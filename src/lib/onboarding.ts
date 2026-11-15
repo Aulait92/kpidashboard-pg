@@ -80,7 +80,8 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
         where: { id: customerId },
         data: {
           plan: pkg,
-          vermittlerTyp: offer.vermittlerTyp === "makler" ? "makler" : "vertreter",
+          // Mehrfachvertreter (Erstinformation) bleibt bei einem Vertreter-Angebot erhalten
+          vermittlerTyp: offer.vermittlerTyp === "makler" ? "makler" : (await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter",
           ...(pkg === "software" ? { newUi: true } : {}),
           retainerMonthly: offer.monthlyFee,
           retainerStart: offer.startDate,
@@ -312,6 +313,7 @@ const ONBOARDING_CUSTOMER_INCLUDE = {
   whatsAppAccount: { select: { status: true } },
   messageTemplates: { where: { purpose: "outreach", status: "approved" }, select: { id: true }, take: 1 },
   reviewSettings: { select: { googleReviewUrl: true } },
+  erstinformation: { select: { statusAt: true, registerNummer: true, url: true, fileName: true } },
   _count: { select: { existingCustomers: true } },
 } satisfies Prisma.CustomerInclude;
 
@@ -377,6 +379,17 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         at: null,
       },
       {
+        // Erstinformation (§ 15 VersVermV): der Assistent schickt den Link in der ersten Nachricht (lib/erstinformation.ts)
+        key: "erstinfo",
+        label: "Erstinformation hinterlegt (Status, Registernummer, PDF oder Link)",
+        owner: "kunde",
+        done: (() => {
+          const e = ob.customer.erstinformation;
+          return !!e?.statusAt && !!e.registerNummer && !!(e.url || e.fileName);
+        })(),
+        at: ob.customer.erstinformation?.statusAt ?? null,
+      },
+      {
         key: "templates",
         // Ohne freigegebene Vorlage darf WhatsApp neue Leads nicht anschreiben.
         label:
@@ -424,7 +437,7 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
 
 /** Übersprungene Schritte (Onboarding.stepSkips): Grund und Zeitpunkt je Schritt. */
 export type StepSkip = { at: string; reason: string };
@@ -514,7 +527,7 @@ export async function customerSetupOpenCount(customerId: string): Promise<number
 }
 
 /** Schritte, die auch nach dem Livegang in der Einrichtung offen bleiben. */
-const LIVE_SETUP_KEYS = new Set(["questionnaire", "app", "calendar", "provision", "whatsapp"]);
+const LIVE_SETUP_KEYS = new Set(["questionnaire", "app", "calendar", "provision", "whatsapp", "erstinfo"]);
 
 /** App installiert (Push-Anmeldung eines Logins) und eigene Provisionssätze hinterlegt. */
 export async function customerExtras(customerId: string): Promise<CustomerExtras> {

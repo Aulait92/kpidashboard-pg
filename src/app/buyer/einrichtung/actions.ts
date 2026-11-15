@@ -173,3 +173,30 @@ export async function skipSetupStepAction(_prev: SetupState, fd: FormData): Prom
   revalidatePath("/buyer", "layout");
   return { ok: true };
 }
+
+// ─── Erstinformation (§ 15 VersVermV): Status, Registernummer, PDF oder Link (lib/erstinformation.ts) ───
+
+export type ErstinfoState = { ok?: boolean; error?: string; tippgeber?: boolean };
+
+export async function saveErstinfoAction(_prev: ErstinfoState, fd: FormData): Promise<ErstinfoState> {
+  let ctx;
+  try {
+    ({ ctx } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const file = fd.get("pdf");
+  const upload = file && typeof file === "object" && "arrayBuffer" in file && (file as File).size > 0 ? (file as File) : null;
+  const { saveErstinfo } = await import("@/lib/erstinformation");
+  const res = await saveErstinfo(ctx.customerId, {
+    status: str(fd, "status", 40),
+    registerNummer: str(fd, "registerNummer", 40),
+    url: str(fd, "url", 500) || null,
+    file: upload ? { name: upload.name, data: new Uint8Array(await upload.arrayBuffer()) } : null,
+    removeFile: fd.get("removeFile") === "1",
+    userId: ctx.userId,
+  });
+  if (!res.ok) return res.error === "tippgeber" ? { tippgeber: true } : { error: res.error };
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}

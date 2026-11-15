@@ -10,6 +10,7 @@
 // Die Admins des Kunden bekommen eine Benachrichtigung und bestätigen. Seit 2021 ist der Zugang
 // zu diesen Endpunkten eingeschränkt – schlägt die Anfrage fehl, bleibt die Klick-Anleitung.
 
+import { leadFormConsentText } from "@/lib/einwilligung-leadformular";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { checkAdAccountAccess } from "@/lib/meta";
@@ -40,6 +41,7 @@ export const SETUP_STEPS = [
   { key: "calendar", label: "Kalender" },
   { key: "mailbox", label: "E-Mail-Postfach" },
   { key: "provision", label: "Provisionen" },
+  { key: "erstinfo", label: "Erstinformation" },
   { key: "metaAccess", label: "Meta freigeben" },
   { key: "whatsapp", label: "WhatsApp verbinden" },
   { key: "bestandImport", label: "Kundenliste hochladen" },
@@ -111,7 +113,8 @@ export function videoEmbedUrl(raw: string | null | undefined): string | null {
 
 /** Einwilligungstext für eigene Leadformulare (Formulare aus dem Agenten-Team enthalten ihn schon). */
 export function consentText(agency: string): string {
-  return `Ich bin damit einverstanden, dass mich ${agency.trim() || "die Agentur"} zu meiner Anfrage per Telefon, E-Mail und WhatsApp kontaktiert. Diese Einwilligung kann ich jederzeit widerrufen.`;
+  // Fester Wortlaut mit KI-Hinweis und Widerruf (lib/einwilligung-leadformular.ts); fehlende Angaben als Platzhalter
+  return leadFormConsentText({ vermittler: agency.trim() || null, anschrift: null, email: null, datenschutzUrl: null });
 }
 
 // ─── Eingaben ───────────────────────────────────────────────────────────
@@ -488,7 +491,7 @@ export function setupSteps(
   const item = (k: string) => items.find((i) => i.key === k);
   const steps: SetupStep[] = [];
   for (const s of SETUP_STEPS) {
-    if (!software && (s.key === "calendar" || s.key === "mailbox" || s.key === "whatsapp" || s.key === "consent")) continue;
+    if (!software && (s.key === "calendar" || s.key === "mailbox" || s.key === "whatsapp" || s.key === "consent" || s.key === "erstinfo")) continue;
     const href = `/buyer/einrichtung?schritt=${s.key}#${s.key}`;
     if (s.key === "app") steps.push({ key: s.key, label: s.label, done: extra.appDone, owner: "kunde", href });
     else if (s.key === "provision") steps.push({ key: s.key, label: s.label, done: extra.provisionDone, owner: "kunde", href: "/buyer/provisionen" });
@@ -556,6 +559,7 @@ const STEP_HINT: Record<string, string> = {
   calendar: "Kalender verbinden",
   whatsapp: "WhatsApp-Nummer verbinden",
   consent: "Einwilligung im Leadformular bestätigen",
+  erstinfo: "Erstinformation hinterlegen (Status, Registernummer, PDF oder Link)",
 };
 
 /** Erinnerung (Mail + Push) an den Kunden senden. `force` = sofort, unabhängig von Tag 1/3/7 (Admin-Knopf). */

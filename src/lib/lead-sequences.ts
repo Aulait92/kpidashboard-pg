@@ -294,13 +294,13 @@ async function sendStep(
 ): Promise<SequenceLogEntry> {
   const base = { at: now.toISOString(), step: seq.step, action: "whatsapp" as const };
   const [lead, account, cal] = await Promise.all([
-    prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true } }),
+    prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: seq.customerId }, select: { status: true } }),
     prisma.calendarConnection.findUnique({ where: { customerId: seq.customerId }, select: { status: true, bookingSlug: true } }),
   ]);
-  if (!lead?.phone || account?.status !== "connected") {
+  if (!lead?.phone || account?.status !== "connected" || lead.waConsent === "nein") {
     const r = await createCallTask(seq.leadId, step.fallbackNote, now);
-    return { ...base, result: r, detail: !lead?.phone ? "Keine Handynummer" : "WhatsApp nicht verbunden" };
+    return { ...base, result: r, detail: !lead?.phone ? "Keine Handynummer" : lead.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : "WhatsApp nicht verbunden" };
   }
   const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
   const an = await anspracheOf(seq.customerId);

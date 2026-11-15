@@ -14,6 +14,7 @@ import { reportError } from "@/lib/monitoring";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { emailLeads } from "@/lib/onboarding-cron";
 import type { MetaLead } from "@/lib/meta-leads";
+import { consentStateOf, parseDisclaimerResponses, type ConsentNachweis, type DisclaimerResponse } from "@/lib/einwilligung-leadformular";
 
 export type IncomingLead = {
   externalId: string | null;
@@ -23,6 +24,8 @@ export type IncomingLead = {
   campaignName: string | null;
   adName: string | null;
   fields: Record<string, string>;
+  /** Häkchen im Formular (custom_disclaimer_responses); null = Formular ohne eigenen Hinweis bzw. unbekannt */
+  disclaimer?: DisclaimerResponse[] | null;
 };
 
 const META_KEYS = new Set([
@@ -44,6 +47,7 @@ export function fromMetaLead(l: MetaLead, pageId: string | null): IncomingLead {
     campaignName: l.campaign_name ?? null,
     adName: l.ad_name ?? null,
     fields,
+    disclaimer: parseDisclaimerResponses(l.custom_disclaimer_responses),
   };
 }
 
@@ -69,6 +73,7 @@ export function fromFlatPayload(body: Record<string, unknown>): IncomingLead {
     campaignName: str(body.campaign_name) || null,
     adName: str(body.ad_name) || null,
     fields,
+    disclaimer: parseDisclaimerResponses(body.custom_disclaimer_responses),
   };
 }
 
@@ -137,6 +142,17 @@ export async function ingestLead(
   const labels = (source?.questionLabels ?? {}) as Record<string, string>;
   const { name, phone, email, answers } = extract(inc, labels);
   const createdAt = new Date(inc.createdAt);
+  // Einwilligung (lib/einwilligung-leadformular.ts): Nachweis mit Zeitpunkt, Formular, Textversion und Wortlaut.
+  // Formular ohne Häkchen → waConsent null (bisheriges Verhalten), Hinweis da und Häkchen fehlt → "nein".
+  const responses = inc.disclaimer ?? null;
+  const waConsent = consentStateOf(responses);
+  const nachweis: ConsentNachweis = {
+    at: (createdAt.getTime() > Date.now() ? new Date() : createdAt).toISOString(),
+    formId: inc.formId,
+    textVersion: responses ? (source?.consentVersion ?? null) : null,
+    text: responses ? (source?.consentText ?? null) : null,
+    responses: responses ?? [],
+  };
   let lead;
   try {
     lead = await prisma.lead.create({
@@ -148,6 +164,8 @@ export async function ingestLead(
         phone,
         email,
         formData: answers.length ? answers : Prisma.DbNull,
+        waConsent,
+        consentData: nachweis as unknown as Prisma.InputJsonValue,
         createdAt: createdAt.getTime() > Date.now() ? new Date() : createdAt,
         adChannel: "Meta",
         status: "Neuer Lead",
@@ -169,7 +187,7 @@ export async function ingestLead(
       data: { amount: source.leadPrice, occurredAt: createdAt, customerId, leadId: lead.id, cancelled: false },
     });
   }
-  if (source) await prisma.leadSource.update({ where: { id: source.id }, data: { lastLeadAt: new Date() } });
+  if (source) await prisma.leadSource.update({ where: { id: source.id }, data: { lastLeadAt: new Date(), lastConsentState: waConsent ?? "ohne" } });
 
   await processNewLead(lead.id).catch((err) => reportError(err, "lead-intake-process", { lead: lead.id }));
   return { status: "created", leadId: lead.id };

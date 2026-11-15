@@ -44,10 +44,17 @@ export async function chooseFollowup(conversationId: string): Promise<FollowupCh
       contactName: true,
       contactPhone: true,
       leadId: true,
-      lead: { select: { status: true, formData: true, source: true } },
+      optedOutAt: true,
+      lead: { select: { status: true, formData: true, source: true, waConsent: true } },
+      _count: { select: { messages: { where: { direction: "inbound" } } } },
     },
   });
   if (!conv) return { kind: "blocked", reason: "Chat nicht gefunden." };
+  // „STOPP“ bzw. keine Einwilligung im Leadformular (lib/whatsapp/stopp.ts, lib/einwilligung-leadformular.ts)
+  if (conv.optedOutAt) return { kind: "blocked", reason: "Der Kontakt hat „STOPP“ geschrieben und bekommt keine WhatsApp-Nachrichten mehr." };
+  if (conv.lead?.waConsent === "nein" && conv._count.messages === 0) {
+    return { kind: "blocked", reason: "Der Lead hat im Formular nicht in WhatsApp eingewilligt. Bitte anrufen oder per E-Mail melden." };
+  }
 
   const status = (conv.lead?.status ?? "").trim().toLowerCase();
   if (DONE.has(status)) {

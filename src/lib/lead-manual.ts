@@ -86,7 +86,7 @@ export type StartChatResult =
 export async function startLeadChat(opts: { leadId: string; customerId: string }): Promise<StartChatResult> {
   const lead = await prisma.lead.findFirst({
     where: { id: opts.leadId, customerId: opts.customerId, erasedAt: null },
-    select: { id: true, name: true, phone: true, airtableId: true, externalId: true, formData: true, source: true },
+    select: { id: true, name: true, phone: true, airtableId: true, externalId: true, formData: true, source: true, waConsent: true },
   });
   if (!lead) return { ok: false, reason: "not_found", error: "Lead nicht gefunden." };
   const account = await prisma.whatsAppAccount.findUnique({ where: { customerId: opts.customerId }, select: { status: true, apiKeyEnc: true } });
@@ -97,19 +97,21 @@ export async function startLeadChat(opts: { leadId: string; customerId: string }
   // Rechtsgrundlage: Der Lead hat selbst angefragt (Formular bzw. Empfehlung mit Einwilligung)
   const asked = !!(lead.airtableId || lead.externalId || lead.formData);
   if (!asked) return { ok: false, reason: "no_consent", error: "Für diesen Kontakt liegt keine Anfrage über ein Formular vor. Bitte zuerst anrufen oder per E-Mail schreiben." };
+  // Häkchen zur Einwilligung im Leadformular fehlt: kein WhatsApp (lib/einwilligung-leadformular.ts)
+  if (lead.waConsent === "nein") return { ok: false, reason: "no_consent", error: "Der Lead hat im Formular nicht in WhatsApp eingewilligt. Bitte anrufen oder per E-Mail zu seiner Anfrage melden." };
 
-  const { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
+  const { NoTemplateError, sendWhatsAppNotice } = await import("@/lib/whatsapp/templates");
+  const { outreachMessage } = await import("@/lib/whatsapp/outreach");
   const { anspracheOf } = await import("@/lib/whatsapp/reminders");
-  const { ansprechpartner } = await import("@/lib/lead-anrede");
   try {
     const an = await anspracheOf(opts.customerId);
-    const who = await ansprechpartner({ customerId: opts.customerId, leadId: lead.id, phone: lead.phone, name: lead.name });
+    const { who, params, text } = await outreachMessage({ customerId: opts.customerId, leadId: lead.id, phone: lead.phone, name: lead.name, an });
     const res = await sendWhatsAppNotice({
       customerId: opts.customerId,
       to: lead.phone,
       purpose: "outreach",
-      params: [firstNameOf(lead.name)],
-      text: noticeText("outreach", an, who, who.kontakt, []),
+      params,
+      text,
       leadId: lead.id,
       contactName: lead.name,
       anrede: who.kontakt,

@@ -3,15 +3,23 @@
 
 import { setVermittlerTypAction } from "@/app/admin/kunden/[id]/whatsapp/module-actions";
 import { loadCustomerProvision } from "@/lib/provision-server";
-import { VERMITTLER_TYPEN } from "@/lib/provision";
+import { prisma } from "@/lib/prisma";
+import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
+
+const STATUS_KNOEPFE = [
+  { key: "vertreter", label: "Vertreter (AO)" },
+  { key: "mehrfachvertreter", label: "Mehrfachvertreter" },
+  { key: "makler", label: "Makler" },
+] as const;
 
 export async function VermittlerCard({ customerId }: { customerId: string }) {
   const p = await loadCustomerProvision(customerId);
+  const roh = (await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp ?? "vertreter";
   return (
     <section className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm">
       <div className="min-w-0 flex-1">
         <div className="font-semibold">
-          Vermittlertyp: {p.typ === "makler" ? "Makler" : "Vertreter"}{" "}
+          Vermittlertyp: {vermittlerStatusLabel(roh)}{" "}
           <span
             className={
               p.hasCustom
@@ -23,22 +31,22 @@ export async function VermittlerCard({ customerId }: { customerId: string }) {
           </span>
         </div>
         <p className="text-[color:var(--muted)]">
-          Bestimmt die Provisionsschätzung je Abschluss. Makler: Sach als Bestandscourtage, Leben/BU in Promille der Beitragssumme, PKV-Tarifoptimierung als Honorar.
+          Bestimmt die Provisionsschätzung je Abschluss (Mehrfachvertreter wie Vertreter) und den Status in der Erstinformation. Makler: Sach als Bestandscourtage, Leben/BU in Promille der Beitragssumme, PKV-Tarifoptimierung als Honorar.
         </p>
       </div>
       <form action={setVermittlerTypAction} className="flex gap-1.5">
         <input type="hidden" name="customerId" value={customerId} />
-        {VERMITTLER_TYPEN.map((t) => (
+        {STATUS_KNOEPFE.map((t) => (
           <button
             key={t.key}
             name="typ"
             value={t.key}
-            aria-pressed={p.typ === t.key}
+            aria-pressed={roh === t.key}
             className={`h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold ${
-              p.typ === t.key ? "bg-[color:var(--brand)] text-white" : "border border-[color:var(--border)] bg-white"
+              roh === t.key ? "bg-[color:var(--brand)] text-white" : "border border-[color:var(--border)] bg-white"
             }`}
           >
-            {t.key === "makler" ? "Makler" : "Vertreter"}
+            {t.label}
           </button>
         ))}
       </form>

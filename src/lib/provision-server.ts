@@ -105,10 +105,12 @@ export async function saveCustomerProvision(
   const storno = parseStorno(input.storno);
   if (!storno.ok) errors.push("Stornoquote pro Jahr zwischen 0 und 50 %");
   if (errors.length) return { ok: false, error: errors.join(" · ") };
+  // Mehrfachvertreter (Erstinformation) rechnet wie Vertreter und bleibt beim Speichern als „Vertreter“ erhalten
+  const current = (await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp;
   await prisma.customer.update({
     where: { id: customerId },
     data: {
-      vermittlerTyp: input.typ,
+      vermittlerTyp: input.typ === "vertreter" && current === "mehrfachvertreter" ? "mehrfachvertreter" : input.typ,
       provisionRates: Object.keys(rates).length ? (rates as Prisma.InputJsonValue) : Prisma.DbNull,
       // Standard (10 %) wird nicht gespeichert, damit eine spätere Änderung des Standards wirkt
       ...(input.storno !== undefined ? { stornoQuote: storno.ok && storno.value != null && storno.value !== STORNO_PRO_JAHR ? storno.value : null } : {}),

@@ -38,7 +38,7 @@ export type CampaignContext = {
   customerName: string;
   /** Name des Vermittlers (Person) bzw. der Agentur – Absender der Anzeigen. */
   advisorName: string;
-  vermittlerTyp: "vertreter" | "makler";
+  vermittlerTyp: "vertreter" | "mehrfachvertreter" | "makler";
   insurer: string | null;
   product: string;
   wish: string | null;
@@ -64,6 +64,8 @@ export type CampaignContext = {
   bookingUrl?: string | null;
   /** Paket mit Software: Buchungsseite ist Pflicht (Nur Betreuung: ohne Kalender). */
   needsBooking?: boolean;
+  /** Fester Einwilligungstext fürs Formular (lib/einwilligung-leadformular.ts); ersetzt den Vorschlag des Formular-Agenten. */
+  consentText?: string | null;
 };
 
 // ─── Agenten-Ergebnisse ─────────────────────────────────────────────────

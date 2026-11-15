@@ -8,6 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { audit } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { claudeCall, AgentError, type AgentUsage, type LlmCall } from "@/lib/kampagnen/llm";
+import { CONSENT_VERSION } from "@/lib/einwilligung-leadformular";
 import { angleResearcher, copywriter, formAgent, reviewer, reviseCopies, reviseForm, strategist } from "@/lib/kampagnen/agents";
 import { checkPrerequisites, loadCampaignContext, type Problem } from "@/lib/kampagnen/context";
 import { adsManagerUrl, buildCampaign, cleanupCampaign, explainMetaError, formUrl, graphApi, pageAccessToken, type MetaApi } from "@/lib/kampagnen/builder";
@@ -364,8 +365,11 @@ export async function buildCampaignRun(id: string, deps: CampaignDeps = defaultD
           customerId: row.customerId,
           productKey: row.product,
           questionLabels: json(Object.fromEntries(form.questions.map((q) => [q.key, q.label]))),
+          // Nachweis am Lead: Wortlaut und Version der Einwilligung (lib/einwilligung-leadformular.ts)
+          consentText: form.consentText,
+          consentVersion: form.consentText === ctx.consentText ? CONSENT_VERSION : null,
         },
-        update: { customerId: row.customerId, productKey: row.product, active: true },
+        update: { customerId: row.customerId, productKey: row.product, active: true, consentText: form.consentText, consentVersion: form.consentText === ctx.consentText ? CONSENT_VERSION : null },
       });
       built.leadSourceId = ls.id;
     }

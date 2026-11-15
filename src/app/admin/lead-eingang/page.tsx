@@ -140,6 +140,11 @@ export default async function LeadIntakePage({
                     <td className="px-5 py-2">
                       <div className="font-medium">{s.formName ?? "Formular"}</div>
                       <div className="text-sm text-[color:var(--muted)]">{s.formId}</div>
+                      {s.lastConsentState === "ohne" ? (
+                        <div className="mt-1 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800" title="Letzter Lead ohne custom_disclaimer_responses: Formular hat kein Einwilligungs-Häkchen">
+                          ohne Einwilligungs-Häkchen
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-3 py-2">{s.customer.name}</td>
                     <td className="px-3 py-2">{s.productKey}</td>

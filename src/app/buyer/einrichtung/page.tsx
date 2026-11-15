@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Smartphone, Star, Upload, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -10,7 +10,10 @@ import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
+import { CopyText, HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
+import { ErstinfoForm } from "./erstinfo-form";
+import { loadErstinfo } from "@/lib/erstinformation";
+import { consentTextFor } from "@/lib/einwilligung-leadformular-server";
 import { SmtpForm } from "@/app/buyer/postfach/forms";
 import { googleMailAvailable, microsoftMailAvailable } from "@/lib/mail/postfach";
 import { appInstalled, loadSetupSettings, setupSteps, videoEmbedUrl, type MetaCheck, type SetupStepKey } from "@/lib/selbst-einrichtung";
@@ -81,6 +84,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     "app",
     ...(software ? ["calendar", "mailbox"] : []),
     "provision",
+    ...(software ? ["erstinfo"] : []),
     "metaAccess",
     ...(waEnabled ? ["whatsapp"] : []),
     ...["bestandImport", "reviewLink", "team"].filter(has),
@@ -101,6 +105,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
   const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
+  // Erstinformation (§ 15 VersVermV) und Einwilligungstext fürs Leadformular
+  const [erstinfo, consent] = software ? await Promise.all([loadErstinfo(ctx.customerId), consentTextFor(ctx.customerId)]) : [null, null];
   const metaInit = {
     adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
     page: ob.customer.metaPageId ?? "",
@@ -298,6 +304,43 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
           </div>
         </Step>
+
+        {software && erstinfo ? (
+          <Step n={nextNo()} title="Erstinformation für Ihre Leads" icon={FileText} done={done("erstinfo")} open={isOpen("erstinfo")} id="erstinfo">
+            <p className="mb-3 text-sm text-[color:var(--muted)]">
+              Als Versicherungsvermittler müssen Sie Ihren Kunden beim ersten Kontakt die Erstinformation geben (§ 15 VersVermV). Ihr Assistent schickt den Link
+              dazu in seiner ersten Nachricht an jeden neuen Lead. Ohne Erstinformation fehlt diese Pflichtangabe.
+            </p>
+            {!erstinfo.vollstaendig ? (
+              <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erstinfo-warnung>
+                Es fehlt noch: {erstinfo.fehlt.join(", ")}.
+              </p>
+            ) : null}
+            <ErstinfoForm
+              initial={{ status: erstinfo.statusAt ? erstinfo.status : null, registerNummer: erstinfo.registerNummer, url: erstinfo.url, fileName: erstinfo.fileName }}
+              readOnly={readOnly}
+            />
+            {erstinfo.token ? (
+              <p className="mt-4 text-sm text-[color:var(--muted)]">
+                So sehen Ihre Leads sie:{" "}
+                <a href={`/erstinformation/${erstinfo.token}`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] underline">
+                  Erstinformation öffnen
+                </a>
+              </p>
+            ) : null}
+            {consent ? (
+              <details className="mt-5 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" data-einwilligung-text>
+                <summary className="cursor-pointer text-[15px] font-medium">Einwilligung im Leadformular (Text zum Kopieren)</summary>
+                <p className="my-2 text-sm text-[color:var(--muted)]">
+                  Unsere Formulare enthalten diesen Text als Pflicht-Häkchen. Nutzen Sie eigene Formulare, übernehmen Sie ihn bitte genauso. Ohne Häkchen schreibt
+                  Ihr Assistent den Lead nicht per WhatsApp an.
+                </p>
+                <CopyText text={consent.text} />
+                {consent.missing.length ? <p className="mt-2 text-xs text-amber-800">Bitte ergänzen: {consent.missing.join(", ")}.</p> : null}
+              </details>
+            ) : null}
+          </Step>
+        ) : null}
 
         <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">
           <p className="text-sm text-[color:var(--muted)]">So schalten wir die Anzeigen in Ihrem Werbekonto und Leads kommen direkt bei Ihnen an. Das Budget bleibt bei Ihnen.</p>

@@ -107,7 +107,8 @@ model Customer {
   // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
   // (Leads per E-Mail, Kundenbereich nur mit Leads und Zahlen)
   plan                String    @default("software")
-  // Vertreter (Ausschließlichkeit) oder Makler – bestimmt die Standard-Provisionssätze
+  // Status nach § 34d GewO: "vertreter" (Ausschließlichkeit), "mehrfachvertreter" oder "makler"; bestimmt die
+  // Standard-Provisionssätze (Mehrfachvertreter rechnen wie Vertreter) und die Erstinformation (lib/erstinformation.ts)
   vermittlerTyp       String    @default("vertreter")
   // Eigene Provisionssätze je Produkt (Kundenbereich → Konto → Meine Provisionen),
   // geprüft über lib/provision.parseCustomRates; null = Standard
@@ -286,6 +287,8 @@ model Customer {
   // Automatische Optimierung je Werbekonto (lib/optimierung, seit 18.11.2026)
   optimizationAccount      OptimizationAccount?
   optimizationMeasures     OptimizationMeasure[]
+  // Erstinformation nach § 15 VersVermV (Registernummer, PDF oder Link, öffentliche Adresse)
+  erstinformation          Erstinformation?
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -556,6 +559,11 @@ model Lead {
   // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
   // lib/lead-fields) — Kontext für den WhatsApp-Bot.
   formData             Json?
+  // Einwilligung aus dem Meta-Leadformular (custom_disclaimer_responses, lib/einwilligung-leadformular.ts):
+  // "ja" (Häkchen gesetzt) | "nein" (Hinweis da, Häkchen fehlt: kein WhatsApp) | null (Formular ohne Hinweis, unbekannt)
+  waConsent            String?
+  // Nachweis: { at, formId, textVersion, text, responses: [{ key, checked }] }
+  consentData          Json?
   // Korrekturen der Stammdaten im Kontakt (lib/lead-stammdaten.ts, Ole 14.11.2026): Anrede, Vor-/Nachname,
   // Adresse. Ab contactEditedAt überschreibt der Airtable-Abgleich Name, Telefon und E-Mail nicht mehr.
   contactOverrides     Json?
@@ -1047,6 +1055,9 @@ model Conversation {
   attentionAt          DateTime?
   windowExpiresAt      DateTime? // Ende des 24h-Service-Fensters
   lastMessageAt        DateTime?
+  // „STOPP“ per WhatsApp (lib/whatsapp/stopp.ts): ab hier keine Nachrichten mehr an diese Nummer (Assistent,
+  // Erstanschreiben, Nachfassen, Erinnerungen, Kampagnen). Schreibt der Kontakt später selbst wieder, wird es aufgehoben.
+  optedOutAt           DateTime?
   // Nur Support-Nummer (Ole, 15.11.2026): Zuordnung des Gegenübers zu Vertriebskontakt bzw. Kunde,
   // daraus „Kunde“ oder „Interessent“ (lib/whatsapp/support-contacts.ts). Manuell gesetzt bleibt sie stehen.
   salesContactId       String?
@@ -1810,6 +1821,11 @@ model LeadSource {
   bezugAirtableId String?
   // Fragen des Formulars (key → Beschriftung) für lesbare Formularangaben
   questionLabels  Json?
+  // Einwilligungstext im Formular (von unseren Kampagnen-Agenten angelegt): Version und Wortlaut als Nachweis am Lead
+  consentVersion  String?
+  consentText     String?
+  // Einwilligung beim letzten Lead: "ja" | "nein" | "ohne" (Formular ohne Häkchen → Warnung im Admin)
+  lastConsentState String?
   active          Boolean   @default(true)
   lastLeadAt      DateTime?
   createdAt       DateTime  @default(now())
@@ -3537,4 +3553,26 @@ model CapiEvent {
   @@unique([leadId, stage])
   @@index([customerId, status, createdAt])
   @@index([status, nextAttemptAt])
+}
+
+// Erstinformation des Vermittlers (§ 15/16 VersVermV, Ole 15.11.2026): der Assistent schickt den Link
+// /erstinformation/<token> in der ersten Nachricht. PDF (in der Datenbank) oder Link auf die eigene Seite.
+model Erstinformation {
+  id             String    @id @default(cuid())
+  customerId     String    @unique
+  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Öffentlicher Teil der Adresse (zufällig, ändert sich nicht)
+  token          String    @unique
+  // IHK-Vermittlerregister, Format D-XXXX-XXXXX-XX
+  registerNummer String?
+  // Status (Customer.vermittlerTyp) in der Einrichtung bestätigt
+  statusAt       DateTime?
+  url            String?
+  fileName       String?
+  contentType    String?
+  size           Int?
+  data           Bytes?
+  updatedById    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }

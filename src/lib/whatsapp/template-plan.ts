@@ -6,9 +6,9 @@
 //
 // Je Kunde und Zweck alle Fassungen (formsFor), unabhängig von der gewählten Ansprache –
 // so greift ein Wechsel Sie/Du sofort mit freigegebenen Vorlagen:
-//   pg_<zweck>_v2                 Du      „Hallo {{1}}, …“
-//   pg_<zweck>_v2_sie             Sie     „Guten Tag {{1}}, …“ ({{1}} = Frau Schneider / Julia Schneider)
-//   pg_<zweck>_v2_sie_ohne_name   Sie     „Guten Tag, …“ (für Kontakte ohne Nachnamen)
+//   pg_<zweck>_v3                 Du      „Hallo {{1}}, …“
+//   pg_<zweck>_v3_sie             Sie     „Guten Tag {{1}}, …“ ({{1}} = Frau Schneider / Julia Schneider)
+//   pg_<zweck>_v3_sie_ohne_name   Sie     „Guten Tag, …“ (für Kontakte ohne Nachnamen)
 
 import {
   TEMPLATE_BUTTONS,
@@ -108,6 +108,7 @@ const EXAMPLES: Record<string, string> = {
   "Google-Link": "https://app.performancegrowth.de/empfehlung/abc123/google",
   Empfehlungslink: "https://app.performancegrowth.de/empfehlung/abc123",
   "Stand der Empfehlung": "Über Ihren Link hat sich jemand bei mir gemeldet.",
+  "Erstinformation (Link)": "https://app.performancegrowth.de/erstinformation/abc123",
 };
 
 export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du"): string[] {

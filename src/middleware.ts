@@ -27,6 +27,7 @@ const PUBLIC_PREFIXES = [
   "/abmelden", // Abmeldelink in Kampagnen-Mails (signierter Token, ein Klick ohne Login)
   "/api/abmelden", // List-Unsubscribe One-Click (POST, signierter Token)
   "/einwilligung", // Einwilligungs-Abfrage für Bestandskunden mit Double-Opt-in (signierter Token)
+  "/erstinformation", // Erstinformation des Vermittlers (§ 15 VersVermV), Link in der ersten WhatsApp-Nachricht (Token)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
@@ -91,7 +92,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/book/") ||
     pathname.startsWith("/empfehlung/") ||
     pathname.startsWith("/abmelden/") ||
-    pathname.startsWith("/einwilligung/")
+    pathname.startsWith("/einwilligung/") ||
+    pathname.startsWith("/erstinformation/")
   ) {
     const headers = new Headers(req.headers);
     headers.set("x-bare-layout", "lead");

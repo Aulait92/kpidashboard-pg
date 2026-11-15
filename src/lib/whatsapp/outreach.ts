@@ -7,6 +7,9 @@
 //      Lead hat selbst geschrieben → kein Anschreiben (skipped_contact)
 //      sonst                   → Vorlage „outreach" senden, Konversation mit
 //                                Lead verknüpfen, der Assistent übernimmt bei Antwort.
+//      Ohne Häkchen zur Einwilligung im Leadformular (Lead.waConsent = "nein") → kein WhatsApp
+//      (skipped_no_consent), der Lead steht auf der Rückrufliste (E-Mail/Telefon).
+//      Nummer hat „STOPP“ geschrieben → kein Anschreiben (skipped_optout).
 //   3. Rückrufliste: offene Leads ohne Termin, bei denen das Anschreiben nicht
 //      möglich war oder 24 h danach noch kein Termin steht.
 
@@ -16,6 +19,18 @@ import { prisma } from "@/lib/prisma";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
+import type { Ansprache } from "@/lib/ansprache";
+import { erstinfoUrlFor } from "@/lib/erstinformation";
+
+/**
+ * Parameter und Freitext für das Erstanschreiben: Vorname, Link zur Erstinformation (§ 15 VersVermV);
+ * der KI-Hinweis steht im Text der Vorlage (TEMPLATE_BODY.outreach).
+ */
+export async function outreachMessage(opts: { customerId: string; leadId: string; phone: string; name: string | null; an: Ansprache }) {
+  const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.phone, name: opts.name });
+  const url = await erstinfoUrlFor(opts.customerId);
+  return { who, params: [firstNameOf(opts.name), url], text: noticeText("outreach", opts.an, who, who.kontakt, [url]) };
+}
 
 /** Nur frische, noch unbearbeitete Leads anschreiben. */
 const OUTREACH_STATUSES = [null, "Neuer Lead"];
@@ -82,7 +97,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         },
         OR: OUTREACH_STATUSES.map((s) => ({ status: s })),
       },
-      select: { id: true, name: true, phone: true },
+      select: { id: true, name: true, phone: true, waConsent: true },
       take: 50,
     });
 
@@ -97,8 +112,18 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         where: {
           customerId_contactPhone: { customerId: agent.customerId, contactPhone: phone },
         },
-        select: { id: true, leadId: true, _count: { select: { messages: true } } },
+        select: { id: true, leadId: true, optedOutAt: true, _count: { select: { messages: true } } },
       });
+
+      // Einwilligungs-Häkchen im Formular fehlt bzw. „STOPP“: kein WhatsApp (nur E-Mail/Telefon zur Anfrage)
+      if (lead.waConsent === "nein" || conv?.optedOutAt) {
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { outreachAt: new Date(), outreachStatus: lead.waConsent === "nein" ? "skipped_no_consent" : "skipped_optout" },
+        });
+        result.skipped++;
+        continue;
+      }
 
       if (await hasAppointment(lead.id, conv?.id)) {
         await prisma.lead.update({
@@ -124,15 +149,14 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         continue;
       }
 
-      const params = [firstNameOf(lead.name)];
       try {
-        const who = await ansprechpartner({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name });
+        const { who, params, text } = await outreachMessage({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an });
         await sendWhatsAppNotice({
           customerId: agent.customerId,
           to: phone,
           purpose: "outreach",
           params,
-          text: noticeText("outreach", an, who, who.kontakt, []),
+          text,
           leadId: lead.id,
           contactName: lead.name,
           anrede: who.kontakt,
@@ -216,6 +240,7 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       createdAt: true,
       outreachAt: true,
       outreachStatus: true,
+      waConsent: true,
       // Letzte Absage (Lead/Berater) → sofort zurückrufen statt 24 h warten.
       appointments: {
         where: {
@@ -260,6 +285,10 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       reason = "Lead hat den Termin abgesagt, kurz nachfassen";
     } else if (!l.phone) {
       reason = "Keine Handynummer, bitte per E-Mail/Telefon nachfassen";
+    } else if (l.waConsent === "nein" || status === "skipped_no_consent") {
+      reason = "Ohne WhatsApp-Einwilligung im Formular: bitte anrufen oder per E-Mail melden";
+    } else if (status === "skipped_optout") {
+      reason = "Möchte keine WhatsApp-Nachrichten („STOPP“): bitte anrufen oder per E-Mail melden";
     } else if (status.startsWith("failed")) {
       reason = "WhatsApp nicht zustellbar";
     } else if (l.outreachAt && now - l.outreachAt.getTime() >= CALLBACK_AFTER_MS) {

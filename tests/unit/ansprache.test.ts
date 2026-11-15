@@ -110,7 +110,9 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     expect(templateTextFor("booking_confirmation", "du")).toMatch(/^Hallo \{\{1\}\}, vielen Dank für deine Buchung bei \[Firma\]\. Dein Termin ist bestätigt: \{\{2\}\} \(\{\{3\}\}\)\. \{\{4\}\}/);
     expect(templateTextFor("booking_confirmation", "sie")).toMatch(/^Guten Tag \{\{1\}\}, vielen Dank für Ihre Buchung bei \[Firma\]\. Ihr Termin ist bestätigt: \{\{2\}\}/);
     expect(templateTextFor("booking_confirmation", "sie_ohne_name")).toMatch(/^Guten Tag, vielen Dank für Ihre Buchung bei \[Firma\]\. Ihr Termin ist bestätigt: \{\{1\}\} \(\{\{2\}\}\)\. \{\{3\}\}/);
-    expect(templateTextFor("outreach", "sie_ohne_name")).not.toMatch(/\{\{\d+\}\}/);
+    // Erstanschreiben: KI-Hinweis und Link zur Erstinformation ({{2}} bzw. ohne Namen {{1}})
+    expect(templateTextFor("outreach", "sie_ohne_name")).toMatch(/^Guten Tag, vielen Dank für Ihre Anfrage! Hier schreibt der digitale KI-Assistent von \[Firma\]\. Ich bin kein Mensch.*Versicherungsvermittler: \{\{1\}\} Haben Sie/);
+    expect(templateTextFor("outreach", "du")).toMatch(/schreib ‚Mensch‘\. Erstinformation zu \[Berater\] als Versicherungsvermittler: \{\{2\}\} Hast du/);
     expect(SIE_TEMPLATE_TEXT.outreach).toBe(templateTextFor("outreach", "sie"));
   });
 
@@ -143,7 +145,8 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     const names = templateNamesOf("Agentur Susanne Meier");
     expect(names).toEqual({ firm: "Agentur Susanne Meier", advisor: "Susanne Meier" });
     expect(templateBodyFor("booking_confirmation", names, "sie")).toContain("Buchung bei Agentur Susanne Meier");
-    expect(templateBodyFor("outreach", names, "du")).toContain("digitale Assistent von Agentur Susanne Meier");
+    expect(templateBodyFor("outreach", names, "du")).toContain("digitale KI-Assistent von Agentur Susanne Meier");
+    expect(templateBodyFor("outreach", names, "du")).toContain("Termin mit Susanne Meier zu vereinbaren");
     expect(templateBodyFor("campaign_review", names, "sie")).toContain("hier ist Susanne Meier, Ihr Versicherungsberater");
     expect(templateNamesOf("Allianz Anid Brand")).toEqual({ firm: "Anid Brand", advisor: "Anid Brand" });
     expect(personFromCustomerName("Allianz Generalvertretung Meier")).toBe("Generalvertretung Meier");
@@ -176,8 +179,8 @@ describe("Vorschau auf der Seite WhatsApp-Vorlagen", () => {
     expect(previewBodyFor("outreach", names, "du").startsWith("Hallo Julia, danke für deine Anfrage!")).toBe(true);
     // Kampagnen siezen immer, auch bei „Du“
     expect(previewBodyFor("campaign_review", names, "du").startsWith("Guten Tag Frau Schneider, hier ist Susanne Meier")).toBe(true);
-    expect(exampleValuesFor("outreach", "sie")).toEqual(["Frau Schneider"]);
-    expect(exampleValuesFor("outreach", "sie_ohne_name")).toEqual([]);
+    expect(exampleValuesFor("outreach", "sie")).toEqual(["Frau Schneider", "https://app.performancegrowth.de/erstinformation/abc123"]);
+    expect(exampleValuesFor("outreach", "sie_ohne_name")).toEqual(["https://app.performancegrowth.de/erstinformation/abc123"]);
   });
 });
 
@@ -232,12 +235,14 @@ describe("Vorlage wählen und Parameter setzen", () => {
   });
   it("Freitext im offenen Fenster: gleiche Anrede-Regel", () => {
     const names = { firm: "Agentur Susanne Meier", advisor: "Susanne Meier" };
-    expect(noticeText("outreach", "sie", names, FRAU, [])).toBe(
-      "Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage! Hier ist der digitale Assistent von Agentur Susanne Meier. Haben Sie kurz Zeit für zwei Fragen, damit wir Ihnen ein passendes Angebot machen können?",
+    const link = "https://app.example.de/erstinformation/abc123";
+    expect(noticeText("outreach", "sie", names, FRAU, [link])).toBe(
+      `Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage! Hier schreibt der digitale KI-Assistent von Agentur Susanne Meier. Ich bin kein Mensch und berate nicht zu Tarifen. Ich helfe Ihnen, einen Termin mit Susanne Meier zu vereinbaren. Wenn Sie direkt mit Susanne Meier sprechen möchten, schreiben Sie ‚Mensch‘. Erstinformation zu Susanne Meier als Versicherungsvermittler: ${link} Haben Sie kurz Zeit für zwei Fragen?`,
     );
-    expect(noticeText("outreach", "sie", names, NUR_VORNAME, []).startsWith("Guten Tag, vielen Dank")).toBe(true);
-    expect(noticeText("outreach", "du", names, FRAU, []).startsWith("Hallo Julia, danke für deine Anfrage!")).toBe(true);
-    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Julia Schneider, hier ist der digitale Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
+    expect(noticeText("outreach", "sie", names, NUR_VORNAME, [link]).startsWith("Guten Tag, vielen Dank")).toBe(true);
+    expect(noticeText("outreach", "du", names, FRAU, [link]).startsWith("Hallo Julia, danke für deine Anfrage! Hier schreibt der digitale KI-Assistent")).toBe(true);
+    expect(noticeText("outreach", "du", names, FRAU, [link])).toContain("Wenn du direkt mit Susanne Meier sprechen möchtest, schreib ‚Mensch‘.");
+    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Julia Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
   });
 });
 
@@ -261,7 +266,7 @@ describe("KI-Assistent: Anrede im Prompt", () => {
     expect(p).toContain("nur als „Frau Schneider“, nie mit dem Vornamen allein");
     expect(p).toContain("Anrede: Frau");
     expect(p).toContain("Sieze den Lead");
-    expect(p).toContain("digitale Assistent von Agentur Susanne Meier");
+    expect(p).toContain("digitale KI-Assistent von Agentur Susanne Meier");
     expect(p).toContain("„Susanne Meier schaut sich das an“");
   });
   it("Sie ohne Anrede: voller Name, Herr/Frau nicht raten", () => {

@@ -1,6 +1,9 @@
 import { AlertTriangle, CheckCircle2, Circle, XCircle } from "lucide-react";
 import { adminCheckMetaAction, openSetupAction, restartSetupAction, sendSetupReminderAction, toggleOnboardingStepAction } from "@/app/admin/vertrieb/onboarding-actions";
 import { REMINDER_DAYS, loadSetupOverview, type MetaCheck } from "@/lib/selbst-einrichtung";
+import { consentTextFor } from "@/lib/einwilligung-leadformular-server";
+import { loadErstinfo } from "@/lib/erstinformation";
+import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 
 const fmt = (d: Date | string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(d));
@@ -38,6 +41,7 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
   const meta = (ob.metaCheck ?? null) as MetaCheck | null;
   const sent = (ob.setupReminders && typeof ob.setupReminders === "object" ? ob.setupReminders : {}) as Record<string, string>;
   const manual: Record<string, string> = { metaAccess: "metaAccess", consent: "consent", testLead: "testLead" };
+  const [consent, erstinfo] = await Promise.all([consentTextFor(customerId).catch(() => null), loadErstinfo(customerId).catch(() => null)]);
   return (
     <section className="card" data-setup-card>
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
@@ -73,6 +77,32 @@ export async function SetupCard({ customerId, notice }: { customerId: string; no
           </li>
         ))}
       </ul>
+      {consent ? (
+        <div className="border-t border-slate-100 px-4 py-3 text-sm" data-admin-einwilligung>
+          <p className="font-medium">Einwilligung im Leadformular (Pflicht-Häkchen, eigener Hinweis)</p>
+          <p className="mt-1 select-all rounded bg-slate-50 p-2 text-xs">{consent.text}</p>
+          {consent.missing.length ? <p className="mt-1 text-xs text-amber-800">Fehlt: {consent.missing.join(", ")} (Impressum prüfen).</p> : null}
+          <p className="mt-1 text-xs text-slate-500">Häkchen-Schlüssel „einwilligung_kontakt“, Pflichtfeld, nicht vorausgewählt. Ohne Häkchen schreibt der Assistent nicht per WhatsApp.</p>
+        </div>
+      ) : null}
+      {erstinfo ? (
+        <div className="border-t border-slate-100 px-4 py-3 text-sm" data-admin-erstinfo>
+          <p className="font-medium">Erstinformation</p>
+          <p className="mt-1 text-xs">
+            {vermittlerStatusLabel(erstinfo.status)}
+            {erstinfo.statusAt ? "" : " (nicht bestätigt)"} · Registernummer {erstinfo.registerNummer ?? "fehlt"} ·{" "}
+            {erstinfo.url ? "Link" : erstinfo.fileName ? "PDF" : "kein Dokument"}
+            {erstinfo.token ? (
+              <>
+                {" · "}
+                <a href={`/erstinformation/${erstinfo.token}`} target="_blank" rel="noreferrer" className="underline">
+                  öffentliche Seite
+                </a>
+              </>
+            ) : null}
+          </p>
+        </div>
+      ) : null}
       <div className="border-t border-slate-100 px-4 py-3 text-sm">
         <p className="font-medium">Meta-Zugriff</p>
         {meta ? (

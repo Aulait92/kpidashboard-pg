@@ -17,6 +17,8 @@ import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
+import { kiHinweisSatz } from "@/lib/whatsapp/ki-hinweis";
+import { WhatsAppNoConsentError, WhatsAppOptOutError } from "@/lib/whatsapp/stopp";
 
 export type NoticePurpose =
   | "outreach"
@@ -57,17 +59,20 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
 
 /**
  * Version der automatisch eingereichten Texte. v2 (14.11.2026): Anrede „Guten Tag Frau Schneider“
- * bei Sie, eigene Fassung ohne Namen, Firma/Berater getrennt. Freigegebene v1-Vorlagen bleiben
- * im Einsatz, bis die v2-Fassung freigegeben ist.
+ * bei Sie, eigene Fassung ohne Namen, Firma/Berater getrennt. v3 (15.11.2026, KI-Verordnung und
+ * Erstinformation): Erstanschreiben mit vollständigem KI-Hinweis („kein Mensch“, „schreiben Sie ‚Mensch‘“)
+ * und Link zur Erstinformation, „digitaler KI-Assistent“ in allen Assistenten-Texten. Freigegebene
+ * ältere Vorlagen bleiben im Einsatz, bis die neue Fassung freigegeben ist; fehlt darin der Hinweis,
+ * holt der Assistent ihn in seiner ersten Antwort nach (lib/whatsapp/ki-hinweis.ts).
  */
-export const TEMPLATE_VERSION = "v2";
+export const TEMPLATE_VERSION = "v3";
 
 /** Fassung einer Vorlage. Kampagnen und Empfehlungen gibt es nur gesiezt. */
 export type TemplateForm = "du" | "sie" | "sie_ohne_name";
 
 /** Weitere Parameter je Zweck (nach dem Namen; Reihenfolge wie im Text). */
 export const REST_PARAMS: Record<NoticePurpose, string[]> = {
-  outreach: [],
+  outreach: ["Erstinformation (Link)"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reschedule: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
@@ -94,9 +99,10 @@ export const NAME_PARAM: Record<"du" | "sie", string> = { du: "Vorname", sie: "A
  * Ohne „du“: nur gesiezt (Bestandskunden, Empfehlungen).
  */
 export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> = {
+  // Erste Nachricht an neue Leads: KI-Hinweis (KI-VO Art. 50) und Erstinformation (§ 15 VersVermV), {{2}} = Link
   outreach: {
-    du: "danke für deine Anfrage! Hier ist der digitale Assistent von [Firma]. Hast du kurz Zeit für zwei Fragen, damit wir dir ein passendes Angebot machen können?",
-    sie: "vielen Dank für Ihre Anfrage! Hier ist der digitale Assistent von [Firma]. Haben Sie kurz Zeit für zwei Fragen, damit wir Ihnen ein passendes Angebot machen können?",
+    du: `danke für deine Anfrage! ${kiHinweisSatz("du")} Erstinformation zu [Berater] als Versicherungsvermittler: {{2}} Hast du kurz Zeit für zwei Fragen?`,
+    sie: `vielen Dank für Ihre Anfrage! ${kiHinweisSatz("sie")} Erstinformation zu [Berater] als Versicherungsvermittler: {{2}} Haben Sie kurz Zeit für zwei Fragen?`,
   },
   booking_confirmation: {
     du: "vielen Dank für deine Buchung bei [Firma]. Dein Termin ist bestätigt: {{2}} ({{3}}). {{4}} Wir freuen uns auf das Gespräch!",
@@ -111,20 +117,20 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "Ihr Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Vielen Dank für Ihr Verständnis!",
   },
   followup: {
-    du: "hier ist nochmal der digitale Assistent von [Firma]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
-    sie: "hier ist nochmal der digitale Assistent von [Firma]. Passt es Ihnen diese Woche noch für ein kurzes Gespräch? Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Passt es dir diese Woche noch für ein kurzes Gespräch? Antworte einfach hier, dann schlage ich dir Zeiten vor.",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Passt es Ihnen diese Woche noch für ein kurzes Gespräch? Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.",
   },
   followup_offer: {
-    du: "hier ist der digitale Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.",
-    sie: "hier ist der digitale Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Wenn Sie Fragen haben oder etwas anpassen möchten, antworten Sie einfach hier.",
+    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Wenn du Fragen hast oder etwas anpassen möchtest, antworte einfach hier.",
+    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Wenn Sie Fragen haben oder etwas anpassen möchten, antworten Sie einfach hier.",
   },
   followup_noshow: {
-    du: "schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
-    sie: "schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworten Sie einfach hier.",
+    du: "schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
+    sie: "schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworten Sie einfach hier.",
   },
   followup_last: {
-    du: "hier ist nochmal der digitale Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
-    sie: "hier ist nochmal der digitale Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Dann antworte einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Dann antworten Sie einfach hier. Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
   },
   campaign_cross_sell: {
     sie: "hier ist [Berater], Ihr Versicherungsberater. Kurze Frage: Sind Sie beim Thema {{2}} schon gut abgesichert? Wenn Sie möchten, schaue ich mir das gern kostenlos mit Ihnen an. Antworten Sie einfach hier.",
@@ -267,11 +273,13 @@ export function rankTemplates<T extends Candidate>(
   const an = effectiveAnsprache(purpose, ansprache);
   const hasName = !!anredeName("sie", kontakt);
   const current = (n: string) => n.startsWith(`pg_${purpose}_${TEMPLATE_VERSION}`);
+  // Unter älteren Fassungen die neueste bevorzugen (v2 vor v1)
+  const older = (n: string) => 0.5 - Math.min(Number(/^pg_[a-z_]+?_v(\d+)(?:_|$)/.exec(n)?.[1] ?? 0), 99) / 1000;
   const score = (t: T): number | null => {
     const slot = nameSlotOf(t.body);
     if (slot === "anrede" && !hasName) return null; // bräuchte einen Nachnamen
     const sieWording = slot !== "vorname" || isSieTemplateName(t.name) || !hasDuVariant(purpose);
-    const cur = current(t.name) ? 0 : 0.5;
+    const cur = current(t.name) ? 0 : older(t.name);
     if (an === "du") {
       if (slot === "vorname" && !sieWording) return 0 + cur;
       if (slot !== "vorname") return 2 + cur;
@@ -331,6 +339,11 @@ export async function pickApprovedTemplate(customerId: string, purpose: NoticePu
   return (await pickTemplate(customerId, purpose, kontakt))?.tpl ?? null;
 }
 
+/** Anzahl verschiedener Platzhalter {{n}} in einem Vorlagentext. */
+export function placeholderCount(body: string): number {
+  return new Set([...body.matchAll(/\{\{(\d+)\}\}/g)].map((m) => m[1])).size;
+}
+
 /** {{1}}, {{2}} … durch Parameter ersetzen. */
 export function renderTemplate(body: string, params: string[]): string {
   return body.replace(/\{\{(\d+)\}\}/g, (_, n: string) => params[Number(n) - 1] ?? "");
@@ -387,8 +400,19 @@ export async function sendWhatsAppNotice(opts: {
         contactPhone: opts.to,
       },
     },
-    select: { windowExpiresAt: true },
+    select: { id: true, windowExpiresAt: true, optedOutAt: true, leadId: true },
   });
+  // „STOPP“: keine Nachrichten mehr an diese Nummer (lib/whatsapp/stopp.ts)
+  if (existing?.optedOutAt) throw new WhatsAppOptOutError();
+  // Häkchen zur Einwilligung im Leadformular fehlt: kein WhatsApp, außer der Lead hat selbst per WhatsApp geschrieben
+  const leadId = opts.leadId ?? existing?.leadId ?? null;
+  if (leadId) {
+    const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { waConsent: true } });
+    if (l?.waConsent === "nein") {
+      const wrote = existing ? await prisma.message.count({ where: { conversationId: existing.id, direction: "inbound" } }) : 0;
+      if (!wrote) throw new WhatsAppNoConsentError();
+    }
+  }
   const windowOpen =
     !!existing?.windowExpiresAt && existing.windowExpiresAt.getTime() > Date.now();
 
@@ -407,7 +431,8 @@ export async function sendWhatsAppNotice(opts: {
     const pick = await pickTemplate(opts.customerId, opts.purpose, kontakt);
     if (!pick) throw new NoTemplateError(opts.purpose);
     const { tpl } = pick;
-    const params = pick.params(opts.params.slice(1));
+    // Nur so viele Werte, wie die gewählte Vorlage Platzhalter hat (ältere Fassungen haben z. B. noch keinen Link)
+    const params = pick.params(opts.params.slice(1)).slice(0, placeholderCount(tpl.body));
     mode = "template";
     pricingCategory = tpl.category.toLowerCase();
     body = renderTemplate(tpl.body, params);

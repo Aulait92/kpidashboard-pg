@@ -1,3 +1,5 @@
+import { LeadLegalCard } from "@/components/lead-legal-card";
+import { isHealthLabel, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 import { AlertTriangle, CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
@@ -167,6 +169,9 @@ export async function LeadDetailBody({
       statusChangedAt: true,
       stornoState: true,
       stornoReason: true,
+      externalId: true,
+      waConsent: true,
+      consentData: true,
     },
   });
   if (!lead) notFound();
@@ -197,6 +202,24 @@ export async function LeadDetailBody({
 
   // Korrigierte Stammdaten (lib/lead-stammdaten.ts) über die Formular- bzw. Airtable-Felder legen
   if (fields) fields = applyStammdatenToFields(fields, lead);
+  // Gesundheitsangaben nur vertraulich in eigener Karte (lib/gesundheitsdaten.ts), nicht unter „Weitere Angaben“
+  const health: { label: string; value: string }[] = Array.isArray(lead.formData)
+    ? splitHealthAnswers(
+        (lead.formData as unknown[]).flatMap((x) =>
+          x && typeof x === "object" && typeof (x as { label?: unknown }).label === "string" && typeof (x as { value?: unknown }).value === "string"
+            ? [{ label: (x as { label: string }).label, value: (x as { value: string }).value }]
+            : [],
+        ),
+      ).health
+    : [];
+  if (fields) {
+    for (const [k, v] of Object.entries(fields)) {
+      if (!isHealthLabel(k) && !health.some((h) => h.label === k)) continue;
+      const value = firstString(v) ?? (v == null ? "" : String(v));
+      if (value && !health.some((h) => h.label === k)) health.push({ label: k, value });
+      delete fields[k];
+    }
+  }
   const stamm = currentStammdaten(lead, fields);
   const stammInitial = {
     salutation: stamm.salutation ?? "",
@@ -404,6 +427,8 @@ export async function LeadDetailBody({
       ) : null}
 
       <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
+
+      <LeadLegalCard waConsent={lead.waConsent} consentData={lead.consentData} health={health} meta={!!lead.externalId} />
 
       {members.length > 1 ? (
         <LeadAssignee

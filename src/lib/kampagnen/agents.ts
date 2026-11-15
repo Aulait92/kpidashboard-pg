@@ -57,7 +57,7 @@ function contextBlock(c: CampaignContext): string {
   const ort = [c.zip, c.city].filter(Boolean).join(" ") || c.region || "Deutschland";
   return `KUNDE (Werbetreibender):
 - Agentur/Kunde: ${c.customerName}
-- Vermittler: ${c.advisorName} (${c.vermittlerTyp === "makler" ? "Versicherungsmakler, unabhängig, vergleicht mehrere Versicherer" : `Versicherungsvertreter${c.insurer ? ` der ${c.insurer}` : ""}`})
+- Vermittler: ${c.advisorName} (${c.vermittlerTyp === "makler" ? "Versicherungsmakler, unabhängig, vergleicht mehrere Versicherer" : c.vermittlerTyp === "mehrfachvertreter" ? "Mehrfachvertreter, vermittelt für mehrere Versicherer" : `Versicherungsvertreter${c.insurer ? ` der ${c.insurer}` : ""}`})
 - Ort: ${ort}
 - Produkt: ${c.product}
 - Tagesbudget laut Vertrag: ${c.dailyBudgetEur} €
@@ -297,7 +297,7 @@ const BOOKING_THANKS = `DANKESEITE MIT TERMINBUCHUNG: Unter dem Text steht der K
 - thankYouBody: 1–2 Sätze, die stark zum Buchen motivieren: Termin dauert nur ca. 30 Sekunden, Sie wählen selbst eine passende Zeit, so geht nichts verloren und das Gespräch findet zur Wunschzeit statt. Ohne Druck-Lügen („nur heute“), ohne Versprechen.`;
 
 export async function formAgent(llm: LlmCall, c: CampaignContext): Promise<{ value: LeadFormDraft; usage: AgentUsage }> {
-  return runAgent(
+  return withConsent(c, await runAgent(
     llm,
     {
       agent: "Formular-Agent",
@@ -313,11 +313,16 @@ ${BOOKING_THANKS}` : ""}`,
       schema: FORM_SCHEMA,
     },
     validateForm,
-  );
+  ));
+}
+
+/** Einwilligungstext immer mit dem festen Wortlaut (nicht vom Agenten formuliert). */
+function withConsent<T extends { value: LeadFormDraft }>(c: CampaignContext, r: T): T {
+  return c.consentText ? { ...r, value: { ...r.value, consentText: c.consentText } } : r;
 }
 
 export async function reviseForm(llm: LlmCall, c: CampaignContext, form: LeadFormDraft, findings: Finding[]): Promise<{ value: LeadFormDraft; usage: AgentUsage }> {
-  return runAgent(
+  return withConsent(c, await runAgent(
     llm,
     {
       agent: "Formular-Agent (Überarbeitung)",
@@ -335,7 +340,7 @@ ${FORM_SPEC}`,
       schema: FORM_SCHEMA,
     },
     validateForm,
-  );
+  ));
 }
 
 // ─── 6. Prüfer ─────────────────────────────────────────────────────────

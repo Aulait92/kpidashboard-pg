@@ -1,3 +1,4 @@
+import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import Link from "next/link";
 import { ArrowLeft, Bot, CalendarClock, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -83,6 +84,10 @@ const INTERNAL_LABELS: Record<string, string> = {
   appointment_cancelled: "Termin abgesagt",
   appointment_rescheduled: "Termin verschoben",
   appointment_declined: "Einladung abgelehnt",
+  handover: "An Sie übergeben",
+  ki_handover: "Möchte einen Menschen: an Sie übergeben, Assistent pausiert",
+  advice_blocked: "Antwort ersetzt: keine Tarif-, Preis- oder Versichereraussagen",
+  opt_out: "„STOPP“: keine weiteren WhatsApp-Nachrichten",
 };
 
 export default async function BuyerChatsPage({ searchParams }: { searchParams: SearchParams }) {
@@ -190,6 +195,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           attentionReason: true,
           qualificationSummary: true,
           windowExpiresAt: true,
+          optedOutAt: true,
           lead: {
             select: { id: true, source: true, status: true, formData: true, createdAt: true },
           },
@@ -215,7 +221,8 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         select: { id: true, startsAt: true, mode: true, meetUrl: true },
       })
     : [];
-  const formAnswers = parseFormAnswers(active?.lead?.formData);
+  // Gesundheitsangaben vertraulich nur im Kontakt (lib/gesundheitsdaten.ts)
+  const { normal: formAnswers, health: healthAnswers } = splitHealthAnswers(parseFormAnswers(active?.lead?.formData));
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > nowMs();
   const followup = active && !windowOpen ? await chooseFollowup(active.id) : null;
@@ -294,6 +301,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               {a.value}
             </InfoRow>
           ))}
+          {healthAnswers.length ? <p className="text-xs text-[color:var(--muted)]">Gesundheitsangaben: vertraulich im Kontakt (nicht beim Assistenten).</p> : null}
         </InfoSection>
       ) : null}
 
@@ -540,7 +548,11 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 <StickToBottom count={active.messages.length} chatId={active.id} />
               </div>
 
-              {windowOpen ? (
+              {active.optedOutAt ? (
+                <p className="border-t border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-900" data-chat-optout>
+                  Der Kontakt hat „STOPP“ geschrieben. Er bekommt keine WhatsApp-Nachrichten mehr, auch nicht vom Assistenten. Schreibt er selbst wieder, können Sie antworten.
+                </p>
+              ) : windowOpen ? (
                 <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-3 py-2.5">
                   <input type="hidden" name="conversationId" value={active.id} />
                   <div className="flex items-end gap-2">

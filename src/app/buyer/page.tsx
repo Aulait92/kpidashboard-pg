@@ -19,6 +19,7 @@ import { loadReferralNudge } from "@/lib/kollegen";
 import { UpdatesHeuteCard } from "@/components/neuigkeiten";
 import { unreadUpdates } from "@/lib/neuigkeiten";
 import { dismissUpdatesAction } from "./neuigkeiten/actions";
+import { ErstinfoHeuteHint } from "@/components/erstinformation-hint";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -39,6 +40,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   ]);
   // Einführungsvideo (nur neue Oberfläche): bis angesehen oder weggeklickt
   const introCard = newUi && !introSeen ? <IntroVideoCard /> : null;
+  // Erstinformation fehlt (§ 15 VersVermV): Warnung oben auf „Heute“
+  const erstinfoHint = <ErstinfoHeuteHint customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} />;
   if (leadCount === 0) {
     // Erster Tag: noch kein Lead → erklären, wie es losgeht (statt leerer Zahlen/„Alles erledigt“).
     return (
@@ -46,6 +49,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
         <LiveRefresh />
         <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
         {introCard}
+        {erstinfoHint}
         <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
       </main>
     );
@@ -85,6 +89,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {introCard}
+            {erstinfoHint}
             {updatesCard}
             {nudgeCard}
             <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
@@ -128,6 +133,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
+      {erstinfoHint}
       {updatesCard}
       {nudgeCard}
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />

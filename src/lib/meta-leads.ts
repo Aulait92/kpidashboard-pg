@@ -57,11 +57,13 @@ export type MetaLead = {
   platform?: string;
   is_organic?: boolean;
   field_data: { name: string; values: string[] }[];
+  /** Antworten auf eigene Hinweise mit Häkchen (Einwilligung), z. B. [{ checkbox_key, is_checked }] */
+  custom_disclaimer_responses?: unknown;
 };
 
 export async function fetchMetaLead(leadgenId: string): Promise<MetaLead> {
   return graphGet<MetaLead>(leadgenId, {
-    fields: "id,created_time,form_id,ad_id,ad_name,adset_name,campaign_name,platform,is_organic,field_data",
+    fields: "id,created_time,form_id,ad_id,ad_name,adset_name,campaign_name,platform,is_organic,field_data,custom_disclaimer_responses",
   });
 }
 

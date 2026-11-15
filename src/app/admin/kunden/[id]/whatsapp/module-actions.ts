@@ -23,7 +23,8 @@ export async function setVermittlerTypAction(fd: FormData): Promise<void> {
   const s = await getCurrentSession();
   if (!s || s.role !== "ADMIN") throw new Error("Nur Admins.");
   const id = String(fd.get("customerId") ?? "");
-  const typ = fd.get("typ") === "makler" ? "makler" : "vertreter";
+  const raw = fd.get("typ");
+  const typ = raw === "makler" ? "makler" : raw === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter";
   const c = await prisma.customer.findUnique({ where: { id }, select: { vermittlerTyp: true } });
   if (!c || c.vermittlerTyp === typ) return;
   await prisma.customer.update({ where: { id }, data: { vermittlerTyp: typ } });

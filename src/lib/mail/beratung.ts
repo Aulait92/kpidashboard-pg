@@ -2,6 +2,7 @@
 // Rat und Gründe, in Textform vor Vertragsschluss). Vorbefüllt aus Formular und Qualifizierung des Assistenten,
 // der Vermittler prüft und ergänzt. Keine KI-Formulierung, kein Rat durch die App. Rein (ohne Datenbank).
 
+import { isHealthAnswer } from "@/lib/gesundheitsdaten";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { qualificationPoints } from "@/lib/whatsapp/qualification";
 import type { PdfBlock } from "@/lib/mail/text-pdf";
@@ -21,7 +22,8 @@ export function wuenscheVorschlag(input: { produkt?: string | null; formData?: u
       if (typeof f?.label !== "string" || typeof f?.value !== "string") continue;
       const label = f.label.trim().replace(/:$/, "");
       const value = f.value.trim();
-      if (!label || !value || OHNE.test(label) || value.length > 200) continue;
+      // Gesundheitsangaben nicht in den Vorschlag (lib/gesundheitsdaten.ts)
+      if (!label || !value || OHNE.test(label) || value.length > 200 || isHealthAnswer({ label, value })) continue;
       lines.push(`${label}: ${value}`);
       if (lines.length >= 10) break;
     }

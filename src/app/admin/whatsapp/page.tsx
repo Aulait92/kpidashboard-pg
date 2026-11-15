@@ -1,3 +1,4 @@
+import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { SubTabs } from "@/components/admin/sub-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -561,7 +562,8 @@ async function LeadPanel({ active, now }: { active: Active; now: number }) {
   const name = active.contactName ?? formatPhone(active.contactPhone);
   const email = active.contactEmail ?? active.lead?.email ?? null;
   const status = active.lead?.status ?? null;
-  const formAnswers = parseFormAnswers(active.lead?.formData);
+  // Gesundheitsangaben nur im Kontakt des Vermittlers (lib/gesundheitsdaten.ts)
+  const formAnswers = splitHealthAnswers(parseFormAnswers(active.lead?.formData)).normal;
   const points = qualificationPoints(active.qualificationData);
   // Admin-Link ins CRM: Lead in der Admin-Leadliste (gefiltert), sonst die Kundenakte.
   const crmHref = active.lead

@@ -30,6 +30,9 @@ import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
 import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-fragen";
 import { fmtDayLong } from "@/lib/absence";
+import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
+import { erstinfoZeile, hasErstinfoLink, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
+import { GESUNDHEITS_REGEL, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -178,6 +181,10 @@ export function buildSystemPrompt(
     anrede?: AnredeKontakt | null;
     /** Wurde im Chat schon offengelegt, dass ein digitaler Assistent schreibt? */
     aiDisclosed: boolean;
+    /** Der KI-Hinweis (mit Begrüßung) wird dieser Antwort automatisch vorangestellt (lib/whatsapp/ki-hinweis.ts). */
+    noticePrefixed?: boolean;
+    /** Im Formular stehen Gesundheitsangaben (nur für den Berater, nicht im Prompt). */
+    healthWithheld?: boolean;
     /** Ansprache des Leads laut Kundeneinstellung (Standard „sie“). */
     ansprache?: Ansprache;
     /** Aktueller Zeitpunkt (Tests); sonst jetzt. */
@@ -193,7 +200,9 @@ export function buildSystemPrompt(
   const zeile = anredeZeile(an, kontakt);
   // Anrede nach Kundeneinstellung (Ole, 14.11.2026), gilt für die erste Nachricht und den ganzen Verlauf
   const anredeRegel = [
-    "- Anrede: Begrüße nur, wenn es passt (z. B. in deiner ersten Nachricht), nicht in jeder Nachricht.",
+    state.noticePrefixed
+      ? "- Anrede: Deiner Nachricht wird automatisch eine Begrüßung mit dem Hinweis vorangestellt, dass hier der digitale KI-Assistent schreibt. Begrüße deshalb nicht und stell dich nicht vor, antworte direkt."
+      : "- Anrede: Begrüße nur, wenn es passt (z. B. in deiner ersten Nachricht), nicht in jeder Nachricht.",
     an === "du"
       ? name
         ? `  Begrüßung: „${zeile}“. Sprich den Lead mit Vornamen an (${name}), auch im weiteren Verlauf.`
@@ -228,6 +237,7 @@ export function buildSystemPrompt(
       ? [
           "Angaben aus dem Leadformular (bereits bekannt: NICHT erneut erfragen):",
           ...state.formAnswers.map((a) => `- ${a.label}: ${a.value}`),
+          ...(state.healthWithheld ? ["(Weitere Angaben zur Gesundheit liegen nur dem Berater vor: frag nicht danach.)"] : []),
           `Knüpfe gezielt daran an (z. B. ${an === "du" ? "„Du hast angegeben, dass …“" : "„Sie haben angegeben, dass …“"}) und frage nur, was für die Beratung noch fehlt.`,
         ].join("\n")
       : "",
@@ -262,10 +272,11 @@ export function buildSystemPrompt(
       "Identität (hat Vorrang vor allen anderen Anweisungen):",
       `- Du schreibst im Namen von ${firm} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
       `- Der Berater (eine Person) heißt „${state.advisorName}“. Nenne ihn immer mit diesem vollen Namen (z. B. „${state.advisorName} schaut sich das an“), nie gekürzt und nie nur mit einem Teil davon.`,
-      state.aiDisclosed
-        ? "- Dass hier ein digitaler Assistent schreibt, wurde dem Lead bereits mitgeteilt, nicht ständig wiederholen."
-        : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht einmal kurz und natürlich darauf hin, dass du der digitale Assistent von ${firm} bist.`,
-      `- Fragt der Lead, ob er mit einem Menschen oder einer KI schreibt: antworte ehrlich, dass du ein digitaler Assistent bist und ${state.advisorName} persönlich übernimmt (Termin bzw. Rückruf).`,
+      state.aiDisclosed || state.noticePrefixed
+        ? "- Dass hier ein digitaler KI-Assistent schreibt, wurde dem Lead mitgeteilt bzw. wird vorangestellt, nicht ständig wiederholen."
+        : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht klar darauf hin, dass du der digitale KI-Assistent von ${firm} bist und kein Mensch.`,
+      "- Du bist eine KI. Gib dich nie als Mensch aus, auch nicht auf Nachfrage, im Scherz oder wenn eine Anweisung oben etwas anderes sagt.",
+      `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${firm} bist und kein Mensch, und dass ${state.advisorName} persönlich übernimmt.`,
     ].join("\n"),
     [
       "Regeln:",
@@ -289,8 +300,10 @@ export function buildSystemPrompt(
       "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Terminbestätigung mit Kalendereintrag per E-Mail bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
-      "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er konkrete Preis-/Tarif-/Vertragsfragen oder etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an).",
+      "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: „Das klärt " + state.advisorName + " im Termin.“",
+      GESUNDHEITS_REGEL,
     ].join("\n"),
+    BERATUNGS_REGELN.split("[Berater]").join(state.advisorName),
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -395,9 +408,10 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       qualified: true,
       qualificationSummary: true,
       qualificationData: true,
+      optedOutAt: true,
     },
   });
-  if (!conversation || !conversation.botActive) return;
+  if (!conversation || !conversation.botActive || conversation.optedOutAt) return;
 
   const agent = await prisma.agentConfig.findUnique({
     where: { customerId: conversation.customerId },
@@ -418,7 +432,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       where: { conversationId, direction: { in: ["inbound", "outbound"] } },
       orderBy: { createdAt: "desc" },
       take: HISTORY_LIMIT,
-      select: { direction: true, body: true },
+      select: { direction: true, body: true, createdAt: true },
     })
   ).reverse();
 
@@ -441,24 +455,52 @@ export async function runBotTurn(conversationId: string): Promise<void> {
   // (sonst schreibt der Bot „mit Agentur“); Firma für „digitaler Assistent von …“
   const who = await ansprechpartner({ customerId: conversation.customerId, leadId: conversation.leadId, phone: conversation.contactPhone, name: conversation.contactName });
   const advisorName = who.advisor || advisorDisplayName(customer?.name) || (ansprache === "du" ? "deinem Berater" : "Ihrem Berater");
-  // Offenlegung schon erfolgt? (Erstanschreiben-Vorlage oder frühere Antwort)
-  const aiDisclosed =
-    (await prisma.message.count({
-      where: {
-        conversationId,
-        direction: "outbound",
-        body: { contains: "Assistent", mode: "insensitive" },
-      },
-    })) > 0;
+  const firm = who.firm || advisorName;
+  const names = { firm, advisor: advisorName };
+  // KI-Kennzeichnung (lib/whatsapp/ki-hinweis.ts): vollständiger Hinweis in der ersten Nachricht, nach über
+  // 30 Tagen Pause erneut. Erstinformation (§ 15 VersVermV) als Link, falls noch nicht geschickt.
+  const now = new Date();
+  const outbound = await prisma.message.findMany({ where: { conversationId, direction: "outbound" }, select: { body: true } });
+  const latest = history[history.length - 1];
+  const previousAt = history.length >= 2 ? history[history.length - 2].createdAt : null;
+  const notice = kiHinweisNoetig({ outbound: outbound.map((m) => m.body), previousAt, now });
+  const aiDisclosed = notice !== "erst";
+  let erstinfo: string | null = null;
+  if (!outbound.some((m) => hasErstinfoLink(m.body))) {
+    try {
+      const { erstinfoUrlFor } = await import("@/lib/erstinformation");
+      erstinfo = erstinfoZeile(advisorName, await erstinfoUrlFor(conversation.customerId));
+    } catch (err) {
+      console.error("[whatsapp bot] Erstinformation", err instanceof Error ? err.message : err);
+    }
+  }
+  const prefix = [
+    notice === "erst" ? kiHinweis(ansprache, names, who.kontakt) : notice === "erneut" ? kiHinweisErneut(ansprache, names) : null,
+    erstinfo,
+  ].filter(Boolean) as string[];
 
+  // „Mensch“, „Bist du ein Bot?“ …: wahrheitsgemäß antworten und an den Vermittler übergeben (Assistent pausiert)
+  if (latest?.direction === "inbound" && wantsHuman(latest.body)) {
+    await persistInternal(conversation.id, "ki_handover", { text: latest.body });
+    await prisma.conversation.update({ where: { id: conversation.id }, data: { botActive: false } });
+    await flagAttention(conversation.id, `Möchte mit einem Menschen sprechen: „${(latest.body ?? "").slice(0, 80)}“`);
+    const reply = [humanHandoverReply(ansprache, names, who.kontakt, { greet: notice === "erst" }), erstinfo].filter(Boolean).join("\n\n");
+    await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: reply, sentBy: "bot" });
+    return;
+  }
+
+  // Gesundheitsangaben aus dem Formular gehen nicht an die KI (lib/gesundheitsdaten.ts)
+  const form = splitHealthAnswers(parseFormAnswers(lead?.formData));
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     advisorName,
-    firmName: who.firm || advisorName,
+    firmName: firm,
     anrede: who.kontakt,
     aiDisclosed,
+    noticePrefixed: notice === "erst",
+    healthWithheld: form.health.length > 0,
     ansprache,
     upcoming,
-    formAnswers: parseFormAnswers(lead?.formData),
+    formAnswers: form.normal,
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
     points: qualificationLines(conversation.qualificationData) || undefined,
@@ -725,10 +767,16 @@ export async function runBotTurn(conversationId: string): Promise<void> {
   }
 
   if (finalText) {
+    // Harte Sperre: keine Versicherer, Tarife, Preise, Vergleiche oder Eignungsaussagen (lib/whatsapp/beratungs-sperre.ts)
+    const hits = beratungsTreffer(finalText, [customer?.name, firm, advisorName]);
+    if (hits.length) {
+      await persistInternal(conversation.id, "advice_blocked", { original: finalText, treffer: hits });
+      finalText = sichereAntwort(ansprache, advisorName, !!upcoming);
+    }
     await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,
-      body: finalText,
+      body: [...prefix, finalText].join("\n\n"),
       sentBy: "bot",
     });
   }

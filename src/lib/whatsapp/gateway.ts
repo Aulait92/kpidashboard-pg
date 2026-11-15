@@ -241,8 +241,24 @@ async function persistInbound(
     return;
   }
 
+  // „STOPP“ beendet alle Nachrichten an diese Nummer (lib/whatsapp/stopp.ts). Schreibt der Kontakt nach einem
+  // Stopp wieder selbst, ist die Sperre aufgehoben; der Assistent bleibt aus, der Vermittler antwortet.
+  const stopp = await import("@/lib/whatsapp/stopp");
+  const isStop = stopp.isStopMessage(body);
+  const receivedAt = now;
+  const optOut = async () => {
+    const confirmed = await prisma.message.count({
+      where: { conversationId: conversation.id, direction: "outbound", createdAt: { gte: receivedAt }, body: { contains: "keine weiteren Nachrichten" } },
+    });
+    await stopp.applyOptOut(conversation.id, { confirm: confirmed === 0, now: receivedAt });
+  };
+  if (!isStop && conversation.optedOutAt) {
+    await stopp.liftOptOut(conversation.id);
+    conversation.botActive = false;
+  }
+
   // Empfehlungen: Anfrage über den WhatsApp-Knopf der Empfehlungsseite (Code im Text) → Lead „Empfehlung“
-  if (!conversation.leadId && body && body.includes("(Ref ")) {
+  if (!isStop && !conversation.leadId && body && body.includes("(Ref ")) {
     try {
       const { handleReferralInbound } = await import("@/lib/empfehlung/requests");
       await handleReferralInbound(conversation.id, from, body, contactName);
@@ -255,7 +271,10 @@ async function persistInbound(
   // (Kritik → Aufgabe „Kunde unzufrieden“), Assistent antwortet dann nicht.
   try {
     const { handleReviewReply } = await import("@/lib/empfehlung/requests");
-    if ((await handleReviewReply(conversation.id, from, body)).handled) return;
+    if ((await handleReviewReply(conversation.id, from, body)).handled) {
+      if (isStop) await optOut();
+      return;
+    }
   } catch (e) {
     console.error("[whatsapp review-reply]", e);
   }
@@ -268,7 +287,10 @@ async function persistInbound(
   } catch (e) {
     console.error("[whatsapp campaign-reply]", e);
   }
-  if (campaignStop) return;
+  if (campaignStop || isStop) {
+    await optOut().catch((e) => console.error("[whatsapp stopp]", e));
+    return;
+  }
 
   // CRM: Lead hat geantwortet ⇒ „Im Gespräch" (nur aus Neu/Nicht erreicht).
   const linkedLead = await prisma.conversation.findUnique({
@@ -382,6 +404,10 @@ export async function sendWhatsAppMessage(opts: {
   if (!account || account.status !== "connected" || !account.apiKeyEnc) {
     throw new Error("Kein verbundenes WhatsApp-Konto für diesen Kunden.");
   }
+
+  // „STOPP“: keine Nachrichten mehr an diese Nummer, auch nicht von Hand (lib/whatsapp/stopp.ts)
+  const { isOptedOut, WhatsAppOptOutError } = await import("@/lib/whatsapp/stopp");
+  if (await isOptedOut(opts.customerId, opts.to)) throw new WhatsAppOptOutError();
 
   const apiKey = decryptSecret(account.apiKeyEnc);
   // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)

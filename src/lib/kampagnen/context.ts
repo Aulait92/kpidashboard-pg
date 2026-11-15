@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { currentBudgets, customerCpl } from "@/lib/budget";
 import { productPatterns } from "@/lib/kampagnen/agents";
 import type { CampaignContext } from "@/lib/kampagnen/types";
+import { consentAngabenFor } from "@/lib/einwilligung-leadformular-server";
+import { leadFormConsentText } from "@/lib/einwilligung-leadformular";
 
 type WebsiteInfo = { privacyUrl?: string | null; impressumUrl?: string | null; sourceUrl?: string | null };
 type Questionnaire = { special?: string; anrede?: string };
@@ -59,11 +61,15 @@ export async function loadCampaignContext(
   const cpl = await customerCpl(customerId, [product], c.vermittlerTyp).catch(() => null);
   const person = [sc?.firstName, sc?.lastName].filter(Boolean).join(" ").trim();
   const knowledge = [c.agentConfig?.knowledge, c.agentConfig?.systemPrompt].filter(Boolean).join("\n\n").slice(0, 2500);
+  const privacyUrl = httpUrl(opts.privacyUrl) ?? httpUrl(web.privacyUrl) ?? httpUrl(web.impressumUrl);
+  // Einwilligung im Formular: fester Wortlaut mit Vermittler, Anschrift, KI-Assistent, Widerruf (Ole, 15.11.2026)
+  const angaben = await consentAngabenFor(customerId).catch(() => null);
+  const consentText = angaben ? leadFormConsentText({ ...angaben, datenschutzUrl: privacyUrl ?? angaben.datenschutzUrl }) : null;
   return {
     customerId: c.id,
     customerName: c.name,
     advisorName: person || sc?.name || c.name,
-    vermittlerTyp: c.vermittlerTyp === "makler" ? "makler" : "vertreter",
+    vermittlerTyp: c.vermittlerTyp === "makler" ? "makler" : c.vermittlerTyp === "mehrfachvertreter" ? "mehrfachvertreter" : "vertreter",
     insurer: sc?.insurer && sc.insurer !== "Makler" ? sc.insurer : null,
     product,
     wish: opts.wish?.trim() || null,
@@ -72,7 +78,8 @@ export async function loadCampaignContext(
     zip: sc?.zip?.trim() || null,
     region: c.region?.trim() || null,
     website: httpUrl(sc?.url ?? web.sourceUrl ?? null),
-    privacyUrl: httpUrl(opts.privacyUrl) ?? httpUrl(web.privacyUrl) ?? httpUrl(web.impressumUrl),
+    privacyUrl,
+    consentText,
     pageId: c.metaPageId ?? c.leadSources[0]?.pageId ?? null,
     adAccountId: c.metaAdAccountId,
     // Gebuchtes, noch nicht gestartetes Produkt: Budget aus der Buchung (zählt erst ab „Gestartet“)
