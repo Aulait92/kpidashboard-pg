@@ -6,6 +6,8 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { unreadUpdates } from "@/lib/neuigkeiten";
 import { prisma } from "@/lib/prisma";
 import { NextStepReminderToggle } from "@/components/next-step-reminder-toggle";
+import { CrossSellReminderToggle, PoliceReminderToggle } from "@/app/buyer/provisionen/cross-sell-toggle";
+import { canEditProvision } from "@/lib/provision-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -18,6 +20,10 @@ export default async function EinstellungenPage() {
   if (!ctx) redirect("/login");
   const owner = ctx.teamRole !== "advisor";
   const unread = ctx.userId && !ctx.preview ? (await unreadUpdates(ctx.userId, ctx.customerId).catch(() => [])).length : 0;
+  const aufgaben = await prisma.customer
+    .findUnique({ where: { id: ctx.customerId }, select: { crossSellReminder: true, policeReminder: true } })
+    .catch(() => null);
+  const canEditAufgaben = canEditProvision(ctx);
   const reminder = ctx.userId ? ((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { nextStepReminder: true } }))?.nextStepReminder ?? true) : true;
 
   const groups: { title: string; items: Item[] }[] = [
@@ -87,6 +93,14 @@ export default async function EinstellungenPage() {
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
             <NextStepReminderToggle initial={reminder} disabled={!ctx.userId || ctx.preview} />
           </div>
+        </section>
+        <section id="aufgaben">
+          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Aufgaben und Erinnerungen</h2>
+          <div className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
+            <CrossSellReminderToggle on={aufgaben?.crossSellReminder ?? true} canEdit={canEditAufgaben} />
+            <PoliceReminderToggle on={aufgaben?.policeReminder ?? true} canEdit={canEditAufgaben} />
+          </div>
+          {!canEditAufgaben ? <p className="mt-2 px-1 text-xs text-[color:var(--muted)]">Nur der Inhaber kann das ändern.</p> : null}
         </section>
         <p className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-sm text-[color:var(--muted)]">
           <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">Impressum</a>

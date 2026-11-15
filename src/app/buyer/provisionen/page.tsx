@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { canEditProvision, customerProductKeys, loadCustomerProvision } from "@/lib/provision-server";
 import { ProvisionForm } from "./provision-form";
 import { EigeneProdukte } from "./eigene-produkte";
-import { CrossSellReminderToggle, PoliceReminderToggle } from "./cross-sell-toggle";
+import Link from "next/link";
 import { realStornoQuote, sparteInfo } from "@/lib/provision";
 import { loadCustomerContracts } from "@/lib/vertraege";
 
@@ -18,13 +18,12 @@ export const metadata = { title: "Meine Provisionen | performancegrowth" };
 export default async function ProvisionenPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const [provision, booked, ob, used, customer, contracts] = await Promise.all([
+  const [provision, booked, ob, used, contracts] = await Promise.all([
     loadCustomerProvision(ctx.customerId),
     customerProductKeys(ctx.customerId),
     prisma.onboarding.findUnique({ where: { customerId: ctx.customerId }, select: { offerId: true } }).catch(() => null),
     // Sparten, die schon in Verträgen vorkommen (Cross-Selling), stehen oben mit
     prisma.leadContract.findMany({ where: { customerId: ctx.customerId }, distinct: ["sparte"], select: { sparte: true } }).catch(() => []),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { crossSellReminder: true, policeReminder: true } }).catch(() => null),
     loadCustomerContracts(ctx.customerId).catch(() => []),
   ]);
   // Tatsächliche Stornoquote aus gekündigten Verträgen (erst ab 20 Verträgen)
@@ -56,8 +55,13 @@ export default async function ProvisionenPage() {
         real={{ quote: real.quote, contracts: real.contracts, cancelled: real.cancelled }}
       />
       <EigeneProdukte products={provision.products} canEdit={canEdit} />
-      <CrossSellReminderToggle on={customer?.crossSellReminder ?? true} canEdit={canEdit} />
-      <PoliceReminderToggle on={customer?.policeReminder ?? true} canEdit={canEdit} />
+      <p className="mt-5 px-1 text-sm text-[color:var(--muted)]">
+        Aufgaben nach einem Abschluss („Weiteres Produkt anbieten?“, „Police da und erste Zahlung erfolgt?“) schalten Sie unter{" "}
+        <Link href="/buyer/einstellungen#aufgaben" className="font-medium text-[color:var(--brand)] underline">
+          Einstellungen → Aufgaben und Erinnerungen
+        </Link>
+        .
+      </p>
     </main>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
+// Schalter für Aufgaben auf „Heute“ nach einem Abschluss; stehen unter Einstellungen → Aufgaben und Erinnerungen
+// (Ole, 15.11.2026, vorher unter Meine Provisionen).
+
 import { useState, useTransition } from "react";
-import { Card } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { setCrossSellReminderAction, setPoliceReminderAction } from "./actions";
 
@@ -11,7 +13,7 @@ export function CrossSellReminderToggle({ on: initial, canEdit }: { on: boolean;
   const [on, setOn] = useState(initial);
   const [pending, start] = useTransition();
   return (
-    <Card className="mt-5">
+    <div>
       <label className="flex cursor-pointer items-start gap-3 p-5" data-cross-sell-toggle>
         <input
           type="checkbox"
@@ -38,7 +40,7 @@ export function CrossSellReminderToggle({ on: initial, canEdit }: { on: boolean;
           </span>
         </span>
       </label>
-    </Card>
+    </div>
   );
 }
 
@@ -48,7 +50,7 @@ export function PoliceReminderToggle({ on: initial, canEdit }: { on: boolean; ca
   const [on, setOn] = useState(initial);
   const [pending, start] = useTransition();
   return (
-    <Card className="mt-5">
+    <div>
       <label className="flex cursor-pointer items-start gap-3 p-5" data-police-toggle>
         <input
           type="checkbox"
@@ -75,6 +77,6 @@ export function PoliceReminderToggle({ on: initial, canEdit }: { on: boolean; ca
           </span>
         </span>
       </label>
-    </Card>
+    </div>
   );
 }

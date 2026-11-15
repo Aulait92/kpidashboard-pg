@@ -456,10 +456,10 @@ Seiten aus der Liste „Seiten“ unten.
   macht alles rückgängig. (Nicht zu verwechseln mit der Reklamation eines Leads bei Pay-per-Lead.)
 - **Aufgabe „Police da und erste Zahlung erfolgt?“:** 2 Wochen nach dem ersten Abschluss auf „Heute“, nur einmal je
   Kunde, nicht wenn die Police schon am Vertrag hängt oder noch eine andere Wiedervorlage offen ist (z. B. „Police
-  fertig machen“). Abschalten unter **Meine Provisionen**.
+  fertig machen“). Abschalten unter **Einstellungen → Aufgaben und Erinnerungen**.
 - **Erinnerung „Weiteres Produkt anbieten?“:** 3 Wochen nach dem ersten Abschluss erscheint die Aufgabe auf „Heute“,
   mit naheliegenden Sparten (z. B. zur Katze: Haftpflicht, Unfall). Nicht, wenn schon ein weiterer Vertrag eingetragen
-  ist oder der Kontakt nicht mehr im Abschluss steht, und nur einmal je Kunde. Abschalten unter **Meine Provisionen**.
+  ist oder der Kontakt nicht mehr im Abschluss steht, und nur einmal je Kunde. Abschalten unter **Einstellungen → Aufgaben und Erinnerungen**.
 - **Bestand:** Kunden mit Abschluss kommen mit allen Verträgen automatisch in den Bestand, damit Bestandskampagnen
   wissen, was der Kunde schon hat. Importieren Sie den Kunden später selbst (gleiche Handynummer oder E-Mail), führt die
   App beide zusammen; Verträge mit gleicher Vertragsnummer gibt es nur einmal.
