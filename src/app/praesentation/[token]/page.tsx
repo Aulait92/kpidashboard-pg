@@ -33,7 +33,6 @@ export default async function VerkaufsLinkPage({ params }: { params: Promise<{ t
         <FolienDeck
           css={p.css}
           folien={p.folien}
-          notizen="aus"
           extra={
             pdf ? (
               <a href={`/praesentation/${token}/pdf`} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] underline">

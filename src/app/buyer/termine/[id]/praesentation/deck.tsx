@@ -11,5 +11,5 @@ type Folie = { id: string; titel: string; html: string };
 
 export function Deck({ id, css, folien, interaktiv = true }: { id: string; css: string; folien: Folie[]; interaktiv?: boolean }) {
   const onKlick = (k: DeckKlick) => (k.tarif != null ? tarifAction(id, k.tarif, k.sparte) : bausteinAction(id, k.item, k.baustein, k.aktiv));
-  return <FolienDeck kanal={`deck-${id}`} css={css} folien={folien} onKlick={interaktiv ? onKlick : undefined} />;
+  return <FolienDeck css={css} folien={folien} onKlick={interaktiv ? onKlick : undefined} />;
 }

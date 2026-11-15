@@ -60,7 +60,6 @@ export default async function VerkaufsPraesentationPage({ params, searchParams }
       <FolienDeck
         css={p.css}
         folien={p.folien}
-        notizen="aus"
         extra={
           pdf ? (
             <ButtonLink href={`/api/admin/praesentationen/${p.audience}/pdf`} external variant="secondary" size="md" icon={FileDown}>

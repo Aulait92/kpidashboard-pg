@@ -2,16 +2,16 @@
 
 // Präsentationsmodus (Ole, 15.11.2026), gemeinsam für Beratungspräsentation (Termin), Demo (/demo/beratung) und
 // Vertriebspräsentation (Admin, Kontakt): Folie (1280×720) skaliert ins Fenster, ← → bzw. Leertaste, Wischen am Handy,
-// Vollbild zum Teilen im Videocall (am Handy ohne Vollbild-API: Folie über den ganzen Bildschirm). Sprechzettel unter
-// der Folie, per Schalter oder als zweites Fenster (blättert über BroadcastChannel mit). Klicks auf Schalter in der
+// Vollbild zum Teilen im Videocall (am Handy ohne Vollbild-API: Folie über den ganzen Bildschirm). Keine Sprechzettel
+// (Ole, 15.11.2026). Klicks auf Schalter in der
 // Folie (data-tarif, data-sparte, data-baustein) gehen an onKlick; die Antwort bringt die neuen Folien.
 
 import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, Expand, NotebookText, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Expand, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 
-export type DeckFolie = { id: string; titel: string; html: string; notizen?: string[] };
+export type DeckFolie = { id: string; titel: string; html: string };
 export type DeckKlick = { tarif: number | null; sparte: boolean; item: number; baustein: number; aktiv: boolean };
 export type DeckAntwort = { ok: true; folien: DeckFolie[] } | { ok: false; error: string };
 
@@ -22,29 +22,18 @@ const WEITER = new Set(["ArrowRight", " ", "PageDown"]);
 const ZURUECK = new Set(["ArrowLeft", "PageUp"]);
 
 export function FolienDeck({
-  kanal,
   css,
   folien: start,
   startFolie = 0,
   onKlick,
-  notizen = "aus",
-  notizenFenster,
-  nurNotizen,
   eingebettet,
   extra,
 }: {
-  /** Name für BroadcastChannel (Sprechzettel im eigenen Fenster); ohne: kein Mitblättern. */
-  kanal?: string;
   css: string;
   folien: DeckFolie[];
   startFolie?: number;
   /** Klick auf einen Schalter in der Folie; ohne: Folien sind nur zum Ansehen. */
   onKlick?: (k: DeckKlick) => Promise<DeckAntwort>;
-  /** Sprechzettel: immer unter der Folie, per Schalter oder gar nicht. */
-  notizen?: "unten" | "schalter" | "aus";
-  /** Fenstername für „Sprechzettel im eigenen Fenster“ (öffnet ?notizen=1). */
-  notizenFenster?: string;
-  nurNotizen?: boolean;
   /** In einer anderen Folie eingebettet (iframe): knappe Leiste, Pfeiltasten blättern das Deck darüber. */
   eingebettet?: boolean;
   /** Weitere Knöpfe in der Leiste (z. B. PDF). */
@@ -53,12 +42,10 @@ export function FolienDeck({
   const [folien, setFolien] = useState(start);
   const [i, setI] = useState(Math.max(0, Math.min(start.length - 1, startFolie)));
   const [pending, startT] = useTransition();
-  const [zeigeNotizen, setZeigeNotizen] = useState(notizen === "unten");
   const [pseudo, setPseudo] = useState(false);
   const toast = useToast();
   const [scale, setScale] = useState(0.5);
   const box = useRef<HTMLDivElement>(null);
-  const chan = useRef<BroadcastChannel | null>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
 
   const onSlideClick = (ev: React.MouseEvent) => {
@@ -79,21 +66,7 @@ export function FolienDeck({
     });
   };
 
-  useEffect(() => {
-    if (!kanal || typeof BroadcastChannel === "undefined") return;
-    const c = new BroadcastChannel(kanal);
-    chan.current = c;
-    c.onmessage = (ev) => typeof ev.data === "number" && setI(ev.data);
-    return () => c.close();
-  }, [kanal]);
-  const go = useCallback(
-    (n: number) => {
-      const next = Math.max(0, Math.min(folien.length - 1, n));
-      setI(next);
-      chan.current?.postMessage(next);
-    },
-    [folien.length],
-  );
+  const go = useCallback((n: number) => setI(Math.max(0, Math.min(folien.length - 1, n))), [folien.length]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -147,28 +120,6 @@ export function FolienDeck({
   };
 
   const f = folien[i];
-  const zettel = (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-4" data-sprechzettel>
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-        Sprechzettel · Folie {i + 1} von {folien.length}: {f.titel}
-      </div>
-      <ul className="list-disc space-y-1.5 pl-5 text-[15px]">
-        {(f.notizen ?? []).map((n) => (
-          <li key={n}>{n}</li>
-        ))}
-      </ul>
-      {folien[i + 1] ? <div className="mt-3 text-xs text-[color:var(--muted)]">Als Nächstes: {folien[i + 1].titel}</div> : null}
-    </div>
-  );
-  if (nurNotizen) {
-    return (
-      <div className="space-y-3">
-        {zettel}
-        <Nav i={i} n={folien.length} go={go} />
-      </div>
-    );
-  }
-
   return (
     <div className={eingebettet ? "flex w-full flex-col gap-2" : "space-y-4"}>
       <style>{css}</style>
@@ -233,20 +184,9 @@ export function FolienDeck({
           <Button variant="secondary" size="md" icon={Expand} onClick={vollbild}>
             Vollbild
           </Button>
-          {notizen === "schalter" ? (
-            <Button variant="secondary" size="md" icon={NotebookText} aria-pressed={zeigeNotizen} onClick={() => setZeigeNotizen((v) => !v)}>
-              {zeigeNotizen ? "Sprechzettel ausblenden" : "Sprechzettel zeigen"}
-            </Button>
-          ) : null}
-          {notizen !== "aus" && notizenFenster ? (
-            <Button variant="secondary" size="md" icon={NotebookText} onClick={() => window.open(`?notizen=1`, notizenFenster, "width=520,height=640")}>
-              Sprechzettel im eigenen Fenster
-            </Button>
-          ) : null}
           {extra}
         </div>
       )}
-      {notizen !== "aus" && zeigeNotizen && !eingebettet ? zettel : null}
     </div>
   );
 }
