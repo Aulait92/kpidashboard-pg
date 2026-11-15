@@ -24,7 +24,7 @@ import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { isCallPlanNote } from "@/lib/call-plan";
 
-export type SequenceKind = "not_reached" | "offer" | "no_show";
+export type SequenceKind = "not_reached" | "offer" | "no_show" | "silent";
 
 const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
@@ -32,8 +32,19 @@ const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nich
 
 /** hi = Anrede-Zeile nach Regel („Hallo Julia,“ bzw. „Guten Tag Frau Schneider,“ / „Guten Tag,“). */
 type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; bookingUrl: string | null; an: Ansprache };
+const HOUR = 60 * 60 * 1000;
+
 type Step =
-  | { day: number; action: "whatsapp"; purpose: NoticePurpose; params: (c: Ctx) => string[]; text: (c: Ctx) => string; fallbackNote: string }
+  | {
+      day: number;
+      action: "whatsapp";
+      purpose: NoticePurpose;
+      params: (c: Ctx) => string[];
+      text: (c: Ctx) => string;
+      fallbackNote: string;
+      /** Nur als Freitext im offenen 24h-Fenster senden, sonst still überspringen (keine Vorlage doppelt). */
+      onlyInWindow?: boolean;
+    }
   | { day: number; action: "call"; note: string };
 
 export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> = {
@@ -89,6 +100,53 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
       },
       { day: 2, action: "call", note: "Neuen Termin vereinbaren" },
+    ],
+  },
+  // Chat ruht (Ole, 15.11.2026: „schon nach wenigen Stunden … recht aggressiv, der Interessent hat ja
+  // Interesse gezeigt“): startet bei jeder Nachricht des Assistenten neu (restartSilentSequence) und läuft,
+  // solange der Lead nicht antwortet. Außerhalb des 24h-Fensters nur die Vorlagen „followup“ und
+  // „followup_last“ (je einmal), der Schritt dazwischen nur als Freitext im offenen Fenster.
+  silent: {
+    label: "Chat ruht",
+    steps: [
+      {
+        day: 2 / 24,
+        action: "whatsapp",
+        purpose: "followup",
+        params: (c) => [c.firstName],
+        text: (c) =>
+          a(
+            c.an,
+            `${c.hi} kurze Nachfrage zu ${c.topic}: Antworte einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich dir Termine vorschlagen.`,
+            `${c.hi} kurze Nachfrage zu ${c.topic}: Antworten Sie einfach hier, dann geht es direkt weiter. Es dauert nur noch einen Moment, dann kann ich Ihnen Termine vorschlagen.`,
+          ),
+        fallbackNote: "Keine Reaktion im Chat: anrufen",
+      },
+      {
+        day: 20 / 24,
+        action: "whatsapp",
+        purpose: "followup",
+        onlyInWindow: true,
+        params: (c) => [c.firstName],
+        text: (c) =>
+          `${c.hi} ich wollte mich noch einmal melden. ${
+            c.bookingUrl
+              ? a(c.an, `Wenn es dir lieber ist, such dir hier direkt eine Zeit für das Gespräch aus: ${c.bookingUrl}`, `Wenn es Ihnen lieber ist, suchen Sie sich hier direkt eine Zeit für das Gespräch aus: ${c.bookingUrl}`)
+              : a(c.an, "Wann passt es dir für ein kurzes Gespräch?", "Wann passt es Ihnen für ein kurzes Gespräch?")
+          }`,
+        fallbackNote: "Keine Reaktion im Chat: anrufen",
+      },
+      {
+        day: 3,
+        action: "whatsapp",
+        purpose: "followup_last",
+        params: (c) => [c.firstName],
+        text: (c) =>
+          `${c.hi} ${a(c.an, "ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell?", "ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell?")}${
+            c.bookingUrl ? a(c.an, ` Hier kannst du dir direkt einen Termin aussuchen: ${c.bookingUrl}`, ` Hier können Sie sich direkt einen Termin aussuchen: ${c.bookingUrl}`) : a(c.an, " Dann antworte einfach hier.", " Dann antworten Sie einfach hier.")
+          } Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+        fallbackNote: "Letzter Versuch: anrufen",
+      },
     ],
   },
 };
@@ -148,6 +206,26 @@ export async function startSequence(leadId: string, kind: SequenceKind, now = ne
   });
 }
 
+/**
+ * „Chat ruht“ nach einer Nachricht des Assistenten (neu) starten: läuft schon eine, beginnt sie von vorn.
+ * Nicht, wenn eine andere Abfolge läuft (Nicht erreicht, Angebot, Nicht erschienen), ein Termin
+ * ansteht oder der Lead abgeschlossen ist.
+ */
+export async function restartSilentSequence(leadId: string, now = new Date()) {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true, status: true, stornoState: true } });
+  if (!lead || lead.erasedAt || lead.stornoState) return null;
+  if (DONE_STATUSES.has((lead.status ?? "").trim().toLowerCase())) return null;
+  if (!(await enabledFor(lead.customerId))) return null;
+  const upcoming = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
+  if (upcoming > 0) return null;
+  const running = await prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true } });
+  if (running.some((r) => r.kind !== "silent")) return null;
+  const nextAt = new Date(now.getTime() + SEQUENCES.silent.steps[0].day * DAY);
+  const same = running.find((r) => r.kind === "silent");
+  if (same) return prisma.leadSequence.update({ where: { id: same.id }, data: { step: 0, startedAt: now, nextAt } });
+  return prisma.leadSequence.create({ data: { leadId, customerId: lead.customerId, kind: "silent", step: 0, startedAt: now, nextAt } });
+}
+
 /** Laufende Abfolgen eines Leads beenden. Optional nur die seit `since` gestarteten. */
 export async function stopSequences(leadId: string, reason: string, opts: { since?: Date; now?: Date } = {}): Promise<number> {
   const now = opts.now ?? new Date();
@@ -188,7 +266,7 @@ function topicOf(formData: Prisma.JsonValue | null, source: string | null, an: A
 }
 
 /** Grund, warum eine Abfolge vor dem nächsten Schritt endet – oder null. */
-export async function stopReasonFor(seq: { leadId: string; customerId: string; startedAt: Date }, now = new Date()): Promise<string | null> {
+export async function stopReasonFor(seq: { leadId: string; customerId: string; startedAt: Date; kind?: string }, now = new Date()): Promise<string | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: seq.leadId },
     select: { status: true, stornoState: true, erasedAt: true, phone: true },
@@ -211,6 +289,22 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
     select: { body: true },
   });
   if (reply) return STOP_WORDS.test(reply.body ?? "") ? "Abgemeldet („Stopp“)" : "Lead hat geantwortet";
+  if (seq.kind === "silent") {
+    // Der Vermittler hat übernommen (Assistent pausiert oder eigene Nachricht): kein Nachfassen im Namen des Assistenten
+    const conv = await prisma.conversation.findFirst({
+      where: { customerId: seq.customerId, OR: [{ leadId: seq.leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
+      orderBy: { lastMessageAt: "desc" },
+      select: { id: true, botActive: true, optedOutAt: true },
+    });
+    if (conv?.optedOutAt) return "Abgemeldet („Stopp“)";
+    if (conv && !conv.botActive) return "Assistent pausiert";
+    if (conv) {
+      const human = await prisma.message.count({
+        where: { conversationId: conv.id, direction: "outbound", createdAt: { gt: seq.startedAt }, NOT: { sentBy: { in: ["bot", "system"] } } },
+      });
+      if (human > 0) return "Vermittler schreibt selbst";
+    }
+  }
   if (lead.phone) {
     const revoked = await prisma.consentOptIn.findFirst({ where: { customerId: seq.customerId, contactPhone: lead.phone, revokedAt: { not: null } }, select: { id: true } });
     if (revoked) return "Einwilligung widerrufen";
@@ -313,6 +407,15 @@ async function sendStep(
     bookingUrl: cal?.status === "connected" && cal.bookingSlug && appUrl ? `${appUrl}/book/${cal.bookingSlug}` : null,
     an,
   };
+  if (step.onlyInWindow) {
+    const conv = await prisma.conversation.findUnique({
+      where: { customerId_contactPhone: { customerId: seq.customerId, contactPhone: lead.phone } },
+      select: { windowExpiresAt: true },
+    });
+    if (!conv?.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) {
+      return { ...base, result: "skipped", detail: "24h-Fenster geschlossen, keine zweite Vorlage" };
+    }
+  }
   const params = step.params(ctx);
   // Freitext (offenes Fenster) = unser Text mit Anrede nach Regel; außerhalb wählt sendWhatsAppNotice
   // die freigegebene Vorlage passend zu Ansprache und Anrede.

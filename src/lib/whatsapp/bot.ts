@@ -29,6 +29,7 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
 import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-fragen";
+import { restartSilentSequence } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { erstinfoZeile, hasErstinfoLink, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
@@ -219,6 +220,7 @@ export function buildSystemPrompt(
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
         "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und buche keinen zusätzlichen Termin (kein book_appointment).",
         "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
+        "Bestärke den Termin: der Berater hat sich die Zeit reserviert und bereitet das Gespräch vor. Kommt etwas dazwischen, lieber verschieben als ausfallen lassen.",
         "Möchte der Lead VERSCHIEBEN: hole mit get_available_slots freie Zeiten, biete 2-3 an und nutze nach seiner Wahl reschedule_appointment. Bestätige danach die neue Zeit.",
         "Möchte der Lead ABSAGEN: frag einmal kurz, ob ein anderer Termin besser passt; besteht er auf Absage, nutze cancel_appointment und bestätige freundlich.",
       ].join("\n")
@@ -300,6 +302,12 @@ export function buildSystemPrompt(
       "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Terminbestätigung mit Kalendereintrag per E-Mail bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
+      // Erscheinen sichern (Ole, 15.11.2026): Verbindlichkeit ohne Druck und ohne Versprechen
+      "Damit der Lead sicher zum Termin kommt (gilt beim Anbieten und Bestätigen eines Termins):",
+      `- Mach den Termin wertvoll und persönlich: ${state.advisorName} nimmt sich die Zeit nur für den Lead und bereitet das Gespräch mit seinen Angaben vor, damit es direkt um seine Situation geht. Versprich keine Ergebnisse, Ersparnisse oder Preise.`,
+      "- Lass den Lead die Zeit selbst wählen und frag beim Anbieten, welche Zeit sicher passt (nicht nur, welche irgendwie geht).",
+      "- In der Buchungsbestätigung: bitte den Lead, sich den Termin gleich im Kalender zu speichern, und sag, dass er kurz hier schreiben kann, falls etwas dazwischenkommt, dann findet ihr eine neue Zeit. Halte die Bestätigung trotzdem kurz.",
+      "- Bei Telefonterminen: sag, dass der Berater ihn auf dieser Nummer anruft, sofern keine andere bekannt ist. Bei Videoterminen: der Link kommt mit der Bestätigung.",
       "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: „Das klärt " + state.advisorName + " im Termin.“",
       GESUNDHEITS_REGEL,
     ].join("\n"),
@@ -779,5 +787,7 @@ export async function runBotTurn(conversationId: string): Promise<void> {
       body: [...prefix, finalText].join("\n\n"),
       sentBy: "bot",
     });
+    // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“)
+    if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
   }
 }

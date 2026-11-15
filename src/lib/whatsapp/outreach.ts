@@ -17,6 +17,7 @@ import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
+import { restartSilentSequence } from "@/lib/lead-sequences";
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import type { Ansprache } from "@/lib/ansprache";
@@ -167,6 +168,8 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         });
         // WhatsApp-Erstanschreiben = Kontaktversuch (Zeit bis Erstkontakt).
         await recordLeadProgress(lead.id, "contact_attempt");
+        // Keine Antwort → nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“)
+        await restartSilentSequence(lead.id).catch((e) => console.error("[lead-sequences silent]", e));
         result.sent++;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

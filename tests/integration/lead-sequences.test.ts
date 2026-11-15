@@ -8,7 +8,7 @@ vi.mock("@/lib/whatsapp/templates", async (orig) => {
 });
 
 import { prisma } from "@/lib/prisma";
-import { inSendWindow, runSequences, startSequence, stopSequences } from "@/lib/lead-sequences";
+import { inSendWindow, restartSilentSequence, runSequences, startSequence, stopSequences } from "@/lib/lead-sequences";
 import { syncFollowUpWithStatus } from "@/lib/lead-followup";
 import { NoTemplateError } from "@/lib/whatsapp/templates";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
@@ -184,5 +184,40 @@ describe("Nachfass-Abfolgen", () => {
     expect(await stopSequences(lead2.id, "Vom Berater gestoppt")).toBe(1);
     await runSequences(T0);
     expect(send.mock.calls.some((c) => (c[0] as { leadId: string }).leadId === lead2.id)).toBe(false);
+  });
+
+  it("„Chat ruht“: 2 Std., ca. 20 Std. nur im offenen Fenster, Tag 3 letzte; Neustart bei neuer Nachricht des Assistenten", async () => {
+    const HOUR = 60 * 60 * 1000;
+    const lead = await newLead();
+    const seq = await restartSilentSequence(lead.id, T0);
+    expect(seq?.nextAt?.getTime()).toBe(T0.getTime() + 2 * HOUR);
+    // neue Nachricht des Assistenten: dieselbe Abfolge beginnt von vorn
+    const later = new Date(T0.getTime() + HOUR);
+    const again = await restartSilentSequence(lead.id, later);
+    expect(again?.id).toBe(seq?.id);
+    expect(again?.nextAt?.getTime()).toBe(later.getTime() + 2 * HOUR);
+
+    await runSequences(new Date(later.getTime() + 2 * HOUR));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup", leadId: lead.id });
+    // ca. 20 Std. (7 Uhr, wartet aufs Versandfenster) bzw. 22 Std. (9 Uhr): kein offenes 24h-Fenster
+    // (keine Konversation) → übersprungen, keine zweite Vorlage
+    await runSequences(new Date(later.getTime() + 20 * HOUR));
+    await runSequences(new Date(later.getTime() + 22 * HOUR));
+    expect(send).toHaveBeenCalledTimes(1);
+    await runSequences(new Date(later.getTime() + 3 * DAY));
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls[1][0]).toMatchObject({ purpose: "followup_last" });
+    const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
+    expect(done.stopReason).toBe("Abgeschlossen");
+  });
+
+  it("„Chat ruht“ startet nicht, wenn eine andere Abfolge läuft oder ein Termin ansteht", async () => {
+    const a = await newLead();
+    await startSequence(a.id, "not_reached", T0);
+    expect(await restartSilentSequence(a.id, T0)).toBeNull();
+    const b = await newLead();
+    await prisma.appointment.create({ data: { customerId, leadId: b.id, startsAt: new Date(T0.getTime() + DAY), endsAt: new Date(T0.getTime() + DAY + 1800000), status: "booked", mode: "phone" } });
+    expect(await restartSilentSequence(b.id, T0)).toBeNull();
   });
 });
