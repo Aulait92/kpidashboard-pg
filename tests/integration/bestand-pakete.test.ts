@@ -269,8 +269,17 @@ describe("Import: Prüfung und „Letzten Import rückgängig machen“", () => 
     ok.set("map_city", "Ort");
     ok.set("map_email", "Email");
     ok.set("befugnis", "on");
+    // Vertreter: vor dem ersten Import ausdrücklich bestätigen (Agenturvertrag und Datenschutz), mit Textversion
+    expect((await runImportAction({}, ok)).error).toMatch(/Agenturvertrag und dem Datenschutzrecht/);
+    expect(await prisma.existingCustomer.count({ where: { customerId } })).toBe(0);
+    ok.set("agentConfirm", "on");
     const r = await runImportAction({}, ok);
     expect(r.message).toMatch(/^2 Kunden übernommen \(2 neu/);
+    const cust = await prisma.customer.findUniqueOrThrow({ where: { id: customerId }, select: { bestandAgentConfirmedAt: true, bestandAgentConfirmedById: true, bestandAgentConfirmedVersion: true } });
+    expect(cust).toMatchObject({ bestandAgentConfirmedById: ownerId, bestandAgentConfirmedVersion: "ao-2026-11-15" });
+    const log = await prisma.auditLog.findFirstOrThrow({ where: { customerId, action: "bestand.agent_confirm" } });
+    expect((log.details as { text?: string; bei?: string }).text).toContain("nach meinem Agenturvertrag und dem Datenschutzrecht zulässig");
+    expect((log.details as { bei?: string }).bei).toBe("import");
     const saved = await prisma.existingCustomer.findMany({ where: { customerId }, orderBy: { company: "asc" } });
     expect(saved.map((s) => [s.firstName, s.company, s.email])).toEqual([
       [null, "Beispiel AG", "kontakt@beispiel.de"],
