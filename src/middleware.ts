@@ -30,6 +30,8 @@ const PUBLIC_PREFIXES = [
   "/einwilligung", // Einwilligungs-Abfrage für Bestandskunden mit Double-Opt-in (signierter Token)
   "/email-bestaetigen", // Bestätigung einer neuen Login-E-Mail (Token aus der Mail, lib/email-aendern.ts)
   "/erstinformation", // Erstinformation des Vermittlers (§ 15 VersVermV), Link in der ersten WhatsApp-Nachricht (Token)
+  "/demo", // Live-Demo der Beratungspräsentation (feste Beispieldaten, keine Datenbank)
+  "/praesentation", // Vertriebspräsentation für Interessenten (geheimer Link je Kontakt, 14 Tage)
   "/beratung", // Beratungspräsentation zum Nachlesen für den Kunden des Vermittlers (geheimer Link, 14 Tage)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
@@ -146,9 +148,19 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/abmelden/") ||
     pathname.startsWith("/einwilligung/") ||
     pathname.startsWith("/erstinformation/") ||
-    pathname.startsWith("/beratung/")
+    pathname.startsWith("/beratung/") ||
+    pathname === "/demo" ||
+    pathname.startsWith("/demo/")
   ) {
     const res = NextResponse.next({ request: { headers: leadHeaders(req) } });
+    res.headers.set("X-Robots-Tag", NO_INDEX);
+    return res;
+  }
+  // Vertriebspräsentation für Interessenten (unser eigenes Material): ohne App-Kopfzeile, nicht indexieren
+  if (pathname.startsWith("/praesentation/")) {
+    const headers = new Headers(req.headers);
+    headers.set("x-bare-layout", "1");
+    const res = NextResponse.next({ request: { headers } });
     res.headers.set("X-Robots-Tag", NO_INDEX);
     return res;
   }

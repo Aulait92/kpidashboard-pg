@@ -23,6 +23,10 @@ die Adresse ohne www leitet dorthin weiter.
   `/erstinformation/…` leiten per 308 auf die Buchungsadresse (gleicher Pfad und gleiche Query, Buchungsseite als
   Kurzlink). Nur GET/HEAD; Formulare und `/api/abmelden` (POST) laufen auf der App weiter. Ausnahme: ein
   eingeloggter Berater mit `?lead=` (Vorbelegung) bleibt auf der App.
+- **Live-Demo der Beratungspräsentation** (Ole, 15.11.2026): `www.dein-beratungstermin.de/demo` (intern `/demo/beratung`),
+  auf der App `app.performancegrowth.de/demo/beratung` ohne Umleitung (dort eingebettet in die Vertriebspräsentation).
+  Feste Beispieldaten (`src/lib/demo-beratung.ts`), keine Datenbank, darf per iframe eingebettet werden.
+  Die Vertriebspräsentation für Interessenten (`/praesentation/<token>`) gibt es nur auf der App, auf der Buchungsadresse ist sie 404.
 - Ohne `PUBLIC_BOOKING_URL` ändert sich nichts.
 
 ## Einrichtung

@@ -75,13 +75,17 @@ describe("Sicherheits-Header", () => {
     expect(header(strict, "Content-Security-Policy")).toBeDefined();
   });
 
-  it("nur /book und /rechner dürfen eingebettet werden", () => {
+  it("nur /book, /rechner und /demo dürfen eingebettet werden", () => {
     const re = (src: string) => new RegExp(`^${src.replace("/:path(", "/(")}$`);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/login")).toBe(true);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/angebot/abc")).toBe(true);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/buyer")).toBe(true);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/book/mein-kalender")).toBe(false);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/rechner")).toBe(false);
+    // Live-Demo (Ole, 15.11.2026): eingebettet in die Vertriebspräsentation bzw. auf der Webseite
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/demo/beratung")).toBe(false);
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/praesentation/abc")).toBe(true);
+    expect(header(rules.find((r) => r.source === "/demo/:path*")!, "Content-Security-Policy-Report-Only")).toContain("frame-ancestors 'self' https:");
     const book = rules.find((r) => r.source === "/book/:path*")!;
     expect(header(book, "Content-Security-Policy-Report-Only")).toContain("frame-ancestors 'self' https:");
     expect(header(book, "X-Frame-Options")).toBeUndefined();
