@@ -182,6 +182,12 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
             `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es dir jetzt? Dann machen wir direkt weiter.`,
             `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt es Ihnen jetzt? Dann machen wir direkt weiter.`,
           ),
+        slotText: (c, [z1, z2]) =>
+          a(
+            c.an,
+            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt dir für ein kurzes Gespräch ${z1} oder ${z2}?`,
+            `${c.hi} wie besprochen melde ich mich wieder zu ${c.topic}. Passt Ihnen für ein kurzes Gespräch ${z1} oder ${z2}?`,
+          ),
         fallbackNote: "Lead wollte, dass wir uns wieder melden: anrufen",
       },
     ],
