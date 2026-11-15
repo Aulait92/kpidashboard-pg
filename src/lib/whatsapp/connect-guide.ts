@@ -95,7 +95,7 @@ const ACCOUNT_START: GuideStep[] = [
 const numberQuestion = (answer: string, why: string): GuideStep => ({
   where: "360dialog",
   title: "Nummer eingeben und Frage beantworten",
-  text: `Sie geben die Nummer ein, die Ihr Assistent nutzen soll. 360dialog fragt dann „Is … already on WhatsApp?“. Sie wählen: „${answer}“.`,
+  text: `Sie geben die Nummer ein, die Ihr Assistent nutzen soll: Land auf Deutschland (+49) umstellen (vorbelegt ist oft USA +1), Nummer ohne führende 0. Nicht „Display Name only“ wählen. 360dialog fragt dann „Is … already on WhatsApp?“. Sie wählen: „${answer}“.`,
   pitfall: why,
 });
 
@@ -104,7 +104,7 @@ const verifyStep = (extra: string): GuideStep => ({
   where: "360dialog",
   title: "Nummer mit Code bestätigen",
   text: "Unter „Verify your phone number“ wählen Sie „Text message (SMS)“ oder „Voice call“ (Anruf) und tippen den 6-stelligen Code ein. Klicken Sie nicht auf „Skip verification and continue“.",
-  pitfall: `Festnetz oder keine SMS nach 2 Minuten? Wählen Sie „Voice call“, eine Ansage liest den Code vor. Fordern Sie den Code nicht mehrmals kurz hintereinander an, sonst sperrt Meta die Nummer für einige Stunden. ${extra}`,
+  pitfall: `Der Code kommt an die Nummer selbst (bei einer virtuellen Nummer im Nachrichten- bzw. Anrufprotokoll Ihres Anbieters). Festnetz oder keine SMS nach 2 Minuten? Wählen Sie „Voice call“, eine Ansage liest den Code vor. Fordern Sie den Code nicht mehrmals kurz hintereinander an, sonst sperrt Meta die Nummer für einige Stunden. ${extra}`,
 });
 
 const META_START: GuideStep[] = [
@@ -117,16 +117,31 @@ const META_START: GuideStep[] = [
   {
     where: "meta",
     title: "Unternehmensportfolio auswählen",
-    text: "Sie wählen Ihr Unternehmensportfolio aus, meist dasselbe wie für Ihr Werbekonto. Haben Sie keines, legen Sie hier eines an.",
+    text: "Sie wählen Ihr eigenes Unternehmensportfolio aus, meist dasselbe wie für Ihr Werbekonto. Meta schlägt manchmal ein anderes vor (z. B. eines, in dem Sie nur mitarbeiten): bitte genau prüfen. Haben Sie keines, legen Sie hier eines an: Name wie im Handelsregister bzw. Impressum, Kategorie „Finance“ (Finanzen), Website mit Impressum, Zeitzone Europe/Berlin.",
     pitfall:
       "Ihr Portfolio fehlt in der Liste? Dann sind Sie dort kein Admin. Lassen Sie sich Admin-Rechte geben oder legen Sie ein neues an. Die Auswahl lässt sich später nicht mehr ändern.",
   },
   {
     where: "meta",
     title: "Freigabe nur für dieses Portfolio",
-    text: "Fragt Meta, für welche Unternehmen 360dialog freigegeben werden soll, wählen Sie „Opt in to current Businesses only“ (nur aktuelle Unternehmen).",
+    text: "Fragt Meta, für welche Unternehmen 360dialog freigegeben werden soll, wählen Sie „Opt in to current Businesses only“ (nur aktuelle Unternehmen). In der Übersicht danach prüfen Sie, dass bei Unternehmen und WhatsApp-Konto Ihr eigener Firmenname steht. „Access your Facebook ads and related stats“ steht bei 360dialog immer dabei und ändert nichts an Ihren Anzeigen.",
+    pitfall: "Meldung „This phone number belongs to another business“? Die Nummer hängt schon in einem anderen Meta-Portfolio. Dort entfernen oder eine andere Nummer nehmen.",
   },
 ];
+
+/** Letzter Meta-Schritt (Ole, 15.11.2026): Datenweitergabe an Meta abwählen. */
+const META_DATA: GuideStep = {
+  where: "meta",
+  title: "Zum Schluss: zwei Häkchen entfernen",
+  text: "Auf der letzten Seite von Meta entfernen Sie beide Häkchen: „Instruct Meta to automatically identify order and lead events“ und „Share Cloud API events“. So gehen keine Gesprächsinhalte für Werbezwecke an Meta. Den Hinweis zur Marketing Messages API und zu Ereignisdaten im Kleingedruckten können Sie bestätigen, die Weitergabe lässt sich später in den Unternehmenseinstellungen abschalten.",
+};
+
+/** 360dialog „Choose a plan“: nichts kaufen, der Tarif läuft über uns. */
+const NO_PLAN: GuideStep = {
+  where: "360dialog",
+  title: "Kein Tarif auswählen",
+  text: "Die Kosten für die Nummer laufen über uns. Zeigt 360dialog danach „Choose a plan“ oder „Pending Activation“, kaufen Sie nichts. Schließen Sie das Fenster und schreiben Sie uns kurz, wir schalten die Nummer frei und verbinden sie.",
+};
 
 const PROFILE: GuideStep = {
   where: "meta",
@@ -155,6 +170,8 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       verifyStep("Meldung „Nummer wird bereits verwendet“? Dann läuft die Nummer doch schon in WhatsApp. Wählen Sie oben den passenden Weg."),
       ...META_START,
       PROFILE,
+      META_DATA,
+      NO_PLAN,
       BACK,
     ],
   },
@@ -182,12 +199,14 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
         text: "Fragt Meta noch einmal, ob die Nummer schon in WhatsApp läuft, wählen Sie: „Ja, diese Nummer ist mit der WhatsApp Business App verbunden“. Steht Ihre Nummer schon in einer Liste, wählen Sie sie dort aus, statt sie einzutippen.",
         pitfall: "Wählen Sie hier nicht „neue Nummer“ und tippen Sie eine vorhandene Nummer nicht neu ein. Sonst schlägt die Bestätigung fehl.",
       },
+      META_DATA,
       {
         where: "whatsapp",
         title: "QR-Code in der App scannen",
         text: "Sie bekommen in der WhatsApp Business App eine Nachricht. Tippen Sie darauf und scannen Sie den QR-Code auf dem Bildschirm. Chatverlauf und Kontakte können Sie dabei übernehmen.",
         pitfall: "Keine Nachricht bekommen? App aktualisieren und öffnen, dann den Schritt im Meta-Fenster wiederholen.",
       },
+      NO_PLAN,
       BACK,
     ],
   },
@@ -216,6 +235,8 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       verifyStep("Meldung „Nummer wird bereits verwendet“? Das WhatsApp-Konto ist noch nicht gelöscht. Etwas warten und erneut versuchen."),
       ...META_START,
       PROFILE,
+      META_DATA,
+      NO_PLAN,
       BACK,
     ],
   },
@@ -227,6 +248,7 @@ export const ERROR_HELP = [
   "Portfolio nicht sichtbar: Sie brauchen Admin-Rechte im Meta-Unternehmensportfolio (prüfen unter business.facebook.com → Einstellungen → Personen).",
   "Bei 360dialog erscheinen fremde Firmen oder Nummern: Sie sind in einem alten Konto gelandet (z. B. über „Continue with Facebook“). Bitte nicht weitermachen und kurz bei uns melden.",
   "„Nummer wird bereits verwendet“: Die Nummer läuft noch in einer WhatsApp-App. Wählen Sie oben den passenden Weg.",
+  "360dialog zeigt „Choose a plan“ oder „Pending Activation“: nichts kaufen, Fenster schließen und uns schreiben. Wir schalten die Nummer frei.",
 ];
 
 // Zusatzfrage beim Weg „WhatsApp Business App“: schon bei einem anderen Anbieter verbunden?
