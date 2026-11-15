@@ -1025,7 +1025,7 @@ model AgentConfig {
   outreachDelayMin         Int       @default(0)
   // Automatisch nachfassen: feste Abfolgen nach „Nicht erreicht“, „Angebot gesendet“,
   // „Nicht erschienen“ (lib/lead-sequences.ts). Standard aus.
-  followUpSequencesEnabled Boolean   @default(false)
+  followUpSequencesEnabled Boolean   @default(true) // Standard an für neue Kunden (Ole, 15.11.2026)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl             String?

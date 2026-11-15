@@ -20,7 +20,8 @@ describe("Privatschutz: Angaben fürs Angebot", () => {
     expect(produktCheckliste("Privatschutz")?.key).toBe("privatschutz");
     expect(produktCheckliste("Hausrat")?.key).toBe("privatschutz");
     expect(produktCheckliste("Wohngebäude")?.key).toBe("privatschutz");
-    expect(produktCheckliste("TKV-Katze")).toBeNull();
+    expect(produktCheckliste("TKV-Katze")?.key).toBe("tier");
+    expect(produktCheckliste("Zahnzusatz")).toBeNull();
     expect(produktCheckliste("Hundehalterhaftpflicht")).toBeNull();
     expect(produktCheckliste("PKV-Tarifoptimierung")).toBeNull();
     expect(produktCheckliste(null)).toBeNull();
@@ -46,8 +47,8 @@ describe("Privatschutz: Angaben fürs Angebot", () => {
     expect(booked).not.toContain("Nach der Buchung: Nenne");
     expect(p).toContain("buche ihn sofort und frag die fehlenden Angaben danach weiter ab");
     expect(p).toContain("Damit Susanne Meier das Angebot vorbereiten kann");
-    const tkv = buildSystemPrompt(agent, "TKV-Katze", base);
-    expect(tkv).toContain("meist nach 2-3 Antworten");
+    const zahn = buildSystemPrompt(agent, "Zahnzusatz", base);
+    expect(zahn).toContain("meist nach 2-3 Antworten");
   });
 
   it("neue Angaben werden gespeichert", () => {
@@ -84,5 +85,19 @@ describe("Termin schon gebucht (Buchungsseite/Leadformular)", () => {
     expect(p).toContain("selbst über die Buchungsseite bzw. das Leadformular gebucht");
     expect(p).toContain("bestätige ihn in deiner nächsten Nachricht kurz mit Datum und Uhrzeit");
     expect(p).toContain("Pflichtangaben für das Angebot");
+  });
+});
+
+describe("TKV: Gesundheit per Chat, Geburtsdatum des Halters", () => {
+  it("fragt Gesundheit 24 Monate, Geburtsdatum Tier und Halter, Tarifwunsch; nicht bei Hundefutter", () => {
+    const c = produktCheckliste("TKV-Katze")!;
+    for (const s of ["24 Monaten", "Geburtsdatum des Halters", "Wohnungskatze oder Freigänger", "OP-Schutz", "volle Krankenversicherung", "Tarif", "Zähne"]) expect(c.fragen).toContain(s);
+    expect(c.unterlagen.join(" ")).toContain("Chipnummer");
+    expect(c.fragen + c.unterlagen.join("")).not.toMatch(/[–—]/);
+    expect(produktCheckliste("Hundefutter")).toBeNull();
+    expect(produktCheckliste("Tierkrankenversicherung Hund")?.key).toBe("tier");
+    const p = buildSystemPrompt(agent, "TKV-Katze", base);
+    expect(p).toContain("Pflichtangaben für das Angebot (Tierkrankenversicherung)");
+    expect(p).not.toContain("meist nach 2-3 Antworten");
   });
 });

@@ -184,7 +184,8 @@ Seiten aus der Liste „Seiten“ unten.
 - Bittet ein Lead, sich später zu melden („morgen nochmal“, „nächste Woche“), legt der Assistent sich selbst eine
   **Wiedervorlage** und meldet sich zur vereinbarten Zeit per WhatsApp. Sie sehen sie im Kontakt unter den
   Aktionen („Wiedervorlage vom Assistenten …“); der Lead zählt damit nicht als „ohne nächsten Schritt“.
-- Bei Privatschutz fragt er die Angaben fürs Angebot ab. Bucht ein Lead schon vorher einen Termin, fragt der
+- Bei Privatschutz und Tierkrankenversicherung (Gesundheit des Tieres, Geburtsdatum des Halters) fragt er die
+  Angaben fürs Angebot ab. Bucht ein Lead schon vorher einen Termin, fragt der
   Assistent die fehlenden Angaben nach der Buchung weiter ab. Hat der Lead direkt über das Leadformular bzw. die
   Buchungsseite gebucht, meldet sich der Assistent trotzdem, bestätigt den Termin und fragt die Angaben ab.
 - Braucht ein Lead Sie (Frage, die der Assistent nicht beantworten soll), landet der Chat unter „Braucht dich“
@@ -242,7 +243,7 @@ Seiten aus der Liste „Seiten“ unten.
 
 ## Automatisches Nachfassen (Abfolgen)
 
-- Wenn wir es für Sie eingeschaltet haben, fasst die App nach einem Ergebnis selbst nach:
+- Standardmäßig an (für neue Kunden): Die App fasst nach einem Ergebnis selbst nach:
   - **Nicht erreicht:** sofort eine WhatsApp („Wann passt es dir?“), nach 6 Tagen eine letzte, freundliche
     WhatsApp. Die Anrufe dazwischen plant der Anrufplan (siehe „Verloren und nicht erreicht“), es kommt keine
     zweite Anruf-Aufgabe dazu. Danach ist Schluss.

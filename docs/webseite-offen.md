@@ -42,3 +42,4 @@ Letzte Aktualisierung der Webseite: 14.11.2026 (Zahlen, mehrere Verträge, Schne
 - 15.11.: WhatsApp-Assistent fasst automatisch nach, wenn ein Lead nicht antwortet (nach 2 Std., am nächsten Tag, nach 3 Tagen), und bestätigt Termine verbindlicher. Falls die Seite das Nachfassen beschreibt, ergänzen (ohne Versprechen zu Erscheinensquoten).
 - 15.11.: Assistent fragt etwa 1 Std. vor dem Termin, ob alles passt, und fasst bei ruhendem Chat zusätzlich nach 8 Std. nach. Falls die Seite Termin-Erinnerungen beschreibt, ergänzen (ohne Versprechen zu Erscheinensquoten).
 - 15.11.: Assistent legt sich auf Wunsch des Leads eine Wiedervorlage und meldet sich zur vereinbarten Zeit; Verschieben von Terminen per Chat statt Link. Falls die Seite den Buchungs-/Verschiebe-Link erwähnt, anpassen.
+- 15.11.: Assistent fragt bei Tierkrankenversicherung Gesundheit des Tieres (24 Monate) und Geburtsdatum des Halters ab. Falls die Seite beschreibt, was der Assistent fragt, ergänzen.

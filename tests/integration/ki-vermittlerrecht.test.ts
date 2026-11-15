@@ -345,7 +345,7 @@ describe("Schon über die Buchungsseite gebucht (z. B. Meta-Leadformular)", () =
       data: { customerId, name: "pg_outreach_v3_sie", language: "de", purpose: "outreach", category: "marketing", status: "approved", auto: true, body: "Guten Tag {{1}}, vielen Dank für Ihre Anfrage! Erstinformation: {{2}} Haben Sie kurz Zeit für zwei Fragen?" },
     });
     const ps = await mk("4917622220011", "Privatschutz");
-    const tkv = await mk("4917622220012", "TKV-Katze");
+    const tkv = await mk("4917622220012", "Zahnzusatz");
     await runOutreach(customerId);
     expect(sent.some((s) => s.to === "4917622220011")).toBe(true);
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: ps.id } })).outreachStatus).toBe("sent_booked");

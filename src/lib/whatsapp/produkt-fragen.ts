@@ -13,7 +13,7 @@
 
 export type ProduktCheckliste = {
   /** Für die Anzeige/Tests: welcher Katalog greift. */
-  key: "privatschutz";
+  key: "privatschutz" | "tier";
   /** Block für den System-Prompt: was vor der Qualifizierung geklärt sein muss. */
   fragen: string;
   /** Was der Lead zum Termin bereitlegen soll (Bot nennt es nach der Buchung). */
@@ -22,8 +22,47 @@ export type ProduktCheckliste = {
 
 const PRIVATSCHUTZ = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|a)ude|\bunfall/i;
 
+/** Tierkrankenversicherung (TKV), z. B. „TKV-Katze“; nicht Hundefutter oder Hundehalter-Haftpflicht. */
+const TKV = /\btkv\b|tierkranken|tier-?op|katze/i;
+
+/**
+ * TKV (Ole, 15.11.2026): Gesundheitsfragen fragt das Formular nicht ab, und das Geburtsdatum des Halters braucht
+ * der Vermittler für den Antrag. Nach dem Allianz-Tarifrechner Tierkranken (Screenshot von Ole): Tierart,
+ * Geschlecht, Name, Geburtsdatum, Rasse, Haltung (Wohnung/Freigänger), Krankheiten, Unfallfolgen, Symptome,
+ * Beeinträchtigungen, Verhaltensauffälligkeiten oder Befunde in den letzten 24 Monaten und betroffene Bereiche.
+ */
+function tierCheckliste(): ProduktCheckliste {
+  return {
+    key: "tier",
+    fragen: [
+      "Pflichtangaben für das Angebot (Tierkrankenversicherung). Es sind die Angaben, die der Allianz-Tarifrechner und der Antrag brauchen, damit der Berater im Termin direkt ein Angebot rechnen kann.",
+      "- Kläre vor qualifiziert=true die folgenden Punkte, aber nur, was noch nicht bekannt ist (Leadformular, Verlauf, 'Bisher erfasst'). Tierart, Rasse, Name, Geschlecht, Geburtsmonat und -jahr und Haltung kommen meist schon aus dem Formular: dann nicht erneut fragen.",
+      "- Weiter genau eine Frage pro Nachricht, gern mit kurzer Auswahl. Bei mehreren Tieren die Angaben je Tier.",
+      "  • Gesundheit des Tieres: Hatte oder hat es in den letzten 24 Monaten Krankheiten, Unfallfolgen, Symptome, Beeinträchtigungen, Verhaltensauffälligkeiten oder Befunde, die noch keine Behandlung brauchen? Erst ja oder nein fragen; bei ja, welche Bereiche betroffen sind (z. B. Zähne, Haut und Fell, Augen, Ohren, Magen und Darm, Gelenke bzw. Bewegungsapparat, Herz, Harnorgane) (angaben.tier)",
+      "  • Genaues Geburtsdatum des Tieres, falls das Formular nur Monat und Jahr hat (angaben.tier)",
+      "  • Bei Katzen: Wohnungskatze oder Freigänger, falls nicht bekannt (angaben.tier)",
+      "  • Geburtsdatum des Halters, also des Leads (für den Antrag) (angaben.geburt)",
+      "  • Postleitzahl, falls nicht aus dem Formular bekannt (angaben.plz)",
+      "  • Besteht schon eine Tierversicherung, und wenn ja, wann läuft sie ab (angaben.vorhanden)",
+      "  • Welcher Schutz gewünscht ist: nur Operationen (OP-Schutz) oder volle Krankenversicherung, also auch Tierarztbehandlungen ohne OP. Neutral fragen, ohne zu empfehlen (angaben.tarifwunsch)",
+      "  • Was beim Tarif am wichtigsten ist: günstiger Preis, bestes Preis-Leistungs-Verhältnis oder bestmöglicher Schutz (angaben.tarifwunsch)",
+      "- Gesundheitsangaben zum Tier sachlich und ohne Wertung aufnehmen. Sag nichts dazu, ob oder wie sie den Versicherungsschutz beeinflussen: das klärt der Berater.",
+      "- Weiß der Lead etwas nicht oder möchte es nicht sagen: nicht nachbohren, als „offen“ festhalten und weitermachen. Wird es dem Lead zu viel, biete direkt den Termin an und lass den Rest offen.",
+      "- Erst wenn diese Punkte geklärt oder als offen festgehalten sind: qualifiziert=true und Termin anbieten.",
+      "- Versicherungssumme, Selbstbeteiligung und Preise fragst du nicht ab und nennst du nicht: das macht der Berater im Termin.",
+    ].join("\n"),
+    unterlagen: [
+      "Heimtierausweis bzw. Impfpass und Chipnummer",
+      "Befunde bzw. Tierarztrechnungen der letzten 24 Monate, falls das Tier behandelt wurde",
+      "bisherige Police mit Ablaufdatum, falls vorhanden",
+      "IBAN für den Beitragseinzug, falls direkt abgeschlossen werden soll",
+    ],
+  };
+}
+
 export function produktCheckliste(product: string | null | undefined): ProduktCheckliste | null {
   const p = product ?? "";
+  if (!/privatschutz/i.test(p) && TKV.test(p) && !/futter|halter/i.test(p)) return tierCheckliste();
   // Reine Tier-Produkte (TKV, Hundehalter) haben eigene Funnels; „Privatschutz“ greift immer
   if (!/privatschutz/i.test(p) && (!PRIVATSCHUTZ.test(p) || /tier|hund|katze|pferd/i.test(p))) return null;
   return {

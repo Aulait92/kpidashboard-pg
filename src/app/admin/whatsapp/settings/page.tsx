@@ -294,7 +294,7 @@ export default async function WhatsAppSettingsPage({
                 advisorEmail={c.agentConfig?.advisorEmail ?? ""}
                 hasIcs={!!c.agentConfig?.availabilityIcsUrlEnc}
                 outreachTemplateReady={usedPurposes.has("outreach")}
-                sequencesEnabled={c.agentConfig?.followUpSequencesEnabled ?? false}
+                sequencesEnabled={c.agentConfig?.followUpSequencesEnabled ?? true}
                 sequenceTemplatesMissing={(["followup", "followup_nudge", "followup_offer", "followup_noshow", "followup_last"] as const).filter((x) => !usedPurposes.has(x)).map((x) => PURPOSE_LABELS[x])}
               />
 
