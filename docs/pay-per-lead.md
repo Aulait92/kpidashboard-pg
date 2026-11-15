@@ -4,7 +4,10 @@
 1. **Eingang** `POST /api/leads/pool?token=<LEAD_WEBHOOK_TOKEN>&produkt=<slug oder Name>`
    - Perspective-Payload (profile/values) wird wie der frühere „Übersetzer“ übersetzt
      (`src/lib/ppl/perspective.ts`), flaches JSON wird direkt übernommen.
-   - Dublette: gleiche Telefonnummer oder E-Mail **im selben Produkt** in 30 Tagen.
+   - Dublette: gleiche Telefonnummer oder E-Mail in **irgendeinem Produkt** in 30 Tagen
+     (wie der Zap; `DUPLICATE_ACROSS_PRODUCTS`/`DUPLICATE_DAYS` in `engine.ts`). Verglichen
+     wird mit Pool-Leads, die ausgeliefert oder geparkt sind (auch die per Import übernommene
+     Airtable-Historie), nicht mit Dubletten oder ungültigen. Der Grund nennt das andere Produkt.
    - Ungültig: weder Telefon noch E-Mail.
 2. **Verteilung** (`src/lib/ppl/engine.ts`, `rules.ts`): d'Hondt nach Kontingent und
    Geliefertem, fällige Test-Bezüge zuerst. Filter je Bezug: PLZ, schwach (Beamte oder
@@ -20,7 +23,8 @@
    die nächste Bestellung. „Sonstiges“ oder Quote > 20 % (30 Tage) → Admin prüft.
 
 ## Unterschiede zum bisherigen Zap (bewusst)
-- Dubletten nur im selben Produkt (Zap: produktübergreifend).
+- Dubletten wie im Zap produktübergreifend (bis 15.11.2026 prüfte die App nur im selben
+  Produkt). Abschaltbar über `DUPLICATE_ACROSS_PRODUCTS = false` in `src/lib/ppl/engine.ts`.
 - `schwach_grenze`, `akzeptiert_beamte`, `nur_schwach`, `ausschluss_regeln` werden
   ausgewertet (im Zap ignoriert). Heinrich von Kleist (Grenze 450 €) bekommt dann auch
   Leads mit 450–700 € Beitrag.

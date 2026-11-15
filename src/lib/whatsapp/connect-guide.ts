@@ -72,9 +72,9 @@ const ACCOUNT_START: GuideStep[] = [
   {
     where: "360dialog",
     title: "Konto bei 360dialog anlegen",
-    text: "Sie sehen eine Seite von 360dialog, unserem WhatsApp-Anbieter, mit unserem Logo. Sie legen ein Konto an, am besten mit „Sign up“ per E-Mail und Passwort. Das ist kostenlos, die Nummer bleibt Ihre.",
+    text: "Sie landen direkt bei der Registrierung von 360dialog, unserem WhatsApp-Anbieter. Sie legen ein Konto mit E-Mail und Passwort an („Sign up“). Das ist kostenlos, die Nummer bleibt Ihre. Prüfen Sie oben auf der Seite, dass performancegrowth als Partner genannt ist.",
     pitfall:
-      "Nehmen Sie lieber nicht „Continue with Facebook“: Das kann in einem alten Konto eines anderen Anbieters landen (z. B. Superchat). Sehen Sie dort fremde Firmen oder Nummern, machen Sie nicht weiter und melden Sie sich bei uns. Sie haben schon ein eigenes Konto bei 360dialog? Dann melden Sie sich einfach an.",
+      "Nicht mit Facebook oder Google anmelden: Das kann in einem alten Konto eines anderen Anbieters landen (z. B. Superchat). Werden Sie nach einem Tarif oder einer Währung zum Bezahlen gefragt oder sehen Sie fremde Firmen oder Nummern, brechen Sie ab und melden Sie sich bei uns. Starten Sie immer über den Knopf in unserer App, nicht direkt auf der Website von 360dialog. Sie haben schon ein eigenes Konto bei 360dialog? Dann wählen Sie auf der Seite „Log in“.",
   },
   {
     where: "360dialog",

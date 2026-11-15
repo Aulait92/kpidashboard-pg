@@ -10,6 +10,9 @@ import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "./actions";
 import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
+import { airtableSyncOff } from "@/lib/airtable-switch";
+import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
+import { StornoEintragen, StornoZuruecknehmen } from "./storno-eintragen";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -25,10 +28,10 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   invalid: { label: "ungültig", tone: "danger" },
 };
 
-export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string }> }) {
+export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string }> }) {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
-  const { ansicht = "", zeitraum, produkt } = await searchParams;
+  const { ansicht = "", zeitraum, produkt, q, bezug } = await searchParams;
   const [subs, parkedCount, reviewCount] = await Promise.all([
     prisma.leadSubscription.findMany({ include: { customer: { select: { name: true } } }, orderBy: [{ productKey: "asc" }, { active: "desc" }, { createdAt: "asc" }] }),
     prisma.poolLead.count({ where: { status: "parked" } }),
@@ -40,6 +43,7 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
     { key: "auswertung", label: "Auswertung" },
     { key: "geparkt", label: "Geparkt", count: parkedCount },
     { key: "storno", label: "Storno prüfen", count: reviewCount },
+    { key: "geliefert", label: "Gelieferte Leads" },
     { key: "eingang", label: "Eingang" },
   ];
 
@@ -47,7 +51,14 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
     <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
       <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/ppl", label: "Pay-per-Lead" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Pay-per-Lead</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Pay-per-Lead</h1>
+          {airtableSyncOff() ? (
+            <Badge tone="warning">Airtable-Abgleich aus (AIRTABLE_SYNC_OFF)</Badge>
+          ) : (
+            <Badge tone="neutral">Airtable-Abgleich an</Badge>
+          )}
+        </div>
         <div className="flex gap-2">
         <Link href="/admin/ppl/import" className="inline-flex h-9 items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium">
           Aus Airtable übernehmen
@@ -77,6 +88,8 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
         <Parked subs={subs} />
       ) : ansicht === "storno" ? (
         <Review />
+      ) : ansicht === "geliefert" ? (
+        <Delivered subs={subs} q={q ?? ""} bezug={bezug ?? ""} />
       ) : ansicht === "eingang" ? (
         <Intake />
       ) : (
@@ -241,6 +254,67 @@ async function Review() {
           </li>
         ))}
       </ul>
+    </Card>
+  );
+}
+
+const STORNO_STATE: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
+  approved: { label: "storniert", tone: "danger" },
+  review: { label: "Storno in Prüfung", tone: "warning" },
+  rejected: { label: "Storno abgelehnt", tone: "neutral" },
+};
+
+/** Gelieferte Leads suchen, Storno von Hand eintragen (z. B. Heinrich von Kleist ohne Login) oder zurücknehmen. */
+async function Delivered({ subs, q, bezug }: { subs: Subs; q: string; bezug: string }) {
+  const leads = await searchDeliveredLeads({ q, subscriptionId: bezug || undefined });
+  return (
+    <Card>
+      <form className="flex flex-wrap items-center gap-2 border-b border-[color:var(--border)] px-5 py-3">
+        <input type="hidden" name="ansicht" value="geliefert" />
+        <input name="q" defaultValue={q} placeholder="Name, Telefon, E-Mail oder Lead-ID" className="h-9 w-72 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm" />
+        <select name="bezug" defaultValue={bezug} className="h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm">
+          <option value="">alle Bezüge</option>
+          {subs.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.customer.name} · {s.label ?? s.productKey}
+            </option>
+          ))}
+        </select>
+        <button className="h-9 rounded-[var(--radius-sm)] bg-[color:var(--foreground)] px-3 text-sm font-semibold text-white">Suchen</button>
+        <span className="text-xs text-[color:var(--muted)]">neueste 50</span>
+      </form>
+      {!leads.length ? (
+        <p className="p-5 text-sm text-[color:var(--muted)]">Keine gelieferten Leads gefunden.</p>
+      ) : (
+        <ul className="divide-y divide-[color:var(--border)]">
+          {leads.map((l) => {
+            const st = l.stornoState ? STORNO_STATE[l.stornoState] : null;
+            return (
+              <li key={l.id} className="space-y-1.5 px-5 py-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{l.name ?? "Lead"}</span>
+                  <span className="text-[color:var(--muted)]">
+                    {l.customer.name} · {l.subscription?.label ?? l.source}
+                  </span>
+                  {st ? <Badge tone={st.tone}>{st.label}</Badge> : null}
+                  {l.creditedAt ? <Badge tone="neutral">Gutschrift verrechnet</Badge> : null}
+                </div>
+                <div className="text-xs text-[color:var(--muted)]">
+                  {[l.phone ? `+${l.phone}` : null, l.email, l.deliveredAt ? `geliefert ${dt(l.deliveredAt)}` : null, l.revenues[0] ? eur(Number(l.revenues[0].amount)) : null, `ID ${l.id}`]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  {l.stornoReason ? <span className="ml-1">· Grund: {l.stornoReason}{l.stornoNote ? ` („${l.stornoNote}“)` : ""}</span> : null}
+                </div>
+                {l.stornoState === "approved" ? (
+                  !l.creditedAt ? <StornoZuruecknehmen leadId={l.id} /> : null
+                ) : (
+                  <StornoEintragen leadId={l.id} reasons={l.subscription?.stornoReasons ?? []} outsideWindow={l.outsideWindow} />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Card>
   );
 }

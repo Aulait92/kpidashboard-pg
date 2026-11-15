@@ -801,6 +801,8 @@ export type SyncResult = {
   newLeads: NewLead[];
   newStornos: NewStorno[];
   errors: string[];
+  /** true = per AIRTABLE_SYNC_OFF übersprungen (kein Abgleich gelaufen) */
+  skipped?: boolean;
 };
 
 export async function syncAirtable(): Promise<SyncResult> {

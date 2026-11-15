@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { encryptSecret } from "@/lib/encryption";
 import { deliver } from "@/lib/ppl/engine";
-import { decideStorno } from "@/lib/ppl/storno";
+import { adminRecordStorno, decideStorno, undoStorno } from "@/lib/ppl/storno";
 import { placeOrder } from "@/lib/ppl/orders";
 import { weekRange } from "@/lib/ppl/periods";
 
@@ -121,6 +121,25 @@ export async function decideStornoAction(fd: FormData): Promise<void> {
   revalidatePath("/admin/ppl", "layout");
 }
 
+export type AdminStornoState = { error?: string; message?: string };
+
+/** Admin → Pay-per-Lead → Gelieferte Leads: Storno direkt als anerkannt eintragen. */
+export async function adminStornoAction(_prev: AdminStornoState, fd: FormData): Promise<AdminStornoState> {
+  const s = await requireAdmin();
+  const r = await adminRecordStorno(String(fd.get("leadId") ?? ""), String(fd.get("reason") ?? ""), String(fd.get("note") ?? ""), { id: s.userId, email: s.email, role: s.role });
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/admin/ppl", "layout");
+  return { message: r.already ? "War schon storniert." : `Storno eingetragen${r.outsideWindow ? " (außerhalb des Storno-Fensters)" : ""}.` };
+}
+
+export async function undoStornoAction(_prev: AdminStornoState, fd: FormData): Promise<AdminStornoState> {
+  const s = await requireAdmin();
+  const r = await undoStorno(String(fd.get("leadId") ?? ""), { id: s.userId, email: s.email, role: s.role });
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/admin/ppl", "layout");
+  return { message: r.already ? "Kein anerkannter Storno." : "Storno zurückgenommen." };
+}
+
 export type ImportState = { error?: string; message?: string };
 
 export async function runImportAction(_prev: ImportState, fd: FormData): Promise<ImportState> {
@@ -131,7 +150,7 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     const history = fd.get("history") === "on" ? await importDuplicateHistory() : 0;
     await audit("ppl.subscription", { entity: "LeadSubscription", actor: { id: s.userId, email: s.email, role: s.role }, details: { import: rows.length, history } });
     revalidatePath("/admin/ppl", "layout");
-    const done = rows.filter((r) => r.action !== "übersprungen").length;
+    const done = rows.filter((r) => r.action !== "übersprungen" && r.action !== "unverändert").length;
     return { message: `${done} Bezüge übernommen${history ? `, ${history} Leads für den Dubletten-Abgleich` : ""}.` };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Import fehlgeschlagen." };

@@ -44,7 +44,7 @@ export async function requestStorno(
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: {
-      id: true, customerId: true, name: true, deliveredAt: true, stornoState: true, source: true,
+      id: true, customerId: true, name: true, deliveredAt: true, stornoState: true, source: true, status: true,
       subscription: { select: { id: true, label: true, stornoDays: true, stornoReasons: true, stornoAutoApprove: true } },
       revenues: { select: { id: true, amount: true }, take: 1 },
     },
@@ -74,7 +74,7 @@ export async function requestStorno(
     data: { stornoState: review ? "review" : "approved", stornoReason: reason, stornoNote: note.trim() || null, stornoRequestedAt: now },
   });
   if (!review) await approve(lead.id, now);
-  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, review, quota: Math.round(quota * 100) } });
+  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, review, quota: Math.round(quota * 100), prevStatus: lead.status } });
   if (review) {
     await sendToAdmins({
       title: `🔎 Storno prüfen: ${sub.label ?? lead.source ?? "Pay-per-Lead"}`,
@@ -105,6 +105,94 @@ export async function decideStorno(leadId: string, accept: boolean, now = new Da
   else await prisma.lead.update({ where: { id: leadId }, data: { stornoState: "rejected", stornoDecidedAt: now } });
   await audit(accept ? "storno.approve" : "storno.reject", { entity: "Lead", entityId: leadId, customerId: lead.customerId });
   return true;
+}
+
+export type AdminStornoOutcome =
+  | { ok: true; already: boolean; outsideWindow: boolean }
+  | { ok: false; error: string };
+
+/**
+ * Admin trägt einen Storno direkt als anerkannt ein (z. B. Heinrich von
+ * Kleist: kein Login, Stornos kommen per Abrechnungs-Mail). Wie ein
+ * anerkannter Kunden-Storno: Status „Storno“, Gutschrift, Umsatz storniert.
+ * Das Storno-Fenster gilt hier nicht (outsideWindow nur als Hinweis); ein
+ * Storno in Prüfung oder ein abgelehnter wird damit anerkannt. Idempotent.
+ */
+export async function adminRecordStorno(
+  leadId: string,
+  reason: string,
+  note: string,
+  actor: { id?: string | null; email?: string | null; role?: string | null },
+  now = new Date(),
+): Promise<AdminStornoOutcome> {
+  const grund = reason.trim().slice(0, 200);
+  if (!grund) return { ok: false, error: "Bitte einen Stornogrund angeben." };
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true, customerId: true, status: true, deliveredAt: true, stornoState: true, subscription: { select: { stornoDays: true } } },
+  });
+  if (!lead?.subscription) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
+  const outsideWindow = !stornoWindowOpen(lead.deliveredAt, lead.subscription.stornoDays, now);
+  if (lead.stornoState === "approved") return { ok: true, already: true, outsideWindow };
+  const rev = await prisma.revenue.findFirst({ where: { leadId: lead.id }, select: { id: true, amount: true } });
+  // Nur wenn noch nicht anerkannt (zweiter Klick / paralleler Aufruf ändert nichts)
+  const claimed = await prisma.$transaction(async (tx) => {
+    const r = await tx.lead.updateMany({
+      where: { id: lead.id, OR: [{ stornoState: null }, { stornoState: { not: "approved" } }] },
+      data: {
+        stornoState: "approved",
+        stornoReason: grund,
+        stornoNote: note.trim().slice(0, 1000) || null,
+        stornoRequestedAt: now,
+        stornoDecidedAt: now,
+        status: "Storno",
+        creditAmount: rev?.amount ?? 0,
+      },
+    });
+    if (r.count && rev) await tx.revenue.update({ where: { id: rev.id }, data: { cancelled: true } });
+    return r.count > 0;
+  });
+  if (!claimed) return { ok: true, already: true, outsideWindow };
+  await audit("storno.admin", {
+    entity: "Lead",
+    entityId: lead.id,
+    customerId: lead.customerId,
+    actor,
+    details: { reason: grund, note: note.trim() || null, outsideWindow, prevStatus: lead.status, prevStornoState: lead.stornoState },
+  });
+  return { ok: true, already: false, outsideWindow };
+}
+
+/**
+ * Anerkannten Storno zurücknehmen (Fehleintrag). Nur solange die Gutschrift
+ * auf keiner Rechnung steht. Status wird auf den Stand vor dem Storno gesetzt.
+ */
+export async function undoStorno(
+  leadId: string,
+  actor: { id?: string | null; email?: string | null; role?: string | null },
+): Promise<{ ok: true; already: boolean } | { ok: false; error: string }> {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, stornoState: true, creditedAt: true, subscriptionId: true } });
+  if (!lead?.subscriptionId) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
+  if (lead.stornoState !== "approved") return { ok: true, already: true };
+  if (lead.creditedAt) return { ok: false, error: "Die Gutschrift ist schon mit einer Bestellung verrechnet." };
+  const last = await prisma.auditLog.findFirst({
+    where: { entity: "Lead", entityId: lead.id, action: { in: ["storno.admin", "lead.storno"] } },
+    orderBy: { at: "desc" },
+    select: { details: true },
+  });
+  const prev = (last?.details as { prevStatus?: unknown } | null)?.prevStatus;
+  const status = typeof prev === "string" && prev && prev !== "Storno" ? prev : "Neuer Lead";
+  const done = await prisma.$transaction(async (tx) => {
+    const r = await tx.lead.updateMany({
+      where: { id: lead.id, stornoState: "approved", creditedAt: null },
+      data: { stornoState: null, stornoReason: null, stornoNote: null, stornoRequestedAt: null, stornoDecidedAt: null, creditAmount: null, status },
+    });
+    if (r.count) await tx.revenue.updateMany({ where: { leadId: lead.id, cancelled: true }, data: { cancelled: false } });
+    return r.count > 0;
+  });
+  if (!done) return { ok: true, already: true };
+  await audit("storno.undo", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { status } });
+  return { ok: true, already: false };
 }
 
 /** Offene Gutschriften eines Bezugs (noch auf keiner Rechnung). */
