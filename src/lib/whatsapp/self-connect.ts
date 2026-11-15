@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
-import { saveWhatsAppKey } from "@/lib/whatsapp/connect";
+import { retryAccountWebhook, saveWhatsAppKey } from "@/lib/whatsapp/connect";
 import { channelInfo, createChannelApiKey, partnerConfig } from "@/lib/whatsapp/dialog360-partner";
 import { submitTemplatesForCustomer } from "@/lib/whatsapp/template-submit";
 import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
@@ -48,9 +48,13 @@ export async function finishChannel(customerId: string, channelId: string, clien
   const key = await createChannelApiKey(cfg, channelId);
   if (key.kind === "retry") return { status: "pending" };
   if (key.kind === "error") return { status: "error", reason: `360dialog ${key.status || ""} ${key.message}`.trim() };
+  // Host, den 360dialog für diesen Key nennt (Diagnose, ohne Key): weicht er von waba-v2 ab, schlagen Webhook und Versand fehl.
+  if (key.address) console.info("[whatsapp connect] Key-Adresse:", key.address.replace(/[?#].*$/, "").slice(0, 80));
   const info = await channelInfo(cfg, channelId);
   const saved = await saveWhatsAppKey(customerId, key.apiKey, { phone: info.phone, dialog360ChannelId: channelId, dialog360ClientId: clientId });
-  if (!saved.ok) return { status: "error", reason: saved.reason === "noconfig" ? "APP_URL/WHATSAPP_WEBHOOK_SECRET fehlt" : "Webhook ließ sich nicht setzen" };
+  if (!saved.ok && saved.reason === "noconfig") return { status: "error", reason: "APP_URL/WHATSAPP_WEBHOOK_SECRET fehlt" };
+  // Key ist gespeichert, nur der Webhook klappt noch nicht (neue Nummer, Meta schaltet frei): der Cron versucht es weiter.
+  if (!saved.ok) return { status: "pending", phone: info.phone };
   if (info.name) await prisma.whatsAppAccount.update({ where: { customerId }, data: { displayName: info.name } }).catch(() => {});
   return { status: "connected", phone: info.phone };
 }
@@ -137,5 +141,24 @@ export async function retryPendingSelfConnect(now = new Date(), limit = 10): Pro
       await prisma.whatsAppAccount.update({ where: { id: acc.id }, data: { status: "pending" } });
     }
   }
-  return { tried: pending.length, connected, failed };
+  // Key schon da, Webhook noch nicht gesetzt (360dialog 404 direkt nach dem Verbinden): erneut versuchen.
+  const keyed = await prisma.whatsAppAccount.findMany({
+    where: {
+      dialog360ChannelId: { not: null },
+      apiKeyEnc: { not: null },
+      status: { in: ["pending", "error"] },
+      updatedAt: { lt: new Date(now.getTime() - 60_000), gt: new Date(now.getTime() - RETRY_WINDOW_MS) },
+    },
+    select: { id: true, customerId: true, phoneNumber: true, dialog360ChannelId: true },
+    orderBy: { updatedAt: "asc" },
+    take: limit,
+  });
+  for (const acc of keyed) {
+    if (await retryAccountWebhook(acc.id)) {
+      connected++;
+      await audit("whatsapp.self_connect", { entity: "Customer", entityId: acc.customerId, customerId: acc.customerId, details: { result: "connected", channelId: acc.dialog360ChannelId, via: "cron-webhook" }, actor: { role: "system" } });
+      await onConnected(acc.customerId, acc.phoneNumber);
+    }
+  }
+  return { tried: pending.length + keyed.length, connected, failed };
 }

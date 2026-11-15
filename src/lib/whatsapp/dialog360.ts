@@ -40,14 +40,18 @@ async function postMessage(apiKey: string, body: unknown): Promise<SendResult> {
  * Eingehende Nachrichten, Status und Coexistence-Echos gehen dann an `url`.
  */
 export async function setWebhook(apiKey: string, url: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}/v1/configs/webhook`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "D360-API-KEY": apiKey },
-    body: JSON.stringify({ url }),
-  });
-  if (!res.ok) {
-    throw new Error(`360dialog ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const headers = { "Content-Type": "application/json", "D360-API-KEY": apiKey };
+  const res = await fetch(`${BASE_URL}/v1/configs/webhook`, { method: "POST", headers, body: JSON.stringify({ url }) });
+  if (res.ok) return;
+  const first = `${res.status}: ${(await res.text()).slice(0, 300)}`;
+  // Ole, 15.11.2026: Bei einer frisch verbundenen Nummer kam 404 {"detail":"Not Found"}. Dann den dokumentierten
+  // Webhook auf Ebene des WhatsApp-Kontos (WABA) setzen; er gilt für Nummern ohne eigenen Webhook.
+  if (res.status === 404) {
+    const waba = await fetch(`${BASE_URL}/waba_webhook`, { method: "POST", headers, body: JSON.stringify({ url }) });
+    if (waba.ok) return;
+    throw new Error(`360dialog ${first}; waba_webhook ${waba.status}: ${(await waba.text()).slice(0, 200)}`);
   }
+  throw new Error(`360dialog ${first}`);
 }
 
 /** Freitext-Nachricht senden (nur innerhalb des 24-Stunden-Fensters erlaubt). */
