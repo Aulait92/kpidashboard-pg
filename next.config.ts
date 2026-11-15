@@ -8,7 +8,9 @@ const nextConfig: NextConfig = {
   // sie bleiben als externes node_modules-Require erhalten.
   serverExternalPackages: ["@ffmpeg-installer/ffmpeg"],
   // Bestandskunden-Import (Excel/CSV mit tausenden Zeilen) per Server Action
-  experimental: { serverActions: { bodySizeLimit: "16mb" } },
+  // proxyClientMaxBodySize: Die Middleware puffert Anfragen; Standard 10 MB schneidet größere Uploads still ab
+  // (Ole, 15.11.2026: Präsentationen mit 12 bis 15 MB kamen abgeschnitten an). Passend zu MAX_BYTES (pptx 100 MB).
+  experimental: { serverActions: { bodySizeLimit: "16mb" }, proxyClientMaxBodySize: "110mb" },
   // Kein „X-Powered-By: Next.js“ (verrät unnötig den Technik-Stack)
   poweredByHeader: false,
   // Marketing hat eigene Seiten (Ole, 14.11.2026): alte Vertriebs-Adressen weiterleiten (Push-Links, Lesezeichen)
