@@ -4,7 +4,7 @@ import { ArrowLeft, ClipboardCheck, FileDown, ListChecks, MessageSquareText, Tri
 import { PageHeader } from "@/components/buyer-shell";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
-import { abschnitte, leitfaden, offenePunkte, spartenVon, unterlagenFuer } from "@/lib/termin-vorbereitung";
+import { abschnitte, GRUNDREGELN, leitfaden, offenePunkte, spartenVon, unterlagenFuer } from "@/lib/termin-vorbereitung";
 import { loadVorbereitung } from "@/lib/termin-vorbereitung-server";
 import { PreparedButton } from "./prepared-button";
 
@@ -87,6 +87,12 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
 
       <Card className="mb-5" data-leitfaden>
         <CardHeader title="Gesprächsleitfaden" icon={MessageSquareText} />
+        <div className="mx-5 mt-3.5 rounded-[var(--radius-md)] bg-[color:var(--brand-soft)] px-4 py-3 text-sm" data-grundregeln>
+          <div className="mb-1 font-semibold text-[color:var(--brand-dark)]">Grundregeln</div>
+          <ul className="list-disc space-y-0.5 pl-4">
+            {GRUNDREGELN.map((g) => <li key={g}>{g}</li>)}
+          </ul>
+        </div>
         <ol className="space-y-3 px-5 py-3.5 text-sm">
           {lf.map((s, i) => (
             <li key={s.titel} className="flex gap-3">

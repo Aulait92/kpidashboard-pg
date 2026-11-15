@@ -50,4 +50,12 @@ describe("Terminvorbereitung", () => {
     const text = html.replace(/<style>[\s\S]*?<\/style>/, "");
     expect(text).not.toMatch(/[–—]/);
   });
+
+  it("Leitfaden: Ablauf mit erlaubtem Nein, Richtig-Frage, eine Empfehlung, Abschlussfrage, Widerruf; Grundregeln im PDF", () => {
+    const t = leitfaden("Privatschutz").flatMap((s) => s.punkte).join(" ");
+    for (const x of ["Ein Nein ist völlig in Ordnung", "Richtig?", "Eine klare Empfehlung", "Spricht etwas dagegen", "14 Tage Widerrufsrecht", "Kennen Sie jemanden"]) expect(t).toContain(x);
+    expect(t).not.toMatch(/Garantie|[–—]/);
+    expect(leitfaden("TKV-Katze").flatMap((s) => s.punkte).join(" ")).toContain("Vorerkrankungen sind nicht mitversichert");
+    expect(vorbereitungHtml(base)).toContain("Grundregeln");
+  });
 });
