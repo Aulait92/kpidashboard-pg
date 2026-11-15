@@ -281,16 +281,14 @@ async function deliverMail(
     ? await prisma.mailConnection.findMany({ where: { userId: { in: order }, customerId: lead.customerId, status: "ok" }, select: { userId: true, fromName: true, user: { select: { displayName: true, mailSignature: true } } } })
     : [];
   const conn = order.map((id) => conns.find((c) => c.userId === id)).find(Boolean);
-  const { logLeadHistory } = await import("@/lib/lead-history");
+  // Versand protokolliert im Verlauf des Leads (automatisch, Art „Kein WhatsApp“, lib/mail/kontakt-mail.ts)
+  const protokoll = { customerId: lead.customerId, leadId: lead.id, art: "kein_whatsapp" as const };
   if (conn) {
     const sender = conn.fromName?.trim() || conn.user.displayName?.trim() || advisor;
     const m = keinWhatsAppMail({ an, kontakt: who.kontakt, source: lead.source, advisor: sender, link, signatur: conn.user.mailSignature });
     const { sendViaPostfach } = await import("@/lib/mail/postfach");
-    const res = await sendViaPostfach(conn.userId, { to, subject: m.subject, text: m.text });
-    if (res.ok) {
-      await logLeadHistory(lead.id, "email", `E-Mail an ${to} (automatisch, kein WhatsApp): ${m.subject}\n\n${m.text}`, { customerId: lead.customerId, userId: null });
-      return { sent: true, via: "postfach" };
-    }
+    const res = await sendViaPostfach(conn.userId, { to, subject: m.subject, text: m.text }, protokoll);
+    if (res.ok) return { sent: true, via: "postfach" };
     console.error("[kein-whatsapp mail] Postfach", res.raw ?? res.error);
   }
 
@@ -303,16 +301,13 @@ async function deliverMail(
     lead.customer.agentConfig?.advisorEmail ||
     (await prisma.user.findFirst({ where: { customerId: lead.customerId, role: "BUYER" }, orderBy: { createdAt: "asc" }, select: { email: true } }))?.email ||
     undefined;
-  const { mailClient } = await import("@/lib/mail-guard");
-  const { error } = await mailClient(apiKey).emails.send({
-    from: `"${advisor.replace(/["<>]/g, "")}" <${fromAddress}>`,
-    to,
-    ...(replyTo ? { replyTo } : {}),
-    subject: m.subject,
-    text: m.text,
-  });
-  if (error) return { sent: false, reason: error.message ?? "send_failed" };
-  await logLeadHistory(lead.id, "email", `E-Mail an ${to} (automatisch, kein WhatsApp): ${m.subject}\n\n${m.text}`, { customerId: lead.customerId, userId: null });
+  const { sendeKontaktMailResend } = await import("@/lib/mail/kontakt-mail");
+  const res = await sendeKontaktMailResend(
+    apiKey,
+    { from: `"${advisor.replace(/["<>]/g, "")}" <${fromAddress}>`, to, ...(replyTo ? { replyTo } : {}), subject: m.subject, text: m.text },
+    protokoll,
+  );
+  if (!res.ok && !res.blocked) return { sent: false, reason: res.error };
   return { sent: true, via: "resend" };
 }
 

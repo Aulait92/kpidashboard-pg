@@ -39,6 +39,7 @@ const PUBLIC_PREFIXES = [
   "/api/health", // Healthcheck für Railway/Uptime (gibt nur ok true/false zurück)
   "/api/status", // Überwachung (DB + Hintergrund-Jobs), Details nur mit Token
   "/api/stripe/webhook", // Stripe-Webhooks (per Signatur geprüft)
+  "/api/resend/webhook", // Resend-Webhooks: Zustellstatus von E-Mails (per Signatur geprüft)
   "/api/meta/leadgen", // Meta-Webhook Lead Ads (Signatur mit META_APP_SECRET)
   "/api/leads/eingang", // Lead-Webhook (Zapier o. ä., per LEAD_WEBHOOK_TOKEN)
   "/api/leads/pool", // Pay-per-Lead-Eingang (Perspective/Funnels, per LEAD_WEBHOOK_TOKEN)

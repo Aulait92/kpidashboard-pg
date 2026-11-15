@@ -37,6 +37,7 @@ import { erstinfoZeile, hasErstinfoLink, hasErstinfoPdf, humanHandoverReply, kiH
 import { ersteFrageRegel } from "@/lib/whatsapp/erstanschreiben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, splitHealthAnswers } from "@/lib/gesundheitsdaten";
+import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -216,6 +217,8 @@ export function buildSystemPrompt(
     ersteFrage?: string | null;
     /** Kontext zur letzten Nachricht, z. B. Knopf „Erste Zeit passt“ mit Startzeit (lib/whatsapp/knopf.ts). */
     hint?: string | null;
+    /** Letzte automatische E-Mails an den Kontakt (lib/mail/kontakt-mail.ts letzteAutomatischeMails). */
+    recentMails?: { art: string; at: Date; subject: string }[];
   },
 ): string {
   // Bestandskunden werden immer gesiezt (wie Kampagnen und Empfehlungen)
@@ -275,6 +278,13 @@ export function buildSystemPrompt(
         ].join("\n")
       : "",
     `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
+    // Automatische E-Mails (Ole, 15.11.2026): darauf beziehen statt dasselbe noch einmal zu schicken
+    state.recentMails?.length
+      ? [
+          "Diese E-Mails hat der Kontakt in den letzten 14 Tagen automatisch bekommen (Art, Datum, Betreff). Du kannst dich darauf beziehen; schick oder kündige dieselbe Information nicht noch einmal an:",
+          ...state.recentMails.map((m) => `- ${m.art}, ${formatSlotDE(m.at.toISOString())} Uhr: „${m.subject}“`),
+        ].join("\n")
+      : "",
     state.summary?.trim() || state.points
       ? `Bisher erfasst (NICHT erneut erfragen):\n${[state.summary?.trim(), state.points].filter(Boolean).join("\n")}\nQualifiziert: ${state.qualified ? "ja: jetzt Termin vereinbaren" : "noch nicht"}`
       : "",
@@ -458,6 +468,14 @@ async function persistInternal(
 }
 
 /** Verarbeitet eine eingegangene Nachricht in einer Konversation mit dem KI-Bot. */
+/** Letzte automatische E-Mails an den Lead bzw. Bestandskunden dieses Chats (Kampagnen-Antwort ohne Lead). */
+async function recentMailsFor(c: { id: string; leadId: string | null }) {
+  const existingCustomerId = c.leadId
+    ? null
+    : ((await prisma.campaignRecipient.findFirst({ where: { conversationId: c.id }, orderBy: { sentAt: "desc" }, select: { existingCustomerId: true } }))?.existingCustomerId ?? null);
+  return letzteAutomatischeMails({ leadId: c.leadId, existingCustomerId });
+}
+
 export async function runBotTurn(conversationId: string, opts: { hint?: string | null } = {}): Promise<void> {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
@@ -577,6 +595,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     // Erstanschreiben v4 (Zweck gespeichert) stellte schon Frage 1; Antwort per Knopf = Antwort auf Frage 1
     ersteFrage: outbound.some((m) => m.purpose && isOutreachPurpose(m.purpose)) && !conversation.qualified ? ersteFrageRegel(lead?.source ?? null, advisorName) : null,
     hint: opts.hint ?? null,
+    recentMails: await recentMailsFor(conversation).catch(() => []),
     qualified: conversation.qualified,
     summary: conversation.qualificationSummary,
     points: qualificationLines(conversation.qualificationData) || undefined,

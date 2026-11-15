@@ -25,6 +25,7 @@ import { firstName, isOccasion as isReferralOccasion, OCCASIONS as REFERRAL_OCCA
 import type { ShareState } from "@/app/buyer/empfehlungen/actions";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { bestandVolumeAdmin } from "@/lib/bestand/volumen";
+import { bestandMailVerlauf, type KontaktMailEintrag } from "@/lib/mail/kontakt-mail";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
@@ -622,4 +623,14 @@ export async function referralCopyAction(existingCustomerId: string, occasion: s
     vertreter: advisorDisplayName(m.name),
   });
   return { ok: false, link: url, text };
+}
+
+/** E-Mail-Verlauf eines Bestandskunden (lib/mail/kontakt-mail.ts), nur lesen. */
+export async function bestandMailVerlaufAction(existingCustomerId: string): Promise<{ ok: true; mails: KontaktMailEintrag[] } | { ok: false; error: string }> {
+  const ctx = await getBuyerContext();
+  if (!ctx) return { ok: false, error: "Nicht angemeldet." };
+  if (ctx.teamRole !== "owner") return { ok: false, error: "Nur der Inhaber kann Bestandskunden verwalten." };
+  const e = await prisma.existingCustomer.findFirst({ where: { id: existingCustomerId, customerId: ctx.customerId }, select: { id: true } });
+  if (!e) return { ok: false, error: "Kontakt nicht gefunden." };
+  return { ok: true, mails: await bestandMailVerlauf(ctx.customerId, e.id) };
 }

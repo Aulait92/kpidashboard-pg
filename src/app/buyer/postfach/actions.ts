@@ -9,7 +9,7 @@ import { writableCustomerId } from "@/lib/buyer-write";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
 import { leadScope } from "@/lib/team";
-import { logLeadHistory, loadLeadHistory, type LeadHistoryEntry } from "@/lib/lead-history";
+import { loadLeadHistory, type LeadHistoryEntry } from "@/lib/lead-history";
 import { saveSmtp, sendViaPostfach } from "@/lib/mail/postfach";
 import { fuehreNachfassenAus } from "@/lib/mail/termin-erinnerung";
 import { nachfassenFuer } from "@/lib/mail/phasen";
@@ -160,10 +160,9 @@ export async function sendLeadMailAction(input: {
     const attachments = files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: Buffer.from(f.data) }));
     if (pdf) attachments.push({ fileName: pdf.fileName, contentType: "application/pdf", data: Buffer.from(pdf.data) });
     if (attachments.reduce((s, f) => s + f.data.length, 0) > 20 * 1024 * 1024) return { ok: false, error: "Anhänge zusammen höchstens 20 MB." };
-    const res = await sendViaPostfach(ctx.userId, { to, subject, text, attachments });
+    // Steht im Verlauf (auch ein Fehlversuch), protokolliert im Versandweg (lib/mail/kontakt-mail.ts)
+    const res = await sendViaPostfach(ctx.userId, { to, subject, text, attachments }, { customerId, leadId: lead.id, art: "manuell", userId: ctx.userId });
     if (!res.ok) return { ok: false, error: res.error };
-    const anh = attachments.length ? `\n\nAnhang: ${attachments.map((f) => f.fileName).join(", ")}` : "";
-    await logLeadHistory(lead.id, "email", `E-Mail an ${to}: ${subject}\n\n${text}${anh}`, { customerId, userId: ctx.userId });
     await recordUsage("action", "lead.email");
     const notes: string[] = [];
     // PDF im Kontakt unter Dokumente ablegen

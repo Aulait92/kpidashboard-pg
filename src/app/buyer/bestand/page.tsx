@@ -27,6 +27,8 @@ import { ConsentBadges, ConsentRowAction } from "@/components/bestand/consent-ac
 import { isExclusiveAgent } from "@/lib/bestand/befugnis";
 import { loadCustomerContracts } from "@/lib/vertraege";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
+import { bestandMitMails } from "@/lib/mail/kontakt-mail";
+import { BestandMailVerlauf } from "@/components/bestand/mail-verlauf";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Bestand | performancegrowth" };
@@ -146,6 +148,8 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
         take: 50,
       })
     : [];
+  // E-Mail-Verlauf: Knopf nur bei Kunden, an die schon E-Mails gingen
+  const withMails = await bestandMitMails(customerId, list.map((e) => e.id));
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -490,6 +494,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                       mailAllowed={consentRequestByMailAllowed(subjectOf(e, suppression), consentSettings)}
                       readOnly={ctx.preview}
                     />
+                    {withMails.has(e.id) ? <BestandMailVerlauf existingCustomerId={e.id} name={title} /> : null}
                     {c.empfehlungEnabled && !e.optOutAt ? <CustomerRowActions existingCustomerId={e.id} name={title} hasPhone={!!e.phone} readOnly={ctx.preview} /> : null}
                   </li>
                 );

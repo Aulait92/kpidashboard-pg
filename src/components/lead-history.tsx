@@ -11,6 +11,7 @@ import { addLeadNoteAction, deleteLeadNoteAction, setPolicyDoneAction } from "@/
 import type { LeadHistoryEntry, LeadHistoryKind } from "@/lib/lead-history";
 import { cn } from "@/lib/utils";
 import { oeffneLeadMail } from "@/components/lead-mail";
+import { MailEintrag } from "@/components/mail-verlauf";
 import { emitLeadAction } from "@/components/next-step";
 
 const ICON: Record<LeadHistoryKind, typeof Phone> = {
@@ -129,7 +130,11 @@ export function LeadHistory({
                   <Icon className="h-3.5 w-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className={cn("whitespace-pre-line break-words text-[15px]", !note && "text-[color:var(--foreground,#0f172a)]")}>{h.text}</p>
+                  {h.mail ? (
+                    <MailEintrag mail={h.mail} />
+                  ) : (
+                    <p className={cn("whitespace-pre-line break-words text-[15px]", !note && "text-[color:var(--foreground,#0f172a)]")}>{h.text}</p>
+                  )}
                   <p className="mt-0.5 text-xs text-[color:var(--muted)]">
                     {when(h.at)}
                     {h.author ? ` · ${h.author}` : ""}

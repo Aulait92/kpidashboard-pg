@@ -1362,6 +1362,16 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 
 ## E-Mails aus der App (eigenes Postfach)
 
+- **Alle E-Mails im Verlauf (seit 15.11.2026):** Jede E-Mail an einen Lead oder Bestandskunden steht im Verlauf des
+  Kontakts (**Lead öffnen → Notizen & Verlauf**), auch die automatischen: Terminbestätigung, Terminverschiebung,
+  Terminabsage, Terminerinnerung, „Kein WhatsApp“, Kampagnen-Mails und Einwilligungs-Mails im Bestand. Automatische
+  Mails tragen das Kennzeichen „automatisch“ und die Art. Darunter Betreff und Empfänger, der Text ist eingeklappt
+  (**Text anzeigen**). Status: versendet, zugestellt, nicht zustellbar, abgemeldet; ging eine Mail nicht raus, steht
+  „nicht versendet“ mit Grund. „Zugestellt“ kennt die App nur bei Mails über den neutralen Absender (Termin-Mails);
+  bei Mails aus Ihrem Postfach bleibt es bei „versendet“, bis eine Unzustellbar-Meldung oder Abmeldung zugeordnet ist.
+  Bestandskunden ohne Lead: in **Bestand → Kunden** der Knopf mit der Uhr neben dem Kunden (nur, wenn schon E-Mails
+  rausgingen). Der WhatsApp-Assistent kennt die letzten automatischen Mails (14 Tage) und schickt nichts doppelt.
+
 - **Einstellungen → E-Mail-Postfach**: Postfach verbinden – Microsoft (Outlook/365) per Anmeldung oder jeder andere
   Anbieter per SMTP (z. B. IONOS, Strato, T-Online, GMX; Gmail mit App-Passwort: smtp.gmail.com, Port 587).
   „Test senden“ schickt eine Probe-Mail an die eigene Adresse.

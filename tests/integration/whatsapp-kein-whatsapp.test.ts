@@ -19,13 +19,13 @@ vi.mock("@/lib/push", () => ({
     return { sent: 1, removed: 0, errors: [] };
   }),
 }));
-const mails: Array<{ userId: string; to: string; subject: string; text: string }> = [];
+const mails: Array<{ userId: string; to: string; subject: string; text: string; protokoll?: { art: string; leadId?: string | null } }> = [];
 vi.mock("@/lib/mail/postfach", async (orig) => {
   const real = await orig<typeof import("@/lib/mail/postfach")>();
   return {
     ...real,
-    sendViaPostfach: vi.fn(async (userId: string, m: { to: string; subject: string; text: string }) => {
-      mails.push({ userId, ...m });
+    sendViaPostfach: vi.fn(async (userId: string, m: { to: string; subject: string; text: string }, protokoll?: { art: string; leadId?: string | null }) => {
+      mails.push({ userId, ...m, protokoll });
       return { ok: true as const, from: "berater@test.local" };
     }),
   };
@@ -118,7 +118,8 @@ describe("Kein WhatsApp", () => {
     expect(mails[0].text.startsWith("Guten Tag,")).toBe(true);
     expect(mails[0].text).toMatch(/Antworten Sie gern|Termin wählen/);
     expect(mails[0].text).not.toMatch(/[–—]/);
-    expect(await prisma.leadHistory.count({ where: { leadId: lead.id, kind: "email" } })).toBe(1);
+    // Verlauf: protokolliert im Versandweg (lib/mail/kontakt-mail.ts, Test kontakt-mail-verlauf.test.ts)
+    expect(mails[0].protokoll).toMatchObject({ art: "kein_whatsapp", leadId: lead.id });
 
     // Ganz oben auf der Anrufliste, mit Grund
     const list = await getCallbackLeads(customerId);

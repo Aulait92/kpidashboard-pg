@@ -114,6 +114,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.unassignedLead.deleteMany({ where: { externalId: { in: externalIds } } }),
     prisma.leadSequence.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.leadHistory.deleteMany({ where: { leadId: { in: ids } } }),
+    // Ausgehende E-Mails (Betreff, Text, Empfänger) im Kontaktverlauf
+    prisma.contactMail.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.leadFile.deleteMany({ where: { leadId: { in: ids } } }),
     // Empfehlungen & Bewertungen: Antworttext, Link und Verweis auf den Empfehlenden
     prisma.reviewRequest.deleteMany({ where: { leadId: { in: ids } } }),

@@ -377,9 +377,9 @@ async function sendMail(leadId: string, customerId: string, subject: string, bod
   const sub = subject.trim().slice(0, 200);
   const text = body.trim().slice(0, 20000);
   if (!sub || !text) return { ok: false, error: "Betreff und Text ausfüllen." };
-  const res = await sendViaPostfach(ctx.userId, { to: lead.email, subject: sub, text });
+  // Steht im Verlauf (auch ein Fehlversuch), protokolliert im Versandweg (lib/mail/kontakt-mail.ts)
+  const res = await sendViaPostfach(ctx.userId, { to: lead.email, subject: sub, text }, { customerId, leadId, art: "manuell", userId: ctx.userId });
   if (!res.ok) return { ok: false, error: res.error };
-  await logLeadHistory(leadId, "email", `E-Mail an ${lead.email}: ${sub}\n\n${text}`, { customerId, userId: ctx.userId });
   await recordUsage("action", "lead.email");
   return { ok: true };
 }

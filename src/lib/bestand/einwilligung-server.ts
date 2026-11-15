@@ -137,6 +137,14 @@ export async function optOutExisting(
       data: { status: "skipped", reason: "abgemeldet" },
     }),
   ]);
+  // Kampagnen-Mail, über die abgemeldet wurde: Status „abgemeldet“ im Kontaktverlauf (lib/mail/kontakt-mail.ts)
+  if (opts.recipientId) {
+    const rec = await prisma.campaignRecipient.findUnique({ where: { id: opts.recipientId }, select: { mailMessageId: true } }).catch(() => null);
+    if (rec?.mailMessageId) {
+      const { setzeMailStatus } = await import("@/lib/mail/kontakt-mail");
+      await setzeMailStatus(rec.mailMessageId, "abgemeldet", { now }).catch(() => 0);
+    }
+  }
   const channels: Channel[] = opts.scope === "all" ? ["email", "whatsapp"] : ["email"];
   for (const channel of channels) {
     await logConsent({
@@ -301,7 +309,7 @@ export async function submitConsentForm(existingCustomerId: string, input: Conse
         "Viele Grüße",
         page.advisor,
       ].join("\n"),
-    });
+    }, page.id, "Bestätigungslink");
     doiSent = r.ok;
   }
   return { ok: true, doiSent, whatsapp: input.whatsapp };
@@ -332,15 +340,19 @@ export async function confirmDoi(token: string, meta: { ip: string | null; userA
  * Bestätigungs- und Einwilligungsmails: über das verbundene Postfach des Inhabers (Absender klar erkennbar),
  * sonst über unseren Versand im Namen des Vermittlers.
  */
-async function sendTransactionalMail(customerId: string, m: { to: string; subject: string; text: string }): Promise<{ ok: boolean }> {
+async function sendTransactionalMail(customerId: string, m: { to: string; subject: string; text: string }, existingCustomerId: string, label: string): Promise<{ ok: boolean }> {
+  // Steht im Verlauf des Bestandskunden (automatisch, Art „Einwilligung“, lib/mail/kontakt-mail.ts)
+  const protokoll = { customerId, existingCustomerId, art: "einwilligung" as const, label };
   const conn = await prisma.mailConnection.findFirst({ where: { customerId, status: "ok", user: { teamRole: "owner" } }, select: { userId: true } });
   if (conn) {
     const { sendViaPostfach } = await import("@/lib/mail/postfach");
-    const r = await sendViaPostfach(conn.userId, m);
+    const r = await sendViaPostfach(conn.userId, m, protokoll);
     if (r.ok) return { ok: true };
   }
   const { sendPlainMail } = await import("@/lib/email");
   const r = await sendPlainMail(m);
+  const { protokolliereMail } = await import("@/lib/mail/kontakt-mail");
+  await protokolliereMail(protokoll, { ...m, provider: "resend", ...(r.ok ? { status: "versendet" as const, messageId: r.id ?? null } : { status: "nicht_versendet" as const, reason: r.error }) });
   return { ok: r.ok };
 }
 
@@ -373,7 +385,7 @@ export async function requestConsent(existingCustomerId: string, customerId: str
     to: ec.email!,
     subject: "Darf ich Sie auf dem Laufenden halten?",
     text: `${anrede}\n\ndarf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen:\n${url}\n\nViele Grüße\n${advisor}`,
-  });
+  }, ec.id, "Anfrage");
   if (!r.ok) return { ok: false, error: "Die E-Mail konnte nicht gesendet werden. Bitte das Postfach prüfen." };
   await logConsent({ customerId, existingCustomerId: ec.id, channel: "email", action: "angefragt", source: "vermittler", text: "Einwilligungs-Abfrage per E-Mail gesendet", address: ec.email, actorUserId: opts.actorUserId, at: now });
   return { ok: true, url, text, mailed: true };

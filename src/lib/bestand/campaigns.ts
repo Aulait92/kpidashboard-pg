@@ -629,7 +629,7 @@ async function sendMailPart(
       html: mail.html,
       messageId,
       headers: { "List-Unsubscribe": `<${unsubscribePostUrl(r.id)}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
-    });
+    }, { customerId: c.customerId, existingCustomerId: ec.id, art: "bestandskampagne", label: c.name });
     let outcome: SendOutcome;
     if (result.ok) {
       outcome = "ok";
@@ -904,6 +904,11 @@ export async function recordEmailReply(
   if (kind === "auto") return { ok: true, kind, leadId: null, name };
   if (kind === "bounce") {
     await prisma.campaignRecipient.update({ where: { id: r.id }, data: { bouncedAt: r.bouncedAt ?? now, status: r.status === "replied" ? r.status : "failed", reason: "unzustellbar" } });
+    // Status im Kontaktverlauf (lib/mail/kontakt-mail.ts)
+    if (r.mailMessageId) {
+      const { setzeMailStatus } = await import("@/lib/mail/kontakt-mail");
+      await setzeMailStatus(r.mailMessageId, "nicht_zustellbar", { reason: "Unzustellbar-Meldung zugeordnet", now }).catch(() => 0);
+    }
     // Drosselung des Postfachs wie bei einer sofortigen Ablehnung
     const userId = r.campaign.senderUserId ?? r.campaign.createdById;
     const mb = userId ? await mailboxRun(userId, new Map()) : null;

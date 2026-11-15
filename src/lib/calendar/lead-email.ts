@@ -9,7 +9,7 @@
 
 import { a, anredeZeile, asAnsprache, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
-import { mailClient } from "@/lib/mail-guard";
+import { sendeKontaktMailResend, type MailArt } from "@/lib/mail/kontakt-mail";
 import {
   buildIcs,
   customerEventById,
@@ -19,6 +19,14 @@ import {
 import { prisma } from "@/lib/prisma";
 
 export type LeadEmailKind = "booked" | "rescheduled" | "cancelled" | "reminder";
+
+/** Art im Kontaktverlauf (lib/mail/kontakt-mail.ts). */
+const MAIL_ART: Record<LeadEmailKind, MailArt> = {
+  booked: "terminbestaetigung",
+  rescheduled: "terminverschiebung",
+  cancelled: "terminabsage",
+  reminder: "terminerinnerung",
+};
 
 const TZ = "Europe/Berlin";
 function when(d: Date): string {
@@ -117,7 +125,7 @@ async function sendLeadEmailInner(
   if (!appt?.conversationId) return { sent: false, reason: "no_conversation" };
   const conv = await prisma.conversation.findUnique({
     where: { id: appt.conversationId },
-    select: { contactEmail: true, contactName: true, contactPhone: true },
+    select: { contactEmail: true, contactName: true, contactPhone: true, leadId: true },
   });
   const to = conv?.contactEmail?.trim();
   if (!to) return { sent: false, reason: "no_email" };
@@ -161,8 +169,8 @@ async function sendLeadEmailInner(
     ev.advisorName,
   ].join("\n");
 
-  const resend = mailClient(apiKey);
-  const { error } = await resend.emails.send({
+  // Versand und Eintrag im Verlauf des Leads (automatisch, mit Zustellstatus)
+  const res = await sendeKontaktMailResend(apiKey, {
     from: `"${displayName}" <${fromAddress}>`,
     to,
     replyTo: appt.customer.agentConfig?.advisorEmail || (await ownerEmail(appt.customerId)),
@@ -185,10 +193,11 @@ async function sendLeadEmailInner(
           ],
         }
       : {}),
-  });
-  if (error) {
-    console.error("[lead email]", kind, error);
-    return { sent: false, reason: error.message ?? "send_failed" };
+  }, { customerId: appt.customerId, leadId: appt.leadId ?? conv?.leadId ?? null, art: MAIL_ART[kind] });
+  // Testumgebung (MAIL_NUR_AN): gilt wie bisher als erledigt, im Verlauf steht „nicht versendet“
+  if (!res.ok && !res.blocked) {
+    console.error("[lead email]", kind, res.error);
+    return { sent: false, reason: res.error };
   }
   return { sent: true };
 }

@@ -696,6 +696,8 @@ model Lead {
   sequences           LeadSequence[]
   history             LeadHistory[]
   files               LeadFile[]
+  // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
+  mails               ContactMail[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
   contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
@@ -2247,6 +2249,7 @@ model ExistingCustomer {
 
   contracts    ExistingContract[]
   recipients   CampaignRecipient[]
+  mails        ContactMail[]
   referralLink ReferralLink?
   consentLogs  BestandConsentLog[]
 
@@ -3320,9 +3323,47 @@ model LeadHistory {
   kind       String
   text       String
   userId     String?
-  createdAt  DateTime @default(now())
+  // E-Mail-Eintrag: Betreff, Text und Zustellstatus stehen in ContactMail
+  mailId     String?      @unique
+  mail       ContactMail? @relation(fields: [mailId], references: [id], onDelete: SetNull)
+  createdAt  DateTime     @default(now())
 
   @@index([leadId, createdAt])
+}
+
+// Ausgehende E-Mails an Leads und Bestandskunden (Ole, 15.11.2026): jede Mail (automatisch oder vom Vermittler)
+// steht im Verlauf des Kontakts, mit Art, Empfänger, Betreff, Text und Zustellstatus. Bestandskunden ohne Lead
+// haben nur existingCustomerId. Gelöscht mit Lead bzw. Bestandskunde (Art. 17, lib/erasure.ts).
+model ContactMail {
+  id                 String            @id @default(cuid())
+  customerId         String
+  leadId             String?
+  lead               Lead?             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  existingCustomerId String?
+  existingCustomer   ExistingCustomer? @relation(fields: [existingCustomerId], references: [id], onDelete: Cascade)
+  // terminbestaetigung | terminverschiebung | terminabsage | terminerinnerung | bestandskampagne | kein_whatsapp
+  // | bewertungsbitte | einwilligung | manuell (lib/mail/kontakt-mail.ts MAIL_ARTEN)
+  kind               String
+  // Zusatz zur Art, z. B. Name der Kampagne
+  label              String?
+  automatic          Boolean           @default(true)
+  recipient          String
+  subject            String
+  body               String
+  // versendet | zugestellt | nicht_zustellbar | abgemeldet | nicht_versendet
+  status             String            @default("versendet")
+  reason             String?
+  statusAt           DateTime?
+  // resend | postfach; Message-ID zum Abgleich mit Zustell-Ereignissen (Resend-Webhook, Bounce, Abmeldung)
+  provider           String?
+  providerMessageId  String?
+  userId             String?
+  createdAt          DateTime          @default(now())
+  history            LeadHistory?
+
+  @@index([leadId, createdAt])
+  @@index([existingCustomerId, createdAt])
+  @@index([providerMessageId])
 }
 
 // Dokumente am Lead (Ole, 13.11.2026): z. B. das Angebot, das der Vermittler geschickt hat,

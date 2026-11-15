@@ -9,6 +9,7 @@ import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
 import { decryptNullable, encryptNullable } from "@/lib/encryption";
 import { isBounceError } from "@/lib/bestand/mail-drossel";
+import { protokolliereMail, type MailProtokoll } from "@/lib/mail/kontakt-mail";
 
 export type MailProvider = "google" | "microsoft" | "smtp";
 export const PROVIDER_LABEL: Record<MailProvider, string> = { google: "Google (Gmail)", microsoft: "Microsoft (Outlook)", smtp: "SMTP" };
@@ -303,10 +304,31 @@ export function buildMime(from: { email: string; name: string | null }, m: Outgo
   return [...head, `Content-Type: multipart/mixed; boundary="${boundary}"`, "", ...parts].join("\r\n");
 }
 
-/** Über das Postfach des Logins senden. Fehler werden am Postfach vermerkt. */
-export async function sendViaPostfach(userId: string, m: OutgoingMail): Promise<{ ok: true; from: string } | { ok: false; error: string; raw?: string }> {
+/**
+ * Über das Postfach des Logins senden. Fehler werden am Postfach vermerkt. Mit `protokoll` steht die Mail (auch ein
+ * Fehlversuch) im Verlauf des Kontakts (lib/mail/kontakt-mail.ts).
+ */
+export async function sendViaPostfach(userId: string, m: OutgoingMail, protokoll?: MailProtokoll): Promise<{ ok: true; from: string } | { ok: false; error: string; raw?: string }> {
   // Keine Gedankenstriche in Mails an Leads und Bestandskunden (Bis-Striche zwischen Zahlen bleiben)
   m = { ...m, subject: ohneGedankenstriche(m.subject), text: ohneGedankenstriche(m.text), ...(m.html ? { html: ohneGedankenstriche(m.html) } : {}) };
+  const res = await sendViaPostfachInner(userId, m);
+  if (protokoll) {
+    const bounce = !res.ok && isBounceError(res.raw ?? res.error);
+    const anhang = m.attachments?.length ? `\n\nAnhang: ${m.attachments.map((f) => f.fileName).join(", ")}` : "";
+    await protokolliereMail(protokoll, {
+      to: m.to,
+      subject: m.subject,
+      text: `${m.text}${anhang}`,
+      provider: "postfach",
+      ...(res.ok
+        ? { status: "versendet", messageId: m.messageId ?? null }
+        : { status: bounce ? "nicht_zustellbar" : "nicht_versendet", reason: bounce ? `Adresse nicht zustellbar: ${(res.raw ?? res.error).slice(0, 200)}` : res.error.replace(/^Senden hat nicht geklappt: /, ""), messageId: m.messageId ?? null }),
+    });
+  }
+  return res;
+}
+
+async function sendViaPostfachInner(userId: string, m: OutgoingMail): Promise<{ ok: true; from: string } | { ok: false; error: string; raw?: string }> {
   const c = await prisma.mailConnection.findUnique({ where: { userId } });
   if (!c) return { ok: false, error: "Noch kein Postfach verbunden." };
   try {
