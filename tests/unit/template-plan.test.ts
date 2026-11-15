@@ -86,7 +86,7 @@ describe("Vorlagen-Plan", () => {
       "Hallo {{1}}, schade, dass es mit unserem Termin nicht geklappt hat. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin finden? Antworte einfach hier.",
     );
     expect(SUGGESTED_TEMPLATE_TEXT.followup_last).toContain("Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.");
-    // Widerspruchs-Knopf nur bei Werbung: Bestandskunden-Kampagnen und Bitte um Empfehlung
+    // Widerspruchs-Knopf nur bei Werbung: Bestandskunden-Kampagnen, Bitte um Empfehlung und Bewertungsbitte
     for (const p of Object.keys(TEMPLATE_BUTTONS) as NoticePurpose[]) expect([...CAMPAIGN_PURPOSES, ...EMPFEHLUNG_PURPOSES]).toContain(p);
   });
 
@@ -130,5 +130,43 @@ describe("Eingehende Knopf-Antworten", () => {
     expect(inboundBody({ type: "interactive", interactive: { button_reply: { title: "Ja" } } })).toBe("Ja");
     expect(inboundBody({ type: "text", text: { body: "Hallo" } })).toBe("Hallo");
     expect(inboundBody({ type: "image" })).toBe("[image]");
+  });
+});
+
+describe("Bewertungsbitte (Anwalts-Memo 15.11.2026): neutral, eigene Version, alte Fassung nicht mehr", () => {
+  it("v3 nur für review_request, Text neutral ohne „5 Sterne“, Abmeldeknopf, Meta-Regeln erfüllt", async () => {
+    const { metaTemplateProblems } = await import("@/lib/whatsapp/template-plan");
+    const { rankTemplates, templateVersionFor } = await import("@/lib/whatsapp/templates");
+    expect(templateNameFor("review_request", "v2", "sie")).toBe("pg_review_request_v3_sie");
+    expect(templateNameFor("outreach", "v2", "sie")).toBe("pg_outreach_v2_sie");
+    expect(templateVersionFor("review_request")).toBe("v3");
+    const body = templateBodyFor("review_request", "Max Muster", "sie");
+    expect(body).toContain("ehrliche Bewertung");
+    expect(body).not.toMatch(/sterne|zufrieden waren/i);
+    expect(TEMPLATE_BUTTONS.review_request).toEqual([OPT_OUT_BUTTON]);
+    for (const form of ["sie", "sie_ohne_name"] as const) {
+      const req = buildTemplateRequest("review_request", "Max Muster", "v2", form);
+      const text = (req.components[0] as { text: string }).text;
+      expect(metaTemplateProblems(text, exampleValuesFor("review_request", form)), text).toEqual([]);
+    }
+    // Ältere freigegebene Fassung (v2, „wenn Sie zufrieden waren“) wird nicht mehr gesendet; manuelle schon
+    const old = { name: "pg_review_request_v2_sie", body: "Guten Tag {{1}}, alt {{2}} Grüße" };
+    const cur = { name: "pg_review_request_v3_sie", body: "Guten Tag {{1}}, neu {{2}} Grüße" };
+    const manual = { name: "bewertung_handarbeit", body: "Guten Tag {{1}}, eigene {{2}} Grüße" };
+    const k = { firstName: "Julia", lastName: "Schneider", salutation: "Frau" };
+    expect(rankTemplates([old], "review_request", "sie", k)).toBeNull();
+    expect(rankTemplates([old, cur], "review_request", "sie", k)?.tpl.name).toBe("pg_review_request_v3_sie");
+    expect(rankTemplates([old, manual], "review_request", "sie", k)?.tpl.name).toBe("bewertung_handarbeit");
+    // Andere Zwecke dürfen bis zur Freigabe weiter die ältere Fassung nutzen
+    expect(rankTemplates([{ name: "pg_referral_request_v1_sie", body: "Guten Tag {{1}}, x {{2}} y" }], "referral_request", "sie", k)).not.toBeNull();
+  });
+  it("Einwilligung für Nachfrage und Bitten; Quellenhinweis für angezeigte Bewertungen", async () => {
+    const { feedbackAllowed, REVIEW_SOURCE_NOTE, DEFAULT_TEXTS } = await import("@/lib/empfehlung/shared");
+    expect(feedbackAllowed({ feedbackConsentAt: null, feedbackOptOutAt: null })).toBe(false);
+    expect(feedbackAllowed({ feedbackConsentAt: new Date(), feedbackOptOutAt: null })).toBe(true);
+    expect(feedbackAllowed({ feedbackConsentAt: new Date(), feedbackOptOutAt: new Date() })).toBe(false);
+    expect(REVIEW_SOURCE_NOTE).toBe("Bewertungen stammen von Google, keine eigene Echtheitsprüfung.");
+    expect(DEFAULT_TEXTS.review).toContain("STOPP");
+    expect(DEFAULT_TEXTS.review).toContain("ehrliche Bewertung");
   });
 });

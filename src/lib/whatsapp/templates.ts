@@ -67,6 +67,27 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
  */
 export const TEMPLATE_VERSION = "v3";
 
+/**
+ * Eigene Textversion je Zweck, wenn sich nur dieser Text ändert (wird neu eingereicht, ohne alle anderen Vorlagen
+ * neu einzureichen). Es gilt die höhere von TEMPLATE_VERSION und diesem Wert.
+ *   review_request v3 (15.11.2026): neutrale Bitte um eine ehrliche Bewertung mit Abmeldeknopf.
+ */
+export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = { review_request: "v3" };
+
+/**
+ * Zwecke, für die nur die aktuelle Fassung gesendet wird (ältere automatisch eingereichte Fassungen nicht mehr),
+ * weil der alte Text nicht mehr verwendet werden darf. Bis zur Freigabe wartet der Versand.
+ */
+export const CURRENT_VERSION_ONLY: readonly NoticePurpose[] = ["review_request"];
+
+const versionNo = (v: string) => Number(/^v(\d+)$/.exec(v)?.[1] ?? 0);
+
+/** Textversion eines Zwecks (z. B. „v3“). */
+export function templateVersionFor(purpose: NoticePurpose): string {
+  const own = PURPOSE_VERSION[purpose];
+  return own && versionNo(own) > versionNo(TEMPLATE_VERSION) ? own : TEMPLATE_VERSION;
+}
+
 /** Fassung einer Vorlage. Kampagnen und Empfehlungen gibt es nur gesiezt. */
 export type TemplateForm = "du" | "sie" | "sie_ohne_name";
 
@@ -144,9 +165,11 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   campaign_renewal: {
     sie: "hier ist [Berater], Ihr Versicherungsberater. Bei Ihrem Vertrag ({{2}}) steht bald ein guter Zeitpunkt an, um Beitrag und Leistung zu prüfen. Soll ich mir das kurz für Sie anschauen? Antworten Sie einfach hier.",
   },
-  // Alle bekommen dieselbe Nachricht: erst der direkte Draht, dann der Google-Link (kein Gating).
+  // Alle bekommen dieselbe Nachricht: erst der direkte Draht, dann die neutrale Bitte um eine ehrliche Bewertung
+  // (kein Gating, nie „5 Sterne“). Abmelden über den Knopf „Keine Nachrichten mehr“ (TEMPLATE_BUTTONS, wie bei
+  // Kampagnen, kein STOPP-Satz in Vorlagen). Version: PURPOSE_VERSION.review_request.
   review_request: {
-    sie: "ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn irgendetwas nicht gepasst hat, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Und wenn Sie zufrieden waren, freue ich mich sehr über eine kurze Google-Bewertung: {{2}} Herzliche Grüße, [Berater]",
+    sie: "ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn etwas nicht passt, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Außerdem freue ich mich über Ihre ehrliche Bewertung bei Google: {{2}} Herzliche Grüße, [Berater]",
   },
   referral_request: {
     sie: "hier ist [Berater]. Kennen Sie jemanden, dem ich genauso weiterhelfen kann? Über Ihren persönlichen Link kann die Person ganz einfach selbst Kontakt mit mir aufnehmen: {{2}} Vielen Dank für Ihr Vertrauen!",
@@ -272,10 +295,13 @@ export function rankTemplates<T extends Candidate>(
 ): { tpl: T; params: (rest: string[]) => string[] } | null {
   const an = effectiveAnsprache(purpose, ansprache);
   const hasName = !!anredeName("sie", kontakt);
-  const current = (n: string) => n.startsWith(`pg_${purpose}_${TEMPLATE_VERSION}`);
   // Unter älteren Fassungen die neueste bevorzugen (v2 vor v1)
   const older = (n: string) => 0.5 - Math.min(Number(/^pg_[a-z_]+?_v(\d+)(?:_|$)/.exec(n)?.[1] ?? 0), 99) / 1000;
+  const current = (n: string) => n.startsWith(`pg_${purpose}_${templateVersionFor(purpose)}`);
+  const strict = CURRENT_VERSION_ONLY.includes(purpose);
+  const olderAuto = (n: string) => new RegExp(`^pg_${purpose}_v\\d+`).test(n) && !current(n);
   const score = (t: T): number | null => {
+    if (strict && olderAuto(t.name)) return null; // alter Text darf nicht mehr raus
     const slot = nameSlotOf(t.body);
     if (slot === "anrede" && !hasName) return null; // bräuchte einen Nachnamen
     const sieWording = slot !== "vorname" || isSieTemplateName(t.name) || !hasDuVariant(purpose);
@@ -313,6 +339,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   campaign_birthday: [OPT_OUT_BUTTON],
   campaign_renewal: [OPT_OUT_BUTTON],
   referral_request: [OPT_OUT_BUTTON],
+  review_request: [OPT_OUT_BUTTON],
 };
 
 export class NoTemplateError extends Error {

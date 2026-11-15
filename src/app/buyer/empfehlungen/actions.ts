@@ -11,7 +11,7 @@ import { audit } from "@/lib/audit";
 import { canAccessLead } from "@/lib/team";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { bookEmpfehlung, cancelEmpfehlung, dismissHint } from "@/lib/empfehlung/module";
-import { canSendReferral, loadSettings, markResolved, settleReward, planReferralFollowUp, referralLinkFor, referralLinkOf, sendReferralLinkNow, sendTestMessage, setReviewOptOut } from "@/lib/empfehlung/requests";
+import { canSendReferral, loadSettings, markResolved, settleReward, planReferralFollowUp, referralLinkFor, referralLinkOf, sendReferralLinkNow, sendTestMessage, setFeedbackConsent, setReviewOptOut } from "@/lib/empfehlung/requests";
 import { TEXT_LABELS, clampDelay, clampFollowUp, DEFAULT_DELAYS, DEFAULT_OFFER_KIND, isOccasion, normalizeGoogleUrl, validateOffer, validateReward, validateText, type TextKey } from "@/lib/empfehlung/shared";
 
 async function ownerCtx() {
@@ -152,6 +152,17 @@ export async function setOptOutAction(leadId: string, off: boolean): Promise<{ o
   if (!ctx || ctx.preview) return { ok: false, error: "In der Vorschau nicht möglich." };
   if (!(await canAccessLead(ctx, leadId))) return { ok: false, error: "Kein Zugriff." };
   const r = await setReviewOptOut(ctx.customerId, leadId, off);
+  refresh();
+  return r;
+}
+
+/** Einwilligung in Nachfrage, Bewertungs- und Empfehlungsbitte bestätigen bzw. zurücknehmen (im Gespräch eingeholt). */
+export async function setFeedbackConsentAction(leadId: string, on: boolean): Promise<{ ok: boolean; error?: string }> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview) return { ok: false, error: "In der Vorschau nicht möglich." };
+  if (!(await canAccessLead(ctx, leadId))) return { ok: false, error: "Kein Zugriff." };
+  const r = await setFeedbackConsent(ctx.customerId, leadId, on);
+  if (r.ok) await audit("empfehlung.einwilligung", { entity: "Lead", entityId: leadId, customerId: ctx.customerId, details: { on } });
   refresh();
   return r;
 }

@@ -873,9 +873,20 @@ Bewertung im Einzelfall liegt bei Ihnen.**
 ## Empfehlungen & Bewertungen (Zusatzmodul)
 
 - **Was es macht:** Einige Tage nach jedem Abschluss (Standard 7) bekommt Ihr Kunde per WhatsApp in Ihrem Namen
-  eine Nachricht: erst der direkte Draht zu Ihnen („Wenn etwas nicht gepasst hat, antworten Sie mir direkt hier“),
-  dann die Bitte um eine Google-Bewertung mit Link. **Alle bekommen dieselbe Nachricht** – es gibt keine Vorab-Frage,
-  die darüber entscheidet, wer den Google-Link bekommt (das verbieten die Google-Richtlinien).
+  eine Nachricht: erst der direkte Draht zu Ihnen („Wenn etwas nicht passt, antworten Sie mir direkt hier“), dann die
+  neutrale Bitte „Außerdem freue ich mich über Ihre ehrliche Bewertung bei Google“ mit Link. **Alle bekommen dieselbe
+  Nachricht**, es gibt keine Vorab-Frage, die darüber entscheidet, wer den Google-Link bekommt (das verbieten die
+  Google-Richtlinien), und nie die Bitte um fünf Sterne oder nur um gute Bewertungen. Mit Knopf „Keine Nachrichten
+  mehr“ bzw. Hinweis auf STOPP. **Einmal je Person**, auch bei mehreren Verträgen.
+- **Nur mit Einwilligung (seit 15.11.2026):** Die Bitte um eine Bewertung oder Empfehlung ist Werbung und geht per
+  WhatsApp nur, wenn Ihr Kunde einverstanden ist. Fragen Sie im Abschlussgespräch, ob Sie nachfragen und um eine
+  ehrliche Bewertung und eine Empfehlung bitten dürfen, und bestätigen Sie das im Kontakt unter „Empfehlungen &
+  Bewertungen“ mit **„Kunde ist einverstanden“** (gespeichert mit Zeitpunkt und Wortlaut). Bis dahin wartet die
+  Nachfrage („Wartet auf Ihre Bestätigung der Einwilligung“), und die geplante Bitte um Empfehlung entfällt ohne
+  Einwilligung. Antwortet der Kunde „STOPP“ oder tippt „Keine Nachrichten mehr“, bekommt er keine Nachfrage und keine
+  Bitte mehr. Eigene Texte für die Nachfrage brauchen den Hinweis auf STOPP und dürfen nicht um fünf Sterne bitten.
+- **Bewertungen anzeigen:** Wo die App Google-Bewertungen zeigt, steht „Bewertungen stammen von Google, keine eigene
+  Echtheitsprüfung.“ Zeigen Sie Bewertungen auf Ihrer eigenen Website, nennen Sie dort ebenfalls die Herkunft.
 - **Antworten:** Die KI liest die Antwort. Kritik oder Beschwerde → sofort Push und die Aufgabe „Kunde unzufrieden –
   bitte heute anrufen“ mit Zitat in „Heute“; die Bitte um Empfehlung geht an diesen Kunden nicht raus. Lob → Dank
   mit dem persönlichen Empfehlungslink (abschaltbar unter „Der richtige Moment“; ohne zweiten Google-Link). Rückfragen landen als „Braucht dich“ im Chat. Geklärte Kritik markieren Sie in

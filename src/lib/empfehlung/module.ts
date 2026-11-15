@@ -319,11 +319,11 @@ export const ANNOUNCEMENT = {
   subject: "Neu: Empfehlungen & Google-Bewertungen automatisch",
   paragraphs: [
     "ab sofort gibt es im Kundenbereich das Zusatzmodul „Empfehlungen & Bewertungen“.",
-    "Nach jedem Abschluss fragt die App Ihren Kunden per WhatsApp in Ihrem Namen, ob alles gepasst hat, mit direktem Draht zu Ihnen, und bittet um eine Google-Bewertung. Einige Wochen später kommt die Bitte um eine Empfehlung: Die empfohlene Person trägt sich selbst ein und landet als neuer Lead bei Ihnen.",
+    "Nach jedem Abschluss fragt die App Ihren Kunden mit seinem Einverständnis per WhatsApp in Ihrem Namen, ob alles gepasst hat, mit direktem Draht zu Ihnen, und bittet neutral um eine ehrliche Google-Bewertung. Einige Wochen später kommt die Bitte um eine Empfehlung: Die empfohlene Person trägt sich selbst ein und landet als neuer Lead bei Ihnen.",
     "Kritische Antworten landen sofort als Aufgabe bei Ihnen, damit Sie sie persönlich klären können.",
     `Sie können das Modul ${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen, danach ${eurNet(PRICE_LIST.empfehlungModuleMonthly)} im Monat, monatlich kündbar.`,
   ],
-  inApp: `Neu: Empfehlungen & Bewertungen. Nach jedem Abschluss automatisch um eine Google-Bewertung und eine Empfehlung bitten. ${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen.`,
+  inApp: `Neu: Empfehlungen & Bewertungen. Nach jedem Abschluss mit Einverständnis des Kunden um eine ehrliche Google-Bewertung und eine Empfehlung bitten. ${PRICE_LIST.empfehlungTrialDays} Tage kostenlos testen.`,
 } as const;
 
 /** Einmalige Ankündigung an alle aktiven Kunden ohne Modul (nur per Knopf, nie automatisch). */

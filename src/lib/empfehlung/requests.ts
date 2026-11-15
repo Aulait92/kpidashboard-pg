@@ -41,6 +41,9 @@ import {
   rewardSentence,
   rewardTaskNote,
   rewardWithinLimit,
+  FEEDBACK_CONSENT_TEXT,
+  feedbackAllowed,
+  validateText,
   sendingWindow,
   statusUpdateLine,
   statusUpdateText,
@@ -96,7 +99,8 @@ export type Settings = {
 export async function loadSettings(customerId: string): Promise<Settings> {
   const s = await prisma.reviewSettings.findUnique({ where: { customerId } });
   const custom: Partial<Record<TextKey, string>> = {};
-  if (s?.reviewText) custom.review = s.reviewText;
+  // Älterer eigener Text, der heute nicht mehr gilt (z. B. ohne STOPP oder „wenn Sie zufrieden waren“): Standardtext
+  if (s?.reviewText && !validateText("review", s.reviewText)) custom.review = s.reviewText;
   if (s?.thanksText) custom.thanks = s.thanksText;
   if (s?.unhappyText) custom.unhappy = s.unhappyText;
   if (s?.referralText) custom.referral = s.referralText;
@@ -246,14 +250,17 @@ export async function scheduleReviewRequests(now = new Date()): Promise<number> 
     const since = new Date(Math.max(c.empfehlungSince?.getTime() ?? now.getTime(), now.getTime() - MAX_AGE_DAYS * DAY_MS));
     const leads = await prisma.lead.findMany({
       where: { customerId: c.id, status: CLOSED, erasedAt: null, phone: { not: null }, closedAt: { gte: since }, reviewRequest: null },
-      select: { id: true, closedAt: true },
+      select: { id: true, closedAt: true, phone: true },
       take: 200,
     });
     for (const l of leads) {
       const closedAt = l.closedAt ?? now;
+      // Einmal je Person: Wurde dieselbe Nummer (anderer Kontakt, z. B. zweiter Vertrag) schon angefragt, nicht noch einmal
+      const asked = await prisma.reviewRequest.count({ where: { customerId: c.id, leadId: { not: l.id }, reviewSentAt: { not: null }, lead: { phone: l.phone } } });
       try {
         await prisma.reviewRequest.create({
           data: {
+            ...(asked ? { status: "skipped", note: "Schon einmal um eine Bewertung gebeten", referralStatus: "skipped" } : {}),
             customerId: c.id,
             leadId: l.id,
             token: newToken(),
@@ -276,7 +283,7 @@ export async function sendDueReviews(now = new Date()): Promise<{ sent: number; 
   if (!sendingWindow(now)) return out;
   const due = await prisma.reviewRequest.findMany({
     where: { status: "scheduled", reviewDueAt: { lte: now }, customer: { empfehlungEnabled: true } },
-    include: { lead: { select: { id: true, name: true, phone: true, status: true, closedAt: true, erasedAt: true } } },
+    include: { lead: { select: { id: true, name: true, phone: true, status: true, closedAt: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true } } },
     orderBy: { reviewDueAt: "asc" },
     take: PER_RUN,
   });
@@ -285,6 +292,11 @@ export async function sendDueReviews(now = new Date()): Promise<{ sent: number; 
     const settings = await loadSettings(r.customerId);
     if (!settings.active) continue;
     const lead = r.lead;
+    if (lead.feedbackOptOutAt) {
+      await prisma.reviewRequest.update({ where: { id: r.id }, data: { status: "off", note: "Möchte keine Nachrichten mehr (STOPP)", referralStatus: "skipped" } });
+      out.skipped++;
+      continue;
+    }
     if (lead.erasedAt || !lead.phone || lead.status !== CLOSED) {
       await prisma.reviewRequest.update({ where: { id: r.id }, data: { status: "skipped", note: lead.status !== CLOSED ? "Kein Abschluss mehr" : "Keine Handynummer" } });
       out.skipped++;
@@ -293,6 +305,12 @@ export async function sendDueReviews(now = new Date()): Promise<{ sent: number; 
     if (lead.closedAt && now.getTime() - lead.closedAt.getTime() > (MAX_AGE_DAYS + 14) * DAY_MS) {
       await prisma.reviewRequest.update({ where: { id: r.id }, data: { status: "skipped", note: "Abschluss zu lange her" } });
       out.skipped++;
+      continue;
+    }
+    // Bewertungsbitte ist Werbung: per WhatsApp nur mit Einwilligung (im Kontakt bestätigt). Bis dahin wartet sie.
+    if (!feedbackAllowed(lead)) {
+      await prisma.reviewRequest.update({ where: { id: r.id }, data: { note: NO_FEEDBACK_CONSENT, reviewDueAt: new Date(now.getTime() + DAY_MS) } });
+      out.waiting++;
       continue;
     }
     if (!settings.googleReviewUrl) {
@@ -342,7 +360,7 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
   if (!sendingWindow(now)) return out;
   const due = await prisma.reviewRequest.findMany({
     where: { referralStatus: "waiting", referralDueAt: { lte: now }, status: { in: ["sent", "answered", "off", "skipped"] }, customer: { empfehlungEnabled: true } },
-    include: { lead: { select: { id: true, name: true, phone: true, status: true, followUpNote: true, erasedAt: true } } },
+    include: { lead: { select: { id: true, name: true, phone: true, status: true, followUpNote: true, erasedAt: true, feedbackConsentAt: true, feedbackOptOutAt: true } } },
     orderBy: { referralDueAt: "asc" },
     take: PER_RUN,
   });
@@ -350,7 +368,12 @@ export async function sendDueReferrals(now = new Date()): Promise<{ sent: number
   for (const r of due) {
     const settings = await loadSettings(r.customerId);
     if (!settings.active) continue;
-    const block = r.status === "skipped" ? { skip: r.note ?? "Nachfrage übersprungen" } : referralBlocker(r, r.lead);
+    const block =
+      r.status === "skipped"
+        ? { skip: r.note ?? "Nachfrage übersprungen" }
+        : !feedbackAllowed(r.lead)
+          ? { skip: r.lead.feedbackOptOutAt ? "Möchte keine Nachrichten mehr (STOPP)" : "Keine Einwilligung für die Bitte um Empfehlung" }
+          : referralBlocker(r, r.lead);
     if (block && "skip" in block) {
       await prisma.reviewRequest.update({ where: { id: r.id }, data: { referralStatus: "skipped", note: block.skip } });
       out.skipped++;
@@ -865,14 +888,25 @@ export async function handleReviewReply(conversationId: string, from: string, bo
   if (!conv) return { handled: false };
   const text = (body ?? "").trim();
 
-  // „Keine Nachrichten mehr“ nach der Bitte um Empfehlung
+  // „STOPP“ bzw. „Keine Nachrichten mehr“ nach der Nachfrage oder der Bitte um Empfehlung: dauerhaft keine
+  // Nachfrage, Bewertungs- oder Empfehlungsbitte mehr (Lead.feedbackOptOutAt), geplante Bitte entfällt
   if (text && STOP.test(text)) {
+    const since = new Date(now.getTime() - 30 * DAY_MS);
     const ref = await prisma.reviewRequest.findFirst({
-      where: { customerId: conv.customerId, referralStatus: "sent", referralSentAt: { gte: new Date(now.getTime() - 30 * DAY_MS) }, lead: { phone: from } },
-      select: { id: true },
+      where: {
+        customerId: conv.customerId,
+        lead: { phone: from },
+        OR: [{ referralStatus: "sent", referralSentAt: { gte: since } }, { status: { in: ["sent", "answered"] }, reviewSentAt: { gte: since } }],
+      },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true, leadId: true, referralStatus: true },
     });
     if (ref) {
-      await prisma.reviewRequest.update({ where: { id: ref.id }, data: { note: "Möchte keine Nachrichten mehr" } });
+      await prisma.reviewRequest.update({
+        where: { id: ref.id },
+        data: { note: "Möchte keine Nachrichten mehr", ...(ref.referralStatus === "waiting" ? { referralStatus: "skipped" } : {}) },
+      });
+      await prisma.lead.updateMany({ where: { customerId: conv.customerId, phone: from, feedbackOptOutAt: null }, data: { feedbackOptOutAt: now } });
       await prisma.conversation.update({ where: { id: conversationId }, data: { botActive: false } });
       const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
       await sendWhatsAppMessage({ customerId: conv.customerId, to: from, body: "Alles klar, wir schreiben Ihnen hier keine weiteren Nachrichten.", sentBy: "system" }).catch(() => {});
@@ -946,6 +980,27 @@ export async function handleReviewReply(conversationId: string, from: string, bo
 }
 
 // ─── Vertreter-Aktionen ─────────────────────────────────────────────────────
+
+/** Hinweis, solange die Einwilligung für die Nachfrage fehlt. */
+export const NO_FEEDBACK_CONSENT = "Wartet auf Ihre Bestätigung der Einwilligung (im Kontakt)";
+
+/**
+ * Einwilligung in Nachfrage, Bewertungs- und Empfehlungsbitte je Kontakt bestätigen (bzw. zurücknehmen). Der Vermittler
+ * hat sie im Gespräch eingeholt; gespeichert mit Zeitpunkt und Wortlaut. Eine wartende Nachfrage wird sofort fällig.
+ */
+export async function setFeedbackConsent(customerId: string, leadId: string, on: boolean, now = new Date()): Promise<{ ok: boolean; error?: string }> {
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId, erasedAt: null }, select: { id: true, feedbackOptOutAt: true } });
+  if (!lead) return { ok: false, error: "Kontakt nicht gefunden." };
+  if (on && lead.feedbackOptOutAt) return { ok: false, error: "Der Kunde hat mit STOPP widersprochen. Bitte nicht erneut anfragen." };
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: on ? { feedbackConsentAt: now, feedbackConsentSource: "vermittler", feedbackConsentText: FEEDBACK_CONSENT_TEXT } : { feedbackConsentAt: null, feedbackConsentSource: null, feedbackConsentText: null },
+  });
+  if (on) {
+    await prisma.reviewRequest.updateMany({ where: { leadId: lead.id, status: "scheduled", note: NO_FEEDBACK_CONSENT }, data: { note: null, reviewDueAt: now } });
+  }
+  return { ok: true };
+}
 
 /** „Nicht anfragen“ je Kontakt (vom Vertreter, nie automatisch). on = false → wieder anfragen. */
 export async function setReviewOptOut(customerId: string, leadId: string, off: boolean, now = new Date()): Promise<{ ok: boolean; error?: string }> {

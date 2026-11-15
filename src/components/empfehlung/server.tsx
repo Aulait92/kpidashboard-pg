@@ -10,8 +10,8 @@ import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
 import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
 import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
-import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
-import { ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
+import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, FEEDBACK_CONSENT_TEXT, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { FeedbackConsentToggle, ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
@@ -19,7 +19,17 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: string; team: TeamCtx & { preview?: boolean }; readOnly: boolean }) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { status: true, source: true, closedAt: true, followUpNote: true, phone: true, reviewRequest: true, ownReferralLink: { select: { lastSentAt: true, _count: { select: { referredLeads: true } } } } },
+    select: {
+      status: true,
+      source: true,
+      closedAt: true,
+      followUpNote: true,
+      phone: true,
+      feedbackConsentAt: true,
+      feedbackOptOutAt: true,
+      reviewRequest: true,
+      ownReferralLink: { select: { lastSentAt: true, _count: { select: { referredLeads: true } } } },
+    },
   });
   if (!lead) return null;
   const isClosed = lead.status === "Abschluss";
@@ -73,20 +83,33 @@ export async function EmpfehlungLeadCard({ leadId, team, readOnly }: { leadId: s
             : null;
   const referred = lead.ownReferralLink?._count.referredLeads ?? 0;
   const canOptOut = isClosed && (!r || r.status === "scheduled" || r.status === "off");
+  // Einwilligung in Nachfrage und Bitten: bestätigen, solange noch nichts gesendet ist (nach STOPP nicht mehr)
+  const canConsent = isClosed && !!lead.phone && !lead.feedbackOptOutAt && (!r || r.status === "scheduled" || r.status === "off");
 
   return (
     <Card className="mb-5" data-empfehlung-lead>
       <CardHeader title="Empfehlungen & Bewertungen" icon={MessageSquareHeart} />
       <div className="space-y-3 px-5 pb-5 pt-4 text-sm">
         {status ? <p>{status}</p> : null}
+        {lead.feedbackOptOutAt ? (
+          <p className="text-[color:var(--muted)]">Der Kunde hat mit STOPP widersprochen: keine Nachfrage, Bewertungs- oder Empfehlungsbitte mehr.</p>
+        ) : isClosed && !lead.feedbackConsentAt ? (
+          <p className="rounded-[var(--radius-md)] bg-amber-50 px-3 py-2 text-amber-900" data-feedback-consent-missing>
+            Die Nachfrage mit Bitte um eine Google-Bewertung und später um eine Empfehlung geht nur mit Einwilligung raus. Fragen Sie im Gespräch, ob das in
+            Ordnung ist, und bestätigen Sie es hier.
+          </p>
+        ) : null}
         {referral ? <p className="text-[color:var(--muted)]">{referral}</p> : null}
         {referred ? <p className="font-medium text-emerald-700">{referred === 1 ? "1 Empfehlung" : `${referred} Empfehlungen`} über den Link dieses Kunden.</p> : null}
         <div className="flex flex-wrap items-start gap-3">
+          {canConsent ? <FeedbackConsentToggle leadId={leadId} consent={!!lead.feedbackConsentAt} text={FEEDBACK_CONSENT_TEXT} readOnly={readOnly} /> : null}
           {canOptOut ? <OptOutToggle leadId={leadId} off={r?.status === "off"} readOnly={readOnly} /> : null}
           <ReferralLinkButton leadId={leadId} readOnly={readOnly} />
         </div>
         {canOptOut ? (
-          <p className="text-sm text-[color:var(--muted)]">„Nicht anfragen“ z. B. bei Kunden, die keine Nachrichten möchten. Alle anderen bekommen dieselbe Nachricht mit Google-Link.</p>
+          <p className="text-sm text-[color:var(--muted)]">
+            „Nicht anfragen“ z. B. bei Kunden, die keine Nachrichten möchten. Alle mit Einwilligung bekommen dieselbe neutrale Nachricht mit Google-Link, einmal je Person.
+          </p>
         ) : null}
       </div>
     </Card>
@@ -122,7 +145,7 @@ export async function EmpfehlungHeuteHint({ ctx }: { ctx: { customerId: string; 
       <ModuleHint
         hintKey={HINTS.heute}
         title={`${closings} zufriedene Kunden könnten Sie weiterempfehlen`}
-        text="Mit „Empfehlungen & Bewertungen“ fragt die App nach jedem Abschluss automatisch nach einer Google-Bewertung und später nach einer Empfehlung."
+        text="Mit „Empfehlungen & Bewertungen“ fragt die App nach jedem Abschluss mit Einverständnis des Kunden nach einer ehrlichen Google-Bewertung und später nach einer Empfehlung."
         cta={info.trialAvailable ? "30 Tage kostenlos testen" : "Modul ansehen"}
       />
     );
@@ -134,7 +157,7 @@ export async function EmpfehlungHeuteHint({ ctx }: { ctx: { customerId: string; 
     <ModuleHint
       hintKey={HINTS.neu}
       title="Neu: Empfehlungen & Bewertungen"
-      text="Nach jedem Abschluss automatisch um eine Google-Bewertung und eine Empfehlung bitten. Kritik landet zuerst bei Ihnen."
+      text="Nach jedem Abschluss mit Einverständnis des Kunden um eine ehrliche Google-Bewertung und eine Empfehlung bitten. Kritik landet zuerst bei Ihnen."
       cta={info.trialAvailable ? "30 Tage kostenlos testen" : "Modul ansehen"}
     />
   );

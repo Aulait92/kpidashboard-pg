@@ -13,6 +13,7 @@
 import {
   TEMPLATE_BUTTONS,
   TEMPLATE_VERSION,
+  templateVersionFor,
   fillNames,
   formsFor,
   hasDuVariant,
@@ -67,6 +68,8 @@ export function plannedTemplates(purposes: NoticePurpose[]): { purpose: NoticePu
  * pg_outreach_v2_sie_ohne_name (Meta: Kleinbuchstaben, Ziffern, Unterstrich).
  */
 export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSION, form: TemplateForm | Ansprache = "du"): string {
+  // Allgemeine Version → ggf. eigene Version des Zwecks (PURPOSE_VERSION, z. B. review_request v3)
+  if (version === TEMPLATE_VERSION) version = templateVersionFor(purpose);
   const f = formOf(purpose, form);
   const suffix = f === "du" ? "" : `_${f}`;
   return `pg_${purpose}_${version}${suffix}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");

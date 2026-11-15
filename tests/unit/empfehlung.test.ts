@@ -70,7 +70,12 @@ describe("Empfehlungen & Bewertungen – Regeln", () => {
 
   it("eigene Texte: Link-Platzhalter Pflicht, keine Prämien", () => {
     expect(validateText("review", "Hallo {Vorname}")).toMatch(/\{Link\}/);
-    expect(validateText("review", "Hallo {Vorname}, hier: {Link}")).toBeNull();
+    expect(validateText("review", "Hallo {Vorname}, hier: {Link}")).toMatch(/STOPP/);
+    expect(validateText("review", "Hallo {Vorname}, hier: {Link} Keine Nachrichten mehr? Antworten Sie mit STOPP.")).toBeNull();
+    // Kein Review-Gating: nie um fünf Sterne oder nur um gute Bewertungen bitten
+    expect(validateText("review", "Hallo {Vorname}, über 5 Sterne freue ich mich: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
+    expect(validateText("review", "Hallo {Vorname}, wenn Sie zufrieden waren, gern eine Bewertung: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
+    expect(validateText("review", "Hallo {Vorname}, über eine positive Bewertung freue ich mich: {Link} STOPP")).toMatch(/ehrliche Bewertung/);
     expect(validateText("referral", "Empfehlen Sie mich: {empfehlungslink}")).toBeNull();
     expect(validateText("referral", "Für jede Empfehlung gibt es einen Gutschein: {Link}")).toMatch(/Prämien/);
     expect(validateText("thanks", "")).toBeNull();

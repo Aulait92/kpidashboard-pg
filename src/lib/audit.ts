@@ -137,6 +137,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "empfehlung.cancel": "Modul Empfehlungen & Bewertungen gekündigt (Kunde)",
   "empfehlung.trial_end": "Testphase Empfehlungen & Bewertungen beendet",
   "empfehlung.settings": "Einstellungen Empfehlungen & Bewertungen geändert",
+  "empfehlung.einwilligung": "Einwilligung in Nachfrage und Bewertungsbitte bestätigt/zurückgenommen",
   "empfehlung.announce": "Ankündigung Zusatzmodul versendet",
   "empfehlung.link_sent": "Empfehlungslink verschickt",
   "rechnung.steuernummer": "Steuernummer für Rechnungen geändert",

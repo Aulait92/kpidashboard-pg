@@ -7,7 +7,7 @@ import { Card, CardHeader, buttonClass } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { REPORT_HELP_URL, fallbackReply, gbpConnectEnabled, listLocations, waechterStats } from "@/lib/empfehlung/google-business";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
-import { fmtDate } from "@/lib/empfehlung/shared";
+import { fmtDate, REVIEW_SOURCE_NOTE } from "@/lib/empfehlung/shared";
 import { disconnectGbpAction } from "@/app/buyer/empfehlungen/actions";
 import { LocationPicker, ReplyEditor } from "@/components/empfehlung/client";
 
@@ -136,6 +136,10 @@ export async function WaechterSection({ customerId, readOnly, flash }: { custome
           ))}
           {!reviews.length ? <li className="px-4 py-3 text-[color:var(--muted)]">Noch keine Bewertungen abgeglichen.</li> : null}
         </ul>
+        {/* § 5b Abs. 3 UWG: Herkunft der angezeigten Bewertungen */}
+        <p className="text-xs text-[color:var(--muted)]" data-review-source-note>
+          {REVIEW_SOURCE_NOTE} Zeigen Sie Bewertungen auf Ihrer Website, nennen Sie dort ebenfalls, woher sie stammen und ob Sie ihre Echtheit prüfen.
+        </p>
       </div>
     );
   }

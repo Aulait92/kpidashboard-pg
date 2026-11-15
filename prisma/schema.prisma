@@ -683,6 +683,14 @@ model Lead {
   referralRewardDueAt   DateTime?
   referralRewardDoneAt  DateTime?
   referralRewardAmount  Int?
+  // Einwilligung in die Nachfrage nach dem Abschluss mit Bewertungs- und Empfehlungsbitte (Anwalts-Memo 15.11.2026):
+  // ohne sie geht keine automatische Nachfrage und keine geplante Bitte um Empfehlung raus. Quelle: vermittler
+  // (im Gespräch eingeholt und in der App bestätigt); Text = bestätigter Wortlaut (lib/empfehlung/shared.FEEDBACK_CONSENT_TEXT)
+  feedbackConsentAt     DateTime?
+  feedbackConsentSource String?
+  feedbackConsentText   String?
+  // „STOPP“ auf die Nachfrage bzw. Bitte: keine weiteren Nachfragen, Bewertungs- oder Empfehlungsbitten
+  feedbackOptOutAt      DateTime?
   // Bewertungs-Wächter: Google-Bewertungen, die diesem Kontakt zugeordnet sind
   googleReviews     GoogleReview[]
   // Rückmeldung an Meta (lib/capi): Stufen dieses Leads im Postausgang

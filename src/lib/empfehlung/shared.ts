@@ -56,8 +56,9 @@ export const DELAY_LIMITS = { min: 1, max: 120 } as const;
 // bekommen dieselbe Anrede; {Vorname} mitten im Text wird zu „Frau Schneider“ (bzw. entfällt).
 
 export const DEFAULT_TEXTS = {
+  // Neutral (Anwalts-Memo 15.11.2026): an alle dieselbe Bitte um eine ehrliche Bewertung, nie um fünf Sterne, mit STOPP
   review:
-    "{Anrede}, ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn irgendetwas nicht gepasst hat, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Und wenn Sie zufrieden waren, freue ich mich sehr über eine kurze Google-Bewertung: {Link} Herzliche Grüße, {Vertreter}",
+    "{Anrede}, ich hoffe, Sie sind mit Ihrem neuen Vertrag gut versorgt. Wenn etwas nicht passt, antworten Sie mir einfach direkt hier, ich kümmere mich persönlich darum. Außerdem freue ich mich über Ihre ehrliche Bewertung bei Google: {Link} Wenn Sie keine Nachrichten mehr möchten, antworten Sie mit STOPP. Herzliche Grüße, {Vertreter}",
   thanks: "{Anrede}, vielen Dank für Ihre Rückmeldung! Das freut mich sehr. Wenn Sie etwas brauchen, schreiben Sie mir einfach hier. Herzliche Grüße, {Vertreter}",
   // Dank bei Lob MIT Empfehlungslink (Einstellung „bei Lob direkt um Empfehlung bitten“). Kein zweiter Google-Link.
   praiseReferral:
@@ -75,7 +76,7 @@ export type TextKey = keyof typeof DEFAULT_TEXTS;
 export const TEXT_LABELS: Record<TextKey, { title: string; hint: string; needsLink: boolean }> = {
   review: {
     title: "Nachfrage nach dem Abschluss",
-    hint: "Empfehlung: erst der direkte Draht zu Ihnen, dann der Google-Link. So landet Kritik bei Ihnen statt bei Google, und alle bekommen denselben Link.",
+    hint: "Erst der direkte Draht zu Ihnen, dann die neutrale Bitte um eine ehrliche Bewertung mit Google-Link, für alle gleich. Nie um fünf Sterne oder nur um gute Bewertungen bitten, der Hinweis auf „STOPP“ bleibt im Text.",
     needsLink: true,
   },
   thanks: { title: "Dank bei positiver Antwort", hint: "Ohne Link, der Google-Link stand schon in der ersten Nachricht.", needsLink: false },
@@ -121,7 +122,13 @@ export function renderText(
     .trim();
 }
 
-/** Eigener Text gültig? (Länge, Link-Platzhalter, keine Prämien-Versprechen) */
+/**
+ * Bewertungsbitte gezielt positiv? (Review-Gating, Google-Richtlinien, UWG): „5 Sterne“, „gute/positive Bewertung“
+ * oder die Bitte nur an Zufriedene.
+ */
+const GATED_REVIEW = /((5|fünf)\s*(\*|sterne|⭐)|⭐{2,}|(gute|positive|tolle|super)\s+(google-)?bewertung|wenn sie zufrieden (waren|sind))/i;
+
+/** Eigener Text gültig? (Länge, Link-Platzhalter, keine Prämien-Versprechen, Bewertungsbitte neutral mit STOPP) */
 export function validateText(key: TextKey, raw: string, opts: { rewardActive?: boolean } = {}): string | null {
   const t = raw.trim();
   if (!t) return null; // leer = Standard
@@ -131,6 +138,8 @@ export function validateText(key: TextKey, raw: string, opts: { rewardActive?: b
   if (/(prämie|gutschein|belohnung|geschenk|bonus|euro|€)/i.test(t) && key !== "unhappy" && !(opts.rewardActive && key !== "review" && key !== "thanks")) {
     return "Bitte keine Prämien, Gutscheine oder Geschenke versprechen (Provisionsabgabeverbot, Google-Richtlinien).";
   }
+  if (key === "review" && GATED_REVIEW.test(t)) return "Bitte neutral um eine ehrliche Bewertung bitten, nicht um fünf Sterne oder nur um gute Bewertungen.";
+  if (key === "review" && !/stopp/i.test(t)) return "Bitte den Hinweis auf „STOPP“ im Text lassen (z. B. „Wenn Sie keine Nachrichten mehr möchten, antworten Sie mit STOPP.“).";
   return null;
 }
 
@@ -467,6 +476,21 @@ export function funnelHint(f: Funnel): FunnelHint {
   }
   return { stage: "ok", title: "Läuft gut", text: "Alle Schritte sehen gut aus. Mehr Links ausgeben bringt jetzt am meisten." };
 }
+
+// ─── Einwilligung in Nachfrage, Bewertungs- und Empfehlungsbitte (15.11.2026) ───
+// Eine Bewertungs- oder Empfehlungsbitte ist Werbung (BGH VI ZR 225/17) und geht per WhatsApp nur mit Einwilligung.
+// Der Vermittler holt sie im Gespräch ein und bestätigt sie je Kontakt in der App; gespeichert mit Zeitpunkt und Wortlaut.
+
+export const FEEDBACK_CONSENT_TEXT =
+  "Der Kunde ist einverstanden, dass ich ihn nach dem Abschluss per WhatsApp frage, ob alles gepasst hat, und ihn einmal um eine ehrliche Google-Bewertung und um eine Empfehlung bitte. Er kann jederzeit mit STOPP widersprechen.";
+
+/** Darf die automatische Nachfrage bzw. Bitte raus? */
+export function feedbackAllowed(l: { feedbackConsentAt: Date | null; feedbackOptOutAt: Date | null }): boolean {
+  return !!l.feedbackConsentAt && !l.feedbackOptOutAt;
+}
+
+/** Quelle der Bewertungen, die wir anzeigen (§ 5b Abs. 3 UWG). */
+export const REVIEW_SOURCE_NOTE = "Bewertungen stammen von Google, keine eigene Echtheitsprüfung.";
 
 // ─── Dankeschön für Empfehlende (Tippgeber-Vergütung) ───────────────────────
 // Standardmäßig aus. Rechtlicher Rahmen (Anwalts-Memo 15.11.2026, keine Rechtsberatung):

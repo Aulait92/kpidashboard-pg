@@ -85,6 +85,8 @@ import {
   sendDueReviews,
   sendReferralThanks,
   setReviewOptOut,
+  setFeedbackConsent,
+  NO_FEEDBACK_CONSENT,
   submitReferral,
   countReferralVisit,
   generalLinkOf,
@@ -145,9 +147,18 @@ describe("Empfehlungen & Bewertungen", () => {
     await makeBuyer(c.id, "owner");
     return c.id;
   }
-  async function closedLead(customerId: string, phone: string, name: string, daysAgo = 8) {
+  // Standard: Einwilligung in Nachfrage und Bitten liegt vor (im Kontakt bestätigt); eigener Test für „fehlt“
+  async function closedLead(customerId: string, phone: string, name: string, daysAgo = 8, consent = true) {
     return prisma.lead.create({
-      data: { customerId, name, phone, status: "Abschluss", source: "Katzenversicherung (TKV)", closedAt: new Date(NOW.getTime() - daysAgo * DAY_MS) },
+      data: {
+        customerId,
+        name,
+        phone,
+        status: "Abschluss",
+        source: "Katzenversicherung (TKV)",
+        closedAt: new Date(NOW.getTime() - daysAgo * DAY_MS),
+        ...(consent ? { feedbackConsentAt: new Date(NOW.getTime() - daysAgo * DAY_MS), feedbackConsentSource: "vermittler" } : {}),
+      },
     });
   }
   async function activeModule(extra: Record<string, unknown> = {}) {
@@ -264,6 +275,51 @@ describe("Empfehlungen & Bewertungen", () => {
     await sendDueReviews(new Date(NOW.getTime() + 3600_000));
     expect(state.notices.filter((n) => n.customerId === id)).toHaveLength(2);
     expect(b.id).toBeTruthy();
+  });
+
+  it("Ohne Einwilligung keine Nachfrage und keine Bitte um Empfehlung; nach Bestätigung sofort; einmal je Person; STOPP wirkt dauerhaft", async () => {
+    const id = await activeModule();
+    const ohne = await closedLead(id, `4915${uid()}23`, "Olaf Ohne", 8, false);
+    await scheduleReviewRequests(NOW);
+    await sendDueReviews(NOW);
+    expect(state.notices.filter((n) => n.customerId === id)).toHaveLength(0);
+    const waiting = await prisma.reviewRequest.findUniqueOrThrow({ where: { leadId: ohne.id } });
+    expect([waiting.status, waiting.note]).toEqual(["scheduled", NO_FEEDBACK_CONSENT]);
+    // Bitte um Empfehlung ohne Einwilligung: auch dann nicht, wenn die Nachfrage aus ist
+    await setReviewOptOut(id, ohne.id, true, NOW);
+    await sendDueReferrals(new Date(NOW.getTime() + 30 * DAY_MS));
+    expect((await prisma.reviewRequest.findUniqueOrThrow({ where: { leadId: ohne.id } })).referralStatus).toBe("skipped");
+    expect(state.notices.filter((n) => n.customerId === id)).toHaveLength(0);
+
+    // Zweiter Kontakt: Vermittler bestätigt die Einwilligung → Nachfrage geht raus, Wortlaut gespeichert
+    const mit = await closedLead(id, `4915${uid()}24`, "Mia Mit", 8, false);
+    await scheduleReviewRequests(NOW);
+    await sendDueReviews(NOW);
+    expect((await setFeedbackConsent(id, mit.id, true, NOW)).ok).toBe(true);
+    const lead = await prisma.lead.findUniqueOrThrow({ where: { id: mit.id } });
+    expect(lead.feedbackConsentText).toContain("ehrliche Google-Bewertung");
+    await sendDueReviews(new Date(NOW.getTime() + 60_000));
+    const sent = state.notices.filter((n) => n.customerId === id);
+    expect(sent.map((n) => n.purpose)).toEqual(["review_request"]);
+    expect(sent[0].text).toContain("ehrliche Bewertung");
+    expect(sent[0].text).toContain("STOPP");
+    expect(sent[0].text).not.toMatch(/sterne|zufrieden waren/i);
+
+    // Einmal je Person: zweiter Vertrag (neuer Kontakt, gleiche Nummer) wird nicht noch einmal angefragt
+    const zweiter = await closedLead(id, mit.phone!, "Mia Mit (Hausrat)", 2);
+    await scheduleReviewRequests(NOW);
+    const r2 = await prisma.reviewRequest.findUniqueOrThrow({ where: { leadId: zweiter.id } });
+    expect([r2.status, r2.note]).toEqual(["skipped", "Schon einmal um eine Bewertung gebeten"]);
+
+    // STOPP auf die Nachfrage: bestätigt, keine Bitte um Empfehlung mehr, Einwilligung nicht wieder setzbar
+    const conv = await prisma.conversation.create({ data: { customerId: id, contactPhone: mit.phone!, leadId: mit.id } });
+    expect(await handleReviewReply(conv.id, mit.phone!, "STOPP", new Date(NOW.getTime() + 3600_000))).toMatchObject({ handled: true });
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: mit.id } })).feedbackOptOutAt).not.toBeNull();
+    expect(state.messages.some((m) => m.to === mit.phone && /keine weiteren Nachrichten/.test(m.body))).toBe(true);
+    await sendDueReferrals(new Date(NOW.getTime() + 30 * DAY_MS));
+    expect((await prisma.reviewRequest.findUniqueOrThrow({ where: { leadId: mit.id } })).referralStatus).toBe("skipped");
+    expect(state.notices.filter((n) => n.customerId === id && n.purpose === "referral_request")).toHaveLength(0);
+    expect((await setFeedbackConsent(id, mit.id, true, NOW)).ok).toBe(false);
   });
 
   it("„Nicht anfragen“ je Kontakt: keine Nachfrage", async () => {

@@ -23,6 +23,7 @@ import {
   saveGoogleUrlAction,
   sendReferralLinkAction,
   sendTestAction,
+  setFeedbackConsentAction,
   setOptOutAction,
   settleRewardAction,
   type ModuleActionState,
@@ -209,6 +210,38 @@ export function ModuleHint({ hintKey, title, text, cta = "30 Tage kostenlos test
 }
 
 // ─── Kontaktakte: „Nicht anfragen“, „Geklärt“, Empfehlungslink ─────────────
+
+/** Einwilligung in Nachfrage, Bewertungs- und Empfehlungsbitte (im Gespräch eingeholt) je Kontakt bestätigen. */
+export function FeedbackConsentToggle({ leadId, consent, text, readOnly }: { leadId: string; consent: boolean; text: string; readOnly: boolean }) {
+  const [value, setValue] = useState(consent);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <span className="inline-flex flex-col gap-1" data-feedback-consent>
+      {!value ? <span className="text-xs text-[color:var(--muted)]">Bestätigt wird: „{text}“</span> : null}
+      <span className="inline-flex flex-wrap items-center gap-2">
+        <Button
+          variant={value ? "secondary" : "primary"}
+          disabled={readOnly || pending}
+          onClick={() =>
+            start(async () => {
+              const r = await setFeedbackConsentAction(leadId, !value);
+              if (r.ok) {
+                setValue(!value);
+                setError(null);
+                haptic("selection");
+              } else setError(r.error ?? "Hat nicht geklappt.");
+            })
+          }
+          data-feedback-consent-toggle
+        >
+          {value ? "Einwilligung zurücknehmen" : "Kunde ist einverstanden"}
+        </Button>
+        {error ? <span className="text-xs text-rose-700">{error}</span> : null}
+      </span>
+    </span>
+  );
+}
 
 export function OptOutToggle({ leadId, off, readOnly }: { leadId: string; off: boolean; readOnly: boolean }) {
   const [value, setValue] = useState(off);
