@@ -2,11 +2,13 @@
 
 // Dokumente am Lead (Ole, 13.11.2026): Angebot, Police oder Sonstiges hochladen und wiederfinden.
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Loader2, Paperclip, Trash2 } from "lucide-react";
+import { FileText, Paperclip, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui";
+import { FileDrop } from "@/components/ui/file-drop";
 import { useToast } from "@/components/ui/toast";
+import { formatBytes, MB } from "@/lib/file-upload";
 import { cn } from "@/lib/utils";
 
 type Kind = "angebot" | "police" | "sonstiges";
@@ -19,13 +21,14 @@ const LABEL: Record<Kind, string> = { angebot: "Angebot", police: "Police", sons
 
 export type LeadFileView = { id: string; kind: Kind; fileName: string; size: number; createdAt: string };
 
-const size = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toLocaleString("de-DE", { maximumFractionDigits: 1 })} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
+/** Wie lib/lead-files.ts (Prüfung am Inhalt bleibt auf dem Server). */
+export const LEAD_FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.docx,.xlsx,application/pdf,image/png,image/jpeg";
+export const LEAD_FILE_MAX_BYTES = 15 * MB;
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 
 export function LeadFiles({ leadId, files, defaultKind = "angebot", readOnly = false }: { leadId: string; files: LeadFileView[]; defaultKind?: Kind; readOnly?: boolean }) {
   const router = useRouter();
   const toast = useToast();
-  const input = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<Kind>(defaultKind);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -45,7 +48,6 @@ export function LeadFiles({ leadId, files, defaultKind = "angebot", readOnly = f
       toast.show({ message: e instanceof Error ? e.message : "Hochladen hat nicht geklappt.", tone: "error" });
     } finally {
       setBusy(null);
-      if (input.current) input.current.value = "";
     }
   }
 
@@ -78,26 +80,20 @@ export function LeadFiles({ leadId, files, defaultKind = "angebot", readOnly = f
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              disabled={busy === "upload"}
-              onClick={() => input.current?.click()}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border-strong)] px-3 text-sm font-medium hover:border-[color:var(--brand)] disabled:opacity-60"
-              data-file-upload
-            >
-              {busy === "upload" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
-              Hochladen
-            </button>
-            <input
-              ref={input}
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx,application/pdf,image/png,image/jpeg"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void upload(f);
-              }}
-            />
+            <div className="min-w-0" data-file-upload>
+              <FileDrop
+                variant="button"
+                size="sm"
+                instant
+                icon={Paperclip}
+                accept={LEAD_FILE_ACCEPT}
+                maxBytes={LEAD_FILE_MAX_BYTES}
+                label="Hochladen"
+                pendingLabel="Lädt …"
+                busy={busy === "upload"}
+                onFiles={(fs) => fs[0] && void upload(fs[0])}
+              />
+            </div>
           </div>
         ) : null}
       </div>
@@ -111,7 +107,7 @@ export function LeadFiles({ leadId, files, defaultKind = "angebot", readOnly = f
               <a href={`/api/buyer/leads/${leadId}/dateien/${f.id}`} target="_blank" rel="noreferrer" className="min-w-0 flex-1 hover:text-[color:var(--brand)]">
                 <span className="block truncate text-[15px] font-medium">{f.fileName}</span>
                 <span className="text-xs text-[color:var(--muted)]">
-                  {LABEL[f.kind]} · {size(f.size)} · {day(f.createdAt)}
+                  {LABEL[f.kind]} · {formatBytes(f.size)} · {day(f.createdAt)}
                 </span>
               </a>
               {!readOnly ? (

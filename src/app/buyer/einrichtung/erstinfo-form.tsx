@@ -5,7 +5,8 @@
 
 import { useActionState, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
-import { TIPPGEBER_HINWEIS, VERMITTLER_STATUS, vermittlerStatusLabel } from "@/lib/erstinformation-shared";
+import { FileDrop } from "@/components/ui/file-drop";
+import { ERSTINFO_MAX_BYTES, TIPPGEBER_HINWEIS, VERMITTLER_STATUS, vermittlerStatusLabel } from "@/lib/erstinformation-shared";
 import { saveErstinfoAction, type ErstinfoState } from "./actions";
 
 const input =
@@ -31,11 +32,11 @@ export function ErstinfoForm({
   const fromImpressum = !!impressum && !confirmed;
   const tippgeber = status === "tippgeber" || (!!state.tippgeber && status === "");
   return (
-    <form action={action} className="space-y-4" data-erstinfo-form>
+    <form action={action} className="min-w-0 space-y-4" data-erstinfo-form>
       {impressum && (impressum.companyName || impressum.address || impressum.registerType) ? (
         <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-sm" data-erstinfo-impressum>
           <p className="font-medium">Aus Ihrem Impressum übernommen{fromImpressum ? ", bitte kurz prüfen" : ""}:</p>
-          <dl className="mt-2 grid grid-cols-[110px_1fr] gap-x-3 gap-y-1">
+          <dl className="mt-2 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1 [overflow-wrap:anywhere]">
             {impressum.companyName ? (
               <>
                 <dt className="text-[color:var(--muted)]">Name</dt>
@@ -96,24 +97,35 @@ export function ErstinfoForm({
             </label>
             <input id="registerNummer" name="registerNummer" className={`${input} mt-1`} placeholder="D-XXXX-XXXXX-XX" defaultValue={initial.registerNummer ?? ""} disabled={readOnly} />
           </div>
-          <details className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" open={!!(initial.fileName || initial.url)}>
+          <details className="min-w-0 rounded-[var(--radius-md)] border border-[color:var(--border)] px-4 py-3" open={!!(initial.fileName || initial.url)}>
             <summary className="cursor-pointer text-sm font-medium">Eigene Erstinformation hinterlegen (freiwillig)</summary>
-            <p className="mt-2 text-xs text-[color:var(--muted)]">
+            <p className="mt-2 text-xs text-[color:var(--muted)] [overflow-wrap:anywhere]">
               Ohne eigene Datei erstellen wir die Erstinformation aus den Angaben oben. Haben Sie eine eigene (z. B. von Ihrer Gesellschaft), nutzt Ihr Assistent diese.
             </p>
-            <div className="mt-3">
+            <div className="mt-3 min-w-0">
               <label className="text-sm font-medium" htmlFor="pdf">
                 Erstinformation als PDF
               </label>
               {initial.fileName ? (
-                <p className="mt-1 text-sm text-[color:var(--muted)]">
-                  Hochgeladen: <b>{initial.fileName}</b>. Eine neue Datei ersetzt sie.{" "}
-                  <label className="ml-2 inline-flex items-center gap-1">
+                <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--muted)]" data-erstinfo-datei>
+                  <p className="min-w-0 [overflow-wrap:anywhere]">
+                    Hochgeladen: <b>{initial.fileName}</b>. Eine neue Datei ersetzt sie.
+                  </p>
+                  <label className="inline-flex shrink-0 items-center gap-1.5">
                     <input type="checkbox" name="removeFile" value="1" disabled={readOnly} /> entfernen
                   </label>
-                </p>
+                </div>
               ) : null}
-              <input id="pdf" name="pdf" type="file" accept="application/pdf,.pdf" className="mt-1 block w-full text-sm" disabled={readOnly} />
+              <FileDrop
+                id="pdf"
+                name="pdf"
+                accept="application/pdf,.pdf"
+                maxBytes={ERSTINFO_MAX_BYTES}
+                label="PDF auswählen"
+                pendingLabel="Wird gespeichert …"
+                disabled={readOnly}
+                className="mt-2"
+              />
             </div>
             <div className="mt-3">
               <label className="text-sm font-medium" htmlFor="url">

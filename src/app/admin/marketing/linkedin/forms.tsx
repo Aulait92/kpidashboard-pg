@@ -3,8 +3,10 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ImageOff, Loader2, Send, Sparkles, Trash2, Undo2, Upload } from "lucide-react";
+import { Check, ImageOff, Loader2, Send, Sparkles, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui";
+import { FileDrop } from "@/components/ui/file-drop";
+import { MB } from "@/lib/file-upload";
 import { cn } from "@/lib/utils";
 import {
   approveAction,
@@ -321,19 +323,19 @@ export function PhotoUpload() {
   const [res, action, pending] = useActionState(uploadPhotosAction, {});
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
-      {/* Ein Knopf: Auswahl öffnet sich, nach der Auswahl wird sofort hochgeladen */}
-      <label className={cn("inline-flex h-10 cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white", pending && "pointer-events-none opacity-60")}>
-        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-        {pending ? "Lade hoch und beschreibe …" : "Fotos hochladen"}
-        <input
-          type="file"
-          name="photos"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          multiple
-          className="sr-only"
-          onChange={(e) => e.currentTarget.files?.length && e.currentTarget.form?.requestSubmit()}
-        />
-      </label>
+      {/* Ein Knopf: Auswahl öffnet sich (oder Fotos darauf ziehen), nach der Auswahl wird sofort hochgeladen */}
+      <FileDrop
+        variant="button"
+        buttonVariant="primary"
+        name="photos"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        maxBytes={8 * MB}
+        multiple
+        autoSubmit
+        busy={pending}
+        label="Fotos hochladen"
+        pendingLabel="Lade hoch und beschreibe …"
+      />
       <span className="text-sm text-[color:var(--muted)]">Mehrere auf einmal möglich (JPG, PNG, WebP).</span>
       <Note res={res} />
     </form>
@@ -382,18 +384,18 @@ export function ImportForm() {
   const [res, action, pending] = useActionState(importAction, {});
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
-      {/* Ein Knopf: Auswahl öffnet sich, nach der Auswahl wird die Datei sofort eingelesen */}
-      <label className={cn("inline-flex h-10 cursor-pointer items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 text-sm font-semibold text-white", pending && "pointer-events-none opacity-60")}>
-        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-        {pending ? "Lese Datei …" : "Export-Datei hochladen"}
-        <input
-          type="file"
-          name="file"
-          accept=".xlsx,.csv"
-          className="sr-only"
-          onChange={(e) => e.currentTarget.files?.length && e.currentTarget.form?.requestSubmit()}
-        />
-      </label>
+      {/* Ein Knopf: Auswahl öffnet sich (oder Datei darauf ziehen), nach der Auswahl wird die Datei sofort eingelesen */}
+      <FileDrop
+        variant="button"
+        buttonVariant="primary"
+        name="file"
+        accept=".xlsx,.csv"
+        maxBytes={10 * MB}
+        autoSubmit
+        busy={pending}
+        label="Export-Datei hochladen"
+        pendingLabel="Lese Datei …"
+      />
       <span className="text-sm text-[color:var(--muted)]">Excel-Datei (.xlsx) aus LinkedIn, wie sie heruntergeladen wurde.</span>
       <Note res={res} />
     </form>

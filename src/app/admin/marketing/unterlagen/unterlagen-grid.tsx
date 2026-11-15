@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileText, Presentation, Trash2, Upload } from "lucide-react";
+import { Download, FileText, Presentation, Trash2 } from "lucide-react";
 import { Button, ButtonLink, Card } from "@/components/ui";
+import { FileDrop } from "@/components/ui/file-drop";
+import { formatBytes, MB } from "@/lib/file-upload";
 
 type Audience = "vertreter" | "makler";
 type Format = "pdf" | "pptx";
@@ -15,7 +17,8 @@ const ACCEPT: Record<Format, string> = {
   pdf: ".pdf,application/pdf",
   pptx: ".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation",
 };
-const size = (b: number) => (b >= 1048576 ? `${(b / 1048576).toLocaleString("de-DE", { maximumFractionDigits: 1 })} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
+/** Wie lib/vertrieb/praesentationen.ts (der Server prüft weiterhin selbst). */
+const MAX_BYTES: Record<Format, number> = { pdf: 25 * MB, pptx: 100 * MB };
 const when = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
@@ -38,7 +41,6 @@ export function UnterlagenGrid({ slots }: { slots: UnterlagenSlot[] }) {
 
 function Slot({ slot }: { slot: UnterlagenSlot }) {
   const router = useRouter();
-  const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const q = `audience=${slot.audience}&format=${slot.format}`;
@@ -60,7 +62,6 @@ function Slot({ slot }: { slot: UnterlagenSlot }) {
       setError("Hochladen fehlgeschlagen. Bitte erneut versuchen.");
     } finally {
       setBusy(false);
-      if (input.current) input.current.value = "";
     }
   }
 
@@ -81,7 +82,7 @@ function Slot({ slot }: { slot: UnterlagenSlot }) {
           <div className="text-sm font-medium">{FORMAT_LABEL[slot.format]}</div>
           {slot.file ? (
             <div className="truncate text-sm text-[color:var(--muted)]" title={slot.file.fileName}>
-              {slot.file.fileName} · {size(slot.file.size)} · {when(slot.file.uploadedAt)}
+              {slot.file.fileName} · {formatBytes(slot.file.size)} · {when(slot.file.uploadedAt)}
             </div>
           ) : (
             <div className="text-sm text-[color:var(--muted)]">Noch keine Datei hinterlegt</div>
@@ -89,19 +90,17 @@ function Slot({ slot }: { slot: UnterlagenSlot }) {
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <input
-          ref={input}
-          type="file"
+        <FileDrop
+          variant="button"
+          instant
+          size="sm"
           accept={ACCEPT[slot.format]}
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void upload(f);
-          }}
+          maxBytes={MAX_BYTES[slot.format]}
+          label={slot.file ? "Ersetzen" : "Hochladen"}
+          pendingLabel="Lädt …"
+          busy={busy}
+          onFiles={(fs) => fs[0] && void upload(fs[0])}
         />
-        <Button icon={Upload} disabled={busy} onClick={() => input.current?.click()}>
-          {busy ? "Lädt …" : slot.file ? "Ersetzen" : "Hochladen"}
-        </Button>
         {slot.file ? (
           <>
             <ButtonLink href={`/api/admin/praesentationen/${slot.audience}/${slot.format}`} external icon={Download}>Herunterladen</ButtonLink>

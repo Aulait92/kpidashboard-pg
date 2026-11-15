@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { FileDrop } from "@/components/ui/file-drop";
 import { syncBankAction, uploadCsvAction, type BankState } from "./actions";
 
 function Result({ state }: { state: BankState }) {
@@ -26,11 +27,11 @@ const input = "mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:
 export function CsvUpload() {
   const [state, action, pending] = useActionState<BankState, FormData>(uploadCsvAction, null);
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-[1fr_200px_auto] sm:items-end">
-      <label className="text-sm">
-        CSV-Datei
-        <input type="file" name="file" accept=".csv,text/csv" className={`${input} py-1.5`} required />
-      </label>
+    <form action={action} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <div className="text-sm sm:col-span-2">
+        <label htmlFor="bank-csv">CSV-Datei</label>
+        <FileDrop id="bank-csv" name="file" accept=".csv,text/csv" maxBytes={5 * 1024 * 1024} label="CSV auswählen" pendingLabel="Wird importiert …" required className="mt-1" />
+      </div>
       <label className="text-sm">
         Herkunft
         <select name="source" defaultValue="auto" className={input}>
@@ -40,7 +41,7 @@ export function CsvUpload() {
         </select>
       </label>
       <button className="btn-primary h-10" disabled={pending}>{pending ? "Importiere …" : "Importieren"}</button>
-      <div className="sm:col-span-3">
+      <div className="sm:col-span-2">
         <Result state={state} />
       </div>
     </form>

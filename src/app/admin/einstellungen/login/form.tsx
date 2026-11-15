@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { FileDrop } from "@/components/ui/file-drop";
 import { LoginInfoCard, type LoginCardContent } from "@/components/login-info-card";
 import { LOGIN_INFO_LIMITS } from "@/lib/login-info";
 import type { LoginCardView } from "@/lib/login-karten-server";
@@ -67,17 +68,24 @@ export function LoginCardForm({ card, justCreated = false }: { card: LoginCardVi
           </Field>
         </div>
 
-        <Field label="Bild" hint="optional, PNG/JPG/WebP bis 1,5 MB, am besten im Querformat (z. B. 1200 × 700)">
-          <input
-            type="file"
+        <div>
+          <label htmlFor="login-card-image" className="mb-1 block text-sm font-medium">
+            Bild
+          </label>
+          <FileDrop
+            id="login-card-image"
             name="image"
             accept="image/png,image/jpeg,image/webp"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
+            maxBytes={L.imageBytes}
+            maxLabel="1,5 MB"
+            label="Bild auswählen"
+            hint="optional, PNG/JPG/WebP bis 1,5 MB, am besten im Querformat (z. B. 1200 × 700)"
+            pendingLabel="Wird gespeichert …"
+            onFiles={(fs) => {
+              const f = fs[0];
               setRemoveImage(false);
               setLocalImage(f ? URL.createObjectURL(f) : null);
             }}
-            className="block w-full text-sm file:mr-3 file:rounded-[var(--radius-sm)] file:border-0 file:bg-[color:var(--brand-soft)] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[color:var(--brand-dark)]"
           />
           {imageUrl || localImage ? (
             <label className="mt-2 flex items-center gap-2 text-sm text-[color:var(--muted)]">
@@ -86,7 +94,7 @@ export function LoginCardForm({ card, justCreated = false }: { card: LoginCardVi
             </label>
           ) : null}
           <input type="hidden" name="removeImage" value={removeImage ? "1" : ""} />
-        </Field>
+        </div>
 
         {state.errors?.length ? (
           <ul role="alert" className="space-y-1 rounded-[var(--radius-md)] bg-rose-50 px-3 py-2 text-sm text-rose-700">

@@ -5,11 +5,13 @@
 // (Datum, Grund, Rückbelastung; rückgängig machbar) und Löschen. Leben/BU mit Monatsbeitrag, Laufzeit
 // bzw. Alter und Endalter oder Beitragssumme; PKV-Tarifoptimierung mit der monatlichen Ersparnis.
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, FileText, Loader2, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { Ban, FileText, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Badge, Button } from "@/components/ui";
+import { FileDrop } from "@/components/ui/file-drop";
 import { Sheet } from "@/components/ui/sheet";
+import { LEAD_FILE_ACCEPT, LEAD_FILE_MAX_BYTES } from "@/components/lead-files";
 import { useToast } from "@/components/ui/toast";
 import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
 import { META_LERNT } from "@/lib/zahlen-tipps";
@@ -276,7 +278,6 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
   };
   const [pending, start] = useTransition();
   const [uploading, setUploading] = useState(false);
-  const fileInput = useRef<HTMLInputElement>(null);
   const field = d.sparte ? premiumFieldForSparte(d.sparte, rates) : null;
   const leben = !!d.sparte && sparteKind(d.sparte) === "beitragssumme";
   // Vorschau der Schätzung mit den Eingaben
@@ -317,7 +318,6 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
       toast.show({ message: e instanceof Error ? e.message : "Hochladen hat nicht geklappt.", tone: "error" });
     } finally {
       setUploading(false);
-      if (fileInput.current) fileInput.current.value = "";
     }
   }
 
@@ -432,13 +432,19 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
             <input value={d.contractNo} onChange={(e) => setD({ ...d, contractNo: e.target.value })} className={inputCls} />
           </label>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <input ref={fileInput} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
-          <Button type="button" variant="secondary" size="sm" icon={uploading ? Loader2 : FileText} disabled={uploading} onClick={() => fileInput.current?.click()}>
-            {d.fileId ? "Andere Police hochladen" : "Police hochladen (optional)"}
-          </Button>
-          {d.fileName ? <span className="text-[color:var(--muted)]">{d.fileName}</span> : null}
-        </div>
+        <FileDrop
+          variant="button"
+          size="sm"
+          instant
+          icon={FileText}
+          accept={LEAD_FILE_ACCEPT}
+          maxBytes={LEAD_FILE_MAX_BYTES}
+          label={d.fileId ? "Andere Police hochladen" : "Police hochladen (optional)"}
+          pendingLabel="Wird hochgeladen …"
+          busy={uploading}
+          onFiles={(fs) => fs[0] && void upload(fs[0])}
+          success={d.fileName ? <>Hochgeladen: {d.fileName}</> : null}
+        />
         <Button type="submit" variant="primary" size="md" className="w-full" disabled={pending || uploading || !d.sparte}>
           {pending ? "Speichere …" : id ? "Speichern" : "Abschluss eintragen"}
         </Button>

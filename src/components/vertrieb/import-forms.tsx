@@ -1,7 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { FileDrop } from "@/components/ui/file-drop";
 import { connectCalendlyAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
+
+// Server-Action-Grenze liegt bei 16 MB (next.config.ts)
+const CSV_MAX_BYTES = 15 * 1024 * 1024;
 
 function Result({ state }: { state: ImportState }) {
   if (!state) return null;
@@ -12,7 +16,7 @@ export function ContactsImport() {
   const [state, action, pending] = useActionState(importContactsAction, null);
   return (
     <form action={action} className="space-y-3">
-      <input type="file" name="file" accept=".csv,text/csv" className="input" required />
+      <FileDrop name="file" accept=".csv,text/csv" maxBytes={CSV_MAX_BYTES} label="CSV auswählen" pendingLabel="Wird importiert …" required />
       <button className="btn-primary" disabled={pending}>{pending ? "Importiere … (kann 1 Min. dauern)" : "Agenturliste importieren"}</button>
       <Result state={state} />
     </form>
@@ -69,7 +73,7 @@ export function InstantlyCsvImport() {
   return (
     <form action={action} className="space-y-3">
       <input name="campaign" placeholder="Kampagnenname (falls nicht in der CSV)" className="input" />
-      <input type="file" name="file" accept=".csv,text/csv" className="input" required />
+      <FileDrop name="file" accept=".csv,text/csv" maxBytes={CSV_MAX_BYTES} label="CSV auswählen" pendingLabel="Wird importiert …" required />
       <button className="btn-ghost" disabled={pending}>{pending ? "Importiere …" : "Instantly-CSV importieren"}</button>
       <Result state={state} />
     </form>
