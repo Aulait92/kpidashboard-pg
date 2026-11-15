@@ -596,6 +596,14 @@ Seiten aus der Liste „Seiten“ unten.
 - Namen ändern, Einladung erneut senden, aus dem Team entfernen (offene Leads gehen an den Inhaber zurück).
 - Einzelnen Lead weitergeben: Lead öffnen → „Zuständig“.
 
+## Anmelde-Adresse ändern (seit 15.11.2026)
+
+- Einstellungen → Anmeldung & Sicherheit → „E-Mail-Adresse für die Anmeldung“: neue Adresse eingeben und mit dem
+  Passwort bestätigen (bei Anmeldung nur über Google oder Microsoft entfällt das Passwort).
+- Wir schicken einen Link an die neue Adresse (24 Stunden gültig). Erst nach dem Klick gilt sie, alle Geräte werden
+  abgemeldet, die alte Adresse bekommt einen Hinweis. Das Passwort bleibt gleich.
+- Wir (Admin) können die Adresse unter Admin → Logins → „E-Mail-Adresse ändern“ auch direkt ändern.
+
 ## Abwesenheit (Urlaub, Krankheit)
 
 - Profilmenü → „Ich bin abwesend“: von–bis (ganze Tage, auch ab heute), Grund (Urlaub, Krank, Sonstiges –
