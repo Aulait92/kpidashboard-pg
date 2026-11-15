@@ -1,3 +1,4 @@
+import { appRedirect } from "@/lib/app-redirect";
 import { unsubscribe } from "@/lib/bestand/abmelden";
 import { checkLimit } from "@/lib/rate-limit";
 
@@ -15,5 +16,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
 
 export async function GET(req: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
-  return Response.redirect(new URL(`/abmelden/${token}`, req.url), 303);
+  return appRedirect(`/abmelden/${token}`, req, 303);
 }

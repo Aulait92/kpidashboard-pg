@@ -52,7 +52,12 @@ export async function requestEmailChange(userId: string, input: { newEmail: stri
 export async function confirmEmailChange(rawToken: string, now = new Date()): Promise<EmailChangeResult> {
   if (!rawToken) return { ok: false, error: "Der Link ist unvollständig." };
   const req = await prisma.emailChangeRequest.findUnique({ where: { tokenHash: hash(rawToken) }, select: { id: true, userId: true, newEmail: true, expiresAt: true, usedAt: true } });
-  if (!req || req.usedAt) return { ok: false, error: "Der Link ist ungültig oder wurde schon verwendet." };
+  if (!req) return { ok: false, error: "Der Link ist ungültig." };
+  if (req.usedAt) {
+    // Schon bestätigt (z. B. zweiter Klick): wenn die Adresse übernommen ist, gilt das als Erfolg
+    const u = await prisma.user.findUnique({ where: { id: req.userId }, select: { email: true } });
+    return u?.email === req.newEmail ? { ok: true, to: req.newEmail } : { ok: false, error: "Der Link wurde schon verwendet." };
+  }
   if (req.expiresAt.getTime() < now.getTime()) return { ok: false, error: "Der Link ist abgelaufen. Bitte fordern Sie im Konto einen neuen an." };
   if (await prisma.user.findUnique({ where: { email: req.newEmail }, select: { id: true } })) return { ok: false, error: "Diese Adresse wird inzwischen für einen anderen Zugang verwendet." };
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.userId }, select: { email: true, customerId: true } });

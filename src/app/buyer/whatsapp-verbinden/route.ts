@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { appRedirect } from "@/lib/app-redirect";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { getAppUrl } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
@@ -15,9 +16,9 @@ import { createPartnerClient, onboardingLink, partnerConfig, signState } from "@
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request): Promise<Response> {
-  const back = (wa: string) => NextResponse.redirect(new URL(`/buyer/einrichtung?wa=${wa}#whatsapp`, req.url));
+  const back = (wa: string) => appRedirect(`/buyer/einrichtung?wa=${wa}#whatsapp`, req);
   const ctx = await getBuyerContext();
-  if (!ctx) return NextResponse.redirect(new URL("/login", req.url));
+  if (!ctx) return appRedirect("/login", req);
   if (ctx.preview || ctx.teamRole !== "owner") return back("forbidden");
   const cfg = partnerConfig();
   if (!cfg) return back("off");

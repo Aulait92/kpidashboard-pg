@@ -46,7 +46,8 @@ describe("Login-E-Mail selbst ändern", () => {
     const after = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
     expect(after.email).toBe(neu);
     expect(sent.mails.at(-1)).toMatchObject({ to: before });
-    expect((await confirmEmailChange(r.rawToken!)).ok).toBe(false);
+    // Zweiter Klick: gilt als bestätigt
+    expect((await confirmEmailChange(r.rawToken!)).ok).toBe(true);
   });
 
   it("abgelaufener Link wirkt nicht", async () => {

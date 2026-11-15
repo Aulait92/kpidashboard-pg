@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { appRedirect } from "@/lib/app-redirect";
 import { getCurrentSession } from "@/lib/auth";
 import { getAppUrl } from "@/lib/email";
 import { onboardingLink, partnerConfig, signState } from "@/lib/whatsapp/dialog360-partner";
@@ -11,8 +12,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request): Promise<Response> {
   const session = await getCurrentSession();
-  if (!session || session.role !== "ADMIN") return NextResponse.redirect(new URL("/login", req.url));
-  const back = (s: string) => NextResponse.redirect(new URL(`/admin/whatsapp/settings?support=${s}#support`, req.url));
+  if (!session || session.role !== "ADMIN") return appRedirect("/login", req);
+  const back = (s: string) => appRedirect(`/admin/whatsapp/settings?support=${s}#support`, req);
   const cfg = partnerConfig();
   if (!cfg) return back("error");
   let base: string;

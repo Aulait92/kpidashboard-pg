@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { appRedirect } from "@/lib/app-redirect";
 import { reportError } from "@/lib/monitoring";
 import { parseChannels, partnerConfig, verifyState } from "@/lib/whatsapp/dialog360-partner";
 import { completeSelfConnect } from "@/lib/whatsapp/self-connect";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const back = (wa: string) => NextResponse.redirect(new URL(`/buyer/einrichtung?wa=${wa}#whatsapp`, req.url));
+  const back = (wa: string) => appRedirect(`/buyer/einrichtung?wa=${wa}#whatsapp`, req);
   if (!partnerConfig()) return back("off");
   const state = verifyState(url.searchParams.get("state"));
   if (!state) return back("state");
@@ -25,7 +26,7 @@ export async function GET(req: Request): Promise<Response> {
       channels: parseChannels(url.searchParams.get("channels")),
     });
     const wa = res.status === "connected" ? "ok" : res.status === "pending" ? "pending" : "error";
-    if (isSupportCustomer(state.customerId)) return NextResponse.redirect(new URL(`/admin/whatsapp/settings?support=${wa}#support`, req.url));
+    if (isSupportCustomer(state.customerId)) return appRedirect(`/admin/whatsapp/settings?support=${wa}#support`, req);
     return back(wa);
   } catch (err) {
     reportError(err, "d360-callback");
