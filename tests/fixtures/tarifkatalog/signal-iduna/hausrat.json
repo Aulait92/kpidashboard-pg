@@ -1,0 +1,10 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "hausrat",
+  "produkt": "SIGNAL IDUNA Hausrat (Beispieldaten für Tests)",
+  "inAllenTarifen": [],
+  "tarife": [
+    { "name": "Hausrat Top", "kurz": "Top", "stufe": 2, "empfohlen": true, "werte": { "grobe-fahrlaessigkeit": "voll", "fahrraddiebstahl": "bis 2.000 €", "elementar": "ja", "wertsachen": "30 %", "online-betrug": "bis 2.500 €" }, "bausteine": { "fahrrad": "optional", "elementar": "inklusive", "glas": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" }
+  ],
+  "offen": []
+}

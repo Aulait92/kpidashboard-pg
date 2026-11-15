@@ -185,7 +185,8 @@ export const GRENZEN = { merkmale: 5, bausteine: 2, alle: 3, plus: 3, plusEinzel
 function schalter(items: AngebotItem[], i: AngebotItem, mitSparte = false, max = Infinity): string {
   if (!i.bausteine.length) return "";
   const idx = items.indexOf(i);
-  const preis = (n: number) => `${n < 0 ? "−" : "+"}${eur(Math.abs(n))}`;
+  // Beitrag 0: im Tarif enthalten (Katalog „inklusive“)
+  const preis = (n: number) => (n === 0 ? "inklusive" : `${n < 0 ? "−" : "+"}${eur(Math.abs(n))}`);
   return `<div class="bausteine">${i.bausteine
     .slice(0, max)
     .map(
@@ -248,6 +249,20 @@ export function stufenNamen(tarife: (string | null | undefined)[], sparte?: stri
   });
 }
 
+/**
+ * Spaltennamen im Vergleich (Tarifkatalog, Ole 15.11.2026): Tarife verschiedener Gesellschaften (Makler) mit der
+ * Gesellschaft davor („AXA Komfort“, „Allianz Komfort“), sonst die Stufennamen.
+ */
+export function spaltenNamen(v: { tarif: string | null | undefined; gesellschaft: string | null | undefined }[], sparte?: string | null): string[] {
+  const ges = new Set(v.map((i) => klein(i.gesellschaft?.trim() ?? "")).filter(Boolean));
+  if (ges.size <= 1) return stufenNamen(v.map((i) => i.tarif), sparte);
+  return v.map((i) => {
+    const t = stufenNamen([i.tarif], sparte)[0];
+    const g = i.gesellschaft?.trim() ?? "";
+    return !g || klein(t).startsWith(klein(g)) ? t : `${g} ${t}`.trim();
+  });
+}
+
 /** Merkmale, die diese Stufe nicht hat, eine andere Stufe derselben Sparte aber schon („das ist nicht drin“). */
 function fehlendeMerkmale(i: AngebotItem, stufen: AngebotItem[]): string[] {
   return i.merkmale
@@ -263,7 +278,7 @@ function vergleichTabelle(
   const namen = [...new Set(v.flatMap((i) => i.merkmale.map((m) => m.name)))];
   const wert = (i: AngebotItem, n: string) => i.merkmale.find((m) => m.name === n)?.wert;
   const gleich = namen.filter((n) => v.every((i) => wert(i, n) != null && klein(wert(i, n)!) === klein(wert(v[0], n)!)));
-  const kurz = stufenNamen(v.map((i) => i.tarif), v[0]?.sparte);
+  const kurz = spaltenNamen(v, v[0]?.sparte);
   const lang = kurz.some((k) => k.length > GRENZEN.kurzname);
   const mitBausteinen = v.some((i) => i.bausteine.length);
   // gemessen: 4 Spalten mit Bausteinen bzw. lange (zweizeilige) Tarifnamen kosten je eine Merkmalzeile
@@ -398,7 +413,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   const stufen = (i: AngebotItem) => {
     const v = items.filter((x) => x.sparte === i.sparte);
     if (v.length < 2) return `<div class="stufe-fest">${i.tarif ? e(stufenNamen([i.tarif], i.sparte)[0]) : ""}</div>`;
-    const kurz = stufenNamen(v.map((x) => x.tarif), i.sparte);
+    const kurz = spaltenNamen(v, i.sparte);
     return `<div class="stufen">${v
       .map((x, k) => `<button type="button" class="st${x.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(x)}">${e(kurz[k])}${x.empfohlen ? `<span class="stern" title="Empfehlung">★</span>` : ""}</button>`)
       .join("")}</div>`;
@@ -444,7 +459,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     const knopf = (i: AngebotItem) =>
       `<button type="button" class="wahl${i.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(i)}">${i.gewaehlt ? "✓ Ausgewählt" : "Auswählen"}</button>`;
     const bs = (i: AngebotItem) => schalter(items, i, false, GRENZEN.bausteine);
-    const kurz = stufenNamen(v.map((i) => i.tarif), sparte);
+    const kurz = spaltenNamen(v, sparte);
     const html = v.some((i) => i.merkmale.length) ? vergleichTabelle(v, { badge, preis, knopf, schalter: bs }) : `<div class="angebote" style="grid-template-columns:repeat(${v.length},minmax(0,1fr))">${v
           .map(
             (i, k) => `<div class="angebot${i.empfohlen ? " empf" : ""}${i.gewaehlt ? " gew" : ""}">${badge(i)}<div class="tarif">${e(kurz[k])}</div>${preis(i)}${punkte(i.leistungen.slice(0, 3))}${bs(i)}${knopf(i)}</div>`,

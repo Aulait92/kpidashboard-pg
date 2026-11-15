@@ -1,0 +1,13 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "hausrat",
+  "produkt": "Allianz Hausratversicherung (Beispieldaten für Tests)",
+  "inAllenTarifen": ["Ersatz zum Neuwert"],
+  "tarife": [
+    { "name": "Hausrat Basis", "kurz": "Basis", "stufe": 1, "werte": { "grobe-fahrlaessigkeit": "nein", "fahrraddiebstahl": "nein", "elementar": "nein", "wertsachen": "20 %", "online-betrug": "nein", "versicherungssumme": "nach Wohnfläche", "ueberspannung": "nein", "hotelkosten": "50 Tage" }, "bausteine": { "fahrrad": "optional", "elementar": "optional", "glas": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Hausrat Smart", "kurz": "Smart", "stufe": 2, "werte": { "grobe-fahrlaessigkeit": "bis 10.000 €", "fahrraddiebstahl": "nein", "elementar": "nein", "wertsachen": "20 %", "online-betrug": "nein", "versicherungssumme": "nach Wohnfläche", "ueberspannung": "ja", "hotelkosten": "100 Tage" }, "bausteine": { "fahrrad": "optional", "elementar": "optional", "glas": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Hausrat Komfort", "kurz": "Komfort", "stufe": 3, "empfohlen": true, "werte": { "grobe-fahrlaessigkeit": "voll", "fahrraddiebstahl": "bis 1.000 €", "elementar": "nein", "wertsachen": "30 %", "online-betrug": "bis 1.000 €", "versicherungssumme": "nach Wohnfläche", "ueberspannung": "ja", "hotelkosten": "200 Tage" }, "bausteine": { "fahrrad": "optional", "elementar": "optional", "glas": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Hausrat Premium", "kurz": "Premium", "stufe": 4, "werte": { "grobe-fahrlaessigkeit": "voll", "fahrraddiebstahl": "bis 3.000 €", "elementar": "ja", "wertsachen": "40 %", "online-betrug": "bis 5.000 €", "versicherungssumme": "nach Wohnfläche", "ueberspannung": "ja", "hotelkosten": "unbegrenzt" }, "bausteine": { "fahrrad": "optional", "elementar": "inklusive", "glas": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" }
+  ],
+  "offen": ["Beispieldaten, nicht geprüft"]
+}

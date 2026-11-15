@@ -1,0 +1,12 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "haftpflicht",
+  "produkt": "Allianz Privathaftpflicht (Beispieldaten für Tests)",
+  "inAllenTarifen": ["Weltweiter Schutz auf Reisen"],
+  "tarife": [
+    { "name": "Privathaftpflicht Basis", "kurz": "Basis", "stufe": 1, "werte": { "deckungssumme": "10 Mio. €", "forderungsausfall": "nein", "schluesselverlust": "nein", "deliktunfaehige-kinder": "ja", "mietsachschaeden": "ja", "gefaelligkeit": "nein" }, "bausteine": { "schluessel-beruflich": "nein", "dienst": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Privathaftpflicht Smart", "kurz": "Smart", "stufe": 2, "empfohlen": true, "werte": { "deckungssumme": "20 Mio. €", "forderungsausfall": "ja", "schluesselverlust": "ja", "deliktunfaehige-kinder": "ja", "mietsachschaeden": "ja", "gefaelligkeit": "ja" }, "bausteine": { "schluessel-beruflich": "optional", "dienst": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Privathaftpflicht Komfort", "kurz": "Komfort", "stufe": 3, "werte": { "deckungssumme": "50 Mio. €", "forderungsausfall": "ja", "schluesselverlust": "ja", "deliktunfaehige-kinder": "ja", "mietsachschaeden": "ja", "gefaelligkeit": "ja" }, "bausteine": { "schluessel-beruflich": "inklusive", "dienst": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" }
+  ],
+  "offen": []
+}

@@ -1,0 +1,13 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "rechtsschutz",
+  "produkt": "Allianz Rechtsschutz Privat (Beispieldaten für Tests, Stufen wie src/lib/demo-beratung.ts)",
+  "inAllenTarifen": ["Telefonische Rechtsberatung", "Kosten im Rechtsstreit"],
+  "tarife": [
+    { "name": "Rechtsschutz Basis", "kurz": "Basis", "stufe": 1, "werte": { "versicherungssumme": "1 Mio. €", "selbstbeteiligung": "150 €", "wartezeit": "3 Monate", "beruf": "nein", "wohnen": "nein", "strafkaution": "100.000 €", "mediation": "ja" }, "bausteine": { "verkehr": "inklusive", "vermieter": "nein" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Rechtsschutz Smart", "kurz": "Smart", "stufe": 2, "werte": { "versicherungssumme": "3 Mio. €", "selbstbeteiligung": "150 €", "wartezeit": "3 Monate", "beruf": "ja", "wohnen": "nein", "strafkaution": "300.000 €", "mediation": "ja" }, "bausteine": { "verkehr": "inklusive", "vermieter": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Rechtsschutz Komfort", "kurz": "Komfort", "stufe": 3, "empfohlen": true, "werte": { "versicherungssumme": "5 Mio. €", "selbstbeteiligung": "150 €", "wartezeit": "3 Monate", "beruf": "ja", "wohnen": "ja", "strafkaution": "500.000 €", "mediation": "ja" }, "bausteine": { "verkehr": "inklusive", "vermieter": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Rechtsschutz Premium", "kurz": "Premium", "stufe": 4, "werte": { "versicherungssumme": "unbegrenzt", "selbstbeteiligung": "150 €", "wartezeit": "3 Monate", "beruf": "ja", "wohnen": "ja", "strafkaution": "1 Mio. €", "mediation": "ja" }, "bausteine": { "verkehr": "inklusive", "vermieter": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" }
+  ],
+  "offen": []
+}

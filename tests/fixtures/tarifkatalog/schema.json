@@ -1,0 +1,58 @@
+{
+  "sparten": [
+    {
+      "key": "haftpflicht",
+      "label": "Privathaftpflicht",
+      "merkmale": [
+        { "key": "deckungssumme", "label": "Deckungssumme", "kurz": "Deckungssumme", "standard": true },
+        { "key": "forderungsausfall", "label": "Forderungsausfalldeckung", "kurz": "Forderungsausfall", "standard": true },
+        { "key": "schluesselverlust", "label": "Verlust fremder Schlüssel", "kurz": "Schlüsselverlust", "standard": true },
+        { "key": "deliktunfaehige-kinder", "label": "Schäden durch deliktunfähige Kinder", "kurz": "Deliktunfähige Kinder", "standard": true },
+        { "key": "mietsachschaeden", "label": "Mietsachschäden an Wohnräumen", "kurz": "Mietsachschäden", "standard": true },
+        { "key": "gefaelligkeit", "label": "Gefälligkeitsschäden", "kurz": "Gefälligkeitsschäden" }
+      ],
+      "bausteine": [
+        { "key": "schluessel-beruflich", "label": "Beruflich genutzte Schlüssel", "kurz": "Beruflicher Schlüssel" },
+        { "key": "dienst", "label": "Diensthaftpflicht", "kurz": "Diensthaftpflicht" }
+      ]
+    },
+    {
+      "key": "hausrat",
+      "label": "Hausrat",
+      "merkmale": [
+        { "key": "grobe-fahrlaessigkeit", "label": "Grobe Fahrlässigkeit", "kurz": "Grobe Fahrlässigkeit", "standard": true },
+        { "key": "fahrraddiebstahl", "label": "Fahrraddiebstahl", "kurz": "Fahrraddiebstahl", "standard": true },
+        { "key": "elementar", "label": "Elementarschäden", "kurz": "Elementarschäden", "standard": true },
+        { "key": "wertsachen", "label": "Wertsachen (Anteil der Summe)", "kurz": "Wertsachen", "standard": true },
+        { "key": "online-betrug", "label": "Online-Betrug und Phishing", "kurz": "Online-Betrug", "standard": true },
+        { "key": "versicherungssumme", "label": "Versicherungssumme", "kurz": "Versicherungssumme" },
+        { "key": "kfz-diebstahl", "label": "Diebstahl aus dem Auto", "kurz": "Diebstahl aus dem Auto" },
+        { "key": "ueberspannung", "label": "Überspannung durch Blitz", "kurz": "Überspannung" },
+        { "key": "hotelkosten", "label": "Hotelkosten nach einem Schaden", "kurz": "Hotelkosten" },
+        { "key": "aussenversicherung", "label": "Außenversicherung", "kurz": "Außenversicherung" }
+      ],
+      "bausteine": [
+        { "key": "fahrrad", "label": "Fahrraddiebstahl", "kurz": "Fahrraddiebstahl" },
+        { "key": "elementar", "label": "Elementarschäden", "kurz": "Elementarschäden" },
+        { "key": "glas", "label": "Glasbruch", "kurz": "Glasbruch" }
+      ]
+    },
+    {
+      "key": "rechtsschutz",
+      "label": "Rechtsschutz",
+      "merkmale": [
+        { "key": "versicherungssumme", "label": "Versicherungssumme", "kurz": "Versicherungssumme", "standard": true },
+        { "key": "selbstbeteiligung", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung", "standard": true },
+        { "key": "wartezeit", "label": "Wartezeit", "kurz": "Wartezeit", "standard": true },
+        { "key": "beruf", "label": "Berufs-Rechtsschutz", "kurz": "Beruf", "standard": true },
+        { "key": "wohnen", "label": "Wohnungs-Rechtsschutz (Mieter)", "kurz": "Wohnen", "standard": true },
+        { "key": "strafkaution", "label": "Strafkaution (als Darlehen)", "kurz": "Strafkaution" },
+        { "key": "mediation", "label": "Mediation", "kurz": "Mediation" }
+      ],
+      "bausteine": [
+        { "key": "verkehr", "label": "Verkehrs-Rechtsschutz", "kurz": "Verkehr" },
+        { "key": "vermieter", "label": "Vermieter-Rechtsschutz", "kurz": "Vermieter" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "gesellschaft": "axa",
+  "sparte": "hausrat",
+  "produkt": "AXA Hausrat (Beispieldaten für Tests)",
+  "inAllenTarifen": [],
+  "tarife": [
+    { "name": "Hausrat Kompakt", "kurz": "Kompakt", "stufe": 1, "werte": { "grobe-fahrlaessigkeit": "bis 5.000 €", "fahrraddiebstahl": "nein", "elementar": "nein", "wertsachen": "20 %", "online-betrug": null }, "bausteine": { "fahrrad": "optional", "elementar": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" },
+    { "name": "Hausrat Komfort", "kurz": "Komfort", "stufe": 2, "empfohlen": true, "werte": { "grobe-fahrlaessigkeit": "voll", "fahrraddiebstahl": "bis 500 €", "elementar": "nein", "wertsachen": "25 %", "online-betrug": "nein" }, "bausteine": { "fahrrad": "optional", "elementar": "optional", "glas": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" }
+  ],
+  "offen": []
+}

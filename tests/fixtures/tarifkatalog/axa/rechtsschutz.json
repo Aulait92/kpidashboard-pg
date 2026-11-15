@@ -1,0 +1,10 @@
+{
+  "gesellschaft": "axa",
+  "sparte": "rechtsschutz",
+  "produkt": "AXA Rechtsschutz (Beispieldaten für Tests)",
+  "inAllenTarifen": [],
+  "tarife": [
+    { "name": "Rechtsschutz Premium", "kurz": "Premium", "stufe": 2, "empfohlen": true, "werte": { "versicherungssumme": "unbegrenzt", "selbstbeteiligung": "150 €", "wartezeit": "3 Monate", "beruf": "ja", "wohnen": "ja" }, "bausteine": { "verkehr": "optional" }, "quelle": "Beispieldaten (Test)", "stand": "2026-11" }
+  ],
+  "offen": []
+}
