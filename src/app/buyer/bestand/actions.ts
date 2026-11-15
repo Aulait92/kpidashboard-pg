@@ -21,6 +21,7 @@ import { loadSettings, referralLinkFor, referralLinkOf } from "@/lib/empfehlung/
 import { firstName, isOccasion as isReferralOccasion, OCCASIONS as REFERRAL_OCCASIONS, renderText } from "@/lib/empfehlung/shared";
 import type { ShareState } from "@/app/buyer/empfehlungen/actions";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
+import { bestandVolumeAdmin } from "@/lib/bestand/volumen";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
@@ -397,7 +398,8 @@ export type RequestState = { ok?: boolean; error?: string };
 
 /** Modul im Kundenbereich anfragen (kein Self-Checkout): Mail + Push an uns, Eintrag in Admin „Heute“. */
 // Wird über useActionState aufgerufen; Formularinhalt und Vorzustand werden nicht gebraucht.
-export async function requestBestandModuleAction(): Promise<RequestState> {
+export async function requestBestandModuleAction(_prev?: RequestState, fd?: FormData): Promise<RequestState> {
+  const volume = bestandVolumeAdmin(fd?.get("volume"));
   const ctx = await getBuyerContext();
   if (!ctx || ctx.preview || !ctx.userId) return { error: "In der Vorschau nicht möglich." };
   if (ctx.teamRole !== "owner") return { error: "Nur der Inhaber kann Module anfragen." };
@@ -406,10 +408,10 @@ export async function requestBestandModuleAction(): Promise<RequestState> {
   if (c.existingCustomersEnabled) return { ok: true };
   if (!c.bestandRequestedAt) {
     await prisma.customer.update({ where: { id: ctx.customerId }, data: { bestandRequestedAt: new Date() } });
-    await audit("bestand.request", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId });
+    await audit("bestand.request", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, ...(volume ? { details: { volume } } : {}) });
     await sendToAdmins({
       title: `Modul-Anfrage: ${c.name}`,
-      body: `Bestandskunden-Modul (${PRICE_LIST.bestandModuleMonthly} €/Monat) angefragt`,
+      body: `Bestandskunden-Modul (${PRICE_LIST.bestandModuleMonthly} €/Monat) angefragt${volume ? `, geplant: ${volume}` : ""}`,
       url: `/admin/kunden/${ctx.customerId}/abrechnung`,
       tag: `bestand-request:${ctx.customerId}`,
     }).catch(() => {});
@@ -419,6 +421,7 @@ export async function requestBestandModuleAction(): Promise<RequestState> {
       greeting: "Hallo,",
       paragraphs: [
         `${c.name} (${ctx.email}) möchte das Bestandskunden-Modul buchen (${PRICE_LIST.bestandModuleMonthly} € netto im Monat).`,
+        ...(volume ? [`Geplante Kampagnen-Nachrichten im Monat: ${volume}.`] : []),
         "Buchen in der Kundenakte unter „Abrechnung“. Dabei wird das Stripe-Abo angepasst.",
       ],
       signature: PROVIDER.brand,

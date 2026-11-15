@@ -6,6 +6,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { bookBestandModuleAction, cancelBestandModuleAction, type BookState } from "@/app/buyer/bestand/actions";
 import { ModuleRequestButton } from "@/components/bestand/module-request";
 import { bestandTerms } from "@/lib/bestand/terms";
+import { bestandPacksText, PRICE_LIST } from "@/lib/offer-pricing";
 
 const VAT_RATE = 0.19;
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
@@ -52,7 +53,7 @@ export function ModuleBookButton({
             {state.error ?? reason} Fragen Sie das Modul hier an, wir melden uns.
           </p>
         ) : null}
-        <ModuleRequestButton requestedAt={requestedAt} readOnly={readOnly} />
+        <ModuleRequestButton requestedAt={requestedAt} readOnly={readOnly} monthlyNet={monthlyNet} annual={annual} freeMonths={freeMonths} />
       </div>
     );
   }
@@ -79,7 +80,11 @@ export function ModuleBookButton({
           <ul className="list-disc space-y-1 pl-5 text-[color:var(--muted)]">
             <li>{terms.charge}</li>
             <li>{terms.cancel}</li>
-            <li>WhatsApp-Gebühren für bis zu {includedMessages} Kampagnen-Nachrichten im Monat inklusive</li>
+            <li>
+              Jeden Monat inklusive: WhatsApp-Gebühren für bis zu {includedMessages.toLocaleString("de-DE")} Kampagnen-Nachrichten und bis zu{" "}
+              {PRICE_LIST.bestandIncludedEmails.toLocaleString("de-DE")} Kampagnen-E-Mails
+            </li>
+            <li>Brauchen Sie mehr Nachrichten, buchen Sie später unter Bestandskunden einfach ein Zusatzpaket dazu: {bestandPacksText()}</li>
           </ul>
           <p className="text-xs text-[color:var(--muted)]">
             Es gelten unsere{" "}
