@@ -1,7 +1,7 @@
 import { LeadLegalCard } from "@/components/lead-legal-card";
 import { isHealthLabel, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
-import { AlertTriangle, CalendarClock, ClipboardList, MessageCircle } from "lucide-react";
+import { AlertTriangle, CalendarClock, ClipboardList, MessageCircle, PhoneCall } from "lucide-react";
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
@@ -172,6 +172,8 @@ export async function LeadDetailBody({
       externalId: true,
       waConsent: true,
       consentData: true,
+      waUnavailableAt: true,
+      waUnavailableMailAt: true,
     },
   });
   if (!lead) notFound();
@@ -336,6 +338,10 @@ export async function LeadDetailBody({
     if (active.length) provision = `≈ ${formatEUR(first)}${trail > 0 ? `, ab dem 2. Jahr ≈ ${formatEUR(trail)} Bestand pro Jahr` : ""}${missing ? " (Standardbeitrag)" : ""}`;
   }
   const label = WHATSAPP_STATUS_LABELS[lead.status ?? ""] ?? lead.status ?? "Neuer Lead";
+  // Kein WhatsApp (lib/whatsapp/kein-whatsapp.ts), solange der Lead nicht selbst geschrieben hat
+  const noWhatsApp =
+    !!lead.waUnavailableAt &&
+    (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId, OR: [{ leadId: lead.id }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] } } })) === 0;
   const apptFmt = (d: Date) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
 
@@ -416,6 +422,21 @@ export async function LeadDetailBody({
           {lead.stornoState === "review"
             ? `Storno eingereicht (${lead.stornoReason ?? "Grund"}), wird geprüft.`
             : `Storno abgelehnt (${lead.stornoReason ?? "Grund"}). Bei Fragen melden Sie sich gern.`}
+        </div>
+      ) : null}
+
+      {noWhatsApp ? (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-900" data-kein-whatsapp>
+          <PhoneCall className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <b>Kein WhatsApp:</b> Diese Nummer ist nicht per WhatsApp erreichbar, der Assistent schreibt nicht. Bitte direkt anrufen.
+            {lead.waUnavailableMailAt ? " Eine E-Mail mit Ihrem Terminlink ist raus." : ""}
+          </span>
+          {lead.phone ? (
+            <a href={`tel:+${lead.phone}`} className="font-semibold">
+              {formatPhone(lead.phone)} anrufen
+            </a>
+          ) : null}
         </div>
       ) : null}
 

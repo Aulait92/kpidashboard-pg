@@ -255,8 +255,10 @@ export async function startSequence(leadId: string, kind: SequenceKind, now = ne
  * ansteht oder der Lead abgeschlossen ist.
  */
 export async function restartSilentSequence(leadId: string, now = new Date()) {
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true, status: true, stornoState: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true, status: true, stornoState: true, waUnavailableAt: true } });
   if (!lead || lead.erasedAt || lead.stornoState) return null;
+  // Kein WhatsApp (lib/whatsapp/kein-whatsapp.ts): kein Nachfassen im Chat, der Vermittler ruft an
+  if (lead.waUnavailableAt) return null;
   if (DONE_STATUSES.has((lead.status ?? "").trim().toLowerCase())) return null;
   if (!(await enabledFor(lead.customerId))) return null;
   const upcoming = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
@@ -464,12 +466,20 @@ async function sendStep(
 ): Promise<SequenceLogEntry> {
   const base = { at: now.toISOString(), step: seq.step, action: "whatsapp" as const };
   const [lead, account] = await Promise.all([
-    prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true } }),
+    prisma.lead.findUnique({ where: { id: seq.leadId }, select: { name: true, phone: true, formData: true, source: true, waConsent: true, waUnavailableAt: true } }),
     prisma.whatsAppAccount.findUnique({ where: { customerId: seq.customerId }, select: { status: true } }),
   ]);
-  if (!lead?.phone || account?.status !== "connected" || lead.waConsent === "nein") {
+  // Kein WhatsApp (Nummer nicht erreichbar, lib/whatsapp/kein-whatsapp.ts): Anruf statt WhatsApp, außer der Lead hat selbst geschrieben
+  const noWa = !!lead?.waUnavailableAt && lead.phone
+    ? (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId: seq.customerId, contactPhone: lead.phone } } })) === 0
+    : false;
+  if (!lead?.phone || account?.status !== "connected" || lead.waConsent === "nein" || noWa) {
     const r = await createCallTask(seq.leadId, step.fallbackNote, now);
-    return { ...base, result: r, detail: !lead?.phone ? "Keine Handynummer" : lead.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : "WhatsApp nicht verbunden" };
+    return {
+      ...base,
+      result: r,
+      detail: !lead?.phone ? "Keine Handynummer" : lead.waConsent === "nein" ? "Keine WhatsApp-Einwilligung im Formular" : noWa ? "Nicht per WhatsApp erreichbar" : "WhatsApp nicht verbunden",
+    };
   }
   const an = await anspracheOf(seq.customerId);
   const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone: lead.phone, name: lead.name });

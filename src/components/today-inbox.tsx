@@ -78,6 +78,8 @@ type CallItem = {
   reason: string;
   overdue: boolean;
   conversationId: string | null;
+  /** Kein WhatsApp: sofort anrufen, steht ganz oben */
+  urgent?: boolean;
 };
 
 type SheetState =
@@ -176,9 +178,23 @@ export function TodayInbox({
   const appointments = data.appointments.filter((a) => !hidden.has(`a:${a.id}`));
   const outcomes = data.outcomes.filter((o) => !hidden.has(`o:${o.id}`));
   const chats = data.chats.filter((c) => !hidden.has(`c:${c.conversationId}`));
-  // Rückrufe und Wiedervorlagen sind für den Nutzer dasselbe: anrufen.
+  // Rückrufe und Wiedervorlagen sind für den Nutzer dasselbe: anrufen. „Kein WhatsApp“ (urgent) ganz oben.
+  const toCallback = (c: InboxData["callbacks"][number]): CallItem => ({
+    key: `r:${c.leadId}`,
+    kind: "callback" as const,
+    leadId: c.leadId,
+    name: c.name,
+    source: c.source,
+    phone: c.phone,
+    reason: `${c.reason} · ${ago(c.createdAt)}`,
+    overdue: false,
+    conversationId: c.conversationId,
+    urgent: c.urgent,
+  });
+  const urgentIds = new Set(data.callbacks.filter((c) => c.urgent).map((c) => c.leadId));
   const calls: CallItem[] = [
-    ...data.followUps.map((f) => ({
+    ...data.callbacks.filter((c) => c.urgent).map(toCallback),
+    ...data.followUps.filter((f) => !urgentIds.has(f.leadId)).map((f) => ({
       key: `f:${f.leadId}`,
       kind: "followup" as const,
       leadId: f.leadId,
@@ -189,17 +205,7 @@ export function TodayInbox({
       overdue: f.overdue,
       conversationId: f.conversationId,
     })),
-    ...data.callbacks.map((c) => ({
-      key: `r:${c.leadId}`,
-      kind: "callback" as const,
-      leadId: c.leadId,
-      name: c.name,
-      source: c.source,
-      phone: c.phone,
-      reason: `${c.reason} · ${ago(c.createdAt)}`,
-      overdue: false,
-      conversationId: c.conversationId,
-    })),
+    ...data.callbacks.filter((c) => !c.urgent).map(toCallback),
   ].filter((c) => !hidden.has(c.key));
   const visibleCalls = showAll ? calls : calls.slice(0, 6);
   const current = callMode ? callMode.queue[callMode.i] : null;
@@ -529,6 +535,7 @@ export function TodayInbox({
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{c.name}</div>
                   <p className="truncate text-xs text-[color:var(--muted)]">
+                    {c.urgent ? <span className="font-semibold text-rose-600" data-call-urgent>Sofort · </span> : null}
                     {c.overdue ? <span className="font-medium text-rose-600">Überfällig · </span> : null}
                     {c.reason}
                   </p>
@@ -824,6 +831,7 @@ function CallModePanel({
           <div className="h-1 bg-[color:var(--brand)] transition-all" style={{ width: `${((index + 1) / total) * 100}%` }} />
         </div>
         <div className="flex flex-1 flex-col justify-center px-6 py-8 md:flex-none">
+          {item.urgent ? <div className="mb-2 text-base font-semibold text-rose-600">Sofort anrufen</div> : null}
           {item.overdue ? <div className="mb-2 text-base font-semibold text-rose-600">Überfällig</div> : null}
           <div className="text-3xl font-semibold tracking-tight">{item.name}</div>
           <p className="mt-2 text-base text-[color:var(--muted)]">{item.reason}</p>

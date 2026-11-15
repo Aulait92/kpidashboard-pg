@@ -33,6 +33,14 @@ export class WhatsAppNoConsentError extends Error {
   }
 }
 
+/** Nummer ist nicht per WhatsApp erreichbar (Lead.waUnavailableAt, lib/whatsapp/kein-whatsapp.ts), Lead hat nie geschrieben. */
+export class WhatsAppUnavailableError extends Error {
+  constructor() {
+    super("Diese Nummer ist nicht per WhatsApp erreichbar. Bitte anrufen oder per E-Mail melden.");
+    this.name = "WhatsAppUnavailableError";
+  }
+}
+
 /** Ist diese Nummer bei diesem Kunden gesperrt? */
 export async function isOptedOut(customerId: string, phone: string): Promise<boolean> {
   const c = await prisma.conversation.findUnique({

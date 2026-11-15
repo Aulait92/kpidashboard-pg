@@ -54,8 +54,9 @@ export type SubjectFields = {
   emailConsent: string | null;
   whatsappConsent: string | null;
   widerspruchHinweis?: string | null;
+  waUnavailableAt?: Date | null;
 };
-export const SUBJECT_SELECT = { phone: true, email: true, optOutAt: true, emailOptOutAt: true, emailConsent: true, whatsappConsent: true, widerspruchHinweis: true } as const;
+export const SUBJECT_SELECT = { phone: true, email: true, optOutAt: true, emailOptOutAt: true, emailConsent: true, whatsappConsent: true, widerspruchHinweis: true, waUnavailableAt: true } as const;
 
 /** Angaben für die Entscheidung inklusive Sperrliste. */
 export function subjectOf(ec: SubjectFields, sup: Suppression): ConsentSubject {

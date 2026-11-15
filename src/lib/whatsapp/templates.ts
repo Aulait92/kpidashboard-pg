@@ -22,7 +22,7 @@ import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
-import { WhatsAppNoConsentError, WhatsAppOptOutError } from "@/lib/whatsapp/stopp";
+import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
 
 export type NoticePurpose =
@@ -661,10 +661,11 @@ export async function sendWhatsAppNotice(opts: {
   // Häkchen zur Einwilligung im Leadformular fehlt: kein WhatsApp, außer der Lead hat selbst per WhatsApp geschrieben
   const leadId = opts.leadId ?? existing?.leadId ?? null;
   if (leadId) {
-    const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { waConsent: true } });
-    if (l?.waConsent === "nein") {
+    const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { waConsent: true, waUnavailableAt: true } });
+    // Kein WhatsApp (Nummer nicht erreichbar, lib/whatsapp/kein-whatsapp.ts): keine weiteren Nachrichten, außer der Lead schreibt selbst
+    if (l?.waConsent === "nein" || l?.waUnavailableAt) {
       const wrote = existing ? await prisma.message.count({ where: { conversationId: existing.id, direction: "inbound" } }) : 0;
-      if (!wrote) throw new WhatsAppNoConsentError();
+      if (!wrote) throw l.waConsent === "nein" ? new WhatsAppNoConsentError() : new WhatsAppUnavailableError();
     }
   }
   const windowOpen =

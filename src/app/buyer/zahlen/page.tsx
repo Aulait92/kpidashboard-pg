@@ -38,6 +38,7 @@ import { loadTipSignals, monthsSinceStart } from "@/lib/zahlen-tipps-server";
 import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
 import { BestandGrowthSection } from "@/components/bestand-growth-chart";
 import { NextStepKpi } from "@/components/next-step-kpi";
+import { KeinWhatsAppKpi } from "@/components/kein-whatsapp-kpi";
 
 type SearchParams = Promise<{
   range?: string;
@@ -248,6 +249,8 @@ async function BuyerDashboardBody({
       />
 
       <NextStepKpi customerId={customerId} />
+
+      <KeinWhatsAppKpi customerId={customerId} range={range} />
 
       <section>
         <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kosten &amp; Ertrag</h2>

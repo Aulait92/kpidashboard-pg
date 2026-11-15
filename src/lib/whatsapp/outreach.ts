@@ -26,6 +26,7 @@ import { ansprechpartner } from "@/lib/lead-anrede";
 import type { Ansprache } from "@/lib/ansprache";
 import { erstinfoUrlFor } from "@/lib/erstinformation";
 import { sendErstinfoPdf } from "@/lib/whatsapp/erstinfo-pdf";
+import { KEIN_WHATSAPP_REASON } from "@/lib/whatsapp/kein-whatsapp";
 
 /**
  * Erstanschreiben (v4, Ole 15.11.2026): Vorlage je Produkt mit der ersten Frage und Knöpfen (lib/whatsapp/erstanschreiben.ts),
@@ -162,7 +163,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         },
         OR: OUTREACH_STATUSES.map((s) => ({ status: s })),
       },
-      select: { id: true, name: true, phone: true, waConsent: true, source: true },
+      select: { id: true, name: true, phone: true, waConsent: true, source: true, waUnavailableAt: true },
       take: 50,
     });
 
@@ -180,6 +181,12 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
         select: { id: true, leadId: true, optedOutAt: true, _count: { select: { messages: true } } },
       });
 
+      // Nummer schon als „kein WhatsApp“ bekannt (lib/whatsapp/kein-whatsapp.ts): nicht anschreiben, steht oben auf der Anrufliste
+      if (lead.waUnavailableAt) {
+        await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: new Date(), outreachStatus: "no_whatsapp" } });
+        result.skipped++;
+        continue;
+      }
       // Einwilligungs-Häkchen im Formular fehlt bzw. „STOPP“: kein WhatsApp (nur E-Mail/Telefon zur Anfrage)
       if (lead.waConsent === "nein" || conv?.optedOutAt) {
         await prisma.lead.update({
@@ -220,8 +227,9 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
 
       try {
         await sendOutreach({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an, source: lead.source });
-        await prisma.lead.update({
-          where: { id: lead.id },
+        // Kam der Status „kein WhatsApp“ schon während des Sendens (Webhook), bleibt „no_whatsapp“ stehen
+        await prisma.lead.updateMany({
+          where: { id: lead.id, waUnavailableAt: null },
           data: { outreachAt: new Date(), outreachStatus: booked ? "sent_booked" : "sent" },
         });
         // WhatsApp-Erstanschreiben = Kontaktversuch (Zeit bis Erstkontakt).
@@ -261,6 +269,8 @@ export type CallbackLead = {
   replied: boolean;
   /** Konversation zum Nachlesen vor dem Anruf (falls vorhanden). */
   conversationId: string | null;
+  /** Sofort anrufen (kein WhatsApp): steht ganz oben auf Heute/Anrufliste. */
+  urgent?: boolean;
 };
 
 /** Hat dieser Kunde den WhatsApp-Agenten mit Erstanschreiben aktiv? */
@@ -302,6 +312,7 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       outreachAt: true,
       outreachStatus: true,
       waConsent: true,
+      waUnavailableAt: true,
       // Letzte Absage (Lead/Berater) → sofort zurückrufen statt 24 h warten.
       appointments: {
         where: {
@@ -337,8 +348,13 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
     const status = l.outreachStatus ?? "";
 
     let reason: string | null = null;
+    let urgent = false;
     const lastCancel = l.appointments[0]?.cancelledBy;
-    if (l.appointments[0]?.status === "no_show") {
+    if (l.waUnavailableAt && !replied) {
+      // Nummer nicht per WhatsApp erreichbar (lib/whatsapp/kein-whatsapp.ts): sofort, ganz oben
+      reason = KEIN_WHATSAPP_REASON;
+      urgent = true;
+    } else if (l.appointments[0]?.status === "no_show") {
       reason = "Nicht zum Termin erschienen, neuen Termin vereinbaren";
     } else if (lastCancel === "advisor") {
       reason = "Du hast den Termin abgelehnt, bitte neuen Termin vereinbaren";
@@ -369,8 +385,11 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
         reason,
         replied,
         conversationId: l.conversations[0]?.id ?? null,
+        ...(urgent ? { urgent: true } : {}),
       });
     }
   }
-  return out;
+  // „Kein WhatsApp“ zuerst (jüngster oben), sonst wie bisher nach Eingang
+  const top = out.filter((c) => c.urgent).sort((x, y) => y.createdAt.getTime() - x.createdAt.getTime());
+  return [...top, ...out.filter((c) => !c.urgent)];
 }
