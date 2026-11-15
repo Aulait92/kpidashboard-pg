@@ -9,6 +9,7 @@ import type { OfferTarget } from "@/lib/offer-links";
 import { bestandPacksText, computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
+import { EMAIL_RE } from "@/lib/whatsapp/phone";
 
 const PRODUCT_SUGGESTIONS = [
   "TKV-Katze",
@@ -104,6 +105,10 @@ export function OfferForm({
 
   function submit() {
     setError(null);
+    if (!EMAIL_RE.test(email.trim())) {
+      setError("Bitte eine gültige E-Mail-Adresse des Empfängers angeben. Daraus entsteht nach der Zahlung der Login.");
+      return;
+    }
     start(async () => {
       const res = await createOfferAction(target, {
         contactName,
@@ -149,7 +154,7 @@ export function OfferForm({
           <div className="grid gap-3 p-5 sm:grid-cols-2">
             <Field l="Ansprechpartner *"><input className={input} value={contactName} onChange={(e) => setContactName(e.target.value)} /></Field>
             <Field l="Firma / Agentur"><input className={input} value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
-            <Field l="E-Mail (für den Versand)"><input className={input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+            <Field l="E-Mail *"><input className={input} type="email" required autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
             <Field l="Straße und Hausnummer"><input className={input} value={street} onChange={(e) => setStreet(e.target.value)} /></Field>
             <Field l="PLZ"><input className={input} value={zip} onChange={(e) => setZip(e.target.value)} /></Field>
             <Field l="Ort"><input className={input} value={city} onChange={(e) => setCity(e.target.value)} /></Field>

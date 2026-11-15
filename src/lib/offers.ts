@@ -4,6 +4,7 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
+import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import {
@@ -118,6 +119,9 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     .map((p) => ({ name: p.name.trim(), dailyBudget: Math.max(0, Number(p.dailyBudget) || 0) }))
     .filter((p) => p.name);
   if (!input.contactName.trim()) throw new Error("Bitte einen Ansprechpartner angeben.");
+  // E-Mail ist Pflicht: Ohne sie entsteht nach der Zahlung kein Login für den Kunden.
+  const email = input.email?.trim().toLowerCase() ?? "";
+  if (!EMAIL_RE.test(email) || email.endsWith(".invalid")) throw new Error("Bitte eine gültige E-Mail-Adresse des Empfängers angeben.");
   if (products.length === 0) throw new Error("Bitte mindestens ein Produkt angeben.");
 
   const pkg: OfferPackage = input.package === "service" ? "service" : "software";
@@ -201,7 +205,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             token: crypto.randomBytes(24).toString("base64url"),
             contactName: input.contactName.trim(),
             company: input.company?.trim() || null,
-            email: input.email?.trim() || null,
+            email,
             street: input.street?.trim() || null,
             zip: input.zip?.trim() || null,
             city: input.city?.trim() || null,
