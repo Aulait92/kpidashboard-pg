@@ -1,13 +1,18 @@
-# Vertriebsunterlagen (Stand 15.11.2026)
+# Vertriebsunterlagen (Stand 15.11.2026, abends)
 
 Aktuelle Präsentationen für Admin → Marketing → Unterlagen (je Zielgruppe PPTX und PDF).
 
+Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unverändert, neu: Terminvorbereitung,
+Beratungspräsentation, Trennfolie „Optional erweitern“, Bestandskunden-Modul (149 €), Empfehlungen & Bewertungen
+(59 €), Paket-Folie mit Zusatzmodulen. Vertreter 26 Folien, Makler 27. Die Folien sind Bilder (Text nicht
+durchsuchbar). Vertreter-Garantie in dieser Fassung wie in Oles Datei. In Produktion erst nach Oles OK hochladen.
+
 | Datei | Zielgruppe | Format | Hinweis |
 |---|---|---|---|
-| `Vertreter-Praesentation.pptx` | vertreter | pptx | Break-even-Garantie „nach 120 Tagen“ (aktive Tage, Pausen verlängern) |
-| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung mit Demo-Bildern des Assistenten, 120 Tage |
-| `Makler-Praesentation.pptx` | makler | pptx | unverändert vom 11.11.2026; Vertrags-Garantie bleibt 90 Tage |
-| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, unverändert vom 11.11.2026 |
+| `Vertreter-Praesentation.pptx` | vertreter | pptx | neues Design, 26 Folien |
+| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung, neues Design |
+| `Makler-Praesentation.pptx` | makler | pptx | neues Design, 27 Folien |
+| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, neues Design |
 
 Hochladen ohne Admin-Login über den geschützten Upload (docs/sicherheit-cron.md):
 
