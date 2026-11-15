@@ -506,7 +506,7 @@ export async function LeadDetailBody({
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
-      <LeadFiles leadId={lead.id} files={files} defaultKind={won ? "police" : "angebot"} />
+      <LeadFiles leadId={lead.id} files={files} defaultKind={won ? "police" : "angebot"} praesentationTermin={won ? undefined : (nextAppt?.id ?? pastAppt?.id ?? null)} />
 
       <LeadHistory mailReady={!!postfach} leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>

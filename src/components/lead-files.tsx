@@ -4,7 +4,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Paperclip, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { FileText, Paperclip, Presentation, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui";
 import { FileDrop } from "@/components/ui/file-drop";
 import { useToast } from "@/components/ui/toast";
@@ -26,28 +27,46 @@ export const LEAD_FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.docx,.xlsx,applicat
 export const LEAD_FILE_MAX_BYTES = 15 * MB;
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 
-export function LeadFiles({ leadId, files, defaultKind = "angebot", readOnly = false }: { leadId: string; files: LeadFileView[]; defaultKind?: Kind; readOnly?: boolean }) {
+export function LeadFiles({
+  leadId,
+  files,
+  defaultKind = "angebot",
+  readOnly = false,
+  praesentationTermin,
+}: {
+  leadId: string;
+  files: LeadFileView[];
+  defaultKind?: Kind;
+  readOnly?: boolean;
+  /** Termin für die Beratungspräsentation (undefined = kein Hinweis, null = noch kein Termin) */
+  praesentationTermin?: string | null;
+}) {
   const router = useRouter();
   const toast = useToast();
   const [kind, setKind] = useState<Kind>(defaultKind);
   const [busy, setBusy] = useState<string | null>(null);
 
-  async function upload(file: File) {
+  // Mehrere Dateien auf einmal (z. B. vier Screenshots aus dem Tarifrechner), nacheinander hochgeladen
+  async function upload(list: File[]) {
     setBusy("upload");
+    let ok = 0;
     try {
-      const res = await fetch(`/api/buyer/leads/${leadId}/dateien?kind=${kind}`, {
-        method: "POST",
-        headers: { "x-file-name": encodeURIComponent(file.name), "content-type": "application/octet-stream" },
-        body: file,
-      });
-      const j = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(j.error ?? "Hochladen hat nicht geklappt.");
-      toast.show({ message: `${LABEL[kind]} gespeichert` });
-      router.refresh();
+      for (const file of list) {
+        const res = await fetch(`/api/buyer/leads/${leadId}/dateien?kind=${kind}`, {
+          method: "POST",
+          headers: { "x-file-name": encodeURIComponent(file.name), "content-type": "application/octet-stream" },
+          body: file,
+        });
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) throw new Error(`${file.name}: ${j.error ?? "Hochladen hat nicht geklappt."}`);
+        ok++;
+      }
+      toast.show({ message: ok === 1 ? `${LABEL[kind]} gespeichert` : `${ok} Dateien gespeichert` });
     } catch (e) {
       toast.show({ message: e instanceof Error ? e.message : "Hochladen hat nicht geklappt.", tone: "error" });
     } finally {
       setBusy(null);
+      if (ok) router.refresh();
     }
   }
 
@@ -61,7 +80,7 @@ export function LeadFiles({ leadId, files, defaultKind = "angebot", readOnly = f
   }
 
   return (
-    <Card className="mt-6" data-lead-files>
+    <Card id="dokumente" className="mt-6" data-lead-files>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--border)] px-5 py-3">
         <h2 className="text-[15px] font-semibold tracking-tight">Dokumente</h2>
         {!readOnly ? (
@@ -91,12 +110,29 @@ export function LeadFiles({ leadId, files, defaultKind = "angebot", readOnly = f
                 label="Hochladen"
                 pendingLabel="Lädt …"
                 busy={busy === "upload"}
-                onFiles={(fs) => fs[0] && void upload(fs[0])}
+                multiple
+                maxFiles={10}
+                onFiles={(fs) => fs.length && void upload(fs)}
               />
             </div>
           </div>
         ) : null}
       </div>
+      {praesentationTermin !== undefined && !readOnly ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[color:var(--border)] bg-[color:var(--brand-soft)] px-5 py-2.5 text-sm" data-praesentation-hinweis>
+          <Presentation className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+          {praesentationTermin ? (
+            <>
+              <span>Angebote für die Beratungspräsentation laden Sie am besten direkt in der Terminvorbereitung hoch, dort liest die App sie aus.</span>
+              <Link href={`/buyer/termine/${praesentationTermin}/vorbereitung#angebote`} className="font-medium text-[color:var(--brand)] underline">
+                Terminvorbereitung und Präsentation öffnen
+              </Link>
+            </>
+          ) : (
+            <span>Für eine Beratungspräsentation legen Sie zuerst einen Termin an. Danach laden Sie die Angebote in der Terminvorbereitung hoch.</span>
+          )}
+        </div>
+      ) : null}
       {files.length === 0 ? (
         <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch keine Dokumente. Laden Sie hier z. B. das Angebot hoch, das Sie geschickt haben.</p>
       ) : (

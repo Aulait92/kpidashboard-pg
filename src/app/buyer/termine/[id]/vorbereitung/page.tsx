@@ -4,6 +4,7 @@ import { ArrowLeft, ClipboardCheck, FileDown, ListChecks, MessageSquareText, Pre
 import { PageHeader } from "@/components/buyer-shell";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { isNewUi } from "@/lib/new-ui";
 import { abschnitte, GRUNDREGELN, leitfaden, offenePunkte, spartenVon, unterlagenFuer } from "@/lib/termin-vorbereitung";
 import { angeboteAuslesenErlaubt, loadAngebote, loadVorbereitung } from "@/lib/termin-vorbereitung-server";
 import { AngeboteEditor } from "./angebote-editor";
@@ -27,7 +28,7 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
   const offen = offenePunkte(ab);
   const lf = leitfaden(d.lead.produkt);
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
-  const [ang, auslesenErlaubt] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt)]);
+  const [ang, auslesenErlaubt, newUi] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt), isNewUi(ctx.customerId)]);
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       {d.leadId ? (
@@ -48,7 +49,7 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
       </div>
 
       {ang ? (
-        <Card className="mb-5" data-termin-angebote>
+        <Card id="angebote" className="mb-5" data-termin-angebote>
           <CardHeader
             title="Ihre Angebote für die Präsentation"
             icon={Receipt}
@@ -58,11 +59,12 @@ export default async function TerminVorbereitungPage({ params }: { params: Promi
             id={d.id}
             items={ang.angebote.items}
             quelle={ang.angebote.quelle}
+            leadId={d.leadId}
             bestaetigt={!!ang.bestaetigt}
             dateien={ang.dateien}
             auslesenErlaubt={auslesenErlaubt}
             readOnly={ctx.preview}
-            leadHref={d.leadId ? `/buyer/leads/${d.leadId}#dokumente` : null}
+            leadHref={d.leadId ? `${newUi ? "/buyer/kontakte/" : "/buyer/leads/"}${d.leadId}#dokumente` : null}
           />
         </Card>
       ) : null}

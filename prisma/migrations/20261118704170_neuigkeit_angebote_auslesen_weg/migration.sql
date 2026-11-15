@@ -1,0 +1,3 @@
+-- Neuigkeit „Angebote automatisch auslesen“: Angebote jetzt direkt in der Terminvorbereitung hochladen
+UPDATE "ProductUpdate" SET "body" = 'Öffnen Sie beim Termin die **Terminvorbereitung** und klicken Sie bei „Ihre Angebote für die Präsentation“ auf **Angebote hochladen**: PDF oder Screenshots aus dem Tarifrechner, auch mehrere auf einmal. Die App liest Stufen, Beiträge und Leistungen aus und füllt die Tabelle. Sie prüfen, wählen Ihre Empfehlung und bestätigen. Das geht für Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierversicherungen.', "updatedAt" = '2026-11-15 21:20:00'
+WHERE "id" = 'upd_2611_angebote_auslesen';

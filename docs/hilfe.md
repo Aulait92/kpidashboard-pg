@@ -184,8 +184,8 @@ Seiten aus der Liste „Seiten“ unten.
 - Haben Sie das Angebot gerechnet, tippen Sie **Vorbereitet**; die Aufgabe verschwindet. Auch im Kontakt am Termin:
   **Vorbereiten**.
 - **Angebote und Präsentation:** In der Terminvorbereitung tragen Sie Ihre Angebote ein (Sparte, Tarif, Beitrag pro
-  Monat, wichtigste Leistungen, was nicht versichert ist) und markieren, was Sie empfehlen. Laden Sie das Angebot im
-  Kontakt hoch, kann die App es auslesen (Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierversicherungen; bei Kranken, BU oder Leben nicht, wegen möglicher Gesundheitsangaben). Laden Sie nur das Angebot hoch, keine Antragsunterlagen mit Gesundheitsfragen. Nach **Prüfen und bestätigen** öffnet **Präsentation**
+  Monat, wichtigste Leistungen, was nicht versichert ist) und markieren, was Sie empfehlen. Mit **Angebote hochladen** (direkt in der
+  Terminvorbereitung, auch mehrere Dateien oder Screenshots aus dem Tarifrechner) liest die App sie aus (Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierversicherungen; bei Kranken, BU oder Leben nicht, wegen möglicher Gesundheitsangaben). Laden Sie nur das Angebot hoch, keine Antragsunterlagen mit Gesundheitsfragen. Nach **Prüfen und bestätigen** öffnet **Präsentation**
   eine bebilderte Beratungsstrecke mit den Angaben Ihres Kunden und Ihren Angeboten, in den Farben Ihrer
   Gesellschaft. Im Videocall den Bildschirm teilen, **Vollbild**, mit den Pfeiltasten weiter. Der **Sprechzettel**
   (nur für Sie) steht unter der Folie oder in einem eigenen Fenster, das mitblättert. **Als PDF** zum Nachschicken.

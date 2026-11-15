@@ -5,7 +5,8 @@
 // Leistungen, Ausschlüsse und Bausteine je Stufe unter „Für die Folien“. Erst bestätigte Angebote kommen in die Präsentation.
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { CheckCircle2, Paperclip, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { FileDrop } from "@/components/ui/file-drop";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import type { AngebotItem } from "@/lib/angebote";
@@ -73,6 +74,7 @@ export function AngeboteEditor(p: {
   auslesenErlaubt: boolean;
   readOnly?: boolean;
   leadHref: string | null;
+  leadId?: string | null;
   quelle?: string[];
 }) {
   const toast = useToast();
@@ -93,6 +95,33 @@ export function AngeboteEditor(p: {
       setDirty(false);
       toast.show({ message: bestaetigen ? "Bestätigt, die Präsentation ist bereit" : "Gespeichert" });
     });
+  // Angebote direkt hier hochladen (Ole, 15.11.2026: im Kontakt war nicht klar, wo sie hingehören), danach sofort auslesen
+  const [laedt, setLaedt] = useState(false);
+  const hochladen = async (list: File[]) => {
+    if (!p.leadId || !list.length) return;
+    setLaedt(true);
+    try {
+      for (const file of list) {
+        const res = await fetch(`/api/buyer/leads/${p.leadId}/dateien?kind=angebot`, {
+          method: "POST",
+          headers: { "x-file-name": encodeURIComponent(file.name), "content-type": "application/octet-stream" },
+          body: file,
+        });
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) throw new Error(`${file.name}: ${j.error ?? "Hochladen hat nicht geklappt."}`);
+      }
+    } catch (e) {
+      setLaedt(false);
+      return toast.show({ message: e instanceof Error ? e.message : "Hochladen hat nicht geklappt.", tone: "error" });
+    }
+    setLaedt(false);
+    if (!p.auslesenErlaubt) {
+      toast.show({ message: list.length === 1 ? "Angebot gespeichert" : `${list.length} Angebote gespeichert` });
+      return window.location.reload();
+    }
+    toast.show({ message: "Hochgeladen, die App liest die Angebote jetzt aus …" });
+    auslesen();
+  };
   const auslesen = () =>
     start(async () => {
       const r = await angeboteAuslesenAction(p.id);
@@ -106,16 +135,36 @@ export function AngeboteEditor(p: {
   return (
     <div className="space-y-5 px-5 py-4 text-sm" data-angebote-editor>
       <div className="flex flex-wrap items-center gap-3">
-        {p.auslesenErlaubt ? (
+        {p.leadId && !ro ? (
+          <FileDrop
+            variant="button"
+            size="md"
+            instant
+            multiple
+            maxFiles={10}
+            icon={Paperclip}
+            accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+            maxBytes={15 * 1024 * 1024}
+            label="Angebote hochladen"
+            pendingLabel="Lädt …"
+            busy={laedt || pending}
+            onFiles={(fs) => void hochladen(fs)}
+          />
+        ) : null}
+        {p.auslesenErlaubt && p.dateien.length ? (
           <Button variant="secondary" size="md" icon={Sparkles} disabled={pending || ro || !p.dateien.length} onClick={auslesen}>
-            {p.dateien.length ? `Aus ${p.dateien.length} ${p.dateien.length === 1 ? "Angebot" : "Angeboten"} auslesen` : "Angebote auslesen"}
+            {`Aus ${p.dateien.length} ${p.dateien.length === 1 ? "Angebot" : "Angeboten"} auslesen`}
           </Button>
         ) : null}
         <span className="text-[color:var(--muted)]">
-          {p.dateien.length ? `Hochgeladen: ${p.dateien.map((d) => d.fileName).join(", ")}` : "Noch kein Angebot hochgeladen."}{" "}
-          {p.leadHref ? (
+          {p.dateien.length
+            ? `Hochgeladen: ${p.dateien.map((d) => d.fileName).join(", ")}`
+            : p.auslesenErlaubt
+              ? "PDF oder Screenshots aus dem Tarifrechner hochladen, die App füllt die Tabelle."
+              : "Noch kein Angebot hochgeladen."}{" "}
+          {p.leadHref && p.dateien.length ? (
             <a className="font-medium text-[color:var(--brand)] underline" href={p.leadHref}>
-              Im Kontakt hochladen
+              Im Kontakt ansehen
             </a>
           ) : null}
         </span>
