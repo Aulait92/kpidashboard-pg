@@ -20,13 +20,19 @@ export function buildResetUrl(rawToken: string): string {
   return `${getAppUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`;
 }
 
+/** Absender immer als „performancegrowth“ zeigen, Adresse aus der Variable behalten (Ole, 15.11.2026). */
+export function brandFrom(raw: string): string {
+  const m = /<([^>]+)>/.exec(raw);
+  const address = (m ? m[1] : raw).trim();
+  return `performancegrowth <${address}>`;
+}
+
 export async function sendPasswordResetEmail(opts: {
   to: string;
   resetUrl: string;
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from =
-    process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  const from = brandFrom(process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
 
   if (!apiKey) {
     // In Dev / ohne Resend-Setup: Link in die Server-Logs schreiben damit
@@ -89,8 +95,7 @@ export async function sendBuyerInviteEmail(opts: {
   setPasswordUrl: string;
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from =
-    process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  const from = brandFrom(process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) {
     console.warn(
       `[email] RESEND_API_KEY fehlt, Einladungs-URL für ${opts.to}: ${opts.setPasswordUrl}`,
@@ -237,7 +242,7 @@ export async function sendOfferEmail(opts: {
   discount?: { label: string; discount: number; list: number; fee: number; anyTerm: boolean } | null;
 }): Promise<SendResult & { subject?: string; text?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   const rechner = opts.rechnerUrl ?? null;
   const anhang = opts.attachment ?? null;
@@ -312,7 +317,7 @@ export async function sendOnboardingWelcomeEmail(opts: {
   replyTo?: string | null;
 }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) {
     console.warn(`[email] RESEND_API_KEY fehlt — Willkommens-Mail an ${opts.to}, Link: ${opts.setPasswordUrl ?? opts.loginUrl}`);
     return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
@@ -435,7 +440,7 @@ export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResu
     ...(opts.textBlocks ? { textBlocks: opts.textBlocks.map((l) => ohneGedankenstriche(l)) } : {}),
   };
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) {
     console.warn(`[email] RESEND_API_KEY fehlt — „${opts.subject}“ an ${[opts.to].flat().join(", ")}${opts.button ? `, Link: ${opts.button.url}` : ""}`);
     return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
@@ -460,7 +465,7 @@ export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResu
 /** Reine Text-Mail ohne HTML (für Empfänger, deren System die Mail ausliest). */
 export async function sendPlainMail(opts: { to: string | string[]; subject: string; text: string; replyTo?: string | null }): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.LEAD_EMAIL_FROM ?? process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>";
+  const from = brandFrom(process.env.LEAD_EMAIL_FROM ?? process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) {
     console.warn(`[email] RESEND_API_KEY fehlt — „${opts.subject}“ an ${[opts.to].flat().join(", ")}`);
     return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
