@@ -139,3 +139,18 @@ mit Hinweis auf Papier auf Wunsch (`ERSTINFO_ZUSTIMMUNG`, Version 2026-11-16).
 
 > Die Software übermittelt die Erstinformation mit der ersten Nachricht des Assistenten als Link und als PDF.
 > Verlangt ein Interessent sie auf Papier, stellt der Kunde sie ihm unverzüglich und unentgeltlich zur Verfügung.
+
+## Thema 11: Gesundheitsangaben im Chat (AVV „Art, Zweck und Umfang“, Anlage 2)
+
+**Problem:** Der AVV beschreibt nur Gesundheitsangaben aus Lead-Formularen. Interessenten schreiben solche Angaben aber
+auch im Chat. **Erledigt im Code (16.11.2026):** Erkannte Gesundheitsangaben einer Person in Chatnachrichten gehen nicht
+mehr an den KI-Anbieter (`redactHealthText` in `lib/gesundheitsdaten.ts`); der Vermittler sieht die Nachricht
+vollständig. Tierangaben bleiben (keine Gesundheitsdaten einer natürlichen Person).
+
+**Vorschlag AVV, Absatz „Gesundheitsangaben (Art. 9 DSGVO) …“, neuer zweiter Satz:**
+
+> Gesundheitsangaben, die Interessenten im Chat machen, blendet die Software vor der Übermittlung an den KI-Anbieter
+> aus, soweit sie sie erkennt; angezeigt werden sie nur dem Auftraggeber.
+
+**Vorschlag Anlage 2, Anthropic, Zweck:** „… Verarbeitung der Chatnachrichten (ohne Gesundheitsangaben aus
+Lead-Formularen und ohne erkannte Gesundheitsangaben aus Chatnachrichten) …“

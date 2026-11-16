@@ -36,7 +36,7 @@ import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsa
 import { erstinfoZeile, hasErstinfoLink, hasErstinfoPdf, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
 import { ersteFrageRegel } from "@/lib/whatsapp/erstanschreiben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
-import { GESUNDHEITS_REGEL, splitHealthAnswers } from "@/lib/gesundheitsdaten";
+import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
@@ -427,12 +427,13 @@ function parseFormAnswers(raw: unknown): FormAnswer[] {
 
 type HistoryMessage = { direction: string; body: string | null };
 
-function toApiMessages(history: HistoryMessage[]): Anthropic.MessageParam[] {
+/** Verlauf für die KI. Gesundheitsangaben des Leads werden ausgeblendet (lib/gesundheitsdaten.ts), außer bei Tier-Leads. */
+function toApiMessages(history: HistoryMessage[], opts: { tier?: boolean } = {}): Anthropic.MessageParam[] {
   const msgs: Anthropic.MessageParam[] = [];
   for (const m of history) {
     const text = (m.body ?? "").trim();
     if (!text) continue;
-    if (m.direction === "inbound") msgs.push({ role: "user", content: text });
+    if (m.direction === "inbound") msgs.push({ role: "user", content: redactHealthText(text, opts) });
     else if (m.direction === "outbound")
       msgs.push({ role: "assistant", content: text });
     // interne Einträge (Qualifizierung/Status) überspringen
@@ -605,7 +606,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       email: conversation.contactEmail,
     },
   });
-  const messages = toApiMessages(history);
+  const messages = toApiMessages(history, { tier: istTierLead(lead?.source) });
   if (messages.length === 0) return;
 
   const client = new Anthropic();

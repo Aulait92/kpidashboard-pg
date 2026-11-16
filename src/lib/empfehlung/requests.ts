@@ -12,6 +12,7 @@ import { publicBaseOrNull } from "@/lib/public-url";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
 import { personFromCustomerName } from "@/lib/advisor-name";
 import { ansprechpartner, kontaktFromExisting } from "@/lib/lead-anrede";
+import { redactHealthText } from "@/lib/gesundheitsdaten";
 import type { AnredeKontakt } from "@/lib/ansprache";
 import {
   DAY_MS,
@@ -868,7 +869,7 @@ export async function classifyReply(text: string): Promise<Sentiment> {
         },
       ],
       tool_choice: { type: "tool", name: "save_sentiment" },
-      messages: [{ role: "user", content: `Antwort des Kunden:\n\n${text.slice(0, 2000)}` }],
+      messages: [{ role: "user", content: `Antwort des Kunden:\n\n${redactHealthText(text.slice(0, 2000))}` }],
     });
     const tool = resp.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
     const s = (tool?.input as { sentiment?: string } | undefined)?.sentiment;

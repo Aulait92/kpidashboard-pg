@@ -492,3 +492,23 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
   angelegt bzw. aktualisiert werden (Ole, Kampagnen).
 - **Handlungsbedarf: ja (umgesetzt), Entwurf** (Papier auf Wunsch, Entwurf Thema 10). **Anwalt:** Ist die erste
   WhatsApp schon der erste Geschäftskontakt, solange die ältere Vorlage ohne Link läuft?
+
+### 10.11 Gesundheitsdaten (Art. 9 DSGVO): Formular, Assistent, Notizen
+
+- **Rechtslage:** Gesundheitsdaten sind Daten über die Gesundheit einer natürlichen Person
+  ([Art. 4 Nr. 15, Art. 9 DSGVO](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32016R0679)); Angaben zu
+  Tieren gehören nicht dazu. Art. 9 gilt auch, wenn sich Gesundheitsinformationen nur mittelbar ableiten lassen (EuGH,
+  Urteil vom 01.08.2022, C-184/20, OT) und schon für Bestelldaten apothekenpflichtiger Arzneimittel (EuGH, Urteil vom
+  04.10.2024, C-21/23, Lindenapotheke). Ausnahme in der Regel nur die ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a);
+  berechtigtes Interesse genügt nicht.
+- **App heute:** Gesundheitsfragen und -antworten aus Formularen gehen nicht an die KI und nicht in WhatsApp-Texte,
+  im Kontakt vertraulich (`lib/gesundheitsdaten.ts`, Paket A); Angebote auslesen nur ohne Gesundheitsangaben
+  (`angebotOhneGesundheitsdaten`); Bestandsimport verwirft Gesundheitsspalten; Notizen gehen nicht an die KI.
+  **Lücke:** Was Interessenten selbst im Chat schreiben („hatte einen Bandscheibenvorfall“), ging vollständig an
+  Anthropic.
+- **Umgesetzt (16.11.2026):** Sätze mit eindeutigen Gesundheitsbegriffen werden vor der KI durch einen Platzhalter
+  ersetzt (`redactHealthText`, im Assistenten und bei der Einordnung von Antworten im Empfehlungsmodul); der Vermittler
+  sieht die Nachricht vollständig; Tier-Leads bleiben unverändert (Test `tests/unit/gesundheit-chat.test.ts`).
+- **Handlungsbedarf: ja (umgesetzt), Entwurf** (AVV-Beschreibung, Entwurf Thema 11). **Anwalt:** Braucht der Vermittler
+  für unaufgefordert im Chat genannte Gesundheitsangaben eine Einwilligung, oder genügt Löschen bzw. Nichtverwenden?
+  Wer holt die Einwilligung für PKV-, BU- und Zahn-Leads ein (Formular-Häkchen)?

@@ -38,6 +38,34 @@ export function splitHealthAnswers<T extends Answer>(answers: T[]): { normal: T[
   return { normal, health };
 }
 
+/** Platzhalter, der statt einer Gesundheitsangabe aus dem Chat an die KI geht. */
+export const HEALTH_REDACTED = "[Gesundheitsangabe ausgeblendet, nur für den Berater sichtbar]";
+
+/** Lead zu einer Tierversicherung (Katze, Hund, Pferd, TKV)? Dann sind Krankheitsangaben keine Art.-9-Daten. */
+export function istTierLead(source: string | null | undefined): boolean {
+  return /katze|kater|\bhund|tier|\btkv\b|pferd/i.test(source ?? "");
+}
+
+/**
+ * Gesundheitsangaben einer Person in einer Chatnachricht des Leads vor der KI ausblenden (Art. 9 DSGVO,
+ * Datenminimierung nach Art. 5 Abs. 1 lit. c und Art. 25 DSGVO; Rechtsprüfung 16.11.2026). Sätze mit eindeutigen
+ * Begriffen werden durch einen Platzhalter ersetzt; in der Datenbank und für den Vermittler bleibt die Nachricht
+ * vollständig. Bei Tier-Leads oder Sätzen über ein Tier bleibt der Text: Tiergesundheit ist keine Gesundheitsangabe
+ * einer natürlichen Person (Art. 4 Nr. 15 DSGVO).
+ */
+export function redactHealthText(text: string, opts: { tier?: boolean } = {}): string {
+  if (opts.tier || !VALUE_RE.test(norm(text))) return text;
+  const parts = text.split(/(?<=[.!?\n])\s*/);
+  const out: string[] = [];
+  for (const s of parts) {
+    const n = norm(s);
+    const hide = VALUE_RE.test(n) && !TIER_RE.test(n);
+    if (!hide) out.push(s.trim());
+    else if (out[out.length - 1] !== HEALTH_REDACTED) out.push(HEALTH_REDACTED);
+  }
+  return out.filter(Boolean).join(" ");
+}
+
 /** Regel für den System-Prompt des Assistenten. */
 export const GESUNDHEITS_REGEL =
-  "- Frage nie nach Gesundheitsangaben (Vorerkrankungen, Diagnosen, Behandlungen, Medikamente, Größe und Gewicht). Nennt der Lead welche, wiederhole sie nicht, halte sie nicht fest (auch nicht in record_qualification) und sag freundlich, dass das der Berater persönlich im Termin bespricht.";
+  `- Frage nie nach Gesundheitsangaben (Vorerkrankungen, Diagnosen, Behandlungen, Medikamente, Größe und Gewicht). Nennt der Lead welche, wiederhole sie nicht, halte sie nicht fest (auch nicht in record_qualification) und sag freundlich, dass das der Berater persönlich im Termin bespricht. Steht im Verlauf „${HEALTH_REDACTED}“, hat der Lead dort etwas zu seiner Gesundheit geschrieben: nicht nachfragen, nur kurz sagen, dass der Berater das im Termin bespricht.`;
