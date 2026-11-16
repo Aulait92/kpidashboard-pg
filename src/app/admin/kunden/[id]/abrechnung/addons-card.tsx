@@ -10,8 +10,7 @@ import { seatUsage } from "@/lib/seats-server";
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const input = "h-9 w-24 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm tabular-nums";
-const btn = "h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold";
-const primary = `${btn} bg-[color:var(--brand)] text-white`;
+const btn = "h-10 sm:h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold";
 const secondary = `${btn} border border-[color:var(--border)] bg-white`;
 
 /** Verkäufer-Plätze, Bestandskunden-Modul (inkl. Kontingent) und Zahlweise – mit Stripe-Abgleich. */
@@ -80,7 +79,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
               € je weiterem Verkäufer
               <input name="seatMonthly" inputMode="decimal" defaultValue={String(seatPrice ?? PRICE_LIST.seatMonthly).replace(".", ",")} className={input} />
             </label>
-            <button className={primary}>Speichern und abgleichen</button>
+            <button className={secondary}>Speichern und abgleichen</button>
           </form>
           {c.seatsIncluded != null ? (
             <form action={syncSeatsAction}>
@@ -108,7 +107,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
               <form action={bestandModuleAction}>
                 {hidden}
                 <input type="hidden" name="mode" value="book" />
-                <button className={primary}>Buchen ({eur(PRICE_LIST.bestandModuleMonthly)}/Monat)</button>
+                <button className={secondary}>Buchen ({eur(PRICE_LIST.bestandModuleMonthly)}/Monat)</button>
               </form>
             ) : null}
             {!c.existingCustomersEnabled || bestandFee ? (
@@ -180,7 +179,7 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
               <form action={empfehlungModuleAction}>
                 {hidden}
                 <input type="hidden" name="mode" value="book" />
-                <button className={primary}>Buchen ({eur(PRICE_LIST.empfehlungModuleMonthly)}/Monat, sofort)</button>
+                <button className={secondary}>Buchen ({eur(PRICE_LIST.empfehlungModuleMonthly)}/Monat, sofort)</button>
               </form>
             ) : null}
             {!c.empfehlungFree ? (
