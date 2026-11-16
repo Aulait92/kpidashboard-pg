@@ -20,7 +20,8 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   danger: "border border-rose-200 bg-white text-rose-700 hover:bg-rose-50",
 };
 const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-xs",
+  // Handy: 40 px hohe Tippziele (Ole, 16.11.2026), ab sm wie bisher 32 px
+  sm: "h-10 px-3 text-[13px] sm:h-8 sm:text-xs",
   md: "h-10 px-4 text-sm",
 };
 
