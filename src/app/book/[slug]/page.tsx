@@ -213,7 +213,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <Clock className="h-3.5 w-3.5" /> {durationMin} Minuten
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--surface-sunken)] px-2.5 py-1">
-          <Phone className="h-3.5 w-3.5" /> Telefon oder <Video className="h-3.5 w-3.5" /> Video
+          <Video className="h-3.5 w-3.5" /> Video oder <Phone className="h-3.5 w-3.5" /> Telefon
         </span>
       </div>
 
