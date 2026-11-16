@@ -28,7 +28,7 @@ import { registerCallAttempt } from "@/lib/call-attempts";
 import { runSequences } from "@/lib/lead-sequences";
 import { runNextStepReminders } from "@/lib/next-step-reminder";
 import { keepTryingResult, markLeadLostResult, nextStepTaskResult } from "@/app/buyer/next-step-actions";
-import { callbackOutcomeResult, undoInboxAction } from "@/app/buyer/inbox-actions";
+import { callbackOutcomeResult, followUpNotReachedResult, undoInboxAction } from "@/app/buyer/inbox-actions";
 import { loadLeadHistory } from "@/lib/lead-history";
 import { NEXT_STEP_TASK_NOTE } from "@/lib/lead-next-step";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
@@ -256,5 +256,16 @@ describe("Nächster Schritt", () => {
     expect(adv[0][1]).toMatchObject({ title: "1 Lead braucht einen nächsten Schritt" });
     const owner = push.mock.calls.filter((c) => c[0] === st.userId);
     expect(owner[0][1]).toMatchObject({ title: "1 Lead braucht einen nächsten Schritt" });
+  });
+
+  it("Wiedervorlage nicht erreicht: Versuch gezählt, Wiedervorlage rückt vor, Notiz bleibt (Ole, 16.11.2026)", async () => {
+    const now = new Date();
+    const l = await lead({ followUpAt: new Date(now.getTime() - DAY), followUpNote: "Angebot nachfassen" });
+    expect(await followUpNotReachedResult(l.id)).toMatchObject({ ok: true });
+    const neu = await prisma.lead.findUniqueOrThrow({ where: { id: l.id } });
+    expect(neu.callAttempts).toBe(1);
+    expect(neu.followUpAt!.getTime()).toBeGreaterThan(now.getTime());
+    expect(neu.followUpNote).toBeTruthy();
+    expect((await loadLeadHistory(l.id)).some((h) => /nicht erreicht/i.test(h.text ?? ""))).toBe(true);
   });
 });

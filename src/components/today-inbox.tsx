@@ -37,6 +37,7 @@ import {
   callbackOutcomeResult,
   chatDoneResult,
   clearFollowUpResult,
+  followUpNotReachedResult,
   setFollowUpResult,
   undoInboxAction,
   type InboxResult,
@@ -268,7 +269,11 @@ export function TodayInbox({
         onSelect: () => run(c.key, `${c.name}: nicht erreicht`, () => callbackOutcomeResult(c.leadId, "not_reached"), { leadId: c.leadId, name: c.name }),
       });
     } else {
-      actions.push({ label: "Erledigt", icon: Check, onSelect: () => run(c.key, `${c.name}: erledigt`, () => clearFollowUpResult(c.leadId)) });
+      actions.push({
+        label: "Nicht erreicht",
+        icon: PhoneMissed,
+        onSelect: () => run(c.key, `${c.name}: nicht erreicht, morgen wieder`, () => followUpNotReachedResult(c.leadId)),
+      });
     }
     // Schnell schieben (Ole, 13.11.2026): +1 Tag / +1 Woche direkt, sonst „Später …“
     actions.push(
@@ -285,6 +290,9 @@ export function TodayInbox({
         onSelect: () =>
           setTimeout(() => askWin(c.name, c.source, (v, sp) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v, sp))), 0),
       },
+      ...(c.kind === "followup"
+        ? [{ label: "Erledigt, kein weiterer Anruf nötig", icon: Check, onSelect: () => run(c.key, `${c.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(c.leadId)) }]
+        : []),
       { label: "Lead öffnen", icon: UserRound, href: leadUrl(c.leadId) },
       { label: "Verloren", icon: ThumbsDown, tone: "danger", onSelect: () => setTimeout(() => setSheet({ kind: "lost", key: c.key, leadId: c.leadId, name: c.name }), 0) },
     );

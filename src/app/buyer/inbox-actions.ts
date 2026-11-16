@@ -341,6 +341,30 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
  * oder ein festes Datum (YYYY-MM-DD). Rückruf-Leads verschwinden bis dahin
  * aus der Rückrufliste und erscheinen am Fälligkeitstag unter „Heute".
  */
+/**
+ * Wiedervorlage angerufen, aber nicht erreicht (Ole, 16.11.2026: im Menü der Wiedervorlage fehlte „Nicht erreicht“):
+ * Versuch zählen und im Verlauf festhalten wie beim Rückruf; die Wiedervorlage rückt auf den nächsten Werktag
+ * (Notiz bleibt), statt überfällig in der Liste stehen zu bleiben.
+ */
+export async function followUpNotReachedResult(leadId: string): Promise<InboxResult> {
+  const customerId = await writableCustomerId(leadId);
+  if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
+  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  const prev = snapshot(lead);
+  const now = new Date();
+  await registerCallAttempt(lead.id, { customerId, now });
+  const cur = await prisma.lead.findUnique({ where: { id: lead.id }, select: { followUpAt: true } });
+  // Hat der Anrufplan keinen späteren Versuch gesetzt: Wiedervorlage auf den nächsten Werktag
+  if (!cur?.followUpAt || cur.followUpAt.getTime() <= now.getTime() + 4 * 60 * 60 * 1000) {
+    const at = workdaysFromNow(1);
+    await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: at, followUpNote: lead.followUpNote ?? null, callbackSnoozedUntil: at } });
+  }
+  await recordUsage("action", "followup.not_reached");
+  refresh();
+  return { ok: true, undo: { kind: "lead", leadId, prev } };
+}
+
 export async function setFollowUpResult(
   leadId: string,
   when: { days: number } | { date: string },
