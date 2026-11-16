@@ -54,7 +54,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ k
       }
     >
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <Card>
+        <Card className="self-start">
           <ul className="divide-y divide-[color:var(--border)]" data-funktion="actions-savelogincardaction--infokarten-liste-neue-karte actions-togglelogincardaction--karte-an-aus actions-movelogincardaction--reihenfolge-der-karten-aendern">
             {cards.map((c, i) => (
               <li key={c.id} className={cn("flex items-center gap-3 px-3 py-3 sm:px-4", !c.enabled && "bg-[color:var(--surface-sunken)]")}>

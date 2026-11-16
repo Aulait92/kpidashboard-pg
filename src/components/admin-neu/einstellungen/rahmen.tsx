@@ -52,8 +52,8 @@ export function SchalterKnopf({ an, label, ...props }: { an: boolean; label: str
 /** Zeile in einer Karte: Titel, ein Satz, rechts Wert oder Aktion. */
 export function Zeile({ titel, text, rechts, className, ...rest }: { titel: React.ReactNode; text?: React.ReactNode; rechts?: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLLIElement>) {
   return (
-    <li className={cn("flex min-h-14 items-center gap-3 px-5 py-3", className)} {...rest}>
-      <div className="min-w-0 flex-1">
+    <li className={cn("flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3", className)} {...rest}>
+      <div className="min-w-[11rem] flex-1">
         <div className="text-sm font-medium">{titel}</div>
         {text ? <div className="text-sm text-[color:var(--muted)]">{text}</div> : null}
       </div>

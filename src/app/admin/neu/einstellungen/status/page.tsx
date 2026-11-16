@@ -60,7 +60,7 @@ export default async function Page() {
           <ul className={LISTE}>
             <Zeile titel="WhatsApp" rechts={support.whatsapp ? <span className="text-sm">+{support.whatsapp}</span> : <Badge tone="warning">fehlt</Badge>} className="min-h-11 py-2" />
             <Zeile titel="E-Mail" rechts={support.email ? <span className="text-sm">{support.email}</span> : <Badge tone="warning">fehlt</Badge>} className="min-h-11 py-2" />
-            <Zeile titel="Antwortzeit" rechts={<span className="text-sm text-[color:var(--muted)]">{support.responseTime}</span>} className="min-h-11 py-2" />
+            <Zeile titel="Antwortzeit" text={support.responseTime} className="min-h-11 py-2" />
           </ul>
           {!support.whatsapp && !support.email ? (
             <p className="border-t border-[color:var(--border)] px-5 py-3 text-sm text-amber-800">Ohne Kontaktweg zeigt der Hilfe-Chat nur „An unser Team weitergeben“ (SUPPORT_WHATSAPP_NUMBER, SUPPORT_EMAIL).</p>
