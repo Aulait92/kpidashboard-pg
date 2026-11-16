@@ -12,7 +12,10 @@ import { prisma } from "@/lib/prisma";
 export const SPERR_DOMAINS = ["minimi-kanzlei.de", "getminimi.de", "getminimi.com"] as const;
 
 /** SHA-256 (hex) gesperrter E-Mail-Adressen, klein geschrieben und ohne Leerzeichen. */
-export const SPERR_EMAIL_HASHES: readonly string[] = [];
+export const SPERR_EMAIL_HASHES: readonly string[] = [
+  // Unterlassungsvertrag Az. ABCNX (16.11.2026). Nur die Adresse, nicht die Domain (Allianz-Vertreter sind Zielgruppe).
+  "083c7c828aa64dc70ad2929eca14c9ed3647e66e1d02cc8bb75aad413eaa62d5",
+];
 
 const hash = (email: string) => createHash("sha256").update(email).digest("hex");
 const norm = (email: string) => email.trim().toLowerCase();

@@ -22,3 +22,10 @@ describe("Feste Sperrliste im Vertrieb", () => {
     expect(emailGesperrt("jemand@beispiel.de")).toBe(false);
   });
 });
+
+describe("Einzeladresse aus dem Unterlassungsvertrag", () => {
+  it("ist gesperrt, die Domain aber nicht", () => {
+    expect(emailGesperrt("Wild.Stanislav@allianz.de")).toBe(true);
+    expect(emailGesperrt("andere.person@allianz.de")).toBe(false);
+  });
+});
