@@ -331,8 +331,8 @@ export function ProvisionForm({
           <fieldset className="min-w-0" disabled={disabled}>
             <legend className="mb-1 text-[15px] font-semibold">Stornoquote pro Jahr</legend>
             <p className="mb-3 text-sm text-[color:var(--muted)]">
-              So viele Verträge fallen pro Jahr im Schnitt weg. Damit rechnen alle Prognosen: Bestandsprovision in 5 Jahren, das Diagramm, der Gewinn mit künftigem
-              Bestand und der Monatsbericht. Leer = Standard {fmt(STORNO_PRO_JAHR * 100)} %. Für einzelne Sparten können Sie unten eine eigene Quote eintragen.
+              {/* Ein Satz statt vier (UX Runde 4) */}
+              So viele Verträge fallen pro Jahr im Schnitt weg, leer bedeutet {fmt(STORNO_PRO_JAHR * 100)} %; alle Prognosen rechnen damit.
             </p>
             <div className="max-w-xs">
               <Field label="Stornoquote pro Jahr (0 bis 50 %)" suffix="%" value={storno} placeholder={fmt(STORNO_PRO_JAHR * 100)} onChange={setStorno} />
