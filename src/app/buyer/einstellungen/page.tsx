@@ -49,7 +49,7 @@ export default async function EinstellungenPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
-      <PageHeader title="Einstellungen" />
+      <PageHeader back="/buyer" title="Einstellungen" />
       <div className="space-y-6" data-einstellungen>
         {groups
           .filter((g) => g.items.length)

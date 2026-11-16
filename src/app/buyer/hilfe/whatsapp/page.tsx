@@ -128,7 +128,7 @@ export default async function WhatsAppHelpPage({ searchParams }: { searchParams:
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="WhatsApp verbinden" subtitle="Schritt für Schritt. Einmalig, etwa 10 Minuten." />
+      <PageHeader back="/buyer/einrichtung" title="WhatsApp verbinden" subtitle="Schritt für Schritt. Einmalig, etwa 10 Minuten." />
       {!owner ? (
         <p className="mb-5 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Das Verbinden macht der Inhaber des Kontos. Diese Anleitung können Sie trotzdem lesen.

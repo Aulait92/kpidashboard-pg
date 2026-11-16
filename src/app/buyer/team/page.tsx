@@ -43,7 +43,7 @@ export default async function TeamPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Team" subtitle="Neue Leads werden reihum verteilt, Abwesende übersprungen. Berater sehen nur ihre eigenen." />
+      <PageHeader back="/buyer/einstellungen" title="Team" subtitle="Neue Leads werden reihum verteilt, Abwesende übersprungen. Berater sehen nur ihre eigenen." />
       <div className="space-y-5">
         {members.length > 1 && receivers === 0 ? (
           <p className="rounded-[var(--radius-md)] bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 ring-1 ring-amber-200">

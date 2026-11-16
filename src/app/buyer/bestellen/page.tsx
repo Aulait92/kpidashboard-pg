@@ -59,7 +59,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Leads bestellen" subtitle="Exklusive Leads, im Voraus bezahlt. Geliefert wird sofort nach Eingang." />
+      <PageHeader back="/buyer/wachstum" title="Leads bestellen" subtitle="Exklusive Leads, im Voraus bezahlt. Geliefert wird sofort nach Eingang." />
       <div className="space-y-5">
         {zahlung === "ok" ? (
           <div className="rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">Zahlungsart ist hinterlegt. Jetzt können Sie bestellen.</div>

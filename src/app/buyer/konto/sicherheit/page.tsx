@@ -24,7 +24,7 @@ export default async function BuyerSecurityPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Anmeldung & Sicherheit" subtitle={ctx.email} />
+      <PageHeader back="/buyer/einstellungen" title="Anmeldung & Sicherheit" subtitle={ctx.email} />
       <div className="space-y-5">
         <Card>
           <CardHeader title="E-Mail-Adresse für die Anmeldung" icon={AtSign} />

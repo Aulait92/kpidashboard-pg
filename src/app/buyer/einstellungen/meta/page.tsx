@@ -52,7 +52,7 @@ export default async function MetaRueckmeldungPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
-      <PageHeader title="Rückmeldung an Meta" subtitle="Meta lernt aus Ihren Ergebnissen, welche Leads abschließen." />
+      <PageHeader back="/buyer/einstellungen" title="Rückmeldung an Meta" subtitle="Meta lernt aus Ihren Ergebnissen, welche Leads abschließen." />
       <div className="space-y-5" data-capi-page>
         <Card>
           <CapiToggle on={o.enabled} canEdit={canEdit} />

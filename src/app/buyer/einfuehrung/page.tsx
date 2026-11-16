@@ -15,7 +15,7 @@ export default async function EinfuehrungPage() {
   const owner = ctx.teamRole !== "advisor";
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Einführung" subtitle="Rundgang durch Ihre Software, funktioniert auch ohne Ton." />
+      <PageHeader back="/buyer" title="Einführung" subtitle="Rundgang durch Ihre Software, funktioniert auch ohne Ton." />
       <Card>
         <div className="p-5">
           <h2 className="mb-3 text-[15px] font-semibold">{VIDEOS.kurz.title}</h2>

@@ -49,7 +49,7 @@ export default async function KollegenEmpfehlenPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Kollegen empfehlen" subtitle="Kennen Sie Vermittler, denen neue Kunden helfen würden?" />
+      <PageHeader back="/buyer/einstellungen" title="Kollegen empfehlen" subtitle="Kennen Sie Vermittler, denen neue Kunden helfen würden?" />
       <div className="space-y-5">
         {/* Ganz oben: was beide Seiten konkret bekommen (aus den Einstellungen) */}
         <div className={`grid gap-3 ${lines.kollege ? "sm:grid-cols-2" : ""}`} data-kollegen-kacheln>

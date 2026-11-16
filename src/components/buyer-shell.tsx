@@ -32,6 +32,7 @@ import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
 import { showNewBadge } from "@/lib/empfehlung/shared";
 import { NotReachedOfferHost } from "@/components/next-step";
+import { ZurueckLink } from "@/components/zurueck-link";
 
 // App-Shell des Kundenbereichs: eine Kopfzeile mit Navigation und Profil-
 // menü (Desktop), unten eine Tab-Leiste (Handy). Alle Seiten teilen sich
@@ -644,12 +645,24 @@ export function PageHeader({
   title,
   subtitle,
   actions,
+  back,
 }: {
   title: string;
   subtitle?: React.ReactNode;
   actions?: React.ReactNode;
+  /** Unterseiten ohne Platz in der unteren Navigation: einheitliches „Zurück“ oben links (Ole, 16.11.2026).
+   *  Kam man aus der App, geht es per Browser-Zurück dorthin, sonst auf diese Elternseite. */
+  back?: string;
 }) {
   return (
+    <>
+    {back ? (
+      <div className="-mt-3 -ml-1 sm:-mt-2">
+        <ZurueckLink href={back} back>
+          Zurück
+        </ZurueckLink>
+      </div>
+    ) : null}
     <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6 sm:items-end">
       <div className="min-w-0">
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
@@ -659,5 +672,6 @@ export function PageHeader({
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
+    </>
   );
 }

@@ -124,7 +124,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Konto & Rechnungen" subtitle={customer.name} />
+      <PageHeader back="/buyer/einstellungen" title="Konto & Rechnungen" subtitle={customer.name} />
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
       <div className="space-y-5">
         <Card>

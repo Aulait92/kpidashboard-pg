@@ -23,7 +23,7 @@ export default async function NeuigkeitenPage() {
   }
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Neuigkeiten" subtitle="Was wir für Sie verbessert haben." />
+      <PageHeader back="/buyer" title="Neuigkeiten" subtitle="Was wir für Sie verbessert haben." />
       <UpdatesList items={items} unreadIds={unread.map((u) => u.id)} />
     </main>
   );

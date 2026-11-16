@@ -71,7 +71,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader title="Mein Kalender" subtitle="Termine für Ihre Leads direkt in Ihrem Kalender" />
+      <PageHeader back="/buyer/einstellungen" title="Mein Kalender" subtitle="Termine für Ihre Leads direkt in Ihrem Kalender" />
       {gcalNote}
       {consentUrl ? <MicrosoftAdminConsent url={consentUrl} /> : null}
 
