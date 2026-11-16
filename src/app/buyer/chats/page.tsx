@@ -501,7 +501,10 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-[color:var(--brand)]">
                   {appointments.length > 0 ? `Termin ${formatAppt(appointments[0].startsAt)} Uhr · Infos` : "Infos zum Lead"}
                 </summary>
-                <div className="px-4 pb-4">{leadInfo}</div>
+                {/* Ole, 16.11.2026: am Handy unten abgeschnitten (fester Chat-Rahmen). Eigener Scrollbereich. */}
+                <div className="max-h-[55dvh] overflow-y-auto overscroll-contain px-4 pb-4" data-lead-infos>
+                  {leadInfo}
+                </div>
               </details>
 
               <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
