@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { BellRing, CheckCircle2, Loader2 } from "lucide-react";
 import { acceptOfferAction, type AcceptState } from "./actions";
 import { eur, withVat, type OfferTerm } from "@/lib/offer-pricing";
 import { ZahlartAuswahl } from "@/components/zahlart-auswahl";
@@ -34,6 +34,7 @@ export function AcceptForm({
   pricing,
   choice,
   payment = false,
+  payLater = false,
 }: {
   token: string;
   termsUrl: string;
@@ -45,6 +46,8 @@ export function AcceptForm({
   choice?: OfferChoiceProps | null;
   /** Online-Zahlung eingerichtet: Zahlart vor dem Weiterleiten wählen (Lastschrift vorausgewählt) */
   payment?: boolean;
+  /** „Später zahlen“ erlaubt (Ole am Angebot): Hinweis vor der Annahme, die Wahl kommt danach im Zahlungsfeld */
+  payLater?: boolean;
 }) {
   const [state, action, pending] = useActionState<AcceptState, FormData>(
     acceptOfferAction.bind(null, token),
@@ -173,6 +176,11 @@ export function AcceptForm({
         <div className="max-w-md">
           <ZahlartAuswahl />
         </div>
+      ) : payLater ? (
+        <p className="flex items-start gap-2 text-sm text-[color:var(--muted)]" data-pay-later-hinweis>
+          <BellRing className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>Nach der Annahme zahlen Sie direkt oder wählen einen späteren Tag, an dem wir Sie an die Zahlung erinnern.</span>
+        </p>
       ) : null}
       {state.error ? <p className="text-sm font-medium text-rose-700">{state.error}</p> : null}
       <button

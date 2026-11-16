@@ -126,6 +126,7 @@ export default async function OfferPage({
                     pricing={offerSummaryInput(offer)}
                     choice={choiceProps(offer)}
                     payment={billingEnabled() && !offer.isTest && !offer.allowPayLater}
+                    payLater={billingEnabled() && !!payLaterProps(offer)}
                   />
                 </div>
               ) : (
