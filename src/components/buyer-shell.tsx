@@ -17,7 +17,6 @@ import {
   MessageSquareText,
   Plane,
   ShoppingCart,
-  Sparkles,
   Sun,
   TrendingUp,
   Users,
@@ -357,18 +356,7 @@ function ProfileMenu({
               )}
             </button>
           ) : null}
-          {newUi ? (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                window.dispatchEvent(new Event("pg-hilfe-open"));
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-            >
-              <Sparkles className="h-4 w-4" /> Hilfe
-            </button>
-          ) : null}
+          {/* „Hilfe“ nicht auch hier: steht schon in der Seitenleiste bzw. am Handy oben (16.11.2026) */}
           <button
             type="button"
             onClick={() => {

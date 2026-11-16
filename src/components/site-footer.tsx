@@ -34,7 +34,7 @@ export async function SiteFooter() {
           Datenschutz
         </a>
         <Link href="/sicherheit" className="hover:text-[color:var(--brand)] hover:underline">
-          Sicherheit &amp; Datenschutz
+          Sicherheit
         </Link>
         <Link href="/status" className="hover:text-[color:var(--brand)] hover:underline">
           Status
