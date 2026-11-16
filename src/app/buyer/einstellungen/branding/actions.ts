@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/audit";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { canEditProvision } from "@/lib/provision-server";
-import { logoBestaetigen, logoEntfernen, logoHochladen, logoHolen } from "@/lib/branding-logo-server";
+import { logoBestaetigen, logoEntfernen, logoHochladen, logoHolen, markthinweisSpeichern } from "@/lib/branding-logo-server";
 
 type Res = { ok: true } | { ok: false; error: string };
 
@@ -57,4 +57,14 @@ export async function logoEntfernenAction(): Promise<Res> {
   await audit("customer.logo", { entity: "Customer", entityId: o.ctx.customerId, customerId: o.ctx.customerId, details: { action: "remove" } });
   done();
   return { ok: true };
+}
+
+/** Makler: Hinweis auf die Marktauswahl in der Präsentation (leer = Standard). */
+export async function markthinweisAction(text: string): Promise<Res> {
+  const o = await owner();
+  if ("error" in o) return { ok: false, error: o.error };
+  const r = await markthinweisSpeichern(o.ctx.customerId, String(text ?? ""));
+  if (r.ok) await audit("customer.markthinweis", { entity: "Customer", entityId: o.ctx.customerId, customerId: o.ctx.customerId });
+  done();
+  return r;
 }

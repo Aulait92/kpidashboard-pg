@@ -1,6 +1,8 @@
 // Logo des Kunden speichern, bestätigen, entfernen (lib/branding-logo.ts).
 
 import { prisma } from "@/lib/prisma";
+import { ohneGedankenstriche } from "@/lib/gedankenstriche";
+import { MARKTHINWEIS_STANDARD } from "@/lib/praesentation";
 import { bildTyp, LOGO_MAX_BYTES, logoDataUri, logoVonWebseite, svgBereinigen } from "@/lib/branding-logo";
 
 export type LogoStand = { dataUri: string | null; source: string | null; bestaetigt: boolean; website: string | null };
@@ -60,4 +62,23 @@ export async function logoBestaetigen(customerId: string): Promise<boolean> {
 
 export async function logoEntfernen(customerId: string): Promise<void> {
   await prisma.customer.update({ where: { id: customerId }, data: { brandLogo: null, brandLogoType: null, brandLogoSource: null, brandLogoConfirmedAt: null } });
+}
+
+// ─── Makler: Hinweis auf die Marktauswahl (§ 60 Abs. 1, 2 VVG, lib/praesentation.ts) ─────────────
+
+export type MarkthinweisStand = { makler: boolean; text: string; standard: string; eigener: boolean };
+
+export async function loadMarkthinweis(customerId: string): Promise<MarkthinweisStand> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, maklerMarkthinweis: true } });
+  const eigener = c?.maklerMarkthinweis?.trim() || null;
+  return { makler: c?.vermittlerTyp === "makler", text: eigener ?? MARKTHINWEIS_STANDARD, standard: MARKTHINWEIS_STANDARD, eigener: !!eigener };
+}
+
+/** Eigenen Text speichern; leer oder gleich dem Standard = Standard. Abschalten geht nicht (Pflichthinweis). */
+export async function markthinweisSpeichern(customerId: string, raw: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const text = ohneGedankenstriche(String(raw ?? "").replace(/\s+/g, " ").trim()).slice(0, 300);
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true } });
+  if (c?.vermittlerTyp !== "makler") return { ok: false, error: "Nur für Makler." };
+  await prisma.customer.update({ where: { id: customerId }, data: { maklerMarkthinweis: !text || text === MARKTHINWEIS_STANDARD ? null : text } });
+  return { ok: true };
 }

@@ -312,3 +312,38 @@ describe("Präsentation: nichts abschneiden, nichts doppelt", () => {
     expect(a.items[0].merkmale[0].name).toBe("Versicherungssumme: Ausnahme");
   });
 });
+
+describe("Makler: Hinweis auf die Marktauswahl (§ 60 Abs. 1, 2 VVG)", () => {
+  const ang = cleanAngebote({ items: [
+    { sparte: "Privathaftpflicht", gesellschaft: "Haftpflichtkasse", tarif: "Einfach Komplett", beitragMonat: 5.9 },
+    { sparte: "Privathaftpflicht", gesellschaft: "Interrisk", tarif: "XXL", beitragMonat: 7.4, empfohlen: true },
+    { sparte: "Hausrat", gesellschaft: "Haftpflichtkasse", tarif: "Komfort", beitragMonat: 6.1, empfohlen: true },
+  ] });
+  const hinweis = (html: string | undefined) => /data-markthinweis>([^<]*)</.exec(html ?? "")?.[1] ?? null;
+
+  it("Makler: dezente Fußzeile auf Empfehlung und Vergleich mit den Gesellschaften der Auswahl", () => {
+    const fs = folien(d, ang, markeFuer({ name: "Müller Versicherungsmakler", vermittlerTyp: "makler" }));
+    expect(hinweis(fs.find((f) => f.id === "empfehlung")?.html)).toBe("Verglichen wurden Tarife von Haftpflichtkasse und Interrisk.");
+    const vergleich = fs.filter((f) => f.id.startsWith("vergleich-"));
+    expect(vergleich).toHaveLength(1);
+    expect(hinweis(vergleich[0].html)).toBe("Verglichen wurden Tarife von Haftpflichtkasse und Interrisk.");
+    // nur dort, nicht auf den anderen Folien
+    expect(fs.filter((f) => f.html.includes("data-markthinweis")).map((f) => f.id)).toEqual(["empfehlung", vergleich[0].id]);
+    expect(praesentationHtml(fs, markeFuer({ name: "X", vermittlerTyp: "makler" }), "T")).toContain(".markthinweis{");
+  });
+
+  it("eigener Text aus den Einstellungen, ohne bekannte Gesellschaft kein Hinweis", () => {
+    const m = markeFuer({ name: "Müller Versicherungsmakler", vermittlerTyp: "makler", maklerMarkthinweis: "Meine Auswahl hier: {gesellschaften}." });
+    expect(hinweis(folien(d, ang, m).find((f) => f.id === "empfehlung")?.html)).toBe("Meine Auswahl hier: Haftpflichtkasse und Interrisk.");
+    const ohne = cleanAngebote({ items: [{ sparte: "Hausrat", tarif: "Komfort", beitragMonat: 6.1, empfohlen: true }] });
+    expect(folien(d, ohne, markeFuer({ name: "M", vermittlerTyp: "makler" })).some((f) => f.html.includes("data-markthinweis"))).toBe(false);
+  });
+
+  it("Vertreter und Mehrfachvertreter: kein Hinweis", () => {
+    for (const vermittlerTyp of ["vertreter", "mehrfachvertreter", null]) {
+      const m = markeFuer({ name: "Allianz Agentur Lohmann", vermittlerTyp, maklerMarkthinweis: "Verglichen wurden Tarife von {gesellschaften}." });
+      expect(m.markthinweis ?? null).toBeNull();
+      expect(folien(d, ang, m).some((f) => f.html.includes("data-markthinweis"))).toBe(false);
+    }
+  });
+});

@@ -335,6 +335,9 @@ model Customer {
   // Tarifkatalog (Terminvorbereitung, Ole 15.11.2026): Gesellschaft(en) des Vertreters bzw. bevorzugte des Maklers
   // (Schlüssel wie data/tarifkatalog/<gesellschaft>); leer = aus Erstinformation bzw. Name abgeleitet
   tarifGesellschaften            String[]                  @default([])
+  // Makler (§ 60 Abs. 1, 2 VVG): eigener Hinweis auf die Marktauswahl in der Präsentation, NULL = Standard
+  // „Verglichen wurden Tarife von {gesellschaften}.“ (lib/praesentation.ts, Einstellungen → Präsentation)
+  maklerMarkthinweis             String?
   eigeneTarife                   EigenerTarif[]
   beraterMerkmale                BeraterMerkmale[]
 }

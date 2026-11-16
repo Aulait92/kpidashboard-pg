@@ -164,10 +164,10 @@ export async function loadPraesentation(appointmentId: string, ctx: TeamCtx) {
   if (!d) return null;
   const [ang, kunde] = await Promise.all([
     loadAngebote(appointmentId, ctx),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, leadAddress: true, brandLogo: true, brandLogoType: true, brandLogoConfirmedAt: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, vermittlerTyp: true, maklerMarkthinweis: true, leadAddress: true, brandLogo: true, brandLogoType: true, brandLogoConfirmedAt: true } }),
   ]);
   const logo = kunde?.brandLogo && kunde.brandLogoType && kunde.brandLogoConfirmedAt ? logoDataUri(new Uint8Array(kunde.brandLogo), kunde.brandLogoType) : null;
-  const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp }, logo);
+  const marke = markeFuer({ name: kunde?.name ?? "Ihre Beratung", vermittlerTyp: kunde?.vermittlerTyp, maklerMarkthinweis: kunde?.maklerMarkthinweis }, logo);
   const fs = folien(d, ang?.bestaetigt ? ang.angebote : null, marke, asAnsprache(kunde?.leadAddress));
   return { d, marke, folien: fs, css: praesentationCss(marke), angeboteBestaetigt: !!ang?.bestaetigt };
 }

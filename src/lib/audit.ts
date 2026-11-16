@@ -162,6 +162,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "rechnung.steuernummer": "Steuernummer für Rechnungen geändert",
   "rechnung.kunden": "Pflichtangaben bei Stripe-Kunden aktualisiert",
   "customer.logo": "Logo für Präsentationen geändert",
+  "customer.markthinweis": "Makler: Hinweis auf die Marktauswahl in der Präsentation geändert",
   "angebote.gesundheit_verworfen": "Angebot mit Gesundheitssparte ausgelesen und verworfen (nichts gespeichert)",
 };
 

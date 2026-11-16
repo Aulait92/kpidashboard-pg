@@ -11,16 +11,46 @@ import { beitragEffektiv, summeEmpfohlen, type AngebotItem, type AngeboteDaten }
 import { a, type Ansprache } from "@/lib/ansprache";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
-export type Marke = { name: string; gesellschaft: string | null; farbe: string; farbeHell: string; akzent: string; logoUrl: string | null };
+export type Marke = {
+  name: string;
+  gesellschaft: string | null;
+  farbe: string;
+  farbeHell: string;
+  akzent: string;
+  logoUrl: string | null;
+  /** Nur Makler (§ 60 Abs. 1, 2 VVG): Vorlage für den Hinweis auf die Marktauswahl, {gesellschaften} wird ersetzt. */
+  markthinweis?: string | null;
+};
+
+/** Standard für Makler, änderbar unter Einstellungen → Präsentation (Customer.maklerMarkthinweis). */
+export const MARKTHINWEIS_STANDARD = "Verglichen wurden Tarife von {gesellschaften}.";
+
+/** Vorlage für den Marktauswahl-Hinweis: nur bei Maklern, eigener Text vor Standard. */
+export function markthinweisVorlage(vermittlerTyp: string | null | undefined, eigener?: string | null): string | null {
+  if (vermittlerTyp !== "makler") return null;
+  return eigener?.trim() || MARKTHINWEIS_STANDARD;
+}
+
+/** „A“, „A und B“, „A, B und C“ */
+export const aufzaehlung = (xs: string[]) => (xs.length < 2 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} und ${xs[xs.length - 1]}`);
+
+/** Hinweis mit den Gesellschaften der gezeigten Tarife; null ohne Vorlage oder ohne bekannte Gesellschaft. */
+export function markthinweisText(vorlage: string | null | undefined, items: Pick<AngebotItem, "gesellschaft">[]): string | null {
+  if (!vorlage) return null;
+  const gs = [...new Set(items.map((i) => i.gesellschaft?.trim()).filter((g): g is string => !!g))];
+  if (!vorlage.includes("{gesellschaften}")) return vorlage;
+  return gs.length ? vorlage.replaceAll("{gesellschaften}", aufzaehlung(gs)) : null;
+}
 
 /** Branding nach Gesellschaft (aus dem Kundennamen, z. B. „Allianz Agentur Lohmann“), sonst PG. */
-export function markeFuer(kunde: { name: string; vermittlerTyp?: string | null }, logoUrl: string | null = null): Marke {
+export function markeFuer(kunde: { name: string; vermittlerTyp?: string | null; maklerMarkthinweis?: string | null }, logoUrl: string | null = null): Marke {
   const n = kunde.name;
   const name = n.trim();
-  if (/allianz/i.test(n)) return { name, gesellschaft: "Allianz", farbe: "#003781", farbeHell: "#e6eef7", akzent: "#003781", logoUrl };
-  if (/\baxa\b/i.test(n)) return { name, gesellschaft: "AXA", farbe: "#00008f", farbeHell: "#e8e8f6", akzent: "#ff1721", logoUrl };
-  if (/signal\s*iduna/i.test(n)) return { name, gesellschaft: "SIGNAL IDUNA", farbe: "#004f9f", farbeHell: "#e6eff8", akzent: "#ffd100", logoUrl };
-  return { name, gesellschaft: null, farbe: "#2563eb", farbeHell: "#e5edff", akzent: "#2563eb", logoUrl };
+  const markthinweis = markthinweisVorlage(kunde.vermittlerTyp, kunde.maklerMarkthinweis);
+  if (/allianz/i.test(n)) return { name, gesellschaft: "Allianz", farbe: "#003781", farbeHell: "#e6eef7", akzent: "#003781", logoUrl, markthinweis };
+  if (/\baxa\b/i.test(n)) return { name, gesellschaft: "AXA", farbe: "#00008f", farbeHell: "#e8e8f6", akzent: "#ff1721", logoUrl, markthinweis };
+  if (/signal\s*iduna/i.test(n)) return { name, gesellschaft: "SIGNAL IDUNA", farbe: "#004f9f", farbeHell: "#e6eff8", akzent: "#ffd100", logoUrl, markthinweis };
+  return { name, gesellschaft: null, farbe: "#2563eb", farbeHell: "#e5edff", akzent: "#2563eb", logoUrl, markthinweis };
 }
 
 export type Folie = { id: string; titel: string; html: string };
@@ -108,6 +138,7 @@ export function praesentationCss(m: Marke): string {
 .schritt span{font-size:19px;color:#334155}
 .leer{color:#66758f;font-size:24px;border:2px dashed #cbd5e1;border-radius:18px;padding:40px;text-align:center}
 .ill{color:var(--f);opacity:.9}
+.slide .markthinweis{position:absolute;left:80px;right:80px;bottom:5px;font-size:14px;line-height:1.3;color:#8a94a6}
 .slide .frage{background:var(--fh);color:var(--f);font-weight:700;padding:8px 18px;border-radius:99px;font-size:18px}
 .titel .hinweis{margin-top:28px;color:#4b5568;font-size:22px}
 .zitate{display:grid;gap:16px}
@@ -169,9 +200,9 @@ export function praesentationCss(m: Marke): string {
 `;
 }
 
-function rahmen(m: Marke, inhalt: string, extraClass = "", frage?: string): string {
+function rahmen(m: Marke, inhalt: string, extraClass = "", frage?: string, hinweis?: string | null): string {
   const marke = m.logoUrl ? `<img src="${e(m.logoUrl)}" alt="">` : "";
-  return `<section class="slide ${extraClass}"><div class="bar"></div><div class="inhalt">${inhalt}</div><div class="foot"><span class="marke">${marke}${e(m.name)}</span>${frage ? `<span class="frage">${e(frage)}</span>` : ""}<span>${m.gesellschaft ? e(m.gesellschaft) : "Ihre Beratung"}</span></div></section>`;
+  return `<section class="slide ${extraClass}"><div class="bar"></div><div class="inhalt">${inhalt}</div>${hinweis ? `<div class="markthinweis" data-markthinweis>${e(hinweis)}</div>` : ""}<div class="foot"><span class="marke">${marke}${e(m.name)}</span>${frage ? `<span class="frage">${e(frage)}</span>` : ""}<span>${m.gesellschaft ? e(m.gesellschaft) : "Ihre Beratung"}</span></div></section>`;
 }
 
 /**
@@ -354,7 +385,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     const s = spartenVon(d);
     return s.length ? s : ["haftpflicht", "hausrat"];
   })();
-  const R = (inhalt: string, frage?: string, cls = "") => rahmen(m, inhalt, cls, frage);
+  const R = (inhalt: string, frage?: string, cls = "", hinweis?: string | null) => rahmen(m, inhalt, cls, frage, hinweis);
   const out: Folie[] = [];
 
   out.push({
@@ -450,6 +481,9 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
           : `<div class="leer">${e(a(an, "Dein persönliches Angebot zeigen wir dir im Gespräch.", "Ihr persönliches Angebot zeigen wir Ihnen im Gespräch."))}</div>`
       }`,
       a(an, "Passt das zu dem, was dir wichtig ist?", "Passt das zu dem, was Ihnen wichtig ist?"),
+      "",
+      // Makler (§ 60 VVG): Gesellschaften der gezeigten Tarife
+      markthinweisText(m.markthinweis, items),
     ),
   });
 
@@ -475,7 +509,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     out.push({
       id: `vergleich-${sparteKey(sparte)}-${out.length}`,
       titel: `Auswahl ${sparte}`,
-      html: R(`<h2>${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: ${e(sparte)}</h2>${html}`),
+      html: R(`<h2>${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: ${e(sparte)}</h2>${html}`, undefined, "", markthinweisText(m.markthinweis, varianten)),
     });
   }
 
