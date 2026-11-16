@@ -35,7 +35,7 @@ export default async function LebenszyklusPage() {
     <main className="mx-auto w-full max-w-[1360px] flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8" data-admin-lebenszyklus>
       <ZahlenTabs neueBuchungen={neu} />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { k: "Ruhende Konten", v: String(s.dormantNow), sub: s.avgDormantDays != null ? `Ø ${s.avgDormantDays} Tage ruhend` : "noch keine" },
           { k: "Reaktivierungsquote", v: pct(s.rate), sub: `${s.reactivations} von ${s.cancelled} Kündigungen zurückgekommen` },
@@ -50,7 +50,7 @@ export default async function LebenszyklusPage() {
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <Card>
           <CardHeader title="Kunden je Monat" />
           <div className="overflow-x-auto px-5 pb-5">
@@ -192,7 +192,7 @@ export default async function LebenszyklusPage() {
               {eur(d.halte.savedMrr - d.halte.stillSavedMrr)}). Rückkehrangebote: {d.winback.sent} verschickt, {d.winback.reactivated} danach reaktiviert.
             </p>
             {d.halte.accepted ? (
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {[
                   { title: "Je Grund", rows: d.halte.byReason },
                   { title: "Je Angebot", rows: d.halte.byKind },

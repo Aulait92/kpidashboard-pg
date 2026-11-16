@@ -62,7 +62,7 @@ export default async function BuchungenPage({ searchParams }: { searchParams: Pr
         </a>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card className="px-5 py-4">
           <div className={`text-2xl font-semibold tabular-nums ${sums.monthly > 0 ? "text-emerald-700" : sums.monthly < 0 ? "text-rose-700" : ""}`}>
             {sums.monthly >= 0 ? "+" : "−"}

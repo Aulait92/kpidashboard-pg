@@ -14,7 +14,7 @@ function Result({ state }: { state: KostenState }) {
 export function CostForm({ cost }: { cost: { id: string; name: string; amount: string; purpose: string; startsAt: string; endsAt: string } }) {
   const [state, action, pending] = useActionState<KostenState, FormData>(saveRecurringCostAction, {});
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2">
+    <form action={action} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <input type="hidden" name="id" value={cost.id} />
       <label className="text-sm">
         Name
@@ -54,7 +54,7 @@ export function CostForm({ cost }: { cost: { id: string; name: string; amount: s
 export function KpiSettingsForm({ hours, rate, campaigns, pplPilotEnd }: { hours: number; rate: number; campaigns: string; pplPilotEnd?: string | null }) {
   const [state, action, pending] = useActionState<KostenState, FormData>(saveKpiSettingsAction, {});
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2">
+    <form action={action} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <label className="text-sm">
         Gründerzeit Vertrieb (Std./Woche)
         <input name="hours" defaultValue={hours} inputMode="numeric" className={input} />

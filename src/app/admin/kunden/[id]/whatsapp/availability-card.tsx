@@ -30,7 +30,7 @@ export async function AvailabilityCard({ customerId }: { customerId: string }) {
   return (
     <Card className="max-w-5xl">
       <CardHeader title="Verfügbarkeit" icon={CalendarDays} />
-      <div className="grid gap-6 p-5 text-sm lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 p-5 text-sm lg:grid-cols-2">
         <div className="space-y-4">
           <p className="text-[color:var(--muted)]">Quellen: {sources.join(" · ")}</p>
           {!setup.status.native.connected ? (

@@ -156,7 +156,7 @@ function CustomerCard({ c }: { c: CustomerUsage }) {
           </div>
         }
       />
-      <div className="grid gap-5 px-5 py-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 px-5 py-4 md:grid-cols-3">
         <section>
           <h3 className="mb-2 text-xs font-semibold text-[color:var(--muted)]">Liegt herum</h3>
           <ul className="space-y-1 text-sm">

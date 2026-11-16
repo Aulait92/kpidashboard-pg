@@ -20,7 +20,7 @@ export function CreateBuyerForm({
 
   return (
     <form action={formAction} className="mt-3 space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
             Email

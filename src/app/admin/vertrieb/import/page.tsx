@@ -43,7 +43,7 @@ export default async function AnbindungenPage() {
         <p className="text-sm text-slate-500">Woher der Vertrieb seine Daten bekommt. Grün = in den letzten 7 Tagen etwas empfangen.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Connection
           name="Instantly"
           what="Cold Mails: gesendet, geöffnet, Antworten"

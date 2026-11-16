@@ -151,7 +151,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
 
       {!configured ? (
         <p className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]">
-          Für die direkte Verbindung fehlen noch <code>ENABLE_BANKING_APP_ID</code> und <code>ENABLE_BANKING_PRIVATE_KEY</code> in Railway. Bis dahin funktioniert der CSV-Import. Weiterleitungs-Adresse für Enable Banking: <code>{redirectUrl}</code>
+          Für die direkte Verbindung fehlen noch <code>ENABLE_BANKING_APP_ID</code> und <code>ENABLE_BANKING_PRIVATE_KEY</code> in Railway. Bis dahin funktioniert der CSV-Import. Weiterleitungs-Adresse für Enable Banking: <code className="break-all">{redirectUrl}</code>
         </p>
       ) : null}
 

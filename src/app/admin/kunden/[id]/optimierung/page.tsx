@@ -26,7 +26,7 @@ export default async function KundenOptimierung({ params }: { params: Promise<{ 
     );
   const measures = await prisma.optimizationMeasure.findMany({ where: { customerId: id }, orderBy: { plannedAt: "desc" }, take: 150 });
   return (
-    <div className="mt-5 grid gap-5 xl:grid-cols-[3fr_2fr]">
+    <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[3fr_2fr]">
       <ProtocolCard measures={measures} />
       <Card>
         <CardHeader title="Maßnahme eintragen" hint="von Hand, landet im Protokoll" />

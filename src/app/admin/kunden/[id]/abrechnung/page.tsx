@@ -48,7 +48,7 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
   ]);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <div className="space-y-5">
         {c.paymentOverdueSince ? (
           <div className="rounded-[var(--radius-lg)] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-900">

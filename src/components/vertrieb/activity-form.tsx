@@ -81,7 +81,7 @@ export function ActivityForm({ contactId, hasOpenTasks }: { contactId: string; h
             Folgeaufgabe anlegen
           </label>
           {createTask && (
-            <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_140px_140px_100px]">
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_140px_140px_100px]">
               <input name="taskTitle" value={title} onChange={(e) => setTitle(e.target.value)} className="input" required />
               <select name="taskType" value={type} onChange={(e) => setType(e.target.value)} className="input">
                 {TASK_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}

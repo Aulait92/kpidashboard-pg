@@ -427,7 +427,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
           )}
         </Card>
       </div>
-      <div className="grid gap-3.5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <Card title="Umsatzmix" cap={`Anteil wiederkehrender Umsatz im ${longMonth(data.current)} (hochgerechnet).`}>
           {cur && cur.recurring > 0 ? (
             <>
@@ -677,7 +677,7 @@ function Wirtschaft({ data, investor }: { data: ZahlenData; investor: boolean })
   const PURPOSE: Record<string, string> = { ppl: "direkt (Pay-per-Lead)", software: "direkt (Software)", akquise: "Kundengewinnung", betrieb: "sonstiger Betrieb" };
   return (
     <div className="space-y-3.5">
-      <div className="grid gap-3.5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <Card title="Kundengewinnung" cap={`Was ein neuer Kunde kostet und einbringt (${u.window.map(shortMonth).join(", ") || "–"}).`}>
           <KV
             items={[
@@ -1635,7 +1635,7 @@ function NachtragForm({ data }: { data: ZahlenData }) {
   const field = "h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm";
   const label = "grid gap-1 text-xs text-[color:var(--muted)]";
   return (
-    <form action={action} className="mt-2.5 grid gap-2.5 sm:grid-cols-2" data-nachtrag-form>
+    <form action={action} className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2" data-nachtrag-form>
       <label className={label}>
         Monat
         <input name="month" type="month" required max={data.current} defaultValue={data.lastComplete} className={field} />

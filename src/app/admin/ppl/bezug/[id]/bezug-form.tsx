@@ -43,7 +43,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
     <form action={action} className="space-y-5">
       <input type="hidden" name="id" value={sub?.id ?? ""} />
       <Card>
-        <div className="grid gap-4 p-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
           <F label="Käufer">
             <select name="customerId" defaultValue={sub?.customerId ?? ""} required className={input}>
               <option value="">Bitte wählen</option>
@@ -75,7 +75,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
       </Card>
 
       <Card>
-        <div className="grid gap-4 p-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
           <F label="Kontingent">
             <select name="period" value={period} onChange={(e) => setPeriod(e.target.value)} className={input}>
               <option value="week">Wochenbestellung (Käufer bestellt und zahlt vorab)</option>
@@ -113,7 +113,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
       </Card>
 
       <Card>
-        <div className="grid gap-4 p-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
           <F label="PLZ-Bereiche" hint="z. B. 80000-85999|70000-72199 · leer = alle">
             <input name="plzRanges" defaultValue={sub?.plzRanges ?? ""} className={input} />
           </F>
@@ -141,7 +141,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
       </Card>
 
       <Card>
-        <div className="grid gap-4 p-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
           <F label="Storno-Fenster (Tage)" hint="leer = kein Storno">
             <input name="stornoDays" inputMode="numeric" defaultValue={sub?.stornoDays ?? ""} className={input} />
           </F>

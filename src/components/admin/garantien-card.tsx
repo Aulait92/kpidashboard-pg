@@ -25,7 +25,7 @@ export async function GarantienCard({ customerId }: { customerId: string }) {
   return (
     <section className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-card="garantien">
       <h2 className="mb-2 font-semibold">Garantien</h2>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {g.ergebnisse.map((e) => {
           const k = e.kennzahlen;
           const laeuft = e.status === "laeuft" || e.status === "nicht_gestartet" || e.status === "nicht_anwendbar";

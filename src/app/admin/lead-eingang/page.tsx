@@ -69,7 +69,7 @@ export default async function LeadIntakePage({
           <span className="flex-1 text-[15px] font-semibold">Meta-Verbindung</span>
           {metaReady ? <Badge tone="success">bereit</Badge> : <Badge tone="warning">unvollständig</Badge>}
         </summary>
-        <div className="grid gap-4 p-5 text-sm md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 p-5 text-sm md:grid-cols-2">
           <ul className="space-y-1.5">
             <Check ok={diag.tokenSet} label="System-User-Token (META_ACCESS_TOKEN)" />
             <Check ok={diag.appSecretSet} label="App-Geheimschlüssel (META_APP_SECRET)" />
@@ -185,7 +185,7 @@ export default async function LeadIntakePage({
             </form>
           ) : null}
           {formsError ? <p className="text-rose-700">{formsError}</p> : null}
-          <form action={assignFormAction} className="grid gap-3 md:grid-cols-2">
+          <form action={assignFormAction} className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <input type="hidden" name="pageId" value={sp.page ?? ""} />
             <label className="block space-y-1">
               <span className="text-xs font-medium text-[color:var(--muted)]">Leadformular</span>

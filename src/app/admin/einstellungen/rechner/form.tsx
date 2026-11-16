@@ -91,7 +91,7 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
                   <span className={`rounded-full px-2 py-0.5 text-xs ${r.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{r.active ? "aktiv" : "aus"}</span>
                   {r.maklerOnly ? <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700">nur Makler</span> : null}
                 </summary>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <F label="Name"><input className={inp} value={String(r.name)} onChange={(e) => upd(i, { name: e.target.value })} /></F>
                   <F label="Schlüssel (für Links)"><input className={inp} value={String(r.key)} onChange={(e) => upd(i, { key: e.target.value })} placeholder="z. B. tkv" /></F>
                   <Check label="Aktiv" checked={!!r.active} onChange={(v) => upd(i, { active: v })} />
@@ -137,7 +137,7 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
                   <F label="Text in Lead-Quelle/Kampagne (für echte Daten)"><input className={inp} value={String(r.match)} onChange={(e) => upd(i, { match: e.target.value })} /></F>
                   <Check label="Immer Erfahrungswert (echte Daten ignorieren)" checked={!!r.cplOverride} onChange={(v) => upd(i, { cplOverride: v })} />
                   <F label="Lead-Garantie: Mindest-Leads in 30 Tagen (leer = keine)"><input className={inp} value={String(r.minLeads30 ?? "")} onChange={(e) => upd(i, { minLeads30: e.target.value })} /></F>
-                  <div className="grid gap-3 rounded-[var(--radius-sm)] bg-slate-50 p-3 sm:col-span-2 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-3 rounded-[var(--radius-sm)] bg-slate-50 p-3 sm:col-span-2 sm:grid-cols-3">
                     <div className="sm:col-span-3">
                       <Check label="Cross-Selling im Makler-Modus einrechnen (Zusatzverträge direkt beim Abschluss)" checked={r.xsOn} onChange={(v) => upd(i, { xsOn: v })} />
                     </div>
@@ -186,7 +186,7 @@ export function RechnerForm({ config, dataInfo }: { config: RechnerConfig; dataI
           <F label="Überschrift"><input className={inp} value={texts.headline} onChange={(e) => setTexts({ ...texts, headline: e.target.value })} /></F>
           <F label="Einleitung"><textarea className={`${inp} h-auto py-2`} rows={2} value={texts.intro} onChange={(e) => setTexts({ ...texts, intro: e.target.value })} /></F>
           <F label="Kleingedrucktes"><textarea className={`${inp} h-auto py-2`} rows={2} value={texts.footer} onChange={(e) => setTexts({ ...texts, footer: e.target.value })} /></F>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <F label="Kontakt-Knopf"><input className={inp} value={texts.contactLabel} onChange={(e) => setTexts({ ...texts, contactLabel: e.target.value })} /></F>
             <F label="Kontakt-Link (https://, mailto: oder tel:)"><input className={inp} value={texts.contactUrl} onChange={(e) => setTexts({ ...texts, contactUrl: e.target.value })} /></F>
           </div>

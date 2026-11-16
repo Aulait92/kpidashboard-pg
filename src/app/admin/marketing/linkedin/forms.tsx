@@ -266,7 +266,7 @@ export function SettingsForm(props: {
         <span className="text-sm font-semibold">Zielgruppe erkennen an (Branche/Beruf in den LinkedIn-Zuschauerdaten)</span>
         <input name="icpKeywords" defaultValue={props.icpKeywords} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] px-3 py-2 text-sm" />
       </label>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <label className="block">
           <span className="text-sm font-semibold">Posts pro Tag</span>
           <select name="postsPerDay" defaultValue={props.postsPerDay} className="mt-1 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] px-3 py-2 text-sm">

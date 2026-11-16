@@ -284,7 +284,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                   {a.note && <p className="mt-1 whitespace-pre-wrap text-slate-600">{a.note}</p>}
                   <details className="mt-1">
                     <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Bearbeiten</summary>
-                    <CloseDetailsForm key={`${a.outcome}-${a.note}-${a.occurredAt.getTime()}-${a.type}`} action={updateActivity} className="mt-2 grid gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[130px_1fr_140px_100px]">
+                    <CloseDetailsForm key={`${a.outcome}-${a.note}-${a.occurredAt.getTime()}-${a.type}`} action={updateActivity} className="mt-2 grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[130px_1fr_140px_100px]">
                       <input type="hidden" name="id" value={a.id} />
                       <select name="type" defaultValue={a.type} className="input">
                         {Object.entries(ACTIVITY_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
@@ -421,7 +421,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               {c.linkedinTags && <span>Tags: {c.linkedinTags}</span>}
               {!c.linkedinStatus && <span className="text-slate-400">Noch keine LinkedIn-Aktivität.</span>}
             </div>
-            <form key={`${c.linkedinStatus}-${c.linkedinUrl}`} action={updateLinkedIn} className="grid gap-2 sm:grid-cols-2">
+            <form key={`${c.linkedinStatus}-${c.linkedinUrl}`} action={updateLinkedIn} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <input type="hidden" name="contactId" value={c.id} />
               <input name="linkedinUrl" defaultValue={c.linkedinUrl ?? ""} placeholder="https://www.linkedin.com/in/…" className="input sm:col-span-2" />
               <select name="linkedinStatus" defaultValue={c.linkedinStatus ?? ""} className="input">
@@ -436,7 +436,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           </Fold>
 
           <Fold title="Kundendaten" summary={c.customerStage ? `${CUSTOMER_LABEL[c.customerStage]}${c.monthlyValue ? ` · ${c.monthlyValue} €/Monat` : ""}` : "noch kein Kunde"}>
-            <form key={`${c.customerStage}-${c.monthlyValue}-${c.products}-${c.customerSource}-${c.customerSourceNote}`} action={updateCustomer} className="grid gap-2 sm:grid-cols-2">
+            <form key={`${c.customerStage}-${c.monthlyValue}-${c.products}-${c.customerSource}-${c.customerSourceNote}`} action={updateCustomer} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <input type="hidden" name="contactId" value={c.id} />
               <div>
                 <label className="label">Kunden-Stufe</label>
@@ -497,7 +497,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                 {c.phone ? <span className="block text-slate-500">Tel. {c.phone}</span> : null}
                 <details className="mt-1">
                   <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Adresse bearbeiten</summary>
-                  <CloseDetailsForm key={`${c.street}-${c.zip}-${c.city}-${c.phone}`} action={updateContactAddress} className="mt-2 grid gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[1fr_90px_1fr]">
+                  <CloseDetailsForm key={`${c.street}-${c.zip}-${c.city}-${c.phone}`} action={updateContactAddress} className="mt-2 grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[1fr_90px_1fr]">
                     <input type="hidden" name="contactId" value={c.id} />
                     <input name="street" defaultValue={c.street ?? ""} placeholder="Straße und Hausnummer" className="input sm:col-span-3" />
                     <input name="zip" defaultValue={c.zip ?? ""} placeholder="PLZ" inputMode="numeric" className="input" />

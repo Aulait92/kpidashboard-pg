@@ -23,7 +23,7 @@ export function IncidentForm() {
         <span className="mb-1 block text-sm font-medium">Text</span>
         <textarea name="message" rows={3} maxLength={1000} placeholder="Was Kunden wissen sollten. Keine internen Details oder Fehlermeldungen." className={`${INPUT} resize-y`} />
       </label>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Art</span>
           <select name="level" defaultValue="degraded" className={INPUT}>

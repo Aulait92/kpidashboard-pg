@@ -53,7 +53,7 @@ export function KampagnenAgenten({
         <form action={action} className="space-y-3 px-5 pb-5 text-sm">
           <input type="hidden" name="customerId" value={customerId} />
           {products.length ? (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="font-medium">Produkt</span>
                 <select name="product" className={`${input} mt-1`} defaultValue={products[0]?.product}>
@@ -135,7 +135,7 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
     <Card>
       <CardHeader title={`Lauf: ${run.product}`} hint={`KI-Kosten ≈ $${(run.costCents / 100).toFixed(2)}`} />
       <div className="space-y-5 px-5 pb-5 text-sm">
-        <ol className="grid gap-1.5 sm:grid-cols-2">
+        <ol className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {steps.map((s) => {
             const st = run.steps.find((x) => x.key === s.key);
             return (
@@ -229,7 +229,7 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
         {run.copies?.length ? (
           <section className="space-y-3">
             <h3 className="font-semibold">Anzeigen</h3>
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {run.copies.map((c, i) => {
                 const img = run.creatives?.find((im) => im.angleKey === c.angleKey);
                 return <AdCard key={`${c.angleKey}-${i}`} runId={run.id} index={i} copy={c} imageUrl={img?.imageUrl ?? null} editable={editable} onDone={(v) => onChange(v)} />;

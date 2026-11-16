@@ -38,7 +38,7 @@ export async function LeadQualitaetCard({ customerId }: { customerId: string }) 
       {disq.length === 0 ? (
         <p className="mt-2 text-slate-500">Keine disqualifizierten Leads.</p>
       ) : (
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <h3 className="mb-1 text-xs font-semibold text-slate-500">Gründe</h3>
             <ul className="space-y-0.5">

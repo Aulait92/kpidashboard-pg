@@ -18,7 +18,7 @@ export default async function KundenWhatsApp({ params, searchParams }: { params:
       <WhatsAppSettingsPage searchParams={Promise.resolve({ kunde: id, wa })} />
       <D360Card customerId={id} />
       <AvailabilityCard customerId={id} />
-      <div className="grid max-w-5xl gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 max-w-5xl gap-5 lg:grid-cols-2">
         <WhatsAppFeesCard customerId={id} admin />
         <BestandModuleCard customerId={id} />
       </div>

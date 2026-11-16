@@ -1149,7 +1149,7 @@ function PoolSettingsList({ pool }: { pool: PoolDetailRow }) {
       {editing ? (
         <form
           action={formAction}
-          className="grid gap-3 border-t border-[color:var(--border)] bg-zinc-50/50 px-4 py-3 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-3 border-t border-[color:var(--border)] bg-zinc-50/50 px-4 py-3 sm:grid-cols-2"
         >
           <input type="hidden" name="poolKey" value={pool.key} />
           <input

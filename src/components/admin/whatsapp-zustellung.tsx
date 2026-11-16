@@ -31,7 +31,7 @@ export async function WhatsAppZustellung() {
           Anteil der per WhatsApp angeschriebenen Leads, deren Nachricht mit „nicht per WhatsApp erreichbar“ zurückkam (Meta{" "}
           {[...NO_WHATSAPP_CODES].join(", ")}). Diese Leads gehen sofort zum Vermittler (Anruf, E-Mail mit Terminlink).
         </p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] px-3 py-2">
             <div className="text-xs text-[color:var(--muted)]">Letzte 30 Tage</div>
             <div className="text-xl font-semibold tabular-nums" data-kein-wa-30>

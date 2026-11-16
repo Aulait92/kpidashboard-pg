@@ -13,7 +13,7 @@ export default async function NeuerLeadPage({ searchParams }: { searchParams: Pr
         wird der bestehende Kontakt ergänzt statt doppelt angelegt. Stufe „Interesse“, Aufgabe für heute.
       </p>
       {sp.fehler && <p className="text-sm text-rose-600">Bitte mindestens Name, E-Mail oder LinkedIn-Profil angeben.</p>}
-      <form action={createLeadManually} className="card grid gap-3 p-5 sm:grid-cols-2">
+      <form action={createLeadManually} className="card grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
         <div>
           <label className="label">Woher?</label>
           <select name="source" defaultValue={sp.quelle ?? "LINKEDIN"} className="input">

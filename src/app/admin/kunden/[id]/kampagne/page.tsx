@@ -33,7 +33,7 @@ export default async function KundenKampagne({ params }: { params: Promise<{ id:
   const latest = runs[0] ? await getRunView(runs[0].id) : null;
 
   return (
-    <div className="mt-5 grid gap-5 xl:grid-cols-[3fr_1fr]">
+    <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[3fr_1fr]">
       <KampagnenAgenten
         customerId={id}
         products={products}

@@ -25,7 +25,7 @@ const when = (iso: string) =>
 export function UnterlagenGrid({ slots, demo }: { slots: UnterlagenSlot[]; demo?: { haupt: string; app: string } }) {
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {(["vertreter", "makler"] as const).map((a) => (
           <Card key={a} className="p-4 sm:p-5">
             <h2 className="mb-3 text-base font-semibold">{AUDIENCE_LABEL[a]}</h2>

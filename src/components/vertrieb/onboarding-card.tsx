@@ -153,7 +153,7 @@ export function StartOnboardingCard({
         Angebot {offerNumber} ist angenommen. Das Onboarding startet automatisch, sobald die Zahlung eingerichtet ist,
         oder hier von Hand (z. B. für Bestandskunden).
       </p>
-      <form action={startOnboardingAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+      <form action={startOnboardingAction} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
         <input type="hidden" name="offerId" value={offerId} />
         <select name="customerId" className="input" defaultValue="">
           <option value="">Neues Kundenkonto anlegen</option>
@@ -241,7 +241,7 @@ export function AdminPauseCard({
           </form>
         </div>
       ) : (
-        <form action={adminPlanPauseAction} className="grid gap-2 sm:grid-cols-2">
+        <form action={adminPlanPauseAction} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <input type="hidden" name="customerId" value={customerId} />
           <input type="hidden" name="contactId" value={contactId} />
           <div>

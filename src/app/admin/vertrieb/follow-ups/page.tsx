@@ -104,7 +104,7 @@ export default async function FollowupsPage() {
             <span className="mt-1 block text-xs text-amber-700">Technisch: INSTANTLY_AUTO_SYNC=1 und INSTANTLY_API_KEY nötig.</span>
           </p>
         ) : null}
-        <form action={saveFollowupSettingsAction} className="grid gap-3 sm:grid-cols-2" key={settings.updatedAt.getTime()}>
+        <form action={saveFollowupSettingsAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2" key={settings.updatedAt.getTime()}>
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
             <input type="checkbox" name="enabled" defaultChecked={settings.enabled} /> Follow-ups automatisch senden
           </label>
@@ -185,7 +185,7 @@ function Group({
               </div>
               <details className="mt-1">
                 <summary className="cursor-pointer text-xs text-slate-400">Vorschau</summary>
-                <div className="mt-1 grid gap-2 sm:grid-cols-2">
+                <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <p className="whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs text-slate-600">{f.body1 ?? "Text wird beim nächsten Lauf erstellt."}</p>
                   <p className="whitespace-pre-wrap rounded bg-slate-50 p-2 text-xs text-slate-600">{f.body2 ?? "Text wird beim nächsten Lauf erstellt."}</p>
                 </div>

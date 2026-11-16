@@ -75,7 +75,7 @@ export async function StornoQuoteUebersicht({ leerHinweis = false }: { leerHinwe
         Gekündigt bzw. storniert in den letzten 12 Monaten geteilt durch den Bestand im Jahresmittel. Erst ab {STORNO_MIN_VERTRAEGE} Verträgen. Gesamt:{" "}
         <b>{quote(s.overall)}</b> ({s.overall.contracts} Verträge).
       </p>
-      <div className="mt-3 grid gap-6 lg:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="overflow-x-auto">
           <Table rows={s.bySparte} first="Sparte" />
         </div>

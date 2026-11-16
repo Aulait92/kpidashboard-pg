@@ -85,7 +85,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
         <Link href="/admin/vertrieb/kontakte/neu" className="btn-primary">+ Neuer Lead</Link>
       </div>
 
-      <form className="card grid gap-3 p-4 md:grid-cols-[2fr_1fr_1fr_1fr_110px_auto] md:items-end">
+      <form className="card grid grid-cols-1 gap-3 p-4 md:grid-cols-[2fr_1fr_1fr_1fr_110px_auto] md:items-end">
         <div>
           <label className="label" htmlFor="kontakte-q">Suchen</label>
           <input id="kontakte-q" name="q" type="search" defaultValue={q} className="input" placeholder="Agentur, Name, E-Mail, Ort, Telefon" />
