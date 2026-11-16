@@ -258,7 +258,7 @@ export default async function LeadIntakePage({
 function Check({ ok, label }: { ok: boolean; label: string }) {
   return (
     <li className="flex items-center gap-2">
-      {ok ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-rose-500" />}
+      {ok ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <XCircle className="h-4 w-4 shrink-0 text-rose-500" />}
       {label}
     </li>
   );

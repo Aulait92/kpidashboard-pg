@@ -25,7 +25,7 @@ export function VertriebNav({ dueCount }: { dueCount: number }) {
   if (path.startsWith(`${BASE}/import`)) return null;
   return (
     <nav className="sticky top-0 z-20 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
-      <div ref={ref} className="mx-auto flex max-w-[1600px] items-center gap-1 overflow-x-auto px-4 py-1.5 [scrollbar-width:none] sm:px-6 lg:px-8">
+      <div ref={ref} className="mx-auto flex max-w-[1600px] items-center gap-1 overflow-x-auto px-4 [scrollbar-width:none] sm:px-6 lg:px-8">
         {LINKS.map((l) => {
           const active = "exact" in l ? path === l.href : path.startsWith(l.href);
           return (
@@ -34,16 +34,16 @@ export function VertriebNav({ dueCount }: { dueCount: number }) {
               href={l.href}
               aria-current={active ? "page" : undefined}
               className={clsx(
-                // 40 px hohe Tippfläche wie im Kundenbereich
-                "flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-3 text-sm font-medium",
+                // Gleiche Reiter wie überall im Admin (SubTabs): Unterstrich, 44 px hoch
+                "-mb-px flex min-h-11 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-sm font-medium transition",
                 active
-                  ? "bg-[color:var(--brand)] text-white"
-                  : "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]",
+                  ? "border-[color:var(--brand)] text-[color:var(--foreground)]"
+                  : "border-transparent text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
               )}
             >
               {l.label}
               {l.href === `${BASE}/aufgaben` && dueCount > 0 && (
-                <span className={clsx("badge", active ? "bg-white text-[color:var(--brand)]" : "bg-rose-600 text-white")}>{dueCount}</span>
+                <span className="badge bg-rose-600 text-white">{dueCount}</span>
               )}
             </Link>
           );

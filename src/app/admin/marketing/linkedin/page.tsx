@@ -56,8 +56,8 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
   const steps = [
     { done: connected, text: "LinkedIn verbinden" },
     { done: !!settings.about.trim(), text: "„Über mich“ ausfüllen (Einstellungen unten)" },
-    { done: photos.length > 0, text: "Fotos hochladen (von dir oder Beweis-Screenshots, z. B. WhatsApp eines Kunden; ohne Fotos nimmt die KI KI-Bilder oder Grafiken)" },
-    { done: !!settings.lastImportAt || (!!conn && hasAnalyticsScope(conn.scopes)), text: "Statistik hochladen (damit die KI weiß, was in der Zielgruppe ankommt)" },
+    { done: photos.length > 0, text: "Fotos hochladen (eigene oder Screenshots; sonst nimmt die KI Grafiken)" },
+    { done: !!settings.lastImportAt || (!!conn && hasAnalyticsScope(conn.scopes)), text: "Statistik hochladen (zeigt der KI, was ankommt)" },
   ];
   const banner = li ? BANNER[li] : null;
 
@@ -79,8 +79,8 @@ export default async function LinkedInPage({ searchParams }: { searchParams: Pro
           <h2 className="mb-3 font-semibold">Einrichten</h2>
           <ol className="space-y-2 text-sm">
             {steps.map((s) => (
-              <li key={s.text} className="flex items-center gap-2">
-                {s.done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Circle className="h-4 w-4 text-[color:var(--muted)]" />}
+              <li key={s.text} className="flex items-start gap-2">
+                {s.done ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /> : <Circle className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />}
                 <span className={s.done ? "text-[color:var(--muted)] line-through" : undefined}>{s.text}</span>
               </li>
             ))}
