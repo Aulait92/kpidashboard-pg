@@ -124,6 +124,8 @@ body:has([data-admin-shell]) { padding-bottom: calc(64px + env(safe-area-inset-b
   body:has([data-admin-shell]) :is(a, button).h-9 { min-height: 40px; }
 }
 body:has([data-admin-shell]) [data-site-footer] { display: none; }
+/* Auswahllisten mit langen Einträgen (z. B. Änderungsprotokoll → Art) nie breiter als der Bildschirm */
+body:has([data-admin-shell]) select { max-width: 100%; }
 
 /* ── App-Gefühl ───────────────────────────────────────────────────────────
    Überall: kein grauer Tipp-Blitz, kurze Drück-Animation auf Knöpfen.
