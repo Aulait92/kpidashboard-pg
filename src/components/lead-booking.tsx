@@ -30,7 +30,7 @@ export function SlotPicker({ leadId, onBooked }: { leadId: string; onBooked: () 
   const toast = useToast();
   const [state, setState] = useState<{ loading: boolean; slots: Slot[]; error: string | null; noCalendar: boolean }>({ loading: true, slots: [], error: null, noCalendar: false });
   const [pick, setPick] = useState<string | null>(null);
-  const [mode, setMode] = useState<"phone" | "video">("phone");
+  const [mode, setMode] = useState<"phone" | "video">("video");
   const [pending, start] = useTransition();
 
   const [reload, setReload] = useState(0);

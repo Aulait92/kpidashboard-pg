@@ -607,7 +607,8 @@ function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string
   const [pending, start] = useTransition();
   const [date, setDate] = useState("");
   const [time, setTime] = useState("10:00");
-  const [mode, setMode] = useState("phone");
+  // Vorrangig Video (Ole, 16.11.2026: „Immer vorrangig Video.“)
+  const [mode, setMode] = useState("video");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const save = () =>
