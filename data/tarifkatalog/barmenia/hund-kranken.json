@@ -1,0 +1,127 @@
+{
+  "gesellschaft": "Barmenia",
+  "sparte": "hund-kranken",
+  "produkt": "Hundekrankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Wartezeit bei Unfällen",
+    "Direktabrechnung mit der Tierarztpraxis"
+  ],
+  "tarife": [
+    {
+      "name": "Tierkrankenversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "got": "3-fach, Notfall 4-fach",
+        "jhl": "OP unbegrenzt",
+        "ohneOp": "bis 400 €",
+        "vorsorge": "nein",
+        "zahn": "nein",
+        "kastration": "nur bei Diagnose",
+        "nachbehandlung": "bis 30 Tage",
+        "physio": "bis 10 Behandlungen",
+        "sb": "0 oder 20 %, max. 250 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/hundekranken-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Tierkrankenversicherung Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "got": "3-fach, Notfall 4-fach",
+        "jhl": "OP unbegrenzt",
+        "ohneOp": "bis 800 €",
+        "vorsorge": "70 € im Jahr",
+        "zahn": "bis 150 €",
+        "kastration": "nur bei Diagnose",
+        "nachbehandlung": "bis 30 Tage",
+        "physio": "bis 10 Behandlungen",
+        "sb": "0 oder 20 %, max. 250 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/hundekranken-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Tierkrankenversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "got": "3-fach, Notfall 4-fach",
+        "jhl": "OP unbegrenzt",
+        "ohneOp": "1.200 € o. unbegrenzt",
+        "vorsorge": "100 € im Jahr",
+        "zahn": "bis 500 €",
+        "kastration": "nur bei Diagnose",
+        "nachbehandlung": "bis 30 Tage",
+        "physio": "bis 10 Behandlungen",
+        "sb": "0 oder 20 %, max. 250 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/hundekranken-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Tierkrankenversicherung Premium Plus",
+      "kurz": "Premium Plus",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "got": "3-fach, Notfall 4-fach",
+        "jhl": "OP unbegrenzt",
+        "ohneOp": "1.200 € o. unbegrenzt",
+        "vorsorge": "100 € im Jahr",
+        "zahn": "bis 500 €",
+        "kastration": "Zuschuss 150 €",
+        "nachbehandlung": "bis 120 Tage",
+        "physio": "bis 10 Behandlungen",
+        "sb": "0 oder 20 %, max. 250 €",
+        "wartezeit": "30 Tage"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/hundekranken-versicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/hundekranken-versicherung/",
+    "https://media.barmenia.de/media/global_media/dokumente/dokumentencenter/ba/verkaufshilfen/WS1282.pdf"
+  ],
+  "offen": [
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (Marke BarmeniaGothaer); Quelle die Leistungsübersichten 01/2026 und barmeniagothaer.de.",
+    "Selbstbeteiligung wählbar: 20 %, höchstens 250 € je Einreichung; sonst 100 % Erstattung.",
+    "Besondere Operationen (z. B. HD, ED, Patellaluxation): Wartezeit 18 Monate, im Premium Plus 6 Monate.",
+    "BarmeniaGothaer nennt Premium den „meistgewählten Tarif“.",
+    "Operationen in allen Stufen ohne Jahreshöchstgrenze; Heilbehandlungen ohne OP jährlich 400 €, 800 €, bei Premium und Premium Plus 1.200 € oder unbegrenzt.",
+    "Die Produktseite zeigt nur Top, Premium und Premium Plus; Basis steht in der Leistungsübersicht 01/2026.",
+    "Akut-Varianten (Top, Premium, Premium Plus) ohne Vorsorge und Zahnbehandlung; Zahnextraktion und Wurzelbehandlung bleiben als OP versichert.",
+    "Ausland Premium Plus: Leistungsübersicht nennt 12 Monate, Produktseite unbegrenzt; deshalb offen.",
+    "Tiere ab 2 Monate bis einschließlich 5 Jahre versicherbar."
+  ]
+}

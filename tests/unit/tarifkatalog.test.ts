@@ -93,6 +93,8 @@ describe("Katalog laden", () => {
     expect(gesellschaftAusText("Uelzener Allgemeine Versicherungs-Gesellschaft a. G.")).toBe("uelzener");
     expect(gesellschaftName("hansemerkur")).toBe("HanseMerkur");
     expect(gesellschaftAusText("Hanse Merkur Allgemeine Versicherung AG")).toBe("hansemerkur");
+    expect(gesellschaftName("barmenia")).toBe("Barmenia");
+    expect(gesellschaftAusText("BarmeniaGothaer Tierkrankenversicherung")).toBe("barmenia");
     expect(sortiereGesellschaften(["uelzener", "agila", "signal-iduna", "allianz"])).toEqual(["allianz", "signal-iduna", "agila", "uelzener"]);
     expect(sparteAusText("Privathaftpflicht")).toBe("haftpflicht");
     expect(sparteAusText("Tierhalterhaftpflicht Hund")).toBe("tierhalter-hund");
