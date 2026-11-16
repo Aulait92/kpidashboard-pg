@@ -8,6 +8,7 @@ import { sendToAdmins } from "@/lib/push";
 import { extract } from "@/lib/lead-intake";
 import { effectivePlzRanges, isWeak, openAreasFor, pickWithAreas, rejectReason, type AreaCandidate, type AreaQuota, type Candidate, type PoolLeadFacts } from "@/lib/ppl/rules";
 import { monthRange, weekRange } from "@/lib/ppl/periods";
+import { pruefeTelefon } from "@/lib/ppl/telefon-pruefung";
 import type { DeliveryReport } from "@/lib/ppl/delivery";
 
 const DAY = 86_400_000;
@@ -145,6 +146,16 @@ export async function ingestPoolLead(input: PoolInput, now = new Date()): Promis
     const p = await save("invalid", "keine Telefonnummer und keine E-Mail");
     await slack(p.id);
     return { status: "invalid", poolLeadId: p.id, reason: p.reason ?? undefined };
+  }
+  // Formatprüfung der Telefonnummer (lib/ppl/telefon-pruefung.ts): falsche Nummern nicht ausliefern
+  const rawPhone = field(input.fields, ["phone_number", "phone", "telefonnummer", "telefon", "handynummer", "mobilnummer", "mobil"]);
+  if (rawPhone || phone) {
+    const tel = pruefeTelefon(rawPhone ?? `+${phone}`);
+    if (!tel.ok) {
+      const p = await save("invalid", `Telefonnummer: ${tel.grund}`);
+      await slack(p.id);
+      return { status: "invalid", poolLeadId: p.id, reason: p.reason ?? undefined };
+    }
   }
   // Dublette: gleiche Telefonnummer oder E-Mail innerhalb von 30 Tagen (alle Produkte, siehe DUPLICATE_ACROSS_PRODUCTS)
   const dupWhere = duplicateWhere({ productKey: input.productKey, phone, email }, now);

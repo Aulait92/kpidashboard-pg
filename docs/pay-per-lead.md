@@ -46,7 +46,9 @@
   Leads mit 450–700 € Beitrag.
 - Jeder Lead bekommt ein Lieferdatum (im Zap blieb `ausgeliefert_am` bei E-Mail/Convexa leer).
 - Kein SMS-Preis, keine Weitergabe-Zustimmung (Superchat entfällt).
-- Keine Telefonprüfung über Byteplant (nur Plausibilität der Nummer).
+- Keine Live-Telefonprüfung über Byteplant. Stattdessen genaue Formatprüfung (lib/ppl/telefon-pruefung.ts, 16.11.2026):
+  nur deutsche Nummern, Länge Festnetz 7 bis 11 / Mobil 10 bis 11 Ziffern ohne 0, keine Sonderrufnummern, keine
+  Fantasienummern (6 gleiche Ziffern, Ziffernreihen). Falsche Nummern: Status „invalid“, keine Auslieferung, Slack.
 - Anrede in der Leadbörsen-Mail: nur wenn der Funnel sie liefert (der Zap leitete sie aus
   einer Vornamensliste ab); ohne Wert entfällt die Zeile.
 
