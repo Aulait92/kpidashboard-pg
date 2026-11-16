@@ -34,13 +34,37 @@ const PAGES: Hit[] = [
   ["Anbindungen", "/admin/vertrieb/import", "Einstellungen"],
   ["Sicherheit (Zwei-Faktor)", "/admin/einstellungen/sicherheit", "Einstellungen"],
   ["Änderungsprotokoll", "/admin/einstellungen/protokoll", "Einstellungen"],
+  // Alle übrigen Admin-Seiten, damit jede Seite über die Suche erreichbar ist (UX-Makeover 16.11.2026)
+  ["Monatsberichte", "/admin/monatsberichte", "Kunden · Berichte prüfen und senden"],
+  ["Optimierung je Werbekonto", "/admin/optimierung", "Kunden · Maßnahmen freigeben"],
+  ["LinkedIn", "/admin/marketing/linkedin", "Marketing · Entwürfe freigeben"],
+  ["Empfehlungen", "/admin/marketing/empfehlungen", "Marketing · Kollegen empfehlen"],
+  ["Unterlagen", "/admin/marketing/unterlagen", "Marketing · Präsentationen"],
+  ["Buchungen", "/admin/zahlen/buchungen", "Zahlen"],
+  ["Stornoquote", "/admin/zahlen/stornoquote", "Zahlen"],
+  ["Kündigung & Rückkehr", "/admin/zahlen/lebenszyklus", "Zahlen"],
+  ["WhatsApp-Zustellung", "/admin/zahlen/whatsapp", "Zahlen"],
+  ["Pay-per-Lead-Import", "/admin/ppl/import", "Leads"],
+  ["Media Buyer", "/admin/media-buyer", "Zahlen · Budgets der Pools"],
+  ["Neuigkeiten", "/admin/einstellungen/neuigkeiten", "Einstellungen"],
+  ["Einrichtung neuer Kunden", "/admin/einstellungen/einrichtung", "Einstellungen"],
+  ["Produkte", "/admin/einstellungen/produkte", "Einstellungen"],
+  ["Kampagnen-Automatik", "/admin/einstellungen/kampagnen-automatik", "Einstellungen"],
+  ["Login-Seite", "/admin/einstellungen/login", "Einstellungen"],
+  ["Status & Support", "/admin/einstellungen/status", "Einstellungen"],
+  ["Halteangebote", "/admin/einstellungen/halteangebote", "Einstellungen"],
+  ["Rechner", "/admin/einstellungen/rechner", "Einstellungen"],
+  ["Kollegen empfehlen", "/admin/einstellungen/empfehlungen", "Einstellungen"],
+  ["Bank & Karten", "/admin/einstellungen/bank", "Einstellungen"],
+  ["Rechnungsangaben", "/admin/einstellungen/rechnungsangaben", "Einstellungen"],
+  ["Monatsberichte (Einstellungen)", "/admin/einstellungen/monatsberichte", "Einstellungen"],
 ].map(([title, href, subtitle]) => ({ kind: "seite" as const, id: href, title, subtitle, href }));
 
 const ICON = { kunde: Building2, kontakt: User, lead: UserRound, seite: ArrowRight };
 
 const pagesFor = (term: string) => {
   const t = term.toLowerCase();
-  return t ? PAGES.filter((p) => p.title.toLowerCase().includes(t)) : PAGES.slice(0, 8);
+  return t ? PAGES.filter((p) => `${p.title} ${p.subtitle ?? ""}`.toLowerCase().includes(t)) : PAGES.slice(0, 8);
 };
 
 /** Globale Suche im Admin: Cmd+K / Strg+K (Bausteine in search-dialog.tsx). */
