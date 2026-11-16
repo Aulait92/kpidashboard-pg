@@ -74,7 +74,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   const hour = Number(
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(new Date()),
   );
-  const greet = hour < 11 ? "Guten Morgen" : hour < 18 ? "Hallo" : "Guten Abend";
+  const greet = hour < 5 ? "Hallo" : hour < 11 ? "Guten Morgen" : hour < 18 ? "Hallo" : "Guten Abend";
   const today = new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin",
     weekday: "long",

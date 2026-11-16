@@ -329,7 +329,7 @@ export function TodayInbox({
                   <p className="truncate text-xs text-[color:var(--muted)]">{c.reason ?? "Bitte melden"}</p>
                 </div>
                 <span onClick={stop}>
-                  <ButtonLink href={`/buyer/chats?c=${c.conversationId}`} variant="primary" icon={MessageCircle}>
+                  <ButtonLink href={`/buyer/chats?c=${c.conversationId}`} variant="secondary" icon={MessageCircle}>
                     Antworten
                   </ButtonLink>
                 </span>
@@ -378,11 +378,11 @@ export function TodayInbox({
                   </div>
                   <span onClick={stop}>
                     {video && a.meetUrl ? (
-                      <ButtonLink href={a.meetUrl} variant="primary" icon={Video}>
+                      <ButtonLink href={a.meetUrl} variant="secondary" icon={Video}>
                         Starten
                       </ButtonLink>
                     ) : a.phone ? (
-                      <ButtonLink href={`tel:+${a.phone}`} variant="primary" icon={Phone}>
+                      <ButtonLink href={`tel:+${a.phone}`} variant="secondary" icon={Phone}>
                         Anrufen
                       </ButtonLink>
                     ) : null}
@@ -476,7 +476,7 @@ export function TodayInbox({
                       if (newUi) markCall(c);
                     }}
                   >
-                    <ButtonLink href={`tel:+${c.phone}`} variant="primary" icon={Phone}>
+                    <ButtonLink href={`tel:+${c.phone}`} variant="secondary" icon={Phone}>
                       Anrufen
                     </ButtonLink>
                   </span>
@@ -538,7 +538,7 @@ export function TodayInbox({
                     </p>
                   </div>
                   <span onClick={stop}>
-                    <Button variant="primary" icon={ChevronRight} onClick={openStep}>
+                    <Button variant="secondary" icon={ChevronRight} onClick={openStep}>
                       {l.resultMissing ? "Ergebnis" : "Weiter"}
                     </Button>
                   </span>
