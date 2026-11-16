@@ -81,7 +81,7 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
         {settings}
         <SetupCard customerId={id} notice={notice} />
         <NaechsterSchrittCard customerId={id} />
-    <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[3fr_2fr]">
       <section className="card p-4 text-sm">
         <h2 className="mb-3 font-medium">Grunddaten</h2>
         <dl className="grid grid-cols-[150px_1fr] gap-y-1.5">

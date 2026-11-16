@@ -13,7 +13,7 @@ export function NeuigkeitenAdmin({ items }: { items: UpdateView[] }) {
   const [edit, setEdit] = useState<UpdateView>(EMPTY);
   const [key, setKey] = useState(0);
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr]">
       <Editor key={key} initial={edit} onDone={() => (setEdit(EMPTY), setKey((k) => k + 1))} />
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-[color:var(--muted)]">Alle Einträge</h2>

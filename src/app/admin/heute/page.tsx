@@ -58,7 +58,7 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
         <p className="mt-1 text-sm text-[color:var(--muted)]">{summary(items)}</p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <section aria-label="Braucht Sie">
           {items.length ? (
             <div className="mb-3 flex gap-1.5 overflow-x-auto" role="group" aria-label="Bereich">

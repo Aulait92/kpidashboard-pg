@@ -28,7 +28,7 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
   ]);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[2fr_3fr]">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_3fr]">
       <div className="space-y-5">
       <MetaAccountCard customerId={id} current={customer?.metaAdAccountId ?? null} />
       <CapiCard customerId={id} />

@@ -92,7 +92,7 @@ export function AccountView({ detail, showBackLink = true }: { detail: Detail; s
         ) : null}
         {a.lastRunAt ? ` · letzter Lauf ${fmtTime(a.lastRunAt)}${a.lastRunNote ? `: ${a.lastRunNote}` : ""}` : " · noch kein Lauf"}
       </p>
-      <div className="grid gap-5 xl:grid-cols-[3fr_2fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[3fr_2fr]">
         <div className="space-y-5">
           <Card>
             <CardHeader title="Geplante Maßnahmen" count={open.length} hint={detail.autopilot ? "Autopilot: wird automatisch ausgeführt" : "Vorschlag: erst nach Freigabe"} />

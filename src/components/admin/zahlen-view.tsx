@@ -380,7 +380,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
   const ausbauShare = b && b.neu + b.ausbau > 0 ? b.ausbau / (b.neu + b.ausbau) : null;
   return (
     <div className="space-y-3.5">
-      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Card title="Umsatz je Monat nach Strom" cap="Wiederkehrender Umsatz. Einrichtungsgebühren getrennt. WhatsApp-Gebühren sind im Preis enthalten und stehen als Kosten, nicht als Umsatz.">
           <Legend sicht={data.sicht} />
           <RevenueChart data={data} />
@@ -601,7 +601,7 @@ function Kunden({ data, investor }: { data: ZahlenData; investor: boolean }) {
   const maxAge = Math.max(0, ...data.cohorts.map((c) => c.values.length));
   const c = data.concentration;
   return (
-    <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <Card title="Kohorten: Umsatz je Startmonat" cap="100 % = Umsatz im ersten Monat. Über 100 % heißt: Kunden kaufen mit der Zeit mehr.">
         {data.cohorts.length ? (
           <div className="overflow-x-auto">
@@ -777,7 +777,7 @@ function Wirkung({ data, investor }: { data: ZahlenData; investor: boolean }) {
   const speed = w.speedMedianSec == null ? "–" : w.speedMedianSec < 120 ? `${Math.round(w.speedMedianSec)} Sek.` : w.speedMedianSec < 7200 ? `${Math.round(w.speedMedianSec / 60)} Min.` : `${(w.speedMedianSec / 3600).toLocaleString("de-DE", { maximumFractionDigits: 1 })} Std.`;
   return (
     <div className="space-y-3.5">
-      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <section className="rounded-[var(--radius-lg)] p-5 text-white" style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)" }}>
           <h2 className="text-[15px] font-semibold">Pro 1 € an performancegrowth</h2>
           <p className="text-[13px] text-white/80">verdienen Vertreter im Schnitt</p>
@@ -838,7 +838,7 @@ function Vertrieb({ data, v }: { data: ZahlenData; v: VertriebZahlen }) {
   return (
     <div className="space-y-3.5">
       <RangeChips param="vzeitraum" current={v.range} from={v.from} to={v.to} />
-      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Card title={`Vertriebstrichter (${label})`} cap="Von der ersten Ansprache bis zum Vertrag. Jede Stufe zählt, was im Zeitraum passiert ist.">
           <Funnel steps={v.steps} labelWidth={170} />
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
@@ -1172,7 +1172,7 @@ function Ppl({ data }: { data: ZahlenData }) {
   const p = data.ppl;
   const max = Math.max(...p.months.map((m) => m.leads), 0);
   return (
-    <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
       <p className="text-[13px] text-[color:var(--muted)] lg:col-span-2" data-ppl-pilot>
         Pay-per-Lead (Pilotphase {pilotLabel(data.pplPilot.from, data.pplPilot.to)}). Dieser Reiter rechnet immer mit allen Pay-per-Lead-Daten, auch in der Sicht „Kerngeschäft“. Ende der Pilotphase unter Einstellungen → Kosten.
       </p>

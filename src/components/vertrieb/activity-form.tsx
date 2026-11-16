@@ -45,7 +45,7 @@ export function ActivityForm({ contactId, hasOpenTasks }: { contactId: string; h
       className="space-y-3"
     >
       <input type="hidden" name="contactId" value={contactId} />
-      <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[140px_1fr]">
         <div>
           <label className="label">Art</label>
           <select name="type" className="input" defaultValue="ANRUF">

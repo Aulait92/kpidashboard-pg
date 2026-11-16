@@ -183,7 +183,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
         </div>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-5">
           <section className="card p-4">
             <h2 className="mb-3 font-medium">Aktivität erfassen</h2>
@@ -195,7 +195,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               <p className="mb-2 text-sm text-slate-500">Antwort manuell einfügen:</p>
               <form action={addReplyManually} className="space-y-2">
                 <input type="hidden" name="contactId" value={c.id} />
-                <div className="grid gap-2 sm:grid-cols-[1fr_150px]">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_150px]">
                   <input name="subject" placeholder="Betreff" className="input" />
                   <input name="date" type="date" defaultValue={todayKey()} className="input" />
                 </div>
@@ -261,7 +261,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               <summary className="cursor-pointer px-4 py-2 text-sm text-slate-500">Antwort manuell einfügen</summary>
               <form action={addReplyManually} className="space-y-2 px-4 pb-4">
                 <input type="hidden" name="contactId" value={c.id} />
-                <div className="grid gap-2 sm:grid-cols-[1fr_150px]">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_150px]">
                   <input name="subject" placeholder="Betreff" className="input" />
                   <input name="date" type="date" defaultValue={todayKey()} className="input" />
                 </div>

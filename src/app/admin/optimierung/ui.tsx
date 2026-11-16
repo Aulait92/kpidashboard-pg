@@ -186,7 +186,7 @@ export function ManualForm({ accountId, customerId }: { accountId: string | null
   const [state, action, pending] = useActionState<OptState, FormData>(addManualAction, {});
   const today = new Date().toISOString().slice(0, 10);
   return (
-    <form action={action} key={state.at ?? 0} className="grid gap-3 px-5 pb-5 sm:grid-cols-[140px_180px_1fr]">
+    <form action={action} key={state.at ?? 0} className="grid grid-cols-1 gap-3 px-5 pb-5 sm:grid-cols-[140px_180px_1fr]">
       <input type="hidden" name="accountId" value={accountId ?? ""} />
       <input type="hidden" name="customerId" value={customerId ?? ""} />
       <input type="date" name="date" defaultValue={today} max={today} className="input h-9" aria-label="Datum" />

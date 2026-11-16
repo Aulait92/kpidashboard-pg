@@ -27,7 +27,7 @@ const input = "mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:
 export function CsvUpload() {
   const [state, action, pending] = useActionState<BankState, FormData>(uploadCsvAction, null);
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+    <form action={action} className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
       <div className="text-sm sm:col-span-2">
         <label htmlFor="bank-csv">CSV-Datei</label>
         <FileDrop id="bank-csv" name="file" accept=".csv,text/csv" maxBytes={5 * 1024 * 1024} label="CSV auswählen" pendingLabel="Wird importiert …" required className="mt-1" />

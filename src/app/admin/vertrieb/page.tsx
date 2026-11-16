@@ -52,7 +52,7 @@ export default async function VertriebUebersichtPage() {
         {total.toLocaleString("de-DE")} Kontakte · {sent.toLocaleString("de-DE")} Cold Mails · {liConnected.toLocaleString("de-DE")} auf LinkedIn vernetzt
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         <section className="card">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <h2 className="font-medium">Heute zu erledigen</h2>

@@ -28,7 +28,7 @@ export default async function OptimierungPage() {
       <p className="mb-5 max-w-3xl text-sm text-[color:var(--muted)]">
         Wöchentlich je Konto: neue Motive bei Ermüdung bzw. spätestens alle 4 Wochen, schwache Anzeigen pausieren, Budget innerhalb des vereinbarten Budgets umschichten, bei schlechter Leadqualität ein Vorschlag an Ole. Höchstens eine größere Änderung je Anzeigengruppe und Woche.
       </p>
-      <div className="grid gap-5 xl:grid-cols-[3fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[3fr_1fr]">
         <Card>
           <CardHeader title="Werbekonten" count={active.length} hint={`rot: letzte Maßnahme älter als ${STALE_DAYS} Tage`} />
           <div className="overflow-x-auto px-5 pb-4">

@@ -59,7 +59,7 @@ export function LoginCardForm({ card, justCreated = false }: { card: LoginCardVi
         <Field label="Text" hint={`2 bis 3 Zeilen, max. ${L.text} Zeichen (${text.length}/${L.text})`}>
           <textarea name="text" value={text} rows={3} maxLength={L.text} onChange={(e) => setText(e.target.value)} className={`${INPUT} resize-y`} />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
           <Field label="Link-Text" hint="optional, z. B. „Mehr erfahren“">
             <input name="linkText" value={linkText} maxLength={L.linkText} onChange={(e) => setLinkText(e.target.value)} className={INPUT} />
           </Field>
