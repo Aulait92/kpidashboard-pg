@@ -22,7 +22,7 @@ export type HeuteUndo =
 const DAY = 86_400_000;
 
 function refresh(contactId?: string | null) {
-  revalidatePath("/admin/heute");
+  revalidatePath("/admin/heute", "layout");
   revalidatePath("/admin/vertrieb", "layout");
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
 }

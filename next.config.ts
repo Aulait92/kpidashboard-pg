@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 import { securityHeaderRules } from "./src/lib/security-headers";
+import { ADMIN_WEITERLEITUNGEN } from "./src/lib/admin-bereiche";
 
 const nextConfig: NextConfig = {
   // Pakete, die zur Laufzeit per Node-require ihre nativen Binaries
@@ -19,12 +20,16 @@ const nextConfig: NextConfig = {
   // Kein „X-Powered-By: Next.js“ (verrät unnötig den Technik-Stack)
   poweredByHeader: false,
   // Marketing hat eigene Seiten (Ole, 14.11.2026): alte Vertriebs-Adressen weiterleiten (Push-Links, Lesezeichen)
+  // Admin-Makeover Runde 2 (Ole, 16.11.2026): Vertrieb-Übersicht und Aufgaben gehen in „Heute“ auf (src/lib/admin-bereiche.ts)
   async redirects() {
-    return ["linkedin", "empfehlungen", "unterlagen"].map((p) => ({
-      source: `/admin/vertrieb/${p}/:rest*`,
-      destination: `/admin/marketing/${p}/:rest*`,
-      permanent: false,
-    }));
+    return [
+      ...["linkedin", "empfehlungen", "unterlagen"].map((p) => ({
+        source: `/admin/vertrieb/${p}/:rest*`,
+        destination: `/admin/marketing/${p}/:rest*`,
+        permanent: false,
+      })),
+      ...ADMIN_WEITERLEITUNGEN.map((r) => ({ source: r.source, destination: r.destination, permanent: false })),
+    ];
   },
   // Sicherheits-Header für alle Antworten (src/lib/security-headers.ts).
   // CSP zunächst nur „Report-Only“; erzwingen mit CSP_ENFORCE=on (zur Build-Zeit).

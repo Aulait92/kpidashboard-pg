@@ -20,7 +20,7 @@ export async function markLeadReceived(userId: string, now = new Date()): Promis
 export const MANUAL_SEAT_TASK = "Platz von Hand abrechnen";
 
 /**
- * Sichtbare Admin-Aufgabe (Vertrieb → Aufgaben), wenn die Platz-Menge nicht automatisch ins
+ * Sichtbare Admin-Aufgabe (Heute → Aufgaben), wenn die Platz-Menge nicht automatisch ins
  * Abo kann (kein Stripe-Kunde, kein laufendes oder geplantes Abo, Startpreis-Phase).
  * Keine Duplikate: eine offene Aufgabe je Kunde wird auf den neuen Stand gebracht; eine
  * schon erledigte Aufgabe mit genau diesem Stand (letzte 90 Tage) wird nicht neu angelegt.

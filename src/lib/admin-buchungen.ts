@@ -234,7 +234,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const join = (parts: (string | null | undefined | false)[]) => parts.filter(Boolean).join(" · ") || null;
 
 const abrechnungHref = (customerId: string) => `/admin/kunden/${customerId}/abrechnung`;
-const taskHref = (t: SrcTask) => (t.contactId ? `/admin/vertrieb/kontakte/${t.contactId}` : "/admin/vertrieb/aufgaben");
+const taskHref = (t: SrcTask) => (t.contactId ? `/admin/vertrieb/kontakte/${t.contactId}` : "/admin/heute/aufgaben");
 
 type TaskHint = { match: (title: string) => boolean; from: Date; to: Date };
 

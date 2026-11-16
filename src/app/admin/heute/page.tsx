@@ -1,30 +1,22 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { CheckCircle2, ChevronRight, ClipboardList, TrendingUp } from "lucide-react";
 import { countNeueBuchungen } from "@/lib/admin-buchungen-neu";
-import { berlinHour, greeting, loadAdminHeute, summary, type HeuteArea } from "@/lib/admin-heute";
+import { HEUTE_FILTERS, loadAdminHeute, summary } from "@/lib/admin-heute";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import { reportError } from "@/lib/monitoring";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { RememberList } from "@/components/admin/list-memory";
+import { VertriebBlick } from "@/components/admin/vertrieb-blick";
 import { HeuteList } from "@/components/admin/heute-list";
 import { HEUTE_ICONS as ICONS } from "@/components/admin/heute-icons";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Heute | performancegrowth Admin" };
 
-const FILTERS: { key: string; label: string; areas: HeuteArea[] }[] = [
-  { key: "", label: "Alle", areas: [] },
-  { key: "vertrieb", label: "Vertrieb", areas: ["Vertrieb"] },
-  { key: "kunden", label: "Kunden", areas: ["Kunden"] },
-  { key: "leads", label: "Leads", areas: ["Leads", "Pay-per-Lead"] },
-];
-
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
-// Startseite der neuen Admin-Oberfläche: alles, was Sie heute brauchen, aus
-// allen Bereichen in einer Liste – mit einem Knopf direkt zur richtigen Stelle.
+// Startseite der Admin-Oberfläche: alles, was Sie heute brauchen, aus allen Bereichen in einer Liste – mit einem
+// Knopf direkt zur richtigen Stelle. Seit 16.11.2026 auch Freigaben, Chats und „Vertrieb“ (früher Vertrieb → Übersicht).
 export default async function AdminHeutePage({ searchParams }: { searchParams: Promise<{ bereich?: string }> }) {
   await connection();
   const session = await requireAuth();
@@ -41,29 +33,23 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
       return 0;
     }),
   ]);
-  const filter = FILTERS.find((f) => f.key === bereich) ?? FILTERS[0];
-  const shown = filter.areas.length ? items.filter((i) => filter.areas.includes(i.area)) : items;
-  const hour = berlinHour(now);
+  const filter = HEUTE_FILTERS.find((f) => f.key === bereich) ?? HEUTE_FILTERS[0];
+  const shown = items.filter(filter.match);
   const revenue = forecast?.rows.find((r) => r.label === "Umsatz");
   const profit = forecast?.rows.find((r) => /gewinn/i.test(r.label));
 
   return (
-    <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <Suspense fallback={null}>
-        <RememberList id="vertrieb" paths={["/admin/heute"]} />
-        <RememberList id="kunden" paths={["/admin/heute"]} />
-      </Suspense>
-      <div className="mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight">{greeting(hour)}</h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">{summary(items)}</p>
-      </div>
+    <>
+      <p className="-mt-1 mb-4 text-sm text-[color:var(--muted)]">{summary(items)}</p>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <section aria-label="Braucht Sie">
           {items.length ? (
             <div className="mb-3 flex gap-1.5 overflow-x-auto" role="group" aria-label="Bereich">
-              {FILTERS.map((f) => {
-                const n = f.areas.length ? items.filter((i) => f.areas.includes(i.area)).length : items.length;
+              {HEUTE_FILTERS.map((f) => {
+                const n = items.filter(f.match).length;
+                // Leere Filter ausblenden (außer dem gewählten), damit die Zeile am Handy kurz bleibt
+                if (!n && f.key && f.key !== filter.key) return null;
                 const active = f.key === filter.key;
                 return (
                   <Link
@@ -96,6 +82,7 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
         </section>
 
         <div className="space-y-6">
+          <VertriebBlick highlight={bereich === "vertrieb"} />
           {neueBuchungen > 0 ? (
             <Link
               href="/admin/zahlen/buchungen"
@@ -166,6 +153,6 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
           ) : null}
         </div>
       </div>
-    </main>
+    </>
   );
 }

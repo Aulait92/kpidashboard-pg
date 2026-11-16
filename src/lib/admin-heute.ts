@@ -12,10 +12,12 @@ import { dayBounds, openTasks } from "@/lib/vertrieb/queries";
 import { offeneGarantieFaelle } from "@/lib/garantien-server";
 import { GARANTIE_LABEL, heuteTitel, monatName, type Kennzahlen } from "@/lib/garantien";
 import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
+import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
+import { monthLabel } from "@/lib/monatsbericht/shared";
 
 const DAY = 24 * 60 * 60 * 1000;
 
-export type HeuteArea = "Vertrieb" | "Kunden" | "Leads" | "Pay-per-Lead" | "System";
+export type HeuteArea = "Vertrieb" | "Kunden" | "Chats" | "Leads" | "Pay-per-Lead" | "System";
 /** bad = hält Geld oder Leads auf, warn = sollte heute passieren, info = gut zu wissen */
 export type HeuteTone = "bad" | "warn" | "info";
 export type HeuteIcon = "phone" | "calendar" | "euro" | "inbox" | "form" | "undo" | "check" | "chat" | "alert" | "offer" | "star" | "task";
@@ -35,7 +37,18 @@ export type HeuteItem = {
   quick?: HeuteQuick;
   /** „Später“: blendet den Punkt für `days` Tage aus (je Admin) */
   later?: { label: string; days: number };
+  /** Freigabe (Monatsberichte, Optimierung, Follow-ups, LinkedIn): Filter „Freigaben“ auf Heute */
+  approval?: boolean;
 };
+
+/** Filter auf Heute (Admin-Makeover Runde 2): Bereiche wie in der Leiste, dazu „Freigaben“. */
+export const HEUTE_FILTERS: { key: string; label: string; match: (i: HeuteItem) => boolean }[] = [
+  { key: "", label: "Alle", match: () => true },
+  { key: "vertrieb", label: "Vertrieb", match: (i) => i.area === "Vertrieb" },
+  { key: "kunden", label: "Kunden", match: (i) => i.area === "Kunden" || i.area === "Leads" || i.area === "Pay-per-Lead" },
+  { key: "chats", label: "Chats", match: (i) => i.area === "Chats" },
+  { key: "freigaben", label: "Freigaben", match: (i) => !!i.approval },
+];
 
 export type HeuteQuick =
   | { kind: "task"; taskId: string }
@@ -161,7 +174,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
     prisma.onboarding.findMany({ where: { status: "running", liveAt: null }, select: { customerId: true, startDate: true, customer: { select: { name: true } } } }),
     prisma.conversation.groupBy({
       by: ["customerId"],
-      where: { needsAttention: true, status: "open", attentionAt: { lt: new Date(now.getTime() - DAY) } },
+      where: { needsAttention: true, status: "open", attentionAt: { lt: new Date(now.getTime() - DAY) }, customerId: { not: SUPPORT_CUSTOMER_ID } },
       _count: true,
       _min: { attentionAt: true },
     }),
@@ -474,7 +487,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: t.type === "ANRUF" ? "phone" : "task",
       title: t.contact && !t.title.includes(shortName(t.contact.name)) && !t.title.includes(t.contact.name) ? `${t.title}: ${shortName(t.contact.name)}` : t.title,
       detail: `${late ? `Überfällig ${sinceText(t.dueAt, now)}` : "Heute fällig"}${t.note ? ` · ${t.note.slice(0, 120)}` : ""}`,
-      action: t.contact ? { label: t.type === "ANRUF" ? "Anrufen" : "Öffnen", href: `/admin/vertrieb/kontakte/${t.contact.id}` } : { label: "Öffnen", href: "/admin/vertrieb/aufgaben" },
+      action: t.contact ? { label: t.type === "ANRUF" ? "Anrufen" : "Öffnen", href: `/admin/vertrieb/kontakte/${t.contact.id}` } : { label: "Öffnen", href: "/admin/heute/aufgaben" },
       since: t.dueAt,
       quick: isTerminReview(t.title) ? { kind: "termin", taskId: t.id } : { kind: "task", taskId: t.id },
     });
@@ -487,7 +500,7 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       icon: "task",
       title: `${tasks.length - shown.length} weitere Aufgaben heute`,
       detail: overdue.length ? `${overdue.length} insgesamt überfällig` : "Alle Aufgaben in einer Liste",
-      action: { label: "Alle Aufgaben", href: "/admin/vertrieb/aufgaben" },
+      action: { label: "Alle Aufgaben", href: "/admin/heute/aufgaben" },
     });
   }
   for (const o of staleOffers) {
@@ -549,11 +562,13 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
   ]);
   if (liDrafts.length) {
     items.push({
-      key: `linkedin:drafts:${liDrafts[0].scheduledAt?.toISOString().slice(0, 10)}`,
+      // Ein Doppelpunkt: sonst lehnt validHeuteKey „Morgen“ ab (Punkt kam immer wieder)
+      key: `linkedin:drafts-${liDrafts[0].scheduledAt?.toISOString().slice(0, 10)}`,
       area: "Vertrieb",
       tone: "info",
       icon: "check",
       title: `LinkedIn: ${plural(liDrafts.length, "Entwurf", "Entwürfe")} freigeben`,
+      approval: true,
       detail: `Erster Post ${liDrafts[0].scheduledAt ? liDrafts[0].scheduledAt.toLocaleString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", minute: "2-digit" }) : ""} · ohne Freigabe geht nichts raus`,
       action: { label: "Ansehen", href: "/admin/marketing/linkedin" },
       later: { label: "Morgen", days: 1 },
@@ -579,6 +594,82 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
       title: liConn.expiresAt <= now ? "LinkedIn-Zugang abgelaufen" : "LinkedIn bald neu verbinden",
       detail: "LinkedIn verlangt alle 60 Tage eine neue Anmeldung, ein Klick genügt",
       action: { label: "Neu verbinden", href: "/api/linkedin/connect" },
+    });
+  }
+
+  // ── Chats: Support-Nummer wartet auf Antwort (eigener Bereich „Chats“) ──
+  const supportChats = await prisma.conversation.findMany({
+    where: { customerId: SUPPORT_CUSTOMER_ID, needsAttention: true, status: "open" },
+    orderBy: { attentionAt: "asc" },
+    take: 20,
+    select: { id: true, contactName: true, contactPhone: true, attentionAt: true },
+  });
+  if (supportChats.length) {
+    const first = supportChats[0];
+    items.push({
+      key: `chats:${supportChats.at(-1)?.id}`,
+      area: "Chats",
+      tone: "warn",
+      icon: "chat",
+      title:
+        supportChats.length === 1
+          ? `${first.contactName ?? `+${first.contactPhone}`} wartet auf Antwort`
+          : `${supportChats.length} Chats warten auf Antwort`,
+      detail: `Support-Nummer${first.attentionAt ? ` · ältester ${sinceText(first.attentionAt, now)}` : ""} · Antwort nur im 24-Stunden-Fenster möglich`,
+      action: { label: "Antworten", href: supportChats.length === 1 ? `/admin/whatsapp?tab=open&c=${first.id}` : "/admin/whatsapp?tab=open&art=support" },
+      since: first.attentionAt,
+    });
+  }
+
+  // ── Freigaben: Monatsberichte, Optimierung, Später-Follow-ups ──
+  const [reportDrafts, measures, followupApprovals] = await Promise.all([
+    prisma.monthlyReport.findMany({ where: { status: "draft" }, select: { month: true, rating: true, createdAt: true }, orderBy: { createdAt: "asc" } }),
+    prisma.optimizationMeasure.findMany({ where: { status: "geplant" }, select: { accountId: true, plannedAt: true }, orderBy: { plannedAt: "asc" } }),
+    prisma.salesFollowup.findMany({ where: { status: "FREIGABE" }, select: { createdAt: true }, orderBy: { createdAt: "asc" } }),
+  ]);
+  if (reportDrafts.length) {
+    const month = reportDrafts.map((r) => r.month).sort().at(-1)!;
+    const weak = reportDrafts.filter((r) => r.month === month && r.rating === "schwach").length;
+    items.push({
+      key: `berichte:${month}-${reportDrafts.length}`,
+      area: "Kunden",
+      tone: "info",
+      icon: "check",
+      title: `${plural(reportDrafts.length, "Monatsbericht", "Monatsberichte")} prüfen`,
+      detail: `${monthLabel(month)}${weak ? ` · ${weak} schwach (Sie entscheiden: senden oder anrufen)` : ""} · ohne Freigabe geht nichts raus`,
+      action: { label: "Prüfen", href: `/admin/monatsberichte?monat=${month}` },
+      since: reportDrafts[0].createdAt,
+      later: TOMORROW,
+      approval: true,
+    });
+  }
+  if (measures.length) {
+    const accounts = [...new Set(measures.map((m) => m.accountId).filter(Boolean))] as string[];
+    items.push({
+      key: `optimierung:${measures.length}-${measures.at(-1)?.plannedAt.getTime()}`,
+      area: "Kunden",
+      tone: "info",
+      icon: "check",
+      title: `Optimierung: ${plural(measures.length, "Maßnahme", "Maßnahmen")} freigeben`,
+      detail: `${plural(accounts.length || 1, "Werbekonto", "Werbekonten")} · geplant ${agoText(measures[0].plannedAt, now)}`,
+      action: { label: "Freigeben", href: accounts.length === 1 ? `/admin/optimierung/${accounts[0]}` : "/admin/optimierung" },
+      since: measures[0].plannedAt,
+      later: TOMORROW,
+      approval: true,
+    });
+  }
+  if (followupApprovals.length) {
+    items.push({
+      key: `followups:${followupApprovals.length}-${followupApprovals.at(-1)?.createdAt.getTime()}`,
+      area: "Vertrieb",
+      tone: "info",
+      icon: "check",
+      title: `Später-Follow-ups: ${plural(followupApprovals.length, "Mail", "Mails")} freigeben`,
+      detail: "Kontakte, die „gerne später“ geschrieben haben · ohne Freigabe geht nichts raus",
+      action: { label: "Freigeben", href: "/admin/vertrieb/follow-ups" },
+      since: followupApprovals[0].createdAt,
+      later: TOMORROW,
+      approval: true,
     });
   }
 
@@ -647,30 +738,33 @@ async function loadAuto(now: Date): Promise<AutoRow[]> {
 }
 
 /** Schnelle Zahlen für die Navigation (ohne die ganze Heute-Liste zu laden). */
-export async function loadAdminNavCounts(userId?: string): Promise<{ heute: number; vertrieb: number }> {
+/** Zähler in der Leiste: Heute (Dringendes und fällige Aufgaben) und Chats (Support-Nummer wartet auf Antwort). */
+export async function loadAdminNavCounts(userId?: string): Promise<{ heute: number; chats: number }> {
   const { tomorrow } = dayBounds();
   try {
-    const [tasks, parked, storno, forms, overdue, garantien, dismissed] = await Promise.all([
+    const [tasks, parked, storno, forms, overdue, garantien, chats, dismissed] = await Promise.all([
       prisma.salesTask.count({ where: { doneAt: null, dueAt: { lt: tomorrow } } }),
       prisma.poolLead.count({ where: { status: "parked" } }),
       prisma.lead.findMany({ where: { stornoState: "review" }, orderBy: { stornoRequestedAt: "asc" }, select: { id: true } }),
       prisma.unassignedLead.count({ where: { resolvedAt: null } }),
       prisma.customer.findMany({ where: { archived: false, paymentOverdueSince: { not: null } }, select: { id: true } }),
       prisma.garantieFall.findMany({ where: { status: "offen" }, select: { id: true } }),
+      prisma.conversation.count({ where: { customerId: SUPPORT_CUSTOMER_ID, needsAttention: true, status: "open" } }),
       userId ? activeDismissals(userId) : Promise.resolve([] as string[]),
     ]);
     const hidden = new Set(dismissed);
     const visible = (key: string) => !hidden.has(key);
     const heute =
+      tasks +
       (parked && visible("parked") ? 1 : 0) +
       storno.slice(0, STORNO_SINGLE).filter((l) => visible(`storno:${l.id}`)).length +
       (storno.length > STORNO_SINGLE && visible("storno") ? 1 : 0) +
       (forms && visible("forms") ? 1 : 0) +
       overdue.filter((c) => visible(`pay:${c.id}`)).length +
       garantien.filter((g) => visible(`garantie:${g.id}`)).length;
-    return { heute, vertrieb: tasks };
+    return { heute, chats };
   } catch {
-    return { heute: 0, vertrieb: 0 };
+    return { heute: 0, chats: 0 };
   }
 }
 

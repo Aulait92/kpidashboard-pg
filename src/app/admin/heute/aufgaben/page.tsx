@@ -1,5 +1,6 @@
 import Link from "next/link";
 import clsx from "clsx";
+import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { TASK_TYPES } from "@/lib/vertrieb/crm";
 import { TaskRow, type TaskWithContact } from "@/components/vertrieb/ui";
@@ -7,6 +8,9 @@ import { TaskForm } from "@/components/vertrieb/task-form";
 import { dayBounds, openTasks, taskInclude } from "@/lib/vertrieb/queries";
 import type { SalesTaskType as TaskType } from "@/generated/prisma/enums";
 
+export const metadata = { title: "Aufgaben | performancegrowth Admin" };
+
+// Alle Aufgaben (früher Vertrieb → Aufgaben, seit 16.11.2026 Reiter in Heute; alte Adresse leitet hierher weiter).
 export default async function AufgabenPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const view = sp.view === "done" ? "done" : "open";
@@ -31,13 +35,13 @@ export default async function AufgabenPage({ searchParams }: { searchParams: Pro
 
   const link = (p: Record<string, string | undefined>) => {
     const q = new URLSearchParams(Object.entries({ view, type, ...p }).filter(([, v]) => v) as [string, string][]);
-    return `/admin/vertrieb/aufgaben?${q}`;
+    return `/admin/heute/aufgaben?${q}`;
   };
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">Aufgaben</h1>
+        <h2 className="sr-only">Aufgaben</h2>
         <div className="flex gap-1 rounded-lg bg-slate-100 p-0.5 text-sm">
           {[["open", "Offen"], ["done", "Erledigt"]].map(([v, l]) => (
             <Link key={v} href={link({ view: v })} className={clsx("inline-flex min-h-10 items-center rounded-md px-3", view === v ? "bg-white shadow-sm" : "text-slate-600")}>{l}</Link>
@@ -51,7 +55,15 @@ export default async function AufgabenPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      <div className="card p-4"><TaskForm /></div>
+      {/* Neue Aufgabe ohne Kontakt ist selten (meist im Kontakt angelegt): zugeklappt */}
+      <details className="card group">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 text-sm font-medium text-sky-700 [&::-webkit-details-marker]:hidden">
+          <Plus className="h-4 w-4" /> Neue Aufgabe
+        </summary>
+        <div className="border-t border-slate-100 p-4">
+          <TaskForm />
+        </div>
+      </details>
 
       {groups.map((g) =>
         g.items.length ? (

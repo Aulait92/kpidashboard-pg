@@ -28,6 +28,8 @@ const s = (fd: FormData, k: string) => {
 function refresh(contactId?: string | null) {
   revalidatePath("/admin/vertrieb", "layout");
   revalidatePath("/admin/kunden", "layout");
+  // Aufgaben und Vertriebs-Kennzahlen stehen auf Heute (Admin-Makeover Runde 2)
+  revalidatePath("/admin/heute", "layout");
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
 }
 

@@ -31,6 +31,7 @@ const TONE: Record<HeuteTone, string> = {
 const AREA_COLOR: Record<HeuteArea, string> = {
   Vertrieb: "text-sky-700",
   Kunden: "text-emerald-700",
+  Chats: "text-fuchsia-700",
   Leads: "text-violet-700",
   "Pay-per-Lead": "text-violet-700",
   System: "text-rose-700",

@@ -94,7 +94,7 @@ async function push(contactId: string | null, name: string | null, title: string
   await sendToAdmins({
     title: `🗓️ ${reviewTitle(name)}`,
     body: `${title} ist vorbei, Ergebnis mit einem Klick eintragen.`,
-    url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/vertrieb/aufgaben",
+    url: contactId ? `/admin/vertrieb/kontakte/${contactId}` : "/admin/heute/aufgaben",
     tag: `termin-review:${contactId}`,
   }).catch((e) => reportError(e, "termin-review-push"));
 }

@@ -164,7 +164,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
     }
   }
 
-  // 3) Aufgaben für den Vertrieb (am Kontakt, erscheinen unter Vertrieb → Aufgaben).
+  // 3) Aufgaben für den Vertrieb (am Kontakt, erscheinen unter Heute → Aufgaben).
   if (contact) {
     const start = offer.startDate;
     const tasks = [
