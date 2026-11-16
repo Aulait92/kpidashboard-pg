@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui";
 import { ZurueckLink } from "@/components/zurueck-link";
 import { prisma } from "@/lib/prisma";
+import { nowMs } from "@/lib/now";
 import { formatPhone } from "@/lib/format";
 import { asAnsprache } from "@/lib/ansprache";
 import type { BuyerContext } from "@/lib/buyer-context";
@@ -16,8 +17,16 @@ import { kundeWill, klaerenPunkte, KLAEREN_MAX } from "@/lib/terminvorbereitung-
 import { ladeTarifvorbereitung } from "@/lib/tarifauswahl-server";
 import { VorbereitungNeu } from "./neu-client";
 
-const chipZeit = (d: Date) =>
-  new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(d) + " Uhr";
+const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
+// „Heute, 10:00 Uhr“ / „Morgen, …“ wie auf „Heute“ (UX Runde 4), sonst Datum
+const chipZeit = (d: Date) => {
+  const now = new Date(nowMs());
+  const morgen = new Date(nowMs() + 86_400_000);
+  const uhr = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(d) + " Uhr";
+  if (berlinTag(d) === berlinTag(now)) return `Heute, ${uhr}`;
+  if (berlinTag(d) === berlinTag(morgen)) return `Morgen, ${uhr}`;
+  return new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(d) + " Uhr";
+};
 
 // Gleiche Spalten in allen Listen, lange Bezeichnungen brechen um statt zu überlappen (Ole, 16.11.2026: „Versicherungsinteresse“)
 const LISTE = "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1";

@@ -367,8 +367,14 @@ export async function LeadDetailBody({
   const noWhatsApp =
     !!lead.waUnavailableAt &&
     (await prisma.message.count({ where: { direction: "inbound", conversation: { customerId, OR: [{ leadId: lead.id }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] } } })) === 0;
-  const apptFmt = (d: Date) =>
-    new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
+  // „Heute, 10:00“ / „Morgen, 10:00“ wie auf „Heute“ (UX Runde 4), sonst „Mo., 23.11., 10:00“
+  const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
+  const apptFmt = (d: Date) => {
+    const uhr = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }).format(d);
+    if (berlinTag(d) === berlinTag(new Date(nowMs()))) return `Heute, ${uhr}`;
+    if (berlinTag(d) === berlinTag(new Date(nowMs() + 86_400_000))) return `Morgen, ${uhr}`;
+    return new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
+  };
 
   return (
     <>
