@@ -210,7 +210,9 @@ export async function BuyerLeadsBody({
                 Alle Kontakte anzeigen
               </Link>
             </>
-          ) : params.range !== "max" ? (
+          ) : q ? (
+            `Kein Kontakt zu „${q}“ gefunden.`
+          ) : params.range !== "max" && (await prisma.lead.count({ where: leadScope(team), take: 1 })) > 0 ? (
             <>
               In diesem Zeitraum sind keine Kontakte eingegangen.{" "}
               <Link href={`${basePath}?range=max`} className="font-medium text-[color:var(--brand)] underline">

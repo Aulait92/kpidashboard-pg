@@ -6,7 +6,7 @@ import {
   type ForgotPasswordState,
 } from "./actions";
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ email = "" }: { email?: string }) {
   const [state, formAction, pending] = useActionState<
     ForgotPasswordState,
     FormData
@@ -34,7 +34,8 @@ export function ForgotPasswordForm() {
           required
           autoComplete="email"
           autoFocus
-          className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-sm focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
+          defaultValue={email}
+          className="mt-1 w-full rounded-lg border border-[color:var(--border)] bg-white px-3 py-2 text-base focus:border-[color:var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-soft)]"
         />
       </label>
 

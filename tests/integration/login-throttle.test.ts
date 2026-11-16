@@ -13,7 +13,7 @@ describe("Login: Schutz gegen Durchprobieren", () => {
   it("sperrt nach 10 Fehlversuchen für 15 Minuten", async () => {
     for (let i = 0; i < 10; i++) {
       const r = await login(email, "falsch");
-      expect(r).toMatchObject({ ok: false, error: "Email oder Passwort falsch." });
+      expect(r).toMatchObject({ ok: false, error: "E-Mail oder Passwort falsch." });
     }
     const r = await login(email, "falsch");
     expect(r.ok).toBe(false);

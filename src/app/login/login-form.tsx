@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { isNativeApp } from "@/lib/native-bridge";
 import { loginAction, totpAction, type LoginActionState } from "./actions";
@@ -28,6 +29,7 @@ export function LoginForm({
   useEffect(() => {
     if (target) window.location.assign(target);
   }, [target]);
+  const router = useRouter();
   const [inApp, setInApp] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setInApp(isNativeApp()), 0);
@@ -106,7 +108,9 @@ export function LoginForm({
             type="email"
             required
             autoComplete="email"
-            autoFocus
+            autoFocus={!state.email}
+            key={state.email ?? ""}
+            defaultValue={state.email ?? ""}
             placeholder="name@agentur.de"
             className={INPUT}
           />
@@ -118,13 +122,20 @@ export function LoginForm({
             </label>
             <Link
               href="/forgot-password"
+              onClick={(e) => {
+                // Schon getippte E-Mail mitnehmen
+                const v = (document.getElementById("login-email") as HTMLInputElement | null)?.value.trim();
+                if (!v) return;
+                e.preventDefault();
+                router.push(`/forgot-password?email=${encodeURIComponent(v)}`);
+              }}
               className="-my-2 inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline focus:outline-none focus-visible:underline"
             >
               Passwort vergessen?
             </Link>
           </div>
           {/* Passwort anzeigen: am Handy vertippt man sich leicht (UX Runde 4) */}
-          <PasswordInput />
+          <PasswordInput autoFocus={!!state.email} />
         </div>
 
         {state.error || (totpState.error && !totpState.needsTotp) ? (
@@ -172,11 +183,11 @@ function GoogleLogo() {
   );
 }
 
-function PasswordInput() {
+function PasswordInput({ autoFocus = false }: { autoFocus?: boolean }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
-      <input id="login-password" name="password" type={show ? "text" : "password"} required autoComplete="current-password" className={`${INPUT} pr-12`} />
+      <input id="login-password" name="password" type={show ? "text" : "password"} required autoComplete="current-password" autoFocus={autoFocus} className={`${INPUT} pr-12`} />
       <button
         type="button"
         onClick={() => setShow((v) => !v)}

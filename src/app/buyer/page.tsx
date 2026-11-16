@@ -42,12 +42,15 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   const erstinfoHint = <ErstinfoHeuteHint customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} />;
   if (leadCount === 0) {
     // Erster Tag: noch kein Lead → erklären, wie es losgeht (statt leerer Zahlen/„Alles erledigt“).
+    // Vor dem Go-live steht die Erstinformation schon als Schritt in der Einrichtungs-Karte; die gelbe Warnung
+    // mit Feldnamen wäre doppelt (Runde 5, 16.11.2026).
+    const ob = await prisma.onboarding.findUnique({ where: { customerId: ctx.customerId }, select: { liveAt: true } });
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <LiveRefresh />
         <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
         {introCard}
-        {erstinfoHint}
+        {!ob || ob.liveAt ? erstinfoHint : null}
         <FirstDay customerId={ctx.customerId} owner={ctx.teamRole !== "advisor"} whatsapp={whatsapp} />
       </main>
     );

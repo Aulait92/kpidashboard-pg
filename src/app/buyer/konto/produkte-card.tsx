@@ -48,7 +48,7 @@ export function ProductsCard({ booked, bookable, lines, ctx, today, readOnly }: 
         {bookable.length ? (
           // Katalog zugeklappt (UX, Ole 15.11.2026): sonst schiebt er Budget und Pause weit nach unten
           <details className="group space-y-2" data-produkte-katalog>
-            <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-10 cursor-pointer list-none items-center gap-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
               <Plus className="h-4 w-4 text-[color:var(--brand)] transition group-open:rotate-45" />
               Weitere Sparte dazubuchen <span className="font-normal text-[color:var(--muted)]">· {bookable.length}</span>
             </summary>

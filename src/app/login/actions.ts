@@ -15,6 +15,8 @@ export type LoginActionState = {
    * (ohne Kopfzeile/Menü) stehen, bis neu geladen wird.
    */
   redirectTo?: string;
+  /** Getippte E-Mail nach einem Fehler zurück ins Feld (React leert das Formular nach der Aktion). */
+  email?: string;
 };
 
 export async function loginAction(
@@ -27,7 +29,7 @@ export async function loginAction(
 
   // Zusätzlich zur Sperre je E-Mail (lib/auth.ts): Drossel je IP
   if (!checkLimit("login", await requestIp()).ok) {
-    return { error: "Zu viele Anmeldeversuche. Bitte in ein paar Minuten noch einmal versuchen." };
+    return { error: "Zu viele Anmeldeversuche. Bitte in ein paar Minuten noch einmal versuchen.", email };
   }
 
   let result: LoginResult;
@@ -38,11 +40,12 @@ export async function loginAction(
     // fehlende User-Tabelle …) statt einer leeren 500-Seite ins UI.
     return {
       error: err instanceof Error ? err.message : "Login fehlgeschlagen.",
+      email,
     };
   }
 
   if (!result.ok) {
-    return result.needsTotp ? { needsTotp: true } : { error: result.error };
+    return result.needsTotp ? { needsTotp: true } : { error: result.error, email };
   }
 
   // Gewünschte Seite (nur intern und nur, wenn sichtbar), sonst Startseite der Rolle.

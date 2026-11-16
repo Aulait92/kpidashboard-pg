@@ -315,7 +315,7 @@ export async function login(
   }
   const failed = async (): Promise<LoginResult> => {
     await audit("login.failed", { actor: { email, role: null } });
-    return { ok: false, error: "Email oder Passwort falsch." };
+    return { ok: false, error: "E-Mail oder Passwort falsch." };
   };
 
   const user = await prisma.user.findUnique({ where: { email } });

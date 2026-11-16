@@ -5,7 +5,9 @@ export const metadata = {
   title: "Passwort vergessen | performancegrowth",
 };
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ email?: string }> }) {
+  // E-Mail aus der Anmeldung übernehmen, damit niemand sie zweimal tippt (Runde 5, 16.11.2026)
+  const email = ((await searchParams).email ?? "").trim().slice(0, 200);
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-6rem)] w-full max-w-md flex-col justify-center px-4 py-12">
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_30px_-12px_rgba(37,99,235,0.18)]">
@@ -21,7 +23,7 @@ export default function ForgotPasswordPage() {
             Wir schicken Ihnen einen Link an Ihre E-Mail-Adresse, mit dem Sie ein neues Passwort festlegen.
           </p>
         </div>
-        <ForgotPasswordForm />
+        <ForgotPasswordForm email={email} />
         <div className="mt-2 text-center text-sm text-[color:var(--muted)]">
           <Link href="/login" className="inline-flex min-h-11 items-center text-[color:var(--brand)] hover:underline">
             ← Zurück zur Anmeldung
