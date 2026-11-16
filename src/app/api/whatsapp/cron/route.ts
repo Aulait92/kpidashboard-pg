@@ -77,6 +77,10 @@ async function handle(req: Request): Promise<Response> {
   await processDueBudgetFees(now).catch((e: unknown) => reportError(e, "cron-budget-fee"));
   // Budget ändern: neues Tagesbudget am Stichtag bei Meta umstellen (sonst Aufgabe)
   await import("@/lib/kampagnen/budget-sync").then((m) => m.processDueMetaBudgets(now)).catch((e: unknown) => reportError(e, "cron-budget-meta"));
+  // Öffentliche App-Demo: Beispieldaten nachts neu (nur eigene Demo-Datenbank, lib/app-demo/seed.ts)
+  if (now.getUTCHours() === 2 && now.getUTCMinutes() < 5 && process.env.APP_DEMO_DATABASE_URL) {
+    after(() => import("@/lib/app-demo/seed").then((m) => m.appDemoNeuAnlegenEinmal(now)).catch((e: unknown) => reportError(e, "cron-app-demo")));
+  }
   const pruned =
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5
       ? {

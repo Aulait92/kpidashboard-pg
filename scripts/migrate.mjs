@@ -124,3 +124,29 @@ if (!state.baselined) {
 
 prisma(["migrate", "deploy"]);
 console.log("[migrate] Schema aktuell.");
+
+// Öffentliche App-Demo (/app-demo, src/lib/app-demo): eigene Demo-Datenbank mitmigrieren, wenn APP_DEMO_DATABASE_URL
+// gesetzt ist. Die Datenbank legt Ole an (leer, z. B. „appdemo“ auf demselben Postgres-Server); die Beispieldaten legt
+// die App selbst an (Start und nachts). Ohne Variable passiert nichts. Fehler hier stoppen den Start NICHT: dann meldet
+// /app-demo „gerade nicht verfügbar“, die App läuft normal.
+const demoUrl = (process.env.APP_DEMO_DATABASE_URL ?? "").trim();
+if (demoUrl) {
+  const ziel = (u) => {
+    try {
+      const x = new URL(u);
+      return `${x.hostname.toLowerCase()}:${x.port || "5432"}/${decodeURIComponent(x.pathname.replace(/^\//, ""))}`;
+    } catch {
+      return u;
+    }
+  };
+  if (ziel(demoUrl) === ziel(process.env.DATABASE_URL ?? "")) {
+    console.error("[migrate] APP_DEMO_DATABASE_URL zeigt auf die echte Datenbank – App-Demo bleibt aus.");
+  } else {
+    try {
+      execFileSync("npx", ["prisma", "migrate", "deploy"], { stdio: "inherit", env: { ...process.env, DATABASE_URL: demoUrl }, encoding: "utf8" });
+      console.log("[migrate] Demo-Datenbank aktuell.");
+    } catch (err) {
+      console.error("[migrate] Demo-Datenbank nicht migriert (App-Demo bleibt aus):", err instanceof Error ? err.message : err);
+    }
+  }
+}
