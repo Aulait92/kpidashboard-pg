@@ -6,7 +6,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { createOfferAction } from "@/app/admin/vertrieb/offer-actions";
 import type { OfferTarget } from "@/lib/offer-links";
-import { bestandPacksText, computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
+import { abschlussBonusStandardTag, berlinTodayIso, bestandPacksText, computeOfferPrice, defaultStartDate, eur, PRICE_LIST, withVat, type OfferPackage, type OfferTerm, type OfferVermittler } from "@/lib/offer-pricing";
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
@@ -85,6 +85,11 @@ export function OfferForm({
   const [customerChoice, setCustomerChoice] = useState(true);
   // „Ich zahle später“ auf der Angebotsseite (Ole, 16.11.2026): nur für Kunden mit spätem Start, Standard aus
   const [allowPayLater, setAllowPayLater] = useState(false);
+  // Abschlussbonus (Ole, 16.11.2026): Standard an, 300 € auf die Einrichtung bei Annahme und Zahlung am Versandtag
+  const [bonusAn, setBonusAn] = useState(true);
+  const [bonusBetrag, setBonusBetrag] = useState("300");
+  // Frist frei wählbar (Ole, 16.11.2026): Vorschlag heute, abends der Folgetag
+  const [bonusBis, setBonusBis] = useState(() => abschlussBonusStandardTag());
   // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
   const [test, setTest] = useState(false);
 
@@ -138,6 +143,8 @@ export function OfferForm({
         vermittlerTyp: vermittler,
         customerChoice,
         allowPayLater: allowPayLater && !test,
+        abschlussBonus: bonusAn && !test ? (num(bonusBetrag) ?? 300) : 0,
+        abschlussBonusBis: bonusAn && !test ? bonusBis : null,
         test,
       });
       if (!res.ok) {
@@ -322,6 +329,36 @@ export function OfferForm({
                   {num(setupOverride) != null || num(monthlyOverride) != null
                     ? "Mit Sonderpreis nur das Startdatum, die Laufzeit bleibt wie hier gewählt."
                     : "Ihre Auswahl hier ist der Vorschlag. Start frühestens in 7 Tagen, spätestens in 90 Tagen."}
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-abschlussbonus-toggle>
+              <input type="checkbox" name="abschlussBonus" className="mt-0.5 h-4 w-4" checked={bonusAn && !test} disabled={test} onChange={(e) => setBonusAn(e.target.checked)} />
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-2 font-semibold">
+                  Abschlussbonus
+                  <input
+                    aria-label="Abschlussbonus in Euro"
+                    inputMode="decimal"
+                    value={bonusBetrag}
+                    disabled={!bonusAn || test}
+                    onChange={(e) => setBonusBetrag(e.target.value)}
+                    className="h-7 w-20 rounded border border-[color:var(--border)] px-2 text-right text-sm font-normal"
+                  />
+                  € auf die Einrichtung, bis
+                  <input
+                    aria-label="Abschlussbonus gilt bis"
+                    type="date"
+                    value={bonusBis}
+                    min={berlinTodayIso()}
+                    disabled={!bonusAn || test}
+                    onChange={(e) => setBonusBis(e.target.value)}
+                    className="h-7 rounded border border-[color:var(--border)] px-2 text-sm font-normal"
+                    data-abschlussbonus-bis
+                  />
+                </span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  Gilt bei Annahme und Zahlung der Einrichtung bis 23:59 Uhr an diesem Tag. Start bleibt frei wählbar, danach automatisch Normalpreis.
                 </span>
               </span>
             </label>

@@ -8,7 +8,7 @@ import type { SalesCustomerStage } from "@/generated/prisma/enums";
 import type { Offer } from "@/generated/prisma/client";
 import type { DealOfferRow } from "@/components/deal-offers-card";
 import { erinnerungsGrenzen, naechsteErinnerung, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
-import { berlinTodayIso } from "@/lib/offer-pricing";
+import { abschlussBonusFrist, abschlussBonusJetzt, berlinTodayIso } from "@/lib/offer-pricing";
 
 type OfferRef = { dealId: string | null; salesContactId: string | null };
 
@@ -90,6 +90,10 @@ export function toOfferRow(o: Offer): DealOfferRow {
     nextReminder: naechsteErinnerung(o, new Date())?.tag ?? null,
     reminderBounds: erinnerungsGrenzen(berlinTodayIso(), o.startDate ? o.startDate.toISOString().slice(0, 10) : null, { admin: true }),
     paymentSetUp: zahlungEingerichtet(o),
+    abschlussBonus: o.abschlussBonus == null ? null : Number(o.abschlussBonus),
+    abschlussBonusBis: abschlussBonusFrist(o)?.toISOString() ?? null,
+    abschlussBonusGewaehrt: o.abschlussBonusGewaehrt == null ? null : Number(o.abschlussBonusGewaehrt),
+    abschlussBonusAbgelaufen: o.abschlussBonus != null && !abschlussBonusJetzt(o),
   };
 }
 

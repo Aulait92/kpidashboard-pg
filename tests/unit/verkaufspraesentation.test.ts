@@ -43,8 +43,8 @@ const text = (html: string) => html.replace(/<style[\s\S]*?<\/style>/g, "").repl
 
 describe("Folienliste", () => {
   it("Vertreter 22, Makler 23 (Makler mit Tarifvergleich nach Folie 19)", () => {
-    const v = folienListe("vertreter");
-    const m = folienListe("makler");
+    const v = folienListe("vertreter", false);
+    const m = folienListe("makler", false);
     expect(v).toHaveLength(22);
     expect(m).toHaveLength(23);
     expect(v[12]).toMatchObject({ nr: 13, art: "video" });
@@ -58,7 +58,7 @@ describe("Folienliste", () => {
 
   it("jedes Folienbild liegt in public/ (scripts/vertrieb-folien.mjs)", () => {
     for (const a of ["vertreter", "makler"] as const) {
-      for (const f of folienListe(a)) expect(existsSync(path.join("public", bildUrl(a, f.nr))), bildUrl(a, f.nr)).toBe(true);
+      for (const f of folienListe(a).filter((x) => x.bild > 0)) expect(existsSync(path.join("public", bildUrl(a, f.bild))), bildUrl(a, f.bild)).toBe(true);
     }
     expect(existsSync("public/praesentation/vertrieb/assistent.mp4")).toBe(true);
   });

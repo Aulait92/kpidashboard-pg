@@ -53,7 +53,9 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
   it("ohne Angebot: Makler-Fassung mit Listenpreisen; mit Angebot: Preise und Zielgruppe aus dem Angebot", async () => {
     const ohne = await ladeVerkaufsPraesentation(contactId);
     expect(ohne).toMatchObject({ audience: "makler", angebotNr: null });
-    expect(ohne!.folien).toHaveLength(23);
+    // Listenpreise: mit Folie „Ihr Abschlussbonus“ (300 € heute)
+    expect(ohne!.folien).toHaveLength(24);
+    expect(ohne!.folien.map((f) => f.titel)).toContain("Ihr Abschlussbonus");
     expect(ohne!.preise.quelle).toBe("liste");
     const offer = await createOffer(
       { salesContactId: contactId },
@@ -63,14 +65,29 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
     const mit = await ladeVerkaufsPraesentation(contactId);
     expect(mit).toMatchObject({ audience: offer.vermittlerTyp === "makler" ? "makler" : "vertreter", angebotNr: offer.number });
     expect(mit!.preise).toMatchObject({ quelle: "angebot", name: "Finanzkontor Test", monatlichNetto: Number(offer.monthlyFee) });
+    // Angebot ohne Abschlussbonus: keine Bonusfolie
     expect((await ladeVerkaufsPraesentation(contactId, "makler"))!.folien).toHaveLength(23);
+    // Angebot mit Abschlussbonus bis morgen: Folie mit Betrag und Frist
+    const morgen = addDaysIso(berlinTodayIso(), 1);
+    await createOffer(
+      { salesContactId: contactId },
+      { contactName: "Eva Test", company: "Finanzkontor Test", email: `vk-${tag}@example.test`, term: "12m", products: [{ name: "TKV-Katze", dailyBudget: 40 }], startDate: addDaysIso(berlinTodayIso(), 20), abschlussBonus: 300, abschlussBonusBis: morgen },
+      null,
+    );
+    const bonus = await ladeVerkaufsPraesentation(contactId, "makler");
+    expect(bonus!.folien).toHaveLength(24);
+    expect(bonus!.preise.bonus).toMatchObject({ betrag: 300 });
+    expect(berlinTodayIso(bonus!.preise.bonus!.bis!)).toBe(morgen);
+    const folie = bonus!.folien.find((f) => f.titel === "Ihr Abschlussbonus")!;
+    expect(folie.html).toContain("300 €");
+    expect(folie.html).not.toMatch(/[–—]/);
   });
 
   it("Link: 14 Tage gültig, Verlängern behält den Token, abgelaufen bzw. beendet ungültig", async () => {
     const a = await verkaufsLinkErstellen(contactId, "makler", null, T0);
     expect(a!.bis.getTime()).toBe(tage(14).getTime());
     expect(await ladeVerkaufsLink(a!.token, tage(13))).toMatchObject({ audience: "makler", contact: { id: contactId } });
-    expect((await ladeVerkaufsLink(a!.token, tage(13)))!.folien).toHaveLength(23);
+    expect((await ladeVerkaufsLink(a!.token, tage(13)))!.folien).toHaveLength(24); // Angebot mit Abschlussbonus (vorheriger Test)
     expect(await ladeVerkaufsLink(a!.token, tage(15))).toBeNull();
     const b = await verkaufsLinkErstellen(contactId, "vertreter", null, tage(5));
     expect(b!.token).toBe(a!.token);

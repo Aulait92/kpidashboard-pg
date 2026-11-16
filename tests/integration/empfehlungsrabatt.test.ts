@@ -146,6 +146,28 @@ describe("Empfehlungsrabatt auf die Einrichtung", () => {
     expect(list * 100 - (stripeState.coupons[0].amount_off as number)).toBe(fee * 100);
   });
 
+  it("Abschlussbonus (Ole, 16.11.2026): zusammen mit dem Empfehlungsrabatt ein Gutschein; nach der Frist Normalpreis", async () => {
+    const contactId = await referred("bonus");
+    const offer = await offerFor(contactId, { abschlussBonus: 300, abschlussBonusBis: today });
+    expect(Number(offer.abschlussBonus)).toBe(300);
+    expect(await accept(offer.token, "12m")).toEqual({ ok: true });
+    expect(await createCheckoutForOffer(offer.id)).toEqual({ url: "https://checkout.stripe.test/x" });
+    const session = stripeState.sessions[0] as { line_items: { price_data: { unit_amount: number } }[]; metadata: Record<string, string>; expires_at: number };
+    expect(session.line_items[0].price_data.unit_amount).toBe(990 * 100);
+    expect(stripeState.coupons[0]).toMatchObject({ amount_off: 60000, name: "Empfehlungsrabatt und Abschlussbonus" });
+    expect(session.metadata.pg_bonus).toBe("30000");
+    // Bezahlseite läuft höchstens bis kurz nach der Frist bzw. mindestens 31 Minuten
+    expect(session.expires_at * 1000).toBeLessThanOrEqual(Date.now() + 24 * 3600_000);
+
+    // Frist vorbei: kein Bonus mehr
+    await prisma.offer.update({ where: { id: offer.id }, data: { abschlussBonusBis: new Date(Date.now() - 60_000), stripeCheckoutSessionId: null } });
+    stripeState.sessions = [];
+    stripeState.coupons = [];
+    await createCheckoutForOffer(offer.id);
+    expect(stripeState.coupons[0]).toMatchObject({ amount_off: 30000, name: "Empfehlungsrabatt" });
+    expect((stripeState.sessions[0] as { metadata: Record<string, string> }).metadata.pg_bonus).toBeUndefined();
+  });
+
   it("nie unter 0: Rabatt größer als die Einrichtung → 0 €, Checkout ohne Zahlung (nur Zahlungsart)", async () => {
     const contactId = await referred("gross");
     const offer = await offerFor(contactId, { setupDiscount: 1500 });

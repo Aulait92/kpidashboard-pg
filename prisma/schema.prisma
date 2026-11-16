@@ -1397,6 +1397,12 @@ model Offer {
   setupDiscount           Decimal?      @db.Decimal(10, 2)
   // Zeile im Angebot, z. B. „Empfehlungsrabatt (empfohlen von Max Muster)“
   setupDiscountLabel      String?
+  // Abschlussbonus (Ole, 16.11.2026): Nachlass auf die Einrichtung, wenn Annahme UND Setup-Zahlung bis zur Frist
+  // passieren (Standard: Versandtag 23:59 Uhr Berlin). Null = kein Bonus. abschlussBonusBis überschreibt die Frist.
+  abschlussBonus          Decimal?      @db.Decimal(10, 2)
+  abschlussBonusBis       DateTime?
+  // Tatsächlich abgezogen (Checkout mit Bonus bezahlt bzw. Lastschrift erteilt)
+  abschlussBonusGewaehrt  Decimal?      @db.Decimal(10, 2)
   // ColleagueReferral, aus der der Rabatt stammt
   referralId              String?
   // Zahlung (Stripe)

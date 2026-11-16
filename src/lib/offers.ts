@@ -8,7 +8,9 @@ import { LOGIN_EMAIL_RE, normalizeLoginEmail } from "@/lib/login-email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
 import {
+  berlinTagesendeIso,
   berlinTodayIso,
+  isIsoDate,
   computeOfferPrice,
   normalizeTerm,
   offerAddOns,
@@ -73,6 +75,13 @@ export type OfferFormInput = {
   customerChoice?: boolean;
   /** „Ich zahle später, erinnern Sie mich am …“ auf der Angebotsseite erlauben (Standard aus, Ole 16.11.2026). */
   allowPayLater?: boolean;
+  /**
+   * Abschlussbonus auf die Einrichtung (netto) bei Annahme und Zahlung am Versandtag (Ole, 16.11.2026).
+   * Das Formular schlägt 300 € vor (ABSCHLUSSBONUS_STANDARD); leer/0 = kein Bonus. Nicht bei Testangeboten oder ohne Einrichtung.
+   */
+  abschlussBonus?: number | null;
+  /** Letzter Tag des Bonus (YYYY-MM-DD, gilt bis 23:59 Uhr Berlin); leer = Versandtag. */
+  abschlussBonusBis?: string | null;
 };
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
@@ -240,6 +249,17 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
             allowPayLater: input.allowPayLater === true && !test,
+            abschlussBonus:
+              test || !(price.setupFee > 0)
+                ? null
+                : (() => {
+                    const b = Number(input.abschlussBonus ?? 0);
+                    return Number.isFinite(b) && b > 0 ? Math.min(b, price.setupFee) : null;
+                  })(),
+            abschlussBonusBis:
+              !test && price.setupFee > 0 && input.abschlussBonus !== 0 && isIsoDate(input.abschlussBonusBis) && input.abschlussBonusBis >= berlinTodayIso()
+                ? berlinTagesendeIso(input.abschlussBonusBis)
+                : null,
             validUntil,
             termsUrl,
             dpaUrl,
