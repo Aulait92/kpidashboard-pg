@@ -97,7 +97,7 @@ export default async function VorlagenPage() {
                   <span className="min-w-0 flex-1 text-[15px] font-semibold">
                     {g} <span className="font-normal text-[color:var(--muted)]">· {inGruppe.length}</span>
                   </span>
-                  <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", offen ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700")}>
+                  <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium", offen ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700")}>
                     {offen ? `${offen} noch nicht freigegeben` : "Alle freigegeben"}
                   </span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)] transition group-open:rotate-90" />

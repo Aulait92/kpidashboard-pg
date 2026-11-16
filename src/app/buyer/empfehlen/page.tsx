@@ -55,12 +55,12 @@ export default async function KollegenEmpfehlenPage() {
         <div className={`grid gap-3 ${lines.kollege ? "sm:grid-cols-2" : ""}`} data-kollegen-kacheln>
           {lines.kollege ? (
             <div className="rounded-[var(--radius-lg)] border border-emerald-200 bg-emerald-50 p-4" data-kollegen-kachel="kollege">
-              <div className="text-sm font-medium text-emerald-800">Ihr Kollege</div>
+              <div className="text-sm font-medium text-emerald-800">Ihr Kollege bekommt</div>
               <div className="mt-1 text-xl font-semibold tracking-tight text-emerald-950">{lines.kollege}</div>
             </div>
           ) : null}
           <div className="rounded-[var(--radius-lg)] border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft,#EFF6FF)] p-4" data-kollegen-kachel="sie">
-            <div className="text-sm font-medium text-[color:var(--brand)]">Sie</div>
+            <div className="text-sm font-medium text-[color:var(--brand)]">Sie bekommen</div>
             <div className="mt-1 text-xl font-semibold tracking-tight">{lines.sie}</div>
             <div className="mt-0.5 text-xs text-[color:var(--muted)]">je Kollege, der Kunde wird, auf Ihrer nächsten Rechnung</div>
           </div>
