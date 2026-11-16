@@ -7,28 +7,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { fetchImpressumText, normalizeUrl } from "@/lib/impressum";
-
-/** Freemail- und Provider-Domains: die Domain sagt nichts über die Agentur. */
-const FREEMAIL = new Set([
-  "gmail.com", "googlemail.com", "web.de", "gmx.de", "gmx.net", "gmx.at", "gmx.ch", "t-online.de", "outlook.com", "outlook.de",
-  "hotmail.com", "hotmail.de", "live.com", "live.de", "msn.com", "icloud.com", "me.com", "mac.com", "yahoo.com", "yahoo.de",
-  "aol.com", "aol.de", "freenet.de", "posteo.de", "mailbox.org", "protonmail.com", "proton.me", "arcor.de", "online.de",
-  "1und1.de", "ionos.de", "email.de", "mail.de", "vodafone.de", "kabelmail.de", "ok.de", "unitybox.de",
-]);
-
-/**
- * Konzern-Domains von Versicherern: Mail-Adressen dort gehören zum Konzern,
- * nicht zur Agentur. Eine Agentur-Seite unter einer Subdomain mit eigenem Pfad
- * (z. B. vertretung.allianz.de/<name>) ist erlaubt.
- */
-const INSURER = [
-  "allianz.de", "allianz.com", "ergo.de", "axa.de", "generali.de", "ruv.de", "signal-iduna.de", "signal-iduna.net", "devk.de",
-  "huk.de", "huk-coburg.de", "zurich.de", "gothaer.de", "lvm.de", "provinzial.de", "provinzial.com", "wwk.de", "debeka.de",
-  "hdi.de", "continentale.de", "barmenia.de", "nuernberger.de", "alte-leipziger.de", "vgh.de", "sv-versicherung.de",
-  "swisslife.de", "dvag.de", "dvag.com", "ottonova.de", "volkswohl-bund.de", "die-bayerische.de", "basler.de", "helvetia.com",
-];
-
-const insurerRoot = (host: string) => INSURER.find((d) => host === d || host.endsWith(`.${d}`)) ?? null;
+import { FREEMAIL, insurerRoot } from "@/lib/vertrieb/dubletten";
 
 /**
  * Welche Website lesen wir für diesen Kontakt? Erst das Feld „url“, sonst die

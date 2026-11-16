@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { STAGE_RANK } from "@/lib/vertrieb/crm";
+import { answersContacts, contactSignals, phoneKey, rankDuplicates } from "@/lib/vertrieb/dubletten";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -164,42 +165,145 @@ export async function mergeContacts(keepId: string, dropId: string, actorLabel =
   });
 }
 
-/** Kandidaten für „Zusammenführen mit …“: Suche nach Name, Firma oder E-Mail. */
+const CANDIDATE_SELECT = { id: true, name: true, email: true, city: true, stage: true, createdAt: true } as const;
+
+/** Kontakt-IDs, deren Telefonnummer (normalisiert) zu einer der Nummern passt. */
+async function contactIdsByPhoneKeys(keys: string[], excludeId = ""): Promise<string[]> {
+  const ks = [...new Set(keys)].filter((k) => k.length >= 7);
+  if (!ks.length) return [];
+  // Vorfilter in der DB über die letzten 7 Ziffern, genauer Vergleich danach
+  const patterns = ks.map((k) => `%${k.slice(-7)}`);
+  const rows = await prisma.$queryRaw<{ id: string; phone: string; createdAt: Date }[]>`
+    SELECT id, phone, "createdAt" FROM "SalesContact"
+    WHERE phone IS NOT NULL AND id <> ${excludeId} AND regexp_replace(phone, '[^0-9]', '', 'g') LIKE ANY(${patterns}::text[])
+    ORDER BY "createdAt" ASC LIMIT 50`;
+  return rows.filter((r) => ks.includes(phoneKey(r.phone) ?? "")).map((r) => r.id);
+}
+
+/** Kontakt zu einer Telefonnummer (beliebige Schreibweise: 0171 …, +49 171 …). Ältester zuerst. */
+export async function findContactIdByPhone(raw: string | null | undefined): Promise<string | null> {
+  const k = phoneKey(raw);
+  return k ? ((await contactIdsByPhoneKeys([k]))[0] ?? null) : null;
+}
+
+/** Kandidaten für „Zusammenführen mit …“: Suche nach Name (auch Vor- + Nachname), Firma, E-Mail (auch weitere) oder Telefon. */
 export async function searchMergeCandidates(excludeId: string, q: string) {
   const term = q.trim();
   if (term.length < 2) return [];
+  const lower = term.toLowerCase();
+  const words = term.split(/\s+/).filter(Boolean);
+  const digits = term.replace(/\D/g, "");
+  const extraIds: string[] = [];
+  // Telefon: ab 5 Ziffern, Schreibweise egal (0171 … findet +49 171 …)
+  if (digits.length >= 5 && /^[\d\s+()/.-]+$/.test(term)) {
+    const tail = (phoneKey(term) ?? digits.replace(/^0+/, "")).slice(-9);
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "SalesContact" WHERE phone IS NOT NULL AND id <> ${excludeId}
+      AND regexp_replace(phone, '[^0-9]', '', 'g') LIKE ${`%${tail}%`} LIMIT 20`;
+    extraIds.push(...rows.map((r) => r.id));
+  }
+  // Weitere E-Mail-Adressen: Teilstring
+  if (lower.includes("@") || lower.includes(".")) {
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "SalesContact" WHERE id <> ${excludeId}
+      AND EXISTS (SELECT 1 FROM unnest("altEmails") a WHERE a ILIKE ${`%${lower.replace(/[%_\\]/g, "\\$&")}%`}) LIMIT 20`;
+    extraIds.push(...rows.map((r) => r.id));
+  }
+  const nameField = (w: string): Prisma.SalesContactWhereInput => ({
+    OR: [
+      { name: { contains: w, mode: "insensitive" } },
+      { firstName: { contains: w, mode: "insensitive" } },
+      { lastName: { contains: w, mode: "insensitive" } },
+      { leaderNames: { contains: w, mode: "insensitive" } },
+    ],
+  });
   return prisma.salesContact.findMany({
     where: {
       id: { not: excludeId },
       OR: [
-        { name: { contains: term, mode: "insensitive" } },
-        { email: { contains: term.toLowerCase() } },
-        { firstName: { contains: term, mode: "insensitive" } },
-        { lastName: { contains: term, mode: "insensitive" } },
-        { altEmails: { has: term.toLowerCase() } },
+        // „Christian Patzwald“: jedes Wort in Name, Vor-, Nachname oder Inhaber
+        words.length > 1 ? { AND: words.map(nameField) } : nameField(term),
+        { email: { contains: lower, mode: "insensitive" } },
+        ...(extraIds.length ? [{ id: { in: extraIds } }] : []),
       ],
     },
     orderBy: { updatedAt: "desc" },
     take: 10,
-    select: { id: true, name: true, email: true, city: true, stage: true, createdAt: true },
+    select: CANDIDATE_SELECT,
   });
 }
 
-/** Wahrscheinliche Dubletten: gleicher Vor- und Nachname oder gleicher Name. */
-export async function likelyDuplicates(contactId: string) {
-  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { name: true, firstName: true, lastName: true } });
-  if (!c) return [];
-  const or: Prisma.SalesContactWhereInput[] = [];
-  if (c.firstName && c.lastName) {
-    or.push({ firstName: { equals: c.firstName, mode: "insensitive" }, lastName: { equals: c.lastName, mode: "insensitive" } });
-    or.push({ name: { contains: `${c.firstName} ${c.lastName}`, mode: "insensitive" } });
-  }
-  or.push({ name: { equals: c.name, mode: "insensitive" } });
-  // „Jens Schmidt“ ↔ „Jens Schmidt Allianz“
-  if (c.name.trim().length >= 8) or.push({ name: { contains: c.name.trim(), mode: "insensitive" } });
-  return prisma.salesContact.findMany({
-    where: { id: { not: contactId }, OR: or },
-    take: 5,
-    select: { id: true, name: true, email: true, city: true, stage: true, createdAt: true },
+const DUP_SIGNAL_SELECT = {
+  ...CANDIDATE_SELECT,
+  altEmails: true,
+  phone: true,
+  url: true,
+  firstName: true,
+  lastName: true,
+  leaderNames: true,
+  meetings: { select: { inviteeEmail: true, answers: true }, orderBy: { createdAt: "desc" }, take: 5 },
+} as const;
+
+type DupRow = Prisma.SalesContactGetPayload<{ select: typeof DUP_SIGNAL_SELECT }>;
+
+/** Merkmale eines Kontakts inkl. E-Mail und Telefon aus Calendly-Buchungen. */
+function signalsOf(c: DupRow) {
+  const fromMeetings = c.meetings.map((m) => answersContacts(m.answers));
+  return contactSignals({
+    ...c,
+    extraEmails: [...c.meetings.map((m) => m.inviteeEmail ?? ""), ...fromMeetings.flatMap((m) => m.emails)],
+    extraPhones: fromMeetings.flatMap((m) => m.phones),
   });
 }
+
+/** Ab so vielen Kontakten gilt eine E-Mail-Domain als gemeinsam genutzt und zählt nicht. */
+const SHARED_DOMAIN_MIN = 6;
+
+/**
+ * Wahrscheinliche Dubletten: zuerst gleiche E-Mail (auch weitere und aus Buchungen),
+ * gleiche Telefonnummer (normalisiert), gleiche Webseite oder Firma, gleiche eigene
+ * E-Mail-Domain; Namen nur mit Vor- und Nachname. Höchstens 3, der beste zuerst, mit Grund.
+ */
+export async function likelyDuplicates(contactId: string, limit = 3): Promise<(MergeCandidateRow & { reason: string })[]> {
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: DUP_SIGNAL_SELECT });
+  if (!c) return [];
+  const t = signalsOf(c);
+  const emails = [...t.emails];
+  const notSelf = { id: { not: contactId } };
+  const or: Prisma.SalesContactWhereInput[] = [];
+  if (emails.length) {
+    or.push({ email: { in: emails, mode: "insensitive" } }, { altEmails: { hasSome: emails } });
+    or.push({ meetings: { some: { inviteeEmail: { in: emails, mode: "insensitive" } } } });
+  }
+  for (const site of t.sites) or.push({ url: { contains: site.split("/")[0], mode: "insensitive" } });
+  if (t.company) or.push({ name: { equals: c.name.trim(), mode: "insensitive" } });
+  if (c.firstName?.trim() && c.lastName?.trim()) {
+    or.push({ firstName: { equals: c.firstName.trim(), mode: "insensitive" }, lastName: { equals: c.lastName.trim(), mode: "insensitive" } });
+    or.push({ name: { contains: `${c.firstName.trim()} ${c.lastName.trim()}`, mode: "insensitive" } });
+  }
+  // Eigene E-Mail-Domain: nur, wenn sie nicht viele Kontakte teilen
+  const ignoreDomains = new Set<string>();
+  for (const d of t.domains) {
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "SalesContact" WHERE id <> ${contactId}
+      AND (lower(email) LIKE ${`%@${d}`} OR EXISTS (SELECT 1 FROM unnest("altEmails") a WHERE lower(a) LIKE ${`%@${d}`}))
+      LIMIT ${SHARED_DOMAIN_MIN}`;
+    if (rows.length >= SHARED_DOMAIN_MIN) ignoreDomains.add(d);
+    else if (rows.length) or.push({ id: { in: rows.map((r) => r.id) } });
+  }
+  const phoneIds = await contactIdsByPhoneKeys([...t.phones], contactId);
+  if (phoneIds.length) or.push({ id: { in: phoneIds } });
+  if (!or.length) return [];
+  const rows = await prisma.salesContact.findMany({ where: { ...notSelf, OR: or }, select: DUP_SIGNAL_SELECT, take: 50 });
+  return rankDuplicates(t, rows.map((r) => ({ ...r, signals: signalsOf(r) })), limit, ignoreDomains).map((r) => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    city: r.city,
+    stage: r.stage,
+    createdAt: r.createdAt,
+    reason: r.reason,
+  }));
+}
+
+export type MergeCandidateRow = Prisma.SalesContactGetPayload<{ select: typeof CANDIDATE_SELECT }>;

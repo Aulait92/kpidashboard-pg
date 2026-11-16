@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { addContactEmail, findContactIdByEmail, likelyDuplicates, mergeContacts } from "@/lib/vertrieb/contact-merge";
+import { addContactEmail, findContactIdByEmail, likelyDuplicates, mergeContacts, searchMergeCandidates } from "@/lib/vertrieb/contact-merge";
 import { requireTestDb } from "./db";
 
 // Dubletten zusammenführen (z. B. Calendly mit anderer E-Mail) und weitere E-Mail-Adressen.
@@ -87,5 +87,92 @@ describe("Vertriebskontakte zusammenführen", () => {
 
   it("lehnt Zusammenführen mit sich selbst ab", async () => {
     expect(await mergeContacts(keep, keep)).toMatchObject({ ok: false });
+  });
+});
+
+// Fall „Christian“ (Calendly, nur Vorname) ↔ „Christian Patzwald“: Dubletten über Telefon/E-Mail, nicht über den Vornamen.
+describe("Vertrieb: Dubletten bei reinem Vornamen", () => {
+  const tag = uid();
+  // eindeutige Nummer je Testlauf: 0171 <7 Ziffern>
+  const digits = String(Math.floor(1_000_000 + Math.random() * 8_999_999));
+  const ids: string[] = [];
+  let patzwald = "";
+  let christian = "";
+
+  beforeAll(async () => {
+    requireTestDb();
+    const p = await prisma.salesContact.create({
+      data: {
+        name: `Allianz Versicherung Christian Patzwald${tag} Generalvertretung`,
+        email: `christian.patzwald${tag}@allianz.de`,
+        firstName: "Christian",
+        lastName: `Patzwald${tag}`,
+        phone: `0171 ${digits.slice(0, 3)} ${digits.slice(3)}`,
+      },
+    });
+    patzwald = p.id;
+    ids.push(p.id);
+    // Viele Agenturen mit „Christian“ im Namen
+    for (const n of ["Aigner", "Andreas", "Anzer", "Arndt", "Bach"]) {
+      const c = await prisma.salesContact.create({
+        data: { name: `Allianz Versicherung Christian ${n}${tag} Generalvertretung`, email: `christian.${n.toLowerCase()}${tag}@allianz.de`, firstName: "Christian", lastName: `${n}${tag}` },
+      });
+      ids.push(c.id);
+    }
+  });
+
+  afterAll(async () => {
+    await prisma.salesContact.deleteMany({ where: { id: { in: ids } } });
+  });
+
+  it("Calendly-Buchung nur mit Vornamen: Zuordnung über die Telefonnummer, kein neuer Kontakt", async () => {
+    const { recordBooking } = await import("@/lib/vertrieb/calendly");
+    const { Matcher } = await import("@/lib/vertrieb/linkedin");
+    const r = await recordBooking(
+      {
+        uri: `https://api.calendly.com/inv-${tag}`,
+        email: `cp${tag}@gmail.com`,
+        name: "Christian",
+        questions_and_answers: [{ question: "Telefonnummer", answer: `+49 171 ${digits}` }],
+      },
+      { uri: `https://api.calendly.com/ev-${tag}`, name: "Erstgespräch", start_time: "2026-11-20T10:00:00Z" },
+      await Matcher.load(),
+    );
+    expect(r).toBe("new");
+    const m = await prisma.salesMeeting.findUniqueOrThrow({ where: { calendlyUri: `https://api.calendly.com/inv-${tag}` } });
+    expect(m.contactId).toBe(patzwald);
+    expect(await prisma.salesContact.count({ where: { email: `cp${tag}@gmail.com` } })).toBe(0);
+  });
+
+  it("schon angelegter Kontakt „Christian“: Hinweis zeigt Patzwald über die Telefonnummer, keine Vornamen-Treffer", async () => {
+    const c = await prisma.salesContact.create({ data: { name: "Christian", firstName: "Christian", email: `christian${tag}@gmail.com`, phone: `+49171${digits}`, stage: "TERMIN" } });
+    christian = c.id;
+    ids.push(c.id);
+    const d = await likelyDuplicates(christian);
+    expect(d.map((x) => x.id)).toEqual([patzwald]);
+    expect(d[0].reason).toBe("gleiche Telefonnummer");
+    // und umgekehrt
+    expect((await likelyDuplicates(patzwald)).map((x) => x.id)).toEqual([christian]);
+  });
+
+  it("Telefon nur in den Buchungsantworten; reiner Vorname ohne Merkmal: kein Vorschlag", async () => {
+    const c = await prisma.salesContact.create({ data: { name: "Christian", firstName: "Christian", email: `c2-${tag}@web.de` } });
+    ids.push(c.id);
+    await prisma.salesMeeting.create({ data: { contactId: c.id, title: "Erstgespräch", startAt: new Date(), answers: `Telefonnummer: 0171/${digits}`, inviteeEmail: `c2-${tag}@web.de` } });
+    const d = await likelyDuplicates(c.id);
+    expect(d[0]?.id).toBe(patzwald);
+    expect(d.length).toBeLessThanOrEqual(3);
+    const solo = await prisma.salesContact.create({ data: { name: "Christian", firstName: "Christian", email: `solo-${tag}@gmail.com` } });
+    ids.push(solo.id);
+    expect(await likelyDuplicates(solo.id)).toEqual([]);
+  });
+
+  it("Suche „Zusammenführen“ findet über Vor- und Nachname, Nachname, Telefon (andere Schreibweise) und weitere E-Mail", async () => {
+    const found = async (q: string) => (await searchMergeCandidates(christian, q)).map((x) => x.id);
+    expect(await found(`Christian Patzwald${tag}`)).toEqual([patzwald]);
+    expect(await found(`Patzwald${tag}`)).toEqual([patzwald]);
+    expect(await found(`+49 171 ${digits}`)).toContain(patzwald);
+    await prisma.salesContact.update({ where: { id: patzwald }, data: { altEmails: [`buero-${tag}@patzwald.test`] } });
+    expect(await found(`buero-${tag}@patzwald`)).toEqual([patzwald]);
   });
 });

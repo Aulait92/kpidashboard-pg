@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 
-export type MergeCandidate = { id: string; name: string; email: string; city: string | null; stage: string; createdAt: Date | string };
+export type MergeCandidate = { id: string; name: string; email: string; city: string | null; stage: string; createdAt: Date | string; reason?: string };
 
 const fd = (o: Record<string, string>) => {
   const f = new FormData();
@@ -154,7 +154,7 @@ export function MergeSheet({
           </>
         ) : (
           <>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, Agentur oder E-Mail suchen" className="input w-full" autoFocus />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, Agentur, E-Mail oder Telefon" className="input w-full" autoFocus />
             {q.trim().length < 2 && suggestions.length ? <p className="text-xs font-medium text-slate-500">Mögliche Dubletten</p> : null}
             <ul className="divide-y divide-slate-100 rounded-lg border border-[color:var(--border)]">
               {list.map((r) => (
@@ -162,6 +162,7 @@ export function MergeSheet({
                   <button type="button" onClick={() => setPicked(r)} className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50">
                     <div className="font-medium">{r.name}</div>
                     <div className="text-slate-500">{r.email}{r.city ? ` · ${r.city}` : ""}</div>
+                    {r.reason ? <div className="text-xs text-amber-700">{r.reason}</div> : null}
                   </button>
                 </li>
               ))}
@@ -174,22 +175,24 @@ export function MergeSheet({
   );
 }
 
-/** Hinweis „Mögliche Dublette“ oben in der Kontaktakte. */
+/** Hinweis „Mögliche Dublette“ oben in der Kontaktakte: höchstens 3, mit Grund. */
 export function DuplicateHint({ contactId, contactName, duplicates }: { contactId: string; contactName: string; duplicates: MergeCandidate[] }) {
   const [pick, setPick] = useState<MergeCandidate | null>(null);
   if (!duplicates.length) return null;
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-      <span className="font-medium">Mögliche Dublette:</span>{" "}
-      {duplicates.map((d, i) => (
-        <span key={d.id}>
-          {i > 0 ? ", " : ""}
-          <a href={`/admin/vertrieb/kontakte/${d.id}`} className="underline">{d.name}</a> ({d.email}){" "}
-          <button type="button" className="font-semibold text-[color:var(--brand)] hover:underline" onClick={() => setPick(d)}>
-            hier zusammenführen
-          </button>
-        </span>
-      ))}
+      <div className="font-medium">{duplicates.length === 1 ? "Mögliche Dublette" : "Mögliche Dubletten"}</div>
+      <ul className="mt-1 space-y-1">
+        {duplicates.map((d) => (
+          <li key={d.id} className="flex flex-wrap items-baseline gap-x-2">
+            <a href={`/admin/vertrieb/kontakte/${d.id}`} className="underline">{d.name}</a>
+            {d.reason ? <span className="text-amber-800">{d.reason}</span> : null}
+            <button type="button" className="font-semibold text-[color:var(--brand)] hover:underline" onClick={() => setPick(d)}>
+              Zusammenführen
+            </button>
+          </li>
+        ))}
+      </ul>
       {pick ? <MergeSheet key={pick.id} open onClose={() => setPick(null)} contactId={contactId} contactName={contactName} suggestions={duplicates} preselect={pick} /> : null}
     </div>
   );
