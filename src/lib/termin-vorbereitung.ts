@@ -4,6 +4,7 @@
 //
 // Reine Funktionen (Abschnitte, offene Punkte, HTML) ohne Datenbank; Laden in termin-vorbereitung-server.ts.
 
+import { formatPhone } from "@/lib/format";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 
@@ -228,7 +229,7 @@ li { margin: 2px 0; }
   ${d.vorbereitetAm ? `<span class="chip ok">Vorbereitet</span>` : ""}
 </div>
 <div class="card"><h2>Kontakt</h2><div class="grid">
-  <div><div class="k">Telefon</div>${e(d.lead.telefon ?? "nicht bekannt")}</div>
+  <div><div class="k">Telefon</div>${e(d.lead.telefon ? formatPhone(d.lead.telefon) : "nicht bekannt")}</div>
   <div><div class="k">E-Mail</div>${e(d.lead.email ?? "nicht bekannt")}</div>
   <div><div class="k">Adresse</div>${e(d.lead.adresse ?? "nicht bekannt")}</div>
   <div><div class="k">Termin</div>${d.termin.mode === "video" && d.termin.meetUrl ? e(d.termin.meetUrl) : "Sie rufen an"}</div>
