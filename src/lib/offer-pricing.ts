@@ -517,6 +517,9 @@ export type AbschlussBonusQuelle = {
   sentAt?: Date | null;
   createdAt: Date;
   setupFee: unknown;
+  /** „Später zahlen“ erlaubt: dann reicht die Annahme bis zur Frist, gezahlt werden darf danach (Ole, 16.11.2026). */
+  allowPayLater?: boolean | null;
+  acceptedAt?: Date | null;
 };
 
 /** Frist des Bonus: gesetzte Frist, sonst Versandtag (bzw. Erstellungstag) 23:59 Uhr Berlin; null ohne Bonus. */
@@ -525,10 +528,21 @@ export function abschlussBonusFrist(o: AbschlussBonusQuelle): Date | null {
   return o.abschlussBonusBis ?? berlinTagesende(o.sentAt ?? o.createdAt);
 }
 
-/** Bonus, der jetzt noch gilt (höchstens die Einrichtung selbst); null, wenn keiner oder abgelaufen. */
-export function abschlussBonusJetzt(o: AbschlussBonusQuelle, now: Date = new Date()): { betrag: number; bis: Date } | null {
+/** Bei „später zahlen“: Annahme bis zur Frist sichert den Bonus, auch wenn die Zahlung danach kommt. */
+export function abschlussBonusGesichert(o: AbschlussBonusQuelle): boolean {
   const bis = abschlussBonusFrist(o);
-  if (!bis || now.getTime() > bis.getTime()) return null;
+  return !!(bis && o.allowPayLater && o.acceptedAt && o.acceptedAt.getTime() <= bis.getTime());
+}
+
+/**
+ * Bonus, der jetzt noch gilt (höchstens die Einrichtung selbst); null, wenn keiner oder abgelaufen.
+ * Ohne „später zahlen“ zählt die Zahlung bis zur Frist, mit „später zahlen“ die Annahme (gesichert = true).
+ */
+export function abschlussBonusJetzt(o: AbschlussBonusQuelle, now: Date = new Date()): { betrag: number; bis: Date; gesichert: boolean } | null {
+  const bis = abschlussBonusFrist(o);
+  if (!bis) return null;
+  const gesichert = abschlussBonusGesichert(o);
+  if (!gesichert && now.getTime() > bis.getTime()) return null;
   const betrag = Math.min(round2(Number(o.abschlussBonus)), round2(Number(o.setupFee)));
-  return betrag > 0.005 ? { betrag, bis } : null;
+  return betrag > 0.005 ? { betrag, bis, gesichert } : null;
 }

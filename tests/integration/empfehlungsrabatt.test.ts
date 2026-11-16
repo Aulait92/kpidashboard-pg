@@ -168,6 +168,19 @@ describe("Empfehlungsrabatt auf die Einrichtung", () => {
     expect((stripeState.sessions[0] as { metadata: Record<string, string> }).metadata.pg_bonus).toBeUndefined();
   });
 
+  it("Abschlussbonus mit „später zahlen“: rechtzeitig angenommen, Zahlung nach der Frist mit Bonus und Gutschein ohne Frist", async () => {
+    const contactId = await referred("bonus-spaeter");
+    const offer = await offerFor(contactId, { abschlussBonus: 300, abschlussBonusBis: today, allowPayLater: true });
+    expect(await accept(offer.token, "12m")).toEqual({ ok: true });
+    // Frist vorbei, Annahme lag davor
+    const bis = new Date(Date.now() - 60_000);
+    await prisma.offer.update({ where: { id: offer.id }, data: { abschlussBonusBis: bis, acceptedAt: new Date(bis.getTime() - 3600_000) } });
+    expect(await createCheckoutForOffer(offer.id)).toEqual({ url: "https://checkout.stripe.test/x" });
+    expect(stripeState.coupons[0]).toMatchObject({ amount_off: 60000, name: "Empfehlungsrabatt und Abschlussbonus" });
+    expect(stripeState.coupons[0].redeem_by).toBeUndefined();
+    expect((stripeState.sessions[0] as { metadata: Record<string, string> }).metadata.pg_bonus).toBe("30000");
+  });
+
   it("nie unter 0: Rabatt größer als die Einrichtung → 0 €, Checkout ohne Zahlung (nur Zahlungsart)", async () => {
     const contactId = await referred("gross");
     const offer = await offerFor(contactId, { setupDiscount: 1500 });

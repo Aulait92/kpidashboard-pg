@@ -47,6 +47,7 @@ export function angebotFuerFolien(o: OfferRow): AngebotFuerFolien {
     introMonthlyFee: num(o.introMonthlyFee),
     introMonths: o.introMonths,
     abschlussBonus: abschlussBonusJetzt(o),
+    allowPayLater: o.allowPayLater,
   };
 }
 

@@ -101,6 +101,8 @@ export type AngebotFuerFolien = {
   introMonths: number | null;
   /** Abschlussbonus, der jetzt noch gilt (abschlussBonusJetzt); null = keiner oder abgelaufen. */
   abschlussBonus?: { betrag: number; bis: Date } | null;
+  /** „Später zahlen“ erlaubt: Bonus gilt schon bei Annahme bis zur Frist */
+  allowPayLater?: boolean;
 };
 
 /** Zielgruppe: Angebot (Makler/Vertreter) geht vor, sonst der Kontakt („Makler“ laut Anreicherung), sonst Vertreter. */
@@ -137,7 +139,7 @@ export type PaketDaten = {
   team: string;
   pause: string;
   /** Abschlussbonus: Setup vorher/nachher (netto); bis = Frist, null = „heute“ (Listenpreise, noch kein Angebot). */
-  bonus: { betrag: number; setupVorher: number; setupNachher: number; bis: Date | null } | null;
+  bonus: { betrag: number; setupVorher: number; setupNachher: number; bis: Date | null; spaeter?: boolean } | null;
 };
 
 const eur0 = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: n % 1 ? 2 : 0, minimumFractionDigits: n % 1 ? 2 : 0 }).format(n)} €`;
@@ -241,7 +243,7 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     team: software ? `Ihr Angebot: ${seats} Berater, davon ${inkl} inklusive. Jeder weitere ${eur0(add.hasSeats ? add.seatMonthly : PRICE_LIST.seatMonthly)} netto im Monat.` : team,
     pause: software ? `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.` : "Anzeigen stoppen automatisch, die Betreuung pausiert mit.",
     bonus: angebot.abschlussBonus
-      ? { betrag: angebot.abschlussBonus.betrag, setupVorher: angebot.setupFee, setupNachher: Math.round((angebot.setupFee - angebot.abschlussBonus.betrag) * 100) / 100, bis: angebot.abschlussBonus.bis }
+      ? { betrag: angebot.abschlussBonus.betrag, setupVorher: angebot.setupFee, setupNachher: Math.round((angebot.setupFee - angebot.abschlussBonus.betrag) * 100) / 100, bis: angebot.abschlussBonus.bis, spaeter: !!angebot.allowPayLater }
       : null,
   };
 }
@@ -438,18 +440,20 @@ export function bonusFolie(p: PaketDaten, b: NonNullable<PaketDaten["bonus"]>, n
 <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-top:22px">
 <div style="display:grid;gap:12px">
 ${schritt(1, "Angebot annehmen", `Mit einem Klick auf Ihrer Angebotsseite, ${frist}.`)}
-${schritt(2, "Setup bezahlen", "Direkt im Anschluss per Karte oder Lastschrift. Der Bonus ist schon abgezogen.")}
+${b.spaeter
+  ? schritt(2, "Setup bezahlen, gern auch später", "Direkt per Karte oder Lastschrift oder zu einem späteren Tag. Der Bonus bleibt Ihnen sicher.")
+  : schritt(2, "Setup bezahlen", "Direkt im Anschluss per Karte oder Lastschrift. Der Bonus ist schon abgezogen.")}
 ${schritt(3, "Start frei wählen", "Sie bestimmen, wann Ihre Kampagne live geht, zum Beispiel erst nach dem Urlaub oder zum Monatsanfang.")}
 </div>
 <div class="vk-karte" style="padding:22px 26px"><div class="vk-label">Einmalig: Setup</div>
 <div class="vk-zeile" style="margin-top:8px"><span>Setup regulär</span><b style="color:#64748b;text-decoration:line-through">${e(euro(b.setupVorher))}</b></div>
 <div class="vk-zeile"><span>${MINUS} Abschlussbonus</span><b class="vk-plus">${MINUS} ${e(euro(b.betrag))}</b></div>
 <div class="vk-zeile summe" style="font-size:20px;padding-top:12px"><span>Ihr Setup</span><b style="font-size:34px;color:#2563eb">${e(euro(b.setupNachher))}</b></div>
-<div class="vk-gruen">Sie sparen ${e(euro(b.betrag))}, wenn Sie ${e(frist)} annehmen und bezahlen.</div>
+<div class="vk-gruen">Sie sparen ${e(euro(b.betrag))}, wenn Sie ${e(frist)} annehmen${b.spaeter ? "" : " und bezahlen"}.</div>
 <div class="vk-hinweis">Warum? Wir planen Ihre Einrichtung sofort fest ein. Wann es losgeht, entscheiden Sie.</div>
 </div>
 </div>`;
-  const fuss = `Gilt bei Annahme des Angebots und Zahlung des Setups ${e(frist)}. Danach gilt automatisch das reguläre Setup. Monatliche Preise bleiben unverändert. Alle Preise zzgl. 19 % USt.`;
+  const fuss = `Gilt bei Annahme des Angebots${b.spaeter ? "" : " und Zahlung des Setups"} ${e(frist)}. Danach gilt automatisch das reguläre Setup. Monatliche Preise bleiben unverändert. Alle Preise zzgl. 19 % USt.`;
   return rahmen("Ihr Vorteil", inhalt, nr, gesamt, fuss);
 }
 

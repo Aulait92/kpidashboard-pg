@@ -116,7 +116,7 @@ export default async function OfferPage({
                 </p>
               ) : canAccept ? (
                 <div className="mt-4">
-                  {bonus ? <BonusHinweis bonus={bonus} /> : null}
+                  {bonus ? <BonusHinweis bonus={bonus} spaeter={offer.allowPayLater} /> : null}
                   <AcceptForm
                     token={token}
                     termsUrl={offer.termsUrl!}
@@ -210,15 +210,18 @@ function fristText(bis: Date): string {
 }
 
 /** Hinweis zum Abschlussbonus über der Annahme bzw. der Zahlung. Keine Gedankenstriche (Text an Kunden). */
-function BonusHinweis({ bonus, zahlung = false }: { bonus: { betrag: number; bis: Date }; zahlung?: boolean }) {
+function BonusHinweis({ bonus, zahlung = false, spaeter = false }: { bonus: { betrag: number; bis: Date; gesichert: boolean }; zahlung?: boolean; spaeter?: boolean }) {
+  const text = bonus.gesichert
+    ? "Ihr Bonus ist gesichert und wird bei der Zahlung abgezogen, auch wenn Sie später zahlen."
+    : zahlung
+      ? `Zahlen Sie das Setup ${fristText(bonus.bis)}, dann ist der Bonus schon abgezogen. Ihren Start wählen Sie trotzdem frei.`
+      : spaeter
+        ? `Wenn Sie ${fristText(bonus.bis)} annehmen. Bezahlen können Sie auch später, der Bonus bleibt. Ihren Start wählen Sie trotzdem frei.`
+        : `Wenn Sie ${fristText(bonus.bis)} annehmen und das Setup bezahlen. Ihren Start wählen Sie trotzdem frei.`;
   return (
     <div className="mb-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900" data-abschlussbonus>
       <div className="font-semibold">Abschlussbonus: {eurBonus(bonus.betrag)} weniger Setup</div>
-      <p className="mt-0.5 text-sm">
-        {zahlung
-          ? `Zahlen Sie das Setup ${fristText(bonus.bis)}, dann ist der Bonus schon abgezogen. Ihren Start wählen Sie trotzdem frei.`
-          : `Wenn Sie ${fristText(bonus.bis)} annehmen und das Setup bezahlen. Ihren Start wählen Sie trotzdem frei.`}
-      </p>
+      <p className="mt-0.5 text-sm">{text}</p>
     </div>
   );
 }
@@ -236,7 +239,7 @@ function PaymentBox({
   returned: string | null;
   enabled: boolean;
   payLater: { min: string; max: string | null; current: string | null } | null;
-  bonus: { betrag: number; bis: Date } | null;
+  bonus: { betrag: number; bis: Date; gesichert: boolean } | null;
 }) {
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
   if (status === "paid") {

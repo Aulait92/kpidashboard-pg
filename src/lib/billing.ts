@@ -239,7 +239,8 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
     // Empfehlungsrabatt: Listenpreis als Posten, Rabatt als einmaliger Gutschein auf den
     // Setup-Posten. So steht auf der Rechnung „Empfehlungsrabatt“, der Betrag = setupFee.
     const discount = setupFee > 0 ? offerSetupDiscount(offer) : null;
-    // Abschlussbonus (Ole, 16.11.2026): nur, solange die Frist läuft; die Bezahlseite läuft zur Frist ab
+    // Abschlussbonus (Ole, 16.11.2026): nur, solange die Frist läuft (die Bezahlseite läuft zur Frist ab); bei
+    // „später zahlen“ und Annahme bis zur Frist gesichert, dann ohne Frist
     const bonus = setupFee > 0 ? abschlussBonusJetzt(offer) : null;
     const nachlass = round2Billing((discount?.discount ?? 0) + (bonus?.betrag ?? 0));
     const listPreis = discount ? discount.list : setupFee;
@@ -269,7 +270,8 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
               max_redemptions: 1,
               name: couponName,
               applies_to: { products: [setup] },
-              ...(bonus ? { redeem_by: Math.floor(bonus.bis.getTime() / 1000) + 3600 } : {}),
+              // Gesicherter Bonus (später zahlen, rechtzeitig angenommen): Gutschein ohne Frist
+              ...(bonus && !bonus.gesichert ? { redeem_by: Math.floor(bonus.bis.getTime() / 1000) + 3600 } : {}),
               metadata: { ...meta, pg_kind: bonus ? (discount ? "empfehlungsrabatt+abschlussbonus" : "abschlussbonus") : "empfehlungsrabatt", referral_id: offer.referralId ?? "" },
             },
             { idempotencyKey: `offer-coupon-${offer.id}-${cents(discount?.discount ?? 0)}-${cents(discount?.list ?? 0)}-${cents(bonus?.betrag ?? 0)}-${bonus?.bis.getTime() ?? 0}` },
@@ -277,7 +279,7 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
         : null;
     // Bezahlseite mit Bonus läuft zur Frist ab (Stripe: frühestens 30 Minuten, spätestens 24 Stunden)
     const jetztSek = Math.floor(Date.now() / 1000);
-    const ablauf = bonus ? Math.min(jetztSek + 24 * 3600 - 60, Math.max(jetztSek + 31 * 60, Math.floor(bonus.bis.getTime() / 1000))) : null;
+    const ablauf = bonus && !bonus.gesichert ? Math.min(jetztSek + 24 * 3600 - 60, Math.max(jetztSek + 31 * 60, Math.floor(bonus.bis.getTime() / 1000))) : null;
     const base = getAppUrl();
     const common = {
       customer: customerId,

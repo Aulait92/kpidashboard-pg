@@ -46,6 +46,8 @@ export type DealOfferRow = {
   abschlussBonusBis: string | null;
   abschlussBonusGewaehrt: number | null;
   abschlussBonusAbgelaufen: boolean;
+  /** Später zahlen und rechtzeitig angenommen: Bonus gilt bei jeder späteren Zahlung */
+  abschlussBonusGesichert: boolean;
 };
 
 const PAYMENT: Record<string, { label: string; tone: "neutral" | "info" | "success" | "warning" | "danger" }> = {
@@ -298,6 +300,9 @@ function AbschlussBonusFrist({ offer, onDone }: { offer: DealOfferRow; onDone: (
   const betrag = eur(offer.abschlussBonus ?? 0);
   if (offer.abschlussBonusGewaehrt != null) {
     return <p className="text-xs font-medium text-emerald-700" data-abschlussbonus>Abschlussbonus {eur(offer.abschlussBonusGewaehrt)} genutzt</p>;
+  }
+  if (offer.abschlussBonusGesichert) {
+    return <p className="text-xs font-medium text-emerald-700" data-abschlussbonus>Abschlussbonus {eur(offer.abschlussBonus ?? 0)} gesichert (rechtzeitig angenommen, Zahlung folgt)</p>;
   }
   const offen = offer.status === "draft" || offer.status === "sent" || (offer.status === "accepted" && !offer.paymentSetUp);
   const abgelaufen = offer.abschlussBonusAbgelaufen;

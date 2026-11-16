@@ -250,6 +250,8 @@ export async function sendOfferEmail(opts: {
   discount?: { label: string; discount: number; list: number; fee: number; anyTerm: boolean } | null;
   /** Abschlussbonus (Ole, 16.11.2026): Betrag netto und Frist */
   bonus?: { betrag: number; bis: Date } | null;
+  /** „Später zahlen“ erlaubt: Bonus gilt schon bei Annahme bis zur Frist */
+  bonusSpaeter?: boolean;
 }): Promise<SendResult & { subject?: string; text?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
@@ -263,7 +265,7 @@ export async function sendOfferEmail(opts: {
   const greeting = escapeHtml(opts.greeting);
   const subject = `${t.subject} (${opts.number})`;
   const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
-  const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du) : null;
+  const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du, !!opts.bonusSpaeter) : null;
   const text = [
     opts.greeting,
     "",
@@ -313,9 +315,14 @@ export async function sendOfferEmail(opts: {
 }
 
 /** Zeile zum Abschlussbonus in der Angebotsmail (ohne Gedankenstriche). */
-export function offerBonusLine(b: { betrag: number; bis: Date }, du: boolean): string {
+export function offerBonusLine(b: { betrag: number; bis: Date }, du: boolean, spaeter = false): string {
   const betrag = `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(b.betrag)} €`;
   const tag = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" }).format(b.bis);
+  if (spaeter) {
+    return du
+      ? `Abschlussbonus: Wenn du bis ${tag}, 23:59 Uhr annimmst, sparst du ${betrag} beim Setup. Bezahlen kannst du auch später, deinen Start wählst du frei.`
+      : `Abschlussbonus: Wenn Sie bis ${tag}, 23:59 Uhr annehmen, sparen Sie ${betrag} beim Setup. Bezahlen können Sie auch später, Ihren Start wählen Sie frei.`;
+  }
   return du
     ? `Abschlussbonus: Wenn du bis ${tag}, 23:59 Uhr annimmst und das Setup bezahlst, sparst du ${betrag} beim Setup. Deinen Start wählst du trotzdem frei.`
     : `Abschlussbonus: Wenn Sie bis ${tag}, 23:59 Uhr annehmen und das Setup bezahlen, sparen Sie ${betrag} beim Setup. Ihren Start wählen Sie trotzdem frei.`;

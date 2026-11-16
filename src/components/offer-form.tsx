@@ -358,7 +358,7 @@ export function OfferForm({
                   />
                 </span>
                 <span className="block text-xs text-[color:var(--muted)]">
-                  Gilt bei Annahme und Zahlung der Einrichtung bis 23:59 Uhr an diesem Tag. Start bleibt frei wählbar, danach automatisch Normalpreis.
+                  Gilt bei Annahme und Zahlung der Einrichtung bis 23:59 Uhr an diesem Tag (mit „Später zahlen“ reicht die Annahme). Start bleibt frei wählbar, danach automatisch Normalpreis.
                 </span>
               </span>
             </label>

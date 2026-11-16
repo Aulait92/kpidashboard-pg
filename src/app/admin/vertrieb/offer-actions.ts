@@ -116,6 +116,7 @@ export async function sendOfferEmailAction(
       ? { label: offer.setupDiscountLabel || "Empfehlungsrabatt", discount: disc.discount, list: disc.list, fee: Number(offer.setupFee), anyTerm: offer.customerChoosesTerm }
       : null,
     bonus: offer.isTest ? null : abschlussBonusJetzt(offer),
+    bonusSpaeter: offer.allowPayLater,
     rechnerUrl: rechner,
     praesentationUrl,
     attachment,

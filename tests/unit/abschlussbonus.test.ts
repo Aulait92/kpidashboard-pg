@@ -38,6 +38,31 @@ describe("Abschlussbonus: Frist", () => {
   });
 });
 
+describe("Abschlussbonus: später zahlen (Ole, 16.11.2026: Abschluss zählt)", () => {
+  const bis = berlinTagesendeIso("2026-11-18");
+  const basis = { abschlussBonus: 300, abschlussBonusBis: bis, createdAt: new Date("2026-11-16T10:00:00Z"), setupFee: 990, allowPayLater: true };
+  const nachFrist = new Date("2026-11-25T10:00:00Z");
+
+  it("rechtzeitig angenommen: Bonus bleibt auch bei späterer Zahlung", () => {
+    const o = { ...basis, acceptedAt: new Date("2026-11-18T20:00:00Z") };
+    expect(abschlussBonusJetzt(o, nachFrist)).toMatchObject({ betrag: 300, gesichert: true });
+  });
+  it("zu spät angenommen oder ohne „später zahlen“: nach der Frist kein Bonus", () => {
+    expect(abschlussBonusJetzt({ ...basis, acceptedAt: new Date("2026-11-19T08:00:00Z") }, nachFrist)).toBeNull();
+    expect(abschlussBonusJetzt({ ...basis, allowPayLater: false, acceptedAt: new Date("2026-11-18T20:00:00Z") }, nachFrist)).toBeNull();
+  });
+  it("vor der Annahme: wie bisher bis zur Frist, nicht gesichert", () => {
+    expect(abschlussBonusJetzt(basis, new Date("2026-11-17T10:00:00Z"))).toMatchObject({ gesichert: false });
+    expect(abschlussBonusJetzt(basis, nachFrist)).toBeNull();
+  });
+  it("Mailzeile mit „später zahlen“ verlangt nur die Annahme", () => {
+    const t = offerBonusLine({ betrag: 300, bis }, false, true);
+    expect(t).toContain("annehmen, sparen Sie 300 €");
+    expect(t).toContain("auch später");
+    expect(t).not.toMatch(/[–—]/);
+  });
+});
+
 describe("Abschlussbonus: Präsentation und Mail", () => {
   it("Folie direkt nach „Ihr Paket“, Bildnummern bleiben wie in den PPTX", () => {
     for (const a of ["vertreter", "makler"] as const) {
