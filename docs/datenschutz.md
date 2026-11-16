@@ -330,8 +330,13 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 
 Auftrag von Ole (15.11.2026): die Anwaltsthemen selbst nachrecherchieren und nach bestem Wissen einbauen. Grundlage:
 Anwalts-Memo vom 15.11.2026, Pakete A bis C (Commits 5d235ad, 4e45b2a, 5653040). Recherche mit Legal Data Hunter
-(Primärquellen), ergänzt um gesetze-im-internet.de; Kanzlei-Zusammenfassungen sind als solche gekennzeichnet. Keine
-Rechtsberatung. AGB- und AVV-Änderungen nur als Entwurf: `docs/rechtstexte/agb-entwurf-2026-11-16.md`.
+(LDH, Primärquellen) und gesetze-im-internet.de; Kanzlei-Zusammenfassungen sind als solche gekennzeichnet. Keine
+Rechtsberatung. Das LDH-Tageslimit (kostenloser Tarif) reichte nur für einen Teil: **im LDH-Volltext geprüft** sind
+Art. 3 und Art. 50 KI-VO (EU/EUR-Lex 32024R1689), EuGH C-21/23 (EU/CURIA 62023CJ0021), § 203 StGB und § 48b VAG
+(DE/BGBl), BGH VIII ZR 53/09 (DE/BGH KORE302852010; entschieden noch zu § 203 Abs. 1 Nr. 6 a. F., heute Nr. 7) und
+BGH VI ZR 225/17 (DE/BGH KORE309042018). Nicht im LDH-Bestand: BGH VIII ZR 16/05 und VIII ZR 7/09 (vor der
+BGH-Abdeckung), VersVermV; diese über gesetze-im-internet.de bzw. veröffentlichte Volltexte und Besprechungen.
+Ein Urteil zur Ähnlichkeit von Versicherungssparten (§ 7 Abs. 3 UWG) fand auch LDH nicht. AGB- und AVV-Änderungen nur als Entwurf: `docs/rechtstexte/agb-entwurf-2026-11-16.md`.
 Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 
 ### 10.1 § 203 StGB: Verpflichtung der Unterauftragsverarbeiter
@@ -356,8 +361,9 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 - **Rechtslage:** §§ 308, 309 BGB gelten gegenüber Unternehmern nicht direkt, § 307 aber voll ([§ 310 Abs. 1 BGB](https://www.gesetze-im-internet.de/bgb/__310.html)).
   Eine Freistellung von Ansprüchen Dritter, die in der kundenfeindlichsten Auslegung ohne Verschulden greift, ist auch
   im B2B unwirksam: Verschuldensprinzip als wesentlicher Grundgedanke, § 307 Abs. 2 Nr. 1 BGB (BGH, Urteil vom
-  05.10.2005, VIII ZR 16/05, BGHZ 164, 196, Einkaufsbedingungen eines Baumarkts, Klauseln Nr. 10.1). Im Voraus
-  versprochene Übernahme von Geldbußen ist regelmäßig sittenwidrig (BAG, Urteil vom 25.01.2001, 8 AZR 465/00, § 138 BGB).
+  05.10.2005, VIII ZR 16/05, BGHZ 164, 196, Einkaufsbedingungen eines Baumarkts, Klauseln Nr. 10.1;
+  [Volltext](https://lorenz.userweb.mwn.de/urteile/viizr16_05.htm)). Im Voraus versprochene Übernahme von Geldbußen ist
+  regelmäßig sittenwidrig (BAG, Urteil vom 25.01.2001, 8 AZR 465/00, § 138 BGB, [Leitsätze](https://lexetius.com/2001,1635)).
 - **App heute:** AGB „Kundendaten: Zusicherung und Freistellung“ und AVV „Pflichten des Auftraggebers“ knüpfen die
   Freistellung an die Verletzung der Zusicherung ohne Verschulden des Kunden und nennen „Behörden“.
 - **Bewertung:** Unwirksamkeitsrisiko. Fällt die Klausel, bleibt nur der gesetzliche Schadensersatz.
@@ -386,7 +392,7 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 
 - **Rechtslage:** Unternehmer ist, wer in Ausübung seiner gewerblichen oder selbstständigen beruflichen Tätigkeit
   handelt ([§ 14 BGB](https://www.gesetze-im-internet.de/bgb/__14.html)). Die Einordnung erfolgt objektiv, Zweifel
-  gehen zugunsten der Verbrauchereigenschaft (BGH, Urteil vom 30.09.2009, VIII ZR 7/09, NJW 2009, 3780). Wer aber einen
+  gehen zugunsten der Verbrauchereigenschaft (BGH, Urteil vom 30.09.2009, VIII ZR 7/09, NJW 2009, 3780, [Volltext](https://lorenz.userweb.mwn.de/urteile/viiizr7_09.htm)). Wer aber einen
   gewerblichen Zweck vortäuscht, kann sich nach Treu und Glauben nicht auf Verbraucherschutz berufen (BGH, Urteil vom
   22.12.2004, VIII ZR 91/04, NJW 2005, 1045).
 - **App heute:** Annahme nur mit Firma (Pflicht), USt-IdNr. (freiwillig, Format geprüft) und Pflicht-Häkchen mit
@@ -428,7 +434,7 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 - **Rechtslage:** E-Mail-Werbung ohne Einwilligung nur, wenn alle vier Voraussetzungen vorliegen, darunter Werbung
   „für eigene ähnliche Waren oder Dienstleistungen“ und Hinweis auf das Widerspruchsrecht schon bei der Erhebung
   ([§ 7 Abs. 3 UWG](https://www.gesetze-im-internet.de/uwg_2004/__7.html); fehlt der Hinweis, ist die Werbung
-  rechtswidrig: BGH, Urteil vom 10.07.2018, VI ZR 225/17, Rn. 24 f.). Ähnlich heißt: derselbe typische
+  rechtswidrig: BGH, Urteil vom 10.07.2018, VI ZR 225/17, Rn. 24 f., [Urteil](https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE309042018&psml=bsjrsprod.psml)). Ähnlich heißt: derselbe typische
   Verwendungszweck oder Bedarf, die Ausnahme ist eng (LG Frankfurt a. M., Urteil vom 22.03.2018, 2-03 O 372/17;
   LG Berlin, Urteil vom 16.11.2017, 16 O 225/17, laut Kanzleibericht). Ein Urteil zu Versicherungssparten gibt es nicht.
 - **App heute:** Ohne Einwilligung nur Anlässe zum selben Vertrag (Ablauf/Wechsel, Jahresgespräch), nur dieselbe Sparte
@@ -498,8 +504,8 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 - **Rechtslage:** Gesundheitsdaten sind Daten über die Gesundheit einer natürlichen Person
   ([Art. 4 Nr. 15, Art. 9 DSGVO](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32016R0679)); Angaben zu
   Tieren gehören nicht dazu. Art. 9 gilt auch, wenn sich Gesundheitsinformationen nur mittelbar ableiten lassen (EuGH,
-  Urteil vom 01.08.2022, C-184/20, OT) und schon für Bestelldaten apothekenpflichtiger Arzneimittel (EuGH, Urteil vom
-  04.10.2024, C-21/23, Lindenapotheke). Ausnahme in der Regel nur die ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a);
+  Urteil vom 01.08.2022, C-184/20, OT, [Urteil](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:62020CJ0184)) und schon für Bestelldaten apothekenpflichtiger Arzneimittel (EuGH, Urteil vom
+  04.10.2024, C-21/23, Lindenapotheke, [Urteil](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:62023CJ0021)). Ausnahme in der Regel nur die ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a);
   berechtigtes Interesse genügt nicht.
 - **App heute:** Gesundheitsfragen und -antworten aus Formularen gehen nicht an die KI und nicht in WhatsApp-Texte,
   im Kontakt vertraulich (`lib/gesundheitsdaten.ts`, Paket A); Angebote auslesen nur ohne Gesundheitsangaben
