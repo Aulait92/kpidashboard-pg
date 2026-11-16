@@ -171,7 +171,7 @@ export function AngeboteEditor(p: {
       </div>
       <p className="text-xs text-[color:var(--muted)]" data-auslesen-hinweis>
         {p.auslesenErlaubt
-          ? "Laden Sie nur das Angebot mit Tarifen und Beiträgen hoch, keine Antragsunterlagen mit Gesundheitsfragen. Die App übernimmt nur Tarif- und Leistungsdaten, keine persönlichen Angaben."
+          ? "Nur Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierangebote, keine Antragsunterlagen mit Gesundheitsfragen."
           : "Für dieses Produkt lesen wir Angebote nicht automatisch aus, weil sie Gesundheitsangaben enthalten können. Tragen Sie die Angebote hier ein."}
       </p>
       {p.quelle?.length && !p.bestaetigt ? (

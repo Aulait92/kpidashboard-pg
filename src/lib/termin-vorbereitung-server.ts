@@ -137,7 +137,11 @@ export async function auslesenUndSpeichern(appointmentId: string, ctx: TeamCtx):
   if (!(await angeboteAuslesenErlaubt(ctx.customerId, a.lead?.source)))
     return { ok: false, error: "Für dieses Produkt lesen wir Angebote nicht automatisch aus, weil sie Gesundheitsangaben enthalten können. Bitte tragen Sie die Angebote von Hand ein." };
   const files = await prisma.leadFile.findMany({ where: { leadId: a.leadId, kind: "angebot" }, orderBy: { createdAt: "desc" }, take: 5, select: { fileName: true, contentType: true, data: true } });
-  const res = await angeboteAuslesen(files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })));
+  const res = await angeboteAuslesen(
+    files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })),
+    { customerId: ctx.customerId, appointmentId, userId: ctx.userId, weg: "angebote" },
+  );
+  // Fehler oder Gesundheitssparte erkannt: nichts speichern, offersJson bleibt wie es war
   if ("error" in res) return { ok: false, error: res.error };
   await prisma.appointment.update({ where: { id: appointmentId }, // Tarifauswahl der neuen Terminvorbereitung gilt dann nicht mehr (ältere Angebote werden wieder gelesen)
     data: { offersJson: res as unknown as Prisma.InputJsonValue, offersConfirmedAt: null, tarifauswahl: Prisma.DbNull } });

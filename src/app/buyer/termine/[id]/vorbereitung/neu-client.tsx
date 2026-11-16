@@ -480,7 +480,7 @@ function Angebote(p: {
                 accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
                 maxBytes={15 * 1024 * 1024}
                 label="Angebot ablegen"
-                hint="Optional: Beiträge werden aus dem Angebot übernommen."
+                hint="Nur Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierangebote; die Beiträge werden übernommen."
                 busy={dateien.some((d) => d.status === "laedt" || d.status === "liest")}
                 pendingLabel="Wird gelesen …"
                 onFiles={(fs) => void ablegen(fs)}

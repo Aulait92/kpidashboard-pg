@@ -9,6 +9,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { reportError } from "@/lib/monitoring";
+import { audit } from "@/lib/audit";
 import { cleanAngebote, type AngeboteDaten } from "@/lib/angebote-daten";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
@@ -41,6 +42,28 @@ export function angebotOhneGesundheitsdaten(produkt: string | null | undefined):
   return !GESUNDHEIT.test(ohneTier);
 }
 
+// Sparten mit Gesundheitsangaben einer Person (Art. 9 DSGVO, Zusage im AVV): nach dem Auslesen je Angebot geprüft.
+const GESUNDHEITS_SPARTE =
+  /kranken|zahn|berufsunf|\bbuz?\b|dienstunf|erwerbsunf|grundf(ä|ae)hig|existenzschutz|leben|sterbegeld|pflege|dread|schwere\s*krankheit|\bpkv\b|beihilfe|heilpraktiker|sehhilfe|tagegeld/i;
+const TIER = /(tier|hunde?|katzen?|pferde?)\s*-?\s*(op|kranken|gesundheit|zahn)[\wäöüß-]*/gi;
+
+/** Ist diese ausgelesene Sparte (bzw. dieser Tarifname) eine Gesundheitssparte? Tierkranken zählt nicht. */
+export function istGesundheitsSparte(text: string | null | undefined): boolean {
+  return GESUNDHEITS_SPARTE.test((text ?? "").replace(TIER, ""));
+}
+
+/** Sparten der ausgelesenen Angebote, die Gesundheitsangaben enthalten (leer = alles in Ordnung). */
+export function gesundheitsSparten(items: Array<{ sparte: string; tarif?: string | null }>): string[] {
+  const treffer = items.filter((i) => istGesundheitsSparte(i.sparte) || istGesundheitsSparte(i.tarif)).map((i) => i.sparte.trim() || "Gesundheit");
+  return [...new Set(treffer)];
+}
+
+/** Hinweis an den Vermittler, wenn ein ausgelesenes Angebot eine Gesundheitssparte betrifft (Sie-Form, ein Satz). */
+export const gesundheitsFehler = (sparten: string[]) =>
+  `Angebote mit Gesundheitsangaben (${sparten.join(", ")}) lesen wir nicht aus, bitte tragen Sie sie von Hand ein.`;
+
+/** Wer gerade ausliest (für das Änderungsprotokoll, falls ein Ergebnis verworfen wird). */
+export type AuslesenKontext = { customerId: string; appointmentId: string; userId?: string | null; weg: "angebote" | "tarifauswahl" };
 
 const SCHEMA = {
   type: "object",
@@ -87,8 +110,12 @@ const SCHEMA = {
 
 export type AngebotDatei = { fileName: string; contentType: string; data: Uint8Array };
 
-/** Angebote (PDF oder Foto) auslesen. Fehler → { error }. */
-export async function angeboteAuslesen(files: AngebotDatei[]): Promise<AngeboteDaten | { error: string }> {
+/**
+ * Angebote (PDF oder Foto) auslesen. Fehler → { error }. Betrifft ein ausgelesenes Angebot eine Gesundheitssparte,
+ * wird das ganze Ergebnis verworfen (nichts gespeichert), der Vermittler auf die Handeingabe verwiesen und das
+ * Ereignis im Änderungsprotokoll festgehalten (nur Sparte, keine Inhalte).
+ */
+export async function angeboteAuslesen(files: AngebotDatei[], kontext?: AuslesenKontext): Promise<AngeboteDaten | { error: string; gesundheit?: string[] }> {
   const usable = files.filter((f) => ["application/pdf", "image/png", "image/jpeg", "image/webp"].includes(f.contentType)).slice(0, 5);
   if (!usable.length) return { error: "Kein Angebot als PDF oder Foto gefunden. Laden Sie es im Kontakt unter Dokumente hoch (Art „Angebot“)." };
   if (!process.env.ANTHROPIC_API_KEY) return { error: "Auslesen ist gerade nicht verfügbar." };
@@ -116,6 +143,19 @@ export async function angeboteAuslesen(files: AngebotDatei[]): Promise<AngeboteD
       return i.beitragMonat != null && drin ? { ...i, beitragMonat: Math.max(0, Math.round((i.beitragMonat - drin) * 100) / 100) } : i;
     });
     if (!out.items.length) return { error: "In den Dokumenten wurde kein Angebot erkannt. Bitte von Hand eintragen." };
+    const gesundheit = gesundheitsSparten(out.items);
+    if (gesundheit.length) {
+      console.warn(`[angebote] Ergebnis verworfen: Gesundheitssparte (${gesundheit.join(", ")})`);
+      if (kontext)
+        await audit("angebote.gesundheit_verworfen", {
+          entity: "Appointment",
+          entityId: kontext.appointmentId,
+          customerId: kontext.customerId,
+          details: { sparten: gesundheit, weg: kontext.weg, dateien: usable.length },
+          actor: { id: kontext.userId ?? null, role: "BUYER" },
+        });
+      return { error: gesundheitsFehler(gesundheit), gesundheit };
+    }
     return out;
   } catch (err) {
     reportError(err, "angebote-auslesen");

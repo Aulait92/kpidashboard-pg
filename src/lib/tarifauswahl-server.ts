@@ -184,7 +184,11 @@ export async function preiseAuslesen(
   if (!(await angeboteAuslesenErlaubt(ctx.customerId, a.lead?.source)))
     return { ok: false, error: "Gespeichert. Für dieses Produkt lesen wir Angebote nicht automatisch aus, bitte Beiträge eintragen." };
   const files = await prisma.leadFile.findMany({ where: { leadId: a.leadId, kind: "angebot" }, orderBy: { createdAt: "desc" }, take: 5, select: { fileName: true, contentType: true, data: true } });
-  const res = await angeboteAuslesen(files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })));
+  const res = await angeboteAuslesen(
+    files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: new Uint8Array(f.data) })),
+    { customerId: ctx.customerId, appointmentId, userId: ctx.userId, weg: "tarifauswahl" },
+  );
+  // Fehler oder Gesundheitssparte erkannt: keine Preise übernehmen, nichts speichern
   if ("error" in res) return { ok: false, error: res.error };
   const r = preiseUebernehmen(aktuell, res.items);
   const s = await tarifauswahlSpeichern(appointmentId, ctx, r.auswahl);
