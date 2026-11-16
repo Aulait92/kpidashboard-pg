@@ -574,15 +574,16 @@ function SpeicherStatus({ status, readOnly, erneut }: { status: Status; readOnly
 }
 
 /** Betrag eingeben („11,40“); eigener Text, damit „11,“ beim Tippen stehen bleibt. */
-function GeldFeld({ wert, onWert, label, klein, ro }: { wert: number | null; onWert: (n: number | null) => void; label: string; klein?: boolean; ro: boolean }) {
+function GeldFeld({ wert, onWert, label, klein, ro, className }: { wert: number | null; onWert: (n: number | null) => void; label: string; klein?: boolean; ro: boolean; className?: string }) {
   const [text, setText] = useState(geld(wert));
   const leer = betrag(text) == null;
   return (
     <label
       className={cn(
         "flex items-center rounded-[var(--radius-sm)] border bg-white focus-within:border-[color:var(--brand)] focus-within:ring-2 focus-within:ring-[color:var(--brand-soft)]",
-        klein ? "h-7 w-[72px] px-1.5" : "h-10 w-32 px-2.5",
+        klein ? "h-8 w-[84px] shrink-0 px-1.5" : "h-10 w-32 px-2.5",
         leer && !klein ? "border-amber-300 bg-amber-50" : "border-[color:var(--border-strong)]",
+        className,
       )}
     >
       <input
@@ -657,9 +658,17 @@ function TarifKarte({
           <Star className="h-5 w-5" fill={empf ? "currentColor" : "none"} />
         </button>
       </div>
-      <div className="mt-2.5 flex flex-wrap items-center gap-2">
-        <GeldFeld key={`${t.id}-${version}`} wert={t.beitrag} label={`Beitrag ${t.kurz}`} ro={ro} onWert={(n) => anTarif(t.id, (x) => void (x.beitrag = n))} />
-        <span className="inline-flex h-8 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border)]" role="group" aria-label="Zahlweise">
+      {/* Ruhige Spalte (Ole, 16.11.2026): Beitrag füllt die Breite, Zahlweise bündig rechts; darunter Monatsbetrag und Folie */}
+      <div className="mt-2.5 flex items-center gap-2">
+        <GeldFeld
+          key={`${t.id}-${version}`}
+          wert={t.beitrag}
+          label={`Beitrag ${t.kurz}`}
+          ro={ro}
+          className="w-auto min-w-0 flex-1"
+          onWert={(n) => anTarif(t.id, (x) => void (x.beitrag = n))}
+        />
+        <span className="inline-flex h-10 shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border)]" role="group" aria-label="Zahlweise">
           {(["monat", "jahr"] as const).map((z) => (
             <button
               key={z}
@@ -667,12 +676,14 @@ function TarifKarte({
               disabled={ro}
               aria-pressed={t.zahlweise === z}
               onClick={() => anTarif(t.id, (x) => void (x.zahlweise = z))}
-              className={cn("px-2.5 text-xs font-semibold", t.zahlweise === z ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "bg-white text-[color:var(--muted)]")}
+              className={cn("px-3 text-xs font-semibold", t.zahlweise === z ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "bg-white text-[color:var(--muted)]")}
             >
               {z === "monat" ? "Monat" : "Jahr"}
             </button>
           ))}
         </span>
+      </div>
+      <div className="mt-1.5 flex min-h-8 items-center gap-2">
         {mitExtra ? <span className="text-xs text-[color:var(--muted)]">{eur(m!)} im Monat</span> : null}
         <label className="ml-auto inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-[color:var(--muted)]">
           In Präsentation
@@ -692,17 +703,17 @@ function TarifKarte({
         <p className="mt-2 text-xs text-amber-700">Nicht auf der Folie: Es passen höchstens {grenzenFuer(sp).tarife} Tarife. Blenden Sie einen anderen aus.</p>
       ) : null}
       {bs.length ? (
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <div className="mt-2.5 grid gap-1.5">
           {bs.map((k) =>
             t.bausteinStatus[k] === "inklusive" ? (
-              <span key={k} className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-2.5 py-0.5 text-[13px] leading-tight">
-                <Check className="h-3.5 w-3.5 text-emerald-600" /> {bName(k)} <small className="text-[color:var(--muted)]">inklusive</small>
+              <span key={k} className="flex min-h-10 w-full items-center gap-1.5 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-2.5 py-1 text-[13px] leading-tight">
+                <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" /> <span className="min-w-0 flex-1">{bName(k)}</span> <small className="text-[color:var(--muted)]">inklusive</small>
               </span>
             ) : (
               <span
                 key={k}
                 className={cn(
-                  "inline-flex min-h-8 max-w-full items-center gap-1 rounded-2xl border py-0.5 pl-1 pr-1.5 text-[13px] leading-tight",
+                  "flex min-h-10 w-full items-center gap-1.5 rounded-xl border py-1 pl-1.5 pr-1.5 text-[13px] leading-tight",
                   t.bausteine[k]?.an ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]" : "border-[color:var(--border-strong)] bg-white",
                 )}
               >
@@ -711,7 +722,7 @@ function TarifKarte({
                   disabled={ro}
                   aria-pressed={!!t.bausteine[k]?.an}
                   onClick={() => anTarif(t.id, (x) => void (x.bausteine[k] = { an: !x.bausteine[k]?.an, beitrag: x.bausteine[k]?.beitrag ?? null }))}
-                  className="inline-flex min-w-0 items-center gap-1.5 pr-0.5 text-left"
+                  className="inline-flex min-h-8 min-w-0 flex-1 items-center gap-1.5 pr-0.5 text-left"
                 >
                   <span className={cn("flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2", t.bausteine[k]?.an ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border-strong)]")}>
                     {t.bausteine[k]?.an ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
