@@ -209,7 +209,7 @@ export function HilfeChat({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="whitespace-nowrap font-semibold">KI-Hilfe</div>
-                <div className="truncate text-xs text-[color:var(--muted)]">Antwortet sofort · kennt die App</div>
+                <div className="truncate text-xs text-[color:var(--muted)]">Antwortet sofort</div>
               </div>
               <button
                 type="button"

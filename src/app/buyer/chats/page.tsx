@@ -469,7 +469,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   href={`tel:+${active.contactPhone}`}
                   aria-label="Anrufen"
                   title={formatPhone(active.contactPhone)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
+                  className="inline-flex h-10 w-10 items-center sm:h-9 sm:w-9 justify-center rounded-full bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
                 >
                   <Phone className="h-4 w-4" />
                 </a>
@@ -488,7 +488,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   <input type="hidden" name="conversationId" value={active.id} />
                   <SubmitButton
                     pendingLabel="…"
-                    className={`h-9 rounded-full px-3 text-xs font-semibold ${
+                    className={`h-10 rounded-full px-3 sm:h-9 text-xs font-semibold ${
                       active.botActive
                         ? "border border-[color:var(--border)] bg-white hover:border-[color:var(--brand)]"
                         : "bg-emerald-600 text-white hover:bg-emerald-700"
@@ -506,7 +506,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   </span>
                   <form action={markChatDoneBuyerAction}>
                     <input type="hidden" name="conversationId" value={active.id} />
-                    <SubmitButton pendingLabel="…" className="rounded-lg border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-800">
+                    <SubmitButton pendingLabel="…" className="min-h-10 rounded-lg border border-rose-300 bg-white px-4 py-1 text-sm font-semibold text-rose-800 sm:min-h-0 sm:px-3 sm:text-xs">
                       Erledigt
                     </SubmitButton>
                   </form>
