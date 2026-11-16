@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung Optimal",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Neuwert in unbegrenzter Höhe",
+    "Grobe Fahrlässigkeit ohne Kürzung",
+    "Fahrraddiebstahl weltweit, unbegrenzt"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Optimal",
+      "kurz": "Optimal",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "fahrrad": "ja, unbegrenzt",
+        "elementar": "optional",
+        "vs": "unbegrenzt",
+        "garten": "ja",
+        "auto": "ja, europaweit",
+        "allgefahren": "nein",
+        "ueberspannung": "ja, unbegrenzt"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/fahrzeug-zuhause/hausratversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Optimal mit Optimal XXL",
+      "kurz": "Optimal XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "fahrrad": "ja, unbegrenzt",
+        "elementar": "optional",
+        "vs": "unbegrenzt",
+        "garten": "ja",
+        "auto": "ja, europaweit",
+        "allgefahren": "ja",
+        "ueberspannung": "ja, unbegrenzt"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional",
+        "reise": "inklusive"
+      },
+      "quelle": "https://www.generali.de/privatkunden/fahrzeug-zuhause/hausratversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/fahrzeug-zuhause/hausratversicherung"
+  ],
+  "offen": [
+    "Generali veröffentlicht einen Tarif (Optimal); Hausrat Optimal XXL ist ein Zuwahlbaustein (Allgefahren: alles, was nicht ausgeschlossen ist; enthält Reisegepäck, Fahrrad Plus, Freizeit Plus). Keine Empfehlung markiert.",
+    "Versicherungssumme: Schutz in unbegrenzter Höhe zum Neuwert; für Wertsachen gelten Entschädigungsgrenzen, nicht beziffert.",
+    "Einfacher Diebstahl am Arbeitsplatz, bei Arztbesuchen und im Krankenhaus sowie Trickdiebstahl in der Wohnung genannt; einfacher Diebstahl in der Wohnung nicht.",
+    "Gartengeräte, -möbel, Grills und Spielgeräte auf dem eingefriedeten Grundstück. Diebstahl aus Kfz europaweit, Höhe nicht genannt.",
+    "Weitere Bausteine: Haus- und Wohnungsschutzbrief (in der VSP ohne Mehrbeitrag), Konto- und Finanzschutzbrief, Freizeit Plus, Fahrrad Plus.",
+    "Online-Betrug, Hotelkosten, Außenversicherung und Selbstbeteiligung nicht genannt."
+  ]
+}

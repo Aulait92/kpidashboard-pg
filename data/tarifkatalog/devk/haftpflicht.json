@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Personen-, Sach- und Vermögensschäden",
+    "Gefälligkeitsschäden",
+    "Weltweiter Schutz bei Auslandsaufenthalt"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "nein",
+        "delikt": "bis 50.000 €",
+        "geliehen": "nein",
+        "gefaelligkeit": "bis 5.000 €",
+        "neuwert": "nein",
+        "drohne": "nein"
+      },
+      "bausteine": {
+        "auto": "nein"
+      },
+      "quelle": "https://www.devk.de/produkte/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 20.000 €, SB 150 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 25.000 €",
+        "gefaelligkeit": "bis 10.000 €",
+        "neuwert": "bis 1.000 €",
+        "rabattretter": "optional",
+        "drohne": "bis 5 kg, 500.000 €",
+        "sb": "0, 150 oder 250 €"
+      },
+      "bausteine": {
+        "auto": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €, SB 150 €",
+        "delikt": "bis 250.000 €",
+        "geliehen": "bis 50.000 €",
+        "gefaelligkeit": "bis 50.000 €",
+        "neuwert": "bis 2.500 €",
+        "rabattretter": "optional",
+        "drohne": "bis 5 kg, 1 Mio. €",
+        "sb": "0, 150 oder 250 €"
+      },
+      "bausteine": {
+        "auto": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/haftpflichtversicherung/privathaftpflicht/"
+  ],
+  "offen": [
+    "DEVK empfiehlt auf der Produktseite ausdrücklich den Premium-Schutz.",
+    "Höchstleistung je Personenschaden: 10 Mio. € (Basis, Komfort), 15 Mio. € (Premium).",
+    "Forderungsausfall laut Produktseite im Komfort- und Premium-Schutz; Premium zusätzlich Spezial-Schadenersatz-Rechtsschutz. Höhe nicht genannt.",
+    "Schlüsselverlust privat und beruflich je bis 20.000 € (Komfort) bzw. 50.000 € (Premium), jeweils 150 € Selbstbeteiligung.",
+    "Selbstbeteiligung nur im Komfort- und Premium-Schutz wählbar (keine, 150 €, 250 €); Basis ohne Angabe.",
+    "Mobil Plus (Komfort und Premium, gegen Aufpreis): Schäden an geliehenen oder gemieteten Kfz, Ausgleich bei Hochstufung der Schadenfreiheitsklasse, SB bei Mietfahrzeugen, Be- und Entladeschäden.",
+    "Auslandsaufenthalt weltweit: 1 Jahr (Basis), 2 Jahre (Komfort), 5 Jahre (Premium). Mietsachschäden an Wohnräumen, Mallorca-Deckung, Ehrenamt und Nebentätigkeit nicht in der Tabelle."
+  ]
+}

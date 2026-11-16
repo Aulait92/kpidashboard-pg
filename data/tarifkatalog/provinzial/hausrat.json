@@ -1,0 +1,108 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Verzicht auf Unterversicherung ab 650 € je m²",
+    "Einbruchdiebstahl, Raub, Vandalismus",
+    "Leitungswasser, Sturm und Hagel"
+  ],
+  "tarife": [
+    {
+      "name": "Kompaktschutz",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 1.500 €",
+        "hotel": "50 €/Tag, 100 Tage",
+        "aussen": "10 % der VS, 3 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:f14e9202-5cf3-4ee0-b91f-1e8dae297fa6/202006000940_0324_Leistungsuebersicht_Hausratversicherung-west.pdf?view=",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundumschutz 2.0",
+      "kurz": "Rundum",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "nein",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 1.500 €",
+        "garten": "bis 1.000 €",
+        "auto": "bis 1.000 €, Inland",
+        "hotel": "200 €/Tag, 200 Tage",
+        "aussen": "10 % der VS, 6 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:f14e9202-5cf3-4ee0-b91f-1e8dae297fa6/202006000940_0324_Leistungsuebersicht_Hausratversicherung-west.pdf?view=",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundumschutz 2.0 mit Plus-Paket 2.0",
+      "kurz": "Rundum Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 5.000 €",
+        "garten": "bis 10.000 €",
+        "auto": "bis 5.000 €, Inland",
+        "hotel": "200 €/Tag, 12 Monate",
+        "aussen": "30 % der VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:f14e9202-5cf3-4ee0-b91f-1e8dae297fa6/202006000940_0324_Leistungsuebersicht_Hausratversicherung-west.pdf?view=",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/wohnen/hausratversicherung.html",
+    "https://www.provinzial.de/dam/jcr:f14e9202-5cf3-4ee0-b91f-1e8dae297fa6/202006000940_0324_Leistungsuebersicht_Hausratversicherung-west.pdf?view="
+  ],
+  "offen": [
+    "Provinzial Versicherung AG, Region Westfalen (provinzial.de/west); die Provinzial Nord veröffentlicht eigene Unterlagen.",
+    "Quelle: Leistungsübersicht Hausratversicherung West (Art.-Nr. 2.02.006.0.0094.0, 03/24).",
+    "Drei Stufen: Kompaktschutz, Rundumschutz 2.0, Rundumschutz 2.0 mit Plus-Paket 2.0. Keine Empfehlung markiert; Rundumschutz 2.0 als mittlere Stufe gesetzt.",
+    "Die Leistungsübersicht kennzeichnet versichert und nicht versichert mit Bildsymbolen, die sich nicht automatisch lesen lassen; erfasst sind nur Beträge sowie Aussagen der Produktseite und des Produktinformationsblatts.",
+    "Grobe Fahrlässigkeit: Verzicht auf Leistungskürzung laut Produktseite Bestandteil des Plus-Pakets 2.0.",
+    "Wertsachen 30 % der VS (Erhöhung möglich), Urkunden 5.000 €, Schmuck 25.000 €. Einfacher Diebstahl nicht genannt; Trickdiebstahl in der Wohnung ab Rundumschutz bis 1.000 €.",
+    "Garten und Diebstahl aus dem Kfz (in Deutschland) für Kompaktschutz nicht lesbar.",
+    "Bausteine: Elementar (SB 1.000 €, änderbar), Fahrraddiebstahl, Glas, Internet-Schutz (Rundum und Plus bis 5.000 €), Unterwegs.",
+    "Überspannung durch Blitz in der Übersicht genannt, Zuordnung je Stufe nicht lesbar."
+  ]
+}

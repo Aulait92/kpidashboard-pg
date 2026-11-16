@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung Optimal",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwert, unbegrenzt bei Ein- und Zweifamilienhaus",
+    "Grobe Fahrlässigkeit ohne Kürzung",
+    "Photovoltaik und Wärmepumpe mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Optimal",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "pv": "ja",
+        "neuwert": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/fahrzeug-zuhause/wohngebaeudeversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/fahrzeug-zuhause/wohngebaeudeversicherung"
+  ],
+  "offen": [
+    "Generali veröffentlicht einen Tarif (Optimal); Wohngebäude Optimal XXL ist ein ergänzender Schutz in der Vermögenssicherungspolice, Leistungen nicht genannt.",
+    "Photovoltaik und Solarthermie am Gebäude, Wärmepumpen auf dem Grundstück als versicherte Sachen; erweiterte Deckung nicht beschrieben.",
+    "Weiter genannt: Rohrverstopfung, Wasser aus Pools, Ladestationen, Aufräumen und Wiederbepflanzung von Bäumen bis 5.000 €.",
+    "Ableitungsrohre, Kosten nach Schaden, Überspannung, undichte Fugen, Vandalismus, Mietausfall und Selbstbeteiligung nicht genannt."
+  ]
+}

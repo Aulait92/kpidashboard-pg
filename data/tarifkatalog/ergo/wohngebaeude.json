@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Feuer, Leitungswasser, Naturgefahren wählbar",
+    "Grobe Fahrlässigkeit ohne Kürzung",
+    "Undichte Silikonfugen, Überspannung durch Blitz"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional, bis 10.000 €",
+        "pv": "optional",
+        "kosten": "bis 25.000 €",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "nein",
+        "allgefahren": "optional",
+        "mietausfall": "bis 24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.ergo.de/content/dam/adhop/pdf/sach/broschuere-wohngebaeude.pdf.coredownload.pdf",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Wohngebäude Best",
+      "kurz": "Best",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional, bis 10.000 €",
+        "pv": "optional",
+        "kosten": "bis 100 % der VS",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "bis 25.000 €",
+        "allgefahren": "optional",
+        "mietausfall": "bis 24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.ergo.de/content/dam/adhop/pdf/sach/broschuere-wohngebaeude.pdf.coredownload.pdf",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Hausrat-und-Gebaeudeversicherung/Wohngebaeudeversicherung",
+    "https://www.ergo.de/content/dam/adhop/pdf/sach/broschuere-wohngebaeude.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "Quelle der Werte ist die Broschüre Wohngebäude (Stand 9.2024, Tabelle Leistungen im Überblick); die auf der Produktseite verlinkte aktuelle Broschüre liegt auf ergo-meine-druckstuecke.de und war für automatische Abrufe gesperrt (HTTP 403). Bitte gegenprüfen.",
+    "ERGO markiert bei Wohngebäude keine Stufe; bei zwei Stufen keine Empfehlung gesetzt.",
+    "Die Gefahren Feuer, Leitungswasser und Naturgefahren (Sturm, Hagel und Elementar) sind einzeln wählbar; ERGO empfiehlt alle drei plus Glas. Elementar daher als zuwählbar erfasst.",
+    "Grobe Fahrlässigkeit: laut Broschüre in beiden Stufen ohne Kürzung.",
+    "Kosten nach Schaden: Aufräumen, Abbruch, Bewegen und Schützen summarisch bis 25.000 € (Smart) bzw. bis 100 % der Versicherungssumme (Best); Hotelkosten bis 200 € je Tag, max. 150 Tage, in beiden.",
+    "Vandalismus, Diebstahl: Gebäudebeschädigung durch Mensch und Tier sowie Diebstahl bis 25.000 € nur in Best.",
+    "Ableitungsrohre außerhalb des Gebäudes über den Baustein Leitungswasser Plus (bis 10.000 €); Photovoltaik und Wärmepumpe gegen unvorhergesehene Schäden über den Baustein Haus- und Energietechnik (bis 50.000 €, SB 250 €); Unbenannte Gefahren als Baustein (SB 250 €).",
+    "Gleitender Neuwert, Marder und Selbstbeteiligung je Stufe nicht im Tarifvergleich.",
+    "Bündelnachlass siehe buendel.json."
+  ]
+}

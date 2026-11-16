@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "haftpflicht",
+  "produkt": "PrivatSchutz Privathaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ehrenamtliche Tätigkeit",
+    "Gefälligkeitsschäden bis zur Deckungssumme",
+    "Selbstbeteiligung wählbar 0, 150, 250 €"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 5.000 €, SB 150 €",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "bis 5 Mio. €",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja",
+        "sb": "wählbar 0, 150, 250 €"
+      },
+      "bausteine": {
+        "dienst": "nein",
+        "hausbesitz": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-privathaftpflicht_2025_04.pdf",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "PrivatSchutz Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "bis 50 Mio. €",
+        "schluessel": "bis 250.000 €",
+        "delikt": "bis 500.000 €",
+        "geliehen": "bis 50.000 €, SB 150 €",
+        "miete": "bis 50 Mio. €",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 3.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "ja",
+        "ehrenamt": "ja",
+        "sb": "wählbar 0, 150, 250 €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "hausbesitz": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-privathaftpflicht_2025_04.pdf",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-privathaftpflicht_2025_04.pdf",
+    "https://www.zurich.de/de-de/pk/haftpflicht-recht/privathaftpflicht"
+  ],
+  "offen": [
+    "Quelle: Deckungskonzept Haftpflichtversicherung PrivatSchutz 04/2025 (Leistungsübersicht, PDF auf zurich.de). Die Produktseite auf zurich.de lädt ihre Inhalte per Skript und ließ sich nicht automatisch lesen.",
+    "Zwei Stufen (Basis, Top), keine Empfehlung markiert; der Vermittler setzt den Stern selbst.",
+    "Deliktunfähige Kinder in Top: 500.000 € Personen und Vermögen, 100.000 € Sachschäden.",
+    "Schlüssel: Basis nur private Schlüssel bis 5.000 € (SB 150 €); Top private, berufliche und ehrenamtliche Schlüssel je bis 250.000 €.",
+    "Mietsachschäden an Wohnräumen: im Deckungskonzept als gemeinsame Zeile mit Vorsorge und Internetrisiko (5 bzw. 50 Mio. €) dargestellt.",
+    "Drohnen: in Top bis 500 g und 501 g bis 5 kg je 10 Mio. €; in Basis nicht versichert.",
+    "Amtshaftpflicht (öffentlicher Dienst) nur in Top einschließbar. Baustein Haus- und Grundbesitz (Vermietung) in beiden Stufen; Baustein Bestleistung nur in Top.",
+    "Hund und Pferd: eigene Tierhalter-Haftpflicht im PrivatSchutz (siehe tierhalter-hund, tierhalter-pferd)."
+  ]
+}

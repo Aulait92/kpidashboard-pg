@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Sofortleistung bei Schwerverletzungen",
+    "Bergung bis 200.000 €, kosmetische OP bis 50.000 €",
+    "Keine Gesundheitsfragen"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basic",
+      "kurz": "Basic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "300 %",
+        "abGrad": "ab 20 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "10 %, max. 25.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 200.000 €"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Unfallversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Unfallversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "300 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "10 %, max. 25.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 200.000 €",
+        "gliedertaxe": "optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Unfallversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Unfallversicherung Best",
+      "kurz": "Best",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "600 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "10 %, max. 25.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 200.000 €",
+        "gliedertaxe": "optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Unfallversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Unfallversicherung"
+  ],
+  "offen": [
+    "ERGO markiert keine Empfehlung (Best trägt nur das Etikett 6-fache Kapitalleistung); Smart als mittlere Stufe gesetzt.",
+    "Invaliditätssumme wird frei gewählt; Rechenbeispiel der Produktseite mit 25.000 € Grundsumme. Volle Kapitalleistung (3-fach bzw. 6-fach) bereits ab 70 % Invalidität.",
+    "Unfallrente ab 50 % Invalidität in allen Stufen zuwählbar; Unfall-Rente Plus (ab 35 % halbe Rente) und Unfall-Hilfe Plus nur in Smart und Best.",
+    "Krankenhaustagegeld zuwählbar, ab dem 4. Tag doppelt. Weitere Bausteine: Unfall-Hilfe, Verletzungsgeld, Unfall-Pflege.",
+    "Gliedertaxe Plus in Smart und Best zuwählbar; für Basic ist in der Tabelle kein Eintrag (nicht belegt).",
+    "Todesfallleistung und Zeckenstich nicht im Tarifvergleich. Die Leistungsübersichten (PDF) liegen auf ergo-meine-druckstuecke.de und waren für automatische Abrufe gesperrt (HTTP 403)."
+  ]
+}

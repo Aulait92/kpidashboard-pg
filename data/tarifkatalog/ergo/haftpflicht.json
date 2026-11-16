@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Geliehene Sachen und Gefälligkeit bis 50.000 €",
+    "SFR-Hochstufung bei geliehenen Fahrzeugen",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "optional",
+        "schluessel": "optional, bis 50.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €",
+        "gefaelligkeit": "bis 50.000 €",
+        "neuwert": "optional, bis 5.000 €",
+        "rabattretter": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Haftpflichtversicherung/Privathaftpflichtversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privat-Haftpflicht Best",
+      "kurz": "Best",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €",
+        "gefaelligkeit": "bis 50.000 €",
+        "neuwert": "bis 5.000 €",
+        "rabattretter": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Haftpflichtversicherung/Privathaftpflichtversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Haftpflichtversicherung/Privathaftpflichtversicherung",
+    "https://www.ergo.de/de/Ratgeber/familie/haftpflichtversicherung-fuer-familien"
+  ],
+  "offen": [
+    "ERGO bietet zwei Stufen (Smart, Best); Best ist auf ergo.de als Bestseller markiert.",
+    "Forderungsausfall, Schlüsselverlust (privat und beruflich bis 50.000 €) und Neuwert (bis 5.000 €) sind in Best enthalten und in Smart einzeln zuwählbar.",
+    "Deliktunfähige Personen: laut ERGO-Ratgeber Familienhaftpflicht (Stand 30.12.2024) bis 50.000 € eingeschlossen; ob in beiden Stufen gleich, steht nicht im Tarifvergleich.",
+    "Rabattretter: ERGO erstattet die SFR-Hochstufung bei geliehenen Fahrzeugen für 3 Jahre.",
+    "Mietsachschäden an Wohnräumen, Mallorca-Deckung, Drohnen, Nebentätigkeit, Ehrenamt und Selbstbeteiligung sind auf der Produktseite nicht genannt.",
+    "Die Leistungsübersicht Smart und Best (PDF) liegt auf ergo-meine-druckstuecke.de und war für automatische Abrufe gesperrt (HTTP 403); bitte dort gegenprüfen.",
+    "Weitere Bausteine: Amts- und Diensthaftpflicht, alleinstehende Familienangehörige (in beiden Stufen zuwählbar). Startbonus 13 % bis 35 Jahre."
+  ]
+}

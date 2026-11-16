@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalterhaftpflichtversicherung Optimal",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Deckschäden mitversichert",
+    "Mithalter und Tierhüter mitversichert",
+    "Auslandsaufenthalt bis 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht Optimal",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "ausland": "bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/recht-haftung/tierhalterhaftpflichtversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/recht-haftung/tierhalterhaftpflichtversicherung"
+  ],
+  "offen": [
+    "Generali veröffentlicht einen Tarif (Optimal) für Hunde und Pferde.",
+    "Mietsachschäden an gemieteten Gebäuden oder Räumen; Einrichtung in Hotelzimmern, Ferienwohnungen, Schiffskabinen ab 100 € Mindestschaden.",
+    "Selbstbeteiligung, Welpen, Forderungsausfall und Neuwert nicht genannt."
+  ]
+}

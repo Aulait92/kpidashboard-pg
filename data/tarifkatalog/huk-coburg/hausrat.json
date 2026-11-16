@@ -1,0 +1,94 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwertersatz",
+    "Unterversicherungsverzicht bei 700 €/m²",
+    "Überspannung durch Blitz"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "700 €/m²",
+        "ueberspannung": "ja",
+        "aussen": "6 Mon., 20 % der VS"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/haus-haftung-recht/haus-wohnung/hausratversicherung.html",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Classic",
+      "kurz": "Classic",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "vs": "700 €/m²",
+        "garten": "ja",
+        "auto": "ja, ohne Elektronik",
+        "ueberspannung": "ja",
+        "hotel": "3 ‰ der VS je Tag",
+        "aussen": "12 Monate, bis VS",
+        "sb": "ohne"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haus-wohnung/hausratversicherung.html",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Classic PLUS",
+      "kurz": "Classic PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "vs": "700 €/m²",
+        "garten": "ja",
+        "auto": "ja, Elektronik 2.500 €",
+        "ueberspannung": "ja",
+        "hotel": "3 ‰ der VS je Tag",
+        "aussen": "12 Monate, bis VS",
+        "sb": "ohne"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "inklusive"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haus-wohnung/hausratversicherung.html",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/haus-wohnung/hausratversicherung.html"
+  ],
+  "offen": [
+    "Die Produktseite beschreibt vor allem Classic; Classic PLUS ist Classic mit Baustein Hausrat PLUS. Für Basis ist nur die Außenversicherung (6 Monate, bis 20 % der Versicherungssumme) genannt, die übrigen Merkmale sind offen.",
+    "HUK-COBURG markiert keine Empfehlung; Classic als mittlere Stufe gesetzt.",
+    "Grobe Fahrlässigkeit, Wertsachengrenzen und Bargeld sind auf der Produktseite nicht beziffert.",
+    "Einfacher Diebstahl in der Wohnung nicht genannt; Classic PLUS: Trickdiebstahl in der Wohnung bis 5.000 €, Taschendiebstahl, Diebstahl am Arbeitsplatz bis 5.000 €, Reisegepäck (SB 100 €).",
+    "Diebstahl aus dem Auto: Classic europaweit ohne Wertsachen und Elektronik; Classic PLUS weltweit inkl. Elektronik bis 2.500 €.",
+    "Phishing beim Online-Banking in Classic bis 1.000 €, mit Baustein Online-Schutz bis 5.000 €. Hotelkosten bis 1 Jahr, je Tag bis 3 Promille der Versicherungssumme, mindestens 100 €.",
+    "Elementar als Baustein mit 500 € Selbstbeteiligung. Preisbeispiel ohne Selbstbeteiligung; andere Stufen nicht genannt."
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Bis zu 5 Hunde in einem Vertrag",
+    "Ohne Leine und Maulkorb, Flurschäden, Deckakt",
+    "Turniere und Hundeschule"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "15 Mio. €",
+        "sb": "keine",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "geliehen": "ja, SB 250 €",
+        "ausland": "EU unbegr., sonst 5 J."
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/hundehaftpflicht.html",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/hundehaftpflicht.html"
+  ],
+  "offen": [
+    "HUK-COBURG bietet einen Tarif (keine Stufen); Versicherungssumme laut Kostenbeispiel 15 Mio. €.",
+    "Keine Selbstbeteiligung; nur bei gemieteten oder geliehenen beweglichen Sachen 250 € (nicht bei Hotelzimmern und Ferienwohnungen).",
+    "Fremde Hüter: gesetzliche Haftpflicht nicht gewerbsmäßiger Tierhüter mitversichert.",
+    "Listenhunde versichert HUK-COBURG nicht. Forderungsausfall, Neuwert und Verzicht auf Mitschuld nicht belegt."
+  ]
+}

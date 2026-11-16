@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "unfall",
+  "produkt": "PrivatSchutz Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "24 Stunden weltweit",
+    "Leistungsarten frei kombinierbar",
+    "Assistance mit Reha-Management"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar bis 500 %",
+        "unfallrente": "wählbar",
+        "khtg": "wählbar",
+        "todesfall": "wählbar",
+        "sofort": "nein",
+        "kosmetik": "bis 20.000 €",
+        "bergung": "bis 20.000 €",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/docs/downloads/zas/zurich-leistungsuebersicht-unfallversicherung.pdf",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "PrivatSchutz Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar bis 1.000 %",
+        "unfallrente": "wählbar",
+        "khtg": "wählbar",
+        "todesfall": "wählbar",
+        "sofort": "optional, 1.000 €",
+        "kosmetik": "bis 75.000 €",
+        "bergung": "bis 75.000 €",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/docs/downloads/zas/zurich-leistungsuebersicht-unfallversicherung.pdf",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media/project/zwp/germany/docs/downloads/zas/zurich-leistungsuebersicht-unfallversicherung.pdf"
+  ],
+  "offen": [
+    "Quelle: Deckungskonzept Unfallversicherung PrivatSchutz 04/2024 (PDF auf zurich.de).",
+    "Zwei Stufen (Basis, Top) und Baustein Premium auf Top (u. a. kosmetische OP und Bergung bis 100.000 €). Keine Empfehlung markiert.",
+    "Invaliditätssumme, Unfallrente (ab 50 % Invalidität), Krankenhaustagegeld und Todesfallleistung werden einzeln vereinbart; Höhe nicht im Deckungskonzept.",
+    "Progression 100, 225, 350, 500 % in beiden Stufen, 1.000 % nur in Top.",
+    "Sofortleistung bei Knochenbruch in Top einschließbar (1.000 €).",
+    "Gliedertaxe: Top mit verbesserten Werten (z. B. Arm 80 % statt 70 %).",
+    "Leistung ab Invaliditätsgrad und Zeckenstich nicht ausdrücklich belegt (Infektionen durch Insektenstiche und Tierbisse in beiden Stufen)."
+  ]
+}

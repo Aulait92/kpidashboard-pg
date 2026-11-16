@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gleitender Neuwert ohne feste Versicherungssumme",
+    "Elementarschutz Basis immer enthalten",
+    "Verzicht auf Einwand grober Fahrlässigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Classic",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional (Basis inkl.)",
+        "ableitung": "optional, bis 30.000 €",
+        "pv": "optional",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haus-wohnung/wohngebaeudeversicherung.html",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Wohngebäude Classic PLUS",
+      "kurz": "Classic PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional (Basis inkl.)",
+        "ableitung": "optional, bis 30.000 €",
+        "pv": "optional",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "ja",
+        "tiere": "ja, Dämmung und Dach"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haus-wohnung/wohngebaeudeversicherung.html",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/haus-wohnung/wohngebaeudeversicherung.html"
+  ],
+  "offen": [
+    "Classic PLUS ist Classic mit Baustein Wohngebäude PLUS. HUK-COBURG markiert keine Stufe; bei zwei Stufen keine Empfehlung gesetzt.",
+    "Elementar: Elementarschutz Basis (SB 100.000 €) ist immer enthalten; HUK empfiehlt Elementarschutz Classic (SB 500 €, Erdbeben 100.000 €, auf 500 € senkbar).",
+    "Ableitungsrohre und weitere Rohre außerhalb des Gebäudes über den Baustein Rohre bis 30.000 € je Jahr (SB 500 €).",
+    "Photovoltaik ist gegen die vereinbarten Gefahren mitversichert (inkl. Nutzungsausfall bis 12 Monate); Allgefahren und Diebstahl gegen Mehrbeitrag.",
+    "Kosten nach Schaden: Aufräum- und Hotelkosten genannt, Höhe nicht beziffert.",
+    "Wohngebäude PLUS zusätzlich: undichte Fugen, Marder und Waschbären an Dämmung und Unterspannbahn, Vandalismus und Graffiti, Bäume und Gartenbepflanzung bis 25.000 €, energetische Modernisierung bis 20.000 €.",
+    "Mietausfall und Selbstbeteiligung je Stufe nicht belegt (Preisbeispiel ohne SB)."
+  ]
+}

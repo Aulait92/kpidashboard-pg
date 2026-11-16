@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung (Partner ADVOCARD, ADVOCARD-360°-PRIVAT)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unbegrenzte Summe und Strafkaution in Europa",
+    "Telefonische und Online-Rechtsberatung",
+    "Vorsorgliche Anwaltsberatung bis 1.000 € je Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "ADVOCARD-360°-PRIVAT",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt (Europa)",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "unbegrenzt (Europa)",
+        "privat": "ja",
+        "vsWelt": "1 Mio. €",
+        "wartezeit": "3 Monate, Verkehr keine",
+        "opfer": "ja",
+        "straf": "ja, erweitert",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.advocard.de/360-grad/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/recht-haftung/rechtsschutzversicherung",
+    "https://www.advocard.de/360-grad/",
+    "https://www.advocard.de/privatrechtsschutz/"
+  ],
+  "offen": [
+    "Versicherer ist ADVOCARD (Partner der Generali); generali.de verweist auf ADVOCARD-360°-PRIVAT, die Werte stammen von advocard.de.",
+    "Ein Tarif: Privat ist der Basisschutz, Beruf, Verkehr und Wohnung frei kombinierbar (P bis PBVW); deshalb als zuwählbar erfasst.",
+    "Weltweit ohne zeitliche Begrenzung, außerhalb Europas und der Mittelmeer-Anrainer bis 1 Mio. €.",
+    "Wartezeit 3 Monate für einige Leistungsarten, Studienplatzverfahren 1 Jahr; keine Wartezeit im Verkehrsbereich.",
+    "Familien- und Erbrecht: erweiterte Beratung bis 1.000 €; Vorsorge-Rechtsschutz bis 250 €.",
+    "Selbstbeteiligung je Tarif nicht genannt (Services ohne SB). In der Generali-VSP 5 % VSP-Nachlass auf Rechtsschutz."
+  ]
+}

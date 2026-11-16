@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Fremdreiter und Reitbeteiligung",
+    "Eigenschaden des Tierhüters versichert",
+    "Mietsachschäden an Stall, Reithalle, Box"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 Mio. €",
+        "sb": "0, 150 oder 250 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "26 Wochen",
+        "forderungsausfall": "bis 5 Mio. €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.devk.de/produkte/haftpflichtversicherung/tierhalter/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferdehaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "0, 150 oder 250 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "52 Wochen",
+        "forderungsausfall": "bis 10 Mio. €",
+        "geliehen": "Anhänger bis 15.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.devk.de/produkte/haftpflichtversicherung/tierhalter/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/haftpflichtversicherung/tierhalter/"
+  ],
+  "offen": [
+    "Zwei Stufen Komfort und Premium, keine Markierung; keine Empfehlung gesetzt.",
+    "Selbstbeteiligung wählbar: keine, 150 € oder 250 €.",
+    "Forderungsausfall für Personen- und Sachschäden; Vermögensschäden bis 1 Mio. € in Komfort (2.000 € SB) bzw. 10 Mio. € in Premium (1.000 € SB).",
+    "Geliehene oder gemietete Pferdeanhänger nur im Premium-Schutz bis 15.000 €.",
+    "Schutz im Ausland für Pferde nicht ausdrücklich genannt."
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "rechtsschutz",
+  "produkt": "PrivatSchutz Rechtsschutzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Privat und Beruf in einem Baustein",
+    "Anwaltshotline und Anwalts-Chat ohne SB",
+    "Mediation"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "1 Mio. €",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "bis 60.000 €",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "100.000 €",
+        "sb": "150, 250, 500 €",
+        "opfer": "nein",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/br/documents/prospekte-broschueren/deckungskonzept_rechtsschutz_2024_10.pdf",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "PrivatSchutz Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "ja, selbst genutzt",
+        "kaution": "bis 500.000 €",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "1 Mio. €",
+        "sb": "0, 150, 250, 500 €",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/br/documents/prospekte-broschueren/deckungskonzept_rechtsschutz_2024_10.pdf",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media/project/zwp/germany/br/documents/prospekte-broschueren/deckungskonzept_rechtsschutz_2024_10.pdf",
+    "https://www.zurich.de/-/media/project/zwp/germany/docs/downloads/zas/Zurich-Leistungsuebersicht-Immobilienrechtsschutz.pdf"
+  ],
+  "offen": [
+    "Quelle: Deckungskonzept Rechtsschutzversicherung PrivatSchutz 10/2024 (PDF auf zurich.de).",
+    "Zwei Stufen (Basis, Top), keine Empfehlung markiert.",
+    "Bausteine: Privat- und Berufs-Rechtsschutz (Arbeitsrecht ausschließbar), Verkehrs-Rechtsschutz und Immobilien-Rechtsschutz jeweils eigener Baustein.",
+    "Top schließt Immobilien-Rechtsschutz für selbst genutzte Wohneinheiten im Inland ein, dazu Vermieter-Rechtsschutz für eine Einliegerwohnung.",
+    "Strafkaution als Darlehen: 60.000 € (Basis), 500.000 € (Top).",
+    "SB 150, 250 oder 500 €; mit von Zurich vermitteltem Anwalt geringer (Top ab 0 €).",
+    "Erweiterte Leistungen in Top u. a. Verwaltungs-RS, Kapitalanlagen bis 20.000 €, Internet-RS, nebenberufliche Tätigkeit.",
+    "Wartezeiten nicht im Deckungskonzept genannt."
+  ]
+}

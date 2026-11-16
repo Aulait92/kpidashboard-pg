@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistung ab 1 % Invalidität",
+    "Zeckenstich-Infektionen versichert",
+    "Unfallrente und Krankenhaustagegeld wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Classic",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "225, 500 oder 1.000 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "20 %, max. 20.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/unfallversicherung.html",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Unfallversicherung Classic mit Unfall PLUS",
+      "kurz": "Classic PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "225, 500 oder 1.000 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "20 %, max. 20.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/unfallversicherung.html",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/unfallversicherung.html"
+  ],
+  "offen": [
+    "Kein Tarifvergleich veröffentlicht: Classic als Grundprodukt, Unfall PLUS als Zusatzbaustein (Stiftung Warentest nennt den Tarif Classic PLUS). Keine Empfehlung markiert.",
+    "Progression: Beispieltabelle der Produktseite mit 225 %, 500 % und 1.000 %, Progression ab 26 % Invalidität. Invaliditätssumme frei wählbar (Beispiele 50.000 und 100.000 €).",
+    "Unfallrente ab 50 % Invalidität, auf Wunsch alternativ oder zusätzlich zur Invaliditätsleistung vereinbar; Höhe frei.",
+    "Sofortleistung bei bestimmten schweren Verletzungen 20 % der Versicherungssumme, mindestens 10.000 €, höchstens 20.000 €; Unfall PLUS zusätzlich bis 1.500 € bei Knochenbrüchen.",
+    "Verbesserte Gliedertaxe (mindestens 20 % höhere Werte) nur mit Unfall PLUS, auf Wunsch gegen Mehrbeitrag.",
+    "Todesfallleistung und Krankenhaustagegeld-Höhe nicht beziffert; weiterer Baustein Unfall-Schutzbrief."
+  ]
+}

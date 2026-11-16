@@ -1,0 +1,115 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "hausrat",
+  "produkt": "Privat Kompakt Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Verzicht auf Kürzung bei grober Fahrlässigkeit",
+    "Überspannung durch Blitz",
+    "Bausteine Internet- und ElektronikSchutz"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 3.000 €",
+        "garten": "bis 2.000 €",
+        "auto": "bis 2.000 €",
+        "ueberspannung": "ja",
+        "allgefahren": "nein",
+        "hotel": "200 €/Tag, 200 Tage",
+        "aussen": "30 % der VS, 6 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "internet": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216997",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 4.000 €",
+        "garten": "bis 5.000 €",
+        "auto": "bis 3.000 €",
+        "ueberspannung": "ja",
+        "allgefahren": "bis 5.000 €, SB 250 €",
+        "hotel": "200 €/Tag, 365 Tage",
+        "aussen": "30 % der VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "internet": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216998",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "100 % der VS",
+        "fahrrad": "ja",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 5.000 €",
+        "garten": "bis Versicherungssumme",
+        "auto": "bis 25.000 €",
+        "ueberspannung": "ja",
+        "allgefahren": "bis 10.000 €, SB 250 €",
+        "hotel": "200 €/Tag, 400 Tage",
+        "aussen": "100 % der VS, 18 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "inklusive",
+        "internet": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216999",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/hausratversicherung/",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216997",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216998",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216999"
+  ],
+  "offen": [
+    "Produkte der Marke BarmeniaGothaer (barmenia.de und gothaer.de leiten auf barmeniagothaer.de um); Versicherer laut Bedingungen: Gothaer Allgemeine Versicherung AG.",
+    "Quelle: Leistungsübersicht „im Überblick“ in den Bedingungen Privat Kompakt Hausrat Klassik, Plus, Premium (Druckstück 06/2026, Teil B Stand 03/2024).",
+    "Keine Empfehlung markiert; Plus als mittlere Stufe gesetzt.",
+    "Einfacher Diebstahl in der Wohnung nicht als eigene Leistung genannt; Plus enthält Trickdiebstahl bis 5.000 €.",
+    "Diebstahl im Garten: Gartenmöbel, Grills, Geräte vom Versicherungsgrundstück (Klassik 2.000 €, Plus 5.000 €, Premium bis zur Versicherungssumme).",
+    "Diebstahl aus dem Kfz: Klassik und Plus ohne Wertsachen; Premium Wertsachen und Elektronik bis 3.000 €.",
+    "Allgefahren = Unbenannte Gefahren. Fahrrad in Klassik und Plus als Baustein Fahrraddiebstahl, zusätzlich Baustein E-BikeSchutz.",
+    "Online-Betrug (Phishing, Pharming, Skimming) nur über den Baustein InternetSchutz. Elementar und Glas „sofern vereinbart“.",
+    "Grobe Fahrlässigkeit bei Herbeiführung ohne Grenze; bei Obliegenheitsverletzungen (Plus, Premium) bis 5.000 €.",
+    "Empfohlene Versicherungssumme je m² und Selbstbeteiligung nicht in der Leistungsübersicht."
+  ]
+}

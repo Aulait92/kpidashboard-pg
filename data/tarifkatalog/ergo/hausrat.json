@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Neuwert, Unterversicherungsverzicht bei 650 €/m²",
+    "Wertsachen bis 30 % der Versicherungssumme",
+    "Überspannung durch Blitz"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 3.000 €",
+        "garten": "optional",
+        "auto": "optional",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "2 ‰ der VS je Tag",
+        "aussen": "30 % der VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Hausrat-und-Gebaeudeversicherung/Hausratversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Best",
+      "kurz": "Best",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "100 % der VS",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 3.000 €",
+        "garten": "ja",
+        "auto": "bis 10.000 €",
+        "allgefahren": "optional",
+        "ueberspannung": "ja",
+        "hotel": "2 ‰ der VS je Tag",
+        "aussen": "30 % der VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Hausrat-und-Gebaeudeversicherung/Hausratversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Hausrat-und-Gebaeudeversicherung/Hausratversicherung",
+    "https://www.ergo.de/content/dam/ergo/pdf/sach/hausratversicherung-broschuere.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "ERGO bietet zwei Stufen (Smart, Best); Best ist auf ergo.de als Bestseller markiert.",
+    "Baustein Diebstahl (Diebstahl außerhalb der Wohnung bis 10.000 €, u. a. aus dem Kfz europaweit, Gartenmöbel und -geräte, Trickdiebstahl außerhalb bis 500 €): in Best enthalten, in Smart zuwählbar. Daraus die Werte Diebstahl aus dem Auto und im Garten.",
+    "Einfacher Diebstahl in der Wohnung ist im Tarifvergleich nicht als eigene Leistung genannt (nur Trickdiebstahl innerhalb der Wohnung im Baustein Diebstahl).",
+    "Unbenannte Gefahren (Allgefahren) nur in Best zuwählbar, in Smart nicht.",
+    "Online-Betrug (Phishing) und Selbstbeteiligung nicht belegt.",
+    "Hotelkosten laut Broschüre (Stand 9.2025): bis 2 Promille der Versicherungssumme je Tag, max. 150 Tage. Außenversicherung weltweit bis 30 % der Versicherungssumme, max. 12 Monate.",
+    "Fahrradschutz wahlweise ab 500 € bis 10.000 € (auch Fahrradkasko); Glas ist ein separater Vertrag."
+  ]
+}

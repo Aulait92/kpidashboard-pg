@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Forderungsausfall (Europa) und Auslandsschutz",
+    "Gefälligkeitsschäden und Ehrenamt",
+    "Hüten fremder Hunde, Reiten fremder Pferde"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "nein",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "wohnung": "nein"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/private-haftpflichtversicherung.html",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht Classic",
+      "kurz": "Classic",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja, SB 250 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 250 g",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "wohnung": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/private-haftpflichtversicherung.html",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht Classic PLUS",
+      "kurz": "Classic PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja, SB 250 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja, 5 Jahre",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "wohnung": "inklusive"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/private-haftpflichtversicherung.html",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/private-haftpflichtversicherung.html"
+  ],
+  "offen": [
+    "Drei Varianten laut Tarifvergleich der Produktseite: Basis, Classic und Classic PLUS (Classic mit Baustein PH-PLUS). HUK-COBURG markiert keine Empfehlung; Classic als mittlere Stufe gesetzt.",
+    "Classic: bei Personenschäden höchstens 15 Mio. € je Person. Forderungsausfall in allen Varianten, begrenzt auf 50 Mio. € und EU, Schweiz, Norwegen, Island, Liechtenstein.",
+    "Deliktunfähige Kinder in Classic und Classic PLUS; Erwachsene bei Demenz bis zur Versicherungssumme, aus sonstigen Gründen bis 50.000 €.",
+    "Geliehene und gemietete bewegliche Sachen in der Regel mit 250 € Selbstbeteiligung; sonst ohne Selbstbeteiligung (Preisbeispiel).",
+    "Mietsachschäden an Wohnräumen sind als Leistung genannt, aber nicht in der Tabelle je Variante; für Basis daher offen.",
+    "Classic PLUS zusätzlich: Mallorca-Police, Kasko-SB bei geliehenen Fahrzeugen, Rückstufung des Schadenfreiheitsrabatts für 5 Jahre, Vermietung von bis zu 3 Objekten, Sachschäden beim Arbeitgeber bis 10.000 €.",
+    "Drohnen bis 250 g sind als Leistung der Haftpflicht genannt (ohne Zuordnung zu Basis), über 250 g bis 5 kg nur in Classic PLUS."
+  ]
+}

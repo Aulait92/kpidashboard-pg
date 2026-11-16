@@ -16,13 +16,15 @@
       "empfohlen": false,
       "werte": {
         "vs": "10 Mio. €",
+        "sb": "wählbar, z. B. 250 €",
         "miete": "bis 10 Mio. €",
         "welpen": "bis Ende Vers.-jahr",
         "forderungsausfall": "nein",
         "geliehen": "nein",
         "nebenberuf": "nein",
         "ausland": "weltweit bis 2 Jahre",
-        "fremdhueter": "ja"
+        "fremdhueter": "ja",
+        "tiergefahr": "nein"
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/tierversicherung/hundeversicherung/hundehaftpflicht",
@@ -42,7 +44,8 @@
         "neuwert": "bis 1.000 €, 2 Jahre",
         "nebenberuf": "bis 6.000 € Umsatz",
         "ausland": "weltweit bis 5 Jahre",
-        "fremdhueter": "ja"
+        "fremdhueter": "ja",
+        "tiergefahr": "nein"
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/tierversicherung/hundeversicherung/hundehaftpflicht",
@@ -62,7 +65,8 @@
         "neuwert": "bis 10.000 €, 2 Jahre",
         "nebenberuf": "bis 24.000 € Umsatz",
         "ausland": "weltweit bis 5 Jahre",
-        "fremdhueter": "ja"
+        "fremdhueter": "ja",
+        "tiergefahr": "bis 10.000 €"
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/tierversicherung/hundeversicherung/hundehaftpflicht",
@@ -74,9 +78,11 @@
   ],
   "offen": [
     "R+V markiert comfort als „Topseller“.",
-    "Selbstbeteiligung je Stufe in der Leistungstabelle nicht genannt.",
+    "Selbstbeteiligung: Berechnungsbeispiel classic mit 250 €; weitere Stufen in der Leistungstabelle nicht genannt.",
     "Versicherungssumme classic und comfort zweifach, premium dreifach maximiert.",
+    "Mietsachschäden an gemieteten Wohnräumen bis zur Versicherungssumme; Einrichtung von Hotelzimmern und Ferienwohnungen nur comfort und premium.",
     "Neuwertersatz in classic laut Tabelle enthalten, Höhe dort nicht genannt.",
+    "Verzicht auf Mitverschulden (Tiergefahr): nur premium bis 10.000 €.",
     "Premium zusätzlich u. a. Tierarztkosten-Ausfalldeckung, Giftköder und Hundediebstahl bis 10.000 €."
   ]
 }

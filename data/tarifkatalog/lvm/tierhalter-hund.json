@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "tierhalter-hund",
+  "produkt": "LVM-Hundehalter-Haftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Tierische Ausscheidungen",
+    "Hundeschauen und Schlittenhunderennen",
+    "Beitragsfreistellung bei Arbeitslosigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "MeineKlassik",
+      "kurz": "MeineKlassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "wählbar 5 bis 100 Mio. €",
+        "forderungsausfall": "ab 500 € Schaden",
+        "welpen": "ja, bis 12 Monate",
+        "geliehen": "Anhänger bis 10.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.lvm.de/dam/jcr:28ed187a-6c33-41a7-a422-ee64d7d9404c/021-hundehalterhaftpflicht-w2241-neu.2025-07-22-10-13-59.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinPremium",
+      "kurz": "MeinPremium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "wählbar 5 bis 100 Mio. €",
+        "forderungsausfall": "ja, inkl. Vorsatz",
+        "welpen": "ja, bis 12 Monate",
+        "geliehen": "Anhänger bis 10.000 €",
+        "nebenberuf": "ja, Kleinerwerb"
+      },
+      "bausteine": {},
+      "quelle": "https://www.lvm.de/dam/jcr:28ed187a-6c33-41a7-a422-ee64d7d9404c/021-hundehalterhaftpflicht-w2241-neu.2025-07-22-10-13-59.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/haftpflichtversicherungen/hundehaftpflicht",
+    "https://www.lvm.de/dam/jcr:28ed187a-6c33-41a7-a422-ee64d7d9404c/021-hundehalterhaftpflicht-w2241-neu.2025-07-22-10-13-59.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre Hundehalter-Haftpflicht (W 2241, 10/2024) und Produktseite lvm.de. MeinPremium enthält alle Leistungen von MeineKlassik.",
+    "Zwei Stufen, keine Empfehlung markiert. Versicherungssumme 5, 10, 20 oder 100 Mio. € (Empfehlung 100 Mio. €); MeineKlassik mit oder ohne Selbstbeteiligung.",
+    "Mietsachschäden in der Reiseunterkunft bis 500.000 €; Schäden an geliehenen Pkw bis 1.000 €.",
+    "MeinPremium: Forderungsausfall mit Vorsatztaten (bis 1 Mio. €), Einsatz als Therapie- oder Rettungshund, gewerblicher Einsatz (Kleinerwerb), Kosten der Tierpension.",
+    "Ausland: Tabelle 2 Jahre weltweit, FAQ der Produktseite bis 5 Jahre und in EU-Staaten unbegrenzt; widersprüchlich, daher nicht erfasst. Fremde Hüter nicht ausdrücklich belegt."
+  ]
+}

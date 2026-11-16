@@ -1,0 +1,97 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "wohngebaeude",
+  "produkt": "Gothaer Wohngebäudeversicherung zum Gleitenden Neuwert (VGB 2019)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gleitender Neuwert",
+    "Feuer, Leitungswasser, Sturm und Hagel",
+    "Home-Service und Notfallservice"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "elementar": "versicherbar",
+        "ableitung": "versicherbar",
+        "pv": "versicherbar",
+        "kosten": "bis 10 % der VS",
+        "ueberspannung": "10 % VS, mind. 10.000 €",
+        "fugen": "nein",
+        "tiere": "nein",
+        "vandalismus": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216485",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Wohngebäude Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "versicherbar",
+        "ableitung": "versicherbar",
+        "pv": "versicherbar",
+        "kosten": "bis 30 % der VS",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "tiere": "nein",
+        "vandalismus": "nein",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216485",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "versicherbar",
+        "ableitung": "versicherbar",
+        "pv": "versicherbar",
+        "kosten": "bis zur VS",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "tiere": "ja",
+        "vandalismus": "bis 1 % der VS",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216485",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/wohngebaeude-versicherung/",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216485"
+  ],
+  "offen": [
+    "Produkte der Marke BarmeniaGothaer (barmenia.de und gothaer.de leiten auf barmeniagothaer.de um); Versicherer laut Bedingungen: Gothaer Allgemeine Versicherung AG.",
+    "Quelle: Tabelle „Leistungen der Gothaer Wohngebäudeversicherung im Überblick“ in den Bedingungen (Stand 06/2026).",
+    "Keine Empfehlung markiert; Plus als mittlere Stufe gesetzt.",
+    "Die Tabelle nutzt für „versichert“ und „versicherbar“ zwei Punktsymbole, die im Text nicht unterscheidbar sind. Elementar, Ableitungsrohre (Klauseln 7049, 7051, 7071) und Photovoltaik (Klauseln 7043, 7044) sind laut Bedingungen über Klauseln bzw. Besondere Bedingungen geregelt und deshalb als versicherbar erfasst; am Antrag gegenprüfen.",
+    "Kosten nach Schaden: Aufräum- und Abbruchkosten; Hotelkosten Basis 100 €/Tag (100 Tage), Plus 200 €/Tag (150 Tage), Premium 200 €/Tag (200 Tage).",
+    "Tiere = Tierbiss an elektrischen Anlagen und Leitungen; Premium zusätzlich Haarwild bis 1 % der VS.",
+    "Vandalismus = mutwillige Beschädigungen; Premium auch Diebstahl außen angebrachter Sachen bis 1 % der VS.",
+    "Grobe Fahrlässigkeit bei Obliegenheiten nur Premium bis 5.000 €. Selbstbeteiligung nicht in der Übersicht.",
+    "Die Produktseite nennt einen Rabatt bei Schadenfreiheit in den letzten fünf Jahren (Klausel 7080), ohne Höhe."
+  ]
+}

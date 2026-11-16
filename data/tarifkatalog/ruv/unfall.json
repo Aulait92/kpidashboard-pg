@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "unfall",
+  "produkt": "Risiko-UnfallPolice",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit, täglich kündbar",
+    "Zeckenstiche und Impfschäden versichert",
+    "Dynamik"
+  ],
+  "tarife": [
+    {
+      "name": "Risiko-UnfallPolice Classic",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "62.500 €",
+        "abGrad": "ab 1 %",
+        "maxInvaliditaet": "250.000 €",
+        "sofort": "nein",
+        "kosmetik": "25.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/unfallversicherung/risiko-unfallversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Risiko-UnfallPolice Comfort",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "125.000 €",
+        "maxInvaliditaet": "500.000 €",
+        "sofort": "nein",
+        "kosmetik": "25.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/unfallversicherung/risiko-unfallversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Risiko-UnfallPolice Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "150.000 €",
+        "maxInvaliditaet": "600.000 €",
+        "sofort": "ja",
+        "kosmetik": "50.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/unfallversicherung/risiko-unfallversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/unfallversicherung/risiko-unfallversicherung"
+  ],
+  "offen": [
+    "Drei zusammengestellte Angebotsvarianten der Produktseite; Grundsumme, Progression und Leistungsarten können in der Beratung abweichend gewählt werden.",
+    "R+V markiert keine Empfehlung; Comfort als mittlere Stufe gesetzt.",
+    "Progression nicht genannt; die Höchstleistung beträgt in allen drei Varianten das Vierfache der Grundsumme.",
+    "Leistung ab 1 % Invalidität ist nur für Classic belegt (Berechnungsgrundlage).",
+    "Zusatzbausteine: HilfePlus in Comfort und Premium enthalten (Reha-Manager, Hilfe im Alltag), PremiumPlus nur in Premium (verbesserte Gliedertaxe, Sofortleistung, Knochenbruchgeld, Kurkosten bis 25.000 €). RisikoPlus (50 % mehr bei Freizeitunfällen ab 20 % Invalidität) beim Berater wählbar.",
+    "Unfallrente, Krankenhaustagegeld, Todesfallleistung und Bergungskosten nicht genannt."
+  ]
+}

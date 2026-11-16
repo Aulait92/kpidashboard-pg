@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Die Haftpflichtkasse",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalterhaftpflicht-Versicherung Einfach Komplett (Hund)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Leinen- und Maulkorbzwang",
+    "Deckschäden",
+    "Rechtsschutz für Tierhalter"
+  ],
+  "tarife": [
+    {
+      "name": "THV Einfach Komplett",
+      "kurz": "Komplett",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "miete": "ja",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 10.000 €",
+        "neuwert": "bis 5.000 €",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ausland": "Europa unbegrenzt",
+        "fremdhueter": "ja",
+        "welpen": "ja, 1. Lebensjahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/107/deckungsuebersicht_2026-06-30.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.haftpflichtkasse.de/versicherungen/privatkunden/tierhalter/",
+    "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/107/deckungsuebersicht_2026-06-30.pdf?reController=search&reAction=index&showInView=true",
+    "https://www.haftpflichtkasse.de/service-kontakt/wissen/dokumentencenter/"
+  ],
+  "offen": [
+    "Quelle: Deckungsübersicht Tierhalter-Haftpflicht Einfach Komplett Hund und Pferd (Stand 01.07.2026, Dokumentencenter haftpflichtkasse.de).",
+    "Ein Tarif (Einfach Komplett).",
+    "Deckungssumme und Selbstbeteiligung nicht in der Übersicht und nicht auf der Produktseite (nur im Beitragsrechner); Vorsorgeversicherung max. 20 Mio. €.",
+    "Mietsachschäden an Immobilien und Mobilien in Ferienunterkünften; gemietete, geliehene bewegliche Sachen und Kfz je 10.000 € (Kfz mit 10 % SB, max. 1.000 €).",
+    "Ausland außerhalb Europas bis 5 Jahre; Bergungskosten für das Tier bis 5.000 €; Opferschutz bei unbekanntem Schädiger bis 50.000 €."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "rechtsschutz",
+  "produkt": "Privat-Rechtsschutz (Risikoträger ÖRAG)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Unbegrenzte Versicherungssumme",
+    "Telefonische Rechtsberatung ohne SB",
+    "Vermittlung von Mediation"
+  ],
+  "tarife": [
+    {
+      "name": "Rundum-Schutz",
+      "kurz": "Rundum",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/rechtsschutzversicherung/rundum-schutz.html",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundum-Schutz PLUS",
+      "kurz": "Rundum Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/dam/jcr:f21fb722-8700-426d-b91d-30e3e4c25533/dlang_AO_flyer_privat-rechtsschutz_2024_final.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/rechtsschutzversicherung/privat-rechtsschutzversicherung.html",
+    "https://www.provinzial.de/west/versicherung/rechtsschutzversicherung/rundum-schutz.html",
+    "https://www.provinzial.de/dam/jcr:f21fb722-8700-426d-b91d-30e3e4c25533/dlang_AO_flyer_privat-rechtsschutz_2024_final.pdf"
+  ],
+  "offen": [
+    "Risikoträger ist die ÖRAG Rechtsschutzversicherungs-AG. Quelle: Produktseiten Privat-Rechtsschutz und Rundum-Schutz (provinzial.de/west) und Flyer Privat-Rechtsschutz (2024).",
+    "Zwei Stufen: Rundum-Schutz (Privat, Verkehr, Wohnen, Beruf) und Rundum-Schutz PLUS; daneben einzelne Bausteine (Privat, Verkehr, Haus und Wohnung, Beruf). Keine Empfehlung markiert.",
+    "Rundum-Schutz PLUS: für nicht versicherte private Angelegenheiten einmal im Kalenderjahr Anwaltskosten bis 1.000 €.",
+    "Selbstbeteiligung sinkt um 150 €, wenn eine von MEINRECHT empfohlene Kanzlei gewählt wird; Höhe der SB, Strafkaution und Wartezeit nicht belegt."
+  ]
+}

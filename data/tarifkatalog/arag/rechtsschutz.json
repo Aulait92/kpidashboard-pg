@@ -1,0 +1,104 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "rechtsschutz",
+  "produkt": "ARAG Rechtsschutzversicherung (Privat)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Versicherungssumme in Europa unbegrenzt",
+    "Erweiterter Straf-Rechtsschutz bis 300.000 €",
+    "Mediation ohne Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Rechtsschutz Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "ja",
+        "sb": "0, 150 oder 250 €",
+        "wartezeit": "meist 3 Monate",
+        "mediation": "bis 3.000 € je Fall",
+        "kaution": "300.000 €",
+        "vsWelt": "350.000 €"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.arag.de/rechtsschutzversicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "ARAG Rechtsschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "ja",
+        "sb": "0, 150 oder 250 €",
+        "wartezeit": "meist 3 Monate",
+        "mediation": "bis 3.000 € je Fall",
+        "kaution": "unbegrenzt in Europa",
+        "vsWelt": "unbegrenzt"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.arag.de/rechtsschutzversicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "ARAG Rechtsschutz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "ja",
+        "sb": "0, 150 oder 250 €",
+        "wartezeit": "meist 3 Monate",
+        "mediation": "bis 3.000 € je Fall",
+        "kaution": "unbegrenzt in Europa",
+        "vsWelt": "unbegrenzt"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.arag.de/rechtsschutzversicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/rechtsschutzversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-rs-arb.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich der Produktseite arag.de (Abruf 16.11.2026); Versicherungsbedingungen (ARB) als PDF verlinkt, nicht ausgewertet.",
+    "Drei Stufen (Kompakt, Komfort, Premium), keine Empfehlung markiert; Komfort als mittlere Stufe gesetzt.",
+    "Privat ist der Grundbaustein; Beruf, Verkehr und Wohnen sind wählbar, Zuordnung je Stufe nicht angegeben.",
+    "Strafkaution in Europa: Kompakt 300.000 €, Komfort und Premium unbegrenzt; weltweit 300.000 €, 500.000 € bzw. 1 Mio. €.",
+    "Versicherungssumme weltweit bei Auslandsaufenthalt bis 12 Monate: Kompakt 350.000 €, Komfort und Premium unbegrenzt.",
+    "Wartezeit je Leistung 0 Monate bis 3 Jahre, typisch 3 Monate; Mediation ohne Wartezeit (bis 3.000 € je Fall, 6.000 € im Jahr).",
+    "Opfer-Rechtsschutz, telefonische Beratung und erweiterte Privat-Leistungen je Stufe nicht eindeutig zuordenbar."
+  ]
+}

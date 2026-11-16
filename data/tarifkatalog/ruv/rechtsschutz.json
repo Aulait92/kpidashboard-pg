@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "rechtsschutz",
+  "produkt": "Privatrechtsschutz (Bausteinkonzept)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Anwaltstelefon und Mediation kostenlos",
+    "Sozial-, Steuer- und Verwaltungs-Rechtsschutz",
+    "Beruf, Verkehr, Immobilien als Bausteine"
+  ],
+  "tarife": [
+    {
+      "name": "Privatrechtsschutz classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "1 Mio. €",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "bis 100.000 €",
+        "privat": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.ruv.de/rechtsschutzversicherung/privatrechtsschutz",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privatrechtsschutz comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "4 Mio. €",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "bis 300.000 €",
+        "privat": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.ruv.de/rechtsschutzversicherung/privatrechtsschutz",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/rechtsschutzversicherung/privatrechtsschutz",
+    "https://www.ruv.de/rechtsschutzversicherung"
+  ],
+  "offen": [
+    "Versicherer ist R+V selbst (kein Partner). Privat ist der Grundbaustein; Beruf, Verkehr und Immobilien (selbst genutzt oder vermietet) sind kombinierbar, daher als zuwählbar erfasst.",
+    "R+V markiert keine Variante; bei zwei Stufen keine Empfehlung gesetzt.",
+    "Strafkaution als zinsloses Darlehen zusätzlich zur Versicherungssumme.",
+    "Weltweiter Internetvertragsrechtsschutz bis 30.000 € (classic) bzw. 300.000 € (comfort); eine allgemeine Summe weltweit ist nicht genannt.",
+    "Zusatzbausteine: Spezial-Straf-Rechtsschutz (classic und comfort); Vorsorge Familie Erbe, Urheberrecht im Internet und Kapitalanlagen nur mit comfort. Ohne Zusatzbaustein Familien- und Erbrecht bis 500 €.",
+    "Selbstbeteiligung, Wartezeit und Opfer-Rechtsschutz nicht belegt; Anwaltstelefon ohne Anrechnung auf die Selbstbeteiligung."
+  ]
+}

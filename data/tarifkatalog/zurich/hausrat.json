@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "hausrat",
+  "produkt": "PrivatSchutz Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Feuer, Einbruchdiebstahl, Leitungswasser, Sturm",
+    "Versicherungssumme unbegrenzt (nach Wohnfläche)",
+    "Überspannung durch Blitz"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "bis 15.000 €, erhöhbar",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 1.000 €",
+        "garten": "nein",
+        "auto": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 €/Tag, 100 Tage",
+        "aussen": "bis 7.500 €, 90 Tage",
+        "sb": "wählbar 0 bis 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "fahrrad": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/br/documents/prospekte-broschueren/hausratversicherung_leistungsuebersicht_2023_10.pdf",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "PrivatSchutz Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis 50.000 €, erhöhbar",
+        "fahrrad": "bis 1.000 €, erhöhbar",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "bargeld": "bis 2.000 €, erhöhbar",
+        "garten": "ja",
+        "auto": "bis 5.000 €",
+        "ueberspannung": "ja",
+        "hotel": "250 €/Tag, 1 Jahr",
+        "aussen": "bis 40.000 €, 180 Tage",
+        "sb": "wählbar 0 bis 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "fahrrad": "inklusive"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/br/documents/prospekte-broschueren/hausratversicherung_leistungsuebersicht_2023_10.pdf",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media/project/zwp/germany/br/documents/prospekte-broschueren/hausratversicherung_leistungsuebersicht_2023_10.pdf",
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/einfache-sprache/hausratversicherung_einfache-uebersicht_2026_04.pdf"
+  ],
+  "offen": [
+    "Quelle: Deckungskonzept Hausratversicherung PrivatSchutz 10/2022 (Dateiname 2023_10, PDF auf zurich.de); die Einfache Übersicht 04/2026 bestätigt Gefahren und unbegrenzte Versicherungssumme, nennt aber keine Grenzen. Ob das Deckungskonzept noch aktuell ist, bitte bei Zurich bestätigen.",
+    "Zwei Stufen (Basis, Top), keine Empfehlung markiert.",
+    "Wertsachen: summarische Grenze 15.000 € (Basis) bzw. 50.000 € (Top), kein Prozentsatz der Versicherungssumme.",
+    "Einfacher Diebstahl in der Wohnung nicht als Leistung genannt; Top enthält Trickdiebstahl in der Wohnung bis 2.000 €.",
+    "Fahrrad: in Basis nur, wenn vereinbart; in Top 1.000 € eingeschlossen und erhöhbar.",
+    "Diebstahl im Garten: Top für Gartenmöbel, Gartengeräte, Balkonkraftwerke auf eingefriedetem Grundstück.",
+    "Phishing beim privaten Online-Banking in Top bis 1.000 €.",
+    "Elementar einschließbar mit 3.500 € SB (wählbar 2.500, 1.500, 750 €; in Top auch 0 €)."
+  ]
+}

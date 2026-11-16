@@ -1,0 +1,48 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "unfall",
+  "produkt": "LVM-Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Folgen von Borreliose und FSME nach Zeckenbiss",
+    "Unfälle durch Eigenbewegungen",
+    "Bausteine Rente, Hilfe, Extra, Kind"
+  ],
+  "tarife": [
+    {
+      "name": "Baustein Basis",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar, z. B. 700 %",
+        "abGrad": "optional, Turbo ab 50 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "ja",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "wählbar"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:4733ad53-41d7-46a1-98b4-215466d7468e/031-privater-unfallschutz-w3112.2026-03-20-08-19-55.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/unfallversicherung",
+    "https://www.lvm.de/dam/jcr:4733ad53-41d7-46a1-98b4-215466d7468e/031-privater-unfallschutz-w3112.2026-03-20-08-19-55.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre Unfallversicherung (W 3112) und Produktseite lvm.de.",
+    "Ein Tarif: Baustein Basis mit wählbaren Bausteinen Rente (ab 50 % Invalidität), Hilfe, Extra (u. a. Krankenhaustagegeld, Fraktur und Bänderriss) und Kind.",
+    "Turbo-Progression (volle Leistung ab 50 % Invalidität) oder verbesserte Gliedertaxe wählbar; Beispiel der Produktseite: 75.000 € mit Progression 700.",
+    "Sofortleistung bei schweren Verletzungen im Baustein Basis; Höhe nicht genannt. Zahnersatz bis 20.000 €."
+  ]
+}

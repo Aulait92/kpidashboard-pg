@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "rechtsschutz",
+  "produkt": "LVM-Privat-Kombi-Rechtsschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Privatbereich immer dabei",
+    "Beruf, Verkehr, Wohnen wählbar",
+    "Treuebonus nach schadenfreien Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "MeineKlassik",
+      "kurz": "MeineKlassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "200.000 €",
+        "wartezeit": "3 Monate"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:e3824163-4e5c-4ded-8ae6-27cc293db49a/071-vertragsgrundlagen-rechtsschutz-r011.2025-12-30-10-03-54.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinPremium",
+      "kurz": "MeinPremium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt in DE",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "bis 300.000 €",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "300.000 €",
+        "wartezeit": "3 Monate"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:b585be1c-950c-4ff8-999b-43019b02d431/071-rechtsschutz-privat-w7111.9a7cdbc0cb0107f9654e610b3ee55377.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/rechtsschutzversicherungen/rechtsschutzversicherung",
+    "https://www.lvm.de/dam/jcr:b585be1c-950c-4ff8-999b-43019b02d431/071-rechtsschutz-privat-w7111.9a7cdbc0cb0107f9654e610b3ee55377.pdf",
+    "https://www.lvm.de/dam/jcr:e3824163-4e5c-4ded-8ae6-27cc293db49a/071-vertragsgrundlagen-rechtsschutz-r011.2025-12-30-10-03-54.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre Privat-Kombi-Rechtsschutz (W 7111) und Produktseite lvm.de.",
+    "Zwei Stufen (MeineKlassik, MeinPremium), keine Empfehlung markiert. Privatbereich immer dabei, Beruf, Verkehr und Wohnen als Bausteine kombinierbar.",
+    "MeinPremium: unbegrenzte Versicherungssumme in Deutschland, 2 Mio. € in Europa, 300.000 € weltweit, Strafkautionsdarlehen bis 300.000 €, Kapitalanlagen-RS bis 10.000 €, Cyber-Rechtsschutz.",
+    "MeineKlassik: weltweit bis 200.000 € (Vertragsgrundlagen R 011, mit RechtsschutzPlus 300.000 €); Versicherungssumme in Europa und Strafkaution laut Versicherungsschein, nicht belegt.",
+    "Wartezeit grundsätzlich 3 Monate; entfällt u. a. im Verkehrs-Rechtsschutz. Selbstbeteiligung nicht belegt."
+  ]
+}

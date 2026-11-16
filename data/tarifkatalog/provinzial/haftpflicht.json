@@ -1,0 +1,94 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gefälligkeitshandlungen",
+    "Ehrenamtliche Tätigkeit",
+    "Ausland in Europa zeitlich unbegrenzt"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "schluessel": "nein",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "ja",
+        "drohne": "bis 1 kg"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "tiere": "optional",
+        "wohnung": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/haftpflichtversicherung/privathaftpflichtversicherung.html",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "schluessel": "ja",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 10.000 €, ohne SB",
+        "miete": "ja",
+        "drohne": "bis 4 kg"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "tiere": "optional",
+        "wohnung": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:9231d3e1-d612-49fa-a98a-8b6fe5193c34",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komfort mit Plus-Paket",
+      "kurz": "Komfort Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "schluessel": "ja",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €, ohne SB",
+        "miete": "ja, auch Küche und Glas",
+        "neuwert": "ja",
+        "mallorca": "ja",
+        "drohne": "bis 4 kg"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "tiere": "optional",
+        "wohnung": "optional",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:9231d3e1-d612-49fa-a98a-8b6fe5193c34",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/haftpflichtversicherung/privathaftpflichtversicherung.html",
+    "https://www.provinzial.de/dam/jcr:9231d3e1-d612-49fa-a98a-8b6fe5193c34",
+    "https://www.provinzial.de/dam/jcr:60bedd80-9093-47b0-a4a6-20c65a71ff57/9060029_PIB%20Privat-Haftpflicht_5_09-2022.pdf?view="
+  ],
+  "offen": [
+    "Provinzial Versicherung AG, Region Westfalen (provinzial.de/west); die Provinzial Nord veröffentlicht eigene Unterlagen.",
+    "Quelle: Leistungsübersicht Privat-Haftpflichtversicherung (PDF, 11/2022), Produktseite und Produktinformationsblatt PIB PHV/7 (Stand 08.2026).",
+    "Drei Stufen: Smart (Basisschutz), Komfort, Komfort mit Plus-Paket (nur zu Komfort). Keine Empfehlung markiert; Komfort als mittlere Stufe gesetzt.",
+    "Die Leistungsübersicht kennzeichnet versichert und nicht versichert mit Bildsymbolen, die sich nicht automatisch lesen lassen; erfasst sind nur Beträge sowie Aussagen der Produktseite und des Produktinformationsblatts.",
+    "Deckungssumme: Produktseite nennt Versicherungssummen bis 50 Mio. € und ein Rechenbeispiel mit 15 Mio. €; Zuordnung je Stufe nicht belegt. Selbstbeteiligung wählbar (Beispiel 150 €).",
+    "Schlüsselverlust laut Produktseite in Smart nicht versichert, in Komfort und Plus-Paket versichert (privat, beruflich, ehrenamtlich; Folgeschäden bis 100.000 €). Deliktunfähige Kinder und geliehenes Werkzeug laut Produktseite nicht in Smart.",
+    "Plus-Paket laut PIB u. a. mit Öltank, Neuwertentschädigung und Mallorca-Deckung; Rabattretter und Forderungsausfall nicht lesbar.",
+    "Bausteine laut PIB: Weitere Angehörige, Vermieter, Dienst, Hund, Pferd. Eine eigene Hunde- bzw. Pferdehalter-Haftpflicht ist auf der Produktseite genannt, Leistungsübersicht nicht ausgewertet (siehe README)."
+  ]
+}

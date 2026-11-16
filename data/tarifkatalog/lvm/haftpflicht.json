@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "haftpflicht",
+  "produkt": "LVM-Privat-Haftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Forderungsausfall inkl. Vorsatztaten",
+    "Ehrenamt in Vereinen",
+    "Gefälligkeitsschäden"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-Privat-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "wählbar",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 100.000 €",
+        "delikt": "ja",
+        "geliehen": "bis 10.000 €",
+        "miete": "bis 500.000 €",
+        "gefaelligkeit": "ja",
+        "mallorca": "optional",
+        "rabattretter": "optional",
+        "drohne": "bis 1 kg",
+        "nebenberuf": "optional",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "auto": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:a46064d2-a9be-499e-b9d0-82729159eaeb/021-privathaftpflicht-h700.2025-12-11-15-49-21.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "LVM-Privat-Haftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "wählbar",
+        "forderungsausfall": "ja, inkl. Vorsatz",
+        "schluessel": "bis 500.000 €",
+        "delikt": "ja",
+        "geliehen": "bis 100.000 €",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 10.000 €",
+        "mallorca": "optional",
+        "rabattretter": "optional",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "optional",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "auto": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:96eba700-8e33-42c9-9a52-42aff8dab146/021-privathaftpflicht-h700a.2025-12-11-15-49-41.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/haftpflichtversicherungen/privathaftpflichtversicherung",
+    "https://www.lvm.de/dam/jcr:a33214fa-f56e-4082-a8b7-74585caa057c/021-privathaftpflicht-w2111.b77da2b122403fbab4e7836453d50c47.pdf",
+    "https://www.lvm.de/dam/jcr:a46064d2-a9be-499e-b9d0-82729159eaeb/021-privathaftpflicht-h700.2025-12-11-15-49-21.pdf",
+    "https://www.lvm.de/dam/jcr:96eba700-8e33-42c9-9a52-42aff8dab146/021-privathaftpflicht-h700a.2025-12-11-15-49-41.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre Privathaftpflicht (W 2111, 09/2026), Leistungsvergleich „Komfort und Premium auf einen Blick“, sowie Produktseite lvm.de.",
+    "Zwei Stufen (Komfort, Premium), keine Empfehlung markiert.",
+    "Die Broschüre kennzeichnet enthaltene und nicht enthaltene Leistungen mit Bildsymbolen, die sich nicht automatisch lesen lassen; erfasst sind nur Beträge und Angaben aus Text und Produktseite.",
+    "Versicherungssumme wählbar; LVM empfiehlt 100 Mio. €. Selbstbeteiligung vereinbar, Höhe nicht belegt.",
+    "Schlüssel privat und ehrenamtlich: 100.000 € bzw. 500.000 €; berufliche Schlüssel in Premium bis 500.000 €. Premium zusätzlich Abhandenkommen geliehener Sachen bis 1.000 €.",
+    "Mietsachschäden an Wohnräumen: Komfort 500.000 €; Premium als Symbol dargestellt.",
+    "Mallorca-Deckung und Rabattretter nur im Ergänzungsbaustein Kfz; nebenberufliche Tätigkeiten im Ergänzungsbaustein Beruf (bis 10 Mio. €).",
+    "Forderungsausfall: Die Bedingungen Komfort (H 700) enthalten Forderungsausfall nur für Mietsachschäden im Rahmen der Plus für Vermieter; Premium (H 700a) mit allgemeiner Forderungsausfalldeckung inkl. Vorsatztaten (Personenschäden bis 1 Mio. € laut Broschüre)."
+  ]
+}

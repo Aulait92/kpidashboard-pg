@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Ungewollter Deckakt und Hundeschule",
+    "Mietsachschäden auch in Reiseunterkünften"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 Mio. €",
+        "sb": "0, 150 oder 250 €",
+        "miete": "ja",
+        "welpen": "26 Wochen",
+        "forderungsausfall": "bis 5 Mio. €",
+        "ausland": "weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.devk.de/produkte/haftpflichtversicherung/tierhalter/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hundehaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "0, 150 oder 250 €",
+        "miete": "ja",
+        "welpen": "52 Wochen",
+        "forderungsausfall": "bis 10 Mio. €",
+        "ausland": "weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.devk.de/produkte/haftpflichtversicherung/tierhalter/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/haftpflichtversicherung/tierhalter/"
+  ],
+  "offen": [
+    "Zwei Stufen Komfort und Premium, keine Markierung; keine Empfehlung gesetzt.",
+    "Selbstbeteiligung wählbar: keine, 150 € (5 % Nachlass) oder 250 € (10 % Nachlass).",
+    "Forderungsausfall für Personen- und Sachschäden; Vermögensschäden bis 1 Mio. € in Komfort (2.000 € SB) bzw. 10 Mio. € in Premium (1.000 € SB).",
+    "Fremde Hüter: laut Pferde-Abschnitt ist der Eigenschaden des nicht gewerbsmäßigen Tierhüters versichert; für Hunde nicht ausdrücklich genannt.",
+    "Rabatt für VDH-Mitglieder (Höhe nicht genannt)."
+  ]
+}

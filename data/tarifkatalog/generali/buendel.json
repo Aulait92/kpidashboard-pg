@@ -1,0 +1,15 @@
+{
+  "gesellschaft": "Generali",
+  "name": "Vermögenssicherungspolice (VSP)",
+  "linien": [],
+  "mindestLaufzeitJahre": null,
+  "sparten": ["haftpflicht", "unfall", "hausrat", "wohngebaeude", "rechtsschutz", "tierhalter-hund", "tierhalter-pferd"],
+  "staffel": [],
+  "quelle": "https://www.generali.de/privatkunden/recht-haftung/privathaftpflichtversicherung",
+  "stand": "2026-11-16",
+  "offen": [
+    "Die VSP enthält die Bausteine Privathaftpflicht, Unfall, Hausrat und Haushalt-Glas; Wohngebäude, Photovoltaik, Reise, Gesundheit und Rechtsschutz (ADVOCARD) zuwählbar. Tierhalterhaftpflicht ist laut Produktseite auch in der VSP abschließbar.",
+    "Beitragsvorteile laut Produktseiten: bis 25 % Kundenbonus; 10 % VSP-Bonus, 10 % Kundenbonus und 10 % Unfallbonus (letzterer für die Kfz-Versicherung); für Rechtsschutz und Gesundheit je 5 % VSP-Nachlass.",
+    "Die Nachlässe sind nicht nach Anzahl der Verträge gestaffelt; Bedingungen für die einzelnen Boni sind nicht genannt. Deshalb keine Staffel."
+  ]
+}

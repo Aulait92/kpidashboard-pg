@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Gothaer Tierhalter-Haftpflichtversicherung (Pferd)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Deckakt mitversichert",
+    "Turniere und Rennen inkl. Training",
+    "Gelegentliche Tätigkeit als Reitlehrer"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "miete": "ja, Stall, Box, Weide",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "ja, bis 12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "ja",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.barmeniagothaer.de/pferdehaftpflicht-versicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/pferdehaftpflicht-versicherung/",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216285"
+  ],
+  "offen": [
+    "Produkte der Marke BarmeniaGothaer (barmenia.de und gothaer.de leiten auf barmeniagothaer.de um); Versicherer laut Bedingungen: Gothaer Allgemeine Versicherung AG.",
+    "Ein Tarif mit wählbarer Deckungssumme (Tarifvergleich der Produktseite). Bedingungen Tierhalter-Haftpflicht: AHB 04/12, BBR 02/18 (Druckstück 07/2026).",
+    "Geliehene Sachen: gemietete oder geliehene Pferdeanhänger und Reitutensilien (Sattel, Helm, Trense).",
+    "Auslandsaufenthalte: in Europa zeitlich unbegrenzt, weltweit fünf Jahre. Die FAQ nennt Stufen Basis-, Top- und Premium-Schutz nur zum Auslandsschutz; im Tarifvergleich steht ein Tarif.",
+    "Selbstbeteiligung nicht belegt."
+  ]
+}

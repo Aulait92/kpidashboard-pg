@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Neubauwert bei Totalschaden",
+    "Photovoltaik und Solarthermie mitversichert",
+    "Innovations-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "ja",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "optional",
+        "vandalismus": "optional",
+        "tiere": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.ruv.de/wohngebaeudeversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Wohngebäude comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "ja, bis 100 €/m²",
+        "pv": "ja",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "optional",
+        "vandalismus": "optional",
+        "tiere": "optional, bis 5.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional"
+      },
+      "quelle": "https://www.ruv.de/wohngebaeudeversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/wohngebaeudeversicherung"
+  ],
+  "offen": [
+    "R+V markiert keine Variante; bei zwei Stufen keine Empfehlung gesetzt.",
+    "Elementar über den Baustein Naturgefahren Plus (ab 500 € Selbstbeteiligung), in classic und comfort.",
+    "Rohre: beitragsfrei bis 100 € je m² in classic und comfort; Ableitungsrohre außerhalb des Grundstücks nur in comfort; Erhöhung auf 150 oder 200 € je m² als Baustein nur mit comfort.",
+    "Photovoltaik und Solarthermie sind als Gebäudebestandteil mitversichert; erweiterte Deckung (Beschädigung aller Art, Diebstahl, Ertragsausfall) über eigene Bausteine.",
+    "Gebäudebeschädigung durch unbefugte Dritte: classic bis 1.000 €, comfort bis 2.500 €. Baustein Diebstahl, Vandalismus und Graffiti bis 2.500 €, wahlweise bis 20.000 € (SB 250 €).",
+    "Überspannung durch Blitz ist ein Baustein. Wildlebende Tiere (z. B. Marder) bis 5.000 € nur mit comfort.",
+    "comfort zusätzlich: Mehrkosten für altersgerechten Umbau bis 25.000 €, umweltfreundliche Baustoffe bis 20.000 €, Fehlalarm bis 2.500 €, Innere Unruhen.",
+    "Höhe der Kosten nach Schaden, Mietausfall, undichte Fugen und Selbstbeteiligung je Variante nicht belegt."
+  ]
+}

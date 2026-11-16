@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "rechtsschutz",
+  "produkt": "Privat-, Wohn-, Berufs- und Verkehrsrechtsschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Unbegrenzte Versicherungssumme",
+    "Telefonische Rechtsberatung und Mediation",
+    "Straf- und Opfer-Rechtsschutz"
+  ],
+  "tarife": [
+    {
+      "name": "Privatrechtsschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "500.000 €",
+        "wartezeit": "1 Monat, Beruf 3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/rechtsschutzversicherung/privat--wohnen--beruf-und-verkehr/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privatrechtsschutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "500.000 €",
+        "wartezeit": "1 Monat, Beruf 3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/rechtsschutzversicherung/privat--wohnen--beruf-und-verkehr/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/rechtsschutzversicherung/privat--wohnen--beruf-und-verkehr/"
+  ],
+  "offen": [
+    "Versicherer ist DEVK selbst. Erfasst ist der Allroundschutz (Privat, Wohnen, Beruf, Verkehr); auch ohne Verkehr oder nur Privat abschließbar.",
+    "DEVK markiert keine Stufe; bei zwei Stufen keine Empfehlung gesetzt.",
+    "Premium zusätzlich: Steuer-, Sozial- und Verwaltungs-Rechtsschutz schon vor Gericht, Beratung Familien- und Erbrecht bis 500 € (Komfort 250 €), Rentenberatung, Aufhebungsverträge, mobile Anwälte, Beitragsfreistellung bei Arbeitslosigkeit, Halt- und Parkverstöße.",
+    "Weltweit bei Auslandsaufenthalten bis 1 Jahr, Versicherungssumme 500.000 €.",
+    "Wartezeit Privat 1 Monat, Arbeitsrecht 3 Monate, teils 12 Monate.",
+    "Selbstbeteiligung: nur im Rechenbeispiel Komfort clever 150 € genannt. Strafkaution nicht belegt.",
+    "Clever-Tarife (Anruf vor Anwaltsbeauftragung) bis 15 % günstiger; Bestandskunden-Bonus bis 5 % bei Verträgen in einer weiteren Sparte."
+  ]
+}

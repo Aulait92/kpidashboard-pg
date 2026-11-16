@@ -1,0 +1,94 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "unfall",
+  "produkt": "Privat Kompakt Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistungsarten frei kombinierbar",
+    "Reha- und Kurbeihilfe",
+    "Vollwaisenrente 500 € im Monat"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar 225 bis 600 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "optional",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "gliedertaxe": "wählbar M, L, XL"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216887",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Unfall Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar 225 bis 600 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "optional",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "gliedertaxe": "wählbar L, XL"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216887",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Unfall Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar 225 bis 600 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "optional",
+        "kosmetik": "bis 1 Mio. €",
+        "bergung": "bis 1 Mio. €",
+        "gliedertaxe": "wählbar XL, XXL"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216887",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/private-unfallversicherung/",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216887",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216888"
+  ],
+  "offen": [
+    "Produkte der Marke BarmeniaGothaer (barmenia.de und gothaer.de leiten auf barmeniagothaer.de um); Versicherer laut Bedingungen: Gothaer Allgemeine Versicherung AG.",
+    "Quelle: Leistungsübersicht in den Bedingungen Privat Kompakt Unfallversicherung Klassik, Plus, Premium (Stand 07/2023).",
+    "Die Produktseite vergleicht Basis, Klassik und Premium; Spar und Basis haben eigene Bedingungen (Druckstück 216888) und sind hier nicht erfasst.",
+    "Keine Empfehlung markiert; Plus als mittlere Stufe gesetzt.",
+    "Invaliditätssumme, Todesfallleistung, Unfallrente (ab 50 % Invalidität, bis 70 Jahre oder lebenslang) und Tagegelder werden einzeln vereinbart; Höhe nicht in der Übersicht.",
+    "Progression 225, 350, 500 oder 600 % (Klassik zusätzlich 500 % Plus). Sofortleistung bei Knochenbrüchen über den Knochen-Zusatzschutz.",
+    "Leistung ab Invaliditätsgrad und Zeckenstich nicht ausdrücklich belegt; bestimmte Infektionskrankheiten über die IMMUN-Klausel in allen Stufen.",
+    "Produktseite: ab der zweiten versicherten Person 10 % Mehrpersonennachlass."
+  ]
+}

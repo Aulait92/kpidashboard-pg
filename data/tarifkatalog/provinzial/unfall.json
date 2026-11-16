@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "24 Stunden weltweit",
+    "Invaliditätsleistung ab 1 %",
+    "Reha-Management"
+  ],
+  "tarife": [
+    {
+      "name": "Private Unfallversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "optional",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:75b3bdc5-e165-4f9f-9a63-519c65ec44b1/leistungsuebersicht-unfall-west.pdf?view=",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/gesundheit/versicherungen-gesundheit/unfallversicherung/private-unfallversicherung.html",
+    "https://www.provinzial.de/dam/jcr:75b3bdc5-e165-4f9f-9a63-519c65ec44b1/leistungsuebersicht-unfall-west.pdf?view="
+  ],
+  "offen": [
+    "Provinzial Versicherung AG, Region Westfalen (provinzial.de/west); die Provinzial Nord veröffentlicht eigene Unterlagen.",
+    "Quelle: Leistungsübersicht Private Unfallversicherung West („Die Unfallversicherung im Detail“, Art.-Nr. 2.02.014.0.0012.0, 11/25) und Produktseite.",
+    "Ein Tarif: Grundschutz mit Risiko-Bausteinen (Invalidität, Unfall-Rente, Sofortleistung, Tagegeld, Krankenhaustagegeld, Todesfall) nach Vereinbarung sowie Plus-Paket und Haushaltshilfe.",
+    "Progressive Invaliditätsstaffel ab 25 % Invalidität; Progression Plus zahlt ab 50 % die sechsfache Leistung. Unfall-Rente ab 50 %, doppelt ab 90 %; Unfall-Rente PLUS halbe Rente ab 35 %.",
+    "Infektionen durch Insektenstiche oder Tierbisse versichert; Zeckenstich nicht ausdrücklich genannt.",
+    "Gliedertaxe nicht genannt."
+  ]
+}

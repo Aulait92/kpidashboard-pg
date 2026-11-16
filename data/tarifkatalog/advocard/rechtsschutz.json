@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "ADVOCARD",
+  "sparte": "rechtsschutz",
+  "produkt": "ADVOCARD Privat-Rechtsschutz",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Versicherungssumme und Strafkaution in Europa unbegrenzt",
+    "Telefonische Rechtsberatung und Online-Chat",
+    "Privat als Grundmodul"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Rechtsschutz mit Modulen",
+      "kurz": "Privat",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "kaution": "unbegrenzt in Europa",
+        "privat": "ja",
+        "wartezeit": "3 Monate",
+        "telefon": "ja",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.advocard.de/privatrechtsschutz/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "ADVOCARD-360°-PRIVAT",
+      "kurz": "360° Privat",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "kaution": "unbegrenzt in Europa",
+        "privat": "ja",
+        "wartezeit": "3 Monate",
+        "telefon": "ja",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.advocard.de/privatrechtsschutz/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.advocard.de/privatrechtsschutz/",
+    "https://www.advocard.de/privatrechtsschutz/?file=files/userdata/content/pdf/bfsg/advocard_bfsg-produktinfo.pdf&cid=4511"
+  ],
+  "offen": [
+    "Quelle: Produktseite advocard.de (Abruf 16.11.2026). Leistungsübersicht und Bedingungen sind dort nicht als PDF verlinkt.",
+    "Zwei Stufen: Privat-Modul mit wählbaren Modulen Beruf, Verkehr, Wohnung (Tarifcodes P, PB, PV, PW usw.) und das Komplettpaket ADVOCARD-360°-PRIVAT (PVW360, PBVW360). Die Produktseite empfiehlt 360°.",
+    "Unterschiede der 360°-Leistungen über die Module hinaus sind nicht im Einzelnen belegt.",
+    "Weltweite Deckung bis 1 Mio. € ohne zeitliche Begrenzung genannt, Zuordnung je Stufe nicht belegt.",
+    "Wartezeit 3 Monate, sofern nicht anders vermerkt; Verkehrs-Rechtsschutz ohne Wartezeit. Selbstbeteiligung nicht belegt.",
+    "Opfer-Rechtsschutz in der Leistungsliste genannt, Zuordnung je Stufe nicht belegt."
+  ]
+}

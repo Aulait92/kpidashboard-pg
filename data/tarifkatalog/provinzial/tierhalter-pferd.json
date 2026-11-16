@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalter-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Fremdreiter mitversichert",
+    "Flurschäden",
+    "Mietsachschäden an Boxen und Paddocks"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalter-Haftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 oder 50 Mio. €",
+        "miete": "ja, Boxen, Stallungen",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "ja, bis 3 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/haftpflichtversicherung/pferdehalter-haftpflichtversicherung.html",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/haftpflichtversicherung/pferdehalter-haftpflichtversicherung.html",
+    "https://www.provinzial.de/dam/jcr:d630ae42-082a-484f-8bb8-102799fa1580/9060031_PIB%20Pferdehalter-Haftpflicht_4_09-2022.pdf?view="
+  ],
+  "offen": [
+    "Provinzial Versicherung AG, Region Westfalen (provinzial.de/west); die Provinzial Nord veröffentlicht eigene Unterlagen.",
+    "Quelle: Produktseite Pferdehalter-Haftpflichtversicherung (provinzial.de/west), PIB Pferdehalter-HV/6 (Stand 08.2026).",
+    "Ein Tarif mit Versicherungssumme 15 oder 50 Mio. € pauschal.",
+    "Selbstbeteiligung, Forderungsausfall und Ausland nicht belegt.",
+    "Alternativ Pferd als Baustein der Privathaftpflicht (PIB PHV/7)."
+  ]
+}

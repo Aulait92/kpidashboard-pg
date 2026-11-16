@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung (Partner ROLAND)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Versicherungssumme unbegrenzt",
+    "Telefonische Rechtsberatung ohne SB",
+    "Mediation ohne SB"
+  ],
+  "tarife": [
+    {
+      "name": "Top-Rechtsschutz Starter",
+      "kurz": "Starter",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "nein",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "wartezeit": "6 Monate",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/rechtsschutz-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Top-Rechtsschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "wartezeit": "6 Monate",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/rechtsschutz-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Top-Rechtsschutz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "wartezeit": "3 Monate",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/rechtsschutz-versicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/rechtsschutz-versicherung/",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/fahrzeuge_gebaeude_recht/haftung_recht/rechtsschutz/produktinformationsblatt_2026.pdf",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/fahrzeuge_gebaeude_recht/haftung_recht/rechtsschutz/arb-2026.pdf",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/fahrzeuge_gebaeude_recht/haftung_recht/rechtsschutz/arb-beiblatt-2026-komfort-starter.pdf",
+    "https://www.roland-rechtsschutz.de/rechtsschutzversicherung/"
+  ],
+  "offen": [
+    "Verkauf unter der Marke BarmeniaGothaer, Risikoträger ist die ROLAND Rechtsschutz-Versicherungs-AG (IPID W 1253 10.2025). Tarife wie ROLAND Top-Rechtsschutz.",
+    "Tarifvergleich der Produktseite barmeniagothaer.de ließ sich nur teilweise lesen (Starter laut Beschreibung ohne Berufsrechtsschutz); Leistungen je Stufe ergänzt aus dem Tarifvergleich auf roland-rechtsschutz.de.",
+    "Abweichung: barmeniagothaer.de nennt für Beratung zum Aufhebungsvertrag bis 1.000 € bzw. 5.000 € je Kalenderjahr, roland-rechtsschutz.de für Komfort bis 1.250 €.",
+    "Aktion laut Produktseite: bis zu 20 % Rabatt auf Neuverträge bis 30.11.2026.",
+    "Stufen laut Tarifvergleich: Starter (Privat und Verkehr, ohne Beruf), Komfort (mit Beruf und selbstständiger Nebentätigkeit), Premium (zusätzlich risikoreiche Kapitalanlagen bis 100.000 € Anlagesumme, Bauherrenrecht bis 5.000 €, Familienrecht bis 5.000 €).",
+    "Keine Empfehlung als Markierung; Komfort als mittlere Stufe gesetzt.",
+    "Wartezeit: Beiblatt Top-Rechtsschutz Komfort und Starter nennt 6 Monate u. a. für Arbeits-, Wohnungs-, Vertrags-, Steuer- und Sozial-Rechtsschutz; sonst gilt die Regelwartezeit von 3 Monaten (ARB 2026, A 6.1.1).",
+    "Wohnen über den Baustein Immobilie (Miet- bzw. Wohn-Rechtsschutz); erweiterter Straf-Rechtsschutz über den Baustein StrafrechtPlus Privat.",
+    "Strafkaution und Selbstbeteiligung je Stufe nicht im Tarifvergleich. Die Leistungsübersicht der ARB 2026 nennt für die Pakete Komfort 500.000 € und Premium 1 Mio. € Strafkaution, für ein Basis-Paket 250.000 €; ob diese Pakete den Tarifen Starter, Komfort, Premium entsprechen, ist nicht belegt.",
+    "Weltweit bei vorübergehendem Aufenthalt bis 12 Monate bis 500.000 €, mit Plus-Baustein bis 1 Mio. € (Infoblatt Privat-Rechtsschutz 10.2025); Zuordnung zu den Stufen nicht belegt.",
+    "Keine Selbstbeteiligung bei Fällen bis 250 € Kosten und bei außergerichtlicher Konfliktlösung (Infoblatt)."
+  ]
+}

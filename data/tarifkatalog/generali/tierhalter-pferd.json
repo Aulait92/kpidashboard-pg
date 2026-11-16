@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalterhaftpflichtversicherung Optimal",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Deckschäden mitversichert",
+    "Reiter und Reitbeteiligte mitversichert",
+    "Auslandsaufenthalt bis 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht Optimal",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "miete": "ja, SB 20 %, mind. 150 €",
+        "reitbeteiligung": "ja",
+        "geliehen": "bis 10.000 €",
+        "ausland": "bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/recht-haftung/tierhalterhaftpflichtversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/recht-haftung/tierhalterhaftpflichtversicherung"
+  ],
+  "offen": [
+    "Generali veröffentlicht einen Tarif (Optimal) für Hunde und Pferde.",
+    "Mietsachschäden an Paddocks, Stallungen, Reithallen und Boxen mit 20 % SB, mindestens 150 €.",
+    "Geliehene oder gemietete Reitutensilien und Tiertransportanhänger bis 10.000 € (SB 20 %, mindestens 150 €).",
+    "Allgemeine Selbstbeteiligung, Flurschäden, Fohlen und Forderungsausfall nicht genannt."
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "rechtsschutz",
+  "produkt": "Privat-, Berufs- und Verkehrsrechtsschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Privat, Beruf und Verkehr",
+    "Telefonische Erstberatung ohne Selbstbeteiligung",
+    "Opfer-Rechtsschutz"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-, Berufs- und Verkehrsrechtsschutz",
+      "kurz": "PBV",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "bis 1 Mio. €",
+        "sb": "Einstieg z. B. 300 €",
+        "wartezeit": "teils 3 Monate",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/rechtsschutzversicherung/privat-berufs-verkehrsrechtsschutz.html",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privat-, Berufs- und Verkehrsrechtsschutz mit Rechtsschutz PLUS",
+      "kurz": "PBV PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "bis 1 Mio. €",
+        "sb": "Einstieg z. B. 300 €",
+        "wartezeit": "teils 3 Monate",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/rechtsschutzversicherung/privat-berufs-verkehrsrechtsschutz.html",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/rechtsschutzversicherung/privat-berufs-verkehrsrechtsschutz.html"
+  ],
+  "offen": [
+    "Versicherer ist die HUK-COBURG Gruppe selbst (kein Partner genannt). Ein Tarifvergleich mit Stufen ist nicht veröffentlicht; Rechtsschutz PLUS ist ein Zusatzbaustein, das Preisbeispiel nennt den Tarif PBV PLUS.",
+    "Versicherungssumme 5 Mio. €, soweit keine Höchstbeträge vereinbart sind; außerhalb Europas bis 1 Mio. € (bis 3 Jahre Aufenthalt).",
+    "Rechtsschutz PLUS u. a.: Kapitalanlagen bis 20.000 €, erweiterte Beratung Familienrecht bis 1.500 €, Vorsorgeverfügungen und Testament bis 500 € je Jahr, Strafanzeige bei Internetnutzung und Stalking je bis 1.000 €, Verbraucherinsolvenzberatung bis 1.000 €.",
+    "Selbstbeteiligung im Schadenfreiheitssystem: Einstiegs-SB wählbar (Preisbeispiel 300 €), sinkt mit schadenfreien Jahren bis 0 €, steigt nach mehreren Fällen bis höchstens 550 €.",
+    "Wartezeit 3 Monate für bestimmte Leistungsarten (z. B. Arbeitsrecht), Studienplatzklagen 3 Jahre; im Verkehrsbereich keine Wartezeit.",
+    "Strafkaution auf der Produktseite nicht genannt. Wohnen (selbst genutzte Wohneinheiten) als Ergänzung zuwählbar.",
+    "Keine Empfehlung markiert; bei zwei Stufen keine Empfehlung gesetzt."
+  ]
+}

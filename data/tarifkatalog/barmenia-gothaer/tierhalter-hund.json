@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "tierhalter-hund",
+  "produkt": "Gothaer Tierhalter-Haftpflichtversicherung (Hund)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Deckakt mitversichert",
+    "Ohne Leine und Maulkorb versichert",
+    "Hundeschule und Turniere"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "fremdhueter": "ja",
+        "welpen": "ja, bis 12 Monate",
+        "forderungsausfall": "ja",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.barmeniagothaer.de/hundehaftpflicht/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/hundehaftpflicht/",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216285"
+  ],
+  "offen": [
+    "Produkte der Marke BarmeniaGothaer (barmenia.de und gothaer.de leiten auf barmeniagothaer.de um); Versicherer laut Bedingungen: Gothaer Allgemeine Versicherung AG.",
+    "Ein Tarif mit wählbarer Deckungssumme (Tarifvergleich der Produktseite). Bedingungen Tierhalter-Haftpflicht: AHB 04/12, BBR 02/18 (Druckstück 07/2026).",
+    "Auslandsaufenthalte: in Europa zeitlich unbegrenzt, weltweit fünf Jahre.",
+    "Mietsachschäden: Inventar in gemieteten Ferienwohnungen, Hotelzimmern und Schiffskabinen; Mietsachschäden an gemieteten Räumen für den Hund nicht ausdrücklich belegt.",
+    "Selbstbeteiligung nicht belegt."
+  ]
+}

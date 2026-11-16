@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Feuer, Leitungswasser, Sturm und Hagel",
+    "Verzicht auf Unterversicherung",
+    "Wasserzuleitungs- und Heizungsrohre außerhalb"
+  ],
+  "tarife": [
+    {
+      "name": "Kompaktschutz",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "kosten": "Aufräumen bis 30.000 €",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:f96ea6f3-7003-42d3-b6b2-dd691834392e/202006001130_0324_Leistungsuebersicht_Wohngebaeude-west.pdf?view=",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundumschutz 2.0",
+      "kurz": "Rundum",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "optional",
+        "kosten": "Hotel 200 €/T., 200 Tage",
+        "fugen": "bis 5.000 €",
+        "vandalismus": "optional",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:f96ea6f3-7003-42d3-b6b2-dd691834392e/202006001130_0324_Leistungsuebersicht_Wohngebaeude-west.pdf?view=",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundumschutz 2.0 mit Plus-Paket 2.0",
+      "kurz": "Rundum Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "optional",
+        "kosten": "Hotel 200 €/T., 12 Mon.",
+        "vandalismus": "innen bis 10.000 €",
+        "tiere": "bis 10.000 €",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:f96ea6f3-7003-42d3-b6b2-dd691834392e/202006001130_0324_Leistungsuebersicht_Wohngebaeude-west.pdf?view=",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/wohnen/wohngebaeudeversicherung.html",
+    "https://www.provinzial.de/dam/jcr:f96ea6f3-7003-42d3-b6b2-dd691834392e/202006001130_0324_Leistungsuebersicht_Wohngebaeude-west.pdf?view="
+  ],
+  "offen": [
+    "Provinzial Versicherung AG, Region Westfalen (provinzial.de/west); die Provinzial Nord veröffentlicht eigene Unterlagen.",
+    "Quelle: Leistungsübersicht Wohngebäudeversicherung West (Art.-Nr. 2.02.006.0.0113.0, 03/24).",
+    "Drei Stufen wie in der Hausrat; keine Empfehlung markiert, Rundumschutz 2.0 als mittlere Stufe gesetzt.",
+    "Die Leistungsübersicht kennzeichnet versichert und nicht versichert mit Bildsymbolen, die sich nicht automatisch lesen lassen; erfasst sind nur Beträge sowie Aussagen der Produktseite und des Produktinformationsblatts.",
+    "Grobe Fahrlässigkeit: Verzicht auf Leistungskürzung laut Produktbeschreibung Bestandteil des Plus-Pakets 2.0.",
+    "Bausteine ab Rundumschutz: Ableitungsrohre auf dem Grundstück (500 € oder 2.500 €), Mut- oder böswillige Beschädigungen (10.000 €, SB 500 €), Energie-Paket Photovoltaik bzw. Solar/Wärmepumpe (je 50.000 €, SB 250 €); Elementar (SB 1.000 €) und Glas (Mehrfamilienhaus) in allen Stufen.",
+    "Kosten nach Schaden: Kompaktschutz Aufräum-, Abbruch-, Bewegungs- und Schutzkosten bis 30.000 €; Hotelkosten ab Rundumschutz. Plus-Paket: Tiere = Gebäudeschäden durch wild lebende Tiere; Tierbiss an Leitungen in der Übersicht genannt, Stufe nicht lesbar.",
+    "Undichte Fugen: Rundumschutz bis 5.000 €, für die anderen Stufen nicht lesbar. Überspannung genannt, Stufe nicht lesbar."
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "haftpflicht",
+  "produkt": "Privat Kompakt Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ehrenamtliche Tätigkeit",
+    "Gefälligkeitsschäden",
+    "Mietsachschäden an Wohnräumen"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Spar",
+      "kurz": "Spar",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 50.000 €, SB 250 €",
+        "delikt": "bis 10.000 €, SB 250 €",
+        "geliehen": "nein",
+        "miete": "bis 1 Mio. €, SB 250 €",
+        "gefaelligkeit": "ja, SB 250 €",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 250 g",
+        "nebenberuf": "bis 6.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216986",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "forderungsausfall": "ja, ab 2.000 €",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "nein",
+        "miete": "bis Deckungssumme",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 6.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216987",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis Deckungssumme",
+        "delikt": "bis Deckungssumme",
+        "geliehen": "ja",
+        "miete": "bis Deckungssumme",
+        "gefaelligkeit": "ja",
+        "neuwert": "ja, bis 1 Jahr alt",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 24.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216990",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/privathaftpflicht-versicherung/",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216986",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216987",
+    "https://www.barmeniagothaer.de/app/dvzui/ui-api/download?artNr=216990"
+  ],
+  "offen": [
+    "Produkte der Marke BarmeniaGothaer (barmenia.de und gothaer.de leiten auf barmeniagothaer.de um); Versicherer laut Bedingungen: Gothaer Allgemeine Versicherung AG.",
+    "Quelle: Leistungsübersicht „im Überblick“ in den Bedingungen Privat Kompakt Spar, Basis, Premium (Druckstück 09/2026, Teil B Stand 07/2023). Deckungssummen 10, 20, 100 Mio. € aus dem Tarifvergleich der Produktseite.",
+    "Die Produktseite erwähnt im Text auch einen Plus-Schutz; im Tarifvergleich stehen nur Spar, Basis, Premium.",
+    "Keine Empfehlung markiert; Basis als mittlere Stufe gesetzt.",
+    "Schlüssel: Spar nur private Schlüssel (50.000 €, SB 250 €); Basis privat 50.000 €, beruflich 10.000 €; Premium privat und beruflich ohne eigene Grenze, Folgeschäden bis 100.000 €.",
+    "Forderungsausfall inkl. Vorsatz: Basis ab 2.000 € Mindestschaden, Premium ohne Mindestschaden.",
+    "Nebenberufliche selbstständige Tätigkeit bis zu dem genannten Gesamtjahresumsatz.",
+    "Selbstbeteiligung und wählbare Bausteine (z. B. Diensthaftpflicht) nicht in der Leistungsübersicht genannt."
+  ]
+}

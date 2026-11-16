@@ -1,0 +1,102 @@
+{
+  "gesellschaft": "Die Haftpflichtkasse",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflicht-Versicherung Einfach",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Forderungsausfall ohne Mindestschaden, inkl. Vorsatz",
+    "Ehrenamt und Gefälligkeitsschäden",
+    "Drohnen und Flugmodelle bis 5 kg"
+  ],
+  "tarife": [
+    {
+      "name": "Einfach Gut",
+      "kurz": "Einfach Gut",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "25 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 100.000 €",
+        "delikt": "Sach bis 10.000 €",
+        "geliehen": "nein",
+        "miete": "bis 10 Mio. €",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/2/deckungsuebersicht_2025-02-05.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Einfach Besser",
+      "kurz": "Einfach Besser",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 500.000 €",
+        "delikt": "Sach bis 500.000 €",
+        "geliehen": "bis 500.000 €",
+        "miete": "bis 10 Mio. €",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/2/deckungsuebersicht_2025-02-05.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Einfach Komplett",
+      "kurz": "Komplett",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "70 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis Versicherungssumme",
+        "delikt": "bis Versicherungssumme",
+        "geliehen": "bis Versicherungssumme",
+        "miete": "bis Versicherungssumme",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 € plus 20 %",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/2/deckungsuebersicht_2025-02-05.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.haftpflichtkasse.de/versicherungen/privatkunden/privathaftpflicht/",
+    "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/2/deckungsuebersicht_2025-02-05.pdf?reController=search&reAction=index&showInView=true",
+    "https://www.haftpflichtkasse.de/service-kontakt/wissen/dokumentencenter/"
+  ],
+  "offen": [
+    "Quelle: Deckungsübersicht PHV Einfach Gut, Besser, Komplett (Stand 01.01.2025, Dokumentencenter haftpflichtkasse.de).",
+    "Keine Empfehlung markiert; Einfach Besser als mittlere Stufe gesetzt.",
+    "Die Deckungsübersicht kennzeichnet enthaltene Leistungen mit einem Bildsymbol und nicht enthaltene mit einem Strich; Zellen ohne Betrag und ohne Strich sind als „ja“ erfasst.",
+    "Deliktunfähige Personen und Kinder: Personenschäden bis zur Versicherungssumme, Sach- und Vermögensschäden bis 10.000 € (Gut) bzw. 500.000 € (Besser), Komplett bis zur Versicherungssumme.",
+    "Schlüssel: Gut privat 100.000 €, beruflich 5.000 €; Besser je 500.000 €; Komplett bis zur Versicherungssumme, Folgeschäden 5.000 €. Rechtsschutz zur Ausfalldeckung ab Besser.",
+    "Neuwert (GAP-Deckung) nur Komplett: bis 5.000 €, zusätzlich 20 % bei nachhaltiger Neuanschaffung. Rabattretter nur Komplett (Mehrbeitrag 5 Jahre, Vollkasko-SB bis 250 €).",
+    "Tarifvariante mit Selbstbehalt genannt; Höhe nicht belegt. Bausteine StrafrechtPlus Privat und Internet-Rechtsschutz JurCyber Privat laut Produktseite."
+  ]
+}

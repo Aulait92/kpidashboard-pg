@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "VHV",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutz KLASSIK-GARANT (Risikoträger NRV)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Privat, Beruf und Verkehr",
+    "Telefonische Rechtsberatung JURCALL",
+    "Mediation"
+  ],
+  "tarife": [
+    {
+      "name": "KLASSIK-GARANT",
+      "kurz": "Klassik-Garant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "bis 300.000 €",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "vsWelt": "unbegrenzt",
+        "sb": "150 € oder 300 €",
+        "wartezeit": "2 Mon., Arbeit 6 Mon.",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.vhv.de/ds/900.0031.58.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "KLASSIK-GARANT mit EXKLUSIV",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "bis 300.000 €",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "unbegrenzt",
+        "sb": "150 € oder 300 €",
+        "wartezeit": "2 Mon., Arbeit 6 Mon.",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.vhv.de/ds/900.0031.58.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vhv.de/rechtsschutz-versicherung",
+    "https://www.vhv.de/ds/900.0031.58.pdf",
+    "https://www.vhv.de/ds/900.0013.02.pdf"
+  ],
+  "offen": [
+    "Risikoträger ist die NRV Neue Rechtsschutz-Versicherungsgesellschaft AG in Kooperation mit der VHV. Quelle: Produktübersicht Rechtsschutz (Stand 10.2025) und Produktseite.",
+    "Zwei Stufen: Grundtarif KLASSIK-GARANT und KLASSIK-GARANT mit Zusatzpaket EXKLUSIV. Keine Empfehlung markiert.",
+    "SB 150 € mit JURCALL-Qualitätsanwalt, sonst 300 €; Baustein FLEXIBILITÄT mit 0, 150, 250 € oder fallender SB ab 400 €.",
+    "Wartezeit generell 2 Monate, Arbeitsrecht 6 Monate (mit FLEXIBILITÄT 2 Monate); EXKLUSIV ohne Wartezeit im Verkehrsbereich.",
+    "Wohnen über den Baustein WOHNUNG/GRUNDSTÜCK (selbst genutzt oder vermietet) und dessen ERWEITERUNG; Baustein SPEZIAL STRAFRECHT.",
+    "EXKLUSIV erweitert u. a. Sozial-, Steuer-, Verwaltungs-RS außergerichtlich, Kapitalanlagen bis 15.000 €, Familien- und Erbrecht bis 1.000 €."
+  ]
+}

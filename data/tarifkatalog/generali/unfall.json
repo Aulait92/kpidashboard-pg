@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung (Unfall Aktiv)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit, rund um die Uhr",
+    "Herzinfarkt, Schlaganfall, Alkoholklausel",
+    "Reha-Manager"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall Aktiv",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "1.000 % Plus",
+        "maxInvaliditaet": "10-fache Summe",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/unfallversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/unfallversicherung"
+  ],
+  "offen": [
+    "Generali veröffentlicht einen Tarif (Unfall Aktiv, Highlights für Personen bis 69 Jahre).",
+    "Progression verbesserte 1000 % Plus: bis zur 10-fachen Versicherungssumme bei 100 % Invalidität; zusätzlich Mehrleistung 100.000 € bei 100 % Invalidität.",
+    "Impfschäden und bestimmte Infektionen versichert; ob Zeckenstich darunter fällt, ist nicht genannt.",
+    "Leistung ab Invaliditätsgrad, Unfallrente, Krankenhaustagegeld, Todesfall und Sofortleistung nicht genannt. Assistance XXL zuwählbar."
+  ]
+}

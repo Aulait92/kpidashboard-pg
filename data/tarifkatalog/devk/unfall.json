@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung ab 1 % Invalidität",
+    "Infektionen (z. B. Borreliose, FSME) und Impfschäden",
+    "Unfallrente und Krankenhaustagegeld als Bausteine"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "225 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "nein",
+        "kosmetik": "bis 15.000 €",
+        "bergung": "bis 25.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/unfallversicherung/privat/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Unfallversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "progression": "225 oder 500 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "10 %, max. 5.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/unfallversicherung/privat/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Unfallversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "progression": "225 oder 500 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "10 %, max. 10.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja, Gliedertaxe Plus"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/unfallversicherung/privat/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/unfallversicherung/privat/"
+  ],
+  "offen": [
+    "DEVK markiert keine Empfehlung; Komfort als mittlere Stufe gesetzt.",
+    "Invaliditätssumme (Grundsumme) wird individuell gewählt; kein Wert je Stufe veröffentlicht.",
+    "Gliedertaxe: Basis allgemein, Komfort verbessert, Premium Gliedertaxe Plus.",
+    "Ergänzungsbausteine: Unfallrente ab 50 % (Kurzrente in Komfort ab 40 % für 3 Jahre, in Premium ab 30 % für 7 Jahre), Todesfallleistung, Unfallkrankenhaustagegeld mit Genesungsgeld, Tagegeld.",
+    "Sofortleistung 10 % der Invaliditätsgrundsumme (nicht bei Unfallrente).",
+    "Bergung umfasst Such-, Rettungs-, Transport- und Rückreisekosten. Kosmetische OP inkl. Zahnersatz bis 10.000, 25.000 bzw. 50.000 €. Familienrabatt 10 %."
+  ]
+}

@@ -1,8 +1,8 @@
 {
-  "gesellschaft": "Barmenia",
-  "sparte": "katze-op",
-  "produkt": "Katzen-OP-Versicherung",
-  "empfehlung": "keine",
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "hund-op",
+  "produkt": "Hunde-OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
   "inAllenTarifen": [
     "Freie Tierarzt- und Klinikwahl",
     "Keine Wartezeit bei Unfällen",
@@ -10,10 +10,34 @@
   ],
   "tarife": [
     {
-      "name": "OP-Schutz Premium",
-      "kurz": "Premium",
+      "name": "Hunde-Unfall-OP-Versicherung",
+      "kurz": "Unfall",
       "stufe": 1,
       "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %, nur Unfall-OPs",
+        "sb": "keine",
+        "wartezeit": "entfällt",
+        "kastration": "nein",
+        "nachbehandlung": "bis 30 Tage",
+        "ausland": "12 Monate weltweit",
+        "got": "3-fach, Notfall 4-fach",
+        "jhl": "unbegrenzt",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "physio": "bis 10 Behandlungen"
+      },
+      "bausteine": {
+        "sb0": "nein"
+      },
+      "quelle": "https://www.barmeniagothaer.de/hunde-op-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "OP-Schutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
       "werte": {
         "erstattung": "100 %, SB wählbar",
         "sb": "0 oder 20 %, max. 250 €",
@@ -30,13 +54,13 @@
       "bausteine": {
         "sb0": "optional"
       },
-      "quelle": "https://www.barmeniagothaer.de/katzen-op-versicherung/",
+      "quelle": "https://www.barmeniagothaer.de/hunde-op-versicherung/",
       "stand": "2026-11-16"
     },
     {
       "name": "OP-Schutz Premium Plus",
       "kurz": "Premium Plus",
-      "stufe": 2,
+      "stufe": 3,
       "empfohlen": false,
       "werte": {
         "erstattung": "100 %, SB wählbar",
@@ -54,12 +78,12 @@
       "bausteine": {
         "sb0": "optional"
       },
-      "quelle": "https://www.barmeniagothaer.de/katzen-op-versicherung/",
+      "quelle": "https://www.barmeniagothaer.de/hunde-op-versicherung/",
       "stand": "2026-11-16"
     }
   ],
   "quellen": [
-    "https://www.barmeniagothaer.de/katzen-op-versicherung/",
+    "https://www.barmeniagothaer.de/hunde-op-versicherung/",
     "https://media.barmenia.de/media/global_media/dokumente/dokumentencenter/ba/verkaufshilfen/WS1281.pdf"
   ],
   "offen": [
@@ -69,7 +93,7 @@
     "Physiotherapie in der Nachbehandlung einer OP: bis zu 10 Behandlungen je 30 Minuten.",
     "Prothesen 500 € (Premium), unbegrenzt (Premium Plus); Goldakupunktur nur Premium Plus.",
     "Tiere ab 2 Monate bis einschließlich 9 Jahre versicherbar.",
-    "Für Katzen nur zwei Stufen (Unfall-OP nur für Hunde); keine Stufe als Empfehlung markiert.",
+    "Die Unfall-OP-Versicherung leistet nur für Operationen nach Unfällen (gleicher Beitrag für alle Hunde).",
     "Ausland Premium Plus laut Produktseite ohne zeitliche Begrenzung."
   ]
 }

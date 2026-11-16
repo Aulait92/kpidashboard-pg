@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "tierhalter-pferd",
+  "produkt": "LVM-Pferdehalter-Haftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Reitbeteiligung mitversichert",
+    "Mietsachschäden an Boxen und Stallungen",
+    "Fohlen und Aufzuchtpferde"
+  ],
+  "tarife": [
+    {
+      "name": "MeineKlassik",
+      "kurz": "MeineKlassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "wählbar",
+        "miete": "bis 500.000 €",
+        "reitbeteiligung": "ja",
+        "forderungsausfall": "ab 500 €, bis 10 Mio. €",
+        "geliehen": "Anhänger bis 5.000 €",
+        "neuwert": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.lvm.de/dam/jcr:d88e80f5-9caf-4405-b6b7-231e40c28a0a/021-pferdehalterhaftpflicht-flyer-w2242.2025-06-23-12-28-33.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinPremium",
+      "kurz": "MeinPremium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "wählbar",
+        "miete": "bis 500.000 €",
+        "reitbeteiligung": "ja",
+        "forderungsausfall": "ab 0 €, bis zur VS",
+        "geliehen": "Anhänger bis 50.000 €",
+        "neuwert": "bis 10.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.lvm.de/dam/jcr:d88e80f5-9caf-4405-b6b7-231e40c28a0a/021-pferdehalterhaftpflicht-flyer-w2242.2025-06-23-12-28-33.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/haftpflichtversicherungen/pferdehalter-haftpflicht-versicherung",
+    "https://www.lvm.de/dam/jcr:d88e80f5-9caf-4405-b6b7-231e40c28a0a/021-pferdehalterhaftpflicht-flyer-w2242.2025-06-23-12-28-33.pdf"
+  ],
+  "offen": [
+    "Quelle: Flyer Pferdehalter-Haftpflicht (W 2242) und Produktseite lvm.de. MeinPremium enthält alle Leistungen von MeineKlassik.",
+    "Zwei Stufen, keine Empfehlung markiert. Versicherungssumme frei wählbar (Empfehlung 100 Mio. €).",
+    "MeinPremium zusätzlich: geliehene Reitutensilien bis 10.000 €, Neuwert für Sachen bis 12 Monate alt bis 10.000 €, Tierversorgung bei Krankenhausaufenthalt und Be- und Entladeschäden je 1.000 €.",
+    "Auslandsaufenthalt weltweit 2 Jahre, in EU-Staaten unbegrenzt. Flurschäden, Fohlen und Selbstbeteiligung ohne Angabe je Stufe."
+  ]
+}

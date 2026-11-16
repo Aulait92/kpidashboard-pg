@@ -1,0 +1,20 @@
+{
+  "gesellschaft": "ERGO",
+  "name": "Bündelnachlass",
+  "linien": [],
+  "mindestLaufzeitJahre": null,
+  "sparten": ["wohngebaeude"],
+  "staffel": [
+    { "anzahl": 2, "prozent": 8 },
+    { "anzahl": 3, "prozent": 10 }
+  ],
+  "quelle": "https://www.ergo.de/de/Produkte/Hausrat-und-Gebaeudeversicherung/Wohngebaeudeversicherung",
+  "stand": "2026-11-16",
+  "offen": [
+    "Belegt nur für die Wohngebäudeversicherung: Broschüre Wohngebäude (Stand 9.2024) nennt bis zu 15 % Bündelnachlass bei mehreren ERGO Verträgen, bei zwei Verträgen 8 %.",
+    "Das Preisbeispiel der Produktseite rechnet mit einem Bündelnachlass von 10 % bei 2 zusätzlich vorhandenen Privatverträgen (also 3 Verträge).",
+    "Ab wie vielen Verträgen 15 % gelten, ist nicht genannt; deshalb nicht in der Staffel.",
+    "Ob Haftpflicht, Hausrat, Unfall oder Rechtsschutz ebenfalls einen Bündelnachlass erhalten, ist auf ergo.de nicht veröffentlicht.",
+    "Hunde- und Pferdehaftpflicht: Mengennachlass ab dem zweiten Tier 25 % (kein Bündel)."
+  ]
+}

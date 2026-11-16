@@ -1,0 +1,20 @@
+{
+  "gesellschaft": "R+V",
+  "name": "PrivatPolice",
+  "linien": [],
+  "mindestLaufzeitJahre": null,
+  "sparten": ["haftpflicht", "tierhalter-hund", "tierhalter-pferd", "hausrat", "wohngebaeude", "rechtsschutz"],
+  "staffel": [
+    { "anzahl": 2, "prozent": 3 },
+    { "anzahl": 3, "prozent": 6 },
+    { "anzahl": 4, "prozent": 9, "abAnzahl": true }
+  ],
+  "quelle": "https://www.ruv.de/privatpolice",
+  "stand": "2026-11-16",
+  "offen": [
+    "Staffel laut Produktseite PrivatPolice: 2 Versicherungen 3 %, 3 Versicherungen 6 %, 4 oder mehr 9 %.",
+    "Zählen: Haftpflicht (inkl. Privat-, Tierhalter-, Berufs-, Haus- und Grundbesitzer-, Gewässerschadenhaftpflicht), Hausrat, Wohngebäude, Rechtsschutz, SicherVermieten.",
+    "Alle Haftpflichtversicherungen zählen zusammen nur einmal. Unfall zählt nicht.",
+    "Bestehende R+V-Verträge zählen mit; Linien und Mindestlaufzeit sind nicht genannt."
+  ]
+}

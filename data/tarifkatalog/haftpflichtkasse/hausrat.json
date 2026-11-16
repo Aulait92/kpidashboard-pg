@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "Die Haftpflichtkasse",
+  "sparte": "hausrat",
+  "produkt": "Hausrat-Versicherung Einfach",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit bis 100 % der VS",
+    "Fahrraddiebstahl bis 10.000 € ohne Nachtzeitklausel",
+    "Außenversicherung 100 % für 12 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Einfach Besser",
+      "kurz": "Einfach Besser",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 % der VS",
+        "fahrrad": "bis 10.000 €",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 3.000 €",
+        "garten": "5 % der VS",
+        "auto": "2 % der VS, weltweit",
+        "ueberspannung": "ja",
+        "allgefahren": "optional",
+        "aussen": "100 % der VS, 12 Mon."
+      },
+      "bausteine": {
+        "fahrrad": "inklusive",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/87/deckungsuebersicht_2025-02-24.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Einfach Komplett",
+      "kurz": "Komplett",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis Versicherungssumme",
+        "fahrrad": "bis 10.000 €",
+        "elementar": "optional",
+        "online": "bis 3.500 €",
+        "bargeld": "bis 3.500 €",
+        "garten": "5 % der VS",
+        "auto": "2 % der VS, weltweit",
+        "ueberspannung": "ja",
+        "allgefahren": "optional",
+        "aussen": "100 % der VS, 12 Mon."
+      },
+      "bausteine": {
+        "fahrrad": "inklusive",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/87/deckungsuebersicht_2025-02-24.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.haftpflichtkasse.de/versicherungen/privatkunden/hausratversicherung/",
+    "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/87/deckungsuebersicht_2025-02-24.pdf?reController=search&reAction=index&showInView=true",
+    "https://www.haftpflichtkasse.de/service-kontakt/wissen/dokumentencenter/"
+  ],
+  "offen": [
+    "Quelle: Deckungsübersicht Hausratversicherung (Stand 25.02.2025, Dokumentencenter haftpflichtkasse.de).",
+    "Zwei Stufen (Einfach Besser, Einfach Komplett), keine Empfehlung markiert.",
+    "Die Deckungsübersicht kennzeichnet enthaltene Leistungen mit einem Bildsymbol und nicht enthaltene mit einem Strich; Zellen ohne Betrag und ohne Strich sind als „ja“ erfasst.",
+    "Einfacher Diebstahl in der Wohnung nicht als Leistung genannt; Trickdiebstahl auf dem Versicherungsgrundstück 3 % der VS, Taschendiebstahl bis 1.000 €.",
+    "Garten: Diebstahl von Wäsche, Gartenmöbeln, Gartengeräten, Mährobotern, Spielgeräten 5 % der VS.",
+    "Online-Betrug: Phishing und Pharming nur Komplett bis 3.500 €, Skimming bis 5.000 €.",
+    "Elementar und Unbenannte Gefahren (SB 250 €) als Einschluss möglich; Elementar mit SB 10 % (mind. 500 €, max. 5.000 €). Glasbruch und Fahrrad-Schutzbrief als Einschluss möglich.",
+    "Hotelkosten und Selbstbeteiligung im Grundtarif nicht in der Übersicht genannt."
+  ]
+}

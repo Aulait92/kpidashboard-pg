@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung Optimal",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Alle Personen im Haushalt mitversichert",
+    "Bestleistungs-Garantie für 5 Jahre (in der VSP)",
+    "Mietsachschäden an Gebäuden und Räumen"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Optimal",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja, mit Opferschutz",
+        "schluessel": "ja",
+        "delikt": "bis 100.000 €",
+        "geliehen": "ja, Verlust SB 150 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/recht-haftung/privathaftpflichtversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/recht-haftung/privathaftpflichtversicherung"
+  ],
+  "offen": [
+    "Generali veröffentlicht einen Tarif (Optimal), keine Stufen. Vertrieb über die Deutsche Vermögensberatung (DVAG).",
+    "Personenschäden je geschädigter Person bis 15 Mio. €. Schlüsselverlust privat, beruflich und aus Ehrenamt, Höhe nicht genannt.",
+    "Deliktunfähige Angehörige bis 100.000 €. Geliehene und gemietete bewegliche Sachen, bei Verlust 150 € SB. Be- und Entladeschäden (SB 100 €).",
+    "Internetschäden und Persönlichkeitsrechtsverletzungen bis 1,5 Mio. €; einzelne berufliche Tätigkeiten (z. B. Tagesmutter) mitversichert.",
+    "Ein Kundenbeispiel nennt die Übernahme der Kasko-SB bei einem geliehenen Auto; als Leistung nicht beziffert, daher nicht erfasst.",
+    "Neuwert, Drohnen, Mallorca-Deckung und Selbstbeteiligung nicht genannt.",
+    "Bestleistungs-Garantie nur in der Vermögenssicherungspolice (VSP)."
+  ]
+}

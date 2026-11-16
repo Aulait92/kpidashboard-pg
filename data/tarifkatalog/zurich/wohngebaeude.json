@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "wohngebaeude",
+  "produkt": "PrivatSchutz Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Feuer, Leitungswasser, Sturm und Hagel",
+    "Überspannung durch Blitz",
+    "Wärmepumpe und Solarheizung mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "WP ja, PV optional",
+        "kosten": "Aufräumen bis 25.000 €",
+        "ueberspannung": "ja",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "mietausfall": "12 Monate",
+        "sb": "0, 250, 500, 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-wohngebaeude_2022_10.pdf",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "PrivatSchutz Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 5.000 €",
+        "pv": "WP ja, PV optional",
+        "kosten": "Aufräumen unbegrenzt",
+        "ueberspannung": "ja",
+        "tiere": "ja",
+        "allgefahren": "optional",
+        "mietausfall": "24 Monate",
+        "sb": "0, 250, 500, 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-wohngebaeude_2022_10.pdf",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-wohngebaeude_2022_10.pdf"
+  ],
+  "offen": [
+    "Quelle: Deckungskonzept Wohngebäudeversicherung PrivatSchutz 04/2024 (Dateiname 2022_10, PDF auf zurich.de).",
+    "Zwei Stufen (Basis, Top), keine Empfehlung markiert.",
+    "Photovoltaik in beiden Stufen einschließbar; Klima-, Wärmepumpen- und Solarheizungsanlagen mitversichert.",
+    "Kosten nach Schaden: Aufräum- und Abbruchkosten Basis 25.000 €, Top unbegrenzt; Hotelkosten nur Top (200 € je Tag, max. 24 Monate).",
+    "Ableitungsrohre außerhalb des Gebäudes: Basis nur wenn vereinbart; Top 5.000 €.",
+    "Tiere: Schäden durch Tiere an elektrischen Anlagen, Leitungen, Dämmungen nur in Top.",
+    "Unbenannte Gefahren nur in Top einschließbar (500 € SB). Elementar mit 3.500 € SB, wählbar.",
+    "Gleitender Neuwert und Glasbruch nicht im Deckungskonzept genannt."
+  ]
+}

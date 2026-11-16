@@ -1,0 +1,94 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Mietsachschäden und Gefälligkeitsschäden",
+    "Internetschäden, Fahrräder und Pedelecs",
+    "Innovations-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "nein",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "drohne": "nein",
+        "sb": "0, 150 oder 250 €"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.ruv.de/haftpflichtversicherung/private-haftpflichtversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "40 Mio. €",
+        "forderungsausfall": "ab 1.000 € Schaden",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 25.000 €",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 1.000 €",
+        "drohne": "bis 250 g",
+        "sb": "0, 150 oder 250 €"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.ruv.de/haftpflichtversicherung/private-haftpflichtversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Privathaftpflicht premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 10.000 €",
+        "drohne": "bis 5 kg",
+        "sb": "0, 150 oder 250 €"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.ruv.de/haftpflichtversicherung/private-haftpflichtversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/haftpflichtversicherung/private-haftpflichtversicherung"
+  ],
+  "offen": [
+    "R+V markiert bei der Haftpflicht keine Empfehlung; comfort als mittlere Stufe gesetzt.",
+    "Werte aus der Leistungstabelle der Produktseite (Häkchen ohne Grenze als „ja“).",
+    "premium: Schlüsselverlust laut Produktseite bis 100 Mio. €; geliehene und gemietete bewegliche Sachen versichert; zusätzlich Be- und Entladeschäden bis 10.000 €, Vollkasko-SB bei gemieteten Fahrzeugen bis 1.000 €, eigener Schaden zum Neuwert bis 10.000 €.",
+    "Neuwertersatz nur für Sachen bis 2 Jahre alt.",
+    "Auslandsaufenthalt weltweit: classic bis 2 Jahre, comfort und premium bis 5 Jahre.",
+    "Mallorca-Deckung, Rabattretter, Ehrenamt und Nebentätigkeit nicht in der Tabelle.",
+    "Diensthaftpflicht in allen drei Varianten zuwählbar."
+  ]
+}

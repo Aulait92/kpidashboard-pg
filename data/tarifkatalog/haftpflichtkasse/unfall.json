@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "Die Haftpflichtkasse",
+  "sparte": "unfall",
+  "produkt": "Unfall-Versicherung Einfach",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unfallrente ab 50 % Invalidität",
+    "Übernahme verbesserter Gliedertaxen in der Rente",
+    "Todesfallleistung auch bei Verschollenheit"
+  ],
+  "tarife": [
+    {
+      "name": "Einfach Gut",
+      "kurz": "Einfach Gut",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "unfallrente": "ab 50 % Invalidität",
+        "sofort": "3 %, max. 5.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "nein",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/229/tarif_2025-07-01.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Einfach Besser",
+      "kurz": "Einfach Besser",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "unfallrente": "ab 50 % Invalidität",
+        "sofort": "5 %, max. 10.000 €",
+        "kosmetik": "bis 500.000 €",
+        "bergung": "bis 500.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja (Komfort)"
+      },
+      "bausteine": {},
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/229/tarif_2025-07-01.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Einfach Komplett",
+      "kurz": "Komplett",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "unfallrente": "ab 50 % Invalidität",
+        "sofort": "20 %, max. 20.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "frei wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/229/tarif_2025-07-01.pdf?reController=search&reAction=index&showInView=true",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.haftpflichtkasse.de/versicherungen/privatkunden/unfallversicherung/",
+    "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/229/tarif_2025-07-01.pdf?reController=search&reAction=index&showInView=true",
+    "https://www.haftpflichtkasse.de/extranet/dokuSearch/download/115/deckungsuebersicht_2022-10-10.pdf?reController=search&reAction=index&showInView=true",
+    "https://www.haftpflichtkasse.de/service-kontakt/wissen/dokumentencenter/"
+  ],
+  "offen": [
+    "Quelle: Tarifunterlagen Unfall (Stand 07/2025: Bergung, kosmetische OP, Gliedertaxe) und Deckungsübersicht Unfallversicherung Einfach (Stand 01.06.2019: Sofortleistung, Unfallrente, Zecken), beide im Dokumentencenter.",
+    "Gliedertaxe: Gut Standard, Besser Komfort, Komplett frei wählbar. Plus-Progression, Schmerzensgeld und Krebsgeld nur in Komplett.",
+    "Keine Empfehlung markiert; Einfach Besser als mittlere Stufe gesetzt.",
+    "Die Deckungsübersicht kennzeichnet enthaltene Leistungen mit einem Bildsymbol und nicht enthaltene mit einem Strich; Zellen ohne Betrag und ohne Strich sind als „ja“ erfasst.",
+    "Sofortleistung bei schweren Verletzungen in Prozent der Invaliditätsgrundsumme.",
+    "Komplett: Bergungskosten und kosmetische Operationen als Symbol dargestellt, Betrag nicht lesbar.",
+    "Invaliditätssumme, Progression, Krankenhaustagegeld und Todesfallleistung werden individuell vereinbart; Progressionen und Gliedertaxe als eigene PDFs im Dokumentencenter (Stand 2019).",
+    "Zeckenstich: Hautverletzungen durch Tiere inkl. Insektenstiche (z. B. Borreliose) ab Einfach Besser."
+  ]
+}

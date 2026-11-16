@@ -1,0 +1,69 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "wohngebaeude",
+  "produkt": "LVM-Wohngebäudeversicherung (VGB 2022)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Feuer, Leitungswasser, Sturm ab Windstärke 8, Hagel",
+    "Überspannung durch Blitz",
+    "Außengeräte von Wärmepumpen und Klimaanlagen"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Basisschutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "optional",
+        "ueberspannung": "ja",
+        "vandalismus": "optional"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "smarthome": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:d4abc117-622e-40c6-b0ea-19d6a913a062/051-wohngebaude-versicherung-w5112.24b73ff93a3c36ae505d52f961048b3e.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basisschutz mit WohngebäudePlus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "ableitung": "bis 10.000 €",
+        "pv": "optional",
+        "ueberspannung": "ja",
+        "fugen": "bis Versicherungssumme",
+        "vandalismus": "bis 10.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "smarthome": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:d4abc117-622e-40c6-b0ea-19d6a913a062/051-wohngebaude-versicherung-w5112.24b73ff93a3c36ae505d52f961048b3e.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/wohnen/wohngebaeudeversicherung",
+    "https://www.lvm.de/dam/jcr:d4abc117-622e-40c6-b0ea-19d6a913a062/051-wohngebaude-versicherung-w5112.24b73ff93a3c36ae505d52f961048b3e.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre Wohngebäudeversicherung (W 5112, VGB 2022) und Produktseite lvm.de.",
+    "Zwei Stufen: Grundbaustein und Grundbaustein mit Baustein WohngebäudePlus (13 Zusatzleistungen). Keine Empfehlung markiert.",
+    "Ableitungsrohre außerhalb des Gebäudes nur mit WohngebäudePlus (bis 10.000 €). Undichte Fugen: Grundbaustein mit Entschädigungsgrenze (Höhe nicht genannt), Plus bis zur Versicherungssumme.",
+    "Photovoltaik, Wärmepumpen/Solarthermie und Gebäudetechnik als Zusatzbausteine; weitere Naturgefahren (Elementar) einschließbar.",
+    "Grobe Fahrlässigkeit, Kosten nach Schaden (Höhe), Mietausfall und Selbstbeteiligung nicht belegt."
+  ]
+}

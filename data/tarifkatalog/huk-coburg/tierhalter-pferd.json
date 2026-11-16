@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Reitschule, Turniere und Kutschfahrten",
+    "Ohne Sattel und Zaumzeug",
+    "Deckakt mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "15 Mio. €",
+        "sb": "keine",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 12 Monate",
+        "geliehen": "ja, SB 250 €",
+        "ausland": "EU unbegr., sonst 5 J."
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/pferdehaftpflicht.html",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/pferdehaftpflicht.html"
+  ],
+  "offen": [
+    "HUK-COBURG bietet einen Tarif (keine Stufen); Versicherungssumme laut Kostenbeispiel 15 Mio. €.",
+    "Keine Selbstbeteiligung; nur bei gemieteten oder geliehenen beweglichen Sachen (z. B. Transportanhänger) 250 €, nicht bei Sachen in gemieteten Ställen.",
+    "Mietsachschäden an Boxen, Stallungen, Reithallen, Koppeln und Anhängern genannt. Reitbeteiligung, Fremd- und Gastreiter sowie nicht gewerbsmäßige Tierhüter mitversichert.",
+    "Forderungsausfall und Neuwert nicht belegt. Gewerbliche Nutzung (Reitunterricht gegen Entgelt) nicht versichert."
+  ]
+}

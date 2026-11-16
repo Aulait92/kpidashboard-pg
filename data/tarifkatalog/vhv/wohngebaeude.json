@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "VHV",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Home-Service rund um die Uhr",
+    "Rohbauschutz 24 Monate beitragsfrei",
+    "Diebstahl von Wärmepumpen bis 35.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "KLASSIK-GARANT",
+      "kurz": "Klassik-Garant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "pv": "optional",
+        "kosten": "Hotel 100 €/Tag, 12 Mon.",
+        "allgefahren": "optional",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "smarthome": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.vhv.de/ds/660.0031.23.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    },
+    {
+      "name": "KLASSIK-GARANT mit EXKLUSIV",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "ableitung": "bis 10.000 €",
+        "pv": "optional",
+        "kosten": "Hotel 150 €/Tag, 24 Mon.",
+        "tiere": "bis 5.000 €",
+        "allgefahren": "optional",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "smarthome": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.vhv.de/ds/660.0031.23.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vhv.de/wohngebaeude-versicherung",
+    "https://www.vhv.de/ds/660.0031.23.pdf",
+    "https://www.vhv.de/ds/660.0031.22.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktübersicht Wohngebäude (Stand 06.2026, PDF auf vhv.de) und Produktseite.",
+    "Zwei Stufen: Grundtarif KLASSIK-GARANT und KLASSIK-GARANT mit Zusatzpaket EXKLUSIV. Keine Empfehlung markiert.",
+    "Die Produktübersicht (PDF) kennzeichnet enthalten, optional und nicht enthalten mit Symbolen, die sich nicht automatisch auslesen lassen. Erfasst sind nur Zeilen mit Beträgen in den Spalten sowie Angaben der Produktseite; Zeilen ohne Betrag sind nur übernommen, wenn die Produktseite sie bestätigt.",
+    "Grobe Fahrlässigkeit: laut Produktseite versichert, Stufenzuordnung nicht lesbar; Verzicht auch bei Obliegenheiten bis 5.000 €.",
+    "Ableitungsrohre auf und außerhalb des Grundstücks bis 10.000 € und Tierbiss bis 5.000 € laut Produktseite in EXKLUSIV; für KLASSIK-GARANT nicht belegt.",
+    "Photovoltaik und Wärmepumpe/Solarthermie als Bausteine mit Allgefahrenschutz; Bausteine Gebäudetechnik und Smart Home, Glasbruch, Unbenannte Gefahren, ProBau.",
+    "Überspannung, undichte Fugen und Selbstbeteiligung: in der Übersicht genannt, Stufenzuordnung nicht lesbar."
+  ]
+}

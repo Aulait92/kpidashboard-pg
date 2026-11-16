@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "tierhalter-hund",
+  "produkt": "PrivatSchutz Tierhalter-Haftpflicht (Hund)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Fremde Hüter mitversichert",
+    "Flur- und Weideschäden",
+    "Schäden durch tierische Ausscheidungen"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "miete": "bis 5 Mio. €",
+        "fremdhueter": "ja",
+        "forderungsausfall": "nein",
+        "geliehen": "nein",
+        "ausland": "EU unbegr., sonst 3 J.",
+        "welpen": "ja, 12 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-privathaftpflicht_2025_04.pdf",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "PrivatSchutz Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "miete": "bis 50 Mio. €",
+        "fremdhueter": "ja",
+        "forderungsausfall": "bis 50 Mio. €",
+        "geliehen": "ja",
+        "ausland": "EU unbegr., sonst 5 J.",
+        "welpen": "ja, 12 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-privathaftpflicht_2025_04.pdf",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/docs/downloads/zas/zurich-leistungsuebersicht-privathaftpflicht_2025_04.pdf"
+  ],
+  "offen": [
+    "Quelle: Deckungskonzept Haftpflichtversicherung PrivatSchutz 04/2025, Abschnitt Tierhalter-Haftpflicht (PDF auf zurich.de).",
+    "Zwei Stufen (Basis, Top), keine Empfehlung markiert.",
+    "Selbstbeteiligung im Abschnitt Tierhalter nicht genannt (Privathaftpflicht: 0, 150 oder 250 €).",
+    "Geliehene Sachen: Top für zur Tierhaltung gemietete oder geliehene bewegliche Sachen (nicht Kfz).",
+    "Top zusätzlich: Forderungsausfall mit Gewaltopferschutz, Rettungs- und Bergungskosten für das Tier bis 25.000 €, Kaution im Ausland bis 1 Mio. €.",
+    "Leistung auch bei Missachtung von Leinen- und Maulkorbzwang (beide Stufen)."
+  ]
+}

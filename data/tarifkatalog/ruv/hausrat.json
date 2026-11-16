@@ -1,0 +1,113 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Neuwert, Versicherungssumme unbegrenzt",
+    "Grobe Fahrlässigkeit ohne Kürzung",
+    "Smart Home Geräte und Ladestationen"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "200 €/m², erhöhbar",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 1.500 €",
+        "garten": "bis 500 €",
+        "auto": "nein",
+        "allgefahren": "nein",
+        "hotel": "200 €/Tag, 200 Tage",
+        "aussen": "6 Mon., bis 20.000 €",
+        "sb": "0 oder 150 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.ruv.de/hausratversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "200 €/m², mind. 25.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 2.000 €",
+        "auto": "ja, Elektronik 500 €",
+        "allgefahren": "nein",
+        "hotel": "300 €/Tag, 300 Tage",
+        "aussen": "12 Mon., bis 30.000 €",
+        "sb": "0 oder 150 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.ruv.de/hausratversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "200 €/m², mind. 25.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 5.000 €",
+        "garten": "unbegrenzt",
+        "auto": "ja, Elektronik 1.000 €",
+        "allgefahren": "bis 5.000 €, SB 500 €",
+        "hotel": "300 €/Tag, bis bewohnbar",
+        "aussen": "12 Mon., bis 100.000 €",
+        "sb": "0 oder 150 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.ruv.de/hausratversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/hausratversicherung"
+  ],
+  "offen": [
+    "R+V markiert comfort als „Topseller“.",
+    "Wertsachen: 200 € je m² Wohnfläche, in comfort und premium mindestens 25.000 €, jeweils erhöhbar. Schmuck und Urkunden bis 20.000, 25.000 bzw. 50.000 €.",
+    "Einfacher Diebstahl in der Wohnung ist nicht genannt; Trickdiebstahl in der Wohnung: classic nein, comfort bis 2.000 €, premium bis 10.000 €.",
+    "Diebstahl im Garten: Gartengeräte, Kinderwagen, Waschmaschinen bis 500 € (classic), 2.000 € (comfort), unbegrenzt (premium); Gartenmöbel gleiche Grenzen.",
+    "Diebstahl aus dem verschlossenen Auto: comfort und premium unbegrenzt, Elektronik und Wertsachen bis 500 € bzw. 1.000 €, ohne Bargeld.",
+    "Allgefahren: premium enthält einen Versehensschutz zu Hause bis 5.000 € (SB 500 €), keine volle Allgefahrendeckung.",
+    "Online-Betrug über den Baustein SicherOnline (alle Varianten). Überspannung und Empfehlung zur Summe je m² nicht genannt (Versicherungssumme unbegrenzt).",
+    "Mindestlaufzeit 1 Jahr."
+  ]
+}

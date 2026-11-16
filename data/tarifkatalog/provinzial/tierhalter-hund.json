@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Deckakt mitversichert",
+    "Tierische Ausscheidungen",
+    "Erlaubte Hunderennen und Veranstaltungen"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalter-Haftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 oder 50 Mio. €",
+        "fremdhueter": "ja, nicht gewerblich",
+        "welpen": "ja, bis 12 Monate",
+        "geliehen": "bis 10.000 €",
+        "ausland": "Europa 5 J., sonst 1 J."
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/haftpflichtversicherung/hundehalter-haftpflichtversicherung.html",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/haftpflichtversicherung/hundehalter-haftpflichtversicherung.html",
+    "https://provinzial.de/west/dam/jcr:ba344cc0-9cb4-498e-9b81-25cbbd23a956/9060030_PIB%20Hundehalter-Haftpflicht_4_09-2022.pdf?view="
+  ],
+  "offen": [
+    "Provinzial Versicherung AG, Region Westfalen (provinzial.de/west); die Provinzial Nord veröffentlicht eigene Unterlagen.",
+    "Quelle: Produktseite Hundehalter-Haftpflichtversicherung (provinzial.de/west), PIB Hundehalter-HV/6 (Stand 08.2026).",
+    "Ein Tarif mit Versicherungssumme 15 oder 50 Mio. € (bei 50 Mio. € Personenschäden max. 15 Mio. € je Person). Laut FAQ verschiedene Tarife wählbar, ohne Namen oder Leistungsunterschiede.",
+    "Mietsachschäden in Ferienwohnungen und Hotels versichert, ohne Betrag. Selbstbeteiligung und Forderungsausfall nicht belegt.",
+    "Alternativ Hund als Baustein der Privathaftpflicht (PIB PHV/7)."
+  ]
+}

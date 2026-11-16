@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung (ERGO Rechtsschutz, früher D.A.S.)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Bereiche Privat, Beruf, Wohnen, Verkehr kombinierbar",
+    "Freie Anwaltswahl, Anwaltshotline",
+    "Opfer von Gewaltstraftaten, Cyber-Mobbing"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "2 Mio. €",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "ja",
+        "sb": "150 oder 250 €",
+        "wartezeit": "teils 3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Rechtsschutzversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Rechtsschutz Best",
+      "kurz": "Best",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "unbegrenzt",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "bis 200.000 €",
+        "sb": "150, 250 oder 500 €",
+        "wartezeit": "teils 3 Monate",
+        "opfer": "ja",
+        "straf": "ja, erweitert",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Rechtsschutzversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Rechtsschutzversicherung"
+  ],
+  "offen": [
+    "Versicherer: ERGO Rechtsschutz; laut ergo.de ist die D.A.S. Rechtsschutzversicherung seit 2019 die ERGO Rechtsschutzversicherung. Ein Partnerversicherer ist nicht nötig.",
+    "Aufbau: Privat ist die Grundlage, Beruf und Wohnen nur zusammen mit Privat, Verkehr auch allein. Beruf, Wohnen und Verkehr daher als zuwählbar erfasst.",
+    "Strafkaution: Best unbegrenzt als zinsloses Darlehen, außerhalb Europas wie die Versicherungssumme bis 200.000 €. Für Smart nicht belegt.",
+    "Versicherungssumme weltweit für Smart nicht belegt.",
+    "Best zusätzlich u. a.: Spezial-Straf-Rechtsschutz, Kapitalanlagestreitigkeiten bis 50.000 €, Vorsorgeverfügungen und Testament, Phishing, Mobiler Anwalt, Nachhaftung; Steuer-, Sozial- und Verwaltungsrecht schon ab dem Widerspruchsverfahren.",
+    "Selbstbeteiligung: mindestens 150 €, auch 250 €, in Best auch 500 €; andere Beträge über den Berater. Halbiert sich nach 3 und entfällt nach 5 schadenfreien Jahren.",
+    "Wartezeit: grundsätzlich keine, 3 Monate z. B. im Arbeits-, Vertrags- sowie Wohnungs- und Grundstücksrecht; entfällt bei nahtlosem Wechsel.",
+    "Für Senioren gibt es den Tarif Vital mit eingeschränktem Arbeits-Rechtsschutz (nicht erfasst)."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "VHV",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalterhaftpflicht KLASSIK-GARANT (Hund)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Leinen- und Maulkorbzwang",
+    "Hundesport und Hundeschule",
+    "Deckschäden"
+  ],
+  "tarife": [
+    {
+      "name": "KLASSIK-GARANT",
+      "kurz": "Klassik-Garant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "30 oder 50 Mio. €",
+        "miete": "bis VS, ohne SB",
+        "forderungsausfall": "ja",
+        "geliehen": "bis VS, ohne SB",
+        "ausland": "Europa unbegrenzt",
+        "fremdhueter": "ja",
+        "welpen": "ja, 1. Lebensjahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vhv.de/ds/102.0031.88.pdf",
+      "stand": "2026-11-16",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vhv.de/tierhalterhaftpflicht-versicherung",
+    "https://www.vhv.de/ds/102.0031.88.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktübersicht Tierhalterhaftpflicht (Stand 09.2024, PDF auf vhv.de) und Produktseite.",
+    "Ein Tarif (KLASSIK-GARANT) mit Deckungssumme 30 oder 50 Mio. € (Personenschäden max. 15 Mio. € je Person); Baustein BEST-LEISTUNGS-GARANTIE optional.",
+    "Mietsachschäden an Räumen, Grundstücken, Reithallen, Stallungen, Weiden sowie gemietete Tiertransportanhänger bis zur Versicherungssumme ohne SB.",
+    "Selbstbeteiligung: Tarifvariante mit 150 € SB bei Sachschäden; ob wählbar oder fest, nicht eindeutig belegt. Nachlass ab dem zweiten Tier.",
+    "Ausland außerhalb Europas bis 5 Jahre; Rettungs- und Bergungskosten bis 10.000 €."
+  ]
+}

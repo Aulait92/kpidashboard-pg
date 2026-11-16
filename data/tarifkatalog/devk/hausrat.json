@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwert, Unterversicherungsverzicht",
+    "Überspannung durch Blitz",
+    "Feuer, Leitungswasser, Einbruchdiebstahl"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "elementar": "optional",
+        "auto": "bis 250 €",
+        "ueberspannung": "ja",
+        "aussen": "20 % der VS"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/haus-wohnen/hausratversicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "100 % der VS",
+        "elementar": "optional",
+        "vs": "700 €/m²",
+        "auto": "bis 500 €",
+        "ueberspannung": "ja",
+        "aussen": "30 % der VS",
+        "sb": "ohne"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/haus-wohnen/hausratversicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "100 % der VS",
+        "elementar": "optional",
+        "auto": "bis 2.500 €",
+        "ueberspannung": "ja",
+        "aussen": "40 % der VS"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/haus-wohnen/hausratversicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/haus-wohnen/hausratversicherung/"
+  ],
+  "offen": [
+    "DEVK markiert keine Empfehlung; Komfort als mittlere Stufe gesetzt.",
+    "Diebstahl aus verschlossenen Kfz, Wohnwagen, Dachboxen: 250 €, 500 €, 2.500 €.",
+    "Einfacher Diebstahl in der Wohnung nicht genannt; Premium: einfacher Diebstahl in der Öffentlichkeit bis 250 €, Balkonkraftwerke bis 1.500 €, undichte Fugen bis 5.000 €.",
+    "Fahrräder nur bei Einbruchdiebstahl; Fahrraddiebstahl über eine eigene Fahrradversicherung (kein Baustein der Hausrat).",
+    "Inventar auf Balkon, Terrasse oder im Garten: 500 €, 5.000 €, 10.000 € (Schäden, nicht ausdrücklich Diebstahl).",
+    "Elementar über Weitere Naturgefahren (SB 500 €); im Rechenbeispiel Komfort eingeschlossen.",
+    "Wertsachen und Bargeld nur „in begrenzter Höhe“, nicht beziffert. Versicherungssumme je m² aus dem Rechenbeispiel (50 m², 35.000 €).",
+    "Online-Betrug, Hotelkosten und Selbstbeteiligung je Stufe nicht genannt (Rechenbeispiel ohne SB)."
+  ]
+}
