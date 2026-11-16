@@ -44,10 +44,10 @@ describe("Postfach", () => {
     const v = await loadVorlagen(c.id);
     expect(v.map((x) => x.name)).toEqual(STANDARD_VORLAGEN.map((x) => x.name));
     expect((await loadVorlagen(c.id)).length).toBe(STANDARD_VORLAGEN.length); // nicht doppelt
-    const w = werteFuer({ name: "Anna Schmitt", source: "TKV-Katze" }, "Susanne Meier");
-    // Standard „Sie“ ohne bekannte Anrede: neutral (Ole, 15.11.2026), ohne Terminlink fällt der Satz weg, keine Gedankenstriche
+    const w = werteFuer({ name: "Kim Schmitt", source: "TKV-Katze" }, "Susanne Meier");
+    // Standard „Sie“ ohne bekannte Anrede (zweideutiger Vorname): neutral (Ole, 15.11.2026), ohne Terminlink fällt der Satz weg, keine Gedankenstriche
     expect(fuelle(v[0].body, w)).toContain("Guten Tag,");
-    expect(fuelle(v[0].body, w)).not.toContain("Anna Schmitt");
+    expect(fuelle(v[0].body, w)).not.toContain("Kim Schmitt");
     expect(fuelle(v[0].body, w)).not.toContain("{terminlink}");
     expect(fuelle(v[0].body, w)).not.toMatch(/[\u2013\u2014]/);
     expect(fuelle(v[0].body, w)).toContain("Susanne Meier");
@@ -104,7 +104,7 @@ describe("Ansprache, Terminlink und Erinnerung (14.11.2026)", () => {
     const { werteFuer, fuelle } = await import("@/lib/mail/platzhalter");
     const { STANDARD_VORLAGEN_JE } = await import("@/lib/mail/vorlagen");
     const link = "https://app.example/book/abc?lead=l1";
-    const sie = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva Pohl", source: "TKV" }, "Jana", { ansprache: "sie", terminlink: link }));
+    const sie = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Kim Pohl", source: "TKV" }, "Jana", { ansprache: "sie", terminlink: link }));
     expect(sie.startsWith("Guten Tag,")).toBe(true);
     // Anrede aus dem Formular: „Guten Tag Frau Pohl,“
     const mitAnrede = fuelle(STANDARD_VORLAGEN_JE.sie[0].body, werteFuer({ name: "Eva Pohl", source: "TKV", salutation: "Frau" }, "Jana", { ansprache: "sie" }));
