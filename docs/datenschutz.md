@@ -407,3 +407,18 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
   Anzeige des Vertragsendes und Bestätigung per E-Mail (AGB „Laufzeit und Kündigung“, `lib/vertrag-kuendigung.ts`).
 - **Bewertung:** § 312k gilt nicht. Ein Weg ohne Login besteht ohnehin (E-Mail).
 - **Handlungsbedarf: nein.**
+
+### 10.6 Überraschende Klausel und Transparenz bei Start- und Staffelpreisen (§§ 305c, 307 BGB)
+
+- **Rechtslage:** Ungewöhnliche Klauseln, mit denen der Kunde nicht rechnen muss, werden nicht Vertragsbestandteil
+  ([§ 305c Abs. 1 BGB](https://www.gesetze-im-internet.de/bgb/__305c.html)); das Transparenzgebot gilt auch für
+  Preisregeln ([§ 307 Abs. 1 Satz 2, Abs. 3 Satz 2 BGB](https://www.gesetze-im-internet.de/bgb/__307.html)). Eine
+  Entgeltklausel, wo der Kunde keine erwartet, wird auch gegenüber Gewerbetreibenden nicht Vertragsbestandteil (BGH,
+  Urteil vom 26.07.2012, VII ZR 262/11). Die Preisangabenverordnung („ab“-Preise) gilt nur gegenüber Verbrauchern
+  ([§ 1 PAngV](https://www.gesetze-im-internet.de/pangv_2022/__1.html)).
+- **App heute:** Startpreis mit Datum des Übergangs und Folgebetrag am Knopf, eigenes Häkchen, Auftragsbestätigung
+  (Paket A). **Lücke:** Die AGB verweisen auf die „Preisstaffel laut Angebot“, das Angebot zeigte nur die aktuelle
+  Stufe.
+- **Umgesetzt (16.11.2026):** Angebot zeigt die vollständige Staffel und den Wechselzeitpunkt (`tierStaffelText`, Test
+  in `tests/unit/offer-pricing.test.ts`). Kundenbereich zeigt die neue Stufe schon vor einer Budgetänderung.
+- **Handlungsbedarf: ja (umgesetzt), Entwurf** für die AGB-Formulierung und Sonderkonditionen (Entwurf Thema 6, Ole).

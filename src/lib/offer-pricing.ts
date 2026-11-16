@@ -465,3 +465,19 @@ export function bestandPacksText(): string {
   const parts = PRICE_LIST.bestandPacks.map((p, i) => `+${p.messages.toLocaleString("de-DE")}${i === 0 ? " Nachrichten" : ""} für ${eur(p.price)}`);
   return `${parts.join(", ")} (netto, einmalig, gültig ${PRICE_LIST.bestandPackMonths} Monate)`;
 }
+
+/**
+ * Vollständige Preisstaffel als Satz für das Angebot (Rechtsprüfung 16.11.2026): Die AGB verweisen auf die
+ * „Preisstaffel laut Angebot“. Damit die Stufe bei dauerhaft höherem Budget vorher erkennbar ist (§ 307 Abs. 1
+ * Satz 2, § 305c Abs. 1 BGB), steht die ganze Staffel im Angebot, nicht nur die aktuelle Stufe. Ohne Gedankenstriche.
+ */
+export function tierStaffelText(): string {
+  const de = (n: number) => n.toLocaleString("de-DE");
+  let from = 0;
+  const parts = PRICE_LIST.tiers.map((t) => {
+    const range = from === 0 ? `bis ${de(t.maxBudget)} €` : `über ${de(from)} bis ${de(t.maxBudget)} €`;
+    from = t.maxBudget;
+    return `${range}: ${eur(t.monthly)}`;
+  });
+  return `Preisstaffel nach Werbebudget im Monat (netto): ${parts.join("; ")}; über ${de(PRICE_LIST.individualFrom)} € individuelles Angebot. Ändern Sie Ihr Budget dauerhaft, gilt die passende Stufe ab dem folgenden Abrechnungsmonat; Sie sehen sie vorher im Kundenbereich.`;
+}

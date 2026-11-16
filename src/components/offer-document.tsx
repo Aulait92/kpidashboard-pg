@@ -10,6 +10,7 @@ import {
   PRICE_LIST,
   bestandPacksText,
   setupForChoice,
+  tierStaffelText,
   vatOf,
   withVat,
   type OfferProduct,
@@ -424,6 +425,7 @@ export function OfferDocument({
                 ? `${serviceOnly ? "Paket Nur Betreuung" : `Preisstufe Werbebudget ${list.tierLabel}`}${extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
                 : "Sonderkondition"}
             </Note>
+            {monthlyIsList && !serviceOnly ? <Note>{tierStaffelText()}</Note> : null}
           </Tr>
           {add.extraSeats > 0 ? (
             <Tr k={`Weitere Verkäufer (${add.extraSeats})`}>

@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { computeOfferPrice, normalizeTerm, setupForTerm, TERM_MONTHS, withVat } from "@/lib/offer-pricing";
+import { computeOfferPrice, normalizeTerm, PRICE_LIST, setupForTerm, TERM_MONTHS, tierStaffelText, withVat } from "@/lib/offer-pricing";
+
+describe("Preisstaffel im Angebot (§ 305c, § 307 Abs. 1 Satz 2 BGB, Rechtsprüfung 16.11.2026)", () => {
+  it("nennt alle Stufen, die Grenze zum individuellen Angebot und den Wechselzeitpunkt, ohne Gedankenstriche", () => {
+    const t = tierStaffelText().replace(/ /g, " ");
+    for (const tier of PRICE_LIST.tiers) expect(t).toContain(tier.maxBudget.toLocaleString("de-DE"));
+    expect(t).toContain("bis 3.000 €: 1.000 €");
+    expect(t).toContain("über 3.000 bis 6.000 €: 1.400 €");
+    expect(t).toContain("über 10.000 € individuelles Angebot");
+    expect(t).toContain("ab dem folgenden Abrechnungsmonat");
+    expect(t).not.toMatch(/[–—]/);
+  });
+});
 
 const p = (dailyBudget: number, name = "Privatschutz") => ({ name, dailyBudget });
 

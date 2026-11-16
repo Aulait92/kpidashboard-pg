@@ -73,3 +73,23 @@ Art. 25 (Rollenwechsel bei eigenem Namen) gilt nur für Hochrisiko-Systeme, der 
 
 **Anwalt:** Ob die Nennung des Vermittlers („digitaler KI-Assistent von …“) ihn zum Anbieter macht
 („unter seinem eigenen Namen … in Betrieb nimmt“, Art. 3 Nr. 3).
+
+## Thema 6: Preisstaffel und Startpreis (AGB „Vergütung und Zahlung“)
+
+**Problem:** Die AGB verweisen auf die „Preisstaffel laut Angebot“, das Angebot zeigte bis 16.11.2026 aber nur die
+aktuelle Stufe („Preisstufe Werbebudget bis 3.000 €“). Steigt das Budget, steigt die Vergütung nach einer Staffel, die
+der Kunde bei Vertragsschluss nicht gesehen hat. Das ist eine Preisnebenabrede, die der Inhaltskontrolle und dem
+Transparenzgebot unterliegt (§ 307 Abs. 1 Satz 2, Abs. 3 Satz 2 BGB), und kann überraschend sein (§ 305c Abs. 1 BGB;
+BGH, Urteil vom 26.07.2012, VII ZR 262/11, auch gegenüber Gewerbetreibenden). **Erledigt im Code (16.11.2026):** Das
+Angebot zeigt jetzt die vollständige Staffel (`tierStaffelText` in `lib/offer-pricing.ts`). Der Startpreis hat schon
+ein eigenes Häkchen mit Datum und Folgebetrag am Annahmeknopf.
+
+**Vorschlag AGB, ersetzt den dritten Absatz:**
+
+> Die Höhe der monatlichen Vergütung richtet sich nach dem vereinbarten monatlichen Werbebudget und der im Angebot
+> vollständig genannten Preisstaffel. Ändert der Kunde das Budget dauerhaft, gilt die Stufe des neuen Budgets ab dem
+> folgenden Abrechnungsmonat; der Kundenbereich zeigt die neue Vergütung vor der Änderung an. Ist im Angebot eine
+> Sonderkondition ohne Staffel vereinbart, ändert eine Budgetänderung die Vergütung nur, wenn die Parteien das in
+> Textform vereinbaren.
+
+**Ole entscheidet:** den letzten Satz (Sonderkondition). Heute ist das nicht geregelt.
