@@ -422,3 +422,19 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 - **Umgesetzt (16.11.2026):** Angebot zeigt die vollständige Staffel und den Wechselzeitpunkt (`tierStaffelText`, Test
   in `tests/unit/offer-pricing.test.ts`). Kundenbereich zeigt die neue Stufe schon vor einer Budgetänderung.
 - **Handlungsbedarf: ja (umgesetzt), Entwurf** für die AGB-Formulierung und Sonderkonditionen (Entwurf Thema 6, Ole).
+
+### 10.7 Bestandskunden-Mail für eine andere Sparte (§ 7 Abs. 3 UWG)
+
+- **Rechtslage:** E-Mail-Werbung ohne Einwilligung nur, wenn alle vier Voraussetzungen vorliegen, darunter Werbung
+  „für eigene ähnliche Waren oder Dienstleistungen“ und Hinweis auf das Widerspruchsrecht schon bei der Erhebung
+  ([§ 7 Abs. 3 UWG](https://www.gesetze-im-internet.de/uwg_2004/__7.html); fehlt der Hinweis, ist die Werbung
+  rechtswidrig: BGH, Urteil vom 10.07.2018, VI ZR 225/17, Rn. 24 f.). Ähnlich heißt: derselbe typische
+  Verwendungszweck oder Bedarf, die Ausnahme ist eng (LG Frankfurt a. M., Urteil vom 22.03.2018, 2-03 O 372/17;
+  LG Berlin, Urteil vom 16.11.2017, 16 O 225/17, laut Kanzleibericht). Ein Urteil zu Versicherungssparten gibt es nicht.
+- **App heute:** Ohne Einwilligung nur Anlässe zum selben Vertrag (Ablauf/Wechsel, Jahresgespräch), nur dieselbe Sparte
+  (`isSimilarLine`, `isSameNeedOccasion` in `lib/bestand/einwilligung.ts`), nur mit Bestätigung des Vermittlers und
+  Nachweis zum Widerspruchshinweis je Kunde; WhatsApp nur mit Einwilligung.
+- **Bewertung:** Andere Sparte (Haftpflicht → Zahnzusatz, auch Hausrat → Wohngebäude) ist nach der engen Auslegung nicht
+  „ähnlich“; die App sperrt das richtig. Ein Argument für Makler (eigene Dienstleistung ist die Vermittlung, nicht das
+  Produkt) ist nicht entschieden.
+- **Handlungsbedarf: nein.** **Anwalt** nur, falls Ole Sachsparten untereinander freigeben möchte.
