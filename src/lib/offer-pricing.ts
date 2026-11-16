@@ -504,11 +504,9 @@ export function berlinTagesendeIso(iso: string): Date {
   return berlinTagesende(new Date(`${iso}T12:00:00Z`));
 }
 
-/** Vorschlag für die Frist: heute, ab 18 Uhr (Berlin) der Folgetag. */
+/** Vorschlag für die Frist: morgen 23:59 Uhr (Berlin), wie auf der Präsentationsfolie (Ole, 16.11.2026). */
 export function abschlussBonusStandardTag(now: Date = new Date()): string {
-  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(now));
-  const heute = berlinTodayIso(now);
-  return h >= 18 ? addDaysIso(heute, 1) : heute;
+  return addDaysIso(berlinTodayIso(now), 1);
 }
 
 export type AbschlussBonusQuelle = {

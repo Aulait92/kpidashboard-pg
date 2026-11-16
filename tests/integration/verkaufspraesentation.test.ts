@@ -53,7 +53,7 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
   it("ohne Angebot: Makler-Fassung mit Listenpreisen; mit Angebot: Preise und Zielgruppe aus dem Angebot", async () => {
     const ohne = await ladeVerkaufsPraesentation(contactId);
     expect(ohne).toMatchObject({ audience: "makler", angebotNr: null });
-    // Listenpreise: mit Folie „Ihr Abschlussbonus“ (300 € heute)
+    // Listenpreise: mit Folie „Ihr Abschlussbonus“ (300 € bis morgen)
     expect(ohne!.folien).toHaveLength(24);
     expect(ohne!.folien.map((f) => f.titel)).toContain("Ihr Abschlussbonus");
     expect(ohne!.preise.quelle).toBe("liste");

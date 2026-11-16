@@ -16,9 +16,9 @@ describe("Abschlussbonus: Frist", () => {
     expect(berlinTagesendeIso("2026-11-17").toISOString()).toBe("2026-11-17T22:59:59.000Z");
   });
 
-  it("Vorschlag: heute, ab 18 Uhr der Folgetag", () => {
-    expect(abschlussBonusStandardTag(new Date("2026-11-16T16:59:00Z"))).toBe("2026-11-16");
-    expect(abschlussBonusStandardTag(new Date("2026-11-16T17:00:00Z"))).toBe("2026-11-17");
+  it("Vorschlag: morgen", () => {
+    expect(abschlussBonusStandardTag(new Date("2026-11-16T08:00:00Z"))).toBe("2026-11-17");
+    expect(abschlussBonusStandardTag(new Date("2026-11-16T23:30:00Z"))).toBe("2026-11-18");
   });
 
   it("gesetzte Frist geht vor, sonst Versandtag, sonst Erstellungstag", () => {
@@ -64,25 +64,26 @@ describe("Abschlussbonus: später zahlen (Ole, 16.11.2026: Abschluss zählt)", (
 });
 
 describe("Abschlussbonus: Präsentation und Mail", () => {
-  it("Folie direkt nach „Ihr Paket“, Bildnummern bleiben wie in den PPTX", () => {
+  it("Folie als vorletzte, Bildnummern bleiben wie in den PPTX", () => {
     for (const a of ["vertreter", "makler"] as const) {
       const ohne = folienListe(a, false);
       const mit = folienListe(a);
       expect(mit.length).toBe(ohne.length + 1);
       const i = mit.findIndex((f) => f.art === "bonus");
-      expect(mit[i - 1].art).toBe("paket");
+      expect(i).toBe(mit.length - 2);
+      expect(mit[i + 1].titel).toBe("Ihr Start in 3 Schritten");
       expect(mit[i + 1].bild).toBe(ohne[i].bild);
       expect(mit.map((f) => f.nr)).toEqual(mit.map((_, k) => k + 1));
     }
   });
 
-  it("Listenpreise: 300 € heute; ohne Bonus im Angebot keine Folie", () => {
+  it("Listenpreise: 300 € bis morgen; ohne Bonus im Angebot keine Folie", () => {
     const p = paketDaten(null, "vertreter");
     expect(p.bonus).toMatchObject({ betrag: 300, bis: null });
     expect(verkaufsFolien("vertreter", p).some((f) => f.titel === "Ihr Abschlussbonus")).toBe(true);
     expect(verkaufsFolien("vertreter", { ...p, bonus: null }).some((f) => f.titel === "Ihr Abschlussbonus")).toBe(false);
     const html = bonusFolie(p, p.bonus!, 21, 23);
-    expect(html).toContain("heute bis 23:59 Uhr");
+    expect(html).toContain("morgen bis 23:59 Uhr");
     expect(html).not.toMatch(/[–—]/);
   });
 

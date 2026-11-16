@@ -88,7 +88,7 @@ export function OfferForm({
   // Abschlussbonus (Ole, 16.11.2026): Standard an, 300 € auf die Einrichtung bei Annahme und Zahlung am Versandtag
   const [bonusAn, setBonusAn] = useState(true);
   const [bonusBetrag, setBonusBetrag] = useState("300");
-  // Frist frei wählbar (Ole, 16.11.2026): Vorschlag heute, abends der Folgetag
+  // Frist frei wählbar (Ole, 16.11.2026): Vorschlag morgen 23:59 Uhr
   const [bonusBis, setBonusBis] = useState(() => abschlussBonusStandardTag());
   // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
   const [test, setTest] = useState(false);

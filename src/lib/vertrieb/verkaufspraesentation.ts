@@ -60,7 +60,7 @@ const ENDE: Record<VerkaufsAudience, Omit<VerkaufsFolieDef, "nr" | "bild">[]> = 
   ],
 };
 
-/** Folie „Ihr Abschlussbonus“ (Ole, 16.11.2026): direkt nach „Ihr Paket“, nicht in den PPTX. */
+/** Folie „Ihr Abschlussbonus“ (Ole, 16.11.2026): vorletzte Folie, vor „Ihr Start in 3 Schritten“; nicht in den PPTX. */
 export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
 
 /**
@@ -69,7 +69,7 @@ export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
  */
 export function folienListe(audience: VerkaufsAudience, mitBonus = true): VerkaufsFolieDef[] {
   const basis = [...GEMEINSAM, ...ENDE[audience]].map((f, i) => ({ ...f, bild: i + 1 }));
-  const liste = basis.flatMap((f) => (mitBonus && f.art === "paket" ? [f, { titel: BONUS_FOLIE_TITEL, art: "bonus" as const, bild: 0 }] : [f]));
+  const liste = mitBonus ? [...basis.slice(0, -1), { titel: BONUS_FOLIE_TITEL, art: "bonus" as const, bild: 0 }, ...basis.slice(-1)] : basis;
   return liste.map((f, i) => ({ ...f, nr: i + 1 }));
 }
 
@@ -425,9 +425,9 @@ export function paketFolie(p: PaketDaten, audience: VerkaufsAudience, nr: number
 
 const FRIST_FMT = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
-/** Frist als Text: „heute bis 23:59 Uhr“ (ohne Angebot) bzw. „bis Montag, 16. November, 23:59 Uhr“. */
+/** Frist als Text: „morgen bis 23:59 Uhr“ (ohne Angebot, Ole 16.11.2026) bzw. „bis Montag, 16. November, 23:59 Uhr“. */
 export function bonusFristText(bis: Date | null): string {
-  return bis ? `bis ${FRIST_FMT.format(bis).replace(" um ", ", ")} Uhr` : "heute bis 23:59 Uhr";
+  return bis ? `bis ${FRIST_FMT.format(bis).replace(" um ", ", ")} Uhr` : "morgen bis 23:59 Uhr";
 }
 
 /** „Ihr Abschlussbonus“ (Ole, 16.11.2026): Setup günstiger bei Annahme und Zahlung am selben Tag, Start frei wählbar. */
