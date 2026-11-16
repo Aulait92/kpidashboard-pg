@@ -72,7 +72,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   );
   const first = (me?.displayName ?? (customer?.name ?? "").replace(/^Allianz\s+/i, "")).split(" ")[0];
   const hour = Number(
-    new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(new Date()),
+    // en-GB: „04“; de-DE liefert „04 Uhr“, Number() wäre NaN und die Seite grüßte immer mit „Guten Abend“
+    new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(new Date()),
   );
   const greet = hour < 5 ? "Hallo" : hour < 11 ? "Guten Morgen" : hour < 18 ? "Hallo" : "Guten Abend";
   const today = new Intl.DateTimeFormat("de-DE", {
