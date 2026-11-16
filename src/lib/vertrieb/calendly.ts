@@ -24,7 +24,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 type Location = { type?: string; location?: string | null; join_url?: string | null; additional_info?: string | null } | null;
 type ScheduledEvent = { uri: string; name: string; status?: string; start_time: string; end_time?: string; location?: Location };
-type Invitee = {
+export type Invitee = {
   uri: string;
   email: string;
   name?: string | null;
@@ -54,7 +54,7 @@ export function verifySignature(rawBody: string, header: string | null, key: str
 }
 
 // ─── Kontakt finden oder anlegen ────────────────────────────────────────
-async function findOrCreateContact(inv: Invitee, matcher: Matcher): Promise<{ id: string; created: boolean }> {
+export async function findOrCreateContact(inv: Invitee, matcher: Matcher): Promise<{ id: string; created: boolean }> {
   const email = inv.email.trim().toLowerCase();
   const [first, ...rest] = (inv.name ?? "").trim().split(/\s+/);
   const firstName = inv.first_name ?? first ?? null;

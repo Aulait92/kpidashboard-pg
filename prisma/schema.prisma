@@ -1740,38 +1740,95 @@ model SalesLinkedInEvent {
 
 // Termine aus Calendly (gebucht über Calendly → Google Calendar)
 model SalesMeeting {
-  id              String       @id @default(cuid())
-  contactId       String
-  contact         SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  calendlyUri     String?      @unique // Invitee-URI
-  eventUri        String?
-  title           String
-  startAt         DateTime
-  endAt           DateTime?
-  location        String?
-  joinUrl         String?
-  status          String       @default("GEPLANT") // GEPLANT, ABGESAGT, VERSCHOBEN
-  cancelReason    String?
-  canceledBy      String?
-  rescheduleUrl   String?
-  cancelUrl       String?
-  answers         String? // Fragen & Antworten aus dem Buchungsformular
-  utmSource       String?
-  inviteeName     String?
-  inviteeEmail    String?
-  taskId          String?
+  id                 String            @id @default(cuid())
+  contactId          String
+  contact            SalesContact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  calendlyUri        String?           @unique // Invitee-URI
+  eventUri           String?
+  title              String
+  startAt            DateTime
+  endAt              DateTime?
+  location           String?
+  joinUrl            String?
+  status             String            @default("GEPLANT") // GEPLANT, ABGESAGT, VERSCHOBEN
+  cancelReason       String?
+  canceledBy         String?
+  rescheduleUrl      String?
+  cancelUrl          String?
+  answers            String? // Fragen & Antworten aus dem Buchungsformular
+  utmSource          String?
+  inviteeName        String?
+  inviteeEmail       String?
+  taskId             String?
   /// Aufgabe „Wie lief der Termin?“ nach Terminende (lib/vertrieb/termin-review.ts)
-  reviewTaskId    String?
+  reviewTaskId       String?
   /// WhatsApp-Terminbestätigung von der Support-Nummer (lib/vertrieb/termin-whatsapp.ts):
   /// sent | no_phone | no_account | no_template | opted_out | failed | past
-  waConfirmStatus String?
-  waConfirmAt     DateTime?
-  waConfirmError  String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  waConfirmStatus    String?
+  waConfirmAt        DateTime?
+  waConfirmError     String?
+  // ─── Eigene Buchungsseite /termin (lib/vertrieb/buchung.ts), parallel zu Calendly ───
+  /// Termintyp der eigenen Buchungsseite (null = Calendly oder von Hand)
+  bookingTypeId      String?
+  bookingType        SalesBookingType? @relation(fields: [bookingTypeId], references: [id], onDelete: SetNull)
+  /// Geheimer Link zum Verschieben/Absagen (/termin/verwalten/<token>)
+  manageToken        String?           @unique
+  /// Kalender-Schlüssel, in dem der Termin liegt (z. B. cust_pg_vertrieb), und Event-ID dort
+  calendarKey        String?
+  calendarEventId    String?
+  inviteePhone       String?
+  consentAt          DateTime?
+  consentText        String?
+  /// Erinnerungen der eigenen Buchungsseite: 24 Stunden und 1 Stunde vorher
+  reminderSentAt     DateTime?
+  soonReminderSentAt DateTime?
+  /// Beim Verschieben: der ursprüngliche Termin
+  rescheduledFromId  String?
+  /// WhatsApp-Erinnerungen von der Support-Nummer (auch Calendly): 24 Stunden und 1 Stunde vorher
+  waReminderAt       DateTime?
+  waSoonAt           DateTime?
+  /// Danke-Seite nach der Buchung (nur mit Buchungs-Token): Vorbereitungsvideo angesehen, Demo geöffnet
+  videoWatchedAt     DateTime?
+  demoOpenedAt       DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   @@index([contactId])
   @@index([startAt])
+  @@index([calendarKey, startAt])
+}
+
+/// Termintyp der eigenen Buchungsseite für Vertriebstermine (/termin, ersetzt später Calendly).
+/// Kalender, Zeiten je Wochentag und Blocker liegen am internen Mandanten cust_pg_vertrieb
+/// (CalendarConnection, CalendarLeadTimes); mehrere calendarKeys = später Round-Robin.
+model SalesBookingType {
+  id           String         @id @default(cuid())
+  slug         String         @unique
+  title        String
+  /// Kurzer Satz unter dem Titel auf der Buchungsseite
+  subtitle     String?
+  /// Eigener Satz in Bestätigung (Seite und E-Mail)
+  confirmText  String?
+  /// Nach der Buchung Danke-Seite mit Vorbereitungsvideo und Demo (/termin/danke/<token>)
+  thanksPage   Boolean        @default(false)
+  durationMin  Int            @default(45)
+  /// video | phone
+  mode         String         @default("video")
+  /// Puffer vor und nach jedem Termin (Minuten)
+  bufferMin    Int            @default(15)
+  /// Vorlauf: frühester Termin ab jetzt (Minuten)
+  noticeMin    Int            @default(240)
+  /// So viele Tage im Voraus buchbar
+  horizonDays  Int            @default(21)
+  /// Fester Videolink, falls der Kalender keinen Meet- bzw. Teams-Link erzeugt
+  videoUrl     String?
+  /// Kalender, in denen gebucht wird (Reihenfolge = Vorrang, mehrere = später Round-Robin)
+  calendarKeys String[]       @default([])
+  active       Boolean        @default(true)
+  sortOrder    Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  meetings     SalesMeeting[]
 }
 
 // Eingehende Leads (Meta Lead Ads über Zapier/Make, Landingpage-Formulare …)
