@@ -4,48 +4,55 @@
   "cap": "",
   "text": "Willkommen bei Performance Growth. In einer Minute zeigen wir Ihnen das Wichtigste.",
   "wav": "/var/tmp/ev/kurz_00.wav",
-  "dur": 6.15
+  "dur": 5.45,
+  "heard": " Willkommen bei Performance Growth. In einer Minute zeigen wir Ihnen das Wichtigste."
  },
  {
   "act": "heute",
   "cap": "Heute: alles, was heute zu tun ist",
-  "text": "Ihr Startpunkt ist ‚Heute‘. Hier steht alles, was heute zu tun ist: Chats, Termine und Ihre Anrufliste.",
+  "text": "Ihr Startpunkt ist ‚Heute‘. Ganz oben steht, wer auf Sie wartet, darunter Ihre Termine und Ihre Anrufliste.",
   "wav": "/var/tmp/ev/kurz_01.wav",
-  "dur": 7.85
+  "dur": 9.55,
+  "heard": " Ihr Startpunkt ist heute. Ganz oben steht wer auf sie wartet, darunter ihre Termine und ihre Anrufliste."
  },
  {
   "act": "termin",
   "cap": "Termin antippen",
   "text": "Tippen Sie auf einen Termin. Sie sehen sofort, was der Assistent schon gefragt hat.",
   "wav": "/var/tmp/ev/kurz_02.wav",
-  "dur": 5.2
+  "dur": 6.05,
+  "heard": " Tippen Sie auf einen Termin.  Sie sehen sofort, was der Assistent schon gefragt hat."
  },
  {
   "act": "nachrichten_chat",
   "cap": "Nachrichten: Ihr WhatsApp-Assistent",
   "text": "Ihr WhatsApp-Assistent schreibt neue Leads in wenigen Minuten an und bucht Termine direkt in Ihren Kalender.",
   "wav": "/var/tmp/ev/kurz_03.wav",
-  "dur": 8.15
+  "dur": 7.55,
+  "heard": " Ihr WhatsApp-Assistent schreibt neue Leads in wenigen Minuten an und bucht Termine direkt in Ihren Kalender."
  },
  {
   "act": "kontakte_pipeline",
   "cap": "Kontakte: alle Leads im Überblick",
   "text": "Unter ‚Kontakte‘ finden Sie alle Leads, als Liste oder als Pipeline.",
   "wav": "/var/tmp/ev/kurz_04.wav",
-  "dur": 6.0
+  "dur": 5.85,
+  "heard": " Unter Kontakte finden Sie alle Lieds als Liste oder als Pipeline."
  },
  {
   "act": "wachstum_zahlen",
   "cap": "Wachstum: Ihre Zahlen",
-  "text": "Und unter ‚Wachstum‘ sehen Sie, was es Ihnen bringt.",
+  "text": "Und unter ‚Wachstum‘ sehen Sie direkt Ihre Zahlen und Ihr Werbebudget.",
   "wav": "/var/tmp/ev/kurz_05.wav",
-  "dur": 4.2
+  "dur": 5.7,
+  "heard": " Und unter Wachstum sehen Sie direkt Ihre Zahlen und Ihr Werbebudget."
  },
  {
   "act": "outro",
   "cap": "",
   "text": "Fragen? Die KI-Hilfe unten links ist jederzeit für Sie da. Viel Erfolg!",
   "wav": "/var/tmp/ev/kurz_06.wav",
-  "dur": 6.05
+  "dur": 6.6,
+  "heard": " Fragen, die KI-Hilfe unten links ist jederzeit für Sie da.  Viel Erfolg!"
  }
 ]

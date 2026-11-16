@@ -1,15 +1,15 @@
 # Erklärvideos Kundenbereich: Sprechertexte
 
-Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (neue Oberfläche). Einführungsvideos neu aufgenommen am 15.11.2026 (Heute mit „Termine vorbereiten“, ohne das ausgeblendete Modul Empfehlungen & Bewertungen).
+Stimme: OpenAI gpt-4o-mini-tts, Stimme „onyx“. Aufgenommen mit Demo-Daten (neue Oberfläche). Einführungsvideos neu aufgenommen am 16.11.2026 (Heute mit „Wartet auf Sie“ und dem Link „Vorbereiten: Angebot rechnen“ in der Terminzeile, Wachstum ohne Zwischenseite, ohne die ausgeblendeten Module Bestandskunden und Empfehlungen & Bewertungen).
 
-## Kurzversion (ca. 56 Sek.), für den ersten Login
+## Kurzversion (ca. 58 Sek.), für den ersten Login
 
 - **intro**: Willkommen bei Performance Growth. In einer Minute zeigen wir Ihnen das Wichtigste.
-- **Heute: alles, was heute zu tun ist**: Ihr Startpunkt ist ‚Heute‘. Hier steht alles, was heute zu tun ist: Chats, Termine und Ihre Anrufliste.
+- **Heute: alles, was heute zu tun ist**: Ihr Startpunkt ist ‚Heute‘. Ganz oben steht, wer auf Sie wartet, darunter Ihre Termine und Ihre Anrufliste.
 - **Termin antippen**: Tippen Sie auf einen Termin. Sie sehen sofort, was der Assistent schon gefragt hat.
 - **Nachrichten: Ihr WhatsApp-Assistent**: Ihr WhatsApp-Assistent schreibt neue Leads in wenigen Minuten an und bucht Termine direkt in Ihren Kalender.
 - **Kontakte: alle Leads im Überblick**: Unter ‚Kontakte‘ finden Sie alle Leads, als Liste oder als Pipeline.
-- **Wachstum: Ihre Zahlen**: Und unter ‚Wachstum‘ sehen Sie, was es Ihnen bringt.
+- **Wachstum: Ihre Zahlen**: Und unter ‚Wachstum‘ sehen Sie direkt Ihre Zahlen und Ihr Werbebudget.
 - **outro**: Fragen? Die KI-Hilfe unten links ist jederzeit für Sie da. Viel Erfolg!
 
 ## Ausführliche Version (ca. 3:20 Min.)

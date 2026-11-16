@@ -25,5 +25,21 @@ await c.query(
   `UPDATE "Lead" SET "followUpAt" = now() + interval '3 days' WHERE "customerId" = $1 AND status = ANY($2) AND "closedAt" IS NULL AND "followUpAt" IS NULL AND NOT (id = ANY($3))`,
   [rows[0].id, open, keep],
 );
+// Heute wie im Alltag (Stand 16.11.2026): ein Termin von gestern ohne Ergebnis („Wie lief es?“) und zwei Kontakte
+// ohne nächsten Schritt (unten „Aufräumen“, in Kontakte „Festlegen“).
+const { rows: dj } = await c.query(`SELECT id FROM "Lead" WHERE "customerId" = $1 AND name = 'Dennis Jung' LIMIT 1`, [rows[0].id]);
+if (dj[0]) {
+  await c.query(
+    `INSERT INTO "Appointment" (id, "customerId", "leadId", mode, "startsAt", "endsAt", status, "updatedAt")
+     VALUES ('ev_wie_lief', $1, $2, 'video', date_trunc('day', now()) - interval '1 day' + interval '13 hours',
+             date_trunc('day', now()) - interval '1 day' + interval '13 hours 30 minutes', 'booked', now())
+     ON CONFLICT (id) DO NOTHING`,
+    [rows[0].id, dj[0].id],
+  );
+}
+await c.query(
+  `UPDATE "Lead" SET "followUpAt" = NULL WHERE "customerId" = $1 AND name IN ('Philipp Günther', 'Stefanie Keller')`,
+  [rows[0].id],
+);
 await c.end();
 console.log("ok");

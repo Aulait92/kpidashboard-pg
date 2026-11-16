@@ -10,34 +10,35 @@ def synth(text,out):
     return d,0
 KURZ=[
  ("intro","", "Willkommen bei Performance Growth. In einer Minute zeigen wir Ihnen das Wichtigste."),
- ("heute","Heute: alles, was heute zu tun ist","Ihr Startpunkt ist ‚Heute‘. Hier steht alles, was heute zu tun ist: Chats, Termine und Ihre Anrufliste."),
+ ("heute","Heute: alles, was heute zu tun ist","Ihr Startpunkt ist ‚Heute‘. Ganz oben steht, wer auf Sie wartet, darunter Ihre Termine und Ihre Anrufliste."),
  ("termin","Termin antippen","Tippen Sie auf einen Termin. Sie sehen sofort, was der Assistent schon gefragt hat."),
  ("nachrichten_chat","Nachrichten: Ihr WhatsApp-Assistent","Ihr WhatsApp-Assistent schreibt neue Leads in wenigen Minuten an und bucht Termine direkt in Ihren Kalender."),
  ("kontakte_pipeline","Kontakte: alle Leads im Überblick","Unter ‚Kontakte‘ finden Sie alle Leads, als Liste oder als Pipeline."),
- ("wachstum_zahlen","Wachstum: Ihre Zahlen","Und unter ‚Wachstum‘ sehen Sie, was es Ihnen bringt."),
+ ("wachstum_zahlen","Wachstum: Ihre Zahlen","Und unter ‚Wachstum‘ sehen Sie direkt Ihre Zahlen und Ihr Werbebudget."),
  ("outro","","Fragen? Die KI-Hilfe unten links ist jederzeit für Sie da. Viel Erfolg!"),
 ]
 LANG=[
  ("intro","", "Willkommen bei Performance Growth. In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten."),
  ("nav","Die vier Bereiche","Links finden Sie die vier Bereiche: Heute, Kontakte, Nachrichten und Wachstum. Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand."),
- ("tiles","Heute: Ihr Startpunkt","‚Heute‘ ist Ihr Startpunkt. Ganz oben stehen Termine, für die Sie vorher ein Angebot rechnen. Darunter sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen."),
- ("braucht","Braucht dich","Unter ‚Braucht dich‘ stehen Leads, die geantwortet haben und auf Sie warten. Mit ‚Antworten‘ öffnen Sie direkt den Chat."),
+ ("heute","Heute: Ihr Startpunkt","‚Heute‘ ist Ihr Startpunkt. Ganz oben steht, wer auf Sie wartet, dann Ihre Termine, offene Ergebnisse unter ‚Wie lief es?‘ und Ihre Anrufe. Am Computer öffnet sich rechts direkt die erste Aufgabe."),
+ ("braucht","Wartet auf Sie","Unter ‚Wartet auf Sie‘ stehen Leads, die geantwortet haben. Mit ‚Antworten‘ öffnen Sie direkt den Chat."),
  ("termin","Ihre Termine","Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick."),
  ("phase","Phase und Ergebnis","Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Gewonnen‘ oder ‚Verloren‘ schließen Sie einen Lead ab."),
  ("notizen","Angaben und Notizen","Darunter stehen alle Angaben aus dem Formular und Ihre Notizen."),
+ ("vorbereiten","Termin vorbereiten","Unter dem Termin steht ‚Vorbereiten: Angebot rechnen‘. Dort laden Sie Ihre Angebote hoch, und mit ‚Präsentation‘ zeigen Sie sie im Termin."),
  ("anrufliste","Anrufliste","In der Anrufliste stehen Rückrufe und fällige Wiedervorlagen. Überfälliges ist rot markiert. Nach dem Anruf tragen Sie das Ergebnis ein, den Rest erledigt die App."),
  ("nachrichten","Nachrichten","Unter ‚Nachrichten‘ finden Sie alle WhatsApp-Gespräche mit Ihren Leads."),
  ("chat","Ihr WhatsApp-Assistent","Ihr Assistent schreibt jeden neuen Lead in wenigen Minuten an, in Ihrem Namen. Er stellt die wichtigsten Fragen und bucht den Termin in eine freie Zeit Ihres Kalenders. Bestätigung und Erinnerung schickt er automatisch."),
  ("selbst","Selbst schreiben","Möchten Sie selbst antworten, schreiben Sie einfach los. Dann hält sich der Assistent in diesem Chat zurück."),
- ("kontakte","Kontakte","Unter ‚Kontakte‘ sehen Sie alle Leads als Liste, mit Suche und Filtern, zum Beispiel ‚Rückruf nötig‘ oder ‚Wiedervorlage fällig‘."),
- ("pipeline","Pipeline","In der Pipeline sehen Sie jeden Lead nach Phase. Am Computer ziehen Sie Karten einfach in die nächste Spalte. Bei Abschlüssen zeigt die App Beitrag und geschätzte Provision."),
- ("wachstum","Wachstum","Unter ‚Wachstum‘ finden Sie Ihre Zahlen, Ihr Werbebudget und die Hochrechnung für den Monat."),
- ("zahlen","Ihre Zahlen","Der Vertriebstrichter zeigt, wie viele Leads Sie erreichen, wie viele einen Termin bekommen und wie viele abschließen. Darunter sehen Sie Ihre Kosten und den Ertrag."),
+ ("kontakte","Kontakte","Unter ‚Kontakte‘ sehen Sie alle Leads als Liste, mit Phase und nächstem Schritt. Fehlt ein nächster Schritt, legen Sie ihn mit ‚Festlegen‘ fest."),
+ ("pipeline","Pipeline","In der Pipeline sehen Sie jeden Lead nach Phase. Am Computer ziehen Sie Karten einfach in die nächste Spalte. Leads ohne Interesse stehen gesammelt unter ‚Verloren‘."),
+ ("wachstum","Wachstum: Ihr Vertriebstrichter","Unter ‚Wachstum‘ sehen Sie direkt Ihre Zahlen. Der Vertriebstrichter zeigt, wie viele Leads Sie erreichen, wie viele einen Termin bekommen und wie viele abschließen."),
+ ("budget","Werbebudget, Produkte und Pause","Darunter sehen Sie Kosten und Ertrag. Weiter unten stellen Sie Ihr Werbebudget ein, sehen Ihre Produkte und tragen eine Pause ein, zum Beispiel für den Urlaub."),
  ("kalender","Mein Kalender","Unter ‚Mein Kalender‘ verbinden Sie Ihren Google- oder Outlook-Kalender und legen fest, wann Leads Termine buchen dürfen. Der Assistent bietet nur diese Zeiten an, und nur, wenn Sie dann frei sind."),
  ("team","Team","Arbeiten Sie im Team? Dann laden Sie unter ‚Team‘ Ihre Berater ein. Neue Leads werden automatisch reihum verteilt."),
  ("outro","","Wenn Sie Fragen haben, hilft Ihnen die KI-Hilfe unten links sofort weiter, und mit einem Klick erreichen Sie unser Team. Viel Erfolg mit Performance Growth!"),
 ]
-for name,L in (("kurz",KURZ),("lang",LANG)):
+for name,L in [(n,l) for n,l in (("kurz",KURZ),("lang",LANG)) if n in (sys.argv[1:] or ["kurz","lang"])]:
     out=[]
     for i,(act,cap,text) in enumerate(L):
         f=f"{EV}/{name}_{i:02d}.wav"; d,h=synth(text.replace("‚","„").replace("‘","“"),f)
