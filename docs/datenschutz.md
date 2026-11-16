@@ -472,3 +472,23 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
   zeigt. Unsere Webseite zeigt nur Stimmen von Vermittlern (B2B, § 5b Abs. 3 gilt nur für Verbraucherbewertungen).
 - **Handlungsbedarf: Entwurf** (Klausel und Textvorschlag für Vermittler, Entwurf Thema 9), beim Einschalten des Moduls
   den Textvorschlag in die Hilfe übernehmen.
+
+### 10.10 Erstinformation (§§ 15, 16 VersVermV): Zeitpunkt und Form
+
+- **Rechtslage:** Mitteilung „beim ersten Geschäftskontakt“, auch durch Beschäftigte
+  ([§ 15 VersVermV](https://www.gesetze-im-internet.de/versvermv_2018/__15.html)). Grundsätzlich auf Papier; ein
+  anderer dauerhafter Datenträger (PDF) nur, wenn angemessen und der Kunde zwischen Papier und Datenträger wählen
+  konnte und sich dafür entschieden hat; eine Website nur mit personalisiertem Zugang oder mit Zustimmung,
+  elektronischer Mitteilung der Adresse und dauerhafter Verfügbarkeit; angemessen insbesondere, wenn der Kunde für das
+  Geschäft eine E-Mail-Adresse angibt ([§ 16 Abs. 1 bis 3 VersVermV](https://www.gesetze-im-internet.de/versvermv_2018/__16.html)).
+  Zum Zeitpunkt: Ein Angebot nach telefonischer Anfrage ist noch kein erster Geschäftskontakt (OLG Schleswig, 6 U 19/10,
+  laut Fachbericht); strenger für Vergleichsportale LG München I, Urteil vom 13.07.2016, 37 O 15268/15.
+- **App heute:** Link `/erstinformation/<token>` (je Vermittler) und PDF als Dokument mit der ersten Nachricht des
+  Assistenten bzw. im Erstanschreiben ab Vorlage v3/v4 (Paket A). Zustimmung des Interessenten zur elektronischen Form
+  war nicht eingeholt.
+- **Umgesetzt (16.11.2026):** Einwilligungstext im Lead-Formular enthält die Zustimmung zur elektronischen
+  Erstinformation mit Papier auf Wunsch (`ERSTINFO_ZUSTIMMUNG`, Version 2026-11-16, Test in
+  `tests/unit/einwilligung-gesundheit.test.ts`). Bestehende Meta-Formulare behalten den alten Text, bis sie neu
+  angelegt bzw. aktualisiert werden (Ole, Kampagnen).
+- **Handlungsbedarf: ja (umgesetzt), Entwurf** (Papier auf Wunsch, Entwurf Thema 10). **Anwalt:** Ist die erste
+  WhatsApp schon der erste Geschäftskontakt, solange die ältere Vorlage ohne Link läuft?

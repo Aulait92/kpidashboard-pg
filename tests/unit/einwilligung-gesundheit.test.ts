@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CONSENT_CHECKBOX_KEY,
+  CONSENT_VERSION,
   consentLabel,
   consentMissing,
   consentStateOf,
@@ -18,8 +19,10 @@ describe("Einwilligungstext im Leadformular", () => {
   const angaben = { vermittler: "Agentur Meier", anschrift: "Hauptstr. 1\n12345 Berlin", email: "info@meier.de", datenschutzUrl: "https://meier.de/datenschutz" };
   it("Wortlaut mit Vermittler, Anschrift, KI-Assistent, STOPP, E-Mail und Datenschutz", () => {
     expect(leadFormConsentText(angaben)).toBe(
-      "Ich willige ein, dass Agentur Meier, Hauptstr. 1, 12345 Berlin, mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert. Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per E-Mail an info@meier.de. Datenschutzhinweise: https://meier.de/datenschutz",
+      "Ich willige ein, dass Agentur Meier, Hauptstr. 1, 12345 Berlin, mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert. Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per E-Mail an info@meier.de. Die Erstinformation nach § 15 VersVermV erhalte ich elektronisch als Link und PDF, auf Wunsch auch auf Papier. Datenschutzhinweise: https://meier.de/datenschutz",
     );
+    // Zustimmung zur elektronischen Erstinformation (§ 16 Abs. 2 VersVermV), Version erhöht
+    expect(CONSENT_VERSION).toBe("2026-11-16");
     expect(leadFormConsentText(angaben)).not.toMatch(/[–—]/);
     expect(consentMissing(angaben)).toEqual([]);
   });

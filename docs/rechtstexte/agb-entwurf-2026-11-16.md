@@ -125,3 +125,17 @@ ob und wie er sicherstellt, dass sie von Kunden stammen, die die Leistung genutz
 **Textvorschlag für den Vermittler (Hilfe, freiwillig, ohne Gedankenstriche):**
 „Die Bewertungen stammen aus meinem Google-Unternehmensprofil. Ich bitte nur Kundinnen und Kunden nach einer Beratung
 um eine Bewertung; ob die Verfasser tatsächlich Kunden sind, prüfe ich darüber hinaus nicht.“
+
+## Thema 10: Erstinformation (AGB „Mitwirkung des Kunden“)
+
+**Problem:** Die Erstinformation ist grundsätzlich auf Papier zu geben (§ 16 Abs. 1 VersVermV). Elektronisch geht sie
+auf einem anderen dauerhaften Datenträger (PDF) nur, wenn der Versicherungsnehmer die Wahl hatte und sich dafür
+entschieden hat, über eine Website nur mit personalisiertem Zugang oder mit seiner Zustimmung (§ 16 Abs. 2, 3
+VersVermV). Unser Link `/erstinformation/<token>` ist je Vermittler, nicht je Interessent. **Erledigt im Code
+(16.11.2026):** Der Einwilligungstext im Lead-Formular enthält jetzt die Zustimmung zur elektronischen Erstinformation
+mit Hinweis auf Papier auf Wunsch (`ERSTINFO_ZUSTIMMUNG`, Version 2026-11-16).
+
+**Vorschlag AGB, ergänzt den Absatz zur Erstinformation:**
+
+> Die Software übermittelt die Erstinformation mit der ersten Nachricht des Assistenten als Link und als PDF.
+> Verlangt ein Interessent sie auf Papier, stellt der Kunde sie ihm unverzüglich und unentgeltlich zur Verfügung.

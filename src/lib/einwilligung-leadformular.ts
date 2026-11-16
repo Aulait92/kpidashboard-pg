@@ -8,7 +8,16 @@
 // Reine Funktionen (ohne Datenbank).
 
 /** Version des Wortlauts; ändert sich der Text, hochzählen (steht im Nachweis am Lead). */
-export const CONSENT_VERSION = "2026-11-15";
+export const CONSENT_VERSION = "2026-11-16";
+
+/**
+ * Zustimmung zur elektronischen Erstinformation (Rechtsprüfung 16.11.2026): Über eine Website (unser Link
+ * /erstinformation/<token> ist je Vermittler, nicht je Interessent personalisiert) darf die Erstinformation nach
+ * § 16 Abs. 2 VersVermV nur gegeben werden, wenn der Versicherungsnehmer zugestimmt hat; ein anderer dauerhafter
+ * Datenträger (PDF) setzt die Wahl gegenüber Papier voraus. Seit Version 2026-11-16 Teil des Einwilligungstexts.
+ */
+export const ERSTINFO_ZUSTIMMUNG =
+  "Die Erstinformation nach § 15 VersVermV erhalte ich elektronisch als Link und PDF, auf Wunsch auch auf Papier.";
 
 /** Schlüssel des Häkchens in unseren Formularen (lib/kampagnen/builder.ts). */
 export const CONSENT_CHECKBOX_KEY = "einwilligung_kontakt";
@@ -35,7 +44,7 @@ export function leadFormConsentText(x: ConsentAngaben): string {
   const adr = clean(x.anschrift) || PLATZHALTER.anschrift;
   const mail = clean(x.email) || PLATZHALTER.email;
   const url = clean(x.datenschutzUrl) || PLATZHALTER.datenschutzUrl;
-  return `Ich willige ein, dass ${v}, ${adr}, mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert. Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per E-Mail an ${mail}. Datenschutzhinweise: ${url}`;
+  return `Ich willige ein, dass ${v}, ${adr}, mich zu meiner Anfrage per WhatsApp, E-Mail und Telefon kontaktiert. Dabei antwortet zunächst ein KI-gestützter Assistent und vereinbart Termine. Widerruf jederzeit, z. B. mit ‚STOPP‘ oder per E-Mail an ${mail}. ${ERSTINFO_ZUSTIMMUNG} Datenschutzhinweise: ${url}`;
 }
 
 /** Welche Angaben fehlen für den Wortlaut? */
