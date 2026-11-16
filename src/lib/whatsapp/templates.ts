@@ -214,7 +214,8 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
   },
-  // Cross-Selling mit Grund und konkretem, kleinem nächsten Schritt (Ole, 15.11.2026)
+  // Cross-Selling mit Grund und konkretem, kleinem nächsten Schritt (Ole, 15.11.2026). Freigegeben bei Meta als v4,
+  // NICHT ändern: Der Text muss zur Freigabe passen. Neue Fassung ist vorgemerkt in NAECHSTE_FASSUNG (v5).
   campaign_cross_sell: {
     sie: "hier ist [Berater][Rolle]. Viele meiner Kunden haben beim Thema {{2}} eine Lücke, die erst im Schadenfall auffällt. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?",
   },
@@ -260,6 +261,23 @@ export const TEMPLATE_BODY_B: Partial<Record<NoticePurpose, { du?: string; sie: 
   },
   campaign_cross_sell: {
     sie: "hier ist [Berater][Rolle]. Beim Thema {{2}} sehe ich oft Lücken, die erst im Schadenfall auffallen. Darf ich in 10 Minuten kurz mit Ihnen prüfen, ob bei Ihnen alles passt?",
+  },
+};
+
+/**
+ * Vorgemerkte nächste Fassung (Fassung a) für die nächste Einreichung bei Meta. Wird NICHT gesendet und NICHT
+ * eingereicht, solange sie hier steht: Gesendet wird immer die freigegebene Vorlage aus TEMPLATE_BODY.
+ * Aktivieren (bei der nächsten Einreichung): Text nach TEMPLATE_BODY übernehmen, PURPOSE_VERSION des Zwecks auf
+ * `version` setzen und den Eintrag hier löschen. Dann reicht template-submit die neuen Namen
+ * (pg_<zweck>_<version>_sie, …_sie_ohne_name, bei A/B auch _b_…) automatisch ein; bis zur Freigabe bleibt die
+ * bisherige Fassung im Einsatz (rankTemplates).
+ *   campaign_cross_sell v5 (Rechtsvorprüfung 16.11.2026, § 5 UWG): statt der nicht belegten Aussage „Viele meiner
+ *   Kunden haben … eine Lücke“ eine allgemeine Aussage über das Thema.
+ */
+export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, { version: string; du?: string; sie: string }>> = {
+  campaign_cross_sell: {
+    version: "v5",
+    sie: "hier ist [Berater][Rolle]. Beim Thema {{2}} gibt es oft Lücken, die erst im Schadenfall auffallen. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?",
   },
 };
 

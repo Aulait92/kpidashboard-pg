@@ -15,7 +15,7 @@ import {
   templateBodyFor,
   templateNameFor,
 } from "@/lib/whatsapp/template-plan";
-import { OPT_OUT_BUTTON, OUTREACH_PURPOSES, PURPOSE_PARAMS, SUGGESTED_TEMPLATE_TEXT, TEMPLATE_BUTTONS, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { NAECHSTE_FASSUNG, OPT_OUT_BUTTON, OUTREACH_PURPOSES, PURPOSE_PARAMS, SUGGESTED_TEMPLATE_TEXT, TEMPLATE_BODY, TEMPLATE_BUTTONS, templateVersionFor, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { inboundBody } from "@/lib/whatsapp/gateway";
 import { SEQUENCES } from "@/lib/lead-sequences";
 
@@ -193,5 +193,25 @@ describe("Bewertungsbitte (Anwalts-Memo 15.11.2026): neutral, eigene Version, al
     expect(REVIEW_SOURCE_NOTE).toBe("Bewertungen stammen von Google, keine eigene Echtheitsprüfung.");
     expect(DEFAULT_TEXTS.review).toContain("STOPP");
     expect(DEFAULT_TEXTS.review).toContain("ehrliche Bewertung");
+  });
+});
+
+describe("Vorgemerkte nächste Fassung (Rechtsvorprüfung 16.11.2026)", () => {
+  it("Kampagne „Lücke schließen“: freigegebene v4 bleibt, v5 ist vorgemerkt, gleiche Platzhalter, ohne Gedankenstriche", () => {
+    // gesendet und eingereicht wird weiter der freigegebene Text (muss zur Meta-Freigabe passen)
+    expect(templateVersionFor("campaign_cross_sell")).toBe("v4");
+    expect(templateNameFor("campaign_cross_sell", undefined, "sie")).toBe("pg_campaign_cross_sell_v4_sie");
+    expect(TEMPLATE_BODY.campaign_cross_sell.sie).toContain("Viele meiner Kunden haben beim Thema {{2}} eine Lücke");
+    const next = NAECHSTE_FASSUNG.campaign_cross_sell!;
+    expect(next.version).toBe("v5");
+    expect(next.sie).toContain("Beim Thema {{2}} gibt es oft Lücken, die erst im Schadenfall auffallen.");
+    expect(next.sie).not.toMatch(/viele meiner Kunden/i);
+    expect(next.sie).not.toMatch(/[–—]/);
+    for (const [purpose, f] of Object.entries(NAECHSTE_FASSUNG) as [NoticePurpose, { version: string; du?: string; sie: string }][]) {
+      const vars = (t: string) => (t.match(/\{\{\d+\}\}|\[[A-Za-z]+\]/g) ?? []).sort();
+      expect(vars(f.sie), purpose).toEqual(vars(TEMPLATE_BODY[purpose].sie));
+      expect(!!f.du, purpose).toBe(!!TEMPLATE_BODY[purpose].du);
+      expect(Number(f.version.slice(1)), purpose).toBeGreaterThan(Number(templateVersionFor(purpose).slice(1)));
+    }
   });
 });
