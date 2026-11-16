@@ -231,16 +231,31 @@ export function setupDiscountLabel(referrerName: string | null): string {
 }
 
 // ─── Teilen ────────────────────────────────────────────────────────────
-/** Vorbefüllter Text, ohne Du/Sie (Kollegen sprechen sich unterschiedlich an). */
-export function defaultShareText(referrerName: string, url: string, settings?: ReferralSettingsLike): string {
+/** Anrede im Teilen-Text: „du“, „sie“ oder offen (Standard, „deine/Ihre“: Kollegen sprechen sich unterschiedlich an). */
+export type ShareForm = "du" | "sie" | "offen";
+
+/**
+ * Offenlegung der Prämie (§ 5a Abs. 4 UWG): Der Empfehler sagt offen, dass er etwas bekommt.
+ * Betrag nur bei fester Gutschrift, sonst allgemein „eine Gutschrift“.
+ */
+export function shareDisclosureSentence(settings?: ReferralSettingsLike, form: ShareForm = "offen"): string {
+  const fixed = settings && settings.rewardKind === "fixed" && settings.rewardFixed != null && settings.rewardFixed > 0 ? round2(settings.rewardFixed) : null;
+  const gutschrift = fixed != null ? `eine Gutschrift über ${eur(fixed)}` : "eine Gutschrift";
+  const wenn = form === "du" ? "Wirst du Kunde" : form === "sie" ? "Werden Sie Kunde" : "Wirst du/Werden Sie Kunde";
+  return `Offen gesagt: ${wenn}, bekomme ich von performancegrowth ${gutschrift}.`;
+}
+
+/** Vorbefüllter Text, standardmäßig ohne feste Du/Sie-Anrede (Kollegen sprechen sich unterschiedlich an). */
+export function defaultShareText(referrerName: string, url: string, settings?: ReferralSettingsLike, form: ShareForm = "offen"): string {
   const discount = settings ? setupDiscountAmount(settings) : null;
   const perk = discount != null ? ` Über diesen Link gibt es ${eur(discount)} Rabatt auf die Einrichtung.` : settings?.benefitKind === "setup_free" ? " Über diesen Link ist die Einrichtung gratis." : "";
+  const deine = form === "du" ? "deine" : form === "sie" ? "Ihre" : "deine/Ihre";
   return [
     "Hallo,",
     "",
     "für die Gewinnung neuer Kunden arbeite ich mit performancegrowth zusammen: Werbung bei Meta, Leads direkt aufs Handy und eine App, mit der ich jeden Kontakt nachverfolge.",
     "",
-    `Falls das auch für deine/Ihre Agentur interessant ist: Hier kann man sich unverbindlich ein Erstgespräch holen.${perk}`,
+    `Falls das auch für ${deine} Agentur interessant ist: Hier kann man sich unverbindlich ein Erstgespräch holen.${perk} ${shareDisclosureSentence(settings, form)}`,
     url,
     "",
     "Viele Grüße",

@@ -3,6 +3,7 @@ import {
   CODE_RE,
   benefitSentence,
   defaultShareText,
+  shareDisclosureSentence,
   isSelfReferral,
   newReferralCode,
   nudgeCandidates,
@@ -113,5 +114,22 @@ describe("Teilen-Text", () => {
     expect(t).toContain("https://app.example/empfehlen/abc2345");
     expect(t).toContain("Max Muster");
     expect(t).toContain("deine/Ihre");
+  });
+
+  it("legt die Prämie offen (§ 5a Abs. 4 UWG), Betrag nur bei fester Gutschrift, keine Gedankenstriche", () => {
+    const nb = (x: string) => x.replace(/\u00a0/g, " ");
+    const fixed = { enabled: true, rewardKind: "fixed", rewardFixed: 300, benefitKind: "none", benefitText: null };
+    const t = nb(defaultShareText("Max Muster", "https://app.example/empfehlen/abc2345", fixed));
+    expect(t).toContain("Offen gesagt: Wirst du/Werden Sie Kunde, bekomme ich von performancegrowth eine Gutschrift über 300 €.");
+    // Offenlegung steht vor dem Link
+    expect(t.indexOf("Offen gesagt")).toBeLessThan(t.indexOf("https://app.example/empfehlen/abc2345"));
+    expect(t).not.toMatch(/[–—]/);
+    expect(nb(shareDisclosureSentence(fixed, "du"))).toBe("Offen gesagt: Wirst du Kunde, bekomme ich von performancegrowth eine Gutschrift über 300 €.");
+    expect(nb(shareDisclosureSentence(fixed, "sie"))).toBe("Offen gesagt: Werden Sie Kunde, bekomme ich von performancegrowth eine Gutschrift über 300 €.");
+    expect(shareDisclosureSentence({ ...fixed, rewardKind: "month" }, "sie")).toBe("Offen gesagt: Werden Sie Kunde, bekomme ich von performancegrowth eine Gutschrift.");
+    expect(defaultShareText("Max", "https://x.test/empfehlen/a")).toContain("bekomme ich von performancegrowth eine Gutschrift.");
+    const du = defaultShareText("Max", "https://x.test/empfehlen/a", fixed, "du");
+    expect(du).toContain("für deine Agentur");
+    expect(du).not.toContain("Ihre");
   });
 });
