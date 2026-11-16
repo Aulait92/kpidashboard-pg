@@ -38,13 +38,17 @@ export default async function PraesentationPage({ params, searchParams }: { para
         <ButtonLink href={`/api/buyer/termine/${id}/praesentation`} external variant="secondary" size="md" icon={FileDown}>
           Als PDF
         </ButtonLink>
-        {!p.marke.logoUrl && ctx.teamRole !== "advisor" ? (
-          <Link href="/buyer/einstellungen/branding" className="text-sm font-medium text-[color:var(--brand)] hover:underline" data-logo-hinweis>
-            Eigenes Logo auf die Folien bringen
-          </Link>
-        ) : null}
       </div>
       <Deck id={id} css={p.css} folien={p.folien} interaktiv={!ctx.preview} />
+      {/* Selten: Logo-Hinweis unter den Folien statt neben dem Knopf (16.11.2026) */}
+      {!p.marke.logoUrl && ctx.teamRole !== "advisor" ? (
+        <p className="mt-3 text-sm text-[color:var(--muted)]" data-logo-hinweis>
+          Noch ohne Ihr Logo.{" "}
+          <Link href="/buyer/einstellungen/branding" className="font-medium text-[color:var(--brand)] hover:underline">
+            Logo hinzufügen
+          </Link>
+        </p>
+      ) : null}
       <div className="mt-6">
         <Kundenlink id={id} start={linkStart} bereit={p.angeboteBestaetigt && !ctx.preview} />
       </div>

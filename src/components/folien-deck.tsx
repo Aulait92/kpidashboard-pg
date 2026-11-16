@@ -194,8 +194,9 @@ export function FolienDeck({
       ) : (
         <div className="flex flex-wrap items-center gap-3">
           <Nav i={i} n={folien.length} go={go} />
-          <Button variant="secondary" size="md" icon={Expand} onClick={vollbild}>
-            Vollbild
+          {/* Handy: nur Symbol, damit Zurück, Zähler, Weiter und Vollbild in eine Zeile passen */}
+          <Button variant="secondary" size="md" icon={Expand} onClick={vollbild} aria-label="Vollbild" title="Vollbild" className="px-3 sm:px-4">
+            <span className="hidden sm:inline">Vollbild</span>
           </Button>
           {extra}
         </div>

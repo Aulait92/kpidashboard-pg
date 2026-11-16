@@ -21,13 +21,13 @@ export function Kundenlink({ id, start, bereit }: { id: string; start: { url: st
     <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-4" data-kundenlink-karte>
       <div className="text-sm font-semibold">Link für Ihren Kunden</div>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
-        Ihr Kunde sieht die Präsentation mit der Auswahl aus dem Termin, ohne Schalter zum Umstellen. Der Link ist 14 Tage gültig.
+        Ihr Kunde liest die Präsentation mit Ihrer Auswahl 14 Tage lang nach.
       </p>
       {link ? (
         <div className="mt-3 space-y-2">
           <div className="flex flex-col gap-2 sm:flex-row">
             <input readOnly value={link.url} onFocus={(e) => e.target.select()} className="h-10 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 text-sm" aria-label="Link für den Kunden" />
-            <Button variant="primary" size="md" icon={Copy} onClick={() => kopieren(link.url)}>
+            <Button variant="secondary" size="md" icon={Copy} onClick={() => kopieren(link.url)}>
               Kopieren
             </Button>
           </div>
@@ -35,7 +35,7 @@ export function Kundenlink({ id, start, bereit }: { id: string; start: { url: st
             <span>Gültig bis {link.bis}.</span>
             <button
               type="button"
-              className="inline-flex items-center gap-1 hover:text-rose-700"
+              className="inline-flex min-h-10 items-center gap-1 hover:text-rose-700"
               disabled={pending}
               onClick={() =>
                 run(async () => {
