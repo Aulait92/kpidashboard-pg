@@ -78,3 +78,16 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   (Kranken, Zahn, BU, Leben, Pflege) nur zur Handeingabe, nicht über „Angebot auslesen“ (Art. 9 DSGVO, Rechtsvorprüfung
   16.11. Punkt 3). Bei vielen Einträgen die Liste nach Tiere, Wohnen und Haftpflicht gruppieren, mit Suchfeld.
   Für jede neue Sparte Merkmale/Bausteine im Tarifkatalog-Schema und Tarifdaten der Gesellschaften (data/tarifkatalog).
+
+- Später (Ole, 16.11.): Beiträge automatisch rechnen über eine echte Schnittstelle statt Screenshot. Bis dahin reicht
+  „Beiträge rechnen“ (offizieller Rechner + Angaben zum Kopieren + „Angebot ablegen“ per Screenshot, „bitte prüfen“).
+  Automatisches Auslesen der Allianz-Rechner ist ausgeschlossen (Nutzungsbedingungen allianz.de, Schutzmaßnahmen).
+  Wege laut Recherche 16.11.:
+  1. Mr-Money API (versicherungsmaklersoftware.de): Sach + Tierkranken Hund/Katze/Pferd, öffentliche Testzugänge,
+     Hersteller-ID für Softwarefirmen. Klären: Allianz je Sparte, Zugang für Ausschließlichkeitsvertreter, Preis
+     (Vertrieb 089 613991-01).
+  2. softfair API (REST, Sandbox): Sach ohne Tierkranken, 1.000 € Einrichtung + ab 1.000 €/Monat + je Berechnung
+     (vertrieb@softfair.de, Benjamin Strixner).
+  3. Allianz direkt: BiPRO-Webservices, Testzugang für Softwarefirmen (Nutzungsbedingungen Onlinedienste Ziff. 4.4),
+     über den Vertriebsverantwortlichen eines Allianz-Kunden anfragen; ob Tarifierung Sach/Tier dabei ist, offen.
+  Allianz-Tarife in Vergleichern nur WG/Hausrat/PHV belegt und nur mit Allianz-Maklerberechtigung.
