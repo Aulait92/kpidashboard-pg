@@ -35,7 +35,7 @@ export default async function OptimierungPage() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[3fr_1fr]">
         <Card>
           <CardHeader title="Werbekonten" count={active.length} hint={`rot: letzte Maßnahme älter als ${STALE_DAYS} Tage`} />
-          <div className="overflow-x-auto px-5 pb-4">
+          <div className="relative overflow-x-auto px-5 pb-4">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-[color:var(--muted)]">
                 <tr>
