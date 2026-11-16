@@ -13,6 +13,29 @@ import { TestdatenCard } from "@/components/admin/testdaten-card";
 import { LeadQualitaetCard } from "@/components/admin/lead-qualitaet-card";
 import { NaechsterSchrittCard } from "@/components/admin/naechster-schritt-card";
 import type { ImpressumInfo } from "@/lib/impressum";
+import { ChevronDown } from "lucide-react";
+
+const TYP_LABEL: Record<string, string> = { vertreter: "Vertreter", mehrfachvertreter: "Mehrfachvertreter", makler: "Makler" };
+
+/**
+ * Seltene Kundeneinstellungen (Oberfläche, Vermittlertyp, Stornoquote, Garantie, Testdaten) an derselben Stelle,
+ * aber zugeklappt mit dem aktuellen Stand in einer Zeile. Vorher standen sie als fünf Karten vor Kontakt und Verlauf
+ * (am Handy rund 1.100 px, bevor man den Kunden anrufen konnte).
+ */
+function KundenEinstellungen({ summary, children }: { summary: string; children: React.ReactNode }) {
+  return (
+    <details className="card group" data-kunden-einstellungen>
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">Einstellungen dieses Kunden</span>
+          <span className="block truncate text-xs text-[color:var(--muted)]">{summary}</span>
+        </span>
+        <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+      </summary>
+      <div className="space-y-3 border-t border-[color:var(--border)] bg-[color:var(--surface-sunken)] p-3">{children}</div>
+    </details>
+  );
+}
 
 // Übersicht der Kundenakte: mit Vertriebskontakt die volle Kontaktseite
 // (Verlauf, Aufgaben, Onboarding, Angebote), sonst die Grunddaten.
@@ -22,18 +45,29 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
   const notice = (await searchParams)?.einrichtung;
   const customer = await prisma.customer.findUnique({
     where: { id },
-    select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true, salesContact: { select: { id: true } } },
+    select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true, vermittlerTyp: true, newUi: true, stornoQuote: true, salesContact: { select: { id: true } } },
   });
   if (!customer) notFound();
+  const summary = [
+    TYP_LABEL[customer.vermittlerTyp] ?? customer.vermittlerTyp,
+    `neue Oberfläche ${customer.newUi ? "an" : "aus"}`,
+    `Stornoquote ${customer.stornoQuote != null ? `${(Math.round(Number(customer.stornoQuote) * 1000) / 10).toLocaleString("de-DE")} %` : "Standard"}`,
+    "Garantie, Testdaten",
+  ].join(" · ");
+  const settings = (
+    <KundenEinstellungen summary={summary}>
+      <NewUiCard customerId={id} />
+      <VermittlerCard customerId={id} />
+      <StornoQuoteKunde customerId={id} />
+      <GarantienCard customerId={id} />
+      <TestdatenCard customerId={id} />
+    </KundenEinstellungen>
+  );
   if (customer.salesContact) {
     return (
       <div className="space-y-5">
-        <NewUiCard customerId={id} />
-        <VermittlerCard customerId={id} />
-        <StornoQuoteKunde customerId={id} />
-        <GarantienCard customerId={id} />
+        {settings}
         <SetupCard customerId={id} notice={notice} />
-        <TestdatenCard customerId={id} />
         <LeadQualitaetCard customerId={id} />
         <NaechsterSchrittCard customerId={id} />
         <ContactPage params={Promise.resolve({ id: customer.salesContact.id })} searchParams={Promise.resolve({ embedded: "1" })} />
@@ -44,12 +78,8 @@ export default async function KundenakteUebersicht({ params, searchParams }: { p
   const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
   return (
     <div className="space-y-5">
-    <NewUiCard customerId={id} />
-    <VermittlerCard customerId={id} />
-    <StornoQuoteKunde customerId={id} />
-        <GarantienCard customerId={id} />
+        {settings}
         <SetupCard customerId={id} notice={notice} />
-        <TestdatenCard customerId={id} />
         <NaechsterSchrittCard customerId={id} />
     <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
       <section className="card p-4 text-sm">
