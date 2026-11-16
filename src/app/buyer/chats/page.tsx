@@ -296,7 +296,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       </InfoSection>
 
       {formAnswers.length > 0 ? (
-        <InfoSection title="Leadformular">
+        <InfoSection title="Angaben">
           {formAnswers.map((a) => (
             <InfoRow key={a.label} label={a.label}>
               {a.value}
@@ -478,7 +478,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     href={`/buyer/leads/${active.lead.id}`}
                     aria-label="Kontakt öffnen"
                     title="Kontakt öffnen"
-                    className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--border-strong)]"
+                    className="hidden sm:inline-flex xl:hidden h-9 w-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--border-strong)]"
                   >
                     <UserRound className="h-4 w-4" />
                   </Link>
