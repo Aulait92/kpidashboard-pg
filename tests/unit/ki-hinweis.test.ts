@@ -146,35 +146,27 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
     for (const an of ["du", "sie"] as const) expect(kiHinweisErneut(an, names)).toContain("Ich bin kein Mensch und berate nicht zu Tarifen.");
   });
 
-  it("freigegebene Vorlagen v4 bleiben unverändert, v5 ist für jedes Erstanschreiben (a und b) vorgemerkt", () => {
+  it("Erstanschreiben v5 (Ole, 16.11.2026): KI-Kennzeichnung im Nutzen-Satz, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
     for (const p of OUTREACH_PURPOSES) {
-      // gesendet bzw. eingereicht wird weiter v4 mit dem freigegebenen Text
-      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v4_sie`);
-      expect(TEMPLATE_BODY[p].sie, p).not.toContain("berate nicht zu Tarifen");
-      expect(buildTemplateRequest(p, names, undefined, "sie").name, p).toBe(`pg_${p}_v4_sie`);
-      const n = NAECHSTE_FASSUNG[p]!;
-      expect(n.version, p).toBe("v5");
-      const texte = [n.du!, n.sie, ...(TEMPLATE_BODY_B[p] ? [n.b!.du!, n.b!.sie] : [])];
-      for (const t of texte) {
-        expect(t, p).toContain(KI_HINWEIS_KURZ);
-        expect(t, p).not.toMatch(/KI-Assistent von \[Berater\]/);
-        expect(t, p).not.toMatch(/[–—]/);
+      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v5_sie`);
+      expect(buildTemplateRequest(p, names, undefined, "sie").name, p).toBe(`pg_${p}_v5_sie`);
+      expect(NAECHSTE_FASSUNG[p], p).toBeUndefined();
+      for (const t of [TEMPLATE_BODY[p].du!, TEMPLATE_BODY[p].sie]) {
+        expect(t, p).toContain("digitale KI-Assistent von [Kurzname]");
+        expect(t, p).not.toMatch(/Mensch|berate nicht|[–—]/);
         expect(hasKiHinweis(t), p).toBe(true);
       }
     }
   });
 
-  it("Freitext im offenen Fenster folgt schon jetzt dem Memo (a und b, Du und Sie)", () => {
+  it("Freitext im offenen Fenster: gleicher Aufbau wie die Vorlage, ohne „Mensch“", () => {
     for (const p of OUTREACH_PURPOSES) {
-      for (const variant of ["a", "b"] as const) {
-        if (variant === "b" && !TEMPLATE_BODY_B[p]) continue;
-        expect(noticeText(p, "sie", names, FRAU, ["Zahnzusatzversicherung"], variant), `${p} ${variant}`).toContain(MEMO);
-        expect(noticeText(p, "du", names, FRAU, ["Zahnzusatzversicherung"], variant), `${p} ${variant}`).toContain(MEMO);
+      for (const an of ["sie", "du"] as const) {
+        const t = noticeText(p, an, { ...names, kurz: "Susanne" }, FRAU, ["Zahnzusatzversicherung", "Ihre Katze"]);
+        expect(t, `${p} ${an}`).toContain("digitale KI-Assistent von Susanne");
+        expect(t, `${p} ${an}`).not.toMatch(/Mensch|berate nicht/);
       }
     }
-    expect(noticeText("outreach_tkv", "sie", names, FRAU, ["Katzenversicherung"])).toBe(
-      `Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage zur Katzenversicherung! ${MEMO} Damit Sie ein passendes Angebot bekommen, stelle ich Ihnen zwei kurze Fragen. Für welches Tier suchen Sie den Schutz?`,
-    );
   });
 
   it("Bot-Prompt: Pflichthinweis im Memo-Wortlaut, solange noch nicht offengelegt", () => {

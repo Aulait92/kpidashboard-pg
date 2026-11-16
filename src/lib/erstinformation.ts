@@ -284,20 +284,69 @@ export async function erstinfoPdfAusDaten(daten: ErstinfoDaten, an: Ansprache, u
   });
 }
 
+/** Layout-Version des erzeugten PDFs: hochsetzen, wenn sich Text oder Gestaltung ändert (neuer Hash, neues PDF). */
+const PDF_LAYOUT = "1";
+
+/**
+ * Hash der Quelldaten des PDFs (rein): gleiche Angaben, gleicher Stand → gleiches PDF. Ändert sich etwas, entsteht ein
+ * neues PDF und eine neue Adresse (?v=…), damit WhatsApp bzw. Meta kein altes PDF aus dem Zwischenspeicher nimmt.
+ */
+export function erstinfoPdfHash(src: { daten: ErstinfoDaten; an: Ansprache; updatedAt: Date | null; upload?: { fileName: string | null; size?: number | null } | null }): string {
+  const json = JSON.stringify({ v: PDF_LAYOUT, d: src.daten, an: src.an, stand: src.updatedAt ? stand(src.updatedAt) : "", upload: src.upload ?? null });
+  return crypto.createHash("sha256").update(json).digest("hex").slice(0, 16);
+}
+
+// Zwischenspeicher der erzeugten PDFs je Token (im Prozess, klein): neu erzeugt nur, wenn sich der Hash ändert.
+const PDF_CACHE = new Map<string, { hash: string; bytes: Uint8Array }>();
+const PDF_CACHE_MAX = 200;
+
+/** Nur für Tests: Zwischenspeicher leeren bzw. Größe lesen. */
+export function erstinfoPdfCache() {
+  return { clear: () => PDF_CACHE.clear(), size: () => PDF_CACHE.size, get: (token: string) => PDF_CACHE.get(token) ?? null };
+}
+
 /**
  * Das PDF, das Leads bekommen (§ 16 VersVermV: dauerhafter Datenträger): hochgeladenes PDF (z. B. Vorlage der
- * Gesellschaft), sonst aus den Angaben erzeugt. null = Token unbekannt.
+ * Gesellschaft), sonst aus den Angaben erzeugt (gleiche Quelle wie die Seite /erstinformation/<token>), zwischengespeichert
+ * nach Hash der Angaben. null = Token unbekannt. dateiname = Name für das WhatsApp-Dokument („Erstinformation_<Agentur>.pdf“).
  */
-export async function erstinfoDokument(where: { token: string } | { customerId: string }): Promise<{ bytes: Uint8Array; fileName: string; vollstaendig: boolean } | null> {
+export async function erstinfoDokument(
+  where: { token: string } | { customerId: string },
+): Promise<{ bytes: Uint8Array; fileName: string; dateiname: string; hash: string; token: string; vollstaendig: boolean } | null> {
   const token = "token" in where ? where.token : (await getOrCreateErstinfo(where.customerId)).token;
   const info = await loadErstinfoByToken(token);
   if (!info) return null;
+  const dateiname = erstinfoDateiname(info.daten.firma || info.daten.name);
   if (info.fileName) {
-    const f = await prisma.erstinformation.findUnique({ where: { token }, select: { data: true, fileName: true } });
-    if (f?.data) return { bytes: new Uint8Array(f.data), fileName: f.fileName ?? "Erstinformation.pdf", vollstaendig: info.vollstaendig };
+    const f = await prisma.erstinformation.findUnique({ where: { token }, select: { data: true, fileName: true, size: true } });
+    if (f?.data) {
+      const hash = erstinfoPdfHash({ daten: info.daten, an: info.an, updatedAt: info.updatedAt, upload: { fileName: f.fileName, size: f.size } });
+      return { bytes: new Uint8Array(f.data), fileName: f.fileName ?? "Erstinformation.pdf", dateiname, hash, token, vollstaendig: info.vollstaendig };
+    }
   }
-  const bytes = await erstinfoPdfAusDaten(info.daten, info.an, info.updatedAt);
-  return { bytes, fileName: erstinfoDateiname(info.daten.firma || info.daten.name), vollstaendig: info.vollstaendig };
+  const hash = erstinfoPdfHash({ daten: info.daten, an: info.an, updatedAt: info.updatedAt });
+  const hit = PDF_CACHE.get(token);
+  let bytes: Uint8Array;
+  if (hit && hit.hash === hash) {
+    bytes = hit.bytes;
+  } else {
+    bytes = await erstinfoPdfAusDaten(info.daten, info.an, info.updatedAt);
+    if (PDF_CACHE.size >= PDF_CACHE_MAX) PDF_CACHE.delete(PDF_CACHE.keys().next().value!);
+    PDF_CACHE.set(token, { hash, bytes });
+  }
+  return { bytes, fileName: dateiname, dateiname, hash, token, vollstaendig: info.vollstaendig };
+}
+
+/**
+ * PDF der Erstinformation für WhatsApp (Dokument bzw. Kopf der Vorlage): öffentliche Adresse mit Hash der Angaben
+ * (/erstinformation/<token>/pdf?v=<hash>; der Token schützt die Adresse, Meta lädt die Datei dort) und Dateiname.
+ * null = nicht vollständig bzw. nicht vorhanden.
+ */
+export async function erstinfoPdfFuerWhatsApp(customerId: string): Promise<{ link: string; filename: string; hash: string } | null> {
+  if (!(await erstinfoBereit(customerId))) return null;
+  const doc = await erstinfoDokument({ customerId });
+  if (!doc) return null;
+  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash };
 }
 
 /** Ist die Erstinformation dieses Kunden vollständig (darf als PDF an Leads gehen)? */

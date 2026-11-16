@@ -16,8 +16,8 @@
 import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { firstNameOf, NoTemplateError, noticeText, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
-import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { erstanschreibenText, outreachProdukt, tierWort, type Herkunft } from "@/lib/whatsapp/erstanschreiben";
 import { abVariantFor } from "@/lib/whatsapp/ab-test";
 import { restartSilentSequence } from "@/lib/lead-sequences";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
@@ -25,15 +25,16 @@ import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import type { Ansprache } from "@/lib/ansprache";
 import { erstinfoUrlFor } from "@/lib/erstinformation";
-import { sendErstinfoPdf } from "@/lib/whatsapp/erstinfo-pdf";
+import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { KEIN_WHATSAPP_REASON } from "@/lib/whatsapp/kein-whatsapp";
 import { logTestLead } from "@/lib/testlead";
 
 /**
- * Erstanschreiben (v4, Ole 15.11.2026): Vorlage je Produkt mit der ersten Frage und Knöpfen (lib/whatsapp/erstanschreiben.ts),
- * KI-Hinweis im Text, Erstinformation als PDF im Kopf (§ 16 VersVermV; nur vollständige Erstinformation).
- * legacyParams: für die bisher freigegebene v3-Fassung (Vorname, Link zur Erstinformation), bis v4 freigegeben ist.
- * Freitext (offenes Fenster): gleicher Text, das PDF geht dann direkt hinterher (sendErstinfoPdf).
+ * Erstanschreiben (v5, Ole 16.11.2026, lib/whatsapp/erstanschreiben.ts): eine Begrüßung, Dank mit Produkt,
+ * „digitaler KI-Assistent von <Vorname>“ mit Nutzen, erste Frage fett als letzte Zeile. Im offenen Fenster als
+ * Freitext, danach sofort das PDF der Erstinformation als Dokument (Nachricht 2). Sonst Vorlage je Produkt mit dem
+ * PDF im Kopf (§ 16 VersVermV; nur vollständige Erstinformation).
+ * paramsFor: Parameter je freigegebener Fassung, bis v5 freigegeben ist (v4: Vorname, Produkt; v3: Vorname, Link).
  */
 export async function outreachMessage(opts: { customerId: string; leadId: string; phone: string; name: string | null; an: Ansprache; source?: string | null }) {
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.phone, name: opts.name });
@@ -43,23 +44,38 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   const rest = produkt ? [produkt.produkt] : [];
   let document: { link: string; filename: string } | null = null;
   try {
-    const { erstinfoBereit, erstinfoDokument, erstinfoPdfUrlFor } = await import("@/lib/erstinformation");
-    if (await erstinfoBereit(opts.customerId)) {
-      const doc = await erstinfoDokument({ customerId: opts.customerId });
-      if (doc) document = { link: await erstinfoPdfUrlFor(opts.customerId), filename: doc.fileName };
-    }
+    const { erstinfoPdfFuerWhatsApp } = await import("@/lib/erstinformation");
+    const pdf = await erstinfoPdfFuerWhatsApp(opts.customerId);
+    if (pdf) document = { link: pdf.link, filename: pdf.filename };
   } catch (err) {
     console.error("[outreach] Erstinformation als PDF", err instanceof Error ? err.message : err);
   }
+  // Hat der Kontakt uns schon geschrieben (offenes Fenster)? Dann „danke für Ihre Nachricht“, sonst „Anfrage“
+  const herkunft: Herkunft = (await prisma.message
+    .count({ where: { direction: "inbound", conversation: { customerId: opts.customerId, contactPhone: opts.phone } } })
+    .catch(() => 0))
+    ? "nachricht"
+    : "anfrage";
   const variant = await abVariantFor(purpose, opts.leadId);
+  const kurz = who.kurz || who.firm;
+  const first = firstNameOf(opts.name);
+  const paramsFor = (p: { version: number; ansprache: Ansprache }): string[] => {
+    if (p.version >= 5) return [first, ...rest, ...(produkt?.purpose === "outreach_tkv" ? [tierWort(produkt.tier, p.ansprache)] : [])];
+    if (p.version === 4) return [first, ...rest];
+    return [first, url];
+  };
   return {
     who,
     purpose,
     variant,
-    params: [firstNameOf(opts.name), ...rest],
-    legacyParams: [firstNameOf(opts.name), url],
+    params: paramsFor({ version: 5, ansprache: opts.an }),
+    paramsFor,
+    legacyParams: [first, url],
     document,
-    text: noticeText(purpose, opts.an, who, who.kontakt, rest, variant),
+    herkunft,
+    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: opts.source, herkunft }),
+    /** Allgemeine Fassung (ohne Produkt), falls die Vorlage des Produkts noch fehlt */
+    textAllgemein: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: null, herkunft }),
   };
 }
 
@@ -69,12 +85,13 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
  */
 export async function sendOutreach(opts: { customerId: string; leadId: string; phone: string; name: string | null; an: Ansprache; source: string | null }) {
   const m = await outreachMessage(opts);
-  const send = (purpose: NoticePurpose, params: string[], text: string, variant = m.variant) =>
+  const send = (purpose: NoticePurpose, paramsFor: typeof m.paramsFor, text: string, variant = m.variant) =>
     sendWhatsAppNotice({
       customerId: opts.customerId,
       to: opts.phone,
       purpose,
-      params,
+      params: paramsFor({ version: 5, ansprache: opts.an }),
+      paramsFor,
       legacyParams: m.legacyParams,
       text,
       leadId: opts.leadId,
@@ -85,15 +102,18 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     });
   let notice;
   try {
-    notice = await send(m.purpose, m.params, m.text);
+    notice = await send(m.purpose, m.paramsFor, m.text);
   } catch (err) {
     if (!(err instanceof NoTemplateError) || m.purpose === "outreach") throw err;
-    notice = await send("outreach", [m.params[0]], noticeText("outreach", opts.an, m.who, m.who.kontakt, []), "a");
+    const first = firstNameOf(opts.name);
+    const url = m.legacyParams[1];
+    notice = await send("outreach", (p) => (p.version >= 4 ? [first] : [first, url]), m.textAllgemein, "a");
   }
-  // Fenster offen (Freitext): Erstinformation gleich als PDF hinterher (§ 16 VersVermV). Nach einer Vorlage mit PDF im
-  // Kopf ist sie schon da; nach einer Vorlage ohne Kopf folgt das PDF mit der ersten Antwort (lib/whatsapp/erstinfo-pdf.ts).
+  // Fenster offen (Freitext): Erstinformation gleich als PDF hinterher (Nachricht 2, § 16 VersVermV; Rückfall Link).
+  // Nach einer Vorlage mit PDF im Kopf ist sie schon da; nach einer Vorlage ohne Kopf folgt das PDF mit der ersten
+  // Antwort (lib/whatsapp/erstinfo-pdf.ts).
   if (notice.mode === "text") {
-    await sendErstinfoPdf({ conversationId: notice.conversationId, an: opts.an, advisorName: m.who.advisor || m.who.firm });
+    await sendErstinfo({ conversationId: notice.conversationId, an: opts.an, advisorName: m.who.advisor || m.who.firm });
   }
   return notice;
 }

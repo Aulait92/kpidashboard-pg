@@ -31,8 +31,10 @@ describe("Vorlagen-Plan", () => {
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v4");
-    expect(templateNameFor("outreach_tkv", undefined, "sie", "b")).toBe("pg_outreach_tkv_v4_b_sie");
+    // Erstanschreiben v5 (16.11.2026), übrige Zwecke v4
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v5");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v5_sie");
+    expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v4_b_sie");
     // Unveränderte Texte behalten ihre Version (keine erneute Einreichung)
     expect(templateNameFor("referral_thanks", undefined, "sie")).toBe("pg_referral_thanks_v3_sie");
     expect(templateNameFor("outreach", "v3", "sie")).toBe("pg_outreach_v3_sie");
@@ -77,17 +79,19 @@ describe("Vorlagen-Plan", () => {
       expect((buttons?.buttons ?? []).length).toBeLessThanOrEqual(3);
     }
     // Knöpfe überall, wo eine Antwort erwartet wird
-    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES]) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
+    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => x !== "outreach_tkv")) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
     expect(TEMPLATE_BUTTONS.reminder).toEqual(["Ja, passt", "Bitte verschieben"]);
     expect(TEMPLATE_BUTTONS.followup_noshow).toEqual(["Ja, neuer Termin", "Kein Bedarf mehr"]);
     expect(TEMPLATE_BUTTONS.followup_last).toEqual(["Ja, noch aktuell", "Nein, danke"]);
     expect(TEMPLATE_BUTTONS.booking_confirmation).toEqual(["Termin verschieben"]);
     expect(TEMPLATE_BUTTONS.campaign_cross_sell).toEqual(["Ja, gern prüfen", "Kein Bedarf", OPT_OUT_BUTTON]);
-    expect(TEMPLATE_BUTTONS.outreach_tkv).toEqual(["Hund", "Katze"]);
+    // Tierkrankenversicherung ab v5: Frage nach dem Alter, frei beantwortet (keine Knöpfe)
+    expect(TEMPLATE_BUTTONS.outreach_tkv).toBeUndefined();
+    expect(TEMPLATE_BUTTONS.outreach_zahn).toEqual(["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"]);
     expect(TEMPLATE_BUTTONS.outreach).toEqual(["Heute", "Morgen", "Lieber schriftlich"]);
     // Erstanschreiben: kein „Später“ und keine Erlaubnisfrage
     for (const p of OUTREACH_PURPOSES) {
-      expect(TEMPLATE_BUTTONS[p]).not.toContain("Später");
+      expect(TEMPLATE_BUTTONS[p] ?? []).not.toContain("Später");
       expect(SUGGESTED_TEMPLATE_TEXT[p]).not.toMatch(/kurz Zeit|darf ich/i);
     }
   });

@@ -18,6 +18,8 @@ import {
   templateComponents,
   templateVersionFor,
   variantOfName,
+  templateAnspracheOf,
+  templateVersionOfName,
 } from "@/lib/whatsapp/templates";
 import { shapeOfComponents } from "@/lib/whatsapp/dialog360";
 import { inboundBody, inboundPayload } from "@/lib/whatsapp/gateway";
@@ -26,7 +28,9 @@ import { empfehlungsThema } from "@/lib/empfehlung/shared";
 
 describe("Erstanschreiben je Produkt", () => {
   it("Produkt aus dem Leadformular → Vorlage, Produktname und erste Frage", () => {
-    expect(outreachProdukt("Katzenversicherung (TKV)")).toMatchObject({ purpose: "outreach_tkv", produkt: "Katzenversicherung", knoepfe: ["Hund", "Katze"] });
+    expect(outreachProdukt("Katzenversicherung (TKV)")).toMatchObject({ purpose: "outreach_tkv", produkt: "Katzenversicherung", frage1: "Wie alt ist Ihre Katze?", frage1Du: "Wie alt ist deine Katze?", knoepfe: [] });
+    expect(outreachProdukt("Hundekrankenversicherung")?.frage1).toBe("Wie alt ist Ihr Hund?");
+    expect(outreachProdukt("Tierkrankenversicherung")?.frage1).toBe("Wie alt ist Ihr Tier?");
     expect(outreachProdukt("Hundekrankenversicherung")?.purpose).toBe("outreach_tkv");
     expect(outreachProdukt("Zahnzusatz")).toMatchObject({ purpose: "outreach_zahn", produkt: "Zahnzusatzversicherung" });
     expect(outreachProdukt("PKV Wechsel")).toMatchObject({ purpose: "outreach_pkv", produkt: "privaten Krankenversicherung" });
@@ -36,17 +40,23 @@ describe("Erstanschreiben je Produkt", () => {
     expect(outreachProdukt("Hundehalter-Haftpflicht")?.purpose).not.toBe("outreach_tkv");
     expect(outreachProdukt("Sterbegeldversicherung")).toBeNull();
     expect(outreachProdukt(null)).toBeNull();
-    // Knöpfe der Vorlage bzw. der vorgemerkten nächsten Fassung = Knöpfe im Prompt (Zahnzusatz: v5 neutral, Art. 9 DSGVO)
+    // Knöpfe der Vorlage = Knöpfe im Prompt (Zahnzusatz: v5 neutral, Art. 9 DSGVO; Tier ohne Knöpfe)
     for (const s of ["TKV Katze", "Zahnzusatz", "PKV", "Privatschutz"]) {
       const p = outreachProdukt(s)!;
-      expect(freitextButtonsOf(p.purpose)).toEqual(p.knoepfe);
+      expect(freitextButtonsOf(p.purpose) ?? []).toEqual(p.knoepfe);
     }
   });
 
   it("Assistent: Knopf-Antwort = Antwort auf Frage 1, dann Frage 2, dann Termine", () => {
     const r = ersteFrageRegel("TKV Katze", "Susanne Meier");
-    expect(r).toContain("„Für welches Tier suchen Sie den Schutz?“");
+    expect(r).toContain("„Wie alt ist Ihre Katze?“");
     expect(r).toContain("ist die Antwort auf diese Frage 1");
+    // Ältere freigegebene v4 (Frage nach dem Tier mit Knöpfen) im Verlauf: deren Frage gilt
+    const alt = ersteFrageRegel("TKV Katze", "Susanne Meier", { gesendet: "Guten Tag Frau X, … Für welches Tier suchen Sie den Schutz?" });
+    expect(alt).toContain("„Für welches Tier suchen Sie den Schutz?“ mit den Knöpfen „Hund“, „Katze“");
+    // Lead hat zuerst geschrieben: Frage 1 jetzt stellen, fett am Ende
+    expect(ersteFrageRegel("TKV Katze", "Susanne", { jetzt: true, an: "du" })).toContain("*Wie alt ist deine Katze?*");
+    expect(ersteFrageRegel(null, "Susanne", { jetzt: true })).toBe("");
     expect(r).toContain("Dann Frage 2");
     expect(ersteFrageRegel(null, "Susanne Meier")).toContain("„Lieber schriftlich“");
     const agent = { systemPrompt: "", knowledge: "", personality: "" };
@@ -73,13 +83,15 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
   it("Erstanschreiben mit Kopf DOCUMENT, Beispiel-Link und Fußzeile; ohne Beispiel ohne Kopf", () => {
     const req = buildTemplateRequest("outreach_tkv", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
     const comps = req.components as { type: string; format?: string; example?: { header_handle: string[] }; text?: string }[];
-    expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
+    expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
     expect(comps[0]).toEqual({ type: "HEADER", format: "DOCUMENT", example: { header_handle: [pdf] } });
     expect(comps[2].text).toBe(ERSTINFO_FOOTER);
     expect(ERSTINFO_FOOTER.length).toBeLessThanOrEqual(60);
-    expect(requestShape(req)).toEqual({ headerFormat: "DOCUMENT", buttons: ["Hund", "Katze"] });
+    expect(requestShape(req)).toEqual({ headerFormat: "DOCUMENT", buttons: [] });
     const plain = withoutHeader(req);
-    expect((plain.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY", "BUTTONS"]);
+    expect((plain.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
+    const zahn = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
+    expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
     expect(requestShape(plain).headerFormat).toBeNull();
     // Andere Zwecke bekommen nie einen Kopf
     const rem = buildTemplateRequest("reminder", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
@@ -118,31 +130,48 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
   const k = { firstName: "Julia", lastName: "Schneider", salutation: "Frau" };
   const v3 = { name: "pg_outreach_v3_sie", body: "Guten Tag {{1}}, alt {{2}} ok?", headerFormat: null };
   const v4 = { name: "pg_outreach_v4_sie", body: "Guten Tag {{1}}, neu ok?", headerFormat: "DOCUMENT" };
-  const tA = { name: "pg_outreach_tkv_v4_sie", body: "Guten Tag {{1}}, A {{2}} ok?", headerFormat: "DOCUMENT" };
-  const tB = { name: "pg_outreach_tkv_v4_b_sie", body: "Guten Tag {{1}}, B {{2}} ok?", headerFormat: "DOCUMENT" };
+  const v5 = { name: "pg_outreach_v5_sie", body: "Hallo {{1}}, danke ok?", headerFormat: "DOCUMENT" };
+  const v5ohne = { name: "pg_outreach_v5_sie_ohne_name", body: "Hallo, danke ok?", headerFormat: "DOCUMENT" };
+  const lA = { name: "pg_followup_last_v4_sie", body: "Guten Tag {{1}}, A ok?", headerFormat: null };
+  const lB = { name: "pg_followup_last_v4_b_sie", body: "Guten Tag {{1}}, B ok?", headerFormat: null };
 
-  it("v4, unveränderte Zwecke behalten v3", () => {
+  it("Erstanschreiben v5, übrige v4, unveränderte Zwecke behalten v3", () => {
     expect(TEMPLATE_VERSION).toBe("v4");
     expect(templateVersionFor("review_request")).toBe("v3");
-    expect(isCurrentTemplateName("pg_outreach_v4_sie", "outreach")).toBe(true);
-    expect(isCurrentTemplateName("pg_outreach_v3_sie", "outreach")).toBe(false);
+    expect(templateVersionFor("outreach_tkv")).toBe("v5");
+    expect(isCurrentTemplateName("pg_outreach_v5_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v4_sie", "outreach")).toBe(false);
     // „outreach_tkv“ ist ein eigener Zweck, nicht die aktuelle Fassung von „outreach“
-    expect(isCurrentTemplateName("pg_outreach_tkv_v4_sie", "outreach")).toBe(false);
+    expect(isCurrentTemplateName("pg_outreach_tkv_v5_sie", "outreach")).toBe(false);
     expect(variantOfName("pg_outreach_tkv_v4_b_sie_ohne_name_r2")).toBe("b");
     expect(variantOfName("pg_outreach_tkv_v4_sie")).toBe("a");
   });
 
-  it("bis zur Freigabe von v4 bleibt v3 im Einsatz (mit alten Parametern); ohne PDF keine Vorlage mit Kopf", () => {
-    expect(rankTemplates([v3, v4], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v4_sie" }, current: true });
+  it("bis zur Freigabe von v5 bleibt v4 (bzw. v3) im Einsatz; ohne PDF keine Vorlage mit Kopf", () => {
+    expect(rankTemplates([v3, v4, v5], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v5_sie" }, current: true });
+    expect(rankTemplates([v3, v4], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v4_sie" }, current: false });
     expect(rankTemplates([v3], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v3_sie" }, current: false });
     expect(rankTemplates([v3, v4], "outreach", "sie", k, { documentHeader: false })?.tpl.name).toBe("pg_outreach_v3_sie");
-    expect(rankTemplates([v4], "outreach", "sie", k, { documentHeader: false })).toBeNull();
+    expect(rankTemplates([v4, v5], "outreach", "sie", k, { documentHeader: false })).toBeNull();
+  });
+
+  it("v5 Sie „Hallo {{1}},“: {{1}} = „Frau Schneider“; ohne Nachnamen die Fassung „Hallo,“", () => {
+    const r = rankTemplates([v4, v5, v5ohne], "outreach", "sie", k)!;
+    expect(r.tpl.name).toBe("pg_outreach_v5_sie");
+    expect(r.params([])).toEqual(["Frau Schneider"]);
+    const ohne = rankTemplates([v4, v5, v5ohne], "outreach", "sie", { firstName: "Julia" })!;
+    expect(ohne.tpl.name).toBe("pg_outreach_v5_sie_ohne_name");
+    expect(ohne.params([])).toEqual([]);
+    expect(templateAnspracheOf(v5)).toBe("sie");
+    expect(templateAnspracheOf({ name: "pg_outreach_v5", body: "Hallo {{1}}, danke" })).toBe("du");
+    expect(templateVersionOfName("pg_outreach_tkv_v5_b_sie_r2")).toBe(5);
+    expect(templateVersionOfName("eigene_vorlage")).toBe(0);
   });
 
   it("gewünschte A/B-Fassung zuerst, sonst die andere aktuelle", () => {
-    expect(rankTemplates([tA, tB], "outreach_tkv", "sie", k, { variant: "b" })).toMatchObject({ tpl: { name: tB.name }, variant: "b" });
-    expect(rankTemplates([tA, tB], "outreach_tkv", "sie", k, { variant: "a" })).toMatchObject({ tpl: { name: tA.name }, variant: "a" });
-    expect(rankTemplates([tA], "outreach_tkv", "sie", k, { variant: "b" })).toMatchObject({ tpl: { name: tA.name }, variant: "a" });
+    expect(rankTemplates([lA, lB], "followup_last", "sie", k, { variant: "b" })).toMatchObject({ tpl: { name: lB.name }, variant: "b" });
+    expect(rankTemplates([lA, lB], "followup_last", "sie", k, { variant: "a" })).toMatchObject({ tpl: { name: lA.name }, variant: "a" });
+    expect(rankTemplates([lA], "followup_last", "sie", k, { variant: "b" })).toMatchObject({ tpl: { name: lA.name }, variant: "a" });
   });
 
   it("interaktive Knöpfe im offenen Fenster nur, wenn WhatsApp sie erlaubt (höchstens 3, je 20 Zeichen)", () => {

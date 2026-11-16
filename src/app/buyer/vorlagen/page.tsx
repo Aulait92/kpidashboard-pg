@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { erstinfoName, type ErstinfoWeb } from "@/lib/erstinformation-shared";
 import { CheckCircle2, ChevronRight, Clock, FileText, Info, MessageCircle, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -38,12 +39,15 @@ export default async function VorlagenPage() {
       empfehlungEnabled: true,
       leadAddress: true,
       whatsAppAccount: { select: { status: true } },
+      erstinformation: { select: { name: true } },
+      onboarding: { select: { websiteInfo: true } },
       messageTemplates: { select: { name: true, purpose: true, status: true, body: true, headerFormat: true, updatedAt: true }, orderBy: { updatedAt: "desc" } },
     },
   });
   if (!customer) redirect("/buyer");
   const connected = customer.whatsAppAccount?.status === "connected";
-  const names = templateNamesOf(customer.name);
+  // Vorname im Erstanschreiben wie beim Einreichen (Anbieterangaben, sonst Vorschlag)
+  const names = templateNamesOf(customer.name, undefined, erstinfoName(customer.erstinformation?.name, (customer.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer.name));
   const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
 
   // Gespeicherte Ansprache (Sie/Du) bestimmt Fassung und Vorschau; Beispielkontakt: Julia Schneider, Anrede „Frau“
@@ -119,7 +123,7 @@ export default async function VorlagenPage() {
                     </span>
                   </div>
                   <div className="mt-3 rounded-[var(--radius-md,12px)] bg-[#efeae2] p-3">
-                    <div className="max-w-md rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm leading-relaxed text-slate-900 shadow-sm">
+                    <div className="max-w-md whitespace-pre-wrap rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm leading-relaxed text-slate-900 shadow-sm">
                       {r.pdf ? (
                         <div className="mb-2 flex items-center gap-2 rounded-md bg-slate-100 px-2 py-1.5 text-xs text-slate-700">
                           <FileText className="h-4 w-4 shrink-0" /> Erstinformation.pdf

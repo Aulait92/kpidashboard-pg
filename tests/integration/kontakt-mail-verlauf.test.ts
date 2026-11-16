@@ -77,7 +77,7 @@ vi.mock("@/lib/whatsapp/gateway", async (orig) => {
   const real = await orig<typeof import("@/lib/whatsapp/gateway")>();
   return { ...real, sendWhatsAppMessage: async () => ({ id: "m1" }) };
 });
-vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => {} }));
+vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => {}, sendErstinfo: async () => {} }));
 
 import { prisma } from "@/lib/prisma";
 import { sendLeadEmail } from "@/lib/calendar/lead-email";

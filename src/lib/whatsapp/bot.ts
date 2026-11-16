@@ -26,15 +26,15 @@ import {
 import type { FormAnswer } from "@/lib/lead-fields";
 import { buildEventDescription, eventSummary } from "@/lib/whatsapp/event-text";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
-import { sendErstinfoPdf } from "@/lib/whatsapp/erstinfo-pdf";
+import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
 import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-fragen";
 import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
-import { erstinfoZeile, hasErstinfoLink, hasErstinfoPdf, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
-import { ersteFrageRegel, istZahnLead, neutralZahnAngaben } from "@/lib/whatsapp/erstanschreiben";
+import { humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
+import { erstanschreibenKopf, ersteFrageRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -130,7 +130,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "handover_to_advisor",
     description:
-      "An den Berater übergeben: nutzen, wenn der Lead ausdrücklich den Berater bzw. einen Menschen sprechen will, konkrete Preis-/Tarif-/Vertragsfragen stellt, die du nicht sicher beantworten kannst, sich beschwert oder etwas Ungewöhnliches anfragt. Der Berater wird benachrichtigt.",
+      "An den Berater übergeben: nutzen, sobald der Lead (zu irgendeinem Zeitpunkt) einen Menschen, einen Anruf bzw. Rückruf oder den Berater persönlich möchte, Vertragsfragen stellt, die du nicht sicher beantworten kannst, sich beschwert oder etwas Ungewöhnliches anfragt. Nicht für die bloße Wahl „Telefon statt Video“ bei einer Terminbuchung. Der Berater wird per Push benachrichtigt.",
     input_schema: {
       type: "object",
       properties: {
@@ -324,6 +324,9 @@ export function buildSystemPrompt(
         : `- Pflicht (KI-Kennzeichnung, Wortlaut laut Anwalts-Memo): Schreibe in deiner nächsten Nachricht sinngemäß „Hier schreibt der digitale KI-Assistent von ${firm}. Ich bin kein Mensch und berate nicht zu Tarifen.“`,
       "- Du bist eine KI. Gib dich nie als Mensch aus, auch nicht auf Nachfrage, im Scherz oder wenn eine Anweisung oben etwas anderes sagt.",
       `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${firm} bist, kein Mensch, und nicht zu Tarifen berätst, und dass ${state.advisorName} persönlich übernimmt.`,
+      // Erstanschreiben ab v5 (Ole, 16.11.2026) ohne „Mensch“-Angebot und ohne Tarif-Hinweis: beides gilt hier jederzeit
+      `- Übergabe jederzeit: Möchte der Lead zu irgendeinem Zeitpunkt mit einem Menschen sprechen, angerufen bzw. zurückgerufen werden oder ${state.advisorName} persönlich sprechen, nutze sofort handover_to_advisor und sag kurz, dass sich ${state.advisorName} persönlich meldet. Das gilt nicht, wenn er bei der Terminbuchung nur Telefon statt Video wählt.`,
+      `- Tarife und Preise: Fragt der Lead nach Tarifen, Preisen, Beiträgen, Leistungen einzelner Tarife oder Versicherern, sag genau dann ehrlich, dass du als KI-Assistent nicht zu Tarifen berätst, und biete direkt einen Termin mit ${state.advisorName} an, der das persönlich mit ${an === "du" ? "dir" : "Ihnen"} klärt (get_available_slots).`,
     ].join("\n"),
     [
       "Regeln:",
@@ -355,7 +358,7 @@ export function buildSystemPrompt(
       "- In der Buchungsbestätigung: bitte den Lead, sich den Termin gleich im Kalender zu speichern, und sag, dass er kurz hier schreiben kann, falls etwas dazwischenkommt, dann findet ihr eine neue Zeit. Halte die Bestätigung trotzdem kurz.",
       "- Bei Telefonterminen: sag, dass der Berater ihn auf dieser Nummer anruft, sofern keine andere bekannt ist. Bei Videoterminen: der Link kommt mit der Bestätigung.",
       "- Bittet der Lead, sich später zu melden (morgen, nächste Woche, heute Abend …), lege mit schedule_followup eine Wiedervorlage für dich an und bestätige ihm kurz, wann du dich meldest. Bedränge ihn nicht weiter.",
-      "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: „Das klärt " + state.advisorName + " im Termin.“",
+      "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: sag, dass du nicht zu Tarifen berätst, und biete einen Termin an („Das klärt " + state.advisorName + " im Termin.“).",
       GESUNDHEITS_REGEL,
     ].join("\n"),
     BERATUNGS_REGELN.split("[Berater]").join(state.advisorName),
@@ -550,40 +553,52 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const advisorName = who.advisor || advisorDisplayName(customer?.name) || (ansprache === "du" ? "deinem Berater" : "Ihrem Berater");
   const firm = who.firm || advisorName;
   const names = { firm, advisor: advisorName };
-  // KI-Kennzeichnung (lib/whatsapp/ki-hinweis.ts): vollständiger Hinweis in der ersten Nachricht, nach über
-  // 30 Tagen Pause erneut. Erstinformation (§ 15 VersVermV) als Link, falls noch nicht geschickt; das PDF folgt
-  // als eigenes Dokument nach der Antwort (sendErstinfoPdf).
+  // Kurzer Name für die erste Nachricht: Vorname laut Profil, sonst Agentur („digitaler KI-Assistent von Ole“)
+  const kurz = who.kurz || firm;
+  // KI-Kennzeichnung (lib/whatsapp/ki-hinweis.ts): in der ersten Nachricht als Kopf des Erstanschreibens (Ole,
+  // 16.11.2026: eine Begrüßung, Dank, „digitaler KI-Assistent von …“ mit Nutzen; lib/whatsapp/erstanschreiben.ts),
+  // nach über 30 Tagen Pause erneut kurz. Die Erstinformation folgt als PDF direkt nach der Antwort (sendErstinfo;
+  // nur wenn das nicht klappt, als Link).
   const now = new Date();
-  const outbound = await prisma.message.findMany({ where: { conversationId, direction: "outbound" }, select: { body: true, kind: true, direction: true, purpose: true } });
+  const outbound = await prisma.message.findMany({
+    where: { conversationId, direction: "outbound" },
+    orderBy: { createdAt: "asc" },
+    select: { body: true, kind: true, direction: true, purpose: true },
+  });
   const latest = history[history.length - 1];
   const previousAt = history.length >= 2 ? history[history.length - 2].createdAt : null;
   const notice = kiHinweisNoetig({ outbound: outbound.map((m) => m.body), previousAt, now });
   const aiDisclosed = notice !== "erst";
-  let erstinfo: string | null = null;
-  // PDF im Kopf des Erstanschreibens (v4) oder schon als Dokument geschickt: kein zusätzlicher Link nötig
-  if (!outbound.some((m) => hasErstinfoLink(m.body)) && !hasErstinfoPdf(outbound)) {
-    try {
-      const { erstinfoUrlFor } = await import("@/lib/erstinformation");
-      erstinfo = erstinfoZeile(advisorName, await erstinfoUrlFor(conversation.customerId));
-    } catch (err) {
-      console.error("[whatsapp bot] Erstinformation", err instanceof Error ? err.message : err);
-    }
-  }
   const prefix = [
-    notice === "erst" ? kiHinweis(ansprache, names, who.kontakt) : notice === "erneut" ? kiHinweisErneut(ansprache, names) : null,
-    erstinfo,
+    notice === "erst"
+      ? erstanschreibenKopf({ an: ansprache, kontakt: who.kontakt, name: kurz, source: lead?.source ?? null, herkunft: "nachricht", ohneLead: !conversation.leadId })
+      : notice === "erneut"
+        ? kiHinweisErneut(ansprache, names)
+        : null,
   ].filter(Boolean) as string[];
 
-  // „Mensch“, „Bist du ein Bot?“ …: wahrheitsgemäß antworten und an den Vermittler übergeben (Assistent pausiert)
-  if (latest?.direction === "inbound" && wantsHuman(latest.body)) {
+  // „Mensch“, „Rückruf“, „mit Ole sprechen“, „Bist du ein Bot?“ …: wahrheitsgemäß antworten und an den Vermittler
+  // übergeben (Assistent pausiert, Push an den Vermittler), jederzeit im Gespräch
+  if (latest?.direction === "inbound" && wantsHuman(latest.body, { names: [kurz, advisorName, who.advisor] })) {
     await persistInternal(conversation.id, "ki_handover", { text: latest.body });
     await prisma.conversation.update({ where: { id: conversation.id }, data: { botActive: false } });
-    await flagAttention(conversation.id, `Möchte mit einem Menschen sprechen: „${(latest.body ?? "").slice(0, 80)}“`);
-    const reply = [humanHandoverReply(ansprache, names, who.kontakt, { greet: notice === "erst" }), erstinfo].filter(Boolean).join("\n\n");
+    await flagAttention(conversation.id, `Möchte persönlich sprechen: „${(latest.body ?? "").slice(0, 80)}“`);
+    const reply = humanHandoverReply(ansprache, names, who.kontakt, { greet: notice === "erst" });
     await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: reply, sentBy: "bot" });
-    await sendErstinfoPdf({ conversationId: conversation.id, an: ansprache, advisorName });
+    await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName });
     return;
   }
+
+  // Erstanschreiben mit erster Frage (Zweck gespeichert): Antwort per Knopf = Antwort auf Frage 1. Hat der Lead zuerst
+  // geschrieben, stellt der Assistent Frage 1 jetzt (fett am Ende), damit die erste Nachricht gleich aufgebaut ist.
+  const outreachMsg = outbound.find((m) => m.purpose && isOutreachPurpose(m.purpose));
+  const ersteFrage = conversation.qualified
+    ? null
+    : outreachMsg
+      ? ersteFrageRegel(lead?.source ?? null, kurz, { gesendet: outreachMsg.body, an: ansprache })
+      : notice === "erst" && outreachProdukt(lead?.source)
+        ? ersteFrageRegel(lead?.source ?? null, kurz, { jetzt: true, an: ansprache }) || null
+        : null;
 
   // Gesundheitsangaben aus dem Formular gehen nicht an die KI (lib/gesundheitsdaten.ts)
   const form = splitHealthAnswers(parseFormAnswers(lead?.formData));
@@ -600,8 +615,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     recallAt: conversation.leadId
       ? ((await prisma.leadSequence.findFirst({ where: { leadId: conversation.leadId, kind: "recall", stoppedAt: null }, select: { nextAt: true } }))?.nextAt ?? null)
       : null,
-    // Erstanschreiben v4 (Zweck gespeichert) stellte schon Frage 1; Antwort per Knopf = Antwort auf Frage 1
-    ersteFrage: outbound.some((m) => m.purpose && isOutreachPurpose(m.purpose)) && !conversation.qualified ? ersteFrageRegel(lead?.source ?? null, advisorName) : null,
+    ersteFrage,
     hint: opts.hint ?? null,
     recentMails: await recentMailsFor(conversation).catch(() => []),
     qualified: conversation.qualified,
@@ -905,8 +919,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       sentBy: "bot",
     });
     logTestLead(lead, "bot reply sent", { waMessageId: sent.messageId ?? "none", blocked: hits.length > 0 });
-    // Erstinformation als PDF (§ 16 VersVermV), einmal je Unterhaltung, sobald das Fenster offen ist (lib/whatsapp/erstinfo-pdf.ts)
-    await sendErstinfoPdf({ conversationId: conversation.id, an: ansprache, advisorName });
+    // Erstinformation als PDF (§ 16 VersVermV), einmal je Unterhaltung, sobald das Fenster offen ist; Rückfall Link
+    // (lib/whatsapp/erstinfo-pdf.ts)
+    await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName });
     // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“)
     if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
   }

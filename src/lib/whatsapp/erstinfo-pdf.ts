@@ -19,16 +19,24 @@
 // als Rückfall: für ältere Vorlagen ohne Kopf, wenn 360dialog bzw. Meta den Kopf ablehnt (dann wird ohne Kopf
 // eingereicht, template-submit.ts) und wenn die Erstinformation beim Erstanschreiben noch nicht vollständig war.
 
+// Neu (Ole, 16.11.2026, Erstanschreiben v5): Im offenen Fenster geht das PDF als Nachricht 2 direkt nach dem
+// Erstanschreiben bzw. der ersten Antwort raus, mit kurzem Begleittext (ERSTINFO_PDF_CAPTION) und dem Dateinamen
+// „Erstinformation_<Agentur>.pdf“. Das PDF wird aus den Anbieterangaben erzeugt (gleiche Quelle wie die Seite
+// /erstinformation/<token>), nach Hash der Angaben zwischengespeichert und über die öffentliche Adresse mit Token und
+// Hash an 360dialog gegeben (Meta lädt die Datei selbst, kein Hochladen nötig). Klappt das nicht, geht als Rückfall
+// der Link zur Erstinformation als Text raus (sendErstinfo) und der Fehler wird protokolliert.
+
 import { prisma } from "@/lib/prisma";
 import { decryptSecret } from "@/lib/encryption";
 import { sendDocument } from "@/lib/whatsapp/dialog360";
-import { erstinfoPdfText, hasErstinfoPdf } from "@/lib/whatsapp/ki-hinweis";
+import { ERSTINFO_PDF_CAPTION, erstinfoZeile, hasErstinfoLink, hasErstinfoPdf } from "@/lib/whatsapp/ki-hinweis";
 import type { Ansprache } from "@/lib/ansprache";
 
-export type ErstinfoPdfResult = "sent" | "already" | "incomplete" | "window_closed" | "not_possible";
+export type ErstinfoPdfResult = "sent" | "already" | "incomplete" | "window_closed" | "not_possible" | "failed";
 
 /** PDF der Erstinformation in eine Unterhaltung schicken, falls noch nicht geschehen. Wirft bei Versandfehlern nicht. */
-export async function sendErstinfoPdf(opts: { conversationId: string; an: Ansprache; advisorName: string }): Promise<ErstinfoPdfResult> {
+export async function sendErstinfoPdf(opts: { conversationId: string; an?: Ansprache; advisorName?: string }): Promise<ErstinfoPdfResult> {
+  let step = "laden";
   try {
     const conv = await prisma.conversation.findUnique({
       where: { id: opts.conversationId },
@@ -37,21 +45,46 @@ export async function sendErstinfoPdf(opts: { conversationId: string; an: Anspra
     if (!conv || conv.optedOutAt) return "not_possible";
     if (hasErstinfoPdf(conv.messages)) return "already";
     if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= Date.now()) return "window_closed";
-    const { erstinfoBereit, erstinfoDokument, erstinfoPdfUrlFor, erstinfoUrlFor } = await import("@/lib/erstinformation");
-    if (!(await erstinfoBereit(conv.customerId))) return "incomplete";
     const account = await prisma.whatsAppAccount.findUnique({ where: { customerId: conv.customerId }, select: { status: true, apiKeyEnc: true } });
     if (!account || account.status !== "connected" || !account.apiKeyEnc) return "not_possible";
-    const [doc, link, page] = await Promise.all([erstinfoDokument({ customerId: conv.customerId }), erstinfoPdfUrlFor(conv.customerId), erstinfoUrlFor(conv.customerId)]);
-    if (!doc) return "not_possible";
-    const caption = erstinfoPdfText(opts.an, opts.advisorName);
-    const res = await sendDocument(decryptSecret(account.apiKeyEnc), conv.contactPhone, { link, filename: doc.fileName, caption });
+    const { erstinfoPdfFuerWhatsApp, erstinfoUrlFor } = await import("@/lib/erstinformation");
+    step = "pdf";
+    const pdf = await erstinfoPdfFuerWhatsApp(conv.customerId);
+    if (!pdf) return "incomplete";
+    const page = await erstinfoUrlFor(conv.customerId);
+    step = "senden";
+    const res = await sendDocument(decryptSecret(account.apiKeyEnc), conv.contactPhone, { link: pdf.link, filename: pdf.filename, caption: ERSTINFO_PDF_CAPTION });
     await prisma.message.create({
-      data: { conversationId: conv.id, direction: "outbound", kind: "document", body: `${caption}\n${page}`, waMessageId: res.messageId, status: "sent", sentBy: "bot" },
+      data: { conversationId: conv.id, direction: "outbound", kind: "document", body: `${ERSTINFO_PDF_CAPTION}\n${pdf.filename}\n${page}`, waMessageId: res.messageId, status: "sent", sentBy: "bot" },
     });
     await prisma.conversation.update({ where: { id: conv.id }, data: { lastMessageAt: new Date() } });
     return "sent";
   } catch (err) {
-    console.error("[whatsapp] Erstinformation als PDF", err instanceof Error ? err.message : err);
-    return "not_possible";
+    console.error(`[whatsapp] Erstinformation als PDF (${step})`, err instanceof Error ? err.message.slice(0, 300) : err);
+    return step === "laden" ? "not_possible" : "failed";
+  }
+}
+
+/**
+ * Erstinformation nach der ersten Nachricht: PDF (sendErstinfoPdf); schlägt das fehl bzw. ist das PDF nicht
+ * vollständig, als Rückfall der Link als Text (wie bisher), einmal je Unterhaltung, mit Protokollzeile.
+ */
+export async function sendErstinfo(opts: { conversationId: string; an?: Ansprache; advisorName: string }): Promise<ErstinfoPdfResult | "link"> {
+  const r = await sendErstinfoPdf(opts);
+  if (r !== "failed" && r !== "incomplete") return r;
+  try {
+    const conv = await prisma.conversation.findUnique({
+      where: { id: opts.conversationId },
+      select: { customerId: true, contactPhone: true, messages: { where: { direction: "outbound" }, select: { body: true } } },
+    });
+    if (!conv || conv.messages.some((m) => hasErstinfoLink(m.body))) return r;
+    const { erstinfoUrlFor } = await import("@/lib/erstinformation");
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+    await sendWhatsAppMessage({ customerId: conv.customerId, to: conv.contactPhone, body: erstinfoZeile(opts.advisorName, await erstinfoUrlFor(conv.customerId)), sentBy: "bot" });
+    console.warn(`[whatsapp] Erstinformation: PDF ${r === "failed" ? "nicht gesendet" : "unvollständig"}, Link als Rückfall`, opts.conversationId);
+    return "link";
+  } catch (err) {
+    console.error("[whatsapp] Erstinformation als Link", err instanceof Error ? err.message.slice(0, 300) : err);
+    return r;
   }
 }

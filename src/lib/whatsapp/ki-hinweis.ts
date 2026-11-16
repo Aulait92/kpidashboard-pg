@@ -1,6 +1,8 @@
 // KI-Kennzeichnung des WhatsApp-Assistenten (KI-Verordnung Art. 50 Abs. 1, gilt seit 2.8.2026; Ole, 15.11.2026).
 // Reine Funktionen (testbar), genutzt von Vorlagen (templates.ts) und Bot (bot.ts):
-//   - Die erste Nachricht an jeden neuen Kontakt enthält immer den Hinweis (nicht abschaltbar).
+//   - Die erste Nachricht an jeden neuen Kontakt enthält immer den Hinweis (nicht abschaltbar). Seit dem neuen
+//     Erstanschreiben (Ole, 16.11.2026, lib/whatsapp/erstanschreiben.ts) als „digitaler KI-Assistent von …“ im
+//     Nutzen-Satz, ohne „Mensch“-Angebot und ohne „berate nicht zu Tarifen“; beides sagt der Assistent im Gespräch.
 //   - Nach einer langen Pause (über 30 Tage ohne Nachricht) wiederholt der Assistent ihn kurz.
 //   - „Mensch“, „Mitarbeiter“, „Bist du ein Bot?“ … → wahrheitsgemäße Antwort und Übergabe an den Vermittler.
 
@@ -37,16 +39,10 @@ export function erstinfoZeile(advisor: string, url: string): string {
 }
 
 /**
- * Begleittext zum PDF der Erstinformation (§ 16 VersVermV: dauerhafter Datenträger, Papier auf Wunsch).
- * Der Link zur Seite steht zusätzlich dahinter.
+ * Begleittext zum PDF der Erstinformation (Nachricht 2 nach dem Erstanschreiben; § 15/16 VersVermV: dauerhafter
+ * Datenträger, der Hinweis auf Papier steht im PDF selbst). Für Du und Sie gleich.
  */
-export function erstinfoPdfText(an: Ansprache, advisor: string): string {
-  return a(
-    an,
-    `Hier ist die Erstinformation zu ${advisor} als Versicherungsvermittler als PDF zum Speichern. Auf Wunsch bekommst du sie auch kostenlos auf Papier.`,
-    `Hier ist die Erstinformation zu ${advisor} als Versicherungsvermittler als PDF zum Speichern. Auf Wunsch erhalten Sie sie auch kostenlos auf Papier.`,
-  );
-}
+export const ERSTINFO_PDF_CAPTION = "Unsere Erstinformation als Versicherungsvermittler, wie gesetzlich vorgesehen.";
 
 /** Markierung im gespeicherten Text einer Vorlage, die das PDF der Erstinformation im Kopf trug (templates.ts). */
 export const ERSTINFO_KOPF = "[Erstinformation als PDF]";
@@ -80,10 +76,12 @@ export function kiHinweisSatz(an: Ansprache): string {
   return cap(KI_HINWEIS_KERN[an]);
 }
 
-/** Enthält eine ausgehende Nachricht den vollständigen KI-Hinweis? (alte Vorlagen „digitaler Assistent“ zählen nicht) */
+/**
+ * Enthält eine ausgehende Nachricht die KI-Kennzeichnung? „digitaler KI-Assistent“ reicht (Erstanschreiben ab v5,
+ * Ole 16.11.2026); alte Vorlagen mit „digitaler Assistent“ ohne „KI“ zählen nicht.
+ */
 export function hasKiHinweis(body: string | null | undefined): boolean {
-  const t = body ?? "";
-  return /KI-Assistent/i.test(t) && /kein Mensch/i.test(t);
+  return /KI-Assistent/i.test(body ?? "");
 }
 
 /** Enthält eine ausgehende Nachricht schon den Link zur Erstinformation? */
@@ -128,16 +126,35 @@ const WUNSCH = [
   /\b(kein(en)? bot|keine ki)\b/,
 ];
 
+// Wunsch nach einem Anruf (Ole, 16.11.2026: jederzeit übergeben). „Lieber telefonieren“ als Antwort auf „Telefon oder
+// Video?“ ist KEIN Übergabewunsch und wird hier nicht erkannt.
+const ANRUF = [
+  /\b(ruf(en sie|t)?|rufe) mich (bitte |doch |mal |gern |gerne |einfach |kurz )*(zurück|an)(?![a-zäöüß])/,
+  /\b(können|könnten|kann|könnte|würden) (sie|du|mich|jemand)( mich)? (bitte |mal |kurz |einfach )*(anrufen|zurückrufen)\b/,
+  /\b(bitte um|wünsche|möchte|hätte gern|hätte gerne|lieber) (einen |einen kurzen )?(rückruf|anruf)\b/,
+  /^(rückruf|anruf|bitte anrufen|bitte rückruf)( bitte)?\s*[?!.]*$/,
+];
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /**
- * Will der Kontakt einen Menschen bzw. fragt er, ob er mit einer KI schreibt? Dann antwortet der
- * Assistent wahrheitsgemäß und übergibt (Bot pausiert, Vermittler bekommt eine Mitteilung).
+ * Will der Kontakt einen Menschen, einen Anruf oder den Vermittler persönlich, bzw. fragt er, ob er mit einer KI
+ * schreibt? Dann antwortet der Assistent wahrheitsgemäß und übergibt (Bot pausiert, Vermittler bekommt eine Push-
+ * Mitteilung). opts.names: Namen des Vermittlers (z. B. „Ole“, „Ole Schmidt“, „Herr Schmidt“) für „Kann ich mit Ole sprechen?“.
  */
-export function wantsHuman(text: string | null | undefined): boolean {
+export function wantsHuman(text: string | null | undefined, opts: { names?: (string | null | undefined)[] } = {}): boolean {
   if (!text) return false;
   const t = norm(text);
   if (!t || t.length > 300) return false;
   if (NUR_WORT.test(t)) return true;
-  return FRAGEN.some((r) => r.test(t)) || WUNSCH.some((r) => r.test(t));
+  if (FRAGEN.some((r) => r.test(t)) || WUNSCH.some((r) => r.test(t)) || ANRUF.some((r) => r.test(t))) return true;
+  const names = (opts.names ?? []).map((n) => norm(n ?? "")).filter((n) => n.length >= 3);
+  if (!names.length) return false;
+  const n = `(herrn? |frau )?(${names.map(esc).join("|")})`;
+  return (
+    new RegExp(`\\bmit ${n}\\b.{0,30}\\b(sprechen|reden|telefonieren|verbinden|kontakt)`).test(t) ||
+    new RegExp(`\\b${n} (soll|möge|kann|könnte|darf) mich\\b.{0,20}\\b(anrufen|zurückrufen|kontaktieren|melden)`).test(t) ||
+    new RegExp(`\\b(ist|wäre) ${n} (persönlich )?(erreichbar|zu sprechen)\\b`).test(t)
+  );
 }
 
 /**
