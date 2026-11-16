@@ -82,7 +82,7 @@ export function NaechsterSchritt({ c, a, termin }: { c: Kontakt; a: Akte; termin
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               {naechster.joinUrl ? (
-                <a href={naechster.joinUrl} target="_blank" rel="noreferrer" className={buttonClass("primary", "sm")}>
+                <a href={naechster.joinUrl} target="_blank" rel="noreferrer" className={buttonClass("secondary", "sm")}>
                   <Video className="h-3.5 w-3.5" /> Gespräch starten
                 </a>
               ) : naechster.location ? (
@@ -308,7 +308,7 @@ export function Stammdaten({ c, a }: { c: Kontakt; a: Akte }) {
     <Card>
       <CardHeader title="Stammdaten" hint={a.extrasSummary || undefined} />
       <dl
-        className="grid grid-cols-[96px_minmax(0,1fr)] gap-x-3 gap-y-2 px-5 py-4 text-sm"
+        className="grid grid-cols-[116px_minmax(0,1fr)] gap-x-3 gap-y-2 px-5 py-4 text-sm"
         data-funktion="page-stammdaten--stammdaten-agenturtyp-versicherer-inhaber actions-updatecontact--kontakt-felder-allgemein-aendern-ohne"
       >
         <dt className={DT}>Name</dt>
@@ -455,7 +455,7 @@ export function Agentur({ c }: { c: Kontakt }) {
           </details>
         ) : null}
         {zeilen.length ? (
-          <dl className="grid grid-cols-[96px_minmax(0,1fr)] gap-x-3 gap-y-1.5">
+          <dl className="grid grid-cols-[116px_minmax(0,1fr)] gap-x-3 gap-y-1.5">
             {zeilen.map(([k, v]) => (
               <div key={k} className="contents">
                 <dt className={DT}>{k}</dt>

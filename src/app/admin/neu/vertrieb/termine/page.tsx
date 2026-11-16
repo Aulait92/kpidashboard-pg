@@ -142,7 +142,7 @@ export default async function TerminePage({ searchParams }: { searchParams: Prom
                   <Badge tone="warning">Kalender nicht verbunden</Badge>
                   <span className="text-xs text-[color:var(--muted)]">Ohne Kalender keine freien Zeiten.</span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
                   <a href={connect("google")} className={buttonClass("secondary", "md")}>
                     Google-Kalender verbinden
                   </a>
