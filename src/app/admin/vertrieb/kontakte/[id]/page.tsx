@@ -7,11 +7,7 @@ import { stripQuoted } from "@/lib/vertrieb/instantly";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
 import { ContactEmails, ContactPhones, DuplicateHint } from "@/components/vertrieb/contact-merge";
-import { detectedDataOf } from "@/lib/vertrieb/kontaktdaten-server";
-import { KIND_LABEL, sourceLabel } from "@/lib/vertrieb/kontaktdaten";
-import type { PhoneKind } from "@/lib/vertrieb/dubletten";
-import { formatPhone } from "@/lib/format";
-import { likelyDuplicates } from "@/lib/vertrieb/contact-merge";
+import { enrichedLine as enrichedLineOf, ladeKontakt, ladeKontaktakte, waConfirmLabel } from "@/lib/vertrieb/kontaktakte";
 import { ArrowLeft, Mail, Phone, Presentation, Trash2 } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
@@ -19,106 +15,36 @@ import { TaskForm } from "@/components/vertrieb/task-form";
 import { addReplyManually, deleteActivity, enrichAddressAction, linkContactCustomer, updateActivity, updateContactAddress, setReplySentiment, updateCustomer, updateLinkedIn } from "@/app/admin/vertrieb/actions";
 import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
-import { taskInclude } from "@/lib/vertrieb/queries";
-import { guessSource } from "@/lib/vertrieb/source";
 import { DealOffersCard } from "@/components/deal-offers-card";
 import { toOfferRow } from "@/lib/offer-links";
-import { getAppUrl } from "@/lib/email";
-import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
+import { onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { BackToList } from "@/components/admin/list-memory";
 import { ADMIN_BACK_CLASS } from "@/components/admin/admin-back";
 import { VERTRIEB_LISTS } from "@/lib/admin-lists";
-import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
-import { benefitSentence } from "@/lib/kollegen-shared";
 import { eur as eurOffer } from "@/lib/offer-pricing";
 import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
-import { audienceForContact, listPresentations } from "@/lib/vertrieb/praesentationen";
+import { audienceForContact } from "@/lib/vertrieb/praesentationen";
 import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card";
-import { aktuellesAngebot, audienceFuer } from "@/lib/vertrieb/verkaufspraesentation";
-import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { VerkaufsLinkKarte } from "./praesentation/link-karte";
 import { AdminRescheduleButton, AdminTerminButton } from "@/components/termin/admin-termin";
 import { adminBookTerminAction, adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
-import { DECISION_BOOKING_TYPE, DEFAULT_BOOKING_TYPE, decisionBookingLink } from "@/lib/vertrieb/buchung";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
   // embedded = in der Kundenakte (/admin/kunden/[id]) eingebettet.
   const embedded = (await searchParams).embedded === "1";
-  const c = await prisma.salesContact.findUnique({
-    where: { id },
-    include: {
-      activities: { orderBy: { occurredAt: "desc" } },
-      tasks: { include: taskInclude, orderBy: [{ doneAt: { sort: "desc", nulls: "first" } }, { dueAt: "asc" }] },
-      campaigns: { include: { campaign: true }, orderBy: { sentAt: "desc" } },
-      emails: { orderBy: { sentAt: "desc" } },
-      meetings: { orderBy: { startAt: "desc" } },
-      offers: { orderBy: { createdAt: "desc" } },
-      followups: { orderBy: { createdAt: "desc" }, take: 5 },
-      phones: { orderBy: { detectedAt: "desc" } },
-    },
-  });
+  // Daten der Kontaktakte: lib/vertrieb/kontaktakte.ts (gemeinsam mit dem neuen Admin)
+  const c = await ladeKontakt(id);
   if (!c) notFound();
-  // Weitere E-Mails und Telefonnummern mit Herkunft („aus Buchung 14.11.“), lib/vertrieb/kontaktdaten-server.ts
-  const emailSources = Object.fromEntries(Object.entries(detectedDataOf(c.detectedData).emails ?? {}).map(([e, v]) => [e, sourceLabel("email", v.source, v.at)]));
-  const extraPhones = c.phones.map((p) => ({
-    id: p.id,
-    phone: p.phone,
-    display: formatPhone(p.phone),
-    kind: KIND_LABEL[p.kind as PhoneKind] ?? p.kind,
-    source: sourceLabel("phone", p.source, p.detectedAt),
-  }));
-  const extrasSummary = [
-    extraPhones.length ? `${extraPhones.length} weitere Nummer${extraPhones.length === 1 ? "" : "n"}` : null,
-    c.altEmails.length ? `${c.altEmails.length} weitere E-Mail${c.altEmails.length === 1 ? "" : "s"}` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
   // Kunden haben eine eigene Akte mit allen Reitern.
   if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
-  const open = c.tasks.filter((t) => !t.doneAt);
-  // Später-Follow-up: nur mit einer Mail aus Instantly (Antwort im selben Thread, gleiches Postfach)
-  const activeFollowup = c.followups.find((f) => f.activeFor) ?? null;
-  const threadMail = c.emails.find((e) => e.direction === "IN" && (e.instantlyId || (e.campaign && e.campaign !== "manuell")));
-  const followupMail = (activeFollowup?.replyEmailId && c.emails.find((e) => e.id === activeFollowup.replyEmailId)) || threadMail;
-  const suggested = c.customerSource ? null : await guessSource(c.id);
-  const done = c.tasks.filter((t) => t.doneAt).slice(0, 10);
-  const onboarding = c.customerId ? await loadOnboarding({ customerId: c.customerId }) : null;
-  const obOffer = onboarding?.offerId ? c.offers.find((o) => o.id === onboarding.offerId) ?? null : null;
-  const acceptedOffer = c.offers.find((o) => o.status === "accepted") ?? null;
-  const freeCustomers =
-    !onboarding && acceptedOffer
-      ? await prisma.customer.findMany({ where: { onboarding: null, plan: { not: "internal" }, archived: false }, select: { id: true, name: true }, orderBy: { name: "asc" } })
-      : [];
-  // Kundenakten für „Mit Kundenakte verknüpfen“: noch mit keinem Kontakt verknüpft (+ die eigene)
-  const linkable = await prisma.customer.findMany({
-    where: { archived: false, plan: { not: "internal" }, OR: [{ salesContact: null }, { id: c.customerId ?? "-" }] },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
-  const duplicates = await likelyDuplicates(c.id);
-  // Entscheidungs-Call: persönlicher Buchungslink (signiert, Buchung hängt direkt an diesem Kontakt)
-  const decisionLink = await decisionBookingLink(c.id).catch(() => null);
-  // „Termin“: Admin bucht selbst (Termintyp, Datum, Uhrzeit frei); nach einem Angebot ist der Entscheidungs-Call vorgewählt
-  const bookingTypes = await prisma.salesBookingType.findMany({ orderBy: { sortOrder: "asc" }, select: { slug: true, title: true, durationMin: true } });
-  const defaultTermin = c.offers.length && bookingTypes.some((t) => t.slug === DECISION_BOOKING_TYPE) ? DECISION_BOOKING_TYPE : DEFAULT_BOOKING_TYPE;
-  // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
-  const referral = await referralForContact(c.id);
-  const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;
-  const referralDiscount = referral ? await referralSetupDiscount(c.id) : null;
-  // Präsentationen (PDF) für die Angebotsmail
-  const pdfs = new Set((await listPresentations()).filter((p) => p.format === "pdf").map((p) => p.audience));
-  let appUrl = "";
-  try {
-    appUrl = getAppUrl();
-  } catch {
-    appUrl = "";
-  }
-  // Vertriebspräsentation: Link für den Interessenten und Aufrufe
-  const [praesLink, praesAufrufe] = await Promise.all([aktiverVerkaufsLink(c.id), verkaufsAufrufe(c.id)]);
-  const praesFassung = audienceFuer(c, aktuellesAngebot(c.offers));
+  const {
+    emailSources, extraPhones, extrasSummary, open, done, activeFollowup, threadMail, followupMail, suggested,
+    onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, bookingTypes, defaultTermin,
+    referral, referralBenefit, referralDiscount, pdfs, appUrl, praesLink, praesAufrufe, praesFassung,
+  } = await ladeKontaktakte(c);
   const praesDatum = (d: Date, mitZeit = false) =>
     new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: mitZeit ? "2-digit" : "numeric", month: mitZeit ? "2-digit" : "long", ...(mitZeit ? { year: "numeric", hour: "2-digit", minute: "2-digit" } : {}) }).format(d);
 
@@ -596,24 +522,4 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
 }
 
 /** „Zuletzt ergänzt am … (Quelle)“ aus SalesContact.enrichment. */
-function enrichedLine(raw: unknown): string | null {
-  const e = (raw ?? {}) as { website?: { at?: string }; google?: { at?: string; status?: string } };
-  const parts: string[] = [];
-  if (e.website?.at) parts.push(`Website ${fmtDate(new Date(e.website.at))}`);
-  if (e.google?.at) parts.push(`Google ${fmtDate(new Date(e.google.at))}${e.google.status && e.google.status !== "gefunden" ? ` (${e.google.status})` : ""}`);
-  return parts.length ? `Zuletzt ergänzt: ${parts.join(" · ")}` : null;
-}
-
-/** Status der WhatsApp-Terminbestätigung (lib/vertrieb/termin-whatsapp.ts). */
-function waConfirmLabel(status: string): string {
-  const labels: Record<string, string> = {
-    sent: "gesendet",
-    no_phone: "nicht gesendet, keine Handynummer",
-    no_account: "nicht gesendet, Support-Nummer nicht verbunden",
-    no_template: "nicht gesendet, Vorlage noch nicht freigegeben",
-    failed: "fehlgeschlagen",
-    past: "nicht gesendet, Termin schon vorbei",
-    opted_out: "nicht gesendet, Kontakt hat STOPP geschrieben",
-  };
-  return labels[status] ?? status;
-}
+const enrichedLine = (raw: unknown) => enrichedLineOf(raw, fmtDate);

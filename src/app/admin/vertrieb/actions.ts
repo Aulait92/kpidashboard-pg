@@ -20,6 +20,7 @@ import { audit } from "@/lib/audit";
 import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from "@/lib/vertrieb/followup";
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
 import { backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
+import { neuerPfad } from "@/lib/admin-neu/umzug";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -33,6 +34,13 @@ function refresh(contactId?: string | null) {
   revalidatePath("/admin/heute", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Heute, Vertrieb → Aufgaben)
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+}
+
+/** Weiterleitung nach einer Aktion: kam sie aus dem neuen Admin (/admin/neu), dorthin (fertige Seite), sonst alt. */
+async function ziel(altPfad: string): Promise<string> {
+  const ref = (await headers()).get("referer") ?? "";
+  if (!/^https?:\/\/[^/]+\/admin\/neu(\/|$|\?)/.test(ref)) return altPfad;
+  return neuerPfad(altPfad) ?? altPfad;
 }
 
 // ─── Aktivität erfassen ─────────────────────────────────────────────────
@@ -240,7 +248,8 @@ export async function deleteContact(fd: FormData) {
     await audit("contact.delete", { entity: "SalesContact", entityId: id, details: { name: gone.name } });
   }
   revalidatePath("/admin/vertrieb", "layout");
-  redirect("/admin/vertrieb/kontakte");
+  revalidatePath("/admin/neu", "layout");
+  redirect(await ziel("/admin/vertrieb/kontakte"));
 }
 
 export async function deleteContacts(fd: FormData) {
@@ -248,6 +257,7 @@ export async function deleteContacts(fd: FormData) {
   const ids = fd.getAll("ids").filter((v): v is string => typeof v === "string" && !!v);
   if (ids.length) await prisma.salesContact.deleteMany({ where: { id: { in: ids } } });
   revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/neu", "layout");
 }
 
 // ─── Kunden-Pipeline ────────────────────────────────────────────────────
@@ -502,8 +512,8 @@ export async function createLeadManually(fd: FormData) {
     { activity: `Lead manuell erfasst (${SOURCE_LABEL[source] ?? source})`, taskTitle: s(fd, "taskTitle") ?? "Lead kontaktieren" },
   );
   refresh();
-  if ("contactId" in r && r.contactId) redirect(`/admin/vertrieb/kontakte/${r.contactId}`);
-  redirect("/admin/vertrieb/kontakte/neu?fehler=1");
+  if ("contactId" in r && r.contactId) redirect(await ziel(`/admin/vertrieb/kontakte/${r.contactId}`));
+  redirect(await ziel("/admin/vertrieb/kontakte/neu?fehler=1"));
 }
 
 /** „Jetzt anreichern“ am Kontakt: Website und Google erneut auswerten, nur leere Felder füllen. */
@@ -695,5 +705,5 @@ export async function mergeContactsAction(keepId: string, dropId: string): Promi
   if (!r.ok) return { error: r.error };
   await audit("contact.merge", { entity: "SalesContact", entityId: keepId, details: { dropId, moved: r.moved } });
   refresh(keepId);
-  redirect(`/admin/vertrieb/kontakte/${keepId}`);
+  redirect(await ziel(`/admin/vertrieb/kontakte/${keepId}`));
 }

@@ -68,6 +68,7 @@ export async function disconnectSalesCalendarAction(): Promise<void> {
   });
   await audit("calendar.disconnect", { customerId: VERTRIEB_CUSTOMER_ID, entity: "CalendarConnection" });
   revalidatePath(PATH);
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Vertrieb → Termine, Einstellungen → Buchungsseiten)
 }
 
 // ─── Termin buchen bzw. verschieben aus dem Vertriebskontakt (nur Admins, ohne Buchungsfenster) ───
@@ -111,6 +112,7 @@ export async function adminBookTerminAction(_prev: AdminTerminState, fd: FormDat
   if (res.ok) {
     await audit("vertrieb.termin.gebucht", { entity: "SalesMeeting", entityId: res.meetingId, details: { contactId, art: type.slug } });
     revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+    revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Vertrieb → Termine)
   }
   return stateOf(res);
 }

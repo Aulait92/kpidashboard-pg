@@ -1,8 +1,144 @@
-import { Platzhalter } from "@/components/admin-neu/ui/platzhalter";
+import Link from "next/link";
+import { ChevronRight, FileText } from "lucide-react";
+import { Badge, Card, EmptyState } from "@/components/ui";
+import { Seite } from "@/components/admin-neu/ui/seite";
+import { kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
+import { fmtTag, tagIso } from "@/lib/angebot-zahlungserinnerung";
+import { offerAdminHref } from "@/lib/offer-links";
+import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/angebote-uebersicht";
+import { requireAuth } from "@/lib/vertrieb/auth";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Angebote | performancegrowth Admin" };
 
-// Platzhalter (wird gerade gebaut). Ersetzen durch die echte Seite: docs/ux/admin-neu/README.md
-export default function Page() {
-  return <Platzhalter pfad="/admin/neu/vertrieb/angebote" />;
+const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+const datum = (d: Date | null) =>
+  d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : "–";
+
+const BASIS = "/admin/neu/vertrieb/angebote";
+
+// Vertrieb → Angebote: je Angebot die aktuelle Version mit Stand, Filter als Chips (wie /admin/vertrieb/angebote,
+// Daten aus lib/vertrieb/angebote-uebersicht.ts). Zeile öffnet die Kontaktakte bei der Angebotskarte.
+export default async function AngebotePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  await requireAuth();
+  const sp = await searchParams;
+  const { filter, shown, count, kennzahlen } = await ladeAngebote(sp.f);
+  const { sent, angenommen, offen, geoeffnet } = kennzahlen;
+  const ziel = (o: (typeof shown)[number]) => (o.salesContactId ? `${kontaktPfad(o.salesContactId)}#angebot` : offerAdminHref(o));
+  const stand = (o: (typeof shown)[number]) => (
+    <>
+      <Badge tone={ANGEBOT_ZUSTAND[o.z].tone}>{o.z === "angenommen" ? `Angenommen ${datum(o.acceptedAt)}` : ANGEBOT_ZUSTAND[o.z].label}</Badge>
+      {o.zahlungOffen ? (
+        <div className="mt-1 text-xs text-amber-700" data-zahlung-offen>
+          Zahlung offen
+          {o.paymentReminderAt ? `, erinnern am ${fmtTag(tagIso(o.paymentReminderAt)!)}` : o.naechste ? `, Erinnerung ${fmtTag(o.naechste)}` : ""}
+        </div>
+      ) : null}
+    </>
+  );
+
+  return (
+    <Seite titel="Vertrieb" reiter="vertrieb">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { l: "Verschickt", v: String(sent.length) },
+          { l: "Geöffnet", v: sent.length ? `${Math.round((geoeffnet.length / sent.length) * 100)} %` : "–", s: `${geoeffnet.length} von ${sent.length}` },
+          { l: "Angenommen", v: String(angenommen.length), s: sent.length ? `${Math.round((angenommen.length / sent.length) * 100)} % Annahmequote` : undefined },
+          { l: "Offen (monatlich)", v: eur(offen.reduce((s, r) => s + Number(r.monthlyFee), 0)), s: `${offen.length} offene Angebote` },
+        ].map((k) => (
+          <Card key={k.l} className="p-4">
+            <div className="text-xs text-[color:var(--muted)]">{k.l}</div>
+            <div className="mt-1 text-xl font-semibold tabular-nums">{k.v}</div>
+            {k.s ? <div className="text-xs text-[color:var(--muted)]">{k.s}</div> : null}
+          </Card>
+        ))}
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-1.5" data-angebote-filter data-funktion="page-filter--filter-alle-verschickten-offen-angenommen page-filter-zahlung--filter-zahlung-offen">
+        {ANGEBOT_FILTER.map((f) => (
+          <Link
+            key={f.key}
+            href={f.key === "alle" ? BASIS : `${BASIS}?f=${f.key}`}
+            aria-current={f.key === filter.key ? "page" : undefined}
+            className={cn(
+              "inline-flex min-h-10 items-center gap-1 rounded-full border px-3 text-sm font-medium sm:min-h-8",
+              f.key === filter.key
+                ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white"
+                : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
+            )}
+          >
+            {f.label} <span className="tabular-nums opacity-80">{count(f)}</span>
+          </Link>
+        ))}
+      </div>
+
+      <Card>
+        <div data-funktion="page--angebotsliste-mit-versand-oeffnung-gueltigkeit deal-offers-card-pay--zahlungsstatus-des-angebots-offen-bestaetigt">
+          {shown.length === 0 ? (
+            <EmptyState icon={FileText} title="Keine Angebote in dieser Ansicht." text="Angebote entstehen in der Kontaktakte, direkt im Gespräch." />
+          ) : (
+            <>
+              {/* Handy: Liste */}
+              <ul className="divide-y divide-[color:var(--border)] md:hidden">
+                {shown.map((o) => (
+                  <li key={o.id}>
+                    <Link href={ziel(o)} className="flex items-center gap-2 px-4 py-3">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{o.company || o.contactName}</span>
+                        <span className="block text-xs text-[color:var(--muted)]">
+                          {o.number}
+                          {o.version > 1 ? ` V${o.version}` : ""} · {eur(Number(o.monthlyFee))}/Monat · gültig bis {datum(o.validUntil)}
+                        </span>
+                        <span className="mt-1 block">{stand(o)}</span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {/* Rechner: Tabelle */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full text-sm" data-angebote>
+                  <thead className="bg-[color:var(--surface-sunken)] text-left text-xs text-[color:var(--muted)]">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Angebot</th>
+                      <th className="px-4 py-2 font-medium">Kunde</th>
+                      <th className="px-4 py-2 text-right font-medium">Monatlich</th>
+                      <th className="px-4 py-2 text-right font-medium">Setup</th>
+                      <th className="px-4 py-2 font-medium">Verschickt</th>
+                      <th className="px-4 py-2 font-medium">Geöffnet</th>
+                      <th className="px-4 py-2 font-medium">Gültig bis</th>
+                      <th className="px-4 py-2 font-medium">Stand</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[color:var(--border)]">
+                    {shown.map((o) => (
+                      <tr key={o.id} className="hover:bg-[color:var(--surface-sunken)]">
+                        <td className="px-4 py-2.5">
+                          <Link href={ziel(o)} className="font-medium text-[color:var(--brand)] hover:underline">
+                            {o.number}
+                          </Link>
+                          {o.version > 1 ? <span className="ml-1 text-xs text-[color:var(--muted)]">V{o.version}</span> : null}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="font-medium">{o.company || o.contactName}</div>
+                          {o.company ? <div className="text-xs text-[color:var(--muted)]">{o.contactName}</div> : null}
+                        </td>
+                        <td className="px-4 py-2.5 text-right tabular-nums">{eur(Number(o.monthlyFee))}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums">{eur(Number(o.setupFee))}</td>
+                        <td className="px-4 py-2.5 tabular-nums">{datum(o.sentAt)}</td>
+                        <td className="px-4 py-2.5 tabular-nums">{datum(o.viewedAt)}</td>
+                        <td className={cn("px-4 py-2.5 tabular-nums", o.z === "abgelaufen" && "text-amber-700")}>{datum(o.validUntil)}</td>
+                        <td className="px-4 py-2.5">{stand(o)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
+      </Card>
+    </Seite>
+  );
 }

@@ -127,6 +127,9 @@ export function AdminTerminButton({
   types,
   defaultType,
   decisionLink,
+  oeffnen,
+  label = "Termin",
+  className = "btn-ghost",
 }: {
   action: Action;
   contactId: string;
@@ -135,15 +138,25 @@ export function AdminTerminButton({
   types: TerminTypeOption[];
   defaultType: string;
   decisionLink: string | null;
+  /** Neuer Admin („+ Neu → Termin“): jeder neue Wert öffnet das Fenster sofort. */
+  oeffnen?: string | null;
+  label?: string;
+  className?: string;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!oeffnen);
   const [copied, setCopied] = useState(false);
+  const [geoeffnet, setGeoeffnet] = useState(oeffnen ?? null);
+  if (oeffnen && oeffnen !== geoeffnet) {
+    // Während des Renderns statt im Effekt (React: Zustand aus geänderten Props ableiten)
+    setGeoeffnet(oeffnen);
+    setOpen(true);
+  }
   if (!types.length) return null;
   return (
     <>
-      <button type="button" className="btn-ghost" onClick={() => setOpen(true)} data-admin-termin>
-        <CalendarPlus className="h-4 w-4" /> Termin
+      <button type="button" className={className} onClick={() => setOpen(true)} data-admin-termin>
+        <CalendarPlus className="h-4 w-4" /> {label}
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Termin buchen" message={contactName}>
         <TerminForm

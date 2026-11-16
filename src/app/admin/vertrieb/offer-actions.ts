@@ -43,6 +43,7 @@ export async function createOfferAction(
     );
     revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
     return { ok: true, offerId: offer.id };
   } catch (err) {
     return {
@@ -73,6 +74,7 @@ export async function markOfferSentAction(
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} als verschickt markiert`);
   revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
   return { ok: true };
 }
 
@@ -159,6 +161,7 @@ export async function sendOfferEmailAction(
   );
   revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
   return { ok: true };
 }
 
@@ -189,6 +192,7 @@ export async function deleteOfferAction(offerId: string): Promise<OfferActionRes
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} gelöscht`);
   revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
   return { ok: true };
 }
 

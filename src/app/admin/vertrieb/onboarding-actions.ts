@@ -11,6 +11,7 @@ import { logOfferActivity, setContactCustomerStage } from "@/lib/offer-links";
 function refresh(contactId?: string | null) {
   revalidatePath("/admin/vertrieb", "layout");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte)
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
 }
 

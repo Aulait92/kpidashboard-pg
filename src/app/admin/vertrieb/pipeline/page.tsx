@@ -2,37 +2,20 @@ import { Clock } from "lucide-react";
 import { connection } from "next/server";
 import Link from "next/link";
 import clsx from "clsx";
-import { prisma } from "@/lib/prisma";
 import { LOSS_LABEL, LOSS_REASONS, STAGES, shortName } from "@/lib/vertrieb/crm";
+import { PIPELINE_PRO_SPALTE as PER_COLUMN, ladePipeline } from "@/lib/vertrieb/pipeline";
 import { relDay, dayKey, todayKey } from "@/lib/vertrieb/dates";
 import { dragStage } from "@/app/admin/vertrieb/actions";
 import { LI_COLOR, LI_LABEL } from "@/lib/vertrieb/linkedin";
 import { Kanban, type KanbanCard, type KanbanColumn } from "@/components/vertrieb/kanban";
 
-const PER_COLUMN = 40;
-
 export default async function PipelinePage() {
   await connection();
-  const counts = await prisma.salesContact.groupBy({ by: ["stage"], _count: true });
-  const lists = await Promise.all(
-    STAGES.map((s) =>
-      s.id === "NEU"
-        ? Promise.resolve([])
-        : prisma.salesContact.findMany({
-            where: { stage: s.id },
-            orderBy: { updatedAt: "desc" },
-            take: PER_COLUMN,
-            select: {
-              id: true, name: true, city: true, stage: true, linkedinStatus: true, lossReason: true, competitor: true,
-              tasks: { where: { doneAt: null }, orderBy: { dueAt: "asc" }, take: 1, select: { title: true, dueAt: true } },
-              campaigns: { select: { sentAt: true, replyCount: true } },
-            },
-          }),
-    ),
-  );
+  // Laden: lib/vertrieb/pipeline.ts (gemeinsam mit dem neuen Admin)
+  const { countOf, contacts } = await ladePipeline();
 
   const columns: KanbanColumn[] = STAGES.map((s) => {
-    const count = counts.find((c) => c.stage === s.id)?._count ?? 0;
+    const count = countOf(s.id);
     return {
       ...s,
       count,
@@ -53,7 +36,7 @@ export default async function PipelinePage() {
     };
   });
 
-  const cards: KanbanCard[] = lists.flat().map((c) => {
+  const cards: KanbanCard[] = contacts.map((c) => {
     const task = c.tasks[0];
     const mailed = c.campaigns.some((x) => x.sentAt);
     const replied = c.campaigns.some((x) => x.replyCount > 0);

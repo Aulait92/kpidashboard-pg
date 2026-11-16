@@ -1,34 +1,16 @@
 import { notFound } from "next/navigation";
-import { OfferForm } from "@/components/offer-form";
-import { legalUrls } from "@/lib/offers";
-import { prisma } from "@/lib/prisma";
 import { shortName } from "@/lib/vertrieb/crm";
-import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
-import { benefitSentence } from "@/lib/kollegen-shared";
-import { eur } from "@/lib/offer-pricing";
 import { AdminBack } from "@/components/admin/admin-back";
+import { AngebotErstellen, ladeAngebotKontakt } from "@/components/vertrieb/angebot-erstellen";
 
 export const metadata = { title: "Angebot erstellen | Vertrieb" };
 
+// Hinweise und Formular: components/vertrieb/angebot-erstellen.tsx (gemeinsam mit dem neuen Admin)
 export default async function ContactOfferPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const c = await prisma.salesContact.findUnique({
-    where: { id },
-    select: {
-      id: true, name: true, email: true, street: true, zip: true, city: true,
-      salutation: true, firstName: true, lastName: true, leaderNames: true, products: true,
-    },
-  });
+  const c = await ladeAngebotKontakt(id);
   if (!c) notFound();
-  const legal = legalUrls();
-  const person = [c.firstName, c.lastName].filter(Boolean).join(" ") || c.leaderNames?.split(",")[0]?.trim() || "";
   const back = `/admin/vertrieb/kontakte/${c.id}`;
-  // „Kollegen empfehlen“: Neukunden-Vorteil als Hinweis bzw. Vorbelegung
-  const referral = await referralForContact(c.id);
-  const settings = referral ? await loadReferralSettings() : null;
-  const benefit = settings ? benefitSentence(settings) : null;
-  // Rabatt auf die Einrichtung: automatisch vorbelegt, wenn berechtigt; sonst 0 mit Grund (übersteuerbar)
-  const discount = referral && settings?.benefitKind === "setup_discount" ? await referralSetupDiscount(c.id) : null;
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -38,52 +20,7 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
         Preise nach Preisliste, Sonderkonditionen jederzeit möglich. Nach der Online-Annahme rückt der Kontakt in der
         Kunden-Pipeline auf „Vertrag“, nach eingerichteter Zahlung auf „Onboarding“.
       </p>
-      {!legal.termsUrl || !legal.dpaUrl ? (
-        <p className="mt-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Online-Annahme noch nicht freigeschaltet: Bitte die Links zu AGB und Auftragsverarbeitungsvertrag hinterlegen.
-        </p>
-      ) : null}
-      {referral ? (
-        <p className="mt-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-angebot-empfehlung>
-          Empfohlen von {referral.referrer.name}.{" "}
-          {discount
-            ? discount.eligible
-              ? `Empfehlungsrabatt: ${eur(discount.amount)} auf die Einrichtung, ist unten vorbelegt und wird automatisch abgezogen.`
-              : `Kein automatischer Empfehlungsrabatt: ${discount.reason}. Bei Bedarf unten von Hand eintragen.`
-            : benefit
-              ? settings?.benefitKind === "setup_free"
-                ? "Neukunden-Vorteil: Einrichtung gratis, ist unten vorbelegt."
-                : `Neukunden-Vorteil: ${benefit} (bitte als Sonderkondition eintragen).`
-              : "Kein Neukunden-Vorteil eingestellt."}
-        </p>
-      ) : null}
-      <div className="mt-6">
-        <OfferForm
-          target={{ salesContactId: c.id }}
-          backHref={back}
-          referralDiscount={
-            discount
-              ? {
-                  amount: discount.eligible ? discount.amount : 0,
-                  label: discount.label,
-                  note: discount.eligible ? null : `Nicht automatisch: ${discount.reason}.`,
-                }
-              : null
-          }
-          initial={{
-            contactName: person,
-            company: c.name,
-            email: c.email,
-            product: c.products?.split(",")[0]?.trim() ?? "",
-            street: c.street ?? "",
-            zip: c.zip ?? "",
-            city: c.city ?? "",
-            ...(referral && settings?.benefitKind === "setup_free"
-              ? { setupOverride: "0", specialTerms: `Empfehlung von ${referral.referrer.name}: Einrichtung ohne Gebühr.` }
-              : {}),
-          }}
-        />
-      </div>
+      <AngebotErstellen c={c} backHref={back} />
     </div>
   );
 }

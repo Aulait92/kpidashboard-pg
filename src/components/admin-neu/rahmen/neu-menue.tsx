@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, Plus } from "lucide-react";
@@ -13,9 +13,14 @@ import { cn } from "@/lib/utils";
 
 // „+ Neu“ oben rechts: jeder Eintrag öffnet den bestehenden Ablauf (Aufgabe, Termin im Fenster)
 // oder die bestehende Seite. Einträge stehen in NEU_EINTRAEGE (src/lib/admin-neu/navigation.ts).
+// „Termin buchen“ öffnet das Fenster der Kontaktakte (Vertrieb), siehe waehlen().
+
+/** Neuer Wert je Klick (öffnet das Termin-Fenster auch auf derselben Seite erneut). */
+const schluessel = () => String(Date.now());
 
 export function NeuMenue({ variante }: { variante: "breit" | "kopf" }) {
   const router = useRouter();
+  const pathname = usePathname();
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [dialog, setDialog] = useState<"aufgabe" | "termin" | null>(null);
@@ -31,6 +36,13 @@ export function NeuMenue({ variante }: { variante: "breit" | "kopf" }) {
       return;
     }
     schliessen();
+    if (e.id === "termin") {
+      // „Termin buchen“ (Vertrieb): in einer Kontaktakte gleich für diesen Kontakt, sonst erst Kontakt wählen.
+      // Neuer Wert bei jedem Klick, damit sich das Fenster auch auf derselben Seite wieder öffnet.
+      const akte = /^\/admin\/neu\/vertrieb\/kontakte\/(?!neu$)[^/]+$/.test(pathname ?? "");
+      router.push(akte ? `${pathname}?termin=${schluessel()}` : `/admin/neu/vertrieb/termine?buchen=${schluessel()}`);
+      return;
+    }
     router.push(neuerPfad(e.href) ?? e.href);
   }
 

@@ -13,6 +13,7 @@ const s = (fd: FormData, k: string) => {
 
 function refresh(contactId?: string | null) {
   revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte)
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
 }
 

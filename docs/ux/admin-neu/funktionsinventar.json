@@ -128,8 +128,8 @@
   "demo_view": "kontakt",
   "id": "list-memory-backtolist--zurueck-link-merkt-gefilterte-liste-suche-filter",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -140,8 +140,8 @@
   "demo_view": "kontakt",
   "id": "buchung--push-an-admins-mit-sprungziel-kontaktakte",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -632,8 +632,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "page--kontaktliste-mit-zaehler",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -644,8 +644,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "page-q--suche-nach-agentur-name-e-mail-ort-telefon",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -656,8 +656,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "page-stage--filter-stufe",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -668,8 +668,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "page-mail-filters--filter-cold-mail-erhalten-keine-geoeffnet",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -680,8 +680,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "page-li--filter-linkedin-status-und-plz-beginnt-mit",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -692,8 +692,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "actions-deletecontacts--mehrere-kontakte-markieren-und-loeschen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -704,8 +704,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "page-tel--direkt-anrufen-aus-der-liste-handy",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -716,8 +716,8 @@
   "demo_view": "vertrieb-kontakte",
   "id": "page-page--seiten-blaettern",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/neu",
@@ -728,8 +728,8 @@
   "demo_view": "kontakt-neu",
   "id": "actions-createleadmanually--kontakt-anlegen-quelle-name-firma-e-mail-telefon",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/neu/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/neu",
@@ -740,8 +740,8 @@
   "demo_view": "kontakt-neu",
   "id": "page--beim-anlegen-linkedin-profil-nachricht-und",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/neu/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/pipeline",
@@ -752,8 +752,8 @@
   "demo_view": "vertrieb",
   "id": "actions-dragstage--akquise-pipeline-per-drag-drop",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/pipeline",
@@ -764,8 +764,8 @@
   "demo_view": "vertrieb",
   "id": "kanban--beim-verschieben-auf-verloren-grund-abfragen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/pipeline",
@@ -776,8 +776,8 @@
   "demo_view": "vertrieb",
   "id": "page--karten-zeigen-cold-mail-status",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -788,8 +788,8 @@
   "demo_view": "kontakt",
   "id": "actions-setstage--stufe-aendern-auswahl",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -800,8 +800,8 @@
   "demo_view": "kontakt",
   "id": "contact-controls-stagepicker--verloren-mit-grund-und-wettbewerber",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -812,8 +812,8 @@
   "demo_view": "kontakt",
   "id": "page-tel--anrufen-und-e-mail-schreiben-aus-dem-kopf",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -824,8 +824,8 @@
   "demo_view": "kontakt",
   "id": "buchung-decisionbookinglink--link-entscheidungs-call-kopieren",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -836,8 +836,8 @@
   "demo_view": "kontakt",
   "id": "page--praesentation-oeffnen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -848,8 +848,8 @@
   "demo_view": "kontakt",
   "id": "contact-controls-contactmore--menue-website-linkedin-profil-oeffnen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -860,8 +860,8 @@
   "demo_view": "kontakt",
   "id": "actions-deletecontact--kontakt-loeschen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -872,8 +872,8 @@
   "demo_view": "kontakt",
   "id": "actions-mergecontactsaction--kontakte-zusammenfuehren-mit-suche-nach",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -884,8 +884,8 @@
   "demo_view": "kontakt",
   "id": "contact-merge-duplicatehint--hinweis-moegliche-dubletten",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -896,8 +896,8 @@
   "demo_view": "kontakt",
   "id": "page-referral--hinweis-empfehlung-von-kunde-mit-setup-rabatt",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -908,8 +908,8 @@
   "demo_view": "kontakt",
   "id": "actions-enrichaddressaction--website-und-google-neu-auswerten-adresse",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -920,8 +920,8 @@
   "demo_view": "kontakt",
   "id": "actions-logactivity--aktivitaet-erfassen-anruf-e-mail-notiz-ergebnis",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -932,8 +932,8 @@
   "demo_view": "kontakt",
   "id": "actions-updateactivity--verlaufseintrag-bearbeiten-oder-loeschen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -944,8 +944,8 @@
   "demo_view": "kontakt",
   "id": "actions-setreplysentiment--antworten-auf-cold-mails-ansehen-stimmung-setzen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -956,8 +956,8 @@
   "demo_view": "kontakt",
   "id": "actions-addreplymanually--antwort-auf-cold-mail-von-hand-einfuegen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -968,8 +968,8 @@
   "demo_view": "kontakt",
   "id": "page-fold-cold-mails--cold-mail-kampagnen-des-kontakts-geoeffnet",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -980,8 +980,8 @@
   "demo_view": "kontakt",
   "id": "page-termine--termine-calendly-bzw-buchungsseite-mit-meeting",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/termine/page.tsx, src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -992,8 +992,8 @@
   "demo_view": "kontakt",
   "id": "page-aufgaben--offene-aufgaben-des-kontakts-und-neue-aufgabe",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1004,8 +1004,8 @@
   "demo_view": "kontakt",
   "id": "actions-updatelinkedin--linkedin-status-und-profil-url-pflegen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1016,8 +1016,8 @@
   "demo_view": "kontakt",
   "id": "actions-updatecustomer--kundendaten-kunden-stufe-monatswert-produkte",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1028,8 +1028,8 @@
   "demo_view": "kontakt",
   "id": "actions-linkcontactcustomer--kontakt-mit-kundenakte-verknuepfen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1040,8 +1040,8 @@
   "demo_view": "kontakt",
   "id": "actions-updateprimaryemailaction--haupt-e-mail-korrigieren",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1052,8 +1052,8 @@
   "demo_view": "kontakt",
   "id": "actions-addcontactemailaction--weitere-e-mail-hinzufuegen-entfernen-zur-haupt-e",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1064,8 +1064,8 @@
   "demo_view": "kontakt",
   "id": "actions-updatecontactaddress--adresse-und-telefon-bearbeiten",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1076,8 +1076,8 @@
   "demo_view": "kontakt",
   "id": "page-stammdaten--stammdaten-agenturtyp-versicherer-inhaber",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1088,8 +1088,8 @@
   "demo_view": "kontakt",
   "id": "actions-updatecontact--kontakt-felder-allgemein-aendern-ohne",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/kontakt-karten.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1100,8 +1100,8 @@
   "demo_view": "kontakt",
   "id": "onboarding-actions-startonboardingaction--onboarding-starten-neues-kundenkonto-oder",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1160,8 +1160,8 @@
   "demo_view": "kontakt",
   "id": "followup-actions-approvefollowupaction--spaeter-follow-up-je-kontakt-freigeben-texte",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1172,8 +1172,8 @@
   "demo_view": "kontakt",
   "id": "followup-actions-sendfollowupnowaction--spaeter-follow-up-mail-sofort-senden-texte-neu",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1184,8 +1184,8 @@
   "demo_view": "kontakt",
   "id": "followup-actions-stopfollowupaction--spaeter-follow-up-stoppen-oder-planen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1196,8 +1196,8 @@
   "demo_view": "kontakt",
   "id": "followup-actions-redraftfollowupaction--spaeter-follow-up-neu-schreiben-ohne-oberflaeche",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1208,8 +1208,8 @@
   "demo_view": "kontakt",
   "id": "deal-offers-card--angebotskarte-angebot-ansehen-und-pdf",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1220,8 +1220,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-actions-sendofferemailaction--angebot-per-e-mail-senden-mit-anrede-rechner",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1232,8 +1232,8 @@
   "demo_view": "kontakt",
   "id": "offer-actions-markoffersentaction--angebot-als-verschickt-markieren-ohne-mail",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1244,8 +1244,8 @@
   "demo_view": "kontakt",
   "id": "offer-actions-deleteofferaction--angebot-loeschen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1256,8 +1256,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-actions-setpaymentreminderaction--zahlungserinnerung-spaeter-zahlen-erlauben",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1268,8 +1268,8 @@
   "demo_view": "vertrieb-angebote",
   "id": "deal-offers-card-pay--zahlungsstatus-des-angebots-offen-bestaetigt",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/angebote/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -1280,8 +1280,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-actions-createofferaction--angebot-erstellen-produkte-werbebudget-laufzeit",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/angebot/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -1292,8 +1292,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-form-empfaenger--angebot-empfaenger-und-kunde-ist-vertreter-oder",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/angebot/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -1304,8 +1304,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-form-paket--angebot-paket-waehlen-z-b-nur-betreuung",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/angebot/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -1316,8 +1316,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-form--angebot-testangebot-0-ohne-zahlung-spaeter",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/angebot/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -1328,8 +1328,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-form-verkaeufer--angebot-verkaeufer-zahlweise-und-module",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/angebot/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -1340,8 +1340,8 @@
   "demo_view": "angebot-neu",
   "id": "offer-form-zusammenfassung--angebot-zusammenfassung",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/angebot/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -1352,8 +1352,8 @@
   "demo_view": "praesentation",
   "id": "folien-deck--verkaufspraesentation-mit-angebotspreisen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/praesentation/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -1364,8 +1364,8 @@
   "demo_view": "praesentation",
   "id": "page-fassung--fassung-vertreter-oder-makler-waehlen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/praesentation/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -1376,8 +1376,8 @@
   "demo_view": "praesentation",
   "id": "actions-verkaufslinkaction--link-fuer-interessenten-erzeugen-kopieren",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/praesentation/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -1388,8 +1388,8 @@
   "demo_view": "praesentation",
   "id": "actions-verkaufslinkbeendenaction--praesentationslink-beenden",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/praesentation/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/angebote",
@@ -1400,8 +1400,8 @@
   "demo_view": "vertrieb-angebote",
   "id": "page--angebotsliste-mit-versand-oeffnung-gueltigkeit",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/angebote/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/angebote",
@@ -1412,8 +1412,8 @@
   "demo_view": "vertrieb-angebote",
   "id": "page-filter--filter-alle-verschickten-offen-angenommen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/angebote/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/angebote",
@@ -1424,8 +1424,8 @@
   "demo_view": "vertrieb-angebote",
   "id": "page-filter-zahlung--filter-zahlung-offen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/angebote/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -1484,8 +1484,8 @@
   "demo_view": "vertrieb-termine",
   "id": "actions-disconnectsalescalendaraction--vertriebskalender-verbinden-bzw-trennen",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/termine/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1532,8 +1532,8 @@
   "demo_view": "vertrieb-termine",
   "id": "page--buchungslink-kopieren",
   "bereich": "vertrieb",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/termine/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
