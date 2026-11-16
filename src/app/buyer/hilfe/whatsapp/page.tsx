@@ -184,7 +184,7 @@ export default async function WhatsAppHelpPage({ searchParams }: { searchParams:
       </section>
 
       <p className="mt-8 text-sm">
-        <Link href="/buyer/einrichtung#whatsapp" className="font-medium text-[color:var(--brand)] underline">
+        <Link href="/buyer/einrichtung#whatsapp" className="inline-flex min-h-11 items-center font-medium text-[color:var(--brand)] underline">
           Zurück zur Einrichtung
         </Link>
       </p>

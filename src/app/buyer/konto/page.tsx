@@ -396,19 +396,21 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 </button>
               </form>
             ) : null}
-            <p className="mt-5 text-sm text-[color:var(--muted)]">Rechnungsadresse, USt-IdNr. und gespeicherte Zahlungsarten:</p>
-            <form action={openPortalAction} className="mt-2">
-              <button
-                type="submit"
-                disabled={!customer.stripeCustomerId || ctx.preview}
-                className={buttonClass("secondary", "md")}
-              >
-                Rechnungsdaten ändern
-              </button>
-            </form>
-            {!customer.stripeCustomerId ? (
-              <p className="mt-3 text-sm text-[color:var(--muted)]">Für Ihr Konto ist noch keine Online-Zahlung hinterlegt.</p>
-            ) : null}
+            {/* Ohne Online-Zahlung kein grauer Knopf ohne Ziel, sondern der Weg (UX Runde 4) */}
+            {customer.stripeCustomerId ? (
+              <>
+                <p className={`${billingEnabled() ? "mt-5" : ""} text-sm text-[color:var(--muted)]`}>Rechnungsadresse, USt-IdNr. und gespeicherte Zahlungsarten:</p>
+                <form action={openPortalAction} className="mt-2">
+                  <button type="submit" disabled={ctx.preview} className={buttonClass("secondary", "md")}>
+                    Rechnungsdaten ändern
+                  </button>
+                </form>
+              </>
+            ) : (
+              <p className="text-sm text-[color:var(--muted)]" data-konto-ohne-online-zahlung>
+                Sie zahlen per Rechnung. Für eine neue Rechnungsadresse oder USt-IdNr. schreiben Sie uns über „Hilfe“.
+              </p>
+            )}
           </div>
         </Card>
 
