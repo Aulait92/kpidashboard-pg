@@ -176,8 +176,8 @@
   "demo_view": "leads-ppl",
   "id": "orders--push-an-admins-mit-sprungziel-pay-per-lead",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -2852,8 +2852,8 @@
   "demo_view": "leads",
   "id": "page--posteingang-leads-ohne-zuordnung",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2864,8 +2864,8 @@
   "demo_view": "leads",
   "id": "actions-assignformaction--formular-zuordnen-seite-formular-kunde-produkt",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2876,8 +2876,8 @@
   "demo_view": "leads",
   "id": "actions-assignformaction--beim-zuordnen-lead-preis-ppl-und-airtable-bezug",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2888,8 +2888,8 @@
   "demo_view": "leads",
   "id": "page-listpageforms--facebook-seite-waehlen-und-formulare-laden",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2900,8 +2900,8 @@
   "demo_view": "leads",
   "id": "actions-dismissunassignedaction--wartende-leads-ohne-zuordnung-verwerfen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2912,8 +2912,8 @@
   "demo_view": "leads",
   "id": "actions-togglesourceaction--zuordnung-an-aus-schalten",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2924,8 +2924,8 @@
   "demo_view": "leads",
   "id": "page--zuordnungen-tabelle-mit-preis-letztem-lead",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2960,8 +2960,8 @@
   "demo_view": "leads-alle",
   "id": "page--alle-leads-aller-kunden-mit-status-und-preis",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  },
  {
   "heute": "/admin/leads",
@@ -2972,8 +2972,8 @@
   "demo_view": "leads-alle",
   "id": "page-morefilters--filter-kunde-produkt-status-zeitraum-monat-oder",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  },
  {
   "heute": "/admin/leads",
@@ -2984,8 +2984,8 @@
   "demo_view": "leads-alle",
   "id": "route-get--csv-export-der-gefilterten-leads-mit-protokoll",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  },
  {
   "heute": "/admin/leads",
@@ -2996,8 +2996,8 @@
   "demo_view": "leads-alle",
   "id": "page-tel--lead-anrufen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3008,8 +3008,8 @@
   "demo_view": "leads-ppl",
   "id": "page-bezuege--bezuege-je-produkt-mit-kontingent-geliefert",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3020,8 +3020,8 @@
   "demo_view": "leads-ppl",
   "id": "ppl-auswertung--uebersicht-je-kunde-woche-monat-liegt-zurueck",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3032,8 +3032,8 @@
   "demo_view": "leads-ppl",
   "id": "ppl-auswertung--auswertung-mit-zeitraum-und-produktfilter",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3044,8 +3044,8 @@
   "demo_view": "leads-ppl",
   "id": "actions-assignparkedaction--geparkte-leads-einem-bezug-zuordnen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3056,8 +3056,8 @@
   "demo_view": "leads-ppl",
   "id": "actions-discardparkedaction--geparkten-lead-verwerfen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3068,8 +3068,8 @@
   "demo_view": "leads-ppl",
   "id": "actions-decidestornoaction--storno-pruefen-annehmen-oder-ablehnen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3080,8 +3080,8 @@
   "demo_view": "leads-alle",
   "id": "page-geliefert--gelieferte-leads-suchen-name-telefon-e-mail-id",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3092,8 +3092,8 @@
   "demo_view": "leads-alle",
   "id": "actions-adminstornoaction--storno-von-hand-eintragen-grund-notiz",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3104,8 +3104,8 @@
   "demo_view": "leads-alle",
   "id": "actions-undostornoaction--storno-zuruecknehmen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3116,8 +3116,8 @@
   "demo_view": "leads-ppl",
   "id": "page-eingang--eingang-aller-ppl-leads-ausgeliefert-geparkt",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl",
@@ -3128,8 +3128,8 @@
   "demo_view": "leads-ppl",
   "id": "page-airtable-sync-off--anzeige-airtable-abgleich-an-aus",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -3140,8 +3140,8 @@
   "demo_view": "leads-bezug",
   "id": "actions-savesubscriptionaction--bezug-anlegen-bearbeiten-kunde-produkt-menge",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/bezug/[id]/page.tsx, src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -3152,8 +3152,8 @@
   "demo_view": "leads-bezug",
   "id": "bezug-form--bezug-modus-woche-monat-einmalig-live-test",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/bezug/[id]/page.tsx"
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -3164,8 +3164,8 @@
   "demo_view": "leads-bezug",
   "id": "actions-saveareaaction--gebiet-mit-vorrang-anlegen-aendern-plz-menge",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/bezug/[id]/page.tsx"
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -3176,8 +3176,8 @@
   "demo_view": "leads-bezug",
   "id": "actions-deleteareaaction--gebiet-loeschen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/bezug/[id]/page.tsx"
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -3188,8 +3188,8 @@
   "demo_view": "leads-bezug",
   "id": "actions-manualorderaction--bestellung-von-hand-bezahlt-ohne-stripe",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/bezug/[id]/page.tsx"
  },
  {
   "heute": "/admin/ppl/import",
@@ -3200,8 +3200,8 @@
   "demo_view": "leads-ppl",
   "id": "actions-runimportaction--bezuege-aus-airtable-uebernehmen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
   "heute": "/admin/media-buyer",
@@ -3212,8 +3212,8 @@
   "demo_view": "leads-optimierung",
   "id": "media-buyer-admin--pool-liste-mit-ist-ziel-prognose-status-auf-kurs",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/media-buyer",
@@ -3224,8 +3224,8 @@
   "demo_view": "leads-konto",
   "id": "actions-savepoolsettings--autopilot-je-pool-an-aus",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/media-buyer",
@@ -3236,8 +3236,8 @@
   "demo_view": "leads-konto",
   "id": "actions-savepoolsettings--max-tagesbudget-je-kanal-meta-outbrain-tiktok",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/media-buyer",
@@ -3248,8 +3248,8 @@
   "demo_view": "leads-konto",
   "id": "actions-savepoolsettings--kampagnen-stichwort-je-kanal",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/media-buyer",
@@ -3260,8 +3260,8 @@
   "demo_view": "leads-konto",
   "id": "actions-rundryrun--trockenlauf-media-buyer",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/media-buyer",
@@ -3272,8 +3272,8 @@
   "demo_view": "leads-konto",
   "id": "actions-runapplynow--jetzt-anwenden-budgets-setzen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/media-buyer",
@@ -3284,8 +3284,8 @@
   "demo_view": "leads-konto",
   "id": "media-buyer-admin--empfehlung-verlauf-der-aktionen-performance-pro",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3296,8 +3296,8 @@
   "demo_view": "leads-optimierung",
   "id": "page--werbekonten-liste-mit-modus-letzter-massnahme",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3332,8 +3332,8 @@
   "demo_view": "leads-konto",
   "id": "actions-saveaccountaction--konto-modus-ziel-leadpreis-tagesbudget-kampagnen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3344,8 +3344,8 @@
   "demo_view": "leads-konto",
   "id": "actions-approveallaction--alle-massnahmen-freigeben",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3356,8 +3356,8 @@
   "demo_view": "leads-konto",
   "id": "actions-approveoneaction--einzelne-massnahme-freigeben",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3368,8 +3368,8 @@
   "demo_view": "leads-konto",
   "id": "actions-rejectaction--massnahme-ablehnen-mit-notiz",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3380,8 +3380,8 @@
   "demo_view": "leads-konto",
   "id": "actions-doneaction--vorschlag-als-erledigt-markieren-mit-notiz",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3392,8 +3392,8 @@
   "demo_view": "leads-konto",
   "id": "actions-dryrunaction--trockenlauf-je-konto",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3404,8 +3404,8 @@
   "demo_view": "leads-konto",
   "id": "actions-runnowaction--lauf-jetzt-starten",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3416,8 +3416,8 @@
   "demo_view": "leads-konto",
   "id": "actions-syncactivitiesaction--meta-aenderungsprotokoll-abrufen-30-tage",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3428,8 +3428,8 @@
   "demo_view": "leads-konto",
   "id": "account-view-protocolcard--protokoll-je-konto-quelle-monatsbericht",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/werbekonten/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3440,8 +3440,8 @@
   "demo_view": "leads-chats",
   "id": "page-status-tabs--status-reiter-offen-zurueckgestellt-erledigt",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3452,8 +3452,8 @@
   "demo_view": "leads-chats",
   "id": "page-art-filters--filter-alle-leads-der-kunden-support-nummer",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3464,8 +3464,8 @@
   "demo_view": "leads-chats",
   "id": "page-q--chats-durchsuchen-nach-name-oder-nummer",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3488,8 +3488,8 @@
   "demo_view": "leads-chat",
   "id": "actions-togglebotaction--bot-pausieren-bzw-wieder-einschalten",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3500,8 +3500,8 @@
   "demo_view": "leads-chat",
   "id": "actions-takeoveraction--gespraech-uebernehmen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3512,8 +3512,8 @@
   "demo_view": "leads-chat",
   "id": "actions-sendreplyaction--antwort-senden-enter-sendet-am-rechner-emoji",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3524,8 +3524,8 @@
   "demo_view": "leads-chat",
   "id": "actions-sendtemplateaction--freigegebene-vorlage-senden-ausserhalb-24",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3536,8 +3536,8 @@
   "demo_view": "leads-chat",
   "id": "appointment-actions-loadrescheduledialogadmin--termin-des-leads-verschieben-dialog-mit-freien",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3548,8 +3548,8 @@
   "demo_view": "leads-chat",
   "id": "appointment-actions-cancelappointmentadminaction--termin-des-leads-absagen",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3560,8 +3560,8 @@
   "demo_view": "leads-chat",
   "id": "page--seitenleiste-lead-kontaktdaten-formularangaben",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3572,8 +3572,8 @@
   "demo_view": "leads-chat",
   "id": "page-crmhref--anrufen-e-mail-zum-crm-kunden-aus-dem-chat",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3584,8 +3584,8 @@
   "demo_view": "leads-chat",
   "id": "page--hinweis-bot-kann-keine-termine-buchen-kalender",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3596,8 +3596,8 @@
   "demo_view": "leads-chat",
   "id": "actions-assignsupportcontactaction--support-chat-absender-einem-vertriebskontakt",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/[id]/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -3608,8 +3608,8 @@
   "demo_view": "leads-chats",
   "id": "page--braucht-aufmerksamkeit-grund-und-nicht",
   "bereich": "leads",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/chats/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",

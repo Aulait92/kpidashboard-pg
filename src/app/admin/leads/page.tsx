@@ -6,7 +6,7 @@ import { Badge, Card, EmptyState } from "@/components/ui";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isStorno, leadSelect, leadWhere, priceOf, type LeadFilter } from "@/lib/admin-leads";
+import { isStorno, loadAdminLeads, priceOf, type LeadFilter } from "@/lib/admin-leads";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Leads | performancegrowth Admin" };
@@ -28,16 +28,8 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
   if (!session || session.role !== "ADMIN") redirect("/login");
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.seite) || 1);
-  const where = leadWhere(sp);
 
-  const [leads, total, customers, products, sums, stornos] = await Promise.all([
-    prisma.lead.findMany({ where, select: leadSelect, orderBy: { createdAt: "desc" }, skip: (page - 1) * PAGE, take: PAGE }),
-    prisma.lead.count({ where }),
-    prisma.customer.findMany({ where: { archived: false, plan: { not: "internal" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.lead.findMany({ where: { source: { not: null } }, distinct: ["source"], select: { source: true }, orderBy: { source: "asc" } }),
-    prisma.revenue.aggregate({ where: { cancelled: false, lead: where }, _sum: { amount: true } }),
-    prisma.lead.count({ where: { AND: [where, { status: { startsWith: "Storno", mode: "insensitive" } }] } }),
-  ]);
+  const { leads, total, customers, products, sums, stornos } = await loadAdminLeads(sp, page, PAGE);
   const qs = new URLSearchParams(Object.entries(sp).filter(([k, v]) => v && k !== "seite") as [string, string][]);
   const pages = Math.max(1, Math.ceil(total / PAGE));
   const months = Array.from({ length: 12 }, (_, i) => {

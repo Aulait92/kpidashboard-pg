@@ -34,7 +34,37 @@ function Check({ name, label, defaultChecked }: { name: string; label: string; d
   );
 }
 
-export function BezugForm({ sub, customers, products }: { sub: Sub | null; customers: { id: string; name: string }[]; products: string[] }) {
+/** Karte; im neuen Admin (`einklappen`) mit Titel zum Aufklappen, damit Seltenes nicht die Seite füllt. */
+function Abschnitt({ titel, einklappen, children }: { titel: string; einklappen?: boolean; children: React.ReactNode }) {
+  if (!einklappen) return <Card>{children}</Card>;
+  return (
+    <Card>
+      <details className="group [&>summary::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-12 cursor-pointer items-center px-5 text-[15px] font-semibold group-open:border-b group-open:border-[color:var(--border)]">
+          <span className="flex-1">{titel}</span>
+          <span className="text-xs font-normal text-[color:var(--muted)] group-open:hidden">anzeigen</span>
+        </summary>
+        {children}
+      </details>
+    </Card>
+  );
+}
+
+export function BezugForm({
+  sub,
+  customers,
+  products,
+  zurueck,
+  einklappen,
+}: {
+  sub: Sub | null;
+  customers: { id: string; name: string }[];
+  products: string[];
+  /** Neuer Admin: nach dem Speichern dorthin statt /admin/ppl */
+  zurueck?: string;
+  /** Neuer Admin: Filter sowie Storno und Lieferung eingeklappt */
+  einklappen?: boolean;
+}) {
   const [state, action, pending] = useActionState<BezugState, FormData>(saveSubscriptionAction, {});
   const [delivery, setDelivery] = useState(sub?.delivery ?? "app");
   const [period, setPeriod] = useState(sub?.period ?? "week");
@@ -43,6 +73,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="id" value={sub?.id ?? ""} />
+      {zurueck ? <input type="hidden" name="zurueck" value={zurueck} /> : null}
       <Card>
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
           <F label="Käufer">
@@ -114,7 +145,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
         </div>
       </Card>
 
-      <Card>
+      <Abschnitt titel="Filter (PLZ, Score, Gesellschaften)" einklappen={einklappen}>
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
           <F label="PLZ-Bereiche" hint="z. B. 80000-85999|70000-72199 · leer = alle">
             <input name="plzRanges" defaultValue={sub?.plzRanges ?? ""} className={input} />
@@ -140,9 +171,9 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
             <input name="excludeRules" defaultValue={sub?.excludeRules ?? ""} className={input} />
           </F>
         </div>
-      </Card>
+      </Abschnitt>
 
-      <Card>
+      <Abschnitt titel="Storno und Lieferweg" einklappen={einklappen}>
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
           <F label="Storno-Fenster (Tage)" hint="leer = kein Storno">
             <input name="stornoDays" inputMode="numeric" defaultValue={sub?.stornoDays ?? ""} className={input} />
@@ -218,7 +249,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
             </>
           ) : null}
         </div>
-      </Card>
+      </Abschnitt>
       {state.error ? <p className="text-sm text-rose-700">{state.error}</p> : null}
       <Button type="submit" variant="primary" size="md" disabled={pending}>
         {pending ? "Speichern …" : "Speichern"}

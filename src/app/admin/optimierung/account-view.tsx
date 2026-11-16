@@ -66,7 +66,16 @@ export function ProtocolCard({ measures }: { measures: MeasureRow[] }) {
   );
 }
 
-export function AccountView({ detail, showBackLink = true }: { detail: Detail; showBackLink?: boolean }) {
+export function AccountView({
+  detail,
+  showBackLink = true,
+  ohneTitel = false,
+}: {
+  detail: Detail;
+  showBackLink?: boolean;
+  /** Neuer Admin: Name steht schon im Seitenkopf */
+  ohneTitel?: boolean;
+}) {
   const a = detail.account;
   const open = detail.measures.filter((m) => m.status === "geplant" || m.status === "freigegeben").map(toView);
   return (
@@ -75,7 +84,7 @@ export function AccountView({ detail, showBackLink = true }: { detail: Detail; s
         <AdminBack href="/admin/optimierung">Optimierung</AdminBack>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{a.label}</h1>
+        {ohneTitel ? null : <h1 className="text-2xl font-semibold tracking-tight">{a.label}</h1>}
         <Badge>{a.kind === "pool" ? "Pay-per-Lead-Pool" : "Eigenes Werbekonto"}</Badge>
         <Badge tone={detail.autopilot ? "warning" : "neutral"}>{detail.autopilot ? "Autopilot" : "Vorschlag"}</Badge>
         {!a.active ? <Badge tone="danger">inaktiv</Badge> : null}

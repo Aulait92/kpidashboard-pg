@@ -1,0 +1,150 @@
+import { Card, CardHeader } from "@/components/ui";
+import { prisma } from "@/lib/prisma";
+import { parseAddresses } from "@/lib/ppl/lead-mail";
+import { fmtWeek, weekRange } from "@/lib/ppl/periods";
+import { areaQuotas } from "@/lib/ppl/engine";
+import { deleteAreaAction, manualOrderAction, saveAreaAction } from "../../actions";
+import { TestLeadButton } from "./test-lead-button";
+
+// Lieferung testen, Gebiete mit Vorrang und Bestellungen eines Bezugs: gemeinsam für /admin/ppl/bezug/[id] und
+// den neuen Admin (/admin/neu/leads/ppl/bezug/[id]).
+
+type Bezug = NonNullable<Awaited<ReturnType<typeof prisma.leadSubscription.findUnique<{ where: { id: string }; include: { orders: true; areas: true } }>>>>;
+
+export async function BezugZusatz({ sub }: { sub: Bezug | null }) {
+  const quotas = sub ? new Map((await areaQuotas(sub)).map((q) => [q.id, q])) : new Map();
+  const testTargets = !sub ? [] : sub.delivery === "email" ? parseAddresses(sub.deliveryEmail) : sub.delivery === "webhook" && sub.webhookUrl ? [hostOf(sub.webhookUrl)] : [];
+  const lastTest = testTargets.length
+    ? await prisma.auditLog.findFirst({ where: { action: "ppl.test", entityId: sub!.id }, orderBy: { at: "desc" }, select: { at: true, details: true } })
+    : null;
+  const lastOk = (lastTest?.details as { ok?: boolean } | null)?.ok;
+  const field = "mt-1 block h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm text-[color:var(--foreground)]";
+  const thisWeek = weekRange().start;
+  const nextWeek = weekRange(new Date(), 1).start;
+  return (
+    <>
+        {sub && testTargets.length ? (
+          <TestLeadButton
+            subscriptionId={sub.id}
+            targets={testTargets}
+            last={lastTest ? `${lastTest.at.toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" })}${lastOk === false ? ", mit Fehler" : ""}` : null}
+          />
+        ) : null}
+        {sub ? (
+          <Card>
+            <CardHeader title="Gebiete mit Vorrang" />
+            <p className="px-5 pb-1 text-sm text-[color:var(--muted)]">
+              Leads aus diesen PLZ-Gebieten gehen zuerst an diesen Bezug, bis die Menge des Gebiets im Zeitraum erreicht ist (100 %). Danach normale Verteilung.
+              Ist beim Bezug kein eigener PLZ-Filter gesetzt, bekommt er nur Leads aus seinen Gebieten.
+            </p>
+            <ul className="divide-y divide-[color:var(--border)] text-sm">
+              {sub.areas.map((a) => {
+                const q = quotas.get(a.id);
+                return (
+                  <li key={a.id} className="px-5 py-3">
+                    <form action={saveAreaAction} className="flex flex-wrap items-end gap-2">
+                      <input type="hidden" name="subscriptionId" value={sub.id} />
+                      <input type="hidden" name="id" value={a.id} />
+                      <label className="text-xs text-[color:var(--muted)]">
+                        Name
+                        <input name="label" defaultValue={a.label ?? ""} className={`${field} w-32`} />
+                      </label>
+                      <label className="min-w-0 flex-1 text-xs text-[color:var(--muted)]">
+                        PLZ-Bereiche
+                        <input name="plzRanges" defaultValue={a.plzRanges} className={`${field} w-full`} />
+                      </label>
+                      <label className="text-xs text-[color:var(--muted)]">
+                        Menge
+                        <input name="quantity" inputMode="numeric" defaultValue={a.quantity} className={`${field} w-20`} />
+                      </label>
+                      <label className="text-xs text-[color:var(--muted)]">
+                        je
+                        <select name="period" defaultValue={a.period ?? ""} className={field}>
+                          <option value="">wie Bezug</option>
+                          <option value="week">Woche</option>
+                          <option value="month">Monat</option>
+                        </select>
+                      </label>
+                      <button className="h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 font-medium">Speichern</button>
+                    </form>
+                    <div className="mt-1.5 flex items-center justify-between text-xs text-[color:var(--muted)]">
+                      <span className="tabular-nums">Im Zeitraum: {q?.delivered ?? 0} von {a.quantity} geliefert{q && q.delivered >= a.quantity ? " · voll, Vorrang pausiert" : ""}</span>
+                      <form action={deleteAreaAction}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <button className="text-rose-600 hover:underline">Gebiet löschen</button>
+                      </form>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <form action={saveAreaAction} className="flex flex-wrap items-end gap-2 border-t border-[color:var(--border)] px-5 py-4 text-sm">
+              <input type="hidden" name="subscriptionId" value={sub.id} />
+              <label className="text-xs text-[color:var(--muted)]">
+                Name
+                <input name="label" placeholder="z. B. Hamburg" className={`${field} w-32`} />
+              </label>
+              <label className="min-w-0 flex-1 text-xs text-[color:var(--muted)]">
+                PLZ-Bereiche
+                <input name="plzRanges" placeholder="20000-22999|25400" required className={`${field} w-full`} />
+              </label>
+              <label className="text-xs text-[color:var(--muted)]">
+                Menge
+                <input name="quantity" inputMode="numeric" required placeholder="20" className={`${field} w-20`} />
+              </label>
+              <label className="text-xs text-[color:var(--muted)]">
+                je
+                <select name="period" defaultValue="" className={field}>
+                  <option value="">wie Bezug</option>
+                  <option value="week">Woche</option>
+                  <option value="month">Monat</option>
+                </select>
+              </label>
+              <button className="h-9 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-3 font-semibold text-white">Gebiet hinzufügen</button>
+            </form>
+          </Card>
+        ) : null}
+        {sub?.period === "week" ? (
+          <Card>
+            <CardHeader title="Bestellungen" />
+            <ul className="divide-y divide-[color:var(--border)] text-sm">
+              {sub.orders.map((o) => (
+                <li key={o.id} className="flex justify-between px-5 py-2.5">
+                  <span>{fmtWeek(o.periodStart)}</span>
+                  <span className="tabular-nums">
+                    {o.quantity} Leads · {Number(o.amount).toLocaleString("de-DE", { style: "currency", currency: "EUR" })} · {o.status}
+                    {o.autoRenew ? " · wiederholt" : ""}
+                  </span>
+                </li>
+              ))}
+              {!sub.orders.length ? <li className="px-5 py-3 text-[color:var(--muted)]">Noch keine Bestellung.</li> : null}
+            </ul>
+            <form action={manualOrderAction} className="flex flex-wrap items-end gap-2 border-t border-[color:var(--border)] px-5 py-4 text-sm">
+              <input type="hidden" name="subscriptionId" value={sub.id} />
+              <label className="text-xs text-[color:var(--muted)]">
+                Woche
+                <select name="week" className="mt-1 block h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm text-[color:var(--foreground)]">
+                  <option value="0">diese ({fmtWeek(thisWeek)})</option>
+                  <option value="1">nächste ({fmtWeek(nextWeek)})</option>
+                </select>
+              </label>
+              <label className="text-xs text-[color:var(--muted)]">
+                Anzahl
+                <input name="quantity" inputMode="numeric" defaultValue={20} className="mt-1 block h-9 w-20 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-2 text-sm text-[color:var(--foreground)]" />
+              </label>
+              <button className="h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 font-medium">Von Hand bestellen (bezahlt)</button>
+              <p className="w-full text-xs text-[color:var(--muted)]">Für Zahlung per Überweisung oder Kulanz: ohne Stripe, gilt sofort als bezahlt.</p>
+            </form>
+          </Card>
+        ) : null}
+    </>
+  );
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
