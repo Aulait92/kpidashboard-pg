@@ -43,7 +43,7 @@ const ERRORS: Record<string, string> = {
 
 const TZ = "Europe/Berlin";
 
-/** Heute → „14:05", gestern → „Gestern", sonst „07.11.". */
+/** Heute → „14:05", gestern → „Gestern", sonst „07.11." (Intl liefert den Punkt schon mit). */
 function shortTime(d: Date): string {
   const day = (x: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(x);
   const now = new Date();
@@ -51,7 +51,7 @@ function shortTime(d: Date): string {
     return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
   }
   if (day(d) === day(new Date(now.getTime() - 86400000))) return "Gestern";
-  return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(d) + ".";
+  return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(d);
 }
 function formatAppt(d: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -342,13 +342,13 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
             <div className="flex gap-1 text-xs font-semibold">
               <Link
                 href={`/buyer/chats${q ? `?q=${encodeURIComponent(q)}` : ""}`}
-                className={`flex-1 rounded-lg px-2 py-1.5 text-center ${filter === "all" ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)]"}`}
+                className={`flex-1 rounded-lg px-2 py-2.5 sm:py-1.5 text-center ${filter === "all" ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)]"}`}
               >
                 Alle
               </Link>
               <Link
                 href={`/buyer/chats?f=attention${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-                className={`flex-1 rounded-lg px-2 py-1.5 text-center ${filter === "attention" ? "bg-rose-100 text-rose-800" : "text-[color:var(--muted)]"}`}
+                className={`flex-1 rounded-lg px-2 py-2.5 sm:py-1.5 text-center ${filter === "attention" ? "bg-rose-100 text-rose-800" : "text-[color:var(--muted)]"}`}
               >
                 Wartet auf Sie{attentionTotal > 0 ? ` (${attentionTotal})` : ""}
               </Link>
@@ -359,7 +359,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 name="q"
                 defaultValue={q}
                 placeholder="Name, Nummer oder E-Mail suchen"
-                className="min-w-0 flex-1 rounded-lg border border-[color:var(--border)] px-2.5 py-1.5 text-xs focus:border-[color:var(--brand)] focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-[color:var(--border)] px-2.5 py-2 text-xs sm:py-1.5 focus:border-[color:var(--brand)] focus:outline-none"
               />
             </form>
           </div>
