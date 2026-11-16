@@ -30,7 +30,7 @@ import { BuyerSearch, BuyerSearchButton } from "@/components/buyer-search";
 import { AbsenceControl, dayShort, type ShellAbsence } from "@/components/absence-sheet";
 import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
-import { showNewBadge } from "@/lib/empfehlung/shared";
+import { EMPFEHLUNG_MODULE_AVAILABLE, showNewBadge } from "@/lib/empfehlung/shared";
 import { NotReachedOfferHost } from "@/components/next-step";
 import { ZurueckLink } from "@/components/zurueck-link";
 
@@ -404,7 +404,7 @@ function ProfileMenu({
             data-menu-einstellungen
           >
             <Settings className="h-4 w-4" /> Einstellungen
-            {owner && showNewBadge() ? (
+            {owner && EMPFEHLUNG_MODULE_AVAILABLE && showNewBadge() ? (
               <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
                 Neu
               </span>
