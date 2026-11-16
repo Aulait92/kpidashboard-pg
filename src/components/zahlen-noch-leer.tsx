@@ -24,8 +24,11 @@ export async function ZahlenNochLeer({ customerId, now }: { customerId: string; 
         <BarChart3 className="h-5 w-5" />
       </span>
       <div>
-        <div className="text-base font-semibold">Ihre Zahlen erscheinen ab dem Kampagnenstart{start ? ` am ${dateFmt(start)}` : ""}.</div>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">Sobald der erste Lead da ist, sehen Sie hier Leads, Termine, Abschlüsse und Ihren Gewinn.</p>
+        {/* Läuft die Kampagne schon, nicht „ab dem Kampagnenstart“ (Heute sagt dann „Ihre Anzeigen laufen“) */}
+        <div className="text-base font-semibold">
+          {start ? `Ihre Zahlen erscheinen ab dem Kampagnenstart am ${dateFmt(start)}.` : "Ihre Zahlen erscheinen mit dem ersten Lead."}
+        </div>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">Dann sehen Sie hier Leads, Termine, Abschlüsse und Ihren Gewinn.</p>
       </div>
       {progress && !progress.complete ? (
         <Link href="/buyer/einrichtung" className={buttonClass("primary", "md")}>
