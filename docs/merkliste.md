@@ -71,3 +71,10 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   Usability-Runden. Die Aufnahme vom 16.11. früh (9814bd1, b788b6d) zeigt noch die alte Terminvorbereitung
   („Angebote hochladen“), die Knöpfe vor der Usability-Runde 1 und „Guten Abend“ (nachts aufgenommen).
   Ausführlich ist mit 3:50 länger als der Ton (3:20): Pausen bei „Angaben und Notizen“ und „Werbebudget“ kürzen.
+
+- Später (Ole, 16.11.): Terminvorbereitung „+ Versicherung“ um weitere Produkte erweitern. Kandidaten: Unfall
+  (auch Kinderunfall), Kfz, Fahrrad/E-Bike, Reise, Glas, Photovoltaik, Pferdehalterhaftpflicht, Pferde-OP,
+  Haus- und Grundbesitzerhaftpflicht, Bauherrenhaftpflicht, Gewerbe/Betriebshaftpflicht. Gesundheitssparten
+  (Kranken, Zahn, BU, Leben, Pflege) nur zur Handeingabe, nicht über „Angebot auslesen“ (Art. 9 DSGVO, Rechtsvorprüfung
+  16.11. Punkt 3). Bei vielen Einträgen die Liste nach Tiere, Wohnen und Haftpflicht gruppieren, mit Suchfeld.
+  Für jede neue Sparte Merkmale/Bausteine im Tarifkatalog-Schema und Tarifdaten der Gesellschaften (data/tarifkatalog).

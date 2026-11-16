@@ -447,7 +447,7 @@ function Angebote(p: {
         {nochFrei.length && !ro ? (
           <details className="sm:relative">
             <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-1 rounded-full border border-dashed border-[color:var(--border-strong)] bg-white px-3.5 text-sm font-medium text-[color:var(--muted)] [&::-webkit-details-marker]:hidden">
-              <Plus className="h-3.5 w-3.5" /> Sparte
+              <Plus className="h-3.5 w-3.5" /> Versicherung
             </summary>
             <div className="absolute left-4 z-20 mt-1 max-h-72 w-60 overflow-auto sm:left-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
               {nochFrei.map((s) => (
@@ -545,7 +545,7 @@ function Angebote(p: {
           <Vorschau auswahl={p.auswahl} sparte={sp} daten={p.vorschau} />
         </div>
       ) : (
-        <p className="px-5 py-6 text-sm text-[color:var(--muted)]">Noch keine Sparte. Wählen Sie oben „+ Sparte“, z. B. Hausrat.</p>
+        <p className="px-5 py-6 text-sm text-[color:var(--muted)]">Noch keine Versicherung. Wählen Sie oben „+ Versicherung“, z. B. Hausrat.</p>
       )}
     </Card>
   );
