@@ -495,6 +495,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     },
   });
   if (!conversation || !conversation.botActive || conversation.optedOutAt) return;
+  // Allowlist (Ole, 16.11.2026, lib/whatsapp/nur-leads.ts): nur Lead-Chats bzw. neue Kontakte mit eingeschaltetem
+  // Schalter. Nie private Chats aus der WhatsApp-Business-App (Coexistence), nie das Support-Postfach.
+  const { assistentDarfAntworten } = await import("@/lib/whatsapp/nur-leads");
+  if (!(await assistentDarfAntworten(conversation))) return;
 
   const agent = await prisma.agentConfig.findUnique({
     where: { customerId: conversation.customerId },

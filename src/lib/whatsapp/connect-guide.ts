@@ -219,7 +219,7 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
   },
   business: {
     intro:
-      "Sie behalten Ihre WhatsApp Business App und schreiben dort weiter. Ihr Assistent übernimmt neue Leads über dieselbe Nummer. Was Sie in der App schreiben, erscheint auch bei uns unter „Chats“, und der Assistent hält sich in diesem Gespräch dann zurück.",
+      "Sie behalten Ihre WhatsApp Business App und schreiben dort weiter. Ihre bestehenden Chats bleiben privat. Der Assistent schreibt nur Leads an, die über performancegrowth kommen. Schreiben Sie einem Lead selbst in der App, hält sich der Assistent in diesem Gespräch zurück.",
     tone: "info",
     canStart: true,
     minutes: 10,
@@ -244,7 +244,7 @@ export const GUIDES: Record<ConnectPath, PathGuide> = {
       {
         where: "whatsapp",
         title: "QR-Code mit der WhatsApp Business App scannen",
-        text: "Statt eines Codes per SMS verbinden Sie die Nummer mit einem QR-Code: Sie bekommen in der WhatsApp Business App auf Ihrem Handy eine Nachricht. Tippen Sie darauf und scannen Sie den QR-Code auf dem Bildschirm. Chatverlauf und Kontakte können Sie dabei übernehmen.",
+        text: "Statt eines Codes per SMS verbinden Sie die Nummer mit einem QR-Code: Sie bekommen in der WhatsApp Business App auf Ihrem Handy eine Nachricht. Tippen Sie darauf und scannen Sie den QR-Code auf dem Bildschirm. Den bisherigen Chatverlauf müssen Sie dabei nicht teilen, wir übernehmen ihn ohnehin nicht.",
         pitfall: "Keine Nachricht bekommen? App aktualisieren und öffnen, dann den Schritt im Fenster von Meta wiederholen.",
       },
       ...META_END,

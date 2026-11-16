@@ -110,6 +110,8 @@ export async function sendTemplateAction(conversationId: string, purpose: string
       text: option.preview,
       leadId: conv.leadId,
       contactName: conv.contactName,
+      // Von Hand gesendet (Klick), keine Automatik
+      manuell: true,
     });
   } catch (err) {
     console.error("[whatsapp template]", err);

@@ -170,6 +170,12 @@ Seiten aus der Liste „Seiten“ unten.
   freigegebene Vorlagen raus. Dann erscheint „Nachfassen senden“ statt des Textfelds. Antwortet der Kunde,
   können Sie wieder frei schreiben.
 - „Erledigt“ entfernt den Chat aus „Wartet auf Sie“.
+- **Neuer Kontakt:** Schreibt eine Nummer, die zu keinem Lead gehört (z. B. ein privater Kontakt, wenn Ihre Nummer aus der
+  WhatsApp Business App verbunden ist), antwortet der Assistent nicht und es geht keine automatische Nachricht raus. Der
+  Chat steht mit „Neuer Kontakt“ unter „Wartet auf Sie“. Mit **„Als Lead übernehmen“** im Chat wird daraus ein Lead
+  (Herkunft „Eigener Kontakt“, zählt nicht als bezahlter Lead) und der Assistent übernimmt. Sonst antworten Sie selbst oder
+  lassen den Chat liegen. Auf Wunsch schaltet performancegrowth den Assistenten auch für neue Kontakte ein
+  (Kontakte aus der WhatsApp Business App bleiben trotzdem ausgenommen).
 - **„STOPP“:** Schreibt ein Kontakt „STOPP“ (oder „Stop“, „Abmelden“, „Keine Nachrichten mehr“), bekommt er eine kurze
   Bestätigung und danach keine WhatsApp-Nachrichten mehr: kein Assistent, kein Nachfassen, keine Termin-Nachrichten, keine
   Kampagnen, auch nicht von Hand. Im Chat steht dann ein roter Hinweis. Schreibt der Kontakt später selbst wieder, können Sie
@@ -464,7 +470,7 @@ Seiten aus der Liste „Seiten“ unten.
      Pop-ups müssen erlaubt sein.
   9. Fenster von Meta „Facebook Login for Business“, „Seamlessly connect your account to 360Dialog“ → **„Continue“**.
   10. „Add your WhatsApp phone number“: Nummer ist vorausgewählt → **„Next“**. Business App: hier statt des SMS-Codes per Nachricht in der
-      WhatsApp Business App einen **QR-Code scannen** (Chatverlauf und Kontakte lassen sich übernehmen); die Nummer sollte etwa 7 Tage in
+      WhatsApp Business App einen **QR-Code scannen** (den Chatverlauf müssen Sie nicht teilen, die App übernimmt ihn ohnehin nicht; bestehende Chats bleiben privat); die Nummer sollte etwa 7 Tage in
       der App genutzt worden sein.
   11. „Select the business assets to share with 360dialog“: eigenes **Business portfolio** (dasselbe wie für das Werbekonto),
       WhatsApp account **„Create a WhatsApp account“** → „Next“.
@@ -1254,8 +1260,9 @@ in der Einrichtung und für Inhaber unter Profilmenü → **Einführung ansehen*
 **Welche Nummer?** (drei Wege, keine Wertung)
 - **Nummer aus der WhatsApp Business App** (häufigster Fall): Leads und Kunden kennen die Nummer schon.
   Der Vermittler schreibt weiter in der App, der Assistent übernimmt neue Leads über dieselbe Nummer.
-  Nachrichten aus der App erscheinen auch unter „Chats“, der Assistent hält sich in dem Gespräch dann
-  zurück. Bei 360dialog auf die Frage „Is … already on WhatsApp?“ „Yes, Business app“ wählen,
+  Ihre bestehenden Chats bleiben privat. Der Assistent schreibt nur Leads an, die über performancegrowth kommen.
+  Den alten Chatverlauf speichert die App nicht. Schreibt der Vermittler einem Lead in der App, erscheint das
+  auch unter „Chats“ und der Assistent pausiert in diesem Gespräch sofort. Bei 360dialog auf die Frage „Is … already on WhatsApp?“ „Yes, Business app“ wählen,
   später statt des SMS-Codes in der App den QR-Code scannen. Voraussetzungen: aktuelle WhatsApp Business App, die Nummer
   schon etwa 7 Tage in der App genutzt, die App mindestens alle 13 Tage öffnen (sonst trennt Meta die
   Verbindung). Mit der App verknüpfte Geräte (z. B. WhatsApp Web) werden getrennt und müssen neu

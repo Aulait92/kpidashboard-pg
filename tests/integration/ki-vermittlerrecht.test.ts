@@ -54,6 +54,11 @@ let phoneNumberId = "";
 let n = 0;
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+/** Der Assistent antwortet nur Leads (lib/whatsapp/nur-leads.ts): Kontakt als Lead aus dem Formular anlegen. */
+async function leadFor(phone: string) {
+  await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone, status: "Neuer Lead", outreachAt: new Date(), outreachStatus: "skipped_contact" } });
+}
+
 async function inbound(from: string, body: string) {
   await handleInboundPayload({
     entry: [{ changes: [{ value: { metadata: { phone_number_id: phoneNumberId }, contacts: [{ profile: { name: "Julia Schneider" } }], messages: [{ from, id: `wamid.in${++n}.${uid()}`, type: "text", text: { body } }] } }] }],
@@ -91,6 +96,7 @@ afterAll(() => {
 describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, Beratungssperre", () => {
   it("erste Antwort an einen neuen Kontakt: Hinweis mit Anrede und Link zur Erstinformation, danach nicht wieder", async () => {
     const phone = "4917611110000";
+    await leadFor(phone);
     h.script.push({ content: [{ type: "text", text: "Für wen soll die Zahnzusatzversicherung sein?" }] });
     await inbound(phone, "Hallo, ich interessiere mich für eine Zahnzusatz");
     const first = lastText();
@@ -122,6 +128,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
 
   it("„Bist du ein Bot?“ → wahrheitsgemäße Antwort, Assistent pausiert, Vermittler bekommt eine Mitteilung", async () => {
     const phone = "4917611110001";
+    await leadFor(phone);
     await inbound(phone, "Bist du ein Bot?");
     expect(h.calls).toHaveLength(0); // ohne KI beantwortet
     const reply = lastText();
@@ -141,6 +148,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
 
   it("„Mensch“ in einem laufenden Chat → Übergabe ohne erneuten vollständigen Hinweis", async () => {
     const phone = "4917611110002";
+    await leadFor(phone);
     await inbound(phone, "Hallo");
     await inbound(phone, "Mensch");
     expect(lastText()).toBe(
@@ -151,6 +159,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
 
   it("nach über 30 Tagen Pause wiederholt der Assistent den Hinweis", async () => {
     const phone = "4917611110003";
+    await leadFor(phone);
     await inbound(phone, "Hallo");
     const c = await conv(phone);
     await prisma.message.updateMany({ where: { conversationId: c.id }, data: { createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000) } });

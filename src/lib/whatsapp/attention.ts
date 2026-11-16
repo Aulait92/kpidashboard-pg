@@ -7,7 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
 import { conversationScope, type TeamCtx } from "@/lib/team";
 
-export async function flagAttention(conversationId: string, reason: string): Promise<void> {
+/** opts.push = false: nur markieren, kein Push (z. B. Kontakt aus der WhatsApp-Business-App). */
+export async function flagAttention(conversationId: string, reason: string, opts: { push?: boolean } = {}): Promise<void> {
   const conv = await prisma.conversation.findUnique({
     where: { id: conversationId },
     select: { id: true, customerId: true, contactName: true, contactPhone: true, needsAttention: true, assignedUserId: true, lead: { select: { assignedUserId: true } } },
@@ -17,7 +18,7 @@ export async function flagAttention(conversationId: string, reason: string): Pro
     where: { id: conv.id },
     data: { needsAttention: true, attentionReason: reason.slice(0, 200), attentionAt: new Date() },
   });
-  if (conv.needsAttention) return; // schon markiert → kein zweiter Push
+  if (conv.needsAttention || opts.push === false) return; // schon markiert → kein zweiter Push
   const payload = {
     title: `💬 ${conv.contactName ?? `+${conv.contactPhone}`} braucht dich`,
     body: reason.slice(0, 140),

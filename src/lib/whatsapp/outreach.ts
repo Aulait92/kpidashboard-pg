@@ -217,7 +217,7 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         continue;
       }
       if (conv && conv._count.messages > 0) {
-        // Lead hat schon selbst geschrieben → der Assistent ist bereits im Gespräch.
+        // Lead hat schon selbst geschrieben → der Assistent ist bereits im Gespräch (bzw. übernimmt jetzt).
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: "skipped_contact" },
@@ -227,6 +227,9 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
             where: { id: conv.id },
             data: { leadId: lead.id },
           });
+          // Bisher „Neuer Kontakt“ ohne Assistent: jetzt Lead-Chat, offene Nachricht beantworten (lib/whatsapp/nur-leads.ts)
+          const { nachLeadZuordnung } = await import("@/lib/whatsapp/nur-leads");
+          await nachLeadZuordnung(conv.id, { antworten: true }).catch((e) => console.error("[outreach] Assistent", e));
         }
         result.skipped++;
         continue;

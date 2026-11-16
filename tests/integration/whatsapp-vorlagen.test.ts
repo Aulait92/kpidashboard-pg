@@ -263,10 +263,12 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
 
     // Senden außerhalb des 24-h-Fensters: Vorlage mit „Frau Schneider“ bzw. ohne Namensparameter, PDF im Kopf
     const document = { link: "https://app.example.de/erstinformation/abc123/pdf", filename: "Erstinformation.pdf" };
-    await sendWhatsAppNotice({ customerId, to: "4917600000011", purpose: "outreach", params: ["Julia"], text: "x", contactName: "Julia Schneider", anrede: FRAU, document });
-    await sendWhatsAppNotice({ customerId, to: "4917600000012", purpose: "outreach", params: ["Julia"], text: "x", contactName: "Julia", document });
+    // Automatische Vorlagen nur an Leads (lib/whatsapp/nur-leads.ts)
+    const leadOf = async (phone: string) => (await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone } })).id;
+    await sendWhatsAppNotice({ customerId, to: "4917600000011", purpose: "outreach", leadId: await leadOf("4917600000011"), params: ["Julia"], text: "x", contactName: "Julia Schneider", anrede: FRAU, document });
+    await sendWhatsAppNotice({ customerId, to: "4917600000012", purpose: "outreach", leadId: await leadOf("4917600000012"), params: ["Julia"], text: "x", contactName: "Julia", document });
     // Ohne PDF (Erstinformation unvollständig) keine Vorlage mit Kopf: die bisherige
-    await sendWhatsAppNotice({ customerId, to: "4917600000013", purpose: "outreach", params: ["Julia"], legacyParams: ["Julia", "https://x.de/erstinformation/abc"], text: "x", contactName: "Julia Schneider", anrede: FRAU });
+    await sendWhatsAppNotice({ customerId, to: "4917600000013", purpose: "outreach", leadId: await leadOf("4917600000013"), params: ["Julia"], legacyParams: ["Julia", "https://x.de/erstinformation/abc"], text: "x", contactName: "Julia Schneider", anrede: FRAU });
     type Comp = { type: string; parameters: { type: string; text?: string; document?: { link: string } }[] };
     const tpl = (i: number) => (sent[i] as { template: { name: string; components?: Comp[] } }).template;
     expect(tpl(0).name).toBe("pg_outreach_v4_sie");
@@ -298,6 +300,8 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
 describe("Coexistence und Abmelde-Knopf", () => {
   it("Echo aus der Business-App → ausgehende Nachricht „App“, Assistent pausiert", async () => {
     const acc = await connect();
+    // Echo in einem Lead-Chat (Echos an private Nummern ohne Lead speichert die App nicht, whatsapp-nur-leads.test.ts)
+    await prisma.lead.create({ data: { customerId, name: "Lena Lead", phone: "4917600000001" } });
     await handleInboundPayload({
       entry: [{ changes: [{ value: { metadata: { phone_number_id: acc.phoneNumberId }, message_echoes: [{ from: "4915112345678", to: "4917600000001", id: "wamid.echo1", type: "text", text: { body: "Hallo, hier direkt vom Handy" } }] } }] }],
     });

@@ -727,6 +727,11 @@ export async function sendWhatsAppNotice(opts: {
   textButtons?: string[];
   /** A/B-Fassung (Standard: fest je Lead bzw. Nummer zugeteilt, siehe lib/whatsapp/ab-test.ts). */
   variant?: TemplateVariant;
+  /**
+   * Der Vermittler bzw. Admin sendet selbst per Klick (Nachfassen im Chat, Test an mich). Ohne: automatische
+   * Nachricht, nur an Kontakte aus der Pipeline (lib/whatsapp/nur-leads.ts, sonst WhatsAppKeinLeadError).
+   */
+  manuell?: boolean;
 }): Promise<{ mode: "text" | "template"; conversationId: string; messageId?: string | null; variant: TemplateVariant | null; documentHeader: boolean }> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
@@ -755,6 +760,12 @@ export async function sendWhatsAppNotice(opts: {
       const wrote = existing ? await prisma.message.count({ where: { conversationId: existing.id, direction: "inbound" } }) : 0;
       if (!wrote) throw l.waConsent === "nein" ? new WhatsAppNoConsentError() : new WhatsAppUnavailableError();
     }
+  }
+  // Allowlist (Ole, 16.11.2026): automatische Nachrichten nur an Leads aus der Pipeline bzw. (Kampagnen, Empfehlungen)
+  // an importierte Bestandskunden. Nie an unbekannte Kontakte, z. B. private Chats der Business-App (Coexistence).
+  if (!opts.manuell) {
+    const { pruefeAutomatik } = await import("@/lib/whatsapp/nur-leads");
+    await pruefeAutomatik({ customerId: opts.customerId, to: opts.to, purpose: opts.purpose, leadId, conversationId: existing?.id ?? null });
   }
   const windowOpen =
     !!existing?.windowExpiresAt && existing.windowExpiresAt.getTime() > Date.now();

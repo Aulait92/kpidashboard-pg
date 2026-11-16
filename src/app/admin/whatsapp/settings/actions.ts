@@ -290,6 +290,26 @@ export async function setFollowUpSequencesAction(customerId: string, enabled: bo
   }
 }
 
+/**
+ * „Assistent auch für neue Kontakte“ (Standard aus, lib/whatsapp/nur-leads.ts): Aus = der Assistent antwortet nur
+ * Chats mit Lead. An = auch unbekannten Nummern, die selbst schreiben, nie Kontakten aus der WhatsApp-Business-App.
+ */
+export async function setNewContactsBotAction(customerId: string, enabled: boolean): Promise<SaveResult> {
+  try {
+    await requireAdmin();
+    await prisma.agentConfig.upsert({
+      where: { customerId },
+      create: { customerId, newContactsBot: enabled, systemPrompt: STARTER_PROMPT },
+      update: { newContactsBot: enabled },
+    });
+    await audit("agent.new_contacts", { entity: "AgentConfig", customerId, details: { enabled } });
+    revalidateSettings();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Speichern fehlgeschlagen." };
+  }
+}
+
 /** Einstellungen des Assistenten speichern (automatisch beim Ändern). */
 export async function saveAgentSettingsAction(formData: FormData): Promise<SaveResult> {
   try {

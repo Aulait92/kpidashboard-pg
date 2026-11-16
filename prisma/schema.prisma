@@ -299,6 +299,7 @@ model Customer {
   calendarLeadTimes              CalendarLeadTimes[]
   calendarBlocks                 CalendarBlock[]
   conversations                  Conversation[]            @relation("ConversationCustomer")
+  whatsAppAppContacts            WhatsAppAppContact[]
   /// Support-Chats (Support-Nummer), die diesem Kunden zugeordnet sind (lib/whatsapp/support-contacts.ts)
   supportConversations           Conversation[]            @relation("ConversationLinkedCustomer")
   /// Kündigungsabsichten aus dem Anti-Churn-Flow (lib/anti-churn-server.ts)
@@ -1074,6 +1075,10 @@ model AgentConfig {
   // Automatisch nachfassen: feste Abfolgen nach „Nicht erreicht“, „Angebot gesendet“,
   // „Nicht erschienen“ (lib/lead-sequences.ts). Standard aus.
   followUpSequencesEnabled Boolean   @default(true) // Standard an für neue Kunden (Ole, 15.11.2026)
+  // Assistent auch für neue Kontakte (Ole, 16.11.2026): Standard aus. Aus = der Assistent antwortet nur Chats, die
+  // einem Lead aus der Pipeline gehören (lib/whatsapp/nur-leads.ts). Kontakte aus der WhatsApp-Business-App
+  // (Coexistence, WhatsAppAppContact) gelten nie als neu.
+  newContactsBot           Boolean   @default(false)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl             String?
@@ -1101,6 +1106,21 @@ model AgentConfig {
 
 // Ein Chat-Faden pro (Kunde × Kontakt-Telefonnummer). Hält den 24h-Fenster-
 // Status und ob der KI-Bot aktiv ist oder ein Mensch übernommen hat.
+// Coexistence (Ole, 16.11.2026): Nummern, mit denen der Kunde in seiner WhatsApp-Business-App schon einen Chat
+// hatte (Webhook „history“) bzw. die dort als Kontakt gespeichert sind („smb_app_state_sync“). Nur die Nummer, kein
+// Verlauf, kein Name. Dient allein dazu, dass der Assistent diese Kontakte nie anschreibt (lib/whatsapp/nur-leads.ts).
+model WhatsAppAppContact {
+  id         String   @id @default(cuid())
+  customerId String
+  phone      String
+  source     String // history | contact
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, phone])
+}
+
 model Conversation {
   id                   String    @id @default(cuid())
   customerId           String

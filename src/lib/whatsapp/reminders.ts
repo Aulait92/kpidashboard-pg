@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { firstNameOf, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
+import { WhatsAppKeinLeadError } from "@/lib/whatsapp/nur-leads";
 
 /** Ansprache des Kunden (Sie/Du) für Texte an Leads. */
 export async function anspracheOf(customerId: string): Promise<Ansprache> {
@@ -201,7 +202,7 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
       await prisma.appointment.update({ where: { id: appt.id }, data: { soonReminderSentAt: new Date() } });
       result.sent++;
     } catch (err) {
-      result.errors.push(`${appt.id} (kurz vorher): ${err instanceof Error ? err.message : String(err)}`);
+      if (!(err instanceof WhatsAppKeinLeadError)) result.errors.push(`${appt.id} (kurz vorher): ${err instanceof Error ? err.message : String(err)}`);
       // nicht endlos erneut versuchen
       await prisma.appointment.update({ where: { id: appt.id }, data: { soonReminderSentAt: new Date() } });
     }
@@ -276,6 +277,8 @@ export async function runReminders(): Promise<ReminderResult> {
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
     // zugestellt hat (sonst nächster Cron-Lauf erneut — ohne Doppel-Mails).
     let delivered = false;
+    // Kein Lead zugeordnet (Allowlist, lib/whatsapp/nur-leads.ts): keine WhatsApp; als erledigt markieren, sonst Dauerschleife
+    let keinLead = false;
     try {
       await sendWhatsAppNotice({
         customerId: appt.customerId,
@@ -290,11 +293,12 @@ export async function runReminders(): Promise<ReminderResult> {
       });
       delivered = true;
     } catch (err) {
-      result.errors.push(`${appt.id} (WhatsApp): ${err instanceof Error ? err.message : String(err)}`);
+      if (err instanceof WhatsAppKeinLeadError) keinLead = true;
+      else result.errors.push(`${appt.id} (WhatsApp): ${err instanceof Error ? err.message : String(err)}`);
     }
     const mail = await sendLeadEmail(appt.id, "reminder").catch(() => ({ sent: false }));
     if (mail.sent) delivered = true;
-    if (delivered) {
+    if (delivered || keinLead) {
       await prisma.appointment.update({
         where: { id: appt.id },
         data: { reminderSentAt: new Date() },
