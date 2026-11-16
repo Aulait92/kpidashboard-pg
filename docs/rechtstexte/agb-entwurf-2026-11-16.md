@@ -108,3 +108,20 @@ andere Geschenke des Vermittlers an dieselbe Person kennt sie nicht.
 **Nicht betroffen:** Prämie „Kollegen empfehlen“ (wir an Vermittler) und Nachlässe an unsere Kunden: Empfänger sind
 Vermittler als unsere Kunden, keine Versicherungsnehmer, versicherten Personen oder Bezugsberechtigten (§ 48b Abs. 1
 VAG). Keine Änderung nötig.
+
+## Thema 9: Bewertungen auf der Website des Vermittlers (AGB „Zusatzmodul Empfehlungen & Bewertungen“)
+
+**Problem:** Die Software zeigt selbst keine Bewertungen an; sie bittet um Google-Bewertungen und meldet neue. Zeigt
+der Vermittler Bewertungen von Verbrauchern auf seiner Website (z. B. eingebundene Google-Bewertungen), muss er angeben,
+ob und wie er sicherstellt, dass sie von Kunden stammen, die die Leistung genutzt haben (§ 5b Abs. 3 UWG).
+
+**Vorschlag AGB, neuer dritter Absatz:**
+
+> Die Software bittet alle Kunden des Kunden in gleicher Weise um eine ehrliche Bewertung, ohne Gegenleistung und ohne
+> Vorauswahl nach Zufriedenheit. Macht der Kunde Bewertungen auf seiner Website oder in seiner Werbung zugänglich, gibt
+> er dort an, ob und wie er sicherstellt, dass sie von Personen stammen, die seine Leistung tatsächlich genutzt haben
+> (§ 5b Abs. 3 UWG).
+
+**Textvorschlag für den Vermittler (Hilfe, freiwillig, ohne Gedankenstriche):**
+„Die Bewertungen stammen aus meinem Google-Unternehmensprofil. Ich bitte nur Kundinnen und Kunden nach einer Beratung
+um eine Bewertung; ob die Verfasser tatsächlich Kunden sind, prüfe ich darüber hinaus nicht.“

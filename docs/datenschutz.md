@@ -455,3 +455,20 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
   Versicherungsnehmer des Vermittlers, sondern unsere Kunden). Beim Dankeschön ist die App strenger als das Gesetz;
   offen ist nur die Anrechnung anderer Geschenke des Vermittlers.
 - **Handlungsbedarf: Entwurf** (Anrechnung anderer Zuwendungen, Entwurf Thema 8). Sonst **nein**.
+
+### 10.9 Bewertungen: Hinweis zur Echtheit (§ 5b Abs. 3 UWG)
+
+- **Rechtslage:** Wer Bewertungen zugänglich macht, die Verbraucher abgegeben haben, muss angeben, ob und wie er
+  sicherstellt, dass sie von Verbrauchern stammen, die die Leistung tatsächlich genutzt haben
+  ([§ 5b Abs. 3 UWG](https://www.gesetze-im-internet.de/uwg_2004/__5b.html); Verbot falscher Echtheitsbehauptungen und
+  gekaufter Bewertungen: [Anhang Nr. 23b, 23c](https://www.gesetze-im-internet.de/uwg_2004/anhang.html)). Für
+  eingebundene Google-Bewertungen genügt die Quellenangabe allein nicht (laut Kanzleiberichten: LG Frankfurt a. M.,
+  Urteil vom 31.10.2025, 3-10 O 103/24; OLG Koblenz, Urteil vom 02.06.2026, 9 U 1015/25; ausreichend war ein
+  gut auffindbarer Hinweis bei OLG Köln, Urteil vom 20.12.2024, 6 U 59/24).
+- **App heute:** Zeigt selbst keine Bewertungen; bittet alle Angeschriebenen gleich um eine ehrliche Bewertung (kein
+  Gating, keine Anreize, `app/empfehlung/g/[token]`), meldet neue Bewertungen und schlägt Antworten vor. Modul derzeit
+  ausgeblendet.
+- **Bewertung:** Für die App keine Pflicht. Die Pflicht trifft den Vermittler, wenn er Bewertungen auf seiner Website
+  zeigt. Unsere Webseite zeigt nur Stimmen von Vermittlern (B2B, § 5b Abs. 3 gilt nur für Verbraucherbewertungen).
+- **Handlungsbedarf: Entwurf** (Klausel und Textvorschlag für Vermittler, Entwurf Thema 9), beim Einschalten des Moduls
+  den Textvorschlag in die Hilfe übernehmen.
