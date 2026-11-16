@@ -606,7 +606,7 @@ model Lead {
   // Kontakt aus Airtable (Telefon normalisiert wie WhatsApp `from`, z. B.
   // 4915112345678) — für die Zuordnung WhatsApp-Konversation/Buchung ↔ Lead.
   phone                String?
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits          String?
   phoneDigitsRev       String?
   email                String?
@@ -1018,7 +1018,7 @@ model WhatsAppAccount {
   wabaId             String?
   phoneNumberId      String?
   phoneNumber        String?
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits        String?
   phoneDigitsRev     String?
   displayName        String?
@@ -1115,7 +1115,7 @@ model Conversation {
   whatsAppAccountId    String?
   leadId               String?
   contactPhone         String
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits          String?
   phoneDigitsRev       String?
   contactName          String?
@@ -1528,7 +1528,7 @@ model SalesContact {
   /// { emails: { "<adresse>": { source, at } }, removed: [von Hand entfernte Adressen/Nummern] }
   detectedData         Json?
   phone                String?
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits          String?
   phoneDigitsRev       String?
   fax                  String?
@@ -1635,7 +1635,7 @@ model SalesContactPhone {
   contact        SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   /// E.164, z. B. +491711234567 (Schreibweise egal, Dubletten über diese Form)
   phone          String
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits    String?
   phoneDigitsRev String?
   /// MOBIL | FESTNETZ
@@ -1872,7 +1872,7 @@ model SalesMeeting {
   calendarKey        String?
   calendarEventId    String?
   inviteePhone       String?
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits        String?
   phoneDigitsRev     String?
   consentAt          DateTime?
@@ -1982,7 +1982,7 @@ model Onboarding {
   metaAccessAt       DateTime?
   // Pflichtangaben (Impressum) von der Agentur-Website
   websiteInfo        Json?
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits        String?
   phoneDigitsRev     String?
   websiteCheckedAt   DateTime?
@@ -2392,7 +2392,7 @@ model ExistingCustomer {
   salutation               String?
   company                  String?
   phone                    String? // normalisiert wie WhatsApp (4915…)
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits              String?
   phoneDigitsRev           String?
   email                    String?
@@ -3977,7 +3977,7 @@ model Erstinformation {
   firma          String?
   anschrift      String?
   telefon        String?
-  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705900)
   phoneDigits    String?
   phoneDigitsRev String?
   email          String?

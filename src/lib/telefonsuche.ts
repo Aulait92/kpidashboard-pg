@@ -1,6 +1,6 @@
 // Telefonsuche (Ole, 16.11.2026), ohne Datenbank und testbar.
 // Gespeichert wird je Nummernfeld ein Ziffernschlüssel (Spalten "phoneDigits" und "phoneDigitsRev", per DB-Trigger
-// aus Migration 20261118705700, SQL-Funktion telefon_ziffern). Der Schlüssel ist derselbe wie phoneKey aus
+// aus Migration 20261118705900, SQL-Funktion telefon_ziffern). Der Schlüssel ist derselbe wie phoneKey aus
 // lib/vertrieb/dubletten.ts: ohne führende 0 bzw. +49/0049, z. B. „0152-581 42 143“ → 15258142143.
 // Gesucht wird
 // - mit Vorwahl (+…, 00…, 0…): Anfang des Schlüssels (die ganze Nummer ist ein Sonderfall davon),
