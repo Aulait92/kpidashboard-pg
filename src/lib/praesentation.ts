@@ -283,10 +283,17 @@ function vergleichTabelle(
   const mitBausteinen = v.some((i) => i.bausteine.length);
   // gemessen: 4 Spalten mit Bausteinen bzw. lange (zweizeilige) Tarifnamen kosten je eine Merkmalzeile
   const maxMerkmale = GRENZEN.merkmale - (v.length >= 4 && mitBausteinen ? 1 : 0) - (lang ? 1 : 0);
-  const anders = namen.filter((n) => !gleich.includes(n)).slice(0, maxMerkmale);
-  // „In allen Tarifen“: Leistungen, die jede Stufe hat, dann gleiche Merkmale; eine kurze Zeile
-  const gemeinsam = (v[0]?.leistungen ?? []).filter((l) => v.every((i) => i.leistungen.some((x) => klein(x) === klein(l))));
-  const gleicheMerkmale = gleich.filter((n) => !istNein(wert(v[0], n))).map((n) => (JA.test(wert(v[0], n)!.trim()) ? n : `${n}: ${wert(v[0], n)}`));
+  // Zeilen: die gewählten Merkmale in ihrer Reihenfolge (Ole, 16.11.2026: „die Merkmale, die man auswählt, landen
+  // nicht in der Präsi“, gleiche Werte verschwanden in „In allen Tarifen“). Sind es mehr als Platz ist, zuerst die,
+  // in denen sich die Stufen unterscheiden.
+  const vorrang = [...namen.filter((n) => !gleich.includes(n)), ...namen.filter((n) => gleich.includes(n))].slice(0, maxMerkmale);
+  const anders = namen.filter((n) => vorrang.includes(n));
+  // „In allen Tarifen“: Leistungen, die jede Stufe hat, dann gleiche Merkmale ohne eigene Zeile; eine kurze Zeile
+  const alsZeile = (l: string) => anders.some((n) => klein(l) === klein(n) || klein(l).startsWith(`${klein(n)}:`));
+  const gemeinsam = (v[0]?.leistungen ?? []).filter((l) => !alsZeile(l) && v.every((i) => i.leistungen.some((x) => klein(x) === klein(l))));
+  const gleicheMerkmale = gleich
+    .filter((n) => !anders.includes(n) && !istNein(wert(v[0], n)))
+    .map((n) => (JA.test(wert(v[0], n)!.trim()) ? n : `${n}: ${wert(v[0], n)}`));
   const alle = [...new Set([...gemeinsam, ...gleicheMerkmale])].slice(0, GRENZEN.alle);
   const col = (i: AngebotItem) => (i.gewaehlt ? ` class="gew"` : "");
   const bs = mitBausteinen ? `<tr><th>Bausteine</th>${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";

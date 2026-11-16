@@ -23,13 +23,12 @@ const d = (x: Partial<VorbereitungDaten> & { angaben?: Record<string, string> } 
 });
 
 describe("Schalter", () => {
-  it("Admin-Vorschau und Testkunde an, sonst aus (bis der Schalter für alle umgelegt ist)", () => {
-    expect(TERMINVORBEREITUNG_NEU_FUER_ALLE).toBe(false);
+  it("für alle freigeschaltet (Ole, 16.11.2026): jeder Kunde, Neuigkeit sichtbar", () => {
+    expect(TERMINVORBEREITUNG_NEU_FUER_ALLE).toBe(true);
     expect(neueTerminvorbereitung({ customerId: "cmwhmxr7w03g436lb34w6xtsk" }, "")).toBe(true);
     expect(neueTerminvorbereitung({ customerId: "x", preview: true }, "")).toBe(true);
-    expect(neueTerminvorbereitung({ customerId: "x" }, "")).toBe(false);
-    expect(neueTerminvorbereitung({ customerId: "x" }, "a, x")).toBe(true);
-    expect(neuigkeitVersteckt(NEUIGKEIT_TERMINVORBEREITUNG)).toBe(true);
+    expect(neueTerminvorbereitung({ customerId: "x" }, "")).toBe(true);
+    expect(neuigkeitVersteckt(NEUIGKEIT_TERMINVORBEREITUNG)).toBe(false);
     expect(neuigkeitVersteckt("upd_andere")).toBe(false);
   });
 });

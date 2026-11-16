@@ -134,7 +134,8 @@ describe("Präsentation", () => {
     let fs = folien(dt, ang, m);
     const v = fs.find((f) => f.id.startsWith("vergleich-"))!.html;
     expect(v).toContain('class="vgl"');
-    expect(v).toContain("In allen Tarifen:</b> <span>✓ Mietsachschäden</span>");
+    // Gewählte Merkmale bleiben Zeilen, auch wenn alle Stufen gleich sind (Ole, 16.11.2026)
+    expect(v).toContain("<th>Mietsachschäden</th>");
     expect(v).toContain('data-tarif="1">✓ Ausgewählt');
     expect(v).toContain('class="nein-z"');
     expect(v.replace(/<style>[\s\S]*?<\/style>/, "")).not.toMatch(/[\u2013\u2014]/);

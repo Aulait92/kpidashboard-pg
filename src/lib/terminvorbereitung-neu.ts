@@ -10,7 +10,7 @@ import { abschnitte, offenePunkte, spartenAus, tierWunsch, type VorbereitungDate
 import { sparteAusText, spartenAusFormular, type Katalog } from "@/lib/tarifkatalog";
 
 /** Neue Terminvorbereitung für alle Kunden? (Ole, 15.11.2026: erst Admin und Testkunde) */
-export const TERMINVORBEREITUNG_NEU_FUER_ALLE = false;
+export const TERMINVORBEREITUNG_NEU_FUER_ALLE = true;
 
 /** Oles Testkunde „Ole Agentur“ */
 const TESTKUNDEN = ["cmwhmxr7w03g436lb34w6xtsk"];
