@@ -678,7 +678,7 @@ function ReadOnlyCard({
 
   return (
     <Card>
-      <CardHeader icon={ClipboardList} title="Angaben zum Lead" actions={edit} />
+      <CardHeader icon={ClipboardList} title="Angaben" actions={edit} />
       <dl className="divide-y divide-[color:var(--border)]">
         {rows.map(({ def, value }) => (
           <DetailRow key={def.label} label={def.label}>

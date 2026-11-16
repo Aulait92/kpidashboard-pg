@@ -12,6 +12,7 @@ import {
 import { formatDate, formatEUR } from "@/lib/format";
 import { displayProduct, statusToneClass } from "@/lib/products";
 import { cn } from "@/lib/utils";
+import { berlinTodayIso } from "@/lib/offer-pricing";
 import { NextStepButton } from "@/components/next-step";
 import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
 
@@ -56,7 +57,12 @@ function formatAppt(d: Date): string {
 }
 
 function followUpText(iso: string): string {
-  return `Wiedervorlage ${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(iso))}`;
+  return `Wiedervorlage ${new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(iso))}${followUpOverdue(iso) ? " · überfällig" : ""}`;
+}
+
+/** Wiedervorlage vor heute (Berlin): rot wie auf „Heute“ (UX Runde 4). */
+function followUpOverdue(iso: string): boolean {
+  return berlinTodayIso(new Date(iso)) < berlinTodayIso();
 }
 
 function statusText(
@@ -141,7 +147,7 @@ export function BuyerLeadsTable({
                         {terminArtKurz(l.appointment.mode)}
                       </div>
                     ) : l.followUpAt ? (
-                      <div className="mt-1 text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</div>
+                      <div className={cn("mt-1 text-xs font-medium", followUpOverdue(l.followUpAt) ? "text-rose-600" : "text-violet-700")}>{followUpText(l.followUpAt)}</div>
                     ) : l.callback && !l.noWhatsApp ? (
                       <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
                     ) : null}
@@ -224,7 +230,7 @@ export function BuyerLeadsTable({
                             {terminArtKurz(l.appointment.mode)}
                           </span>
                         ) : l.followUpAt ? (
-                          <span className="text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</span>
+                          <span className={cn("text-xs font-medium", followUpOverdue(l.followUpAt) ? "text-rose-600" : "text-violet-700")}>{followUpText(l.followUpAt)}</span>
                         ) : l.callback && !l.noWhatsApp ? (
                           <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
                         ) : l.noNextStep ? (

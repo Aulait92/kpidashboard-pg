@@ -1,5 +1,6 @@
 "use client";
 
+import { berlinTodayIso } from "@/lib/offer-pricing";
 import { LEAD_MAIL_EVENT } from "@/components/lead-mail";
 import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
@@ -188,6 +189,7 @@ export function LeadHeaderActions(p: Props) {
   // Anrufen, Chat, Wiedervorlage, Mehr immer; E-Mail und Termin je nach Lage (siehe Kacheln unten)
   const tileCount = 4 + (p.mailOff ? 0 : 1) + (p.hasUpcomingAppointment ? 0 : 1);
 
+  const dueOverdue = !!p.followUpAt && berlinTodayIso(new Date(p.followUpAt)) < berlinTodayIso();
   const dueLabel = p.followUpAt
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric" }).format(new Date(p.followUpAt))
     : null;
@@ -321,7 +323,7 @@ export function LeadHeaderActions(p: Props) {
             onClick={p.phone && p.askAfterCall ? () => markCall(p.leadId) : undefined}
             primary
             title={p.phone ? formatPhone(p.phone) : undefined}
-            explain={{ title: "Keine Telefonnummer hinterlegt", text: "Tragen Sie die Nummer bei den Angaben zum Lead ein, dann können Sie direkt anrufen.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
+            explain={{ title: "Keine Telefonnummer hinterlegt", text: "Tragen Sie die Nummer bei den Angaben ein, dann können Sie direkt anrufen.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
           <ActionTile
             icon={MessageCircle}
@@ -336,7 +338,7 @@ export function LeadHeaderActions(p: Props) {
             label="E-Mail"
             href={!p.mailReady && p.email ? `mailto:${p.email}` : undefined}
             onClick={p.mailReady && p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
-            explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben zum Lead ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
+            explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
           )}
           {/* Steht schon ein Termin an, zeigt die Terminkarte ihn (Verschieben, Vorbereiten); kein zweiter Knopf (16.11.2026) */}
@@ -371,6 +373,7 @@ export function LeadHeaderActions(p: Props) {
             <BellRing className="h-4 w-4 shrink-0" />
             <button type="button" onClick={() => setOpen("followup")} className="line-clamp-2 min-w-0 flex-1 text-left">
               <b>Wiedervorlage {dueLabel}</b>
+              {dueOverdue ? <b className="text-rose-700"> · überfällig</b> : null}
               {p.followUpNote ? ` · ${p.followUpNote}` : ""}
             </button>
             {/* Handy: nur Symbole (40 px), damit das Datum nicht abgeschnitten wird */}
@@ -392,7 +395,7 @@ export function LeadHeaderActions(p: Props) {
           onPick={(message, action) => followUp(action, message)}
         />
       ) : null}
-      <ActionSheet open={open === "phase"} onClose={() => setOpen(null)} title="Status ändern" actions={phaseActions} />
+      <ActionSheet open={open === "phase"} onClose={() => setOpen(null)} title="Phase ändern" actions={phaseActions} />
       <ActionSheet open={open === "more"} onClose={() => setOpen(null)} title={p.name ?? "Lead"} actions={moreActions} />
       {open === "lost" ? (
         <LostSheet
@@ -408,7 +411,7 @@ export function LeadHeaderActions(p: Props) {
 
       <AbschlussSheet
         open={open === "win"}
-        title="Abschluss"
+        title="Gewonnen"
         source={p.source}
         onClose={() => setOpen(null)}
         onSave={(v, sp) => {
@@ -544,7 +547,7 @@ function ActionTile({
   const [why, setWhy] = useState(false);
   const disabled = !href && !onClick;
   const cls = cn(
-    "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-[11px] font-semibold leading-tight transition @2xl:flex-row @2xl:gap-2 @2xl:px-4 @2xl:text-sm",
+    "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-[11px] font-semibold leading-tight transition sm:text-xs @2xl:flex-row @2xl:gap-2 @2xl:px-4 @2xl:text-sm",
     primary
       ? "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
       : "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] shadow-[var(--shadow-sm)] hover:border-[color:var(--border-strong)]",
@@ -635,8 +638,9 @@ function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string
           </div>
         ) : (
           <div className="space-y-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950" data-termin-ohne-kalender>
-            <p>Für Terminbuchungen verbinden Sie Ihren Kalender. Dann sieht der Lead nur Ihre freien Zeiten, und der Termin landet direkt in Ihrem Kalender.</p>
-            <a href="/buyer/kalender" className="inline-flex rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 py-2 font-semibold text-white">
+            {/* UX Runde 4: eine Hauptaktion je Fenster („Termin eintragen“), Kalender verbinden daher als Zweitknopf */}
+            <p>Mit verbundenem Kalender wählen Sie hier freie Zeiten, und der Termin landet direkt in Ihrem Kalender.</p>
+            <a href="/buyer/kalender" className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] border border-amber-300 bg-white px-4 py-2 font-semibold text-amber-950 hover:border-amber-400">
               Kalender verbinden
             </a>
           </div>
@@ -665,7 +669,7 @@ function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string
             <span className="mb-1 block text-[color:var(--muted)]">Notiz (optional)</span>
             <textarea className="input w-full" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
           </label>
-          <p className="text-xs text-[color:var(--muted)]">Der Termin steht auf „Heute“ und im Kontakt. In Ihren Kalender wird er nicht übertragen, der Lead bekommt keine automatische Erinnerung.</p>
+          <p className="text-xs text-[color:var(--muted)]">Steht auf „Heute“ und im Kontakt, aber nicht in Ihrem Kalender und ohne Erinnerung an den Kunden.</p>
           {error ? <p className="rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-rose-800">{error}</p> : null}
           <Button variant="primary" size="md" className="w-full" disabled={pending || !date || !time} onClick={save}>
             {pending ? "Wird gespeichert …" : "Termin eintragen"}
@@ -714,7 +718,7 @@ function ChatStartSheet({
           </>
         ) : !phone ? (
           <>
-            <p className="text-[color:var(--muted)]">Keine Mobilnummer hinterlegt. Tragen Sie die Nummer bei den Angaben zum Lead ein.</p>
+            <p className="text-[color:var(--muted)]">Keine Mobilnummer hinterlegt. Tragen Sie die Nummer bei den Angaben ein.</p>
             <Button
               variant="primary"
               size="md"

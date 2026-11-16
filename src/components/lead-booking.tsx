@@ -79,7 +79,7 @@ export function SlotPicker({ leadId, onBooked }: { leadId: string; onBooked: () 
   if (state.noCalendar) {
     return (
       <div className="space-y-2 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        <p>Für Terminbuchungen verbinden Sie Ihren Kalender. Dann sieht der Lead nur Ihre freien Zeiten, und der Termin landet direkt in Ihrem Kalender.</p>
+        <p>Mit verbundenem Kalender wählen Sie hier freie Zeiten, und der Termin landet direkt in Ihrem Kalender.</p>
         <a href="/buyer/kalender" className="inline-flex rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-4 py-2 font-semibold text-white">
           Kalender verbinden
         </a>
