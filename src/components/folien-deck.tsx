@@ -45,7 +45,10 @@ export function FolienDeck({
   const [pseudo, setPseudo] = useState(false);
   const toast = useToast();
   const [scale, setScale] = useState(0.5);
+  // Vollbild im Hochformat (Handy): Folie um 90° gedreht wie im Kundenlink (UX Runde 4, Vorschlag 8)
+  const [gedreht, setGedreht] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const rahmen = useRef<HTMLDivElement>(null);
   const folie = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
 
@@ -103,7 +106,9 @@ export function FolienDeck({
       const voll = !!document.fullscreenElement || pseudo;
       const w = voll ? window.innerWidth : el.clientWidth;
       const h = voll ? window.innerHeight : el.clientWidth * 0.5625;
-      setScale(Math.min(w / 1280, h / 720));
+      const hoch = voll && h > w;
+      setGedreht(hoch);
+      setScale(hoch ? Math.min(h / 1280, w / 720) : Math.min(w / 1280, h / 720));
     };
     fit();
     window.addEventListener("resize", fit);
@@ -116,7 +121,9 @@ export function FolienDeck({
 
   const vollbild = () => {
     const el = box.current;
-    if (el?.requestFullscreen && document.fullscreenEnabled) el.requestFullscreen().catch(() => setPseudo(true));
+    // Android: im Vollbild quer stellen, wenn möglich; sonst dreht fit() die Folie
+    const quer = () => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.("landscape").catch(() => {});
+    if (el?.requestFullscreen && document.fullscreenEnabled) el.requestFullscreen().then(quer, () => setPseudo(true));
     else setPseudo(true);
   };
 
@@ -125,13 +132,37 @@ export function FolienDeck({
   useLayoutEffect(() => {
     const el = folie.current;
     if (!el) return;
-    folienEinpassen(el);
+    // Messen in normaler Lage (die Drehung vertauscht Breite und Höhe)
+    const einpassen = () => {
+      const r = rahmen.current;
+      const t = r?.style.transform ?? "";
+      if (r) r.style.transform = "";
+      folienEinpassen(el);
+      if (r) r.style.transform = t;
+    };
+    einpassen();
     let aktiv = true;
-    document.fonts?.ready.then(() => aktiv && folienEinpassen(el));
+    document.fonts?.ready.then(() => aktiv && einpassen());
     return () => {
       aktiv = false;
     };
-  }, [f.html]);
+  }, [f.html, gedreht]);
+  const leiste = (
+          <div className="absolute bottom-3 right-3 flex items-center gap-2" data-vollbild-leiste>
+            <RundKnopf label="Zurück" onClick={() => go(i - 1)} disabled={i === 0}>
+              <ChevronLeft className="h-5 w-5" />
+            </RundKnopf>
+            <span className="rounded-full bg-black/50 px-2 py-1 text-xs tabular-nums text-white">
+              {i + 1} / {folien.length}
+            </span>
+            <RundKnopf label="Weiter" onClick={() => go(i + 1)} disabled={i === folien.length - 1}>
+              <ChevronRight className="h-5 w-5" />
+            </RundKnopf>
+            <RundKnopf label="Vollbild beenden" onClick={() => setPseudo(false)}>
+              <X className="h-5 w-5" />
+            </RundKnopf>
+          </div>
+  );
   return (
     <div className={eingebettet ? "flex w-full flex-col gap-2" : "space-y-4"}>
       <style>{css}</style>
@@ -150,10 +181,13 @@ export function FolienDeck({
           if (!s) return;
           const dx = e.changedTouches[0].clientX - s.x;
           const dy = e.changedTouches[0].clientY - s.y;
-          if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) go(dx < 0 ? i + 1 : i - 1);
+          // gedreht: Folien-x ist Bildschirm-y
+          const [a, b] = gedreht ? [dy, dx] : [dx, dy];
+          if (Math.abs(a) > 60 && Math.abs(a) > 1.5 * Math.abs(b)) go(a < 0 ? i + 1 : i - 1);
         }}
       >
-        <div className="relative shrink-0 overflow-hidden" style={{ width: 1280 * scale, height: 720 * scale }}>
+        <div ref={rahmen} className="relative shrink-0" style={{ width: 1280 * scale, height: 720 * scale, transform: gedreht ? "rotate(90deg)" : undefined }}>
+          <div className="relative h-full w-full overflow-hidden">
           <div
             ref={folie}
             onClick={onSlideClick}
@@ -161,23 +195,10 @@ export function FolienDeck({
             style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }}
             dangerouslySetInnerHTML={{ __html: f.html }}
           />
-        </div>
-        {pseudo ? (
-          <div className="absolute bottom-3 right-3 flex items-center gap-2" data-vollbild-leiste>
-            <RundKnopf label="Zurück" onClick={() => go(i - 1)} disabled={i === 0}>
-              <ChevronLeft className="h-5 w-5" />
-            </RundKnopf>
-            <span className="rounded-full bg-black/50 px-2 py-1 text-xs tabular-nums text-white">
-              {i + 1} / {folien.length}
-            </span>
-            <RundKnopf label="Weiter" onClick={() => go(i + 1)} disabled={i === folien.length - 1}>
-              <ChevronRight className="h-5 w-5" />
-            </RundKnopf>
-            <RundKnopf label="Vollbild beenden" onClick={() => setPseudo(false)}>
-              <X className="h-5 w-5" />
-            </RundKnopf>
           </div>
-        ) : null}
+          {pseudo && gedreht ? leiste : null}
+        </div>
+        {pseudo && !gedreht ? leiste : null}
       </div>
       {eingebettet ? (
         <div className="flex items-center justify-center gap-3">
