@@ -111,6 +111,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "leadsource.toggle": "Leadformular pausiert/aktiviert",
   "preview.start": "Kundenansicht geöffnet (Admin)",
   "rechner.config": "Rechner-Einstellungen geändert",
+  "preise.pilot": "Beiträge rechnen (Pilot) je Sparte an/aus",
   "status.incident": "Statusmeldung angelegt/geändert",
   "help.escalate": "Hilfe-Chat an das Team weitergegeben",
   "budget.change": "Werbebudget geändert (Kunde)",

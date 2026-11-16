@@ -3331,6 +3331,14 @@ model InvoiceSettings {
   updatedAt DateTime @updatedAt
 }
 
+// Beiträge rechnen (Pilot, Ole 16.11.2026, docs/preise-pilot.md): Schalter je Gesellschaft und Sparte, Standard aus.
+// aktiv = Schlüssel „<gesellschaft>/<sparte>“ (z. B. „allianz/hausrat“). Eine Zeile, id „default“.
+model PreisPilot {
+  id        String   @id @default("default")
+  aktiv     String[] @default([])
+  updatedAt DateTime @updatedAt
+}
+
 // Selbst-Einrichtung (eine Zeile, id „default“): unsere Business-ID für den Meta-Partnerzugriff
 // und je Einrichtungsschritt eine Video-URL (Loom/YouTube), die der Kunde eingebettet sieht.
 model SetupSettings {

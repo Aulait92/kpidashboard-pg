@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Anchor, Bot, Calculator, CalendarDays, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, Wallet, Workflow } from "lucide-react";
+import { Activity, Anchor, BadgeEuro, Bot, Calculator, CalendarDays, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
@@ -18,6 +18,7 @@ const GROUPS = [
       { href: "/admin/buyers", icon: KeyRound, color: "bg-amber-500", title: "Kunden-Logins", text: "Zugänge, Passwort, Vorschau" },
       { href: "/admin/einstellungen/einrichtung", icon: Rocket, color: "bg-blue-600", title: "Einrichtung neuer Kunden", text: "Meta-Business-ID, Erklärvideos" },
       { href: "/admin/einstellungen/produkte", icon: Layers, color: "bg-orange-500", title: "Produkte", text: "Sparten zum Selbst-Dazubuchen" },
+      { href: "/admin/einstellungen/beitraege", icon: BadgeEuro, color: "bg-amber-600", title: "Beiträge rechnen (Pilot)", text: "Rechner je Gesellschaft und Sparte" },
       { href: "/admin/einstellungen/kampagnen-automatik", icon: Bot, color: "bg-fuchsia-500", title: "Kampagnen-Automatik", text: "Budget, neue Kampagnen, Anzeigen auffrischen" },
       // Eintrag zur Optimierung je Werbekonto (Teil B, 18.11.2026): Übersicht, Freigabe, Autopilot
     ],

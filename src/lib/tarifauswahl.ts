@@ -47,6 +47,11 @@ export type TarifWahl = {
   /** Bausteine mit Preis (in der Zahlweise des Tarifs) und an/aus */
   bausteine: Record<string, { an: boolean; beitrag: number | null }>;
   inAllen: string[];
+  /**
+   * Beitrag ist ein Richtwert, noch nicht vom Vermittler bestätigt (Pilot „Beiträge rechnen“, docs/preise-pilot.md):
+   * Herkunft („Aus dem Angebot gelesen“) und Zeitpunkt. Bestätigen oder selbst ändern entfernt die Markierung.
+   */
+  preisPruefen?: { quelle: string; am: string } | null;
   /** Für einen späteren Bündelrabatt (lib/tarifkatalog.ts BuendelRegel): Produktlinie und Vertragslaufzeit */
   linie?: string | null;
   laufzeitJahre?: number | null;
@@ -117,6 +122,8 @@ function cleanTarif(v: unknown): TarifWahl | null {
   const bausteine: TarifWahl["bausteine"] = {};
   for (const [k, x] of Object.entries(obj(r.bausteine)).slice(0, 20)) bausteine[k.slice(0, 80)] = { an: obj(x).an === true, beitrag: betrag(obj(x).beitrag, true) };
   const herkunft = r.herkunft === "eigen" || r.herkunft === "angebot" ? r.herkunft : "katalog";
+  const pp = obj(r.preisPruefen);
+  const preisPruefen = str(pp.quelle, 60) && str(pp.am, 40) ? { quelle: str(pp.quelle, 60)!, am: str(pp.am, 40)! } : null;
   return {
     id,
     herkunft,
@@ -133,6 +140,7 @@ function cleanTarif(v: unknown): TarifWahl | null {
     zeigen: r.zeigen !== false,
     bausteine,
     inAllen: strs(r.inAllen, 8, 120),
+    ...(preisPruefen && betrag(r.beitrag) != null ? { preisPruefen } : {}),
     ...(r.linie !== undefined ? { linie: str(r.linie, 40) } : {}),
     ...(typeof r.laufzeitJahre === "number" && r.laufzeitJahre > 0 && r.laufzeitJahre <= 10 ? { laufzeitJahre: Math.round(r.laufzeitJahre) } : {}),
     ...(Array.isArray(r.leistungen) ? { leistungen: strs(r.leistungen, 6, 160) } : {}),
@@ -469,7 +477,12 @@ export function ausAltenAngeboten(d: AngeboteDaten, k?: Katalog | null): Tarifau
  * Beiträge und Bausteinpreise aus ausgelesenen Angeboten den gewählten Tarifen zuordnen (Sparte, Gesellschaft,
  * Tarifname). Nur leere Beiträge werden gefüllt; Merkmale bleiben aus dem Katalog. anzahl = gefüllte Tarife.
  */
-export function preiseUebernehmen(a: Tarifauswahl, items: AngebotItem[]): { auswahl: Tarifauswahl; anzahl: number; sparten: string[] } {
+export function preiseUebernehmen(
+  a: Tarifauswahl,
+  items: AngebotItem[],
+  /** Pilot „Beiträge rechnen“: gefüllte Beiträge als Richtwert markieren (je Sparte und Gesellschaft), Zeitpunkt */
+  opts: { pruefen?: (sparte: string, gesellschaft: string | null) => boolean; am?: string } = {},
+): { auswahl: Tarifauswahl; anzahl: number; sparten: string[] } {
   const neu: Tarifauswahl = structuredClone(a);
   let anzahl = 0;
   const sparten = new Set<string>();
@@ -491,6 +504,7 @@ export function preiseUebernehmen(a: Tarifauswahl, items: AngebotItem[]): { ausw
     if (t.beitrag == null) {
       t.beitrag = i.beitragMonat;
       t.zahlweise = "monat";
+      if (opts.pruefen?.(sp.key, t.gesellschaftKey)) t.preisPruefen = { quelle: PRUEF_QUELLE_ANGEBOT, am: opts.am ?? new Date().toISOString() };
       anzahl++;
       sparten.add(sp.label);
     }
@@ -503,4 +517,17 @@ export function preiseUebernehmen(a: Tarifauswahl, items: AngebotItem[]): { ausw
     }
   }
   return { auswahl: neu, anzahl, sparten: [...sparten] };
+}
+
+// ─── Richtwerte „bitte prüfen“ ──────────────────────────────────────────────────────────────
+
+export const PRUEF_QUELLE_ANGEBOT = "Aus dem Angebot gelesen";
+
+/** Gezeigte Tarife mit Beitrag, den der Vermittler noch nicht bestätigt hat (Hinweis vor der Präsentation). */
+export function ungepruefteBeitraege(a: Tarifauswahl): { sparte: string; label: string; tarif: string }[] {
+  return a.sparten.flatMap((sp) =>
+    gezeigteTarife(sp)
+      .filter((t) => t.preisPruefen && t.beitrag != null)
+      .map((t) => ({ sparte: sp.key, label: sp.label, tarif: t.kurz })),
+  );
 }

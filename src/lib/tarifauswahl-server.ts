@@ -14,12 +14,15 @@ import {
   kurzName,
   preiseUebernehmen,
   startAuswahl,
+  ungepruefteBeitraege,
   zuAngebote,
   type EigenerTarifDaten,
   type MeineAuswahl,
   type Tarifauswahl,
 } from "@/lib/tarifauswahl";
 import { spartenFuerTermin } from "@/lib/terminvorbereitung-neu";
+import { ladePreisPilot } from "@/lib/preise/pilot-server";
+import { rechnerUrl } from "@/lib/preise/pilot";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
 /**
@@ -161,6 +164,13 @@ export async function tarifauswahlSpeichern(appointmentId: string, ctx: TeamCtx,
   return { ok: true, auswahl: a };
 }
 
+/** Sparten mit Beiträgen, die noch ein Richtwert sind (Hinweis auf der Präsentationsseite). */
+export async function ungepruefteSparten(appointmentId: string, ctx: TeamCtx): Promise<string[]> {
+  const a = await prisma.appointment.findFirst({ where: { id: appointmentId, ...appointmentScope(ctx) }, select: { tarifauswahl: true } }).catch(() => null);
+  const t = a ? cleanTarifauswahl(a.tarifauswahl) : null;
+  return t ? [...new Set(ungepruefteBeitraege(t).map((u) => u.label))] : [];
+}
+
 /** „Noch klären im Termin“: abgehakte Punkte speichern. */
 export async function klaerenSpeichern(appointmentId: string, ctx: TeamCtx, erledigt: string[]): Promise<boolean> {
   const clean = [...new Set(erledigt.filter((x) => typeof x === "string").map((x) => x.slice(0, 200)))].slice(0, 30);
@@ -190,7 +200,9 @@ export async function preiseAuslesen(
   );
   // Fehler oder Gesundheitssparte erkannt: keine Preise übernehmen, nichts speichern
   if ("error" in res) return { ok: false, error: res.error };
-  const r = preiseUebernehmen(aktuell, res.items);
+  // Pilot „Beiträge rechnen“ (docs/preise-pilot.md): Beiträge freigeschalteter Sparten sind ein Richtwert, bis der Vermittler bestätigt
+  const pilot = await ladePreisPilot();
+  const r = preiseUebernehmen(aktuell, res.items, { pruefen: (sparte, ges) => rechnerUrl(pilot, ges, sparte) != null });
   const s = await tarifauswahlSpeichern(appointmentId, ctx, r.auswahl);
   if (!s.ok) return s;
   return { ok: true, auswahl: s.auswahl, anzahl: r.anzahl, sparten: r.sparten };
