@@ -59,7 +59,7 @@ export function Switch({
         } else router.refresh();
       }}
       className={cn(
-        "relative h-8 w-[52px] shrink-0 rounded-full transition-colors duration-150 disabled:opacity-50",
+        "relative h-8 w-[52px] shrink-0 rounded-full transition-colors duration-150 after:absolute after:-inset-1 after:content-[''] disabled:opacity-50",
         on ? "bg-emerald-500" : "bg-slate-300",
         shake && "animate-[wiggle_0.3s_ease-in-out]",
       )}

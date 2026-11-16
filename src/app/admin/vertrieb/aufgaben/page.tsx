@@ -38,15 +38,15 @@ export default async function AufgabenPage({ searchParams }: { searchParams: Pro
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold">Aufgaben</h1>
-        <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-sm">
+        <div className="flex gap-1 rounded-lg bg-slate-100 p-0.5 text-sm">
           {[["open", "Offen"], ["done", "Erledigt"]].map(([v, l]) => (
-            <Link key={v} href={link({ view: v })} className={clsx("rounded-md px-3 py-1", view === v ? "bg-white shadow-sm" : "text-slate-600")}>{l}</Link>
+            <Link key={v} href={link({ view: v })} className={clsx("inline-flex min-h-10 items-center rounded-md px-3", view === v ? "bg-white shadow-sm" : "text-slate-600")}>{l}</Link>
           ))}
         </div>
-        <div className="flex flex-wrap gap-1 text-sm">
-          <Link href={link({ type: undefined })} className={clsx("badge", !type ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200")}>Alle</Link>
+        <div className="flex flex-wrap gap-x-1 gap-y-5 text-sm">
+          <Link href={link({ type: undefined })} className={clsx("badge relative after:absolute after:-inset-y-2.5 after:inset-x-0 after:content-['']", !type ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200")}>Alle</Link>
           {TASK_TYPES.map((t) => (
-            <Link key={t.id} href={link({ type: t.id })} className={clsx("badge", type === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200")}>{t.label}</Link>
+            <Link key={t.id} href={link({ type: t.id })} className={clsx("badge relative after:absolute after:-inset-y-2.5 after:inset-x-0 after:content-['']", type === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200")}>{t.label}</Link>
           ))}
         </div>
       </div>

@@ -261,7 +261,7 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
                 aria-checked={data.sicht === s}
                 disabled={sichtPending}
                 onClick={() => goSicht(s, true)}
-                className={cn("rounded-full px-3 py-1", data.sicht === s ? "bg-[color:var(--foreground)] font-semibold text-white" : "text-[color:var(--muted)]")}
+                className={cn("min-h-10 rounded-full px-3 sm:min-h-0 sm:py-1", data.sicht === s ? "bg-[color:var(--foreground)] font-semibold text-white" : "text-[color:var(--muted)]")}
               >
                 {s === "kern" ? "Kerngeschäft" : "Gesamt"}
               </button>
@@ -271,14 +271,14 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
             type="button"
             aria-pressed={investor}
             onClick={toggleInvestor}
-            className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white py-1.5 pl-1.5 pr-3 text-sm"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[color:var(--border)] bg-white py-1.5 pl-1.5 pr-3 text-sm sm:min-h-0"
           >
             <span className={cn("relative h-5 w-[34px] rounded-full transition", investor ? "bg-[color:var(--brand)]" : "bg-slate-300")}>
               <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", investor ? "left-4" : "left-0.5")} />
             </span>
             Investoren-Ansicht
           </button>
-          <button type="button" onClick={() => setUpdate(true)} className="rounded-[10px] bg-[color:var(--brand)] px-3.5 py-2 text-sm font-semibold text-white">
+          <button type="button" onClick={() => setUpdate(true)} className="min-h-10 rounded-[10px] bg-[color:var(--brand)] px-3.5 py-2 text-sm font-semibold text-white">
             Investoren-Update
           </button>
         </div>
@@ -307,7 +307,7 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
             ) : null}
             <div className="mt-1 text-xs text-[color:var(--muted)]">{t.note}</div>
             {!investor && "drill" in t && t.drill ? (
-              <button type="button" onClick={() => setDrill(t.drill!)} className="mt-1.5 text-[12.5px] font-medium text-[color:var(--brand)] hover:underline" data-drill={t.drill}>
+              <button type="button" onClick={() => setDrill(t.drill!)} className="-mb-2 mt-0.5 inline-flex min-h-10 items-center text-[12.5px] font-medium text-[color:var(--brand)] hover:underline" data-drill={t.drill}>
                 Woraus besteht das?
               </button>
             ) : null}
@@ -333,7 +333,7 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
             aria-selected={active === t.key}
             onClick={() => choose(t.key)}
             className={cn(
-              "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium",
+              "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-sm font-medium",
               active === t.key ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)]",
             )}
           >
@@ -342,10 +342,10 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
         ))}
         {!investor ? (
           <>
-            <Link href="/" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
+            <Link href="/" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
               Pay-per-Lead (Details) →
             </Link>
-            <Link href="/admin/einstellungen/kosten" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
+            <Link href="/admin/einstellungen/kosten" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
               Laufende Kosten →
             </Link>
             <Link href="/admin/nutzung" className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 py-1.5 text-sm text-[color:var(--muted)]">
