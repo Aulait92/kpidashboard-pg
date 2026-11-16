@@ -583,6 +583,7 @@ export function TodayInbox({
           onResult={() => setOutcome({ key: current.key, leadId: current.leadId, name: current.name, source: current.source, kind: current.kind })}
           onSkip={advance}
           onEnd={() => setCallMode(null)}
+          kontaktHref={leadUrl(current.leadId)}
         />
       ) : null}
       <CallOutcomeSheet
@@ -759,6 +760,7 @@ function CallModePanel({
   onResult,
   onSkip,
   onEnd,
+  kontaktHref,
 }: {
   item: CallItem;
   index: number;
@@ -767,6 +769,8 @@ function CallModePanel({
   onResult: () => void;
   onSkip: () => void;
   onEnd: () => void;
+  /** Kontakt mit einem Tipp öffnen (Ole, 16.11.2026) */
+  kontaktHref: string;
 }) {
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-[color:var(--background)] md:items-center md:justify-center md:bg-slate-900/40" role="dialog" aria-label="Anrufliste">
@@ -788,7 +792,11 @@ function CallModePanel({
         <div className="flex flex-1 flex-col justify-center px-6 py-8 md:flex-none">
           {item.urgent ? <div className="mb-2 text-base font-semibold text-rose-600">Sofort anrufen</div> : null}
           {item.overdue ? <div className="mb-2 text-base font-semibold text-rose-600">Überfällig</div> : null}
-          <div className="text-3xl font-semibold tracking-tight">{item.name}</div>
+          {/* Name öffnet den Kontakt (Ole, 16.11.2026: „mit 1 Klick öffnen können“) */}
+          <Link href={kontaktHref} onClick={onEnd} aria-label={`${item.name}: Kontakt öffnen`} className="group inline-flex min-h-11 items-center gap-1.5 self-start text-3xl font-semibold tracking-tight hover:text-[color:var(--brand)]" data-anruf-kontakt>
+            {item.name}
+            <ChevronRight className="h-6 w-6 shrink-0 text-[color:var(--muted)] group-hover:text-[color:var(--brand)]" />
+          </Link>
           <p className="mt-2 text-base text-[color:var(--muted)]">{item.reason}</p>
           {/* Was im Gespräch zu tun ist, auf einen Blick (Ole, 16.11.2026) */}
           {(() => {
