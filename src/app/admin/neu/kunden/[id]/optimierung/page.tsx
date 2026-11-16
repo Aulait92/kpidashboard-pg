@@ -1,8 +1,17 @@
-import { Platzhalter } from "@/components/admin-neu/ui/platzhalter";
+import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
+import KundenOptimierung from "@/app/admin/kunden/[id]/optimierung/page";
 
 export const metadata = { title: "Optimierung | performancegrowth Admin" };
 
-// Platzhalter (wird gerade gebaut). Ersetzen durch die echte Seite: docs/ux/admin-neu/README.md
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <Platzhalter pfad="/admin/neu/kunden/[id]/optimierung" params={await params} />;
+// Kundenakte › Optimierung: mit eigenem Werbekonto die volle Konto-Ansicht (geplante Maßnahmen freigeben, Protokoll,
+// Maßnahme eintragen), sonst Protokoll und „Maßnahme eintragen“. Derselbe Reiter wie /admin/kunden/[id]/optimierung.
+export default async function KundeOptimierung({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return (
+    <KundenakteSeite id={id}>
+      <div className="-mt-5" data-funktion="account-view-protocolcard--protokoll-der-massnahmen-des-kunden actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text">
+        <KundenOptimierung params={Promise.resolve({ id })} />
+      </div>
+    </KundenakteSeite>
+  );
 }

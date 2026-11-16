@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { endPauseNow, planPause } from "@/lib/pause";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -13,6 +14,7 @@ function refresh(contactId?: string | null) {
   revalidatePath("/admin/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte)
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 export async function startOnboardingAction(fd: FormData) {
@@ -33,6 +35,7 @@ export async function openSetupAction(fd: FormData) {
   await openSetupForExisting(customerId);
   revalidatePath(`/admin/kunden/${customerId}`);
   revalidatePath("/buyer", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 /** Kundenakte: Einrichtung neu starten (Fragebogen, Kalender, WhatsApp, Einwilligung wieder offen). */
@@ -43,6 +46,7 @@ export async function restartSetupAction(fd: FormData) {
   await restartSetup(customerId);
   revalidatePath(`/admin/kunden/${customerId}`);
   revalidatePath("/buyer", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 export async function toggleOnboardingStepAction(fd: FormData) {
@@ -84,7 +88,7 @@ export async function sendSetupReminderAction(fd: FormData) {
   const { sendSetupReminderNow } = await import("@/lib/selbst-einrichtung");
   const res = await sendSetupReminderNow(customerId);
   refresh();
-  redirect(`/admin/kunden/${customerId}?einrichtung=${res.ok ? "erinnert" : encodeURIComponent(res.error)}`);
+  redirect(await adminZiel(`/admin/kunden/${customerId}?einrichtung=${res.ok ? "erinnert" : encodeURIComponent(res.error)}`));
 }
 
 /** Selbst-Einrichtung: Meta-Zugriff jetzt prüfen (mit den beim Kunden hinterlegten IDs). */
@@ -94,7 +98,7 @@ export async function adminCheckMetaAction(fd: FormData) {
   const { checkMetaAccess } = await import("@/lib/selbst-einrichtung");
   const res = await checkMetaAccess(customerId, {}, { source: "admin" });
   refresh();
-  redirect(`/admin/kunden/${customerId}?einrichtung=${res.ok ? (res.check.ok ? "meta-ok" : "meta-fehlt") : encodeURIComponent(res.error)}`);
+  redirect(await adminZiel(`/admin/kunden/${customerId}?einrichtung=${res.ok ? (res.check.ok ? "meta-ok" : "meta-fehlt") : encodeURIComponent(res.error)}`));
 }
 
 export async function resendWelcomeAction(fd: FormData) {
@@ -114,7 +118,7 @@ export async function adminPlanPauseAction(fd: FormData) {
   const until = String(fd.get("until") ?? "").trim();
   const res = await planPause(customerId, { from: String(fd.get("from") ?? ""), until: until || null, reason: String(fd.get("reason") ?? "") }, "admin");
   refresh(contactId);
-  if (!res.ok) redirect(`/admin/kunden/${customerId}/abrechnung?pause=${encodeURIComponent(res.error)}`);
+  if (!res.ok) redirect(await adminZiel(`/admin/kunden/${customerId}/abrechnung?pause=${encodeURIComponent(res.error)}`));
 }
 
 export async function adminEndPauseAction(fd: FormData) {

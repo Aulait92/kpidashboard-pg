@@ -22,7 +22,10 @@ async function adminCustomer(fd: FormData): Promise<string | null> {
   return String(fd.get("customerId") ?? "") || null;
 }
 
-const done = (customerId: string) => revalidatePath(`/admin/kunden/${customerId}/whatsapp`);
+const done = (customerId: string) => {
+  revalidatePath(`/admin/kunden/${customerId}/whatsapp`);
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
+};
 
 export async function adminConnectAllianzAction(_prev: SourceResult, fd: FormData): Promise<SourceResult> {
   const customerId = await adminCustomer(fd);

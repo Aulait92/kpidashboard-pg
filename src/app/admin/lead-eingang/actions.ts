@@ -65,6 +65,7 @@ export async function assignFormAction(fd: FormData) {
   const taken = await assignPendingLeads(formId);
   revalidatePath("/admin/lead-eingang");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   back(`Formular zugeordnet.${note}${taken ? ` ${taken} wartende Leads übernommen.` : ""}`);
 }
 
@@ -78,6 +79,7 @@ export async function toggleSourceAction(fd: FormData) {
   }
   revalidatePath("/admin/lead-eingang");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 export async function dismissUnassignedAction(fd: FormData) {
@@ -86,4 +88,5 @@ export async function dismissUnassignedAction(fd: FormData) {
   await prisma.unassignedLead.updateMany({ where: { formId: formId || null, resolvedAt: null }, data: { resolvedAt: new Date() } });
   revalidatePath("/admin/lead-eingang");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }

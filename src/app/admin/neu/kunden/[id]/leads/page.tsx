@@ -1,8 +1,44 @@
-import { Platzhalter } from "@/components/admin-neu/ui/platzhalter";
+import { Sparkles } from "lucide-react";
+import { ButtonLink, Card, CardHeader } from "@/components/ui";
+import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
+import { LeadQualitaetCard } from "@/components/admin/lead-qualitaet-card";
+import KundenLeads from "@/app/admin/kunden/[id]/leads/page";
+import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Kampagne & Leads | performancegrowth Admin" };
 
-// Platzhalter (wird gerade gebaut). Ersetzen durch die echte Seite: docs/ux/admin-neu/README.md
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <Platzhalter pfad="/admin/neu/kunden/[id]/leads" params={await params} />;
+// Kundenakte › Kampagne & Leads: Meta-Werbekonto, CAPI-Rückmeldung, Leadformulare und letzte Leads (derselbe Reiter wie
+// /admin/kunden/[id]/leads, Bausteine und Actions von dort), dazu „Kampagne mit KI“ als Einstieg und die Lead-Qualität
+// (früher in der Übersicht).
+export default async function KundeKampagneLeads({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const letzterLauf = await prisma.campaignRun.findFirst({ where: { customerId: id }, orderBy: { createdAt: "desc" }, select: { product: true, createdAt: true } });
+  return (
+    <KundenakteSeite id={id}>
+      <div className="space-y-5">
+        <div
+          data-funktion="meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen actions-togglesourceaction--leadformulare-des-kunden-an-aus page--letzte-leads-mit-abschluss-storno"
+        >
+          <KundenLeads params={Promise.resolve({ id })} />
+        </div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_3fr]">
+          <Card>
+            <CardHeader title="Kampagne mit KI" icon={Sparkles} />
+            <div className="space-y-3 px-5 py-4 text-sm">
+              <p className="text-[color:var(--muted)]">
+                Ein KI-Team erstellt Anzeigen, Texte und Formular und legt die Kampagne pausiert an.
+                {letzterLauf ? ` Zuletzt: ${letzterLauf.product}, ${letzterLauf.createdAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}.` : ""}
+              </p>
+              <ButtonLink href={`/admin/neu/kunden/${id}/kampagne`} variant="primary" size="md" icon={Sparkles}>
+                Kampagne erstellen
+              </ButtonLink>
+            </div>
+          </Card>
+          <div data-funktion="lead-qualitaet-card--lead-qualitaet-disqualifizierte-leads-nach-grund">
+            <LeadQualitaetCard customerId={id} />
+          </div>
+        </div>
+      </div>
+    </KundenakteSeite>
+  );
 }

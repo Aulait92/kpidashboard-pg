@@ -18,6 +18,7 @@ export function Seite({
   reiter,
   params,
   breit,
+  zeile,
   children,
 }: {
   titel: React.ReactNode;
@@ -34,6 +35,8 @@ export function Seite({
   params?: Record<string, string>;
   /** Volle Breite (Tabellen, Board), sonst max. 1240 px wie in der Demo */
   breit?: boolean;
+  /** Zeile unter dem Kopf, auch am Handy sichtbar (z. B. Status-Abzeichen einer Akte) */
+  zeile?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -57,6 +60,7 @@ export function Seite({
         </div>
         {aktionen ? <div className="flex shrink-0 flex-wrap items-center gap-2">{aktionen}</div> : null}
       </div>
+      {zeile ? <div className="-mt-2 mb-4">{zeile}</div> : null}
       {reiter ? <SubTabs tabs={reiterFuer(reiter, params)} /> : null}
       {children}
     </main>

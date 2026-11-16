@@ -152,8 +152,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "ruhend--push-an-admins-mit-sprungziel-kundenakte",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -164,8 +164,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "self-connect--push-an-admins-mit-sprungziel-whatsapp",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -1112,8 +1112,8 @@
   "demo_view": "kunde",
   "id": "onboarding-actions-toggleonboardingstepaction--onboarding-schritte-abhaken",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1124,8 +1124,8 @@
   "demo_view": "kunde",
   "id": "onboarding-actions-goliveaction--live-schalten-bzw-zuruecknehmen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1136,8 +1136,8 @@
   "demo_view": "kunde",
   "id": "onboarding-actions-resendwelcomeaction--willkommens-mail-erneut-senden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1148,8 +1148,8 @@
   "demo_view": "kunde",
   "id": "onboarding-card-impressum--pflichtangaben-aus-dem-impressum-erstinformation",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1688,8 +1688,8 @@
   "demo_view": "kunden",
   "id": "page-redirect--weiterleitung-auf-kunden-pipeline-keine-eigene",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
  },
  {
   "heute": "/admin/kunden",
@@ -1700,8 +1700,8 @@
   "demo_view": "kunden",
   "id": "page--kundenliste-mit-status-test-zahlung-offen-pause",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
  },
  {
   "heute": "/admin/kunden",
@@ -1712,8 +1712,8 @@
   "demo_view": "kunden",
   "id": "page-filters--filter-alle-zahlung-offen-onboarding-pausiert",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
  },
  {
   "heute": "/admin/kunden",
@@ -1724,8 +1724,8 @@
   "demo_view": "kunden",
   "id": "kunden-tabs--unterreiter-uebersicht-pipeline-leads-pay-per",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
  },
  {
   "heute": "/admin/kunden/pipeline",
@@ -1736,8 +1736,8 @@
   "demo_view": "kunde",
   "id": "actions-dragcustomer--kunden-pipeline-vertrag-onboarding-test-aktiv",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx, src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/pipeline",
@@ -1748,8 +1748,8 @@
   "demo_view": "kunde",
   "id": "actions-movecustomer--kunde-eine-stufe-vor-oder-zurueck",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/pipeline",
@@ -1772,8 +1772,8 @@
   "demo_view": "kunde",
   "id": "layout--kopf-mit-stufe-onboarding-whatsapp-an-aus",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1784,8 +1784,8 @@
   "demo_view": "kunde",
   "id": "layout-referred--hinweis-hat-x-kunden-geworben-link-empfehlungen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1796,8 +1796,8 @@
   "demo_view": "kunde",
   "id": "layout-absentusers--abwesenheiten-der-berater-mit-vertretung",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1808,8 +1808,8 @@
   "demo_view": "kunde",
   "id": "test-actions-deletetestcustomeraction--testkunde-komplett-loeschen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1820,8 +1820,8 @@
   "demo_view": "kunde",
   "id": "layout-subtabs--reiter-der-kundenakte",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1832,8 +1832,8 @@
   "demo_view": "kunde",
   "id": "module-actions-togglenewuiaction--neue-oberflaeche-fuer-kunden-an-aus",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1844,8 +1844,8 @@
   "demo_view": "kunde",
   "id": "module-actions-setvermittlertypaction--vermittlertyp-setzen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1856,8 +1856,8 @@
   "demo_view": "kunde",
   "id": "storno-quote-stornoquotekunde--stornoquote-der-vertraege-des-kunden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1868,8 +1868,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "garantien-card--garantien-stand-und-faelle",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1880,8 +1880,8 @@
   "demo_view": "kunde",
   "id": "actions-marktestcustomeraction--als-testkunde-markieren",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1892,8 +1892,8 @@
   "demo_view": "kunde",
   "id": "actions-seeddemoaction--testdaten-anlegen-bzw-entfernen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1904,8 +1904,8 @@
   "demo_view": "kunde",
   "id": "onboarding-actions-opensetupaction--selbst-einrichtung-freischalten",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1916,8 +1916,8 @@
   "demo_view": "kunde",
   "id": "setup-card--einrichtungsschritte-ansehen-einwilligung",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1928,8 +1928,8 @@
   "demo_view": "kunde",
   "id": "onboarding-actions-sendsetupreminderaction--erinnerung-zur-einrichtung-senden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1940,8 +1940,8 @@
   "demo_view": "kunde",
   "id": "onboarding-actions-admincheckmetaaction--meta-zugriff-pruefen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1952,8 +1952,8 @@
   "demo_view": "kunde",
   "id": "onboarding-actions-restartsetupaction--einrichtung-neu-starten",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1964,8 +1964,8 @@
   "demo_view": "kunde-leads",
   "id": "lead-qualitaet-card--lead-qualitaet-disqualifizierte-leads-nach-grund",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1976,8 +1976,8 @@
   "demo_view": "kunde-team",
   "id": "naechster-schritt-card--naechster-schritt-je-berater-quote-ohne-schritt",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1988,8 +1988,8 @@
   "demo_view": "kunde",
   "id": "page-contactpage-embedded--eingebettete-kontaktakte-verlauf-aufgaben",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kontakt/page.tsx, src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -2000,8 +2000,8 @@
   "demo_view": "kunde",
   "id": "page-grunddaten--grunddaten-region-betreuungsgebuehr-meta",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2012,8 +2012,8 @@
   "demo_view": "kunde-leads",
   "id": "meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2024,8 +2024,8 @@
   "demo_view": "kunde-leads",
   "id": "capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2036,8 +2036,8 @@
   "demo_view": "kunde-leads",
   "id": "actions-togglesourceaction--leadformulare-des-kunden-an-aus",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -2048,8 +2048,8 @@
   "demo_view": "kunde-leads",
   "id": "page--letzte-leads-mit-abschluss-storno",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/leads/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2060,8 +2060,8 @@
   "demo_view": "leads-ki",
   "id": "actions-startrunaction--ki-kampagne-starten-produkt-zusatzwunsch-seiten",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kampagne/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2072,8 +2072,8 @@
   "demo_view": "leads-ki",
   "id": "actions-getrunaction--fortschritt-abrufen-plan-anzeigen-sofortformular",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kampagne/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2084,8 +2084,8 @@
   "demo_view": "leads-ki",
   "id": "actions-updatecopyaction--anzeigentext-bearbeiten",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kampagne/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2096,8 +2096,8 @@
   "demo_view": "leads-ki",
   "id": "actions-regenerateimageaction--bild-neu-erzeugen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kampagne/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2108,8 +2108,8 @@
   "demo_view": "leads-ki",
   "id": "actions-buildrunaction--kampagne-bei-meta-anlegen-pausiert",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kampagne/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2120,8 +2120,8 @@
   "demo_view": "leads-ki",
   "id": "actions-cleanuprunaction--angelegte-kampagne-bei-meta-loeschen-formular",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kampagne/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -2132,8 +2132,8 @@
   "demo_view": "leads-ki",
   "id": "page--verlauf-der-laeufe",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/kampagne/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/optimierung",
@@ -2144,8 +2144,8 @@
   "demo_view": "kunde-optimierung",
   "id": "account-view-protocolcard--protokoll-der-massnahmen-des-kunden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/optimierung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/optimierung",
@@ -2156,8 +2156,8 @@
   "demo_view": "kunde-optimierung",
   "id": "actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/optimierung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2168,8 +2168,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "d360-actions-d360assignaction--360dialog-nummer-zuordnen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2180,8 +2180,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "d360-actions-d360resetaction--halb-fertige-whatsapp-verbindung-zuruecksetzen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2192,8 +2192,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "calendar-actions-adminconnectallianzaction--allianz-online-kalender-verbinden-aendern",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2204,8 +2204,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "calendar-actions-adminsaveleadtimesaction--buchbare-zeiten-fuer-leads-speichern",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2216,8 +2216,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "calendar-actions-adminaddblockaction--zeit-blockieren-und-blocker-loeschen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2228,8 +2228,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "whatsapp-fees-card--meta-gebuehren-intern",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -2240,8 +2240,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "page-bestandmodulecard--bestandskunden-kampagnen-hinweis-link-abrechnung",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2252,8 +2252,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-addcustomeraction--kunde-fuer-den-assistenten-hinzufuegen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2264,8 +2264,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-connectwhatsappaction--whatsapp-nummer-von-hand-verbinden-nummer-api",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2276,8 +2276,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-setagentactiveaction--assistent-aktiv-an-aus",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2288,8 +2288,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-saveagentsettingsaction--neue-leads-automatisch-anschreiben-nach-x",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2300,8 +2300,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-setfollowupsequencesaction--automatisch-nachfassen-abfolgen-an-aus",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2312,8 +2312,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-saveagentsettingsaction--berater-e-mail-fuer-einladungen-videoraum",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2324,8 +2324,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "calendar-card-calendarcard--buchungskalender-google-microsoft-verbinden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2336,8 +2336,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "controls-templateautostatus--vorlagen-des-kunden-ansehen-status-bei-meta",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2348,8 +2348,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-savetemplateresultaction--vorlage-anlegen-bearbeiten-mit-zweck",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2360,8 +2360,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-deletetemplateaction--vorlage-loeschen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2372,8 +2372,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-submittemplatesaction--vorlagen-bei-meta-einreichen-bzw-einzeln-neu",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2384,8 +2384,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-settemplateapprovedaction--vorlage-von-hand-als-freigegeben-markieren",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2396,8 +2396,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-saveoutreachsettingsaction--erstanschreiben-einstellungen-alt-ohne",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
@@ -2432,8 +2432,8 @@
   "demo_view": "kunden",
   "id": "page--uebersicht-aller-kunden-mit-assistent-liste",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2444,8 +2444,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "page--hinweis-zahlung-offen-seit",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2456,8 +2456,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "lebenszyklus-card--kuendigung-rueckkehr-ruht-seit-reaktiviert",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2468,8 +2468,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "retainer-actions-saveretaineraction--betreuungsgebuehr-eintragen-aendern-entfernen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2480,8 +2480,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "retainer-card--kuendigungsabsichten-und-angebotene",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2492,8 +2492,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "budget-actions-decidebudgetaction--budgetaenderung-des-kunden-uebernehmen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2504,8 +2504,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "budget-actions-decidebudgetaction--budgetaenderung-ablehnen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2516,8 +2516,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "produkt-actions-decideproductaction--produktbuchung-des-kunden-annehmen-oder-ablehnen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2528,8 +2528,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "addon-actions-saveseatsaction--aktive-verkaeufer-speichern-und-mit-stripe",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2540,8 +2540,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "addon-actions-bestandmoduleaction--bestandskunden-modul-freischalten-kostenlos",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2552,8 +2552,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "addon-actions-savequotaaction--kontingent-bestandskunden-speichern-zusatzpakete",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2564,8 +2564,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "addon-actions-empfehlungmoduleaction--modul-empfehlungen-bewertungen-freischalten-oder",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2576,8 +2576,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "addon-actions-billingintervalaction--zahlweise-monatlich-jaehrlich-umstellen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2588,8 +2588,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "onboarding-actions-adminplanpauseaction--pause-urlaub-eintragen-ab-neustart-grund",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2600,8 +2600,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "onboarding-actions-adminendpauseaction--pause-beenden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2612,8 +2612,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "erase-actions-erasecustomerdataaction--kundendaten-endgueltig-loeschen-mit-grund",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2624,8 +2624,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "page-invoices--rechnungen-mit-status-und-pdf",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -2636,8 +2636,8 @@
   "demo_view": "kunde-abrechnung",
   "id": "page--in-stripe-oeffnen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2648,8 +2648,8 @@
   "demo_view": "kunde-team",
   "id": "login-list--logins-des-kunden-mit-einladung-offen-zuletzt",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2660,8 +2660,8 @@
   "demo_view": "kunde-team",
   "id": "actions-createbuyeraccount--neuen-login-anlegen-e-mail-passwort-kunde",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2672,8 +2672,8 @@
   "demo_view": "kunde-team",
   "id": "actions-resetbuyerpassword--passwort-setzen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2684,8 +2684,8 @@
   "demo_view": "kunde-team",
   "id": "actions-changebuyeremail--e-mail-adresse-aendern",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2696,8 +2696,8 @@
   "demo_view": "kunde-team",
   "id": "actions-deletebuyeraccount--login-loeschen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2708,8 +2708,8 @@
   "demo_view": "kunde-team",
   "id": "actions-sendbuyeraccesslink--einladung-erneut-senden-bzw-link-zum-passwort",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2720,8 +2720,8 @@
   "demo_view": "kunde-team",
   "id": "actions-reassignbuyercustomer--login-einem-anderen-kunden-zuordnen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/team/page.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2732,8 +2732,8 @@
   "demo_view": "kunde",
   "id": "preview-actions-startpreviewaction--als-kunde-ansehen-nur-lesend",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/kunden/akte.tsx"
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -2756,8 +2756,8 @@
   "demo_view": "kunden-berichte",
   "id": "page--monatsuebersicht-aller-berichte-mit-monat-vor",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/berichte/page.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -2768,8 +2768,8 @@
   "demo_view": "kunden-berichte",
   "id": "actions-generatenowaction--berichte-jetzt-erzeugen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/berichte/page.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -2780,8 +2780,8 @@
   "demo_view": "kunde-berichte",
   "id": "page--bericht-ansehen-mit-vorschau-und-pruefbefunden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/berichte/page.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -2792,8 +2792,8 @@
   "demo_view": "kunde-berichte",
   "id": "actions-sendreportaction--bericht-senden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/berichte/page.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -2804,8 +2804,8 @@
   "demo_view": "kunde-berichte",
   "id": "actions-sendreportaction--bericht-bearbeiten-betreff-einstieg-und-senden",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/berichte/page.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -2816,8 +2816,8 @@
   "demo_view": "kunde-berichte",
   "id": "actions-callinsteadaction--anrufen-statt-mail",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/berichte/page.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -2828,8 +2828,8 @@
   "demo_view": "kunde-berichte",
   "id": "actions-skipreportaction--diesen-monat-aussetzen",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/berichte/page.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -2840,8 +2840,8 @@
   "demo_view": "kunde-berichte",
   "id": "actions-togglecustomerreportsaction--monatsberichte-fuer-diesen-kunden-an-aus",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/berichte/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -3476,8 +3476,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "page-gcal--rueckmeldung-kalender-verbunden-abgelehnt",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -4196,8 +4196,8 @@
   "demo_view": "kunden",
   "id": "page--ruhende-konten-mit-loeschdatum-aufbewahrung",
   "bereich": "kunden",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
  },
  {
   "heute": "/admin/zahlen/stornoquote",

@@ -16,6 +16,7 @@ async function actor() {
 const done = (id?: string) => {
   revalidatePath("/admin/monatsberichte");
   if (id) revalidatePath(`/admin/monatsberichte/${id}`);
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 };
 
 /** „So senden“ bzw. „Bearbeiten und senden“ (mit geänderten Absätzen). */

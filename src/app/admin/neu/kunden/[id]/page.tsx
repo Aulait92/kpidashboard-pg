@@ -1,8 +1,224 @@
-import { Platzhalter } from "@/components/admin-neu/ui/platzhalter";
+import Link from "next/link";
+import { connection } from "next/server";
+import { notFound } from "next/navigation";
+import { ArrowRight } from "lucide-react";
+import { Card, CardHeader } from "@/components/ui";
+import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
+import { Kennzahlen, LeadsJeTag } from "@/components/admin-neu/kunden/kennzahlen";
+import { Aufklapp } from "@/components/admin-neu/kunden/aufklapp";
+import { OnboardingCard } from "@/components/vertrieb/onboarding-card";
+import { SetupCard } from "@/components/admin/setup-card";
+import { NewUiCard } from "@/components/admin/new-ui-card";
+import { VermittlerCard } from "@/components/admin/vermittler-card";
+import { StornoQuoteKunde } from "@/components/admin/storno-quote";
+import { TestdatenCard } from "@/components/admin/testdaten-card";
+import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
+import { prisma } from "@/lib/prisma";
+import { ACTIVITY_LABEL } from "@/lib/vertrieb/crm";
+import { fmtDate } from "@/lib/vertrieb/dates";
+import type { ImpressumInfo } from "@/lib/impressum";
 
 export const metadata = { title: "Kunde | performancegrowth Admin" };
 
-// Platzhalter (wird gerade gebaut). Ersetzen durch die echte Seite: docs/ux/admin-neu/README.md
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <Platzhalter pfad="/admin/neu/kunden/[id]" params={await params} />;
+const TYP_LABEL: Record<string, string> = { vertreter: "Vertreter", mehrfachvertreter: "Mehrfachvertreter", makler: "Makler" };
+const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
+// Kundenakte › Übersicht: kompakt. Oben Kennzahlen, dann Einrichtung (offen nur, solange sie läuft), Verlauf mit
+// Sprung in die ganze Kontaktakte, Grunddaten und die seltenen Einstellungen zugeklappt. Früher bettete die Übersicht
+// die ganze Kontaktseite ein (am Handy rund 2.700 px); die liegt jetzt unter „Ganze Kontaktakte“ (./kontakt).
+// Lead-Qualität → Kampagne & Leads, Nächster Schritt je Berater → Team & Logins, Garantien → Abrechnung & Pause.
+export default async function KundeUebersicht({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ einrichtung?: string }> }) {
+  await connection();
+  const { id } = await params;
+  const { einrichtung: notice } = await searchParams;
+  const c = await prisma.customer.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      region: true,
+      retainerMonthly: true,
+      retainerStart: true,
+      metaAdAccountId: true,
+      vermittlerTyp: true,
+      newUi: true,
+      stornoQuote: true,
+      salesContact: {
+        select: {
+          id: true,
+          phone: true,
+          email: true,
+          offers: { select: { id: true, paymentStatus: true, paidAt: true, isTest: true } },
+          activities: { orderBy: { occurredAt: "desc" }, take: 4, select: { id: true, type: true, note: true, outcome: true, occurredAt: true } },
+          tasks: { where: { doneAt: null }, orderBy: { dueAt: "asc" }, take: 2, select: { id: true, title: true, dueAt: true } },
+          _count: { select: { activities: true, tasks: { where: { doneAt: null } } } },
+        },
+      },
+    },
+  });
+  if (!c) notFound();
+  const onboarding = await loadOnboarding({ customerId: id });
+  const live = !onboarding || !!onboarding.liveAt;
+  const contact = c.salesContact;
+  const obOffer = onboarding?.offerId ? (contact?.offers.find((o) => o.id === onboarding.offerId) ?? null) : null;
+
+  const einstellungen = [
+    TYP_LABEL[c.vermittlerTyp] ?? c.vermittlerTyp,
+    `neue Oberfläche ${c.newUi ? "an" : "aus"}`,
+    `Stornoquote ${c.stornoQuote != null ? `${(Math.round(Number(c.stornoQuote) * 1000) / 10).toLocaleString("de-DE")} %` : "Standard"}`,
+    "Testdaten",
+  ].join(" · ");
+
+  const einrichtung = (
+    <div className="space-y-4">
+      <div
+        data-funktion="setup-card--einrichtungsschritte-ansehen-einwilligung onboarding-actions-opensetupaction--selbst-einrichtung-freischalten onboarding-actions-sendsetupreminderaction--erinnerung-zur-einrichtung-senden onboarding-actions-admincheckmetaaction--meta-zugriff-pruefen onboarding-actions-restartsetupaction--einrichtung-neu-starten onboarding-actions-toggleonboardingstepaction--onboarding-schritte-abhaken"
+      >
+        <SetupCard customerId={id} notice={notice} />
+      </div>
+      {onboarding ? (
+        <div
+          data-funktion="onboarding-actions-goliveaction--live-schalten-bzw-zuruecknehmen onboarding-actions-resendwelcomeaction--willkommens-mail-erneut-senden onboarding-card-impressum--pflichtangaben-aus-dem-impressum-erstinformation"
+        >
+          <OnboardingCard
+            onboarding={onboarding}
+            items={onboardingChecklist(onboarding, obOffer)}
+            customerName={onboarding.customer.name}
+            loginEmail={onboarding.customer.users[0]?.email ?? null}
+            feedback={await prisma.customerFeedback.findMany({ where: { customerId: id }, orderBy: { sentAt: "asc" } })}
+            websiteInfo={(onboarding.websiteInfo ?? null) as ImpressumInfo | null}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+
+  return (
+    <KundenakteSeite id={id}>
+      <div className="space-y-5">
+        <Kennzahlen customerId={id} />
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="min-w-0 space-y-5">
+            {/* Einrichtung: offen, solange sie läuft (oder eine Rückmeldung da ist), danach zugeklappt */}
+            {live && !notice ? (
+              <Aufklapp titel="Einrichtung" zusammenfassung={onboarding?.liveAt ? `live seit ${fmtDate(onboarding.liveAt)}` : "Selbst-Einrichtung, Onboarding"}>
+                {einrichtung}
+              </Aufklapp>
+            ) : (
+              einrichtung
+            )}
+            <LeadsJeTag customerId={id} />
+          </div>
+
+          <div className="min-w-0 space-y-5">
+            <Card>
+              <div data-funktion="page-contactpage-embedded--eingebettete-kontaktakte-verlauf-aufgaben">
+                <CardHeader
+                  title="Verlauf"
+                  count={contact?._count.activities}
+                  actions={
+                    contact ? (
+                      <Link href={`/admin/neu/kunden/${id}/kontakt`} className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-[color:var(--brand)] hover:underline">
+                        Ganze Kontaktakte <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    ) : null
+                  }
+                />
+                {contact ? (
+                  <ul className="divide-y divide-[color:var(--border)] text-sm">
+                    {contact.tasks.map((t) => (
+                      <li key={t.id} className="flex items-baseline gap-3 px-5 py-2.5">
+                        <span className="min-w-0 flex-1 truncate font-medium">{t.title}</span>
+                        <span className="shrink-0 text-xs text-[color:var(--muted)]">Aufgabe · {fmtDate(t.dueAt)}</span>
+                      </li>
+                    ))}
+                    {contact.activities.map((a) => (
+                      <li key={a.id} className="px-5 py-2.5">
+                        <div className="flex items-baseline gap-3">
+                          <span className="min-w-0 flex-1 truncate font-medium">{ACTIVITY_LABEL[a.type]}{a.outcome ? ` · ${a.outcome}` : ""}</span>
+                          <span className="shrink-0 text-xs text-[color:var(--muted)]">{fmtDate(a.occurredAt)}</span>
+                        </div>
+                        {a.note ? <p className="mt-0.5 line-clamp-2 text-xs text-[color:var(--muted)]">{a.note}</p> : null}
+                      </li>
+                    ))}
+                    {!contact.tasks.length && !contact.activities.length ? (
+                      <li className="px-5 py-4 text-[color:var(--muted)]">
+                        Noch kein Eintrag.{" "}
+                        <Link href={`/admin/neu/kunden/${id}/kontakt`} className="font-medium text-[color:var(--brand)] hover:underline">
+                          Notiz oder Aufgabe anlegen
+                        </Link>
+                      </li>
+                    ) : null}
+                  </ul>
+                ) : (
+                  <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Kein Vertriebskontakt verknüpft (Kunde aus Airtable).</p>
+                )}
+              </div>
+            </Card>
+
+            <Card>
+              <div data-funktion="page-grunddaten--grunddaten-region-betreuungsgebuehr-meta">
+                <CardHeader title="Grunddaten" />
+                <dl className="grid grid-cols-[minmax(0,130px)_minmax(0,1fr)] gap-x-3 gap-y-1.5 px-5 py-4 text-sm">
+                  <dt className="text-[color:var(--muted)]">Name</dt>
+                  <dd className="break-words">{c.name}</dd>
+                  {contact?.phone ? (
+                    <>
+                      <dt className="text-[color:var(--muted)]">Telefon</dt>
+                      <dd>
+                        <a href={`tel:${contact.phone}`} className="text-[color:var(--brand)] hover:underline">
+                          {contact.phone}
+                        </a>
+                      </dd>
+                    </>
+                  ) : null}
+                  {contact?.email ? (
+                    <>
+                      <dt className="text-[color:var(--muted)]">E-Mail</dt>
+                      <dd className="break-all">
+                        <a href={`mailto:${contact.email}`} className="text-[color:var(--brand)] hover:underline">
+                          {contact.email}
+                        </a>
+                      </dd>
+                    </>
+                  ) : null}
+                  {c.region ? (
+                    <>
+                      <dt className="text-[color:var(--muted)]">Region</dt>
+                      <dd>{c.region}</dd>
+                    </>
+                  ) : null}
+                  <dt className="text-[color:var(--muted)]">Betreuungsgebühr</dt>
+                  <dd>
+                    {c.retainerMonthly ? `${eur(Number(c.retainerMonthly))} / Monat${c.retainerStart ? ` seit ${fmtDate(c.retainerStart)}` : ""}` : "keine"}
+                  </dd>
+                  <dt className="text-[color:var(--muted)]">Meta-Werbekonto</dt>
+                  <dd className="break-all">{c.metaAdAccountId ? `act_${c.metaAdAccountId}` : "nicht hinterlegt"}</dd>
+                </dl>
+              </div>
+            </Card>
+
+            <Aufklapp titel="Einstellungen dieses Kunden" zusammenfassung={einstellungen}>
+              <div className="space-y-3">
+                <div data-funktion="module-actions-togglenewuiaction--neue-oberflaeche-fuer-kunden-an-aus">
+                  <NewUiCard customerId={id} />
+                </div>
+                <div data-funktion="module-actions-setvermittlertypaction--vermittlertyp-setzen">
+                  <VermittlerCard customerId={id} />
+                </div>
+                <div data-funktion="storno-quote-stornoquotekunde--stornoquote-der-vertraege-des-kunden">
+                  <StornoQuoteKunde customerId={id} />
+                </div>
+                <div data-funktion="actions-marktestcustomeraction--als-testkunde-markieren actions-seeddemoaction--testdaten-anlegen-bzw-entfernen">
+                  <TestdatenCard customerId={id} />
+                </div>
+              </div>
+            </Aufklapp>
+          </div>
+        </div>
+      </div>
+    </KundenakteSeite>
+  );
 }
+

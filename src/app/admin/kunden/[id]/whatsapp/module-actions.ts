@@ -16,6 +16,7 @@ export async function toggleNewUiAction(fd: FormData): Promise<void> {
   await audit("customer.new_ui", { entity: "Customer", entityId: id, customerId: id, details: { enabled: !c.newUi } });
   revalidatePath(`/admin/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 /** Vermittlertyp (Vertreter/Makler) – bestimmt die Standard-Provisionssätze. */
@@ -31,4 +32,5 @@ export async function setVermittlerTypAction(fd: FormData): Promise<void> {
   await audit("customer.provision", { entity: "Customer", entityId: id, customerId: id, details: { typ, durch: "admin" } });
   revalidatePath(`/admin/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }

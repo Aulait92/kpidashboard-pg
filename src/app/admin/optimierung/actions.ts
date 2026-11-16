@@ -35,6 +35,7 @@ const refresh = (accountId?: string | null, customerId?: string | null) => {
   revalidatePath("/admin/optimierung");
   if (accountId) revalidatePath(`/admin/optimierung/${accountId}`);
   if (customerId) revalidatePath(`/admin/kunden/${customerId}/optimierung`);
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 };
 
 /** Global: Lauf an/aus, Autopilot für alle Konten ohne eigene Einstellung. */

@@ -5,6 +5,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { getCurrentSession } from "@/lib/auth";
 import { acceptProductRequest, rejectProduct, startProduct } from "@/lib/produkt-buchen";
 
@@ -23,7 +24,8 @@ export async function decideProductAction(fd: FormData): Promise<void> {
         ? await acceptProductRequest(bookingId, note, actor)
         : await rejectProduct(bookingId, note, actor);
   revalidatePath(`/admin/kunden/${customerId}`, "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   const done = decision === "start" ? "Produkt gestartet, Kunde informiert." : decision === "accept" ? "Anfrage übernommen, Kunde informiert." : "Buchung abgelehnt, Kunde informiert.";
   const msg = r.ok ? (r.note ? `${done} ${r.note}` : done) : r.error;
-  redirect(`/admin/kunden/${customerId}/abrechnung?produkt=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`);
+  redirect(await adminZiel(`/admin/kunden/${customerId}/abrechnung?produkt=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
 }
