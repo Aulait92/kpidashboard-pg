@@ -71,7 +71,7 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
                     href={f.key ? `/admin/heute?bereich=${f.key}` : "/admin/heute"}
                     aria-current={active ? "true" : undefined}
                     className={cn(
-                      "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition",
+                      "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition",
                       active
                         ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white"
                         : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]",

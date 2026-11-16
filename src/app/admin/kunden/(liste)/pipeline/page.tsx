@@ -1,3 +1,4 @@
+import { Clock } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 import { connection } from "next/server";
@@ -70,7 +71,7 @@ export default async function KundenPage() {
           )}
           {task && (
             <div className={clsx("mt-2 text-xs", dayKey(task.dueAt) < todayKey() ? "text-rose-600" : dayKey(task.dueAt) === todayKey() ? "text-amber-700" : "text-slate-500")}>
-              ⏰ {task.title} · {relDay(task.dueAt)}
+              <Clock className="mr-1 inline h-3 w-3 align-[-2px]" />{task.title} · {relDay(task.dueAt)}
             </div>
           )}
           {/* Pfeile als Alternative zu Drag & Drop (z.B. auf dem Handy) */}

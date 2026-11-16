@@ -56,7 +56,7 @@ function Count({ n }: { n: number }) {
 
 function Logo({ withName }: { withName?: boolean }) {
   return (
-    <Link href="/admin/heute" className="flex items-center gap-2" aria-label="Zur Startseite">
+    <Link href="/admin/heute" className="-m-1.5 flex min-h-10 min-w-10 items-center gap-2 p-1.5" aria-label="Zur Startseite">
       <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
         <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
       </span>

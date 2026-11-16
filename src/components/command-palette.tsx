@@ -58,7 +58,7 @@ export function CommandPalette() {
         ref={button}
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm text-[color:var(--muted)] transition hover:border-[color:var(--border-strong)]"
+        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm text-[color:var(--muted)] transition hover:border-[color:var(--border-strong)]"
       >
         <Search className="h-4 w-4" />
         <span className="hidden md:inline">Suchen</span>

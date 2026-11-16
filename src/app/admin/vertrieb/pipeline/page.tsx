@@ -1,3 +1,4 @@
+import { Clock } from "lucide-react";
 import { connection } from "next/server";
 import Link from "next/link";
 import clsx from "clsx";
@@ -73,7 +74,7 @@ export default async function PipelinePage() {
           </div>
           {task && (
             <div className={clsx("mt-2 text-xs", dayKey(task.dueAt) < todayKey() ? "text-rose-600" : dayKey(task.dueAt) === todayKey() ? "text-amber-700" : "text-slate-500")}>
-              ⏰ {task.title} · {relDay(task.dueAt)}
+              <Clock className="mr-1 inline h-3 w-3 align-[-2px]" />{task.title} · {relDay(task.dueAt)}
             </div>
           )}
         </div>

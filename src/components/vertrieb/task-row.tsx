@@ -60,12 +60,17 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
           setDoneLocal((v) => !v);
           run(() => toggleTask(fd({ id: t.id })));
         }}
-        className={clsx(
-          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition",
-          doneLocal ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 hover:border-emerald-600",
-        )}
+        // Kreis bleibt 24 px, die Tippfläche ist 40 px (Handy)
+        className="group -m-2 flex h-10 w-10 shrink-0 items-center justify-center"
       >
-        {doneLocal ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+        <span
+          className={clsx(
+            "flex h-6 w-6 items-center justify-center rounded-full border-2 transition",
+            doneLocal ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 group-hover:border-emerald-600",
+          )}
+        >
+          {doneLocal ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+        </span>
       </button>
       <div className="min-w-0 flex-1">
         {(() => {
@@ -118,7 +123,7 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
                   });
                 }}
                 className={clsx(
-                  "rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                  "relative rounded-full border px-2.5 py-0.5 text-xs font-medium after:absolute after:-inset-y-2 after:inset-x-0 after:content-['']",
                   c.outcome === "gewonnen"
                     ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
                     : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-white",
@@ -130,12 +135,12 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
           </div>
         ) : null}
         {!doneLocal ? (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-3">
             <button
               type="button"
               disabled={pending}
               onClick={() => run(() => snoozeTask(fd({ id: t.id, days: "1" })))}
-              className="rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:bg-white"
+              className="relative rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600 after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] hover:border-slate-300 hover:bg-white"
             >
               +1 Tag
             </button>
@@ -143,14 +148,14 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
               type="button"
               disabled={pending}
               onClick={() => run(() => snoozeTask(fd({ id: t.id, days: "7" })))}
-              className="rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:bg-white"
+              className="relative rounded-full border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600 after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] hover:border-slate-300 hover:bg-white"
             >
               +1 Woche
             </button>
           </div>
         ) : null}
       </div>
-      <button type="button" onClick={() => setOpen(true)} aria-label="Weitere Aktionen" title="Weitere Aktionen" className="-mr-1 mt-0.5 shrink-0 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+      <button type="button" onClick={() => setOpen(true)} aria-label="Weitere Aktionen" title="Weitere Aktionen" className="-mr-3 -mt-2 shrink-0 rounded-md p-3 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
         <MoreHorizontal className="h-4 w-4" />
       </button>
       <ActionSheet open={open} onClose={() => setOpen(false)} title={t.title} message={t.contact ? shortName(t.contact.name) : undefined} actions={actions} />

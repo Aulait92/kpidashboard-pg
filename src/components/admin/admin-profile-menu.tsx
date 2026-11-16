@@ -55,7 +55,7 @@ export function AdminProfileMenu({ email, variant = "header" }: { email: string;
           aria-expanded={open}
           aria-label="Profil"
           title="Profil"
-          className="flex items-center gap-1 rounded-full py-1 pl-1 pr-1.5 text-sm transition hover:bg-[color:var(--surface-sunken)]"
+          className="flex min-h-10 items-center gap-1 rounded-full py-1 pl-1 pr-1.5 text-sm transition hover:bg-[color:var(--surface-sunken)]"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">{initials}</span>
           <ChevronDown className="h-4 w-4 text-[color:var(--muted)]" />

@@ -56,7 +56,7 @@ export default async function VertriebUebersichtPage() {
         <section className="card">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <h2 className="font-medium">Heute zu erledigen</h2>
-            <Link href="/admin/vertrieb/aufgaben" className="text-sm text-sky-700 hover:underline">Alle Aufgaben →</Link>
+            <Link href="/admin/vertrieb/aufgaben" className="-my-2 inline-flex min-h-10 items-center text-sm text-sky-700 hover:underline">Alle Aufgaben →</Link>
           </div>
           {tasks.length ? (
             <ul className="divide-y divide-slate-100">{tasks.slice(0, 30).map((t) => <TaskRow key={t.id} t={t} />)}</ul>
@@ -75,7 +75,7 @@ export default async function VertriebUebersichtPage() {
             <ul className="space-y-2 text-sm">
               {meetings.map((m) => (
                 <li key={m.id}>
-                  <Link href={`/admin/vertrieb/kontakte/${m.contact.id}`} className="block rounded-lg px-2 py-1 hover:bg-slate-50">
+                  <Link href={`/admin/vertrieb/kontakte/${m.contact.id}`} className="block rounded-lg px-2 py-2 hover:bg-slate-50">
                     <span className="font-medium">{fmtDateTime(m.startAt)}</span> · {shortName(m.contact.name)}
                     <span className="block text-xs text-slate-500">{m.title}{m.contact.city ? ` · ${m.contact.city}` : ""}</span>
                   </Link>
@@ -92,7 +92,7 @@ export default async function VertriebUebersichtPage() {
             <ul className="space-y-2 text-sm">
               {leads.map((l) => (
                 <li key={l.id}>
-                  <Link href={l.contact ? `/admin/vertrieb/kontakte/${l.contact.id}` : "/admin/vertrieb/import"} className="block rounded-lg px-2 py-1 hover:bg-slate-50">
+                  <Link href={l.contact ? `/admin/vertrieb/kontakte/${l.contact.id}` : "/admin/vertrieb/import"} className="block rounded-lg px-2 py-2 hover:bg-slate-50">
                     <span className="font-medium">{l.contact ? shortName(l.contact.name) : l.name ?? l.email}</span>
                     <span className="block text-xs text-slate-500">
                       {fmtDateTime(l.createdAt)} · {SOURCE_LABEL[l.source] ?? l.source}{l.campaign ? ` · ${l.campaign}` : ""}
@@ -105,10 +105,10 @@ export default async function VertriebUebersichtPage() {
         )}
         <section className="card p-4">
           <h2 className="mb-3 font-medium">Pipeline</h2>
-          <ul className="space-y-1.5">
+          <ul className="space-y-0.5">
             {STAGES.map((s) => (
               <li key={s.id}>
-                <Link href={`/admin/vertrieb/kontakte?stage=${s.id}`} className="flex items-center justify-between rounded-lg px-2 py-1 hover:bg-slate-50">
+                <Link href={`/admin/vertrieb/kontakte?stage=${s.id}`} className="flex min-h-10 items-center justify-between rounded-lg px-2 hover:bg-slate-50">
                   <span className={`badge ${s.color}`}>{s.label}</span>
                   <span className="tabular-nums text-sm">{count(s.id).toLocaleString("de-DE")}</span>
                 </Link>

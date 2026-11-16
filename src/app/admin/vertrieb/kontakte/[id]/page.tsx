@@ -8,7 +8,7 @@ import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
 import { ContactEmails, DuplicateHint } from "@/components/vertrieb/contact-merge";
 import { likelyDuplicates } from "@/lib/vertrieb/contact-merge";
-import { ArrowLeft, Mail, Phone, Presentation } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Presentation, Trash2 } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
 import { TaskForm } from "@/components/vertrieb/task-form";
@@ -241,7 +241,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                               <input type="hidden" name="id" value={e.id} />
                               <input type="hidden" name="sentiment" value={x} />
                               <button className="btn-ghost px-2 py-0.5 text-xs">
-                                {x === "POSITIV" ? "👍 positiv" : x === "NEGATIV" ? "👎 negativ" : x === "AUTO" ? "🤖 automatische Antwort" : x === "SPAETER" ? "⏰ später (Follow-up)" : "neutral"}
+                                {x === "POSITIV" ? "positiv" : x === "NEGATIV" ? "negativ" : x === "AUTO" ? "automatische Antwort" : x === "SPAETER" ? "später (Follow-up)" : "neutral"}
                               </button>
                             </form>
                           ))}
@@ -296,7 +296,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                       <div className="flex justify-between gap-2 sm:col-span-4">
                         <button className="btn-primary">Speichern</button>
                         <ConfirmButton formAction={deleteActivity} message="Diesen Verlaufseintrag wirklich löschen?" className="btn-ghost text-rose-600 hover:bg-rose-50">
-                          🗑 Eintrag löschen
+                          <Trash2 className="h-4 w-4" /> Eintrag löschen
                         </ConfirmButton>
                       </div>
                     </CloseDetailsForm>
