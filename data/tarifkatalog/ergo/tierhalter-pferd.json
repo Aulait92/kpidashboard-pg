@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalter-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gewollter und ungewollter Deckakt",
+    "Turniere und Wettbewerbe mit Training",
+    "Nicht gewerbliche Kutsch- und Schlittenfahrten"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalter-Haftpflichtversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "5, 10 oder 50 Mio. €",
+        "sb": "150 € (Sach) oder ohne",
+        "miete": "Stall und Boxen, ja",
+        "reitbeteiligung": "ja",
+        "fohlen": "bis 12 Monate",
+        "geliehen": "bis 50.000 €",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Haftpflichtversicherung/Pferdehalterhaftpflicht",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Haftpflichtversicherung/Pferdehalterhaftpflicht",
+    "https://www.ergo.de/content/dam/ergo/pdf/sach/phv/kurzinformation-pferdehaftpflichtversicherung.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "ERGO hat keine Tarifstufen, nur einen Tarif mit wählbarer Versicherungssumme; deshalb eine Stufe „Tarif“.",
+    "Selbstbeteiligung 150 € nur für Sachschäden, wählbar.",
+    "Mitversichert: nicht gewerbsmäßige Tierhüter, berechtigte Reiter und Reitbeteiligungen.",
+    "Geliehene bewegliche Sachen (z. B. Pferdeanhänger, Sattel) bis 50.000 €; Mietsachschäden an Stall und Boxen bis zur Versicherungssumme.",
+    "Flurschäden und Forderungsausfall auf der Produktseite nicht genannt."
+  ]
+}

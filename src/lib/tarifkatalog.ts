@@ -64,12 +64,13 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   // Tierversicherer (16.11.2026)
   agila: "AGILA",
   uelzener: "Uelzener",
+  ergo: "ERGO",
   dfv: "DFV",
   barmenia: "Barmenia",
   hansemerkur: "HanseMerkur",
 };
 /** Reihenfolge in Listen: die drei Vertreter-Gesellschaften zuerst, dann die Tierversicherer, sonst alphabetisch. */
-const REIHENFOLGE = ["allianz", "axa", "signal-iduna", "agila", "uelzener", "hansemerkur", "barmenia", "dfv"];
+const REIHENFOLGE = ["allianz", "axa", "signal-iduna", "agila", "uelzener", "hansemerkur", "barmenia", "dfv", "ergo"];
 
 export function gesellschaftName(key: string): string {
   if (GESELLSCHAFT_NAMEN[key]) return GESELLSCHAFT_NAMEN[key];
@@ -88,6 +89,7 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/signal\s*-?\s*iduna/i.test(t)) return "signal-iduna";
   if (/\bagila\b/i.test(t)) return "agila";
   if (/uelzener/i.test(t)) return "uelzener";
+  if (/\bergo\b/i.test(t)) return "ergo";
   if (/\bdfv\b|deutsche\s+familienversicherung/i.test(t)) return "dfv";
   if (/barmenia/i.test(t)) return "barmenia";
   if (/hanse\s*-?\s*merkur/i.test(t)) return "hansemerkur";

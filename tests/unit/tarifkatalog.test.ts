@@ -98,6 +98,8 @@ describe("Katalog laden", () => {
     expect(gesellschaftName("dfv")).toBe("DFV");
     expect(gesellschaftAusText("Deutsche Familienversicherung AG")).toBe("dfv");
     expect(gesellschaftAusText("DFV-TierkrankenSchutz")).toBe("dfv");
+    expect(gesellschaftName("ergo")).toBe("ERGO");
+    expect(gesellschaftAusText("ERGO Versicherung AG")).toBe("ergo");
     expect(sortiereGesellschaften(["uelzener", "agila", "signal-iduna", "allianz"])).toEqual(["allianz", "signal-iduna", "agila", "uelzener"]);
     expect(sparteAusText("Privathaftpflicht")).toBe("haftpflicht");
     expect(sparteAusText("Tierhalterhaftpflicht Hund")).toBe("tierhalter-hund");

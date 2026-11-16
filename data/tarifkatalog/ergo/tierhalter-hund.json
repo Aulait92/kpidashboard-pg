@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ungewollter Deckakt",
+    "Hundeschauen und Rennen mit Training",
+    "Mehrere Hunde: ab dem zweiten 25 % Nachlass"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalter-Haftpflichtversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "5, 10 oder 50 Mio. €",
+        "sb": "150 € (Sach) oder ohne",
+        "miete": "ja, Gebäudeteile",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "optional",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Haftpflichtversicherung/Hundehalterhaftpflicht",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Haftpflichtversicherung/Hundehalterhaftpflicht",
+    "https://www.ergo.de/content/dam/ergo/pdf/sach/phv/kurzinformation-hundehalter-haftpflicht.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "ERGO hat keine Tarifstufen, nur einen Tarif mit wählbarer Versicherungssumme; deshalb eine Stufe „Tarif“.",
+    "Selbstbeteiligung 150 € nur für Sachschäden, wählbar.",
+    "Mietsachschäden an Gebäudeteilen gemieteter Wohnräume, Hotels und Ferienwohnungen; Mobiliar in Hotels und Ferienwohnungen nur mit Baustein „Haus & Gassi“.",
+    "Forderungsausfall nur über den Baustein „Haus & Gassi“: Tierarztkosten, Einschläferung und Bestattung bis 1.500 €, wenn ein fremder Hund den eigenen verletzt.",
+    "Fremde Tierhüter auf der Produktseite nicht ausdrücklich genannt (bei Pferden schon).",
+    "Listenhunde sind nicht versicherbar. Kurzinformation (Flyer) Stand 12/2020."
+  ]
+}
