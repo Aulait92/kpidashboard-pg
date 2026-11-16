@@ -11,7 +11,7 @@ import { writableCustomerId } from "@/lib/buyer-write";
 import { planNextCallAttempt, registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
 import { fmtAttemptAt } from "@/lib/call-plan";
 import { formWithOverrides } from "@/lib/lead-stammdaten";
-import { a, anredeZeile, asAnsprache, namePartsFromForm, salutationFromForm, type Ansprache } from "@/lib/ansprache";
+import { a, anredeRohAusForm, anredeZeile, asAnsprache, namePartsFromForm, type Ansprache } from "@/lib/ansprache";
 import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
 import { fmtDayShort, logLeadHistory } from "@/lib/lead-history";
 import { canChooseUnreachable, isLostReason, lostReason, needsLostWarning, CALL_ATTEMPTS_TARGET, type LostReasonKey } from "@/lib/lead-lost";
@@ -283,9 +283,9 @@ export async function notReachedTextsAction(leadId: string): Promise<{ ok: true;
     prisma.mailTemplate.findFirst({ where: { customerId: ctx.customerId, name: "Nicht erreicht" }, select: { subject: true, body: true } }),
   ]);
   const meinname = postfach?.fromName ?? me?.displayName ?? "";
-  const werte = { ...werteFuer({ name: lead.name, source: lead.source, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }, meinname, { ansprache: an, terminlink: link }), signatur: me?.mailSignature ?? "" };
+  const werte = { ...werteFuer({ name: lead.name, source: lead.source, salutation: anredeRohAusForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }, meinname, { ansprache: an, terminlink: link }), signatur: me?.mailSignature ?? "" };
   const v = own ?? STANDARD_VORLAGEN_JE[an].find((x) => x.name === "Nicht erreicht")!;
-  const kontakt = { fullName: lead.name, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) };
+  const kontakt = { fullName: lead.name, salutation: anredeRohAusForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) };
   const hi = anredeZeile(an, kontakt);
   const whatsapp = [
     `${hi} ${a(an, "ich habe gerade versucht, dich anzurufen, leider ohne Erfolg.", "ich habe gerade versucht, Sie anzurufen, leider ohne Erfolg.")}`,
@@ -355,7 +355,7 @@ export async function appointmentTextsAction(leadId: string): Promise<{ ok: true
     postfachOf(ctx.userId),
   ]);
   const meinname = postfach?.fromName ?? me?.displayName ?? "";
-  const hi = anredeZeile(an, { fullName: lead.name, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) });
+  const hi = anredeZeile(an, { fullName: lead.name, salutation: anredeRohAusForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) });
   const core = `${hi} ${a(an, "lass uns kurz sprechen. Such dir hier einfach einen passenden Termin aus:", "lassen Sie uns kurz sprechen. Suchen Sie sich hier einfach einen passenden Termin aus:")}\n\n${link}`;
   const gruss = meinname ? `Viele Grüße\n${meinname}` : "";
   return {

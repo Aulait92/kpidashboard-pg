@@ -34,7 +34,7 @@ import { passendeVorlagen } from "@/lib/mail/phasen";
 import { istSpaeter } from "@/lib/mail/termin-erinnerung";
 import { wuenscheVorschlag } from "@/lib/mail/beratung";
 import { LeadMailComposer } from "@/components/lead-mail";
-import { asAnsprache, namePartsFromForm, salutationFromForm } from "@/lib/ansprache";
+import { anredeRohAusForm, asAnsprache, namePartsFromForm } from "@/lib/ansprache";
 import { bookingPageUrl } from "@/lib/public-url";
 import { LeadFiles } from "@/components/lead-files";
 import { LeadStammdatenEdit } from "@/components/lead-stammdaten-edit";
@@ -410,7 +410,7 @@ export async function LeadDetailBody({
       {postfach ? (
         <LeadMailComposer
           leadId={lead.id}
-          lead={{ name: lead.name, source: lead.source, salutation: salutationFromForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }}
+          lead={{ name: lead.name, source: lead.source, salutation: anredeRohAusForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }}
           to={lead.email}
           from={postfach.email}
           meinname={postfach.fromName ?? me?.displayName ?? ""}

@@ -9,6 +9,8 @@
 //   Die Anrede wird nie aus dem Vornamen geraten, nur aus Angaben (Formularfeld Anrede/Geschlecht,
 //   Bestandskunde, Vertriebs-CRM oder „Frau …“/„Herr …“ im Namen selbst).
 
+import { anredeAusVorname, anredeBewusstOffen } from "@/lib/vorname-anrede";
+
 export type Ansprache = "sie" | "du";
 
 export const ANSPRACHE_LABEL: Record<Ansprache, string> = { sie: "Sie (förmlich)", du: "Du (persönlich)" };
@@ -76,6 +78,24 @@ export function salutationFromForm(formData: unknown): Salutation | null {
   return null;
 }
 
+/**
+ * Anrede-Rohwert aus Lead.formData für AnredeKontakt: „Herr“/„Frau“, „keine“ bei ausdrücklich offener Anrede
+ * (Divers, keine Angabe, vom Vermittler so gewählt), sonst null (dann Anrede aus dem Vornamen, falls eindeutig).
+ */
+export function anredeRohAusForm(formData: unknown): string | null {
+  if (!Array.isArray(formData)) return null;
+  for (const x of formData) {
+    if (!x || typeof x !== "object") continue;
+    const { label, value } = x as { label?: unknown; value?: unknown };
+    if (typeof label === "string" && SALUTATION_LABELS.has(normLabel(label))) {
+      const s = salutationOf(value);
+      if (s) return s;
+      if (anredeBewusstOffen(value)) return "keine";
+    }
+  }
+  return null;
+}
+
 /** Vor- bzw. Nachname aus Lead.formData (falls das Formular sie getrennt abfragt). */
 export function namePartsFromForm(formData: unknown): { firstName: string | null; lastName: string | null } {
   const out = { firstName: null as string | null, lastName: null as string | null };
@@ -120,6 +140,8 @@ export function kontaktParts(k: AnredeKontakt | null | undefined): { first: stri
     }
   }
   if (first && last && first === last) first = "";
+  // Eindeutiger Vorname → Herr/Frau (Ole, 16.11.2026), außer die Anrede wurde bewusst offen gelassen
+  if (!salutation && !anredeBewusstOffen(k?.salutation)) salutation = anredeAusVorname(first);
   return { first, last, salutation };
 }
 

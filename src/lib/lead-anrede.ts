@@ -1,6 +1,7 @@
 // Anrede und Beratername für Texte an einen Lead bzw. Kunden (Ole, 14.11.2026).
 //   Anrede:  Name + Herr/Frau aus Lead.formData (Feld Anrede/Geschlecht), sonst aus dem
-//            Bestandskunden mit derselben Nummer (ExistingCustomer.salutation). Nie geraten.
+//            Bestandskunden mit derselben Nummer (ExistingCustomer.salutation), sonst aus einem
+//            eindeutigen Vornamen (lib/vorname-anrede.ts, Ole 16.11.2026).
 //   Berater: Person, z. B. „Susanne Meier schaut sich das an“. Anzeigename des zuständigen
 //            Beraters (Lead.assignedUser) hat Vorrang, sonst der Kundenname ohne „Agentur“ usw.
 //   Firma:   Kundenname, z. B. „Ihre Buchung bei Agentur Susanne Meier“.
@@ -11,7 +12,7 @@ import { firmDisplayName, personFromCustomerName, advisorPerson } from "@/lib/ad
 
 export { firmDisplayName, personFromCustomerName, advisorPerson };
 import { formWithOverrides } from "@/lib/lead-stammdaten";
-import { kontaktParts, namePartsFromForm, salutationFromForm, salutationOf, type AnredeKontakt } from "@/lib/ansprache";
+import { anredeRohAusForm, kontaktParts, namePartsFromForm, type AnredeKontakt } from "@/lib/ansprache";
 
 /** Anrede-Angaben aus einem Lead (Name, formData). */
 export function kontaktFromLead(lead: { name?: string | null; formData?: unknown; contactOverrides?: unknown } | null | undefined, fallbackName?: string | null): AnredeKontakt {
@@ -22,7 +23,7 @@ export function kontaktFromLead(lead: { name?: string | null; formData?: unknown
     fullName: lead?.name ?? fallbackName ?? null,
     firstName: parts.firstName,
     lastName: parts.lastName,
-    salutation: salutationFromForm(form),
+    salutation: anredeRohAusForm(form),
   };
 }
 
@@ -32,7 +33,8 @@ export function kontaktFromExisting(ec: { firstName?: string | null; lastName?: 
     firstName: ec.firstName ?? null,
     lastName: ec.lastName ?? null,
     fullName: [ec.firstName, ec.lastName].filter(Boolean).join(" ") || null,
-    salutation: salutationOf(ec.salutation) ?? null,
+    // Rohwert, damit „Divers“ aus dem Import nicht durch eine Anrede aus dem Vornamen ersetzt wird
+    salutation: ec.salutation ?? null,
   };
 }
 

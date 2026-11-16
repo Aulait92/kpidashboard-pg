@@ -220,7 +220,7 @@ export function LeadHeaderActions(p: Props) {
                 onClick={() => setOpen("lost")}
                 className={cn(
                   "inline-flex h-8 items-center rounded-[var(--radius-sm)] border px-3 text-sm font-medium transition",
-                  lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700",
+                  lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-rose-700 hover:border-rose-300 hover:bg-rose-50",
                 )}
               >
                 Verloren
@@ -297,7 +297,7 @@ export function LeadHeaderActions(p: Props) {
               onClick={() => setOpen("lost")}
               className={cn(
                 "inline-flex h-10 items-center justify-center rounded-[var(--radius-md)] border text-sm font-medium",
-                lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)]",
+                lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-rose-700",
               )}
             >
               Verloren

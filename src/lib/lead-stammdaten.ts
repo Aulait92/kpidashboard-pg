@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { logLeadHistory } from "@/lib/lead-history";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { namePartsFromForm, salutationFromForm, salutationOf, type Salutation } from "@/lib/ansprache";
+import { anredeAusVorname, anredeBewusstOffen } from "@/lib/vorname-anrede";
 
 export type Stammdaten = {
   salutation: Salutation | null;
@@ -21,7 +22,10 @@ export type Stammdaten = {
 };
 
 /** Gespeicherte Korrekturen (nur, was nicht in name/phone/email steht) */
-export type ContactOverrides = Partial<Pick<Stammdaten, "salutation" | "firstName" | "lastName" | "street" | "zip" | "city">>;
+export type ContactOverrides = Partial<Pick<Stammdaten, "firstName" | "lastName" | "street" | "zip" | "city">> & {
+  /** „keine“: Vermittler hat „Keine Angabe“ gewählt, dann keine Anrede aus dem Vornamen (Ole, 16.11.2026) */
+  salutation?: Salutation | "keine";
+};
 
 const LABEL: Record<keyof Stammdaten, string> = {
   salutation: "Anrede",
@@ -41,6 +45,7 @@ export function asOverrides(v: unknown): ContactOverrides {
   for (const k of ["firstName", "lastName", "street", "zip", "city"] as const) if (typeof o[k] === "string") out[k] = o[k] as string;
   const sal = salutationOf(o.salutation);
   if (sal) out.salutation = sal;
+  else if (anredeBewusstOffen(o.salutation)) out.salutation = "keine";
   return out;
 }
 
@@ -60,6 +65,16 @@ export function formWithOverrides(formData: unknown, overrides: unknown): unknow
 
 const str = (v: unknown) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim() : "");
 
+const ANREDE_LABEL = /^(ihre)?anrede$|^salutation$|^geschlecht$|^gender$|^title$/;
+/** Steht im Formular ausdrücklich „Divers“ oder „Keine Angabe“ als Anrede? */
+function formOffen(formData: unknown): boolean {
+  if (!Array.isArray(formData)) return false;
+  return formData.some((x) => {
+    const { label, value } = (x ?? {}) as { label?: unknown; value?: unknown };
+    return typeof label === "string" && ANREDE_LABEL.test(label.toLowerCase().normalize("NFKD").replace(/[^a-z]/g, "")) && anredeBewusstOffen(value);
+  });
+}
+
 /** Aktuelle Stammdaten eines Leads (Korrekturen vor Formular vor Airtable-Feldern) */
 export function currentStammdaten(
   lead: { name: string | null; phone: string | null; email: string | null; formData: unknown; contactOverrides: unknown },
@@ -69,9 +84,14 @@ export function currentStammdaten(
   const parts = namePartsFromForm(lead.formData);
   const words = (lead.name ?? "").trim().split(/\s+/).filter(Boolean);
   const f = (k: string) => str(Array.isArray(fields?.[k]) ? (fields?.[k] as unknown[])[0] : fields?.[k]);
+  const firstName = o.firstName ?? parts.firstName ?? (f("Vorname") || words[0] || "");
+  // Anrede: Korrektur, Formular, Airtable; sonst aus einem eindeutigen Vornamen (Ole, 16.11.2026),
+  // außer sie wurde bewusst offen gelassen (Keine Angabe, Divers)
+  const offen = o.salutation === "keine" || formOffen(lead.formData) || anredeBewusstOffen(f("Anrede"));
+  const salutation = o.salutation === "keine" ? null : (o.salutation ?? salutationFromForm(lead.formData) ?? salutationOf(f("Anrede")) ?? (offen ? null : anredeAusVorname(firstName)));
   return {
-    salutation: o.salutation ?? salutationFromForm(lead.formData) ?? salutationOf(f("Anrede")),
-    firstName: o.firstName ?? parts.firstName ?? (f("Vorname") || words[0] || ""),
+    salutation,
+    firstName,
     lastName: o.lastName ?? parts.lastName ?? (f("Nachname") || words.slice(1).join(" ")),
     phone: lead.phone,
     email: lead.email,
@@ -150,7 +170,8 @@ export async function saveLeadStammdaten(opts: {
   if (changed.length === 0) return { ok: true, changed: [], hinweise: [] };
 
   const overrides: ContactOverrides = {
-    ...(after.salutation ? { salutation: after.salutation } : {}),
+    // „Keine Angabe“ merken, wenn bisher eine Anrede galt (sonst käme die Anrede aus dem Vornamen zurück)
+    ...(after.salutation ? { salutation: after.salutation } : before.salutation || asOverrides(lead.contactOverrides).salutation === "keine" ? { salutation: "keine" as const } : {}),
     firstName: after.firstName,
     lastName: after.lastName,
     street: after.street,

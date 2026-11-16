@@ -45,10 +45,10 @@ describe("E-Mail an Leads ohne WhatsApp", () => {
   const link = "https://dein-beratungstermin.de/book/anna?lead=l1";
 
   it("Sie ohne bekannte Anrede: neutral „Guten Tag,“, Produkt, Link, Name", () => {
-    const m = keinWhatsAppMail({ an: "sie", kontakt: { fullName: "Nina Winter" }, source: "Zahnzusatzversicherung", advisor: "Anna Berater", link });
+    const m = keinWhatsAppMail({ an: "sie", kontakt: { fullName: "Kim Winter" }, source: "Zahnzusatzversicherung", advisor: "Anna Berater", link });
     expect(m.subject).toBe("Kurz zu Ihrer Zahnzusatzversicherung");
     expect(m.text.startsWith("Guten Tag,\n")).toBe(true);
-    expect(m.text).not.toContain("Nina Winter");
+    expect(m.text).not.toContain("Kim Winter");
     expect(m.text).toContain("Ihr Interesse");
     expect(m.text).toContain("Hier können Sie direkt einen Termin wählen");
     expect(m.text).toContain(link);
@@ -57,18 +57,18 @@ describe("E-Mail an Leads ohne WhatsApp", () => {
   });
 
   it("Sie mit Anrede: „Guten Tag Frau Winter,“ und Name im Betreff", () => {
-    const m = keinWhatsAppMail({ an: "sie", kontakt: { fullName: "Nina Winter", salutation: "Frau" }, source: "Zahnzusatzversicherung", advisor: "Anna", link });
+    const m = keinWhatsAppMail({ an: "sie", kontakt: { fullName: "Kim Winter", salutation: "Frau" }, source: "Zahnzusatzversicherung", advisor: "Anna", link });
     expect(m.text.startsWith("Guten Tag Frau Winter,")).toBe(true);
     expect(m.subject).toBe("Frau Winter, kurz zu Ihrer Zahnzusatzversicherung");
   });
 
   it("Du: Vorname, du-Form; ohne Link: bitte antworten", () => {
-    const m = keinWhatsAppMail({ an: "du", kontakt: { fullName: "Nina Winter" }, source: null, advisor: "Anna", link: null });
-    expect(m.text.startsWith("Hallo Nina,")).toBe(true);
+    const m = keinWhatsAppMail({ an: "du", kontakt: { fullName: "Kim Winter" }, source: null, advisor: "Anna", link: null });
+    expect(m.text.startsWith("Hallo Kim,")).toBe(true);
     expect(m.text).toContain("dein Interesse");
     expect(m.text).toContain("Antworte gern einfach auf diese E-Mail");
     expect(m.text).not.toMatch(/\bSie\b|\bIhnen\b/);
-    expect(m.subject).toBe("Nina, kurz zu deiner Anfrage");
+    expect(m.subject).toBe("Kim, kurz zu deiner Anfrage");
   });
 
   it("mit Signatur des Postfachs statt „Viele Grüße“", () => {

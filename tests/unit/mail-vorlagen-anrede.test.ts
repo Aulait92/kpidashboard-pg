@@ -4,7 +4,7 @@ import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
 import { fuelle, fuelleMitSignatur, werteFuer } from "@/lib/mail/platzhalter";
 
 const SIG = "Ole Kannapinn\nOle Agentur";
-const lead = (extra: Record<string, unknown> = {}) => ({ name: "Nina Winter", source: "Privatschutz", ...extra });
+const lead = (extra: Record<string, unknown> = {}) => ({ name: "Kim Winter", source: "Privatschutz", ...extra });
 
 describe("E-Mail-Vorlagen: Betreff und Anrede", () => {
   for (const an of ["sie", "du"] as const) {
@@ -17,9 +17,9 @@ describe("E-Mail-Vorlagen: Betreff und Anrede", () => {
             expect(subject).not.toContain("Ole Kannapinn");
             expect(subject).not.toContain("\n");
             expect(subject).not.toMatch(/\{[a-z_0-9]+\}/);
-            if (an === "sie") expect(subject).not.toContain("Nina Winter");
+            if (an === "sie") expect(subject).not.toContain("Kim Winter");
             const body = fuelleMitSignatur(v.body, w);
-            if (an === "sie") expect(body).not.toContain("Nina Winter");
+            if (an === "sie") expect(body).not.toContain("Kim Winter");
             if (sig) expect(body.trimEnd().endsWith("Ole Agentur")).toBe(true);
           });
         }
@@ -44,7 +44,7 @@ describe("E-Mail-Vorlagen: Betreff und Anrede", () => {
   it("Du: Vorname", () => {
     const v = STANDARD_VORLAGEN_JE.du.find((x) => x.name === "Nicht erreicht")!;
     const w = werteFuer(lead(), "Ole", { ansprache: "du" });
-    expect(fuelle(v.subject, w)).toBe("Nina, kurz zu deinem Privatschutz");
-    expect(fuelle(v.body, w).startsWith("Hallo Nina,")).toBe(true);
+    expect(fuelle(v.subject, w)).toBe("Kim, kurz zu deinem Privatschutz");
+    expect(fuelle(v.body, w).startsWith("Hallo Kim,")).toBe(true);
   });
 });
