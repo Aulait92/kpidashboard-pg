@@ -512,3 +512,18 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 - **Handlungsbedarf: ja (umgesetzt), Entwurf** (AVV-Beschreibung, Entwurf Thema 11). **Anwalt:** Braucht der Vermittler
   für unaufgefordert im Chat genannte Gesundheitsangaben eine Einwilligung, oder genügt Löschen bzw. Nichtverwenden?
   Wer holt die Einwilligung für PKV-, BU- und Zahn-Leads ein (Formular-Häkchen)?
+
+### 10.12 Parallele Vorprüfung (noch nicht gemergt): trägt die Rechtslage?
+
+Nicht doppelt gebaut, nur geprüft. Ergebnis: Die Rechtslage trägt alle Punkte.
+
+- **Sentry-Tokens:** Datenminimierung und Sicherheit der Verarbeitung (Art. 5 Abs. 1 lit. c, Art. 32 DSGVO); Tokens
+  und Links mit Zugriff auf Daten gehören nicht in Fehlerberichte.
+- **Kollegen-Prämie:** § 48b VAG nicht berührt (siehe 10.8); die Empfohlenen tragen sich mit Einwilligung selbst ein
+  (§ 7 Abs. 2 Nr. 2 UWG, BGH I ZR 208/12 zu Empfehlungs-E-Mails laut Memo).
+- **Gesundheitsdaten beim Angebot-Auslesen:** Art. 9 DSGVO, siehe 10.11.
+- **Makler-Marktauswahl:** Der Makler muss seinem Rat eine hinreichende Zahl von Verträgen und Versicherern zugrunde
+  legen oder auf eine eingeschränkte Auswahl hinweisen ([§ 60 VVG](https://www.gesetze-im-internet.de/vvg_2008/__60.html)).
+- **KI-Hinweis-Wortlaut:** Art. 50 Abs. 1 und 5 KI-VO, siehe 10.3.
+- **Impressum-Link:** Anbieterkennzeichnung leicht erkennbar, unmittelbar erreichbar und ständig verfügbar
+  ([§ 5 DDG](https://www.gesetze-im-internet.de/ddg/__5.html), seit 14.05.2024 statt § 5 TMG).
