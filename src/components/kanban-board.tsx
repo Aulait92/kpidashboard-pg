@@ -625,7 +625,7 @@ function KanbanCard({
           )}
         </div>
         {lead.noNextStep ? (
-          <span title={lead.resultMissing ? "Ergebnis fehlt: Termin vorbei, bitte Ergebnis eintragen" : "Kein nächster Schritt: Wiedervorlage, Termin, Gewonnen oder Verloren"} className="shrink-0 text-amber-500">
+          <span title={lead.resultMissing ? "Ergebnis fehlt: Termin vorbei, bitte Ergebnis eintragen" : "Kein nächster Schritt: Wiedervorlage, Termin, Abschluss oder Verloren"} className="shrink-0 text-amber-500">
             <AlertTriangle className="h-4 w-4" />
           </span>
         ) : null}

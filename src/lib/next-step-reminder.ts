@@ -33,7 +33,7 @@ export function reminderText(missing: number, resultMissing: number): { title: s
   const sentence = parts.join(", ");
   return {
     title: missing === 1 ? "1 Lead braucht einen nächsten Schritt" : `${missing} Leads brauchen einen nächsten Schritt`,
-    body: `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}. Legen Sie fest, wie es weitergeht: Wiedervorlage, Termin, Gewonnen oder Verloren.`,
+    body: `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}. Legen Sie fest, wie es weitergeht: Wiedervorlage, Termin, Abschluss oder Verloren.`,
   };
 }
 

@@ -215,7 +215,7 @@ export function LeadHeaderActions(p: Props) {
                   won ? "border-emerald-600 bg-emerald-600 text-white" : "border-[color:var(--border)] bg-white text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50",
                 )}
               >
-                <Trophy className="h-4 w-4" /> Gewonnen
+                <Trophy className="h-4 w-4" /> Abschluss
               </button>
               <button
                 type="button"
@@ -293,7 +293,7 @@ export function LeadHeaderActions(p: Props) {
                 won ? "border-emerald-600 bg-emerald-600 text-white" : "border-[color:var(--border)] bg-white text-emerald-700",
               )}
             >
-              <Trophy className="h-4 w-4" /> Gewonnen
+              <Trophy className="h-4 w-4" /> Abschluss
             </button>
             <button
               type="button"
@@ -412,7 +412,7 @@ export function LeadHeaderActions(p: Props) {
 
       <AbschlussSheet
         open={open === "win"}
-        title="Gewonnen"
+        title="Abschluss"
         source={p.source}
         onClose={() => setOpen(null)}
         onSave={(v, sp) => {

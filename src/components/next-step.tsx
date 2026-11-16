@@ -537,7 +537,7 @@ export function NextStepSheet({
     });
   const won = () => {
     if (asksCloseValue(source, rates)) return setStep("win");
-    run(`${name}: Gewonnen`, () => (appointmentId ? appointmentOutcomeResult(appointmentId, "closed", null) : callbackOutcomeResult(leadId, "won", null)));
+    run(`${name}: Abschluss`, () => (appointmentId ? appointmentOutcomeResult(appointmentId, "closed", null) : callbackOutcomeResult(leadId, "won", null)));
   };
 
   if (step === "offer" && offer) {
@@ -587,7 +587,7 @@ export function NextStepSheet({
         title={`Abschluss mit ${name}`}
         source={source}
         onClose={() => setStep("pick")}
-        onSave={(v, sp) => run(`${name}: Gewonnen`, () => (appointmentId ? appointmentOutcomeResult(appointmentId, "closed", v, sp) : callbackOutcomeResult(leadId, "won", v, sp)))}
+        onSave={(v, sp) => run(`${name}: Abschluss`, () => (appointmentId ? appointmentOutcomeResult(appointmentId, "closed", v, sp) : callbackOutcomeResult(leadId, "won", v, sp)))}
       />
     );
   }
@@ -706,7 +706,7 @@ export function NextStepSheet({
           ) : null}
           <div className="grid grid-cols-2 gap-2">
             <button type="button" className={cn(chip, "border-emerald-200 text-emerald-700")} disabled={busy} onClick={won} data-step="gewonnen">
-              <Trophy className="h-4 w-4" /> Gewonnen
+              <Trophy className="h-4 w-4" /> Abschluss
             </button>
             <button type="button" className={cn(chip, "border-rose-200 text-rose-700")} disabled={busy} onClick={() => setStep("lost")} data-step="verloren">
               <ThumbsDown className="h-4 w-4" /> Verloren

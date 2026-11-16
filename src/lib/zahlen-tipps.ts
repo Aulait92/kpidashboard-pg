@@ -144,7 +144,7 @@ export function candidateTips(s: TipSignals): Tip[] {
     out.push({
       key: "meta_lernen",
       title: "Ergebnisse eintragen",
-      text: `${stale} Leads aus Meta warten seit über 14 Tagen auf ein Ergebnis. Tragen Sie Gewonnen oder Verloren ein. ${META_LERNT}`,
+      text: `${stale} Leads aus Meta warten seit über 14 Tagen auf ein Ergebnis. Tragen Sie Abschluss oder Verloren ein. ${META_LERNT}`,
       href: "/buyer/leads",
       cta: "Leads ansehen",
       impact: stale * 0.1 * Math.max(closing, 0.05) * prov,
