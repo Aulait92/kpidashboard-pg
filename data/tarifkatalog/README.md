@@ -65,7 +65,7 @@ Ordner: `allianz`, `axa`, `signal-iduna`.
   (IPID), Leistungsvergleich. Vergleichsportale höchstens als Hinweis, nie als einzige Quelle.
 - Jeder Tarif hat `quelle` (exakte URL) und `stand` (Datum des Abrufs, hier 15.11.2026). Stand der Dokumente steht unten.
 - Nichts erfunden: Was nicht belegbar ist, fehlt und steht in `offen`. Lieber weniger, aber richtig.
-- Monatliche Quellprüfung (Teil 4 des Entwurfs): je Tarif `quelle` neu lesen und mit `werte` vergleichen.
+- Wöchentliche Quellprüfung (Ole, 16.11.2026; geplante Aufgabe „Tarifkatalog wöchentlich aktualisieren“, sonntags 21:17 Uhr): je Tarif `quelle` neu lesen und mit `werte` vergleichen, Änderungen deployen (nie werktags 8 bis 20 Uhr).
 
 ## Stand je Datei
 
