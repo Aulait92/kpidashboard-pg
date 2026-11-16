@@ -518,8 +518,9 @@ export async function LeadDetailBody({
           {nextAppt ? (
             <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
               <CalendarClock className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
-              <div className="min-w-0 flex-1">
-                <div className="font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
+              {/* Zeit nie abschneiden: im schmalen Fenster rutschen die Knöpfe in die nächste Zeile */}
+              <div className="min-w-fit flex-1">
+                <div className="whitespace-nowrap font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
                 <div className="text-xs text-[color:var(--muted)]">{terminArtLabel(nextAppt.mode)}</div>
               </div>
               <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap [&>*]:px-2 sm:[&>*]:px-3">

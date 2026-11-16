@@ -173,7 +173,7 @@ export function BuyerLeadsTable({
           <table className="w-full text-sm">
             <thead className="bg-[color:var(--brand-soft)]/30 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
               <tr>
-                <th className="px-3 py-2.5 text-left">Datum</th>
+                <th className="px-3 py-2.5 text-left">Eingang</th>
                 <th className="px-3 py-2.5 text-left">Name</th>
                 {singleProduct ? null : <th className="px-3 py-2.5 text-left">Produkt</th>}
                 <th className="px-3 py-2.5 text-left">Phase</th>
