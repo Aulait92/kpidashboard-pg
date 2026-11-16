@@ -16,6 +16,8 @@ in Texten an Kunden). Der alte Admin bleibt vollständig erreichbar, bis Ole abn
 | Umzug alt → neu (noch nicht aktiv) | `src/lib/admin-neu/umzug.ts` |
 | Offene Funktionen je Bereich | `src/lib/admin-neu/offen/<bereich>.ts` |
 | Schalter „Neue Oberfläche“ | Profilmenü; Cookie `pg_admin_neu` (`src/lib/admin-neu/schalter.ts`) |
+| Rückweg nach dem Speichern (gemeinsame Actions) | `adminZiel` in `src/components/admin-neu/ui/rueckweg.ts` (Referer /admin/neu → neue Seite) |
+| Rücksprung nach Kalender, LinkedIn, Bank, 360dialog | `src/lib/admin-neu/ruecksprung.ts` (Cookie `pg_neu_back`, nur wenn der Start aus /admin/neu kam) |
 
 Andere Bereiche nicht anfassen. Was mehrere Bereiche brauchen, gehört nach `components/admin-neu/ui/` (kurz im
 Commit begründen).

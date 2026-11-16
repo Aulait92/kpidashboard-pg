@@ -10,8 +10,9 @@
 //   SCREENSHOTS=<ordner>   legt je Ansicht und Breite ein PNG ab
 //   CHROMIUM=/opt/pw-browsers/chromium (Standard)
 // Exit 1, wenn etwas auffällt.
-// Dev-Server im Worktree (node_modules als Symlink): `NODE_OPTIONS=--max-old-space-size=8192 npx next dev --webpack`
-// (Turbopack findet next über den Symlink nicht; ohne mehr Speicher startet webpack nach ~60 Seiten neu).
+// Dev-Server im Worktree (node_modules als Symlink): `NODE_OPTIONS=--max-old-space-size=6144 npx next dev --webpack`
+// (Turbopack findet next über den Symlink nicht). webpack startet bei Speicherdruck von selbst neu, der Durchklick lädt
+// die Seite dann noch einmal; mit 8192 MB wuchs der Prozess über das Speicherlimit des Containers (14 GB) und wurde beendet.
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -44,6 +45,25 @@ function adresse(pfad) {
   return pfad.replace(/\[[a-z]+\]/gi, encodeURIComponent(PARAMS[key]));
 }
 
+// Seiten, die bewusst weiterleiten (alte Links): /kunden/berichte/[id] öffnet den Bericht in der Kundenakte.
+const WEITERLEITUNG_ERWARTET = { "/admin/neu/kunden/berichte/[id]": /^\/admin\/neu\/kunden\/[^/]+\/berichte$/ };
+
+/** Lädt eine Seite und prüft HTTP-Status, Umleitung und Breite. Wirft, wenn die Seite nicht (vollständig) lädt. */
+async function pruefen(page, pfad, b, muster) {
+  const res = await page.goto(`${BASE}${pfad}`, { waitUntil: "networkidle" });
+  if (!res) throw new Error("keine Antwort");
+  const breit = await page.evaluate(() => {
+    const d = document.documentElement;
+    if (!d || !document.body) throw new Error("Seite leer");
+    return d.scrollWidth - d.clientWidth;
+  });
+  if (res.status() >= 400) probleme.push(`${b.name} ${pfad}: HTTP ${res.status()}`);
+  const ziel = new URL(page.url()).pathname;
+  if (ziel !== pfad && !WEITERLEITUNG_ERWARTET[muster]?.test(ziel)) probleme.push(`${b.name} ${pfad}: umgeleitet auf ${ziel}`);
+  if (breit > 1) probleme.push(`${b.name} ${pfad}: waagrechtes Scrollen (${breit} px zu breit)`);
+  return true;
+}
+
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM ?? "/opt/pw-browsers/chromium" });
 const probleme = [];
 const uebersprungen = [];
@@ -74,16 +94,22 @@ for (const b of BREITEN) {
       continue;
     }
     aktuell = pfad;
-    const res = await page.goto(`${BASE}${pfad}`, { waitUntil: "networkidle" }).catch((e) => {
-      probleme.push(`${b.name} ${pfad}: lädt nicht (${String(e).slice(0, 120)})`);
-      return null;
-    });
-    if (!res) continue;
+    // Der Dev-Server startet bei Speicherdruck neu („approaching the used memory threshold“): dann ist die Seite
+    // kurz leer. Einmal warten und neu laden, bevor etwas als Fehler zählt.
+    let ergebnis = null;
+    for (let versuch = 1; versuch <= 2 && !ergebnis; versuch++) {
+      const vorher = probleme.length;
+      ergebnis = await pruefen(page, pfad, b, s.pfad).catch((e) => {
+        if (versuch === 2) probleme.push(`${b.name} ${pfad}: lädt nicht (${String(e).slice(0, 120)})`);
+        return null;
+      });
+      if (!ergebnis && versuch === 1) {
+        probleme.length = vorher; // Meldungen des abgebrochenen Versuchs verwerfen
+        await page.waitForTimeout(20_000);
+      }
+    }
+    if (!ergebnis) continue;
     geprueft++;
-    if (res.status() >= 400) probleme.push(`${b.name} ${pfad}: HTTP ${res.status()}`);
-    if (new URL(page.url()).pathname !== pfad) probleme.push(`${b.name} ${pfad}: umgeleitet auf ${new URL(page.url()).pathname}`);
-    const breit = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    if (breit > 1) probleme.push(`${b.name} ${pfad}: waagrechtes Scrollen (${breit} px zu breit)`);
     if (SHOTS) await page.screenshot({ path: join(SHOTS, `${s.view}-${pfad.split("/").filter(Boolean).slice(2).join("_") || "heute"}-${b.width}.png`), fullPage: true });
   }
   await ctx.close();
