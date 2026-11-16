@@ -89,7 +89,7 @@ export function LeadFiles({
                   role="radio"
                   aria-checked={kind === k.key}
                   onClick={() => setKind(k.key)}
-                  className={cn("rounded-full px-3 py-2 sm:py-1", kind === k.key ? "bg-white font-semibold shadow-sm" : "text-[color:var(--muted)]")}
+                  className={cn("rounded-full px-3 py-2.5 sm:py-1", kind === k.key ? "bg-white font-semibold shadow-sm" : "text-[color:var(--muted)]")}
                 >
                   {k.label}
                 </button>

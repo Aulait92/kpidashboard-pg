@@ -269,7 +269,8 @@ export function LeadHeaderActions(p: Props) {
               type="button"
               onClick={() => setOpen("phase")}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition hover:opacity-80",
+                // unsichtbar vergrößerte Tippfläche (40 px), Chip bleibt klein (UX Runde 4)
+                "relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition hover:opacity-80 after:absolute after:-inset-y-1.5 after:inset-x-0 after:content-['']",
                 statusToneClass(p.status),
                 showBar && "@2xl:hidden",
               )}
@@ -371,16 +372,16 @@ export function LeadHeaderActions(p: Props) {
         {dueLabel ? (
           <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-900">
             <BellRing className="h-4 w-4 shrink-0" />
-            <button type="button" onClick={() => setOpen("followup")} className="line-clamp-2 min-w-0 flex-1 text-left">
+            <button type="button" onClick={() => setOpen("followup")} className="-my-2 line-clamp-2 min-w-0 flex-1 py-2 text-left">
               <b>Wiedervorlage {dueLabel}</b>
               {dueOverdue ? <b className="text-rose-700"> · überfällig</b> : null}
               {p.followUpNote ? ` · ${p.followUpNote}` : ""}
             </button>
             {/* Handy: nur Symbole (40 px), damit das Datum nicht abgeschnitten wird */}
-            <Button variant="ghost" icon={Pencil} onClick={() => setOpen("followup")} aria-label="Wiedervorlage ändern" className="h-10 shrink-0 px-2.5 sm:h-8 sm:px-3" data-followup-edit>
+            <Button variant="ghost" icon={Pencil} onClick={() => setOpen("followup")} aria-label="Wiedervorlage ändern" className="h-10 min-w-10 shrink-0 px-2.5 sm:h-8 sm:min-w-0 sm:px-3" data-followup-edit>
               <span className="hidden sm:inline">Ändern</span>
             </Button>
-            <Button variant="ghost" icon={Check} onClick={() => followUp(() => clearFollowUpResult(p.leadId), "Wiedervorlage erledigt")} aria-label="Wiedervorlage erledigt" className="h-10 shrink-0 px-2.5 sm:h-8 sm:px-3">
+            <Button variant="ghost" icon={Check} onClick={() => followUp(() => clearFollowUpResult(p.leadId), "Wiedervorlage erledigt")} aria-label="Wiedervorlage erledigt" className="h-10 min-w-10 shrink-0 px-2.5 sm:h-8 sm:min-w-0 sm:px-3">
               <span className="hidden sm:inline">Erledigt</span>
             </Button>
           </div>

@@ -60,7 +60,7 @@ export function LeadStammdatenEdit({ leadId, initial }: { leadId: string; initia
       <button
         type="button"
         onClick={openSheet}
-        className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-sm font-medium text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
+        className="-my-2 inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2 py-1 text-sm font-medium text-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
         aria-label="Angaben bearbeiten"
         data-stammdaten-bearbeiten
       >
