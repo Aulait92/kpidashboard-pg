@@ -93,12 +93,12 @@ const LATER = [
  */
 export function CallOutcomeSheet({
   target,
-  bookingSlug,
   onClose,
   onPick,
 }: {
   target: CallOutcomeTarget | null;
-  bookingSlug: string | null;
+  /** Nicht mehr nötig: „Termin vereinbart“ gibt es auch ohne Kalender (Formular von Hand). */
+  bookingSlug?: string | null;
   onClose: () => void;
   onPick: (message: string, action: () => Promise<InboxResult>) => void;
 }) {
@@ -122,7 +122,8 @@ export function CallOutcomeSheet({
     onSelect: () =>
       pick(`${t.name}: morgen wieder in der Liste`, () => (t.kind === "followup" ? followUpNotReachedResult(t.leadId) : callbackOutcomeResult(t.leadId, "not_reached"))),
   });
-  if (bookingSlug) actions.push({ label: "Termin vereinbart", icon: CalendarPlus, onSelect: () => openLeadBooking(t.leadId, t.name) });
+  // Auch ohne verbundenen Kalender: das Buchungsfenster bietet dann „von Hand eintragen“ (UX Runde 4)
+  actions.push({ label: "Termin vereinbart", icon: CalendarPlus, onSelect: () => openLeadBooking(t.leadId, t.name) });
   actions.push(
     { label: "Angebot gesendet", icon: Send, onSelect: () => pick(`${t.name}: Angebot gesendet`, () => callbackOutcomeResult(t.leadId, "offer")) },
     // keepOpen: Folgeschritt statt Schließen.

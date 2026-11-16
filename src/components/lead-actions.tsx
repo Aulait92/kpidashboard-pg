@@ -21,8 +21,8 @@ import {
   X,
 } from "lucide-react";
 import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
-import { manualAppointmentAction, startLeadChatAction } from "@/app/buyer/lead-manual-actions";
-import { SlotPicker } from "@/components/lead-booking";
+import { startLeadChatAction } from "@/app/buyer/lead-manual-actions";
+import { ManualTerminForm, SlotPicker } from "@/components/lead-booking";
 import { clearFollowUpResult, setFollowUpResult, undoInboxAction } from "@/app/buyer/inbox-actions";
 import { Button, Card } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
@@ -612,22 +612,6 @@ function ActionTile({
 
 /** „Termin“: über die Buchungsseite (mit Kalender) oder von Hand eintragen (Ole, 14.11.2026). */
 function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string; bookingSlug: string | null; onClose: () => void; onSaved: () => void }) {
-  const toast = useToast();
-  const [pending, start] = useTransition();
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("10:00");
-  // Vorrangig Video (Ole, 16.11.2026: „Immer vorrangig Video.“)
-  const [mode, setMode] = useState("video");
-  const [note, setNote] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const save = () =>
-    start(async () => {
-      setError(null);
-      const r = await manualAppointmentAction(leadId, { date, time, mode, note });
-      if (!r.ok) return setError(r.error);
-      toast.show({ message: "Termin eingetragen" });
-      onSaved();
-    });
   return (
     <Sheet open onClose={onClose} title="Termin">
       <div className="max-h-[75vh] space-y-4 overflow-y-auto p-5 text-sm" data-termin-sheet>
@@ -647,33 +631,7 @@ function TerminSheet({ leadId, bookingSlug, onClose, onSaved }: { leadId: string
         )}
         <div className="space-y-3" data-termin-manuell>
           <p className="font-semibold">{bookingSlug ? "Oder von Hand eintragen" : "Termin von Hand eintragen"}</p>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="block">
-              <span className="mb-1 block text-[color:var(--muted)]">Datum</span>
-              <input type="date" className="input w-full" value={date} onChange={(e) => setDate(e.target.value)} />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-[color:var(--muted)]">Uhrzeit</span>
-              <input type="time" step={300} className="input w-full" value={time} onChange={(e) => setTime(e.target.value)} />
-            </label>
-          </div>
-          <label className="block">
-            <span className="mb-1 block text-[color:var(--muted)]">Art</span>
-            <select className="input w-full" value={mode} onChange={(e) => setMode(e.target.value)}>
-              <option value="phone">Telefon</option>
-              <option value="video">Video</option>
-              <option value="onsite">Vor Ort</option>
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[color:var(--muted)]">Notiz (optional)</span>
-            <textarea className="input w-full" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
-          </label>
-          <p className="text-xs text-[color:var(--muted)]">Steht auf „Heute“ und im Kontakt, aber nicht in Ihrem Kalender und ohne Erinnerung an den Kunden.</p>
-          {error ? <p className="rounded-[var(--radius-sm)] bg-rose-50 px-3 py-2 text-rose-800">{error}</p> : null}
-          <Button variant="primary" size="md" className="w-full" disabled={pending || !date || !time} onClick={save}>
-            {pending ? "Wird gespeichert …" : "Termin eintragen"}
-          </Button>
+          <ManualTerminForm leadId={leadId} onSaved={onSaved} />
         </div>
       </div>
     </Sheet>
