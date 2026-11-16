@@ -233,3 +233,109 @@ bleibt Arbeit an Kontakten“), die Knöpfe „+1 Tag / +1 Woche“ an jeder Auf
 - Zwei-Faktor-Login: lokal ohne TOTP angemeldet (Bootstrap-Admin); Einrichten nicht durchgespielt.
 - Drag & Drop in den Pipelines am Handy.
 - Erklärvideos: `tools/erklaervideos/betroffen.py 08ee0b7..HEAD` meldet keine betroffenen Seiten (kein Video zeigt den Admin).
+
+# Runde 2 (16.11.2026): Struktur umgesetzt
+
+Ole hat die Entscheidungen 1 bis 5 aus Abschnitt 7 nach Empfehlung getroffen. Umgesetzt in 0e1fe2b, 4ce391e, c90f977.
+Grundsatz: **Funktionen nur umgezogen, nichts gelöscht; fast alle Adressen bleiben gleich.** Welche Adresse zu
+welchem Bereich gehört, steht an einer Stelle (`src/lib/admin-bereiche.ts`, Test `tests/unit/admin-bereiche.test.ts`).
+
+## 9. Neue Struktur
+
+| Bereich | Leiste unten / Seitenleiste | Reiter |
+|---|---|---|
+| Heute (Zähler: Dringendes + fällige Aufgaben) | ja | Braucht Sie · Aufgaben; Filter Alle, Vertrieb, Kunden, Chats, Freigaben; rechts Karte „Vertrieb“ (Kennzahlen, Termine, neue Anfragen, Pipeline), „Läuft von allein“, Zahlen |
+| Vertrieb | ja (landet auf Kontakte) | Kontakte · Akquise-Pipeline · Follow-ups · Angebote · Marketing (darunter LinkedIn, Empfehlungen, Unterlagen, Rechner) |
+| Kunden | ja | Übersicht · Pipeline · Leads · Pay-per-Lead (mit Media Buyer) · Optimierung · Monatsberichte |
+| Chats (Zähler: Support-Nummer wartet) | ja | eine Seite (Offen, Zurückgestellt, Erledigt; Filter Support, Kunden, Interessenten) |
+| Zahlen | ja | Übersicht · Buchungen · Stornoquote · Kündigung & Rückkehr · WhatsApp-Zustellung · Leads & Werbung · Nutzung |
+| Einstellungen | Profilmenü (Handy), unten in der Seitenleiste (Rechner) | nur Einstellungen; Monatsberichte (automatischer Versand) statt der Arbeitsliste, Optimierung entfernt |
+
+Neu auf Heute: Monatsberichte prüfen, Optimierung freigeben, Später-Follow-ups freigeben (alle mit Filter
+„Freigaben“, LinkedIn-Entwürfe gehören ebenfalls dazu) und Support-Chats ohne Antwort (Bereich „Chats“).
+Nebenbei behoben: Der LinkedIn-Punkt ließ sich nicht auf „Morgen“ legen (Schlüssel wurde abgelehnt).
+
+![Heute am Handy](bilder/admin-runde2-heute-390.png) ![Kunden am Handy](bilder/admin-runde2-kunden-390.png) ![Chats am Handy](bilder/admin-runde2-chats-390.png)
+
+![Heute am Rechner](bilder/admin-runde2-heute-1280.png)
+
+## 10. Alte Pfade → neue Pfade
+
+| Alt | Neu | Wie |
+|---|---|---|
+| `/admin/vertrieb` (Vertrieb-Übersicht) | `/admin/heute?bereich=vertrieb` (Karte „Vertrieb“ hervorgehoben) | Weiterleitung 307 in `next.config.ts` |
+| `/admin/vertrieb/aufgaben?view=…&type=…` | `/admin/heute/aufgaben?view=…&type=…` | Weiterleitung 307, Suchparameter bleiben (geprüft) |
+| `/admin/leads`, `/admin/ppl`, `/admin/ppl/…` | unverändert | jetzt Bereich Kunden |
+| `/admin/whatsapp` | unverändert | jetzt Bereich Chats |
+| `/admin/monatsberichte`, `/admin/optimierung`, `/admin/media-buyer` | unverändert | jetzt Bereich Kunden (vorher Einstellungen bzw. ohne Menü) |
+| `/admin/marketing/…` | unverändert | jetzt Reiter im Vertrieb |
+| `/`, `/admin/nutzung` | unverändert | Reiter unter Zahlen |
+| `/admin/vertrieb/linkedin|empfehlungen|unterlagen`, `/admin/vertrieb/kunden`, `/admin/marketing` | wie bisher weitergeleitet | |
+
+Links im Code auf die alten Adressen angepasst (Heute-Einträge, Push bei Hilfeterminen und Termin-Review,
+Buchungsliste, Angebots-Link ohne Kontakt, gemerkte Listen, Suche); ein Test durchsucht `src/` und schlägt an, wenn
+wieder ein Link auf eine weitergeleitete Adresse zeigt. Texte in Push-Mitteilungen nennen die neuen Wege
+(„Kunden → Pay-per-Lead“, „Vertrieb → Marketing → LinkedIn“).
+
+## 11. Prüfrunde: Aufgaben von Ole, Klicks vorher und nachher
+
+Klicks ab Heute (ohne Texteingabe). Korrektur zu Abschnitt 2: „Vertrieb“ führte schon vor Runde 1 direkt zu
+Kontakte; Aufgaben 3 und 5 brauchten also 2 bzw. 4 Klicks, nicht 3 bzw. 5.
+
+| # | Aufgabe | 390 vorher | 390 nachher | 1280 vorher | 1280 nachher |
+|---|---|---|---|---|---|
+| 1 | Morgens sehen, was zu tun ist (inkl. Freigaben, Chats) | 0, aber Freigaben und Chats fehlten | 0 | 0 | 0 |
+| 2 | Fälligen Kontakt anrufen, Ergebnis eintragen | 2 + Formular | 2 + Formular | 2 + Formular | 2 + Formular |
+| 3 | Kontakt suchen und öffnen | 2 | 2 | 2 | 2 |
+| 4 | Support-Chat beantworten | 3 (Leads, Reiter, Chat) | 1 (Heute „Antworten“, bei einem Chat) bzw. 2 (Chats, Chat) | 3 | 1 bzw. 2 |
+| 5 | Angebot erstellen und senden | 4 | 4 | 4 | 4 |
+| 6 | Kunden mit offener Zahlung klären | 1 | 1 | 1 | 1 |
+| 7 | Monatsberichte prüfen und senden | 5 (Mehr, Einstellungen, Monatsberichte, Bericht, Senden) | 3 (Heute „Prüfen“, Bericht, Senden) | 4 | 3 |
+| 8 | Optimierung freigeben | 5 | 2 (Heute „Freigeben“, Freigeben; bei mehreren Konten 3) | 4 | 2 |
+| 9 | LinkedIn-Entwürfe freigeben | 2 über Heute, 3 über Menü | 2 über Heute, 3 über Menü (Vertrieb, Marketing, Freigeben) | 2 | 2 |
+| 10 | Geschäftszahlen ansehen | 2 (Mehr, Zahlen) | 1 | 1 | 1 |
+| 11 | Lead-Dashboard („/“) ansehen | 3 (Mehr, Zahlen, Reiter) | 2 (Zahlen, Reiter) | 2 | 2 |
+| 12 | Alle Aufgaben der Woche ansehen | 2 (Vertrieb, Aufgaben) | 1 (Heute, Reiter Aufgaben) | 2 | 1 |
+| 13 | Kunden-Login anlegen | 3 | 3 | 3 | 3 |
+
+Summe der 13 Aufgaben am Handy: 34 → 24 Klicks. Am Handy erreicht jetzt jeder Bereich die Leiste mit einem Tipp
+(vorher Marketing, Zahlen, Einstellungen hinter „Mehr“).
+
+Gemessen (Produktions-Build, 64 Seiten inkl. Detailseiten und Weiterleitungen, 390 und 1280 px, Bilder `r3-…`):
+kein Querscrollen (nach Korrektur Optimierung), keine Konsolenfehler außer bei einem Monatsbericht mit unvollständigen
+Demo-Daten (zeigt die Fehlerseite) und der absichtlichen 404; Tippziele unter 40 px am Handy 2,7 je Seite (fast nur
+seltene Einstellungen und Kanban-Karten). Leiste am Handy: genau fünf Einträge.
+
+Kleine Funde, gleich behoben: Optimierung mit sechs Zeilen Erklärung (jetzt ein Satz, Rest aufklappbar) und 3 px
+Querscrollen; Lead-Dashboard hieß „Dashboard“ (jetzt wie der Reiter „Leads & Werbung“); doppelter Link
+„Pay-per-Lead (Details)“ in Zahlen (ist jetzt Reiter); 404 im Admin führt zu Heute statt zum Lead-Dashboard.
+
+## 12. SUS-Schätzung nach Runde 2
+
+| Bereich | nach Runde 1 | nach Runde 2 | Begründung |
+|---|---|---|---|
+| Heute | 8,5 | 9 | Ein Eingang für alles, was dran ist, inkl. Freigaben, Chats und Aufgaben. Abzug: am Handy steht die Karte „Vertrieb“ erst unter einer langen Liste. |
+| Vertrieb | 7,5 | 8 | Landet auf Kontakte, Marketing als Reiter; Abzug: auf Marketing-Seiten zwei Auswahlzeilen. |
+| Kunden | 8 | 8 | Alles zu Kunden an einer Stelle; Abzug: 6 Reiter (am Handy wischen), Pay-per-Lead mit 8 inneren Ansichten, Kundenakte mit 7 Reitern. |
+| Chats | 7 | 8,5 | Eigener Bereich mit Zähler, eine Aktion auf Heute; Abzug: Support- und Lead-Chats in einer Liste. |
+| Zahlen | 7 | 7,5 | Eine Reiterleiste statt zwei verschiedener; Abzug: 7 Reiter außen, in der Übersicht 8 innere. |
+| Einstellungen | 7 | 8 | Nur noch Einstellungen, im Profil erreichbar. |
+| Übergreifend | 8 | 8,5 | Leiste ohne „Mehr“, gleiche Reiter überall, alte Links funktionieren. |
+| **Gesamt (SUS-Schätzung)** | **ca. 74** | **ca. 80** | Geschätzt nach Heuristiken, nicht gemessen. |
+
+## 13. Was für 90 noch fehlt
+
+1. **Kundenakte und Kontakt:** die Übersicht der Akte bettet die ganze Kontaktseite ein (am Handy rund 2.700 px).
+   Vorschlag: Kopf mit Anrufen/E-Mail/Aktivität, darunter „Was ansteht“, Verlauf und Stammdaten in Reitern; 7 → 5
+   Reiter (Leads & Kampagne zusammen, Optimierung in Kampagne).
+2. **Pay-per-Lead:** 8 innere Ansichten auf 4 reduzieren (Bezüge, Lieferungen inkl. Geparkt/Storno, Auswertung, Budgets).
+3. **Zahlen:** Übersicht mit 8 inneren Reitern und 7 äußeren; Ziel eine Ebene (z. B. Übersicht, Leads & Werbung,
+   Kunden & Kündigung, Buchungen, Nutzung).
+4. **Chats:** Standardfilter „Support-Nummer“, Lead-Chats der Kunden nur auf Wunsch (eine Entscheidung für Ole).
+5. **Messen statt schätzen:** Admin-Seitenaufrufe pseudonym zählen und einen kurzen SUS-Fragebogen mit Ole
+   (10 Fragen, 3 Minuten) nach einer Woche Nutzung.
+6. Restliche kleine Tippziele in WhatsApp-Einstellungen und Rechner-Einstellungen; Kanban-Karten am Handy.
+
+Nicht geprüft in Runde 2: echte Anbindungen (wie Runde 1), Push-Mitteilungen auf einem echten Gerät (die Links sind
+per Test und Weiterleitung abgesichert). Die Kundenliste zeigt den internen Kunden „performancegrowth Support“ an,
+falls er in der Produktion nicht ausgeblendet ist (lokal mit Demo-Daten gesehen, nicht verändert).
