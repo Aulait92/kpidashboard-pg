@@ -39,7 +39,11 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
   const [ang, auslesenErlaubt, newUi] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt), isNewUi(ctx.customerId)]);
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      {d.leadId ? (
+      {von === "heute" ? (
+        <ZurueckLink href="/buyer" back>
+          Heute
+        </ZurueckLink>
+      ) : d.leadId ? (
         <ZurueckLink href={`${newUi ? "/buyer/kontakte/" : "/buyer/leads/"}${d.leadId}`} back={von === "kontakt"}>
           Zum Kontakt
         </ZurueckLink>

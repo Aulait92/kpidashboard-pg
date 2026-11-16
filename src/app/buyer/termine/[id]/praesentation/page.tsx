@@ -27,9 +27,15 @@ export default async function PraesentationPage({ params, searchParams }: { para
     : null;
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <ZurueckLink href={`/buyer/termine/${id}/vorbereitung`} back={von === "vorbereitung"}>
-        Zur Terminvorbereitung
-      </ZurueckLink>
+      {von === "heute" ? (
+        <ZurueckLink href="/buyer" back>
+          Heute
+        </ZurueckLink>
+      ) : (
+        <ZurueckLink href={`/buyer/termine/${id}/vorbereitung`} back={von === "vorbereitung"}>
+          Zur Terminvorbereitung
+        </ZurueckLink>
+      )}
       <PageHeader
         title={`Präsentation: ${p.d.lead.name}`}
         subtitle={p.angeboteBestaetigt ? "Im Videocall den Bildschirm teilen und auf Vollbild gehen." : "Noch ohne Angebote: Bestätigen Sie Ihre Angebote in der Terminvorbereitung, dann erscheinen sie hier."}

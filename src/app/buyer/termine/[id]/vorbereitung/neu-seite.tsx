@@ -140,7 +140,12 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-32 pt-6 sm:px-6 md:pb-10 lg:px-8">
-      {d.leadId ? (
+      {/* von=heute: aus dem Termin auf „Heute“ geöffnet, zurück dorthin (UX Runde 4) */}
+      {von === "heute" ? (
+        <ZurueckLink href="/buyer" back>
+          Heute
+        </ZurueckLink>
+      ) : d.leadId ? (
         <ZurueckLink href={`/buyer/leads/${d.leadId}`} back={von === "kontakt"}>
           Zum Kontakt
         </ZurueckLink>

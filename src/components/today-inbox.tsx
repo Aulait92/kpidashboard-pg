@@ -31,6 +31,7 @@ import {
   X,
   SkipForward,
   PlayCircle,
+  Presentation,
 } from "lucide-react";
 import {
   appointmentOutcomeResult,
@@ -316,7 +317,7 @@ export function TodayInbox({
       ...(c.kind === "followup" && c.erledigtOk
         ? [{ label: "Erledigt, kein weiterer Anruf nötig", icon: Check, onSelect: () => run(c.key, `${c.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(c.leadId)) }]
         : []),
-      { label: "Lead öffnen", icon: UserRound, href: leadUrl(c.leadId) },
+      { label: "Kontakt öffnen", icon: UserRound, href: leadUrl(c.leadId) },
       { label: "Verloren", icon: ThumbsDown, tone: "danger", onSelect: () => setTimeout(() => setSheet({ kind: "lost", key: c.key, leadId: c.leadId, name: c.name }), 0) },
     );
     setSheet({ kind: "actions", title: c.name, message: c.reason, actions });
@@ -382,8 +383,13 @@ export function TodayInbox({
               const actions: SheetAction[] = [];
               if (video && a.meetUrl) actions.push({ label: "Videocall starten", icon: Video, href: a.meetUrl, tone: "primary" });
               if (a.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${a.phone}`, tone: video ? undefined : "primary" });
+              // UX Runde 4: Vorbereiten und Präsentation auch hier (vorher nur über den Kontakt erreichbar)
+              if (a.leadId) {
+                actions.push({ label: "Vorbereiten", icon: Calculator, href: `/buyer/termine/${a.id}/vorbereitung?von=heute` });
+                actions.push({ label: "Präsentation", icon: Presentation, href: `/buyer/termine/${a.id}/praesentation?von=heute` });
+              }
               if (a.conversationId) actions.push({ label: "Chat öffnen", icon: MessageCircle, href: `/buyer/chats?c=${a.conversationId}` });
-              if (a.leadId) actions.push({ label: "Lead öffnen", icon: UserRound, href: leadUrl(a.leadId) });
+              if (a.leadId) actions.push({ label: "Kontakt öffnen", icon: UserRound, href: leadUrl(a.leadId) });
               actions.push({
                 label: "Verschieben oder absagen",
                 icon: CalendarClock,
@@ -403,7 +409,7 @@ export function TodayInbox({
                     <div className="truncate font-medium">{a.name}</div>
                     <p className="truncate text-xs text-[color:var(--muted)]">{a.summary ?? terminArtLabel(a.mode)}</p>
                     {vorbereiten.has(a.id) ? (
-                      <Link href={`/buyer/termine/${a.id}/vorbereitung`} onClick={stop} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline" data-termin-vorbereiten>
+                      <Link href={`/buyer/termine/${a.id}/vorbereitung?von=heute`} onClick={stop} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline" data-termin-vorbereiten>
                         <Calculator className="h-3.5 w-3.5" /> Vorbereiten: Angebot rechnen
                       </Link>
                     ) : null}
@@ -729,7 +735,7 @@ function UpcomingCard({
                     {it.kind === "termin" ? `Termin ${time(it.at)} Uhr · ${it.note ?? ""}` : `Wiedervorlage${it.note ? ` · ${it.note}` : ""}`}
                   </p>
                   {it.kind === "termin" && vorbereiten.has(it.key.slice(2)) ? (
-                    <Link href={`/buyer/termine/${it.key.slice(2)}/vorbereitung`} onClick={(e) => e.stopPropagation()} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline" data-termin-vorbereiten>
+                    <Link href={`/buyer/termine/${it.key.slice(2)}/vorbereitung?von=heute`} onClick={(e) => e.stopPropagation()} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline" data-termin-vorbereiten>
                       <Calculator className="h-3.5 w-3.5" /> Vorbereiten: Angebot rechnen
                     </Link>
                   ) : null}
