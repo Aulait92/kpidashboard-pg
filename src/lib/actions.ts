@@ -7,6 +7,7 @@ import type { OutbrainSyncResult } from "@/lib/outbrain";
 import type { TikTokSyncResult } from "@/lib/tiktok";
 import type { GoogleSyncResult } from "@/lib/google";
 import { runFullSync } from "@/lib/sync";
+import { getCurrentSession } from "@/lib/auth";
 
 export type SyncActionResult =
   | {
@@ -29,6 +30,8 @@ export type SyncActionResult =
   | { ok: false; error: string };
 
 export async function runAirtableSync(): Promise<SyncActionResult> {
+  // Nur mit Login (Prüfung App-Demo 16.11.2026: die Action war ohne Anmeldung aufrufbar). Auch nicht in der App-Demo.
+  if (!(await getCurrentSession())) return { ok: false, error: "Bitte neu anmelden." };
   try {
     const { airtable, meta, outbrain, tiktok, google, push } =
       await runFullSync();
