@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "pferd-op",
+  "produkt": "Pferde-OP-Versicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Keine Jahreshöchstentschädigung",
+    "Freie Tierarzt- und Klinikwahl",
+    "Stabiler Beitrag im Pferdealter"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-OP-Versicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "got": "unabhängig vom Satz",
+        "jhl": "bis 1.500 € je OP",
+        "nachbehandlung": "bis 15 Tage",
+        "chips": "nein",
+        "kolik": "5 Tage",
+        "zahn": "bis 500 € je OP",
+        "wartezeit": "3 Monate",
+        "ausland": "Europa"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/pferdeversicherung/pferde-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferde-OP-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "got": "unabhängig vom Satz",
+        "jhl": "bis 4.000 € je OP",
+        "nachbehandlung": "bis 15 Tage",
+        "chips": "nein",
+        "kolik": "5 Tage",
+        "zahn": "bis 1.500 € je OP",
+        "wartezeit": "3 Monate",
+        "ausland": "Europa"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/pferdeversicherung/pferde-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferde-OP-Versicherung Exzellent",
+      "kurz": "Exzellent",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "got": "unabhängig vom Satz",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 15 Tage",
+        "chips": "ja, nach 12 Monaten",
+        "kolik": "5 Tage",
+        "zahn": "unbegrenzt",
+        "wartezeit": "3 Monate",
+        "ausland": "weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/pferdeversicherung/pferde-op-versicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/tierversicherung/pferdeversicherung/pferde-op-versicherung",
+    "https://www.ruv.de/dam/jcr:d0d0a2dd-2922-4c09-beb3-a34c21254016/OPK_Pferd_Produktinformationsblatt.pdf"
+  ],
+  "offen": [
+    "R+V markiert Exzellent als „Topseller“.",
+    "Höchstentschädigung je Operation, keine Jahresgrenze: Basis bis 1.500 € (Zahn, Tumor, Wunden bis 500 €), Premium bis 4.000 € (Zahn u. a. bis 1.500 €), Kolik-OPs im Premium und Exzellent unbegrenzt.",
+    "Erstattungssatz in Prozent und Selbstbeteiligung auf der Produktseite nicht genannt.",
+    "Unfall-OPs: Basis und Premium 3 Monate Wartezeit, Exzellent keine; Chip-OPs nur im Exzellent (12 Monate).",
+    "Regenerative Therapien nur im Exzellent (bis 15 Tage); Vorsorge nicht versichert bzw. nicht genannt.",
+    "Höchstaufnahmealter 15 Jahre."
+  ]
+}

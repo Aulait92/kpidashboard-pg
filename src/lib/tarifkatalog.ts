@@ -67,10 +67,11 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   dfv: "DFV",
   ergo: "ERGO",
   hansemerkur: "HanseMerkur",
+  ruv: "R+V",
   uelzener: "Uelzener",
 };
 /** Reihenfolge in Listen: die drei Vertreter-Gesellschaften zuerst, dann die Tierversicherer (alphabetisch), sonst alphabetisch. */
-const REIHENFOLGE = ["allianz", "axa", "signal-iduna", "agila", "barmenia", "dfv", "ergo", "hansemerkur", "uelzener"];
+const REIHENFOLGE = ["allianz", "axa", "signal-iduna", "agila", "barmenia", "dfv", "ergo", "hansemerkur", "ruv", "uelzener"];
 
 export function gesellschaftName(key: string): string {
   if (GESELLSCHAFT_NAMEN[key]) return GESELLSCHAFT_NAMEN[key];
@@ -92,6 +93,7 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/\bdfv\b|deutsche\s+familienversicherung/i.test(t)) return "dfv";
   if (/\bergo\b/i.test(t)) return "ergo";
   if (/hanse\s*-?\s*merkur/i.test(t)) return "hansemerkur";
+  if (/(^|[^a-z])r\s*\+\s*v([^a-z]|$)|\bruv\b/i.test(t)) return "ruv";
   if (/uelzener/i.test(t)) return "uelzener";
   return null;
 }

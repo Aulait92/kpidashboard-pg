@@ -32,7 +32,7 @@ Gemeinsames Merkmal-Schema je Sparte, gleich für alle Gesellschaften.
 
 ### `<gesellschaft>/<sparte>.json`
 Ordner: Schlüssel der Gesellschaft, klein mit Bindestrich (`allianz`, `axa`, `signal-iduna`, Tierversicherer z. B.
-`agila`, `uelzener`, `hansemerkur`). Neue Ordner prüft der Datentest automatisch mit; Anzeigename und Reihenfolge stehen in
+`agila`, `barmenia`, `dfv`, `ergo`, `hansemerkur`, `ruv`, `uelzener`). Neue Ordner prüft der Datentest automatisch mit; Anzeigename und Reihenfolge stehen in
 `src/lib/tarifkatalog.ts` (`GESELLSCHAFT_NAMEN`, `REIHENFOLGE`, `gesellschaftAusText`).
 
 ```json
@@ -95,16 +95,16 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 Tierversicherer (Abruf 16.11.2026; nur Tier-Sparten). „1 Tarif“ = die Gesellschaft hat keine Stufen, nur wählbare
 Summen bzw. Selbstbeteiligung (Stufe „Tarif“).
 
-| Sparte | AGILA | Barmenia | DFV | ERGO | HanseMerkur | Uelzener |
-|---|---|---|---|---|---|---|
-| katze-kranken | vollständig (3 Stufen) | vollständig (4 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | vollständig (3 Stufen) | vollständig (1 Tarif) |
-| katze-op | vollständig (3 Stufen) | vollständig (2 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | vollständig (1 Tarif) |
-| hund-kranken | vollständig (3 Stufen) | vollständig (4 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | vollständig (3 Stufen) | vollständig (1 Tarif) |
-| hund-op | vollständig (3 Stufen) | vollständig (3 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | vollständig (1 Tarif) |
-| pferd-op | fehlt (nur Hund, Katze) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | vollständig (1 Tarif) |
-| pferd-kranken | fehlt (nur Hund, Katze) | fehlt (kein Vollschutz für Pferde) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | vollständig (1 Tarif) |
-| tierhalter-hund | vollständig (3 Stufen) | fehlt (Stufen Klassik, Premium nicht als Tabelle) | vollständig (1 Tarif) | teilweise (1 Tarif, Fremdhüter offen) | vollständig (2 Stufen) | vollständig (1 Tarif) |
-| tierhalter-pferd | fehlt (kein Produkt) | fehlt (Stufen nicht als Tabelle) | fehlt (kein Produkt) | teilweise (1 Tarif, Flurschäden offen) | fehlt (kein Produkt) | vollständig (1 Tarif) |
+| Sparte | AGILA | Barmenia | DFV | ERGO | HanseMerkur | R+V | Uelzener |
+|---|---|---|---|---|---|---|---|
+| katze-kranken | vollständig (3 Stufen) | vollständig (4 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | vollständig (3 Stufen) | fehlt (kein Produkt) | vollständig (1 Tarif) |
+| katze-op | vollständig (3 Stufen) | vollständig (2 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | fehlt (kein Produkt) | vollständig (1 Tarif) |
+| hund-kranken | vollständig (3 Stufen) | vollständig (4 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | vollständig (3 Stufen) | fehlt (nur OP) | vollständig (1 Tarif) |
+| hund-op | vollständig (3 Stufen) | vollständig (3 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | teilweise (3 Stufen, Vorsorge nicht genannt) | vollständig (1 Tarif) |
+| pferd-op | fehlt (nur Hund, Katze) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | vollständig (1 Tarif) |
+| pferd-kranken | fehlt (nur Hund, Katze) | fehlt (kein Vollschutz für Pferde) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | fehlt (kein Produkt) | vollständig (1 Tarif) |
+| tierhalter-hund | vollständig (3 Stufen) | fehlt (Stufen Klassik, Premium nicht als Tabelle) | vollständig (1 Tarif) | teilweise (1 Tarif, Fremdhüter offen) | vollständig (2 Stufen) | fehlt (nicht erhoben) | vollständig (1 Tarif) |
+| tierhalter-pferd | fehlt (kein Produkt) | fehlt (Stufen nicht als Tabelle) | fehlt (kein Produkt) | teilweise (1 Tarif, Flurschäden offen) | fehlt (kein Produkt) | fehlt (nicht erhoben) | vollständig (1 Tarif) |
 
 Nicht aufgenommen: PETPROTECT (Vermittler der BarmeniaGothaer, Tarifvergleich nur als Symbole ohne Werte),
 Helvetia (helvetia.de nennt nur „je nach Tarifwahl“, keine Stufen; Seiten für automatische Abrufe gesperrt), Gothaer
@@ -179,6 +179,11 @@ Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext
   OP- und Krankenversicherung Komfort, Premium („Bestseller“), Premium plus für Hund und Katze; Hundehaftpflicht Komfort
   und Premium plus („Testsieger“). Kein Pferdeprodukt.
 
+### R+V
+- Quelle: Leistungstabellen auf ruv.de (Hunde-OP, Pferde-OP) und das Produktinformationsblatt Pferde-OP. Stufen Basis,
+  Premium, Exzellent („Topseller“). Ordner `ruv` enthält nur Tier-Dateien. Keine Katzen- und keine Krankenvollversicherung;
+  Hunde- und Pferdehalterhaftpflicht gibt es, sind aber noch nicht erhoben.
+
 ### Uelzener
 - Quelle: Produktseiten und Leistungsübersichten auf uelzener.de (Hund 12/2025, Katze 08/2025, Pferd 03/2025,
   Hundehaftpflicht 02/2024) und Informationsblätter. Uelzener hat keine Tarifstufen: je Produkt ein Tarif mit wählbarer
@@ -191,7 +196,7 @@ Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext
   ohne Vorsorge; ERGO Hundehaftpflicht ohne Angabe zu fremden Hütern, Pferdehaftpflicht ohne Flurschäden; Uelzener
   ohne veröffentlichte SB-Beträge bei Hund und Pferdehaftpflicht; Barmenia Premium Plus Ausland widersprüchlich
   (12 Monate bzw. unbegrenzt).
-- Pferdekranken gibt es nur bei Allianz und Uelzener; Pferde-OP zusätzlich bei Barmenia.
+- Pferdekranken gibt es nur bei Allianz und Uelzener; Pferde-OP zusätzlich bei Barmenia und R+V.
 - Allianz Hausrat: Überspannung, Hotelkosten, Außenversicherung, Diebstahl aus dem Auto, Selbstbeteiligung stehen nicht
   im aktuellen Tarifvergleich.
 - Allianz Unfall: Ob Invaliditätssumme, Unfallrente und Tagegeld je Stufe fest oder im Rechner wählbar sind, ist nicht belegt.

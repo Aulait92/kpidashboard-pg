@@ -100,6 +100,10 @@ describe("Katalog laden", () => {
     expect(gesellschaftAusText("DFV-TierkrankenSchutz")).toBe("dfv");
     expect(gesellschaftName("ergo")).toBe("ERGO");
     expect(gesellschaftAusText("ERGO Versicherung AG")).toBe("ergo");
+    expect(gesellschaftName("ruv")).toBe("R+V");
+    expect(gesellschaftAusText("R+V Allgemeine Versicherung AG")).toBe("ruv");
+    expect(gesellschaftAusText("Agentur Schmidt (R + V)")).toBe("ruv");
+    expect(gesellschaftAusText("Arvid Hansen")).toBeNull();
     expect(sortiereGesellschaften(["uelzener", "agila", "signal-iduna", "allianz"])).toEqual(["allianz", "signal-iduna", "agila", "uelzener"]);
     expect(sparteAusText("Privathaftpflicht")).toBe("haftpflicht");
     expect(sparteAusText("Tierhalterhaftpflicht Hund")).toBe("tierhalter-hund");
@@ -360,7 +364,11 @@ describe("Echte Katalogdaten (data/tarifkatalog)", () => {
     expect(op.tarife[0].gesellschaft).toBe("allianz");
     expect(new Set(op.tarife.map((t) => t.gesellschaft)).size).toBe(3);
     // Pferde-Sparten: Allianz-Vertreter bekommt Stufen, Makler mehrere Gesellschaften
-    expect(vorauswahl(echt, "pferd-op", { rolle: "makler", gesellschaften: [] }).tarife.map((t) => t.gesellschaft)).toContain("uelzener");
+    const pferd = vorauswahl(echt, "pferd-op", { rolle: "makler", gesellschaften: [] }).tarife.map((t) => t.gesellschaft);
+    expect(pferd).toHaveLength(3);
+    expect(pferd[0]).toBe("allianz");
+    expect(new Set(pferd).size).toBe(3);
+    expect(vorauswahl(echt, "pferd-kranken", { rolle: "vertreter", gesellschaften: ["uelzener"] }).tarife.map((t) => t.kurz)).toEqual(["Tarif"]);
     const m = vorauswahl(echt, "hausrat", { rolle: "makler", gesellschaften: [] });
     expect(m.tarife.map((t) => t.gesellschaft)).toEqual(["allianz", "axa", "signal-iduna"]);
   });

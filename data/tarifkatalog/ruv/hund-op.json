@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "hund-op",
+  "produkt": "Hunde-OP-Versicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Stabiler Beitrag im Alter",
+    "Direkte Abrechnung mit dem Tierarzt"
+  ],
+  "tarife": [
+    {
+      "name": "OP-Kostenversicherung Hund Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %, max. 1.000 €",
+        "jhl": "unbegrenzt, 1.000 €/OP",
+        "nachbehandlung": "bis 14 Tage",
+        "physio": "bis 14 Tage nach OP",
+        "kastration": "nein",
+        "sb": "keine",
+        "wartezeit": "28 Tage",
+        "ausland": "Europa",
+        "got": "unabhängig vom Satz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/hundeversicherung/hunde-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "OP-Kostenversicherung Hund Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "90 %",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 1 Monat",
+        "physio": "bis 1 Monat nach OP",
+        "kastration": "ja, nach 6 Monaten",
+        "sb": "10 %",
+        "wartezeit": "28 Tage",
+        "ausland": "weltweit",
+        "got": "unabhängig vom Satz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/hundeversicherung/hunde-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "OP-Kostenversicherung Hund Exzellent",
+      "kurz": "Exzellent",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "100 %",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 1 Monat",
+        "physio": "bis 1 Monat nach OP",
+        "kastration": "ja, nach 6 Monaten",
+        "sb": "keine",
+        "wartezeit": "28 Tage",
+        "ausland": "weltweit",
+        "got": "unabhängig vom Satz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/hundeversicherung/hunde-op-versicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/tierversicherung/hundeversicherung/hunde-op-versicherung"
+  ],
+  "offen": [
+    "R+V markiert Exzellent als „Topseller“.",
+    "Erstattung gilt bei Versicherungsbeginn bis 5 Jahre; ab 6 Jahren 75 %, ab 8 Jahren 60 % (Basis höchstens 750 bzw. 600 € je OP). Neuversicherung nur bis 8 Jahre.",
+    "Angeborene Fehlentwicklungen nur im Exzellent (Wartezeit 1 Jahr); Unfall-OPs: Basis und Premium 1 Woche, Exzellent ohne Wartezeit.",
+    "Vorsorge und Zahnbehandlung je Stufe in der Tabelle nur als Symbol; Zahnersatz ist nicht versichert.",
+    "R+V hat für Hunde nur die OP-Versicherung, für Katzen kein Produkt."
+  ]
+}
