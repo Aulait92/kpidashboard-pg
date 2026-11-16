@@ -124,8 +124,11 @@ export function LeadTimesForm({
   readOnly,
   hidden,
   source = "none",
+  fixedDuration,
 }: {
   initial: LeadTimesInitial;
+  /** Termindauer kommt von woanders (z. B. Termintyp der Vertriebs-Buchungsseite): Auswahl ausblenden */
+  fixedDuration?: number;
   action: FormAction;
   readOnly: boolean;
   hidden?: Record<string, string>;
@@ -139,7 +142,7 @@ export function LeadTimesForm({
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
   const [, startTransition] = useTransition();
   const init = initialSchedule(initial);
-  const [duration, setDuration] = useState<number>(initial.durationMin ?? 30);
+  const [duration, setDuration] = useState<number>(fixedDuration ?? initial.durationMin ?? 30);
   const [step, setStep] = useState<number>(init.step);
   const [days, setDays] = useState<Days>(init.days);
   const [lastRange, setLastRange] = useState<Range>(() => Object.values(init.days)[0]?.[0] ?? ["09:00", "17:00"]);
@@ -195,7 +198,7 @@ export function LeadTimesForm({
       {hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null}
       <input type="hidden" name="duration" value={duration} />
       <input type="hidden" name="schedule" value={JSON.stringify({ step, days })} />
-      <fieldset>
+      <fieldset hidden={fixedDuration != null}>
         <legend className="text-sm font-medium">Termindauer</legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {DURATIONS.map((d) => (

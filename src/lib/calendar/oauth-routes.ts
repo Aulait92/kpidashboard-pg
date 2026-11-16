@@ -28,6 +28,8 @@ export function publicOrigin(req: Request): string {
 // weil „state“ schon die Kalender-Zuordnung trägt. Nur feste Ziele erlaubt.
 const BACK_COOKIE = "pg_cal_back";
 const BACK_TARGETS: Record<string, string> = { kalender: "/buyer/kalender", einrichtung: "/buyer/einrichtung" };
+/** Admins: Vertriebskalender der Buchungsseite /termin (lib/vertrieb/buchung.ts). */
+const ADMIN_BACK_TARGETS: Record<string, string> = { buchungsseite: "/admin/vertrieb/buchungsseite" };
 
 function cookieValue(req: Request, name: string): string | null {
   const raw = req.headers.get("cookie") ?? "";
@@ -62,7 +64,7 @@ export async function connectRoute(
   try {
     const back = new URL(req.url).searchParams.get("zurueck");
     const headers = new Headers({ Location: authUrl(customerId) });
-    if (back && BACK_TARGETS[back]) {
+    if (back && (session.role === "ADMIN" ? ADMIN_BACK_TARGETS : BACK_TARGETS)[back]) {
       headers.append("Set-Cookie", `${BACK_COOKIE}=${back}; Path=/api; Max-Age=900; HttpOnly; Secure; SameSite=Lax`);
     }
     return new Response(null, { status: 302, headers });
@@ -94,10 +96,10 @@ export async function callbackRoute(
   if (isBuyer && customerId !== ownKey && (customerId !== session.customerId || (await teamRoleOf(session.userId)) === "advisor")) {
     return Response.json({ error: "Nicht erlaubt." }, { status: 403 });
   }
-  const wanted = BACK_TARGETS[cookieValue(req, BACK_COOKIE) ?? ""];
+  const wanted = (isBuyer ? BACK_TARGETS : ADMIN_BACK_TARGETS)[cookieValue(req, BACK_COOKIE) ?? ""];
   const back = (status: string) => {
     const dest = new URL(
-      isBuyer ? (wanted ?? (customerId === ownKey ? "/buyer/kalender" : "/buyer/einrichtung")) : "/admin/whatsapp",
+      isBuyer ? (wanted ?? (customerId === ownKey ? "/buyer/kalender" : "/buyer/einrichtung")) : (wanted ?? "/admin/whatsapp"),
       publicOrigin(req),
     );
     dest.searchParams.set("gcal", status);

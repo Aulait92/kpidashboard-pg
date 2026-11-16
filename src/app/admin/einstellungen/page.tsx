@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Anchor, Bot, Calculator, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
+import { Activity, Anchor, Bot, Calculator, CalendarDays, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
@@ -38,6 +38,7 @@ const GROUPS = [
     title: "Vertrieb & Wachstum",
     text: "Neue Kunden gewinnen",
     items: [
+      { href: "/admin/vertrieb/buchungsseite", icon: CalendarDays, color: "bg-blue-500", title: "Meine Buchungsseite", text: "Eigene Terminbuchung statt Calendly: Kalender, Zeiten, Termintypen" },
       { href: "/admin/vertrieb/import", icon: FileUp, color: "bg-violet-500", title: "Anbindungen", text: "Instantly, Calendly, Formulare, Import" },
       { href: "/admin/vertrieb/follow-ups#einstellungen", icon: Clock, color: "bg-teal-500", title: "Später-Follow-ups", text: "Automatik ein/aus, Tageslimit je Postfach, Buchungslink, KI-Texte" },
       { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },

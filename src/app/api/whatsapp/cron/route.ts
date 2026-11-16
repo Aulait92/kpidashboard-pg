@@ -181,6 +181,13 @@ async function handle(req: Request): Promise<Response> {
   after(() =>
     enrichPendingContacts(Number(process.env.ADDRESS_ENRICH_PER_RUN ?? 20)).catch((e: unknown) => reportError(e, "cron-addresses")),
   );
+  // Vertrieb: eigene Buchungsseite /termin, Erinnerungen 24 h und 1 h vorher (E-Mail und WhatsApp)
+  const vertriebErinnerungen = await import("@/lib/vertrieb/buchung")
+    .then((m) => m.runSalesBookingReminders(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-vertrieb-erinnerungen");
+      return null;
+    });
   // Instantly: Antworten alle 15 Minuten nachholen (Sicherheitsnetz, falls der Webhook nicht
   // ankommt, z. B. falsche URL). Nur wo INSTANTLY_AUTO_SYNC=1 gesetzt ist (Produktion).
   if (process.env.INSTANTLY_AUTO_SYNC === "1" && process.env.INSTANTLY_API_KEY && now.getUTCMinutes() % 15 < 5) {
@@ -268,7 +275,7 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-support-templates");
       return null;
     });
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, vertraege, terminNachfragen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, vertraege, terminNachfragen, vertriebErinnerungen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;
