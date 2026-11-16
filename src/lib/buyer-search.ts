@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPhone } from "@/lib/format";
 import { statusLabel } from "@/lib/products";
 import { conversationScope, leadScope, type TeamCtx } from "@/lib/team";
+import { phoneDigitsWhere, phoneQuery } from "@/lib/telefonsuche";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 
 export type BuyerSearchHit = {
@@ -25,6 +26,8 @@ export const SEARCH_MIN_CHARS = 2;
  * „0151 123…“, „+49 151 …“ oder „0049151…“: Ländervorwahl 49 bzw. führende Null
  * fallen weg, damit alle Schreibweisen dieselben Treffer liefern.
  * null = keine Telefonsuche (Buchstaben drin oder zu wenige Ziffern).
+ * Seit 16.11.2026 sucht die Telefonsuche über lib/telefonsuche.ts (Spalten phoneDigits/phoneDigitsRev);
+ * hier nur noch: Sieht die Eingabe nach einer Nummer aus (Bestandskunden-Nummer externalNo)?
  */
 export function phoneSearchCore(q: string): string | null {
   const t = q.trim();
@@ -49,8 +52,9 @@ export async function searchBuyer(ctx: TeamCtx, rawQ: string, opts: { newUi: boo
   const q = rawQ.trim().slice(0, 80);
   if (q.length < SEARCH_MIN_CHARS) return [];
   const text = { contains: q, mode: "insensitive" as const };
-  const core = phoneSearchCore(q);
-  const phoneOr = core ? [{ phone: { contains: core } }] : [];
+  // Telefonnummer in jeder Schreibweise, auch nur die Endziffern (lib/telefonsuche.ts, Spalten mit Index)
+  const pq = phoneQuery(q);
+  const phoneOr = pq ? [phoneDigitsWhere(pq)] : [];
 
   const owner = ctx.teamRole === "owner";
   const [customer, chatsOn] = await Promise.all([
@@ -70,7 +74,7 @@ export async function searchBuyer(ctx: TeamCtx, rawQ: string, opts: { newUi: boo
       ? prisma.existingCustomer.findMany({
           where: {
             customerId: ctx.customerId,
-            OR: [{ lastName: text }, { firstName: text }, { company: text }, { email: text }, ...phoneOr, ...(core ? [{ externalNo: { contains: q } }] : [])],
+            OR: [{ lastName: text }, { firstName: text }, { company: text }, { email: text }, ...phoneOr, ...(phoneSearchCore(q) ? [{ externalNo: { contains: q } }] : [])],
           },
           take: 5,
           orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
@@ -79,7 +83,7 @@ export async function searchBuyer(ctx: TeamCtx, rawQ: string, opts: { newUi: boo
       : [],
     chatsOn
       ? prisma.conversation.findMany({
-          where: { ...conversationScope(ctx), OR: [{ contactName: text }, ...(core ? [{ contactPhone: { contains: core } }] : [])] },
+          where: { ...conversationScope(ctx), OR: [{ contactName: text }, ...phoneOr] },
           take: 4,
           orderBy: { lastMessageAt: { sort: "desc", nulls: "last" } },
           select: { id: true, contactName: true, contactPhone: true },

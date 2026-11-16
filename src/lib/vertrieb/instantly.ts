@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { contactIdsByEmails, findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
 import { captureFromLead, captureFromMail } from "@/lib/vertrieb/kontaktdaten-server";
+import { indexMailPhones } from "@/lib/telefonsuche-server";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
 
 const API = "https://api.instantly.ai/api/v2";
@@ -294,6 +295,8 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
         eaccount: dup.eaccount ?? r.eaccount ?? null,
       },
     });
+    // Text kam erst jetzt dazu: Nummern der Signatur für die Telefonsuche neu eintragen
+    if (!dup.text && !dup.html && (r.text || r.html)) await indexMailPhones(dup.id).catch((e) => reportError(e, "telefonsuche-index"));
     return false;
   }
   // Eingangsbestätigungen/Abwesenheitsnotizen auch erkennen, wenn Instantly sie nicht markiert
@@ -326,6 +329,8 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
     select: { id: true },
   });
 
+  // Telefonsuche: Nummern aus der Signatur am Mail-Eintrag (findet den Kontakt, auch wenn die Nummer nicht übernommen wird)
+  await indexMailPhones(saved.id).catch((e) => reportError(e, "telefonsuche-index"));
   // Absenderadresse und Telefonnummern aus der Signatur übernehmen (nicht aus Abwesenheitsnotizen, lib/vertrieb/kontaktdaten-server.ts)
   if (!r.isAutoReply) {
     await captureFromMail(contactId, { direction: "IN", fromEmail: r.fromEmail, text: r.text, html: r.html, isAutoReply: false, sentAt: r.sentAt }).catch((e) =>

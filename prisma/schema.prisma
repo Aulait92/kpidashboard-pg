@@ -606,6 +606,9 @@ model Lead {
   // Kontakt aus Airtable (Telefon normalisiert wie WhatsApp `from`, z. B.
   // 4915112345678) — für die Zuordnung WhatsApp-Konversation/Buchung ↔ Lead.
   phone                String?
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits          String?
+  phoneDigitsRev       String?
   email                String?
   // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
   // lib/lead-fields) — Kontext für den WhatsApp-Bot.
@@ -758,6 +761,8 @@ model Lead {
   @@index([customerId, phone])
   @@index([subscriptionId, deliveredAt])
   @@index([stornoState])
+  @@index([phoneDigits])
+  @@index([phoneDigitsRev])
 }
 
 model Revenue {
@@ -1013,6 +1018,9 @@ model WhatsAppAccount {
   wabaId             String?
   phoneNumberId      String?
   phoneNumber        String?
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits        String?
+  phoneDigitsRev     String?
   displayName        String?
   apiKeyEnc          String? // app-seitig verschlüsselter 360dialog-API-Key
   status             String    @default("pending") // pending | connected | disabled
@@ -1107,6 +1115,9 @@ model Conversation {
   whatsAppAccountId    String?
   leadId               String?
   contactPhone         String
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits          String?
+  phoneDigitsRev       String?
   contactName          String?
   contactEmail         String? // vom Lead im Chat genannt (für Kalender-Einladung)
   botActive            Boolean   @default(true)
@@ -1150,6 +1161,8 @@ model Conversation {
   @@index([customerId, status, lastMessageAt])
   @@index([salesContactId])
   @@index([linkedCustomerId])
+  @@index([phoneDigits])
+  @@index([phoneDigitsRev])
 }
 
 // Einzelne Nachricht in einer Konversation (ein- oder ausgehend).
@@ -1515,6 +1528,9 @@ model SalesContact {
   /// { emails: { "<adresse>": { source, at } }, removed: [von Hand entfernte Adressen/Nummern] }
   detectedData         Json?
   phone                String?
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits          String?
+  phoneDigitsRev       String?
   fax                  String?
   street               String?
   zip                  String?
@@ -1606,27 +1622,34 @@ model SalesContact {
   @@index([linkedinStatus])
   @@index([zip])
   @@index([city])
+  @@index([phoneDigits])
+  @@index([phoneDigitsRev])
 }
 
 // Weitere Telefonnummern eines Vertriebskontakts (Ole, 16.11.2026): automatisch erkannt aus Buchungen,
 // E-Mail-Signaturen, Formularen und Instantly (lib/vertrieb/kontaktdaten-server.ts). Die Hauptnummer bleibt
 // SalesContact.phone und wird nie überschrieben.
 model SalesContactPhone {
-  id         String       @id @default(cuid())
-  contactId  String
-  contact    SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  contactId      String
+  contact        SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   /// E.164, z. B. +491711234567 (Schreibweise egal, Dubletten über diese Form)
-  phone      String
+  phone          String
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits    String?
+  phoneDigitsRev String?
   /// MOBIL | FESTNETZ
-  kind       String       @default("FESTNETZ")
+  kind           String       @default("FESTNETZ")
   /// BUCHUNG | CALENDLY | MAIL | FORMULAR | INSTANTLY | ZUSAMMENGEFUEHRT | HAUPT (frühere Hauptnummer) | MANUELL
-  source     String
+  source         String
   /// Zeitpunkt der Quelle (Buchung, Mail), sonst Erkennungszeitpunkt
-  detectedAt DateTime     @default(now())
-  createdAt  DateTime     @default(now())
+  detectedAt     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
 
   @@unique([contactId, phone])
   @@index([phone])
+  @@index([phoneDigits])
+  @@index([phoneDigitsRev])
 }
 
 model SalesActivity {
@@ -1691,25 +1714,48 @@ model SalesCampaignLead {
 
 // E-Mails aus Instantly (v.a. Antworten auf Cold Mails)
 model SalesEmail {
-  id          String       @id @default(cuid())
-  instantlyId String?      @unique
-  contactId   String
-  contact     SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  campaign    String?
-  direction   String       @default("IN") // IN = Antwort vom Kontakt, OUT = von uns
-  subject     String?
-  text        String?
-  html        String?
-  fromEmail   String?
-  threadId    String?
+  id              String            @id @default(cuid())
+  instantlyId     String?           @unique
+  contactId       String
+  contact         SalesContact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  campaign        String?
+  direction       String            @default("IN") // IN = Antwort vom Kontakt, OUT = von uns
+  subject         String?
+  text            String?
+  html            String?
+  fromEmail       String?
+  threadId        String?
   /// Unser Instantly-Postfach, das die Mail empfangen bzw. gesendet hat (Antwort im selben Thread)
-  eaccount    String?
-  isAutoReply Boolean      @default(false)
-  sentiment   String? // POSITIV, NEGATIV, NEUTRAL, SPAETER (Später-Interesse)
-  sentAt      DateTime
-  createdAt   DateTime     @default(now())
+  eaccount        String?
+  isAutoReply     Boolean           @default(false)
+  sentiment       String? // POSITIV, NEGATIV, NEUTRAL, SPAETER (Später-Interesse)
+  sentAt          DateTime
+  createdAt       DateTime          @default(now())
+  /// Telefonnummern der Signatur in SalesEmailPhone eingetragen (lib/telefonsuche-server.ts), null = noch offen
+  phonesIndexedAt DateTime?
+  phones          SalesEmailPhone[]
 
   @@index([contactId, sentAt])
+}
+
+// Telefonnummern aus der Signatur eingehender Vertriebsmails (Ole, 16.11.2026, lib/telefonsuche-server.ts):
+// nur eigener Teil und Signatur des Absenders (lib/vertrieb/kontaktdaten.ts extractMailPhones), nie zitierter Verlauf.
+// Für die Suche: die Nummer findet den Kontakt der Mail, auch wenn sie (noch) nicht am Kontakt steht.
+model SalesEmailPhone {
+  id             String     @id @default(cuid())
+  emailId        String
+  email          SalesEmail @relation(fields: [emailId], references: [id], onDelete: Cascade)
+  /// E.164, z. B. +4915258142143
+  phone          String
+  /// MOBIL | FESTNETZ
+  kind           String     @default("FESTNETZ")
+  phoneDigits    String
+  phoneDigitsRev String
+  createdAt      DateTime   @default(now())
+
+  @@unique([emailId, phone])
+  @@index([phoneDigits])
+  @@index([phoneDigitsRev])
 }
 
 // Später-Follow-up (lib/vertrieb/followup.ts): Kontakt hat „gerne später“ geantwortet
@@ -1826,6 +1872,9 @@ model SalesMeeting {
   calendarKey        String?
   calendarEventId    String?
   inviteePhone       String?
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits        String?
+  phoneDigitsRev     String?
   consentAt          DateTime?
   consentText        String?
   /// Erinnerungen der eigenen Buchungsseite: 24 Stunden und 1 Stunde vorher
@@ -1845,6 +1894,8 @@ model SalesMeeting {
   @@index([contactId])
   @@index([startAt])
   @@index([calendarKey, startAt])
+  @@index([phoneDigits])
+  @@index([phoneDigitsRev])
 }
 
 /// Termintyp der eigenen Buchungsseite für Vertriebstermine (/termin, ersetzt später Calendly).
@@ -1931,6 +1982,9 @@ model Onboarding {
   metaAccessAt       DateTime?
   // Pflichtangaben (Impressum) von der Agentur-Website
   websiteInfo        Json?
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits        String?
+  phoneDigitsRev     String?
   websiteCheckedAt   DateTime?
   campaignReadyAt    DateTime?
   testLeadAt         DateTime?
@@ -2338,6 +2392,9 @@ model ExistingCustomer {
   salutation               String?
   company                  String?
   phone                    String? // normalisiert wie WhatsApp (4915…)
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits              String?
+  phoneDigitsRev           String?
   email                    String?
   birthday                 DateTime?
   street                   String?
@@ -2390,6 +2447,8 @@ model ExistingCustomer {
   @@index([customerId, phone])
   @@index([customerId, email])
   @@index([importId])
+  @@index([phoneDigits])
+  @@index([phoneDigitsRev])
 }
 
 // Ein Import-Lauf (Datei hochgeladen und übernommen). Der letzte Lauf lässt sich rückgängig machen:
@@ -3918,6 +3977,9 @@ model Erstinformation {
   firma          String?
   anschrift      String?
   telefon        String?
+  /// Telefonsuche (lib/telefonsuche.ts): Ziffern ohne 0 bzw. +49 und umgekehrt, gepflegt per DB-Trigger (Migration 20261118705700)
+  phoneDigits    String?
+  phoneDigitsRev String?
   email          String?
   // Versicherer: Ausschließlichkeitsvertreter genau einer, Mehrfachvertreter mindestens einer
   versicherer    String[]  @default([])

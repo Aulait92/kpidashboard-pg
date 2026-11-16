@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { ArrowRight, Building2, KeyRound, Search, User, UserRound } from "lucide-react";
+import { ArrowRight, Building2, KeyRound, MessageCircle, Search, User, UserRound } from "lucide-react";
 import { SearchDialog, useSearchShortcut, useShortcutLabel, type SearchHit } from "@/components/search-dialog";
 import { SUCH_SEITEN } from "@/lib/admin-neu/navigation";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
@@ -10,7 +10,7 @@ import { neuerPfad } from "@/lib/admin-neu/umzug";
 // Globale Suche im neuen Admin (⌘K / Strg K): Kontakte, Kunden, Leads und Logins vom Server
 // (dieselbe Admin-Suche wie in der alten Oberfläche, /api/admin/search), Seiten aus navigation.ts.
 
-const ICON = { kunde: Building2, kontakt: User, lead: UserRound, login: KeyRound, seite: ArrowRight };
+const ICON = { kunde: Building2, kontakt: User, lead: UserRound, login: KeyRound, chat: MessageCircle, seite: ArrowRight };
 
 const seitenFuer = (term: string): SearchHit[] => {
   const t = term.trim().toLowerCase();
