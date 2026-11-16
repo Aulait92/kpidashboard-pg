@@ -523,7 +523,7 @@ function BuyerShellA({
         {/* Handy: schmale Kopfzeile */}
         <header className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-white/90 backdrop-blur md:hidden">
           <div className="flex h-14 items-center gap-2 px-4">
-            <Link href="/buyer" className="flex items-center gap-2">
+            <Link href="/buyer" aria-label="Heute" className="-m-1.5 flex items-center gap-2 p-1.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
                 <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
               </span>

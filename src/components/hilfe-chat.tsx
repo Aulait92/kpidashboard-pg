@@ -179,14 +179,14 @@ export function HilfeChat({
           aria-label="KI-Hilfe: Fragen zur App"
         >
           <Sparkles className="h-5 w-5 text-[color:var(--brand)]" />
-          <span>KI-Hilfe</span>
+          <span>Hilfe</span>
         </button>
       ) : (
         <button
           ref={triggerRef}
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 text-sm font-semibold text-[color:var(--brand-dark)] transition hover:brightness-95"
+          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 text-sm font-semibold text-[color:var(--brand-dark)] transition hover:brightness-95"
           aria-label="KI-Hilfe: Fragen zur App"
         >
           <Sparkles className="h-4 w-4" />
