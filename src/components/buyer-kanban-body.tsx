@@ -12,6 +12,7 @@ import { formatEUR } from "@/lib/format";
 import { contractProvision } from "@/lib/provision";
 import { loadCustomerProvision } from "@/lib/provision-server";
 import { contractSummary } from "@/lib/vertraege";
+import { keinWhatsAppIds } from "@/lib/kein-whatsapp-kennzeichen-server";
 
 export async function BuyerKanbanBody({
   customerId,
@@ -55,8 +56,11 @@ export async function BuyerKanbanBody({
       id: true,
       createdAt: true,
       name: true,
+      phone: true,
       source: true,
       status: true,
+      outreachStatus: true,
+      waUnavailableAt: true,
       closeValue: true,
       followUpAt: true,
       statusChangedAt: true,
@@ -74,7 +78,7 @@ export async function BuyerKanbanBody({
   });
 
   // Nächster Schritt: gleiche Regel wie Liste und „Heute“ (Termin, Wiedervorlage, Bot-Gespräch)
-  const flags = await loadNextStepFlags(leadRows.map((l) => l.id));
+  const [flags, noWhatsApp] = await Promise.all([loadNextStepFlags(leadRows.map((l) => l.id)), keinWhatsAppIds(leadRows)]);
 
   // Storno-Leads werden im Pipeline-Board nicht angezeigt — der Storno
   // läuft über den dedizierten StornoDialog im Leads-Tab oder Lead-Detail.
@@ -97,6 +101,7 @@ export async function BuyerKanbanBody({
       noNextStep: ["missing", "result_missing"].includes(stateFor(l, flags)),
       resultMissing: stateFor(l, flags) === "result_missing",
       ...contractInfo(l.contracts),
+      ...(noWhatsApp.has(l.id) ? { phone: l.phone, noWhatsApp: true } : {}),
     }));
 
   return (

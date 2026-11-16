@@ -14,6 +14,7 @@ import { pastOpenAppointmentWhere, upcomingAppointmentWhere, withoutNextStepWher
 import { countWithoutNextStep, loadNextStepFlags, stateFor } from "@/lib/lead-next-step-server";
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { nowMs } from "@/lib/now";
+import { keinWhatsAppIds } from "@/lib/kein-whatsapp-kennzeichen-server";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -68,8 +69,11 @@ export async function BuyerLeadsBody({
       id: true,
       createdAt: true,
       name: true,
+      phone: true,
       source: true,
       status: true,
+      outreachStatus: true,
+      waUnavailableAt: true,
       followUpAt: true,
       reached: true,
       closedAt: true,
@@ -94,7 +98,7 @@ export async function BuyerLeadsBody({
   // Termine für alle Kunden (nicht nur mit WhatsApp-Assistent): ohne sie zeigte die Liste bei
   // „Termin vereinbart“ mit künftigem Termin fälschlich „Kein nächster Schritt“.
   const leadIds = leadRows.map((l) => l.id);
-  const [appointments, flags, pastAppts] = await Promise.all([
+  const [appointments, flags, pastAppts, noWhatsApp] = await Promise.all([
     prisma.appointment.findMany({
       where: { customerId, leadId: { in: leadIds }, ...upcomingAppointmentWhere(now) },
       orderBy: { startsAt: "asc" },
@@ -106,6 +110,7 @@ export async function BuyerLeadsBody({
       orderBy: { startsAt: "desc" },
       select: { id: true, leadId: true },
     }),
+    keinWhatsAppIds(leadRows),
   ]);
   const apptByLead = new Map<string, { startsAt: Date; mode: string }>();
   for (const a of appointments) {
@@ -131,6 +136,7 @@ export async function BuyerLeadsBody({
     appointment: apptByLead.get(l.id) ?? null,
     callback: callbackIds.has(l.id),
     followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
+    ...(noWhatsApp.has(l.id) ? { phone: l.phone, noWhatsApp: true } : {}),
     ...nextStepFields(stateFor(l, flags), pastByLead.get(l.id) ?? null),
   }));
 
@@ -143,6 +149,10 @@ export async function BuyerLeadsBody({
     // Neu: noch niemand hat gesprochen (wie der Zähler an „Kontakte“)
     { key: "neu", label: "Neu", match: (l: BuyerLeadRow) => !l.reached && !l.closedAt && (!l.status || l.status === "Neuer Lead") },
     ...(whatsapp ? [{ key: "rueckruf", label: "Rückruf nötig", match: (l: BuyerLeadRow) => !!l.callback }] : []),
+    // Nur, wenn es solche Kontakte gibt (oder die Ansicht gerade offen ist): Leads ohne WhatsApp gesammelt anrufen
+    ...(view === "ohne-whatsapp" || leads.some((l) => l.noWhatsApp)
+      ? [{ key: "ohne-whatsapp", label: "Nur ohne WhatsApp", match: (l: BuyerLeadRow) => !!l.noWhatsApp }]
+      : []),
     { key: "wiedervorlage", label: "Wiedervorlage fällig", match: (l) => !!l.followUpAt && new Date(l.followUpAt) <= today },
     { key: "ohne-schritt", label: "Ohne nächsten Schritt", match: (l) => !!l.noNextStep },
     ...(whatsapp ? [{ key: "termin", label: "Termin", match: (l: BuyerLeadRow) => !!l.appointment }] : []),

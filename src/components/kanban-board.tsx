@@ -23,6 +23,7 @@ import { asksCloseValue } from "@/components/abschluss-sheet";
 import { cn } from "@/lib/utils";
 import { isLostStatus } from "@/lib/lead-lost";
 import { LostSheet, useStepDone } from "@/components/next-step";
+import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
 
 export type KanbanLead = {
   id: string;
@@ -44,6 +45,10 @@ export type KanbanLead = {
   /** Verträge (Cross-Selling): geschätzte Provision 1. Jahr und Kurztext, auf dem Server berechnet. */
   contractProvision?: number | null;
   contractLabel?: string | null;
+  /** Nummer (für das Kennzeichen „Kein WhatsApp“, Klick ruft an). */
+  phone?: string | null;
+  /** Nicht per WhatsApp erreichbar, frühe Phase (lib/kein-whatsapp-kennzeichen.ts). */
+  noWhatsApp?: boolean;
 };
 
 
@@ -653,6 +658,11 @@ function KanbanCard({
           </div>
         ) : null;
       })()}
+      {lead.noWhatsApp && lead.phone ? (
+        <div className="mt-1.5">
+          <KeinWhatsAppBadge phone={lead.phone} />
+        </div>
+      ) : null}
       {lead.appointment ? (
         <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-700">
           {new Intl.DateTimeFormat("de-DE", {

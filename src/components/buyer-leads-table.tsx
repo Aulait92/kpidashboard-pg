@@ -13,6 +13,7 @@ import { formatDate, formatEUR } from "@/lib/format";
 import { displayProduct, statusToneClass } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import { NextStepButton } from "@/components/next-step";
+import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
 
 export type { StornogrundOption };
 
@@ -37,6 +38,10 @@ export type BuyerLeadRow = {
   /** Termin vorbei, Ergebnis fehlt (statt „Kein nächster Schritt“) und der Termin dazu. */
   resultMissing?: boolean;
   pastAppointmentId?: string | null;
+  /** Nummer (für das Kennzeichen „Kein WhatsApp“, Klick ruft an). */
+  phone?: string | null;
+  /** Nicht per WhatsApp erreichbar, frühe Phase (lib/kein-whatsapp-kennzeichen.ts). */
+  noWhatsApp?: boolean;
 };
 
 function formatAppt(d: Date): string {
@@ -137,7 +142,7 @@ export function BuyerLeadsTable({
                       </div>
                     ) : l.followUpAt ? (
                       <div className="mt-1 text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</div>
-                    ) : l.callback ? (
+                    ) : l.callback && !l.noWhatsApp ? (
                       <div className="mt-1 text-xs font-medium text-amber-700">Rückruf nötig</div>
                     ) : null}
                   </div>
@@ -145,9 +150,12 @@ export function BuyerLeadsTable({
                     {label}
                   </span>
                 </button>
-                {l.noNextStep ? (
-                  <div className="-mt-1 px-4 pb-3">
-                    <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label="Nächsten Schritt festlegen" />
+                {l.noNextStep || (l.noWhatsApp && l.phone) ? (
+                  <div className="-mt-1 flex flex-wrap items-center gap-2 px-4 pb-3">
+                    {l.noWhatsApp && l.phone ? <KeinWhatsAppBadge phone={l.phone} /> : null}
+                    {l.noNextStep ? (
+                      <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label="Nächsten Schritt festlegen" />
+                    ) : null}
                   </div>
                 ) : null}
               </li>
@@ -192,6 +200,7 @@ export function BuyerLeadsTable({
                       {l.name ?? (
                         <span className="text-[color:var(--muted)]">–</span>
                       )}
+                      {l.noWhatsApp && l.phone ? <KeinWhatsAppBadge phone={l.phone} className="ml-2 align-middle" /> : null}
                     </td>
                     {singleProduct ? null : (
                       <td className="px-3 py-2.5 text-[color:var(--foreground)]">
@@ -216,7 +225,7 @@ export function BuyerLeadsTable({
                           </span>
                         ) : l.followUpAt ? (
                           <span className="text-xs font-medium text-violet-700">{followUpText(l.followUpAt)}</span>
-                        ) : l.callback ? (
+                        ) : l.callback && !l.noWhatsApp ? (
                           <span className="text-xs font-medium text-amber-700">Rückruf nötig</span>
                         ) : l.noNextStep ? (
                           <NextStepButton leadId={l.id} name={l.name ?? "Lead"} source={l.source} resultMissing={!!l.resultMissing} appointmentId={l.pastAppointmentId ?? null} label="Festlegen" />

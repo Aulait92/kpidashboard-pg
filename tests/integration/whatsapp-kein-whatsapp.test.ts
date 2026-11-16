@@ -256,4 +256,23 @@ describe("Kein WhatsApp", () => {
     const plan = await planAudience(customerId, "cross_sell", {}, { now: new Date(Date.now() + 40 * 86_400_000) });
     expect(plan.recipients.find((x) => x.id === ec.id)?.channel).toBe("email");
   });
+
+  it("Kennzeichen „Kein WhatsApp“ (Pipeline, Kontakte): nur frühe Phase und nur, solange der Lead nicht selbst geschrieben hat", async () => {
+    const { keinWhatsAppIds } = await import("@/lib/kein-whatsapp-kennzeichen-server");
+    const select = { id: true, status: true, phone: true, outreachStatus: true, waUnavailableAt: true, closedAt: true, erasedAt: true } as const;
+    const a = await leadWithOutreach();
+    const b = await leadWithOutreach();
+    const c = await leadWithOutreach();
+    const d = await leadWithOutreach();
+    await handleInboundPayload(failed(pnid, a.wamid, 131026, "Message undeliverable"));
+    await handleInboundPayload(failed(pnid, b.wamid, 131042, "Business eligibility payment issue"));
+    await handleInboundPayload(failed(pnid, c.wamid, 131026, "Message undeliverable"));
+    await prisma.lead.update({ where: { id: c.lead.id }, data: { status: "In Beratung" } });
+    await handleInboundPayload(failed(pnid, d.wamid, 131026, "Message undeliverable"));
+    // Später doch selbst geschrieben: hat WhatsApp
+    await prisma.message.create({ data: { conversationId: d.conv.id, direction: "inbound", kind: "text", body: "Hallo" } });
+    const rows = await prisma.lead.findMany({ where: { id: { in: [a, b, c, d].map((x) => x.lead.id) } }, select });
+    const ids = await keinWhatsAppIds(rows);
+    expect([...ids].sort()).toEqual([a.lead.id, b.lead.id].sort());
+  });
 });
