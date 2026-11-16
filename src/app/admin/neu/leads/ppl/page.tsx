@@ -15,6 +15,7 @@ import { nowMs } from "@/lib/now";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "@/app/admin/ppl/actions";
 import { ImportButton } from "@/app/admin/ppl/import/import-button";
 import { SlackTest } from "@/app/admin/ppl/slack-test";
+import { HvkAbrechnungen, HvkReklamationenReview } from "@/app/admin/ppl/hvk-abrechnungen";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -23,6 +24,8 @@ export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 //   Bezüge (Start): Kennzahlen, zu Erledigendes (Storno prüfen, Geparkt) und die Bezüge je Produkt
 //   Auswertung: Übersicht je Kunde und Auswertung mit Zeitraum/Produkt untereinander
 //   Eingang: alle Pool-Leads mit Ergebnis
+//   HvK-Abrechnungen: Gutschriften je Woche (gleicher Baustein wie /admin/ppl?ansicht=hvk); offene
+//   HvK-Reklamationen stehen auf dem Start bei „Storno prüfen“
 // Gelieferte Leads (Suche, Storno von Hand) → Alle Leads › „Pay-per-Lead geliefert“; Media Buyer → Werbekonten.
 // Alte Adressen (?ansicht=storno|geparkt|uebersicht|geliefert, Push-Ziele) werden verstanden.
 // „Aus Airtable übernehmen“ ist selten: Ansicht ?ansicht=import ohne eigenen Schalter.
@@ -30,7 +33,7 @@ export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 const PFAD = "/admin/neu/leads/ppl";
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const dt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
-const DELIVERY: Record<string, string> = { app: "Kundenbereich", email: "E-Mail", webhook: "Webhook" };
+const DELIVERY: Record<string, string> = { app: "Kundenbereich", app_pdf: "Kundenbereich + PDF per Mail", email: "E-Mail", webhook: "Webhook" };
 const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   delivered: { label: "ausgeliefert", tone: "success" },
   parked: { label: "geparkt", tone: "warning" },
@@ -38,7 +41,7 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   invalid: { label: "ungültig", tone: "danger" },
 };
 
-type Suche = { ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; gespeichert?: string };
+type Suche = { ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; gespeichert?: string; postfach?: string };
 
 export default async function Page({ searchParams }: { searchParams: Promise<Suche> }) {
   const sp = await searchParams;
@@ -47,7 +50,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
     const qs = new URLSearchParams({ art: "ppl", ...(sp.q ? { q: sp.q } : {}), ...(sp.bezug ? { bezug: sp.bezug } : {}) });
     redirect(`/admin/neu/leads/alle?${qs.toString()}`);
   }
-  const ansicht = sp.ansicht === "uebersicht" ? "auswertung" : ["auswertung", "eingang", "import"].includes(sp.ansicht ?? "") ? sp.ansicht! : "";
+  const ansicht = sp.ansicht === "uebersicht" ? "auswertung" : ["auswertung", "eingang", "hvk", "import"].includes(sp.ansicht ?? "") ? sp.ansicht! : "";
   const syncAus = airtableSyncOff();
 
   return (
@@ -70,6 +73,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
             { key: "", label: "Bezüge", href: PFAD },
             { key: "auswertung", label: "Auswertung", href: `${PFAD}?ansicht=auswertung` },
             { key: "eingang", label: "Eingang", href: `${PFAD}?ansicht=eingang`, funktion: "page-eingang--eingang-aller-ppl-leads-ausgeliefert-geparkt" },
+            { key: "hvk", label: "HvK-Abrechnungen", href: `${PFAD}?ansicht=hvk`, funktion: "hvk-abrechnungen-hvkabrechnungen--hvk-abrechnungen-gutschrift-pdf-je-woche" },
           ]}
         />
         {sp.gespeichert ? <Meldung ok="Bezug gespeichert." /> : null}
@@ -84,6 +88,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
           </div>
         ) : ansicht === "eingang" ? (
           <Eingang />
+        ) : ansicht === "hvk" ? (
+          <HvkAbrechnungen postfach={sp.postfach} />
         ) : ansicht === "import" ? (
           <Import />
         ) : (
@@ -98,7 +104,7 @@ type Subs = Awaited<ReturnType<typeof prisma.leadSubscription.findMany<{ include
 
 async function Start({ syncAus }: { syncAus: boolean }) {
   const seit = new Date(nowMs() - 7 * 86_400_000);
-  const [subs, parked, review, eingang7, geliefert7] = await Promise.all([
+  const [subs, parked, review, eingang7, geliefert7, hvkOffen] = await Promise.all([
     prisma.leadSubscription.findMany({ include: { customer: { select: { name: true } } }, orderBy: [{ productKey: "asc" }, { active: "desc" }, { createdAt: "asc" }] }),
     prisma.poolLead.findMany({ where: { status: "parked" }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.lead.findMany({
@@ -108,6 +114,8 @@ async function Start({ syncAus }: { syncAus: boolean }) {
     }),
     prisma.poolLead.count({ where: { createdAt: { gte: seit } } }),
     prisma.poolLead.count({ where: { createdAt: { gte: seit }, status: "delivered" } }),
+    // Reklamationen aus der HvK-Abrechnung ohne eindeutigen Lead (wie /admin/ppl → Storno prüfen)
+    prisma.hvkReklamation.count({ where: { status: "offen" } }),
   ]);
   return (
     <div className="space-y-4">
@@ -116,9 +124,14 @@ async function Start({ syncAus }: { syncAus: boolean }) {
           { label: "Eingang 7 Tage", wert: eingang7, href: `${PFAD}?ansicht=eingang` },
           { label: "Ausgeliefert 7 Tage", wert: geliefert7 },
           { label: "Geparkt", wert: parked.length, warn: parked.length > 0, href: "#geparkt" },
-          { label: "Storno in Prüfung", wert: review.length, warn: review.length > 0, href: "#storno" },
+          { label: "Storno in Prüfung", wert: review.length + hvkOffen, warn: review.length + hvkOffen > 0, href: "#storno" },
         ]}
       />
+      {hvkOffen ? (
+        <div data-funktion="hvk-abrechnungen-hvkreklamationenreview--hvk-reklamationen-ohne-eindeutigen-lead-zuordnen">
+          <HvkReklamationenReview />
+        </div>
+      ) : null}
       {review.length || parked.length ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {review.length ? <StornoPruefen leads={review} /> : null}
@@ -139,7 +152,9 @@ async function Bezuege({ subs, syncAus }: { subs: Subs; syncAus: boolean }) {
       <span data-funktion="page-airtable-sync-off--anzeige-airtable-abgleich-an-aus">
         {syncAus ? <Badge tone="warning">Airtable-Abgleich aus</Badge> : <Badge>Airtable-Abgleich an</Badge>}
       </span>
-      <SlackTest configured={!!slackWebhookUrl()} />
+      <span data-funktion="slack-test-slacktest--slack-testen-testnachricht-an-den-ppl-kanal">
+        <SlackTest configured={!!slackWebhookUrl()} />
+      </span>
       <Link href={`${PFAD}?ansicht=import`} className="inline-flex min-h-10 items-center gap-1 font-medium text-[color:var(--brand)] hover:underline sm:min-h-0" data-funktion="actions-runimportaction--bezuege-aus-airtable-uebernehmen">
         <CloudDownload className="h-3.5 w-3.5" /> Aus Airtable übernehmen
       </Link>

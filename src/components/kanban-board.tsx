@@ -24,10 +24,13 @@ import { cn } from "@/lib/utils";
 import { isLostStatus } from "@/lib/lead-lost";
 import { LostSheet, useStepDone } from "@/components/next-step";
 import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
+import { TestLeadBadge } from "@/components/test-lead-badge";
 
 export type KanbanLead = {
   id: string;
   name: string | null;
+  /** Testlead (lib/testlead.ts): Abzeichen „Test“. */
+  isTest?: boolean;
   source: string | null;
   status: string | null;
   createdAt: Date;
@@ -623,6 +626,7 @@ function KanbanCard({
           {lead.name ?? (
             <span className="text-[color:var(--muted)]">unbenannt</span>
           )}
+          {lead.isTest ? <TestLeadBadge className="ml-1.5 align-middle" /> : null}
         </div>
         {lead.noNextStep ? (
           <span title={lead.resultMissing ? "Ergebnis fehlt: Termin vorbei, bitte Ergebnis eintragen" : "Kein nächster Schritt: Wiedervorlage, Termin, Abschluss oder Verloren"} className="shrink-0 text-amber-500">

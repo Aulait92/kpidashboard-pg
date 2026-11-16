@@ -10,11 +10,11 @@ import { kindLabel, npsOf, NPS_DETRACTOR_MAX, NPS_PROMOTER } from "@/lib/nps";
 export async function NpsCard() {
   const since = new Date(nowMs() - 365 * 24 * 60 * 60 * 1000);
   const rows = await prisma.customerFeedback.findMany({
-    where: { kind: { not: "day7" }, answeredAt: { gte: since }, score: { not: null }, customer: { plan: { not: "internal" } } },
+    where: { kind: { not: "day7" }, answeredAt: { gte: since }, score: { not: null }, customer: { plan: { not: "internal" }, isTest: false } },
     orderBy: { answeredAt: "desc" },
     select: { id: true, kind: true, score: true, comment: true, answeredAt: true, customer: { select: { id: true, name: true } } },
   });
-  const sent = await prisma.customerFeedback.count({ where: { kind: { not: "day7" }, sentAt: { gte: since } } });
+  const sent = await prisma.customerFeedback.count({ where: { kind: { not: "day7" }, sentAt: { gte: since }, customer: { plan: { not: "internal" }, isTest: false } } });
   const r = npsOf(rows.map((x) => x.score!));
   return (
     <Card className="mb-6" data-nps-card>

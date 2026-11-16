@@ -25,4 +25,6 @@ export const OFFEN: Record<string, readonly string[]> = {
 export const BLEIBT: string[] = [
   "route-get--diagnose-openai-erreichbarkeit-nur-technik-keine",
   "route-get--diagnose-airtable-felder-nur-technik-keine",
+  // Funktion des Kundenbereichs (Chats der Vermittler), im Admin nur der Schalter je Kunde (Kundenakte › WhatsApp)
+  "chat-actions-takeasleadbuyeraction--neuer-kontakt-im-chat-als-lead-uebernehmen",
 ];

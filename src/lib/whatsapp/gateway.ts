@@ -58,16 +58,25 @@ type MessageEcho = {
   type?: string;
   text?: { body?: string };
 };
+// Coexistence-Abgleich beim Verbinden der Business-App (Webhook-Felder „history“ und „smb_app_state_sync“):
+// alter Verlauf bzw. Adressbuch. Wir merken uns davon nur die Nummern (lib/whatsapp/nur-leads.ts), sonst nichts.
+type HistoryChunk = { threads?: Array<{ id?: string; messages?: unknown[] }> };
+type StateSync = { type?: string; action?: string; contact?: { phone_number?: string } };
 type ChangeValue = {
   metadata?: { phone_number_id?: string };
+  history?: HistoryChunk[];
+  state_sync?: StateSync[];
   contacts?: Array<{ profile?: { name?: string } }>;
   messages?: InboundMessage[];
   statuses?: StatusUpdate[];
   message_echoes?: MessageEcho[];
 };
 type WebhookPayload = {
-  entry?: Array<{ changes?: Array<{ value?: ChangeValue }> }>;
+  entry?: Array<{ changes?: Array<{ field?: string; value?: ChangeValue }> }>;
 };
+
+/** Webhook-Felder des Coexistence-Abgleichs: nie als Nachricht verarbeiten (kein Chat, kein Lead, kein Assistent). */
+const SYNC_FIELDS = new Set(["history", "smb_app_state_sync"]);
 
 export type InboundResult = { processed: number; errors: string[] };
 
@@ -86,6 +95,7 @@ export async function handleInboundPayload(
     for (const change of entry?.changes ?? []) {
       const value = change?.value;
       if (!value) continue;
+      const field = change?.field ?? "";
 
       const phoneNumberId = value.metadata?.phone_number_id;
       let account = phoneNumberId
@@ -122,6 +132,25 @@ export async function handleInboundPayload(
             });
           }
         }
+      }
+
+      // Coexistence-Abgleich (alter Verlauf, Adressbuch der Business-App): Inhalte werden NICHT gespeichert, es entsteht
+      // kein Chat, kein Lead und keine Nachricht. Nur die Nummern merken, damit der Assistent sie nie anschreibt.
+      if (SYNC_FIELDS.has(field) || value.history || value.state_sync) {
+        if (account) {
+          try {
+            const { merkeAppKontakte } = await import("@/lib/whatsapp/nur-leads");
+            const fromHistory = (value.history ?? []).flatMap((h) => (h?.threads ?? []).map((t) => t?.id ?? ""));
+            const fromContacts = (value.state_sync ?? [])
+              .filter((x) => x?.type === "contact" && x.action !== "remove")
+              .map((x) => x.contact?.phone_number ?? "");
+            await merkeAppKontakte(account.customerId, fromHistory, "history");
+            await merkeAppKontakte(account.customerId, fromContacts, "contact");
+          } catch (e) {
+            errors.push(e instanceof Error ? e.message : String(e));
+          }
+        }
+        continue;
       }
 
       // Eingehende Nachrichten
@@ -189,6 +218,9 @@ async function persistInbound(
   // Support-Postfach von performancegrowth: ohne Assistent und ohne Lead-Logik (lib/whatsapp/support-inbox.ts)
   const support = isSupportCustomer(customerId);
 
+  // Allowlist (lib/whatsapp/nur-leads.ts): Ein neuer Chat startet mit Assistent AUS. Eingeschaltet wird er erst,
+  // wenn ein Lead zugeordnet ist (unten bzw. später beim Lead-Import) oder der Schalter für neue Kontakte greift.
+  const isNew = !(await prisma.conversation.count({ where: { customerId, contactPhone: from } }));
   const conversation = await prisma.conversation.upsert({
     where: { customerId_contactPhone: { customerId, contactPhone: from } },
     create: {
@@ -196,7 +228,7 @@ async function persistInbound(
       whatsAppAccountId,
       contactPhone: from,
       contactName,
-      botActive: !support,
+      botActive: false,
       status: "open",
       lastMessageAt: now,
       windowExpiresAt,
@@ -251,10 +283,36 @@ async function persistInbound(
     return;
   }
 
-  // „STOPP“ beendet alle Nachrichten an diese Nummer (lib/whatsapp/stopp.ts). Schreibt der Kontakt nach einem
-  // Stopp wieder selbst, ist die Sperre aufgehoben; der Assistent bleibt aus, der Vermittler antwortet.
+  const nurLeads = await import("@/lib/whatsapp/nur-leads");
+  // Empfehlungen: Anfrage über den WhatsApp-Knopf der Empfehlungsseite (Code im Text) → Lead „Empfehlung“.
+  // Vor allem anderen, damit der Chat ab hier ein Lead-Chat ist.
   const stopp = await import("@/lib/whatsapp/stopp");
   const isStop = stopp.isStopMessage(body);
+  if (!isStop && !conversation.leadId && body && body.includes("(Ref ")) {
+    try {
+      const { handleReferralInbound } = await import("@/lib/empfehlung/requests");
+      await handleReferralInbound(conversation.id, from, body, contactName);
+    } catch (e) {
+      console.error("[whatsapp referral-inbound]", e);
+    }
+  }
+  // Lead jetzt zugeordnet (Formular, Empfehlungscode)? Neuer Chat → Assistent an (die Antwort folgt unten).
+  const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { leadId: true, botActive: true } });
+  conversation.leadId = fresh?.leadId ?? null;
+  conversation.botActive = !!fresh?.botActive;
+  if (conversation.leadId && !conversation.botActive && !conversation.optedOutAt) {
+    conversation.botActive = await nurLeads.nachLeadZuordnung(conversation.id);
+  }
+  const pipeline = await nurLeads.istPipelineChat(conversation);
+  // Unbekannter Kontakt: Assistent nur mit dem Schalter „Assistent auch für neue Kontakte“ (nie für App-Kontakte)
+  if (!pipeline && isNew && (await nurLeads.assistentDarfAntworten(conversation))) {
+    await prisma.conversation.update({ where: { id: conversation.id }, data: { botActive: true } });
+    conversation.botActive = true;
+  }
+  let botErlaubt = conversation.botActive && (pipeline || (await nurLeads.assistentDarfAntworten(conversation)));
+
+  // „STOPP“ beendet alle Nachrichten an diese Nummer (lib/whatsapp/stopp.ts). Schreibt der Kontakt nach einem
+  // Stopp wieder selbst, ist die Sperre aufgehoben; der Assistent bleibt aus, der Vermittler antwortet.
   const receivedAt = now;
   const optOut = async () => {
     const confirmed = await prisma.message.count({
@@ -265,16 +323,7 @@ async function persistInbound(
   if (!isStop && conversation.optedOutAt) {
     await stopp.liftOptOut(conversation.id);
     conversation.botActive = false;
-  }
-
-  // Empfehlungen: Anfrage über den WhatsApp-Knopf der Empfehlungsseite (Code im Text) → Lead „Empfehlung“
-  if (!isStop && !conversation.leadId && body && body.includes("(Ref ")) {
-    try {
-      const { handleReferralInbound } = await import("@/lib/empfehlung/requests");
-      await handleReferralInbound(conversation.id, from, body, contactName);
-    } catch (e) {
-      console.error("[whatsapp referral-inbound]", e);
-    }
+    botErlaubt = false;
   }
 
   // Empfehlungen & Bewertungen: Antwort auf die Nachfrage nach dem Abschluss → KI wertet aus
@@ -301,8 +350,12 @@ async function persistInbound(
     console.error("[whatsapp campaign-reply]", e);
   }
   if (campaignStop || isStop) {
-    await optOut().catch((e) => console.error("[whatsapp stopp]", e));
-    return;
+    // Unbekannter Kontakt (kein Lead, keine Kampagne): keine automatische Bestätigung, keine Sperre. Ein „Stopp“
+    // in einem privaten Chat ist meist nicht an uns gerichtet; der Vermittler sieht die Nachricht als „Neuer Kontakt“.
+    if (campaignStop || pipeline || botErlaubt) {
+      await optOut().catch((e) => console.error("[whatsapp stopp]", e));
+      return;
+    }
   }
 
   // CRM: Lead hat geantwortet ⇒ „Im Gespräch" (nur aus Neu/Nicht erreicht).
@@ -313,12 +366,14 @@ async function persistInbound(
   if (linkedLead?.leadId) {
     const { recordLeadProgress } = await import("@/lib/lead-progress");
     await recordLeadProgress(linkedLead.leadId, "replied");
+    // Antwort auf eine Bestandskampagne hat gerade den Lead angelegt: Lead-Chat, der Assistent darf (wie bisher) antworten
+    if (!botErlaubt && conversation.botActive && !conversation.leadId) botErlaubt = true;
   }
 
   // Knopf-Antworten (lib/whatsapp/knopf.ts): „Ja, passt“ bestätigt den Termin, „Kein Bedarf mehr“ schließt den Lead
   // ab (beides ohne Assistent); Terminwahl und Verschieben bekommt der Assistent mit Hinweis.
   let botHint: string | null = null;
-  if (conversation.botActive && (type === "button" || type === "interactive")) {
+  if (botErlaubt && (type === "button" || type === "interactive")) {
     try {
       const { handleButtonReply } = await import("@/lib/whatsapp/knopf");
       const r = await handleButtonReply(conversation.id, { kind: type, text: body, payload: inboundPayload(m) }, now);
@@ -329,15 +384,21 @@ async function persistInbound(
     }
   }
 
-  // Übernommener Chat (Assistent pausiert): Berater muss antworten.
-  if (!conversation.botActive) {
+  // Übernommener Chat (Assistent pausiert) bzw. neuer Kontakt ohne Lead: Berater muss antworten bzw. entscheiden.
+  if (!botErlaubt) {
     const { flagAttention } = await import("@/lib/whatsapp/attention");
-    await flagAttention(conversation.id, body ? `Neue Nachricht: „${body.slice(0, 100)}"` : "Neue Nachricht");
+    if (!linkedLead?.leadId && !pipeline) {
+      // Push nur für wirklich neue Nummern, nicht für Kontakte aus der Business-App (die sieht der Vermittler dort ohnehin)
+      const appKontakt = await nurLeads.istAppKontakt(customerId, from);
+      await flagAttention(conversation.id, nurLeads.neuerKontaktGrund(body), { push: !appKontakt });
+    } else {
+      await flagAttention(conversation.id, body ? `Neue Nachricht: „${body.slice(0, 100)}"` : "Neue Nachricht");
+    }
   }
 
-  // KI-Bot anstoßen, wenn aktiv. Dynamischer Import bricht den Zyklus
-  // gateway <-> bot; Fehler dürfen die Ingestion nicht scheitern lassen.
-  if (conversation.botActive) {
+  // KI-Bot anstoßen, nur wenn erlaubt (Lead-Chat bzw. Schalter für neue Kontakte). runBotTurn prüft das noch einmal.
+  // Dynamischer Import bricht den Zyklus gateway <-> bot; Fehler dürfen die Ingestion nicht scheitern lassen.
+  if (botErlaubt) {
     try {
       const { runBotTurn } = await import("@/lib/whatsapp/bot");
       await runBotTurn(conversation.id, { hint: botHint });
@@ -369,6 +430,13 @@ async function persistEcho(
     if (existing) return;
   }
   const now = new Date();
+  // Private Chats bleiben privat: Echo an eine Nummer ohne Chat bei uns und ohne Lead wird nicht gespeichert.
+  const known = await prisma.conversation.count({ where: { customerId, contactPhone: to } });
+  if (!known) {
+    const lead = await prisma.lead.count({ where: { customerId, phone: to, erasedAt: null } });
+    if (!lead) return;
+  }
+  // Der Vermittler schreibt selbst: Assistent in diesem Chat sofort pausieren (wie beim Selbstschreiben im CRM)
   const conversation = await prisma.conversation.upsert({
     where: { customerId_contactPhone: { customerId, contactPhone: to } },
     create: {
@@ -379,7 +447,7 @@ async function persistEcho(
       status: "open",
       lastMessageAt: now,
     },
-    update: { botActive: false, lastMessageAt: now },
+    update: { botActive: false, lastMessageAt: now, needsAttention: false, attentionReason: null, attentionAt: null },
   });
   const type = e.type ?? "text";
   await prisma.message.create({

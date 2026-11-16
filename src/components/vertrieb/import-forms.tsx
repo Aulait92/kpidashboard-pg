@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { FileDrop } from "@/components/ui/file-drop";
-import { backfillContactDataAction, connectCalendlyAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
+import { backfillContactDataAction, connectCalendlyAction, instantlyNachholenAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
 
 // Server-Action-Grenze liegt bei 16 MB (next.config.ts)
 const CSV_MAX_BYTES = 15 * 1024 * 1024;
@@ -65,6 +65,61 @@ export function InstantlySync({ hasKey }: { hasKey: boolean }) {
       {!hasKey && <p className="text-sm text-amber-700">INSTANTLY_API_KEY ist nicht gesetzt.</p>}
       <Result state={state} />
     </form>
+  );
+}
+
+/**
+ * Fehlende Instantly-Antworten der letzten 90 Tage (alle Postfächer und Kampagnen): erst Vorschau
+ * mit Anzahl und Liste, dann nachholen. Mehrfach ausführbar, schon Vorhandenes wird erkannt.
+ */
+export function InstantlyNachholen({ hasKey }: { hasKey: boolean }) {
+  const [state, action, pending] = useActionState(instantlyNachholenAction, null);
+  const r = state?.ergebnis;
+  const preview = r && !r.angewendet;
+  return (
+    <details className="text-sm" data-instantly-nachholen>
+      <summary className="cursor-pointer text-slate-500">Fehlende Antworten nachholen (90 Tage)</summary>
+      <form action={action} className="mt-2 space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <button name="mode" value="vorschau" className="btn-ghost" disabled={pending || !hasKey}>
+            {pending ? "Prüfe … (kann 1 Min. dauern)" : "Vorschau"}
+          </button>
+          {preview && r.fehlend > 0 && (
+            <button name="mode" value="anwenden" className="btn-primary" disabled={pending}>
+              {r.fehlend.toLocaleString("de-DE")} nachholen
+            </button>
+          )}
+        </div>
+        <Result state={state} />
+        {r && (
+          <p className="text-xs text-slate-500">
+            {r.gelesen.toLocaleString("de-DE")} empfangen, {r.schonImCrm.toLocaleString("de-DE")} schon im CRM
+            {r.gesperrt ? `, ${r.gesperrt} gesperrt` : ""}
+            {r.ignoriert ? `, ${r.ignoriert} aus ausgeblendeten Kampagnen` : ""}
+            {r.automatisch ? `, ${r.automatisch} automatische Antworten` : ""}
+            {r.ohneKampagne ? `, ${r.ohneKampagne} ohne Kampagne` : ""}
+          </p>
+        )}
+        {preview && r.liste.length > 0 && (
+          <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200">
+            {r.liste.map((x, i) => (
+              <li key={`${x.lead}-${x.at}-${i}`} className="space-y-0.5 px-3 py-2 text-xs">
+                <div className="flex flex-wrap items-center gap-x-2">
+                  <span className="font-medium text-slate-800">{x.lead}</span>
+                  {x.kontakt === "neu" && <span className="badge bg-sky-50 text-sky-700">neu</span>}
+                  {x.spaeter && <span className="badge bg-amber-50 text-amber-700">später</span>}
+                </div>
+                <div className="truncate text-slate-500">
+                  {new Date(x.at).toLocaleDateString("de-DE")} · {x.postfach ?? "?"}
+                  {x.kampagne ? ` · ${x.kampagne}` : ""}
+                  {x.betreff ? ` · ${x.betreff}` : ""}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </form>
+    </details>
   );
 }
 

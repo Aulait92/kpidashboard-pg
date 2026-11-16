@@ -140,7 +140,7 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 async function sendFeedback(now: Date) {
   // Tag 7 (Smileys), Tag 30 und danach alle 90 Tage Weiterempfehlung 0–10 (NPS, Ole 13.11.2026)
   const live = await prisma.onboarding.findMany({
-    where: { liveAt: { not: null, lte: new Date(now.getTime() - 7 * DAY) }, status: { not: "cancelled" }, customer: { archived: false, plan: { not: "internal" } } },
+    where: { liveAt: { not: null, lte: new Date(now.getTime() - 7 * DAY) }, status: { not: "cancelled" }, customer: { archived: false, plan: { not: "internal" }, isTest: false } },
     select: { customerId: true, liveAt: true, package: true, offerId: true, salesContactId: true, customer: { select: { plan: true, feedback: { select: { kind: true } } } } },
   });
   let sent = 0;

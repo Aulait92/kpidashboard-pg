@@ -7,7 +7,7 @@ import { median } from "@/lib/linkedin/posts";
 import { neuigkeitVersteckt } from "@/lib/terminvorbereitung-neu";
 
 const DAY = 86_400_000;
-const REAL_LEAD = { customer: { plan: { not: "internal" } }, NOT: { bezugAirtableId: "demo" } };
+const REAL_LEAD = { isTest: false, customer: { plan: { not: "internal" }, isTest: false }, NOT: { bezugAirtableId: "demo" } };
 
 const fmtMin = (min: number) => (min < 1 ? "unter 1 Minute" : min < 60 ? `${Math.round(min)} Minuten` : `${Math.round(min / 60)} Stunden`);
 
@@ -18,7 +18,7 @@ export async function loadTrustFacts(now = new Date()): Promise<string[]> {
     prisma.lead.findMany({ where: { createdAt: { gte: since }, firstContactAt: { not: null }, ...REAL_LEAD }, select: { createdAt: true, firstContactAt: true }, take: 5000 }),
     prisma.appointment.count({ where: { createdAt: { gte: since }, status: { not: "cancelled" }, customer: { plan: { not: "internal" } } } }),
     prisma.customerFeedback.findMany({
-      where: { kind: { not: "day7" }, answeredAt: { gte: new Date(now.getTime() - 365 * DAY) }, score: { not: null }, customer: { plan: { not: "internal" } } },
+      where: { kind: { not: "day7" }, answeredAt: { gte: new Date(now.getTime() - 365 * DAY) }, score: { not: null }, customer: { plan: { not: "internal" }, isTest: false } },
       select: { score: true },
     }),
     prisma.productUpdate.findMany({ where: { publishedAt: { gte: since, lte: now } }, orderBy: { publishedAt: "desc" }, take: 8, select: { id: true, title: true } }),

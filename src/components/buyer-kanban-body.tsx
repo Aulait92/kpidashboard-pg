@@ -54,6 +54,7 @@ export async function BuyerKanbanBody({
     take: 500,
     select: {
       id: true,
+      isTest: true,
       createdAt: true,
       name: true,
       phone: true,
@@ -102,6 +103,7 @@ export async function BuyerKanbanBody({
       resultMissing: stateFor(l, flags) === "result_missing",
       ...contractInfo(l.contracts),
       ...(noWhatsApp.has(l.id) ? { phone: l.phone, noWhatsApp: true } : {}),
+      ...(l.isTest ? { isTest: true } : {}),
     }));
 
   return (

@@ -34,6 +34,7 @@ export async function POST(req: Request): Promise<Response> {
   if (type.includes("template")) {
     await syncTemplates(new Date(), { force: true, limit: 20 }).catch((err) => reportError(err, "d360-partner-webhook-templates"));
   }
-  // Übrige Ereignisse (z. B. history, smb_app_state_sync bei Coexistence) bewusst ignoriert.
+  // Übrige Ereignisse bewusst ignoriert, insbesondere history und smb_app_state_sync (Coexistence): kein Chat, kein
+  // Lead, kein Assistent, kein Inhalt. Über die Nummer-Webhook-URL merkt sich gateway.ts davon nur die Nummern.
   return Response.json({ ok: true });
 }

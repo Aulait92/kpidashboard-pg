@@ -715,7 +715,8 @@ async function countPoolLeads(
     createdAt: { gte: Date; lte: Date };
     customerId?: { in: string[] };
     adChannel?: string;
-  } = { source: def.product, createdAt: { gte: monthStart, lte: mtdEnd } };
+    isTest: false;
+  } = { source: def.product, createdAt: { gte: monthStart, lte: mtdEnd }, isTest: false };
   if (def.customerIds) {
     if (def.customerIds.length === 0) return 0;
     where.customerId = { in: def.customerIds };

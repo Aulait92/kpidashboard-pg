@@ -192,6 +192,10 @@ describe("WhatsApp: Erstinformation als PDF-Dokument (§ 16 VersVermV)", () => {
   const sent: Array<{ to: string; type: string; text?: { body: string }; document?: { link: string; filename: string; caption?: string } }> = [];
   let phoneNumberId = "";
   async function inbound(from: string, body: string) {
+    // Der Assistent antwortet nur Leads (lib/whatsapp/nur-leads.ts): Kontakt als Lead aus dem Formular
+    if (!(await prisma.lead.count({ where: { customerId: st.customerId, phone: from } }))) {
+      await prisma.lead.create({ data: { customerId: st.customerId, name: "Julia Schneider", phone: from, outreachAt: new Date(), outreachStatus: "skipped_contact" } });
+    }
     await handleInboundPayload({
       entry: [{ changes: [{ value: { metadata: { phone_number_id: phoneNumberId }, contacts: [{ profile: { name: "Julia Schneider" } }], messages: [{ from, id: `wamid.in.${Math.random()}`, type: "text", text: { body } }] } }] }],
     });

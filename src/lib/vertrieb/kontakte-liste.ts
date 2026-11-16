@@ -1,3 +1,4 @@
+import { kontaktSucheWhere } from "@/lib/vertrieb/suche";
 import { prisma } from "@/lib/prisma";
 import { STAGES } from "@/lib/vertrieb/crm";
 import { LI_STATUSES } from "@/lib/vertrieb/linkedin";
@@ -34,22 +35,8 @@ export function kontakteFilter(sp: Record<string, string | undefined>): Kontakte
 export function kontakteWhere({ q, stage, mail, plz, li }: KontakteFilter): Prisma.SalesContactWhereInput {
   return {
     AND: [
-      q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-              { city: { contains: q, mode: "insensitive" } },
-              { phone: { contains: q } },
-              { leaderNames: { contains: q, mode: "insensitive" } },
-              { lastName: { contains: q, mode: "insensitive" } },
-              // "Joerg Riccius" → Vor- und Nachname getrennt suchen
-              ...(q.includes(" ")
-                ? [{ AND: q.split(/\s+/).map((w) => ({ OR: [{ name: { contains: w, mode: "insensitive" as const } }, { leaderNames: { contains: w, mode: "insensitive" as const } }] })) }]
-                : []),
-            ],
-          }
-        : {},
+      // Umlaut-tolerant (Dröge = Droege), auch E-Mail, weitere Adressen, Firma, Ort, Telefon (lib/vertrieb/suche.ts)
+      q ? kontaktSucheWhere(q) : {},
       stage ? { stage } : {},
       mail ? MAIL_FILTERS[mail].where : {},
       plz ? { zip: { startsWith: plz } } : {},

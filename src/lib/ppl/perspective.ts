@@ -18,7 +18,7 @@ export function isPerspectivePayload(body: Obj): boolean {
   return isObj(body.profile) || isObj(body.values);
 }
 
-type Category = "pkv" | "tier" | "futter" | "sterbegeld" | "ksp" | "zahnzusatz";
+export type Category = "pkv" | "tier" | "futter" | "sterbegeld" | "ksp" | "zahnzusatz";
 
 export function categoryOf(slug: string): Category {
   const s = slug.toLowerCase();
@@ -77,6 +77,11 @@ const MAP: Record<Category, [string, string][]> = {
     ["question_eqxptw", "Interesse (Zahnzusatz)"],
   ],
 };
+
+/** Feldnamen der Funnel-Fragen einer Kategorie in Funnel-Reihenfolge, ohne Doppelte (z. B. für den Testdatensatz). */
+export function categoryLabels(cat: Category): string[] {
+  return [...new Set(MAP[cat].map(([, label]) => label))];
+}
 
 /** Geburtsdatum als TT.MM.JJJJ (aus ISO, T.M.JJJJ oder T/M/JJJJ). */
 export function formatBirthday(raw: string): string {

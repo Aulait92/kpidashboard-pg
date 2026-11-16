@@ -70,6 +70,7 @@ export function leadWhere(f: LeadFilter): Prisma.LeadWhereInput {
 
 export const leadSelect = {
   id: true,
+  isTest: true,
   createdAt: true,
   name: true,
   phone: true,

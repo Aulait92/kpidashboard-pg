@@ -76,6 +76,7 @@ export default async function WhatsAppSettingsPage({
           outreachEnabled: true,
           outreachDelayMin: true,
           followUpSequencesEnabled: true,
+          newContactsBot: true,
           videoRoomUrl: true,
           advisorEmail: true,
           availabilityIcsUrlEnc: true,
@@ -297,6 +298,7 @@ export default async function WhatsAppSettingsPage({
                 hasIcs={!!c.agentConfig?.availabilityIcsUrlEnc}
                 outreachTemplateReady={usedPurposes.has("outreach")}
                 sequencesEnabled={c.agentConfig?.followUpSequencesEnabled ?? true}
+                newContactsBot={c.agentConfig?.newContactsBot ?? false}
                 sequenceTemplatesMissing={(["followup", "followup_nudge", "followup_offer", "followup_noshow", "followup_last"] as const).filter((x) => !usedPurposes.has(x)).map((x) => PURPOSE_LABELS[x])}
               />
 

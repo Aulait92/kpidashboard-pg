@@ -79,11 +79,14 @@ export async function sendToAdmins(
       select: { id: true },
     })
   ).map((u) => u.id);
-  return deliver(
+  const out = await deliver(
     adminIds,
     () => prisma.pushSubscription.findMany({ where: { OR: [{ userId: { in: adminIds } }, { userId: null }] } }),
     payload,
   );
+  // In den Railway-Logs sehen, ob z. B. ein Support-Push rausging (ohne Inhalt, ohne Telefonnummer).
+  console.info(`[push admin] tag=${payload.tag ?? "-"} sent=${out.sent} removed=${out.removed} errors=${out.errors.length}`);
+  return out;
 }
 
 // An alle Buyer-User eines bestimmten Kunden.

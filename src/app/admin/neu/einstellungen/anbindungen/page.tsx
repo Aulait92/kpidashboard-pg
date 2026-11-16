@@ -6,7 +6,7 @@ import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 import { EinstellungSeite, LISTE } from "@/components/admin-neu/einstellungen/rahmen";
 import { WaalaxyImport } from "@/components/admin-neu/einstellungen/waalaxy-import";
 import { Button, Card, CardHeader, buttonClass } from "@/components/ui";
-import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactDataBackfill, ContactsImport, CopyField, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
+import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactDataBackfill, ContactsImport, CopyField, InstantlyCsvImport, InstantlyNachholen, InstantlySync } from "@/components/vertrieb/import-forms";
 import { getAppUrl } from "@/lib/email";
 import { linkedInAvailable } from "@/lib/linkedin/api";
 import { metaDiagnostics } from "@/lib/meta-leads";
@@ -126,6 +126,9 @@ export default async function Page() {
           <Quelle name="Instantly" was="Cold Mails: gesendet, geöffnet, Antworten" ok={isWithinDays(lastMail?.createdAt, 7)} status={zuletzt(lastMail?.createdAt)} funktion="actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen">
             {adresse(hook("/api/vertrieb/instantly/webhook"))}
             <InstantlySync hasKey={!!process.env.INSTANTLY_API_KEY} />
+            <div data-funktion="import-forms-instantlynachholen--fehlende-instantly-antworten-der-letzten-90-tage">
+              <InstantlyNachholen hasKey={!!process.env.INSTANTLY_API_KEY} />
+            </div>
             <Schritte steps={["Instantly → Settings → Integrations → Webhooks", "Bestehenden Webhook bearbeiten, URL ersetzen, „All Events“"]} />
           </Quelle>
 

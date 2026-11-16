@@ -30,4 +30,12 @@ describe("Pay-per-Lead: Gebiete mit Vorrang", () => {
     const andere: AreaCandidate = { id: "a", quota: 3, delivered: 0, area: null };
     expect(pickWithAreas([zu, andere])?.id).toBe("a");
   });
+
+  it("Gebietsvorrang schlägt auch Test-Bezüge mit fälliger Probemenge (HvK vor verrata24 und Novus)", () => {
+    const hvk: AreaCandidate = { id: "hvk-frankfurt", quota: 40, delivered: 39, area: area("ffm", "60311-61118", 40, 39) };
+    const verrata: AreaCandidate = { id: "verrata24", quota: 25, delivered: 0, area: null, test: { quantity: 25, delivered: 0, days: null, startedDaysAgo: 0 } };
+    const novus: AreaCandidate = { id: "novus", quota: 1000, delivered: 0, area: null };
+    expect(pickWithAreas([verrata, novus, hvk])?.id).toBe("hvk-frankfurt");
+    expect(pickWithAreas([novus, verrata])?.id).toBe("verrata24");
+  });
 });

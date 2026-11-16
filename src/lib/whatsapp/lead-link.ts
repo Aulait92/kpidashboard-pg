@@ -48,6 +48,9 @@ export async function linkLeadToConversation(conversationId: string): Promise<vo
       ...(!conv.contactEmail && lead.email ? { contactEmail: lead.email } : {}),
     },
   });
+  // War es ein „Neuer Kontakt“ (Assistent aus, nichts von uns geschrieben): jetzt ist es ein Lead-Chat (lib/whatsapp/nur-leads.ts)
+  const { nachLeadZuordnung } = await import("@/lib/whatsapp/nur-leads");
+  await nachLeadZuordnung(conversationId);
 }
 
 /**
@@ -81,6 +84,10 @@ export async function attachLeadToContact(leadId: string): Promise<void> {
   if (!conv) return;
 
   await prisma.conversation.update({ where: { id: conv.id }, data: { leadId } });
+  // Rennen Webhook vor Lead-Import: Der Kontakt hat schon geschrieben, solange er noch unbekannt war. Jetzt übernimmt
+  // der Assistent und beantwortet die offene Nachricht (lib/whatsapp/nur-leads.ts).
+  const { nachLeadZuordnung } = await import("@/lib/whatsapp/nur-leads");
+  await nachLeadZuordnung(conv.id, { antworten: true }).catch((e) => console.error("[lead-link] Assistent", e));
   await prisma.appointment.updateMany({
     where: { conversationId: conv.id, leadId: null },
     data: { leadId },

@@ -49,7 +49,10 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
   const addresses = parseAddresses(String(fd.get("deliveryEmail") ?? ""));
   const mailData =
     mailKind == null
-      ? {}
+      ? // Kundenbereich + PDF per Mail: nur der Einwilligungstext fürs PDF
+        fd.get("consentText") != null
+        ? { consentText: String(fd.get("consentText")).replace(/\r\n/g, "\n").trim() || null }
+        : {}
       : {
           emailFormat: mailKind === "maschinenlesbar" ? "maschinenlesbar" : "standard",
           ...(mailKind === "maschinenlesbar" ? {} : { emailTemplate: mailKind === "vorlage" ? String(fd.get("emailTemplate") ?? "").replace(/\r\n/g, "\n").trim() || null : null }),
@@ -79,7 +82,7 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
     stornoDays: int(fd.get("stornoDays")),
     stornoReasons: list(fd.get("stornoReasons")),
     stornoAutoApprove: fd.get("stornoAutoApprove") === "on",
-    delivery: ["app", "email", "webhook"].includes(delivery) ? delivery : "app",
+    delivery: ["app", "app_pdf", "email", "webhook"].includes(delivery) ? delivery : "app",
     deliveryEmail: addresses.length ? addresses.join(", ") : null,
     ...(mailKind === "maschinenlesbar" ? {} : { emailSubject: String(fd.get("emailSubject") ?? "").trim() || null }),
     ...mailData,
@@ -88,8 +91,9 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
     webhookFormat: fd.get("webhookFormat") === "convexa" ? "convexa" : "standard",
     ...(secret ? { webhookSecretEnc: encryptSecret(secret) } : {}),
   };
-  if (data.delivery === "email" && !data.deliveryEmail) return { error: "Für Lieferung per E-Mail eine Adresse angeben." };
-  const bad = data.delivery === "email" ? invalidAddresses(addresses) : [];
+  const byMail = data.delivery === "email" || data.delivery === "app_pdf";
+  if (byMail && !data.deliveryEmail) return { error: data.delivery === "app_pdf" ? "Für das PDF per Mail eine Adresse angeben." : "Für Lieferung per E-Mail eine Adresse angeben." };
+  const bad = byMail ? invalidAddresses(addresses) : [];
   if (bad.length) return { error: `Keine gültige E-Mail-Adresse: ${bad.join(", ")}. Mehrere Adressen mit Komma trennen.` };
   if (mailKind === "vorlage" && !("emailTemplate" in mailData && mailData.emailTemplate)) return { error: "Für „Eigene Vorlage“ eine Vorlage angeben." };
   if (data.delivery === "webhook" && !/^https:\/\//.test(data.webhookUrl ?? "")) return { error: "Für Webhook eine https-Adresse angeben." };

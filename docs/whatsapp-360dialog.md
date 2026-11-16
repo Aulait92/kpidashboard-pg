@@ -91,10 +91,20 @@ kümmern uns). Nur lesen.
 
 ## Coexistence (Kunde nutzt WhatsApp Business App weiter)
 
+- **Nur Leads (Ole, 16.11.2026, `lib/whatsapp/nur-leads.ts`):** Assistent und jede automatische Nachricht
+  (Erstanschreiben, Nachfassen, Termin-Nachrichten, Knopf-Antworten, STOPP-Bestätigung) nur in Chats mit Lead
+  bzw. nach eigener Buchung über die Buchungsseite. Kampagnen und Empfehlungen nur an Leads bzw. importierte
+  Bestandskunden. Unbekannte Nummern: Chat „Neuer Kontakt“, Assistent aus, der Vermittler entscheidet mit
+  „Als Lead übernehmen“. Schalter je Kunde „Assistent auch für neue Kontakte“ (Admin → WhatsApp → Einstellungen,
+  Standard aus); Nummern aus der Business-App bleiben auch dann ausgenommen.
 - Nachrichten, die der Kunde selbst in der Business-App schreibt, kommen als Echo
   (`smb_message_echoes`, im Webhook als `value.message_echoes`) an die Nummer-Webhook-URL. Die App
-  speichert sie als ausgehende Nachricht („App“) und pausiert den Assistenten für diesen Chat.
-- `history` und `smb_app_state_sync` (alter Verlauf, Kontakte) werden nicht übernommen.
+  speichert sie als ausgehende Nachricht („App“) und pausiert den Assistenten für diesen Chat sofort.
+  Echos an Nummern ohne Chat und ohne Lead (private Chats) werden nicht gespeichert.
+- `history` und `smb_app_state_sync` (alter Verlauf, Adressbuch; Webhook-Feld `field`, Inhalt in `value.history`
+  bzw. `value.state_sync`): kein Chat, kein Lead, keine Nachricht, kein Inhalt. Gespeichert wird nur die Nummer
+  (`WhatsAppAppContact`), damit der Assistent diese Kontakte nie anschreibt. Kommen sie über den Partner-Webhook,
+  werden sie dort ganz ignoriert.
 - Live noch nicht mit einer echten Coexistence-Nummer getestet.
 
 ## Einstellungen im 360dialog Partner Hub (einmalig)

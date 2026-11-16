@@ -117,6 +117,7 @@ export type AdminStornoOutcome =
  * anerkannter Kunden-Storno: Status „Storno“, Gutschrift, Umsatz storniert.
  * Das Storno-Fenster gilt hier nicht (outsideWindow nur als Hinweis); ein
  * Storno in Prüfung oder ein abgelehnter wird damit anerkannt. Idempotent.
+ * allowAirtableLead: auch Leads aus der Airtable-Zeit ohne Bezug (HvK-Abrechnung, lib/ppl/hvk-abrechnung-server.ts).
  */
 export async function adminRecordStorno(
   leadId: string,
@@ -124,15 +125,16 @@ export async function adminRecordStorno(
   note: string,
   actor: { id?: string | null; email?: string | null; role?: string | null },
   now = new Date(),
+  opts: { allowAirtableLead?: boolean } = {},
 ): Promise<AdminStornoOutcome> {
   const grund = reason.trim().slice(0, 200);
   if (!grund) return { ok: false, error: "Bitte einen Stornogrund angeben." };
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, customerId: true, status: true, deliveredAt: true, stornoState: true, subscription: { select: { stornoDays: true } } },
+    select: { id: true, customerId: true, status: true, deliveredAt: true, stornoState: true, airtableId: true, subscription: { select: { stornoDays: true } } },
   });
-  if (!lead?.subscription) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
-  const outsideWindow = !stornoWindowOpen(lead.deliveredAt, lead.subscription.stornoDays, now);
+  if (!lead || (!lead.subscription && !(opts.allowAirtableLead && lead.airtableId))) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
+  const outsideWindow = !stornoWindowOpen(lead.deliveredAt, lead.subscription?.stornoDays ?? null, now);
   if (lead.stornoState === "approved") return { ok: true, already: true, outsideWindow };
   const rev = await prisma.revenue.findFirst({ where: { leadId: lead.id }, select: { id: true, amount: true } });
   // Nur wenn noch nicht anerkannt (zweiter Klick / paralleler Aufruf ändert nichts)

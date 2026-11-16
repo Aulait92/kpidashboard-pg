@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { berlinTodayIso } from "@/lib/offer-pricing";
 import { NextStepButton } from "@/components/next-step";
 import { KeinWhatsAppBadge } from "@/components/kein-whatsapp-badge";
+import { TestLeadBadge } from "@/components/test-lead-badge";
 
 export type { StornogrundOption };
 
@@ -43,6 +44,8 @@ export type BuyerLeadRow = {
   phone?: string | null;
   /** Nicht per WhatsApp erreichbar, frühe Phase (lib/kein-whatsapp-kennzeichen.ts). */
   noWhatsApp?: boolean;
+  /** Testlead (lib/testlead.ts): Abzeichen „Test“. */
+  isTest?: boolean;
 };
 
 function formatAppt(d: Date): string {
@@ -136,7 +139,10 @@ export function BuyerLeadsTable({
                   className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left active:bg-[color:var(--background)]"
                 >
                   <div className="min-w-0">
-                    <div className="truncate font-medium">{l.name ?? "–"}</div>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="truncate font-medium">{l.name ?? "–"}</span>
+                      {l.isTest ? <TestLeadBadge /> : null}
+                    </div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                       eingegangen {formatDate(l.createdAt)}
                       {singleProduct ? "" : ` · ${displayProduct(l.source)}`}
@@ -206,6 +212,7 @@ export function BuyerLeadsTable({
                       {l.name ?? (
                         <span className="text-[color:var(--muted)]">–</span>
                       )}
+                      {l.isTest ? <TestLeadBadge className="ml-2 align-middle" /> : null}
                       {l.noWhatsApp && l.phone ? <KeinWhatsAppBadge phone={l.phone} className="ml-2 align-middle" /> : null}
                     </td>
                     {singleProduct ? null : (

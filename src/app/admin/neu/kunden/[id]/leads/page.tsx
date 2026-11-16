@@ -35,7 +35,7 @@ export default async function KundeKampagneLeads({ params }: { params: Promise<{
           </div>
         </div>
         <div
-          data-funktion="meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen actions-togglesourceaction--leadformulare-des-kunden-an-aus page--letzte-leads-mit-abschluss-storno"
+          data-funktion="meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen actions-togglesourceaction--leadformulare-des-kunden-an-aus page--letzte-leads-mit-abschluss-storno testlead-actions-sendtestleadaction--testlead-schicken-echter-ablauf-zaehlt-nirgends"
         >
           <KundenLeads params={Promise.resolve({ id })} />
         </div>

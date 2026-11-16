@@ -17,9 +17,12 @@ import {
   Phone,
   Pencil,
   ShieldX,
+  Trash2,
   Trophy,
   X,
 } from "lucide-react";
+import { deleteOwnTestLeadAction } from "@/app/buyer/testlead-actions";
+import { TestLeadBadge } from "@/components/test-lead-badge";
 import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
 import { startLeadChatAction } from "@/app/buyer/lead-manual-actions";
 import { ManualTerminForm, SlotPicker } from "@/components/lead-booking";
@@ -70,6 +73,8 @@ type Props = {
   whatsappConnected?: boolean;
   /** Ein Termin steht an: Die Terminkarte darunter übernimmt, „Termin“ wandert unter „Mehr“. */
   hasUpcomingAppointment?: boolean;
+  /** Testlead (lib/testlead.ts): Abzeichen „Test“ und „Testlead löschen“ unter „Mehr“. */
+  isTest?: boolean;
 };
 
 /** Öffnet „Angaben bearbeiten“ im Kontakt (components/lead-stammdaten-edit.tsx). */
@@ -161,10 +166,22 @@ export function LeadHeaderActions(p: Props) {
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
       : []),
-    ...(p.canErase
+    ...(p.canErase && !p.isTest
       ? [{ label: "Daten löschen (Datenschutz)", icon: ShieldX, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("erase"), 0) }]
       : []),
+    ...(p.isTest ? [{ label: "Testlead löschen", icon: Trash2, tone: "danger" as const, onSelect: () => setTimeout(deleteTest, 0) }] : []),
   ];
+
+  function deleteTest() {
+    if (!window.confirm("Testlead mit Chat und Termin löschen?")) return;
+    start(async () => {
+      const res = await deleteOwnTestLeadAction(p.leadId);
+      if (!res.ok) return toast.show({ message: res.error ?? "Löschen hat nicht geklappt.", tone: "error" });
+      toast.show({ message: "Testlead gelöscht" });
+      router.push("/buyer/kontakte");
+      router.refresh();
+    });
+  }
 
   function erase() {
     setErasing(true);
@@ -200,7 +217,10 @@ export function LeadHeaderActions(p: Props) {
           Phasenleiste, deren Beschriftungen dort zu „Neuer L…“ gekürzt wurden (16.11.2026). */}
       <header className="@container mb-5">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{p.name ?? "Lead"}</h1>
+          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
+            {p.name ?? "Lead"}
+            {p.isTest ? <TestLeadBadge /> : null}
+          </h1>
           {!p.storniert ? (
             <div className="hidden shrink-0 gap-2 sm:flex">
               <button

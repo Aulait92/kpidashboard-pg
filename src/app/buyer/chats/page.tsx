@@ -2,7 +2,8 @@ import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import Link from "next/link";
 import { ArrowLeft, Bot, CalendarClock, ChevronRight, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
-import { LiveRefresh, StickToBottom } from "@/components/live-refresh";
+import { NewMessageHint, StickToBottom } from "@/components/live-refresh";
+import { lastInboundAt } from "@/lib/live";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass } from "@/components/ui";
 import { chooseFollowup } from "@/lib/whatsapp/followup";
@@ -19,6 +20,7 @@ import {
   followupBuyerAction,
   markChatDoneBuyerAction,
   sendReplyBuyerAction,
+  takeAsLeadBuyerAction,
   toggleBotBuyerAction,
 } from "../chat-actions";
 import { nowMs } from "@/lib/now";
@@ -39,6 +41,8 @@ const ERRORS: Record<string, string> = {
   template:
     "Die WhatsApp-Vorlage für diese Nachfass-Situation ist noch nicht von Meta freigegeben. Wir reichen sie automatisch ein, bis dahin bitte anrufen.",
   followup_blocked: "Nachfassen ist in dieser Situation nicht sinnvoll, siehe Hinweis unten.",
+  lead: "Der Kontakt konnte nicht als Lead übernommen werden. Bitte später erneut versuchen.",
+  neuer_kontakt: "Der Assistent antwortet erst, wenn Sie den Kontakt als Lead übernehmen.",
 };
 
 const TZ = "Europe/Berlin";
@@ -181,6 +185,15 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     },
   });
 
+  // Hinweis „Neue Nachricht“, wenn in einem anderen Chat etwas eingeht (components/live-refresh.tsx)
+  const inbound = await lastInboundAt(conversations.map((c) => c.id));
+  const hintItems = conversations.map((c) => ({
+    id: c.id,
+    name: c.contactName ?? formatPhone(c.contactPhone),
+    href: `/buyer/chats?c=${c.id}${listQs ? `&${listQs}` : ""}`,
+    inboundAt: inbound.get(c.id) ?? null,
+  }));
+
   // Aktiven Chat NUR mit customerId laden (Mandantentrennung).
   const active = activeId
     ? await prisma.conversation.findFirst({
@@ -316,7 +329,6 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
-      <LiveRefresh />
       {/* Chat übernommen bzw. selbst geantwortet: fragen, wie es mit dem Lead weitergeht (falls kein Schritt) */}
       {sp.schritt === "1" && active?.lead ? (
         <NextStepPrompt leadId={active.lead.id} name={active.contactName ?? "Lead"} source={active.lead.source} autoOpen />
@@ -334,7 +346,8 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         </div>
       ) : null}
 
-      <div className="flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+      <div className="relative flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+        <NewMessageHint key={listQs || "alle"} items={hintItems} activeId={active?.id ?? null} />
         {/* Liste — auf dem Handy ausgeblendet, sobald ein Chat offen ist */}
         <aside
           className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px]`}
@@ -418,7 +431,12 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                             {statusLabel(c.lead.status, true)}
                           </span>
                         ) : null}
-                        {!c.botActive ? (
+                        {/* Ohne Lead: der Vermittler entscheidet (lib/whatsapp/nur-leads.ts), kein Assistent */}
+                        {!c.lead ? (
+                          <span className="rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800 ring-1 ring-inset ring-sky-200" data-neuer-kontakt>
+                            Neuer Kontakt
+                          </span>
+                        ) : !c.botActive ? (
                           <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200">
                             Sie schreiben
                           </span>
@@ -460,10 +478,17 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   ) : (
                     <div className="truncate font-bold">{active.contactName ?? formatPhone(active.contactPhone)}</div>
                   )}
-                  <div className={`flex items-center gap-1 text-xs ${active.botActive ? "text-emerald-700" : "text-[color:var(--muted)]"}`}>
-                    <Bot className="h-3.5 w-3.5" />
-                    {active.botActive ? "Assistent antwortet" : "Sie schreiben selbst"}
-                  </div>
+                  {!active.lead && !active.botActive ? (
+                    <div className="flex items-center gap-1 text-xs font-medium text-sky-800">
+                      <UserRound className="h-3.5 w-3.5" />
+                      Neuer Kontakt
+                    </div>
+                  ) : (
+                    <div className={`flex items-center gap-1 text-xs ${active.botActive ? "text-emerald-700" : "text-[color:var(--muted)]"}`}>
+                      <Bot className="h-3.5 w-3.5" />
+                      {active.botActive ? "Assistent antwortet" : "Sie schreiben selbst"}
+                    </div>
+                  )}
                 </div>
                 <a
                   href={`tel:+${active.contactPhone}`}
@@ -483,8 +508,20 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     <UserRound className="h-4 w-4" />
                   </Link>
                 ) : null}
+                {/* Neuer Kontakt (kein Lead): der Vermittler entscheidet. Erst dann darf der Assistent antworten. */}
+                {!active.lead ? (
+                  <form action={takeAsLeadBuyerAction}>
+                    <input type="hidden" name="conversationId" value={active.id} />
+                    <SubmitButton
+                      pendingLabel="…"
+                      className="h-10 rounded-full bg-[color:var(--brand)] px-3 text-xs font-semibold text-white hover:bg-[color:var(--brand-dark)] sm:h-9"
+                    >
+                      Als Lead übernehmen
+                    </SubmitButton>
+                  </form>
+                ) : null}
                 {/* Handy: Schreiben übernimmt automatisch; Knopf nur zum Zurückgeben an den Assistenten */}
-                <form action={toggleBotBuyerAction} className={active.botActive ? "hidden sm:block" : ""}>
+                <form action={toggleBotBuyerAction} className={!active.lead ? "hidden" : active.botActive ? "hidden sm:block" : ""}>
                   <input type="hidden" name="conversationId" value={active.id} />
                   <SubmitButton
                     pendingLabel="…"

@@ -25,8 +25,12 @@ export type MachineLead = {
 export type MachineMail = { subject: string; text: string; json: Record<string, unknown>; attachment: { filename: string; content: string } };
 
 const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+/** Antworten mit Name, Telefon oder E-Mail (stehen in Lead-Mail und PDF schon als Kontaktzeilen). */
+const CONTACT = new Set(["name", "fullname", "vorname", "firstname", "nachname", "lastname", "telefon", "telefonnummer", "phone", "phonenumber", "handynummer", "email", "emailadresse"]);
+export const isContactLabel = (label: string) => CONTACT.has(norm(label));
+
 /** Antworten, die schon als feste Zeile erscheinen (nicht doppelt aufführen). */
-const FIXED = new Set(["anrede", "salutation", "vorname", "firstname", "nachname", "lastname", "plz", "postleitzahl", "zip", "zipcode", "postalcode", "ort", "stadt", "city", "wohnort"].map(norm));
+const FIXED = new Set([...CONTACT, ...["anrede", "salutation", "plz", "postleitzahl", "zip", "zipcode", "postalcode", "ort", "stadt", "city", "wohnort"].map(norm)]);
 
 /** Ein Wert pro Zeile: Zeilenumbrüche raus, keine Gedankenstriche. */
 const clean = (v: string | null | undefined) => ohneGedankenstriche((v ?? "").replace(/\s*[\r\n]+\s*/g, " ").trim());

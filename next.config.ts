@@ -7,7 +7,8 @@ const nextConfig: NextConfig = {
   // Pakete, die zur Laufzeit per Node-require ihre nativen Binaries
   // auflösen und deshalb von Turbopack nicht gebundlet werden können —
   // sie bleiben als externes node_modules-Require erhalten.
-  serverExternalPackages: ["@ffmpeg-installer/ffmpeg"],
+  // unpdf (pdf.js, HvK-Abrechnung): lädt pdf.js zur Laufzeit selbst nach
+  serverExternalPackages: ["@ffmpeg-installer/ffmpeg", "unpdf"],
   // Bestandskunden-Import (Excel/CSV mit tausenden Zeilen) per Server Action
   // proxyClientMaxBodySize: Die Middleware puffert Anfragen; Standard 10 MB schneidet größere Uploads still ab
   // (Ole, 15.11.2026: Präsentationen mit 12 bis 15 MB kamen abgeschnitten an). Passend zu MAX_BYTES (pptx 100 MB).

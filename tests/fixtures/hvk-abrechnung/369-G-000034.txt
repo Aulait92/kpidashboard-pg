@@ -1,0 +1,28 @@
+Muster GmbH
+Max Muster
+Musterstraße 1
+10115 Berlin
+Eckelsheim, 27.07.2026
+RECHNUNG
+Seite: 1
+Rechnungsnummer:   369-G-000034
+Zeitraum:   20.07.2026 - 26.07.2026
+Broker ID:   3618
+Pos.   Name   Anz.   Netto Preis   MwSt. Satz   Gesamt Netto
+1   Reklamation (100.00% des Kaufpreises) Lead ID: 4596925, KVV-Opt, 2026-07-19, 84032 Landshut   1   45,00 €   19 %   45,00 €
+Zwischensumme Netto:   45,00 €
+Pos   Name   Anz.   Netto Preis   MwSt. Satz   Gesamt Netto
+2   Lead ID: 4595123, KVV-Opt, 41239 Mönchengladbach   1   -45,00 €   19 %   -45,00 €
+3   Lead ID: 4597001, KVV-Opt, 26382 Wilhelmshaven   1   -45,00 €   19 %   -45,00 €
+4   Lead ID: 4597002, KVV-Opt, 80331 München   1   -45,00 €   19 %   -45,00 €
+5   Lead ID: 4597003, KVV-Opt, 79713 Bad Säckingen   1   -45,00 €   19 %   -45,00 €
+6   Lead ID: 4597004, KVV-Opt, 76307 Karlsbad   1   -45,00 €   19 %   -45,00 €
+7   Lead ID: 4597005, KVV-Opt, 49835 Wietmarschen   1   -45,00 €   19 %   -45,00 €
+8   Lead ID: 4597006, KVV-Opt, 71364 Winnenden   1   -45,00 €   19 %   -45,00 €
+Zwischensumme Netto:   -315,00 €
+Endsumme Netto:   -270,00 €
+zzgl. MwSt 19,00%:   -51,30 €
+Endsumme Brutto:   -321,30 €
+Vereinbarungsgemäß überweisen wir den Rechnungsbetrag auf Ihr Konto.
+Mit freundlichen Grüßen
+Ihr Lead-Production Team

@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|instantly[&email=…|&name=…|&nachholen=1]
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -327,13 +327,199 @@ async function d360webhook() {
   return { baseUrl: base.replace(/\/\/([^/@]*@)/, "//"), baseAusVariable: raw !== undefined, konten: out };
 }
 
+/**
+ * Pay-per-Lead (nur lesend): Bezüge mit Filtern, Lieferweg (E-Mail nur Domain), Gebieten und
+ * Geliefertem im laufenden Monat, dazu Eingang der letzten 48 Stunden je Status. Keine Lead-Kontaktdaten.
+ */
+async function ppl() {
+  const { monthRange } = await import("@/lib/ppl/periods");
+  const { start, end } = monthRange(new Date());
+  const domains = (s: string | null) => [...new Set((s ?? "").split(/[,;\s]+/).filter(Boolean).map((a) => a.split("@")[1] ?? "?"))];
+  const subs = await prisma.leadSubscription.findMany({
+    orderBy: [{ productKey: "asc" }, { createdAt: "asc" }],
+    include: { customer: { select: { name: true, dormantSince: true } }, areas: true },
+  });
+  const rows = [];
+  for (const s of subs) {
+    const geliefertMonat = await prisma.lead.count({ where: { subscriptionId: s.id, deliveredAt: { gte: start, lt: end } } });
+    const gebiete = [];
+    for (const a of s.areas) {
+      const geliefert = await prisma.poolLead.count({ where: { areaId: a.id, status: "delivered", deliveredAt: { gte: start, lt: end } } });
+      gebiete.push({ id: a.id, label: a.label, menge: a.quantity, zeitraum: a.period, geliefertMonat: geliefert, plz: a.plzRanges.slice(0, 80) });
+    }
+    rows.push({
+      id: s.id,
+      kunde: s.customer.name,
+      ruhend: !!s.customer.dormantSince,
+      label: s.label,
+      produkt: s.productKey,
+      aktiv: s.active,
+      status: s.status,
+      zeitraum: s.period,
+      ziel: s.goal,
+      start: s.startDate,
+      preis: s.price,
+      geliefertMonat,
+      lieferung: s.delivery,
+      mailDomains: domains(s.deliveryEmail),
+      mailFormat: s.emailFormat,
+      vorlage: !!s.emailTemplate,
+      plz: s.plzRanges?.slice(0, 80) ?? null,
+      schwachOk: s.acceptWeak,
+      schwachGrenze: s.weakThreshold,
+      beamteOk: s.acceptCivilServants,
+      nurSchwache: s.onlyWeak,
+      gesEin: s.insurerInclude.length,
+      gesAus: s.insurerExclude.length,
+      regeln: s.excludeRules,
+      storno: { tage: s.stornoDays, auto: s.stornoAutoApprove },
+      slack: s.slackNotify,
+      airtable: !!s.airtableId,
+      gebiete,
+    });
+  }
+  const since = new Date(Date.now() - 48 * 3600_000);
+  const eingang = await prisma.poolLead.groupBy({ by: ["productKey", "status", "via"], where: { createdAt: { gte: since } }, _count: true });
+  return { monat: { start, end }, bezuege: rows, eingang48h: eingang };
+}
+
+/**
+ * Instantly (Ole, 16.11.2026: Antwort von Christina Dröge fehlte im CRM). Nur lesend, nie Schlüssel, keine Mailinhalte:
+ * Konfiguration (ja/nein), Kampagnen im CRM (ignoriert?), unsere Postfächer mit letzter Antwort, letzter Abgleich
+ * (Antworten mit Instantly-ID = Abgleich, ohne = Webhook), Postfächer, Kampagnen und Webhooks laut Instantly.
+ *   &email=…   Kontakt zur Adresse (Id, Name, Stufe, Daten), Antworten (Zeitpunkte, Postfach, Weg), Follow-up und
+ *              die Mails dieser Adresse laut Instantly (IDs, Zeitpunkte, Postfach, ob im CRM)
+ *   &name=…    Treffer der Kontaktsuche (umlaut-tolerant) mit Id, Name, Stufe
+ *   &nachholen=1  Vorschau „Antworten nachholen“ (90 Tage), nur Zahlen je Postfach
+ */
+async function instantly(params: URLSearchParams) {
+  const hasKey = !!process.env.INSTANTLY_API_KEY;
+  const [kampagnen, postfaecher, letzteAbgleich, letzterWebhook, letzteAntwort] = await Promise.all([
+    prisma.salesCampaign.findMany({
+      orderBy: { createdAt: "desc" },
+      select: { name: true, instantlyId: true, ignored: true, createdAt: true, _count: { select: { leads: true } } },
+    }),
+    prisma.salesEmail.groupBy({ by: ["eaccount"], where: { direction: "IN" }, _count: true, _max: { sentAt: true, createdAt: true } }),
+    prisma.salesEmail.findFirst({ where: { direction: "IN", instantlyId: { not: null } }, orderBy: { createdAt: "desc" }, select: { createdAt: true, sentAt: true } }),
+    prisma.salesEmail.findFirst({ where: { direction: "IN", instantlyId: null, NOT: { campaign: "manuell" } }, orderBy: { createdAt: "desc" }, select: { createdAt: true, sentAt: true } }),
+    prisma.salesEmail.findFirst({ where: { direction: "IN" }, orderBy: { createdAt: "desc" }, select: { createdAt: true, sentAt: true } }),
+  ]);
+  const out: Record<string, unknown> = {
+    konfiguration: {
+      apiKey: hasKey,
+      autoSync: process.env.INSTANTLY_AUTO_SYNC === "1",
+      webhookToken: !!process.env.VERTRIEB_WEBHOOK_TOKEN,
+      sperrlisteVariable: !!process.env.VERTRIEB_SPERRLISTE,
+    },
+    abgleich: { letzteAntwortGespeichert: letzteAntwort, letzteUeberAbgleich: letzteAbgleich, letzteUeberWebhook: letzterWebhook, takt: "alle 15 Minuten (Cron), Webhook sofort" },
+    kampagnenImCrm: kampagnen.map((c) => ({ name: c.name, instantlyId: !!c.instantlyId, ignoriert: c.ignored, leads: c._count.leads, angelegt: c.createdAt })),
+    postfaecherMitAntworten: postfaecher
+      .map((p) => ({ postfach: p.eaccount ?? "(unbekannt)", antworten: p._count, letzteAntwort: p._max.sentAt, zuletztGespeichert: p._max.createdAt }))
+      .sort((a, b) => String(b.letzteAntwort).localeCompare(String(a.letzteAntwort))),
+  };
+  if (hasKey) {
+    const { instantlyRead, listCampaigns } = await import("@/lib/vertrieb/instantly");
+    const safe = async <T,>(fn: () => Promise<T>) => fn().catch((e: unknown) => ({ fehler: e instanceof Error ? e.message.slice(0, 200) : "Fehler" }));
+    out.instantly = {
+      postfaecher: await safe(async () => {
+        const items: { email?: string; status?: number }[] = [];
+        let after: string | undefined;
+        do {
+          const q = new URLSearchParams({ limit: "100" });
+          if (after) q.set("starting_after", after);
+          const page = await instantlyRead<{ items: { email?: string; status?: number }[]; next_starting_after?: string }>(`/accounts?${q}`);
+          items.push(...page.items);
+          after = page.items.length ? page.next_starting_after : undefined;
+        } while (after && items.length < 1000);
+        return items.map((a) => ({ email: a.email, status: a.status }));
+      }),
+      kampagnen: await safe(async () => {
+        const stored = new Map(kampagnen.filter((c) => c.instantlyId).map((c) => [c.instantlyId!, c]));
+        return (await listCampaigns()).map((c) => ({ name: c.name, status: c.status ?? null, imCrm: stored.has(c.id), ignoriert: stored.get(c.id)?.ignored ?? null }));
+      }),
+      webhooks: await safe(async () => {
+        const page = await instantlyRead<{ items?: Record<string, unknown>[] }>("/webhooks?limit=100");
+        return (page.items ?? []).map((w) => {
+          const url = typeof w.target_hook_url === "string" ? w.target_hook_url : "";
+          let ziel = "?";
+          try {
+            const u = new URL(url);
+            ziel = `${u.host}${u.pathname}${u.searchParams.has("token") ? " (mit Token)" : ""}`;
+          } catch {}
+          return { ereignis: w.event_type ?? null, kampagne: w.campaign ?? null, ziel, aktiv: w.status ?? null };
+        });
+      }),
+    };
+  }
+
+  const email = (params.get("email") ?? "").trim().toLowerCase();
+  if (email) {
+    const { findContactIdByEmail } = await import("@/lib/vertrieb/contact-merge");
+    const id = await findContactIdByEmail(email);
+    const c = id
+      ? await prisma.salesContact.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            name: true,
+            stage: true,
+            createdAt: true,
+            updatedAt: true,
+            activities: { orderBy: { occurredAt: "desc" }, take: 15, select: { type: true, outcome: true, occurredAt: true } },
+            emails: { where: { direction: "IN" }, orderBy: { sentAt: "desc" }, select: { sentAt: true, createdAt: true, eaccount: true, campaign: true, sentiment: true, isAutoReply: true, instantlyId: true } },
+            followups: { orderBy: { createdAt: "desc" }, select: { status: true, source: true, nextAt: true, createdAt: true } },
+            campaigns: { select: { replyCount: true, interest: true, sentAt: true, lastReplyAt: true, campaign: { select: { name: true, ignored: true } } } },
+          },
+        })
+      : null;
+    const kontakt = c && {
+      ...c,
+      emails: c.emails.map(({ instantlyId, ...e }) => ({ ...e, weg: instantlyId ? "Abgleich" : e.campaign === "manuell" ? "von Hand" : "Webhook" })),
+    };
+    let inInstantly: unknown = null;
+    if (hasKey) {
+      const { listEmails } = await import("@/lib/vertrieb/instantly");
+      inInstantly = await listEmails(new URLSearchParams({ lead: email, limit: "20", sort_order: "desc" }))
+        .then(async (page) =>
+          Promise.all(
+            page.items.map(async (e) => ({
+              id: e.id,
+              zeitpunkt: e.timestamp_email || e.timestamp_created,
+              postfach: e.eaccount ?? null,
+              kampagneImCrm: e.campaign_id ? (kampagnen.find((k) => k.instantlyId === e.campaign_id)?.name ?? "unbekannt") : null,
+              typ: e.ue_type,
+              automatisch: e.is_auto_reply === 1,
+              interesse: e.i_status ?? null,
+              imCrm: !!(await prisma.salesEmail.findUnique({ where: { instantlyId: e.id }, select: { id: true } })),
+            })),
+          ),
+        )
+        .catch((e: unknown) => ({ fehler: e instanceof Error ? e.message.slice(0, 200) : "Fehler" }));
+    }
+    out.adresse = { gesperrt: (await import("@/lib/vertrieb/sperrliste")).emailGesperrt(email), kontakt, inInstantly };
+  }
+
+  const name = (params.get("name") ?? "").trim();
+  if (name) {
+    const { kontaktSucheWhere } = await import("@/lib/vertrieb/suche");
+    out.suche = await prisma.salesContact.findMany({ where: kontaktSucheWhere(name), take: 10, orderBy: { updatedAt: "desc" }, select: { id: true, name: true, stage: true, createdAt: true } });
+  }
+
+  if (params.get("nachholen") === "1" && hasKey) {
+    const { nachholenAntworten } = await import("@/lib/vertrieb/instantly-nachholen");
+    const { liste, ...zahlen } = await nachholenAntworten({ anwenden: false });
+    out.nachholenVorschau = { ...zahlen, beispiele: liste.length };
+  }
+  return out;
+}
+
 /** Pflichtvariablen: nur Status je Name, nie Werte (lib/env-check.ts). */
 async function variablen() {
   const { pruefeVariablen } = await import("@/lib/env-check");
   return pruefeVariablen();
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, instantly };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

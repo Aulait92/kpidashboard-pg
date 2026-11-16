@@ -17,6 +17,7 @@ const FUNKTIONEN = [
   "actions-connectwhatsappaction--whatsapp-nummer-von-hand-verbinden-nummer-api",
   "actions-setagentactiveaction--assistent-aktiv-an-aus",
   "actions-saveagentsettingsaction--neue-leads-automatisch-anschreiben-nach-x",
+  "actions-setnewcontactsbotaction--assistent-auch-fuer-neue-kontakte-sonst-nur",
   "actions-setfollowupsequencesaction--automatisch-nachfassen-abfolgen-an-aus",
   "actions-saveagentsettingsaction--berater-e-mail-fuer-einladungen-videoraum",
   "actions-saveoutreachsettingsaction--erstanschreiben-einstellungen-alt-ohne",

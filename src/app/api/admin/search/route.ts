@@ -3,6 +3,7 @@ import { packageLabel } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { phoneQuery } from "@/lib/telefonsuche";
 import { searchPhonesAdmin, type AdminSearchHit } from "@/lib/telefonsuche-server";
+import { kontaktSucheWhere, nameVarianten } from "@/lib/vertrieb/suche";
 
 // Globale Admin-Suche (Cmd+K): Kunden, Vertriebskontakte, Leads und Logins der Kunden (E-Mail, Name).
 // Telefonnummern (Ole, 16.11.2026) in jeder Schreibweise und über die Endziffern, in allen Nummernfeldern
@@ -24,7 +25,7 @@ export async function GET(req: Request): Promise<Response> {
 
   const [customers, contacts, leads, logins] = await Promise.all([
     prisma.customer.findMany({
-      where: { name: text, plan: { not: "internal" } },
+      where: { OR: nameVarianten("name", q), plan: { not: "internal" } },
       take: 5,
       orderBy: { name: "asc" },
       select: { id: true, name: true, archived: true, plan: true, retainerMonthly: true, onboarding: { select: { id: true } } },
@@ -32,14 +33,15 @@ export async function GET(req: Request): Promise<Response> {
     prisma.salesContact.findMany({
       where: {
         customerId: null,
-        OR: [{ name: text }, { email: text }, { city: text }, { firstName: text }, { lastName: text }],
+        // Umlaut-tolerant (Dröge = Droege): Firma, Vor- und Nachname, Inhaber, E-Mail (auch weitere), Ort (lib/vertrieb/suche.ts)
+        AND: [kontaktSucheWhere(q)],
       },
       take: 6,
       orderBy: { updatedAt: "desc" },
       select: { id: true, name: true, city: true, email: true },
     }),
     prisma.lead.findMany({
-      where: { OR: [{ name: text }, { email: text }] },
+      where: { OR: [...nameVarianten("name", q), ...nameVarianten("email", q)] },
       take: 6,
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, source: true, customer: { select: { id: true, name: true } } },

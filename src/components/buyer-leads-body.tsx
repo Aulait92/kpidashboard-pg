@@ -79,6 +79,7 @@ export async function BuyerLeadsBody({
       closedAt: true,
       erasedAt: true,
       stornoState: true,
+      isTest: true,
       revenues: { select: { amount: true }, take: 1 },
     },
   });
@@ -137,6 +138,7 @@ export async function BuyerLeadsBody({
     callback: callbackIds.has(l.id),
     followUpAt: l.followUpAt ? l.followUpAt.toISOString() : null,
     ...(noWhatsApp.has(l.id) ? { phone: l.phone, noWhatsApp: true } : {}),
+    ...(l.isTest ? { isTest: true } : {}),
     ...nextStepFields(stateFor(l, flags), pastByLead.get(l.id) ?? null),
   }));
 

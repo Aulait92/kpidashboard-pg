@@ -10,6 +10,7 @@ import {
   saveTemplateResultAction,
   setAgentActiveAction,
   setFollowUpSequencesAction,
+  setNewContactsBotAction,
   setTemplateApprovedAction,
   submitTemplatesAction,
   resubmitTemplateAction,
@@ -103,6 +104,8 @@ export function AgentSettings(p: {
   sequencesEnabled: boolean;
   /** Fehlende freigegebene Vorlagen für die Abfolgen (Anzeigenamen). */
   sequenceTemplatesMissing: string[];
+  /** „Assistent auch für neue Kontakte“ (Standard aus). */
+  newContactsBot: boolean;
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -151,6 +154,14 @@ export function AgentSettings(p: {
           <div className="text-sm text-[color:var(--muted)]">Antwortet Leads auf WhatsApp und bucht Termine.</div>
         </div>
         <Switch label="Assistent aktiv" checked={p.active} onChange={(next) => setAgentActiveAction(p.customerId, next)} />
+      </div>
+
+      <div className="flex min-h-[60px] items-center gap-4 px-4 py-3" data-neue-kontakte>
+        <div className="min-w-0 flex-1">
+          <div className="font-medium">Assistent auch für neue Kontakte</div>
+          <div className="text-sm text-[color:var(--muted)]">Aus: antwortet nur Leads. Kontakte aus der WhatsApp-Business-App nie.</div>
+        </div>
+        <Switch label="Assistent auch für neue Kontakte" checked={p.newContactsBot} onChange={(next) => setNewContactsBotAction(p.customerId, next)} />
       </div>
 
       <div className="flex min-h-[60px] flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 text-[15px]">

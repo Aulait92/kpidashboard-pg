@@ -428,6 +428,8 @@ export type CustomerMailOpts = {
   textBlocks?: string[];
   replyTo?: string | null;
   signature?: string;
+  /** Anhänge (Resend), z. B. das Lead-PDF */
+  attachments?: { filename: string; content: string | Buffer; contentType?: string }[];
 };
 
 type MailBody = Pick<CustomerMailOpts, "greeting" | "paragraphs" | "list" | "button" | "html" | "textBlocks" | "signature">;
@@ -489,6 +491,7 @@ export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResu
       subject: opts.subject,
       text: customerMailText(opts),
       html: customerMailHtml(opts),
+      ...(opts.attachments?.length ? { attachments: opts.attachments } : {}),
     });
     if (error) return { ok: false, error: error.message ?? "Resend hat abgelehnt." };
     return { ok: true };

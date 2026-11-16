@@ -7,16 +7,21 @@
 // leadOrigin() erkennen und in originWhere() als Prisma-Filter abbilden. Alle Auswertungen laufen
 // über diese beiden Funktionen.
 
-export type LeadOrigin = "paid" | "empfehlung" | "bestand";
+// „eigen“ (Ole, 16.11.2026): eigener Kontakt des Vermittlers, im Chat „Als Lead übernehmen“ (lib/whatsapp/nur-leads.ts).
+// Kein bezahlter Lead: zählt nicht in Quoten, Kosten pro Lead und Garantien.
+export type LeadOrigin = "paid" | "empfehlung" | "bestand" | "eigen";
 
 export const LEAD_ORIGINS: readonly { key: LeadOrigin; label: string; plural: string }[] = [
   { key: "paid", label: "Bezahlter Lead", plural: "bezahlte Leads" },
   { key: "empfehlung", label: "Empfehlung", plural: "Empfehlungen" },
   { key: "bestand", label: "Bestandskunde", plural: "Bestandskampagnen" },
+  { key: "eigen", label: "Eigener Kontakt", plural: "eigene Kontakte" },
 ];
 
 export const EMPFEHLUNG_SOURCE = "Empfehlung";
 export const BESTAND_SOURCE = "Bestandskunde";
+/** Werbekanal (Lead.adChannel) eines im Chat übernommenen eigenen Kontakts. */
+export const EIGEN_CHANNEL = "Eigener Kontakt";
 
 export type LeadOriginInput = { source?: string | null; adChannel?: string | null; referralLinkId?: string | null };
 
@@ -24,6 +29,7 @@ export type LeadOriginInput = { source?: string | null; adChannel?: string | nul
 export function leadOrigin(l: LeadOriginInput): LeadOrigin {
   if (l.referralLinkId || l.source === EMPFEHLUNG_SOURCE || l.adChannel === EMPFEHLUNG_SOURCE) return "empfehlung";
   if (l.source === BESTAND_SOURCE) return "bestand";
+  if (l.adChannel === EIGEN_CHANNEL) return "eigen";
   return "paid";
 }
 
@@ -31,21 +37,31 @@ export function leadOrigin(l: LeadOriginInput): LeadOrigin {
 export const LEAD_ORIGIN_SELECT = { source: true, adChannel: true, referralLinkId: true } as const;
 
 /**
+ * Testleads (Admin → Kunde → Leads → „Testlead schicken“, lib/testlead.ts) zählen nirgends: nicht in Zahlen,
+ * Kosten pro Lead, Monatsbericht, Garantien, Kontingenten oder Umsatz. Jede Auswertung über Leads nimmt diesen Filter.
+ */
+export const NOT_TEST_LEAD = { isTest: false } as const;
+
+/**
  * Prisma-Filter (Lead) für eine Herkunft. Achtung NULL: „nicht Empfehlung“ muss Leads ohne
- * Quelle/Kanal einschließen, deshalb die expliziten OR mit null.
+ * Quelle/Kanal einschließen, deshalb die expliziten OR mit null. Testleads sind in keiner Herkunft.
  */
 export function originWhere(origin: LeadOrigin) {
   if (origin === "empfehlung") {
-    return { OR: [{ referralLinkId: { not: null } }, { source: EMPFEHLUNG_SOURCE }, { adChannel: EMPFEHLUNG_SOURCE }] };
+    return { ...NOT_TEST_LEAD, OR: [{ referralLinkId: { not: null } }, { source: EMPFEHLUNG_SOURCE }, { adChannel: EMPFEHLUNG_SOURCE }] };
   }
   if (origin === "bestand") {
-    return { AND: [{ source: BESTAND_SOURCE }, { referralLinkId: null }, { OR: [{ adChannel: null }, { adChannel: { not: EMPFEHLUNG_SOURCE } }] }] };
+    return { ...NOT_TEST_LEAD, AND: [{ source: BESTAND_SOURCE }, { referralLinkId: null }, { OR: [{ adChannel: null }, { adChannel: { not: EMPFEHLUNG_SOURCE } }] }] };
+  }
+  if (origin === "eigen") {
+    return { ...NOT_TEST_LEAD, AND: [{ adChannel: EIGEN_CHANNEL }, { referralLinkId: null }, { OR: [{ source: null }, { source: { notIn: [EMPFEHLUNG_SOURCE, BESTAND_SOURCE] } }] }] };
   }
   return {
+    ...NOT_TEST_LEAD,
     AND: [
       { referralLinkId: null },
       { OR: [{ source: null }, { source: { notIn: [EMPFEHLUNG_SOURCE, BESTAND_SOURCE] } }] },
-      { OR: [{ adChannel: null }, { adChannel: { not: EMPFEHLUNG_SOURCE } }] },
+      { OR: [{ adChannel: null }, { adChannel: { notIn: [EMPFEHLUNG_SOURCE, EIGEN_CHANNEL] } }] },
     ],
   };
 }

@@ -38,6 +38,7 @@ import { ersteFrageRegel, istZahnLead, neutralZahnAngaben } from "@/lib/whatsapp
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
+import { logTestLead } from "@/lib/testlead";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -495,6 +496,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     },
   });
   if (!conversation || !conversation.botActive || conversation.optedOutAt) return;
+  // Allowlist (Ole, 16.11.2026, lib/whatsapp/nur-leads.ts): nur Lead-Chats bzw. neue Kontakte mit eingeschaltetem
+  // Schalter. Nie private Chats aus der WhatsApp-Business-App (Coexistence), nie das Support-Postfach.
+  const { assistentDarfAntworten } = await import("@/lib/whatsapp/nur-leads");
+  if (!(await assistentDarfAntworten(conversation))) return;
 
   const agent = await prisma.agentConfig.findUnique({
     where: { customerId: conversation.customerId },
@@ -507,9 +512,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const lead = conversation.leadId
     ? await prisma.lead.findUnique({
         where: { id: conversation.leadId },
-        select: { source: true, formData: true },
+        select: { id: true, source: true, formData: true, isTest: true },
       })
     : null;
+  // Testlead (lib/testlead.ts): Logzeilen ohne Inhalte
+  logTestLead(lead, "bot turn", { conversation: conversation.id, qualified: conversation.qualified });
 
   // Die NEUESTEN Chat-Nachrichten laden (desc + reverse) — interne Einträge
   // ausgenommen, damit sie das Fenster nicht verstopfen.
@@ -667,6 +674,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
             ...(data ? { qualificationData: data } : {}),
           },
         });
+        logTestLead(lead, "qualification", {
+          qualified: input.qualifiziert === true,
+          fields: data && typeof data === "object" && !Array.isArray(data) ? Object.keys(data as Record<string, unknown>).length : 0,
+        });
         // Kein Statuswechsel bei bloßer Qualifizierung: „In Beratung" zählt
         // als Termin. Erreicht ergibt sich im KPI aus der Chat-Antwort, der
         // Termin aus der Buchung (book_appointment → recordLeadProgress).
@@ -755,6 +766,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
               appointmentId: res.appointmentId,
               meetUrl: res.meetUrl,
             });
+            logTestLead(lead, "booking via bot", { appointment: res.appointmentId, mode });
             content =
               `Termin gebucht für ${formatSlotDE(res.start)}` +
               (mode === "video" && res.meetUrl
@@ -849,6 +861,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         }
       } else if (tu.name === "propose_appointment") {
         await persistInternal(conversation.id, "appointment_proposal", tu.input);
+        logTestLead(lead, "appointment wish recorded");
       }
       toolResults.push({
         type: "tool_result",
@@ -885,12 +898,13 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       await persistInternal(conversation.id, "advice_blocked", { original: finalText, treffer: hits });
       finalText = sichereAntwort(ansprache, advisorName, !!upcoming);
     }
-    await sendWhatsAppMessage({
+    const sent = await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,
       body: [...prefix, finalText].join("\n\n"),
       sentBy: "bot",
     });
+    logTestLead(lead, "bot reply sent", { waMessageId: sent.messageId ?? "none", blocked: hits.length > 0 });
     // Erstinformation als PDF (§ 16 VersVermV), einmal je Unterhaltung, sobald das Fenster offen ist (lib/whatsapp/erstinfo-pdf.ts)
     await sendErstinfoPdf({ conversationId: conversation.id, an: ansprache, advisorName });
     // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“)

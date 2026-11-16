@@ -27,6 +27,7 @@ import type { Ansprache } from "@/lib/ansprache";
 import { erstinfoUrlFor } from "@/lib/erstinformation";
 import { sendErstinfoPdf } from "@/lib/whatsapp/erstinfo-pdf";
 import { KEIN_WHATSAPP_REASON } from "@/lib/whatsapp/kein-whatsapp";
+import { logTestLead } from "@/lib/testlead";
 
 /**
  * Erstanschreiben (v4, Ole 15.11.2026): Vorlage je Produkt mit der ersten Frage und Knöpfen (lib/whatsapp/erstanschreiben.ts),
@@ -169,7 +170,7 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
             },
             OR: OUTREACH_STATUSES.map((s) => ({ status: s })),
           },
-      select: { id: true, name: true, phone: true, waConsent: true, source: true, waUnavailableAt: true },
+      select: { id: true, name: true, phone: true, waConsent: true, source: true, waUnavailableAt: true, isTest: true },
       take: 50,
     });
 
@@ -190,12 +191,14 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
 
       // Nummer schon als „kein WhatsApp“ bekannt (lib/whatsapp/kein-whatsapp.ts): nicht anschreiben, steht oben auf der Anrufliste
       if (lead.waUnavailableAt) {
+        logTestLead(lead, "outreach skipped", { reason: "no_whatsapp" });
         await prisma.lead.update({ where: { id: lead.id }, data: { outreachAt: new Date(), outreachStatus: "no_whatsapp" } });
         result.skipped++;
         continue;
       }
       // Einwilligungs-Häkchen im Formular fehlt bzw. „STOPP“: kein WhatsApp (nur E-Mail/Telefon zur Anfrage)
       if (lead.waConsent === "nein" || conv?.optedOutAt) {
+        logTestLead(lead, "outreach skipped", { reason: lead.waConsent === "nein" ? "no_consent" : "optout" });
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: lead.waConsent === "nein" ? "skipped_no_consent" : "skipped_optout" },
@@ -209,6 +212,7 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
       // fragt die Angaben ab (Ole, 15.11.2026). Sonst wie bisher kein Erstanschreiben.
       const booked = await hasAppointment(lead.id, conv?.id);
       if (booked && !produktCheckliste(source)) {
+        logTestLead(lead, "outreach skipped", { reason: "booked" });
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: "skipped_booked" },
@@ -216,8 +220,10 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         result.skipped++;
         continue;
       }
-      if (conv && conv._count.messages > 0) {
-        // Lead hat schon selbst geschrieben → der Assistent ist bereits im Gespräch.
+      // Testlead (lib/testlead.ts): der Chat wurde vorher frisch begonnen; schreibt der Admin dazwischen selbst, kommt
+      // das Erstanschreiben trotzdem (Ziel ist, den ganzen Ablauf zu erleben).
+      if (conv && conv._count.messages > 0 && !lead.isTest) {
+        // Lead hat schon selbst geschrieben → der Assistent ist bereits im Gespräch (bzw. übernimmt jetzt).
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: "skipped_contact" },
@@ -227,13 +233,17 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
             where: { id: conv.id },
             data: { leadId: lead.id },
           });
+          // Bisher „Neuer Kontakt“ ohne Assistent: jetzt Lead-Chat, offene Nachricht beantworten (lib/whatsapp/nur-leads.ts)
+          const { nachLeadZuordnung } = await import("@/lib/whatsapp/nur-leads");
+          await nachLeadZuordnung(conv.id, { antworten: true }).catch((e) => console.error("[outreach] Assistent", e));
         }
         result.skipped++;
         continue;
       }
 
       try {
-        await sendOutreach({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an, source });
+        const notice = await sendOutreach({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an, source });
+        logTestLead(lead, "outreach sent", { mode: notice.mode, waMessageId: notice.messageId ?? "none", conversation: notice.conversationId, variant: notice.variant, pdfHeader: notice.documentHeader });
         // Kam der Status „kein WhatsApp“ schon während des Sendens (Webhook), bleibt „no_whatsapp“ stehen
         await prisma.lead.updateMany({
           where: { id: lead.id, waUnavailableAt: null },
@@ -246,6 +256,7 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         result.sent++;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
+        logTestLead(lead, "outreach failed", { reason: err instanceof NoTemplateError ? "no_template" : msg.replace(/\d{6,}/g, "#").slice(0, 120) });
         if (err instanceof NoTemplateError) {
           // Kein outreachAt → wird erneut versucht, sobald die Vorlage da ist.
           await prisma.lead.update({

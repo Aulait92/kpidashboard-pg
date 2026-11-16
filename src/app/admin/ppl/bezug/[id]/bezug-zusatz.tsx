@@ -13,7 +13,13 @@ type Bezug = NonNullable<Awaited<ReturnType<typeof prisma.leadSubscription.findU
 
 export async function BezugZusatz({ sub }: { sub: Bezug | null }) {
   const quotas = sub ? new Map((await areaQuotas(sub)).map((q) => [q.id, q])) : new Map();
-  const testTargets = !sub ? [] : sub.delivery === "email" ? parseAddresses(sub.deliveryEmail) : sub.delivery === "webhook" && sub.webhookUrl ? [hostOf(sub.webhookUrl)] : [];
+  const testTargets = !sub
+    ? []
+    : sub.delivery === "email" || sub.delivery === "app_pdf"
+      ? parseAddresses(sub.deliveryEmail)
+      : sub.delivery === "webhook" && sub.webhookUrl
+        ? [hostOf(sub.webhookUrl)]
+        : [];
   const lastTest = testTargets.length
     ? await prisma.auditLog.findFirst({ where: { action: "ppl.test", entityId: sub!.id }, orderBy: { at: "desc" }, select: { at: true, details: true } })
     : null;
@@ -27,6 +33,7 @@ export async function BezugZusatz({ sub }: { sub: Bezug | null }) {
           <TestLeadButton
             subscriptionId={sub.id}
             targets={testTargets}
+            pdfOnly={sub.delivery === "app_pdf"}
             last={lastTest ? `${lastTest.at.toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" })}${lastOk === false ? ", mit Fehler" : ""}` : null}
           />
         ) : null}

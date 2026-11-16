@@ -8,6 +8,7 @@ import { isStorno, loadAdminLeads, priceOf, type LeadFilter } from "@/lib/admin-
 import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
 import { prisma } from "@/lib/prisma";
 import { StornoEintragen, StornoZuruecknehmen } from "@/app/admin/ppl/storno-eintragen";
+import { TestLeadBadge } from "@/components/test-lead-badge";
 
 export const metadata = { title: "Alle Leads | performancegrowth Admin" };
 
@@ -123,6 +124,11 @@ async function Alle({ sp }: { sp: Suche }) {
                     <summary className="cursor-pointer list-none">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="truncate font-medium">{l.name ?? "ohne Name"}</span>
+                        {l.isTest ? (
+                          <span data-funktion="test-lead-badge-testleadbadge--testleads-in-lead-listen-mit-kennzeichen-test">
+                            <TestLeadBadge />
+                          </span>
+                        ) : null}
                         {storno ? <Badge tone="danger">Storno</Badge> : l.closedAt ? <Badge tone="success">Abschluss</Badge> : <Badge>{l.status ?? "Neu"}</Badge>}
                       </div>
                       <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">

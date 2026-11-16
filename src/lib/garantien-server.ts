@@ -113,7 +113,8 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
           select: { id: true, createdAt: true, source: true, status: true, closeValue: true, closedAt: true, statusChangedAt: true },
         }),
         prisma.appointment.findMany({
-          where: { customerId, startsAt: { gte: new Date(start.getTime() - DAY), lte: now }, status: { not: "cancelled" } },
+          // Termine von Testleads zählen nicht (lib/testlead.ts)
+          where: { customerId, startsAt: { gte: new Date(start.getTime() - DAY), lte: now }, status: { not: "cancelled" }, NOT: { lead: { is: { isTest: true } } } },
           select: { startsAt: true, status: true },
         }),
       ])

@@ -29,7 +29,7 @@ export default async function OrderPage({ searchParams }: { searchParams: Promis
   if (ctx.teamRole === "advisor") redirect("/buyer");
   const { zahlung } = await searchParams;
   const [subs, customer] = await Promise.all([
-    prisma.leadSubscription.findMany({ where: { customerId: ctx.customerId, active: true, delivery: "app" }, orderBy: { createdAt: "asc" } }),
+    prisma.leadSubscription.findMany({ where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } }, orderBy: { createdAt: "asc" } }),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { stripeCustomerId: true } }),
   ]);
   if (!subs.length) redirect("/buyer");

@@ -34,9 +34,14 @@ export async function toggleBotBuyerAction(formData: FormData): Promise<void> {
   if (!session) redirect(chatUrl(conversationId, "preview"));
   const conv = await prisma.conversation.findFirst({
     where: { id: conversationId, ...session.conv },
-    select: { id: true, botActive: true },
+    select: { id: true, botActive: true, leadId: true, customerId: true, contactPhone: true },
   });
   if (!conv) redirect("/buyer/chats");
+  // Assistent an nur in Lead-Chats bzw. mit „Assistent auch für neue Kontakte“; sonst erst „Als Lead übernehmen“
+  if (!conv.botActive) {
+    const { assistentDarfAntworten } = await import("@/lib/whatsapp/nur-leads");
+    if (!(await assistentDarfAntworten(conv))) redirect(chatUrl(conv.id, "neuer_kontakt"));
+  }
   await prisma.conversation.update({
     where: { id: conv.id },
     data: { botActive: !conv.botActive },
@@ -87,6 +92,24 @@ export async function sendReplyBuyerAction(formData: FormData): Promise<void> {
   redirect(chatUrl(conv.id, failed ? "send" : undefined, !failed));
 }
 
+/**
+ * Neuer Kontakt (ohne Lead) → „Als Lead übernehmen“: Lead anlegen bzw. zuordnen, Assistent an
+ * (lib/whatsapp/nur-leads.ts). Ohne diese Entscheidung schreibt der Assistent unbekannten Kontakten nie.
+ */
+export async function takeAsLeadBuyerAction(formData: FormData): Promise<void> {
+  const conversationId = String(formData.get("conversationId") ?? "");
+  const session = await requireBuyer();
+  if (!session) redirect(chatUrl(conversationId, "preview"));
+  const conv = await prisma.conversation.findFirst({ where: { id: conversationId, ...session.conv }, select: { id: true } });
+  if (!conv) redirect("/buyer/chats");
+  const { alsLeadUebernehmen } = await import("@/lib/whatsapp/nur-leads");
+  const r = await alsLeadUebernehmen({ conversationId: conv.id, customerId: session.customerId, userId: session.userId });
+  await recordUsage(r.ok ? "action" : "error", r.ok ? "chat.take_as_lead" : "chat.take_as_lead.error");
+  revalidatePath("/buyer/chats");
+  revalidatePath("/buyer");
+  redirect(chatUrl(conv.id, r.ok ? undefined : "lead"));
+}
+
 /** „Braucht dich" als erledigt markieren (z. B. nach einem Anruf). */
 export async function markChatDoneBuyerAction(formData: FormData): Promise<void> {
   const conversationId = String(formData.get("conversationId") ?? "");
@@ -135,6 +158,8 @@ export async function followupBuyerAction(formData: FormData): Promise<void> {
         leadId: conv.leadId,
         contactName: conv.contactName,
         anrede: choice.anrede,
+        // Von Hand gesendet (Klick), keine Automatik
+        manuell: true,
       });
     } catch (e) {
       console.error("[buyer followup]", e);

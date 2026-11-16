@@ -21,6 +21,7 @@ import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
 import { backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
 import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
+import { nachholenAntworten, type NachholenErgebnis } from "@/lib/vertrieb/instantly-nachholen";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -230,6 +231,33 @@ export async function syncInstantlyAction(prev: ImportState): Promise<ImportStat
       ok: true,
       message: `${r.campaigns} Kampagnen, ${r.leads} Leads: ${r.matched} zugeordnet, ${r.sent} mit gesendeter Mail, ${r.replies} mit Antwort (${r.newReplies} neue Antwort-Mails gespeichert), ${r.created} neu im CRM angelegt, ${r.unmatched} noch nicht angeschrieben und nicht im CRM.`,
     };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+// ─── Instantly-Antworten nachholen (Vorschau, dann Anwenden) ─────────────
+export type NachholenState = { ok: boolean; message: string; ergebnis?: NachholenErgebnis } | null;
+
+/** Fehlende Antworten der letzten 90 Tage aus allen Postfächern und Kampagnen: „vorschau“ schreibt nichts. */
+export async function instantlyNachholenAction(_p: NachholenState, fd: FormData): Promise<NachholenState> {
+  await requireAuth();
+  const anwenden = s(fd, "mode") === "anwenden";
+  try {
+    const r = await nachholenAntworten({ anwenden });
+    const { liste, ...zahlen } = r;
+    void liste;
+    if (anwenden) {
+      await audit("vertrieb.instantly_nachholen", { entity: "SalesEmail", details: zahlen });
+      refresh();
+    }
+    const n = (x: number, one: string, many: string) => `${x.toLocaleString("de-DE")} ${x === 1 ? one : many}`;
+    const message = anwenden
+      ? `${n(r.nachgeholt, "Antwort", "Antworten")} nachgeholt, ${n(r.neueKontakte, "Kontakt", "Kontakte")} neu angelegt, ${n(r.spaeter, "Später-Antwort", "Später-Antworten")} mit Follow-up.`
+      : r.fehlend
+        ? `${n(r.fehlend, "Antwort fehlt", "Antworten fehlen")} im CRM (${n(r.neueKontakte, "neuer Kontakt", "neue Kontakte")}, ${n(r.spaeter, "Später-Antwort", "Später-Antworten")}).`
+        : `Alle ${n(r.gelesen, "Antwort", "Antworten")} der letzten ${r.tage} Tage sind im CRM.`;
+    return { ok: true, message, ergebnis: r };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }

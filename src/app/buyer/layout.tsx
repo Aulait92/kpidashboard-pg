@@ -20,6 +20,10 @@ import { nowMs } from "@/lib/now";
 import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
 import { AppDemoRahmen } from "@/components/app-demo-rahmen";
 import { demoTourZiele } from "@/lib/app-demo/tour-server";
+import { LiveRefresh } from "@/components/live-refresh";
+
+// Seiten, die bei jeder Änderung (Lead, Chat, Termin) sofort neu laden; überall sonst nur der Zähler „Braucht dich“.
+const LIVE_PATHS = ["/buyer", "/buyer/leads", "/buyer/kanban", "/buyer/kontakte", "/buyer/chats"];
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -74,7 +78,7 @@ export default async function BuyerLayout({
         advisor ? 0 : customerSetupOpenCount(ctx.customerId),
         advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
-        advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: "app" } }),
+        advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } }),
         // Bestand: nur Inhaber, und vorerst nur mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
         advisor || ctx.demo ? false : loadBestandVisible(ctx.customerId, { preview: ctx.preview }),
       ])
@@ -151,6 +155,8 @@ export default async function BuyerLayout({
                 </div>
               </Suspense>
             ) : null}
+            {/* Live: neue Leads und Chat-Nachrichten ohne Neuladen, auch der Zähler „Braucht dich“ (components/live-refresh.tsx) */}
+            <LiveRefresh fullPaths={LIVE_PATHS} />
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}

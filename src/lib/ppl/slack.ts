@@ -45,12 +45,18 @@ const STATUS = {
   invalid: { icon: "⛔", text: "ungültig" },
 } as const;
 
+/** Ziel „Kundenbereich“ (Lieferweg app bzw. app_pdf) ist keine Adresse: nicht als Domain zählen. */
+const APP_TARGET = "Kundenbereich";
+const targetName = (t: string) => (t === APP_TARGET ? APP_TARGET : targetDomain(t));
+
 function deliveryLine(d: NonNullable<SlackLeadInfo["delivery"]>): string {
-  const domains = [...new Set(d.targets.map((t) => targetDomain(t.target)))];
-  const where = d.targets.length > 1 ? ` an ${d.targets.length} Adressen (${domains.join(", ")})` : domains.length ? ` an ${domains[0]}` : "";
+  // Adressen ohne den Kundenbereich (steckt schon im Lieferweg, z. B. „Kundenbereich + PDF per Mail“)
+  const addresses = d.targets.filter((t) => t.target !== APP_TARGET);
+  const domains = [...new Set(addresses.map((t) => targetDomain(t.target)))];
+  const where = addresses.length > 1 ? ` an ${addresses.length} Adressen (${domains.join(", ")})` : domains.length ? ` an ${domains[0]}` : "";
   const blocked = d.targets.some((t) => t.blocked) ? ", Testumgebung: teilweise gesperrt" : "";
   const failed = d.targets.filter((t) => !t.ok);
-  const why = failed.length ? failed.map((t) => `${targetDomain(t.target)}: ${t.error ?? "Fehler"}`).join("; ") : (d.error ?? "unbekannt");
+  const why = failed.length ? failed.map((t) => `${targetName(t.target)}: ${t.error ?? "Fehler"}`).join("; ") : (d.error ?? "unbekannt");
   const state = d.ok ? `zugestellt${blocked}` : `FEHLER: ${maskEmails(why)}`;
   return `Lieferweg: ${esc(d.label)}${esc(where)}: ${esc(state)}`;
 }

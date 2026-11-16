@@ -21,8 +21,14 @@
      feste Zeilen `Feld: Wert` (Lead-ID, Datum ISO, Produkt, Anrede, Vorname, Nachname, Telefon E.164, E-Mail,
      PLZ, Ort, alle Antworten, Einwilligungstext und Zeitpunkt), am Ende `JSON: {…}` und Anhang `lead.json`
      (`src/lib/ppl/lead-mail.ts`). Einwilligungstext am Bezug, Zeitpunkt = Eingang des Funnel-Formulars.
-   - Bezug → **Testdatensatz senden**: „TEST Lead“, Betreff mit [TEST], an alle Lieferadressen; legt keinen
-     Lead an (zählt nicht ins Kontingent, Umsatz, Auswertung), steht im Änderungsprotokoll („Testdatensatz gesendet“).
+   - **Kundenbereich + PDF per Mail** (`app_pdf`, z. B. Novus-Makler mit Login, die das PDF wie früher aus dem
+     Zap wollen): wie Kundenbereich, danach je Adresse eine Mail mit dem Lead als PDF (`src/lib/ppl/lead-pdf.ts`,
+     Layout des alten Zap-PDFs: Kontakt, Angaben je Kategorie, Einwilligung mit Text und Zeitpunkt; Chromium,
+     sonst schlicht mit pdf-lib). Mailfehler machen die Lieferung in den Kundenbereich nicht rückgängig.
+     Airtable-Import: Liefermethode „PDF“ mit Login und Empfänger-Mail → `app_pdf`.
+   - Bezug → **Testdatensatz senden**: „TEST Lead“ mit allen Feldern des echten Funnels, Betreff mit [TEST], an
+     alle Lieferadressen (bei `app_pdf` nur die PDF-Mail); legt keinen Lead an (zählt nicht ins Kontingent, Umsatz,
+     Auswertung), steht im Änderungsprotokoll („Testdatensatz gesendet“).
    - **Slack** je Lead (`src/lib/ppl/slack.ts`): Railway-Variable `SLACK_PPL_WEBHOOK_URL` (Incoming Webhook);
      Ergebnis, Produkt, Bezieher, Vorname und PLZ/Ort, Lieferweg mit Status, Link in den Admin; bei
      Zustellfehler eigene Warnung. Schalter „Slack-Nachricht je Lead“ am Bezug. Prüfen: Pay-per-Lead → **Slack testen**.

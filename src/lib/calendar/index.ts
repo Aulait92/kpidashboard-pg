@@ -384,6 +384,8 @@ export async function bookAppointment(opts: {
       manageToken,
     },
   });
+  // Testlead (lib/testlead.ts): Buchung als Logzeile (Bot, Buchungsseite oder von Hand)
+  if (opts.leadId) await (await import("@/lib/testlead")).logIfTestLead(opts.leadId, "booking", { appointment: appt.id, mode: opts.mode, start: start.toISOString() });
   // Termin gebucht: Erinnerung „Kein Termin gebucht: nachfassen“ aus einer E-Mail mit Terminlink entfällt
   if (opts.leadId) await clearTerminErinnerung(opts.leadId).catch(() => {});
   // Team: Lead ohne Zuständigen gehört jetzt dem Berater, bei dem gebucht wurde.

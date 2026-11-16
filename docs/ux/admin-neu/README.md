@@ -1,6 +1,6 @@
 # Neuer Admin (/admin/neu): Konventionen für die Bereiche
 
-Grundlage: `demo.html` (Entwurf, Struktur, Look) und `funktionsinventar.json` (409 Funktionen, verbindliche
+Grundlage: `demo.html` (Entwurf, Struktur, Look) und `funktionsinventar.json` (419 Funktionen: 409 aus dem Entwurf, 10 später auf claude/whatsapp-crm ergänzt; verbindliche
 Abnahmeliste: keine Funktion darf verloren gehen). Regeln aus `AGENTS.md` gelten (UX-Regel, keine Gedankenstriche
 in Texten an Kunden). Der alte Admin bleibt vollständig erreichbar, bis Ole abnimmt.
 

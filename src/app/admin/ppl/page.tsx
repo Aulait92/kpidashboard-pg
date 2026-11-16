@@ -15,6 +15,7 @@ import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
 import { StornoEintragen, StornoZuruecknehmen } from "./storno-eintragen";
 import { SlackTest } from "./slack-test";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
+import { HvkAbrechnungen, HvkReklamationenReview } from "./hvk-abrechnungen";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -22,7 +23,7 @@ export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const dt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
 const PERIOD: Record<string, string> = { week: "Wochenbestellung", month: "monatlich", once: "einmalig" };
-const DELIVERY: Record<string, string> = { app: "Kundenbereich", email: "E-Mail", webhook: "Webhook" };
+const DELIVERY: Record<string, string> = { app: "Kundenbereich", app_pdf: "Kundenbereich + PDF per Mail", email: "E-Mail", webhook: "Webhook" };
 const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   delivered: { label: "ausgeliefert", tone: "success" },
   parked: { label: "geparkt", tone: "warning" },
@@ -30,15 +31,18 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   invalid: { label: "ungültig", tone: "danger" },
 };
 
-export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string }> }) {
+export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; postfach?: string }> }) {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
-  const { ansicht = "", zeitraum, produkt, q, bezug } = await searchParams;
-  const [subs, parkedCount, reviewCount] = await Promise.all([
+  const { ansicht = "", zeitraum, produkt, q, bezug, postfach } = await searchParams;
+  const [subs, parkedCount, leadReviewCount, hvkOpenCount] = await Promise.all([
     prisma.leadSubscription.findMany({ include: { customer: { select: { name: true } } }, orderBy: [{ productKey: "asc" }, { active: "desc" }, { createdAt: "asc" }] }),
     prisma.poolLead.count({ where: { status: "parked" } }),
     prisma.lead.count({ where: { stornoState: "review" } }),
+    // Reklamationen aus der HvK-Abrechnung ohne eindeutigen Lead
+    prisma.hvkReklamation.count({ where: { status: "offen" } }),
   ]);
+  const reviewCount = leadReviewCount + hvkOpenCount;
   const views = [
     { key: "", label: "Bezüge" },
     { key: "uebersicht", label: "Übersicht je Kunde" },
@@ -46,6 +50,7 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
     { key: "geparkt", label: "Geparkt", count: parkedCount },
     { key: "storno", label: "Storno prüfen", count: reviewCount },
     { key: "geliefert", label: "Gelieferte Leads" },
+    { key: "hvk", label: "HvK-Abrechnungen" },
     { key: "eingang", label: "Eingang" },
   ];
 
@@ -94,7 +99,12 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
       ) : ansicht === "geparkt" ? (
         <Parked subs={subs} />
       ) : ansicht === "storno" ? (
-        <Review />
+        <div className="space-y-5">
+          <HvkReklamationenReview />
+          <Review hideEmpty={hvkOpenCount > 0} />
+        </div>
+      ) : ansicht === "hvk" ? (
+        <HvkAbrechnungen postfach={postfach} />
       ) : ansicht === "geliefert" ? (
         <Delivered subs={subs} q={q ?? ""} bezug={bezug ?? ""} />
       ) : ansicht === "eingang" ? (
@@ -227,13 +237,13 @@ async function Parked({ subs }: { subs: Subs }) {
   );
 }
 
-async function Review() {
+async function Review({ hideEmpty = false }: { hideEmpty?: boolean }) {
   const leads = await prisma.lead.findMany({
     where: { stornoState: "review" },
     orderBy: { stornoRequestedAt: "asc" },
     select: { id: true, name: true, source: true, deliveredAt: true, stornoReason: true, stornoNote: true, customer: { select: { name: true } }, creditAmount: true, revenues: { select: { amount: true }, take: 1 } },
   });
-  if (!leads.length) return <Card><p className="p-5 text-sm text-[color:var(--muted)]">Keine Stornos zu prüfen.</p></Card>;
+  if (!leads.length) return hideEmpty ? null : <Card><p className="p-5 text-sm text-[color:var(--muted)]">Keine Stornos zu prüfen.</p></Card>;
   return (
     <Card>
       <ul className="divide-y divide-[color:var(--border)]">

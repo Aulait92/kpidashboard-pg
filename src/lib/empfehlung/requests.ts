@@ -1255,6 +1255,8 @@ export async function sendTestMessage(customerId: string, phone: string): Promis
       text: renderText(settings.texts.review, { vorname: "Test", link: settings.googleReviewUrl, vertreter, anrede: { firstName: "Test" } }),
       contactName: "Test (Empfehlungen & Bewertungen)",
       anrede: { firstName: "Test" },
+      // „Test an mich“: der Vermittler sendet selbst an die eigene Nummer
+      manuell: true,
     });
     return { ok: true, mode: r.mode };
   } catch (err) {

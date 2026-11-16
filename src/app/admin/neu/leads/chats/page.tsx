@@ -9,7 +9,7 @@ export const metadata = { title: "WhatsApp-Chats | performancegrowth Admin" };
 // nach Art (Alle, Leads der Kunden, Support-Nummer, Kunden, Interessenten, Unbekannt), Status und Suche.
 // Liste, Verlauf und Lead-Seitenleiste wie /admin/whatsapp (chats-ansicht.tsx); ein Chat hat eine eigene Adresse.
 const FUNKTIONEN =
-  "page-status-tabs--status-reiter-offen-zurueckgestellt-erledigt page-art-filters--filter-alle-leads-der-kunden-support-nummer page-q--chats-durchsuchen-nach-name-oder-nummer page--braucht-aufmerksamkeit-grund-und-nicht";
+  "page-status-tabs--status-reiter-offen-zurueckgestellt-erledigt page-art-filters--filter-alle-leads-der-kunden-support-nummer page-q--chats-durchsuchen-nach-name-oder-nummer page--braucht-aufmerksamkeit-grund-und-nicht live-refresh-liverefresh--chats-aktualisieren-sich-live-hinweis-neue";
 
 export default async function Page({ searchParams }: { searchParams: Promise<ChatsSuche> }) {
   const sp = await searchParams;

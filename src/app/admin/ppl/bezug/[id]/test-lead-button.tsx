@@ -5,7 +5,7 @@ import { Button, Card, CardHeader } from "@/components/ui";
 import { sendTestLeadAction, type TestLeadState } from "../../actions";
 
 /** Bezug → „Testdatensatz senden“ mit Rückmeldung je Lieferadresse. */
-export function TestLeadButton({ subscriptionId, targets, last }: { subscriptionId: string; targets: string[]; last: string | null }) {
+export function TestLeadButton({ subscriptionId, targets, last, pdfOnly = false }: { subscriptionId: string; targets: string[]; last: string | null; pdfOnly?: boolean }) {
   const [state, action, pending] = useActionState<TestLeadState, FormData>(sendTestLeadAction, {});
   return (
     <Card>
@@ -13,7 +13,8 @@ export function TestLeadButton({ subscriptionId, targets, last }: { subscription
       <form action={action} className="space-y-3 px-5 py-4 text-sm">
         <input type="hidden" name="subscriptionId" value={subscriptionId} />
         <p className="text-[color:var(--muted)]">
-          „TEST Lead“ mit [TEST] im Betreff an {targets.length === 1 ? targets[0] : `${targets.length} Adressen`}. Zählt nicht ins Kontingent und nicht in die Auswertung.
+          „TEST Lead“ mit [TEST] im Betreff an {targets.length === 1 ? targets[0] : `${targets.length} Adressen`}
+          {pdfOnly ? " (nur die PDF-Mail, kein Lead im Kundenbereich)" : ""}. Zählt nicht ins Kontingent und nicht in die Auswertung.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" size="md" disabled={pending}>
