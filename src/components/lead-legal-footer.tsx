@@ -30,7 +30,15 @@ export async function LeadLegalFooter({ customerId }: { customerId?: string | nu
   const websiteInfo = customerId
     ? (await prisma.onboarding.findUnique({ where: { customerId }, select: { websiteInfo: true } }).catch(() => null))?.websiteInfo
     : null;
-  const links = leadLegalLinks(websiteInfo);
+  let links = leadLegalLinks(websiteInfo);
+  // Ole, 16.11.2026 (Kundenlink zeigte unser Impressum): Ist der Vermittler bekannt, aber sein Impressum nicht
+  // hinterlegt, führt „Impressum“ zu seiner Erstinformation (Name, Anschrift, Register); unser Datenschutz nur als
+  // technischer Dienstleister.
+  if (customerId && links.imprint === OPERATOR_IMPRINT) {
+    const { erstinfoUrlFor } = await import("@/lib/erstinformation");
+    const erstinfo = await erstinfoUrlFor(customerId).catch(() => null);
+    if (erstinfo) links = { imprint: erstinfo, privacy: links.privacy, processor: links.processor ?? (links.privacy === operatorPrivacy() ? null : operatorPrivacy()) };
+  }
   const cls = "hover:underline";
   return (
     <footer className="mt-8 px-4 py-4 text-center text-xs text-[color:var(--muted)] print:hidden" data-lead-footer>

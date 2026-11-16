@@ -8,7 +8,7 @@ import { loadVorbereitung } from "@/lib/termin-vorbereitung-server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const ctx = await getBuyerContext();
   if (!ctx) return new Response("Nicht gefunden.", { status: 404 });
   const { id } = await params;
@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return new Response(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(name)}`,
+        "Content-Disposition": `${new URL(req.url).searchParams.has("download") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(name)}`,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },

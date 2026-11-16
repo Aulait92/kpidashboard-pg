@@ -120,7 +120,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
             </>
           ) : null}
           <div className="mt-4 flex flex-col items-start gap-1.5">
-            <a href={`/api/buyer/termine/${d.id}/vorbereitung`} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1.5 font-medium text-[color:var(--brand)] hover:underline">
+            <a href={`/api/buyer/termine/${d.id}/vorbereitung?download=1`} download className="inline-flex min-h-9 items-center gap-1.5 font-medium text-[color:var(--brand)] hover:underline">
               <FileDown className="h-4 w-4" /> Als PDF herunterladen
             </a>
             <Link href="/buyer/einstellungen/branding" className="inline-flex min-h-9 items-center gap-1.5 font-medium text-[color:var(--brand)] hover:underline">

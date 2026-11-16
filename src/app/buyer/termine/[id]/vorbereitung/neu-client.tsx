@@ -423,20 +423,24 @@ function Angebote(p: {
           const m = e ? tarifMonat(s, e) : null;
           const an = s.key === sp?.key;
           return (
-            <button
+            <span
               key={s.key}
-              type="button"
-              role="tab"
-              aria-selected={an}
-              onClick={() => setAktiv(s.key)}
               className={cn(
-                "inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold",
+                "inline-flex h-9 items-center rounded-full border text-sm font-semibold",
                 an ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white" : "border-[color:var(--border)] bg-white",
               )}
             >
-              {s.label}
-              <small className={cn("text-xs font-medium", an ? "opacity-80" : m == null ? "text-amber-700" : "text-[color:var(--muted)]")}>{m != null ? eur(m) : "Beitrag fehlt"}</small>
-            </button>
+              <button type="button" role="tab" aria-selected={an} onClick={() => setAktiv(s.key)} className={cn("inline-flex h-full items-center gap-1.5 pl-3.5", an && !ro ? "pr-1" : "pr-3.5")}>
+                {s.label}
+                <small className={cn("text-xs font-medium", an ? "opacity-80" : m == null ? "text-amber-700" : "text-[color:var(--muted)]")}>{m != null ? eur(m) : "Beitrag fehlt"}</small>
+              </button>
+              {/* Ole, 16.11.2026: „ich kann kein Produkt wieder entfernen“ (stand nur unter „Tarife ändern“) */}
+              {an && !ro ? (
+                <button type="button" aria-label={`${s.label} entfernen`} title={`${s.label} entfernen`} onClick={sparteWeg} className="mr-1 flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/20" data-sparte-entfernen>
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </span>
           );
         })}
         {nochFrei.length && !ro ? (

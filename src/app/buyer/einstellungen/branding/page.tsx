@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/buyer-shell";
+import { ZurueckLink } from "@/components/zurueck-link";
 import { Card, CardHeader } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { canEditProvision } from "@/lib/provision-server";
@@ -17,6 +18,10 @@ export default async function BrandingPage() {
   const canEdit = canEditProvision(ctx);
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
+      {/* Ole, 16.11.2026: kein Zurück. Aus der App: Browser-Zurück (Vorbereitung, Präsentation), sonst Einstellungen */}
+      <ZurueckLink href="/buyer/einstellungen" back>
+        Zurück
+      </ZurueckLink>
       <PageHeader title="Logo für Präsentationen" subtitle="Ihr Logo erscheint auf der Präsentation, die Sie im Termin zeigen." />
       <Card>
         <CardHeader title="Logo" />

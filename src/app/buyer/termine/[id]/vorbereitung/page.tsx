@@ -50,7 +50,7 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
         <ButtonLink href={`/buyer/termine/${d.id}/praesentation?von=vorbereitung`} variant="primary" size="md" icon={Presentation}>
           Präsentation
         </ButtonLink>
-        <ButtonLink href={`/api/buyer/termine/${d.id}/vorbereitung`} external variant="secondary" size="md" icon={FileDown}>
+        <ButtonLink href={`/api/buyer/termine/${d.id}/vorbereitung?download=1`} external variant="secondary" size="md" icon={FileDown}>
           Als PDF
         </ButtonLink>
         <PreparedButton id={d.id} prepared={!!d.vorbereitetAm} readOnly={ctx.preview} />
