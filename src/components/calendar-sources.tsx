@@ -321,9 +321,16 @@ export function BlockTimes({
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(addAction, {});
   const [blockFrom, setBlockFrom] = useState("09:00");
   const [blockTo, setBlockTo] = useState("17:00");
+  // Selten gebraucht: Formular erst auf Knopfdruck (wie „Pause planen“, 16.11.2026)
+  const [offen, setOffen] = useState(false);
   const hiddenInputs = hidden ? Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />) : null;
   return (
     <div className="space-y-4">
+      {!offen && !state.error && !state.ok ? (
+        <button type="button" disabled={readOnly} onClick={() => setOffen(true)} className={buttonClass("secondary", "md")} data-block-oeffnen>
+          Zeit blockieren
+        </button>
+      ) : (
       <form action={formAction} className="space-y-3">
         {hiddenInputs}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
@@ -348,6 +355,7 @@ export function BlockTimes({
           <Result state={state} />
         </div>
       </form>
+      )}
       {blocks.length ? (
         <ul className="divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]">
           {blocks.map((b) => (
@@ -366,9 +374,7 @@ export function BlockTimes({
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="text-sm text-[color:var(--muted)]">Keine blockierten Zeiten.</p>
-      )}
+      ) : null}
     </div>
   );
 }
