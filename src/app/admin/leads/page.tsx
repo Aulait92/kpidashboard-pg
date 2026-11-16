@@ -1,8 +1,8 @@
 import { SubTabs } from "@/components/admin/sub-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Download } from "lucide-react";
-import { Badge, Card } from "@/components/ui";
+import { Download, Inbox, Phone } from "lucide-react";
+import { Badge, Card, EmptyState } from "@/components/ui";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -54,7 +54,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
         </div>
-        <a href={`/admin/leads/export?${qs.toString()}`} className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium">
+        <a href={`/admin/leads/export?${qs.toString()}`} className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium">
           <Download className="h-4 w-4" /> CSV exportieren
         </a>
       </div>
@@ -94,7 +94,41 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
         {stornos ? <>{" · "}<span className="text-rose-700">{stornos} Stornos</span></> : null}
       </p>
 
-      <Card>
+      {/* Handy: Liste statt 7-Spalten-Tabelle (Kunde, Status und Preis lagen außerhalb des Bildschirms) */}
+      <Card className="md:hidden">
+        {leads.length ? (
+          <ul className="divide-y divide-[color:var(--border)]">
+            {leads.map((l) => {
+              const storno = isStorno(l.status);
+              const price = priceOf(l);
+              return (
+                <li key={l.id} className="flex items-start gap-3 px-4 py-3 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium">{l.name ?? "ohne Name"}</span>
+                      {storno ? <Badge tone="danger">Storno</Badge> : l.closedAt ? <Badge tone="success">Abschluss</Badge> : null}
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
+                      {dt(l.createdAt)} · {l.customer.name}
+                      {l.source ? ` · ${l.source}` : ""}
+                    </div>
+                  </div>
+                  <span className={`shrink-0 tabular-nums ${storno ? "text-[color:var(--muted)] line-through" : ""}`}>{price ? eur(price) : ""}</span>
+                  {l.phone ? (
+                    <a href={`tel:+${l.phone}`} aria-label={`${l.name ?? "Lead"} anrufen`} className="-my-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[color:var(--brand)] hover:bg-[color:var(--surface-sunken)]">
+                      <Phone className="h-4 w-4" />
+                    </a>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <EmptyState icon={Inbox} title="Keine Leads für diese Auswahl." text="Filter oben ändern, z. B. einen anderen Zeitraum wählen." />
+        )}
+      </Card>
+
+      <Card className="hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-[color:var(--border)] text-left text-xs text-[color:var(--muted)]">
@@ -170,11 +204,11 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
 
       {pages > 1 ? (
         <div className="flex items-center justify-center gap-3 text-sm">
-          {page > 1 ? <Link href={`/admin/leads?${qs.toString()}&seite=${page - 1}`} className="underline">zurück</Link> : null}
+          {page > 1 ? <Link href={`/admin/leads?${qs.toString()}&seite=${page - 1}`} className="inline-flex min-h-10 items-center underline">zurück</Link> : null}
           <span className="text-[color:var(--muted)]">
             Seite {page} von {pages}
           </span>
-          {page < pages ? <Link href={`/admin/leads?${qs.toString()}&seite=${page + 1}`} className="underline">weiter</Link> : null}
+          {page < pages ? <Link href={`/admin/leads?${qs.toString()}&seite=${page + 1}`} className="inline-flex min-h-10 items-center underline">weiter</Link> : null}
         </div>
       ) : null}
     </main>

@@ -215,7 +215,7 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
       />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">WhatsApp-Chats</h1>
-        <Link href="/admin/whatsapp/settings" className="text-sm font-medium text-[color:var(--brand)] hover:underline">
+        <Link href="/admin/whatsapp/settings" className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
           Einstellungen →
         </Link>
       </div>
@@ -239,12 +239,12 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
       <div className="mt-6 flex h-[calc(100dvh-290px)] min-h-[460px] overflow-hidden md:h-[calc(100dvh-200px)] md:min-h-[540px] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
         {/* Spalte 1: Konversationsliste (Handy: ausgeblendet, sobald ein Chat offen ist) */}
         <aside className={cn(active ? "hidden md:flex" : "flex", "w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px] xl:w-[320px]")}>
-          <div className="flex gap-1 p-3">
+          <div className="flex gap-1 p-3 pb-2">
             {STATUS_TABS.map((t) => (
               <Link
                 key={t.key}
                 href={`/admin/whatsapp?tab=${t.key}${artQs}`}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                className={`inline-flex h-10 items-center rounded-full px-3 text-[13px] font-semibold md:h-8 md:text-xs ${
                   t.key === tab
                     ? "bg-[color:var(--foreground)] text-white"
                     : "bg-[color:var(--background)] text-[color:var(--muted)] hover:bg-[color:var(--brand-soft)]/40"
@@ -254,12 +254,12 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
               </Link>
             ))}
           </div>
-          <div className="flex flex-wrap gap-1 px-3 pb-2" data-art-filter>
+          <div className="flex gap-1 overflow-x-auto px-3 pb-2 [scrollbar-width:none]" data-art-filter>
             {ART_FILTERS.map((f) => (
               <Link
                 key={f.key || "alle"}
                 href={`/admin/whatsapp?tab=${tab}${f.key ? `&art=${f.key}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                className={`inline-flex h-10 shrink-0 items-center rounded-full px-3 text-[13px] font-medium ring-1 ring-inset md:h-7 md:px-2.5 md:text-xs ${
                   (art ?? "") === f.key ? "bg-[color:var(--brand)] text-white ring-[color:var(--brand)]" : "text-[color:var(--muted)] ring-[color:var(--border)] hover:bg-[color:var(--brand-soft)]/40"
                 }`}
               >
@@ -274,13 +274,16 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
               name="q"
               defaultValue={q}
               placeholder="Name oder Nummer suchen"
-              className="w-full rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-sm focus:border-[color:var(--brand)] focus:outline-none"
+              type="search"
+              className="h-10 w-full rounded-lg border border-[color:var(--border)] px-3 text-base focus:border-[color:var(--brand)] focus:outline-none md:h-9 md:text-sm"
             />
           </form>
 
           <div className="flex-1 overflow-y-auto px-2 pb-2">
             {conversations.length === 0 ? (
-              <div className="p-4 text-sm text-[color:var(--muted)]">Keine Konversationen.</div>
+              <div className="p-4 text-sm text-[color:var(--muted)]">
+                {q ? `Kein Chat zu „${q}“.` : tab === "open" ? "Keine offenen Chats. Neue Nachrichten erscheinen hier sofort." : "Keine Chats in dieser Liste."}
+              </div>
             ) : (
               conversations.map((c) => {
                 const last = c.messages[0];
