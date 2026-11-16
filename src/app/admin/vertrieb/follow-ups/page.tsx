@@ -42,10 +42,14 @@ export default async function FollowupsPage() {
     <div className="max-w-5xl space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Später-Follow-ups</h1>
-        <p className="text-sm text-slate-500">
-          Kontakte, die „gerne später“ geschrieben haben: Zum Zeitpunkt geht Mail 1 als Antwort im selben Instantly-Thread raus (gleiches Postfach), nach 5 Werktagen ohne Antwort Mail 2,
-          danach die Aufgabe „Wieder melden“. Versand werktags 8 bis 17 Uhr. Jede Antwort, Abmeldung oder die Stufen Termin, Gewonnen, Verloren, Ungültig stoppen sofort.
-        </p>
+        <p className="text-sm text-slate-500">Kontakte, die „gerne später“ geschrieben haben, bekommen zum Zeitpunkt automatisch zwei Mails.</p>
+        <details className="mt-1 text-sm text-slate-500">
+          <summary className="inline-flex min-h-10 cursor-pointer items-center font-medium text-sky-700">So läuft es</summary>
+          <p className="mt-1">
+            Mail 1 geht als Antwort im selben Instantly-Thread raus (gleiches Postfach), nach 5 Werktagen ohne Antwort Mail 2, danach die Aufgabe „Wieder melden“.
+            Versand werktags 8 bis 17 Uhr. Jede Antwort, Abmeldung oder die Stufen Termin, Gewonnen, Verloren, Ungültig stoppen sofort.
+          </p>
+        </details>
       </div>
 
       {waiting.length ? (
@@ -191,7 +195,7 @@ function Group({
           ))}
         </ul>
       ) : (
-        <p className="px-4 py-4 text-sm text-slate-500">Keine.</p>
+        <p className="px-4 py-4 text-sm text-slate-500">Gerade nichts. Neue „Später“-Antworten aus Instantly landen automatisch hier.</p>
       )}
     </section>
   );
