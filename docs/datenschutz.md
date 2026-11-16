@@ -381,3 +381,17 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
   (Rollenwechsel) gilt nur für Hochrisiko-Systeme.
 - **Handlungsbedarf: ja, Entwurf** (Rollen ausdrücklich, Art. 4 beim Kunden): Entwurf Thema 3. **Anwalt:** macht die
   Nennung „KI-Assistent von [Vermittler]“ den Vermittler zum Anbieter?
+
+### 10.4 Unternehmereigenschaft per Häkchen (§ 14 BGB)
+
+- **Rechtslage:** Unternehmer ist, wer in Ausübung seiner gewerblichen oder selbstständigen beruflichen Tätigkeit
+  handelt ([§ 14 BGB](https://www.gesetze-im-internet.de/bgb/__14.html)). Die Einordnung erfolgt objektiv, Zweifel
+  gehen zugunsten der Verbrauchereigenschaft (BGH, Urteil vom 30.09.2009, VIII ZR 7/09, NJW 2009, 3780). Wer aber einen
+  gewerblichen Zweck vortäuscht, kann sich nach Treu und Glauben nicht auf Verbraucherschutz berufen (BGH, Urteil vom
+  22.12.2004, VIII ZR 91/04, NJW 2005, 1045).
+- **App heute:** Annahme nur mit Firma (Pflicht), USt-IdNr. (freiwillig, Format geprüft) und Pflicht-Häkchen mit
+  § 14-Wortlaut (`lib/unternehmer.ts`), gespeichert mit Name, IP und Zeit (`Offer.acceptedAsBusiness`); Zielgruppe
+  sind nur Vermittler mit § 34d-Erlaubnis.
+- **Bewertung:** Das ist die übliche und tragfähige Absicherung. Ein Vermittler, der für sein Gewerbe abschließt, ist
+  ohnehin Unternehmer.
+- **Handlungsbedarf: nein.**
