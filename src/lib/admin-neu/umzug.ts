@@ -62,6 +62,8 @@ export function neuerPfad(altHref: string, { nurFertige = true }: { nurFertige?:
   const pfad = m[1].replace(/\/+$/, "") || "/";
   const rest = m[2];
   if (pfad.startsWith("/admin/neu")) return null;
+  const akte = kundeWhatsApp(pfad, rest, nurFertige);
+  if (akte) return akte;
   for (const u of UMZUG) {
     if (nurFertige && !u.fertig) continue;
     if (!u.alt.includes("[")) {
@@ -75,4 +77,20 @@ export function neuerPfad(altHref: string, { nurFertige = true }: { nurFertige?:
     return u.neu.replace(/\[[a-z]+\]/gi, () => werte[i++] ?? "") + rest;
   }
   return null;
+}
+
+/**
+ * WhatsApp-Einstellungen eines Kunden (/admin/whatsapp/settings?kunde=<id>, ?c=<id> oder #kunde-<id>) gehören im neuen
+ * Admin in die Kundenakte, Reiter WhatsApp (?wa= bleibt für die Rückmeldung). Ohne Kunde: Einstellungen → WhatsApp.
+ */
+function kundeWhatsApp(pfad: string, rest: string, nurFertige: boolean): string | null {
+  if (pfad !== "/admin/whatsapp/settings") return null;
+  const [anfrage, anker = ""] = rest.split("#");
+  const q = new URLSearchParams(anfrage.replace(/^\?/, ""));
+  const kunde = q.get("kunde") ?? q.get("c") ?? /^kunde-(.+)$/.exec(anker)?.[1] ?? null;
+  if (!kunde || !/^[A-Za-z0-9_-]+$/.test(kunde)) return null;
+  const ziel = SEITEN.find((s) => s.pfad === "/admin/neu/kunden/[id]/whatsapp");
+  if (!ziel || (nurFertige && !ziel.fertig)) return null;
+  const wa = q.get("wa");
+  return `/admin/neu/kunden/${kunde}/whatsapp${wa ? `?wa=${encodeURIComponent(wa)}` : ""}`;
 }

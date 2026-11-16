@@ -3,6 +3,7 @@ import { publicOrigin } from "@/lib/calendar/oauth-routes";
 import { audit } from "@/lib/audit";
 import { exchangeCode, fetchMember, userFromLinkedInState } from "@/lib/linkedin/api";
 import { saveConnection } from "@/lib/linkedin/posts";
+import { neuRuecksprungCookie, ruecksprungZiel } from "@/lib/admin-neu/ruecksprung";
 
 // LinkedIn-Rücksprung: Code gegen Zugang tauschen, Profil lesen, verschlüsselt speichern.
 export const dynamic = "force-dynamic";
@@ -10,7 +11,15 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const origin = publicOrigin(req);
-  const back = (status: string) => Response.redirect(new URL(`/admin/marketing/linkedin?li=${status}`, origin), 302);
+  // Start aus dem neuen Admin (Cookie): zurück auf diese Seite, sonst wie bisher
+  const back = (status: string) =>
+    new Response(null, {
+      status: 302,
+      headers: [
+        ["Location", new URL(ruecksprungZiel(`/admin/marketing/linkedin?li=${status}`, req.headers.get("cookie")), origin).toString()],
+        ["Set-Cookie", neuRuecksprungCookie(null)],
+      ],
+    });
   const session = await getCurrentSession();
   const userId = userFromLinkedInState(url.searchParams.get("state") ?? "");
   // Nur der Login, der die Anmeldung gestartet hat

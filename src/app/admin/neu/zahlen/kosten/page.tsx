@@ -15,7 +15,7 @@ export const metadata = { title: "Kosten & Bank | performancegrowth Admin" };
 // Hauptaufgabe: neue Ausgaben zuordnen (einzige Hauptaktion). Laufende Kosten, Konten und Regeln darunter,
 // Annahmen für die Kennzahlen eingeklappt. Gleiche Bausteine und Server Actions wie die alten Seiten
 // (components/admin/bank-bausteine.tsx, kosten-liste.tsx, app/admin/einstellungen/{bank,kosten}/forms.tsx).
-// Rückkehr von der Bank-Anmeldung landet weiter auf /admin/einstellungen/bank (Callback der Bank).
+// Rückkehr von der Bank-Anmeldung landet wieder hier (Cookie aus dem neuen Admin, lib/admin-neu/ruecksprung.ts).
 export default async function Page({ searchParams }: { searchParams: Promise<{ fehler?: string; verbunden?: string }> }) {
   await connection();
   await requireAuth();

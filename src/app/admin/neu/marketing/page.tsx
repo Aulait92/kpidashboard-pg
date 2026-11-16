@@ -24,7 +24,7 @@ export const metadata = { title: "Marketing | performancegrowth Admin" };
 // Marketing → LinkedIn (früher /admin/marketing/linkedin): Hauptaufgabe Entwürfe freigeben (links), daneben die
 // Reichweite bei der Zielgruppe. Geplant, Ergebnisse je Post, Statistik, Fotos, Einstellungen und Verbindung eingeklappt.
 // Laden, Bausteine und Server Actions gemeinsam mit der alten Seite (components/admin/linkedin-bausteine.tsx,
-// app/admin/marketing/linkedin/forms.tsx). Die Rückkehr von der LinkedIn-Anmeldung landet weiter auf der alten Seite.
+// app/admin/marketing/linkedin/forms.tsx). Die Rückkehr von der LinkedIn-Anmeldung landet wieder hier (lib/admin-neu/ruecksprung.ts).
 export default async function Page({ searchParams }: { searchParams: Promise<{ li?: string }> }) {
   await connection();
   await requireAuth();

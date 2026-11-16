@@ -253,7 +253,7 @@ export function ZahlenView({
       return next;
     });
   const inhalt = (t: Tab) =>
-    t === "wachstum" ? <Wachstum data={data} investor={investor} ohneEinmal={eingebettet && !investor} />
+    t === "wachstum" ? <Wachstum data={data} investor={investor} ohneEinmal={eingebettet && !investor} lebenszyklus={eingebettet ? "Reiter „Kunden-Lebenszyklus“" : undefined} />
     : t === "kunden" ? <Kunden data={data} investor={investor} />
     : t === "wirtschaft" ? <Wirtschaft data={data} investor={investor} />
     : t === "wirkung" ? <Wirkung data={data} investor={investor} />
@@ -433,7 +433,18 @@ export function ZahlenView({
 }
 
 // ─── Wachstum ────────────────────────────────────────────────────────────
-function Wachstum({ data, investor, ohneEinmal = false }: { data: ZahlenData; investor: boolean; ohneEinmal?: boolean }) {
+function Wachstum({
+  data,
+  investor,
+  ohneEinmal = false,
+  lebenszyklus = "Reiter „Kündigung & Rückkehr“",
+}: {
+  data: ZahlenData;
+  investor: boolean;
+  ohneEinmal?: boolean;
+  /** Wo die Details zu Kündigungen stehen (neuer Admin: Reiter „Kunden-Lebenszyklus“) */
+  lebenszyklus?: string;
+}) {
   const [table, setTable] = useState(false);
   const cur = data.totals.find((t) => t.month === data.current);
   const last = data.totals.find((t) => t.month === data.lastComplete);
@@ -474,7 +485,7 @@ function Wachstum({ data, investor, ohneEinmal = false }: { data: ZahlenData; in
             </div>
           ) : null}
         </Card>
-        <Card title={b ? `MRR-Brücke ${longMonth(b.from).split(" ")[0]} → ${longMonth(b.to).split(" ")[0]}` : "MRR-Brücke"} cap="Woher das Wachstum kommt: neue Kunden, Ausbau, Reaktivierungen (zurückgekehrte Kunden), Verkleinerung, Kündigungen (abgeschlossene Monate). Details im Reiter „Kündigung & Rückkehr“.">
+        <Card title={b ? `MRR-Brücke ${longMonth(b.from).split(" ")[0]} → ${longMonth(b.to).split(" ")[0]}` : "MRR-Brücke"} cap={`Woher das Wachstum kommt: neue Kunden, Ausbau, Reaktivierungen (zurückgekehrte Kunden), Verkleinerung, Kündigungen (abgeschlossene Monate). Details im ${lebenszyklus}.`}>
           {b ? (
             <>
               <BridgeChart b={b} />

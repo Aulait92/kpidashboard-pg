@@ -20,7 +20,7 @@ import { audit } from "@/lib/audit";
 import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from "@/lib/vertrieb/followup";
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
 import { backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
-import { neuerPfad } from "@/lib/admin-neu/umzug";
+import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -36,12 +36,9 @@ function refresh(contactId?: string | null) {
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
 }
 
-/** Weiterleitung nach einer Aktion: kam sie aus dem neuen Admin (/admin/neu), dorthin (fertige Seite), sonst alt. */
-async function ziel(altPfad: string): Promise<string> {
-  const ref = (await headers()).get("referer") ?? "";
-  if (!/^https?:\/\/[^/]+\/admin\/neu(\/|$|\?)/.test(ref)) return altPfad;
-  return neuerPfad(altPfad) ?? altPfad;
-}
+/** Weiterleitung nach einer Aktion: kam sie aus dem neuen Admin (/admin/neu), dorthin (fertige Seite), sonst alt.
+ *  Gleiche Regel wie überall (components/admin-neu/ui/rueckweg.ts). */
+const ziel = (altPfad: string) => adminZiel(altPfad);
 
 // ─── Aktivität erfassen ─────────────────────────────────────────────────
 export async function logActivity(fd: FormData) {

@@ -14,6 +14,8 @@ import { airtableSyncOff } from "@/lib/airtable-switch";
 import { nowMs } from "@/lib/now";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "@/app/admin/ppl/actions";
 import { ImportButton } from "@/app/admin/ppl/import/import-button";
+import { SlackTest } from "@/app/admin/ppl/slack-test";
+import { slackWebhookUrl } from "@/lib/ppl/slack";
 
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 
@@ -137,6 +139,7 @@ async function Bezuege({ subs, syncAus }: { subs: Subs; syncAus: boolean }) {
       <span data-funktion="page-airtable-sync-off--anzeige-airtable-abgleich-an-aus">
         {syncAus ? <Badge tone="warning">Airtable-Abgleich aus</Badge> : <Badge>Airtable-Abgleich an</Badge>}
       </span>
+      <SlackTest configured={!!slackWebhookUrl()} />
       <Link href={`${PFAD}?ansicht=import`} className="inline-flex min-h-10 items-center gap-1 font-medium text-[color:var(--brand)] hover:underline sm:min-h-0" data-funktion="actions-runimportaction--bezuege-aus-airtable-uebernehmen">
         <CloudDownload className="h-3.5 w-3.5" /> Aus Airtable übernehmen
       </Link>
