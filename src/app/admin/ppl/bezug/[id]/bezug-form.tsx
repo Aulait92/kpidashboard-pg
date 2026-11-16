@@ -10,7 +10,7 @@ type Sub = {
   price: number; emailSubject: string | null; emailTemplate: string | null; plzRanges: string | null; acceptWeak: boolean; weakThreshold: number | null;
   acceptCivilServants: boolean; onlyWeak: boolean; scoreFloor: number | null; insurerInclude: string[]; insurerExclude: string[];
   excludeRules: string | null; stornoDays: number | null; stornoReasons: string[]; stornoAutoApprove: boolean; delivery: string; deliveryEmail: string | null;
-  webhookUrl: string | null; webhookFormat: string; hasSecret: boolean;
+  webhookUrl: string | null; webhookFormat: string; hasSecret: boolean; emailFormat: string; consentText: string | null; slackNotify: boolean;
 };
 
 const input = "mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm text-[color:var(--foreground)] outline-none focus:border-[color:var(--brand)]";
@@ -39,6 +39,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
   const [delivery, setDelivery] = useState(sub?.delivery ?? "app");
   const [period, setPeriod] = useState(sub?.period ?? "week");
   const [status, setStatus] = useState(sub?.status ?? "live");
+  const [mailKind, setMailKind] = useState(sub?.emailFormat === "maschinenlesbar" ? "maschinenlesbar" : sub?.emailTemplate ? "vorlage" : "standard");
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="id" value={sub?.id ?? ""} />
@@ -67,6 +68,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
           </F>
           <div className="flex flex-col justify-end gap-2">
             <Check name="active" label="Aktiv (bekommt Leads)" defaultChecked={sub?.active ?? true} />
+            <Check name="slackNotify" label="Slack-Nachricht je Lead" defaultChecked={sub?.slackNotify ?? true} />
           </div>
           <F label="Preis je Lead (netto €)">
             <input name="price" inputMode="decimal" defaultValue={sub?.price ?? ""} required className={input} />
@@ -164,20 +166,40 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
           </F>
           {delivery === "email" ? (
             <>
-              <F label="E-Mail-Adresse(n)">
+              <F label="E-Mail-Adresse(n)" hint="Mehrere mit Komma trennen, jede Adresse bekommt eine eigene Mail.">
                 <input name="deliveryEmail" defaultValue={sub?.deliveryEmail ?? ""} className={input} />
               </F>
-              <F label="Betreff (optional)" hint="Standard: Neuer Lead - Performancegrowth">
-                <input name="emailSubject" defaultValue={sub?.emailSubject ?? ""} className={input} />
+              <F label="Mail-Vorlage">
+                <select name="emailKind" value={mailKind} onChange={(e) => setMailKind(e.target.value)} className={input}>
+                  <option value="standard">Standard (lesbar)</option>
+                  <option value="maschinenlesbar">Standard maschinenlesbar (Make, Zapier, CRM)</option>
+                  <option value="vorlage">Eigene Vorlage</option>
+                </select>
               </F>
-              <div className="sm:col-span-2">
-                <F
-                  label="Vorlage (optional, für Systeme, die die Mail auslesen)"
-                  hint="Platzhalter: {anrede} {vorname} {nachname} {name} {strasse} {plz} {ort} {geburtsdatum} {berufsstatus} {email} {telefon} {versicherer} {versicherungsart} {beitrag} {id} sowie jedes Formularfeld als {Feldname}. Zeilen ohne Wert entfallen. Leer = Standard-Mail."
-                >
-                  <textarea name="emailTemplate" rows={8} defaultValue={sub?.emailTemplate ?? ""} className={`${area} font-mono text-xs`} />
-                </F>
-              </div>
+              {mailKind === "maschinenlesbar" ? (
+                <div className="sm:col-span-2">
+                  <F
+                    label="Einwilligungstext des Funnels (optional)"
+                    hint="Betreff „Neuer Lead: Produkt (Lead-ID)“, feste Zeilen „Feld: Wert“, JSON am Ende und als lead.json. Dieser Wortlaut steht in jeder Mail."
+                  >
+                    <textarea name="consentText" rows={3} defaultValue={sub?.consentText ?? ""} className={area} />
+                  </F>
+                </div>
+              ) : mailKind === "vorlage" ? (
+                <>
+                  <F label="Betreff (optional)" hint="Standard: Neuer Lead - Performancegrowth">
+                    <input name="emailSubject" defaultValue={sub?.emailSubject ?? ""} className={input} />
+                  </F>
+                  <div className="sm:col-span-2">
+                    <F
+                      label="Vorlage (für Systeme, die die Mail auslesen)"
+                      hint="Platzhalter: {anrede} {vorname} {nachname} {name} {strasse} {plz} {ort} {geburtsdatum} {berufsstatus} {email} {telefon} {versicherer} {versicherungsart} {beitrag} {id} sowie jedes Formularfeld als {Feldname}. Zeilen ohne Wert entfallen."
+                    >
+                      <textarea name="emailTemplate" rows={8} defaultValue={sub?.emailTemplate ?? ""} className={`${area} font-mono text-xs`} />
+                    </F>
+                  </div>
+                </>
+              ) : null}
             </>
           ) : delivery === "webhook" ? (
             <>

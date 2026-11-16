@@ -498,7 +498,14 @@ export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResu
 }
 
 /** Reine Text-Mail ohne HTML (für Empfänger, deren System die Mail ausliest). */
-export async function sendPlainMail(opts: { to: string | string[]; subject: string; text: string; replyTo?: string | null }): Promise<SendResult & { id?: string | null }> {
+export async function sendPlainMail(opts: {
+  to: string | string[];
+  subject: string;
+  text: string;
+  replyTo?: string | null;
+  /** Anhänge (Resend), z. B. lead.json */
+  attachments?: { filename: string; content: string | Buffer; contentType?: string }[];
+}): Promise<SendResult & { id?: string | null; blocked?: boolean }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = brandFrom(process.env.LEAD_EMAIL_FROM ?? process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
   if (!apiKey) {
@@ -506,8 +513,16 @@ export async function sendPlainMail(opts: { to: string | string[]; subject: stri
     return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
   }
   try {
-    const { data, error } = await mailClient(apiKey).emails.send({ from, to: opts.to, subject: opts.subject, text: opts.text, ...(opts.replyTo ? { replyTo: opts.replyTo } : {}) });
-    return error ? { ok: false, error: error.message } : { ok: true, id: data?.id ?? null };
+    const res = await mailClient(apiKey).emails.send({
+      from,
+      to: opts.to,
+      subject: opts.subject,
+      text: opts.text,
+      ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+      ...(opts.attachments?.length ? { attachments: opts.attachments } : {}),
+    });
+    if (res.error) return { ok: false, error: res.error.message };
+    return { ok: true, id: res.data?.id ?? null, ...(wasBlocked(res) ? { blocked: true } : {}) };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }

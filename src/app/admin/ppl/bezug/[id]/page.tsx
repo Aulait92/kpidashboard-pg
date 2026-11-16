@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardHeader } from "@/components/ui";
 import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { BezugForm } from "./bezug-form";
+import { TestLeadButton } from "./test-lead-button";
+import { parseAddresses } from "@/lib/ppl/lead-mail";
 import { deleteAreaAction, manualOrderAction, saveAreaAction } from "../../actions";
 import { areaQuotas } from "@/lib/ppl/engine";
 import { AdminBack } from "@/components/admin/admin-back";
@@ -22,6 +24,11 @@ export default async function BezugPage({ params }: { params: Promise<{ id: stri
   ]);
   if (!isNew && !sub) notFound();
   const quotas = sub ? new Map((await areaQuotas(sub)).map((q) => [q.id, q])) : new Map();
+  const testTargets = !sub ? [] : sub.delivery === "email" ? parseAddresses(sub.deliveryEmail) : sub.delivery === "webhook" && sub.webhookUrl ? [hostOf(sub.webhookUrl)] : [];
+  const lastTest = testTargets.length
+    ? await prisma.auditLog.findFirst({ where: { action: "ppl.test", entityId: sub!.id }, orderBy: { at: "desc" }, select: { at: true, details: true } })
+    : null;
+  const lastOk = (lastTest?.details as { ok?: boolean } | null)?.ok;
   const field = "mt-1 block h-9 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm text-[color:var(--foreground)]";
   const thisWeek = weekRange().start;
   const nextWeek = weekRange(new Date(), 1).start;
@@ -35,6 +42,13 @@ export default async function BezugPage({ params }: { params: Promise<{ id: stri
         customers={customers}
         products={products.map((p) => p.productKey)}
       />
+      {sub && testTargets.length ? (
+        <TestLeadButton
+          subscriptionId={sub.id}
+          targets={testTargets}
+          last={lastTest ? `${lastTest.at.toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" })}${lastOk === false ? ", mit Fehler" : ""}` : null}
+        />
+      ) : null}
       {sub ? (
         <Card>
           <CardHeader title="Gebiete mit Vorrang" />
@@ -144,4 +158,12 @@ export default async function BezugPage({ params }: { params: Promise<{ id: stri
       ) : null}
     </main>
   );
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
 }

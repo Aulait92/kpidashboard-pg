@@ -2226,6 +2226,13 @@ model LeadSubscription {
   // Zeile). Platzhalter {vorname}, {nachname}, {plz} … siehe lib/ppl/delivery.
   emailSubject        String?
   emailTemplate       String?
+  // standard (lesbare Mail bzw. Vorlage aus emailTemplate) | maschinenlesbar (feste
+  // „Feld: Wert“-Zeilen, JSON-Block und lead.json, z. B. für einen Make-Mailhook)
+  emailFormat         String    @default("standard")
+  // Einwilligungstext des Funnels (Wortlaut), steht in der maschinenlesbaren Mail
+  consentText         String?
+  // Slack-Nachricht je Lead (SLACK_PPL_WEBHOOK_URL); aus = für diesen Bezug stumm
+  slackNotify         Boolean   @default(true)
   webhookUrl          String?
   // standard (JSON mit lead/answers, Secret im Header) | convexa (FirstName, LastName …)
   webhookFormat       String    @default("standard")

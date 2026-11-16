@@ -10,6 +10,7 @@ import { deliver } from "@/lib/ppl/engine";
 import { adminRecordStorno, decideStorno, undoStorno } from "@/lib/ppl/storno";
 import { placeOrder } from "@/lib/ppl/orders";
 import { weekRange } from "@/lib/ppl/periods";
+import { invalidAddresses, parseAddresses } from "@/lib/ppl/lead-mail";
 
 async function requireAdmin() {
   const s = await getCurrentSession();
@@ -43,6 +44,17 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
   if (price == null || !Number.isFinite(price) || price < 0) return { error: "Preis je Lead angeben." };
   const delivery = String(fd.get("delivery") ?? "app");
   const secret = String(fd.get("webhookSecret") ?? "").trim();
+  // Lead-Mail: standard | vorlage | maschinenlesbar (nur gesendet, wenn Lieferung E-Mail gewählt ist)
+  const mailKind = fd.get("emailKind") == null ? null : String(fd.get("emailKind"));
+  const addresses = parseAddresses(String(fd.get("deliveryEmail") ?? ""));
+  const mailData =
+    mailKind == null
+      ? {}
+      : {
+          emailFormat: mailKind === "maschinenlesbar" ? "maschinenlesbar" : "standard",
+          ...(mailKind === "maschinenlesbar" ? {} : { emailTemplate: mailKind === "vorlage" ? String(fd.get("emailTemplate") ?? "").replace(/\r\n/g, "\n").trim() || null : null }),
+          ...(fd.get("consentText") != null ? { consentText: String(fd.get("consentText")).replace(/\r\n/g, "\n").trim() || null } : {}),
+        };
   const data = {
     customerId,
     productKey,
@@ -68,14 +80,18 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
     stornoReasons: list(fd.get("stornoReasons")),
     stornoAutoApprove: fd.get("stornoAutoApprove") === "on",
     delivery: ["app", "email", "webhook"].includes(delivery) ? delivery : "app",
-    deliveryEmail: String(fd.get("deliveryEmail") ?? "").trim() || null,
-    emailSubject: String(fd.get("emailSubject") ?? "").trim() || null,
-    emailTemplate: String(fd.get("emailTemplate") ?? "").replace(/\r\n/g, "\n").trim() || null,
+    deliveryEmail: addresses.length ? addresses.join(", ") : null,
+    ...(mailKind === "maschinenlesbar" ? {} : { emailSubject: String(fd.get("emailSubject") ?? "").trim() || null }),
+    ...mailData,
+    slackNotify: fd.get("slackNotify") === "on",
     webhookUrl: String(fd.get("webhookUrl") ?? "").trim() || null,
     webhookFormat: fd.get("webhookFormat") === "convexa" ? "convexa" : "standard",
     ...(secret ? { webhookSecretEnc: encryptSecret(secret) } : {}),
   };
   if (data.delivery === "email" && !data.deliveryEmail) return { error: "Für Lieferung per E-Mail eine Adresse angeben." };
+  const bad = data.delivery === "email" ? invalidAddresses(addresses) : [];
+  if (bad.length) return { error: `Keine gültige E-Mail-Adresse: ${bad.join(", ")}. Mehrere Adressen mit Komma trennen.` };
+  if (mailKind === "vorlage" && !("emailTemplate" in mailData && mailData.emailTemplate)) return { error: "Für „Eigene Vorlage“ eine Vorlage angeben." };
   if (data.delivery === "webhook" && !/^https:\/\//.test(data.webhookUrl ?? "")) return { error: "Für Webhook eine https-Adresse angeben." };
   const saved = id ? await prisma.leadSubscription.update({ where: { id }, data }) : await prisma.leadSubscription.create({ data });
   await audit("ppl.subscription", { entity: "LeadSubscription", entityId: saved.id, customerId, details: { productKey, active: data.active, price } });
@@ -183,4 +199,31 @@ export async function deleteAreaAction(fd: FormData): Promise<void> {
   const a = await prisma.subscriptionArea.delete({ where: { id } });
   await audit("ppl.area_delete", { entity: "LeadSubscription", entityId: a.subscriptionId, details: { plzRanges: a.plzRanges } });
   revalidatePath(`/admin/ppl/bezug/${a.subscriptionId}`);
+}
+
+export type TestLeadState = { error?: string; message?: string; targets?: { target: string; ok: boolean; error?: string; blocked?: boolean }[] };
+
+/** Bezug → „Testdatensatz senden“: Test-Lead an alle Lieferadressen, zählt nirgends mit. */
+export async function sendTestLeadAction(_prev: TestLeadState, fd: FormData): Promise<TestLeadState> {
+  const s = await requireAdmin();
+  const { sendTestLead } = await import("@/lib/ppl/test-lead");
+  const r = await sendTestLead(String(fd.get("subscriptionId") ?? ""), { id: s.userId, email: s.email, role: s.role });
+  revalidatePath(`/admin/ppl/bezug/${String(fd.get("subscriptionId") ?? "")}`);
+  if (!r.targets.length) return { error: r.error ?? "Nicht gesendet." };
+  const okCount = r.targets.filter((t) => t.ok).length;
+  return {
+    targets: r.targets,
+    ...(r.ok ? { message: `Testdatensatz ${r.leadId} gesendet an ${okCount} von ${r.targets.length} ${r.targets.length === 1 ? "Adresse" : "Adressen"}.` } : { error: `Nur an ${okCount} von ${r.targets.length} gesendet.` }),
+  };
+}
+
+export type SlackTestState = { state?: "gesendet" | "nicht eingerichtet" | "fehler"; status?: number; error?: string };
+
+/** Pay-per-Lead → „Slack testen“: Testnachricht an SLACK_PPL_WEBHOOK_URL, Ergebnis anzeigen. */
+export async function slackTestAction(_prev: SlackTestState, _fd: FormData): Promise<SlackTestState> {
+  const s = await requireAdmin();
+  const { sendSlackTest } = await import("@/lib/ppl/slack");
+  const r = await sendSlackTest();
+  await audit("ppl.slack_test", { entity: "LeadSubscription", actor: { id: s.userId, email: s.email, role: s.role }, details: { ...r } });
+  return r;
 }
