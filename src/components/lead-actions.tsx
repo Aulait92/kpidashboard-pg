@@ -239,7 +239,7 @@ export function LeadHeaderActions(p: Props) {
                     )}
                   >
                     <span className="truncate">
-                      {current && days != null ? `${days} ${days === 1 ? "Tag" : "Tage"} · ` : ""}
+                      {current && days ? `${days} ${days === 1 ? "Tag" : "Tage"} · ` : ""}
                       {ph.label}
                     </span>
                   </button>
@@ -297,13 +297,16 @@ export function LeadHeaderActions(p: Props) {
           />
           )}
           <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />
-          {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt) */}
+          {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt). Steht schon eine an,
+              übernimmt die Leiste darunter (Ändern, Erledigt): kein zweiter Knopf für dasselbe (16.11.2026). */}
+          {dueLabel ? null : (
           <ActionTile
             icon={BellRing}
             label="Wiedervorlage"
             onClick={!p.storniert ? () => setOpen("followup") : undefined}
             explain={{ title: "Lead ist storniert", text: "Für stornierte Leads gibt es keine Wiedervorlage mehr. Ist die Stornierung abgelehnt worden, ändern Sie zuerst den Status." }}
           />
+          )}
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
         </div>
 
@@ -324,15 +327,16 @@ export function LeadHeaderActions(p: Props) {
         {dueLabel ? (
           <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-900">
             <BellRing className="h-4 w-4 shrink-0" />
-            <button type="button" onClick={() => setOpen("followup")} className="min-w-0 flex-1 truncate text-left">
+            <button type="button" onClick={() => setOpen("followup")} className="line-clamp-2 min-w-0 flex-1 text-left">
               <b>Wiedervorlage {dueLabel}</b>
               {p.followUpNote ? ` · ${p.followUpNote}` : ""}
             </button>
-            <Button variant="ghost" icon={Pencil} onClick={() => setOpen("followup")} data-followup-edit>
-              Ändern
+            {/* Handy: nur Symbole (40 px), damit das Datum nicht abgeschnitten wird */}
+            <Button variant="ghost" icon={Pencil} onClick={() => setOpen("followup")} aria-label="Wiedervorlage ändern" className="h-10 shrink-0 px-2.5 sm:h-8 sm:px-3" data-followup-edit>
+              <span className="hidden sm:inline">Ändern</span>
             </Button>
-            <Button variant="ghost" icon={Check} onClick={() => followUp(() => clearFollowUpResult(p.leadId), "Wiedervorlage erledigt")}>
-              Erledigt
+            <Button variant="ghost" icon={Check} onClick={() => followUp(() => clearFollowUpResult(p.leadId), "Wiedervorlage erledigt")} aria-label="Wiedervorlage erledigt" className="h-10 shrink-0 px-2.5 sm:h-8 sm:px-3">
+              <span className="hidden sm:inline">Erledigt</span>
             </Button>
           </div>
         ) : null}

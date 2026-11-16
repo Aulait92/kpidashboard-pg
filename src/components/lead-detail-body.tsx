@@ -485,7 +485,7 @@ export async function LeadDetailBody({
                 <div className="font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
                 <div className="text-xs text-[color:var(--muted)]">{terminArtLabel(nextAppt.mode)}</div>
               </div>
-              <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap [&>*]:px-2 sm:[&>*]:px-3">
               <ButtonLink href={`/buyer/termine/${nextAppt.id}/vorbereitung?von=kontakt`} variant="secondary" data-termin-vorbereiten>
                 Vorbereiten
               </ButtonLink>
@@ -684,8 +684,8 @@ function DetailRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-1 px-5 py-3 sm:grid-cols-[200px_1fr] sm:gap-4">
-      <dt className="text-sm text-[color:var(--muted)]">{label}</dt>
+    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-3 px-5 py-2.5 sm:grid-cols-[200px_1fr] sm:gap-4 sm:py-3">
+      <dt className="hyphens-auto text-sm text-[color:var(--muted)] [overflow-wrap:anywhere]">{label}</dt>
       <dd className="text-sm font-medium text-[color:var(--foreground)] break-words">
         {children}
       </dd>
