@@ -8,6 +8,7 @@ import { sendToAdmins } from "@/lib/push";
 import { extract } from "@/lib/lead-intake";
 import { effectivePlzRanges, isWeak, openAreasFor, pickWithAreas, rejectReason, type AreaCandidate, type AreaQuota, type Candidate, type PoolLeadFacts } from "@/lib/ppl/rules";
 import { monthRange, weekRange } from "@/lib/ppl/periods";
+import type { DeliveryReport } from "@/lib/ppl/delivery";
 
 const DAY = 86_400_000;
 export const DUPLICATE_DAYS = 30;
@@ -142,6 +143,7 @@ export async function ingestPoolLead(input: PoolInput, now = new Date()): Promis
 
   if (!phone && !email) {
     const p = await save("invalid", "keine Telefonnummer und keine E-Mail");
+    await slack(p.id);
     return { status: "invalid", poolLeadId: p.id, reason: p.reason ?? undefined };
   }
   // Dublette: gleiche Telefonnummer oder E-Mail innerhalb von 30 Tagen (alle Produkte, siehe DUPLICATE_ACROSS_PRODUCTS)
@@ -150,12 +152,25 @@ export async function ingestPoolLead(input: PoolInput, now = new Date()): Promis
   if (dup) {
     const day = dup.createdAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
     const p = await save("duplicate", `schon am ${day}${dup.productKey !== input.productKey ? ` (${dup.productKey})` : ""}`);
+    await slack(p.id);
     return { status: "duplicate", poolLeadId: p.id, reason: p.reason ?? undefined };
   }
 
   const pool = await save("parked", "wird verteilt");
   const res = await distribute(pool.id, now);
+  // Geliefert meldet deliver() selbst (mit Zustellstatus)
+  if (res.status !== "delivered") await slack(pool.id);
   return { ...res, poolLeadId: pool.id };
+}
+
+/** Slack je Lead (nicht blockierend, ohne SLACK_PPL_WEBHOOK_URL nichts). */
+async function slack(poolLeadId: string, extra: { delivery?: DeliveryReport | null; wasParked?: boolean } = {}) {
+  try {
+    const { notifyPplSlack } = await import("@/lib/ppl/slack");
+    await notifyPplSlack(poolLeadId, extra);
+  } catch (err) {
+    console.warn("[ppl-slack]", err instanceof Error ? err.message : err);
+  }
 }
 
 /** Freien Bezug suchen und ausliefern; sonst geparkt lassen (Admin-Hinweis). */
@@ -207,6 +222,7 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
 /** Lead beim Käufer anlegen und über den gewählten Weg zustellen. */
 export async function deliver(poolLeadId: string, sub: SubRow, orderId: string | null, now = new Date(), areaId: string | null = null): Promise<string> {
   const pl = await prisma.poolLead.findUniqueOrThrow({ where: { id: poolLeadId } });
+  const wasParked = pl.status === "parked" && pl.reason !== "wird verteilt";
   const price = sub.price;
   const lead = await prisma.lead.create({
     data: {
@@ -229,7 +245,15 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
     prisma.poolLead.update({ where: { id: pl.id }, data: { status: "delivered", reason: null, leadId: lead.id, deliveredAt: now, areaId } }),
   ]);
   const { sendDelivery } = await import("@/lib/ppl/delivery");
-  await sendDelivery(lead.id, sub).catch((err: unknown) => reportError(err, "ppl-delivery", { lead: lead.id, sub: sub.id }));
+  const report = await sendDelivery(lead.id, sub).catch((err: unknown) => {
+    reportError(err, "ppl-delivery", { lead: lead.id, sub: sub.id });
+    return null;
+  });
+  if (report && !report.ok) reportError(new Error(`${report.error ?? "Zustellung fehlgeschlagen"} (Lead ${lead.id})`), "ppl-delivery", { lead: lead.id, sub: sub.id });
+  await slack(pl.id, {
+    wasParked,
+    delivery: report ?? { channel: sub.delivery as "app" | "email" | "webhook", label: sub.delivery, targets: [], ok: false, error: "Zustellung abgebrochen" },
+  });
   return lead.id;
 }
 

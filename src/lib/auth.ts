@@ -1,9 +1,10 @@
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { jwtVerify, SignJWT } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { normalizeLoginEmail } from "@/lib/login-email";
+import { APP_DEMO_HEADER } from "@/lib/app-demo/marke";
 
 export const SESSION_COOKIE = "kpi_session";
 const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 Tage
@@ -124,6 +125,16 @@ export function clearSessionVersionCache() {
 }
 
 export async function getCurrentSession(): Promise<SessionPayload | null> {
+  // Öffentliche App-Demo (src/lib/app-demo): Anfragen mit Demo-Kennzeichen haben nie eine Sitzung, auch wenn der
+  // Browser ein echtes Login-Cookie mitschickt (die Middleware entfernt Cookies dort zusätzlich).
+  // Außerhalb einer Anfrage (Skripte, Tests) gibt es keine Header und damit auch kein Demo-Kennzeichen.
+  let demo = false;
+  try {
+    demo = (await headers()).has(APP_DEMO_HEADER);
+  } catch {
+    demo = false;
+  }
+  if (demo) return null;
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;

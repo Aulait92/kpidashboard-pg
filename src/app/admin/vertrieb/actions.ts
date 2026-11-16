@@ -19,6 +19,7 @@ import { ensureReplyTask, importInstantlyCsv, recordReply, removeReplyTaskIfNoPo
 import { audit } from "@/lib/audit";
 import { planFollowup, planFromOutcome, stopFollowup, stopFollowupOnStage } from "@/lib/vertrieb/followup";
 import { addContactEmail, makePrimaryEmail, mergeContacts, removeContactEmail, searchMergeCandidates, updatePrimaryEmail } from "@/lib/vertrieb/contact-merge";
+import { backfillContactData, makePrimaryPhone, removeContactPhone } from "@/lib/vertrieb/kontaktdaten-server";
 
 const s = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -647,6 +648,38 @@ export async function makePrimaryEmailAction(fd: FormData) {
   const id = s(fd, "contactId")!;
   await makePrimaryEmail(id, s(fd, "email") ?? "");
   refresh(id);
+}
+
+// ─── Weitere Telefonnummern (lib/vertrieb/kontaktdaten-server.ts) ───────
+export async function makePrimaryPhoneAction(fd: FormData) {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  await makePrimaryPhone(id, s(fd, "phoneId") ?? "");
+  refresh(id);
+}
+
+export async function removeContactPhoneAction(fd: FormData) {
+  await requireAuth();
+  const id = s(fd, "contactId")!;
+  await removeContactPhone(id, s(fd, "phoneId") ?? "");
+  refresh(id);
+}
+
+/** Einmalig rückwirkend: alle Kontakte über vorhandene Buchungen, Mails und Formulare (idempotent). */
+export async function backfillContactDataAction(prev: ImportState): Promise<ImportState> {
+  void prev;
+  await requireAuth();
+  try {
+    const r = await backfillContactData();
+    await audit("vertrieb.kontaktdaten_rueckwirkend", { entity: "SalesContact", details: r });
+    refresh();
+    return {
+      ok: true,
+      message: `${r.contacts.toLocaleString("de-DE")} Kontakt${r.contacts === 1 ? "" : "e"} geprüft: ${r.emails} E-Mail-Adresse${r.emails === 1 ? "" : "n"} und ${r.phones} Telefonnummer${r.phones === 1 ? "" : "n"} ergänzt.`,
+    };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 export async function searchMergeCandidatesAction(contactId: string, q: string) {

@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { EMPFEHLUNG_MODULE_AVAILABLE, showNewBadge } from "@/lib/empfehlung/shared";
 import { NotReachedOfferHost } from "@/components/next-step";
 import { ZurueckLink } from "@/components/zurueck-link";
+import { demoPfadAlsBuyer } from "@/lib/app-demo/weiche";
 
 // App-Shell des Kundenbereichs: eine Kopfzeile mit Navigation und Profil-
 // menü (Desktop), unten eine Tab-Leiste (Handy). Alle Seiten teilen sich
@@ -59,8 +60,11 @@ export function BuyerShell({
   absence = null,
   updatesUnread = 0,
   noStepBadge = 0,
+  demo = false,
   children,
 }: {
+  /** Öffentliche App-Demo (/app-demo): ohne Suche, KI-Hilfe, Profilmenü, Push und Nutzungsmessung. */
+  demo?: boolean;
   /** Leads ohne nächsten Schritt (Zähler an „Kontakte“ bzw. „Leads“, lib/lead-next-step.ts). */
   noStepBadge?: number;
   /** Ungelesene Neuigkeiten des Logins (Profilmenü). */
@@ -86,14 +90,15 @@ export function BuyerShell({
   setupOpen?: number;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname() ?? "/buyer";
-  // Seitenaufrufe zählen (Nutzungsmessung, pseudonym).
+  const pathname = demoPfadAlsBuyer(usePathname() ?? "/buyer");
+  // Seitenaufrufe zählen (Nutzungsmessung, pseudonym). Nicht in der Demo.
   useEffect(() => {
-    void sendUsage({ type: "page", name: normalizePath(pathname) });
-  }, [pathname]);
-  if (newUi) {
+    if (!demo) void sendUsage({ type: "page", name: normalizePath(pathname) });
+  }, [pathname, demo]);
+  if (newUi || demo) {
     return (
       <BuyerShellA
+        demo={demo}
         pathname={pathname}
         displayName={displayName}
         hilfeGruss={hilfeGruss}
@@ -426,6 +431,7 @@ function ProfileMenu({
  * Wachstum. Am Rechner eine Seitenleiste links, auf dem Handy Tabs unten.
  */
 function BuyerShellA({
+  demo,
   pathname,
   displayName,
   hilfeGruss,
@@ -451,6 +457,7 @@ function BuyerShellA({
   teamRole: "owner" | "advisor";
   hasTeam: boolean;
   children: React.ReactNode;
+  demo: boolean;
 }) {
   const owner = teamRole === "owner";
   const items: NavItem[] = [
@@ -477,7 +484,7 @@ function BuyerShellA({
               performance<span className="text-[color:var(--brand)]">growth</span>
             </span>
           </Link>
-          <BuyerSearchButton variant="field" className="mb-4" />
+          {demo ? null : <BuyerSearchButton variant="field" className="mb-4" />}
           <nav className="space-y-1" aria-label="Bereiche">
             {items.map((it) => {
               const active = it.match(pathname);
@@ -502,7 +509,7 @@ function BuyerShellA({
                 </Link>
               );
             })}
-            {owner && setupOpen > 0 ? (
+            {owner && setupOpen > 0 && !demo ? (
               <Link
                 href="/buyer/einrichtung"
                 className={cn(
@@ -517,10 +524,14 @@ function BuyerShellA({
               </Link>
             ) : null}
           </nav>
-          <div className="mt-auto space-y-2 border-t border-[color:var(--border)] pt-3">
-            <HilfeChat greeting={hilfeGruss} owner={owner} variant="nav" />
-            <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} updatesUnread={updatesUnread} />
-          </div>
+          {demo ? (
+            <div className="mt-auto border-t border-[color:var(--border)] px-3 pt-3 text-sm text-[color:var(--muted)]">{displayName}</div>
+          ) : (
+            <div className="mt-auto space-y-2 border-t border-[color:var(--border)] pt-3">
+              <HilfeChat greeting={hilfeGruss} owner={owner} variant="nav" />
+              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} variant="sidebar" absence={absence} updatesUnread={updatesUnread} />
+            </div>
+          )}
         </aside>
 
         {/* Handy: schmale Kopfzeile */}
@@ -531,20 +542,24 @@ function BuyerShellA({
                 <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
               </span>
             </Link>
-            <div className="ml-auto flex items-center gap-2">
-              <BuyerSearchButton variant="icon" />
-              <HilfeChat greeting={hilfeGruss} owner={owner} />
-              <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} updatesUnread={updatesUnread} />
-            </div>
+            {demo ? (
+              <span className="ml-auto text-sm text-[color:var(--muted)]">{displayName}</span>
+            ) : (
+              <div className="ml-auto flex items-center gap-2">
+                <BuyerSearchButton variant="icon" />
+                <HilfeChat greeting={hilfeGruss} owner={owner} />
+                <ProfileMenu name={displayName} owner={owner} hasTeam={hasTeam} newUi setupOpen={setupOpen} absence={absence} updatesUnread={updatesUnread} />
+              </div>
+            )}
           </div>
         </header>
 
         <div className="pb-20 md:pb-0">
           {absence ? <AbsenceControl data={absence} /> : null}
-          <PushHint />
+          {demo ? null : <PushHint />}
           {children}
         </div>
-        <BuyerSearch storageKey={displayName} />
+        {demo ? null : <BuyerSearch storageKey={displayName} />}
 
         {/* Handy: vier Bereiche unten */}
         <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden" aria-label="Bereiche">

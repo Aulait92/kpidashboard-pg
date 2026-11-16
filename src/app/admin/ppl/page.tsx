@@ -13,6 +13,8 @@ import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 import { airtableSyncOff } from "@/lib/airtable-switch";
 import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
 import { StornoEintragen, StornoZuruecknehmen } from "./storno-eintragen";
+import { SlackTest } from "./slack-test";
+import { slackWebhookUrl } from "@/lib/ppl/slack";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -58,6 +60,7 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
           ) : (
             <Badge tone="neutral">Airtable-Abgleich an</Badge>
           )}
+          <SlackTest configured={!!slackWebhookUrl()} />
         </div>
         <div className="flex gap-2">
         <Link href="/admin/ppl/import" className="inline-flex h-9 items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium">

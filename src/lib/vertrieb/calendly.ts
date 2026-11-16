@@ -6,6 +6,8 @@ import { findContactIdByEmail, findContactIdByPhone } from "@/lib/vertrieb/conta
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
+import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
+import { reportError } from "@/lib/monitoring";
 import type { SalesStage as Stage } from "@/generated/prisma/enums";
 
 const API = "https://api.calendly.com";
@@ -142,6 +144,12 @@ export async function recordBooking(inv: Invitee, ev: ScheduledEvent, matcher?: 
       note: [created ? "Neuer Kontakt aus Calendly" : null, inv.name && `Gebucht von ${inv.name} (${inv.email})`, utm && `Quelle (utm_source): ${utm}`, answersText(inv)].filter(Boolean).join("\n") || null,
     },
   });
+  // Abweichende E-Mail und Telefonnummer aus der Buchung als weitere Angabe übernehmen (Hauptwerte bleiben)
+  const { bookingPhone } = await import("@/lib/vertrieb/termin-whatsapp");
+  const phone = bookingPhone(inv, null);
+  await captureFromBooking(contactId, { email: inv.email, phone: phone ? `+${phone}` : null, answers: answersText(inv), source: "CALENDLY" }).catch((e) =>
+    reportError(e, "kontaktdaten-calendly"),
+  );
   // Pipeline: auf "Termin" (Gewonnene Kunden bleiben, wo sie sind)
   const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { stage: true } });
   if (c.stage !== "GEWONNEN" && c.stage !== "TERMIN") {

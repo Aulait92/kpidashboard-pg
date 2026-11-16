@@ -33,12 +33,34 @@ const SHARED_AGENT_DOMAINS = [
 export const insurerRoot = (host: string) => INSURER.find((d) => host === d || host.endsWith(`.${d}`)) ?? null;
 const sharedRoot = (host: string) => insurerRoot(host) ?? SHARED_AGENT_DOMAINS.find((d) => host === d || host.endsWith(`.${d}`)) ?? null;
 
-/** Telefonnummer vergleichbar machen: 0171 …, +49 171 …, 0049 171 … → 171… */
+/** „+49 (0) 171 …“: die eingeklammerte 0 nach der Ländervorwahl gehört nicht zur Nummer. */
+const cleanPhone = (raw: string) => raw.replace(/\(\s*0\s*\)/g, " ");
+
+/** Telefonnummer vergleichbar machen: 0171 …, +49 171 …, +49 (0) 171 …, 0049 171 … → 171… */
 export function phoneKey(raw: string | null | undefined): string | null {
-  const p = raw ? normalizePhone(raw) : null;
+  const p = raw ? normalizePhone(cleanPhone(raw)) : null;
   if (!p) return null;
   const k = p.startsWith("49") ? p.slice(2) : p;
   return k.length >= 7 ? k : null;
+}
+
+/** Telefonnummer als E.164 („+491711234567“), Schreibweise egal; null, wenn keine gültige Nummer. */
+export function phoneE164(raw: string | null | undefined): string | null {
+  const p = raw ? normalizePhone(cleanPhone(raw)) : null;
+  return p ? `+${p}` : null;
+}
+
+export type PhoneKind = "MOBIL" | "FESTNETZ";
+
+/**
+ * Mobil oder Festnetz: in Deutschland, Österreich und der Schweiz an der Vorwahl erkennbar,
+ * sonst nach der Beschriftung in der Signatur („Mobil“, „Handy“ …).
+ */
+export function phoneKind(e164: string, label?: string | null): PhoneKind {
+  const d = e164.replace(/\D/g, "");
+  if (/^49(15|16|17)/.test(d) || /^436[5-9]/.test(d) || /^417[5-9]/.test(d)) return "MOBIL";
+  if (/^(49|43|41)/.test(d)) return "FESTNETZ";
+  return label && /mobil|mobile|handy|mob|cell|whatsapp|^m$/i.test(label.trim()) ? "MOBIL" : "FESTNETZ";
 }
 
 /** Eigene E-Mail-Domain (nicht Freemail, nicht Versicherer-Konzern, keine Platzhalter). */

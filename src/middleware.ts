@@ -2,6 +2,10 @@ import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter } from "@/lib/login-karten";
 import { PUBLIC_NOT_FOUND_HTML, PUBLIC_ROBOTS_TXT, decidePublicHost, requestHost } from "@/lib/public-booking-host";
+import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
+import { DEMO_LIMIT, buyerZuDemo, demoActionAntwort, demoWeiche, istDemoPfad, vonDemoSeite } from "@/lib/app-demo/weiche";
+import { demoDatenbankUrl } from "@/lib/app-demo/konfig";
+import { clientIp, hit } from "@/lib/rate-limit";
 
 const SESSION_COOKIE = "kpi_session";
 
@@ -135,12 +139,69 @@ function bookingHost(req: NextRequest): NextResponse | null {
   }
 }
 
+const DEMO_NICHT_VERFUEGBAR_HTML = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Demo gerade nicht verfügbar</title></head><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 16px;color:#0f172a"><h1 style="font-size:1.4rem">Die Demo ist gerade nicht verfügbar.</h1><p>Bitte versuchen Sie es in ein paar Minuten noch einmal.</p><p><a href="/demo/beratung" style="color:#2563eb">Zur Live-Demo der Beratungspräsentation</a></p></body></html>`;
+
+/**
+ * Öffentliche App-Demo (/app-demo, Ole 16.11.2026, src/lib/app-demo): die echten Seiten des Kundenbereichs mit dem
+ * Demo-Kunden aus der eigenen Demo-Datenbank, nur lesend. Kein Cookie, keine Sitzung: Die Anfrage wird intern auf
+ * /buyer/… umgeschrieben, ohne Cookies des Browsers, mit signiertem Kennzeichen. Server Actions beantwortet diese
+ * Funktion selbst (sie erreichen keinen App-Code), andere Methoden 405, Rate-Limit je IP.
+ */
+async function appDemo(req: NextRequest): Promise<NextResponse> {
+  const noindex = (res: NextResponse) => {
+    res.headers.set("X-Robots-Tag", NO_INDEX);
+    res.headers.set("Cache-Control", "no-store");
+    return res;
+  };
+  if (!hit("appDemo", clientIp(req.headers), DEMO_LIMIT).ok) {
+    return noindex(new NextResponse("Zu viele Anfragen in kurzer Zeit. Bitte einen Moment warten.", { status: 429, headers: { "Retry-After": "60", "content-type": "text/plain; charset=utf-8" } }));
+  }
+  const d = demoWeiche({ pathname: req.nextUrl.pathname, method: req.method, serverAction: req.headers.has("next-action") });
+  if (d.kind === "action") {
+    const a = demoActionAntwort();
+    return noindex(new NextResponse(a.body, { status: 200, headers: a.headers }));
+  }
+  if (d.kind === "method") return noindex(new NextResponse("In der Demo wird nichts gespeichert.", { status: 405, headers: { Allow: "GET, HEAD", "content-type": "text/plain; charset=utf-8" } }));
+  if (d.kind === "redirect") {
+    const url = req.nextUrl.clone();
+    const [p, q] = d.location.split("?");
+    url.pathname = p;
+    url.search = q ? `?${q}` : "";
+    return noindex(NextResponse.redirect(url, 307));
+  }
+  const marke = demoDatenbankUrl(process.env) ? await signiereDemoMarke(process.env.AUTH_SECRET) : null;
+  if (!marke) return noindex(new NextResponse(DEMO_NICHT_VERFUEGBAR_HTML, { status: 503, headers: { "content-type": "text/html; charset=utf-8", "Retry-After": "300" } }));
+  const headers = new Headers(req.headers);
+  // Kein Login in der Demo: Cookies und Anmeldedaten des Browsers erreichen die Seite nie
+  headers.delete("cookie");
+  headers.delete("authorization");
+  headers.set(APP_DEMO_HEADER, marke);
+  headers.set("x-app-area", "buyer");
+  const url = req.nextUrl.clone();
+  url.pathname = d.pathname;
+  return noindex(NextResponse.rewrite(url, { request: { headers } }));
+}
+
 export async function middleware(req: NextRequest) {
+  // App-Demo-Kennzeichen setzt nur die Middleware selbst (beim Umschreiben). Kommt es von außen, ist es gefälscht.
+  if (req.headers.has(APP_DEMO_HEADER)) return new NextResponse("Bad Request", { status: 400, headers: { "X-Robots-Tag": NO_INDEX } });
   const moved = legacyRedirect(req);
   if (moved) return moved;
   const booking = bookingHost(req);
   if (booking) return booking;
   const { pathname } = req.nextUrl;
+  if (istDemoPfad(pathname)) return appDemo(req);
+  // Aus der Demo heraus keine API (Downloads, Suche, Nutzungsmessung …): die Demo hat keine Sitzung und schreibt nichts
+  if (pathname.startsWith("/api/") && vonDemoSeite(req.headers.get("referer"), requestHost(req.headers))) {
+    return NextResponse.json({ error: "In der Demo nicht verfügbar." }, { status: 403, headers: { "X-Robots-Tag": NO_INDEX } });
+  }
+  // Link einer echten Seite, in der Demo angeklickt (/buyer/… ohne Login, kommt von /app-demo): zurück in die Demo
+  const demoZiel = buyerZuDemo(pathname);
+  if (demoZiel && !req.cookies.has(SESSION_COOKIE) && vonDemoSeite(req.headers.get("referer"), requestHost(req.headers))) {
+    const url = req.nextUrl.clone();
+    url.pathname = demoZiel;
+    return NextResponse.redirect(url, 307);
+  }
   // Seiten für Endkunden der Vermittler (Terminbuchung, Empfehlung): ohne performancegrowth-Kopfzeile
   // und mit neutralem Footer – die Seite gehört dem Vermittler (Ole, 14.11.2026).
   if (

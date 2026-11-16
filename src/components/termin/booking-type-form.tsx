@@ -15,18 +15,20 @@ export function BookingTypeForm({
   durations,
   buffers,
   notices,
+  windows,
 }: {
   action: Action;
-  type: { id: string; durationMin: number; bufferMin: number; noticeMin: number; videoUrl: string | null; active: boolean };
+  type: { id: string; durationMin: number; bufferMin: number; noticeMin: number; bookingWindowDays: number; videoUrl: string | null; active: boolean };
   durations: readonly number[];
   buffers: readonly number[];
   notices: readonly number[];
+  windows: readonly number[];
 }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
   return (
     <form action={formAction} className="space-y-3" data-termintyp={type.id}>
       <input type="hidden" name="id" value={type.id} />
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <label className="block text-xs font-medium text-[color:var(--muted)]">
           Dauer
           <select name="durationMin" defaultValue={type.durationMin} className={`${select} mt-1`}>
@@ -53,6 +55,16 @@ export function BookingTypeForm({
             {notices.map((d) => (
               <option key={d} value={d}>
                 {NOTICE_LABEL[d] ?? `${d} Min.`}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-xs font-medium text-[color:var(--muted)]" title="Interessenten sehen nur Zeiten in den nächsten N Tagen ab heute. Sie selbst buchen im Vertriebskontakt ohne Grenze.">
+          Zeitraum
+          <select name="bookingWindowDays" defaultValue={type.bookingWindowDays} className={`${select} mt-1`}>
+            {windows.map((d) => (
+              <option key={d} value={d}>
+                {d} Tage
               </option>
             ))}
           </select>

@@ -16,6 +16,16 @@
 3. **Auslieferung** (`delivery.ts`): Kundenbereich (Push, WhatsApp-Assistent falls aktiv),
    E-Mail (optional nach Vorlage, z. B. Leadbörse Heinrich von Kleist) oder Webhook
    (Format Standard oder Convexa).
+   - Mehrere Lieferadressen mit Komma: jede Adresse bekommt eine eigene Mail.
+   - Mail-Vorlage „Standard maschinenlesbar“ (z. B. Make-Mailhook): Betreff `Neuer Lead: {Produkt} ({Lead-ID})`,
+     feste Zeilen `Feld: Wert` (Lead-ID, Datum ISO, Produkt, Anrede, Vorname, Nachname, Telefon E.164, E-Mail,
+     PLZ, Ort, alle Antworten, Einwilligungstext und Zeitpunkt), am Ende `JSON: {…}` und Anhang `lead.json`
+     (`src/lib/ppl/lead-mail.ts`). Einwilligungstext am Bezug, Zeitpunkt = Eingang des Funnel-Formulars.
+   - Bezug → **Testdatensatz senden**: „TEST Lead“, Betreff mit [TEST], an alle Lieferadressen; legt keinen
+     Lead an (zählt nicht ins Kontingent, Umsatz, Auswertung), steht im Änderungsprotokoll („Testdatensatz gesendet“).
+   - **Slack** je Lead (`src/lib/ppl/slack.ts`): Railway-Variable `SLACK_PPL_WEBHOOK_URL` (Incoming Webhook);
+     Ergebnis, Produkt, Bezieher, Vorname und PLZ/Ort, Lieferweg mit Status, Link in den Admin; bei
+     Zustellfehler eigene Warnung. Schalter „Slack-Nachricht je Lead“ am Bezug. Prüfen: Pay-per-Lead → **Slack testen**.
 4. **Kontingent**: Wochenbestellung im Kundenbereich (Vorkasse über Stripe, „jede Woche
    wiederholen“, Verlängerung freitags ab 10 Uhr) oder Monats-/Einmal-Ziel von Hand
    (Heinrich von Kleist, Convexa: rechnen selbst ab, nur gezählt).

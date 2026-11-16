@@ -1511,6 +1511,9 @@ model SalesContact {
   email                String    @unique
   /// Weitere E-Mail-Adressen (z. B. nach Zusammenführen); werden bei Calendly, Instantly und Inbound mit erkannt
   altEmails            String[]  @default([])
+  /// Automatisch erkannte Kontaktdaten (lib/vertrieb/kontaktdaten-server.ts): Herkunft weiterer E-Mails
+  /// { emails: { "<adresse>": { source, at } }, removed: [von Hand entfernte Adressen/Nummern] }
+  detectedData         Json?
   phone                String?
   fax                  String?
   street               String?
@@ -1594,6 +1597,8 @@ model SalesContact {
   colleagueReferrals   ColleagueReferral[]
   /// Links zur Vertriebspräsentation (/praesentation/<token>, 14 Tage)
   presentationLinks    SalesPresentationLink[]
+  /// Weitere Telefonnummern (aus Buchungen, E-Mail-Signaturen, Formularen), die Hauptnummer bleibt `phone`
+  phones               SalesContactPhone[]
 
   @@index([altEmails], type: Gin)
   @@index([stage])
@@ -1601,6 +1606,27 @@ model SalesContact {
   @@index([linkedinStatus])
   @@index([zip])
   @@index([city])
+}
+
+// Weitere Telefonnummern eines Vertriebskontakts (Ole, 16.11.2026): automatisch erkannt aus Buchungen,
+// E-Mail-Signaturen, Formularen und Instantly (lib/vertrieb/kontaktdaten-server.ts). Die Hauptnummer bleibt
+// SalesContact.phone und wird nie überschrieben.
+model SalesContactPhone {
+  id         String       @id @default(cuid())
+  contactId  String
+  contact    SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  /// E.164, z. B. +491711234567 (Schreibweise egal, Dubletten über diese Form)
+  phone      String
+  /// MOBIL | FESTNETZ
+  kind       String       @default("FESTNETZ")
+  /// BUCHUNG | CALENDLY | MAIL | FORMULAR | INSTANTLY | ZUSAMMENGEFUEHRT | HAUPT (frühere Hauptnummer) | MANUELL
+  source     String
+  /// Zeitpunkt der Quelle (Buchung, Mail), sonst Erkennungszeitpunkt
+  detectedAt DateTime     @default(now())
+  createdAt  DateTime     @default(now())
+
+  @@unique([contactId, phone])
+  @@index([phone])
 }
 
 model SalesActivity {
@@ -1825,33 +1851,35 @@ model SalesMeeting {
 /// Kalender, Zeiten je Wochentag und Blocker liegen am internen Mandanten cust_pg_vertrieb
 /// (CalendarConnection, CalendarLeadTimes); mehrere calendarKeys = später Round-Robin.
 model SalesBookingType {
-  id           String         @id @default(cuid())
-  slug         String         @unique
-  title        String
+  id                String         @id @default(cuid())
+  slug              String         @unique
+  title             String
   /// Kurzer Satz unter dem Titel auf der Buchungsseite
-  subtitle     String?
+  subtitle          String?
   /// Eigener Satz in Bestätigung (Seite und E-Mail)
-  confirmText  String?
+  confirmText       String?
   /// Nach der Buchung Danke-Seite mit Vorbereitungsvideo und Demo (/termin/danke/<token>)
-  thanksPage   Boolean        @default(false)
-  durationMin  Int            @default(45)
+  thanksPage        Boolean        @default(false)
+  durationMin       Int            @default(45)
   /// video | phone
-  mode         String         @default("video")
+  mode              String         @default("video")
   /// Puffer vor und nach jedem Termin (Minuten)
-  bufferMin    Int            @default(15)
+  bufferMin         Int            @default(15)
   /// Vorlauf: frühester Termin ab jetzt (Minuten)
-  noticeMin    Int            @default(240)
-  /// So viele Tage im Voraus buchbar
-  horizonDays  Int            @default(21)
+  noticeMin         Int            @default(240)
+  /// Veraltet, ersetzt durch bookingWindowDays (Migration 20261118705340)
+  horizonDays       Int            @default(21)
+  /// Öffentlich buchbar: nur die nächsten N Tage ab heute (rollierend, heute zählt mit). Admins buchen ohne Grenze.
+  bookingWindowDays Int            @default(7)
   /// Fester Videolink, falls der Kalender keinen Meet- bzw. Teams-Link erzeugt
-  videoUrl     String?
+  videoUrl          String?
   /// Kalender, in denen gebucht wird (Reihenfolge = Vorrang, mehrere = später Round-Robin)
-  calendarKeys String[]       @default([])
-  active       Boolean        @default(true)
-  sortOrder    Int            @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  meetings     SalesMeeting[]
+  calendarKeys      String[]       @default([])
+  active            Boolean        @default(true)
+  sortOrder         Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  meetings          SalesMeeting[]
 }
 
 // Eingehende Leads (Meta Lead Ads über Zapier/Make, Landingpage-Formulare …)
@@ -2198,6 +2226,13 @@ model LeadSubscription {
   // Zeile). Platzhalter {vorname}, {nachname}, {plz} … siehe lib/ppl/delivery.
   emailSubject        String?
   emailTemplate       String?
+  // standard (lesbare Mail bzw. Vorlage aus emailTemplate) | maschinenlesbar (feste
+  // „Feld: Wert“-Zeilen, JSON-Block und lead.json, z. B. für einen Make-Mailhook)
+  emailFormat         String    @default("standard")
+  // Einwilligungstext des Funnels (Wortlaut), steht in der maschinenlesbaren Mail
+  consentText         String?
+  // Slack-Nachricht je Lead (SLACK_PPL_WEBHOOK_URL); aus = für diesen Bezug stumm
+  slackNotify         Boolean   @default(true)
   webhookUrl          String?
   // standard (JSON mit lead/answers, Secret im Header) | convexa (FirstName, LastName …)
   webhookFormat       String    @default("standard")

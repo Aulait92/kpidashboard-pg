@@ -6,7 +6,11 @@ import { dayKey, fmtDate, fmtDateTime, timeKey, todayKey } from "@/lib/vertrieb/
 import { stripQuoted } from "@/lib/vertrieb/instantly";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
-import { ContactEmails, DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { ContactEmails, ContactPhones, DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { detectedDataOf } from "@/lib/vertrieb/kontaktdaten-server";
+import { KIND_LABEL, sourceLabel } from "@/lib/vertrieb/kontaktdaten";
+import type { PhoneKind } from "@/lib/vertrieb/dubletten";
+import { formatPhone } from "@/lib/format";
 import { likelyDuplicates } from "@/lib/vertrieb/contact-merge";
 import { ArrowLeft, Mail, Phone, Presentation, Trash2 } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
@@ -35,8 +39,9 @@ import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card
 import { aktuellesAngebot, audienceFuer } from "@/lib/vertrieb/verkaufspraesentation";
 import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { VerkaufsLinkKarte } from "./praesentation/link-karte";
-import { CopyLinkButton } from "@/components/termin/copy-link-button";
-import { decisionBookingLink } from "@/lib/vertrieb/buchung";
+import { AdminRescheduleButton, AdminTerminButton } from "@/components/termin/admin-termin";
+import { adminBookTerminAction, adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
+import { DECISION_BOOKING_TYPE, DEFAULT_BOOKING_TYPE, decisionBookingLink } from "@/lib/vertrieb/buchung";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -52,9 +57,25 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
       meetings: { orderBy: { startAt: "desc" } },
       offers: { orderBy: { createdAt: "desc" } },
       followups: { orderBy: { createdAt: "desc" }, take: 5 },
+      phones: { orderBy: { detectedAt: "desc" } },
     },
   });
   if (!c) notFound();
+  // Weitere E-Mails und Telefonnummern mit Herkunft („aus Buchung 14.11.“), lib/vertrieb/kontaktdaten-server.ts
+  const emailSources = Object.fromEntries(Object.entries(detectedDataOf(c.detectedData).emails ?? {}).map(([e, v]) => [e, sourceLabel("email", v.source, v.at)]));
+  const extraPhones = c.phones.map((p) => ({
+    id: p.id,
+    phone: p.phone,
+    display: formatPhone(p.phone),
+    kind: KIND_LABEL[p.kind as PhoneKind] ?? p.kind,
+    source: sourceLabel("phone", p.source, p.detectedAt),
+  }));
+  const extrasSummary = [
+    extraPhones.length ? `${extraPhones.length} weitere Nummer${extraPhones.length === 1 ? "" : "n"}` : null,
+    c.altEmails.length ? `${c.altEmails.length} weitere E-Mail${c.altEmails.length === 1 ? "" : "s"}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   // Kunden haben eine eigene Akte mit allen Reitern.
   if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
   const open = c.tasks.filter((t) => !t.doneAt);
@@ -80,6 +101,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   const duplicates = await likelyDuplicates(c.id);
   // Entscheidungs-Call: persönlicher Buchungslink (signiert, Buchung hängt direkt an diesem Kontakt)
   const decisionLink = await decisionBookingLink(c.id).catch(() => null);
+  // „Termin“: Admin bucht selbst (Termintyp, Datum, Uhrzeit frei); nach einem Angebot ist der Entscheidungs-Call vorgewählt
+  const bookingTypes = await prisma.salesBookingType.findMany({ orderBy: { sortOrder: "asc" }, select: { slug: true, title: true, durationMin: true } });
+  const defaultTermin = c.offers.length && bookingTypes.some((t) => t.slug === DECISION_BOOKING_TYPE) ? DECISION_BOOKING_TYPE : DEFAULT_BOOKING_TYPE;
   // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
   const referral = await referralForContact(c.id);
   const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;
@@ -156,7 +180,15 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           <Link href={`/admin/vertrieb/kontakte/${c.id}/praesentation`} className="btn-ghost" data-praesentation-knopf>
             <Presentation className="h-4 w-4" /> Präsentation
           </Link>
-          {decisionLink ? <CopyLinkButton url={decisionLink} label="Entscheidungs-Call" /> : null}
+          <AdminTerminButton
+            action={adminBookTerminAction}
+            contactId={c.id}
+            contactName={shortName(c.name)}
+            email={c.email || null}
+            types={bookingTypes}
+            defaultType={defaultTermin}
+            decisionLink={decisionLink}
+          />
           <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} />
         </div>
       </div>
@@ -341,7 +373,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
 
           {c.meetings.length > 0 && (
             <section className="card">
-              <h2 className="border-b border-slate-100 px-4 py-3 font-medium">Termine (Calendly)</h2>
+              <h2 className="border-b border-slate-100 px-4 py-3 font-medium">Termine</h2>
               <ul className="divide-y divide-slate-100">
                 {c.meetings.map((m) => {
                   const past = m.startAt < new Date();
@@ -353,6 +385,11 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                         </span>
                         <span className={`font-medium ${m.status !== "GEPLANT" ? "text-slate-400 line-through" : ""}`}>{fmtDateTime(m.startAt)}</span>
                         <span className="text-slate-600">{m.title}</span>
+                        {m.status === "GEPLANT" && !past && m.bookingTypeId && m.manageToken ? (
+                          <span className="ml-auto">
+                            <AdminRescheduleButton action={adminRescheduleTerminAction} meetingId={m.id} title={`${m.title}, ${fmtDateTime(m.startAt)}`} startAt={m.startAt.toISOString()} />
+                          </span>
+                        ) : null}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
                         {m.inviteeName && <span>{m.inviteeName} ({m.inviteeEmail})</span>}
@@ -486,17 +523,17 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             </form>
           </Fold>
 
-          <Fold title="Stammdaten">
+          <Fold title="Stammdaten" summary={extrasSummary || undefined}>
             <div className="text-sm">
             <dl className="grid grid-cols-[110px_1fr] gap-y-1.5">
               <dt className="text-slate-500">Name</dt><dd>{c.name}</dd>
-              <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} /></dd>
+              <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} sources={emailSources} /></dd>
+              <dt className="text-slate-500">Telefon</dt><dd className="min-w-0"><ContactPhones contactId={c.id} phone={c.phone} extras={extraPhones} /></dd>
               <dt className="text-slate-500">Adresse</dt>
               <dd className="min-w-0">
                 <span>{[c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || <span className="text-slate-400">keine Adresse</span>}</span>
-                {c.phone ? <span className="block text-slate-500">Tel. {c.phone}</span> : null}
                 <details className="mt-1">
-                  <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Adresse bearbeiten</summary>
+                  <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Adresse und Telefon bearbeiten</summary>
                   <CloseDetailsForm key={`${c.street}-${c.zip}-${c.city}-${c.phone}`} action={updateContactAddress} className="mt-2 grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[1fr_90px_1fr]">
                     <input type="hidden" name="contactId" value={c.id} />
                     <input name="street" defaultValue={c.street ?? ""} placeholder="Straße und Hausnummer" className="input sm:col-span-3" />

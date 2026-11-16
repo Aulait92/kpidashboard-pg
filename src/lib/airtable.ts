@@ -1413,6 +1413,8 @@ export async function syncAirtable(): Promise<SyncResult> {
         salesContact: null,
         whatsAppAccount: null,
         leadSources: { none: {} },
+        // In der App angelegte Pay-per-Lead-Bezieher (Bezug ohne Airtable-Herkunft) bleiben
+        leadSubscriptions: { none: { airtableId: null } },
       },
       data: { archived: true },
     });
@@ -1449,6 +1451,8 @@ export async function syncAirtable(): Promise<SyncResult> {
         agentConfig: null,
         pauses: { none: {} },
         salesContact: null,
+        // Bezüge hängen per Cascade am Kunden: Kunden mit Bezug nie löschen
+        leadSubscriptions: { none: {} },
       },
     });
   }

@@ -49,6 +49,8 @@ export const AUDIT_LABEL: Record<string, string> = {
   "storno.undo": "Storno zurückgenommen",
   "ppl.order": "Leads bestellt",
   "ppl.subscription": "Bezug geändert",
+  "ppl.test": "Testdatensatz gesendet",
+  "ppl.slack_test": "Slack-Benachrichtigung getestet",
   "bestand.import": "Bestandskunden importiert",
   "bestand.campaign": "Bestandskunden-Kampagne gestartet",
   "bestand.module": "Modul Bestandskunden an/aus",

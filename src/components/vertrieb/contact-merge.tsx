@@ -6,8 +6,10 @@ import { GitMerge, Pencil, Star, X } from "lucide-react";
 import {
   addContactEmailAction,
   makePrimaryEmailAction,
+  makePrimaryPhoneAction,
   mergeContactsAction,
   removeContactEmailAction,
+  removeContactPhoneAction,
   updatePrimaryEmailAction,
   searchMergeCandidatesAction,
   type ContactEmailState,
@@ -24,8 +26,79 @@ const fd = (o: Record<string, string>) => {
 };
 const fmtDate = (d: Date | string) => new Date(d).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
 
-/** Haupt- und weitere E-Mail-Adressen eines Kontakts. */
-export function ContactEmails({ contactId, email, altEmails }: { contactId: string; email: string; altEmails: string[] }) {
+/** Weitere Angaben: die ersten zwei sichtbar, der Rest eingeklappt. */
+function Extras<T>({ items, render }: { items: T[]; render: (x: T) => React.ReactNode }) {
+  const shown = items.slice(0, 2);
+  const rest = items.slice(2);
+  return (
+    <>
+      {shown.map(render)}
+      {rest.length ? (
+        <details className="group/mehr">
+          <summary className="cursor-pointer list-none text-xs text-slate-500 hover:text-slate-700 group-open/mehr:hidden [&::-webkit-details-marker]:hidden">
+            {rest.length} weitere anzeigen
+          </summary>
+          <div className="space-y-1.5">{rest.map(render)}</div>
+        </details>
+      ) : null}
+    </>
+  );
+}
+
+/** Eine weitere Angabe: Wert, Herkunft, „Als Haupt setzen“ und „Entfernen“ mit einem Klick. */
+function ExtraRow({ href, value, badge, source, onPrimary, onRemove }: { href: string; value: string; badge?: string; source?: string; onPrimary: () => void; onRemove: () => void }) {
+  // Wert und Knöpfe in einer Zeile, Typ und Herkunft klein darunter (passt auch auf 390 px)
+  return (
+    <div className="min-w-0" data-weitere-angabe>
+      <div className="flex items-center gap-1.5">
+        <a href={href} className="truncate text-sky-700 hover:underline">{value}</a>
+        <button type="button" title="Als Haupt setzen" aria-label={`${value} als Haupt setzen`} className="shrink-0 p-1 text-slate-400 hover:text-amber-600" onClick={onPrimary}>
+          <Star className="h-3.5 w-3.5" />
+        </button>
+        <button type="button" title="Entfernen" aria-label={`${value} entfernen`} className="shrink-0 p-1 text-slate-400 hover:text-rose-600" onClick={onRemove}>
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {badge || source ? <div className="text-xs text-slate-400">{[badge, source].filter(Boolean).join(" · ")}</div> : null}
+    </div>
+  );
+}
+
+export type ExtraPhone = { id: string; phone: string; display: string; kind: string; source: string };
+
+/** Haupt- und weitere Telefonnummern (automatisch erkannt aus Buchungen, Signaturen, Formularen). */
+export function ContactPhones({ contactId, phone, extras }: { contactId: string; phone: string | null; extras: ExtraPhone[] }) {
+  const [pending, start] = useTransition();
+  return (
+    <div className={clsx("space-y-1.5", pending && "opacity-60")} data-kontakt-telefon>
+      {phone ? (
+        <div className="flex items-center gap-2">
+          <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="truncate text-sky-700 hover:underline">{phone}</a>
+          <span className="badge bg-slate-100 text-slate-600">Haupt</span>
+        </div>
+      ) : (
+        <span className="text-slate-400">keine Nummer</span>
+      )}
+      <Extras
+        items={extras}
+        render={(p) => (
+          <ExtraRow
+            key={p.id}
+            href={`tel:${p.phone}`}
+            value={p.display}
+            badge={p.kind}
+            source={p.source}
+            onPrimary={() => start(() => makePrimaryPhoneAction(fd({ contactId, phoneId: p.id })))}
+            onRemove={() => start(() => removeContactPhoneAction(fd({ contactId, phoneId: p.id })))}
+          />
+        )}
+      />
+    </div>
+  );
+}
+
+/** Haupt- und weitere E-Mail-Adressen eines Kontakts. `sources`: Herkunft je weiterer Adresse („aus Buchung 14.11.“). */
+export function ContactEmails({ contactId, email, altEmails, sources = {} }: { contactId: string; email: string; altEmails: string[]; sources?: Record<string, string> }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, action, adding] = useActionState<ContactEmailState, FormData>(async (prev, f) => {
     const r = await addContactEmailAction(prev, f);
@@ -59,24 +132,30 @@ export function ContactEmails({ contactId, email, altEmails }: { contactId: stri
       )}
       {editState?.error ? <p className="text-xs text-rose-600">{editState.error}</p> : null}
       {editing ? <p className="text-xs text-slate-500">Ersetzt die Adresse, auch in offenen Angeboten an diesen Kontakt.</p> : null}
-      {altEmails.map((e) => (
-        <div key={e} className="flex items-center gap-2">
-          <a href={`mailto:${e}`} className="truncate text-sky-700 hover:underline">{e}</a>
-          <button type="button" title="Als Haupt-E-Mail" aria-label={`${e} als Haupt-E-Mail`} className="text-slate-400 hover:text-amber-600" onClick={() => start(() => makePrimaryEmailAction(fd({ contactId, email: e })))}>
-            <Star className="h-3.5 w-3.5" />
-          </button>
-          <button type="button" title="Entfernen" aria-label={`${e} entfernen`} className="text-slate-400 hover:text-rose-600" onClick={() => start(() => removeContactEmailAction(fd({ contactId, email: e })))}>
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ))}
-      <form ref={formRef} action={action} className="flex gap-2 pt-1">
-        <input type="hidden" name="contactId" value={contactId} />
-        <input name="email" type="email" required placeholder="Weitere E-Mail hinzufügen" className="input h-8 min-w-0 flex-1 text-sm" />
-        <button className="btn-ghost h-8 text-sm" disabled={adding}>Hinzufügen</button>
-      </form>
-      {state?.error ? <p className="text-xs text-rose-600">{state.error}</p> : null}
-      <p className="text-xs text-slate-500">Weitere Adressen werden bei Calendly-Buchungen, Cold Mails und Anfragen diesem Kontakt zugeordnet.</p>
+      <Extras
+        items={altEmails}
+        render={(e) => (
+          <ExtraRow
+            key={e}
+            href={`mailto:${e}`}
+            value={e}
+            source={sources[e]}
+            onPrimary={() => start(() => makePrimaryEmailAction(fd({ contactId, email: e })))}
+            onRemove={() => start(() => removeContactEmailAction(fd({ contactId, email: e })))}
+          />
+        )}
+      />
+      {/* Selten gebraucht: neue Adressen kommen meist automatisch aus Buchungen und Mails */}
+      <details open={!!state?.error}>
+        <summary className="cursor-pointer list-none text-xs text-slate-500 hover:text-slate-700 [&::-webkit-details-marker]:hidden">+ Weitere E-Mail</summary>
+        <form ref={formRef} action={action} className="flex gap-2 pt-1">
+          <input type="hidden" name="contactId" value={contactId} />
+          <input name="email" type="email" required placeholder="Weitere E-Mail" className="input h-8 min-w-0 flex-1 text-sm" />
+          <button className="btn-ghost h-8 text-sm" disabled={adding}>Hinzufügen</button>
+        </form>
+        {state?.error ? <p className="mt-1 text-xs text-rose-600">{state.error}</p> : null}
+        <p className="mt-1 text-xs text-slate-500">Weitere Adressen werden Buchungen, Cold Mails und Anfragen zugeordnet.</p>
+      </details>
     </div>
   );
 }

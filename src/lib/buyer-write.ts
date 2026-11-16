@@ -21,7 +21,8 @@ export async function writableCustomerId(leadId: string): Promise<string | null>
     return session.customerId;
   }
   const ctx = await getBuyerContext();
-  if (ctx?.preview && leadId) {
+  // App-Demo: nie beschreibbar (auch nicht die Demo-Leads wie in der Admin-Vorschau)
+  if (ctx?.preview && !ctx.demo && leadId) {
     const demo = await prisma.lead.findFirst({
       where: { id: leadId, customerId: ctx.customerId, bezugAirtableId: "demo" },
       select: { id: true },

@@ -4,7 +4,8 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { STAGE_RANK } from "@/lib/vertrieb/crm";
-import { answersContacts, contactSignals, phoneKey, rankDuplicates } from "@/lib/vertrieb/dubletten";
+import { answersContacts, contactSignals, phoneE164, phoneKey, phoneKind, rankDuplicates } from "@/lib/vertrieb/dubletten";
+import { usableEmail } from "@/lib/vertrieb/kontaktdaten";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -62,14 +63,24 @@ export async function removeContactEmail(contactId: string, raw: string): Promis
   const email = normalizeEmail(raw);
   const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { altEmails: true } });
   await prisma.salesContact.update({ where: { id: contactId }, data: { altEmails: c.altEmails.filter((e) => e !== email) } });
+  // Nicht erneut automatisch aus Mails oder Buchungen übernehmen (lib/vertrieb/kontaktdaten-server.ts)
+  if (email) await import("@/lib/vertrieb/kontaktdaten-server").then((m) => m.rememberRemoved(contactId, email));
 }
 
 /** Weitere Adresse wird Hauptadresse (die bisherige Hauptadresse wird weitere Adresse). */
 export async function makePrimaryEmail(contactId: string, raw: string): Promise<void> {
   const email = normalizeEmail(raw);
-  const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { email: true, altEmails: true } });
+  const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { email: true, altEmails: true, detectedData: true } });
   if (!email || !c.altEmails.includes(email)) return;
-  await prisma.salesContact.update({ where: { id: contactId }, data: { email, altEmails: [c.email, ...c.altEmails.filter((e) => e !== email)] } });
+  // Herkunft für die Anzeige: die bisherige Hauptadresse ist jetzt „frühere Hauptadresse“
+  const d = (c.detectedData && typeof c.detectedData === "object" && !Array.isArray(c.detectedData) ? c.detectedData : {}) as { emails?: Record<string, unknown> };
+  const old = c.email.trim().toLowerCase();
+  const emails = { ...(d.emails ?? {}), [old]: { source: "HAUPT", at: new Date().toISOString() } };
+  delete (emails as Record<string, unknown>)[email];
+  await prisma.salesContact.update({
+    where: { id: contactId },
+    data: { email, altEmails: [c.email, ...c.altEmails.filter((e) => e !== email)], detectedData: { ...d, emails } as Prisma.InputJsonValue },
+  });
 }
 
 /**
@@ -138,6 +149,23 @@ export async function mergeContacts(keepId: string, dropId: string, actorLabel =
     const keepCampaigns = new Set((await tx.salesCampaignLead.findMany({ where: { contactId: keepId }, select: { campaignId: true } })).map((c) => c.campaignId));
     if (keepCampaigns.size) await tx.salesCampaignLead.deleteMany({ where: { contactId: dropId, campaignId: { in: [...keepCampaigns] } } });
     moved.kampagnen = (await tx.salesCampaignLead.updateMany({ where, data: { contactId: keepId } })).count;
+    // Weitere Telefonnummern: übernehmen, was der erste Kontakt noch nicht hat; abweichende Hauptnummer wird weitere Nummer
+    const keepKeys = new Set(
+      [keep.phone, ...(await tx.salesContactPhone.findMany({ where: { contactId: keepId }, select: { phone: true } })).map((p) => p.phone)].map(phoneKey).filter(Boolean),
+    );
+    moved.telefonnummern = 0;
+    for (const p of await tx.salesContactPhone.findMany({ where: { contactId: dropId } })) {
+      const k = phoneKey(p.phone);
+      if (!k || keepKeys.has(k)) continue;
+      keepKeys.add(k);
+      await tx.salesContactPhone.update({ where: { id: p.id }, data: { contactId: keepId } });
+      moved.telefonnummern++;
+    }
+    const dropMain = phoneE164(drop.phone);
+    if (keep.phone?.trim() && dropMain && !keepKeys.has(phoneKey(dropMain))) {
+      await tx.salesContactPhone.create({ data: { contactId: keepId, phone: dropMain, kind: phoneKind(dropMain), source: "ZUSAMMENGEFUEHRT" } });
+      moved.telefonnummern++;
+    }
 
     const data: Prisma.SalesContactUncheckedUpdateInput = {};
     const k = keep as unknown as Record<string, unknown>;
@@ -148,6 +176,13 @@ export async function mergeContacts(keepId: string, dropId: string, actorLabel =
     if (drop.lastContactAt && (!keep.lastContactAt || drop.lastContactAt > keep.lastContactAt)) data.lastContactAt = drop.lastContactAt;
     if (drop.description && drop.description !== keep.description) data.description = keep.description ? `${keep.description}\n\n${drop.description}` : drop.description;
     data.altEmails = [...new Set([...keep.altEmails, drop.email, ...drop.altEmails])].filter((e) => e !== keep.email);
+    // Herkunft weiterer Adressen und entfernte Werte beider Kontakte zusammenlegen
+    const dd = (x: unknown) => (x && typeof x === "object" && !Array.isArray(x) ? (x as { emails?: Record<string, unknown>; removed?: string[] }) : {});
+    const kd = dd(keep.detectedData);
+    const rd = dd(drop.detectedData);
+    if (rd.emails || rd.removed) {
+      data.detectedData = { emails: { ...rd.emails, ...kd.emails }, removed: [...new Set([...(kd.removed ?? []), ...(rd.removed ?? [])])] } as Prisma.InputJsonValue;
+    }
     const customerId = !keep.customerId && drop.customerId ? drop.customerId : null;
 
     // Erst den zweiten Kontakt löschen (E-Mail und Kundenkonto sind eindeutig), dann übernehmen
@@ -177,7 +212,15 @@ async function contactIdsByPhoneKeys(keys: string[], excludeId = ""): Promise<st
     SELECT id, phone, "createdAt" FROM "SalesContact"
     WHERE phone IS NOT NULL AND id <> ${excludeId} AND regexp_replace(phone, '[^0-9]', '', 'g') LIKE ANY(${patterns}::text[])
     ORDER BY "createdAt" ASC LIMIT 50`;
-  return rows.filter((r) => ks.includes(phoneKey(r.phone) ?? "")).map((r) => r.id);
+  const main = rows.filter((r) => ks.includes(phoneKey(r.phone) ?? "")).map((r) => r.id);
+  // Weitere Telefonnummern (E.164): +49… bzw. + Ländervorwahl
+  const extra = await prisma.salesContactPhone.findMany({
+    where: { phone: { in: ks.flatMap((k) => [`+49${k}`, `+${k}`]) }, contactId: { not: excludeId } },
+    orderBy: { createdAt: "asc" },
+    select: { contactId: true },
+    take: 50,
+  });
+  return [...new Set([...main, ...extra.map((p) => p.contactId)])];
 }
 
 /** Kontakt zu einer Telefonnummer (beliebige Schreibweise: 0171 …, +49 171 …). Ältester zuerst. */
@@ -241,7 +284,11 @@ const DUP_SIGNAL_SELECT = {
   firstName: true,
   lastName: true,
   leaderNames: true,
-  meetings: { select: { inviteeEmail: true, answers: true }, orderBy: { createdAt: "desc" }, take: 5 },
+  meetings: { select: { inviteeEmail: true, inviteePhone: true, answers: true }, orderBy: { createdAt: "desc" }, take: 5 },
+  /** weitere Telefonnummern (aus Buchungen, Signaturen, Formularen) */
+  phones: { select: { phone: true } },
+  /** Absender eingehender Mails (z. B. von einer Adresse, die schon an einem anderen Kontakt hängt) */
+  emails: { where: { direction: "IN", isAutoReply: false, fromEmail: { not: null } }, select: { fromEmail: true }, orderBy: { sentAt: "desc" }, take: 10 },
 } as const;
 
 type DupRow = Prisma.SalesContactGetPayload<{ select: typeof DUP_SIGNAL_SELECT }>;
@@ -249,10 +296,11 @@ type DupRow = Prisma.SalesContactGetPayload<{ select: typeof DUP_SIGNAL_SELECT }
 /** Merkmale eines Kontakts inkl. E-Mail und Telefon aus Calendly-Buchungen. */
 function signalsOf(c: DupRow) {
   const fromMeetings = c.meetings.map((m) => answersContacts(m.answers));
+  const mailFrom = c.emails.map((m) => (m.fromEmail ?? "").trim().toLowerCase()).filter((e) => e && usableEmail(e));
   return contactSignals({
     ...c,
-    extraEmails: [...c.meetings.map((m) => m.inviteeEmail ?? ""), ...fromMeetings.flatMap((m) => m.emails)],
-    extraPhones: fromMeetings.flatMap((m) => m.phones),
+    extraEmails: [...c.meetings.map((m) => m.inviteeEmail ?? ""), ...fromMeetings.flatMap((m) => m.emails), ...mailFrom],
+    extraPhones: [...fromMeetings.flatMap((m) => m.phones), ...c.meetings.map((m) => m.inviteePhone ?? ""), ...c.phones.map((p) => p.phone)],
   });
 }
 
