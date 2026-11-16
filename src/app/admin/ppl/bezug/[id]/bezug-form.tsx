@@ -160,6 +160,7 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
           <F label="Lieferung">
             <select name="delivery" value={delivery} onChange={(e) => setDelivery(e.target.value)} className={input}>
               <option value="app">Kundenbereich (Login, Push, E-Mail)</option>
+              <option value="app_pdf">Kundenbereich + PDF per Mail</option>
               <option value="email">Nur E-Mail</option>
               <option value="webhook">Webhook (eigene Anbindung)</option>
             </select>
@@ -200,6 +201,15 @@ export function BezugForm({ sub, customers, products }: { sub: Sub | null; custo
                   </div>
                 </>
               ) : null}
+            </>
+          ) : delivery === "app_pdf" ? (
+            <>
+              <F label="E-Mail-Adresse(n) für das PDF" hint="Lead im Kundenbereich, dazu je Adresse eine Mail mit dem Lead als PDF.">
+                <input name="deliveryEmail" defaultValue={sub?.deliveryEmail ?? ""} className={input} />
+              </F>
+              <F label="Einwilligungstext des Funnels (optional)" hint="Steht wörtlich im PDF.">
+                <textarea name="consentText" rows={2} defaultValue={sub?.consentText ?? ""} className={area} />
+              </F>
             </>
           ) : delivery === "webhook" ? (
             <>

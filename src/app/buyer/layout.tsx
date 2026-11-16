@@ -78,7 +78,7 @@ export default async function BuyerLayout({
         advisor ? 0 : customerSetupOpenCount(ctx.customerId),
         advisor && ctx.userId ? prisma.user.findUnique({ where: { id: ctx.userId }, select: { displayName: true, email: true } }) : null,
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
-        advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: "app" } }),
+        advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } }),
         // Bestand: nur Inhaber, und vorerst nur mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
         advisor || ctx.demo ? false : loadBestandVisible(ctx.customerId, { preview: ctx.preview }),
       ])

@@ -116,7 +116,22 @@ const pipe = (v: unknown) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
-const deliveryLabel = (d: string, email: string | null) => (d === "email" ? `E-Mail (${email ?? "?"})` : d === "webhook" ? "Webhook" : "Kundenbereich");
+const deliveryLabel = (d: string, email: string | null) =>
+  d === "email" ? `E-Mail (${email ?? "?"})` : d === "app_pdf" ? `Kundenbereich + PDF per Mail (${email ?? "?"})` : d === "webhook" ? "Webhook" : "Kundenbereich";
+
+/**
+ * Lieferweg aus „Liefermethode“ des Airtable-Kunden (rein, getestet):
+ * Webhook (mit Adresse) → webhook; E-Mail (mit Empfänger) → email; PDF mit Login und Empfänger →
+ * app_pdf (Kundenbereich + PDF per Mail an „Empfaenger E-Mail“); sonst mit Login → app,
+ * ohne Login mit Empfänger → email.
+ */
+export function importDelivery(i: { method: string; receiver: string; webhookUrl: string; hasLogin: boolean }): "app" | "app_pdf" | "email" | "webhook" {
+  if (/^webhook/i.test(i.method) && i.webhookUrl) return "webhook";
+  if (/e-?mail/i.test(i.method) && i.receiver) return "email";
+  if (/pdf/i.test(i.method) && i.hasLogin && i.receiver) return "app_pdf";
+  if (i.hasLogin) return "app";
+  return i.receiver ? "email" : "app";
+}
 
 export async function importSubscriptions(opts: { dryRun: boolean }): Promise<ImportRow[]> {
   const [bezuege, kunden, produkte, gruende] = await Promise.all([
@@ -147,7 +162,7 @@ export async function importSubscriptions(opts: { dryRun: boolean }): Promise<Im
     const receiver = s(kunde["Empfaenger E-Mail"]);
     const webhookUrl = s(kunde["Webhook Url"]);
     const webhookSecret = s(kunde["Webhook Secret"]);
-    const delivery = /^webhook/i.test(method) && webhookUrl ? "webhook" : /e-?mail/i.test(method) && receiver ? "email" : customer?.users.length ? "app" : receiver ? "email" : "app";
+    const delivery = importDelivery({ method, receiver, webhookUrl, hasLogin: !!customer?.users.length });
     const price = n(f["Preis netto"]) ?? n(produkt["Standardpreis netto"]) ?? 0;
     const row = {
       customerId: customer?.id ?? "",
@@ -175,7 +190,7 @@ export async function importSubscriptions(opts: { dryRun: boolean }): Promise<Im
         .map((id) => s(G.get(id)?.["Grund"]))
         .filter((g) => g && g !== "0"),
       delivery,
-      deliveryEmail: delivery === "email" ? receiver : null,
+      deliveryEmail: delivery === "email" || delivery === "app_pdf" ? receiver : null,
       webhookUrl: delivery === "webhook" ? webhookUrl : null,
       webhookFormat: /convexa/i.test(method) || /api\.convexa\.app/.test(webhookUrl) ? "convexa" : "standard",
       airtableId: b.id,

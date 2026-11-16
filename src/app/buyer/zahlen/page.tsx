@@ -114,7 +114,7 @@ export default async function BuyerPage({
           {(await loadBestandVisible(session.customerId, { preview: session.preview })) ? (
             <a href="/buyer/bestand" className="font-medium text-[color:var(--brand)] hover:underline">Bestandskunden</a>
           ) : null}
-          {(await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: "app" } })) > 0 ? (
+          {(await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } })) > 0 ? (
             <a href="/buyer/bestellen" className="font-medium text-[color:var(--brand)] hover:underline">Leads bestellen</a>
           ) : null}
         </nav>

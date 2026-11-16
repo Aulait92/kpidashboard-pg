@@ -1,5 +1,8 @@
 // Auslieferung eines Pay-per-Lead an den Käufer:
 //   app     → Kundenbereich (Push, Team-Verteilung, ggf. WhatsApp-Assistent)
+//   app_pdf → wie app, danach je Adresse in deliveryEmail eine Mail mit dem Lead als PDF
+//             (Kunden mit Login, die das PDF wie früher aus dem Zap per Mail wollen). Ein Mailfehler
+//             macht die Lieferung in den Kundenbereich nicht rückgängig. Test: nur die PDF-Mail.
 //   email   → Lead-Mail an deliveryEmail (eine oder mehrere Adressen, je Adresse eine Mail):
 //             Standard (lesbar), eigene Vorlage (z. B. Heinrich von Kleist) oder
 //             „Standard maschinenlesbar“ (Make-Mailhook, mit lead.json)
@@ -12,7 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { sendCustomerMail, sendPlainMail } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { decryptSecret } from "@/lib/encryption";
-import { machineMail, parseAddresses } from "@/lib/ppl/lead-mail";
+import { isContactLabel, machineMail, parseAddresses } from "@/lib/ppl/lead-mail";
 
 type Sub = Prisma.LeadSubscriptionGetPayload<object>;
 type Answer = { label: string; value: string };
@@ -28,12 +31,15 @@ export type DeliveryLead = {
   date: Date;
   /** Eingang des Funnel-Formulars (Zeitpunkt der Einwilligung) */
   consentAt: Date | null;
+  /** SMS-Bestätigung im Funnel (PoolLead.smsVerified), Abzeichen im PDF */
+  smsVerified?: boolean;
   test?: boolean;
 };
 
 export type DeliveryTarget = { target: string; ok: boolean; error?: string; blocked?: boolean };
+export type DeliveryChannel = "app" | "app_pdf" | "email" | "webhook";
 export type DeliveryReport = {
-  channel: "app" | "email" | "webhook";
+  channel: DeliveryChannel;
   /** z. B. „E-Mail (maschinenlesbar)“ */
   label: string;
   targets: DeliveryTarget[];
@@ -48,7 +54,59 @@ export function mailKind(sub: Pick<Sub, "emailFormat" | "emailTemplate">): "masc
 }
 
 const MAIL_LABEL = { maschinenlesbar: "E-Mail (maschinenlesbar)", vorlage: "E-Mail (Vorlage)", standard: "E-Mail" } as const;
+/** Ziel „Kundenbereich“ in Bericht und Slack (keine Adresse). */
+export const APP_TARGET = "Kundenbereich";
+export const APP_PDF_LABEL = "Kundenbereich + PDF per Mail";
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+type SendFn = (address: string) => Promise<{ ok: boolean; error?: string; blocked?: boolean }>;
+
+/** Je Adresse eine eigene Mail (Empfänger sehen sich nicht, ein Fehler hält die anderen nicht auf). */
+async function sendEach(to: string[], send: SendFn): Promise<DeliveryTarget[]> {
+  const targets: DeliveryTarget[] = [];
+  for (const [i, address] of to.entries()) {
+    if (i > 0) await pause(400); // Resend: wenige Anfragen je Sekunde
+    const res: { ok: boolean; error?: string; blocked?: boolean } = await send(address).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
+    targets.push({ target: address, ok: res.ok, ...(res.ok ? {} : { error: res.error }), ...(res.blocked ? { blocked: true } : {}) });
+  }
+  return targets;
+}
+
+const failText = (targets: DeliveryTarget[]) =>
+  targets
+    .filter((t) => !t.ok)
+    .map((t) => `${t.target}: ${t.error}`)
+    .join("; ");
+
+/** Lead in den Kundenbereich (Push, Team, WhatsApp-Assistent). */
+async function deliverApp(leadId: string): Promise<DeliveryTarget> {
+  try {
+    const { processNewLead } = await import("@/lib/lead-intake");
+    await processNewLead(leadId);
+    return { target: APP_TARGET, ok: true };
+  } catch (err) {
+    return { target: APP_TARGET, ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/** Lead-PDF an alle Adressen des Bezugs (kurze Mail, PDF im Anhang). */
+async function sendPdfMails(sub: Sub, lead: DeliveryLead, answers: Answer[]): Promise<DeliveryTarget[] | string> {
+  const to = parseAddresses(sub.deliveryEmail);
+  if (!to.length) return "Keine Liefer-E-Mail für das PDF am Bezug hinterlegt.";
+  const { leadPdf, leadPdfMail, leadPdfName } = await import("@/lib/ppl/lead-pdf");
+  const pdf = Buffer.from(await leadPdf({ ...lead, answers, consentText: sub.consentText }));
+  const filename = `${lead.test ? "TEST_" : ""}${leadPdfName(lead)}`;
+  const mail = leadPdfMail(lead);
+  return sendEach(to, (address) =>
+    sendCustomerMail({
+      to: address,
+      ...mail,
+      replyTo: null,
+      signature: "performancegrowth",
+      attachments: [{ filename, content: pdf, contentType: "application/pdf" }],
+    }),
+  );
+}
 
 /** Lead über den Lieferweg des Bezugs zustellen (ohne Datenbank). Wirft nicht. */
 export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryReport> {
@@ -58,14 +116,20 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
 
   if (sub.delivery === "app") {
     if (lead.test) return { channel: "app", label: "Kundenbereich", targets: [], ok: false, error: "Kein Testversand in den Kundenbereich (der Lead würde beim Kunden erscheinen)." };
-    try {
-      const { processNewLead } = await import("@/lib/lead-intake");
-      await processNewLead(lead.id);
-      return { channel: "app", label: "Kundenbereich", targets: [{ target: "Kundenbereich", ok: true }], ok: true };
-    } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      return { channel: "app", label: "Kundenbereich", targets: [{ target: "Kundenbereich", ok: false, error }], ok: false, error };
-    }
+    const t = await deliverApp(lead.id);
+    return { channel: "app", label: "Kundenbereich", targets: [t], ok: t.ok, ...(t.ok ? {} : { error: t.error }) };
+  }
+
+  if (sub.delivery === "app_pdf") {
+    // Test: nie in den Kundenbereich, nur die PDF-Mail
+    const app = lead.test ? null : await deliverApp(lead.id);
+    const mails = await sendPdfMails(sub, lead, answers).catch((err: unknown) => `PDF-Mail: ${err instanceof Error ? err.message : String(err)}`);
+    const targets = [...(app ? [app] : []), ...(typeof mails === "string" ? [] : mails)];
+    const errors = [
+      ...(app && !app.ok ? [`Kundenbereich: ${app.error}`] : []),
+      ...(typeof mails === "string" ? [mails] : failText(mails) ? [`PDF-Mail: ${failText(mails)}`] : []),
+    ];
+    return { channel: "app_pdf", label: APP_PDF_LABEL, targets, ok: errors.length === 0, ...(errors.length ? { error: errors.join("; ") } : {}) };
   }
 
   if (sub.delivery === "email") {
@@ -75,7 +139,7 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
     const tl = { id: lead.id, name: lead.name, phone: lead.phone, email: lead.email, answers };
     // Inhalt einmal bauen, dann je Adresse eine eigene Mail (Empfänger sehen sich nicht gegenseitig,
     // ein Fehler an einer Adresse hält die anderen nicht auf)
-    let send: (address: string) => Promise<{ ok: boolean; error?: string; blocked?: boolean }>;
+    let send: SendFn;
     if (kind === "maschinenlesbar") {
       const m = machineMail({ ...tl, date: lead.date, product: lead.product, consentText: sub.consentText, consentAt: lead.consentAt, test: lead.test });
       send = (address) => sendPlainMail({ to: address, subject: m.subject, text: m.text, attachments: [{ filename: m.attachment.filename, content: m.attachment.content, contentType: "application/json" }] });
@@ -95,27 +159,16 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
             `Name: ${lead.name ?? "nicht angegeben"}`,
             `Telefon: ${phone ?? "nicht angegeben"}`,
             `E-Mail: ${lead.email ?? "nicht angegeben"}`,
-            ...answers.map((a) => `${a.label}: ${a.value}`),
+            ...answers.filter((a) => !isContactLabel(a.label)).map((a) => `${a.label}: ${a.value}`),
             `Lead-ID: ${lead.id}`,
           ],
           replyTo: null,
           signature: "performancegrowth",
         });
     }
-    const targets: DeliveryTarget[] = [];
-    for (const [i, address] of to.entries()) {
-      if (i > 0) await pause(400); // Resend: wenige Anfragen je Sekunde
-      const res: { ok: boolean; error?: string; blocked?: boolean } = await send(address).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
-      targets.push({ target: address, ok: res.ok, ...(res.ok ? {} : { error: res.error }), ...(res.blocked ? { blocked: true } : {}) });
-    }
-    const failed = targets.filter((t) => !t.ok);
-    return {
-      channel: "email",
-      label: MAIL_LABEL[kind],
-      targets,
-      ok: failed.length === 0,
-      ...(failed.length ? { error: failed.map((t) => `${t.target}: ${t.error}`).join("; ") } : {}),
-    };
+    const targets = await sendEach(to, send);
+    const error = failText(targets);
+    return { channel: "email", label: MAIL_LABEL[kind], targets, ok: !error, ...(error ? { error } : {}) };
   }
 
   // webhook
@@ -180,7 +233,7 @@ export async function sendDelivery(leadId: string, sub: Sub): Promise<DeliveryRe
     where: { id: leadId },
     select: { id: true, name: true, phone: true, email: true, source: true, formData: true, deliveredAt: true },
   });
-  const pool = await prisma.poolLead.findUnique({ where: { leadId }, select: { createdAt: true } });
+  const pool = await prisma.poolLead.findUnique({ where: { leadId }, select: { createdAt: true, smsVerified: true } });
   const answers = (Array.isArray(lead.formData) ? (lead.formData as Answer[]) : []).filter((a) => a?.label && a?.value);
   const report = await deliverTo(sub, {
     id: lead.id,
@@ -191,8 +244,10 @@ export async function sendDelivery(leadId: string, sub: Sub): Promise<DeliveryRe
     answers,
     date: lead.deliveredAt ?? new Date(),
     consentAt: pool?.createdAt ?? null,
+    smsVerified: pool?.smsVerified ?? false,
   });
-  if (report.channel !== "app" && report.targets.some((t) => t.ok)) {
+  // emailedAt: Lead ging per Mail/Webhook raus (bei app_pdf zählt nur die PDF-Mail, nicht der Kundenbereich)
+  if (report.channel !== "app" && report.targets.some((t) => t.ok && t.target !== APP_TARGET)) {
     await prisma.lead.update({ where: { id: lead.id }, data: { emailedAt: new Date() } });
   }
   if (!report.ok) {

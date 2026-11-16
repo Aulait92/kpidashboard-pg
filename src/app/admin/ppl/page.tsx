@@ -22,7 +22,7 @@ export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const dt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
 const PERIOD: Record<string, string> = { week: "Wochenbestellung", month: "monatlich", once: "einmalig" };
-const DELIVERY: Record<string, string> = { app: "Kundenbereich", email: "E-Mail", webhook: "Webhook" };
+const DELIVERY: Record<string, string> = { app: "Kundenbereich", app_pdf: "Kundenbereich + PDF per Mail", email: "E-Mail", webhook: "Webhook" };
 const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   delivered: { label: "ausgeliefert", tone: "success" },
   parked: { label: "geparkt", tone: "warning" },

@@ -252,7 +252,7 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
   if (report && !report.ok) reportError(new Error(`${report.error ?? "Zustellung fehlgeschlagen"} (Lead ${lead.id})`), "ppl-delivery", { lead: lead.id, sub: sub.id });
   await slack(pl.id, {
     wasParked,
-    delivery: report ?? { channel: sub.delivery as "app" | "email" | "webhook", label: sub.delivery, targets: [], ok: false, error: "Zustellung abgebrochen" },
+    delivery: report ?? { channel: sub.delivery as DeliveryReport["channel"], label: sub.delivery, targets: [], ok: false, error: "Zustellung abgebrochen" },
   });
   return lead.id;
 }
