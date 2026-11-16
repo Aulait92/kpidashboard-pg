@@ -32,6 +32,7 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 //   4. Nachfass-Abfolgen (siehe lib/lead-sequences.ts)
 //   5. Erinnerung „Leads ohne nächsten Schritt“ um 8 Uhr (siehe lib/next-step-reminder.ts)
 //   6. Rückmeldung an Meta (Conversions API für CRM) alle 15 Minuten (siehe lib/capi/server.ts)
+//   7. Zahlungserinnerung für angenommene, unbezahlte Angebote (siehe lib/angebot-zahlungserinnerung.ts)
 // Per WHATSAPP_WEBHOOK_SECRET gesichert: Header „Authorization: Bearer …“ oder
 // x-cron-token (x-webhook-secret und ?token= nur noch im Übergang, lib/cron-auth.ts).
 export const dynamic = "force-dynamic";
@@ -176,6 +177,14 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-termin-review");
     return null;
   });
+  // Vertrieb: Zahlungserinnerung für angenommene, unbezahlte Angebote (E-Mail + WhatsApp Support-Nummer, 9 bis 19 Uhr),
+  // Aufgabe „Zahlung offen“, Push nach 7 Tagen (lib/angebot-zahlungserinnerung-server.ts)
+  const zahlungserinnerung = await import("@/lib/angebot-zahlungserinnerung-server")
+    .then((m) => m.runZahlungserinnerungen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-zahlungserinnerung");
+      return null;
+    });
   // Vertrieb: Kontakte anreichern (Website + Google Places) – nach der Antwort,
   // damit der Cron nicht auf langsame Websites wartet (gedrosselt, je Kontakt einmal).
   after(() =>
@@ -275,7 +284,7 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-support-templates");
       return null;
     });
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, vertraege, terminNachfragen, vertriebErinnerungen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

@@ -7,6 +7,7 @@ import { acceptOffer, getOfferByToken } from "@/lib/offers";
 import { billingEnabled, createCheckoutForOffer } from "@/lib/billing";
 import { checkLimit, clientIp, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { parseZahlart } from "@/lib/zahlart";
+import { setzeErinnerungPerToken } from "@/lib/angebot-zahlungserinnerung-server";
 
 export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string };
 
@@ -36,8 +37,9 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
   // ein clientseitiger Redirect im Formular käme deshalb nicht mehr zum Zug.
   if (billingEnabled()) {
     const offer = await getOfferByToken(token);
-    // Testangebot: keine Zahlung, das Onboarding startet schon mit der Annahme
-    if (offer && !offer.isTest) {
+    // Testangebot: keine Zahlung, das Onboarding startet schon mit der Annahme.
+    // „Später zahlen erlaubt“: nicht direkt weiterleiten, die Seite zeigt „Zahlung einrichten“ und „Ich zahle später“.
+    if (offer && !offer.isTest && !offer.allowPayLater) {
       const checkout = await createCheckoutForOffer(offer.id, parseZahlart(formData.get("zahlart")));
       if ("url" in checkout) redirect(checkout.url);
     }
@@ -52,4 +54,16 @@ export async function startPaymentAction(token: string, zahlart?: string): Promi
   if (!offer) return { error: "Angebot nicht gefunden." };
   const res = await createCheckoutForOffer(offer.id, parseZahlart(zahlart));
   return "url" in res ? { url: res.url } : { error: res.error };
+}
+
+/**
+ * „Ich zahle später, erinnern Sie mich am …“ (Ole, 16.11.2026). Nur wenn Ole „Später zahlen erlauben“ am Angebot
+ * gesetzt hat; frühestens morgen, spätestens 14 Tage vor dem Start (serverseitig geprüft).
+ */
+export async function setPayLaterAction(token: string, date: string): Promise<{ ok?: boolean; error?: string }> {
+  if (!checkLimit("offerAccept", clientIp(await headers())).ok) return { error: RATE_LIMIT_MESSAGE };
+  const res = await setzeErinnerungPerToken(token, String(date ?? ""));
+  if (!res.ok) return { error: res.error };
+  revalidatePath(`/angebot/${token}`);
+  return { ok: true };
 }

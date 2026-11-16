@@ -1410,6 +1410,23 @@ model Offer {
   // Status des Stripe-Abos (active, past_due, canceled …)
   subscriptionStatus      String?
   paidAt                  DateTime?
+  // Zahlungserinnerung (Ole, 16.11.2026): angenommen, aber Zahlung noch nicht eingerichtet.
+  // paymentReminderAt = vom Kunden (Angebotsseite) oder Admin gewählter Tag der ersten Erinnerung
+  // (12:00 UTC des Berliner Tages wie startDate); null = Standardplan ab Annahme.
+  // Plan: lib/angebot-zahlungserinnerung.ts, Versand im WhatsApp-Cron.
+  paymentReminderAt       DateTime?
+  // „Ich zahle später“ auf der Angebotsseite nur, wenn Ole es am Angebot erlaubt hat (Standard aus)
+  allowPayLater           Boolean       @default(false)
+  // Versendete Erinnerungen (je Stufe höchstens eine) und Zeitpunkt der letzten
+  paymentReminderCount    Int           @default(0)
+  paymentReminderLastAt   DateTime?
+  // Aufgabe „Zahlung offen“ im Vertriebskontakt angelegt bzw. Push an die Admins (7 Tage danach) gesendet
+  paymentReminderTaskAt   DateTime?
+  paymentReminderPushAt   DateTime?
+  // Anrede in Kundenmails zum Angebot (gemerkt beim Versand der Angebotsmail, im Admin änderbar)
+  mailDu                  Boolean       @default(false)
+  // Startdatum wurde verschoben, weil erst nach dem Start gezahlt wurde: ursprünglicher Start
+  startShiftedFrom        DateTime?
   createdById             String?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt

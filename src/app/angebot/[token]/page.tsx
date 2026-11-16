@@ -15,6 +15,8 @@ import {
 } from "@/lib/offer-pricing";
 import { AcceptForm, type OfferChoiceProps } from "./accept-form";
 import { PayButton } from "./pay-button";
+import { PayLater } from "./pay-later";
+import { erinnerungsGrenzen, tagIso } from "@/lib/angebot-zahlungserinnerung";
 import { billingEnabled } from "@/lib/billing";
 import { CheckCircle2, Clock } from "lucide-react";
 import { nowMs } from "@/lib/now";
@@ -91,6 +93,7 @@ export default async function OfferPage({
             status={offer.paymentStatus}
             returned={zahlung ?? null}
             enabled={billingEnabled()}
+            payLater={payLaterProps(offer)}
           />
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
@@ -116,7 +119,7 @@ export default async function OfferPage({
                     defaultCompany={offer.company ?? ""}
                     pricing={offerSummaryInput(offer)}
                     choice={choiceProps(offer)}
-                    payment={billingEnabled() && !offer.isTest}
+                    payment={billingEnabled() && !offer.isTest && !offer.allowPayLater}
                   />
                 </div>
               ) : (
@@ -178,16 +181,25 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
   };
 }
 
+/** „Ich zahle später“ nur, wenn Ole es am Angebot erlaubt hat und der Start nicht zu nah ist. */
+function payLaterProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>) {
+  if (!offer.allowPayLater || offer.isTest) return null;
+  const bounds = erinnerungsGrenzen(berlinTodayIso(new Date(nowMs())), tagIso(offer.startDate));
+  return bounds ? { ...bounds, current: tagIso(offer.paymentReminderAt) } : null;
+}
+
 function PaymentBox({
   token,
   status,
   returned,
   enabled,
+  payLater,
 }: {
   token: string;
   status: string;
   returned: string | null;
   enabled: boolean;
+  payLater: { min: string; max: string | null; current: string | null } | null;
 }) {
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
   if (status === "paid") {
@@ -228,6 +240,7 @@ function PaymentBox({
         Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.
       </p>
       <PayButton token={token} />
+      {payLater ? <PayLater token={token} {...payLater} /> : null}
     </div>
   );
 }

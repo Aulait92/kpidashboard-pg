@@ -83,6 +83,8 @@ export function OfferForm({
   const [empfehlung, setEmpfehlung] = useState(false);
   const [vermittler, setVermittler] = useState<OfferVermittler>("vertreter");
   const [customerChoice, setCustomerChoice] = useState(true);
+  // „Ich zahle später“ auf der Angebotsseite (Ole, 16.11.2026): nur für Kunden mit spätem Start, Standard aus
+  const [allowPayLater, setAllowPayLater] = useState(false);
   // Testangebot (Ole, 15.11.2026): 0 €, ohne Zahlung, legt einen Testkunden an
   const [test, setTest] = useState(false);
 
@@ -135,6 +137,7 @@ export function OfferForm({
         empfehlungModule: empfehlung && softwarePkg,
         vermittlerTyp: vermittler,
         customerChoice,
+        allowPayLater: allowPayLater && !test,
         test,
       });
       if (!res.ok) {
@@ -319,6 +322,22 @@ export function OfferForm({
                   {num(setupOverride) != null || num(monthlyOverride) != null
                     ? "Mit Sonderpreis nur das Startdatum, die Laufzeit bleibt wie hier gewählt."
                     : "Ihre Auswahl hier ist der Vorschlag. Start frühestens in 7 Tagen, spätestens in 90 Tagen."}
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-pay-later-toggle>
+              <input
+                type="checkbox"
+                name="allowPayLater"
+                className="mt-0.5 h-4 w-4"
+                checked={allowPayLater && !test}
+                disabled={test}
+                onChange={(e) => setAllowPayLater(e.target.checked)}
+              />
+              <span>
+                <span className="block font-semibold">Später zahlen erlauben</span>
+                <span className="block text-xs text-[color:var(--muted)]">
+                  Nach der Annahme kann der Kunde „Ich zahle später“ wählen und den Tag der Zahlungserinnerung festlegen (spätestens 14 Tage vor dem Start).
                 </span>
               </span>
             </label>

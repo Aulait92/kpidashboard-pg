@@ -12,6 +12,14 @@ import { normalizePhone } from "@/lib/whatsapp/phone";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { findRemote, mapRemoteStatus, metaTemplateProblems } from "@/lib/whatsapp/template-plan";
 import { renderTemplate } from "@/lib/whatsapp/templates";
+import {
+  ZAHLUNG_TEMPLATE_BODY_DU,
+  ZAHLUNG_TEMPLATE_BODY_SIE,
+  ZAHLUNG_TEMPLATE_DU,
+  ZAHLUNG_TEMPLATE_EXAMPLES,
+  ZAHLUNG_TEMPLATE_PURPOSE,
+  ZAHLUNG_TEMPLATE_SIE,
+} from "@/lib/angebot-zahlungserinnerung";
 
 export const TERMIN_TEMPLATE_NAME = "pg_vertrieb_termin_v1";
 export const TERMIN_TEMPLATE_PURPOSE = "vertrieb_termin";
@@ -49,6 +57,9 @@ export const SUPPORT_TEMPLATES: SupportTemplate[] = [
   { name: TERMIN_TEMPLATE_NAME, body: TERMIN_TEMPLATE_BODY, examples: TERMIN_TEMPLATE_EXAMPLES, purpose: TERMIN_TEMPLATE_PURPOSE },
   { name: ERINNERUNG_TEMPLATE_NAME, body: ERINNERUNG_TEMPLATE_BODY, examples: ERINNERUNG_TEMPLATE_EXAMPLES, purpose: "vertrieb_erinnerung" },
   { name: GLEICH_TEMPLATE_NAME, body: GLEICH_TEMPLATE_BODY, examples: GLEICH_TEMPLATE_EXAMPLES, purpose: "vertrieb_gleich" },
+  // Zahlungserinnerung zum Angebot (lib/angebot-zahlungserinnerung.ts), Sie und Du
+  { name: ZAHLUNG_TEMPLATE_SIE, body: ZAHLUNG_TEMPLATE_BODY_SIE, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
+  { name: ZAHLUNG_TEMPLATE_DU, body: ZAHLUNG_TEMPLATE_BODY_DU, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
 ];
 
 export function supportTemplateRequest(t: SupportTemplate): CreateTemplateInput {
@@ -332,11 +343,18 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
 const CHECK_PENDING_MS = 30 * 60 * 1000;
 const CHECK_IDLE_MS = 6 * 60 * 60 * 1000;
 
+const LABEL: Record<string, string> = {
+  [TERMIN_TEMPLATE_PURPOSE]: "Terminbestätigung",
+  vertrieb_erinnerung: "Terminerinnerung",
+  vertrieb_gleich: "Termin gleich",
+  [ZAHLUNG_TEMPLATE_PURPOSE]: "Zahlungserinnerung",
+};
+
 /**
  * Im WhatsApp-Cron: Vorlagen der Support-Nummer einreichen bzw. Status abgleichen (gedrosselt).
- * Gibt den Status der Terminbestätigung zurück (die Erinnerungen laufen genauso mit).
+ * `status` = Stand der Terminbestätigung, `statuses` = Stand je Vorlage.
  */
-export async function syncSupportTemplates(now = new Date(), opts: { force?: boolean } = {}): Promise<{ status: string } | null> {
+export async function syncSupportTemplates(now = new Date(), opts: { force?: boolean } = {}): Promise<{ status: string; statuses: Record<string, string> } | null> {
   const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { status: true, apiKeyEnc: true, templatesCheckedAt: true } });
   if (acc?.status !== "connected" || !acc.apiKeyEnc) return null;
   const locals = await prisma.messageTemplate.findMany({
@@ -353,7 +371,7 @@ export async function syncSupportTemplates(now = new Date(), opts: { force?: boo
   }
   const apiKey = decryptSecret(acc.apiKeyEnc);
   const remoteList = await listTemplates(apiKey);
-  let first: string | null = null;
+  const statuses: Record<string, string> = {};
   for (const t of SUPPORT_TEMPLATES) {
     let remote = findRemote(remoteList, t.name);
     let submittedAt: Date | null = null;
@@ -362,7 +380,7 @@ export async function syncSupportTemplates(now = new Date(), opts: { force?: boo
       submittedAt = now;
     }
     const status = mapRemoteStatus(remote.status);
-    first ??= status;
+    statuses[t.name] = status;
     await prisma.messageTemplate.upsert({
       where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: t.name, language: LANGUAGE } },
       create: {
@@ -382,7 +400,7 @@ export async function syncSupportTemplates(now = new Date(), opts: { force?: boo
     if (status === "rejected" && localStatus.get(t.name) !== "rejected") {
       const { sendToAdmins } = await import("@/lib/push");
       await sendToAdmins({
-        title: "WhatsApp-Vorlage für Vertriebstermine abgelehnt",
+        title: `WhatsApp-Vorlage ${LABEL[t.purpose] ?? t.name} abgelehnt`,
         body: `${t.name}: ${(remote.rejectedReason ?? "Grund unbekannt").slice(0, 100)}`,
         url: "/admin/whatsapp/settings",
         tag: `tpl:support-${t.name}`,
@@ -390,5 +408,5 @@ export async function syncSupportTemplates(now = new Date(), opts: { force?: boo
     }
   }
   await prisma.whatsAppAccount.update({ where: { customerId: SUPPORT_CUSTOMER_ID }, data: { templatesCheckedAt: now } });
-  return { status: first ?? "pending" };
+  return { status: statuses[TERMIN_TEMPLATE_NAME] ?? "pending", statuses };
 }

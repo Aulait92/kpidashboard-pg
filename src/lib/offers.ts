@@ -71,6 +71,8 @@ export type OfferFormInput = {
    * Mit Sonderpreis (Setup/Monat abweichend) nur das Startdatum.
    */
   customerChoice?: boolean;
+  /** „Ich zahle später, erinnern Sie mich am …“ auf der Angebotsseite erlauben (Standard aus, Ole 16.11.2026). */
+  allowPayLater?: boolean;
 };
 
 /** Rechtstexte, denen bei der Annahme zugestimmt wird (per Umgebungsvariable). */
@@ -237,6 +239,7 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             startDate: input.startDate ? new Date(`${input.startDate}T12:00:00Z`) : null,
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
+            allowPayLater: input.allowPayLater === true && !test,
             validUntil,
             termsUrl,
             dpaUrl,

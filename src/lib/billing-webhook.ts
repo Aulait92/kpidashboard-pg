@@ -109,6 +109,17 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           ...(paid ? { paidAt: offer.paidAt ?? new Date() } : {}),
         },
       });
+      // Zahlung erst nach dem Startdatum: Start auf den nächsten Monatsersten verschieben (nichts rückwirkend),
+      // bevor Abo-Zeitplan und Onboarding das Startdatum übernehmen (lib/angebot-zahlungserinnerung-server.ts).
+      let shiftedTo: string | null = null;
+      if (!failed && session.mode !== "subscription") {
+        shiftedTo = await import("@/lib/angebot-zahlungserinnerung-server")
+          .then((m) => m.startNachZahlungVerschieben(offer.id))
+          .catch((err) => {
+            reportError(err, "billing-start-shift", { offer: offer.number });
+            return null;
+          });
+      }
       // Abo-Zeitplan (Monatsgebühr ab Startdatum) – nur für den neuen Ablauf
       // (Checkout im Modus „payment“/„setup“; alte Abo-Checkouts haben schon ein Abo).
       if (!failed && session.mode !== "subscription") {
@@ -139,11 +150,11 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         await logActivity(
           offer,
           paid ? `Zahlung für ${offer.number} eingegangen` : `Zahlung für ${offer.number} eingerichtet (SEPA wird bestätigt)`,
-          `Setup: ${eur(session.amount_total)} brutto${offer.startDate ? ` · Monatsgebühr ab ${offer.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : ""}`,
+          `Setup: ${eur(session.amount_total)} brutto${shiftedTo ? ` · Monatsgebühr ab ${shiftedTo.split("-").reverse().join(".")} (Start verschoben)` : offer.startDate ? ` · Monatsgebühr ab ${offer.startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}` : ""}`,
         );
         await notify(
           `💶 ${paid ? "Bezahlt" : "Zahlung eingerichtet"}: ${offer.company ?? offer.contactName}`,
-          `${offer.number} · ${eur(session.amount_total)}`,
+          `${offer.number} · ${eur(session.amount_total)}${shiftedTo ? ` · Start verschoben auf ${shiftedTo.split("-").reverse().join(".")}` : ""}`,
           offerAdminHref(offer),
           `pay:${offer.id}`,
         );

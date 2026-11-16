@@ -127,7 +127,8 @@ export async function sendOfferEmailAction(
   if (!res.ok) return { ok: false, error: res.error };
   await prisma.offer.update({
     where: { id: offer.id },
-    data: { status: "sent", sentAt: offer.sentAt ?? new Date() },
+    // Anrede merken: Zahlungserinnerung und weitere Mails zum Angebot folgen ihr
+    data: { status: "sent", sentAt: offer.sentAt ?? new Date(), mailDu: !!extras.du },
   });
   await logOfferActivity(
     offer,
@@ -184,5 +185,26 @@ export async function deleteOfferAction(offerId: string): Promise<OfferActionRes
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} gelöscht`);
   revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
+  return { ok: true };
+}
+
+/**
+ * Zahlungserinnerung am Angebot (Ole, 16.11.2026): „Zahlung erinnern am“ (leer = Standardplan),
+ * Anrede der Erinnerung und „Später zahlen erlauben“ (Option auf der Angebotsseite).
+ */
+export async function setPaymentReminderAction(
+  offerId: string,
+  input: { date?: string | null; du?: boolean; allowPayLater?: boolean },
+): Promise<OfferActionResult> {
+  await requireAdmin();
+  const { setzeErinnerungAdmin } = await import("@/lib/angebot-zahlungserinnerung-server");
+  const res = await setzeErinnerungAdmin(offerId, input);
+  if (!res.ok) return res;
+  const offer = await prisma.offer.findUnique({ where: { id: offerId }, select: { dealId: true, salesContactId: true, token: true } });
+  if (offer) {
+    revalidatePath(offerAdminHref(offer));
+    revalidatePath(`/angebot/${offer.token}`);
+  }
+  revalidatePath("/admin/vertrieb/angebote");
   return { ok: true };
 }

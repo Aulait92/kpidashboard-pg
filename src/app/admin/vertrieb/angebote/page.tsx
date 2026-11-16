@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { offerAdminHref } from "@/lib/offer-links";
 import { Badge } from "@/components/ui";
+import { fmtTag, naechsteErinnerung, tagIso, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
 
 export const metadata = { title: "Angebote | Vertrieb" };
 export const dynamic = "force-dynamic";
@@ -29,12 +30,15 @@ function zustand(o: { status: string; acceptedAt: Date | null; viewedAt: Date | 
   return o.viewedAt ? "geoeffnet" : "offen";
 }
 
-const FILTER: { key: string; label: string; match: (z: Zustand) => boolean }[] = [
-  { key: "alle", label: "Alle verschickten", match: (z) => z !== "entwurf" },
-  { key: "offen", label: "Offen", match: (z) => z === "offen" || z === "geoeffnet" },
-  { key: "angenommen", label: "Angenommen", match: (z) => z === "angenommen" },
-  { key: "abgelaufen", label: "Abgelaufen / abgelehnt", match: (z) => z === "abgelaufen" || z === "abgelehnt" },
-  { key: "entwurf", label: "Entwürfe", match: (z) => z === "entwurf" },
+type Row = { z: Zustand; zahlungOffen: boolean };
+const FILTER: { key: string; label: string; match: (r: Row) => boolean }[] = [
+  { key: "alle", label: "Alle verschickten", match: (r) => r.z !== "entwurf" },
+  { key: "offen", label: "Offen", match: (r) => r.z === "offen" || r.z === "geoeffnet" },
+  { key: "angenommen", label: "Angenommen", match: (r) => r.z === "angenommen" },
+  // Angenommen, aber Zahlung bzw. Mandat noch nicht eingerichtet (Ole, 16.11.2026)
+  { key: "zahlung", label: "Zahlung offen", match: (r) => r.zahlungOffen },
+  { key: "abgelaufen", label: "Abgelaufen / abgelehnt", match: (r) => r.z === "abgelaufen" || r.z === "abgelehnt" },
+  { key: "entwurf", label: "Entwürfe", match: (r) => r.z === "entwurf" },
 ];
 
 // Übersicht aller Angebote (Ole, 13.11.2026): je Angebotsnummer die aktuelle Version.
@@ -51,15 +55,21 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
       id: true, number: true, version: true, status: true, contactName: true, company: true, email: true,
       setupFee: true, monthlyFee: true, sentAt: true, viewedAt: true, acceptedAt: true, validUntil: true, createdAt: true,
       salesContactId: true, dealId: true,
+      isTest: true, paymentStatus: true, stripeSubscriptionId: true, stripeScheduleId: true, startDate: true,
+      paymentReminderAt: true, paymentReminderCount: true, paymentReminderLastAt: true,
     },
   });
-  const rows = offers.map((o) => ({ ...o, z: zustand(o, now) }));
+  const rows = offers.map((o) => {
+    const z = zustand(o, now);
+    const zahlungOffen = z === "angenommen" && o.status === "accepted" && !o.isTest && !zahlungEingerichtet(o);
+    return { ...o, z, zahlungOffen, naechste: zahlungOffen ? (naechsteErinnerung(o, now)?.tag ?? null) : null };
+  });
   const sent = rows.filter((r) => r.z !== "entwurf");
   const angenommen = sent.filter((r) => r.z === "angenommen");
   const offen = sent.filter((r) => r.z === "offen" || r.z === "geoeffnet");
   const geoeffnet = sent.filter((r) => r.viewedAt);
-  const shown = rows.filter((r) => filter.match(r.z));
-  const count = (f: (typeof FILTER)[number]) => rows.filter((r) => f.match(r.z)).length;
+  const shown = rows.filter((r) => filter.match(r));
+  const count = (f: (typeof FILTER)[number]) => rows.filter((r) => f.match(r)).length;
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -136,6 +146,12 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                   <td className={`px-4 py-2.5 tabular-nums ${o.z === "abgelaufen" ? "text-amber-700" : ""}`}>{date(o.validUntil)}</td>
                   <td className="px-4 py-2.5">
                     <Badge tone={ZUSTAND[o.z].tone}>{o.z === "angenommen" ? `Angenommen ${date(o.acceptedAt)}` : ZUSTAND[o.z].label}</Badge>
+                    {o.zahlungOffen ? (
+                      <div className="mt-1 text-xs text-amber-700" data-zahlung-offen>
+                        Zahlung offen
+                        {o.paymentReminderAt ? ` · erinnern am ${fmtTag(tagIso(o.paymentReminderAt)!)}` : o.naechste ? ` · Erinnerung ${fmtTag(o.naechste)}` : ""}
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ))

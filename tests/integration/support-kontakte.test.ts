@@ -81,7 +81,7 @@ describe("Support-Nummer: Kunde oder Interessent", () => {
     const meeting = await prisma.salesMeeting.create({ data: { contactId: contactIds[0], title: "Kennenlernen", startAt: new Date(Date.now() + 2 * 86400_000) } });
     const inv = { name: "Max Muster", reschedule_url: "https://calendly.com/r/1" };
     expect(await sendTerminConfirmation(meeting.id, inv, { type: "zoom", join_url: "https://zoom.us/j/1" })).toBe("no_template");
-    expect(await syncSupportTemplates(new Date())).toEqual({ status: "pending" });
+    expect(await syncSupportTemplates(new Date())).toMatchObject({ status: "pending" });
     await prisma.messageTemplate.update({ where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: TERMIN_TEMPLATE_NAME, language: "de" } }, data: { status: "approved" } });
     expect(await sendTerminConfirmation(meeting.id, inv, { type: "zoom", join_url: "https://zoom.us/j/1" })).toBe("sent");
     expect(sent.at(-1)).toMatchObject({ to: PH_I, name: TERMIN_TEMPLATE_NAME });

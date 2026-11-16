@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send, Trash2 } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
-import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction } from "@/app/admin/vertrieb/offer-actions";
+import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
+import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
 
 export type DealOfferRow = {
   id: string;
@@ -24,6 +25,22 @@ export type DealOfferRow = {
   validUntil: string;
   paymentStatus: string;
   subscriptionStatus: string | null;
+  isTest: boolean;
+  /** YYYY-MM-DD */
+  startDate: string | null;
+  /** Ursprünglicher Start, falls nach dem Start gezahlt wurde (YYYY-MM-DD) */
+  startShiftedFrom: string | null;
+  /** „Ich zahle später“ auf der Angebotsseite erlaubt */
+  allowPayLater: boolean;
+  mailDu: boolean;
+  /** Zahlung erinnern am (YYYY-MM-DD), null = Standardplan */
+  paymentReminderAt: string | null;
+  paymentReminderCount: number;
+  paymentReminderLastAt: string | null;
+  /** Nächste geplante Erinnerung (YYYY-MM-DD), null = keine mehr */
+  nextReminder: string | null;
+  paymentSetUp: boolean;
+  reminderBounds: { min: string; max: string | null } | null;
 };
 
 const PAYMENT: Record<string, { label: string; tone: "neutral" | "info" | "success" | "warning" | "danger" }> = {
@@ -128,7 +145,15 @@ export function DealOffersCard({
               {current.sentAt ? <li>Verschickt {fmt(current.sentAt)}</li> : null}
               {current.viewedAt ? <li>Vom Interessenten geöffnet {fmt(current.viewedAt)}</li> : null}
               {current.acceptedAt ? <li className="font-medium text-emerald-700">Angenommen {fmt(current.acceptedAt)} von {current.acceptedName}</li> : null}
+              {current.startShiftedFrom && current.startDate ? (
+                <li className="font-medium text-amber-700" data-start-verschoben>
+                  Start verschoben: {fmtTag(current.startShiftedFrom)} → {fmtTag(current.startDate)} (erst nach dem Start gezahlt, Kunde per Mail informiert)
+                </li>
+              ) : null}
             </ul>
+            {current.status === "accepted" && !current.isTest && !current.paymentSetUp ? (
+              <PaymentReminder offer={current} onDone={(m) => { flash(m); router.refresh(); }} />
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
                 icon={Copy}
@@ -235,6 +260,7 @@ export function DealOffersCard({
                   </label>
                 ) : null}
                 <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
+                {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
               </div>
             ) : null}
             {msg ? <p className="text-xs font-medium text-emerald-700">{msg}</p> : null}
@@ -252,6 +278,96 @@ export function DealOffersCard({
           </div>
         ) : null}
       </Card>
+    </div>
+  );
+}
+
+/** „Später zahlen erlauben“: zeigt auf der Angebotsseite nach der Annahme „Ich zahle später, erinnern Sie mich am …“. */
+function PayLaterToggle({ offer, onDone }: { offer: DealOfferRow; onDone: (msg: string) => void }) {
+  const [pending, start] = useTransition();
+  return (
+    <label className="flex items-center gap-2 border-t border-[color:var(--border)] pt-2" data-pay-later-toggle>
+      <input
+        type="checkbox"
+        className="h-4 w-4"
+        disabled={pending}
+        checked={offer.allowPayLater}
+        onChange={(e) => {
+          const allow = e.target.checked;
+          start(async () => {
+            const res = await setPaymentReminderAction(offer.id, { allowPayLater: allow });
+            if (!res.ok) alert(res.error);
+            else onDone(allow ? "Später zahlen erlaubt" : "Später zahlen nicht mehr erlaubt");
+          });
+        }}
+      />
+      Später zahlen erlauben (Kunde wählt den Tag der Zahlungserinnerung)
+    </label>
+  );
+}
+
+/** Angenommen, Zahlung offen: „Zahlung erinnern am“, Anrede der Erinnerung, Stand des Plans (Ole, 16.11.2026). */
+function PaymentReminder({ offer, onDone }: { offer: DealOfferRow; onDone: (msg: string) => void }) {
+  const [date, setDate] = useState(offer.paymentReminderAt ?? "");
+  const [pending, start] = useTransition();
+  const save = (input: Parameters<typeof setPaymentReminderAction>[1], msg: string) =>
+    start(async () => {
+      const res = await setPaymentReminderAction(offer.id, input);
+      if (!res.ok) alert(res.error);
+      else onDone(msg);
+    });
+  const max = offer.paymentReminderAt ? ABSTAENDE_MIT_DATUM.length : ABSTAENDE_OHNE_DATUM.length;
+  const stand = offer.nextReminder
+    ? `Nächste Erinnerung ${fmtTag(offer.nextReminder)} · ${offer.paymentReminderCount} von ${max} gesendet`
+    : `${offer.paymentReminderCount} von ${max} Erinnerungen gesendet, keine weitere geplant`;
+  return (
+    <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-zahlung-erinnern>
+      <form
+        className="flex flex-wrap items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save({ date: date || null }, date ? `Erinnerung am ${fmtTag(date)}` : "Standardplan ohne Datum");
+        }}
+      >
+        <label htmlFor={`erinnern-${offer.id}`} className="text-xs font-medium text-[color:var(--muted)]">
+          Zahlung erinnern am
+        </label>
+        <input
+          id={`erinnern-${offer.id}`}
+          type="date"
+          value={date}
+          min={offer.reminderBounds?.min}
+          max={offer.reminderBounds?.max ?? undefined}
+          onChange={(e) => setDate(e.target.value)}
+          className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
+        />
+        <Button type="submit" variant="secondary" disabled={pending || date === (offer.paymentReminderAt ?? "")}>
+          Speichern
+        </Button>
+        {offer.paymentReminderAt ? (
+          <Button type="button" variant="ghost" disabled={pending} onClick={() => { setDate(""); save({ date: null }, "Standardplan ohne Datum"); }}>
+            Datum entfernen
+          </Button>
+        ) : null}
+      </form>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-xs text-[color:var(--muted)]" data-zahlung-stand>{stand}</span>
+        <div className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white p-0.5" aria-label="Anrede der Erinnerung">
+          {([false, true] as const).map((v) => (
+            <button
+              key={String(v)}
+              type="button"
+              disabled={pending}
+              onClick={() => v !== offer.mailDu && save({ du: v }, `Anrede: ${v ? "Du" : "Sie"}`)}
+              aria-pressed={offer.mailDu === v}
+              className={`rounded-[6px] px-2.5 py-0.5 text-xs font-medium ${offer.mailDu === v ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"}`}
+            >
+              {v ? "Du" : "Sie"}
+            </button>
+          ))}
+        </div>
+      </div>
+      <PayLaterToggle offer={offer} onDone={onDone} />
     </div>
   );
 }

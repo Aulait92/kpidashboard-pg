@@ -7,6 +7,8 @@ import { reportError } from "@/lib/monitoring";
 import type { SalesCustomerStage } from "@/generated/prisma/enums";
 import type { Offer } from "@/generated/prisma/client";
 import type { DealOfferRow } from "@/components/deal-offers-card";
+import { erinnerungsGrenzen, naechsteErinnerung, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
+import { berlinTodayIso } from "@/lib/offer-pricing";
 
 type OfferRef = { dealId: string | null; salesContactId: string | null };
 
@@ -77,6 +79,17 @@ export function toOfferRow(o: Offer): DealOfferRow {
     validUntil: o.validUntil.toISOString(),
     paymentStatus: o.paymentStatus,
     subscriptionStatus: o.subscriptionStatus,
+    isTest: o.isTest,
+    startDate: o.startDate ? o.startDate.toISOString().slice(0, 10) : null,
+    startShiftedFrom: o.startShiftedFrom ? o.startShiftedFrom.toISOString().slice(0, 10) : null,
+    allowPayLater: o.allowPayLater,
+    mailDu: o.mailDu,
+    paymentReminderAt: o.paymentReminderAt ? o.paymentReminderAt.toISOString().slice(0, 10) : null,
+    paymentReminderCount: o.paymentReminderCount,
+    paymentReminderLastAt: o.paymentReminderLastAt?.toISOString() ?? null,
+    nextReminder: naechsteErinnerung(o, new Date())?.tag ?? null,
+    reminderBounds: erinnerungsGrenzen(berlinTodayIso(), o.startDate ? o.startDate.toISOString().slice(0, 10) : null, { admin: true }),
+    paymentSetUp: zahlungEingerichtet(o),
   };
 }
 
