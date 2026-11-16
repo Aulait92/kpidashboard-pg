@@ -363,3 +363,21 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 - **Bewertung:** Unwirksamkeitsrisiko. Fällt die Klausel, bleibt nur der gesetzliche Schadensersatz.
 - **Handlungsbedarf: ja, Entwurf** (Verschulden mit Beweislast beim Kunden wie § 280 Abs. 1 Satz 2 BGB, § 254 BGB,
   keine Geldbußen): `docs/rechtstexte/agb-entwurf-2026-11-16.md`, Thema 2. **Anwalt** entscheidet.
+
+### 10.3 KI-Verordnung Art. 50: Anbieter und Betreiber beim WhatsApp-Assistenten
+
+- **Rechtslage:** Anbieter ist, wer ein KI-System entwickelt (oder entwickeln lässt) und unter eigenem Namen in Verkehr
+  bringt oder in Betrieb nimmt (Art. 3 Nr. 3), Betreiber, wer es in eigener Verantwortung beruflich verwendet (Art. 3
+  Nr. 4). Die Pflicht, Personen über die Interaktion mit einem KI-System zu informieren, trifft den Anbieter
+  (Art. 50 Abs. 1), klar erkennbar spätestens bei der ersten Interaktion (Abs. 5). Betreiberpflichten in Art. 50 Abs. 3
+  und 4 betreffen nur Emotionserkennung, Deepfakes und Texte zur Information der Öffentlichkeit. KI-Kompetenz (Art. 4)
+  gilt für Anbieter und Betreiber seit 02.02.2025, Art. 50 seit 02.08.2026 (Art. 113). Bußgeld bis 15 Mio. € bzw. 3 %
+  (Art. 99 Abs. 4 lit. g). Laut Kanzleiberichten verschiebt die Omnibus-Verordnung (EU) 2026/1744 nur die
+  maschinenlesbare Kennzeichnung nach Abs. 2 (bis 02.12.2026), nicht Abs. 1 (Amtsblatt nicht selbst gelesen).
+  Quelle: [Verordnung (EU) 2024/1689](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32024R1689).
+- **App heute:** Hinweis in der ersten Nachricht, nicht abschaltbar, erneut nach 30 Tagen, wahrheitsgemäße Antwort und
+  Übergabe bei „Mensch“ (`lib/whatsapp/ki-hinweis.ts`, Paket A). AGB nennen die Rollen nur als „Verständnis der Parteien“.
+- **Bewertung:** Wir sind Anbieter, der Vermittler Betreiber. Pflicht aus Abs. 1 und 5 ist erfüllt. Art. 25
+  (Rollenwechsel) gilt nur für Hochrisiko-Systeme.
+- **Handlungsbedarf: ja, Entwurf** (Rollen ausdrücklich, Art. 4 beim Kunden): Entwurf Thema 3. **Anwalt:** macht die
+  Nennung „KI-Assistent von [Vermittler]“ den Vermittler zum Anbieter?
