@@ -106,7 +106,7 @@ function IconButton({ label, onClick, disabled, children }: { label: string; onC
       disabled={disabled}
       aria-label={label}
       title={label}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-sunken,#f1f5f9)] hover:text-[color:var(--foreground,#0f172a)] disabled:opacity-50"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] sm:h-9 sm:w-9 transition hover:bg-[color:var(--surface-sunken,#f1f5f9)] hover:text-[color:var(--foreground,#0f172a)] disabled:opacity-50"
     >
       {children}
     </button>
@@ -214,7 +214,7 @@ export function LeadTimesForm({
             const ersterTag = DAYS.find(([k]) => (days[k] ?? []).length)?.[0] === d;
             const all = [...new Set(ranges.flatMap((r) => starts(r, step, duration)))].sort();
             return (
-              <li key={d} className="flex items-start gap-3 py-3" data-day={d}>
+              <li key={d} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:gap-3" data-day={d}>
                 <span
                   className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                     ranges.length ? "bg-[color:var(--brand)] text-white" : "bg-[color:var(--surface-sunken,#f1f5f9)] text-[color:var(--muted)]"
@@ -232,16 +232,16 @@ export function LeadTimesForm({
                     </div>
                   ) : (
                     ranges.map((r, i) => (
-                      <div key={i} className="flex flex-wrap items-center gap-1.5">
-                        <TimeSelect value={r[0]} onChange={(v) => update(d, i, 0, v)} max="23:45" ariaLabel={`${label} von`} className="w-[7.25rem]" disabled={readOnly} />
-                        <span className="text-[color:var(--muted)]">–</span>
+                      <div key={i} className="flex items-center gap-1.5 sm:flex-wrap">
+                        <TimeSelect value={r[0]} onChange={(v) => update(d, i, 0, v)} max="23:45" ariaLabel={`${label} von`} className="w-[6.5rem] sm:w-[7.25rem]" disabled={readOnly} />
+                        <span className="hidden text-[color:var(--muted)] sm:inline">–</span>
                         <TimeSelect
                           value={r[1]}
                           onChange={(v) => update(d, i, 1, v)}
                           min={fromMin(Math.min(toMin(r[0]) + 15, 1440))}
                           max="24:00"
                           ariaLabel={`${label} bis`}
-                          className="w-[7.25rem]"
+                          className="w-[6.5rem] sm:w-[7.25rem]"
                           disabled={readOnly}
                         />
                         <IconButton label={`Zeitraum bei ${label} entfernen`} onClick={() => setDay(d, ranges.filter((_, k) => k !== i))} disabled={readOnly}>
@@ -252,9 +252,11 @@ export function LeadTimesForm({
                             <IconButton label={`Weiteren Zeitraum für ${label}`} onClick={() => add(d)} disabled={readOnly}>
                               <Plus className="h-4 w-4" />
                             </IconButton>
-                            <IconButton label={`Zeiten von ${label} auf alle Tage mit Terminen übertragen`} onClick={() => copyToAll(d)} disabled={readOnly}>
-                              <Copy className="h-4 w-4" />
-                            </IconButton>
+                            <span className="hidden sm:contents">
+                              <IconButton label={`Zeiten von ${label} auf alle Tage mit Terminen übertragen`} onClick={() => copyToAll(d)} disabled={readOnly}>
+                                <Copy className="h-4 w-4" />
+                              </IconButton>
+                            </span>
                           </>
                         ) : null}
                       </div>
