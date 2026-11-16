@@ -139,12 +139,15 @@ export function LeadHeaderActions(p: Props) {
     });
   }
 
+  // Verloren mit Grund, auch über das Status-Menü (Ole, 16.11.2026)
+  const LOST_KEYS_ALL = new Set(["kein-interesse", "disqualifiziert", "verloren"]);
   const phaseActions: SheetAction[] = p.phases.map((ph) => ({
     label: ph.label,
     tone: ph.key === phase?.key ? "primary" : undefined,
     onSelect: () => {
       if (ph.key === phase?.key) return;
       if (ph.key === "abschluss") askWin();
+      else if (LOST_KEYS_ALL.has(ph.key)) setTimeout(() => setOpen("lost"), 0);
       else setStatus(ph.defaultStatus, ph.label);
     },
   }));
@@ -276,6 +279,31 @@ export function LeadHeaderActions(p: Props) {
           )}
           <span>eingegangen {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(p.createdAt))}</span>
         </div>
+        {/* Handy (Ole, 16.11.2026: „Wo kann ich auf gewonnen/verloren setzen?“): oben rechts ist dafür kein Platz */}
+        {!p.storniert ? (
+          <div className="mt-3 grid grid-cols-2 gap-1.5 sm:hidden" data-gewonnen-verloren>
+            <button
+              type="button"
+              onClick={() => !won && askWin()}
+              className={cn(
+                "inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius-md)] border text-sm font-medium",
+                won ? "border-emerald-600 bg-emerald-600 text-white" : "border-[color:var(--border)] bg-white text-emerald-700",
+              )}
+            >
+              <Trophy className="h-4 w-4" /> Gewonnen
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen("lost")}
+              className={cn(
+                "inline-flex h-10 items-center justify-center rounded-[var(--radius-md)] border text-sm font-medium",
+                lost ? "border-rose-600 bg-rose-600 text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)]",
+              )}
+            >
+              Verloren
+            </button>
+          </div>
+        ) : null}
 
         {/* Handy: 4 Kacheln in einer Reihe, sonst 3 je Reihe (keine einzelne Kachel allein in der zweiten Reihe) */}
         <div className={cn("mt-4 grid gap-1.5 sm:flex sm:flex-wrap sm:gap-2", tileCount === 4 ? "grid-cols-4" : "grid-cols-3")}>
