@@ -123,6 +123,11 @@ Kalender/Verfügbarkeit, Kennzeichen „Kein WhatsApp“, `lib/lead-intake.ts`.
 - Nachrichten: Name im Chatkopf öffnet den Kontakt; „Kontakt öffnen“, „Infos zum Kontakt“, „Anfrage“, „Phase“; Seitentitel am Handy (Vorschlag 6); Reiter 14 px; Knöpfe 40 px.
 - Terminvorbereitung: „Heute, 10:00 Uhr“ im Kopf; Sparten-Chips, Monat/Jahr, Entfernen-Kreuze am Handy 36 bis 40 px.
 - Profilmenü: „Einstellungen“ als erster Eintrag. Anmeldung: Passwort anzeigen, „Passwort vergessen?“ 40 px. Konto: ohne Online-Zahlung kein grauer Knopf, sondern ein Satz mit dem Weg. Suche: Phase zuerst. KI-Hilfe: Untertitel passt.
+- Danach: WhatsApp-Vorlagen und Meine Provisionen mit Hinweisen in einem Satz; Nachrichten am Rechner zeigen den
+  Namen im Chatkopf ganz (doppeltes Personen-Symbol neben der Infospalte ausgeblendet, „Leadformular“ heißt „Angaben“);
+  Fußzeilen-Links in den Einstellungen 40 px.
+- Präsentation quer im Vollbild am Handy (Vorschlag 8) ist gebaut, für heute früh zurückgenommen und kommt ab 20 Uhr,
+  weil sie die Folien in laufenden Kundenterminen betrifft.
 - Neuigkeit `20261118705260_neuigkeit_bedienung_feinschliff`, Eintrag in `docs/webseite-offen.md`.
 
 ### Bewertung Runde 4 (1 bis 10, frisch geprüft)
@@ -139,7 +144,7 @@ hätte ich mit etwa 83 statt 86 bewertet.
 | Kontakt | 9 | 8,5 | 9,5 | Überfällig sichtbar, Tippziele, Fenster rechts aufgeräumt. Rest: „Gewonnen“ vs. Phase „Abschluss“. |
 | Termin buchen | 8 | 7 | 9 | Eine Hauptaktion, Formular überall gleich. Ohne echten Kalender nicht ganz durchspielbar. |
 | Terminvorbereitung | 9 | 8,5 | 9 | Tippziele, „Heute“. Seite bleibt lang (viel Inhalt, aber gegliedert). |
-| Präsentation | 9 | 8 | 8,5 | Folie am Handy weiter klein (Vorschlag 8). |
+| Präsentation | 9 | 8 | 8,5 | Folie am Handy weiter klein, bis die Drehung ab 20 Uhr live ist (dann 9). |
 | Nachrichten | 9 | 8 | 9,5 | Name führt zum Kontakt, Titel, Begriffe. |
 | Einstellungen, Profilmenü | 9 | 8,5 | 9,5 | Einstellungen oben. Rest: „Rückmeldung an Meta“ ist Technik. |
 | Konto | 8 | 7,5 | 8,5 | Kein grauer Knopf mehr. Rest: Kündigen recht weit oben. |
@@ -151,7 +156,7 @@ hätte ich mit etwa 83 statt 86 bewertet.
 1. Ein Begriff für den Erfolg: Knopf „Gewonnen“, Phase und Ergebnis-Auswahl „Abschluss“. Vorschlag: Ergebnis-Auswahl „Gewonnen“ (Phase bleibt „Abschluss“), Erklärvideo-Text prüfen. Entscheidung Ole.
 2. Fenster „Gewonnen“: drei Textblöcke (Feld, Provisionsrechnung, Meta-Satz). Vorschlag: Meta-Satz nur, wenn die Rückmeldung an Meta aktiv ist, Rechenweg hinter „So rechnen wir“.
 3. Wachstum und Kalender (Vorschläge 1, 2, 5 aus Runde 3, anderer Agent).
-4. Präsentation am Handy: Vollbild dreht die Folie quer wie im Kundenlink (Vorschlag 8).
+4. Präsentation am Handy: Vollbild dreht die Folie quer wie im Kundenlink (gebaut, Livegang ab 20 Uhr).
 5. „Nächste Tage“ auf Heute: „+1 Tag/+1 Woche“ nur am geöffneten Eintrag statt an jeder Zeile (Ole hat die Knöpfe eingeführt, daher nur Vorschlag).
 6. Echter Test mit 5 Vermittlern (SUS-Fragebogen); über 95 lässt sich nicht am Schreibtisch schätzen, nur messen.
 7. Einrichtung und Konto ohne Leads in dieser Runde nicht prüfbar (Demo-Konto fertig eingerichtet).

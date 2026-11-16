@@ -77,7 +77,7 @@ export default async function EinstellungenPage() {
               </ul>
             </section>
           ))}
-        <p className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-sm text-[color:var(--muted)]">
+        <p className="flex flex-wrap gap-x-4 px-1 text-sm text-[color:var(--muted)] [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center">
           <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">Impressum</a>
           <a href="https://performancegrowth.de/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:underline">Datenschutz</a>
           <a href="/sicherheit" target="_blank" rel="noopener" className="hover:underline">Sicherheit</a>
