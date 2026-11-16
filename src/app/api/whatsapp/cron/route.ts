@@ -194,6 +194,11 @@ async function handle(req: Request): Promise<Response> {
       }
     });
   }
+  // Calendly: stündlich die Termine abgleichen (Sicherheitsnetz, falls ein Webhook nicht ankommt; Ole 16.11.2026:
+  // Termin von Christoph Patzwald fehlte im CRM). Nur Abgleich, keine WhatsApp-Bestätigung für nachgeholte Termine.
+  if (process.env.CALENDLY_TOKEN && now.getUTCMinutes() < 5) {
+    after(() => import("@/lib/vertrieb/calendly").then((m) => m.syncCalendly()).catch((e: unknown) => reportError(e, "cron-calendly")));
+  }
   // Vertrieb: Später-Follow-ups (Antwort im Instantly-Thread, werktags 8–17 Uhr, je Postfach begrenzt;
   // gesendet wird nur mit INSTANTLY_AUTO_SYNC=1, siehe docs/vertrieb-spaeter-followup.md)
   after(() => import("@/lib/vertrieb/followup").then((m) => m.runFollowups(now)).catch((e: unknown) => reportError(e, "cron-followups")));
