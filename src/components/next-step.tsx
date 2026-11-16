@@ -327,7 +327,7 @@ export function LostSheet({
       {!info ? (
         error ? <p className="px-5 py-4 text-sm text-rose-700">{error}</p> : <Loading />
       ) : (
-        <div className="max-h-[70dvh] overflow-y-auto" data-lost-sheet>
+        <div data-lost-sheet>
           {!appointmentId ? (
             <button type="button" onClick={notReached} disabled={busy} className={cn(rowCls, "border-b border-[color:var(--border)] bg-[color:var(--brand-soft)]")} data-not-reached>
               <PhoneMissed className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[color:var(--brand)]" />
@@ -354,7 +354,7 @@ export function LostSheet({
                     <span className="min-w-0 flex-1">
                       <span className="block text-[15px]">{r.label}</span>
                       <span className="block text-xs text-[color:var(--muted)]">
-                        {locked ? `Erst ${Math.min(attempts, CALL_ATTEMPTS_TARGET)} von ${CALL_ATTEMPTS_TARGET} Versuchen` : r.hint}
+                        {locked ? `Erst nach ${CALL_ATTEMPTS_TARGET} Versuchen, bisher ${Math.min(attempts, CALL_ATTEMPTS_TARGET)}` : r.hint}
                       </span>
                     </span>
                   </button>

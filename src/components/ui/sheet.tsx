@@ -3,7 +3,7 @@
 // Auswahlfenster: auf dem Handy von unten, am Desktop mittig. Für alle
 // Neben-Aktionen einer Zeile, damit pro Zeile nur eine Hauptaktion sichtbar ist.
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { impact } from "@/lib/haptics";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,23 @@ export function Sheet({
   message?: string;
   children: React.ReactNode;
 }) {
+  // Nach unten wischen schließt (Ole, 16.11.2026: „Ich kann hier nicht runterwischen“), nur am Griff bzw. an der
+  // Kopfzeile, damit das Scrollen der Liste nicht ausgelöst wird.
+  const [drag, setDrag] = useState(0);
+  const start = useRef<number | null>(null);
+  const wisch = {
+    onTouchStart: (e: React.TouchEvent) => void (start.current = e.touches[0].clientY),
+    onTouchMove: (e: React.TouchEvent) => {
+      if (start.current == null) return;
+      setDrag(Math.max(0, e.touches[0].clientY - start.current));
+    },
+    onTouchEnd: () => {
+      const weit = drag > 80;
+      start.current = null;
+      setDrag(0);
+      if (weit) onClose();
+    },
+  };
   useEffect(() => {
     if (!open) return;
     impact("light"); // Auswahlfenster/Kontextmenü öffnet
@@ -50,20 +67,26 @@ export function Sheet({
       <div
         role="dialog"
         aria-modal="true"
-        className="ui-sheet relative w-full max-w-md overflow-hidden rounded-t-[var(--radius-lg)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-lg)] sm:rounded-[var(--radius-lg)] sm:pb-0"
+        className="ui-sheet relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[var(--radius-lg)] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-lg)] sm:max-h-[85vh] sm:rounded-[var(--radius-lg)] sm:pb-0"
+        style={drag ? { transform: `translateY(${drag}px)`, transition: "none" } : undefined}
       >
-        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[color:var(--border-strong)] sm:hidden" />
-        {title || message ? (
-          <div className="border-b border-[color:var(--border)] px-5 pb-3 pt-3">
-            {title ? <div className="text-[15px] font-semibold">{title}</div> : null}
-            {message ? <div className="mt-0.5 text-xs text-[color:var(--muted)]">{message}</div> : null}
-          </div>
-        ) : null}
-        {children}
+        <div {...wisch} className="shrink-0 touch-none">
+          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[color:var(--border-strong)] sm:hidden" />
+          {title || message ? (
+            <div className="border-b border-[color:var(--border)] px-5 pb-3 pt-3">
+              {title ? <div className="text-[15px] font-semibold">{title}</div> : null}
+              {message ? <div className="mt-0.5 text-xs text-[color:var(--muted)]">{message}</div> : null}
+            </div>
+          ) : (
+            <div className="h-3 sm:hidden" />
+          )}
+        </div>
+        {/* Inhalt scrollt, Kopf und „Abbrechen“ bleiben stehen */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
         <button
           type="button"
           onClick={onClose}
-          className="h-12 w-full border-t border-[color:var(--border)] text-sm font-medium text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]"
+          className="h-12 w-full shrink-0 border-t border-[color:var(--border)] text-sm font-medium text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]"
         >
           Abbrechen
         </button>
