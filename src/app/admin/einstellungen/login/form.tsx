@@ -12,7 +12,8 @@ const INPUT =
   "w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 py-2 text-sm outline-none focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand)]/20";
 
 /** Karte bearbeiten oder neu anlegen (card null), mit Live-Vorschau. */
-export function LoginCardForm({ card, justCreated = false }: { card: LoginCardView | null; justCreated?: boolean }) {
+/** `basis`: Seite, auf die nach dem Anlegen bzw. Löschen geleitet wird (neuer Admin: /admin/neu/einstellungen/login). */
+export function LoginCardForm({ card, justCreated = false, basis }: { card: LoginCardView | null; justCreated?: boolean; basis?: string }) {
   const [state, action, pending] = useActionState<LoginCardFormState, FormData>(saveLoginCardAction, justCreated ? { ok: true } : {});
   const [enabled, setEnabled] = useState(card?.enabled ?? true);
   const [badge, setBadge] = useState(card?.badge ?? "");
@@ -34,6 +35,7 @@ export function LoginCardForm({ card, justCreated = false }: { card: LoginCardVi
   return (
     <form action={action} className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
       {card ? <input type="hidden" name="id" value={card.id} /> : null}
+      {basis ? <input type="hidden" name="basis" value={basis} /> : null}
       <div className="space-y-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-5 shadow-[var(--shadow-sm)]">
         <label className="flex items-center justify-between gap-4">
           <span>
@@ -178,7 +180,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 /** Löschen mit Rückfrage. */
-export function DeleteCardButton({ id, title }: { id: string; title: string }) {
+export function DeleteCardButton({ id, title, basis }: { id: string; title: string; basis?: string }) {
   return (
     <form
       action={deleteLoginCardAction}
@@ -187,6 +189,7 @@ export function DeleteCardButton({ id, title }: { id: string; title: string }) {
       }}
     >
       <input type="hidden" name="id" value={id} />
+      {basis ? <input type="hidden" name="basis" value={basis} /> : null}
       <button type="submit" className="text-sm font-medium text-rose-700 hover:underline">
         Karte löschen
       </button>

@@ -9,6 +9,10 @@ export type LoginCardFormState = { ok?: boolean; errors?: string[]; savedAt?: nu
 
 const actorOf = (s: { userId: string; email: string; role: string }) => ({ id: s.userId, email: s.email, role: s.role });
 
+// Rücksprung nach Anlegen bzw. Löschen: alte Seite oder die im neuen Admin (nur diese beiden, kein offener Redirect)
+const BASEN = ["/admin/einstellungen/login", "/admin/neu/einstellungen/login"];
+const basisAus = (fd: FormData) => (BASEN.includes(String(fd.get("basis") ?? "")) ? String(fd.get("basis")) : BASEN[0]);
+
 function refresh() {
   revalidatePath("/login");
   revalidatePath("/admin/einstellungen/login");
@@ -40,7 +44,7 @@ export async function saveLoginCardAction(_prev: LoginCardFormState, fd: FormDat
   if (!res.ok) return { errors: res.errors };
   refresh();
   // Neue Karte: zur Bearbeitung der angelegten Karte wechseln
-  if (!id) redirect(`/admin/einstellungen/login?karte=${encodeURIComponent(res.card.id)}&gespeichert=1`);
+  if (!id) redirect(`${basisAus(fd)}?karte=${encodeURIComponent(res.card.id)}&gespeichert=1`);
   return { ok: true, savedAt: Date.now() };
 }
 
@@ -60,5 +64,5 @@ export async function deleteLoginCardAction(fd: FormData): Promise<void> {
   const session = await requireAuth();
   await deleteLoginCard(String(fd.get("id") ?? ""), actorOf(session));
   refresh();
-  redirect("/admin/einstellungen/login");
+  redirect(basisAus(fd));
 }

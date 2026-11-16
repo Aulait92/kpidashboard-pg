@@ -1436,8 +1436,8 @@
   "demo_view": "e-followups",
   "id": "followup-actions-approvefollowupaction--liste-wartet-auf-freigabe-einzeln-oder-alle",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/follow-ups/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -1448,8 +1448,8 @@
   "demo_view": "e-followups",
   "id": "page-group--listen-geplant-laufend-zuletzt-beendet-mit",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/follow-ups/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -1460,8 +1460,8 @@
   "demo_view": "e-followups",
   "id": "followup-actions-savefollowupsettingsaction--einstellungen-automatik-an-hoechstzahl-je-tag",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/follow-ups/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -1472,8 +1472,8 @@
   "demo_view": "e-followups",
   "id": "followup-actions-planexistingaction--bestand-jetzt-pruefen-bestehende-spaeter",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/follow-ups/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1496,8 +1496,8 @@
   "demo_view": "e-buchung",
   "id": "actions-savebookingtypeaction--termintypen-bearbeiten-dauer-puffer-vorlauf",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/buchungsseiten/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1508,8 +1508,8 @@
   "demo_view": "e-buchung",
   "id": "actions-savesalestimesaction--buchbare-zeiten-je-wochentag",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/buchungsseiten/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1520,8 +1520,8 @@
   "demo_view": "e-buchung",
   "id": "page-embedsnippet--einbettungscode-fuer-die-webseite-kopieren",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/buchungsseiten/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1544,8 +1544,8 @@
   "demo_view": "e-anbindungen",
   "id": "page--status-je-quelle-instantly-calendly-formulare",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1556,8 +1556,8 @@
   "demo_view": "e-anbindungen",
   "id": "page-copyfield--webhook-adressen-kopieren-und-anleitung",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1568,8 +1568,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1580,8 +1580,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-importinstantlyaction--instantly-csv-importieren",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1592,8 +1592,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-connectcalendlyaction--calendly-verbinden-und-termine-abgleichen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1604,8 +1604,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-importcontactsaction--agenturliste-csv-importieren",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1616,8 +1616,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-importcoldcrmaction--daten-aus-altem-cold-crm-uebernehmen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1628,8 +1628,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-replacecoldcrmaction--vertrieb-neu-importieren-ersetzt-alles",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1640,8 +1640,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-importwaalaxyaction--waalaxy-import-ohne-oberflaeche",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1652,8 +1652,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-convertinboundlead--linkedin-nachrichten-ohne-zuordnung-als-lead",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1664,8 +1664,8 @@
   "demo_view": "e-anbindungen",
   "id": "page-placesused--kontakte-anreichern-google-kontingent-heute",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1676,8 +1676,8 @@
   "demo_view": "e-einrichtung",
   "id": "page-team-kalender--team-kalender-fuer-hilfetermine-der-kunden",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/einrichtung/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kunden",
@@ -2408,8 +2408,8 @@
   "demo_view": "e-vorlagen",
   "id": "route-get--support-whatsapp-verbinden-360dialog",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
@@ -2420,8 +2420,8 @@
   "demo_view": "e-vorlagen",
   "id": "ab-test-card--a-b-tests-der-vorlagen-mit-antwort-und",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/whatsapp/page.tsx"
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
@@ -2936,8 +2936,8 @@
   "demo_view": "e-anbindungen",
   "id": "page-diag--meta-verbindung-pruefen-token-rechte-webhook-url",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/lead-eingang",
@@ -2948,8 +2948,8 @@
   "demo_view": "e-anbindungen",
   "id": "page--uebergang-webhook-fuer-zapier",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/leads",
@@ -3308,8 +3308,8 @@
   "demo_view": "e-automatik",
   "id": "actions-saveglobalaction--global-woechentlicher-optimierungslauf-an-aus",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/kampagnen-automatik/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3320,8 +3320,8 @@
   "demo_view": "e-automatik",
   "id": "actions-saveglobalaction--global-autopilot-fuer-alle-konten",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/kampagnen-automatik/page.tsx"
  },
  {
   "heute": "/admin/optimierung",
@@ -3752,8 +3752,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-disconnectaction--linkedin-verbinden-bzw-trennen-hinweis-zugang",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -4304,8 +4304,8 @@
   "demo_view": "e-neuigkeiten",
   "id": "module-actions-sendannouncementaction--ankuendigung-des-zusatzmoduls-an-kunden-senden",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/neuigkeiten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen",
@@ -4316,8 +4316,8 @@
   "demo_view": "einstellungen",
   "id": "page--uebersicht-aller-einstellungen-in-gruppen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/page.tsx"
  },
  {
   "heute": "/admin/einstellungen",
@@ -4328,8 +4328,8 @@
   "demo_view": "einstellungen",
   "id": "page--warnhinweise-zwei-faktor-aus-steuernummer-fehlt",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/produkte",
@@ -4340,8 +4340,8 @@
   "demo_view": "e-produkte",
   "id": "actions-savecatalogitemaction--produkt-buchbar-an-aus",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/produkte/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/produkte",
@@ -4352,8 +4352,8 @@
   "demo_view": "e-produkte",
   "id": "actions-savecatalogitemaction--produkt-als-bewaehrt-markieren-und-nutzen-text",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/produkte/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/beitraege",
@@ -4364,8 +4364,8 @@
   "demo_view": "e-tarife",
   "id": "actions-preispilotumschaltenaction--beitraege-rechnen-pilot-rechner-je-gesellschaft",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/tarife/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/kampagnen-automatik",
@@ -4376,8 +4376,8 @@
   "demo_view": "e-automatik",
   "id": "actions-saveautomationaction--budgetaenderungen-automatisch-bei-meta-umsetzen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/kampagnen-automatik/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/kampagnen-automatik",
@@ -4388,8 +4388,8 @@
   "demo_view": "e-automatik",
   "id": "actions-saveautomationaction--gebuchte-produkte-starten-das-agenten-team",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/kampagnen-automatik/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/kampagnen-automatik",
@@ -4400,8 +4400,8 @@
   "demo_view": "e-automatik",
   "id": "actions-saveautomationaction--muede-anzeigen-erkennen-mit-schwellen-frequenz",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/kampagnen-automatik/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/halteangebote",
@@ -4412,8 +4412,8 @@
   "demo_view": "e-halte",
   "id": "actions-savehalteaction--halteangebote-je-kuendigungsgrund-an-aus-mit",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/halteangebote/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/halteangebote",
@@ -4424,8 +4424,8 @@
   "demo_view": "e-halte",
   "id": "form--regeln-fuer-rabatte-anzeige",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/halteangebote/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -4436,8 +4436,8 @@
   "demo_view": "e-neuigkeiten",
   "id": "actions-saveupdateaction--neuigkeiten-liste-neu-anlegen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/neuigkeiten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -4448,8 +4448,8 @@
   "demo_view": "e-neuigkeiten",
   "id": "actions-saveupdateaction--eintrag-bearbeiten-art-zielgruppe-push-an-kunden",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/neuigkeiten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -4460,8 +4460,8 @@
   "demo_view": "e-neuigkeiten",
   "id": "actions-draftupdateaction--ki-entwurf-aus-notizen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/neuigkeiten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -4472,8 +4472,8 @@
   "demo_view": "e-neuigkeiten",
   "id": "actions-deleteupdateaction--eintrag-loeschen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/neuigkeiten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -4484,8 +4484,8 @@
   "demo_view": "e-neuigkeiten",
   "id": "form--vorschau-im-kundenbereich",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/neuigkeiten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/monatsberichte",
@@ -4496,8 +4496,8 @@
   "demo_view": "e-berichte",
   "id": "actions-savereportsettingsaction--gute-berichte-automatisch-senden",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/monatsberichte/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/monatsberichte",
@@ -4508,8 +4508,8 @@
   "demo_view": "e-berichte",
   "id": "actions-savereportsettingsaction--einstufung-gut-schwach-ziel-leadpreis-absender",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/monatsberichte/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -4520,8 +4520,8 @@
   "demo_view": "e-login",
   "id": "actions-savelogincardaction--infokarten-liste-neue-karte",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -4532,8 +4532,8 @@
   "demo_view": "e-login",
   "id": "actions-savelogincardaction--karte-bearbeiten-badge-titel-text-link-bild",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -4544,8 +4544,8 @@
   "demo_view": "e-login",
   "id": "actions-togglelogincardaction--karte-an-aus",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -4556,8 +4556,8 @@
   "demo_view": "e-login",
   "id": "actions-movelogincardaction--reihenfolge-der-karten-aendern",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -4568,8 +4568,8 @@
   "demo_view": "e-login",
   "id": "actions-deletelogincardaction--karte-loeschen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/login/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -4580,8 +4580,8 @@
   "demo_view": "e-status",
   "id": "actions-createincidentaction--statusmeldung-veroeffentlichen-text-stufe",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -4592,8 +4592,8 @@
   "demo_view": "e-status",
   "id": "actions-resolveincidentaction--meldung-als-behoben-markieren",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -4604,8 +4604,8 @@
   "demo_view": "e-status",
   "id": "actions-deleteincidentaction--meldung-loeschen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -4616,8 +4616,8 @@
   "demo_view": "e-status",
   "id": "page--zustand-jetzt-und-support-kontakt-anzeige",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/status/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/rechner",
@@ -4640,8 +4640,8 @@
   "demo_view": "e-empfehlen",
   "id": "actions-savereferralsettingsaction--programm-aktiv-hinweise-an-kunden-praemie-fest",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/kollegen-empfehlen/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/einrichtung",
@@ -4652,8 +4652,8 @@
   "demo_view": "e-einrichtung",
   "id": "actions-savesetupsettingsaction--meta-business-id-und-erklaervideos-je-schritt",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/einrichtung/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -4664,8 +4664,8 @@
   "demo_view": "e-rechnung",
   "id": "actions-savetaxnumberaction--steuernummer-fuer-rechnungen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/rechnungsangaben/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -4676,8 +4676,8 @@
   "demo_view": "e-rechnung",
   "id": "page--stripe-konto-pruefen-pflichtangaben-testmodus",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/rechnungsangaben/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -4688,8 +4688,8 @@
   "demo_view": "e-rechnung",
   "id": "actions-customerfootersaction--fusszeile-bei-bestehenden-kunden-setzen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/rechnungsangaben/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -4700,8 +4700,8 @@
   "demo_view": "e-rechnung",
   "id": "actions-countinvoicesaction--finalisierte-rechnungen-zaehlen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/rechnungsangaben/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/kosten",
@@ -4844,8 +4844,8 @@
   "demo_view": "e-sicherheit",
   "id": "actions-starttotpsetupaction--zwei-faktor-einrichten-bestaetigen-abschalten",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/sicherheit/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/sicherheit",
@@ -4856,8 +4856,8 @@
   "demo_view": "e-sicherheit",
   "id": "actions-signouteverywhereaction--ueberall-abmelden",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/sicherheit/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/protokoll",
@@ -4868,8 +4868,8 @@
   "demo_view": "e-protokoll",
   "id": "page--aenderungsprotokoll-ansehen",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/protokoll/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/protokoll",
@@ -4880,8 +4880,8 @@
   "demo_view": "e-protokoll",
   "id": "page--protokoll-filtern-nach-kunde-und-art",
   "bereich": "einstellungen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/einstellungen/protokoll/page.tsx"
  },
  {
   "heute": "/api/admin",

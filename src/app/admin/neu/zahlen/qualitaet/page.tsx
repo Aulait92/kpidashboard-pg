@@ -72,7 +72,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
             <NutzungJeKunde report={report} />
           </Aufklapp>
           <Aufklapp titel="Zusatzmodul: Kandidaten fürs Gespräch" offen={!!sp.ankuendigung} funktion="module-card--zusatzmodul-empfehlungen-kandidaten-fuers">
-            <ModuleCandidatesCard message={sp.ankuendigung ?? null} neu />
+            <ModuleCandidatesCard message={sp.ankuendigung ?? null} zurueck="/admin/neu/zahlen/qualitaet" />
           </Aufklapp>
         </section>
       </div>
