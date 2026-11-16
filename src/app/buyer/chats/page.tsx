@@ -431,7 +431,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
                   <MessageCircle className="h-5 w-5" />
                 </span>
-                <span className="font-medium text-[color:var(--foreground)]">Wähle einen Chat aus</span>
+                <span className="font-medium text-[color:var(--foreground)]">Wählen Sie links ein Gespräch aus</span>
 
               </span>
             </div>
