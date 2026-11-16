@@ -4,6 +4,7 @@
 // Aufgabe „Wieder melden“ (ersetzt die 60-Tage-Aufgabe). Abbruch bei Antwort,
 // Abmeldung, Stufe Termin/Gewonnen/Verloren/Ungültig oder „Stoppen“. Abwesenheits-
 // notizen verschieben Mail 2. Versand nur werktags 8–17 Uhr, je Postfach und Tag begrenzt.
+import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { claudeCall, runAgent, type LlmCall } from "@/lib/kampagnen/llm";
@@ -194,6 +195,7 @@ async function stopReasonFor(f: { id: string; contactId: string; replyEmailId: s
   if (!c) return "Kontakt gelöscht";
   if (STOP_STAGES.includes(c.stage)) return `Stufe „${STAGE_LABEL[c.stage]}“`;
   if (await prisma.salesCampaignLead.findFirst({ where: { contactId: f.contactId, unsubscribed: true }, select: { id: true } })) return "Abgemeldet";
+  if (await kontaktGesperrt(f.contactId)) return "Sperrliste";
   const anchor = await anchorOf(f);
   const answered = await prisma.salesEmail.findFirst({
     where: { contactId: f.contactId, direction: "IN", isAutoReply: false, sentAt: { gt: anchor }, ...(f.replyEmailId ? { id: { not: f.replyEmailId } } : {}) },
