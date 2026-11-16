@@ -1,6 +1,6 @@
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import Link from "next/link";
-import { ArrowLeft, Bot, CalendarClock, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
+import { ArrowLeft, Bot, CalendarClock, ChevronRight, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import { LiveRefresh, StickToBottom } from "@/components/live-refresh";
 import { PageHeader } from "@/components/buyer-shell";
@@ -246,17 +246,17 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       </InfoSection>
 
       {active.lead ? (
-        <InfoSection title="Lead">
+        <InfoSection title="Anfrage">
           {active.lead.source ? <InfoRow label="Produkt">{displayProduct(active.lead.source)}</InfoRow> : null}
           {active.lead.status ? (
-            <InfoRow label="Status">{statusLabel(active.lead.status, true)}</InfoRow>
+            <InfoRow label="Phase">{statusLabel(active.lead.status, true)}</InfoRow>
           ) : null}
           <InfoRow label="Eingang">{formatDateTime(active.lead.createdAt)}</InfoRow>
           <Link
             href={`/buyer/leads/${active.lead.id}`}
             className="mt-1 inline-block text-xs font-semibold text-[color:var(--brand)] hover:underline"
           >
-            Lead öffnen →
+            Kontakt öffnen →
           </Link>
         </InfoSection>
       ) : null}
@@ -449,7 +449,15 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-bold">{active.contactName ?? formatPhone(active.contactPhone)}</div>
+                  {/* UX Runde 4: Name öffnet den Kontakt (am Handy war der Weg nur über „Infos“ erreichbar) */}
+                  {active.lead ? (
+                    <Link href={`/buyer/leads/${active.lead.id}`} className="flex min-w-0 items-center gap-0.5 font-bold hover:underline" data-chat-kontakt>
+                      <span className="truncate">{active.contactName ?? formatPhone(active.contactPhone)}</span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                    </Link>
+                  ) : (
+                    <div className="truncate font-bold">{active.contactName ?? formatPhone(active.contactPhone)}</div>
+                  )}
                   <div className={`flex items-center gap-1 text-xs ${active.botActive ? "text-emerald-700" : "text-[color:var(--muted)]"}`}>
                     <Bot className="h-3.5 w-3.5" />
                     {active.botActive ? "Assistent antwortet" : "Sie schreiben selbst"}
@@ -466,8 +474,8 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 {active.lead ? (
                   <Link
                     href={`/buyer/leads/${active.lead.id}`}
-                    aria-label="Lead öffnen"
-                    title="Lead öffnen"
+                    aria-label="Kontakt öffnen"
+                    title="Kontakt öffnen"
                     className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--border-strong)]"
                   >
                     <UserRound className="h-4 w-4" />
@@ -506,7 +514,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               {/* Lead-Infos: unter xl als aufklappbarer Block, ab xl rechts */}
               <details className="border-b border-[color:var(--border)] bg-white xl:hidden">
                 <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-[color:var(--brand)]">
-                  {appointments.length > 0 ? `Termin ${formatAppt(appointments[0].startsAt)} Uhr · Infos` : "Infos zum Lead"}
+                  {appointments.length > 0 ? `Termin ${formatAppt(appointments[0].startsAt)} Uhr · Infos` : "Infos zum Kontakt"}
                 </summary>
                 {/* Ole, 16.11.2026: am Handy unten abgeschnitten (fester Chat-Rahmen). Eigener Scrollbereich. */}
                 <div className="max-h-[55dvh] overflow-y-auto overscroll-contain px-4 pb-4" data-lead-infos>
