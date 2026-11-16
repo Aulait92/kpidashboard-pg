@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { getAppUrl, sendOfferEmail } from "@/lib/email";
 import { createOffer, type OfferFormInput } from "@/lib/offers";
-import { offerSetupDiscount } from "@/lib/offer-pricing";
+import { abschlussBonusJetzt, berlinTagesendeIso, berlinTodayIso, isIsoDate, offerSetupDiscount } from "@/lib/offer-pricing";
 import { prisma } from "@/lib/prisma";
 import { customerGreeting, logOfferActivity, offerAdminHref, type OfferTarget } from "@/lib/offer-links";
 import { AUDIENCE_LABEL, getPresentation, isAudience, rechnerUrl, type Audience } from "@/lib/vertrieb/praesentationen";
@@ -36,7 +36,9 @@ export async function createOfferAction(
     await logOfferActivity(
       offer,
       `Angebot ${offer.number} erstellt`,
-      `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup${offer.setupDiscount != null ? ` (nach ${offer.setupDiscountLabel ?? "Empfehlungsrabatt"})` : ""} · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)`,
+      `${Number(offer.setupFee).toLocaleString("de-DE")} € Setup${offer.setupDiscount != null ? ` (nach ${offer.setupDiscountLabel ?? "Empfehlungsrabatt"})` : ""} · ${Number(offer.monthlyFee).toLocaleString("de-DE")} € / Monat (netto)${
+        offer.abschlussBonus != null ? ` · Abschlussbonus ${Number(offer.abschlussBonus).toLocaleString("de-DE")} €` : ""
+      }`,
       session.userId,
     );
     revalidatePath(offerAdminHref(offer));
@@ -113,6 +115,7 @@ export async function sendOfferEmailAction(
     discount: disc
       ? { label: offer.setupDiscountLabel || "Empfehlungsrabatt", discount: disc.discount, list: disc.list, fee: Number(offer.setupFee), anyTerm: offer.customerChoosesTerm }
       : null,
+    bonus: offer.isTest ? null : abschlussBonusJetzt(offer),
     rechnerUrl: rechner,
     praesentationUrl,
     attachment,
@@ -185,6 +188,30 @@ export async function deleteOfferAction(offerId: string): Promise<OfferActionRes
   if (offer.salesContactId) await logOfferActivity(offer, `Angebot ${offer.number} gelöscht`);
   revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
+  return { ok: true };
+}
+
+/**
+ * Frist des Abschlussbonus verschieben (Ole, 16.11.2026): gilt bis 23:59 Uhr (Berlin) des gewählten Tages.
+ * Nur solange die Einrichtung noch nicht bezahlt ist.
+ */
+export async function setAbschlussBonusAction(offerId: string, input: { bis: string }): Promise<OfferActionResult> {
+  const session = await requireAdmin();
+  if (!isIsoDate(input.bis)) return { ok: false, error: "Bitte ein gültiges Datum wählen." };
+  if (input.bis < berlinTodayIso()) return { ok: false, error: "Die Frist kann nicht in der Vergangenheit liegen." };
+  const offer = await prisma.offer.findUnique({ where: { id: offerId } });
+  if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
+  if (offer.abschlussBonus == null) return { ok: false, error: "Dieses Angebot hat keinen Abschlussbonus." };
+  if (offer.abschlussBonusGewaehrt != null || offer.paymentStatus === "paid" || offer.paymentStatus === "processing") {
+    return { ok: false, error: "Die Einrichtung ist schon bezahlt." };
+  }
+  const bis = berlinTagesendeIso(input.bis);
+  await prisma.offer.update({ where: { id: offerId }, data: { abschlussBonusBis: bis } });
+  if (offer.salesContactId || offer.dealId) {
+    await logOfferActivity(offer, `Abschlussbonus ${offer.number}: Frist bis ${input.bis.split("-").reverse().join(".")}, 23:59 Uhr`, undefined, session.userId);
+  }
+  revalidatePath(offerAdminHref(offer));
+  revalidatePath(`/angebot/${offer.token}`);
   return { ok: true };
 }
 

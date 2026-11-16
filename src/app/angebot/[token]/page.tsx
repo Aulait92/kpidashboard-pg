@@ -4,6 +4,8 @@ import { OfferDocument, offerProducts, toOfferDoc } from "@/components/offer-doc
 import { getCurrentSession } from "@/lib/auth";
 import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerSummaryInput } from "@/lib/offers";
 import {
+  abschlussBonusJetzt,
+  addDaysIso,
   berlinTodayIso,
   normalizeTerm,
   offerAddOns,
@@ -67,6 +69,8 @@ export default async function OfferPage({
 
   const expired = offer.validUntil.getTime() < nowMs();
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;
+  // Abschlussbonus (Ole, 16.11.2026): nur echte Angebote mit Online-Zahlung, solange die Frist läuft
+  const bonus = !offer.isTest && billingEnabled() ? abschlussBonusJetzt(offer, new Date(nowMs())) : null;
 
   return (
     <main className="min-h-screen bg-[#eef2f8] px-3 py-6 sm:px-4 sm:py-12">
@@ -94,6 +98,7 @@ export default async function OfferPage({
             returned={zahlung ?? null}
             enabled={billingEnabled()}
             payLater={payLaterProps(offer)}
+            bonus={bonus}
           />
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
@@ -111,6 +116,7 @@ export default async function OfferPage({
                 </p>
               ) : canAccept ? (
                 <div className="mt-4">
+                  {bonus ? <BonusHinweis bonus={bonus} /> : null}
                   <AcceptForm
                     token={token}
                     termsUrl={offer.termsUrl!}
@@ -137,7 +143,9 @@ export default async function OfferPage({
             <div className="h-20" />
             <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#e5e7eb] bg-white/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur">
               <div className="mx-auto flex max-w-[880px] items-center justify-between gap-3">
-                <span className="hidden text-sm text-[#374151] sm:block">Alles klar? Dann hier annehmen.</span>
+                <span className="hidden text-sm text-[#374151] sm:block">
+                  {bonus ? `Abschlussbonus: ${eurBonus(bonus.betrag)} weniger Setup ${fristText(bonus.bis)}` : "Alles klar? Dann hier annehmen."}
+                </span>
                 <a
                   href="#annehmen"
                   className="inline-flex h-12 w-full items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--brand)] px-6 text-[15px] font-semibold text-white hover:bg-[color:var(--brand-dark)] sm:w-auto"
@@ -188,18 +196,46 @@ function payLaterProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByTo
   return bounds ? { ...bounds, current: tagIso(offer.paymentReminderAt) } : null;
 }
 
+const eurBonus = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(n)} €`;
+const TAG_FMT = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" });
+
+/** „heute bis 23:59 Uhr“, „morgen bis 23:59 Uhr“ oder „bis Dienstag, 17. November, 23:59 Uhr“. */
+function fristText(bis: Date): string {
+  const tag = berlinTodayIso(bis);
+  const heute = berlinTodayIso(new Date(nowMs()));
+  if (tag === heute) return "heute bis 23:59 Uhr";
+  if (tag === addDaysIso(heute, 1)) return "morgen bis 23:59 Uhr";
+  return `bis ${TAG_FMT.format(bis)}, 23:59 Uhr`;
+}
+
+/** Hinweis zum Abschlussbonus über der Annahme bzw. der Zahlung. Keine Gedankenstriche (Text an Kunden). */
+function BonusHinweis({ bonus, zahlung = false }: { bonus: { betrag: number; bis: Date }; zahlung?: boolean }) {
+  return (
+    <div className="mb-4 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900" data-abschlussbonus>
+      <div className="font-semibold">Abschlussbonus: {eurBonus(bonus.betrag)} weniger Setup</div>
+      <p className="mt-0.5 text-sm">
+        {zahlung
+          ? `Zahlen Sie das Setup ${fristText(bonus.bis)}, dann ist der Bonus schon abgezogen. Ihren Start wählen Sie trotzdem frei.`
+          : `Wenn Sie ${fristText(bonus.bis)} annehmen und das Setup bezahlen. Ihren Start wählen Sie trotzdem frei.`}
+      </p>
+    </div>
+  );
+}
+
 function PaymentBox({
   token,
   status,
   returned,
   enabled,
   payLater,
+  bonus,
 }: {
   token: string;
   status: string;
   returned: string | null;
   enabled: boolean;
   payLater: { min: string; max: string | null; current: string | null } | null;
+  bonus: { betrag: number; bis: Date } | null;
 }) {
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
   if (status === "paid") {
@@ -239,6 +275,7 @@ function PaymentBox({
       <p className="mb-4 mt-1 text-sm text-[color:var(--muted)]">
         Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.
       </p>
+      {bonus ? <BonusHinweis bonus={bonus} zahlung /> : null}
       <PayButton token={token} />
       {payLater ? <PayLater token={token} {...payLater} /> : null}
     </div>

@@ -107,6 +107,8 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
           ...(idOf(session.customer) ? { stripeCustomerId: idOf(session.customer) } : {}),
           ...(paid ? { paidAt: offer.paidAt ?? new Date() } : {}),
+          // Abschlussbonus: auf der bezahlten Seite abgezogen (Metadaten der Bezahlseite, Ole 16.11.2026)
+          ...(!failed && session.metadata?.pg_bonus ? { abschlussBonusGewaehrt: Number(session.metadata.pg_bonus) / 100 } : {}),
         },
       });
       // Zahlung erst nach dem Startdatum: Start auf den nächsten Monatsersten verschieben (nichts rückwirkend),

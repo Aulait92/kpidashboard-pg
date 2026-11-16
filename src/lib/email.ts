@@ -248,6 +248,8 @@ export async function sendOfferEmail(opts: {
   du?: boolean;
   /** Empfehlungsrabatt auf die Einrichtung (eigene Zeile, Listenpreis durchgestrichen). */
   discount?: { label: string; discount: number; list: number; fee: number; anyTerm: boolean } | null;
+  /** Abschlussbonus (Ole, 16.11.2026): Betrag netto und Frist */
+  bonus?: { betrag: number; bis: Date } | null;
 }): Promise<SendResult & { subject?: string; text?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = brandFrom(process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
@@ -261,6 +263,7 @@ export async function sendOfferEmail(opts: {
   const greeting = escapeHtml(opts.greeting);
   const subject = `${t.subject} (${opts.number})`;
   const discount = opts.discount ? offerDiscountLine(opts.discount) : null;
+  const bonusText = opts.bonus ? offerBonusLine(opts.bonus, !!opts.du) : null;
   const text = [
     opts.greeting,
     "",
@@ -270,6 +273,7 @@ export async function sendOfferEmail(opts: {
     `${t.accept} Das Angebot gilt bis ${until}.`,
     "",
     ...(discount ? [discount.text, ""] : []),
+    ...(bonusText ? [bonusText, ""] : []),
     ...(rechner ? [`${t.rechner}:`, rechner, ""] : []),
     ...(praes ? [`${t.praesentation}:`, praes, ""] : []),
     ...(termin ? [`${t.termin}:`, termin, ""] : []),
@@ -291,6 +295,7 @@ export async function sendOfferEmail(opts: {
           <p style="margin:24px 0"><a href="${opts.offerUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Angebot ansehen</a></p>
           <p style="margin:0 0 16px;font-size:13px;color:#5b5e68">Angebot ${escapeHtml(opts.number)} · gültig bis ${until}</p>
           ${discount ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${discount.html}</p>` : ""}
+          ${bonusText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#047857">${escapeHtml(bonusText)}</p>` : ""}
           ${rechner ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.rechner}: <a href="${escapeHtml(rechner)}" style="color:#2563eb;font-weight:600">Zum Rechner</a></p>` : ""}
           ${praes ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.praesentation}: <a href="${escapeHtml(praes)}" style="color:#2563eb;font-weight:600">Zur Präsentation</a></p>` : ""}
           ${termin ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6">${t.termin}: <a href="${escapeHtml(termin)}" style="color:#2563eb;font-weight:600">Termin wählen</a></p>` : ""}
@@ -305,6 +310,15 @@ export async function sendOfferEmail(opts: {
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Versand fehlgeschlagen" };
   }
+}
+
+/** Zeile zum Abschlussbonus in der Angebotsmail (ohne Gedankenstriche). */
+export function offerBonusLine(b: { betrag: number; bis: Date }, du: boolean): string {
+  const betrag = `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(b.betrag)} €`;
+  const tag = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" }).format(b.bis);
+  return du
+    ? `Abschlussbonus: Wenn du bis ${tag}, 23:59 Uhr annimmst und das Setup bezahlst, sparst du ${betrag} beim Setup. Deinen Start wählst du trotzdem frei.`
+    : `Abschlussbonus: Wenn Sie bis ${tag}, 23:59 Uhr annehmen und das Setup bezahlen, sparen Sie ${betrag} beim Setup. Ihren Start wählen Sie trotzdem frei.`;
 }
 
 /** Teilschritte der Einrichtung in der Reihenfolge der Einrichtungsseite. */

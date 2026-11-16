@@ -18,7 +18,9 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
-import { annualMultiplier, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pricing";
+import { abschlussBonusJetzt, annualMultiplier, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pricing";
+
+const round2Billing = (n: number) => Math.round(n * 100) / 100;
 import { audit, type AuditActor } from "@/lib/audit";
 import { seatsToBill } from "@/lib/seats";
 import { MANUAL_SEAT_TASK, manualSeatTask, seatUsage } from "@/lib/seats-server";
@@ -237,10 +239,14 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
     // Empfehlungsrabatt: Listenpreis als Posten, Rabatt als einmaliger Gutschein auf den
     // Setup-Posten. So steht auf der Rechnung „Empfehlungsrabatt“, der Betrag = setupFee.
     const discount = setupFee > 0 ? offerSetupDiscount(offer) : null;
+    // Abschlussbonus (Ole, 16.11.2026): nur, solange die Frist läuft; die Bezahlseite läuft zur Frist ab
+    const bonus = setupFee > 0 ? abschlussBonusJetzt(offer) : null;
+    const nachlass = round2Billing((discount?.discount ?? 0) + (bonus?.betrag ?? 0));
+    const listPreis = discount ? discount.list : setupFee;
     // Positionen und Zahlart dieser Bezahlseite: gleich → offene Seite wiederverwenden
     const fingerprint = crypto
       .createHash("sha256")
-      .update(JSON.stringify([setupFee > 0 ? "payment" : "setup", offer.package, cents(setupFee), discount ? [cents(discount.list), cents(discount.discount)] : null, zahlart ?? null, customerId, tax.automatic ? "auto" : tax.rateId]))
+      .update(JSON.stringify([setupFee > 0 ? "payment" : "setup", offer.package, cents(setupFee), discount ? [cents(discount.list), cents(discount.discount)] : null, bonus ? [cents(bonus.betrag), bonus.bis.getTime()] : null, zahlart ?? null, customerId, tax.automatic ? "auto" : tax.rateId]))
       .digest("hex")
       .slice(0, 24);
     if (offer.stripeCheckoutSessionId) {
@@ -251,20 +257,27 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
         return reuse;
       }
     }
-    const coupon = discount
-      ? await stripe.coupons.create(
-          {
-            amount_off: cents(discount.discount),
-            currency: "eur",
-            duration: "once",
-            max_redemptions: 1,
-            name: "Empfehlungsrabatt",
-            applies_to: { products: [setup] },
-            metadata: { ...meta, pg_kind: "empfehlungsrabatt", referral_id: offer.referralId ?? "" },
-          },
-          { idempotencyKey: `offer-coupon-${offer.id}-${cents(discount.discount)}-${cents(discount.list)}` },
-        )
-      : null;
+    // Stripe erlaubt einen Gutschein je Bezahlseite: Empfehlungsrabatt und Abschlussbonus zusammen
+    const couponName = discount && bonus ? "Empfehlungsrabatt und Abschlussbonus" : bonus ? "Abschlussbonus" : "Empfehlungsrabatt";
+    const coupon =
+      nachlass > 0.005
+        ? await stripe.coupons.create(
+            {
+              amount_off: cents(nachlass),
+              currency: "eur",
+              duration: "once",
+              max_redemptions: 1,
+              name: couponName,
+              applies_to: { products: [setup] },
+              ...(bonus ? { redeem_by: Math.floor(bonus.bis.getTime() / 1000) + 3600 } : {}),
+              metadata: { ...meta, pg_kind: bonus ? (discount ? "empfehlungsrabatt+abschlussbonus" : "abschlussbonus") : "empfehlungsrabatt", referral_id: offer.referralId ?? "" },
+            },
+            { idempotencyKey: `offer-coupon-${offer.id}-${cents(discount?.discount ?? 0)}-${cents(discount?.list ?? 0)}-${cents(bonus?.betrag ?? 0)}-${bonus?.bis.getTime() ?? 0}` },
+          )
+        : null;
+    // Bezahlseite mit Bonus läuft zur Frist ab (Stripe: frühestens 30 Minuten, spätestens 24 Stunden)
+    const jetztSek = Math.floor(Date.now() / 1000);
+    const ablauf = bonus ? Math.min(jetztSek + 24 * 3600 - 60, Math.max(jetztSek + 31 * 60, Math.floor(bonus.bis.getTime() / 1000))) : null;
     const base = getAppUrl();
     const common = {
       customer: customerId,
@@ -274,7 +287,8 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
       locale: "de" as const,
       client_reference_id: offer.id,
       integration_identifier: "pg-angebot-qkzvmtrb",
-      metadata: { ...meta, pg_checkout: fingerprint },
+      metadata: { ...meta, pg_checkout: fingerprint, ...(bonus ? { pg_bonus: String(cents(bonus.betrag)) } : {}) },
+      ...(ablauf ? { expires_at: ablauf } : {}),
       success_url: `${base}/angebot/${offer.token}?zahlung=ok`,
       cancel_url: `${base}/angebot/${offer.token}?zahlung=abgebrochen`,
     };
@@ -292,7 +306,7 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
                 price_data: {
                   currency: "eur",
                   product: setup,
-                  unit_amount: cents(discount ? discount.list : setupFee),
+                  unit_amount: cents(listPreis),
                   tax_behavior: "exclusive",
                 },
                 ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),

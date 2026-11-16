@@ -481,3 +481,54 @@ export function tierStaffelText(): string {
   });
   return `Preisstaffel nach Werbebudget im Monat (netto): ${parts.join("; ")}; über ${de(PRICE_LIST.individualFrom)} € individuelles Angebot. Ändern Sie Ihr Budget dauerhaft, gilt die passende Stufe ab dem folgenden Abrechnungsmonat; Sie sehen sie vorher im Kundenbereich.`;
 }
+
+// ─── Abschlussbonus (Ole, 16.11.2026) ───────────────────────────────────────
+// Nachlass auf die Einrichtung, wenn der Vermittler am selben Tag annimmt UND die Einrichtung bezahlt (bzw. die
+// Lastschrift erteilt). Start bleibt frei wählbar. Die Frist ist echt: danach gilt automatisch der normale Preis.
+
+/** Standardbetrag für neue Angebote (netto). */
+export const ABSCHLUSSBONUS_STANDARD = 300;
+
+/** 23:59:59 Uhr (Berlin) des Tages von `d`. */
+export function berlinTagesende(d: Date): Date {
+  const iso = berlinTodayIso(d);
+  // Mitternacht des Folgetags in Berlin minus 1 Sekunde; Offset per Rückrechnung ermitteln (Sommer-/Winterzeit)
+  const next = addDaysIso(iso, 1);
+  const guess = new Date(`${next}T00:00:00Z`);
+  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(guess));
+  return new Date(guess.getTime() - h * 3600_000 - 1000);
+}
+
+/** 23:59:59 Uhr (Berlin) eines Kalendertags YYYY-MM-DD. */
+export function berlinTagesendeIso(iso: string): Date {
+  return berlinTagesende(new Date(`${iso}T12:00:00Z`));
+}
+
+/** Vorschlag für die Frist: heute, ab 18 Uhr (Berlin) der Folgetag. */
+export function abschlussBonusStandardTag(now: Date = new Date()): string {
+  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(now));
+  const heute = berlinTodayIso(now);
+  return h >= 18 ? addDaysIso(heute, 1) : heute;
+}
+
+export type AbschlussBonusQuelle = {
+  abschlussBonus?: unknown;
+  abschlussBonusBis?: Date | null;
+  sentAt?: Date | null;
+  createdAt: Date;
+  setupFee: unknown;
+};
+
+/** Frist des Bonus: gesetzte Frist, sonst Versandtag (bzw. Erstellungstag) 23:59 Uhr Berlin; null ohne Bonus. */
+export function abschlussBonusFrist(o: AbschlussBonusQuelle): Date | null {
+  if (o.abschlussBonus == null || !(Number(o.abschlussBonus) > 0)) return null;
+  return o.abschlussBonusBis ?? berlinTagesende(o.sentAt ?? o.createdAt);
+}
+
+/** Bonus, der jetzt noch gilt (höchstens die Einrichtung selbst); null, wenn keiner oder abgelaufen. */
+export function abschlussBonusJetzt(o: AbschlussBonusQuelle, now: Date = new Date()): { betrag: number; bis: Date } | null {
+  const bis = abschlussBonusFrist(o);
+  if (!bis || now.getTime() > bis.getTime()) return null;
+  const betrag = Math.min(round2(Number(o.abschlussBonus)), round2(Number(o.setupFee)));
+  return betrag > 0.005 ? { betrag, bis } : null;
+}

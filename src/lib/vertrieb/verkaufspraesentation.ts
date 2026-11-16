@@ -7,7 +7,7 @@
 //
 // Texte gehen an Interessenten: keine Gedankenstriche (Bis-Striche in Zahlenbereichen sind ok), Minus als „−“.
 
-import { normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, type OfferTerm } from "@/lib/offer-pricing";
+import { ABSCHLUSSBONUS_STANDARD, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
 export type VerkaufsAudience = "vertreter" | "makler";
@@ -18,10 +18,11 @@ export const BILD_BASIS = "/praesentation/vertrieb";
 // Startet mit Folie 1 (Ole, 15.11.2026), nicht mehr auf dem Vergleich
 export const DEMO_EINGEBETTET = "/demo/beratung?eingebettet=1";
 
-type Art = "bild" | "video" | "demo" | "rechnung" | "paket";
-export type VerkaufsFolieDef = { nr: number; titel: string; art: Art };
+type Art = "bild" | "video" | "demo" | "rechnung" | "paket" | "bonus";
+/** nr: Position in der Präsentation; bild: Nummer des Folienbilds aus der PPTX (Bild-, Video- und Demofolien). */
+export type VerkaufsFolieDef = { nr: number; titel: string; art: Art; bild: number };
 
-const GEMEINSAM: Omit<VerkaufsFolieDef, "nr">[] = [
+const GEMEINSAM: Omit<VerkaufsFolieDef, "nr" | "bild">[] = [
   { titel: "Alles Wichtige zur Leadgenerierung", art: "bild" },
   { titel: "Wer sind wir?", art: "bild" },
   { titel: "Ole Kannapinn", art: "bild" },
@@ -42,7 +43,7 @@ const GEMEINSAM: Omit<VerkaufsFolieDef, "nr">[] = [
   { titel: "Sie wissen jederzeit, ob es sich rechnet", art: "bild" },
 ];
 
-const ENDE: Record<VerkaufsAudience, Omit<VerkaufsFolieDef, "nr">[]> = {
+const ENDE: Record<VerkaufsAudience, Omit<VerkaufsFolieDef, "nr" | "bild">[]> = {
   vertreter: [
     { titel: "Rechnet sich das?", art: "rechnung" },
     { titel: "Ihr Paket: Leads + Software", art: "paket" },
@@ -59,9 +60,17 @@ const ENDE: Record<VerkaufsAudience, Omit<VerkaufsFolieDef, "nr">[]> = {
   ],
 };
 
-/** Folienliste je Zielgruppe (Vertreter 22, Makler 23), Nummern wie in den PPTX. */
-export function folienListe(audience: VerkaufsAudience): VerkaufsFolieDef[] {
-  return [...GEMEINSAM, ...ENDE[audience]].map((f, i) => ({ ...f, nr: i + 1 }));
+/** Folie „Ihr Abschlussbonus“ (Ole, 16.11.2026): direkt nach „Ihr Paket“, nicht in den PPTX. */
+export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
+
+/**
+ * Folienliste je Zielgruppe (Vertreter 22, Makler 23 Folien aus den PPTX, Bildnummern wie dort), dazu nach
+ * „Ihr Paket“ die Folie zum Abschlussbonus (mitBonus, Standard an).
+ */
+export function folienListe(audience: VerkaufsAudience, mitBonus = true): VerkaufsFolieDef[] {
+  const basis = [...GEMEINSAM, ...ENDE[audience]].map((f, i) => ({ ...f, bild: i + 1 }));
+  const liste = basis.flatMap((f) => (mitBonus && f.art === "paket" ? [f, { titel: BONUS_FOLIE_TITEL, art: "bonus" as const, bild: 0 }] : [f]));
+  return liste.map((f, i) => ({ ...f, nr: i + 1 }));
 }
 
 export const bildUrl = (audience: VerkaufsAudience, nr: number) => `${BILD_BASIS}/${audience}/${String(nr).padStart(2, "0")}.webp`;
@@ -90,6 +99,8 @@ export type AngebotFuerFolien = {
   setupDiscount: number | null;
   introMonthlyFee: number | null;
   introMonths: number | null;
+  /** Abschlussbonus, der jetzt noch gilt (abschlussBonusJetzt); null = keiner oder abgelaufen. */
+  abschlussBonus?: { betrag: number; bis: Date } | null;
 };
 
 /** Zielgruppe: Angebot (Makler/Vertreter) geht vor, sonst der Kontakt („Makler“ laut Anreicherung), sonst Vertreter. */
@@ -125,6 +136,8 @@ export type PaketDaten = {
   produkte: { name: string; tagesbudget: number }[];
   team: string;
   pause: string;
+  /** Abschlussbonus: Setup vorher/nachher (netto); bis = Frist, null = „heute“ (Listenpreise, noch kein Angebot). */
+  bonus: { betrag: number; setupVorher: number; setupNachher: number; bis: Date | null } | null;
 };
 
 const eur0 = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: n % 1 ? 2 : 0, minimumFractionDigits: n % 1 ? 2 : 0 }).format(n)} €`;
@@ -165,6 +178,11 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
       produkte: [],
       team,
       pause: `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.`,
+      bonus: (() => {
+        const vorher = audience === "makler" ? PRICE_LIST.setup12m : PRICE_LIST.setupNoTerm;
+        const betrag = Math.min(ABSCHLUSSBONUS_STANDARD, vorher);
+        return betrag > 0 ? { betrag, setupVorher: vorher, setupNachher: vorher - betrag, bis: null } : null;
+      })(),
     };
   }
 
@@ -222,6 +240,9 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     produkte,
     team: software ? `Ihr Angebot: ${seats} Berater, davon ${inkl} inklusive. Jeder weitere ${eur0(add.hasSeats ? add.seatMonthly : PRICE_LIST.seatMonthly)} netto im Monat.` : team,
     pause: software ? `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.` : "Anzeigen stoppen automatisch, die Betreuung pausiert mit.",
+    bonus: angebot.abschlussBonus
+      ? { betrag: angebot.abschlussBonus.betrag, setupVorher: angebot.setupFee, setupNachher: Math.round((angebot.setupFee - angebot.abschlussBonus.betrag) * 100) / 100, bis: angebot.abschlussBonus.bis }
+      : null,
   };
 }
 
@@ -400,6 +421,38 @@ export function paketFolie(p: PaketDaten, audience: VerkaufsAudience, nr: number
   return rahmen("Ihr Paket", inhalt, nr, gesamt, fuss);
 }
 
+const FRIST_FMT = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+
+/** Frist als Text: „heute bis 23:59 Uhr“ (ohne Angebot) bzw. „bis Montag, 16. November, 23:59 Uhr“. */
+export function bonusFristText(bis: Date | null): string {
+  return bis ? `bis ${FRIST_FMT.format(bis).replace(" um ", ", ")} Uhr` : "heute bis 23:59 Uhr";
+}
+
+/** „Ihr Abschlussbonus“ (Ole, 16.11.2026): Setup günstiger bei Annahme und Zahlung am selben Tag, Start frei wählbar. */
+export function bonusFolie(p: PaketDaten, b: NonNullable<PaketDaten["bonus"]>, nr: number, gesamt: number): string {
+  const frist = bonusFristText(b.bis);
+  const schritt = (n: number, titel: string, text: string) =>
+    `<div class="vk-karte vk-box" style="padding:18px 22px"><i style="font-weight:800">${n}</i><div><b>${e(titel)}</b><span>${e(text)}</span></div></div>`;
+  const inhalt = `<div class="vk-chips"><span class="vk-chip gruen">Einmaliges Angebot</span>${angebotChip(p)}</div>
+<h2>Ihr Abschlussbonus: ${e(euro(b.betrag))} weniger Setup</h2>
+<div style="display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-top:22px">
+<div style="display:grid;gap:12px">
+${schritt(1, "Angebot annehmen", `Mit einem Klick auf Ihrer Angebotsseite, ${frist}.`)}
+${schritt(2, "Setup bezahlen", "Direkt im Anschluss per Karte oder Lastschrift. Der Bonus ist schon abgezogen.")}
+${schritt(3, "Start frei wählen", "Sie bestimmen, wann Ihre Kampagne live geht, zum Beispiel erst nach dem Urlaub oder zum Monatsanfang.")}
+</div>
+<div class="vk-karte" style="padding:22px 26px"><div class="vk-label">Einmalig: Setup</div>
+<div class="vk-zeile" style="margin-top:8px"><span>Setup regulär</span><b style="color:#64748b;text-decoration:line-through">${e(euro(b.setupVorher))}</b></div>
+<div class="vk-zeile"><span>${MINUS} Abschlussbonus</span><b class="vk-plus">${MINUS} ${e(euro(b.betrag))}</b></div>
+<div class="vk-zeile summe" style="font-size:20px;padding-top:12px"><span>Ihr Setup</span><b style="font-size:34px;color:#2563eb">${e(euro(b.setupNachher))}</b></div>
+<div class="vk-gruen">Sie sparen ${e(euro(b.betrag))}, wenn Sie ${e(frist)} annehmen und bezahlen.</div>
+<div class="vk-hinweis">Warum? Wir planen Ihre Einrichtung sofort fest ein. Wann es losgeht, entscheiden Sie.</div>
+</div>
+</div>`;
+  const fuss = `Gilt bei Annahme des Angebots und Zahlung des Setups ${e(frist)}. Danach gilt automatisch das reguläre Setup. Monatliche Preise bleiben unverändert. Alle Preise zzgl. 19 % USt.`;
+  return rahmen("Ihr Vorteil", inhalt, nr, gesamt, fuss);
+}
+
 /** „Rechnet sich das?“ (Vertreter) bzw. „Rechnet sich das, als Makler?“ mit Angebots- bzw. Listenpreisen. */
 export function rechnungFolie(p: PaketDaten, audience: VerkaufsAudience, nr: number, gesamt: number): string {
   return audience === "makler" ? maklerFolie(p, nr, gesamt) : vertreterFolie(p, nr, gesamt);
@@ -478,14 +531,14 @@ function maklerFolie(p: PaketDaten, nr: number, gesamt: number): string {
 
 /** Alle Folien einer Zielgruppe. demoSrc: Adresse der eingebetteten Live-Demo (gleiche Herkunft). */
 export function verkaufsFolien(audience: VerkaufsAudience, p: PaketDaten, demoSrc = DEMO_EINGEBETTET): VerkaufsFolie[] {
-  const liste = folienListe(audience);
+  const liste = folienListe(audience, p.bonus != null);
   const gesamt = liste.length;
   return liste.map((f) => {
     const id = `folie-${f.nr}`;
-    const bild = `<img src="${bildUrl(audience, f.nr)}" alt="${e(f.titel)}" draggable="false">`;
+    const bild = `<img src="${bildUrl(audience, f.bild)}" alt="${e(f.titel)}" draggable="false">`;
     switch (f.art) {
       case "video":
-        return { id, titel: f.titel, html: `<section class="vk vk-bild"><video src="${BILD_BASIS}/assistent.mp4" poster="${bildUrl(audience, f.nr)}" autoplay muted playsinline controls preload="metadata"></video></section>` };
+        return { id, titel: f.titel, html: `<section class="vk vk-bild"><video src="${BILD_BASIS}/assistent.mp4" poster="${bildUrl(audience, f.bild)}" autoplay muted playsinline controls preload="metadata"></video></section>` };
       case "demo":
         return {
           id,
@@ -496,6 +549,8 @@ export function verkaufsFolien(audience: VerkaufsAudience, p: PaketDaten, demoSr
         return { id, titel: f.titel, html: rechnungFolie(p, audience, f.nr, gesamt) };
       case "paket":
         return { id, titel: f.titel, html: paketFolie(p, audience, f.nr, gesamt) };
+      case "bonus":
+        return { id, titel: f.titel, html: p.bonus ? bonusFolie(p, p.bonus, f.nr, gesamt) : "" };
       default:
         return { id, titel: f.titel, html: `<section class="vk vk-bild">${bild}</section>` };
     }

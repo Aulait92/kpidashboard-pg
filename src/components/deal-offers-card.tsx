@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send, Trash2 } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
-import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
+import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
 
 export type DealOfferRow = {
@@ -41,6 +41,11 @@ export type DealOfferRow = {
   nextReminder: string | null;
   paymentSetUp: boolean;
   reminderBounds: { min: string; max: string | null } | null;
+  /** Abschlussbonus netto (null = keiner), Frist (ISO) und ob er schon abgezogen wurde */
+  abschlussBonus: number | null;
+  abschlussBonusBis: string | null;
+  abschlussBonusGewaehrt: number | null;
+  abschlussBonusAbgelaufen: boolean;
 };
 
 const PAYMENT: Record<string, { label: string; tone: "neutral" | "info" | "success" | "warning" | "danger" }> = {
@@ -151,6 +156,7 @@ export function DealOffersCard({
                 </li>
               ) : null}
             </ul>
+            {current.abschlussBonus ? <AbschlussBonusFrist offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
             {current.status === "accepted" && !current.isTest && !current.paymentSetUp ? (
               <PaymentReminder offer={current} onDone={(m) => { flash(m); router.refresh(); }} />
             ) : null}
@@ -279,6 +285,51 @@ export function DealOffersCard({
         ) : null}
       </Card>
     </div>
+  );
+}
+
+const berlinTag = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date(iso));
+
+/** Abschlussbonus: Frist ansehen und verschieben (Ole, 16.11.2026: „abends setze ich die Frist auf den Folgetag“). */
+function AbschlussBonusFrist({ offer, onDone }: { offer: DealOfferRow; onDone: (msg: string) => void }) {
+  const tag = offer.abschlussBonusBis ? berlinTag(offer.abschlussBonusBis) : "";
+  const [date, setDate] = useState(tag);
+  const [pending, start] = useTransition();
+  const betrag = eur(offer.abschlussBonus ?? 0);
+  if (offer.abschlussBonusGewaehrt != null) {
+    return <p className="text-xs font-medium text-emerald-700" data-abschlussbonus>Abschlussbonus {eur(offer.abschlussBonusGewaehrt)} genutzt</p>;
+  }
+  const offen = offer.status === "draft" || offer.status === "sent" || (offer.status === "accepted" && !offer.paymentSetUp);
+  const abgelaufen = offer.abschlussBonusAbgelaufen;
+  if (!offen) return null;
+  return (
+    <form
+      className="flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm"
+      data-abschlussbonus
+      onSubmit={(e) => {
+        e.preventDefault();
+        start(async () => {
+          const res = await setAbschlussBonusAction(offer.id, { bis: date });
+          if (!res.ok) alert(res.error);
+          else onDone(`Abschlussbonus gilt bis ${fmtTag(date)}, 23:59 Uhr`);
+        });
+      }}
+    >
+      <label htmlFor={`bonus-${offer.id}`} className="text-xs font-medium text-[color:var(--muted)]">
+        Abschlussbonus {betrag} {abgelaufen ? "(abgelaufen) " : ""}gilt bis
+      </label>
+      <input
+        id={`bonus-${offer.id}`}
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2 text-sm"
+      />
+      <span className="text-xs text-[color:var(--muted)]">23:59 Uhr</span>
+      <Button type="submit" variant="secondary" disabled={pending || !date || date === tag}>
+        Speichern
+      </Button>
+    </form>
   );
 }
 
