@@ -6,7 +6,11 @@ import { dayKey, fmtDate, fmtDateTime, timeKey, todayKey } from "@/lib/vertrieb/
 import { stripQuoted } from "@/lib/vertrieb/instantly";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
-import { ContactEmails, DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { ContactEmails, ContactPhones, DuplicateHint } from "@/components/vertrieb/contact-merge";
+import { detectedDataOf } from "@/lib/vertrieb/kontaktdaten-server";
+import { KIND_LABEL, sourceLabel } from "@/lib/vertrieb/kontaktdaten";
+import type { PhoneKind } from "@/lib/vertrieb/dubletten";
+import { formatPhone } from "@/lib/format";
 import { likelyDuplicates } from "@/lib/vertrieb/contact-merge";
 import { ArrowLeft, Mail, Phone, Presentation, Trash2 } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
@@ -53,9 +57,25 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
       meetings: { orderBy: { startAt: "desc" } },
       offers: { orderBy: { createdAt: "desc" } },
       followups: { orderBy: { createdAt: "desc" }, take: 5 },
+      phones: { orderBy: { detectedAt: "desc" } },
     },
   });
   if (!c) notFound();
+  // Weitere E-Mails und Telefonnummern mit Herkunft („aus Buchung 14.11.“), lib/vertrieb/kontaktdaten-server.ts
+  const emailSources = Object.fromEntries(Object.entries(detectedDataOf(c.detectedData).emails ?? {}).map(([e, v]) => [e, sourceLabel("email", v.source, v.at)]));
+  const extraPhones = c.phones.map((p) => ({
+    id: p.id,
+    phone: p.phone,
+    display: formatPhone(p.phone),
+    kind: KIND_LABEL[p.kind as PhoneKind] ?? p.kind,
+    source: sourceLabel("phone", p.source, p.detectedAt),
+  }));
+  const extrasSummary = [
+    extraPhones.length ? `${extraPhones.length} weitere Nummer${extraPhones.length === 1 ? "" : "n"}` : null,
+    c.altEmails.length ? `${c.altEmails.length} weitere E-Mail${c.altEmails.length === 1 ? "" : "s"}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   // Kunden haben eine eigene Akte mit allen Reitern.
   if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
   const open = c.tasks.filter((t) => !t.doneAt);
@@ -503,17 +523,17 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             </form>
           </Fold>
 
-          <Fold title="Stammdaten">
+          <Fold title="Stammdaten" summary={extrasSummary || undefined}>
             <div className="text-sm">
             <dl className="grid grid-cols-[110px_1fr] gap-y-1.5">
               <dt className="text-slate-500">Name</dt><dd>{c.name}</dd>
-              <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} /></dd>
+              <dt className="text-slate-500">E-Mail</dt><dd className="min-w-0"><ContactEmails contactId={c.id} email={c.email} altEmails={c.altEmails} sources={emailSources} /></dd>
+              <dt className="text-slate-500">Telefon</dt><dd className="min-w-0"><ContactPhones contactId={c.id} phone={c.phone} extras={extraPhones} /></dd>
               <dt className="text-slate-500">Adresse</dt>
               <dd className="min-w-0">
                 <span>{[c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ") || <span className="text-slate-400">keine Adresse</span>}</span>
-                {c.phone ? <span className="block text-slate-500">Tel. {c.phone}</span> : null}
                 <details className="mt-1">
-                  <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Adresse bearbeiten</summary>
+                  <summary className="cursor-pointer list-none text-xs text-slate-400 hover:text-slate-600 [&::-webkit-details-marker]:hidden">✎ Adresse und Telefon bearbeiten</summary>
                   <CloseDetailsForm key={`${c.street}-${c.zip}-${c.city}-${c.phone}`} action={updateContactAddress} className="mt-2 grid grid-cols-1 gap-2 rounded-lg bg-slate-50 p-3 sm:grid-cols-[1fr_90px_1fr]">
                     <input type="hidden" name="contactId" value={c.id} />
                     <input name="street" defaultValue={c.street ?? ""} placeholder="Straße und Hausnummer" className="input sm:col-span-3" />

@@ -1511,6 +1511,9 @@ model SalesContact {
   email                String    @unique
   /// Weitere E-Mail-Adressen (z. B. nach Zusammenführen); werden bei Calendly, Instantly und Inbound mit erkannt
   altEmails            String[]  @default([])
+  /// Automatisch erkannte Kontaktdaten (lib/vertrieb/kontaktdaten-server.ts): Herkunft weiterer E-Mails
+  /// { emails: { "<adresse>": { source, at } }, removed: [von Hand entfernte Adressen/Nummern] }
+  detectedData         Json?
   phone                String?
   fax                  String?
   street               String?
@@ -1594,6 +1597,8 @@ model SalesContact {
   colleagueReferrals   ColleagueReferral[]
   /// Links zur Vertriebspräsentation (/praesentation/<token>, 14 Tage)
   presentationLinks    SalesPresentationLink[]
+  /// Weitere Telefonnummern (aus Buchungen, E-Mail-Signaturen, Formularen), die Hauptnummer bleibt `phone`
+  phones               SalesContactPhone[]
 
   @@index([altEmails], type: Gin)
   @@index([stage])
@@ -1601,6 +1606,27 @@ model SalesContact {
   @@index([linkedinStatus])
   @@index([zip])
   @@index([city])
+}
+
+// Weitere Telefonnummern eines Vertriebskontakts (Ole, 16.11.2026): automatisch erkannt aus Buchungen,
+// E-Mail-Signaturen, Formularen und Instantly (lib/vertrieb/kontaktdaten-server.ts). Die Hauptnummer bleibt
+// SalesContact.phone und wird nie überschrieben.
+model SalesContactPhone {
+  id         String       @id @default(cuid())
+  contactId  String
+  contact    SalesContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  /// E.164, z. B. +491711234567 (Schreibweise egal, Dubletten über diese Form)
+  phone      String
+  /// MOBIL | FESTNETZ
+  kind       String       @default("FESTNETZ")
+  /// BUCHUNG | CALENDLY | MAIL | FORMULAR | INSTANTLY | ZUSAMMENGEFUEHRT | HAUPT (frühere Hauptnummer) | MANUELL
+  source     String
+  /// Zeitpunkt der Quelle (Buchung, Mail), sonst Erkennungszeitpunkt
+  detectedAt DateTime     @default(now())
+  createdAt  DateTime     @default(now())
+
+  @@unique([contactId, phone])
+  @@index([phone])
 }
 
 model SalesActivity {

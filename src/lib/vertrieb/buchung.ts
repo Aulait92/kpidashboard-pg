@@ -24,6 +24,7 @@ import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { findOrCreateContact, type Invitee } from "@/lib/vertrieb/calendly";
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
+import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
 import type { SalesBookingType } from "@/generated/prisma/client";
 
 /** Interner Mandant, an dem der Vertriebskalender hängt (Migration 20261118705300). */
@@ -406,13 +407,12 @@ export async function bookSalesMeeting(opts: {
   }
 
   // Kontakt ergänzen (nichts überschreiben)
-  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { phone: true, insurer: true, firstName: true, lastName: true } });
+  const c = await prisma.salesContact.findUnique({ where: { id: contactId }, select: { insurer: true, firstName: true, lastName: true } });
   const [first, ...rest] = input.name.split(/\s+/);
   await prisma.salesContact
     .update({
       where: { id: contactId },
       data: {
-        ...(!c?.phone ? { phone: `+${input.phone}` } : {}),
         ...(!c?.insurer && input.role === "makler" ? { insurer: "Makler" } : {}),
         ...(!c?.firstName && first ? { firstName: first } : {}),
         ...(!c?.lastName && rest.length ? { lastName: rest.join(" ") } : {}),
@@ -420,6 +420,8 @@ export async function bookSalesMeeting(opts: {
       },
     })
     .catch(() => {});
+  // E-Mail und Telefon aus der Buchung: fehlt die Hauptnummer, wird sie gesetzt; abweichende Werte kommen als weitere Angabe dazu
+  await captureFromBooking(contactId, { email: input.email, phone: `+${input.phone}`, source: "BUCHUNG", at: now }).catch((e) => reportError(e, "kontaktdaten-buchung"));
 
   const note = [created ? "Neuer Kontakt aus der Buchungsseite" : null, `Gebucht von ${input.name} (${input.email})`, answersOf(input)].filter(Boolean).join("\n");
   await recordCrm(contactId, res.meetingId, t, opts.start, res.joinUrl, note, `Termin über die Buchungsseite gebucht: ${t.title} am ${fmtDateTime(opts.start)}`).catch((e) =>

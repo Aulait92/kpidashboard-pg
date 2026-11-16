@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { FileDrop } from "@/components/ui/file-drop";
-import { connectCalendlyAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
+import { backfillContactDataAction, connectCalendlyAction, importColdCrmAction, replaceColdCrmAction, importContactsAction, importInstantlyAction, syncCalendlyAction, syncInstantlyAction, type ImportState } from "@/app/admin/vertrieb/actions";
 
 // Server-Action-Grenze liegt bei 16 MB (next.config.ts)
 const CSV_MAX_BYTES = 15 * 1024 * 1024;
@@ -63,6 +63,17 @@ export function InstantlySync({ hasKey }: { hasKey: boolean }) {
     <form action={action} className="space-y-3">
       <button className="btn-primary" disabled={pending || !hasKey}>{pending ? "Synchronisiere …" : "Jetzt mit Instantly abgleichen"}</button>
       {!hasKey && <p className="text-sm text-amber-700">INSTANTLY_API_KEY ist nicht gesetzt.</p>}
+      <Result state={state} />
+    </form>
+  );
+}
+
+/** Einmalig rückwirkend: Kontaktdaten aus vorhandenen Mails und Buchungen ergänzen (idempotent). */
+export function ContactDataBackfill() {
+  const [state, action, pending] = useActionState(backfillContactDataAction, null);
+  return (
+    <form action={action} className="space-y-2" data-kontaktdaten-rueckwirkend>
+      <button className="btn-ghost" disabled={pending}>{pending ? "Ergänze … (kann einige Minuten dauern)" : "Kontaktdaten aus Mails und Buchungen ergänzen"}</button>
       <Result state={state} />
     </form>
   );

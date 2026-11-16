@@ -1,0 +1,199 @@
+// Kontaktdaten aus E-Mails und Buchungen erkennen (Ole, 16.11.2026), ohne Datenbank und testbar.
+// Ausgewertet werden nur der Kopf (Absender) und die Signatur des eigenen Teils einer Mail:
+// zitierter oder weitergeleiteter Verlauf anderer Personen und Fußzeilen von Tools (Calendly,
+// Instantly …) werden vorher abgeschnitten. Zuerst Regex; nur wenn danach noch eine Nummer
+// übrig bleibt, die keiner Regel eindeutig zuzuordnen ist, meldet `unclear` das (dann KI, siehe
+// kontaktdaten-server.ts). Speichern und Ausschlüsse mit Datenbank: kontaktdaten-server.ts.
+
+import { FREEMAIL, insurerRoot, phoneE164, phoneKey, phoneKind, type PhoneKind } from "@/lib/vertrieb/dubletten";
+
+// ─── Quellen ────────────────────────────────────────────────────────────
+
+export type ContactDataSource = "BUCHUNG" | "CALENDLY" | "MAIL" | "FORMULAR" | "INSTANTLY" | "ZUSAMMENGEFUEHRT" | "HAUPT" | "MANUELL";
+
+const SOURCE_TEXT: Record<ContactDataSource, { phone: string; email: string }> = {
+  BUCHUNG: { phone: "aus Buchung", email: "aus Buchung" },
+  CALENDLY: { phone: "aus Calendly-Buchung", email: "aus Calendly-Buchung" },
+  MAIL: { phone: "aus E-Mail-Signatur", email: "aus E-Mail" },
+  FORMULAR: { phone: "aus Formular", email: "aus Formular" },
+  INSTANTLY: { phone: "aus Instantly", email: "aus Instantly" },
+  ZUSAMMENGEFUEHRT: { phone: "aus Zusammenführen", email: "aus Zusammenführen" },
+  HAUPT: { phone: "frühere Hauptnummer", email: "frühere Hauptadresse" },
+  MANUELL: { phone: "von Hand", email: "von Hand" },
+};
+
+const dayMonth = (d: Date | string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(d));
+
+/** „aus Buchung 14.11.“, „aus E-Mail-Signatur 12.11.“ */
+export function sourceLabel(kind: "phone" | "email", source: string | null | undefined, at?: Date | string | null): string {
+  const s = SOURCE_TEXT[source as ContactDataSource]?.[kind];
+  if (!s) return at ? `erkannt ${dayMonth(at)}` : "";
+  return at ? `${s} ${dayMonth(at)}` : s;
+}
+
+export const KIND_LABEL: Record<PhoneKind, string> = { MOBIL: "Mobil", FESTNETZ: "Festnetz" };
+
+// ─── Ausschlüsse für E-Mail-Adressen ────────────────────────────────────
+
+/** Eigene Adressen und Nummern (Ole, Mirko, performancegrowth), aus DB und Konfiguration (kontaktdaten-server.ts). */
+export type OwnContext = { domains: Set<string>; addresses: Set<string>; phoneKeys: Set<string> };
+export const EMPTY_OWN: OwnContext = { domains: new Set(), addresses: new Set(), phoneKeys: new Set() };
+
+/** Unsere Domains: alles mit „performancegrowth“ im Namen. */
+const OWN_DOMAIN = /(^|[.-])performance-?growth[.-]/i;
+
+const SYSTEM_LOCAL =
+  /^(no[-_.]?reply|do[-_.]?not[-_.]?reply|donotreply|mailer[-_.]?daemon|postmaster|bounces?|notifications?|notify|benachrichtigungen?|automated|automatisch|system|calendar|kalender|newsletter|abuse|daemon|unsubscribe|reply)([+._-].*)?$/i;
+const SYSTEM_DOMAIN =
+  /(^|\.)(calendly\.com|instantly\.ai|zapier\.com|hubspot\.com|hubspotemail\.net|mailchimp\.com|mcsv\.net|sendgrid\.net|amazonses\.com|resend\.dev|facebookmail\.com|linkedin\.com|zoom\.us|teams\.microsoft\.com|google\.com|apple\.com|stripe\.com|typeform\.com)$/i;
+/** Sammeladressen bei Freemailern und Versicherer-Konzernen: gehören nicht zur Person. */
+const GENERIC_LOCAL = /^(info|service|kontakt|contact|kundenservice|support|office|mail|post|hallo|hello|team|zentrale|vertrieb|schaden|presse)$/i;
+
+export const emailDomain = (email: string) => email.split("@")[1]?.toLowerCase() ?? "";
+
+/** Darf diese Adresse als Kontaktadresse übernommen werden? */
+export function usableEmail(email: string, own: OwnContext = EMPTY_OWN): boolean {
+  const e = email.trim().toLowerCase();
+  const [local, domain] = e.split("@");
+  if (!local || !domain || !domain.includes(".")) return false;
+  if (domain.endsWith(".invalid") || domain.endsWith(".local")) return false;
+  if (own.addresses.has(e) || own.domains.has(domain) || OWN_DOMAIN.test(`.${domain}.`)) return false;
+  if (SYSTEM_LOCAL.test(local) || SYSTEM_DOMAIN.test(domain)) return false;
+  if ((FREEMAIL.has(domain) || insurerRoot(domain)) && GENERIC_LOCAL.test(local)) return false;
+  return true;
+}
+
+// ─── Mailtext: eigenen Teil und Signatur finden ─────────────────────────
+
+/** Beginn von zitiertem oder weitergeleitetem Verlauf (anderer Personen). */
+const QUOTE_START =
+  /^\s*(>|Am .{3,120}(schrieb|wrote)|On .{3,120}wrote|-{2,}\s*(Original|Ursprüngliche|Weitergeleitete|Forwarded)|-{5,}\s*$|_{5,}\s*$|(Von|From|Gesendet|Sent|Betreff|Subject|Datum|Date):\s|Gesendet von meinem|Sent from my|Begin forwarded message|Anfang der weitergeleiteten)/im;
+
+/** Fußzeile eines Tools: ab hier gehört nichts mehr zum Absender. */
+const TOOL_FOOTER = /(calendly|instantly|powered by|sent (with|via|using)|gesendet (mit|über)|unsubscribe|to stop receiving|you are receiving|you received this|diese (e-?mail|nachricht) wurde (automatisch|über|mit))/i;
+/** Einzelne Zeile eines Tools (z. B. Abmeldelink): nur diese Zeile weglassen. */
+const TOOL_LINE = /(abmelden|abbestellen|opt-?out|https?:\/\/\S*(calendly|instantly|unsubscribe))/i;
+
+/** Grußformel, ab der die Signatur beginnt. */
+const GREETING =
+  /^\s*(?:--\s*$|(?:mit\s+)?(?:[a-zäöüß]+\s+)?gr(?:ü|ue|u)(?:ß|ss)(?:e|en)?(?=[\s,.!]|$)|mfg\b|vg\b|lg\b|bg\b|(?:best|kind|warm)\s+regards\b|regards\b|cheers\b|best\b,?\s*$)/im;
+
+/** Eigener Teil einer Mail: ohne zitierten/weitergeleiteten Verlauf und ohne Tool-Fußzeilen. */
+export function ownPart(text: string | null | undefined): string {
+  if (!text) return "";
+  const t = text.replace(/\r\n?/g, "\n");
+  const cut = t.search(QUOTE_START);
+  const own = cut >= 0 ? t.slice(0, cut) : t;
+  const lines: string[] = [];
+  for (const line of own.split("\n")) {
+    if (TOOL_FOOTER.test(line)) break;
+    if (TOOL_LINE.test(line)) continue;
+    lines.push(line);
+  }
+  return lines.join("\n").trim();
+}
+
+/** Signatur: ab der letzten Grußformel, sonst die letzten 12 Zeilen des eigenen Teils. */
+export function signatureBlock(text: string | null | undefined): string {
+  const own = ownPart(text);
+  if (!own) return "";
+  const lines = own.split("\n");
+  let start = -1;
+  lines.forEach((l, i) => {
+    if (GREETING.test(l)) start = i;
+  });
+  return (start >= 0 ? lines.slice(start) : lines.slice(-12)).join("\n");
+}
+
+// ─── Telefonnummern ─────────────────────────────────────────────────────
+
+const NUMBER = String.raw`(\+?\(?\d[\d\s/()\-–.]{5,22}\d)`;
+const LABEL = String.raw`(Tel(?:efon)?|Fon|Phone|Festnetz|Büro|Mobil(?:funk|telefon)?|Mobile|Handy|Mob|Cell|WhatsApp|T|M)`;
+const LABELLED = new RegExp(String.raw`(?:^|[\s|·•,;(])${LABEL}\.?\s*[:.]?\s*${NUMBER}`, "gi");
+const FAX_LABEL = /(?:Tele)?fax|\bF\s*[:.]/i;
+const BARE_LINE = /^\s*(\+\d{1,3}|00\d{2}|0)[\d\s/()\-–.]{6,20}\d\s*$/;
+const ANY_NUMBER = /(?<![\w+])(\+\d|00\d|0\d)[\d\s/()\-–.]{5,20}\d/g;
+/** Zeilen ohne Absender-Telefonnummern: Bank, Register, Steuer. */
+const SKIP_LINE = /\biban\b|\bbic\b|swift|\bust\b|ust-?id|umsatzsteuer|steuer-?nr|steuernummer|\bhrb\b|\bhra\b|amtsgericht|register|\bd-[a-z0-9]{4}-|\bkonto\b|kontonummer|\bblz\b/i;
+/** Service-/Hotline-Nummern (z. B. vom Versicherer): nicht die Nummer des Kontakts. */
+const SERVICE_LINE = /hotline|service|schaden|notruf|kundenbetreuung|kundendienst|gebührenfrei|kostenlos|kostenfrei|zentrale\s+der/i;
+
+/** Gültige Rufnummer? 7 bis 15 Ziffern, keine Service- oder Sondernummer, kein Datum. */
+export function plausiblePhone(raw: string): boolean {
+  const t = raw.trim().replace(/^\(/, "");
+  const digits = t.replace(/\D/g, "");
+  if (digits.length < 7 || digits.length > 15) return false;
+  if (/^\d{1,2}[./]\d{1,2}[./]\d{2,4}$/.test(t)) return false; // Datum
+  if (!/^(\+|00|0)/.test(t)) return false;
+  const e = phoneE164(raw);
+  if (!e) return false;
+  // 0800 (kostenlos), 0180x (Service), 0900 (Mehrwert), 0137/0138 (Gewinnspiel), 0700 (persönliche Rufnummer)
+  if (/^49(800|180|900|137|138|700)/.test(e.slice(1))) return false;
+  return true;
+}
+
+const tidy = (raw: string) => raw.replace(/–/g, "-").replace(/\s+/g, " ").trim();
+
+export type FoundPhone = { raw: string; e164: string; kind: PhoneKind; label: string | null };
+
+/**
+ * Telefonnummern aus der Signatur einer Mail (Mobil und Festnetz, deutsch und international).
+ * `exclude`: eigene Nummern (beliebige Schreibweise). `unclear`: in der Signatur steht noch
+ * eine Nummer, die keine Regel eindeutig zuordnen konnte (dann darf die KI nachsehen).
+ */
+export function extractMailPhones(text: string | null | undefined, exclude: string[] = []): { phones: FoundPhone[]; unclear: boolean; signature: string } {
+  const signature = signatureBlock(text);
+  const skip = new Set(exclude.map((e) => phoneKey(e)).filter((k): k is string => !!k));
+  const found = new Map<string, FoundPhone>();
+  const seen = new Set<string>(); // auch ausgeschlossene, damit sie nicht als unklar gelten
+  const take = (raw: string, label: string | null, into: FoundPhone[]) => {
+    if (!plausiblePhone(raw)) return;
+    const e164 = phoneE164(raw)!;
+    const key = phoneKey(e164)!;
+    seen.add(key);
+    if (skip.has(key) || found.has(key)) return;
+    const p = { raw: tidy(raw), e164, kind: phoneKind(e164, label), label };
+    found.set(key, p);
+    into.push(p);
+  };
+  const segments = signature.split("\n").flatMap((l) => l.split(/\s[|·•]\s/));
+  const labelled: FoundPhone[] = [];
+  const bare: FoundPhone[] = [];
+  const usable = (seg: string) => !SKIP_LINE.test(seg) && !SERVICE_LINE.test(seg);
+  for (const seg of segments) {
+    if (!usable(seg)) continue;
+    // Fax-Teil abschneiden (Telefon vor dem Fax bleibt)
+    const beforeFax = FAX_LABEL.test(seg) ? seg.slice(0, seg.search(FAX_LABEL)) : seg;
+    for (const m of beforeFax.matchAll(LABELLED)) take(m[2], m[1], labelled);
+  }
+  for (const seg of segments) {
+    if (!usable(seg) || FAX_LABEL.test(seg)) continue;
+    if (BARE_LINE.test(seg)) take(seg, null, bare);
+  }
+  // Noch eine plausible Nummer übrig, die keiner Regel entspricht? (z. B. „Max Muster 0171 1234567“)
+  let unclear = false;
+  for (const seg of segments) {
+    if (!usable(seg) || FAX_LABEL.test(seg)) continue;
+    for (const m of seg.matchAll(ANY_NUMBER)) {
+      const k = plausiblePhone(m[0]) ? phoneKey(m[0]) : null;
+      if (k && !seen.has(k)) unclear = true;
+    }
+  }
+  return { phones: [...labelled, ...bare], unclear, signature };
+}
+
+/** Eigene Nummern (aus der Absender-Signatur), die nie als Kontakt-Nummer übernommen werden. */
+export function ownPhones(): string[] {
+  // Unsere Nummer (steht auch in der App unter Einrichtung) + optional weitere per Umgebungsvariable
+  return ["+49 151 52418846", ...(process.env.OWN_PHONE_NUMBERS ?? "").split(",")].map((s) => s.trim()).filter(Boolean);
+}
+
+/** Nummern, die tatsächlich in der Signatur stehen (Prüfung einer KI-Antwort). */
+export function phoneKeysIn(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of text.matchAll(ANY_NUMBER)) {
+    const k = plausiblePhone(m[0]) ? phoneKey(m[0]) : null;
+    if (k) out.add(k);
+  }
+  return out;
+}

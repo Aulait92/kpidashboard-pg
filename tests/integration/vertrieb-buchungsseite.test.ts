@@ -163,6 +163,11 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     // Stufe springt auf Termin, Telefon des bestehenden Kontakts bleibt
     const tel = await prisma.salesContact.findUniqueOrThrow({ where: { id: byPhone.id } });
     expect(tel).toMatchObject({ stage: "TERMIN", phone: "0151 9876 5432" });
+    // Abweichende E-Mail aus der Buchung: weitere Adresse mit Herkunft „Buchung“, Hauptadresse bleibt
+    expect(tel.email).toBe(`kontakt.tel@${DOMAIN}`);
+    expect(tel.altEmails).toEqual([`petra.tel@${DOMAIN}`]);
+    expect(tel.detectedData).toMatchObject({ emails: { [`petra.tel@${DOMAIN}`]: { source: "BUCHUNG" } } });
+    expect(await prisma.salesContactPhone.count({ where: { contactId: byPhone.id } })).toBe(0);
     // Zweite Buchung desselben Kontakts: bestehender Termin statt doppelt
     const again = await bookSalesMeeting({ type, start: at("15:00"), input: input("mail", { email: `petra.mail@${DOMAIN}` }) });
     expect(again).toMatchObject({ ok: true, duplicate: true, meetingId: a.meetingId });

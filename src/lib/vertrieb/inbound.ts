@@ -8,6 +8,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { SOURCE_LABEL } from "@/lib/vertrieb/crm";
 import { normalizeLinkedInUrl } from "@/lib/vertrieb/linkedin";
 import { scheduleAddressEnrichment } from "@/lib/vertrieb/address-enrich";
+import { captureFromLead } from "@/lib/vertrieb/kontaktdaten-server";
+import { reportError } from "@/lib/monitoring";
 
 const K = {
   email: ["email", "emailadresse", "mail", "eMail", "workemail", "businessemail"],
@@ -162,11 +164,10 @@ export async function handleInboundLead(raw: unknown, source = "META_ADS", opts:
   }
 
   if (!created) {
-    const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { stage: true, phone: true, customerSource: true } });
+    const c = await prisma.salesContact.findUniqueOrThrow({ where: { id: contactId }, select: { stage: true, customerSource: true } });
     await prisma.salesContact.update({
       where: { id: contactId },
       data: {
-        phone: c.phone ?? l.phone ?? undefined,
         linkedinUrl: l.linkedinUrl ?? undefined,
         // Kontakt hat sich selbst gemeldet → mindestens "Interesse"
         stage: ["NEU", "NICHT_ERREICHT", "WIEDERVORLAGE", "SPAETER", "VERLOREN", "UNGUELTIG"].includes(c.stage) ? "INTERESSE" : undefined,
@@ -175,6 +176,8 @@ export async function handleInboundLead(raw: unknown, source = "META_ADS", opts:
         customerSourceNote: c.customerSource ? undefined : [l.campaign, l.ad].filter(Boolean).join(" · ") || null,
       },
     });
+    // Abweichende E-Mail bzw. Nummer aus dem Formular: weitere Angabe (fehlt die Hauptnummer, wird sie gesetzt)
+    await captureFromLead(contactId, { email: l.email, phone: l.phone, source: "FORMULAR" }).catch((e) => reportError(e, "kontaktdaten-formular"));
   }
 
   const info = [

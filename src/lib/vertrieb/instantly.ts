@@ -1,10 +1,9 @@
 import Papa from "papaparse";
-import { htmlToText } from "@/lib/impressum";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
 import { contactIdsByEmails, findContactIdByEmail } from "@/lib/vertrieb/contact-merge";
 import { CAMPAIGN_STATUS } from "@/lib/vertrieb/crm";
-import { fillPhoneFromMail } from "@/lib/vertrieb/signature-phone";
+import { captureFromLead, captureFromMail } from "@/lib/vertrieb/kontaktdaten-server";
 import { classifyReply, isAutoReplyText, sentimentFromInstantly, type Sentiment } from "@/lib/vertrieb/sentiment";
 
 const API = "https://api.instantly.ai/api/v2";
@@ -327,8 +326,12 @@ export async function recordReply(contactId: string, r: Reply): Promise<boolean>
     select: { id: true },
   });
 
-  // Leere Telefonnummer aus der Signatur ergänzen (nicht aus Abwesenheitsnotizen)
-  if (!r.isAutoReply) await fillPhoneFromMail(contactId, r.text || (r.html ? htmlToText(r.html) : null)).catch((e) => reportError(e, "phone-from-mail"));
+  // Absenderadresse und Telefonnummern aus der Signatur übernehmen (nicht aus Abwesenheitsnotizen, lib/vertrieb/kontaktdaten-server.ts)
+  if (!r.isAutoReply) {
+    await captureFromMail(contactId, { direction: "IN", fromEmail: r.fromEmail, text: r.text, html: r.html, isAutoReply: false, sentAt: r.sentAt }).catch((e) =>
+      reportError(e, "kontaktdaten-mail"),
+    );
+  }
   const snippet = stripQuoted(r.text ?? "").slice(0, 600) || r.subject || "";
   const label = r.isAutoReply
     ? "Automatische Antwort"
@@ -600,6 +603,10 @@ export async function handleWebhook(p: Record<string, unknown>) {
   }
   const contact = { id: contactId };
   const at = p.timestamp ? new Date(String(p.timestamp)) : new Date();
+  // Abweichende Nummer aus Instantly (z. B. aus der hochgeladenen Liste) als weitere Nummer übernehmen
+  if (typeof p.phone === "string" && p.phone.trim()) {
+    await captureFromLead(contactId, { phone: p.phone, source: "INSTANTLY", at }).catch((e) => reportError(e, "kontaktdaten-instantly"));
+  }
   const key = { contactId_campaignId: { contactId: contact.id, campaignId: campaign.id } };
   const prev = await prisma.salesCampaignLead.findUnique({ where: key });
   const base = { contactId: contact.id, campaignId: campaign.id };

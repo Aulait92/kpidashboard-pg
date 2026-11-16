@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
+import { CalendlyForms, ColdCrmImport, ContactDataBackfill, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
 import { coldCrmReplaceAllowed, coldCrmSourceConfigured, stagingSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
 import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
@@ -98,6 +98,8 @@ export default async function AnbindungenPage() {
               GOOGLE_PLACES_API_KEY in Railway eintragen (Anleitung: docs/kontakt-anreicherung.md). Bis dahin wird nur die Website ausgewertet.
             </p>
           )}
+          <p className="text-sm text-slate-600">E-Mail und Telefon aus älteren Mails und Buchungen einmalig übernehmen:</p>
+          <ContactDataBackfill />
         </section>
 
         <section className="card space-y-3 p-5">
