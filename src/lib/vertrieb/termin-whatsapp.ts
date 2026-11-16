@@ -1,7 +1,8 @@
-// WhatsApp-Terminbestätigung für Vertriebstermine (Ole, 15.11.2026): Bucht ein Interessent über Calendly
-// einen Termin, schickt die App von der Support-Nummer eine Bestätigung (Sie-Form). Nur Bestätigung,
-// die Erinnerung kommt von Calendly. Läuft erst, wenn die Support-Nummer verbunden und die Vorlage von
-// Meta freigegeben ist; Einreichen und Freigabe-Abgleich im WhatsApp-Cron (syncSupportTemplates).
+// WhatsApp für Vertriebstermine von der Support-Nummer (Ole, 15./16.11.2026), Sie-Form:
+// Bestätigung nach der Buchung (Calendly und eigene Buchungsseite /termin) sowie Erinnerung
+// 24 Stunden und 1 Stunde vorher (runSalesWhatsAppReminders). Läuft erst, wenn die Support-Nummer
+// verbunden und die jeweilige Vorlage von Meta freigegeben ist; Einreichen und Freigabe-Abgleich im
+// WhatsApp-Cron (syncSupportTemplates).
 
 import { decryptSecret } from "@/lib/encryption";
 import { reportError } from "@/lib/monitoring";
@@ -28,6 +29,36 @@ export const TERMIN_TEMPLATE_EXAMPLES = [
   "per Video, den Link finden Sie in Ihrer Bestätigungsmail",
   "https://calendly.com/reschedulings/abc",
 ];
+
+// Erinnerungen (Ole, 16.11.2026): 24 Stunden und 1 Stunde vorher, für die eigene Buchungsseite und Calendly.
+export const ERINNERUNG_TEMPLATE_NAME = "pg_vertrieb_erinnerung_v1";
+export const ERINNERUNG_TEMPLATE_BODY =
+  "Guten Tag {{1}}, kurze Erinnerung an Ihren Termin mit performancegrowth: {{2}} um {{3}} Uhr, {{4}}. " +
+  "Zum Verschieben oder Absagen nutzen Sie bitte diesen Link: {{5}} Viele Grüße, Ihr Team von performancegrowth";
+export const ERINNERUNG_TEMPLATE_EXAMPLES = TERMIN_TEMPLATE_EXAMPLES;
+
+export const GLEICH_TEMPLATE_NAME = "pg_vertrieb_gleich_v1";
+export const GLEICH_TEMPLATE_BODY =
+  "Guten Tag {{1}}, in einer Stunde beginnt Ihr Termin mit performancegrowth: heute um {{2}} Uhr, {{3}}. " +
+  "Falls etwas dazwischenkommt, verschieben Sie den Termin bitte hier: {{4}} Viele Grüße, Ihr Team von performancegrowth";
+export const GLEICH_TEMPLATE_EXAMPLES = ["Max Mustermann", "14:30", "per Video: https://meet.google.com/abc-defg-hij", "https://app.performancegrowth.de/termin/verwalten/abc"];
+
+type SupportTemplate = { name: string; body: string; examples: string[]; purpose: string };
+/** Alle Vorlagen der Support-Nummer für Vertriebstermine (Einreichung im WhatsApp-Cron). */
+export const SUPPORT_TEMPLATES: SupportTemplate[] = [
+  { name: TERMIN_TEMPLATE_NAME, body: TERMIN_TEMPLATE_BODY, examples: TERMIN_TEMPLATE_EXAMPLES, purpose: TERMIN_TEMPLATE_PURPOSE },
+  { name: ERINNERUNG_TEMPLATE_NAME, body: ERINNERUNG_TEMPLATE_BODY, examples: ERINNERUNG_TEMPLATE_EXAMPLES, purpose: "vertrieb_erinnerung" },
+  { name: GLEICH_TEMPLATE_NAME, body: GLEICH_TEMPLATE_BODY, examples: GLEICH_TEMPLATE_EXAMPLES, purpose: "vertrieb_gleich" },
+];
+
+export function supportTemplateRequest(t: SupportTemplate): CreateTemplateInput {
+  return {
+    name: t.name,
+    category: "UTILITY",
+    language: LANGUAGE,
+    components: [{ type: "BODY", text: t.body, example: { body_text: [t.examples] } }],
+  };
+}
 
 export function terminTemplateRequest(): CreateTemplateInput {
   return {
@@ -93,6 +124,75 @@ async function supportAccount(): Promise<SupportAccount | null> {
   return acc?.status === "connected" && acc.apiKeyEnc ? { id: acc.id, apiKeyEnc: acc.apiKeyEnc } : null;
 }
 
+async function templateApproved(name: string): Promise<boolean> {
+  const tpl = await prisma.messageTemplate.findUnique({
+    where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name, language: LANGUAGE } },
+    select: { status: true },
+  });
+  return tpl?.status === "approved";
+}
+
+type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out";
+
+/**
+ * Vorlage von der Support-Nummer an einen Vertriebskontakt senden und im Support-Chat sowie im
+ * Verlauf des Kontakts vermerken. Wirft bei API-Fehlern.
+ */
+async function sendSupportTemplate(opts: {
+  contactId: string;
+  phone: string;
+  name: string | null;
+  template: { name: string; body: string };
+  params: string[];
+  activity: string;
+  now: Date;
+}): Promise<SendOutcome> {
+  const acc = await supportAccount();
+  if (!acc) return "no_account";
+  if (!(await templateApproved(opts.template.name))) return "no_template";
+  // „STOPP“ geschrieben: keine Nachrichten mehr an diese Nummer (lib/whatsapp/stopp.ts)
+  const prior = await prisma.conversation.findUnique({
+    where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: opts.phone } },
+    select: { optedOutAt: true },
+  });
+  if (prior?.optedOutAt) return "opted_out";
+  const apiKey = decryptSecret(acc.apiKeyEnc);
+  const res = await sendTemplate(apiKey, opts.phone, opts.template.name, LANGUAGE, [{ type: "body", parameters: opts.params.map((text) => ({ type: "text", text })) }]);
+  const conv = await prisma.conversation.upsert({
+    where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: opts.phone } },
+    create: {
+      customerId: SUPPORT_CUSTOMER_ID,
+      whatsAppAccountId: acc.id,
+      contactPhone: opts.phone,
+      contactName: opts.name,
+      botActive: false,
+      status: "open",
+      lastMessageAt: opts.now,
+      salesContactId: opts.contactId,
+      contactMatchedAt: opts.now,
+    },
+    update: { lastMessageAt: opts.now },
+    select: { id: true, contactLinkManual: true, salesContactId: true, linkedCustomerId: true },
+  });
+  if (!conv.contactLinkManual && !conv.salesContactId && !conv.linkedCustomerId) {
+    await prisma.conversation.update({ where: { id: conv.id }, data: { salesContactId: opts.contactId, contactMatchedAt: opts.now } });
+  }
+  await prisma.message.create({
+    data: {
+      conversationId: conv.id,
+      direction: "outbound",
+      kind: "template",
+      body: renderTemplate(opts.template.body, opts.params),
+      waMessageId: res.messageId,
+      status: "sent",
+      sentBy: "system",
+      pricingCategory: "utility",
+    },
+  });
+  await prisma.salesActivity.create({ data: { contactId: opts.contactId, type: "TERMIN", outcome: opts.activity, note: null } }).catch(() => {});
+  return "sent";
+}
+
 /**
  * Bestätigung für einen neu gebuchten Vertriebstermin senden und am Termin vermerken.
  * Wirft nie; Ergebnis steht in SalesMeeting.waConfirmStatus.
@@ -119,112 +219,176 @@ export async function sendTerminConfirmation(
     if (!phone) return await mark("no_phone");
     // Nummer am Kontakt merken, damit Support-Chats ihn erkennen
     if (!m.contact.phone) await prisma.salesContact.update({ where: { id: m.contactId }, data: { phone: `+${phone}` } }).catch(() => {});
-    const acc = await supportAccount();
-    if (!acc) return await mark("no_account");
-    const tpl = await prisma.messageTemplate.findUnique({
-      where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: TERMIN_TEMPLATE_NAME, language: LANGUAGE } },
-      select: { status: true },
-    });
-    if (tpl?.status !== "approved") return await mark("no_template");
-    // „STOPP“ geschrieben: keine Nachrichten mehr an diese Nummer (lib/whatsapp/stopp.ts)
-    const prior = await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: phone } }, select: { optedOutAt: true } });
-    if (prior?.optedOutAt) return await mark("opted_out");
-
     const name = inv.name?.trim() || [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || null;
     const params = terminParams({ name, startAt: m.startAt, loc, rescheduleUrl: inv.reschedule_url ?? null });
-    const apiKey = decryptSecret(acc.apiKeyEnc);
-    const res = await sendTemplate(apiKey, phone, TERMIN_TEMPLATE_NAME, LANGUAGE, [{ type: "body", parameters: params.map((text) => ({ type: "text", text })) }]);
-
-    const conv = await prisma.conversation.upsert({
-      where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: phone } },
-      create: {
-        customerId: SUPPORT_CUSTOMER_ID,
-        whatsAppAccountId: acc.id,
-        contactPhone: phone,
-        contactName: name,
-        botActive: false,
-        status: "open",
-        lastMessageAt: now,
-        salesContactId: m.contactId,
-        contactMatchedAt: now,
-      },
-      update: { lastMessageAt: now },
-      select: { id: true, contactLinkManual: true, salesContactId: true, linkedCustomerId: true },
+    const out = await sendSupportTemplate({
+      contactId: m.contactId,
+      phone,
+      name,
+      template: { name: TERMIN_TEMPLATE_NAME, body: TERMIN_TEMPLATE_BODY },
+      params,
+      activity: "Terminbestätigung per WhatsApp gesendet",
+      now,
     });
-    if (!conv.contactLinkManual && !conv.salesContactId && !conv.linkedCustomerId) {
-      await prisma.conversation.update({ where: { id: conv.id }, data: { salesContactId: m.contactId, contactMatchedAt: now } });
-    }
-    await prisma.message.create({
-      data: {
-        conversationId: conv.id,
-        direction: "outbound",
-        kind: "template",
-        body: renderTemplate(TERMIN_TEMPLATE_BODY, params),
-        waMessageId: res.messageId,
-        status: "sent",
-        sentBy: "system",
-        pricingCategory: "utility",
-      },
-    });
-    await prisma.salesActivity.create({ data: { contactId: m.contactId, type: "TERMIN", outcome: "Terminbestätigung per WhatsApp gesendet", note: null } }).catch(() => {});
-    return await mark("sent");
+    return await mark(out);
   } catch (err) {
     reportError(err, "vertrieb-termin-whatsapp", { meeting: meetingId });
     return await mark("failed", err instanceof Error ? err.message : String(err));
   }
 }
 
-// ─── Vorlage einreichen und Freigabe nachziehen ─────────────────────────
+// ─── Erinnerungen 24 Stunden und 1 Stunde vorher ────────────────────────
+
+const HOUR = 60 * 60 * 1000;
+
+/** Ort des Termins für die Erinnerung (Videolink bzw. Art), wie bei der Bestätigung. */
+function meetingLoc(m: { joinUrl: string | null; location: string | null }): Parameters<typeof terminArt>[0] {
+  if (m.joinUrl) return { type: "video", join_url: m.joinUrl };
+  if (m.location && /video/i.test(m.location)) return { type: "video" };
+  return m.location ? { type: m.location, location: null } : null;
+}
+
+/** Link zum Verschieben: eigene Buchungsseite (Token) oder Calendly. */
+function rescheduleLink(m: { manageToken: string | null; rescheduleUrl: string | null }, manageUrl: (token: string) => string): string | null {
+  return m.manageToken ? manageUrl(m.manageToken) : m.rescheduleUrl;
+}
+
+export type WaReminderResult = { day: number; soon: number; skipped: number; errors: number };
+
+/**
+ * WhatsApp-Erinnerungen von der Support-Nummer für geplante Vertriebstermine (eigene Buchungsseite und
+ * Calendly). 24 Stunden vorher nur, wenn mehr als 26 Stunden im Voraus gebucht; 1 Stunde vorher nur, wenn
+ * mindestens 3 Stunden im Voraus gebucht. Jede Art höchstens einmal je Termin (waReminderAt, waSoonAt).
+ * Solange die Nummer nicht verbunden bzw. die Vorlage nicht freigegeben ist, wird nichts gesendet
+ * und nichts markiert.
+ */
+export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (token: string) => string): Promise<WaReminderResult> {
+  const result: WaReminderResult = { day: 0, soon: 0, skipped: 0, errors: 0 };
+  if (!(await supportAccount())) return result;
+  const kinds = [
+    { field: "waReminderAt", template: { name: ERINNERUNG_TEMPLATE_NAME, body: ERINNERUNG_TEMPLATE_BODY }, from: 2 * HOUR, to: 24 * HOUR, minLead: 26 * HOUR, key: "day" },
+    { field: "waSoonAt", template: { name: GLEICH_TEMPLATE_NAME, body: GLEICH_TEMPLATE_BODY }, from: 10 * 60 * 1000, to: HOUR, minLead: 3 * HOUR, key: "soon" },
+  ] as const;
+  for (const k of kinds) {
+    if (!(await templateApproved(k.template.name))) continue;
+    const due = await prisma.salesMeeting.findMany({
+      where: { status: "GEPLANT", [k.field]: null, startAt: { gt: new Date(now.getTime() + k.from), lte: new Date(now.getTime() + k.to) } },
+      select: {
+        id: true,
+        startAt: true,
+        createdAt: true,
+        joinUrl: true,
+        location: true,
+        manageToken: true,
+        rescheduleUrl: true,
+        inviteeName: true,
+        inviteePhone: true,
+        contactId: true,
+        contact: { select: { phone: true, firstName: true, lastName: true } },
+      },
+      orderBy: { startAt: "asc" },
+      take: 100,
+    });
+    for (const m of due) {
+      // Markierung zuerst: parallel laufende Crons senden nie doppelt
+      const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, [k.field]: null }, data: { [k.field]: now } });
+      if (!claimed.count) continue;
+      if (m.startAt.getTime() - m.createdAt.getTime() < k.minLead) {
+        result.skipped++;
+        continue;
+      }
+      const phone = [m.inviteePhone, m.contact.phone].map((p) => (p ? normalizePhone(p) : null)).find(Boolean) ?? null;
+      if (!phone) {
+        result.skipped++;
+        continue;
+      }
+      const name = m.inviteeName?.trim() || [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || null;
+      const base = terminParams({ name, startAt: m.startAt, loc: meetingLoc(m), rescheduleUrl: rescheduleLink(m, manageUrl) });
+      // [Name, Datum, Uhrzeit, Art, Link] bzw. kurz vorher [Name, Uhrzeit, Art, Link]
+      const params = k.key === "day" ? base : [base[0], base[2], base[3], base[4]];
+      try {
+        const out = await sendSupportTemplate({
+          contactId: m.contactId,
+          phone,
+          name,
+          template: k.template,
+          params,
+          activity: k.key === "day" ? "Terminerinnerung (24 Stunden) per WhatsApp gesendet" : "Terminerinnerung (1 Stunde) per WhatsApp gesendet",
+          now,
+        });
+        if (out === "sent") result[k.key]++;
+        else result.skipped++;
+      } catch (err) {
+        result.errors++;
+        reportError(err, "vertrieb-termin-erinnerung", { meeting: m.id, kind: k.key });
+      }
+    }
+  }
+  return result;
+}
+
+// ─── Vorlagen einreichen und Freigabe nachziehen ─────────────────────────
 
 const CHECK_PENDING_MS = 30 * 60 * 1000;
 const CHECK_IDLE_MS = 6 * 60 * 60 * 1000;
 
-/** Im WhatsApp-Cron: Vorlage der Support-Nummer einreichen bzw. Status abgleichen (gedrosselt). */
+/**
+ * Im WhatsApp-Cron: Vorlagen der Support-Nummer einreichen bzw. Status abgleichen (gedrosselt).
+ * Gibt den Status der Terminbestätigung zurück (die Erinnerungen laufen genauso mit).
+ */
 export async function syncSupportTemplates(now = new Date(), opts: { force?: boolean } = {}): Promise<{ status: string } | null> {
   const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { status: true, apiKeyEnc: true, templatesCheckedAt: true } });
   if (acc?.status !== "connected" || !acc.apiKeyEnc) return null;
-  const local = await prisma.messageTemplate.findUnique({
-    where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: TERMIN_TEMPLATE_NAME, language: LANGUAGE } },
-    select: { status: true },
+  const locals = await prisma.messageTemplate.findMany({
+    where: { customerId: SUPPORT_CUSTOMER_ID, language: LANGUAGE, name: { in: SUPPORT_TEMPLATES.map((t) => t.name) } },
+    select: { name: true, status: true },
   });
+  const localStatus = new Map(locals.map((l) => [l.name, l.status]));
+  const allApproved = SUPPORT_TEMPLATES.every((t) => localStatus.get(t.name) === "approved");
   const age = acc.templatesCheckedAt ? now.getTime() - acc.templatesCheckedAt.getTime() : Infinity;
-  if (!opts.force && age < (local?.status === "approved" ? CHECK_IDLE_MS : CHECK_PENDING_MS)) return null;
-  const problems = metaTemplateProblems(TERMIN_TEMPLATE_BODY, TERMIN_TEMPLATE_EXAMPLES);
-  if (problems.length) throw new Error(`Vorlage ungültig: ${problems.join(", ")}`);
+  if (!opts.force && age < (allApproved ? CHECK_IDLE_MS : CHECK_PENDING_MS)) return null;
+  for (const t of SUPPORT_TEMPLATES) {
+    const problems = metaTemplateProblems(t.body, t.examples);
+    if (problems.length) throw new Error(`Vorlage ${t.name} ungültig: ${problems.join(", ")}`);
+  }
   const apiKey = decryptSecret(acc.apiKeyEnc);
   const remoteList = await listTemplates(apiKey);
-  let remote = findRemote(remoteList, TERMIN_TEMPLATE_NAME);
-  let submittedAt: Date | null = null;
-  if (!remote) {
-    remote = await createTemplate(apiKey, terminTemplateRequest());
-    submittedAt = now;
+  let first: string | null = null;
+  for (const t of SUPPORT_TEMPLATES) {
+    let remote = findRemote(remoteList, t.name);
+    let submittedAt: Date | null = null;
+    if (!remote) {
+      remote = await createTemplate(apiKey, supportTemplateRequest(t));
+      submittedAt = now;
+    }
+    const status = mapRemoteStatus(remote.status);
+    first ??= status;
+    await prisma.messageTemplate.upsert({
+      where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: t.name, language: LANGUAGE } },
+      create: {
+        customerId: SUPPORT_CUSTOMER_ID,
+        name: t.name,
+        language: LANGUAGE,
+        purpose: t.purpose,
+        category: "utility",
+        status,
+        body: t.body,
+        auto: true,
+        submittedAt,
+        rejectionReason: status === "rejected" ? remote.rejectedReason : null,
+      },
+      update: { status, rejectionReason: status === "rejected" ? remote.rejectedReason : null, ...(submittedAt ? { submittedAt } : {}) },
+    });
+    if (status === "rejected" && localStatus.get(t.name) !== "rejected") {
+      const { sendToAdmins } = await import("@/lib/push");
+      await sendToAdmins({
+        title: "WhatsApp-Vorlage für Vertriebstermine abgelehnt",
+        body: `${t.name}: ${(remote.rejectedReason ?? "Grund unbekannt").slice(0, 100)}`,
+        url: "/admin/whatsapp/settings",
+        tag: `tpl:support-${t.name}`,
+      }).catch(() => {});
+    }
   }
-  const status = mapRemoteStatus(remote.status);
-  await prisma.messageTemplate.upsert({
-    where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: TERMIN_TEMPLATE_NAME, language: LANGUAGE } },
-    create: {
-      customerId: SUPPORT_CUSTOMER_ID,
-      name: TERMIN_TEMPLATE_NAME,
-      language: LANGUAGE,
-      purpose: TERMIN_TEMPLATE_PURPOSE,
-      category: "utility",
-      status,
-      body: TERMIN_TEMPLATE_BODY,
-      auto: true,
-      submittedAt,
-      rejectionReason: status === "rejected" ? remote.rejectedReason : null,
-    },
-    update: { status, rejectionReason: status === "rejected" ? remote.rejectedReason : null, ...(submittedAt ? { submittedAt } : {}) },
-  });
   await prisma.whatsAppAccount.update({ where: { customerId: SUPPORT_CUSTOMER_ID }, data: { templatesCheckedAt: now } });
-  if (status === "rejected" && local?.status !== "rejected") {
-    const { sendToAdmins } = await import("@/lib/push");
-    await sendToAdmins({
-      title: "WhatsApp-Vorlage Terminbestätigung abgelehnt",
-      body: (remote.rejectedReason ?? "Grund unbekannt").slice(0, 120),
-      url: "/admin/whatsapp/settings",
-      tag: "tpl:support-termin",
-    }).catch(() => {});
-  }
-  return { status };
+  return { status: first ?? "pending" };
 }

@@ -18,7 +18,7 @@ import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { assignSupportConversation, refreshSupportLinks, supportBadge, SUPPORT_BADGE_SELECT, supportKindWhere } from "@/lib/whatsapp/support-contacts";
-import { sendTerminConfirmation, syncSupportTemplates, TERMIN_TEMPLATE_NAME } from "@/lib/vertrieb/termin-whatsapp";
+import { ERINNERUNG_TEMPLATE_NAME, GLEICH_TEMPLATE_NAME, runSalesWhatsAppReminders, sendTerminConfirmation, syncSupportTemplates, TERMIN_TEMPLATE_NAME } from "@/lib/vertrieb/termin-whatsapp";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
 const tag = Math.random().toString(36).slice(2, 8);
@@ -91,6 +91,48 @@ describe("Support-Nummer: Kunde oder Interessent", () => {
     expect(conv.messages.at(-1)?.body).toContain("Guten Tag Max Muster");
     expect(conv.messages.at(-1)?.body).toContain("per Video: https://zoom.us/j/1");
     expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: meeting.id } })).waConfirmStatus).toBe("sent");
+  });
+
+  it("Erinnerungen 24 Stunden und 1 Stunde vorher: erst nach Freigabe, je Art einmal, Abmeldung zählt", async () => {
+    const now = new Date();
+    const h = 3600_000;
+    const PH_X = `49179${Math.floor(1e6 + Math.random() * 8e6)}`;
+    const PH_STOP = `49170${Math.floor(1e6 + Math.random() * 8e6)}`;
+    const mk = (startH: number, bookedH: number, phone: string, extra: Record<string, unknown> = {}) =>
+      prisma.salesMeeting.create({
+        data: { contactId: contactIds[0], title: "Meta-Leads-Call", startAt: new Date(now.getTime() + startH * h), createdAt: new Date(now.getTime() - bookedH * h), inviteePhone: `+${phone}`, inviteeName: "Max Muster", ...extra },
+      });
+    const day = await mk(23, 72, PH_X, { manageToken: `tok-${tag}-a`, joinUrl: "https://meet.google.com/abc" });
+    const soon = await mk(0.75, 48, PH_X, { rescheduleUrl: "https://calendly.com/r/2" });
+    const fresh = await mk(20, 1, PH_X);
+    const stop = await mk(22, 72, PH_STOP);
+    await prisma.conversation.create({ data: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: PH_STOP, botActive: false, optedOutAt: now } });
+    const ours = () => sent.filter((x) => x.to === PH_X || x.to === PH_STOP).map((x) => x.name);
+    const link = (t: string) => `https://app.example/termin/verwalten/${t}`;
+
+    // Vorlagen eingereicht, aber noch nicht freigegeben: nichts senden, nichts markieren
+    await syncSupportTemplates(now, { force: true });
+    expect((await prisma.messageTemplate.findMany({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { name: true } })).map((t) => t.name)).toEqual(
+      expect.arrayContaining([TERMIN_TEMPLATE_NAME, ERINNERUNG_TEMPLATE_NAME, GLEICH_TEMPLATE_NAME]),
+    );
+    await runSalesWhatsAppReminders(now, link);
+    expect(ours()).toEqual([]);
+    expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: day.id } })).waReminderAt).toBeNull();
+
+    await prisma.messageTemplate.updateMany({ where: { customerId: SUPPORT_CUSTOMER_ID, name: { in: [ERINNERUNG_TEMPLATE_NAME, GLEICH_TEMPLATE_NAME] } }, data: { status: "approved" } });
+    await runSalesWhatsAppReminders(now, link);
+    expect(ours().sort()).toEqual([ERINNERUNG_TEMPLATE_NAME, GLEICH_TEMPLATE_NAME].sort());
+    const params = (name: string) => JSON.stringify(sent.find((x) => x.to === PH_X && x.name === name)?.components);
+    expect(params(ERINNERUNG_TEMPLATE_NAME)).toContain(link(`tok-${tag}-a`));
+    expect(params(ERINNERUNG_TEMPLATE_NAME)).toContain("per Video: https://meet.google.com/abc");
+    expect(params(GLEICH_TEMPLATE_NAME)).toContain("https://calendly.com/r/2");
+    // kurzfristig gebucht: keine 24-Stunden-Erinnerung; abgemeldet: nichts; beide markiert
+    expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: fresh.id } })).waReminderAt).not.toBeNull();
+    expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: stop.id } })).waReminderAt).not.toBeNull();
+    expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: soon.id } })).waSoonAt).not.toBeNull();
+    // zweiter Lauf: kein Doppelversand
+    await runSalesWhatsAppReminders(now, link);
+    expect(ours()).toHaveLength(2);
   });
 
   it("ohne Nummer wird nichts gesendet", async () => {

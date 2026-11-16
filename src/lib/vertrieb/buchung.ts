@@ -616,10 +616,10 @@ const HOUR = 60 * MIN;
 
 /**
  * Erinnerung per E-Mail 24 Stunden und 1 Stunde vor Terminen der eigenen Buchungsseite
- * (Calendly-Termine erinnert Calendly selbst). Kurzfristig Gebuchtes bekommt keine Erinnerung,
+ * (Calendly-Termine erinnert Calendly per E-Mail selbst), danach WhatsApp für alle Vertriebstermine. Kurzfristig Gebuchtes bekommt keine Erinnerung,
  * die direkt auf die Bestätigung folgen würde.
  */
-export async function runSalesBookingReminders(now = new Date()): Promise<{ day: number; soon: number }> {
+export async function runSalesBookingReminders(now = new Date()): Promise<{ day: number; soon: number; whatsapp: unknown }> {
   let day = 0;
   let soon = 0;
   const base = { status: "GEPLANT", manageToken: { not: null }, bookingTypeId: { not: null } } as const;
@@ -646,5 +646,11 @@ export async function runSalesBookingReminders(now = new Date()): Promise<{ day:
     if (m.startAt.getTime() - m.createdAt.getTime() < 3 * HOUR) continue;
     if (await sendInviteeMail(m.id, "soon")) soon++;
   }
-  return { day, soon };
+  // WhatsApp von der Support-Nummer (auch für Calendly-Termine), eigene Markierung je Art
+  const { runSalesWhatsAppReminders } = await import("@/lib/vertrieb/termin-whatsapp");
+  const whatsapp = await runSalesWhatsAppReminders(now, manageLink).catch((e: unknown) => {
+    reportError(e, "vertrieb-whatsapp-erinnerung");
+    return null;
+  });
+  return { day, soon, whatsapp };
 }
