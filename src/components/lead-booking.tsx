@@ -17,6 +17,9 @@ import { cn } from "@/lib/utils";
 const OPEN_EVENT = "pg:lead-booking";
 type Slot = { start: string; end: string };
 
+/** Termin gebucht (z. B. Anrufliste schaltet weiter, Ole 16.11.2026) */
+export const LEAD_BOOKED_EVENT = "pg-lead-booked";
+
 export function openLeadBooking(leadId: string, name?: string | null) {
   window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: { leadId, name: name ?? null } }));
 }
@@ -62,6 +65,7 @@ export function SlotPicker({ leadId, onBooked }: { leadId: string; onBooked: () 
         return;
       }
       toast.show({ message: `Termin gebucht: ${dayLabel(r.start)}, ${timeLabel(r.start)} Uhr` });
+      window.dispatchEvent(new CustomEvent(LEAD_BOOKED_EVENT, { detail: { leadId } }));
       onBooked();
     });
 

@@ -1,14 +1,14 @@
 "use client";
 
 import { anrufZiel } from "@/lib/anruf-ziel";
-import { openLeadBooking } from "@/components/lead-booking";
+import { LEAD_BOOKED_EVENT, openLeadBooking } from "@/components/lead-booking";
 import { terminArtLabel } from "@/lib/termin-art";
 
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { useProvisionRates } from "@/components/provision-context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   AlertTriangle,
   BellRing,
@@ -229,6 +229,22 @@ export function TodayInbox({
       }
       return { ...m, i: m.i + 1 };
     });
+  // Anrufliste: Termin gebucht → Karte erledigt, weiter zur nächsten (Ole, 16.11.2026: „Hatte einen Termin vereinbart.
+  // Danach müsste die nächste Karte angezeigt werden.“). Bei Wiedervorlagen ist die Wiedervorlage damit erledigt.
+  useEffect(() => {
+    if (!callMode) return;
+    const h = (e: Event) => {
+      const leadId = (e as CustomEvent<{ leadId: string }>).detail?.leadId;
+      const cur = callMode.queue[callMode.i];
+      if (!cur || cur.leadId !== leadId) return;
+      if (cur.kind === "followup") run(cur.key, `${cur.name}: Termin gebucht`, () => clearFollowUpResult(cur.leadId));
+      else hide(cur.key);
+      advance();
+    };
+    window.addEventListener(LEAD_BOOKED_EVENT, h);
+    return () => window.removeEventListener(LEAD_BOOKED_EVENT, h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callMode]);
   const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
   const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
   const nothing = appointments.length + outcomes.length + chats.length + calls.length + noStep.length === 0;
