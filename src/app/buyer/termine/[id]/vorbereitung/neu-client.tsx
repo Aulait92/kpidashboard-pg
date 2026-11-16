@@ -417,7 +417,7 @@ function Angebote(p: {
       ) : null}
 
       {/* Sparten-Reiter, vorausgewählt aus dem Formular */}
-      <div className="flex flex-wrap gap-1.5 px-4 pt-3 sm:px-5" role="tablist" data-sparten>
+      <div className="relative flex flex-wrap gap-1.5 px-4 pt-3 sm:px-5" role="tablist" data-sparten>
         {p.auswahl.sparten.map((s) => {
           const e = empfehlungVon(s);
           const m = e ? tarifMonat(s, e) : null;
@@ -444,11 +444,11 @@ function Angebote(p: {
           );
         })}
         {nochFrei.length && !ro ? (
-          <details className="relative">
+          <details className="sm:relative">
             <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-1 rounded-full border border-dashed border-[color:var(--border-strong)] bg-white px-3.5 text-sm font-medium text-[color:var(--muted)] [&::-webkit-details-marker]:hidden">
               <Plus className="h-3.5 w-3.5" /> Sparte
             </summary>
-            <div className="absolute left-0 z-20 mt-1 max-h-72 w-60 overflow-auto rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
+            <div className="absolute left-4 z-20 mt-1 max-h-72 w-60 overflow-auto sm:left-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
               {nochFrei.map((s) => (
                 <button
                   key={s.key}
@@ -496,7 +496,7 @@ function Angebote(p: {
               </div>
             ))}
 
-            <div className="mt-3.5 grid gap-2.5" data-tarife>
+            <div className="mt-3.5 grid grid-cols-1 gap-2.5" data-tarife>
               {sp.tarife.length ? (
                 sp.tarife.map((t) => <TarifKarte key={t.id} sp={sp} t={t} version={p.version} ro={ro} anTarif={anTarif} anSparte={anSparte} />)
               ) : (
@@ -626,7 +626,7 @@ function TarifKarte({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-md)] border bg-white px-3.5 py-3 transition",
+        "rounded-[var(--radius-md)] border bg-white min-w-0 px-3.5 py-3 transition",
         empf ? "border-[color:var(--brand)] shadow-[inset_0_0_0_1px_var(--brand)]" : "border-[color:var(--border)]",
         !t.zeigen && "bg-[color:var(--surface-sunken)] opacity-70",
       )}
@@ -694,14 +694,14 @@ function TarifKarte({
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {bs.map((k) =>
             t.bausteinStatus[k] === "inklusive" ? (
-              <span key={k} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-2.5 text-[13px]">
+              <span key={k} className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-2.5 py-0.5 text-[13px] leading-tight">
                 <Check className="h-3.5 w-3.5 text-emerald-600" /> {bName(k)} <small className="text-[color:var(--muted)]">inklusive</small>
               </span>
             ) : (
               <span
                 key={k}
                 className={cn(
-                  "inline-flex h-8 items-center gap-1 rounded-full border pl-1 pr-1.5 text-[13px]",
+                  "inline-flex min-h-8 max-w-full items-center gap-1 rounded-2xl border py-0.5 pl-1 pr-1.5 text-[13px] leading-tight",
                   t.bausteine[k]?.an ? "border-[color:var(--brand)] bg-[color:var(--brand-soft)]" : "border-[color:var(--border-strong)] bg-white",
                 )}
               >
@@ -710,9 +710,9 @@ function TarifKarte({
                   disabled={ro}
                   aria-pressed={!!t.bausteine[k]?.an}
                   onClick={() => anTarif(t.id, (x) => void (x.bausteine[k] = { an: !x.bausteine[k]?.an, beitrag: x.bausteine[k]?.beitrag ?? null }))}
-                  className="inline-flex items-center gap-1.5 pr-0.5"
+                  className="inline-flex min-w-0 items-center gap-1.5 pr-0.5 text-left"
                 >
-                  <span className={cn("flex h-[18px] w-[18px] items-center justify-center rounded-full border-2", t.bausteine[k]?.an ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border-strong)]")}>
+                  <span className={cn("flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2", t.bausteine[k]?.an ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border-strong)]")}>
                     {t.bausteine[k]?.an ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
                   </span>
                   {bName(k)}
