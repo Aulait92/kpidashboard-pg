@@ -23,14 +23,14 @@ export function anrufZiel(c: { kind: "callback" | "followup"; reason: string; so
     return { ziel: "Nachfassen", schritte: ["An das letzte Gespräch anknüpfen", "Nächsten Schritt festlegen"] };
   }
   if (/im chat geantwortet/.test(r)) {
-    return { ziel: "Termin vereinbaren", schritte: ["Auf den Chat Bezug nehmen", `Bedarf klären: ${bedarfsfragen(c.source)}`, "Termin vereinbaren (Telefon oder Video)"] };
+    return { ziel: "Termin vereinbaren", schritte: ["Auf den Chat Bezug nehmen", `Bedarf klären: ${bedarfsfragen(c.source)}`, "Termin vereinbaren, am besten per Video"] };
   }
   return {
     ziel: "Termin vereinbaren",
     schritte: [
       c.source ? `Vorstellen: Ihre Anfrage zu ${c.source}` : "Vorstellen und auf die Anfrage Bezug nehmen",
       `Bedarf kurz abfragen: ${bedarfsfragen(c.source)}`,
-      "Termin vereinbaren (Telefon oder Video)",
+      "Termin vereinbaren, am besten per Video",
     ],
   };
 }
