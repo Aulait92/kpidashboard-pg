@@ -185,7 +185,9 @@ export function LeadHeaderActions(p: Props) {
 
   return (
     <>
-      <header className="mb-5">
+      {/* @container: Im schmalen Fenster rechts auf „Heute“ (rund 530 px) wie am Handy der Status-Chip statt der
+          Phasenleiste, deren Beschriftungen dort zu „Neuer L…“ gekürzt wurden (16.11.2026). */}
+      <header className="@container mb-5">
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{p.name ?? "Lead"}</h1>
           {!p.storniert ? (
@@ -218,7 +220,7 @@ export function LeadHeaderActions(p: Props) {
           ) : null}
         </div>
         {showBar ? (
-          <ol className="mt-3 hidden overflow-hidden rounded-[var(--radius-sm)] sm:flex" aria-label="Phasen">
+          <ol className="mt-3 hidden overflow-hidden rounded-[var(--radius-sm)] @2xl:flex" aria-label="Phasen">
             {stepPhases.map((ph, i) => {
               const done = currentIdx >= 0 && i < currentIdx;
               const current = i === currentIdx;
@@ -258,7 +260,7 @@ export function LeadHeaderActions(p: Props) {
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition hover:opacity-80",
                 statusToneClass(p.status),
-                showBar && "sm:hidden",
+                showBar && "@2xl:hidden",
               )}
             >
               <span className={cn("h-2 w-2 rounded-full", PHASE_DOT[phase?.key ?? "neu"] ?? "bg-zinc-400")} />
