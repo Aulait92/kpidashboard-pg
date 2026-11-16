@@ -43,6 +43,7 @@ import { loadCustomerProvision } from "@/lib/provision-server";
 import { contractProvision, sparteInfo } from "@/lib/provision";
 import { listLeadContracts, syncPrimaryContract } from "@/lib/vertraege";
 import { LeadContracts } from "@/components/lead-contracts";
+import { anrufZiel } from "@/lib/anruf-ziel";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
 import {
   ALL_GROUP_KEYS,
@@ -158,6 +159,7 @@ export async function LeadDetailBody({
       contactOverrides: true,
       contactEditedAt: true,
       contactAttempts: true,
+      reached: true,
       firstContactAt: true,
       followUpAt: true,
       followUpNote: true,
@@ -287,6 +289,19 @@ export async function LeadDetailBody({
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
   const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
+  // Was beim nächsten Anruf zu tun ist, auf einen Blick (Ole, 16.11.2026; gleiche Regeln wie die Anrufliste).
+  // Nur bei offenen Kontakten ohne anstehenden Termin und ohne fehlendes Termin-Ergebnis.
+  const verloren = ["kein interesse", "disqualifiziert"].includes((lead.status ?? "").trim().toLowerCase());
+  const gesprochen = lead.reached || !!lead.followUpAt || lead.status === "Angebot gesendet";
+  const ziel =
+    !storniert && !won && !verloren && !nextAppt && stepState !== "result_missing" && !lead.erasedAt
+      ? anrufZiel({
+          kind: gesprochen ? "followup" : "callback",
+          reason: lead.followUpNote ?? (lead.status === "Angebot gesendet" ? "Angebot nachfassen" : (conv?.attentionReason ?? "")),
+          source: lead.source,
+          known: conv?.qualificationSummary ?? null,
+        })
+      : null;
   const [history, rates, files, postfachRaw, me, mailOff] = await Promise.all([
     loadLeadHistory(lead.id, team.userId),
     won ? loadCustomerProvision(customerId).then((p) => p.rates) : null,
@@ -477,8 +492,23 @@ export async function LeadDetailBody({
         />
       ) : null}
 
-      {nextAppt || conv?.qualificationSummary || qPoints.length ? (
+      {nextAppt || ziel || conv?.qualificationSummary || qPoints.length ? (
         <Card className="mb-6">
+          {ziel ? (
+            <div className="px-5 py-3.5" data-kontakt-ziel>
+              <div className="text-sm font-semibold text-[color:var(--muted)]">
+                Ziel: <span className="text-[color:var(--foreground)]">{ziel.ziel}</span>
+              </div>
+              <ol className="mt-1.5 space-y-1 text-sm">
+                {ziel.schritte.map((s, i) => (
+                  <li key={s} className="flex gap-2">
+                    <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-semibold text-[color:var(--brand-dark)]">{i + 1}</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
           {nextAppt ? (
             <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
               <CalendarClock className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
@@ -507,14 +537,14 @@ export async function LeadDetailBody({
             </div>
           ) : null}
           {conv?.qualificationSummary ? (
-            <p className={`px-5 py-3.5 text-sm ${nextAppt ? "border-t border-[color:var(--border)]" : ""}`}>
+            <p className={`px-5 py-3.5 text-sm ${nextAppt || ziel ? "border-t border-[color:var(--border)]" : ""}`}>
               <span className="text-[color:var(--muted)]">Assistent: </span>
               {conv.qualificationSummary}
             </p>
           ) : null}
           {/* Einzelne Angaben des Assistenten, z. B. fürs Privatschutz-Angebot (Ole, 15.11.2026) */}
           {qPoints.length ? (
-            <dl className={`grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 px-5 py-3.5 text-sm ${nextAppt || conv?.qualificationSummary ? "border-t border-[color:var(--border)]" : ""}`} data-lead-angaben>
+            <dl className={`grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 px-5 py-3.5 text-sm ${nextAppt || ziel || conv?.qualificationSummary ? "border-t border-[color:var(--border)]" : ""}`} data-lead-angaben>
               {qPoints.map((q) => (
                 <div key={q.key} className="contents">
                   <dt className="text-[color:var(--muted)]">{q.label}</dt>

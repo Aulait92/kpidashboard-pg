@@ -49,6 +49,8 @@ export type InboxCallback = {
   conversationId: string | null;
   /** Kein WhatsApp: sofort anrufen, ganz oben (lib/whatsapp/kein-whatsapp.ts) */
   urgent?: boolean;
+  /** Was der Assistent im Chat schon erfahren hat (Conversation.qualificationSummary), für die Anrufliste */
+  known?: string | null;
 };
 export type InboxFollowUp = {
   leadId: string;
@@ -60,6 +62,8 @@ export type InboxFollowUp = {
   dueAt: string;
   overdue: boolean;
   conversationId: string | null;
+  /** Was der Assistent im Chat schon erfahren hat, für die Anrufliste */
+  known?: string | null;
 };
 /** Kommende Tage (Ole, 13.11.2026): Wiedervorlagen ab morgen und Termine ab übermorgen, 14 Tage. */
 export type InboxUpcoming = { key: string; kind: "wiedervorlage" | "termin"; leadId: string | null; name: string; note: string | null; at: string };
@@ -174,7 +178,12 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
   const noStep = await listWithoutNextStep(leadScope(ctx), { now, take: 30 });
   const outcomeLeadIds = new Set(past.filter((a) => !POST_STATUSES.includes(a.lead?.status ?? "")).map((a) => a.leadId));
 
-  const convIds = upcoming.map((a) => a.conversationId).filter((x): x is string => !!x);
+  // Auch für die Anrufliste: was der Assistent schon weiß (Ole, 16.11.2026)
+  const convIds = [
+    ...upcoming.map((a) => a.conversationId),
+    ...callbacks.map((c) => c.conversationId),
+    ...followUps.map((f) => f.conversations[0]?.id ?? null),
+  ].filter((x): x is string => !!x);
   const convs = convIds.length
     ? await prisma.conversation.findMany({
         where: { id: { in: convIds } },
@@ -212,6 +221,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       dueAt: f.followUpAt!.toISOString(),
       overdue: f.followUpAt!.getTime() < todayStart.getTime(),
       conversationId: f.conversations[0]?.id ?? null,
+      known: convById.get(f.conversations[0]?.id ?? "")?.qualificationSummary ?? null,
     })),
     appointments: upcoming.map((a) => {
       const conv = a.conversationId ? convById.get(a.conversationId) : undefined;
@@ -254,6 +264,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       createdAt: c.createdAt.toISOString(),
       conversationId: c.conversationId,
       urgent: !!c.urgent,
+      known: c.conversationId ? (convById.get(c.conversationId)?.qualificationSummary ?? null) : null,
     })),
     bookingSlug: cal?.status === "connected" ? await getOrCreateBookingSlug(customerId) : null,
     noNextStep: { total: noStep.total, leads: noStep.leads.filter((l) => !outcomeLeadIds.has(l.leadId)) },

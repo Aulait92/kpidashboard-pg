@@ -83,6 +83,8 @@ type CallItem = {
   conversationId: string | null;
   /** Kein WhatsApp: sofort anrufen, steht ganz oben */
   urgent?: boolean;
+  /** Was der Assistent schon weiß (Chat-Zusammenfassung) */
+  known?: string | null;
 };
 
 type SheetState =
@@ -197,6 +199,7 @@ export function TodayInbox({
     overdue: false,
     conversationId: c.conversationId,
     urgent: c.urgent,
+    known: c.known ?? null,
   });
   const urgentIds = new Set(data.callbacks.filter((c) => c.urgent).map((c) => c.leadId));
   const calls: CallItem[] = [
@@ -211,6 +214,7 @@ export function TodayInbox({
       reason: f.note ?? "Nachfassen",
       overdue: f.overdue,
       conversationId: f.conversationId,
+      known: f.known ?? null,
     })),
     ...data.callbacks.filter((c) => !c.urgent).map(toCallback),
   ].filter((c) => !hidden.has(c.key));
@@ -794,6 +798,12 @@ function CallModePanel({
                 <div className="text-sm font-semibold text-[color:var(--muted)]">
                   Ziel: <span className="text-[color:var(--foreground)]">{z.ziel}</span>
                 </div>
+                {/* Was der Assistent im Chat schon erfahren hat, damit der Vermittler nicht doppelt fragt (Ole, 16.11.2026) */}
+                {item.known ? (
+                  <p className="mt-1.5 text-sm text-[color:var(--muted)]" data-anruf-bekannt>
+                    <span className="font-medium text-[color:var(--foreground)]">Aus dem Chat:</span> {item.known}
+                  </p>
+                ) : null}
                 <ol className="mt-2 space-y-1.5 text-base">
                   {z.schritte.map((s, i) => (
                     <li key={s} className="flex gap-2">

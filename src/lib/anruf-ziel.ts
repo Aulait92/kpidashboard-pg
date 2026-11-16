@@ -13,8 +13,10 @@ export function bedarfsfragen(produkt: string | null | undefined): string {
   return "Was abgesichert werden soll, bestehende Verträge";
 }
 
-export function anrufZiel(c: { kind: "callback" | "followup"; reason: string; source: string | null }): AnrufZiel {
+export function anrufZiel(c: { kind: "callback" | "followup"; reason: string; source: string | null; known?: string | null }): AnrufZiel {
   const r = c.reason.toLowerCase();
+  // Weiß der Assistent schon etwas (steht im Anrufmodus darüber), nur bestätigen statt neu abfragen (16.11.2026)
+  const bedarf = (verb: string) => (c.known ? "Bekanntes kurz bestätigen, nur Fehlendes fragen" : `${verb}: ${bedarfsfragen(c.source)}`);
   if (/nicht zum termin erschienen|termin abgelehnt|termin abgesagt/.test(r)) {
     return { ziel: "Neuen Termin vereinbaren", schritte: ["Kurz nachfragen, was dazwischenkam", "Zwei Termine zur Wahl anbieten", "Termin direkt eintragen"] };
   }
@@ -23,13 +25,13 @@ export function anrufZiel(c: { kind: "callback" | "followup"; reason: string; so
     return { ziel: "Nachfassen", schritte: ["An das letzte Gespräch anknüpfen", "Nächsten Schritt festlegen"] };
   }
   if (/im chat geantwortet/.test(r)) {
-    return { ziel: "Termin vereinbaren", schritte: ["Auf den Chat Bezug nehmen", `Bedarf klären: ${bedarfsfragen(c.source)}`, "Termin vereinbaren, am besten per Video"] };
+    return { ziel: "Termin vereinbaren", schritte: ["Auf den Chat Bezug nehmen", bedarf("Bedarf klären"), "Termin vereinbaren, am besten per Video"] };
   }
   return {
     ziel: "Termin vereinbaren",
     schritte: [
       c.source ? `Vorstellen: Ihre Anfrage zu ${c.source}` : "Vorstellen und auf die Anfrage Bezug nehmen",
-      `Bedarf kurz abfragen: ${bedarfsfragen(c.source)}`,
+      bedarf("Bedarf kurz abfragen"),
       "Termin vereinbaren, am besten per Video",
     ],
   };

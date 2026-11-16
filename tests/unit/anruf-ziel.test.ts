@@ -17,6 +17,11 @@ describe("Ziel des Anrufs", () => {
   it("Angebot nachfassen: Entscheidung", () => {
     expect(anrufZiel({ kind: "followup", reason: "Angebot nachfassen", source: "Privatschutz" }).ziel).toBe("Entscheidung zum Angebot");
   });
+  it("weiß der Assistent schon etwas: bestätigen statt neu abfragen", () => {
+    const z = anrufZiel({ kind: "callback", reason: "Keine Reaktion", source: "Privatschutz", known: "Paar, Hausrat" });
+    expect(z.schritte[1]).toBe("Bekanntes kurz bestätigen, nur Fehlendes fragen");
+    expect(anrufZiel({ kind: "callback", reason: "Keine Reaktion", source: "Privatschutz", known: null }).schritte[1]).toContain("Sparten");
+  });
   it("Bedarfsfragen je Produkt, ohne Gedankenstriche", () => {
     expect(bedarfsfragen("Privatschutz")).toContain("Sparten");
     expect(bedarfsfragen("PKV")).toContain("Beruf");
