@@ -7,7 +7,8 @@ import { keinWhatsAppQuote } from "@/lib/whatsapp/kein-whatsapp";
 
 export async function KeinWhatsAppKpi({ customerId, range }: { customerId: string; range: { from: Date; to: Date } }) {
   const q = await keinWhatsAppQuote({ customerId, from: range.from, to: range.to });
-  if (q.attempted === 0) return null;
+  // Nichts zu tun, nichts zu zeigen (UX-Regel: ohne Handlung kein Platz)
+  if (q.attempted === 0 || q.noWhatsApp === 0) return null;
   const pct = q.share == null ? 0 : Math.round(q.share * 100);
   return (
     <p
@@ -17,8 +18,7 @@ export async function KeinWhatsAppKpi({ customerId, range }: { customerId: strin
       <PhoneCall className="h-4 w-4 shrink-0" />
       <span>
         <b className="text-[color:var(--foreground)]">Leads ohne WhatsApp: {pct} %</b> ({formatNumber(q.noWhatsApp)} von {formatNumber(q.attempted)} per WhatsApp
-        angeschriebenen Leads). Der Assistent arbeitet nur über WhatsApp. Diese Leads stehen sofort oben auf Ihrer Anrufliste und bekommen, wenn eine
-        E-Mail-Adresse da ist, eine kurze E-Mail mit Ihrem Terminlink.
+        angeschriebenen Leads). Sie stehen sofort oben auf Ihrer Anrufliste.
       </span>
     </p>
   );

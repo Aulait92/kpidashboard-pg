@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2, PauseCircle } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { endPauseAction, planPauseAction, toggleLeadEmailAction, type PauseFormState } from "./actions";
@@ -25,6 +25,8 @@ export function PauseCard({
 }) {
   const [planState, plan, planning] = useActionState<PauseFormState, FormData>(planPauseAction, {});
   const [endState, end, ending] = useActionState<PauseFormState, FormData>(endPauseAction, {});
+  // Selten gebraucht: Formular erst auf Knopfdruck (UX-Regel: Seltenes verstecken)
+  const [formOpen, setFormOpen] = useState(false);
   const d = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
 
   return (
@@ -65,6 +67,17 @@ export function PauseCard({
               Anzeigen pausieren, z. B. im Urlaub. Am Neustart-Tag laufen sie von selbst wieder an. {softwareFeeText}
             </p>
             {planState.ok ? <p className="text-sm font-medium text-emerald-700">Pause eingetragen.</p> : null}
+            {!formOpen && !planState.error ? (
+              <button
+                type="button"
+                disabled={readOnly}
+                onClick={() => setFormOpen(true)}
+                className={`${btn} border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]`}
+                data-pause-oeffnen
+              >
+                Pause planen
+              </button>
+            ) : (
             <form action={plan} className="grid gap-3 sm:grid-cols-2">
               <label className="block space-y-1">
                 <span className="text-sm font-medium">Pause ab</span>
@@ -86,6 +99,7 @@ export function PauseCard({
                 {planState.error ? <span className="text-sm font-medium text-rose-700">{planState.error}</span> : null}
               </div>
             </form>
+            )}
           </>
         )}
       </div>
