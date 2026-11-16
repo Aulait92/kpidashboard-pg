@@ -115,7 +115,7 @@ export default async function BuchungsseitePage({ searchParams }: { searchParams
 
       <p className="text-center text-xs text-[color:var(--muted)]">
         Gebuchte Termine erscheinen als Aufgabe im{" "}
-        <Link href="/admin/vertrieb/aufgaben" className="underline">
+        <Link href="/admin/heute/aufgaben" className="underline">
           Vertrieb
         </Link>
         . Calendly läuft parallel weiter.

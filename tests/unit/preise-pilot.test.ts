@@ -18,10 +18,14 @@ const d = (x: Partial<VorbereitungDaten> = {}): VorbereitungDaten => ({
 });
 
 describe("Schalter je Gesellschaft und Sparte", () => {
-  it("alle 11 Allianz-Sparten des Katalogs, Standard aus", () => {
+  it("11 Allianz-Sparten des Katalogs, Standard aus (Pferd ohne Pilot-Rechner)", () => {
     const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
     expect(PILOT_SCHLUESSEL).toHaveLength(11);
-    expect(PILOT_SCHLUESSEL.map((s) => s.split("/")[1]).sort()).toEqual(echt.sparten.map((s) => s.key).sort());
+    const pilot = PILOT_SCHLUESSEL.map((s) => s.split("/")[1]);
+    const katalog = echt.sparten.map((s) => s.key);
+    for (const k of pilot) expect(katalog).toContain(k);
+    // Pferde-Sparten kamen am 16.11. mit den Tiertarifen dazu, im Pilot noch ohne Rechner
+    expect(katalog.filter((k) => !pilot.includes(k)).sort()).toEqual(["pferd-kranken", "pferd-op"]);
     for (const url of Object.values(RECHNER.allianz)) expect(url).toMatch(/^https:\/\/www\.allianz\.de\/.+\/rechner\//);
     expect(rechnerUrl([], "allianz", "hausrat")).toBeNull();
     expect(rechnerUrl(cleanPilot(null), "allianz", "hausrat")).toBeNull();

@@ -8,6 +8,7 @@ import { pickTwoSlots, slotLabel } from "@/lib/whatsapp/termin-vorschlaege";
 import { buildTemplateRequest, categoryFor, metaTemplateProblems, requestShape, withoutHeader } from "@/lib/whatsapp/template-plan";
 import {
   ERSTINFO_FOOTER,
+  freitextButtonsOf,
   interactiveButtons,
   isCurrentTemplateName,
   rankTemplates,
@@ -35,10 +36,10 @@ describe("Erstanschreiben je Produkt", () => {
     expect(outreachProdukt("Hundehalter-Haftpflicht")?.purpose).not.toBe("outreach_tkv");
     expect(outreachProdukt("Sterbegeldversicherung")).toBeNull();
     expect(outreachProdukt(null)).toBeNull();
-    // Knöpfe der Vorlage = Knöpfe im Prompt
+    // Knöpfe der Vorlage bzw. der vorgemerkten nächsten Fassung = Knöpfe im Prompt (Zahnzusatz: v5 neutral, Art. 9 DSGVO)
     for (const s of ["TKV Katze", "Zahnzusatz", "PKV", "Privatschutz"]) {
       const p = outreachProdukt(s)!;
-      expect(TEMPLATE_BUTTONS[p.purpose]).toEqual(p.knoepfe);
+      expect(freitextButtonsOf(p.purpose)).toEqual(p.knoepfe);
     }
   });
 
