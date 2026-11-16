@@ -10,6 +10,8 @@
 //   SCREENSHOTS=<ordner>   legt je Ansicht und Breite ein PNG ab
 //   CHROMIUM=/opt/pw-browsers/chromium (Standard)
 // Exit 1, wenn etwas auffällt.
+// Dev-Server im Worktree (node_modules als Symlink): `NODE_OPTIONS=--max-old-space-size=8192 npx next dev --webpack`
+// (Turbopack findet next über den Symlink nicht; ohne mehr Speicher startet webpack nach ~60 Seiten neu).
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
