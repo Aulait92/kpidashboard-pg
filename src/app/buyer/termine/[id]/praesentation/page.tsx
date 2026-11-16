@@ -50,7 +50,7 @@ export default async function PraesentationPage({ params, searchParams }: { para
       {!p.marke.logoUrl && ctx.teamRole !== "advisor" ? (
         <p className="mt-3 text-sm text-[color:var(--muted)]" data-logo-hinweis>
           Noch ohne Ihr Logo.{" "}
-          <Link href="/buyer/einstellungen/branding" className="font-medium text-[color:var(--brand)] hover:underline">
+          <Link href="/buyer/einstellungen/branding" className="-my-2.5 inline-block py-2.5 font-medium text-[color:var(--brand)] hover:underline">
             Logo hinzufügen
           </Link>
         </p>

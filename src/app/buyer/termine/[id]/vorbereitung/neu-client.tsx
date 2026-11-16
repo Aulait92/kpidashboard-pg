@@ -427,7 +427,7 @@ function Angebote(p: {
             <span
               key={s.key}
               className={cn(
-                "inline-flex h-9 items-center rounded-full border text-sm font-semibold",
+                "inline-flex h-10 items-center rounded-full border text-sm font-semibold sm:h-9",
                 an ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white" : "border-[color:var(--border)] bg-white",
               )}
             >
@@ -437,7 +437,7 @@ function Angebote(p: {
               </button>
               {/* Ole, 16.11.2026: „ich kann kein Produkt wieder entfernen“ (stand nur unter „Tarife ändern“) */}
               {an && !ro ? (
-                <button type="button" aria-label={`${s.label} entfernen`} title={`${s.label} entfernen`} onClick={sparteWeg} className="mr-1 flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/20" data-sparte-entfernen>
+                <button type="button" aria-label={`${s.label} entfernen`} title={`${s.label} entfernen`} onClick={sparteWeg} className="mr-0.5 flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/20 sm:mr-1 sm:h-7 sm:w-7" data-sparte-entfernen>
                   <X className="h-3.5 w-3.5" />
                 </button>
               ) : null}
@@ -446,7 +446,7 @@ function Angebote(p: {
         })}
         {nochFrei.length && !ro ? (
           <details className="sm:relative">
-            <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-1 rounded-full border border-dashed border-[color:var(--border-strong)] bg-white px-3.5 text-sm font-medium text-[color:var(--muted)] [&::-webkit-details-marker]:hidden">
+            <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-1 rounded-full border border-dashed sm:h-9 border-[color:var(--border-strong)] bg-white px-3.5 text-sm font-medium text-[color:var(--muted)] [&::-webkit-details-marker]:hidden">
               <Plus className="h-3.5 w-3.5" /> Versicherung
             </summary>
             <div className="absolute left-4 z-20 mt-1 max-h-72 w-60 overflow-auto sm:left-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
@@ -787,7 +787,7 @@ function Auswahl({
             {nummern ? <span className="text-[11px] font-bold opacity-70">{i + 1}</span> : null}
             {name(k)}
             {!ro ? (
-              <button type="button" aria-label={`${name(k)} entfernen`} onClick={() => setze(auswahlWeg(an, k))} className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/60">
+              <button type="button" aria-label={`${name(k)} entfernen`} onClick={() => setze(auswahlWeg(an, k))} className="relative flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/60 after:absolute after:-inset-2 after:content-['']">
                 <X className="h-3.5 w-3.5" />
               </button>
             ) : null}
