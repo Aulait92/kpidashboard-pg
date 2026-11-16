@@ -2,13 +2,17 @@
 
 // Folien untereinander, auf die Breite skaliert (Kundenlink, nur lesen). Zu langer Inhalt wird kleiner statt
 // abgeschnitten, wie im Deck und im PDF.
+// Handy (16.11.2026): Auf 390 px ist die Schrift einer 1280-px-Folie rund 7 px groß. Antippen öffnet die Folie
+// bildschirmfüllend, im Hochformat quer gedreht, damit sie lesbar ist.
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { X } from "lucide-react";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
 export function FolienListe({ css, folien }: { css: string; folien: { id: string; html: string }[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
+  const [gross, setGross] = useState<number | null>(null);
   useEffect(() => {
     const fit = () => ref.current && setScale(ref.current.clientWidth / 1280);
     fit();
@@ -25,14 +29,72 @@ export function FolienListe({ css, folien }: { css: string; folien: { id: string
       aktiv = false;
     };
   }, [folien]);
+  const klein = scale < 0.5;
   return (
-    <div ref={ref} className="flex flex-col gap-4" data-kundenfolien>
-      <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st{cursor:default;pointer-events:none}`}</style>
-      {folien.map((f) => (
-        <div key={f.id} className="relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] shadow-[var(--shadow-sm)]" style={{ aspectRatio: "16 / 9" }}>
-          <div className="deck nurlesen absolute left-0 top-0" style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: f.html }} />
-        </div>
-      ))}
+    <>
+      {klein ? <p className="mb-2 text-sm text-[color:var(--muted)]">Zum Vergrößern eine Folie antippen.</p> : null}
+      <div ref={ref} className="flex flex-col gap-4" data-kundenfolien>
+        <style>{`${css}\n.nurlesen .bs,.nurlesen .wahl,.nurlesen .teil,.nurlesen .st{cursor:default;pointer-events:none}`}</style>
+        {folien.map((f, i) => (
+          <div
+            key={f.id}
+            className="relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] shadow-[var(--shadow-sm)]"
+            style={{ aspectRatio: "16 / 9" }}
+          >
+            <div className="deck nurlesen absolute left-0 top-0" style={{ width: 1280, height: 720, transform: `scale(${scale})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: f.html }} />
+            {klein ? (
+              <button type="button" className="absolute inset-0" aria-label={`Folie ${i + 1} vergrößern`} onClick={() => setGross(i)} data-folie-gross />
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {gross != null ? <FolieGross html={folien[gross].html} onClose={() => setGross(null)} /> : null}
+    </>
+  );
+}
+
+/** Eine Folie bildschirmfüllend; im Hochformat um 90° gedreht. */
+function FolieGross({ html, onClose }: { html: string; onClose: () => void }) {
+  const [vp, setVp] = useState({ w: 390, h: 844 });
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const fit = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    fit();
+    window.addEventListener("resize", fit);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("resize", fit);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [onClose]);
+  const quer = vp.h > vp.w;
+  // Erst ungedreht einpassen (die Messung braucht die normale Lage), dann drehen
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.transform = "";
+    folienEinpassen(el);
+    el.style.transform = quer ? "rotate(90deg)" : "";
+  }, [html, quer]);
+  // Platz für die Folie (gedreht: Höhe des Bildschirms ist die Folienbreite)
+  const breite = quer ? vp.h - 24 : vp.w - 24;
+  const hoehe = quer ? vp.w - 24 : vp.h - 24;
+  const s = Math.min(breite / 1280, hoehe / 720);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={onClose} role="dialog" aria-modal="true" data-folie-vollbild>
+      <div ref={ref} style={{ width: 1280 * s, height: 720 * s }} className="relative shrink-0 overflow-hidden rounded-md bg-white">
+        <div className="deck nurlesen absolute left-0 top-0" style={{ width: 1280, height: 720, transform: `scale(${s})`, transformOrigin: "top left" }} dangerouslySetInnerHTML={{ __html: html }} />
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Schließen"
+        className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white"
+        style={{ top: "max(12px, env(safe-area-inset-top))" }}
+      >
+        <X className="h-5 w-5" />
+      </button>
     </div>
   );
 }
