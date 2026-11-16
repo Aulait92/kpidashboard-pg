@@ -4,6 +4,7 @@
 // verbunden und die jeweilige Vorlage von Meta freigegeben ist; Einreichen und Freigabe-Abgleich im
 // WhatsApp-Cron (syncSupportTemplates).
 
+import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { decryptSecret } from "@/lib/encryption";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
@@ -143,7 +144,7 @@ async function templateApproved(name: string): Promise<boolean> {
   return tpl?.status === "approved";
 }
 
-type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out";
+type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out" | "gesperrt";
 
 /**
  * Vorlage von der Support-Nummer an einen Vertriebskontakt senden und im Support-Chat sowie im
@@ -158,6 +159,8 @@ async function sendSupportTemplate(opts: {
   activity: string;
   now: Date;
 }): Promise<SendOutcome> {
+  // Feste Sperrliste im Vertrieb (lib/vertrieb/sperrliste.ts)
+  if (await kontaktGesperrt(opts.contactId)) return "gesperrt";
   const acc = await supportAccount();
   if (!acc) return "no_account";
   if (!(await templateApproved(opts.template.name))) return "no_template";

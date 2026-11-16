@@ -3,6 +3,7 @@
 // Support-Nummer), Aufgabe „Zahlung offen“ für Ole, Push nach 7 Tagen und Startverschiebung bei Zahlung nach dem
 // Start. Plan und Texte: lib/angebot-zahlungserinnerung.ts.
 
+import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
@@ -125,8 +126,7 @@ const OFFEN_WHERE = {
 
 /** Kontakt auf der Sperrliste (Cold-Mail abgemeldet)? */
 async function gesperrt(contactId: string | null): Promise<boolean> {
-  if (!contactId) return false;
-  return !!(await prisma.salesCampaignLead.findFirst({ where: { contactId, unsubscribed: true }, select: { id: true } }));
+  return kontaktGesperrt(contactId);
 }
 
 /** Gibt es eine neuere Version des Angebots (gleicher Kontakt bzw. Deal)? */
