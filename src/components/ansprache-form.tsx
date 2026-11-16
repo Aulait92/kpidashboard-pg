@@ -14,7 +14,7 @@ export function AnspracheForm({ current, readOnly }: { current: Ansprache; readO
       <p className="mt-1 text-[color:var(--muted)]">Gilt für den WhatsApp-Assistenten, WhatsApp-Vorlagen, Termin-Nachrichten und E-Mail-Vorlagen.</p>
       <div className="mt-3 flex flex-wrap items-center gap-4">
         {(["sie", "du"] as const).map((v) => (
-          <label key={v} className="flex items-center gap-2">
+          <label key={v} className="flex min-h-10 cursor-pointer items-center gap-2">
             <input type="radio" name="ansprache" value={v} defaultChecked={current === v} disabled={readOnly} className="h-4 w-4" />
             {v === "sie" ? "Sie (förmlich)" : "Du (persönlich)"}
           </label>

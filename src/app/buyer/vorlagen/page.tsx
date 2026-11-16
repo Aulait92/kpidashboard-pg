@@ -81,8 +81,8 @@ export default async function VorlagenPage() {
           <div className="flex gap-3 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 text-sm">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
             <p className="text-[color:var(--muted)]">
-              Erste Nachrichten und Nachrichten nach 24 Stunden ohne Antwort prüft Meta vorher; Anrede, Namen und Termine setzt die App beim Senden ein
-              {an === "sie" ? " (ohne Anrede im Formular mit vollem Namen, ohne Nachnamen „Guten Tag,“)" : ""}.
+              {/* Ein Satz statt Technik (UX Runde 4); Einzelheiten zur Anrede stehen in der Vorlage selbst */}
+              Anrede, Namen und Termine setzt die App beim Senden ein; neue Vorlagen prüft Meta vorher.
             </p>
           </div>
 
