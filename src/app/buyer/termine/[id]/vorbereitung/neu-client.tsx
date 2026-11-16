@@ -882,7 +882,8 @@ function TarifeAendern({
     <label key={id} className={cn("flex min-h-11 items-center gap-2.5 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2.5 py-1.5 text-sm", !an && !frei ? "cursor-not-allowed opacity-50" : "cursor-pointer")}>
       <input type="checkbox" checked={an} disabled={!an && !frei} onChange={(e) => umschalten(fn(), e.target.checked)} className="h-4 w-4" />
       <b className="font-semibold">{titel}</b>
-      <span className="truncate text-[color:var(--muted)]">{ges}</span>
+      {/* Gesperrte Zeile am Handy ohne Gesellschaft, sonst wird sie zu „A…“ abgeschnitten */}
+      <span className={cn("truncate text-[color:var(--muted)]", !an && !frei && "hidden sm:inline")}>{ges}</span>
       <small className="ml-auto shrink-0 text-xs text-[color:var(--muted)]">{!an && !frei ? `höchstens ${sp.tarife.length} auf einer Folie` : rechts}</small>
     </label>
   );
@@ -890,7 +891,8 @@ function TarifeAendern({
   return (
     <details className="group mt-4" data-tarife-aendern>
       <summary className="inline-flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
-        <Plus className="h-4 w-4" /> Tarife ändern
+        {/* Zustand sichtbar wie bei „Weitere Bausteine“ (Ole, 16.11.2026: „aufgeklappt müsste aus dem + ein Minus werden“) */}
+        Tarife ändern <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
       </summary>
       <div className="mt-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] p-3">
         <label className="flex h-10 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-strong)] bg-white px-2.5">
