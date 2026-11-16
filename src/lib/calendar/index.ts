@@ -128,6 +128,9 @@ const overlaps = (busy: Busy[], start: Date, end: Date) =>
  */
 export type SlotHours = number[] | "lead" | { lead: true; prefer: string[] };
 
+/** Zusatzoptionen für suggestSlots/findFreeCalendar (Vertriebs-Buchungsseite). */
+export type SlotOptions = { keys?: string[]; bufferMin?: number; noticeMin?: number };
+
 /** Kandidaten-Uhrzeiten ("HH:MM") eines Kalendertags, in Vorschlags-Reihenfolge. */
 export function candidateTimes(spec: SlotHours, lt: LeadTimes, dow: number): string[] {
   if (Array.isArray(spec)) return dow === 0 || dow === 6 ? [] : spec.map((h) => `${String(h).padStart(2, "0")}:00`);
@@ -148,11 +151,18 @@ export async function suggestSlots(
   leadId?: string | null,
   /** Frühester Suchbeginn (z. B. Tag nach einer Abwesenheit). */
   from?: Date | null,
+  /**
+   * Feste Kalender statt der Team-Auswahl (z. B. Vertriebs-Buchungsseite), Puffer vor und
+   * nach belegten Zeiten und Vorlauf (frühester Termin ab jetzt, mindestens 60 Minuten).
+   */
+  opts: SlotOptions = {},
 ): Promise<Slot[]> {
-  const keys = await bookingKeys(customerId, leadId);
+  const keys = opts.keys?.length ? opts.keys : await bookingKeys(customerId, leadId);
   const now = new Date();
   const base = from && from.getTime() > now.getTime() ? from : now;
-  const timeMin = new Date(Math.max(now.getTime() + 60 * 60 * 1000, base.getTime()));
+  const noticeMs = Math.max(60, opts.noticeMin ?? 60) * 60 * 1000;
+  const bufferMs = Math.max(0, opts.bufferMin ?? 0) * 60 * 1000;
+  const timeMin = new Date(Math.max(now.getTime() + noticeMs, base.getTime()));
   // Abwesenheit (Urlaub, Krank …): diese Zeit ist belegt, und die Suche läuft
   // entsprechend länger, damit danach noch Termine gefunden werden.
   const horizon = new Date(base.getTime() + (days + 60) * 24 * 60 * 60 * 1000);
@@ -161,7 +171,9 @@ export async function suggestSlots(
   const timeMax = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
   // Team: frei, sobald EIN infrage kommender Kalender frei ist. Ein einzelner
   // ausgefallener Berater-Kalender blockiert nicht alle; fällt alles aus → Fehler.
-  const results = await Promise.allSettled(keys.map(async (k) => (await adapterFor(k)).getBusy(timeMin, timeMax)));
+  const results = await Promise.allSettled(
+    keys.map(async (k) => (await adapterFor(k)).getBusy(new Date(timeMin.getTime() - bufferMs), new Date(timeMax.getTime() + bufferMs))),
+  );
   const cals = await Promise.all(
     results.map(async (r, i) =>
       r.status === "fulfilled"
@@ -189,7 +201,8 @@ export async function suggestSlots(
       const start = berlinAt(ymd, t);
       if (start.getTime() < timeMin.getTime()) continue;
       const end = new Date(start.getTime() + durationMin * 60000);
-      if (usable.some((c, i) => perCal[i].has(t) && !overlaps(c.busy, start, end))) {
+      const [bStart, bEnd] = [new Date(start.getTime() - bufferMs), new Date(end.getTime() + bufferMs)];
+      if (usable.some((c, i) => perCal[i].has(t) && !overlaps(c.busy, bStart, bEnd))) {
         slots.push({ start: start.toISOString(), end: end.toISOString() });
       }
     }
@@ -258,6 +271,36 @@ export class SlotBusyError extends Error {
   }
 }
 
+/**
+ * Erster Kalender (in Reihenfolge von `keys`), der [start, end] (plus Puffer) frei hat, mit Adapter.
+ * Abwesende Personen werden übersprungen. Nichts frei → SlotBusyError; fällt der einzige Kalender
+ * aus, wird dessen Fehler weitergereicht.
+ */
+export async function findFreeCalendar(
+  customerId: string,
+  keys: string[],
+  start: Date,
+  end: Date,
+  opts: { leadId?: string | null; bufferMin?: number } = {},
+): Promise<{ key: string; adapter: Awaited<ReturnType<typeof adapterFor>> }> {
+  const buf = Math.max(0, opts.bufferMin ?? 0) * 60000;
+  const [from, to] = [new Date(start.getTime() - buf), new Date(end.getTime() + buf)];
+  let lastErr: unknown = null;
+  // Abwesende Person: in ihrem Kalender wird nichts gebucht.
+  const absent = await absenceBusyForKeys(customerId, keys, opts.leadId, start, end);
+  for (const [i, key] of keys.entries()) {
+    if (overlaps(absent[i], start, end)) continue;
+    try {
+      const a = await adapterFor(key);
+      if (!overlaps(await a.getBusy(from, to), from, to)) return { key, adapter: a };
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  if (lastErr && keys.length === 1) throw lastErr;
+  throw new SlotBusyError();
+}
+
 /** Termin anlegen: Kalender-Event (Video-Link bei Video) + Appointment-Zeile. */
 export async function bookAppointment(opts: {
   customerId: string;
@@ -294,28 +337,7 @@ export async function bookAppointment(opts: {
   if (start.getTime() < Date.now()) throw new Error("Startzeit liegt in der Vergangenheit.");
   // Unmittelbar vor dem Anlegen erneut prüfen — der Slot kann seit dem
   // Vorschlag belegt worden sein (oder der Bot nennt eine eigene Zeit).
-  let calendarKey: string | null = null;
-  let adapter: Awaited<ReturnType<typeof adapterFor>> | null = null;
-  let lastErr: unknown = null;
-  // Abwesende Person: in ihrem Kalender wird nichts gebucht.
-  const absent = await absenceBusyForKeys(opts.customerId, keys, opts.leadId, start, end);
-  for (const [i, key] of keys.entries()) {
-    if (overlaps(absent[i], start, end)) continue;
-    try {
-      const a = await adapterFor(key);
-      if (!overlaps(await a.getBusy(start, end), start, end)) {
-        calendarKey = key;
-        adapter = a;
-        break;
-      }
-    } catch (err) {
-      lastErr = err;
-    }
-  }
-  if (!adapter || !calendarKey) {
-    if (lastErr && keys.length === 1) throw lastErr;
-    throw new SlotBusyError();
-  }
+  const { key: calendarKey, adapter } = await findFreeCalendar(opts.customerId, keys, start, end, { leadId: opts.leadId });
   const advisorUserId = userIdOfKey(calendarKey);
 
   // Fester Video-Link des Kunden (z. B. Webex-Raum) hat Vorrang vor
