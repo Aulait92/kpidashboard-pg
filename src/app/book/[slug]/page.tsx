@@ -203,9 +203,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
         </span>
         <div className="min-w-0">
           <div className="text-xs text-[color:var(--muted)]">Kostenloses Beratungsgespräch</div>
-          <h1 className="text-lg font-semibold leading-tight tracking-tight">
-            {advisor.replace(/^Allianz\s+/i, "")}
-          </h1>
+          {/* Gleicher Name wie in der Bestätigung und auf „Termin verwalten“ (16.11.2026); nur die Initialen ohne „Allianz“ */}
+          <h1 className="text-lg font-semibold leading-tight tracking-tight">{advisor}</h1>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
