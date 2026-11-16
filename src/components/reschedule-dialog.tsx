@@ -242,7 +242,16 @@ function RescheduleContent({
       {current}
       {d.slotsError ? (
         <p className="text-sm text-[color:var(--muted)]">
-          Freie Zeiten konnten gerade nicht geladen werden. {actions.calendarHint ?? "Bitte prüfen Sie unter „Mein Kalender“, ob Ihr Kalender verbunden ist."}
+          Freie Zeiten konnten gerade nicht geladen werden.{" "}
+          {actions.calendarHint ?? (
+            <>
+              Bitte prüfen Sie unter{" "}
+              <a href="/buyer/kalender" className="font-medium text-[color:var(--brand)] underline">
+                Mein Kalender
+              </a>
+              , ob Ihr Kalender verbunden ist.
+            </>
+          )}
         </p>
       ) : !day ? (
         <p className="text-sm text-[color:var(--muted)]">In den nächsten zwei Wochen sind keine freien Lead-Zeiten mehr verfügbar.</p>
