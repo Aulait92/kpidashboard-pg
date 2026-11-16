@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Entwurf</title>
+<!--
+  Entwurf neue Informationsarchitektur Admin (16.11.2026), statisch, nicht mit der App verbunden.
+  Gehört zu docs/ux/2026-11-16-admin-makeover.md. Tokens wie src/app/globals.css. Daten sind Beispiele.
+  Bilder daraus: docs/ux/bilder/admin-entwurf-*.png (?ansicht=handy | rechner | karte).
+-->
+<style>
+:root{--background:#f5f8ff;--foreground:#0b1220;--brand:#2563eb;--brand-dark:#1d4ed8;--brand-soft:#e5edff;--border:#e6ecf5;--muted:#5b6883;--sunken:#f7f9fc;--strong:#d6dee9;--r-sm:8px;--r-md:12px;--r-lg:16px;--sh:0 1px 2px rgba(15,23,42,.05)}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--foreground);background:#eef2f8;padding:24px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:15px;margin:0}
+.muted{color:var(--muted)}.small{font-size:12px}
+.row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.phone{width:390px;height:844px;background:var(--background);border-radius:28px;border:8px solid #0b1220;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.top{height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;background:#fff;border-bottom:1px solid var(--border)}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--brand)}
+.icon{width:40px;height:40px;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dark);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.content{flex:1;overflow:hidden;padding:16px}
+.chips{display:flex;gap:6px;margin:12px 0}
+.chip{height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:500}
+.chip.on{background:var(--foreground);color:#fff;border-color:var(--foreground)}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh)}
+.item{padding:12px 14px;border-bottom:1px solid var(--border)}.item:last-child{border:0}
+.area{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.t{font-weight:600;font-size:15px;margin:2px 0}
+.btns{display:flex;gap:8px;margin-top:10px}
+.btn{height:40px;border-radius:var(--r-sm);border:1px solid var(--border);background:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 12px;flex:1}
+.btn.p{background:var(--brand);color:#fff;border-color:var(--brand)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--muted);flex:1;padding:8px 0;position:relative}
+.tab.on{color:var(--brand);font-weight:600}
+.tab i{display:block;width:24px;height:24px;border-radius:6px;background:currentColor;opacity:.25}
+.tab.on i{opacity:.9}
+.badge{position:absolute;top:3px;left:calc(50% + 4px);background:#e11d48;color:#fff;border-radius:9px;font-size:10px;font-weight:700;padding:1px 5px}
+.bar{display:flex;border-top:1px solid var(--border);background:#fff}
+.desk{width:1280px;height:720px;background:var(--background);border-radius:12px;border:1px solid var(--strong);overflow:hidden;display:flex}
+.side{width:240px;background:#fff;border-right:1px solid var(--border);padding:20px 12px;display:flex;flex-direction:column;gap:4px}
+.nav{height:44px;border-radius:var(--r-md);display:flex;align-items:center;gap:12px;padding:0 12px;font-weight:500;font-size:15px}
+.nav.on{background:var(--brand-soft);color:var(--brand-dark)}
+.nav i{width:18px;height:18px;border-radius:4px;background:currentColor;opacity:.3}
+.cnt{margin-left:auto;background:#e11d48;color:#fff;border-radius:9px;font-size:10px;font-weight:700;padding:1px 6px}
+.main{flex:1;padding:24px 32px;overflow:hidden}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-top:12px}
+.map{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:1280px}
+.map ul{margin:6px 0 0;padding-left:18px}.map li{margin:2px 0}
+.old{background:#fff7ed;border-color:#fed7aa}.new{background:#f0fdf4;border-color:#bbf7d0}
+.pad{padding:16px 18px}
+.tag{display:inline-block;font-size:11px;border-radius:999px;padding:1px 8px;margin-left:4px;font-weight:600}
+.tag.w{background:#dbeafe;color:#1d4ed8}.tag.x{background:#fee2e2;color:#b91c1c}.tag.m{background:#fef3c7;color:#92400e}
+</style>
+</head>
+<body>
+
+<section data-ansicht="handy">
+  <h1>Entwurf: Admin am Handy</h1>
+  <p class="muted">Fünf Bereiche unten, kein „Mehr“. Einstellungen im Profilmenü (wie im Kundenbereich). Heute enthält auch Freigaben und unbeantwortete Chats.</p>
+  <div class="row">
+    <div class="phone">
+      <div class="top"><span class="logo"></span><b style="font-size:16px">Heute</b><span style="margin-left:auto" class="icon">Suche</span><span class="avatar">OL</span></div>
+      <div class="content">
+        <h1>Guten Morgen</h1>
+        <div class="muted">6 Punkte brauchen Sie · 2 halten Leads oder Geld auf</div>
+        <div class="chips"><span class="chip on">Alle 6</span><span class="chip">Vertrieb 2</span><span class="chip">Kunden 3</span><span class="chip">Chats 1</span></div>
+        <div class="card">
+          <div class="item"><div class="area" style="color:#059669">Kunden</div><div class="t">Sabine Koch zahlt nicht</div><div class="muted small">Rechnung offen seit 6 Tagen</div><div class="btns"><span class="btn">Morgen</span><span class="btn p">Zur Abrechnung</span></div></div>
+          <div class="item"><div class="area" style="color:#7c3aed">Chats</div><div class="t">Max Berger wartet auf Antwort</div><div class="muted small">„Wie stelle ich den Kalender um?“ · seit 2 Std.</div><div class="btns"><span class="btn">Später</span><span class="btn p">Antworten</span></div></div>
+          <div class="item"><div class="area" style="color:#2563eb">Vertrieb</div><div class="t">Erneut anrufen: Petra Hahn</div><div class="muted small">Heute fällig · Nicht erreicht</div><div class="btns"><span class="btn">Erledigt</span><span class="btn">Morgen</span><span class="btn p">Anrufen</span></div></div>
+          <div class="item"><div class="area" style="color:#059669">Kunden</div><div class="t">2 Monatsberichte prüfen</div><div class="muted small">Oktober · 1 schwach (Sie entscheiden)</div><div class="btns"><span class="btn p">Prüfen</span></div></div>
+        </div>
+      </div>
+      <div class="bar">
+        <span class="tab on"><i></i>Heute<span class="badge">6</span></span>
+        <span class="tab"><i></i>Vertrieb</span>
+        <span class="tab"><i></i>Kunden</span>
+        <span class="tab"><i></i>Chats<span class="badge">1</span></span>
+        <span class="tab"><i></i>Zahlen</span>
+      </div>
+    </div>
+
+    <div class="phone">
+      <div class="top"><span class="logo"></span><b style="font-size:16px">Kunden</b><span style="margin-left:auto" class="icon">Suche</span><span class="avatar">OL</span></div>
+      <div class="content">
+        <div style="display:flex;align-items:center;justify-content:space-between"><h1>Kunden</h1><span class="chip" style="height:36px">Liste · Pipeline</span></div>
+        <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);margin:8px 0 12px;white-space:nowrap;overflow:hidden">
+          <span style="padding:10px 12px;border-bottom:2px solid var(--brand);font-weight:600">Kunden</span><span style="padding:10px 12px" class="muted">Leads</span><span style="padding:10px 12px" class="muted">Pay-per-Lead</span><span style="padding:10px 12px" class="muted">Kampagnen</span><span style="padding:10px 12px" class="muted">Berichte</span>
+        </div>
+        <div class="chips"><span class="chip on">Alle 4</span><span class="chip">Zahlung offen 1</span><span class="chip">Onboarding 1</span></div>
+        <div class="card">
+          <div class="item"><div class="t" style="font-size:14px">Max Berger <span class="tag" style="background:#d1fae5;color:#065f46">Aktiv</span></div><div class="muted small">Software · 490 €/Monat · 28 Leads in 30 Tagen</div></div>
+          <div class="item"><div class="t" style="font-size:14px">Sabine Koch <span class="tag x">Zahlung offen</span></div><div class="muted small">Software · 490 €/Monat · 11 Leads</div></div>
+          <div class="item"><div class="t" style="font-size:14px">Kraus Versicherungsmakler <span class="tag w">Onboarding 40 %</span></div><div class="muted small">Betreuung + Software · 1.290 €/Monat</div></div>
+          <div class="item"><div class="t" style="font-size:14px">Thomas Wendt <span class="tag" style="background:#d1fae5;color:#065f46">Aktiv</span></div><div class="muted small">Software · 490 €/Monat</div></div>
+        </div>
+      </div>
+      <div class="bar">
+        <span class="tab"><i></i>Heute<span class="badge">6</span></span>
+        <span class="tab"><i></i>Vertrieb</span>
+        <span class="tab on"><i></i>Kunden</span>
+        <span class="tab"><i></i>Chats<span class="badge">1</span></span>
+        <span class="tab"><i></i>Zahlen</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-ansicht="rechner" style="margin-top:40px">
+  <h1>Entwurf: Admin am Rechner</h1>
+  <p class="muted">Seitenleiste mit fünf Bereichen, darunter Einstellungen. Jede Seite eine Hauptaktion (blau).</p>
+  <div class="desk">
+    <div class="side">
+      <div style="display:flex;align-items:center;gap:8px;margin:0 8px 16px"><span class="logo"></span><b>performance<span style="color:var(--brand)">growth</span></b></div>
+      <div class="icon" style="width:auto;justify-content:flex-start;padding:0 12px;margin-bottom:12px">Suchen … Strg K</div>
+      <span class="nav on"><i></i>Heute<span class="cnt">6</span></span>
+      <span class="nav"><i></i>Vertrieb</span>
+      <span class="nav"><i></i>Kunden</span>
+      <span class="nav"><i></i>Chats<span class="cnt">1</span></span>
+      <span class="nav"><i></i>Zahlen</span>
+      <span style="margin-top:auto;border-top:1px solid var(--border);padding-top:10px" class="nav muted"><i></i>Einstellungen</span>
+    </div>
+    <div class="main">
+      <h1>Guten Morgen</h1>
+      <div class="muted">6 Punkte brauchen Sie · 2 halten Leads oder Geld auf</div>
+      <div class="grid">
+        <div>
+          <div class="chips"><span class="chip on">Alle 6</span><span class="chip">Vertrieb 2</span><span class="chip">Kunden 3</span><span class="chip">Chats 1</span></div>
+          <div class="card">
+            <div class="item"><div class="area" style="color:#059669">Kunden</div><div class="t">Sabine Koch zahlt nicht</div><div class="muted small">Rechnung offen seit 6 Tagen</div><div class="btns" style="max-width:360px"><span class="btn">Morgen</span><span class="btn p">Zur Abrechnung</span></div></div>
+            <div class="item"><div class="area" style="color:#7c3aed">Chats</div><div class="t">Max Berger wartet auf Antwort</div><div class="muted small">seit 2 Std.</div><div class="btns" style="max-width:360px"><span class="btn">Später</span><span class="btn p">Antworten</span></div></div>
+            <div class="item"><div class="area" style="color:#2563eb">Vertrieb</div><div class="t">Angebot nachfassen: Markus Lang</div><div class="muted small">Gesendet vor 4 Tagen, geöffnet</div><div class="btns" style="max-width:360px"><span class="btn">Erledigt</span><span class="btn">Morgen</span><span class="btn p">Öffnen</span></div></div>
+            <div class="item"><div class="area" style="color:#2563eb">Vertrieb</div><div class="t">LinkedIn: 3 Entwürfe freigeben</div><div class="btns" style="max-width:360px"><span class="btn p">Freigeben</span></div></div>
+          </div>
+        </div>
+        <div>
+          <h2>Termine heute</h2>
+          <div class="card pad" style="margin:8px 0 20px"><b>10:00</b> Jana Vogel · Video<br><span class="muted small">Angebot liegt als Entwurf bereit</span></div>
+          <h2>Läuft von allein</h2>
+          <div class="card pad" style="margin:8px 0 20px">15 Leads zugestellt · 46 Assistent-Nachrichten</div>
+          <h2>Zahlen</h2>
+          <div class="card pad" style="margin-top:8px">Gewinn bis heute 1.584 € · Hochrechnung 2.970 €</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-ansicht="karte" style="margin-top:40px">
+  <h1>Struktur vorher und nachher</h1>
+  <p class="muted">Links heute (6 Bereiche, 3 Reiterebenen, 21 Einträge in Einstellungen), rechts der Entwurf.</p>
+  <div class="map">
+    <div class="card pad old">
+      <h2>Heute</h2>
+      <ul>
+        <li>Heute</li>
+        <li>Vertrieb: Übersicht · Kontakte · Akquise-Pipeline · Aufgaben · Follow-ups · Angebote</li>
+        <li>Kunden: Übersicht · Pipeline · Akte mit 7 Reitern</li>
+        <li>Leads: Leads · Pay-per-Lead · WhatsApp-Chats</li>
+        <li>Marketing (Mehr): LinkedIn · Empfehlungen · Unterlagen</li>
+        <li>Zahlen (Mehr): Dashboard „/“ · Nutzung · Zahlen mit 5 Reitern und 8 inneren Reitern</li>
+        <li>Einstellungen (Mehr): 21 Einträge, darunter Arbeitslisten (Monatsberichte, Optimierung, Kunden-Logins)</li>
+        <li>Ohne Menü: Media Buyer</li>
+      </ul>
+    </div>
+    <div class="card pad new">
+      <h2>Entwurf</h2>
+      <ul>
+        <li><b>Heute</b>: alles, was Sie jetzt tun müssen, auch Freigaben und Chats <span class="tag w">nimmt Vertrieb-Übersicht und Aufgaben auf</span></li>
+        <li><b>Vertrieb</b>: Kontakte (Liste/Pipeline) · Angebote · Marketing <span class="tag m">Follow-ups als Filter</span></li>
+        <li><b>Kunden</b>: Kunden (Liste/Pipeline) · Leads · Pay-per-Lead · Kampagnen · Berichte; Akte mit 6 Reitern</li>
+        <li><b>Chats</b>: WhatsApp-Support und Lead-Chats, mit Zähler <span class="tag w">eigener Bereich</span></li>
+        <li><b>Zahlen</b>: Übersicht · Leads &amp; Werbung (heute „/“) · Buchungen · Kündigung &amp; Storno · Nutzung</li>
+        <li><b>Einstellungen</b> (Profilmenü, Seitenleiste unten): nach Bereichen gruppiert, nur Einstellungen</li>
+        <li><span class="tag x">entfällt</span> Bereich „Leads“, Bereich „Marketing“, „Mehr“, Media Buyer als eigene Seite (in Pay-per-Lead)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</body>
+</html>
