@@ -90,3 +90,74 @@ noch offen sind, stehen gesondert darunter.
 - Buchung mit echten freien Zeiten und Verschieben mit Zeitauswahl: ohne verbundenen Kalender lädt die App keine Zeiten.
 - Native App (iOS/Android-Hülle), Push-Benachrichtigungen, echte WhatsApp-Zustellung.
 - Datumsfelder: Headless-Chromium zeigt sie im US-Format; im deutschen Browser erscheinen sie deutsch.
+
+## Runde 4 (unabhängig)
+
+Prüfer: unabhängige Runde ohne Übernahme des Urteils aus Runde 1 bis 3. Blick: 50-jähriger Vermittler, am Handy
+zwischen zwei Kundenterminen, Demo-Konto ohne verbundenen Kalender. Stand `origin/claude/whatsapp-crm` ab accc79e.
+Jede Änderung auf 390 und 1280 px per Screenshot geprüft (kein Querscrollen, nichts abgeschnitten); programmatisch
+Tippziele unter 40 px, Gedankenstriche, Du-Form, englische Reste. Ausgenommen (andere Agenten): Wachstum, Kosten-Karten,
+Kalender/Verfügbarkeit, Kennzeichen „Kein WhatsApp“, `lib/lead-intake.ts`.
+
+### Aufgaben durchgespielt (Klicks am Handy, vorher → nachher)
+
+| Aufgabe | vorher | nachher | Stolperstelle (vorher) |
+|---|---|---|---|
+| Morgens Heute öffnen, wissen was zu tun ist | 0 | 0 | keine; alles „Überfällig“ rot, wenn alles überfällig ist (bleibt) |
+| Neuen Lead anrufen, Ergebnis eintragen | 3 | 3 | gut |
+| Termin vereinbaren nach dem Anruf (ohne Kalender) | 6+ (Anrufliste beenden, Kontakt, Termin, Formular) | 3 | „Termin vereinbart“ fehlte im Ergebnis-Fenster ganz, wenn kein Kalender verbunden ist |
+| Termin vorbereiten und präsentieren (von Heute) | 3 bis 4 (über den Kontakt), Zurück landete im Kontakt | 2, Zurück führt nach Heute | Termin-Fenster auf Heute bot weder Vorbereiten noch Präsentation |
+| Kontakt finden | 3 | 3 | Phase in der Trefferzeile abgeschnitten |
+| Lead auf Gewonnen/Verloren | 2 | 2 | Knopf „Gewonnen“ öffnete Fenster „Abschluss“ |
+| Chat beantworten und zum Kontakt | 2 + 2 (Infos aufklappen, kleiner Link „Lead öffnen“) | 2 + 1 (Name antippen) | kein direkter Weg vom Chat zum Kontakt am Handy |
+| Einstellungen ändern | 2 (Menü, 7. Eintrag) | 2 (1. Eintrag) | Einstellungen ganz unten im Profilmenü |
+| Hilfe finden | 1 | 1 | Untertitel abgeschnitten |
+
+### Umgesetzt (Commits 2a1ba01 bis 34e91b5)
+
+- Heute: Termin antippen bietet „Vorbereiten“ und „Präsentation“; von dort führt Zurück („Heute“) wieder nach Heute. „Termin buchen“ im Anruf-Fenster auch ohne Kalender.
+- Anrufliste: „Termin vereinbart“ auch ohne verbundenen Kalender; das Buchungsfenster zeigt dann gleich „Termin von Hand eintragen“, mit Kalender aufklappbar unter den freien Zeiten. Danach geht die Liste weiter. Ein Formular für Kontakt und Buchungsfenster (`ManualTerminForm`).
+- Kontakt: überfällige Wiedervorlage „· überfällig“ in Rot (auch in der Kontaktliste); im Fenster rechts auf Heute dieselben Kacheln wie am Handy statt einer umbrechenden Knopfreihe, „Anrufen“ statt Telefonnummer; Terminzeit „Heute, 10:00 Uhr“ bzw. „Morgen“, nie abgeschnitten; Termin-Fenster mit einer Hauptaktion („Kalender verbinden“ als Zweitknopf, Hinweise je ein Satz); „Gewonnen“ öffnet „Gewonnen“; „Phase ändern“; Kartentitel „Angaben“; Tippflächen 40 px (Phasen-Chip unsichtbar vergrößert, Wiedervorlage, Stift, Dokumentart).
+- Kontaktliste: „eingegangen …“ und „Termin …“ beschriftet, Suche und Filter 40 px, Spalte „Eingang“ statt „Datum“.
+- Pipeline: „Phase ändern“ statt „Verschieben“ (Verschieben heißt sonst Termin verschieben).
+- Nachrichten: Name im Chatkopf öffnet den Kontakt; „Kontakt öffnen“, „Infos zum Kontakt“, „Anfrage“, „Phase“; Seitentitel am Handy (Vorschlag 6); Reiter 14 px; Knöpfe 40 px.
+- Terminvorbereitung: „Heute, 10:00 Uhr“ im Kopf; Sparten-Chips, Monat/Jahr, Entfernen-Kreuze am Handy 36 bis 40 px.
+- Profilmenü: „Einstellungen“ als erster Eintrag. Anmeldung: Passwort anzeigen, „Passwort vergessen?“ 40 px. Konto: ohne Online-Zahlung kein grauer Knopf, sondern ein Satz mit dem Weg. Suche: Phase zuerst. KI-Hilfe: Untertitel passt.
+- Neuigkeit `20261118705260_neuigkeit_bedienung_feinschliff`, Eintrag in `docs/webseite-offen.md`.
+
+### Bewertung Runde 4 (1 bis 10, frisch geprüft)
+
+Ehrlich: Mein Ausgangsurteil lag unter Runde 3. Die fehlende Terminwahl nach dem Anruf ohne Kalender, die nicht erkennbar
+überfällige Wiedervorlage im Kontakt, der fehlende Weg vom Chat zum Kontakt am Handy und rund 20 Tippziele unter 40 px
+hätte ich mit etwa 83 statt 86 bewertet.
+
+| Bereich | Runde 3 | R4 vorher | R4 nachher | Begründung |
+|---|---|---|---|---|
+| Heute | 9 | 8,5 | 9,5 | Termin führt direkt zu Vorbereiten/Präsentation. Rest: „+1 Tag/+1 Woche“ an jeder Wiedervorlage unter „Nächste Tage“. |
+| Anrufliste | 10 | 8 | 9,5 | Ohne Kalender fehlte „Termin vereinbart“. Jetzt drei Tipps. |
+| Kontakte (Liste, Pipeline) | 9 | 8,5 | 9,5 | Beschriftete Daten, überfällig rot, „Phase ändern“. |
+| Kontakt | 9 | 8,5 | 9,5 | Überfällig sichtbar, Tippziele, Fenster rechts aufgeräumt. Rest: „Gewonnen“ vs. Phase „Abschluss“. |
+| Termin buchen | 8 | 7 | 9 | Eine Hauptaktion, Formular überall gleich. Ohne echten Kalender nicht ganz durchspielbar. |
+| Terminvorbereitung | 9 | 8,5 | 9 | Tippziele, „Heute“. Seite bleibt lang (viel Inhalt, aber gegliedert). |
+| Präsentation | 9 | 8 | 8,5 | Folie am Handy weiter klein (Vorschlag 8). |
+| Nachrichten | 9 | 8 | 9,5 | Name führt zum Kontakt, Titel, Begriffe. |
+| Einstellungen, Profilmenü | 9 | 8,5 | 9,5 | Einstellungen oben. Rest: „Rückmeldung an Meta“ ist Technik. |
+| Konto | 8 | 7,5 | 8,5 | Kein grauer Knopf mehr. Rest: Kündigen recht weit oben. |
+| Login, Hilfe, Neuigkeiten | 9 | 8,5 | 9,5 | Passwort anzeigen, Tippziele, Untertitel. |
+| Gesamt (SUS-Schätzung) | ca. 86 | ca. 83 | ca. 89 | |
+
+### Was für über 95 noch fehlt (Vorschläge, nach Wirkung)
+
+1. Ein Begriff für den Erfolg: Knopf „Gewonnen“, Phase und Ergebnis-Auswahl „Abschluss“. Vorschlag: Ergebnis-Auswahl „Gewonnen“ (Phase bleibt „Abschluss“), Erklärvideo-Text prüfen. Entscheidung Ole.
+2. Fenster „Gewonnen“: drei Textblöcke (Feld, Provisionsrechnung, Meta-Satz). Vorschlag: Meta-Satz nur, wenn die Rückmeldung an Meta aktiv ist, Rechenweg hinter „So rechnen wir“.
+3. Wachstum und Kalender (Vorschläge 1, 2, 5 aus Runde 3, anderer Agent).
+4. Präsentation am Handy: Vollbild dreht die Folie quer wie im Kundenlink (Vorschlag 8).
+5. „Nächste Tage“ auf Heute: „+1 Tag/+1 Woche“ nur am geöffneten Eintrag statt an jeder Zeile (Ole hat die Knöpfe eingeführt, daher nur Vorschlag).
+6. Echter Test mit 5 Vermittlern (SUS-Fragebogen); über 95 lässt sich nicht am Schreibtisch schätzen, nur messen.
+7. Einrichtung und Konto ohne Leads in dieser Runde nicht prüfbar (Demo-Konto fertig eingerichtet).
+
+### Erklärvideos betroffen (`tools/erklaervideos/betroffen.py accc79e..HEAD`)
+
+- Ausführlich: Kontakt rechts auf Heute (Kacheln statt Knopfreihe, „Angaben“ statt „Angaben zum Lead“, Termin „Heute, …“), Nachrichten (Name mit Pfeil, Titel am Handy). Aufnahmeskript `rec_ev.js` auf „Angaben“ angepasst; neu aufnehmen.
+- Kurz: Termin im Kontakt und Nachrichten (gleiche Punkte). Gesprochener Text bleibt gültig; nur Bild.
+- WhatsApp verbinden: nicht betroffen (nur Link-Höhe auf der Hilfe-Seite).
