@@ -719,13 +719,14 @@ function MoveButton({
         }}
         className="ml-auto inline-flex h-10 shrink-0 items-center gap-1 rounded-full border border-[color:var(--border)] bg-white px-3 text-xs font-semibold text-[color:var(--foreground)] sm:h-auto sm:px-2.5 sm:py-1 sm:text-[11px]"
       >
-        Verschieben <ArrowRightLeft className="h-3 w-3" />
+        {/* „Verschieben“ hieß sonst Termin verschieben; hier geht es um die Phase (UX Runde 4) */}
+        Phase ändern <ArrowRightLeft className="h-3 w-3" />
       </button>
       <span onClick={(e) => e.stopPropagation()}>
         <ActionSheet
           open={open}
           onClose={() => setOpen(false)}
-          title={`${name ?? "Lead"} verschieben nach`}
+          title={`Phase für ${name ?? "Kontakt"}`}
           actions={columns.map((c) => ({
             label: c.label,
             tone: c.key === currentKey ? "primary" : undefined,
