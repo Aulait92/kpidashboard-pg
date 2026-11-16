@@ -147,6 +147,7 @@ export async function LeadDetailBody({
     where: { id: leadId, ...leadScope(team) },
     select: {
       assignedUserId: true,
+      isTest: true,
       id: true,
       airtableId: true,
       name: true,
@@ -396,6 +397,7 @@ export async function LeadDetailBody({
         stornoOptions={stornoOptions}
         storniert={storniert}
         canErase={canErase}
+        isTest={lead.isTest}
         daysInPhase={Math.max(0, Math.floor((nowMs() - lead.statusChangedAt.getTime()) / 86_400_000))}
         askAfterCall={newUi}
         mailReady={!!postfach}

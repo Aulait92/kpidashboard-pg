@@ -698,6 +698,10 @@ model Lead {
   // DSGVO-Löschung (Art. 17): personenbezogene Felder geleert, Zeile bleibt
   // für Abrechnung und Statistik. Der Airtable-Sync überschreibt sie nicht mehr.
   erasedAt             DateTime?
+  // Testlead (Ole, 16.11.2026, Admin → Kunde → Leads → „Testlead schicken“, lib/testlead.ts): läuft durch den echten
+  // Ablauf (Push, Erstanschreiben, Assistent, Termin), zählt aber nirgends (Zahlen, Kosten pro Lead, Monatsbericht,
+  // Garantien, Kontingente, Umsatz, Meta-Rückmeldung). Abzeichen „Test“, löschbar.
+  isTest               Boolean           @default(false)
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]

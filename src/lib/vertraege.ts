@@ -363,7 +363,8 @@ const num = (v: unknown) => (v == null ? null : Number(v));
  */
 export async function loadCustomerContracts(customerId: string, opts: { leadWhere?: Record<string, unknown> } = {}): Promise<CustomerContract[]> {
   const leads = await prisma.lead.findMany({
-    where: { customerId, status: CLOSED_STATUS, ...(opts.leadWhere ?? {}) },
+    // Testleads zählen nicht in Provision und Gewinn (lib/testlead.ts)
+    where: { customerId, status: CLOSED_STATUS, isTest: false, ...(opts.leadWhere ?? {}) },
     select: {
       id: true,
       createdAt: true,

@@ -97,7 +97,7 @@ export async function customerCpl(customerId: string, productNames: string[], ve
   const from = new Date(now.getTime() - 30 * DAY_MS);
   const [spend, leads] = await Promise.all([
     adSpendForRange(customerId, from, now).catch(() => 0),
-    prisma.lead.count({ where: { customerId, createdAt: { gte: from, lte: now } } }),
+    prisma.lead.count({ where: { customerId, createdAt: { gte: from, lte: now }, isTest: false } }),
   ]);
   if (spend > 0 && leads >= 10) return { cpl: Math.round((spend / leads) * 100) / 100, source: "kunde" };
   const names = productNames.map((n) => n.toLowerCase());

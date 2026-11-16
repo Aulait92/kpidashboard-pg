@@ -17,6 +17,7 @@ import { emailLeads } from "@/lib/onboarding-cron";
 import { tryReentry } from "@/lib/lead-erneut";
 import type { MetaLead } from "@/lib/meta-leads";
 import { consentStateOf, parseDisclaimerResponses, type ConsentNachweis, type DisclaimerResponse } from "@/lib/einwilligung-leadformular";
+import { logTestLead } from "@/lib/testlead";
 
 export type IncomingLead = {
   externalId: string | null;
@@ -234,9 +235,11 @@ export async function ingestLead(
 export async function processNewLead(leadId: string) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, name: true, source: true, customerId: true, customer: { select: { plan: true } } },
+    select: { id: true, name: true, source: true, customerId: true, isTest: true, customer: { select: { plan: true } } },
   });
   if (!lead) return;
+  // Testlead (lib/testlead.ts): jede Station als Logzeile „[testlead <id>] …“
+  logTestLead(lead, "process", { customer: lead.customerId });
   // Team (Großkunden): gleichmäßig zuteilen, Push nur an den Zuständigen.
   await assignLead(lead.id).catch((err) => reportError(err, "lead-intake-assign"));
   await attachLeadToContact(lead.id).catch((err) => reportError(err, "lead-intake-attach"));
@@ -246,14 +249,18 @@ export async function processNewLead(leadId: string) {
     tag: `lead-buyer:${lead.id}`,
     url: "/buyer",
   });
+  logTestLead(lead, "notify push");
   {
     await emailLeads(new Date(), lead.customerId).catch((err) => reportError(err, "lead-intake-email"));
   }
+  logTestLead(lead, "notify mail checked");
   // WhatsApp-Erstanschreiben: sofort, wenn keine Wartezeit eingestellt ist
   // (sonst übernimmt der Cron nach Ablauf der Wartezeit).
   const agent = await prisma.agentConfig.findUnique({ where: { customerId: lead.customerId }, select: { outreachEnabled: true, outreachDelayMin: true, active: true } });
   if (agent?.active && agent.outreachEnabled && agent.outreachDelayMin === 0) {
     await runOutreach(lead.customerId).catch((err) => reportError(err, "lead-intake-outreach"));
+  } else {
+    logTestLead(lead, "outreach not immediate", { agentActive: !!agent?.active, outreachEnabled: !!agent?.outreachEnabled, delayMin: agent?.outreachDelayMin ?? null });
   }
 }
 

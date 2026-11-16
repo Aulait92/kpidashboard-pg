@@ -37,20 +37,27 @@ export function leadOrigin(l: LeadOriginInput): LeadOrigin {
 export const LEAD_ORIGIN_SELECT = { source: true, adChannel: true, referralLinkId: true } as const;
 
 /**
+ * Testleads (Admin → Kunde → Leads → „Testlead schicken“, lib/testlead.ts) zählen nirgends: nicht in Zahlen,
+ * Kosten pro Lead, Monatsbericht, Garantien, Kontingenten oder Umsatz. Jede Auswertung über Leads nimmt diesen Filter.
+ */
+export const NOT_TEST_LEAD = { isTest: false } as const;
+
+/**
  * Prisma-Filter (Lead) für eine Herkunft. Achtung NULL: „nicht Empfehlung“ muss Leads ohne
- * Quelle/Kanal einschließen, deshalb die expliziten OR mit null.
+ * Quelle/Kanal einschließen, deshalb die expliziten OR mit null. Testleads sind in keiner Herkunft.
  */
 export function originWhere(origin: LeadOrigin) {
   if (origin === "empfehlung") {
-    return { OR: [{ referralLinkId: { not: null } }, { source: EMPFEHLUNG_SOURCE }, { adChannel: EMPFEHLUNG_SOURCE }] };
+    return { ...NOT_TEST_LEAD, OR: [{ referralLinkId: { not: null } }, { source: EMPFEHLUNG_SOURCE }, { adChannel: EMPFEHLUNG_SOURCE }] };
   }
   if (origin === "bestand") {
-    return { AND: [{ source: BESTAND_SOURCE }, { referralLinkId: null }, { OR: [{ adChannel: null }, { adChannel: { not: EMPFEHLUNG_SOURCE } }] }] };
+    return { ...NOT_TEST_LEAD, AND: [{ source: BESTAND_SOURCE }, { referralLinkId: null }, { OR: [{ adChannel: null }, { adChannel: { not: EMPFEHLUNG_SOURCE } }] }] };
   }
   if (origin === "eigen") {
-    return { AND: [{ adChannel: EIGEN_CHANNEL }, { referralLinkId: null }, { OR: [{ source: null }, { source: { notIn: [EMPFEHLUNG_SOURCE, BESTAND_SOURCE] } }] }] };
+    return { ...NOT_TEST_LEAD, AND: [{ adChannel: EIGEN_CHANNEL }, { referralLinkId: null }, { OR: [{ source: null }, { source: { notIn: [EMPFEHLUNG_SOURCE, BESTAND_SOURCE] } }] }] };
   }
   return {
+    ...NOT_TEST_LEAD,
     AND: [
       { referralLinkId: null },
       { OR: [{ source: null }, { source: { notIn: [EMPFEHLUNG_SOURCE, BESTAND_SOURCE] } }] },

@@ -77,7 +77,7 @@ export async function quotaFor(sub: SubRow, now = new Date()): Promise<(Candidat
   if (!sub.active || (sub.startDate && sub.startDate > now)) return null;
   const testInfo = async () => {
     if (sub.status !== "test" || !sub.testQuantity) return null;
-    const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id } });
+    const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id, isTest: false } });
     const started = sub.startDate ?? sub.createdAt;
     return { quantity: sub.testQuantity, delivered, days: sub.testDays, startedDaysAgo: Math.floor((now.getTime() - started.getTime()) / DAY) };
   };
@@ -85,13 +85,13 @@ export async function quotaFor(sub: SubRow, now = new Date()): Promise<(Candidat
     const { start } = weekRange(now);
     const order = await prisma.leadOrder.findUnique({ where: { subscriptionId_periodStart: { subscriptionId: sub.id, periodStart: start } } });
     if (!order || !["paid", "processing"].includes(order.status)) return null;
-    const delivered = await prisma.lead.count({ where: { orderId: order.id } });
+    const delivered = await prisma.lead.count({ where: { orderId: order.id, isTest: false } });
     return { id: sub.id, quota: order.quantity, delivered, orderId: order.id, test: await testInfo() };
   }
   const test = await testInfo();
   const goal = sub.goal ?? (test ? test.quantity : 0);
   const range = sub.period === "month" ? monthRange(now) : { start: sub.startDate ?? new Date(0), end: new Date(8.64e15) };
-  const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id, deliveredAt: { gte: range.start, lt: range.end } } });
+  const delivered = await prisma.lead.count({ where: { subscriptionId: sub.id, isTest: false, deliveredAt: { gte: range.start, lt: range.end } } });
   return { id: sub.id, quota: goal, delivered, orderId: null, test };
 }
 

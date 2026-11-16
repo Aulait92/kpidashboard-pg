@@ -7,6 +7,7 @@ import { FilterChips } from "@/components/ui/filter-chips";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isStorno, leadSelect, leadWhere, priceOf, type LeadFilter } from "@/lib/admin-leads";
+import { TestLeadBadge } from "@/components/test-lead-badge";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Leads | performancegrowth Admin" };
@@ -106,6 +107,7 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-medium">{l.name ?? "ohne Name"}</span>
+                      {l.isTest ? <TestLeadBadge /> : null}
                       {storno ? <Badge tone="danger">Storno</Badge> : l.closedAt ? <Badge tone="success">Abschluss</Badge> : null}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
@@ -152,7 +154,10 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
                     <td className="whitespace-nowrap px-4 py-2.5 text-[color:var(--muted)]">{dt(l.createdAt)}</td>
                     <td className="px-3 py-2.5">
                       <details>
-                        <summary className="cursor-pointer font-medium">{l.name ?? "ohne Name"}</summary>
+                        <summary className="cursor-pointer font-medium">
+                          {l.name ?? "ohne Name"}
+                          {l.isTest ? <TestLeadBadge className="ml-2 align-middle" /> : null}
+                        </summary>
                         <div className="mt-2 space-y-1 text-xs text-[color:var(--muted)]">
                           {answers.map((a, i) => (
                             <div key={i}>

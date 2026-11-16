@@ -123,8 +123,8 @@ async function monthMetrics(customerId: string, month: string, data: ErtragData)
   const [leads, spendRows, termine, closed] = await Promise.all([
     prisma.lead.findMany({ where: { customerId, createdAt: { gte: from, lt: to }, ...NOT_STORNO, ...PAID_LEAD_WHERE }, select: { createdAt: true, status: true, source: true } }),
     prisma.customerAdSpend.findMany({ where: { customerId, date: { gte: from, lt: to } }, select: { date: true, amount: true } }),
-    prisma.appointment.count({ where: { customerId, startsAt: { gte: from, lt: to }, status: { not: "cancelled" } } }),
-    prisma.lead.findMany({ where: { customerId, status: CLOSED_STATUS, closedAt: { gte: from, lt: to }, ...NOT_STORNO }, select: { id: true } }),
+    prisma.appointment.count({ where: { customerId, startsAt: { gte: from, lt: to }, status: { not: "cancelled" }, NOT: { lead: { is: { isTest: true } } } } }),
+    prisma.lead.findMany({ where: { customerId, status: CLOSED_STATUS, closedAt: { gte: from, lt: to }, isTest: false, ...NOT_STORNO }, select: { id: true } }),
   ]);
   const spend = spendRows.reduce((s, r) => s + Number(r.amount), 0);
   const activeDays = new Set(spendRows.filter((r) => Number(r.amount) > 0).map((r) => r.date.toISOString().slice(0, 10))).size;

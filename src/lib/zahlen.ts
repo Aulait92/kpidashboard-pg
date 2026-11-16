@@ -145,6 +145,7 @@ export async function loadLedger(now = new Date()) {
       WHERE r.cancelled = false AND r."occurredAt" >= ${new Date(from.getTime() - DAY)}
         AND (c.plan IS NULL OR c.plan <> 'internal')
         AND c."isTest" IS NOT TRUE
+        AND NOT EXISTS (SELECT 1 FROM "Lead" tl WHERE tl.id = r."leadId" AND tl."isTest" = true)
       GROUP BY 1, 2`,
     prisma.customer.findMany({
       where: { retainerMonthly: { not: null }, plan: { not: "internal" }, isTest: false },
@@ -508,22 +509,22 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
   const [statusGroups, closedLeads, funnelReached, funnelAppt, speedRows, autoRows, waCustomers] = await Promise.all([
     prisma.lead.groupBy({
       by: ["customerId", "status"],
-      where: { createdAt: { gte: wFrom, lt: wTo }, ...NOT_STORNO },
+      where: { createdAt: { gte: wFrom, lt: wTo }, isTest: false, ...NOT_STORNO },
       _count: { _all: true },
     }),
     prisma.lead.findMany({
-      where: { createdAt: { gte: wFrom, lt: wTo }, status: "Abschluss", ...NOT_STORNO },
+      where: { createdAt: { gte: wFrom, lt: wTo }, status: "Abschluss", isTest: false, ...NOT_STORNO },
       select: { customerId: true, source: true, closeValue: true },
     }),
-    prisma.lead.count({ where: { createdAt: { gte: wFrom, lt: wTo }, reached: true, ...NOT_STORNO } }),
-    prisma.appointment.findMany({ where: { lead: { createdAt: { gte: wFrom, lt: wTo } }, leadId: { not: null } }, distinct: ["leadId"], select: { leadId: true } }),
+    prisma.lead.count({ where: { createdAt: { gte: wFrom, lt: wTo }, reached: true, isTest: false, ...NOT_STORNO } }),
+    prisma.appointment.findMany({ where: { lead: { createdAt: { gte: wFrom, lt: wTo }, isTest: false }, leadId: { not: null } }, distinct: ["leadId"], select: { leadId: true } }),
     prisma.$queryRaw<{ sec: number }[]>`
       SELECT EXTRACT(EPOCH FROM ("firstContactAt" - "createdAt"))::float8 AS sec FROM "Lead"
-      WHERE "createdAt" >= ${wFrom} AND "createdAt" < ${wTo} AND "firstContactAt" IS NOT NULL AND "firstContactAt" >= "createdAt"`,
+      WHERE "createdAt" >= ${wFrom} AND "createdAt" < ${wTo} AND "isTest" = false AND "firstContactAt" IS NOT NULL AND "firstContactAt" >= "createdAt"`,
     prisma.$queryRaw<{ n: number }[]>`
       SELECT COUNT(DISTINCT c."leadId")::int AS n FROM "Conversation" c
       JOIN "Lead" l ON l.id = c."leadId"
-      WHERE l."createdAt" >= ${wFrom} AND l."createdAt" < ${wTo}
+      WHERE l."createdAt" >= ${wFrom} AND l."createdAt" < ${wTo} AND l."isTest" = false
         AND EXISTS (SELECT 1 FROM "Message" m WHERE m."conversationId" = c.id AND m."sentBy" = 'bot' AND m.direction = 'outbound')`,
     prisma.whatsAppAccount.findMany({ select: { customerId: true } }),
   ]);

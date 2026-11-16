@@ -28,7 +28,7 @@ export async function cplFromData(p: Pick<RechnerProduct, "match">, now = new Da
       where: { kind: "LEAD", occurredAt: { gte: since }, product: { contains: match, mode: "insensitive" } },
       _sum: { amount: true },
     }),
-    prisma.lead.count({ where: { createdAt: { gte: since }, source: { contains: match, mode: "insensitive" } } }),
+    prisma.lead.count({ where: { createdAt: { gte: since }, isTest: false, source: { contains: match, mode: "insensitive" } } }),
   ]);
   const sum = Number(cost._sum.amount ?? 0);
   if (leads < MIN_LEADS_FOR_DATA || sum <= 0) return null;

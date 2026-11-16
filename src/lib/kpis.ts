@@ -190,6 +190,8 @@ async function computeLeadCosts(params: {
 
   const leads = await prisma.lead.findMany({
     where: {
+      // Testleads zählen nirgends (lib/testlead.ts)
+      isTest: false,
       source: { in: usedProducts },
       createdAt: {
         gte: parseMonthStart(minKey),
@@ -241,6 +243,8 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
   ] = await Promise.all([
     prisma.lead.findMany({
       where: {
+        // Testleads zählen nirgends (lib/testlead.ts)
+        isTest: false,
         ...customerClause,
         ...productLeadClause,
         createdAt: { gte: range.from, lte: range.to },
@@ -260,6 +264,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       where: {
         ...customerClause,
         ...productRevenueClause,
+        NOT: { lead: { is: { isTest: true } } },
         cancelled: false,
         occurredAt: { gte: range.from, lte: range.to },
       },
@@ -269,6 +274,7 @@ export async function computeKpis(filters: KpiFilters): Promise<Kpis> {
       where: {
         ...customerClause,
         ...productRevenueClause,
+        NOT: { lead: { is: { isTest: true } } },
         cancelled: true,
         occurredAt: { gte: range.from, lte: range.to },
       },
@@ -465,6 +471,8 @@ export async function computeCustomerLeaderboard(params: {
       prisma.customer.findMany({ where: { plan: { not: "internal" } }, select: { id: true, name: true } }),
       prisma.lead.findMany({
         where: {
+          // Testleads zählen nirgends (lib/testlead.ts)
+          isTest: false,
           ...productLeadClause,
           createdAt: { gte: range.from, lte: range.to },
         },
@@ -523,6 +531,8 @@ export async function computeCustomerLeaderboard(params: {
     );
     const leadsForProration = await prisma.lead.findMany({
       where: {
+        // Testleads zählen nirgends (lib/testlead.ts)
+        isTest: false,
         source: { in: usedProducts },
         createdAt: {
           gte: parseMonthStart(minKey),
@@ -688,6 +698,8 @@ export async function computeProductBreakdown(params: {
   const [leads, revenues] = await Promise.all([
     prisma.lead.findMany({
       where: {
+        // Testleads zählen nirgends (lib/testlead.ts)
+        isTest: false,
         ...customerClause,
         source: { not: null },
         createdAt: { gte: range.from, lte: range.to },
@@ -821,6 +833,8 @@ export async function computeChannelPerformance(params: {
   // Leads-Aggregate pro Kanal (Brutto + Stornos via Lead-Status).
   const leads = await prisma.lead.findMany({
     where: {
+      // Testleads zählen nirgends (lib/testlead.ts)
+      isTest: false,
       ...customerClause,
       ...productLeadClause,
       createdAt: { gte: range.from, lte: range.to },
@@ -1020,6 +1034,8 @@ export async function computeTimeSeries(params: {
   const [leads, revenues, allLeadCosts, allOtherCosts] = await Promise.all([
     prisma.lead.findMany({
       where: {
+        // Testleads zählen nirgends (lib/testlead.ts)
+        isTest: false,
         ...customerClause,
         ...productLeadClause,
         createdAt: { gte: range.from, lte: range.to },
@@ -1172,6 +1188,8 @@ export async function computeTimeSeries(params: {
       );
       const leadsForShare = await prisma.lead.findMany({
         where: {
+          // Testleads zählen nirgends (lib/testlead.ts)
+          isTest: false,
           source: { in: usedProducts },
           createdAt: {
             gte: parseMonthStart(minKey),

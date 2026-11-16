@@ -6,6 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { isStorno } from "@/lib/admin-leads";
 import { MetaAccountCard } from "./meta-account-card";
 import { CapiCard } from "./capi-card";
+import { TestLeadBadge } from "@/components/test-lead-badge";
+import { testLeadProducts } from "@/lib/testlead";
+import { TestLeadButton, TestLeadDeleteButton } from "./testlead-button";
 
 const fmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
@@ -15,16 +18,17 @@ const fmt = (d: Date) =>
 export default async function KundenLeads({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   const { id } = await params;
-  const [customer, sources, leads, total] = await Promise.all([
-    prisma.customer.findUnique({ where: { id }, select: { metaAdAccountId: true } }),
+  const [customer, sources, leads, total, products] = await Promise.all([
+    prisma.customer.findUnique({ where: { id }, select: { metaAdAccountId: true, isTest: true } }),
     prisma.leadSource.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" } }),
     prisma.lead.findMany({
       where: { customerId: id },
       orderBy: { createdAt: "desc" },
       take: 25,
-      select: { id: true, name: true, phone: true, source: true, status: true, createdAt: true, closedAt: true, externalId: true, airtableId: true },
+      select: { id: true, name: true, phone: true, source: true, status: true, createdAt: true, closedAt: true, externalId: true, airtableId: true, isTest: true },
     }),
     prisma.lead.count({ where: { customerId: id } }),
+    testLeadProducts(id),
   ]);
 
   return (
@@ -72,9 +76,13 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
           title="Letzte Leads"
           count={total}
           actions={
-            <Link href={`/admin/leads?kunde=${id}`} className="text-sm font-medium text-[color:var(--brand)] hover:underline">
-              Alle anzeigen →
-            </Link>
+            <div className="flex items-center gap-3">
+              {/* Admin-Profil hat keine eigene Telefonnummer: leer mit Platzhalter, zuletzt genutzte Nummer aus dem Browser */}
+              <TestLeadButton customerId={id} testCustomer={!!customer?.isTest} products={products} defaultPhone={null} />
+              <Link href={`/admin/leads?kunde=${id}`} className="hidden text-sm font-medium text-[color:var(--brand)] hover:underline sm:inline">
+                Alle anzeigen →
+              </Link>
+            </div>
           }
         />
         {leads.length === 0 ? (
@@ -89,15 +97,19 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
             {leads.map((l) => (
               <li key={l.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
                 <span className="w-24 shrink-0 text-xs text-[color:var(--muted)]">{fmt(l.createdAt)}</span>
-                <span className="min-w-0 flex-1 truncate font-medium">{l.name ?? "ohne Name"}</span>
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="truncate font-medium">{l.name ?? "ohne Name"}</span>
+                  {l.isTest ? <TestLeadBadge /> : null}
+                </span>
                 <span className="hidden truncate text-xs text-[color:var(--muted)] sm:block">{l.source ?? ""}</span>
                 {isStorno(l.status) ? (
                   <Badge tone="danger">Storno</Badge>
                 ) : l.closedAt ? (
                   <Badge tone="success">Abschluss</Badge>
                 ) : (
-                  <span className="shrink-0 text-xs text-[color:var(--muted)]">{l.status ?? "Neu"}</span>
+                  <span className={`shrink-0 text-xs text-[color:var(--muted)] ${l.isTest ? "hidden sm:inline" : ""}`}>{l.status ?? "Neu"}</span>
                 )}
+                {l.isTest ? <TestLeadDeleteButton customerId={id} leadId={l.id} /> : null}
               </li>
             ))}
           </ul>

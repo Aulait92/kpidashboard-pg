@@ -125,7 +125,8 @@ export type MetaLeadStages = { leadId: string; metaLeadId: string; createdAt: Da
 /** Leads aus Meta-Lead-Ads (leadgen_id) eines Kunden seit `since` mit ihren erkannten Stufen. */
 export async function loadMetaLeadStages(customerId: string, since: Date, now = new Date(), opts: { includeErased?: boolean } = {}): Promise<MetaLeadStages[]> {
   const rows = await prisma.lead.findMany({
-    where: { customerId, externalId: { not: null }, subscriptionId: null, createdAt: { gte: since, lte: now }, ...(opts.includeErased ? {} : { erasedAt: null }) },
+    // Testleads (lib/testlead.ts) gehen nie an Meta
+    where: { customerId, externalId: { not: null }, subscriptionId: null, isTest: false, createdAt: { gte: since, lte: now }, ...(opts.includeErased ? {} : { erasedAt: null }) },
     select: {
       id: true,
       externalId: true,
@@ -224,7 +225,7 @@ export async function sendDue(now = new Date(), opts: { max?: number } = {}): Pr
       stage: true,
       eventTime: true,
       attempts: true,
-      lead: { select: { externalId: true, erasedAt: true } },
+      lead: { select: { externalId: true, erasedAt: true, isTest: true } },
       customer: { select: { capiEnabled: true, isTest: true, archived: true, metaDatasetId: true } },
     },
   });
@@ -245,9 +246,12 @@ export async function sendDue(now = new Date(), opts: { max?: number } = {}): Pr
       await skip(list.map((e) => e.id), "Testkunde");
       continue;
     }
-    await skip(list.filter((e) => e.lead.erasedAt || !isMetaLeadId(e.lead.externalId)).map((e) => e.id), "Lead gelöscht");
-    await skip(list.filter((e) => !e.lead.erasedAt && isMetaLeadId(e.lead.externalId) && isTooOld(e.eventTime, now)).map((e) => e.id), TOO_OLD);
-    const ready = list.filter((e) => !e.lead.erasedAt && isMetaLeadId(e.lead.externalId) && !isTooOld(e.eventTime, now) && isCapiStage(e.stage));
+    // Testleads (lib/testlead.ts) nie an Meta senden
+    await skip(list.filter((e) => e.lead.isTest).map((e) => e.id), "Testlead");
+    const real = list.filter((e) => !e.lead.isTest);
+    await skip(real.filter((e) => e.lead.erasedAt || !isMetaLeadId(e.lead.externalId)).map((e) => e.id), "Lead gelöscht");
+    await skip(real.filter((e) => !e.lead.erasedAt && isMetaLeadId(e.lead.externalId) && isTooOld(e.eventTime, now)).map((e) => e.id), TOO_OLD);
+    const ready = real.filter((e) => !e.lead.erasedAt && isMetaLeadId(e.lead.externalId) && !isTooOld(e.eventTime, now) && isCapiStage(e.stage));
     if (!c.metaDatasetId) continue;
     const premiums = await premiumsFor(ready.filter((e) => e.stage === "abschluss").map((e) => e.leadId));
     for (let i = 0; i < ready.length; i += BATCH) {
