@@ -7,7 +7,7 @@ export default async function NeuerLeadPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <AdminBack href="/admin/vertrieb/kontakte">Kontakte</AdminBack>
-      <h1 className="text-xl font-semibold">Neuer Lead</h1>
+      <h1 className="text-xl font-semibold">Neuer Kontakt</h1>
       <p className="text-sm text-slate-600">
         Z.B. wenn dir jemand auf LinkedIn schreibt. Gibt es die Agentur schon (gleiche E-Mail, LinkedIn-Profil oder Name),
         wird der bestehende Kontakt ergänzt statt doppelt angelegt. Stufe „Interesse“, Aufgabe für heute.

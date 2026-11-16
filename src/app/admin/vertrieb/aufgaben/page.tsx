@@ -63,7 +63,22 @@ export default async function AufgabenPage({ searchParams }: { searchParams: Pro
           </section>
         ) : null,
       )}
-      {!tasks.length && <p className="py-10 text-center text-sm text-slate-500">Keine Aufgaben.</p>}
+      {!tasks.length && (
+        <p className="py-10 text-center text-sm text-slate-500">
+          {type ? (
+            <>
+              Keine Aufgaben dieser Art.{" "}
+              <Link href={link({ type: undefined })} className="font-medium text-sky-700 hover:underline">
+                Alle Arten zeigen
+              </Link>
+            </>
+          ) : view === "open" ? (
+            "Alles erledigt. Neue Aufgaben legst du oben oder im Kontakt an."
+          ) : (
+            "Noch nichts erledigt."
+          )}
+        </p>
+      )}
     </div>
   );
 }

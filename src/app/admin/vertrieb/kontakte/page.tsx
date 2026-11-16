@@ -82,7 +82,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">Kontakte <span className="text-base font-normal text-slate-500">({total.toLocaleString("de-DE")})</span></h1>
-        <Link href="/admin/vertrieb/kontakte/neu" className="btn-primary">+ Neuer Lead</Link>
+        <Link href="/admin/vertrieb/kontakte/neu" className="btn-primary">+ Neuer Kontakt</Link>
       </div>
 
       <form className="card grid grid-cols-1 gap-3 p-4 md:grid-cols-[2fr_1fr_1fr_1fr_110px_auto] md:items-end">
@@ -221,7 +221,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
               filtered ? (
                 <Link href="/admin/vertrieb/kontakte" className={buttonClass("secondary", "md")}>Filter zurücksetzen</Link>
               ) : (
-                <Link href="/admin/vertrieb/kontakte/neu" className={buttonClass("primary", "md")}>Ersten Lead anlegen</Link>
+                <Link href="/admin/vertrieb/kontakte/neu" className={buttonClass("primary", "md")}>Ersten Kontakt anlegen</Link>
               )
             }
           />

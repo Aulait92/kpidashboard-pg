@@ -40,7 +40,7 @@ export default async function VertriebUebersichtPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">Vertrieb: Übersicht</h1>
-        <Link href="/admin/vertrieb/kontakte/neu" className="btn-primary">+ Neuer Lead</Link>
+        <Link href="/admin/vertrieb/kontakte/neu" className="btn-primary">+ Neuer Kontakt</Link>
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Heute fällig" value={tasks.length - overdue} href="/admin/vertrieb/aufgaben" tone="amber" />
@@ -83,7 +83,7 @@ export default async function VertriebUebersichtPage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">Keine anstehenden Termine.</p>
+            <p className="text-sm text-slate-500">Keine anstehenden Termine. Buchungen über Calendly erscheinen hier automatisch.</p>
           )}
         </section>
         {leads.length > 0 && (

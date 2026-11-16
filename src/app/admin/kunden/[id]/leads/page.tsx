@@ -78,7 +78,12 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
           }
         />
         {leads.length === 0 ? (
-          <p className="p-5 text-sm text-[color:var(--muted)]">Noch keine Leads.</p>
+          <p className="p-5 text-sm text-[color:var(--muted)]">
+            Noch keine Leads. Sie kommen, sobald ein Leadformular diesem Kunden zugeordnet ist:{" "}
+            <Link href="/admin/lead-eingang" className="font-medium text-[color:var(--brand)] hover:underline">
+              Lead-Eingang
+            </Link>
+          </p>
         ) : (
           <ul className="divide-y divide-[color:var(--border)]">
             {leads.map((l) => (
