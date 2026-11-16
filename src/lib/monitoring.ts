@@ -2,10 +2,11 @@
 // nichts außer einem Log-Eintrag – lokal und in Tests bleibt alles still.
 //
 // Datenschutz: Wir senden nur technische Fehlerinformationen. Cookies,
-// Header, Request-Body, Query-Parameter und Nutzerdaten werden entfernt,
-// damit keine Lead- oder Kundendaten bei Sentry landen.
+// Header, Request-Body, Query-Parameter, Nutzerdaten und geheime Link-Tokens
+// im Pfad werden entfernt, damit keine Lead- oder Kundendaten bei Sentry landen.
 
 import * as Sentry from "@sentry/nextjs";
+import { scrubBreadcrumb, scrubSentryEvent } from "@/lib/sentry-redact";
 
 let initialized = false;
 
@@ -34,17 +35,10 @@ export function initSentry() {
       queues: false,
       stackFrameVariables: false,
     },
-    beforeSend(event) {
-      if (event.request) {
-        delete event.request.cookies;
-        delete event.request.headers;
-        delete event.request.data;
-        delete event.request.query_string;
-        if (event.request.url) event.request.url = event.request.url.split("?")[0];
-      }
-      delete event.user;
-      return event;
-    },
+    // Cookies, Header, Body, Query, Nutzer und geheime Link-Tokens im Pfad entfernen (src/lib/sentry-redact.ts).
+    beforeSend: (event) => scrubSentryEvent(event, { server: true }),
+    beforeSendTransaction: (event) => scrubSentryEvent(event, { server: true }),
+    beforeBreadcrumb: (crumb) => scrubBreadcrumb(crumb),
   });
 }
 
