@@ -93,7 +93,7 @@ export async function searchBuyer(ctx: TeamCtx, rawQ: string, opts: { newUi: boo
       kind: "kontakt" as const,
       id: l.id,
       title: l.name?.trim() || formatPhone(l.phone) || l.email || "Kontakt ohne Name",
-      subtitle: [formatPhone(l.phone), l.email, statusLabel(l.status)].filter(Boolean).join(" · ") || "Kontakt",
+      subtitle: [statusLabel(l.status), formatPhone(l.phone), l.email].filter(Boolean).join(" · ") || "Kontakt",
       href: `${detail}${l.id}`,
     })),
     ...existing.map((e) => {
