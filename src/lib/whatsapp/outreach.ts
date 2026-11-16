@@ -357,7 +357,7 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
     } else if (l.appointments[0]?.status === "no_show") {
       reason = "Nicht zum Termin erschienen, neuen Termin vereinbaren";
     } else if (lastCancel === "advisor") {
-      reason = "Du hast den Termin abgelehnt, bitte neuen Termin vereinbaren";
+      reason = "Sie haben den Termin abgelehnt, bitte neuen Termin vereinbaren";
     } else if (lastCancel === "lead") {
       reason = "Lead hat den Termin abgesagt, kurz nachfassen";
     } else if (!l.phone) {

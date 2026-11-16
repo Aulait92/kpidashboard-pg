@@ -1,5 +1,6 @@
 "use client";
 
+import { anrufZiel } from "@/lib/anruf-ziel";
 import { openLeadBooking } from "@/components/lead-booking";
 import { terminArtLabel } from "@/lib/termin-art";
 
@@ -777,10 +778,29 @@ function CallModePanel({
           {item.overdue ? <div className="mb-2 text-base font-semibold text-rose-600">Überfällig</div> : null}
           <div className="text-3xl font-semibold tracking-tight">{item.name}</div>
           <p className="mt-2 text-base text-[color:var(--muted)]">{item.reason}</p>
+          {/* Was im Gespräch zu tun ist, auf einen Blick (Ole, 16.11.2026) */}
+          {(() => {
+            const z = anrufZiel(item);
+            return (
+              <div className="mt-5 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 py-3" data-anruf-ziel>
+                <div className="text-sm font-semibold text-[color:var(--muted)]">
+                  Ziel: <span className="text-[color:var(--foreground)]">{z.ziel}</span>
+                </div>
+                <ol className="mt-2 space-y-1.5 text-base">
+                  {z.schritte.map((s, i) => (
+                    <li key={s} className="flex gap-2">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-semibold text-[color:var(--brand-dark)]">{i + 1}</span>
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            );
+          })()}
           <a
             href={item.phone ? `tel:+${item.phone}` : undefined}
             onClick={onCall}
-            className="mt-8 flex h-16 items-center justify-center gap-2 rounded-[var(--radius-lg)] bg-[color:var(--brand)] text-lg font-semibold text-white shadow-[var(--shadow-md)] active:scale-[0.99]"
+            className="mt-6 flex h-16 items-center justify-center gap-2 rounded-[var(--radius-lg)] bg-[color:var(--brand)] text-lg font-semibold text-white shadow-[var(--shadow-md)] active:scale-[0.99]"
           >
             <Phone className="h-6 w-6" /> Anrufen
           </a>
