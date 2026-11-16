@@ -36,8 +36,6 @@ export function templateValues(l: TemplateLead): Record<string, string> {
     const hit = aliases.map((a) => byLabel.get(norm(a))).find(Boolean);
     if (hit) v[key] = hit;
   }
-  // Leadbörse (HvK): Anrede wie im alten Zap aus dem Vornamen, falls der Funnel keine liefert
-  if (!v.anrede) v.anrede = anredeAusVorname(v.vorname);
   // Kennung bei der Leadbörse: steht nicht im Code, sondern in der Variable PPL_HVK_BROKERCODE
   if (process.env.PPL_HVK_BROKERCODE?.trim()) v.brokercode = process.env.PPL_HVK_BROKERCODE.trim();
   for (const [k, val] of byLabel) if (!(k in v)) v[k] = val;
@@ -50,6 +48,8 @@ export function templateValues(l: TemplateLead): Record<string, string> {
  */
 export function renderTemplate(template: string, l: TemplateLead): string {
   const v = templateValues(l);
+  // Leadbörse (HvK): Anrede wie im alten Zap aus dem Vornamen, falls der Funnel keine liefert (nur Vorlagen-Mail)
+  if (!v.anrede) v.anrede = anredeAusVorname(v.vorname);
   const get = (key: string) => (v[key.trim().toLowerCase()] ?? v[norm(key)] ?? "").trim();
   return template
     .split("\n")
