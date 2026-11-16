@@ -26,7 +26,7 @@ export default async function KundeKampagneKi({ params }: { params: Promise<{ id
   if (!c) notFound();
   return (
     <Seite titel="Kampagne mit KI" untertitel="Angelegt wird pausiert, veröffentlicht wird von Hand." zurueck={{ href: `/admin/neu/kunden/${id}/leads`, label: kurzName(c.name) }}>
-      <div className="-mt-5" data-funktion={FUNKTIONEN}>
+      <div className="-mt-2" data-funktion={FUNKTIONEN}>
         <KundenKampagne params={Promise.resolve({ id })} />
       </div>
     </Seite>

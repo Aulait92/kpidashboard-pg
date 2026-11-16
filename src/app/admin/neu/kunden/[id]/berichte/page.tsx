@@ -77,7 +77,7 @@ export default async function KundeBerichte({ params, searchParams }: { params: 
           data-funktion="actions-sendreportaction--bericht-senden actions-sendreportaction--bericht-bearbeiten-betreff-einstieg-und-senden actions-callinsteadaction--anrufen-statt-mail actions-skipreportaction--diesen-monat-aussetzen"
         >
           {offen ? (
-            <MonatsberichtDetail id={offen.id} />
+            <MonatsberichtDetail id={offen.id} ohneSchalter />
           ) : reports.length ? (
             <p className="hidden rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border)] px-5 py-10 text-center text-sm text-[color:var(--muted)] lg:block">
               Bericht links wählen: Vorschau, Prüfbefunde und Senden.

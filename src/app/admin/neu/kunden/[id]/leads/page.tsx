@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { ButtonLink, Card, CardHeader } from "@/components/ui";
+import { ButtonLink, Card } from "@/components/ui";
 import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
 import { LeadQualitaetCard } from "@/components/admin/lead-qualitaet-card";
 import KundenLeads from "@/app/admin/kunden/[id]/leads/page";
@@ -16,16 +16,12 @@ export default async function KundeKampagneLeads({ params }: { params: Promise<{
   return (
     <KundenakteSeite id={id}>
       <div className="space-y-5">
-        <div
-          data-funktion="meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen actions-togglesourceaction--leadformulare-des-kunden-an-aus page--letzte-leads-mit-abschluss-storno"
-        >
-          <KundenLeads params={Promise.resolve({ id })} />
-        </div>
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_3fr]">
           <Card>
-            <CardHeader title="Kampagne mit KI" icon={Sparkles} />
-            <div className="space-y-3 px-5 py-4 text-sm">
-              <p className="text-[color:var(--muted)]">
+            <div className="flex flex-wrap items-center gap-3 px-5 py-4 text-sm">
+              <Sparkles className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+              <p className="min-w-0 flex-1 text-[color:var(--muted)]">
+                <span className="font-semibold text-[color:var(--foreground)]">Kampagne mit KI: </span>
                 Ein KI-Team erstellt Anzeigen, Texte und Formular und legt die Kampagne pausiert an.
                 {letzterLauf ? ` Zuletzt: ${letzterLauf.product}, ${letzterLauf.createdAt.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}.` : ""}
               </p>
@@ -37,6 +33,11 @@ export default async function KundeKampagneLeads({ params }: { params: Promise<{
           <div data-funktion="lead-qualitaet-card--lead-qualitaet-disqualifizierte-leads-nach-grund">
             <LeadQualitaetCard customerId={id} />
           </div>
+        </div>
+        <div
+          data-funktion="meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen actions-togglesourceaction--leadformulare-des-kunden-an-aus page--letzte-leads-mit-abschluss-storno"
+        >
+          <KundenLeads params={Promise.resolve({ id })} />
         </div>
       </div>
     </KundenakteSeite>

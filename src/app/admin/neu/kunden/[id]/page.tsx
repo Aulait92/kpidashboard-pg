@@ -99,16 +99,19 @@ export default async function KundeUebersicht({ params, searchParams }: { params
         <Kennzahlen customerId={id} />
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <div className="min-w-0 space-y-5">
+          <div className="flex min-w-0 flex-col gap-5">
             {/* Einrichtung: offen, solange sie läuft (oder eine Rückmeldung da ist), danach zugeklappt */}
             {live && !notice ? (
-              <Aufklapp titel="Einrichtung" zusammenfassung={onboarding?.liveAt ? `live seit ${fmtDate(onboarding.liveAt)}` : "Selbst-Einrichtung, Onboarding"}>
+              <Aufklapp titel="Einrichtung" zusammenfassung={onboarding?.liveAt ? `live seit ${fmtDate(onboarding.liveAt)}` : "Selbst-Einrichtung noch nicht freigeschaltet"}>
                 {einrichtung}
               </Aufklapp>
             ) : (
               einrichtung
             )}
-            <LeadsJeTag customerId={id} />
+            {/* Am Handy reichen die Kennzahlen oben */}
+            <div className="hidden sm:block">
+              <LeadsJeTag customerId={id} />
+            </div>
           </div>
 
           <div className="min-w-0 space-y-5">

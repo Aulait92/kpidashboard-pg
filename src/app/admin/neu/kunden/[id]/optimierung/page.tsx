@@ -9,7 +9,7 @@ export default async function KundeOptimierung({ params }: { params: Promise<{ i
   const { id } = await params;
   return (
     <KundenakteSeite id={id}>
-      <div className="-mt-5" data-funktion="account-view-protocolcard--protokoll-der-massnahmen-des-kunden actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text">
+      <div className="-mt-2" data-funktion="account-view-protocolcard--protokoll-der-massnahmen-des-kunden actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text">
         <KundenOptimierung params={Promise.resolve({ id })} />
       </div>
     </KundenakteSeite>

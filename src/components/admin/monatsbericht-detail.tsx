@@ -10,7 +10,8 @@ import { CustomerReportsToggle, ReportDecision } from "@/app/admin/monatsbericht
 // Monatsbericht ansehen: interne Einstufung mit Prüfbefunden, Vorschau der E-Mail, Senden/Bearbeiten/Anrufen/Aussetzen
 // und der Schalter je Kunde. Gemeinsam für /admin/monatsberichte/[id] und die Kundenakte im neuen Admin
 // (/admin/neu/kunden/[id]/berichte?bericht=…).
-export async function MonatsberichtDetail({ id }: { id: string }) {
+/** `ohneSchalter`: der Schalter „keine Monatsberichte für diesen Kunden“ steht schon woanders (Kundenakte). */
+export async function MonatsberichtDetail({ id, ohneSchalter = false }: { id: string; ohneSchalter?: boolean }) {
   const r = await prisma.monthlyReport.findUnique({ where: { id }, include: { customer: { select: { id: true, name: true, monthlyReportsOff: true } } } });
   if (!r) notFound();
   const body = r.body as unknown as ReportBody;
@@ -92,7 +93,7 @@ export async function MonatsberichtDetail({ id }: { id: string }) {
     </section>
 
     {r.status === "draft" ? <ReportDecision id={r.id} subject={r.subject} body={body.paragraphs.join("\n\n")} rating={r.rating} /> : null}
-    <CustomerReportsToggle id={r.id} customerId={r.customer.id} off={r.customer.monthlyReportsOff} />
+    {ohneSchalter ? null : <CustomerReportsToggle id={r.id} customerId={r.customer.id} off={r.customer.monthlyReportsOff} />}
     </>
   );
 }
