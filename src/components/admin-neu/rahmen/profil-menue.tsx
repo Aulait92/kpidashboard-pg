@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils";
 const zeile = "flex min-h-11 w-full items-center gap-2 px-3 text-left hover:bg-[color:var(--surface-sunken)]";
 
 /** Schalter „Neue Oberfläche“ (in beiden Profilmenüs). `an` = aktueller Zustand. */
-export function NeueOberflaecheSchalter({ an }: { an: boolean }) {
+export function NeueOberflaecheSchalter({ an, label = "Neue Oberfläche" }: { an: boolean; label?: string }) {
   return (
     <form action={neueOberflaecheAction} className="border-b border-[color:var(--border)]">
       <input type="hidden" name="an" value={an ? "0" : "1"} />
       <button type="submit" role="switch" aria-checked={an} className={cn(zeile, "justify-between")}>
-        <span>Neue Oberfläche</span>
+        <span>{label}</span>
         <span className={cn("relative h-[22px] w-[38px] shrink-0 rounded-full transition", an ? "bg-[color:var(--brand)]" : "bg-[color:var(--border-strong)]")}>
           <span className={cn("absolute top-[3px] h-4 w-4 rounded-full bg-white transition-all", an ? "left-[19px]" : "left-[3px]")} />
         </span>
