@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -327,13 +327,69 @@ async function d360webhook() {
   return { baseUrl: base.replace(/\/\/([^/@]*@)/, "//"), baseAusVariable: raw !== undefined, konten: out };
 }
 
+/**
+ * Pay-per-Lead (nur lesend): Bezüge mit Filtern, Lieferweg (E-Mail nur Domain), Gebieten und
+ * Geliefertem im laufenden Monat, dazu Eingang der letzten 48 Stunden je Status. Keine Lead-Kontaktdaten.
+ */
+async function ppl() {
+  const { monthRange } = await import("@/lib/ppl/periods");
+  const { start, end } = monthRange(new Date());
+  const domains = (s: string | null) => [...new Set((s ?? "").split(/[,;\s]+/).filter(Boolean).map((a) => a.split("@")[1] ?? "?"))];
+  const subs = await prisma.leadSubscription.findMany({
+    orderBy: [{ productKey: "asc" }, { createdAt: "asc" }],
+    include: { customer: { select: { name: true, dormantSince: true } }, areas: true },
+  });
+  const rows = [];
+  for (const s of subs) {
+    const geliefertMonat = await prisma.lead.count({ where: { subscriptionId: s.id, deliveredAt: { gte: start, lt: end } } });
+    const gebiete = [];
+    for (const a of s.areas) {
+      const geliefert = await prisma.poolLead.count({ where: { areaId: a.id, status: "delivered", deliveredAt: { gte: start, lt: end } } });
+      gebiete.push({ id: a.id, label: a.label, menge: a.quantity, zeitraum: a.period, geliefertMonat: geliefert, plz: a.plzRanges.slice(0, 80) });
+    }
+    rows.push({
+      id: s.id,
+      kunde: s.customer.name,
+      ruhend: !!s.customer.dormantSince,
+      label: s.label,
+      produkt: s.productKey,
+      aktiv: s.active,
+      status: s.status,
+      zeitraum: s.period,
+      ziel: s.goal,
+      start: s.startDate,
+      preis: s.price,
+      geliefertMonat,
+      lieferung: s.delivery,
+      mailDomains: domains(s.deliveryEmail),
+      mailFormat: s.emailFormat,
+      vorlage: !!s.emailTemplate,
+      plz: s.plzRanges?.slice(0, 80) ?? null,
+      schwachOk: s.acceptWeak,
+      schwachGrenze: s.weakThreshold,
+      beamteOk: s.acceptCivilServants,
+      nurSchwache: s.onlyWeak,
+      gesEin: s.insurerInclude.length,
+      gesAus: s.insurerExclude.length,
+      regeln: s.excludeRules,
+      storno: { tage: s.stornoDays, auto: s.stornoAutoApprove },
+      slack: s.slackNotify,
+      airtable: !!s.airtableId,
+      gebiete,
+    });
+  }
+  const since = new Date(Date.now() - 48 * 3600_000);
+  const eingang = await prisma.poolLead.groupBy({ by: ["productKey", "status", "via"], where: { createdAt: { gte: since } }, _count: true });
+  return { monat: { start, end }, bezuege: rows, eingang48h: eingang };
+}
+
 /** Pflichtvariablen: nur Status je Name, nie Werte (lib/env-check.ts). */
 async function variablen() {
   const { pruefeVariablen } = await import("@/lib/env-check");
   return pruefeVariablen();
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
