@@ -103,8 +103,8 @@ Summen bzw. Selbstbeteiligung (Stufe „Tarif“).
 | hund-op | vollständig (3 Stufen) | vollständig (3 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | teilweise (3 Stufen, Vorsorge nicht genannt) | vollständig (1 Tarif) |
 | pferd-op | fehlt (nur Hund, Katze) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | vollständig (1 Tarif) |
 | pferd-kranken | fehlt (nur Hund, Katze) | fehlt (kein Vollschutz für Pferde) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | fehlt (kein Produkt) | vollständig (1 Tarif) |
-| tierhalter-hund | vollständig (3 Stufen) | fehlt (Stufen Klassik, Premium nicht als Tabelle) | vollständig (1 Tarif) | teilweise (1 Tarif, Fremdhüter offen) | vollständig (2 Stufen) | fehlt (nicht erhoben) | vollständig (1 Tarif) |
-| tierhalter-pferd | fehlt (kein Produkt) | fehlt (Stufen nicht als Tabelle) | fehlt (kein Produkt) | teilweise (1 Tarif, Flurschäden offen) | fehlt (kein Produkt) | fehlt (nicht erhoben) | vollständig (1 Tarif) |
+| tierhalter-hund | vollständig (3 Stufen) | fehlt (Stufen Klassik, Premium nicht als Tabelle) | vollständig (1 Tarif) | teilweise (1 Tarif, Fremdhüter offen) | vollständig (2 Stufen) | teilweise (3 Stufen, SB offen) | vollständig (1 Tarif) |
+| tierhalter-pferd | fehlt (kein Produkt) | fehlt (Stufen nicht als Tabelle) | fehlt (kein Produkt) | teilweise (1 Tarif, Flurschäden offen) | fehlt (kein Produkt) | teilweise (3 Stufen, SB offen) | vollständig (1 Tarif) |
 
 Nicht aufgenommen: PETPROTECT (Vermittler der BarmeniaGothaer, Tarifvergleich nur als Symbole ohne Werte),
 Helvetia (helvetia.de nennt nur „je nach Tarifwahl“, keine Stufen; Seiten für automatische Abrufe gesperrt), Gothaer
@@ -182,7 +182,7 @@ Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext
 ### R+V
 - Quelle: Leistungstabellen auf ruv.de (Hunde-OP, Pferde-OP) und das Produktinformationsblatt Pferde-OP. Stufen Basis,
   Premium, Exzellent („Topseller“). Ordner `ruv` enthält nur Tier-Dateien. Keine Katzen- und keine Krankenvollversicherung;
-  Hunde- und Pferdehalterhaftpflicht gibt es, sind aber noch nicht erhoben.
+  Hunde- und Pferdehalterhaftpflicht classic, comfort („Topseller“ bei Hund), premium; Selbstbeteiligung nicht in der Tabelle.
 
 ### Uelzener
 - Quelle: Produktseiten und Leistungsübersichten auf uelzener.de (Hund 12/2025, Katze 08/2025, Pferd 03/2025,

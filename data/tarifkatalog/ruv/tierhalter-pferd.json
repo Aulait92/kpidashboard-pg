@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalterhaftpflicht",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Fremdreiter und Reitbeteiligung beitragsfrei",
+    "Gewollter und ungewollter Deckakt",
+    "Turniere (keine Pferderennen)"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalterhaftpflicht classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "miete": "bis 10 Mio. €",
+        "fohlen": "bis Ende Vers.-jahr",
+        "forderungsausfall": "nein",
+        "geliehen": "nein",
+        "ausland": "weltweit bis 2 Jahre",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/pferdeversicherung/pferdehaftpflichtversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferdehalterhaftpflicht comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "40 Mio. €",
+        "miete": "bis 40 Mio. €",
+        "fohlen": "bis 12 Monate",
+        "forderungsausfall": "ab 1.000 € Schaden",
+        "geliehen": "nein",
+        "ausland": "weltweit bis 5 Jahre",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/pferdeversicherung/pferdehaftpflichtversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferdehalterhaftpflicht premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "miete": "bis 100 Mio. €",
+        "fohlen": "bis 18 Monate",
+        "forderungsausfall": "ab 1.000 € Schaden",
+        "geliehen": "ja, SB 300 €",
+        "ausland": "weltweit bis 5 Jahre",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/tierversicherung/pferdeversicherung/pferdehaftpflichtversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/tierversicherung/pferdeversicherung/pferdehaftpflichtversicherung"
+  ],
+  "offen": [
+    "R+V markiert keine Stufe; comfort als mittlere Stufe gesetzt.",
+    "Selbstbeteiligung je Stufe in der Leistungstabelle nicht genannt (nur 300 € bei geliehenen Sachen im premium).",
+    "Mietsachschäden an Stall, Einfriedungen und Boxen bis zur Versicherungssumme; Pferdeanhänger nur im premium.",
+    "Rettungs- und Bergungskosten: comfort bis 10.000 €, premium bis zur Versicherungssumme."
+  ]
+}
