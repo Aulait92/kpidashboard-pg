@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { quotaFor } from "@/lib/ppl/engine";
 import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { assignParkedAction, decideStornoAction, discardParkedAction } from "./actions";
+import { AirtableNachholen } from "./nachholen";
 import { loadCustomerOverview, loadPplReport, type Granularity } from "@/lib/ppl/auswertung";
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 import { airtableSyncOff } from "@/lib/airtable-switch";
@@ -195,9 +196,10 @@ async function Subscriptions({ subs }: { subs: Subs }) {
 
 async function Parked({ subs }: { subs: Subs }) {
   const parked = await prisma.poolLead.findMany({ where: { status: "parked" }, orderBy: { createdAt: "desc" }, take: 100 });
-  if (!parked.length) return <Card><p className="p-5 text-sm text-[color:var(--muted)]">Keine geparkten Leads.</p></Card>;
+  if (!parked.length) return <Card><AirtableNachholen /><p className="p-5 text-sm text-[color:var(--muted)]">Keine geparkten Leads.</p></Card>;
   return (
     <Card>
+      <AirtableNachholen />
       <ul className="divide-y divide-[color:var(--border)]">
         {parked.map((p) => {
           const options = subs.filter((s) => s.active && s.productKey === p.productKey);
