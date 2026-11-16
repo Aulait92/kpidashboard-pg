@@ -1,12 +1,12 @@
-import Link from "next/link";
 import { createLeadManually } from "@/app/admin/vertrieb/actions";
 import { SOURCES } from "@/lib/vertrieb/crm";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export default async function NeuerLeadPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link href="/admin/vertrieb/kontakte" className="text-sm text-slate-500 hover:underline">← Kontakte</Link>
+      <AdminBack href="/admin/vertrieb/kontakte">Kontakte</AdminBack>
       <h1 className="text-xl font-semibold">Neuer Lead</h1>
       <p className="text-sm text-slate-600">
         Z.B. wenn dir jemand auf LinkedIn schreibt. Gibt es die Agentur schon (gleiche E-Mail, LinkedIn-Profil oder Name),

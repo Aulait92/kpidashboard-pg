@@ -8,7 +8,7 @@ import { TaskRow } from "@/components/vertrieb/ui";
 import { ContactMore, Fold, StagePicker } from "@/components/vertrieb/contact-controls";
 import { ContactEmails, DuplicateHint } from "@/components/vertrieb/contact-merge";
 import { likelyDuplicates } from "@/lib/vertrieb/contact-merge";
-import { Mail, Phone, Presentation } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Presentation } from "lucide-react";
 import { ActivityForm } from "@/components/vertrieb/activity-form";
 import { Collapsible } from "@/components/vertrieb/collapsible";
 import { TaskForm } from "@/components/vertrieb/task-form";
@@ -24,6 +24,7 @@ import { loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { BackToList } from "@/components/admin/list-memory";
+import { ADMIN_BACK_CLASS } from "@/components/admin/admin-back";
 import { VERTRIEB_LISTS } from "@/lib/admin-lists";
 import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
@@ -103,8 +104,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
         <div>
           {embedded ? null : (
             <>
-              <BackToList id="vertrieb" fallback="/admin/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className="text-sm text-slate-500 hover:underline">
-                ← Zurück
+              <BackToList id="vertrieb" fallback="/admin/vertrieb/kontakte" allowed={VERTRIEB_LISTS} className={ADMIN_BACK_CLASS}>
+                <ArrowLeft className="h-4 w-4 shrink-0" />
+                Zurück
               </BackToList>
               <h1 className="mt-1 text-2xl font-semibold">{shortName(c.name)}</h1>
             </>

@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/ui";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { listPresentations } from "@/lib/vertrieb/praesentationen";
 import { folienListe, isVerkaufsAudience, paketDaten, verkaufsCss, verkaufsFolien, VERKAUFS_AUDIENCES } from "@/lib/vertrieb/verkaufspraesentation";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Web-Präsentation | Unterlagen" };
 export const dynamic = "force-dynamic";
@@ -22,9 +23,7 @@ export default async function UnterlagenPraesentationPage({ params }: { params: 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4" data-verkaufspraesentation>
       <div>
-        <Link href="/admin/marketing/unterlagen" className="text-sm text-slate-500 hover:underline">
-          ← Unterlagen
-        </Link>
+        <AdminBack href="/admin/marketing/unterlagen">Unterlagen</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Web-Präsentation {LABEL[audience]}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           Mit Listenpreisen. Für Preise aus einem Angebot und den Link für den Interessenten: Vertrieb, Kontakt, „Präsentation“. Pfeiltasten zum Blättern,

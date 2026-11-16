@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { listPoolsForAdmin } from "@/lib/media-buyer";
@@ -10,6 +9,7 @@ import {
   type PoolDetailRow,
   type TopStats,
 } from "./media-buyer-admin";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 
@@ -139,12 +139,7 @@ export default async function MediaBuyerPage() {
   return (
     <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-8">
       <header className="mb-4">
-        <Link
-          href="/"
-          className="text-xs text-[color:var(--brand)] hover:underline"
-        >
-          ← zum Dashboard
-        </Link>
+        <AdminBack href="/">Dashboard</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           Media Buyer
         </h1>

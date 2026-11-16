@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OfferForm } from "@/components/offer-form";
 import { legalUrls } from "@/lib/offers";
@@ -7,6 +6,7 @@ import { shortName } from "@/lib/vertrieb/crm";
 import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
 import { benefitSentence } from "@/lib/kollegen-shared";
 import { eur } from "@/lib/offer-pricing";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Angebot erstellen | Vertrieb" };
 
@@ -32,7 +32,7 @@ export default async function ContactOfferPage({ params }: { params: Promise<{ i
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <Link href={back} className="text-sm text-slate-500 hover:underline">← {shortName(c.name)}</Link>
+      <AdminBack href={back}>{shortName(c.name)}</AdminBack>
       <h1 className="mt-1 text-2xl font-semibold tracking-tight">Angebot erstellen</h1>
       <p className="mt-1 text-sm text-[color:var(--muted)]">
         Preise nach Preisliste, Sonderkonditionen jederzeit möglich. Nach der Online-Annahme rückt der Kontakt in der

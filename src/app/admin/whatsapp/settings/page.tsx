@@ -24,6 +24,7 @@ import { SupportInboxCard } from "./support-card";
 import { AbTestCard } from "./ab-test-card";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
 import { AgentSettings, ResubmitTemplateButton, SubmitTemplatesButton, TemplateApproved, TemplateAutoStatus, TemplateEditor } from "./controls";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "WhatsApp-Einstellungen | performancegrowth Admin" };
@@ -119,9 +120,7 @@ export default async function WhatsAppSettingsPage({
         <h1 className="text-2xl font-semibold tracking-tight">
           WhatsApp-Einstellungen
         </h1>
-        <Link href="/admin/einstellungen" className="text-sm font-medium text-[color:var(--brand)] hover:underline">
-          ← Einstellungen
-        </Link>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
       </div>
 
 

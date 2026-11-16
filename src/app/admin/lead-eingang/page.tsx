@@ -6,6 +6,7 @@ import { getAppUrl } from "@/lib/email";
 import { listPageForms, metaDiagnostics, type MetaForm } from "@/lib/meta-leads";
 import { prisma } from "@/lib/prisma";
 import { assignFormAction, dismissUnassignedAction, toggleSourceAction } from "./actions";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Lead-Eingang | performancegrowth Admin" };
@@ -55,7 +56,7 @@ export default async function LeadIntakePage({
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <div>
-        <a href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</a>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Lead-Eingang</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">Leadformular einem Kunden zuordnen, dann kommen Leads direkt in die App.</p>
       </div>

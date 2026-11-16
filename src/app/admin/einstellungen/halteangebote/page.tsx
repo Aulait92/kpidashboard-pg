@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { loadHalteSettings } from "@/lib/halteangebote-server";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { HalteForm } from "./form";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Halteangebote | performancegrowth Admin" };
 
@@ -13,9 +14,7 @@ export default async function HalteangebotePage() {
   const s = await loadHalteSettings();
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/admin/einstellungen" className="text-sm text-[color:var(--muted)] hover:underline">
-        ← Einstellungen
-      </Link>
+      <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
       <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Halteangebote</h1>
       <p className="mb-6 text-sm text-[color:var(--muted)]">
         Was Kunden im Kündigungsfenster je Grund angeboten wird. „Trotzdem kündigen“ steht immer auf jedem Schritt. Jede Annahme erzeugt Push und Aufgabe; die

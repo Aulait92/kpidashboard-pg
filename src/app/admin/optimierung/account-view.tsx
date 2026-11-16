@@ -4,6 +4,7 @@ import { isSuggestion, type MeasureKind } from "@/lib/optimierung/regeln";
 import { activityLabel, KIND_LABEL, STATUS_LABEL, type MeasureStatus } from "@/lib/optimierung/shared";
 import type { loadAccountDetail } from "@/lib/optimierung/server";
 import { AccountSettingsForm, ManualForm, PlannedList, RunPanel, type MeasureView } from "./ui";
+import { AdminBack } from "@/components/admin/admin-back";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof loadAccountDetail>>>;
 type MeasureRow = Detail["measures"][number];
@@ -71,9 +72,7 @@ export function AccountView({ detail, showBackLink = true }: { detail: Detail; s
   return (
     <div className="space-y-5">
       {showBackLink ? (
-        <Link href="/admin/optimierung" className="text-sm text-[color:var(--muted)] hover:underline">
-          ← Optimierung
-        </Link>
+        <AdminBack href="/admin/optimierung">Optimierung</AdminBack>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{a.label}</h1>

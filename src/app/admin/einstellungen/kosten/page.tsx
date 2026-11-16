@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { COST_PURPOSE_LABEL, loadKpiSettings, type CostPurpose } from "@/lib/zahlen";
 import { deleteRecurringCostAction } from "@/app/admin/zahlen/actions";
 import { CostForm, KpiSettingsForm } from "./forms";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Laufende Kosten | performancegrowth Admin" };
 
@@ -19,7 +20,7 @@ export default async function KostenPage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-8 sm:px-6">
       <div>
-        <Link href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</Link>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Laufende Kosten</h1>
         <p className="text-sm text-[color:var(--muted)]">
           Monatliche Kosten mit Zweck. Direkte Kosten senken die Marge, Kundengewinnung fließt in die Kosten je Neukunde. Meta-Werbung kommt automatisch aus dem Abgleich.

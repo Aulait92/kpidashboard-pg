@@ -7,6 +7,7 @@ import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 import { placesDailyLimit, placesKey, placesUsedToday } from "@/lib/vertrieb/contact-enrich";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Anbindungen | performancegrowth Admin" };
 
@@ -37,7 +38,7 @@ export default async function AnbindungenPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <a href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</a>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         <h1 className="mt-1 text-xl font-semibold">Anbindungen</h1>
         <p className="text-sm text-slate-500">Woher der Vertrieb seine Daten bekommt. Grün = in den letzten 7 Tagen etwas empfangen.</p>
       </div>

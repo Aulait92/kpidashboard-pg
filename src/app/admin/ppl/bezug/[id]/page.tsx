@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +6,7 @@ import { fmtWeek, weekRange } from "@/lib/ppl/periods";
 import { BezugForm } from "./bezug-form";
 import { deleteAreaAction, manualOrderAction, saveAreaAction } from "../../actions";
 import { areaQuotas } from "@/lib/ppl/engine";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +28,7 @@ export default async function BezugPage({ params }: { params: Promise<{ id: stri
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-      <Link href="/admin/ppl" className="text-sm text-[color:var(--brand)] hover:underline">
-        ← Pay-per-Lead
-      </Link>
+      <AdminBack href="/admin/ppl">Pay-per-Lead</AdminBack>
       <h1 className="text-2xl font-semibold tracking-tight">{isNew ? "Bezug anlegen" : "Bezug bearbeiten"}</h1>
       <BezugForm
         sub={sub ? { ...sub, price: Number(sub.price), startDate: sub.startDate?.toISOString().slice(0, 10) ?? "", hasSecret: !!sub.webhookSecretEnc } : null}

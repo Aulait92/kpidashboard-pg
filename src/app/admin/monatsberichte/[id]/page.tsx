@@ -7,6 +7,7 @@ import type { ReportBody } from "@/lib/monatsbericht/server";
 import type { RawMeasure } from "@/lib/monatsbericht/bericht";
 import { MonatsberichtAnsicht } from "@/components/monatsbericht-ansicht";
 import { CustomerReportsToggle, ReportDecision } from "../forms";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Monatsbericht | performancegrowth Admin" };
 
@@ -23,7 +24,7 @@ export default async function MonatsberichtPage({ params }: { params: Promise<{ 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-8 sm:px-6">
       <div>
-        <Link href={`/admin/monatsberichte?monat=${r.month}`} className="text-sm text-[color:var(--muted)] hover:underline">← Monatsberichte {monthLabel(r.month)}</Link>
+        <AdminBack href={`/admin/monatsberichte?monat=${r.month}`}>Monatsberichte {monthLabel(r.month)}</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">{r.customer.name}</h1>
         <p className="text-sm text-[color:var(--muted)]">
           {monthLabel(r.month)} · Status: {STATUS_LABEL[r.status] ?? r.status}

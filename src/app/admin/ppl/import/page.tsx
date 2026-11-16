@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { Badge, Card } from "@/components/ui";
 import { ImportButton } from "./import-button";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +21,7 @@ export default async function ImportPage() {
   }
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-      <Link href="/admin/ppl" className="text-sm text-[color:var(--brand)] hover:underline">
-        ← Pay-per-Lead
-      </Link>
+      <AdminBack href="/admin/ppl">Pay-per-Lead</AdminBack>
       <h1 className="text-2xl font-semibold tracking-tight">Bezüge aus Airtable übernehmen</h1>
       <p className="max-w-2xl text-sm text-[color:var(--muted)]">
         Vorschau, noch nichts geändert. Bezüge werden mit ihrem Airtable-Datensatz verknüpft (oder mit einem in der App angelegten Bezug

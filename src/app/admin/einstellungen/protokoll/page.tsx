@@ -3,6 +3,7 @@ import { Card } from "@/components/ui";
 import { AUDIT_LABEL } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Änderungsprotokoll | performancegrowth Admin" };
@@ -37,9 +38,7 @@ export default async function ProtokollPage({ searchParams }: { searchParams: Pr
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 space-y-5 px-4 py-8 sm:px-6">
       <div>
-        <Link href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">
-          ← Einstellungen
-        </Link>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Änderungsprotokoll</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">Wer hat wann was geändert. Einträge bleiben 1 Jahr.</p>
       </div>

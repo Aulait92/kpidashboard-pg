@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { loadCatalog } from "@/lib/produkt-buchen";
 import { NEU_HINWEIS } from "@/lib/produkt-buchen-shared";
 import { PRICE_LIST } from "@/lib/offer-pricing";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { CatalogItemForm } from "./form";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Produkte | performancegrowth Admin" };
 
@@ -14,9 +14,7 @@ export default async function ProductCatalogPage() {
   const catalog = await loadCatalog();
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/admin/einstellungen" className="text-sm text-[color:var(--muted)] hover:underline">
-        ← Einstellungen
-      </Link>
+      <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
       <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Produkte</h1>
       <p className="mb-6 text-sm text-[color:var(--muted)]">
         Welche Sparten Kunden unter Konto & Rechnungen → Produkte selbst dazubuchen können. Preis je weiterem Produkt: Einrichtung {PRICE_LIST.extraProductSetupSelfService > 0 ? eur0(PRICE_LIST.extraProductSetupSelfService) : "kostenlos"},

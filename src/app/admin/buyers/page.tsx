@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { startPreviewAction } from "@/app/buyer/preview-actions";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CreateBuyerForm } from "./buyer-management";
 import { LoginList, type LoginRow } from "./login-list";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 
@@ -74,12 +74,7 @@ export default async function AdminBuyersPage({ searchParams }: { searchParams?:
       <>
       <header className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <Link
-            href="/admin/einstellungen"
-            className="text-xs text-[color:var(--brand)] hover:underline"
-          >
-            ← Einstellungen
-          </Link>
+          <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
             Kunden-Logins
           </h1>

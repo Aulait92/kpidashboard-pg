@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { LogOut, ShieldCheck } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
 import { SignOutEverywhereButton } from "@/components/security/sign-out-everywhere";
 import { TotpPanel } from "@/components/security/totp-panel";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { confirmTotpAction, disableTotpAction, signOutEverywhereAction, startTotpSetupAction } from "./actions";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Sicherheit | performancegrowth Admin" };
@@ -13,9 +13,7 @@ export default async function SicherheitPage() {
   const session = await requireAuth();
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">
-        ← Einstellungen
-      </Link>
+      <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
       <h1 className="mb-5 mt-1 text-2xl font-semibold tracking-tight">Sicherheit</h1>
       <div className="space-y-5">
         <Card>

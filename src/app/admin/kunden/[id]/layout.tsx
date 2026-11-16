@@ -1,8 +1,10 @@
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { packageLabel } from "@/lib/customer-package";
 import { notFound } from "next/navigation";
 import { SubTabs } from "@/components/admin/sub-tabs";
 import { BackToList } from "@/components/admin/list-memory";
+import { ADMIN_BACK_CLASS } from "@/components/admin/admin-back";
 import { KUNDEN_LISTS } from "@/lib/admin-lists";
 import { Badge } from "@/components/ui";
 import { TestkundeLoeschen } from "@/components/admin/testkunde-loeschen";
@@ -49,8 +51,9 @@ export default async function KundenakteLayout({ children, params }: { children:
   const stage = c.salesContact?.customerStage ?? null;
   return (
     <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <BackToList id="kunden" fallback="/admin/kunden" allowed={KUNDEN_LISTS} className="text-sm text-[color:var(--muted)] hover:underline">
-        ← Zurück
+      <BackToList id="kunden" fallback="/admin/kunden" allowed={KUNDEN_LISTS} className={ADMIN_BACK_CLASS}>
+        <ArrowLeft className="h-4 w-4 shrink-0" />
+        Zurück
       </BackToList>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{c.name.replace(/^Allianz\s+/i, "")}</h1>

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { connection } from "next/server";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { cplFromData, loadRechnerConfig } from "@/lib/rechner-server";
 import { RechnerForm } from "./form";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Rechner | performancegrowth Admin" };
 
@@ -17,7 +17,7 @@ export default async function RechnerEinstellungenPage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-8 sm:px-6">
       <div>
-        <Link href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</Link>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">Rechner</h1>
           <a href="/rechner" target="_blank" rel="noopener" className="text-sm font-medium text-[color:var(--brand)] hover:underline">Rechner öffnen ↗</a>

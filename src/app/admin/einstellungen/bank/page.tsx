@@ -7,6 +7,7 @@ import { ACTION_LABEL, COST_ACTIONS, overlappingRecurring, type CostAction } fro
 import { BANK_REMIND_DAYS, bankRedirectUrl } from "@/lib/bank/server";
 import { connectBankAction, deleteRuleAction, disconnectBankAction, saveRuleAction } from "./actions";
 import { CsvUpload, SyncButton } from "./forms";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Bank & Karten | performancegrowth Admin" };
 
@@ -120,7 +121,7 @@ export default async function BankPage({ searchParams }: { searchParams: Promise
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 px-4 py-8 sm:px-6">
       <div>
-        <Link href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</Link>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Bank & Karten</h1>
         <p className="text-sm text-[color:var(--muted)]">
           Ausgaben vom Geschäftskonto und der Kreditkarte holen und als Kosten zuordnen. Zugeordnete Ausgaben fließen netto in Marge und Kundengewinnungskosten auf der Zahlen-Seite.

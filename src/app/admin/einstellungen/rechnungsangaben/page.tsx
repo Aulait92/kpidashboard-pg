@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { effectiveTaxNumber, invoiceFooter, loadTaxNumberOverride, taxNumberWarning } from "@/lib/invoice-footer";
 import { PROVIDER } from "@/lib/legal-texts";
 import { loadAccountCheck } from "@/lib/rechnungsangaben";
 import { CustomerFootersForm, InvoiceCountForm, TaxNumberForm } from "./form";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Rechnungsangaben | performancegrowth Admin" };
 
@@ -19,9 +19,7 @@ export default async function RechnungsangabenPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 space-y-5 px-4 py-8 sm:px-6">
       <div>
-        <Link href="/admin/einstellungen" className="text-sm text-[color:var(--muted)] hover:underline">
-          ← Einstellungen
-        </Link>
+        <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Rechnungsangaben</h1>
         <p className="text-sm text-[color:var(--muted)]">
           Auf jeder Stripe-Rechnung (Abo, Einmalposten, Pakete, Setup) stehen unten die Pflichtangaben nach § 14 Abs. 4 UStG und die Angaben der UG,

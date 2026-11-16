@@ -9,6 +9,7 @@ import { listPresentations } from "@/lib/vertrieb/praesentationen";
 import { folienListe, isVerkaufsAudience, VERKAUFS_AUDIENCES } from "@/lib/vertrieb/verkaufspraesentation";
 import { aktiverVerkaufsLink, ladeVerkaufsPraesentation, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { VerkaufsLinkKarte } from "./link-karte";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Präsentation | Vertrieb" };
 
@@ -35,9 +36,7 @@ export default async function VerkaufsPraesentationPage({ params, searchParams }
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4" data-verkaufspraesentation>
       <div>
-        <Link href={back} className="text-sm text-slate-500 hover:underline">
-          ← {shortName(p.contact.name)}
-        </Link>
+        <AdminBack href={back}>{shortName(p.contact.name)}</AdminBack>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Präsentation: {shortName(p.contact.name)}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           {p.angebotNr ? `Paket und Rechnung mit den Preisen aus Angebot ${p.angebotNr}.` : "Noch kein Angebot: Paket und Rechnung mit Listenpreisen."} Pfeiltasten zum Blättern,

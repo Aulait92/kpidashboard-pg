@@ -6,6 +6,7 @@ import { listLoginCards } from "@/lib/login-karten-server";
 import { cn } from "@/lib/utils";
 import { moveLoginCardAction, toggleLoginCardAction } from "./actions";
 import { DeleteCardButton, LoginCardForm, LoginCardsPreview } from "./form";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Login-Seite | performancegrowth Admin" };
 
@@ -24,9 +25,9 @@ export default async function LoginSeiteEinstellungenPage({ searchParams }: { se
     <main className="mx-auto w-full max-w-5xl flex-1 space-y-5 px-4 py-8 sm:px-6">
       <div>
         {editing ? (
-          <Link href={BASE} className="text-xs text-[color:var(--brand)] hover:underline">← Alle Karten</Link>
+          <AdminBack href={BASE}>Alle Karten</AdminBack>
         ) : (
-          <Link href="/admin/einstellungen" className="text-xs text-[color:var(--brand)] hover:underline">← Einstellungen</Link>
+          <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
         )}
         <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{editing === "neu" ? "Neue Karte" : editing ? "Karte bearbeiten" : "Login-Seite"}</h1>

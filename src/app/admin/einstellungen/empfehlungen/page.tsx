@@ -2,6 +2,7 @@ import Link from "next/link";
 import { loadReferralSettings } from "@/lib/kollegen";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { ReferralSettingsForm } from "./form";
+import { AdminBack } from "@/components/admin/admin-back";
 
 export const metadata = { title: "Kollegen empfehlen | performancegrowth Admin" };
 
@@ -10,9 +11,7 @@ export default async function ReferralSettingsPage() {
   const s = await loadReferralSettings();
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/admin/einstellungen" className="text-sm text-[color:var(--muted)] hover:underline">
-        ← Einstellungen
-      </Link>
+      <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
       <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Kollegen empfehlen</h1>
       <p className="mb-6 text-sm text-[color:var(--muted)]">
         Kunden empfehlen uns an Kollegen weiter (persönlicher Link im Kundenbereich). Übersicht und offene Prämien:{" "}
