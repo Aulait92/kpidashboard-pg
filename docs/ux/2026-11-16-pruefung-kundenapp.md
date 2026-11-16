@@ -86,8 +86,9 @@ noch offen sind, stehen gesondert darunter.
 - Heute: „+1 Tag / +1 Woche“ an jeder Wiedervorlage unter „Nächste Tage“.
 
 ## Nicht geprüft
-- Einrichtung (`/buyer/einrichtung`): Das Demo-Konto ist fertig eingerichtet, die Seite leitet auf Heute.
-- Buchung mit echten freien Zeiten und Verschieben mit Zeitauswahl: ohne verbundenen Kalender lädt die App keine Zeiten.
+- Einrichtung und Buchung mit echten freien Zeiten: seit Runde 5 geprüft (Google-Kalender lokal nachgebildet, also ohne
+  echte belegte Zeiten und ohne echte Einladung).
+- WhatsApp selbst verbinden (360dialog) in der Einrichtung: lokal kein Partner-Zugang, Schritt nicht sichtbar.
 - Native App (iOS/Android-Hülle), Push-Benachrichtigungen, echte WhatsApp-Zustellung.
 - Datumsfelder: Headless-Chromium zeigt sie im US-Format; im deutschen Browser erscheinen sie deutsch.
 
@@ -166,3 +167,72 @@ hätte ich mit etwa 83 statt 86 bewertet.
 - Ausführlich: Kontakt rechts auf Heute (Kacheln statt Knopfreihe, „Angaben“ statt „Angaben zum Lead“, Termin „Heute, …“), Nachrichten (Name mit Pfeil, Titel am Handy). Aufnahmeskript `rec_ev.js` auf „Angaben“ angepasst; neu aufnehmen.
 - Kurz: Termin im Kontakt und Nachrichten (gleiche Punkte). Gesprochener Text bleibt gültig; nur Bild.
 - WhatsApp verbinden: nicht betroffen (nur Link-Höhe auf der Hilfe-Seite).
+
+## Runde 5: Termine mit echten freien Zeiten, Einrichtung, erster Tag, Anmeldung
+
+Stand: `origin/claude/whatsapp-crm` bis a226423 (nach Runde 4 unabhängig). Aufbau: Kopie der Demo-DB (`ux_r5`), Kalenderverbindung (Google) für den Demo-Kunden mit Buchungsseite; die
+Google-Aufrufe waren lokal nachgebildet (keine belegten Zeiten, Termin wird „angelegt“), alles andere echt (freie
+Zeiten aus den Lead-Zeiten, Buchung, Verschieben, Absagen, Links, Status). Dazu ein frischer Kunde mit Login und
+laufender Einrichtung (Paket Software, Start in 7 Tagen, keine Leads). Jeder Ablauf auf 390 px (iPhone-Kennung) und 1280 px.
+
+Durchgespielt: Termin aus dem Kontakt buchen, verschieben, absagen; Termin aus der Anrufliste („Ergebnis eintragen →
+Termin vereinbart“); öffentliche Buchung `/book/<slug>` als Lead; „Termin verwalten“ als Lead (verschieben, absagen,
+alten Link nach dem Verschieben öffnen); Einrichtung vom ersten Login (Fragebogen speichern, jeder Schritt einzeln) bis
+live; Heute, Kontakte, Nachrichten und Wachstum ohne Daten; Login mit falschem Passwort, Passwort vergessen;
+Neuigkeiten, Profilmenü, Konto und Rechnungen.
+
+Gefunden und umgesetzt:
+- Lead öffnet nach dem Verschieben den alten Link (Bestätigung, Erinnerung): Dort stand „Dieser Termin wurde abgesagt“
+  mit „Neuen Termin wählen“, also Gefahr einer Doppelbuchung. Jetzt Weiterleitung zum aktuellen Termin mit Hinweis.
+- „Termin verwalten“ nach dem Verschieben: Bestätigung oben, Zeiten und Absagen hinter „Andere Zeit wählen oder absagen“
+  (vorher die ganze Zeitliste mit Hauptknopf darunter). Absage-Häkchen 20 px und tippbar.
+- Anrufliste: Nach gebuchtem Termin stand „Termin gebucht“ mit „Rückgängig“; das holte nur die Wiedervorlage zurück,
+  nicht die Buchung. Jetzt bleibt der Toast mit Datum und Uhrzeit, ohne Rückgängig.
+- Buchungsfenster: „Heute“ und „Morgen“ über den freien Zeiten (40 px hohe Zeiten und „Von Hand eintragen“ im Fenster kamen parallel aus Runde 4 unabhängig).
+- Anmeldung: Nach falschem Passwort war die E-Mail weg (Formular wird nach der Aktion geleert). Jetzt bleibt sie stehen,
+  Cursor im Passwort. „Email oder Passwort falsch.“ → „E-Mail oder Passwort falsch.“
+- Passwort vergessen übernimmt die getippte E-Mail; Eingabefeld 16 px (kein iPhone-Zoom).
+- Neuigkeit: kein eigener Eintrag, sondern der bestehende „Bedienung“-Eintrag (`upd_2611_bedienung_feinschliff`) per
+  UPDATE-Migration `20261118705270_neuigkeit_feinschliff_termine` um die drei spürbaren Punkte ergänzt (drei Sätze).
+- Erster Tag vor dem Go-live: keine gelbe Erstinformations-Warnung mit Feldnamen mehr über der Einrichtungs-Karte, in der
+  derselbe Schritt schon steht.
+- Kontakte ganz ohne Leads: „Noch keine Kontakte …“ statt „In diesem Zeitraum … Gesamten Zeitraum anzeigen“; Suche ohne
+  Treffer nennt den Suchbegriff.
+- Neuigkeiten: ältere Einträge auf der ganzen Zeile tippbar (Titelzeile war 23 px hoch). „Weitere Sparte dazubuchen“ 40 px.
+- Einwilligungen (Bestand, ausgeblendet): Link „Hilfe“ führte auf eine 404-Seite, öffnet jetzt die KI-Hilfe.
+
+Geprüft und in Ordnung: Status wechselt beim Buchen auf „Termin vereinbart“ und beim Absagen zurück, danach
+„Kein nächster Schritt“ mit Knopf; Verschieben behält Dauer und Art; Anrufliste springt nach der Buchung zur nächsten
+Karte; `/book` und Bestätigung in Sie-Form, „Zum Kalender hinzufügen“; Einrichtungsschritte mit iPhone-Anleitung, Kalender
+mit Lead-Zeiten, „Später“ und „Meine Gesellschaft erlaubt das nicht“; Nachrichten ohne WhatsApp mit „Zur Einrichtung“.
+Keine Gedankenstriche, kein Querscrollen, keine Konsolenfehler (bis auf Neustarts des lokalen Dev-Servers).
+
+Spalte „Runde 4“: der niedrigere Wert aus Runde 4 und Runde 4 (unabhängig).
+
+| Bereich | Runde 4 | Runde 5 | Begründung |
+|---|---|---|---|
+| Termin buchen, verschieben (Vermittler) | 8 | 9 | Mit echten Zeiten durchgespielt, alles klappt; Rest: Buchen zeigt eine Liste aller Tage, Verschieben blättert Tag für Tag (zwei Muster für dieselbe Aufgabe); Absage informiert den Lead nicht per WhatsApp. |
+| Anrufliste | 9,5 | 10 | Termin vereinbart → nächste Karte, jetzt ohne irreführendes Rückgängig. |
+| Öffentliche Buchung (/book) | 10 | 10 | Drei Schritte, klare Bestätigung. |
+| Termin verwalten (Lead) | nicht geprüft | 9 | Alter Link führt zum aktuellen Termin; nach dem Verschieben aufgeräumt. |
+| Einrichtung | nicht geprüft | 8 | Schritte verständlich, „Später“ überall; Rest: Übersichtsliste oben und aufklappbare Schritte darunter sind doppelt („0 von 7“ oben, 8 nummerierte Schritte unten), Erstinformation und Meta sind lange Texte. |
+| Leere Zustände, erster Tag | 9 | 9 | Kontakte ehrlich leer, eine Warnung weniger; am Handy stapeln sich Push-Hinweis, Video und Einrichtungs-Karte vor der Hauptaktion. |
+| Login, Passwort vergessen | 9 | 10 | E-Mail bleibt, wird übernommen, deutsch. |
+| Hilfe, Neuigkeiten, Profilmenü | 9 | 9 | Neuigkeiten gut tippbar; Konto nur über Einstellungen erreichbar (bewusst, nicht im Profilmenü). |
+| Konto & Rechnungen | 8,5 | 9 | Kein grauer Knopf mehr (Runde 4 unabhängig), Daten-Export und Kündigen klar; Rest: Konto nur über Einstellungen. |
+| Gesamt (SUS-Schätzung) | ca. 89 bis 90 | ca. 91 | Die bisher ungeprüften Abläufe tragen; die gefundenen Fehler (Doppelbuchung über alten Link, leere E-Mail nach Tippfehler) hätten echte Nutzer getroffen. |
+
+Für über 95 fehlt (nach Wirkung):
+1. Echte Nutzertests mit 3 bis 5 Vermittlern (je 20 Minuten, Aufgaben: Termin buchen, verschieben, Einrichtung). Die
+   Schätzung beruht auf Heuristiken; über 95 lässt sich ohne Messung nicht ehrlich behaupten.
+2. Präsentation am iPhone im Hochformat (läuft heute Abend).
+3. Ein Muster für Zeiten wählen: Verschieben wie Buchen als Liste aller Tage (oder beides als Tagesblätter). M.
+4. Absagen durch den Vermittler: Lead automatisch per WhatsApp informieren wie beim Verschieben (statt „Bitte geben Sie
+   kurz Bescheid“). M, Vorlage nötig.
+5. Einrichtung: Übersichtsliste oben weglassen oder zur Navigation der Schritte machen (eine Liste statt zwei). S bis M,
+   Entscheidung Ole (gewohnter Weg).
+6. Erster Tag am Handy: Einführungsvideo und Push-Hinweis nicht gleichzeitig über der Einrichtungs-Karte. S.
+
+Screenshots Runde 5: `/tmp/claude-0/-home-user-kpidashboard-pg/5666182b-f0f3-50fb-a1b4-146b28494aa3/scratchpad/r5/shots/`
+(`a-`/`b-` Kontakt, `c-` Anrufliste, `d-` /book, `e-` Termin verwalten, `f-`/`g-`/`h-` neuer Kunde und Einrichtung,
+`i-` Login, `j-` Neuigkeiten, Konto, Menü).
