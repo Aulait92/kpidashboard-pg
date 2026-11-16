@@ -31,6 +31,7 @@ function refresh(contactId?: string | null) {
   revalidatePath("/admin/kunden", "layout");
   // Aufgaben und Vertriebs-Kennzahlen stehen auf Heute (Admin-Makeover Runde 2)
   revalidatePath("/admin/heute", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Heute, Vertrieb → Aufgaben)
   if (contactId) revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
 }
 

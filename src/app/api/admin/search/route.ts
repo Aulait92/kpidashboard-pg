@@ -2,10 +2,11 @@ import { getCurrentSession } from "@/lib/auth";
 import { packageLabel } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 
-// Globale Admin-Suche (Cmd+K): Kunden, Vertriebskontakte, Leads.
+// Globale Admin-Suche (Cmd+K): Kunden, Vertriebskontakte, Leads und Logins der Kunden (E-Mail, Name).
+// Genutzt von der alten (components/command-palette.tsx) und der neuen Oberfläche (components/admin-neu/rahmen/suche.tsx).
 export const dynamic = "force-dynamic";
 
-export type SearchHit = { kind: "kunde" | "kontakt" | "lead"; id: string; title: string; subtitle: string; href: string };
+export type SearchHit = { kind: "kunde" | "kontakt" | "lead" | "login"; id: string; title: string; subtitle: string; href: string };
 
 export async function GET(req: Request): Promise<Response> {
   const session = await getCurrentSession();
@@ -16,7 +17,7 @@ export async function GET(req: Request): Promise<Response> {
   const text = { contains: q, mode: "insensitive" as const };
   const phone = digits.length >= 4 ? digits : null;
 
-  const [customers, contacts, leads] = await Promise.all([
+  const [customers, contacts, leads, logins] = await Promise.all([
     prisma.customer.findMany({
       where: { name: text, plan: { not: "internal" } },
       take: 5,
@@ -45,6 +46,13 @@ export async function GET(req: Request): Promise<Response> {
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, source: true, customer: { select: { id: true, name: true } } },
     }),
+    // Logins (früher nur über /admin/buyers zu finden): nur Kunden-Logins mit Kunde
+    prisma.user.findMany({
+      where: { role: "BUYER", customerId: { not: null }, OR: [{ email: text }, { displayName: text }] },
+      take: 5,
+      orderBy: { lastLoginAt: { sort: "desc", nulls: "last" } },
+      select: { id: true, email: true, displayName: true, teamRole: true, customer: { select: { id: true, name: true } } },
+    }),
   ]);
 
   const short = (n: string) => n.replace(/^Allianz\s+/i, "");
@@ -70,6 +78,19 @@ export async function GET(req: Request): Promise<Response> {
       subtitle: `Lead · ${short(l.customer.name)}${l.source ? ` · ${l.source}` : ""}`,
       href: `/admin/leads?kunde=${l.customer.id}&q=${encodeURIComponent(l.name ?? "")}`,
     })),
+    ...logins.flatMap((u) =>
+      u.customer
+        ? [
+            {
+              kind: "login" as const,
+              id: u.id,
+              title: u.email,
+              subtitle: `Login · ${short(u.customer.name)}${u.displayName ? ` · ${u.displayName}` : ""}${u.teamRole === "advisor" ? " · Berater" : ""}`,
+              href: `/admin/kunden/${u.customer.id}/logins`,
+            },
+          ]
+        : [],
+    ),
   ];
   return Response.json({ hits });
 }

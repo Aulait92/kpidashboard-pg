@@ -1,8 +1,10 @@
 import { createTask } from "@/app/admin/vertrieb/actions";
 import { TASK_TYPES } from "@/lib/vertrieb/crm";
 import { todayKey } from "@/lib/vertrieb/dates";
+import type { SalesTaskType as TaskType } from "@/generated/prisma/enums";
 
-export function TaskForm({ contactId, compact }: { contactId?: string; compact?: boolean }) {
+/** `defaultType`: vorgewählte Art (z. B. „Termin“ aus „+ Neu“ im neuen Admin). */
+export function TaskForm({ contactId, compact, defaultType = "NACHFASSEN" }: { contactId?: string; compact?: boolean; defaultType?: TaskType }) {
   return (
     <form action={createTask} className={compact ? "grid grid-cols-2 gap-2 [&>div:first-of-type]:col-span-2" : "grid gap-2 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-end"}>
       {contactId && <input type="hidden" name="contactId" value={contactId} />}
@@ -12,7 +14,7 @@ export function TaskForm({ contactId, compact }: { contactId?: string; compact?:
       </div>
       <div>
         <label className="label">Art</label>
-        <select name="type" className="input" defaultValue="NACHFASSEN">
+        <select name="type" className="input" defaultValue={defaultType}>
           {TASK_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
         </select>
       </div>

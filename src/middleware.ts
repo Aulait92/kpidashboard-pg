@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter } from "@/lib/login-karten";
+import { ADMIN_NEU_COOKIE, istAn, neuStartFuer } from "@/lib/admin-neu/schalter";
 import { PUBLIC_NOT_FOUND_HTML, PUBLIC_ROBOTS_TXT, decidePublicHost, requestHost } from "@/lib/public-booking-host";
 import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
 import { DEMO_LIMIT, buyerZuDemo, demoActionAntwort, demoWeiche, istDemoPfad, vonDemoSeite } from "@/lib/app-demo/weiche";
@@ -330,6 +331,22 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
+  }
+
+  // Neuer Admin (/admin/neu, src/lib/admin-neu): eigene Shell aus src/app/admin/neu/layout.tsx. Kennzeichen wie beim
+  // Kundenbereich, damit SiteHeader die alte Admin-Shell dort nicht zusätzlich rendert. Mit eingeschaltetem
+  // Schalter „Neue Oberfläche“ (Cookie je Admin) führen /admin und /admin/heute auf den neuen Start.
+  if (role === "ADMIN") {
+    if (pathname === "/admin/neu" || pathname.startsWith("/admin/neu/")) {
+      const headers = new Headers(req.headers);
+      headers.set("x-app-area", "admin-neu");
+      return NextResponse.next({ request: { headers } });
+    }
+    if ((req.method === "GET" || req.method === "HEAD") && neuStartFuer(pathname) && istAn(req.cookies.get(ADMIN_NEU_COOKIE)?.value)) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/admin/neu";
+      return NextResponse.redirect(url);
+    }
   }
 
   // Kundenbereich hat eine eigene App-Shell (BuyerShell) — globalen

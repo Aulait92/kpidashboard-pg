@@ -5,7 +5,11 @@
   "quelle": "components/admin/admin-shell.tsx:adminAreas",
   "neu": "Seitenleiste › 6 Bereiche plus Einstellungen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-shell-adminareas--seitenleiste-mit-bereichen-heute-vertrieb-kunden",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/shell.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -13,7 +17,11 @@
   "quelle": "components/admin/admin-shell.tsx:Count",
   "neu": "Seitenleiste › Heute › Zähler",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-shell-count--zaehler-badge-an-heute-offene-punkte",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/shell.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -21,7 +29,11 @@
   "quelle": "components/admin/admin-shell.tsx:Count",
   "neu": "Seitenleiste › Leads & Kampagnen › Zähler",
   "status": "abgedeckt",
-  "demo_view": "leads-chats"
+  "demo_view": "leads-chats",
+  "id": "admin-shell-count--zaehler-badge-an-chats-offene-whatsapp",
+  "bereich": "leads",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/shell.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -29,7 +41,11 @@
   "quelle": "components/admin/admin-shell.tsx:MobileNav",
   "neu": "Leiste unten (5 Bereiche plus Mehr)",
   "status": "abgedeckt",
-  "demo_view": "mehr"
+  "demo_view": "mehr",
+  "id": "admin-shell-mobilenav--handy-leiste-unten-mit-allen-bereichen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/shell.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -37,7 +53,11 @@
   "quelle": "components/admin/admin-shell.tsx:Logo",
   "neu": "Seitenleiste › Logo",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-shell-logo--logo-fuehrt-zu-heute",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/shell.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -45,7 +65,11 @@
   "quelle": "components/command-palette.tsx",
   "neu": "Globale Suche › Abschnitt Seiten",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "command-palette--befehlspalette-mit-seiten-spruengen-35-ziele",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/suche.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -53,7 +77,11 @@
   "quelle": "app/api/admin/search/route.ts:GET",
   "neu": "Globale Suche › Kontakte, Kunden, Leads",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "route-get--suche-nach-kunden-kontakten-leads-api",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/suche.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -61,7 +89,11 @@
   "quelle": "components/search-dialog.tsx:useSearchShortcut",
   "neu": "Globale Suche › ⌘K",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "search-dialog-usesearchshortcut--tastenkuerzel-cmd-strg-k-oeffnet-suche-pfeile",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/suche.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -69,7 +101,11 @@
   "quelle": "components/notifications-button.tsx:usePush",
   "neu": "Profilmenü › Push-Benachrichtigungen (fehlt in Demo)",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "notifications-button-usepush--push-benachrichtigungen-aktivieren-abschalten",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/profil-menue.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -77,7 +113,11 @@
   "quelle": "components/admin/admin-profile-menu.tsx",
   "neu": "Seitenleiste › Profil (Ole) › Menü mit Abmelden (in Demo nur Anzeige)",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-profile-menu--profilmenue-einstellungen-sicherheit-abmelden",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/profil-menue.tsx"
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -85,7 +125,11 @@
   "quelle": "components/admin/list-memory.tsx:BackToList",
   "neu": "Alle Akten › Zurück-Link zur gefilterten Liste",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "list-memory-backtolist--zurueck-link-merkt-gefilterte-liste-suche-filter",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -93,7 +137,11 @@
   "quelle": "lib/vertrieb/buchung.ts, lib/pause.ts, lib/budget.ts, app/buyer/einrichtung/actions.ts: sendToAdmins",
   "neu": "Push › Ziel Vertrieb › Kontaktakte (Adressen umstellen)",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "buchung--push-an-admins-mit-sprungziel-kontaktakte",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -101,7 +149,11 @@
   "quelle": "lib/ruhend.ts, lib/vertrag-kuendigung.ts, lib/seats-server.ts, lib/bestand/*: sendToAdmins",
   "neu": "Push › Ziel Kundenakte › Abrechnung & Pause (Adressen umstellen)",
   "status": "ergänzen",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "ruhend--push-an-admins-mit-sprungziel-kundenakte",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -109,7 +161,11 @@
   "quelle": "lib/whatsapp/self-connect.ts, app/buyer/kalender/source-actions.ts, lib/whatsapp/template-submit.ts",
   "neu": "Push › Ziel Kundenakte › WhatsApp bzw. Einstellungen › Vorlagen (Adressen umstellen)",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "self-connect--push-an-admins-mit-sprungziel-whatsapp",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -117,7 +173,11 @@
   "quelle": "lib/ppl/orders.ts, lib/ppl/delivery.ts, lib/ppl/storno.ts",
   "neu": "Push › Ziel Leads & Kampagnen › Pay-per-Lead (Adressen umstellen)",
   "status": "ergänzen",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "orders--push-an-admins-mit-sprungziel-pay-per-lead",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "Rahmen (alle Admin-Seiten)",
@@ -125,7 +185,11 @@
   "quelle": "lib/linkedin/cron.ts, lib/bank/server.ts, lib/monatsbericht/server.ts, lib/env-check.ts, lib/kollegen.ts",
   "neu": "Push › Ziele Marketing, Zahlen › Kosten & Bank, Kunden › Monatsberichte, Einstellungen › Status (Adressen umstellen)",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "cron--push-an-admins-linkedin-bank-neu-verbinden",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/heute",
@@ -133,7 +197,11 @@
   "quelle": "app/admin/heute/layout.tsx, lib/admin-heute.ts:summary",
   "neu": "Heute › Kopf",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "layout--begruessung-und-zusammenfassung-der-offenen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -141,7 +209,11 @@
   "quelle": "components/admin/heute-list.tsx, lib/admin-heute.ts:loadAdminHeute",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "heute-list--liste-braucht-sie-aus-allen-bereichen-mit",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -149,7 +221,11 @@
   "quelle": "lib/admin-heute.ts:HEUTE_FILTERS",
   "neu": "Heute › Chips (Demo: Vertrieb, Kunden, Leads, Finanzen; Freigaben und Chats ergänzen)",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-heute-filters--filter-alle-vertrieb-kunden-chats-freigaben",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -157,7 +233,11 @@
   "quelle": "app/admin/heute/actions.ts:completeTaskAction",
   "neu": "Heute › Zu erledigen › Zeile › Erledigt",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-completetaskaction--aufgabe-erledigt-schnellknopf",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -165,7 +245,11 @@
   "quelle": "app/admin/heute/actions.ts:postponeTaskAction",
   "neu": "Heute › Zu erledigen › Zeile › Morgen",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-postponetaskaction--aufgabe-verschieben-auf-morgen-schnellknopf",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -173,7 +257,11 @@
   "quelle": "app/admin/heute/actions.ts:meetingOutcomeAction",
   "neu": "Heute › Zu erledigen › Termin-Zeile › Ergebnis-Knöpfe",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-meetingoutcomeaction--termin-ergebnis-eintragen-stattgefunden-nicht",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -181,7 +269,11 @@
   "quelle": "app/admin/heute/actions.ts:decideStornoQuickAction",
   "neu": "Heute › Zu erledigen › Storno-Zeile (Demo: nur Prüfen-Link)",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-decidestornoquickaction--reklamation-ppl-storno-direkt-annehmen-oder",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -189,7 +281,11 @@
   "quelle": "app/admin/heute/actions.ts:garantieGewaehrenAction",
   "neu": "Heute › Zu erledigen › Garantie-Zeile › Gewähren",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-garantiegewaehrenaction--garantie-fall-gewaehren",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -197,7 +293,11 @@
   "quelle": "app/admin/heute/actions.ts:garantieAblehnenAction",
   "neu": "Heute › Zu erledigen › Garantie-Zeile › Ablehnen mit Grund",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-garantieablehnenaction--garantie-fall-ablehnen-mit-begruendung",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -205,7 +305,11 @@
   "quelle": "app/admin/heute/actions.ts:offerFollowedUpAction",
   "neu": "Heute › Zu erledigen › Angebot-Zeile › Nachgefasst",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-offerfollowedupaction--angebot-als-nachgefasst-markieren",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -213,7 +317,11 @@
   "quelle": "app/admin/heute/actions.ts:dismissAction",
   "neu": "Heute › Zu erledigen › Zeile › Später",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-dismissaction--punkt-ausblenden-fuer-x-tage-spaeter-gelesen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -221,7 +329,11 @@
   "quelle": "app/admin/heute/actions.ts:undoHeuteAction",
   "neu": "Heute › Toast Rückgängig",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "actions-undoheuteaction--ausblenden-rueckgaengig-machen-toast",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -229,7 +341,11 @@
   "quelle": "lib/admin-heute.ts:forms/parked/storno",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-forms--punkte-formulare-ohne-zuordnung-geparkte-leads",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -237,7 +353,11 @@
   "quelle": "lib/admin-heute.ts:pay/order/bank",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-pay--punkte-zahlung-offen-lastschrift-fehlgeschlagen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -245,7 +365,11 @@
   "quelle": "lib/admin-heute.ts:ob/setup-stuck/stale/ruhend",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-ob--punkte-onboarding-wartet-einrichtung-haengt",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -253,7 +377,11 @@
   "quelle": "lib/admin-heute.ts:modul/support/feedback",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-modul--punkte-bestandskunden-modul-gewuenscht-hilfe",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -261,7 +389,11 @@
   "quelle": "lib/admin-heute.ts:linkedin",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-linkedin--punkte-linkedin-entwuerfe-post-fehlgeschlagen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -269,7 +401,11 @@
   "quelle": "lib/admin-heute.ts:chats/berichte/optimierung/followups",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-chats--punkte-support-chats-monatsberichte-pruefen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -277,7 +413,11 @@
   "quelle": "lib/admin-heute.ts:rechnung:steuernummer",
   "neu": "Heute › Zu erledigen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-rechnung--punkt-rechnungen-ohne-steuernummer",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -285,7 +425,11 @@
   "quelle": "lib/admin-heute.ts:heartbeatProblem",
   "neu": "Heute › Systemstatus",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-heartbeatproblem--punkt-hintergrund-jobs-bzw-werbedaten-abgleich",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -293,7 +437,11 @@
   "quelle": "lib/admin-heute.ts:meet/task",
   "neu": "Heute › Termine heute",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-meet--termine-heute-und-aufgaben-heute-als-zeilen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -301,7 +449,11 @@
   "quelle": "lib/admin-heute.ts:AutoRow, app/admin/heute/page.tsx",
   "neu": "Heute › Karte Läuft von allein (Demo zeigt nur Systemstatus)",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-heute-autorow--laeuft-von-allein-was-die-app-in-7-tagen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -309,7 +461,11 @@
   "quelle": "lib/admin-buchungen-neu.ts:countNeueBuchungen",
   "neu": "Heute › Hinweiszeile, Zahlen › Umsatz & Buchungen › Zähler",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "admin-buchungen-neu-countneuebuchungen--hinweis-neue-buchungen-seit-letztem-besuch",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -317,7 +473,11 @@
   "quelle": "lib/forecast.ts:computeMonthlyForecast",
   "neu": "Heute › Kennzahl MRR (Hochrechnung ergänzen)",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "forecast-computemonthlyforecast--umsatz-bzw-gewinn-bis-heute-mit-monats",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -325,7 +485,11 @@
   "quelle": "components/admin/vertrieb-blick.tsx",
   "neu": "Vertrieb › Pipeline › Kennzahlen unter dem Board",
   "status": "ergänzen",
-  "demo_view": "vertrieb"
+  "demo_view": "vertrieb",
+  "id": "vertrieb-blick--vertrieb-auf-einen-blick-heute-faellig",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -333,7 +497,11 @@
   "quelle": "components/admin/vertrieb-blick.tsx",
   "neu": "Heute › Termine heute, Vertrieb › Termine",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-termine"
+  "demo_view": "vertrieb-termine",
+  "id": "vertrieb-blick--vertrieb-auf-einen-blick-naechste-termine",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -341,7 +509,11 @@
   "quelle": "components/admin/vertrieb-blick.tsx",
   "neu": "Heute › Neue Antworten (Anfragen ergänzen)",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "vertrieb-blick--vertrieb-auf-einen-blick-neue-anfragen-der",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -349,7 +521,11 @@
   "quelle": "components/admin/vertrieb-blick.tsx",
   "neu": "Vertrieb › Pipeline › Spaltenzähler",
   "status": "abgedeckt",
-  "demo_view": "vertrieb"
+  "demo_view": "vertrieb",
+  "id": "vertrieb-blick--vertrieb-auf-einen-blick-kontakte-je-stufe",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -357,7 +533,11 @@
   "quelle": "app/admin/heute/aufgaben/page.tsx",
   "neu": "Vertrieb › Aufgaben",
   "status": "ergänzen",
-  "demo_view": "vertrieb-aufgaben"
+  "demo_view": "vertrieb-aufgaben",
+  "id": "page--aufgabenliste-gruppiert-ueberfaellig-heute",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -365,7 +545,11 @@
   "quelle": "app/admin/heute/aufgaben/page.tsx:view",
   "neu": "Vertrieb › Aufgaben",
   "status": "ergänzen",
-  "demo_view": "vertrieb-aufgaben"
+  "demo_view": "vertrieb-aufgaben",
+  "id": "page-view--ansicht-offen-oder-erledigt",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -373,7 +557,11 @@
   "quelle": "app/admin/heute/aufgaben/page.tsx:TASK_TYPES",
   "neu": "Vertrieb › Aufgaben",
   "status": "ergänzen",
-  "demo_view": "vertrieb-aufgaben"
+  "demo_view": "vertrieb-aufgaben",
+  "id": "page-task-types--filter-nach-aufgabenart",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -381,7 +569,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:createTask",
   "neu": "Vertrieb › Aufgaben › „+ Aufgabe“, „+ Neu“ › Aufgabe, Kontaktakte › Aufgaben",
   "status": "ergänzen",
-  "demo_view": "vertrieb-aufgaben"
+  "demo_view": "vertrieb-aufgaben",
+  "id": "actions-createtask--aufgabe-anlegen-art-faellig-uhrzeit-auch-ohne",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -389,7 +581,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:toggleTask",
   "neu": "Heute › Zeile, Kontaktakte › Aufgaben",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-toggletask--aufgabe-erledigt-oder-wieder-oeffnen",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -397,7 +593,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:snoozeTask",
   "neu": "Heute › Zeile › Später, Kontaktakte › Aufgaben",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-snoozetask--aufgabe-auf-morgen-oder-in-1-woche-schieben",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -405,7 +605,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:deleteTask",
   "neu": "Kontaktakte › Aufgaben › ⋯",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-deletetask--aufgabe-loeschen",
+  "bereich": "vertrieb",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/heute/aufgaben",
@@ -413,7 +617,11 @@
   "quelle": "components/vertrieb/task-row.tsx:actions",
   "neu": "Heute › Zeile › Anrufen",
   "status": "abgedeckt",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "task-row-actions--aus-aufgabe-anrufen-oder-kontakt-oeffnen",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/page.tsx, src/app/admin/neu/vertrieb/aufgaben/page.tsx"
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -421,7 +629,11 @@
   "quelle": "app/admin/vertrieb/kontakte/page.tsx",
   "neu": "Vertrieb › Kontakte",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "page--kontaktliste-mit-zaehler",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -429,7 +641,11 @@
   "quelle": "app/admin/vertrieb/kontakte/page.tsx:q",
   "neu": "Vertrieb › Kontakte › Suchfeld über der Liste (sonst nur globale Suche)",
   "status": "ergänzen",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "page-q--suche-nach-agentur-name-e-mail-ort-telefon",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -437,7 +653,11 @@
   "quelle": "app/admin/vertrieb/kontakte/page.tsx:stage",
   "neu": "Vertrieb › Kontakte › Filter Stufe",
   "status": "ergänzen",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "page-stage--filter-stufe",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -445,7 +665,11 @@
   "quelle": "app/admin/vertrieb/kontakte/page.tsx:MAIL_FILTERS",
   "neu": "Vertrieb › Kontakte › Chips",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "page-mail-filters--filter-cold-mail-erhalten-keine-geoeffnet",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -453,7 +677,11 @@
   "quelle": "app/admin/vertrieb/kontakte/page.tsx:li/plz",
   "neu": "Vertrieb › Kontakte › Weitere Filter",
   "status": "ergänzen",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "page-li--filter-linkedin-status-und-plz-beginnt-mit",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -461,7 +689,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:deleteContacts",
   "neu": "Vertrieb › Kontakte › Auswahl › Löschen",
   "status": "ergänzen",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "actions-deletecontacts--mehrere-kontakte-markieren-und-loeschen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -469,7 +701,11 @@
   "quelle": "app/admin/vertrieb/kontakte/page.tsx:tel",
   "neu": "Vertrieb › Kontakte › Zeile › Telefon",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "page-tel--direkt-anrufen-aus-der-liste-handy",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte",
@@ -477,7 +713,11 @@
   "quelle": "app/admin/vertrieb/kontakte/page.tsx:page",
   "neu": "Vertrieb › Kontakte › Blättern",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-kontakte"
+  "demo_view": "vertrieb-kontakte",
+  "id": "page-page--seiten-blaettern",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/neu",
@@ -485,7 +725,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:createLeadManually",
   "neu": "+ Neu › Kontakt",
   "status": "abgedeckt",
-  "demo_view": "kontakt-neu"
+  "demo_view": "kontakt-neu",
+  "id": "actions-createleadmanually--kontakt-anlegen-quelle-name-firma-e-mail-telefon",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/neu",
@@ -493,7 +737,11 @@
   "quelle": "app/admin/vertrieb/kontakte/neu/page.tsx",
   "neu": "Neuer Kontakt › Felder LinkedIn, Notiz, Aufgabe heute",
   "status": "ergänzen",
-  "demo_view": "kontakt-neu"
+  "demo_view": "kontakt-neu",
+  "id": "page--beim-anlegen-linkedin-profil-nachricht-und",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/pipeline",
@@ -501,7 +749,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:dragStage",
   "neu": "Vertrieb › Pipeline › Board",
   "status": "abgedeckt",
-  "demo_view": "vertrieb"
+  "demo_view": "vertrieb",
+  "id": "actions-dragstage--akquise-pipeline-per-drag-drop",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/pipeline",
@@ -509,7 +761,11 @@
   "quelle": "components/vertrieb/kanban.tsx",
   "neu": "Vertrieb › Pipeline › Dialog Warum verloren",
   "status": "abgedeckt",
-  "demo_view": "vertrieb"
+  "demo_view": "vertrieb",
+  "id": "kanban--beim-verschieben-auf-verloren-grund-abfragen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/pipeline",
@@ -517,7 +773,11 @@
   "quelle": "app/admin/vertrieb/pipeline/page.tsx",
   "neu": "Vertrieb › Pipeline › Kachel",
   "status": "abgedeckt",
-  "demo_view": "vertrieb"
+  "demo_view": "vertrieb",
+  "id": "page--karten-zeigen-cold-mail-status",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -525,7 +785,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:setStage",
   "neu": "Kontaktakte › Stammdaten › Stufe",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-setstage--stufe-aendern-auswahl",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -533,7 +797,11 @@
   "quelle": "components/vertrieb/contact-controls.tsx:StagePicker",
   "neu": "Kontaktakte › Stufe › Verloren-Dialog",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "contact-controls-stagepicker--verloren-mit-grund-und-wettbewerber",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -541,7 +809,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:tel/mailto",
   "neu": "Kontaktakte › Kopf › Anrufen, E-Mail",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "page-tel--anrufen-und-e-mail-schreiben-aus-dem-kopf",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -549,7 +821,11 @@
   "quelle": "lib/vertrieb/buchung.ts:decisionBookingLink",
   "neu": "Kontaktakte › Nächster Schritt › Termin buchen › Link kopieren",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "buchung-decisionbookinglink--link-entscheidungs-call-kopieren",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -557,7 +833,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx",
   "neu": "Kontaktakte › Präsentation",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "page--praesentation-oeffnen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -565,7 +845,11 @@
   "quelle": "components/vertrieb/contact-controls.tsx:ContactMore",
   "neu": "Kontaktakte › ⋯",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "contact-controls-contactmore--menue-website-linkedin-profil-oeffnen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -573,7 +857,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:deleteContact",
   "neu": "Kontaktakte › ⋯ › Löschen",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-deletecontact--kontakt-loeschen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -581,7 +869,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:mergeContactsAction, searchMergeCandidatesAction",
   "neu": "Kontaktakte › ⋯ › Zusammenführen",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-mergecontactsaction--kontakte-zusammenfuehren-mit-suche-nach",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -589,7 +881,11 @@
   "quelle": "components/vertrieb/contact-merge.tsx:DuplicateHint",
   "neu": "Kontaktakte › Hinweisband Dublette",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "contact-merge-duplicatehint--hinweis-moegliche-dubletten",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -597,7 +893,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:referral",
   "neu": "Kontaktakte › Hinweisband Empfehlung",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "page-referral--hinweis-empfehlung-von-kunde-mit-setup-rabatt",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -605,7 +905,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:enrichAddressAction",
   "neu": "Kontaktakte › Agentur › Neu auswerten",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-enrichaddressaction--website-und-google-neu-auswerten-adresse",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -613,7 +917,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:logActivity, createTask",
   "neu": "Kontaktakte › Aktivität erfassen",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-logactivity--aktivitaet-erfassen-anruf-e-mail-notiz-ergebnis",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -621,7 +929,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:updateActivity, deleteActivity",
   "neu": "Kontaktakte › Verlauf › Eintrag ⋯",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-updateactivity--verlaufseintrag-bearbeiten-oder-loeschen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -629,7 +941,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:setReplySentiment",
   "neu": "Kontaktakte › Cold Mails › Antworten mit Stimmung",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-setreplysentiment--antworten-auf-cold-mails-ansehen-stimmung-setzen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -637,7 +953,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:addReplyManually",
   "neu": "Kontaktakte › Cold Mails › Antwort einfügen",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-addreplymanually--antwort-auf-cold-mail-von-hand-einfuegen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -645,7 +965,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Fold Cold Mails",
   "neu": "Kontaktakte › Cold Mails",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "page-fold-cold-mails--cold-mail-kampagnen-des-kontakts-geoeffnet",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -653,7 +977,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Termine",
   "neu": "Kontaktakte › Nächster Schritt",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "page-termine--termine-calendly-bzw-buchungsseite-mit-meeting",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -661,7 +989,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Aufgaben",
   "neu": "Kontaktakte › Karte Aufgaben (fehlt in Demo)",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "page-aufgaben--offene-aufgaben-des-kontakts-und-neue-aufgabe",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -669,7 +1001,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:updateLinkedIn",
   "neu": "Kontaktakte › Stammdaten › Bearbeiten › LinkedIn",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-updatelinkedin--linkedin-status-und-profil-url-pflegen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -677,7 +1013,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:updateCustomer",
   "neu": "Kontaktakte › Karte Kundendaten bzw. Kundenakte › Übersicht",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-updatecustomer--kundendaten-kunden-stufe-monatswert-produkte",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -685,7 +1025,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:linkContactCustomer",
   "neu": "Kontaktakte › ⋯ › Mit Kunde verknüpfen",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-linkcontactcustomer--kontakt-mit-kundenakte-verknuepfen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -693,7 +1037,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:updatePrimaryEmailAction",
   "neu": "Kontaktakte › Stammdaten › Bearbeiten",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-updateprimaryemailaction--haupt-e-mail-korrigieren",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -701,7 +1049,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:addContactEmailAction, removeContactEmailAction, makePrimaryEmailAction",
   "neu": "Kontaktakte › Stammdaten › E-Mail",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-addcontactemailaction--weitere-e-mail-hinzufuegen-entfernen-zur-haupt-e",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -709,7 +1061,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:updateContactAddress",
   "neu": "Kontaktakte › Stammdaten › Bearbeiten",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-updatecontactaddress--adresse-und-telefon-bearbeiten",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -717,7 +1073,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Stammdaten",
   "neu": "Kontaktakte › Stammdaten, Agentur",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "page-stammdaten--stammdaten-agenturtyp-versicherer-inhaber",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -725,7 +1085,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:updateContact",
   "neu": "Kontaktakte › Stammdaten › Bearbeiten",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "actions-updatecontact--kontakt-felder-allgemein-aendern-ohne",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -733,7 +1097,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:startOnboardingAction",
   "neu": "Kontaktakte › Angebote › Angenommen › Onboarding starten",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "onboarding-actions-startonboardingaction--onboarding-starten-neues-kundenkonto-oder",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -741,7 +1109,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:toggleOnboardingStepAction",
   "neu": "Kundenakte › Übersicht › Einrichtung",
   "status": "abgedeckt",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-actions-toggleonboardingstepaction--onboarding-schritte-abhaken",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -749,7 +1121,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:goLiveAction",
   "neu": "Kundenakte › Übersicht › Einrichtung › Live schalten",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-actions-goliveaction--live-schalten-bzw-zuruecknehmen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -757,7 +1133,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:resendWelcomeAction",
   "neu": "Kundenakte › Übersicht › Einrichtung › ⋯",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-actions-resendwelcomeaction--willkommens-mail-erneut-senden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -765,7 +1145,11 @@
   "quelle": "components/vertrieb/onboarding-card.tsx:Impressum",
   "neu": "Kundenakte › Übersicht › Einrichtung › Vermittlerangaben",
   "status": "abgedeckt",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-card-impressum--pflichtangaben-aus-dem-impressum-erstinformation",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -773,7 +1157,11 @@
   "quelle": "app/admin/vertrieb/followup-actions.ts:approveFollowupAction, saveFollowupAction",
   "neu": "Kontaktakte › Karte Später-Follow-up",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "followup-actions-approvefollowupaction--spaeter-follow-up-je-kontakt-freigeben-texte",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -781,7 +1169,11 @@
   "quelle": "app/admin/vertrieb/followup-actions.ts:sendFollowupNowAction, redraftFollowupNowAction",
   "neu": "Kontaktakte › Karte Später-Follow-up › Jetzt senden, Neu schreiben",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "followup-actions-sendfollowupnowaction--spaeter-follow-up-mail-sofort-senden-texte-neu",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -789,7 +1181,11 @@
   "quelle": "app/admin/vertrieb/followup-actions.ts:stopFollowupAction, planFollowupAction",
   "neu": "Kontaktakte › Karte Später-Follow-up",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "followup-actions-stopfollowupaction--spaeter-follow-up-stoppen-oder-planen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -797,7 +1193,11 @@
   "quelle": "app/admin/vertrieb/followup-actions.ts:redraftFollowupAction",
   "neu": "Kontaktakte › Karte Später-Follow-up",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "followup-actions-redraftfollowupaction--spaeter-follow-up-neu-schreiben-ohne-oberflaeche",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -805,7 +1205,11 @@
   "quelle": "components/deal-offers-card.tsx",
   "neu": "Kontaktakte › Angebote",
   "status": "abgedeckt",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "deal-offers-card--angebotskarte-angebot-ansehen-und-pdf",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -813,7 +1217,11 @@
   "quelle": "app/admin/vertrieb/offer-actions.ts:sendOfferEmailAction",
   "neu": "Angebot erstellen › Verschicken mit Optionen (Rechner und Anrede ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-actions-sendofferemailaction--angebot-per-e-mail-senden-mit-anrede-rechner",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -821,7 +1229,11 @@
   "quelle": "app/admin/vertrieb/offer-actions.ts:markOfferSentAction",
   "neu": "Kontaktakte › Angebote › ⋯ › Als verschickt markieren",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "offer-actions-markoffersentaction--angebot-als-verschickt-markieren-ohne-mail",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -829,7 +1241,11 @@
   "quelle": "app/admin/vertrieb/offer-actions.ts:deleteOfferAction",
   "neu": "Kontaktakte › Angebote › ⋯ › Löschen",
   "status": "ergänzen",
-  "demo_view": "kontakt"
+  "demo_view": "kontakt",
+  "id": "offer-actions-deleteofferaction--angebot-loeschen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -837,7 +1253,11 @@
   "quelle": "app/admin/vertrieb/offer-actions.ts:setPaymentReminderAction",
   "neu": "Angebot erstellen › Zahlungserinnerung, Einstellungen › Zahlungserinnerungen",
   "status": "abgedeckt",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-actions-setpaymentreminderaction--zahlungserinnerung-spaeter-zahlen-erlauben",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -845,7 +1265,11 @@
   "quelle": "components/deal-offers-card.tsx:PAY",
   "neu": "Vertrieb › Angebote › Status",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-angebote"
+  "demo_view": "vertrieb-angebote",
+  "id": "deal-offers-card-pay--zahlungsstatus-des-angebots-offen-bestaetigt",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -853,7 +1277,11 @@
   "quelle": "app/admin/vertrieb/offer-actions.ts:createOfferAction, components/offer-form.tsx",
   "neu": "Kontaktakte › Angebot erstellen",
   "status": "abgedeckt",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-actions-createofferaction--angebot-erstellen-produkte-werbebudget-laufzeit",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -861,7 +1289,11 @@
   "quelle": "components/offer-form.tsx:Empfänger/Kunde ist",
   "neu": "Angebot erstellen › Felder Empfänger, Kundentyp",
   "status": "ergänzen",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-form-empfaenger--angebot-empfaenger-und-kunde-ist-vertreter-oder",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -869,7 +1301,11 @@
   "quelle": "components/offer-form.tsx:Paket",
   "neu": "Angebot erstellen › Feld Paket",
   "status": "ergänzen",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-form-paket--angebot-paket-waehlen-z-b-nur-betreuung",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -877,7 +1313,11 @@
   "quelle": "components/offer-form.tsx",
   "neu": "Angebot erstellen › Schalter Testangebot",
   "status": "ergänzen",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-form--angebot-testangebot-0-ohne-zahlung-spaeter",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -885,7 +1325,11 @@
   "quelle": "components/offer-form.tsx:Verkäufer, Zahlweise und Module",
   "neu": "Angebot erstellen › Abschnitt Verkäufer, Zahlweise, Module",
   "status": "ergänzen",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-form-verkaeufer--angebot-verkaeufer-zahlweise-und-module",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/angebot",
@@ -893,7 +1337,11 @@
   "quelle": "components/offer-form.tsx:Zusammenfassung",
   "neu": "Angebot erstellen › Vorschau",
   "status": "abgedeckt",
-  "demo_view": "angebot-neu"
+  "demo_view": "angebot-neu",
+  "id": "offer-form-zusammenfassung--angebot-zusammenfassung",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -901,7 +1349,11 @@
   "quelle": "components/folien-deck.tsx",
   "neu": "Präsentation › Vollbild",
   "status": "abgedeckt",
-  "demo_view": "praesentation"
+  "demo_view": "praesentation",
+  "id": "folien-deck--verkaufspraesentation-mit-angebotspreisen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -909,7 +1361,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/praesentation/page.tsx:fassung",
   "neu": "Präsentation › Umschalter Fassung",
   "status": "ergänzen",
-  "demo_view": "praesentation"
+  "demo_view": "praesentation",
+  "id": "page-fassung--fassung-vertreter-oder-makler-waehlen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -917,7 +1373,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/praesentation/actions.ts:verkaufsLinkAction",
   "neu": "Präsentation › Link für den Interessenten",
   "status": "abgedeckt",
-  "demo_view": "praesentation"
+  "demo_view": "praesentation",
+  "id": "actions-verkaufslinkaction--link-fuer-interessenten-erzeugen-kopieren",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
@@ -925,7 +1385,11 @@
   "quelle": "app/admin/vertrieb/kontakte/[id]/praesentation/actions.ts:verkaufsLinkBeendenAction",
   "neu": "Präsentation › Beenden",
   "status": "abgedeckt",
-  "demo_view": "praesentation"
+  "demo_view": "praesentation",
+  "id": "actions-verkaufslinkbeendenaction--praesentationslink-beenden",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/angebote",
@@ -933,7 +1397,11 @@
   "quelle": "app/admin/vertrieb/angebote/page.tsx",
   "neu": "Vertrieb › Angebote",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-angebote"
+  "demo_view": "vertrieb-angebote",
+  "id": "page--angebotsliste-mit-versand-oeffnung-gueltigkeit",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/angebote",
@@ -941,7 +1409,11 @@
   "quelle": "app/admin/vertrieb/angebote/page.tsx:FILTER",
   "neu": "Vertrieb › Angebote › Chips",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-angebote"
+  "demo_view": "vertrieb-angebote",
+  "id": "page-filter--filter-alle-verschickten-offen-angenommen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/angebote",
@@ -949,7 +1421,11 @@
   "quelle": "app/admin/vertrieb/angebote/page.tsx:FILTER zahlung",
   "neu": "Vertrieb › Angebote › Chip Zahlung offen",
   "status": "ergänzen",
-  "demo_view": "vertrieb-angebote"
+  "demo_view": "vertrieb-angebote",
+  "id": "page-filter-zahlung--filter-zahlung-offen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -957,7 +1433,11 @@
   "quelle": "app/admin/vertrieb/followup-actions.ts:approveFollowupAction",
   "neu": "Einstellungen › Später-Follow-ups › Wartet auf Freigabe, Heute",
   "status": "abgedeckt",
-  "demo_view": "e-followups"
+  "demo_view": "e-followups",
+  "id": "followup-actions-approvefollowupaction--liste-wartet-auf-freigabe-einzeln-oder-alle",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -965,7 +1445,11 @@
   "quelle": "app/admin/vertrieb/follow-ups/page.tsx:Group",
   "neu": "Einstellungen › Später-Follow-ups › Listen (ergänzen), Kontaktakte",
   "status": "ergänzen",
-  "demo_view": "e-followups"
+  "demo_view": "e-followups",
+  "id": "page-group--listen-geplant-laufend-zuletzt-beendet-mit",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -973,7 +1457,11 @@
   "quelle": "app/admin/vertrieb/followup-actions.ts:saveFollowupSettingsAction",
   "neu": "Einstellungen › Später-Follow-ups › Einstellungen (Demo nur Freigabe und Abstand)",
   "status": "ergänzen",
-  "demo_view": "e-followups"
+  "demo_view": "e-followups",
+  "id": "followup-actions-savefollowupsettingsaction--einstellungen-automatik-an-hoechstzahl-je-tag",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/follow-ups",
@@ -981,7 +1469,11 @@
   "quelle": "app/admin/vertrieb/followup-actions.ts:planExistingAction",
   "neu": "Einstellungen › Später-Follow-ups › Bestand prüfen",
   "status": "ergänzen",
-  "demo_view": "e-followups"
+  "demo_view": "e-followups",
+  "id": "followup-actions-planexistingaction--bestand-jetzt-pruefen-bestehende-spaeter",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -989,7 +1481,11 @@
   "quelle": "app/admin/vertrieb/buchungsseite/actions.ts:disconnectSalesCalendarAction",
   "neu": "Vertrieb › Termine › Buchungsseiten › Kalender, Einstellungen › Buchungsseiten",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-termine"
+  "demo_view": "vertrieb-termine",
+  "id": "actions-disconnectsalescalendaraction--vertriebskalender-verbinden-bzw-trennen",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -997,7 +1493,11 @@
   "quelle": "app/admin/vertrieb/buchungsseite/actions.ts:saveBookingTypeAction",
   "neu": "Einstellungen › Buchungsseiten",
   "status": "abgedeckt",
-  "demo_view": "e-buchung"
+  "demo_view": "e-buchung",
+  "id": "actions-savebookingtypeaction--termintypen-bearbeiten-dauer-puffer-vorlauf",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1005,7 +1505,11 @@
   "quelle": "app/admin/vertrieb/buchungsseite/actions.ts:saveSalesTimesAction",
   "neu": "Einstellungen › Buchungsseiten › Zeiten",
   "status": "ergänzen",
-  "demo_view": "e-buchung"
+  "demo_view": "e-buchung",
+  "id": "actions-savesalestimesaction--buchbare-zeiten-je-wochentag",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1013,7 +1517,11 @@
   "quelle": "app/admin/vertrieb/buchungsseite/page.tsx:embedSnippet",
   "neu": "Einstellungen › Buchungsseiten › Auf Webseite einbinden",
   "status": "ergänzen",
-  "demo_view": "e-buchung"
+  "demo_view": "e-buchung",
+  "id": "page-embedsnippet--einbettungscode-fuer-die-webseite-kopieren",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1021,7 +1529,11 @@
   "quelle": "app/admin/vertrieb/buchungsseite/page.tsx",
   "neu": "Vertrieb › Termine › Link kopieren",
   "status": "abgedeckt",
-  "demo_view": "vertrieb-termine"
+  "demo_view": "vertrieb-termine",
+  "id": "page--buchungslink-kopieren",
+  "bereich": "vertrieb",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1029,7 +1541,11 @@
   "quelle": "app/admin/vertrieb/import/page.tsx",
   "neu": "Einstellungen › Anbindungen & Import",
   "status": "abgedeckt",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "page--status-je-quelle-instantly-calendly-formulare",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1037,7 +1553,11 @@
   "quelle": "app/admin/vertrieb/import/page.tsx:CopyField",
   "neu": "Einstellungen › Anbindungen & Import › Zeile › Adresse kopieren",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "page-copyfield--webhook-adressen-kopieren-und-anleitung",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1045,7 +1565,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:syncInstantlyAction",
   "neu": "Einstellungen › Anbindungen & Import › Instantly › Jetzt abgleichen",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1053,7 +1577,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:importInstantlyAction",
   "neu": "Einstellungen › Anbindungen & Import › CSV",
   "status": "abgedeckt",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-importinstantlyaction--instantly-csv-importieren",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1061,7 +1589,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:connectCalendlyAction, syncCalendlyAction",
   "neu": "Einstellungen › Anbindungen & Import › Calendly",
   "status": "abgedeckt",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-connectcalendlyaction--calendly-verbinden-und-termine-abgleichen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1069,7 +1601,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:importContactsAction",
   "neu": "Einstellungen › Anbindungen & Import › CSV Agenturliste",
   "status": "abgedeckt",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-importcontactsaction--agenturliste-csv-importieren",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1077,7 +1613,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:importColdCrmAction",
   "neu": "Einstellungen › Anbindungen & Import › Zeile Cold CRM",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-importcoldcrmaction--daten-aus-altem-cold-crm-uebernehmen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1085,7 +1625,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:replaceColdCrmAction",
   "neu": "Einstellungen › Anbindungen & Import › Gefahrenbereich",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-replacecoldcrmaction--vertrieb-neu-importieren-ersetzt-alles",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1093,7 +1637,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:importWaalaxyAction",
   "neu": "Einstellungen › Anbindungen & Import › LinkedIn",
   "status": "abgedeckt",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-importwaalaxyaction--waalaxy-import-ohne-oberflaeche",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1101,7 +1649,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:convertInboundLead",
   "neu": "Einstellungen › Anbindungen & Import › LinkedIn › Ohne Zuordnung",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-convertinboundlead--linkedin-nachrichten-ohne-zuordnung-als-lead",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1109,7 +1661,11 @@
   "quelle": "app/admin/vertrieb/import/page.tsx:placesUsed",
   "neu": "Einstellungen › Anbindungen & Import › Zeile Google",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "page-placesused--kontakte-anreichern-google-kontingent-heute",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1117,7 +1673,11 @@
   "quelle": "app/admin/vertrieb/import/page.tsx:Team-Kalender",
   "neu": "Einstellungen › Einrichtung neuer Kunden › Hilfetermin-Kalender",
   "status": "ergänzen",
-  "demo_view": "e-einrichtung"
+  "demo_view": "e-einrichtung",
+  "id": "page-team-kalender--team-kalender-fuer-hilfetermine-der-kunden",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kunden",
@@ -1125,7 +1685,11 @@
   "quelle": "app/admin/vertrieb/kunden/page.tsx:redirect",
   "neu": "entfällt",
   "status": "abgedeckt",
-  "demo_view": "kunden"
+  "demo_view": "kunden",
+  "id": "page-redirect--weiterleitung-auf-kunden-pipeline-keine-eigene",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden",
@@ -1133,7 +1697,11 @@
   "quelle": "app/admin/kunden/(liste)/page.tsx",
   "neu": "Kunden › Liste",
   "status": "abgedeckt",
-  "demo_view": "kunden"
+  "demo_view": "kunden",
+  "id": "page--kundenliste-mit-status-test-zahlung-offen-pause",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden",
@@ -1141,7 +1709,11 @@
   "quelle": "app/admin/kunden/(liste)/page.tsx:FILTERS",
   "neu": "Kunden › Chips",
   "status": "abgedeckt",
-  "demo_view": "kunden"
+  "demo_view": "kunden",
+  "id": "page-filters--filter-alle-zahlung-offen-onboarding-pausiert",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden",
@@ -1149,7 +1721,11 @@
   "quelle": "components/admin/kunden-tabs.tsx",
   "neu": "aufgeteilt auf Kunden und Leads & Kampagnen",
   "status": "abgedeckt",
-  "demo_view": "kunden"
+  "demo_view": "kunden",
+  "id": "kunden-tabs--unterreiter-uebersicht-pipeline-leads-pay-per",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/pipeline",
@@ -1157,7 +1733,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:dragCustomer",
   "neu": "Kunden › Liste › Filter (Ansicht); Stufe ändern in Kundenakte ergänzen",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "actions-dragcustomer--kunden-pipeline-vertrag-onboarding-test-aktiv",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/pipeline",
@@ -1165,7 +1745,11 @@
   "quelle": "app/admin/vertrieb/actions.ts:moveCustomer",
   "neu": "Kundenakte › Kopf › Status ändern",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "actions-movecustomer--kunde-eine-stufe-vor-oder-zurueck",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/pipeline",
@@ -1173,7 +1757,11 @@
   "quelle": "app/admin/kunden/(liste)/pipeline/page.tsx",
   "neu": "Zahlen › Übersicht › Woher Kunden kommen",
   "status": "ergänzen",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "page--kunden-nach-kanal-ohne-gekuendigt",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1181,7 +1769,11 @@
   "quelle": "app/admin/kunden/[id]/layout.tsx",
   "neu": "Kundenakte › Kopf",
   "status": "abgedeckt",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "layout--kopf-mit-stufe-onboarding-whatsapp-an-aus",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1189,7 +1781,11 @@
   "quelle": "app/admin/kunden/[id]/layout.tsx:referred",
   "neu": "Kundenakte › Kopf › Badge",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "layout-referred--hinweis-hat-x-kunden-geworben-link-empfehlungen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1197,7 +1793,11 @@
   "quelle": "app/admin/kunden/[id]/layout.tsx:absentUsers",
   "neu": "Kundenakte › Kopf › Hinweiszeile",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "layout-absentusers--abwesenheiten-der-berater-mit-vertretung",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1205,7 +1805,11 @@
   "quelle": "app/admin/kunden/[id]/test-actions.ts:deleteTestCustomerAction",
   "neu": "Kundenakte › ⋯ › Testkunde löschen",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "test-actions-deletetestcustomeraction--testkunde-komplett-loeschen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -1213,7 +1817,11 @@
   "quelle": "app/admin/kunden/[id]/layout.tsx:SubTabs",
   "neu": "Kundenakte › 7 Reiter",
   "status": "abgedeckt",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "layout-subtabs--reiter-der-kundenakte",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1221,7 +1829,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/module-actions.ts:toggleNewUiAction",
   "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "module-actions-togglenewuiaction--neue-oberflaeche-fuer-kunden-an-aus",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1229,7 +1841,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/module-actions.ts:setVermittlerTypAction",
   "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "module-actions-setvermittlertypaction--vermittlertyp-setzen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1237,7 +1853,11 @@
   "quelle": "components/admin/storno-quote.tsx:StornoQuoteKunde",
   "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "storno-quote-stornoquotekunde--stornoquote-der-vertraege-des-kunden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1245,7 +1865,11 @@
   "quelle": "components/admin/garantien-card.tsx",
   "neu": "Kundenakte › Abrechnung & Pause › Karte Garantien",
   "status": "ergänzen",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "garantien-card--garantien-stand-und-faelle",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1253,7 +1877,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:markTestCustomerAction",
   "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "actions-marktestcustomeraction--als-testkunde-markieren",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1261,7 +1889,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:seedDemoAction, removeDemoAction",
   "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden › Testdaten",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "actions-seeddemoaction--testdaten-anlegen-bzw-entfernen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1269,7 +1901,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:openSetupAction",
   "neu": "Kundenakte › Übersicht › Einrichtung › Freischalten",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-actions-opensetupaction--selbst-einrichtung-freischalten",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1277,7 +1913,11 @@
   "quelle": "components/admin/setup-card.tsx",
   "neu": "Kundenakte › Übersicht › Einrichtung",
   "status": "abgedeckt",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "setup-card--einrichtungsschritte-ansehen-einwilligung",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1285,7 +1925,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:sendSetupReminderAction",
   "neu": "Kundenakte › Übersicht › Einrichtung › Erinnern",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-actions-sendsetupreminderaction--erinnerung-zur-einrichtung-senden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1293,7 +1937,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:adminCheckMetaAction",
   "neu": "Kundenakte › Übersicht › Einrichtung › Meta prüfen",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-actions-admincheckmetaaction--meta-zugriff-pruefen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1301,7 +1949,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:restartSetupAction",
   "neu": "Kundenakte › Übersicht › Einrichtung › ⋯",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "onboarding-actions-restartsetupaction--einrichtung-neu-starten",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1309,7 +1961,11 @@
   "quelle": "components/admin/lead-qualitaet-card.tsx",
   "neu": "Kundenakte › Kampagne & Leads › Karte Lead-Qualität",
   "status": "ergänzen",
-  "demo_view": "kunde-leads"
+  "demo_view": "kunde-leads",
+  "id": "lead-qualitaet-card--lead-qualitaet-disqualifizierte-leads-nach-grund",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1317,7 +1973,11 @@
   "quelle": "components/admin/naechster-schritt-card.tsx",
   "neu": "Kundenakte › Team & Logins › Karte je Berater",
   "status": "ergänzen",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "naechster-schritt-card--naechster-schritt-je-berater-quote-ohne-schritt",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1325,7 +1985,11 @@
   "quelle": "app/admin/kunden/[id]/page.tsx:ContactPage embedded",
   "neu": "Kundenakte › Übersicht › Verlauf plus Link zur Kontaktakte",
   "status": "ergänzen",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "page-contactpage-embedded--eingebettete-kontaktakte-verlauf-aufgaben",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id] (Übersicht)",
@@ -1333,7 +1997,11 @@
   "quelle": "app/admin/kunden/[id]/page.tsx:Grunddaten",
   "neu": "Kundenakte › Übersicht, Kampagne & Leads",
   "status": "abgedeckt",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "page-grunddaten--grunddaten-region-betreuungsgebuehr-meta",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -1341,7 +2009,11 @@
   "quelle": "app/admin/kunden/[id]/leads/meta-account-actions.ts:setMetaAdAccountAction",
   "neu": "Kundenakte › Kampagne & Leads › Meta-Werbekonto",
   "status": "abgedeckt",
-  "demo_view": "kunde-leads"
+  "demo_view": "kunde-leads",
+  "id": "meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -1349,7 +2021,11 @@
   "quelle": "app/admin/kunden/[id]/leads/capi-actions.ts:setCapiDatasetAction",
   "neu": "Kundenakte › Kampagne & Leads › CAPI",
   "status": "abgedeckt",
-  "demo_view": "kunde-leads"
+  "demo_view": "kunde-leads",
+  "id": "capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -1357,7 +2033,11 @@
   "quelle": "app/admin/lead-eingang/actions.ts:toggleSourceAction",
   "neu": "Kundenakte › Kampagne & Leads › Leadformulare",
   "status": "abgedeckt",
-  "demo_view": "kunde-leads"
+  "demo_view": "kunde-leads",
+  "id": "actions-togglesourceaction--leadformulare-des-kunden-an-aus",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/leads",
@@ -1365,7 +2045,11 @@
   "quelle": "app/admin/kunden/[id]/leads/page.tsx",
   "neu": "Kundenakte › Kampagne & Leads › Letzte Leads",
   "status": "abgedeckt",
-  "demo_view": "kunde-leads"
+  "demo_view": "kunde-leads",
+  "id": "page--letzte-leads-mit-abschluss-storno",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -1373,7 +2057,11 @@
   "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:startRunAction",
   "neu": "Leads & Kampagnen › Kampagne mit KI",
   "status": "abgedeckt",
-  "demo_view": "leads-ki"
+  "demo_view": "leads-ki",
+  "id": "actions-startrunaction--ki-kampagne-starten-produkt-zusatzwunsch-seiten",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -1381,7 +2069,11 @@
   "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:getRunAction",
   "neu": "Kampagne mit KI › Ergebnis (Plan, Anzeigen, Formular ergänzen)",
   "status": "ergänzen",
-  "demo_view": "leads-ki"
+  "demo_view": "leads-ki",
+  "id": "actions-getrunaction--fortschritt-abrufen-plan-anzeigen-sofortformular",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -1389,7 +2081,11 @@
   "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:updateCopyAction",
   "neu": "Kampagne mit KI › Anzeigen › Bearbeiten",
   "status": "ergänzen",
-  "demo_view": "leads-ki"
+  "demo_view": "leads-ki",
+  "id": "actions-updatecopyaction--anzeigentext-bearbeiten",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -1397,7 +2093,11 @@
   "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:regenerateImageAction",
   "neu": "Kampagne mit KI › Anzeigen › Bild neu",
   "status": "ergänzen",
-  "demo_view": "leads-ki"
+  "demo_view": "leads-ki",
+  "id": "actions-regenerateimageaction--bild-neu-erzeugen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -1405,7 +2105,11 @@
   "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:buildRunAction",
   "neu": "Kampagne mit KI › Anlegen",
   "status": "abgedeckt",
-  "demo_view": "leads-ki"
+  "demo_view": "leads-ki",
+  "id": "actions-buildrunaction--kampagne-bei-meta-anlegen-pausiert",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -1413,7 +2117,11 @@
   "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:cleanupRunAction",
   "neu": "Kampagne mit KI › Verlauf › Löschen",
   "status": "ergänzen",
-  "demo_view": "leads-ki"
+  "demo_view": "leads-ki",
+  "id": "actions-cleanuprunaction--angelegte-kampagne-bei-meta-loeschen-formular",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/kampagne",
@@ -1421,7 +2129,11 @@
   "quelle": "app/admin/kunden/[id]/kampagne/page.tsx",
   "neu": "Kampagne mit KI › Verlauf",
   "status": "abgedeckt",
-  "demo_view": "leads-ki"
+  "demo_view": "leads-ki",
+  "id": "page--verlauf-der-laeufe",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/optimierung",
@@ -1429,7 +2141,11 @@
   "quelle": "app/admin/optimierung/account-view.tsx:ProtocolCard",
   "neu": "Kundenakte › Optimierung › Protokoll",
   "status": "ergänzen",
-  "demo_view": "kunde-optimierung"
+  "demo_view": "kunde-optimierung",
+  "id": "account-view-protocolcard--protokoll-der-massnahmen-des-kunden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/optimierung",
@@ -1437,7 +2153,11 @@
   "quelle": "app/admin/optimierung/actions.ts:addManualAction",
   "neu": "Kundenakte › Optimierung › Maßnahme eintragen",
   "status": "abgedeckt",
-  "demo_view": "kunde-optimierung"
+  "demo_view": "kunde-optimierung",
+  "id": "actions-addmanualaction--massnahme-von-hand-eintragen-datum-art-text",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -1445,7 +2165,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/d360-actions.ts:d360AssignAction",
   "neu": "Kundenakte › WhatsApp › Nummer zuordnen",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "d360-actions-d360assignaction--360dialog-nummer-zuordnen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -1453,7 +2177,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/d360-actions.ts:d360ResetAction",
   "neu": "Kundenakte › WhatsApp › Nummer › Zurücksetzen",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "d360-actions-d360resetaction--halb-fertige-whatsapp-verbindung-zuruecksetzen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -1461,7 +2189,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/calendar-actions.ts:adminConnectAllianzAction, adminChangeAllianzAction, adminDisconnectAllianzAction",
   "neu": "Kundenakte › WhatsApp › Verfügbarkeit › Kalender",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "calendar-actions-adminconnectallianzaction--allianz-online-kalender-verbinden-aendern",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -1469,7 +2201,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/calendar-actions.ts:adminSaveLeadTimesAction",
   "neu": "Kundenakte › WhatsApp › Verfügbarkeit",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "calendar-actions-adminsaveleadtimesaction--buchbare-zeiten-fuer-leads-speichern",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -1477,7 +2213,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/calendar-actions.ts:adminAddBlockAction, adminDeleteBlockAction",
   "neu": "Kundenakte › WhatsApp › Verfügbarkeit › Zeit blockieren",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "calendar-actions-adminaddblockaction--zeit-blockieren-und-blocker-loeschen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -1485,7 +2225,11 @@
   "quelle": "components/whatsapp-fees-card.tsx",
   "neu": "Kundenakte › WhatsApp › Meta-Gebühren",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "whatsapp-fees-card--meta-gebuehren-intern",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/whatsapp",
@@ -1493,7 +2237,11 @@
   "quelle": "app/admin/kunden/[id]/whatsapp/page.tsx:BestandModuleCard",
   "neu": "Kundenakte › WhatsApp › Karte Bestandskunden",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "page-bestandmodulecard--bestandskunden-kampagnen-hinweis-link-abrechnung",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1501,7 +2249,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:addCustomerAction",
   "neu": "Kundenakte › WhatsApp › Assistent einrichten",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-addcustomeraction--kunde-fuer-den-assistenten-hinzufuegen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1509,7 +2261,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:connectWhatsAppAction",
   "neu": "Kundenakte › WhatsApp › Nummer › ändern",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-connectwhatsappaction--whatsapp-nummer-von-hand-verbinden-nummer-api",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1517,7 +2273,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:setAgentActiveAction",
   "neu": "Kundenakte › WhatsApp › Assistent aktiv",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-setagentactiveaction--assistent-aktiv-an-aus",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1525,7 +2285,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:saveAgentSettingsAction",
   "neu": "Kundenakte › WhatsApp › Assistent (Verzögerung ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-saveagentsettingsaction--neue-leads-automatisch-anschreiben-nach-x",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1533,7 +2297,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:setFollowUpSequencesAction",
   "neu": "Kundenakte › WhatsApp › Automatisches Nachfassen",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-setfollowupsequencesaction--automatisch-nachfassen-abfolgen-an-aus",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1541,7 +2309,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:saveAgentSettingsAction",
   "neu": "Kundenakte › WhatsApp › Assistent › Felder",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-saveagentsettingsaction--berater-e-mail-fuer-einladungen-videoraum",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1549,7 +2321,11 @@
   "quelle": "app/admin/whatsapp/settings/calendar-card.tsx:CalendarCard",
   "neu": "Kundenakte › WhatsApp › Verfügbarkeit › Kalender verbinden",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "calendar-card-calendarcard--buchungskalender-google-microsoft-verbinden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1557,7 +2333,11 @@
   "quelle": "app/admin/whatsapp/settings/controls.tsx:TemplateAutoStatus",
   "neu": "Kundenakte › WhatsApp › Karte Vorlagen (Demo nur global in Einstellungen)",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "controls-templateautostatus--vorlagen-des-kunden-ansehen-status-bei-meta",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1565,7 +2345,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:saveTemplateResultAction, saveTemplateAction",
   "neu": "Kundenakte › WhatsApp › Vorlagen › Bearbeiten",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-savetemplateresultaction--vorlage-anlegen-bearbeiten-mit-zweck",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1573,7 +2357,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:deleteTemplateAction",
   "neu": "Kundenakte › WhatsApp › Vorlagen › ⋯",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-deletetemplateaction--vorlage-loeschen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1581,7 +2369,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:submitTemplatesAction, resubmitTemplateAction",
   "neu": "Kundenakte › WhatsApp › Vorlagen › Einreichen",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-submittemplatesaction--vorlagen-bei-meta-einreichen-bzw-einzeln-neu",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1589,7 +2381,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:setTemplateApprovedAction",
   "neu": "Kundenakte › WhatsApp › Vorlagen › Schalter",
   "status": "ergänzen",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-settemplateapprovedaction--vorlage-von-hand-als-freigegeben-markieren",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -1597,7 +2393,11 @@
   "quelle": "app/admin/whatsapp/settings/actions.ts:saveOutreachSettingsAction",
   "neu": "Kundenakte › WhatsApp › Assistent",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "actions-saveoutreachsettingsaction--erstanschreiben-einstellungen-alt-ohne",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
@@ -1605,7 +2405,11 @@
   "quelle": "app/admin/whatsapp/support-verbinden/route.ts:GET",
   "neu": "Einstellungen › WhatsApp-Vorlagen & Support-Nummer › Support-Nummer",
   "status": "abgedeckt",
-  "demo_view": "e-vorlagen"
+  "demo_view": "e-vorlagen",
+  "id": "route-get--support-whatsapp-verbinden-360dialog",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
@@ -1613,7 +2417,11 @@
   "quelle": "app/admin/whatsapp/settings/ab-test-card.tsx",
   "neu": "Einstellungen › WhatsApp-Vorlagen › A/B-Test",
   "status": "abgedeckt",
-  "demo_view": "e-vorlagen"
+  "demo_view": "e-vorlagen",
+  "id": "ab-test-card--a-b-tests-der-vorlagen-mit-antwort-und",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
@@ -1621,7 +2429,11 @@
   "quelle": "app/admin/whatsapp/settings/page.tsx",
   "neu": "Kunden › Liste (Spalte WhatsApp) bzw. Kundenakte › WhatsApp",
   "status": "abgedeckt",
-  "demo_view": "kunden"
+  "demo_view": "kunden",
+  "id": "page--uebersicht-aller-kunden-mit-assistent-liste",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1629,7 +2441,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/page.tsx",
   "neu": "Kundenakte › Abrechnung & Pause",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "page--hinweis-zahlung-offen-seit",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1637,7 +2453,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/lebenszyklus-card.tsx",
   "neu": "Kundenakte › Abrechnung & Pause › Kündigung & Rückkehr",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "lebenszyklus-card--kuendigung-rueckkehr-ruht-seit-reaktiviert",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1645,7 +2465,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/retainer-actions.ts:saveRetainerAction",
   "neu": "Kundenakte › Abrechnung & Pause › Betreuungsgebühr › Bearbeiten",
   "status": "ergänzen",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "retainer-actions-saveretaineraction--betreuungsgebuehr-eintragen-aendern-entfernen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1653,7 +2477,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/retainer-card.tsx",
   "neu": "Kundenakte › Abrechnung & Pause › Kündigung & Rückkehr",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "retainer-card--kuendigungsabsichten-und-angebotene",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1661,7 +2489,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/budget-actions.ts:decideBudgetAction",
   "neu": "Kundenakte › Abrechnung & Pause › Werbebudget › Übernehmen",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "budget-actions-decidebudgetaction--budgetaenderung-des-kunden-uebernehmen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1669,7 +2501,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/budget-actions.ts:decideBudgetAction",
   "neu": "Kundenakte › Abrechnung & Pause › Werbebudget › Ablehnen",
   "status": "ergänzen",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "budget-actions-decidebudgetaction--budgetaenderung-ablehnen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1677,7 +2513,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/produkt-actions.ts:decideProductAction",
   "neu": "Kundenakte › Abrechnung & Pause › Produkte",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "produkt-actions-decideproductaction--produktbuchung-des-kunden-annehmen-oder-ablehnen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1685,7 +2525,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:saveSeatsAction, syncSeatsAction",
   "neu": "Kundenakte › Abrechnung & Pause › Verkäufer, Module, Zahlweise",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "addon-actions-saveseatsaction--aktive-verkaeufer-speichern-und-mit-stripe",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1693,7 +2537,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:bestandModuleAction, bestandSichtbarAction",
   "neu": "Kundenakte › Abrechnung & Pause › Verkäufer, Module, Zahlweise",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "addon-actions-bestandmoduleaction--bestandskunden-modul-freischalten-kostenlos",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1701,7 +2549,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:saveQuotaAction",
   "neu": "Kundenakte › Abrechnung & Pause › Module",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "addon-actions-savequotaaction--kontingent-bestandskunden-speichern-zusatzpakete",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1709,7 +2561,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:empfehlungModuleAction",
   "neu": "Kundenakte › Abrechnung & Pause › Module",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "addon-actions-empfehlungmoduleaction--modul-empfehlungen-bewertungen-freischalten-oder",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1717,7 +2573,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:billingIntervalAction",
   "neu": "Kundenakte › Abrechnung & Pause › Zahlweise",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "addon-actions-billingintervalaction--zahlweise-monatlich-jaehrlich-umstellen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1725,7 +2585,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:adminPlanPauseAction",
   "neu": "Kundenakte › Abrechnung & Pause › Pausieren",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "onboarding-actions-adminplanpauseaction--pause-urlaub-eintragen-ab-neustart-grund",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1733,7 +2597,11 @@
   "quelle": "app/admin/vertrieb/onboarding-actions.ts:adminEndPauseAction",
   "neu": "Kundenakte › Abrechnung & Pause › Pause beenden",
   "status": "ergänzen",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "onboarding-actions-adminendpauseaction--pause-beenden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1741,7 +2609,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/erase-actions.ts:eraseCustomerDataAction",
   "neu": "Kundenakte › Abrechnung & Pause › Gefahrenbereich Daten löschen",
   "status": "ergänzen",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "erase-actions-erasecustomerdataaction--kundendaten-endgueltig-loeschen-mit-grund",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1749,7 +2621,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/page.tsx:invoices",
   "neu": "Kundenakte › Abrechnung & Pause › Rechnungen",
   "status": "abgedeckt",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "page-invoices--rechnungen-mit-status-und-pdf",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/abrechnung",
@@ -1757,7 +2633,11 @@
   "quelle": "app/admin/kunden/[id]/abrechnung/page.tsx",
   "neu": "Kundenakte › Abrechnung & Pause › Rechnungen › Stripe",
   "status": "ergänzen",
-  "demo_view": "kunde-abrechnung"
+  "demo_view": "kunde-abrechnung",
+  "id": "page--in-stripe-oeffnen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1765,7 +2645,11 @@
   "quelle": "app/admin/buyers/login-list.tsx",
   "neu": "Kundenakte › Team & Logins",
   "status": "abgedeckt",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "login-list--logins-des-kunden-mit-einladung-offen-zuletzt",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1773,7 +2657,11 @@
   "quelle": "app/admin/buyers/actions.ts:createBuyerAccount",
   "neu": "Kundenakte › Team & Logins › + Login",
   "status": "abgedeckt",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "actions-createbuyeraccount--neuen-login-anlegen-e-mail-passwort-kunde",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1781,7 +2669,11 @@
   "quelle": "app/admin/buyers/actions.ts:resetBuyerPassword",
   "neu": "Kundenakte › Team & Logins › ⋯",
   "status": "abgedeckt",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "actions-resetbuyerpassword--passwort-setzen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1789,7 +2681,11 @@
   "quelle": "app/admin/buyers/actions.ts:changeBuyerEmail",
   "neu": "Kundenakte › Team & Logins › ⋯",
   "status": "abgedeckt",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "actions-changebuyeremail--e-mail-adresse-aendern",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1797,7 +2693,11 @@
   "quelle": "app/admin/buyers/actions.ts:deleteBuyerAccount",
   "neu": "Kundenakte › Team & Logins › ⋯",
   "status": "abgedeckt",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "actions-deletebuyeraccount--login-loeschen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1805,7 +2705,11 @@
   "quelle": "app/admin/buyers/actions.ts:sendBuyerAccessLink",
   "neu": "Kundenakte › Team & Logins › ⋯ › Einladung senden",
   "status": "ergänzen",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "actions-sendbuyeraccesslink--einladung-erneut-senden-bzw-link-zum-passwort",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1813,7 +2717,11 @@
   "quelle": "app/admin/buyers/actions.ts:reassignBuyerCustomer",
   "neu": "Kundenakte › Team & Logins › ⋯ › Anderem Kunden zuordnen",
   "status": "ergänzen",
-  "demo_view": "kunde-team"
+  "demo_view": "kunde-team",
+  "id": "actions-reassignbuyercustomer--login-einem-anderen-kunden-zuordnen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1821,7 +2729,11 @@
   "quelle": "app/buyer/preview-actions.ts:startPreviewAction",
   "neu": "Kundenakte › Kopf › Als Kunde ansehen",
   "status": "abgedeckt",
-  "demo_view": "kunde"
+  "demo_view": "kunde",
+  "id": "preview-actions-startpreviewaction--als-kunde-ansehen-nur-lesend",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/[id]/logins und /admin/buyers",
@@ -1829,7 +2741,11 @@
   "quelle": "app/admin/buyers/page.tsx",
   "neu": "Globale Suche › Abschnitt Logins (ergänzen)",
   "status": "ergänzen",
-  "demo_view": "heute"
+  "demo_view": "heute",
+  "id": "page--login-liste-aller-kunden-suche-nach-e-mail",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/suche.tsx"
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1837,7 +2753,11 @@
   "quelle": "app/admin/monatsberichte/page.tsx",
   "neu": "Kunden › Monatsberichte (alle Kunden je Monat)",
   "status": "ergänzen",
-  "demo_view": "kunden-berichte"
+  "demo_view": "kunden-berichte",
+  "id": "page--monatsuebersicht-aller-berichte-mit-monat-vor",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1845,7 +2765,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:generateNowAction",
   "neu": "Kunden › Monatsberichte (alle Kunden je Monat)",
   "status": "ergänzen",
-  "demo_view": "kunden-berichte"
+  "demo_view": "kunden-berichte",
+  "id": "actions-generatenowaction--berichte-jetzt-erzeugen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1853,7 +2777,11 @@
   "quelle": "app/admin/monatsberichte/[id]/page.tsx",
   "neu": "Kundenakte › Monatsberichte › Ansehen",
   "status": "abgedeckt",
-  "demo_view": "kunde-berichte"
+  "demo_view": "kunde-berichte",
+  "id": "page--bericht-ansehen-mit-vorschau-und-pruefbefunden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1861,7 +2789,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:sendReportAction",
   "neu": "Kundenakte › Monatsberichte › Bericht › Senden",
   "status": "ergänzen",
-  "demo_view": "kunde-berichte"
+  "demo_view": "kunde-berichte",
+  "id": "actions-sendreportaction--bericht-senden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1869,7 +2801,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:sendReportAction",
   "neu": "Kundenakte › Monatsberichte › Bericht › Bearbeiten",
   "status": "ergänzen",
-  "demo_view": "kunde-berichte"
+  "demo_view": "kunde-berichte",
+  "id": "actions-sendreportaction--bericht-bearbeiten-betreff-einstieg-und-senden",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1877,7 +2813,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:callInsteadAction",
   "neu": "Kundenakte › Monatsberichte › Bericht › Anrufen statt Mail",
   "status": "ergänzen",
-  "demo_view": "kunde-berichte"
+  "demo_view": "kunde-berichte",
+  "id": "actions-callinsteadaction--anrufen-statt-mail",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1885,7 +2825,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:skipReportAction",
   "neu": "Kundenakte › Monatsberichte › Bericht › Aussetzen",
   "status": "ergänzen",
-  "demo_view": "kunde-berichte"
+  "demo_view": "kunde-berichte",
+  "id": "actions-skipreportaction--diesen-monat-aussetzen",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/monatsberichte",
@@ -1893,7 +2837,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:toggleCustomerReportsAction",
   "neu": "Kundenakte › Monatsberichte › Schalter",
   "status": "ergänzen",
-  "demo_view": "kunde-berichte"
+  "demo_view": "kunde-berichte",
+  "id": "actions-togglecustomerreportsaction--monatsberichte-fuer-diesen-kunden-an-aus",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1901,7 +2849,11 @@
   "quelle": "app/admin/lead-eingang/page.tsx",
   "neu": "Leads & Kampagnen › Lead-Eingang › Ohne Zuordnung",
   "status": "abgedeckt",
-  "demo_view": "leads"
+  "demo_view": "leads",
+  "id": "page--posteingang-leads-ohne-zuordnung",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1909,7 +2861,11 @@
   "quelle": "app/admin/lead-eingang/actions.ts:assignFormAction",
   "neu": "Lead-Eingang › Kunde wählen, + Zuordnung",
   "status": "abgedeckt",
-  "demo_view": "leads"
+  "demo_view": "leads",
+  "id": "actions-assignformaction--formular-zuordnen-seite-formular-kunde-produkt",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1917,7 +2873,11 @@
   "quelle": "app/admin/lead-eingang/actions.ts:assignFormAction",
   "neu": "Lead-Eingang › Zuordnung › Erweitert",
   "status": "ergänzen",
-  "demo_view": "leads"
+  "demo_view": "leads",
+  "id": "actions-assignformaction--beim-zuordnen-lead-preis-ppl-und-airtable-bezug",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1925,7 +2885,11 @@
   "quelle": "app/admin/lead-eingang/page.tsx:listPageForms",
   "neu": "Lead-Eingang › Zuordnung › Seite",
   "status": "abgedeckt",
-  "demo_view": "leads"
+  "demo_view": "leads",
+  "id": "page-listpageforms--facebook-seite-waehlen-und-formulare-laden",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1933,7 +2897,11 @@
   "quelle": "app/admin/lead-eingang/actions.ts:dismissUnassignedAction",
   "neu": "Lead-Eingang › Ohne Zuordnung › Verwerfen",
   "status": "ergänzen",
-  "demo_view": "leads"
+  "demo_view": "leads",
+  "id": "actions-dismissunassignedaction--wartende-leads-ohne-zuordnung-verwerfen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1941,7 +2909,11 @@
   "quelle": "app/admin/lead-eingang/actions.ts:toggleSourceAction",
   "neu": "Lead-Eingang › Zuordnungen › Schalter",
   "status": "ergänzen",
-  "demo_view": "leads"
+  "demo_view": "leads",
+  "id": "actions-togglesourceaction--zuordnung-an-aus-schalten",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1949,7 +2921,11 @@
   "quelle": "app/admin/lead-eingang/page.tsx",
   "neu": "Lead-Eingang › Zuordnungen",
   "status": "abgedeckt",
-  "demo_view": "leads"
+  "demo_view": "leads",
+  "id": "page--zuordnungen-tabelle-mit-preis-letztem-lead",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1957,7 +2933,11 @@
   "quelle": "app/admin/lead-eingang/page.tsx:diag",
   "neu": "Einstellungen › Anbindungen & Import › Meta (oder Lead-Eingang Kopf)",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "page-diag--meta-verbindung-pruefen-token-rechte-webhook-url",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/lead-eingang",
@@ -1965,7 +2945,11 @@
   "quelle": "app/admin/lead-eingang/page.tsx",
   "neu": "Einstellungen › Anbindungen & Import",
   "status": "ergänzen",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "page--uebergang-webhook-fuer-zapier",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/leads",
@@ -1973,7 +2957,11 @@
   "quelle": "app/admin/leads/page.tsx",
   "neu": "Leads & Kampagnen › Alle Leads",
   "status": "abgedeckt",
-  "demo_view": "leads-alle"
+  "demo_view": "leads-alle",
+  "id": "page--alle-leads-aller-kunden-mit-status-und-preis",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/leads",
@@ -1981,7 +2969,11 @@
   "quelle": "app/admin/leads/page.tsx:MoreFilters",
   "neu": "Alle Leads › Chips (Produkt und von/bis ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "leads-alle"
+  "demo_view": "leads-alle",
+  "id": "page-morefilters--filter-kunde-produkt-status-zeitraum-monat-oder",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/leads",
@@ -1989,7 +2981,11 @@
   "quelle": "app/admin/leads/export/route.ts:GET",
   "neu": "Alle Leads › Export",
   "status": "ergänzen",
-  "demo_view": "leads-alle"
+  "demo_view": "leads-alle",
+  "id": "route-get--csv-export-der-gefilterten-leads-mit-protokoll",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/leads",
@@ -1997,7 +2993,11 @@
   "quelle": "app/admin/leads/page.tsx:tel",
   "neu": "Alle Leads › Zeile",
   "status": "abgedeckt",
-  "demo_view": "leads-alle"
+  "demo_view": "leads-alle",
+  "id": "page-tel--lead-anrufen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2005,7 +3005,11 @@
   "quelle": "app/admin/ppl/page.tsx:Bezuege",
   "neu": "Leads & Kampagnen › Pay-per-Lead › Bezüge",
   "status": "abgedeckt",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "page-bezuege--bezuege-je-produkt-mit-kontingent-geliefert",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2013,7 +3017,11 @@
   "quelle": "components/admin/ppl-auswertung.tsx",
   "neu": "Pay-per-Lead › Ansicht Übersicht je Kunde",
   "status": "ergänzen",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "ppl-auswertung--uebersicht-je-kunde-woche-monat-liegt-zurueck",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2021,7 +3029,11 @@
   "quelle": "components/admin/ppl-auswertung.tsx",
   "neu": "Pay-per-Lead › Ansicht Auswertung bzw. Zahlen › Übersicht › Pay-per-Lead",
   "status": "ergänzen",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "ppl-auswertung--auswertung-mit-zeitraum-und-produktfilter",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2029,7 +3041,11 @@
   "quelle": "app/admin/ppl/actions.ts:assignParkedAction",
   "neu": "Pay-per-Lead › Geparkt › Zuordnen",
   "status": "ergänzen",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "actions-assignparkedaction--geparkte-leads-einem-bezug-zuordnen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2037,7 +3053,11 @@
   "quelle": "app/admin/ppl/actions.ts:discardParkedAction",
   "neu": "Pay-per-Lead › Geparkt › Verwerfen",
   "status": "ergänzen",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "actions-discardparkedaction--geparkten-lead-verwerfen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2045,7 +3065,11 @@
   "quelle": "app/admin/ppl/actions.ts:decideStornoAction",
   "neu": "Pay-per-Lead › Storno prüfen",
   "status": "abgedeckt",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "actions-decidestornoaction--storno-pruefen-annehmen-oder-ablehnen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2053,7 +3077,11 @@
   "quelle": "app/admin/ppl/page.tsx:Geliefert",
   "neu": "Pay-per-Lead › Gelieferte Leads bzw. Alle Leads Filter PPL",
   "status": "abgedeckt",
-  "demo_view": "leads-alle"
+  "demo_view": "leads-alle",
+  "id": "page-geliefert--gelieferte-leads-suchen-name-telefon-e-mail-id",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2061,7 +3089,11 @@
   "quelle": "app/admin/ppl/actions.ts:adminStornoAction",
   "neu": "Alle Leads › Lead › Storno eintragen",
   "status": "ergänzen",
-  "demo_view": "leads-alle"
+  "demo_view": "leads-alle",
+  "id": "actions-adminstornoaction--storno-von-hand-eintragen-grund-notiz",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2069,7 +3101,11 @@
   "quelle": "app/admin/ppl/actions.ts:undoStornoAction",
   "neu": "Alle Leads › Lead › Storno zurücknehmen",
   "status": "ergänzen",
-  "demo_view": "leads-alle"
+  "demo_view": "leads-alle",
+  "id": "actions-undostornoaction--storno-zuruecknehmen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2077,7 +3113,11 @@
   "quelle": "app/admin/ppl/page.tsx:Eingang",
   "neu": "Pay-per-Lead › Eingang",
   "status": "abgedeckt",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "page-eingang--eingang-aller-ppl-leads-ausgeliefert-geparkt",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl",
@@ -2085,7 +3125,11 @@
   "quelle": "app/admin/ppl/page.tsx:AIRTABLE_SYNC_OFF",
   "neu": "Pay-per-Lead › Kopf › Status",
   "status": "ergänzen",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "page-airtable-sync-off--anzeige-airtable-abgleich-an-aus",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -2093,7 +3137,11 @@
   "quelle": "app/admin/ppl/actions.ts:saveSubscriptionAction",
   "neu": "Pay-per-Lead › Bezug",
   "status": "abgedeckt",
-  "demo_view": "leads-bezug"
+  "demo_view": "leads-bezug",
+  "id": "actions-savesubscriptionaction--bezug-anlegen-bearbeiten-kunde-produkt-menge",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -2101,7 +3149,11 @@
   "quelle": "app/admin/ppl/bezug/[id]/bezug-form.tsx",
   "neu": "Bezug › weitere Felder Modus, Lieferweg",
   "status": "ergänzen",
-  "demo_view": "leads-bezug"
+  "demo_view": "leads-bezug",
+  "id": "bezug-form--bezug-modus-woche-monat-einmalig-live-test",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -2109,7 +3161,11 @@
   "quelle": "app/admin/ppl/actions.ts:saveAreaAction",
   "neu": "Bezug › Gebiete mit Vorrang",
   "status": "abgedeckt",
-  "demo_view": "leads-bezug"
+  "demo_view": "leads-bezug",
+  "id": "actions-saveareaaction--gebiet-mit-vorrang-anlegen-aendern-plz-menge",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -2117,7 +3173,11 @@
   "quelle": "app/admin/ppl/actions.ts:deleteAreaAction",
   "neu": "Bezug › Gebiete › Löschen",
   "status": "abgedeckt",
-  "demo_view": "leads-bezug"
+  "demo_view": "leads-bezug",
+  "id": "actions-deleteareaaction--gebiet-loeschen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/bezug/[id]",
@@ -2125,7 +3185,11 @@
   "quelle": "app/admin/ppl/actions.ts:manualOrderAction",
   "neu": "Bezug › Bestellungen › Von Hand bestellen",
   "status": "ergänzen",
-  "demo_view": "leads-bezug"
+  "demo_view": "leads-bezug",
+  "id": "actions-manualorderaction--bestellung-von-hand-bezahlt-ohne-stripe",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/ppl/import",
@@ -2133,7 +3197,11 @@
   "quelle": "app/admin/ppl/actions.ts:runImportAction",
   "neu": "Pay-per-Lead › Aus Airtable",
   "status": "abgedeckt",
-  "demo_view": "leads-ppl"
+  "demo_view": "leads-ppl",
+  "id": "actions-runimportaction--bezuege-aus-airtable-uebernehmen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -2141,7 +3209,11 @@
   "quelle": "app/admin/media-buyer/media-buyer-admin.tsx",
   "neu": "Leads & Kampagnen › Werbekonten › Filter",
   "status": "abgedeckt",
-  "demo_view": "leads-optimierung"
+  "demo_view": "leads-optimierung",
+  "id": "media-buyer-admin--pool-liste-mit-ist-ziel-prognose-status-auf-kurs",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -2149,7 +3221,11 @@
   "quelle": "app/admin/media-buyer/actions.ts:savePoolSettings",
   "neu": "Werbekonto › Einstellungen › Automatisch ausführen",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-savepoolsettings--autopilot-je-pool-an-aus",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -2157,7 +3233,11 @@
   "quelle": "app/admin/media-buyer/actions.ts:savePoolSettings",
   "neu": "Werbekonto › Einstellungen › Budget je Kanal",
   "status": "ergänzen",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-savepoolsettings--max-tagesbudget-je-kanal-meta-outbrain-tiktok",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -2165,7 +3245,11 @@
   "quelle": "app/admin/media-buyer/actions.ts:savePoolSettings",
   "neu": "Werbekonto › Einstellungen › Stichwort",
   "status": "ergänzen",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-savepoolsettings--kampagnen-stichwort-je-kanal",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -2173,7 +3257,11 @@
   "quelle": "app/admin/media-buyer/actions.ts:runDryRun",
   "neu": "Werbekonto › Trockenlauf",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-rundryrun--trockenlauf-media-buyer",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -2181,7 +3269,11 @@
   "quelle": "app/admin/media-buyer/actions.ts:runApplyNow",
   "neu": "Werbekonto › Jetzt ausführen",
   "status": "ergänzen",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-runapplynow--jetzt-anwenden-budgets-setzen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/media-buyer",
@@ -2189,7 +3281,11 @@
   "quelle": "app/admin/media-buyer/media-buyer-admin.tsx",
   "neu": "Werbekonto › Protokoll, Kennzahlen je Kanal",
   "status": "ergänzen",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "media-buyer-admin--empfehlung-verlauf-der-aktionen-performance-pro",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2197,7 +3293,11 @@
   "quelle": "app/admin/optimierung/page.tsx",
   "neu": "Leads & Kampagnen › Werbekonten",
   "status": "abgedeckt",
-  "demo_view": "leads-optimierung"
+  "demo_view": "leads-optimierung",
+  "id": "page--werbekonten-liste-mit-modus-letzter-massnahme",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2205,7 +3305,11 @@
   "quelle": "app/admin/optimierung/actions.ts:saveGlobalAction",
   "neu": "Einstellungen › Kampagnen-Automatik",
   "status": "ergänzen",
-  "demo_view": "e-automatik"
+  "demo_view": "e-automatik",
+  "id": "actions-saveglobalaction--global-woechentlicher-optimierungslauf-an-aus",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2213,7 +3317,11 @@
   "quelle": "app/admin/optimierung/actions.ts:saveGlobalAction",
   "neu": "Einstellungen › Kampagnen-Automatik › Maßnahmen automatisch ausführen",
   "status": "abgedeckt",
-  "demo_view": "e-automatik"
+  "demo_view": "e-automatik",
+  "id": "actions-saveglobalaction--global-autopilot-fuer-alle-konten",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2221,7 +3329,11 @@
   "quelle": "app/admin/optimierung/actions.ts:saveAccountAction",
   "neu": "Werbekonto › Einstellungen (Ziel, Budget, Stichwort ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-saveaccountaction--konto-modus-ziel-leadpreis-tagesbudget-kampagnen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2229,7 +3341,11 @@
   "quelle": "app/admin/optimierung/actions.ts:approveAllAction",
   "neu": "Werbekonto › Alle freigeben",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-approveallaction--alle-massnahmen-freigeben",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2237,7 +3353,11 @@
   "quelle": "app/admin/optimierung/actions.ts:approveOneAction",
   "neu": "Werbekonto › Freigeben",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-approveoneaction--einzelne-massnahme-freigeben",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2245,7 +3365,11 @@
   "quelle": "app/admin/optimierung/actions.ts:rejectAction",
   "neu": "Werbekonto › Ablehnen",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-rejectaction--massnahme-ablehnen-mit-notiz",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2253,7 +3377,11 @@
   "quelle": "app/admin/optimierung/actions.ts:doneAction",
   "neu": "Werbekonto › Maßnahme › Erledigt",
   "status": "ergänzen",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-doneaction--vorschlag-als-erledigt-markieren-mit-notiz",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2261,7 +3389,11 @@
   "quelle": "app/admin/optimierung/actions.ts:dryRunAction",
   "neu": "Werbekonto › Trockenlauf",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-dryrunaction--trockenlauf-je-konto",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2269,7 +3401,11 @@
   "quelle": "app/admin/optimierung/actions.ts:runNowAction",
   "neu": "Werbekonto › Jetzt planen",
   "status": "ergänzen",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-runnowaction--lauf-jetzt-starten",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2277,7 +3413,11 @@
   "quelle": "app/admin/optimierung/actions.ts:syncActivitiesAction",
   "neu": "Werbekonto › Protokoll › Meta-Änderungen abrufen",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "actions-syncactivitiesaction--meta-aenderungsprotokoll-abrufen-30-tage",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/optimierung",
@@ -2285,7 +3425,11 @@
   "quelle": "app/admin/optimierung/account-view.tsx:ProtocolCard",
   "neu": "Werbekonto › Protokoll",
   "status": "abgedeckt",
-  "demo_view": "leads-konto"
+  "demo_view": "leads-konto",
+  "id": "account-view-protocolcard--protokoll-je-konto-quelle-monatsbericht",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2293,7 +3437,11 @@
   "quelle": "app/admin/whatsapp/page.tsx:STATUS_TABS",
   "neu": "WhatsApp-Chats › Chips (Zurückgestellt, Erledigt ergänzen)",
   "status": "ergänzen",
-  "demo_view": "leads-chats"
+  "demo_view": "leads-chats",
+  "id": "page-status-tabs--status-reiter-offen-zurueckgestellt-erledigt",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2301,7 +3449,11 @@
   "quelle": "app/admin/whatsapp/page.tsx:ART_FILTERS",
   "neu": "WhatsApp-Chats › Chips (Support-Arten ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "leads-chats"
+  "demo_view": "leads-chats",
+  "id": "page-art-filters--filter-alle-leads-der-kunden-support-nummer",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2309,7 +3461,11 @@
   "quelle": "app/admin/whatsapp/page.tsx:q",
   "neu": "WhatsApp-Chats › Suchfeld",
   "status": "ergänzen",
-  "demo_view": "leads-chats"
+  "demo_view": "leads-chats",
+  "id": "page-q--chats-durchsuchen-nach-name-oder-nummer",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2317,7 +3473,11 @@
   "quelle": "app/admin/whatsapp/page.tsx:gcal",
   "neu": "Kundenakte › WhatsApp › Hinweis",
   "status": "abgedeckt",
-  "demo_view": "kunde-whatsapp"
+  "demo_view": "kunde-whatsapp",
+  "id": "page-gcal--rueckmeldung-kalender-verbunden-abgelehnt",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2325,7 +3485,11 @@
   "quelle": "app/admin/whatsapp/actions.ts:toggleBotAction",
   "neu": "Chat › Übernehmen bzw. Bot wieder an",
   "status": "abgedeckt",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "actions-togglebotaction--bot-pausieren-bzw-wieder-einschalten",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2333,7 +3497,11 @@
   "quelle": "app/admin/whatsapp/actions.ts:takeOverAction",
   "neu": "Chat › Übernehmen",
   "status": "abgedeckt",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "actions-takeoveraction--gespraech-uebernehmen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2341,7 +3509,11 @@
   "quelle": "app/admin/whatsapp/actions.ts:sendReplyAction",
   "neu": "Chat › Nachricht schreiben",
   "status": "abgedeckt",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "actions-sendreplyaction--antwort-senden-enter-sendet-am-rechner-emoji",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2349,7 +3521,11 @@
   "quelle": "app/admin/whatsapp/actions.ts:sendTemplateAction",
   "neu": "Chat › Vorlage einfügen",
   "status": "abgedeckt",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "actions-sendtemplateaction--freigegebene-vorlage-senden-ausserhalb-24",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2357,7 +3533,11 @@
   "quelle": "app/admin/whatsapp/appointment-actions.ts:loadRescheduleDialogAdmin, rescheduleAppointmentAdminAction",
   "neu": "Chat › Seitenleiste Termine › Verschieben",
   "status": "ergänzen",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "appointment-actions-loadrescheduledialogadmin--termin-des-leads-verschieben-dialog-mit-freien",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2365,7 +3545,11 @@
   "quelle": "app/admin/whatsapp/appointment-actions.ts:cancelAppointmentAdminAction",
   "neu": "Chat › Seitenleiste Termine › Absagen",
   "status": "ergänzen",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "appointment-actions-cancelappointmentadminaction--termin-des-leads-absagen",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2373,7 +3557,11 @@
   "quelle": "app/admin/whatsapp/page.tsx",
   "neu": "Chat › Seitenleiste Lead",
   "status": "ergänzen",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "page--seitenleiste-lead-kontaktdaten-formularangaben",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2381,7 +3569,11 @@
   "quelle": "app/admin/whatsapp/page.tsx:crmHref",
   "neu": "Chat › Zum Kunden (Anrufen, E-Mail ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "page-crmhref--anrufen-e-mail-zum-crm-kunden-aus-dem-chat",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2389,7 +3581,11 @@
   "quelle": "app/admin/whatsapp/page.tsx",
   "neu": "Chat › Hinweis",
   "status": "abgedeckt",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "page--hinweis-bot-kann-keine-termine-buchen-kalender",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2397,7 +3593,11 @@
   "quelle": "app/admin/whatsapp/actions.ts:assignSupportContactAction",
   "neu": "Chat › Seitenleiste Wer schreibt? › Zuordnen",
   "status": "ergänzen",
-  "demo_view": "leads-chat"
+  "demo_view": "leads-chat",
+  "id": "actions-assignsupportcontactaction--support-chat-absender-einem-vertriebskontakt",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp (Chats)",
@@ -2405,7 +3605,11 @@
   "quelle": "app/admin/whatsapp/page.tsx",
   "neu": "WhatsApp-Chats › Status Nicht zugestellt",
   "status": "abgedeckt",
-  "demo_view": "leads-chats"
+  "demo_view": "leads-chats",
+  "id": "page--braucht-aufmerksamkeit-grund-und-nicht",
+  "bereich": "leads",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2413,7 +3617,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:saveDraftAction",
   "neu": "Marketing › LinkedIn › Entwurf",
   "status": "abgedeckt",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-savedraftaction--entwuerfe-zur-freigabe-text-bearbeiten-bild",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2421,7 +3629,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:approveAction",
   "neu": "Marketing › LinkedIn › Freigeben",
   "status": "abgedeckt",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-approveaction--entwurf-freigeben-planen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2429,7 +3641,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:approveAction(sofort)",
   "neu": "Marketing › LinkedIn › Entwurf › Jetzt posten",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-approveaction-sofort--sofort-veroeffentlichen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2437,7 +3653,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:discardAction",
   "neu": "Marketing › LinkedIn › Entwurf › Verwerfen",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-discardaction--entwurf-verwerfen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2445,7 +3665,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:unapproveAction",
   "neu": "Marketing › LinkedIn › Liste Geplant",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-unapproveaction--geplante-posts-und-freigabe-zuruecknehmen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2453,7 +3677,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:generateNowAction",
   "neu": "Marketing › LinkedIn › + Entwurf",
   "status": "abgedeckt",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-generatenowaction--entwuerfe-jetzt-generieren-fuer-x-tage",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2461,7 +3689,11 @@
   "quelle": "app/admin/marketing/linkedin/page.tsx:Ergebnisse",
   "neu": "Marketing › LinkedIn › Reichweite je Zielgruppe (Tabelle je Post ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "page-ergebnisse--ergebnisse-je-post-impressionen-zielgruppe",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2469,7 +3701,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:setMetricsAction, setImportedTextAction",
   "neu": "Marketing › LinkedIn › Ergebnisse › Bearbeiten",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-setmetricsaction--zahlen-je-post-nachtragen-importierten-text",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2477,7 +3713,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:importAction",
   "neu": "Marketing › LinkedIn › Statistik hochladen",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-importaction--linkedin-statistik-excel-hochladen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2485,7 +3725,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:uploadPhotosAction, updatePhotoAction, deletePhotoAction",
   "neu": "Marketing › LinkedIn › Fotos",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-uploadphotosaction--fotos-hochladen-beschreiben-loeschen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2493,7 +3737,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:saveSettingsAction",
   "neu": "Marketing › LinkedIn › Einstellungen (oder Einstellungen › Anbindungen)",
   "status": "ergänzen",
-  "demo_view": "marketing"
+  "demo_view": "marketing",
+  "id": "actions-savesettingsaction--einstellungen-zielgruppe-produkte-ueber-mich",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -2501,7 +3749,11 @@
   "quelle": "app/admin/marketing/linkedin/actions.ts:disconnectAction",
   "neu": "Einstellungen › Anbindungen & Import › LinkedIn",
   "status": "abgedeckt",
-  "demo_view": "e-anbindungen"
+  "demo_view": "e-anbindungen",
+  "id": "actions-disconnectaction--linkedin-verbinden-bzw-trennen-hinweis-zugang",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -2509,7 +3761,11 @@
   "quelle": "app/admin/marketing/empfehlungen/page.tsx",
   "neu": "Marketing › Empfehlungen",
   "status": "abgedeckt",
-  "demo_view": "marketing-empfehlungen"
+  "demo_view": "marketing-empfehlungen",
+  "id": "page--kennzahlen-und-alle-empfehlungen-mit-stand-und",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -2517,7 +3773,11 @@
   "quelle": "app/admin/marketing/empfehlungen/actions.ts:markRewardDoneAction",
   "neu": "Marketing › Empfehlungen › Prämie › Gutgeschrieben",
   "status": "ergänzen",
-  "demo_view": "marketing-empfehlungen"
+  "demo_view": "marketing-empfehlungen",
+  "id": "actions-markrewarddoneaction--praemie-als-gutgeschrieben-markieren",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -2525,7 +3785,11 @@
   "quelle": "app/admin/marketing/empfehlungen/actions.ts:applyReferralDiscountsAction",
   "neu": "Marketing › Empfehlungen › Karte Offene Angebote ohne Rabatt",
   "status": "ergänzen",
-  "demo_view": "marketing-empfehlungen"
+  "demo_view": "marketing-empfehlungen",
+  "id": "actions-applyreferraldiscountsaction--empfehlungsrabatt-auf-offene-angebote-anwenden",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -2533,7 +3797,11 @@
   "quelle": "app/admin/marketing/empfehlungen/page.tsx:Top-Empfehler",
   "neu": "Marketing › Empfehlungen › Kennzahl Top-Empfehler (Tabelle ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "marketing-empfehlungen"
+  "demo_view": "marketing-empfehlungen",
+  "id": "page-top-empfehler--top-empfehler-mit-geworbenen-kunden-umsatz",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -2541,7 +3809,11 @@
   "quelle": "app/admin/marketing/unterlagen/praesentation/[audience]/page.tsx",
   "neu": "Marketing › Unterlagen › Web öffnen, PDF",
   "status": "abgedeckt",
-  "demo_view": "marketing-unterlagen"
+  "demo_view": "marketing-unterlagen",
+  "id": "page--web-praesentation-je-zielgruppe-oeffnen-und-als",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -2549,7 +3821,11 @@
   "quelle": "app/api/admin/praesentationen/[audience]/[format]/route.ts:GET",
   "neu": "Marketing › Unterlagen › PPTX, PDF",
   "status": "abgedeckt",
-  "demo_view": "marketing-unterlagen"
+  "demo_view": "marketing-unterlagen",
+  "id": "route-get--datei-pptx-pdf-herunterladen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -2557,7 +3833,11 @@
   "quelle": "app/api/admin/praesentationen/route.ts:POST",
   "neu": "Marketing › Unterlagen › Datei hochladen",
   "status": "ergänzen",
-  "demo_view": "marketing-unterlagen"
+  "demo_view": "marketing-unterlagen",
+  "id": "route-post--datei-hochladen-bzw-ersetzen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -2565,7 +3845,11 @@
   "quelle": "app/api/admin/praesentationen/route.ts:DELETE",
   "neu": "Marketing › Unterlagen › ⋯ › Entfernen",
   "status": "ergänzen",
-  "demo_view": "marketing-unterlagen"
+  "demo_view": "marketing-unterlagen",
+  "id": "route-delete--datei-entfernen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -2573,7 +3857,11 @@
   "quelle": "app/admin/marketing/unterlagen/unterlagen-grid.tsx",
   "neu": "Marketing › Unterlagen › Hinweis Live-Demo",
   "status": "abgedeckt",
-  "demo_view": "marketing-unterlagen"
+  "demo_view": "marketing-unterlagen",
+  "id": "unterlagen-grid--live-demo-der-beratungspraesentation",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -2581,7 +3869,11 @@
   "quelle": "components/marketing/nav.tsx",
   "neu": "Marketing › Webseite & Rechner",
   "status": "abgedeckt",
-  "demo_view": "marketing-webseite"
+  "demo_view": "marketing-webseite",
+  "id": "nav--oeffentlichen-rechner-oeffnen",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2589,7 +3881,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Übersicht",
   "status": "abgedeckt",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view--kennzahlen-kacheln-mrr-kunden-churn-cac",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2597,7 +3893,11 @@
   "quelle": "components/admin/zahlen-view.tsx:sicht",
   "neu": "Zahlen › Übersicht › Umschalter",
   "status": "abgedeckt",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view-sicht--sicht-kerngeschaeft-oder-gesamt-mit-pay-per-lead",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2605,7 +3905,11 @@
   "quelle": "components/admin/zahlen-view.tsx:setDrill",
   "neu": "Zahlen › Übersicht › Kachel › Details",
   "status": "ergänzen",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view-setdrill--kachel-aufklappen-drill-down-kunden-je-kennzahl",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2613,7 +3917,11 @@
   "quelle": "components/admin/zahlen-view.tsx:toggleInvestor",
   "neu": "Zahlen › Übersicht › Umschalter Investoren",
   "status": "ergänzen",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view-toggleinvestor--investoren-ansicht-interne-reiter-ausblenden",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2621,7 +3929,11 @@
   "quelle": "app/admin/zahlen/actions.ts:saveUpdateTextsAction",
   "neu": "Zahlen › Übersicht › Investoren-Update",
   "status": "ergänzen",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "actions-saveupdatetextsaction--investoren-update-highlights-texte-speichern",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2629,7 +3941,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Übersicht › MRR je Monat",
   "status": "abgedeckt",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view--reiter-wachstum-umsatz-je-strom-umsatzmix",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2637,7 +3953,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Übersicht bzw. Kunden-Lebenszyklus",
   "status": "ergänzen",
-  "demo_view": "zahlen-kunden"
+  "demo_view": "zahlen-kunden",
+  "id": "zahlen-view--reiter-kunden-kohorten-kundenbasis-abhaengigkeit",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2645,7 +3965,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Übersicht (CAC-Kachel), Marge ergänzen",
   "status": "ergänzen",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view--reiter-wirtschaftlichkeit-kundengewinnung",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2653,7 +3977,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Qualität & Nutzung oder Übersicht",
   "status": "ergänzen",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view--reiter-wirkung-beim-vertreter-pro-1-lead-bis",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2661,7 +3989,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Übersicht › Produkte",
   "status": "abgedeckt",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view--reiter-produkte-ueber-alle-vertreter-und-je",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2669,7 +4001,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Übersicht › Vertrieb (30 Tage)",
   "status": "abgedeckt",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view--reiter-vertrieb-pipeline-woher-kunden-kommen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2677,7 +4013,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Übersicht › Pay-per-Lead",
   "status": "abgedeckt",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view--reiter-pay-per-lead-verkaufte-leads-je-monat",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2685,7 +4025,11 @@
   "quelle": "components/admin/zahlen-view.tsx:BWA",
   "neu": "Zahlen › Übersicht › BWA",
   "status": "abgedeckt",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-view-bwa--reiter-bwa-mit-drill-down-je-zeile-und-hinweis",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2693,7 +4037,11 @@
   "quelle": "app/admin/zahlen/actions.ts:saveManualRevenueAction",
   "neu": "Zahlen › Umsatz & Buchungen › + Umsatz von Hand",
   "status": "ergänzen",
-  "demo_view": "zahlen-umsatz"
+  "demo_view": "zahlen-umsatz",
+  "id": "actions-savemanualrevenueaction--einrichtungsgebuehren-je-monat-umsatz-von-hand",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2701,7 +4049,11 @@
   "quelle": "app/admin/zahlen/actions.ts:deleteManualRevenueAction",
   "neu": "Zahlen › Umsatz & Buchungen › ⋯",
   "status": "ergänzen",
-  "demo_view": "zahlen-umsatz"
+  "demo_view": "zahlen-umsatz",
+  "id": "actions-deletemanualrevenueaction--manuellen-umsatz-loeschen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2709,7 +4061,11 @@
   "quelle": "components/admin/zahlen-view.tsx",
   "neu": "Zahlen › Umsatz & Buchungen › Hinweis",
   "status": "ergänzen",
-  "demo_view": "zahlen-umsatz"
+  "demo_view": "zahlen-umsatz",
+  "id": "zahlen-view--kunden-ohne-hinterlegte-betreuungsgebuehr",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen",
@@ -2717,7 +4073,11 @@
   "quelle": "components/admin/zahlen-tabs.tsx",
   "neu": "Zahlen › Übersicht › Link Leads & Werbung",
   "status": "ergänzen",
-  "demo_view": "zahlen"
+  "demo_view": "zahlen",
+  "id": "zahlen-tabs--link-leads-werbung-dashboard",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -2725,7 +4085,11 @@
   "quelle": "components/admin/buchungen-liste.tsx",
   "neu": "Zahlen › Umsatz & Buchungen",
   "status": "abgedeckt",
-  "demo_view": "zahlen-umsatz"
+  "demo_view": "zahlen-umsatz",
+  "id": "buchungen-liste--buchungsliste-aller-kunden-angebote-produkte",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -2733,7 +4097,11 @@
   "quelle": "app/admin/zahlen/buchungen/page.tsx",
   "neu": "Zahlen › Umsatz & Buchungen › Chips",
   "status": "abgedeckt",
-  "demo_view": "zahlen-umsatz"
+  "demo_view": "zahlen-umsatz",
+  "id": "page--filter-kunde-art-status-zeitraum-offen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -2741,7 +4109,11 @@
   "quelle": "app/admin/zahlen/buchungen/page.tsx:q",
   "neu": "Zahlen › Umsatz & Buchungen › Suche",
   "status": "ergänzen",
-  "demo_view": "zahlen-umsatz"
+  "demo_view": "zahlen-umsatz",
+  "id": "page-q--suche-in-buchungen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -2749,7 +4121,11 @@
   "quelle": "app/admin/zahlen/buchungen/export/route.ts:GET",
   "neu": "Zahlen › Umsatz & Buchungen › Export",
   "status": "ergänzen",
-  "demo_view": "zahlen-umsatz"
+  "demo_view": "zahlen-umsatz",
+  "id": "route-get--csv-export-buchungen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -2757,7 +4133,11 @@
   "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
   "neu": "Zahlen › Kunden-Lebenszyklus › Kennzahlen",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kunden"
+  "demo_view": "zahlen-kunden",
+  "id": "page--kunden-je-monat-neu-reaktiviert-gekuendigt-netto",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -2765,7 +4145,11 @@
   "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
   "neu": "Zahlen › Kunden-Lebenszyklus › MRR-Bewegung",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kunden"
+  "demo_view": "zahlen-kunden",
+  "id": "page--mrr-bewegung-je-monat",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -2773,7 +4157,11 @@
   "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
   "neu": "Zahlen › Kunden-Lebenszyklus › Karte Reaktivierungsquote",
   "status": "ergänzen",
-  "demo_view": "zahlen-kunden"
+  "demo_view": "zahlen-kunden",
+  "id": "page--reaktivierungsquote-je-kuendigungsmonat",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -2781,7 +4169,11 @@
   "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
   "neu": "Zahlen › Kunden-Lebenszyklus",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kunden"
+  "demo_view": "zahlen-kunden",
+  "id": "page--kuendigungsgruende-die-zurueckkommen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -2789,7 +4181,11 @@
   "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
   "neu": "Zahlen › Kunden-Lebenszyklus › Halteangebote",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kunden"
+  "demo_view": "zahlen-kunden",
+  "id": "page--halteangebote-angenommen-mrr-gerettet-spaeter",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -2797,7 +4193,11 @@
   "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
   "neu": "Zahlen › Kunden-Lebenszyklus › Liste Ruhend (Kunden › Filter Ruhend)",
   "status": "abgedeckt",
-  "demo_view": "kunden"
+  "demo_view": "kunden",
+  "id": "page--ruhende-konten-mit-loeschdatum-aufbewahrung",
+  "bereich": "kunden",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/stornoquote",
@@ -2805,7 +4205,11 @@
   "quelle": "components/admin/storno-quote.tsx:StornoQuoteUebersicht",
   "neu": "Zahlen › Qualität & Nutzung › Stornoquote",
   "status": "abgedeckt",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "storno-quote-stornoquoteuebersicht--stornoquote-der-vertraege-je-kunde-und-sparte",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/whatsapp",
@@ -2813,7 +4217,11 @@
   "quelle": "components/admin/whatsapp-zustellung.tsx",
   "neu": "Zahlen › Qualität & Nutzung › Ohne WhatsApp (Tabelle je Kunde ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "whatsapp-zustellung--leads-ohne-whatsapp-je-kunde-30-tage-gesamt",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/whatsapp",
@@ -2821,7 +4229,11 @@
   "quelle": "components/admin/whatsapp-zustellung.tsx",
   "neu": "Zahlen › Qualität & Nutzung › Zustellfehler",
   "status": "abgedeckt",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "whatsapp-zustellung--zustellfehler-der-letzten-14-tage-je-kunde-und",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/nutzung",
@@ -2829,7 +4241,11 @@
   "quelle": "app/admin/nutzung/page.tsx",
   "neu": "Zahlen › Qualität & Nutzung › Hilfe-Anfragen",
   "status": "abgedeckt",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "page--hilfe-anfragen-an-das-team",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/nutzung",
@@ -2837,7 +4253,11 @@
   "quelle": "app/admin/nutzung/page.tsx",
   "neu": "Zahlen › Qualität & Nutzung › KI-Hilfe",
   "status": "abgedeckt",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "page--ki-hilfe-fragen-der-vertreter-mit-bewertung",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/nutzung",
@@ -2845,7 +4265,11 @@
   "quelle": "app/admin/nutzung/page.tsx",
   "neu": "Zahlen › Qualität & Nutzung › Genutzte Funktionen (je Kunde ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "page--nutzung-je-kunde-liegt-herum-genutzte-aktionen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/nutzung",
@@ -2853,7 +4277,11 @@
   "quelle": "app/admin/nutzung/nps-card.tsx",
   "neu": "Zahlen › Qualität & Nutzung › NPS",
   "status": "abgedeckt",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "nps-card--weiterempfehlung-nps",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/nutzung",
@@ -2861,7 +4289,11 @@
   "quelle": "app/admin/nutzung/module-card.tsx",
   "neu": "fehlt. Vorschlag Zahlen › Qualität & Nutzung › Karte Modul-Kandidaten",
   "status": "ergänzen",
-  "demo_view": "zahlen-qualitaet"
+  "demo_view": "zahlen-qualitaet",
+  "id": "module-card--zusatzmodul-empfehlungen-kandidaten-fuers",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/nutzung",
@@ -2869,7 +4301,11 @@
   "quelle": "app/admin/nutzung/module-actions.ts:sendAnnouncementAction",
   "neu": "Einstellungen › Neuigkeiten › Ankündigung an Kandidaten",
   "status": "ergänzen",
-  "demo_view": "e-neuigkeiten"
+  "demo_view": "e-neuigkeiten",
+  "id": "module-actions-sendannouncementaction--ankuendigung-des-zusatzmoduls-an-kunden-senden",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen",
@@ -2877,7 +4313,11 @@
   "quelle": "app/admin/einstellungen/page.tsx",
   "neu": "Einstellungen › 6 Gruppen",
   "status": "abgedeckt",
-  "demo_view": "einstellungen"
+  "demo_view": "einstellungen",
+  "id": "page--uebersicht-aller-einstellungen-in-gruppen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen",
@@ -2885,7 +4325,11 @@
   "quelle": "app/admin/einstellungen/page.tsx",
   "neu": "Einstellungen › Hinweise oben bzw. Heute",
   "status": "ergänzen",
-  "demo_view": "einstellungen"
+  "demo_view": "einstellungen",
+  "id": "page--warnhinweise-zwei-faktor-aus-steuernummer-fehlt",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/produkte",
@@ -2893,7 +4337,11 @@
   "quelle": "app/admin/einstellungen/produkte/actions.ts:saveCatalogItemAction",
   "neu": "Einstellungen › Produkte › Aktiv",
   "status": "abgedeckt",
-  "demo_view": "e-produkte"
+  "demo_view": "e-produkte",
+  "id": "actions-savecatalogitemaction--produkt-buchbar-an-aus",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/produkte",
@@ -2901,7 +4349,11 @@
   "quelle": "app/admin/einstellungen/produkte/actions.ts:saveCatalogItemAction",
   "neu": "Einstellungen › Produkte › Bearbeiten",
   "status": "ergänzen",
-  "demo_view": "e-produkte"
+  "demo_view": "e-produkte",
+  "id": "actions-savecatalogitemaction--produkt-als-bewaehrt-markieren-und-nutzen-text",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/beitraege",
@@ -2909,7 +4361,11 @@
   "quelle": "app/admin/einstellungen/beitraege/actions.ts:preisPilotUmschaltenAction",
   "neu": "Einstellungen › Tarifkatalog › Beitragsrechner (Pilot)",
   "status": "ergänzen",
-  "demo_view": "e-tarife"
+  "demo_view": "e-tarife",
+  "id": "actions-preispilotumschaltenaction--beitraege-rechnen-pilot-rechner-je-gesellschaft",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/kampagnen-automatik",
@@ -2917,7 +4373,11 @@
   "quelle": "app/admin/einstellungen/kampagnen-automatik/actions.ts:saveAutomationAction",
   "neu": "Einstellungen › Kampagnen-Automatik › Schalter",
   "status": "ergänzen",
-  "demo_view": "e-automatik"
+  "demo_view": "e-automatik",
+  "id": "actions-saveautomationaction--budgetaenderungen-automatisch-bei-meta-umsetzen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/kampagnen-automatik",
@@ -2925,7 +4385,11 @@
   "quelle": "app/admin/einstellungen/kampagnen-automatik/actions.ts:saveAutomationAction",
   "neu": "Einstellungen › Kampagnen-Automatik › Schalter",
   "status": "ergänzen",
-  "demo_view": "e-automatik"
+  "demo_view": "e-automatik",
+  "id": "actions-saveautomationaction--gebuchte-produkte-starten-das-agenten-team",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/kampagnen-automatik",
@@ -2933,7 +4397,11 @@
   "quelle": "app/admin/einstellungen/kampagnen-automatik/actions.ts:saveAutomationAction",
   "neu": "Einstellungen › Kampagnen-Automatik › Anzeigen mit hohen Kosten (Schwellen ergänzen)",
   "status": "abgedeckt",
-  "demo_view": "e-automatik"
+  "demo_view": "e-automatik",
+  "id": "actions-saveautomationaction--muede-anzeigen-erkennen-mit-schwellen-frequenz",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/halteangebote",
@@ -2941,7 +4409,11 @@
   "quelle": "app/admin/einstellungen/halteangebote/actions.ts:saveHalteAction",
   "neu": "Einstellungen › Halteangebote",
   "status": "abgedeckt",
-  "demo_view": "e-halte"
+  "demo_view": "e-halte",
+  "id": "actions-savehalteaction--halteangebote-je-kuendigungsgrund-an-aus-mit",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/halteangebote",
@@ -2949,7 +4421,11 @@
   "quelle": "app/admin/einstellungen/halteangebote/form.tsx",
   "neu": "Einstellungen › Halteangebote › Hinweis",
   "status": "abgedeckt",
-  "demo_view": "e-halte"
+  "demo_view": "e-halte",
+  "id": "form--regeln-fuer-rabatte-anzeige",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -2957,7 +4433,11 @@
   "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:saveUpdateAction",
   "neu": "Einstellungen › Neuigkeiten",
   "status": "abgedeckt",
-  "demo_view": "e-neuigkeiten"
+  "demo_view": "e-neuigkeiten",
+  "id": "actions-saveupdateaction--neuigkeiten-liste-neu-anlegen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -2965,7 +4445,11 @@
   "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:saveUpdateAction",
   "neu": "Einstellungen › Neuigkeiten › Eintrag",
   "status": "ergänzen",
-  "demo_view": "e-neuigkeiten"
+  "demo_view": "e-neuigkeiten",
+  "id": "actions-saveupdateaction--eintrag-bearbeiten-art-zielgruppe-push-an-kunden",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -2973,7 +4457,11 @@
   "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:draftUpdateAction",
   "neu": "Einstellungen › Neuigkeiten › Mit KI entwerfen",
   "status": "ergänzen",
-  "demo_view": "e-neuigkeiten"
+  "demo_view": "e-neuigkeiten",
+  "id": "actions-draftupdateaction--ki-entwurf-aus-notizen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -2981,7 +4469,11 @@
   "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:deleteUpdateAction",
   "neu": "Einstellungen › Neuigkeiten › ⋯",
   "status": "ergänzen",
-  "demo_view": "e-neuigkeiten"
+  "demo_view": "e-neuigkeiten",
+  "id": "actions-deleteupdateaction--eintrag-loeschen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/neuigkeiten",
@@ -2989,7 +4481,11 @@
   "quelle": "app/admin/einstellungen/neuigkeiten/form.tsx",
   "neu": "Einstellungen › Neuigkeiten › Vorschau",
   "status": "ergänzen",
-  "demo_view": "e-neuigkeiten"
+  "demo_view": "e-neuigkeiten",
+  "id": "form--vorschau-im-kundenbereich",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/monatsberichte",
@@ -2997,7 +4493,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:saveReportSettingsAction",
   "neu": "Einstellungen › Monatsberichte › Automatisch versenden",
   "status": "abgedeckt",
-  "demo_view": "e-berichte"
+  "demo_view": "e-berichte",
+  "id": "actions-savereportsettingsaction--gute-berichte-automatisch-senden",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/monatsberichte",
@@ -3005,7 +4505,11 @@
   "quelle": "app/admin/monatsberichte/actions.ts:saveReportSettingsAction",
   "neu": "Einstellungen › Monatsberichte › Schwellen, Absender",
   "status": "ergänzen",
-  "demo_view": "e-berichte"
+  "demo_view": "e-berichte",
+  "id": "actions-savereportsettingsaction--einstufung-gut-schwach-ziel-leadpreis-absender",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -3013,7 +4517,11 @@
   "quelle": "app/admin/einstellungen/login/actions.ts:saveLoginCardAction",
   "neu": "Einstellungen › Login-Seite",
   "status": "abgedeckt",
-  "demo_view": "e-login"
+  "demo_view": "e-login",
+  "id": "actions-savelogincardaction--infokarten-liste-neue-karte",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -3021,7 +4529,11 @@
   "quelle": "app/admin/einstellungen/login/actions.ts:saveLoginCardAction",
   "neu": "Einstellungen › Login-Seite › Karte",
   "status": "abgedeckt",
-  "demo_view": "e-login"
+  "demo_view": "e-login",
+  "id": "actions-savelogincardaction--karte-bearbeiten-badge-titel-text-link-bild",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -3029,7 +4541,11 @@
   "quelle": "app/admin/einstellungen/login/actions.ts:toggleLoginCardAction",
   "neu": "Einstellungen › Login-Seite › Schalter",
   "status": "abgedeckt",
-  "demo_view": "e-login"
+  "demo_view": "e-login",
+  "id": "actions-togglelogincardaction--karte-an-aus",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -3037,7 +4553,11 @@
   "quelle": "app/admin/einstellungen/login/actions.ts:moveLoginCardAction",
   "neu": "Einstellungen › Login-Seite › Verschieben",
   "status": "ergänzen",
-  "demo_view": "e-login"
+  "demo_view": "e-login",
+  "id": "actions-movelogincardaction--reihenfolge-der-karten-aendern",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/login",
@@ -3045,7 +4565,11 @@
   "quelle": "app/admin/einstellungen/login/actions.ts:deleteLoginCardAction",
   "neu": "Einstellungen › Login-Seite › ⋯",
   "status": "abgedeckt",
-  "demo_view": "e-login"
+  "demo_view": "e-login",
+  "id": "actions-deletelogincardaction--karte-loeschen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -3053,7 +4577,11 @@
   "quelle": "app/admin/einstellungen/status/actions.ts:createIncidentAction",
   "neu": "Einstellungen › Status & Support › + Meldung",
   "status": "abgedeckt",
-  "demo_view": "e-status"
+  "demo_view": "e-status",
+  "id": "actions-createincidentaction--statusmeldung-veroeffentlichen-text-stufe",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -3061,7 +4589,11 @@
   "quelle": "app/admin/einstellungen/status/actions.ts:resolveIncidentAction",
   "neu": "Einstellungen › Status & Support › Meldung › Behoben",
   "status": "ergänzen",
-  "demo_view": "e-status"
+  "demo_view": "e-status",
+  "id": "actions-resolveincidentaction--meldung-als-behoben-markieren",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -3069,7 +4601,11 @@
   "quelle": "app/admin/einstellungen/status/actions.ts:deleteIncidentAction",
   "neu": "Einstellungen › Status & Support › Meldung › ⋯",
   "status": "ergänzen",
-  "demo_view": "e-status"
+  "demo_view": "e-status",
+  "id": "actions-deleteincidentaction--meldung-loeschen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/status",
@@ -3077,7 +4613,11 @@
   "quelle": "app/admin/einstellungen/status/page.tsx",
   "neu": "Einstellungen › Status & Support",
   "status": "abgedeckt",
-  "demo_view": "e-status"
+  "demo_view": "e-status",
+  "id": "page--zustand-jetzt-und-support-kontakt-anzeige",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/rechner",
@@ -3085,7 +4625,11 @@
   "quelle": "app/admin/einstellungen/rechner/actions.ts:saveRechnerAction",
   "neu": "Marketing › Webseite & Rechner",
   "status": "abgedeckt",
-  "demo_view": "marketing-webseite"
+  "demo_view": "marketing-webseite",
+  "id": "actions-saverechneraction--rechner-produkte-quoten-kosten-garantien-texte",
+  "bereich": "marketing",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/empfehlungen",
@@ -3093,7 +4637,11 @@
   "quelle": "app/admin/einstellungen/empfehlungen/actions.ts:saveReferralSettingsAction",
   "neu": "Einstellungen › Kollegen empfehlen",
   "status": "abgedeckt",
-  "demo_view": "e-empfehlen"
+  "demo_view": "e-empfehlen",
+  "id": "actions-savereferralsettingsaction--programm-aktiv-hinweise-an-kunden-praemie-fest",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/einrichtung",
@@ -3101,7 +4649,11 @@
   "quelle": "app/admin/einstellungen/einrichtung/actions.ts:saveSetupSettingsAction",
   "neu": "Einstellungen › Einrichtung neuer Kunden › Felder",
   "status": "ergänzen",
-  "demo_view": "e-einrichtung"
+  "demo_view": "e-einrichtung",
+  "id": "actions-savesetupsettingsaction--meta-business-id-und-erklaervideos-je-schritt",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -3109,7 +4661,11 @@
   "quelle": "app/admin/einstellungen/rechnungsangaben/actions.ts:saveTaxNumberAction",
   "neu": "Einstellungen › Rechnungsangaben › Feld Steuernummer",
   "status": "ergänzen",
-  "demo_view": "e-rechnung"
+  "demo_view": "e-rechnung",
+  "id": "actions-savetaxnumberaction--steuernummer-fuer-rechnungen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -3117,7 +4673,11 @@
   "quelle": "app/admin/einstellungen/rechnungsangaben/page.tsx",
   "neu": "Einstellungen › Rechnungsangaben › Prüfung",
   "status": "ergänzen",
-  "demo_view": "e-rechnung"
+  "demo_view": "e-rechnung",
+  "id": "page--stripe-konto-pruefen-pflichtangaben-testmodus",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -3125,7 +4685,11 @@
   "quelle": "app/admin/einstellungen/rechnungsangaben/actions.ts:customerFootersAction",
   "neu": "Einstellungen › Rechnungsangaben › Bestehende Kunden",
   "status": "ergänzen",
-  "demo_view": "e-rechnung"
+  "demo_view": "e-rechnung",
+  "id": "actions-customerfootersaction--fusszeile-bei-bestehenden-kunden-setzen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -3133,7 +4697,11 @@
   "quelle": "app/admin/einstellungen/rechnungsangaben/actions.ts:countInvoicesAction",
   "neu": "Einstellungen › Rechnungsangaben › Rechnungen zählen",
   "status": "ergänzen",
-  "demo_view": "e-rechnung"
+  "demo_view": "e-rechnung",
+  "id": "actions-countinvoicesaction--finalisierte-rechnungen-zaehlen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/kosten",
@@ -3141,7 +4709,11 @@
   "quelle": "app/admin/zahlen/actions.ts:saveRecurringCostAction",
   "neu": "Zahlen › Kosten & Bank › + Kosten",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-saverecurringcostaction--laufende-kosten-anlegen-aendern-zweck-zeitraum",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/kosten",
@@ -3149,7 +4721,11 @@
   "quelle": "app/admin/zahlen/actions.ts:deleteRecurringCostAction",
   "neu": "Zahlen › Kosten & Bank › Laufende Kosten › ⋯",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-deleterecurringcostaction--laufende-kosten-loeschen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/kosten",
@@ -3157,7 +4733,11 @@
   "quelle": "app/admin/zahlen/actions.ts:saveKpiSettingsAction",
   "neu": "Zahlen › Kosten & Bank › Karte Annahmen",
   "status": "ergänzen",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-savekpisettingsaction--annahmen-fuer-kennzahlen-stunden-stundensatz",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3165,7 +4745,11 @@
   "quelle": "app/admin/einstellungen/bank/actions.ts:connectBankAction",
   "neu": "Zahlen › Kosten & Bank › + Konto",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-connectbankaction--bank-verbinden",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3173,7 +4757,11 @@
   "quelle": "app/admin/einstellungen/bank/actions.ts:syncBankAction",
   "neu": "Zahlen › Kosten & Bank › Konto › Abrufen",
   "status": "ergänzen",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-syncbankaction--umsaetze-jetzt-abrufen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3181,7 +4769,11 @@
   "quelle": "app/admin/einstellungen/bank/actions.ts:disconnectBankAction",
   "neu": "Zahlen › Kosten & Bank › Konto › Trennen",
   "status": "ergänzen",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-disconnectbankaction--bank-trennen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3189,7 +4781,11 @@
   "quelle": "app/admin/einstellungen/bank/actions.ts:uploadCsvAction",
   "neu": "Zahlen › Kosten & Bank › Hochladen",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-uploadcsvaction--csv-hochladen-commerzbank-amex-automatisch",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3197,7 +4793,11 @@
   "quelle": "app/admin/einstellungen/bank/actions.ts:saveRuleAction",
   "neu": "Zahlen › Kosten & Bank › Regeln",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-saveruleaction--regel-speichern",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3205,7 +4805,11 @@
   "quelle": "app/admin/einstellungen/bank/actions.ts:deleteRuleAction",
   "neu": "Zahlen › Kosten & Bank › Regeln › ⋯",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-deleteruleaction--regel-loeschen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3213,7 +4817,11 @@
   "quelle": "app/admin/einstellungen/bank/actions.ts:assignAction",
   "neu": "Zahlen › Kosten & Bank › Neue Ausgaben zuordnen",
   "status": "abgedeckt",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "actions-assignaction--ausgabe-zuordnen-zweck-inkl-ust-immer-so-bei",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -3221,7 +4829,11 @@
   "quelle": "app/admin/einstellungen/bank/zuordnen/page.tsx",
   "neu": "Zahlen › Kosten & Bank › Alle Ausgaben",
   "status": "ergänzen",
-  "demo_view": "zahlen-kosten"
+  "demo_view": "zahlen-kosten",
+  "id": "page--zugeordnete-ausgaben-ansehen",
+  "bereich": "zahlen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/sicherheit",
@@ -3229,7 +4841,11 @@
   "quelle": "app/admin/einstellungen/sicherheit/actions.ts:startTotpSetupAction, confirmTotpAction, disableTotpAction",
   "neu": "Einstellungen › Zwei-Faktor & Geräte",
   "status": "abgedeckt",
-  "demo_view": "e-sicherheit"
+  "demo_view": "e-sicherheit",
+  "id": "actions-starttotpsetupaction--zwei-faktor-einrichten-bestaetigen-abschalten",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/sicherheit",
@@ -3237,7 +4853,11 @@
   "quelle": "app/admin/einstellungen/sicherheit/actions.ts:signOutEverywhereAction",
   "neu": "Einstellungen › Zwei-Faktor & Geräte › Überall abmelden",
   "status": "ergänzen",
-  "demo_view": "e-sicherheit"
+  "demo_view": "e-sicherheit",
+  "id": "actions-signouteverywhereaction--ueberall-abmelden",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/protokoll",
@@ -3245,7 +4865,11 @@
   "quelle": "app/admin/einstellungen/protokoll/page.tsx",
   "neu": "Einstellungen › Änderungsprotokoll",
   "status": "abgedeckt",
-  "demo_view": "e-protokoll"
+  "demo_view": "e-protokoll",
+  "id": "page--aenderungsprotokoll-ansehen",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/protokoll",
@@ -3253,7 +4877,11 @@
   "quelle": "app/admin/einstellungen/protokoll/page.tsx",
   "neu": "Einstellungen › Änderungsprotokoll › Filter",
   "status": "ergänzen",
-  "demo_view": "e-protokoll"
+  "demo_view": "e-protokoll",
+  "id": "page--protokoll-filtern-nach-kunde-und-art",
+  "bereich": "einstellungen",
+  "status_neu": "offen",
+  "ort_neu": ""
  },
  {
   "heute": "/api/admin",
@@ -3261,7 +4889,11 @@
   "quelle": "app/api/admin/openai-check/route.ts:GET",
   "neu": "bleibt API, vom Neudesign nicht betroffen",
   "status": "abgedeckt",
-  "demo_view": "landkarte"
+  "demo_view": "landkarte",
+  "id": "route-get--diagnose-openai-erreichbarkeit-nur-technik-keine",
+  "bereich": "was-wo-ist",
+  "status_neu": "bleibt",
+  "ort_neu": ""
  },
  {
   "heute": "/api/admin",
@@ -3269,6 +4901,10 @@
   "quelle": "app/api/admin/airtable-fields/route.ts:GET",
   "neu": "bleibt API, vom Neudesign nicht betroffen",
   "status": "abgedeckt",
-  "demo_view": "landkarte"
+  "demo_view": "landkarte",
+  "id": "route-get--diagnose-airtable-felder-nur-technik-keine",
+  "bereich": "was-wo-ist",
+  "status_neu": "bleibt",
+  "ort_neu": ""
  }
 ]
