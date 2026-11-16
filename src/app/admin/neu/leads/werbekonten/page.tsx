@@ -48,7 +48,7 @@ async function Konten() {
     <div className="space-y-4">
       <Card>
         <div data-funktion="page--werbekonten-liste-mit-modus-letzter-massnahme">
-          <CardHeader title="Werbekonten" count={rows.filter((r) => r.active).length} hint={offen ? `${offen} Maßnahmen warten auf Freigabe` : `rot: letzte Maßnahme älter als ${STALE_DAYS} Tage`} />
+          <CardHeader title="Werbekonten" count={rows.filter((r) => r.active).length} hint={offen ? `${offen} ${offen === 1 ? "Maßnahme wartet" : "Maßnahmen warten"} auf Freigabe` : `rot: letzte Maßnahme älter als ${STALE_DAYS} Tage`} />
           {sortiert.length ? (
             <ul className="divide-y divide-[color:var(--border)]">
               {sortiert.map((r) => (
