@@ -30,7 +30,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-type ApiCampaign = { id: string; name: string };
+/** Nur lesender Zugriff auf die Instantly-API (Diagnose). */
+export async function instantlyRead<T>(path: string): Promise<T> {
+  return api<T>(path);
+}
+
+type ApiCampaign = { id: string; name: string; status?: number };
 type ApiLead = {
   id: string;
   email: string | null;
@@ -93,11 +98,24 @@ export async function ensureInstantlyContact(
   return { id: c.id, created: true };
 }
 
-async function upsertCampaign(name: string, instantlyId?: string) {
+/**
+ * Kampagne zur Instantly-ID bzw. zum Namen. Ohne Namen (Webhook ohne campaign_name) bleibt der
+ * gespeicherte Name; vorher wurde die Kampagne dann in „Instantly“ umbenannt, und gab es den Namen
+ * schon, brach der Webhook mit einem Unique-Fehler ab (Antwort ging verloren).
+ */
+export async function upsertCampaign(rawName: string | null | undefined, instantlyId?: string) {
+  const given = rawName?.trim() || null;
   if (instantlyId) {
     const byId = await prisma.salesCampaign.findUnique({ where: { instantlyId } });
-    if (byId) return byId.name === name ? byId : prisma.salesCampaign.update({ where: { id: byId.id }, data: { name } });
+    if (byId) {
+      if (!given || byId.name === given) return byId;
+      return prisma.salesCampaign.update({ where: { id: byId.id }, data: { name: given } }).catch((err) => {
+        if ((err as { code?: string }).code === "P2002") return byId; // Name gehört schon einer anderen Kampagne
+        throw err;
+      });
+    }
   }
+  const name = given ?? "Instantly";
   return prisma.salesCampaign.upsert({
     where: { name },
     create: { name, instantlyId, ignored: IGNORE_CAMPAIGN.test(name) },
@@ -106,7 +124,7 @@ async function upsertCampaign(name: string, instantlyId?: string) {
 }
 
 /** Kampagnen mit anderem Thema: kommen nicht ins CRM (umschaltbar unter Vertrieb → Import). */
-const IGNORE_CAMPAIGN = /pflege|bad[\s-]?umbau|kinderwunsch/i;
+export const IGNORE_CAMPAIGN = /pflege|bad[\s-]?umbau|kinderwunsch/i;
 /** Ältere Instantly-Aktivität stammt aus früheren Pay-per-Lead-Kampagnen → keinen neuen Kontakt anlegen. */
 const CREATE_MAX_AGE_MS = 28 * 86400000;
 const recent = (d: string | Date | null | undefined) => !!d && Date.now() - new Date(d).getTime() <= CREATE_MAX_AGE_MS;
@@ -118,11 +136,8 @@ async function contactMap(emails: string[]) {
   return contactIdsByEmails(emails);
 }
 
-export type SyncStats = { campaigns: number; leads: number; matched: number; unmatched: number; created: number; sent: number; replies: number; newReplies: number };
-
-/** Holt alle Kampagnen + Leads aus Instantly (API v2) und gleicht per E-Mail ab. */
-export async function syncInstantly(): Promise<SyncStats> {
-  const stats: SyncStats = { campaigns: 0, leads: 0, matched: 0, unmatched: 0, created: 0, sent: 0, replies: 0, newReplies: 0 };
+/** Alle Kampagnen des Instantly-Workspace (nur lesend). */
+export async function listCampaigns(): Promise<ApiCampaign[]> {
   const campaigns: ApiCampaign[] = [];
   let cursor: string | undefined;
   do {
@@ -132,6 +147,47 @@ export async function syncInstantly(): Promise<SyncStats> {
     campaigns.push(...page.items);
     cursor = page.items.length ? page.next_starting_after : undefined;
   } while (cursor);
+  return campaigns;
+}
+
+/** Name, Firma usw. eines Leads aus Instantly (für neu angelegte Kontakte); ohne Treffer leer. Nur lesend. */
+export async function leadDetails(email: string): Promise<Parameters<typeof ensureInstantlyContact>[1]> {
+  try {
+    const page = await api<{ items: ApiLead[] }>("/leads/list", { method: "POST", body: JSON.stringify({ search: email, limit: 10 }) });
+    const l = (page.items ?? []).find((x) => x.email?.trim().toLowerCase() === email.trim().toLowerCase());
+    return l ? { firstName: l.first_name, lastName: l.last_name, company: l.company_name, website: l.website, phone: l.phone } : {};
+  } catch {
+    return {};
+  }
+}
+
+// Unibox-Ansicht ausdrücklich „alle“ (Primary und Others), damit keine Antwort an der Standardansicht
+// hängen bleibt. Lehnt die API den Parameter ab (400), geht es ohne ihn weiter.
+let modeAllSupported: boolean | null = null;
+
+/** Eine Seite empfangener bzw. gesendeter Mails aus Instantly, über alle Postfächer und Kampagnen. */
+export async function listEmails(params: URLSearchParams): Promise<{ items: ApiEmail[]; next_starting_after?: string }> {
+  if (modeAllSupported !== false) {
+    const q = new URLSearchParams(params);
+    q.set("mode", "emode_all");
+    try {
+      const page = await api<{ items: ApiEmail[]; next_starting_after?: string }>(`/emails?${q}`);
+      modeAllSupported = true;
+      return page;
+    } catch (err) {
+      if (modeAllSupported !== null || !/: 400\b/.test(err instanceof Error ? err.message : "")) throw err;
+      modeAllSupported = false;
+    }
+  }
+  return api<{ items: ApiEmail[]; next_starting_after?: string }>(`/emails?${params}`);
+}
+
+export type SyncStats = { campaigns: number; leads: number; matched: number; unmatched: number; created: number; sent: number; replies: number; newReplies: number };
+
+/** Holt alle Kampagnen + Leads aus Instantly (API v2) und gleicht per E-Mail ab. */
+export async function syncInstantly(): Promise<SyncStats> {
+  const stats: SyncStats = { campaigns: 0, leads: 0, matched: 0, unmatched: 0, created: 0, sent: 0, replies: 0, newReplies: 0 };
+  const campaigns = await listCampaigns();
 
   for (const c of campaigns) {
     stats.campaigns++;
@@ -220,7 +276,7 @@ export async function syncReplies(full = false): Promise<number> {
     const q = new URLSearchParams({ email_type: "received", limit: "100", sort_order: "asc" });
     if (since) q.set("min_timestamp_created", since.toISOString());
     if (cursor) q.set("starting_after", cursor);
-    const page = await api<{ items: ApiEmail[]; next_starting_after?: string }>(`/emails?${q}`);
+    const page = await listEmails(q);
     cursor = page.items.length ? page.next_starting_after : undefined;
     const ids = await contactMap(page.items.map((e) => (e.lead ?? e.from_address_email ?? "").toLowerCase()).filter(Boolean));
     for (const e of page.items) {
@@ -231,7 +287,8 @@ export async function syncReplies(full = false): Promise<number> {
       if (!contactId) {
         // Antwort aus einer Kampagne, deren Liste nicht im CRM ist: Kontakt anlegen (nicht für Abwesenheitsnotizen)
         if (!e.campaign_id || e.is_auto_reply === 1 || !leadEmail || (!recent(e.timestamp_email || e.timestamp_created) && !positiveStatus(e.i_status))) continue;
-        contactId = (await ensureInstantlyContact(leadEmail, {}, campaignNames.get(e.campaign_id) ?? "Instantly")).id;
+        // Name und Firma aus Instantly, damit der Kontakt in der Suche unter dem Namen auftaucht (nicht nur als Adresse)
+        contactId = (await ensureInstantlyContact(leadEmail, await leadDetails(leadEmail), campaignNames.get(e.campaign_id) ?? "Instantly")).id;
         ids.set(leadEmail, contactId);
       }
       const isNew = await recordReply(contactId, {
@@ -580,8 +637,8 @@ export async function handleWebhook(p: Record<string, unknown>) {
   const email = String(p.lead_email ?? "").trim().toLowerCase();
   const type = String(p.event_type ?? "");
   if (!email || !type) return { ignored: "missing lead_email/event_type" };
-  const name = String(p.campaign_name ?? "Instantly");
-  const campaign = await upsertCampaign(name, p.campaign_id ? String(p.campaign_id) : undefined);
+  const campaign = await upsertCampaign(typeof p.campaign_name === "string" ? p.campaign_name : null, p.campaign_id ? String(p.campaign_id) : undefined);
+  const name = campaign.name;
   if (campaign.ignored) return { ignored: "campaign ignored" };
   let contactId = await findContactIdByEmail(email);
   if (!contactId) {

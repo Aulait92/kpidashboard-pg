@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { prisma } from "@/lib/prisma";
 import { STAGES, shortName } from "@/lib/vertrieb/crm";
 import { fmtDate } from "@/lib/vertrieb/dates";
+import { kontaktSucheWhere } from "@/lib/vertrieb/suche";
 import { StageBadge } from "@/components/vertrieb/ui";
 import { LI_COLOR, LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { deleteContacts } from "@/app/admin/vertrieb/actions";
@@ -34,22 +35,8 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
 
   const where: Prisma.SalesContactWhereInput = {
     AND: [
-      q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-              { city: { contains: q, mode: "insensitive" } },
-              { phone: { contains: q } },
-              { leaderNames: { contains: q, mode: "insensitive" } },
-              { lastName: { contains: q, mode: "insensitive" } },
-              // "Joerg Riccius" → Vor- und Nachname getrennt suchen
-              ...(q.includes(" ")
-                ? [{ AND: q.split(/\s+/).map((w) => ({ OR: [{ name: { contains: w, mode: "insensitive" as const } }, { leaderNames: { contains: w, mode: "insensitive" as const } }] })) }]
-                : []),
-            ],
-          }
-        : {},
+      // Umlaut-tolerant (Dröge = Droege), auch E-Mail, weitere Adressen, Firma, Ort, Telefon (lib/vertrieb/suche.ts)
+      q ? kontaktSucheWhere(q) : {},
       stage ? { stage } : {},
       mail ? MAIL_FILTERS[mail].where : {},
       plz ? { zip: { startsWith: plz } } : {},

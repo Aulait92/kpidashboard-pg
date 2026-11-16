@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { CalendlyForms, ColdCrmImport, ContactDataBackfill, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlySync } from "@/components/vertrieb/import-forms";
+import { CalendlyForms, ColdCrmImport, ContactDataBackfill, ColdCrmReplace, ContactsImport, CopyField, InstantlyCsvImport, InstantlyNachholen, InstantlySync } from "@/components/vertrieb/import-forms";
 import { coldCrmReplaceAllowed, coldCrmSourceConfigured, stagingSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
 import { teamCalendarStatus } from "@/lib/help-call";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
@@ -52,6 +52,7 @@ export default async function AnbindungenPage() {
           steps={["Instantly → Settings → Integrations → Webhooks", "Bestehenden Webhook bearbeiten, URL ersetzen, „All Events“"]}
         >
           <InstantlySync hasKey={!!process.env.INSTANTLY_API_KEY} />
+          <InstantlyNachholen hasKey={!!process.env.INSTANTLY_API_KEY} />
         </Connection>
 
         <Connection
