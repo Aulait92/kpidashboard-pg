@@ -11,6 +11,7 @@ import { expireBestandCancellations, reconcileSeatBilling } from "@/lib/billing"
 import { processDueBudgetFees } from "@/lib/budget";
 import { renewOrders } from "@/lib/ppl/orders";
 import { redistributeParked } from "@/lib/ppl/engine";
+import { hvkCronDue } from "@/lib/ppl/hvk-abrechnung";
 import { runCampaigns } from "@/lib/bestand/campaigns";
 import { runEmpfehlungen } from "@/lib/empfehlung/requests";
 import { runSequences } from "@/lib/lead-sequences";
@@ -131,6 +132,11 @@ async function handle(req: Request): Promise<Response> {
     }),
     redistributed: await redistributeParked(undefined, now).catch(() => null),
   };
+  // HvK-Abrechnung: Mail „Neue Gutschrift“ (PDF) Mo–Mi stündlich 7–20 Uhr abrufen, nur lesen, je Rechnung einmal
+  // (nach der Antwort, lib/ppl/hvk-abrechnung-server.ts)
+  if (hvkCronDue(now)) {
+    after(() => import("@/lib/ppl/hvk-abrechnung-server").then((m) => m.runHvkCron(now)).catch((e: unknown) => reportError(e, "cron-hvk-abrechnung")));
+  }
   // Bestandskunden-Kampagnen: gedrosselter Versand (Mo–Sa 9–19 Uhr)
   const campaigns = await runCampaigns(now).catch((e: unknown) => {
     reportError(e, "cron-campaigns");

@@ -4116,3 +4116,81 @@ model BeraterMerkmale {
 
   @@unique([customerId, userKey, sparte])
 }
+
+// ─── HvK-Abrechnung (Ole, 16.11.2026) ──────────────────────────────────────
+/// Wöchentliche Gutschrift von Lead-Production für Heinrich von Kleist (Mail „Neue Gutschrift“ mit PDF).
+/// Je Rechnungsnummer genau einmal (idempotent). Nur im Admin-Bereich sichtbar (lib/ppl/hvk-abrechnung*.ts).
+model HvkInvoice {
+  id               String    @id @default(cuid())
+  invoiceNo        String    @unique
+  periodStart      DateTime  @db.Date
+  periodEnd        DateTime  @db.Date
+  invoiceDate      DateTime? @db.Date
+  brokerId         String?
+  // Beträge in Cent wie im PDF: gekaufte Leads negativ, Reklamationen positiv (Endsumme Netto z. B. -27000)
+  netCents         Int
+  vatCents         Int?
+  grossCents       Int?
+  boughtCount      Int
+  reklamationCount Int
+  // Zeilen aus dem PDF [{ kind, hvkLeadId, product, date?, plz, ort, cents }]
+  lines            Json
+  // Abgleich: geliefert/abgerechnet, Zuordnung der Reklamationen, Hinweise (HvkProcessResult)
+  result           Json
+  deliveredCount   Int       @default(0)
+  stornoAuto       Int       @default(0)
+  stornoReview     Int       @default(0)
+  pdf              Bytes
+  pdfName          String?
+  // Graph-ID der Mail (Abruf), leer bei Upload
+  mailMessageId    String?   @unique
+  receivedAt       DateTime?
+  // mail | backfill | upload
+  source           String    @default("mail")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  reklamationen HvkReklamation[]
+
+  @@index([periodStart])
+}
+
+/// Reklamation aus einer HvK-Abrechnung. auto = genau ein Lead (Lieferdatum + PLZ), Storno eingetragen;
+/// offen = kein oder mehrere Kandidaten → Admin → Pay-per-Lead → „Storno prüfen“; erledigt | verworfen = vom Admin entschieden.
+model HvkReklamation {
+  id           String     @id @default(cuid())
+  invoiceId    String
+  invoice      HvkInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  hvkLeadId    String
+  deliveryDate DateTime   @db.Date
+  plz          String
+  ort          String
+  cents        Int
+  status       String
+  leadId       String?
+  candidateIds String[]   @default([])
+  decidedAt    DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@unique([invoiceId, hvkLeadId])
+  @@index([status])
+}
+
+/// Postfach, aus dem die App nur liest (Microsoft Graph, Mail.Read), z. B. für die HvK-Abrechnung. Eine Zeile je Zweck.
+model AdminMailbox {
+  id              String    @id @default(cuid())
+  purpose         String    @unique
+  provider        String    @default("microsoft")
+  email           String
+  accessTokenEnc  String?
+  refreshTokenEnc String?
+  expiresAt       DateTime?
+  scope           String?
+  // ok | error
+  status          String    @default("ok")
+  lastError       String?
+  lastCheckAt     DateTime?
+  connectedById   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
