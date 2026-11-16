@@ -9,6 +9,7 @@ import { CheckCircle2, Copy, Loader2, Plus, Trash2, X } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { TimeSelect } from "@/components/time-select";
 import type { SourceResult } from "@/lib/calendar/sources";
+import { aktiveTage, aufTageVerteilen, gemeinsameZeiten } from "@/lib/calendar/zeiten-gleich";
 
 type FormAction = (prev: SourceResult, fd: FormData) => Promise<SourceResult>;
 type PlainAction = (fd: FormData) => Promise<void>;
@@ -142,6 +143,17 @@ export function LeadTimesForm({
   const [step, setStep] = useState<number>(init.step);
   const [days, setDays] = useState<Days>(init.days);
   const [lastRange, setLastRange] = useState<Range>(() => Object.values(init.days)[0]?.[0] ?? ["09:00", "17:00"]);
+  // Gleiche Zeiten an allen Tagen (Ole, 16.11.2026): einmal zeigen, Wochentage als Schalter. Nur Anzeige, gespeichert
+  // wird derselbe Zeitplan je Tag (lib/calendar/zeiten-gleich.ts). „Tage einzeln einstellen“ öffnet die Ansicht je Tag.
+  const [einzeln, setEinzeln] = useState(() => gemeinsameZeiten(init.days) == null);
+  const [gemeinsam, setGemeinsam] = useState<Range[]>(() => gemeinsameZeiten(init.days) ?? [["09:00", "17:00"]]);
+  const tage = aktiveTage(days);
+  const gemeinsamSetzen = (ranges: Range[]) => {
+    setGemeinsam(ranges);
+    setDays(aufTageVerteilen(ranges, tage));
+  };
+  const tagUmschalten = (d: number) => setDays(aufTageVerteilen(gemeinsam, tage.includes(d) ? tage.filter((t) => t !== d) : [...tage, d]));
+  const gemeinsamStarts = [...new Set(gemeinsam.flatMap((r) => starts(r, step, duration)))].sort();
 
   const setDay = (d: number, ranges: Range[]) =>
     setDays((prev) => {
@@ -205,6 +217,77 @@ export function LeadTimesForm({
           ))}
         </div>
       </fieldset>
+      {!einzeln ? (
+      <fieldset data-zeiten-gemeinsam>
+        <legend className="text-sm font-medium">An diesen Tagen</legend>
+        <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
+          {DAYS.map(([d, label]) => (
+            <button
+              key={d}
+              type="button"
+              disabled={readOnly}
+              aria-pressed={tage.includes(d)}
+              onClick={() => tagUmschalten(d)}
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition ${
+                tage.includes(d) ? "bg-[color:var(--brand)] text-white" : "bg-[color:var(--surface-sunken,#f1f5f9)] text-[color:var(--muted)]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 text-sm font-medium">Zu diesen Zeiten</div>
+        <div className="mt-2 space-y-2">
+          {gemeinsam.map((r, i) => (
+            <div key={i} className="flex items-center gap-1.5 sm:flex-wrap">
+              <TimeSelect
+                value={r[0]}
+                onChange={(v) => gemeinsamSetzen(gemeinsam.map((x, k) => (k === i ? ([v, x[1]] as Range) : x)))}
+                max="23:45"
+                ariaLabel="Von"
+                className="w-[6.5rem] sm:w-[7.25rem]"
+                disabled={readOnly}
+              />
+              <span className="hidden text-[color:var(--muted)] sm:inline">–</span>
+              <TimeSelect
+                value={r[1]}
+                onChange={(v) => gemeinsamSetzen(gemeinsam.map((x, k) => (k === i ? ([x[0], v] as Range) : x)))}
+                min={fromMin(Math.min(toMin(r[0]) + 15, 1440))}
+                max="24:00"
+                ariaLabel="Bis"
+                className="w-[6.5rem] sm:w-[7.25rem]"
+                disabled={readOnly}
+              />
+              {gemeinsam.length > 1 ? (
+                <IconButton label="Zeitraum entfernen" onClick={() => gemeinsamSetzen(gemeinsam.filter((_, k) => k !== i))} disabled={readOnly}>
+                  <X className="h-4 w-4" />
+                </IconButton>
+              ) : null}
+              {i === gemeinsam.length - 1 ? (
+                <IconButton
+                  label="Weiteren Zeitraum"
+                  onClick={() => {
+                    const f = Math.min(toMin(r[1]) + 60, 22 * 60);
+                    gemeinsamSetzen([...gemeinsam, [fromMin(f), fromMin(Math.min(f + 120, 23 * 60))]]);
+                  }}
+                  disabled={readOnly}
+                >
+                  <Plus className="h-4 w-4" />
+                </IconButton>
+              ) : null}
+            </div>
+          ))}
+          <p className={`text-xs ${gemeinsamStarts.length ? "text-[color:var(--muted)]" : "font-medium text-rose-700"}`}>
+            {gemeinsamStarts.length
+              ? `${gemeinsamStarts.length} ${gemeinsamStarts.length === 1 ? "Startzeit" : "Startzeiten"} je Tag: ${gemeinsamStarts.length > 6 ? `${hm(gemeinsamStarts[0])}, ${hm(gemeinsamStarts[1])} … ${hm(gemeinsamStarts[gemeinsamStarts.length - 1])}` : gemeinsamStarts.map(hm).join(", ")} Uhr`
+              : "Zeitraum kürzer als ein Termin, hier wird nichts angeboten."}
+          </p>
+        </div>
+        <button type="button" onClick={() => setEinzeln(true)} className="mt-3 inline-flex min-h-10 items-center text-sm font-semibold text-[color:var(--brand)] hover:underline" data-tage-einzeln>
+          Tage einzeln einstellen
+        </button>
+      </fieldset>
+      ) : (
       <fieldset>
         <legend className="text-sm font-medium">Zeiten je Wochentag</legend>
         <ul className="mt-2 divide-y divide-[color:var(--border)]">
@@ -280,6 +363,7 @@ export function LeadTimesForm({
           })}
         </ul>
       </fieldset>
+      )}
       <p className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken,#f8fafc)] px-4 py-3 text-sm">
         {source === "allianz"
           ? "Halten Sie diese Zeiten in Ihrem Allianz-Kalender frei. Blocken Sie sie dort bitte nicht, sonst zeigt Ihr Online-Kalender sie als belegt und wir können sie nicht anbieten."
