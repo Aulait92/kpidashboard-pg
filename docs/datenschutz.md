@@ -395,3 +395,15 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
 - **Bewertung:** Das ist die übliche und tragfähige Absicherung. Ein Vermittler, der für sein Gewerbe abschließt, ist
   ohnehin Unternehmer.
 - **Handlungsbedarf: nein.**
+
+### 10.5 Kündigungsknopf (§ 312k BGB)
+
+- **Rechtslage:** Die Pflicht zur Kündigungsschaltfläche gilt nur, wenn „Verbrauchern“ der Abschluss eines
+  Dauerschuldverhältnisses über eine Webseite ermöglicht wird ([§ 312k BGB](https://www.gesetze-im-internet.de/bgb/__312k.html);
+  Anwendungsbereich Verbraucherverträge, [§ 312 Abs. 1 BGB](https://www.gesetze-im-internet.de/bgb/__312.html),
+  [§ 310 Abs. 3 BGB](https://www.gesetze-im-internet.de/bgb/__310.html)). Täuscht ein Verbraucher die
+  Unternehmereigenschaft vor, kann er sich nicht auf Verbraucherschutz berufen (siehe 10.4).
+- **App heute:** Kündigung in Textform (E-Mail, ohne Login) oder im Kundenbereich unter „Vertrag hier kündigen“ mit
+  Anzeige des Vertragsendes und Bestätigung per E-Mail (AGB „Laufzeit und Kündigung“, `lib/vertrag-kuendigung.ts`).
+- **Bewertung:** § 312k gilt nicht. Ein Weg ohne Login besteht ohnehin (E-Mail).
+- **Handlungsbedarf: nein.**
