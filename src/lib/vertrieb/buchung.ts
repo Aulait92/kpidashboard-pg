@@ -16,7 +16,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { adapterFor, findFreeCalendar, SlotBusyError, suggestSlots, type Slot } from "@/lib/calendar";
 import { berlinAt, loadLeadTimes, timesForDay } from "@/lib/calendar/lead-times";
-import { berlinYmd, weekdayOfYmd } from "@/lib/absence";
+import { addDaysYmd, berlinYmd, weekdayOfYmd } from "@/lib/absence";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { reportError } from "@/lib/monitoring";
@@ -117,6 +117,8 @@ export type Rolle = (typeof ROLLEN)[number]["key"];
 export const BUFFER_CHOICES = [0, 10, 15, 30] as const;
 export const NOTICE_CHOICES = [60, 120, 240, 720, 1440, 2880] as const;
 export const DURATION_CHOICES = [30, 45, 60] as const;
+/** Buchungsfenster: öffentlich buchbar in den nächsten N Tagen ab heute (heute zählt mit). */
+export const WINDOW_CHOICES = [3, 5, 7, 10, 14, 21, 30] as const;
 
 const TZ = "Europe/Berlin";
 const MIN = 60_000;
@@ -144,14 +146,24 @@ async function ownBusy(keys: string[], from: Date, to: Date, excludeId?: string)
   });
 }
 
-/** Freie Zeiten des Termintyps (Berliner Zeit, Puffer und Vorlauf berücksichtigt). */
-export async function availableSlots(t: SalesBookingType): Promise<Slot[]> {
+/** Letzter öffentlich buchbarer Tag (Berliner Datum): heute plus N − 1 Tage, rollierend. */
+export const windowLastYmd = (t: Pick<SalesBookingType, "bookingWindowDays">, now = new Date()) =>
+  addDaysYmd(berlinYmd(now), Math.max(1, t.bookingWindowDays) - 1);
+
+/** Liegt der Start im öffentlichen Buchungsfenster des Termintyps? (Admins buchen ohne Grenze.) */
+export const inBookingWindow = (t: Pick<SalesBookingType, "bookingWindowDays">, start: Date, now = new Date()) => berlinYmd(start) <= windowLastYmd(t, now);
+
+/** Freie Zeiten des Termintyps (Berliner Zeit, Puffer, Vorlauf und Buchungsfenster berücksichtigt). */
+export async function availableSlots(t: SalesBookingType, now = new Date()): Promise<Slot[]> {
   const keys = typeKeys(t);
-  const slots = await suggestSlots(VERTRIEB_CUSTOMER_ID, t.durationMin, 400, "lead", t.horizonDays, null, null, {
+  const found = await suggestSlots(VERTRIEB_CUSTOMER_ID, t.durationMin, 400, "lead", Math.max(1, t.bookingWindowDays), null, null, {
     keys,
     bufferMin: t.bufferMin,
     noticeMin: t.noticeMin,
   });
+  // Die Suche verlängert sich bei Abwesenheiten: hier hart auf das Fenster begrenzen.
+  const last = windowLastYmd(t, now);
+  const slots = found.filter((s) => berlinYmd(new Date(s.start)) <= last);
   if (!slots.length) return slots;
   const buf = t.bufferMin * MIN;
   const own = await ownBusy(keys, new Date(slots[0].start), new Date(new Date(slots[slots.length - 1].end).getTime() + buf));
@@ -166,7 +178,7 @@ export async function availableSlots(t: SalesBookingType): Promise<Slot[]> {
 export async function isBookableStart(t: SalesBookingType, start: Date, now = new Date()): Promise<boolean> {
   if (Number.isNaN(start.getTime())) return false;
   if (start.getTime() < now.getTime() + Math.max(60, t.noticeMin) * MIN) return false;
-  if (start.getTime() > now.getTime() + (t.horizonDays + 1) * 24 * 60 * MIN) return false;
+  if (!inBookingWindow(t, start, now)) return false;
   const ymd = berlinYmd(start);
   const hhmm = new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(start);
   if (berlinAt(ymd, hhmm).getTime() !== start.getTime()) return false;
@@ -182,7 +194,8 @@ export type BookingInput = {
   /** Ziffern international ohne „+“ (normalizePhone) */
   phone: string;
   company: string;
-  role: Rolle;
+  /** null: unbekannt (vom Team gebucht) */
+  role: Rolle | null;
   interest: string;
   message: string | null;
 };
@@ -213,9 +226,9 @@ const roleLabel = (r: Rolle) => ROLLEN.find((x) => x.key === r)?.label ?? r;
 function answersOf(i: BookingInput): string {
   return [
     `Agentur/Firma: ${i.company}`,
-    `Telefon: +${i.phone}`,
-    `Vertreter oder Makler: ${roleLabel(i.role)}`,
-    `Interesse: ${i.interest}`,
+    i.phone ? `Telefon: +${i.phone}` : null,
+    i.role ? `Vertreter oder Makler: ${roleLabel(i.role)}` : null,
+    i.interest ? `Interesse: ${i.interest}` : null,
     i.message ? `Nachricht: ${i.message}` : null,
   ]
     .filter(Boolean)
@@ -241,18 +254,25 @@ async function reserveAndCreate(opts: {
   input: BookingInput;
   consentAt: Date | null;
   rescheduledFromId?: string | null;
+  /** Vom Team (Admin) gebucht: erster Kalender des Typs, keine Belegt-Prüfung (Überschneidungen wurden vorher angezeigt). */
+  admin?: boolean;
 }): Promise<Created> {
   const { type: t, start } = opts;
   const end = new Date(start.getTime() + t.durationMin * MIN);
   const keys = typeKeys(t);
   // 1) Kalender: erster freier (mit Puffer), wirft SlotBusyError
-  const { key, adapter } = await findFreeCalendar(VERTRIEB_CUSTOMER_ID, keys, start, end, { bufferMin: t.bufferMin });
+  const { key, adapter } = opts.admin
+    ? { key: keys[0], adapter: await adapterFor(keys[0]) }
+    : await findFreeCalendar(VERTRIEB_CUSTOMER_ID, keys, start, end, { bufferMin: t.bufferMin });
   const buf = t.bufferMin * MIN;
   const manageToken = randomBytes(18).toString("base64url");
+  const phone = opts.input.phone ? `+${opts.input.phone}` : null;
   // 2) Eigene Termine unter Sperre prüfen und den Termin sofort belegen
   const meetingId = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sales-booking:${key}`}))`;
-    const clash = await tx.salesMeeting.findFirst({
+    const clash = opts.admin
+      ? null
+      : await tx.salesMeeting.findFirst({
       where: {
         status: "GEPLANT",
         calendarKey: key,
@@ -272,10 +292,10 @@ async function reserveAndCreate(opts: {
         location: t.mode === "video" ? "Videocall" : "Telefon",
         status: "GEPLANT",
         answers: answersOf(opts.input),
-        utmSource: "buchungsseite",
+        utmSource: opts.admin ? "admin" : "buchungsseite",
         inviteeName: opts.input.name,
         inviteeEmail: opts.input.email,
-        inviteePhone: `+${opts.input.phone}`,
+        inviteePhone: phone,
         bookingTypeId: t.id,
         manageToken,
         calendarKey: key,
@@ -294,7 +314,7 @@ async function reserveAndCreate(opts: {
       end,
       summary: `${t.title}: ${opts.input.name} (${opts.input.company})`,
       description: [
-        `${t.title} über die Buchungsseite`,
+        `${t.title} ${opts.admin ? "vom Team eingetragen" : "über die Buchungsseite"}`,
         answersOf(opts.input),
         `E-Mail: ${opts.input.email}`,
         `Kontakt im CRM: ${salesAppUrl(`/admin/vertrieb/kontakte/${opts.contactId}`)}`,
@@ -305,7 +325,7 @@ async function reserveAndCreate(opts: {
         .join("\n"),
       attendeeEmails: [opts.input.email],
       video: t.mode === "video",
-      location: t.mode === "phone" ? `Telefon: +${opts.input.phone}` : null,
+      location: t.mode === "phone" && phone ? `Telefon: ${phone}` : null,
     });
     const joinUrl = t.mode === "video" ? event.videoUrl ?? t.videoUrl ?? null : null;
     await prisma.salesMeeting.update({ where: { id: meetingId }, data: { calendarEventId: event.eventId, joinUrl } });
@@ -471,29 +491,171 @@ export async function rescheduleSalesMeeting(token: string, start: Date, now = n
   const t = m.bookingType ?? (await loadBookingType(null));
   if (!t || !(await bookingReady(t))) return { ok: false, error: "error" };
   if (!(await isBookableStart(t, start, now))) return { ok: false, error: "slot" };
+  return moveMeeting(m, t, start, false);
+}
+
+type MovableMeeting = NonNullable<Awaited<ReturnType<typeof meetingByToken>>>;
+
+/** Neuen Termin anlegen, alten als verschoben markieren und aus dem Kalender löschen, CRM, Mail. */
+async function moveMeeting(m: MovableMeeting, t: SalesBookingType, start: Date, admin: boolean): Promise<ChangeResult> {
   const input = inputFromMeeting(m);
   let res: Created;
   try {
-    res = await reserveAndCreate({ type: t, contactId: m.contactId, start, input, consentAt: m.consentAt, rescheduledFromId: m.id });
+    res = await reserveAndCreate({ type: t, contactId: m.contactId, start, input, consentAt: m.consentAt, rescheduledFromId: m.id, admin });
   } catch (err) {
     if (err instanceof SlotBusyError) return { ok: false, error: "taken" };
     reportError(err, "vertrieb-buchung-verschieben");
     return { ok: false, error: "error" };
   }
-  await prisma.salesMeeting.update({ where: { id: m.id }, data: { status: "VERSCHOBEN", canceledBy: "invitee" } });
+  await prisma.salesMeeting.update({ where: { id: m.id }, data: { status: "VERSCHOBEN", canceledBy: admin ? "team" : "invitee" } });
   await deleteCalendarEvent(m);
   if (m.taskId) await prisma.salesTask.deleteMany({ where: { id: m.taskId, doneAt: null } });
   await recordCrm(m.contactId, res.meetingId, t, start, res.joinUrl, m.answers ?? "", `Termin verschoben: ${t.title} auf ${fmtDateTime(start)} (war ${fmtDateTime(m.startAt)})`).catch((e) =>
     reportError(e, "vertrieb-buchung-crm"),
   );
-  await pushOle(`🔁 ${t.title} verschoben: ${input.name}`, `Neu: ${whenShort(start)} Uhr (war ${whenShort(m.startAt)})`, m.contactId, `sales-booking:${res.meetingId}`);
+  if (!admin) await pushOle(`🔁 ${t.title} verschoben: ${input.name}`, `Neu: ${whenShort(start)} Uhr (war ${whenShort(m.startAt)})`, m.contactId, `sales-booking:${res.meetingId}`);
   await sendInviteeMail(res.meetingId, "rescheduled");
   return { ok: true, token: res.manageToken };
 }
 
+// ─── Admin: buchen und verschieben ohne Grenze (Ole, 16.11.2026) ─────────
+//
+// Kein Buchungsfenster, keine Zeiten je Wochentag, kein Vorlauf. Überschneidungen mit dem Kalender bzw. eigenen
+// Terminen kommen als Warnung zurück; mit force bucht der Admin trotzdem. Bestätigung (E-Mail, WhatsApp)
+// und Erinnerungen laufen wie bei der öffentlichen Buchung.
+
+export type Conflict = { startAt: Date; endAt: Date; label: string };
+
+/** Kalendertermine und eigene Vertriebstermine, die sich mit [start, end) überschneiden. */
+export async function adminConflicts(
+  t: SalesBookingType,
+  start: Date,
+  end: Date,
+  exclude?: { id: string; startAt: Date; endAt: Date | null } | null,
+): Promise<Conflict[]> {
+  const overlaps = (a: Date, b: Date) => a.getTime() < end.getTime() && b.getTime() > start.getTime();
+  const own = await prisma.salesMeeting.findMany({
+    where: { status: "GEPLANT", startAt: { lt: end }, endAt: { gt: start }, ...(exclude ? { id: { not: exclude.id } } : {}) },
+    select: { startAt: true, endAt: true, title: true, contact: { select: { name: true } } },
+    orderBy: { startAt: "asc" },
+  });
+  const out: Conflict[] = own.map((m) => ({ startAt: m.startAt, endAt: m.endAt ?? m.startAt, label: `${m.title}: ${m.contact.name}` }));
+  const same = (a: { startAt: Date; endAt: Date | null }, b: { start: Date; end: Date }) =>
+    a.startAt.getTime() === b.start.getTime() && (a.endAt ?? a.startAt).getTime() === b.end.getTime();
+  for (const key of typeKeys(t)) {
+    const busy = await (await adapterFor(key)).getBusy(start, end).catch((e: unknown) => {
+      reportError(e, "vertrieb-buchung-admin-kalender");
+      return [];
+    });
+    for (const b of busy) {
+      if (!overlaps(b.start, b.end)) continue;
+      // Der zu verschiebende Termin selbst und schon gelistete eigene Termine nicht doppelt
+      if ((exclude && same(exclude, b)) || out.some((o) => same(o, b))) continue;
+      out.push({ startAt: b.start, endAt: b.end, label: "Kalendertermin" });
+    }
+  }
+  return out.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+}
+
+/** Lesbare Zeile für den Warnhinweis, z. B. „Kalendertermin, Mo., 18.11., 10:00 bis 11:00 Uhr“. */
+export function conflictText(c: Conflict): string {
+  const sameDay = berlinYmd(c.startAt) === berlinYmd(c.endAt);
+  return `${c.label}, ${whenShort(c.startAt)} bis ${sameDay ? timeOf(c.endAt) : whenShort(c.endAt)} Uhr`;
+}
+
+export type AdminResult =
+  | { ok: true; meetingId: string; manageToken: string }
+  | { ok: false; error: "not_found" | "closed" | "unavailable" | "past" | "email" | "error" }
+  | { ok: false; error: "conflict"; conflicts: Conflict[] };
+
+/** Ist der Kalender des Termintyps verbunden? (Admins buchen auch Typen, die nicht online buchbar sind.) */
+async function calendarReady(t: SalesBookingType): Promise<boolean> {
+  const conn = await prisma.calendarConnection.findUnique({ where: { customerId: typeKeys(t)[0] }, select: { status: true } });
+  return conn?.status === "connected";
+}
+
+/** Admin bucht für einen Vertriebskontakt: Datum und Uhrzeit frei, auch außerhalb der freien Zeiten. */
+export async function adminBookSalesMeeting(opts: {
+  type: SalesBookingType;
+  contactId: string;
+  start: Date;
+  /** Abweichende E-Mail für Einladung und Bestätigung (sonst die des Kontakts) */
+  email?: string | null;
+  force?: boolean;
+  now?: Date;
+}): Promise<AdminResult> {
+  const { type: t, start } = opts;
+  const now = opts.now ?? new Date();
+  const c = await prisma.salesContact.findUnique({
+    where: { id: opts.contactId },
+    select: { id: true, name: true, email: true, phone: true, firstName: true, lastName: true, insurer: true },
+  });
+  if (!c) return { ok: false, error: "not_found" };
+  if (Number.isNaN(start.getTime()) || start.getTime() <= now.getTime()) return { ok: false, error: "past" };
+  const email = (opts.email?.trim() || c.email || "").toLowerCase();
+  if (!EMAIL_RE.test(email)) return { ok: false, error: "email" };
+  if (!(await calendarReady(t))) return { ok: false, error: "unavailable" };
+  const end = new Date(start.getTime() + t.durationMin * MIN);
+  if (!opts.force) {
+    const conflicts = await adminConflicts(t, start, end);
+    if (conflicts.length) return { ok: false, error: "conflict", conflicts };
+  }
+  const input: BookingInput = {
+    name: [c.firstName, c.lastName].filter(Boolean).join(" ") || c.name,
+    email,
+    phone: (c.phone && normalizePhone(c.phone)) || "",
+    company: c.name,
+    role: c.insurer === "Makler" ? "makler" : null,
+    interest: "",
+    message: null,
+  };
+  let res: Created;
+  try {
+    res = await reserveAndCreate({ type: t, contactId: c.id, start, input, consentAt: null, admin: true });
+  } catch (err) {
+    reportError(err, "vertrieb-buchung-admin");
+    return { ok: false, error: "error" };
+  }
+  if (!c.email) await prisma.salesContact.update({ where: { id: c.id }, data: { email } }).catch(() => {});
+  await recordCrm(c.id, res.meetingId, t, start, res.joinUrl, `Vom Team eingetragen, Einladung an ${email}`, `Termin gebucht: ${t.title} am ${fmtDateTime(start)}`).catch((e) =>
+    reportError(e, "vertrieb-buchung-crm"),
+  );
+  await sendInviteeMail(res.meetingId, "booked");
+  const { sendTerminConfirmation } = await import("@/lib/vertrieb/termin-whatsapp");
+  await sendTerminConfirmation(
+    res.meetingId,
+    { text_reminder_number: input.phone ? `+${input.phone}` : null, name: input.name, reschedule_url: manageLink(res.manageToken) },
+    res.joinUrl ? { type: "video", join_url: res.joinUrl } : { type: t.mode === "video" ? "video" : "outbound_call" },
+  );
+  return { ok: true, meetingId: res.meetingId, manageToken: res.manageToken };
+}
+
+/** Admin verschiebt einen Termin der eigenen Buchungsseite: Datum und Uhrzeit frei, Warnung bei Überschneidung. */
+export async function adminRescheduleSalesMeeting(meetingId: string, start: Date, opts: { force?: boolean; now?: Date } = {}): Promise<AdminResult> {
+  const now = opts.now ?? new Date();
+  const m = await prisma.salesMeeting.findUnique({
+    where: { id: meetingId },
+    include: { bookingType: true, contact: { select: { id: true, name: true } } },
+  });
+  if (!m?.manageToken) return { ok: false, error: "not_found" };
+  if (!isOpenMeeting(m, now)) return { ok: false, error: "closed" };
+  const t = m.bookingType ?? (await loadBookingType(null));
+  if (!t || !(await calendarReady(t))) return { ok: false, error: "unavailable" };
+  if (Number.isNaN(start.getTime()) || start.getTime() <= now.getTime()) return { ok: false, error: "past" };
+  if (!opts.force) {
+    const conflicts = await adminConflicts(t, start, new Date(start.getTime() + t.durationMin * MIN), m);
+    if (conflicts.length) return { ok: false, error: "conflict", conflicts };
+  }
+  const res = await moveMeeting(m, t, start, true);
+  if (!res.ok) return { ok: false, error: res.error === "not_found" || res.error === "closed" ? res.error : "error" };
+  const neu = await prisma.salesMeeting.findUniqueOrThrow({ where: { manageToken: res.token }, select: { id: true } });
+  return { ok: true, meetingId: neu.id, manageToken: res.token };
+}
+
 function inputFromMeeting(m: { inviteeName: string | null; inviteeEmail: string | null; inviteePhone: string | null; answers: string | null; contact: { name: string } }): BookingInput {
   const get = (label: string) => m.answers?.split("\n").find((l) => l.startsWith(`${label}: `))?.slice(label.length + 2) ?? "";
-  const role = get("Vertreter oder Makler").toLowerCase() === "makler" ? "makler" : "vertreter";
+  const r = get("Vertreter oder Makler").toLowerCase();
+  const role = r === "makler" ? "makler" : r === "vertreter" ? "vertreter" : null;
   return {
     name: m.inviteeName ?? m.contact.name,
     email: m.inviteeEmail ?? "",
@@ -517,6 +679,8 @@ type MailMeeting = {
   manageToken: string;
   confirmText?: string | null;
   thanksPage?: boolean;
+  /** Vom Team eingetragen (nicht selbst gebucht) */
+  byTeam?: boolean;
 };
 
 /** Inhalt der Mail (rein, für Tests). Sie-Form, keine Gedankenstriche. */
@@ -530,7 +694,7 @@ export function inviteeMailContent(kind: InviteeMailKind, m: MailMeeting) {
       return {
         subject: `Ihr Termin mit performancegrowth: ${w}`,
         greeting,
-        paragraphs: [`vielen Dank für Ihre Buchung. Ihr ${m.title} ist bestätigt: ${w}.`, how, m.confirmText ?? "Wir freuen uns auf das Gespräch."],
+        paragraphs: [m.byTeam ? `Ihr ${m.title} ist bestätigt: ${w}.` : `vielen Dank für Ihre Buchung. Ihr ${m.title} ist bestätigt: ${w}.`, how, m.confirmText ?? "Wir freuen uns auf das Gespräch."],
         button: m.thanksPage ? { label: "Vorbereitungsvideo ansehen", url: thanksLink(m.manageToken) } : manage,
         extra: m.thanksPage ? manage : null,
       };
@@ -564,10 +728,25 @@ export async function sendInviteeMail(meetingId: string, kind: InviteeMailKind):
   try {
     const m = await prisma.salesMeeting.findUnique({
       where: { id: meetingId },
-      select: { title: true, startAt: true, joinUrl: true, inviteeName: true, inviteeEmail: true, manageToken: true, bookingType: { select: { confirmText: true, thanksPage: true } } },
+      select: {
+        title: true,
+        startAt: true,
+        joinUrl: true,
+        inviteeName: true,
+        inviteeEmail: true,
+        manageToken: true,
+        utmSource: true,
+        bookingType: { select: { confirmText: true, thanksPage: true } },
+      },
     });
     if (!m?.inviteeEmail || !m.manageToken) return false;
-    const c = inviteeMailContent(kind, { ...m, manageToken: m.manageToken, confirmText: m.bookingType?.confirmText, thanksPage: m.bookingType?.thanksPage });
+    const c = inviteeMailContent(kind, {
+      ...m,
+      manageToken: m.manageToken,
+      confirmText: m.bookingType?.confirmText,
+      thanksPage: m.bookingType?.thanksPage,
+      byTeam: m.utmSource === "admin",
+    });
     const res = await sendCustomerMail({
       to: m.inviteeEmail,
       subject: c.subject,

@@ -13,6 +13,7 @@ import {
   DEFAULT_BOOKING_TYPE,
   DURATION_CHOICES,
   NOTICE_CHOICES,
+  WINDOW_CHOICES,
   VERTRIEB_CUSTOMER_ID,
   bookingPath,
   embedSnippet,
@@ -92,7 +93,7 @@ export default async function BuchungsseitePage({ searchParams }: { searchParams
             <CardHeader title={t.title} hint={t.slug === DEFAULT_BOOKING_TYPE ? "Erstgespräch" : "Folgetermin nach dem Angebot, persönlicher Link im Vertriebskontakt"} />
             <div className="space-y-4 p-5">
               <CopyField value={url} />
-              <BookingTypeForm action={saveBookingTypeAction} type={t} durations={DURATION_CHOICES} buffers={BUFFER_CHOICES} notices={NOTICE_CHOICES} />
+              <BookingTypeForm action={saveBookingTypeAction} type={t} durations={DURATION_CHOICES} buffers={BUFFER_CHOICES} notices={NOTICE_CHOICES} windows={WINDOW_CHOICES} />
             </div>
           </Card>
         );

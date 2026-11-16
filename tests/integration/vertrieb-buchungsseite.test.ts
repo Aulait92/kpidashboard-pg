@@ -60,6 +60,9 @@ import {
   availableSlots,
   rescheduleSalesMeeting,
   runSalesBookingReminders,
+  adminBookSalesMeeting,
+  adminRescheduleSalesMeeting,
+  conflictText,
   VERTRIEB_CUSTOMER_ID,
   type BookingInput,
 } from "@/lib/vertrieb/buchung";
@@ -289,5 +292,121 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     calls.mails = [];
     await runSalesBookingReminders(now);
     expect(calls.mails.filter((m) => m.to === `erinnerung@${DOMAIN}`)).toHaveLength(0);
+  });
+
+  // ─── Buchungsfenster (Ole, 16.11.2026): öffentlich nur die nächsten N Tage, Admins ohne Grenze ───
+  // Tag 1 = heute (Berliner Datum), Standard N = 7: Tag 8 ist öffentlich nicht buchbar.
+  const tag = (n: number, hhmm: string) => berlinAt(addDaysYmd(berlinYmd(new Date()), n - 1), hhmm);
+
+  it("öffentlich: freie Zeiten nur bis Tag 7, Buchung und Verschieben per Link an Tag 8 serverseitig abgelehnt", async () => {
+    expect(type.bookingWindowDays).toBe(7);
+    const days = new Set((await availableSlots(type)).map((s) => berlinYmd(new Date(s.start))));
+    expect(days.has(berlinYmd(tag(7, "12:00")))).toBe(true);
+    expect(days.has(berlinYmd(tag(8, "12:00")))).toBe(false);
+    expect([...days].every((d) => d <= berlinYmd(tag(7, "12:00")))).toBe(true);
+    // Einstellung je Termintyp: 3 Tage
+    const short = new Set((await availableSlots({ ...type, bookingWindowDays: 3 })).map((s) => berlinYmd(new Date(s.start))));
+    expect([...short].every((d) => d <= berlinYmd(tag(3, "12:00")))).toBe(true);
+    expect(short.has(berlinYmd(tag(3, "12:00")))).toBe(true);
+
+    // Buchung an Tag 8 (Zeit im Raster, Kalender frei): abgelehnt, nichts angelegt
+    expect(await bookSalesMeeting({ type, start: tag(8, "12:00"), input: input("tag8") })).toEqual({ ok: false, error: "slot" });
+    expect(calls.created).toHaveLength(0);
+    // Verschieben per Link auf Tag 8: abgelehnt, auf Tag 7: möglich
+    const res = await bookSalesMeeting({ type, start: tag(7, "12:00"), input: input("fenster") });
+    if (!res.ok) throw new Error("Buchung an Tag 7 fehlgeschlagen");
+    expect(await rescheduleSalesMeeting(res.manageToken, tag(8, "12:00"))).toEqual({ ok: false, error: "slot" });
+    expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: res.meetingId } })).status).toBe("GEPLANT");
+    expect(await rescheduleSalesMeeting(res.manageToken, tag(7, "13:00"))).toMatchObject({ ok: true });
+  });
+
+  it("Admin bucht Tag 30 außerhalb der freien Zeiten: Kalendereinladung, Bestätigung per E-Mail und WhatsApp, Erinnerungen", async () => {
+    const decision = (await loadBookingType("entscheidung"))!;
+    const c = await prisma.salesContact.create({
+      data: { name: "Agentur Admin", firstName: "Anna", lastName: "Admin", email: `anna.admin@${DOMAIN}`, phone: "0151 2223 3344", stage: "INTERESSE" },
+    });
+    const start = tag(30, "20:30"); // weit nach dem Fenster, abends, nicht im Raster
+    const res = await adminBookSalesMeeting({ type: decision, contactId: c.id, start });
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const m = await prisma.salesMeeting.findUniqueOrThrow({ where: { id: res.meetingId } });
+    expect(m).toMatchObject({ status: "GEPLANT", utmSource: "admin", bookingTypeId: decision.id, calendarKey: VERTRIEB_CUSTOMER_ID, inviteeEmail: `anna.admin@${DOMAIN}`, inviteePhone: "+4915122233344", consentAt: null });
+    expect(m.startAt.toISOString()).toBe(start.toISOString());
+    expect(m.endAt!.getTime() - m.startAt.getTime()).toBe(30 * 60000);
+    expect(m.manageToken).toBeTruthy();
+    expect(calls.created[0]).toMatchObject({ attendeeEmails: [`anna.admin@${DOMAIN}`], video: true });
+    // CRM wie bei der öffentlichen Buchung, aber kein Push an sich selbst
+    expect((await prisma.salesTask.findUniqueOrThrow({ where: { id: m.taskId! } })).type).toBe("TERMIN");
+    expect((await prisma.salesContact.findUniqueOrThrow({ where: { id: c.id } })).stage).toBe("TERMIN");
+    expect(calls.pushes).toHaveLength(0);
+    // Bestätigung
+    expect(calls.mails).toHaveLength(1);
+    expect(calls.mails[0]).toMatchObject({ to: `anna.admin@${DOMAIN}` });
+    expect(calls.mails[0].subject).toContain("Ihr Termin mit performancegrowth");
+    expect(calls.whatsapp).toEqual([res.meetingId]);
+    // Erinnerungen 24 Stunden und 1 Stunde vorher
+    calls.mails = [];
+    await runSalesBookingReminders(new Date(start.getTime() - 23 * 3600_000));
+    await runSalesBookingReminders(new Date(start.getTime() - 50 * 60_000));
+    const subjects = calls.mails.filter((x) => x.to === `anna.admin@${DOMAIN}`).map((x) => x.subject);
+    expect(subjects.some((s) => s.startsWith("Erinnerung"))).toBe(true);
+    expect(subjects.some((s) => s.startsWith("Gleich geht es los"))).toBe(true);
+    const after = await prisma.salesMeeting.findUniqueOrThrow({ where: { id: res.meetingId } });
+    expect(after.reminderSentAt).not.toBeNull();
+    expect(after.soonReminderSentAt).not.toBeNull();
+  });
+
+  it("Admin: Überschneidung mit Kalendertermin gibt Warnhinweis, mit „trotzdem“ wird gebucht", async () => {
+    const c = await prisma.salesContact.create({ data: { name: "Agentur Konflikt", email: `konflikt@${DOMAIN}`, stage: "INTERESSE" } });
+    calls.busy = [{ start: tag(20, "09:30"), end: tag(20, "10:30") }];
+    const warn = await adminBookSalesMeeting({ type, contactId: c.id, start: tag(20, "10:00") });
+    expect(warn).toMatchObject({ ok: false, error: "conflict" });
+    if (warn.ok || warn.error !== "conflict") return;
+    expect(warn.conflicts).toHaveLength(1);
+    expect(conflictText(warn.conflicts[0])).toMatch(/^Kalendertermin, .* 09:30 bis 10:30 Uhr$/);
+    expect(calls.created).toHaveLength(0);
+    expect(await prisma.salesMeeting.count({ where: { contactId: c.id } })).toBe(0);
+
+    const forced = await adminBookSalesMeeting({ type, contactId: c.id, start: tag(20, "10:00"), force: true });
+    expect(forced.ok).toBe(true);
+    // Ein zweiter Termin zur selben Zeit: Warnung nennt auch den eigenen Vertriebstermin
+    const other = await prisma.salesContact.create({ data: { name: "Agentur Zweit", email: `zweit@${DOMAIN}`, stage: "INTERESSE" } });
+    calls.busy = [];
+    const again = await adminBookSalesMeeting({ type, contactId: other.id, start: tag(20, "10:15") });
+    expect(again).toMatchObject({ ok: false, error: "conflict" });
+    if (!again.ok && again.error === "conflict") expect(again.conflicts[0].label).toBe("Meta-Leads-Call mit Ole Kannapinn: Agentur Konflikt");
+    // Ohne E-Mail keine Einladung möglich
+    const noMail = await prisma.salesContact.create({ data: { name: "Ohne Mail", email: "", description: "buchung-termin-test", stage: "NEU" } });
+    expect(await adminBookSalesMeeting({ type, contactId: noMail.id, start: tag(21, "10:00") })).toEqual({ ok: false, error: "email" });
+  });
+
+  it("Admin verschiebt ohne Grenze (Tag 40, nachts); der Termin selbst zählt nicht als Überschneidung", async () => {
+    const c = await prisma.salesContact.create({ data: { name: "Agentur Schieben", email: `admin.schieben@${DOMAIN}`, stage: "TERMIN" } });
+    const booked = await adminBookSalesMeeting({ type, contactId: c.id, start: tag(25, "10:00") });
+    if (!booked.ok) throw new Error("Buchung fehlgeschlagen");
+    const old = await prisma.salesMeeting.findUniqueOrThrow({ where: { id: booked.meetingId } });
+    calls.mails = [];
+    // Der eigene Kalendertermin (gleiche Zeit) blockiert das Verschieben um 15 Minuten nicht
+    calls.busy = [{ start: old.startAt, end: old.endAt! }];
+    const nudged = await adminRescheduleSalesMeeting(old.id, tag(25, "10:15"));
+    expect(nudged.ok).toBe(true);
+    if (!nudged.ok) return;
+    expect(await prisma.salesMeeting.findUniqueOrThrow({ where: { id: old.id } })).toMatchObject({ status: "VERSCHOBEN", canceledBy: "team" });
+    expect(calls.deleted).toContain(old.calendarEventId);
+    expect(calls.mails[0].subject).toContain("Neuer Termin");
+    expect(calls.pushes).toHaveLength(0);
+
+    // Überschneidung mit einem anderen Kalendertermin: Warnung, dann trotzdem
+    calls.busy = [{ start: tag(40, "21:30"), end: tag(40, "22:30") }];
+    expect(await adminRescheduleSalesMeeting(nudged.meetingId, tag(40, "22:00"))).toMatchObject({ ok: false, error: "conflict" });
+    const late = await adminRescheduleSalesMeeting(nudged.meetingId, tag(40, "22:00"), { force: true });
+    expect(late.ok).toBe(true);
+    if (!late.ok) return;
+    const neu = await prisma.salesMeeting.findUniqueOrThrow({ where: { id: late.meetingId } });
+    expect(neu).toMatchObject({ status: "GEPLANT", contactId: c.id, rescheduledFromId: nudged.meetingId });
+    expect(neu.startAt.toISOString()).toBe(tag(40, "22:00").toISOString());
+    // Vergangenes bzw. schon verschobenes geht nicht
+    expect(await adminRescheduleSalesMeeting(nudged.meetingId, tag(41, "10:00"))).toEqual({ ok: false, error: "closed" });
+    expect(await adminRescheduleSalesMeeting(late.meetingId, new Date(Date.now() - 3600_000))).toEqual({ ok: false, error: "past" });
   });
 });

@@ -35,8 +35,9 @@ import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card
 import { aktuellesAngebot, audienceFuer } from "@/lib/vertrieb/verkaufspraesentation";
 import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { VerkaufsLinkKarte } from "./praesentation/link-karte";
-import { CopyLinkButton } from "@/components/termin/copy-link-button";
-import { decisionBookingLink } from "@/lib/vertrieb/buchung";
+import { AdminRescheduleButton, AdminTerminButton } from "@/components/termin/admin-termin";
+import { adminBookTerminAction, adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
+import { DECISION_BOOKING_TYPE, DEFAULT_BOOKING_TYPE, decisionBookingLink } from "@/lib/vertrieb/buchung";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -80,6 +81,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   const duplicates = await likelyDuplicates(c.id);
   // Entscheidungs-Call: persönlicher Buchungslink (signiert, Buchung hängt direkt an diesem Kontakt)
   const decisionLink = await decisionBookingLink(c.id).catch(() => null);
+  // „Termin“: Admin bucht selbst (Termintyp, Datum, Uhrzeit frei); nach einem Angebot ist der Entscheidungs-Call vorgewählt
+  const bookingTypes = await prisma.salesBookingType.findMany({ orderBy: { sortOrder: "asc" }, select: { slug: true, title: true, durationMin: true } });
+  const defaultTermin = c.offers.length && bookingTypes.some((t) => t.slug === DECISION_BOOKING_TYPE) ? DECISION_BOOKING_TYPE : DEFAULT_BOOKING_TYPE;
   // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
   const referral = await referralForContact(c.id);
   const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;
@@ -156,7 +160,15 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           <Link href={`/admin/vertrieb/kontakte/${c.id}/praesentation`} className="btn-ghost" data-praesentation-knopf>
             <Presentation className="h-4 w-4" /> Präsentation
           </Link>
-          {decisionLink ? <CopyLinkButton url={decisionLink} label="Entscheidungs-Call" /> : null}
+          <AdminTerminButton
+            action={adminBookTerminAction}
+            contactId={c.id}
+            contactName={shortName(c.name)}
+            email={c.email || null}
+            types={bookingTypes}
+            defaultType={defaultTermin}
+            decisionLink={decisionLink}
+          />
           <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} />
         </div>
       </div>
@@ -341,7 +353,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
 
           {c.meetings.length > 0 && (
             <section className="card">
-              <h2 className="border-b border-slate-100 px-4 py-3 font-medium">Termine (Calendly)</h2>
+              <h2 className="border-b border-slate-100 px-4 py-3 font-medium">Termine</h2>
               <ul className="divide-y divide-slate-100">
                 {c.meetings.map((m) => {
                   const past = m.startAt < new Date();
@@ -353,6 +365,11 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
                         </span>
                         <span className={`font-medium ${m.status !== "GEPLANT" ? "text-slate-400 line-through" : ""}`}>{fmtDateTime(m.startAt)}</span>
                         <span className="text-slate-600">{m.title}</span>
+                        {m.status === "GEPLANT" && !past && m.bookingTypeId && m.manageToken ? (
+                          <span className="ml-auto">
+                            <AdminRescheduleButton action={adminRescheduleTerminAction} meetingId={m.id} title={`${m.title}, ${fmtDateTime(m.startAt)}`} startAt={m.startAt.toISOString()} />
+                          </span>
+                        ) : null}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-slate-500">
                         {m.inviteeName && <span>{m.inviteeName} ({m.inviteeEmail})</span>}
