@@ -67,6 +67,8 @@ type Props = {
   source?: string | null;
   /** WhatsApp im Konto verbunden (für „WhatsApp-Gespräch starten“). */
   whatsappConnected?: boolean;
+  /** Ein Termin steht an: Die Terminkarte darunter übernimmt, „Termin“ wandert unter „Mehr“. */
+  hasUpcomingAppointment?: boolean;
 };
 
 /** Öffnet „Angaben bearbeiten“ im Kontakt (components/lead-stammdaten-edit.tsx). */
@@ -150,6 +152,7 @@ export function LeadHeaderActions(p: Props) {
   // Nur Aktionen, die nicht schon als eigene Kachel sichtbar sind (Ole, 14.11.2026: „Wiedervorlage setzen ist doppelt“).
   // Die Kacheln E-Mail und Wiedervorlage stehen auf jeder Breite (Handy: Raster mit 3 Spalten).
   const moreActions: SheetAction[] = [
+    ...(p.hasUpcomingAppointment ? [{ label: "Weiteren Termin eintragen", icon: CalendarPlus, onSelect: () => setTimeout(() => setOpen("termin"), 0) }] : []),
     ...(!p.mailReady && !p.mailOff && p.email ? [{ label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
@@ -178,6 +181,9 @@ export function LeadHeaderActions(p: Props) {
   const won = phase?.key === "abschluss";
   const lost = !!phase && LOST_KEYS.has(phase.key);
   const showBar = !p.storniert && !won && !lost && stepPhases.length > 1;
+
+  // Anrufen, Chat, Mehr immer; E-Mail, Termin, Wiedervorlage je nach Lage (siehe Kacheln unten)
+  const tileCount = 3 + (p.mailOff ? 0 : 1) + (p.hasUpcomingAppointment ? 0 : 1) + (p.followUpAt ? 0 : 1);
 
   const dueLabel = p.followUpAt
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric" }).format(new Date(p.followUpAt))
@@ -271,7 +277,8 @@ export function LeadHeaderActions(p: Props) {
           <span>eingegangen {new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(p.createdAt))}</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+        {/* Handy: 4 Kacheln in einer Reihe, sonst 3 je Reihe (keine einzelne Kachel allein in der zweiten Reihe) */}
+        <div className={cn("mt-4 grid gap-1.5 sm:flex sm:flex-wrap sm:gap-2", tileCount === 4 ? "grid-cols-4" : "grid-cols-3")}>
           {/* Grundsatz (Ole, 14.11.2026): Kein Knopf ist grau ohne Erklärung. Fehlt etwas, sagt das Antippen, was und wie es weitergeht. */}
           <ActionTile
             icon={Phone}
@@ -298,7 +305,8 @@ export function LeadHeaderActions(p: Props) {
             explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben zum Lead ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
           )}
-          <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />
+          {/* Steht schon ein Termin an, zeigt die Terminkarte ihn (Verschieben, Vorbereiten); kein zweiter Knopf (16.11.2026) */}
+          {p.hasUpcomingAppointment ? null : <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />}
           {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt). Steht schon eine an,
               übernimmt die Leiste darunter (Ändern, Erledigt): kein zweiter Knopf für dasselbe (16.11.2026). */}
           {dueLabel ? null : (
