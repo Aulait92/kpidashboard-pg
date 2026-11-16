@@ -7,6 +7,9 @@ import { StageBadge } from "@/components/vertrieb/ui";
 import { LI_COLOR, LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { deleteContacts } from "@/app/admin/vertrieb/actions";
 import { ConfirmButton, SelectAll } from "@/components/vertrieb/confirm-button";
+import { MoreFilters } from "@/components/admin/more-filters";
+import { ChevronRight, Phone, SearchX, Trash2 } from "lucide-react";
+import { EmptyState, buttonClass } from "@/components/ui";
 import type { Prisma } from "@/generated/prisma/client";
 import type { SalesStage as Stage } from "@/generated/prisma/enums";
 
@@ -69,6 +72,7 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
     }),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE));
+  const filtered = !!(q || stage || mail || plz || li);
   const link = (p: Record<string, string | undefined>) => {
     const params = new URLSearchParams(Object.entries({ q, stage, mail, plz, li, ...p }).filter(([, v]) => v) as [string, string][]);
     return `/admin/vertrieb/kontakte?${params}`;
@@ -83,9 +87,11 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
 
       <form className="card grid gap-3 p-4 md:grid-cols-[2fr_1fr_1fr_1fr_110px_auto] md:items-end">
         <div>
-          <label className="label">Suche (Agentur, Ansprechpartner, E-Mail, Ort, Telefon)</label>
-          <input name="q" defaultValue={q} className="input" placeholder="z.B. Krefeld" />
+          <label className="label" htmlFor="kontakte-q">Suchen</label>
+          <input id="kontakte-q" name="q" type="search" defaultValue={q} className="input" placeholder="Agentur, Name, E-Mail, Ort, Telefon" />
         </div>
+        {/* Am Handy: Stufe, Cold Mail, LinkedIn und PLZ hinter „Filter“ (vorher füllten sie den ganzen Bildschirm) */}
+        <MoreFilters active={[stage, mail, li, plz].filter(Boolean).length}>
         <div>
           <label className="label">Stufe</label>
           <select name="stage" defaultValue={stage ?? ""} className="input">
@@ -110,26 +116,52 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
         </div>
         <div>
           <label className="label">PLZ beginnt mit</label>
-          <input name="plz" defaultValue={plz} className="input" placeholder="40" />
+          <input name="plz" defaultValue={plz} className="input" placeholder="40" inputMode="numeric" />
         </div>
+        </MoreFilters>
         <div className="flex gap-2">
-          <button className="btn-primary">Filtern</button>
-          <Link href="/admin/vertrieb/kontakte" className="btn-ghost">Zurücksetzen</Link>
+          <button className="btn-ghost">Filtern</button>
+          {filtered ? <Link href="/admin/vertrieb/kontakte" className="btn-ghost">Zurücksetzen</Link> : null}
         </div>
       </form>
 
-      <form id="bulk" action={deleteContacts} className="flex items-center justify-between gap-2 text-sm text-slate-500">
-        <span>Kontakte per Häkchen auswählen, um sie zu löschen.</span>
+      {/* Löschen ist selten: nur am Rechner (Häkchen in der Tabelle), am Handy nicht im Weg */}
+      <form id="bulk" action={deleteContacts} className="hidden items-center justify-between gap-2 text-sm text-slate-500 md:flex">
+        <span>Häkchen setzen, um Kontakte zu löschen.</span>
         <ConfirmButton
           form="bulk"
           message="Ausgewählte Kontakte wirklich löschen? Verlauf, Aufgaben und Cold-Mail-Status werden mit gelöscht."
           className="btn-ghost text-rose-600 hover:bg-rose-50"
         >
-          🗑 Ausgewählte löschen
+          <Trash2 className="h-4 w-4" /> Ausgewählte löschen
         </ConfirmButton>
       </form>
 
-      <div className="card overflow-x-auto">
+      {/* Handy: Liste statt Tabelle (die Tabelle war 9 Spalten breit, Telefon und Stufe lagen außerhalb) */}
+      <ul className="card divide-y divide-slate-100 md:hidden">
+        {contacts.map((c) => (
+          <li key={c.id} className="flex items-center gap-2 pr-2">
+            <Link href={`/admin/vertrieb/kontakte/${c.id}`} className="flex min-w-0 flex-1 items-center gap-2 py-3 pl-4">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{shortName(c.name)}</span>
+                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                  <StageBadge stage={c.stage} />
+                  {c.city ? <span>{c.city}</span> : null}
+                  {c.tasks[0] ? <span>· {fmtDate(c.tasks[0].dueAt)} {c.tasks[0].title}</span> : null}
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+            </Link>
+            {c.phone ? (
+              <a href={`tel:${c.phone.replace(/\s/g, "")}`} aria-label={`${shortName(c.name)} anrufen`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[color:var(--brand)] hover:bg-slate-50">
+                <Phone className="h-4 w-4" />
+              </a>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+
+      <div className="card hidden overflow-x-auto md:block">
         <table className="w-full text-sm">
           <thead className="border-b border-slate-100 text-left text-xs text-slate-500">
             <tr>
@@ -179,8 +211,22 @@ export default async function KontaktePage({ searchParams }: { searchParams: Pro
             })}
           </tbody>
         </table>
-        {!contacts.length && <p className="py-10 text-center text-sm text-slate-500">Keine Kontakte gefunden.</p>}
       </div>
+      {!contacts.length && (
+        <div className="card">
+          <EmptyState
+            icon={SearchX}
+            title={filtered ? "Kein Kontakt passt zu Suche und Filter." : "Noch keine Kontakte."}
+            action={
+              filtered ? (
+                <Link href="/admin/vertrieb/kontakte" className={buttonClass("secondary", "md")}>Filter zurücksetzen</Link>
+              ) : (
+                <Link href="/admin/vertrieb/kontakte/neu" className={buttonClass("primary", "md")}>Ersten Lead anlegen</Link>
+              )
+            }
+          />
+        </div>
+      )}
 
       {pages > 1 && (
         <div className="flex items-center justify-center gap-2 text-sm">
