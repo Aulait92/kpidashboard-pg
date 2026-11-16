@@ -711,7 +711,7 @@ function UpcomingCard({
                         key={b.d}
                         type="button"
                         onClick={() => shift(it, b.d)}
-                        className="rounded-full border border-[color:var(--border)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
+                        className="rounded-full border border-[color:var(--border)] px-2.5 py-2.5 text-xs font-semibold text-[color:var(--muted)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] sm:py-1"
                       >
                         {b.l}
                       </button>
