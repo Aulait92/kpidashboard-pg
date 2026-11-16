@@ -33,7 +33,12 @@ export type BuyerContext = {
 
 /** Demo-Sicht: nur beim Rendern einer /app-demo-Seite (signiertes Kennzeichen der Middleware), nie in einer Server Action. */
 async function getAppDemoContext(): Promise<BuyerContext | null | undefined> {
-  const h = await headers();
+  let h: Awaited<ReturnType<typeof headers>>;
+  try {
+    h = await headers();
+  } catch {
+    return undefined; // außerhalb einer Anfrage (Skripte, Tests): keine Demo
+  }
   if (!h.get(APP_DEMO_HEADER)) return undefined;
   // Kennzeichen da, aber ungültig oder in einer Action: keine Sicht, auch kein Rückfall auf eine Sitzung
   if (!istDemoAnsicht(h)) return null;
