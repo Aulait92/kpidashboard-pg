@@ -4,7 +4,7 @@ import { FileDown } from "lucide-react";
 import { FolienDeck } from "@/components/folien-deck";
 import { getCurrentSession } from "@/lib/auth";
 import { listPresentations } from "@/lib/vertrieb/praesentationen";
-import { ladeVerkaufsLink, verkaufsAufrufMerken } from "@/lib/vertrieb/verkaufspraesentation-server";
+import { AUFRUF_HINWEIS, DATENSCHUTZ_URL, ladeVerkaufsLink, verkaufsAufrufMerken } from "@/lib/vertrieb/verkaufspraesentation-server";
 
 // Vertriebspräsentation zum Nachklicken für den Interessenten (Ole, 15.11.2026): geheimer Link je Kontakt, 14 Tage,
 // ohne Sprechzettel; Preise aus seinem Angebot. Nur auf der App-Adresse (nicht auf der Buchungsadresse der Vermittler).
@@ -43,6 +43,14 @@ export default async function VerkaufsLinkPage({ params }: { params: Promise<{ t
         />
       </div>
       <p className="mt-3 text-sm text-[color:var(--muted)] sm:hidden">Tipp: Handy quer halten, dann wird die Folie größer.</p>
+      {/* Aufrufstatistik (SalesPresentationView): Hinweis nach Art. 13 DSGVO, Rechtsvorprüfung 16.11.2026 */}
+      <p className="mt-6 text-xs text-[color:var(--muted)]" data-aufruf-hinweis>
+        {AUFRUF_HINWEIS}{" "}
+        <a href={DATENSCHUTZ_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-[color:var(--brand)]">
+          Datenschutzerklärung
+        </a>
+        .
+      </p>
     </main>
   );
 }

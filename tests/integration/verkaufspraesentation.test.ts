@@ -27,6 +27,8 @@ import {
   verkaufsAufrufMerken,
   verkaufsLinkErstellen,
 } from "@/lib/vertrieb/verkaufspraesentation-server";
+import { renderToStaticMarkup } from "react-dom/server";
+import VerkaufsLinkPage from "@/app/praesentation/[token]/page";
 import { requireTestDb } from "./db";
 
 const tag = Math.random().toString(36).slice(2, 8);
@@ -90,6 +92,21 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
     expect(await verkaufsAufrufMerken(p!.linkId, new Date(t.getTime() + 10 * 60_000))).toBe(false);
     expect(await verkaufsAufrufMerken(p!.linkId, new Date(t.getTime() + 40 * 60_000))).toBe(true);
     expect((await verkaufsAufrufe(contactId, 50)).length).toBe(vorher + 2);
+  });
+
+  it("Seite für Interessenten: Hinweis auf die Aufrufstatistik mit Link zur Datenschutzerklärung", async () => {
+    const l = await verkaufsLinkErstellen(contactId, "makler", null, new Date());
+    st.role = "GAST";
+    try {
+      const html = renderToStaticMarkup(await VerkaufsLinkPage({ params: Promise.resolve({ token: l!.token }) }));
+      const hinweis = /data-aufruf-hinweis[^>]*>([\s\S]*?)<\/p>/.exec(html)?.[1] ?? "";
+      expect(hinweis).toContain("Wir speichern, wann Sie diesen Link öffnen (ohne IP-Adresse), um unser Gespräch vorzubereiten, mehr dazu in unserer");
+      expect(hinweis).toContain('href="https://performancegrowth.de/datenschutz"');
+      expect(hinweis).toContain("Datenschutzerklärung");
+      expect(hinweis).not.toMatch(/[–—]/);
+    } finally {
+      st.role = "ADMIN";
+    }
   });
 
   it("nur Admins erstellen und beenden Links", async () => {

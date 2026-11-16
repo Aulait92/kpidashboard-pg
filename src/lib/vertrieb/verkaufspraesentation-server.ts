@@ -102,6 +102,10 @@ export async function ladeVerkaufsLink(token: string, now = new Date()) {
 }
 
 /** Aufruf merken (ohne IP/Gerät); innerhalb von 30 Minuten nur einmal. true = neu protokolliert. */
+/** Hinweis unten auf /praesentation/[token] (ein Satz, Sie-Form, Link folgt als „Datenschutzerklärung“). */
+export const AUFRUF_HINWEIS = "Wir speichern, wann Sie diesen Link öffnen (ohne IP-Adresse), um unser Gespräch vorzubereiten, mehr dazu in unserer";
+export const DATENSCHUTZ_URL = "https://performancegrowth.de/datenschutz";
+
 export async function verkaufsAufrufMerken(linkId: string, now = new Date()): Promise<boolean> {
   const kurz = await prisma.salesPresentationView.findFirst({ where: { linkId, viewedAt: { gt: new Date(now.getTime() - AUFRUF_PAUSE_MS) } }, select: { id: true } });
   if (kurz) return false;
