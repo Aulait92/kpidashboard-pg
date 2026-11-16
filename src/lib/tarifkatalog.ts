@@ -5,7 +5,7 @@
 // Format (Recherche, data/tarifkatalog/README):
 // - schema.json: { sparten: [ { key, label, merkmale: [ { key, label, kurz, standard? } ], bausteine: [ { key, label, kurz } ] } ] }
 // - <gesellschaft>/<sparte>.json: { gesellschaft, sparte, produkt, inAllenTarifen, tarife: [ { name, kurz, stufe, empfohlen?,
-//   werte: { merkmal: string|null }, bausteine: { baustein: "inklusive"|"optional"|"nein" }, quelle, stand } ], offen }
+//   werte: { merkmal: string|null }, bausteine: { baustein: "inklusive"|"optional"|"nein" }, quelle, stand, ungeprueft? } ], offen }
 //
 // Reine Funktionen (auch im Browser): Einlesen und Prüfen, Vorauswahl, Grenzen und Tausch der Merkmale.
 // Laden von der Platte: lib/tarifkatalog-laden.ts.
@@ -40,6 +40,11 @@ export type KatalogTarif = {
   inAllenTarifen: string[];
   /** Produktlinie für einen Bündelrabatt (z. B. „Komfort“); ohne Angabe der Kurzname */
   linie: string | null;
+  /**
+   * Werte nicht an der Quelle gegengeprüft (Ole, 16.11.2026; JSON „ungeprueft“: true je Tarif): Die Oberfläche zeigt
+   * bei der Tarifwahl „bitte prüfen“.
+   */
+  ungeprueft?: boolean;
 };
 
 /**
@@ -56,22 +61,48 @@ export type Katalog = { sparten: KatalogSparte[]; tarife: KatalogTarif[]; buende
  */
 export const AUSWAHL_GRENZEN = { tarife: 3, stufen: 4, merkmale: 5, bausteine: 2, kurzname: 18 } as const;
 
+/** Die drei Vertreter-Gesellschaften, in Listen immer zuerst. */
+const VERTRETER_GESELLSCHAFTEN = ["allianz", "axa", "signal-iduna"];
 /** Anzeigenamen der Gesellschaften (Ordnernamen im Katalog), Schreibweise wie die Marke. */
 const GESELLSCHAFT_NAMEN: Record<string, string> = {
   allianz: "Allianz",
   axa: "AXA",
   "signal-iduna": "SIGNAL IDUNA",
-  // Tierversicherer (16.11.2026)
+  advocard: "ADVOCARD",
   agila: "AGILA",
-  barmenia: "Barmenia",
+  arag: "ARAG",
+  // Barmenia und Gothaer sind fusioniert (Ole, 16.11.2026): eine Gesellschaft, Tier- und Sachtarife in einem Ordner
+  "barmenia-gothaer": "BarmeniaGothaer",
+  devk: "DEVK",
   dfv: "DFV",
   ergo: "ERGO",
+  generali: "Generali",
+  haftpflichtkasse: "Die Haftpflichtkasse",
   hansemerkur: "HanseMerkur",
+  "huk-coburg": "HUK-COBURG",
+  lvm: "LVM",
+  provinzial: "Provinzial",
+  roland: "ROLAND",
   ruv: "R+V",
   uelzener: "Uelzener",
+  vhv: "VHV",
+  zurich: "Zurich",
 };
-/** Reihenfolge in Listen: die drei Vertreter-Gesellschaften zuerst, dann die Tierversicherer (alphabetisch), sonst alphabetisch. */
-const REIHENFOLGE = ["allianz", "axa", "signal-iduna", "agila", "barmenia", "dfv", "ergo", "hansemerkur", "ruv", "uelzener"];
+/** Reihenfolge in Listen (Ole, 16.11.2026): die Vertreter-Gesellschaften zuerst, dann alle übrigen alphabetisch nach Anzeigename. */
+const REIHENFOLGE = [
+  ...VERTRETER_GESELLSCHAFTEN,
+  ...Object.keys(GESELLSCHAFT_NAMEN)
+    .filter((k) => !VERTRETER_GESELLSCHAFTEN.includes(k))
+    .sort((a, b) => GESELLSCHAFT_NAMEN[a].localeCompare(GESELLSCHAFT_NAMEN[b], "de")),
+];
+/** Frühere Schlüssel (z. B. in Customer.tarifGesellschaften gespeichert) → heutiger Schlüssel. */
+const ALTE_SCHLUESSEL: Record<string, string> = { barmenia: "barmenia-gothaer", gothaer: "barmenia-gothaer" };
+
+/** Heutiger Schlüssel einer Gesellschaft (alte Schlüssel wie „barmenia“ werden umgestellt). */
+export const gesellschaftSchluessel = (key: string): string => ALTE_SCHLUESSEL[key] ?? key;
+
+/** Alle bekannten Gesellschaften in Listenreihenfolge (für Tests und Auswahllisten). */
+export const bekannteGesellschaften = (): string[] => [...REIHENFOLGE];
 
 export function gesellschaftName(key: string): string {
   if (GESELLSCHAFT_NAMEN[key]) return GESELLSCHAFT_NAMEN[key];
@@ -89,15 +120,30 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/\baxa\b/i.test(t)) return "axa";
   if (/signal\s*-?\s*iduna/i.test(t)) return "signal-iduna";
   if (/\bagila\b/i.test(t)) return "agila";
-  if (/barmenia/i.test(t)) return "barmenia";
+  // BarmeniaGothaer: „Barmenia“, „Gothaer“ und „BarmeniaGothaer“ sind eine Gesellschaft (fusioniert)
+  if (/barmenia|gothaer/i.test(t)) return "barmenia-gothaer";
   if (/\bdfv\b|deutsche\s+familienversicherung/i.test(t)) return "dfv";
   if (/\bergo\b/i.test(t)) return "ergo";
   if (/hanse\s*-?\s*merkur/i.test(t)) return "hansemerkur";
   if (/(^|[^a-z])r\s*\+\s*v([^a-z]|$)|\bruv\b/i.test(t)) return "ruv";
   if (/uelzener/i.test(t)) return "uelzener";
+  if (/\bhuk(?:-?coburg|24)?\b/i.test(t)) return "huk-coburg";
+  if (/\bdevk\b/i.test(t)) return "devk";
+  if (/\bgenerali\b/i.test(t)) return "generali";
+  // Marke ohne Umlaut; die Stadt Zürich soll nicht treffen.
+  if (/\bzurich\b/i.test(t)) return "zurich";
+  if (/\bvhv\b/i.test(t)) return "vhv";
+  if (/haftpflicht\s*-?\s*kasse/i.test(t)) return "haftpflichtkasse";
+  if (/\blvm\b/i.test(t)) return "lvm";
+  if (/provinzial/i.test(t)) return "provinzial";
+  if (/\barag\b/i.test(t)) return "arag";
+  // „Roland“ ist auch ein Vorname: nur die Großschreibung der Marke oder mit Rechtsschutz bzw. Versicherung.
+  if (/\bROLAND\b/.test(t) || /\broland[\s-]*(rechtsschutz|versicherung)/i.test(t)) return "roland";
+  if (/advocard/i.test(t)) return "advocard";
   return null;
 }
 
+/** Schlüssel in Listenreihenfolge (Vertreter-Gesellschaften zuerst, dann alphabetisch nach Anzeigename), ohne Doppelte. */
 export const sortiereGesellschaften = (keys: string[]): string[] =>
   [...new Set(keys)].sort((a, b) => {
     const ia = REIHENFOLGE.indexOf(a);
@@ -310,6 +356,7 @@ export function parseTarifDatei(raw: unknown, pfad: { gesellschaft: string; spar
       stand: text(t.stand, 20),
       inAllenTarifen: inAllen,
       linie: text(t.linie, 40),
+      ...(t.ungeprueft === true ? { ungeprueft: true } : {}),
     });
   }
   return out;

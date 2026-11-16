@@ -31,9 +31,17 @@ Gemeinsames Merkmal-Schema je Sparte, gleich für alle Gesellschaften.
   (Wort im Leadformular für die Vorauswahl).
 
 ### `<gesellschaft>/<sparte>.json`
-Ordner: Schlüssel der Gesellschaft, klein mit Bindestrich (`allianz`, `axa`, `signal-iduna`, Tierversicherer z. B.
-`agila`, `barmenia`, `dfv`, `ergo`, `hansemerkur`, `ruv`, `uelzener`). Neue Ordner prüft der Datentest automatisch mit; Anzeigename und Reihenfolge stehen in
-`src/lib/tarifkatalog.ts` (`GESELLSCHAFT_NAMEN`, `REIHENFOLGE`, `gesellschaftAusText`).
+Ordner: Schlüssel der Gesellschaft, klein mit Bindestrich: `allianz`, `axa`, `signal-iduna` (Vertreter-Gesellschaften),
+`advocard`, `agila`, `arag`, `barmenia-gothaer`, `devk`, `dfv`, `ergo`, `generali`, `haftpflichtkasse`, `hansemerkur`,
+`huk-coburg`, `lvm`, `provinzial`, `roland`, `ruv` (R+V, wie die Adresse ruv.de; „+“ taugt nicht als Ordnername),
+`uelzener`, `vhv`, `zurich`. Neue Ordner prüft der Datentest automatisch mit; jeder Ordner braucht einen Eintrag in
+`src/lib/tarifkatalog.ts` (`GESELLSCHAFT_NAMEN`, `gesellschaftAusText`), sonst schlägt der Datentest an.
+Reihenfolge in Listen: Allianz, AXA, SIGNAL IDUNA zuerst, dann alle übrigen alphabetisch nach Anzeigename.
+
+**BarmeniaGothaer** (Ole, 16.11.2026): Barmenia und Gothaer sind fusioniert und stehen als eine Gesellschaft im
+Ordner `barmenia-gothaer` (Tier-Tarife der Barmenia und Sachtarife der Gothaer Allgemeine). `gesellschaftAusText`
+erkennt „Barmenia“, „Gothaer“ und „BarmeniaGothaer“; früher gespeicherte Schlüssel `barmenia` bzw. `gothaer` stellt
+`gesellschaftSchluessel` um.
 
 ```json
 { "gesellschaft": "Allianz", "sparte": "rechtsschutz", "produkt": "Rechtsschutzversicherung",
@@ -58,12 +66,18 @@ Ordner: Schlüssel der Gesellschaft, klein mit Bindestrich (`allianz`, `axa`, `s
 - `inAllenTarifen`: höchstens 3 kurze Punkte, die in jeder Stufe gleich sind.
 - Zusätzlich gegenüber dem ursprünglichen Format (additiv, darf ignoriert werden): `empfehlung`, `quellen` (alle
   verwendeten Dokumente der Gesellschaft, bei Allianz Rechtsschutz auch Oles Rechner-Screenshot).
+- `ungeprueft: true` je Tarif (optional, Ole 16.11.2026): Die Werte sind nicht am Bildschirm bzw. an der Quelle
+  gegengeprüft. Die Terminvorbereitung zeigt dann bei „Tarife ändern“ und an der Tarifkarte „bitte prüfen“ statt des
+  Stands; auf den Kundenfolien erscheint nichts davon. Gesetzt bei VHV, LVM, Die Haftpflichtkasse und Provinzial
+  (Symboltabellen, Werte nur teilweise lesbar). Nach dem Gegenprüfen das Feld entfernen.
 - `buendel.json` je Gesellschaft: Bündel- bzw. Kombirabatte.
   `{ "gesellschaft", "name", "linien": ["Komfort","Premium"], "mindestLaufzeitJahre": 3 | null, "sparten": [...],
   "staffel": [{ "anzahl": 2, "prozent": 5 }, …], "quelle", "stand", "offen": [] }`. Ein Staffeleintrag mit
   `"abAnzahl": true` gilt für diese und jede höhere Anzahl. Leere `staffel` = nicht veröffentlicht (Grund in `offen`).
   Stand: Allianz Staffel belegt (2: 5 %, 3: 10 %, 4: 15 %, ab 5: 20 %, Linien Komfort und Premium, Mindestlaufzeit nicht
-  als Bedingung genannt); AXA und SIGNAL IDUNA veröffentlichen keine Staffel.
+  als Bedingung genannt); AXA und SIGNAL IDUNA veröffentlichen keine Staffel. ERGO: Staffel nur für Wohngebäude
+  (2: 8 %, 3: 10 %); R+V PrivatPolice (2: 3 %, 3: 6 %, ab 4: 9 %). Ohne Staffel (Grund in `offen`): HUK-COBURG, DEVK,
+  Generali, Zurich, BarmeniaGothaer, VHV, Die Haftpflichtkasse, LVM, Provinzial, ARAG, ROLAND, ADVOCARD.
 
 ## Quellenregel
 - Nur öffentliche Quellen der Gesellschaft: Produktseite mit Tarifvergleich, Produktsteckbrief, Produktinformationsblatt
@@ -95,7 +109,7 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 Tierversicherer (Abruf 16.11.2026; nur Tier-Sparten). „1 Tarif“ = die Gesellschaft hat keine Stufen, nur wählbare
 Summen bzw. Selbstbeteiligung (Stufe „Tarif“).
 
-| Sparte | AGILA | Barmenia | DFV | ERGO | HanseMerkur | R+V | Uelzener |
+| Sparte | AGILA | BarmeniaGothaer | DFV | ERGO | HanseMerkur | R+V | Uelzener |
 |---|---|---|---|---|---|---|---|
 | katze-kranken | vollständig (3 Stufen) | vollständig (4 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | vollständig (3 Stufen) | fehlt (kein Produkt) | vollständig (1 Tarif) |
 | katze-op | vollständig (3 Stufen) | vollständig (2 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | fehlt (kein Produkt) | vollständig (1 Tarif) |
@@ -103,13 +117,38 @@ Summen bzw. Selbstbeteiligung (Stufe „Tarif“).
 | hund-op | vollständig (3 Stufen) | vollständig (3 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | teilweise (3 Stufen, Vorsorge nicht genannt) | vollständig (1 Tarif) |
 | pferd-op | fehlt (nur Hund, Katze) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | vollständig (1 Tarif) |
 | pferd-kranken | fehlt (nur Hund, Katze) | fehlt (kein Vollschutz für Pferde) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | fehlt (kein Produkt) | vollständig (1 Tarif) |
-| tierhalter-hund | vollständig (3 Stufen) | fehlt (Stufen Klassik, Premium nicht als Tabelle) | vollständig (1 Tarif) | teilweise (1 Tarif, Fremdhüter offen) | vollständig (2 Stufen) | teilweise (3 Stufen, SB offen) | vollständig (1 Tarif) |
-| tierhalter-pferd | fehlt (kein Produkt) | fehlt (Stufen nicht als Tabelle) | fehlt (kein Produkt) | teilweise (1 Tarif, Flurschäden offen) | fehlt (kein Produkt) | teilweise (3 Stufen, SB offen) | vollständig (1 Tarif) |
+| tierhalter-hund | vollständig (3 Stufen) | teilweise (1 Tarif, siehe Privatschutz) | vollständig (1 Tarif) | teilweise (1 Tarif, Fremdhüter offen) | vollständig (2 Stufen) | teilweise (3 Stufen, SB nur classic) | vollständig (1 Tarif) |
+| tierhalter-pferd | fehlt (kein Produkt) | teilweise (1 Tarif, siehe Privatschutz) | fehlt (kein Produkt) | teilweise (1 Tarif, Flurschäden offen) | fehlt (kein Produkt) | teilweise (3 Stufen, SB offen) | vollständig (1 Tarif) |
 
 Nicht aufgenommen: PETPROTECT (Vermittler der BarmeniaGothaer, Tarifvergleich nur als Symbole ohne Werte),
-Helvetia (helvetia.de nennt nur „je nach Tarifwahl“, keine Stufen; Seiten für automatische Abrufe gesperrt), Gothaer
-(gothaer.de leitet auf barmeniagothaer.de; Tierkranken siehe Barmenia; Hunde- und Pferdehaftpflicht dort nur eine
-Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext erwähnt).
+Helvetia (helvetia.de nennt nur „je nach Tarifwahl“, keine Stufen; Seiten für automatische Abrufe gesperrt).
+
+Privatschutz (Abruf 16.11.2026; Tierhalter von ERGO und R+V siehe Tierversicherer). Zahl in Klammern = Stufen.
+**ungeprüft** = Werte mit `ungeprueft: true`, bitte gegenprüfen.
+
+| Sparte | ERGO | R+V | HUK-COBURG | DEVK | Generali |
+|---|---|---|---|---|---|
+| haftpflicht | vollständig (2, Mietsachschäden offen) | vollständig (3) | vollständig (3) | vollständig (3) | vollständig (1 Tarif) |
+| hausrat | teilweise (2, einf. Diebstahl) | teilweise (3, einf. Diebstahl) | teilweise (3, Basis kaum belegt, GF) | teilweise (3, Wertsachen, Fahrrad) | teilweise (2, Wertsachen) |
+| rechtsschutz | teilweise (2, Kaution Smart) | vollständig (2, Bausteinkonzept) | teilweise (2, Strafkaution) | teilweise (2, Strafkaution) | vollständig (1 Tarif, ADVOCARD) |
+| wohngebaeude | vollständig (2, Broschüre 9.2024) | vollständig (2) | vollständig (2) | teilweise (3, Ableitungsrohre) | teilweise (1 Tarif, Rohre, Kosten) |
+| unfall | vollständig (3, Summe wählbar) | teilweise (3, Rente, Tagegeld) | vollständig (2) | teilweise (3, Grundsumme individuell) | teilweise (1 Tarif, Rente, Tagegeld) |
+| tierhalter-hund | siehe Tierversicherer | siehe Tierversicherer | vollständig (1 Tarif) | teilweise (2, fremde Hüter) | teilweise (1 Tarif, SB, Welpen) |
+| tierhalter-pferd | siehe Tierversicherer | siehe Tierversicherer | vollständig (1 Tarif) | vollständig (2) | teilweise (1 Tarif, SB, Flurschäden) |
+
+| Sparte | Zurich | BarmeniaGothaer | VHV (ungeprüft) | Die Haftpflichtkasse (ungeprüft) | LVM (ungeprüft) | Provinzial (ungeprüft) |
+|---|---|---|---|---|---|---|
+| haftpflicht | vollständig (2) | vollständig (3) | vollständig (2) | vollständig (3) | vollständig (2) | teilweise (3, Summe, Forderungsausfall) |
+| hausrat | teilweise (2, einf. Diebstahl) | teilweise (3, einf. Diebstahl) | teilweise (2, einf. Diebstahl, GF) | teilweise (2, einf. Diebstahl) | teilweise (2, einf. Diebstahl) | teilweise (3, einf. Diebstahl) |
+| rechtsschutz | vollständig (2) | teilweise (3, Strafkaution; ROLAND) | vollständig (2; NRV) | fehlt (kein Produkt) | teilweise (2, Klassik-Summen) | teilweise (2, Strafkaution; ÖRAG) |
+| wohngebaeude | vollständig (2) | vollständig (3) | teilweise (2, GF, Ableitung Klassik) | fehlt (kein Produkt) | teilweise (2, GF, Kosten) | teilweise (3, PV und Ableitung Kompakt) |
+| unfall | teilweise (2, ab Grad) | teilweise (3, ab Grad) | teilweise (2, ab Grad) | teilweise (3, Summen) | vollständig (1) | vollständig (1) |
+| tierhalter-hund | teilweise (2, SB) | teilweise (1, SB, Miete) | teilweise (1, SB) | teilweise (1, Summe, SB) | teilweise (2, SB, Hüter, Miete) | teilweise (1, SB, Miete) |
+| tierhalter-pferd | teilweise (2, SB) | teilweise (1, SB) | teilweise (1, SB) | teilweise (1, Summe, SB) | teilweise (2, SB, Flurschäden) | teilweise (1, SB) |
+
+| Sparte | ARAG | ROLAND | ADVOCARD |
+|---|---|---|---|
+| rechtsschutz | vollständig (3) | teilweise (3, Strafkaution) | vollständig (2) |
 
 ### Allianz
 - Quelle ist jeweils der Tarifvergleich der Produktseite auf allianz.de (Abruf 15.11.2026), dazu der Produktsteckbrief.
@@ -157,22 +196,38 @@ Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext
 - Zusätzlicher Schutz (Vorsorge, Physiotherapie, Zahn) gegen Aufpreis; der Flex-Tarif ist nicht als Stufe geführt.
 - Kein Pferdeprodukt, keine Pferdehaftpflicht.
 
-### Barmenia (BarmeniaGothaer)
-- Quelle: Leistungsübersichten WS1281 (Tier-OP) und WS1282 (Tierkranken), Stand 01/2026, sowie die Produkttabellen auf
-  barmeniagothaer.de. Risikoträger Barmenia Allgemeine. Ordner `barmenia` enthält nur Tier-Dateien.
-- Tierkranken Basis, Top, Premium („meistgewählt“), Premium Plus; Tier-OP Unfall (nur Hunde), Premium, Premium Plus;
-  Pferde-OP Basis, Top, Premium.
-- Hunde- und Pferdehaftpflicht stehen auf barmeniagothaer.de nur als eine Spalte; die Stufen sind nur im Text genannt,
-  deshalb nicht aufgenommen.
+### BarmeniaGothaer
+- Eine Gesellschaft (Ordner `barmenia-gothaer`): barmenia.de und gothaer.de leiten auf barmeniagothaer.de um.
+- Tier: Leistungsübersichten WS1281 (Tier-OP) und WS1282 (Tierkranken), Stand 01/2026, sowie die Produkttabellen auf
+  barmeniagothaer.de. Risikoträger Barmenia Allgemeine. Tierkranken Basis, Top, Premium („meistgewählt“), Premium Plus;
+  Tier-OP Unfall (nur Hunde), Premium, Premium Plus; Pferde-OP Basis, Top, Premium.
+- Privatschutz: Die Sachtarife (Privat Kompakt) trägt laut Bedingungen die Gothaer Allgemeine Versicherung AG. Quelle
+  sind die Leistungsübersichten „im Überblick“ in den Bedingungen (Download-Links der Produktseiten): Haftpflicht Spar,
+  Basis, Premium (09/2026); Hausrat Klassik, Plus, Premium (06/2026); Wohngebäude Basis, Plus, Premium (06/2026);
+  Unfall Klassik, Plus, Premium (07/2023).
+- Hunde- und Pferdehaftpflicht als ein Tarif mit wählbarer Summe (AHB 04/12, BBR 02/18); die Stufen Klassik/Premium
+  bzw. Basis/Top/Premium sind auf barmeniagothaer.de nur im Fließtext erwähnt und deshalb nicht als Stufen aufgenommen.
+- Rechtsschutz über den Partner ROLAND (Top-Rechtsschutz Starter, Komfort, Premium), Werte wie bei ROLAND.
+- Keine Empfehlung markiert, bei drei Stufen die mittlere gesetzt.
 
 ### DFV (Deutsche Familienversicherung)
 - Quelle: Leistungsübersichten auf deutsche-familienversicherung.de. Je ein Tarif: TierkrankenSchutz OP-Schutz und
   Vollschutz („Leistungs-Empfehlung“), HundehaftpflichtSchutz mit oder ohne Selbstbeteiligung. Nur Hunde.
 
 ### ERGO
-- Quelle: Produktseiten und Kurzinformationen (Flyer 12/2020) auf ergo.de. Hunde- und Pferdehalter-Haftpflicht je ein
-  Tarif mit 5, 10 oder 50 Mio. €. Ordner `ergo` enthält nur Tier-Dateien. Keine Tierkranken- oder Tier-OP-Versicherung
-  als Produkt auf ergo.de (nur Ratgeber).
+- Tier: Produktseiten und Kurzinformationen (Flyer 12/2020 bzw. 6.22) auf ergo.de. Hunde- und Pferdehalter-Haftpflicht
+  je ein Tarif mit 5, 10 oder 50 Mio. €. Keine Tierkranken- oder Tier-OP-Versicherung als Produkt auf ergo.de (nur
+  Ratgeber).
+- Privatschutz: Tarifvergleiche der Produktseiten auf ergo.de (Abruf 16.11.2026); Wohngebäude aus der Broschüre
+  (Stand 9.2024, Tabelle als Bild ausgewertet), Hausrat ergänzt aus der Broschüre (Stand 9.2025). Die
+  Leistungsübersichten auf ergo-meine-druckstuecke.de waren für automatische Abrufe gesperrt und sind nicht verwendet.
+- Stufen: Haftpflicht, Hausrat, Rechtsschutz, Wohngebäude Smart und Best; Unfall Basic, Smart, Best.
+- Rechtsschutz ist ERGOs eigener Rechtsschutz: Die D.A.S. heißt seit 2019 ERGO Rechtsschutzversicherung (laut ergo.de).
+  Privat, Beruf, Wohnen, Verkehr sind frei kombinierbar, daher Beruf, Wohnen und Verkehr als „optional“.
+- Empfehlung: ERGO markiert Best als „Bestseller“ (Haftpflicht, Hausrat, Rechtsschutz). Wohngebäude ohne Markierung
+  (`empfehlung: "keine"`), Unfall: Smart als mittlere Stufe.
+- Bündel: Broschüre Wohngebäude nennt bis 15 % Bündelnachlass, bei zwei Verträgen 8 %; das Preisbeispiel der Produktseite
+  rechnet mit 10 % bei drei Verträgen. Nur für Wohngebäude belegt.
 
 ### HanseMerkur
 - Quelle: Leistungstabellen auf hansemerkur.de, Leistungsübersicht Hundehaftpflicht (MS 201, 05/2025).
@@ -180,9 +235,18 @@ Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext
   und Premium plus („Testsieger“). Kein Pferdeprodukt.
 
 ### R+V
-- Quelle: Leistungstabellen auf ruv.de (Hunde-OP, Pferde-OP) und das Produktinformationsblatt Pferde-OP. Stufen Basis,
-  Premium, Exzellent („Topseller“). Ordner `ruv` enthält nur Tier-Dateien. Keine Katzen- und keine Krankenvollversicherung;
-  Hunde- und Pferdehalterhaftpflicht classic, comfort („Topseller“ bei Hund), premium; Selbstbeteiligung nicht in der Tabelle.
+- Ordner `ruv` (wie die Adresse ruv.de).
+- Tier: Leistungstabellen auf ruv.de (Hunde-OP, Pferde-OP) und das Produktinformationsblatt Pferde-OP. Stufen Basis,
+  Premium, Exzellent („Topseller“). Keine Katzen- und keine Krankenvollversicherung; Hunde- und Pferdehalterhaftpflicht
+  classic, comfort („Topseller“ bei Hund), premium; Selbstbeteiligung nur als Berechnungsbeispiel (classic 250 €).
+- Privatschutz: Leistungstabellen der Produktseiten auf ruv.de (Abruf 16.11.2026), Rechtsschutz von der Seite
+  Privatrechtsschutz, Bündel von der Seite PrivatPolice. Haftpflicht und Hausrat classic, comfort, premium; Unfall
+  (Risiko-UnfallPolice) Classic, Comfort, Premium als zusammengestellte Angebotsvarianten; Rechtsschutz und Wohngebäude
+  classic und comfort.
+- Rechtsschutz ist R+V selbst (Bausteinkonzept: Privat plus Beruf, Verkehr, Immobilien).
+- Empfehlung: R+V markiert comfort als „Topseller“ bei Hausrat und Hundehaftpflicht; Haftpflicht, Pferd, Unfall: comfort
+  als mittlere Stufe; Rechtsschutz und Wohngebäude ohne Markierung (`empfehlung: "keine"`).
+- Bündel: PrivatPolice mit 3 % (2 Verträge), 6 % (3), 9 % (ab 4); alle Haftpflichtverträge zählen einmal, Unfall nicht.
 
 ### Uelzener
 - Quelle: Produktseiten und Leistungsübersichten auf uelzener.de (Hund 12/2025, Katze 08/2025, Pferd 03/2025,
@@ -191,12 +255,104 @@ Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext
 - Einzige Gesellschaft mit Pferde-OP und Pferdekranken als eigene Produkte neben Allianz; dazu Kolik-Versicherung
   (nicht im Schema).
 
+### HUK-COBURG
+- Quelle: Produktseiten auf huk.de (Abruf 16.11.2026), Haftpflicht mit Tarifvergleich Basis, Classic, Classic PLUS;
+  Unfall und Rechtsschutz an der Produktseite gegengeprüft (kein Tarifvergleich, Classic und PLUS-Baustein aus dem
+  Fließtext).
+- Stufen: Haftpflicht und Hausrat Basis, Classic, Classic PLUS; Wohngebäude und Unfall Classic und Classic PLUS (PLUS ist
+  jeweils ein Zusatzbaustein); Rechtsschutz PBV und PBV mit Rechtsschutz PLUS; Hunde- und Pferdehaftpflicht je ein Tarif
+  (15 Mio. €, ohne Selbstbeteiligung).
+- Rechtsschutz ist HUK-COBURG selbst (kein Partner genannt). Wohnen ist eine Ergänzung.
+- Empfehlung: HUK markiert keine Stufe; Haftpflicht und Hausrat Classic als mittlere Stufe, sonst `empfehlung: "keine"`.
+- Bündel: auf huk.de kein Bündelrabatt veröffentlicht (nur Neukaufnachlass Wohngebäude).
+
+### DEVK
+- Quelle: Tarifvergleiche der Produktseiten auf devk.de (Abruf 16.11.2026); Hunde- und Pferdehaftpflicht von der Seite
+  Tierhalter.
+- Stufen: Haftpflicht, Hausrat, Wohngebäude, Unfall Basis, Komfort, Premium; Rechtsschutz (Allroundschutz Privat, Wohnen,
+  Beruf, Verkehr) Komfort und Premium; Hunde- und Pferdehaftpflicht Komfort und Premium.
+- Rechtsschutz ist DEVK selbst; Clever-Varianten bis 15 % günstiger.
+- Empfehlung: DEVK empfiehlt bei der Haftpflicht ausdrücklich Premium; Hausrat, Wohngebäude, Unfall Komfort als mittlere
+  Stufe; Rechtsschutz und Tierhalter ohne Markierung (`empfehlung: "keine"`).
+- Bündel: keine Staffel veröffentlicht; Rechtsschutz nennt einen Bestandskunden-Bonus bis 5 %.
+
+### Generali
+- Quelle: Produktseiten auf generali.de (Abruf 16.11.2026, nur Highlights, keine Tarifvergleiche); Rechtsschutz von
+  advocard.de (ADVOCARD-360°-PRIVAT), da Generali Rechtsschutz über den Partner ADVOCARD anbietet.
+- Stufen: je Sparte ein Tarif (Optimal bzw. Unfall Aktiv); Hausrat zusätzlich Optimal XXL (Allgefahren-Baustein) als
+  zweite Stufe. Vertrieb über die Deutsche Vermögensberatung (DVAG).
+- Empfehlung: einzelne Tarife als „mittlere Stufe“ markiert; Hausrat mit zwei Stufen ohne Empfehlung.
+- Bündel: Vermögenssicherungspolice (VSP) mit 10 % VSP-Bonus und bis 25 % Kundenbonus, nicht nach Anzahl gestaffelt;
+  daher leere Staffel, Details in `offen`.
+
+### Zurich
+- Quelle: Deckungskonzepte (Leistungsübersichten, PDF) auf zurich.de: Haftpflicht inkl. Tierhalter 04/2025, Hausrat
+  10/2022 (Dateiname 2023_10, Einfache Übersicht 04/2026), Wohngebäude 04/2024, Unfall 04/2024, Rechtsschutz 10/2024.
+  Die Produktseiten laden ihre Inhalte per Skript und ließen sich nicht automatisch lesen.
+- Stufen: PrivatSchutz Basis und Top in allen Sparten (Unfall zusätzlich Baustein Premium auf Top). Keine Empfehlung
+  markiert (`empfehlung: "keine"`).
+- Rechtsschutz: Privat und Beruf ein Baustein, Verkehr und Immobilien je eigener Baustein; Top schließt Immobilien-RS
+  für selbst genutzte Einheiten ein.
+
+### VHV (ungeprüft)
+- Quelle: Produktübersichten (PDF) auf vhv.de: Haftpflicht 09.2024, Hausrat 09.2025, Wohngebäude 06.2026, Unfall
+  07.2026, Tierhalter 09.2024, Rechtsschutz 10.2025 (Risikoträger NRV), dazu die Produktseiten.
+- Stufen: KLASSIK-GARANT und KLASSIK-GARANT mit Zusatzpaket EXKLUSIV; Tierhalter nur KLASSIK-GARANT.
+- Die Übersichten kennzeichnen enthalten/optional/nicht enthalten mit Symbolen, die nicht lesbar sind; erfasst sind
+  nur Zeilen mit Beträgen und Angaben der Produktseiten.
+
+### Die Haftpflichtkasse (ungeprüft)
+- Quelle: Deckungsübersichten im Dokumentencenter auf haftpflichtkasse.de: PHV Einfach Gut, Besser, Komplett
+  (01.01.2025), Hausrat Einfach Besser, Komplett (25.02.2025), Tierhalter Einfach Komplett (01.07.2026), Unfall
+  Einfach (Tarifunterlagen 07/2025, ergänzt aus der Übersicht von 2019).
+- Keine Wohngebäude- und keine eigenständige Rechtsschutzversicherung.
+- Enthaltene Leistungen als Bildsymbol: Zellen ohne Betrag und ohne Strich sind als „ja“ erfasst.
+
+### LVM (ungeprüft)
+- Quelle: Broschüren und Produktseiten auf lvm.de. Haftpflicht Komfort, Premium (W 2111, 09/2026); Hausrat und
+  Rechtsschutz MeineKlassik, MeinPremium; Wohngebäude Grundbaustein und WohngebäudePlus; Unfall ein Tarif mit
+  Bausteinen; Hund und Pferd MeineKlassik, MeinPremium.
+- Viele Tabellen der Broschüren nutzen Bildsymbole oder sind als Grafik gesetzt (Rechtsschutz); erfasst sind nur
+  lesbare Beträge. Hausrat und Haftpflicht zusätzlich aus den Vertragsgrundlagen (VHB 2025, H 700/H 700a) ergänzt.
+
+### Provinzial (ungeprüft)
+- Region West (Provinzial Versicherung AG, provinzial.de/west); die Provinzial Nord hat eigene Unterlagen.
+- Haftpflicht: Smart, Komfort, Komfort mit Plus-Paket (Leistungsübersicht 11/2022, PIB 08.2026, Produktseite).
+  Hausrat und Wohngebäude: Kompaktschutz, Rundumschutz 2.0, Rundumschutz 2.0 mit Plus-Paket 2.0 (Leistungsübersichten
+  West 03/24). Unfall: ein Tarif mit Bausteinen (Leistungsübersicht West 11/25). Rechtsschutz über ÖRAG: Rundum-Schutz
+  und Rundum-Schutz PLUS (Produktseiten, Flyer 2024).
+- Hund und Pferd: je ein Tarif aus den Produktseiten (Summe 15 oder 50 Mio. €); alternativ Baustein der Privathaftpflicht.
+
+### ARAG, ROLAND, ADVOCARD (Rechtsschutz)
+- ARAG: Kompakt, Komfort, Premium aus dem Tarifvergleich auf arag.de; Privat Grundbaustein, Beruf, Verkehr, Wohnen
+  wählbar. Strafkaution Europa 300.000 € bzw. unbegrenzt.
+- ROLAND: Top-Rechtsschutz Starter (ohne Beruf), Komfort, Premium (roland-rechtsschutz.de), Wartezeit Starter und
+  Komfort 6 Monate laut Beiblatt, Premium 3 Monate. Strafkaution je Tarif nicht belegt (ARB-Pakete heißen anders).
+- ADVOCARD: Privat-Modul mit wählbaren Modulen und ADVOCARD-360°-PRIVAT (von ADVOCARD empfohlen), Produktseite.
+
 ## Offen (wichtigste Lücken)
-- Tierversicherer: HanseMerkur OP ohne Angabe zur Vorsorge; Barmenia Pferde-OP ohne Erstattungssatz in Prozent und
+- VHV, LVM, Die Haftpflichtkasse, Provinzial: als `ungeprueft` gekennzeichnet. Symboltabellen nicht lesbar, Werte nur
+  teilweise; bitte am Bildschirm gegenprüfen und danach `ungeprueft` entfernen.
+- Privatschutz allgemein: Selbstbeteiligung bei Tierhalter fast überall offen; einfacher Diebstahl in der Hausrat bei
+  keiner der neuen Gesellschaften als Leistung genannt; Leistung ab Invaliditätsgrad (Unfall) meist nicht belegt.
+- Provinzial: Deckungssumme der Privathaftpflicht je Stufe offen; Tierhalter ohne SB.
+- Zurich Hausrat: Deckungskonzept 10/2022, Aktualität bestätigen.
+- ERGO: Haftpflicht ohne Mietsachschäden, Ehrenamt, Drohnen; Hausrat ohne einfachen Diebstahl und Phishing;
+  Wohngebäude aus der Broschüre 9.2024 (aktuelle Fassung gesperrt); Leistungsübersichten auf ergo-meine-druckstuecke.de
+  bitte von Hand gegenprüfen.
+- R+V: Unfall ohne Progression, Unfallrente und Tagegeld (Varianten individuell); Pferd ohne Selbstbeteiligung; Hausrat
+  ohne einfachen Diebstahl; Rechtsschutz ohne Selbstbeteiligung und Wartezeit.
+- HUK-COBURG: Hausrat Basis fast ohne Angaben, grobe Fahrlässigkeit und Wertsachen nicht beziffert; Rechtsschutz ohne
+  Strafkaution; Unfall ohne Tarifvergleich (Todesfall und Tagegeld nicht beziffert); kein Bündelrabatt.
+- DEVK: Hausrat ohne Wertsachen- und Bargeldgrenzen; Wohngebäude ohne Ableitungsrohre und Kosten nach Schaden;
+  Rechtsschutz ohne Strafkaution und Selbstbeteiligung; Unfall-Grundsumme individuell.
+- Generali: generali.de zeigt nur Highlights; Wertsachen, Selbstbeteiligung, Unfallrente, Tagegeld und Wohngebäude-Details
+  fehlen. Verbindliche Werte bitte über die DVAG-Unterlagen bzw. Bedingungen ergänzen.
+- Tierversicherer: HanseMerkur OP ohne Angabe zur Vorsorge; BarmeniaGothaer Pferde-OP ohne Erstattungssatz in Prozent und
   ohne Vorsorge; ERGO Hundehaftpflicht ohne Angabe zu fremden Hütern, Pferdehaftpflicht ohne Flurschäden; Uelzener
-  ohne veröffentlichte SB-Beträge bei Hund und Pferdehaftpflicht; Barmenia Premium Plus Ausland widersprüchlich
+  ohne veröffentlichte SB-Beträge bei Hund und Pferdehaftpflicht; BarmeniaGothaer Premium Plus Ausland widersprüchlich
   (12 Monate bzw. unbegrenzt).
-- Pferdekranken gibt es nur bei Allianz und Uelzener; Pferde-OP zusätzlich bei Barmenia und R+V.
+- Pferdekranken gibt es nur bei Allianz und Uelzener; Pferde-OP zusätzlich bei BarmeniaGothaer und R+V.
 - Allianz Hausrat: Überspannung, Hotelkosten, Außenversicherung, Diebstahl aus dem Auto, Selbstbeteiligung stehen nicht
   im aktuellen Tarifvergleich.
 - Allianz Unfall: Ob Invaliditätssumme, Unfallrente und Tagegeld je Stufe fest oder im Rechner wählbar sind, ist nicht belegt.

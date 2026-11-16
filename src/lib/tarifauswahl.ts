@@ -52,6 +52,8 @@ export type TarifWahl = {
    * Herkunft („Aus dem Angebot gelesen“) und Zeitpunkt. Bestätigen oder selbst ändern entfernt die Markierung.
    */
   preisPruefen?: { quelle: string; am: string } | null;
+  /** Werte aus dem Katalog sind nicht an der Quelle gegengeprüft (KatalogTarif.ungeprueft): „bitte prüfen“ an der Karte */
+  werteUngeprueft?: boolean;
   /** Für einen späteren Bündelrabatt (lib/tarifkatalog.ts BuendelRegel): Produktlinie und Vertragslaufzeit */
   linie?: string | null;
   laufzeitJahre?: number | null;
@@ -141,6 +143,7 @@ function cleanTarif(v: unknown): TarifWahl | null {
     bausteine,
     inAllen: strs(r.inAllen, 8, 120),
     ...(preisPruefen && betrag(r.beitrag) != null ? { preisPruefen } : {}),
+    ...(r.werteUngeprueft === true ? { werteUngeprueft: true } : {}),
     ...(r.linie !== undefined ? { linie: str(r.linie, 40) } : {}),
     ...(typeof r.laufzeitJahre === "number" && r.laufzeitJahre > 0 && r.laufzeitJahre <= 10 ? { laufzeitJahre: Math.round(r.laufzeitJahre) } : {}),
     ...(Array.isArray(r.leistungen) ? { leistungen: strs(r.leistungen, 6, 160) } : {}),
@@ -202,6 +205,7 @@ export function tarifAusKatalog(t: KatalogTarif): TarifWahl {
     bausteine: {},
     inAllen: [...t.inAllenTarifen],
     linie: t.linie ?? t.kurz,
+    ...(t.ungeprueft ? { werteUngeprueft: true } : {}),
   };
 }
 

@@ -7,7 +7,7 @@ import { appointmentScope, type TeamCtx } from "@/lib/team";
 import { angeboteAuslesen, cleanAngebote } from "@/lib/angebote";
 import { angeboteAuslesenErlaubt } from "@/lib/termin-vorbereitung-server";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
-import { gesellschaftAusText, gesellschaftName, sortiereGesellschaften, sparteVon, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
+import { gesellschaftAusText, gesellschaftName, gesellschaftSchluessel, sortiereGesellschaften, sparteVon, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
 import {
   ausAltenAngeboten,
   cleanTarifauswahl,
@@ -41,13 +41,19 @@ export async function vertriebFuer(customerId: string): Promise<{ vertrieb: Vert
     const ausErstinfo = (c?.erstinformation?.versicherer ?? []).map(gesellschaftAusText).filter((g): g is string => !!g);
     gesellschaften = ausErstinfo.length ? ausErstinfo : [gesellschaftAusText(c?.name)].filter((g): g is string => !!g);
   }
-  gesellschaften = sortiereGesellschaften(gesellschaften);
+  // Frühere Schlüssel („barmenia“, „gothaer“) auf den heutigen umstellen
+  gesellschaften = sortiereGesellschaften(gesellschaften.map(gesellschaftSchluessel));
   return { vertrieb: { rolle, gesellschaften }, gesellschaftFehlt: rolle === "vertreter" && !gesellschaften.length };
 }
 
 /** Gesellschaft(en) einmalig wählen (Vertreter) bzw. bevorzugte merken (Makler). */
 export async function gesellschaftenSpeichern(ctx: TeamCtx, keys: string[]): Promise<void> {
-  const clean = sortiereGesellschaften(keys.map((k) => k.trim().toLowerCase()).filter((k) => /^[a-z0-9-]{2,40}$/.test(k))).slice(0, 12);
+  const clean = sortiereGesellschaften(
+    keys
+      .map((k) => k.trim().toLowerCase())
+      .filter((k) => /^[a-z0-9-]{2,40}$/.test(k))
+      .map(gesellschaftSchluessel),
+  ).slice(0, 12);
   await prisma.customer.update({ where: { id: ctx.customerId }, data: { tarifGesellschaften: clean } });
 }
 

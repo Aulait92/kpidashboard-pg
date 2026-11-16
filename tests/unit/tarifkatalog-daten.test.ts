@@ -4,6 +4,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
+import { bekannteGesellschaften } from "@/lib/tarifkatalog";
 
 const ROOT = join(__dirname, "..", "..", "data", "tarifkatalog");
 // Alle Gesellschaftsordner (neue Gesellschaften werden ohne Teständerung mitgeprüft)
@@ -25,6 +26,7 @@ type Tarif = {
   bausteine?: Record<string, string>;
   quelle: string;
   stand: string;
+  ungeprueft?: boolean;
 };
 type Datei = { gesellschaft: string; sparte: string; produkt: string; inAllenTarifen?: string[]; tarife: Tarif[]; offen?: string[] };
 
@@ -116,6 +118,21 @@ describe("Tarifkatalog: Gesellschaftsdateien", () => {
     for (const g of GESELLSCHAFTEN) expect(g, g).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
   });
 
+  it("jeder Ordner hat Anzeigename und Platz in der Reihenfolge (src/lib/tarifkatalog.ts)", () => {
+    const bekannt = bekannteGesellschaften();
+    for (const g of GESELLSCHAFTEN) expect(bekannt, `${g} fehlt in GESELLSCHAFT_NAMEN`).toContain(g);
+  });
+
+  it("VHV, LVM, Die Haftpflichtkasse und Provinzial sind als ungeprüft gekennzeichnet (Ole, 16.11.2026)", () => {
+    const ungeprueft = ["vhv", "lvm", "haftpflichtkasse", "provinzial"];
+    const betroffen = dateien.filter((d) => ungeprueft.includes(d.ordner));
+    expect(betroffen.length).toBeGreaterThan(0);
+    for (const d of betroffen) {
+      const j = JSON.parse(readFileSync(d.pfad, "utf8")) as Datei;
+      for (const t of j.tarife) expect(t.ungeprueft, `${relative(ROOT, d.pfad)} „${t.name}“`).toBe(true);
+    }
+  });
+
   for (const d of dateien) {
     const name = relative(ROOT, d.pfad);
     it(name, () => {
@@ -141,6 +158,7 @@ describe("Tarifkatalog: Gesellschaftsdateien", () => {
         expect(t.kurz.length, `${wo}: kurz leer`).toBeGreaterThan(0);
         expect(t.quelle, `${wo}: quelle fehlt`).toMatch(/^https:\/\//);
         expect(t.stand, `${wo}: stand fehlt`).toMatch(/^\d{4}-\d{2}(-\d{2})?$/);
+        if (t.ungeprueft !== undefined) expect(t.ungeprueft, `${wo}: ungeprueft nur als true`).toBe(true);
         for (const [k, v] of Object.entries(t.werte)) {
           expect(merkmale.has(k), `${wo}: Merkmal „${k}“ nicht im Schema`).toBe(true);
           expect(typeof v, `${wo}: ${k}`).toBe("string");

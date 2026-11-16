@@ -820,7 +820,9 @@ function TarifKarte({
   const mitExtra = m != null && (t.zahlweise === "jahr" || Object.values(t.bausteine).some((b) => b.an));
   const bs = sp.bausteine.filter((k) => t.bausteinStatus[k] === "inklusive" || t.bausteinStatus[k] === "optional");
   const bName = (k: string) => sp.schema.bausteine.find((b) => b.key === k)?.kurz ?? k;
-  const sub = [t.gesellschaft || null, sp.label, t.herkunft === "eigen" ? "Eigener Tarif" : t.herkunft === "angebot" ? "Aus dem Angebot" : stand(t.stand) ? `Stand ${stand(t.stand)}` : null].filter(Boolean).join(" · ");
+  // Nicht gegengeprüfte Katalogwerte: „bitte prüfen“ statt des Stands (wie der Richtwert beim Beitrag)
+  const pruefen = t.herkunft === "katalog" && t.werteUngeprueft;
+  const sub = [t.gesellschaft || null, sp.label, t.herkunft === "eigen" ? "Eigener Tarif" : t.herkunft === "angebot" ? "Aus dem Angebot" : !pruefen && stand(t.stand) ? `Stand ${stand(t.stand)}` : null].filter(Boolean).join(" · ");
   return (
     <div
       className={cn(
@@ -834,7 +836,17 @@ function TarifKarte({
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6eef7] text-[11px] font-bold text-[#003781]">{kuerzel(t.gesellschaft || t.kurz || "?")}</span>
         <span className="min-w-0 flex-1">
           <b className="block truncate text-[15px]">{t.kurz}</b>
-          <span className="block truncate text-xs text-[color:var(--muted)]">{sub}</span>
+          <span className="block truncate text-xs text-[color:var(--muted)]">
+            {sub}
+            {pruefen ? (
+              <>
+                {" · "}
+                <span className="font-medium text-amber-700" data-werte-pruefen>
+                  bitte prüfen
+                </span>
+              </>
+            ) : null}
+          </span>
         </span>
         <button
           type="button"
@@ -1094,13 +1106,15 @@ function TarifeAendern({
     setFilter(neu);
     void gesellschaftAction(null, neu);
   };
-  const zeile = (id: string, titel: string, ges: string, rechts: string | null, an: boolean, frei: boolean, fn: () => TarifWahl) => (
+  const zeile = (id: string, titel: string, ges: string, rechts: string | null, an: boolean, frei: boolean, fn: () => TarifWahl, pruefen = false) => (
     <label key={id} className={cn("flex min-h-11 items-center gap-2.5 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-2.5 py-1.5 text-sm", !an && !frei ? "cursor-not-allowed opacity-50" : "cursor-pointer")}>
       <input type="checkbox" checked={an} disabled={!an && !frei} onChange={(e) => umschalten(fn(), e.target.checked)} className="h-4 w-4" />
       <b className="font-semibold">{titel}</b>
       {/* Gesperrte Zeile am Handy ohne Gesellschaft, sonst wird sie zu „A…“ abgeschnitten */}
       <span className={cn("truncate text-[color:var(--muted)]", !an && !frei && "hidden sm:inline")}>{ges}</span>
-      <small className="ml-auto shrink-0 text-xs text-[color:var(--muted)]">{!an && !frei ? `höchstens ${sp.tarife.length} auf einer Folie` : rechts}</small>
+      <small className={cn("ml-auto shrink-0 text-xs", pruefen && (an || frei) ? "font-medium text-amber-700" : "text-[color:var(--muted)]")} data-werte-pruefen={pruefen || undefined}>
+        {!an && !frei ? `höchstens ${sp.tarife.length} auf einer Folie` : pruefen ? "bitte prüfen" : rechts}
+      </small>
     </label>
   );
 
@@ -1136,7 +1150,9 @@ function TarifeAendern({
           ) : null}
         </div>
         <div className="mt-2 grid gap-1">
-          {kat.map((t) => zeile(t.id, t.kurz, t.gesellschaftName, stand(t.stand) ? `Stand ${stand(t.stand)}` : null, gewaehlt.has(t.id), platz(tarifAusKatalog(t)), () => sp.tarife.find((x) => x.id === t.id) ?? tarifAusKatalog(t)))}
+          {kat.map((t) =>
+            zeile(t.id, t.kurz, t.gesellschaftName, stand(t.stand) ? `Stand ${stand(t.stand)}` : null, gewaehlt.has(t.id), platz(tarifAusKatalog(t)), () => sp.tarife.find((x) => x.id === t.id) ?? tarifAusKatalog(t), !!t.ungeprueft),
+          )}
           {eig.map((e) => zeile(`eigen:${e.id}`, e.kurz, e.gesellschaft, "Eigener Tarif", gewaehlt.has(`eigen:${e.id}`), platz(tarifAusEigenem(e)), () => sp.tarife.find((x) => x.id === `eigen:${e.id}`) ?? tarifAusEigenem(e)))}
           {!kat.length && !eig.length ? <p className="py-1 text-sm text-[color:var(--muted)]">Kein Tarif im Katalog. Legen Sie einen eigenen an.</p> : null}
         </div>

@@ -6,8 +6,10 @@ import {
   AUSWAHL_GRENZEN,
   auswahlDazu,
   auswahlWeg,
+  bekannteGesellschaften,
   gesellschaftAusText,
   gesellschaftName,
+  gesellschaftSchluessel,
   katalogAus,
   parseBuendel,
   SPARTEN_STANDARD,
@@ -81,6 +83,58 @@ describe("Katalog laden", () => {
     expect(parseBuendel({ staffel: [] })).toBeNull();
   });
 
+  it("Reihenfolge: Vertreter-Gesellschaften zuerst, dann alphabetisch nach Anzeigename (Ole, 16.11.2026)", () => {
+    expect(bekannteGesellschaften().map(gesellschaftName)).toEqual([
+      "Allianz",
+      "AXA",
+      "SIGNAL IDUNA",
+      "ADVOCARD",
+      "AGILA",
+      "ARAG",
+      "BarmeniaGothaer",
+      "DEVK",
+      "DFV",
+      "Die Haftpflichtkasse",
+      "ERGO",
+      "Generali",
+      "HanseMerkur",
+      "HUK-COBURG",
+      "LVM",
+      "Provinzial",
+      "R+V",
+      "ROLAND",
+      "Uelzener",
+      "VHV",
+      "Zurich",
+    ]);
+    expect(sortiereGesellschaften(["zurich", "ruv", "advocard", "axa", "barmenia-gothaer", "allianz", "vhv"])).toEqual([
+      "allianz",
+      "axa",
+      "advocard",
+      "barmenia-gothaer",
+      "ruv",
+      "vhv",
+      "zurich",
+    ]);
+  });
+
+  it("ungeprüfte Werte: „ungeprueft“ je Tarif bleibt bis in die gespeicherte Auswahl erhalten", () => {
+    const kk = katalogAus(null, [
+      {
+        gesellschaft: "vhv",
+        sparte: "hausrat",
+        json: { tarife: [{ name: "Hausrat Klassik", kurz: "Klassik", stufe: 1, werte: {}, ungeprueft: true }, { name: "Hausrat Exklusiv", kurz: "Exklusiv", stufe: 2, werte: {} }] },
+      },
+    ]);
+    const [klassik, exklusiv] = tarifeFuer(kk, "hausrat");
+    expect(klassik.ungeprueft).toBe(true);
+    expect(exklusiv.ungeprueft).toBeUndefined();
+    expect(tarifAusKatalog(klassik).werteUngeprueft).toBe(true);
+    expect(tarifAusKatalog(exklusiv).werteUngeprueft).toBeUndefined();
+    const gespeichert = cleanTarifauswahl({ v: 1, sparten: [{ key: "hausrat", label: "Hausrat", schema: {}, tarife: [tarifAusKatalog(klassik), tarifAusKatalog(exklusiv)] }] });
+    expect(gespeichert?.sparten[0].tarife.map((t) => t.werteUngeprueft ?? false)).toEqual([true, false]);
+  });
+
   it("Gesellschaft und Sparte aus Texten", () => {
     expect(gesellschaftAusText("Allianz Agentur Lohmann")).toBe("allianz");
     expect(gesellschaftAusText("AXA Versicherung AG")).toBe("axa");
@@ -93,8 +147,14 @@ describe("Katalog laden", () => {
     expect(gesellschaftAusText("Uelzener Allgemeine Versicherungs-Gesellschaft a. G.")).toBe("uelzener");
     expect(gesellschaftName("hansemerkur")).toBe("HanseMerkur");
     expect(gesellschaftAusText("Hanse Merkur Allgemeine Versicherung AG")).toBe("hansemerkur");
-    expect(gesellschaftName("barmenia")).toBe("Barmenia");
-    expect(gesellschaftAusText("BarmeniaGothaer Tierkrankenversicherung")).toBe("barmenia");
+    // Barmenia und Gothaer sind fusioniert (Ole, 16.11.2026): eine Gesellschaft „BarmeniaGothaer“
+    expect(gesellschaftName("barmenia-gothaer")).toBe("BarmeniaGothaer");
+    expect(gesellschaftAusText("BarmeniaGothaer Tierkrankenversicherung")).toBe("barmenia-gothaer");
+    expect(gesellschaftAusText("Barmenia Allgemeine Versicherungs-AG")).toBe("barmenia-gothaer");
+    expect(gesellschaftAusText("Gothaer Allgemeine Versicherung AG")).toBe("barmenia-gothaer");
+    expect(gesellschaftSchluessel("barmenia")).toBe("barmenia-gothaer");
+    expect(gesellschaftSchluessel("gothaer")).toBe("barmenia-gothaer");
+    expect(gesellschaftSchluessel("allianz")).toBe("allianz");
     expect(gesellschaftName("dfv")).toBe("DFV");
     expect(gesellschaftAusText("Deutsche Familienversicherung AG")).toBe("dfv");
     expect(gesellschaftAusText("DFV-TierkrankenSchutz")).toBe("dfv");
@@ -105,6 +165,34 @@ describe("Katalog laden", () => {
     expect(gesellschaftAusText("Agentur Schmidt (R + V)")).toBe("ruv");
     expect(gesellschaftAusText("Arvid Hansen")).toBeNull();
     expect(sortiereGesellschaften(["uelzener", "agila", "signal-iduna", "allianz"])).toEqual(["allianz", "signal-iduna", "agila", "uelzener"]);
+    // Privatschutz (16.11.2026): ERGO, R+V, HUK-COBURG, DEVK, Generali
+    expect(gesellschaftAusText("R + V Agentur Meier")).toBe("ruv");
+    expect(gesellschaftAusText("HUK-COBURG Vertrauensmann")).toBe("huk-coburg");
+    expect(gesellschaftAusText("HUK24 AG")).toBe("huk-coburg");
+    expect(gesellschaftAusText("DEVK Geschäftsstelle")).toBe("devk");
+    expect(gesellschaftAusText("Generali Deutschland")).toBe("generali");
+    expect(gesellschaftAusText("Hugo Ergonomie GmbH")).toBeNull();
+    // Zurich, VHV, Die Haftpflichtkasse, LVM, Provinzial und die Rechtsschutz-Spezialisten
+    const faelle: Array<[string, string, string]> = [
+      ["Zurich Insurance plc", "zurich", "Zurich"],
+      ["VHV Allgemeine Versicherung AG", "vhv", "VHV"],
+      ["Die Haftpflichtkasse VVaG", "haftpflichtkasse", "Die Haftpflichtkasse"],
+      ["LVM Landwirtschaftlicher Versicherungsverein", "lvm", "LVM"],
+      ["Provinzial Versicherung AG", "provinzial", "Provinzial"],
+      ["ARAG SE", "arag", "ARAG"],
+      ["ROLAND Rechtsschutz-Versicherungs-AG", "roland", "ROLAND"],
+      ["ADVOCARD Rechtsschutzversicherung AG", "advocard", "ADVOCARD"],
+      ["HUK-COBURG", "huk-coburg", "HUK-COBURG"],
+      ["DEVK", "devk", "DEVK"],
+      ["Generali", "generali", "Generali"],
+    ];
+    for (const [text, key, name] of faelle) {
+      expect(gesellschaftAusText(text), text).toBe(key);
+      expect(gesellschaftName(key)).toBe(name);
+    }
+    expect(gesellschaftAusText("Agentur Roland Meier")).toBeNull();
+    expect(gesellschaftAusText("Paragraph 5")).toBeNull();
+    expect(gesellschaftAusText("Kanzlei in Zürich")).toBeNull();
     expect(sparteAusText("Privathaftpflicht")).toBe("haftpflicht");
     expect(sparteAusText("Tierhalterhaftpflicht Hund")).toBe("tierhalter-hund");
     expect(sparteAusText("Pferdehalterhaftpflicht")).toBe("tierhalter-pferd");
