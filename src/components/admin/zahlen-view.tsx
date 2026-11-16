@@ -342,9 +342,6 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
         ))}
         {!investor ? (
           <>
-            <Link href="/" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
-              Pay-per-Lead (Details) →
-            </Link>
             <Link href="/admin/einstellungen/kosten" className="inline-flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-[color:var(--border)] px-3.5 text-sm text-[color:var(--muted)]">
               Laufende Kosten →
             </Link>

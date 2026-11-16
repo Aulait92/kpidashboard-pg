@@ -5,7 +5,7 @@ import { loadOptimizationOverview, syncOptimizationAccounts } from "@/lib/optimi
 import { STALE_DAYS } from "@/lib/optimierung/shared";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { GlobalForm } from "./ui";
-import { AdminBack } from "@/components/admin/admin-back";
+import { KundenTabs } from "@/components/admin/kunden-tabs";
 
 export const metadata = { title: "Optimierung | performancegrowth Admin" };
 
@@ -23,11 +23,15 @@ export default async function OptimierungPage() {
   const inactive = rows.filter((r) => !r.active);
   return (
     <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
-      <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Optimierung je Werbekonto</h1>
-      <p className="mb-5 max-w-3xl text-sm text-[color:var(--muted)]">
-        Wöchentlich je Konto: neue Motive bei Ermüdung bzw. spätestens alle 4 Wochen, schwache Anzeigen pausieren, Budget innerhalb des vereinbarten Budgets umschichten, bei schlechter Leadqualität ein Vorschlag an Ole. Höchstens eine größere Änderung je Anzeigengruppe und Woche.
-      </p>
+      <KundenTabs />
+      <h1 className="mb-1 text-2xl font-semibold tracking-tight">Optimierung je Werbekonto</h1>
+      <p className="max-w-3xl text-sm text-[color:var(--muted)]">Einmal pro Woche plant die App je Werbekonto Maßnahmen; ohne Freigabe ändert sich bei Meta nichts.</p>
+      <details className="mb-5 max-w-3xl text-sm text-[color:var(--muted)]">
+        <summary className="inline-flex min-h-10 cursor-pointer items-center font-medium text-[color:var(--brand)]">Was geplant wird</summary>
+        <p>
+          Neue Motive bei Ermüdung bzw. spätestens alle 4 Wochen, schwache Anzeigen pausieren, Budget innerhalb des vereinbarten Budgets umschichten, bei schlechter Leadqualität ein Vorschlag an Ole. Höchstens eine größere Änderung je Anzeigengruppe und Woche.
+        </p>
+      </details>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[3fr_1fr]">
         <Card>
           <CardHeader title="Werbekonten" count={active.length} hint={`rot: letzte Maßnahme älter als ${STALE_DAYS} Tage`} />

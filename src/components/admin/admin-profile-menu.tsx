@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Profilmenü des Admins: E-Mail und Rolle, Einstellungen, Sicherheit, Abmelden.
- * Bereiche wie Marketing stehen in der Navigation (Seitenleiste bzw. „Mehr“ am Handy).
+ * Am Handy der einzige Weg zu den Einstellungen (Leiste unten: fünf Bereiche, kein „Mehr“; Ole, 16.11.2026).
  * variant „sidebar“ = unten in der Seitenleiste, sonst kompakt in der Kopfzeile (Handy).
  */
 export function AdminProfileMenu({ email, variant = "header" }: { email: string; variant?: "header" | "sidebar" }) {
@@ -31,7 +31,7 @@ export function AdminProfileMenu({ email, variant = "header" }: { email: string;
     };
   }, [open]);
 
-  const itemCls = "flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--surface-sunken)]";
+  const itemCls = "flex min-h-11 w-full items-center gap-2 px-3 text-left hover:bg-[color:var(--surface-sunken)]";
 
   return (
     <div ref={ref} className="relative">

@@ -1,4 +1,4 @@
-import { SubTabs } from "@/components/admin/sub-tabs";
+import { KundenTabs } from "@/components/admin/kunden-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Download, Inbox, Phone } from "lucide-react";
@@ -48,8 +48,8 @@ export default async function AdminLeadsPage({ searchParams }: { searchParams: P
   });
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-      <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/ppl", label: "Pay-per-Lead" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
+    <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+      <KundenTabs />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>

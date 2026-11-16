@@ -6,19 +6,18 @@ import clsx from "clsx";
 import { useActiveTabInView } from "@/components/admin/sub-tabs";
 
 const BASE = "/admin/vertrieb";
-// Kunden und Import liegen im Hauptmenü bzw. in den Einstellungen;
-// LinkedIn, Empfehlungen, Unterlagen und Rechner unter „Marketing“ (Ole, 14.11.2026).
-// „Übersicht“ = Vertriebs-Kennzahlen (früher „Heute“ der alten Admin-Oberfläche).
+// Kunden und Import liegen im Hauptmenü bzw. in den Einstellungen.
+// Admin-Makeover Runde 2 (Ole, 16.11.2026): „Übersicht“ und „Aufgaben“ gehen in Heute auf
+// (Weiterleitungen in src/lib/admin-bereiche.ts), Marketing kommt als Reiter in den Vertrieb.
 export const LINKS: { href: string; label: string; exact?: boolean }[] = [
-  { href: BASE, label: "Übersicht", exact: true },
   { href: `${BASE}/kontakte`, label: "Kontakte" },
   { href: `${BASE}/pipeline`, label: "Akquise-Pipeline" },
-  { href: `${BASE}/aufgaben`, label: "Aufgaben" },
   { href: `${BASE}/follow-ups`, label: "Follow-ups" },
   { href: `${BASE}/angebote`, label: "Angebote" },
+  { href: "/admin/marketing", label: "Marketing" },
 ];
 
-export function VertriebNav({ dueCount }: { dueCount: number }) {
+export function VertriebNav() {
   const path = usePathname();
   const ref = useActiveTabInView<HTMLDivElement>(path);
   // Im Import (Einstellungen) keine Unternavigation.
@@ -42,9 +41,6 @@ export function VertriebNav({ dueCount }: { dueCount: number }) {
               )}
             >
               {l.label}
-              {l.href === `${BASE}/aufgaben` && dueCount > 0 && (
-                <span className="badge bg-rose-600 text-white">{dueCount}</span>
-              )}
             </Link>
           );
         })}

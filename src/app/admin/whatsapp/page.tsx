@@ -1,5 +1,4 @@
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
-import { SubTabs } from "@/components/admin/sub-tabs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -43,7 +42,7 @@ import { nowMs } from "@/lib/now";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "WhatsApp-Inbox | performancegrowth Admin" };
+export const metadata = { title: "Chats | performancegrowth Admin" };
 
 const STATUS_TABS = [
   { key: "open", label: "Offen" },
@@ -206,15 +205,9 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
 
   return (
     <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:px-6">
-      <SubTabs
-        tabs={[
-          { href: "/admin/leads", label: "Leads" },
-          { href: "/admin/ppl", label: "Pay-per-Lead" },
-          { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true },
-        ]}
-      />
+      {/* Chats sind seit 16.11.2026 ein eigener Bereich in der Leiste (vorher Leads → WhatsApp-Chats) */}
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">WhatsApp-Chats</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Chats</h1>
         <Link href="/admin/whatsapp/settings" className="inline-flex min-h-10 items-center text-sm font-medium text-[color:var(--brand)] hover:underline">
           Einstellungen →
         </Link>
@@ -236,7 +229,7 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
         </div>
       ) : null}
 
-      <div className="mt-6 flex h-[calc(100dvh-290px)] min-h-[460px] overflow-hidden md:h-[calc(100dvh-200px)] md:min-h-[540px] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+      <div className="mt-6 flex h-[calc(100dvh-250px)] min-h-[460px] overflow-hidden md:h-[calc(100dvh-160px)] md:min-h-[540px] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
         {/* Spalte 1: Konversationsliste (Handy: ausgeblendet, sobald ein Chat offen ist) */}
         <aside className={cn(active ? "hidden md:flex" : "flex", "w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px] xl:w-[320px]")}>
           <div className="flex gap-1 p-3 pb-2">

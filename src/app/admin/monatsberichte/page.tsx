@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { AdminBack } from "@/components/admin/admin-back";
+import { KundenTabs } from "@/components/admin/kunden-tabs";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { listReports, loadReportSettings } from "@/lib/monatsbericht/server";
 import { monthLabel, previousMonthKey, shiftMonth, STATUS_LABEL } from "@/lib/monatsbericht/shared";
@@ -22,8 +22,8 @@ export default async function MonatsberichtePage({ searchParams }: { searchParam
   const counts = { draft: 0, sent: 0, skipped: 0, call: 0 } as Record<string, number>;
   for (const r of rows) counts[r.status] = (counts[r.status] ?? 0) + 1;
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
-      <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
+    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6">
+      <KundenTabs />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Monatsberichte</h1>

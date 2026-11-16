@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Activity, Anchor, Bot, Calculator, CalendarDays, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, TrendingUp, Wallet, Workflow } from "lucide-react";
+import { Activity, Anchor, Bot, Calculator, CalendarDays, Clock, FileBarChart, Layers, ChevronRight, FileUp, Gift, History, KeyRound, Landmark, LifeBuoy, LogIn, Megaphone, MessageCircle, Receipt, Rocket, ShieldCheck, Wallet, Workflow } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { supportConfig } from "@/lib/support";
 import { loadTaxNumber, taxNumberWarning } from "@/lib/invoice-footer";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
+// Nur Einstellungen (16.11.2026): Arbeitslisten Monatsberichte und Optimierung liegen unter Kunden.
 export const metadata = { title: "Einstellungen | performancegrowth Admin" };
 
 // Einstellungen in Gruppen (Ole, 14.11.2026): als lange Liste unübersichtlich.
@@ -19,14 +20,13 @@ const GROUPS = [
       { href: "/admin/einstellungen/produkte", icon: Layers, color: "bg-orange-500", title: "Produkte", text: "Sparten zum Selbst-Dazubuchen" },
       { href: "/admin/einstellungen/kampagnen-automatik", icon: Bot, color: "bg-fuchsia-500", title: "Kampagnen-Automatik", text: "Budget, neue Kampagnen, Anzeigen auffrischen" },
       // Eintrag zur Optimierung je Werbekonto (Teil B, 18.11.2026): Übersicht, Freigabe, Autopilot
-      { href: "/admin/optimierung", icon: TrendingUp, color: "bg-rose-500", title: "Optimierung je Werbekonto", text: "Maßnahmen freigeben, Autopilot" },
     ],
   },
   {
     title: "Kommunikation mit Kunden",
     items: [
       { href: "/admin/einstellungen/neuigkeiten", icon: Megaphone, color: "bg-violet-500", title: "Neuigkeiten", text: "Einträge für den Kundenbereich" },
-      { href: "/admin/monatsberichte", icon: FileBarChart, color: "bg-blue-600", title: "Monatsberichte", text: "Entwürfe prüfen und senden" },
+      { href: "/admin/einstellungen/monatsberichte", icon: FileBarChart, color: "bg-blue-600", title: "Monatsberichte", text: "Automatischer Versand" },
       { href: "/admin/einstellungen/login", icon: LogIn, color: "bg-indigo-500", title: "Login-Seite", text: "Infokarten neben dem Login" },
       { href: "/admin/einstellungen/status", icon: Activity, color: "bg-emerald-500", title: "Status & Support", text: "Statusseite, Störungen, Support-Kontakt" },
       { href: "/admin/einstellungen/halteangebote", icon: Anchor, color: "bg-rose-500", title: "Halteangebote", text: "Angebote beim Kündigen je Grund" },

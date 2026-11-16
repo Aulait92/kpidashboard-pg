@@ -194,7 +194,7 @@ export async function distribute(poolLeadId: string, now = new Date(), notify = 
     await prisma.poolLead.update({ where: { id: pl.id }, data: { status: "parked", reason } });
     if (notify) await sendToAdmins({
       title: `⏸️ Lead geparkt: ${pl.productKey}`,
-      body: `${reason}. Unter Leads → Pay-per-Lead zuweisen.`,
+      body: `${reason}. Unter Kunden → Pay-per-Lead zuweisen.`,
       url: "/admin/ppl",
       tag: `ppl-parked:${pl.productKey}`,
     }).catch(() => {});

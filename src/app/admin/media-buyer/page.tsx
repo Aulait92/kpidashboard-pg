@@ -9,7 +9,7 @@ import {
   type PoolDetailRow,
   type TopStats,
 } from "./media-buyer-admin";
-import { AdminBack } from "@/components/admin/admin-back";
+import { KundenTabs } from "@/components/admin/kunden-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -138,9 +138,9 @@ export default async function MediaBuyerPage() {
 
   return (
     <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-8">
+      <KundenTabs />
       <header className="mb-4">
-        <AdminBack href="/">Dashboard</AdminBack>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight">
           Media Buyer
         </h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">

@@ -15,7 +15,7 @@ export async function runLinkedIn(now = new Date()) {
     return null;
   });
   if (published?.failed) {
-    await sendToAdmins({ title: "LinkedIn: Post nicht veröffentlicht", body: "Bitte in Marketing → LinkedIn ansehen.", url: "/admin/marketing/linkedin", tag: "linkedin-error" }).catch(() => null);
+    await sendToAdmins({ title: "LinkedIn: Post nicht veröffentlicht", body: "Bitte in Vertrieb → Marketing → LinkedIn ansehen.", url: "/admin/marketing/linkedin", tag: "linkedin-error" }).catch(() => null);
   }
   const metrics = await refreshMetrics(now).catch((e: unknown) => {
     reportError(e, "linkedin-metrics");

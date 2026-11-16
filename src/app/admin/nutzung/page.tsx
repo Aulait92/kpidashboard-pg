@@ -1,4 +1,4 @@
-import { SubTabs } from "@/components/admin/sub-tabs";
+import { ZahlenTabs } from "@/components/admin/zahlen-tabs";
 import { redirect } from "next/navigation";
 import { AlertTriangle, LifeBuoy, MessageSquareText, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui";
@@ -45,7 +45,7 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <SubTabs tabs={[{ href: "/", label: "Dashboard", exact: true }, { href: "/admin/nutzung", label: "Nutzung" }]} />
+      <ZahlenTabs />
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Nutzung</h1>

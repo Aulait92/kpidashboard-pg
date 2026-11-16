@@ -21,13 +21,15 @@ export function useActiveTabInView<T extends HTMLElement>(dep: unknown) {
 }
 
 /** Reiter innerhalb einer Seite (statt weiterer Punkte im Hauptmenü). */
-export function SubTabs({ tabs }: { tabs: { href: string; label: string; exact?: boolean; count?: number }[] }) {
+export function SubTabs({ tabs }: { tabs: { href: string; label: string; exact?: boolean; count?: number; /** weitere Adressen, auf denen der Reiter aktiv ist */ also?: string[] }[] }) {
   const pathname = usePathname() ?? "/";
   const ref = useActiveTabInView<HTMLDivElement>(pathname);
   return (
     <div ref={ref} className="mb-5 flex gap-1 overflow-x-auto border-b border-[color:var(--border)] [scrollbar-width:none]">
       {tabs.map((t) => {
-        const active = t.exact ? pathname === t.href : pathname === t.href || pathname.startsWith(`${t.href}/`);
+        const active =
+          (t.exact ? pathname === t.href : pathname === t.href || pathname.startsWith(`${t.href}/`)) ||
+          !!t.also?.some((a) => pathname === a || pathname.startsWith(`${a}/`));
         return (
           <Link
             key={t.href}

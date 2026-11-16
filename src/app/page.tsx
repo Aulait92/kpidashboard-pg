@@ -1,4 +1,4 @@
-import { SubTabs } from "@/components/admin/sub-tabs";
+import { ZahlenTabs } from "@/components/admin/zahlen-tabs";
 import { ChevronDown } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -89,10 +89,10 @@ export default async function DashboardPage({
     <PullToRefresh>
       <AutoRefresh />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <SubTabs tabs={[{ href: "/admin/zahlen", label: "Übersicht" }, { href: "/", label: "Pay-per-Lead (Details)", exact: true }, { href: "/admin/nutzung", label: "Nutzung" }]} />
+        <ZahlenTabs />
         <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Leads &amp; Werbung</h1>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
               {formatDate(range.from)} bis {formatDate(range.to)} · aktualisiert{" "}
               <LiveUpdated since={renderedAt} />

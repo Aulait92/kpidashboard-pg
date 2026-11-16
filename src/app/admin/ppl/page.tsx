@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, Plus } from "lucide-react";
-import { SubTabs } from "@/components/admin/sub-tabs";
+import { KundenTabs } from "@/components/admin/kunden-tabs";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -48,8 +48,8 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
   ];
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-8 sm:px-6 lg:px-8">
-      <SubTabs tabs={[{ href: "/admin/leads", label: "Leads" }, { href: "/admin/ppl", label: "Pay-per-Lead" }, { href: "/admin/whatsapp", label: "WhatsApp-Chats", exact: true }]} />
+    <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+      <KundenTabs />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">Pay-per-Lead</h1>
@@ -68,7 +68,7 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
         </Link>
         </div>
       </div>
-      <nav className="flex gap-1 overflow-x-auto">
+      <nav className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
         {views.map((v) => (
           <Link
             key={v.key || "bezuege"}
@@ -79,6 +79,10 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
             {v.count ? <span className={`rounded-full px-1.5 text-xs ${ansicht === v.key ? "bg-white/20" : "bg-amber-100 text-amber-800"}`}>{v.count}</span> : null}
           </Link>
         ))}
+        {/* Media Buyer (Budgets der Pools) gehört seit 16.11.2026 zu Pay-per-Lead, vorher nur per Push erreichbar */}
+        <Link href="/admin/media-buyer" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-[color:var(--muted)] hover:bg-white">
+          Media Buyer
+        </Link>
       </nav>
       {ansicht === "uebersicht" ? (
         <PplOverview rows={await loadCustomerOverview()} />
