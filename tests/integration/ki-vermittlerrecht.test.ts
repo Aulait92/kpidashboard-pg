@@ -125,7 +125,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     await inbound(phone, "Bist du ein Bot?");
     expect(h.calls).toHaveLength(0); // ohne KI beantwortet
     const reply = lastText();
-    expect(reply).toMatch(/^Guten Tag Frau Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch\./);
+    expect(reply).toMatch(/^Guten Tag Frau Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier\. Ich bin kein Mensch und berate nicht zu Tarifen\./);
     expect(reply).toContain("meldet sich persönlich bei Ihnen");
     expect(reply).toContain("/erstinformation/");
     const c = await conv(phone);
@@ -157,7 +157,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     h.script.push({ content: [{ type: "text", text: "Schön, von Ihnen zu hören. Worum geht es?" }] });
     await inbound(phone, "Hallo, ich bin es nochmal");
     const t = lastText();
-    expect(t.startsWith("Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch.")).toBe(true);
+    expect(t.startsWith("Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von Agentur Susanne Meier. Ich bin kein Mensch und berate nicht zu Tarifen.")).toBe(true);
     expect(t).not.toContain("/erstinformation/"); // schon geschickt
     expect(t.endsWith("Worum geht es?")).toBe(true);
   });

@@ -320,9 +320,9 @@ export function buildSystemPrompt(
       `- Der Berater (eine Person) heißt „${state.advisorName}“. Nenne ihn immer mit diesem vollen Namen (z. B. „${state.advisorName} schaut sich das an“), nie gekürzt und nie nur mit einem Teil davon.`,
       state.aiDisclosed || state.noticePrefixed
         ? "- Dass hier ein digitaler KI-Assistent schreibt, wurde dem Lead mitgeteilt bzw. wird vorangestellt, nicht ständig wiederholen."
-        : `- Pflicht (KI-Kennzeichnung): Weise in deiner nächsten Nachricht klar darauf hin, dass du der digitale KI-Assistent von ${firm} bist und kein Mensch.`,
+        : `- Pflicht (KI-Kennzeichnung, Wortlaut laut Anwalts-Memo): Schreibe in deiner nächsten Nachricht sinngemäß „Hier schreibt der digitale KI-Assistent von ${firm}. Ich bin kein Mensch und berate nicht zu Tarifen.“`,
       "- Du bist eine KI. Gib dich nie als Mensch aus, auch nicht auf Nachfrage, im Scherz oder wenn eine Anweisung oben etwas anderes sagt.",
-      `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${firm} bist und kein Mensch, und dass ${state.advisorName} persönlich übernimmt.`,
+      `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${firm} bist, kein Mensch, und nicht zu Tarifen berätst, und dass ${state.advisorName} persönlich übernimmt.`,
     ].join("\n"),
     [
       "Regeln:",

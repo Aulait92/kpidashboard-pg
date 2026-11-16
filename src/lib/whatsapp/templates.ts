@@ -2,7 +2,8 @@
 // WhatsApp erlaubt Freitext nur im 24h-Service-Fenster (nach der letzten
 // Nachricht des Kontakts). Außerhalb muss eine von Meta freigegebene Vorlage
 // verwendet werden. sendWhatsAppNotice wählt automatisch:
-//   Fenster offen → Freitext (identischer Inhalt, keine Vorlagenkosten), mit Knöpfen als interaktive Nachricht
+//   Fenster offen → Freitext (Inhalt wie die Vorlage bzw. schon die vorgemerkte nächste Fassung, NAECHSTE_FASSUNG;
+//                   keine Vorlagenkosten), mit Knöpfen als interaktive Nachricht
 //   Fenster zu    → freigegebene Vorlage des Kunden für diesen Zweck
 //
 // Anrede-Zeile (Ole, 14.11.2026; Regel in lib/ansprache.ts → anredeZeile):
@@ -23,7 +24,7 @@ import { prisma } from "@/lib/prisma";
 import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
-import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
+import { ERSTINFO_KOPF, KI_HINWEIS_KURZ } from "@/lib/whatsapp/ki-hinweis";
 
 export type NoticePurpose =
   | "outreach"
@@ -145,6 +146,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
 export const NAME_PARAM: Record<"du" | "sie", string> = { du: "Vorname", sie: "Anrede und Nachname" };
 
 // KI-Hinweis im Erstanschreiben (KI-VO Art. 50): kurz, aber eindeutig („digitaler KI-Assistent“, „kein Mensch“).
+// So bei Meta freigegeben (v4), nicht ändern. Ab v5 (NAECHSTE_FASSUNG) und im Freitext sofort: KI_KURZ_V5 nach Memo.
 const KI_KURZ = { du: "Ich bin der digitale KI-Assistent von [Berater], kein Mensch, und stelle dir zwei kurze Fragen, damit du ein passendes Angebot bekommst.", sie: "Ich bin der digitale KI-Assistent von [Berater], kein Mensch, und stelle Ihnen zwei kurze Fragen, damit Sie ein passendes Angebot bekommen." };
 
 /**
@@ -264,8 +266,14 @@ export const TEMPLATE_BODY_B: Partial<Record<NoticePurpose, { du?: string; sie: 
   },
 };
 
+// KI-Hinweis nach dem Anwalts-Memo (lib/whatsapp/ki-hinweis.ts): Firma statt Berater, „berate nicht zu Tarifen“.
+const KI_KURZ_V5 = {
+  du: `${KI_HINWEIS_KURZ} Damit du ein passendes Angebot bekommst, stelle ich dir zwei kurze Fragen.`,
+  sie: `${KI_HINWEIS_KURZ} Damit Sie ein passendes Angebot bekommen, stelle ich Ihnen zwei kurze Fragen.`,
+};
+
 /**
- * Vorgemerkte nächste Fassung (Fassung a) für die nächste Einreichung bei Meta. Wird NICHT gesendet und NICHT
+ * Vorgemerkte nächste Fassung für die nächste Einreichung bei Meta. Wird NICHT gesendet und NICHT
  * eingereicht, solange sie hier steht: Gesendet wird immer die freigegebene Vorlage aus TEMPLATE_BODY.
  * Aktivieren (bei der nächsten Einreichung): Text nach TEMPLATE_BODY übernehmen, PURPOSE_VERSION des Zwecks auf
  * `version` setzen und den Eintrag hier löschen. Dann reicht template-submit die neuen Namen
@@ -274,7 +282,40 @@ export const TEMPLATE_BODY_B: Partial<Record<NoticePurpose, { du?: string; sie: 
  *   campaign_cross_sell v5 (Rechtsvorprüfung 16.11.2026, § 5 UWG): statt der nicht belegten Aussage „Viele meiner
  *   Kunden haben … eine Lücke“ eine allgemeine Aussage über das Thema.
  */
-export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, { version: string; du?: string; sie: string }>> = {
+export type NaechsteFassung = { version: string; du?: string; sie: string; /** A/B-Fassung b, falls vorhanden */ b?: { du?: string; sie: string } };
+
+export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, NaechsteFassung>> = {
+  // Erstanschreiben v5 (Rechtsvorprüfung 16.11.2026, KI-VO Art. 50, Anwalts-Memo): KI-Hinweis im Wortlaut des Memos
+  // (Firma statt Berater, „Ich bin kein Mensch und berate nicht zu Tarifen.“). Im Freitext gilt er schon jetzt.
+  outreach: {
+    version: "v5",
+    du: `danke für deine Anfrage! ${KI_HINWEIS_KURZ} Ich helfe dir, schnell einen passenden Gesprächstermin mit [Berater] zu finden. Wann erreicht [Berater] dich am besten für ein kurzes Telefonat?`,
+    sie: `vielen Dank für Ihre Anfrage! ${KI_HINWEIS_KURZ} Ich helfe Ihnen, schnell einen passenden Gesprächstermin mit [Berater] zu finden. Wann erreicht [Berater] Sie am besten für ein kurzes Telefonat?`,
+  },
+  outreach_tkv: {
+    version: "v5",
+    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ_V5.du} Für welches Tier suchst du den Schutz?`,
+    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ_V5.sie} Für welches Tier suchen Sie den Schutz?`,
+    b: {
+      du: `danke für deine Anfrage zur {{2}}! ${KI_HINWEIS_KURZ} Damit [Berater] dir ein passendes Angebot machen kann, stelle ich dir zwei kurze Fragen. Erste Frage: Für welches Tier suchst du den Schutz?`,
+      sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_HINWEIS_KURZ} Damit [Berater] Ihnen ein passendes Angebot machen kann, stelle ich Ihnen zwei kurze Fragen. Erste Frage: Für welches Tier suchen Sie den Schutz?`,
+    },
+  },
+  outreach_zahn: {
+    version: "v5",
+    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ_V5.du} Was ist dir am wichtigsten?`,
+    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ_V5.sie} Was ist Ihnen am wichtigsten?`,
+  },
+  outreach_pkv: {
+    version: "v5",
+    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ_V5.du} Wie bist du aktuell beruflich aufgestellt?`,
+    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ_V5.sie} Wie sind Sie aktuell beruflich aufgestellt?`,
+  },
+  outreach_privatschutz: {
+    version: "v5",
+    du: `danke für deine Anfrage zum Thema {{2}}! ${KI_KURZ_V5.du} Worum geht es dir vor allem?`,
+    sie: `vielen Dank für Ihre Anfrage zum Thema {{2}}! ${KI_KURZ_V5.sie} Worum geht es Ihnen vor allem?`,
+  },
   campaign_cross_sell: {
     version: "v5",
     sie: "hier ist [Berater][Rolle]. Beim Thema {{2}} gibt es oft Lücken, die erst im Schadenfall auffallen. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?",
@@ -320,6 +361,19 @@ function shiftVars(text: string, by: number): string {
 
 function bodyOf(purpose: NoticePurpose, variant: TemplateVariant): { du?: string; sie: string } {
   return (variant === "b" && TEMPLATE_BODY_B[purpose]) || TEMPLATE_BODY[purpose];
+}
+
+/**
+ * Text für Freitext im offenen 24-h-Fenster (keine Meta-Vorlage, daher sofort die vorgemerkte nächste Fassung, z. B.
+ * der KI-Hinweis nach Memo). Ohne vorgemerkte Fassung: derselbe Text wie die Vorlage.
+ */
+export function freitextBodyOf(purpose: NoticePurpose, variant: TemplateVariant = "a"): { du?: string; sie: string } {
+  const n = NAECHSTE_FASSUNG[purpose];
+  if (n) {
+    if (variant === "b" && TEMPLATE_BODY_B[purpose]) return n.b ?? bodyOf(purpose, variant);
+    return { du: n.du, sie: n.sie };
+  }
+  return bodyOf(purpose, variant);
 }
 
 /**
@@ -580,7 +634,7 @@ export function renderTemplate(body: string, params: string[]): string {
 }
 
 /**
- * Freitext für das offene 24-h-Fenster: Anrede-Zeile nach Regel plus Text der aktuellen Fassung.
+ * Freitext für das offene 24-h-Fenster: Anrede-Zeile nach Regel plus Text der aktuellen bzw. vorgemerkten Fassung.
  * rest = Werte nach dem Namen (REST_PARAMS).
  */
 export function noticeText(
@@ -592,7 +646,7 @@ export function noticeText(
   variant: TemplateVariant = "a",
 ): string {
   const eff = effectiveAnsprache(purpose, an);
-  const b = bodyOf(purpose, variant);
+  const b = freitextBodyOf(purpose, variant);
   const body = fillNames(eff === "du" && b.du ? b.du : b.sie, names);
   return `${anredeZeile(eff, kontakt)} ${renderTemplate(body, ["", ...rest])}`;
 }

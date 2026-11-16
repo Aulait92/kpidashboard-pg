@@ -253,10 +253,10 @@ describe("Vorlage wählen und Parameter setzen", () => {
   it("Freitext im offenen Fenster: gleiche Anrede-Regel", () => {
     const names = { firm: "Agentur Susanne Meier", advisor: "Susanne Meier" };
     expect(noticeText("outreach_tkv", "sie", names, FRAU, ["Katzenversicherung"])).toBe(
-      "Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage zur Katzenversicherung! Ich bin der digitale KI-Assistent von Susanne Meier, kein Mensch, und stelle Ihnen zwei kurze Fragen, damit Sie ein passendes Angebot bekommen. Für welches Tier suchen Sie den Schutz?",
+      "Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage zur Katzenversicherung! Hier schreibt der digitale KI-Assistent von Agentur Susanne Meier. Ich bin kein Mensch und berate nicht zu Tarifen. Damit Sie ein passendes Angebot bekommen, stelle ich Ihnen zwei kurze Fragen. Für welches Tier suchen Sie den Schutz?",
     );
     expect(noticeText("outreach", "sie", names, NUR_VORNAME, []).startsWith("Guten Tag, vielen Dank")).toBe(true);
-    expect(noticeText("outreach", "du", names, FRAU, []).startsWith("Hallo Julia, danke für deine Anfrage! Ich bin der digitale KI-Assistent von Susanne Meier, kein Mensch")).toBe(true);
+    expect(noticeText("outreach", "du", names, FRAU, []).startsWith("Hallo Julia, danke für deine Anfrage! Hier schreibt der digitale KI-Assistent von Agentur Susanne Meier. Ich bin kein Mensch und berate nicht zu Tarifen.")).toBe(true);
     // A/B-Fassung b
     expect(noticeText("outreach_tkv", "sie", names, FRAU, ["Katzenversicherung"], "b")).toContain("Erste Frage: Für welches Tier suchen Sie den Schutz?");
     expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Frau Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");

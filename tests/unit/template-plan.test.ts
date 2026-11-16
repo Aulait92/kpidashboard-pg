@@ -207,8 +207,9 @@ describe("Vorgemerkte nächste Fassung (Rechtsvorprüfung 16.11.2026)", () => {
     expect(next.sie).toContain("Beim Thema {{2}} gibt es oft Lücken, die erst im Schadenfall auffallen.");
     expect(next.sie).not.toMatch(/viele meiner Kunden/i);
     expect(next.sie).not.toMatch(/[–—]/);
-    for (const [purpose, f] of Object.entries(NAECHSTE_FASSUNG) as [NoticePurpose, { version: string; du?: string; sie: string }][]) {
-      const vars = (t: string) => (t.match(/\{\{\d+\}\}|\[[A-Za-z]+\]/g) ?? []).sort();
+    for (const [purpose, f] of Object.entries(NAECHSTE_FASSUNG) as [NoticePurpose, NonNullable<(typeof NAECHSTE_FASSUNG)[NoticePurpose]>][]) {
+      // Meta-Parameter müssen gleich bleiben ([Firma]/[Berater] füllt die App je Kunde)
+      const vars = (t: string) => (t.match(/\{\{\d+\}\}/g) ?? []).sort();
       expect(vars(f.sie), purpose).toEqual(vars(TEMPLATE_BODY[purpose].sie));
       expect(!!f.du, purpose).toBe(!!TEMPLATE_BODY[purpose].du);
       expect(Number(f.version.slice(1)), purpose).toBeGreaterThan(Number(templateVersionFor(purpose).slice(1)));

@@ -10,11 +10,14 @@ import {
   kiHinweis,
   kiHinweisErneut,
   kiHinweisNoetig,
+  KI_HINWEIS_KERN,
+  KI_HINWEIS_KURZ,
   wantsHuman,
 } from "@/lib/whatsapp/ki-hinweis";
 import { beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { buildSystemPrompt } from "@/lib/whatsapp/bot";
-import { noticeText, OUTREACH_PURPOSES, TEMPLATE_BODY, TEMPLATE_BODY_B, TEMPLATE_HEADER } from "@/lib/whatsapp/templates";
+import { NAECHSTE_FASSUNG, noticeText, OUTREACH_PURPOSES, TEMPLATE_BODY, TEMPLATE_BODY_B, TEMPLATE_HEADER } from "@/lib/whatsapp/templates";
+import { buildTemplateRequest, templateNameFor } from "@/lib/whatsapp/template-plan";
 import { isStopMessage } from "@/lib/whatsapp/stopp";
 
 const names = { firm: "Agentur Susanne Meier", advisor: "Susanne Meier" };
@@ -108,7 +111,7 @@ describe("KI-Hinweis", () => {
       "Ich bin der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch. Ich habe Susanne Meier Bescheid gegeben, Susanne Meier meldet sich persönlich bei Ihnen.",
     );
     expect(humanHandoverReply("du", names, FRAU, { greet: true })).toBe(
-      "Hallo Julia, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch. Ich habe Susanne Meier Bescheid gegeben, Susanne Meier meldet sich persönlich bei dir.",
+      "Hallo Julia, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier. Ich bin kein Mensch und berate nicht zu Tarifen. Ich habe Susanne Meier Bescheid gegeben, Susanne Meier meldet sich persönlich bei dir.",
     );
   });
 
@@ -126,11 +129,68 @@ describe("KI-Hinweis", () => {
       ansprache: "sie",
     });
     expect(p).toContain("Gib dich nie als Mensch aus");
-    expect(p).toContain("antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von Agentur Susanne Meier bist und kein Mensch");
+    expect(p).toContain("antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von Agentur Susanne Meier bist, kein Mensch, und nicht zu Tarifen berätst");
     expect(p).toContain("Nenne keine Versicherer, Tarife oder Produktnamen, keine Preise");
     expect(p).toContain("„Das klärt Susanne Meier im Termin mit Ihnen.“");
     expect(p).toContain("Frage nie nach Gesundheitsangaben");
     expect(p).toContain("Begrüße deshalb nicht und stell dich nicht vor");
+  });
+});
+
+describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
+  const MEMO = "Hier schreibt der digitale KI-Assistent von Agentur Susanne Meier. Ich bin kein Mensch und berate nicht zu Tarifen.";
+
+  it("Kern und Kurzfassung stimmen überein: Firma statt Berater, „berate nicht zu Tarifen“", () => {
+    expect(KI_HINWEIS_KURZ).toBe("Hier schreibt der digitale KI-Assistent von [Firma]. Ich bin kein Mensch und berate nicht zu Tarifen.");
+    for (const an of ["du", "sie"] as const) expect(KI_HINWEIS_KERN[an].startsWith("hier schreibt der digitale KI-Assistent von [Firma]. Ich bin kein Mensch und berate nicht zu Tarifen.")).toBe(true);
+    for (const an of ["du", "sie"] as const) expect(kiHinweisErneut(an, names)).toContain("Ich bin kein Mensch und berate nicht zu Tarifen.");
+  });
+
+  it("freigegebene Vorlagen v4 bleiben unverändert, v5 ist für jedes Erstanschreiben (a und b) vorgemerkt", () => {
+    for (const p of OUTREACH_PURPOSES) {
+      // gesendet bzw. eingereicht wird weiter v4 mit dem freigegebenen Text
+      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v4_sie`);
+      expect(TEMPLATE_BODY[p].sie, p).not.toContain("berate nicht zu Tarifen");
+      expect(buildTemplateRequest(p, names, undefined, "sie").name, p).toBe(`pg_${p}_v4_sie`);
+      const n = NAECHSTE_FASSUNG[p]!;
+      expect(n.version, p).toBe("v5");
+      const texte = [n.du!, n.sie, ...(TEMPLATE_BODY_B[p] ? [n.b!.du!, n.b!.sie] : [])];
+      for (const t of texte) {
+        expect(t, p).toContain(KI_HINWEIS_KURZ);
+        expect(t, p).not.toMatch(/KI-Assistent von \[Berater\]/);
+        expect(t, p).not.toMatch(/[–—]/);
+        expect(hasKiHinweis(t), p).toBe(true);
+      }
+    }
+  });
+
+  it("Freitext im offenen Fenster folgt schon jetzt dem Memo (a und b, Du und Sie)", () => {
+    for (const p of OUTREACH_PURPOSES) {
+      for (const variant of ["a", "b"] as const) {
+        if (variant === "b" && !TEMPLATE_BODY_B[p]) continue;
+        expect(noticeText(p, "sie", names, FRAU, ["Zahnzusatzversicherung"], variant), `${p} ${variant}`).toContain(MEMO);
+        expect(noticeText(p, "du", names, FRAU, ["Zahnzusatzversicherung"], variant), `${p} ${variant}`).toContain(MEMO);
+      }
+    }
+    expect(noticeText("outreach_tkv", "sie", names, FRAU, ["Katzenversicherung"])).toBe(
+      `Guten Tag Frau Schneider, vielen Dank für Ihre Anfrage zur Katzenversicherung! ${MEMO} Damit Sie ein passendes Angebot bekommen, stelle ich Ihnen zwei kurze Fragen. Für welches Tier suchen Sie den Schutz?`,
+    );
+  });
+
+  it("Bot-Prompt: Pflichthinweis im Memo-Wortlaut, solange noch nicht offengelegt", () => {
+    const p = buildSystemPrompt({ systemPrompt: "", knowledge: "", personality: "" }, "Zahnzusatz", {
+      qualified: false,
+      summary: null,
+      contact: { name: "Julia Schneider", phone: "4917600000001", email: null },
+      upcoming: null,
+      formAnswers: [],
+      advisorName: "Susanne Meier",
+      firmName: "Agentur Susanne Meier",
+      aiDisclosed: false,
+      noticePrefixed: false,
+      ansprache: "sie",
+    });
+    expect(p).toContain(`„${MEMO}“`);
   });
 });
 

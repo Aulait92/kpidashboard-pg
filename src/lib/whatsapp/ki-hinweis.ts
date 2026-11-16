@@ -11,12 +11,19 @@ export const KI_HINWEIS_PAUSE_TAGE = 30;
 const DAY = 24 * 60 * 60 * 1000;
 
 /**
+ * Die ersten beiden Sätze des Memo-Wortlauts (für Du und Sie gleich): wer schreibt (die Firma), kein Mensch, keine
+ * Beratung zu Tarifen. Auch Grundlage der Erstanschreiben (Vorlagen ab v5, Freitext sofort; templates.ts).
+ */
+export const KI_HINWEIS_KURZ = "Hier schreibt der digitale KI-Assistent von [Firma]. Ich bin kein Mensch und berate nicht zu Tarifen.";
+const kurzKlein = KI_HINWEIS_KURZ.charAt(0).toLowerCase() + KI_HINWEIS_KURZ.slice(1);
+
+/**
  * Kern des Hinweises (nach der Anrede-Zeile, kleingeschrieben). [Firma] = Kundenname, [Berater] = Person.
  * Wortlaut laut Anwalts-Memo, in beiden Fassungen.
  */
 export const KI_HINWEIS_KERN: Record<Ansprache, string> = {
-  du: "hier schreibt der digitale KI-Assistent von [Firma]. Ich bin kein Mensch und berate nicht zu Tarifen. Ich helfe dir, einen Termin mit [Berater] zu vereinbaren. Wenn du direkt mit [Berater] sprechen möchtest, schreib ‚Mensch‘.",
-  sie: "hier schreibt der digitale KI-Assistent von [Firma]. Ich bin kein Mensch und berate nicht zu Tarifen. Ich helfe Ihnen, einen Termin mit [Berater] zu vereinbaren. Wenn Sie direkt mit [Berater] sprechen möchten, schreiben Sie ‚Mensch‘.",
+  du: `${kurzKlein} Ich helfe dir, einen Termin mit [Berater] zu vereinbaren. Wenn du direkt mit [Berater] sprechen möchtest, schreib ‚Mensch‘.`,
+  sie: `${kurzKlein} Ich helfe Ihnen, einen Termin mit [Berater] zu vereinbaren. Wenn Sie direkt mit [Berater] sprechen möchten, schreiben Sie ‚Mensch‘.`,
 };
 
 export type KiNamen = { firm: string; advisor: string };
@@ -63,8 +70,8 @@ export function kiHinweis(an: Ansprache, names: KiNamen, kontakt?: AnredeKontakt
 export function kiHinweisErneut(an: Ansprache, names: KiNamen): string {
   return a(
     an,
-    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}, kein Mensch. Wenn du direkt mit ${names.advisor} sprechen möchtest, schreib ‚Mensch‘.`,
-    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}, kein Mensch. Wenn Sie direkt mit ${names.advisor} sprechen möchten, schreiben Sie ‚Mensch‘.`,
+    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}. Ich bin kein Mensch und berate nicht zu Tarifen. Wenn du direkt mit ${names.advisor} sprechen möchtest, schreib ‚Mensch‘.`,
+    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}. Ich bin kein Mensch und berate nicht zu Tarifen. Wenn Sie direkt mit ${names.advisor} sprechen möchten, schreiben Sie ‚Mensch‘.`,
   );
 }
 
@@ -139,7 +146,7 @@ export function wantsHuman(text: string | null | undefined): boolean {
  */
 export function humanHandoverReply(an: Ansprache, names: KiNamen, kontakt?: AnredeKontakt | null, opts: { greet?: boolean } = {}): string {
   const wer = opts.greet
-    ? `${anredeZeile(an, kontakt)} hier schreibt der digitale KI-Assistent von ${names.firm}, kein Mensch.`
+    ? `${anredeZeile(an, kontakt)} ${fill(kurzKlein, names)}`
     : `Ich bin der digitale KI-Assistent von ${names.firm}, kein Mensch.`;
   return `${wer} ${a(an, `Ich habe ${names.advisor} Bescheid gegeben, ${names.advisor} meldet sich persönlich bei dir.`, `Ich habe ${names.advisor} Bescheid gegeben, ${names.advisor} meldet sich persönlich bei Ihnen.`)}`;
 }
