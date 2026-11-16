@@ -8,6 +8,7 @@
 //   DURCHKLICK_PARAMS='{"/admin/neu/kunden/[id]":"<kundeId>","/admin/neu/vertrieb/kontakte/[id]":"<kontaktId>"}'
 //     setzt ids für Detailseiten (Schlüssel = Anfang des Pfads; ohne passenden Schlüssel wird die Seite übersprungen)
 //   SCREENSHOTS=<ordner>   legt je Ansicht und Breite ein PNG ab
+//   DURCHKLICK_BREITEN=390 nur diese Breite(n), z. B. „390“ oder „1280“ (Standard: beide)
 //   CHROMIUM=/opt/pw-browsers/chromium (Standard)
 // Exit 1, wenn etwas auffällt.
 // Dev-Server im Worktree (node_modules als Symlink): `NODE_OPTIONS=--max-old-space-size=6144 npx next dev --webpack`
@@ -27,7 +28,7 @@ const SHOTS = process.env.SCREENSHOTS;
 const BREITEN = [
   { name: "handy", width: 390, height: 844 },
   { name: "rechner", width: 1280, height: 900 },
-];
+].filter((b) => !process.env.DURCHKLICK_BREITEN || process.env.DURCHKLICK_BREITEN.split(",").includes(String(b.width)));
 
 if (!EMAIL || !PASSWORD) {
   console.error("ADMIN_EMAIL und ADMIN_PASSWORD setzen (Admin-Login der Test-Datenbank).");
@@ -85,7 +86,8 @@ for (const b of BREITEN) {
   await page.goto(`${BASE}/login`);
   await page.fill('input[name="email"]', EMAIL);
   await page.fill('input[name="password"]', PASSWORD);
-  await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 180_000 }), page.click('button[type="submit"]')]);
+  // „commit“ statt „load“: startet der Dev-Server gerade neu, feuert „load“ der Startseite unter Umständen nie
+  await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 180_000, waitUntil: "commit" }), page.click('button[type="submit"]')]);
 
   for (const s of SEITEN) {
     const pfad = adresse(s.pfad);
