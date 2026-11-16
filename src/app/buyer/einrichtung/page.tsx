@@ -10,7 +10,8 @@ import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { HelpCallPicker, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
+import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
+import { impressumUrlAus } from "@/lib/impressum-fehlt";
 import { ErstinfoForm } from "./erstinfo-form";
 import { loadErstinfo } from "@/lib/erstinformation";
 import { vermittlerStatusLabel } from "@/lib/erstinformation-shared";
@@ -109,6 +110,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
   // Erstinformation (§ 15 VersVermV) und Einwilligungstext fürs Leadformular
   const erstinfo = software ? await loadErstinfo(ctx.customerId) : null;
+  // Impressum-Adresse: Pflichtangabe auf den Seiten für Endkunden, geprüft, aber nicht blockierend (Rechtsvorprüfung 16.11.2026)
+  const impressumFehlt = !impressumUrlAus(ob.websiteInfo);
   const metaInit = {
     adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
     page: ob.customer.metaPageId ?? "",
@@ -318,13 +321,19 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               <div className="mb-3 rounded-[var(--radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" data-erstinfo-fertig>
                 Ihre Erstinformation ist fertig: {vermittlerStatusLabel(erstinfo.status)}
                 {erstinfo.registerNummer ? `, Registernummer ${erstinfo.registerNummer}` : ""}
-                {erstinfo.fileName ? ", eigenes PDF hinterlegt" : ", aus Ihren Angaben erstellt"}. Sie müssen nichts tun.
+                {erstinfo.fileName ? ", eigenes PDF hinterlegt" : ", aus Ihren Angaben erstellt"}.{impressumFehlt ? "" : " Sie müssen nichts tun."}
               </div>
             ) : (
               <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-erstinfo-warnung>
                 Es fehlt noch: {erstinfo.fehlt.join(", ")}.
               </p>
             )}
+            {impressumFehlt ? (
+              <div className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-impressum-fehlt>
+                <p className="mb-3">Tragen Sie Ihr Impressum ein, sonst zeigen Ihre Seiten für Kunden nur die Erstinformation als Anbieterangaben.</p>
+                <ImpressumUrlForm readOnly={readOnly} />
+              </div>
+            ) : null}
             {erstinfo.vollstaendig ? (
               <details className="text-sm">
                 <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Angaben ändern</summary>

@@ -88,6 +88,24 @@ export async function confirmMetaAccessAction(_prev: SetupState, _fd: FormData):
   return { ok: true };
 }
 
+/**
+ * Impressum-Adresse der eigenen Webseite (Rechtsvorprüfung 16.11.2026): Pflichtangabe auf den Seiten für Endkunden.
+ * Freiwillig im Ablauf (blockiert die Einrichtung nicht), ohne sie zeigen die Seiten die Erstinformation.
+ */
+export async function saveImpressumUrlAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
+  let ob;
+  try {
+    ({ ob } = await requireCustomer());
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+  const { impressumUrlSpeichern } = await import("@/lib/impressum-fehlt");
+  const r = await impressumUrlSpeichern(ob.customerId, str(fd, "impressumUrl", 300));
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/buyer", "layout");
+  return { ok: true };
+}
+
 export async function bookHelpCallAction(_prev: SetupState, fd: FormData): Promise<SetupState> {
   try {
     const { ctx } = await requireCustomer();

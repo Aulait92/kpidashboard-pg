@@ -8,6 +8,7 @@ import {
   checkMetaAccessAction,
   confirmConsentAction,
   confirmMetaAccessAction,
+  saveImpressumUrlAction,
   saveQuestionnaireAction,
   skipSetupStepAction,
   type MetaSetupState,
@@ -126,6 +127,36 @@ export function MetaConfirmButton({ done, readOnly }: { done: boolean; readOnly:
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         Zugriff ist erteilt
       </button>
+      <Feedback state={state} />
+    </form>
+  );
+}
+
+/** Impressum-Adresse nachtragen (Einrichtung, Schritt Erstinformation); freiwillig, blockiert nichts. */
+export function ImpressumUrlForm({ readOnly }: { readOnly: boolean }) {
+  const [state, action, pending] = useActionState<SetupState, FormData>(saveImpressumUrlAction, {});
+  if (state.ok)
+    return (
+      <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-700" data-impressum-gespeichert>
+        <CheckCircle2 className="h-4 w-4" /> Gespeichert. Ihre Seiten für Kunden verlinken jetzt Ihr Impressum.
+      </p>
+    );
+  return (
+    <form action={action} className="space-y-2" data-impressum-form>
+      <label className={label} htmlFor="impressumUrl">
+        Adresse Ihres Impressums
+      </label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input id="impressumUrl" name="impressumUrl" className={input} placeholder="z. B. agentur-muster.de/impressum" inputMode="url" autoComplete="url" disabled={readOnly || pending} />
+        <button
+          type="submit"
+          disabled={pending || readOnly}
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-5 text-[15px] font-semibold transition hover:bg-[color:var(--surface-sunken)] disabled:opacity-60"
+        >
+          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          Speichern
+        </button>
+      </div>
       <Feedback state={state} />
     </form>
   );
