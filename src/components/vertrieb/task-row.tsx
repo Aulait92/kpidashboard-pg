@@ -8,6 +8,7 @@ import { CalendarClock, Check, ChevronRight, MoreHorizontal, Phone, Trash2, User
 import { deleteTask, snoozeTask, toggleTask } from "@/app/admin/vertrieb/actions";
 import { success as hapticSuccess } from "@/lib/haptics";
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
+import { useToast } from "@/components/ui/toast";
 import { STAGE_COLOR, STAGE_LABEL, TASK_LABEL, TERMIN_REVIEW_CHOICES, isTerminReview, shortName } from "@/lib/vertrieb/crm";
 import { meetingOutcomeAction } from "@/app/admin/heute/actions";
 import { dayKey, fmtDateTime, relDay, todayKey } from "@/lib/vertrieb/dates";
@@ -29,6 +30,7 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [doneLocal, setDoneLocal] = useState(!!t.doneAt);
+  const toast = useToast();
   const overdue = !t.doneAt && dayKey(t.dueAt) < todayKey();
   const today = !t.doneAt && dayKey(t.dueAt) === todayKey();
   const run = (fn: () => Promise<void>) =>
@@ -118,7 +120,7 @@ export function TaskRow({ t, showContact = true }: { t: TaskWithContact; showCon
                     const res = await meetingOutcomeAction(t.id, c.outcome);
                     if (!res.ok) {
                       setDoneLocal(false);
-                      alert(res.error);
+                      toast.show({ message: res.error ?? "Das hat nicht geklappt. Bitte die Seite neu laden.", tone: "error" });
                     }
                   });
                 }}
