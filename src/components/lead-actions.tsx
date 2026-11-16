@@ -182,8 +182,8 @@ export function LeadHeaderActions(p: Props) {
   const lost = !!phase && LOST_KEYS.has(phase.key);
   const showBar = !p.storniert && !won && !lost && stepPhases.length > 1;
 
-  // Anrufen, Chat, Mehr immer; E-Mail, Termin, Wiedervorlage je nach Lage (siehe Kacheln unten)
-  const tileCount = 3 + (p.mailOff ? 0 : 1) + (p.hasUpcomingAppointment ? 0 : 1) + (p.followUpAt ? 0 : 1);
+  // Anrufen, Chat, Wiedervorlage, Mehr immer; E-Mail und Termin je nach Lage (siehe Kacheln unten)
+  const tileCount = 4 + (p.mailOff ? 0 : 1) + (p.hasUpcomingAppointment ? 0 : 1);
 
   const dueLabel = p.followUpAt
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric" }).format(new Date(p.followUpAt))
@@ -308,15 +308,13 @@ export function LeadHeaderActions(p: Props) {
           {/* Steht schon ein Termin an, zeigt die Terminkarte ihn (Verschieben, Vorbereiten); kein zweiter Knopf (16.11.2026) */}
           {p.hasUpcomingAppointment ? null : <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />}
           {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt). Steht schon eine an,
-              übernimmt die Leiste darunter (Ändern, Erledigt): kein zweiter Knopf für dasselbe (16.11.2026). */}
-          {dueLabel ? null : (
+              Ole, 16.11.2026: Kachel bleibt auch, wenn schon eine ansteht („fand es besser, den großen Knopf hier zu haben“). */}
           <ActionTile
             icon={BellRing}
             label="Wiedervorlage"
             onClick={!p.storniert ? () => setOpen("followup") : undefined}
             explain={{ title: "Lead ist storniert", text: "Für stornierte Leads gibt es keine Wiedervorlage mehr. Ist die Stornierung abgelehnt worden, ändern Sie zuerst den Status." }}
           />
-          )}
           <ActionTile icon={MoreHorizontal} label="Mehr" onClick={() => setOpen("more")} />
         </div>
 

@@ -266,6 +266,6 @@ describe("Nächster Schritt", () => {
     expect(neu.callAttempts).toBe(1);
     expect(neu.followUpAt!.getTime()).toBeGreaterThan(now.getTime());
     expect(neu.followUpNote).toBeTruthy();
-    expect((await loadLeadHistory(l.id)).some((h) => /nicht erreicht/i.test(h.text ?? ""))).toBe(true);
+    expect((await loadLeadHistory(l.id, null)).some((h) => /nicht erreicht/i.test(h.text ?? ""))).toBe(true);
   });
 });
