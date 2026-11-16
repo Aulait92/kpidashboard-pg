@@ -457,15 +457,33 @@ function Angebote(p: {
       {p.daten.gesellschaftFehlt ? (
         <div className="mx-4 mt-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm sm:mx-5" data-gesellschaft-waehlen>
           <p className="font-medium">Welche Gesellschaft vertreten Sie?</p>
+          {/* Häufig: die drei Vertreter-Gesellschaften als Knöpfe; alle übrigen Katalog-Gesellschaften in einer Auswahl */}
           <div className="mt-2 flex flex-wrap gap-2">
-            {gesellschaftsListe.map((g) => (
-              <Button key={g.key} size="sm" disabled={ro} onClick={() => void gesellschaftWaehlen([g.key])}>
-                {g.name}
-              </Button>
-            ))}
-            <Button size="sm" variant="ghost" disabled={ro} onClick={() => void gesellschaftWaehlen(["andere"])}>
-              Andere
-            </Button>
+            {gesellschaftsListe
+              .filter((g) => STANDARD_GESELLSCHAFTEN.includes(g.key))
+              .map((g) => (
+                <Button key={g.key} size="sm" disabled={ro} onClick={() => void gesellschaftWaehlen([g.key])}>
+                  {g.name}
+                </Button>
+              ))}
+            <select
+              aria-label="Andere Gesellschaft"
+              disabled={ro}
+              value=""
+              onChange={(e) => e.target.value && void gesellschaftWaehlen([e.target.value])}
+              className="h-9 min-w-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 text-sm font-medium"
+              data-gesellschaft-andere
+            >
+              <option value="">Andere …</option>
+              {gesellschaftsListe
+                .filter((g) => !STANDARD_GESELLSCHAFTEN.includes(g.key))
+                .map((g) => (
+                  <option key={g.key} value={g.key}>
+                    {g.name}
+                  </option>
+                ))}
+              <option value="andere">Nicht in der Liste</option>
+            </select>
           </div>
         </div>
       ) : null}
@@ -1077,6 +1095,15 @@ function TarifeAendern({
   const [filter, setFilter] = useState<string[]>(makler ? (vertrieb.gesellschaften.length ? vertrieb.gesellschaften : imKatalog) : vertrieb.gesellschaften);
   const [suche, setSuche] = useState("");
   const [eigenOffen, setEigenOffen] = useState(false);
+  // Viele Gesellschaften (Makler, 16.11.2026: 21 im Katalog): gewählte zuerst, höchstens 6 Chips, Rest hinter „+ n weitere“
+  const [alleChips, setAlleChips] = useState(false);
+  const chipQuelle = makler ? gesellschaften.filter((g) => imKatalog.includes(g.key)) : vertrieb.gesellschaften.map((key) => ({ key, name: gesellschaftName(key) }));
+  // Reihenfolge nach der Auswahl beim Öffnen, damit Chips beim Antippen nicht springen
+  const [startFilter] = useState(filter);
+  const chipsSortiert = [...chipQuelle.filter((g) => startFilter.includes(g.key)), ...chipQuelle.filter((g) => !startFilter.includes(g.key))];
+  const CHIP_MAX = 6;
+  const chipsSichtbar = alleChips || chipsSortiert.length <= CHIP_MAX + 1 ? chipsSortiert : chipsSortiert.slice(0, CHIP_MAX);
+  const chipsVersteckt = chipsSortiert.length - chipsSichtbar.length;
 
   const q = suche.trim().toLowerCase();
   const passtSuche = (s: string) => !q || s.toLowerCase().includes(q);
@@ -1131,7 +1158,7 @@ function TarifeAendern({
         </label>
         <div className="mb-1 mt-2.5 flex flex-wrap items-center gap-1.5" data-gesellschaften>
           {makler || vertrieb.gesellschaften.length > 1 ? (
-            (makler ? gesellschaften.filter((g) => imKatalog.includes(g.key)) : vertrieb.gesellschaften.map((key) => ({ key, name: gesellschaftName(key) }))).map((g) => (
+            chipsSichtbar.map((g) => (
               <button
                 key={g.key}
                 type="button"
@@ -1141,7 +1168,15 @@ function TarifeAendern({
               >
                 {g.name}
               </button>
-            ))
+            )).concat(
+              chipsVersteckt > 0
+                ? [
+                    <button key="mehr" type="button" onClick={() => setAlleChips(true)} className="h-8 rounded-full px-2 text-xs font-semibold text-[color:var(--brand)]" data-weitere-gesellschaften>
+                      + {chipsVersteckt} weitere
+                    </button>,
+                  ]
+                : [],
+            )
           ) : vertrieb.gesellschaften.length ? (
             <>
               <span className="inline-flex h-8 items-center rounded-full bg-[#e6eef7] px-3 text-xs font-semibold text-[#003781]">{gesellschaftName(vertrieb.gesellschaften[0])}</span>
