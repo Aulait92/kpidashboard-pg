@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies, headers } from "next/headers";
+import { NEU_RUECKSPRUNG_COOKIE, NEU_RUECKSPRUNG_MAX_AGE, neuPfadAusReferer } from "@/lib/admin-neu/ruecksprung";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { audit } from "@/lib/audit";
@@ -15,13 +17,19 @@ export type BankState = { ok?: boolean; message?: string; error?: string } | nul
 const refresh = () => {
   revalidatePath("/admin/einstellungen/bank", "layout");
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
 };
 
 export async function connectBankAction(fd: FormData) {
   const session = await requireAuth();
   const aspsp = String(fd.get("aspsp") ?? "").trim();
   const r = await startBankConnection(aspsp || "Commerzbank", session.userId);
-  if ("error" in r) redirect(`/admin/einstellungen/bank?fehler=${encodeURIComponent(r.error.slice(0, 200))}`);
+  // Aus dem neuen Admin (Zahlen → Kosten & Bank): Rücksprung der Bank dorthin (api/bank/callback, lib/admin-neu/ruecksprung.ts)
+  const neu = neuPfadAusReferer((await headers()).get("referer"));
+  if ("error" in r) redirect(`${neu ?? "/admin/einstellungen/bank"}?fehler=${encodeURIComponent(r.error.slice(0, 200))}`);
+  const jar = await cookies();
+  if (neu) jar.set(NEU_RUECKSPRUNG_COOKIE, neu, { path: "/api", maxAge: NEU_RUECKSPRUNG_MAX_AGE, httpOnly: true, secure: true, sameSite: "lax" });
+  else jar.delete({ name: NEU_RUECKSPRUNG_COOKIE, path: "/api" });
   redirect(r.url);
 }
 

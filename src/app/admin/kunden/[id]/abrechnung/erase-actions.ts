@@ -23,6 +23,7 @@ export async function eraseCustomerDataAction(_prev: EraseCustomerState, fd: For
   if (blocker) return { error: blocker };
   const r = await finalDeleteCustomer(id, { actor: { id: session.userId, email: session.email, role: session.role }, reason });
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return {
     ok: true,
     message: `Gelöscht: ${r.leads} Leads anonymisiert, ${r.conversations} Chats, ${r.appointments} Termine, ${r.consents} Einwilligungen, ${r.bestand} Bestandskunden, ${r.consentLogs} Einträge im Einwilligungsprotokoll. ${r.logins} Logins entfernt. Kalender und Postfach getrennt.`,

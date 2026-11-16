@@ -66,6 +66,19 @@ describe("Schnellsuche Kundenbereich", () => {
     }
   });
 
+  it("Telefon über Endziffern und mit Klammern/Schrägstrich, nie aus anderen Kunden (Telefonsuche 16.11.2026)", async () => {
+    for (const q of ["45678", "345678", "(0151) 1234/5678", "0151-1234 5678"]) {
+      const found = await keys(owner, q);
+      expect(found, q).toEqual([`kontakt:${ids.leadA}`, `chat:${ids.chatA}`].sort());
+      expect(found, q).not.toContain(`kontakt:${ids.leadOther}`);
+    }
+    // Bestandskunde über die Endziffern
+    expect(await keys(owner, "44433")).toContain(`bestand:${ids.bestand}`);
+    // Anderer Kunde mit derselben Nummer sieht nur seinen eigenen Kontakt
+    const otherCtx: TeamCtx = { customerId: otherCustomerId, userId: "x", teamRole: "owner" };
+    expect(await keys(otherCtx, "45678")).toEqual([`kontakt:${ids.leadOther}`]);
+  });
+
   it("Linkziel je Oberfläche, unter 2 Zeichen nichts", async () => {
     const [neu] = await searchBuyer(advisorA, "erika@", { newUi: true });
     const [alt] = await searchBuyer(advisorA, "erika@", { newUi: false });

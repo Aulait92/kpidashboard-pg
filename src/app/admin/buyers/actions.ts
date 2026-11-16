@@ -64,6 +64,7 @@ export async function createBuyerAccount(
 
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, createdEmail: email };
 }
 
@@ -94,6 +95,7 @@ export async function resetBuyerPassword(
   await audit("user.password_reset", { entity: "User", entityId: userId });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, createdEmail: user.email };
 }
 
@@ -134,6 +136,7 @@ export async function reassignBuyerCustomer(
   await audit("user.reassign", { entity: "User", entityId: userId, customerId });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   // createdEmail trägt hier den Kundennamen für die Bestätigung im UI.
   return { ok: true, createdEmail: customer.name };
 }
@@ -172,6 +175,7 @@ export async function sendBuyerAccessLink(
   if (!sent.ok) return { ok: false, error: `E-Mail an ${user.email} ging nicht raus: ${sent.error}` };
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, message: invite ? `Einladung an ${user.email} gesendet` : `Link zum Passwort ändern an ${user.email} gesendet` };
 }
 
@@ -188,6 +192,7 @@ export async function deleteBuyerAccount(formData: FormData) {
   await audit("user.delete", { entity: "User", entityId: userId, customerId: gone.customerId, details: { email: gone.email } });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 /** Login-E-Mail eines Kunden-Logins ändern (Ole, 15.11.2026, z. B. Testkunde mit frischer Adresse). */
@@ -207,5 +212,6 @@ export async function changeBuyerEmail(_prev: CreateBuyerState, formData: FormDa
   await audit("user.email_change", { entity: "User", entityId: userId, customerId: user.customerId, details: { from: user.email, to: email } });
   revalidatePath("/admin/buyers");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true, createdEmail: email };
 }

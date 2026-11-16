@@ -14,20 +14,26 @@ async function requireAdmin() {
   if (!s || s.role !== "ADMIN") throw new Error("Nur Admins.");
 }
 
-const back = (msg: string, ok = true) => redirect(`/admin/lead-eingang?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
+// Rückweg: alte Seite oder (Feld „zurueck“) der neue Admin unter /admin/neu/leads
+const ziel = (fd: FormData) => {
+  const z = String(fd.get("zurueck") ?? "");
+  return z.startsWith("/admin/neu/") && !z.includes("?") ? z : "/admin/lead-eingang";
+};
+const back = (msg: string, ok = true, basis = "/admin/lead-eingang") => redirect(`${basis}?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
 
 export async function assignFormAction(fd: FormData) {
   await requireAdmin();
+  const basis = ziel(fd);
   const formId = String(fd.get("formId") ?? "").trim();
   const customerId = String(fd.get("customerId") ?? "");
   const productKey = String(fd.get("productKey") ?? "").trim();
   const priceRaw = String(fd.get("leadPrice") ?? "").replace(",", ".").trim();
   const bezug = String(fd.get("bezugAirtableId") ?? "").trim() || null;
   let pageId = String(fd.get("pageId") ?? "").trim() || null;
-  if (!/^\d{5,}$/.test(formId)) back("Bitte eine gültige Formular-ID angeben.", false);
-  if (!customerId || !productKey) back("Bitte Kunde und Produkt wählen.", false);
+  if (!/^\d{5,}$/.test(formId)) back("Bitte eine gültige Formular-ID angeben.", false, basis);
+  if (!customerId || !productKey) back("Bitte Kunde und Produkt wählen.", false, basis);
   const leadPrice = priceRaw ? Number(priceRaw) : null;
-  if (leadPrice != null && (!Number.isFinite(leadPrice) || leadPrice < 0)) back("Der Lead-Preis ist ungültig.", false);
+  if (leadPrice != null && (!Number.isFinite(leadPrice) || leadPrice < 0)) back("Der Lead-Preis ist ungültig.", false, basis);
 
   // Formularfragen (Beschriftungen) und Name von Meta holen – optional.
   let formName: string | null = null;
@@ -64,8 +70,9 @@ export async function assignFormAction(fd: FormData) {
   }
   const taken = await assignPendingLeads(formId);
   revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu", "layout");
   revalidatePath("/admin/kunden", "layout");
-  back(`Formular zugeordnet.${note}${taken ? ` ${taken} wartende Leads übernommen.` : ""}`);
+  back(`Formular zugeordnet.${note}${taken ? ` ${taken} wartende Leads übernommen.` : ""}`, true, basis);
 }
 
 export async function toggleSourceAction(fd: FormData) {
@@ -77,6 +84,7 @@ export async function toggleSourceAction(fd: FormData) {
     await audit("leadsource.toggle", { entity: "LeadSource", entityId: u.formId, customerId: u.customerId, details: { active: u.active } });
   }
   revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu", "layout");
   revalidatePath("/admin/kunden", "layout");
 }
 
@@ -85,5 +93,6 @@ export async function dismissUnassignedAction(fd: FormData) {
   const formId = String(fd.get("formId") ?? "");
   await prisma.unassignedLead.updateMany({ where: { formId: formId || null, resolvedAt: null }, data: { resolvedAt: new Date() } });
   revalidatePath("/admin/lead-eingang");
+  revalidatePath("/admin/neu", "layout");
   revalidatePath("/admin/kunden", "layout");
 }

@@ -11,6 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { fetchHtml, fetchImpressumText, htmlToText, normalizeUrl } from "@/lib/impressum";
 import { enrichmentSourceUrl, extractAddress, needsAddress } from "@/lib/vertrieb/address-enrich";
 import { backfillPhonesFromMail } from "@/lib/vertrieb/signature-phone";
+import { indexPendingMailPhones } from "@/lib/telefonsuche-server";
+import { reportError } from "@/lib/monitoring";
 
 const DAY = 86400000;
 // 30 Tage: Google Maps Platform erlaubt nur kurzfristiges Zwischenspeichern von Places-Inhalten
@@ -559,6 +561,8 @@ export async function enrichPendingContacts(limit = 20, budgetMs = 120_000): Pro
   });
   // Telefon aus bisherigen E-Mail-Antworten (Signatur) nachholen – nur Datenbank, kostet nichts
   const mail = await backfillPhonesFromMail(50).catch(() => ({ tried: 0, updated: 0 }));
+  // Telefonsuche: Signatur-Nummern bisheriger Mails nachtragen (einmalig je Mail, danach nur noch neue)
+  await indexPendingMailPhones(300).catch((e: unknown) => reportError(e, "telefonsuche-index"));
   let tried = mail.tried;
   let updated = mail.updated;
   for (const p of pending) {

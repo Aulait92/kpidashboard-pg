@@ -11,6 +11,8 @@ export async function SiteHeader() {
   if (h.get("x-bare-layout")) return null;
   // Kundenbereich: eigene App-Shell (src/components/buyer-shell.tsx).
   if (h.get("x-app-area") === "buyer") return null;
+  // Neuer Admin (/admin/neu): eigene Shell im Layout src/app/admin/neu/layout.tsx (Kennzeichen setzt src/middleware.ts).
+  if (h.get("x-app-area") === "admin-neu") return null;
   const session = await getCurrentSession();
   // Admin: Seitenleiste am Rechner, Leiste unten am Handy (die alte Kopfzeile ist abgeschaltet).
   if (session?.role === "ADMIN") {

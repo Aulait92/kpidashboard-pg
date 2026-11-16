@@ -54,6 +54,7 @@ export async function rescheduleAppointmentAdminAction(appointmentId: string, st
   try {
     const res = await rescheduleOpenAppointment(r.appt, start, { by: "team", userId: r.userId }, "admin");
     revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu", "layout");
     return { ok: true, start: res.start };
   } catch (err) {
     if (err instanceof SlotBusyError) return { ok: false, error: ERR.taken, code: "taken" };
@@ -69,6 +70,7 @@ export async function cancelAppointmentAdminAction(appointmentId: string): Promi
   try {
     await cancelOpenAppointment(r.appt, { by: "team", userId: r.userId }, "admin");
     revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu", "layout");
     return { ok: true };
   } catch (err) {
     console.error("[admin cancel appointment]", err);

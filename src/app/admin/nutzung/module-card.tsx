@@ -5,8 +5,9 @@ import { ANNOUNCEMENT, moduleOverview } from "@/lib/empfehlung/module";
 import { CANDIDATE_MIN_CLOSINGS, CANDIDATE_WINDOW_DAYS, fmtDate } from "@/lib/empfehlung/shared";
 import { sendAnnouncementAction } from "./module-actions";
 
-/** Zusatzmodule: Zähler, Kandidaten fürs Gespräch, einmalige Ankündigung (nur per Knopf). */
-export async function ModuleCandidatesCard({ message }: { message: string | null }) {
+/** Zusatzmodule: Zähler, Kandidaten fürs Gespräch, einmalige Ankündigung (nur per Knopf).
+ *  `zurueck`: Seite nach dem Senden (neuer Admin: Einstellungen → Neuigkeiten oder Zahlen → Qualität & Nutzung), sonst /admin/nutzung. */
+export async function ModuleCandidatesCard({ message, zurueck }: { message: string | null; zurueck?: string }) {
   const o = await moduleOverview();
   return (
     <Card className="mb-6">
@@ -65,6 +66,7 @@ export async function ModuleCandidatesCard({ message }: { message: string | null
             </p>
           ) : (
             <form action={sendAnnouncementAction} className="flex flex-wrap items-center gap-3">
+              {zurueck ? <input type="hidden" name="zurueck" value={zurueck} /> : null}
               <label className="flex items-center gap-2">
                 <input type="checkbox" name="confirm" className="h-4 w-4" />
                 <span>An {o.audience} aktive Kunden ohne Modul senden (einmalig)</span>

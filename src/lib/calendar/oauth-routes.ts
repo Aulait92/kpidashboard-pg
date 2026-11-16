@@ -4,6 +4,7 @@
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { userCalendarKey } from "@/lib/calendar/tokens";
+import { neuPfadAusReferer, neuRuecksprungCookie, ruecksprungZiel } from "@/lib/admin-neu/ruecksprung";
 
 /** Rolle im Team (Agentur-Kalender verbindet nur der Inhaber). */
 async function teamRoleOf(userId: string): Promise<"owner" | "advisor"> {
@@ -28,7 +29,8 @@ export function publicOrigin(req: Request): string {
 // weil „state“ schon die Kalender-Zuordnung trägt. Nur feste Ziele erlaubt.
 const BACK_COOKIE = "pg_cal_back";
 const BACK_TARGETS: Record<string, string> = { kalender: "/buyer/kalender", einrichtung: "/buyer/einrichtung" };
-/** Admins: Vertriebskalender der Buchungsseite /termin (lib/vertrieb/buchung.ts). */
+/** Admins: Vertriebskalender der Buchungsseite /termin (lib/vertrieb/buchung.ts). Kam der Start aus dem neuen Admin
+ *  (/admin/neu/…), geht der Rücksprung auf genau diese Seite (lib/admin-neu/ruecksprung.ts). */
 const ADMIN_BACK_TARGETS: Record<string, string> = { buchungsseite: "/admin/vertrieb/buchungsseite" };
 
 function cookieValue(req: Request, name: string): string | null {
@@ -67,6 +69,7 @@ export async function connectRoute(
     if (back && (session.role === "ADMIN" ? ADMIN_BACK_TARGETS : BACK_TARGETS)[back]) {
       headers.append("Set-Cookie", `${BACK_COOKIE}=${back}; Path=/api; Max-Age=900; HttpOnly; Secure; SameSite=Lax`);
     }
+    if (session.role === "ADMIN") headers.append("Set-Cookie", neuRuecksprungCookie(neuPfadAusReferer(req.headers.get("referer"))));
     return new Response(null, { status: 302, headers });
   } catch (err) {
     return Response.json(
@@ -99,14 +102,16 @@ export async function callbackRoute(
   const wanted = (isBuyer ? BACK_TARGETS : ADMIN_BACK_TARGETS)[cookieValue(req, BACK_COOKIE) ?? ""];
   const back = (status: string) => {
     const dest = new URL(
-      isBuyer ? (wanted ?? (customerId === ownKey ? "/buyer/kalender" : "/buyer/einrichtung")) : (wanted ?? "/admin/whatsapp"),
+      isBuyer
+        ? (wanted ?? (customerId === ownKey ? "/buyer/kalender" : "/buyer/einrichtung"))
+        : ruecksprungZiel(wanted ?? "/admin/whatsapp", req.headers.get("cookie")),
       publicOrigin(req),
     );
     dest.searchParams.set("gcal", status);
-    return new Response(null, {
-      status: 302,
-      headers: { Location: dest.toString(), "Set-Cookie": `${BACK_COOKIE}=; Path=/api; Max-Age=0; HttpOnly; Secure; SameSite=Lax` },
-    });
+    const headers = new Headers({ Location: dest.toString() });
+    headers.append("Set-Cookie", `${BACK_COOKIE}=; Path=/api; Max-Age=0; HttpOnly; Secure; SameSite=Lax`);
+    if (!isBuyer) headers.append("Set-Cookie", neuRuecksprungCookie(null));
+    return new Response(null, { status: 302, headers });
   };
   if (oauthError) {
     // z. B. Microsoft „admin consent required" bei Firmen-Tenants

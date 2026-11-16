@@ -17,6 +17,7 @@ export async function verkaufsLinkAction(contactId: string, audience: string): P
   const l = await verkaufsLinkErstellen(contactId, audience, s.userId);
   if (!l) return { ok: false, error: "Kontakt nicht gefunden." };
   revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+  revalidatePath(`/admin/neu/vertrieb/kontakte/${contactId}`, "layout");
   return { ok: true, url: `${getAppUrl()}/praesentation/${l.token}`, bis: datum(l.bis) };
 }
 
@@ -25,5 +26,6 @@ export async function verkaufsLinkBeendenAction(contactId: string): Promise<{ ok
   if (!s || s.role !== "ADMIN") return { ok: false, error: "Nicht berechtigt." };
   await verkaufsLinkBeenden(contactId);
   revalidatePath(`/admin/vertrieb/kontakte/${contactId}`);
+  revalidatePath(`/admin/neu/vertrieb/kontakte/${contactId}`, "layout");
   return { ok: true };
 }

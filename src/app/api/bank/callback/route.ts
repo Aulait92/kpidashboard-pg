@@ -2,12 +2,21 @@ import { getCurrentSession } from "@/lib/auth";
 import { finishBankConnection, syncConnection } from "@/lib/bank/server";
 import { audit } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
+import { neuRuecksprungCookie, ruecksprungZiel } from "@/lib/admin-neu/ruecksprung";
 
 // Rückkehr von der Bank (Enable Banking): ?code=…&state=… oder ?error=…
 // Nur für angemeldete Admins; state wird gegen die gespeicherte Anfrage geprüft.
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const back = (q: string) => Response.redirect(new URL(`/admin/einstellungen/bank?${q}`, url), 303);
+  // Start aus dem neuen Admin (Cookie, lib/admin-neu/ruecksprung.ts): zurück auf Zahlen → Kosten & Bank
+  const back = (q: string) =>
+    new Response(null, {
+      status: 303,
+      headers: [
+        ["Location", new URL(ruecksprungZiel(`/admin/einstellungen/bank?${q}`, req.headers.get("cookie")), url).toString()],
+        ["Set-Cookie", neuRuecksprungCookie(null)],
+      ],
+    });
   const session = await getCurrentSession().catch(() => null);
   if (!session || session.role !== "ADMIN") return Response.redirect(new URL(`/login?next=${encodeURIComponent("/admin/einstellungen/bank")}`, url), 303);
   const code = url.searchParams.get("code");

@@ -7,7 +7,7 @@ import { headers } from "next/headers";
 export async function SiteFooter() {
   // Kundenbereich: Links stecken im Profilmenü der App-Shell.
   const h = await headers();
-  if (h.get("x-app-area") === "buyer") return null;
+  if (h.get("x-app-area") === "buyer" || h.get("x-app-area") === "admin-neu") return null;
   // Login-Seite bringt ihren eigenen, dezenten Footer mit.
   if (h.get("x-bare-layout") === "login") return null;
   // Seiten für Endkunden der Vermittler: eigene Fußzeile mit Impressum/Datenschutz des Vermittlers

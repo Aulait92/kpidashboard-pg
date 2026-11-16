@@ -4,6 +4,7 @@ import { callbackRoute, publicOrigin } from "@/lib/calendar/oauth-routes";
 import { microsoftExchangeCode } from "@/lib/calendar/microsoft";
 import { getCurrentSession } from "@/lib/auth";
 import { hvkMailExchange, isHvkMailState, userFromHvkMailState } from "@/lib/ppl/hvk-mail";
+import { neuRuecksprungCookie, ruecksprungZiel } from "@/lib/admin-neu/ruecksprung";
 
 // Microsoft-OAuth-Callback: Code gegen Tokens tauschen (verschlüsselt speichern).
 export const dynamic = "force-dynamic";
@@ -20,10 +21,13 @@ export async function GET(req: Request): Promise<Response> {
 async function hvkCallback(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const back = (status: string) => {
-    const dest = new URL("/admin/ppl", publicOrigin(req));
+    // Start aus dem neuen Admin (Cookie): zurück nach Leads › Pay-per-Lead › HvK-Abrechnungen, sonst /admin/ppl
+    const dest = new URL(ruecksprungZiel("/admin/ppl", req.headers.get("cookie")), publicOrigin(req));
     dest.searchParams.set("ansicht", "hvk");
     dest.searchParams.set("postfach", status);
-    return new Response(null, { status: 302, headers: { Location: dest.toString() } });
+    const headers = new Headers({ Location: dest.toString() });
+    headers.append("Set-Cookie", neuRuecksprungCookie(null));
+    return new Response(null, { status: 302, headers });
   };
   const session = await getCurrentSession();
   const userId = userFromHvkMailState(url.searchParams.get("state") ?? "");

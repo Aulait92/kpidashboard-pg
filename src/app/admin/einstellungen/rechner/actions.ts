@@ -20,5 +20,6 @@ export async function saveRechnerAction(_prev: RechnerFormState, fd: FormData): 
   if (!res.ok) return { errors: res.errors };
   revalidatePath("/rechner");
   revalidatePath("/admin/einstellungen/rechner");
+  revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }

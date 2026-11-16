@@ -36,6 +36,7 @@ export async function toggleBotAction(formData: FormData): Promise<void> {
   if (!conv) return;
   await setBotActive(conversationId, !conv.botActive);
   revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu", "layout");
 }
 
 /** Übernehmen (Bot aus), z. B. sobald der Admin im Chat zu tippen beginnt. Idempotent. */
@@ -44,6 +45,7 @@ export async function takeOverAction(conversationId: string): Promise<AdminChatR
   if (typeof conversationId !== "string" || !conversationId) return { ok: false, error: "Chat nicht gefunden." };
   const ok = await setBotActive(conversationId, false);
   revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu", "layout");
   return ok ? { ok: true } : { ok: false, error: "Chat nicht gefunden." };
 }
 
@@ -77,6 +79,7 @@ export async function sendReplyAction(conversationId: string, rawBody: string): 
   // Wer selbst schreibt, hat übernommen: der Bot antwortet nicht dazwischen.
   await setBotActive(conversationId, false);
   revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
 
@@ -118,6 +121,7 @@ export async function sendTemplateAction(conversationId: string, purpose: string
     return { ok: false, error: err instanceof NoTemplateError ? "Für diese Vorlage gibt es noch keine Freigabe von Meta." : "Vorlage konnte nicht gesendet werden." };
   }
   revalidatePath("/admin/whatsapp");
+  revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
 
@@ -134,6 +138,7 @@ export async function assignSupportContactAction(_prev: SupportAssignState, fd: 
   if (fd.get("unlink")) {
     await assignSupportConversation(conversationId, null);
     revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu", "layout");
     return { ok: true };
   }
   const pick = String(fd.get("pick") ?? "");
@@ -142,6 +147,7 @@ export async function assignSupportContactAction(_prev: SupportAssignState, fd: 
     if ((type !== "contact" && type !== "customer") || !id) return { error: "Ungültige Auswahl." };
     const ok = await assignSupportConversation(conversationId, { type, id });
     revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu", "layout");
     return ok ? { ok: true } : { error: "Zuordnung nicht möglich." };
   }
   const candidates = await findAssignCandidates(String(fd.get("q") ?? ""));
@@ -149,6 +155,7 @@ export async function assignSupportContactAction(_prev: SupportAssignState, fd: 
   if (candidates.length === 1) {
     await assignSupportConversation(conversationId, candidates[0]);
     revalidatePath("/admin/whatsapp");
+    revalidatePath("/admin/neu", "layout");
     return { ok: true };
   }
   return { candidates };

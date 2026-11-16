@@ -165,11 +165,14 @@ export function MediaBuyerLayout({
   log,
   top,
   attribution,
+  ohneLeiste = false,
 }: {
   pools: PoolDetailRow[];
   log: ActionLogRow[];
   top: TopStats;
   attribution: AdspendAttribution;
+  /** Neuer Admin: Simulieren/Anwenden am Handy in der Seite statt fest unten (dort liegt die Leiste des Rahmens) */
+  ohneLeiste?: boolean;
 }) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [filter, setFilter] = useState<"alle" | "pkv" | "kw">("alle");
@@ -256,7 +259,13 @@ export function MediaBuyerLayout({
       </div>
 
       {/* Sticky Bottom-Action-Bar nur mobil und nur wenn Liste sichtbar. */}
-      {!selected ? (
+      {!selected && ohneLeiste ? (
+        <div className="mt-4 flex gap-3 lg:hidden">
+          <DryRunButton />
+          <ApplyNowButton />
+        </div>
+      ) : null}
+      {!selected && !ohneLeiste ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[color:var(--border)] bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
           <div className="mx-auto flex max-w-[1400px] gap-3">
             <DryRunButton />

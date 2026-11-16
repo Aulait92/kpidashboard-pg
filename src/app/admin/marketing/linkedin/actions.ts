@@ -12,6 +12,8 @@ import { addPhoto } from "@/lib/linkedin/photos";
 import { importFile } from "@/lib/linkedin/import";
 
 const PATH = "/admin/marketing/linkedin";
+/** Neuer Admin (Marketing → LinkedIn) */
+const NEU = "/admin/neu";
 export type LiResult = { ok?: boolean; error?: string; info?: string };
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Nicht möglich.");
@@ -22,6 +24,7 @@ export async function approveAction(id: string, text: string, image: string, now
   try {
     const res = now ? await approveNow(id, text, new Date(), image) : await approvePost(id, text, new Date(), image);
     revalidatePath(PATH);
+    revalidatePath(NEU, "layout");
     if (!res.ok) return { error: res.error };
     return { ok: true, info: now ? "Veröffentlicht." : `Freigegeben für ${fmt(res.scheduledAt)}.` };
   } catch (e) {
@@ -37,6 +40,7 @@ export async function saveDraftAction(id: string, text: string, image: string, g
   const g = graphic !== undefined ? graphic.trim().slice(0, 120) || null : post.graphic;
   await prisma.linkedInPost.update({ where: { id }, data: { text: text.trim().slice(0, 3000), graphic: g, ...(await imageFields(image, g)) } });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true, info: "Gespeichert." };
 }
 
@@ -44,6 +48,7 @@ export async function discardAction(id: string): Promise<LiResult> {
   await requireAuth();
   await prisma.linkedInPost.updateMany({ where: { id, status: { in: ["entwurf", "fehler", "freigegeben"] } }, data: { status: "verworfen" } });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true };
 }
 
@@ -52,6 +57,7 @@ export async function unapproveAction(id: string): Promise<LiResult> {
   await requireAuth();
   await prisma.linkedInPost.updateMany({ where: { id, status: "freigegeben" }, data: { status: "entwurf" } });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true };
 }
 
@@ -66,11 +72,13 @@ export async function generateNowAction(days = 1): Promise<LiResult> {
   try {
     for (const day of postingDays(settings, new Date(), n, { includeToday: true })) made += await generateDrafts(day, { push: false });
     revalidatePath(PATH);
+    revalidatePath(NEU, "layout");
     return made
       ? { ok: true, info: `${made} neue Entwürfe für die nächsten ${n === 1 ? "Posting-Tag" : `${n} Posting-Tage`}.` }
       : { ok: true, info: n === 1 ? "Für den nächsten Posting-Tag sind schon alle Uhrzeiten belegt." : `Die nächsten ${n} Posting-Tage sind schon voll geplant.` };
   } catch (e) {
     revalidatePath(PATH);
+    revalidatePath(NEU, "layout");
     return { error: `${made ? `${made} Entwürfe geschrieben, dann: ` : ""}${msg(e)}` };
   }
 }
@@ -102,6 +110,7 @@ export async function saveSettingsAction(_prev: LiResult, fd: FormData): Promise
     },
   });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true, info: "Gespeichert." };
 }
 
@@ -117,6 +126,7 @@ export async function uploadPhotosAction(_prev: LiResult, fd: FormData): Promise
     else errors.push(res.error);
   }
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return errors.length ? { error: `${added} hochgeladen. ${errors.join(" ")}` } : { ok: true, info: `${added} Foto${added === 1 ? "" : "s"} hochgeladen.` };
 }
 
@@ -124,6 +134,7 @@ export async function updatePhotoAction(id: string, description: string): Promis
   await requireAuth();
   await prisma.linkedInPhoto.update({ where: { id }, data: { description: description.trim().slice(0, 300) } });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true, info: "Gespeichert." };
 }
 
@@ -131,6 +142,7 @@ export async function deletePhotoAction(id: string): Promise<LiResult> {
   await requireAuth();
   await prisma.linkedInPhoto.deleteMany({ where: { id } });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true };
 }
 
@@ -144,6 +156,7 @@ export async function importAction(_prev: LiResult, fd: FormData): Promise<LiRes
     const settings = await getSettings();
     const res = await importFile(f.name, Buffer.from(await f.arrayBuffer()), icpTerms(settings.icpKeywords));
     revalidatePath(PATH);
+    revalidatePath(NEU, "layout");
     if (res.kind === "leer") return { error: "In der Datei wurden keine Posts oder Zuschauerdaten erkannt. Bitte den Export aus LinkedIn (Statistiken → Exportieren) nehmen." };
     const icp = res.icpShare != null ? ` Zielgruppe: ${Math.round(res.icpShare * 100)} %${res.kind === "profil" ? " (ganzes Profil)" : " (dieser Post)"}.` : "";
     const open = res.unmatched ? ` ${res.unmatched} Post(s) nicht eindeutig zuzuordnen (mehrere am selben Tag) – bitte den Export je Post hochladen.` : "";
@@ -158,6 +171,7 @@ export async function setImportedTextAction(id: string, text: string): Promise<L
   await requireAuth();
   await prisma.linkedInPost.updateMany({ where: { id, status: "importiert" }, data: { text: text.trim().slice(0, 3000) } });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true, info: "Gespeichert." };
 }
 
@@ -174,6 +188,7 @@ export async function setMetricsAction(id: string, impressions: number | null, i
     },
   });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true, info: "Gespeichert." };
 }
 
@@ -182,5 +197,6 @@ export async function disconnectAction(): Promise<LiResult> {
   await prisma.linkedInConnection.deleteMany({});
   await audit("linkedin.disconnect", { entity: "LinkedInConnection", entityId: session.userId });
   revalidatePath(PATH);
+  revalidatePath(NEU, "layout");
   return { ok: true };
 }

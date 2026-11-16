@@ -2,13 +2,23 @@
 
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
+import { Check, CornerDownLeft, Plus, Search, X, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Bausteine der Schnellsuche (Admin „Suchen Strg K“ und Kundenbereich „Kontakt suchen“):
 // Tastenkürzel, Overlay mit Live-Treffern vom Server, Pfeiltasten/Enter/Esc.
 
-export type SearchHit = { kind: string; id: string; title: string; subtitle: string; href: string };
+export type SearchHit = {
+  kind: string;
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  /** Warum gefunden, z. B. „+49 152 58142143 · in E-Mail-Signatur vom 12.11.“ (Telefonsuche) */
+  match?: string;
+  /** Zusatzknopf unter dem Treffer, z. B. „Als weitere Nummer übernehmen“: POST (JSON) an url, Antwort { text } */
+  action?: { label: string; url: string; body: Record<string, string> };
+};
 
 const noop = () => () => {};
 /** true auf Mac/iPhone/iPad (⌘K statt Strg K). Auf dem Server false. */
@@ -81,6 +91,8 @@ export function SearchDialog({
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [loading, setLoading] = useState(false);
   const [sel, setSel] = useState(0);
+  // Ergebnis der Zusatzknöpfe je Treffer („Als weitere Nummer übernommen“)
+  const [actionDone, setActionDone] = useState<Record<string, string>>({});
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const listId = useId();
@@ -132,7 +144,21 @@ export function SearchDialog({
     list.current?.querySelector<HTMLElement>(`[data-index="${sel}"]`)?.scrollIntoView({ block: "nearest" });
   }, [sel]);
 
+  async function runAction(h: SearchHit) {
+    if (!h.action) return;
+    const key = `${h.kind}-${h.id}`;
+    setActionDone((d) => ({ ...d, [key]: "Wird übernommen …" }));
+    try {
+      const res = await fetch(h.action.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(h.action.body) });
+      const json = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
+      setActionDone((d) => ({ ...d, [key]: json.text ?? json.error ?? (res.ok ? "Erledigt" : "Hat nicht geklappt") }));
+    } catch {
+      setActionDone((d) => ({ ...d, [key]: "Hat nicht geklappt, bitte erneut versuchen" }));
+    }
+  }
+
   function close() {
+    setActionDone({});
     setQ("");
     setHits([]);
     setSel(0);
@@ -250,9 +276,29 @@ export function SearchDialog({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium">{h.title}</span>
                     <span className="block truncate text-[13px] text-[color:var(--muted)]">{h.subtitle}</span>
+                    {h.match ? <span className="block text-[13px] text-[color:var(--foreground)]">{h.match}</span> : null}
                   </span>
                   {i === sel ? <CornerDownLeft className="hidden h-4 w-4 shrink-0 text-[color:var(--muted)] md:block" /> : null}
                 </button>
+                {h.action ? (
+                  <div className="pb-2 pl-[60px] pr-4">
+                    {actionDone[`${h.kind}-${h.id}`] ? (
+                      <span className="inline-flex min-h-10 items-center gap-1.5 text-[13px] font-medium text-[color:var(--muted)]" role="status">
+                        <Check className="h-4 w-4" />
+                        {actionDone[`${h.kind}-${h.id}`]}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void runAction(h)}
+                        className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-[13px] font-medium transition hover:border-[color:var(--border-strong)]"
+                      >
+                        <Plus className="h-4 w-4" />
+                        {h.action.label}
+                      </button>
+                    )}
+                  </div>
+                ) : null}
               </li>
             );
           })}

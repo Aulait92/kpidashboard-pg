@@ -100,7 +100,10 @@ export async function saveSubscriptionAction(_prev: BezugState, fd: FormData): P
   const saved = id ? await prisma.leadSubscription.update({ where: { id }, data }) : await prisma.leadSubscription.create({ data });
   await audit("ppl.subscription", { entity: "LeadSubscription", entityId: saved.id, customerId, details: { productKey, active: data.active, price } });
   revalidatePath("/admin/ppl", "layout");
-  redirect(`/admin/ppl?gespeichert=${saved.id}`);
+  revalidatePath("/admin/neu", "layout");
+  // Rückweg: alte Übersicht oder (Feld „zurueck“) die Pay-per-Lead-Seite im neuen Admin
+  const zurueck = String(fd.get("zurueck") ?? "");
+  redirect(`${zurueck.startsWith("/admin/neu/") && !zurueck.includes("?") ? zurueck : "/admin/ppl"}?gespeichert=${saved.id}`);
 }
 
 export async function manualOrderAction(fd: FormData): Promise<void> {
@@ -114,6 +117,7 @@ export async function manualOrderAction(fd: FormData): Promise<void> {
     actor: { id: s.userId, email: s.email, role: s.role },
   });
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
 }
 
 export async function assignParkedAction(fd: FormData): Promise<void> {
@@ -127,18 +131,21 @@ export async function assignParkedAction(fd: FormData): Promise<void> {
       : null;
   await deliver(pool.id, sub, order?.id ?? null);
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
 }
 
 export async function discardParkedAction(fd: FormData): Promise<void> {
   await requireAdmin();
   await prisma.poolLead.updateMany({ where: { id: String(fd.get("poolLeadId") ?? ""), status: "parked" }, data: { status: "invalid", reason: "verworfen (Admin)" } });
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
 }
 
 export async function decideStornoAction(fd: FormData): Promise<void> {
   await requireAdmin();
   await decideStorno(String(fd.get("leadId") ?? ""), fd.get("decision") === "approve");
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
 }
 
 export type AdminStornoState = { error?: string; message?: string };
@@ -149,6 +156,7 @@ export async function adminStornoAction(_prev: AdminStornoState, fd: FormData): 
   const r = await adminRecordStorno(String(fd.get("leadId") ?? ""), String(fd.get("reason") ?? ""), String(fd.get("note") ?? ""), { id: s.userId, email: s.email, role: s.role });
   if (!r.ok) return { error: r.error };
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
   return { message: r.already ? "War schon storniert." : `Storno eingetragen${r.outsideWindow ? " (außerhalb des Storno-Fensters)" : ""}.` };
 }
 
@@ -157,6 +165,7 @@ export async function undoStornoAction(_prev: AdminStornoState, fd: FormData): P
   const r = await undoStorno(String(fd.get("leadId") ?? ""), { id: s.userId, email: s.email, role: s.role });
   if (!r.ok) return { error: r.error };
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
   return { message: r.already ? "Kein anerkannter Storno." : "Storno zurückgenommen." };
 }
 
@@ -170,6 +179,7 @@ export async function runImportAction(_prev: ImportState, fd: FormData): Promise
     const history = fd.get("history") === "on" ? await importDuplicateHistory() : 0;
     await audit("ppl.subscription", { entity: "LeadSubscription", actor: { id: s.userId, email: s.email, role: s.role }, details: { import: rows.length, history } });
     revalidatePath("/admin/ppl", "layout");
+    revalidatePath("/admin/neu", "layout");
     const done = rows.filter((r) => r.action !== "übersprungen" && r.action !== "unverändert").length;
     return { message: `${done} Bezüge übernommen${history ? `, ${history} Leads für den Dubletten-Abgleich` : ""}.` };
   } catch (err) {
@@ -195,6 +205,7 @@ export async function saveAreaAction(fd: FormData): Promise<void> {
   await audit("ppl.area", { entity: "LeadSubscription", entityId: subscriptionId, details: { plzRanges, quantity, period } });
   revalidatePath(`/admin/ppl/bezug/${subscriptionId}`);
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout");
 }
 
 export async function deleteAreaAction(fd: FormData): Promise<void> {
@@ -203,6 +214,7 @@ export async function deleteAreaAction(fd: FormData): Promise<void> {
   const a = await prisma.subscriptionArea.delete({ where: { id } });
   await audit("ppl.area_delete", { entity: "LeadSubscription", entityId: a.subscriptionId, details: { plzRanges: a.plzRanges } });
   revalidatePath(`/admin/ppl/bezug/${a.subscriptionId}`);
+  revalidatePath("/admin/neu", "layout");
 }
 
 export type TestLeadState = { error?: string; message?: string; targets?: { target: string; ok: boolean; error?: string; blocked?: boolean }[] };

@@ -173,8 +173,31 @@ function Def({ show, children }: { show: boolean; children: ReactNode }) {
 // ─── Hauptansicht ────────────────────────────────────────────────────────
 type DrillKind = "arr" | "mrr" | "retention" | "margin" | "active";
 
-export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData; produkte: ProdukteData; vertrieb: VertriebZahlen; bwa: BwaData }) {
+export type ZahlenAbschnitt = Tab;
+
+export function ZahlenView({
+  data,
+  produkte,
+  vertrieb,
+  bwa,
+  eingebettet = false,
+  funktionen = {},
+  abschnittExtra = {},
+}: {
+  data: ZahlenData;
+  produkte: ProdukteData;
+  vertrieb: VertriebZahlen;
+  bwa: BwaData;
+  /** Neuer Admin (/admin/neu/zahlen): ohne eigenen Titel, ohne Querverweise, Bereiche untereinander zum Aufklappen statt
+   *  einer zweiten Reiterleiste. „Kunden ohne Betreuungsgebühr“ und Einrichtungsgebühren stehen dort unter Umsatz & Buchungen. */
+  eingebettet?: boolean;
+  /** data-funktion je Teil (Abnahme neuer Admin): Abschnitt-Schlüssel, „kopf“, „sicht“, „investor“, „update“, „kacheln“ */
+  funktionen?: Partial<Record<Tab | "kopf" | "sicht" | "investor" | "update" | "kacheln", string>>;
+  /** Zusätzlicher Inhalt am Ende eines Abschnitts (nur eingebettet) */
+  abschnittExtra?: Partial<Record<Tab, ReactNode>>;
+}) {
   const [tab, setTab] = useState<Tab>("wachstum");
+  const [offen, setOffen] = useState<Tab[]>(["wachstum"]);
   const [investor, setInvestor] = useState(false);
   const [update, setUpdate] = useState(false);
   const router = useRouter();
@@ -217,8 +240,27 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
       const t = localStorage.getItem("zahlen-tab") as Tab | null;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- gemerkter Bereich erst nach dem Laden
       if (t && TABS.some((x) => x.key === t)) setTab(t);
+      const o = JSON.parse(localStorage.getItem("zahlen-offen") ?? "null") as Tab[] | null;
+      if (Array.isArray(o)) setOffen(o.filter((k) => TABS.some((x) => x.key === k)));
     } catch {}
   }, []);
+  const toggleOffen = (t: Tab) =>
+    setOffen((cur) => {
+      const next = cur.includes(t) ? cur.filter((k) => k !== t) : [...cur, t];
+      try {
+        localStorage.setItem("zahlen-offen", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  const inhalt = (t: Tab) =>
+    t === "wachstum" ? <Wachstum data={data} investor={investor} ohneEinmal={eingebettet && !investor} lebenszyklus={eingebettet ? "Reiter „Kunden-Lebenszyklus“" : undefined} />
+    : t === "kunden" ? <Kunden data={data} investor={investor} />
+    : t === "wirtschaft" ? <Wirtschaft data={data} investor={investor} />
+    : t === "wirkung" ? <Wirkung data={data} investor={investor} />
+    : t === "produkte" ? <Produkte p={produkte} />
+    : t === "vertrieb" ? <Vertrieb data={data} v={vertrieb} />
+    : t === "bwa" ? <BwaTab d={bwa} />
+    : <Ppl data={data} />;
   const choose = (t: Tab) => {
     setTab(t);
     try {
@@ -243,16 +285,16 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
   return (
     <div style={PALETTE} className="zahlen-root">
       <Tooltip />
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3" data-funktion={funktionen.kopf}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Zahlen</h1>
+          {eingebettet ? null : <h1 className="text-2xl font-semibold tracking-tight">Zahlen</h1>}
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">
             Stand {new Date(data.generatedAt).toLocaleDateString("de-DE")} · {longMonth(data.current)} hochgerechnet · {SICHT_LABEL[data.sicht]}
             {kern ? "" : ` · Pay-per-Lead-Pilot ${pilotLabel(data.pplPilot.from, data.pplPilot.to)}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div role="radiogroup" aria-label="Sicht" className={cn("inline-flex rounded-full border border-[color:var(--border)] bg-white p-0.5 text-sm", sichtPending && "opacity-60")} data-sicht={data.sicht}>
+          <div role="radiogroup" aria-label="Sicht" className={cn("inline-flex rounded-full border border-[color:var(--border)] bg-white p-0.5 text-sm", sichtPending && "opacity-60")} data-sicht={data.sicht} data-funktion={funktionen.sicht}>
             {(["kern", "gesamt"] as const).map((s) => (
               <button
                 key={s}
@@ -271,6 +313,7 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
             type="button"
             aria-pressed={investor}
             onClick={toggleInvestor}
+            data-funktion={funktionen.investor}
             className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[color:var(--border)] bg-white py-1.5 pl-1.5 pr-3 text-sm sm:min-h-0"
           >
             <span className={cn("relative h-5 w-[34px] rounded-full transition", investor ? "bg-[color:var(--brand)]" : "bg-slate-300")}>
@@ -278,7 +321,7 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
             </span>
             Investoren-Ansicht
           </button>
-          <button type="button" onClick={() => setUpdate(true)} className="min-h-10 rounded-[10px] bg-[color:var(--brand)] px-3.5 py-2 text-sm font-semibold text-white">
+          <button type="button" onClick={() => setUpdate(true)} className="min-h-10 rounded-[10px] bg-[color:var(--brand)] px-3.5 py-2 text-sm font-semibold text-white" data-funktion={funktionen.update}>
             Investoren-Update
           </button>
         </div>
@@ -292,7 +335,7 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
         </p>
       ) : null}
 
-      <section className="mb-4 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-6" aria-label="Kennzahlen">
+      <section className="mb-4 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-6" aria-label="Kennzahlen" data-funktion={funktionen.kacheln}>
         {tiles.map((t) => (
           <div key={t.lbl} className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-3.5 shadow-[var(--shadow-sm)]">
             <div className="flex items-center gap-1.5 text-[12.5px] text-[color:var(--muted)]">
@@ -323,9 +366,38 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
         </p>
       ) : null}
 
-      {!investor && data.missingRetainer.length ? <MissingRetainer data={data} /> : null}
+      {!investor && !eingebettet && data.missingRetainer.length ? <MissingRetainer data={data} /> : null}
 
-      <div className="mb-3.5 flex gap-1.5 overflow-x-auto pb-0.5" role="tablist">
+      {eingebettet ? (
+        <div className="space-y-3">
+          {visibleTabs.map((t) => {
+            const auf = offen.includes(t.key);
+            return (
+              <section key={t.key} className="min-w-0" data-abschnitt={t.key} data-funktion={funktionen[t.key]}>
+                <button
+                  type="button"
+                  aria-expanded={auf}
+                  onClick={() => toggleOffen(t.key)}
+                  className="flex min-h-11 w-full items-center gap-2 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-4 text-left text-[15px] font-semibold shadow-[var(--shadow-sm)] hover:bg-[color:var(--surface-sunken)]"
+                >
+                  <span className={cn("inline-block text-[color:var(--muted)] transition-transform", auf && "rotate-90")} aria-hidden>
+                    ›
+                  </span>
+                  {t.label}
+                </button>
+                {auf ? (
+                  <div className="mt-3 space-y-3.5">
+                    {inhalt(t.key)}
+                    {abschnittExtra[t.key]}
+                  </div>
+                ) : null}
+              </section>
+            );
+          })}
+        </div>
+      ) : null}
+
+      <div className={cn("mb-3.5 flex gap-1.5 overflow-x-auto pb-0.5", eingebettet && "hidden")} role="tablist">
         {visibleTabs.map((t) => (
           <button
             key={t.key}
@@ -352,14 +424,7 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
         ) : null}
       </div>
 
-      {active === "wachstum" ? <Wachstum data={data} investor={investor} /> : null}
-      {active === "kunden" ? <Kunden data={data} investor={investor} /> : null}
-      {active === "wirtschaft" ? <Wirtschaft data={data} investor={investor} /> : null}
-      {active === "wirkung" ? <Wirkung data={data} investor={investor} /> : null}
-      {active === "produkte" ? <Produkte p={produkte} /> : null}
-      {active === "vertrieb" ? <Vertrieb data={data} v={vertrieb} /> : null}
-      {active === "bwa" ? <BwaTab d={bwa} /> : null}
-      {active === "ppl" ? <Ppl data={data} /> : null}
+      {eingebettet ? null : inhalt(active)}
 
       {update ? <UpdateSheet data={data} onClose={() => setUpdate(false)} /> : null}
       {drill ? <DrillSheet kind={drill} data={data} onClose={() => setDrill(null)} /> : null}
@@ -368,7 +433,18 @@ export function ZahlenView({ data, produkte, vertrieb, bwa }: { data: ZahlenData
 }
 
 // ─── Wachstum ────────────────────────────────────────────────────────────
-function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
+function Wachstum({
+  data,
+  investor,
+  ohneEinmal = false,
+  lebenszyklus = "Reiter „Kündigung & Rückkehr“",
+}: {
+  data: ZahlenData;
+  investor: boolean;
+  ohneEinmal?: boolean;
+  /** Wo die Details zu Kündigungen stehen (neuer Admin: Reiter „Kunden-Lebenszyklus“) */
+  lebenszyklus?: string;
+}) {
   const [table, setTable] = useState(false);
   const cur = data.totals.find((t) => t.month === data.current);
   const last = data.totals.find((t) => t.month === data.lastComplete);
@@ -409,7 +485,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
             </div>
           ) : null}
         </Card>
-        <Card title={b ? `MRR-Brücke ${longMonth(b.from).split(" ")[0]} → ${longMonth(b.to).split(" ")[0]}` : "MRR-Brücke"} cap="Woher das Wachstum kommt: neue Kunden, Ausbau, Reaktivierungen (zurückgekehrte Kunden), Verkleinerung, Kündigungen (abgeschlossene Monate). Details im Reiter „Kündigung & Rückkehr“.">
+        <Card title={b ? `MRR-Brücke ${longMonth(b.from).split(" ")[0]} → ${longMonth(b.to).split(" ")[0]}` : "MRR-Brücke"} cap={`Woher das Wachstum kommt: neue Kunden, Ausbau, Reaktivierungen (zurückgekehrte Kunden), Verkleinerung, Kündigungen (abgeschlossene Monate). Details im ${lebenszyklus}.`}>
           {b ? (
             <>
               <BridgeChart b={b} />
@@ -453,7 +529,7 @@ function Wachstum({ data, investor }: { data: ZahlenData; investor: boolean }) {
             <Empty />
           )}
         </Card>
-        <OneTimeCard data={data} investor={investor} />
+        {ohneEinmal ? null : <OneTimeCard data={data} investor={investor} />}
       </div>
     </div>
   );
@@ -1498,6 +1574,21 @@ function DrillSheet({ kind, data, onClose }: { kind: DrillKind; data: ZahlenData
           </>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+/** Neuer Admin, Umsatz & Buchungen: Hinweis „Kunden ohne hinterlegte Betreuungsgebühr“ (sonst in der Übersicht). */
+export function ZahlenOhneBetreuungsgebuehr({ data }: { data: ZahlenData }) {
+  return data.missingRetainer.length ? <MissingRetainer data={data} /> : null;
+}
+
+/** Neuer Admin, Umsatz & Buchungen: Einrichtungsgebühren je Monat mit „Einmal-Umsatz nachtragen“ und Löschen. */
+export function ZahlenEinmalUmsatz({ data }: { data: ZahlenData }) {
+  return (
+    <div style={PALETTE}>
+      <Tooltip />
+      <OneTimeCard data={data} investor={false} />
     </div>
   );
 }

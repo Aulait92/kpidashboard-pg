@@ -1,9 +1,7 @@
 import Link from "next/link";
 import clsx from "clsx";
-import { prisma } from "@/lib/prisma";
 import { STAGES, shortName } from "@/lib/vertrieb/crm";
 import { fmtDate } from "@/lib/vertrieb/dates";
-import { kontaktSucheWhere } from "@/lib/vertrieb/suche";
 import { StageBadge } from "@/components/vertrieb/ui";
 import { LI_COLOR, LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { deleteContacts } from "@/app/admin/vertrieb/actions";
@@ -11,55 +9,13 @@ import { ConfirmButton, SelectAll } from "@/components/vertrieb/confirm-button";
 import { MoreFilters } from "@/components/admin/more-filters";
 import { ChevronRight, Phone, SearchX, Trash2 } from "lucide-react";
 import { EmptyState, buttonClass } from "@/components/ui";
-import type { Prisma } from "@/generated/prisma/client";
-import type { SalesStage as Stage } from "@/generated/prisma/enums";
-
-const PAGE = 50;
-
-const MAIL_FILTERS: Record<string, { label: string; where: Prisma.SalesContactWhereInput }> = {
-  sent: { label: "Cold Mail erhalten", where: { campaigns: { some: { sentAt: { not: null } } } } },
-  none: { label: "Keine Cold Mail", where: { campaigns: { none: { sentAt: { not: null } } } } },
-  opened: { label: "Geöffnet", where: { campaigns: { some: { openCount: { gt: 0 } } } } },
-  replied: { label: "Geantwortet", where: { campaigns: { some: { replyCount: { gt: 0 } } } } },
-  bounced: { label: "Bounced", where: { campaigns: { some: { bounced: true } } } },
-};
+import { MAIL_FILTERS, kontakteFilter, ladeKontakte } from "@/lib/vertrieb/kontakte-liste";
 
 export default async function KontaktePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const sp = await searchParams;
-  const q = sp.q?.trim();
-  const stage = STAGES.some((s) => s.id === sp.stage) ? (sp.stage as Stage) : undefined;
-  const mail = sp.mail && MAIL_FILTERS[sp.mail] ? sp.mail : undefined;
-  const plz = sp.plz?.trim();
-  const li = sp.li === "none" || LI_STATUSES.some((x) => x.id === sp.li) ? sp.li : undefined;
-  const page = Math.max(1, Number(sp.page) || 1);
-
-  const where: Prisma.SalesContactWhereInput = {
-    AND: [
-      // Umlaut-tolerant (Dröge = Droege), auch E-Mail, weitere Adressen, Firma, Ort, Telefon (lib/vertrieb/suche.ts)
-      q ? kontaktSucheWhere(q) : {},
-      stage ? { stage } : {},
-      mail ? MAIL_FILTERS[mail].where : {},
-      plz ? { zip: { startsWith: plz } } : {},
-      li ? { linkedinStatus: li === "none" ? null : li } : {},
-    ],
-  };
-
-  const [total, contacts] = await Promise.all([
-    prisma.salesContact.count({ where }),
-    prisma.salesContact.findMany({
-      where,
-      orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-      skip: (page - 1) * PAGE,
-      take: PAGE,
-      select: {
-        id: true, name: true, leaderNames: true, city: true, linkedinStatus: true, zip: true, phone: true, stage: true, ratingValue: true, ratingCount: true, lastContactAt: true,
-        campaigns: { select: { sentAt: true, openCount: true, replyCount: true, bounced: true } },
-        tasks: { where: { doneAt: null }, orderBy: { dueAt: "asc" }, take: 1, select: { dueAt: true, title: true } },
-      },
-    }),
-  ]);
-  const pages = Math.max(1, Math.ceil(total / PAGE));
-  const filtered = !!(q || stage || mail || plz || li);
+  // Suche, Filter und Seiten: lib/vertrieb/kontakte-liste.ts (gemeinsam mit dem neuen Admin)
+  const f = kontakteFilter(await searchParams);
+  const { q, stage, mail, plz, li, page } = f;
+  const { total, contacts, pages, filtered } = await ladeKontakte(f);
   const link = (p: Record<string, string | undefined>) => {
     const params = new URLSearchParams(Object.entries({ q, stage, mail, plz, li, ...p }).filter(([, v]) => v) as [string, string][]);
     return `/admin/vertrieb/kontakte?${params}`;

@@ -2,9 +2,7 @@ import { redirect } from "next/navigation";
 import { CheckCircle2, Inbox, PlugZap, Workflow, XCircle } from "lucide-react";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
-import { getAppUrl } from "@/lib/email";
-import { listPageForms, metaDiagnostics, type MetaForm } from "@/lib/meta-leads";
-import { prisma } from "@/lib/prisma";
+import { loadLeadEingang } from "./daten";
 import { assignFormAction, dismissUnassignedAction, toggleSourceAction } from "./actions";
 import { AdminBack } from "@/components/admin/admin-back";
 
@@ -25,33 +23,7 @@ export default async function LeadIntakePage({
   if (!session || session.role !== "ADMIN") redirect("/login");
   const sp = await searchParams;
 
-  const [diag, sources, customers, products, leadSources, unassigned] = await Promise.all([
-    metaDiagnostics(),
-    prisma.leadSource.findMany({ include: { customer: { select: { name: true } } }, orderBy: { createdAt: "desc" } }),
-    prisma.customer.findMany({ where: { plan: { not: "internal" }, archived: false }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.product.findMany({ where: { active: true }, select: { name: true }, orderBy: { name: "asc" } }),
-    prisma.lead.findMany({ where: { source: { not: null } }, distinct: ["source"], select: { source: true }, take: 50 }),
-    prisma.unassignedLead.groupBy({ by: ["formId"], where: { resolvedAt: null }, _count: { _all: true }, _max: { createdAt: true } }),
-  ]);
-  const productOptions = Array.from(new Set([...products.map((p) => p.name), ...leadSources.map((l) => l.source!)])).sort();
-
-  let forms: MetaForm[] = [];
-  let formsError: string | null = null;
-  if (sp.page) {
-    try {
-      forms = await listPageForms(sp.page);
-    } catch (err) {
-      formsError = err instanceof Error ? err.message : String(err);
-    }
-  }
-
-  let base = "";
-  try {
-    base = getAppUrl();
-  } catch {
-    base = "";
-  }
-  const metaReady = diag.tokenSet && diag.appSecretSet && diag.verifyTokenSet && !diag.missing.includes("leads_retrieval");
+  const { diag, sources, customers, productOptions, unassigned, forms, formsError, base, metaReady } = await loadLeadEingang(sp.page);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8 sm:px-6 lg:px-8">

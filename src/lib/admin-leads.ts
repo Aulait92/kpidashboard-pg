@@ -94,3 +94,17 @@ export type AdminLead = Prisma.LeadGetPayload<{ select: typeof leadSelect }>;
 
 export const isStorno = (s: string | null) => !!s && s.toLowerCase().startsWith("storno");
 export const priceOf = (l: AdminLead) => l.revenues.reduce((a, r) => a + Number(r.amount), 0);
+
+/** Seite der Admin-Leadliste mit Summen (gemeinsam für /admin/leads und /admin/neu/leads/alle). */
+export async function loadAdminLeads(sp: LeadFilter, page: number, take: number) {
+  const where = leadWhere(sp);
+  const [leads, total, customers, products, sums, stornos] = await Promise.all([
+    prisma.lead.findMany({ where, select: leadSelect, orderBy: { createdAt: "desc" }, skip: (page - 1) * take, take }),
+    prisma.lead.count({ where }),
+    prisma.customer.findMany({ where: { archived: false, plan: { not: "internal" } }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.lead.findMany({ where: { source: { not: null } }, distinct: ["source"], select: { source: true }, orderBy: { source: "asc" } }),
+    prisma.revenue.aggregate({ where: { cancelled: false, lead: where }, _sum: { amount: true } }),
+    prisma.lead.count({ where: { AND: [where, { status: { startsWith: "Storno", mode: "insensitive" } }] } }),
+  ]);
+  return { leads, total, customers, products, sums, stornos };
+}

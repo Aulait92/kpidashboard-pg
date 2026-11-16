@@ -6,7 +6,18 @@ import { Trash2 } from "lucide-react";
 import { deleteTestCustomerAction } from "@/app/admin/kunden/[id]/test-actions";
 
 /** Abzeichen „Test“ mit Knopf zum Löschen des Testkunden (Kundenakte). */
-export function TestkundeLoeschen({ customerId, name, whatsapp }: { customerId: string; name: string; whatsapp: string | null }) {
+export function TestkundeLoeschen({
+  customerId,
+  name,
+  whatsapp,
+  zurueck = "/admin/kunden",
+}: {
+  customerId: string;
+  name: string;
+  whatsapp: string | null;
+  /** Ziel nach dem Löschen (neuer Admin: /admin/neu/kunden) */
+  zurueck?: string;
+}) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -21,7 +32,7 @@ export function TestkundeLoeschen({ customerId, name, whatsapp }: { customerId: 
         setError(r.error ?? "Löschen hat nicht geklappt.");
         return;
       }
-      router.push("/admin/kunden");
+      router.push(zurueck);
     });
   };
   return (

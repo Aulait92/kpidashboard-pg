@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { getCurrentSession } from "@/lib/auth";
 import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
@@ -72,6 +73,7 @@ export async function saveOutreachSettingsAction(formData: FormData): Promise<vo
   });
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 /**
@@ -102,6 +104,7 @@ export async function saveTemplateAction(formData: FormData): Promise<void> {
   });
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 /** Kunden für den WhatsApp-Assistenten vorbereiten (Agent noch inaktiv). */
@@ -118,6 +121,7 @@ export async function addCustomerAction(formData: FormData): Promise<void> {
   });
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 export async function deleteTemplateAction(formData: FormData): Promise<void> {
@@ -127,6 +131,7 @@ export async function deleteTemplateAction(formData: FormData): Promise<void> {
   await prisma.messageTemplate.delete({ where: { id } }).catch(() => {});
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 /**
@@ -139,8 +144,9 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const customerId = String(formData.get("customerId") ?? "");
   if (!customerId) return;
+  // Im neuen Admin zurück in die Kundenakte (Reiter WhatsApp), sonst wie bisher
   const back = (state: string) =>
-    `/admin/whatsapp/settings?wa=${state}&c=${encodeURIComponent(customerId)}#kunde-${customerId}`;
+    adminZiel(`/admin/whatsapp/settings?wa=${state}&c=${encodeURIComponent(customerId)}#kunde-${customerId}`, `/admin/neu/kunden/${customerId}/whatsapp?wa=${state}&c=${encodeURIComponent(customerId)}`);
 
   const apiKeyRaw = String(formData.get("apiKey") ?? "").trim();
   const phone = String(formData.get("phoneNumber") ?? "").replace(/\D/g, "").replace(/^00/, "");
@@ -149,10 +155,10 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
     select: { id: true, apiKeyEnc: true },
   });
   const apiKey = apiKeyRaw || (existing?.apiKeyEnc ? decryptSecret(existing.apiKeyEnc) : "");
-  if (!apiKey) redirect(back("nokey"));
+  if (!apiKey) redirect(await back("nokey"));
   const base = appUrl();
   const secret = process.env.WHATSAPP_WEBHOOK_SECRET;
-  if (!base || !secret) redirect(back("noconfig"));
+  if (!base || !secret) redirect(await back("noconfig"));
 
   const account = await prisma.whatsAppAccount.upsert({
     where: { customerId },
@@ -187,7 +193,8 @@ export async function connectWhatsAppAction(formData: FormData): Promise<void> {
   if (ok && apiKeyRaw) await submitTemplatesForCustomer(customerId).catch((err) => reportError(err, "templates-after-admin-connect"));
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
-  redirect(back(ok ? "ok" : "webhook"));
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
+  redirect(await back(ok ? "ok" : "webhook"));
 }
 
 /** Admin-Knopf: fehlende Vorlagen einreichen und Status bei 360dialog abfragen. */
@@ -233,6 +240,7 @@ export async function seedDemoAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
   revalidatePath("/buyer");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 export async function removeDemoAction(formData: FormData): Promise<void> {
@@ -245,6 +253,7 @@ export async function removeDemoAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
   revalidatePath("/buyer");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 export type SaveResult = { ok: true } | { ok: false; error: string };
@@ -252,6 +261,7 @@ export type SaveResult = { ok: true } | { ok: false; error: string };
 function revalidateSettings() {
   revalidatePath("/admin/whatsapp/settings");
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }
 
 /** Assistent an/aus (Sofort-Schalter). Beim ersten Einschalten Start-Anweisung setzen. */
@@ -353,4 +363,5 @@ export async function markTestCustomerAction(formData: FormData): Promise<void> 
   await prisma.customer.update({ where: { id: customerId }, data: { plan: "internal" } });
   revalidatePath(`/admin/kunden/${customerId}`);
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
 }

@@ -6,6 +6,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { adminZiel } from "@/components/admin-neu/ui/rueckweg";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
@@ -16,11 +17,12 @@ async function requireAdmin() {
   if (!s || s.role !== "ADMIN") throw new Error("Nur Admins.");
 }
 
-function done(id: string, r: AddOnResult): never {
+async function done(id: string, r: AddOnResult): Promise<never> {
   revalidatePath(`/admin/kunden/${id}`, "layout");
   revalidatePath("/buyer", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   const msg = r.ok ? (r.note ? `Gespeichert. ${r.note}` : "Gespeichert.") : r.error;
-  redirect(`/admin/kunden/${id}/abrechnung?zusatz=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`);
+  redirect(await adminZiel(`/admin/kunden/${id}/abrechnung?zusatz=${encodeURIComponent(msg)}${r.ok ? "" : "&fehler=1"}`));
 }
 
 /** Inklusive aktive Verkäufer und Preis je weiterem Verkäufer setzen, danach Abo abgleichen. */
@@ -30,10 +32,10 @@ export async function saveSeatsAction(fd: FormData): Promise<void> {
   const included = Number(fd.get("seatsIncluded"));
   const price = Number(String(fd.get("seatMonthly") ?? "").replace(",", "."));
   if (!Number.isInteger(included) || included < 1 || included > 100 || !Number.isFinite(price) || price < 0 || price > 10_000) {
-    done(id, { ok: false, error: "Bitte gültige Werte eingeben (Verkäufer 1 bis 100, Preis ab 0 €)." });
+    return done(id, { ok: false, error: "Bitte gültige Werte eingeben (Verkäufer 1 bis 100, Preis ab 0 €)." });
   }
   const c = await prisma.customer.findUnique({ where: { id }, select: { seatsIncluded: true, seatMonthly: true } });
-  if (!c) done(id, { ok: false, error: "Kunde nicht gefunden." });
+  if (!c) return done(id, { ok: false, error: "Kunde nicht gefunden." });
   await prisma.customer.update({ where: { id }, data: { seatsIncluded: included, seatMonthly: price } });
   await audit("billing.seats", {
     entity: "Customer",
@@ -41,21 +43,21 @@ export async function saveSeatsAction(fd: FormData): Promise<void> {
     customerId: id,
     details: { seatsIncluded: { from: c.seatsIncluded, to: included }, seatMonthly: { from: c.seatMonthly != null ? Number(c.seatMonthly) : null, to: price } },
   });
-  done(id, await syncSeatBilling(id, { force: true }));
+  return done(id, await syncSeatBilling(id, { force: true }));
 }
 
 export async function syncSeatsAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const id = String(fd.get("customerId") ?? "");
-  done(id, await syncSeatBilling(id, { force: true }));
+  return done(id, await syncSeatBilling(id, { force: true }));
 }
 
 export async function bestandModuleAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const id = String(fd.get("customerId") ?? "");
   const mode = String(fd.get("mode") ?? "");
-  if (mode !== "book" && mode !== "free" && mode !== "cancel") done(id, { ok: false, error: "Unbekannte Aktion." });
-  done(id, await setBestandModule(id, mode));
+  if (mode !== "book" && mode !== "free" && mode !== "cancel") return done(id, { ok: false, error: "Unbekannte Aktion." });
+  return done(id, await setBestandModule(id, mode));
 }
 
 /** Bestandskunden-Modul im Kundenbereich sichtbar, auch ohne Buchung (Testkunden; lib/bestand/sichtbar.ts). */
@@ -64,18 +66,18 @@ export async function bestandSichtbarAction(fd: FormData): Promise<void> {
   const id = String(fd.get("customerId") ?? "");
   const on = fd.get("on") === "1";
   const c = await prisma.customer.findUnique({ where: { id }, select: { bestandSichtbar: true } });
-  if (!c) done(id, { ok: false, error: "Kunde nicht gefunden." });
+  if (!c) return done(id, { ok: false, error: "Kunde nicht gefunden." });
   await prisma.customer.update({ where: { id }, data: { bestandSichtbar: on } });
   await audit("bestand.sichtbar", { entity: "Customer", entityId: id, customerId: id, details: { from: c.bestandSichtbar, to: on } });
-  done(id, { ok: true, changed: true });
+  return done(id, { ok: true, changed: true });
 }
 
 export async function empfehlungModuleAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const id = String(fd.get("customerId") ?? "");
   const mode = String(fd.get("mode") ?? "");
-  if (mode !== "book" && mode !== "free" && mode !== "cancel") done(id, { ok: false, error: "Unbekannte Aktion." });
-  done(id, await setEmpfehlungModule(id, mode));
+  if (mode !== "book" && mode !== "free" && mode !== "cancel") return done(id, { ok: false, error: "Unbekannte Aktion." });
+  return done(id, await setEmpfehlungModule(id, mode));
 }
 
 /** Kampagnen-Kontingent je Monat; leer = Standard aus der Preisliste. */
@@ -84,17 +86,17 @@ export async function saveQuotaAction(fd: FormData): Promise<void> {
   const id = String(fd.get("customerId") ?? "");
   const raw = String(fd.get("quota") ?? "").trim();
   const quota = raw === "" ? null : Number(raw);
-  if (quota != null && (!Number.isInteger(quota) || quota < 0 || quota > 100_000)) done(id, { ok: false, error: "Kontingent: ganze Zahl von 0 bis 100.000." });
+  if (quota != null && (!Number.isInteger(quota) || quota < 0 || quota > 100_000)) return done(id, { ok: false, error: "Kontingent: ganze Zahl von 0 bis 100.000." });
   const c = await prisma.customer.findUnique({ where: { id }, select: { bestandMessageQuota: true } });
-  if (!c) done(id, { ok: false, error: "Kunde nicht gefunden." });
+  if (!c) return done(id, { ok: false, error: "Kunde nicht gefunden." });
   await prisma.customer.update({ where: { id }, data: { bestandMessageQuota: quota } });
   await audit("bestand.quota", { entity: "Customer", entityId: id, customerId: id, details: { from: c.bestandMessageQuota, to: quota } });
-  done(id, { ok: true, changed: true });
+  return done(id, { ok: true, changed: true });
 }
 
 export async function billingIntervalAction(fd: FormData): Promise<void> {
   await requireAdmin();
   const id = String(fd.get("customerId") ?? "");
   const interval = fd.get("interval") === "year" ? "year" : "month";
-  done(id, await changeBillingInterval(id, interval));
+  return done(id, await changeBillingInterval(id, interval));
 }

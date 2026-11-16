@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, Settings, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NeueOberflaecheSchalter } from "@/components/admin-neu/rahmen/profil-menue";
 
 /**
- * Profilmenü des Admins: E-Mail und Rolle, Einstellungen, Sicherheit, Abmelden.
+ * Profilmenü des Admins: E-Mail und Rolle, Schalter „Neue Oberfläche“, Einstellungen, Sicherheit, Abmelden.
  * Am Handy der einzige Weg zu den Einstellungen (Leiste unten: fünf Bereiche, kein „Mehr“; Ole, 16.11.2026).
  * variant „sidebar“ = unten in der Seitenleiste, sonst kompakt in der Kopfzeile (Handy).
  */
@@ -72,6 +73,8 @@ export function AdminProfileMenu({ email, variant = "header" }: { email: string;
             <div className="truncate font-semibold">{email}</div>
             <div className="text-xs text-[color:var(--muted)]">Admin</div>
           </div>
+          {/* Neuer Admin (/admin/neu) zum Ausprobieren, je Admin (Cookie, src/lib/admin-neu/schalter.ts) */}
+          <NeueOberflaecheSchalter an={false} />
           <Link href="/admin/einstellungen" onClick={() => setOpen(false)} className={itemCls}>
             <Settings className="h-4 w-4" /> Einstellungen
           </Link>

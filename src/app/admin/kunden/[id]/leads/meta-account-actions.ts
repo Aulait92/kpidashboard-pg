@@ -21,6 +21,7 @@ export async function setMetaAdAccountAction(_prev: MetaAccountState, fd: FormDa
   await prisma.customer.update({ where: { id: customerId }, data: { metaAdAccountId: raw || null } });
   await audit("customer.meta_account", { entity: "Customer", entityId: customerId, customerId, details: { account: raw || null } });
   revalidatePath(`/admin/kunden/${customerId}`, "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   if (!raw) return { ok: true, message: "Werbekonto entfernt." };
   const check = await checkAdAccountAccess(raw);
   return check.ok

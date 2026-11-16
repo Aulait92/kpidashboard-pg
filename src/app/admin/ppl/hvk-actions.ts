@@ -47,6 +47,7 @@ export async function hvkFetchNowAction(_prev: HvkRunState, _fd: FormData): Prom
   const run = await checkHvkMails(new Date(Date.now() - 21 * 86_400_000), { actor });
   if (!run.ok) return { error: run.error };
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   const rows = rowsOf(run.results);
   const neu = rows.filter((r) => r.ok && r.status === "neu").length;
   return { rows, message: run.mails ? `${run.mails} Mails geprüft, ${neu} neue Abrechnung${neu === 1 ? "" : "en"} übernommen.` : "Keine Mail „Neue Gutschrift“ in den letzten 3 Wochen." };
@@ -59,7 +60,10 @@ export async function hvkBackfillAction(_prev: HvkRunState, fd: FormData): Promi
   const { hvkBackfill } = await import("@/lib/ppl/hvk-abrechnung-server");
   const run = await hvkBackfill({ dryRun, actor });
   if (!run.ok) return { error: run.error, dryRun };
-  if (!dryRun) revalidatePath("/admin/ppl", "layout");
+  if (!dryRun) {
+    revalidatePath("/admin/ppl", "layout");
+    revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
+  }
   const rows = rowsOf(run.results);
   const count = (s: string) => rows.filter((r) => r.ok && r.status === s).length;
   return {
@@ -81,6 +85,7 @@ export async function hvkUploadAction(_prev: HvkRunState, fd: FormData): Promise
   const r = await importHvkPdf(new Uint8Array(await file.arrayBuffer()), { pdfName: file.name, source: "upload" }, { actor });
   if (!r.ok) return { error: r.error };
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   return { rows: rowsOf([r]), message: r.result.status === "vorhanden" ? `${r.result.invoiceNo} war schon übernommen.` : `${r.result.invoiceNo} übernommen.` };
 }
 
@@ -93,6 +98,7 @@ export async function hvkAssignAction(_prev: HvkReklamationState, fd: FormData):
   const r = await assignHvkReklamation(String(fd.get("reklamationId") ?? ""), String(fd.get("leadId") ?? ""), actor);
   if (!r.ok) return { error: r.error };
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   return { message: r.message };
 }
 
@@ -101,4 +107,5 @@ export async function hvkDiscardAction(fd: FormData): Promise<void> {
   const { discardHvkReklamation } = await import("@/lib/ppl/hvk-abrechnung-server");
   await discardHvkReklamation(String(fd.get("reklamationId") ?? ""), actor);
   revalidatePath("/admin/ppl", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
 }

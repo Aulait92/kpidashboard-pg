@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { offerAdminHref } from "@/lib/offer-links";
 import { Badge } from "@/components/ui";
-import { fmtTag, naechsteErinnerung, tagIso, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
+import { fmtTag, tagIso } from "@/lib/angebot-zahlungserinnerung";
+import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/angebote-uebersicht";
 
 export const metadata = { title: "Angebote | Vertrieb" };
 export const dynamic = "force-dynamic";
@@ -12,64 +12,16 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 const date = (d: Date | null) =>
   d ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d) : "–";
 
-type Zustand = "angenommen" | "geoeffnet" | "offen" | "abgelaufen" | "abgelehnt" | "entwurf";
-const ZUSTAND: Record<Zustand, { label: string; tone: "success" | "info" | "neutral" | "warning" | "danger" }> = {
-  angenommen: { label: "Angenommen", tone: "success" },
-  geoeffnet: { label: "Geöffnet", tone: "info" },
-  offen: { label: "Verschickt, ungeöffnet", tone: "neutral" },
-  abgelaufen: { label: "Abgelaufen", tone: "warning" },
-  abgelehnt: { label: "Abgelehnt", tone: "danger" },
-  entwurf: { label: "Entwurf", tone: "neutral" },
-};
-
-function zustand(o: { status: string; acceptedAt: Date | null; viewedAt: Date | null; validUntil: Date; sentAt: Date | null }, now: Date): Zustand {
-  if (o.status === "accepted" || o.acceptedAt) return "angenommen";
-  if (o.status === "declined") return "abgelehnt";
-  if (o.status === "draft" && !o.sentAt) return "entwurf";
-  if (o.validUntil < now) return "abgelaufen";
-  return o.viewedAt ? "geoeffnet" : "offen";
-}
-
-type Row = { z: Zustand; zahlungOffen: boolean };
-const FILTER: { key: string; label: string; match: (r: Row) => boolean }[] = [
-  { key: "alle", label: "Alle verschickten", match: (r) => r.z !== "entwurf" },
-  { key: "offen", label: "Offen", match: (r) => r.z === "offen" || r.z === "geoeffnet" },
-  { key: "angenommen", label: "Angenommen", match: (r) => r.z === "angenommen" },
-  // Angenommen, aber Zahlung bzw. Mandat noch nicht eingerichtet (Ole, 16.11.2026)
-  { key: "zahlung", label: "Zahlung offen", match: (r) => r.zahlungOffen },
-  { key: "abgelaufen", label: "Abgelaufen / abgelehnt", match: (r) => r.z === "abgelaufen" || r.z === "abgelehnt" },
-  { key: "entwurf", label: "Entwürfe", match: (r) => r.z === "entwurf" },
-];
+const ZUSTAND = ANGEBOT_ZUSTAND;
+const FILTER = ANGEBOT_FILTER;
 
 // Übersicht aller Angebote (Ole, 13.11.2026): je Angebotsnummer die aktuelle Version.
+// Laden, Zustand und Filter: lib/vertrieb/angebote-uebersicht.ts (gemeinsam mit dem neuen Admin)
 export default async function AngebotePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
   const sp = await searchParams;
-  const filter = FILTER.find((f) => f.key === sp.f) ?? FILTER[0];
-  const now = new Date();
-  const offers = await prisma.offer.findMany({
-    where: { status: { not: "superseded" } },
-    orderBy: [{ sentAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
-    take: 500,
-    select: {
-      id: true, number: true, version: true, status: true, contactName: true, company: true, email: true,
-      setupFee: true, monthlyFee: true, sentAt: true, viewedAt: true, acceptedAt: true, validUntil: true, createdAt: true,
-      salesContactId: true, dealId: true,
-      isTest: true, paymentStatus: true, stripeSubscriptionId: true, stripeScheduleId: true, startDate: true,
-      paymentReminderAt: true, paymentReminderCount: true, paymentReminderLastAt: true,
-    },
-  });
-  const rows = offers.map((o) => {
-    const z = zustand(o, now);
-    const zahlungOffen = z === "angenommen" && o.status === "accepted" && !o.isTest && !zahlungEingerichtet(o);
-    return { ...o, z, zahlungOffen, naechste: zahlungOffen ? (naechsteErinnerung(o, now)?.tag ?? null) : null };
-  });
-  const sent = rows.filter((r) => r.z !== "entwurf");
-  const angenommen = sent.filter((r) => r.z === "angenommen");
-  const offen = sent.filter((r) => r.z === "offen" || r.z === "geoeffnet");
-  const geoeffnet = sent.filter((r) => r.viewedAt);
-  const shown = rows.filter((r) => filter.match(r));
-  const count = (f: (typeof FILTER)[number]) => rows.filter((r) => f.match(r)).length;
+  const { filter, shown, count, kennzahlen } = await ladeAngebote(sp.f);
+  const { sent, angenommen, offen, geoeffnet } = kennzahlen;
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6">

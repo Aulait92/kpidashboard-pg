@@ -1,0 +1,216 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ChevronRight, MoreHorizontal, TrendingUp } from "lucide-react";
+import { Sheet } from "@/components/ui/sheet";
+import { BEREICHE, NEU, bereichFuer, type NeuBereich } from "@/lib/admin-neu/navigation";
+import { neuerPfad } from "@/lib/admin-neu/umzug";
+import { cn } from "@/lib/utils";
+import { BEREICH_SYMBOL } from "./symbole";
+import { NeuMenue } from "./neu-menue";
+import { ProfilMenue } from "./profil-menue";
+import { Suche } from "./suche";
+
+// Rahmen des neuen Admins (/admin/neu, Ole 16.11.2026; Entwurf docs/ux/admin-neu/demo.html):
+// Rechner: Seitenleiste (Arbeit oben, Einstellungen und „Was wo ist“ unten, Profil), oben Suche und „+ Neu“.
+// Handy: Kopfzeile mit Suche, „+ Neu“, Profil; unten fünf Bereiche plus „Mehr“ (wie der Kundenbereich).
+// Bereiche und Seiten: src/lib/admin-neu/navigation.ts. data-admin-shell → Abstände aus globals.css (wie die alte Shell).
+
+export type NavZaehler = { heute: number; chats: number };
+
+function Zahl({ n }: { n: number }) {
+  return (
+    <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">
+      {n > 99 ? "99+" : n}
+    </span>
+  );
+}
+
+const zaehlerVon = (b: NeuBereich, z: NavZaehler) => (b.zaehler ? z[b.zaehler] : 0);
+
+/**
+ * Links auf alte Admin-Seiten führen innerhalb der neuen Oberfläche auf die neue Seite, sobald sie fertig ist
+ * (umzug.ts, `fertig` in navigation.ts). So zeigen wiederverwendete Bausteine (Heute-Liste usw.) automatisch
+ * auf neue Seiten, ohne dass jeder Link einzeln angepasst wird.
+ */
+function useUmzugLinks() {
+  const router = useRouter();
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download")) return;
+      const href = a.getAttribute("href") ?? "";
+      if (!href.startsWith("/admin/") || href.startsWith(NEU)) return;
+      const ziel = neuerPfad(href);
+      if (!ziel) return;
+      e.preventDefault();
+      e.stopPropagation();
+      router.push(ziel);
+    };
+    // Capture-Phase: vor dem Klick-Handler von next/link
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [router]);
+}
+
+function Logo({ mitName }: { mitName?: boolean }) {
+  return (
+    <Link href={NEU} className="-m-1.5 flex min-h-10 min-w-10 items-center gap-2 p-1.5" aria-label="Zu Heute" data-funktion="admin-shell-logo--logo-fuehrt-zu-heute">
+      <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
+        <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
+      </span>
+      {mitName ? (
+        <span className="text-[15px] font-semibold tracking-tight">
+          performance<span className="text-[color:var(--brand)]">growth</span>
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function SeitenleistenLink({ b, aktiv, zaehler, klein }: { b: NeuBereich; aktiv: boolean; zaehler: number; klein?: boolean }) {
+  const Icon = BEREICH_SYMBOL[b.id];
+  return (
+    <Link
+      href={b.pfad}
+      aria-current={aktiv ? "page" : undefined}
+      data-bereich={b.id}
+      className={cn(
+        "flex items-center gap-3 rounded-[var(--radius-md)] px-3 font-medium transition",
+        klein ? "h-10 text-sm" : "h-11 text-[15px]",
+        aktiv
+          ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]"
+          : klein
+            ? "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]"
+            : "text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]",
+      )}
+    >
+      <Icon className={klein ? "h-4 w-4" : "h-[18px] w-[18px]"} strokeWidth={aktiv ? 2.4 : 1.9} />
+      <span className="min-w-0 flex-1 truncate">{b.label}</span>
+      {zaehler ? (
+        <span data-funktion={b.zaehler === "heute" ? "admin-shell-count--zaehler-badge-an-heute-offene-punkte" : "admin-shell-count--zaehler-badge-an-chats-offene-whatsapp"}>
+          <Zahl n={zaehler} />
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+export function AdminNeuShell({ email, zaehler, children }: { email: string; zaehler: NavZaehler; children: React.ReactNode }) {
+  const pathname = usePathname() ?? NEU;
+  const aktuell = bereichFuer(pathname);
+  const [mehr, setMehr] = useState(false);
+  useUmzugLinks();
+
+  const oben = BEREICHE.filter((b) => b.ort === "oben");
+  const unten = BEREICHE.filter((b) => b.ort === "unten");
+  const leiste = BEREICHE.filter((b) => b.handy === "leiste");
+  const unterMehr = BEREICHE.filter((b) => b.handy === "mehr");
+  const mehrAktiv = !!aktuell && aktuell.handy === "mehr";
+
+  return (
+    <div data-admin-shell="" data-admin-neu="" className="flex min-h-dvh flex-1 flex-col">
+      {/* Rechner: Seitenleiste */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 lg:flex">
+        <div className="mb-5 px-2">
+          <Logo mitName />
+        </div>
+        <nav className="space-y-1" aria-label="Bereiche" data-funktion="admin-shell-adminareas--seitenleiste-mit-bereichen-heute-vertrieb-kunden">
+          {oben.map((b) => (
+            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={zaehlerVon(b, zaehler)} />
+          ))}
+        </nav>
+        <div className="mt-auto space-y-1 border-t border-[color:var(--border)] pt-3">
+          {unten.map((b) => (
+            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={0} klein />
+          ))}
+          <div className="pt-2">
+            <ProfilMenue email={email} variant="sidebar" />
+          </div>
+        </div>
+      </aside>
+
+      {/* Kopfzeile: Rechner Suche + Neu, Handy zusätzlich Logo und Profil */}
+      <header className="sticky top-0 z-20 border-b border-[color:var(--border)] bg-[color:var(--background)]/90 backdrop-blur">
+        <div className="hidden h-16 items-center gap-3 px-8 lg:flex">
+          <Suche variante="breit" />
+          <NeuMenue variante="breit" />
+        </div>
+        <div className="flex h-14 items-center gap-2 px-4 lg:hidden">
+          <Logo />
+          <Suche variante="kopf" />
+          <NeuMenue variante="kopf" />
+          <ProfilMenue email={email} />
+        </div>
+      </header>
+
+      <div className="flex-1">{children}</div>
+
+      {/* Handy: Leiste unten */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+        aria-label="Bereiche"
+        data-funktion="admin-shell-mobilenav--handy-leiste-unten-mit-allen-bereichen"
+      >
+        <ul className="mx-auto flex max-w-lg">
+          {leiste.map((b) => {
+            const aktiv = aktuell?.id === b.id;
+            const Icon = BEREICH_SYMBOL[b.id];
+            const z = zaehlerVon(b, zaehler);
+            return (
+              <li key={b.id} className="min-w-0 flex-1">
+                <Link
+                  href={b.pfad}
+                  data-haptic="selection"
+                  aria-current={aktiv ? "page" : undefined}
+                  className={cn("flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-medium", aktiv ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
+                >
+                  <span className="relative">
+                    <Icon className="h-6 w-6" strokeWidth={aktiv ? 2.4 : 1.9} />
+                    {z ? (
+                      <span className="absolute -right-2.5 -top-1.5">
+                        <Zahl n={z} />
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="max-w-full truncate">{b.kurz}</span>
+                </Link>
+              </li>
+            );
+          })}
+          <li className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => setMehr(true)}
+              aria-current={mehrAktiv ? "page" : undefined}
+              className={cn("flex w-full flex-col items-center gap-0.5 py-2 text-[11px] font-medium", mehrAktiv ? "text-[color:var(--brand)]" : "text-[color:var(--muted)]")}
+            >
+              <MoreHorizontal className="h-6 w-6" strokeWidth={mehrAktiv ? 2.4 : 1.9} />
+              Mehr
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <Sheet open={mehr} onClose={() => setMehr(false)} title="Mehr">
+        <ul className="divide-y divide-[color:var(--border)]">
+          {unterMehr.map((b) => {
+            const Icon = BEREICH_SYMBOL[b.id];
+            return (
+              <li key={b.id}>
+                <Link href={b.pfad} onClick={() => setMehr(false)} className="flex h-12 items-center gap-3 px-5 text-[15px] hover:bg-[color:var(--surface-sunken)]">
+                  <Icon className="h-[18px] w-[18px] text-[color:var(--muted)]" />
+                  <span className="flex-1">{b.label}</span>
+                  <ChevronRight className="h-4 w-4 text-[color:var(--border-strong)]" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </Sheet>
+    </div>
+  );
+}

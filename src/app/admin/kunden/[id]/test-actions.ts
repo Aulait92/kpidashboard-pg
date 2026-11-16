@@ -11,5 +11,6 @@ export async function deleteTestCustomerAction(customerId: string): Promise<{ ok
   const r = await deleteTestCustomer(customerId);
   if (!r.ok) return { ok: false, error: r.error };
   revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kundenakte)
   return { ok: true };
 }

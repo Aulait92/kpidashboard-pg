@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { ArrowRight, Building2, Search, User, UserRound } from "lucide-react";
+import { ArrowRight, Building2, KeyRound, MessageCircle, Search, User, UserRound } from "lucide-react";
 import { SearchDialog, useSearchShortcut, useShortcutLabel, type SearchHit } from "@/components/search-dialog";
 
-type Hit = SearchHit & { kind: "kunde" | "kontakt" | "lead" | "seite" };
+type Hit = SearchHit & { kind: "kunde" | "kontakt" | "lead" | "login" | "chat" | "seite" };
 
 // Seiten und Schnellaktionen, die ohne Server gefunden werden.
 const PAGES: Hit[] = [
@@ -60,7 +60,7 @@ const PAGES: Hit[] = [
   ["Monatsberichte (automatischer Versand)", "/admin/einstellungen/monatsberichte", "Einstellungen"],
 ].map(([title, href, subtitle]) => ({ kind: "seite" as const, id: href, title, subtitle, href }));
 
-const ICON = { kunde: Building2, kontakt: User, lead: UserRound, seite: ArrowRight };
+const ICON = { kunde: Building2, kontakt: User, lead: UserRound, login: KeyRound, chat: MessageCircle, seite: ArrowRight };
 
 const pagesFor = (term: string) => {
   const t = term.toLowerCase();

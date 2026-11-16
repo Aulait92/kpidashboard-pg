@@ -86,11 +86,14 @@ export function DealOffersCard({
   offers,
   appUrl,
   mail = { audience: "vertreter", pdf: { vertreter: false, makler: false } },
+  knopf = true,
 }: {
   newOfferHref: string;
   offers: DealOfferRow[];
   appUrl: string;
   mail?: OfferMailOptions;
+  /** false: kein „Angebot erstellen“ in der Karte (neuer Admin: steht schon als Hauptaktion im Kopf der Akte) */
+  knopf?: boolean;
 }) {
   const [mitRechner, setMitRechner] = useState(false);
   const [mitPraesentation, setMitPraesentation] = useState(false);
@@ -129,7 +132,7 @@ export function DealOffersCard({
         <CardHeader
           title="Angebot"
           icon={FileText}
-          actions={<ButtonLink href={newOfferHref} variant={current ? "secondary" : "primary"} icon={Plus}>{current ? "Neue Version" : "Angebot erstellen"}</ButtonLink>}
+          actions={knopf ? <ButtonLink href={newOfferHref} variant={current ? "secondary" : "primary"} icon={Plus}>{current ? "Neue Version" : "Angebot erstellen"}</ButtonLink> : <span />}
         />
         {!current ? (
           <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch kein Angebot. Erstelle es direkt im Gespräch. Der Interessent kann es online annehmen.</p>
