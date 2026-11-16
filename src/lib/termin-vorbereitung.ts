@@ -96,7 +96,7 @@ export function abschnitte(d: VorbereitungDaten): Abschnitt[] {
     if (!sp.length) sp = SPARTEN.map((s) => s.key);
     const out: Abschnitt[] = [
       {
-        titel: "Für alle Sparten",
+        titel: "Für alle Versicherungen",
         felder: [
           { label: "Lebenssituation", wert: formWert(d.formular, /lebenssituation/i) ?? q("lebenssituation") },
           { label: "Wer versichert werden soll", wert: q("versichern") },

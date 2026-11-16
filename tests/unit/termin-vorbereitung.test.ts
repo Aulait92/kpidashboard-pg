@@ -21,7 +21,7 @@ describe("Terminvorbereitung", () => {
 
   it("Abschnitte je gefragter Sparte, offene Punkte, Unterlagen nur passend", () => {
     const ab = abschnitte(base);
-    expect(ab.map((s) => s.titel)).toEqual(["Für alle Sparten", "Allianz-Rechner Privathaftpflicht", "Allianz-Rechner Hausrat", "Allianz-Rechner Tierkranken / Tierhalterhaftpflicht"]);
+    expect(ab.map((s) => s.titel)).toEqual(["Für alle Versicherungen", "Allianz-Rechner Privathaftpflicht", "Allianz-Rechner Hausrat", "Allianz-Rechner Tierkranken / Tierhalterhaftpflicht"]);
     const tier = ab.find((s) => s.titel.includes("Tier"))!;
     expect(tier.felder.map((f) => f.label)).not.toContain("Gewünschter Schutz (OP oder voll)");
     const offen = offenePunkte(ab);

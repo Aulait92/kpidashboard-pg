@@ -19,6 +19,10 @@ import { VorbereitungNeu } from "./neu-client";
 const chipZeit = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(d) + " Uhr";
 
+// Gleiche Spalten in allen Listen, lange Bezeichnungen brechen um statt zu überlappen (Ole, 16.11.2026: „Versicherungsinteresse“)
+const LISTE = "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1";
+const BEZ = "break-words hyphens-auto text-[color:var(--muted)]";
+
 export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: VorbereitungDaten & { id: string; leadId: string | null }; von?: string }) {
   const [tv, p, kunde] = await Promise.all([
     ladeTarifvorbereitung(d.id, ctx, d),
@@ -67,21 +71,21 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
       <div className="grid gap-x-8 gap-y-1 border-t border-[color:var(--border)] px-5 pb-4 pt-1 text-sm md:grid-cols-2">
         <div>
           <h3 className="mb-1 mt-3 text-[13px] font-semibold text-[color:var(--muted)]">Kontakt</h3>
-          <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1">
-            <dt className="text-[color:var(--muted)]">Telefon</dt>
+          <dl className={LISTE}>
+            <dt className={BEZ}>Telefon</dt>
             <dd className="font-medium">{d.lead.telefon ? formatPhone(d.lead.telefon) : "nicht bekannt"}</dd>
-            <dt className="text-[color:var(--muted)]">E-Mail</dt>
+            <dt className={BEZ}>E-Mail</dt>
             <dd className="break-words font-medium">{d.lead.email ?? "nicht bekannt"}</dd>
-            <dt className="text-[color:var(--muted)]">Adresse</dt>
+            <dt className={BEZ}>Adresse</dt>
             <dd className="font-medium">{d.lead.adresse ?? "nicht bekannt"}</dd>
           </dl>
           {d.formular.length ? (
             <>
               <h3 className="mb-1 mt-4 text-[13px] font-semibold text-[color:var(--muted)]">Aus dem Formular</h3>
-              <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1">
+              <dl className={LISTE}>
                 {d.formular.map((f) => (
                   <div key={f.label} className="contents">
-                    <dt className="text-[color:var(--muted)]">{f.label}</dt>
+                    <dt className={BEZ}>{f.label}</dt>
                     <dd className="font-medium">{f.value}</dd>
                   </div>
                 ))}
@@ -99,10 +103,10 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           {ab.map((s) => (
             <div key={s.titel}>
               <h3 className="mb-1 mt-3 text-[13px] font-semibold text-[color:var(--muted)]">{s.titel}</h3>
-              <dl className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 gap-y-1">
+              <dl className={LISTE}>
                 {s.felder.map((f) => (
                   <div key={f.label} className="contents">
-                    <dt className="text-[color:var(--muted)]">{f.label}</dt>
+                    <dt className={BEZ}>{f.label}</dt>
                     <dd className={f.wert ? "font-medium" : "font-medium text-amber-700"}>{f.wert ?? "offen"}</dd>
                   </div>
                 ))}
