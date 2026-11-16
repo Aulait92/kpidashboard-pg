@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
 
 import { useProvisionRates } from "@/components/provision-context";
@@ -236,7 +237,10 @@ export function KanbanBoard({
   if (leads.length === 0) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[var(--shadow-md)]">
-        Im gewählten Zeitraum sind keine aktiven Leads vorhanden.
+        Keine offenen Kontakte in diesem Zeitraum.{" "}
+        <Link href="/buyer/kontakte?modus=pipeline&range=max" className="font-medium text-[color:var(--brand)] underline">
+          Gesamten Zeitraum anzeigen
+        </Link>
       </div>
     );
   }

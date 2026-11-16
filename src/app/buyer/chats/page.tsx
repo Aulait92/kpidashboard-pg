@@ -365,7 +365,13 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {conversations.length === 0 ? (
-              <p className="p-4 text-sm text-[color:var(--muted)]">Noch keine Chats.</p>
+              <p className="p-4 text-sm text-[color:var(--muted)]">
+                {q
+                  ? "Keine Treffer."
+                  : filter === "attention"
+                    ? "Niemand wartet gerade auf Sie."
+                    : "Noch keine Nachrichten. Sobald der Assistent einen Lead anschreibt, steht das Gespräch hier."}
+              </p>
             ) : (
               conversations.map((c) => {
                 const last = c.messages[0];

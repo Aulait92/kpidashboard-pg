@@ -76,7 +76,10 @@ export function BuyerLeadsTable({
   title = "Alle Kontakte",
   detailBase = "/buyer/leads/",
   detailSuffix = "?from=leads",
+  empty,
 }: {
+  /** Leerer Zustand mit nächster Handlung (z. B. „Alle Zeiträume anzeigen“); sonst der Standardsatz. */
+  empty?: React.ReactNode;
   /** Ziel beim Klick auf einen Lead: `${detailBase}${id}${detailSuffix}`. */
   detailBase?: string;
   detailSuffix?: string;
@@ -94,8 +97,7 @@ export function BuyerLeadsTable({
   if (leads.length === 0) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-6 text-sm text-[color:var(--muted)] shadow-[var(--shadow-md)]">
-        Im gewählten Zeitraum sind keine Leads für Ihr Konto
-        eingegangen.
+        {empty ?? "In diesem Zeitraum sind keine Kontakte eingegangen."}
       </div>
     );
   }

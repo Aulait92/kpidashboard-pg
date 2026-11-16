@@ -191,6 +191,26 @@ export async function BuyerLeadsBody({
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}
         detailSuffix={detailSuffix}
+        empty={
+          // Leerer Zustand mit nächster Handlung (UX-Regel): Filter lösen bzw. Zeitraum erweitern
+          leads.length > 0 ? (
+            <>
+              Keine Kontakte in dieser Ansicht.{" "}
+              <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
+                Alle Kontakte anzeigen
+              </Link>
+            </>
+          ) : params.range !== "max" ? (
+            <>
+              In diesem Zeitraum sind keine Kontakte eingegangen.{" "}
+              <Link href={`${basePath}?range=max`} className="font-medium text-[color:var(--brand)] underline">
+                Gesamten Zeitraum anzeigen
+              </Link>
+            </>
+          ) : (
+            "Noch keine Kontakte. Neue Leads erscheinen hier und auf „Heute“, sobald sie eingehen."
+          )
+        }
       />
     </div>
   );
