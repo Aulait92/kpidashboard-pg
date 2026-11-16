@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 // Nur die reine Logik von „Heute“ (Admin-A); die Datenbank wird nicht gebraucht.
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 
-import { agoText, daysSince, greeting, heartbeatProblem, rankItems, sinceText, summary, validHeuteKey, withoutDismissed, type HeuteItem } from "@/lib/admin-heute";
+import { agoText, berlinHour, daysSince, greeting, heartbeatProblem, rankItems, sinceText, summary, validHeuteKey, withoutDismissed, type HeuteItem } from "@/lib/admin-heute";
 
 const item = (key: string, tone: HeuteItem["tone"], since?: Date): HeuteItem => ({
   key,
@@ -45,6 +45,10 @@ describe("Admin-Heute", () => {
     expect(greeting(7)).toBe("Guten Morgen");
     expect(greeting(14)).toBe("Guten Tag");
     expect(greeting(20)).toBe("Guten Abend");
+    // Berliner Zeit, nie NaN (früher immer „Guten Abend“)
+    expect(berlinHour(new Date("2026-11-16T08:30:00Z"))).toBe(9);
+    expect(greeting(berlinHour(new Date("2026-11-16T08:30:00Z")))).toBe("Guten Morgen");
+    expect(berlinHour(new Date("2026-07-01T22:15:00Z"))).toBe(0);
   });
 
   it("fasst zusammen, wie viel Geld oder Leads aufhält", () => {

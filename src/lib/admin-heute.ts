@@ -91,6 +91,11 @@ export function agoText(d: Date, now: Date): string {
   return n === 0 ? "heute" : n === 1 ? "gestern" : `vor ${n} Tagen`;
 }
 
+/** Stunde in Berlin (0–23). en-GB liefert „09“; de-DE liefert „09 Uhr“, Number() wäre NaN (Begrüßung war immer „Guten Abend“). */
+export function berlinHour(now: Date): number {
+  return Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone: "Europe/Berlin" }).format(now));
+}
+
 export function greeting(hour: number): string {
   return hour < 11 ? "Guten Morgen" : hour < 18 ? "Guten Tag" : "Guten Abend";
 }

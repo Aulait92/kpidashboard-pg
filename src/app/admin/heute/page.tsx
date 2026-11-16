@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { CheckCircle2, ChevronRight, ClipboardList, TrendingUp } from "lucide-react";
 import { countNeueBuchungen } from "@/lib/admin-buchungen-neu";
-import { greeting, loadAdminHeute, summary, type HeuteArea } from "@/lib/admin-heute";
+import { berlinHour, greeting, loadAdminHeute, summary, type HeuteArea } from "@/lib/admin-heute";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import { reportError } from "@/lib/monitoring";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -43,7 +43,7 @@ export default async function AdminHeutePage({ searchParams }: { searchParams: P
   ]);
   const filter = FILTERS.find((f) => f.key === bereich) ?? FILTERS[0];
   const shown = filter.areas.length ? items.filter((i) => filter.areas.includes(i.area)) : items;
-  const hour = Number(new Intl.DateTimeFormat("de-DE", { hour: "numeric", hourCycle: "h23", timeZone: "Europe/Berlin" }).format(now));
+  const hour = berlinHour(now);
   const revenue = forecast?.rows.find((r) => r.label === "Umsatz");
   const profit = forecast?.rows.find((r) => /gewinn/i.test(r.label));
 
