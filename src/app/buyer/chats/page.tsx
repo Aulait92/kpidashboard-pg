@@ -340,7 +340,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px]`}
         >
           <div className="space-y-2 border-b border-[color:var(--border)] p-2">
-            <div className="flex gap-1 text-xs font-semibold">
+            {/* Handy: Seitentitel wie auf den anderen Seiten (UX Runde 4, Vorschlag 6) */}
+            <h1 className="px-2 pt-2 text-[22px] font-bold tracking-tight sm:hidden">Nachrichten</h1>
+            <div className="flex gap-1 text-sm font-semibold sm:text-xs">
               <Link
                 href={`/buyer/chats${q ? `?q=${encodeURIComponent(q)}` : ""}`}
                 className={`flex-1 rounded-lg px-2 py-2.5 sm:py-1.5 text-center ${filter === "all" ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)]"}`}
