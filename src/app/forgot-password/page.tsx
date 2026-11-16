@@ -22,9 +22,9 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         <ForgotPasswordForm />
-        <div className="mt-4 text-center text-xs text-[color:var(--muted)]">
-          <Link href="/login" className="text-[color:var(--brand)] hover:underline">
-            ← Zurück zum Login
+        <div className="mt-2 text-center text-sm text-[color:var(--muted)]">
+          <Link href="/login" className="inline-flex min-h-11 items-center text-[color:var(--brand)] hover:underline">
+            ← Zurück zur Anmeldung
           </Link>
         </div>
       </div>

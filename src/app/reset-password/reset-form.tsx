@@ -26,7 +26,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           href="/login"
           className="block w-full rounded-lg bg-[color:var(--brand)] px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)]"
         >
-          Zum Login
+          Zur Anmeldung
         </Link>
       </div>
     );

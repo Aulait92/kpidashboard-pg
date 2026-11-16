@@ -125,7 +125,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <h1 className="mt-4 text-xl font-semibold tracking-tight">
-            {sp.dup ? "Du hast bereits einen Termin" : "Dein Termin ist gebucht!"}
+            {sp.dup ? a(an, "Du hast bereits einen Termin", "Sie haben bereits einen Termin") : a(an, "Dein Termin ist gebucht!", "Ihr Termin ist gebucht!")}
           </h1>
           <div className="mt-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--background)] p-4">
             <div className="text-sm text-[color:var(--muted)]">

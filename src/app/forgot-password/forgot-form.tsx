@@ -15,11 +15,10 @@ export function ForgotPasswordForm() {
   if (state.ok) {
     return (
       <div className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-        <div className="font-medium">Mail unterwegs.</div>
+        <div className="font-medium">E-Mail ist unterwegs.</div>
         <p className="mt-1 text-xs text-emerald-700">
-          Falls für diese Adresse ein Account existiert, kommt in den
-          nächsten Minuten eine Mail mit Reset-Link. Der Link ist 1 Stunde
-          gültig.
+          Falls es für diese Adresse einen Zugang gibt, kommt in den nächsten
+          Minuten eine E-Mail mit einem Link. Er ist 1 Stunde gültig.
         </p>
       </div>
     );
@@ -28,9 +27,7 @@ export function ForgotPasswordForm() {
   return (
     <form action={formAction} className="space-y-3">
       <label className="block">
-        <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--muted)]">
-          Email
-        </span>
+        <span className="text-sm font-medium">E-Mail</span>
         <input
           name="email"
           type="email"
@@ -52,7 +49,7 @@ export function ForgotPasswordForm() {
         disabled={pending}
         className="w-full rounded-lg bg-[color:var(--brand)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60"
       >
-        {pending ? "Sende…" : "Reset-Link anfordern"}
+        {pending ? "Wird gesendet …" : "Link anfordern"}
       </button>
     </form>
   );
