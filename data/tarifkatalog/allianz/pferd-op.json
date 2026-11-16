@@ -1,0 +1,129 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "pferd-op",
+  "produkt": "Pferde-OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Lebenslanger Schutz ohne Höchstalter",
+    "Keine Wartezeit bei Unfällen"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdeversicherung OP-Schutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "2-fach",
+        "kolik": "5 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate europaweit",
+        "jhl": "7.500 €",
+        "nachbehandlung": "bis 10 Tage",
+        "vorsorge": "nein",
+        "chips": "nein",
+        "zahn": "nein",
+        "physio": "nein"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/op-versicherung-pferd/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferdeversicherung OP-Schutz Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "2-fach",
+        "kolik": "5 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate europaweit",
+        "jhl": "15.000 €",
+        "nachbehandlung": "bis 10 Tage",
+        "vorsorge": "bis 100 €",
+        "chips": "bis 5.000 €",
+        "zahn": "bis 5.000 €",
+        "physio": "nein"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/op-versicherung-pferd/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferdeversicherung OP-Schutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "2-fach",
+        "kolik": "5 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate europaweit",
+        "jhl": "30.000 €",
+        "nachbehandlung": "bis 15 Tage",
+        "vorsorge": "bis 200 €",
+        "chips": "bis 10.000 €",
+        "zahn": "bis 10.000 €",
+        "physio": "bis 300 €, 60 Tage"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/op-versicherung-pferd/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferdeversicherung OP-Schutz Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "2-fach",
+        "kolik": "5 Tage",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate europaweit",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 15 Tage",
+        "vorsorge": "bis 200 €",
+        "chips": "bis 20.000 €",
+        "zahn": "bis 20.000 €",
+        "physio": "bis 300 €, 60 Tage"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "wechsel": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/op-versicherung-pferd/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/gesundheit/op-versicherung-pferd/",
+    "https://goa-eportale.allianz.de/MMS/--2/MMS--2339Z0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Allianz kennzeichnet keine Empfehlung; Komfort als mittlere Stufe gesetzt.",
+    "Erstattung: 100 % ohne Selbstbeteiligung, mit SB 10 % (max. 1.500 €) bzw. 20 % (max. 3.000 €) je Rechnung.",
+    "Vorsorge ab Smart; Vorsorgebonus nach leistungsfreien Jahren plus 50 € bzw. 150 €.",
+    "Zahnbehandlung und Gelenk-Chips: je eigene Höchstsumme innerhalb der Jahreshöchstleistung.",
+    "Schutz im Ausland: Europäischer Wirtschaftsraum, Schweiz und Vereinigtes Königreich.",
+    "Kastration steht nicht im Tarifvergleich der Produktseite."
+  ]
+}

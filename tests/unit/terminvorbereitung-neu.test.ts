@@ -41,6 +41,18 @@ describe("Sparten aus Formular und Angaben", () => {
     expect(spartenFuerTermin(d({ lead: { ...d().lead, produkt: "Katzenversicherung" }, angaben: { tarifwunsch: "nur OP-Schutz" } }))).toEqual(["katze-op"]);
     expect(spartenFuerTermin(d({ lead: { ...d().lead, produkt: "Tierkrankenversicherung" }, formular: [{ label: "Tierart", value: "Hund" }] }))).toEqual(["hund-kranken"]);
   });
+
+  it("Pferde-Leads bekommen Pferde-OP bzw. Pferdekranken (16.11.2026)", () => {
+    const produkt = (p: string, x: Partial<VorbereitungDaten> & { angaben?: Record<string, string> } = {}) => spartenFuerTermin(d({ lead: { ...d().lead, produkt: p }, ...x }));
+    expect(produkt("Pferde-OP-Versicherung")).toEqual(["pferd-op"]);
+    expect(produkt("Pferdekrankenversicherung")).toEqual(["pferd-kranken"]);
+    expect(produkt("Pferdeversicherung")).toEqual(["pferd-op"]);
+    expect(produkt("Pferdehalterhaftpflicht")).toEqual(["tierhalter-pferd"]);
+    expect(produkt("Tierkrankenversicherung", { formular: [{ label: "Tierart", value: "Pferd" }] })).toEqual(["pferd-kranken"]);
+    expect(produkt("Tier-OP-Versicherung", { angaben: { tier: "Pferd, 12 Jahre" } })).toEqual(["pferd-op"]);
+    // Privatschutz mit Tieren: Pferd mit Krankenschutz und Haftpflicht
+    expect(spartenFuerTermin(d({ angaben: { interesse: "Tierkrankenversicherung und Tierhalterhaftpflicht", tier: "Pferd" } }))).toEqual(["pferd-kranken", "tierhalter-pferd"]);
+  });
 });
 
 describe("Das will der Kunde, Noch klären", () => {

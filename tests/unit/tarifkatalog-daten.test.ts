@@ -6,7 +6,11 @@ import { describe, expect, it } from "vitest";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 
 const ROOT = join(__dirname, "..", "..", "data", "tarifkatalog");
-const GESELLSCHAFTEN = ["allianz", "axa", "signal-iduna"];
+// Alle Gesellschaftsordner (neue Gesellschaften werden ohne Teständerung mitgeprüft)
+const GESELLSCHAFTEN = readdirSync(ROOT, { withFileTypes: true })
+  .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+  .map((e) => e.name)
+  .sort();
 const BAUSTEIN_WERTE = ["optional", "inklusive", "nein"];
 const GRENZE = { tarifKurz: 14, merkmalKurz: 28, bausteinKurz: 20, wert: 24, stufen: 4, standard: 5 };
 
@@ -49,7 +53,7 @@ function texte(v: unknown, pfad = ""): Array<[string, string]> {
 
 describe("Tarifkatalog: Schema", () => {
   it("hat alle Sparten mit eindeutigen Keys, kurzen Kurznamen und höchstens 5 Standardmerkmalen", () => {
-    const keys = ["katze-kranken", "katze-op", "hund-kranken", "hund-op", "haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd", "unfall"];
+    const keys = ["katze-kranken", "katze-op", "hund-kranken", "hund-op", "pferd-op", "pferd-kranken", "haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd", "unfall"];
     expect([...sparten.keys()].sort()).toEqual([...keys].sort());
     for (const s of schema.sparten) {
       const mk = s.merkmale.map((m) => m.key);
@@ -106,6 +110,10 @@ describe("Tarifkatalog: Bündelrabatte (buendel.json)", () => {
 describe("Tarifkatalog: Gesellschaftsdateien", () => {
   it("gibt es", () => {
     expect(dateien.length).toBeGreaterThan(0);
+  });
+
+  it("Ordnernamen sind Schlüssel (klein, Bindestrich)", () => {
+    for (const g of GESELLSCHAFTEN) expect(g, g).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
   });
 
   for (const d of dateien) {

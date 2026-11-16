@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "stand": "2026-11-15",
+  "stand": "2026-11-16",
   "grenzen": { "tarife": 3, "merkmale": 5, "bausteine": 2, "stufenJeDatei": 4, "tarifKurz": 14, "merkmalKurz": 28, "wert": 24 },
   "bausteinWerte": ["optional", "inklusive", "nein"],
   "sparten": [
@@ -101,6 +101,59 @@
       "bausteine": [
         { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
         { "key": "vorsorge", "label": "Vorsorge-Paket", "kurz": "Vorsorge-Paket" },
+        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+      ]
+    },
+    {
+      "key": "pferd-op",
+      "label": "Pferde-OP-Versicherung",
+      "produkt": "pferd",
+      "formularMatch": "Pferde-OP",
+      "merkmale": [
+        { "key": "erstattung", "label": "Erstattung der OP-Kosten", "kurz": "Erstattung", "standard": true },
+        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
+        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
+        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP", "standard": true },
+        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
+        { "key": "chips", "label": "Operative Entfernung von Gelenk-Chips (z. B. OCD)", "kurz": "Gelenk-Chips" },
+        { "key": "kolik", "label": "Wartezeit bei Kolik", "kurz": "Wartezeit Kolik" },
+        { "key": "zahn", "label": "Zahnbehandlung und OP im Maul", "kurz": "Zahnbehandlung" },
+        { "key": "kastration", "label": "Kastration (Zuschuss oder Erstattung)", "kurz": "Kastration" },
+        { "key": "physio", "label": "Physiotherapie nach OP", "kurz": "Physiotherapie" },
+        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
+        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
+        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+      ],
+      "bausteine": [
+        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
+        { "key": "reha", "label": "Reha-Baustein (Physiotherapie nach OP)", "kurz": "Reha-Baustein" },
+        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+      ]
+    },
+    {
+      "key": "pferd-kranken",
+      "label": "Pferdekrankenversicherung",
+      "produkt": "pferd",
+      "formularMatch": "Pferdekranken",
+      "merkmale": [
+        { "key": "erstattung", "label": "Erstattung der Tierarztkosten", "kurz": "Erstattung", "standard": true },
+        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
+        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
+        { "key": "ohneOp", "label": "Behandlungen ohne Operation", "kurz": "Behandlung ohne OP", "standard": true },
+        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
+        { "key": "chips", "label": "Operative Entfernung von Gelenk-Chips (z. B. OCD)", "kurz": "Gelenk-Chips" },
+        { "key": "kolik", "label": "Wartezeit bei Kolik", "kurz": "Wartezeit Kolik" },
+        { "key": "zahn", "label": "Zahnbehandlung", "kurz": "Zahnbehandlung" },
+        { "key": "kastration", "label": "Kastration (Zuschuss oder Erstattung)", "kurz": "Kastration" },
+        { "key": "physio", "label": "Physiotherapie", "kurz": "Physiotherapie" },
+        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP" },
+        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
+        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
+        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+      ],
+      "bausteine": [
+        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
+        { "key": "reha", "label": "Reha-Baustein (Physiotherapie nach OP)", "kurz": "Reha-Baustein" },
         { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
       ]
     },

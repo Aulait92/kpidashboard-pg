@@ -141,6 +141,8 @@ export const SPARTEN_STANDARD: KatalogSparte[] = [
   TIERKRANKEN("katze-op", "Katzen-OP"),
   TIERKRANKEN("hund-kranken", "Hundekranken"),
   TIERKRANKEN("hund-op", "Hunde-OP"),
+  TIERKRANKEN("pferd-op", "Pferde-OP"),
+  TIERKRANKEN("pferd-kranken", "Pferdekranken"),
   {
     key: "haftpflicht",
     label: "Privathaftpflicht",
@@ -409,6 +411,8 @@ export function sparteAusText(t: string | null | undefined): string | null {
   const s = (t ?? "").toLowerCase();
   if (!s.trim()) return null;
   if (/pferd/.test(s) && /halter|haftpflicht/.test(s)) return "tierhalter-pferd";
+  // Pferd ohne Haftpflicht: OP-Schutz, außer ausdrücklich Kranken- bzw. Vollschutz (bei Pferden ist OP der Regelfall)
+  if (/pferd/.test(s)) return /kranken|voll/.test(s) && !/\bop\b|op-|operation/.test(s) ? "pferd-kranken" : "pferd-op";
   if (/(hund|tier)\w*\s*-?\s*halter|hundehaftpflicht|tierhalter/.test(s)) return "tierhalter-hund";
   if (/katze/.test(s)) return /\bop\b|op-|operation/.test(s) ? "katze-op" : "katze-kranken";
   if (/hund/.test(s)) return /\bop\b|op-|operation/.test(s) ? "hund-op" : "hund-kranken";

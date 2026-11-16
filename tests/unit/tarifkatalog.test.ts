@@ -65,7 +65,7 @@ describe("Katalog laden", () => {
     const leer = ladeTarifkatalog(path.join(ORDNER, "gibt-es-nicht"));
     expect(leer.tarife).toEqual([]);
     expect(leer.sparten.map((s) => s.key)).toEqual(SPARTEN_STANDARD.map((s) => s.key));
-    expect(leer.sparten.map((s) => s.key)).toEqual(["katze-kranken", "katze-op", "hund-kranken", "hund-op", "haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd", "unfall"]);
+    expect(leer.sparten.map((s) => s.key)).toEqual(["katze-kranken", "katze-op", "hund-kranken", "hund-op", "pferd-op", "pferd-kranken", "haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd", "unfall"]);
     for (const s of SPARTEN_STANDARD) expect(s.merkmale.filter((m) => m.standard).length).toBeLessThanOrEqual(5);
     const kk = katalogAus(null, [
       { gesellschaft: "allianz", sparte: "hausrat", json: { tarife: [{ name: "X", werte: { a: 5 }, bausteine: { b: "vielleicht" } }, { kurz: "ohne Namen" }] } },
@@ -88,6 +88,9 @@ describe("Katalog laden", () => {
     expect(sparteAusText("Tierhalterhaftpflicht Hund")).toBe("tierhalter-hund");
     expect(sparteAusText("Pferdehalterhaftpflicht")).toBe("tierhalter-pferd");
     expect(sparteAusText("Katzen-OP-Versicherung")).toBe("katze-op");
+    expect(sparteAusText("Pferde-OP-Versicherung")).toBe("pferd-op");
+    expect(sparteAusText("Pferdekrankenversicherung")).toBe("pferd-kranken");
+    expect(sparteAusText("Pferdeversicherung")).toBe("pferd-op");
     expect(sparteAusText("Hundekrankenversicherung")).toBe("hund-kranken");
     expect(sparteAusText("Wohngebäude")).toBe("wohngebaeude");
     expect(sparteAusText("Kfz")).toBeNull();
@@ -323,7 +326,7 @@ describe("Preise aus dem Angebot (PDF)", () => {
 describe("Echte Katalogdaten (data/tarifkatalog)", () => {
   const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
   it("Allianz-Vertreter: je Sparte 3 Stufen um die Empfehlung, Stern auf Komfort; Halterhaftpflicht 3 Stufen", () => {
-    expect(echt.sparten).toHaveLength(11);
+    expect(echt.sparten).toHaveLength(13);
     for (const s of echt.sparten) {
       const v = vorauswahl(echt, s.key, { rolle: "vertreter", gesellschaften: ["allianz"] });
       expect(v.tarife.length, s.key).toBe(3);

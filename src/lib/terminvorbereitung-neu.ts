@@ -30,12 +30,15 @@ export const neuigkeitVersteckt = (id: string) => id === NEUIGKEIT_TERMINVORBERE
 const formWert = (d: VorbereitungDaten, re: RegExp) => d.formular.find((f) => re.test(f.label))?.value?.trim() || null;
 const angaben = (d: VorbereitungDaten) => Object.fromEntries(qualificationPoints(d.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
 
+/** Tierart für die Tierkranken-Sparten: Pferd, Hund, sonst Katze. */
+const tierartAus = (t: string): "pferd" | "hund" | "katze" => (/pferd/i.test(t) ? "pferd" : /hund/i.test(t) ? "hund" : "katze");
+
 /** Gefragte Sparten (Schlüssel im Tarifkatalog) aus Produkt, Formular und Angaben des Assistenten. */
 export function spartenFuerTermin(d: VorbereitungDaten, k?: Pick<Katalog, "sparten"> | null): string[] {
   const q = angaben(d);
   const kat = produktCheckliste(d.lead.produkt)?.key ?? null;
   const tierText = [formWert(d, /tierart/i), q.tier, d.lead.produkt].filter(Boolean).join(" ");
-  const tierArt = /hund/i.test(tierText) ? "hund" : "katze";
+  const tierArt = tierartAus(tierText);
   const op = /\bop\b|op-|operation/i.test([q.tarifwunsch, d.lead.produkt].filter(Boolean).join(" ")) && !/voll|kranken(voll|schutz)/i.test(q.tarifwunsch ?? "");
   if (kat === "tier") return [`${tierArt}-${op ? "op" : "kranken"}`];
   if (kat === "privatschutz") {
@@ -51,7 +54,7 @@ export function spartenFuerTermin(d: VorbereitungDaten, k?: Pick<Katalog, "spart
       }
       const tw = tierWunsch(q.interesse ?? null);
       const t = [interesse, q.tier].filter(Boolean).join(" ");
-      if (tw.kranken) out.push(`${/hund/i.test(t) ? "hund" : "katze"}-${op ? "op" : "kranken"}`);
+      if (tw.kranken) out.push(`${tierartAus(t)}-${op ? "op" : "kranken"}`);
       if (tw.halter) out.push(/pferd/i.test(t) ? "tierhalter-pferd" : "tierhalter-hund");
     }
     return [...new Set([...out, ...ausKatalog])];
