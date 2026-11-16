@@ -174,7 +174,7 @@ export async function BuyerLeadsBody({
               key={v.key || "alle"}
               href={hrefFor(v.key)}
               scroll={false}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition ${
+              className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm sm:h-8 font-medium transition ${
                 active ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--foreground)]"
               }`}
             >

@@ -69,8 +69,9 @@ export default async function KontaktePage({ searchParams }: { searchParams: Sea
               role="tab"
               aria-selected={t.active}
               className={cn(
-                "inline-flex h-11 items-center gap-2 rounded-[var(--radius-sm)] px-4 text-base font-medium transition",
-                t.active ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]",
+                "inline-flex h-10 items-center gap-2 rounded-[var(--radius-sm)] px-4 text-[15px] font-medium transition",
+                // Aktive Ansicht wie die aktive Seite in der Navigation (hellblau), nicht als zweiter blauer Hauptknopf
+                t.active ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]",
               )}
             >
               <t.icon className="h-[18px] w-[18px]" />

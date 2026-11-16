@@ -265,7 +265,7 @@ export function KanbanBoard({
                 type="button"
                 onClick={() => setMobilePhase(c.key)}
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                  "flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs sm:h-auto sm:py-1.5 font-semibold transition",
                   active
                     ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-white"
                     : "border-[color:var(--border)] bg-white text-[color:var(--foreground)]",
@@ -703,7 +703,7 @@ function MoveButton({
           e.stopPropagation();
           setOpen(true);
         }}
-        className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--border)] bg-white px-2.5 py-1 text-[11px] font-semibold text-[color:var(--foreground)]"
+        className="ml-auto inline-flex h-10 shrink-0 items-center gap-1 rounded-full border border-[color:var(--border)] bg-white px-3 text-xs font-semibold text-[color:var(--foreground)] sm:h-auto sm:px-2.5 sm:py-1 sm:text-[11px]"
       >
         Verschieben <ArrowRightLeft className="h-3 w-3" />
       </button>
