@@ -65,6 +65,8 @@ async function inbound(from: string, body: string) {
   });
 }
 const lastText = () => sent.filter((s) => s.type === "text").at(-1)?.text?.body ?? "";
+/** Vorletzte Textnachricht (die letzte ist der Link zur Erstinformation, wenn das PDF nicht möglich ist). */
+const prevText = () => sent.filter((s) => s.type === "text").at(-2)?.text?.body ?? "";
 const conv = (phone: string) => prisma.conversation.findFirstOrThrow({ where: { customerId, contactPhone: phone }, include: { messages: { orderBy: { createdAt: "asc" } } } });
 
 beforeAll(() => requireTestDb());
@@ -94,18 +96,20 @@ afterAll(() => {
 });
 
 describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, Beratungssperre", () => {
-  it("erste Antwort an einen neuen Kontakt: Hinweis mit Anrede und Link zur Erstinformation, danach nicht wieder", async () => {
+  it("erste Antwort an einen neuen Kontakt: eine Begrüßung, KI-Assistent mit Nutzen, kein „Mensch“; Erstinformation danach (ohne fertiges PDF als Link), danach nicht wieder", async () => {
     const phone = "4917611110000";
     await leadFor(phone);
     h.script.push({ content: [{ type: "text", text: "Für wen soll die Zahnzusatzversicherung sein?" }] });
     await inbound(phone, "Hallo, ich interessiere mich für eine Zahnzusatz");
-    const first = lastText();
-    expect(first).toMatch(/^Guten Tag Frau Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier/);
-    expect(first).toContain("Ich bin kein Mensch und berate nicht zu Tarifen.");
-    expect(first).toContain("schreiben Sie ‚Mensch‘.");
+    const first = prevText();
+    // Erstanschreiben v5 (Ole, 16.11.2026): Lead hat zuerst geschrieben → „danke für Ihre Nachricht“
+    expect(first).toBe(
+      "Hallo Frau Schneider, danke für Ihre Nachricht!\nIch bin der digitale KI-Assistent von Susanne und helfe Ihnen, schnell einen passenden Gesprächstermin zu finden.\n\nFür wen soll die Zahnzusatzversicherung sein?",
+    );
+    expect(first).not.toMatch(/Mensch|berate nicht/);
+    // Erstinformation unvollständig (kein PDF möglich): Rückfall auf den Link als eigene Nachricht
     const e = await prisma.erstinformation.findUniqueOrThrow({ where: { customerId } });
-    expect(first).toContain(`als Versicherungsvermittler: https://app.example.de/erstinformation/${e.token}`);
-    expect(first.endsWith("Für wen soll die Zahnzusatzversicherung sein?")).toBe(true);
+    expect(lastText()).toBe(`Erstinformation zu Susanne Meier als Versicherungsvermittler: https://app.example.de/erstinformation/${e.token}`);
     // System-Prompt: Hinweis wird vorangestellt, Regeln gegen Beratung und Vermenschlichung
     expect(h.calls[0].system).toContain("Begrüße deshalb nicht und stell dich nicht vor");
     expect(h.calls[0].system).toContain("Gib dich nie als Mensch aus");
@@ -131,10 +135,10 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     await leadFor(phone);
     await inbound(phone, "Bist du ein Bot?");
     expect(h.calls).toHaveLength(0); // ohne KI beantwortet
-    const reply = lastText();
+    const reply = prevText();
     expect(reply).toMatch(/^Guten Tag Frau Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier\. Ich bin kein Mensch und berate nicht zu Tarifen\./);
     expect(reply).toContain("meldet sich persönlich bei Ihnen");
-    expect(reply).toContain("/erstinformation/");
+    expect(lastText()).toContain("/erstinformation/");
     const c = await conv(phone);
     expect(c.botActive).toBe(false);
     expect(c.needsAttention).toBe(true);
@@ -155,6 +159,21 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
       "Ich bin der digitale KI-Assistent von Agentur Susanne Meier, kein Mensch. Ich habe Susanne Meier Bescheid gegeben, Susanne Meier meldet sich persönlich bei Ihnen.",
     );
     expect((await conv(phone)).botActive).toBe(false);
+  });
+
+  it("Wunsch nach Anruf oder dem Vermittler jederzeit → Übergabe mit Push (Ole, 16.11.2026)", async () => {
+    for (const [phone, text] of [["4917611110005", "Können Sie mich bitte anrufen?"], ["4917611110006", "Kann ich mit Susanne Meier sprechen?"]] as const) {
+      await leadFor(phone);
+      await inbound(phone, "Hallo");
+      vi.mocked(sendToBuyersOfCustomer).mockClear();
+      const calls = h.calls.length;
+      await inbound(phone, text);
+      expect(h.calls.length, text).toBe(calls); // ohne KI übergeben
+      expect(lastText(), text).toContain("meldet sich persönlich bei Ihnen");
+      const c = await conv(phone);
+      expect(c.botActive, text).toBe(false);
+      expect(sendToBuyersOfCustomer, text).toHaveBeenCalled();
+    }
   });
 
   it("nach über 30 Tagen Pause wiederholt der Assistent den Hinweis", async () => {
@@ -208,9 +227,9 @@ describe("Erstanschreiben (Vorlage v3 mit Link) und Rückfall auf ältere Vorlag
     expect(t1.template?.components?.[0].parameters.map((p) => p.text)).toEqual(["Frau Schneider"]); // Anrede aus eindeutigem Vornamen (Ole, 16.11.2026)
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: l1.id } })).outreachStatus).toBe("sent");
 
-    // Bis zur Freigabe der v3: der Assistent holt Hinweis und Link in seiner ersten Antwort nach
+    // Bis zur Freigabe: der Assistent holt KI-Kennzeichnung (erste Antwort) und Erstinformation (danach) nach
     await inbound("4917622220001", "Ja, gern");
-    expect(lastText()).toMatch(/^Guten Tag Frau Schneider, hier schreibt der digitale KI-Assistent/);
+    expect(prevText()).toMatch(/^Hallo Frau Schneider, danke für Ihre Nachricht!\nIch bin der digitale KI-Assistent von Susanne /);
     expect(lastText()).toContain("/erstinformation/");
 
     await prisma.messageTemplate.create({

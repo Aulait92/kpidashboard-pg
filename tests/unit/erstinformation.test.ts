@@ -21,7 +21,7 @@ import {
   versichererVorschlag,
   type ErstinfoDaten,
 } from "@/lib/erstinformation-shared";
-import { erstinfoPdfText, hasErstinfoPdf } from "@/lib/whatsapp/ki-hinweis";
+import { ERSTINFO_PDF_CAPTION, hasErstinfoPdf } from "@/lib/whatsapp/ki-hinweis";
 import { erstinfoMailZeile } from "@/lib/calendar/lead-email";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 
@@ -185,7 +185,7 @@ describe("Text der Erstinformation (alle Angaben nach § 15 Abs. 1 VersVermV)", 
 
   it("Vergütungstext und Dateiname", () => {
     expect(verguetungText({ verguetung: ["provision"], zuwendungen: false }).split("\n")).toHaveLength(4);
-    expect(erstinfoDateiname("Agentur Meier GmbH")).toBe("Erstinformation-Agentur-Meier-GmbH.pdf");
+    expect(erstinfoDateiname("Agentur Meier GmbH")).toBe("Erstinformation_Agentur_Meier_GmbH.pdf");
     expect(erstinfoDateiname("")).toBe("Erstinformation.pdf");
   });
 
@@ -195,11 +195,11 @@ describe("Text der Erstinformation (alle Angaben nach § 15 Abs. 1 VersVermV)", 
     }
     expect(papierHinweis("du")).toContain("bekommst du");
     expect(papierHinweis("sie")).toContain("erhalten Sie");
-    expect(erstinfoPdfText("du", "Susanne Meier")).toContain("bekommst du sie auch kostenlos auf Papier");
-    expect(erstinfoPdfText("sie", "Susanne Meier")).toContain("Erstinformation zu Susanne Meier als Versicherungsvermittler als PDF");
+    // Begleittext zum PDF (Nachricht 2 nach dem Erstanschreiben), für Du und Sie gleich; Papier-Hinweis steht im PDF
+    expect(ERSTINFO_PDF_CAPTION).toBe("Unsere Erstinformation als Versicherungsvermittler, wie gesetzlich vorgesehen.");
     expect(erstinfoMailZeile("sie", "Susanne Meier")).toContain("Im Anhang finden Sie die Erstinformation");
     expect(erstinfoMailZeile("du", "Susanne Meier")).toContain("Im Anhang findest du");
-    for (const s of [erstinfoPdfText("du", "X"), erstinfoPdfText("sie", "X"), erstinfoMailZeile("du", "X"), erstinfoMailZeile("sie", "X")]) expect(hatGedankenstrich(s)).toBe(false);
+    for (const s of [ERSTINFO_PDF_CAPTION, erstinfoMailZeile("du", "X"), erstinfoMailZeile("sie", "X")]) expect(hatGedankenstrich(s)).toBe(false);
   });
 
   it("PDF schon geschickt?", () => {

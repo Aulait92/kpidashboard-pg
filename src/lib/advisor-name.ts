@@ -41,3 +41,23 @@ export function advisorPerson(customerName: string | null | undefined, assignedD
   const own = (assignedDisplayName ?? "").replace(/\s+/g, " ").trim();
   return own.length >= 2 ? own : personFromCustomerName(customerName);
 }
+
+const KEIN_VORNAME = /^(agentur|allianz|büro|buero|versicherung(en)?|versicherungsbüro|generalvertretung|hauptvertretung|vertretung|team|firma|gmbh|kg|ohg|gbr|finanz|makler|vermittler|kunde|test|dr\.?|prof\.?|herr|frau)$/i;
+
+/** Vorname aus einem Personennamen („Ole Schmidt“ → „Ole“, „Dr. Anna Weber“ → „Anna“); null, wenn keiner erkennbar. */
+export function vornameAus(name: string | null | undefined): string | null {
+  const words = (name ?? "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  const rest = words.filter((w) => !KEIN_VORNAME.test(w));
+  // „Agentur Meier“ → nur ein Nachname übrig: kein Vorname. Ein einzelnes Wort ohne Zusatz („Ole“) gilt als Vorname.
+  if (!rest.length || (rest.length === 1 && words.length > 1)) return null;
+  // Nur Buchstaben (auch „Hans-Peter“), kein Kürzel
+  return /^\p{Lu}[\p{L}'-]+$/u.test(rest[0]) ? rest[0] : null;
+}
+
+/**
+ * Name des Vermittlers im Erstanschreiben (Ole, 16.11.2026): Vorname aus dem Profil (zuständiger Berater, sonst Name
+ * in den Anbieterangaben der Erstinformation), sonst der Agenturname. Kurz und persönlich: „KI-Assistent von Ole“.
+ */
+export function kurzNameFuerLeads(opts: { assignedDisplayName?: string | null; profilName?: string | null; customerName?: string | null }): string {
+  return vornameAus(opts.assignedDisplayName) ?? vornameAus(opts.profilName) ?? firmDisplayName(opts.customerName);
+}

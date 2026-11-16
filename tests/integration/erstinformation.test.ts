@@ -115,7 +115,7 @@ describe("Einrichtung: Erstinformation speichern", () => {
     const { res, bytes, text } = await pdfFor(st.customerId);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("application/pdf");
-    expect(res.headers.get("content-disposition")).toContain("Erstinformation-Agentur-Meier-GmbH.pdf");
+    expect(res.headers.get("content-disposition")).toContain("Erstinformation_Agentur_Meier_GmbH.pdf");
     expect(Buffer.from(bytes.slice(0, 4)).toString()).toBe("%PDF");
     for (const s of [
       "Susanne Meier",
@@ -224,24 +224,64 @@ describe("WhatsApp: Erstinformation als PDF-Dokument (§ 16 VersVermV)", () => {
     // Noch nicht bestätigt: Link ja, Dokument nein
     await inbound("4917699990001", "Hallo");
     expect(sent.filter((s) => s.type === "document")).toHaveLength(0);
-    expect(sent.find((s) => s.type === "text")?.text?.body).toContain("/erstinformation/");
+    // Rückfall: Link als eigene Nachricht nach der Antwort
+    expect(sent.filter((s) => s.type === "text").at(-1)?.text?.body).toContain("/erstinformation/");
 
     expect(await saveErstinfoAction({}, form({ ...base, status: "vertreter", versicherer: "Allianz Versicherungs-AG", verguetung: "provision" }))).toEqual({ ok: true });
     await inbound("4917699990002", "Hallo, ich möchte einen Termin");
     const idx = sent.findIndex((s) => s.type === "document");
     expect(idx).toBeGreaterThan(0);
-    expect(sent[idx - 1].type).toBe("text"); // erst KI-Hinweis und Antwort, dann das PDF
+    expect(sent[idx - 1].type).toBe("text"); // erst Begrüßung mit KI-Assistent und Antwort (Nachricht 1), dann das PDF (Nachricht 2)
+    expect(sent[idx - 1].text?.body).toMatch(/^Hallo Frau Schneider, danke für Ihre Nachricht!\nIch bin der digitale KI-Assistent von Susanne /);
+    expect(sent[idx - 1].text?.body).not.toContain("/erstinformation/");
     const e = await prisma.erstinformation.findUniqueOrThrow({ where: { customerId: st.customerId } });
-    expect(sent[idx]).toMatchObject({
-      to: "4917699990002",
-      document: { link: `https://app.example.de/erstinformation/${e.token}/pdf`, filename: "Erstinformation-Agentur-Meier-GmbH.pdf" },
-    });
-    expect(sent[idx].document?.caption).toContain("Auf Wunsch erhalten Sie sie auch kostenlos auf Papier.");
+    expect(sent[idx]).toMatchObject({ to: "4917699990002", document: { filename: "Erstinformation_Agentur_Meier_GmbH.pdf" } });
+    // Öffentliche Adresse mit Token und Hash der Angaben (neues PDF, neue Adresse, wenn sich etwas ändert)
+    expect(sent[idx].document?.link).toMatch(new RegExp(`^https://app\\.example\\.de/erstinformation/${e.token}/pdf\\?v=[0-9a-f]{16}$`));
+    expect(sent[idx].document?.caption).toBe("Unsere Erstinformation als Versicherungsvermittler, wie gesetzlich vorgesehen.");
+    const v1 = sent[idx].document!.link;
+    // Gleiche Angaben: gleiches PDF aus dem Zwischenspeicher, gleiche Adresse; geänderte Angaben: neuer Hash
+    const { erstinfoPdfFuerWhatsApp } = await import("@/lib/erstinformation");
+    expect((await erstinfoPdfFuerWhatsApp(st.customerId))?.link).toBe(v1);
+    await prisma.erstinformation.update({ where: { customerId: st.customerId }, data: { telefon: "089 999999" } });
+    expect((await erstinfoPdfFuerWhatsApp(st.customerId))?.link).not.toBe(v1);
     const msg = await prisma.message.findFirstOrThrow({ where: { kind: "document", conversation: { customerId: st.customerId, contactPhone: "4917699990002" } } });
     expect(msg).toMatchObject({ direction: "outbound", sentBy: "bot" });
 
     // Zweite Nachricht: kein weiteres Dokument
     await inbound("4917699990002", "Morgen?");
     expect(sent.filter((s) => s.type === "document" && s.to === "4917699990002")).toHaveLength(1);
+  });
+
+  it("PDF lässt sich nicht senden: Rückfall auf den Link zur Erstinformation (einmal), Fehler protokolliert", async () => {
+    await setup("vertreter");
+    phoneNumberId = `pn-erstinfo-${Math.random().toString(36).slice(2, 8)}`;
+    await prisma.whatsAppAccount.create({ data: { customerId: st.customerId, provider: "360dialog", status: "connected", apiKeyEnc: encryptSecret("k"), phoneNumberId } });
+    await prisma.agentConfig.create({ data: { customerId: st.customerId, active: true } });
+    expect(await saveErstinfoAction({}, form({ ...base, status: "vertreter", versicherer: "Allianz Versicherungs-AG", verguetung: "provision" }))).toEqual({ ok: true });
+    // 360dialog lehnt das Dokument ab
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = String(input instanceof Request ? input.url : input);
+        if (url.includes("/messages")) {
+          const body = JSON.parse(String(init?.body));
+          if (body.type === "document") return new Response("media download failed", { status: 400 });
+          sent.push(body);
+          return new Response(JSON.stringify({ messages: [{ id: `wamid.out.${Math.random()}` }] }), { status: 200 });
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    );
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    await inbound("4917699990003", "Hallo");
+    const texts = sent.filter((x) => x.to === "4917699990003" && x.type === "text").map((x) => x.text?.body ?? "");
+    expect(texts).toHaveLength(2);
+    expect(texts[1]).toMatch(/^Erstinformation zu .+ als Versicherungsvermittler: https:\/\/app\.example\.de\/erstinformation\/[\w-]+$/);
+    expect(err.mock.calls.some((c) => String(c[0]).includes("Erstinformation als PDF"))).toBe(true);
+    err.mockRestore();
+    // Nächste Antwort: kein zweiter Link
+    await inbound("4917699990003", "Morgen?");
+    expect(sent.filter((x) => x.to === "4917699990003" && x.type === "text" && x.text?.body.includes("/erstinformation/"))).toHaveLength(1);
   });
 });

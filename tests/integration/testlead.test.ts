@@ -33,7 +33,7 @@ vi.mock("@anthropic-ai/sdk", () => ({
     };
   },
 }));
-vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => "already" }));
+vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => "already", sendErstinfo: async () => "already" }));
 
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";

@@ -253,6 +253,15 @@ export function verguetungStandard(status: VermittlerStatus): Verguetung[] {
 }
 
 /**
+ * Vor- und Nachname des Vermittlers: gespeichert, sonst Vorschlag aus Impressum (Vertreter) bzw. Kundenname als Person
+ * („Agentur Susanne Meier“ → „Susanne Meier“). Auch Quelle des Vornamens im Erstanschreiben (lead-anrede.ts).
+ */
+export function erstinfoName(saved: string | null | undefined, web: ErstinfoWeb | undefined, customerName: string | null | undefined): string {
+  const person = advisorDisplayName(customerName);
+  return (saved ?? (clean(web?.representative) || (person && person.includes(" ") ? person : "") || clean(customerName))).trim();
+}
+
+/**
  * Angaben zusammenführen: Gespeichertes hat Vorrang, sonst Vorschlag aus Impressum und Angebot (Ole: nichts
  * abfragen, was wir schon wissen; vorausfüllen und nur prüfen lassen).
  */
@@ -263,8 +272,7 @@ export function erstinfoDaten(
 ): ErstinfoDaten {
   const status = asVermittlerStatus(customer.vermittlerTyp);
   const w = web ?? {};
-  const person = advisorDisplayName(customer.name);
-  const name = e?.name ?? (clean(w.representative) || (person && person.includes(" ") ? person : "") || clean(customer.name));
+  const name = erstinfoName(e?.name, w, customer.name);
   const firmaVorschlag = clean(w.companyName) || clean(customer.name);
   const firma = e?.firma ?? (firmaVorschlag && firmaVorschlag !== name ? firmaVorschlag : "");
   const gespeicherteVersicherer = (e?.versicherer ?? []).filter((v) => v.trim());
@@ -397,8 +405,8 @@ export function erstinfoAbschnitte(d: ErstinfoDaten): ErstinfoAbschnitt[] {
   ];
 }
 
-/** Dateiname des erzeugten PDFs. */
+/** Dateiname des PDFs, z. B. „Erstinformation_Agentur_Meier_GmbH.pdf“ (auch das WhatsApp-Dokument an Leads). */
 export function erstinfoDateiname(name: string): string {
-  const n = name.replace(/[^\p{L}\p{N} ]+/gu, " ").trim().replace(/\s+/g, "-").slice(0, 60);
-  return n ? `Erstinformation-${n}.pdf` : "Erstinformation.pdf";
+  const n = name.replace(/[^\p{L}\p{N} ]+/gu, " ").trim().replace(/\s+/g, "_").slice(0, 60);
+  return n ? `Erstinformation_${n}.pdf` : "Erstinformation.pdf";
 }

@@ -31,7 +31,7 @@ import {
   type TemplateVariant,
 } from "@/lib/whatsapp/templates";
 import type { Ansprache } from "@/lib/ansprache";
-import { firmDisplayName, personFromCustomerName } from "@/lib/advisor-name";
+import { firmDisplayName, kurzNameFuerLeads, personFromCustomerName } from "@/lib/advisor-name";
 import type { CreateTemplateInput, RemoteTemplate } from "@/lib/whatsapp/dialog360";
 
 export { TEMPLATE_VERSION };
@@ -100,9 +100,17 @@ export function advisorDisplayName(customerName: string): string {
   return customerName.replace(/^Allianz\s+/i, "").trim() || customerName.trim();
 }
 
-/** [Firma] = Kundenname, [Berater] = Person (Ole, 14.11.2026), [Rolle] = Status laut Erstinformation (rolleText). */
-export function templateNamesOf(customerName: string, role?: string): TemplateNames {
-  return { firm: firmDisplayName(customerName), advisor: personFromCustomerName(customerName), ...(role ? { role } : {}) };
+/**
+ * [Firma] = Kundenname, [Berater] = Person (Ole, 14.11.2026), [Rolle] = Status laut Erstinformation (rolleText),
+ * [Kurzname] = Vorname laut Profil (Anbieterangaben), sonst Agentur (Erstanschreiben ab v5, Ole 16.11.2026).
+ */
+export function templateNamesOf(customerName: string, role?: string, profilName?: string | null): TemplateNames {
+  return {
+    firm: firmDisplayName(customerName),
+    advisor: personFromCustomerName(customerName),
+    kurz: kurzNameFuerLeads({ profilName, customerName }),
+    ...(role ? { role } : {}),
+  };
 }
 
 /** Text der Vorlage für diesen Kunden (names: Firma und Berater, oder ein Name für beide). */
@@ -128,11 +136,12 @@ const EXAMPLES: Record<string, string> = {
   "Terminvorschlag 1": "Di., 17.11. um 10:00 Uhr",
   "Terminvorschlag 2": "Mi., 18.11. um 16:00 Uhr",
   "Thema der Empfehlung": "Hausrat",
+  Tier: "Ihre Katze",
 };
 
 /** Beispiel für das Produkt im Erstanschreiben (passt zum Artikel im Text: „zur …“ bzw. „zum Thema …“). */
 const PRODUKT_BEISPIEL: Partial<Record<NoticePurpose, string>> = {
-  outreach_tkv: "Tierkrankenversicherung",
+  outreach_tkv: "Katzenversicherung",
   outreach_zahn: "Zahnzusatzversicherung",
   outreach_pkv: "privaten Krankenversicherung",
   outreach_privatschutz: "Privatschutz",
@@ -143,6 +152,8 @@ export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | An
   return paramLabelsFor(purpose, f).map((label) =>
     label === "Link/Hinweis" && f !== "du"
       ? "Wir rufen Sie unter Ihrer Nummer an."
+      : label === "Tier" && f === "du"
+        ? "deine Katze"
       : label === "Produkt"
         ? (PRODUKT_BEISPIEL[purpose] ?? "Versicherung")
         : (EXAMPLES[label] ?? label),
