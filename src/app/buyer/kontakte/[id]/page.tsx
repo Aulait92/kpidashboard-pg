@@ -29,7 +29,7 @@ export default async function KontaktPage({
         className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-base font-medium text-[color:var(--brand)] hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
-        Alle Kontakte
+        {von === "pipeline" ? "Pipeline" : "Alle Kontakte"}
       </Link>
       <LeadDetailBody leadId={id} team={session} newUi />
     </main>

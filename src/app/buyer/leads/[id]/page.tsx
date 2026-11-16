@@ -8,7 +8,7 @@ import { isNewUi } from "@/lib/new-ui";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Lead-Detail | performancegrowth",
+  title: "Kontakt | performancegrowth",
 };
 
 export default async function LeadDetailPage({
@@ -28,19 +28,20 @@ export default async function LeadDetailPage({
   // Default = Leads-Tab (für direkte URL-Aufrufe).
   const { from } = await searchParams;
   const backHref = from === "kanban" ? "/buyer/kanban" : "/buyer/leads";
-  const backLabel =
-    from === "kanban" ? "Zurück zur Pipeline" : "Zurück zu den Leads";
+  const newUi = await isNewUi(session.customerId);
+  // Gleiche Begriffe und gleicher Zurück-Link wie auf /buyer/kontakte/[id] (Ole, 16.11.2026: überall „Kontakte“)
+  const backLabel = from === "kanban" ? "Pipeline" : newUi ? "Alle Kontakte" : "Alle Leads";
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
       <Link
         href={backHref}
-        className="mb-4 inline-flex items-center gap-1 text-xs font-medium text-[color:var(--brand)] hover:underline"
+        className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-base font-medium text-[color:var(--brand)] hover:underline"
       >
-        <ArrowLeft className="h-3 w-3" />
+        <ArrowLeft className="h-4 w-4" />
         {backLabel}
       </Link>
-      <LeadDetailBody leadId={id} team={session} newUi={await isNewUi(session.customerId)} />
+      <LeadDetailBody leadId={id} team={session} newUi={newUi} />
     </main>
   );
 }
