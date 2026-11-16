@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AdminBack } from "@/components/admin/admin-back";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { listReports, loadReportSettings } from "@/lib/monatsbericht/server";
 import { monthLabel, previousMonthKey, shiftMonth, STATUS_LABEL } from "@/lib/monatsbericht/shared";
@@ -21,24 +23,30 @@ export default async function MonatsberichtePage({ searchParams }: { searchParam
   for (const r of rows) counts[r.status] = (counts[r.status] ?? 0) + 1;
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
+      <AdminBack href="/admin/einstellungen">Einstellungen</AdminBack>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Monatsberichte</h1>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Einstufung ist intern. Nur „gut“ mit mindestens einer Maßnahme im Monat kann automatisch raus{settings.autoSendGood ? "" : " (ist derzeit aus, du siehst alles zuerst)"}. Mittel, schwach und Berichte ohne Maßnahme gehen nie automatisch raus.
+            {settings.autoSendGood ? "Nur „gut“ mit Maßnahme geht automatisch raus, alles andere prüfst du." : "Nichts geht automatisch raus: du prüfst jeden Bericht."} Die Einstufung sehen nur wir.
           </p>
         </div>
-        <Link href="/admin/einstellungen/monatsberichte" className="text-sm text-[color:var(--brand)] hover:underline">Einstellungen</Link>
+        <Link href="/admin/einstellungen/monatsberichte" className="inline-flex min-h-10 items-center text-sm text-[color:var(--brand)] hover:underline">Einstellungen</Link>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
-        <Link className="btn-ghost h-9" href={`/admin/monatsberichte?monat=${shiftMonth(month, -1)}`}>← {monthLabel(shiftMonth(month, -1))}</Link>
-        <span className="font-semibold">{monthLabel(month)}</span>
-        <Link className="btn-ghost h-9" href={`/admin/monatsberichte?monat=${shiftMonth(month, 1)}`}>{monthLabel(shiftMonth(month, 1))} →</Link>
-        <span className="text-[color:var(--muted)]">
-          {counts.draft} Entwurf · {counts.sent} gesendet · {counts.call} Anruf · {counts.skipped} ausgesetzt
-        </span>
+      {/* Monat blättern: eine Zeile auch am Handy */}
+      <div className="mt-5 flex items-center gap-2 text-sm">
+        <Link className="btn-ghost h-10 w-10 px-0" aria-label={monthLabel(shiftMonth(month, -1))} title={monthLabel(shiftMonth(month, -1))} href={`/admin/monatsberichte?monat=${shiftMonth(month, -1)}`}>
+          <ChevronLeft className="h-4 w-4" />
+        </Link>
+        <span className="min-w-[8.5rem] text-center font-semibold">{monthLabel(month)}</span>
+        <Link className="btn-ghost h-10 w-10 px-0" aria-label={monthLabel(shiftMonth(month, 1))} title={monthLabel(shiftMonth(month, 1))} href={`/admin/monatsberichte?monat=${shiftMonth(month, 1)}`}>
+          <ChevronRight className="h-4 w-4" />
+        </Link>
       </div>
+      <p className="mt-2 text-sm text-[color:var(--muted)]">
+        {counts.draft} Entwurf · {counts.sent} gesendet · {counts.call} Anruf · {counts.skipped} ausgesetzt
+      </p>
       <div className="mt-3">
         <GenerateNow month={month} />
       </div>

@@ -13,7 +13,8 @@ import { NotificationsButton } from "@/components/notifications-button";
 // und „Mehr“ (Zahlen, Marketing, Einstellungen).
 // Platz für Seitenleiste/Leiste unten schafft globals.css über [data-admin-shell].
 
-const SETTINGS = ["/admin/einstellungen", "/admin/lead-eingang", "/admin/whatsapp/settings", "/admin/vertrieb/import", "/admin/buyers", "/admin/media-buyer"];
+// Seiten, die man (heute) über Einstellungen erreicht: dort ist das Menü markiert und die Kopfzeile heißt „Einstellungen“.
+const SETTINGS = ["/admin/einstellungen", "/admin/lead-eingang", "/admin/whatsapp/settings", "/admin/vertrieb/import", "/admin/buyers", "/admin/media-buyer", "/admin/monatsberichte", "/admin/optimierung"];
 const isSettings = (p: string) => SETTINGS.some((s) => p.startsWith(s));
 
 type Item = { href: string; label: string; icon: LucideIcon; match: (p: string) => boolean; badge?: number; /** am Handy unter „Mehr“ statt in der Leiste unten */ more?: boolean };
