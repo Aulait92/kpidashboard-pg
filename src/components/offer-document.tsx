@@ -351,15 +351,19 @@ export function OfferDocument({
               Abschluss.
             </Tr>
           )}
+          {/* Ole, 16.11.2026: Produkte nur mit Namen; das Budget steht unter „Werbebudget“, damit es sich nicht wie unser Preis liest */}
           <Tr k="Produkte">
-            <ul className="space-y-0.5">
-              {products.map((p, i) => (
-                <li key={i}>
-                  <span className="font-medium text-[#111827]">{p.name}</span>: {eur(p.dailyBudget)} pro Tag (≈{" "}
-                  {eur(Math.round(p.dailyBudget * PRICE_LIST.daysPerMonth))} im Monat)
-                </li>
-              ))}
-            </ul>
+            {products.length === 1 ? (
+              <span className="font-medium text-[#111827]">{products[0].name}</span>
+            ) : (
+              <ul className="space-y-0.5">
+                {products.map((p, i) => (
+                  <li key={i} className="font-medium text-[#111827]">
+                    {p.name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </Tr>
           {add.hasSeats ? (
             <Tr k="Verkäufer">
@@ -376,8 +380,24 @@ export function OfferDocument({
             </Tr>
           ) : null}
           <Tr k="Werbebudget">
-            ≈ {eur(list.monthlyBudget)} im Monat. Das Werbebudget zahlt der Kunde direkt an Meta; es ist in den Preisen
-            nicht enthalten.
+            {products.length === 1 ? (
+              <>
+                {eur(products[0].dailyBudget)} pro Tag, etwa {eur(list.monthlyBudget)} im Monat.
+              </>
+            ) : (
+              <ul className="space-y-0.5">
+                {products.map((p, i) => (
+                  <li key={i}>
+                    {p.name}: {eur(p.dailyBudget)} pro Tag, etwa {eur(Math.round(p.dailyBudget * PRICE_LIST.daysPerMonth))} im Monat
+                  </li>
+                ))}
+                <li>Zusammen etwa {eur(list.monthlyBudget)} im Monat.</li>
+              </ul>
+            )}{" "}
+            Das Werbebudget zahlen Sie direkt an Meta, es ist nicht Teil unserer Rechnung.
+            {!serviceOnly && !list.individual && offer.monthlyFee != null ? (
+              <Note>Ihre Betreuung richtet sich nach diesem Werbebudget: {eur2(offer.monthlyFee)} netto im Monat.</Note>
+            ) : null}
           </Tr>
           {offer.startDate ? (
             <Tr k="Start">
