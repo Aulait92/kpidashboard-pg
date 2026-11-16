@@ -4,11 +4,14 @@ Free-Plan: wenige Abfragen pro Tag. Jeden Tag die nächsten offenen Fragen abfra
 
 | Nr | Frage | Status | Ergebnis / Fundstelle |
 |----|-------|--------|-----------------------|
-| 1 | EuGH C-184/20 und C-21/23: Antworten „Zahnersatz/Prophylaxe“ als Gesundheitsdaten (Art. 9 DSGVO) | offen | |
-| 2 | § 5 UWG: Werbung mit Erfolgsangaben gegenüber Unternehmern (18 Kunden/Monat, 12 % Quote), Beweislast, BGH | offen | |
-| 3 | § 5a Abs. 4 UWG, BGH I ZR 90/20: Offenlegung Empfehlungsprämie 300 € im vorformulierten Teilen-Text | offen | |
-| 4 | § 60 Abs. 1 S. 2, Abs. 2 VVG: Hinweis eingeschränkte Marktauswahl beim Makler, Rechtsprechung „hinreichende Zahl“ | offen | |
-| 5 | § 25 Abs. 2 Nr. 2 TDDDG: Fehlerlogging/Session Replay ohne Einwilligung, DSK-Orientierungshilfe | offen | |
+| 1 | EuGH C-184/20 und C-21/23: Antworten „Zahnersatz/Prophylaxe“ als Gesundheitsdaten (Art. 9 DSGVO) | teilweise (16.11.) | EuGH C-184/20 Urteil 1.8.2022 (Große Kammer): https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62020CJ0184 ; Schlussanträge C-21/23 Lindenapotheke 25.4.2024: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62023CC0021 . Urteil C-21/23 noch nicht über Tool gefunden. Vorsichtige Variante (Knöpfe neutral) ist beauftragt. |
+| 2 | § 5 UWG: Werbung mit Erfolgsangaben gegenüber Unternehmern (18 Kunden/Monat, 12 % Quote), Beweislast, BGH | teilweise (16.11.) | Kein direkter Treffer zu Erfolgsquoten. Verwandt: BGH 15.4.2021 „Testsiegel auf Produktabbildung“ (Fundstelle der Angabe muss prüfbar sein): https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE301482021&psml=bsjrsprod.psml . Weitere Suche nötig. |
+| 3 | § 5a Abs. 4 UWG, BGH I ZR 90/20: Offenlegung Empfehlungsprämie 300 € im vorformulierten Teilen-Text | belegt (16.11.) | BGH 9.9.2021 I ZR 125/20 „Influencer II“ (Gegenleistung als Kriterium des kommerziellen Zwecks): https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE305152021&psml=bsjrsprod.psml ; BGH 13.1.2022 (Influencerin, Revision zurückgewiesen): https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE626022022&psml=bsjrsprod.psml . Beauftragte Offenlegung im Teilen-Text bestätigt. |
+| 4 | § 60 Abs. 1 S. 2, Abs. 2 VVG: Hinweis eingeschränkte Marktauswahl beim Makler, Rechtsprechung „hinreichende Zahl“ | teilweise (16.11.) | BGH 10.3.2016 (Pflichten des Maklers: welche Risiken, effektivste Deckung, bei welchem Risikoträger): https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE304562016&psml=bsjrsprod.psml . Normtext § 60 noch abrufen. Hinweis im Produkt beauftragt. |
+| 5 | § 25 Abs. 2 Nr. 2 TDDDG: Fehlerlogging/Session Replay ohne Einwilligung, DSK-Orientierungshilfe | teilweise (16.11.) | OLG Frankfurt 11.12.2025, 6 U 81/23: Verbot nach § 25 TDDDG gilt gegenüber jedermann, auch Drittanbieter haften: https://www.lareda.hessenrecht.hessen.de/perma?d=LARE260000013 . Stützt: Replay auf Endkundenseiten aus (beauftragt). Für reines Fehlerlogging ohne Speicherung im Browser noch offen. |
 | 6 | § 203 Abs. 1 Nr. 7, Abs. 3, Abs. 4 StGB: Vermittler (Makler/Vertreter) erfasst? KI-Dienstleister in USA | offen | |
 | 7 | BFSG § 1 Abs. 3 Nr. 5, § 3 Abs. 3: Buchungsseite/Kundenlink-Präsentation, Rollen SaaS/Vermittler | offen | |
 | 8 | Art. 50 KI-VO Abs. 1, 2, 4: Bot-Kennzeichnung, KI-Zusammenfassungen auf Kundenfolien, Fristen/Digital-Omnibus | offen | |
+| 9 | § 7a VVG: Hinweis bei Paketen (Bestandteile auch einzeln erhältlich) im Kombi-Flow der Beratungspräsentation | offen | |
+
+Letzter Lauf: 16.11.2026, Limit erreicht, Reset laut Tool 17.11.2026 12:50 UTC. Nächste: 6, 7, 8, 9, dann Rest von 1, 2, 4, 5.
