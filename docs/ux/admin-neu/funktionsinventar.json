@@ -1,0 +1,3274 @@
+[
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Seitenleiste mit Bereichen Heute, Vertrieb, Kunden, Chats, Zahlen",
+  "quelle": "components/admin/admin-shell.tsx:adminAreas",
+  "neu": "Seitenleiste › 6 Bereiche plus Einstellungen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Zähler-Badge an Heute (offene Punkte)",
+  "quelle": "components/admin/admin-shell.tsx:Count",
+  "neu": "Seitenleiste › Heute › Zähler",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Zähler-Badge an Chats (offene WhatsApp-Gespräche)",
+  "quelle": "components/admin/admin-shell.tsx:Count",
+  "neu": "Seitenleiste › Leads & Kampagnen › Zähler",
+  "status": "abgedeckt",
+  "demo_view": "leads-chats"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Handy: Leiste unten mit allen Bereichen",
+  "quelle": "components/admin/admin-shell.tsx:MobileNav",
+  "neu": "Leiste unten (5 Bereiche plus Mehr)",
+  "status": "abgedeckt",
+  "demo_view": "mehr"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Logo führt zu Heute",
+  "quelle": "components/admin/admin-shell.tsx:Logo",
+  "neu": "Seitenleiste › Logo",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Befehlspalette mit Seiten-Sprüngen (35 Ziele)",
+  "quelle": "components/command-palette.tsx",
+  "neu": "Globale Suche › Abschnitt Seiten",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Suche nach Kunden, Kontakten, Leads (API)",
+  "quelle": "app/api/admin/search/route.ts:GET",
+  "neu": "Globale Suche › Kontakte, Kunden, Leads",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Tastenkürzel Cmd/Strg+K öffnet Suche, Pfeile/Enter/Esc darin",
+  "quelle": "components/search-dialog.tsx:useSearchShortcut",
+  "neu": "Globale Suche › ⌘K",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Push-Benachrichtigungen aktivieren, abschalten, Test senden",
+  "quelle": "components/notifications-button.tsx:usePush",
+  "neu": "Profilmenü › Push-Benachrichtigungen (fehlt in Demo)",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Profilmenü: Einstellungen, Sicherheit, Abmelden",
+  "quelle": "components/admin/admin-profile-menu.tsx",
+  "neu": "Seitenleiste › Profil (Ole) › Menü mit Abmelden (in Demo nur Anzeige)",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Zurück-Link merkt gefilterte Liste (Suche, Filter, Seite)",
+  "quelle": "components/admin/list-memory.tsx:BackToList",
+  "neu": "Alle Akten › Zurück-Link zur gefilterten Liste",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Push an Admins mit Sprungziel Kontaktakte (Buchung, Termin, Zahlung, Budget, Fragebogen)",
+  "quelle": "lib/vertrieb/buchung.ts, lib/pause.ts, lib/budget.ts, app/buyer/einrichtung/actions.ts: sendToAdmins",
+  "neu": "Push › Ziel Vertrieb › Kontaktakte (Adressen umstellen)",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Push an Admins mit Sprungziel Kundenakte Abrechnung (Kündigung, Reaktivierung, Module, Verkäufer, Pakete)",
+  "quelle": "lib/ruhend.ts, lib/vertrag-kuendigung.ts, lib/seats-server.ts, lib/bestand/*: sendToAdmins",
+  "neu": "Push › Ziel Kundenakte › Abrechnung & Pause (Adressen umstellen)",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Push an Admins mit Sprungziel WhatsApp (Verbindung prüfen, Kalender fehlt, Vorlage abgelehnt)",
+  "quelle": "lib/whatsapp/self-connect.ts, app/buyer/kalender/source-actions.ts, lib/whatsapp/template-submit.ts",
+  "neu": "Push › Ziel Kundenakte › WhatsApp bzw. Einstellungen › Vorlagen (Adressen umstellen)",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Push an Admins mit Sprungziel Pay-per-Lead (Bestellung, Lieferung, Storno, nicht verlängert)",
+  "quelle": "lib/ppl/orders.ts, lib/ppl/delivery.ts, lib/ppl/storno.ts",
+  "neu": "Push › Ziel Leads & Kampagnen › Pay-per-Lead (Adressen umstellen)",
+  "status": "ergänzen",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Push an Admins: LinkedIn, Bank neu verbinden, Monatsberichte, Status/Variable fehlt, Empfehlungsprämie",
+  "quelle": "lib/linkedin/cron.ts, lib/bank/server.ts, lib/monatsbericht/server.ts, lib/env-check.ts, lib/kollegen.ts",
+  "neu": "Push › Ziele Marketing, Zahlen › Kosten & Bank, Kunden › Monatsberichte, Einstellungen › Status (Adressen umstellen)",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Begrüßung und Zusammenfassung der offenen Punkte",
+  "quelle": "app/admin/heute/layout.tsx, lib/admin-heute.ts:summary",
+  "neu": "Heute › Kopf",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Liste Braucht Sie aus allen Bereichen mit Sprungknopf",
+  "quelle": "components/admin/heute-list.tsx, lib/admin-heute.ts:loadAdminHeute",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Filter Alle, Vertrieb, Kunden, Chats, Freigaben",
+  "quelle": "lib/admin-heute.ts:HEUTE_FILTERS",
+  "neu": "Heute › Chips (Demo: Vertrieb, Kunden, Leads, Finanzen; Freigaben und Chats ergänzen)",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Aufgabe erledigt (Schnellknopf)",
+  "quelle": "app/admin/heute/actions.ts:completeTaskAction",
+  "neu": "Heute › Zu erledigen › Zeile › Erledigt",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Aufgabe verschieben auf morgen (Schnellknopf)",
+  "quelle": "app/admin/heute/actions.ts:postponeTaskAction",
+  "neu": "Heute › Zu erledigen › Zeile › Morgen",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Termin-Ergebnis eintragen (stattgefunden, nicht erschienen, ...)",
+  "quelle": "app/admin/heute/actions.ts:meetingOutcomeAction",
+  "neu": "Heute › Zu erledigen › Termin-Zeile › Ergebnis-Knöpfe",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Reklamation (PPL-Storno) direkt annehmen oder ablehnen",
+  "quelle": "app/admin/heute/actions.ts:decideStornoQuickAction",
+  "neu": "Heute › Zu erledigen › Storno-Zeile (Demo: nur Prüfen-Link)",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Garantie-Fall gewähren",
+  "quelle": "app/admin/heute/actions.ts:garantieGewaehrenAction",
+  "neu": "Heute › Zu erledigen › Garantie-Zeile › Gewähren",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Garantie-Fall ablehnen mit Begründung",
+  "quelle": "app/admin/heute/actions.ts:garantieAblehnenAction",
+  "neu": "Heute › Zu erledigen › Garantie-Zeile › Ablehnen mit Grund",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Angebot als nachgefasst markieren",
+  "quelle": "app/admin/heute/actions.ts:offerFollowedUpAction",
+  "neu": "Heute › Zu erledigen › Angebot-Zeile › Nachgefasst",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkt ausblenden für X Tage (Später, Gelesen, Erledigt)",
+  "quelle": "app/admin/heute/actions.ts:dismissAction",
+  "neu": "Heute › Zu erledigen › Zeile › Später",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Ausblenden rückgängig machen (Toast)",
+  "quelle": "app/admin/heute/actions.ts:undoHeuteAction",
+  "neu": "Heute › Toast Rückgängig",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkte: Formulare ohne Zuordnung, geparkte Leads, Reklamationen",
+  "quelle": "lib/admin-heute.ts:forms/parked/storno",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkte: Zahlung offen, Lastschrift fehlgeschlagen, Ausgaben zuordnen",
+  "quelle": "lib/admin-heute.ts:pay/order/bank",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkte: Onboarding wartet, Einrichtung hängt, Kunde reagiert nicht auf Leads, ruhende Konten vor Löschung",
+  "quelle": "lib/admin-heute.ts:ob/setup-stuck/stale/ruhend",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkte: Bestandskunden-Modul gewünscht, Hilfe-Anfragen, Feedback/KI-Antworten schlecht",
+  "quelle": "lib/admin-heute.ts:modul/support/feedback",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkte: LinkedIn-Entwürfe, Post fehlgeschlagen, LinkedIn neu verbinden",
+  "quelle": "lib/admin-heute.ts:linkedin",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkte: Support-Chats, Monatsberichte prüfen, Optimierung freigeben, Später-Follow-ups freigeben",
+  "quelle": "lib/admin-heute.ts:chats/berichte/optimierung/followups",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkt: Rechnungen ohne Steuernummer",
+  "quelle": "lib/admin-heute.ts:rechnung:steuernummer",
+  "neu": "Heute › Zu erledigen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Punkt: Hintergrund-Jobs bzw. Werbedaten-Abgleich hängt",
+  "quelle": "lib/admin-heute.ts:heartbeatProblem",
+  "neu": "Heute › Systemstatus",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Termine heute und Aufgaben heute als Zeilen",
+  "quelle": "lib/admin-heute.ts:meet/task",
+  "neu": "Heute › Termine heute",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Läuft von allein: was die App in 7 Tagen automatisch erledigt hat",
+  "quelle": "lib/admin-heute.ts:AutoRow, app/admin/heute/page.tsx",
+  "neu": "Heute › Karte Läuft von allein (Demo zeigt nur Systemstatus)",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Hinweis neue Buchungen seit letztem Besuch",
+  "quelle": "lib/admin-buchungen-neu.ts:countNeueBuchungen",
+  "neu": "Heute › Hinweiszeile, Zahlen › Umsatz & Buchungen › Zähler",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Umsatz bzw. Gewinn bis heute mit Monats-Hochrechnung",
+  "quelle": "lib/forecast.ts:computeMonthlyForecast",
+  "neu": "Heute › Kennzahl MRR (Hochrechnung ergänzen)",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Vertrieb auf einen Blick: Heute fällig, Überfällig, Antworten, Mail nie angerufen",
+  "quelle": "components/admin/vertrieb-blick.tsx",
+  "neu": "Vertrieb › Pipeline › Kennzahlen unter dem Board",
+  "status": "ergänzen",
+  "demo_view": "vertrieb"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Vertrieb auf einen Blick: nächste Termine",
+  "quelle": "components/admin/vertrieb-blick.tsx",
+  "neu": "Heute › Termine heute, Vertrieb › Termine",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-termine"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Vertrieb auf einen Blick: neue Anfragen der letzten 7 Tage",
+  "quelle": "components/admin/vertrieb-blick.tsx",
+  "neu": "Heute › Neue Antworten (Anfragen ergänzen)",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/heute",
+  "funktion": "Vertrieb auf einen Blick: Kontakte je Stufe",
+  "quelle": "components/admin/vertrieb-blick.tsx",
+  "neu": "Vertrieb › Pipeline › Spaltenzähler",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Aufgabenliste gruppiert: Überfällig, Heute, Morgen, 7 Tage, Später",
+  "quelle": "app/admin/heute/aufgaben/page.tsx",
+  "neu": "Vertrieb › Aufgaben",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-aufgaben"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Ansicht Offen oder Erledigt",
+  "quelle": "app/admin/heute/aufgaben/page.tsx:view",
+  "neu": "Vertrieb › Aufgaben",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-aufgaben"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Filter nach Aufgabenart",
+  "quelle": "app/admin/heute/aufgaben/page.tsx:TASK_TYPES",
+  "neu": "Vertrieb › Aufgaben",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-aufgaben"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Aufgabe anlegen (Art, fällig, Uhrzeit), auch ohne Kontakt",
+  "quelle": "app/admin/vertrieb/actions.ts:createTask",
+  "neu": "Vertrieb › Aufgaben › „+ Aufgabe“, „+ Neu“ › Aufgabe, Kontaktakte › Aufgaben",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-aufgaben"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Aufgabe erledigt oder wieder öffnen",
+  "quelle": "app/admin/vertrieb/actions.ts:toggleTask",
+  "neu": "Heute › Zeile, Kontaktakte › Aufgaben",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Aufgabe auf morgen oder in 1 Woche schieben",
+  "quelle": "app/admin/vertrieb/actions.ts:snoozeTask",
+  "neu": "Heute › Zeile › Später, Kontaktakte › Aufgaben",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Aufgabe löschen",
+  "quelle": "app/admin/vertrieb/actions.ts:deleteTask",
+  "neu": "Kontaktakte › Aufgaben › ⋯",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/heute/aufgaben",
+  "funktion": "Aus Aufgabe anrufen oder Kontakt öffnen",
+  "quelle": "components/vertrieb/task-row.tsx:actions",
+  "neu": "Heute › Zeile › Anrufen",
+  "status": "abgedeckt",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Kontaktliste mit Zähler",
+  "quelle": "app/admin/vertrieb/kontakte/page.tsx",
+  "neu": "Vertrieb › Kontakte",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Suche nach Agentur, Name, E-Mail, Ort, Telefon",
+  "quelle": "app/admin/vertrieb/kontakte/page.tsx:q",
+  "neu": "Vertrieb › Kontakte › Suchfeld über der Liste (sonst nur globale Suche)",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Filter Stufe",
+  "quelle": "app/admin/vertrieb/kontakte/page.tsx:stage",
+  "neu": "Vertrieb › Kontakte › Filter Stufe",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Filter Cold Mail (erhalten, keine, geöffnet, geantwortet, bounced)",
+  "quelle": "app/admin/vertrieb/kontakte/page.tsx:MAIL_FILTERS",
+  "neu": "Vertrieb › Kontakte › Chips",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Filter LinkedIn-Status und PLZ beginnt mit",
+  "quelle": "app/admin/vertrieb/kontakte/page.tsx:li/plz",
+  "neu": "Vertrieb › Kontakte › Weitere Filter",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Mehrere Kontakte markieren und löschen",
+  "quelle": "app/admin/vertrieb/actions.ts:deleteContacts",
+  "neu": "Vertrieb › Kontakte › Auswahl › Löschen",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Direkt anrufen aus der Liste (Handy)",
+  "quelle": "app/admin/vertrieb/kontakte/page.tsx:tel",
+  "neu": "Vertrieb › Kontakte › Zeile › Telefon",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte",
+  "funktion": "Seiten blättern",
+  "quelle": "app/admin/vertrieb/kontakte/page.tsx:page",
+  "neu": "Vertrieb › Kontakte › Blättern",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-kontakte"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/neu",
+  "funktion": "Kontakt anlegen (Quelle, Name, Firma, E-Mail, Telefon)",
+  "quelle": "app/admin/vertrieb/actions.ts:createLeadManually",
+  "neu": "+ Neu › Kontakt",
+  "status": "abgedeckt",
+  "demo_view": "kontakt-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/neu",
+  "funktion": "Beim Anlegen LinkedIn-Profil, Nachricht und Aufgabe für heute mitgeben",
+  "quelle": "app/admin/vertrieb/kontakte/neu/page.tsx",
+  "neu": "Neuer Kontakt › Felder LinkedIn, Notiz, Aufgabe heute",
+  "status": "ergänzen",
+  "demo_view": "kontakt-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/pipeline",
+  "funktion": "Akquise-Pipeline per Drag & Drop",
+  "quelle": "app/admin/vertrieb/actions.ts:dragStage",
+  "neu": "Vertrieb › Pipeline › Board",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb"
+ },
+ {
+  "heute": "/admin/vertrieb/pipeline",
+  "funktion": "Beim Verschieben auf Verloren Grund abfragen",
+  "quelle": "components/vertrieb/kanban.tsx",
+  "neu": "Vertrieb › Pipeline › Dialog Warum verloren",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb"
+ },
+ {
+  "heute": "/admin/vertrieb/pipeline",
+  "funktion": "Karten zeigen Cold-Mail-Status",
+  "quelle": "app/admin/vertrieb/pipeline/page.tsx",
+  "neu": "Vertrieb › Pipeline › Kachel",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Stufe ändern (Auswahl)",
+  "quelle": "app/admin/vertrieb/actions.ts:setStage",
+  "neu": "Kontaktakte › Stammdaten › Stufe",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Verloren mit Grund und Wettbewerber",
+  "quelle": "components/vertrieb/contact-controls.tsx:StagePicker",
+  "neu": "Kontaktakte › Stufe › Verloren-Dialog",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Anrufen und E-Mail schreiben aus dem Kopf",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:tel/mailto",
+  "neu": "Kontaktakte › Kopf › Anrufen, E-Mail",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Link Entscheidungs-Call kopieren",
+  "quelle": "lib/vertrieb/buchung.ts:decisionBookingLink",
+  "neu": "Kontaktakte › Nächster Schritt › Termin buchen › Link kopieren",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Präsentation öffnen",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx",
+  "neu": "Kontaktakte › Präsentation",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Menü: Website, LinkedIn-Profil öffnen",
+  "quelle": "components/vertrieb/contact-controls.tsx:ContactMore",
+  "neu": "Kontaktakte › ⋯",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Kontakt löschen",
+  "quelle": "app/admin/vertrieb/actions.ts:deleteContact",
+  "neu": "Kontaktakte › ⋯ › Löschen",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Kontakte zusammenführen mit Suche nach Kandidaten",
+  "quelle": "app/admin/vertrieb/actions.ts:mergeContactsAction, searchMergeCandidatesAction",
+  "neu": "Kontaktakte › ⋯ › Zusammenführen",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Hinweis mögliche Dubletten",
+  "quelle": "components/vertrieb/contact-merge.tsx:DuplicateHint",
+  "neu": "Kontaktakte › Hinweisband Dublette",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Hinweis Empfehlung von Kunde mit Setup-Rabatt",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:referral",
+  "neu": "Kontaktakte › Hinweisband Empfehlung",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Website und Google neu auswerten (Adresse, Bewertung, Öffnungszeiten)",
+  "quelle": "app/admin/vertrieb/actions.ts:enrichAddressAction",
+  "neu": "Kontaktakte › Agentur › Neu auswerten",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Aktivität erfassen (Anruf, E-Mail, Notiz, Ergebnis, Grund) mit Folgeaufgabe",
+  "quelle": "app/admin/vertrieb/actions.ts:logActivity, createTask",
+  "neu": "Kontaktakte › Aktivität erfassen",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Verlaufseintrag bearbeiten oder löschen",
+  "quelle": "app/admin/vertrieb/actions.ts:updateActivity, deleteActivity",
+  "neu": "Kontaktakte › Verlauf › Eintrag ⋯",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Antworten auf Cold Mails ansehen, Stimmung setzen",
+  "quelle": "app/admin/vertrieb/actions.ts:setReplySentiment",
+  "neu": "Kontaktakte › Cold Mails › Antworten mit Stimmung",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Antwort auf Cold Mail von Hand einfügen",
+  "quelle": "app/admin/vertrieb/actions.ts:addReplyManually",
+  "neu": "Kontaktakte › Cold Mails › Antwort einfügen",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Cold-Mail-Kampagnen des Kontakts (geöffnet, bounced, abgemeldet)",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Fold Cold Mails",
+  "neu": "Kontaktakte › Cold Mails",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Termine (Calendly bzw. Buchungsseite) mit Meeting-Link",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Termine",
+  "neu": "Kontaktakte › Nächster Schritt",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Offene Aufgaben des Kontakts und neue Aufgabe",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Aufgaben",
+  "neu": "Kontaktakte › Karte Aufgaben (fehlt in Demo)",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "LinkedIn-Status und Profil-URL pflegen",
+  "quelle": "app/admin/vertrieb/actions.ts:updateLinkedIn",
+  "neu": "Kontaktakte › Stammdaten › Bearbeiten › LinkedIn",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Kundendaten: Kunden-Stufe, Monatswert, Produkte, Vertragsstart, Herkunft",
+  "quelle": "app/admin/vertrieb/actions.ts:updateCustomer",
+  "neu": "Kontaktakte › Karte Kundendaten bzw. Kundenakte › Übersicht",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Kontakt mit Kundenakte verknüpfen",
+  "quelle": "app/admin/vertrieb/actions.ts:linkContactCustomer",
+  "neu": "Kontaktakte › ⋯ › Mit Kunde verknüpfen",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Haupt-E-Mail korrigieren",
+  "quelle": "app/admin/vertrieb/actions.ts:updatePrimaryEmailAction",
+  "neu": "Kontaktakte › Stammdaten › Bearbeiten",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Weitere E-Mail hinzufügen, entfernen, zur Haupt-E-Mail machen",
+  "quelle": "app/admin/vertrieb/actions.ts:addContactEmailAction, removeContactEmailAction, makePrimaryEmailAction",
+  "neu": "Kontaktakte › Stammdaten › E-Mail",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Adresse und Telefon bearbeiten",
+  "quelle": "app/admin/vertrieb/actions.ts:updateContactAddress",
+  "neu": "Kontaktakte › Stammdaten › Bearbeiten",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Stammdaten: Agenturtyp, Versicherer, Inhaber, Teamgröße, Potenzial, Social, Bewertung, Öffnungszeiten",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/page.tsx:Stammdaten",
+  "neu": "Kontaktakte › Stammdaten, Agentur",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Kontakt-Felder allgemein ändern (ohne Oberfläche)",
+  "quelle": "app/admin/vertrieb/actions.ts:updateContact",
+  "neu": "Kontaktakte › Stammdaten › Bearbeiten",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Onboarding starten (neues Kundenkonto oder bestehendes) nach Annahme",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:startOnboardingAction",
+  "neu": "Kontaktakte › Angebote › Angenommen › Onboarding starten",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Onboarding-Schritte abhaken",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:toggleOnboardingStepAction",
+  "neu": "Kundenakte › Übersicht › Einrichtung",
+  "status": "abgedeckt",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Live schalten bzw. zurücknehmen",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:goLiveAction",
+  "neu": "Kundenakte › Übersicht › Einrichtung › Live schalten",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Willkommens-Mail erneut senden",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:resendWelcomeAction",
+  "neu": "Kundenakte › Übersicht › Einrichtung › ⋯",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Pflichtangaben aus dem Impressum (Erstinformation) anzeigen",
+  "quelle": "components/vertrieb/onboarding-card.tsx:Impressum",
+  "neu": "Kundenakte › Übersicht › Einrichtung › Vermittlerangaben",
+  "status": "abgedeckt",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Später-Follow-up je Kontakt: freigeben, Texte Mail 1 und 2 bearbeiten",
+  "quelle": "app/admin/vertrieb/followup-actions.ts:approveFollowupAction, saveFollowupAction",
+  "neu": "Kontaktakte › Karte Später-Follow-up",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Später-Follow-up: Mail sofort senden, Texte neu schreiben",
+  "quelle": "app/admin/vertrieb/followup-actions.ts:sendFollowupNowAction, redraftFollowupNowAction",
+  "neu": "Kontaktakte › Karte Später-Follow-up › Jetzt senden, Neu schreiben",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Später-Follow-up stoppen oder planen",
+  "quelle": "app/admin/vertrieb/followup-actions.ts:stopFollowupAction, planFollowupAction",
+  "neu": "Kontaktakte › Karte Später-Follow-up",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Später-Follow-up neu schreiben (ohne Oberfläche)",
+  "quelle": "app/admin/vertrieb/followup-actions.ts:redraftFollowupAction",
+  "neu": "Kontaktakte › Karte Später-Follow-up",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Angebotskarte: Angebot ansehen und PDF",
+  "quelle": "components/deal-offers-card.tsx",
+  "neu": "Kontaktakte › Angebote",
+  "status": "abgedeckt",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Angebot per E-Mail senden mit Anrede, Rechner, Präsentation (PDF/Link), Zielgruppe",
+  "quelle": "app/admin/vertrieb/offer-actions.ts:sendOfferEmailAction",
+  "neu": "Angebot erstellen › Verschicken mit Optionen (Rechner und Anrede ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Angebot als verschickt markieren (ohne Mail)",
+  "quelle": "app/admin/vertrieb/offer-actions.ts:markOfferSentAction",
+  "neu": "Kontaktakte › Angebote › ⋯ › Als verschickt markieren",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Angebot löschen",
+  "quelle": "app/admin/vertrieb/offer-actions.ts:deleteOfferAction",
+  "neu": "Kontaktakte › Angebote › ⋯ › Löschen",
+  "status": "ergänzen",
+  "demo_view": "kontakt"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Zahlungserinnerung: Später zahlen erlauben, Erinnerungsdatum",
+  "quelle": "app/admin/vertrieb/offer-actions.ts:setPaymentReminderAction",
+  "neu": "Angebot erstellen › Zahlungserinnerung, Einstellungen › Zahlungserinnerungen",
+  "status": "abgedeckt",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]",
+  "funktion": "Zahlungsstatus des Angebots (offen, bestätigt, bezahlt, fehlgeschlagen)",
+  "quelle": "components/deal-offers-card.tsx:PAY",
+  "neu": "Vertrieb › Angebote › Status",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-angebote"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/angebot",
+  "funktion": "Angebot erstellen: Produkte, Werbebudget, Laufzeit, Start, Setup, Gültigkeit",
+  "quelle": "app/admin/vertrieb/offer-actions.ts:createOfferAction, components/offer-form.tsx",
+  "neu": "Kontaktakte › Angebot erstellen",
+  "status": "abgedeckt",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/angebot",
+  "funktion": "Angebot: Empfänger und Kunde ist Vertreter oder Makler (Garantieart)",
+  "quelle": "components/offer-form.tsx:Empfänger/Kunde ist",
+  "neu": "Angebot erstellen › Felder Empfänger, Kundentyp",
+  "status": "ergänzen",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/angebot",
+  "funktion": "Angebot: Paket wählen (z. B. Nur Betreuung)",
+  "quelle": "components/offer-form.tsx:Paket",
+  "neu": "Angebot erstellen › Feld Paket",
+  "status": "ergänzen",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/angebot",
+  "funktion": "Angebot: Testangebot 0 € ohne Zahlung, Später zahlen erlauben",
+  "quelle": "components/offer-form.tsx",
+  "neu": "Angebot erstellen › Schalter Testangebot",
+  "status": "ergänzen",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/angebot",
+  "funktion": "Angebot: Verkäufer, Zahlweise und Module",
+  "quelle": "components/offer-form.tsx:Verkäufer, Zahlweise und Module",
+  "neu": "Angebot erstellen › Abschnitt Verkäufer, Zahlweise, Module",
+  "status": "ergänzen",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/angebot",
+  "funktion": "Angebot: Zusammenfassung",
+  "quelle": "components/offer-form.tsx:Zusammenfassung",
+  "neu": "Angebot erstellen › Vorschau",
+  "status": "abgedeckt",
+  "demo_view": "angebot-neu"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
+  "funktion": "Verkaufspräsentation mit Angebotspreisen, Pfeiltasten, Vollbild",
+  "quelle": "components/folien-deck.tsx",
+  "neu": "Präsentation › Vollbild",
+  "status": "abgedeckt",
+  "demo_view": "praesentation"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
+  "funktion": "Fassung Vertreter oder Makler wählen",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/praesentation/page.tsx:fassung",
+  "neu": "Präsentation › Umschalter Fassung",
+  "status": "ergänzen",
+  "demo_view": "praesentation"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
+  "funktion": "Link für Interessenten erzeugen, kopieren, Aufrufe sehen",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/praesentation/actions.ts:verkaufsLinkAction",
+  "neu": "Präsentation › Link für den Interessenten",
+  "status": "abgedeckt",
+  "demo_view": "praesentation"
+ },
+ {
+  "heute": "/admin/vertrieb/kontakte/[id]/praesentation",
+  "funktion": "Präsentationslink beenden",
+  "quelle": "app/admin/vertrieb/kontakte/[id]/praesentation/actions.ts:verkaufsLinkBeendenAction",
+  "neu": "Präsentation › Beenden",
+  "status": "abgedeckt",
+  "demo_view": "praesentation"
+ },
+ {
+  "heute": "/admin/vertrieb/angebote",
+  "funktion": "Angebotsliste mit Versand, Öffnung, Gültigkeit, Stand",
+  "quelle": "app/admin/vertrieb/angebote/page.tsx",
+  "neu": "Vertrieb › Angebote",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-angebote"
+ },
+ {
+  "heute": "/admin/vertrieb/angebote",
+  "funktion": "Filter Alle verschickten, Offen, Angenommen, Abgelaufen/abgelehnt, Entwürfe",
+  "quelle": "app/admin/vertrieb/angebote/page.tsx:FILTER",
+  "neu": "Vertrieb › Angebote › Chips",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-angebote"
+ },
+ {
+  "heute": "/admin/vertrieb/angebote",
+  "funktion": "Filter Zahlung offen",
+  "quelle": "app/admin/vertrieb/angebote/page.tsx:FILTER zahlung",
+  "neu": "Vertrieb › Angebote › Chip Zahlung offen",
+  "status": "ergänzen",
+  "demo_view": "vertrieb-angebote"
+ },
+ {
+  "heute": "/admin/vertrieb/follow-ups",
+  "funktion": "Liste wartet auf Freigabe, einzeln oder alle freigeben",
+  "quelle": "app/admin/vertrieb/followup-actions.ts:approveFollowupAction",
+  "neu": "Einstellungen › Später-Follow-ups › Wartet auf Freigabe, Heute",
+  "status": "abgedeckt",
+  "demo_view": "e-followups"
+ },
+ {
+  "heute": "/admin/vertrieb/follow-ups",
+  "funktion": "Listen Geplant, Laufend, Zuletzt beendet mit Vorschau und Fehler",
+  "quelle": "app/admin/vertrieb/follow-ups/page.tsx:Group",
+  "neu": "Einstellungen › Später-Follow-ups › Listen (ergänzen), Kontaktakte",
+  "status": "ergänzen",
+  "demo_view": "e-followups"
+ },
+ {
+  "heute": "/admin/vertrieb/follow-ups",
+  "funktion": "Einstellungen: Automatik an, Höchstzahl je Tag und Postfach, Buchungslink, Signatur, Angebotstext",
+  "quelle": "app/admin/vertrieb/followup-actions.ts:saveFollowupSettingsAction",
+  "neu": "Einstellungen › Später-Follow-ups › Einstellungen (Demo nur Freigabe und Abstand)",
+  "status": "ergänzen",
+  "demo_view": "e-followups"
+ },
+ {
+  "heute": "/admin/vertrieb/follow-ups",
+  "funktion": "Bestand jetzt prüfen (bestehende Später-Antworten einplanen)",
+  "quelle": "app/admin/vertrieb/followup-actions.ts:planExistingAction",
+  "neu": "Einstellungen › Später-Follow-ups › Bestand prüfen",
+  "status": "ergänzen",
+  "demo_view": "e-followups"
+ },
+ {
+  "heute": "/admin/vertrieb/buchungsseite",
+  "funktion": "Vertriebskalender verbinden bzw. trennen",
+  "quelle": "app/admin/vertrieb/buchungsseite/actions.ts:disconnectSalesCalendarAction",
+  "neu": "Vertrieb › Termine › Buchungsseiten › Kalender, Einstellungen › Buchungsseiten",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-termine"
+ },
+ {
+  "heute": "/admin/vertrieb/buchungsseite",
+  "funktion": "Termintypen bearbeiten (Dauer, Puffer, Vorlauf)",
+  "quelle": "app/admin/vertrieb/buchungsseite/actions.ts:saveBookingTypeAction",
+  "neu": "Einstellungen › Buchungsseiten",
+  "status": "abgedeckt",
+  "demo_view": "e-buchung"
+ },
+ {
+  "heute": "/admin/vertrieb/buchungsseite",
+  "funktion": "Buchbare Zeiten je Wochentag",
+  "quelle": "app/admin/vertrieb/buchungsseite/actions.ts:saveSalesTimesAction",
+  "neu": "Einstellungen › Buchungsseiten › Zeiten",
+  "status": "ergänzen",
+  "demo_view": "e-buchung"
+ },
+ {
+  "heute": "/admin/vertrieb/buchungsseite",
+  "funktion": "Einbettungscode für die Webseite kopieren",
+  "quelle": "app/admin/vertrieb/buchungsseite/page.tsx:embedSnippet",
+  "neu": "Einstellungen › Buchungsseiten › Auf Webseite einbinden",
+  "status": "ergänzen",
+  "demo_view": "e-buchung"
+ },
+ {
+  "heute": "/admin/vertrieb/buchungsseite",
+  "funktion": "Buchungslink kopieren",
+  "quelle": "app/admin/vertrieb/buchungsseite/page.tsx",
+  "neu": "Vertrieb › Termine › Link kopieren",
+  "status": "abgedeckt",
+  "demo_view": "vertrieb-termine"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Status je Quelle (Instantly, Calendly, Formulare, LinkedIn) grün bei Eingang in 7 Tagen",
+  "quelle": "app/admin/vertrieb/import/page.tsx",
+  "neu": "Einstellungen › Anbindungen & Import",
+  "status": "abgedeckt",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Webhook-Adressen kopieren und Anleitung",
+  "quelle": "app/admin/vertrieb/import/page.tsx:CopyField",
+  "neu": "Einstellungen › Anbindungen & Import › Zeile › Adresse kopieren",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Jetzt mit Instantly abgleichen",
+  "quelle": "app/admin/vertrieb/actions.ts:syncInstantlyAction",
+  "neu": "Einstellungen › Anbindungen & Import › Instantly › Jetzt abgleichen",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Instantly-CSV importieren",
+  "quelle": "app/admin/vertrieb/actions.ts:importInstantlyAction",
+  "neu": "Einstellungen › Anbindungen & Import › CSV",
+  "status": "abgedeckt",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Calendly verbinden und Termine abgleichen",
+  "quelle": "app/admin/vertrieb/actions.ts:connectCalendlyAction, syncCalendlyAction",
+  "neu": "Einstellungen › Anbindungen & Import › Calendly",
+  "status": "abgedeckt",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Agenturliste (CSV) importieren",
+  "quelle": "app/admin/vertrieb/actions.ts:importContactsAction",
+  "neu": "Einstellungen › Anbindungen & Import › CSV Agenturliste",
+  "status": "abgedeckt",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Daten aus altem Cold CRM übernehmen",
+  "quelle": "app/admin/vertrieb/actions.ts:importColdCrmAction",
+  "neu": "Einstellungen › Anbindungen & Import › Zeile Cold CRM",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Vertrieb neu importieren (ersetzt alles, Bestätigung ERSETZEN)",
+  "quelle": "app/admin/vertrieb/actions.ts:replaceColdCrmAction",
+  "neu": "Einstellungen › Anbindungen & Import › Gefahrenbereich",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Waalaxy-Import (ohne Oberfläche)",
+  "quelle": "app/admin/vertrieb/actions.ts:importWaalaxyAction",
+  "neu": "Einstellungen › Anbindungen & Import › LinkedIn",
+  "status": "abgedeckt",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "LinkedIn-Nachrichten ohne Zuordnung als Lead übernehmen",
+  "quelle": "app/admin/vertrieb/actions.ts:convertInboundLead",
+  "neu": "Einstellungen › Anbindungen & Import › LinkedIn › Ohne Zuordnung",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Kontakte anreichern: Google-Kontingent heute",
+  "quelle": "app/admin/vertrieb/import/page.tsx:placesUsed",
+  "neu": "Einstellungen › Anbindungen & Import › Zeile Google",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/vertrieb/import (Anbindungen)",
+  "funktion": "Team-Kalender für Hilfetermine der Kunden (Status)",
+  "quelle": "app/admin/vertrieb/import/page.tsx:Team-Kalender",
+  "neu": "Einstellungen › Einrichtung neuer Kunden › Hilfetermin-Kalender",
+  "status": "ergänzen",
+  "demo_view": "e-einrichtung"
+ },
+ {
+  "heute": "/admin/vertrieb/kunden",
+  "funktion": "Weiterleitung auf Kunden-Pipeline (keine eigene Funktion)",
+  "quelle": "app/admin/vertrieb/kunden/page.tsx:redirect",
+  "neu": "entfällt",
+  "status": "abgedeckt",
+  "demo_view": "kunden"
+ },
+ {
+  "heute": "/admin/kunden",
+  "funktion": "Kundenliste mit Status, Test, Zahlung offen, Pause, Onboarding-Fortschritt, Nächster-Schritt-Quote",
+  "quelle": "app/admin/kunden/(liste)/page.tsx",
+  "neu": "Kunden › Liste",
+  "status": "abgedeckt",
+  "demo_view": "kunden"
+ },
+ {
+  "heute": "/admin/kunden",
+  "funktion": "Filter Alle, Zahlung offen, Onboarding, Pausiert, Ruhend",
+  "quelle": "app/admin/kunden/(liste)/page.tsx:FILTERS",
+  "neu": "Kunden › Chips",
+  "status": "abgedeckt",
+  "demo_view": "kunden"
+ },
+ {
+  "heute": "/admin/kunden",
+  "funktion": "Unterreiter Übersicht, Pipeline, Leads, Pay-per-Lead, Optimierung, Monatsberichte",
+  "quelle": "components/admin/kunden-tabs.tsx",
+  "neu": "aufgeteilt auf Kunden und Leads & Kampagnen",
+  "status": "abgedeckt",
+  "demo_view": "kunden"
+ },
+ {
+  "heute": "/admin/kunden/pipeline",
+  "funktion": "Kunden-Pipeline (Vertrag, Onboarding, Test, Aktiv, Pausiert, Gekündigt) per Drag & Drop",
+  "quelle": "app/admin/vertrieb/actions.ts:dragCustomer",
+  "neu": "Kunden › Liste › Filter (Ansicht); Stufe ändern in Kundenakte ergänzen",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/pipeline",
+  "funktion": "Kunde eine Stufe vor oder zurück",
+  "quelle": "app/admin/vertrieb/actions.ts:moveCustomer",
+  "neu": "Kundenakte › Kopf › Status ändern",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/pipeline",
+  "funktion": "Kunden nach Kanal (ohne Gekündigt)",
+  "quelle": "app/admin/kunden/(liste)/pipeline/page.tsx",
+  "neu": "Zahlen › Übersicht › Woher Kunden kommen",
+  "status": "ergänzen",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Kopf)",
+  "funktion": "Kopf mit Stufe, Onboarding, WhatsApp an/aus, Zahlung offen, ruht/gekündigt/gelöscht, pausiert",
+  "quelle": "app/admin/kunden/[id]/layout.tsx",
+  "neu": "Kundenakte › Kopf",
+  "status": "abgedeckt",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Kopf)",
+  "funktion": "Hinweis hat X Kunden geworben (Link Empfehlungen)",
+  "quelle": "app/admin/kunden/[id]/layout.tsx:referred",
+  "neu": "Kundenakte › Kopf › Badge",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Kopf)",
+  "funktion": "Abwesenheiten der Berater mit Vertretung",
+  "quelle": "app/admin/kunden/[id]/layout.tsx:absentUsers",
+  "neu": "Kundenakte › Kopf › Hinweiszeile",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Kopf)",
+  "funktion": "Testkunde komplett löschen",
+  "quelle": "app/admin/kunden/[id]/test-actions.ts:deleteTestCustomerAction",
+  "neu": "Kundenakte › ⋯ › Testkunde löschen",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Kopf)",
+  "funktion": "Reiter der Kundenakte",
+  "quelle": "app/admin/kunden/[id]/layout.tsx:SubTabs",
+  "neu": "Kundenakte › 7 Reiter",
+  "status": "abgedeckt",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Neue Oberfläche für Kunden an/aus",
+  "quelle": "app/admin/kunden/[id]/whatsapp/module-actions.ts:toggleNewUiAction",
+  "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Vermittlertyp setzen",
+  "quelle": "app/admin/kunden/[id]/whatsapp/module-actions.ts:setVermittlerTypAction",
+  "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Stornoquote der Verträge des Kunden",
+  "quelle": "components/admin/storno-quote.tsx:StornoQuoteKunde",
+  "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Garantien: Stand und Fälle",
+  "quelle": "components/admin/garantien-card.tsx",
+  "neu": "Kundenakte › Abrechnung & Pause › Karte Garantien",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Als Testkunde markieren",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:markTestCustomerAction",
+  "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Testdaten anlegen bzw. entfernen",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:seedDemoAction, removeDemoAction",
+  "neu": "Kundenakte › Übersicht › Einstellungen dieses Kunden › Testdaten",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Selbst-Einrichtung freischalten",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:openSetupAction",
+  "neu": "Kundenakte › Übersicht › Einrichtung › Freischalten",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Einrichtungsschritte ansehen (Einwilligung, Erstinformation, Meta-Zugriff)",
+  "quelle": "components/admin/setup-card.tsx",
+  "neu": "Kundenakte › Übersicht › Einrichtung",
+  "status": "abgedeckt",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Erinnerung zur Einrichtung senden",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:sendSetupReminderAction",
+  "neu": "Kundenakte › Übersicht › Einrichtung › Erinnern",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Meta-Zugriff prüfen",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:adminCheckMetaAction",
+  "neu": "Kundenakte › Übersicht › Einrichtung › Meta prüfen",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Einrichtung neu starten",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:restartSetupAction",
+  "neu": "Kundenakte › Übersicht › Einrichtung › ⋯",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Lead-Qualität: disqualifizierte Leads nach Grund und Produkt",
+  "quelle": "components/admin/lead-qualitaet-card.tsx",
+  "neu": "Kundenakte › Kampagne & Leads › Karte Lead-Qualität",
+  "status": "ergänzen",
+  "demo_view": "kunde-leads"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Nächster Schritt je Berater (Quote, ohne Schritt, vorzeitig verloren)",
+  "quelle": "components/admin/naechster-schritt-card.tsx",
+  "neu": "Kundenakte › Team & Logins › Karte je Berater",
+  "status": "ergänzen",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Eingebettete Kontaktakte (Verlauf, Aufgaben, Angebote, Onboarding)",
+  "quelle": "app/admin/kunden/[id]/page.tsx:ContactPage embedded",
+  "neu": "Kundenakte › Übersicht › Verlauf plus Link zur Kontaktakte",
+  "status": "ergänzen",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id] (Übersicht)",
+  "funktion": "Grunddaten: Region, Betreuungsgebühr, Meta-Werbekonto",
+  "quelle": "app/admin/kunden/[id]/page.tsx:Grunddaten",
+  "neu": "Kundenakte › Übersicht, Kampagne & Leads",
+  "status": "abgedeckt",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id]/leads",
+  "funktion": "Meta-Werbekonto-ID setzen",
+  "quelle": "app/admin/kunden/[id]/leads/meta-account-actions.ts:setMetaAdAccountAction",
+  "neu": "Kundenakte › Kampagne & Leads › Meta-Werbekonto",
+  "status": "abgedeckt",
+  "demo_view": "kunde-leads"
+ },
+ {
+  "heute": "/admin/kunden/[id]/leads",
+  "funktion": "CAPI-Rückmeldung: Status und Dataset setzen",
+  "quelle": "app/admin/kunden/[id]/leads/capi-actions.ts:setCapiDatasetAction",
+  "neu": "Kundenakte › Kampagne & Leads › CAPI",
+  "status": "abgedeckt",
+  "demo_view": "kunde-leads"
+ },
+ {
+  "heute": "/admin/kunden/[id]/leads",
+  "funktion": "Leadformulare des Kunden an/aus",
+  "quelle": "app/admin/lead-eingang/actions.ts:toggleSourceAction",
+  "neu": "Kundenakte › Kampagne & Leads › Leadformulare",
+  "status": "abgedeckt",
+  "demo_view": "kunde-leads"
+ },
+ {
+  "heute": "/admin/kunden/[id]/leads",
+  "funktion": "Letzte Leads mit Abschluss/Storno",
+  "quelle": "app/admin/kunden/[id]/leads/page.tsx",
+  "neu": "Kundenakte › Kampagne & Leads › Letzte Leads",
+  "status": "abgedeckt",
+  "demo_view": "kunde-leads"
+ },
+ {
+  "heute": "/admin/kunden/[id]/kampagne",
+  "funktion": "KI-Kampagne starten (Produkt, Zusatzwunsch, Seiten-ID, Datenschutz-URL)",
+  "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:startRunAction",
+  "neu": "Leads & Kampagnen › Kampagne mit KI",
+  "status": "abgedeckt",
+  "demo_view": "leads-ki"
+ },
+ {
+  "heute": "/admin/kunden/[id]/kampagne",
+  "funktion": "Fortschritt abrufen, Plan, Anzeigen, Sofortformular ansehen",
+  "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:getRunAction",
+  "neu": "Kampagne mit KI › Ergebnis (Plan, Anzeigen, Formular ergänzen)",
+  "status": "ergänzen",
+  "demo_view": "leads-ki"
+ },
+ {
+  "heute": "/admin/kunden/[id]/kampagne",
+  "funktion": "Anzeigentext bearbeiten",
+  "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:updateCopyAction",
+  "neu": "Kampagne mit KI › Anzeigen › Bearbeiten",
+  "status": "ergänzen",
+  "demo_view": "leads-ki"
+ },
+ {
+  "heute": "/admin/kunden/[id]/kampagne",
+  "funktion": "Bild neu erzeugen",
+  "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:regenerateImageAction",
+  "neu": "Kampagne mit KI › Anzeigen › Bild neu",
+  "status": "ergänzen",
+  "demo_view": "leads-ki"
+ },
+ {
+  "heute": "/admin/kunden/[id]/kampagne",
+  "funktion": "Kampagne bei Meta anlegen (pausiert)",
+  "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:buildRunAction",
+  "neu": "Kampagne mit KI › Anlegen",
+  "status": "abgedeckt",
+  "demo_view": "leads-ki"
+ },
+ {
+  "heute": "/admin/kunden/[id]/kampagne",
+  "funktion": "Angelegte Kampagne bei Meta löschen, Formular archivieren",
+  "quelle": "app/admin/kunden/[id]/kampagne/actions.ts:cleanupRunAction",
+  "neu": "Kampagne mit KI › Verlauf › Löschen",
+  "status": "ergänzen",
+  "demo_view": "leads-ki"
+ },
+ {
+  "heute": "/admin/kunden/[id]/kampagne",
+  "funktion": "Verlauf der Läufe",
+  "quelle": "app/admin/kunden/[id]/kampagne/page.tsx",
+  "neu": "Kampagne mit KI › Verlauf",
+  "status": "abgedeckt",
+  "demo_view": "leads-ki"
+ },
+ {
+  "heute": "/admin/kunden/[id]/optimierung",
+  "funktion": "Protokoll der Maßnahmen des Kunden",
+  "quelle": "app/admin/optimierung/account-view.tsx:ProtocolCard",
+  "neu": "Kundenakte › Optimierung › Protokoll",
+  "status": "ergänzen",
+  "demo_view": "kunde-optimierung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/optimierung",
+  "funktion": "Maßnahme von Hand eintragen (Datum, Art, Text)",
+  "quelle": "app/admin/optimierung/actions.ts:addManualAction",
+  "neu": "Kundenakte › Optimierung › Maßnahme eintragen",
+  "status": "abgedeckt",
+  "demo_view": "kunde-optimierung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/whatsapp",
+  "funktion": "360dialog-Nummer zuordnen",
+  "quelle": "app/admin/kunden/[id]/whatsapp/d360-actions.ts:d360AssignAction",
+  "neu": "Kundenakte › WhatsApp › Nummer zuordnen",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/kunden/[id]/whatsapp",
+  "funktion": "Halb fertige WhatsApp-Verbindung zurücksetzen",
+  "quelle": "app/admin/kunden/[id]/whatsapp/d360-actions.ts:d360ResetAction",
+  "neu": "Kundenakte › WhatsApp › Nummer › Zurücksetzen",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/kunden/[id]/whatsapp",
+  "funktion": "Allianz-Online-Kalender verbinden, ändern, trennen",
+  "quelle": "app/admin/kunden/[id]/whatsapp/calendar-actions.ts:adminConnectAllianzAction, adminChangeAllianzAction, adminDisconnectAllianzAction",
+  "neu": "Kundenakte › WhatsApp › Verfügbarkeit › Kalender",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/kunden/[id]/whatsapp",
+  "funktion": "Buchbare Zeiten für Leads speichern",
+  "quelle": "app/admin/kunden/[id]/whatsapp/calendar-actions.ts:adminSaveLeadTimesAction",
+  "neu": "Kundenakte › WhatsApp › Verfügbarkeit",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/kunden/[id]/whatsapp",
+  "funktion": "Zeit blockieren und Blocker löschen",
+  "quelle": "app/admin/kunden/[id]/whatsapp/calendar-actions.ts:adminAddBlockAction, adminDeleteBlockAction",
+  "neu": "Kundenakte › WhatsApp › Verfügbarkeit › Zeit blockieren",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/kunden/[id]/whatsapp",
+  "funktion": "Meta-Gebühren (intern)",
+  "quelle": "components/whatsapp-fees-card.tsx",
+  "neu": "Kundenakte › WhatsApp › Meta-Gebühren",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/kunden/[id]/whatsapp",
+  "funktion": "Bestandskunden-Kampagnen (Hinweis, Link Abrechnung)",
+  "quelle": "app/admin/kunden/[id]/whatsapp/page.tsx:BestandModuleCard",
+  "neu": "Kundenakte › WhatsApp › Karte Bestandskunden",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Kunde für den Assistenten hinzufügen",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:addCustomerAction",
+  "neu": "Kundenakte › WhatsApp › Assistent einrichten",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "WhatsApp-Nummer von Hand verbinden (Nummer, API-Schlüssel)",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:connectWhatsAppAction",
+  "neu": "Kundenakte › WhatsApp › Nummer › ändern",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Assistent aktiv an/aus",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:setAgentActiveAction",
+  "neu": "Kundenakte › WhatsApp › Assistent aktiv",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Neue Leads automatisch anschreiben nach X Minuten",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:saveAgentSettingsAction",
+  "neu": "Kundenakte › WhatsApp › Assistent (Verzögerung ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Automatisch nachfassen (Abfolgen) an/aus",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:setFollowUpSequencesAction",
+  "neu": "Kundenakte › WhatsApp › Automatisches Nachfassen",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Berater-E-Mail für Einladungen, Videoraum, belegte Zeiten aus ICS",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:saveAgentSettingsAction",
+  "neu": "Kundenakte › WhatsApp › Assistent › Felder",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Buchungskalender Google/Microsoft verbinden, Buchungslink für Leadformular",
+  "quelle": "app/admin/whatsapp/settings/calendar-card.tsx:CalendarCard",
+  "neu": "Kundenakte › WhatsApp › Verfügbarkeit › Kalender verbinden",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Vorlagen des Kunden ansehen, Status bei Meta",
+  "quelle": "app/admin/whatsapp/settings/controls.tsx:TemplateAutoStatus",
+  "neu": "Kundenakte › WhatsApp › Karte Vorlagen (Demo nur global in Einstellungen)",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Vorlage anlegen/bearbeiten mit Zweck, Platzhaltern, Handy-Vorschau",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:saveTemplateResultAction, saveTemplateAction",
+  "neu": "Kundenakte › WhatsApp › Vorlagen › Bearbeiten",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Vorlage löschen",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:deleteTemplateAction",
+  "neu": "Kundenakte › WhatsApp › Vorlagen › ⋯",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Vorlagen bei Meta einreichen bzw. einzeln neu einreichen",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:submitTemplatesAction, resubmitTemplateAction",
+  "neu": "Kundenakte › WhatsApp › Vorlagen › Einreichen",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Vorlage von Hand als freigegeben markieren",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:setTemplateApprovedAction",
+  "neu": "Kundenakte › WhatsApp › Vorlagen › Schalter",
+  "status": "ergänzen",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
+  "funktion": "Erstanschreiben-Einstellungen (alt, ohne Oberfläche)",
+  "quelle": "app/admin/whatsapp/settings/actions.ts:saveOutreachSettingsAction",
+  "neu": "Kundenakte › WhatsApp › Assistent",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (global)",
+  "funktion": "Support-WhatsApp verbinden (360dialog)",
+  "quelle": "app/admin/whatsapp/support-verbinden/route.ts:GET",
+  "neu": "Einstellungen › WhatsApp-Vorlagen & Support-Nummer › Support-Nummer",
+  "status": "abgedeckt",
+  "demo_view": "e-vorlagen"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (global)",
+  "funktion": "A/B-Tests der Vorlagen mit Antwort- und Terminquote",
+  "quelle": "app/admin/whatsapp/settings/ab-test-card.tsx",
+  "neu": "Einstellungen › WhatsApp-Vorlagen › A/B-Test",
+  "status": "abgedeckt",
+  "demo_view": "e-vorlagen"
+ },
+ {
+  "heute": "/admin/whatsapp/settings (global)",
+  "funktion": "Übersicht aller Kunden mit Assistent (Liste, Sprung)",
+  "quelle": "app/admin/whatsapp/settings/page.tsx",
+  "neu": "Kunden › Liste (Spalte WhatsApp) bzw. Kundenakte › WhatsApp",
+  "status": "abgedeckt",
+  "demo_view": "kunden"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Hinweis Zahlung offen seit",
+  "quelle": "app/admin/kunden/[id]/abrechnung/page.tsx",
+  "neu": "Kundenakte › Abrechnung & Pause",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Kündigung & Rückkehr: ruht seit, reaktiviert",
+  "quelle": "app/admin/kunden/[id]/abrechnung/lebenszyklus-card.tsx",
+  "neu": "Kundenakte › Abrechnung & Pause › Kündigung & Rückkehr",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Betreuungsgebühr eintragen, ändern, entfernen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/retainer-actions.ts:saveRetainerAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Betreuungsgebühr › Bearbeiten",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Kündigungsabsichten und angebotene Halteangebote",
+  "quelle": "app/admin/kunden/[id]/abrechnung/retainer-card.tsx",
+  "neu": "Kundenakte › Abrechnung & Pause › Kündigung & Rückkehr",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Budgetänderung des Kunden übernehmen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/budget-actions.ts:decideBudgetAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Werbebudget › Übernehmen",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Budgetänderung ablehnen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/budget-actions.ts:decideBudgetAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Werbebudget › Ablehnen",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Produktbuchung des Kunden annehmen oder ablehnen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/produkt-actions.ts:decideProductAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Produkte",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Aktive Verkäufer speichern und mit Stripe abgleichen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:saveSeatsAction, syncSeatsAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Verkäufer, Module, Zahlweise",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Bestandskunden-Modul freischalten (kostenlos), sperren, sichtbar machen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:bestandModuleAction, bestandSichtbarAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Verkäufer, Module, Zahlweise",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Kontingent Bestandskunden speichern, Zusatzpakete sehen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:saveQuotaAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Module",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Modul Empfehlungen & Bewertungen freischalten oder sperren",
+  "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:empfehlungModuleAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Module",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Zahlweise monatlich/jährlich umstellen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/addon-actions.ts:billingIntervalAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Zahlweise",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Pause/Urlaub eintragen (ab, Neustart, Grund)",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:adminPlanPauseAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Pausieren",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Pause beenden",
+  "quelle": "app/admin/vertrieb/onboarding-actions.ts:adminEndPauseAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Pause beenden",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Kundendaten endgültig löschen mit Grund",
+  "quelle": "app/admin/kunden/[id]/abrechnung/erase-actions.ts:eraseCustomerDataAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Gefahrenbereich Daten löschen",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Rechnungen mit Status und PDF",
+  "quelle": "app/admin/kunden/[id]/abrechnung/page.tsx:invoices",
+  "neu": "Kundenakte › Abrechnung & Pause › Rechnungen",
+  "status": "abgedeckt",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "In Stripe öffnen",
+  "quelle": "app/admin/kunden/[id]/abrechnung/page.tsx",
+  "neu": "Kundenakte › Abrechnung & Pause › Rechnungen › Stripe",
+  "status": "ergänzen",
+  "demo_view": "kunde-abrechnung"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Logins des Kunden mit Einladung offen, zuletzt aktiv",
+  "quelle": "app/admin/buyers/login-list.tsx",
+  "neu": "Kundenakte › Team & Logins",
+  "status": "abgedeckt",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Neuen Login anlegen (E-Mail, Passwort, Kunde)",
+  "quelle": "app/admin/buyers/actions.ts:createBuyerAccount",
+  "neu": "Kundenakte › Team & Logins › + Login",
+  "status": "abgedeckt",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Passwort setzen",
+  "quelle": "app/admin/buyers/actions.ts:resetBuyerPassword",
+  "neu": "Kundenakte › Team & Logins › ⋯",
+  "status": "abgedeckt",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "E-Mail-Adresse ändern",
+  "quelle": "app/admin/buyers/actions.ts:changeBuyerEmail",
+  "neu": "Kundenakte › Team & Logins › ⋯",
+  "status": "abgedeckt",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Login löschen",
+  "quelle": "app/admin/buyers/actions.ts:deleteBuyerAccount",
+  "neu": "Kundenakte › Team & Logins › ⋯",
+  "status": "abgedeckt",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Einladung erneut senden bzw. Link zum Passwort ändern senden",
+  "quelle": "app/admin/buyers/actions.ts:sendBuyerAccessLink",
+  "neu": "Kundenakte › Team & Logins › ⋯ › Einladung senden",
+  "status": "ergänzen",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Login einem anderen Kunden zuordnen",
+  "quelle": "app/admin/buyers/actions.ts:reassignBuyerCustomer",
+  "neu": "Kundenakte › Team & Logins › ⋯ › Anderem Kunden zuordnen",
+  "status": "ergänzen",
+  "demo_view": "kunde-team"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Als Kunde ansehen (nur lesend)",
+  "quelle": "app/buyer/preview-actions.ts:startPreviewAction",
+  "neu": "Kundenakte › Kopf › Als Kunde ansehen",
+  "status": "abgedeckt",
+  "demo_view": "kunde"
+ },
+ {
+  "heute": "/admin/kunden/[id]/logins und /admin/buyers",
+  "funktion": "Login-Liste aller Kunden (Suche nach E-Mail)",
+  "quelle": "app/admin/buyers/page.tsx",
+  "neu": "Globale Suche › Abschnitt Logins (ergänzen)",
+  "status": "ergänzen",
+  "demo_view": "heute"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Monatsübersicht aller Berichte mit Monat vor/zurück",
+  "quelle": "app/admin/monatsberichte/page.tsx",
+  "neu": "Kunden › Monatsberichte (alle Kunden je Monat)",
+  "status": "ergänzen",
+  "demo_view": "kunden-berichte"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Berichte jetzt erzeugen",
+  "quelle": "app/admin/monatsberichte/actions.ts:generateNowAction",
+  "neu": "Kunden › Monatsberichte (alle Kunden je Monat)",
+  "status": "ergänzen",
+  "demo_view": "kunden-berichte"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Bericht ansehen mit Vorschau und Prüfbefunden",
+  "quelle": "app/admin/monatsberichte/[id]/page.tsx",
+  "neu": "Kundenakte › Monatsberichte › Ansehen",
+  "status": "abgedeckt",
+  "demo_view": "kunde-berichte"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Bericht senden",
+  "quelle": "app/admin/monatsberichte/actions.ts:sendReportAction",
+  "neu": "Kundenakte › Monatsberichte › Bericht › Senden",
+  "status": "ergänzen",
+  "demo_view": "kunde-berichte"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Bericht bearbeiten (Betreff, Einstieg) und senden",
+  "quelle": "app/admin/monatsberichte/actions.ts:sendReportAction",
+  "neu": "Kundenakte › Monatsberichte › Bericht › Bearbeiten",
+  "status": "ergänzen",
+  "demo_view": "kunde-berichte"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Anrufen statt Mail",
+  "quelle": "app/admin/monatsberichte/actions.ts:callInsteadAction",
+  "neu": "Kundenakte › Monatsberichte › Bericht › Anrufen statt Mail",
+  "status": "ergänzen",
+  "demo_view": "kunde-berichte"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Diesen Monat aussetzen",
+  "quelle": "app/admin/monatsberichte/actions.ts:skipReportAction",
+  "neu": "Kundenakte › Monatsberichte › Bericht › Aussetzen",
+  "status": "ergänzen",
+  "demo_view": "kunde-berichte"
+ },
+ {
+  "heute": "/admin/monatsberichte",
+  "funktion": "Monatsberichte für diesen Kunden an/aus",
+  "quelle": "app/admin/monatsberichte/actions.ts:toggleCustomerReportsAction",
+  "neu": "Kundenakte › Monatsberichte › Schalter",
+  "status": "ergänzen",
+  "demo_view": "kunde-berichte"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Posteingang Leads ohne Zuordnung",
+  "quelle": "app/admin/lead-eingang/page.tsx",
+  "neu": "Leads & Kampagnen › Lead-Eingang › Ohne Zuordnung",
+  "status": "abgedeckt",
+  "demo_view": "leads"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Formular zuordnen (Seite, Formular, Kunde, Produkt)",
+  "quelle": "app/admin/lead-eingang/actions.ts:assignFormAction",
+  "neu": "Lead-Eingang › Kunde wählen, + Zuordnung",
+  "status": "abgedeckt",
+  "demo_view": "leads"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Beim Zuordnen Lead-Preis (PPL) und Airtable-Bezug",
+  "quelle": "app/admin/lead-eingang/actions.ts:assignFormAction",
+  "neu": "Lead-Eingang › Zuordnung › Erweitert",
+  "status": "ergänzen",
+  "demo_view": "leads"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Facebook-Seite wählen und Formulare laden",
+  "quelle": "app/admin/lead-eingang/page.tsx:listPageForms",
+  "neu": "Lead-Eingang › Zuordnung › Seite",
+  "status": "abgedeckt",
+  "demo_view": "leads"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Wartende Leads ohne Zuordnung verwerfen",
+  "quelle": "app/admin/lead-eingang/actions.ts:dismissUnassignedAction",
+  "neu": "Lead-Eingang › Ohne Zuordnung › Verwerfen",
+  "status": "ergänzen",
+  "demo_view": "leads"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Zuordnung an/aus schalten",
+  "quelle": "app/admin/lead-eingang/actions.ts:toggleSourceAction",
+  "neu": "Lead-Eingang › Zuordnungen › Schalter",
+  "status": "ergänzen",
+  "demo_view": "leads"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Zuordnungen-Tabelle mit Preis, letztem Lead, Einwilligungs-Warnung",
+  "quelle": "app/admin/lead-eingang/page.tsx",
+  "neu": "Lead-Eingang › Zuordnungen",
+  "status": "abgedeckt",
+  "demo_view": "leads"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Meta-Verbindung prüfen (Token, Rechte, Webhook-URL)",
+  "quelle": "app/admin/lead-eingang/page.tsx:diag",
+  "neu": "Einstellungen › Anbindungen & Import › Meta (oder Lead-Eingang Kopf)",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/lead-eingang",
+  "funktion": "Übergang: Webhook für Zapier",
+  "quelle": "app/admin/lead-eingang/page.tsx",
+  "neu": "Einstellungen › Anbindungen & Import",
+  "status": "ergänzen",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/leads",
+  "funktion": "Alle Leads aller Kunden mit Status und Preis",
+  "quelle": "app/admin/leads/page.tsx",
+  "neu": "Leads & Kampagnen › Alle Leads",
+  "status": "abgedeckt",
+  "demo_view": "leads-alle"
+ },
+ {
+  "heute": "/admin/leads",
+  "funktion": "Filter Kunde, Produkt, Status, Zeitraum (Monat oder von/bis)",
+  "quelle": "app/admin/leads/page.tsx:MoreFilters",
+  "neu": "Alle Leads › Chips (Produkt und von/bis ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "leads-alle"
+ },
+ {
+  "heute": "/admin/leads",
+  "funktion": "CSV-Export der gefilterten Leads (mit Protokoll)",
+  "quelle": "app/admin/leads/export/route.ts:GET",
+  "neu": "Alle Leads › Export",
+  "status": "ergänzen",
+  "demo_view": "leads-alle"
+ },
+ {
+  "heute": "/admin/leads",
+  "funktion": "Lead anrufen",
+  "quelle": "app/admin/leads/page.tsx:tel",
+  "neu": "Alle Leads › Zeile",
+  "status": "abgedeckt",
+  "demo_view": "leads-alle"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Bezüge je Produkt mit Kontingent, geliefert, Preis, Filter, Lieferung",
+  "quelle": "app/admin/ppl/page.tsx:Bezuege",
+  "neu": "Leads & Kampagnen › Pay-per-Lead › Bezüge",
+  "status": "abgedeckt",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Übersicht je Kunde (Woche, Monat, liegt zurück)",
+  "quelle": "components/admin/ppl-auswertung.tsx",
+  "neu": "Pay-per-Lead › Ansicht Übersicht je Kunde",
+  "status": "ergänzen",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Auswertung mit Zeitraum und Produktfilter (Diagramm, Tabelle)",
+  "quelle": "components/admin/ppl-auswertung.tsx",
+  "neu": "Pay-per-Lead › Ansicht Auswertung bzw. Zahlen › Übersicht › Pay-per-Lead",
+  "status": "ergänzen",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Geparkte Leads einem Bezug zuordnen",
+  "quelle": "app/admin/ppl/actions.ts:assignParkedAction",
+  "neu": "Pay-per-Lead › Geparkt › Zuordnen",
+  "status": "ergänzen",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Geparkten Lead verwerfen",
+  "quelle": "app/admin/ppl/actions.ts:discardParkedAction",
+  "neu": "Pay-per-Lead › Geparkt › Verwerfen",
+  "status": "ergänzen",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Storno prüfen: annehmen oder ablehnen",
+  "quelle": "app/admin/ppl/actions.ts:decideStornoAction",
+  "neu": "Pay-per-Lead › Storno prüfen",
+  "status": "abgedeckt",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Gelieferte Leads suchen (Name, Telefon, E-Mail, ID, Bezug)",
+  "quelle": "app/admin/ppl/page.tsx:Geliefert",
+  "neu": "Pay-per-Lead › Gelieferte Leads bzw. Alle Leads Filter PPL",
+  "status": "abgedeckt",
+  "demo_view": "leads-alle"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Storno von Hand eintragen (Grund, Notiz)",
+  "quelle": "app/admin/ppl/actions.ts:adminStornoAction",
+  "neu": "Alle Leads › Lead › Storno eintragen",
+  "status": "ergänzen",
+  "demo_view": "leads-alle"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Storno zurücknehmen",
+  "quelle": "app/admin/ppl/actions.ts:undoStornoAction",
+  "neu": "Alle Leads › Lead › Storno zurücknehmen",
+  "status": "ergänzen",
+  "demo_view": "leads-alle"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Eingang aller PPL-Leads (ausgeliefert, geparkt, Dublette, ungültig)",
+  "quelle": "app/admin/ppl/page.tsx:Eingang",
+  "neu": "Pay-per-Lead › Eingang",
+  "status": "abgedeckt",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl",
+  "funktion": "Anzeige Airtable-Abgleich an/aus",
+  "quelle": "app/admin/ppl/page.tsx:AIRTABLE_SYNC_OFF",
+  "neu": "Pay-per-Lead › Kopf › Status",
+  "status": "ergänzen",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/ppl/bezug/[id]",
+  "funktion": "Bezug anlegen/bearbeiten (Kunde, Produkt, Menge, Preis, Start)",
+  "quelle": "app/admin/ppl/actions.ts:saveSubscriptionAction",
+  "neu": "Pay-per-Lead › Bezug",
+  "status": "abgedeckt",
+  "demo_view": "leads-bezug"
+ },
+ {
+  "heute": "/admin/ppl/bezug/[id]",
+  "funktion": "Bezug: Modus Woche/Monat/einmalig, Live/Test, Lieferweg App/E-Mail/Webhook mit Format",
+  "quelle": "app/admin/ppl/bezug/[id]/bezug-form.tsx",
+  "neu": "Bezug › weitere Felder Modus, Lieferweg",
+  "status": "ergänzen",
+  "demo_view": "leads-bezug"
+ },
+ {
+  "heute": "/admin/ppl/bezug/[id]",
+  "funktion": "Gebiet mit Vorrang anlegen/ändern (PLZ, Menge, Zeitraum)",
+  "quelle": "app/admin/ppl/actions.ts:saveAreaAction",
+  "neu": "Bezug › Gebiete mit Vorrang",
+  "status": "abgedeckt",
+  "demo_view": "leads-bezug"
+ },
+ {
+  "heute": "/admin/ppl/bezug/[id]",
+  "funktion": "Gebiet löschen",
+  "quelle": "app/admin/ppl/actions.ts:deleteAreaAction",
+  "neu": "Bezug › Gebiete › Löschen",
+  "status": "abgedeckt",
+  "demo_view": "leads-bezug"
+ },
+ {
+  "heute": "/admin/ppl/bezug/[id]",
+  "funktion": "Bestellung von Hand (bezahlt, ohne Stripe)",
+  "quelle": "app/admin/ppl/actions.ts:manualOrderAction",
+  "neu": "Bezug › Bestellungen › Von Hand bestellen",
+  "status": "ergänzen",
+  "demo_view": "leads-bezug"
+ },
+ {
+  "heute": "/admin/ppl/import",
+  "funktion": "Bezüge aus Airtable übernehmen",
+  "quelle": "app/admin/ppl/actions.ts:runImportAction",
+  "neu": "Pay-per-Lead › Aus Airtable",
+  "status": "abgedeckt",
+  "demo_view": "leads-ppl"
+ },
+ {
+  "heute": "/admin/media-buyer",
+  "funktion": "Pool-Liste mit Ist/Ziel, Prognose, Status (auf Kurs, knapp, Unterdeckung)",
+  "quelle": "app/admin/media-buyer/media-buyer-admin.tsx",
+  "neu": "Leads & Kampagnen › Werbekonten › Filter",
+  "status": "abgedeckt",
+  "demo_view": "leads-optimierung"
+ },
+ {
+  "heute": "/admin/media-buyer",
+  "funktion": "Autopilot je Pool an/aus",
+  "quelle": "app/admin/media-buyer/actions.ts:savePoolSettings",
+  "neu": "Werbekonto › Einstellungen › Automatisch ausführen",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/media-buyer",
+  "funktion": "Max. Tagesbudget je Kanal (Meta, Outbrain, TikTok, Google)",
+  "quelle": "app/admin/media-buyer/actions.ts:savePoolSettings",
+  "neu": "Werbekonto › Einstellungen › Budget je Kanal",
+  "status": "ergänzen",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/media-buyer",
+  "funktion": "Kampagnen-Stichwort je Kanal",
+  "quelle": "app/admin/media-buyer/actions.ts:savePoolSettings",
+  "neu": "Werbekonto › Einstellungen › Stichwort",
+  "status": "ergänzen",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/media-buyer",
+  "funktion": "Trockenlauf Media Buyer",
+  "quelle": "app/admin/media-buyer/actions.ts:runDryRun",
+  "neu": "Werbekonto › Trockenlauf",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/media-buyer",
+  "funktion": "Jetzt anwenden (Budgets setzen)",
+  "quelle": "app/admin/media-buyer/actions.ts:runApplyNow",
+  "neu": "Werbekonto › Jetzt ausführen",
+  "status": "ergänzen",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/media-buyer",
+  "funktion": "Empfehlung, Verlauf der Aktionen, Performance pro Kanal, Adspend-Zuordnung",
+  "quelle": "app/admin/media-buyer/media-buyer-admin.tsx",
+  "neu": "Werbekonto › Protokoll, Kennzahlen je Kanal",
+  "status": "ergänzen",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Werbekonten-Liste mit Modus, letzter Maßnahme (rot wenn alt), offen, letzter Lauf",
+  "quelle": "app/admin/optimierung/page.tsx",
+  "neu": "Leads & Kampagnen › Werbekonten",
+  "status": "abgedeckt",
+  "demo_view": "leads-optimierung"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Global: wöchentlicher Optimierungslauf an/aus",
+  "quelle": "app/admin/optimierung/actions.ts:saveGlobalAction",
+  "neu": "Einstellungen › Kampagnen-Automatik",
+  "status": "ergänzen",
+  "demo_view": "e-automatik"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Global: Autopilot für alle Konten",
+  "quelle": "app/admin/optimierung/actions.ts:saveGlobalAction",
+  "neu": "Einstellungen › Kampagnen-Automatik › Maßnahmen automatisch ausführen",
+  "status": "abgedeckt",
+  "demo_view": "e-automatik"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Konto: Modus, Ziel-Leadpreis, Tagesbudget, Kampagnen-Stichwort",
+  "quelle": "app/admin/optimierung/actions.ts:saveAccountAction",
+  "neu": "Werbekonto › Einstellungen (Ziel, Budget, Stichwort ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Alle Maßnahmen freigeben",
+  "quelle": "app/admin/optimierung/actions.ts:approveAllAction",
+  "neu": "Werbekonto › Alle freigeben",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Einzelne Maßnahme freigeben",
+  "quelle": "app/admin/optimierung/actions.ts:approveOneAction",
+  "neu": "Werbekonto › Freigeben",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Maßnahme ablehnen mit Notiz",
+  "quelle": "app/admin/optimierung/actions.ts:rejectAction",
+  "neu": "Werbekonto › Ablehnen",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Vorschlag als erledigt markieren mit Notiz",
+  "quelle": "app/admin/optimierung/actions.ts:doneAction",
+  "neu": "Werbekonto › Maßnahme › Erledigt",
+  "status": "ergänzen",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Trockenlauf je Konto",
+  "quelle": "app/admin/optimierung/actions.ts:dryRunAction",
+  "neu": "Werbekonto › Trockenlauf",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Lauf jetzt starten",
+  "quelle": "app/admin/optimierung/actions.ts:runNowAction",
+  "neu": "Werbekonto › Jetzt planen",
+  "status": "ergänzen",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Meta-Änderungsprotokoll abrufen (30 Tage)",
+  "quelle": "app/admin/optimierung/actions.ts:syncActivitiesAction",
+  "neu": "Werbekonto › Protokoll › Meta-Änderungen abrufen",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/optimierung",
+  "funktion": "Protokoll je Konto (Quelle Monatsbericht)",
+  "quelle": "app/admin/optimierung/account-view.tsx:ProtocolCard",
+  "neu": "Werbekonto › Protokoll",
+  "status": "abgedeckt",
+  "demo_view": "leads-konto"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Status-Reiter Offen, Zurückgestellt, Erledigt",
+  "quelle": "app/admin/whatsapp/page.tsx:STATUS_TABS",
+  "neu": "WhatsApp-Chats › Chips (Zurückgestellt, Erledigt ergänzen)",
+  "status": "ergänzen",
+  "demo_view": "leads-chats"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Filter Alle, Leads der Kunden, Support-Nummer, Kunde, Interessent, unbekannt",
+  "quelle": "app/admin/whatsapp/page.tsx:ART_FILTERS",
+  "neu": "WhatsApp-Chats › Chips (Support-Arten ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "leads-chats"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Chats durchsuchen nach Name oder Nummer",
+  "quelle": "app/admin/whatsapp/page.tsx:q",
+  "neu": "WhatsApp-Chats › Suchfeld",
+  "status": "ergänzen",
+  "demo_view": "leads-chats"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Rückmeldung Kalender verbunden/abgelehnt",
+  "quelle": "app/admin/whatsapp/page.tsx:gcal",
+  "neu": "Kundenakte › WhatsApp › Hinweis",
+  "status": "abgedeckt",
+  "demo_view": "kunde-whatsapp"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Bot pausieren bzw. wieder einschalten",
+  "quelle": "app/admin/whatsapp/actions.ts:toggleBotAction",
+  "neu": "Chat › Übernehmen bzw. Bot wieder an",
+  "status": "abgedeckt",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Gespräch übernehmen",
+  "quelle": "app/admin/whatsapp/actions.ts:takeOverAction",
+  "neu": "Chat › Übernehmen",
+  "status": "abgedeckt",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Antwort senden (Enter sendet am Rechner, Emoji, Textbausteine)",
+  "quelle": "app/admin/whatsapp/actions.ts:sendReplyAction",
+  "neu": "Chat › Nachricht schreiben",
+  "status": "abgedeckt",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Freigegebene Vorlage senden (außerhalb 24 Stunden)",
+  "quelle": "app/admin/whatsapp/actions.ts:sendTemplateAction",
+  "neu": "Chat › Vorlage einfügen",
+  "status": "abgedeckt",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Termin des Leads verschieben (Dialog mit freien Zeiten)",
+  "quelle": "app/admin/whatsapp/appointment-actions.ts:loadRescheduleDialogAdmin, rescheduleAppointmentAdminAction",
+  "neu": "Chat › Seitenleiste Termine › Verschieben",
+  "status": "ergänzen",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Termin des Leads absagen",
+  "quelle": "app/admin/whatsapp/appointment-actions.ts:cancelAppointmentAdminAction",
+  "neu": "Chat › Seitenleiste Termine › Absagen",
+  "status": "ergänzen",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Seitenleiste Lead: Kontaktdaten, Formularangaben, Bot-Zusammenfassung, Termine, Ereignisse",
+  "quelle": "app/admin/whatsapp/page.tsx",
+  "neu": "Chat › Seitenleiste Lead",
+  "status": "ergänzen",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Anrufen, E-Mail, Zum CRM/Kunden aus dem Chat",
+  "quelle": "app/admin/whatsapp/page.tsx:crmHref",
+  "neu": "Chat › Zum Kunden (Anrufen, E-Mail ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Hinweis Bot kann keine Termine buchen, Kalender verbinden",
+  "quelle": "app/admin/whatsapp/page.tsx",
+  "neu": "Chat › Hinweis",
+  "status": "abgedeckt",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Support-Chat: Absender einem Vertriebskontakt zuordnen",
+  "quelle": "app/admin/whatsapp/actions.ts:assignSupportContactAction",
+  "neu": "Chat › Seitenleiste Wer schreibt? › Zuordnen",
+  "status": "ergänzen",
+  "demo_view": "leads-chat"
+ },
+ {
+  "heute": "/admin/whatsapp (Chats)",
+  "funktion": "Braucht Aufmerksamkeit (Grund) und nicht zugestellt markiert",
+  "quelle": "app/admin/whatsapp/page.tsx",
+  "neu": "WhatsApp-Chats › Status Nicht zugestellt",
+  "status": "abgedeckt",
+  "demo_view": "leads-chats"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Entwürfe zur Freigabe: Text bearbeiten, Bild wählen (Foto, Grafik, ohne), Hypothese sehen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:saveDraftAction",
+  "neu": "Marketing › LinkedIn › Entwurf",
+  "status": "abgedeckt",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Entwurf freigeben (planen)",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:approveAction",
+  "neu": "Marketing › LinkedIn › Freigeben",
+  "status": "abgedeckt",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Sofort veröffentlichen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:approveAction(sofort)",
+  "neu": "Marketing › LinkedIn › Entwurf › Jetzt posten",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Entwurf verwerfen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:discardAction",
+  "neu": "Marketing › LinkedIn › Entwurf › Verwerfen",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Geplante Posts und Freigabe zurücknehmen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:unapproveAction",
+  "neu": "Marketing › LinkedIn › Liste Geplant",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Entwürfe jetzt generieren für X Tage",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:generateNowAction",
+  "neu": "Marketing › LinkedIn › + Entwurf",
+  "status": "abgedeckt",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Ergebnisse je Post (Impressionen, Zielgruppe, Reichweite)",
+  "quelle": "app/admin/marketing/linkedin/page.tsx:Ergebnisse",
+  "neu": "Marketing › LinkedIn › Reichweite je Zielgruppe (Tabelle je Post ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Zahlen je Post nachtragen, importierten Text setzen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:setMetricsAction, setImportedTextAction",
+  "neu": "Marketing › LinkedIn › Ergebnisse › Bearbeiten",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "LinkedIn-Statistik (Excel) hochladen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:importAction",
+  "neu": "Marketing › LinkedIn › Statistik hochladen",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Fotos hochladen, beschreiben, löschen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:uploadPhotosAction, updatePhotoAction, deletePhotoAction",
+  "neu": "Marketing › LinkedIn › Fotos",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "Einstellungen: Zielgruppe, Produkte, Über mich, Trust-Material, Posts pro Tag, Uhrzeiten",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:saveSettingsAction",
+  "neu": "Marketing › LinkedIn › Einstellungen (oder Einstellungen › Anbindungen)",
+  "status": "ergänzen",
+  "demo_view": "marketing"
+ },
+ {
+  "heute": "/admin/marketing/linkedin",
+  "funktion": "LinkedIn verbinden bzw. trennen, Hinweis Zugang abgelaufen",
+  "quelle": "app/admin/marketing/linkedin/actions.ts:disconnectAction",
+  "neu": "Einstellungen › Anbindungen & Import › LinkedIn",
+  "status": "abgedeckt",
+  "demo_view": "e-anbindungen"
+ },
+ {
+  "heute": "/admin/marketing/empfehlungen",
+  "funktion": "Kennzahlen und alle Empfehlungen mit Stand und Prämie",
+  "quelle": "app/admin/marketing/empfehlungen/page.tsx",
+  "neu": "Marketing › Empfehlungen",
+  "status": "abgedeckt",
+  "demo_view": "marketing-empfehlungen"
+ },
+ {
+  "heute": "/admin/marketing/empfehlungen",
+  "funktion": "Prämie als gutgeschrieben markieren",
+  "quelle": "app/admin/marketing/empfehlungen/actions.ts:markRewardDoneAction",
+  "neu": "Marketing › Empfehlungen › Prämie › Gutgeschrieben",
+  "status": "ergänzen",
+  "demo_view": "marketing-empfehlungen"
+ },
+ {
+  "heute": "/admin/marketing/empfehlungen",
+  "funktion": "Empfehlungsrabatt auf offene Angebote anwenden",
+  "quelle": "app/admin/marketing/empfehlungen/actions.ts:applyReferralDiscountsAction",
+  "neu": "Marketing › Empfehlungen › Karte Offene Angebote ohne Rabatt",
+  "status": "ergänzen",
+  "demo_view": "marketing-empfehlungen"
+ },
+ {
+  "heute": "/admin/marketing/empfehlungen",
+  "funktion": "Top-Empfehler mit geworbenen Kunden, Umsatz, Prämien",
+  "quelle": "app/admin/marketing/empfehlungen/page.tsx:Top-Empfehler",
+  "neu": "Marketing › Empfehlungen › Kennzahl Top-Empfehler (Tabelle ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "marketing-empfehlungen"
+ },
+ {
+  "heute": "/admin/marketing/unterlagen",
+  "funktion": "Web-Präsentation je Zielgruppe öffnen und als PDF",
+  "quelle": "app/admin/marketing/unterlagen/praesentation/[audience]/page.tsx",
+  "neu": "Marketing › Unterlagen › Web öffnen, PDF",
+  "status": "abgedeckt",
+  "demo_view": "marketing-unterlagen"
+ },
+ {
+  "heute": "/admin/marketing/unterlagen",
+  "funktion": "Datei (PPTX/PDF) herunterladen",
+  "quelle": "app/api/admin/praesentationen/[audience]/[format]/route.ts:GET",
+  "neu": "Marketing › Unterlagen › PPTX, PDF",
+  "status": "abgedeckt",
+  "demo_view": "marketing-unterlagen"
+ },
+ {
+  "heute": "/admin/marketing/unterlagen",
+  "funktion": "Datei hochladen bzw. ersetzen",
+  "quelle": "app/api/admin/praesentationen/route.ts:POST",
+  "neu": "Marketing › Unterlagen › Datei hochladen",
+  "status": "ergänzen",
+  "demo_view": "marketing-unterlagen"
+ },
+ {
+  "heute": "/admin/marketing/unterlagen",
+  "funktion": "Datei entfernen",
+  "quelle": "app/api/admin/praesentationen/route.ts:DELETE",
+  "neu": "Marketing › Unterlagen › ⋯ › Entfernen",
+  "status": "ergänzen",
+  "demo_view": "marketing-unterlagen"
+ },
+ {
+  "heute": "/admin/marketing/unterlagen",
+  "funktion": "Live-Demo der Beratungspräsentation",
+  "quelle": "app/admin/marketing/unterlagen/unterlagen-grid.tsx",
+  "neu": "Marketing › Unterlagen › Hinweis Live-Demo",
+  "status": "abgedeckt",
+  "demo_view": "marketing-unterlagen"
+ },
+ {
+  "heute": "/admin/marketing/unterlagen",
+  "funktion": "Öffentlichen Rechner öffnen",
+  "quelle": "components/marketing/nav.tsx",
+  "neu": "Marketing › Webseite & Rechner",
+  "status": "abgedeckt",
+  "demo_view": "marketing-webseite"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Kennzahlen-Kacheln (MRR, Kunden, Churn, CAC ...)",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Übersicht",
+  "status": "abgedeckt",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Sicht Kerngeschäft oder Gesamt mit Pay-per-Lead",
+  "quelle": "components/admin/zahlen-view.tsx:sicht",
+  "neu": "Zahlen › Übersicht › Umschalter",
+  "status": "abgedeckt",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Kachel aufklappen (Drill-down Kunden je Kennzahl)",
+  "quelle": "components/admin/zahlen-view.tsx:setDrill",
+  "neu": "Zahlen › Übersicht › Kachel › Details",
+  "status": "ergänzen",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Investoren-Ansicht (interne Reiter ausblenden)",
+  "quelle": "components/admin/zahlen-view.tsx:toggleInvestor",
+  "neu": "Zahlen › Übersicht › Umschalter Investoren",
+  "status": "ergänzen",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Investoren-Update: Highlights, Texte speichern, drucken",
+  "quelle": "app/admin/zahlen/actions.ts:saveUpdateTextsAction",
+  "neu": "Zahlen › Übersicht › Investoren-Update",
+  "status": "ergänzen",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter Wachstum: Umsatz je Strom, Umsatzmix",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Übersicht › MRR je Monat",
+  "status": "abgedeckt",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter Kunden: Kohorten, Kundenbasis, Abhängigkeit",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Übersicht bzw. Kunden-Lebenszyklus",
+  "status": "ergänzen",
+  "demo_view": "zahlen-kunden"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter Wirtschaftlichkeit: Kundengewinnung, Bruttomarge je Strom",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Übersicht (CAC-Kachel), Marge ergänzen",
+  "status": "ergänzen",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter Wirkung beim Vertreter: Pro 1 €, Lead bis Abschluss, Tempo",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Qualität & Nutzung oder Übersicht",
+  "status": "ergänzen",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter Produkte: über alle Vertreter und je Vertreter, Zeitraum",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Übersicht › Produkte",
+  "status": "abgedeckt",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter Vertrieb: Pipeline, Woher Kunden kommen",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Übersicht › Vertrieb (30 Tage)",
+  "status": "abgedeckt",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter Pay-per-Lead: verkaufte Leads je Monat",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Übersicht › Pay-per-Lead",
+  "status": "abgedeckt",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Reiter BWA mit Drill-down je Zeile und Hinweis offene Zuordnungen",
+  "quelle": "components/admin/zahlen-view.tsx:BWA",
+  "neu": "Zahlen › Übersicht › BWA",
+  "status": "abgedeckt",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Einrichtungsgebühren je Monat, Umsatz von Hand nachtragen",
+  "quelle": "app/admin/zahlen/actions.ts:saveManualRevenueAction",
+  "neu": "Zahlen › Umsatz & Buchungen › + Umsatz von Hand",
+  "status": "ergänzen",
+  "demo_view": "zahlen-umsatz"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Manuellen Umsatz löschen",
+  "quelle": "app/admin/zahlen/actions.ts:deleteManualRevenueAction",
+  "neu": "Zahlen › Umsatz & Buchungen › ⋯",
+  "status": "ergänzen",
+  "demo_view": "zahlen-umsatz"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Kunden ohne hinterlegte Betreuungsgebühr",
+  "quelle": "components/admin/zahlen-view.tsx",
+  "neu": "Zahlen › Umsatz & Buchungen › Hinweis",
+  "status": "ergänzen",
+  "demo_view": "zahlen-umsatz"
+ },
+ {
+  "heute": "/admin/zahlen",
+  "funktion": "Link Leads & Werbung (Dashboard /)",
+  "quelle": "components/admin/zahlen-tabs.tsx",
+  "neu": "Zahlen › Übersicht › Link Leads & Werbung",
+  "status": "ergänzen",
+  "demo_view": "zahlen"
+ },
+ {
+  "heute": "/admin/zahlen/buchungen",
+  "funktion": "Buchungsliste aller Kunden (Angebote, Produkte, Module, Budget, Pausen, Kündigungen)",
+  "quelle": "components/admin/buchungen-liste.tsx",
+  "neu": "Zahlen › Umsatz & Buchungen",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-umsatz"
+ },
+ {
+  "heute": "/admin/zahlen/buchungen",
+  "funktion": "Filter Kunde, Art, Status, Zeitraum, Offen",
+  "quelle": "app/admin/zahlen/buchungen/page.tsx",
+  "neu": "Zahlen › Umsatz & Buchungen › Chips",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-umsatz"
+ },
+ {
+  "heute": "/admin/zahlen/buchungen",
+  "funktion": "Suche in Buchungen",
+  "quelle": "app/admin/zahlen/buchungen/page.tsx:q",
+  "neu": "Zahlen › Umsatz & Buchungen › Suche",
+  "status": "ergänzen",
+  "demo_view": "zahlen-umsatz"
+ },
+ {
+  "heute": "/admin/zahlen/buchungen",
+  "funktion": "CSV-Export Buchungen",
+  "quelle": "app/admin/zahlen/buchungen/export/route.ts:GET",
+  "neu": "Zahlen › Umsatz & Buchungen › Export",
+  "status": "ergänzen",
+  "demo_view": "zahlen-umsatz"
+ },
+ {
+  "heute": "/admin/zahlen/lebenszyklus",
+  "funktion": "Kunden je Monat (neu, reaktiviert, gekündigt, netto)",
+  "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
+  "neu": "Zahlen › Kunden-Lebenszyklus › Kennzahlen",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kunden"
+ },
+ {
+  "heute": "/admin/zahlen/lebenszyklus",
+  "funktion": "MRR-Bewegung je Monat",
+  "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
+  "neu": "Zahlen › Kunden-Lebenszyklus › MRR-Bewegung",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kunden"
+ },
+ {
+  "heute": "/admin/zahlen/lebenszyklus",
+  "funktion": "Reaktivierungsquote je Kündigungsmonat",
+  "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
+  "neu": "Zahlen › Kunden-Lebenszyklus › Karte Reaktivierungsquote",
+  "status": "ergänzen",
+  "demo_view": "zahlen-kunden"
+ },
+ {
+  "heute": "/admin/zahlen/lebenszyklus",
+  "funktion": "Kündigungsgründe, die zurückkommen",
+  "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
+  "neu": "Zahlen › Kunden-Lebenszyklus",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kunden"
+ },
+ {
+  "heute": "/admin/zahlen/lebenszyklus",
+  "funktion": "Halteangebote: angenommen, MRR gerettet, später gekündigt",
+  "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
+  "neu": "Zahlen › Kunden-Lebenszyklus › Halteangebote",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kunden"
+ },
+ {
+  "heute": "/admin/zahlen/lebenszyklus",
+  "funktion": "Ruhende Konten mit Löschdatum, Aufbewahrung, Grund",
+  "quelle": "app/admin/zahlen/lebenszyklus/page.tsx",
+  "neu": "Zahlen › Kunden-Lebenszyklus › Liste Ruhend (Kunden › Filter Ruhend)",
+  "status": "abgedeckt",
+  "demo_view": "kunden"
+ },
+ {
+  "heute": "/admin/zahlen/stornoquote",
+  "funktion": "Stornoquote der Verträge je Kunde und Sparte",
+  "quelle": "components/admin/storno-quote.tsx:StornoQuoteUebersicht",
+  "neu": "Zahlen › Qualität & Nutzung › Stornoquote",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/zahlen/whatsapp",
+  "funktion": "Leads ohne WhatsApp je Kunde (30 Tage, gesamt)",
+  "quelle": "components/admin/whatsapp-zustellung.tsx",
+  "neu": "Zahlen › Qualität & Nutzung › Ohne WhatsApp (Tabelle je Kunde ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/zahlen/whatsapp",
+  "funktion": "Zustellfehler der letzten 14 Tage je Kunde und Code",
+  "quelle": "components/admin/whatsapp-zustellung.tsx",
+  "neu": "Zahlen › Qualität & Nutzung › Zustellfehler",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/nutzung",
+  "funktion": "Hilfe-Anfragen an das Team",
+  "quelle": "app/admin/nutzung/page.tsx",
+  "neu": "Zahlen › Qualität & Nutzung › Hilfe-Anfragen",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/nutzung",
+  "funktion": "KI-Hilfe: Fragen der Vertreter mit Bewertung",
+  "quelle": "app/admin/nutzung/page.tsx",
+  "neu": "Zahlen › Qualität & Nutzung › KI-Hilfe",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/nutzung",
+  "funktion": "Nutzung je Kunde: liegt herum, genutzte Aktionen, Seitenaufrufe, Fehler, Feedback",
+  "quelle": "app/admin/nutzung/page.tsx",
+  "neu": "Zahlen › Qualität & Nutzung › Genutzte Funktionen (je Kunde ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/nutzung",
+  "funktion": "Weiterempfehlung (NPS)",
+  "quelle": "app/admin/nutzung/nps-card.tsx",
+  "neu": "Zahlen › Qualität & Nutzung › NPS",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/nutzung",
+  "funktion": "Zusatzmodul Empfehlungen: Kandidaten fürs Gespräch",
+  "quelle": "app/admin/nutzung/module-card.tsx",
+  "neu": "fehlt. Vorschlag Zahlen › Qualität & Nutzung › Karte Modul-Kandidaten",
+  "status": "ergänzen",
+  "demo_view": "zahlen-qualitaet"
+ },
+ {
+  "heute": "/admin/nutzung",
+  "funktion": "Ankündigung des Zusatzmoduls an Kunden senden (Mail und In-App)",
+  "quelle": "app/admin/nutzung/module-actions.ts:sendAnnouncementAction",
+  "neu": "Einstellungen › Neuigkeiten › Ankündigung an Kandidaten",
+  "status": "ergänzen",
+  "demo_view": "e-neuigkeiten"
+ },
+ {
+  "heute": "/admin/einstellungen",
+  "funktion": "Übersicht aller Einstellungen in Gruppen",
+  "quelle": "app/admin/einstellungen/page.tsx",
+  "neu": "Einstellungen › 6 Gruppen",
+  "status": "abgedeckt",
+  "demo_view": "einstellungen"
+ },
+ {
+  "heute": "/admin/einstellungen",
+  "funktion": "Warnhinweise: Zwei-Faktor aus, Steuernummer fehlt, Statusmeldung aktiv",
+  "quelle": "app/admin/einstellungen/page.tsx",
+  "neu": "Einstellungen › Hinweise oben bzw. Heute",
+  "status": "ergänzen",
+  "demo_view": "einstellungen"
+ },
+ {
+  "heute": "/admin/einstellungen/produkte",
+  "funktion": "Produkt buchbar an/aus",
+  "quelle": "app/admin/einstellungen/produkte/actions.ts:saveCatalogItemAction",
+  "neu": "Einstellungen › Produkte › Aktiv",
+  "status": "abgedeckt",
+  "demo_view": "e-produkte"
+ },
+ {
+  "heute": "/admin/einstellungen/produkte",
+  "funktion": "Produkt als bewährt markieren und Nutzen-Text",
+  "quelle": "app/admin/einstellungen/produkte/actions.ts:saveCatalogItemAction",
+  "neu": "Einstellungen › Produkte › Bearbeiten",
+  "status": "ergänzen",
+  "demo_view": "e-produkte"
+ },
+ {
+  "heute": "/admin/einstellungen/beitraege",
+  "funktion": "Beiträge rechnen (Pilot): Rechner je Gesellschaft und Sparte freischalten",
+  "quelle": "app/admin/einstellungen/beitraege/actions.ts:preisPilotUmschaltenAction",
+  "neu": "Einstellungen › Tarifkatalog › Beitragsrechner (Pilot)",
+  "status": "ergänzen",
+  "demo_view": "e-tarife"
+ },
+ {
+  "heute": "/admin/einstellungen/kampagnen-automatik",
+  "funktion": "Budgetänderungen automatisch bei Meta umsetzen",
+  "quelle": "app/admin/einstellungen/kampagnen-automatik/actions.ts:saveAutomationAction",
+  "neu": "Einstellungen › Kampagnen-Automatik › Schalter",
+  "status": "ergänzen",
+  "demo_view": "e-automatik"
+ },
+ {
+  "heute": "/admin/einstellungen/kampagnen-automatik",
+  "funktion": "Gebuchte Produkte starten das Agenten-Team",
+  "quelle": "app/admin/einstellungen/kampagnen-automatik/actions.ts:saveAutomationAction",
+  "neu": "Einstellungen › Kampagnen-Automatik › Schalter",
+  "status": "ergänzen",
+  "demo_view": "e-automatik"
+ },
+ {
+  "heute": "/admin/einstellungen/kampagnen-automatik",
+  "funktion": "Müde Anzeigen erkennen mit Schwellen (Frequenz, CTR, Leadpreis, Mindestausgabe)",
+  "quelle": "app/admin/einstellungen/kampagnen-automatik/actions.ts:saveAutomationAction",
+  "neu": "Einstellungen › Kampagnen-Automatik › Anzeigen mit hohen Kosten (Schwellen ergänzen)",
+  "status": "abgedeckt",
+  "demo_view": "e-automatik"
+ },
+ {
+  "heute": "/admin/einstellungen/halteangebote",
+  "funktion": "Halteangebote je Kündigungsgrund an/aus mit Werten (10 Angebote inkl. Rückkehrangebot)",
+  "quelle": "app/admin/einstellungen/halteangebote/actions.ts:saveHalteAction",
+  "neu": "Einstellungen › Halteangebote",
+  "status": "abgedeckt",
+  "demo_view": "e-halte"
+ },
+ {
+  "heute": "/admin/einstellungen/halteangebote",
+  "funktion": "Regeln für Rabatte (Anzeige)",
+  "quelle": "app/admin/einstellungen/halteangebote/form.tsx",
+  "neu": "Einstellungen › Halteangebote › Hinweis",
+  "status": "abgedeckt",
+  "demo_view": "e-halte"
+ },
+ {
+  "heute": "/admin/einstellungen/neuigkeiten",
+  "funktion": "Neuigkeiten-Liste, neu anlegen",
+  "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:saveUpdateAction",
+  "neu": "Einstellungen › Neuigkeiten",
+  "status": "abgedeckt",
+  "demo_view": "e-neuigkeiten"
+ },
+ {
+  "heute": "/admin/einstellungen/neuigkeiten",
+  "funktion": "Eintrag bearbeiten: Art, Zielgruppe, Push an Kunden, veröffentlichen oder Entwurf",
+  "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:saveUpdateAction",
+  "neu": "Einstellungen › Neuigkeiten › Eintrag",
+  "status": "ergänzen",
+  "demo_view": "e-neuigkeiten"
+ },
+ {
+  "heute": "/admin/einstellungen/neuigkeiten",
+  "funktion": "KI-Entwurf aus Notizen",
+  "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:draftUpdateAction",
+  "neu": "Einstellungen › Neuigkeiten › Mit KI entwerfen",
+  "status": "ergänzen",
+  "demo_view": "e-neuigkeiten"
+ },
+ {
+  "heute": "/admin/einstellungen/neuigkeiten",
+  "funktion": "Eintrag löschen",
+  "quelle": "app/admin/einstellungen/neuigkeiten/actions.ts:deleteUpdateAction",
+  "neu": "Einstellungen › Neuigkeiten › ⋯",
+  "status": "ergänzen",
+  "demo_view": "e-neuigkeiten"
+ },
+ {
+  "heute": "/admin/einstellungen/neuigkeiten",
+  "funktion": "Vorschau im Kundenbereich",
+  "quelle": "app/admin/einstellungen/neuigkeiten/form.tsx",
+  "neu": "Einstellungen › Neuigkeiten › Vorschau",
+  "status": "ergänzen",
+  "demo_view": "e-neuigkeiten"
+ },
+ {
+  "heute": "/admin/einstellungen/monatsberichte",
+  "funktion": "Gute Berichte automatisch senden",
+  "quelle": "app/admin/monatsberichte/actions.ts:saveReportSettingsAction",
+  "neu": "Einstellungen › Monatsberichte › Automatisch versenden",
+  "status": "abgedeckt",
+  "demo_view": "e-berichte"
+ },
+ {
+  "heute": "/admin/einstellungen/monatsberichte",
+  "funktion": "Einstufung gut/schwach, Ziel-Leadpreis, Absender/Signatur",
+  "quelle": "app/admin/monatsberichte/actions.ts:saveReportSettingsAction",
+  "neu": "Einstellungen › Monatsberichte › Schwellen, Absender",
+  "status": "ergänzen",
+  "demo_view": "e-berichte"
+ },
+ {
+  "heute": "/admin/einstellungen/login",
+  "funktion": "Infokarten-Liste, neue Karte",
+  "quelle": "app/admin/einstellungen/login/actions.ts:saveLoginCardAction",
+  "neu": "Einstellungen › Login-Seite",
+  "status": "abgedeckt",
+  "demo_view": "e-login"
+ },
+ {
+  "heute": "/admin/einstellungen/login",
+  "funktion": "Karte bearbeiten (Badge, Titel, Text, Link, Bild)",
+  "quelle": "app/admin/einstellungen/login/actions.ts:saveLoginCardAction",
+  "neu": "Einstellungen › Login-Seite › Karte",
+  "status": "abgedeckt",
+  "demo_view": "e-login"
+ },
+ {
+  "heute": "/admin/einstellungen/login",
+  "funktion": "Karte an/aus",
+  "quelle": "app/admin/einstellungen/login/actions.ts:toggleLoginCardAction",
+  "neu": "Einstellungen › Login-Seite › Schalter",
+  "status": "abgedeckt",
+  "demo_view": "e-login"
+ },
+ {
+  "heute": "/admin/einstellungen/login",
+  "funktion": "Reihenfolge der Karten ändern",
+  "quelle": "app/admin/einstellungen/login/actions.ts:moveLoginCardAction",
+  "neu": "Einstellungen › Login-Seite › Verschieben",
+  "status": "ergänzen",
+  "demo_view": "e-login"
+ },
+ {
+  "heute": "/admin/einstellungen/login",
+  "funktion": "Karte löschen",
+  "quelle": "app/admin/einstellungen/login/actions.ts:deleteLoginCardAction",
+  "neu": "Einstellungen › Login-Seite › ⋯",
+  "status": "abgedeckt",
+  "demo_view": "e-login"
+ },
+ {
+  "heute": "/admin/einstellungen/status",
+  "funktion": "Statusmeldung veröffentlichen (Text, Stufe, Bereich)",
+  "quelle": "app/admin/einstellungen/status/actions.ts:createIncidentAction",
+  "neu": "Einstellungen › Status & Support › + Meldung",
+  "status": "abgedeckt",
+  "demo_view": "e-status"
+ },
+ {
+  "heute": "/admin/einstellungen/status",
+  "funktion": "Meldung als behoben markieren",
+  "quelle": "app/admin/einstellungen/status/actions.ts:resolveIncidentAction",
+  "neu": "Einstellungen › Status & Support › Meldung › Behoben",
+  "status": "ergänzen",
+  "demo_view": "e-status"
+ },
+ {
+  "heute": "/admin/einstellungen/status",
+  "funktion": "Meldung löschen",
+  "quelle": "app/admin/einstellungen/status/actions.ts:deleteIncidentAction",
+  "neu": "Einstellungen › Status & Support › Meldung › ⋯",
+  "status": "ergänzen",
+  "demo_view": "e-status"
+ },
+ {
+  "heute": "/admin/einstellungen/status",
+  "funktion": "Zustand jetzt und Support-Kontakt (Anzeige), Statusseite öffnen",
+  "quelle": "app/admin/einstellungen/status/page.tsx",
+  "neu": "Einstellungen › Status & Support",
+  "status": "abgedeckt",
+  "demo_view": "e-status"
+ },
+ {
+  "heute": "/admin/einstellungen/rechner",
+  "funktion": "Rechner: Produkte, Quoten, Kosten, Garantien, Texte, Kontakt-Link",
+  "quelle": "app/admin/einstellungen/rechner/actions.ts:saveRechnerAction",
+  "neu": "Marketing › Webseite & Rechner",
+  "status": "abgedeckt",
+  "demo_view": "marketing-webseite"
+ },
+ {
+  "heute": "/admin/einstellungen/empfehlungen",
+  "funktion": "Programm aktiv, Hinweise an Kunden, Prämie (fest, Monate Bestand, Monatspreis), Vorteil für Neukunden",
+  "quelle": "app/admin/einstellungen/empfehlungen/actions.ts:saveReferralSettingsAction",
+  "neu": "Einstellungen › Kollegen empfehlen",
+  "status": "abgedeckt",
+  "demo_view": "e-empfehlen"
+ },
+ {
+  "heute": "/admin/einstellungen/einrichtung",
+  "funktion": "Meta-Business-ID und Erklärvideos je Schritt",
+  "quelle": "app/admin/einstellungen/einrichtung/actions.ts:saveSetupSettingsAction",
+  "neu": "Einstellungen › Einrichtung neuer Kunden › Felder",
+  "status": "ergänzen",
+  "demo_view": "e-einrichtung"
+ },
+ {
+  "heute": "/admin/einstellungen/rechnungsangaben",
+  "funktion": "Steuernummer für Rechnungen",
+  "quelle": "app/admin/einstellungen/rechnungsangaben/actions.ts:saveTaxNumberAction",
+  "neu": "Einstellungen › Rechnungsangaben › Feld Steuernummer",
+  "status": "ergänzen",
+  "demo_view": "e-rechnung"
+ },
+ {
+  "heute": "/admin/einstellungen/rechnungsangaben",
+  "funktion": "Stripe-Konto prüfen (Pflichtangaben, Testmodus)",
+  "quelle": "app/admin/einstellungen/rechnungsangaben/page.tsx",
+  "neu": "Einstellungen › Rechnungsangaben › Prüfung",
+  "status": "ergänzen",
+  "demo_view": "e-rechnung"
+ },
+ {
+  "heute": "/admin/einstellungen/rechnungsangaben",
+  "funktion": "Fußzeile bei bestehenden Kunden setzen (Probelauf, Anwenden)",
+  "quelle": "app/admin/einstellungen/rechnungsangaben/actions.ts:customerFootersAction",
+  "neu": "Einstellungen › Rechnungsangaben › Bestehende Kunden",
+  "status": "ergänzen",
+  "demo_view": "e-rechnung"
+ },
+ {
+  "heute": "/admin/einstellungen/rechnungsangaben",
+  "funktion": "Finalisierte Rechnungen zählen",
+  "quelle": "app/admin/einstellungen/rechnungsangaben/actions.ts:countInvoicesAction",
+  "neu": "Einstellungen › Rechnungsangaben › Rechnungen zählen",
+  "status": "ergänzen",
+  "demo_view": "e-rechnung"
+ },
+ {
+  "heute": "/admin/einstellungen/kosten",
+  "funktion": "Laufende Kosten anlegen, ändern (Zweck, Zeitraum)",
+  "quelle": "app/admin/zahlen/actions.ts:saveRecurringCostAction",
+  "neu": "Zahlen › Kosten & Bank › + Kosten",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/kosten",
+  "funktion": "Laufende Kosten löschen",
+  "quelle": "app/admin/zahlen/actions.ts:deleteRecurringCostAction",
+  "neu": "Zahlen › Kosten & Bank › Laufende Kosten › ⋯",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/kosten",
+  "funktion": "Annahmen für Kennzahlen: Stunden, Stundensatz, eigene Kampagnen, PPL-Pilot-Ende",
+  "quelle": "app/admin/zahlen/actions.ts:saveKpiSettingsAction",
+  "neu": "Zahlen › Kosten & Bank › Karte Annahmen",
+  "status": "ergänzen",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "Bank verbinden",
+  "quelle": "app/admin/einstellungen/bank/actions.ts:connectBankAction",
+  "neu": "Zahlen › Kosten & Bank › + Konto",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "Umsätze jetzt abrufen",
+  "quelle": "app/admin/einstellungen/bank/actions.ts:syncBankAction",
+  "neu": "Zahlen › Kosten & Bank › Konto › Abrufen",
+  "status": "ergänzen",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "Bank trennen",
+  "quelle": "app/admin/einstellungen/bank/actions.ts:disconnectBankAction",
+  "neu": "Zahlen › Kosten & Bank › Konto › Trennen",
+  "status": "ergänzen",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "CSV hochladen (Commerzbank, Amex, automatisch)",
+  "quelle": "app/admin/einstellungen/bank/actions.ts:uploadCsvAction",
+  "neu": "Zahlen › Kosten & Bank › Hochladen",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "Regel speichern",
+  "quelle": "app/admin/einstellungen/bank/actions.ts:saveRuleAction",
+  "neu": "Zahlen › Kosten & Bank › Regeln",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "Regel löschen",
+  "quelle": "app/admin/einstellungen/bank/actions.ts:deleteRuleAction",
+  "neu": "Zahlen › Kosten & Bank › Regeln › ⋯",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "Ausgabe zuordnen (Zweck, inkl. USt, immer so bei Muster)",
+  "quelle": "app/admin/einstellungen/bank/actions.ts:assignAction",
+  "neu": "Zahlen › Kosten & Bank › Neue Ausgaben zuordnen",
+  "status": "abgedeckt",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/bank",
+  "funktion": "Zugeordnete Ausgaben ansehen",
+  "quelle": "app/admin/einstellungen/bank/zuordnen/page.tsx",
+  "neu": "Zahlen › Kosten & Bank › Alle Ausgaben",
+  "status": "ergänzen",
+  "demo_view": "zahlen-kosten"
+ },
+ {
+  "heute": "/admin/einstellungen/sicherheit",
+  "funktion": "Zwei-Faktor einrichten, bestätigen, abschalten",
+  "quelle": "app/admin/einstellungen/sicherheit/actions.ts:startTotpSetupAction, confirmTotpAction, disableTotpAction",
+  "neu": "Einstellungen › Zwei-Faktor & Geräte",
+  "status": "abgedeckt",
+  "demo_view": "e-sicherheit"
+ },
+ {
+  "heute": "/admin/einstellungen/sicherheit",
+  "funktion": "Überall abmelden",
+  "quelle": "app/admin/einstellungen/sicherheit/actions.ts:signOutEverywhereAction",
+  "neu": "Einstellungen › Zwei-Faktor & Geräte › Überall abmelden",
+  "status": "ergänzen",
+  "demo_view": "e-sicherheit"
+ },
+ {
+  "heute": "/admin/einstellungen/protokoll",
+  "funktion": "Änderungsprotokoll ansehen",
+  "quelle": "app/admin/einstellungen/protokoll/page.tsx",
+  "neu": "Einstellungen › Änderungsprotokoll",
+  "status": "abgedeckt",
+  "demo_view": "e-protokoll"
+ },
+ {
+  "heute": "/admin/einstellungen/protokoll",
+  "funktion": "Protokoll filtern nach Kunde und Art",
+  "quelle": "app/admin/einstellungen/protokoll/page.tsx",
+  "neu": "Einstellungen › Änderungsprotokoll › Filter",
+  "status": "ergänzen",
+  "demo_view": "e-protokoll"
+ },
+ {
+  "heute": "/api/admin",
+  "funktion": "Diagnose OpenAI-Erreichbarkeit (nur Technik, keine Oberfläche)",
+  "quelle": "app/api/admin/openai-check/route.ts:GET",
+  "neu": "bleibt API, vom Neudesign nicht betroffen",
+  "status": "abgedeckt",
+  "demo_view": "landkarte"
+ },
+ {
+  "heute": "/api/admin",
+  "funktion": "Diagnose Airtable-Felder (nur Technik, keine Oberfläche)",
+  "quelle": "app/api/admin/airtable-fields/route.ts:GET",
+  "neu": "bleibt API, vom Neudesign nicht betroffen",
+  "status": "abgedeckt",
+  "demo_view": "landkarte"
+ }
+]
