@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "pferd-op",
+  "produkt": "Pferde-OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Ab dem ersten Lebenstag",
+    "Bildgebung bis zur Erstattungshöhe"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-OP-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "15.000/25.000/50.000 €",
+        "nachbehandlung": "bis 17 Tage",
+        "vorsorge": "nein",
+        "chips": "ja, nach 1 Jahr",
+        "kolik": "5 Tage",
+        "zahn": "nur Zahn-OP",
+        "kastration": "Zuschuss 200 €",
+        "physio": "über Reha-Baustein",
+        "sb": "0, 500 oder 1.000 €",
+        "wartezeit": "2 Monate",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "reha": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://uelzener.de/pferd/pferde-op-versicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/pferd/pferde-op-versicherung/",
+    "https://uelzener.de/app/uploads/2025/04/Pferde-OP-_-Kolik-_-Kranken-_Herden-OP-Versicherung_Leistungsuebersicht.pdf",
+    "https://www.uelzener.de/formulare/download/a1c8b54c-adc5-492c-a125-0518e662fcb6"
+  ],
+  "offen": [
+    "Uelzener hat keine Tarifstufen, nur einen Tarif mit wählbarer Erstattungshöhe und Selbstbeteiligung; deshalb eine Stufe „Tarif“.",
+    "Erstattungshöhe je Versicherungsjahr wählbar: 15.000 €, 25.000 € oder 50.000 €.",
+    "Wartezeit: Kolik und Unfall 5 Tage, allgemein 2 Monate, besondere OPs und Chip-OPs 1 Jahr.",
+    "Reha-Baustein (Physiotherapie u. a. bis 6 Monate nach OP) bis 3.000 € im Jahr mit 20 % SB je Rechnung; dazu ein Krankenversicherungs-Baustein.",
+    "Kolik ohne OP nur über die eigene Pferde-Kolikversicherung.",
+    "Ausgeschlossen: Behandlung von Hufabszessen und Hufgeschwüren."
+  ]
+}

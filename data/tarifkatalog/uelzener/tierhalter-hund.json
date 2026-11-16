@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflicht",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Kein Maulkorb- oder Leinenzwang",
+    "Gewollter und ungewollter Deckakt",
+    "Hundeschulen, Agility, Hundepension"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalter-Haftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "3, 10 oder 50 Mio. €",
+        "sb": "0, 150 oder 300 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 24 Monate",
+        "forderungsausfall": "ab 2.500 € Forderung",
+        "geliehen": "bis 100.000 €",
+        "ausland": "weltweit, außer USA/CA"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://uelzener.de/hund/hunde-haftpflichtversicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/hund/hunde-haftpflichtversicherung/",
+    "https://uelzener.de/app/uploads/2024/02/DOC-20_0224_V03_ANSICHT-Leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "Uelzener hat keine Tarifstufen, nur einen Tarif mit wählbarer Deckungssumme und Selbstbeteiligung; deshalb eine Stufe „Tarif“.",
+    "Deckungssumme wählbar 3, 10 oder 50 Mio. € (bei 50 Mio. € höchstens 15 Mio. € je Person); SB je Leistungsfall ohne, 150 € oder 300 €.",
+    "Geliehene Sachen: Mietsachschäden an beweglichen Sachen und privat gemieteten Pkw bis 100.000 € je Leistungsfall.",
+    "Auslandsschutz: vorübergehende Aufenthalte weltweit außer USA, Kanada und US-Territorien.",
+    "Baustein Best-Leistung (u. a. Neuwert bis 7.500 €, gewerbliche Nutzung bis 22.000 € Umsatz) gegen Mehrbeitrag; im Schema kein eigener Baustein."
+  ]
+}

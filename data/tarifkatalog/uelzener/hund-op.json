@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "hund-op",
+  "produkt": "Hunde-OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Ab dem 1. Lebenstag, ohne Höchstalter",
+    "Giftköderschutz"
+  ],
+  "tarife": [
+    {
+      "name": "Hunde-OP-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "3.000/6.000 €/unbegrenzt",
+        "nachbehandlung": "bis 42 Tage",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "ja, nach 6 Monaten",
+        "physio": "ja, rund um die OP",
+        "sb": "wählbar, auch ohne",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://uelzener.de/hund/hunde-op-versicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/hund/hunde-op-versicherung/",
+    "https://uelzener.de/app/uploads/2026/02/Leistungsuebersicht_Hundeprodukte-1.pdf",
+    "https://www.uelzener.de/formulare/download/61af20dc-1444-4710-aca5-634108071f7e"
+  ],
+  "offen": [
+    "Uelzener hat keine Tarifstufen, nur einen Tarif mit wählbarer Erstattungshöhe und Selbstbeteiligung; deshalb eine Stufe „Tarif“.",
+    "Erstattungshöhe je Versicherungsjahr wählbar: 3.000 €, 6.000 € oder unbegrenzt.",
+    "Selbstbeteiligung je Versicherungsjahr wählbar bis ohne SB; Beträge nicht veröffentlicht (Beispielrechnung 500 €).",
+    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung.",
+    "Wartezeit: Unfall 5 Tage, allgemein 30 Tage, Kastration 6 Monate, besondere OPs 1 Jahr.",
+    "Zahnbehandlung in der Leistungsübersicht nicht gesondert genannt."
+  ]
+}

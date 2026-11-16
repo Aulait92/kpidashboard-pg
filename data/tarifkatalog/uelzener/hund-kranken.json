@@ -1,0 +1,51 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "hund-kranken",
+  "produkt": "Hunde-Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Ab dem 1. Lebenstag, ohne Höchstalter",
+    "Giftköderschutz"
+  ],
+  "tarife": [
+    {
+      "name": "Hunde-Krankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "3.000/6.000 €/unbegrenzt",
+        "ohneOp": "ja, bis Erstattungshöhe",
+        "nachbehandlung": "unbegrenzt",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "ja, nach 6 Monaten",
+        "physio": "ohne OP bis 750 €/Jahr",
+        "sb": "wählbar, auch ohne",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://uelzener.de/hund/hunde-krankenversicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/hund/hunde-krankenversicherung/",
+    "https://uelzener.de/app/uploads/2026/02/Leistungsuebersicht_Hundeprodukte-1.pdf"
+  ],
+  "offen": [
+    "Uelzener hat keine Tarifstufen, nur einen Tarif mit wählbarer Erstattungshöhe und Selbstbeteiligung; deshalb eine Stufe „Tarif“.",
+    "Erstattungshöhe je Versicherungsjahr wählbar: 3.000 €, 6.000 € oder unbegrenzt.",
+    "Selbstbeteiligung je Versicherungsjahr wählbar bis ohne SB; Beträge nicht veröffentlicht (Beispielrechnung 500 €).",
+    "Physiotherapie und alternative Behandlungen rund um eine OP in der Erstattungshöhe, ohne OP bis 750 € im Jahr.",
+    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung.",
+    "Wartezeit: Unfall 5 Tage, allgemein 30 Tage, Kastration 6 Monate, besondere Erkrankungen 1 Jahr.",
+    "Zahnbehandlung in der Leistungsübersicht nicht gesondert genannt."
+  ]
+}

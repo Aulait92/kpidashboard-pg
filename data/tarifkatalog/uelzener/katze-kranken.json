@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "katze-kranken",
+  "produkt": "Katzen-Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Ab dem 1. Lebenstag, ohne Höchstalter",
+    "Notdienstgebühr bei OP"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-Krankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "1.000/5.000 €/unbegrenzt",
+        "ohneOp": "ja, bis Erstattungshöhe",
+        "nachbehandlung": "unbegrenzt",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "Zuschuss bis 150 €",
+        "physio": "optional",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://uelzener.de/katze/katzen-krankenversicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/katze/katzen-krankenversicherung/",
+    "https://uelzener.de/app/uploads/2025/09/Leistungsuebersicht_Katze.pdf"
+  ],
+  "offen": [
+    "Uelzener hat keine Tarifstufen, nur einen Tarif mit wählbarer Erstattungshöhe und Selbstbeteiligung; deshalb eine Stufe „Tarif“.",
+    "Erstattungshöhe je Versicherungsjahr wählbar: 1.000 €, 5.000 € oder unbegrenzt; Selbstbeteiligung je Jahr ohne, 250 € oder 500 €.",
+    "Kastration ist ausgeschlossen, es gibt einen Zuschuss: Kater 100 €, Katze 150 €.",
+    "Vorsorge und Physiotherapie über den Baustein Gesundheit PLUS, bis 500 € im Jahr mit 25 % SB je Rechnung.",
+    "Wartezeit: Unfall 5 Tage, allgemein 30 Tage, besondere Erkrankungen 1 Jahr.",
+    "Zahnbehandlung: eigene Katzen-Zahnversicherung, in der Krankenversicherung nicht gesondert genannt."
+  ]
+}

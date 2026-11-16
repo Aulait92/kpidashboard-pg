@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalter-Haftpflicht",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Fremd- und Gastreiter ohne Namensnennung",
+    "Gewollter und ungewollter Deckakt",
+    "Keine Auflagen zur Zaunhöhe"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalter-Haftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "5, 10 oder 50 Mio. €",
+        "sb": "wählbar, z. B. 300 €",
+        "miete": "bis 100.000 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 12 Monate",
+        "forderungsausfall": "ab 2.500 € Forderung",
+        "geliehen": "Anhänger bis 100.000 €",
+        "ausland": "weltweit, außer USA/CA"
+      },
+      "bausteine": {},
+      "quelle": "https://uelzener.de/pferd/pferde-haftpflichtversicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/pferd/pferde-haftpflichtversicherung/",
+    "https://www.uelzener.de/formulare/download/22b7d142-415f-4fd2-8a9e-bc2abf2aa7e3",
+    "https://www.uelzener.de/formulare/download/228685a4-c1bc-4333-acda-5b4594b886a4"
+  ],
+  "offen": [
+    "Uelzener hat keine Tarifstufen, nur einen Tarif mit wählbarer Deckungssumme und Selbstbeteiligung; deshalb eine Stufe „Tarif“.",
+    "Deckungssumme wählbar 5, 10 oder 50 Mio. €; Höhe der Selbstbeteiligung wählbar, Beträge nicht veröffentlicht (Beispielrechnung 300 €).",
+    "Mietsachschäden an Stallungen, Reithallen, Boxen sowie am geliehenen oder gemieteten Pferdeanhänger bis 100.000 € je Leistungsfall.",
+    "Ob eine Variante ohne Selbstbeteiligung wählbar ist, ist nicht belegt.",
+    "Sachschäden des Pferdehüters bis 7.500 € je Fall mit 250 € SB (Bedingungen BHAFPf 2024).",
+    "Neuwert nur über den Baustein Best-Leistung; im Schema kein eigener Baustein."
+  ]
+}
