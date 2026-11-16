@@ -133,7 +133,9 @@ export default async function BuyerPage({
             range={range}
           />
           <TeamStats customerId={session.customerId} range={range} mitBestand={await loadGewinnMitBestand(session)} />
-          <MonatsberichteKunde customerId={session.customerId} />
+          <div className="mt-6">
+            <MonatsberichteKunde customerId={session.customerId} />
+          </div>
         </Suspense>
         <section className="mt-8 space-y-6" aria-label="Werbung und Produkte">
           <h2 className="text-lg font-semibold tracking-tight">Werbung und Produkte</h2>
@@ -262,6 +264,7 @@ async function BuyerDashboardBody({
     <div className="mt-6 space-y-6">
       <FunnelHero
         kpis={k}
+        kopfzahlen={false}
         footer={
           <>
             Nur bezahlte Leads, damit die Quoten stimmen.

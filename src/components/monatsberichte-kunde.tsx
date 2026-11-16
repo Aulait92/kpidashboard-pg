@@ -23,10 +23,7 @@ export async function MonatsberichteKunde({ customerId }: { customerId: string }
       {!reports.length ? (
         <div data-monatsberichte-leer>
           <p className="mt-1 text-[15px]">Ihr erster Monatsbericht kommt voraussichtlich Anfang {monthLabel(ersterBerichtMonat()).split(" ")[0]}.</p>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Darin finden Sie jeden Monat Ihre Leads, Termine, Abschlüsse und Ihren Gewinn im Vergleich zum Vormonat, dazu unsere Maßnahmen und Tipps. Sie bekommen ihn per E-Mail und finden ihn danach
-            hier, auch als PDF.
-          </p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">Per E-Mail und danach hier als PDF.</p>
         </div>
       ) : (
         <p className="text-sm text-[color:var(--muted)]">Ihr Rückblick von uns, jeden Monat auch per E-Mail.</p>

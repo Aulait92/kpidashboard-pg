@@ -21,7 +21,7 @@ function Stage({
     <div className="relative flex-1 min-w-0">
       <div
         className={cn(
-          "relative overflow-hidden rounded-xl border bg-[color:var(--brand-soft)]/30 px-5 py-4",
+          "relative overflow-hidden rounded-xl border bg-[color:var(--brand-soft)]/30 px-4 py-2.5 sm:px-5 sm:py-4",
           emphasis
             ? "border-[color:var(--brand)]/40"
             : "border-[color:var(--border)]",
@@ -32,15 +32,16 @@ function Stage({
           className="absolute inset-y-0 left-0 bg-[color:var(--brand)]/15 transition-all"
           style={{ width: `${pct * 100}%` }}
         />
-        <div className="relative">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)]">
-            {label}
-          </div>
-          <div className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-[color:var(--foreground)] sm:text-3xl">
+        {/* Handy: eine Zeile je Stufe (Zahl links, Bezeichnung rechts), am Rechner Kachel */}
+        <div className="relative grid grid-cols-[3.5rem_1fr] items-center gap-x-3 sm:flex sm:flex-col sm:items-start">
+          <div className="row-span-2 text-2xl font-bold tabular-nums tracking-tight text-[color:var(--foreground)] sm:mt-1 sm:text-3xl">
             {formatNumber(count)}
           </div>
+          <div className="text-[11px] font-medium uppercase tracking-wide text-[color:var(--muted)] sm:-order-1">
+            {label}
+          </div>
           {hint ? (
-            <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+            <div className="text-[11px] text-[color:var(--muted)] sm:mt-0.5">
               {hint}
             </div>
           ) : null}
@@ -61,7 +62,17 @@ function Connector({ rate }: { rate: number | null }) {
   );
 }
 
-export function FunnelHero({ kpis, footer }: { kpis: Kpis; /** Zeile unter dem Trichter (z. B. Abschlüsse aus Empfehlungen). */ footer?: React.ReactNode }) {
+export function FunnelHero({
+  kpis,
+  footer,
+  kopfzahlen = true,
+}: {
+  kpis: Kpis;
+  /** Zeile unter dem Trichter (z. B. Abschlüsse aus Empfehlungen). */
+  footer?: React.ReactNode;
+  /** Abschlussquote und Abschlüsse oben rechts; im Vermittlerbereich aus, die letzte Stufe zeigt beides schon (16.11.2026). */
+  kopfzahlen?: boolean;
+}) {
   const max = kpis.nettoLeads;
   const ratio = (n: number) => (max > 0 ? n / max : 0);
 
@@ -73,6 +84,7 @@ export function FunnelHero({ kpis, footer }: { kpis: Kpis; /** Zeile unter dem T
             Ihr Vertriebstrichter
           </h2>
         </div>
+        {kopfzahlen ? (
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 sm:text-right">
           <div>
             <div className="text-[11px] uppercase tracking-wide text-[color:var(--muted)]">
@@ -91,6 +103,7 @@ export function FunnelHero({ kpis, footer }: { kpis: Kpis; /** Zeile unter dem T
             </div>
           </div>
         </div>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0">
