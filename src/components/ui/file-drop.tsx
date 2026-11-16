@@ -58,6 +58,8 @@ export type FileDropProps = {
   /** Erfolgsmeldung des Aufrufers (z. B. „Hochgeladen“) */
   success?: React.ReactNode;
   className?: string;
+  /** variant „button“: Knopf füllt die Breite des Elternelements (z. B. am Handy untereinander) */
+  buttonClassName?: string;
 };
 
 export function FileDrop({
@@ -84,6 +86,7 @@ export function FileDrop({
   pendingLabel,
   success,
   className,
+  buttonClassName,
 }: FileDropProps) {
   const autoId = useId();
   const inputId = id ?? `file-${autoId}`;
@@ -201,6 +204,7 @@ export function FileDrop({
       aria-disabled={locked || undefined}
       className={cn(
         buttonClass(buttonVariant, size, "max-w-full cursor-pointer"),
+        buttonClassName,
         focused && ring,
         locked && "pointer-events-none opacity-50",
         extra,

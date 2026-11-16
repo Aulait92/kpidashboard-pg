@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { kundenlinkStand, loadPraesentation } from "@/lib/termin-vorbereitung-server";
 import { publicUrlOr } from "@/lib/public-url";
+import { ungepruefteSparten } from "@/lib/tarifauswahl-server";
 import { Kundenlink } from "./kundenlink";
 import { Deck } from "./deck";
 
@@ -21,7 +22,7 @@ export default async function PraesentationPage({ params, searchParams }: { para
   const { von } = await searchParams;
   const p = await loadPraesentation(id, ctx);
   if (!p) notFound();
-  const link = await kundenlinkStand(id, ctx);
+  const [link, ungeprueft] = await Promise.all([kundenlinkStand(id, ctx), ungepruefteSparten(id, ctx)]);
   const linkStart = link
     ? { url: publicUrlOr(`/beratung/${link.token}`), bis: new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "long" }).format(link.bis) }
     : null;
@@ -40,6 +41,15 @@ export default async function PraesentationPage({ params, searchParams }: { para
         title={`Präsentation: ${p.d.lead.name}`}
         subtitle={p.angeboteBestaetigt ? "Im Videocall den Bildschirm teilen und auf Vollbild gehen." : "Noch ohne Angebote: Bestätigen Sie Ihre Angebote in der Terminvorbereitung, dann erscheinen sie hier."}
       />
+      {/* Pilot „Beiträge rechnen“: Richtwerte nie unbemerkt beim Kunden (docs/preise-pilot.md) */}
+      {ungeprueft.length ? (
+        <p className="mb-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-beitraege-ungeprueft>
+          Beiträge noch nicht bestätigt ({ungeprueft.join(", ")}).{" "}
+          <Link href={`/buyer/termine/${id}/vorbereitung#angebote`} className="-my-2.5 inline-block py-2.5 font-semibold underline">
+            Jetzt prüfen
+          </Link>
+        </p>
+      ) : null}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <ButtonLink href={`/api/buyer/termine/${id}/praesentation`} external variant="secondary" size="md" icon={FileDown}>
           Als PDF

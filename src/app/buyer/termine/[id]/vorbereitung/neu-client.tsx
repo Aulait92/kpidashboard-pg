@@ -8,9 +8,10 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Check, ChevronDown, Phone, Plus, Presentation, RotateCcw, Search, Star, Video, X } from "lucide-react";
+import { Calculator, CalendarDays, Check, ChevronDown, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Star, Video, X } from "lucide-react";
 import { Button, buttonClass, Card } from "@/components/ui";
 import { FileDrop } from "@/components/ui/file-drop";
+import { ActionSheet, Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { folienEinpassen } from "@/lib/folien-einpassen";
@@ -29,6 +30,7 @@ import {
   tarifAusKatalog,
   tarifEinfuegen,
   tarifMonat,
+  ungepruefteBeitraege,
   zuAngebote,
   type MeineAuswahl,
   type SparteWahl,
@@ -36,6 +38,7 @@ import {
   type TarifWahl,
 } from "@/lib/tarifauswahl";
 import type { EigenerTarifZeile } from "@/lib/tarifauswahl-server";
+import { pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib/preise/pilot";
 import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, preiseAuslesenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 
@@ -57,6 +60,8 @@ export type AngeboteProps = {
   gesellschaften: { key: string; name: string }[];
   eigene: EigenerTarifZeile[];
   meine: MeineAuswahl;
+  /** Beiträge rechnen (Pilot): freigeschaltete „<gesellschaft>/<sparte>“ und die Rechner-Angaben je Sparte */
+  rechnen: { aktiv: string[]; angaben: Record<string, RechnerAngabe[]> };
 };
 
 export function VorbereitungNeu(p: {
@@ -148,8 +153,17 @@ export function VorbereitungNeu(p: {
   }, [status]);
 
   const praesentation = `/buyer/termine/${p.id}/praesentation?von=vorbereitung`;
+  // Richtwerte (Pilot „Beiträge rechnen“): vor der Präsentation kurz darauf hinweisen, nie unbemerkt beim Kunden
+  const [pruefHinweis, setPruefHinweis] = useState(false);
+  const [springeZu, setSpringeZu] = useState<{ key: string; n: number } | null>(null);
+  const ungeprueft = ungepruefteBeitraege(auswahl);
   const oeffnen = async (e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    if (ungepruefteBeitraege(ref.current).length) {
+      e.preventDefault();
+      setPruefHinweis(true);
+      return;
+    }
     if (!offen.current && !laeuft.current) return;
     e.preventDefault();
     await speichern();
@@ -222,6 +236,30 @@ export function VorbereitungNeu(p: {
           while (laeuft.current) await laeuft.current;
         }}
         neuLaden={() => router.refresh()}
+        springeZu={springeZu}
+      />
+
+      <ActionSheet
+        open={pruefHinweis}
+        onClose={() => setPruefHinweis(false)}
+        title="Beiträge noch nicht bestätigt"
+        message={`${ungeprueft.length === 1 ? "Ein Beitrag ist" : `${ungeprueft.length} Beiträge sind`} nur ein Richtwert aus dem Angebot (${[...new Set(ungeprueft.map((u) => u.label))].join(", ")}). Bitte kurz prüfen.`}
+        actions={[
+          {
+            label: "Jetzt prüfen",
+            icon: Check,
+            tone: "primary",
+            onSelect: () => {
+              if (ungeprueft[0]) setSpringeZu((x) => ({ key: ungeprueft[0].sparte, n: (x?.n ?? 0) + 1 }));
+              document.getElementById("angebote")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          },
+          {
+            label: "Trotzdem öffnen",
+            icon: Presentation,
+            onSelect: () => void speichern().then(() => router.push(praesentation)),
+          },
+        ]}
       />
 
       <div className="mt-5">{p.mehr}</div>
@@ -310,10 +348,19 @@ function Angebote(p: {
   vorschau: Parameters<typeof VorbereitungNeu>[0]["vorschau"];
   vorSpeichern: () => Promise<void>;
   neuLaden: () => void;
+  /** „Jetzt prüfen“ im Hinweis vor der Präsentation: diese Sparte zeigen */
+  springeZu: { key: string; n: number } | null;
 }) {
   const toast = useToast();
   const { katalog, vertrieb } = p.daten;
   const [aktiv, setAktiv] = useState<string | null>(p.auswahl.sparten[0]?.key ?? null);
+  const [rechnenOffen, setRechnenOffen] = useState(false);
+  // „Jetzt prüfen“: Sparte beim Rendern umstellen (ohne Effekt)
+  const [gesprungen, setGesprungen] = useState(p.springeZu);
+  if (p.springeZu !== gesprungen) {
+    setGesprungen(p.springeZu);
+    if (p.springeZu) setAktiv(p.springeZu.key);
+  }
   const sp = p.auswahl.sparten.find((s) => s.key === aktiv) ?? p.auswahl.sparten[0] ?? null;
   const [eigene, setEigene] = useState(p.daten.eigene);
   const [dateien, setDateien] = useState<DateiZeile[]>([]);
@@ -391,6 +438,12 @@ function Angebote(p: {
     }
     p.neuLaden();
   };
+
+  // Beiträge rechnen (Pilot): offizieller Rechner der ersten freigeschalteten Gesellschaft dieser Sparte
+  const rechnerTarif = sp?.tarife.find((t) => rechnerUrl(p.daten.rechnen.aktiv, t.gesellschaftKey, sp.key));
+  const rechnerAdresse = sp && rechnerTarif ? rechnerUrl(p.daten.rechnen.aktiv, rechnerTarif.gesellschaftKey, sp.key) : null;
+  const rechner = sp && rechnerTarif && rechnerAdresse ? { url: rechnerAdresse, gesellschaft: rechnerTarif.gesellschaft, angaben: p.daten.rechnen.angaben[sp.key] ?? [] } : null;
+  const ablegenLaeuft = dateien.some((d) => d.status === "laedt" || d.status === "liest");
 
   const gesellschaftsListe = [...new Map([...p.daten.gesellschaften, ...STANDARD_GESELLSCHAFTEN.map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()];
 
@@ -471,7 +524,46 @@ function Angebote(p: {
       {sp ? (
         <div className="grid gap-5 px-4 pb-5 pt-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_400px]">
           <div className="min-w-0">
-            {p.leadId && !ro ? (
+            {rechner ? (
+              // Mit Rechner: beide Wege zum Beitrag in einer Zeile statt Knopf über der Ablagefläche
+              <div className="grid gap-2 sm:flex sm:flex-wrap" data-beitraege-zeile>
+                <Button size="md" icon={Calculator} onClick={() => setRechnenOffen(true)} data-beitraege-rechnen>
+                  Beiträge rechnen
+                </Button>
+                {p.leadId && !ro ? (
+                  <FileDrop
+                    variant="button"
+                    size="md"
+                    instant
+                    multiple
+                    maxFiles={5}
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                    maxBytes={15 * 1024 * 1024}
+                    label="Angebot ablegen"
+                    hint={null}
+                    busy={ablegenLaeuft}
+                    pendingLabel="Wird gelesen …"
+                    buttonClassName="w-full sm:w-auto"
+                    onFiles={(fs) => void ablegen(fs)}
+                  />
+                ) : null}
+                <BeitraegeRechnen
+                  open={rechnenOffen}
+                  onClose={() => setRechnenOffen(false)}
+                  sparte={sp.label}
+                  {...rechner}
+                  ablegen={
+                    p.leadId && !ro
+                      ? (fs) => {
+                          setRechnenOffen(false);
+                          void ablegen(fs);
+                        }
+                      : null
+                  }
+                  busy={ablegenLaeuft}
+                />
+              </div>
+            ) : p.leadId && !ro ? (
               <FileDrop
                 variant="zone"
                 instant
@@ -548,6 +640,92 @@ function Angebote(p: {
         <p className="px-5 py-6 text-sm text-[color:var(--muted)]">Noch keine Versicherung. Wählen Sie oben „+ Versicherung“, z. B. Hausrat.</p>
       )}
     </Card>
+  );
+}
+
+/**
+ * Beiträge rechnen (Pilot, docs/preise-pilot.md): offiziellen Rechner öffnen, Angaben zum Kopieren, Ergebnis als
+ * Screenshot ablegen. Keine automatische Abfrage (Nutzungsbedingungen der Gesellschaft).
+ */
+function BeitraegeRechnen({
+  open,
+  onClose,
+  sparte,
+  gesellschaft,
+  url,
+  angaben,
+  ablegen,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  sparte: string;
+  gesellschaft: string;
+  url: string;
+  angaben: RechnerAngabe[];
+  ablegen: ((files: File[]) => void) | null;
+  busy: boolean;
+}) {
+  const toast = useToast();
+  const kopieren = async (a: RechnerAngabe) => {
+    if (!a.wert) return;
+    try {
+      await navigator.clipboard.writeText(a.wert);
+      toast.show({ message: `${a.label} kopiert` });
+    } catch {
+      toast.show({ message: "Kopieren nicht möglich, bitte abtippen.", tone: "error" });
+    }
+  };
+  return (
+    <Sheet open={open} onClose={onClose} title="Beiträge rechnen" message={`${gesellschaft} · ${sparte}`}>
+      <div className="space-y-4 px-5 py-4" data-beitraege-fenster>
+        <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "md", "w-full")} data-rechner-oeffnen>
+          <ExternalLink className="h-4 w-4" /> Im {gesellschaft}-Rechner berechnen
+        </a>
+        {angaben.length ? (
+          <div>
+            <h3 className="mb-1.5 text-[13px] font-semibold text-[color:var(--muted)]">Angaben zum Kopieren</h3>
+            <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)]" data-rechner-angaben>
+              {angaben.map((a) => (
+                <li key={a.label}>
+                  <button
+                    type="button"
+                    disabled={!a.wert}
+                    onClick={() => void kopieren(a)}
+                    aria-label={a.wert ? `${a.label} kopieren` : undefined}
+                    className="flex min-h-12 w-full items-center gap-3 px-3.5 py-2 text-left hover:bg-[color:var(--surface-sunken)] disabled:hover:bg-transparent"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs text-[color:var(--muted)]">{a.label}</span>
+                      <span className={cn("block break-words text-sm font-medium", !a.wert && "text-amber-700")}>{a.wert ?? "im Termin klären"}</span>
+                    </span>
+                    {a.wert ? <Copy className="h-4 w-4 shrink-0 text-[color:var(--muted)]" /> : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        <p className="text-sm text-[color:var(--muted)]">Danach das Ergebnis als Screenshot ablegen: Die Beiträge werden übernommen, Sie prüfen sie nur noch.</p>
+        {ablegen ? (
+          <FileDrop
+            variant="button"
+            size="md"
+            instant
+            multiple
+            maxFiles={5}
+            accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+            maxBytes={15 * 1024 * 1024}
+            label="Screenshot ablegen"
+            hint={null}
+            busy={busy}
+            pendingLabel="Wird gelesen …"
+            buttonClassName="w-full"
+            onFiles={ablegen}
+          />
+        ) : null}
+      </div>
+    </Sheet>
   );
 }
 
@@ -666,7 +844,12 @@ function TarifKarte({
           label={`Beitrag ${t.kurz}`}
           ro={ro}
           className="w-auto min-w-0 flex-1"
-          onWert={(n) => anTarif(t.id, (x) => void (x.beitrag = n))}
+          onWert={(n) =>
+            anTarif(t.id, (x) => {
+              x.beitrag = n;
+              delete x.preisPruefen; // selbst eingetragen: kein Richtwert mehr
+            })
+          }
         />
         <span className="inline-flex h-10 shrink-0 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border)]" role="group" aria-label="Zahlweise">
           {(["monat", "jahr"] as const).map((z) => (
@@ -683,6 +866,21 @@ function TarifKarte({
           ))}
         </span>
       </div>
+      {t.preisPruefen && t.beitrag != null ? (
+        <div className="mt-1.5 flex items-center gap-2 rounded-[var(--radius-sm)] bg-amber-50 py-1 pl-2.5 pr-1 text-xs text-amber-800" data-preis-pruefen>
+          <span className="min-w-0 flex-1">{pruefEtikett(t.preisPruefen)}</span>
+          {!ro ? (
+            <button
+              type="button"
+              onClick={() => anTarif(t.id, (x) => void delete x.preisPruefen)}
+              className="inline-flex h-9 shrink-0 items-center gap-1 rounded-[var(--radius-sm)] px-2.5 font-semibold text-amber-900 hover:bg-amber-100"
+              data-preis-bestaetigen
+            >
+              <Check className="h-3.5 w-3.5" /> Bestätigen
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <div className="mt-1.5 flex min-h-8 items-center gap-2">
         {mitExtra ? <span className="text-xs text-[color:var(--muted)]">{eur(m!)} im Monat</span> : null}
         <label className="ml-auto inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-[color:var(--muted)]">
