@@ -11,52 +11,47 @@ export const metadata = { title: "Einstellungen | performancegrowth Admin" };
 const GROUPS = [
   {
     title: "Kunden & Leads",
-    text: "Wie Leads ankommen und Kunden starten",
     items: [
-      { href: "/admin/lead-eingang", icon: Workflow, color: "bg-blue-500", title: "Lead-Eingang", text: "Meta-Verbindung und Leadformulare zuordnen" },
-      { href: "/admin/whatsapp/settings", icon: MessageCircle, color: "bg-emerald-500", title: "WhatsApp-Assistent", text: "Nummern, Vorlagen, Erstanschreiben je Kunde" },
-      { href: "/admin/buyers", icon: KeyRound, color: "bg-amber-500", title: "Kunden-Logins", text: "Zugänge anlegen, Passwort, Vorschau" },
-      { href: "/admin/einstellungen/einrichtung", icon: Rocket, color: "bg-blue-600", title: "Einrichtung neuer Kunden", text: "Business-ID für den Meta-Zugriff, Erklärvideos je Schritt" },
-      { href: "/admin/einstellungen/produkte", icon: Layers, color: "bg-orange-500", title: "Produkte", text: "Welche Sparten Kunden selbst dazubuchen können" },
-      { href: "/admin/einstellungen/kampagnen-automatik", icon: Bot, color: "bg-fuchsia-500", title: "Kampagnen-Automatik", text: "Budget bei Meta umstellen, Kampagne bei Produktbuchung, müde Anzeigen auffrischen" },
+      { href: "/admin/lead-eingang", icon: Workflow, color: "bg-blue-500", title: "Lead-Eingang", text: "Meta verbinden, Formulare zuordnen" },
+      { href: "/admin/whatsapp/settings", icon: MessageCircle, color: "bg-emerald-500", title: "WhatsApp-Assistent", text: "Nummern, Vorlagen, Erstanschreiben" },
+      { href: "/admin/buyers", icon: KeyRound, color: "bg-amber-500", title: "Kunden-Logins", text: "Zugänge, Passwort, Vorschau" },
+      { href: "/admin/einstellungen/einrichtung", icon: Rocket, color: "bg-blue-600", title: "Einrichtung neuer Kunden", text: "Meta-Business-ID, Erklärvideos" },
+      { href: "/admin/einstellungen/produkte", icon: Layers, color: "bg-orange-500", title: "Produkte", text: "Sparten zum Selbst-Dazubuchen" },
+      { href: "/admin/einstellungen/kampagnen-automatik", icon: Bot, color: "bg-fuchsia-500", title: "Kampagnen-Automatik", text: "Budget, neue Kampagnen, Anzeigen auffrischen" },
       // Eintrag zur Optimierung je Werbekonto (Teil B, 18.11.2026): Übersicht, Freigabe, Autopilot
-      { href: "/admin/optimierung", icon: TrendingUp, color: "bg-rose-500", title: "Optimierung je Werbekonto", text: "Wöchentliche Maßnahmen je Konto freigeben, Autopilot, letzte Maßnahme je Konto" },
+      { href: "/admin/optimierung", icon: TrendingUp, color: "bg-rose-500", title: "Optimierung je Werbekonto", text: "Maßnahmen freigeben, Autopilot" },
     ],
   },
   {
     title: "Kommunikation mit Kunden",
-    text: "Was Kunden von uns sehen und bekommen",
     items: [
-      { href: "/admin/einstellungen/neuigkeiten", icon: Megaphone, color: "bg-violet-500", title: "Neuigkeiten", text: "Was wir verbessert haben: Einträge für den Kundenbereich, optional mit Push" },
-      { href: "/admin/monatsberichte", icon: FileBarChart, color: "bg-blue-600", title: "Monatsberichte", text: "Berichte an Kunden: Entwürfe prüfen, senden oder lieber anrufen" },
-      { href: "/admin/einstellungen/login", icon: LogIn, color: "bg-indigo-500", title: "Login-Seite", text: "Infokarten neben dem Login: mehrere Karten im Wechsel, mit Klickzahlen" },
-      { href: "/admin/einstellungen/status", icon: Activity, color: "bg-emerald-500", title: "Status & Support", text: "Öffentliche Statusseite, Störungsmeldungen, Support-Kontakt im Hilfe-Chat" },
-      { href: "/admin/einstellungen/halteangebote", icon: Anchor, color: "bg-rose-500", title: "Halteangebote", text: "Angebote beim Kündigen je Grund: Nachlass, Neustart, Pause, Nur Bestand, Rückkehrangebot" },
+      { href: "/admin/einstellungen/neuigkeiten", icon: Megaphone, color: "bg-violet-500", title: "Neuigkeiten", text: "Einträge für den Kundenbereich" },
+      { href: "/admin/monatsberichte", icon: FileBarChart, color: "bg-blue-600", title: "Monatsberichte", text: "Entwürfe prüfen und senden" },
+      { href: "/admin/einstellungen/login", icon: LogIn, color: "bg-indigo-500", title: "Login-Seite", text: "Infokarten neben dem Login" },
+      { href: "/admin/einstellungen/status", icon: Activity, color: "bg-emerald-500", title: "Status & Support", text: "Statusseite, Störungen, Support-Kontakt" },
+      { href: "/admin/einstellungen/halteangebote", icon: Anchor, color: "bg-rose-500", title: "Halteangebote", text: "Angebote beim Kündigen je Grund" },
     ],
   },
   {
     title: "Vertrieb & Wachstum",
-    text: "Neue Kunden gewinnen",
     items: [
       { href: "/admin/vertrieb/buchungsseite", icon: CalendarDays, color: "bg-blue-500", title: "Meine Buchungsseite", text: "Eigene Terminbuchung statt Calendly: Kalender, Zeiten, Termintypen" },
       { href: "/admin/vertrieb/import", icon: FileUp, color: "bg-violet-500", title: "Anbindungen", text: "Instantly, Calendly, Formulare, Import" },
-      { href: "/admin/vertrieb/follow-ups#einstellungen", icon: Clock, color: "bg-teal-500", title: "Später-Follow-ups", text: "Automatik ein/aus, Tageslimit je Postfach, Buchungslink, KI-Texte" },
-      { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten: Produkte, Quoten, Garantien" },
-      { href: "/admin/einstellungen/empfehlungen", icon: Gift, color: "bg-emerald-600", title: "Kollegen empfehlen", text: "Empfehlungsprogramm: Prämie für Empfehler, Vorteil für Neukunden" },
+      { href: "/admin/vertrieb/follow-ups#einstellungen", icon: Clock, color: "bg-teal-500", title: "Später-Follow-ups", text: "Automatik, Tageslimit, Buchungslink" },
+      { href: "/admin/einstellungen/rechner", icon: Calculator, color: "bg-sky-500", title: "Rechner", text: "Break-even-Rechner für Interessenten" },
+      { href: "/admin/einstellungen/empfehlungen", icon: Gift, color: "bg-emerald-600", title: "Kollegen empfehlen", text: "Prämie und Vorteil für Neukunden" },
     ],
   },
   {
     title: "Finanzen",
-    text: "Kosten und Konten",
     items: [
-      { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung für Marge und Kundengewinnung" },
-      { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Commerzbank und Amex: Ausgaben holen und als Kosten zuordnen" },
-      { href: "/admin/einstellungen/rechnungsangaben", icon: Receipt, color: "bg-slate-500", title: "Rechnungsangaben", text: "Steuernummer und Pflichtangaben auf Stripe-Rechnungen, Prüfung des Stripe-Kontos" },
+      { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung" },
+      { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Ausgaben holen und zuordnen" },
+      { href: "/admin/einstellungen/rechnungsangaben", icon: Receipt, color: "bg-slate-500", title: "Rechnungsangaben", text: "Steuernummer, Pflichtangaben, Stripe" },
     ],
   },
   {
     title: "Sicherheit",
-    text: "Zugang und Nachvollziehbarkeit",
     items: [
       { href: "/admin/einstellungen/sicherheit", icon: ShieldCheck, color: "bg-slate-600", title: "Sicherheit", text: "Zwei-Faktor-Login" },
       { href: "/admin/einstellungen/protokoll", icon: History, color: "bg-slate-400", title: "Änderungsprotokoll", text: "Wer hat wann was geändert" },
@@ -91,7 +86,7 @@ export default async function EinstellungenPage() {
           className="mb-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
           <Receipt className="h-4 w-4 shrink-0" />
-          <span className="flex-1">Rechnungen ohne Steuernummer: Auf Stripe-Rechnungen fehlt die USt-IdNr. bzw. Steuernummer.</span>
+          <span className="flex-1">Auf Stripe-Rechnungen fehlt die Steuernummer.</span>
           <span className="font-semibold">Eintragen</span>
         </Link>
       ) : null}
@@ -101,17 +96,17 @@ export default async function EinstellungenPage() {
           className="mb-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
         >
           <LifeBuoy className="h-4 w-4 shrink-0" />
-          <span className="flex-1">Support-Kontakt fehlt: Im Hilfe-Chat erscheinen keine Knöpfe für WhatsApp oder E-Mail (SUPPORT_WHATSAPP_NUMBER, SUPPORT_EMAIL).</span>
+          <span className="flex-1">Im Hilfe-Chat fehlt der Support-Kontakt (WhatsApp, E-Mail).</span>
           <span className="font-semibold">Ansehen</span>
         </Link>
       ) : null}
       <div className="space-y-7">
         {GROUPS.map((g, gi) => (
           <section key={g.title} aria-labelledby={`gruppe-${gi}`}>
-            <h2 id={`gruppe-${gi}`} className="text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+            <h2 id={`gruppe-${gi}`} className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
               {g.title}
             </h2>
-            <p className="mb-2 text-sm text-[color:var(--muted)]">{g.text}</p>
+            
             <ul className="divide-y divide-[color:var(--border)] overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
               {g.items.map((i) => (
                 <li key={i.href}>
@@ -121,7 +116,7 @@ export default async function EinstellungenPage() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">{i.title}</span>
-                      <span className="block truncate text-sm text-[color:var(--muted)]">{i.text}</span>
+                      <span className="block text-sm text-[color:var(--muted)]">{i.text}</span>
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
                   </Link>
