@@ -299,6 +299,8 @@ function ProfileMenu({
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
+          aria-label="Profil und Einstellungen"
+          aria-expanded={open}
           className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm transition hover:bg-[color:var(--background)]"
         >
           <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
@@ -333,6 +335,20 @@ function ProfileMenu({
               </span>
             </Link>
           ) : null}
+          {/* UX Runde 4: Einstellungen oben, weil am häufigsten gesucht */}
+          <Link
+            href="/buyer/einstellungen"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
+            data-menu-einstellungen
+          >
+            <Settings className="h-4 w-4" /> Einstellungen
+            {owner && EMPFEHLUNG_MODULE_AVAILABLE && showNewBadge() ? (
+              <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
+                Neu
+              </span>
+            ) : null}
+          </Link>
           <PushMenuItem />
           {absence ? (
             <button
@@ -384,19 +400,6 @@ function ProfileMenu({
           >
             <Megaphone className="h-4 w-4" /> Neuigkeiten
             {updatesUnread > 0 ? <span className="ml-auto h-2 w-2 rounded-full bg-[color:var(--brand)]" aria-label="Ungelesene Neuigkeiten" /> : null}
-          </Link>
-          <Link
-            href="/buyer/einstellungen"
-            onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[color:var(--background)]"
-            data-menu-einstellungen
-          >
-            <Settings className="h-4 w-4" /> Einstellungen
-            {owner && EMPFEHLUNG_MODULE_AVAILABLE && showNewBadge() ? (
-              <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800" title="Neu: Zusatzmodul Empfehlungen & Bewertungen">
-                Neu
-              </span>
-            ) : null}
           </Link>
           <form action="/api/auth/logout" method="post" className="border-t border-[color:var(--border)]">
             <button
