@@ -5,7 +5,7 @@ Werkzeuge für die drei Erklärvideos im Kundenbereich:
 | Video | Ziel-Datei (public/videos) | Szenen | Aufnahme |
 |---|---|---|---|
 | Kurzversion (ca. 1 Min.) | `einfuehrung-kurz.mp4` | `KURZ` in `scenes_oa.py` | `rec_ev.js kurz` |
-| Ausführlich (ca. 3:20 Min.) | `einfuehrung-ausfuehrlich.mp4` | `LANG` in `scenes_oa.py` | `rec_ev.js lang` |
+| Ausführlich (ca. 3:50 Min.) | `einfuehrung-ausfuehrlich.mp4` | `LANG` in `scenes_oa.py` | `rec_ev.js lang` |
 | WhatsApp verbinden (ca. 3:20 Min.) | `whatsapp-verbinden.mp4` | `wa_scenes.py` | `wa_rec.js` (App-Teile echt, 360dialog/Meta aus `cards/wa_mock.html`) |
 
 Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`).
@@ -28,7 +28,11 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 - Nach `seed.ts`, `wa.ts`, `termin.ts`: `DATABASE_URL=… node local/ev_zustand.mjs` (Erstinformation vollständig, Wiedervorlagen gesetzt), sonst stehen Warnhinweis und „Leads ohne nächsten Schritt“ über allem auf „Heute“.
 - `rec_ev.js` klickt vor der Aufnahme die Hinweiskarten weg (Willkommen-Video, Neuigkeiten, Mitteilungen).
 - Ton gegenhören: `python3 check_oa.py kurz lang` (faster-whisper, erzeugt Szenen mit falsch gehörten Begriffen neu; englisch „Lead“ hört Whisper als „Lied“, das gilt als richtig).
-- Ausgeblendete Module (z. B. „Empfehlungen & Bewertungen“, `EMPFEHLUNG_MODULE_AVAILABLE = false`) nicht zeigen und nicht nennen.
+- Ausgeblendete Module (z. B. „Empfehlungen & Bewertungen“, `EMPFEHLUNG_MODULE_AVAILABLE = false`, Bestandskunden-Modul, `BESTAND_MODULE_AVAILABLE = false`) nicht zeigen und nicht nennen.
+- Knapper Speicher (16.11.2026, mehrere Dev-Server parallel): „Ausführlich“ in zwei Teilen aufnehmen und den Dev-Server dazwischen neu starten
+  (`NODE_OPTIONS=--max-old-space-size=4096`): `EV_PART=langA EV_FROM=0 EV_TO=8 node rec_ev.js lang`, dann
+  `EV_PART=langB EV_FROM=9 node rec_ev.js lang`, je Teil `mux.py langA …` bzw. `mux.py langB …` und mit
+  `ffmpeg -f concat -c copy` aneinanderhängen. `python3 scenes_oa.py kurz` vertont nur eine Fassung.
 
 ### Zusatz für „WhatsApp verbinden“ (Stand 15.11.2026)
 
@@ -37,15 +41,15 @@ Arbeitsverzeichnis für Ton, Rohvideo und Logs: `EV_DIR` (Standard `/var/tmp/ev`
 - Aufnahme: `APP=http://localhost:3123 DATABASE_URL=… node wa_rec.js`. Fehlt Playwrights Chromium, `PW_CHROME=/usr/bin/google-chrome`; fehlt Playwrights ffmpeg für die Aufnahme, `PLAYWRIGHT_BROWSERS_PATH=<eigener Ordner> npx playwright install ffmpeg` und denselben `PLAYWRIGHT_BROWSERS_PATH` beim Aufnehmen setzen.
 - Einzelne Szenen neu vertonen: `python3 wa_scenes.py 3 7` (Rest bleibt). `wa_rec.js` meldet Szenen, deren Bild länger braucht als der Ton („lang …“).
 
-## Was jedes Video zeigt (für die Prüfung, Stand 15.11.2026)
+## Was jedes Video zeigt (für die Prüfung, Stand 16.11.2026)
 
 Ändert sich eine dieser Seiten oder einer dieser Begriffe sichtbar, Video prüfen (siehe AGENTS.md „Erklärvideos aktuell halten“).
 `python3 tools/erklaervideos/betroffen.py` vergleicht geänderte Dateien mit dieser Liste.
 
 | Video | Seiten (Routen) | Begriffe und Knöpfe im Sprechertext |
 |---|---|---|
-| Kurz (`kurz.json`, `public/videos/einfuehrung-kurz*`) | /buyer (Heute), Termin im Kontakt, /buyer/chats, /buyer/kontakte, /buyer/wachstum | Heute, Termin, Assistent, Kontakte (Liste, Pipeline), Wachstum, KI-Hilfe |
-| Ausführlich (`lang.json`, `public/videos/einfuehrung-lang*`) | /buyer, Kontakt (Fenster und Seite), Terminvorbereitung, Anrufliste, /buyer/chats, /buyer/kontakte (Liste, Pipeline), /buyer/wachstum, /buyer/zahlen, /buyer/kalender, /buyer/team | Heute, Kontakte, Nachrichten, Wachstum, „Braucht dich“, Phase, Gewonnen, Verloren, Angaben, Notizen, Anrufliste, Wiedervorlagen, Pipeline, Vertriebstrichter, Mein Kalender, Team, KI-Hilfe |
+| Kurz (`kurz.json`, `public/videos/einfuehrung-kurz*`) | /buyer (Heute), Termin im Kontakt, /buyer/chats, /buyer/kontakte, /buyer/wachstum (mit Werbebudget) | Heute, „Wartet auf Sie“, Termin, Assistent, Nachrichten, Kontakte (Liste, Pipeline), Wachstum, Werbebudget, KI-Hilfe |
+| Ausführlich (`lang.json`, `public/videos/einfuehrung-ausfuehrlich*`) | /buyer (Heute mit Kontakt rechts), Terminvorbereitung (/buyer/termine/…/vorbereitung), Anrufliste, /buyer/chats, /buyer/kontakte (Liste, Pipeline), /buyer/wachstum (Trichter, Werbebudget, Produkte, Pause), /buyer/kalender, /buyer/team | Heute, Kontakte, Nachrichten, Wachstum, „Wartet auf Sie“, „Wie lief es?“, Phase, Gewonnen, Verloren, Angaben, Notizen, „Vorbereiten: Angebot rechnen“, Präsentation, Anrufliste, Wiedervorlagen, „Festlegen“, Pipeline, Vertriebstrichter, Werbebudget, Pause, Mein Kalender, Team, KI-Hilfe |
 | WhatsApp verbinden (`wa.json`, `public/videos/whatsapp-verbinden*`) | /buyer/einrichtung (Schritt WhatsApp), /buyer/whatsapp-verbinden, Seiten von 360dialog und Meta | „WhatsApp verbinden“, „Jetzt WhatsApp verbinden“, „Erledigt“, „Fast geschafft“, Fünfzehn-Minuten-Termin |
 
 ## 2. Prüfen, ob sich etwas Grundlegendes geändert hat

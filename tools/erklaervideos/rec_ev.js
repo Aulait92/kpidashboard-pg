@@ -36,7 +36,12 @@ async function hoverText(p,t,ms=900){return hoverEl(p,p.getByText(t).first(),ms)
 const termineItem=p=>p.locator('#termine').locator('..').getByText('Verena Martin').first();
 const cardHead=(p,id,t)=>p.locator('#'+id).locator('..').getByText(t).first();
 const CARDS='file://'+__dirname+'/cards/';
-const VERSION=process.argv[2]; const scenes=JSON.parse(require('fs').readFileSync(EV+'/'+VERSION+'.json'));
+const VERSION=process.argv[2];
+// Teilaufnahme bei knappem Speicher (Dev-Server zwischendurch neu starten): EV_PART=langA EV_FROM=0 EV_TO=8 node rec_ev.js lang
+// schreibt langA.json/langA_log.json; danach mux.py je Teil und die Teile aneinanderhängen.
+const PART=process.env.EV_PART||VERSION;
+const scenes=JSON.parse(require('fs').readFileSync(EV+'/'+VERSION+'.json')).slice(+(process.env.EV_FROM||0),process.env.EV_TO!=null?+process.env.EV_TO+1:undefined);
+if(PART!==VERSION)require('fs').writeFileSync(EV+'/'+PART+'.json',JSON.stringify(scenes,null,1));
 async function nav(p,name){const l=p.getByRole('link',{name:new RegExp('^\\s*'+name)}).first();const href=await l.getAttribute('href').catch(()=>null);await clickLoc(p,l);if(href){const ok=await p.waitForURL(u=>u.pathname===href.split('?')[0],{timeout:15000}).then(()=>true).catch(()=>false);if(!ok){console.log('nav fallback',name);await p.goto(B+href,{waitUntil:'load',timeout:15000}).catch(()=>{});}}await p.waitForLoadState('networkidle',{timeout:5000}).catch(()=>{});await sleep(900);}
 let CUR='';
 async function go(p,u){await p.goto(B+u,{waitUntil:'load',timeout:15000}).catch(()=>{});await p.waitForLoadState('networkidle',{timeout:5000}).catch(()=>{});await sleep(150);await cap(p,CUR);}
@@ -71,14 +76,15 @@ const A={
 (async()=>{
  const b=await chromium.launch(process.env.PW_CHROME?{executablePath:process.env.PW_CHROME}:{});
  const c0=await b.newContext({viewport:{width:W,height:H},locale:'de-DE',timezoneId:'Europe/Berlin'});
- const q=await c0.newPage();await q.goto(B+'/login');await q.fill('input[type=email]','demo@pg.local');await q.fill('input[type=password]','Demo12345!');await q.click('button[type=submit]');await q.waitForTimeout(5000);
+ const q=await c0.newPage();await q.goto(B+'/login');await q.fill('input[type=email]','demo@pg.local');await q.fill('input[type=password]','Demo12345!');await q.click('button[type=submit]');await q.waitForURL(u=>!u.pathname.startsWith('/login'),{timeout:90000}).catch(()=>{});await q.waitForTimeout(1500);
  await q.goto(B+'/buyer',{waitUntil:'networkidle'}).catch(()=>{});await q.waitForTimeout(1500);
  for(let i=0;i<4;i++){const l=q.locator('button[aria-label="Video ausblenden"], button[aria-label="Hinweis ausblenden"]').filter({visible:true}).first();if(!(await l.count()))break;await l.click().catch(()=>{});await q.waitForTimeout(900);}
- for(const u of ['/buyer','/buyer/chats','/buyer/kontakte','/buyer/kontakte?modus=pipeline','/buyer/zahlen','/buyer/kalender','/buyer/wachstum','/buyer/team']){await q.goto(B+u,{waitUntil:'networkidle'}).catch(()=>{});}
+ for(const u of (process.env.EV_WARM?process.env.EV_WARM.split(','):['/buyer','/buyer/chats','/buyer/kontakte','/buyer/kontakte?modus=pipeline','/buyer/kalender','/buyer/wachstum','/buyer/team'])){await q.goto(B+u,{waitUntil:'networkidle'}).catch(()=>{});}
  const state=await c0.storageState();await c0.close();
- const ctx=await b.newContext({viewport:{width:W,height:H},locale:'de-DE',timezoneId:'Europe/Berlin',storageState:state,recordVideo:{dir:EV+'/raw_'+VERSION,size:{width:W,height:H}}});
+ const ctx=await b.newContext({viewport:{width:W,height:H},locale:'de-DE',timezoneId:'Europe/Berlin',storageState:state,recordVideo:{dir:EV+'/raw_'+PART,size:{width:W,height:H}}});
  await ctx.addInitScript(INIT);
- const p=await ctx.newPage(); p.setDefaultTimeout(5000); const T0=Date.now(); await p.goto('about:blank'); await sleep(300);
+ const p=await ctx.newPage(); p.setDefaultTimeout(5000); const T0=Date.now();
+ if(scenes[0].act!=='intro'){await p.goto(B+'/buyer',{waitUntil:'load',timeout:60000}).catch(()=>{});await sleep(2500);}else await p.goto('about:blank'); await sleep(300);
  const log=[];
  for(const s of scenes){
    const st=(Date.now()-T0)/1000; log.push(st);
@@ -91,6 +97,6 @@ const A={
  }
  const end=(Date.now()-T0)/1000;
  await p.close(); const v=await p.video().path(); await ctx.close(); await b.close();
- require('fs').writeFileSync(EV+'/'+VERSION+'_log.json',JSON.stringify({video:v,starts:log,end}));
+ require('fs').writeFileSync(EV+'/'+PART+'_log.json',JSON.stringify({video:v,starts:log,end}));
  console.log(VERSION,v,end);
 })();

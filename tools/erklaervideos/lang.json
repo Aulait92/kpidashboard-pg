@@ -4,125 +4,151 @@
   "cap": "",
   "text": "Willkommen bei Performance Growth. In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten.",
   "wav": "/var/tmp/ev/lang_00.wav",
-  "dur": 9.8
+  "dur": 7.85,
+  "heard": " Willkommen bei Performance Growth.  In den nächsten Minuten zeigen wir Ihnen Schritt für Schritt, wie Sie mit der Software arbeiten."
  },
  {
   "act": "nav",
   "cap": "Die vier Bereiche",
   "text": "Links finden Sie die vier Bereiche: Heute, Kontakte, Nachrichten und Wachstum. Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand.",
   "wav": "/var/tmp/ev/lang_01.wav",
-  "dur": 12.3
+  "dur": 12.05,
+  "heard": " Links finden Sie die vier Bereiche, Heute, Kontakte, Nachrichten und Wachstum.  Auf dem Handy finden Sie dieselben Bereiche unten am Bildschirmrand."
  },
  {
-  "act": "tiles",
+  "act": "heute",
   "cap": "Heute: Ihr Startpunkt",
-  "text": "‚Heute‘ ist Ihr Startpunkt. Ganz oben stehen Termine, für die Sie vorher ein Angebot rechnen. Darunter sehen Sie auf einen Blick, wie viele Chats, Termine, Ergebnisse und Anrufe anstehen.",
+  "text": "‚Heute‘ ist Ihr Startpunkt. Ganz oben steht, wer auf Sie wartet, dann Ihre Termine, offene Ergebnisse unter ‚Wie lief es?‘ und Ihre Anrufe. Am Computer öffnet sich rechts direkt die erste Aufgabe.",
   "wav": "/var/tmp/ev/lang_02.wav",
-  "dur": 13.3
+  "dur": 15.8,
+  "heard": " Heute ist Ihr Startpunkt.  Ganz oben steht wer auf Sie wartet,  dann Ihre Termine,  offene Ergebnisse unter wie lief es  und Ihre Anrufe.  Am Computer öffnet sich rechts direkt die erste Aufgabe."
  },
  {
   "act": "braucht",
-  "cap": "Braucht dich",
-  "text": "Unter ‚Braucht dich‘ stehen Leads, die geantwortet haben und auf Sie warten. Mit ‚Antworten‘ öffnen Sie direkt den Chat.",
+  "cap": "Wartet auf Sie",
+  "text": "Unter ‚Wartet auf Sie‘ stehen Leads, die geantwortet haben. Mit ‚Antworten‘ öffnen Sie direkt den Chat.",
   "wav": "/var/tmp/ev/lang_03.wav",
-  "dur": 8.55
+  "dur": 7.85,
+  "heard": " Unter Wartet auf Sie stehen Lieds, die geantwortet haben.  Mit Antworten öffnen Sie direkt den Chat."
  },
  {
   "act": "termin",
   "cap": "Ihre Termine",
   "text": "Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten: Lebenssituation, Interesse und Rückfragen. Anrufen oder Videocall starten Sie mit einem Klick.",
   "wav": "/var/tmp/ev/lang_04.wav",
-  "dur": 10.85
+  "dur": 11.7,
+  "heard": " Bei Ihren Terminen sehen Sie die Zusammenfassung des Assistenten.  Lebenssituation, Interesse und Rückfragen.  Anrufen oder Videocall starten Sie mit einem Blick."
  },
  {
   "act": "phase",
   "cap": "Phase und Ergebnis",
   "text": "Oben im Kontakt sehen Sie die Phase. Ein Klick ändert sie. Mit ‚Gewonnen‘ oder ‚Verloren‘ schließen Sie einen Lead ab.",
   "wav": "/var/tmp/ev/lang_05.wav",
-  "dur": 8.85
+  "dur": 9.0,
+  "heard": " Oben im Kontakt sehen Sie die Phase.  Ein Klick ändert Sie.  Mit Gewonnen oder verloren schließen Sie einen Lied ab."
  },
  {
   "act": "notizen",
   "cap": "Angaben und Notizen",
   "text": "Darunter stehen alle Angaben aus dem Formular und Ihre Notizen.",
   "wav": "/var/tmp/ev/lang_06.wav",
-  "dur": 8.6
+  "dur": 4.85,
+  "heard": " Darunter stehen alle Angaben aus dem Formular und ihre Notizen."
+ },
+ {
+  "act": "vorbereiten",
+  "cap": "Termin vorbereiten",
+  "text": "Unter dem Termin steht ‚Vorbereiten: Angebot rechnen‘. Dort laden Sie Ihre Angebote hoch, und mit ‚Präsentation‘ zeigen Sie sie im Termin.",
+  "wav": "/var/tmp/ev/lang_07.wav",
+  "dur": 9.6,
+  "heard": " Unter dem Termin steht vorbereiten Angebot rechnen.  Dort laden Sie Ihre Angebote hoch und mit Präsentation zeigen Sie sie im Termin."
  },
  {
   "act": "anrufliste",
   "cap": "Anrufliste",
   "text": "In der Anrufliste stehen Rückrufe und fällige Wiedervorlagen. Überfälliges ist rot markiert. Nach dem Anruf tragen Sie das Ergebnis ein, den Rest erledigt die App.",
-  "wav": "/var/tmp/ev/lang_07.wav",
-  "dur": 12.05
+  "wav": "/var/tmp/ev/lang_08.wav",
+  "dur": 12.85,
+  "heard": " In der Anrufliste stehen Rückrufe und fällige Wiedervorlagen.  Überfälliges ist rot markiert.  Nach dem Anruf tragen Sie das Ergebnis ein, den Rest erledigt die App."
  },
  {
   "act": "nachrichten",
   "cap": "Nachrichten",
   "text": "Unter ‚Nachrichten‘ finden Sie alle WhatsApp-Gespräche mit Ihren Leads.",
-  "wav": "/var/tmp/ev/lang_08.wav",
-  "dur": 5.55
+  "wav": "/var/tmp/ev/lang_09.wav",
+  "dur": 4.8,
+  "heard": " Unter Nachrichten finden Sie alle WhatsApp-Gespräche mit Ihren Leads."
  },
  {
   "act": "chat",
   "cap": "Ihr WhatsApp-Assistent",
   "text": "Ihr Assistent schreibt jeden neuen Lead in wenigen Minuten an, in Ihrem Namen. Er stellt die wichtigsten Fragen und bucht den Termin in eine freie Zeit Ihres Kalenders. Bestätigung und Erinnerung schickt er automatisch.",
-  "wav": "/var/tmp/ev/lang_09.wav",
-  "dur": 15.45
+  "wav": "/var/tmp/ev/lang_10.wav",
+  "dur": 15.05,
+  "heard": " Ihr Assistent schreibt jeden neuen Lied in wenigen Minuten an in Ihrem Namen.  Er stellt die wichtigsten Fragen und bucht den Termin in eine freie Zeit ihres Kalenders.  Bestätigung und Erinnerung schickt er automatisch."
  },
  {
   "act": "selbst",
   "cap": "Selbst schreiben",
   "text": "Möchten Sie selbst antworten, schreiben Sie einfach los. Dann hält sich der Assistent in diesem Chat zurück.",
-  "wav": "/var/tmp/ev/lang_10.wav",
-  "dur": 6.85
+  "wav": "/var/tmp/ev/lang_11.wav",
+  "dur": 8.0,
+  "heard": " Möchten Sie selbst antworten, schreiben Sie einfach los.  Dann hält sich der Assistent in diesem Chat zurück."
  },
  {
   "act": "kontakte",
   "cap": "Kontakte",
-  "text": "Unter ‚Kontakte‘ sehen Sie alle Leads als Liste, mit Suche und Filtern, zum Beispiel ‚Rückruf nötig‘ oder ‚Wiedervorlage fällig‘.",
-  "wav": "/var/tmp/ev/lang_11.wav",
-  "dur": 10.0
+  "text": "Unter ‚Kontakte‘ sehen Sie alle Leads als Liste, mit Phase und nächstem Schritt. Fehlt ein nächster Schritt, legen Sie ihn mit ‚Festlegen‘ fest.",
+  "wav": "/var/tmp/ev/lang_12.wav",
+  "dur": 10.45,
+  "heard": " Unter Kontakte sehen Sie alle Lieds als Liste mit Phase und Nächstem Schritt.  Fehlt ein nächster Schritt, legen Sie ihn mit Festlegen fest."
  },
  {
   "act": "pipeline",
   "cap": "Pipeline",
-  "text": "In der Pipeline sehen Sie jeden Lead nach Phase. Am Computer ziehen Sie Karten einfach in die nächste Spalte. Bei Abschlüssen zeigt die App Beitrag und geschätzte Provision.",
-  "wav": "/var/tmp/ev/lang_12.wav",
-  "dur": 11.15
+  "text": "In der Pipeline sehen Sie jeden Lead nach Phase. Am Computer ziehen Sie Karten einfach in die nächste Spalte. Leads ohne Interesse stehen gesammelt unter ‚Verloren‘.",
+  "wav": "/var/tmp/ev/lang_13.wav",
+  "dur": 11.45,
+  "heard": " In der Pipeline sehen Sie jeden Lied nach Phase.  Am Computer ziehen Sie Karten einfach in die nächste Spalte.  Lieds ohne Interesse stehen gesammelt unter verloren."
  },
  {
   "act": "wachstum",
-  "cap": "Wachstum",
-  "text": "Unter ‚Wachstum‘ finden Sie Ihre Zahlen, Ihr Werbebudget und die Hochrechnung für den Monat.",
-  "wav": "/var/tmp/ev/lang_13.wav",
-  "dur": 7.4
+  "cap": "Wachstum: Ihr Vertriebstrichter",
+  "text": "Unter ‚Wachstum‘ sehen Sie direkt Ihre Zahlen. Der Vertriebstrichter zeigt, wie viele Leads Sie erreichen, wie viele einen Termin bekommen und wie viele abschließen.",
+  "wav": "/var/tmp/ev/lang_14.wav",
+  "dur": 11.5,
+  "heard": " Unter Wachstum sehen Sie direkt Ihre Zahlen, der Vertriebstrichter zeigt, wie viele Lieds Sie erreichen, wie viele einen Termin bekommen und wie viele abschließen."
  },
  {
-  "act": "zahlen",
-  "cap": "Ihre Zahlen",
-  "text": "Der Vertriebstrichter zeigt, wie viele Leads Sie erreichen, wie viele einen Termin bekommen und wie viele abschließen. Darunter sehen Sie Ihre Kosten und den Ertrag.",
-  "wav": "/var/tmp/ev/lang_14.wav",
-  "dur": 11.75
+  "act": "budget",
+  "cap": "Werbebudget, Produkte und Pause",
+  "text": "Darunter sehen Sie Kosten und Ertrag. Weiter unten stellen Sie Ihr Werbebudget ein, sehen Ihre Produkte und tragen eine Pause ein, zum Beispiel für den Urlaub.",
+  "wav": "/var/tmp/ev/lang_15.wav",
+  "dur": 12.2,
+  "heard": " Darunter sehen Sie Kosten und Ertrag.  Weiter unten stellen Sie Ihr Werbebudget ein, sehen Ihre Produkte und tragen eine Pause ein, zum Beispiel für den Urlaub."
  },
  {
   "act": "kalender",
   "cap": "Mein Kalender",
   "text": "Unter ‚Mein Kalender‘ verbinden Sie Ihren Google- oder Outlook-Kalender und legen fest, wann Leads Termine buchen dürfen. Der Assistent bietet nur diese Zeiten an, und nur, wenn Sie dann frei sind.",
-  "wav": "/var/tmp/ev/lang_15.wav",
-  "dur": 13.1
+  "wav": "/var/tmp/ev/lang_16.wav",
+  "dur": 15.3,
+  "heard": " Unter Mein Kalender verbinden Sie Ihren Google- oder Outlookkalender und legen fest, wann Lieds Termine buchen dürfen.  Der Assistent bietet nur diese Zeiten an und nur wenn sie dann frei sind."
  },
  {
   "act": "team",
   "cap": "Team",
   "text": "Arbeiten Sie im Team? Dann laden Sie unter ‚Team‘ Ihre Berater ein. Neue Leads werden automatisch reihum verteilt.",
-  "wav": "/var/tmp/ev/lang_16.wav",
-  "dur": 8.45
+  "wav": "/var/tmp/ev/lang_17.wav",
+  "dur": 7.9,
+  "heard": " Arbeiten Sie im Team, dann laden Sie unter Team Ihre Berater ein.  Neue Leads werden automatisch rei- und verteilt."
  },
  {
   "act": "outro",
   "cap": "",
   "text": "Wenn Sie Fragen haben, hilft Ihnen die KI-Hilfe unten links sofort weiter, und mit einem Klick erreichen Sie unser Team. Viel Erfolg mit Performance Growth!",
-  "wav": "/var/tmp/ev/lang_17.wav",
-  "dur": 11.65
+  "wav": "/var/tmp/ev/lang_18.wav",
+  "dur": 12.3,
+  "heard": " Wenn Sie Fragen haben, hilft Ihnen die KI-Hilfe unten links sofort weiter.  Und mit einem Klick erreichen Sie unser Team.  Viel Erfolg mit Performance Growth!"
  }
 ]
