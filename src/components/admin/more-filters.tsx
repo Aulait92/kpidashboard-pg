@@ -19,7 +19,7 @@ export function MoreFilters({ active, children, className }: { active: number; c
         className="inline-flex min-h-10 items-center gap-1.5 self-start rounded-[var(--radius-sm)] px-1 text-sm font-medium text-[color:var(--brand)] md:hidden"
       >
         <SlidersHorizontal className="h-4 w-4" />
-        {open ? "Weniger Filter" : active ? `Filter (${active})` : "Filter"}
+        {open ? "Weniger Filter" : active ? `Weitere Filter (${active})` : "Weitere Filter"}
       </button>
       <div className={cn(open ? "contents" : "hidden md:contents", className)}>{children}</div>
     </>
