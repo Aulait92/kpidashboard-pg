@@ -1,6 +1,9 @@
 # Entwurf: Änderungen an AGB und AVV (Rechtsprüfung 16.11.2026)
 
-**Status: Entwurf, nicht in Kraft.** Die gültigen Texte stehen unverändert in `src/lib/legal-texts.ts`
+**Stand 16.11.2026:** Die AGB-Vorschläge der Themen 2, 3, 6 und 10 sind mit der gekürzten Fassung in Kraft
+(`agb-kurzfassung-entwurf-2026-11-16.md`); Themen 8 und 9 ruhen mit dem ausgeblendeten Modul. AVV-Vorschläge: offen.
+
+**Status (ursprünglich): Entwurf, nicht in Kraft.** Die gültigen Texte stehen unverändert in `src/lib/legal-texts.ts`
 (`LEGAL_VERSION` „15.11.2026 (Fassung 2)“). Ole entscheidet mit dem Anwalt. Keine Rechtsberatung.
 
 **Umsetzung nach Freigabe:** Texte in `src/lib/legal-texts.ts` übernehmen, `LEGAL_VERSION` erhöhen (neue Fassung),

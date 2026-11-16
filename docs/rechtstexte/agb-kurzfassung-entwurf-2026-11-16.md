@@ -1,6 +1,7 @@
 # Entwurf: AGB gekürzt (16.11.2026)
 
-**Status: Entwurf zum Vergleichen, nicht in Kraft.** Gültig bleibt `src/lib/legal-texts.ts` („15.11.2026 (Fassung 2)“).
+**Status: umgesetzt am 16.11.2026** (Ole: „Baue es so ein“), `LEGAL_VERSION` „16.11.2026“ in `src/lib/legal-texts.ts`.
+Bisherige Fassung als Archiv: `agb-2026-11-15-fassung-2.md`. Die Fragen an den Anwalt unten sind weiter offen.
 Ole entscheidet, der Anwalt sieht drüber. Keine Rechtsberatung.
 
 **Ziel (Ole, 16.11.2026: „Die AGBs sind nur so lang jetzt“):** gleicher Schutz, weniger Text. Gekürzt wurde nur, was

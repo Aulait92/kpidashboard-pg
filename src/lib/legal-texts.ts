@@ -45,7 +45,7 @@
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "15.11.2026 (Fassung 2)";
+export const LEGAL_VERSION = "16.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -65,181 +65,136 @@ export const PROVIDER = {
 
 export type LegalSection = { title: string; items: (string | { sub: string; text: string })[] };
 
+// 16.11.2026 (Ole: „Die AGBs sind nur so lang jetzt“, „Baue es so ein“): gekürzte Fassung, ca. 3.400 → 2.100 Wörter.
+// Entwurf mit Begründung je Abschnitt: docs/rechtstexte/agb-kurzfassung-entwurf-2026-11-16.md; bisherige Fassung als
+// Archiv: docs/rechtstexte/agb-2026-11-15-fassung-2.md. Eingearbeitet aus der Rechtsprüfung (agb-entwurf-2026-11-16.md):
+// Freistellung mit Verschulden (Thema 2), Rollen nach der KI-Verordnung (Thema 3), vollständige Preisstaffel (Thema 6),
+// Erstinformation als Link und PDF (Thema 10). Entfallen, solange ausgeblendet: Zusatzmodul Empfehlungen & Bewertungen
+// und die Regeln zum Bestandskunden-Modul (Fair Use, Werberecht § 7 UWG, Paket „Nur Bestand“); bei Rückkehr aus dem
+// Archiv wieder aufnehmen (Themen 8 und 9 der Rechtsprüfung beachten).
 export const AGB: LegalSection[] = [
   {
+    // Prüfen: Ausschluss von Tippgebern (Anwalts-Memo, Vermittlerrecht; Ole 15.11.2026)
     title: "Geltungsbereich",
     items: [
-      `Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge zwischen der ${PROVIDER.name}, ${PROVIDER.street}, ${PROVIDER.city} („Anbieter“) und ihren Kunden über Leadgenerierung und die Nutzung der Software des Anbieters.`,
-      "Das Angebot richtet sich ausschließlich an Unternehmer im Sinne von § 14 BGB, insbesondere Versicherungsvermittler. Abweichende Bedingungen des Kunden gelten nur, wenn der Anbieter ihnen ausdrücklich in Textform zustimmt.",
-      // Prüfen: Ausschluss von Tippgebern (Anwalts-Memo, Vermittlerrecht; Ole 15.11.2026)
-      "Die Leistungen richten sich an Versicherungsvermittler mit Erlaubnis bzw. Registrierung nach § 34d GewO. Tippgeber ohne eigene Erlaubnis sind von den Leistungen ausgeschlossen.",
+      `Diese AGB gelten für alle Verträge zwischen der ${PROVIDER.name}, ${PROVIDER.street}, ${PROVIDER.city} („Anbieter“) und ihren Kunden über Leadgenerierung und die Nutzung der Software des Anbieters.`,
+      "Sie richten sich ausschließlich an Unternehmer (§ 14 BGB), und zwar an Versicherungsvermittler mit Erlaubnis bzw. Registrierung nach § 34d GewO; Tippgeber ohne eigene Erlaubnis sind ausgeschlossen. Abweichende Bedingungen des Kunden gelten nur, wenn der Anbieter ihnen in Textform zustimmt.",
     ],
   },
   {
+    // Prüfen: Unternehmereigenschaft bei der Annahme (Anwalts-Memo, Ole 15.11.2026)
     title: "Vertragsschluss und Rangfolge",
     items: [
-      "Der Vertrag kommt durch die Annahme des Angebots zustande: online über den Angebotslink, per E-Mail oder in sonstiger Textform.",
-      // Prüfen: Unternehmereigenschaft bei der Annahme (Anwalts-Memo, Ole 15.11.2026)
-      "Bei der Online-Annahme gibt der Kunde seine Firma und, soweit vorhanden, seine USt-IdNr. an und bestätigt, dass er den Vertrag als Unternehmer im Sinne von § 14 BGB schließt. Direkt am Knopf zur Annahme stehen Einrichtungsgebühr, laufende Vergütung mit Beginn, gegebenenfalls Startpreis mit dem Datum des Übergangs in die reguläre Vergütung sowie Laufzeit und Kündigungsmöglichkeit. Der Anbieter bestätigt den Vertragsschluss mit diesen Angaben per E-Mail.",
-      "Es gelten in dieser Rangfolge: im Angebot vereinbarte Sondervereinbarungen, das Angebot, diese AGB, der Auftragsverarbeitungsvertrag.",
+      "Der Vertrag kommt durch Annahme des Angebots zustande: online über den Angebotslink, per E-Mail oder in sonstiger Textform. Bei der Online-Annahme gibt der Kunde seine Firma und gegebenenfalls USt-IdNr. an und bestätigt, als Unternehmer zu handeln. Die wesentlichen Konditionen stehen direkt am Knopf zur Annahme; der Anbieter bestätigt den Vertrag per E-Mail.",
+      "Es gelten in dieser Rangfolge: Sondervereinbarungen im Angebot, das Angebot, diese AGB, der Auftragsverarbeitungsvertrag.",
     ],
   },
   {
     title: "Leistungen: Leadgenerierung",
     items: [
-      "Der Anbieter konzipiert, erstellt und betreut Werbekampagnen auf Facebook und Instagram (Meta) im Werbekonto des Kunden, einschließlich Werbemitteln und Lead-Formularen, und optimiert diese laufend.",
-      "Die generierten Leads werden exklusiv für den Kunden erzeugt und nicht an Dritte verkauft.",
-      "Das Werbebudget zahlt der Kunde direkt an Meta. Der Anbieter steuert es im vereinbarten Rahmen (Tagesbudget je Produkt).",
-      "Der Anbieter schuldet eine fachgerechte Dienstleistung, keinen bestimmten Erfolg. Insbesondere werden keine bestimmte Anzahl an Leads, Kosten pro Lead, Erreichbarkeit oder Abschlussquote zugesichert. Entscheidungen von Meta (z. B. Ablehnung von Anzeigen, Kontosperren) liegen außerhalb des Einflussbereichs des Anbieters.",
+      "Der Anbieter erstellt und betreut Werbekampagnen auf Facebook und Instagram (Meta) im Werbekonto des Kunden, einschließlich Werbemitteln und Lead-Formularen, und optimiert sie laufend. Die Leads werden exklusiv für den Kunden erzeugt und nicht an Dritte verkauft.",
+      "Das Werbebudget zahlt der Kunde direkt an Meta; der Anbieter steuert es im vereinbarten Rahmen. Der Anbieter schuldet eine fachgerechte Dienstleistung, keinen bestimmten Erfolg, insbesondere keine bestimmte Zahl an Leads, Kosten pro Lead oder Abschlussquote. Entscheidungen von Meta (z. B. Ablehnung von Anzeigen, Kontosperren) liegen außerhalb seines Einflusses.",
     ],
   },
   {
     title: "Leistungen: Software",
     items: [
-      "Ist im Angebot das Paket mit Software vereinbart, stellt der Anbieter dem Kunden seine Software als Online-Dienst bereit, insbesondere Lead-Verwaltung, Pipeline, Wiedervorlagen, Terminbuchung mit Erinnerungen, Auswertungen und einen digitalen Assistenten auf WhatsApp.",
-      // Prüfen: KI-Kennzeichnung nach Art. 50 KI-VO, Rollen Anbieter/Betreiber (Anwalts-Memo, Ole 15.11.2026)
-      "Der digitale Assistent ist ein KI-System. Er weist Interessenten und Kunden des Kunden spätestens mit der ersten Nachricht klar darauf hin, dass sie mit einem KI-System und nicht mit einem Menschen schreiben (Art. 50 Abs. 1 der Verordnung (EU) 2024/1689, KI-Verordnung), gibt sich nie als Mensch aus und beantwortet die Frage danach wahrheitsgemäß. Der Hinweis in der ersten Nachricht lässt sich nicht abschalten; der Kunde entfernt oder verdeckt ihn nicht, auch nicht in eigenen Nachrichten und Vorlagen.",
-      // Prüfen: Rollen nach der KI-Verordnung (Anbieter/Betreiber), Anwalt prüft die Einordnung
-      "Nach dem Verständnis der Parteien stellt der Anbieter das KI-System bereit, und der Kunde setzt es in eigener Verantwortung für seine Kommunikation mit Interessenten und Kunden ein (Betreiber im Sinne der KI-Verordnung). Beide Seiten erfüllen die Pflichten, die sie in ihrer jeweiligen Rolle treffen, und unterstützen sich dabei.",
-      "Der digitale Assistent führt keine Versicherungsberatung oder Versicherungsvermittlung durch: Er berät nicht, gibt keine Empfehlungen zu Versicherungsprodukten, nennt keine Tarife, Versicherer oder Preise bzw. Beiträge und vergleicht keine Angebote. Er stellt Fragen zur Bedarfsklärung und vereinbart Termine. Beratung und Vermittlung einschließlich der Befragungs-, Beratungs- und Dokumentationspflichten nach §§ 61, 62 VVG bleiben vollständig beim Kunden, der Gespräche jederzeit selbst übernehmen kann.",
-      "Der Anbieter strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen. Für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt der Anbieter keine Gewähr.",
-      "Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben.",
+      "Ist das Paket mit Software vereinbart, stellt der Anbieter seine Software als Online-Dienst bereit, insbesondere zur Verwaltung von Leads und Terminen, für Auswertungen und mit einem digitalen Assistenten auf WhatsApp. Der Anbieter darf die Software weiterentwickeln, solange die vereinbarten wesentlichen Funktionen erhalten bleiben. Er strebt eine Verfügbarkeit von 99 % im Monatsmittel an, ausgenommen angekündigte Wartungen; für Dienste Dritter (insbesondere Meta/WhatsApp, Kalender- und KI-Anbieter) übernimmt er keine Gewähr.",
+      // Prüfen: KI-Kennzeichnung (Art. 50 KI-VO), Rollen Anbieter/Betreiber und KI-Kompetenz (Rechtsprüfung Thema 3)
+      { sub: "Digitaler Assistent (KI)", text: "Der Anbieter ist Anbieter des Assistenten im Sinne von Art. 3 Nr. 3 der KI-Verordnung (EU) 2024/1689 und stellt sicher, dass er Interessenten spätestens mit der ersten Nachricht klar darauf hinweist, dass sie mit einem KI-System schreiben (Art. 50 KI-Verordnung). Der Hinweis lässt sich nicht abschalten; der Kunde entfernt oder verdeckt ihn nicht. Der Kunde setzt den Assistenten als Betreiber (Art. 3 Nr. 4) in eigener Verantwortung ein und sorgt für die KI-Kompetenz der Personen, die in seinem Auftrag damit arbeiten (Art. 4)." },
+      { sub: "Keine Beratung", text: "Der Assistent berät nicht, empfiehlt keine Versicherungsprodukte, nennt keine Tarife, Versicherer oder Beiträge und vergleicht keine Angebote. Er klärt den Bedarf und vereinbart Termine. Beratung und Vermittlung einschließlich der Pflichten nach §§ 61, 62 VVG liegen vollständig beim Kunden, der Gespräche jederzeit übernehmen kann." },
       // Prüfen: aktive Verkäufer statt Logins (Ole, 14.11.2026)
-      "Im Paket mit Software ist die im Angebot genannte Zahl aktiver Verkäufer enthalten. Aktiv ist ein Zugang, der Leads zugeteilt bekommt (Einstellung „bekommt Leads“) oder an einem Tag Leads zugewiesen bekommen hat; er zählt dann für diesen Tag als aktiv. Zugänge ohne Leads (z. B. Inhaber, der nur steuert, oder Assistenz) sind kostenlos. Weitere Zugänge kann der Kunde selbst anlegen; jeder weitere aktive Verkäufer wird zum im Angebot genannten Preis je Monat berechnet, tagesgenau anteilig. Ab der im Angebot genannten Zahl an Zugängen gelten individuelle Konditionen.",
-      // Prüfen: Bestandskunden-Modul + Fair Use; Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
-      "Das Bestandskunden-Modul (Import und Auswertung der Bestandskunden des Kunden, Kampagnen per WhatsApp) ist ein Zusatzmodul und nur enthalten, wenn es im Angebot vereinbart oder nachträglich in Textform gebucht wurde. Es ist zum Ende des Abrechnungszeitraums kündbar, sofern im Angebot nichts anderes vereinbart ist: bei monatlicher Zahlweise zum Ende des Abrechnungsmonats, bei jährlicher Vorauszahlung zum Ende des bezahlten Abrechnungsjahres. Bei jährlicher Vorauszahlung wird das Modul bei Buchung anteilig bis zum Ende des laufenden Abrechnungsjahres berechnet; eine anteilige Erstattung bei Kündigung erfolgt nicht.",
-      // Prüfen: Selbstbuchung von Zusatzmodulen im Kundenbereich (Ole, 11.11.2026)
-      "Zusatzmodule können im Kundenbereich auch selbst gebucht und dort zum Ende des laufenden Abrechnungszeitraums gekündigt werden. Bei einer Buchung im laufenden Zeitraum wird die Vergütung tagesgenau anteilig berechnet; bei einer Kündigung bleibt das Modul bis zum Ende des bereits bezahlten Zeitraums nutzbar, eine anteilige Erstattung erfolgt nicht.",
+      { sub: "Zugänge", text: "Enthalten ist die im Angebot genannte Zahl aktiver Verkäufer. Aktiv ist ein Zugang, der Leads zugeteilt bekommt; Zugänge ohne Leads sind kostenlos. Jeder weitere aktive Verkäufer kostet den im Angebot genannten Preis je Monat, tagesgenau anteilig." },
+      // Prüfen: Zusatzmodule, Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
+      { sub: "Zusatzmodule", text: "Zusatzmodule gelten nur, wenn sie im Angebot vereinbart oder im Kundenbereich bzw. in Textform gebucht sind. Sie werden tagesgenau anteilig berechnet und sind zum Ende des laufenden Abrechnungszeitraums kündbar, bei jährlicher Vorauszahlung zum Ende des bezahlten Abrechnungsjahres; eine anteilige Erstattung erfolgt nicht." },
     ],
   },
   {
-    // Prüfen: Dankeschön (§ 48b VAG) und Bewertungsbitten (Anwalts-Memo, Ole 15.11.2026)
-    title: "Zusatzmodul Empfehlungen & Bewertungen",
-    items: [
-      "Der Kunde holt vor der automatischen Nachfrage mit Bewertungs- und Empfehlungsbitte das Einverständnis seines Kunden ein und bestätigt es in der Software.",
-      "Ein Dankeschön für Empfehlungen beträgt höchstens 15 € je Empfehler und Kalenderjahr, wird nicht in bar gewährt, nicht an einen Vertragsabschluss gekoppelt und nie der empfohlenen Person gewährt. Vorgaben des Versicherers beachtet der Kunde selbst.",
-    ],
-  },
-  {
+    // Prüfen: Erstinformation (§§ 15, 16 VersVermV), Einwilligungstext, STOPP (Anwalts-Memo, Rechtsprüfung Thema 10)
     title: "Mitwirkung des Kunden",
     items: [
-      "Der Kunde räumt dem Anbieter Zugriff auf sein Meta-Werbekonto ein, stellt eine Zahlungsmethode bei Meta bereit und verbindet, soweit gebucht, seine WhatsApp-Nummer und seinen Kalender.",
-      "Der Kunde bearbeitet die Leads zeitnah, prüft die Werbemittel und Nachrichtenvorlagen vor dem Start und gibt sie frei.",
-      "Der Kunde ist für die Einhaltung seiner berufsrechtlichen Pflichten verantwortlich, insbesondere aus § 34d GewO, der Versicherungsvertriebsrichtlinie und den Vorgaben seines Versicherers, einschließlich etwaiger Werberichtlinien.",
-      // Prüfen: Erstinformation, Einwilligungstext, STOPP (Anwalts-Memo, Ole 15.11.2026)
-      "Der Kunde hinterlegt in der Software eine zutreffende Erstinformation nach § 15 VersVermV, seine Registernummer und seinen Status nach § 34d GewO und hält diese Angaben aktuell. Die Software stellt die Erstinformation Interessenten über einen Link zur Verfügung.",
-      "Nutzt der Kunde eigene Lead-Formulare oder Landingpages, verwendet er den vom Anbieter bereitgestellten Einwilligungstext unverändert.",
-      "Widerspricht ein Interessent oder Kunde der Kontaktaufnahme, etwa mit „STOPP“, beachtet die Software den Widerspruch für alle Kanäle (WhatsApp, E-Mail und Kampagnen). Der Kunde beachtet ihn auch außerhalb der Software.",
-      "Zugangsdaten sind geheim zu halten. Der Kunde informiert den Anbieter unverzüglich über einen Missbrauchsverdacht.",
+      "Der Kunde räumt Zugriff auf sein Meta-Werbekonto ein, stellt bei Meta eine Zahlungsmethode bereit und verbindet, soweit gebucht, WhatsApp und Kalender. Er prüft Werbemittel und Nachrichtenvorlagen vor dem Start, gibt sie frei und bearbeitet Leads zeitnah.",
+      "Der Kunde beachtet seine berufsrechtlichen Pflichten (insbesondere § 34d GewO, Versicherungsvertriebsrichtlinie, Vorgaben und Werberichtlinien seines Versicherers). Er hinterlegt in der Software eine zutreffende Erstinformation (§ 15 VersVermV) mit Registernummer und Status und hält sie aktuell; die Software stellt sie Interessenten als Link und als PDF bereit. Eigene Lead-Formulare nutzt er nur mit dem vom Anbieter bereitgestellten Einwilligungstext.",
+      "Widerspricht eine Person der Kontaktaufnahme (etwa mit „STOPP“), beachtet die Software das für alle Kanäle; der Kunde beachtet es auch außerhalb der Software. Zugangsdaten hält er geheim und meldet einen Missbrauchsverdacht unverzüglich.",
     ],
   },
   {
+    // Prüfen: Preisstaffel vollständig im Angebot (Rechtsprüfung Thema 6), jährliche Vorauszahlung, WhatsApp-Gebühren
     title: "Vergütung und Zahlung",
     items: [
-      "Die Setupgebühr wird mit Vertragsschluss fällig. Die monatliche Vergütung ist ab dem im Angebot genannten Startdatum monatlich im Voraus fällig. Alle Preise verstehen sich netto zuzüglich der gesetzlichen Umsatzsteuer.",
-      // Prüfen: jährliche Vorauszahlung
-      { sub: "Jährliche Vorauszahlung", text: "Ist im Angebot die jährliche Vorauszahlung vereinbart, ist die Vergütung für 12 Monate zum Start im Voraus fällig. Sie beträgt das im Angebot genannte Vielfache der monatlichen Vergütung einschließlich vereinbarter Zusätze (Nachlass für die Vorauszahlung). Während des Zahlungsjahres hinzukommende aktive Verkäufer oder Module werden anteilig für die Restlaufzeit berechnet. Eine anteilige Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung aus wichtigem Grund durch den Kunden." },
-      "Die Höhe der monatlichen Vergütung richtet sich nach dem vereinbarten monatlichen Werbebudget (Preisstaffel laut Angebot). Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat.",
-      // Prüfen: WhatsApp-Gebühren inklusive, Fair Use bei Bestandskampagnen
-      "Die Gebühren von Meta für WhatsApp-Nachrichten sind in der Vergütung enthalten. Das gilt ohne Mengenbegrenzung für die Kommunikation mit Leads (Erstkontakt, Erinnerungen, Nachfassen). Für Kampagnen an Bestandskunden sind die Gebühren für die im Angebot genannte Zahl an Kampagnen-Nachrichten je Kalendermonat enthalten (Fair Use); ist das Kontingent erreicht, startet die Software weitere Kampagnen erst im Folgemonat. Ein höheres Kontingent kann gesondert vereinbart werden.",
-      "Rechnungen sind innerhalb von 7 Tagen per Überweisung oder SEPA-Lastschrift zu zahlen. Gerät der Kunde mehr als 30 Tage in Zahlungsverzug, darf der Anbieter die Kampagnen nach vorheriger Ankündigung pausieren. Nach Zahlungseingang werden sie wieder gestartet.",
+      "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Alle Preise sind netto zuzüglich Umsatzsteuer.",
+      "Die monatliche Vergütung richtet sich nach dem vereinbarten Werbebudget und der im Angebot vollständig genannten Preisstaffel. Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat; der Kundenbereich zeigt die neue Vergütung vor der Änderung an.",
+      { sub: "Jährliche Vorauszahlung", text: "Ist sie vereinbart, ist die Vergütung für 12 Monate zum Start fällig (Nachlass laut Angebot). Im Zahlungsjahr hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },
+      "Die Meta-Gebühren für WhatsApp-Nachrichten an Leads sind in der Vergütung enthalten. Rechnungen sind innerhalb von 7 Tagen zu zahlen. Bei mehr als 30 Tagen Zahlungsverzug darf der Anbieter die Kampagnen nach Ankündigung pausieren, bis die Zahlung eingeht.",
     ],
   },
   {
     title: "Pause und Urlaub",
     items: [
-      "Der Kunde kann die Kampagnen jederzeit pausieren, etwa für Urlaub. Während der Pause wird statt der monatlichen Vergütung nur die im Angebot genannte Software-Gebühr berechnet, tagesgenau anteilig; ist keine Software vereinbart, fällt während der Pause keine Vergütung an.",
-      "Eine Pause verlängert eine vereinbarte Mindestlaufzeit nicht.",
-      // Prüfen: Pause bei Jahreszahlung
-      "Bei jährlicher Vorauszahlung können die Kampagnen ebenfalls pausiert werden; eine Gutschrift oder Verlängerung des Zahlungsjahres erfolgt dafür nicht.",
+      "Der Kunde kann die Kampagnen jederzeit pausieren. Während der Pause fällt statt der monatlichen Vergütung nur die im Angebot genannte Software-Gebühr an, tagesgenau anteilig; ohne Software fällt nichts an. Bei jährlicher Vorauszahlung gibt es dafür keine Gutschrift. Eine Pause verlängert eine Mindestlaufzeit nicht.",
     ],
   },
   {
-    // Prüfen: Testphasen und kostenlose Zeiträume (Ole, 14.11.2026)
+    // Prüfen: Testphasen, Startpreis mit automatischem Übergang (§ 305c BGB), gesonderte Bestätigung am Knopf
     title: "Testphasen und kostenlose Zeiträume",
     items: [
-      "Bietet der Anbieter ein Zusatzmodul oder eine Leistung für einen bestimmten Zeitraum kostenlos an (Testphase, Prämie oder Aktion), nennt er die Dauer und den anschließenden Preis bei der Buchung bzw. im Angebot.",
-      "Nach Ende des kostenlosen Zeitraums wird die Leistung automatisch zu dem bei der Buchung genannten Preis fortgeführt und berechnet, sofern der Kunde sie nicht vorher beendet.",
-      "Der Kunde kann die Leistung während des kostenlosen Zeitraums jederzeit im Kundenbereich oder in Textform beenden. Es entstehen dann keine Kosten.",
-      "Der Anbieter weist den Kunden spätestens 7 Tage vor Ende des kostenlosen Zeitraums per E-Mail und im Kundenbereich auf das Ende und den folgenden Preis hin.",
-      "Nach dem Übergang in die kostenpflichtige Phase kann die Leistung monatlich zum Ende des Abrechnungsmonats gekündigt werden, soweit im Angebot nichts anderes vereinbart ist.",
-      "Je Leistung und Kunde wird ein kostenloser Zeitraum gewährt. Ein Anspruch auf kostenlose Zeiträume besteht nicht.",
-      // Prüfen: Startpreis mit automatischem Übergang (Anwalts-Memo 15.11.2026, § 305c BGB)
-      "Ist im Angebot ein Startpreis vereinbart, gilt er für die genannte Zahl von Abrechnungsmonaten ab Start. Danach gilt automatisch die im Angebot genannte reguläre Vergütung. Das Datum des Übergangs und der folgende Betrag stehen bei der Annahme direkt am Knopf, der Kunde bestätigt sie dort gesondert, und sie stehen in der Auftragsbestätigung.",
-      "Bei Testphasen, die der Kunde im Kundenbereich bucht, stehen Ende der Testphase und folgender Preis direkt am Knopf zur Buchung und werden dort gesondert bestätigt. Der Anbieter bestätigt Beginn, Ende und folgenden Preis per E-Mail.",
+      "Bietet der Anbieter eine Leistung für eine bestimmte Zeit kostenlos oder zu einem Startpreis an, stehen Dauer und folgender Preis bei der Buchung bzw. im Angebot direkt am Knopf und werden dort gesondert bestätigt. Danach läuft die Leistung automatisch zu diesem Preis weiter, sofern der Kunde sie nicht vorher im Kundenbereich oder in Textform beendet; während des kostenlosen Zeitraums entstehen dann keine Kosten. Der Anbieter erinnert spätestens 7 Tage vor Ende per E-Mail und im Kundenbereich.",
+      "Nach dem Übergang in die kostenpflichtige Phase ist die Leistung zum Ende des Abrechnungsmonats kündbar, soweit im Angebot nichts anderes vereinbart ist. Je Leistung gibt es einen kostenlosen Zeitraum; ein Anspruch darauf besteht nicht.",
     ],
   },
   {
-    // Prüfen: Halteangebote vor einer Kündigung (Ole, 15.11.2026), insbesondere Mindestlaufzeit nach einem Nachlass (§ 307 BGB)
+    // Prüfen: Halteangebote, insbesondere Mindestlaufzeit nach einem Nachlass (§ 307 BGB); Einzelheiten stehen bei der Annahme
     title: "Angebote vor einer Kündigung",
     items: [
-      "Der Anbieter kann dem Kunden vor einer Kündigung, insbesondere im Kundenbereich unter „Vertrag hier kündigen“, Angebote machen, etwa einen Nachlass auf die monatliche Vergütung, einen kostenlosen Monat der Betreuung, eine Pause ohne Vergütung, eine Neuausrichtung der Kampagne oder einen Wechsel des Pakets. Es gelten die bei der Annahme genannten Bedingungen; der Anbieter bestätigt sie im Kundenbereich und bei einem Nachlass zusätzlich per E-Mail.",
-      { sub: "Rabattbedingungen", text: "Ein Nachlass gilt für die genannte Zahl von Monatsrechnungen ab der nächsten Rechnung und bezieht sich auf die monatliche Vergütung einschließlich vereinbarter Zusätze. Er wird nicht ausgezahlt und nicht auf andere Zeiträume übertragen. Bei jährlicher Vorauszahlung wird kein Nachlass auf die Monatsgebühr angeboten." },
-      { sub: "Mindestlaufzeit nach einem Nachlass", text: "Ist ein Nachlass an eine weitere Laufzeit geknüpft, läuft der Vertrag mindestens bis zu dem bei der Annahme genannten Tag. Er ergibt sich aus dem laufenden Abrechnungsmonat, den rabattierten Abrechnungsmonaten und der genannten Zahl weiterer Abrechnungsmonate (Beispiel: Start am 01.08., Annahme am 15.11., Nachlass für 2 Monate, danach 3 Monate: Mindestlaufzeit bis 30.04. des Folgejahres). Eine Kündigung ist jederzeit möglich, wirkt aber frühestens zu diesem Tag." },
-      { sub: "Pause ohne Vergütung", text: "Wird eine Pause ohne Vergütung vereinbart, entfällt für ihre Dauer die gesamte Vergütung. Sie dauert höchstens die bei der Annahme genannte Zahl von Monaten und verlängert eine vereinbarte Mindestlaufzeit nicht." },
-      { sub: "Paket „Nur Bestand“", text: "Wählt der Kunde das Paket „Nur Bestand“, umfasst der Vertrag ab dem nächstmöglichen Kündigungstermin des bisherigen Pakets nur noch die Speicherung seiner Daten und das Bestandskunden-Modul mit dessen Kontingent zu dem bei der Annahme genannten Preis, ohne Leadgenerierung und ohne Betreuung. Das Modul „Empfehlungen & Bewertungen“ kann gegen den im Kundenbereich genannten Aufpreis dazugebucht werden. Im Übrigen gelten die Regeln zu Zusatzmodulen und „Laufzeit und Kündigung“ ohne Mindestlaufzeit." },
-      "Gutschriften für Leads mit fehlerhaften Angaben erfolgen nur nach Prüfung durch den Anbieter und in der von ihm bestätigten Höhe.",
-      "Ein Anspruch auf solche Angebote besteht nicht. Der Anbieter kann sie von einer Mindestdauer der Kundenbeziehung abhängig machen und Nachlässe und vergleichbare Vorteile auf einmal innerhalb von 12 Monaten begrenzen.",
-      "Nach Vertragsende kann der Anbieter ein Angebot zur Rückkehr ohne neue Einrichtungsgebühr machen. Ein neuer Vertrag kommt erst zustande, wenn der Kunde Paket und Preis zugestimmt hat.",
+      "Der Anbieter kann dem Kunden vor einer Kündigung Angebote machen, etwa einen Nachlass, einen kostenlosen Monat, eine Pause ohne Vergütung oder einen Paketwechsel. Es gelten die bei der Annahme genannten Bedingungen; der Anbieter bestätigt sie im Kundenbereich und per E-Mail. Ein Nachlass wird nicht ausgezahlt.",
+      "Ist ein Nachlass an eine weitere Laufzeit geknüpft, läuft der Vertrag mindestens bis zu dem bei der Annahme genannten Tag; eine Kündigung wirkt frühestens dann.",
+      "Gutschriften für fehlerhafte Leads gibt es nur nach Prüfung und in der bestätigten Höhe. Ein Anspruch auf solche Angebote besteht nicht; der Anbieter kann sie von einer Mindestdauer der Kundenbeziehung abhängig machen und auf einmal innerhalb von 12 Monaten begrenzen. Ein Rückkehrangebot nach Vertragsende wird erst mit Zustimmung des Kunden zu Paket und Preis zum neuen Vertrag.",
     ],
   },
   {
+    // Prüfen: eindeutiger Kündigungstermin und Kündigung im Kundenbereich (Anwalts-Memo, Ole 15.11.2026)
     title: "Laufzeit und Kündigung",
     items: [
-      { sub: "Ohne Vertragslaufzeit", text: "Der Vertrag läuft unbefristet und kann von beiden Seiten zum Ende des jeweiligen Abrechnungsmonats in Textform gekündigt werden." },
-      // Prüfen: Mindestlaufzeit 3 Monate (Ole, 11.11.2026)
-      { sub: "Mit 3 Monaten Laufzeit", text: "Der Vertrag hat eine Mindestlaufzeit von 3 Monaten ab Start. Danach läuft er unbefristet weiter und kann zum Ende des jeweiligen Abrechnungsmonats gekündigt werden." },
-      { sub: "Mit 12 Monaten Laufzeit", text: "Der Vertrag hat eine Mindestlaufzeit von 12 Monaten ab Start. Danach läuft er unbefristet weiter und kann zum Ende des jeweiligen Abrechnungsmonats gekündigt werden." },
-      // Prüfen: Verlängerung bei Jahreszahlung
-      { sub: "Mit jährlicher Vorauszahlung", text: "Der Vertrag hat eine Laufzeit von 12 Monaten ab Start und verlängert sich jeweils um weitere 12 Monate, wenn er nicht mit einer Frist von einem Monat zum Ende des Zahlungsjahres in Textform gekündigt wird. Der Kunde kann vor Ablauf des Zahlungsjahres in Textform auf monatliche Zahlung umstellen; dann gilt ab dem folgenden Zahlungszeitraum die Regel „Mit 12 Monaten Laufzeit“." },
-      // Prüfen: eindeutiger Kündigungstermin und Kündigung im Kundenbereich (Anwalts-Memo, Ole 15.11.2026)
-      { sub: "Fristen", text: "Start ist das im Angebot genannte oder bei der Annahme gewählte Startdatum. Ein Abrechnungsmonat beginnt am Starttag bzw. an demselben Kalendertag der Folgemonate und endet mit dem Tag davor; fehlt dieser Tag in einem Monat, endet er mit dem Monatsletzten (Beispiel: Start am 15.03., Abrechnungsmonate 15.03. bis 14.04., 15.04. bis 14.05. usw.). Eine Mindestlaufzeit von 3 bzw. 12 Monaten endet entsprechend (Beispiel: Start am 15.03.2027, 3 Monate bis 14.06.2027). Eine Kündigung während der Mindestlaufzeit wirkt zu deren Ende, danach zum Ende des Abrechnungsmonats, in dem sie zugeht. Bei jährlicher Vorauszahlung muss die Kündigung spätestens einen Monat vor Ende des Zahlungsjahres zugehen (Beispiel: Zahlungsjahr bis 14.03.2028, Kündigung bis 14.02.2028), sonst wirkt sie zum Ende des folgenden Zahlungsjahres." },
-      { sub: "Form der Kündigung", text: "Die Kündigung erfolgt in Textform (z. B. E-Mail) oder im Kundenbereich unter „Konto & Rechnungen“ über „Vertrag hier kündigen“. Dort sieht der Kunde vor dem Absenden den Termin, zu dem der Vertrag endet. Der Anbieter bestätigt den Eingang der Kündigung und das Vertragsende unverzüglich per E-Mail." },
-      "Hat der Kunde einen Nachlass mit Mindestlaufzeit angenommen (Abschnitt „Angebote vor einer Kündigung“), wirkt eine ordentliche Kündigung frühestens zum Ende dieser Mindestlaufzeit.",
-      "Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt. Die Setupgebühr wird bei Vertragsende nicht erstattet.",
+      "Ohne Vertragslaufzeit ist der Vertrag von beiden Seiten zum Ende jedes Abrechnungsmonats kündbar. Mit 3 bzw. 12 Monaten Laufzeit gilt diese Mindestlaufzeit ab Start; danach läuft er unbefristet und ist zum Ende jedes Abrechnungsmonats kündbar.",
+      "Bei jährlicher Vorauszahlung läuft der Vertrag 12 Monate ab Start und verlängert sich um jeweils 12 Monate, wenn er nicht spätestens einen Monat vor Ende des Zahlungsjahres gekündigt wird. Der Kunde kann vorher auf monatliche Zahlung umstellen; dann gilt die Regel für 12 Monate Laufzeit.",
+      { sub: "Fristen", text: "Start ist das im Angebot genannte oder bei der Annahme gewählte Datum. Ein Abrechnungsmonat läuft vom Starttag bis zum Tag vor demselben Kalendertag des Folgemonats (fehlt der Tag, bis zum Monatsletzten); Beispiel: Start am 15.03., Abrechnungsmonate 15.03. bis 14.04. usw., 3 Monate Mindestlaufzeit bis 14.06. Eine Kündigung während der Mindestlaufzeit wirkt zu deren Ende, danach zum Ende des Abrechnungsmonats, in dem sie zugeht." },
+      "Die Kündigung erfolgt in Textform oder im Kundenbereich unter „Konto & Rechnungen“ („Vertrag hier kündigen“), wo der Kunde den Endtermin vorher sieht. Der Anbieter bestätigt Eingang und Vertragsende per E-Mail. Das Recht zur außerordentlichen Kündigung bleibt unberührt. Die Setupgebühr wird nicht erstattet.",
     ],
   },
   {
+    // Prüfen: Garantien (von Ole am 11.11.2026 freigegeben); 120 statt 90 Tage für neue Angebote (Übergang bleibt, da eine URL)
     title: "Garantien",
     items: [
-      // Prüfen: Garantien (von Ole am 11.11.2026 freigegeben)
-      "Die folgenden Garantien gelten für das Produkt Katzenversicherung (TKV) sowie für weitere Produkte, soweit sie im Angebot ausdrücklich genannt sind. Sie gelten ab Start der Kampagne (Tag der ersten Auslieferung der Anzeigen).",
-      { sub: "Lead-Garantie", text: "Beträgt das Werbebudget in den ersten 30 aktiven Tagen mindestens 20 € pro Tag und Produkt und erhält der Kunde in diesem Zeitraum weniger als 100 Leads für dieses Produkt, entfällt die monatliche Vergütung für Betreuung und Software im folgenden Abrechnungsmonat. Das Werbebudget zahlt der Kunde weiterhin direkt an Meta." },
-      { sub: "Break-even-Garantie", text: "Gilt für Kunden, die als Versicherungsvertreter mit Abschlussprovision arbeiten (nicht für Makler, deren Vergütung als laufende Bestandsprovision über die Vertragslaufzeit anfällt). Ziel: spätestens ab dem 5. Monat profitabel. Liegt die Provision des Kunden aus den über den Anbieter gewonnenen Verträgen nach 4 Monaten (120 aktiven Tagen) unter der Summe aus Werbebudget und Vergütung für Betreuung und Software in diesem Zeitraum, betreut der Anbieter den Kunden ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis die Provision seit Kampagnenstart diese Kosten erreicht, längstens jedoch 6 Monate. Voraussetzungen: Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt; mindestens 80 % der über die Software gebuchten Termine wahrgenommen; für mindestens 80 % der Leads das Ergebnis in der Software eingetragen (z. B. erreicht, Termin, Abschluss mit Beitrag); Provisionssätze unter „Meine Provisionen“ hinterlegt. Maßgeblich ist die Berechnung in der Software auf Grundlage dieser Angaben; der Anbieter kann Nachweise zu Abschlüssen verlangen. Für Verträge aus Angeboten, die vor dem 13.11.2026, 19:00 Uhr erstellt wurden, gilt statt 120 aktiven Tagen eine Frist von 90 Tagen." },
-      // Prüfen: Vertrags-Garantie für Makler inkl. Produktwechsel ohne Setupgebühr (Ole, 11.11.2026);
-      // 120 statt 90 aktive Tage für neue Angebote (Ole, 15.11.2026, Stichtag VERTRAGS_GARANTIE_120_AB in lib/rechner.ts)
-      { sub: "Vertrags-Garantie (für Makler)", text: "Gilt für Kunden, die als Versicherungsmakler tätig sind, anstelle der Break-even-Garantie. Hat der Kunde nach 120 aktiven Tagen weniger als 15 Verträge aus den über den Anbieter gewonnenen Leads abgeschlossen, betreut der Anbieter den Kunden ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis 15 Verträge erreicht sind, längstens jedoch 6 Monate. Als Vertrag zählt jeder Lead, für den in der Software ein Abschluss eingetragen ist. Voraussetzungen: Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt; mindestens 80 % der über die Software gebuchten Termine wahrgenommen; für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Im Garantiefall kann der Anbieter als Nachweis eine Courtage- bzw. Provisionsabrechnung des Versicherers anfordern; verschweigt der Kunde Abschlüsse, entfällt der Anspruch. Für Verträge aus Angeboten, die vor dem 15.11.2026, 23:45 Uhr erstellt wurden, gilt statt 120 aktiven Tagen eine Frist von 90 aktiven Tagen." },
-      "Pausen (z. B. Urlaub oder Krankheit) verlängern den jeweiligen Prüfzeitraum um ihre Dauer; maßgeblich sind die aktiven Tage. Besteht zum Zeitpunkt der Prüfung ein Zahlungsverzug, ruht der Anspruch bis zum Ausgleich. Das gilt für alle Garantien.",
-      "Weitergehende Ansprüche, insbesondere auf eine bestimmte Provision oder, über die Vertrags-Garantie hinaus, auf eine bestimmte Zahl von Verträgen, bestehen nicht.",
+      "Die Garantien gelten für die Katzenversicherung (TKV) und für weitere im Angebot genannte Produkte, ab dem Tag der ersten Auslieferung der Anzeigen.",
+      { sub: "Gemeinsame Voraussetzungen", text: "Werbebudget an den aktiven Tagen mindestens 20 € pro Tag und Produkt. Für Break-even- und Vertrags-Garantie außerdem: mindestens 80 % der über die Software gebuchten Termine wahrgenommen und für mindestens 80 % der Leads das Ergebnis in der Software eingetragen. Pausen verlängern den Prüfzeitraum um ihre Dauer; bei Zahlungsverzug ruht der Anspruch bis zum Ausgleich." },
+      { sub: "Lead-Garantie", text: "Erhält der Kunde in den ersten 30 aktiven Tagen weniger als 100 Leads für das Produkt, entfällt die Vergütung für Betreuung und Software im folgenden Abrechnungsmonat. Das Werbebudget zahlt er weiter an Meta." },
+      { sub: "Break-even-Garantie (Vertreter mit Abschlussprovision)", text: "Liegt die Provision aus den über den Anbieter gewonnenen Verträgen nach 120 aktiven Tagen unter Werbebudget plus Vergütung für Betreuung und Software in diesem Zeitraum, betreut der Anbieter ohne diese Vergütung weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis die Provision seit Start die Kosten erreicht, längstens 6 Monate. Grundlage ist die Berechnung in der Software mit den unter „Meine Provisionen“ hinterlegten Sätzen; der Anbieter kann Nachweise zu Abschlüssen verlangen." },
+      { sub: "Vertrags-Garantie (Makler, statt Break-even)", text: "Hat der Kunde nach 120 aktiven Tagen weniger als 15 Verträge aus den Leads abgeschlossen (in der Software als Abschluss eingetragen), betreut der Anbieter ohne Vergütung für Betreuung und Software weiter, auf Wunsch mit einem anderen Produkt ohne Setupgebühr, bis 15 Verträge erreicht sind, längstens 6 Monate. Der Anbieter kann eine Courtage- bzw. Provisionsabrechnung des Versicherers anfordern; verschweigt der Kunde Abschlüsse, entfällt der Anspruch." },
+      { sub: "Übergang", text: "Für Verträge aus Angeboten, die vor dem 13.11.2026, 19:00 Uhr (Break-even-Garantie) bzw. vor dem 15.11.2026, 23:45 Uhr (Vertrags-Garantie) erstellt wurden, gelten 90 statt 120 aktive Tage." },
+      "Weitergehende Ansprüche, insbesondere auf eine bestimmte Provision oder Zahl an Verträgen, bestehen nicht.",
     ],
   },
   {
     title: "Datenschutz",
     items: [
-      "Die Leads werden auf Grundlage einer ausdrücklichen Einwilligung der Interessenten erzeugt, die auch die Kontaktaufnahme per Telefon, E-Mail und WhatsApp umfasst. Der Anbieter dokumentiert die Einwilligung und stellt den Nachweis auf Anfrage zur Verfügung.",
-      "Für die Verarbeitung personenbezogener Daten in der Software ist der Kunde Verantwortlicher und der Anbieter Auftragsverarbeiter. Hierfür gilt der Auftragsverarbeitungsvertrag, der Bestandteil des Vertrags ist.",
-      "Der Kunde gibt Leads nicht an Dritte weiter, soweit dies nicht von der Einwilligung gedeckt ist, und beachtet Widerrufe unverzüglich.",
+      "Die Leads entstehen auf Grundlage einer ausdrücklichen Einwilligung, die auch die Kontaktaufnahme per Telefon, E-Mail und WhatsApp umfasst; der Anbieter dokumentiert sie und legt den Nachweis auf Anfrage vor. Für die Daten in der Software ist der Kunde Verantwortlicher und der Anbieter Auftragsverarbeiter nach dem Auftragsverarbeitungsvertrag, der Bestandteil des Vertrags ist. Der Kunde gibt Leads nur im Rahmen der Einwilligung weiter und beachtet Widerrufe unverzüglich.",
     ],
   },
   {
-    // Prüfen: Zusicherung und Freistellung, vor allem für Ausschließlichkeitsvertreter (Anwalts-Memo, Ole 15.11.2026)
+    // Prüfen: Zusicherung und Freistellung mit Verschulden (Rechtsprüfung Thema 2, BGH VIII ZR 16/05)
     title: "Kundendaten: Zusicherung und Freistellung",
     items: [
-      "Lädt der Kunde Daten seiner Kunden oder Interessenten in die Software (insbesondere Bestandskunden, eigene Kontaktlisten und Leads aus anderen Quellen) oder nutzt er sie dort, etwa für Kampagnen, sichert er zu, dass Upload und Nutzung nach seinem Vermittlervertrag, nach seinen berufsrechtlichen Pflichten und nach dem Datenschutz- und Wettbewerbsrecht zulässig sind und dass eine erforderliche Zustimmung des Versicherers vorliegt. Der Kunde ist dafür verantwortlich, für welche Produkte und Zwecke er diese Daten nutzt.",
-      "Ist der Kunde gebundener Versicherungsvertreter, sichert er insbesondere zu, dass Upload, Speicherung und Nutzung der übermittelten Kundendaten nach seinem Agenturvertrag und dem Datenschutzrecht zulässig sind.",
-      // Prüfen: Werberecht beim Bestandskunden-Modul (§ 7 UWG), Ole 15.11.2026
-      "Beim Bestandskunden-Modul ist der Kunde für die werberechtlichen Voraussetzungen verantwortlich, insbesondere Einwilligungen und, bei E-Mail-Werbung ohne Einwilligung, den Hinweis auf das Widerspruchsrecht bei Erhebung der Adresse (§ 7 Abs. 3 UWG). Seine Angaben hierzu (Importdatei, Bestätigungen) müssen zutreffen; die Software prüft nur anhand dieser Angaben.",
-      "Der Kunde stellt den Anbieter von Ansprüchen Dritter frei, insbesondere des Versicherers sowie von betroffenen Personen, Mitbewerbern, Verbänden und Behörden, die auf einer Verletzung dieser Zusicherung oder auf einer unzulässigen Ansprache durch den Kunden beruhen. Die Freistellung umfasst die angemessenen Kosten der Rechtsverteidigung. Der Anbieter informiert den Kunden unverzüglich über geltend gemachte Ansprüche, gibt ihm Gelegenheit zur Stellungnahme und erkennt Ansprüche nicht ohne Abstimmung mit dem Kunden an. Die Freistellung gilt nicht, soweit der Anbieter die Verletzung zu vertreten hat.",
+      "Lädt oder nutzt der Kunde eigene Daten in der Software (z. B. Kontaktlisten, Leads aus anderen Quellen), sichert er zu, dass das nach seinem Vermittler- bzw. Agenturvertrag, seinem Berufsrecht sowie dem Datenschutz- und Wettbewerbsrecht zulässig ist und eine nötige Zustimmung des Versicherers vorliegt. Für welche Produkte und Zwecke er die Daten nutzt, verantwortet er selbst.",
+      "Verletzt der Kunde diese Zusicherung oder spricht er Personen über die Software unzulässig an, stellt er den Anbieter von darauf beruhenden Ansprüchen Dritter frei (insbesondere des Versicherers, betroffener Personen, Mitbewerber und Verbände), einschließlich angemessener Kosten der Rechtsverteidigung; das gilt nicht, wenn er die Verletzung nicht zu vertreten hat. Der Anbieter informiert den Kunden unverzüglich, gibt ihm Gelegenheit zur Stellungnahme und erkennt Ansprüche nicht ohne Abstimmung an. Hat der Anbieter die Verletzung mit zu vertreten, etwa durch eine fehlerhafte Funktion der Software, mindert sich die Freistellung entsprechend § 254 BGB. Geldbußen gegen den Anbieter selbst sind nicht erfasst.",
     ],
   },
   {
     // Prüfen: Export, Ruhephase (Standard 24 Monate) und Löschung nach Vertragsende, Sperrliste als Hashwerte (15.11.2026)
     title: "Daten bei Vertragsende",
     items: [
-      "Der Kunde kann jederzeit einen vollständigen Export seiner Daten im Kundenbereich abrufen (Konto, „Ihre Daten herunterladen“), auch nach Vertragsende bis zur Löschung.",
-      "Nach Vertragsende ruht das Konto des Kunden: Der Anbieter speichert die Daten nur noch und verarbeitet sie nicht weiter; Kampagnen, Nachrichten, digitaler Assistent und Abgleiche sind beendet. Der Kunde kann sich anmelden, um seine Daten zu exportieren oder sein Konto zu reaktivieren. Für die Reaktivierung vereinbaren die Parteien die Leistungen und die Vergütung neu.",
-      "Die Daten bewahrt der Anbieter nach Vertragsende 24 Monate auf (Ruhephase). Der Kunde kann bei der Kündigung und danach jederzeit bis zur Löschung im Kundenbereich eine kürzere Aufbewahrung von 3 Monaten oder die Löschung sofort nach Vertragsende wählen oder zur Aufbewahrung von 24 Monaten zurückkehren. Der Anbieter erinnert den Kunden 30 und 7 Tage vor der Löschung per E-Mail.",
-      "Nach Ablauf der gewählten Aufbewahrung löscht der Anbieter die personenbezogenen Daten der Leads, Kontakte und Kunden des Kunden sowie die Zugänge endgültig. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, zur dauerhaften Beachtung des Widerspruchs, sowie Daten, für die eine gesetzliche Pflicht zur Aufbewahrung besteht. Daten in Datensicherungen werden im Rahmen der regulären Rotation gelöscht. Angebote, Verträge, Rechnungen und die zugehörigen Abrechnungsdaten bewahrt der Anbieter nach den gesetzlichen Fristen auf; anonyme Kennzahlen ohne Personenbezug bleiben erhalten.",
+      "Der Kunde kann seine Daten jederzeit im Kundenbereich vollständig exportieren (Konto, „Ihre Daten herunterladen“), auch nach Vertragsende bis zur Löschung.",
+      "Nach Vertragsende ruht das Konto: Die Daten werden nur noch gespeichert, Kampagnen, Nachrichten und Assistent sind beendet. Der Kunde kann sich zum Export oder zur Reaktivierung (zu neu vereinbarten Konditionen) anmelden. Die Daten werden 24 Monate aufbewahrt; im Kundenbereich kann der Kunde jederzeit bis zur Löschung 3 Monate oder die sofortige Löschung wählen. Der Anbieter erinnert 30 und 7 Tage vor der Löschung per E-Mail.",
+      "Danach löscht der Anbieter die personenbezogenen Daten endgültig, ausgenommen pseudonymisierte Sperrlisteneinträge (Hashwerte) von Personen, die der Werbung widersprochen haben, und Daten mit gesetzlicher Aufbewahrungspflicht (z. B. Angebote, Verträge und Rechnungen). Datensicherungen werden mit der regulären Rotation gelöscht; anonyme Kennzahlen bleiben erhalten.",
     ],
   },
   {
