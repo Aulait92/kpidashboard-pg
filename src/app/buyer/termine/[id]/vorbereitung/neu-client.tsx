@@ -235,11 +235,12 @@ export function VorbereitungNeu(p: {
           aria-label={vorbereitet ? "Doch nicht vorbereitet" : "Als vorbereitet markieren"}
           title={vorbereitet ? "Doch nicht vorbereitet" : "Als vorbereitet markieren"}
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border bg-white disabled:opacity-50",
+            "flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border bg-white px-3 text-sm font-semibold disabled:opacity-50",
             vorbereitet ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-[color:var(--border)] text-[color:var(--muted)]",
           )}
         >
-          <Check className="h-5 w-5" />
+          {/* Beschriftet statt nur Haken (16.11.2026): ohne Text war unklar, was der Knopf tut */}
+          <Check className="h-5 w-5" /> Vorbereitet
         </button>
         <a href={praesentation} onClick={oeffnen} className={buttonClass("primary", "md", "h-11 flex-1 text-[15px]")}>
           <Presentation className="h-4 w-4" /> Präsentation öffnen
