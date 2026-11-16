@@ -66,7 +66,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
           </div>
           <Aufklapp
             titel="Nutzung je Kunde"
-            hinweis={stockend ? `${stockend} mit liegen gebliebenen Aufgaben` : `${report.customers.length} Kunden`}
+            hinweis={stockend ? `${stockend} mit liegen gebliebenen Aufgaben` : `${report.customers.length} ${report.customers.length === 1 ? "Kunde" : "Kunden"}`}
             funktion="page--nutzung-je-kunde-liegt-herum-genutzte-aktionen"
           >
             <NutzungJeKunde report={report} />
