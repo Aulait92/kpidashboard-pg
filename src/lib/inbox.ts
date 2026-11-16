@@ -64,6 +64,11 @@ export type InboxFollowUp = {
   conversationId: string | null;
   /** Was der Assistent im Chat schon erfahren hat, für die Anrufliste */
   known?: string | null;
+  /**
+   * „Erledigt, kein weiterer Anruf nötig“ nur, wenn danach trotzdem ein Schritt bleibt: Termin geplant oder
+   * Abschluss (Police, Cross-Selling). Sonst stünde der Kontakt ohne nächsten Schritt da (Ole, 16.11.2026).
+   */
+  erledigtOk: boolean;
 };
 /** Kommende Tage (Ole, 13.11.2026): Wiedervorlagen ab morgen und Termine ab übermorgen, 14 Tage. */
 export type InboxUpcoming = { key: string; kind: "wiedervorlage" | "termin"; leadId: string | null; name: string; note: string | null; at: string };
@@ -170,6 +175,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         followUpAt: true,
         followUpNote: true,
         conversations: { select: { id: true }, take: 1 },
+        appointments: { where: { status: "booked", startsAt: { gt: now } }, select: { id: true }, take: 1 },
       },
     }),
   ]);
@@ -222,6 +228,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       overdue: f.followUpAt!.getTime() < todayStart.getTime(),
       conversationId: f.conversations[0]?.id ?? null,
       known: convById.get(f.conversations[0]?.id ?? "")?.qualificationSummary ?? null,
+      erledigtOk: f.status === "Abschluss" || f.appointments.length > 0,
     })),
     appointments: upcoming.map((a) => {
       const conv = a.conversationId ? convById.get(a.conversationId) : undefined;

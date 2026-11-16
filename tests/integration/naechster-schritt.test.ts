@@ -269,3 +269,28 @@ describe("Nächster Schritt", () => {
     expect((await loadLeadHistory(l.id, null)).some((h) => /nicht erreicht/i.test(h.text ?? ""))).toBe(true);
   });
 });
+
+// „Erledigt, kein weiterer Anruf nötig“ nur mit weiterem Schritt (Ole, 16.11.2026)
+describe("Wiedervorlage: Erledigt nur mit weiterem Schritt", () => {
+  let customerId = "";
+  beforeAll(async () => {
+    requireTestDb();
+    customerId = (await makeCustomer()).id;
+  });
+  afterAll(() => cleanupCustomer(customerId));
+
+  it("offen ohne Termin: nein; mit geplantem Termin oder nach Abschluss: ja", async () => {
+    const { loadInbox } = await import("@/lib/inbox");
+    const { POLICY_TODO } = await import("@/lib/lead-followup");
+    const due = new Date(Date.now() - HOUR);
+    const offen = await prisma.lead.create({ data: { customerId, name: "Offen Ohne", phone: "4915130000001", status: "Angebot gesendet", followUpAt: due } });
+    const mitTermin = await prisma.lead.create({ data: { customerId, name: "Mit Termin", phone: "4915130000002", status: "Im Gespräch", followUpAt: due } });
+    await prisma.appointment.create({ data: { customerId, leadId: mitTermin.id, mode: "video", startsAt: new Date(Date.now() + 2 * DAY), endsAt: new Date(Date.now() + 2 * DAY + HOUR), status: "booked" } });
+    const police = await prisma.lead.create({ data: { customerId, name: "Police Fertig", phone: "4915130000003", status: "Abschluss", followUpAt: due, followUpNote: POLICY_TODO } });
+    const data = await loadInbox({ customerId, userId: null, teamRole: "owner" });
+    const ok = (id: string) => data.followUps.find((f) => f.leadId === id)?.erledigtOk;
+    expect(ok(offen.id)).toBe(false);
+    expect(ok(mitTermin.id)).toBe(true);
+    expect(ok(police.id)).toBe(true);
+  });
+});

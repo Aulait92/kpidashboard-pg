@@ -75,6 +75,8 @@ export type CallOutcomeTarget = {
   source?: string | null;
   /** Wiedervorlage: „Erledigt“ statt „Nicht erreicht“ als erste Wahl. */
   kind?: "callback" | "followup" | "lead";
+  /** Wiedervorlage ohne weiteren Schritt abhaken nur, wenn ein Termin geplant ist bzw. nach dem Abschluss */
+  erledigtOk?: boolean;
 };
 
 const LATER = [
@@ -130,7 +132,9 @@ export function CallOutcomeSheet({
     { label: "Später nochmal", icon: Clock, keepOpen: true, onSelect: () => setStep("later") },
     // Wiedervorlage ohne neuen Schritt abhaken (Ole, 16.11.2026: „Was heißt gesprochen, erledigt?“). Klarer benannt,
     // nicht mehr als erste, blaue Wahl: bei „Angebot nachfassen“ sind Abschluss bzw. Später nochmal die Regel.
-    ...(t.kind === "followup"
+    // Nur, wenn danach trotzdem ein Schritt bleibt (Termin, Abschluss); sonst Abschluss, Später nochmal oder Verloren
+    // (Ole, 16.11.2026: „Wenn ich sage erledigt … ist der Kontakt danach ohne weiteren Schritt“)
+    ...(t.kind === "followup" && t.erledigtOk
       ? [{ label: "Erledigt, kein weiterer Anruf nötig", icon: Check, onSelect: () => pick(`${t.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(t.leadId)) }]
       : []),
     // Verloren mit Grund; nie erreicht und unter 6 Versuchen: Warnung (Ole, 14.11.2026)

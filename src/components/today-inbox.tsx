@@ -85,6 +85,8 @@ type CallItem = {
   urgent?: boolean;
   /** Was der Assistent schon weiß (Chat-Zusammenfassung) */
   known?: string | null;
+  /** Wiedervorlage: „Erledigt, kein weiterer Anruf nötig“ erlaubt (lib/inbox.ts InboxFollowUp.erledigtOk) */
+  erledigtOk?: boolean;
 };
 
 type SheetState =
@@ -121,7 +123,7 @@ export function TodayInbox({
   const lastCall = useRef<CallItem | null>(null);
   const markCallReturn = useCallReturn((key) => {
     const c = lastCall.current;
-    if (c && c.key === key) setOutcome({ key: c.key, leadId: c.leadId, name: c.name, source: c.source, kind: c.kind });
+    if (c && c.key === key) setOutcome({ key: c.key, leadId: c.leadId, name: c.name, source: c.source, kind: c.kind, erledigtOk: c.erledigtOk });
   });
   const markCall = (c: CallItem) => {
     lastCall.current = c;
@@ -215,6 +217,7 @@ export function TodayInbox({
       overdue: f.overdue,
       conversationId: f.conversationId,
       known: f.known ?? null,
+      erledigtOk: f.erledigtOk,
     })),
     ...data.callbacks.filter((c) => !c.urgent).map(toCallback),
   ].filter((c) => !hidden.has(c.key));
@@ -310,7 +313,7 @@ export function TodayInbox({
         onSelect: () =>
           setTimeout(() => askWin(c.name, c.source, (v, sp) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v, sp))), 0),
       },
-      ...(c.kind === "followup"
+      ...(c.kind === "followup" && c.erledigtOk
         ? [{ label: "Erledigt, kein weiterer Anruf nötig", icon: Check, onSelect: () => run(c.key, `${c.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(c.leadId)) }]
         : []),
       { label: "Lead öffnen", icon: UserRound, href: leadUrl(c.leadId) },
@@ -596,7 +599,7 @@ export function TodayInbox({
           index={callMode.i}
           total={callMode.queue.length}
           onCall={() => markCall(current)}
-          onResult={() => setOutcome({ key: current.key, leadId: current.leadId, name: current.name, source: current.source, kind: current.kind })}
+          onResult={() => setOutcome({ key: current.key, leadId: current.leadId, name: current.name, source: current.source, kind: current.kind, erledigtOk: current.erledigtOk })}
           onSkip={advance}
           onEnd={() => setCallMode(null)}
           kontaktHref={leadUrl(current.leadId)}
