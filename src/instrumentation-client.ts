@@ -11,6 +11,8 @@ Sentry.init({
   enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+  // Keine personenbezogenen Standarddaten (Nutzer samt IP, Cookies, Header, Query), Rechtsprüfung Nachtrag 16.11.2026
+  dataCollection: { userInfo: false, cookies: false, httpHeaders: false, httpBodies: [], urlQueryParams: false },
   // Session Replay nur bei Fehlern aufzeichnen. Datenschutz: alle Texte und
   // Eingaben maskiert, Bilder/Medien blockiert (keine Lead-Daten im Replay).
   replaysSessionSampleRate: 0,

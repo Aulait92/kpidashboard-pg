@@ -282,7 +282,15 @@ const KI_KURZ_V5 = {
  *   campaign_cross_sell v5 (Rechtsvorprüfung 16.11.2026, § 5 UWG): statt der nicht belegten Aussage „Viele meiner
  *   Kunden haben … eine Lücke“ eine allgemeine Aussage über das Thema.
  */
-export type NaechsteFassung = { version: string; du?: string; sie: string; /** A/B-Fassung b, falls vorhanden */ b?: { du?: string; sie: string } };
+export type NaechsteFassung = {
+  version: string;
+  du?: string;
+  sie: string;
+  /** A/B-Fassung b, falls vorhanden */
+  b?: { du?: string; sie: string };
+  /** Neue Schnellantwort-Knöpfe (im Freitext sofort, in der Vorlage ab dieser Version). */
+  knoepfe?: string[];
+};
 
 export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, NaechsteFassung>> = {
   // Erstanschreiben v5 (Rechtsvorprüfung 16.11.2026, KI-VO Art. 50, Anwalts-Memo): KI-Hinweis im Wortlaut des Memos
@@ -301,10 +309,13 @@ export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, NaechsteFassung>> =
       sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_HINWEIS_KURZ} Damit [Berater] Ihnen ein passendes Angebot machen kann, stelle ich Ihnen zwei kurze Fragen. Erste Frage: Für welches Tier suchen Sie den Schutz?`,
     },
   },
+  // Zahnzusatz v5 (Rechtsprüfung Nachtrag 16.11.2026, Art. 9 DSGVO, EuGH C-184/20 und C-21/23): Frage und Knöpfe
+  // nach dem gewünschten Tarifbaustein statt nach dem eigenen Bedarf („Zahnersatz“ ließe auf den Gebisszustand schließen).
   outreach_zahn: {
     version: "v5",
-    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ_V5.du} Was ist dir am wichtigsten?`,
-    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ_V5.sie} Was ist Ihnen am wichtigsten?`,
+    du: `danke für deine Anfrage zur {{2}}! ${KI_KURZ_V5.du} Welcher Tarifbaustein ist dir am wichtigsten?`,
+    sie: `vielen Dank für Ihre Anfrage zur {{2}}! ${KI_KURZ_V5.sie} Welcher Tarifbaustein ist Ihnen am wichtigsten?`,
+    knoepfe: ["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"],
   },
   outreach_pkv: {
     version: "v5",
@@ -374,6 +385,11 @@ export function freitextBodyOf(purpose: NoticePurpose, variant: TemplateVariant 
     return { du: n.du, sie: n.sie };
   }
   return bodyOf(purpose, variant);
+}
+
+/** Knöpfe im offenen Fenster: die der vorgemerkten nächsten Fassung, sonst die der freigegebenen Vorlage. */
+export function freitextButtonsOf(purpose: NoticePurpose): string[] | undefined {
+  return NAECHSTE_FASSUNG[purpose]?.knoepfe ?? TEMPLATE_BUTTONS[purpose];
 }
 
 /**
@@ -754,7 +770,7 @@ export async function sendWhatsAppNotice(opts: {
   if (windowOpen) {
     mode = "text";
     body = opts.text;
-    const buttons = interactiveButtons(opts.textButtons ?? TEMPLATE_BUTTONS[opts.purpose]);
+    const buttons = interactiveButtons(opts.textButtons ?? freitextButtonsOf(opts.purpose));
     if (buttons) {
       // Interaktive Knöpfe; die ID trägt den Payload (z. B. Terminvorschlag), sonst den Knopftext
       const ids = buttons.map((b, i) => opts.buttonPayloads?.[i] ?? b);

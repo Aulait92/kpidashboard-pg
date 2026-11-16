@@ -34,7 +34,7 @@ import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { erstinfoZeile, hasErstinfoLink, hasErstinfoPdf, humanHandoverReply, kiHinweis, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
-import { ersteFrageRegel } from "@/lib/whatsapp/erstanschreiben";
+import { ersteFrageRegel, istZahnLead, neutralZahnAngaben } from "@/lib/whatsapp/erstanschreiben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -648,12 +648,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           qualifiziert?: unknown;
           angaben?: unknown;
         };
-        await persistInternal(conversation.id, "qualification", tu.input); // Audit-Log
+        // Zahnzusatz: Knopfantworten nur als neutrales Produktinteresse speichern (Art. 9 DSGVO, erstanschreiben.ts)
+        const angaben = istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben;
+        await persistInternal(conversation.id, "qualification", angaben === input.angaben ? tu.input : { ...input, angaben }); // Audit-Log
         // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
         const prevData = (
           await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } })
         )?.qualificationData;
-        const data = input.angaben !== undefined ? mergeQualificationData(prevData, input.angaben) : undefined;
+        const data = angaben !== undefined ? mergeQualificationData(prevData, angaben) : undefined;
         await prisma.conversation.update({
           where: { id: conversation.id },
           data: {

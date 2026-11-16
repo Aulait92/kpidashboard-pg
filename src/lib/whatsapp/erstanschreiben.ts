@@ -41,13 +41,17 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
     };
   }
   if (ZAHN.test(s)) {
+    // Art. 9 DSGVO (Rechtsprüfung Nachtrag 16.11.2026): gefragt wird nach dem gewünschten Tarifbaustein, nie nach dem
+    // eigenen Bedarf. Die bei Meta freigegebene v4 trägt noch „Zahnersatz/Prophylaxe/Beides“; beide Fassungen werden
+    // mit neutralZahnAngaben auf dieselben neutralen Werte gebracht.
     return {
       purpose: "outreach_zahn",
       produkt: "Zahnzusatzversicherung",
-      frage1: "Was ist Ihnen am wichtigsten?",
-      knoepfe: ["Zahnersatz", "Prophylaxe", "Beides"],
-      frage2: "Sind Sie gesetzlich krankenversichert? (angaben.vorhanden; keine Fragen zu Behandlungen, Befunden oder dem Gebiss)",
-      feld1: "interesse",
+      frage1: "Welcher Tarifbaustein ist Ihnen am wichtigsten?",
+      knoepfe: ["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"],
+      frage2:
+        "Sind Sie gesetzlich krankenversichert? (angaben.vorhanden; keine Fragen zu Befunden, Behandlungen, Beschwerden oder dem Gebiss, auch nicht, ob jemand Zahnersatz braucht)",
+      feld1: "tarifwunsch",
     };
   }
   if (PKV.test(s) && !/kinderwunsch/i.test(s)) {
@@ -92,10 +96,50 @@ export function ersteFrageRegel(source: string | null | undefined, advisorName: 
       "- „Lieber schriftlich“: kein Problem, mach im Chat weiter: frag in einem Satz, worum es genau geht, und biete erst danach einen Termin an.",
     ].join("\n");
   }
+  const zahn =
+    p.purpose === "outreach_zahn"
+      ? [
+          `- Ältere Fassung derselben Frage hatte die Knöpfe ${ZAHN_KNOEPFE_V4.map((k) => `„${k}“`).join(", ")}: das ist die gleiche Antwort auf Frage 1 (gewünschter Tarifbaustein), kein Befund.`,
+          "- Frag nie, ob der Lead selbst Zahnersatz, eine Behandlung oder eine Zahnreinigung braucht, und nie nach Befunden oder Beschwerden. Erzählt er von sich aus etwas zu seinen Zähnen, halte es nicht fest und sag: „Das klären wir am besten im Gespräch.“",
+        ]
+      : [];
   return [
     `Erste Frage (stand schon in unserer ersten WhatsApp): „${p.frage1}“ mit den Knöpfen ${p.knoepfe.map((k) => `„${k}“`).join(", ")}.`,
+    ...zahn,
     `- Die nächste Nachricht des Leads (per Knopf oder frei, z. B. „${p.knoepfe[0]}“) ist die Antwort auf diese Frage 1: nicht erneut fragen, sondern mit record_qualification festhalten (angaben.${p.feld1}) und kurz bestätigen.`,
     `- Dann Frage 2: ${p.frage2}`,
     "- Nach Frage 2 setze qualifiziert=true und biete direkt zwei konkrete Termine an (get_available_slots). Weitere Angaben fürs Angebot fragst du erst nach der Buchung ab.",
   ].join("\n");
+}
+
+/** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */
+export const ZAHN_KNOEPFE_V4 = ["Zahnersatz", "Prophylaxe", "Beides"] as const;
+
+const ZAHN_NEUTRAL: Record<string, string> = {
+  zahnersatz: "Tarif mit starkem Zahnersatz-Baustein",
+  "starker zahnersatz": "Tarif mit starkem Zahnersatz-Baustein",
+  prophylaxe: "Tarif mit Zahnreinigung",
+  "mit zahnreinigung": "Tarif mit Zahnreinigung",
+  beides: "Beides vergleichen",
+  "beides vergleichen": "Beides vergleichen",
+};
+
+/**
+ * Antwort auf Frage 1 bei Zahnzusatz neutral als Produktinteresse speichern (Art. 9 DSGVO): „Zahnersatz“ wird zu
+ * „Tarif mit starkem Zahnersatz-Baustein“ usw. Gilt für alle Felder, in denen die KI die Knopfantwort ablegt.
+ * Andere Angaben bleiben unverändert (rein, testbar).
+ */
+export function neutralZahnAngaben(angaben: unknown): unknown {
+  if (!angaben || typeof angaben !== "object" || Array.isArray(angaben)) return angaben;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(angaben as Record<string, unknown>)) {
+    const n = typeof v === "string" ? ZAHN_NEUTRAL[v.trim().toLowerCase().replace(/[.!]+$/, "")] : undefined;
+    out[n && (k === "interesse" || k === "bedarf") ? "tarifwunsch" : k] = n ?? v;
+  }
+  return out;
+}
+
+/** Ist der Lead ein Zahnzusatz-Lead (Erstanschreiben outreach_zahn)? */
+export function istZahnLead(source: string | null | undefined): boolean {
+  return outreachProdukt(source)?.purpose === "outreach_zahn";
 }
