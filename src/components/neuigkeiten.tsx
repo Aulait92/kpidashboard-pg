@@ -47,12 +47,13 @@ export function UpdateEntry({ u, unread = false }: { u: UpdateView; unread?: boo
 function UpdateKompakt({ u }: { u: UpdateView }) {
   return (
     <li data-update={u.id}>
-      <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3">
-        <summary className="flex cursor-pointer list-none items-center gap-2 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
+      <details className="group rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white">
+        {/* Ganze Zeile tippbar, nicht nur der Titel (Runde 5, 16.11.2026) */}
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-3 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
           <span className="min-w-0 flex-1 truncate">{u.title}</span>
           {u.publishedAt ? <span className="shrink-0 text-xs text-[color:var(--muted)]">{dayLabel(u.publishedAt)}</span> : null}
         </summary>
-        <div className="mt-2 space-y-2 text-[15px] leading-relaxed text-[color:var(--muted)]">
+        <div className="space-y-2 px-4 pb-3 text-[15px] leading-relaxed text-[color:var(--muted)]">
           <RichText text={u.body} />
         </div>
       </details>

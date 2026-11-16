@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HilfeChatButton } from "@/components/hilfe-chat";
 import { redirect } from "next/navigation";
 import { Download, History, Layers, Mail, Scale, ShieldCheck, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
@@ -58,10 +59,8 @@ export default async function EinwilligungenPage() {
       <p className="mb-5 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-4 py-3 text-sm text-[color:var(--muted)]" data-recht-hinweis>
         Die App prüft vor jedem Versand Einwilligung, Anlass und Abmeldungen nach den Regeln unten. Das ist eine Hilfe und keine Rechtsberatung: Die rechtliche
         Bewertung im Einzelfall liegt bei Ihnen. Mehr dazu in der{" "}
-        <Link href="/buyer/hilfe" className="underline">
-          Hilfe
-        </Link>
-        .
+        {/* /buyer/hilfe gibt es nicht (404); Hilfe ist das KI-Fenster */}
+        <HilfeChatButton className="underline">KI-Hilfe</HilfeChatButton>.
       </p>
       <div className="space-y-5">
         <Card>
