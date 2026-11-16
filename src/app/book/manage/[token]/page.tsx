@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { CheckCircle2, Video } from "lucide-react";
@@ -58,6 +59,8 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
       mode: true,
       meetUrl: true,
       leadId: true,
+      conversationId: true,
+      createdAt: true,
       calendarKey: true,
       customer: {
         select: { name: true, leadAddress: true, calendarConnection: { select: { bookingSlug: true } } },
@@ -87,6 +90,31 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
   const an = asAnsprache(appt.customer.leadAddress);
   const ERRORS = errorsFor(an);
   const kind = appt.mode === "video" ? "Videocall" : "Telefonat";
+
+  // Alter Link nach dem Verschieben (neuer Termin, neuer Link): zum aktuellen Termin statt „abgesagt“,
+  // sonst bucht der Lead womöglich doppelt (Runde 5, 16.11.2026).
+  if (appt.status === "cancelled" && sp.done !== "cancelled") {
+    const same = [
+      ...(appt.leadId ? [{ leadId: appt.leadId }] : []),
+      ...(appt.conversationId ? [{ conversationId: appt.conversationId }] : []),
+    ];
+    const current = same.length
+      ? await prisma.appointment.findFirst({
+          where: {
+            customerId: appt.customerId,
+            id: { not: appt.id },
+            status: "booked",
+            startsAt: { gt: new Date(nowMs()) },
+            createdAt: { gte: appt.createdAt },
+            manageToken: { not: null },
+            OR: same,
+          },
+          orderBy: { createdAt: "desc" },
+          select: { manageToken: true },
+        })
+      : null;
+    if (current?.manageToken) redirect(`/book/manage/${current.manageToken}?done=aktuell`);
+  }
 
   if (appt.status === "cancelled") {
     return (
@@ -136,6 +164,11 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
 
   return (
     <Shell customerId={appt.customerId}>
+      {sp.done === "aktuell" ? (
+        <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-soft,#eff6ff)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" /> {a(an, "Dein Termin wurde verschoben. Das ist die aktuelle Zeit.", "Ihr Termin wurde verschoben. Das ist die aktuelle Zeit.")}
+        </div>
+      ) : null}
       {sp.done === "rescheduled" ? (
         <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {a(an, "Dein Termin wurde verschoben. Trag die neue Zeit am besten gleich in deinen Kalender ein.", "Ihr Termin wurde verschoben. Tragen Sie die neue Zeit am besten gleich in Ihren Kalender ein.")}
@@ -159,56 +192,71 @@ export default async function ManageAppointmentPage({ params, searchParams }: Pr
         </div>
       ) : null}
 
-      <section className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold">Termin verschieben</h2>
-        {days.size === 0 ? (
-          <p className="text-sm text-[color:var(--muted)]">
-            Aktuell sind keine anderen Zeiten online verfügbar.
-          </p>
-        ) : (
-          <form action={rescheduleManageAction.bind(null, token)} className="space-y-4">
-            {[...days.entries()].map(([label, daySlots]) => (
-              <div key={label}>
-                <div className="mb-1.5 text-xs font-medium text-[color:var(--muted)]">{label}</div>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {daySlots.map((s) => (
-                    <label
-                      key={s.start}
-                      className="cursor-pointer rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold tabular-nums transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
-                    >
-                      <input type="radio" name="start" value={s.start} required className="sr-only" />
-                      {fmt(new Date(s.start), { hour: "2-digit", minute: "2-digit" })}
-                    </label>
-                  ))}
+      {/* Gerade verschoben: Bestätigung steht oben, Ändern nur noch auf Wunsch (Runde 5, 16.11.2026) */}
+      <ChangeArea collapsed={sp.done === "rescheduled"}>
+        <section className="mt-6">
+          <h2 className="mb-2 text-sm font-semibold">Termin verschieben</h2>
+          {days.size === 0 ? (
+            <p className="text-sm text-[color:var(--muted)]">
+              Aktuell sind keine anderen Zeiten online verfügbar.
+            </p>
+          ) : (
+            <form action={rescheduleManageAction.bind(null, token)} className="space-y-4">
+              {[...days.entries()].map(([label, daySlots]) => (
+                <div key={label}>
+                  <div className="mb-1.5 text-xs font-medium text-[color:var(--muted)]">{label}</div>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {daySlots.map((s) => (
+                      <label
+                        key={s.start}
+                        className="cursor-pointer rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white py-2.5 text-center text-sm font-semibold tabular-nums transition hover:border-[color:var(--brand)] has-checked:border-[color:var(--brand)] has-checked:bg-[color:var(--brand)] has-checked:text-white"
+                      >
+                        <input type="radio" name="start" value={s.start} required className="sr-only" />
+                        {fmt(new Date(s.start), { hour: "2-digit", minute: "2-digit" })}
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              <SubmitButton
+                pendingLabel="Wird verschoben …"
+                className={buttonClass("primary", "md", "h-12 w-full text-base")}
+              >
+                Auf diese Zeit verschieben
+              </SubmitButton>
+            </form>
+          )}
+        </section>
+
+        <section className="mt-8 border-t border-[color:var(--border)] pt-5">
+          <h2 className="mb-2 text-sm font-semibold">Termin absagen</h2>
+          <form action={cancelManageAction.bind(null, token)} className="space-y-3">
+            <label className="flex cursor-pointer items-start gap-2.5 py-1 text-sm text-[color:var(--muted)]">
+              <input type="checkbox" required className="mt-0.5 h-5 w-5 shrink-0" />
+              Ja, ich möchte den Termin am {when} absagen.
+            </label>
             <SubmitButton
-              pendingLabel="Wird verschoben …"
-              className={buttonClass("primary", "md", "h-12 w-full text-base")}
+              pendingLabel="Wird abgesagt …"
+              className={buttonClass("danger", "md", "w-full")}
             >
-              Auf diese Zeit verschieben
+              Termin absagen
             </SubmitButton>
           </form>
-        )}
-      </section>
-
-      <section className="mt-8 border-t border-[color:var(--border)] pt-5">
-        <h2 className="mb-2 text-sm font-semibold">Termin absagen</h2>
-        <form action={cancelManageAction.bind(null, token)} className="space-y-3">
-          <label className="flex items-start gap-2 text-xs text-[color:var(--muted)]">
-            <input type="checkbox" required className="mt-0.5" />
-            Ja, ich möchte den Termin am {when} absagen.
-          </label>
-          <SubmitButton
-            pendingLabel="Wird abgesagt …"
-            className={buttonClass("danger", "md", "w-full")}
-          >
-            Termin absagen
-          </SubmitButton>
-        </form>
-      </section>
+        </section>
+      </ChangeArea>
     </Shell>
+  );
+}
+
+function ChangeArea({ collapsed, children }: { collapsed: boolean; children: React.ReactNode }) {
+  if (!collapsed) return <>{children}</>;
+  return (
+    <details className="group mt-6">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border)] text-sm font-medium text-[color:var(--muted)] group-open:hidden">
+        Andere Zeit wählen oder absagen
+      </summary>
+      {children}
+    </details>
   );
 }
 

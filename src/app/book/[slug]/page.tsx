@@ -156,7 +156,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
           {appt.manageToken ? (
             <Link
               href={`/book/manage/${appt.manageToken}`}
-              className="mt-3 block text-center text-sm text-[color:var(--muted)] underline"
+              className="mt-1 block py-2.5 text-center text-sm text-[color:var(--muted)] underline"
             >
               Termin verschieben oder absagen
             </Link>

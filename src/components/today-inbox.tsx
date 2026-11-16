@@ -241,8 +241,15 @@ export function TodayInbox({
       const leadId = (e as CustomEvent<{ leadId: string }>).detail?.leadId;
       const cur = callMode.queue[callMode.i];
       if (!cur || cur.leadId !== leadId) return;
-      if (cur.kind === "followup") run(cur.key, `${cur.name}: Termin gebucht`, () => clearFollowUpResult(cur.leadId));
-      else hide(cur.key);
+      hide(cur.key);
+      // Ohne eigenen Toast: „Termin gebucht: Montag, 16.11., 10:00 Uhr“ aus dem Buchungsfenster bleibt stehen.
+      // Kein „Rückgängig“ hier, es würde nur die Wiedervorlage zurückholen, nicht die Buchung (Runde 5, 16.11.2026).
+      if (cur.kind === "followup")
+        startTransition(async () => {
+          const res = await clearFollowUpResult(cur.leadId);
+          if (!res.ok) toast.show({ message: res.error, tone: "error" });
+          router.refresh();
+        });
       advance();
     };
     window.addEventListener(LEAD_BOOKED_EVENT, h);

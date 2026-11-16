@@ -27,6 +27,14 @@ export function openLeadBooking(leadId: string, name?: string | null) {
 
 const TZ = "Europe/Berlin";
 const dayLabel = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long", day: "2-digit", month: "2-digit" }).format(new Date(iso));
+const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
+/** Tagesüberschrift: „Heute, 16.11.“, „Morgen, 17.11.“, sonst „Mittwoch, 18.11.“ */
+const groupLabel = (iso: string) => {
+  const d = ymd(new Date(iso));
+  const now = new Date();
+  const rel = d === ymd(now) ? "Heute" : d === ymd(new Date(now.getTime() + 864e5)) ? "Morgen" : null;
+  return rel ? `${rel}, ${new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(new Date(iso))}` : dayLabel(iso);
+};
 const timeLabel = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
 /** Freie Zeiten wählen und buchen (auch eingebettet im Fenster „Termin“ des Kontakts). */
@@ -102,7 +110,7 @@ export function SlotPicker({ leadId, onBooked, onNoCalendar }: { leadId: string;
   if (!state.slots.length) return <p className="text-sm text-[color:var(--muted)]">In den nächsten 14 Tagen sind keine freien Zeiten in Ihren Lead-Zeiten. Prüfen Sie „Mein Kalender“ oder tragen Sie den Termin von Hand ein.</p>;
 
   const days = new Map<string, Slot[]>();
-  for (const s of state.slots) days.set(dayLabel(s.start), [...(days.get(dayLabel(s.start)) ?? []), s]);
+  for (const s of state.slots) days.set(groupLabel(s.start), [...(days.get(groupLabel(s.start)) ?? []), s]);
   return (
     <div className="space-y-3" data-slot-picker>
       <div className="inline-grid grid-flow-col gap-1 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken,#f1f5f9)] p-1 text-sm" role="radiogroup" aria-label="Art des Termins">
@@ -130,7 +138,7 @@ export function SlotPicker({ leadId, onBooked, onNoCalendar }: { leadId: string;
                   type="button"
                   onClick={() => setPick(s.start)}
                   className={cn(
-                    "min-h-10 min-w-16 rounded-[var(--radius-sm)] border px-3 py-1.5 text-sm",
+                    "min-h-10 min-w-16 rounded-[var(--radius-sm)] border px-3 py-1.5 text-sm tabular-nums",
                     pick === s.start ? "border-[color:var(--brand)] bg-[color:var(--brand)] font-semibold text-white" : "border-[color:var(--border)] bg-white hover:border-[color:var(--brand)]",
                   )}
                   data-slot
