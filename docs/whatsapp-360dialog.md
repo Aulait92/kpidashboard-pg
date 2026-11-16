@@ -153,3 +153,24 @@ Einrichtung bleibt dann beim Admin-Weg.
   https://docs.360dialog.com/partner/onboarding/webhook-events-and-setup/webhook-events-partner-and-messaging-api
 - Coexistence-Webhooks (`smb_message_echoes`, `history`, `smb_app_state_sync`):
   https://docs.360dialog.com/partner/onboarding/whatsapp-coexistence/coexistence-webhooks
+
+## Meta Tech Provider (Ole, 16.11.2026)
+
+Meta verlangt ab dem 4. verbundenen WhatsApp-Konto, dass wir als Tech Provider registriert sind (Mail von 360dialog).
+Stand 16.11.2026:
+
+- Eigene Meta-App **„performancegrowth Messaging“** (App-ID 1614781496561638), getrennt von der Werbe-App
+  „performancegrowth KPI Dashboard“. Anwendungsfall nur „Connect with customers through WhatsApp“.
+  („WhatsApp“ darf nicht im App-Namen stehen.)
+- Partner Solution **„performancegrowth: ZpYP1yPA“**, Solution ID **1125545677133515**, Partner: 360dialog
+  (App-ID 307713669880953), „Send messages: Only my partner“. Solution ID im 360dialog Partner Hub unter
+  Integration eingetragen und bestätigt.
+- App-Einstellungen: Datenschutz `https://performancegrowth.de/datenschutz`, Datenlöschung
+  `https://app.performancegrowth.de/rechtliches/datenloeschung`.
+- App Review beantragt für `whatsapp_business_messaging` und `whatsapp_business_management` (je Beschreibung und
+  Video). Testaufrufe im Graph API Explorer: `<WABA-ID>/message_templates` und
+  `<Phone-Number-ID>/whatsapp_business_profile?fields=about` (die Testnummer der App braucht eine Zahlungsmethode
+  zum Senden; ein lesender Aufruf reicht). Data handling: Dienstleister 360dialog (DE), Railway (NL/US),
+  Anthropic (US), alle „IT solutions and services“.
+- Offen: App Review abschicken (sobald Meta die Testaufrufe verbucht, bis 24 h), nach Freigabe App unter
+  **Publish** auf Live stellen (sonst bricht Embedded Signup ab), Partner Solution muss „Active“ zeigen.
