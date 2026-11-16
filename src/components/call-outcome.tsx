@@ -113,9 +113,6 @@ export function CallOutcomeSheet({
   };
 
   const actions: SheetAction[] = [];
-  if (t.kind === "followup") {
-    actions.push({ label: "Gesprochen, erledigt", icon: Check, tone: "primary", onSelect: () => pick(`${t.name}: erledigt`, () => clearFollowUpResult(t.leadId)) });
-  }
   actions.push({ label: "Nicht erreicht", icon: PhoneMissed, onSelect: () => pick(`${t.name}: morgen wieder in der Liste`, () => callbackOutcomeResult(t.leadId, "not_reached")) });
   if (bookingSlug) actions.push({ label: "Termin vereinbart", icon: CalendarPlus, onSelect: () => openLeadBooking(t.leadId, t.name) });
   actions.push(
@@ -125,6 +122,11 @@ export function CallOutcomeSheet({
       ? { label: "Abschluss", icon: Trophy, keepOpen: true, onSelect: () => setStep("win") }
       : { label: "Abschluss", icon: Trophy, onSelect: () => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", null)) },
     { label: "Später nochmal", icon: Clock, keepOpen: true, onSelect: () => setStep("later") },
+    // Wiedervorlage ohne neuen Schritt abhaken (Ole, 16.11.2026: „Was heißt gesprochen, erledigt?“). Klarer benannt,
+    // nicht mehr als erste, blaue Wahl: bei „Angebot nachfassen“ sind Abschluss bzw. Später nochmal die Regel.
+    ...(t.kind === "followup"
+      ? [{ label: "Erledigt, kein weiterer Anruf nötig", icon: Check, onSelect: () => pick(`${t.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(t.leadId)) }]
+      : []),
     // Verloren mit Grund; nie erreicht und unter 6 Versuchen: Warnung (Ole, 14.11.2026)
     { label: "Verloren", icon: ThumbsDown, tone: "danger", keepOpen: true, onSelect: () => setStep("lost") },
   );
