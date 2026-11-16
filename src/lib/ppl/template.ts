@@ -3,6 +3,7 @@
 // ohne Wert entfallen.
 
 import { formatPhone } from "@/lib/format";
+import { anredeAusVorname } from "@/lib/ppl/anrede";
 
 export type TemplateLead = { id: string; name: string | null; phone: string | null; email: string | null; answers: { label: string; value: string }[] };
 
@@ -35,6 +36,10 @@ export function templateValues(l: TemplateLead): Record<string, string> {
     const hit = aliases.map((a) => byLabel.get(norm(a))).find(Boolean);
     if (hit) v[key] = hit;
   }
+  // Leadbörse (HvK): Anrede wie im alten Zap aus dem Vornamen, falls der Funnel keine liefert
+  if (!v.anrede) v.anrede = anredeAusVorname(v.vorname);
+  // Kennung bei der Leadbörse: steht nicht im Code, sondern in der Variable PPL_HVK_BROKERCODE
+  if (process.env.PPL_HVK_BROKERCODE?.trim()) v.brokercode = process.env.PPL_HVK_BROKERCODE.trim();
   for (const [k, val] of byLabel) if (!(k in v)) v[k] = val;
   return v;
 }

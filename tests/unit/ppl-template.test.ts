@@ -20,4 +20,25 @@ describe("Lead-Mail nach Vorlage", () => {
       ["Brokercode: ABC", "Art: KVV-Opt", "Anrede: Frau", "Name: Mustermann", "Vorname: Erika", "Strasse: Unbekannt", "PLZ: 70173", "Tel_mobil: +49 151 12345678", "Leadgen_ID: lead1", "Wo versichert: DKV", "Monatsbeitrag: 870"].join("\n"),
     );
   });
+
+  it("Anrede aus dem Vornamen (wie der alte Zap) und Brokercode aus der Variable", () => {
+    const prev = process.env.PPL_HVK_BROKERCODE;
+    process.env.PPL_HVK_BROKERCODE = "code123";
+    try {
+      const out = renderTemplate("Brokercode: {brokercode}\nAnrede: {anrede}\nVorname: {vorname}", {
+        id: "x",
+        name: "Thomas Beispiel",
+        phone: null,
+        email: null,
+        answers: [{ label: "Vorname", value: "Thomas" }],
+      });
+      expect(out).toBe("Brokercode: code123\nAnrede: Herr\nVorname: Thomas");
+      delete process.env.PPL_HVK_BROKERCODE;
+      // unbekannter Vorname, kein Code: beide Zeilen entfallen
+      expect(renderTemplate("Brokercode: {brokercode}\nAnrede: {anrede}\nName: {nachname}", { id: "y", name: "Xyz Test", phone: null, email: null, answers: [] })).toBe("Name: Test");
+    } finally {
+      if (prev === undefined) delete process.env.PPL_HVK_BROKERCODE;
+      else process.env.PPL_HVK_BROKERCODE = prev;
+    }
+  });
 });
