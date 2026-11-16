@@ -83,6 +83,21 @@ export function verifyContactToken(token: string | null | undefined, now = new D
 /** Persönlicher Buchungslink (z. B. Entscheidungs-Call aus Angebot und Vertriebskontakt). */
 export const personalBookingLink = (slug: string, contactId: string) => salesAppUrl(`${bookingPath(slug)}?k=${signContactToken(contactId)}`);
 
+/** iframe-Code für die Lovable-Seite performancegrowth.de/termin (Höhe per postMessage). */
+export function embedSnippet(): string {
+  const src = salesAppUrl("/termin?einbetten=1");
+  const origin = new URL(src).origin;
+  return `<iframe id="pg-termin" src="${src}" title="Termin buchen" style="width:100%;border:0;min-height:640px" loading="lazy"></iframe>
+<script>
+  window.addEventListener("message", function (e) {
+    if (e.origin !== "${origin}" || !e.data) return;
+    var f = document.getElementById("pg-termin");
+    if (e.data.type === "pg-termin-hoehe") f.style.height = e.data.hoehe + "px";
+    if (e.data.type === "pg-termin-gebucht") f.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+</script>`;
+}
+
 export const TERMIN_CONSENT_TEXT =
   "Ich bin einverstanden, dass performancegrowth meine Angaben speichert, um den Termin mit mir durchzuführen und mich dazu per E-Mail, Telefon oder WhatsApp zu kontaktieren. Die Einwilligung kann ich jederzeit widerrufen.";
 

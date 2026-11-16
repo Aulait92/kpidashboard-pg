@@ -88,7 +88,11 @@ describe("Sicherheits-Header", () => {
     // Auch /demo ohne Schrägstrich (dein-beratungstermin.de/demo lieferte X-Frame-Options: DENY, Ole 16.11.2026)
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/demo")).toBe(false);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/demonstration")).toBe(true);
-    for (const source of ["/demo", "/demo/:path*"]) {
+    // Vertriebs-Buchungsseite (Ole, 16.11.2026): eingebettet auf performancegrowth.de/termin
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/termin")).toBe(false);
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/termin/verwalten/abc")).toBe(false);
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/terminplan")).toBe(true);
+    for (const source of ["/demo", "/demo/:path*", "/termin", "/termin/:path*"]) {
       const demo = rules.find((r) => r.source === source)!;
       expect(header(demo, "X-Frame-Options")).toBeUndefined();
       // erzwungen, nur unsere Webseite und die Lovable-Hosts
