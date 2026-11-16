@@ -1,0 +1,97 @@
+{
+  "gesellschaft": "AGILA",
+  "sparte": "katze-op",
+  "produkt": "OP-Kostenschutz für Katzen",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Rasseausschlüsse",
+    "Verkehrsunfallschutz"
+  ],
+  "tarife": [
+    {
+      "name": "OP-Kostenschutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "80 %",
+        "got": "bis 4-fach",
+        "jhl": "2.500 €",
+        "vorsorge": "optional",
+        "zahn": "optional",
+        "physio": "bis 30 Tage nach OP",
+        "kastration": "nur med. Indikation",
+        "sb": "20 % je Rechnung",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate",
+        "nachbehandlung": "bis 30 Tage"
+      },
+      "bausteine": {
+        "vorsorge": "optional"
+      },
+      "quelle": "https://www.agila.de/versicherungen/katzenversicherung/katzen-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "OP-Kostenschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "90 %",
+        "got": "bis 4-fach",
+        "jhl": "5.000 €",
+        "vorsorge": "optional",
+        "zahn": "optional",
+        "physio": "bis 30 Tage nach OP",
+        "kastration": "nur med. Indikation",
+        "sb": "10 % je Rechnung",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate",
+        "nachbehandlung": "bis 30 Tage"
+      },
+      "bausteine": {
+        "vorsorge": "optional"
+      },
+      "quelle": "https://www.agila.de/versicherungen/katzenversicherung/katzen-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "OP-Kostenschutz Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "vorsorge": "optional",
+        "zahn": "optional",
+        "physio": "bis 30 Tage nach OP",
+        "kastration": "nur med. Indikation",
+        "sb": "keine",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate",
+        "nachbehandlung": "bis 30 Tage"
+      },
+      "bausteine": {
+        "vorsorge": "optional"
+      },
+      "quelle": "https://www.agila.de/versicherungen/katzenversicherung/katzen-op-versicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.agila.de/versicherungen/katzenversicherung/katzen-op-versicherung",
+    "https://www.agila.de/images/pdf/Vertragswerke/2026-07-15_de_agila_vertragswerk_barrierefrei.pdf"
+  ],
+  "offen": [
+    "AGILA markiert Komfort als „Beliebt“.",
+    "Ab dem 8. Geburtstag beträgt die Kostenübernahme in allen Tarifen höchstens 80 %.",
+    "Zusätzlicher Schutz gegen Aufpreis in drei Stufen: Vorsorge 50, 100 oder 150 €, Physiotherapie und andere Heilmethoden 150, 250 oder 500 €, Zahnbehandlung 250, 500 oder 1.000 € im Jahr.",
+    "Kastration und Sterilisation nur bei medizinischer Indikation (Vertragswerk).",
+    "Wartezeit 1 Monat (Verkehrsunfall und Vorsorge-Baustein ohne), für besondere Krankheiten 6 Monate.",
+    "Zusätzlich gibt es einen Flex-Tarif mit frei wählbarer Summe (3.000 € bis unbegrenzt) und Kostenübernahme (80 bis 100 %); hier nicht als Stufe geführt."
+  ]
+}

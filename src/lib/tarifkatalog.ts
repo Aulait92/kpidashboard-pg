@@ -56,10 +56,17 @@ export type Katalog = { sparten: KatalogSparte[]; tarife: KatalogTarif[]; buende
  */
 export const AUSWAHL_GRENZEN = { tarife: 3, stufen: 4, merkmale: 5, bausteine: 2, kurzname: 18 } as const;
 
-/** Anzeigenamen der Gesellschaften (Ordnernamen im Katalog). */
-const GESELLSCHAFT_NAMEN: Record<string, string> = { allianz: "Allianz", axa: "AXA", "signal-iduna": "SIGNAL IDUNA" };
-/** Reihenfolge in Listen: die drei Vertreter-Gesellschaften zuerst, dann alphabetisch. */
-const REIHENFOLGE = ["allianz", "axa", "signal-iduna"];
+/** Anzeigenamen der Gesellschaften (Ordnernamen im Katalog), Schreibweise wie die Marke. */
+const GESELLSCHAFT_NAMEN: Record<string, string> = {
+  allianz: "Allianz",
+  axa: "AXA",
+  "signal-iduna": "SIGNAL IDUNA",
+  // Tierversicherer (16.11.2026)
+  agila: "AGILA",
+  uelzener: "Uelzener",
+};
+/** Reihenfolge in Listen: die drei Vertreter-Gesellschaften zuerst, dann die Tierversicherer, sonst alphabetisch. */
+const REIHENFOLGE = ["allianz", "axa", "signal-iduna", "agila", "uelzener"];
 
 export function gesellschaftName(key: string): string {
   if (GESELLSCHAFT_NAMEN[key]) return GESELLSCHAFT_NAMEN[key];
@@ -76,6 +83,8 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/allianz/i.test(t)) return "allianz";
   if (/\baxa\b/i.test(t)) return "axa";
   if (/signal\s*-?\s*iduna/i.test(t)) return "signal-iduna";
+  if (/\bagila\b/i.test(t)) return "agila";
+  if (/uelzener/i.test(t)) return "uelzener";
   return null;
 }
 

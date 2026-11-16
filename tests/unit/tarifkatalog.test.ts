@@ -7,9 +7,11 @@ import {
   auswahlDazu,
   auswahlWeg,
   gesellschaftAusText,
+  gesellschaftName,
   katalogAus,
   parseBuendel,
   SPARTEN_STANDARD,
+  sortiereGesellschaften,
   sparteAusText,
   spartenAusFormular,
   standardMerkmale,
@@ -84,6 +86,12 @@ describe("Katalog laden", () => {
     expect(gesellschaftAusText("AXA Versicherung AG")).toBe("axa");
     expect(gesellschaftAusText("SIGNAL IDUNA Allgemeine")).toBe("signal-iduna");
     expect(gesellschaftAusText("Maklerbüro Schmidt")).toBeNull();
+    // Tierversicherer (16.11.2026): Markenschreibweise, Erkennung im Text, Reihenfolge nach den Vertreter-Gesellschaften
+    expect(gesellschaftName("agila")).toBe("AGILA");
+    expect(gesellschaftName("uelzener")).toBe("Uelzener");
+    expect(gesellschaftAusText("AGILA Haustierversicherung AG")).toBe("agila");
+    expect(gesellschaftAusText("Uelzener Allgemeine Versicherungs-Gesellschaft a. G.")).toBe("uelzener");
+    expect(sortiereGesellschaften(["uelzener", "agila", "signal-iduna", "allianz"])).toEqual(["allianz", "signal-iduna", "agila", "uelzener"]);
     expect(sparteAusText("Privathaftpflicht")).toBe("haftpflicht");
     expect(sparteAusText("Tierhalterhaftpflicht Hund")).toBe("tierhalter-hund");
     expect(sparteAusText("Pferdehalterhaftpflicht")).toBe("tierhalter-pferd");
@@ -336,9 +344,14 @@ describe("Echte Katalogdaten (data/tarifkatalog)", () => {
     }
     expect(vorauswahl(echt, "tierhalter-hund", { rolle: "vertreter", gesellschaften: ["allianz"] }).tarife.map((t) => t.kurz)).toEqual(["Smart", "Komfort", "Premium"]);
   });
-  it("AXA und SIGNAL IDUNA ohne Tierkranken: leere Vorauswahl (eigener Tarif bzw. Angebot); Makler bekommt Allianz-Stufen", () => {
+  it("AXA und SIGNAL IDUNA ohne Tierkranken: leere Vorauswahl (eigener Tarif bzw. Angebot); Makler bekommt je Tierversicherer die Empfehlung", () => {
     expect(vorauswahl(echt, "katze-kranken", { rolle: "vertreter", gesellschaften: ["axa"] }).tarife).toEqual([]);
-    expect(vorauswahl(echt, "katze-op", { rolle: "makler", gesellschaften: [] }).tarife.every((t) => t.gesellschaft === "allianz")).toBe(true);
+    const op = vorauswahl(echt, "katze-op", { rolle: "makler", gesellschaften: [] });
+    expect(op.tarife).toHaveLength(3);
+    expect(op.tarife[0].gesellschaft).toBe("allianz");
+    expect(new Set(op.tarife.map((t) => t.gesellschaft)).size).toBe(3);
+    // Pferde-Sparten: Allianz-Vertreter bekommt Stufen, Makler mehrere Gesellschaften
+    expect(vorauswahl(echt, "pferd-op", { rolle: "makler", gesellschaften: [] }).tarife.map((t) => t.gesellschaft)).toContain("uelzener");
     const m = vorauswahl(echt, "hausrat", { rolle: "makler", gesellschaften: [] });
     expect(m.tarife.map((t) => t.gesellschaft)).toEqual(["allianz", "axa", "signal-iduna"]);
   });

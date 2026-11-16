@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "AGILA",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflicht",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Alle Rassen zum gleichen Beitrag",
+    "Fremdhüter mitversichert (nicht gewerbsmäßig)",
+    "Hilfe bei Rechtsstreitigkeiten"
+  ],
+  "tarife": [
+    {
+      "name": "Haftpflichtschutz 24",
+      "kurz": "Schutz 24",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "80 €",
+        "miete": "nein",
+        "fremdhueter": "ja",
+        "welpen": "nein",
+        "ausland": "2 Monate weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.agila.de/versicherungen/hundeversicherung/hundehaftpflicht",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Haftpflichtschutz",
+      "kurz": "Schutz",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "16 Mio. €",
+        "sb": "80 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.agila.de/versicherungen/hundeversicherung/hundehaftpflicht",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Haftpflichtschutz Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 Mio. €",
+        "sb": "keine",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.agila.de/versicherungen/hundeversicherung/hundehaftpflicht",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.agila.de/versicherungen/hundeversicherung/hundehaftpflicht",
+    "https://www.agila.de/images/pdf/Vertragswerke/2026-07-15_de_agila_vertragswerk_barrierefrei.pdf"
+  ],
+  "offen": [
+    "AGILA markiert den mittleren Tarif Haftpflichtschutz als „Beliebt“.",
+    "Deckungssumme Haftpflichtschutz und Exklusiv: höchstens 15 Mio. € je geschädigter Person.",
+    "Haftpflichtschutz 24: Mietsachschäden nicht versichert, Welpen nicht genannt, Festlaufzeit 24 Monate.",
+    "Nur im Exklusiv: Kosten für den Abbruch der Trächtigkeit nach ungewolltem Deckakt.",
+    "Forderungsausfall, Neuwert und Flurschäden: nicht versichert bzw. nicht genannt."
+  ]
+}
