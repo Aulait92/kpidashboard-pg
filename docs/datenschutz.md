@@ -438,3 +438,20 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
   „ähnlich“; die App sperrt das richtig. Ein Argument für Makler (eigene Dienstleistung ist die Vermittlung, nicht das
   Produkt) ist nicht entschieden.
 - **Handlungsbedarf: nein.** **Anwalt** nur, falls Ole Sachsparten untereinander freigeben möchte.
+
+### 10.8 Sondervergütungsverbot (§ 48b VAG): Prämien, Gutschriften, Rabatte
+
+- **Rechtslage:** Versicherer und Vermittler dürfen Versicherungsnehmern, versicherten Personen und Bezugsberechtigten
+  keine Sondervergütungen gewähren; erlaubt sind geringwertige Zuwendungen bis 15 € je Versicherungsverhältnis und
+  Kalenderjahr ([§ 48b Abs. 1, 2 VAG](https://www.gesetze-im-internet.de/vag_2016/__48b.html)). § 48b ist
+  Marktverhaltensregel, ein 50-€-Gutschein ist unzulässig (OLG Frankfurt, Urteil vom 27.05.2021, 6 U 81/20); die
+  Ausnahme nach Abs. 4 wird eng ausgelegt (VG Frankfurt a. M., Urteil vom 19.11.2020, 7 K 2581/19.F, laut
+  [beck-aktuell](https://www.beck-aktuell.de/heute-im-recht/rechtsprechung/vg-frankfurt-bestaetigt-provisionsabgabeverbot-fuer-online-versicherungsvermittler-2020-11-20)).
+  Ein Urteil oder eine BaFin-Aussage speziell zu Empfehlungsprämien an Bestandskunden haben wir nicht gefunden.
+- **App heute:** Dankeschön im Modul Empfehlungen & Bewertungen (derzeit ausgeblendet) höchstens 15 € je Empfehler und
+  Jahr, kein Bargeld, nicht an Abschluss gekoppelt, nie für den Empfohlenen (`lib/empfehlung/shared.ts`). Prämie
+  „Kollegen empfehlen“ und Halte-Nachlässe gehen von uns an Vermittler.
+- **Bewertung:** Prämie für Kollegen und Nachlässe an Vermittler sind von § 48b nicht erfasst (Empfänger sind keine
+  Versicherungsnehmer des Vermittlers, sondern unsere Kunden). Beim Dankeschön ist die App strenger als das Gesetz;
+  offen ist nur die Anrechnung anderer Geschenke des Vermittlers.
+- **Handlungsbedarf: Entwurf** (Anrechnung anderer Zuwendungen, Entwurf Thema 8). Sonst **nein**.

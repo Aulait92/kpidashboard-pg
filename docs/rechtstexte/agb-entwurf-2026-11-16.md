@@ -93,3 +93,18 @@ ein eigenes Häkchen mit Datum und Folgebetrag am Annahmeknopf.
 > Textform vereinbaren.
 
 **Ole entscheidet:** den letzten Satz (Sonderkondition). Heute ist das nicht geregelt.
+
+## Thema 8: Dankeschön für Empfehlungen (AGB „Zusatzmodul Empfehlungen & Bewertungen“)
+
+**Problem:** § 48b Abs. 2 VAG erlaubt geringwertige Zuwendungen bis 15 € je Versicherungsverhältnis und Kalenderjahr.
+Die Grenze gilt je Versicherungsverhältnis und Kalenderjahr für alle Geschenke zusammen, nicht je Geschenk. Die Software zählt nur die Dankeschöns aus dem Modul;
+andere Geschenke des Vermittlers an dieselbe Person kennt sie nicht.
+
+**Vorschlag AGB, zweiter Absatz, ergänzt um einen Satz:**
+
+> … und nie der empfohlenen Person gewährt. Andere Zuwendungen des Kunden an dieselbe Person im selben Kalenderjahr
+> rechnet der Kunde auf die Grenze an. Vorgaben des Versicherers beachtet der Kunde selbst.
+
+**Nicht betroffen:** Prämie „Kollegen empfehlen“ (wir an Vermittler) und Nachlässe an unsere Kunden: Empfänger sind
+Vermittler als unsere Kunden, keine Versicherungsnehmer, versicherten Personen oder Bezugsberechtigten (§ 48b Abs. 1
+VAG). Keine Änderung nötig.
