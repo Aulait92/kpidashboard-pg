@@ -1,0 +1,105 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "hund-kranken",
+  "produkt": "Hundekrankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Beitragserhöhung wegen des Alters",
+    "Keine Wartezeit bei Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "Hundekrankenversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "3-fach",
+        "jhl": "2.500 €",
+        "ohneOp": "ja, in der Summe",
+        "vorsorge": "nein",
+        "nachbehandlung": "unbegrenzt",
+        "physio": "15 Tage, dann 100 €/Jahr",
+        "zahn": "nein",
+        "sb": "0, 250 oder 500 €/Jahr",
+        "wartezeit": "1 Monat",
+        "ausland": "3 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "zahn": "nein",
+        "vorsorge": "nein"
+      },
+      "quelle": "https://www.hansemerkur.de/hundekrankenversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hundekrankenversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "4-fach, mit Notdienst",
+        "jhl": "5.000 €",
+        "ohneOp": "ja, in der Summe",
+        "vorsorge": "75 € im Jahr",
+        "nachbehandlung": "unbegrenzt",
+        "physio": "30 Tage, dann 250 €/Jahr",
+        "zahn": "optional",
+        "sb": "0, 250 oder 500 €/Jahr",
+        "wartezeit": "1 Monat",
+        "ausland": "6 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "zahn": "optional",
+        "vorsorge": "nein"
+      },
+      "quelle": "https://www.hansemerkur.de/hundekrankenversicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hundekrankenversicherung Premium plus",
+      "kurz": "Premium plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "4-fach, mit Notdienst",
+        "jhl": "unbegrenzt",
+        "ohneOp": "ja, in der Summe",
+        "vorsorge": "100 € im Jahr",
+        "nachbehandlung": "unbegrenzt",
+        "physio": "60 Tage, dann 250 €/Jahr",
+        "zahn": "optional",
+        "sb": "0, 250 oder 500 €/Jahr",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "zahn": "optional",
+        "vorsorge": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/hundekrankenversicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/hundekrankenversicherung",
+    "https://www.hansemerkur.de/resource/blob/164544/ce5646d9a51304358a6d58b3082b3721/ms-274-0226-leistungsuebersicht-tier-kv-data.pdf"
+  ],
+  "offen": [
+    "HanseMerkur markiert Premium als „Bestseller“.",
+    "Ohne Selbstbeteiligung nur bis Eintrittsalter 5 Jahre; bei Hunden der Risikoklasse E Höchsteintrittsalter 3 Jahre.",
+    "Besondere Erkrankungen (z. B. HD, ED): Komfort nicht versichert, Premium 5.000 € über die Vertragslaufzeit (Wartezeit 12 Monate), Premium plus unbegrenzt (6 Monate).",
+    "Baustein Zahn (Premium, Premium plus) und Baustein Tier Assistance gegen Aufpreis.",
+    "Kastration auf der Produktseite nicht genannt.",
+    "Jahreshöchstentschädigung gilt für Operationen und allgemeine Behandlungen zusammen; Premium plus nennt zusätzlich 10.000 € für allgemeine Behandlungen.",
+    "Physiotherapie, Osteopathie und Chiropraktik: nach OP 15, 30 bzw. 60 Tage, danach jährlich 100 bzw. 250 €, auch ohne OP.",
+    "Baustein Vorsorge Plus (nur Premium plus): Vorsorgepauschale 250 € im Jahr."
+  ]
+}

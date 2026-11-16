@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflicht",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Fremde Tierhüter (nicht gewerblich)",
+    "Gewollter und ungewollter Deckakt",
+    "Ohne Leine und Maulkorb"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalter-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "sb": "150 € oder ohne",
+        "miete": "Gebäude bis 1 Mio. €",
+        "fremdhueter": "ja",
+        "welpen": "bis 6 Monate",
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "weltweit bis 1 Jahr"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/hundehaftpflicht",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Hundehalter-Haftpflicht Premium plus",
+      "kurz": "Premium plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "150 € oder ohne",
+        "miete": "bis 50 Mio. €",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja, ohne Mindesthöhe",
+        "geliehen": "bis 5.000 €",
+        "neuwert": "bis 5.000 €, 12 Monate",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ausland": "weltweit bis 5 Jahre"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/hundehaftpflicht",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/hundehaftpflicht",
+    "https://www.hansemerkur.de/resource/blob/247980/7f3b04c1ad4f2e36a2ced1875ae470df/ms-201-leistungsuebersicht-hundehaftpflicht-data.pdf"
+  ],
+  "offen": [
+    "HanseMerkur markiert Premium plus als „Testsieger“; nur zwei Stufen.",
+    "Deckungssumme je Einzelperson höchstens 15 Mio. €.",
+    "Komfort: Mietsachschäden an beweglichen Sachen nur in Ferienunterkünften bis 30.000 €; Premium plus bis 15 Mio. €, sonstige bewegliche Sachen bis 5.000 €.",
+    "Ausland: innerhalb Europas unbegrenzt, außerhalb 1 Jahr (Komfort) bzw. 5 Jahre (Premium plus).",
+    "Best-Leistungs-Garantie nur in Premium plus; Giftköder-Schutz (bis 5.000 €) als Zusatztarif."
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Versicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Beitragserhöhung wegen des Alters",
+    "Keine Wartezeit bei Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-OP-Versicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "3-fach",
+        "jhl": "2.500 €",
+        "nachbehandlung": "bis 15 Tage",
+        "physio": "bis 15 Tage nach OP",
+        "zahn": "nein",
+        "sb": "0, 250 oder 500 € je OP",
+        "wartezeit": "1 Monat",
+        "ausland": "3 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/katzen-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Katzen-OP-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "4-fach, mit Notdienst",
+        "jhl": "5.000 €",
+        "nachbehandlung": "bis 30 Tage",
+        "physio": "bis 30 Tage nach OP",
+        "zahn": "optional",
+        "sb": "0, 250 oder 500 € je OP",
+        "wartezeit": "1 Monat",
+        "ausland": "6 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/katzen-op-versicherung",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Katzen-OP-Versicherung Premium plus",
+      "kurz": "Premium plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %, SB wählbar",
+        "got": "4-fach, mit Notdienst",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 60 Tage",
+        "physio": "bis 60 Tage nach OP",
+        "zahn": "optional",
+        "sb": "0, 250 oder 500 € je OP",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/katzen-op-versicherung",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/katzen-op-versicherung",
+    "https://www.hansemerkur.de/resource/blob/79344/e14ae742f96cbf558cad25dd0c9667f1/ms-125-leistungsuebersicht-tier-op-data.pdf"
+  ],
+  "offen": [
+    "HanseMerkur markiert Premium als „Bestseller“.",
+    "Ohne Selbstbeteiligung nur bis Eintrittsalter 5 Jahre; bei Hunden der Risikoklasse E Höchsteintrittsalter 3 Jahre.",
+    "Besondere Erkrankungen (z. B. HD, ED): Komfort nicht versichert, Premium 5.000 € über die Vertragslaufzeit (Wartezeit 12 Monate), Premium plus unbegrenzt (6 Monate).",
+    "Baustein Zahn (Premium, Premium plus) und Baustein Tier Assistance gegen Aufpreis.",
+    "Kastration auf der Produktseite nicht genannt.",
+    "Vorsorge ist in der OP-Versicherung nicht genannt."
+  ]
+}
