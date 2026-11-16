@@ -67,13 +67,13 @@ export function FilterChips({ fields, searchKey = "q", searchPlaceholder = "Such
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
-      <label className="relative flex h-9 min-w-[220px] flex-1 items-center sm:max-w-xs">
+      <label className="relative flex h-10 min-w-[220px] flex-1 items-center sm:h-9 sm:max-w-xs">
         <Search className="pointer-events-none absolute left-3 h-4 w-4 text-[color:var(--muted)]" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={searchPlaceholder}
-          className="h-9 w-full rounded-full border border-[color:var(--border)] bg-white pl-9 pr-8 text-sm outline-none transition focus:border-[color:var(--brand)]"
+          className="h-10 w-full rounded-full border border-[color:var(--border)] bg-white pl-9 pr-8 text-sm outline-none sm:h-9 transition focus:border-[color:var(--brand)]"
         />
         {q ? (
           <button type="button" aria-label="Suche leeren" onClick={() => setQ("")} className="absolute right-2.5 text-[color:var(--muted)]">
@@ -135,7 +135,7 @@ function Chip({ label, valueLabel, open, onClick, onClear }: { label: string; va
   return (
     <span
       className={cn(
-        "inline-flex h-9 items-center rounded-full border text-sm transition",
+        "inline-flex h-10 items-center rounded-full border text-sm transition sm:h-9",
         active
           ? "border-[color:var(--brand)]/30 bg-[color:var(--brand-soft)] text-[color:var(--brand-dark,var(--brand))]"
           : "border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--border-strong)]",

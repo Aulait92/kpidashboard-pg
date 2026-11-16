@@ -138,12 +138,12 @@ export function BuyerLeadsTable({
                   <div className="min-w-0">
                     <div className="truncate font-medium">{l.name ?? "–"}</div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                      {formatDate(l.createdAt)}
+                      eingegangen {formatDate(l.createdAt)}
                       {singleProduct ? "" : ` · ${displayProduct(l.source)}`}
                     </div>
                     {l.appointment ? (
                       <div className="mt-1 text-xs font-medium text-blue-700">
-                        {formatAppt(new Date(l.appointment.startsAt))} Uhr ·{" "}
+                        Termin {formatAppt(new Date(l.appointment.startsAt))} ·{" "}
                         {terminArtKurz(l.appointment.mode)}
                       </div>
                     ) : l.followUpAt ? (
