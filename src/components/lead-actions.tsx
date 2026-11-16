@@ -305,8 +305,14 @@ export function LeadHeaderActions(p: Props) {
           </div>
         ) : null}
 
-        {/* Handy: 4 Kacheln in einer Reihe, sonst 3 je Reihe (keine einzelne Kachel allein in der zweiten Reihe) */}
-        <div className={cn("mt-4 grid gap-1.5 sm:flex sm:flex-wrap sm:gap-2", tileCount === 4 ? "grid-cols-4" : "grid-cols-3")}>
+        {/* Schmal (Handy, Fenster rechts auf Heute): Kacheln mit Symbol über dem Text; 4 in einer Reihe, sonst 3 je Reihe,
+            ab 448 px Breite alle in einer Reihe. Breit (ab 672 px, Container-Abfrage): Knöpfe in einer Zeile. */}
+        <div
+          className={cn(
+            "mt-4 grid gap-1.5 @2xl:flex @2xl:flex-wrap @2xl:gap-2",
+            tileCount === 4 ? "grid-cols-4" : tileCount === 5 ? "grid-cols-3 @md:grid-cols-5" : "grid-cols-3 @md:grid-cols-6",
+          )}
+        >
           {/* Grundsatz (Ole, 14.11.2026): Kein Knopf ist grau ohne Erklärung. Fehlt etwas, sagt das Antippen, was und wie es weitergeht. */}
           <ActionTile
             icon={Phone}
@@ -538,7 +544,7 @@ function ActionTile({
   const [why, setWhy] = useState(false);
   const disabled = !href && !onClick;
   const cls = cn(
-    "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-[11px] font-semibold leading-tight transition sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
+    "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] px-1.5 py-2.5 text-center text-[11px] font-semibold leading-tight transition @2xl:flex-row @2xl:gap-2 @2xl:px-4 @2xl:text-sm",
     primary
       ? "bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
       : "border border-[color:var(--border)] bg-white text-[color:var(--foreground)] shadow-[var(--shadow-sm)] hover:border-[color:var(--border-strong)]",
@@ -546,8 +552,8 @@ function ActionTile({
   );
   const inner = (
     <>
-      <Icon className="h-5 w-5 sm:h-4 sm:w-4" />
-      <span>{title && primary ? <><span className="sm:hidden">{label}</span><span className="hidden sm:inline">{title}</span></> : label}</span>
+      <Icon className="h-5 w-5 @2xl:h-4 @2xl:w-4" />
+      <span>{title && primary ? <><span className="@2xl:hidden">{label}</span><span className="hidden @2xl:inline">{title}</span></> : label}</span>
     </>
   );
   if (href) {
