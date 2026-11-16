@@ -17,7 +17,8 @@ export const EMBEDDABLE_PATHS = ["/book/:path*", "/rechner"] as const;
  * Live-Demo (/demo, /demo/beratung) und Vertriebs-Buchungsseite (/termin, Ole 16.11.2026): nur auf unserer Webseite einbettbar. Kein X-Frame-Options,
  * dafür erzwungene CSP frame-ancestors mit genau diesen Hosts (Webseite und Lovable-Vorschau).
  */
-export const DEMO_PATHS = ["/demo", "/demo/:path*", "/termin", "/termin/:path*"] as const;
+/** /app-demo: öffentliche App-Demo zum Selbstklicken (Ole, 16.11.2026), gleiche Regeln. */
+export const DEMO_PATHS = ["/demo", "/demo/:path*", "/termin", "/termin/:path*", "/app-demo", "/app-demo/:path*"] as const;
 export const DEMO_FRAME_ANCESTORS = [
   "'self'",
   "https://performancegrowth.de",
@@ -26,8 +27,8 @@ export const DEMO_FRAME_ANCESTORS = [
   "https://growthspark-leads.lovable.app",
 ].join(" ");
 
-/** Alle Pfade außer /book/…, /rechner, /demo/… und /termin/… (path-to-regexp mit negativem Lookahead). */
-export const NOT_EMBEDDABLE_SOURCE = "/:path((?!book/|rechner(?:/|$)|demo(?:/|$)|termin(?:/|$)).*)";
+/** Alle Pfade außer /book/…, /rechner, /demo/…, /termin/… und /app-demo/… (path-to-regexp mit negativem Lookahead). */
+export const NOT_EMBEDDABLE_SOURCE = "/:path((?!book/|rechner(?:/|$)|demo(?:/|$)|termin(?:/|$)|app-demo(?:/|$)).*)";
 
 export const CSP_REPORT_PATH = "/api/csp-report";
 

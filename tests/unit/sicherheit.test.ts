@@ -92,7 +92,12 @@ describe("Sicherheits-Header", () => {
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/termin")).toBe(false);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/termin/verwalten/abc")).toBe(false);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/terminplan")).toBe(true);
-    for (const source of ["/demo", "/demo/:path*", "/termin", "/termin/:path*"]) {
+    
+    // App-Demo zum Selbstklicken (Ole, 16.11.2026): gleiche Regeln wie /demo; /buyer selbst bleibt DENY
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/app-demo")).toBe(false);
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/app-demo/kontakte")).toBe(false);
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/app-demonstration")).toBe(true);
+    for (const source of ["/demo", "/demo/:path*", "/termin", "/termin/:path*", "/app-demo", "/app-demo/:path*"]) {
       const demo = rules.find((r) => r.source === source)!;
       expect(header(demo, "X-Frame-Options")).toBeUndefined();
       // erzwungen, nur unsere Webseite und die Lovable-Hosts
