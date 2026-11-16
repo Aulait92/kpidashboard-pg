@@ -81,6 +81,51 @@ Eine Kopie dieser Erklärung und den Wortlaut von § 203 StGB habe ich erhalten.
 Für Unterauftragsverarbeiter (AVV Anlage 2) gilt die Pflicht aus dem AVV „Verschwiegenheit der
 Unterauftragsverarbeiter“: Verpflichtung in Textform mit Hinweis auf § 203 Abs. 4 StGB, soweit sie Kenntnis
 von Geheimnissen erlangen können. Nachweis (DPA bzw. ergänzende Erklärung) in der Tabelle in
-`docs/datenschutz.md`, Abschnitt 3, ablegen. **Prüfen (Anwalt):** ob die Vertraulichkeitsklauseln der
-Standard-DPAs (z. B. Anthropic, Meta, 360dialog, Sentry, Railway) als Verpflichtung im Sinne von § 203 Abs. 4
-Satz 2 Nr. 1 StGB genügen oder ob eine eigene Erklärung nötig ist.
+`docs/datenschutz.md`, Abschnitt 3, ablegen.
+
+### Einschätzung (Rechtsprüfung 16.11.2026, keine Rechtsberatung)
+
+- § 203 StGB schreibt für die Verpflichtung **keine Form** vor. Strafbar ist nach Abs. 4 Satz 2 Nr. 1 bzw. Nr. 2 nur,
+  wer „nicht dafür Sorge getragen hat“, dass die mitwirkende Person „zur Geheimhaltung verpflichtet wurde“, und auch
+  nur, wenn diese Person das Geheimnis dann unbefugt offenbart. Ein Vertrag, der den Dienstleister zur Vertraulichkeit
+  über die Kundendaten verpflichtet (Art. 28 Abs. 3 Satz 2 lit. b DSGVO), ist nach dem Wortlaut eine solche
+  Verpflichtung. Eine ausdrückliche Belehrung über die Strafbarkeit verlangt § 203 StGB nicht; sie ist nur im
+  Berufsrecht einzelner Berufe vorgeschrieben (z. B. § 43e Abs. 3 Nr. 1 BRAO für Anwälte), nicht für
+  Versicherungsvermittler.
+- Ergebnis: Die Standard-DPAs von Anthropic, Meta, 360dialog, Sentry und Railway reichen **voraussichtlich** als
+  Verpflichtung, **wenn** sie eine Vertraulichkeitspflicht für die verarbeiteten Daten und die Pflicht enthalten,
+  eingesetzte Personen und weitere Unterauftragsverarbeiter ebenso zu verpflichten. Das je DPA mit Fundstelle
+  (Klausel) in der Tabelle eintragen. Zusätzlich jedem Dienst einmal den **Hinweis unten in Textform** schicken
+  (E-Mail an den Datenschutzkontakt, Antwort nicht nötig) und den Versand ablegen: Das dokumentiert die
+  „Sorge“ nach Abs. 4 Satz 2 und schließt die Lücke, falls ein DPA nur „Customer Data“ allgemein nennt.
+- Bei Diensten, die nach unserer Technik keine Geheimnisse sehen (Sentry ohne personenbezogene Inhalte, Resend nur
+  Terminbestätigungen ohne Sparte), ist die Verpflichtung vorsorglich, nicht zwingend.
+- **Anwalt:** Bestätigen, dass eine einseitige Mitteilung plus DPA genügt, oder ob eine Gegenzeichnung nötig ist.
+
+### Vorlage: Hinweis an Unterauftragsverarbeiter (E-Mail, Textform)
+
+Betreff: Confidentiality obligation under Section 203 German Criminal Code (StGB) / Verschwiegenheit nach § 203 StGB
+
+> Sehr geehrte Damen und Herren,
+>
+> die Ole Kannapinn UG (haftungsbeschränkt) nutzt Ihren Dienst [Dienst] auf Grundlage Ihres Auftragsverarbeitungsvertrags
+> [Bezeichnung, Stand] als Unterauftragsverarbeiter. Unsere Kunden sind zum Teil Versicherungsvermittler, die nach § 203
+> Abs. 1 Nr. 7 des deutschen Strafgesetzbuchs (StGB) zur Verschwiegenheit verpflichtet sind. Bei Ihrer Leistung können
+> Ihnen solche fremden Geheimnisse zugänglich werden, zum Beispiel die Tatsache, dass eine Person eine Kranken-, Unfall-
+> oder Lebensversicherung hat oder anfragt.
+>
+> Wir weisen Sie darauf hin, dass Sie insoweit als mitwirkende Person im Sinne von § 203 Abs. 3 Satz 2 StGB tätig sind,
+> dass die unbefugte Offenbarung solcher Geheimnisse nach § 203 Abs. 4 StGB strafbar ist und dass Sie nach Ihrem
+> Auftragsverarbeitungsvertrag zur Vertraulichkeit über diese Daten verpflichtet sind. Bitte verpflichten Sie Personen
+> und weitere Unterauftragsverarbeiter, die Sie für unsere Daten einsetzen, ebenso zur Verschwiegenheit
+> (§ 203 Abs. 4 Satz 2 Nr. 2 StGB). Eine Antwort ist nicht erforderlich.
+>
+> English summary: Our customers include insurance intermediaries bound by professional secrecy under Section 203 (1)
+> no. 7 German Criminal Code. You may obtain such secrets when providing your service. Unauthorised disclosure is a
+> criminal offence under Section 203 (4). You are bound to confidentiality under our data processing agreement; please
+> bind your staff and sub-processors accordingly. No reply is required.
+>
+> Mit freundlichen Grüßen, Ole Kannapinn
+
+Nachweis: Datum des Versands und Empfängeradresse in der Tabelle in `docs/datenschutz.md`, Abschnitt 3, Spalte
+„Ablage“ eintragen.

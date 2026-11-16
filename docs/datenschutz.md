@@ -304,6 +304,8 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 - [ ] § 203 StGB (AVV Stand 15.11.2026): Mitarbeiter vor Beginn mit `docs/vorlage-verpflichtung-203-stgb.md` verpflichten
       und in der Nachweisliste eintragen; je Unterauftragsverarbeiter Verpflichtung in Textform mit Hinweis auf § 203 Abs. 4 StGB
       ablegen (DPA oder eigene Erklärung). Anwalt: reichen die Standard-DPAs (Anthropic, Meta, 360dialog, Sentry, Railway)?
+      Einschätzung 16.11.2026 (Abschnitt 10.1): voraussichtlich ja, wenn sie eine Vertraulichkeitspflicht enthalten;
+      zusätzlich je Dienst den Hinweis aus der Vorlage (Abschnitt „Unterauftragsverarbeiter“) in Textform schicken.
 - [ ] Aufbewahrung der Railway-Sicherungen ablesen und im Löschkonzept eintragen
 - [ ] Sentry: Aufbewahrung prüfen, Datenregion EU bestätigen
 - [ ] Anwalt: Rolle bei Pay-per-Lead; Kalt-E-Mails an Vermittler; DSFA-Muss-Liste; AGB/AVV-Fassung 10.11.2026
@@ -323,3 +325,28 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
 - [ ] Datenschutzerklärung je Kunde: Die Buchungsseite verlinkt die Datenschutzerklärung von
       der Website des Kunden (aus dem Onboarding), sonst performancegrowth.de/datenschutz.
       Diese muss dann WhatsApp-Assistent, Terminbuchung und die Dienste nennen
+
+## 10. Rechtsprüfung 16.11.2026 (Legal Data Hunter)
+
+Auftrag von Ole (15.11.2026): die Anwaltsthemen selbst nachrecherchieren und nach bestem Wissen einbauen. Grundlage:
+Anwalts-Memo vom 15.11.2026, Pakete A bis C (Commits 5d235ad, 4e45b2a, 5653040). Recherche mit Legal Data Hunter
+(Primärquellen), ergänzt um gesetze-im-internet.de; Kanzlei-Zusammenfassungen sind als solche gekennzeichnet. Keine
+Rechtsberatung. AGB- und AVV-Änderungen nur als Entwurf: `docs/rechtstexte/agb-entwurf-2026-11-16.md`.
+Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
+
+### 10.1 § 203 StGB: Verpflichtung der Unterauftragsverarbeiter
+
+- **Rechtslage:** Selbstständige Versicherungsvertreter sind Geheimnisträger nach § 203 Abs. 1 Nr. 7 StGB, geschützt
+  ist schon das Bestehen einer Personenversicherung (BGH, Urteil vom 10.02.2010, VIII ZR 53/09). Offenbaren an
+  „sonstige mitwirkende Personen“ ist erlaubt, soweit erforderlich (Abs. 3 Satz 2). Strafbar ist, wer nicht dafür
+  sorgt, dass sie „zur Geheimhaltung verpflichtet“ wurden, und weitere Mitwirkende ebenso (Abs. 4 Satz 2 Nr. 1, 2).
+  Eine Form oder eine Belehrung schreibt § 203 StGB nicht vor; eine Textform-Pflicht mit Belehrung gibt es nur im
+  Berufsrecht einzelner Berufe (§ 43e Abs. 3 BRAO), nicht für Vermittler. Quellen: [§ 203 StGB](https://www.gesetze-im-internet.de/stgb/__203.html),
+  [§ 43e BRAO](https://www.gesetze-im-internet.de/brao/__43e.html), BGH VIII ZR 53/09 ([Urteil](https://www.rechtsprechung-im-internet.de/jportal/?quelle=jlink&docid=KORE302852010&psml=bsjrsprod.psml)).
+- **App heute:** AVV verpflichtet uns, Mitarbeiter und Unterauftragsverarbeiter (Abschnitt „Pflichten des
+  Auftragnehmers“); Vorlage für Mitarbeiter `docs/vorlage-verpflichtung-203-stgb.md`. Meta-Rückmeldung ohne Sparte,
+  Gesundheitsangaben nicht an die KI.
+- **Bewertung:** Standard-DPAs mit Vertraulichkeitspflicht reichen voraussichtlich als „Verpflichtung“. Zur Sicherheit
+  einmal je Dienst ein Hinweis in Textform (Vorlage ergänzt) und Fundstelle der Vertraulichkeitsklausel ablegen.
+- **Handlungsbedarf: ja (Ole):** Hinweise verschicken, Tabelle Abschnitt 3 füllen. **Anwalt:** einseitiger Hinweis
+  plus DPA genügt?
