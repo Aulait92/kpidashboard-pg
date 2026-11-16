@@ -568,6 +568,7 @@ export async function LeadDetailBody({
           source={lead.source}
           statusLabels={WHATSAPP_STATUS_LABELS}
           edit={team.userId ? <LeadStammdatenEdit leadId={lead.id} initial={stammInitial} /> : null}
+          nameImTitel={!!lead.name}
         />
       ) : null}
 
@@ -585,9 +586,12 @@ function ReadOnlyCard({
   source,
   statusLabels = {},
   edit = null,
+  nameImTitel = false,
 }: {
   fields: Record<string, unknown>;
   source: string | null;
+  /** Name steht schon als Überschrift: Vorname und Nachname nicht noch einmal (16.11.2026) */
+  nameImTitel?: boolean;
   statusLabels?: Record<string, string>;
   /** Stift „Bearbeiten“ im Kartenkopf */
   edit?: React.ReactNode;
@@ -609,6 +613,7 @@ function ReadOnlyCard({
     const hide = new Set(["Postleitzahl", "Ort", "Bundesland"]);
     common = common.filter((f) => !hide.has(f.key));
   }
+  if (nameImTitel) common = common.filter((f) => f.key !== "Vorname" && f.key !== "Nachname");
   const curated = [...common, ...group, ...TAIL_FIELDS];
 
   const rows = curated.map((def) => {
