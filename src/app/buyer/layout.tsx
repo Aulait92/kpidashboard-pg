@@ -18,6 +18,8 @@ import { leadScope, memberName } from "@/lib/team";
 import { unreadUpdateCount } from "@/lib/neuigkeiten";
 import { nowMs } from "@/lib/now";
 import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
+import { AppDemoRahmen } from "@/components/app-demo-rahmen";
+import { demoTourZiele } from "@/lib/app-demo/tour-server";
 
 // Gemeinsames Layout für den Buyer-Bereich. Hält den @modal-Parallel-Slot,
 // in den der Lead-Detail-Modal von ALLEN Buyer-Tabs (KPIs, Leads, Pipeline)
@@ -60,7 +62,8 @@ export default async function BuyerLayout({
       ? await prisma.salesContact.findUnique({ where: { customerId: ctx.customerId }, select: { salutation: true, lastName: true } }).catch(() => null)
       : null,
   );
-  const previewName = ctx?.preview ? customerName : null;
+  const demo = !!ctx?.demo;
+  const previewName = ctx?.preview && !demo ? customerName : null;
   const newUi = ctx ? await isNewUi(ctx.customerId) : false;
   const advisor = ctx?.teamRole === "advisor";
   const provision = ctx ? await loadCustomerProvision(ctx.customerId) : null;
@@ -73,7 +76,7 @@ export default async function BuyerLayout({
         prisma.user.count({ where: { customerId: ctx.customerId, role: "BUYER" } }),
         advisor ? 0 : prisma.leadSubscription.count({ where: { customerId: ctx.customerId, active: true, delivery: "app" } }),
         // Bestand: nur Inhaber, und vorerst nur mit Schalter oder aktivem Modul (lib/bestand/sichtbar.ts)
-        advisor ? false : loadBestandVisible(ctx.customerId, { preview: ctx.preview }),
+        advisor || ctx.demo ? false : loadBestandVisible(ctx.customerId, { preview: ctx.preview }),
       ])
     : [false, 0, 0, null, 0, 0, false];
   // Anzeigename ohne Gesellschafts-Präfix („Allianz Anid Schwarzkopf").
@@ -134,7 +137,13 @@ export default async function BuyerLayout({
       ) : null}
       {ctx ? (
         <ProvisionRatesProvider rates={provision?.rates ?? {}} products={provision?.products ?? []}>
-          <BuyerShell newUi={newUi} displayName={displayName} hilfeGruss={gruss} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
+          <BuyerShell demo={demo} newUi={newUi} displayName={displayName} hilfeGruss={gruss} showChats={showChats} chatBadge={chatBadge} setupOpen={setupOpen} teamRole={ctx.teamRole} hasTeam={logins > 1} showOrders={pplSubs > 0} showBestand={bestand} absence={absence} updatesUnread={updatesUnread} noStepBadge={noStepBadge}>
+            {demo ? (
+              <>
+                <meta name="robots" content="noindex, nofollow" />
+                <AppDemoRahmen ziele={await demoTourZiele(ctx.customerId)} />
+              </>
+            ) : null}
             {ctx.teamRole === "advisor" ? (
               <Suspense fallback={null}>
                 <div className="px-4 sm:px-6 lg:px-8">
