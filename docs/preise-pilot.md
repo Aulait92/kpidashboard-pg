@@ -53,14 +53,28 @@ vortäuschen, Headless-Browser, eine Berechnung mit Testdaten auslösen.
 
 - In der Terminvorbereitung oben in der Versicherung: Knopf **„Beiträge rechnen“**, nur wenn die Sparte Allianz-Tarife
   hat und der Schalter für Allianz und diese Sparte an ist.
-- Er öffnet ein Fenster mit **„Im Allianz-Rechner berechnen“** (offizieller Rechner im neuen Fenster), darunter die
-  Angaben aus Lead und Formular zum Antippen und Kopieren (nur Rechner-Angaben: keine Namen, Telefonnummern, E-Mail,
-  keine Gesundheitsangaben zu Menschen), fehlende Angaben als „im Termin klären“.
+- Er öffnet ein Fenster mit dem Hauptknopf **„In Ihrem Allianz-System berechnen“** (Entscheidung Ole, 16.11.2026,
+  siehe unten), darunter die Angaben aus Lead und Formular zum Antippen und Kopieren (nur Rechner-Angaben: keine Namen,
+  Telefonnummern, E-Mail, keine Gesundheitsangaben zu Menschen), fehlende Angaben als „im Termin klären“. Der
+  öffentliche Rechner auf allianz.de steht nur noch als Textlink „Öffentlichen Allianz-Rechner öffnen“ darunter.
 - Darunter der Weg zurück: Ergebnis als Screenshot über **„Angebot ablegen“** einlesen. Beiträge, die so gelesen
   werden, stehen als Richtwert im Feld („Aus dem Angebot gelesen, bitte prüfen“). Der Vermittler bestätigt mit einem Tipp;
   solange nicht bestätigt ist, zeigt „Präsentation öffnen“ einen kurzen Hinweis.
 - Admin: Einstellungen → Beiträge rechnen (Pilot), Schalter je Gesellschaft und Sparte, Standard aus, Änderungen im
   Änderungsprotokoll.
+
+## Entscheidung Ole, 16.11.2026: Rechnen im Vertriebssystem des Vertreters
+
+- Die automatische Abfrage bleibt aus; die Screenshot-Variante ist „erstmal gut genug“. Freigabe ab 16.11.2026, 18 Uhr.
+- Der Hauptweg ist das **Vertriebssystem des Allianz-Vertreters**, nicht der öffentliche Rechner auf allianz.de.
+  Hauptknopf im Fenster: **„In Ihrem Allianz-System berechnen“**, darunter ein Satz: „Rechnen Sie in Ihrem
+  Allianz-Vertriebssystem und legen Sie das Ergebnis als Screenshot ab.“
+- Für das Vertriebssystem ist keine Adresse hinterlegt (es gibt keine geprüfte, allgemein gültige). Der Knopf kopiert
+  deshalb alle bekannten Angaben auf einmal (eine Zeile je Angabe), zum Einfügen im eigenen System. Liefert Ole eine
+  feste Adresse, kann der Knopf sie zusätzlich öffnen.
+- Der öffentliche Rechner bleibt als zweite, unauffällige Wahl: Textlink „Öffentlichen Allianz-Rechner öffnen“.
+- Angaben zum Kopieren, „Screenshot ablegen“, Richtwert „bitte prüfen“ und der Knopf „Beiträge rechnen“ in der
+  Terminvorbereitung bleiben wie gebaut.
 
 ## Sauberer Weg zur echten Automatik (für Ole)
 

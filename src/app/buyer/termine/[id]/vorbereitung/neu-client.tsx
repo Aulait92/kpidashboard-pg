@@ -38,7 +38,7 @@ import {
   type TarifWahl,
 } from "@/lib/tarifauswahl";
 import type { EigenerTarifZeile } from "@/lib/tarifauswahl-server";
-import { pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib/preise/pilot";
+import { angabenText, pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib/preise/pilot";
 import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, preiseAuslesenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 
@@ -644,8 +644,9 @@ function Angebote(p: {
 }
 
 /**
- * Beiträge rechnen (Pilot, docs/preise-pilot.md): offiziellen Rechner öffnen, Angaben zum Kopieren, Ergebnis als
- * Screenshot ablegen. Keine automatische Abfrage (Nutzungsbedingungen der Gesellschaft).
+ * Beiträge rechnen (Pilot, docs/preise-pilot.md): Der Vertreter rechnet in seinem Vertriebssystem (Ole, 16.11.2026),
+ * nimmt die Angaben per Kopieren mit und legt das Ergebnis als Screenshot ab. Der öffentliche Rechner nur als zweite
+ * Wahl. Keine automatische Abfrage (Nutzungsbedingungen der Gesellschaft).
  */
 function BeitraegeRechnen({
   open,
@@ -676,12 +677,26 @@ function BeitraegeRechnen({
       toast.show({ message: "Kopieren nicht möglich, bitte abtippen.", tone: "error" });
     }
   };
+  // Hauptknopf: alle bekannten Angaben auf einmal kopieren, zum Einfügen im eigenen Vertriebssystem
+  const alleKopieren = async () => {
+    const text = angabenText(angaben);
+    if (!text) return toast.show({ message: "Noch keine Angaben bekannt, bitte im Termin klären." });
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.show({ message: `Angaben kopiert, jetzt im ${gesellschaft}-System einfügen` });
+    } catch {
+      toast.show({ message: "Kopieren nicht möglich, bitte abtippen.", tone: "error" });
+    }
+  };
   return (
     <Sheet open={open} onClose={onClose} title="Beiträge rechnen" message={`${gesellschaft} · ${sparte}`}>
       <div className="space-y-4 px-5 py-4" data-beitraege-fenster>
-        <a href={url} target="_blank" rel="noopener noreferrer" className={buttonClass("primary", "md", "w-full")} data-rechner-oeffnen>
-          <ExternalLink className="h-4 w-4" /> Im {gesellschaft}-Rechner berechnen
-        </a>
+        <div>
+          <Button variant="primary" size="md" icon={Calculator} className="w-full" onClick={() => void alleKopieren()} data-im-system-berechnen>
+            In Ihrem {gesellschaft}-System berechnen
+          </Button>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">Rechnen Sie in Ihrem {gesellschaft}-Vertriebssystem und legen Sie das Ergebnis als Screenshot ab.</p>
+        </div>
         {angaben.length ? (
           <div>
             <h3 className="mb-1.5 text-[13px] font-semibold text-[color:var(--muted)]">Angaben zum Kopieren</h3>
@@ -706,7 +721,6 @@ function BeitraegeRechnen({
             </ul>
           </div>
         ) : null}
-        <p className="text-sm text-[color:var(--muted)]">Danach das Ergebnis als Screenshot ablegen: Die Beiträge werden übernommen, Sie prüfen sie nur noch.</p>
         {ablegen ? (
           <FileDrop
             variant="button"
@@ -724,6 +738,10 @@ function BeitraegeRechnen({
             onFiles={ablegen}
           />
         ) : null}
+        {/* Zweite Wahl (Ole, 16.11.2026): öffentlicher Rechner nur als unauffälliger Textlink */}
+        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1.5 text-sm text-[color:var(--muted)] hover:underline" data-rechner-oeffnen>
+          <ExternalLink className="h-3.5 w-3.5" /> Öffentlichen {gesellschaft}-Rechner öffnen
+        </a>
       </div>
     </Sheet>
   );

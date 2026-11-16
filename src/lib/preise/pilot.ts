@@ -2,7 +2,8 @@
 //
 // Eine automatische Abfrage der Allianz-Rechner gibt es nicht: Die Nutzungsbedingungen von allianz.de verbieten das
 // systematische Auslesen und Speichern von Preisen, die Schnittstellen sind zudem geschützt. Deshalb die Rückfall-Variante:
-// offiziellen Rechner öffnen, Angaben aus dem Lead kopieren, Ergebnis über „Angebot ablegen“ einlesen. So gelesene
+// im eigenen Vertriebssystem rechnen (Ole, 16.11.2026; öffentlicher Rechner als zweite Wahl), Angaben aus dem Lead
+// kopieren, Ergebnis über „Angebot ablegen“ einlesen. So gelesene
 // Beiträge sind ein Richtwert („bitte prüfen“), bis der Vermittler sie bestätigt.
 //
 // Reine Funktionen (auch im Browser). Schalter laden und speichern: lib/preise/pilot-server.ts.
@@ -136,7 +137,16 @@ export function rechnerAngaben(d: VorbereitungDaten, sparte: string): RechnerAng
   }
 }
 
-// ─── Richtwert „bitte prüfen“ ──────────────────────────────────────────────────────────────
+/**
+ * Alle bekannten Angaben als Text zum Einfügen im eigenen Vertriebssystem (Knopf „In Ihrem Allianz-System berechnen“,
+ * Ole 16.11.2026): eine Zeile je Angabe, fehlende weggelassen; null, wenn keine Angabe bekannt ist.
+ */
+export function angabenText(angaben: RechnerAngabe[]): string | null {
+  const zeilen = angaben.filter((a) => a.wert).map((a) => `${a.label}: ${a.wert}`);
+  return zeilen.length ? zeilen.join("\n") : null;
+}
+
+// ─── Richtwert „bitte prüfen“──────────────────────────────────────────────────────────────
 
 /** Etikett an einem nicht bestätigten Beitrag: „Aus dem Angebot gelesen, Stand 16.11. 10:12, bitte prüfen“. */
 export function pruefEtikett(p: { quelle: string; am: string }): string {

@@ -3,7 +3,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
-import { cleanPilot, PILOT_SCHLUESSEL, plzAus, pruefEtikett, RECHNER, rechnerAngaben, rechnerUrl } from "@/lib/preise/pilot";
+import { angabenText, cleanPilot, PILOT_SCHLUESSEL, plzAus, pruefEtikett, RECHNER, rechnerAngaben, rechnerUrl } from "@/lib/preise/pilot";
 import { cleanTarifauswahl, PRUEF_QUELLE_ANGEBOT, preiseUebernehmen, startAuswahl, ungepruefteBeitraege, zuAngebote } from "@/lib/tarifauswahl";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -75,6 +75,13 @@ describe("Angaben für den Rechner", () => {
     expect(rechnerAngaben(tier, "hund-op")).toContainEqual({ label: "Tierart", wert: "Katze" });
     expect(rechnerAngaben(d({ angaben: {} }), "unfall").map((x) => x.wert)).toEqual([null, null, null]);
     expect(rechnerAngaben(d(), "kfz")).toEqual([]);
+  });
+
+  it("Knopf „In Ihrem Allianz-System berechnen“: alle bekannten Angaben als Text, fehlende weggelassen", () => {
+    expect(angabenText(rechnerAngaben(d(), "hausrat"))).toBe("Postleitzahl: 50667\nWohnfläche: 95 m², Wohnung\nGeburtsdatum: 12.03.1985");
+    expect(angabenText([{ label: "Beruf", wert: null }, { label: "Geburtsdatum", wert: "1.1.1990" }])).toBe("Geburtsdatum: 1.1.1990");
+    expect(angabenText(rechnerAngaben(d({ angaben: {} }), "unfall"))).toBeNull();
+    expect(angabenText([])).toBeNull();
   });
 
   it("PLZ aus Formular vor Adresse", () => {

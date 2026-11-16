@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Beiträge rechnen | performancegrowth Admin" };
 
 // Pilot „Beiträge rechnen“ (Ole, 16.11.2026; docs/preise-pilot.md): Schalter je Gesellschaft und Sparte, Standard aus.
-// An heißt: In der Terminvorbereitung erscheint „Beiträge rechnen“ (offizieller Rechner, Angaben zum Kopieren), und aus
+// An heißt: In der Terminvorbereitung erscheint „Beiträge rechnen“ (eigenes Vertriebssystem, Angaben zum Kopieren), und aus
 // einem abgelegten Angebot gelesene Beiträge sind ein Richtwert, bis der Vermittler bestätigt.
 export default async function BeitraegePage() {
   await requireAuth();
@@ -28,8 +28,8 @@ export default async function BeitraegePage() {
       </Link>
       <h1 className="mb-1 mt-1 text-2xl font-semibold tracking-tight">Beiträge rechnen (Pilot)</h1>
       <p className="mb-6 text-sm text-[color:var(--muted)]">
-        Ohne automatische Abfrage (Nutzungsbedingungen der Gesellschaft): Vermittler öffnen den offiziellen Rechner, kopieren die Angaben und legen das Ergebnis
-        als Screenshot ab. Details: docs/preise-pilot.md.
+        Ohne automatische Abfrage (Nutzungsbedingungen der Gesellschaft): Vertreter rechnen in ihrem Vertriebssystem (öffentlicher Rechner als zweite Wahl),
+        kopieren die Angaben und legen das Ergebnis als Screenshot ab. Details: docs/preise-pilot.md.
       </p>
       {[...gruppen].map(([g, liste]) => (
         <section key={g} className="mb-6">
