@@ -141,11 +141,11 @@ export const BEREICHE: NeuBereich[] = [
     handy: "leiste",
     ordner: "marketing",
     seiten: [
-      { view: "marketing", pfad: n("/marketing"), titel: "LinkedIn", alt: ["/admin/marketing/linkedin", "/admin/marketing"], reiter: { gruppe: "marketing", label: "LinkedIn" }, suchwoerter: "Entwürfe Posts" },
-      { view: "marketing-empfehlungen", pfad: n("/marketing/empfehlungen"), titel: "Empfehlungen", alt: ["/admin/marketing/empfehlungen"], reiter: { gruppe: "marketing", label: "Empfehlungen" }, suchwoerter: "Kollegen empfehlen Prämie" },
-      { view: "marketing-unterlagen", pfad: n("/marketing/unterlagen"), titel: "Unterlagen", alt: ["/admin/marketing/unterlagen"], reiter: { gruppe: "marketing", label: "Unterlagen" }, suchwoerter: "Präsentation" },
-      { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], reiter: { gruppe: "marketing", label: "Webseite & Rechner" }, suchwoerter: "Preise Rechner" },
-      { view: "marketing-unterlagen", pfad: n("/marketing/unterlagen/praesentation/[audience]"), titel: "Präsentation", alt: ["/admin/marketing/unterlagen/praesentation/[audience]"] },
+      { view: "marketing", pfad: n("/marketing"), titel: "LinkedIn", alt: ["/admin/marketing/linkedin", "/admin/marketing"], reiter: { gruppe: "marketing", label: "LinkedIn" }, suchwoerter: "Entwürfe Posts", fertig: true },
+      { view: "marketing-empfehlungen", pfad: n("/marketing/empfehlungen"), titel: "Empfehlungen", alt: ["/admin/marketing/empfehlungen"], reiter: { gruppe: "marketing", label: "Empfehlungen" }, suchwoerter: "Kollegen empfehlen Prämie", fertig: true },
+      { view: "marketing-unterlagen", pfad: n("/marketing/unterlagen"), titel: "Unterlagen", alt: ["/admin/marketing/unterlagen"], reiter: { gruppe: "marketing", label: "Unterlagen" }, suchwoerter: "Präsentation", fertig: true },
+      { view: "marketing-webseite", pfad: n("/marketing/webseite"), titel: "Webseite & Rechner", alt: ["/admin/einstellungen/rechner"], reiter: { gruppe: "marketing", label: "Webseite & Rechner" }, suchwoerter: "Preise Rechner", fertig: true },
+      { view: "marketing-unterlagen", pfad: n("/marketing/unterlagen/praesentation/[audience]"), titel: "Präsentation", alt: ["/admin/marketing/unterlagen/praesentation/[audience]"], fertig: true },
     ],
   },
   {
@@ -157,12 +157,12 @@ export const BEREICHE: NeuBereich[] = [
     handy: "mehr",
     ordner: "zahlen",
     seiten: [
-      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen", "/"], reiter: { gruppe: "zahlen", label: "Übersicht" }, suchwoerter: "Kennzahlen Investoren MRR BWA Dashboard" },
-      { view: "zahlen-umsatz", pfad: n("/zahlen/umsatz"), titel: "Umsatz & Buchungen", alt: ["/admin/zahlen/buchungen"], reiter: { gruppe: "zahlen", label: "Umsatz & Buchungen" } },
-      { view: "zahlen-kosten", pfad: n("/zahlen/kosten"), titel: "Kosten & Bank", alt: ["/admin/einstellungen/kosten", "/admin/einstellungen/bank"], reiter: { gruppe: "zahlen", label: "Kosten & Bank" }, suchwoerter: "Laufende Kosten Ausgaben Karten" },
-      { view: "zahlen-kunden", pfad: n("/zahlen/kunden"), titel: "Kunden-Lebenszyklus", alt: ["/admin/zahlen/lebenszyklus"], reiter: { gruppe: "zahlen", label: "Kunden-Lebenszyklus" }, suchwoerter: "Kündigung Ruhephase Rückkehr" },
-      { view: "zahlen-qualitaet", pfad: n("/zahlen/qualitaet"), titel: "Qualität & Nutzung", alt: ["/admin/zahlen/stornoquote", "/admin/zahlen/whatsapp", "/admin/nutzung"], reiter: { gruppe: "zahlen", label: "Qualität & Nutzung" }, suchwoerter: "Stornoquote WhatsApp-Zustellung Nutzung NPS" },
-      { view: "zahlen-kosten", pfad: n("/zahlen/kosten/zuordnen"), titel: "Ausgaben zuordnen", alt: ["/admin/einstellungen/bank/zuordnen"] },
+      { view: "zahlen", pfad: n("/zahlen"), titel: "Übersicht", alt: ["/admin/zahlen", "/"], reiter: { gruppe: "zahlen", label: "Übersicht" }, suchwoerter: "Kennzahlen Investoren MRR BWA Dashboard", fertig: true },
+      { view: "zahlen-umsatz", pfad: n("/zahlen/umsatz"), titel: "Umsatz & Buchungen", alt: ["/admin/zahlen/buchungen"], reiter: { gruppe: "zahlen", label: "Umsatz & Buchungen" }, fertig: true },
+      { view: "zahlen-kosten", pfad: n("/zahlen/kosten"), titel: "Kosten & Bank", alt: ["/admin/einstellungen/kosten", "/admin/einstellungen/bank"], reiter: { gruppe: "zahlen", label: "Kosten & Bank" }, suchwoerter: "Laufende Kosten Ausgaben Karten", fertig: true },
+      { view: "zahlen-kunden", pfad: n("/zahlen/kunden"), titel: "Kunden-Lebenszyklus", alt: ["/admin/zahlen/lebenszyklus"], reiter: { gruppe: "zahlen", label: "Kunden-Lebenszyklus" }, suchwoerter: "Kündigung Ruhephase Rückkehr", fertig: true },
+      { view: "zahlen-qualitaet", pfad: n("/zahlen/qualitaet"), titel: "Qualität & Nutzung", alt: ["/admin/zahlen/stornoquote", "/admin/zahlen/whatsapp", "/admin/nutzung"], reiter: { gruppe: "zahlen", label: "Qualität & Nutzung" }, suchwoerter: "Stornoquote WhatsApp-Zustellung Nutzung NPS", fertig: true },
+      { view: "zahlen-kosten", pfad: n("/zahlen/kosten/zuordnen"), titel: "Ausgaben zuordnen", alt: ["/admin/einstellungen/bank/zuordnen"], fertig: true },
     ],
   },
   {
@@ -266,9 +266,9 @@ export const NEU_EINTRAEGE: NeuEintrag[] = [
   { id: "termin", label: "Termin buchen", hinweis: "Meta-Leads-Call oder Entscheidungs-Call", art: "link", href: "/admin/neu/vertrieb/termine?buchen=1" },
   { id: "zuordnung", label: "Zuordnung", hinweis: "Formular zu Kunde", art: "link", href: "/admin/neu/leads?neu=1#zuordnen" },
   { id: "ppl-bezug", label: "Pay-per-Lead-Bezug", art: "link", href: "/admin/neu/leads/ppl/bezug/neu" },
-  { id: "linkedin", label: "LinkedIn-Entwurf", art: "link", href: "/admin/marketing/linkedin" },
+  { id: "linkedin", label: "LinkedIn-Entwurf", art: "link", href: "/admin/neu/marketing" },
   { id: "neuigkeit", label: "Neuigkeit", hinweis: "für den Kundenbereich", art: "link", href: "/admin/einstellungen/neuigkeiten" },
-  { id: "kosten", label: "Kosten", hinweis: "laufende Kosten", art: "link", href: "/admin/einstellungen/kosten" },
+  { id: "kosten", label: "Kosten", hinweis: "laufende Kosten", art: "link", href: "/admin/neu/zahlen/kosten" },
 ];
 
 // ─── Suche: Seiten ───────────────────────────────────────────────────────

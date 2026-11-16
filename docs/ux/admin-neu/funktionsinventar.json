@@ -1760,8 +1760,8 @@
   "demo_view": "zahlen",
   "id": "page--kunden-nach-kanal-ohne-gekuendigt",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/kunden-nach-kanal.tsx"
  },
  {
   "heute": "/admin/kunden/[id] (Kopf)",
@@ -3620,8 +3620,8 @@
   "demo_view": "marketing",
   "id": "actions-savedraftaction--entwuerfe-zur-freigabe-text-bearbeiten-bild",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3632,8 +3632,8 @@
   "demo_view": "marketing",
   "id": "actions-approveaction--entwurf-freigeben-planen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3644,8 +3644,8 @@
   "demo_view": "marketing",
   "id": "actions-approveaction-sofort--sofort-veroeffentlichen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3656,8 +3656,8 @@
   "demo_view": "marketing",
   "id": "actions-discardaction--entwurf-verwerfen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3668,8 +3668,8 @@
   "demo_view": "marketing",
   "id": "actions-unapproveaction--geplante-posts-und-freigabe-zuruecknehmen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3680,8 +3680,8 @@
   "demo_view": "marketing",
   "id": "actions-generatenowaction--entwuerfe-jetzt-generieren-fuer-x-tage",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3692,8 +3692,8 @@
   "demo_view": "marketing",
   "id": "page-ergebnisse--ergebnisse-je-post-impressionen-zielgruppe",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3704,8 +3704,8 @@
   "demo_view": "marketing",
   "id": "actions-setmetricsaction--zahlen-je-post-nachtragen-importierten-text",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3716,8 +3716,8 @@
   "demo_view": "marketing",
   "id": "actions-importaction--linkedin-statistik-excel-hochladen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3728,8 +3728,8 @@
   "demo_view": "marketing",
   "id": "actions-uploadphotosaction--fotos-hochladen-beschreiben-loeschen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3740,8 +3740,8 @@
   "demo_view": "marketing",
   "id": "actions-savesettingsaction--einstellungen-zielgruppe-produkte-ueber-mich",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/marketing/linkedin",
@@ -3764,8 +3764,8 @@
   "demo_view": "marketing-empfehlungen",
   "id": "page--kennzahlen-und-alle-empfehlungen-mit-stand-und",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/empfehlungen/page.tsx"
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -3776,8 +3776,8 @@
   "demo_view": "marketing-empfehlungen",
   "id": "actions-markrewarddoneaction--praemie-als-gutgeschrieben-markieren",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/empfehlungen/page.tsx"
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -3788,8 +3788,8 @@
   "demo_view": "marketing-empfehlungen",
   "id": "actions-applyreferraldiscountsaction--empfehlungsrabatt-auf-offene-angebote-anwenden",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/empfehlungen/page.tsx"
  },
  {
   "heute": "/admin/marketing/empfehlungen",
@@ -3800,8 +3800,8 @@
   "demo_view": "marketing-empfehlungen",
   "id": "page-top-empfehler--top-empfehler-mit-geworbenen-kunden-umsatz",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/empfehlungen/page.tsx"
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -3812,8 +3812,8 @@
   "demo_view": "marketing-unterlagen",
   "id": "page--web-praesentation-je-zielgruppe-oeffnen-und-als",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/unterlagen/page.tsx, src/app/admin/neu/marketing/unterlagen/praesentation/[audience]/page.tsx"
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -3824,8 +3824,8 @@
   "demo_view": "marketing-unterlagen",
   "id": "route-get--datei-pptx-pdf-herunterladen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/unterlagen/page.tsx"
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -3836,8 +3836,8 @@
   "demo_view": "marketing-unterlagen",
   "id": "route-post--datei-hochladen-bzw-ersetzen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/unterlagen/page.tsx"
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -3848,8 +3848,8 @@
   "demo_view": "marketing-unterlagen",
   "id": "route-delete--datei-entfernen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/unterlagen/page.tsx"
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -3860,8 +3860,8 @@
   "demo_view": "marketing-unterlagen",
   "id": "unterlagen-grid--live-demo-der-beratungspraesentation",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/unterlagen/page.tsx"
  },
  {
   "heute": "/admin/marketing/unterlagen",
@@ -3872,8 +3872,8 @@
   "demo_view": "marketing-webseite",
   "id": "nav--oeffentlichen-rechner-oeffnen",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/webseite/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3884,8 +3884,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view--kennzahlen-kacheln-mrr-kunden-churn-cac",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3896,8 +3896,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view-sicht--sicht-kerngeschaeft-oder-gesamt-mit-pay-per-lead",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3908,8 +3908,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view-setdrill--kachel-aufklappen-drill-down-kunden-je-kennzahl",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3920,8 +3920,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view-toggleinvestor--investoren-ansicht-interne-reiter-ausblenden",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3932,8 +3932,8 @@
   "demo_view": "zahlen",
   "id": "actions-saveupdatetextsaction--investoren-update-highlights-texte-speichern",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3944,8 +3944,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view--reiter-wachstum-umsatz-je-strom-umsatzmix",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3956,8 +3956,8 @@
   "demo_view": "zahlen-kunden",
   "id": "zahlen-view--reiter-kunden-kohorten-kundenbasis-abhaengigkeit",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3968,8 +3968,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view--reiter-wirtschaftlichkeit-kundengewinnung",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3980,8 +3980,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view--reiter-wirkung-beim-vertreter-pro-1-lead-bis",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -3992,8 +3992,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view--reiter-produkte-ueber-alle-vertreter-und-je",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4004,8 +4004,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view--reiter-vertrieb-pipeline-woher-kunden-kommen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4016,8 +4016,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view--reiter-pay-per-lead-verkaufte-leads-je-monat",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4028,8 +4028,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-view-bwa--reiter-bwa-mit-drill-down-je-zeile-und-hinweis",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4040,8 +4040,8 @@
   "demo_view": "zahlen-umsatz",
   "id": "actions-savemanualrevenueaction--einrichtungsgebuehren-je-monat-umsatz-von-hand",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/umsatz/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4052,8 +4052,8 @@
   "demo_view": "zahlen-umsatz",
   "id": "actions-deletemanualrevenueaction--manuellen-umsatz-loeschen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/umsatz/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4064,8 +4064,8 @@
   "demo_view": "zahlen-umsatz",
   "id": "zahlen-view--kunden-ohne-hinterlegte-betreuungsgebuehr",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/umsatz/page.tsx"
  },
  {
   "heute": "/admin/zahlen",
@@ -4076,8 +4076,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-tabs--link-leads-werbung-dashboard",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -4088,8 +4088,8 @@
   "demo_view": "zahlen-umsatz",
   "id": "buchungen-liste--buchungsliste-aller-kunden-angebote-produkte",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/umsatz/page.tsx"
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -4100,8 +4100,8 @@
   "demo_view": "zahlen-umsatz",
   "id": "page--filter-kunde-art-status-zeitraum-offen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/umsatz/page.tsx"
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -4112,8 +4112,8 @@
   "demo_view": "zahlen-umsatz",
   "id": "page-q--suche-in-buchungen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/umsatz/page.tsx"
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -4124,8 +4124,8 @@
   "demo_view": "zahlen-umsatz",
   "id": "route-get--csv-export-buchungen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/umsatz/page.tsx"
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -4136,8 +4136,8 @@
   "demo_view": "zahlen-kunden",
   "id": "page--kunden-je-monat-neu-reaktiviert-gekuendigt-netto",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kunden/page.tsx"
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -4148,8 +4148,8 @@
   "demo_view": "zahlen-kunden",
   "id": "page--mrr-bewegung-je-monat",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kunden/page.tsx"
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -4160,8 +4160,8 @@
   "demo_view": "zahlen-kunden",
   "id": "page--reaktivierungsquote-je-kuendigungsmonat",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kunden/page.tsx"
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -4172,8 +4172,8 @@
   "demo_view": "zahlen-kunden",
   "id": "page--kuendigungsgruende-die-zurueckkommen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kunden/page.tsx"
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -4184,8 +4184,8 @@
   "demo_view": "zahlen-kunden",
   "id": "page--halteangebote-angenommen-mrr-gerettet-spaeter",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kunden/page.tsx"
  },
  {
   "heute": "/admin/zahlen/lebenszyklus",
@@ -4208,8 +4208,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "storno-quote-stornoquoteuebersicht--stornoquote-der-vertraege-je-kunde-und-sparte",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/zahlen/whatsapp",
@@ -4220,8 +4220,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "whatsapp-zustellung--leads-ohne-whatsapp-je-kunde-30-tage-gesamt",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/zahlen/whatsapp",
@@ -4232,8 +4232,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "whatsapp-zustellung--zustellfehler-der-letzten-14-tage-je-kunde-und",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/nutzung",
@@ -4244,8 +4244,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "page--hilfe-anfragen-an-das-team",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/nutzung",
@@ -4256,8 +4256,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "page--ki-hilfe-fragen-der-vertreter-mit-bewertung",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/nutzung",
@@ -4268,8 +4268,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "page--nutzung-je-kunde-liegt-herum-genutzte-aktionen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/nutzung",
@@ -4280,8 +4280,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "nps-card--weiterempfehlung-nps",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/nutzung",
@@ -4292,8 +4292,8 @@
   "demo_view": "zahlen-qualitaet",
   "id": "module-card--zusatzmodul-empfehlungen-kandidaten-fuers",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/qualitaet/page.tsx"
  },
  {
   "heute": "/admin/nutzung",
@@ -4628,8 +4628,8 @@
   "demo_view": "marketing-webseite",
   "id": "actions-saverechneraction--rechner-produkte-quoten-kosten-garantien-texte",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/webseite/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/empfehlungen",
@@ -4712,8 +4712,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-saverecurringcostaction--laufende-kosten-anlegen-aendern-zweck-zeitraum",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/kosten",
@@ -4724,8 +4724,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-deleterecurringcostaction--laufende-kosten-loeschen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/kosten",
@@ -4736,8 +4736,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-savekpisettingsaction--annahmen-fuer-kennzahlen-stunden-stundensatz",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4748,8 +4748,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-connectbankaction--bank-verbinden",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4760,8 +4760,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-syncbankaction--umsaetze-jetzt-abrufen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4772,8 +4772,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-disconnectbankaction--bank-trennen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4784,8 +4784,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-uploadcsvaction--csv-hochladen-commerzbank-amex-automatisch",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4796,8 +4796,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-saveruleaction--regel-speichern",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4808,8 +4808,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-deleteruleaction--regel-loeschen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4820,8 +4820,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-assignaction--ausgabe-zuordnen-zweck-inkl-ust-immer-so-bei",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx, src/app/admin/neu/zahlen/kosten/zuordnen/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/bank",
@@ -4832,8 +4832,8 @@
   "demo_view": "zahlen-kosten",
   "id": "page--zugeordnete-ausgaben-ansehen",
   "bereich": "zahlen",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx, src/app/admin/neu/zahlen/kosten/zuordnen/page.tsx"
  },
  {
   "heute": "/admin/einstellungen/sicherheit",

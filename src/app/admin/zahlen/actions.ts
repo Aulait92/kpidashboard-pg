@@ -19,6 +19,7 @@ export async function saveUpdateTextsAction(fd: FormData): Promise<{ ok: boolean
     update: { updateChallenges, updateNext },
   });
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
 
@@ -51,6 +52,7 @@ export async function saveRecurringCostAction(_prev: KostenState, fd: FormData):
   await audit("kpi.kosten", { entity: "RecurringCost", entityId: saved.id, details: { name, amount, purpose } });
   revalidatePath("/admin/einstellungen/kosten");
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
 
@@ -62,6 +64,7 @@ export async function deleteRecurringCostAction(fd: FormData): Promise<void> {
   await audit("kpi.kosten", { entity: "RecurringCost", entityId: id, details: { deleted: true } });
   revalidatePath("/admin/einstellungen/kosten");
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
 }
 
 /** Gründerzeit und Kampagnen der eigenen Kundengewinnung. */
@@ -84,6 +87,7 @@ export async function saveKpiSettingsAction(_prev: KostenState, fd: FormData): P
   await audit("kpi.einstellungen", { details: { hours, rate, campaigns, pplPilotEnd } });
   revalidatePath("/admin/einstellungen/kosten");
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
 
@@ -113,6 +117,7 @@ export async function saveManualRevenueAction(_prev: NachtragState, fd: FormData
   const saved = await prisma.manualRevenue.create({ data: { month, customerId, amount, kind, note, createdBy: session?.email ?? null } });
   await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: saved.id, customerId, details: { month, amount, kind, note } });
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
   return { ok: true };
 }
 
@@ -125,4 +130,5 @@ export async function deleteManualRevenueAction(fd: FormData): Promise<void> {
   await prisma.manualRevenue.delete({ where: { id } });
   await audit("kpi.nachtrag", { entity: "ManualRevenue", entityId: id, customerId: row.customerId, details: { deleted: true, month: row.month, amount: Number(row.amount), kind: row.kind } });
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
 }

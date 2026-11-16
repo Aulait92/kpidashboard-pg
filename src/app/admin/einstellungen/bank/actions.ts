@@ -15,6 +15,7 @@ export type BankState = { ok?: boolean; message?: string; error?: string } | nul
 const refresh = () => {
   revalidatePath("/admin/einstellungen/bank", "layout");
   revalidatePath("/admin/zahlen");
+  revalidatePath("/admin/neu", "layout");
 };
 
 export async function connectBankAction(fd: FormData) {

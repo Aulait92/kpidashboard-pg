@@ -3,7 +3,8 @@ import Link from "next/link";
 import clsx from "clsx";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CUSTOMER_STAGES, SOURCES, SOURCE_COLOR, SOURCE_LABEL, shortName } from "@/lib/vertrieb/crm";
+import { CUSTOMER_STAGES, SOURCE_COLOR, SOURCE_LABEL, shortName } from "@/lib/vertrieb/crm";
+import { kundenNachKanal } from "@/lib/vertrieb/kunden-kanal";
 import { ensureSource } from "@/lib/vertrieb/source";
 import { dayKey, fmtDate, relDay, todayKey } from "@/lib/vertrieb/dates";
 import { dragCustomer, moveCustomer } from "@/app/admin/vertrieb/actions";
@@ -108,18 +109,13 @@ export default async function KundenPage() {
       {customers.length > 0 && (
         <div className="card flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 text-sm">
           <span className="text-xs font-medium text-slate-500">Kunden nach Kanal (ohne Gekündigt):</span>
-          {[...SOURCES.map((x) => x.id), null].map((src) => {
-            const list = customers.filter((c) => (c.customerSource ?? null) === src && c.customerStage !== "GEKUENDIGT");
-            if (!list.length) return null;
-            const mrr = list.filter((c) => c.customerStage === "AKTIV").reduce((a, c) => a + (c.monthlyValue ?? 0), 0);
-            return (
-              <span key={src ?? "none"} className="flex items-center gap-1.5">
-                <span className={`badge ${src ? SOURCE_COLOR[src] : "bg-slate-100 text-slate-500"}`}>{src ? SOURCE_LABEL[src] : "Unbekannt"}</span>
-                <span className="tabular-nums">{list.length}</span>
-                {mrr > 0 && <span className="text-xs text-slate-500">· {eur(mrr)}/M aktiv</span>}
-              </span>
-            );
-          })}
+          {kundenNachKanal(customers).map(({ source: src, count, mrrAktiv: mrr }) => (
+            <span key={src ?? "none"} className="flex items-center gap-1.5">
+              <span className={`badge ${src ? SOURCE_COLOR[src] : "bg-slate-100 text-slate-500"}`}>{src ? SOURCE_LABEL[src] : "Unbekannt"}</span>
+              <span className="tabular-nums">{count}</span>
+              {mrr > 0 && <span className="text-xs text-slate-500">· {eur(mrr)}/M aktiv</span>}
+            </span>
+          ))}
         </div>
       )}
 

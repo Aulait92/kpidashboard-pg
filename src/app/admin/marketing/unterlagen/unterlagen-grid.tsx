@@ -22,7 +22,19 @@ const MAX_BYTES: Record<Format, number> = { pdf: 25 * MB, pptx: 100 * MB };
 const when = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
-export function UnterlagenGrid({ slots, demo }: { slots: UnterlagenSlot[]; demo?: { haupt: string; app: string } }) {
+export function UnterlagenGrid({
+  slots,
+  demo,
+  praesentationBasis = "/admin/marketing/unterlagen/praesentation",
+  funktionen = {},
+}: {
+  slots: UnterlagenSlot[];
+  demo?: { haupt: string; app: string };
+  /** Adresse der Web-Präsentation ohne Zielgruppe (neuer Admin: /admin/neu/marketing/unterlagen/praesentation) */
+  praesentationBasis?: string;
+  /** data-funktion je Teil (Abnahme neuer Admin) */
+  funktionen?: { web?: string; datei?: string; demo?: string };
+}) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -30,15 +42,23 @@ export function UnterlagenGrid({ slots, demo }: { slots: UnterlagenSlot[]; demo?
           <Card key={a} className="p-4 sm:p-5">
             <h2 className="mb-3 text-base font-semibold">{AUDIENCE_LABEL[a]}</h2>
             <div className="space-y-3">
-              <WebPraesentation audience={a} />
+              <div data-funktion={funktionen.web}>
+                <WebPraesentation audience={a} basis={praesentationBasis} />
+              </div>
               {slots.filter((s) => s.audience === a).map((s) => (
-                <Slot key={s.format} slot={s} />
+                <div key={s.format} data-funktion={funktionen.datei}>
+                  <Slot slot={s} />
+                </div>
               ))}
             </div>
           </Card>
         ))}
       </div>
-      {demo ? <DemoLink demo={demo} /> : null}
+      {demo ? (
+        <div data-funktion={funktionen.demo}>
+          <DemoLink demo={demo} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -54,9 +74,9 @@ function useKopieren() {
 }
 
 /** Web-Präsentation zum Durchklicken (Listenpreise); mit Kontakt: Vertrieb → Kontakt → „Präsentation“. */
-function WebPraesentation({ audience }: { audience: Audience }) {
+function WebPraesentation({ audience, basis }: { audience: Audience; basis: string }) {
   const { msg, kopieren } = useKopieren();
-  const pfad = `/admin/marketing/unterlagen/praesentation/${audience}`;
+  const pfad = `${basis}/${audience}`;
   return (
     <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] p-3" data-web-praesentation={audience}>
       <div className="flex items-start gap-3">

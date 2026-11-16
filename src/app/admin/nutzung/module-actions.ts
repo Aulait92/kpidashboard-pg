@@ -9,8 +9,11 @@ import { sendAnnouncement } from "@/lib/empfehlung/module";
 export async function sendAnnouncementAction(fd: FormData): Promise<void> {
   const s = await getCurrentSession();
   if (!s || s.role !== "ADMIN") throw new Error("Nur Admins.");
-  if (fd.get("confirm") !== "on") redirect("/admin/nutzung?ankuendigung=bestaetigen#zusatzmodule");
+  // Neuer Admin (Zahlen → Qualität & Nutzung) schickt zurueck=neu mit
+  const basis = fd.get("zurueck") === "neu" ? "/admin/neu/zahlen/qualitaet" : "/admin/nutzung";
+  if (fd.get("confirm") !== "on") redirect(`${basis}?ankuendigung=bestaetigen#zusatzmodule`);
   const r = await sendAnnouncement({ id: s.userId, email: s.email, role: s.role });
   revalidatePath("/admin/nutzung");
-  redirect(`/admin/nutzung?ankuendigung=${encodeURIComponent(r.ok ? `Verschickt an ${r.sent} Kunden.` : r.error)}#zusatzmodule`);
+  revalidatePath("/admin/neu", "layout");
+  redirect(`${basis}?ankuendigung=${encodeURIComponent(r.ok ? `Verschickt an ${r.sent} Kunden.` : r.error)}#zusatzmodule`);
 }
