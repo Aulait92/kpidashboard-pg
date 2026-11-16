@@ -11,10 +11,23 @@ type HeaderRule = { source: string; headers: Header[] };
 
 /** Öffentliche Seiten, die (z. B. auf Vermittler-Websites) eingebettet werden dürfen. */
 /** /demo: Live-Demo der Beratungspräsentation, eingebettet in die Vertriebspräsentation und ggf. auf der Webseite. */
-export const EMBEDDABLE_PATHS = ["/book/:path*", "/rechner", "/demo/:path*"] as const;
+export const EMBEDDABLE_PATHS = ["/book/:path*", "/rechner"] as const;
+
+/**
+ * Live-Demo (/demo, /demo/beratung): nur auf unserer Webseite einbettbar (Ole, 16.11.2026). Kein X-Frame-Options,
+ * dafür erzwungene CSP frame-ancestors mit genau diesen Hosts (Webseite und Lovable-Vorschau).
+ */
+export const DEMO_PATHS = ["/demo", "/demo/:path*"] as const;
+export const DEMO_FRAME_ANCESTORS = [
+  "'self'",
+  "https://performancegrowth.de",
+  "https://www.performancegrowth.de",
+  "https://id-preview--a5c5b7c8-3a9c-49e9-ab57-02f8766b662e.lovable.app",
+  "https://growthspark-leads.lovable.app",
+].join(" ");
 
 /** Alle Pfade außer /book/…, /rechner und /demo/… (path-to-regexp mit negativem Lookahead). */
-export const NOT_EMBEDDABLE_SOURCE = "/:path((?!book/|rechner(?:/|$)|demo/).*)";
+export const NOT_EMBEDDABLE_SOURCE = "/:path((?!book/|rechner(?:/|$)|demo(?:/|$)).*)";
 
 export const CSP_REPORT_PATH = "/api/csp-report";
 
@@ -89,6 +102,16 @@ export function securityHeaderRules(env: { dev?: boolean; enforceCsp?: boolean }
   // X-Frame-Options, sondern frame-ancestors für beliebige https-Seiten.
   for (const source of EMBEDDABLE_PATHS) {
     rules.push({ source, headers: [{ key: cspKey, value: contentSecurityPolicy({ dev: env.dev, frameAncestors: "'self' https:" }) }] });
+  }
+  // Demo: gesamte CSP wie überall (ggf. Report-Only), zusätzlich frame-ancestors immer erzwungen
+  for (const source of DEMO_PATHS) {
+    rules.push({
+      source,
+      headers: [
+        { key: cspKey, value: contentSecurityPolicy({ dev: env.dev, frameAncestors: DEMO_FRAME_ANCESTORS }) },
+        ...(cspKey === "Content-Security-Policy" ? [] : [{ key: "Content-Security-Policy", value: `frame-ancestors ${DEMO_FRAME_ANCESTORS}` }]),
+      ],
+    });
   }
   return rules;
 }

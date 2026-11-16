@@ -85,7 +85,18 @@ describe("Sicherheits-Header", () => {
     // Live-Demo (Ole, 15.11.2026): eingebettet in die Vertriebspräsentation bzw. auf der Webseite
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/demo/beratung")).toBe(false);
     expect(re(NOT_EMBEDDABLE_SOURCE).test("/praesentation/abc")).toBe(true);
-    expect(header(rules.find((r) => r.source === "/demo/:path*")!, "Content-Security-Policy-Report-Only")).toContain("frame-ancestors 'self' https:");
+    // Auch /demo ohne Schrägstrich (dein-beratungstermin.de/demo lieferte X-Frame-Options: DENY, Ole 16.11.2026)
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/demo")).toBe(false);
+    expect(re(NOT_EMBEDDABLE_SOURCE).test("/demonstration")).toBe(true);
+    for (const source of ["/demo", "/demo/:path*"]) {
+      const demo = rules.find((r) => r.source === source)!;
+      expect(header(demo, "X-Frame-Options")).toBeUndefined();
+      // erzwungen, nur unsere Webseite und die Lovable-Hosts
+      expect(header(demo, "Content-Security-Policy")).toBe(
+        "frame-ancestors 'self' https://performancegrowth.de https://www.performancegrowth.de https://id-preview--a5c5b7c8-3a9c-49e9-ab57-02f8766b662e.lovable.app https://growthspark-leads.lovable.app",
+      );
+      expect(header(demo, "Content-Security-Policy-Report-Only")).not.toContain("frame-ancestors 'self' https:;");
+    }
     const book = rules.find((r) => r.source === "/book/:path*")!;
     expect(header(book, "Content-Security-Policy-Report-Only")).toContain("frame-ancestors 'self' https:");
     expect(header(book, "X-Frame-Options")).toBeUndefined();
