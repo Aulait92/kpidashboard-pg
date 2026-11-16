@@ -39,6 +39,8 @@ import { SubmitButton } from "@/components/submit-button";
 import { buttonClass } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { nowMs } from "@/lib/now";
+import { LiveRefresh, NewMessageHint, StickToBottom } from "@/components/live-refresh";
+import { lastInboundAt } from "@/lib/live";
 
 export const dynamic = "force-dynamic";
 
@@ -203,13 +205,20 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
     },
   });
 
-  const active = activeId ? await prisma.conversation.findUnique({ where: { id: activeId }, select: ACTIVE_SELECT }) : null;
+  const [active, inbound] = await Promise.all([
+    activeId ? prisma.conversation.findUnique({ where: { id: activeId }, select: ACTIVE_SELECT }) : null,
+    lastInboundAt(conversations.map((c) => c.id)),
+  ]);
 
   const artQs = art ? `&art=${art}` : "";
   const linkFor = (id: string) => `/admin/whatsapp?tab=${tab}&c=${id}${artQs}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+  // Hinweis „Neue Nachricht“, wenn in einem anderen Chat etwas eingeht (components/live-refresh.tsx)
+  const hintItems = conversations.map((c) => ({ id: c.id, name: c.contactName ?? formatPhone(c.contactPhone), href: linkFor(c.id), inboundAt: inbound.get(c.id) ?? null }));
 
   return (
     <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:px-6">
+      {/* Live: neue Nachrichten (auch Echos aus der WhatsApp-Business-App) ohne Neuladen */}
+      <LiveRefresh endpoint="/api/admin/chats/updates" safetyMs={0} haptics={false} />
       {/* Chats sind seit 16.11.2026 ein eigener Bereich in der Leiste (vorher Leads → WhatsApp-Chats) */}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Chats</h1>
@@ -234,7 +243,8 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
         </div>
       ) : null}
 
-      <div className="mt-6 flex h-[calc(100dvh-250px)] min-h-[460px] overflow-hidden md:h-[calc(100dvh-160px)] md:min-h-[540px] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+      <div className="relative mt-6 flex h-[calc(100dvh-250px)] min-h-[460px] overflow-hidden md:h-[calc(100dvh-160px)] md:min-h-[540px] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+        <NewMessageHint key={`${tab}:${art ?? ""}:${q}`} items={hintItems} activeId={active?.id ?? null} />
         {/* Spalte 1: Konversationsliste (Handy: ausgeblendet, sobald ein Chat offen ist) */}
         <aside className={cn(active ? "hidden md:flex" : "flex", "w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px] xl:w-[320px]")}>
           <div className="flex gap-1 p-3 pb-2">
@@ -522,6 +532,7 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6" data-messages>
         {items}
+        <StickToBottom count={active.messages.length} chatId={active.id} />
       </div>
 
       <ChatComposer

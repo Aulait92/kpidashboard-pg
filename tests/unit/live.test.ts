@@ -28,6 +28,11 @@ describe("Live-Aktualisierung: Fingerabdruck", () => {
     expect(fp((p) => { p.leads.count = 11; })).not.toBe(a); // gelöscht
   });
 
+  it("hängt die jüngste Nachricht an, wenn vorhanden", () => {
+    expect(fingerprintOf({ ...base, messages: { lastCreated: null } })).toMatch(/\|m-$/);
+    expect(fp((p) => { p.messages = { lastCreated: new Date("2026-11-10T10:00:00Z") }; })).not.toBe(fp((p) => { p.messages = { lastCreated: new Date("2026-11-10T10:00:01Z") }; }));
+  });
+
   it("kommt mit leeren Konten zurecht", () => {
     const empty: FingerprintParts = { leads: { count: 0, lastCreated: null, lastStatus: null }, conversations: { count: 0, lastUpdated: null, attention: 0 }, appointments: { count: 0, lastUpdated: null } };
     expect(fingerprintOf(empty)).toBe("l0.-.-|c0.-.0|a0.-");

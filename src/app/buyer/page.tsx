@@ -6,7 +6,6 @@ import { FreePeriodNotices } from "@/components/free-period-notices";
 import { TodayInbox } from "@/components/today-inbox";
 import { FirstDay } from "@/components/first-day";
 import { IntroVideoCard } from "@/components/intro-video";
-import { LiveRefresh } from "@/components/live-refresh";
 import { LeadDetailBody } from "@/components/lead-detail-body";
 import { isNewUi } from "@/lib/new-ui";
 import { EmpfehlungHeuteHint } from "@/components/empfehlung/server";
@@ -47,7 +46,6 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     const ob = await prisma.onboarding.findUnique({ where: { customerId: ctx.customerId }, select: { liveAt: true } });
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <LiveRefresh />
         <PageHeader title="Willkommen" subtitle="Schön, dass Sie da sind." />
         {introCard}
         {!ob || ob.liveAt ? erstinfoHint : null}
@@ -103,7 +101,6 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     const rechts = selected ?? ersteAufgabe;
     return (
       <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <LiveRefresh />
         <div className="xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6">
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
@@ -146,7 +143,6 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <LiveRefresh />
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {erstinfoHint}
       <TodayInbox data={data} zuVorbereiten={zuVorbereiten} />

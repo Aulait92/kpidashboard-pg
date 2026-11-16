@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { LiveRefresh } from "@/components/live-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
 import { BuyerKanbanBody } from "@/components/buyer-kanban-body";
@@ -47,7 +46,6 @@ export default async function BuyerKanbanPage({
 
   return (
     <PullToRefresh>
-      <LiveRefresh />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         <PageHeader
           title="Pipeline"

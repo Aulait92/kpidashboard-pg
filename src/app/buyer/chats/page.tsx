@@ -2,7 +2,8 @@ import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import Link from "next/link";
 import { ArrowLeft, Bot, CalendarClock, ChevronRight, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
-import { LiveRefresh, StickToBottom } from "@/components/live-refresh";
+import { NewMessageHint, StickToBottom } from "@/components/live-refresh";
+import { lastInboundAt } from "@/lib/live";
 import { PageHeader } from "@/components/buyer-shell";
 import { buttonClass } from "@/components/ui";
 import { chooseFollowup } from "@/lib/whatsapp/followup";
@@ -181,6 +182,15 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     },
   });
 
+  // Hinweis „Neue Nachricht“, wenn in einem anderen Chat etwas eingeht (components/live-refresh.tsx)
+  const inbound = await lastInboundAt(conversations.map((c) => c.id));
+  const hintItems = conversations.map((c) => ({
+    id: c.id,
+    name: c.contactName ?? formatPhone(c.contactPhone),
+    href: `/buyer/chats?c=${c.id}${listQs ? `&${listQs}` : ""}`,
+    inboundAt: inbound.get(c.id) ?? null,
+  }));
+
   // Aktiven Chat NUR mit customerId laden (Mandantentrennung).
   const active = activeId
     ? await prisma.conversation.findFirst({
@@ -316,7 +326,6 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
-      <LiveRefresh />
       {/* Chat übernommen bzw. selbst geantwortet: fragen, wie es mit dem Lead weitergeht (falls kein Schritt) */}
       {sp.schritt === "1" && active?.lead ? (
         <NextStepPrompt leadId={active.lead.id} name={active.contactName ?? "Lead"} source={active.lead.source} autoOpen />
@@ -334,7 +343,8 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         </div>
       ) : null}
 
-      <div className="flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+      <div className="relative flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+        <NewMessageHint key={listQs || "alle"} items={hintItems} activeId={active?.id ?? null} />
         {/* Liste — auf dem Handy ausgeblendet, sobald ein Chat offen ist */}
         <aside
           className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px]`}

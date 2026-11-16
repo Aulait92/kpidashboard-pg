@@ -1183,6 +1183,8 @@ model Message {
   @@index([conversationId, createdAt])
   @@index([billable, createdAt])
   @@index([purpose, createdAt])
+  // Live-Aktualisierung der Admin-Chats: jüngste Nachricht über alle Chats (lib/live.ts)
+  @@index([createdAt])
 }
 
 // Admin-Alarm zu WhatsApp-Zustellfehlern, die nicht „kein WhatsApp“ bedeuten (Zahlung, Vorlage, Limits …):
