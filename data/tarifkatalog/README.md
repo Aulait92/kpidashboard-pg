@@ -1,4 +1,4 @@
-# Tarifkatalog (Stand 15.11.2026)
+# Tarifkatalog (Stand 16.11.2026)
 
 Tarifdaten für die Terminvorbereitung (Entwurf: `docs/ux/2026-11-15-aufraeumen-und-terminvorbereitung.md`, Teil 2 bis 4).
 Je Sparte bis zu 3 Tarife einer Gesellschaft auf der Vergleichsfolie, höchstens 5 Merkmale und 2 Bausteine.
@@ -18,8 +18,11 @@ Gemeinsames Merkmal-Schema je Sparte, gleich für alle Gesellschaften.
    "bausteine": [ { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" } ] } ] }
 ```
 
-- Sparten-Keys: `katze-kranken, katze-op, hund-kranken, hund-op, haftpflicht, hausrat, rechtsschutz, wohngebaeude,
-  tierhalter-hund, tierhalter-pferd, unfall`.
+- Sparten-Keys: `katze-kranken, katze-op, hund-kranken, hund-op, pferd-op, pferd-kranken, haftpflicht, hausrat,
+  rechtsschutz, wohngebaeude, tierhalter-hund, tierhalter-pferd, unfall`.
+- Pferde-Sparten (16.11.2026) wie Tierkranken, dazu die pferdetypischen Merkmale `chips` (Entfernung von Gelenk-Chips)
+  und `kolik` (Wartezeit bei Kolik) sowie der Baustein `reha` (Reha-Baustein, Physiotherapie nach OP); belegt bei
+  Allianz und Uelzener. Ein Lead mit Produkt „Pferd…“ bekommt `pferd-op`, mit „Kranken“ oder „Voll“ `pferd-kranken`.
 - `standard: true`: vorausgewählte Merkmale (höchstens 5), an denen sich die Stufen am meisten unterscheiden und die
   Kunden am meisten interessieren. Die übrigen Merkmale stehen zur Tauschauswahl.
 - `kurz`: Merkmal höchstens 28 Zeichen, Baustein höchstens 20 Zeichen.
@@ -28,7 +31,9 @@ Gemeinsames Merkmal-Schema je Sparte, gleich für alle Gesellschaften.
   (Wort im Leadformular für die Vorauswahl).
 
 ### `<gesellschaft>/<sparte>.json`
-Ordner: `allianz`, `axa`, `signal-iduna`.
+Ordner: Schlüssel der Gesellschaft, klein mit Bindestrich (`allianz`, `axa`, `signal-iduna`, Tierversicherer z. B.
+`agila`, `uelzener`, `hansemerkur`). Neue Ordner prüft der Datentest automatisch mit; Anzeigename und Reihenfolge stehen in
+`src/lib/tarifkatalog.ts` (`GESELLSCHAFT_NAMEN`, `REIHENFOLGE`, `gesellschaftAusText`).
 
 ```json
 { "gesellschaft": "Allianz", "sparte": "rechtsschutz", "produkt": "Rechtsschutzversicherung",
@@ -77,6 +82,8 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 | katze-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
 | hund-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
 | hund-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
+| pferd-op | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
+| pferd-kranken | vollständig (4 Stufen) | fehlt (kein Produkt auf axa.de) | fehlt (kein Produkt auf signal-iduna.de) |
 | haftpflicht | vollständig (4 Stufen) | teilweise (3 Stufen, geliehene Sachen L offen) | vollständig (3 Stufen) |
 | hausrat | vollständig (4 Stufen) | teilweise (3 Stufen, einfacher Diebstahl offen) | teilweise (3 Stufen, einfacher Diebstahl offen) |
 | rechtsschutz | vollständig (4 Stufen) | teilweise (3 Stufen, Strafkaution offen) | teilweise (2 Stufen, Summe und Strafkaution offen) |
@@ -84,6 +91,25 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
 | tierhalter-hund | vollständig (3 Stufen) | vollständig (1 Tarif) | teilweise (2 Stufen, Flyer 2012) |
 | tierhalter-pferd | vollständig (3 Stufen) | teilweise (1 Tarif, nur Summe) | teilweise (2 Stufen, Flyer 2012) |
 | unfall | vollständig (4 Stufen) | vollständig (3 Stufen) | teilweise (2 Stufen, Summen individuell) |
+
+Tierversicherer (Abruf 16.11.2026; nur Tier-Sparten). „1 Tarif“ = die Gesellschaft hat keine Stufen, nur wählbare
+Summen bzw. Selbstbeteiligung (Stufe „Tarif“).
+
+| Sparte | AGILA | Barmenia | DFV | ERGO | HanseMerkur | Uelzener |
+|---|---|---|---|---|---|---|
+| katze-kranken | vollständig (3 Stufen) | vollständig (4 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | vollständig (3 Stufen) | vollständig (1 Tarif) |
+| katze-op | vollständig (3 Stufen) | vollständig (2 Stufen) | fehlt (nur Hunde) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | vollständig (1 Tarif) |
+| hund-kranken | vollständig (3 Stufen) | vollständig (4 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | vollständig (3 Stufen) | vollständig (1 Tarif) |
+| hund-op | vollständig (3 Stufen) | vollständig (3 Stufen) | vollständig (1 Tarif) | fehlt (kein Produkt) | teilweise (3 Stufen, Vorsorge nicht genannt) | vollständig (1 Tarif) |
+| pferd-op | fehlt (nur Hund, Katze) | teilweise (3 Stufen, Erstattung %, Vorsorge offen) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | vollständig (1 Tarif) |
+| pferd-kranken | fehlt (nur Hund, Katze) | fehlt (kein Vollschutz für Pferde) | fehlt (nur Hunde) | fehlt (kein Produkt) | fehlt (kein Pferdeprodukt) | vollständig (1 Tarif) |
+| tierhalter-hund | vollständig (3 Stufen) | fehlt (Stufen Klassik, Premium nicht als Tabelle) | vollständig (1 Tarif) | teilweise (1 Tarif, Fremdhüter offen) | vollständig (2 Stufen) | vollständig (1 Tarif) |
+| tierhalter-pferd | fehlt (kein Produkt) | fehlt (Stufen nicht als Tabelle) | fehlt (kein Produkt) | teilweise (1 Tarif, Flurschäden offen) | fehlt (kein Produkt) | vollständig (1 Tarif) |
+
+Nicht aufgenommen: PETPROTECT (Vermittler der BarmeniaGothaer, Tarifvergleich nur als Symbole ohne Werte),
+Helvetia (helvetia.de nennt nur „je nach Tarifwahl“, keine Stufen; Seiten für automatische Abrufe gesperrt), Gothaer
+(gothaer.de leitet auf barmeniagothaer.de; Tierkranken siehe Barmenia; Hunde- und Pferdehaftpflicht dort nur eine
+Spalte, die Stufen Klassik/Premium bzw. Basis/Top/Premium sind nur im Fließtext erwähnt).
 
 ### Allianz
 - Quelle ist jeweils der Tarifvergleich der Produktseite auf allianz.de (Abruf 15.11.2026), dazu der Produktsteckbrief.
@@ -119,7 +145,53 @@ vollständig = alle Standardmerkmale belegt; teilweise = Standardmerkmale fehlen
   Bei zwei Stufen ohne Markierung (Wohngebäude, Unfall, Tierhalter) ist keine Empfehlung gesetzt
   (`empfehlung: "keine"`, kein Tarif mit `empfohlen: true`); der Vermittler setzt den Stern selbst.
 
+### Allianz Pferd (16.11.2026)
+- Pferde OP-Schutz und Vollschutz Basis, Smart, Komfort, Premium aus den Tarifvergleichen auf allianz.de
+  (`/gesundheit/op-versicherung-pferd/`, `/gesundheit/pferdekrankenversicherung/`), Steckbrief Pferdekranken.
+- Keine Markierung; Komfort als mittlere Stufe. Kastration steht nicht im Tarifvergleich.
+
+### AGILA
+- Quelle: Tariftabellen auf agila.de (Hunde- und Katzen-OP, -Krankenschutz, Hundehaftpflicht) und das Vertragswerk
+  07/2026 (Informationsblätter 11/2025). Stufen Basis, Komfort, Exklusiv (Summe und Kostenübernahme 80, 90, 100 %);
+  Hundehaftpflicht Schutz 24, Schutz, Exklusiv. AGILA markiert Komfort bzw. den mittleren Haftpflichtschutz als „Beliebt“.
+- Zusätzlicher Schutz (Vorsorge, Physiotherapie, Zahn) gegen Aufpreis; der Flex-Tarif ist nicht als Stufe geführt.
+- Kein Pferdeprodukt, keine Pferdehaftpflicht.
+
+### Barmenia (BarmeniaGothaer)
+- Quelle: Leistungsübersichten WS1281 (Tier-OP) und WS1282 (Tierkranken), Stand 01/2026, sowie die Produkttabellen auf
+  barmeniagothaer.de. Risikoträger Barmenia Allgemeine. Ordner `barmenia` enthält nur Tier-Dateien.
+- Tierkranken Basis, Top, Premium („meistgewählt“), Premium Plus; Tier-OP Unfall (nur Hunde), Premium, Premium Plus;
+  Pferde-OP Basis, Top, Premium.
+- Hunde- und Pferdehaftpflicht stehen auf barmeniagothaer.de nur als eine Spalte; die Stufen sind nur im Text genannt,
+  deshalb nicht aufgenommen.
+
+### DFV (Deutsche Familienversicherung)
+- Quelle: Leistungsübersichten auf deutsche-familienversicherung.de. Je ein Tarif: TierkrankenSchutz OP-Schutz und
+  Vollschutz („Leistungs-Empfehlung“), HundehaftpflichtSchutz mit oder ohne Selbstbeteiligung. Nur Hunde.
+
+### ERGO
+- Quelle: Produktseiten und Kurzinformationen (Flyer 12/2020) auf ergo.de. Hunde- und Pferdehalter-Haftpflicht je ein
+  Tarif mit 5, 10 oder 50 Mio. €. Ordner `ergo` enthält nur Tier-Dateien. Keine Tierkranken- oder Tier-OP-Versicherung
+  als Produkt auf ergo.de (nur Ratgeber).
+
+### HanseMerkur
+- Quelle: Leistungstabellen auf hansemerkur.de, Leistungsübersicht Hundehaftpflicht (MS 201, 05/2025).
+  OP- und Krankenversicherung Komfort, Premium („Bestseller“), Premium plus für Hund und Katze; Hundehaftpflicht Komfort
+  und Premium plus („Testsieger“). Kein Pferdeprodukt.
+
+### Uelzener
+- Quelle: Produktseiten und Leistungsübersichten auf uelzener.de (Hund 12/2025, Katze 08/2025, Pferd 03/2025,
+  Hundehaftpflicht 02/2024) und Informationsblätter. Uelzener hat keine Tarifstufen: je Produkt ein Tarif mit wählbarer
+  Erstattungshöhe bzw. Deckungssumme und Selbstbeteiligung; die Auswahl steht im Wert (z. B. „3.000/6.000 €/unbegrenzt“).
+- Einzige Gesellschaft mit Pferde-OP und Pferdekranken als eigene Produkte neben Allianz; dazu Kolik-Versicherung
+  (nicht im Schema).
+
 ## Offen (wichtigste Lücken)
+- Tierversicherer: HanseMerkur OP ohne Angabe zur Vorsorge; Barmenia Pferde-OP ohne Erstattungssatz in Prozent und
+  ohne Vorsorge; ERGO Hundehaftpflicht ohne Angabe zu fremden Hütern, Pferdehaftpflicht ohne Flurschäden; Uelzener
+  ohne veröffentlichte SB-Beträge bei Hund und Pferdehaftpflicht; Barmenia Premium Plus Ausland widersprüchlich
+  (12 Monate bzw. unbegrenzt).
+- Pferdekranken gibt es nur bei Allianz und Uelzener; Pferde-OP zusätzlich bei Barmenia.
 - Allianz Hausrat: Überspannung, Hotelkosten, Außenversicherung, Diebstahl aus dem Auto, Selbstbeteiligung stehen nicht
   im aktuellen Tarifvergleich.
 - Allianz Unfall: Ob Invaliditätssumme, Unfallrente und Tagegeld je Stufe fest oder im Rechner wählbar sind, ist nicht belegt.
