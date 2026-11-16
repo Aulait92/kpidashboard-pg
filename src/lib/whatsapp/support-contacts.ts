@@ -57,7 +57,9 @@ export function supportBadge(conv: { salesContact: ContactInfo | null; linkedCus
 const CONTACT_IS_CUSTOMER: Prisma.SalesContactWhereInput = { OR: [{ customerId: { not: null } }, { stage: "GEWONNEN" }, { customerStage: { not: null } }] };
 
 /** Filter für die Chatliste (nur Chats der Support-Nummer). */
-export function supportKindWhere(kind: SupportKind | "support"): Prisma.ConversationWhereInput {
+export function supportKindWhere(kind: SupportKind | "support" | "leads"): Prisma.ConversationWhereInput {
+  // Chats der Leads unserer Kunden (alles außer der Support-Nummer), Ole 16.11.2026: „alle gemischt, aber filterbar“
+  if (kind === "leads") return { customerId: { not: SUPPORT_CUSTOMER_ID } };
   const base: Prisma.ConversationWhereInput = { customerId: SUPPORT_CUSTOMER_ID };
   if (kind === "support") return base;
   if (kind === "kunde") return { ...base, OR: [{ linkedCustomerId: { not: null } }, { salesContact: { is: CONTACT_IS_CUSTOMER } }] };

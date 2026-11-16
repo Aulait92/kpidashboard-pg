@@ -55,11 +55,16 @@ type SearchParams = Promise<{
   tab?: string;
   q?: string;
   gcal?: string;
-  /** Support-Nummer: support | kunde | interessent | unbekannt */
+  /** leads (Chats der Kunden-Nummern) | Support-Nummer: support | kunde | interessent | unbekannt */
   art?: string;
 }>;
 
-const ART_FILTERS: { key: SupportKind | "support" | ""; label: string }[] = [{ key: "", label: "Alle" }, { key: "support", label: "Support-Nummer" }, ...SUPPORT_KINDS];
+const ART_FILTERS: { key: SupportKind | "support" | "leads" | ""; label: string }[] = [
+  { key: "", label: "Alle" },
+  { key: "leads", label: "Leads der Kunden" },
+  { key: "support", label: "Support-Nummer" },
+  ...SUPPORT_KINDS,
+];
 
 const BADGE_TONE: Record<SupportKind, string> = {
   kunde: "bg-emerald-50 text-emerald-800 ring-emerald-200",
@@ -160,7 +165,7 @@ export default async function AdminWhatsAppPage({ searchParams }: { searchParams
   const qDigits = q.replace(/\D/g, "");
   const activeId = sp.c ?? null;
   const now = nowMs();
-  const art = ART_FILTERS.some((f) => f.key && f.key === sp.art) ? (sp.art as SupportKind | "support") : null;
+  const art = ART_FILTERS.some((f) => f.key && f.key === sp.art) ? (sp.art as SupportKind | "support" | "leads") : null;
   // Support-Chats ohne frische Zuordnung über die Telefonnummer nachziehen (Kunde/Interessent)
   await refreshSupportLinks(new Date(now)).catch(() => 0);
 
