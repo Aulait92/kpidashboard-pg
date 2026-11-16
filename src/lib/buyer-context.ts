@@ -1,6 +1,9 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { istDemoAnsicht } from "@/lib/app-demo/anfrage";
+import { APP_DEMO_HEADER } from "@/lib/app-demo/marke";
+import { APP_DEMO_KUNDE_ID, demoDatenbankGeprueft } from "@/lib/app-demo/db";
 
 // Wer sieht gerade den Buyer-Bereich (Kunden-CRM)?
 //   - ein echter Buyer-Login → sein eigener Kunde
@@ -21,9 +24,26 @@ export type BuyerContext = {
   userId: string | null;
   /** Team: owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads). */
   teamRole: "owner" | "advisor";
+  /**
+   * Öffentliche App-Demo (/app-demo, src/lib/app-demo): Demo-Kunde aus der eigenen Demo-Datenbank, nur lesend,
+   * ohne Login. Immer zusammen mit preview = true; im Unterschied zur Admin-Vorschau ist hier gar nichts beschreibbar.
+   */
+  demo?: boolean;
 };
 
+/** Demo-Sicht: nur beim Rendern einer /app-demo-Seite (signiertes Kennzeichen der Middleware), nie in einer Server Action. */
+async function getAppDemoContext(): Promise<BuyerContext | null | undefined> {
+  const h = await headers();
+  if (!h.get(APP_DEMO_HEADER)) return undefined;
+  // Kennzeichen da, aber ungültig oder in einer Action: keine Sicht, auch kein Rückfall auf eine Sitzung
+  if (!istDemoAnsicht(h)) return null;
+  if (!(await demoDatenbankGeprueft())) return null;
+  return { customerId: APP_DEMO_KUNDE_ID, email: "demo@example.com", preview: true, userId: null, teamRole: "owner", demo: true };
+}
+
 export async function getBuyerContext(): Promise<BuyerContext | null> {
+  const demo = await getAppDemoContext();
+  if (demo !== undefined) return demo;
   const session = await getCurrentSession();
   if (!session) return null;
   if (session.role === "BUYER" && session.customerId) {
