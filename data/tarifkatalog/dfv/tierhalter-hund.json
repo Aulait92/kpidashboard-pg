@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "tierhalter-hund",
+  "produkt": "DFV-HundehaftpflichtSchutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Leine und Maulkorb",
+    "Gewollter und ungewollter Deckakt",
+    "Hundeschauen und Turniere"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-HundehaftpflichtSchutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "sb": "300 € oder ohne",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "ja, auch Pkw",
+        "ausland": "weltweit, Europa unbegr."
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/tierversicherung/hundehaftpflichtversicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/tierversicherung/hundehaftpflichtversicherung/",
+    "https://www.deutsche-familienversicherung.de/fileadmin/media/pdf/produkte/hundehaftpflicht/produktinformationsblatt.pdf"
+  ],
+  "offen": [
+    "Ein Tarif, wählbar mit 300 € oder ohne Selbstbeteiligung.",
+    "Versicherungssumme 20 Mio. € weltweit, zweifach maximiert.",
+    "Ausland: in Europa zeitlich unbegrenzt, außerhalb Europas bis 5 Jahre.",
+    "Höhe der Forderungsausfalldeckung auf der Produktseite nicht genannt; Kautionsstellung 1 Mio. € (Europa)."
+  ]
+}

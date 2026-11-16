@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "hund-op",
+  "produkt": "DFV-TierkrankenSchutz OP",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Zahnextraktion und Wurzelbehandlung",
+    "Videosprechstunde beim Tierarzt"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-TierkrankenSchutz OP-Schutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "90 %",
+        "got": "bis Höchstsatz (4-fach)",
+        "jhl": "1.000 bis 5.000 €",
+        "nachbehandlung": "bis 30 Tage",
+        "vorsorge": "nein",
+        "zahn": "ja",
+        "sb": "10 %",
+        "wartezeit": "1 Monat",
+        "ausland": "weltweit, Europa unbegr."
+      },
+      "bausteine": {},
+      "quelle": "https://www.deutsche-familienversicherung.de/tierversicherung/hunde-op-versicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/tierversicherung/hunde-op-versicherung/",
+    "https://www.deutsche-familienversicherung.de/fileadmin/media/pdf/produkte/tierkranken/produktinformationsblatt.pdf"
+  ],
+  "offen": [
+    "DFV hat je Produkt nur einen Tarif (OP-Schutz bzw. Vollschutz); deshalb eine Stufe „Tarif“.",
+    "Jahreshöchstleistung steigt: 1.000 € in den ersten 12 Monaten, 2.000 € ab dem 13. Monat, 5.000 € ab dem 25. Monat.",
+    "Erstattung 90 %, Selbstbeteiligung fest 10 %; keine Variante ohne SB genannt.",
+    "Schutz in Europa (EU, EWR, Schweiz, Israel, UK) ohne zeitliche Grenze, außerhalb Europas bis 12 Monate.",
+    "Mindestvertragslaufzeit 24 Monate. Nur für Hunde; Katzen bietet DFV auf der Webseite nicht an.",
+    "Physiotherapie im OP-Schutz in der Leistungsübersicht nicht eindeutig zugeordnet.",
+    "OP-Voruntersuchung bis 10 Tage vor, Unterbringung und Arzneimittel bis 30 Tage nach dem Eingriff."
+  ]
+}
