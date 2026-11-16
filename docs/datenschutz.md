@@ -350,3 +350,16 @@ Handlungsbedarf: **ja** (umgesetzt oder Entwurf), **nein**, **Anwalt**.
   einmal je Dienst ein Hinweis in Textform (Vorlage ergänzt) und Fundstelle der Vertraulichkeitsklausel ablegen.
 - **Handlungsbedarf: ja (Ole):** Hinweise verschicken, Tabelle Abschnitt 3 füllen. **Anwalt:** einseitiger Hinweis
   plus DPA genügt?
+
+### 10.2 AGB-Freistellung gegenüber Unternehmern (§ 307 BGB)
+
+- **Rechtslage:** §§ 308, 309 BGB gelten gegenüber Unternehmern nicht direkt, § 307 aber voll ([§ 310 Abs. 1 BGB](https://www.gesetze-im-internet.de/bgb/__310.html)).
+  Eine Freistellung von Ansprüchen Dritter, die in der kundenfeindlichsten Auslegung ohne Verschulden greift, ist auch
+  im B2B unwirksam: Verschuldensprinzip als wesentlicher Grundgedanke, § 307 Abs. 2 Nr. 1 BGB (BGH, Urteil vom
+  05.10.2005, VIII ZR 16/05, BGHZ 164, 196, Einkaufsbedingungen eines Baumarkts, Klauseln Nr. 10.1). Im Voraus
+  versprochene Übernahme von Geldbußen ist regelmäßig sittenwidrig (BAG, Urteil vom 25.01.2001, 8 AZR 465/00, § 138 BGB).
+- **App heute:** AGB „Kundendaten: Zusicherung und Freistellung“ und AVV „Pflichten des Auftraggebers“ knüpfen die
+  Freistellung an die Verletzung der Zusicherung ohne Verschulden des Kunden und nennen „Behörden“.
+- **Bewertung:** Unwirksamkeitsrisiko. Fällt die Klausel, bleibt nur der gesetzliche Schadensersatz.
+- **Handlungsbedarf: ja, Entwurf** (Verschulden mit Beweislast beim Kunden wie § 280 Abs. 1 Satz 2 BGB, § 254 BGB,
+  keine Geldbußen): `docs/rechtstexte/agb-entwurf-2026-11-16.md`, Thema 2. **Anwalt** entscheidet.
