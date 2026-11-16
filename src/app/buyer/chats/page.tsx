@@ -88,6 +88,7 @@ const INTERNAL_LABELS: Record<string, string> = {
   ki_handover: "Möchte einen Menschen: an Sie übergeben, Assistent pausiert",
   advice_blocked: "Antwort ersetzt: keine Tarif-, Preis- oder Versichereraussagen",
   opt_out: "„STOPP“: keine weiteren WhatsApp-Nachrichten",
+  erneut_eingetragen: "Hat sich erneut eingetragen",
 };
 
 export default async function BuyerChatsPage({ searchParams }: { searchParams: SearchParams }) {

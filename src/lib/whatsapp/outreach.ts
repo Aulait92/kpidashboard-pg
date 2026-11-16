@@ -127,8 +127,12 @@ export type OutreachResult = {
   errors: string[];
 };
 
-/** Optional nur für einen Kunden (z. B. direkt nach einem neuen Lead). */
-export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResult> {
+/**
+ * Optional nur für einen Kunden (z. B. direkt nach einem neuen Lead).
+ * only: nur diese Leads, ohne Alters- und Phasengrenze und ohne Wartezeit (erneut eingetragen ohne bisheriges
+ * Gespräch, lib/lead-erneut.ts); source = Produkt der neuen Einsendung fürs Erstanschreiben.
+ */
+export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: string[]; source?: string | null }): Promise<OutreachResult> {
   const result: OutreachResult = {
     customers: 0,
     candidates: 0,
@@ -153,16 +157,18 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
 
     const now = Date.now();
     const leads = await prisma.lead.findMany({
-      where: {
-        customerId: agent.customerId,
-        phone: { not: null },
-        outreachAt: null,
-        createdAt: {
-          gte: new Date(now - OUTREACH_MAX_AGE_MS),
-          lte: new Date(now - agent.outreachDelayMin * 60 * 1000),
-        },
-        OR: OUTREACH_STATUSES.map((s) => ({ status: s })),
-      },
+      where: only
+        ? { customerId: agent.customerId, phone: { not: null }, outreachAt: null, erasedAt: null, id: { in: only.leadIds } }
+        : {
+            customerId: agent.customerId,
+            phone: { not: null },
+            outreachAt: null,
+            createdAt: {
+              gte: new Date(now - OUTREACH_MAX_AGE_MS),
+              lte: new Date(now - agent.outreachDelayMin * 60 * 1000),
+            },
+            OR: OUTREACH_STATUSES.map((s) => ({ status: s })),
+          },
       select: { id: true, name: true, phone: true, waConsent: true, source: true, waUnavailableAt: true },
       take: 50,
     });
@@ -174,6 +180,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
     for (const lead of leads) {
       result.candidates++;
       const phone = lead.phone!;
+      const source = only?.source ?? lead.source;
       const conv = await prisma.conversation.findUnique({
         where: {
           customerId_contactPhone: { customerId: agent.customerId, contactPhone: phone },
@@ -201,7 +208,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
       // (lib/whatsapp/produkt-fragen) meldet sich der Assistent trotzdem, bestätigt den Termin im Gespräch und
       // fragt die Angaben ab (Ole, 15.11.2026). Sonst wie bisher kein Erstanschreiben.
       const booked = await hasAppointment(lead.id, conv?.id);
-      if (booked && !produktCheckliste(lead.source)) {
+      if (booked && !produktCheckliste(source)) {
         await prisma.lead.update({
           where: { id: lead.id },
           data: { outreachAt: new Date(), outreachStatus: "skipped_booked" },
@@ -226,7 +233,7 @@ export async function runOutreach(onlyCustomerId?: string): Promise<OutreachResu
       }
 
       try {
-        await sendOutreach({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an, source: lead.source });
+        await sendOutreach({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an, source });
         // Kam der Status „kein WhatsApp“ schon während des Sendens (Webhook), bleibt „no_whatsapp“ stehen
         await prisma.lead.updateMany({
           where: { id: lead.id, waUnavailableAt: null },

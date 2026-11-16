@@ -124,6 +124,7 @@ const INTERNAL: Record<string, { label: string; icon: typeof Bot }> = {
   appointment_rescheduled: { label: "Termin verschoben", icon: CalendarClock },
   appointment_declined: { label: "Einladung abgelehnt", icon: CalendarX },
   handover: { label: "An den Berater übergeben", icon: UserRound },
+  erneut_eingetragen: { label: "Hat sich erneut eingetragen", icon: UserRound },
 };
 
 /** Absender ausgehender Nachrichten als kleines Etikett. */

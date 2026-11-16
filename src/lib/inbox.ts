@@ -11,6 +11,7 @@ import { getOrCreateBookingSlug } from "@/lib/calendar";
 import { appointmentScope, conversationScope, isAdvisor, leadScope, type TeamCtx } from "@/lib/team";
 import { listWithoutNextStep, type NoStepLead } from "@/lib/lead-next-step-server";
 import { APPOINTMENT_RESULT_AFTER_MS } from "@/lib/lead-next-step";
+import { isErneutNote } from "@/lib/lead-erneut";
 
 const TZ = "Europe/Berlin";
 const DAY = 24 * 60 * 60 * 1000;
@@ -217,7 +218,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         at: a.startsAt.toISOString(),
       })),
     ].sort((x, y) => x.at.localeCompare(y.at)),
-    followUps: followUps.map((f) => ({
+    // Erneut eingetragen (lib/lead-erneut.ts): ganz oben unter den Wiedervorlagen, sonst nach Fälligkeit
+    followUps: [...followUps.filter((f) => isErneutNote(f.followUpNote)), ...followUps.filter((f) => !isErneutNote(f.followUpNote))].map((f) => ({
       leadId: f.id,
       name: f.name ?? "Lead",
       source: f.source,

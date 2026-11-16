@@ -3,6 +3,7 @@
 // → Lead in der Datenbank → sofort weiterverarbeiten (Push an den Kunden,
 // WhatsApp-Erstanschreiben, bei „Nur Betreuung“ Lead-Mail). Formulare ohne
 // Zuordnung landen im Posteingang (UnassignedLead) und gehen nicht verloren.
+// Dieselbe Person erneut beim selben Kunden (Telefon oder E-Mail): kein zweiter Lead (lib/lead-erneut.ts).
 
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +14,7 @@ import { assignLead, notifyLeadPush } from "@/lib/team";
 import { reportError } from "@/lib/monitoring";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { emailLeads } from "@/lib/onboarding-cron";
+import { tryReentry } from "@/lib/lead-erneut";
 import type { MetaLead } from "@/lib/meta-leads";
 import { consentStateOf, parseDisclaimerResponses, type ConsentNachweis, type DisclaimerResponse } from "@/lib/einwilligung-leadformular";
 
@@ -108,7 +110,8 @@ export function extract(inc: Pick<IncomingLead, "fields">, labels: Record<string
   return { name, phone, email, answers };
 }
 
-export type IngestResult = { status: "created" | "duplicate" | "unassigned"; leadId?: string };
+/** reentry: dieselbe Person beim selben Kunden erneut eingetragen, kein neuer Lead (lib/lead-erneut.ts) */
+export type IngestResult = { status: "created" | "duplicate" | "unassigned" | "reentry"; leadId?: string };
 
 export async function ingestLead(
   inc: IncomingLead,
@@ -118,6 +121,12 @@ export async function ingestLead(
   if (inc.externalId) {
     const dup = await prisma.lead.findUnique({ where: { externalId: inc.externalId }, select: { id: true } });
     if (dup) return { status: "duplicate", leadId: dup.id };
+    // Schon als erneute Eintragung verarbeitet (lib/lead-erneut.ts); Fehler hier → normaler Weg
+    const again = await prisma.leadReentry.findUnique({ where: { externalId: inc.externalId }, select: { leadId: true } }).catch((err) => {
+      reportError(err, "lead-erneut-dublette", { externalId: inc.externalId });
+      return null;
+    });
+    if (again) return { status: "duplicate", leadId: again.leadId };
   }
   const source = inc.formId ? await prisma.leadSource.findFirst({ where: { formId: inc.formId, active: true } }) : null;
   const customerId = source?.customerId ?? override?.customerId ?? null;
@@ -155,6 +164,32 @@ export async function ingestLead(
     text: responses ? (source?.consentText ?? null) : null,
     responses: responses ?? [],
   };
+  // Dieselbe Person hat sich bei diesem Kunden schon eingetragen (gleiche Nummer oder E-Mail): kein zweiter Lead,
+  // der bestehende rückt nach oben (lib/lead-erneut.ts). Jeder Fehler dort → wie bisher neuer Lead.
+  const reentry = await tryReentry({
+    customerId,
+    productKey,
+    externalId: inc.externalId,
+    formId: inc.formId,
+    name,
+    phone,
+    email,
+    answers,
+    waConsent,
+    consentData: nachweis,
+  }).catch((err) => {
+    reportError(err, "lead-erneut", { customer: customerId });
+    return null;
+  });
+  if (reentry) {
+    if (reentry.status === "reentry" && source) {
+      await prisma.leadSource
+        .update({ where: { id: source.id }, data: { lastLeadAt: new Date(), lastConsentState: waConsent ?? "ohne" } })
+        .catch((err) => reportError(err, "lead-erneut-quelle", { lead: reentry.leadId }));
+    }
+    return reentry;
+  }
+
   let lead;
   try {
     lead = await prisma.lead.create({

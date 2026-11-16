@@ -3,16 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { ingestLead, type IncomingLead } from "@/lib/lead-intake";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
-const lead = (over: Partial<IncomingLead> = {}): IncomingLead => ({
-  externalId: `ext-${Math.random().toString(36).slice(2)}`,
-  formId: "form-unbekannt",
-  pageId: "page-1",
-  createdAt: new Date().toISOString(),
-  campaignName: "Test",
-  adName: null,
-  fields: { full_name: "Julia Muster", phone_number: "0171 1234567", email: "JULIA@example.com", "wann_erreichbar?": "abends" },
-  ...over,
-});
+// Je Aufruf eine andere Person (gleiche Nummer bzw. E-Mail wäre eine erneute Eintragung, lib/lead-erneut.ts)
+let n = 0;
+const lead = (over: Partial<IncomingLead> = {}): IncomingLead => {
+  n++;
+  return {
+    externalId: `ext-${Math.random().toString(36).slice(2)}`,
+    formId: "form-unbekannt",
+    pageId: "page-1",
+    createdAt: new Date().toISOString(),
+    campaignName: "Test",
+    adName: null,
+    fields: { full_name: "Julia Muster", phone_number: `0171 12345${String(n).padStart(2, "0")}`, email: `JULIA${n}@example.com`, "wann_erreichbar?": "abends" },
+    ...over,
+  };
+};
 
 describe("Lead-Eingang", () => {
   let customerId = "";
@@ -47,8 +52,9 @@ describe("Lead-Eingang", () => {
     expect(l.customerId).toBe(customerId);
     expect(l.source).toBe("Privatschutz");
     expect(l.name).toBe("Julia Muster");
-    expect(l.phone).toBe("491711234567");
-    expect(l.email).toBe("julia@example.com");
+    expect(l.phone).toBe(`49${inc.fields.phone_number.replace(/\D/g, "").slice(1)}`);
+    expect(l.phone).toMatch(/^4917112345\d\d$/);
+    expect(l.email).toBe(inc.fields.email.toLowerCase());
     expect(l.formData).toEqual([{ label: "Wann erreichbar?", value: "abends" }]);
     const rev = await prisma.revenue.findFirst({ where: { leadId: l.id } });
     expect(Number(rev?.amount)).toBe(50);

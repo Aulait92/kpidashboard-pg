@@ -273,7 +273,8 @@ describe("Einwilligung im Meta-Leadformular", () => {
     createdAt: new Date().toISOString(),
     campaignName: null,
     adName: null,
-    fields: { full_name: "Julia Schneider", phone_number: phone, email: "julia@example.com" },
+    // Je Nummer eine eigene E-Mail (gleiche E-Mail wäre eine erneute Eintragung, lib/lead-erneut.ts)
+    fields: { full_name: "Julia Schneider", phone_number: phone, email: `julia${phone.replace(/\D/g, "")}@example.com` },
     disclaimer,
   });
 

@@ -703,6 +703,8 @@ model Lead {
   appointments        Appointment[]
   sequences           LeadSequence[]
   history             LeadHistory[]
+  // Erneut eingetragen (lib/lead-erneut.ts): weitere Formular-Einsendungen derselben Person beim selben Kunden
+  reentries           LeadReentry[]
   files               LeadFile[]
   // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
   mails               ContactMail[]
@@ -3342,6 +3344,24 @@ model LeadHistory {
   createdAt  DateTime     @default(now())
 
   @@index([leadId, createdAt])
+}
+
+// Erneut eingetragen (Ole, 16.11.2026, lib/lead-erneut.ts): Trägt sich dieselbe Person (gleiche Telefonnummer oder
+// E-Mail) beim selben Kunden noch einmal ein, entsteht kein zweiter Lead. Je Einsendung eine Zeile: Meta-Lead-ID
+// gegen doppelte Zustellung (Meta + Zapier), Formular, Produkt und Einwilligungsnachweis dieser Einsendung.
+model LeadReentry {
+  id          String   @id @default(cuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customerId  String
+  externalId  String?  @unique
+  formId      String?
+  productKey  String?
+  consentData Json?
+  createdAt   DateTime @default(now())
+
+  @@index([leadId])
+  @@index([customerId, createdAt])
 }
 
 // Ausgehende E-Mails an Leads und Bestandskunden (Ole, 15.11.2026): jede Mail (automatisch oder vom Vermittler)
