@@ -75,7 +75,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
     <div className="mx-auto w-full max-w-6xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Angebote</h1>
-        <p className="text-sm text-[color:var(--muted)]">Alle Angebote mit Stand: verschickt, geöffnet, angenommen. Je Angebot die aktuelle Version.</p>
+        <p className="text-sm text-[color:var(--muted)]">Je Angebot die aktuelle Version mit Stand.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -98,7 +98,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
           <Link
             key={f.key}
             href={f.key === "alle" ? "/admin/vertrieb/angebote" : `/admin/vertrieb/angebote?f=${f.key}`}
-            className={`rounded-full border px-3 py-1 text-sm font-medium ${
+            className={`inline-flex min-h-10 items-center rounded-full border px-3 text-sm font-medium sm:min-h-8 ${
               f.key === filter.key
                 ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white"
                 : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]"

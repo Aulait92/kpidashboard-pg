@@ -73,7 +73,7 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
           <Link
             key={v.key || "bezuege"}
             href={v.key ? `/admin/ppl?ansicht=${v.key}` : "/admin/ppl"}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${ansicht === v.key ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:bg-white"}`}
+            className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium ${ansicht === v.key ? "bg-[color:var(--foreground)] text-white" : "text-[color:var(--muted)] hover:bg-white"}`}
           >
             {v.label}
             {v.count ? <span className={`rounded-full px-1.5 text-xs ${ansicht === v.key ? "bg-white/20" : "bg-amber-100 text-amber-800"}`}>{v.count}</span> : null}

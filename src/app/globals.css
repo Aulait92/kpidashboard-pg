@@ -119,6 +119,9 @@ body:has([data-admin-shell]) { padding-bottom: calc(64px + env(safe-area-inset-b
   body:has([data-admin-shell]) :is(.btn, .btn-primary, .btn-ghost) { min-height: 40px; }
   body:has([data-admin-shell]) :is(.input, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea) { font-size: 16px; }
   body:has([data-admin-shell]) :is(.input, select:not([class*="h-"])) { min-height: 40px; }
+  /* Knöpfe und Links mit fester Höhe 32/36 px (h-8, h-9) aus älteren Admin-Seiten */
+  body:has([data-admin-shell]) :is(a, button).h-8,
+  body:has([data-admin-shell]) :is(a, button).h-9 { min-height: 40px; }
 }
 body:has([data-admin-shell]) [data-site-footer] { display: none; }
 

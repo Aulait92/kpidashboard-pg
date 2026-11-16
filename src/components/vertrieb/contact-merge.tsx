@@ -52,7 +52,7 @@ export function ContactEmails({ contactId, email, altEmails }: { contactId: stri
         <div className="flex items-center gap-2">
           <a href={`mailto:${email}`} className="truncate text-sky-700 hover:underline">{email}</a>
           <span className="badge bg-slate-100 text-slate-600">Haupt</span>
-          <button type="button" title="E-Mail korrigieren" aria-label="Haupt-E-Mail bearbeiten" className="text-slate-400 hover:text-sky-700" onClick={() => setEditing(true)}>
+          <button type="button" title="E-Mail korrigieren" aria-label="Haupt-E-Mail bearbeiten" className="-m-3 p-3 text-slate-400 hover:text-sky-700" onClick={() => setEditing(true)}>
             <Pencil className="h-3.5 w-3.5" />
           </button>
         </div>

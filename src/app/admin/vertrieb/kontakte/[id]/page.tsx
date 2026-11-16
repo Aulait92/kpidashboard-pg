@@ -137,7 +137,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             {c.businessStatus === "CLOSED_PERMANENTLY" && <span className="badge bg-rose-50 text-rose-700">laut Google dauerhaft geschlossen</span>}
             <form action={enrichAddressAction}>
               <input type="hidden" name="id" value={c.id} />
-              <button className="text-xs text-[color:var(--brand)] hover:underline" title="Website und Google erneut auswerten: Adresse, Öffnungszeiten, Bewertung, Social-Links … (nur leere Felder)">
+              <button className="inline-flex min-h-10 items-center text-xs text-[color:var(--brand)] hover:underline" title="Website und Google erneut auswerten: Adresse, Öffnungszeiten, Bewertung, Social-Links … (nur leere Felder)">
                 Jetzt anreichern
               </button>
             </form>

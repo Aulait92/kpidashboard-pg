@@ -58,7 +58,7 @@ export default async function UsagePage({ searchParams }: { searchParams: Promis
             <a
               key={d}
               href={`/admin/nutzung?days=${d}`}
-              className={`rounded-full px-3 py-1.5 ${d === days ? "bg-[color:var(--foreground)] text-white" : "border border-[color:var(--border)] bg-white"}`}
+              className={`inline-flex min-h-10 items-center rounded-full px-3 ${d === days ? "bg-[color:var(--foreground)] text-white" : "border border-[color:var(--border)] bg-white"}`}
             >
               {d} Tage
             </a>
