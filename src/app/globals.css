@@ -112,6 +112,15 @@ body:has([data-admin-shell]) { padding-bottom: calc(64px + env(safe-area-inset-b
 @media (min-width: 1024px) {
   body:has([data-admin-shell]) { padding-left: 15rem; padding-bottom: 0; }
 }
+/* Admin am Handy (UX-Makeover 16.11.2026): die übernommenen Vertriebs-Klassen (btn, input) bekommen
+   dieselben 40-px-Tippziele wie die Bausteine aus components/ui, Eingaben 16 px (kein iPhone-Zoom).
+   Nur im Admin (Kundenbereich hat keine Admin-Shell). Fußzeile mit Impressum braucht der Admin nicht. */
+@media (max-width: 639px) {
+  body:has([data-admin-shell]) :is(.btn, .btn-primary, .btn-ghost) { min-height: 40px; }
+  body:has([data-admin-shell]) :is(.input, input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select, textarea) { font-size: 16px; }
+  body:has([data-admin-shell]) :is(.input, select:not([class*="h-"])) { min-height: 40px; }
+}
+body:has([data-admin-shell]) [data-site-footer] { display: none; }
 
 /* ── App-Gefühl ───────────────────────────────────────────────────────────
    Überall: kein grauer Tipp-Blitz, kurze Drück-Animation auf Knöpfen.

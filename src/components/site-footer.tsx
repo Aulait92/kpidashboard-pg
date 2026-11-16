@@ -14,7 +14,7 @@ export async function SiteFooter() {
   // (components/lead-legal-footer.tsx, je Seite), kein performancegrowth-Name (Ole, 14./15.11.2026).
   if (h.get("x-bare-layout") === "lead") return null;
   return (
-    <footer className="mt-12 border-t print:hidden border-[color:var(--border)] px-4 py-4 text-center text-xs text-[color:var(--muted)] sm:px-6 lg:px-8">
+    <footer data-site-footer className="mt-12 border-t print:hidden border-[color:var(--border)] px-4 py-4 text-center text-xs text-[color:var(--muted)] sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-center gap-x-4 gap-y-1 sm:flex-row">
         <span>© performancegrowth</span>
         <a

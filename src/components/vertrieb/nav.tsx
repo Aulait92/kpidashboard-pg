@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import { useActiveTabInView } from "@/components/admin/sub-tabs";
 
 const BASE = "/admin/vertrieb";
 // Kunden und Import liegen im Hauptmenü bzw. in den Einstellungen;
@@ -19,19 +20,22 @@ export const LINKS: { href: string; label: string; exact?: boolean }[] = [
 
 export function VertriebNav({ dueCount }: { dueCount: number }) {
   const path = usePathname();
+  const ref = useActiveTabInView<HTMLDivElement>(path);
   // Im Import (Einstellungen) keine Unternavigation.
   if (path.startsWith(`${BASE}/import`)) return null;
   return (
     <nav className="sticky top-0 z-20 border-b border-[color:var(--border)] bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-[1600px] items-center gap-1 overflow-x-auto px-4 py-2 sm:px-6 lg:px-8">
+      <div ref={ref} className="mx-auto flex max-w-[1600px] items-center gap-1 overflow-x-auto px-4 py-1.5 [scrollbar-width:none] sm:px-6 lg:px-8">
         {LINKS.map((l) => {
           const active = "exact" in l ? path === l.href : path.startsWith(l.href);
           return (
             <Link
               key={l.href}
               href={l.href}
+              aria-current={active ? "page" : undefined}
               className={clsx(
-                "flex items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-3 py-1.5 text-sm font-medium",
+                // 40 px hohe Tippfläche wie im Kundenbereich
+                "flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-3 text-sm font-medium",
                 active
                   ? "bg-[color:var(--brand)] text-white"
                   : "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]",
