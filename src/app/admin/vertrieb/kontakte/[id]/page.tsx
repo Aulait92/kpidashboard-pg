@@ -34,6 +34,8 @@ import { FollowupBadge, FollowupCard } from "@/components/vertrieb/followup-card
 import { aktuellesAngebot, audienceFuer } from "@/lib/vertrieb/verkaufspraesentation";
 import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { VerkaufsLinkKarte } from "./praesentation/link-karte";
+import { CopyLinkButton } from "@/components/termin/copy-link-button";
+import { decisionBookingLink } from "@/lib/vertrieb/buchung";
 
 export default async function ContactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ embedded?: string }> }) {
   const { id } = await params;
@@ -75,6 +77,8 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
     orderBy: { name: "asc" },
   });
   const duplicates = await likelyDuplicates(c.id);
+  // Entscheidungs-Call: persönlicher Buchungslink (signiert, Buchung hängt direkt an diesem Kontakt)
+  const decisionLink = await decisionBookingLink(c.id).catch(() => null);
   // „Kollegen empfehlen“: von einem Kunden empfohlen → Hinweis mit Neukunden-Vorteil
   const referral = await referralForContact(c.id);
   const referralBenefit = referral ? benefitSentence(await loadReferralSettings()) : null;
@@ -150,6 +154,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
           <Link href={`/admin/vertrieb/kontakte/${c.id}/praesentation`} className="btn-ghost" data-praesentation-knopf>
             <Presentation className="h-4 w-4" /> Präsentation
           </Link>
+          {decisionLink ? <CopyLinkButton url={decisionLink} label="Entscheidungs-Call" /> : null}
           <ContactMore contactId={c.id} name={shortName(c.name)} url={c.url} linkedinUrl={c.linkedinUrl} duplicates={duplicates} />
         </div>
       </div>

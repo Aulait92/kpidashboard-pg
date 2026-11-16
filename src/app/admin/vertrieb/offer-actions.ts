@@ -1,5 +1,6 @@
 "use server";
 
+import { decisionBookingLink } from "@/lib/vertrieb/buchung";
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { getAppUrl, sendOfferEmail } from "@/lib/email";
@@ -104,8 +105,11 @@ export async function sendOfferEmailAction(
     if (!link) return { ok: false, error: "Kontakt nicht gefunden." };
     praesentationUrl = `${getAppUrl()}/praesentation/${link.token}`;
   }
+  // Entscheidungs-Call: persönlicher Buchungslink (signiert, hängt direkt am Kontakt), solange online buchbar
+  const terminUrl = offer.salesContactId ? await decisionBookingLink(offer.salesContactId) : null;
   const disc = offerSetupDiscount(offer);
   const res = await sendOfferEmail({
+    terminUrl,
     discount: disc
       ? { label: offer.setupDiscountLabel || "Empfehlungsrabatt", discount: disc.discount, list: disc.list, fee: Number(offer.setupFee), anyTerm: offer.customerChoosesTerm }
       : null,

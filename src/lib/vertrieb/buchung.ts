@@ -80,6 +80,12 @@ export function verifyContactToken(token: string | null | undefined, now = new D
   return m[1];
 }
 
+/** Persönlicher Link zum Entscheidungs-Call, nur wenn der Termintyp online buchbar ist. */
+export async function decisionBookingLink(contactId: string): Promise<string | null> {
+  const t = await prisma.salesBookingType.findUnique({ where: { slug: DECISION_BOOKING_TYPE } });
+  return t && (await bookingReady(t)) ? personalBookingLink(DECISION_BOOKING_TYPE, contactId) : null;
+}
+
 /** Persönlicher Buchungslink (z. B. Entscheidungs-Call aus Angebot und Vertriebskontakt). */
 export const personalBookingLink = (slug: string, contactId: string) => salesAppUrl(`${bookingPath(slug)}?k=${signContactToken(contactId)}`);
 
