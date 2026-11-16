@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "Barmenia",
+  "sparte": "pferd-op",
+  "produkt": "Pferde-OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Alle Operationen versichert",
+    "Freie Tierarztwahl weltweit",
+    "Keine Wartezeit bei Unfällen"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-OP-Versicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "jhl": "2.500 € je OP",
+        "got": "2-fach",
+        "chips": "nein",
+        "nachbehandlung": "bis 7 Tage",
+        "sb": "0 bis 1.000 € je Fall",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/pferde-op-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferde-OP-Versicherung Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "jhl": "unbegrenzt",
+        "got": "2-fach",
+        "chips": "bis 1.500 € je OP",
+        "nachbehandlung": "bis 10 Tage",
+        "sb": "0 bis 1.000 € je Fall",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/pferde-op-versicherung/",
+      "stand": "2026-11-16"
+    },
+    {
+      "name": "Pferde-OP-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "jhl": "unbegrenzt",
+        "got": "2-fach, Notfall 4-fach",
+        "chips": "ja",
+        "nachbehandlung": "bis 14 Tage",
+        "sb": "0 bis 1.000 € je Fall",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/pferde-op-versicherung/",
+      "stand": "2026-11-16"
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/pferde-op-versicherung/",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/tiere_freizeit/tiere/tierkranken/barmeniagothaer-avb-pferde-op-a3726-02.pdf"
+  ],
+  "offen": [
+    "BarmeniaGothaer markiert keine Stufe; Top als mittlere Stufe gesetzt.",
+    "Erstattungssatz in Prozent auf der Produktseite nicht genannt; Basis erstattet bis 2.500 € je Operation, bildgebende Verfahren dort bis 1.000 € je Fall zusätzlich.",
+    "Selbstbeteiligung wählbar 0, 250, 500 oder 1.000 € je Versicherungsfall.",
+    "Gelenk-Chip-OPs: besondere Wartezeit 12 Monate.",
+    "Unterbringung: Basis 15 € am Tag (7 Tage), Top 30 € am Tag (10 Tage), Premium bis 14 Tage.",
+    "Vorsorge, Physiotherapie, Kastration und Kolik ohne OP auf der Produktseite nicht genannt.",
+    "Für Pferde keine Krankenvollversicherung auf barmeniagothaer.de gefunden."
+  ]
+}
