@@ -66,3 +66,8 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   2+ Produkte Linie Komfort/Premium, 3 Jahre, 5 bis 20 % Staffel nach Anzahl (Beispiel 3 Produkte = 10 %). Rabatt automatisch
   berechnen, Hinweis „Mit Unfall: 15 %“ bzw. „Basis verhindert den Rabatt“, Beitragsfolie mit Einzelsumme, Rabatt (% und €),
   Endbeitrag, Staffel-Leiste, Bedingung als Fußnote; Live-Demo ergänzen. Keine neue Karte. Daten: data/tarifkatalog/<ges>/buendel.json.
+
+- 16.11. ab 20 Uhr: Einführungsvideos „Kurz“ und „Ausführlich“ noch einmal neu aufnehmen, nach Abschluss der
+  Usability-Runden. Die Aufnahme vom 16.11. früh (9814bd1, b788b6d) zeigt noch die alte Terminvorbereitung
+  („Angebote hochladen“), die Knöpfe vor der Usability-Runde 1 und „Guten Abend“ (nachts aufgenommen).
+  Ausführlich ist mit 3:50 länger als der Ton (3:20): Pausen bei „Angaben und Notizen“ und „Werbebudget“ kürzen.
