@@ -9,7 +9,7 @@ import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
 import { formatNumber } from "@/lib/format";
 import { CALL_ATTEMPTS_TARGET } from "@/lib/lead-lost";
 import { verlustKarte } from "@/lib/verlustgruende-server";
-import { prozent, punkte } from "@/lib/verlustgruende";
+import { prozent } from "@/lib/verlustgruende";
 
 export async function VerlustKarte({
   customerId,
@@ -70,8 +70,8 @@ export async function VerlustKarte({
           <ul className="space-y-3" aria-label="Verlustgründe">
             {d.vergleich.map((z) => {
               const vs = [
-                z.prevShare != null ? `Vorzeitraum ${prozent(z.prevShare)} (${punkte(z.share, z.prevShare)})` : null,
-                z.avgShare != null ? `Schnitt aller Kunden ${prozent(z.avgShare)}` : null,
+                z.prevShare != null ? `vorher ${prozent(z.prevShare)}` : null,
+                z.avgShare != null ? `Schnitt ${prozent(z.avgShare)}` : null,
               ].filter(Boolean);
               return (
                 <li key={z.key} data-verlust-grund={z.key}>
@@ -109,7 +109,7 @@ export async function VerlustKarte({
           </p>
         ) : null}
         <p className="text-xs text-[color:var(--muted)]">
-          {mitSchnitt ? "Strich im Balken: Schnitt aller Kunden (anonym, letzte 90 Tage). " : ""}Grund antippen zeigt diese Kontakte.
+          Vorher: Vorzeitraum.{mitSchnitt ? " Schnitt und Strich im Balken: alle Kunden, anonym, letzte 90 Tage." : ""} Grund antippen zeigt diese Kontakte.
         </p>
         {d.tipps.length ? <ZahlenTippsCard tips={d.tipps} intro={null} canDismiss={false} /> : null}
       </div>
