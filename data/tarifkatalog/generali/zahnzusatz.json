@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-zahnschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PlanZahn2",
@@ -41,8 +40,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-zahnschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PlanZahn1",
@@ -59,8 +57,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-zahnschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -73,6 +70,7 @@
     "Prophylaxe im PlanZahn3: Tabellenzelle leer, daher nicht erfasst.",
     "Wartezeit nicht auf der Produktseite; die verlinkten Bedingungen (12/2022) nennen 8 Monate für Zahnbehandlung und Zahnersatz, beziehen sich aber auf ältere Tarifnamen (PlanZ1 bis Z3). Bitte prüfen.",
     "Kieferorthopädie nur im Kindertarif PlanJunior. Mein Plan (Plan1 bis 3) kombiniert dieselben Zahnleistungen mit Sehhilfen und Auslandsschutz.",
-    "Generali markiert keinen Tarif; PlanZahn2 als mittlere Stufe."
+    "Generali markiert keinen Tarif; PlanZahn2 als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf generali.de."
   ]
 }

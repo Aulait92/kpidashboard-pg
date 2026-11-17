@@ -23,8 +23,7 @@
         "wartezeit": "3 Monate"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV116.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif EAplus",
@@ -40,8 +39,7 @@
         "wartezeit": "3 Monate"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV113.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
     "EA: 80 % der Restkosten; Naturheilverfahren und Heilpraktiker zusammen bis 500 € im Jahr, Sehhilfen bis 100 € im Jahr, Hilfsmittel (auch Hörgeräte), Heilmittel, Fahrten, Arznei- und Verbandmittel zusammen bis 100 € im Jahr.",
     "EAplus: 90 % der Restkosten, Eigenanteil im Jahr höchstens 500 € (Kinder 400 €), darüber 100 %. Die Produktseite nennt 400 € als Grenze; Tarifbedingungen (Stand 2017) nennen 500 € für Erwachsene, bitte gegenprüfen. Sehhilfen bis 1.000 € Rechnungsbetrag, Zeitraum nicht genannt.",
     "Für Versicherte ab 55 Jahren gibt es EA55plus (mit Zahnersatz 50 %), nicht aufgenommen. Auslandsreise-Krankenschutz ist ein eigener Tarif (AR). Augenlaser nicht genannt.",
-    "Debeka nennt EA „Basistarif“ und EAplus „Vorteilstarif“, keine Empfehlung markiert."
+    "Debeka nennt EA „Basistarif“ und EAplus „Vorteilstarif“, keine Empfehlung markiert.",
+    "Geprüft am 17.11.2026 an Tarifbedingungen und Produktseite auf debeka.de."
   ]
 }

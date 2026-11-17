@@ -31,8 +31,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -42,6 +41,7 @@
     "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
     "Ein Tarif mit wählbarer Erstattungshöhe (15.000 €, 25.000 € oder 50.000 € je Jahr) und Selbstbeteiligung.",
     "Reha-Baustein bis 3.000 € im Jahr mit 20 % Selbstbeteiligung je Rechnung (auf debeka.de beim Pferd allgemein genannt).",
-    "Gelenk-Chips auf debeka.de nicht genannt."
+    "Gelenk-Chips auf debeka.de nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite Tierversicherung auf debeka.de."
   ]
 }

@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.dbv.de/beruf-vorsorge/p/dienstunfaehigkeitsversicherung-beamte",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
     "Beamte auf Probe und Widerruf: Die Seite nennt sie als Zielgruppe und beschreibt die Entlassung als Versicherungsfall, ohne eigene Klausel zu zitieren.",
     "Ob Berufsunfähigkeit mitversichert ist, steht nicht auf der Seite.",
     "Dynamik: optionale Leistungsfall-Dynamik (Rente steigt im Leistungsfall); Beitragsdynamik nicht genannt. AU-Klausel nicht genannt.",
-    "Varianten Dienstanfänger-Police und DU SmartFlex (mit Altersvorsorge) nicht als eigene Stufen aufgenommen; Bedingungen nicht ausgewertet."
+    "Varianten Dienstanfänger-Police und DU SmartFlex (mit Altersvorsorge) nicht als eigene Stufen aufgenommen; Bedingungen nicht ausgewertet.",
+    "Geprüft am 17.11.2026 an der Produktseite auf dbv.de (Marke der AXA): echte DU-Klausel, Teil-DU optional, Verzicht auf abstrakte Verweisung, Leistungsfall-Dynamik optional."
   ]
 }

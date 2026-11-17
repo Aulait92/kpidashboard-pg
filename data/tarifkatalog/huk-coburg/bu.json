@@ -19,21 +19,15 @@
         "prognose": "36 Monate",
         "au": "optional",
         "nachversicherung": "ja",
-        "rueckwirkend": "nein",
         "weltweit": "ja",
-        "teilzeit": "nein",
-        "pflege": "nein",
-        "stundung": "nein",
-        "dynamik": "optional",
-        "infektion": "nein"
+        "dynamik": "optional"
       },
       "bausteine": {
         "au": "optional",
         "dynamik": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeitsversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "BU Premium Schutz",
@@ -47,7 +41,6 @@
         "nachversicherung": "ja, erweitert",
         "rueckwirkend": "ja",
         "weltweit": "ja",
-        "teilzeit": "nein",
         "pflege": "ja",
         "stundung": "bis 24 Monate",
         "dynamik": "optional",
@@ -58,8 +51,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeitsversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "BU Premium Plus Schutz",
@@ -84,8 +76,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeitsversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -98,6 +89,7 @@
     "Nachversicherung: Erhöhungsoptionen (Geburt, Immobilie) in allen Varianten, erweiterte Optionen (Heirat, Einkommen, Selbstständigkeit, einmalig ohne Anlass bis 35) ab Premium.",
     "Beitragspause: Classic 6 Monate, Premium 12 Monate; zinslose Stundung bis 24 Monate laut Tabelle erst ab Premium.",
     "Premium Plus zusätzlich: Rente bis 18 Monate bei Krebs/schweren Krankheiten, Notfallpaket Kind, Wiedereingliederungshilfe, Reha bis 2.000 €. Verzicht auf Umorganisation nicht genannt.",
-    "HUK markiert keine Variante; Premium als mittlere Stufe gesetzt."
+    "HUK markiert keine Variante; Premium als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de. Korrigiert: Wo die Tabelle statt Haken nur einen Strich zeigt (Screenreader „keine Angabe“, nicht „nein“), steht kein Wert mehr (Classic: rückwirkende Leistung, Teilzeitklausel, Pflege, Stundung, Infektion; Premium: Teilzeitklausel)."
   ]
 }

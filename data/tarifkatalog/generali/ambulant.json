@@ -23,8 +23,7 @@
         "sehhilfen": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-schutz-aerztliche-versorgung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -34,6 +33,7 @@
   "offen": [
     "80 % Erstattung, zusammen bis 1.200 € in zwei Kalenderjahren für Naturheilverfahren und Telemedizin (jeweils inkl. Arzneimittel).",
     "Sehhilfen und Auslandsreiseschutz nicht in PlanAmbulant, sondern in Mein Plan (Plan1 bis 3: Sehhilfen 300/200/100 € in zwei Jahren, auch LASIK; Auslandsreisen 60 Tage); als optional erfasst.",
-    "Arzneimittel-Zuzahlungen, Hörgeräte und Wartezeit nicht genannt."
+    "Arzneimittel-Zuzahlungen, Hörgeräte und Wartezeit nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de."
   ]
 }
