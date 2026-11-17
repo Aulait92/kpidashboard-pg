@@ -360,6 +360,11 @@ export function OfferForm({
                 <span className="block text-xs text-[color:var(--muted)]">
                   Gilt bei Annahme und Zahlung der Einrichtung bis 23:59 Uhr an diesem Tag (mit „Später zahlen“ reicht die Annahme). Start bleibt frei wählbar, danach automatisch Normalpreis.
                 </span>
+                {bonusAn && !test && price.setupFee > 0 && (num(bonusBetrag) ?? 0) >= price.setupFee ? (
+                  <span className="mt-1 block text-xs font-medium text-amber-700" data-abschlussbonus-ganzes-setup>
+                    Der Bonus deckt das ganze Setup ({eur(price.setupFee)}): Es wird nichts eingezogen, nur die Zahlungsart gespeichert. Soll das Setup bezahlt werden, Bonus abwählen.
+                  </span>
+                ) : null}
               </span>
             </label>
             <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-pay-later-toggle>
