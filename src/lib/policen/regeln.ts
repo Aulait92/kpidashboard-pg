@@ -7,6 +7,11 @@
 //   - Gesundheitsbezug (Kranken, BU, Leben, Pflege, Unfall): nur mit Schalter POLICEN_GESUNDHEIT_AN und nur mit
 //     ausdrücklicher Einwilligung (Art. 9 Abs. 2 lit. a DSGVO), nie auslesen. Ohne Einwilligung bzw. Schalter aus:
 //     Datei verwerfen, freundlicher Hinweis.
+//   - Schalter an (docs/recht-gesundheitsunterlagen.md Abschnitt b, Ole 17.11.2026): Nennt der Lead eine
+//     Gesundheitssparte, enthält schon die Einladung die Einwilligung (zwei Knöpfe). Ohne Einwilligung wird eine Datei
+//     mit möglichem Gesundheitsbezug nicht geladen und nicht an die KI gegeben (vorabEinordnung, nur Dateiname,
+//     Begleittext und Angaben des Leads); die Media-ID bleibt höchstens 24 Stunden, die Frage kommt einmal erneut.
+//     Nach der Einwilligung ordnet die KI solche Unterlagen nur über einen EU-Endpunkt zu (policenKiEu), sonst gar nicht.
 // Texte an Leads ohne Gedankenstriche, in beiden Ansprachen (a(an, du, sie)), keine Versprechen.
 
 import { a, type Ansprache } from "@/lib/ansprache";
@@ -19,10 +24,35 @@ export const POLICEN_MAX_JE_LEAD = 30;
 export const LOESCHFRIST_TAGE = 30;
 /** Ausstehende Einwilligung: nach so vielen Stunden verfällt die Unterlage (nur die Media-ID war gemerkt). */
 export const WARTEN_STUNDEN = 24;
+/** Mit Abschluss: Löschung so viele Tage nach dem Abschluss (Standard), außer „Beratungsdokumentation behalten“. */
+export const LOESCHFRIST_ABSCHLUSS_TAGE = 90;
+/** Erinnerung an den Vermittler („In die Kundenakte übernehmen“) so viele Tage vor der Löschung nach Abschluss. */
+export const ERINNERUNG_TAGE = 14;
+/** Einwilligungsfrage höchstens so oft je Chat (Einladung bzw. erste Frage und einmal erneut). */
+export const MAX_EINWILLIGUNGSFRAGEN = 2;
+/** Version des Einwilligungstexts (steht im Protokoll; bei jeder inhaltlichen Änderung hochzählen). */
+export const EINWILLIGUNG_VERSION = "2026-11-17.2";
+/** Vermerk, wenn der Vermittler eine Unterlage behält. */
+export const BEHALTEN_VERMERK = "Beratungsdokumentation (§ 61 VVG)";
 
 /** Gesundheitsbezogene Unterlagen erlaubt? Railway-Variable POLICEN_GESUNDHEIT_AN, Standard aus (bis der Anwalt geprüft hat). */
 export function policenGesundheitAn(env: Record<string, string | undefined> = process.env): boolean {
   return /^(1|true|ja|an|on)$/i.test((env.POLICEN_GESUNDHEIT_AN ?? "").trim());
+}
+
+/**
+ * KI für Unterlagen mit möglichem Gesundheitsbezug (nach der Einwilligung): nur über einen EU-Endpunkt.
+ * POLICEN_KI_REGION=eu und POLICEN_KI_EU_URL (Anthropic-kompatible Messages-API in der EU, z. B. Claude über AWS Bedrock
+ * Frankfurt hinter einem Gateway) mit POLICEN_KI_EU_KEY, optional POLICEN_KI_EU_MODEL. Fehlt etwas: null, dann keine
+ * KI für diese Unterlagen, Einordnung nur nach Dateiname, Begleittext und Angaben des Leads.
+ */
+export type KiEndpunkt = { baseURL: string; apiKey: string; model: string | null };
+export function policenKiEu(env: Record<string, string | undefined> = process.env): KiEndpunkt | null {
+  if ((env.POLICEN_KI_REGION ?? "").trim().toLowerCase() !== "eu") return null;
+  const baseURL = (env.POLICEN_KI_EU_URL ?? "").trim().replace(/\/$/, "");
+  const apiKey = (env.POLICEN_KI_EU_KEY ?? "").trim();
+  if (!/^https:\/\//i.test(baseURL) || !apiKey) return null;
+  return { baseURL, apiKey, model: (env.POLICEN_KI_EU_MODEL ?? "").trim() || null };
 }
 
 export const SPARTEN = {
@@ -67,6 +97,12 @@ export function sparteAusText(text: string | null | undefined): Sparte | null {
   return null;
 }
 
+/** Alle Sparten in einem Text (z. B. Vertragsliste „Haftpflicht HUK, Hausrat Allianz“), je Teil bei Komma, „und“ usw. */
+export function spartenAusText(text: string | null | undefined): Sparte[] {
+  const teile = (text ?? "").split(/[,;/+\n]|\bund\b|\bsowie\b/i);
+  return [...new Set(teile.map(sparteAusText).filter((x): x is Sparte => !!x))];
+}
+
 /** Nennt dieser Text (z. B. die Vertragsliste „Haftpflicht HUK, BU Allianz“) eine Sparte mit Gesundheitsangaben? */
 // Wie lib/angebote.ts GESUNDHEITS_SPARTE (hier ohne Server-Abhängigkeiten), dazu Unfall (Gesundheitsfragen im Antrag)
 const GESUNDHEIT_RE =
@@ -95,6 +131,22 @@ export function entscheide(o: { ki: Klassifikation | null; text?: string | null 
   return { sparte: null, gesundheit: true };
 }
 
+/**
+ * Vor dem Laden, ohne Inhalt und ohne KI (Schalter an, noch keine Einwilligung): Sparte und ob ein Gesundheitsbezug
+ * möglich ist. Grundlage nur Dateiname und Begleittext (text) sowie die Angaben des Leads (Vertragsliste, Produkt).
+ * Unbekannt gilt als möglich; nur wenn der Lead ausschließlich Sachversicherungen genannt hat, nicht.
+ */
+export function vorabEinordnung(o: { text?: string | null; leadAngaben?: (string | null | undefined)[] }): { sparte: Sparte | null; gesundheitMoeglich: boolean } {
+  const ausText = sparteAusText(o.text);
+  if (ausText) return { sparte: ausText, gesundheitMoeglich: istGesundheitsbezug(ausText) || gesundheitInText(o.text) };
+  if (gesundheitInText(o.text)) return { sparte: null, gesundheitMoeglich: true };
+  const angaben = (o.leadAngaben ?? []).filter((x): x is string => typeof x === "string" && !!x.trim());
+  const genannt = [...new Set(angaben.flatMap(spartenAusText).filter((x) => x !== "sonstig"))];
+  const sparte = genannt.length === 1 ? genannt[0] : null;
+  const leadGesundheit = angaben.some((x) => gesundheitInText(x)) || genannt.some(istGesundheitsbezug);
+  return { sparte, gesundheitMoeglich: !genannt.length || leadGesundheit };
+}
+
 // ─── Dateitypen ─────────────────────────────────────────────────────────────
 
 export type PolicenTyp = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
@@ -107,6 +159,14 @@ export function typAusInhalt(b: Uint8Array): PolicenTyp | null {
   if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
   if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
   return null;
+}
+
+/** Typ laut Angabe von WhatsApp (nur für den Dateinamen, solange nichts geladen ist). */
+export function typAusMime(mime: string | null | undefined): PolicenTyp {
+  const m = (mime ?? "").toLowerCase().split(";")[0].trim();
+  if (m === "image/jpeg" || m === "image/jpg") return "image/jpeg";
+  if (m === "image/png" || m === "image/webp") return m;
+  return "application/pdf";
 }
 
 /** Vorab nach der Angabe von WhatsApp: lohnt sich das Laden? (HEIC, Word, Videos … nicht) */
@@ -153,23 +213,72 @@ export function einladungText(an: Ansprache, person: Person, o: { gesundheitAn: 
   return `${satz} ${rest}`;
 }
 
-/** Erkennt die Einladung in einer unserer Nachrichten (nur einmal je Chat). */
-export const EINLADUNG_RE = /(Fotos oder PDFs (deiner|Ihrer) Policen)/;
+/** Erkennt die Einladung in einer unserer Nachrichten (nur einmal je Chat), auch die Einladung mit Einwilligung. */
+export const EINLADUNG_RE = /(Fotos oder PDFs (deiner|Ihrer) (Policen|bisherigen Versicherungen))/;
 
-/** Einwilligung (Art. 9 Abs. 2 lit. a DSGVO), Wortlaut wird so protokolliert. */
-export function einwilligungText(an: Ansprache, person: Person): string {
-  return a(
-    an,
-    `Unterlagen zur Kranken-, BU- oder Lebensversicherung können Gesundheitsangaben enthalten. Dürfen wir sie für ${person.dat} zur Vorbereitung speichern? Du kannst das jederzeit widerrufen.`,
-    `Unterlagen zur Kranken-, BU- oder Lebensversicherung können Gesundheitsangaben enthalten. Dürfen wir sie für ${person.dat} zur Vorbereitung speichern? Sie können das jederzeit widerrufen.`,
-  );
+/** Verantwortlicher im Einwilligungstext: Vermittler (Name in der Ansprache), Firma, Link zur Langfassung. */
+export type Verantwortlicher = { person: Person; firma: string | null; link: string | null };
+
+/** Firma nur, wenn sie etwas anderes sagt als der Name (z. B. nicht „Ole Kannapinn (Ole Kannapinn)“). */
+function mitFirma(v: Verantwortlicher): string {
+  const firma = (v.firma ?? "").replace(/\s+/g, " ").trim();
+  if (!firma || v.person.nom.toLowerCase().includes(firma.toLowerCase())) return v.person.nom;
+  return `${v.person.nom} (${firma})`;
 }
-export const EINWILLIGUNG_RE = /können Gesundheitsangaben enthalten\. Dürfen wir sie für/;
+
+/**
+ * Ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a DSGVO), Wortlaut aus docs/recht-gesundheitsunterlagen.md
+ * Abschnitt b. In der Einladung (Schalter an, Lead nennt eine Gesundheitssparte) bzw. nach einer Datei
+ * (nachDatei, erster Satz angepasst). Genau dieser Text wird mit EINWILLIGUNG_VERSION protokolliert. Höchstens 1.024
+ * Zeichen (interaktive WhatsApp-Nachricht).
+ */
+export function einwilligungText(an: Ansprache, v: Verantwortlicher, o: { nachDatei?: boolean } = {}): string {
+  const wer = mitFirma(v);
+  const absaetze = [
+    o.nachDatei
+      ? a(
+          an,
+          "Danke für deine Unterlage. Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu deiner Gesundheit enthalten.",
+          "Danke für Ihre Unterlage. Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu Ihrer Gesundheit enthalten.",
+        )
+      : a(
+          an,
+          "Vor dem Termin kannst du uns Fotos oder PDFs deiner bisherigen Versicherungen hier schicken. Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu deiner Gesundheit enthalten.",
+          "Vor dem Termin können Sie uns Fotos oder PDFs Ihrer bisherigen Versicherungen hier schicken. Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu Ihrer Gesundheit enthalten.",
+        ),
+    a(
+      an,
+      `Bist du einverstanden, dass ${wer} deine Unterlagen einschließlich dieser Gesundheitsangaben speichert und zur Vorbereitung deines Termins nutzt? Eine KI ordnet jede Unterlage einer Versicherungsart zu, Gesundheitsangaben werden nicht ausgewertet. Dafür setzen wir Dienstleister ein, auch in den USA. Sehen kann die Unterlagen nur dein Berater.`,
+      `Sind Sie einverstanden, dass ${wer} Ihre Unterlagen einschließlich dieser Gesundheitsangaben speichert und zur Vorbereitung Ihres Termins nutzt? Eine KI ordnet jede Unterlage einer Versicherungsart zu, Gesundheitsangaben werden nicht ausgewertet. Dafür setzen wir Dienstleister ein, auch in den USA. Sehen kann die Unterlagen nur Ihr Berater.`,
+    ),
+    a(
+      an,
+      "Unterlagen von mitversicherten Personen schick bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Du kannst jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
+      "Unterlagen von mitversicherten Personen schicken Sie bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Sie können jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
+    ),
+    v.link ? `Mehr dazu: ${v.link}` : null,
+  ];
+  return absaetze.filter(Boolean).join("\n\n");
+}
+/** Erkennt die Einwilligungsfrage (neu und der frühere kurze Wortlaut). */
+export const EINWILLIGUNG_RE = /einschließlich dieser Gesundheitsangaben|können Gesundheitsangaben enthalten\. Dürfen wir sie für/;
+
+/** Einladung mit Einwilligung als interaktive Nachricht. */
+export function einladungMitEinwilligung(an: Ansprache, v: Verantwortlicher): { text: string; buttons: { id: string; title: string }[] } {
+  return { text: einwilligungText(an, v), buttons: EINWILLIGUNG_KNOEPFE };
+}
 
 export const KNOPF_JA = "Ja, einverstanden";
 export const KNOPF_NEIN = "Lieber im Termin";
 export const PAYLOAD_JA = "policen:ja";
 export const PAYLOAD_NEIN = "policen:nein";
+export const EINWILLIGUNG_KNOEPFE = [
+  { id: PAYLOAD_JA, title: KNOPF_JA },
+  { id: PAYLOAD_NEIN, title: KNOPF_NEIN },
+];
+/** Nach „Ja, einverstanden“ auf die Einladung (noch keine Datei da). */
+export const einwilligungDankeText = (an: Ansprache) =>
+  a(an, "Danke! Schick die Unterlagen einfach hier als Foto oder PDF.", "Danke! Schicken Sie die Unterlagen einfach hier als Foto oder PDF.");
 
 export const angekommenText = () => "Danke, ist angekommen.";
 export const ANGEKOMMEN_RE = /ist angekommen\./;
@@ -194,16 +303,34 @@ export const widerrufText = (an: Ansprache) => a(an, "Erledigt, deine Unterlagen
 
 const norm = (t: string | null | undefined) => (t ?? "").trim().toLowerCase().replace(/[.!]+$/, "");
 
+// Nicht gemeint: Termin, Versicherungsvertrag (der Widerruf eines Vertrags gehört in den Termin)
+const KEIN_UNTERLAGEN_BEZUG = /(termin|vertrag|antrag)/;
+const UNTERLAGEN = /(unterlage|police|dokument|datei|foto|bild|pdf|daten|alles|gesundheitsangabe)/;
+
 /**
- * „Widerruf“ bzw. „Unterlagen löschen“. Nicht: „Termin löschen“ und nicht der Widerruf eines Versicherungsvertrags
- * („meinen alten Vertrag widerrufen“), der gehört in den Termin.
+ * Eindeutiger Widerruf nach Regeln: „Widerruf“, „Unterlagen löschen“, „Einwilligung zurück“, „nicht mehr einverstanden“,
+ * „bitte nicht mehr speichern“. Nicht: „Termin löschen“ und nicht der Widerruf eines Versicherungsvertrags
+ * („meinen alten Vertrag widerrufen“), der gehört in den Termin. Sinngemäße Fälle prüft die KI (widerrufVerdacht).
  */
 export function istWiderruf(text: string | null | undefined): boolean {
   const t = norm(text);
   if (!t) return false;
-  if (/^(ich )?(widerruf|widerrufe|widerrufen)( (meine|die|der) einwilligung)?$/.test(t)) return true;
-  if (/widerruf/.test(t) && /(einwilligung|unterlage|dokument|daten|speicher|foto|bild)/.test(t)) return true;
-  return /(lösch|loesch|entfern)/.test(t) && /(unterlage|police|dokument|datei|foto|bild|pdf|meine daten|alles)/.test(t);
+  if (/^(ich )?(widerruf|widerrufe|widerrufen)( (meine|die|der|ihre|deine) einwilligung)?$/.test(t)) return true;
+  if (/widerruf/.test(t) && /(einwilligung|einverständnis|zustimmung|unterlage|dokument|daten|speicher|foto|bild)/.test(t)) return true;
+  if (/(einwilligung|einverständnis|zustimmung)/.test(t) && /(zurück|nicht mehr|entzieh|ziehe)/.test(t)) return true;
+  if (/(doch|nicht mehr) (nicht )?einverstanden/.test(t) && !KEIN_UNTERLAGEN_BEZUG.test(t)) return true;
+  if (/nicht (mehr )?(speichern|gespeichert|aufbewahren|behalten)/.test(t) && UNTERLAGEN.test(t) && !KEIN_UNTERLAGEN_BEZUG.test(t)) return true;
+  return /(lösch|loesch|entfern|vernicht)/.test(t) && UNTERLAGEN.test(t) && !/termin/.test(t);
+}
+
+/**
+ * Könnte ein Widerruf sein, ist aber nach den Regeln nicht eindeutig: Dann entscheidet die KI (lib/policen/ki.ts
+ * widerrufKi), ohne KI gilt die Regel. Nur relevant, wenn der Lead Unterlagen oder eine Einwilligung hat.
+ */
+export function widerrufVerdacht(text: string | null | undefined): boolean {
+  const t = norm(text);
+  if (!t || t.length > 600) return false;
+  return /(widerruf|zurück|lösch|loesch|entfern|vernicht|nicht (mehr )?(speicher|einverstanden|gespeichert|haben|nutzen|verwenden)|doch nicht|will (das|ich) (doch )?nicht|möchte (das|ich) (doch )?nicht|lieber nicht|datenschutz|dsgvo|meine daten|wieder weg|wieder raus|anders überlegt|rückgängig)/.test(t);
 }
 
 /** Getippte Zustimmung auf die Einwilligungsfrage (Knopf ist der Normalfall). */
@@ -320,13 +447,30 @@ export function vertraegeAusUnterlagen(docs: { id: string; extracted: unknown; g
 const TAG_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Wann wird die Unterlage gelöscht? 30 Tage nach dem letzten Termin (ohne Termin: nach dem Eingang), null bei Abschluss
- * (dann entscheidet der Vermittler im Kontakt).
+ * Wann wird die Unterlage gelöscht? Ohne Abschluss 30 Tage nach dem letzten Termin (ohne Termin: nach dem Eingang).
+ * Mit Abschluss 90 Tage nach dem Abschluss (frühestens nach dem Eingang), vorher Erinnerung an den Vermittler
+ * (abschlussSchritt). null: „Beratungsdokumentation behalten“, dann löscht nur der Vermittler (bzw. Widerruf, Art. 17,
+ * Vertragsende).
  */
-export function loeschDatum(o: { termine: Date[]; eingang: Date; abschluss: boolean }): Date | null {
-  if (o.abschluss) return null;
+export function loeschDatum(o: { termine: Date[]; eingang: Date; abschluss: boolean; abschlussAm?: Date | null; behalten?: boolean }): Date | null {
+  if (o.behalten) return null;
+  if (o.abschluss) return new Date(Math.max(o.eingang.getTime(), o.abschlussAm?.getTime() ?? 0) + LOESCHFRIST_ABSCHLUSS_TAGE * TAG_MS);
   const ref = o.termine.length ? new Date(Math.max(...o.termine.map((d) => d.getTime()))) : o.eingang;
   return new Date(ref.getTime() + LOESCHFRIST_TAGE * TAG_MS);
+}
+
+/**
+ * Nach Abschluss: erst erinnern (14 Tage vorher), dann löschen. Wird die Erinnerung spät verschickt, verschiebt sich die
+ * Löschung, damit dem Vermittler immer 14 Tage bleiben.
+ */
+export function abschlussSchritt(o: { datum: Date; erinnertAt: Date | null; now: Date }): { aktion: "loeschen" | "erinnern" | "warten"; deleteAfter: Date } {
+  const frist = ERINNERUNG_TAGE * TAG_MS;
+  if (!o.erinnertAt) {
+    if (o.now.getTime() < o.datum.getTime() - frist) return { aktion: "warten", deleteAfter: o.datum };
+    return { aktion: "erinnern", deleteAfter: new Date(Math.max(o.datum.getTime(), o.now.getTime() + frist)) };
+  }
+  const deleteAfter = new Date(Math.max(o.datum.getTime(), o.erinnertAt.getTime() + frist));
+  return { aktion: o.now.getTime() >= deleteAfter.getTime() ? "loeschen" : "warten", deleteAfter };
 }
 
 /** Abschluss laut Lead-Status (wie im Kontakt: „Abschluss“). */

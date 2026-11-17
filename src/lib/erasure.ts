@@ -120,7 +120,7 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.leadFile.deleteMany({ where: { leadId: { in: ids } } }),
     // Unterlagen per WhatsApp (Policen, lib/policen) und deren Einwilligungen
     prisma.leadDocument.deleteMany({ where: { leadId: { in: ids } } }),
-    prisma.bestandConsentLog.deleteMany({ where: { customerId, source: "policen_gesundheit", address: { in: phones } } }),
+    prisma.bestandConsentLog.deleteMany({ where: { customerId, source: "policen_gesundheit", OR: [{ address: { in: phones } }, { leadId: { in: ids } }] } }),
     // Empfehlungen & Bewertungen: Antworttext, Link und Verweis auf den Empfehlenden
     prisma.reviewRequest.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.referralLink.deleteMany({ where: { leadId: { in: ids } } }),

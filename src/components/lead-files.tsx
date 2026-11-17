@@ -31,6 +31,10 @@ export type UnterlageView = {
   consentAt: string | null;
   auszug: string | null;
   ansehen: boolean;
+  loeschtAm: string | null;
+  behaltenAt: string | null;
+  behaltenVermerk: string | null;
+  behaltenMoeglich: boolean;
 };
 
 /** Wie lib/lead-files.ts (Prüfung am Inhalt bleibt auf dem Server). */
@@ -79,6 +83,31 @@ export function LeadFiles({
       setBusy(null);
       if (ok) router.refresh();
     }
+  }
+
+  // Widerruf, der den Vermittler anders erreicht hat (Telefon, E-Mail, Termin): alle Unterlagen vom Kunden löschen
+  async function widerrufen() {
+    if (!window.confirm("Einwilligung widerrufen und alle Unterlagen vom Kunden löschen?")) return;
+    setBusy("widerruf");
+    const res = await fetch(`/api/buyer/leads/${leadId}/unterlagen`, { method: "DELETE" });
+    setBusy(null);
+    if (!res.ok) return toast.show({ message: "Löschen hat nicht geklappt.", tone: "error" });
+    toast.show({ message: "Widerruf vermerkt, Unterlagen gelöscht" });
+    router.refresh();
+  }
+
+  // „Beratungsdokumentation behalten“: keine automatische Löschung nach dem Abschluss
+  async function behalten(u: UnterlageView, ja: boolean) {
+    setBusy(u.id);
+    const res = await fetch(`/api/buyer/leads/${leadId}/unterlagen/${u.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ behalten: ja }),
+    });
+    setBusy(null);
+    if (!res.ok) return toast.show({ message: "Speichern hat nicht geklappt.", tone: "error" });
+    toast.show({ message: ja ? "Wird behalten" : "Wird wieder automatisch gelöscht" });
+    router.refresh();
   }
 
   async function remove(f: { id: string; fileName: string }, art: "dateien" | "unterlagen" = "dateien") {
@@ -131,7 +160,20 @@ export function LeadFiles({
       </div>
       {unterlagen.length ? (
         <div data-unterlagen-vom-kunden>
-          <h3 className="px-5 pt-3 text-[13px] font-semibold text-[color:var(--muted)]">Unterlagen vom Kunden</h3>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 px-5 pt-3">
+            <h3 className="text-[13px] font-semibold text-[color:var(--muted)]">Unterlagen vom Kunden</h3>
+            {!readOnly ? (
+              <button
+                type="button"
+                onClick={() => void widerrufen()}
+                disabled={busy === "widerruf"}
+                className="py-1 text-xs font-medium text-[color:var(--muted)] hover:text-rose-700 hover:underline"
+                data-widerruf
+              >
+                Einwilligung widerrufen / Unterlagen löschen
+              </button>
+            ) : null}
+          </div>
           <ul className="divide-y divide-[color:var(--border)]">
             {unterlagen.map((u) => {
               const kopf = (
@@ -154,6 +196,31 @@ export function LeadFiles({
                       kopf
                     )}
                     {u.auszug ? <p className="mt-1 text-sm">{u.auszug}</p> : null}
+                    {u.behaltenAt ? (
+                      <p className="mt-1 text-xs text-[color:var(--muted)]" data-behalten>
+                        Behalten seit {day(u.behaltenAt)}: {u.behaltenVermerk ?? "Beratungsdokumentation"}
+                        {!readOnly ? (
+                          <>
+                            {" · "}
+                            <button type="button" onClick={() => void behalten(u, false)} disabled={busy === u.id} className="font-medium hover:underline">
+                              Aufheben
+                            </button>
+                          </>
+                        ) : null}
+                      </p>
+                    ) : u.loeschtAm ? (
+                      <p className="mt-1 text-xs text-[color:var(--muted)]" data-loescht-am>
+                        Wird am {day(u.loeschtAm)} automatisch gelöscht
+                        {u.behaltenMoeglich && !readOnly ? (
+                          <>
+                            {" · "}
+                            <button type="button" onClick={() => void behalten(u, true)} disabled={busy === u.id} className="font-medium text-[color:var(--brand)] hover:underline">
+                              Als Beratungsdokumentation behalten
+                            </button>
+                          </>
+                        ) : null}
+                      </p>
+                    ) : null}
                     {u.gesundheit ? (
                       <span className="mt-1.5 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200" data-gesundheit>
                         Gesundheitsangaben möglich{u.consentAt ? `, mit Einwilligung vom ${day(u.consentAt)}` : ""}

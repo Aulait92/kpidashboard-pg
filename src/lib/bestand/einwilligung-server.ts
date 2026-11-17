@@ -78,6 +78,10 @@ type LogInput = {
   actorUserId?: string | null;
   tokenHash?: string | null;
   confirmedAt?: Date | null;
+  /** Policen per WhatsApp (lib/policen): Lead, Version des Wortlauts, WhatsApp-ID der Antwort */
+  leadId?: string | null;
+  version?: string | null;
+  waMessageId?: string | null;
   at?: Date;
 };
 
@@ -96,6 +100,9 @@ export function logConsent(l: LogInput) {
       actorUserId: l.actorUserId ?? null,
       tokenHash: l.tokenHash ?? null,
       confirmedAt: l.confirmedAt ?? null,
+      leadId: l.leadId ?? null,
+      version: l.version ?? null,
+      waMessageId: l.waMessageId ?? null,
       ...(l.at ? { createdAt: l.at } : {}),
     },
   });
