@@ -7,7 +7,7 @@ import { ReferralShare } from "@/components/kollegen";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { ensureReferralCode, loadReferralSettings, referralsForCustomer, referralUrl, referrerByCode } from "@/lib/kollegen";
-import { STAGE_LABEL, benefitSentence, defaultShareText, referralOfferLines, rewardSentence, type ReferralStage } from "@/lib/kollegen-shared";
+import { STAGE_LABEL, benefitSentence, canOpenReferralPage, defaultShareText, referralLinkState, referralOfferLines, rewardSentence, type ReferralStage } from "@/lib/kollegen-shared";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kollegen empfehlen | performancegrowth" };
@@ -24,21 +24,23 @@ const STAGE_TONE: Record<ReferralStage, "neutral" | "brand" | "success" | "warni
   abgelehnt: "neutral",
 };
 
-// „Kollegen empfehlen“ (nur Inhaber): persönlicher Link, Teilen, Stand der Empfehlungen.
+// „Kollegen empfehlen“ (Inhaber, auch interne Testkunden und Admin-Vorschau): persönlicher Link, Teilen, Stand der Empfehlungen.
+// Zugang wie die Kachel in den Einstellungen (canOpenReferralPage), sonst führt die Kachel ins Leere.
 export default async function KollegenEmpfehlenPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  if (ctx.teamRole === "advisor") redirect("/buyer");
+  if (!canOpenReferralPage(ctx)) redirect("/buyer");
   const [settings, customer] = await Promise.all([
     loadReferralSettings(),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true, retainerMonthly: true } }),
   ]);
-  if (!customer || customer.plan === "internal") redirect("/buyer");
+  if (!customer) redirect("/buyer");
   const monthly = customer.retainerMonthly != null ? Number(customer.retainerMonthly) : null;
 
-  // In der Admin-Vorschau keinen Code anlegen (schreibgeschützt)
+  // Vorschau: keinen Code anlegen (schreibgeschützt); interne Testkunden: kein Link (Landingpage nimmt ihn nicht an)
   const existing = await prisma.referralCode.findUnique({ where: { customerId: ctx.customerId }, select: { code: true } });
-  const code = existing?.code ?? (ctx.preview ? null : await ensureReferralCode(ctx.customerId));
+  const link = referralLinkState({ preview: ctx.preview, internal: customer.plan === "internal", hasCode: !!existing });
+  const code = !link.show ? null : (existing?.code ?? (link.create ? await ensureReferralCode(ctx.customerId) : null));
   const url = code ? referralUrl(code) : null;
   const ref = code ? await referrerByCode(code) : null;
   const qr = url ? await QRCode.toDataURL(url, { margin: 1, width: 360 }) : null;
@@ -84,7 +86,9 @@ export default async function KollegenEmpfehlenPage() {
             {url ? (
               <ReferralShare url={url} defaultText={defaultShareText(ref?.person ?? "", url, settings)} readOnly={ctx.preview} />
             ) : (
-              <p className="text-sm text-[color:var(--muted)]">In der Vorschau wird kein Empfehlungslink angelegt.</p>
+              <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm text-[color:var(--muted)]" data-kollegen-link-hinweis>
+                {link.hinweis ?? "Der Empfehlungslink ist gerade nicht verfügbar."}
+              </p>
             )}
           </div>
         </Card>
