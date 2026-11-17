@@ -5,8 +5,8 @@ import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { closeValueField, contractProvision, premiumFieldForSparte, sparteForSource, spartenAuswahl, type ProvisionOverrides, type SparteKey } from "@/lib/provision";
-import { encodeSparte } from "@/lib/eigene-produkte";
-import { anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
+import { artInfo, encodeSparte } from "@/lib/eigene-produkte";
+import { abschlussWert, anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
 import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
 import { META_LERNT } from "@/lib/zahlen-tipps";
 
@@ -59,9 +59,11 @@ export function AbschlussSheet({
     setProdukt(v === "sonstiges" ? sonstigesStandard(rates) : { productName: "", rateAbschluss: "", rateBestand: "" });
   };
   const needsSparte = asksSparteFor(source);
+  // Eigenes Produkt rechnet in der Sparte seiner Art (Leben: Monatsbeitrag × 12, Kranken: Monatsbeitrag)
+  const wirkSparte = sparte === "sonstiges" ? artInfo(produkt.art).sparte : sparte;
   const field = needsSparte
-    ? sparte
-      ? premiumFieldForSparte(sparte, rates)
+    ? wirkSparte
+      ? premiumFieldForSparte(wirkSparte, rates)
       : { label: "Beitrag netto (optional)", hint: "Bitte zuerst die Sparte wählen.", placeholder: "z. B. 400", factor: 1 }
     : (closeValueField(source, rates) ?? { label: "Wert des Abschlusses (optional)", hint: "", placeholder: "z. B. 1.200", factor: 1 });
   const label = needsSparte && sparte ? `${field.label} (optional)` : field.label;
@@ -74,7 +76,13 @@ export function AbschlussSheet({
   const vorschau =
     sparte === "sonstiges" && produkt.productName.trim()
       ? contractProvision(
-          { sparte, premium: Number.isFinite(n0) && n0 > 0 ? n0 : null, productName: produkt.productName, rateAbschluss: anteil(produkt.rateAbschluss), rateBestand: anteil(produkt.rateBestand) },
+          {
+            sparte: wirkSparte || "sonstiges",
+            premium: Number.isFinite(n0) && n0 > 0 ? n0 * field.factor : null,
+            productName: produkt.productName,
+            rateAbschluss: abschlussWert(produkt),
+            rateBestand: anteil(produkt.rateBestand),
+          },
           rates,
         )
       : null;
@@ -130,7 +138,7 @@ export function AbschlussSheet({
           </label>
         ) : null}
         {needsSparte && sparte === "sonstiges" ? (
-          <EigenesProduktFelder value={produkt} onChange={setProdukt} inputCls="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base" />
+          <EigenesProduktFelder value={produkt} onChange={setProdukt} rates={rates} inputCls="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base" />
         ) : null}
         <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 focus-within:border-[color:var(--brand)]">
           <input
@@ -151,7 +159,8 @@ export function AbschlussSheet({
         </p>
         {vorschau && (vorschau.abschluss > 0 || vorschau.trailPerYear > 0) ? (
           <p className="text-sm text-[color:var(--muted)]" data-abschluss-vorschau>
-            ≈ {Math.round(vorschau.abschluss).toLocaleString("de-DE")} € Abschlussprovision, ≈ {Math.round(vorschau.trailPerYear).toLocaleString("de-DE")} € Bestand pro Jahr ab dem 2. Jahr
+            ≈ {Math.round(vorschau.abschluss).toLocaleString("de-DE")} € Abschlussprovision, ≈ {Math.round(vorschau.trailPerYear).toLocaleString("de-DE")} € Bestand pro Jahr
+            {vorschau.trailFromYear2 ? " ab dem 2. Jahr" : ""}
             {vorschau.premiumMissing ? " (mit Standardbeitrag, solange kein Beitrag eingetragen ist)" : ""}
           </p>
         ) : null}

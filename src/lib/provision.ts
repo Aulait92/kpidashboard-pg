@@ -669,7 +669,8 @@ export type ContractLike = {
 /** Anzeigename eines Vertrags: eigenes Produkt (z. B. „Rechtsschutz Gewerbe“) statt „Sonstiges“. */
 export function contractLabel(c: { sparte: string; productName?: string | null }): string {
   const name = (c.productName ?? "").trim();
-  return asSparte(c.sparte) === "sonstiges" && name ? name : sparteInfo(c.sparte).label;
+  // Eigenes Produkt (auch Leben/Kranken in deren Sparte, Ole 17.11.2026) heißt wie vom Vermittler angelegt
+  return name ? name : sparteInfo(c.sparte).label;
 }
 
 export type ContractBasis = "beitrag" | "beitragssumme" | "monatsbeitraege" | "honorar" | "fest";
@@ -724,13 +725,20 @@ export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): 
   const sparte = asSparte(c.sparte);
   const rateKey = sparteInfo(sparte).rateKey;
   const base: RateSpec = rates?.[rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === rateKey)!.standard;
-  // Eigenes Produkt (Sparte „Sonstiges“): Sätze am Vertrag, Bestand ab dem 2. Jahr (Ole, 14.11.2026)
-  const ownA = sparte === "sonstiges" ? asNumber(c.rateAbschluss) : null;
-  const ownB = sparte === "sonstiges" ? asNumber(c.rateBestand) : null;
-  const spec: RateSpec =
-    ownA != null || ownB != null
-      ? { kind: "percent", rate: ownA ?? 0, trail: ownB ?? 0, trailFromYear2: true, defaultPremium: base.kind === "percent" ? base.defaultPremium : 300, ...(base.storno != null ? { storno: base.storno } : {}) }
-      : base;
+  // Eigenes Produkt: Sätze am Vertrag (Ole, 14.11.2026). Die Sparte bestimmt die Rechenart (17.11.2026):
+  // Sach („sonstiges“) % vom Jahresbeitrag, Bestand ab dem 2. Jahr; Leben (Beitragssumme) ‰ der Beitragssumme;
+  // Kranken (Monatsbeiträge) Anzahl Monatsbeiträge. Bestand jeweils Anteil vom Jahresbeitrag pro Jahr.
+  const eigen = !!(c.productName ?? "").trim() || sparte === "sonstiges";
+  const ownA = eigen ? asNumber(c.rateAbschluss) : null;
+  const ownB = eigen ? asNumber(c.rateBestand) : null;
+  const hatEigene = ownA != null || ownB != null;
+  const spec: RateSpec = !hatEigene
+    ? base
+    : base.kind === "beitragssumme"
+      ? { ...base, promille: ownA ?? 0, trail: ownB ?? 0 }
+      : base.kind === "monthly"
+        ? { ...base, months: ownA ?? 0, trail: ownB ?? 0 }
+        : { kind: "percent", rate: ownA ?? 0, trail: ownB ?? 0, trailFromYear2: true, defaultPremium: base.kind === "percent" ? base.defaultPremium : 300, ...(base.storno != null ? { storno: base.storno } : {}) };
   const premium = asNumber(c.premium);
   const zero: ContractProvision = {
     sparte,
