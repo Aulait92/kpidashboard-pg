@@ -29,8 +29,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/rechtsschutz/privat-rechtsschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -40,6 +39,7 @@
   "offen": [
     "Risikoträger ROLAND Rechtsschutz. Top-Rechtsschutz besteht immer aus Privat, Beruf und Verkehr; Immobilien-Rechtsschutz optional.",
     "Weltweit außerhalb Europas bei Aufenthalt bis 1 Jahr bis 1 Mio. €. Keine Selbstbeteiligung bei Fällen bis 250 € (Beratung); Höhe der SB sonst nicht genannt.",
-    "Strafkaution und Wartezeiten nicht auf der Produktseite."
+    "Strafkaution und Wartezeiten nicht auf der Produktseite.",
+    "Geprüft am 17.11.2026 an Tariftabelle bzw. Text der Produktseite auf hdi.de."
   ]
 }

@@ -25,8 +25,7 @@
         "au": "nein"
       },
       "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-young/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "EGO Top",
@@ -48,8 +47,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-top/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "EGO Top mit Leistungen wegen Krankschreibung",
@@ -71,8 +69,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-top/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "EGO Young ist eine Todesfallversicherung mit BU-Zusatz für Berufseinsteiger (höchstens 15 Jahre Laufzeit, Umtausch in EGO Top ohne Gesundheitsprüfung bis 5 Jahre vor Ablauf); Prognose, Teilzeit, Pflege dort nicht genannt.",
     "Weltweit bei EGO Top nicht ausdrücklich genannt. Stundung: „flexible Möglichkeiten“ bei Zahlungsschwierigkeiten, Dauer nicht genannt.",
     "EGO Top: Erste-Hilfe-Leistung 15 Monate bei bestimmten Krebserkrankungen, Blindheit, Taubheit, Querschnitt; UpgradeJoker bis Alter 35; KarrierePlus bis 6.000 € Monatsrente.",
-    "Keine Markierung; EGO Top als mittlere Stufe. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+    "Keine Markierung; EGO Top als mittlere Stufe. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Geprüft am 17.11.2026 an der Produktseite auf hdi.de."
   ]
 }

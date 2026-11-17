@@ -24,8 +24,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/private-rente-fonds/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "GarantieRente Invest",
@@ -35,7 +34,7 @@
       "werte": {
         "garantie": "bis 90 % wählbar",
         "anlage": "5 Anlageoptionen",
-        "flexibel": "ja, Zuzahlung, Entnahme",
+        "flexibel": "Teilauszahlung möglich",
         "hinterbliebene": "Beiträge zurück",
         "kapital": "Rente oder Kapital",
         "beitragspause": "ja"
@@ -44,8 +43,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/anlagegebundene-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
     "GarantieRente Invest: wählbare Beitragsgarantie bis 90 %, garantierte Mindestrente, jährliche Sicherung von 70 % der Kursgewinne; bei Tod vor Rentenbeginn mindestens die eingezahlten Beiträge.",
     "Garantierter Rentenfaktor und Effektivkosten nicht auf den Produktseiten genannt.",
     "Zusatz: Beitragsbefreiung oder Zusatzrente bei Berufsunfähigkeit; Fondsrente auch Pflegerente (PflegeRent-Option). Weitere Produkte (Sofortrente, Kapitallebensversicherung) nicht aufgenommen.",
-    "Zwei Produkte ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+    "Zwei Produkte ohne Markierung der Gesellschaft: keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an den Produktseiten auf barmeniagothaer.de. Korrigiert: GarantieRente Invest nennt Beiträge reduzieren, aussetzen, erhöhen und Teilauszahlungen, aber keine Zuzahlungen; Wert entsprechend angepasst."
   ]
 }

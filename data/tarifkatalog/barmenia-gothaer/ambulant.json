@@ -26,8 +26,7 @@
         "sehhilfen": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Mehr Gesundheit 1.000 D",
@@ -46,8 +45,7 @@
         "sehhilfen": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Mehr Gesundheit 2.000 D",
@@ -66,8 +64,7 @@
         "sehhilfen": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -77,6 +74,7 @@
     "Die Stufen unterscheiden sich nur im jährlichen Leistungsbudget (bis 500, 1.000 oder 2.000 €); alle Leistungen zählen auf das Budget.",
     "Hörgeräte als Hilfsmittel 100 % (Hilfsmittel ohne Sehhilfen). Brillen und Kontaktlinsen nicht enthalten, über die Augenversicherung „Mehr Sehen“ zusätzlich wählbar.",
     "Wartezeit nur für Naturheilverfahren und Heilpraktiker 3 Monate. Schutzimpfungen (auch Reiseimpfungen) 100 %. Auslandsreise-Krankenschutz nicht enthalten (eigenes Produkt).",
-    "BarmeniaGothaer markiert keine Stufe; 1.000 D als mittlere Stufe."
+    "BarmeniaGothaer markiert keine Stufe; 1.000 D als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produkttabelle auf barmeniagothaer.de."
   ]
 }
