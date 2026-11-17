@@ -181,11 +181,13 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const sub = event.data.object as Stripe.Subscription;
       const offer = await offerForSubscription(sub.id, sub.metadata?.offer_id);
       if (!offer) return;
+      // Abo wegen geplatzter Setup-Lastschrift beendet: nicht wieder verknüpfen (eine neue Zahlung legt ein neues an)
+      const nachFehlschlag = event.type === "customer.subscription.deleted" && offer.paymentStatus === "failed" && offer.stripeSubscriptionId !== sub.id;
       await prisma.offer.update({
         where: { id: offer.id },
-        data: { stripeSubscriptionId: sub.id, subscriptionStatus: sub.status },
+        data: nachFehlschlag ? { subscriptionStatus: sub.status } : { stripeSubscriptionId: sub.id, subscriptionStatus: sub.status },
       });
-      if (event.type === "customer.subscription.deleted") {
+      if (event.type === "customer.subscription.deleted" && !nachFehlschlag) {
         await setContactCustomerStage(offer, "GEKUENDIGT");
         await logActivity(offer, `Abo zu ${offer.number} beendet`);
         await notify(`Abo beendet: ${offer.company ?? offer.contactName}`, offer.number, offerAdminHref(offer));
