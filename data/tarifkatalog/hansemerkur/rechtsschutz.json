@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung (Itzehoer)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Anwaltswahl",
+    "Familientarif",
+    "Arbeits-, Vertrags-, Sozialrecht"
+  ],
+  "tarife": [
+    {
+      "name": "Privat- und Berufs-Rechtsschutz",
+      "kurz": "Privat, Beruf",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "2 Mio. € (Europa)",
+        "beruf": "ja",
+        "privat": "ja",
+        "vsWelt": "100.000 €, 6 Wochen",
+        "sb": "wählbar",
+        "straf": "ja",
+        "mediation": "bis 2.000 €",
+        "telefon": "bis 5 mal im Jahr",
+        "verkehr": "nein"
+      },
+      "bausteine": {
+        "verkehr": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/rechtsschutzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-, Berufs- und Verkehrs-Rechtsschutz",
+      "kurz": "P, B, Verkehr",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "2 Mio. € (Europa)",
+        "beruf": "ja",
+        "privat": "ja",
+        "vsWelt": "100.000 €, 6 Wochen",
+        "sb": "wählbar",
+        "straf": "ja",
+        "mediation": "bis 2.000 €",
+        "telefon": "bis 5 mal im Jahr",
+        "verkehr": "ja"
+      },
+      "bausteine": {
+        "verkehr": "inklusive"
+      },
+      "quelle": "https://www.hansemerkur.de/rechtsschutzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/rechtsschutzversicherung"
+  ],
+  "offen": [
+    "HanseMerkur bietet den Rechtsschutz in Kooperation mit der Itzehoer an; Leistungstabelle auf hansemerkur.de.",
+    "Für Nichtselbstständige. Verkehrs-Rechtsschutz auch einzeln; Wohnungs- und Grundstücks-Rechtsschutz nicht genannt.",
+    "Strafkaution und Wartezeit nicht genannt; Selbstbeteiligungsvariante wählbar, Höhe nicht genannt.",
+    "HanseMerkur markiert Privat-, Berufs- und Verkehrs-Rechtsschutz als „Bestseller“."
+  ]
+}

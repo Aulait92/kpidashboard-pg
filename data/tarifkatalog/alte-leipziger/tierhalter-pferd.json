@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalter-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Reiten ohne Sattel und Zaumzeug",
+    "Turniere und Reitunterricht",
+    "Forderungsausfall"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalter-Haftpflicht classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "werte": {
+        "vs": "10 Mio. €",
+        "miete": "ja, SB 250 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 18 Monate",
+        "forderungsausfall": "ja, ab 500 €",
+        "geliehen": "bis 5.000 €",
+        "neuwert": "bis 3.000 €",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/701/deklarationsvergleichpferdehalterhaftpflichtpp701pdf/deklarationsvergleich-pferdehalterhaftpflicht-pp701.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferdehalter-Haftpflicht comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "werte": {
+        "vs": "20 Mio. €",
+        "miete": "ja, SB 250 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 18 Monate",
+        "forderungsausfall": "ja, ohne Mindesthöhe",
+        "geliehen": "bis 10.000 €",
+        "neuwert": "bis 5.000 €",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/701/deklarationsvergleichpferdehalterhaftpflichtpp701pdf/deklarationsvergleich-pferdehalterhaftpflicht-pp701.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/haftpflicht/pferdehaftpflicht",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/701/deklarationsvergleichpferdehalterhaftpflichtpp701pdf/deklarationsvergleich-pferdehalterhaftpflicht-pp701.pdf"
+  ],
+  "offen": [
+    "Quelle: Deklarationsvergleich PP 701 (Stand 04.2025) der Alte Leipziger Versicherung AG; Symbole im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
+    "Allgemeine Selbstbeteiligung nicht genannt; SB 250 € gilt für Mietsachschäden (Box, Reithalle, Koppel) und Transportanhänger, SB 100 € für sonstige geliehene Sachen.",
+    "Fremdreiter und Reitbeteiligte samt ihrer Ansprüche gegen den Halter mitversichert. comfort zusätzlich Pferderipper und Wolfsriss bis 10.000 €. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

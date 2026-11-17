@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalterhaftpflicht für Hunde",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Hüterrisiko mitversichert",
+    "Umweltschäden bis 1 Mio. €",
+    "Rettungskosten bis 10.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht Hund",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "miete": "ja, Wohnräume",
+        "fremdhueter": "ja",
+        "welpen": "ja, bis 12 Monate",
+        "forderungsausfall": "ja, 15 Mio. €",
+        "geliehen": "bis 10.000 €",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.itzehoer.de/produkte/haftpflicht/tierhalterhaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/haftpflicht/tierhalterhaftpflicht/",
+    "https://www.itzehoer.de/dokumente/produkte/haftpflicht-und-recht/fuer-privatpersonen/informationsblatt-fuer-versicherungsprodukte-fuer-die-allgemeine-haftpflichtversicherung-ipid-01-24.pdf"
+  ],
+  "offen": [
+    "Ein Tarif je Tierart (Leistungsmerkmale auf der Produktseite, Abruf 17.11.2026). Versicherer: Itzehoer Versicherung/Brandgilde von 1691 VVaG.",
+    "Selbstbeteiligung für den Grundvertrag nicht genannt; SB 150 € bei geliehenen Sachen, 250 € bei Transportanhängern.",
+    "Ausland: vorübergehend bis 1 Jahr weltweit, in Europa ohne zeitliche Begrenzung; Kaution weltweit bis 100.000 €. Gefährliche Hunde nicht versicherbar.",
+    "Mietsachschäden an privat gemieteten Wohn- und sonstigen Räumen, Inventar von Reiseunterkünften bis 50.000 €."
+  ]
+}

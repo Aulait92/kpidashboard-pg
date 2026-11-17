@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "hund-op",
+  "produkt": "Hund-OP-Versicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Keine Wartezeit bei Unfall",
+    "Tierärztliche Videoberatung"
+  ],
+  "tarife": [
+    {
+      "name": "MeineKlassik",
+      "kurz": "MeineKlassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "bis 4-fach",
+        "jhl": "2.500/5.000 €/unbegrenzt",
+        "zahn": "Extraktion, Wurzel",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate weltweit",
+        "nachbehandlung": "14 Tage",
+        "vorsorge": "nur mit Heilbehandlung",
+        "kastration": "nein",
+        "physio": "nein"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/tierversicherungen/hundekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinPremium",
+      "kurz": "MeinPremium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "bis 4-fach",
+        "jhl": "2.500/5.000 €/unbegrenzt",
+        "zahn": "Extraktion, Wurzel",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate weltweit",
+        "nachbehandlung": "28 Tage",
+        "vorsorge": "nur mit Heilbehandlung",
+        "kastration": "ja, nach 12 Monaten",
+        "physio": "bis 500 € nach OP"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/tierversicherungen/hundekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/tierversicherungen/hundekrankenversicherung",
+    "https://www.lvm.de/dam/jcr:e21c8472-bdc6-4562-bb78-5fa2088ea799/051-leistungsuebersicht-s205.2024-05-06-13-33-41.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite lvm.de und Leistungsübersicht Tierkrankenversicherung (S 205).",
+    "Höchstentschädigung für Operationen je Jahr wählbar 2.500 €, 5.000 € oder unbegrenzt; Selbstbeteiligung wählbar 0 %, 10 % oder 20 %.",
+    "MeinPremium zusätzlich: HD/ED, bestimmte angeborene Erkrankungen, Kaiserschnitt, Endoprothesen bis 1.000 € (Wartezeit 12 Monate).",
+    "Vorsorgepauschale 100 € im Jahr nur mit dem Zusatzschutz Heilbehandlungen.",
+    "Abschluss ab 8 Wochen bis 8 Jahre. LVM markiert MeinPremium als „Beliebt“."
+  ]
+}

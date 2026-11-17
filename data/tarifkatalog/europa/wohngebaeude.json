@@ -1,0 +1,102 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit",
+    "Gleitender Neuwert",
+    "Unterversicherungsverzicht"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "PV ja",
+        "kosten": "bis 100.000 €",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "6.000 € nach Einbruch",
+        "tiere": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "2.000 €",
+        "pv": "PV und Wärmepumpe",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "nach Einbruch ja",
+        "tiere": "Tierbiss 5.000 €",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Exklusiv-Schutz",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "2.000 €",
+        "pv": "PV und Wärmepumpe",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "nach Einbruch ja",
+        "tiere": "Tierbiss 10.000 €",
+        "mietausfall": "60 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/wohngebaeudeversicherung/",
+    "https://www.europa.de/fileadmin/pdf/produkte/wohngebaeude/antragsdokumente/europa_wohngebaeude_ipid.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Exklusiv; keine Stufe hervorgehoben, Komfort als mittlere Stufe.",
+    "Kosten nach Schaden: Aufräumungs-, Abbruch-, Bewegungs- und Schutzkosten im Basis bis 100.000 €, sonst ohne eigene Grenze.",
+    "Photovoltaik in allen Tarifen mitversichert, Wärmepumpen ab Komfort; Photovoltaik- und Energieanlagenversicherung als Zusatz.",
+    "Ableitungsrohre: Frost- und Bruchschäden außerhalb des Gebäudes ab Komfort bis 2.000 €.",
+    "Tiere: Tierbiss an elektrischen Leitungen. Elementar und Haus- und Wohnungsschutzbrief als Zusatz."
+  ]
+}

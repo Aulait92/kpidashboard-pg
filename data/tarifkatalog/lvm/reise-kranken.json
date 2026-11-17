@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Jahresvertrag, beliebig viele Reisen",
+    "Bergung bis 25.000 €",
+    "24/7 Notfall-Hotline"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandskrankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "8 Wochen",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "ja, notwendige"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/reiseversicherungen/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/reiseversicherungen/auslandskrankenversicherung"
+  ],
+  "offen": [
+    "Quelle: Produktseite lvm.de; ein Jahrestarif für alle Reisen bis 8 Wochen, weltweit.",
+    "Familientarif für Erwachsene bis 60 Jahre und Kinder bis 17 Jahre.",
+    "Bekannte Erkrankungen und Schwangerschaft auf der Seite nicht genannt."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalter-Haftpflichtversicherung Pferd",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gelegentliche Hüter versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflichtversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "1 oder 10 Mio. €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/weitere-haftpflichtversicherungen/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/weitere-haftpflichtversicherungen/"
+  ],
+  "offen": [
+    "Seite nennt nur die Summen: 1 Mio. € pauschal für Personen- und Sachschäden mit Vermögensschäden bis 25.000 € oder 10 Mio. € pauschal für Personen-, Sach- und Vermögensschäden.",
+    "Mitversichert sind Freunde, Verwandte oder Nachbarn, die gelegentlich auf das Tier aufpassen. Selbstbeteiligung, Mietsachschäden, Reitbeteiligung und Flurschäden nicht genannt; Bedingungen bitte prüfen."
+  ]
+}

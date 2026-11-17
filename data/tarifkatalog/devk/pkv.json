@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung (Krankenvollversicherung)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Keine Zuzahlung zu Arzneimitteln",
+    "Freie Krankenhauswahl",
+    "Weltweiter Rücktransport"
+  ],
+  "tarife": [
+    {
+      "name": "AM-V, ZE-V und ST-V3",
+      "kurz": "Mehrbettzimmer",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "zahnersatz": "80 %, ohne Limit",
+        "bre": "bis 5 Monatsbeiträge",
+        "heilpraktiker": "100 % (GebüH)",
+        "hilfsmittel": "100 %, offener Katalog",
+        "psychotherapie": "100 %, 52 Sitzungen",
+        "sehhilfen": "100 %, Fassung 200 €",
+        "ausland": "weltweit",
+        "stationaer": "Mehrbett, ohne Chefarzt"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AM-V, ZE-V, ST-V3 und ST-V2",
+      "kurz": "Zweibettzimmer",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "zahnersatz": "80 %, ohne Limit",
+        "bre": "bis 5 Monatsbeiträge",
+        "heilpraktiker": "100 % (GebüH)",
+        "hilfsmittel": "100 %, offener Katalog",
+        "psychotherapie": "100 %, 52 Sitzungen",
+        "sehhilfen": "100 %, Fassung 200 €",
+        "ausland": "weltweit",
+        "stationaer": "Zweibett, Chefarzt"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/private-krankenversicherung/",
+    "https://medien.devk.de/assets/content/download/produkte/kranken/devk-kranken-produktinfo-voll-08506-301-2026-02.pdf"
+  ],
+  "offen": [
+    "Baukasten-Tarif: ambulant AM-V, Zahn ZE-V, stationär ST-V3 (Basis) und ST-V2 (Zweibettzimmer, privatärztlich). Stufen und Kurznamen selbst gebildet.",
+    "Einbettzimmer mit 35 € Eigenbeteiligung je Tag; Ersatzkrankenhaustagegeld 21 €.",
+    "Selbstbehalt nicht genannt. Beitragsrückerstattung erfolgsabhängig bis zu fünf Monatsbeiträge.",
+    "Kieferorthopädie bis 100 %; ohne ZE-V jeweils 50 %.",
+    "Krankentagegeld, Krankenhaustagegeld und Pflegetagegeld als Ergänzung empfohlen."
+  ]
+}

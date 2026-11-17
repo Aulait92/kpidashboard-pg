@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwertentschädigung",
+    "Unterversicherungsverzicht",
+    "Auch im Hotel und Bankfach"
+  ],
+  "tarife": [
+    {
+      "name": "Hausratversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "20 %, bis 50 % wählbar",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "ueberspannung": "5 %, bis 30 % wählbar"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/wohnen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/wohnen/hausratversicherung/",
+    "https://www.muenchener-verein.de/downloadcenter/Sach/Werbeunterlagen/8700165.pdf"
+  ],
+  "offen": [
+    "Ein Tarif ohne Stufen. Unterversicherungsverzicht bei 650 €/m² Wohnfläche. Grobe Fahrlässigkeit laut Prospekt (01.2020) inklusive, auf der Produktseite nicht genannt.",
+    "Fahrrad: Produktseite nennt 24-Stunden-Schutz gegen Diebstahl als optionale Erweiterung, der Prospekt (01.2020) als inklusive (ohne Nachtzeitklausel); bitte prüfen.",
+    "Einfacher Diebstahl, Online-Betrug, Hotelkosten und Selbstbeteiligung nicht genannt. Datenrettung bis 250 €, Transport und Lagerung bis 100 Tage."
+  ]
+}

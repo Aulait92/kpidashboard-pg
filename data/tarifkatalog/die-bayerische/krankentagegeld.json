@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung (Barmenia)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auch an Sonn- und Feiertagen",
+    "Anpassung ans Nettoeinkommen"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld T42+",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "hoehe": "nach Nettoeinkommen",
+        "dauer": "zeitlich unbegrenzt",
+        "ausland": "stationär im Ausland"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/krankenzusatzversicherungen/krankentagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/krankenzusatzversicherungen/krankentagegeldversicherung/",
+    "https://www.barmeniagothaer.de/krankentagegeldversicherung/"
+  ],
+  "offen": [
+    "Angebot der Bayerischen in Kooperation mit der Barmenia Krankenversicherung AG; die Seite nennt als Beispiel den Tarif T42+ (Zusatzversicherung für Arbeitnehmer nach 42 Tagen Lohnfortzahlung). Abruf 17.11.2026.",
+    "Leistung nach Ablauf der Karenzzeit bzw. Entgeltfortzahlung zeitlich unbegrenzt, auch bei Schwangerschaft; Anpassung an das Nettoeinkommen ohne Gesundheitsprüfung und Wartezeit.",
+    "Wartezeit, Ende bei Berufsunfähigkeit, Höchstbetrag und Tarife für Selbstständige auf der Seite nicht genannt (siehe Ordner barmenia-gothaer)."
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "rechtsschutz",
+  "produkt": "Privat-Rechtsschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Baukasten: Privat ist Pflicht",
+    "Fluggastrechte mit Flightright",
+    "Telefonische Anwaltsberatung"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Rechtsschutz KOMFORT",
+      "kurz": "KOMFORT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "Europa unbegrenzt",
+        "vsWelt": "500.000 €",
+        "kaution": "EU unbegrenzt",
+        "privat": "ja",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "sb": "fallend bis 0 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "telefon": "ja, rund um die Uhr",
+        "mediation": "5.000 € je Verfahren"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/rechtsschutz/privat-rechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Rechtsschutz TOP",
+      "kurz": "TOP",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "Europa unbegrenzt",
+        "vsWelt": "500.000 €",
+        "kaution": "EU unbegrenzt",
+        "privat": "ja",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "sb": "fallend bis 0 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "telefon": "ja, rund um die Uhr",
+        "mediation": "unbegrenzt",
+        "privatPlus": "ja, u. a. Cyber"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/rechtsschutz/privat-rechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/rechtsschutz/privat-rechtsschutz/",
+    "https://www.itzehoer.de/dokumente/produkte/haftpflicht-und-recht/fuer-privatpersonen/a-09-000_folder_rechtsschutz-privat_01-2026_web.pdf",
+    "https://www.itzehoer.de/dokumente/produkte/haftpflicht-und-recht/fuer-privatpersonen/informationsblatt-fuer-versicherungsprodukte-fuer-die-rechtsschutz-ipid-05-23.pdf"
+  ],
+  "offen": [
+    "Zwei Stufen laut Leistungsübersicht im Folder 01/2026 und Produktseite (Abruf 17.11.2026). Versicherer: Itzehoer Versicherung/Brandgilde von 1691 VVaG.",
+    "Baukasten: Privat ist Grunddeckung, Beruf, Verkehr, Wohnen und Spezial-Strafrecht wählbar.",
+    "Selbstbeteiligung: Folder nennt 150 € als Standard (Varianten 1.000/500/300/150 €), Produktseite 300 €; sinkt bei Schadenfreiheit, nach dem 4. schadenfreien Jahr 0 €.",
+    "Wartezeit 3 Monate für einige Leistungsarten (Produktseite); abweichende Wartezeiten z. B. für Studienplatzklagen.",
+    "Strafkaution außerhalb der EU bis 500.000 €. TOP zusätzlich u. a. Familien-/Erbrecht bis 2.500 €, Cyber-Rechtsschutz, Rechtsschutz plus bis 1.000 €."
+  ]
+}

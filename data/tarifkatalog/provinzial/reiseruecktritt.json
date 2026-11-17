@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung (URV)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Stornokompass und Travel-Info",
+    "Jobwechsel als Grund versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktrittsversicherung für eine Reise",
+      "kurz": "Einmalpolice",
+      "stufe": 1,
+      "werte": {
+        "sb": "ohne oder 20 %",
+        "abbruch": "optional",
+        "jahr": "nein",
+        "gruende": "z. B. Jobwechsel"
+      },
+      "bausteine": {
+        "abbruch": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/reiseversicherung/reiseruecktrittsversicherung-einmalschutz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktrittsversicherung",
+      "kurz": "Jahrespolice",
+      "stufe": 2,
+      "werte": {
+        "abbruch": "ja",
+        "jahr": "ja",
+        "familie": "ja",
+        "gruende": "z. B. Jobwechsel"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/reiseversicherung/reiseruecktrittsversicherung-jahresschutz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/reiseversicherung/reiseruecktrittsversicherung-einmalschutz.html",
+    "https://www.provinzial.de/west/versicherung/reiseversicherung/reiseruecktrittsversicherung-jahresschutz.html"
+  ],
+  "offen": [
+    "Region West. Produktgeber ist die URV Union Reiseversicherung AG (Abruf 17.11.2026). Stufen Einmalpolice und Jahrespolice; Einmalpolice mit oder ohne Selbstbehalt (20 % des erstattungsfähigen Schadens, mindestens 25 € je Person) und mit oder ohne Reiseabbruch.",
+    "Jahrespolice laut Seite mit Reiseabbruchschutz und für die Familie; Selbstbehalt der Jahrespolice nicht genannt. Versicherungssumme (nach Reisepreis gewählt) und Pandemie nicht beziffert.",
+    "Travel-Pakete (Einmal- und Jahresschutz) nicht als eigene Stufe ausgewertet."
+  ]
+}

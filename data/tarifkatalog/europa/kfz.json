@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit",
+    "Glasreparatur ohne SB",
+    "Sonderausstattung versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "nur Haarwild",
+        "neuwert": "3 Monate",
+        "marder": "nein",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "nein",
+        "mallorca": "nein"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/kfz-versicherung/auto/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "inkl. Folgeschäden",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/kfz-versicherung/auto/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/kfz-versicherung/auto/",
+    "https://www.europa.de/fileadmin/pdf/produkte/kfz/antragsdokumente/europa_kfz_ipid.pdf",
+    "https://www.europa.de/fileadmin/pdf/produkte/kfz/antragsdokumente/europa_kfz_vertragsinformation_102026.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und Komfort; keine Stufe hervorgehoben.",
+    "Marderbiss: Schäden durch Tierbisse einschließlich Folgeschäden nur im Komfort.",
+    "Akku: Allgefahrendeckung für den Akku von E- und Hybrid-Pkw in der Vollkasko nur Komfort; Wallbox im Komfort beitragsfrei.",
+    "Werkstatt: Kaskoschäden in EUROPA-Partnerwerkstätten günstiger (Werkstattbindung wählbar).",
+    "Rabattschutz, Schutzbrief, GAP-Deckung, Auslandsschadenschutz und Fahrerschutz als Ergänzungen."
+  ]
+}

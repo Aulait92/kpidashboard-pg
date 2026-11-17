@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Weltweit, auch bei Wohnsitz",
+    "Erhöhung alle 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Pflegetagegeld Tarif PG (gestaffelt)",
+      "kurz": "Tarif PG",
+      "stufe": 1,
+      "werte": {
+        "pg5": "100 %",
+        "ab-pg": "Pflegegrad 2",
+        "einmal": "50-fach Tagessatz PG 5",
+        "ambulant-gleich": "nein, ambulant gestuft",
+        "wartezeit": "keine",
+        "dynamik": "alle 5 Jahre"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/pflege-tagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegetagegeld Tarife PG1 bis PG4 (individuell)",
+      "kurz": "PG1 bis PG4",
+      "stufe": 2,
+      "werte": {
+        "pg5": "je nach Kombination",
+        "ab-pg": "Pflegegrad 1 (PG1)",
+        "einmal": "nein",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "alle 5 Jahre"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/pflege-tagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/pflege-tagegeld/"
+  ],
+  "offen": [
+    "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Zwei Varianten statt Leistungsstufen; keine Empfehlung markiert. Tagegeld 5 bis 120 € in 5-€-Schritten.",
+    "Tarif PG: ambulant PG 2 20 %, PG 3 40 %, PG 4 80 %, PG 5 100 %; stationär ab PG 2 100 %; Sonderzahlung bei erster Einstufung (PG 2 oder höher) das 50-fache des Tagessatzes für PG 5. Variante 2: Tarife PG1 bis PG4 frei kombinierbar, ambulant und stationär gleich (z. B. PG1 100 % in PG 1, 250 % ab PG 2).",
+    "Beitragsbefreiung im Pflegefall je nach Tarif schon ab Pflegegrad 2 (Zuordnung je Tarif nicht genannt). Erhöhung alle 5 Jahre ohne Gesundheitsprüfung, auch im Leistungsbezug."
+  ]
+}

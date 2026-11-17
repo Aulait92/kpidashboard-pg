@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung Profi Care",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 % Rente ab 50 % BU",
+    "Sofortleistung bei 7 Krankheiten",
+    "Keine Meldung bei Berufswechsel"
+  ],
+  "tarife": [
+    {
+      "name": "Profi Care",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "au": "optional",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "optional",
+        "infektion": "ja",
+        "dynamik": "optional (Leistung)"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/berufsunfaehigkeitsversicherung"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht der Produktseite hansemerkur.de (Tarif Profi Care).",
+    "AU-Baustein: volle Rente ab 4 Monaten und voraussichtlich 6 Monaten Arbeitsunfähigkeit, bis 24 Monate.",
+    "Prognosezeitraum und Nachversicherung auf der Seite nicht genannt.",
+    "Sofortleistung bis 15 Monatsrenten bei Krebs, Schlaganfall, Herzinfarkt, Querschnittslähmung, Seh-, Hör- oder Sprachverlust."
+  ]
+}

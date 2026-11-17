@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "LV 1871",
+  "sparte": "sterbegeld",
+  "produkt": "Bestattungsvorsorge (Sterbegeldversicherung)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsprüfung",
+    "Lebenslange Absicherung",
+    "Eintrittsalter 40 bis 90 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Bestattungsvorsorge Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "werte": {
+        "summe": "1.500 € bis 12.500 €",
+        "wartezeit": "voll nach 24-36 Monaten",
+        "unfall": "nein",
+        "ohne-gp": "ja",
+        "beitragsende": "bis 85 oder lebenslang"
+      },
+      "bausteine": {
+        "dynamik": "nein"
+      },
+      "quelle": "https://www.lv1871.de/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Bestattungsvorsorge Comfort Plus",
+      "kurz": "Comfort Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "summe": "1.500 € bis 12.500 €",
+        "wartezeit": "voll nach 12-36 Monaten",
+        "unfall": "ja",
+        "ohne-gp": "ja",
+        "beitragsende": "bis 85 oder lebenslang"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.lv1871.de/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Bestattungsvorsorge Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "werte": {
+        "summe": "1.500 € bis 12.500 €",
+        "wartezeit": "voll nach 12-36 Monaten",
+        "unfall": "ja",
+        "ohne-gp": "ja",
+        "beitragsende": "bis 95 oder lebenslang"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.lv1871.de/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lv1871.de/sterbegeldversicherung/",
+    "https://www.lv1871.de/sterbegeldversicherung/sterbegeld/"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich auf der Produktseite (Bestattungsvorsorge der Lebensversicherung von 1871 a. G. München); Comfort Plus ist dort als „Unsere Empfehlung“ markiert.",
+    "Volle Leistung nach 24 bis 36 bzw. 12 bis 36 Monaten (Staffelung vermutlich nach Eintrittsalter, nicht erläutert); bei Unfalltod keine Wartezeit. Unfall-Zusatz: Verdoppelung der Summe bei Unfalltod ab Comfort Plus.",
+    "Beitragsdynamik 3 % ab Comfort Plus wählbar. Erbrechtsberatung und vorläufiger Schutz ab Comfort Plus; Kinder- und Enkelmitversicherung sowie Auslandsüberführung nur Premium. Ein eigener Bestattungsvorsorge-Service ist nicht genannt."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "krankentagegeld",
+  "produkt": "DFV-KrankenGeld",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auch bei Kur und Reha",
+    "Leistung bei Kind krank",
+    "Bei Arbeitslosigkeit 12 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-KrankenGeld",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "wartezeit": "3 Monate, Unfall keine",
+        "dauer": "bis 12 Mon. nach GKV",
+        "bu-ende": "noch 6 Monate"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankengeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankengeld/"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht der Produktseite deutsche-familienversicherung.de; ein Tarif für gesetzlich versicherte Arbeitnehmer.",
+    "Höhe des Tagegelds individuell, kein Höchstbetrag genannt.",
+    "Nach Ende der 78 Wochen Krankengeld der Kasse bis zu 12 Monate weiter; bei Berufsunfähigkeit oder Erwerbsminderung 1. bis 6. Monat zu 100 %.",
+    "Wartezeit Psychotherapie 8 Monate. Leistung für Selbstständige nicht genannt. Mindestlaufzeit 24 Monate."
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "basisrente",
+  "produkt": "Basis-Rentenversicherung (Rürup)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ab 25 € im Monat",
+    "Lebenslange Rente",
+    "Rentenbeginn frei wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Klassische Basis-Rentenversicherung (E-BRCP)",
+      "kurz": "Klassisch",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "100 % der Beiträge",
+        "rentenfaktor": "garantiert",
+        "anlage": "Klassisch",
+        "flexibel": "Sonderzahlung 4x/Jahr"
+      },
+      "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/klassische-basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Basis-Rentenversicherung (E-BRI)",
+      "kurz": "Fonds (ETF)",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "garantiert",
+        "anlage": "bis zu 10 ETFs",
+        "flexibel": "Sonderzahlung 6x/Jahr"
+      },
+      "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/fondsgebundene-basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/private-rentenversicherung/klassische-basisrente/",
+    "https://www.europa.de/versicherungen/private-rentenversicherung/fondsgebundene-basisrente/",
+    "https://www.europa.de/fileadmin/pdf/produkte/rente/antragsdokumente/europa_vertragsinformationen_e_brcp.pdf",
+    "https://www.europa.de/fileadmin/pdf/produkte/rente/antragsdokumente/europa_vertragsinformationen_e_bri.pdf"
+  ],
+  "offen": [
+    "Zwei Varianten (klassisch und fondsgebunden), keine Leistungsstufen; keine Variante hervorgehoben.",
+    "Klassisch: zum Garantietermin mindestens 100 % der Beiträge; Günstigerprüfung bei Rentenbeginn. Fondsgebunden: Beitragsgarantie auf der Seite nicht genannt.",
+    "Garantierter Rentenfaktor in beiden Varianten, Höhe nicht genannt.",
+    "Sonderzahlungen klassisch ab 500 €, fondsgebunden ab 250 €; Fondswechsel bis 6x im Jahr, Ablaufmanagement.",
+    "Hinterbliebenenschutz, Beitragspause und Effektivkosten auf den Produktseiten nicht genannt."
+  ]
+}

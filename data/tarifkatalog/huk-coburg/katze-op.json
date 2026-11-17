@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "katze-op",
+  "produkt": "Tierkrankenversicherung Katze, OP-Schutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Rassenbeschränkung",
+    "Unfall ohne Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "Tierkrankenversicherung OP-Schutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "got": "bis 4-fach + Notdienst",
+        "kastration": "nur med. notwendig",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "1 Monat",
+        "ausland": "weltweit, 12 Monate",
+        "jhl": "3.500 €",
+        "nachbehandlung": "bis 28 Tage",
+        "vorsorge": "nein",
+        "zahn": "nein"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/tierkrankenversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierkrankenversicherung OP-Schutz Classic",
+      "kurz": "Classic",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "got": "bis 4-fach + Notdienst",
+        "kastration": "nur med. notwendig",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "1 Monat",
+        "ausland": "weltweit, 12 Monate",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 42 Tage",
+        "vorsorge": "nein",
+        "zahn": "Zahn-OPs (Extraktion)"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/tierkrankenversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/tierkrankenversicherung.html",
+    "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/allgemeine-versicherungsbedingungen-tierkranken.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite (Häkchen und Hinweisfenster) und den AVB Tierkranken (Stand 10.2026); Produkt neu seit 01.10.2026.",
+    "Selbstbeteiligung 0 %, 10 % oder 20 %; ohne oder mit 10 % nur, wenn das Tier jünger als 2 Jahre ist, höchstens 3 Monate im Besitz ist oder nahtlos aus einer Vorversicherung wechselt. Auf Vorsorge keine SB.",
+    "Fehlentwicklungen nur in den Classic-Tarifen (Wartezeit 12 Monate). Prothesen, Implantate, Hilfsmittel höchstens 500 € je Vertrag (Wartezeit 12 Monate). Kastration und Sterilisation nur, wenn medizinisch notwendig.",
+    "Neuabschluss für Hunde ab 8 Wochen und Katzen ab 12 Wochen bis zum vollendeten 8. Lebensjahr; ein Tier je Vertrag. Innovationsgarantie. Schadenbearbeitung über den Dienstleister Inca.",
+    "OP-Schutz: Heilbehandlungen ohne OP, Vorsorge und Zahnbehandlung ohne OP sind nicht versichert. Physiotherapie nach OP steht im Tarifvergleich nur beim Voll-Schutz.",
+    "HUK-COBURG empfiehlt den Voll-Schutz Classic; im OP-Schutz keine Markierung (zwei Stufen, empfehlung keine)."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "Dialog",
+  "sparte": "hausrat",
+  "produkt": "Hausrat (Dialog Privatschutz 2023)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit",
+    "Wertsachen bis 50.000 €",
+    "Leistungsupdate-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50.000 €",
+        "fahrrad": "optional",
+        "elementar": "ja (abwählbar)",
+        "bargeld": "3.000 €",
+        "garten": "ja",
+        "auto": "ja, ohne Technik",
+        "ueberspannung": "ja",
+        "hotel": "bis 150 Tage",
+        "aussen": "6 Monate",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "inklusive",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/4180/cd953dcbe82018ca658905d19606529c/Leistungs%C3%BCbersicht%20Hausrat.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat PremiumPlus",
+      "kurz": "PremiumPlus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50.000 €",
+        "fahrrad": "optional",
+        "elementar": "ja (abwählbar)",
+        "bargeld": "3.000 €",
+        "garten": "ja",
+        "auto": "ja, ohne Technik",
+        "ueberspannung": "ja",
+        "hotel": "ja",
+        "aussen": "12 Monate",
+        "allgefahren": "ja (abwählbar)"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "inklusive",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/4180/cd953dcbe82018ca658905d19606529c/Leistungs%C3%BCbersicht%20Hausrat.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dialog-versicherung.de/produkte/privatkunden-komposit/hausrat",
+    "https://www.dialog-versicherung.de/resource/blob/4180/cd953dcbe82018ca658905d19606529c/Leistungs%C3%BCbersicht%20Hausrat.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Premium und PremiumPlus (Dialog Privatschutz 2023, VHB 2020); keine Stufe hervorgehoben. Ältere Tarife Basis und KomfortPlus (2019) nicht erfasst.",
+    "Einfacher Diebstahl nicht allgemein versichert; genannt sind Diebstahl aus Kfz (ohne technische Geräte, europaweit), von Gartenmöbeln, Wäsche, Kinderwagen; PremiumPlus zusätzlich Diebstahl am Arbeitsplatz.",
+    "Fahrraddiebstahl zuwählbar bis 10.000 €. Elementargefahren und Haus- und Wohnungsschutzbrief eingeschlossen, aber abwählbar.",
+    "PremiumPlus: unbenannte Gefahren (abwählbar), Bestleistungsgarantie, Umzugskosten, Wasser- und Gasverlust nach Rohrbruch.",
+    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+  ]
+}

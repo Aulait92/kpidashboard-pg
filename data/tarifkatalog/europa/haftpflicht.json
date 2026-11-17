@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Mietsachschäden",
+    "Internetschäden"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "10 Mio. €",
+        "schluessel": "25.000 €",
+        "delikt": "10.000 €",
+        "geliehen": "1.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "5.000 €",
+        "mallorca": "nein",
+        "drohne": "bis 250 g",
+        "ehrenamt": "nein",
+        "sb": "ohne oder 250 €"
+      },
+      "bausteine": {
+        "oeltank": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "30 Mio. €",
+        "forderungsausfall": "30 Mio. €",
+        "schluessel": "200.000 €",
+        "delikt": "30.000 €",
+        "geliehen": "30.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "30.000 €",
+        "mallorca": "nein",
+        "drohne": "bis 1 kg",
+        "ehrenamt": "ja",
+        "sb": "ohne oder 250 €"
+      },
+      "bausteine": {
+        "oeltank": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Premium-Schutz",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "50 Mio. €",
+        "schluessel": "300.000 €",
+        "delikt": "50.000 €",
+        "geliehen": "50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "100.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 1 kg",
+        "ehrenamt": "ja",
+        "sb": "ohne oder 250 €"
+      },
+      "bausteine": {
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/haftpflichtversicherung/privathaftpflicht/",
+    "https://www.europa.de/fileadmin/pdf/produkte/haftpflicht/antragsdokumente/europa_haftpflicht_ipid_privathaftpflicht.pdf",
+    "https://www.europa.de/fileadmin/pdf/produkte/haftpflicht/antragsdokumente/europa_phv_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Premium; keine Stufe hervorgehoben, Komfort als mittlere Stufe.",
+    "Schlüsselverlust: Wert für fremde private Schlüssel; Dienst- und Vereinsschlüssel 10.000, 50.000 bzw. 100.000 €.",
+    "Mietsach- und Allmählichkeitsschäden in allen Tarifen; Höhe nicht gesondert beziffert.",
+    "Mallorca-Deckung über den Kfz-Baustein, laut Tabelle nur im Premium enthalten; Öko-Baustein (Photovoltaik) in Komfort und Premium.",
+    "Heizöltank in Basis und Komfort gegen Zuschlag; Selbstbeteiligung 250 € wählbar."
+  ]
+}

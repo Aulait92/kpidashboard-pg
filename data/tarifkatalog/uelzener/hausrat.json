@@ -1,0 +1,108 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "hausrat",
+  "produkt": "Hausrat-Versicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit bis VS",
+    "Tierarztkosten nach Schaden",
+    "UV-Verzicht ab 500 €/m²"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat-Versicherung basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "wert": "20 % der VS",
+        "fahrrad": "optional bis 3.000 €",
+        "elementar": "nein, nur Altverträge",
+        "online": "bis 250 €",
+        "vs": "UV-Verzicht 500 €/m²",
+        "bargeld": "bis 1.000 €",
+        "garten": "bis 250 €",
+        "auto": "bis 125 €",
+        "ueberspannung": "ja",
+        "aussen": "10 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://uelzener.de/mensch/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat-Versicherung premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "wert": "30 % der VS",
+        "fahrrad": "optional bis 3.000 €",
+        "elementar": "nein, nur Altverträge",
+        "online": "bis 500 €",
+        "vs": "UV-Verzicht 500 €/m²",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 500 €",
+        "auto": "bis 250 €",
+        "ueberspannung": "ja",
+        "hotel": "bis 200 Tage",
+        "aussen": "20 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://uelzener.de/mensch/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat-Versicherung premium plus",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "wert": "40 % der VS",
+        "fahrrad": "optional bis 3.000 €",
+        "elementar": "nein, nur Altverträge",
+        "online": "bis 1.000 €",
+        "vs": "UV-Verzicht 500 €/m²",
+        "bargeld": "bis 4.000 €",
+        "garten": "bis 1.000 €",
+        "auto": "bis 500 €",
+        "ueberspannung": "ja",
+        "hotel": "bis 400 Tage",
+        "aussen": "30 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://uelzener.de/mensch/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/mensch/hausratversicherung/",
+    "https://www.uelzener.de/formulare/download/49a177e9-edf9-47f0-bdcb-0bb37882c7bf",
+    "https://www.uelzener.de/formulare/download/b8bf24c8-4913-414e-ac83-689d17a99689",
+    "https://www.uelzener.de/formulare/download/3dbfc4b4-d4a5-4267-a178-c984998aebb8",
+    "https://www.uelzener.de/formulare/download/d06d9ec8-da5a-4168-ad1e-c6a0e462da4d",
+    "https://www.uelzener.de/formulare/download/d1f1d67d-f1e4-4dff-bfa9-161d91c57c36"
+  ],
+  "offen": [
+    "Uelzener markiert premium als „Kundenfavorit“. Leistungsübersicht DOC-716 (03/2025) und Besondere Bedingungen UEVHBB/UEVHBP/UEVHBPP 2015.",
+    "Einfacher Diebstahl aus der Wohnung nicht genannt; einfacher Diebstahl nur für Krankenfahrstühle und Kinderwagen (125/250/500 €) sowie Trickdiebstahl (125/250/500 €).",
+    "Elementarschäden laut Informationsblatt nur für Abschlüsse bis 31.12.2020 (bis 20 % der VS); für neue Verträge nicht angeboten.",
+    "Hotelkosten basis: in den Besonderen Bedingungen nicht erweitert, Dauer nach VHB nicht ausgewertet. Garten = Diebstahl von Wäsche, Gartenmöbeln, Sportgeräten. Auto = Diebstahl aus verschlossenem Kfz in Deutschland.",
+    "Zusatzpakete gegen Aufpreis: Fahrraddiebstahl (500 bis 3.000 €), Glasschäden, Pferdehalter (Sattel- und Zaumzeug). Selbstbeteiligung nicht veröffentlicht."
+  ]
+}

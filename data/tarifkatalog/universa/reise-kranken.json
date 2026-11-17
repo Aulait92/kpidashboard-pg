@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreisekrankenversicherung uni-RD",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsprüfung",
+    "24-Stunden-Notruf",
+    "Privatstation im Krankenhaus"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreisekrankenversicherung uni-RD",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 2 Monate",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "akut notwendig"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/auslandsreisekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/private-zusatzversicherung/auslandsreisekrankenversicherung/",
+    "https://www.universa.de/site/assets/files/133803/bedingungen-private_zusatzversicherung-auslandsreise-uni_rd.pdf"
+  ],
+  "offen": [
+    "Ein Jahrestarif für alle Reisen bis zwei Monate; Ausland sind alle Staaten außer Deutschland. Rücktransport mit Begleitperson; Bestattung und Überführung bis 10.300 €.",
+    "Zahn laut Seite: akut notwendige Instandsetzung von Zahnersatz; schmerzstillende Behandlung nicht ausdrücklich genannt. Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft nicht genannt."
+  ]
+}

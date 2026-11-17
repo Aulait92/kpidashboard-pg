@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalter-Haftpflichtversicherung (Hund)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Auslandsschutz"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "miete": "5 Mio. €",
+        "ausland": "bis 3 Jahre"
+      },
+      "quelle": "https://www.da-direkt.de/haftpflichtversicherung/tierhalter-haftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "miete": "20 Mio. €",
+        "ausland": "bis 5 Jahre"
+      },
+      "quelle": "https://www.da-direkt.de/haftpflichtversicherung/tierhalter-haftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "miete": "50 Mio. €",
+        "ausland": "bis 5 Jahre"
+      },
+      "quelle": "https://www.da-direkt.de/haftpflichtversicherung/tierhalter-haftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/haftpflichtversicherung/tierhalter-haftpflicht",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/haftpflicht/da-direkt_verbraucherinformationen_th-haftpflicht_2026.pdf",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/haftpflicht/tierhalter/dadirekt_ps_hv_thv_einfacheuebersicht_069_0625.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Top für Hunde und Pferde; keine Stufe hervorgehoben, Komfort als mittlere Stufe.",
+    "Tarifvergleich nennt nur Deckungssumme, Mietsachschäden und Auslandsschutz; Selbstbeteiligung nicht genannt.",
+    "Auch sogenannte Listenhunde versicherbar (laut Produktseite).",
+    "Fremde Hüter und Welpen im Tarifvergleich nicht genannt."
+  ]
+}

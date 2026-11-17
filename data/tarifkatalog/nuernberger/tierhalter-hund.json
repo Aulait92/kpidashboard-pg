@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Leine und Maulkorb",
+    "Hundeschule und Turniere",
+    "Kaution Europa 100.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "15 oder 30 Mio. €",
+        "miete": "ja",
+        "welpen": "bis 1 Jahr",
+        "forderungsausfall": "ja",
+        "neuwert": "bis 12 Monate alt",
+        "ausland": "weltweit 7 Jahre"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/hundehaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/hundehaftpflicht/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Ein Tarif mit wählbarer Summe (15 oder 30 Mio. €).",
+    "Selbstbeteiligung wählbar, Höhe nicht genannt. Fremde Hüter (z. B. Freunde beim Gassi) nicht ausdrücklich genannt; Aufenthalt in der Hundepension versichert.",
+    "Flurschäden, Deckakt (gewollt und ungewollt), Ferienwohnung und Hotel mitversichert; geliehene Hundeanhänger, -kutschen und -schlitten mitversichert."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung Senior Care",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Eintritt 40 bis 80 Jahre",
+    "Lebenslanger Schutz",
+    "Beitragsfreistellung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Senior Care",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "3.000 bis 20.000 €",
+        "wartezeit": "36 Monate",
+        "unfall": "sofort volle Summe",
+        "ohne-gp": "ja",
+        "beitragsende": "bis 85"
+      },
+      "quelle": "https://www.hansemerkur.de/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/sterbegeldversicherung"
+  ],
+  "offen": [
+    "Quelle: Produktseite hansemerkur.de (Tarif Senior Care).",
+    "Wartezeit 36 Monate, gilt nicht bei Unfalltod; Verdopplung bei Unfall nicht genannt.",
+    "Beitragszahlung endet mit dem 85. Lebensjahr."
+  ]
+}

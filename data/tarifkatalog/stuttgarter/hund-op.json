@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "hund-op",
+  "produkt": "BestFriend OP-Versicherung für Hunde",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 % bis 4-facher GOT-Satz",
+    "Ohne Selbstbeteiligung",
+    "Freie Tierarztwahl, weltweit"
+  ],
+  "tarife": [
+    {
+      "name": "BestFriend Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "4-fach",
+        "jhl": "2.000 €",
+        "nachbehandlung": "bis 15 Tage nach OP",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "physio": "bis 250 €",
+        "sb": "ohne",
+        "wartezeit": "30 Tage",
+        "ausland": "weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F06_Tier-OP&files=7.2.024_BR_Tier-OP-BestFriend.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BestFriend Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "4-fach",
+        "jhl": "4.000 €",
+        "nachbehandlung": "bis 20 Tage nach OP",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "physio": "bis 500 €",
+        "sb": "ohne",
+        "wartezeit": "30 Tage",
+        "ausland": "weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F06_Tier-OP&files=7.2.024_BR_Tier-OP-BestFriend.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/unfall-krankheit/tier-op-versicherung",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F06_Tier-OP&files=7.2.024_BR_Tier-OP-BestFriend.pdf",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F06_Tier-OP&files=7_3_065_PS_BestFriend_TierOP.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre BestFriend 7.2.024 (Stand 2/2024) und Produkt-Steckbrief 7.3.065 der Stuttgarter Versicherung AG. Jahreshöchstleistung als Versicherungssumme gelesen (Basis 2.000 €, Komfort 4.000 €); ob je Jahr oder je OP, bitte prüfen.",
+    "Gestaffelte Leistung: 1. Kalenderjahr Basis 500 €, Komfort 1.000 €; 1. und 2. Kalenderjahr zusammen 1.000 € bzw. 2.000 €. Wartezeit 30 Tage, 365 Tage bei HD, ED, Patellaluxation, Herz, Kastration; nach Unfall und für Tierheimtiere keine.",
+    "Vorsorge (Impfung, Entwurmung) nicht genannt. Physiotherapie bis 8 Wochen nach der OP. Zwei Pakete ohne Markierung, daher keine Empfehlung."
+  ]
+}

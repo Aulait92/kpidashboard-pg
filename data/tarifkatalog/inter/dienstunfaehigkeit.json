@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufsunfähigkeitsversicherung mit DU-Klausel",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung ab 50 % BU",
+    "Wiedereingliederungshilfe"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung mit Dienstunfähigkeitsklausel",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/vorsorge-vermoegen/berufsunfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "Kein eigenes DU-Produkt: Berufsunfähigkeitsversicherung (Tarif Premium) mit Dienstunfähigkeitsklausel für Beamte. Entlassung oder Ruhestand wegen allgemeiner oder (in bestimmten Beamtenberufen) spezieller Dienstunfähigkeit gilt als Berufsunfähigkeit.",
+    "Leistung für Beamte auf Probe und Widerruf sowie Teildienstunfähigkeit nicht genannt; bitte in den Bedingungen prüfen. Übrige Werte wie inter/bu.json."
+  ]
+}

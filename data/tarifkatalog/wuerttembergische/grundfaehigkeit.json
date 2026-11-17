@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente schon bei 1 Fähigkeit",
+    "Kinder ab 7 Jahren",
+    "Unabhängig vom Beruf"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitsversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "7",
+        "prognose": "6 Monate",
+        "dynamik": "optional, 1 bis 5 %"
+      },
+      "quelle": "https://www.wuerttembergische.de/existenz/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/existenz/grundfaehigkeitsversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/altersvorsorge_und_bu/Grundfaehigkeitsversicherung.pdf"
+  ],
+  "offen": [
+    "Werte von der Produktseite (Abruf 17.11.2026); die Bedingungen (PDF) ließen sich nicht automatisch laden.",
+    "Sieben Grundfähigkeiten: Sehen, Hören, Sprechen, Gehen, Treppensteigen, Stehen, Gebrauch der Hände. Rente ab dem Verlust einer Fähigkeit für mindestens 6 Monate, mindestens 600 € im Jahr.",
+    "Psyche, Leistung bei Pflegebedürftigkeit und Nachversicherung auf der Seite nicht genannt; bitte in den Bedingungen prüfen."
+  ]
+}

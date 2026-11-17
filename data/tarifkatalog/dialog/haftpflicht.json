@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "Dialog",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflicht (Dialog Privatschutz 2019)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Mietsachschäden",
+    "Weltweit ohne Zeitgrenze",
+    "Hüten fremder Hunde, Pferde"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "nein",
+        "delikt": "ja",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "nein",
+        "ehrenamt": "ja",
+        "drohne": "bis 250 g"
+      },
+      "bausteine": {
+        "oeltank": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/3858/3f7cecfac29ad6a26035cead0cc95a2f/Leistungs%C3%BCbersicht%20Privathaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht KomfortPlus-Schutz",
+      "kurz": "KomfortPlus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "ehrenamt": "ja",
+        "drohne": "bis 250 g"
+      },
+      "bausteine": {
+        "oeltank": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/3858/3f7cecfac29ad6a26035cead0cc95a2f/Leistungs%C3%BCbersicht%20Privathaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dialog-versicherung.de/produkte/privatkunden-komposit/haftpflichtversicherungen-pkk/privathaftpflicht",
+    "https://www.dialog-versicherung.de/resource/blob/3858/3f7cecfac29ad6a26035cead0cc95a2f/Leistungs%C3%BCbersicht%20Privathaftpflicht"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und KomfortPlus (Leistungsübersicht Stand 10/2019); keine Stufe hervorgehoben.",
+    "Werte aus der Leistungsübersicht: „versichert“ heißt im Rahmen der Versicherungssumme, ohne eigene Grenze.",
+    "Deliktunfähige Kinder nicht bei Single-Deckung. Drohnen bis 250 g nach Vereinbarung bis 5 Mio. €. Schlüsselverlust und Forderungsausfall im KomfortPlus abwählbar.",
+    "Personenschäden max. 15 Mio. € je Person. Selbstbeteiligung nicht genannt.",
+    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+  ]
+}

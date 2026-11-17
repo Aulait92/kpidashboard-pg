@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gleitender Neuwert",
+    "Überspannung durch Blitz",
+    "Aufräum- und Abbruchkosten"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "pv": "optional",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.inter.de/sach-haftpflicht/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "elementar": "optional",
+        "pv": "optional",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "Graffiti bis 500 €",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.inter.de/sach-haftpflicht/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "pv": "optional",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "Graffiti ja",
+        "allgefahren": "optional, 50.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.inter.de/sach-haftpflicht/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/sach-haftpflicht/wohngebaeudeversicherung/"
+  ],
+  "offen": [
+    "Tarifübersicht der Produktseite ist knapp: grobe Fahrlässigkeit und Ableitungsrohre außerhalb des Gebäudes nicht genannt.",
+    "Photovoltaik als Einschluss wählbar (Feuer, Sturm, Hagel); Wärmepumpen und Solarthermie als Zubehör mitversichert. Kosten: Aufräum-, Abbruch-, Bewegungs- und Schutzkosten in allen Stufen, Summen nicht genannt.",
+    "Graffiti nur an Ein- und Zweifamilienhäusern, Exklusiv mit 250 € Selbstbeteiligung. Leistungs-Upgrade-Garantie ab Exklusiv. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+  ]
+}

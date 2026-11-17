@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rückreisekosten bis 5.000 €",
+    "Fußbodenheizung versichert",
+    "Ohne Rauchmelder versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäudeversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "elementar": "optional",
+        "ableitung": "1 % der VS",
+        "pv": "nein",
+        "kosten": "10 % der VS",
+        "ueberspannung": "5 % der VS",
+        "mietausfall": "12 Monate",
+        "tiere": "nein",
+        "vandalismus": "bis 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäudeversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, bis zur VS",
+        "elementar": "optional",
+        "ableitung": "1 % der VS",
+        "pv": "ja",
+        "kosten": "100 % der VS",
+        "ueberspannung": "10 % der VS",
+        "mietausfall": "24 Monate",
+        "tiere": "Tierbiss bis 3.000 €",
+        "vandalismus": "bis 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/wohnen/wohngebaeudeversicherung/",
+    "https://www.muenchener-verein.de/downloadcenter/Sach/Verkaufsunterlagen/8700706.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich (Stand 01.2020, Spalten Komfort und Premium VGB 2014); Produktseite nennt dieselben Stufen.",
+    "Kosten: Aufräum-, Abbruch-, Schutz- und Bewegungskosten. Premium zusätzlich Hotelkosten bis 100 €/Tag für 200 Tage. Ableitungsrohre auf und außerhalb des Grundstücks je 1 % der VS.",
+    "Selbstbeteiligung wählbar, Höhe nicht genannt. Tierbiss nur an elektrischen Leitungen. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

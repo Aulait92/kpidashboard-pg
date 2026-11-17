@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit versichert",
+    "Mietausfall",
+    "Rauch- und Schmorschäden"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "optional",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "ja",
+        "pv": "optional",
+        "vandalismus": "ja",
+        "tiere": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "ja",
+        "pv": "optional",
+        "vandalismus": "ja",
+        "tiere": "Tierbiss, ja",
+        "allgefahren": "unbenannte Gefahren"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/wohngebaeudeversicherung/"
+  ],
+  "offen": [
+    "Werte aus der Leistungsbeschreibung der Produktseite auf nuernberger.de (Abruf 17.11.2026, nur Aufzählung ohne Beträge). Keine Stufe markiert; Komfort als mittlere Stufe.",
+    "Ableitungsrohre auf und außerhalb des Grundstücks ab Komfort; Vandalismus ab Komfort; Tierbiss an elektrischen Anlagen und Dämmung sowie unbenannte Gefahren nur Premium. Grobe Fahrlässigkeit schon in Kompakt genannt (Grenze nicht beziffert).",
+    "Kosten nach Schaden (Aufräumung, Abbruch) ohne Beträge; Zusatzbausteine Weitere Naturgefahren (Elementar), Gebäudetechnik und Photovoltaik. Selbstbeteiligung wählbar."
+  ]
+}

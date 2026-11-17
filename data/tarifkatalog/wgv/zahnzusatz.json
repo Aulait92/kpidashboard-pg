@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Inkl. Kassenleistung",
+    "Bei Unfall sofort, ohne Limit",
+    "Freie Zahnarztwahl"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnzusatzversicherung BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "50 %",
+        "implantate": "50 %, max. 4 je Kiefer",
+        "behandlung": "nein",
+        "prophylaxe": "nein",
+        "wartezeit": "8 Monate",
+        "staffel": "2.000 € in 4 Jahren",
+        "kfo": "nein",
+        "inlays": "50 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatzversicherung OPTIMAL",
+      "kurz": "OPTIMAL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "80 %",
+        "implantate": "80 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 €/Jahr",
+        "wartezeit": "8 Monate",
+        "staffel": "3.200 € in 4 Jahren",
+        "kfo": "80 %, max. 2.000 €",
+        "inlays": "80 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatzversicherung PLUS",
+      "kurz": "PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "4.000 € in 4 Jahren",
+        "kfo": "100 %, max. 3.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/gesundheit-vorsorge/gesundheit/zahnzusatzversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/krankenzusatz.pdf"
+  ],
+  "offen": [
+    "Drei Stufen laut Tarifübersicht der Produktseite und Tarifbedingungen (Abruf 17.11.2026); OPTIMAL ist als \"Unsere Empfehlung\" markiert. Versicherer: WGV-Versicherung AG.",
+    "Prozentsätze beim Zahnersatz einschließlich der Vorleistung der Krankenkasse; bei Regelversorgung 100 %.",
+    "Erstattungshöchstsätze in den ersten vier Jahren (BASIS 500/1.000/1.500/2.000 €, OPTIMAL 800 bis 3.200 €, PLUS 1.000 bis 4.000 €); entfallen bei Unfall.",
+    "Zahnbehandlung (Füllungen, Wurzel, Parodontose) und Prophylaxe nur OPTIMAL und PLUS; PLUS zusätzlich Schmerzbehandlung bis 200 €/Jahr. KFO für Minderjährige, insgesamt begrenzt."
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Feuer, Leitungswasser, Sturm, Einbruch",
+    "Vandalismus nach Einbruch",
+    "Aufräum- und Umzugskosten"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "fahrrad": "optional",
+        "ueberspannung": "ja",
+        "gf": "bis 10.000 €",
+        "wert": "20 % der VS",
+        "bargeld": "bis 1.500 €",
+        "garten": "bis 500 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "elementar": "optional",
+        "fahrrad": "optional",
+        "ueberspannung": "ja",
+        "gf": "ja",
+        "wert": "30 % der VS",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 1.750 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "fahrrad": "optional",
+        "ueberspannung": "ja",
+        "gf": "ja",
+        "wert": "40 % der VS",
+        "bargeld": "bis 3.000 €",
+        "garten": "bis 2.500 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/hausratversicherung"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite hansemerkur.de (Premium, Exklusiv, Top).",
+    "Einfacher Diebstahl nicht als Leistung genannt; Diebstahl aus dem Hausflur 250, 500 bzw. 1.000 €; Schlossänderung nach einfachem Diebstahl nur Top (300 €).",
+    "Schmuck und Uhren bis 20.000, 25.000 bzw. 35.000 €. Bankkarten-Missbrauch nach Einbruch 250, 750 bzw. 1.500 €.",
+    "Fahrraddiebstahl, Glasbruch und Naturgefahren als Zusatzbausteine. Online-Betrug und Selbstbeteiligung nicht genannt.",
+    "HanseMerkur markiert Exklusiv als „Bestseller“."
+  ]
+}

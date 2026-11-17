@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung GesundheitVARIO",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ambulant 100 %, freie Arztwahl",
+    "Selbstbehalt 400, 800, 1.600 €",
+    "Heilpraktiker bis GebüH"
+  ],
+  "tarife": [
+    {
+      "name": "GesundheitVARIO",
+      "kurz": "VARIO",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 % bis GOÄ-Höchstsatz",
+        "stationaer": "allg. Krankenhausleist.",
+        "zahnersatz": "70 %",
+        "selbstbehalt": "400/800/1.600 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "ja, bis GebüH",
+        "sehhilfen": "500 € in 2 Jahren"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/private-krankenversicherung/angestellte.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GesundheitVARIO mit AmbulantPlus, KlinikPlus, ZahnPlus",
+      "kurz": "VARIO Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über GOÄ-Satz",
+        "stationaer": "Ein-/Zweibett, Chefarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "400/800/1.600 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "ja, bis GebüH",
+        "sehhilfen": "1.000 € in 2 Jahren"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/private-krankenversicherung/angestellte.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/gesundheit/private-krankenversicherung/angestellte.html",
+    "https://www.provinzial.de/west/versicherung/gesundheit/private-krankenversicherung.html"
+  ],
+  "offen": [
+    "Region West. Produktgeber ist die Union Krankenversicherung AG (UKV); Tarife und Werte wie im Ordner ukv, auf provinzial.de mit eigener Produktseite angeboten (Abruf 17.11.2026).",
+    "GesundheitVARIO ist der Grundtarif; die Ergänzungsbausteine VARIO AmbulantPlus, KlinikPlus und ZahnPlus sind einzeln wählbar. Stufe 2 zeigt alle drei zusammen (von Franke und Bornberg mit FFF+ bewertet). Keine Empfehlung markiert.",
+    "Selbstbehalt ambulant je Kalenderjahr: VARIO 400 = 20 % bis 400 €, VARIO 800 = 800 €, VARIO 1600 = 1.600 € (Kinder halb). Vorsorge, Impfungen und Arzneimittel bei schweren Erkrankungen ohne Selbstbehalt.",
+    "AmbulantPlus: über GOÄ-Höchstsatz, 200 € Vorsorge/Jahr, 500 € zusätzlich für Sehhilfen in 2 Jahren, Restkosten Augenlaser und Hörgeräte. KlinikPlus: Wahlarzt, Ein-/Zweibettzimmer, Ersatz-Tagegeld. ZahnPlus: Zahnersatz 90 %, über GOZ-Höchstsatz.",
+    "Hilfsmittel als Aufzählung mit „z. B.“ (offener Katalog nicht ausdrücklich bestätigt); Hörgeräte im Grundtarif bis 2.000 € je Ohr. Beitragsrückerstattung erfolgsabhängig, Höhe nicht veröffentlicht. Psychotherapie, Primärarzt und Ausland nicht ausgewertet.",
+    "Krankentagegeld (Arbeitnehmer bzw. Selbstständige), Krankenhaustagegeld, Kurtagegeld und Beitragsentlastung BEA65 als Zusatzschutz wählbar."
+  ]
+}

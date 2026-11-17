@@ -1,0 +1,77 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung ERGO Body Protect",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente schon bei 1 Fähigkeit",
+    "Erwachsene und Kinder ab 6",
+    "Pflegebedürftigkeit versichert"
+  ],
+  "tarife": [
+    {
+      "name": "ERGO Body Protect (Grundschutz)",
+      "kurz": "Grundschutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "Sehen, Gehen, Hand u. a.",
+        "psyche": "optional",
+        "pflege": "ja"
+      },
+      "bausteine": {
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Body Protect Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "+ Bücken, Tragen, Tippen",
+        "psyche": "optional",
+        "pflege": "ja"
+      },
+      "bausteine": {
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Body Protect Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "+ Geistiges, Mobilität",
+        "psyche": "optional",
+        "pflege": "ja"
+      },
+      "bausteine": {
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/grundfaehigkeitsversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/leben/grundfaehigkeitsversicherung",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/flyer-kind-grundfaehigkeitsversicherung.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "Werte aus der Produktseite und der Produkttabelle auf ergo.de; Bedingungen und das PDF „Informationen zur Grundfähigkeitsversicherung“ (ergo-meine-druckstuecke.de) waren für automatische Abrufe gesperrt.",
+    "Anzahl der Grundfähigkeiten nennt ERGO nicht als Zahl. Grundschutz: Sehen, Sprechen, Hören, Sitzen, Gehen, Stehen, Arme und Hände, Autofahren, Pflegebedürftigkeit. Komfort zusätzlich Beine und Rücken (Knien, Bücken, Heben, Tragen, Gleichgewicht, Treppensteigen) und Fingerfertigkeit (Schreiben, Tippen, Smartphone). Premium zusätzlich Mobilität (Fahrrad, ÖPNV), geistige Fähigkeiten, Infektionsschutz (Tätigkeitsverbot) und Beratung (Zweitmeinung, Reha, Soforthilfe Kids).",
+    "Psyche Plus (Rente bei psychischer Erkrankung, wenn weniger als 3 Stunden täglich erwerbsfähig), Pflege Plus (lebenslange Pflegerente zusätzlich in gleicher Höhe) und Sport Plus in allen Varianten zuwählbar.",
+    "Prognosezeitraum und Nachversicherung nicht genannt. Laut Produktseite lassen sich Beiträge und Leistungen erhöhen, reduzieren oder pausieren; der Kinder-Flyer (9.2023) nennt Erhöhungen ohne Gesundheitsfragen mit 10 und 18 Jahren und den Wechsel in die BU.",
+    "Erste 12 Monatsrenten auf Wunsch als Einmalbetrag. Versicherbar: Erwachsene bis 62 Jahre, Kinder ab 6 Jahren. Risikoträger ERGO Vorsorge Lebensversicherung AG.",
+    "ERGO hebt keine Variante als Empfehlung hervor (nur Testurteil für Premium); Komfort als mittlere Stufe."
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Progression 225 % bis 1.000 %",
+    "Zeckenbiss (FSME) versichert",
+    "Beitragsfrei bei Arbeitslosigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung compact",
+      "kurz": "compact",
+      "stufe": 1,
+      "werte": {
+        "progression": "225 % bis 1.000 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "nein",
+        "kosmetik": "bis 10.000 €",
+        "bergung": "bis 10.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/141/deklarationsvergleichunfallpp141pdf/deklarationsvergleich-unfall-pp141.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung classic",
+      "kurz": "classic",
+      "stufe": 2,
+      "werte": {
+        "progression": "225 % bis 1.000 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "bis 10.000 €",
+        "kosmetik": "bis 75.000 €",
+        "bergung": "bis 75.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/141/deklarationsvergleichunfallpp141pdf/deklarationsvergleich-unfall-pp141.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung comfort",
+      "kurz": "comfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "progression": "225 % bis 1.000 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "bis 25.000 €",
+        "kosmetik": "bis 1 Mio. €",
+        "bergung": "bis 1 Mio. €",
+        "zecken": "ja",
+        "gliedertaxe": "ja, exclusiv optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/141/deklarationsvergleichunfallpp141pdf/deklarationsvergleich-unfall-pp141.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/private-vorsorge/unfallversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/141/deklarationsvergleichunfallpp141pdf/deklarationsvergleich-unfall-pp141.pdf"
+  ],
+  "offen": [
+    "Quelle: Deklarationsvergleich PP 141 (Seiten Stand 10.2024, Fußzeile 07.2026) der Alte Leipziger Versicherung AG und Produktseite; comfort ist dort als „Unser Top-Angebot“ markiert.",
+    "Grundsumme frei wählbar, keine Spanne genannt. Progressionen 225 %, 350 %, 500 %+, 800 % oder 1.000 % laut Produktseite; Leistung ab welchem Invaliditätsgrad nicht genannt.",
+    "Unfallrente, Krankenhaustagegeld, Genesungsgeld und Tagegeld sind optionale Leistungsarten; Höhe frei vereinbar. Krankenhaustagegeld höchstens 2, 3 bzw. 5 Jahre.",
+    "Gliedertaxe exclusiv nur für comfort wählbar. Pakete Hilfe & Pflege, Rehamanagement, Zuhause Tier & Co., Sport Freizeit & Co. gegen Aufpreis."
+  ]
+}

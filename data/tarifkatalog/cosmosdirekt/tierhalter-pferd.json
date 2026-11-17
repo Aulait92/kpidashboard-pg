@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalter-Haftpflichtversicherung (Pferd)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Flurschäden versichert",
+    "Ausland bis 3 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "wählbar",
+        "miete": "nein",
+        "flurschaden": "ja",
+        "fohlen": "nein",
+        "ausland": "bis 3 Jahre"
+      },
+      "quelle": "https://www.cosmosdirekt.de/tierhalterhaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Comfort-Schutz",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "wählbar",
+        "miete": "50 Mio. €",
+        "flurschaden": "ja",
+        "fohlen": "bis 6 Monate",
+        "ausland": "bis 3 Jahre"
+      },
+      "quelle": "https://www.cosmosdirekt.de/tierhalterhaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/tierhalterhaftpflicht/"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und Comfort für Hunde und Pferde; keine Stufe hervorgehoben.",
+    "Selbstbeteiligung im Rechner wählbar, Höhe auf der Seite nicht genannt.",
+    "Ab dem zweiten Tier 25 % Rabatt auf den Gesamtbeitrag.",
+    "Nicht versicherbar: gewerblich gehaltene Tiere (z. B. Wachhunde, Turnierpferde), bestimmte Hunderassen.",
+    "Reitbeteiligung bzw. Fremdreiter auf der Seite nicht genannt.",
+    "Nachwuchs (Fohlen) nur im Comfort bis 6 Monate."
+  ]
+}

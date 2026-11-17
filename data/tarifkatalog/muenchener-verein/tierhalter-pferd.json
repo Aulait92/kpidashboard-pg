@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalter-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "3 Mio. € pauschal"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Pferd",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "3 Mio. € pauschal",
+        "flurschaden": "ja",
+        "fohlen": "bis 2 Jahre",
+        "ausland": "weltweit, bis 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/tierhalter-haftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/haftpflicht/tierhalter-haftpflicht/"
+  ],
+  "offen": [
+    "Ein Tarif ohne Stufen; Werte aus der Produktseite. Flurschäden bei Weidetierhaltung, Summe nicht genannt. Fohlen der versicherten Stute bis 2 Jahre.",
+    "Selbstbeteiligung, Mietsachschäden (Stall, Box) und Reitbeteiligung nicht genannt; bitte im Angebot prüfen."
+  ]
+}

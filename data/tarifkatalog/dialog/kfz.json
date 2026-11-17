@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Dialog",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung Pkw (Tarif 10/2026)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Kein Abzug neu für alt",
+    "Mallorca-Police",
+    "Zweitwagen bis SF 3"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Premium",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 5.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "elektro": "ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/produkte/privatkunden-komposit/kraftfahrt/pkw",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dialog-versicherung.de/produkte/privatkunden-komposit/kraftfahrt/pkw",
+    "https://www.dialog-versicherung.de/resource/blob/4358/3ea7afdb671be4e582d5b71627afe0e3/Leistungs%C3%BCbersicht%20Kraftfahrt"
+  ],
+  "offen": [
+    "Ein Pkw-Tarif Premium (AKB Stand 10/2026); Zusatzbaustein VollkaskoPLUS mit 36 Monaten Neu- und Kaufpreisentschädigung, Allgefahrendeckung und Tierbiss-Folgeschäden bis zum Wiederbeschaffungswert.",
+    "Tierbiss- und Kurzschlussfolgeschäden bis 5.000 €, gegen Mehrbeitrag 10.000 €; E- und Hybrid-Pkw bis 20.000 € und Allgefahrendeckung für den Akku.",
+    "Werkstattbindung nicht genannt. Schutzbrief, FahrerPLUS, Rabattschutz ab SF 1 und GAP-Deckung optional.",
+    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+  ]
+}

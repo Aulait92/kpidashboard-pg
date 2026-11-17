@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "Würzburger",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung für gesetzlich Versicherte",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Freie Arztwahl",
+    "Begrenzung entfällt bei Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "Zahn-Schutzbrief (Zahnerhalt und Zahnersatz)",
+      "kurz": "Schutzbrief",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "doppelter Festzuschuss",
+        "implantate": "nur Zahnersatz darauf",
+        "behandlung": "100 % mit GKV",
+        "prophylaxe": "50 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "4 Jahre, bis 1.000 €",
+        "kfo": "nein",
+        "inlays": "100 % mit GKV"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerzburger.com/produkte/zahnzusatzversicherung/zahn-schutzbrief",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DentSecure Exklusiv",
+      "kurz": "DentSecure",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "85 %, 90 % mit Bonus",
+        "implantate": "85 %, 90 % mit Bonus",
+        "behandlung": "100 %",
+        "prophylaxe": "2 x 80 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "5 Jahre, bis 2.500 €",
+        "kfo": "nein",
+        "inlays": "85 %, 90 % mit Bonus"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerzburger.com/produkte/zahnzusatzversicherung/dentsecure-exklusiv",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerzburger.com/produkte/zahnzusatzversicherung",
+    "https://www.wuerzburger.com/produkte/zahnzusatzversicherung/zahn-schutzbrief",
+    "https://www.wuerzburger.com/produkte/zahnzusatzversicherung/dentsecure-exklusiv",
+    "https://www.wuerzburger.com/images/pdf/AVB_Zahn_2010_03-0717.pdf",
+    "https://www.wuerzburger.com/images/pdf/AVB_DentSecure_2019.pdf"
+  ],
+  "offen": [
+    "Zwei eigenständige Produkte für gesetzlich Versicherte, hier als Stufen geführt: Zahn-Schutzbrief (Zahnerhalt und Zahnersatz einzeln oder zusammen wählbar) und DentSecure Exklusiv. Keine Empfehlung markiert.",
+    "Erstattung jeweils zusammen mit der Vorleistung der GKV, höchstens 100 % der Rechnung. DentSecure: Regelversorgung 100 %; 90 % bei Nachweis jährlicher Vorsorge in den letzten 5 Jahren.",
+    "Zahn-Schutzbrief: implantologische Maßnahmen ausgeschlossen, Zahnersatz auf Implantaten mit doppeltem Festzuschuss. Begrenzung 250/500/750/1.000 € in den Jahren 1 bis 4.",
+    "DentSecure: Begrenzung 500/1.000/1.500/2.000/2.500 € in den Jahren 1 bis 5; zusätzlich bis 250 €/Jahr für Narkose, Lachgas, Akupunktur. Kieferorthopädie in beiden Produkten ausgeschlossen.",
+    "DentOptimal ist ein Zahnersatz-Tarif für privat Vollversicherte und nicht aufgenommen."
+  ]
+}

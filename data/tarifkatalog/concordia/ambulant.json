@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung AZ Kompakt",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Telemedizin TeleClinic",
+    "Recht auf Höherversicherung"
+  ],
+  "tarife": [
+    {
+      "name": "AZ Kompakt",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, bis 600 €/Jahr",
+        "sehhilfen": "80 %, bis 150 €/Jahr",
+        "vorsorge": "80 %, bis 300 €/Jahr",
+        "arznei": "Zuzahlungen 80 %",
+        "hoergeraete": "Zuzahlung 80 %"
+      },
+      "bausteine": {
+        "sehhilfen": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/ambulante-zusatzversicherungen/az-kompakt/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/ambulante-zusatzversicherungen/az-kompakt/",
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/ambulante-zusatzversicherungen/az-baustein-tarife/"
+  ],
+  "offen": [
+    "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Kompakttarif; daneben einzeln kombinierbare Bausteine (Prävention, Sehen und Hören, TOP-Versorgung ohne Zuzahlungen, Naturheilverfahren), nicht als Stufen geführt.",
+    "Gesetzliche Zuzahlungen (Arznei, Heil- und Hilfsmittel außer Sehhilfen, Krankenhaus u. a.) 80 %, bis 300 € im Jahr. Vorsorge und Schutzimpfungen inklusive Reiseimpfungen 80 %, bis 300 € im Jahr. Telemedizin 100 %, bis 500 € im Jahr.",
+    "Wartezeit und Leistungen für Hörgeräte über die Zuzahlung hinaus nicht genannt. In den ersten 10 Jahren Wechsel in andere AZ-Tarife ohne Gesundheitsprüfung."
+  ]
+}

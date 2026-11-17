@@ -1,0 +1,77 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Rooming-in für Kinder bis 16",
+    "Auch für Privatversicherte"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenhauszusatzversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "bei schwerer Krankheit",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "30 €/Tag, max. 60 €",
+        "ambulant-op": "ja"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:dc83bbc4-6b9b-4ee3-b8d3-4a46610db4ce/275008_highlightblatt_krankenhauszusatzversicherung_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenhauszusatzversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "30 €/Tag, max. 60 €",
+        "ambulant-op": "ja"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:dc83bbc4-6b9b-4ee3-b8d3-4a46610db4ce/275008_highlightblatt_krankenhauszusatzversicherung_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenhauszusatzversicherung Prestige",
+      "kurz": "Prestige",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "50 €/Tag, max. 100 €",
+        "ambulant-op": "ja"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:dc83bbc4-6b9b-4ee3-b8d3-4a46610db4ce/275008_highlightblatt_krankenhauszusatzversicherung_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/dam/jcr:dc83bbc4-6b9b-4ee3-b8d3-4a46610db4ce/275008_highlightblatt_krankenhauszusatzversicherung_bf.pdf",
+    "https://www.diebayerische.de/krankenzusatzversicherungen/krankenhauszusatzversicherung/"
+  ],
+  "offen": [
+    "Quelle: Highlightblatt B 275008 (08.2025) der BA die Bayerische Allgemeine und die Produktseite (Abruf 17.11.2026). Keine Stufe markiert; Komfort als mittlere Stufe.",
+    "Smart leistet nur bei schwerer Krankheit laut Tarifbestimmungen (z. B. Herzinfarkt, bösartiger Tumor, chronische Niereninsuffizienz) und Unfall; Komfort und Prestige bei jedem medizinisch notwendigen Aufenthalt.",
+    "Erstattung privatärztlicher Leistungen ohne Begrenzung auf die GOÄ. Ersatz-Krankenhaustagegeld je Leistungsverzicht (Unterbringung bzw. Privatarzt).",
+    "Komfort und Prestige zusätzlich: Hebamme, stationäre Psychotherapie, Kurtagegeld 16 €/Tag, Familienzimmer bei Entbindung. ÄrzteKompass (Zweitmeinung) nur Prestige. Krankenhaustagegeld als Baustein nicht genannt."
+  ]
+}

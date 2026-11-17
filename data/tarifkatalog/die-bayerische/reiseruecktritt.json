@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktritts- und Reiseabbruchversicherung (TravelProtect)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rücktritt und Abbruch zusammen",
+    "Jobverlust und -wechsel versichert",
+    "Ohne Selbstbehalt möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktritt und -abbruch Standard",
+      "kurz": "Standard",
+      "stufe": 1,
+      "werte": {
+        "sb": "ohne SB möglich",
+        "abbruch": "ja",
+        "jahr": "einmal oder jährlich",
+        "pandemie": "nein",
+        "familie": "Familientarif",
+        "gruende": "Jobverlust, -wechsel"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:e337771e-c487-4725-a2ee-6d89418bc38d/298060_highlightblatt_reiseversicherung.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Reiserücktritt und -abbruch Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "werte": {
+        "sb": "ohne SB möglich",
+        "abbruch": "ja, Urlaubsgarantie",
+        "jahr": "nur Jahresschutz",
+        "pandemie": "ja",
+        "familie": "Familientarif",
+        "gruende": "Jobverlust, -wechsel"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:e337771e-c487-4725-a2ee-6d89418bc38d/298060_highlightblatt_reiseversicherung.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/dam/jcr:e337771e-c487-4725-a2ee-6d89418bc38d/298060_highlightblatt_reiseversicherung.pdf",
+    "https://www.diebayerische.de/unfallversicherung/reiseruecktrittsversicherung/"
+  ],
+  "offen": [
+    "Angebot der Bayerischen mit dem Partner TravelProtect (Highlightblatt B 298060, Abruf 17.11.2026). Einmalschutz nur Standard; Jahresschutz Standard oder Premium, als Plus mit Reisegepäck und als VIP zusätzlich mit Reisekranken.",
+    "Premium zusätzlich: Pandemie und Quarantäne, Schutz trotz Reisewarnung, Reiseunterbrechung, Umbuchung ohne Grund bis 42 Tage vor Reisebeginn (max. 50 € je Person), Urlaubsgarantie (voller Reisepreis bei Abbruch in der ersten Hälfte bzw. ersten 7 Tagen).",
+    "Versicherungssumme (nach Reisepreis) und Höhe einer Selbstbeteiligung nicht genannt; laut Produktseite „ohne Selbstbehalt möglich“. Familientarif: bis zwei Erwachsene und Kinder bis 25 Jahre."
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Versicherung (TierVital-Schutz)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Ausland bis 12 Monate",
+    "Auch bei Fehlentwicklung"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-OP-Versicherung",
+      "kurz": "OP",
+      "stufe": 1,
+      "werte": {
+        "got": "3-fach + Notdienst",
+        "jhl": "4.000 € (OP)",
+        "vorsorge": "nein",
+        "physio": "nein",
+        "ausland": "bis 12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "nein"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/katze/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Katzen-OP-Versicherung mit Plus-Baustein",
+      "kurz": "OP mit Plus",
+      "stufe": 2,
+      "werte": {
+        "got": "4-fach + Notdienst",
+        "jhl": "4.000 € (OP)",
+        "vorsorge": "nein",
+        "physio": "nach OP",
+        "ausland": "bis 12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "nein"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/katze/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/katze/"
+  ],
+  "offen": [
+    "Ein Tarif (TierVital-Schutz) mit wählbarem Plus-Baustein; Stufe 2 zeigt den Tarif mit Plus-Baustein. Keine Empfehlung markiert. Werte aus der Leistungsübersicht der Produktseite (Abruf 17.11.2026).",
+    "Erstattungssatz in Prozent nicht genannt (Selbstbeteiligung wählbar, Höhe nicht genannt). Nachbehandlung: Vor- und Nachsorge der OP versichert, Dauer nicht genannt.",
+    "Plus-Baustein: 4-facher GOT-Satz, Prothesen, Implantate, Orthesen, regenerative Therapien, Physiotherapie und Osteopathie nach OP. Zahn-Baustein (Zahn- und Kieferbehandlung) zusätzlich wählbar.",
+    "Neuabschluss bis 10 Jahre. Wartezeit nicht genannt. Laut Seite lebenslanger Schutz durch Kündigungsverzicht im OP-Tarif."
+  ]
+}

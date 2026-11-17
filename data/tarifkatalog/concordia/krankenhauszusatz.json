@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Stationäre Zusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Krankenhauswahl",
+    "Chefarzt, Spezialist",
+    "Psychotherapie bis 20 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Stationäre Zusatzversicherung SZ 2",
+      "kurz": "SZ 2",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nur mit SZ PLUS",
+        "ersatztagegeld": "20 € je Verzicht",
+        "ambulant-op": "nur mit SZ PLUS"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/krankenhaus-zusatzversicherungen/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Stationäre Zusatzversicherung SZ 1",
+      "kurz": "SZ 1",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nur mit SZ PLUS",
+        "ersatztagegeld": "20 € + 40 € Verzicht",
+        "ambulant-op": "nur mit SZ PLUS"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/krankenhaus-zusatzversicherungen/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Stationäre Zusatzversicherung SZ 1 mit SZ PLUS",
+      "kurz": "SZ 1 + PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "ersatztagegeld": "20 € + 40 € Verzicht",
+        "ambulant-op": "ja, im Krankenhaus"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/krankenhaus-zusatzversicherungen/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/krankenhaus-zusatzversicherungen/"
+  ],
+  "offen": [
+    "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Keine Stufe markiert; SZ 1 als mittlere Stufe. SZ PLUS ist ein Ergänzungstarif zu SZ 1 oder SZ 2.",
+    "Ersatz-Krankenhaustagegeld: 20 € bei Verzicht auf Chefarzt, 40 € (SZ 1) bzw. 20 € (SZ 2) bei Verzicht auf das Ein- bzw. Zweibettzimmer. Wartezeit nicht genannt.",
+    "SZ PLUS zusätzlich: Zuzahlung Krankenhaus 10 €/Tag bis 28 Tage, Rooming-in 25 €/Tag, Wechseloption in die Vollversicherung nach 5 Jahren. Krankenhaustagegeld als eigener Tarif KHT."
+  ]
+}

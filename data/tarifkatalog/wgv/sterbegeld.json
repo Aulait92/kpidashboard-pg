@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsfragen",
+    "Beitragsrückgabe in Aufbauzeit",
+    "Überschussbeteiligung"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "frei wählbar",
+        "wartezeit": "2 Jahre Aufbauzeit",
+        "unfall": "volle Summe sofort",
+        "ohne-gp": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/vorsorge/sterbegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/gesundheit-vorsorge/vorsorge/sterbegeld/",
+    "https://www.wgv.de/docs/vertragsunterlagen/leben_sterbegeld.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Produktseite und Versicherungsbedingungen, Abruf 17.11.2026). Versicherer: WGV-Lebensversicherung AG.",
+    "Bei Tod in den ersten zwei Jahren wird die Beitragssumme erstattet, bei Unfalltod immer die volle Summe (keine doppelte Summe).",
+    "Versicherungssumme: Beispiele 2.500 bis 7.500 €, Mindest- und Höchstsumme nicht genannt. Beitragszahlungsdauer nicht genannt."
+  ]
+}

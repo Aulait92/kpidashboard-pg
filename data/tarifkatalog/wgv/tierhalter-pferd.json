@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Hunde- und Pferdehaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistungs-Update-Garantie",
+    "Weltweit gültig",
+    "Nachlass ab dem 2. Tier"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "miete": "ja, Stall, Weide, Halle",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "ja, erste 12 Monate",
+        "forderungsausfall": "ja, inkl. Vorsatz",
+        "geliehen": "ja, zur Tierhaltung",
+        "tiergefahr": "bis 250 €",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/recht-eigentum/haftung/tierhalterhaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/recht-eigentum/haftung/tierhalterhaftpflichtversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/tier.pdf"
+  ],
+  "offen": [
+    "Ein Tarif für Hunde und Pferde (Produktseite \"Ausgewählte Leistungen\" und Vertragsbedingungen, Abruf 17.11.2026). Versicherer: WGV-Versicherung AG bzw. für den öffentlichen Dienst in Württemberg die Württembergische Gemeinde-Versicherung a.G.",
+    "Selbstbeteiligung laut Bedingungen nur \"falls vereinbart\"; ob und in welcher Höhe wählbar, nicht genannt.",
+    "Mehrleistung 20 % bei Reparatur statt Neukauf bis 1.000 €; Mithaftung bis 250 € wird nicht angerechnet; Ausland in Europa unbegrenzt, weltweit bis 5 Jahre.",
+    "Tierschutzbrief für Hundehalter als Baustein. Listenhunde (z. B. Pitbull, Bullterrier) werden nicht versichert."
+  ]
+}

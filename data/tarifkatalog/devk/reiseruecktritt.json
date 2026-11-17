@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung (ERGO Reiseversicherung)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Stornokosten und Umbuchung",
+    "Telefonische Stornoberatung",
+    "Assistance weltweit"
+  ],
+  "tarife": [
+    {
+      "name": "Einmal-Reiseschutz (Rundum-Sorglos-Paket)",
+      "kurz": "Einmalreise",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja",
+        "jahr": "nein"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.devk.de/produkte/reiseversicherung/reiseruecktritt/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktrittsversicherung",
+      "kurz": "Jahresschutz",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "summe": "2.500 bis 10.000 €",
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja",
+        "jahr": "ja",
+        "familie": "Familie, Kinder bis 25"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.devk.de/produkte/reiseversicherung/reiseruecktritt/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/reiseversicherung/reiseruecktritt/",
+    "https://medien.devk.de/assets/content/download/produkte/reise/devk-ergo-produktinfo-jahresreise-ruecktritt-72001-2023-12.pdf"
+  ],
+  "offen": [
+    "DEVK bietet die Reiserücktrittsversicherung über den Kooperationspartner ERGO Reiseversicherung an.",
+    "Einmal-Schutz enthält Storno, Reiseabbruch, Reisekranken und Reisegepäck; Versicherungssumme je Reise nicht genannt.",
+    "Jahresschutz: Tarifsumme je Reise 2.500, 5.000, 7.500 oder 10.000 € (Produktinfo 72001, 12/2023), alle Reisen ab 50 km.",
+    "Höhe der Selbstbeteiligung, Pandemie und Jobverlust nicht genannt."
+  ]
+}

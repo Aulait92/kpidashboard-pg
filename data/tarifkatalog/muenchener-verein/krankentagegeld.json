@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld für Arbeitnehmer (Tarif 380)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Berufszuschlag",
+    "Auch an Sonn- und Feiertagen",
+    "Wiedereingliederung 100 %"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld Tarif 380",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "hoehe": "bis 206 €/Tag",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja",
+        "selbststaendige": "ja, ab 22. Tag",
+        "ausland": "Europa"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/gesundheit/krankentagegeld/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/KTG-AVB/KTG-T380_Bedingungen_MuenchenerVerein_PKV-Zusatz_KrankentagegeldV.pdf",
+    "https://www.muenchener-verein.de/downloadcenter/KV/Werbeunterlagen/6700211.pdf"
+  ],
+  "offen": [
+    "Zusatzversicherung für gesetzlich versicherte Arbeitnehmer; Selbstständige ab dem 22. Tag. Höchstsatz für Selbstständige auf der Seite widersprüchlich (213 € bzw. 189 €/Tag), bitte prüfen.",
+    "Wartezeit 3 Monate, entfällt bei Unfällen. Ende laut FAQ bei Berufsunfähigkeit, Bezug von Altersrente, spätestens mit 67."
+  ]
+}

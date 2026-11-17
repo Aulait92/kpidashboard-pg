@@ -1,0 +1,48 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "hund-kranken",
+  "produkt": "Tierversicherung Hund: Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Alle Leistungen der OP-Versicherung",
+    "Wartezeit Unfall 5 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenversicherung Hund",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "3.000/6.000 €/unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "ja, nach 6 Monaten",
+        "physio": "ohne OP bis 750 €",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/tiere/tierversicherung.html"
+  ],
+  "offen": [
+    "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (3.000 €, 6.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
+    "Diagnostik auch ohne OP; Physiotherapie und alternative Behandlungen ohne OP bis 750 € im Jahr.",
+    "Dauer der Nachbehandlung nach OP für die Krankenversicherung auf debeka.de nicht genannt (DEVK nennt für denselben Uelzener-Tarif unbegrenzt).",
+    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung."
+  ]
+}

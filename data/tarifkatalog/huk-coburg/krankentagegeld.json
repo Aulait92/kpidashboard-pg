@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Für GKV- und PKV-Versicherte",
+    "Tagessatz in 5-€-Schritten",
+    "Bis zum Nettoeinkommen"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld KT1 bis KT3 (Selbstständige, Freiberufler)",
+      "kurz": "KT1 bis KT3",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "noch 3 Monate",
+        "ausland": "Europa, akut",
+        "ab-tag": "ab 8., 15. oder 22. Tag",
+        "hoehe": "bis 180 € (KT1: 90 €)",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/krankentagegeld.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld KT6 bis KT52 (Arbeitnehmer, Selbstständige)",
+      "kurz": "KT6 bis KT52",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "noch 3 Monate",
+        "ausland": "Europa, akut",
+        "ab-tag": "ab 43. Tag oder später",
+        "hoehe": "bis 300 €",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/krankentagegeld.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/krankentagegeld.html",
+    "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/allgemeine_versicherungsbedingungen_krankentagegeld_kt1-3.pdf",
+    "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/allgemeine_versicherungsbedingungen_krankentagegeld_kt6-52.pdf",
+    "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/allgemeine_versicherungsbedingungen_krankentagegeld.pdf"
+  ],
+  "offen": [
+    "Werte aus Produktseite und Tarifbedingungen KT1 bis KT3 bzw. KT6 bis KT52 (Stand 01.2018) sowie den AVB Krankentagegeld (Stand 06.2024).",
+    "Karenzzeit: KT1 ab 8., KT2 ab 15., KT3 ab 22. Tag; KT6 ab 43. Tag (6 Wochen), bei Arbeitnehmern auch längere Karenzzeiten bis KT52. Tagessatz höchstens 180 € (KT1 90 €) bzw. 300 € für alle Krankentagegeldtarife zusammen.",
+    "Allgemeine Wartezeit 3 Monate, entfällt bei Unfällen. Bei Berufsunfähigkeit endet der Vertrag, Leistung höchstens noch 3 Monate. Im europäischen Ausland für akute Krankheiten und Unfälle.",
+    "Stufen sind Zielgruppen bzw. Karenzzeiten, keine Leistungsstufen; keine Empfehlung markiert."
+  ]
+}

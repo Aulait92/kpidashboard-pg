@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung FLEXXdrive",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Eigenschäden bis 100.000 €",
+    "Parkschaden Smart-Repair",
+    "Eltern-Kind-Regelung"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung FLEXXdrive",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "inkl. Folgeschäden",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "wählbar",
+        "elektro": "ja",
+        "mallorca": "ja, bis 6 Monate"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/kfz-versicherung/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/kfz-versicherung/autoversicherung/"
+  ],
+  "offen": [
+    "Ein Tarif mit Haftpflicht, Teil- und Vollkasko und Bausteinen; keine Leistungsstufen. Je geschädigte Person höchstens 15 Mio. €.",
+    "Grobe Fahrlässigkeit: volle Leistung laut Highlights. Marder: Tierbissschäden inklusive Folgeschäden, Summe nicht genannt. Kurzschluss-Folgeschäden bis 3.000 €.",
+    "Werkstatt-Service als Baustein für Pkw (20 % Nachlass auf die Kasko). Akku-Schäden bei Hybrid- und Elektro-Pkw sowie Ladekabel mitversichert. Rabattschutz ab SF 4."
+  ]
+}

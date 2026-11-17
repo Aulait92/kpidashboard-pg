@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit",
+    "Gleitender Neuwert",
+    "Beitragsfreie Rohbauzeit"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäudeversicherung Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "PV optional",
+        "kosten": "bis 50.000 €",
+        "neuwert": "ja",
+        "ueberspannung": "bis 5.000 €",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäudeversicherung Comfort-Schutz",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "PV optional",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "bis 5.000 €",
+        "vandalismus": "bis 5.000 €",
+        "tiere": "bis 1.000 €",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/wohngebaeudeversicherung/",
+    "https://www.cosmosdirekt.de/resource/blob/600380/af8ef44a1c3bed5eec677ae45d15629f/BF_VGV_1025.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und Comfort; keine Stufe hervorgehoben.",
+    "Kosten nach Schaden: Aufräumungs-, Abbruch-, Bewegungs- und Schutzkosten im Basis bis 50.000 €, im Comfort ohne eigene Grenze.",
+    "Photovoltaik als Baustein (inkl. Ertragsausfall bis 5.000 €); Wärmepumpen und Ladestationen in beiden Tarifen versichert.",
+    "Ableitungsrohre außerhalb des Gebäudes als Baustein bis 5.000 €.",
+    "Vandalismus: Comfort ersetzt Gebäudeschäden durch Einbrecher und Graffiti je bis 5.000 €.",
+    "Selbstbeteiligung wählbar (Preisbeispiel 500 €)."
+  ]
+}

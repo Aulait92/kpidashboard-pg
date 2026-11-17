@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "katze-op",
+  "produkt": "Tier-OP-Versicherung (Hund und Katze)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Wartezeit bei Unfall",
+    "Aufnahme 2 Monate bis 9 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Tier-OP-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "28 Tage",
+        "vorsorge": "nein",
+        "zahn": "Zahn-Baustein optional",
+        "kastration": "nur med. notwendig",
+        "physio": "bis 28 Tage nach OP",
+        "sb": "wählbar",
+        "wartezeit": "1 Monat",
+        "ausland": "bis 12 Monate weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/reise-freizeit/tiere/tier-op/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/reise-freizeit/tiere/tier-op/",
+    "https://www.wgv.de/docs/vertragsunterlagen/tier-op.pdf"
+  ],
+  "offen": [
+    "Ein Tarif für Hund und Katze, keine Stufen (Produktseite und Vertragsbedingungen mit IPID, Abruf 17.11.2026). Versicherer: WGV-Versicherung AG.",
+    "Erstattung in Prozent nicht genannt: erstattet werden die Tierarztkosten bis zum 4-fachen GOT-Satz inkl. Notdienstgebühr, abzüglich einer vereinbarten Selbstbeteiligung.",
+    "Selbstbeteiligung laut Bedingungen \"falls vereinbart\"; Beitragsbeispiel ohne SB, wählbare SB-Höhen nicht genannt.",
+    "Wartezeit 6 Monate für bestimmte Erkrankungen; entfällt bei Unfall und nahtloser Vorversicherung.",
+    "Routine- und Vorsorgeuntersuchungen ausgeschlossen. Zahn-Baustein (Zahnextraktion, Wurzelbehandlung) und Tierschutzbrief gegen Mehrbeitrag."
+  ]
+}

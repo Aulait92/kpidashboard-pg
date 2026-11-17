@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit",
+    "Feuer, Wasser, Einbruch, Sturm",
+    "Arbeitszimmer mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Hausratversicherung Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis 20 %",
+        "fahrrad": "optional",
+        "elementar": "nein",
+        "auto": "nein",
+        "ueberspannung": "bis 10 %",
+        "hotel": "50 €, 180 Tage",
+        "aussen": "6 Monate, 20.000 €",
+        "online": "optional",
+        "garten": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausratversicherung Comfort-Schutz",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis 40 %",
+        "fahrrad": "optional",
+        "elementar": "ja",
+        "auto": "bis 5.000 €",
+        "ueberspannung": "ja",
+        "hotel": "100 €, unbegrenzt",
+        "aussen": "12 Monate, 40.000 €",
+        "online": "optional",
+        "garten": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/hausratversicherung/",
+    "https://www.cosmosdirekt.de/resource/blob/600378/c4c4256f99132e3b44247aa5ecaa086e/BF_VHV_1025.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und Comfort; keine Stufe hervorgehoben.",
+    "Einfacher Diebstahl nicht als Leistung genannt; Comfort deckt Trickdiebstahl, Diebstahl am Arbeitsplatz und aus Umkleiden bis 5.000 €.",
+    "Wertsachen in % der Versicherungssumme (Höchstentschädigung).",
+    "Fahrraddiebstahl als Baustein von 500 bis 10.000 € wählbar; Onlineschutz Plus (Phishing, Online-Banking, bis 10.000 €) als Baustein.",
+    "Elementarschäden laut Tariftabelle im Comfort enthalten, im Basis nicht.",
+    "Selbstbeteiligung wählbar, Höhe nicht genannt."
+  ]
+}

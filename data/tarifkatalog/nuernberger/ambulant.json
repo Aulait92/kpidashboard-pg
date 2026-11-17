@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung Rundumschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Heilpraktiker 80 %, bis 400 €",
+    "Sehhilfen bis 300 € in 2 Jahren",
+    "Auslandskrankenschutz"
+  ],
+  "tarife": [
+    {
+      "name": "Rundumschutz (PEG)",
+      "kurz": "PEG",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 400 €/Jahr",
+        "sehhilfen": "80 %, 300 €/2 Jahre",
+        "vorsorge": "nein",
+        "ausland": "ja"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/rundumschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundumschutz + Vorsorge (PEG+VORS)",
+      "kurz": "PEG+VORS",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, bis 400 €/Jahr",
+        "sehhilfen": "80 %, 300 €/2 Jahre",
+        "vorsorge": "100 %, bis 400 €/Jahr",
+        "ausland": "ja"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/rundumschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundumschutz + Vorsorge + Zahnvorsorge (PEG+VORS+ZV)",
+      "kurz": "PEG+VORS+ZV",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 400 €/Jahr",
+        "sehhilfen": "80 %, 300 €/2 Jahre",
+        "vorsorge": "100 %, bis 400 €/Jahr",
+        "ausland": "ja"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/rundumschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/rundumschutz/",
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/sehen-und-hoeren/",
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/alternative-medizin/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert; PEG+VORS als mittlere Stufe.",
+    "Alle Stufen: Zahnersatz 50 %, gesetzliche Zuzahlungen 100 % (bis 40 € im Jahr) und im Krankenhaus. Ab PEG+VORS Schutzimpfungen bis 200 € in 24 Monaten; PEG+VORS+ZV zusätzlich Zahnprophylaxe 100 € im Jahr, Kieferorthopädie 80 % bis 2.000 €.",
+    "Arzneimittel und Hörgeräte nicht im Rundumschutz. Einzeltarife: Sehen und Hören (Hörgeräte 800 € je Ohr in 36 Monaten, LASIK 750 € je Auge), Alternative Medizin AMed (80 %, bis 800 € in 12 Monaten)."
+  ]
+}

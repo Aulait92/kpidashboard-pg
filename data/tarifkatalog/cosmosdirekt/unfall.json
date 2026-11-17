@@ -1,0 +1,77 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistung ab 1 % Invalidität",
+    "25 % mehr im Cosmos-Pkw",
+    "Weltweit rund um die Uhr"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "wählbar",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "nein",
+        "kosmetik": "bis 15.000 €",
+        "bergung": "bis 15.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "Standard"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Comfort-Schutz",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "wählbar",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "10.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "verbessert"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/unfallversicherung/",
+    "https://www.cosmosdirekt.de/resource/blob/600390/bea747c04e7aa8a310a75624a89a9f0d/BF_AU_1025.pdf",
+    "https://www.cosmosdirekt.de/resource/blob/11558/bca2cb79bee1dccca68457d03fadaa4f/Bedingungen-Unfallversicherung.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und Comfort; keine Stufe hervorgehoben.",
+    "Invaliditätssumme frei wählbar (Empfehlung der Seite: 5- bis 6-faches Bruttojahresgehalt); Progression wählbar, Beispiele mit 225 % und 500 %.",
+    "Unfallrente (ab 50 % Invalidität), Todesfallleistung und Krankenhaustage- und Genesungsgeld frei wählbar; Unfallschutz Plus (Hilfeleistungen) als Zusatz.",
+    "Zeckenstich: Infektionen durch Insektenstiche und Tierbisse in beiden Tarifen versichert.",
+    "Knochenbruch-Extrageld Basis bis 250 €, Comfort bis 500 €; 25 % Mehrleistung bei Unfall im bei CosmosDirekt versicherten Pkw."
+  ]
+}

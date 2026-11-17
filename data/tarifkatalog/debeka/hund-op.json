@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "hund-op",
+  "produkt": "Tierversicherung Hund: OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Giftköderschutz",
+    "Wartezeit Unfall 5 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "OP-Versicherung Hund",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "3.000/6.000 €/unbegrenzt",
+        "nachbehandlung": "bis 42 Tage",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "ja, nach 6 Monaten",
+        "physio": "ja, rund um die OP",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/tiere/tierversicherung.html"
+  ],
+  "offen": [
+    "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (3.000 €, 6.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
+    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung; Sterbegeld-Baustein optional.",
+    "Wartezeit besondere OPs 1 Jahr."
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalterhaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Forderungsausfall bei Vorsatz",
+    "Turniere und Kutschfahrten",
+    "Gewollte Deckakte"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "30 Mio. €",
+        "reitbeteiligung": "ja",
+        "geliehen": "bis 5.000 €",
+        "nebenberuf": "bis 6.000 € Umsatz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/sach-haftpflicht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierhalterhaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "reitbeteiligung": "ja",
+        "geliehen": "ja",
+        "nebenberuf": "bis 22.000 € Umsatz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/sach-haftpflicht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/sach-haftpflicht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/"
+  ],
+  "offen": [
+    "Gleiche Tarifübersicht für Hund und Pferd. Je Person höchstens 15 Mio. €. Reitbeteiligte, Haltergemeinschaften und fremde Reiter sowie deren Ansprüche mitversichert.",
+    "Selbstbeteiligung, Mietsachschäden (Stall, Box) und Flurschäden nicht genannt. „Geliehen“: Mieterschutz für geliehene, gemietete und geleaste bewegliche Sachen (Exklusiv bis 5.000 €).",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Forderungsausfall bei Vorsatz",
+    "Mietsachschäden weltweit",
+    "Ehrenamt mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "forderungsausfall": "ja, auch Vorsatz",
+        "schluessel": "bis 100.000 €",
+        "geliehen": "bis 25.000 €",
+        "gefaelligkeit": "bis 25.000 €",
+        "neuwert": "nein",
+        "miete": "ja",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/sach-haftpflicht/haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "30 Mio. €",
+        "forderungsausfall": "ja, auch Vorsatz",
+        "schluessel": "ja",
+        "geliehen": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "miete": "ja",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/sach-haftpflicht/haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja, auch Vorsatz",
+        "schluessel": "ja",
+        "geliehen": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "miete": "ja",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/sach-haftpflicht/haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/sach-haftpflicht/haftpflichtversicherung/"
+  ],
+  "offen": [
+    "Werte aus der Tarifübersicht der Produktseite (grüner Haken = bis zur Versicherungssumme, als „ja“ übernommen). Je Person höchstens 15 Mio. €.",
+    "Schäden durch deliktunfähige Kinder: auf der Seite nur als Überschrift „Forderungsausfall & Deliktunfähigkeit“ genannt, ohne Wert; bitte in den Bedingungen prüfen.",
+    "Neuwert Premium: bis 5.000 € für Sachen bis 24 Monate (ohne Computer, Handys, Unterhaltungselektronik, Brillen). Fremde Kfz beim Be- und Entladen bis 5.000 €, geliehene Fahrräder bis 500 €.",
+    "Mietsachschäden: Text nennt starken Schutz in allen Tarifen, ohne Summe. Selbstbeteiligung, Mallorca-Deckung und Drohnen nicht genannt. Keine Empfehlung markiert; Exklusiv als mittlere Stufe.",
+    "Tierhalterhaftpflicht für Hund und Pferd als eigenes Produkt (siehe tierhalter-hund, tierhalter-pferd)."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rückholung bis 10.000 €",
+    "Abschluss ab 50 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeld-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "2.500 bis 15.000 €",
+        "wartezeit": "24 Monate",
+        "unfall": "sofort volle Summe",
+        "ohne-gp": "ja",
+        "beitragsende": "nach Wunsch",
+        "vorsorge": "Vorsorgeportal"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/sterbegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/zukunft-vorsorge/sterbegeld/"
+  ],
+  "offen": [
+    "Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Tarif; Risikoträger auf der Seite nicht ausdrücklich genannt.",
+    "Volle Summe nach 24 Monaten, bei Unfalltod sofort (keine doppelte Leistung genannt). Leistung in der Wartezeit nicht beschrieben. Vermittlung von Palliativpflege und Hospizplatz, 24-Stunden-Telefonservice."
+  ]
+}

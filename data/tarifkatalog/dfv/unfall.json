@@ -1,0 +1,95 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "unfall",
+  "produkt": "DFV-UnfallSchutz",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Genesungsgeld wie Tagegeld",
+    "Reha und Hilfsmittel 100 %",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-UnfallSchutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "100.000 €",
+        "progression": "225 %",
+        "abGrad": "ab 20 %",
+        "unfallrente": "optional",
+        "khtg": "20 € je Tag",
+        "maxInvaliditaet": "225.000 €",
+        "todesfall": "5.000 €",
+        "sofort": "10.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-UnfallSchutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "150.000 €",
+        "progression": "350 %",
+        "abGrad": "ab 20 %",
+        "unfallrente": "optional",
+        "khtg": "40 € je Tag",
+        "maxInvaliditaet": "525.000 €",
+        "todesfall": "10.000 €",
+        "sofort": "10.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-UnfallSchutz Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "150.000 €",
+        "progression": "500 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "50 € je Tag",
+        "maxInvaliditaet": "750.000 €",
+        "todesfall": "20.000 €",
+        "sofort": "20.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "100 %"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/unfallversicherung/"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich und Leistungsübersicht der Produktseite deutsche-familienversicherung.de.",
+    "Exklusiv: zusätzlich 150.000 € ab 80 % Invalidität vor dem 65. Geburtstag (Vollinvalidität laut Tarifkarte bis 900.000 €).",
+    "Todesfallleistung nur bei Unfall vor dem 65. Geburtstag. Krankenhaustagegeld im Ausland doppelt.",
+    "Flex-Tarif mit frei wählbarer Grundsumme und Progression nicht als Stufe aufgenommen.",
+    "DFV markiert Premium als „Unsere Empfehlung“."
+  ]
+}

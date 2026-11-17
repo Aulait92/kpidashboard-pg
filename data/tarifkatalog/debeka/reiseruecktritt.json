@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiseversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit, bis 70 Tage je Reise",
+    "Kinder bis 20 J. beitragsfrei",
+    "Reisegepäck inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Reiseversicherung Comfort",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "1.500 bis 20.000 €",
+        "sb": "20 % ambulant, min. 25 €",
+        "abbruch": "ja",
+        "jahr": "ja",
+        "pandemie": "optional (LeistungsPlus)",
+        "familie": "Familientarif"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/reisenimausland/reiseversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/zuhausefahrenreisen/reisenimausland/reiseversicherung.html"
+  ],
+  "offen": [
+    "Quelle: Produktseite debeka.de; Jahresvertrag mit vier wählbaren Versicherungssummen je Reise (Single 1.500 bis 10.000 €, Familie 3.000 bis 20.000 €).",
+    "Selbstbehalt 20 %, mindestens 25 €, nur bei unerwarteter schwerer Erkrankung ohne vollstationäre Behandlung.",
+    "Reise LeistungsPlus (gegen Beitrag): u. a. Absicherung bei Corona-Maßnahmen; entfällt Selbstbehalt bei Covid-19.",
+    "Jobverlust als Rücktrittsgrund nicht genannt."
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Deckakt mitversichert",
+    "Flurschäden",
+    "Einsatz im Verein"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "ohne oder 250 €",
+        "miete": "1 Mio. €",
+        "fremdhueter": "ja",
+        "welpen": "bis 6 Monate",
+        "forderungsausfall": "nein",
+        "ausland": "bis 3 Jahre"
+      },
+      "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/hundehaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalterhaftpflicht Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "30 Mio. €",
+        "sb": "ohne oder 250 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 1 Jahr",
+        "forderungsausfall": "ja",
+        "ausland": "bis 5 Jahre"
+      },
+      "quelle": "https://www.europa.de/versicherungen/haftpflichtversicherung/hundehaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/haftpflichtversicherung/hundehaftpflicht/"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und Komfort; keine Stufe hervorgehoben.",
+    "Fremde Hüter: Tabelle nennt „Tierhüter fremder Tiere“ in beiden Tarifen.",
+    "Mietsachschäden im Komfort bis zur Versicherungssumme; Ferienwohnung und Hotel 500 € bzw. 10.000 €.",
+    "Ab dem zweiten Hund 50 % Nachlass."
+  ]
+}

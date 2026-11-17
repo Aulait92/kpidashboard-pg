@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "pkv",
+  "produkt": "Private Krankenvollversicherung (Barmenia einsA)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zahnbehandlung 100 %",
+    "Zahnprophylaxe 100 %",
+    "Vorsorge 100 %"
+  ],
+  "tarife": [
+    {
+      "name": "Barmenia einsA prima",
+      "kurz": "einsA prima",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, Facharzt 75 %",
+        "stationaer": "Mehrbettzimmer",
+        "zahnersatz": "75 %",
+        "selbstbehalt": "330, 660 o. 1.320 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "75 %",
+        "psychotherapie": "75 %",
+        "primaerarzt": "ja, sonst 75 %",
+        "sehhilfen": "150 € je Sehhilfe"
+      },
+      "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Barmenia einsA prima+",
+      "kurz": "einsA prima+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, Facharzt 80 %",
+        "stationaer": "Zweibett, Privatarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "330, 660 o. 1.320 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "80 %",
+        "psychotherapie": "80 %",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "300 € je Sehhilfe"
+      },
+      "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Barmenia einsA expert",
+      "kurz": "einsA expert",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "1-/2-Bett, Privatarzt",
+        "zahnersatz": "85 %",
+        "selbstbehalt": "330, 660 o. 1.320 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "85 %",
+        "psychotherapie": "85 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "600 € alle 2 Jahre"
+      },
+      "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Barmenia einsA expert+",
+      "kurz": "einsA expert+",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "1-/2-Bett, Privatarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "330, 660 o. 1.320 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "100 %",
+        "psychotherapie": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "600 € alle 2 Jahre"
+      },
+      "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-prima.pdf",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-prima-2.pdf",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-expert.pdf",
+    "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-expert-2.pdf"
+  ],
+  "offen": [
+    "Angebot der Bayerischen in Kooperation mit der Barmenia Krankenversicherung AG; gleiche Tarife wie im Ordner barmenia-gothaer, Tarifnamen und Leistungen auf diebayerische.de geprüft (Abruf 17.11.2026). Die Bayerische markiert keine Stufe.",
+    "Keine Tarifvergleichstabelle auf barmeniagothaer.de; Werte aus der Kurzübersicht der Tarifbedingungen (Stand 01.01.2025 bzw. 01.01.2026). Laut Produktseite aktuelle Barmenia-Tarife: einsA prima, prima+, expert, expert+.",
+    "Selbstbehalt je Kalenderjahr über die Leistungsstufe: Stufe 1 330 €, Stufe 2 660 €, Stufe 3 1.320 € (Bedingungen nennen dies als Beispiel). Beitragsrückerstattung erfolgsabhängig laut Bedingungen, Höhe nicht genannt.",
+    "prima und prima+: Primärarzttarife, bei direktem Facharztbesuch 75 bzw. 80 %. expert und expert+ sind Kompakttarife ohne Primärarztregel. Hilfsmittel 75/80/85/100 %.",
+    "Sehhilfen: Rechnungsbetrag je Sehhilfe, neue Sehhilfe nach 2 Jahren (bei expert so belegt). Krankentagegeld und Pflegezusatz nicht in den Unterlagen genannt."
+  ]
+}

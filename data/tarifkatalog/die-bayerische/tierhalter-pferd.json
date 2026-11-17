@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalterhaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Flurschäden und Koppelunfälle",
+    "Fremd- und Gastreiter versichert",
+    "Stiftung-Warentest-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalterhaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "werte": {
+        "vs": "25 Mio. €",
+        "sb": "0, 150 oder 500 €",
+        "miete": "Stall bis 50.000 €",
+        "reitbeteiligung": "gegen Zuschlag",
+        "flurschaden": "ja",
+        "fohlen": "12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "50.000 € (SB 250 €)",
+        "ausland": "weltweit 5 Jahre"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:a7a03965-924b-4655-9ad7-ba77943289a2/B%20299352_THV2025_Pferde_Tarifvergleich_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferdehalterhaftpflicht Prestige",
+      "kurz": "Prestige",
+      "stufe": 2,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "0, 150 oder 500 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "18 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "ja",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:a7a03965-924b-4655-9ad7-ba77943289a2/B%20299352_THV2025_Pferde_Tarifvergleich_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/dam/jcr:a7a03965-924b-4655-9ad7-ba77943289a2/B%20299352_THV2025_Pferde_Tarifvergleich_bf.pdf",
+    "https://www.diebayerische.de/tierversicherungen/pferdehaftpflichtversicherung/"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich Pferdehalterhaftpflicht B 299352 (06.2025) der BA die Bayerische Allgemeine und die Produktseite (Abruf 17.11.2026). Keine Stufe markiert.",
+    "Mietsachschäden an Gebäuden und Wohnräumen in beiden Tarifen; Stallungen, Boxen, Reithallen und Koppeln in Komfort bis 50.000 € (SB 250 €), in Prestige ohne Begrenzung. Pferdeanhänger geliehen oder gemietet bis 10.000 € (Komfort SB 250 €).",
+    "Prestige zusätzlich: Best-Leistungs-Garantie, unentgeltlicher Reitunterricht, Handpferd, eigene Kutschen, Kautionsstellung bis 100.000 €, Forderungsausfall mit Prozesskosten bis 15.000 €.",
+    "Neuwert statt Zeitwert nicht im Tarifvergleich genannt."
+  ]
+}

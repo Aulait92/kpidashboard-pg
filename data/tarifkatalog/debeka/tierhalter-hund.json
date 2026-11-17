@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalterhaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Vermögensschäden bis 1 Mio. €",
+    "Kaution im Ausland 250.000 €",
+    "Außerhalb EU bis 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "miete": "Immobilien bis 50 Mio.",
+        "fremdhueter": "ja, nicht gewerblich",
+        "welpen": "ja, 12 Monate",
+        "forderungsausfall": "bis 15 Mio. €",
+        "geliehen": "bis 50.000 €",
+        "ausland": "EU unbegrenzt"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/tierhalterhaftpflicht.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/tierhalterhaftpflicht.html"
+  ],
+  "offen": [
+    "Quelle: Produktseite debeka.de, ein Tarif für Hunde und Pferde.",
+    "Selbstbeteiligung auf der Seite nicht genannt.",
+    "Personenschäden je Person bis 15 Mio. €."
+  ]
+}

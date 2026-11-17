@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsprüfung",
+    "Ohne Altersgrenze",
+    "Ohne Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise-Krankenversicherung Tarif 501 Single",
+      "kurz": "Single",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 70 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja",
+        "selbstbeteiligung": "keine",
+        "zahn": "100 %",
+        "schwanger": "Frühgeburt bis 36. Woche"
+      },
+      "bausteine": {
+        "familie": "nein"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/auslandsreise-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Auslandsreise-Krankenversicherung Tarif 502 Familie",
+      "kurz": "Familie",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 70 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja",
+        "selbstbeteiligung": "keine",
+        "zahn": "100 %",
+        "schwanger": "Frühgeburt bis 36. Woche"
+      },
+      "bausteine": {
+        "familie": "inklusive"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/auslandsreise-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/gesundheit/auslandsreise-krankenversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/ARKV-AVB/1003270.pdf",
+    "https://www.muenchener-verein.de/downloadcenter/KV/Werbeunterlagen/6700156.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife mit gleichen Leistungen (Single und Familie). Familie: Ehe- oder Lebenspartner und Kinder bis 25 im Haushalt, mit Rooming-in und Kinderbetreuung.",
+    "Zahn: schmerzstillende Behandlung, provisorischer Zahnersatz und notwendige Reparaturen, je 100 %. Schwangerschaft: Seite nennt nur Frühgeburten bis Ende der 36. Woche.",
+    "Bekannte Erkrankungen: bei Reiseantritt geplante Behandlungen ausgeschlossen, sonst keine allgemeine Regel genannt. Langzeitreise nicht angeboten. Zwei Tarife ohne Markierung, daher keine Empfehlung."
+  ]
+}

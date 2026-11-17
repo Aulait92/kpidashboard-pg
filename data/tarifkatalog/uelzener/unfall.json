@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "unfall",
+  "produkt": "Unfall-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Reiten mitversichert",
+    "Weltweit, rund um die Uhr",
+    "Genesungsgeld nach Klinik"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall-Versicherung Variante Erwachsene Invalidität",
+      "kurz": "Invalidität",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "350 %",
+        "unfallrente": "nein, Kapitalzahlung",
+        "khtg": "z. B. 48 €/Tag",
+        "maxInvaliditaet": "z. B. 210.000 €",
+        "todesfall": "z. B. 15.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://uelzener.de/mensch/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfall-Renten-Versicherung 24 Stunden Erwachsene",
+      "kurz": "Unfallrente",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "progression": "350 %",
+        "abGrad": "ab 1 % Invalidität",
+        "unfallrente": "bis 2.000 €, lebenslang",
+        "khtg": "z. B. 50 €/Tag",
+        "maxInvaliditaet": "z. B. 280.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://uelzener.de/mensch/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/mensch/unfallversicherung/",
+    "https://uelzener.de/app/uploads/2025/04/DOC-112_0325_V01.pdf",
+    "https://uelzener.de/app/uploads/2025/04/DOC-548_0325_V02.pdf"
+  ],
+  "offen": [
+    "Uelzener bietet Varianten statt Stufen: Invalidität (Kapital) oder Unfallrente, jeweils für Erwachsene und Kinder; Beträge sind Beispielwerte der Produktseite (3 Jahre Laufzeit). Keine Empfehlung markiert.",
+    "Grundsumme nicht genannt; Beispiel Invalidität: 210.000 € bei Vollinvalidität mit 350 % Progression. Rentenvariante: Rente frei wählbar bis 2.000 € monatlich (Beispiel 1.000 €) oder wahlweise Kapital.",
+    "Leistung ab 1 % Invalidität laut Produktseite für die lebenslange Invaliditätszahlung (Rente); für die Kapitalvariante nicht ausdrücklich genannt.",
+    "Kinder: Invalidität z. B. 140.000 € bei Vollinvalidität, 10 € Krankenhaustagegeld, 5.000 € Bergungskosten; Rente z. B. 500 € monatlich. Reiter-Unfallversicherung nur im Pferdehalter-Schutz zur Pferdehaftpflicht, nicht aufgenommen.",
+    "Bedingungen AUB 2008 der Uelzener; Krankenhaustagegeld ab dem 1. Tag, Leistungsdauer unbegrenzt."
+  ]
+}

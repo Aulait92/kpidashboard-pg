@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Dienstunfähigkeitsversicherung (SBU mit DU-Klausel)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Echte DU-Klausel",
+    "Polizei-DU-Klausel",
+    "Karenzzeit wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Exklusiv SBU mit Dienstunfähigkeitsklausel",
+      "kurz": "Exklusiv",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "Zusatzvertrag 1.000 €",
+        "bu": "ja",
+        "nachversicherung": "ja, auch ohne Anlass",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/lebensversicherung/dienstunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Premium SBU mit Dienstunfähigkeitsklausel",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "Zusatzvertrag 1.000 €",
+        "bu": "ja",
+        "nachversicherung": "ja, auch ohne Anlass",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/lebensversicherung/dienstunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/lebensversicherung/dienstunfaehigkeitsversicherung/",
+    "https://www.universa.de/site/assets/files/112159/lvf-210.pdf"
+  ],
+  "offen": [
+    "Selbstständige BU (Exklusiv SBU, Premium SBU) mit vereinbarter DU-Klausel: Entlassung oder Ruhestand wegen Dienstunfähigkeit gilt als BU. Polizeidienstunfähigkeit bis 36 Monate.",
+    "Höchstrenten: einfacher und mittlerer Dienst 1.000 €, gehobener 1.250 €, höherer 1.500 € monatlich. Beamte auf Probe oder Widerruf: zusätzlicher Vertrag über 1.000 € Monatsrente.",
+    "Teildienstunfähigkeit nicht genannt. AU-Klausel nur Premium (siehe universa/bu.json). Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

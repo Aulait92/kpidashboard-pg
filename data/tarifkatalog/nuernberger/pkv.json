@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zahnbehandlung 100 %",
+    "Erfolgsabhängige BRE"
+  ],
+  "tarife": [
+    {
+      "name": "Hausarzttarif HAT6",
+      "kurz": "HAT6",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "Hausarzt 100 %, sonst 75",
+        "stationaer": "Mehrbett (opt. S1/S2)",
+        "zahnersatz": "60 %, Vorsorge 80 %",
+        "selbstbehalt": "600 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "75 %, bis 1.200 €",
+        "primaerarzt": "ja",
+        "sehhilfen": "75 %, 230 €/24 Mon."
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komforttarife TOP3/TOP6",
+      "kurz": "TOP3/TOP6",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %, freie Arztwahl",
+        "stationaer": "Mehrbett (opt. S1/S2)",
+        "zahnersatz": "60 %, mit ZZ20 80 %",
+        "selbstbehalt": "300 oder 600 €",
+        "bre": "TOP+: 4 Monatsbeiträge",
+        "heilpraktiker": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "100 %, 170 €/24 Mon."
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Premiumtarif MAX6+",
+      "kurz": "MAX6+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über Höchstsatz",
+        "stationaer": "1-/2-Bett, Chefarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "600 €",
+        "bre": "1.500 € Gesundheitsplus",
+        "heilpraktiker": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "100 %, 600 €/2 Jahre"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/private-krankenversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert; Komforttarife als mittlere Stufe.",
+    "Stationär HAT6 und TOP: Stationsarzt und Mehrbettzimmer; Chefarzt und Ein-/Zweibettzimmer über die Zusatztarife S1, S2 bzw. SZU (nur Unfall). Selbstbehalt Kinder jeweils halb.",
+    "Beitragsrückerstattung erfolgsabhängig in allen Tarifen; garantiert 4 Monatsbeiträge in TOP3+/TOP6+, im MAX6+ Gesundheitsplus 1.500 € im Jahr ab 21 Jahren. Zahnstaffel 1.000 bis 5.000 € in den ersten Jahren.",
+    "Krankentagegeld als eigener Tarif wählbar (Krankentagegeld für vollversicherte Arbeitnehmer). Hilfsmittel, Psychotherapie und Ausland nicht ausgewertet."
+  ]
+}

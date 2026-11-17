@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "haftpflicht",
+  "produkt": "Private Haftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Gefälligkeitsschäden",
+    "EU unbegrenzt im Ausland",
+    "Beitragsfrei bei Jobverlust"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "forderungsausfall": "5 Mio. €",
+        "schluessel": "5.000 € (150 € SB)",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "5 Mio. €",
+        "gefaelligkeit": "ja",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "ehrenamt": "ja"
+      },
+      "quelle": "https://www.da-direkt.de/haftpflichtversicherung/private-haftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "forderungsausfall": "20 Mio. €",
+        "schluessel": "25.000 € (150 € SB)",
+        "delikt": "500.000 €",
+        "geliehen": "50.000 € (150 € SB)",
+        "miete": "20 Mio. €",
+        "gefaelligkeit": "ja",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 500 g",
+        "ehrenamt": "ja"
+      },
+      "quelle": "https://www.da-direkt.de/haftpflichtversicherung/private-haftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "50 Mio. €",
+        "schluessel": "250.000 €",
+        "delikt": "500.000 €",
+        "geliehen": "50.000 € (150 € SB)",
+        "miete": "50 Mio. €",
+        "gefaelligkeit": "ja",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 500 g",
+        "ehrenamt": "ja"
+      },
+      "quelle": "https://www.da-direkt.de/haftpflichtversicherung/private-haftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/haftpflichtversicherung/private-haftpflichtversicherung",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/haftpflicht/da-direkt_verbraucherinformationen_ps-haftpflicht_2026.pdf",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/haftpflicht/privat/dadirekt_ps_hv_phv_einfacheuebersicht_068_0625.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Top; DA Direkt markiert Komfort als „Topseller“.",
+    "Deliktunfähige Personen: 500.000 € Personen- und Vermögensschäden, 100.000 € Sachschäden (Komfort und Top).",
+    "Schlüsselverlust privat: Basis und Komfort mit 150 € Selbstbeteiligung; beruflich nur Komfort (25.000 €) und Top (250.000 €).",
+    "Drohnen 501 g bis 5 kg in Komfort und Top einschließbar (10 Mio. €); Photovoltaik und Ferienhausvermietung einschließbar.",
+    "Allgemeine Selbstbeteiligung im Tarifvergleich nicht genannt."
+  ]
+}

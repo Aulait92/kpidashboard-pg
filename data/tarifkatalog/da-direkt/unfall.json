@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "24 Stunden weltweit",
+    "Infektionen, Tierbisse, Impfung",
+    "Beitragsfrei bei Jobverlust"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "nein",
+        "kosmetik": "bis 20.000 €",
+        "bergung": "bis 20.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/unfallversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "optional (500 €)",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/unfallversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "optional (1.000 €)",
+        "kosmetik": "bis 75.000 €",
+        "bergung": "bis 75.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "für Ärzte optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/unfallversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/unfallversicherung",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/unfall/dadirekt_ps_unfall_einfacheuebersicht_072_0625.pdf",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/unfall/da-direkt_verbraucherinformationen_unfall_2026.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Top; keine Stufe hervorgehoben, Komfort als mittlere Stufe.",
+    "Invaliditätsleistung, Progressionsstaffeln, Unfallrente, Todesfallleistung und Krankenhaustagegeld (Basis, Komfort bis 3 Jahre, Top bis 5 Jahre) einschließbar; Summen individuell.",
+    "Leistung ab Invaliditätsgrad im Tarifvergleich nicht genannt.",
+    "Sofortleistung bei Knochenbruch einschließbar. Top mit Premium-Baustein: Bergung und kosmetische OP bis 100.000 €.",
+    "Mitwirkung von Krankheiten: Basis 25 %, Komfort und Top 50 %."
+  ]
+}
