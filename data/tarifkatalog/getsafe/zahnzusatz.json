@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Getsafe",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Zahnbehandlung 100 %",
+    "Bis 5-facher GOZ-Satz"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnzusatz mit 75 % Zahnersatz",
+      "kurz": "75 %",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "75 %",
+        "implantate": "75 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, ohne Limit",
+        "wartezeit": "keine",
+        "staffel": "3 Jahre, bis 4.500 €",
+        "kfo": "Kinder bis 3.000 €",
+        "inlays": "75 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/de-de/dental",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz mit 90 % Zahnersatz",
+      "kurz": "90 %",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, ohne Limit",
+        "wartezeit": "keine",
+        "staffel": "3 Jahre, bis 4.500 €",
+        "kfo": "Kinder bis 3.000 €",
+        "inlays": "90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/de-de/dental",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz mit 100 % Zahnersatz",
+      "kurz": "100 %",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, ohne Limit",
+        "wartezeit": "keine",
+        "staffel": "3 Jahre, bis 4.500 €",
+        "kfo": "Kinder bis 3.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/de-de/dental",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hellogetsafe.com/de-de/dental",
+    "https://www.hellogetsafe.com/documents/vertragsbedingungen_zahnzusatz.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktseite („Dein Zahnschutz auf einen Blick“) und Bedingungen (Stand 10.2026); Risikoträger andsafe AG. Ein Tarif mit wählbarem Erstattungssatz für Zahnersatz (75, 90 oder 100 % inklusive GKV-Leistung); Tarifnamen selbst vergeben, keine Markierung, 90 % als mittlere Stufe.",
+    "Implantate: Die Produktseite nennt „100 % Erstattung“, die Bedingungen zählen Implantate und Inlays zum Zahnersatz (Satz nach Tarifwahl). Hier nach Bedingungen gesetzt, bitte prüfen.",
+    "Zahnstaffel kumulativ: 1. Jahr 1.500 €, bis 2. Jahr 3.000 €, bis 3. Jahr 4.500 €, ab dem 4. Jahr unbegrenzt; bei Unfall sofort unbegrenzt; Vorversicherung wird angerechnet.",
+    "Kieferorthopädie bis 21 Jahre: KIG 1 bis 2 bis 3.000 € je Fall, KIG 3 bis 5 Mehrkosten. Bleaching bis 200 € alle zwei Jahre. Nur für GKV-Versicherte; Mindestlaufzeit 12 Monate."
+  ]
+}

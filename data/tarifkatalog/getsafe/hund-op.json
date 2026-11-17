@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Getsafe",
+  "sparte": "hund-op",
+  "produkt": "Tier-OP-Versicherung (Hund)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl, Telemedizin",
+    "Unfälle ohne Wartezeit",
+    "Selbstbeteiligung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "OP-Schutz Comfort",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "3-fach, Notfall 4-fach",
+        "nachbehandlung": "15 Tage",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzel",
+        "kastration": "Zuschuss 50 bzw. 75 €",
+        "sb": "wählbar",
+        "wartezeit": "1 Monat",
+        "ausland": "weltweit bis 12 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_tierkrankenversicherung_op_schutz_comfort.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hellogetsafe.com/de-de/p/tierkrankenversicherung-de",
+    "https://www.hellogetsafe.com/documents/de_2025_ipid_tierkrankenversicherung.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_tierkrankenversicherung_op_schutz_comfort.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktinformationsblatt und Bedingungen OP-Schutz Comfort (Stand 01.2024); einziger OP-Tarif, Risikoträger andsafe AG.",
+    "Erstattungssatz und Jahreshöchstleistung stehen im Versicherungsschein; die Produktseite nennt „bis zu 100 Prozent“. Selbstbeteiligung als Prozentsatz wählbar (Beispiel 20 %).",
+    "Vorsorge nur in den Vollschutz-Tarifen. Kastration ohne medizinische Indikation auf tierärztlichen Rat: Zuschuss 50 € (männlich) bzw. 75 € (weiblich); mit Indikation voll.",
+    "Physiotherapie nach OP nicht ausdrücklich genannt; Arznei-, Heil- und Hilfsmittel bis 15 Tage nach der OP.",
+    "Besondere Wartezeit 12 Monate u. a. für HD, ED, Patellaluxation."
+  ]
+}

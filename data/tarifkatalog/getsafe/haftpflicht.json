@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "Getsafe",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Täglich kündbar",
+    "Weltweit, außerhalb Europas 5 Jahre",
+    "Drohne bis 5 kg als Erweiterung"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 10.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 50.000 €",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "drohne": "optional",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_privathaftpflichtversicherung_comfort.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis Deckungssumme",
+        "delikt": "bis Deckungssumme",
+        "geliehen": "bis Deckungssumme",
+        "miete": "ja",
+        "gefaelligkeit": "bis Deckungssumme",
+        "neuwert": "bis 3.000 €, 1 Jahr",
+        "mallorca": "ja",
+        "drohne": "optional",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_privathaftpflichtversicherung_premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hellogetsafe.com/de-de/p/haftpflicht-de",
+    "https://www.hellogetsafe.com/documents/de_2025_ipid_privathaftpflichtversicherung.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_privathaftpflichtversicherung_comfort.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_privathaftpflichtversicherung_premium.pdf"
+  ],
+  "offen": [
+    "Kein Tarifvergleich veröffentlicht: Werte aus den Besonderen Bedingungen Comfort und Premium (Stand 01.2022) gegeneinander gelesen; Risikoträger andsafe AG. Keine Markierung.",
+    "Deckungssumme steht im Versicherungsschein; die Produktseite nennt „bis 50 Mio. €“. Ob kleinere Summen wählbar sind, ist nicht belegt.",
+    "Comfort begrenzt Mietsachschäden an beweglichen Sachen und Ferienunterkünften auf je 10.000 €, Schlüssel auf 10.000 €, Delikt und Gefälligkeit auf 50.000 €; Premium nennt dafür keine Grenze (bis Deckungssumme).",
+    "Premium zusätzlich: Vollkasko-Selbstbehalt bei geliehenen Kfz bis 2.500 €, Betankungs- und Beladeschäden, Beitragsbefreiung bei Arbeitslosigkeit. Neuwert nur für Sachen bis 1 Jahr und 3.000 € Kaufpreis.",
+    "Selbstbeteiligung wählbar, Höhe nicht veröffentlicht. Familie und Drohne als Erweiterung."
+  ]
+}

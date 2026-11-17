@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Getsafe",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit bis 100 %",
+    "Täglich kündbar",
+    "Trickdiebstahl in der Wohnung"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 2.500 €",
+        "bargeld": "bis 2.500 €",
+        "garten": "bis 2.500 €",
+        "auto": "bis 2.500 €",
+        "ueberspannung": "ja",
+        "hotel": "100 € je Nacht",
+        "aussen": "weltweit, 40 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hausratversicherung_comfort.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "100 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 5.000 €",
+        "bargeld": "bis 5.000 €",
+        "garten": "ja",
+        "auto": "bis 5.000 €",
+        "ueberspannung": "ja",
+        "hotel": "150 € je Nacht",
+        "aussen": "weltweit, 100 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hausratversicherung_premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hellogetsafe.com/de-de/p/hausrat-de",
+    "https://www.hellogetsafe.com/documents/de_2025_ipid_hausratversicherung.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hausratversicherung_comfort.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hausratversicherung_premium.pdf"
+  ],
+  "offen": [
+    "Kein Tarifvergleich veröffentlicht: Werte aus den Bedingungen Comfort und Premium (Stand 01.2023) gegeneinander gelesen; Risikoträger andsafe AG. Keine Markierung.",
+    "Einfacher Diebstahl in der Wohnung nicht als eigene Gefahr genannt (versichert sind u. a. Trickdiebstahl und Diebstahl von Taschen).",
+    "Fahrraddiebstahl, Glasbruch und Elementar laut Produktinformationsblatt nur, sofern gesondert vereinbart.",
+    "Bargeld = Grenze für Bargeld und Geldkarten insgesamt; Garten = Diebstahl auf dem Grundstück (Premium ohne eigene Grenze). Premium zusätzlich Unterversicherungsverzicht bis 5.000 € Schaden und beruflicher Zweitwohnsitz.",
+    "Selbstbeteiligung individuell vereinbar, Höhe nicht veröffentlicht; empfohlene Versicherungssumme je m² nicht genannt."
+  ]
+}

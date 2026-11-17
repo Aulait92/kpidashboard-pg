@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "Adam Riese",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Täglich kündbar",
+    "Gefälligkeitsschäden versichert",
+    "Europa ohne Zeitgrenze"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht L",
+      "kurz": "Tarif L",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "7,5 Mio. €",
+        "forderungsausfall": "ab 2.000 € Schaden",
+        "schluessel": "privat bis 10.000 €",
+        "delikt": "bis 10.000 €",
+        "geliehen": "10.000 €, 250 € SB",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja",
+        "sb": "optional"
+      },
+      "bausteine": {
+        "schluesselBeruf": "nein",
+        "oeltank": "nein"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/240702_Privathaftpflicht_LU.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht XL",
+      "kurz": "Tarif XL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "forderungsausfall": "ab 1.000 € Schaden",
+        "schluessel": "bis 200.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "200.000 €, 250 € SB",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja",
+        "sb": "optional"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "oeltank": "nein"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/240702_Privathaftpflicht_LU.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht XXL",
+      "kurz": "Tarif XXL",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja, ohne Mindestschaden",
+        "schluessel": "bis 500.000 €",
+        "delikt": "bis 500.000 €",
+        "geliehen": "bis 500.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 5 kg, 3 Mio. €",
+        "nebenberuf": "bis 15.000 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "optional"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/240702_Privathaftpflicht_LU.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.adam-riese.de/privathaftpflicht",
+    "https://www.adam-riese.de/downloads/240702_Privathaftpflicht_LU.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht mit Tarifvergleich (Dateiname 07/2024, im Dokument „Stand 08.10.2019“) und Tarifkacheln der Produktseite; Haken im PDF sind Bilder, leere Zellen als „ja“, Striche als „nein“ gelesen.",
+    "Adam Riese markiert keinen Tarif; XL als mittlere Stufe gesetzt.",
+    "Rabattretter (geliehenes Auto) steht nicht in der Leistungsübersicht. Selbstbeteiligung wählbar (Berechnungsbeispiel mit 150 €).",
+    "Mietsachschäden an Wohnräumen in allen Tarifen bis zur Versicherungssumme; Schlüssel beruflich erst ab XL. Öltank (selbst genutztes Ein- oder Zweifamilienhaus) nur XXL."
+  ]
+}

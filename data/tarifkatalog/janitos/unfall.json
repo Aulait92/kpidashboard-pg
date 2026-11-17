@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Progression 225 bis 1.000 %",
+    "Unfallrente ab 50 % wählbar",
+    "Zeckenstich mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basic",
+      "kurz": "Basic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "optional bis 1.000 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional, bis 2 Jahre",
+        "sofort": "20 %",
+        "kosmetik": "bis 15.000 €",
+        "bergung": "bis 15.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/unfallversicherung/leistungsvergleich_unfallversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Balance",
+      "kurz": "Balance",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "optional bis 1.000 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional, bis 3 Jahre",
+        "sofort": "30 %, mind. 10.000 €",
+        "kosmetik": "bis 75.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/unfallversicherung/leistungsvergleich_unfallversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Best Selection",
+      "kurz": "Best Selection",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "optional bis 1.000 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional, bis 5 Jahre",
+        "sofort": "40 %, mind. 15.000 €",
+        "kosmetik": "bis 1 Mio. €",
+        "bergung": "bis 1 Mio. €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/unfallversicherung/leistungsvergleich_unfallversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/unfallversicherung/",
+    "https://www.janitos.de/media/downloads/produkte/unfallversicherung/leistungsvergleich_unfallversicherung_janitos_versicherung_ag.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Unfallversicherung (Stand 01.04.2026) und Tarifdetails der Produktseite. Keine Markierung; Balance als mittlere Stufe.",
+    "Invaliditätssumme nicht als fester Wert genannt (Invaliditätsleistung oder Unfallrente muss vereinbart sein). Leistung ab welchem Invaliditätsgrad nicht ausdrücklich genannt.",
+    "Progression optional 225, 350, 500, 600 oder 1.000 %; Gliedertaxen je Linie wählbar (u. a. Med für Human- und Zahnmediziner). Krankenhaustagegeld = Dauer bei vollstationärem Aufenthalt, sofern vereinbart.",
+    "Sofortleistung in Prozent der zu erwartenden Invaliditätsleistung. Basic ohne Eigenbewegung und ohne Herzinfarkt/Schlaganfall als Ursache; Best Selection ohne Kürzung bei Mitwirkung (außer festgelegten Krankheiten)."
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "Ammerländer",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Leinenzwang",
+    "Flurschäden mitversichert",
+    "Fremdhütung mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht Economic",
+      "kurz": "Economic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "miete": "nein",
+        "fremdhueter": "ja",
+        "welpen": "bis 6 Monate",
+        "forderungsausfall": "ab 1.500 €",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "tiergefahr": "nein",
+        "nebenberuf": "nein",
+        "ausland": "weltweit bis 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:41218c30-c181-4b06-b750-d9211bead4f3/Leistungseinschluesse%20in%20der%20Hundehalterhaftpflichtversicherung%20zum%20Economic-%20und%20Comfort-Schutz.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalterhaftpflicht Comfort",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 oder 100 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 18 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "ja",
+        "neuwert": "bis 2.500 €",
+        "tiergefahr": "bis 500 € Schaden",
+        "nebenberuf": "bis 15.000 € Umsatz",
+        "ausland": "weltweit bis 10 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:41218c30-c181-4b06-b750-d9211bead4f3/Leistungseinschluesse%20in%20der%20Hundehalterhaftpflichtversicherung%20zum%20Economic-%20und%20Comfort-Schutz.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ammerlaender-versicherung.de/hundehalterhaftpflicht",
+    "https://www.ammerlaender-versicherung.de/dam/jcr:41218c30-c181-4b06-b750-d9211bead4f3/Leistungseinschluesse%20in%20der%20Hundehalterhaftpflichtversicherung%20zum%20Economic-%20und%20Comfort-Schutz.pdf"
+  ],
+  "offen": [
+    "Quelle: „Leistungseinschlüsse in der Hundehalterhaftpflichtversicherung“ (AVB HundehalterHV 2026, als Bild gelesen) und Leistungsvergleich der Produktseite. Nur zwei Tarife, keine Markierung.",
+    "Selbstbeteiligung nicht veröffentlicht. Miete = Mietsachschäden an unbeweglichen Objekten; geliehen = bewegliche Mietsachen (z. B. Hotelinventar) bis zur Versicherungssumme.",
+    "Tiergefahr = keine Anrechnung der Mithaftung bei Schäden bis 500 €. Nebenberuf = gewerbliche Nutzung bis 15.000 € Jahresumsatz.",
+    "Nur Comfort: Tierarztkosten-Ausfalldeckung und Giftköder je bis 5.000 €, Hundepension bis 5.000 €, Opferschutz bis 50.000 €, Kaution im Ausland bis 200.000 €."
+  ]
+}

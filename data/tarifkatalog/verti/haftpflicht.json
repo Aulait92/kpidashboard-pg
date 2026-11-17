@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Verti",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Personenschäden 15 Mio. € je Person",
+    "Drohnen bis 5 kg",
+    "Neuwert bis 12 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "nein",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 25.000 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "wählbar"
+      },
+      "bausteine": {
+        "schluesselBeruf": "nein"
+      },
+      "quelle": "https://www.verti.de/haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "privat und beruflich",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 25.000 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "wählbar"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive"
+      },
+      "quelle": "https://www.verti.de/haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.verti.de/haftpflichtversicherung/",
+    "https://www.verti.de/media/indoc/ahb_phv.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite (Symbole aus dem Seitenquelltext gelesen: lila = enthalten, grau = nicht enthalten) und AVB PHV Klassik mit Leistungserweiterungen Premium (Stand 02/2026). Keine Markierung.",
+    "Deckungssumme Sachschäden 50 bzw. 100 Mio. €, Personenschäden je Person 15 Mio. €.",
+    "Nur Premium: Schlüsselverlust (privat und beruflich), Haftpflicht gegenüber Arbeitgebern bis 10.000 €, Be- und Entladeschäden, Best-Leistungs-Garantie.",
+    "Geliehene und gemietete bewegliche Sachen bis zur Versicherungssumme (E-Bikes und Fahrräder bis 5.000 €). Rabattretter = Rückstufung des Schadenfreiheitsrabatts geliehener Kfz. Selbstbeteiligung im Rechner wählbar, Höhe nicht veröffentlicht."
+  ]
+}

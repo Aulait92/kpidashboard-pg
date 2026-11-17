@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "Verti",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 Mio. € pauschal",
+    "Fahrerschutz inklusive",
+    "Kasko Clever mit Werkstatt"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "nein",
+        "tiere": "nur Haarwild",
+        "neuwert": "12 Monate",
+        "marder": "nein",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "mallorca": "nein"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.verti.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Klassik",
+      "kurz": "Klassik",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "18 Monate",
+        "marder": "bis 10.000 €",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.verti.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "bis 25.000 €",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.verti.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.verti.de/autoversicherung/",
+    "https://www.verti.de/media/indoc/akb_auto.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungstabellen der Produktseite (Haftpflicht, Teilkasko, Vollkasko; Symbole aus dem Seitenquelltext gelesen). Keine Markierung; Klassik als mittlere Stufe (Wettbewerbsvergleich der Seite rechnet mit Klassik Kasko Clever).",
+    "Marder = Folgeschäden nach Tierbiss; Neuwert = Neupreisentschädigung, Kaufpreisentschädigung für Gebrauchte erst ab Klassik (18 bzw. 36 Monate).",
+    "Zusatzleistungen laut Seite: Schutzbrief, GAP-Schutz, Kasko Clever (Werkstattbindung, 15 % Nachlass), Fahrerschutz gratis. Rabattschutz und Akku-Schutz für E-Autos auf der Seite nicht genannt.",
+    "Nur Premium: Eigenschadendeckung, Schlossänderung nach Schlüsseldiebstahl, Leihwagen nach Unfall (Vollkasko)."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Adam Riese",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Versicherungssumme unbegrenzt",
+    "Bausteine frei kombinierbar",
+    "Freie Anwaltswahl"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz XL",
+      "kurz": "Tarif XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "bis 400.000 €",
+        "privat": "optional",
+        "vsWelt": "400.000 €",
+        "sb": "wählbar",
+        "wartezeit": "3 Monate, Arbeit 6",
+        "opfer": "ja",
+        "straf": "Erweitert optional",
+        "mediation": "bis 3.000 €",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/250514_lu_rs2-0_direkt.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rechtsschutz XXL",
+      "kurz": "Tarif XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "Europa unbegrenzt",
+        "privat": "optional",
+        "vsWelt": "1,2 Mio. €",
+        "sb": "wählbar",
+        "wartezeit": "3 Monate, Arbeit 6",
+        "opfer": "ja",
+        "straf": "Erweitert inklusive",
+        "mediation": "bis 3.000 €",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/250514_lu_rs2-0_direkt.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.adam-riese.de/rechtsschutz",
+    "https://www.adam-riese.de/downloads/250514_lu_rs2-0_direkt.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Rechtsschutz (Stand 01.05.2025) und Tarifkacheln der Produktseite; nur zwei Tarife XL und XXL, keine Markierung.",
+    "Bausteinkonzept: Privat, Beruf, Verkehr, Wohnen, Vermietung und Erweiterter Straf-Rechtsschutz frei wählbar (bis 5 Bausteine); Berechnungsbeispiel Privat + Beruf + Verkehr mit 300 € Selbstbehalt. Ob Privat Pflicht ist, steht nicht auf der Seite.",
+    "Strafkaution XXL: europaweit unbegrenzt, weltweit 800.000 €. Wohnen und Vermietung je 1 Mio. € Versicherungssumme.",
+    "Höhe der wählbaren Selbstbeteiligung nicht veröffentlicht."
+  ]
+}

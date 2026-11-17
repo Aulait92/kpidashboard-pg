@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung JA stationär plus",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rooming-in für ein Elternteil",
+    "Vor- und nachstationär 100 %",
+    "Europaweit versichert"
+  ],
+  "tarife": [
+    {
+      "name": "JA stationär plus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja, 100 %",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "30 € je Tag",
+        "ambulant-op": "ja, im Krankenhaus"
+      },
+      "bausteine": {},
+      "quelle": "https://www.janitos.de/produkte/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/krankenhauszusatzversicherung/",
+    "https://www.janitos.de/media/downloads/produkte/krankenhauszusatzversicherung/produktinformation_krankenhauszusatzversicherung_janitos_versicherung_ag.pdf",
+    "https://www.janitos.de/media/downloads/bedingungen/260103.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht der Produktseite, Produktinformationsblatt (Stand 12/2017) und Bedingungen. Nur ein Tarif.",
+    "Wartezeit: allgemeine Wartezeit 3 Monate laut Bedingungen (§ 3); Ausnahmen (z. B. Unfall) und Erlass bitte in den Bedingungen gegenprüfen.",
+    "Ersatz-Krankenhaustagegeld 30 € bei Verzicht auf Ein- oder Zweibettzimmer oder privatärztliche Behandlung. Außereuropäisches Ausland nur in den ersten drei Monaten eines vorübergehenden Aufenthalts."
+  ]
+}

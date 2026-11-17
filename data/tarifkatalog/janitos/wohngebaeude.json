@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung online",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Photovoltaik auf dem Dach",
+    "Feuer-Rohbau 24 Monate",
+    "Elementar und Glas wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude onlinePlus",
+      "kurz": "onlinePlus",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 25 % der VS",
+        "elementar": "optional",
+        "ableitung": "bis 5.000 €",
+        "pv": "ja (Aufdach)",
+        "kosten": "Hotel 100 € je Tag",
+        "ueberspannung": "ja",
+        "tiere": "ohne Dämmungen",
+        "allgefahren": "nein",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/wohngeb%C3%A4udeversicherung/leistungs%C3%BCbersicht_wohngeb%C3%A4ude_online_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude onlineMax",
+      "kurz": "onlineMax",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 10.000 €",
+        "pv": "ja (Aufdach)",
+        "kosten": "Hotel 200 € je Tag",
+        "ueberspannung": "ja",
+        "tiere": "ja",
+        "allgefahren": "optional",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/wohngeb%C3%A4udeversicherung/leistungs%C3%BCbersicht_wohngeb%C3%A4ude_online_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/wohngebaeudeversicherung/",
+    "https://www.janitos.de/media/downloads/produkte/wohngeb%C3%A4udeversicherung/leistungs%C3%BCbersicht_wohngeb%C3%A4ude_online_janitos_versicherung_ag.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Wohngebäude online (Stand 01.05.2022, Haken als Bild gelesen) und Tabelle der Produktseite. Nur zwei Linien, keine Markierung.",
+    "Ableitungsrohre auf und außerhalb des Grundstücks mit 500 € Selbstbehalt (entfällt bei Gebäuden bis 10 Jahre); onlineMax mit Multi-Garantie zusätzlich unbegrenzt für jüngere oder geprüfte Leitungen.",
+    "Tiere = Bissschäden durch Marder an elektrischen Anlagen (onlinePlus ohne Dämmungen und Unterspannbahnen). Grobe Fahrlässigkeit bei Obliegenheitsverletzung: onlinePlus 5 %, onlineMax 25 % der VS.",
+    "Neuwert (gleitender Neuwert) nicht ausdrücklich genannt. Elementar mit 10 % Selbstbeteiligung (500 bis 5.000 €); Allgefahren nur onlineMax; Hausschutzbrief gegen Zuschlag."
+  ]
+}

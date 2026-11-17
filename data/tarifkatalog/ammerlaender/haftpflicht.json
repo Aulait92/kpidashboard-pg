@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Ammerländer",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Mietsachschäden bis zur Summe",
+    "Mallorca-Deckung",
+    "Beitragsbefreiung bei Arbeitslosigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Exclusiv",
+      "kurz": "Exclusiv",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "30 oder 100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja, beruflich 100.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 500.000 €",
+        "neuwert": "bis 2.500 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg, 5 Mio. €",
+        "nebenberuf": "bis 10.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.ammerlaender-versicherung.de/privathaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Excellent",
+      "kurz": "Excellent",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 oder 100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "ja",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 20.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.ammerlaender-versicherung.de/privathaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ammerlaender-versicherung.de/privathaftpflicht",
+    "https://www.ammerlaender-versicherung.de/dam/jcr:ff225224-fcf1-4c5f-8922-a18ac18bc0a7/Leistungseinschluesse%20in%20der%20Privathaftpflichtversicherung.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsvergleich der Produktseite und „Leistungseinschlüsse in der Privathaftpflichtversicherung“ (AVB PHV 2026; Haken als Bild, ein Haken in Excellent = bis zur Versicherungssumme). Ammerländer nennt Excellent „unser Top-Tarif“.",
+    "Excellent-Werte „ja“ bedeuten bis zur Versicherungssumme laut Legende; bitte am Dokument gegenprüfen (Neuwert, Delikt, Gefälligkeit, geliehene Sachen).",
+    "Nur Excellent: Best-Leistungsgarantie, Abhandenkommen geliehener Sachen, Rechtsschutz zur Forderungsausfalldeckung, Rabattrückstufung und Vollkasko-SB bei Carsharing. Opferschutz Exclusiv 50.000 €.",
+    "Auslandsaufenthalt außerhalb Europas: Exclusiv bis 5 Jahre, Excellent bis 10 Jahre. Heizöltanks bis 10.000 Liter in beiden Linien."
+  ]
+}

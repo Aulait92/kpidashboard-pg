@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € pauschal",
+    "Eigenschadendeckung",
+    "Zweitwagenregelung"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Compact",
+      "kurz": "Compact",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "12 Monate",
+        "marder": "Folgeschäden 3.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "ja, abwählbar",
+        "elektro": "nein",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.janitos.de/produkte/kraftfahrzeugversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung Advanced",
+      "kurz": "Advanced",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 10.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "ja, abwählbar",
+        "elektro": "Akku bis 25.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.janitos.de/produkte/kraftfahrzeugversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/kraftfahrzeugversicherung/",
+    "https://www.janitos.de/media/downloads/produkte/kfz-versicherung/leistungs%C3%BCbersicht_gesamt_kfz-versicherung_janitos_versicherung_ag.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht der Produktseite (Symbole aus dem Seitenquelltext gelesen). Nur zwei Linien, keine Markierung.",
+    "Marder = Tierbiss an Verkabelung, Schläuchen, Leitungen und Dämmmatten mit Folgeschäden. Kaufpreisentschädigung für Gebrauchte 12 bzw. 24 Monate.",
+    "Werkstattmanagement enthalten, gegen Zuschlag abwählbar. Akku-Schutz: Allgefahren für den Akku nur Advanced in der Vollkasko (bis 25.000 €).",
+    "Nur Advanced: JurDrive (Schadenersatz- und Verteidigungs-Rechtsschutz), Kasko Pur (einmaliger SB-Verzicht nach 4 schadenfreien Jahren), Mietwagen nach Diebstahl, Kasko-Extra-Schutz optional. Gegen Zuschlag: Fahrerschutz, Auslandsschaden-Schutz."
+  ]
+}

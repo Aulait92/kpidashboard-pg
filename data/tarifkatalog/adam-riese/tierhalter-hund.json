@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "Adam Riese",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Täglich kündbar",
+    "Forderungsausfall ohne Mindestschaden",
+    "Führen ohne Leine versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht XL",
+      "kurz": "Tarif XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 Mio. €",
+        "sb": "0, 150 oder 500 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "12 Monate",
+        "forderungsausfall": "ja",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/260616_Leistungsuebersicht_HHV_2.1",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalterhaftpflicht XXL",
+      "kurz": "Tarif XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "0, 150 oder 500 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "18 Monate",
+        "forderungsausfall": "ja",
+        "neuwert": "bis 5.000 €",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/260616_Leistungsuebersicht_HHV_2.1",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.adam-riese.de/hundehalter",
+    "https://www.adam-riese.de/downloads/260616_Leistungsuebersicht_HHV_2.1"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Hundehalterhaftpflicht (Stand 01.08.2026) und Produktseite; nur zwei Tarife XL und XXL, keine Markierung.",
+    "Geliehene oder gemietete bewegliche Sachen: „bis 200.000 €“ steht nur in einer Spalte, Zuordnung zu XL oder beiden Tarifen unklar, deshalb nicht übernommen.",
+    "Außereuropäische Aufenthalte bis 5 Jahre. XXL zusätzlich Tierarztkosten (Ausfalldeckung) bis 3.000 € und Verletzung am Versicherungsnehmer bis 1 Mio. €."
+  ]
+}

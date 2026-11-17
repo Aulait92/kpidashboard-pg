@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "Adam Riese",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Täglich kündbar",
+    "Diebstahl aus Hotelzimmer weltweit",
+    "Unterversicherungsverzicht"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat XL",
+      "kurz": "Tarif XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 2.500 €",
+        "vs": "650 € je m²",
+        "bargeld": "bis 500 €",
+        "garten": "bis 2.500 €",
+        "auto": "bis 1.000 € (Europa)",
+        "ueberspannung": "ja",
+        "hotel": "100 € je Tag",
+        "aussen": "ja, bis 12 Monate",
+        "sb": "0 bis 1.000 € wählbar"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/240108_Hausrat_LU_Direkt.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat XXL",
+      "kurz": "Tarif XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 2.500 €",
+        "vs": "650 € je m²",
+        "bargeld": "bis 2.000 €",
+        "garten": "ja",
+        "auto": "bis 2.500 € (Europa)",
+        "ueberspannung": "ja",
+        "hotel": "150 € je Tag",
+        "aussen": "ja, bis 12 Monate",
+        "sb": "0 bis 1.000 € wählbar"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/240108_Hausrat_LU_Direkt.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.adam-riese.de/hausrat",
+    "https://www.adam-riese.de/downloads/240108_Hausrat_LU_Direkt.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Hausrat (Bild-PDF, im Dokument „Stand 01.03.2019“, Dateiname 01/2024) und Tarifkacheln der Produktseite; nur zwei Tarife XL und XXL, keine Markierung.",
+    "Einfacher Diebstahl in der Wohnung nicht als eigene Zeile genannt (Trickdiebstahl in der Wohnung nur XXL, Diebstahl durch Hausangestellte nur XXL bis 5.000 €).",
+    "Bargeld und Garten: Entschädigungsgrenzen außerhalb von Wertschutzschränken; Garten = Wäsche und Gartenmöbel auf dem Grundstück. Elementar als Baustein mit 1.000 € Selbstbeteiligung.",
+    "Empfohlene Versicherungssumme: Unterversicherungsverzicht bei mindestens 650 € je m² Wohnfläche."
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung online",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Überspannung bis zur Summe",
+    "Fahrrad, Elementar, Glas wählbar",
+    "Leistungsgarantie GDV"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat onlineFit",
+      "kurz": "onlineFit",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 30 % der VS",
+        "wert": "20 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "1.000 €",
+        "garten": "1 % der VS",
+        "auto": "1 % der VS",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "max. 150 € je Tag",
+        "aussen": "30 % VS, 6 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "nein"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/hausratversicherung/leistungsuebersicht_online_hausratversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat onlinePlus",
+      "kurz": "onlinePlus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja, 100 % der VS",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 2.000 €",
+        "bargeld": "1.500 €",
+        "garten": "5 % der VS",
+        "auto": "5 % der VS",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "max. 200 € je Tag",
+        "aussen": "40 % VS, 9 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "nein"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/hausratversicherung/leistungsuebersicht_online_hausratversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat onlineMax",
+      "kurz": "onlineMax",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, 100 % der VS",
+        "wert": "40 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 2.000 €",
+        "bargeld": "2.000 €",
+        "garten": "bis zur VS",
+        "auto": "bis zur VS",
+        "allgefahren": "optional",
+        "ueberspannung": "ja",
+        "hotel": "max. 250 € je Tag",
+        "aussen": "bis VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/hausratversicherung/leistungsuebersicht_online_hausratversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/hausratversicherung/",
+    "https://www.janitos.de/media/downloads/produkte/hausratversicherung/leistungsuebersicht_online_hausratversicherung_janitos_versicherung_ag.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Hausrat online (Stand 01.07.2024) und Tabelle der Produktseite. Keine Markierung; onlinePlus als mittlere Stufe.",
+    "Einfacher Diebstahl in der Wohnung nicht als eigene Zeile (Trickdiebstahl in versicherten Räumen onlinePlus 5 % der VS bis 2.500 €, onlineMax 10 % bis 5.000 €; Diebstahl durch Hausangestellte nur onlineMax).",
+    "Garten = Diebstahl und böswillige Beschädigung auf dem Grundstück; Auto = Diebstahl aus verschlossenem Kfz ohne Wertsachen (Elektronik bis 250 €). Hotel je Tag höchstens 2 % (onlineMax 3 %) der VS.",
+    "Fahrrad optional 1 bis 10 % der VS ohne Nachtzeitklausel; Elementar optional mit 10 % Selbstbeteiligung (500 bis 2.500 €); Allgefahren nur onlineMax. Notfallservice (Schlüsseldienst u. a. je 500 €) nur onlineMax."
+  ]
+}

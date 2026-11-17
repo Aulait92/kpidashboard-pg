@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "Getsafe",
+  "sparte": "hund-kranken",
+  "produkt": "Tierkrankenversicherung Vollschutz (Hund)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl, Telemedizin",
+    "Unfälle ohne Wartezeit",
+    "Selbstbeteiligung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Vollschutz Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "3-fach, Notfall 4-fach",
+        "ohneOp": "ja",
+        "vorsorge": "100 € einmalig",
+        "zahn": "Extraktion, Wurzel",
+        "kastration": "bei med. Indikation",
+        "physio": "nein",
+        "nachbehandlung": "15 Tage",
+        "sb": "wählbar",
+        "wartezeit": "1 Monat",
+        "ausland": "weltweit bis 12 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_tierkrankenversicherung_vollschutz_comfort.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Vollschutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "3-fach, Notfall 4-fach",
+        "ohneOp": "ja",
+        "vorsorge": "100 € je Jahr",
+        "zahn": "plus 500 € je Jahr",
+        "kastration": "bei med. Indikation",
+        "physio": "bis 500 € je Jahr",
+        "nachbehandlung": "30 Tage",
+        "sb": "wählbar",
+        "wartezeit": "1 Monat",
+        "ausland": "weltweit bis 12 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_tierkrankenversicherung_vollschutz_premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hellogetsafe.com/de-de/p/tierkrankenversicherung-de",
+    "https://www.hellogetsafe.com/documents/de_2025_ipid_tierkrankenversicherung.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_tierkrankenversicherung_vollschutz_comfort.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_tierkrankenversicherung_vollschutz_premium.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktinformationsblatt und Bedingungen Vollschutz Comfort und Premium (Stand 01.2024); Risikoträger andsafe AG. Keine Markierung.",
+    "Erstattungssatz und Jahreshöchstleistung stehen im Versicherungsschein; die Produktseite nennt „bis zu 100 Prozent“. Selbstbeteiligung als Prozentsatz wählbar (Beispiel 20 %).",
+    "Besondere Wartezeit 12 Monate u. a. für HD, ED, Herz, Allergien, Patellaluxation. Physiotherapie in Premium als alternative Heilmethode (bis 500 € je Jahr).",
+    "Vorsorgepauschale: Comfort einmalig 100 € für die gesamte Laufzeit, Premium 100 € je Versicherungsjahr. Premium zusätzlich Zahnzusatzschutz bis 500 € je Jahr."
+  ]
+}

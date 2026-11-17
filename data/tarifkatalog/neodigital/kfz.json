@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Neodigital",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € pauschal",
+    "GAP-Deckung in der Vollkasko",
+    "Werkstattbindung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "NEO M",
+      "kurz": "NEO M",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "rabattschutz": "optional, ab SF 4",
+        "gap": "ja (Vollkasko)",
+        "werkstatt": "optional",
+        "elektro": "ja (Vollkasko)",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://neodigital.de/app/uploads/2025/06/Kfzversicherung_Leistungsuebersicht_Neodigital.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NEO L",
+      "kurz": "NEO L",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "rabattschutz": "optional, ab SF 4",
+        "gap": "ja (Vollkasko)",
+        "werkstatt": "optional",
+        "elektro": "ja (Vollkasko)",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://neodigital.de/app/uploads/2025/06/Kfzversicherung_Leistungsuebersicht_Neodigital.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://neodigital.de/kfzversicherung/",
+    "https://neodigital.de/app/uploads/2025/06/Kfzversicherung_Leistungsuebersicht_Neodigital.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Kfz 2027 (Symbole als Bild gelesen) und Tarifvergleich der Produktseite; Risikoträger Neodigital Autoversicherung AG. Keine Markierung.",
+    "Nur NEO L: Kaufwertentschädigung für Gebrauchte 36 Monate, Eigenschadenversicherung 100.000 € je Jahr (500 € Selbstbeteiligung), Brems-, Betriebs- und Bruchschäden, Sportgeräte am Fahrzeug.",
+    "Akku-Schutz: Antriebs-Akku in der Vollkasko (Allgefahren), Ladeausrüstung in der Kasko. GAP-Deckung laut Produktseite in der Vollkasko für finanzierte und geleaste Fahrzeuge enthalten.",
+    "Zusätzlich wählbar: Schutzbrief, Fahrerschutz (15 Mio. €), Auslands-Schadenschutz, Rabattschutz."
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "Ammerländer",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit versichert",
+    "Feuer-Rohbau 24 Monate frei",
+    "Elementar als Zusatz"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Classic",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "kosten": "kein Hotel",
+        "ueberspannung": "ja",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "mietausfall": "bis 12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:a5b34a34-2bb8-48f1-aace-eeeef1555010/Leistungseinschluesse%20im%20Wohngebaeude%20Classic-%20und%20Exclusiv-Schutz.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Exclusiv",
+      "kurz": "Exclusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "kosten": "Hotel 100 € je Tag",
+        "ueberspannung": "ja",
+        "vandalismus": "Graffiti bis 2.000 €",
+        "tiere": "Marderbiss Elektrik",
+        "mietausfall": "bis 30 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:a5b34a34-2bb8-48f1-aace-eeeef1555010/Leistungseinschluesse%20im%20Wohngebaeude%20Classic-%20und%20Exclusiv-Schutz.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ammerlaender-versicherung.de/wohngebaeude",
+    "https://www.ammerlaender-versicherung.de/dam/jcr:a5b34a34-2bb8-48f1-aace-eeeef1555010/Leistungseinschluesse%20im%20Wohngebaeude%20Classic-%20und%20Exclusiv-Schutz.pdf"
+  ],
+  "offen": [
+    "Quelle: „Leistungseinschlüsse in der Wohngebäudeversicherung Classic- und Exclusiv-Schutz“ (VGB 2012, Stand 07/2025, als Bild gelesen) und Produktseite. Nur zwei Tarife, keine Markierung.",
+    "Ableitungsrohre außerhalb des Gebäudes und Photovoltaik stehen nicht in der Übersicht (nur Zuleitungsrohre: Exclusiv außerhalb des Grundstücks bis 5 % der VS).",
+    "Kosten: Hotel nur Exclusiv (150 Tage je 100 €); Mietausfall Exclusiv bis 30 Monate, wenn die Wohnung unbewohnbar ist. Gleitender Neuwert nicht ausdrücklich genannt.",
+    "Elementar (Überschwemmung, Rückstau, Erdbeben u. a.) als Zusatzversicherung auf der Produktseite; Glas, Technik und Schutzbrief nicht genannt."
+  ]
+}

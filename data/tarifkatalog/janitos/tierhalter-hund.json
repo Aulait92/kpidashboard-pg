@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Leine und Maulkorb",
+    "Deckschäden mitversichert",
+    "20 % Rabatt ab dem 2. Hund"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht Balance",
+      "kurz": "Balance",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 oder 20 Mio. €",
+        "sb": "ohne oder 200 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "6 Monate",
+        "forderungsausfall": "ja, ab 500 €",
+        "nebenberuf": "nein",
+        "ausland": "weltweit 5 Jahre"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/tierhalterhaftpflichtversicherung/leistungs%C3%BCbersicht_gesamt_tierhalterhaftpflichtversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalterhaftpflicht Best Selection",
+      "kurz": "Best Selection",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 oder 20 Mio. €",
+        "sb": "ohne oder 200 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "12 Monate",
+        "forderungsausfall": "ja, ohne Mindestschaden",
+        "nebenberuf": "bis 15.000 € Umsatz",
+        "ausland": "weltweit unbegrenzt"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/tierhalterhaftpflichtversicherung/leistungs%C3%BCbersicht_gesamt_tierhalterhaftpflichtversicherung_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/hundehalterhaftpflicht/",
+    "https://www.janitos.de/media/downloads/produkte/tierhalterhaftpflichtversicherung/leistungs%C3%BCbersicht_gesamt_tierhalterhaftpflichtversicherung_janitos_versicherung_ag.pdf",
+    "https://www.janitos.de/media/downloads/produkte/tierhalterhaftpflichtversicherung/tarif%C3%BCbersicht_tierhalterhaftpflichtversicherung_janitos_versicherung_ag.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Tierhalterhaftpflicht 2016 (Stand 01.07.2016, Haken als Bild gelesen), Tabelle der Produktseite und Tarifübersicht (Stand 07.03.2024, Selbstbehalt ohne oder 200 €). Keine Markierung.",
+    "Welpen in Balance 6 Monate, mindestens bis zur nächsten Hauptfälligkeit. Nebenberuf = gelegentliche Tätigkeit als Hundelehrer (Jahresumsatz bis 15.000 €, Ertrag bis 6.000 €).",
+    "Geliehene bewegliche Sachen nur für Inventar in Ferienunterkünften belegt (Balance 50.000 € mit 250 € Selbstbehalt, Best Selection 200.000 €); allgemein nicht genannt. Neuwert nicht genannt.",
+    "Bestimmte Rassen nicht versicherbar (Annahmerichtlinien)."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Adam Riese",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Täglich kündbar",
+    "Feuer-Rohbau beitragsfrei",
+    "Bausteine frei kombinierbar"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude XL",
+      "kurz": "Tarif XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional, 10.000 €",
+        "pv": "optional",
+        "kosten": "Hotel 100 € je Tag",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "tiere": "Tierbiss bis 1.000 €",
+        "allgefahren": "nein",
+        "mietausfall": "bis 24 Monate",
+        "sb": "optional"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/260313_Leistungsuebersicht_VGV_2-0_Direkt.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude XXL",
+      "kurz": "Tarif XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional, 10.000 €",
+        "pv": "optional",
+        "kosten": "Hotel 150 € je Tag",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "tiere": "Tierbiss bis 5.000 €",
+        "allgefahren": "optional",
+        "mietausfall": "bis 36 Monate",
+        "sb": "optional"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.adam-riese.de/downloads/260313_Leistungsuebersicht_VGV_2-0_Direkt.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.adam-riese.de/wohngebaeudeversicherung",
+    "https://www.adam-riese.de/downloads/260313_Leistungsuebersicht_VGV_2-0_Direkt.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Wohngebäude (Stand 01.04.2026) und Tarifkacheln der Produktseite; nur zwei Tarife XL und XXL, keine Markierung.",
+    "Bausteine: Elementar (Selbstbeteiligung je nach ZÜRS-Zone), Ableitungsrohre (je 10.000 € auf und außerhalb des Grundstücks), Glas, Photovoltaik, Haustechnik, Schutzbrief, Allgefahren (nur XXL, 150 € Selbstbeteiligung).",
+    "Neuwert: laut Produktseite dynamische Anpassung an die Baukostenentwicklung. Grobe Fahrlässigkeit bei Verletzung von Sicherheitsvorschriften nur XXL bis 10.000 €.",
+    "Tierbiss = Schäden an elektrischen Anlagen. Einbruchschäden am Gebäude und Mehrkosten für Modernisierung nur XXL."
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung online",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe 10, 20 oder 50 Mio. €",
+    "Ehrenamt mitversichert",
+    "Online-Schutz als Zusatzpaket"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht onlineFit",
+      "kurz": "onlineFit",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "forderungsausfall": "ja, ab 1.500 €",
+        "schluessel": "bis 25.000 €",
+        "delikt": "bis 25.000 €",
+        "geliehen": "nein",
+        "miete": "bis 5 Mio. €",
+        "gefaelligkeit": "bis 25.000 €",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/privathaftpflichtversicherung-online/leistunguebersicht_privathaftpflichtversicherung_online_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht onlinePlus",
+      "kurz": "onlinePlus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "forderungsausfall": "ja, ab 500 €",
+        "schluessel": "bis 100.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "nebenberuf": "bis 6.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/privathaftpflichtversicherung-online/leistunguebersicht_privathaftpflichtversicherung_online_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht onlineMax",
+      "kurz": "onlineMax",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "forderungsausfall": "ja, ohne Mindestschaden",
+        "schluessel": "bis 200.000 €",
+        "delikt": "bis 200.000 €",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 3.000 €",
+        "mallorca": "ja",
+        "rabattretter": "bis 1.000 €",
+        "drohne": "mit Motor bis 500 g",
+        "nebenberuf": "bis 15.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive"
+      },
+      "quelle": "https://www.janitos.de/media/downloads/produkte/privathaftpflichtversicherung-online/leistunguebersicht_privathaftpflichtversicherung_online_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/privathaftpflichtversicherung/",
+    "https://www.janitos.de/media/downloads/produkte/privathaftpflichtversicherung-online/leistunguebersicht_privathaftpflichtversicherung_online_janitos_versicherung_ag.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Privathaftpflicht online 2018 (Stand 01.07.2018, auf der Produktseite verlinkt; Haken als Bild gelesen) und Produktlinien-Tabelle der Produktseite. Keine Markierung; onlinePlus als mittlere Stufe.",
+    "Deckungssumme in allen Linien wählbar (bei 50 Mio. € höchstens 20 Mio. € je Person). Delikt = Sach- und Vermögensschäden durch nicht deliktfähige Kinder (Personenschäden onlineFit 25.000 €, onlinePlus 50.000 €, onlineMax bis Deckungssumme).",
+    "Schlüssel privat und beruflich (Räume) mit 25.000 / 100.000 / 200.000 €; in onlineFit und onlinePlus mit Selbstbehalt (200 bzw. 100 €). Gefälligkeit und Mietsachen in onlineFit mit 200 € Selbstbehalt.",
+    "Rabattretter = SFR-Rückstufung der Vollkasko bei geliehenem Kfz (onlineMax 1.000 €, 100 € Selbstbehalt). Drohne: versicherungspflichtige Flugmodelle ohne Motor bis 5 kg in allen Linien, mit Motor bis 500 g nur onlineMax.",
+    "Zusatzpakete: Online-Schutz (alle Linien), Multi-Garantie (nur onlineMax)."
+  ]
+}

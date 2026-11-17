@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Janitos",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung JA dentalplus",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Zahnbehandlung 100 %",
+    "Abschluss ab 21 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "JA dental 75plus",
+      "kurz": "75plus",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "75 %",
+        "implantate": "75 %",
+        "behandlung": "100 %",
+        "prophylaxe": "max. 120 € je Jahr",
+        "wartezeit": "keine",
+        "staffel": "4 Jahre, bis 4.000 €",
+        "kfo": "nur nach Unfall",
+        "inlays": "75 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.janitos.de/media/downloads/produkte/zahnzusatzversicherung/leistungsvergleich_zahnzusatz_ja_dentalplus_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "JA dental 90plus",
+      "kurz": "90plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "max. 180 € je Jahr",
+        "wartezeit": "keine",
+        "staffel": "4 Jahre, bis 4.000 €",
+        "kfo": "nur nach Unfall",
+        "inlays": "90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.janitos.de/media/downloads/produkte/zahnzusatzversicherung/leistungsvergleich_zahnzusatz_ja_dentalplus_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "JA dental 100plus",
+      "kurz": "100plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %",
+        "wartezeit": "keine",
+        "staffel": "4 Jahre, bis 6.000 €",
+        "kfo": "nur nach Unfall",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.janitos.de/media/downloads/produkte/zahnzusatzversicherung/leistungsvergleich_zahnzusatz_ja_dentalplus_janitos_versicherung_ag.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.janitos.de/produkte/zahnzusatzversicherung/",
+    "https://www.janitos.de/media/downloads/produkte/zahnzusatzversicherung/leistungsvergleich_zahnzusatz_ja_dentalplus_janitos_versicherung_ag.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Zahnzusatz (Stand 01.07.2024) und Tarifübersicht der Produktseite. Keine Markierung; 90plus als mittlere Stufe.",
+    "Erstattung „75/90/100 % abzüglich der GKV-Leistung“, also einschließlich Kassenanteil. Implantate und Inlays gehören zum Zahnersatz.",
+    "Zahnstaffel (nicht für Prophylaxe): 75plus und 90plus 1.000 / 2.000 / 3.000 / 4.000 € in den ersten vier Kalenderjahren, 100plus 1.500 / 3.000 / 4.500 / 6.000 €.",
+    "Kieferorthopädie nur nach Unfall (75plus 75 % bis 1.500 €, 90plus 100 % bis 2.000 €, 100plus 100 % bis 2.500 €). 100plus: Prophylaxe 100 %, Aufhellung bis 300 € in 2 Jahren."
+  ]
+}

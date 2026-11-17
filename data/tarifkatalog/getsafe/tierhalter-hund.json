@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "Getsafe",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Alle Hunderassen versicherbar",
+    "Führen ohne Leine versichert",
+    "SOS-Hilfe als Erweiterung"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "ausland": "weltweit bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hundehalterhaftpflichtversicherung_comfort.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 5.000 €",
+        "neuwert": "bis 3.000 €, 1 Jahr",
+        "ausland": "weltweit bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hundehalterhaftpflichtversicherung_premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hellogetsafe.com/de-de/p/hundehaftpflicht-de",
+    "https://www.hellogetsafe.com/documents/de_2025_ipid_hundehalterhaftpflichtversicherung.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hundehalterhaftpflichtversicherung_comfort.pdf",
+    "https://www.hellogetsafe.com/documents/de_2025_vertragsbedingungen_hundehalterhaftpflichtversicherung_premium.pdf"
+  ],
+  "offen": [
+    "Kein Tarifvergleich veröffentlicht: Werte aus den Besonderen Bedingungen Comfort und Premium gegeneinander gelesen; Risikoträger andsafe AG. Keine Markierung.",
+    "Selbstbeteiligung vereinbar, Höhe nicht veröffentlicht. Deckungssumme laut Produktseite bis 50 Mio. €, im Einzelnen im Versicherungsschein.",
+    "Welpen vom versicherten Muttertier bis 12 Monate ohne Anzeige. Fremde Hüter mitversichert, gewerbsmäßige nur nachrangig.",
+    "Premium zusätzlich: Kaution bis 500.000 € statt 100.000 €, Beitragsbefreiung bei Arbeitslosigkeit. SOS-Hilfe (Tierarzt nach Angriff, Suche, Hundepension) bis 3.000 € als Erweiterung."
+  ]
+}
