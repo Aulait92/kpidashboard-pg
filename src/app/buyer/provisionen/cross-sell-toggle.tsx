@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { useToast } from "@/components/ui/toast";
 import { setCrossSellReminderAction, setPoliceReminderAction } from "./actions";
 
-/** Erinnerung „Weiteres Produkt anbieten?“ 3 Wochen nach dem ersten Abschluss (Standard an). */
+/** Erinnerung „Weiteres Produkt anbieten?“ 6 Wochen nach dem ersten Abschluss (Standard an). */
 export function CrossSellReminderToggle({ on: initial, canEdit }: { on: boolean; canEdit: boolean }) {
   const toast = useToast();
   const [on, setOn] = useState(initial);
@@ -35,7 +35,7 @@ export function CrossSellReminderToggle({ on: initial, canEdit }: { on: boolean;
         <span>
           <span className="block text-[15px] font-semibold">Erinnerung „Weiteres Produkt anbieten?“</span>
           <span className="mt-1 block text-sm text-[color:var(--muted)]">
-            3 Wochen nach dem ersten Abschluss erscheint auf „Heute“ eine Aufgabe mit naheliegenden Sparten, z. B. Haftpflicht oder Unfall zum Tierschutz. Nicht,
+            6 Wochen nach dem ersten Abschluss erscheint auf „Heute“ eine Aufgabe mit naheliegenden Sparten, z. B. Haftpflicht oder Unfall zum Tierschutz. Nicht,
             wenn schon ein weiterer Vertrag eingetragen ist.
           </span>
         </span>
