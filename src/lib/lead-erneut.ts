@@ -18,6 +18,7 @@ import { reportError } from "@/lib/monitoring";
 import { isLostStatus, lostReasonLabel, lostReasonOf } from "@/lib/lead-lost";
 import { POLICY_TODO } from "@/lib/lead-followup";
 import { CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vertraege-shared";
+import { adData, type LeadAd } from "@/lib/anzeige";
 
 /** Text der Wiedervorlage bzw. Grund auf der Anrufliste. */
 export const ERNEUT_TODO = "Hat sich erneut eingetragen";
@@ -37,6 +38,8 @@ export type ReentryInput = {
   answers: { label: string; value: string }[];
   waConsent: string | null;
   consentData: unknown;
+  /** Anzeige dieser Einsendung (lib/anzeige.ts); der Lead behält seine erste Anzeige */
+  ad?: Partial<LeadAd> | null;
 };
 
 export type ReentryResult = { status: "reentry" | "duplicate"; leadId: string };
@@ -195,6 +198,7 @@ async function saveReentry(lead: MatchLead, inc: ReentryInput, now: Date) {
         formId: inc.formId,
         productKey: inc.productKey,
         consentData: (inc.consentData ?? Prisma.DbNull) as Prisma.InputJsonValue,
+        ...adData(inc.ad),
       },
     }),
     prisma.lead.update({ where: { id: lead.id }, data }),

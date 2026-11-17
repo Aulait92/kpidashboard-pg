@@ -18,6 +18,7 @@ import { tryReentry } from "@/lib/lead-erneut";
 import type { MetaLead } from "@/lib/meta-leads";
 import { consentStateOf, parseDisclaimerResponses, type ConsentNachweis, type DisclaimerResponse } from "@/lib/einwilligung-leadformular";
 import { logTestLead } from "@/lib/testlead";
+import { adData, adFromFlat, adFromMetaLead, mergeAd, type LeadAd } from "@/lib/anzeige";
 
 export type IncomingLead = {
   externalId: string | null;
@@ -29,6 +30,8 @@ export type IncomingLead = {
   fields: Record<string, string>;
   /** Häkchen im Formular (custom_disclaimer_responses); null = Formular ohne eigenen Hinweis bzw. unbekannt */
   disclaimer?: DisclaimerResponse[] | null;
+  /** Anzeige (Plattform, Kampagne, Anzeigengruppe, Anzeige; lib/anzeige.ts). Fehlt bei älteren Payloads im Lead-Eingang. */
+  ad?: LeadAd | null;
 };
 
 const META_KEYS = new Set([
@@ -51,6 +54,7 @@ export function fromMetaLead(l: MetaLead, pageId: string | null): IncomingLead {
     adName: l.ad_name ?? null,
     fields,
     disclaimer: parseDisclaimerResponses(l.custom_disclaimer_responses),
+    ad: adFromMetaLead(l),
   };
 }
 
@@ -77,6 +81,7 @@ export function fromFlatPayload(body: Record<string, unknown>): IncomingLead {
     adName: str(body.ad_name) || null,
     fields,
     disclaimer: parseDisclaimerResponses(body.custom_disclaimer_responses),
+    ad: adFromFlat(body),
   };
 }
 
@@ -170,6 +175,8 @@ export async function ingestLead(
     return { status: "unassigned" };
   }
 
+  // Anzeige der Einsendung; ältere Payloads (Lead-Eingang) kennen nur Kampagnen- und Anzeigennamen
+  const ad = mergeAd(inc.ad, { adFormId: inc.formId, adCampaignName: inc.campaignName, adName: inc.adName });
   const labels = (source?.questionLabels ?? {}) as Record<string, string>;
   const { name, phone, email, answers } = extract(inc, labels);
   const createdAt = new Date(inc.createdAt);
@@ -197,6 +204,7 @@ export async function ingestLead(
     answers,
     waConsent,
     consentData: nachweis,
+    ad,
   }).catch((err) => {
     reportError(err, "lead-erneut", { customer: customerId });
     return null;
@@ -227,6 +235,7 @@ export async function ingestLead(
         adChannel: "Meta",
         status: "Neuer Lead",
         bezugAirtableId: source?.bezugAirtableId ?? null,
+        ...adData(ad),
       },
       select: { id: true },
     });

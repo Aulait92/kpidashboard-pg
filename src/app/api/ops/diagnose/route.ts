@@ -612,12 +612,18 @@ async function vertriebTermine(params: URLSearchParams) {
 
 const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p) };
 
+// Weitere Abfragen in eigenen Modulen (nur lesend)
+//   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
+const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
+  "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
+};
+
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const params = new URL(req.url).searchParams;
   const q = params.get("q") ?? "uebersicht";
-  const fn = QUERIES[q];
-  if (!fn) return Response.json({ error: "Unbekannte Abfrage", abfragen: Object.keys(QUERIES) }, { status: 400 });
+  const fn = QUERIES[q] ?? WEITERE[q];
+  if (!fn) return Response.json({ error: "Unbekannte Abfrage", abfragen: [...Object.keys(QUERIES), ...Object.keys(WEITERE)] }, { status: 400 });
   try {
     return Response.json({ q, at: new Date().toISOString(), data: await fn(params) });
   } catch (e) {

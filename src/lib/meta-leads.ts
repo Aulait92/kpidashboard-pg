@@ -52,7 +52,9 @@ export type MetaLead = {
   form_id?: string;
   ad_id?: string;
   ad_name?: string;
+  adset_id?: string;
   adset_name?: string;
+  campaign_id?: string;
   campaign_name?: string;
   platform?: string;
   is_organic?: boolean;
@@ -63,8 +65,21 @@ export type MetaLead = {
 
 export async function fetchMetaLead(leadgenId: string): Promise<MetaLead> {
   return graphGet<MetaLead>(leadgenId, {
-    fields: "id,created_time,form_id,ad_id,ad_name,adset_name,campaign_name,platform,is_organic,field_data,custom_disclaimer_responses",
+    fields: `id,created_time,${AD_FIELDS_META},is_organic,field_data,custom_disclaimer_responses`,
   });
+}
+
+/** Anzeige-Felder eines Leads (lib/anzeige.ts); ohne Personendaten. */
+const AD_FIELDS_META = "form_id,platform,campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name";
+
+export type MetaLeadAd = Omit<MetaLead, "field_data" | "custom_disclaimer_responses">;
+
+/**
+ * Nur die Anzeige eines Leads abrufen (Rückfüllung, lib/anzeige-rueckfuellung.ts): Formular, Plattform, Kampagne,
+ * Anzeigengruppe, Anzeige. Fragt bewusst keine Formularangaben (Personendaten) ab. Meta hält Leads 90 Tage.
+ */
+export async function fetchMetaLeadAd(leadgenId: string): Promise<MetaLeadAd> {
+  return graphGet<MetaLeadAd>(leadgenId, { fields: `id,created_time,${AD_FIELDS_META}` });
 }
 
 export type MetaForm = { id: string; name: string; status?: string; questions?: { key: string; label?: string; type?: string }[] };
