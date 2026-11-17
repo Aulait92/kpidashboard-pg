@@ -374,7 +374,7 @@ export async function followUpNotReachedResult(leadId: string): Promise<InboxRes
 
 export async function setFollowUpResult(
   leadId: string,
-  when: { days: number } | { date: string },
+  when: { days: number } | { date: string; time?: string | null },
   note?: string | null,
 ): Promise<InboxResult> {
   const customerId = await writableCustomerId(leadId);
@@ -389,8 +389,16 @@ export async function setFollowUpResult(
     at = workdaysFromNow(Math.max(1, Math.min(60, Math.round(when.days))));
   } else {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(when.date)) return { ok: false, error: "Ungültiges Datum." };
-    at = new Date(`${when.date}T08:00:00.000Z`);
-    if (at.getTime() < Date.now() - 24 * 60 * 60 * 1000) return { ok: false, error: "Datum liegt in der Vergangenheit." };
+    if (when.time) {
+      // Rückruf mit Uhrzeit (Ole, 17.11.2026): genauer Zeitpunkt, steht auch im Kalender des Beraters
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(when.time)) return { ok: false, error: "Ungültige Uhrzeit." };
+      const { berlinAt } = await import("@/lib/calendar/lead-times");
+      at = berlinAt(when.date, when.time);
+      if (at.getTime() < Date.now()) return { ok: false, error: "Die Uhrzeit liegt in der Vergangenheit." };
+    } else {
+      at = new Date(`${when.date}T08:00:00.000Z`);
+      if (at.getTime() < Date.now() - 24 * 60 * 60 * 1000) return { ok: false, error: "Datum liegt in der Vergangenheit." };
+    }
   }
   await prisma.lead.update({
     where: { id: lead.id },
@@ -401,7 +409,16 @@ export async function setFollowUpResult(
     },
   });
   const noteText = (note ?? "").trim() || lead.followUpNote;
-  await logLeadHistory(lead.id, "wiedervorlage", `Wiedervorlage ${fmtDayShort(at)}${noteText ? ` · ${noteText}` : ""}`, { customerId });
+  const mitZeit = "date" in when && !!when.time;
+  // Kalender: Rückruf mit Uhrzeit eintragen, sonst einen früheren Eintrag entfernen
+  const rk = await import("@/lib/calendar/rueckruf");
+  const imKalender = mitZeit ? (await rk.rueckrufInKalender(lead.id, at, { appUrl: process.env.APP_URL ?? null })) === "eingetragen" : (await rk.rueckrufAusKalender(lead.id), false);
+  await logLeadHistory(
+    lead.id,
+    "wiedervorlage",
+    `${mitZeit ? `Rückruf ${fmtDayShort(at)} ${when.time} Uhr${imKalender ? " (im Kalender)" : ""}` : `Wiedervorlage ${fmtDayShort(at)}`}${noteText ? ` · ${noteText}` : ""}`,
+    { customerId },
+  );
   await recordUsage("action", "followup.set", { meta: "days" in when ? { days: when.days } : { date: true } });
   refresh();
   return { ok: true, undo: { kind: "lead", leadId, prev } };
@@ -416,6 +433,8 @@ export async function clearFollowUpResult(leadId: string): Promise<InboxResult> 
   const prev = snapshot(lead);
   // Ergebnis eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
   await anrufErledigt(lead.id);
+  // Rückruf erledigt: Kalender-Eintrag entfernen (lib/calendar/rueckruf.ts)
+  await (await import("@/lib/calendar/rueckruf")).rueckrufAusKalender(lead.id);
   // „Police fertig machen“ erledigt → Police abgehakt
   const police = lead.followUpNote === POLICY_TODO && !lead.policyDoneAt;
   await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: null, followUpNote: null, ...(police ? { policyDoneAt: new Date() } : {}) } });

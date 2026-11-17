@@ -697,6 +697,9 @@ model Lead {
   // am Fälligkeitstag auf „Heute".
   followUpAt           DateTime?
   followUpNote         String?
+  // Rückruf mit Uhrzeit als Kalender-Eintrag beim Berater (lib/calendar/rueckruf.ts)
+  rueckrufEventId      String?
+  rueckrufEventKey     String?
   // Notizen des Beraters (bei Airtable-Leads zusätzlich dort gespiegelt)
   notes                String?
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
