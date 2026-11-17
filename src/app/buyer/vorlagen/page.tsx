@@ -73,7 +73,7 @@ export default async function VorlagenPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-      <PageHeader back="/buyer/einstellungen" title="WhatsApp-Vorlagen" subtitle="Diese Nachrichten schickt Ihr Assistent in Ihrem Namen." />
+      <PageHeader back="/buyer/einstellungen/assistent" title="WhatsApp-Vorlagen" subtitle="Diese Nachrichten schickt Ihr Assistent in Ihrem Namen." />
 
       {customer.plan === "service" ? (
         <p className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 text-sm text-[color:var(--muted)]">
