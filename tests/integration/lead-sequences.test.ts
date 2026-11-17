@@ -139,12 +139,14 @@ describe("Nachfass-Abfolgen", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("„Angebot gesendet“ startet die Abfolge statt der 3-Tage-Wiedervorlage; ohne Schalter bleibt alles wie bisher", async () => {
+  it("„Angebot gesendet“ allein startet kein Nachfassen mehr (P3), sondern die 3-Tage-Wiedervorlage; ohne Schalter bleibt alles wie bisher", async () => {
     const lead = await newLead();
     await syncFollowUpWithStatus(lead.id, "Angebot gesendet");
-    const seq = await prisma.leadSequence.findFirstOrThrow({ where: { leadId: lead.id, stoppedAt: null } });
+    expect(await prisma.leadSequence.count({ where: { leadId: lead.id } })).toBe(0);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpNote).toBe("Angebot nachfassen");
+    // Gestartet wird es erst mit dem Versand (lib/angebot-senden-server.ts)
+    const seq = (await startSequence(lead.id, "offer", T0))!;
     expect(seq.kind).toBe("offer");
-    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpAt).toBeNull();
 
     await prisma.agentConfig.update({ where: { customerId }, data: { followUpSequencesEnabled: false } });
     const lead2 = await newLead();

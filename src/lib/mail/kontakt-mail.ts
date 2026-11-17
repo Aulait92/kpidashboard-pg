@@ -22,6 +22,8 @@ export const MAIL_ARTEN = {
   kein_whatsapp: "Kein WhatsApp",
   bewertungsbitte: "Bewertungsbitte",
   einwilligung: "Einwilligung",
+  angebot: "Angebot",
+  angebot_nachfassen: "Angebot nachfassen",
   manuell: "E-Mail",
 } as const;
 export type MailArt = keyof typeof MAIL_ARTEN;

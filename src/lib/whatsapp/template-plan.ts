@@ -62,6 +62,12 @@ export const CORE_PURPOSES: NoticePurpose[] = [
  * CORE_PURPOSES aufnehmen. Bis dahin gehen sie nur als Freitext im offenen 24-h-Fenster (lib/showup.ts).
  */
 export const VORBEREITETE_PURPOSES: NoticePurpose[] = ["reminder_start", "appt_waiting"];
+/**
+ * Angebot nach dem Termin (Paket P3, Ole 17.11.2026): „Angebot senden“ (UTILITY) und das Nachfassen zum selbst gesendeten
+ * Angebot (MARKETING), nur VORBEREITET wie oben (docs/vorlagen-angebot.md). Bis zur Freigabe: „Angebot senden“ nur als
+ * Freitext im offenen 24-h-Fenster (sonst nur die E-Mail), das Nachfassen mit der freigegebenen Vorlage followup_offer.
+ */
+export const VORBEREITET_ANGEBOT: NoticePurpose[] = ["offer_send", "followup_offer_selbst"];
 
 /** Nur mit gebuchtem Bestandskunden-Modul. */
 export const CAMPAIGN_PURPOSES: NoticePurpose[] = ["campaign_cross_sell", "campaign_review", "campaign_birthday", "campaign_renewal"];
@@ -115,7 +121,7 @@ export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSI
  * alles andere ist Ansprache (MARKETING). Meta prüft und stuft ggf. selbst um.
  */
 export function categoryFor(purpose: NoticePurpose): "UTILITY" | "MARKETING" {
-  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "reschedule"].includes(purpose) ? "UTILITY" : "MARKETING";
+  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "reschedule", "offer_send"].includes(purpose) ? "UTILITY" : "MARKETING";
 }
 
 /** Firmenname, der im Text für „[Firma]“ steht (wie im Admin: ohne vorangestelltes „Allianz“). */
@@ -161,6 +167,8 @@ const EXAMPLES: Record<string, string> = {
   "Terminvorschlag 1": "Di., 17.11. um 10:00 Uhr",
   "Terminvorschlag 2": "Mi., 18.11. um 16:00 Uhr",
   "Thema der Empfehlung": "Hausrat",
+  "Thema (z. B. Haftpflicht und Hausrat)": "Haftpflicht und Hausrat",
+  Angebotslink: "https://app.performancegrowth.de/ihr-angebot/abc123",
   Tier: "Ihre Katze",
 };
 
@@ -298,7 +306,9 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   reschedule: { title: "Termin verschoben", when: "Wenn Ihr Team einen Termin verlegen muss, z. B. wegen Abwesenheit." },
   followup: { title: "Nachfassen mit zwei Terminvorschlägen", when: "Wenn ein Lead länger nicht geantwortet hat, mit zwei freien Zeiten aus Ihrem Kalender." },
   followup_nudge: { title: "Kurze Nachfrage", when: "Wenn ein Lead noch nicht geantwortet hat (ohne verbundenen Kalender statt der Terminvorschläge)." },
-  followup_offer: { title: "Nachfassen nach einem Angebot", when: "Einige Tage nach „Angebot gesendet“." },
+  followup_offer: { title: "Nachfassen nach einem Angebot", when: "Zwei Tage, nachdem Sie das Angebot über die App gesendet haben." },
+  followup_offer_selbst: { title: "Nachfassen nach einem selbst gesendeten Angebot", when: "Zwei Tage, nachdem Sie „Habe ich selbst gesendet“ angetippt haben." },
+  offer_send: { title: "Ihr Angebot nach dem Termin", when: "Wenn Sie das Angebot über die App senden und der Chat länger als 24 Stunden ruht." },
   followup_noshow: { title: "Nachfassen nach verpasstem Termin", when: "Wenn ein Lead nicht zum Termin erschienen ist." },
   followup_last: { title: "Letzte Nachricht", when: "Zum Abschluss einer Nachfass-Abfolge." },
   campaign_cross_sell: { title: "Bestandskunden: Lücke schließen", when: "Kampagne an Bestandskunden mit fehlender Sparte." },
