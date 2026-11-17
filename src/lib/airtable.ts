@@ -1209,6 +1209,12 @@ export async function syncAirtable(): Promise<SyncResult> {
         const phone = normalizePhone(readString(rec.fields, "Telefonnummer") ?? "");
         const email = readString(rec.fields, "E-Mail")?.toLowerCase() ?? null;
         const formAnswers = extractFormAnswers(product, rec.fields);
+        // PLZ und Ort mitnehmen (Ole, 17.11.2026): die HvK-Abrechnung ordnet gekaufte Leads und Reklamationen über PLZ
+        // und Ort zu (lib/ppl/hvk-abrechnung.ts leadPlzOrt); ohne sie fand der Abgleich keinen Airtable-Lead.
+        for (const key of ["Postleitzahl", "Ort"] as const) {
+          const v = readString(rec.fields, key)?.trim();
+          if (v && !formAnswers.some((a) => a.label === key)) formAnswers.push({ label: key, value: v });
+        }
         const formData = formAnswers.length > 0 ? formAnswers : Prisma.DbNull;
 
         const isCancelled = isCancelledStatus(status);
