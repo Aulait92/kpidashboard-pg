@@ -19,7 +19,7 @@ import { AcceptForm, type OfferChoiceProps } from "./accept-form";
 import { PayButton } from "./pay-button";
 import { PayLater } from "./pay-later";
 import { erinnerungsGrenzen, tagIso } from "@/lib/angebot-zahlungserinnerung";
-import { billingEnabled } from "@/lib/billing";
+import { billingEnabled, STRIPE_MIN_EUR } from "@/lib/billing";
 import { CheckCircle2, Clock } from "lucide-react";
 import { nowMs } from "@/lib/now";
 
@@ -99,6 +99,7 @@ export default async function OfferPage({
             enabled={billingEnabled()}
             payLater={payLaterProps(offer)}
             bonus={bonus}
+            rechnung={Number(offer.setupFee) - Number(offer.abschlussBonusGewaehrt ?? 0) >= STRIPE_MIN_EUR}
           />
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
@@ -233,6 +234,7 @@ function PaymentBox({
   enabled,
   payLater,
   bonus,
+  rechnung,
 }: {
   token: string;
   status: string;
@@ -240,6 +242,8 @@ function PaymentBox({
   enabled: boolean;
   payLater: { min: string; max: string | null; current: string | null } | null;
   bonus: { betrag: number; bis: Date; gesichert: boolean } | null;
+  /** Setup-Rechnung entsteht nur, wenn nach Rabatt und Bonus etwas zu zahlen war. */
+  rechnung: boolean;
 }) {
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
   if (status === "paid") {
@@ -250,7 +254,7 @@ function PaymentBox({
           <div className="font-semibold">Zahlung erhalten, vielen Dank!</div>
           <p className="mt-1 text-sm">
             Sie bekommen gleich eine E-Mail mit Ihrem Zugang. Die Einrichtung dauert ca. 20 bis 30 Minuten, Sie können
-            jederzeit unterbrechen; auf Wunsch helfen wir Ihnen in einem 15-Minuten-Termin. Ihre Rechnung kommt per E-Mail.
+            jederzeit unterbrechen; auf Wunsch helfen wir Ihnen in einem 15-Minuten-Termin.{rechnung ? " Ihre Rechnung kommt per E-Mail." : ""}
           </p>
         </div>
       </div>
