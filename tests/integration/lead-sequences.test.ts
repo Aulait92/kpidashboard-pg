@@ -204,23 +204,25 @@ describe("Nachfass-Abfolgen", () => {
     expect(again?.id).toBe(seq?.id);
     expect(again?.nextAt?.getTime()).toBe(later.getTime() + 2 * HOUR);
 
+    // Nur die Aufrufe für diesen Lead (andere Abfolgen aus früheren Tests, z. B. No-Show-Rettung Tag 1, laufen mit)
+    const mine = () => send.mock.calls.filter((c) => (c[0] as { leadId?: string }).leadId === lead.id);
     await runSequences(new Date(later.getTime() + 2 * HOUR)); // 13:00
-    expect(send).toHaveBeenCalledTimes(1);
-    expect(send.mock.calls[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id });
+    expect(mine()).toHaveLength(1);
+    expect(mine()[0][0]).toMatchObject({ purpose: "followup_nudge", leadId: lead.id });
     await runSequences(new Date(later.getTime() + 8 * HOUR)); // 19:00: außerhalb, wartet
-    expect(send).toHaveBeenCalledTimes(1);
+    expect(mine()).toHaveLength(1);
     await runSequences(new Date(later.getTime() + 22 * HOUR)); // Mi 09:00
-    expect(send).toHaveBeenCalledTimes(2);
-    expect(send.mock.calls[1][0]).toMatchObject({ purpose: "followup_nudge" });
+    expect(mine()).toHaveLength(2);
+    expect(mine()[1][0]).toMatchObject({ purpose: "followup_nudge" });
     // nächster Schritt (20 Std. = 07:00, schon fällig) erst nach dem Mindestabstand von 2 Std.
     const mid = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(mid.nextAt?.getTime()).toBe(later.getTime() + 24 * HOUR);
     // ohne offenes 24h-Fenster (keine Konversation) → übersprungen, keine Vorlage doppelt
     await runSequences(new Date(later.getTime() + 24 * HOUR));
-    expect(send).toHaveBeenCalledTimes(2);
+    expect(mine()).toHaveLength(2);
     await runSequences(new Date(later.getTime() + 3 * DAY));
-    expect(send).toHaveBeenCalledTimes(3);
-    expect(send.mock.calls[2][0]).toMatchObject({ purpose: "followup_last" });
+    expect(mine()).toHaveLength(3);
+    expect(mine()[2][0]).toMatchObject({ purpose: "followup_last" });
     const done = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(done.stopReason).toBe("Abgeschlossen");
   });

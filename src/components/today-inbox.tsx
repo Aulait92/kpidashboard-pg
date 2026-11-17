@@ -52,6 +52,8 @@ import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
 import { attemptMessage, emitNotReachedOffer, LostSheet, NextStepSheet } from "@/components/next-step";
 import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
+import { TerminAnwesenheit } from "@/components/termin-anwesenheit";
+import { anwesenheitsFrage } from "@/lib/showup";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -389,6 +391,11 @@ export function TodayInbox({
           <ul className="divide-y divide-[color:var(--border)]">
             {appointments.map((a) => {
               const video = a.mode === "video";
+              // Show-up-Paket: ab Terminbeginn „Ist Frau Becker da?“ direkt in der Zeile (auch ohne Push)
+              const frage = anwesenheitsFrage(
+                { startsAt: new Date(a.startsAt), endsAt: a.endsAt ? new Date(a.endsAt) : null, mode: a.mode, status: "booked", attendance: a.attendance ?? null },
+                new Date(),
+              );
               const actions: SheetAction[] = [];
               if (video && a.meetUrl) actions.push({ label: "Videocall starten", icon: Video, href: a.meetUrl, tone: "primary" });
               if (a.phone) actions.push({ label: "Anrufen", icon: Phone, href: `tel:+${a.phone}`, tone: video ? undefined : "primary" });
@@ -417,7 +424,12 @@ export function TodayInbox({
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{a.name}</div>
                     <p className="truncate text-xs text-[color:var(--muted)]">{a.summary ?? terminArtLabel(a.mode)}</p>
-                    {vorbereiten.has(a.id) ? (
+                    {frage === "start" || frage === "wartet" ? (
+                      <div className="mt-1.5">
+                        <TerminAnwesenheit appointmentId={a.id} label={a.label ?? a.name} stand={frage} phone={a.phone} />
+                      </div>
+                    ) : null}
+                    {frage !== "start" && frage !== "wartet" && vorbereiten.has(a.id) ? (
                       <Link href={`/buyer/termine/${a.id}/vorbereitung?von=heute`} onClick={stop} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline" data-termin-vorbereiten>
                         <Calculator className="h-3.5 w-3.5" /> Vorbereiten: Angebot rechnen
                       </Link>
@@ -472,6 +484,18 @@ export function TodayInbox({
             })}
             {outcomes.map((o) => {
               const key = `o:${o.id}`;
+              // „Fehlt noch“ ohne weitere Antwort: erst „Ist … noch gekommen?“ (Show-up-Paket), danach wie gewohnt das Ergebnis
+              if (o.attendance === "fehlt" && o.mode === "video") {
+                return (
+                  <li key={o.id} className={`px-5 py-3 ${sel(o.leadId) ?? ""}`}>
+                    <div className="truncate font-medium">{o.name}</div>
+                    <p className="mb-1 truncate text-xs text-[color:var(--muted)]">
+                      {day(o.startsAt)}, {time(o.startsAt)} Uhr · {terminArtLabel(o.mode)}
+                    </p>
+                    <TerminAnwesenheit appointmentId={o.id} label={o.label ?? o.name} stand="nachher" phone={null} />
+                  </li>
+                );
+              }
               const open = () =>
                 setSheet({
                   kind: "actions",

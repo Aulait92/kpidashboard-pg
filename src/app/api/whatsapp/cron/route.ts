@@ -77,6 +77,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-start-reminders");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Terminbeginn: Push „Ist … da?“ an den Vermittler, nach „Fehlt noch“ die Rückfrage nach dem Termin (lib/showup-server.ts)
+  const terminBeginn = await import("@/lib/showup-server").then((m) => m.runTerminBeginn()).catch((e: unknown) => {
+    reportError(e, "cron-termin-beginn");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
   // Onboarding: Erinnerungen, Leads per E-Mail (Nur Betreuung), Feedback, Tag 90.
   const onboarding = await runOnboardingCron().catch((e: unknown) => {
     reportError(e, "cron-onboarding");
@@ -356,7 +361,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

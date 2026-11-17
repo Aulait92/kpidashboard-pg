@@ -13,6 +13,8 @@ import { listWithoutNextStep, type NoStepLead } from "@/lib/lead-next-step-serve
 import { APPOINTMENT_RESULT_AFTER_MS } from "@/lib/lead-next-step";
 import { isErneutNote } from "@/lib/lead-erneut";
 import { CALL_PAUSE_MAX_MS } from "@/lib/telefonat";
+import { kontaktFromLead } from "@/lib/lead-anrede";
+import { leadLabel } from "@/lib/showup";
 
 const TZ = "Europe/Berlin";
 const DAY = 24 * 60 * 60 * 1000;
@@ -38,8 +40,24 @@ export type InboxAppointment = {
   name: string;
   phone: string | null;
   summary: string | null;
+  /** Ende des Termins (Show-up-Paket: Frage „Ist … da?“ bis zum Ende) */
+  endsAt?: string | null;
+  /** Anwesenheit (lib/showup.ts): erschienen | fehlt | nicht_erschienen */
+  attendance?: string | null;
+  /** Name für die Frage „Ist Frau Becker da?“ */
+  label?: string;
 };
-export type InboxOutcome = { id: string; startsAt: string; mode: string; leadId: string; name: string; source: string | null };
+export type InboxOutcome = {
+  id: string;
+  startsAt: string;
+  mode: string;
+  leadId: string;
+  name: string;
+  source: string | null;
+  /** „Fehlt noch“ ohne weitere Antwort: Rückfrage „Ist … noch gekommen?“ statt Ergebnis */
+  attendance?: string | null;
+  label?: string;
+};
 /** Angerufen, Ergebnis fehlt (lib/telefonat.ts): Assistent pausiert, bis das Ergebnis eingetragen ist. */
 export type InboxOpenCall = { leadId: string; name: string; source: string | null; at: string };
 export type InboxChat = { conversationId: string; name: string; reason: string | null; at: string | null };
@@ -132,11 +150,13 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       select: {
         id: true,
         startsAt: true,
+        endsAt: true,
         mode: true,
         meetUrl: true,
         leadId: true,
         conversationId: true,
-        lead: { select: { name: true, phone: true } },
+        attendance: true,
+        lead: { select: { name: true, phone: true, formData: true, contactOverrides: true } },
       },
     }),
     prisma.appointment.findMany({
@@ -148,7 +168,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       },
       orderBy: { startsAt: "desc" },
       take: 20,
-      select: { id: true, startsAt: true, mode: true, leadId: true, lead: { select: { name: true, status: true, source: true } } },
+      select: { id: true, startsAt: true, mode: true, leadId: true, attendance: true, lead: { select: { name: true, status: true, source: true, formData: true, contactOverrides: true } } },
     }),
     prisma.conversation.findMany({
       where: { ...conversationScope(ctx), needsAttention: true },
@@ -256,6 +276,9 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         name: a.lead?.name ?? conv?.contactName ?? "Lead",
         phone: a.lead?.phone ?? conv?.contactPhone ?? null,
         summary: conv?.qualificationSummary ?? null,
+        endsAt: a.endsAt?.toISOString() ?? null,
+        attendance: a.attendance,
+        label: leadLabel(kontaktFromLead(a.lead, conv?.contactName ?? null)),
       };
     }),
     outcomes: past
@@ -267,6 +290,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         leadId: a.leadId!,
         name: a.lead?.name ?? "Lead",
         source: a.lead?.source ?? null,
+        attendance: a.attendance,
+        label: leadLabel(kontaktFromLead(a.lead)),
       })),
     openCalls: openCalls.map((l) => ({ leadId: l.id, name: l.name ?? "Lead", source: l.source, at: l.callStartedAt!.toISOString() })),
     chats: chats.map((c) => ({
