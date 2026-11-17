@@ -55,6 +55,7 @@ import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { waOhneMarker } from "@/lib/wa-format";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
+import { angebotStandText } from "@/lib/angebot-senden";
 import {
   ALL_GROUP_KEYS,
   COMMON_FIELDS,
@@ -356,7 +357,7 @@ export async function LeadDetailBody({
           known: conv?.qualificationSummary ?? null,
         })
       : null;
-  const [history, rates, files, postfachRaw, me, mailOff, unterlagen] = await Promise.all([
+  const [history, rates, files, postfachRaw, me, mailOff, unterlagen, angebotStaende] = await Promise.all([
     loadLeadHistory(lead.id, team.userId),
     won ? loadCustomerProvision(customerId).then((p) => p.rates) : null,
     listLeadFiles(lead.id),
@@ -365,7 +366,19 @@ export async function LeadDetailBody({
     mailFeaturesOffFor(customerId),
     // Unterlagen vom Kunden per WhatsApp (lib/policen); Admin-Vorschau ohne Inhalte mit Gesundheitsbezug
     listUnterlagen(lead.id, { preview: !team.userId }),
+    // Kennzeichen „Angebot abgelegt am“ / „gesendet am“ an der Datei (Paket P3, lib/angebot-senden.ts)
+    prisma.appointment.findMany({
+      where: { leadId: lead.id, angebotDateiId: { not: null } },
+      orderBy: { startsAt: "desc" },
+      take: 10,
+      select: { angebotDateiId: true, angebotAbgelegtAt: true, angebotGesendetAt: true, angebotVersand: true, angebotKanaele: true },
+    }),
   ]);
+  const angebotStand = new Map<string, string>();
+  for (const t of angebotStaende) {
+    const text = angebotStandText({ abgelegtAt: t.angebotAbgelegtAt, gesendetAt: t.angebotGesendetAt, versand: t.angebotVersand, kanaele: t.angebotKanaele });
+    if (t.angebotDateiId && text && !angebotStand.has(t.angebotDateiId)) angebotStand.set(t.angebotDateiId, text);
+  }
   // E-Mail an den Lead (Pakete M0/M1, Ole 17.11.2026): Dialog immer. Über die App aus dem eigenen Postfach, sonst von
   // unserer Versanddomain mit „Name | Agentur“; „Meine Gesellschaft erlaubt das nicht“ (mailOff): nur eigenes
   // Mailprogramm und Kopieren.
@@ -653,7 +666,7 @@ export async function LeadDetailBody({
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
-      <LeadFiles leadId={lead.id} files={files} unterlagen={unterlagen} defaultKind={won ? "police" : "angebot"} />
+      <LeadFiles leadId={lead.id} files={files.map((f) => ({ ...f, stand: angebotStand.get(f.id) ?? null }))} unterlagen={unterlagen} defaultKind={won ? "police" : "angebot"} />
 
       <LeadHistory mailReady={!lead.erasedAt} leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>

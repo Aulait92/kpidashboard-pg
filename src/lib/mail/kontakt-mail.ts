@@ -23,10 +23,12 @@ export const MAIL_ARTEN = {
   nummer_erfragen: "Richtige Nummer erfragen",
   bewertungsbitte: "Bewertungsbitte",
   einwilligung: "Einwilligung",
+  angebot: "Angebot",
+  angebot_nachfassen: "Angebot nachfassen",
   manuell: "E-Mail",
   // Vorlagen-Mails (Paket M0, lib/mail/vorlagen-mail.ts): Art = Schlüssel der Vorlage, automatisch oder von Hand
   nicht_erreicht: "Nicht erreicht",
-  angebot: "Angebot",
+  // „angebot“ steht oben (Paket P3, gleiche Bezeichnung)
   nachfassen_angebot: "Nachfassen Angebot",
   nach_abschluss: "Nach dem Abschluss",
   termin_vorbereitung: "Termin: Vorbereitung",

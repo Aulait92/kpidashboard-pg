@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "MeinKrankenhausschutz Plus",
@@ -43,8 +42,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "MeinKrankenhausschutz Best",
@@ -62,8 +60,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Ersatz-Krankenhaustagegeld: je 50 € bei Verzicht auf Zimmer bzw. Chefarzt (Plus, Best).",
     "Krankenhaustagegeld als eigener Baustein auf der Seite nicht genannt.",
     "Anschlussheilbehandlung in Smart und Plus nur bei Vorleistung der Kasse; Kur und Reha nur in Best.",
-    "Allianz markiert keinen Tarif; Plus als mittlere Stufe gesetzt."
+    "Allianz markiert keinen Tarif; Plus als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de."
   ]
 }
