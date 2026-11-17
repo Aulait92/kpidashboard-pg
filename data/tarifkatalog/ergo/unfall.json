@@ -4,9 +4,9 @@
   "produkt": "Unfallversicherung",
   "empfehlung": "mittlere Stufe",
   "inAllenTarifen": [
-    "Sofortleistung bei Schwerverletzungen",
-    "Bergung bis 200.000 €, kosmetische OP bis 50.000 €",
-    "Keine Gesundheitsfragen"
+    "Sofortleistung bei Schwerverl.",
+    "Bergung bis 200.000 €",
+    "Ohne Gesundheitsfragen"
   ],
   "tarife": [
     {
@@ -87,6 +87,7 @@
     "Unfallrente ab 50 % Invalidität in allen Stufen zuwählbar; Unfall-Rente Plus (ab 35 % halbe Rente) und Unfall-Hilfe Plus nur in Smart und Best.",
     "Krankenhaustagegeld zuwählbar, ab dem 4. Tag doppelt. Weitere Bausteine: Unfall-Hilfe, Verletzungsgeld, Unfall-Pflege.",
     "Gliedertaxe Plus in Smart und Best zuwählbar; für Basic ist in der Tabelle kein Eintrag (nicht belegt).",
-    "Todesfallleistung und Zeckenstich nicht im Tarifvergleich. Die Leistungsübersichten (PDF) liegen auf ergo-meine-druckstuecke.de und waren für automatische Abrufe gesperrt (HTTP 403)."
+    "Todesfallleistung und Zeckenstich nicht im Tarifvergleich. Die Leistungsübersichten (PDF) liegen auf ergo-meine-druckstuecke.de und waren für automatische Abrufe gesperrt (HTTP 403).",
+    "inAllenTarifen gekürzt (17.11.2026): auch kosmetische OP bis 50.000 €"
   ]
 }

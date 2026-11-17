@@ -5,8 +5,8 @@
   "empfehlung": "mittlere Stufe",
   "inAllenTarifen": [
     "Leistung ab 1 % Invalidität",
-    "Infektionen (z. B. Borreliose, FSME) und Impfschäden",
-    "Unfallrente und Krankenhaustagegeld als Bausteine"
+    "Infektionen und Impfschäden",
+    "Rente, KH-Tagegeld wählbar"
   ],
   "tarife": [
     {
@@ -91,6 +91,7 @@
     "Gliedertaxe: Basis allgemein, Komfort verbessert, Premium Gliedertaxe Plus.",
     "Ergänzungsbausteine: Unfallrente ab 50 % (Kurzrente in Komfort ab 40 % für 3 Jahre, in Premium ab 30 % für 7 Jahre), Todesfallleistung, Unfallkrankenhaustagegeld mit Genesungsgeld, Tagegeld.",
     "Sofortleistung 10 % der Invaliditätsgrundsumme (nicht bei Unfallrente).",
-    "Bergung umfasst Such-, Rettungs-, Transport- und Rückreisekosten. Kosmetische OP inkl. Zahnersatz bis 10.000, 25.000 bzw. 50.000 €. Familienrabatt 10 %."
+    "Bergung umfasst Such-, Rettungs-, Transport- und Rückreisekosten. Kosmetische OP inkl. Zahnersatz bis 10.000, 25.000 bzw. 50.000 €. Familienrabatt 10 %.",
+    "inAllenTarifen gekürzt (17.11.2026): Infektionen z. B. Borreliose, FSME"
   ]
 }

@@ -103,6 +103,7 @@ describe("Katalog laden", () => {
     expect(gesellschaftAusText("Sparkassen DirektVersicherung")).toBe("s-direkt");
     expect(gesellschaftAusText("SV SparkassenVersicherung")).toBe("sv");
     expect(gesellschaftAusText("Black Friday Angebot")).toBeNull();
+    expect(gesellschaftAusText("FRIDAY Versicherung")).toBe("allianz");
     expect(gesellschaftAusText("Condor Lebensversicherung")).toBe("condor");
   });
 
@@ -139,7 +140,6 @@ describe("Katalog laden", () => {
       "ERV",
       "Europa",
       "Figo",
-      "FRIDAY",
       "Generali",
       "Getsafe",
       "GVV",
@@ -147,7 +147,6 @@ describe("Katalog laden", () => {
       "Hannoversche",
       "HanseMerkur",
       "HDI",
-      "Heidelberger Leben",
       "Helvetia",
       "HUK-COBURG",
       "IDEAL",

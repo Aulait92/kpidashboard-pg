@@ -129,7 +129,6 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   // Welle 3 (Ole, 17.11.2026: „möglichst alle Gesellschaften und Tarife“)
   "adam-riese": "Adam Riese",
   getsafe: "Getsafe",
-  friday: "FRIDAY",
   verti: "Verti",
   neodigital: "Neodigital",
   janitos: "Janitos",
@@ -146,7 +145,6 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   auxilia: "AUXILIA",
   oerag: "ÖRAG",
   deurag: "DEURAG",
-  "heidelberger-leben": "Heidelberger Leben",
   "standard-life": "Standard Life",
   interrisk: "InterRisk",
   rhion: "Rhion",
@@ -190,7 +188,8 @@ export function gesellschaftName(key: string): string {
 /** Gesellschaft aus einem Text (Kundenname, Erstinformation, Angebot), z. B. „Allianz Agentur Lohmann“ → allianz. */
 export function gesellschaftAusText(text: string | null | undefined): string | null {
   const t = text ?? "";
-  if (/allianz/i.test(t)) return "allianz";
+  // FRIDAY gehört seit 2026 zu Allianz Direct (friday.de leitet dorthin um)
+  if (/allianz/i.test(t) || /\bFRIDAY\b/.test(t) || /friday[\s-]*versicherung/i.test(t)) return "allianz";
   if (/\baxa\b/i.test(t)) return "axa";
   if (/signal\s*-?\s*iduna/i.test(t)) return "signal-iduna";
   if (/\bagila\b/i.test(t)) return "agila";
@@ -252,7 +251,6 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   // Welle 3
   if (/adam\s*riese/i.test(t)) return "adam-riese";
   if (/\bgetsafe\b/i.test(t)) return "getsafe";
-  if (/\bFRIDAY\b/.test(t) || /friday[\s-]*versicherung/i.test(t)) return "friday";
   if (/\bverti\b/i.test(t)) return "verti";
   if (/neodigital/i.test(t)) return "neodigital";
   if (/\bjanitos\b/i.test(t)) return "janitos";
@@ -267,7 +265,6 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/\bvpv\b/i.test(t)) return "vpv";
   if (/condor[\s-]*(lebens)?versicherung/i.test(t)) return "condor";
   if (/\bauxilia\b/i.test(t)) return "auxilia";
-  if (/heidelberger\s*leben/i.test(t)) return "heidelberger-leben";
   if (/standard\s*life/i.test(t)) return "standard-life";
   if (/\brhion\b/i.test(t)) return "rhion";
   if (/\bnv[\s-]*versicherung/i.test(t)) return "nv";
