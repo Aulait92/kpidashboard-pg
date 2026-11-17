@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lead-Verlauf</title>
+<meta name="description" content="Onboarding für Vermittler: Was mit Ihren Leads automatisch passiert, wann Sie etwas tun und wann Sie anrufen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+<style>
+/* Tokens 1:1 aus docs/ux/admin-v2/demo.html. Rollenfarben: Assistent = brand (blau), Sie = warn (bernstein, heißt hier: Ihre Aufgabe), Lead = neutral. */
+:root{
+  --bg:#f4f7fc; --surface:#ffffff; --sunken:#f7f9fd; --hover:#f2f5fb;
+  --fg:#0b1220; --muted:#55627a; --faint:#8a95ab;
+  --line:#e8edf5; --line2:#dce3ee;
+  --brand:#2563eb; --brand-ink:#1d4ed8; --brand-soft:#eef3ff; --brand-line:#d6e2ff;
+  --ok:#047857; --ok-soft:#ecfdf5; --ok-line:#bfe9d6;
+  --warn:#b45309; --warn-soft:#fff7e8; --warn-line:#fbe0b4;
+  --err:#dc2626; --err-soft:#fef2f2; --err-line:#fbd0d0;
+  --on-brand:#ffffff;
+  --sh1:0 1px 2px rgba(15,23,42,.04),0 1px 1px rgba(15,23,42,.02);
+  --sh2:0 1px 2px rgba(15,23,42,.04),0 12px 32px -12px rgba(15,23,42,.14);
+  --font:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r1:12px; --r2:16px; --r3:20px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1220; --surface:#111a2d; --sunken:#0e1626; --hover:#16213a;
+  --fg:#e7edf8; --muted:#9ba7bf; --faint:#6e7a93;
+  --line:#1e2940; --line2:#273450;
+  --brand:#4f86ff; --brand-ink:#8db0ff; --brand-soft:#15244a; --brand-line:#22386b;
+  --ok:#34d399; --ok-soft:#0e2a22; --ok-line:#165440;
+  --warn:#fbbf24; --warn-soft:#2a2010; --warn-line:#4d3a14;
+  --err:#f87171; --err-soft:#2c1418; --err-line:#5a2329;
+  --on-brand:#ffffff;
+  --sh1:none; --sh2:0 1px 0 rgba(255,255,255,.02),0 12px 32px -12px rgba(0,0,0,.5);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1220; --surface:#111a2d; --sunken:#0e1626; --hover:#16213a;
+  --fg:#e7edf8; --muted:#9ba7bf; --faint:#6e7a93;
+  --line:#1e2940; --line2:#273450;
+  --brand:#4f86ff; --brand-ink:#8db0ff; --brand-soft:#15244a; --brand-line:#22386b;
+  --ok:#34d399; --ok-soft:#0e2a22; --ok-line:#165440;
+  --warn:#fbbf24; --warn-soft:#2a2010; --warn-line:#4d3a14;
+  --err:#f87171; --err-soft:#2c1418; --err-line:#5a2329;
+  --on-brand:#ffffff;
+  --sh1:none; --sh2:0 1px 0 rgba(255,255,255,.02),0 12px 32px -12px rgba(0,0,0,.5);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:400 15px/1.55 var(--font);background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{letter-spacing:-.015em;text-wrap:balance}
+p,li{text-wrap:pretty;hyphens:auto}
+a{color:var(--brand)}
+.ic{flex:none;display:block;width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px 72px;display:flex;flex-direction:column;gap:40px}
+
+/* Kopf */
+.top{display:flex;align-items:center;gap:12px;padding:18px 0 0}
+.logo{display:flex;align-items:center;gap:10px;font-weight:650;font-size:16px}
+.logo .mk{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--on-brand);display:grid;place-items:center;font-weight:700;font-size:14px}
+.top .sp{flex:1}
+.jump{display:flex;gap:6px}
+.jump a{font-size:14px;font-weight:550;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface)}
+.jump a:hover{color:var(--fg);border-color:var(--line2)}
+.theme{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.theme:hover{color:var(--fg)}
+
+.hero{display:flex;flex-direction:column;gap:10px;padding-top:12px}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--brand)}
+.hero h1{font-size:38px;line-height:1.12;font-weight:650;max-width:22ch}
+.hero .sub{color:var(--muted);font-size:17px;max-width:62ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+
+/* Rollen-Tags */
+.tag{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:99px;font-size:13px;font-weight:600;background:var(--sunken);color:var(--muted);border:1px solid var(--line);white-space:nowrap}
+.tag .ic{width:14px;height:14px}
+.tag.bot{background:var(--brand-soft);color:var(--brand-ink);border-color:var(--brand-line)}
+.tag.you{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)}
+.tag.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+
+/* Auf einen Blick */
+.glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.g{background:var(--surface);border:1px solid var(--line);border-radius:var(--r3);box-shadow:var(--sh1);padding:22px;display:flex;flex-direction:column;gap:10px;position:relative}
+.g .gi{width:42px;height:42px;border-radius:13px;display:grid;place-items:center}
+.g .gi .ic{width:22px;height:22px}
+.g.bot .gi{background:var(--brand-soft);color:var(--brand)}
+.g.you .gi{background:var(--warn-soft);color:var(--warn)}
+.g.you{border-color:var(--warn-line)}
+.g h2{font-size:19px;font-weight:650;line-height:1.25}
+.g p{color:var(--muted);font-size:15px}
+.g .when{font-size:13px;font-weight:600;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+
+/* Abschnittsköpfe */
+.sh{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.sh h2{font-size:26px;font-weight:650;line-height:1.2}
+.sh p{color:var(--muted);font-size:16px;max-width:66ch}
+
+/* Aufgaben */
+.duo{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r3);box-shadow:var(--sh1);min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;padding:20px 22px 8px}
+.card-h h3{font-size:18px;font-weight:650}
+.todo{list-style:none;margin:0;padding:4px 10px 12px;counter-reset:t}
+.todo li{display:flex;gap:14px;padding:14px 12px;border-top:1px solid var(--line)}
+.todo li:first-child{border-top:0}
+.todo .n{width:30px;height:30px;border-radius:99px;background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn-line);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.todo b{display:block;font-size:16px;font-weight:600}
+.todo span{display:block;color:var(--muted);font-size:14.5px;margin-top:2px}
+.todo em{font-style:normal;font-weight:600;color:var(--fg)}
+.auto{list-style:none;margin:0;padding:4px 22px 18px;display:flex;flex-direction:column;gap:10px}
+.auto li{display:flex;gap:10px;font-size:15px;color:var(--fg)}
+.auto li .ic{color:var(--ok);margin-top:3px}
+.auto li span{color:var(--muted)}
+.tip{margin:0 22px 20px;padding:12px 14px;border-radius:14px;background:var(--sunken);border:1px solid var(--line);font-size:14px;color:var(--muted)}
+.tip b{color:var(--fg);font-weight:600}
+
+/* Zeitstrahl */
+.lanes{display:grid;grid-template-columns:56px minmax(0,1fr);}
+.lh{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:12px;padding:0 19px 10px;position:sticky;top:0;z-index:5;background:var(--bg);padding-top:10px}
+.lh div{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);display:flex;align-items:center;gap:6px}
+.lh .c2{color:var(--brand)}.lh .c3{color:var(--warn)}
+.phase{grid-column:1 / -1;display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+.phase:first-of-type{margin-top:4px}
+.phase b{font-size:14px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.phase::after{content:"";flex:1;height:1px;background:var(--line)}
+.rail{position:relative;display:flex;justify-content:center}
+.rail::before{content:"";position:absolute;top:0;bottom:-12px;left:50%;width:2px;margin-left:-1px;background:var(--line2)}
+.rail.end::before{display:none}
+.dotn{position:relative;z-index:1;width:36px;height:36px;border-radius:99px;display:grid;place-items:center;font-weight:700;font-size:15px;background:var(--brand-soft);color:var(--brand-ink);border:2px solid var(--brand-line);margin-top:14px}
+.dotn.you{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)}
+.dotn.br{background:var(--surface);color:var(--warn);border:2px dashed var(--warn)}
+.dotn .ic{width:16px;height:16px}
+.st{background:var(--surface);border:1px solid var(--line);border-radius:var(--r2);box-shadow:var(--sh1);margin-bottom:12px;min-width:0}
+.st.you{border-color:var(--warn-line);box-shadow:0 0 0 3px var(--warn-soft)}
+.st.br{border:2px dashed var(--warn-line);background:color-mix(in srgb,var(--warn-soft) 45%,var(--surface))}
+.st-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px 6px}
+.st-h h3{font-size:17px;font-weight:650}
+.st-h .tag{height:24px;font-size:12.5px}
+.cells{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:12px;padding:6px 18px 16px}
+.cell{font-size:14.5px;color:var(--fg);min-width:0}
+.cell .lbl{display:none}
+.cell.none{color:var(--faint)}
+.cell.do{background:var(--warn-soft);border:1px solid var(--warn-line);border-radius:12px;padding:8px 10px;margin:-8px -4px 0}
+.cell.do b{color:var(--warn)}
+.cell small{display:block;color:var(--muted);font-size:13.5px;margin-top:4px}
+.q{color:var(--muted)}
+
+/* Anrufplan */
+.plan{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:4px 18px 8px}
+.day{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:8px 8px 10px;min-width:0}
+.day h4{margin:0 0 6px;font-size:12.5px;font-weight:650;color:var(--muted);letter-spacing:.02em}
+.day.off{background:transparent;border-style:dashed}
+.day.off h4{color:var(--faint)}
+.call{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:550;padding:4px 6px;border-radius:8px;background:var(--warn-soft);color:var(--warn);margin-top:4px;min-width:0}
+.call i{font-style:normal;width:18px;height:18px;border-radius:99px;background:var(--warn);color:var(--surface);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.call span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.planfoot{padding:6px 18px 16px;font-size:14px;color:var(--muted)}
+.planfoot b{color:var(--fg)}
+
+/* Beispielchat */
+.chat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r3);box-shadow:var(--sh2);overflow:hidden}
+.cp-h{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.av{width:38px;height:38px;border-radius:99px;display:grid;place-items:center;font-weight:600;font-size:14px;flex:none;background:#fce7f3;color:#be185d}
+:root[data-theme="dark"] .av{background:#3a1430;color:#f9a8d4}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .av{background:#3a1430;color:#f9a8d4}}
+.cp-h .nm{font-weight:600;font-size:16px;display:block}
+.live{font-size:13px;color:var(--ok);display:flex;align-items:center;gap:6px}
+.pulse{width:7px;height:7px;border-radius:99px;background:var(--ok);box-shadow:0 0 0 3px var(--ok-soft)}
+.cp-h .sp{flex:1}
+.seg{display:grid;grid-template-columns:260px minmax(0,1fr);border-top:1px solid var(--line);background:color-mix(in srgb,var(--sunken) 55%,var(--surface))}
+.seg:first-of-type{border-top:0}
+.note{padding:18px 20px;background:var(--sunken);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.note .nh{display:flex;align-items:center;gap:8px}
+.note .sn{width:26px;height:26px;border-radius:99px;background:var(--brand-soft);color:var(--brand-ink);border:1px solid var(--brand-line);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.note b{font-size:15px;font-weight:650}
+.note p{font-size:14px;color:var(--muted)}
+.msgs{padding:16px 22px;display:flex;flex-direction:column;gap:6px;min-width:0;width:100%;max-width:640px;background:color-mix(in srgb,var(--sunken) 55%,var(--surface))}
+.m{max-width:78%;display:flex;flex-direction:column;min-width:0}
+.m.in{align-self:flex-start}
+.m.out{align-self:flex-end;align-items:flex-end}
+.who{font-size:12px;color:var(--faint);margin:6px 4px 3px;display:flex;align-items:center;gap:5px}
+.who .ic{width:13px;height:13px}
+.b{font-size:15px;line-height:1.5;padding:10px 14px;border-radius:18px;overflow-wrap:anywhere}
+.in .b{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.out .b{background:var(--brand-soft);border:1px solid var(--brand-line);border-bottom-right-radius:6px}
+.b b{font-weight:600}
+.b .ft{display:block;font-size:12px;color:var(--faint);margin-top:6px}
+.t{font-size:11.5px;color:var(--faint);margin:3px 6px 0}
+.qr{display:flex;flex-direction:column;gap:4px;margin-top:4px;width:100%}
+.qr span{display:block;text-align:center;font-size:14.5px;font-weight:600;color:var(--brand);background:var(--surface);border:1px solid var(--brand-line);border-radius:12px;padding:8px 12px}
+.pdf{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.pdf .pi{width:34px;height:40px;border-radius:7px;background:var(--err-soft);color:var(--err);display:grid;place-items:center;font-size:10px;font-weight:700;flex:none}
+.pdf b{display:block;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.pdf span{display:block;font-size:12.5px;color:var(--faint)}
+.out .pdf{margin-bottom:4px}
+.ev{align-self:center;font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;margin:8px 0;padding:4px 12px;border-radius:99px;background:var(--surface);border:1px dashed var(--line2);text-align:center;max-width:100%}
+.ev i{width:18px;height:18px;border-radius:99px;background:var(--ok-soft);color:var(--ok);display:inline-grid;place-items:center;font-style:normal;flex:none}
+.ev i .ic{width:12px;height:12px}
+.ev em{font-style:normal;color:var(--faint)}
+.chat-foot{padding:14px 20px;border-top:1px solid var(--line);font-size:14px;color:var(--muted);display:flex;gap:10px;align-items:flex-start}
+.chat-foot .ic{color:var(--brand);margin-top:2px}
+
+footer{color:var(--faint);font-size:13px;text-align:center}
+
+/* Tablet */
+@media (max-width:960px){
+  .glance{grid-template-columns:minmax(0,1fr)}
+  .duo{grid-template-columns:minmax(0,1fr)}
+  .seg{grid-template-columns:minmax(0,1fr)}
+  .note{border-right:0;border-bottom:1px solid var(--line);padding:12px 16px;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+  .note .nh{flex:none}
+  .note p{flex:1 1 100%}
+}
+/* Handy */
+@media (max-width:720px){
+  .wrap{padding:0 16px 56px;gap:32px}
+  .jump{display:none}
+  .hero h1{font-size:29px}
+  .hero .sub{font-size:16px}
+  .sh h2{font-size:22px}
+  .g{padding:18px;flex-direction:row;flex-wrap:wrap;gap:6px 14px;align-items:flex-start}
+  .g .gi{width:38px;height:38px}
+  .g>div{flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .lh{display:none}
+  .lanes{grid-template-columns:40px minmax(0,1fr)}
+  .dotn{width:30px;height:30px;font-size:13px;margin-top:12px}
+  .cells{grid-template-columns:minmax(0,1fr);gap:8px;padding:4px 14px 14px}
+  .st-h{padding:12px 14px 4px}
+  .cell{display:grid;grid-template-columns:76px minmax(0,1fr);gap:8px}
+  .cell .lbl{display:block;font-size:12px;font-weight:650;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);padding-top:2px}
+  .cell.c2 .lbl{color:var(--brand)}.cell.c3 .lbl{color:var(--warn)}
+  .cell.do{margin:0}
+  .plan{grid-template-columns:minmax(0,1fr);gap:6px;padding:4px 14px 8px}
+  .day{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 10px}
+  .day h4{margin:0;width:48px}
+  .day .call{margin-top:0}
+  .day.off{display:none}
+  .planfoot{padding:6px 14px 14px}
+  .msgs{padding:14px 12px}
+  .m{max-width:88%}
+  .ev{border-radius:12px;flex-wrap:wrap;justify-content:center;gap:4px 8px}
+  .ev em{flex-basis:100%}
+  .card-h{padding:18px 16px 6px}
+  .todo{padding:4px 4px 10px}
+  .auto{padding:4px 16px 16px}
+  .tip{margin:0 16px 16px}
+  .cp-h{padding:12px 14px}
+  .chat-foot{padding:12px 14px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></symbol>
+ <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+ <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+ <symbol id="i-video" viewBox="0 0 24 24"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+ <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+ <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+ <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+ <symbol id="i-branch" viewBox="0 0 24 24"><path d="M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a9 9 0 0 1-9 9"/></symbol>
+ <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+</svg>
+
+<div class="wrap">
+ <header class="top">
+  <div class="logo"><span class="mk">pg</span>performancegrowth</div>
+  <span class="sp"></span>
+  <nav class="jump" aria-label="Auf dieser Seite"><a href="#aufgaben">Ihre Aufgaben</a><a href="#zeitstrahl">Zeitstrahl</a><a href="#chat">Beispielchat</a></nav>
+  <button class="theme" id="theme" aria-label="Hell oder dunkel umschalten" title="Hell oder dunkel"><svg class="ic"><use href="#i-moon"/></svg></button>
+ </header>
+
+ <section class="hero">
+  <div class="eyebrow">Onboarding für Vermittler</div>
+  <h1>Was mit Ihren Leads passiert, in 2 Minuten</h1>
+  <p class="sub">Ein Lead ist ein Interessent, der das Formular in Ihrer Facebook- oder Instagram-Anzeige ausgefüllt hat. Ab da schreibt ihn Ihr digitaler Assistent per WhatsApp an und bucht einen Videotermin bei Ihnen. Sie werden nur gebraucht, wo es zählt.</p>
+  <div class="legend" aria-label="Farblegende">
+   <span class="tag bot"><svg class="ic"><use href="#i-bot"/></svg>Blau: läuft automatisch</span>
+   <span class="tag you"><svg class="ic"><use href="#i-user"/></svg>Bernstein: Ihre Aufgabe</span>
+  </div>
+ </section>
+
+ <section class="glance" aria-label="Auf einen Blick">
+  <article class="g bot">
+   <span class="gi"><svg class="ic"><use href="#i-bot"/></svg></span>
+   <div><span class="when">Vor dem Termin</span><h2>Der Assistent chattet und bucht den Termin</h2><p>Binnen Minuten nach der Anfrage. Er fragt nur, was fürs Angebot nötig ist, sammelt die Policen und trägt den Termin in Ihren Kalender ein.</p></div>
+  </article>
+  <article class="g you">
+   <span class="gi"><svg class="ic"><use href="#i-video"/></svg></span>
+   <div><span class="when">Im Termin</span><h2>Sie beraten per Video</h2><p>Vorher sehen Sie sich die Terminvorbereitung an: Vergleichsblatt mit Beiträgen, kündbaren Verträgen und Lücken. Danach Angebot und Abschluss.</p></div>
+  </article>
+  <article class="g you">
+   <span class="gi"><svg class="ic"><use href="#i-phone"/></svg></span>
+   <div><span class="when">Kein Termin gebucht</span><h2>Sie rufen an, wenn das Handy summt</h2><p>Sie bekommen eine Push-Nachricht. Der Anrufplan sagt Ihnen, wann der nächste Versuch fällig ist: 6 Versuche in 6 Tagen.</p></div>
+  </article>
+ </section>
+
+ <section id="aufgaben">
+  <div class="sh"><h2>Was Sie tun müssen und was automatisch läuft</h2><p>Vier Dinge liegen bei Ihnen. Alles andere übernimmt der Assistent in Ihrem Namen.</p></div>
+  <div class="duo">
+   <div class="card">
+    <div class="card-h"><span class="tag you"><svg class="ic"><use href="#i-user"/></svg>Ihre Aufgabe</span><h3>Was Sie tun müssen</h3></div>
+    <ol class="todo">
+     <li><span class="n">1</span><div><b>Kalender verbinden</b><span>Einmalig beim Start. Nur so schlägt der Assistent freie Zeiten vor und blockt gebuchte Termine sofort.</span></div></li>
+     <li><span class="n">2</span><div><b>Anrufen, wenn eine Push-Nachricht kommt</b><span>Dann hat der Lead keinen Termin gebucht. Rufen Sie zur genannten Zeit an. <em>Erst nach 6 Versuchen</em> gilt er als verloren.</span></div></li>
+     <li><span class="n">3</span><div><b>Terminvorbereitung ansehen</b><span>Vor jedem Videotermin. Das Vergleichsblatt zeigt Beiträge im Monat, kündbare Verträge, Doppelversicherungen und fehlende Bausteine.</span></div></li>
+     <li><span class="n">4</span><div><b>Abschluss eintragen, mit Betrag</b><span>Nach dem Angebot und Ihrem Anruf. Dann sind Ihre Zahlen im Dashboard richtig.</span></div></li>
+    </ol>
+   </div>
+   <div class="card">
+    <div class="card-h"><span class="tag bot"><svg class="ic"><use href="#i-bot"/></svg>Automatisch</span><h3>Was automatisch läuft</h3></div>
+    <ul class="auto">
+     <li><svg class="ic"><use href="#i-check"/></svg><div>Erstnachricht per WhatsApp <span>mit Ihrer Erstinformation als PDF</span></div></li>
+     <li><svg class="ic"><use href="#i-check"/></svg><div>Terminvorschlag und Buchung <span>nur zu freien Zeiten aus Ihrem Kalender</span></div></li>
+     <li><svg class="ic"><use href="#i-check"/></svg><div>Fragen fürs Angebot <span>eine pro Nachricht, nur was der Rechner braucht</span></div></li>
+     <li><svg class="ic"><use href="#i-check"/></svg><div>Policen einsammeln und auslesen <span>ergibt Ihr Vergleichsblatt</span></div></li>
+     <li><svg class="ic"><use href="#i-check"/></svg><div>Kalendereinladung und 3 Erinnerungen <span>an den Lead vor dem Termin</span></div></li>
+     <li><svg class="ic"><use href="#i-check"/></svg><div>Anrufplan, falls kein Termin zustande kommt <span>Sie bekommen jeden Versuch als Push</span></div></li>
+    </ul>
+    <p class="tip"><b>Gut zu wissen:</b> Schreiben Sie selbst in einen Chat, pausiert der Assistent dort. Er nennt Sie gegenüber dem Lead immer „Herr“ oder „Frau“ mit Nachnamen.</p>
+   </div>
+  </div>
+ </section>
+
+ <section id="zeitstrahl">
+  <div class="sh"><h2>Der Verlauf Schritt für Schritt</h2><p>Für jede Station: was der Lead erlebt, was der Assistent tut und was Sie tun. Beispiel: Anfrage zum Privatschutz.</p></div>
+
+  <div class="lanes">
+   <div></div>
+   <div class="lh" aria-hidden="true"><div><svg class="ic" style="width:14px;height:14px"><use href="#i-user"/></svg>Der Lead erlebt</div><div class="c2"><svg class="ic" style="width:14px;height:14px"><use href="#i-bot"/></svg>Der Assistent tut</div><div class="c3"><svg class="ic" style="width:14px;height:14px"><use href="#i-user"/></svg>Sie tun</div></div>
+
+   <div class="phase"><b>Phase 1 · Im Chat bis zum Termin</b></div>
+
+   <div class="rail"><span class="dotn">1</span></div>
+   <article class="st">
+    <div class="st-h"><h3>Lead kommt rein</h3><span class="tag">binnen Minuten</span></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Füllt das Formular in Ihrer Anzeige aus. Bekommt eine WhatsApp mit Ihrer Erstinformation als PDF und einer kurzen Frage.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Legt den Lead an, schreibt ihn in Ihrem Namen an und schickt die gesetzliche Erstinformation mit.</div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn">2</span></div>
+   <article class="st">
+    <div class="st-h"><h3>Eine Zwischenfrage</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Antwortet und tippt einen Knopf, etwa „Familie mit Kindern“.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Stellt genau eine Frage, die fürs Angebot zählt.<small>Fragt der Lead selbst nach einem Termin, entfällt sie.</small></div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn">3</span></div>
+   <article class="st">
+    <div class="st-h"><h3>Terminvorschlag per Video</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Bekommt 2 freie Zeiten und „Andere Zeit“ als Knöpfe.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Schlägt nur Zeiten vor, die in Ihrem Kalender frei sind.</div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun<small>Voraussetzung: Kalender verbunden</small></div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn br" title="Abzweig"><svg class="ic"><use href="#i-branch"/></svg></span></div>
+   <article class="st br">
+    <div class="st-h"><span class="tag you"><svg class="ic"><use href="#i-phone"/></svg>Abzweig</span><h3>Kein Termin gebucht: Sie rufen an</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Hat im Chat keinen Termin gewählt.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Legt den Anrufplan an und schickt Ihnen zu jedem Versuch eine Push-Nachricht.</div></div>
+     <div class="cell c3 do"><span class="lbl">Sie</span><div><b>Anrufen, wenn die Push-Nachricht kommt.</b></div></div>
+    </div>
+    <div class="plan" aria-label="Anrufplan, 6 Versuche">
+     <div class="day"><h4>Tag 1</h4><div class="call"><i>1</i><span>sofort</span></div><div class="call"><i>2</i><span>+2 Std.</span></div><div class="call"><i>3</i><span>abends</span></div></div>
+     <div class="day"><h4>Tag 2</h4><div class="call"><i>4</i><span>vormittags</span></div></div>
+     <div class="day off"><h4>Tag 3</h4></div>
+     <div class="day"><h4>Tag 4</h4><div class="call"><i>5</i><span>nachmittags</span></div></div>
+     <div class="day off"><h4>Tag 5</h4></div>
+     <div class="day"><h4>Tag 6</h4><div class="call"><i>6</i><span>abends</span></div></div>
+    </div>
+    <p class="planfoot">Erst nach dem <b>6. Versuch</b> ohne Erfolg steht der Lead auf „verloren“.</p>
+   </article>
+
+   <div class="rail"><span class="dotn">4</span></div>
+   <article class="st">
+    <div class="st-h"><h3>Buchungsbestätigung</h3><span class="tag ok"><svg class="ic"><use href="#i-cal"/></svg>Kalender sofort geblockt</span></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Bekommt eine kurze Bestätigung mit Termin und Link.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Blockt die Zeit sofort in Ihrem Kalender.</div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn">5</span></div>
+   <article class="st">
+    <div class="st-h"><h3>Fragen fürs Angebot</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Beantwortet kurze Fragen, eine pro Nachricht. Kann einen Komplettcheck aller Verträge wählen.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Fragt nur, was der Tarifrechner braucht.<small>Bei Komplettcheck wird der Termin länger.</small></div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn">6</span></div>
+   <article class="st">
+    <div class="st-h"><h3>Policen und Einwilligung</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Schickt Fotos oder PDFs seiner Policen in den Chat und tippt [Einverstanden] oder [Lieber nicht].</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Liest die Vertragsdaten automatisch aus und füllt Ihr Vergleichsblatt.<small>Fehlt noch eine Police: höchstens 2 Erinnerungen, Stopp beim ersten Dokument.</small></div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn">7</span></div>
+   <article class="st">
+    <div class="st-h"><h3>E-Mail bestätigen, Einladung geht raus</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Bestätigt die E-Mail per Knopf und wird gebeten, sich den Termin gleich einzutragen.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Schickt die Kalendereinladung genau einmal, mit der endgültigen Dauer.<small>Ohne Antwort spätestens nach 15 Minuten. Liegt der Termin in weniger als 3 Stunden: nach 5 Minuten. Immer spätestens 60 Minuten vor dem Termin.</small></div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn">8</span></div>
+   <article class="st">
+    <div class="st-h"><h3>Erinnerungen vor dem Termin</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Bekommt 3 Erinnerungen, die letzte 15 Minuten vor dem Termin.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Verschickt die Erinnerungen per WhatsApp.</div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="phase"><b>Phase 2 · Ihr Termin</b></div>
+
+   <div class="rail"><span class="dotn you">9</span></div>
+   <article class="st you">
+    <div class="st-h"><h3>Terminvorbereitung, dann Videotermin</h3><span class="tag you"><svg class="ic"><use href="#i-user"/></svg>Ihre Aufgabe</span></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Nimmt am Videotermin teil.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Legt Ihnen das Vergleichsblatt bereit: Beiträge im Monat, kündbare Verträge, Doppelversicherungen, fehlende Bausteine.</div></div>
+     <div class="cell c3 do"><span class="lbl">Sie</span><div><b>Vorbereitung ansehen, Videotermin führen.</b></div></div>
+    </div>
+   </article>
+
+   <div class="phase"><b>Phase 3 · Nach dem Termin</b></div>
+
+   <div class="rail end"><span class="dotn you">10</span></div>
+   <article class="st you">
+    <div class="st-h"><h3>Angebot, Anruf, Abschluss</h3><span class="tag you"><svg class="ic"><use href="#i-user"/></svg>Ihre Aufgabe</span></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Bekommt das Angebot und Erinnerungen daran.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Erinnert den Lead ans Angebot. Nach Ihrem Eintrag gibt es einen Glückwunsch.</div></div>
+     <div class="cell c3 do"><span class="lbl">Sie</span><div><b>Nach dem Angebot anrufen, Abschluss mit Betrag eintragen.</b></div></div>
+    </div>
+   </article>
+  </div>
+ </section>
+
+ <section id="chat">
+  <div class="sh"><h2>Beispielchat: So sieht das beim Lead aus</h2><p>Merle Mustermann fragt abends Privatschutz an. Links steht, an welcher Station wir sind. Grau gestrichelte Hinweise sehen nur Sie, nicht der Lead.</p></div>
+  <div class="chat">
+   <div class="cp-h">
+    <span class="av">MM</span>
+    <div><span class="nm">Merle Mustermann</span><span class="live"><span class="pulse"></span>Assistent antwortet für Sie</span></div>
+    <span class="sp"></span><span class="tag">Privatschutz</span>
+   </div>
+
+   <div class="seg">
+    <div class="note"><div class="nh"><span class="sn">1</span><b>Erstnachricht</b></div><p>Kommt 2 Minuten nach der Anfrage. Oben die Erstinformation, unten eine kurze Öffnungsfrage.</p></div>
+    <div class="msgs">
+     <div class="ev"><i><svg class="ic"><use href="#i-check"/></svg></i>Neue Anfrage aus Ihrer Anzeige · Di, 17.11., 19:42 <em>· nur für Sie</em></div>
+     <div class="m out"><div class="who"><svg class="ic"><use href="#i-bot"/></svg>Assistent</div>
+      <div class="pdf"><span class="pi">PDF</span><div><b>Erstinformation_Kannapinn.pdf</b><span>PDF · 2 Seiten</span></div></div>
+      <div class="b">Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von Herrn Kannapinn. <b>Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?</b><span class="ft">KI-Assistent · Oben: Erstinformation (gesetzlich)</span></div><div class="t">19:44</div></div>
+    </div>
+   </div>
+
+   <div class="seg">
+    <div class="note"><div class="nh"><span class="sn">2</span><b>Eine Zwischenfrage</b></div><p>Nur eine, mit Knöpfen. Hätte Frau Mustermann nach einem Termin gefragt, ginge es direkt zu Station 3.</p></div>
+    <div class="msgs">
+     <div class="m in"><div class="b">Haftpflicht hab ich schon, Hausrat wäre neu</div><div class="t">19:51</div></div>
+     <div class="m out"><div class="b">Danke! Dann schaut sich Herr Kannapinn beides an. <b>Wer soll mitversichert sein?</b></div>
+      <div class="qr"><span>Nur ich</span><span>Zu zweit</span><span>Familie mit Kindern</span></div><div class="t">19:51</div></div>
+     <div class="m in"><div class="b">Familie mit Kindern</div><div class="t">19:52</div></div>
+    </div>
+   </div>
+
+   <div class="seg">
+    <div class="note"><div class="nh"><span class="sn">3</span><b>Terminvorschlag</b></div><p>Zwei freie Zeiten aus Ihrem Kalender, dazu „Andere Zeit“.</p></div>
+    <div class="msgs">
+     <div class="m out"><div class="b">Am einfachsten klären Sie das in einem kurzen Videotermin mit Herrn Kannapinn. Er zeigt Ihnen dort passende Tarife und die Beiträge. <b>Welche Zeit passt Ihnen?</b></div>
+      <div class="qr"><span>Do, 19.11. um 18:00</span><span>Fr, 20.11. um 10:30</span><span>Andere Zeit</span></div><div class="t">19:52</div></div>
+     <div class="m in"><div class="b">Do, 19.11. um 18:00</div><div class="t">19:53</div></div>
+    </div>
+   </div>
+
+   <div class="seg">
+    <div class="note"><div class="nh"><span class="sn">4</span><b>Buchungsbestätigung</b></div><p>Kurz, mit Link. Ihr Kalender ist im selben Moment geblockt.</p></div>
+    <div class="msgs">
+     <div class="m out"><div class="b">Ihr Videotermin steht: <b>Do, 19.11. um 18:00 Uhr.</b> Herr Kannapinn hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor.<br>Termin ansehen: <a href="#chat" onclick="return false">pg.link/t/8KQ2</a></div><div class="t">19:53</div></div>
+     <div class="ev"><i><svg class="ic"><use href="#i-cal"/></svg></i>Termin im Kalender von Herrn Kannapinn geblockt <em>· nur für Sie</em></div>
+    </div>
+   </div>
+
+   <div class="seg">
+    <div class="note"><div class="nh"><span class="sn">5</span><b>Fragen fürs Angebot</b></div><p>Eine Frage pro Nachricht, nur was der Rechner braucht. Mit Komplettcheck wird der Termin länger.</p></div>
+    <div class="msgs">
+     <div class="m out"><div class="b">Damit Herr Kannapinn Ihre Beiträge vorbereiten kann, habe ich noch ein paar kurze Fragen. <b>Wie lautet Ihr Geburtsdatum?</b></div><div class="t">19:53</div></div>
+     <div class="m in"><div class="b">22.08.1992</div><div class="t">19:54</div></div>
+     <div class="m out"><div class="b"><b>Wie groß ist Ihre Wohnung ungefähr?</b></div><div class="t">19:54</div></div>
+     <div class="m in"><div class="b">78 qm</div><div class="t">19:54</div></div>
+     <div class="m out"><div class="b"><b>Und in welcher Postleitzahl wohnen Sie?</b></div><div class="t">19:54</div></div>
+     <div class="m in"><div class="b">80331</div><div class="t">19:55</div></div>
+     <div class="m out"><div class="b"><b>Arbeiten Sie oder Ihr Partner im öffentlichen Dienst?</b></div>
+      <div class="qr"><span>Ja</span><span>Nein</span></div><div class="t">19:55</div></div>
+     <div class="m in"><div class="b">Nein</div><div class="t">19:55</div></div>
+     <div class="m out"><div class="b">Danke! Herr Kannapinn kann bei der Gelegenheit auch alle Ihre übrigen Verträge mit durchsehen. Der Termin dauert dann 60 statt 30 Minuten. <b>Möchten Sie diesen Komplettcheck?</b></div>
+      <div class="qr"><span>Ja, gern</span><span>Nur Privatschutz</span></div><div class="t">19:55</div></div>
+     <div class="m in"><div class="b">Ja, gern</div><div class="t">19:56</div></div>
+    </div>
+   </div>
+
+   <div class="seg">
+    <div class="note"><div class="nh"><span class="sn">6</span><b>Policen und Einwilligung</b></div><p>Policen aller Sparten per Chat. Die Daten landen ausgelesen in Ihrem Vergleichsblatt.</p></div>
+    <div class="msgs">
+     <div class="m out"><div class="b">Prima. Schicken Sie mir gern Fotos oder PDFs Ihrer bisherigen Policen hier in den Chat, zum Beispiel Haftpflicht, Kfz, Unfall oder Rechtsschutz. Dann hat Herr Kannapinn im Termin alles auf einen Blick.</div><div class="t">19:56</div></div>
+     <div class="m out"><div class="b"><b>Darf ich die Vertragsdaten aus Ihren Dokumenten automatisch auslesen und an Herrn Kannapinn weitergeben?</b> Mehr dazu steht in der Datenschutzinformation.</div>
+      <div class="qr"><span>Einverstanden</span><span>Lieber nicht</span></div><div class="t">19:56</div></div>
+     <div class="m in"><div class="b">Einverstanden</div><div class="t">19:58</div></div>
+     <div class="m in"><div class="pdf"><span class="pi">PDF</span><div><b>Haftpflicht_Police.pdf</b><span>PDF · 4 Seiten</span></div></div><div class="t">20:03</div></div>
+     <div class="m in"><div class="b">Kfz suche ich morgen raus</div><div class="t">20:03</div></div>
+     <div class="m out"><div class="b">Danke, ist angekommen! Die Kfz-Police können Sie jederzeit hier nachreichen.</div><div class="t">20:03</div></div>
+     <div class="ev"><i><svg class="ic"><use href="#i-check"/></svg></i>Haftpflicht ausgelesen, Vergleichsblatt ergänzt <em>· nur für Sie</em></div>
+    </div>
+   </div>
+
+   <div class="seg">
+    <div class="note"><div class="nh"><span class="sn">7</span><b>E-Mail und Einladung</b></div><p>Die Einladung geht genau einmal raus, hier mit 60 Minuten wegen des Komplettchecks.</p></div>
+    <div class="msgs">
+     <div class="m out"><div class="b">Zum Schluss: <b>Ist merle.mustermann@web.de die richtige Adresse für Ihre Einladung?</b></div>
+      <div class="qr"><span>Ja, stimmt</span><span>Andere Adresse</span></div><div class="t">20:04</div></div>
+     <div class="m in"><div class="b">Ja, stimmt</div><div class="t">20:04</div></div>
+     <div class="m out"><div class="b">Danke! Die Einladung für Do, 19.11. um 18:00 Uhr (60 Minuten, per Video) ist unterwegs. <b>Tragen Sie sich den Termin am besten gleich ein.</b></div><div class="t">20:04</div></div>
+     <div class="ev"><i><svg class="ic"><use href="#i-check"/></svg></i>Kalendereinladung gesendet · 60 Minuten <em>· nur für Sie</em></div>
+    </div>
+   </div>
+
+   <div class="chat-foot"><svg class="ic"><use href="#i-info"/></svg><div>Danach bekommt Frau Mustermann 3 Erinnerungen, die letzte um 17:45 Uhr. Herr Kannapinn öffnet vorher die Terminvorbereitung mit dem Vergleichsblatt.</div></div>
+  </div>
+ </section>
+
+ <footer>performancegrowth · Lead-Verlauf · Stand 17.11.2026</footer>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('theme');
+  try{var s=localStorage.getItem('pg-theme');if(s)root.setAttribute('data-theme',s);}catch(e){}
+  btn.addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    var nx=cur==='dark'?'light':'dark';root.setAttribute('data-theme',nx);
+    try{localStorage.setItem('pg-theme',nx);}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
