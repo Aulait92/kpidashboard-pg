@@ -79,7 +79,14 @@ const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", c
 
 type Audience = "vertreter" | "makler";
 /** Präsentationen (PDF) je Zielgruppe vorhanden? und Vorschlag aus dem Kontakt (Makler/Vertreter). */
-export type OfferMailOptions = { audience: Audience; pdf: Record<Audience, boolean>; /** Vertriebskontakt: Link zur Web-Präsentation möglich */ link?: boolean };
+export type OfferMailOptions = {
+  audience: Audience;
+  pdf: Record<Audience, boolean>;
+  /** Vertriebskontakt: Link zur Web-Präsentation möglich */
+  link?: boolean;
+  /** Welche Variante zum Entscheidungs-Call die Mail enthält (gebucht: Termin, sonst Buchungslink), lib/vertrieb/entscheidungs-call.ts */
+  entscheidung?: string | null;
+};
 
 export function DealOffersCard({
   newOfferHref,
@@ -112,7 +119,7 @@ export function DealOffersCard({
   const current = offers.find((o) => o.status !== "superseded");
   const older = offers.filter((o) => o !== current);
 
-  function run(id: string, fn: () => Promise<{ ok: boolean; error?: string }>, success: string) {
+  function run(id: string, fn: () => Promise<{ ok: boolean; error?: string; hinweis?: string }>, success: string) {
     setBusy(id);
     start(async () => {
       const res = await fn();
@@ -121,7 +128,7 @@ export function DealOffersCard({
         alert(res.error ?? "Fehler");
         return;
       }
-      flash(success);
+      flash(res.hinweis ? `${success}. ${res.hinweis}` : success);
       router.refresh();
     });
   }
@@ -233,6 +240,11 @@ export function DealOffersCard({
                     ))}
                   </div>
                 </div>
+                {mail.entscheidung ? (
+                  <p className="text-xs text-[color:var(--muted)]" data-entscheidungs-call>
+                    {mail.entscheidung}
+                  </p>
+                ) : null}
                 <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" className="h-4 w-4" checked={mitRechner} onChange={(e) => setMitRechner(e.target.checked)} />

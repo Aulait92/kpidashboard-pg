@@ -42,7 +42,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
   const {
     emailSources, extraPhones, extrasSummary, open, done, activeFollowup, threadMail, followupMail, suggested,
-    onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, bookingTypes, defaultTermin,
+    onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, entscheidungsHinweis, bookingTypes, defaultTermin,
     referral, referralBenefit, referralDiscount, pdfs, appUrl, praesLink, praesAufrufe, praesFassung,
   } = await ladeKontaktakte(c);
   const praesDatum = (d: Date, mitZeit = false) =>
@@ -286,7 +286,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               newOfferHref={`/admin/vertrieb/kontakte/${c.id}/angebot`}
               appUrl={appUrl}
               offers={c.offers.map(toOfferRow)}
-              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler") }, link: true }}
+              mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler") }, link: true, entscheidung: entscheidungsHinweis }}
             />
           </div>
 
