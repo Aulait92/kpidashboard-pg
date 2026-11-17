@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "LV 1871",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup) MeinPlan Basisrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Fondsgebundener Rentenbezug",
+    "Ab 25 € im Monat"
+  ],
+  "tarife": [
+    {
+      "name": "MeinPlan Basisrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "wählbar 0 bis 100 %",
+        "rentenfaktor": "garantiert, Höhe offen",
+        "anlage": "über 160 Fonds und ETFs",
+        "flexibel": "Zuzahlungen ja",
+        "hinterbliebene": "optional",
+        "beitragspause": "Freistellung möglich"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.lv1871.de/basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lv1871.de/basisrente/",
+    "https://www.lv1871.de/basisrente/fondsgebunden/",
+    "https://www.lv1871.de/basisrente/beamte/"
+  ],
+  "offen": [
+    "Beitragserhalt 0 bis 100 % laut Seite „Basisrente für Beamte“; garantierter Rentenfaktor „auf hohem Niveau“ ohne Zahl.",
+    "BU-Schutz als BUZ-Beitragsschutz (Beitrag bis 4 % der Beitragsbemessungsgrenze) oder BU-Zusatzrente. Dynamik nicht beschrieben.",
+    "Hinterbliebenenschutz als Zusatzvereinbarung (Rente aus dem Vertragsguthaben an Ehe- oder Lebenspartner und Kinder). Effektivkosten nicht ausgewertet. Keine Renditeangaben."
+  ]
+}

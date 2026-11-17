@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "basisrente",
+  "produkt": "Basisrente Best Invest Basis",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "Rentenbeginn 62 bis 85 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Baloise Best Invest Basis",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "wählbar 0 bis 90 %",
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds, ETF, Sicherung",
+        "flexibel": "Zuzahlung ab 250 €",
+        "hinterbliebene": "optional",
+        "beitragspause": "bis 3 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/best-invest-basis/produktsteckbrief-best-invest-basis-bal8584.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/basisrente.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/best-invest-basis/produktsteckbrief-best-invest-basis-bal8584.pdf",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/best-invest-basis/avb-best-invest-basis-bal8327.pdf"
+  ],
+  "offen": [
+    "Auf helvetia.de angeboten (Marke Helvetia seit der Fusion zur Helvetia Baloise Gruppe), Risikoträger laut Unterlage aber die Baloise Lebensversicherung AG Deutschland (früher Basler). Gleiche Werte wie in der Basler-Datei.",
+    "Beitragsgarantie über das Garantievermögen (0 bis 90 % bei Abschluss, später bis 100 %); garantierter Rentenfaktor ohne Zahl. Hinterbliebenenrente vor Rentenbeginn optional, nach Rentenbeginn Garantiezeit, 60 bis 100 % Hinterbliebenenrente oder Restkapital.",
+    "Dynamik 1 bis 10 %. Effektivkosten nicht ausgewertet. Keine Renditeangaben."
+  ]
+}

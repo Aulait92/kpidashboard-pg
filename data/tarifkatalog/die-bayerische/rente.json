@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Cashback-System plusrente",
+    "Kapitalwahlrecht"
+  ],
+  "tarife": [
+    {
+      "name": "KlassikRente",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Kapital zu Rentenbeginn",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "Zuzahlungen ja",
+        "hinterbliebene": "Garantiezeit bis 25 J.",
+        "kapital": "ja",
+        "beitragspause": "Freistellung möglich"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/rentenversicherung/klassische-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsrente Hallo Zukunft",
+      "kurz": "Hallo Zukunft",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "Fonds oder Portfolios",
+        "flexibel": "ja",
+        "hinterbliebene": "Garantiezeit bis 25 J.",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/rentenversicherung/fonds-rente-ohne-garantien/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Blue Invest (nachhaltige Fondsrente)",
+      "kurz": "Blue Invest",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "nachhaltige Fonds",
+        "flexibel": "ja",
+        "hinterbliebene": "Garantiezeit bis 25 J.",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/rentenversicherung/blue-invest/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/rentenversicherung/klassische-rente/",
+    "https://www.diebayerische.de/rentenversicherung/fonds-rente-ohne-garantien/",
+    "https://www.diebayerische.de/rentenversicherung/blue-invest/",
+    "https://www.diebayerische.de/dam/jcr:03c4eb92-2dd6-4fe7-bff6-b1ab011afc45/520040_steckbrief_klassikrente.pdf",
+    "https://www.diebayerische.de/dam/jcr:1f2b6139-fe20-45d5-b042-90fdf8db2837/191030_highlightblatt_hallo-zukunft.pdf",
+    "https://www.diebayerische.de/dam/jcr:8d75220a-75d1-4f11-9251-6a4f5c0b37d5/B%20530400_blue_invest_highlightblatt.pdf"
+  ],
+  "offen": [
+    "Die Stufen sind Anlagekonzepte, keine Leistungsstufen (sicherheits- bis chancenorientiert). Keine Markierung der Gesellschaft; Hallo Zukunft als mittlere Stufe gesetzt.",
+    "Beitragsgarantie bei Hallo Zukunft und Blue Invest nicht ausdrücklich genannt (Seitenadresse „fonds-rente-ohne-garantien“); Wert deshalb offen.",
+    "Garantierter Rentenfaktor in keiner Unterlage beziffert. Effektivkosten (Basisinformationsblätter) nicht ausgewertet.",
+    "Blue Invest: mindestens 30 % in den Sachwertfonds Blue Energy und Blue Living (Pangaea Life), Rest frei aus nachhaltigen Fonds; Entnahmen daraus beschränkt.",
+    "BU-Zusatz bei den Fondsrenten auch ohne Gesundheitsprüfung mit 3 Jahren Wartezeit. Cashback-System plusrente bei allen Tarifen. Keine Renditeangaben."
+  ]
+}

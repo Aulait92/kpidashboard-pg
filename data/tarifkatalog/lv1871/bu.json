@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "LV 1871",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung Golden BU",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Wiedereingliederungshilfe",
+    "Schnelle Leistung bei Krebs",
+    "Kein Zwang zu Jobalternativen"
+  ],
+  "tarife": [
+    {
+      "name": "Golden BU",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, bis 24 Mon.",
+        "nachversicherung": "auch ohne Anlass",
+        "teilzeit": "ja, unter 30 Std.",
+        "stundung": "bis 24 Monate",
+        "pflege": "Pflegepaket optional",
+        "dynamik": "optional, 3 bis 5 %"
+      },
+      "bausteine": {
+        "au": "optional",
+        "pflege": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.lv1871.de/berufsunfaehigkeitsversicherung/golden-bu/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lv1871.de/berufsunfaehigkeitsversicherung/golden-bu/",
+    "https://shop.lv1871.de/api/download/pdfkit/4646?hash=b8b9eff024e16e682850b9e78ae33b8a1415fb99&nocropmarks=1",
+    "https://shop.lv1871.de/article/directdownload/1646/",
+    "https://www.lv1871.de/berufsunfaehigkeitsversicherung/golden-bu-start/"
+  ],
+  "offen": [
+    "Rückwirkende Leistung bei verspäteter Meldung und weltweiter Schutz stehen weder auf der Produktseite noch in der Kundenbroschüre; Wert offen (AVB nicht ausgewertet).",
+    "AU-Option „Gelber Schein“: Rente bei voraussichtlich 6 Monaten Krankschreibung rückwirkend ab Beginn, bis 24 Monate (bei BU-Antrag bis 36 Monate).",
+    "Pflege: ohne Mehrbeitrag lebenslange BU-Rente nach 10 Jahren erheblicher Pflegebedürftigkeit vor Vertragsende (nicht mit Pflegepaket); Pflegepaket mit lebenslanger Pflegerente optional.",
+    "Kein Verzicht auf Umorganisation genannt, aber Umorganisationshilfe (6 Monatsrenten) für Selbstständige. Schnelle Leistung bei schwerer Krankheit bis 18 Monate.",
+    "Golden BU Start (bis 27 Jahre, reduzierter Beitrag in den ersten 10 Jahren, gleicher Schutz) und Golden BU Vorsorgeschutz (übernimmt Beiträge für Vorsorgeverträge) nicht als Stufen geführt."
+  ]
+}

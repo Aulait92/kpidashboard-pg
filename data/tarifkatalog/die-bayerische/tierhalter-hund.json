@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Leinen- und Maulkorbzwang",
+    "Deckschäden mitversichert",
+    "Stiftung-Warentest-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "25 Mio. €",
+        "sb": "0, 150 oder 500 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "50.000 € (SB 250 €)",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "weltweit 5 Jahre"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:a3206ec2-eed5-435d-877c-2f8df1fb08f0/B%20299353_THV2025_Hunde_Leistungs%C3%BCbersicht_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalterhaftpflicht Prestige",
+      "kurz": "Prestige",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "0, 150 oder 500 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "18 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "ja",
+        "neuwert": "bis 2.500 €",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:a3206ec2-eed5-435d-877c-2f8df1fb08f0/B%20299353_THV2025_Hunde_Leistungs%C3%BCbersicht_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/tierversicherungen/hundehaftpflichtversicherung/",
+    "https://www.diebayerische.de/dam/jcr:a3206ec2-eed5-435d-877c-2f8df1fb08f0/B%20299353_THV2025_Hunde_Leistungs%C3%BCbersicht_bf.pdf",
+    "https://www.diebayerische.de/dam/jcr:f654ab04-7907-47fb-9b3e-df3d569017c7/B%20299347_THV2025_Hunde_Highlightblatt_bf.pdf"
+  ],
+  "offen": [
+    "Fremde Hüter: „nicht gewerbsmäßiger Tierhalter und -hüter“ ist in beiden Stufen versicherte Person.",
+    "Forderungsausfall in beiden Stufen ab 2.000 € Schaden; inklusive Prozesskosten nur Prestige (bis 15.000 €).",
+    "Prestige zusätzlich: Best-Leistungs-Garantie, Nottötung, Hundepension bis 1.500 €, Mitführen eines fremden Hundes, Beitragsbefreiung bei Arbeitslosigkeit.",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt."
+  ]
+}

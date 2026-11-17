@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "Basler",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Renten immer unbefristet",
+    "Soforthilfe schwere Krankheit"
+  ],
+  "tarife": [
+    {
+      "name": "Baloise Berufsunfähigkeitsversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "au": "optional, bis 36 Mon.",
+        "nachversicherung": "auch ohne Anlass",
+        "teilzeit": "ja",
+        "infektion": "ja",
+        "stundung": "bis 24 Monate",
+        "pflege": "optional",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "pflege": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/berufsunf%C3%A4higkeitsversicherung/Baloise-Berufsunf-higkeitsVersicherung-Leistungs-bersicht--BAL1550-.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/berufsunfaehigkeit.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/berufsunf%C3%A4higkeitsversicherung/Baloise-Berufsunf-higkeitsVersicherung-Leistungs-bersicht--BAL1550-.pdf",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/berufsunf%C3%A4higkeitsversicherung/Baloise-BerufsunfaehigkeitsVersicherung-Produktsteckbrief-",
+    "https://www.helvetia.de/de/privatkunden/berufsunfaehigkeit-cashplus.html"
+  ],
+  "offen": [
+    "Basler-Produkt der Baloise (Risikoträger laut Unterlage: die Baloise Lebensversicherung AG Deutschland). basler.de und baloise.de sind nicht mehr erreichbar bzw. leiten auf helvetia.de um; seit der Fusion zur Helvetia Baloise Gruppe wird das Produkt auf helvetia.de unter der Marke Helvetia angeboten. Gleiche Werte wie in der Helvetia-Datei.",
+    "Prognosezeitraum, rückwirkende Leistung und weltweiter Schutz stehen nicht in der Leistungsübersicht BAL 1550 (07.26); Bedingungen nicht ausgewertet.",
+    "Optionale Zusatzleistungen: Arbeitsunfähigkeitsschutz (bis 36 Monate), Inflationsschutz (garantierte Rentensteigerung 1 bis 3 %), Pflegeschutz (lebenslange Rente), Krankheitenschutz (Soforthilfe), Cash+ (Kapitalleistung bis 90.000 €). Ein Tarif, die Optionen sind nicht als Stufen geführt.",
+    "Nachversicherung ohne Anlass einmal in den ersten fünf Jahren und einmal nach dem zehnten Jahr; Karriere-Garantie bis 7.500 € Monatsrente. Beitragspause z. B. in Elternzeit bis 36 Monate."
+  ]
+}

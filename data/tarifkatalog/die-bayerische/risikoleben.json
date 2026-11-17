@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "risikoleben",
+  "produkt": "IDEAL RisikoLeben (Partner IDEAL)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Summe 50.000 € bis 3 Mio. €",
+    "Vorläufiger Schutz 2 Monate",
+    "Dynamik 2 bis 5 % wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL RisikoLeben Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "bei 19 Ereignissen",
+        "vorgezogen": "100 % (12 Monate)",
+        "verlaengerung": "nein",
+        "laufzeit": "Endalter 75"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:b4e18eb8-2054-4a35-be5c-85491a243174/Produktbeschreibung_IDEAL_RisikoLeben_0126.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL RisikoLeben Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "auch ohne Anlass",
+        "vorgezogen": "100 % (12 Monate)",
+        "verlaengerung": "bis 15 Jahre",
+        "laufzeit": "Endalter 75"
+      },
+      "bausteine": {
+        "fallend": "nein"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:b4e18eb8-2054-4a35-be5c-85491a243174/Produktbeschreibung_IDEAL_RisikoLeben_0126.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/lebensversicherung/risikolebensversicherung/",
+    "https://www.diebayerische.de/dam/jcr:b4e18eb8-2054-4a35-be5c-85491a243174/Produktbeschreibung_IDEAL_RisikoLeben_0126.pdf",
+    "https://www.diebayerische.de/dam/jcr:5c9a3559-cb38-46cb-903a-f6b6b57fb3e3/Bedingungen_IDEAL_RisikoLeben.pdf"
+  ],
+  "offen": [
+    "Risikoträger ist die IDEAL Lebensversicherung a.G. (Kooperation mit der Bayerischen).",
+    "Umtauschrecht und weltweiter Schutz stehen nicht in der Produktbeschreibung.",
+    "Vorgezogene Leistung: 100 % der Summe bei schwerer Erkrankung mit höchstens 12 Monaten Lebenserwartung.",
+    "Exklusiv zusätzlich: Soforthilfe im Todesfall (10 %, max. 10.000 €), Extra-Kindergeld, Leistung bei schwerer Krankheit eines Kindes, Auslandsrückholung, Trauerberatung, Boni nach Hochzeit, Geburt, Hausbau. Ereignisunabhängige Nachversicherung: zweimal in den ersten 5 Jahren, zusammen 50.000 €.",
+    "Wahlbausteine zu beiden Tarifen: schwere Erkrankung (10 %, max. 50.000 €), Pflegebedürftigkeit ab Pflegegrad 2 (10 %, max. 30.000 €), doppelte Leistung bei Unfalltod. Fallende Summe nur im Klassiktarif ohne Zusatzleistungen.",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt."
+  ]
+}

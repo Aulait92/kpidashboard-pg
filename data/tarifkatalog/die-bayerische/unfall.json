@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Doppelte Leistung im ÖPNV",
+    "Vorsorgebudget alle 3 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sofort": "3 %, max. 5.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:c5fda116-1f3a-4bca-bbc3-8d52065071f1/B%20333440%20Highlightblatt%20Unfall%20allgemein_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfall Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "sofort": "5 %, max. 10.000 €",
+        "kosmetik": "bis 500.000 €",
+        "bergung": "bis 500.000 €"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:c5fda116-1f3a-4bca-bbc3-8d52065071f1/B%20333440%20Highlightblatt%20Unfall%20allgemein_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfall Prestige",
+      "kurz": "Prestige",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "progression": "optional",
+        "sofort": "20 %, max. 20.000 €",
+        "kosmetik": "unbegrenzt",
+        "bergung": "unbegrenzt"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:c5fda116-1f3a-4bca-bbc3-8d52065071f1/B%20333440%20Highlightblatt%20Unfall%20allgemein_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/unfallversicherung/klassische-unfallversicherung/",
+    "https://www.diebayerische.de/dam/jcr:c5fda116-1f3a-4bca-bbc3-8d52065071f1/B%20333440%20Highlightblatt%20Unfall%20allgemein_bf.pdf"
+  ],
+  "offen": [
+    "Invaliditätssumme, Progression, Leistung ab Invaliditätsgrad, Unfallrente und Krankenhaustagegeld werden individuell vereinbart und stehen weder auf der Produktseite noch im Highlightblatt. Progression nur als „ProgressionPlus optional“ bei Prestige genannt.",
+    "Weitere Unterschiede: Umbaukosten Pkw und Wohnung 5.000/10.000/30.000 €, Rooming-in 30/30/60 € pro Tag, Pflegegeld nur Komfort (10 €/Tag) und Prestige (30 €/Tag), Infektionskrankheiten ab Komfort, Gipsgeld nur Prestige.",
+    "Keine Gesundheitsfragen in Smart und Komfort, Prestige mit 2 Gesundheitsfragen. Bausteine ÄrzteKompass, NotfallAssistent, MehrWert zu allen Stufen (nicht im Schema).",
+    "Keine Markierung; Komfort als mittlere Stufe gesetzt."
+  ]
+}

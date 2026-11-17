@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Einmal- oder laufender Beitrag",
+    "Stundung bis 12 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "1.000 bis 12.500 €",
+        "wartezeit": "12 bis 36 Monate",
+        "unfall": "ja",
+        "ohne-gp": "ja",
+        "beitragsende": "höchstens 45 Jahre",
+        "vorsorge": "Ninebarc (Rabatt)"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "nein"
+      },
+      "quelle": "https://www.diebayerische.de/vorsorge/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/vorsorge/sterbegeldversicherung/",
+    "https://www.diebayerische.de/dam/jcr:4b55c3ad-893c-4144-870d-dbcc1709e8e7/660861_highlightblatt_sterbegeldversicherung_bf.pdf",
+    "https://www.diebayerische.de/dam/jcr:a7dd7a61-4726-4cc9-8302-f971a716e64d/660800_avb_sterbegeldversicherung.pdf"
+  ],
+  "offen": [
+    "Wartezeit bei laufendem Beitrag nach Eintrittsalter: 40 bis 49 Jahre 36 Monate, 50 bis 59 Jahre 24 Monate, ab 60 Jahre 12 Monate; bei Einmalbeitrag 6 Monate. Bei Tod in der Wartezeit Rückzahlung der Beiträge.",
+    "Doppelte Leistung bei Unfalltod auch in der Wartezeit. Vorsorgedokumente über den Partner Ninebarc mit Nachlass (bis 34 %).",
+    "Abschluss 40 bis 80 Jahre, mit Einmalbeitrag bis 85 Jahre."
+  ]
+}
