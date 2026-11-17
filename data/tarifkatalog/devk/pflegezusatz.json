@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Tagessatz frei wählbar",
+    "Keine Wartezeiten",
+    "Mit Förderpflege kombinierbar"
+  ],
+  "tarife": [
+    {
+      "name": "Pflegetagegeld-Grundabsicherung PT3",
+      "kurz": "Grundschutz",
+      "stufe": 1,
+      "werte": {
+        "pg5": "100 % Tagessatz",
+        "ab-pg": "Pflegegrad 4 (50 %)",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.devk.de/produkte/pflegezusatzversicherung/pflegetagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegetagegeld in allen Pflegegraden PT/PA",
+      "kurz": "Alle Grade",
+      "stufe": 2,
+      "werte": {
+        "pg5": "100 % Tagessatz",
+        "ab-pg": "Pflegegrad 1 (15 %)",
+        "ambulant-gleich": "nein, stationär 100 %",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.devk.de/produkte/pflegezusatzversicherung/pflegetagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/pflegezusatzversicherung/pflegetagegeld",
+    "https://www.devk.de/produkte/pflegezusatzversicherung/foerderpflege",
+    "https://medien.devk.de/assets/content/download/produkte/kranken/devk-kranken-produktinfo-foerderpflege-08506-203-2026-01.pdf"
+  ],
+  "offen": [
+    "Stufen laut Produktseite Pflegetagegeld: PT3 (Grundabsicherung: Pflegegrad 5 100 %, Pflegegrad 4 50 % des Tagessatzes) und PT/PA (alle Pflegegrade, mit Pflege-Assistance). DEVK markiert keine Stufe. Einzeltarife frei kombinierbar.",
+    "PT/PA häuslich: Pflegegrad 1 15 %, 2 25 %, 3 50 %, 4 75 %, 5 100 %; vollstationär immer 100 %. Assistance mit Malteser Hilfsdienst (Pflegeplatz in 24 Stunden). Schutz in EU und Schweiz.",
+    "Ob PT3 bei häuslicher und stationärer Pflege gleich leistet, nicht genannt.",
+    "Einmalleistung, Beitragsbefreiung im Pflegefall, Demenz und Dynamik stehen nicht auf der Produktseite.",
+    "Förderpflege (staatlich gefördert, 60 € Zulage im Jahr, ohne Gesundheitsprüfung) als eigenes Produkt nicht als Stufe geführt; Leistungen hängen vom Eintrittsalter ab."
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente, Kapital oder beides",
+    "Dynamik auf Wunsch"
+  ],
+  "tarife": [
+    {
+      "name": "KlassikRente",
+      "kurz": "KlassikRente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "ja, klassisch",
+        "rentenfaktor": "ja, Rente garantiert",
+        "anlage": "klassisch",
+        "hinterbliebene": "optional",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/fondsgebundene-rentenversicherung/klassik-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GarantRente Vario",
+      "kurz": "GarantRente",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "10 bis 90 % wählbar",
+        "rentenfaktor": "ja, Rente garantiert",
+        "anlage": "Garantie und Fonds",
+        "hinterbliebene": "optional",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/fondsgebundene-rentenversicherung/garant-rente-vario.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FondsRente Vario",
+      "kurz": "FondsRente",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds oder Dachfonds",
+        "flexibel": "ja",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/fondsgebundene-rentenversicherung/fonds-rente-vario.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/leben-und-rente/fondsgebundene-rentenversicherung/klassik-rente.html",
+    "https://www.provinzial.de/west/versicherung/leben-und-rente/fondsgebundene-rentenversicherung/garant-rente-vario.html",
+    "https://www.provinzial.de/west/versicherung/leben-und-rente/fondsgebundene-rentenversicherung/fonds-rente-vario.html"
+  ],
+  "offen": [
+    "Region West. Drei Produkte mit unterschiedlichem Anlagekonzept, keine Leistungsstufen: KlassikRente (klassisch mit alternativem Garantiekonzept), GarantRente Vario (Garantiekapital 10 bis 90 % der Beitragssumme wählbar, Rest in Fonds), FondsRente Vario (Fonds, kostenloser Wechsel). Keine Markierung.",
+    "FondsRente Vario: Beitragsgarantie und Rentenfaktor nicht genannt; BU-Beitragsbefreiung und Hinterbliebenenrente dort nicht ausdrücklich aufgeführt („attraktive Zusatzleistungen“).",
+    "Klassik und GarantRente: kostenlose PflegeRentenoption und Dread-Disease-Option; Risiko- und Hinterbliebenenrenten-Zusatzversicherung wählbar. Höhe des garantierten Rentenfaktors, Beitragspause und Effektivkosten nicht auf den Seiten (Basisinformationsblätter verlinkt)."
+  ]
+}

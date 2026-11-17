@@ -1,0 +1,104 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit versichert",
+    "Unfall mit Tieren aller Art",
+    "Kasko-Mobil wählbar (bis 13 %)"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "nein",
+        "marder": "ohne Folgeschäden",
+        "gap": "nein",
+        "mallorca": "nein",
+        "werkstatt": "wählbar (Kasko-Mobil)",
+        "rabattschutz": "optional, ab SF 4"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/kfz-versicherung/pkw/vollkasko",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "18 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "gap": "optional",
+        "mallorca": "ja",
+        "werkstatt": "wählbar (Kasko-Mobil)",
+        "elektro": "Akku bis 20.000 €",
+        "rabattschutz": "optional, ab SF 4"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/kfz-versicherung/pkw/vollkasko",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung Premium-Schutz",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden unbegrenzt",
+        "gap": "ja (Vollkasko)",
+        "mallorca": "ja",
+        "werkstatt": "wählbar (Kasko-Mobil)",
+        "elektro": "Akku unbegrenzt",
+        "rabattschutz": "optional, ab SF 4"
+      },
+      "bausteine": {
+        "schutzbrief": "inklusive",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/kfz-versicherung/pkw/vollkasko",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/kfz-versicherung",
+    "https://www.devk.de/produkte/kfz-versicherung/pkw/vollkasko",
+    "https://www.devk.de/produkte/kfz-versicherung/pkw/teilkasko",
+    "https://medien.devk.de/assets/content/download/produkte/fahrzeuge/devk-kfz-produktinfo-auto-08504-2025-08.pdf",
+    "https://medien.devk.de/assets/content/download/produkte/fahrzeuge/devk-kfz-tarifuebersicht-08504-401-2025-03.pdf"
+  ],
+  "offen": [
+    "Werte aus der Tarifübersicht für Pkw 10/2025 in der Produktbroschüre (08504, 08/2025) und den Tariftabellen der Produktseiten Teil- und Vollkasko. Die ältere Tarifübersicht 03/2025 nennt die erste Stufe noch „Aktiv“.",
+    "Empfehlung laut DEVK: „Der Komfort-Schutz empfiehlt sich grundsätzlich für alle Kunden“ (Tarifübersicht 03/2025).",
+    "Deckung: Pauschal 100 Mio. € für Personen-, Sach- und Vermögensschäden, Personenschäden je Person bis 15 Mio. € (alle Stufen).",
+    "Neuwert: Neupreis ab Erstzulassung bzw. Kaufpreis bei Gebrauchtwagen 18 (Komfort) bzw. 36 Monate (Premium); im Basis-Schutz nicht versichert.",
+    "Schutzbrief Auto Plus: Basis und Komfort optional, Premium inklusive (Tarifübersicht 10/2025, Symbole am gerenderten Bild abgelesen).",
+    "GAP-Deckung: im Komfort-Schutz zusätzlich zur Vollkasko wählbar, in Premium bei Vollkasko inklusive.",
+    "Rabattschutz: für Haftpflicht und Vollkasko ab SF 4 wählbar; ob in allen drei Stufen, nicht ausdrücklich genannt.",
+    "Akku (Allgefahrendeckung in der Vollkasko) für Basis nicht genannt. Premium zusätzlich Parkschadenschutz bis 250 €, Reifenversicherung, Auslandsreise-Kranken."
+  ]
+}

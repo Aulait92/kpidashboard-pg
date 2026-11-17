@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Stationäre Krankheitskosten-Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rooming-in für Kinder bis 14",
+    "Vor- und nachstationär privat",
+    "Junge Leute: SGR 1/SGR 2"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif SG 2",
+      "kurz": "SG 2",
+      "stufe": 1,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nein, bis GOÄ-Höchstsatz",
+        "wartezeit": "3 Monate, Unfall sofort",
+        "ersatztagegeld": "30 € bzw. 50 €",
+        "ambulant-op": "ja, im Krankenhaus"
+      },
+      "bausteine": {
+        "tagegeld": "optional",
+        "einbett": "nein"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:10b74053-e3bf-47b4-af4a-b02d64c9a829/011-vertragsgrundlagen-gesetzlich-versicherte-kv160.5b4226c9c939efe0600e1f8748b6bfa8.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif SG 1",
+      "kurz": "SG 1",
+      "stufe": 2,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nein, bis GOÄ-Höchstsatz",
+        "wartezeit": "3 Monate, Unfall sofort",
+        "ersatztagegeld": "30 € bzw. 50 €",
+        "ambulant-op": "ja, im Krankenhaus"
+      },
+      "bausteine": {
+        "tagegeld": "optional",
+        "einbett": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:10b74053-e3bf-47b4-af4a-b02d64c9a829/011-vertragsgrundlagen-gesetzlich-versicherte-kv160.5b4226c9c939efe0600e1f8748b6bfa8.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/krankenzusatzversicherungen",
+    "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf",
+    "https://www.lvm.de/dam/jcr:10b74053-e3bf-47b4-af4a-b02d64c9a829/011-vertragsgrundlagen-gesetzlich-versicherte-kv160.5b4226c9c939efe0600e1f8748b6bfa8.pdf"
+  ],
+  "offen": [
+    "Tarifnamen und Unterschiede aus den Vertragsgrundlagen KV 160 (Teil III Tarife SG): SG 1 Ein- oder Zweibettzimmer, SG 2 Zweibettzimmer (bei Einbettzimmer Erstattung wie Zweibett). Produktseite und Broschüre W 1113 nennen nur „Ein- oder Zweibettzimmer“. Keine Markierung.",
+    "Ersatztagegeld: 30 € bei Verzicht auf das Zimmer, 50 € bei Verzicht auf privatärztliche Behandlung (unter 21 Jahren 25 €).",
+    "Erstattung ärztlicher Leistungen bis zum Höchstsatz der GOÄ. Wartezeit: allgemeine Wartezeit 3 Monate laut Teil II der Bedingungen, entfällt bei Unfällen; bitte für die SG-Tarife gegenprüfen.",
+    "SGR 1 und SGR 2: Varianten ohne Alterungsrückstellung mit reduziertem Beitrag für junge Leute, zeitlich begrenzt. Krankenhaustagegeld als eigener Tarif wählbar (Beträge nicht genannt)."
+  ]
+}

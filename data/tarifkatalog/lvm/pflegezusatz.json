@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflege-Zusatztagegeld",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "300 bis 4.500 € im Monat",
+    "Pflege-Bahr (PTG) zusätzlich"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif PZT-Komfort",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "100 % Tagessatz",
+        "ab-pg": "Pflegegrad 1 (20 %)",
+        "befreiung": "ab Pflegegrad 3",
+        "ambulant-gleich": "nein, stationär ab PG 2",
+        "wartezeit": "keine",
+        "dynamik": "ja, automatisch"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/pflegezusatzversicherung",
+    "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf",
+    "https://www.lvm.de/dam/jcr:99ca4ca4-499d-4aa7-a214-948fa70574ef/011-pflegezusatzversicherung-w11108.2024-12-27-12-31-01.pdf"
+  ],
+  "offen": [
+    "Ein Tarif PZT-Komfort laut Broschüre W 1113 (04/2026) und Übersicht Krankenzusatz. Geförderter Pflege-Bahr (Tarif PTG, 60 € Zulage im Jahr) als Ergänzung, nicht als Stufe geführt.",
+    "Häusliche Pflege: je Pflegegrad 20 % mehr (PG 1 20 % bis PG 5 100 %); vollstationär ab Pflegegrad 2 der volle Tagessatz.",
+    "Einmalleistung und Demenz-Regelung nicht genannt. Dynamik wird bei Abschluss automatisch eingeschlossen."
+  ]
+}

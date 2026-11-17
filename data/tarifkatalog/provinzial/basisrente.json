@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "basisrente",
+  "produkt": "Basis GarantRente Vario (Rürup)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Pfändungsschutz Ansparphase",
+    "Pflegerenten-Option"
+  ],
+  "tarife": [
+    {
+      "name": "Basis GarantRente Vario",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "wählbar",
+        "rentenfaktor": "ja, Rente garantiert",
+        "anlage": "Garantie und Fonds",
+        "flexibel": "ja, auch Beitragspause",
+        "hinterbliebene": "ja",
+        "beitragspause": "ja"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/gefoerderte-rentenversicherung/basis-ruerup-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/leben-und-rente/gefoerderte-rentenversicherung/basis-ruerup-rente.html",
+    "https://www.provinzial.de/dam/jcr:e0e1f028-2d38-44f3-a84d-3a518a26c36f/KIB_BasisRente_RB_30_internet_west.pdf"
+  ],
+  "offen": [
+    "Region West, ein Tarif laut Produktseite. Garantie: Kunde entscheidet, wie viel der Beiträge zum Vertragsende garantiert ist; Spanne auf der Seite nicht genannt (bei der privaten GarantRente Vario 10 bis 90 %).",
+    "„Garantierte lebenslange Rentenzahlung“ laut Seite; Höhe des Rentenfaktors nicht genannt. Hinterbliebenenschutz enthalten, Ausgestaltung nicht beschrieben.",
+    "Flexibel: Zuzahlungen, Beitragserhöhungen, Beitragspausen. BU-Zusatz, Dynamik und Effektivkosten nicht genannt."
+  ]
+}

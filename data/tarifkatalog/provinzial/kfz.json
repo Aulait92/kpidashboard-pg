@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung Komfort (Pkw)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit versichert",
+    "Leistungsupdate automatisch",
+    "Schadenrückkauf bis 1.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 5.000 €",
+        "gap": "optional",
+        "mallorca": "ja",
+        "werkstatt": "frei, Werkstatt-Bonus",
+        "elektro": "Akku All-Risk (VK)",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.provinzial.de/dam/jcr:82dcdf0d-1dd1-435d-a6e5-a5b060381bec/leistungsuebersicht-autoversicherung-west.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung Komfort mit Haftpflicht und Kasko Komfort Plus",
+      "kurz": "Komfort Plus",
+      "stufe": 2,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden 25.000 €",
+        "gap": "optional",
+        "mallorca": "ja",
+        "werkstatt": "frei, Werkstatt-Bonus",
+        "elektro": "Akku All-Risk (VK)",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/kfz-versicherung/autoversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/kfz-versicherung/autoversicherung.html",
+    "https://www.provinzial.de/dam/jcr:82dcdf0d-1dd1-435d-a6e5-a5b060381bec/leistungsuebersicht-autoversicherung-west.pdf?view",
+    "https://www.provinzial.de/dam/jcr:722a0fa0-bc6c-4c0b-98be-d703036d3684/IPID_Kfz-Komfort_PV_PNB_barrierefrei_Stand_01.2026_A1-B.pdf?view"
+  ],
+  "offen": [
+    "Region West (provinzial.de/west). Stufen laut Produktseite und Produktsteckbrief „Kfz-Versicherung Komfort“: Grundtarif Komfort und die Pakete Haftpflicht Komfort Plus (Eigenschaden bis 100.000 €, 300 € SB; Auslandsschadenschutz) und Kasko Komfort Plus. Die Pakete sind einzeln wählbar; zur Stufe zusammengefasst. Keine Markierung.",
+    "Neuwert: Neupreis bis 24 Monate ab Erstzulassung, Kaufwert für Gebrauchte bis 24 Monate (Fahrzeug höchstens 8 Jahre); mit Kasko Komfort Plus jeweils 36 Monate.",
+    "Tierbiss und Kurzschluss: Folgeschäden bis 5.000 €, bei E-Pkw bis 25.000 €; mit Kasko Komfort Plus bis 25.000 € und Marderschäden im Innenraum.",
+    "Rabattschutz ab SF 1/2 für Haftpflicht und Vollkasko (Selbstbehalt mindestens 300 €). GAP-Deckung zur Vollkasko wählbar. Werkstatt frei; Werkstatt-Bonus (Werkstattwahl durch die Provinzial) gegen günstigeren Beitrag.",
+    "Akku: Teilkasko Überspannung durch Blitz, Vollkasko All-Risk; Entsorgung bis 2.000 €. Fahrerschutz (bis 15 Mio. €) als Zusatzbaustein."
+  ]
+}

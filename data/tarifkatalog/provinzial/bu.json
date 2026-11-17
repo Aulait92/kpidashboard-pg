@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "bu",
+  "produkt": "Einkommens-Schutz (Berufsunfähigkeitsversicherung)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Dienstunfähigkeit für Beamte",
+    "Beitragsbefreiung bei BU"
+  ],
+  "tarife": [
+    {
+      "name": "Einkommens-Schutz BU Smart",
+      "kurz": "BU Smart",
+      "stufe": 1,
+      "werte": {
+        "verweisung": "ja",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "pflege": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/berufsunfaehigkeitsversicherung/berufsunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Einkommens-Schutz BU Komfort",
+      "kurz": "BU Komfort",
+      "stufe": 2,
+      "werte": {
+        "verweisung": "ja",
+        "au": "ab 6 Mon., bis 24 Mon.",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "pflege": "36 Monatsrenten ab PG 3"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "pflege": "inklusive"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/berufsunfaehigkeitsversicherung/berufsunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/leben-und-rente/berufsunfaehigkeitsversicherung/berufsunfaehigkeitsversicherung.html",
+    "https://www.provinzial.de/dam/jcr:473cb0e2-a40f-4532-9101-30899bb633ed/650_61_SBU_PK_Leben_SK_1125_pdfA.pdf"
+  ],
+  "offen": [
+    "Region West. Stufen laut Produktseite: BU Smart und BU Komfort (Komfort enthält alle wählbaren Zusatzbausteine). EU Smart (Erwerbsunfähigkeit, später in BU umwandelbar) und BU-Starter nicht als Stufe geführt. Keine Markierung.",
+    "Zusatzbausteine: Einmalleistungen (3 Monatsrenten Anfangshilfe, 6 Monatsrenten Wiedereingliederungshilfe), Pflege-Einmalleistung (36 Monatsrenten ab Pflegegrad 3), AU-Rente nach 6 Monaten ununterbrochener Arbeitsunfähigkeit für höchstens 24 Monate; in Smart optional, in Komfort enthalten.",
+    "Prognosezeitraum, rückwirkende Leistung, Beitragsstundung, Teilzeit, Umorganisation, Infektionsklausel und Dynamik stehen nicht auf der Produktseite. Die Bedingungen (PDF 650_61, 11/2025) ließen sich nicht als Text auslesen."
+  ]
+}

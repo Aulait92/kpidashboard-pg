@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "VHV",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung (Pkw)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistungs-Update-Garantie",
+    "Schadenservice PLUS",
+    "TELEMATIK bis 30 % Nachlass"
+  ],
+  "tarife": [
+    {
+      "name": "KLASSIK-GARANT 2.0",
+      "kurz": "Klassik-Garant",
+      "stufe": 1,
+      "werte": {
+        "deckung": "50 oder 100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "gap": "optional",
+        "mallorca": "ja",
+        "werkstatt": "optional, 15 % Nachlass",
+        "elektro": "Akku All-Risk (VK)",
+        "rabattschutz": "optional, ab SF 3"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vhv.de/ds/200.0031.98.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KLASSIK-GARANT 2.0 mit Zusatzpaket EXKLUSIV",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "werte": {
+        "deckung": "50 oder 100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "48 Monate",
+        "marder": "Folgeschäden unbegrenzt",
+        "gap": "optional",
+        "mallorca": "ja",
+        "werkstatt": "optional, 15 % Nachlass",
+        "elektro": "Akku All-Risk (VK)",
+        "rabattschutz": "optional, ab SF 3"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vhv.de/ds/200.0031.98.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vhv.de/auto-versicherung",
+    "https://www.vhv.de/ds/200.0031.98.pdf",
+    "https://www.vhv.de/ds/200.0005.209.pdf"
+  ],
+  "offen": [
+    "Werte aus der Produktübersicht Auto (200.0031.98, Stand 07.2026; Symbole am gerenderten Bild abgelesen) und der Produktseite. Stufen: KLASSIK-GARANT 2.0 und mit Zusatzpaket EXKLUSIV. Keine Markierung.",
+    "Deckung: 50 Mio. € (max. 12 Mio. € je Person) oder 100 Mio. € (max. 15 Mio. € je Person) wählbar.",
+    "Neuwert: Neupreis bis 24 bzw. 48 Monate nach Erstzulassung bei Erstbesitz; Kaufpreis für Gebrauchte ebenso 24 bzw. 48 Monate. Tierbiss und Kurzschluss: Folgeschäden bis 20.000 € bzw. unbegrenzt (Innenraum ausgenommen).",
+    "EXKLUSIV zusätzlich: Unterschlagung, kein Abzug „neu für alt“ beim Antriebs-Akku, Wertminderungspauschale 5 %, erweiterte Eigenschadendeckung.",
+    "Werkstattbindung: 15 % Nachlass auf den Kaskobeitrag; bei eigener Werkstatt Kürzung der Erstattung um 15 % (max. 1.500 €). Schutzbrief, GAP, Rabattschutz (ab SF 3), Fahrerschutz, Auslandschutz, Verkehrs-Rechtsschutz als Zusatzbausteine."
+  ]
+}

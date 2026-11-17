@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Summe konstant oder fallend",
+    "Vorläufig bis 100.000 €",
+    "Familien-Rabatt"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "werte": {
+        "nachversicherung": "nein",
+        "vorgezogen": "nein",
+        "summe": "bis 500.000 € o. Arzt"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/altersvorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung mit Baustein Risiko Plus",
+      "kurz": "Risiko Plus",
+      "stufe": 2,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja",
+        "summe": "bis 500.000 € o. Arzt"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/altersvorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/altersvorsorge/risikolebensversicherung/",
+    "https://medien.devk.de/assets/content/download/produkte/altersvorsorge---leben/devk-risikoleben-produktinfo-07709-2026-02.pdf"
+  ],
+  "offen": [
+    "Stufen laut Produktseite und Broschüre 07709 (02/2026): Basis-Schutz und Baustein Risiko Plus (zum Basis-Schutz hinzuwählbar). DEVK markiert keine Stufe.",
+    "Risiko Plus: Nachversicherungsgarantie innerhalb von 12 Monaten nach Heirat, Geburt/Adoption, Immobilienkauf oder erstmaliger Selbstständigkeit; vorgezogene Todesfallleistung, wenn die Erkrankung voraussichtlich binnen 12 Monaten zum Tod führt; Soforthilfe 10.000 € bei Tod.",
+    "Verlängerungsoption, Umtauschrecht und weltweiter Schutz stehen nicht auf der Produktseite bzw. in der Broschüre.",
+    "Summe ohne Zusatzprüfung: bis 500.000 € keine ärztliche Untersuchung (Gesundheitsfragen gibt es trotzdem).",
+    "Dynamik 3, 4 oder 5 % nur bei gleichbleibender Summe. Zusatzversicherungen wählbar: Schwere Krankheiten, Berufsunfähigkeit (Beitragsbefreiung), Unfall (doppelte Summe bei Unfalltod). Verbundene Leben für Paare nicht genannt."
+  ]
+}

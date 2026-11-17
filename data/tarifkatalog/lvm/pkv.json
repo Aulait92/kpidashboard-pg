@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "pkv",
+  "produkt": "Krankenvollversicherung (Bausteine)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Bis 4 Monatsbeiträge zurück",
+    "Freie Krankenhauswahl",
+    "Psychotherapie 50 Sitz./Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "Tarife AP, S3, Z100/50",
+      "kurz": "Einstieg",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "70 %, 100 % mit Überw.",
+        "stationaer": "Mehrbett, diensth. Arzt",
+        "zahnersatz": "50 %",
+        "selbstbehalt": "400 oder 800 €",
+        "bre": "bis 4 Monatsbeiträge",
+        "heilpraktiker": "70 %",
+        "primaerarzt": "ja",
+        "sehhilfen": "120 € in 3 Jahren",
+        "psychotherapie": "50 Sitzungen/Jahr"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:7994dd80-8750-4520-8fa5-4a814864b156/011-krankenvollversicherung-w1111.4acd368c567dd9cdd4134641cb49dd6f.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarife A, S2, Z100/80",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "0 bis 2.500 €",
+        "bre": "bis 4 Monatsbeiträge",
+        "heilpraktiker": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "Gläser unbegrenzt",
+        "psychotherapie": "50 Sitzungen/Jahr"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:7994dd80-8750-4520-8fa5-4a814864b156/011-krankenvollversicherung-w1111.4acd368c567dd9cdd4134641cb49dd6f.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarife A, S1, Z100/100",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Ein-/Zweibett, Chefarzt",
+        "zahnersatz": "100 %",
+        "selbstbehalt": "0 bis 2.500 €",
+        "bre": "bis 4 Monatsbeiträge",
+        "heilpraktiker": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "Gläser unbegrenzt",
+        "psychotherapie": "50 Sitzungen/Jahr"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:7994dd80-8750-4520-8fa5-4a814864b156/011-krankenvollversicherung-w1111.4acd368c567dd9cdd4134641cb49dd6f.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/private_krankenversicherung",
+    "https://www.lvm.de/dam/jcr:7994dd80-8750-4520-8fa5-4a814864b156/011-krankenvollversicherung-w1111.4acd368c567dd9cdd4134641cb49dd6f.pdf"
+  ],
+  "offen": [
+    "LVM hat keine festen Stufen, sondern Bausteine: ambulant A oder AP, stationär S1, S2 oder S3, Zahn Z100/100, Z100/80 oder Z100/50. Die drei Stufen sind selbst gebildete Kombinationen aus der Broschüre W 1111. Bitte gegenprüfen.",
+    "Empfehlung: LVM markiert in den Tabellen jeweils A-Tarif, S1 und Z100/100 als „Unsere Empfehlung“; deshalb Top als empfohlen.",
+    "Selbstbeteiligung (nur ambulant): A 0, 300, 650, 1.350, 2.500 € oder 20 % (A 20/P); AP 400 oder 800 €. Stationär und Zahn ohne Selbstbeteiligung.",
+    "AP: Primärarztprinzip, Facharzt 100 % mit Überweisung, sonst 70 %; Arzneimittel 70 % bis 3.000 € Rechnungsbetrag im Jahr, darüber 100 %; Heil- und Hilfsmittel 70 %.",
+    "Zahnbehandlung inkl. Prophylaxe in allen Zahntarifen 100 %; Zahnersatz, Inlays und Kieferorthopädie 100, 80 bzw. 50 %. Höchstbeträge in den ersten Jahren nicht in der Broschüre genannt.",
+    "S3 (Mehrbettzimmer) ist in der Tabelle mit freier Krankenhauswahl angegeben. Auslandsschutz: Krankenrücktransport aus dem Ausland in allen S-Tarifen; Dauer im Ausland nicht genannt.",
+    "Beitragsrückerstattung wird jährlich vom Vorstand festgelegt (nicht garantiert). Ergänzungen: Krankentagegeld KT, Krankenhaustagegeld KHT, Pflegetagegeld PZT-Komfort, Vorsorge-Plus."
+  ]
+}
