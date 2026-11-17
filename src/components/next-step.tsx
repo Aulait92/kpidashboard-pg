@@ -48,6 +48,7 @@ import {
   needsNextStepAction,
   nextStepTaskResult,
   notReachedResult,
+  nummerPerMailResult,
   notReachedTextsAction,
   offerAppointmentResult,
   sendNotReachedMailResult,
@@ -183,7 +184,7 @@ export function LostSheet({
 }) {
   const toast = useToast();
   const { info, error } = useStepInfo(leadId);
-  const [step, setStep] = useState<"pick" | "note" | "warn" | "override" | "offer">("pick");
+  const [step, setStep] = useState<"pick" | "note" | "warn" | "override" | "offer" | "nummer">("pick");
   const [reason, setReason] = useState<LostReasonKey | null>(null);
   const [note, setNote] = useState("");
   const [busy, startBusy] = useTransition();
@@ -209,9 +210,19 @@ export function LostSheet({
     setReason(key);
     const r = LOST_REASONS.find((x) => x.key === key)!;
     if (r.needsNote) return setStep("note");
+    // Falsche Nummer (Ole, 17.11.2026): erst anbieten, die richtige Nummer per E-Mail zu erfragen
+    if (key === "falsche_daten" && info?.email) return setStep("nummer");
     if (needsLostWarning(guard, key)) return setStep("warn");
     submit(key, "");
   };
+
+  const nummerPerMail = () =>
+    startBusy(async () => {
+      const res = await nummerPerMailResult(leadId);
+      if (!res.ok) return toast.show({ message: res.error, tone: "error" });
+      onDone(res, `${name}: Nummer per E-Mail erfragt`);
+      onClose();
+    });
 
   const notReached = () =>
     startBusy(async () => {
@@ -250,6 +261,29 @@ export function LostSheet({
           onClose();
         }}
       />
+    );
+  }
+
+  if (step === "nummer") {
+    return (
+      <Sheet open onClose={onClose} title="Richtige Nummer per E-Mail erfragen?" message={info?.email ?? name}>
+        <div className="space-y-3 p-5" data-nummer-mail>
+          <Button variant="primary" size="md" icon={Mail} className="w-full" disabled={busy} onClick={nummerPerMail} data-nummer-senden>
+            E-Mail senden
+          </Button>
+          <p className="text-center text-xs text-[color:var(--muted)]">Der Kontakt bleibt offen. Wiedervorlage in 2 Werktagen.</p>
+          <Button
+            variant="ghost"
+            size="md"
+            className="w-full"
+            disabled={busy}
+            onClick={() => (needsLostWarning(guard, "falsche_daten") ? setStep("warn") : submit("falsche_daten", ""))}
+            data-nummer-verloren
+          >
+            Nur als verloren markieren
+          </Button>
+        </div>
+      </Sheet>
     );
   }
 
