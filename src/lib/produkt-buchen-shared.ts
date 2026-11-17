@@ -199,7 +199,10 @@ const eur0 = (n: number) => `${Math.round(n).toLocaleString("de-DE")} €`;
 export function bookingSentence(p: BookingPreview): string | null {
   if (p.overIndividual) return tierSentence(p);
   if (p.bookingPricing === "individual") {
-    return `Ihre Konditionen sind individuell. Wir bestätigen Ihnen den neuen Monatspreis für ${eur0(p.monthlyTo)} Werbebudget pro Monat gesondert.`;
+    // Mit bekanntem Preis den voraussichtlichen neuen Betrag nennen (Ole, 17.11.2026)
+    if (p.manualReason === "individual_terms" && p.feeFrom != null)
+      return `Ihre Konditionen sind individuell. Für Betreuung und Software rechnen wir voraussichtlich mit ${eur0(p.feeFrom + p.extraMonthly)} netto im Monat (bisher ${eur0(p.feeFrom)}) und bestätigen Ihnen den Preis gesondert.`;
+    return `Ihre Konditionen sind individuell. Für Betreuung und Software kommen voraussichtlich ${eur0(p.extraMonthly)} netto im Monat dazu; den neuen Preis bestätigen wir Ihnen gesondert.`;
   }
   return tierSentence(p);
 }

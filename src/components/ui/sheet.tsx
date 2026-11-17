@@ -4,6 +4,7 @@
 // Neben-Aktionen einer Zeile, damit pro Zeile nur eine Hauptaktion sichtbar ist.
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { impact } from "@/lib/haptics";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,9 @@ export function Sheet({
     };
   }, [open, onClose]);
   if (!open) return null;
-  return (
+  // Per Portal direkt an <body> (Ole, 17.11.2026: Fenster oben abgeschnitten). Sonst ist „fixed“ an einen Vorfahren mit
+  // transform/filter gebunden (z. B. animierte Karte) statt an den Bildschirm.
+  const fenster = (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="ui-backdrop absolute inset-0 bg-slate-900/40" onClick={onClose} />
       <div
@@ -93,6 +96,7 @@ export function Sheet({
       </div>
     </div>
   );
+  return typeof document === "undefined" ? fenster : createPortal(fenster, document.body);
 }
 
 export function ActionSheet({
