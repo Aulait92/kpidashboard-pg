@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "Swiss Life",
+  "sparte": "basisrente",
+  "produkt": "Swiss Life Maximo Basisrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beiträge steuerlich absetzbar",
+    "Rentenbeginn 62 bis 85"
+  ],
+  "tarife": [
+    {
+      "name": "Swiss Life Maximo Basisrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "0 bis 80 % wählbar",
+        "rentenfaktor": "ja",
+        "anlage": "über 200 Fonds und ETFs",
+        "flexibel": "ja, Zuzahlung jederzeit",
+        "hinterbliebene": "wählbar",
+        "beitragspause": "Beiträge aussetzbar"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/3f/16191.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.swisslife.de/content/dam/de/documents/3f/16191.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/f0/15437.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/47/21014.pdf"
+  ],
+  "offen": [
+    "Quelle: Produkthighlights Maximo Basisrente, Allgemeine Bedingungen AVB_ED_RUB_2025_10 und Muster-Produktinformationsblatt (Beispiel mit 60 % Beitragserhaltung, garantierter Rentenfaktor 22,13 € je 10.000 €); die Produktseiten auf swisslife.de waren für automatische Abrufe gesperrt.",
+    "Hinterbliebene: Im Todesfall vor Rentenbeginn Hinterbliebenenrente aus dem Vertragsguthaben an berechtigte Hinterbliebene; Varianten des Todesfallschutzes laut Produkthighlights wählbar.",
+    "Swiss Life Investo Basisrente (AVB_FF_RUB_2025_10, Komfort- und Aktiv-Variante) nicht als Stufe aufgenommen: keine öffentliche Produktübersicht gefunden.",
+    "Effektivkosten je Muster unterschiedlich, nicht aufgenommen."
+  ]
+}

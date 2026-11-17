@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung DFV-ZahnSchutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Bis GOZ-Höchstsatz",
+    "Begrenzung entfällt bei Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-ZahnSchutz Basis 50",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "50 %",
+        "implantate": "50 %",
+        "behandlung": "50 %",
+        "prophylaxe": "bis 100 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "max. 875 € im 1. Jahr",
+        "kfo": "50 %, alle KIG",
+        "inlays": "50 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/zahngesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-ZahnSchutz Komfort 70",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "implantate": "70 %",
+        "behandlung": "70 %",
+        "prophylaxe": "bis 140 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "max. 1.225 € im 1. Jahr",
+        "kfo": "70 %, alle KIG",
+        "inlays": "70 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/zahngesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-ZahnSchutz Premium 80",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "80 %",
+        "implantate": "80 %",
+        "behandlung": "80 %",
+        "prophylaxe": "bis 160 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "max. 1.400 € im 1. Jahr",
+        "kfo": "80 %, alle KIG",
+        "inlays": "80 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/zahngesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-ZahnSchutz Exklusiv 100",
+      "kurz": "Exklusiv",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 200 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "max. 1.750 € im 1. Jahr",
+        "kfo": "100 %, alle KIG",
+        "inlays": "100 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/zahngesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/zahngesundheit/zahnzusatzversicherung/",
+    "https://www.deutsche-familienversicherung.de/fileadmin/media/pdf/produkte/zahnzusatz/produktinformationsblatt.pdf"
+  ],
+  "offen": [
+    "Erstattungssatz gilt für Zahnbehandlung, Zahnersatz, Implantate und Kieferorthopädie gleich (Basis 50, Komfort 70, Premium 80, Exklusiv 100 %); Inlays laut Leistungsübersicht unter Zahnbehandlung.",
+    "Zahnstaffel: Begrenzung in den ersten 12/24/36/48 Monaten, z. B. Basis 875/1.750/2.625/3.500 €, Komfort 1.225/2.450/3.675/4.900 €, Premium 1.400/2.800/4.200/5.600 €, Exklusiv 1.750/3.500/5.250/7.000 €; ab dem 49. Monat und bei Unfall unbegrenzt. Mindestlaufzeit 24 Monate.",
+    "Kieferorthopädie KIG 1 bis 5 ohne Altersgrenze; ohne GKV-Vorleistung höchstens 1.000 / 1.400 / 1.600 / 2.000 € je Versicherungsfall.",
+    "Prophylaxe 100 % bis zum Jahresbetrag; Bleaching alle 3 Jahre zusammen mit der Prophylaxe im selben Höchstbetrag.",
+    "DFV markiert Exklusiv als Testsieger (Stiftung Warentest), nicht als Empfehlung; bei 4 Stufen die dritte (Premium)."
+  ]
+}

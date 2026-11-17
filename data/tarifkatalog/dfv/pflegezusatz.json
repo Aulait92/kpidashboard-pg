@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung DFV-DeutschlandPflege",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Weltweit versichert",
+    "Nachversicherung ohne Prüfung"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-DeutschlandPflege Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "1.000 €",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "10fach, max. 7.000 €",
+        "befreiung": "ab Pflegegrad 5",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "5 % alle 3 Jahre"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-DeutschlandPflege Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "1.500 €",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "10fach, max. 7.000 €",
+        "befreiung": "ab Pflegegrad 5",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "5 % alle 3 Jahre"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-DeutschlandPflege Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "2.000 €",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "10fach, max. 7.000 €",
+        "befreiung": "ab Pflegegrad 5",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "5 % alle 3 Jahre"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/pflegezusatzversicherung/"
+  ],
+  "offen": [
+    "Pflegemonatsgeld als Verdopplung bzw. Erhöhung der gesetzlichen Leistung um 100, 150 oder 200 %: Pflegegrad 1 150/225/300 €, PG 2 350/525/700 €, PG 3 600/900/1.200 €, PG 4 800/1.200/1.600 €, PG 5 1.000/1.500/2.000 €.",
+    "Ambulant wie stationär: DFV nennt Pflege zu Hause und im Heim gleichermaßen versichert, ohne unterschiedliche Beträge; bitte in den Bedingungen gegenprüfen.",
+    "Einmalleistung: 10faches des letzten Pflegemonatsgelds (max. 7.000 €), nur ab Pflegegrad 3, Wartezeit 5 Jahre. Erhöhung einmalig um bis zu 30 % bei Lebensereignissen.",
+    "Empfehlung: DFV markiert Premium als „Unsere Empfehlung“."
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreisekrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beliebig viele Reisen im Jahr",
+    "Überführung bis 30.000 €",
+    "Kinderbetreuung bis 14 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandskrankenversicherung (Tarif ERK-56)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "56 Tage je Reise",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "weltweit",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "familie": "optional",
+        "lang": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/auslandsreisekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/auslandsreisekrankenversicherung/"
+  ],
+  "offen": [
+    "Ein Tarif (Jahresvertrag für Singles, Familien und Senioren); Familie als eigener Beitrag wählbar.",
+    "Langzeitreise: Erweiterung ERK-V von 57 bis 365 Tagen (ab 65 Jahren nur bis 90 Tage), als Baustein „Langzeitreise“ erfasst.",
+    "Geltungsbereich „weltweit“; USA und Kanada nicht ausdrücklich genannt.",
+    "Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft auf der Produktseite nicht genannt.",
+    "Rücktransport, wenn medizinisch sinnvoll und vertretbar oder Krankenhausaufenthalt voraussichtlich über 14 Tage. Ersatz-Krankenhaustagegeld 25 € je Tag, Bergung bis 5.000 €."
+  ]
+}

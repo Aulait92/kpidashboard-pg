@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Swiss Life",
+  "sparte": "bu",
+  "produkt": "Swiss Life BU",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Akuthilfe schwere Krankheit",
+    "Reha-Hilfe bis 2.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Swiss Life BU",
+      "kurz": "BU",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "nein",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "bei < 5 Mitarbeitern",
+        "pflege": "ab Pflegegrad 2",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/49/8855.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Swiss Life BU plus",
+      "kurz": "BU plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "24 oder 36 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "bei < 5 Mitarbeitern",
+        "pflege": "ab Pflegegrad 2",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/49/8855.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.swisslife.de/content/dam/de/documents/49/8855.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/58/9858.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/8e/8856.pdf"
+  ],
+  "offen": [
+    "Quelle sind nur die Allgemeinen Bedingungen (AVB_EV_SBU_2025_01, Stand 01.2025) und die Dynamik-Bedingungen (10.2025); die Produktseiten auf swisslife.de waren für automatische Abrufe gesperrt. Werte bitte an der Produktseite gegenprüfen.",
+    "plus heißt: mit Leistung bei Arbeitsunfähigkeit (gegen Mehrbeitrag, Leistungsdauer 24 oder 36 Monate wählbar). Die Varianten BU 4U und BU 4U plus unterscheiden sich laut Bedingungen nur in der Kalkulation (andere Invalidisierungstafeln) und sind nicht als Stufen geführt.",
+    "Pflegerente als care-Option: laut Bedingungen über die Nachversicherungsgarantie gegen Mehrbeitrag einschließbar; ob sie auch bei Abschluss wählbar ist, nicht belegt.",
+    "Rückwirkende Leistung: Anspruch entsteht mit Beginn des Monats nach Eintritt der Berufsunfähigkeit; eine Frist für verspätete Meldung ist nicht genannt.",
+    "Umorganisation: Verzicht bei Arbeitnehmern immer, bei Selbstständigen unter 5 Mitarbeitern oder mit akademischem Abschluss und mindestens 90 % kaufmännischer Tätigkeit.",
+    "Akuthilfe: 18 Monate BU-Rente bei schwerer Krankheit (z. B. Krebs). Leistung bei voller Erwerbsminderung nur unter Voraussetzungen (u. a. ab Alter 50).",
+    "Swiss Life markiert keine Variante. Die Grundfähigkeitsversicherung heißt Swiss Life Vitalschutz (siehe grundfaehigkeit.json)."
+  ]
+}

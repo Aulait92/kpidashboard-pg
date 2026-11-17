@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "basisrente",
+  "produkt": "Basisrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Steuervorteil in der Ansparphase",
+    "Nicht vererbbar, nicht kündbar"
+  ],
+  "tarife": [
+    {
+      "name": "Debeka Basisrente (Tarif BA6)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "ja, garantiertes Kapital",
+        "rentenfaktor": "ja, garantiert",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "Sonderzahlung möglich",
+        "hinterbliebene": "Todesfall-Leistung",
+        "beitragspause": "Freistellung möglich",
+        "kosten": "1,16 % (Muster 30 J.)"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/sonstige/landingpages/basisinformationsbl%C3%A4tter/bA6_30_jahre.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/landingpages/sonstige/basisinformationsblaetter-musterpib.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/sonstige/landingpages/basisinformationsbl%C3%A4tter/bA6_30_jahre.pdf"
+  ],
+  "offen": [
+    "Keine Produktseite für die Basisrente auf debeka.de gefunden; Werte nur aus dem Muster-Produktinformationsblatt Tarif BA6 (Stand 01.01.2026, Musterkunde 100 € im Monat, 30 Jahre). Bedingungen nicht veröffentlicht gefunden.",
+    "Klassische Rentenversicherung im Sicherungsvermögen, Chancen-Risiko-Klasse 3. Garantiertes Kapital im Muster 36.934 € bei 36.000 € Einzahlung; Rentenfaktor 29,47 € je 10.000 € garantiert. Keine Renditeaussage.",
+    "Hinterbliebene: Todesfall-Leistung in der Ansparphase, Rentengarantiezeit (im Muster 15 Jahre). Einmalzahlung nicht möglich, Sonderzahlung möglich, Anbieterwechsel nicht möglich.",
+    "Effektivkosten 1,16 Prozentpunkte gelten nur für den Musterkunden. BU-Zusatz und Dynamik nicht belegt."
+  ]
+}

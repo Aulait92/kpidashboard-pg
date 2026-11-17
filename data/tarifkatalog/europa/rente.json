@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente, Kapital oder beides",
+    "Rentenbeginn frei wählbar",
+    "Entnahmen nach Rentenbeginn"
+  ],
+  "tarife": [
+    {
+      "name": "Klassische Rentenversicherung (E-RCP)",
+      "kurz": "Klassisch",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "100 % der Beiträge",
+        "rentenfaktor": "garantiert",
+        "anlage": "klassisch",
+        "hinterbliebene": "Rentengarantiezeit",
+        "flexibel": "Zuzahlung und Entnahme",
+        "kapital": "ja",
+        "beitragspause": "bis 6 Monate"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/klassische-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Rentenversicherung mit Garantie (E-RIG)",
+      "kurz": "Fonds Garantie",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "50, 80 oder 100 %",
+        "anlage": "über 30 ETFs",
+        "flexibel": "Zuzahlung und Entnahme",
+        "kapital": "ja",
+        "beitragspause": "bis 6 Monate"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/fondsrente-mit-garantie/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Rentenversicherung (E-RI)",
+      "kurz": "Fondsrente",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "keine",
+        "rentenfaktor": "garantiert",
+        "anlage": "über 30 ETFs",
+        "flexibel": "Zuzahlung und Entnahme",
+        "kapital": "ja",
+        "beitragspause": "bis 6 Monate"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/fondsgebundene-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/private-rentenversicherung/",
+    "https://www.europa.de/versicherungen/private-rentenversicherung/klassische-rentenversicherung/",
+    "https://www.europa.de/versicherungen/private-rentenversicherung/fondsrente-mit-garantie/",
+    "https://www.europa.de/versicherungen/private-rentenversicherung/fondsgebundene-rente/"
+  ],
+  "offen": [
+    "Die drei Varianten sind Anlagekonzepte (klassisch, Fonds mit Garantie, Fonds ohne Garantie), keine Leistungsstufen. EUROPA markiert keine; Fonds mit Garantie als mittlere Stufe.",
+    "Garantie: klassisch mindestens 100 % der Beiträge zum Garantietermin; mit Garantie 50, 80 oder 100 % bei Vertragsbeginn wählbar; Fondsrente ohne Mindestgarantie (aus der Gegenüberstellung der Seiten, nicht ausdrücklich so formuliert).",
+    "Garantierter Rentenfaktor bei klassisch und Fondsrente genannt, bei der Fondsrente mit Garantie nur „garantierte Günstigerprüfung“.",
+    "Hinterbliebenenschutz nur bei der klassischen Rente belegt (Rentengarantiezeit oder Kapitalrückgewähr). BU-Zusatz und Effektivkosten nicht genannt (Verwaltungskostenquote 0,78 % ist eine Unternehmenskennzahl).",
+    "Sonderzahlungen: klassisch 4x im Jahr ab 500 €, mit Garantie 4x ab 250 €, Fondsrente 6x ab 250 €. Dynamik 3 bis 5 % (Fondsrente 3 bis 10 %). Beitragsunterbrechung bis 6 Monate."
+  ]
+}

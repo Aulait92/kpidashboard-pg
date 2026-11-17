@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 % Rente ab 50 % BU",
+    "Reha-Kosten bis 4.000 €",
+    "Wiedereingliederung 6 Renten"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "verzichtet",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "unter Bedingungen",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "wählbar",
+        "infektion": "ja",
+        "au": "nein"
+      },
+      "bausteine": {
+        "au": "nein"
+      },
+      "quelle": "https://www.europa.de/versicherungen/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung Premium-Schutz",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "verzichtet",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "unter Bedingungen",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "wählbar",
+        "infektion": "ja",
+        "au": "bis 24 Monate"
+      },
+      "bausteine": {
+        "au": "inklusive"
+      },
+      "quelle": "https://www.europa.de/versicherungen/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/berufsunfaehigkeitsversicherung/",
+    "https://www.europa.de/fileadmin/pdf/produkte/bu/antragsdokumente/europa_bu_vertragsbedingungen.pdf"
+  ],
+  "offen": [
+    "Zwei Stufen ohne Markierung der EUROPA: keine Empfehlung gesetzt. Einziger Unterschied laut Leistungsübersicht: Leistung bei Arbeitsunfähigkeit nur im Premium-Schutz.",
+    "AU-Leistung: bei 6 Monaten Krankschreibung (oder 3 Monaten mit fachärztlicher Prognose), zusammen höchstens 24 Monate (Vertragsbedingungen, Stand 01.08.2026).",
+    "Umorganisation: Verzicht nur für bestimmte Selbstständige (z. B. Akademiker oder Meister mit weniger als 10 Mitarbeitenden und mindestens 90 % Bürotätigkeit); Arbeitnehmer werden nicht auf Umorganisation geprüft.",
+    "Teilzeit, Pflege (6 Monate Hilfebedarf, Punktetabelle) und Infektionsklausel (Tätigkeitsverbot) aus den Vertragsbedingungen, je Stufe nicht getrennt ausgewiesen.",
+    "Dynamik: Beitragsdynamik gegen Inflation in beiden Stufen. Leistungen bei schweren Erkrankungen (Krebs, Herzinfarkt, Schlaganfall u. a.) in beiden Stufen."
+  ]
+}

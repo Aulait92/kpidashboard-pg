@@ -1,0 +1,54 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "reise-kranken",
+  "produkt": "DKV Auslandskrankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Arzt, Klinik, Arznei 100 %",
+    "Bergung bis 20.000 €",
+    "24-Stunden-Notruf"
+  ],
+  "tarife": [
+    {
+      "name": "DKV Auslandskrankenversicherung Einzelperson",
+      "kurz": "Einzelperson",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 10 Wochen",
+        "ruecktransport": "100 %, med. sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "schmerzstillend 100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/reise/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV Auslandskrankenversicherung Familie",
+      "kurz": "Familie",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 10 Wochen",
+        "ruecktransport": "100 %, med. sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "schmerzstillend 100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/reise/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Reiseversicherung/ReisekrankenversicherungDKV",
+    "https://www.ergo.de/fragments/produkttabelle/reise/master"
+  ],
+  "offen": [
+    "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Jahresvertrag für beliebig viele Reisen bis je 10 Wochen; Leistungen von Einzel- und Familientarif gleich, Familie zusätzlich 500 € Pauschale je bestimmter Erkrankung bei stationärer Behandlung (auch ohne Reise).",
+    "Weltweit laut Seite „auch bei Pandemien und Reisewarnungen“; USA und Kanada nicht ausdrücklich als Geltungsbereich genannt (nur Fallbeispiel USA). Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft nicht genannt.",
+    "Für Reisen bis 12 Monate gibt es eine eigene Langzeit-Auslandskrankenversicherung. ERGO Reiseversicherung bietet zusätzlich Reisekranken in Jahres- und Einzelreisepaketen (nicht als Stufe geführt). Keine Empfehlung markiert (zwei Stufen)."
+  ]
+}

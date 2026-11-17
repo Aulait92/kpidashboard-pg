@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "zahnzusatz",
+  "produkt": "MeinZahnschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zahnbehandlung und Zahnreinigung 100 %",
+    "Bleaching bis 150 € alle 2 Jahre",
+    "Ohne Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "MeinZahnschutz 75",
+      "kurz": "75",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "behandlung": "100 %",
+        "prophylaxe": "100 %",
+        "wartezeit": "keine",
+        "zahnersatz": "75 %",
+        "implantate": "75 %",
+        "staffel": "1.000/1.500/2.000 €",
+        "kfo": "75 %, bis 2.000 €",
+        "inlays": "Inlays 75 %, Füll. 100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinZahnschutz 90",
+      "kurz": "90",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "behandlung": "100 %",
+        "prophylaxe": "100 %",
+        "wartezeit": "keine",
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "staffel": "1.000/2.000/3.000 €",
+        "kfo": "90 %, bis 2.500 €",
+        "inlays": "Inlays 90 %, Füll. 100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinZahnschutz 100",
+      "kurz": "100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "behandlung": "100 %",
+        "prophylaxe": "100 %",
+        "wartezeit": "keine",
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "staffel": "1.000/2.500/4.000 €",
+        "kfo": "100 %, bis 3.000 €",
+        "inlays": "Inlays, Füllungen 100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/gesundheit/zahnzusatzversicherung/",
+    "https://goa-eportale.allianz.de/ZS7/5--/ZS75----EZ0.pdf.download.pdf",
+    "https://goa-eportale.allianz.de/ZS9/0--/ZS90----EZ0.pdf.download.pdf",
+    "https://goa-eportale.allianz.de/ZS1/00-/ZS100---EZ0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Begrenzung: Zahnstaffel für 1., 1. bis 2., 1. bis 3. Kalenderjahr, ab dem 4. Jahr unbegrenzt.",
+    "Prozentsätze inklusive Vorleistung der gesetzlichen Kasse, bis GOZ/GOÄ-Höchstsatz; Implantate laut Tarifvergleich unter Zahnersatz.",
+    "Kieferorthopädie für Versicherte unter 21 Jahren (ab 21 nur bei Unfall oder schwerer Erkrankung).",
+    "Allianz markiert keinen Tarif (MeinZahnschutz 100 mit Testsiegel); 90 als mittlere Stufe gesetzt.",
+    "Varianten mit Alterungsrückstellungen (ab 21 Jahren) nicht getrennt erfasst."
+  ]
+}

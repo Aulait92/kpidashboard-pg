@@ -1,0 +1,112 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "rente",
+  "produkt": "PrivatRente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapitalauszahlung",
+    "Beiträge aussetzen, Zuzahlungen, Entnahmen",
+    "Rentenbeginn bis Alter 85 wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatRente Perspektive",
+      "kurz": "Perspektive",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "90 % der Beiträge",
+        "rentenfaktor": "garantierte Mindestrente",
+        "anlage": "Sicherungsvermögen"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/perspektive/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PrivatRente IndexSelect",
+      "kurz": "IndexSelect",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "90 % der Beiträge",
+        "rentenfaktor": "garantierte Mindestrente",
+        "anlage": "Index oder fester Zins"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/indexselect/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PrivatRente KomfortDynamik",
+      "kurz": "KomfortDynamik",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "60, 80 oder 90 %",
+        "rentenfaktor": "garantierte Mindestrente",
+        "anlage": "Aktien + Sicherungsverm."
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/komfortdynamik/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PrivatRente InvestFlex",
+      "kurz": "InvestFlex",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "ohne oder 10 bis 90 %",
+        "anlage": "Fonds und ETFs"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/invest-flex/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/vorsorge/private-rentenversicherung/",
+    "https://www.allianz.de/vorsorge/vorsorgekonzept/",
+    "https://www.allianz.de/vorsorge/vorsorgekonzept/perspektive/",
+    "https://www.allianz.de/vorsorge/vorsorgekonzept/indexselect/",
+    "https://www.allianz.de/vorsorge/vorsorgekonzept/komfortdynamik/",
+    "https://www.allianz.de/vorsorge/vorsorgekonzept/invest-flex/"
+  ],
+  "offen": [
+    "Stufen sind die vier Vorsorgekonzepte der PrivatRente, geordnet von sicherheits- nach chancenorientiert; online nur KomfortDynamik und Perspektive abschließbar.",
+    "Garantie in Prozent der eingezahlten Beiträge zum Rentenbeginn. Perspektive 100 % bei Einmalbeitrag; IndexSelect 80 % mit Chancenturbo; InvestFlex ohne Garantie oder 10 bis 90 % in 10er Schritten.",
+    "Garantierter Rentenfaktor nicht veröffentlicht; die Seiten nennen eine garantierte Mindestrente (bei InvestFlex nicht genannt).",
+    "Effektivkosten nicht auf der Produktseite (Basisinformationsblätter nicht ausgewertet).",
+    "Zusatzbausteine Hinterbliebenen- und BU-Vorsorge nur bei Abschluss vor Ort, nicht online. Dynamik nicht genannt.",
+    "Allianz markiert kein Konzept; KomfortDynamik als dritte von vier Stufen gesetzt."
+  ]
+}

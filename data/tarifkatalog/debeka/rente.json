@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung (Privatrente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Garantierter Rentenfaktor",
+    "Kapitalwahlrecht",
+    "Fonds Debeka Global Shares"
+  ],
+  "tarife": [
+    {
+      "name": "Privatrente Chance Garant",
+      "kurz": "Chance Garant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "ja",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Todesfall-Leistung",
+        "kapital": "ja",
+        "beitragspause": "Unterbrechung mögl.",
+        "garantie": "garantierte Rente",
+        "anlage": "Sicherungsvermögen"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/zukunftalter/privatrente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privatrente Chance Balance",
+      "kurz": "Chance Balance",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "ja",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Todesfall-Leistung",
+        "kapital": "ja",
+        "beitragspause": "Unterbrechung mögl.",
+        "garantie": "für den Garantieteil",
+        "anlage": "50 % Fonds, 50 % SV"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/zukunftalter/privatrente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privatrente Chance Invest",
+      "kurz": "Chance Invest",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "ja",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Todesfall-Leistung",
+        "kapital": "ja",
+        "beitragspause": "Unterbrechung mögl.",
+        "garantie": "nein",
+        "anlage": "100 % Fonds"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/zukunftalter/privatrente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/vorsorgensparen/zukunftalter/privatrente.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV85.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV86.pdf",
+    "https://www.debeka.de/landingpages/sonstige/basisinformationsblaetter-musterpib.html"
+  ],
+  "offen": [
+    "Die Stufen sind die Anlage-Pakete der Privatrente (Tarife CA2I und CA6I mit Fondskomponenten), keine Leistungsstufen: Garant 0 % Fonds, Balance 50 %, Invest 100 % im Fonds Debeka Global Shares (ESG).",
+    "Beitragsgarantie: Produktseite sagt nur, dass Chance Invest auf eine Beitragsgarantie verzichtet; Höhe der Garantie bei Garant und Balance nicht belegt. Garantierter Rentenfaktor für das Fondsguthaben laut Bedingungen.",
+    "Hinterbliebene: CA2I mit garantierter Todesfall-Leistung, CA6I mit Todesfall-Leistung vor Rentenbeginn und Rentengarantiezeit.",
+    "Dynamik 5 % oder 10 % im Jahr, Ablaufmanagement, BU-Zusatzversicherung wählbar. Effektivkosten je Variante in den Basisinformationsblättern (nicht ausgewertet). Keine Renditeaussage.",
+    "Debeka markiert kein Paket; Chance Balance als mittlere Stufe gesetzt."
+  ]
+}

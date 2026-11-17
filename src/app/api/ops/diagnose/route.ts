@@ -97,6 +97,17 @@ async function whatsapp() {
   return { anzahl: rows.length, rows, letzteNachricht: last };
 }
 
+/** Letzte nicht zugestellte WhatsApp-Nachrichten (Ole, 17.11.2026): Meta-Fehlercode, Zweck, Kunde; ohne Nummer und Inhalt */
+async function zustellfehler() {
+  const rows = await prisma.message.findMany({
+    where: { direction: "outbound", status: "failed" },
+    orderBy: { createdAt: "desc" },
+    take: 25,
+    select: { createdAt: true, kind: true, purpose: true, variant: true, errorCode: true, errorTitle: true, sentBy: true, conversation: { select: { customer: { select: { name: true } } } } },
+  });
+  return rows.map((r) => ({ at: r.createdAt, kunde: r.conversation.customer.name, kind: r.kind, purpose: r.purpose, variant: r.variant, sentBy: r.sentBy, errorCode: r.errorCode, errorTitle: r.errorTitle }));
+}
+
 /** Gespeicherte Texte mit Gedankenstrichen (Regel AGENTS.md): nur Anzahlen und Namen, keine Inhalte */
 async function gedankenstriche() {
   const has = { contains: "–" } as const;
@@ -610,7 +621,7 @@ async function vertriebTermine(params: URLSearchParams) {
   return diagnoseVertriebTermine({ seit: berlinMidnight(/^\d{4}-\d{2}-\d{2}$/.test(seit) ? seit : "2026-11-11"), link: params.get("link") === "1" });
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p) };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p) };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)

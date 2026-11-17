@@ -45,7 +45,7 @@ export function berlinDay(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
-export type FailedStatusResult = { error: Zustellfehler; lead?: "flagged" | "already" | "skipped"; optOut?: boolean; campaign?: boolean; alarm?: "created" | "counted" | null };
+export type FailedStatusResult = { error: Zustellfehler; sms?: string; lead?: "flagged" | "already" | "skipped"; optOut?: boolean; campaign?: boolean; alarm?: "created" | "counted" | null };
 
 /**
  * Status „failed“ einer ausgehenden Nachricht verarbeiten (Webhook). Fehler an der Nachricht speichern, dann
@@ -63,6 +63,9 @@ export async function handleFailedStatus(waMessageId: string, errors: StatusErro
   const campaign = await applyCampaignStatus(waMessageId, "failed", now, { code: error.code });
   const out: FailedStatusResult = { error, campaign };
   if (!msg || msg.direction !== "outbound") return out;
+  // Terminnachricht im Vertrieb (Support-Nummer): derselbe Text per SMS (lib/sms/ersatz.ts)
+  const { smsErsatz, smsErsatzZweck } = await import("@/lib/sms/ersatz");
+  if (smsErsatzZweck(msg.purpose)) out.sms = await smsErsatz(waMessageId, error.code, now);
   const conv = msg.conversation;
 
   if (error.art === "kein_whatsapp") {

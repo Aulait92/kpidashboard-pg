@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "risikoleben",
+  "produkt": "RisikoLebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Laufzeit bis 50 Jahre",
+    "Beitragsstundung 24 Monate",
+    "Dynamik wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "RisikoLebensversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja",
+        "verlaengerung": "nein",
+        "umtausch": "nein",
+        "kinder": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/vorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "RisikoLebensversicherung Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja",
+        "verlaengerung": "bis 15 Jahre",
+        "umtausch": "ja, in Rente",
+        "kinder": "+25 %, bis 50 T€"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/vorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "RisikoLebensversicherung Plus mit Unfall",
+      "kurz": "Plus Unfall",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja",
+        "verlaengerung": "bis 15 Jahre",
+        "umtausch": "ja, in Rente",
+        "kinder": "+25 %, bis 50 T€"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/vorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/vorsorge/risikolebensversicherung/",
+    "https://www.allianz.de/service/dokumente/#risikolebensversicherung"
+  ],
+  "offen": [
+    "Weltweiter Schutz und höchstes Endalter stehen nicht in der Tarifübersicht (nur Höchsteintrittsalter 74 und Laufzeit bis 50 Jahre).",
+    "Umtauschrecht: Allianz nennt eine Umwandlung in eine Rentenversicherung mit Hinterbliebenenvorsorge (Plus, Plus Unfall; erste 10 Jahre, bis Alter 60), keine Kapitalversicherung.",
+    "Kinder-Nachversicherung: Wert zeigt den Kinder-Bonus (vorübergehend bis 9 Monate); Geburt ist zudem Anlass der Nachversicherung.",
+    "Summe ohne Zusatzprüfung nicht veröffentlicht. Versicherungssumme Basis bis 10 Mio. €, Plus bis 20 Mio. €.",
+    "Fallende Summe und verbundene Leben gibt es als eigene Varianten nur über die Beratung vor Ort; nicht als Baustein erfasst.",
+    "Basis ist ein Angebot der Deutschen Lebensversicherungs-AG, Plus der Allianz Lebensversicherungs-AG. Plus Unfall zahlt 30.000 € mehr bei Unfalltod.",
+    "Allianz markiert keinen Tarif; Plus als mittlere Stufe gesetzt.",
+    "Kinder-Nachversicherung: +25 % der Summe, höchstens 50.000 € (Wert für die Folie gekürzt)",
+    "In allen Tarifen gekürzt für die Folie: Eintritt bis 74 Jahre, Dynamik 3 % im Jahr"
+  ]
+}

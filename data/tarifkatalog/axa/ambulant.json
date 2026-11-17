@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Heilpraktiker und Naturheilverfahren 80 %",
+    "Arznei- und Verbandmittel 80 %",
+    "Zuschuss für Brillen und Kontaktlinsen"
+  ],
+  "tarife": [
+    {
+      "name": "MED (EG 080)",
+      "kurz": "MED",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %",
+        "sehhilfen": "80 %, bis 130 €/2 Jahre",
+        "vorsorge": "nein",
+        "arznei": "80 %",
+        "hoergeraete": "nein",
+        "ausland": "100 %, bis 6 Wochen",
+        "lasik": "nein"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MED Komfort",
+      "kurz": "MED Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %",
+        "sehhilfen": "100 %, bis 300 €/2 Jahre",
+        "vorsorge": "80 %",
+        "arznei": "80 %",
+        "hoergeraete": "80 %, bis 500 €/5 Jahre",
+        "wartezeit": "3 Monate",
+        "lasik": "bis 1.000 € (2 mal)"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/ambulante-zusatzversicherung"
+  ],
+  "offen": [
+    "Gesamtgrenze für Heilpraktiker, Arznei-, Heil- und Hilfsmittel, Vorsorge: MED 500 € im Jahr, MED Komfort 2.000 € in zwei aufeinanderfolgenden Jahren.",
+    "Auslandsreiseschutz (100 %, bis 6 Wochen, inkl. Rücktransport) für Tarif MED belegt; laut Seite ergänzt MED Komfort das Leistungspaket von MED, ob der Auslandsschutz darin enthalten ist, nicht ausdrücklich genannt.",
+    "Wartezeit MED nicht genannt; MED Komfort 3 Monate (Entbindung 8 Monate, keine Wartezeit bei Unfall).",
+    "Zuzahlungen für Heil- und Hilfsmittel: MED nein, MED Komfort 80 %.",
+    "Zwei Tarife ohne Markierung der Gesellschaft (MED Komfort mit „Beste Preis-Leistung“ beschriftet, nicht als Empfehlung hervorgehoben); keine Empfehlung gesetzt."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Bei Unfalltod sofort volle Summe"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "2 Jahre",
+        "ohne-gp": "bis 20.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/sterbegeldversicherung/"
+  ],
+  "offen": [
+    "Ein Tarif. Ohne Gesundheitsprüfung bis 20.000 €; in den ersten 2 Jahren werden dann die gezahlten Beiträge erstattet, danach die volle Summe. Mit freiwilliger Gesundheitsprüfung entfällt die Wartezeit.",
+    "Höchste Versicherungssumme mit Gesundheitsprüfung nicht genannt.",
+    "Doppelte Leistung bei Unfalltod nicht genannt (bei Unfalltod volle Summe ab Beginn).",
+    "Ende der Beitragszahlung nur allgemein („bis zu einem bestimmten Alter“); Bestattungsvorsorge-Service nicht genannt."
+  ]
+}

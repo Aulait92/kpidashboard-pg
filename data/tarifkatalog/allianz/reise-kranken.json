@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Auch bei Pandemie und Reisewarnung",
+    "24h-Hotline und Dolmetscherservice",
+    "Sport & Aktiv-Versicherung inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Jahres-Reise-Krankenschutz",
+      "kurz": "Jahrespolice",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ruecktransport": "medizinisch sinnvoll",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend 100 %",
+        "dauer": "bis 56 Tage"
+      },
+      "bausteine": {
+        "familie": "optional",
+        "lang": "optional"
+      },
+      "quelle": "https://www.allianz.de/reise-und-freizeit/auslandskrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Reise-Krankenschutz",
+      "kurz": "Einzelreise",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ruecktransport": "medizinisch sinnvoll",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend 100 %",
+        "dauer": "1 bis 365 Tage"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/reise-und-freizeit/auslandskrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/reise-und-freizeit/auslandskrankenversicherung/"
+  ],
+  "offen": [
+    "USA und Kanada nicht ausdrücklich genannt; die Seite spricht von weltweitem Schutz.",
+    "Bekannte Erkrankungen und Schwangerschaft nicht im Tarifvergleich.",
+    "Familie: Jahres-Reise-Krankenschutz als Familien- oder Paartarif, Kinder bis 21 beitragsfrei. Längere Reisen über die Kombination mit dem Reise-Krankenschutz (bis 365 Tage).",
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen, provisorischer Zahnersatz.",
+    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt."
+  ]
+}

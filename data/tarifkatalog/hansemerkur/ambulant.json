@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Heilmittel-Zuzahlung 100 %",
+    "Klinik-Zuzahlung 10 €/Tag"
+  ],
+  "tarife": [
+    {
+      "name": "Ambulant Komfort (Tarif ES)",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "nein",
+        "sehhilfen": "180 € alle 2 Jahre",
+        "arznei": "nein",
+        "ausland": "100 %, bis 6 Wochen",
+        "wartezeit": "3 Monate"
+      },
+      "quelle": "https://www.hansemerkur.de/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant Premium (Tarif EST)",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, bis 1.000 €/Jahr",
+        "sehhilfen": "200 € alle 2 Jahre",
+        "arznei": "100 % Zuzahlung",
+        "ausland": "100 %, bis 6 Wochen",
+        "wartezeit": "3 Monate"
+      },
+      "quelle": "https://www.hansemerkur.de/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant Exklusiv (Tarif EST + EZT)",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 1.000 €/Jahr",
+        "sehhilfen": "200 € alle 2 Jahre",
+        "arznei": "100 % Zuzahlung",
+        "ausland": "100 %, bis 6 Wochen",
+        "wartezeit": "3 Monate"
+      },
+      "quelle": "https://www.hansemerkur.de/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/ambulante-zusatzversicherung",
+    "https://www.hansemerkur.de/ambulante-zusatzversicherung-hoeren-sehen"
+  ],
+  "offen": [
+    "Vorsorgeuntersuchungen und Hörgeräte sind nicht Teil dieser Tarife (eigener Tarif „Zusatz Hören, Sehen und Vorsorge“: bis 400 € Vorsorge, bis 500 € Hörhilfen, Augenlasern); Werte daher nicht belegt.",
+    "Heilpraktiker: 80 % bis 1.000 € Rechnungsbetrag im Jahr ab dem 3. Jahr (1. Jahr 100 €, 2. Jahr 200 €). Brille in Komfort, Kontaktlinsen nur Premium und Exklusiv; jährlich bei Änderung um 0,5 Dioptrien.",
+    "Zahnersatz: Komfort 25 %, Premium 30 % (auch Inlays, Implantate), Exklusiv 90 % mit Leistungsstaffel 420 bis 1.680 € in den ersten 4 Jahren. Wartezeit Zahn 6 Monate.",
+    "Premium und Exklusiv: Reha- und Kur-Zuzahlung 10 €/Tag, Reiseimpfungen 100 €/Jahr.",
+    "Empfehlung: HanseMerkur markiert Ambulant Premium als „Bestseller“."
+  ]
+}

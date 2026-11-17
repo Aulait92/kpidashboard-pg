@@ -18,7 +18,7 @@ import { folienEinpassen } from "@/lib/folien-einpassen";
 import { folien, type Marke } from "@/lib/praesentation";
 import type { Ansprache } from "@/lib/ansprache";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { auswahlDazu, auswahlWeg, gesellschaftName, tarifeFuer, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
+import { angebotAuslesbar, auswahlDazu, auswahlWeg, gesellschaftName, spartenGruppiert, tarifeFuer, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
 import {
   betrag,
   empfehlungVon,
@@ -564,19 +564,25 @@ function Angebote(p: {
             <summary className="inline-flex h-10 cursor-pointer list-none items-center gap-1 rounded-full border border-dashed sm:h-9 border-[color:var(--border-strong)] bg-white px-3.5 text-sm font-medium text-[color:var(--muted)] [&::-webkit-details-marker]:hidden">
               <Plus className="h-3.5 w-3.5" /> Versicherung
             </summary>
-            <div className="absolute left-4 z-20 mt-1 max-h-72 w-60 overflow-auto sm:left-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
-              {nochFrei.map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  className="block w-full rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm hover:bg-[color:var(--surface-sunken)]"
-                  onClick={(e) => {
-                    (e.currentTarget.closest("details") as HTMLDetailsElement | null)?.removeAttribute("open");
-                    sparteDazu(s.key);
-                  }}
-                >
-                  {s.label}
-                </button>
+            <div className="absolute left-4 z-20 mt-1 max-h-96 w-64 overflow-auto sm:left-0 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-1 shadow-[var(--shadow-lg)]">
+              {/* Gruppiert (Ole, 17.11.2026: alle Versicherungsprodukte, z. B. BU und PKV nach dem Komplettcheck) */}
+              {spartenGruppiert(nochFrei).map((g) => (
+                <div key={g.label} data-sparten-gruppe={g.label}>
+                  <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">{g.label}</div>
+                  {g.sparten.map((s) => (
+                    <button
+                      key={s.key}
+                      type="button"
+                      className="block w-full rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm hover:bg-[color:var(--surface-sunken)]"
+                      onClick={(e) => {
+                        (e.currentTarget.closest("details") as HTMLDetailsElement | null)?.removeAttribute("open");
+                        sparteDazu(s.key);
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           </details>
@@ -605,7 +611,7 @@ function Angebote(p: {
                 <Button size="md" icon={Calculator} onClick={() => setRechnenOffen(true)} data-beitraege-rechnen>
                   Beiträge rechnen
                 </Button>
-                {p.leadId && !ro ? (
+                {p.leadId && !ro && angebotAuslesbar(sp.key) ? (
                   <FileDrop
                     variant="button"
                     size="md"
@@ -638,7 +644,7 @@ function Angebote(p: {
                   busy={ablegenLaeuft}
                 />
               </div>
-            ) : p.leadId && !ro ? (
+            ) : p.leadId && !ro && angebotAuslesbar(sp.key) ? (
               <FileDrop
                 variant="zone"
                 instant

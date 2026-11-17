@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Auslandsreise-KV bis 8 Wochen",
+    "Zuzahlungen 100 % bis 250 €/Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "AmbulantSTARTpur",
+      "kurz": "START",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 250 €/Jahr",
+        "sehhilfen": "bis 250 € in 2 Jahren",
+        "vorsorge": "bis 250 € in 2 Jahren",
+        "arznei": "100 %, bis 250 €/Jahr",
+        "hoergeraete": "bis 250 €/Jahr",
+        "ausland": "ja, bis 8 Wochen",
+        "wartezeit": "keine",
+        "lasik": "500 €"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AmbulantPLUS",
+      "kurz": "PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 750 €/Jahr",
+        "sehhilfen": "bis 375 € in 2 Jahren",
+        "vorsorge": "bis 750 € in 2 Jahren",
+        "arznei": "100 %, bis 250 €/Jahr",
+        "hoergeraete": "bis 750 €/Jahr",
+        "ausland": "ja, bis 8 Wochen",
+        "wartezeit": "keine",
+        "lasik": "1.000 €"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/ambulante-zusatzversicherung/"
+  ],
+  "offen": [
+    "Zwei Tarife ohne Markierung; keine Empfehlung gesetzt. AmbulantPLUS gibt es mit oder ohne Alterungsrückstellungen (pur).",
+    "Arzneimittel: gesetzliche Zuzahlungen für Heil-, Hilfs-, Arznei- und Verbandmittel und Haushaltshilfe zusammen bis 250 €/Jahr.",
+    "Hörgeräte: Hilfsmittel ohne Einschränkung des Katalogs (z. B. Hörgeräte, Einlagen) bis 250 € bzw. 750 € je Jahr.",
+    "Augenlasern erstmals nach 3 Jahren, zweimal während der Laufzeit. Vorsorge inklusive Reiseschutzimpfungen."
+  ]
+}

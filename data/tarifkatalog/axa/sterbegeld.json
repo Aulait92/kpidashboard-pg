@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung (Partner IDEAL)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslanger Versicherungsschutz",
+    "Auslandsrückholung im Todesfall",
+    "Beitrag für Männer und Frauen gleich"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 15.000 €",
+        "wartezeit": "6 bzw. 18 Monate",
+        "unfall": "doppelt, wenn vereinbart",
+        "ohne-gp": "ja, bis 85 Jahre",
+        "beitragsende": "bis Alter 85"
+      },
+      "bausteine": {
+        "unfall": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/sterbegeld-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/existenzsicherung/p/sterbegeld-versicherung"
+  ],
+  "offen": [
+    "Versicherer ist der Kooperationspartner IDEAL Versicherung.",
+    "Wartezeit: voller Schutz nach 6 Monaten bei Einmalbeitrag, nach 18 Monaten bei monatlichem Beitrag (Produktseite nennt an anderer Stelle den 19. Monat); bei Unfalltod sofort.",
+    "Beitragszahlung bis 85: belegt nur durch das Beispiel der Produktseite (danach beitragsfrei); Einmalbeitrag wählbar.",
+    "Beitragsbefreiung bei Pflegebedürftigkeit ab Pflegegrad 4 vereinbar. Bestattungsvorsorge-Service und Dynamik nicht belegt (Erhöhung nur über Überschüsse).",
+    "Nur ein Tarif."
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Nachversicherung bei 12 Anlässen",
+    "Nichtraucher zahlen weniger",
+    "Überschüsse auch als Fonds"
+  ],
+  "tarife": [
+    {
+      "name": "Risikoversicherung Ri10 (gleichbleibende Summe)",
+      "kurz": "Konstant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis Alter 50",
+        "summe": "Nachvers. bis 300.000 €"
+      },
+      "bausteine": {
+        "fallend": "nein"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikoversicherung Ri20 (variable Summe)",
+      "kurz": "Variabel",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis Alter 50",
+        "summe": "Nachvers. bis 300.000 €"
+      },
+      "bausteine": {
+        "fallend": "inklusive"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/private-vorsorge/risikolebensversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2202/allgemeinebedingungenrisikoversicherungpm2202pdf/allgemeine-bedingungen-risikoversicherung-pm2202.pdf"
+  ],
+  "offen": [
+    "Die beiden Tarife sind Varianten, keine Leistungsstufen: Ri10 mit gleichbleibender Summe, Ri20 mit bis zu drei Phasen, in denen die Summe steigen, fallen oder gleich bleiben kann (z. B. für Kredite). Keine Empfehlung markiert.",
+    "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption, Umtauschrecht und weltweiter Schutz stehen weder auf der Produktseite noch in den Bedingungen (PM 2202, 01.2025); nicht belegt.",
+    "Nachversicherung: Antrag innerhalb von 12 Monaten nach dem Ereignis, Versicherter höchstens 50 Jahre, je Nachversicherung 25.000 bis 50.000 €, zusammen höchstens 100 % der Ursprungssumme und alle Verträge höchstens 300.000 €; nicht bei vereinfachter Risikoprüfung.",
+    "Verbundene Leben (Paare) und Kinder-Nachversicherung nicht genannt."
+  ]
+}

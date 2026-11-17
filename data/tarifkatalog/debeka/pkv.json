@@ -1,0 +1,135 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Zahnbehandlung und -ersatz 70 %",
+    "Psychotherapie 52 Sitzungen"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif NW-SB",
+      "kurz": "NW-SB",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "bre": "erfolgsabh., bis 2 MB",
+        "heilpraktiker": "ja",
+        "hilfsmittel": "offen (Beispielliste)",
+        "psychotherapie": "52 Sitzungen/Jahr",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 1.000 € Rechnung",
+        "ausland": "weltweit",
+        "ambulant": "100 % nach SB",
+        "stationaer": "allg. Krankenhausleist.",
+        "selbstbehalt": "1.350 €"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV102.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif NW",
+      "kurz": "NW",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "bre": "erfolgsabh., bis 2 MB",
+        "heilpraktiker": "ja",
+        "hilfsmittel": "offen (Beispielliste)",
+        "psychotherapie": "52 Sitzungen/Jahr",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 1.000 € Rechnung",
+        "ausland": "weltweit",
+        "ambulant": "90 %, über SB 100 %",
+        "stationaer": "allg. Krankenhausleist.",
+        "selbstbehalt": "10 %, max. 500 €"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV100.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif N-SB",
+      "kurz": "N-SB",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "70 %",
+        "bre": "erfolgsabh., bis 2 MB",
+        "heilpraktiker": "ja",
+        "hilfsmittel": "offen (Beispielliste)",
+        "psychotherapie": "52 Sitzungen/Jahr",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 1.000 € Rechnung",
+        "ausland": "weltweit",
+        "ambulant": "100 % nach SB",
+        "stationaer": "Zweibett, Chefarzt",
+        "selbstbehalt": "1.600 €"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/ckv101.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif N",
+      "kurz": "N",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "bre": "erfolgsabh., bis 2 MB",
+        "heilpraktiker": "ja",
+        "hilfsmittel": "offen (Beispielliste)",
+        "psychotherapie": "52 Sitzungen/Jahr",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 1.000 € Rechnung",
+        "ausland": "weltweit",
+        "ambulant": "90 %, über SB 100 %",
+        "stationaer": "Zweibett, Chefarzt",
+        "selbstbehalt": "10 %, max. 500 €"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV97.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenvollversicherung/pkvfuerversicherungsfreiearbeitnehmer.html",
+    "https://www.debeka.de/service/vertragsgrundlagen.html#krankenversicherung_unisex",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV97.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV100.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/ckv101.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV102.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_27.pdf"
+  ],
+  "offen": [
+    "Die Produktseite nennt keine Tarifnamen; Stufen aus den Tarifbedingungen für Nicht-Beihilfeberechtigte (Arbeitnehmer, Selbstständige), Stand der Tarife N 01/2025, NW, N-SB, NW-SB 07/2025. Für N-SB und NW-SB gibt es ab 01.01.2027 neue Fassungen (auf der Seite Vertragsgrundlagen verlinkt, nicht ausgewertet).",
+    "N und N-SB: Wahlleistungen Zweibettzimmer und Chefarzt (bei Einbettzimmer Erstattung wie Zweibett), ohne Wahlleistungen Ersatz-Krankenhaustagegeld 50 €. NW und NW-SB: nur allgemeine Krankenhausleistungen.",
+    "Selbstbehalt: N und NW 10 % ambulant bis 500 € im Jahr, darüber 100 %; N-SB 1.600 €, NW-SB 1.350 € fest im Jahr (Kinder 790 bzw. 660 €).",
+    "Zahn: 70 % für Zahnbehandlung, Zahnersatz, Kieferorthopädie und zwei Zahnreinigungen im Jahr; in den ersten zwei Kalenderjahren zusammen höchstens 750 € (nicht bei Unfall).",
+    "Beitragsrückerstattung erfolgsabhängig, laut Produktseite bis zu 2 Monatsbeiträge im Jahr. Sehhilfen bis 1.000 € Rechnungsbetrag, Zeitraum in den Tarifbedingungen nicht genannt. Hilfsmittel als Beispielliste (offen), Hörgeräte bis 1.500 € je Gerät.",
+    "Beihilfetarife für Beamte (Tarif B, B-Easy mit Ergänzungen BC, BG, WL; Debeka ist Marktführer bei Beamten) sind nicht aufgenommen. Tarif Nmed nur für Ärzte und Medizinstudenten, Tarif HS für Studierende; beide nicht aufgenommen.",
+    "Krankentagegeld (KT, KTmed) und Pflegezusatz (EPG, EPC) als Ergänzungstarife. Debeka markiert keine Empfehlung; dritte Stufe als mittlere Stufe gesetzt."
+  ]
+}

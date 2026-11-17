@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unfalltod ab Antrag mitversichert",
+    "Dread Disease wählbar",
+    "Erhöhung einmal ohne Anlass"
+  ],
+  "tarife": [
+    {
+      "name": "ERGO Risikolebensversicherung Grundschutz",
+      "kurz": "Grundschutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis 50 Jahre",
+        "vorgezogen": "ja",
+        "verlaengerung": "nein",
+        "kinder": "ja, bei Geburt"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/leben/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Risikolebensversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, erweitert",
+        "vorgezogen": "ja",
+        "verlaengerung": "nein",
+        "kinder": "ja, bei Geburt"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/leben/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Risikolebensversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, erweitert",
+        "vorgezogen": "ja",
+        "verlaengerung": "ja, bis 15 Jahre",
+        "kinder": "ja, plus Waisenrente"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/leben/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Lebensversicherung/Risikolebensversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/leben/master",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rlv_highlightblatt_grundschutz.pdf.coredownload.pdf",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rlv_highlightblatt_komfort.pdf.coredownload.pdf",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rlv_highlightblatt_premium.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "Umtauschrecht in eine Kapitalversicherung und weltweiter Schutz sind auf der Seite nicht genannt.",
+    "Vorgezogene Leistung: volle Summe bei Lebenserwartung unter einem Jahr (alle Stufen); Dread Disease (10 % der Summe, max. 30.000 €, bei Krebs, Herzinfarkt, Schlaganfall) in allen Stufen wählbar. Nachversicherung ohne Risikoprüfung bis 50 Jahre bei Heirat, Geburt, Immobilienkauf u. a.; Komfort und Premium zusätzlich erweitert (z. B. Scheidung, Einkommen über Beitragsbemessungsgrenze) und vorübergehend +50.000 € bei wichtigen Ereignissen.",
+    "Premium zusätzlich: Waisenschutz 250 € (Vollwaise 500 €) monatlich je Kind bis 18, Pflegebonus bis 10 % der Summe (max. 15.000 €), Soforthilfe 10 % (max. 10.000 €), Zweitmeinung. „Sicherheit Plus“ (konstante Beiträge) wählbar in Komfort und Premium.",
+    "Versicherungssumme online 50.000 bis 500.000 €; Höchstsumme ohne Zusatzprüfung und höchstes Endalter nicht genannt. Fallende Summe (linear oder annuitätisch) wählbar; verbundene Leben nicht genannt. ERGO kennzeichnet keine Empfehlung; Komfort als mittlere Stufe."
+  ]
+}

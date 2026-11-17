@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "pkv",
+  "produkt": "DKV Krankenvollversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zahnbehandlung und PZR 100 %",
+    "Arzneimittel 100 %",
+    "Freie Krankenhauswahl"
+  ],
+  "tarife": [
+    {
+      "name": "DKV BestMed Eco (Tarif BME)",
+      "kurz": "BestMed Eco",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, Hausarzt zuerst",
+        "stationaer": "Mehrbett, Chefarzt opt.",
+        "zahnersatz": "70 %",
+        "selbstbehalt": "680 €, nur ambulant",
+        "bre": "bis 1.200 €, erfolgsabh.",
+        "heilpraktiker": "75 %, max. 500 €",
+        "primaerarzt": "ja",
+        "sehhilfen": "200 € alle 24 Monate",
+        "ausland": "Europa, Welt 1 Monat"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/Krankenvollversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV BestMed Komfort (Tarif BMK)",
+      "kurz": "BestMed Komf.",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %, freie Arztwahl",
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "75 %",
+        "selbstbehalt": "wählbar, auch 0 €",
+        "bre": "bis 2.100 €, erfolgsabh.",
+        "heilpraktiker": "80 %, max. 1.000 €",
+        "primaerarzt": "nein",
+        "sehhilfen": "500 € alle 24 Monate",
+        "ausland": "Europa, Welt 6 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/Krankenvollversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV PremiumMed (Tarif PMN)",
+      "kurz": "PremiumMed",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, freie Arztwahl",
+        "stationaer": "Ein-/Zweibett, Chefarzt",
+        "zahnersatz": "90 %, Unfall 100 %",
+        "selbstbehalt": "wählbar, auch 0 €",
+        "bre": "bis 3.600 €",
+        "heilpraktiker": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "1.500 € alle 24 Monate",
+        "ausland": "Europa, Welt 6 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/Krankenvollversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankenvollversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/kranken/Krankenvollversicherung"
+  ],
+  "offen": [
+    "Produkt der DKV Deutsche Krankenversicherung AG (Tochter der ERGO), vertrieben über ergo.de. Quelle ist der Leistungsvergleich „Alle Leistungen vergleichen“ der Produktseite.",
+    "Stationär: in BestMed Eco sind Chefarzt und Zweibettzimmer hinzuwählbar, in Eco und Komfort das Einbettzimmer. Selbstbehalt: Eco 680 € im Jahr nur ambulant (Kinder 330 €); Komfort und PremiumMed in allen Bereichen wählbar, auf Wunsch 0 €.",
+    "Beitragsrückerstattung je nach Selbstbehalt; PremiumMed bis 3.600 € (1.500 € garantiert plus bis 2.100 € erfolgsabhängig). Zahnersatz mit Zahnstaffel in Eco und Komfort; Implantate Eco bis 4, Komfort bis 6 je Kiefer.",
+    "Hilfsmittel 100 % bei Bezug über die DKV (sonst 80 bzw. 90 %), ob offener Katalog, nicht belegt. Psychotherapie steht nicht im Leistungsvergleich. Krankentagegeld und Pflegezusatz als Bausteine nicht auf der Seite genannt.",
+    "Die Produktseite nennt die erste Stufe „BestMed Basis“, der Leistungsvergleich „BestMed Eco (Tarif BME)“. ERGO kennzeichnet keine Empfehlung; BestMed Komfort als mittlere Stufe (Beispielbeitrag der Seite bezieht sich auf Komfort)."
+  ]
+}

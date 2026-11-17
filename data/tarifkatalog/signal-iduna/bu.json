@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung SI WorkLife",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % Berufsunfähigkeit",
+    "Leistung auch bei Pflegebedürftigkeit, Demenz",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "SI WorkLife EXKLUSIV",
+      "kurz": "EXKLUSIV",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "nein",
+        "nachversicherung": "ja (Ausbaugarantie)",
+        "weltweit": "ja",
+        "teilzeit": "ja, 5 Jahre",
+        "pflege": "ja",
+        "dynamik": "optional 1 bis 5 %",
+        "infektion": "Heil- und Pflegeberufe"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SI WorkLife EXKLUSIV-PLUS",
+      "kurz": "EXKLUSIV-PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, bis 24 Monate",
+        "nachversicherung": "ja (Ausbaugarantie)",
+        "weltweit": "ja",
+        "teilzeit": "ja, 5 Jahre",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional 1 bis 5 %",
+        "infektion": "alle Berufe"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/berufsunfaehigkeitsversicherung/",
+    "https://www.signal-iduna.de/content/dam/si-documents/2/27/27099xx.pdf.coredownload.inline.pdf"
+  ],
+  "offen": [
+    "SIGNAL IDUNA bietet zwei Tarife (EXKLUSIV, EXKLUSIV-PLUS) ohne Markierung; keine Empfehlung gesetzt. Stiftung Warentest 2026: SEHR GUT für EXKLUSIV-PLUS.",
+    "Rückwirkende Leistung bei verspäteter Meldung nicht auf Produktseite und Broschüre (Aug26) genannt; Bedingungen (2319505, 2319605 Jan26) bitte prüfen.",
+    "Verzicht auf Umorganisation nicht belegt: genannt ist nur eine Umorganisationshilfe für Selbstständige (EXKLUSIV-PLUS, bis 6 Monatsrenten, max. 12.000 €).",
+    "Zinslose Beitragsstundung bis 2 Jahre laut Broschüre nur bei EXKLUSIV-PLUS; die Produktseite nennt Stundung bis 24 Monate allgemein.",
+    "Pflegerente als eigener Baustein nicht genannt (Leistung bei Pflege ist in der BU-Rente enthalten).",
+    "Ausbaugarantie: anlassbezogen, in den ersten 5 Jahren auch ohne Anlass; Grenzen in den Besonderen Bedingungen (2320005)."
+  ]
+}

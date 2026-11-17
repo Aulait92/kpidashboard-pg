@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "Canada Life",
+  "sparte": "rente",
+  "produkt": "Private Rente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Fondsgebundene Anlage"
+  ],
+  "tarife": [
+    {
+      "name": "Flexibler Kapitalplan",
+      "kurz": "Kapitalplan",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds und Portfolios",
+        "flexibel": "ja, Entnahme jederzeit",
+        "hinterbliebene": "wählbar",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.canadalife.de/media/kundenflyer-flexibler-kapitalplan.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GENERATION private plus",
+      "kurz": "GENERATION",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "über UWP-Fonds wählbar",
+        "rentenfaktor": "ja",
+        "anlage": "UWP, APM, Einzelfonds",
+        "flexibel": "ja, Zuzahlung ab 250 €",
+        "hinterbliebene": "zum Rentenbeginn wählbar",
+        "kapital": "ja",
+        "beitragspause": "befristet beitragsfrei"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.canadalife.de/generation-private-plus/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GARANTIE INVESTMENT RENTE private",
+      "kurz": "Garantie-Rente",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "Rente garantiert",
+        "anlage": "3 Fondsportfolios",
+        "flexibel": "ja, Entnahme kostenfrei",
+        "hinterbliebene": "90, 95 oder 100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.canadalife.de/media/kundenflyer-garantie-investment-rente-private.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.canadalife.de/private-rente/",
+    "https://www.canadalife.de/generation-private-plus/",
+    "https://www.canadalife.de/media/kundenflyer-generation-private-plus.pdf",
+    "https://www.canadalife.de/media/versicherungsbedingungen-generation-private-plus.pdf",
+    "https://www.canadalife.de/media/kundenflyer-flexibler-kapitalplan.pdf",
+    "https://www.canadalife.de/media/kundenflyer-garantie-investment-rente-private.pdf"
+  ],
+  "offen": [
+    "Stufen sind drei Produkte, keine Leistungsstufen: Flexibler Kapitalplan und GARANTIE INVESTMENT RENTE private nur gegen Einmalbeitrag, GENERATION private plus mit laufendem Beitrag (ab 50 € monatlich, Startoption ab 20 €). Empfehlung nur als mittlere Stufe gesetzt.",
+    "GENERATION private plus: Garantie nur bei Wahl des UWP-Fonds (Fonds mit Garantie), Höhe der Mindestgarantie selbst bestimmbar; garantierter Rentenfaktor laut Bedingungen (Stand Mai 2026). Zusatzoptionen BU-Rente und Schwere Krankheiten (33 Krankheiten).",
+    "GARANTIE INVESTMENT RENTE private: garantierte lebenslange Rente, die laut Flyer nur steigen kann, sofern keine Entnahmen erfolgen; Todesfallschutz 90, 95 oder 100 % des Beitrags abzüglich Entnahmen und Renten. Beitragsgarantie im Sinne des Schemas nicht genannt.",
+    "Flexibler Kapitalplan: Garantie, Rentenfaktor und Beitragspause nicht genannt.",
+    "Effektivkosten nur in Musterrechnungen, je nach Fondswahl unterschiedlich; nicht aufgenommen."
+  ]
+}

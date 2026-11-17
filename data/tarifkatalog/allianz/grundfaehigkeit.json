@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "grundfaehigkeit",
+  "produkt": "KörperSchutzPolice",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beitragsbefreiung während der Rente",
+    "Wechseloption in die BU ohne Gesundheitsprüfung",
+    "Demenz und Tätigkeitsverbot (IfSG) mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "KörperSchutzPolice",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "optional",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "wählbar 1 bis 5 %"
+      },
+      "bausteine": {
+        "pflege": "optional",
+        "ernst": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/koerperschutzpolice/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/vorsorge/koerperschutzpolice/",
+    "https://www.allianz.de/vorsorge/grundfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "Anzahl der versicherten Grundfähigkeiten nennt die Produktseite nicht (nur Beispiele wie Gebrauch einer Hand, Heben und Tragen, Autofahren).",
+    "Psyche: Leistung bei schwerer Depression oder Erwerbsunfähigkeit wegen psychischer Erkrankung als Wahlbaustein; auch Krankschreibung (bis 36 Monate) und spezielle Berufe wählbar.",
+    "Nur ein Tarif mit Wahlbausteinen; Eintrittsalter 15 bis 54, Laufzeit bis 67."
+  ]
+}

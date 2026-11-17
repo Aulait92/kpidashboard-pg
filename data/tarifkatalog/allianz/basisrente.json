@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "basisrente",
+  "produkt": "BasisRente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente ab 62",
+    "Abschluss nur vor Ort bei der Allianz"
+  ],
+  "tarife": [
+    {
+      "name": "BasisRente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "Vorsorgekonzept wählbar",
+        "flexibel": "ja, bis Höchstbetrag",
+        "hinterbliebene": "optional",
+        "beitragspause": "Stundung möglich"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/vorsorge/ruerup-rente/",
+    "https://www.allianz.de/vorsorge/vorsorgekonzept/"
+  ],
+  "offen": [
+    "Beitragsgarantie hängt vom gewählten Vorsorgekonzept ab; welche Konzepte für die BasisRente wählbar sind, nennt die Produktseite nicht vollständig (InvestFlex als Beispiel).",
+    "Garantierter Rentenfaktor und Effektivkosten nicht veröffentlicht.",
+    "Beiträge stunden bei Arbeitslosigkeit, Kurzarbeit oder Elternzeit; Herabsetzen möglich.",
+    "BasisRente StartUp (reduzierte Anfangsbeiträge) und BasisSofortRente nicht als Stufen aufgenommen."
+  ]
+}

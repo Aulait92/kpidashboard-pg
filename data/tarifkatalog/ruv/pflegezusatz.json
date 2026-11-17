@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegemonatsgeld (R+V-PflegeVorsorge)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Doppeltes Geld bei Kindern",
+    "Weltweiter Schutz",
+    "Keine Kostennachweise"
+  ],
+  "tarife": [
+    {
+      "name": "PflegeVorsorge classic (PM3)",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Monatsgelds",
+        "einmal": "optional",
+        "befreiung": "ab Pflegegrad 4",
+        "wartezeit": "keine",
+        "dynamik": "+10 % alle 3 Jahre",
+        "ab-pg": "ab Pflegegrad 3",
+        "ambulant-gleich": "nein"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/pflegeversicherung/pflege-zusatzversicherung/pflegemonatsgeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegeVorsorge comfort (PM2)",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "100 % des Monatsgelds",
+        "einmal": "optional",
+        "befreiung": "ab Pflegegrad 4",
+        "wartezeit": "keine",
+        "dynamik": "+10 % alle 3 Jahre",
+        "ab-pg": "ab Pflegegrad 1",
+        "ambulant-gleich": "nein"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/pflegeversicherung/pflege-zusatzversicherung/pflegemonatsgeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegeVorsorge premium (PM1)",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Monatsgelds",
+        "einmal": "optional",
+        "befreiung": "ab Pflegegrad 4",
+        "wartezeit": "keine",
+        "dynamik": "+10 % alle 3 Jahre",
+        "ab-pg": "ab Pflegegrad 1",
+        "ambulant-gleich": "ja"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/pflegeversicherung/pflege-zusatzversicherung/pflegemonatsgeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/pflegeversicherung/pflege-zusatzversicherung/pflegemonatsgeldversicherung",
+    "https://www.ruv.de/dam/jcr:8bb0aa96-4e50-40d9-9711-6d3fc25d7864/ruv-pkx-kranken-verbraucherinfo.pdf"
+  ],
+  "offen": [
+    "Leistung in Prozent des vereinbarten Monatsgelds: classic PG 3 ambulant 70 %, stationär 100 %, PG 4 und 5 je 100 %, PG 1 und 2 nichts; comfort PG 1 10 %, PG 2 ambulant 30 %, stationär 100 %, PG 3 ambulant 70 %; premium ab PG 2 überall 100 %, PG 1 10 %.",
+    "Einmalleistung über den Zusatztarif PflegeVorsorge cash (PE): 4.000, 8.000 oder 12.000 € bei erstmaliger Pflegebedürftigkeit.",
+    "Dynamik: alle drei Jahre +10 % bis Alter 70, auch im Pflegefall. Beitragspause bis 2 Jahre nach Geburt; doppeltes Monatsgeld bis zur Volljährigkeit des jüngsten Kindes.",
+    "Leistung bei Demenz nicht gesondert genannt.",
+    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+  ]
+}

@@ -364,3 +364,76 @@ Privatschutz (Abruf 16.11.2026; Tierhalter von ERGO und R+V siehe Tierversichere
 - Keine der drei Gesellschaften veröffentlicht ein Bündel mit festen Stufen für alle Sparten; die Stufennamen
   unterscheiden sich je Sparte (z. B. AXA Tarif S/M/L, Topschutz, BOXFLEX).
 - Details je Datei unter `offen`.
+
+## Alle Versicherungsprodukte (17.11.2026)
+
+Ole: „Wir müssen auf sämtliche Versicherungsprodukte erweitern, damit wir Gesellschaften und Tarife beim
+Cross-Selling mit in die Präsentation nehmen können“ (Chat pusht auf einen Komplettcheck, Vermittler wollen dann z. B.
+BU und PKV anbieten). Neue Sparten im Schema: `bu, risikoleben, grundfaehigkeit, pkv, zahnzusatz, krankenhauszusatz,
+ambulant, pflegezusatz, rente, basisrente, kfz, reise-kranken, sterbegeld`. Gruppen der Auswahl „+ Versicherung“:
+`SPARTEN_GRUPPEN` in `src/lib/tarifkatalog.ts`.
+
+**Datenschutz:** Nur Produktmerkmale, nie Gesundheitsangaben (keine Gesundheitsfragen, keine Risikozuschläge). Angebote
+zu Leben, Gesundheit und Vorsorge liest die KI nicht aus (`angebotAuslesbar`, AVV); der Vermittler trägt den Beitrag
+selbst ein. „Ohne Gesundheitsfragen“ (Sterbegeld) ist ein Produktmerkmal.
+
+**Alle Werte `ungeprueft: true`** (recherchiert am 17.11.2026 von den Seiten der Gesellschaften), bitte gegenprüfen.
+Zahl = Stufen; offene Standardmerkmale in Klammern (Grund im Feld `offen`).
+
+| Sparte | Allianz | AXA | SIGNAL IDUNA |
+|---|---|---|---|
+| bu | 3 | 3 (rückwirkend) | 2 |
+| risikoleben | 3 (weltweit) | 2 (vorgezogen, Verlängerung, Umtausch) | 3 (Umtausch, weltweit) |
+| grundfaehigkeit | 1, KörperSchutzPolice (Anzahl) | 1, Existenzschutz (Anzahl, Prognose, Psyche) | 2 (Psyche) |
+| pkv | 2, nur Angestellte | 3 | 3 (Selbstbehalt) |
+| zahnzusatz | 3 | 3 (Implantate) | 3 |
+| krankenhauszusatz | 3 | 3 (Krankenhauswahl) | 4 |
+| ambulant | 2 (Arzneimittel) | 2 | 2 |
+| pflegezusatz | 1 | 3 (Einmalleistung) | 2 |
+| rente | 4 Vorsorgekonzepte (Rentenfaktor teils) | 3 (Hinterbliebene, Rentenfaktor teils) | 2 (Rentenfaktor) |
+| basisrente | 1 (Garantie, Rentenfaktor) | 2 (Rentenfaktor) | 2 |
+| kfz | 4 inkl. Allianz Direct (grobe Fahrl. bei Direct) | 3 (Neuwert, Marder teils) | 2 |
+| reise-kranken | 2 (USA nicht ausdrücklich) | 2 (USA nicht ausdrücklich) | 2 |
+| sterbegeld | 1 | 1 (Partner IDEAL) | 1 (Unfall, Beitragsende) |
+
+Zum Gegenprüfen besonders: Rente (Stufen sind Anlagekonzepte, keine Leistungsstufen; Empfehlung nur „mittlere
+Stufe“), AXA Kfz (Neupreisentschädigung 12 bzw. 3 Monate widersprüchlich), SIGNAL IDUNA Krankenhaus (Stufen
+unterscheiden sich vor allem darin, wann sie leisten), selbst vergebene Kurznamen (SIGNAL IDUNA Risikoleben).
+Folien-Test: `tests/unit/vergleichsfolie-passt.test.ts` misst jede Sparte aller drei Gesellschaften.
+
+### Welle 1: Marktführer Leben und Gesundheit (17.11.2026)
+
+Weitere Sparten `dienstunfaehigkeit, krankentagegeld, kinderinvaliditaet, reiseruecktritt`; neue Gesellschaften
+Debeka, Alte Leipziger, Hallesche, Swiss Life, Canada Life, Hannoversche, Europa, CosmosDirekt; ERGO (mit DKV),
+HUK-COBURG, R+V, HanseMerkur, BarmeniaGothaer und DFV um Leben, Gesundheit und Vorsorge ergänzt. Zahl = Stufen,
+„·“ = kein Produkt bei der Gesellschaft bzw. nicht recherchiert. Alles `ungeprueft: true`.
+
+| Sparte | Allianz | AXA | SI | ERGO | HUK | R+V | Debeka | HM | BG | DFV | AL | Hall. | SL | CL | Hann. | Europa | Cosmos |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| bu | 3 | 3 | 2 | 2 | 3 | 3 | 1 | · | 2 | · | 1 | · | 2 | 1 | 3 | 2 | 2 |
+| dienstunfaehigkeit | 1 | 1 | 2 | · | · | 3 | 1 | · | · | · | · | · | · | · | · | · | · |
+| grundfaehigkeit | 1 | 1 | 2 | · | · | 3 | · | · | · | · | 3 | · | 2 | 1 | · | · | · |
+| risikoleben | 3 | 2 | 3 | 3 | 3 | 3 | 2 | · | 3 | · | 2 | · | · | 2 | 3 | 2 | 3 |
+| kinderinvaliditaet | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| sterbegeld | 1 | 1 | 1 | 3 | 1 | 1 | 1 | · | · | · | · | · | · | · | 3 | · | 1 |
+| pkv | 2 | 3 | 3 | 3 | 3 | 3 | 4 | 3 | 4 | · | · | 3 | · | · | · | · | · |
+| krankentagegeld | 4 | 1 | 3 | 3 | · | 1 | 2 | 1 | 1 | · | · | 2 | · | · | · | · | · |
+| zahnzusatz | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 4 | · | 3 | · | · | · | · | · |
+| krankenhauszusatz | 3 | 3 | 4 | 3 | 2 | 3 | 1 | 3 | 2 | 4 | · | 3 | · | · | · | · | · |
+| ambulant | 2 | 2 | 2 | 3 | 2 | 3 | 2 | 3 | 3 | 4 | · | 3 | · | · | · | · | · |
+| pflegezusatz | 1 | 3 | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 3 | · | 2 | · | · | · | · | · |
+| reise-kranken | 2 | 2 | 2 | 2 | 2 | · | 1 | 2 | · | 1 | · | 1 | · | · | · | 1 | · |
+| rente | 4 | 3 | 2 | 4 | 1 | 3 | 3 | · | 2 | · | 4 | · | 1 | 3 | 2 | 3 | 1 |
+| basisrente | 1 | 2 | 2 | 3 | 1 | 2 | 1 | · | · | · | 2 | · | 1 | 2 | · | · | · |
+| kfz | 4 | 3 | 2 | 3 | 3 | 3 | 2 | · | · | · | · | · | · | · | · | · | 2 |
+| reiseruecktritt | 4 | 2 | 3 | 3 | · | · | · | 3 | · | · | · | · | · | · | · | · | · |
+
+Kein eigenes Produkt laut Seiten der Gesellschaft: Kinderinvalidität bei SIGNAL IDUNA, HUK, R+V, ERGO, Alte Leipziger;
+Dienstunfähigkeit bei Alte Leipziger und Swiss Life (BU ohne DU-Klausel); Sterbegeld bei DFV und Europa; Basisrente
+bei CosmosDirekt (kein Neugeschäft). Swiss Life Risikoleben fehlt (Produktseite für Abrufe gesperrt).
+
+Zum Gegenprüfen besonders: Stufen, die Zielgruppen oder Varianten sind statt Leistungsstufen (Krankentagegeld,
+Rente, Basisrente, Pflege, Reise); Allianz und AXA Kinderinvalidität (Baustein der Kinderunfall bzw. Rente nach
+medizinischen Kriterien); Swiss Life (Werte aus Bedingungen, Produktseiten gesperrt); Debeka PKV (Stufen selbst
+gebildet, Beihilfetarife fehlen); Hannoversche „110 % Vorabauszahlung“ nur bis 30.11.2026.
+Folien-Test misst jetzt jede Sparte jeder Gesellschaft.

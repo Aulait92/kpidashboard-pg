@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auch Sonn- und Feiertage",
+    "Anpassung ohne neue Prüfung",
+    "Keine Zuschläge für Berufe"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab 8. Tag wählbar",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja, endet bei BU",
+        "selbststaendige": "ja",
+        "ausland": "weltweit"
+      },
+      "quelle": "https://www.barmeniagothaer.de/krankentagegeld-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/krankentagegeld-versicherung/"
+  ],
+  "offen": [
+    "Tarifname und Höchstbetrag des Tagegelds nicht auf der Produktseite genannt (Tagegeld nach Nettoeinkommen).",
+    "Leistungsbeginn ab dem 8. Tag vereinbar, gestaffelt z. B. ab 15. und 29. Tag; ohne Krankenvollversicherung bei BarmeniaGothaer mindestens ab dem 43. Tag.",
+    "Wartezeit nicht beziffert (Anpassungen an gestiegenes Einkommen ohne Wartezeit). Ausland: weltweit für Krankheiten und Unfälle im Ausland bei Krankenhausbehandlung.",
+    "Leistung bis zum Eintritt der Berufsunfähigkeit (für Selbstständige und Freiberufler ausdrücklich genannt). Auch bei Kur und Reha nach mindestens 14 Tagen Arbeitsunfähigkeit.",
+    "Nur ein Tarif, daher Stufe „Tarif“."
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Zuzahlungen bis 500 € im Jahr",
+    "Impfungen bis 100 € im Jahr",
+    "Auslandsreise weltweit 6 Wo."
+  ],
+  "tarife": [
+    {
+      "name": "Ambulante Zusatzversicherung AZplus",
+      "kurz": "AZplus",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 800 €/Jahr",
+        "sehhilfen": "100 €/Jahr, ansparbar",
+        "vorsorge": "nein",
+        "arznei": "bis 500 €/Jahr",
+        "ausland": "weltweit, 6 Wochen",
+        "wartezeit": "3 Monate",
+        "lasik": "200 €/Jahr, ansparbar"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/ambulante-zusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulante Zusatzversicherung AZpremium",
+      "kurz": "AZpremium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 800 €/Jahr",
+        "sehhilfen": "100 €/Jahr, ansparbar",
+        "vorsorge": "200 €/Jahr, ansparbar",
+        "arznei": "bis 500 €/Jahr",
+        "ausland": "weltweit, 6 Wochen",
+        "wartezeit": "3 Monate",
+        "lasik": "200 €/Jahr, ansparbar"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/ambulante-zusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/ambulante-zusatzversicherung.html"
+  ],
+  "offen": [
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole aus dem Seitenquelltext); Strich „keine Angabe“ bei Vorsorge als „nein“ erfasst.",
+    "Sehhilfen ansparbar bis 1.000 €, alternativ Lasik bis 200 € im Jahr (ansparbar bis 2.000 €); Vorsorge AZpremium ansparbar bis 1.000 €.",
+    "Gesetzliche Zuzahlungen für Arznei-, Verbands-, Heil- und Hilfsmittel sowie Fahrtkosten bis 500 € im Jahr. OTC-Arzneimittel 80 % bis 160 € im Jahr (laut Tabelle in AZpremium nur teilweise, bitte prüfen). AZpremium zusätzlich Prävention bis 100 € im Jahr.",
+    "Hörgeräte nicht genannt. Wartezeit 3 Monate, entfällt bei Unfall und für die Auslandsreise.",
+    "Keine Empfehlung markiert (zwei Tarife)."
+  ]
+}

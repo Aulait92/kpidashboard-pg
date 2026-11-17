@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 % Kostenerstattung als Privatpatient",
+    "Keine Gesundheitsfragen",
+    "24-Stunden-Hotline"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise Einzelpolice (ARE)",
+      "kurz": "Einzelpolice",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "eine Reise, bis 1 Jahr",
+        "ruecktransport": "ja",
+        "usa": "weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "singleTRAVEL (Jahrespolice)",
+      "kurz": "singleTRAVEL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "je Reise bis 56 Tage",
+        "ruecktransport": "ja",
+        "usa": "weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/auslandskrankenversicherung",
+    "https://www.axa.de/pk/gesundheit/p/reiseversicherung"
+  ],
+  "offen": [
+    "USA und Kanada nicht ausdrücklich genannt; die Produktseite nennt weltweiten Schutz.",
+    "Rücktransport: medizinisch sinnvoll und vertretbar. Zahn: schmerzstillende Behandlung, singleTRAVEL auch Reparatur von Zahnersatz und Provisorien.",
+    "singleTRAVEL: Leistung auch über 56 Tage hinaus, wenn die Rückreise nicht ohne Gefährdung möglich ist; Mindestlaufzeit 1 Jahr.",
+    "Bekannte Erkrankungen nur allgemein im FAQ (bei Reisetauglichkeit und akuter Verschlechterung); Schwangerschaft nicht belegt.",
+    "Familien- und Langzeitvariante nicht als Baustein belegt. Die Reiseversicherung Komfort und Premium enthält keine Auslandskrankenversicherung (nur als Baustein zubuchbar). Zwei Varianten ohne Empfehlung."
+  ]
+}

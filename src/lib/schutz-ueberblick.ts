@@ -1,7 +1,9 @@
 // Cross-Selling im Termin (Ole, 16.11.2026, Teil A2, A7, A10): „Ihr Schutz im Überblick“ als Ampel mit 4 Zuständen je
 // Sparte (bei uns, woanders, prüfen, Lücke) und „Chance im Termin“ mit höchstens 2 erkannten Lücken samt Gesprächsöffner.
-// Grundsatz: Bedarf entdecken, nicht verkaufen. Nur Sach, Haftpflicht, Rechtsschutz, Unfall und Tier, keine
-// Gesundheitsprodukte und keine Gesundheitsangaben.
+// Grundsatz: Bedarf entdecken, nicht verkaufen. Nie Gesundheitsangaben. Seit 17.11.2026 (Ole: Cross-Selling nach dem
+// Komplettcheck, auch BU und PKV) stehen alle Sparten des Tarifkatalogs im Überblick, sobald der Vermittler sie
+// hinzufügt oder ein Vertrag bei uns sie belegt; automatische Lücken-Vorschläge bleiben bei Sach, Haftpflicht,
+// Rechtsschutz, Unfall und Tier (große Produkte nur als Vorsorge-Thema).
 //
 // Reine Funktionen (Terminvorbereitung im Browser, Präsentation, Demo). Vorschlag aus Formular, Chat und Verträgen:
 // schutzVorschlag; gespeichert wird er mit der Tarifauswahl (Appointment.tarifauswahl.schutz), danach entscheidet der
@@ -63,6 +65,24 @@ export const SCHUTZ_SPARTEN: Record<string, string> = {
   "hund-op": "Hunde-OP",
   "pferd-op": "Pferde-OP",
   "pferd-kranken": "Pferdekranken",
+  // Alle Versicherungsprodukte (Ole, 17.11.2026): erscheinen, wenn der Vermittler sie hinzufügt bzw. ein Vertrag sie belegt
+  bu: "Berufsunfähigkeit",
+  risikoleben: "Risikoleben",
+  grundfaehigkeit: "Grundfähigkeit",
+  pkv: "Private Krankenversicherung",
+  zahnzusatz: "Zahnzusatz",
+  krankenhauszusatz: "Krankenhauszusatz",
+  ambulant: "Ambulante Zusatz",
+  pflegezusatz: "Pflegezusatz",
+  rente: "Private Rente",
+  basisrente: "Basisrente",
+  kfz: "Kfz",
+  "reise-kranken": "Auslandsreisekranken",
+  sterbegeld: "Sterbegeld",
+  dienstunfaehigkeit: "Dienstunfähigkeit",
+  krankentagegeld: "Krankentagegeld",
+  kinderinvaliditaet: "Kinderinvalidität",
+  reiseruecktritt: "Reiserücktritt",
 };
 
 /**
@@ -142,7 +162,16 @@ function ausdruecklichOhne(text: string): string[] {
 }
 
 /** Sparte einer Vertragssparte (LeadContract.sparte) im Überblick; privatschutz ist nicht eindeutig, also keine. */
-const VERTRAG_SPARTE: Record<string, string> = { unfall: "unfall", hausrat: "hausrat", wohngebaeude: "wohngebaeude", rechtsschutz: "rechtsschutz" };
+const VERTRAG_SPARTE: Record<string, string> = {
+  unfall: "unfall",
+  hausrat: "hausrat",
+  wohngebaeude: "wohngebaeude",
+  rechtsschutz: "rechtsschutz",
+  kfz: "kfz",
+  bu: "bu",
+  pkv: "pkv",
+  pkv_tarif: "pkv",
+};
 
 export type SchutzKontext = {
   /** Sparten im Angebot dieses Termins */
@@ -284,6 +313,8 @@ export const VORSORGE_THEMEN: Record<VorsorgeKey, string> = {
   pflege: "Pflegevorsorge",
 };
 export type VorsorgeThema = { key: VorsorgeKey; label: string; oeffner: string };
+/** Sparte im Tarifkatalog zum Vorsorge-Thema („In die Präsentation“, Ole 17.11.2026). */
+export const VORSORGE_SPARTE: Record<VorsorgeKey, string> = { pkv: "pkv", bu: "bu", risikoleben: "risikoleben", pflege: "pflegezusatz" };
 
 /** Alter in Jahren aus „22.08.1992“ bzw. „1992-08-22“; null, wenn unklar. */
 export function alterAus(text: string | null | undefined, heute: Date): number | null {

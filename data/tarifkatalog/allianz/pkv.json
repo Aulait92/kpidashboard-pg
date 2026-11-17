@@ -1,0 +1,77 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "pkv",
+  "produkt": "MeinGesundheitsschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeiten",
+    "Vorsorge über gesetzliche Programme hinaus",
+    "Beitragsbefreiung bei Elterngeldbezug"
+  ],
+  "tarife": [
+    {
+      "name": "MeinGesundheitsschutz Plus",
+      "kurz": "Plus",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "selbstbehalt": "30 %, 10 % oder 0 %",
+        "bre": "bis 30 % (10 % fest)",
+        "zahnersatz": "optional 75/90/100 %",
+        "psychotherapie": "100 %",
+        "primaerarzt": "nein",
+        "ambulant": "100 % bis GOÄ-Höchstsatz",
+        "stationaer": "1/2-Bett, Chefarzt",
+        "heilpraktiker": "max. 1.000 € im Jahr",
+        "hilfsmittel": "80 %, 100 % Kooperation",
+        "sehhilfen": "500 € in 36 Monaten",
+        "ausland": "außerhalb EU 6 Monate"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/private-krankenversicherung/arbeitnehmer/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinGesundheitsschutz Best",
+      "kurz": "Best",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "selbstbehalt": "30 %, 10 % oder 0 %",
+        "bre": "bis 30 % (10 % fest)",
+        "zahnersatz": "optional 75/90/100 %",
+        "psychotherapie": "100 %",
+        "primaerarzt": "nein",
+        "ambulant": "100 % über Höchstsatz",
+        "stationaer": "1/2-Bett, Wunschklinik",
+        "heilpraktiker": "max. 2.000 € im Jahr",
+        "hilfsmittel": "100 %",
+        "sehhilfen": "1.000 € in 36 Monaten",
+        "ausland": "außerhalb EU 12 Monate"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/private-krankenversicherung/arbeitnehmer/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/gesundheit/private-krankenversicherung/arbeitnehmer/",
+    "https://www.allianz.de/gesundheit/private-krankenversicherung/"
+  ],
+  "offen": [
+    "Tarife für Angestellte (Seite Arbeitnehmer); Tarife für Selbstständige und Beamte nicht erfasst.",
+    "Selbstbehalt: Stufe 70 = 30 % (max. 1.500 € im Jahr), 90 = 10 % (max. 500 €), 100 = ohne.",
+    "Beitragsrückerstattung: 10 % fest, bis 20 % zusätzlicher Bonus, abhängig von den Überschüssen.",
+    "Zahnersatz nur über die Zahnbausteine MeinGesundheitsschutz Zahn 75, 90 oder 100 (Zahnbehandlung und Prophylaxe dort 100 %).",
+    "Primärarztprinzip: laut Produktseite in beiden Tarifen direkt zum Facharzt.",
+    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt."
+  ]
+}

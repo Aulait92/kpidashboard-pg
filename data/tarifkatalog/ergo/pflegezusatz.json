@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "pflegezusatz",
+  "produkt": "DKV Pflegezusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ambulant und stationär",
+    "Geld zur freien Verfügung",
+    "Rückwirkend bei später Meldung"
+  ],
+  "tarife": [
+    {
+      "name": "DKV Pflege Tagegeld (Tarif PTG)",
+      "kurz": "Pflegetagegeld",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "5 bis 160 €/Tag wählbar",
+        "einmal": "optional",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 Jahre"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/pflege/pflegezusatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV Pflege-Zuschuss (Tarif PZU)",
+      "kurz": "Zuschuss",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "+50 % oder +100 % GPV",
+        "einmal": "optional",
+        "wartezeit": "keine",
+        "dynamik": "wie gesetzl. Leistung"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/pflege/pflegezusatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV KombiMed Förder-Pflege (Tarif KFP)",
+      "kurz": "Förder-Pflege",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "mind. 600 €/Monat",
+        "einmal": "optional",
+        "wartezeit": "ja, außer Unfall",
+        "dynamik": "nein"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "nein"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/pflege/pflegezusatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Pflegeversicherung/Pflegezusatzversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/pflege/pflegezusatz"
+  ],
+  "offen": [
+    "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Die drei Tarife sind Varianten (Tagegeld, Zuschuss zur gesetzlichen Pflegeleistung, staatlich geförderte Förder-Pflege mit 60 € Zulage im Jahr), keine Leistungsstufen. DKV markiert das Pflegetagegeld als „Bestseller“.",
+    "Einmalleistung nur über das Pflege Schutz Paket (PSP, mit allen Tarifen kombinierbar oder einzeln): 1.000 € einmalig ab Pflegegrad 2, Pflegeheimplatz bzw. Pflegedienst innerhalb 24 Stunden, Beratung, ohne Gesundheitsprüfung.",
+    "Leistung ab Pflegegrad, Leistung je Pflegegrad, Beitragsbefreiung im Pflegefall und Demenz nicht auf der Seite genannt. Pflege-Zuschuss erhöht die Leistung der gesetzlichen Pflegeversicherung (GPV) um 50 oder 100 %.",
+    "Dynamik: Tagegeld alle 3 Jahre ohne Gesundheitsprüfung (Widerspruch möglich), Zuschuss steigt mit der gesetzlichen Leistung; Tagegeld zusätzlich anlassbezogen erhöhbar (Heirat, Geburt, Scheidung). Förder-Pflege: keine Wartezeit nur bei Unfall (Dauer nicht genannt), keine Gesundheitsfragen, höhere Leistung nach 15 Jahren."
+  ]
+}

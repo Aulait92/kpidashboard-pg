@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung DFV-AmbulantSchutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Impfungen bis 200 €/2 Jahre",
+    "Geld bei schwerer Krankheit"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-AmbulantSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vorsorge": "100 %, 1.000 €/2 Jahre",
+        "arznei": "Zuzahlung, bis 100 €",
+        "hoergeraete": "nur Zuzahlung",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-AmbulantSchutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vorsorge": "100 %, 1.000 €/2 Jahre",
+        "arznei": "Zuzahlung, bis 100 €",
+        "hoergeraete": "nur Zuzahlung",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-AmbulantSchutz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vorsorge": "100 %, 1.000 €/2 Jahre",
+        "arznei": "Zuzahlung, bis 100 €",
+        "hoergeraete": "nur Zuzahlung",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-AmbulantSchutz Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "vorsorge": "100 %, 1.000 €/2 Jahre",
+        "arznei": "Zuzahlung, bis 100 €",
+        "hoergeraete": "nur Zuzahlung",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/ambulante-zusatzversicherung/"
+  ],
+  "offen": [
+    "Die Stufen unterscheiden sich nur in der Leistung bei besonders schweren Krankheiten (kein Merkmal im Schema): Basis keine; Komfort 3.000 €, Premium 6.000 €, Exklusiv 12.000 € im Jahr (Krebs 5 Jahre, Infarkt und Schlaganfall 1 Jahr). Bitte auf der Folie ergänzen.",
+    "Heilpraktiker und Sehhilfen nicht versichert bzw. nicht genannt (Zuzahlungen ausdrücklich ohne Sehhilfen). Hörgeräte nur über die gesetzliche Zuzahlung für Hilfsmittel (max. 100 € im Jahr gesamt).",
+    "Gesetzliche Zuzahlungen für Arznei-, Verband-, Heil- und Hilfsmittel und Fahrtkosten 100 %, höchstens 100 € je Versicherungsjahr. Schutzimpfungen inkl. Reiseimpfungen 100 % bis 200 € alle 2 Jahre.",
+    "Nur für gesetzlich Versicherte. DFV markiert keine Stufe; bei 4 Stufen die dritte (Premium)."
+  ]
+}

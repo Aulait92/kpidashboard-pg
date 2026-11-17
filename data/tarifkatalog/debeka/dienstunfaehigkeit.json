@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufsunfähigkeits-Versicherung für Beamte und Richter",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Amtsarzt-Zeugnis genügt",
+    "Spezielle DU (z. B. Polizei)",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "BU für Beamte und Richter mit Dienstunfähigkeit (ABBV-B 01/2026)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja, 6 Jahre DU-Regel",
+        "bu": "ja",
+        "nachversicherung": "ja, bis Alter 50",
+        "teil-du": "ab 25 %, anteilig",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Berufsunf%C3%A4higkeit/BLV20.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/einkommensvorsorge/dienstunfaehigkeitsversicherung.html",
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/einkommensvorsorge/erwerbsundberufsunfaehigkeitsversicherung.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Berufsunf%C3%A4higkeit/BLV20.pdf"
+  ],
+  "offen": [
+    "Volle Leistung bei Entlassung oder Ruhestand wegen allgemeiner Dienstunfähigkeit auf Grund eines Zeugnisses des Amtsarztes; ebenso bei beschränkter Dienstunfähigkeit (z. B. Polizei, Justizvollzug, Feuerwehr).",
+    "Beamte auf Widerruf und auf Probe: Dienstunfähigkeitsregel für 6 Jahre, danach Leistung bei Berufsunfähigkeit ab 50 %.",
+    "Begrenzte Dienstfähigkeit: anteilige Leistung ab 25 % Arbeitszeitverkürzung.",
+    "Dynamik als Besondere Bedingung (BBBV) für die BU-Versicherung genannt; ob sie für den Beamtentarif gleich gilt, bitte gegenprüfen. Produktseite Dienstunfähigkeit nur kurz ausgewertet."
+  ]
+}

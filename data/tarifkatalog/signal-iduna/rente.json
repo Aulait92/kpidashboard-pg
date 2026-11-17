@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung (fondsgebunden)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "Entnahmen möglich, 1.000 € bleiben im Vertrag",
+    "Zuzahlungen bis 200.000 € im Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "SI Global Garant Invest",
+      "kurz": "Garant Invest",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "wählbar 30 bis 80 %",
+        "anlage": "90 Fonds und ETF",
+        "flexibel": "ja, Zuzahlung ab 240 €",
+        "hinterbliebene": "Guthaben, BRG optional",
+        "kapital": "ab 62, letzte 7 Jahre",
+        "beitragspause": "bis 3 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/private-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SI Pur Invest",
+      "kurz": "Pur Invest",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "über 80 Fonds und ETF",
+        "flexibel": "ja, jederzeit",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/fondsgebundene-altersvorsorge/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/private-altersvorsorge/private-rentenversicherung/",
+    "https://www.signal-iduna.de/produkte/private-altersvorsorge/fondsgebundene-altersvorsorge/"
+  ],
+  "offen": [
+    "Zwei Produkte (mit Garantie bzw. reine Fondsanlage), keine Markierung; keine Empfehlung gesetzt. SI Wertspeicher (Einmalbeitrag, Garantie 50 bis 90 %) nicht aufgenommen.",
+    "Garantierter Rentenfaktor auf beiden Produktseiten nicht genannt; Produktinformationsblatt bitte prüfen.",
+    "SI Pur Invest: eine Beitragsgarantie ist nicht genannt (reine Fondsanlage); Wert bewusst offen gelassen.",
+    "Garant Invest: Anlage verteilt auf Sicherungsvermögen und Fonds je nach Garantieniveau; Optionen Sicherheit+ und Ablaufmanagement+. Dynamik 1 bis 10 %.",
+    "Effektivkosten auf den Produktseiten nicht beziffert (Informationsblatt vor Abschluss).",
+    "Keine Renditeangaben aufgenommen."
+  ]
+}

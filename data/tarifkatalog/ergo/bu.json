@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Leistung bei grober Fahrlässigkeit",
+    "Wiedereingliederungshilfe"
+  ],
+  "tarife": [
+    {
+      "name": "ERGO BU Best",
+      "kurz": "Best",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "ja",
+        "au": "optional (AU-Plus)",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "teilzeit": "ja",
+        "pflege": "ja",
+        "stundung": "ja",
+        "dynamik": "wählbar 2 bis 5 %"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/leben/selbststaendige-berufsunfaehigkeit",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO BU Best Plus",
+      "kurz": "Best Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "ja",
+        "au": "optional (AU-Plus)",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "teilzeit": "ja",
+        "pflege": "ja",
+        "stundung": "ja",
+        "dynamik": "wählbar 2 bis 5 %"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/leben/selbststaendige-berufsunfaehigkeit",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Berufsunfaehigkeitsversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/leben/selbststaendige-berufsunfaehigkeit",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rente/highlightblatt-sbu-best.pdf.coredownload.pdf",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rente/highlightblatt-sbu-best-plus.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "Best Plus zusätzlich: Rente bei Krebs, Herzinfarkt oder Schlaganfall (bis 18 Monate, mit Beitragsbefreiung), Rente bei Verlust einer Grundfähigkeit (Sehen, Hören, Sprechen, Fortbewegen; bis 24 Monate plus einmalig 6 Monatsrenten, max. 15.000 €), Reha-Service bis 2.000 €, medizinische Zweitmeinung, Online-Programme für mentale Gesundheit.",
+    "AU-Plus (Rente bei Arbeitsunfähigkeit bis 36 Monate), Pflege Plus (lebenslange Pflegerente) und garantierte Rentenerhöhung im Leistungsfall sind zuwählbar. Nachversicherung ohne erneute Risikoprüfung z. B. bei Heirat, Geburt, Immobilienerwerb.",
+    "Weltweiter Schutz und Infektionsklausel nicht genannt. Umorganisationshilfe für Selbstständige ist eine Kostenbeteiligung, kein Verzicht auf Umorganisation; deshalb Merkmal „Verzicht auf Umorganisation“ offen.",
+    "Daneben gibt es BU Start (für Schüler) und den DANV-Sondertarif für Juristen und Wirtschaftsberufe; nicht als Stufen geführt. Keine Empfehlung markiert (zwei Stufen)."
+  ]
+}

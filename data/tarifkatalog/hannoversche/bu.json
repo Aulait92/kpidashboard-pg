@@ -1,0 +1,103 @@
+{
+  "gesellschaft": "Hannoversche",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 % Rente ab 50 % BU",
+    "Sofortschutz ab Antragseingang",
+    "Karrieregarantie bis 72.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "verzichtet",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "pflege": "ja",
+        "stundung": "bis 36 Monate",
+        "dynamik": "wählbar",
+        "au": "nein"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung Premium-Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "verzichtet",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "pflege": "ja",
+        "stundung": "bis 36 Monate",
+        "dynamik": "wählbar",
+        "au": "bis 24 Monate"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung Premium-Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "verzichtet",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "pflege": "ja",
+        "stundung": "bis 36 Monate",
+        "dynamik": "wählbar",
+        "au": "bis 36 Monate"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hannoversche.de/berufsunfaehigkeitsversicherung",
+    "https://www.hannoversche.de/dam/bu-eu/werbedruckstuecke/produktuebersicht-berufsunfaehigkeitsversicherung.pdf",
+    "https://www.hannoversche.de/dam/bu-eu/werbedruckstuecke/broschuere-berufsunfaehigkeitsversicherung.pdf",
+    "https://www.hannoversche.de/dam/bu-eu/bedingungen/bedingungen-einkommensabsicherung-aktuell.pdf"
+  ],
+  "offen": [
+    "Hannoversche markiert keinen Tarif; Premium-Plus als mittlere Stufe gesetzt. Kurznamen Plus und Exklusiv wie im Fließtext der Produktseite.",
+    "AU-Klausel widersprüchlich: Produktübersicht (Stand 08.2026) nennt höchstens 24 Monate in Premium-Plus und 36 Monate in Premium-Exklusiv, die Produktseite für Plus und Exklusiv 36 Monate. Wert aus der Produktübersicht.",
+    "Exklusiv zusätzlich: Soforthilfe bei Unfall (6 Monatsrenten), Krisen-Airbag bis 2.000 €, Rente bei schwerer Krankheit (18 Monate) und bei Rollstuhlbedarf, Besserstellung bei Berufswechsel, RLV-Anwartschaft.",
+    "Verzicht auf Umorganisation nicht genannt; es gibt eine Umorganisationshilfe für Selbstständige (bis 20 Monatsrenten, höchstens 30.000 €).",
+    "Infektionsklausel auf Produktseite und in der Produktübersicht nicht genannt.",
+    "Pflege: Rente bei voraussichtlich 6 Monaten Pflegebedürftigkeit. Stundung zinslos insgesamt bis 36 Monate. Dynamik: Beitragsdynamik 1 bis 5 %, Leistungsdynamik 1 bis 3 %, in allen drei Tarifen.",
+    "Starter-Tarif bis 35 Jahre (geringere Beiträge in den ersten 5 Jahren) ist eine Beitragsvariante, keine Stufe."
+  ]
+}

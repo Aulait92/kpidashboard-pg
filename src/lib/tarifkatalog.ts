@@ -94,6 +94,15 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   uelzener: "Uelzener",
   vhv: "VHV",
   zurich: "Zurich",
+  // Marktführer Leben, Gesundheit und Vorsorge (Ole, 17.11.2026: alle Versicherungsprodukte)
+  "alte-leipziger": "Alte Leipziger",
+  "canada-life": "Canada Life",
+  cosmosdirekt: "CosmosDirekt",
+  debeka: "Debeka",
+  europa: "Europa",
+  hallesche: "Hallesche",
+  hannoversche: "Hannoversche",
+  "swiss-life": "Swiss Life",
 };
 /** Reihenfolge in Listen (Ole, 16.11.2026): die Vertreter-Gesellschaften zuerst, dann alle übrigen alphabetisch nach Anzeigename. */
 const REIHENFOLGE = [
@@ -147,6 +156,14 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   // „Roland“ ist auch ein Vorname: nur die Großschreibung der Marke oder mit Rechtsschutz bzw. Versicherung.
   if (/\bROLAND\b/.test(t) || /\broland[\s-]*(rechtsschutz|versicherung)/i.test(t)) return "roland";
   if (/advocard/i.test(t)) return "advocard";
+  if (/alte\s*leipziger/i.test(t)) return "alte-leipziger";
+  if (/canada\s*life/i.test(t)) return "canada-life";
+  if (/cosmos\s*direkt/i.test(t)) return "cosmosdirekt";
+  if (/\bdebeka\b/i.test(t)) return "debeka";
+  if (/europa[\s-]*(versicherung|lebensversicherung)/i.test(t)) return "europa";
+  if (/hallesche/i.test(t)) return "hallesche";
+  if (/hannoversche/i.test(t)) return "hannoversche";
+  if (/swiss\s*life/i.test(t)) return "swiss-life";
   return null;
 }
 
@@ -208,6 +225,34 @@ const TIERHALTER = (key: string, label: string, pferd: boolean): KatalogSparte =
   ],
   bausteine: [b("sb", "Selbstbeteiligung")],
 });
+/** Gruppen der Sparten-Auswahl („+ Versicherung“, Ole 17.11.2026: alle Versicherungsprodukte), in Anzeige-Reihenfolge. */
+export const SPARTEN_GRUPPEN: { label: string; keys: string[] }[] = [
+  { label: "Haftpflicht und Sach", keys: ["haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "unfall"] },
+  { label: "Tiere", keys: ["katze-kranken", "katze-op", "hund-kranken", "hund-op", "pferd-kranken", "pferd-op", "tierhalter-hund", "tierhalter-pferd"] },
+  { label: "Leben und Arbeitskraft", keys: ["bu", "dienstunfaehigkeit", "grundfaehigkeit", "risikoleben", "kinderinvaliditaet", "sterbegeld"] },
+  { label: "Gesundheit", keys: ["pkv", "krankentagegeld", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "reise-kranken"] },
+  { label: "Vorsorge", keys: ["rente", "basisrente"] },
+  { label: "Kfz und Reise", keys: ["kfz", "reiseruecktritt"] },
+];
+
+/**
+ * Angebote dieser Sparte darf die KI auslesen? Nein bei Leben, Gesundheit und Vorsorge (AVV: keine Produkte mit
+ * Gesundheitsangaben an den KI-Anbieter, lib/angebote.ts); dort trägt der Vermittler nur den Beitrag ein.
+ */
+export function angebotAuslesbar(key: string): boolean {
+  const ohne = SPARTEN_GRUPPEN.filter((g) => ["Leben und Arbeitskraft", "Gesundheit", "Vorsorge"].includes(g.label)).flatMap((g) => g.keys);
+  return !ohne.includes(key);
+}
+
+/** Sparten nach Gruppen; unbekannte Sparten am Ende unter „Weitere“. */
+export function spartenGruppiert<T extends { key: string }>(sparten: T[]): { label: string; sparten: T[] }[] {
+  const out = SPARTEN_GRUPPEN.map((g) => ({ label: g.label, sparten: g.keys.map((k) => sparten.find((s) => s.key === k)).filter((s): s is T => !!s) }));
+  const bekannt = new Set(SPARTEN_GRUPPEN.flatMap((g) => g.keys));
+  const rest = sparten.filter((s) => !bekannt.has(s.key));
+  if (rest.length) out.push({ label: "Weitere", sparten: rest });
+  return out.filter((g) => g.sparten.length);
+}
+
 export const SPARTEN_STANDARD: KatalogSparte[] = [
   TIERKRANKEN("katze-kranken", "Katzenkranken"),
   TIERKRANKEN("katze-op", "Katzen-OP"),

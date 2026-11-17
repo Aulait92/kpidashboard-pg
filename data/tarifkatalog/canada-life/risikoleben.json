@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Canada Life",
+  "sparte": "risikoleben",
+  "produkt": "RISIKOLEBEN",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Garantierter Beitrag",
+    "Sofortschutz bis 100.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "RISIKOLEBEN komfort",
+      "kurz": "komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "vorgezogen": "nein",
+        "verlaengerung": "nein",
+        "umtausch": "nein",
+        "kinder": "nein"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.canadalife.de/risikoleben-komfort/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "RISIKOLEBEN optimal",
+      "kurz": "optimal",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja, unter 12 Monaten",
+        "verlaengerung": "bis 15 Jahre",
+        "umtausch": "ja",
+        "kinder": "8.000 €"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.canadalife.de/risikoleben-optimal/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.canadalife.de/risikolebensversicherung/",
+    "https://www.canadalife.de/risikoleben-optimal/",
+    "https://www.canadalife.de/risikoleben-komfort/",
+    "https://www.canadalife.de/media/kundenflyer-risikoleben.pdf"
+  ],
+  "offen": [
+    "Vergleichstabelle der Produktseite: Vorgezogene Todesfallleistung, Mitversicherung der Kinder, Umwandlungsoption, Verlängerungsoption und Nachversicherungsgarantie nur bei optimal (bei komfort mit X markiert); bitte am Bildschirm gegenprüfen.",
+    "Weltweiter Schutz und höchstes Endalter nicht belegt (Bedingungen nicht verlinkt).",
+    "Verlängerung um bis zu 15 Jahre laut Produktseite, laut Flyer bis 5 Jahre vor Vertragsende ausübbar. Dynamik 3 oder 5 % jährlich wählbar (kein Schemamerkmal).",
+    "Zwei Personen: Individualschutz (je eigene Summe) oder Gemeinschaftsschutz (eine Summe beim ersten Todesfall) in beiden Varianten. Fallende Summe nicht belegt.",
+    "Canada Life markiert keine Variante."
+  ]
+}

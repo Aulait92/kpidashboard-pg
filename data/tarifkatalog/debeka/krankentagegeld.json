@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne zeitliche Begrenzung",
+    "Auch an Sonn- und Feiertagen",
+    "Wartezeit entfällt bei Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif KG (zur gesetzlichen KV)",
+      "kurz": "KG (GKV)",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "hoehe": "Lücke zum Krankengeld",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja, bei BU",
+        "selbststaendige": "nein"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV109.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif KT (zur Debeka PKV)",
+      "kurz": "KT (PKV)",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 15. Tag",
+        "hoehe": "bis Nettoeinkommen",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja, bei BU",
+        "selbststaendige": "ja"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV108.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/krankentagegeld.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV109.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV108.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV110.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife für verschiedene Kunden, keine Leistungsstufen: KG für gesetzlich Versicherte mit Krankengeldanspruch (Angestellte), KT nur zusammen mit einer Debeka Krankenvollversicherung (Angestellte und Selbstständige).",
+    "Leistungsbeginn wählbar: KG ab dem 43., 64., 85., 92., 106., 127., 183., 244., 274. oder 366. Tag; KT zusätzlich ab dem 15. oder 29. Tag. Bei Angestellten nie vor Ende der Lohnfortzahlung.",
+    "Höhe KG: Lücke zwischen Nettokrankengeld und Nettoeinkommen (Produktseite). Höchstes versicherbares Tagegeld in Euro nicht veröffentlicht.",
+    "Wartezeit: Produktseite nennt 3 Monate für gesetzlich Versicherte (entfällt bei Unfall); zusammen mit der Debeka Vollversicherung entfällt sie laut Produktseite. Ende bei Berufsunfähigkeit nach MB/KT (mehr als 50 %), Wortlaut nicht im Einzelnen geprüft.",
+    "KT: Selbstständige erhalten bei Teil-Arbeitsunfähigkeit anteilig bis 3 Monate; bei Wiedereingliederung bis 3 Monate. Tarif KTmed für Heilberufe nicht aufgenommen. Debeka markiert keinen Tarif."
+  ]
+}

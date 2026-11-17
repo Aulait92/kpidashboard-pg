@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Einmalleistung 90 Tagessätze ab Pflegegrad 4",
+    "Tagegeld steigt alle 3 Jahre um 10 %",
+    "Assistance und Pflegeheimplatz"
+  ],
+  "tarife": [
+    {
+      "name": "PflegeSTART",
+      "kurz": "START",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "ab-pg": "PG 4 (PG 1 bis 3 Unfall)",
+        "einmal": "90 Tagessätze ab PG 4",
+        "befreiung": "PG 4 halb, PG 5 voll",
+        "ambulant-gleich": "ja",
+        "dynamik": "10 % alle 3 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/private-pflegeversicherung/pflegetagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegeTOP",
+      "kurz": "TOP",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "90 Tagessätze ab PG 4",
+        "befreiung": "PG 4 halb, PG 5 voll",
+        "ambulant-gleich": "ja",
+        "dynamik": "10 % alle 3 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/private-pflegeversicherung/pflegetagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/private-pflegeversicherung/pflegetagegeldversicherung/",
+    "https://www.signal-iduna.de/produkte/private-pflegeversicherung/"
+  ],
+  "offen": [
+    "Zwei Tarife ohne Markierung; keine Empfehlung gesetzt. PflegeBAHR (staatlich gefördert) nicht aufgenommen.",
+    "Staffel je Pflegegrad: 10, 35, 55, 75, 100 % des vereinbarten Tagegelds; bei START Pflegegrad 1 bis 3 nur nach Unfall.",
+    "Dynamik bei TOP auch im Leistungsfall. Wartezeit und Demenz-Leistung auf der Produktseite nicht genannt; Bedingungen bitte prüfen."
+  ]
+}

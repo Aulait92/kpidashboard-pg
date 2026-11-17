@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Keine Selbstbeteiligung",
+    "Weltweit inkl. USA, Kanada",
+    "Notruf rund um die Uhr"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandskrankenversicherung für eine Reise",
+      "kurz": "Einzelreise",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 365 Tage, 1 Reise",
+        "ruecktransport": "ja, wenn sinnvoll",
+        "usa": "ja",
+        "selbstbeteiligung": "keine",
+        "zahn": "Schmerzbehandl., Füllung"
+      },
+      "quelle": "https://www.hansemerkur.de/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Auslandskrankenversicherung",
+      "kurz": "Jahresvertrag",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 56 Tage je Reise",
+        "ruecktransport": "ja, wenn sinnvoll",
+        "usa": "ja",
+        "selbstbeteiligung": "keine",
+        "zahn": "Schmerzbehandl., Füllung"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/auslandskrankenversicherung",
+    "https://www.hansemerkur.de/reisekrankenversicherung"
+  ],
+  "offen": [
+    "Die beiden Stufen sind Vertragsformen (eine Reise oder beliebig viele Reisen im Jahr), keine Leistungsstufen. Familien-, Paar- und Gruppentarife; Familie bei der Einzelreise nicht ausdrücklich genannt.",
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparatur von Zahnersatz.",
+    "Bekannte Erkrankungen und Schwangerschaft nicht auf der Produktseite; Details in der Leistungsbeschreibung (PDF) nicht ausgewertet.",
+    "Für lange Aufenthalte eigene Tarife (Langfristige Auslandskrankenversicherung, Young Travel), nicht aufgenommen.",
+    "Empfehlung: HanseMerkur markiert die Jahres-Auslandskrankenversicherung als „Bestseller“."
+  ]
+}

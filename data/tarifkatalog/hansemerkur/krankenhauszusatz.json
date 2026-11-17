@@ -1,0 +1,77 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Chefarzt bzw. Spezialist",
+    "Ein- oder Zweibettzimmer",
+    "Ersatztagegeld bei Verzicht"
+  ],
+  "tarife": [
+    {
+      "name": "Klinik Fit (Tarif clinic U)",
+      "kurz": "Klinik Fit",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "1-/2-Bett, nur Unfall",
+        "chefarzt": "ja, nur nach Unfall",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine (nur Unfall)",
+        "ersatztagegeld": "20 € + 30 €/Tag",
+        "ambulant-op": "nein"
+      },
+      "quelle": "https://www.hansemerkur.de/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Klinik Premium (Tarif PSG)",
+      "kurz": "Klinik Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine bei Unfall",
+        "ersatztagegeld": "25 € + 35 €/Tag",
+        "ambulant-op": "nein"
+      },
+      "quelle": "https://www.hansemerkur.de/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Klinik Premium Plus (Tarif SGK)",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja, auch über 3,5fach",
+        "wartezeit": "keine allgemeine",
+        "ersatztagegeld": "50 € + 50 €/Tag",
+        "ambulant-op": "ja, 100 %"
+      },
+      "quelle": "https://www.hansemerkur.de/resource/blob/287984/46fd5c604a85e494e6e3ab83a47df7a2/advigon-flyer-klinik-premium-plus-tarif-sgk-data.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/krankenhauszusatzversicherung",
+    "https://www.hansemerkur.de/resource/blob/287984/46fd5c604a85e494e6e3ab83a47df7a2/advigon-flyer-klinik-premium-plus-tarif-sgk-data.pdf"
+  ],
+  "offen": [
+    "Klinik Fit leistet nur, wenn ein Unfall die Ursache ist; Laufzeit höchstens 10 Jahre, danach Umstellung auf Klinik Premium.",
+    "Ersatztagegeld: erster Betrag bei Verzicht auf Chefarzt, zweiter bei Verzicht auf das Ein- oder Zweibettzimmer (Premium Plus: Kinder unter 13 Jahren die Hälfte).",
+    "Wartezeit Klinik Premium: nur „keine bei Unfall“ genannt, Dauer der allgemeinen Wartezeit nicht belegt. Premium Plus: besondere Wartezeit 8 Monate für Entbindung und Psychotherapie.",
+    "Erstattung über dem GOÄ-Höchstsatz nur für Premium Plus belegt (Flyer); Fit und Premium offen. Freie Krankenhauswahl für Fit und Premium nur aus den Vorteilen der Produktseite.",
+    "Premium Plus zusätzlich Kurtagegeld 40 €/Tag und Entbindungsgeld 50 €/Tag (je 21 Tage), Rooming-in; Premium mit Rücktransport aus dem Ausland. Risikoträger Advigon Versicherung AG (Tochter der HanseMerkur).",
+    "Empfehlung: HanseMerkur markiert Klinik Premium als „Bestseller“."
+  ]
+}

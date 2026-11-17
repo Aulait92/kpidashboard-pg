@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente, kein Kapitalwahlrecht",
+    "Beitragspause bis 3 Jahre",
+    "Hinterbliebenenschutz vereinbar"
+  ],
+  "tarife": [
+    {
+      "name": "SIGGI Basis-Rente (Global Garant Invest)",
+      "kurz": "SIGGI",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "wählbar 30 bis 80 %",
+        "rentenfaktor": "Anhebung auf 95 %",
+        "anlage": "60 Fonds, Spezialfonds",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "optional",
+        "beitragspause": "bis 3 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SI Pur Invest Basis-Rente",
+      "kurz": "Pur Invest",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "keine",
+        "rentenfaktor": "95 % garantiert",
+        "anlage": "über 60 Fonds, 26 ETF",
+        "flexibel": "ja, Zuzahlung ab 240 €",
+        "hinterbliebene": "optional",
+        "beitragspause": "bis 3 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/si-pur-invest-basis-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/private-altersvorsorge/ruerup-rente/",
+    "https://www.signal-iduna.de/produkte/private-altersvorsorge/si-pur-invest-basis-rente/"
+  ],
+  "offen": [
+    "Zwei Varianten (sicherheitsorientiert mit Garantie, chancenorientiert ohne Garantie), keine Markierung; keine Empfehlung gesetzt.",
+    "SIGGI: Beitragsgarantie und garantierte Mindestrente; Bedingungen auf der Seite von 01/2017, Aktualität bestätigen.",
+    "Rentenfaktor: Tarifvergleich nennt für beide „Anhebung garantierter Rentenfaktor auf 95 %“; bei Pur Invest 95 % ab Abschluss garantiert.",
+    "BU-Absicherung als Beitragsbefreiung, bei Pur Invest wahlweise „Vorsorge-Retter“ mit 3 Jahren Wartezeit.",
+    "Effektivkosten nicht beziffert (Muster-Produktinformationsblätter verlinkt). Dynamik als Baustein nicht genannt.",
+    "Keine Renditeangaben aufgenommen."
+  ]
+}

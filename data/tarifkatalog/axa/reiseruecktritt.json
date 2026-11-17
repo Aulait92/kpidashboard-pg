@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiseversicherung (inkl. Reiserücktritt)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Quarantänekosten versichert",
+    "Reiseassistance und App",
+    "Einzel- oder Jahrespolice"
+  ],
+  "tarife": [
+    {
+      "name": "AXA Reiseversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 25.000 € je Reise",
+        "sb": "wählbar: 0 oder 20 %",
+        "abbruch": "ja",
+        "jahr": "wählbar",
+        "pandemie": "ja",
+        "familie": "wählbar",
+        "gruende": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/reiseversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AXA Reiseversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 25.000 € je Reise",
+        "sb": "wählbar: 0 oder 20 %",
+        "abbruch": "ja",
+        "jahr": "wählbar",
+        "pandemie": "ja",
+        "familie": "wählbar",
+        "gruende": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/reiseversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/reiseversicherung"
+  ],
+  "offen": [
+    "Komfort und Premium unterscheiden sich nur in Leistungen ohne Merkmal im Schema: Premium zusätzlich mit Reisegepäck, Reiseunannehmlichkeiten (Verspätung), Reiseunfall und Aktivitätsversicherung.",
+    "Summe: einzelne Reise bis 25.000 €, Jahrespolice bis 10.000 € Einzelperson bzw. 15.000 € Familie. Einzelpolice für eine Reise bis 180 Tage, Jahrespolice für Reisen bis 56 Tage (insgesamt 180 Reisetage).",
+    "Selbstbehalt laut FAQ wählbar (20 % des Schadens, mindestens 25 € je Person); Formulierung auf der Seite unvollständig, bitte prüfen.",
+    "Pandemie: Corona-Erkrankung als Rücktrittsgrund genannt; Jobverlust als „Verlust des Arbeitsplatzes“. Familie: als Einzelperson, Paar oder Familie versicherbar.",
+    "Keine Markierung durch AXA. Auslandskrankenversicherung als Baustein zubuchbar."
+  ]
+}

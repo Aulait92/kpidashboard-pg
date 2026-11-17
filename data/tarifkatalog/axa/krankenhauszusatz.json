@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ein- oder Zweibettzimmer",
+    "Rooming-in und Familienzimmer",
+    "Neugeborene 1 Jahr beitragsfrei"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenhaus easy (Tarif S)",
+      "kurz": "Easy",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "nein",
+        "ueber-hoechstsatz": "nein",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "50 € je Tag"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenhaus Premium (Tarif M)",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "50 € je Tag"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenhaus Premium Plus (Tarif L)",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "50 € je Tag"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/krankenhauszusatzversicherung"
+  ],
+  "offen": [
+    "Freie Krankenhauswahl nicht ausdrücklich genannt; M und L erstatten Krankentransporte zum Wunschkrankenhaus.",
+    "Ersatztagegeld 50 € je Tag (Kinder 25 €) bei Verzicht auf Ein- oder Zweibettzimmer in allen Tarifen; M und L zusätzlich 50 € bei Verzicht auf Chefarzt.",
+    "Wartezeit Entbindung und Psychotherapie 8 Monate in allen Tarifen; bei S entfällt die Wartezeit bei Unfall.",
+    "Nur Tarif L bildet Alterungsrückstellungen (stabiler Beitrag im Alter). S ohne Gesundheitsprüfung und monatlich kündbar.",
+    "Krankenhaustagegeld und ambulante Operationen nicht belegt. AXA kennzeichnet keine Empfehlung; Premium als mittlere Stufe."
+  ]
+}

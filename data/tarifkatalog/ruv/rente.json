@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "Sparrate ab 25 € im Monat",
+    "Steuerfreie Ansparphase"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatRente IndexInvest",
+      "kurz": "IndexInvest",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "mind. 90 % der Beiträge",
+        "anlage": "Index oder fester Zins",
+        "flexibel": "Zuzahlen, Teilauszahlen",
+        "hinterbliebene": "Vertragswert, mind. 90 %",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ruv.de/altersvorsorge/private-rentenversicherung/privat-rente-indexinvest",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AnsparKombi Safe+Smart",
+      "kurz": "AnsparKombi",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "50 % ins sichere Kapital",
+        "anlage": "Sicher + Aktienindizes",
+        "flexibel": "Zuzahlen, Teilauszahlen",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/geldanlage/ansparkombi",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Rentenversicherung (VorsorgeKonzept)",
+      "kurz": "Fondsrente",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds, Union Investment",
+        "flexibel": "Zuzahlen, entnehmen",
+        "hinterbliebene": "optional",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ruv.de/altersvorsorge/private-rentenversicherung/rv-vorsorge-konzept",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/altersvorsorge/private-rentenversicherung",
+    "https://www.ruv.de/altersvorsorge/private-rentenversicherung/privat-rente-indexinvest",
+    "https://www.ruv.de/geldanlage/ansparkombi",
+    "https://www.ruv.de/altersvorsorge/private-rentenversicherung/rv-vorsorge-konzept"
+  ],
+  "offen": [
+    "Stufen sind drei Produkte der privaten Rente, geordnet von sicherheits- nach chancenorientiert; keine Leistungsstufen. Weitere Produkte: AnlageKombi Safe+Smart und SofortRente (Einmalbeitrag), InvestmentKonzept Duo Invest.",
+    "Garantierter Rentenfaktor bei keinem der drei Produkte genannt; VorsorgeKonzept nennt eine lebenslange garantierte Rente, deren Höhe vom Fondsguthaben zu Rentenbeginn abhängt.",
+    "AnsparKombi: mindestens die Hälfte der Sparrate fließt ins sichere Kapital (Sicherungsvermögen, kann nur wachsen), der Rest in drei Aktienindizes. Hinterbliebenenschutz nicht näher beschrieben.",
+    "VorsorgeKonzept: keine Beitragsgarantie genannt; Beitragsrückgewähr für Hinterbliebene vereinbar; Beitrags- und Leistungsdynamik vereinbar.",
+    "IndexInvest: Hinterbliebene erhalten vor Rentenbeginn den Vertragswert, mind. 90 % der Beiträge; BU-Zusatzversicherung (Beitragsbefreiung) als Zusatzbaustein. Beitragspause nicht genannt.",
+    "Effektivkosten nur im Basisinformationsblatt (ruv-bib.de), nicht ausgewertet. Keine Markierung; AnsparKombi als mittlere Stufe gesetzt."
+  ]
+}

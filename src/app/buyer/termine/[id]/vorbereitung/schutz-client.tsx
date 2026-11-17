@@ -16,7 +16,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { tarifMitSparte } from "@/lib/praesentation";
 import { naechsteText, prozentMit } from "@/lib/kombi-rabatt";
-import { chancen, SCHUTZ_REIHENFOLGE, SCHUTZ_SPARTEN, SCHUTZ_STATUS, type SchutzEintrag, type SchutzStatus, type VorsorgeThema } from "@/lib/schutz-ueberblick";
+import { chancen, SCHUTZ_REIHENFOLGE, SCHUTZ_SPARTEN, SCHUTZ_STATUS, type SchutzEintrag, type SchutzStatus, VORSORGE_SPARTE, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 import type { BuendelRegel, Katalog } from "@/lib/tarifkatalog";
 import { beitragsUebersicht, betrag, type Tarifauswahl } from "@/lib/tarifauswahl";
 
@@ -78,13 +78,20 @@ export function ChanceImTermin({
         <p className="mt-1 text-[13px] text-[color:var(--muted)]">Keine Lücke erkannt. Fragen Sie im Termin kurz nach dem übrigen Schutz.</p>
       ) : null}
       {vorsorge ? (
-        // Teil C2: großes Thema getrennt von den Sach-Chancen, nur Thema, kein Tarif, keine Gesundheitsfragen
+        // Teil C2: großes Thema getrennt von den Sach-Chancen, keine Gesundheitsfragen; „Ins Angebot“ holt die Sparte
+        // aus dem Tarifkatalog (erst nach „Mit anschauen“ im Vergleich, wie die Chancen)
         <div className="mt-2 flex items-start gap-2.5 border-t border-[color:var(--border)] pt-2" data-vorsorge-thema={vorsorge.key}>
           <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-violet-500" aria-hidden />
           <div className="min-w-0 flex-1 text-sm">
-            <span className="font-semibold">Vorsorge: {vorsorge.label}</span> <span className="text-[13px] text-[color:var(--muted)]">eigener Termin</span>
+            <span className="font-semibold">Vorsorge: {vorsorge.label}</span>
             <p className="text-[13px] text-[color:var(--muted)]">„{vorsorge.oeffner}“</p>
           </div>
+          {/* Ole, 17.11.2026: mit Gesellschaft und Tarif in die Präsentation (nur Tarifmerkmale, nie Gesundheitsangaben) */}
+          {!ro ? (
+            <Button size="sm" icon={Plus} onClick={() => anbieten(VORSORGE_SPARTE[vorsorge.key])} data-vorsorge-anbieten>
+              Ins Angebot
+            </Button>
+          ) : null}
         </div>
       ) : null}
       <SchutzFenster open={offen} onClose={() => setOffen(false)} auswahl={auswahl} ro={ro} aendern={aendern} anbieten={anbieten} />

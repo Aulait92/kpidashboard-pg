@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "Hannoversche",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Eintritt 40 bis 80 Jahre",
+    "Lebenslanger Schutz",
+    "Beiträge zurück in Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "3.000 bis 25.000 €",
+        "wartezeit": "12 bis 36 Monate",
+        "ohne-gp": "ja",
+        "beitragsende": "bis Alter 65 bis 95",
+        "unfall": "nein"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Sterbegeldversicherung Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "summe": "3.000 bis 25.000 €",
+        "wartezeit": "12 bis 36 Monate",
+        "ohne-gp": "ja",
+        "beitragsende": "bis Alter 65 bis 95",
+        "unfall": "doppelte Summe"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Sterbegeldversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "summe": "3.000 bis 25.000 €",
+        "wartezeit": "12 bis 36 Monate",
+        "ohne-gp": "ja",
+        "beitragsende": "bis Alter 65 bis 95",
+        "unfall": "doppelte Summe"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hannoversche.de/sterbegeldversicherung",
+    "https://www.hannoversche.de/dam/stg/werbedruckstuecke/produktuebersicht-sterbegeldversicherung.pdf",
+    "https://www.hannoversche.de/dam/stg/bedingungen/bedingungen-sterbegeldversicherung.pdf"
+  ],
+  "offen": [
+    "Hannoversche markiert keinen Tarif; Plus als mittlere Stufe gesetzt.",
+    "Wartezeit frei wählbar 12 bis 36 Monate; bei Tod in der Wartezeit werden die Beiträge erstattet, bei Unfalltod volle Summe (auch Basis).",
+    "Beitragszahlung bis zu einem wählbaren Alter zwischen 65 und 95 Jahren, Schutz lebenslang. Summe innerhalb 3.000 bis 25.000 € später anpassbar.",
+    "Plus und Exklusiv zusätzlich: Rückholung bei Tod im Ausland (bis doppelte Summe, höchstens 20.000 €), Kinder mit 3.000 € mitversichert. Exklusiv zusätzlich: Beitragsbefreiung ab Pflegegrad 3, vorgezogene Leistung bei schwerer Krankheit.",
+    "Bestattungsvorsorge-Service nicht genannt. Dynamik: Beitragsdynamik in allen drei Tarifen wählbar."
+  ]
+}

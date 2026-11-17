@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Canada Life",
+  "sparte": "basisrente",
+  "produkt": "Basisrente",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Beiträge steuerlich absetzbar",
+    "Lebenslange Rente ab 62"
+  ],
+  "tarife": [
+    {
+      "name": "GENERATION basic plus",
+      "kurz": "GENERATION",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "90 % im UWP-Fonds",
+        "rentenfaktor": "ja",
+        "anlage": "UWP, APM, Einzelfonds",
+        "flexibel": "ja, Zuzahlung ab 250 €",
+        "hinterbliebene": "optional",
+        "beitragspause": "befristet beitragsfrei"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.canadalife.de/generation-basic-plus/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Flexibler Kapitalplan basic",
+      "kurz": "Kapitalplan",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "nein",
+        "anlage": "Fonds und Portfolios",
+        "flexibel": "Einmalbeitrag, Zuzahlung",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {},
+      "quelle": "https://www.canadalife.de/media/muster-produktinformationsblatt-flexibler-kapitalplan-basic-20-jahre.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.canadalife.de/basisrente/",
+    "https://www.canadalife.de/generation-basic-plus/",
+    "https://www.canadalife.de/media/versicherungsbedingungen-generation-basic-plus.pdf",
+    "https://www.canadalife.de/media/muster-produktinformationsblatt-generation-basic-plus-mit-100-prozent-uwp-30-jahre.pdf",
+    "https://www.canadalife.de/media/muster-produktinformationsblatt-flexibler-kapitalplan-basic-20-jahre.pdf"
+  ],
+  "offen": [
+    "Stufen sind zwei Produkte: GENERATION basic plus mit laufendem Beitrag (ab 50 € monatlich), Flexibler Kapitalplan basic gegen Einmalbeitrag (ab 10.000 €, auch sofort beginnend). Canada Life markiert keines.",
+    "GENERATION basic plus: Beitragserhaltungszusage 90 % nur für die in den UWP-Fonds investierten Beitragsanteile (Muster-Produktinformationsblatt); garantierter Rentenfaktor laut Bedingungen (Stand Mai 2024, bitte Aktualität prüfen).",
+    "Flexibler Kapitalplan basic: fondsgebunden ohne gesonderte Garantieabsicherung; ob der Rentenfaktor garantiert ist, nennt das Muster-Produktinformationsblatt nicht.",
+    "Effektivkosten nur in Musterrechnungen, je nach Fondswahl unterschiedlich; nicht aufgenommen."
+  ]
+}

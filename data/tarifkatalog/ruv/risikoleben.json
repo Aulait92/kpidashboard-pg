@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe gleich oder fallend",
+    "Schnelle Auszahlung",
+    "Überkreuz für Paare möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "verlaengerung": "nein"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ruv.de/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja",
+        "verlaengerung": "bis 15 Jahre"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ruv.de/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja",
+        "verlaengerung": "bis 15 Jahre"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ruv.de/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/risikolebensversicherung",
+    "https://www.ruv.de/dam/jcr:038d2022-558e-46d7-b161-e37647ff9a2d/PLG0426.pdf"
+  ],
+  "offen": [
+    "Vorgezogene Leistung bei schwerer Krankheit, Umtauschrecht und weltweiter Schutz nicht auf der Produktseite genannt.",
+    "Nachversicherung (comfort, premium): bei gleichbleibender Summe innerhalb von 6 Monaten nach Heirat, Geburt, Berufsstart u. a., je Erhöhung mind. 2.000 €, insgesamt höchstens 60.000 €.",
+    "Kinder: kein Nachversicherungsrecht für Kinder genannt, sondern Kinder-Bonus (25.000 € extra bei Tod innerhalb 6 Monaten nach Geburt oder Adoption). Dazu Bau-Bonus 25.000 € (comfort, premium) und Pflege-Bonus 10 % der Summe, max. 15.000 € (nur premium).",
+    "Verlängerungsoption: einmalig bis 15 Jahre, bis 3 Jahre vor Vertragsende. Verbundene Leben nicht genannt.",
+    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+  ]
+}

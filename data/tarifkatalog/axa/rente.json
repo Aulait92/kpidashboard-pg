@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapitalauszahlung",
+    "Zuzahlungen und Entnahmen möglich",
+    "Bezugsberechtigte frei bestimmbar"
+  ],
+  "tarife": [
+    {
+      "name": "Relax Rente Comfort Plus",
+      "kurz": "Comfort Plus",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "80 % der Beiträge",
+        "anlage": "Index + Sondervermögen",
+        "flexibel": "ja",
+        "kapital": "ja",
+        "beitragspause": "bis 2 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/altersvorsorge/p/relax-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Relax Rente Chance",
+      "kurz": "Chance",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "80 % der Beiträge",
+        "anlage": "Index + freie Fonds",
+        "flexibel": "ja",
+        "kapital": "ja",
+        "beitragspause": "bis 2 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/altersvorsorge/p/relax-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "JustInvest Fonds-Rente",
+      "kurz": "JustInvest",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "keine (Garantie-Option)",
+        "rentenfaktor": "ja",
+        "anlage": "Fonds, ETFs, Portfolios",
+        "flexibel": "ja",
+        "kapital": "ja",
+        "beitragspause": "bis 3 Jahre"
+      },
+      "quelle": "https://www.axa.de/pk/altersvorsorge/p/fondsrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/altersvorsorge/p/private-rentenversicherung",
+    "https://www.axa.de/pk/altersvorsorge/p/relax-rente",
+    "https://www.axa.de/pk/altersvorsorge/p/fondsrente",
+    "https://www.axa.de/site/axa-de/get/documents_E-1373810646/axade/medien/privatkunden/altersvorsorge/privatrente/leistungsdetails-private-rentenversicherung.pdf"
+  ],
+  "offen": [
+    "Garantie Relax Rente: mindestens 80 % der regelmäßig gezahlten Beiträge zum Ende der Laufzeit (Sicherungsvermögen). JustInvest ohne Beitragsgarantie; Garantie-Option überträgt bis 100 % des Fondsvermögens ins Sicherungsvermögen.",
+    "Garantierter Rentenfaktor nur für JustInvest ausdrücklich genannt; für die Relax Rente nicht belegt.",
+    "Hinterbliebenenschutz je Tarif nicht beziffert (Todesfallleistung laut Seite vereinbar). Kosten (Effektivkosten) stehen nur in den Basisinformationsblättern zum Angebot.",
+    "BU-Zusatzversicherung für beide Relax-Varianten belegt; für JustInvest nur allgemein „kombinierbar“. Dynamik: regelmäßige Beitragserhöhungen bei der Relax Rente möglich.",
+    "Die drei Varianten sind keine Leistungsstufen, sondern Anlagekonzepte (von sicherheits- bis chancenorientiert). AXA kennzeichnet keine Empfehlung; Relax Rente Chance als mittlere Stufe."
+  ]
+}

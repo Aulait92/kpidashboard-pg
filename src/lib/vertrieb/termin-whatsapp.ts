@@ -334,7 +334,7 @@ async function sendSupportTemplate(opts: {
   contactId: string;
   phone: string;
   name: string | null;
-  template: { name: string; body: string };
+  template: { name: string; body: string; purpose?: string };
   params: string[];
   activity: string;
   now: Date;
@@ -359,7 +359,7 @@ async function sendSupportTemplate(opts: {
 
 async function vermerkeVersand(
   acc: SupportAccount,
-  opts: { contactId: string; phone: string; name: string | null; template: { name: string; body: string }; params: string[]; activity: string; now: Date },
+  opts: { contactId: string; phone: string; name: string | null; template: { name: string; body: string; purpose?: string }; params: string[]; activity: string; now: Date },
   messageId: string | null,
 ): Promise<void> {
   const conv = await prisma.conversation.upsert({
@@ -391,6 +391,8 @@ async function vermerkeVersand(
       status: "sent",
       sentBy: "system",
       pricingCategory: "utility",
+      // Zweck (vertrieb_termin, vertrieb_erinnerung, vertrieb_gleich): bei Zustellfehler SMS-Ersatz (lib/sms/ersatz.ts)
+      purpose: opts.template.purpose ?? null,
     },
   });
   await prisma.salesActivity.create({ data: { contactId: opts.contactId, type: "TERMIN", outcome: opts.activity, note: null } }).catch(() => {});

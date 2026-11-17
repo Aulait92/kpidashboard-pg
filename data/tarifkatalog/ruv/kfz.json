@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung (KfzPolice)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Glasreparatur ohne SB (Partner)",
+    "Digitale Versichertenkarte",
+    "Werkstattservice wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "KfzPolice classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "werkstatt": "optional",
+        "grob": "nein",
+        "tiere": "Haarwild",
+        "neuwert": "nein",
+        "marder": "nein",
+        "rabattschutz": "nein",
+        "gap": "nein",
+        "mallorca": "Europa ohne Deutschland"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "nein"
+      },
+      "quelle": "https://www.ruv.de/kfz-versicherung/autoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KfzPolice comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "werkstatt": "optional",
+        "grob": "ja",
+        "tiere": "alle Tiere",
+        "neuwert": "12 Monate",
+        "marder": "bis 3.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "mallorca": "Europa ohne Deutschland"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.ruv.de/kfz-versicherung/autoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KfzPolice premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "werkstatt": "optional",
+        "grob": "ja",
+        "tiere": "alle Tiere",
+        "neuwert": "30 Monate",
+        "marder": "bis 5.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "mallorca": "Europa mit Deutschland"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.ruv.de/kfz-versicherung/autoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/kfz-versicherung/autoversicherung",
+    "https://www.ruv.de/dam/jcr:94b61b07-18e6-464c-aa24-1e3f7c160e9e/Verbraucherinformation_RVA_Pkw_01.07.2026.2.0103953fd58738a3d6f27ae424bc3291.pdf"
+  ],
+  "offen": [
+    "Deckung pauschal 100 Mio. €, Personenschäden classic 12, comfort 15, premium 16 Mio. €.",
+    "Grobe Fahrlässigkeit in comfort und premium außer bei Alkohol, Rauschmitteln und Entwendung.",
+    "Marder: Tierbiss selbst ab comfort (alle Tiere außer Haus- und Nutztiere); Wert = Folgeschäden. Neupreisentschädigung ab Erstzulassung auf den Kunden; Kaufwertentschädigung Gebrauchtwagen comfort 12, premium 24 Monate.",
+    "Werkstattservice (freiwillige Werkstattbindung mit Nachlass) in allen Stufen wählbar; bei classic ist der Werkstattservice Glas Pflicht. Akku-Schutz für E-Autos nicht in der Tabelle.",
+    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+  ]
+}
