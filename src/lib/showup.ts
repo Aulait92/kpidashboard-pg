@@ -117,7 +117,7 @@ export type VortagEingabe = {
   person: VermittlerName;
 };
 
-/** Platzhalter der vorbereiteten Vortags-Vorlage v5 nach dem Namen: Wann, Nutzen (+ Verträge), Zugang. */
+/** Platzhalter der Vortags-Vorlage v5 (reminder) nach dem Namen: Wann, Nutzen (+ Verträge), Zugang. */
 export function vortagParams(o: VortagEingabe): [string, string, string] {
   const nutzen = o.komplettcheck ? `${o.nutzen} ${vertraegeBereitSatz(o.an)}` : o.nutzen;
   return [o.wann, nutzen, zugangText(o.an, o.person, o.mode, o.meetUrl)];

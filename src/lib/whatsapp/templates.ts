@@ -117,7 +117,10 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_zahn: "v7",
   outreach_pkv: "v7",
   outreach_privatschutz: "v7",
-  // Show-up-Paket (Ole, 17.11.2026): neue Zwecke, nur vorbereitet (VORBEREITETE_PURPOSES in template-plan.ts), nicht eingereicht
+  // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
+  // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
+  reminder: "v5",
+  reminder_soon: "v5",
   reminder_start: "v5",
   appt_waiting: "v5",
 };
@@ -151,8 +154,9 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   outreach_pkv: ["Thema", "Vermittler", "Erste Frage"],
   outreach_privatschutz: ["Thema", "Vermittler", "Erste Frage"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
-  reminder: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
-  reminder_soon: ["Uhrzeit", "Art", "Link/Hinweis"],
+  // Ab v5 (Show-up-Paket); ältere freigegebene Fassungen: PLATZHALTER_AB
+  reminder: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
+  reminder_soon: ["Terminart (Videotermin bzw. Telefontermin)", "Vermittler (Dativ)"],
   reminder_start: ["Vermittler (Nominativ)", "Uhrzeit", "Videolink"],
   appt_waiting: ["Vermittler (Nominativ)", "Videolink"],
   reschedule: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
@@ -193,17 +197,18 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
     sie: "Ihr Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Legen Sie sich gern Ihre bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
   },
+  // Show-up-Paket v5 (Ole, freigegeben 17.11.2026; Freitext: lib/showup.ts). Vortag (ca. 24 h vorher): Wann, Nutzensatz
+  // aus den Angaben (bei Komplettcheck mit dem Satz zu den Verträgen), Zugang, Frage
   reminder: {
-    du: "kurze Erinnerung an deinen Termin bei [Firma]: {{2}} ({{3}}). {{4}} Passt der Termin für dich?",
-    sie: "kurze Erinnerung an Ihren Termin bei [Firma]: {{2}} ({{3}}). {{4}} Passt der Termin für Sie?",
+    du: "kurze Erinnerung an deinen Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?",
+    sie: "kurze Erinnerung an Ihren Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?",
   },
-  // Kurz vor dem Termin (Ole, 15.11.2026): passt alles? Lieber verschieben als nicht erscheinen
+  // 1 Stunde vorher, ohne Link: passt alles? Lieber verschieben als nicht erscheinen
   reminder_soon: {
-    du: "gleich ist es so weit: Dein Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei dir alles?",
-    sie: "gleich ist es so weit: Ihr Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei Ihnen alles?",
+    du: "in einer Stunde ist dein {{2}} mit {{3}}. Passt bei dir alles? Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.",
+    sie: "in einer Stunde ist Ihr {{2}} mit {{3}}. Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.",
   },
-  // Show-up-Paket (Ole, 17.11.2026), nur vorbereitet, nicht eingereicht (VORBEREITETE_PURPOSES): 15 Minuten vorher mit
-  // Link (nur Videotermine) und „wartet schon im Videoraum“ nach „Fehlt noch“. Freitext: lib/showup.ts.
+  // 15 Minuten vorher mit Link (nur Videotermine) und „wartet schon im Videoraum“ nach „Fehlt noch“
   reminder_start: {
     du: "gleich geht es los: {{2}} ist um {{3}} für dich im Videoraum. Der Link funktioniert direkt im Handy-Browser, ohne App: {{4}} Bis gleich!",
     sie: "gleich geht es los: {{2}} ist um {{3}} für Sie im Videoraum. Der Link funktioniert direkt im Handy-Browser, ohne App: {{4}} Bis gleich!",
@@ -304,11 +309,11 @@ export type NaechsteFassung = {
 };
 
 /**
- * Vorbereitete neue Fassung mit ANDEREN Platzhaltern (Show-up-Paket, Ole 17.11.2026): wird NICHT eingereicht und als
- * Vorlage nicht gesendet, bis Ole die Texte freigibt (docs/vorlagen-showup.md). Im offenen 24-h-Fenster sendet die App
- * schon den neuen Text als Freitext (lib/showup.ts). Aktivieren: Text nach TEMPLATE_BODY, REST_PARAMS des Zwecks auf
- * `params`, PURPOSE_VERSION auf `version`, Eintrag hier löschen. Die Absender (lib/whatsapp/reminders.ts) belegen die
- * Platzhalter je Version der gewählten Vorlage (paramsFor): ab dieser Version die neue Belegung, sonst die bisherige.
+ * Vorbereitete neue Fassung mit ANDEREN Platzhaltern: wird NICHT eingereicht und als Vorlage nicht gesendet, bis Ole die
+ * Texte freigibt. Im offenen 24-h-Fenster kann der Absender schon den neuen Text als Freitext senden. Aktivieren: Text
+ * nach TEMPLATE_BODY, REST_PARAMS des Zwecks auf `params`, PURPOSE_VERSION auf `version`, Eintrag hier löschen und die
+ * bisherige Belegung in PLATZHALTER_AB eintragen. Show-up-Paket am 17.11.2026 freigegeben; zurzeit nur das
+ * Erstanschreiben v8 (P2, wartet auf Ole).
  */
 export type VorbereiteteFassung = { version: string; du: string; sie: string; params: string[]; beispiele: { du: string[]; sie: string[] } };
 
@@ -345,26 +350,24 @@ export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFas
     ["Frau Becker", "zu Haftpflicht und Hausrat 🏠", "Herrn Kannapinn", "er", "für Ihre Familie", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"],
     ["Anna", "zu Haftpflicht und Hausrat 🏠", "Ole", "er", "für deine Familie", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"],
   ),
-  // Vortag (ca. 24 h vorher): Nutzensatz aus den Angaben, bei Komplettcheck der Satz zu den Verträgen, Zugang, Frage
-  reminder: {
-    version: "v5",
-    du: "kurze Erinnerung an deinen Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?",
-    sie: "kurze Erinnerung an Ihren Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?",
-    params: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
-    beispiele: {
-      du: ["Julia", "morgen um 10 Uhr", "In einem kurzen Videotermin zeigt dir Thomas, was Haftpflicht und Hausrat für deine Familie kosten und worauf du achten solltest.", "https://meet.google.com/abc-defg-hij"],
-      sie: ["Frau Schneider", "morgen um 10 Uhr", "In einem kurzen Videotermin zeigt Ihnen Herr Schmidt, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten. Legen Sie gern Ihre bestehenden Verträge bereit.", "https://meet.google.com/abc-defg-hij"],
-    },
-  },
-  // 1 Stunde vorher, ohne Link
-  reminder_soon: {
-    version: "v5",
-    du: "in einer Stunde ist dein {{2}} mit {{3}}. Passt bei dir alles? Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.",
-    sie: "in einer Stunde ist Ihr {{2}} mit {{3}}. Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.",
-    params: ["Terminart (Videotermin bzw. Telefontermin)", "Vermittler (Dativ)"],
-    beispiele: { du: ["Julia", "Videotermin", "Thomas"], sie: ["Frau Schneider", "Videotermin", "Herrn Schmidt"] },
-  },
 };
+
+/**
+ * Zwecke, deren Platzhalter sich mit einer Textversion geändert haben: ab `version` gilt REST_PARAMS, ältere
+ * freigegebene Fassungen (bis zur Freigabe der neuen bei Meta weiter im Einsatz, rankTemplates) haben die Belegung
+ * `frueher`. Die Absender belegen die Platzhalter je Version der gewählten Vorlage (paramsFor, lib/whatsapp/reminders.ts).
+ *   reminder, reminder_soon v5 (Show-up-Paket, Ole 17.11.2026)
+ */
+export const PLATZHALTER_AB: Partial<Record<NoticePurpose, { version: number; frueher: string[] }>> = {
+  reminder: { version: 5, frueher: ["Datum/Uhrzeit", "Art", "Link/Hinweis"] },
+  reminder_soon: { version: 5, frueher: ["Uhrzeit", "Art", "Link/Hinweis"] },
+};
+
+/** Hat die Vorlage dieser Textversion schon die aktuelle Platzhalter-Belegung (REST_PARAMS)? Von Hand angelegte (0): nein. */
+export function neuePlatzhalter(purpose: NoticePurpose, version: number): boolean {
+  const ab = PLATZHALTER_AB[purpose];
+  return !ab || (version > 0 && version >= ab.version);
+}
 
 export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, NaechsteFassung>> = {
   campaign_cross_sell: {

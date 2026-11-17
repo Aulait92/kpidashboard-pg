@@ -69,7 +69,8 @@ Geprüft: keine Gedankenstriche, kein Platzhalter am Anfang oder Ende, keine Pla
 1. In `TEMPLATE_BODY` (templates.ts) die fünf Erstanschreiben-Zwecke auf `{ ...ERSTANSCHREIBEN_V8 }` setzen.
 2. `PURPOSE_VERSION` dieser Zwecke auf `"v8"` setzen und die Einträge in `VORBEREITETE_FASSUNG` löschen.
 3. `REST_PARAMS` der Zwecke auf die fünf Platzhalter oben erweitern (die Parameter liefert schon
-   `outreach.ts` `paramsFor` ab Version 8 über `erstanschreibenV8Params`).
+   `outreach.ts` `paramsFor` ab Version 8 über `erstanschreibenV8Params`) und die bisherige Belegung (v7: Thema,
+   Vermittler, Frage) in `PLATZHALTER_AB` mit `version: 8` eintragen.
 4. Danach reicht `template-submit` die neuen Namen (`pg_outreach_privatschutz_v8_sie` …) je Kunde automatisch ein; bis
    zur Freigabe bei Meta bleibt v7 bzw. v6 im Einsatz.
 
