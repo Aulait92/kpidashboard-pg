@@ -67,7 +67,7 @@ export async function ansprechpartner(opts: {
   const [lead, customer, profil] = await Promise.all([
     opts.leadId
       ? prisma.lead
-          .findUnique({ where: { id: opts.leadId }, select: { name: true, formData: true, contactOverrides: true, phone: true, assignedUser: { select: { displayName: true } } } })
+          .findUnique({ where: { id: opts.leadId }, select: { name: true, formData: true, contactOverrides: true, phone: true, assignedUser: { select: { displayName: true, teamRole: true } } } })
           .catch(() => null)
       : null,
     prisma.customer.findUnique({ where: { id: opts.customerId }, select: { name: true, onboarding: { select: { websiteInfo: true } } } }).catch(() => null),
@@ -93,7 +93,8 @@ export async function ansprechpartner(opts: {
   const profilName = erstinfoName(profil?.name, (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer?.name) || null;
   const zustaendig = lead?.assignedUser?.displayName?.replace(/\s+/g, " ").trim() || null;
   // Team (Ole, 17.11.2026): Zuständiger ohne Anzeigenamen → nie den Inhaber nennen, sondern neutral die Agentur
-  const ohneName = !!lead?.assignedUser && !zustaendig;
+  // (der Inhaber selbst bleibt die Person der Anbieterangaben)
+  const ohneName = !!lead?.assignedUser && !zustaendig && lead.assignedUser.teamRole !== "owner";
   // Anrede gilt nur für die Person der Anbieterangaben (anderer Berater im Team: Vor- und Nachname)
   const vermittler = ohneName
     ? { name: null, anrede: null }
