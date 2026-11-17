@@ -1,6 +1,6 @@
 // Bestandsaufnahme „Kette je Lead“ (lib/ops/kette-auswertung.ts): Stufen, Abdeckung, Zeiträume, verschobene Termine.
 import { describe, expect, it } from "vitest";
-import { auswerten, imZeitraum, kompakt, type KetteLead } from "@/lib/ops/kette-auswertung";
+import { auswerten, FEHLENDE_FELDER, imZeitraum, kompakt, kundenartFuer, kundenartKunde, type KetteLead } from "@/lib/ops/kette-auswertung";
 
 const NOW = new Date("2026-11-17T12:00:00Z");
 const H = 3_600_000;
@@ -16,6 +16,10 @@ function lead(p: Partial<KetteLead> = {}): KetteLead {
     kanal: true,
     metaLeadId: true,
     formular: false,
+    plattform: false,
+    kampagne: false,
+    anzeigengruppe: false,
+    anzeige: false,
     firstContactAt: null,
     reached: false,
     kontaktversuche: false,
@@ -155,5 +159,37 @@ describe("Kette je Lead", () => {
     expect(k.stufen.abschluss).toBe(1);
     expect(k.abdeckung["crossSelling.jahresbeitrag"]).toBe(50);
     expect(k.abdeckung["lieferung.geliefertAm"]).toBeUndefined();
+  });
+});
+
+describe("Anzeigenfelder und Kundenart (Admin v2, A0)", () => {
+  it("zählt Plattform, Kampagne, Anzeigengruppe und Anzeige mit, statt sie als fehlend zu führen", () => {
+    const b = auswerten([lead({ plattform: true, kampagne: true, anzeigengruppe: true, anzeige: true, formular: true }), lead()], NOW);
+    expect(b.stufen.anzeige.felder.kampagne).toEqual({ n: 1, pct: 50 });
+    expect(b.stufen.anzeige.felder.anzeigengruppe).toEqual({ n: 1, pct: 50 });
+    expect(b.stufen.anzeige.felder.anzeige).toEqual({ n: 1, pct: 50 });
+    expect(b.stufen.anzeige.felder.plattform).toEqual({ n: 1, pct: 50 });
+    expect(b.stufen.anzeige.felder.formular).toEqual({ n: 1, pct: 50 });
+    expect(FEHLENDE_FELDER.anzeige).toBeUndefined();
+    expect(kompakt(b).abdeckung["anzeige.kampagne"]).toBe(50);
+  });
+
+  it("Airtable-Eingang allein macht keinen Pay-per-Lead-Lead", () => {
+    const keine = new Set<string>();
+    const pkv = new Set(["PKV-Tarifoptimierung"]);
+    expect(kundenartFuer({ bezug: false, pool: false, eingang: true, produkt: "PKV-Tarifoptimierung", bezugProdukte: keine })).toBe("vermittler");
+    expect(kundenartFuer({ bezug: false, pool: false, eingang: true, produkt: "PKV-Tarifoptimierung", bezugProdukte: pkv })).toBe("ppl");
+    expect(kundenartFuer({ bezug: false, pool: false, eingang: true, produkt: "Hausrat", bezugProdukte: pkv })).toBe("vermittler");
+    expect(kundenartFuer({ bezug: false, pool: false, eingang: true, produkt: null, bezugProdukte: pkv })).toBe("vermittler");
+    expect(kundenartFuer({ bezug: true, pool: false, eingang: false, produkt: null, bezugProdukte: keine })).toBe("ppl");
+    expect(kundenartFuer({ bezug: false, pool: true, eingang: false, produkt: null, bezugProdukte: keine })).toBe("ppl");
+    expect(kundenartFuer({ bezug: false, pool: false, eingang: false, produkt: "PKV-Tarifoptimierung", bezugProdukte: pkv })).toBe("vermittler");
+  });
+
+  it("Kundenart je Kunde: nur Pay-per-Lead, gemischt oder Vermittler", () => {
+    expect(kundenartKunde([{ kundenart: "ppl" }, { kundenart: "ppl" }])).toBe("ppl");
+    expect(kundenartKunde([{ kundenart: "ppl" }, { kundenart: "vermittler" }])).toBe("gemischt");
+    expect(kundenartKunde([{ kundenart: "vermittler" }])).toBe("vermittler");
+    expect(kundenartKunde([])).toBe("vermittler");
   });
 });
