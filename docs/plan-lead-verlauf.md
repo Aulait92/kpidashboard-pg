@@ -190,3 +190,14 @@ Es kommt **keine eigene Anruf-Logik**. Es gilt der bestehende Anrufplan aus `src
 - **WA-Nachfassen:** mit der bestehenden Nicht-erreicht-Abfolge (`lead-sequences.ts`) abstimmen, nicht doppeln. Antwortet der Lead im Chat, stoppt der Anrufplan.
 - **Entfällt:** „Tag 2 / Tag 5 / Status kein Kontakt“ aus A.
 - **Anzeige:** Onboarding-Grafik und „Nächste Nachrichten“ zeigen den 6er-Plan.
+
+## Entscheidungen Ole (17.11.2026, ab 20 Uhr)
+
+- **P2 Reihenfolge nach der Buchung:** Buchungsnachricht → Komplettcheck-Frage (nur Ja/Nein-Knopf) → fehlende Angaben fürs Angebot → bei Ja: Vertragsfrage und Policen-Einladung → Abschluss mit Bereitlegen und Kalenderfrage. Rückfall `runStreckeAbschliessen`: kein Abschluss, solange Angebotsfragen offen sind.
+- **P2 Policen-Bitte immer:** Jeder Lead bekommt genau einmal die Bitte, Verträge zu schicken. Bei Komplettcheck = Ja die volle Bitte (alle Verträge, Policen-Einladung). Bei Nein oder ohne Antwort eine enge, freiwillige Fassung in der Abschlussnachricht, nur der Vertrag in der angefragten Sparte („Falls Sie schon eine … haben: Schicken Sie mir gern ein Foto der Police, dann vergleiche ich direkt und achte auf die Kündigungsfrist.“). Test: jeder Pfad genau eine Bitte.
+- **P3 Mails aus Vorlagen:** `angebotMail` und `nachfassMail` holen den Text aus `src/lib/mail/vorlagen.ts` (`angebot`, `nachfassen_angebot`; Kunden-Vorlage, sonst Standard). Schrittart `email` in `lead-sequences.ts` mit `vorlage: VorlageKey`. Platzhalter `{rueckruf_link}` in `platzhalter.ts`.
+- **Mail-Vorlagen in der Journey (M0 bis M9):** Plan in `docs/plan-mail-vorlagen.md`. Entscheidungen: Weiterleitungsadresse nicht bei verbundenem Postfach; Terminlink in Mails erlaubt; KI-Zusammenfassung als gekennzeichneter Entwurf (EU-KI); automatische Mails auch für Allianz-Vertreter über dein-beratungstermin.de mit Weiterleitungsadresse; Mail 2 h nach der WA, entfällt bei Antwort, höchstens eine automatische Mail je Lead und Tag. Erklärschritt in Sie-Form mit den abgeschwächten Formulierungen. Start M0, M1, dann M9 (nur Einstellungen).
+
+## Nach P3 eingeplant (Ole, 17.11.2026)
+
+- **Vergleich bisheriger Vertrag (P3b, ca. 6 bis 8 h):** Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie, ein- und ausblendbar. Policen-Auszug liest zusätzlich den Tarifnamen; ist der Tarif im Tarifkatalog, kommen dessen Merkmale in die Spalte, sonst nur Werte der Police (Beitrag, Versicherungssumme, Selbstbeteiligung). Unbekanntes neutral „laut Police prüfen“, nie „nicht enthalten“. Darunter Beitragsunterschied pro Jahr und Hinweis auf die Kündigungsfrist (Ablauf, Hauptfälligkeit). Auch ohne Police, wenn der Lead den Tarif im Chat nennt (`vorvertraege`). Gesundheitssparten erst nach Freischaltung der Gesundheitsunterlagen.
