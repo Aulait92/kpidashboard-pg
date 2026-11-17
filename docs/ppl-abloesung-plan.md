@@ -25,12 +25,18 @@ Auswertung komplett in der App, Airtable/Zapier nur noch als Übergang.
 - **Wirtschaft**: Umsatz (verkaufte Leads nach Stornos), Ausgaben (Meta-Kosten
   Pay-per-Lead + direkte Kosten), **Gewinn** und **Marge** – je Tag/Woche/Monat.
 
-## 4. Stornos von Heinrich von Kleist
-- Heinrich meldet Stornos in seinen **Abrechnungs-Mails**, die in Oles
-  **Outlook** landen. Diese Mails automatisch auslesen und die Stornos den
-  Leads zuordnen (Weg klären: Outlook-Regel → Weiterleitung an eine
-  Eingangsadresse/Zapier-Parser → Webhook der App, oder Microsoft Graph mit
-  Mail.Read). Beispiel-Mail von Ole besorgen.
+## 4. Stornos von Heinrich von Kleist ✅ (Admin → Pay-per-Lead → „HvK-Abrechnungen“, `lib/ppl/hvk-abrechnung*.ts`)
+- Abruf der Mail „Neue Gutschrift“ (Microsoft Graph, Mail.Read) Mo bis Mi stündlich, PDF lesen, je Rechnungsnummer
+  einmal übernehmen; Upload von Hand und „Rückwirkend ab Juli“ möglich.
+- Stand 17.11.2026, was automatisch geht:
+  - Gekaufte Leads der Woche werden unseren gelieferten Leads zugeordnet (PLZ + Ort). Sichere Treffer (im Durchgang
+    eindeutig) speichern wir als `Lead.hvkLeadId`; nie überschrieben, mehrdeutige nicht gespeichert.
+  - Reklamation → Lead, in dieser Reihenfolge: (a) gespeicherte HvK-Lead-ID, (b) Lieferdatum + PLZ eindeutig,
+    (c) bei mehreren: über den Ort eingrenzen, Leads mit anderer HvK-ID, anderer Reklamation oder schon storniert
+    fallen weg, (d) bei keinem: Lieferdatum ±1 Tag (Lieferung um Mitternacht) mit gleicher PLZ. Eindeutig → Storno wie
+    „Storno eintragen“; der Weg steht als ein Wort an der Reklamation (ID, Datum+PLZ, Ort, ±1 Tag).
+  - Ein Lead deckt höchstens eine Reklamation. Bleibt es mehrdeutig, wird nicht geraten: **Storno prüfen**.
+  - „Neu abgleichen“ rechnet alle übernommenen Wochen mit derselben Logik neu und löst alte offene Reklamationen auf.
 
 ## 5. Nebenbei beheben ✅ (Paketart-Anzeige „Pay-per-Lead“; Abgleich schreibt nur noch geänderte Kunden/Bezüge/Produkte)
 - Kundenliste zeigt Pay-per-Lead-Kunden fälschlich als „Betreuung + Software“
