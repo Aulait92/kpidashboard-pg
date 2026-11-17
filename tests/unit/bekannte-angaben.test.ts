@@ -5,6 +5,8 @@ import { bekannteAntworten, ersteFrage, ersteFrageRegel, erstanschreibenText, ou
 import { testLeadAnswers } from "@/lib/testlead";
 import { isHealthAnswer } from "@/lib/gesundheitsdaten";
 import { buildSystemPrompt } from "@/lib/whatsapp/bot";
+import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
+import { abschnitte } from "@/lib/termin-vorbereitung";
 
 const labels = (p: string) => testLeadAnswers(p).map((a) => a.label);
 
@@ -77,5 +79,27 @@ describe("Bekannte Antworten aus dem Formular", () => {
     });
     expect(s).toMatch(/E-Mail: jule@example.com \(bekannt: NICHT erfragen/);
     expect(s).toMatch(/Rasse \(Tier\): Europäisch Kurzhaar/);
+  });
+});
+
+describe("Hund wie Katze (Tierkrankenversicherung)", () => {
+  it("Hundekrankenversicherung bekommt die Tier-Checkliste, Halterhaftpflicht und Futter nicht", () => {
+    expect(produktCheckliste("Hundekrankenversicherung")?.key).toBe("tier");
+    expect(produktCheckliste("Hunde-OP-Versicherung")?.key).toBe("tier");
+    expect(produktCheckliste("Hundehalterhaftpflicht")).toBeNull();
+    expect(produktCheckliste("Hundefutter")).toBeNull();
+  });
+
+  it("Terminvorbereitung zeigt beim Hund die Felder des Tier-Rechners aus dem Formular", () => {
+    const ab = abschnitte({
+      lead: { name: "Jule Sommer", telefon: null, email: null, adresse: null, produkt: "Hundekrankenversicherung" },
+      termin: { startsAt: new Date(), mode: "video", berater: "Ole", meetUrl: null },
+      zusammenfassung: null,
+      formular: testLeadAnswers("Hundekrankenversicherung"),
+      angaben: { tarifwunsch: "volle Krankenversicherung" },
+      vorbereitetAm: null,
+    });
+    const felder = Object.fromEntries(ab.flatMap((s) => s.felder).map((f) => [f.label, f.wert]));
+    expect(felder).toMatchObject({ Tierart: "Hund", Rasse: "Labrador Retriever", "Geburtsmonat / -jahr": "Juni 2021", "Gewünschter Schutz (OP oder voll)": "volle Krankenversicherung" });
   });
 });
