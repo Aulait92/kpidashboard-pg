@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankentagegeld Arbeitnehmer privat versichert",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankentagegeld Selbstständige",
@@ -63,8 +61,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankentagegeld Ärztinnen und Ärzte",
@@ -81,8 +78,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -94,6 +90,7 @@
     "Wartezeit: 3 Monate allgemein, 8 Monate u. a. für Psychotherapie, Zahnbehandlung und Mutterschutz; entfällt bei Unfall und mit Allianz-Krankenvollversicherung.",
     "Ausland nur bei Umzug in EU, EWR oder Schweiz und nur bei stationärer Behandlung im öffentlichen Krankenhaus.",
     "Dynamik: Anpassung alle 3 Jahre an die Einkommensentwicklung (nicht für gesetzlich versicherte Angestellte); als Baustein nicht eindeutig, daher nicht gesetzt. Selbstständige wählen Karenzzeit 7, 14, 21, 28 oder 42 Tage.",
-    "Ärzte: Selbstständigkeit nicht getrennt ausgewiesen. Für Beamte gibt es kein Krankentagegeld."
+    "Ärzte: Selbstständigkeit nicht getrennt ausgewiesen. Für Beamte gibt es kein Krankentagegeld.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de."
   ]
 }
