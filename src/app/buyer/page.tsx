@@ -132,7 +132,10 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
                   <ArrowLeft className="h-4 w-4" />
                   Heute
                 </Link>
-                <LeadDetailBody leadId={rechts} team={ctx} newUi />
+                {/* Platz für das X (oben rechts), sonst liegt es über „Verloren“ */}
+                <div className="xl:pr-9">
+                  <LeadDetailBody leadId={rechts} team={ctx} newUi />
+                </div>
               </>
             ) : (
               <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border-strong)] px-6 text-center text-[color:var(--muted)]">
