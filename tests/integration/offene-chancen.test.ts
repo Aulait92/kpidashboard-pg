@@ -55,8 +55,13 @@ describe("loadOffeneChancen", () => {
       });
       await prisma.appointment.create({ data: { customerId, leadId: l.id, mode: "video", startsAt: new Date(now.getTime() - 25 * DAY), status: "completed" } });
     }
-    const c = await loadOffeneChancen(customerId, undefined, now);
+    let c = await loadOffeneChancen(customerId, undefined, now);
     expect(c.quoten.termin).toEqual({ quote: 0.4, eigen: true, faelle: 10 });
+    // Verloren nach einem Termin ohne Kalender-Eintrag (nur Status „Termin vereinbart“ im Verlauf): zählt im Nenner mit
+    const ohne = await prisma.lead.create({ data: { customerId, source: "Privatschutz", status: "Kein Interesse", lostAt: now, reached: true, createdAt: new Date(now.getTime() - 20 * DAY) } });
+    await prisma.leadHistory.create({ data: { leadId: ohne.id, customerId, kind: "status", text: "Status: Termin vereinbart" } });
+    c = await loadOffeneChancen(customerId, undefined, now);
+    expect(c.quoten.termin).toEqual({ quote: 4 / 11, eigen: true, faelle: 11 });
     expect(c.liste.find((x) => x.name === "Termin")!.schaetzung).toBe(false);
     expect(c.liste.find((x) => x.name === "Angebot")!.schaetzung).toBe(true);
   });
