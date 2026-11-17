@@ -56,10 +56,11 @@ describe("Pay-per-Lead: Storno und Bestellung", () => {
     expect((await requestStorno(leadIds[1], "Sonstiges", "Nummer gehört jemand anderem", { role: "BUYER" })).ok).toBe(true);
   });
 
-  it("Quote über 20 % → Grenzfall 50:50, Altfälle in Prüfung per Admin 50:50", async () => {
+  it("Quote über 20 %: zugelassene Gründe trotzdem voll, Altfälle in Prüfung per Admin 50:50", async () => {
     await requestStorno(leadIds[2], "Nicht erreichbar", "", { role: "BUYER" });
     const r = await requestStorno(leadIds[3], "Nicht erreichbar", "", { role: "BUYER" });
-    expect(r).toEqual({ ok: true, state: "approved", anteil: 0.5 });
+    expect(r).toEqual({ ok: true, state: "approved", anteil: 1 });
+    expect((await prisma.auditLog.findFirstOrThrow({ where: { entityId: leadIds[3], action: "lead.storno" } })).details).toMatchObject({ hoheQuote: true });
     const alt = await prisma.lead.create({ data: { customerId, subscriptionId: subId, deliveredAt: new Date(), stornoState: "review" } });
     await prisma.revenue.create({ data: { customerId, leadId: alt.id, amount: 50 } });
     expect(await decideStorno(alt.id, "half")).toBe(true);
@@ -71,8 +72,8 @@ describe("Pay-per-Lead: Storno und Bestellung", () => {
     const r = await placeOrder({ subscriptionId: subId, weekOffset: 1, quantity: 10, autoRenew: true, markPaid: true });
     expect(r.ok).toBe(true);
     const order = await prisma.leadOrder.findFirstOrThrow({ where: { subscriptionId: subId } });
-    // 10 × 50 € − 1 voller Storno à 50 € − 4 Grenzfälle à 25 € (Quote > 20 % ab dem 3. Storno)
-    expect(Number(order.amount)).toBe(350);
+    // 10 × 50 € − 3 volle Stornos à 50 € − 2 Grenzfälle („Sonstiges“, Altfall) à 25 €
+    expect(Number(order.amount)).toBe(300);
     expect(order.status).toBe("paid");
     expect(await prisma.lead.count({ where: { subscriptionId: subId, creditedAt: { not: null } } })).toBe(5);
     const again = await placeOrder({ subscriptionId: subId, weekOffset: 1, quantity: 10, autoRenew: true, markPaid: true });
