@@ -289,6 +289,35 @@ describe("Policen per WhatsApp", () => {
     expect(sach.extracted).toMatchObject({ gesellschaft: "HUK-Coburg" });
   });
 
+  it("Schalter an, Lead nennt nur Sachversicherungen: KI-Zuordnung und Auslesen über den EU-Endpunkt, wenn eingerichtet", async () => {
+    process.env.POLICEN_GESUNDHEIT_AN = "1";
+    process.env.POLICEN_KI_REGION = "eu";
+    process.env.POLICEN_KI_EU_URL = "https://claude-eu.example";
+    process.env.POLICEN_KI_EU_KEY = "eu-key";
+    const { lead, phone } = await leadMitChat({}, { versichern: "nur ich", vorhanden: "Hausrat Allianz" });
+    await doc(phone, "Hausrat.pdf");
+    expect(st.calls).toEqual(["save_sparte", "save_vertrag"]);
+    expect(st.baseURLs).toEqual(["https://claude-eu.example", "https://claude-eu.example"]);
+    expect(await prisma.leadDocument.count({ where: { leadId: lead.id, status: "gespeichert", gesundheitsbezug: false } })).toBe(1);
+  });
+
+  it("Schalter an, minderjähriger Lead laut Formular: keine Einwilligungsfrage, Gesundheitsunterlagen verworfen", async () => {
+    process.env.POLICEN_GESUNDHEIT_AN = "1";
+    const { lead, phone } = await leadMitChat({ formData: [{ label: "Geburtsdatum", value: "01.06.2010" }] }, { versichern: "nur ich", vorhanden: "BU bei der Allianz, Haftpflicht HUK" });
+    await text(phone, "BU bei der Allianz und Haftpflicht bei der HUK");
+    expect(buttons()).toHaveLength(0);
+    expect(texts()[0]).toContain("Sachversicherungen wie Haftpflicht, Hausrat oder Kfz");
+    st.calls = [];
+    st.klass = { police: true, sparte: "bu", gesundheit: true };
+    await doc(phone, "BU.pdf");
+    expect(buttons()).toHaveLength(0);
+    expect(await prisma.leadDocument.count({ where: { leadId: lead.id } })).toBe(0);
+    expect(texts().at(-1)).toContain("speichere ich hier nicht");
+    // Ein alter Knopf „Ja“ (z. B. weitergeleitet) protokolliert keine Einwilligung
+    await knopf(phone, "policen:ja", "Ja, einverstanden");
+    expect(await prisma.bestandConsentLog.count({ where: { customerId, address: phone } })).toBe(0);
+  });
+
   it("Schalter aus: Verhalten wie bisher (Einladung nur Sach, KI ordnet zu, Gesundheitsbezug verworfen, keine Knöpfe)", async () => {
     const { lead, phone } = await leadMitChat({}, { versichern: "nur ich", vorhanden: "BU bei der Allianz, Haftpflicht HUK" });
     await text(phone, "BU bei der Allianz und Haftpflicht bei der HUK");

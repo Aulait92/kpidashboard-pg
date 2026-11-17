@@ -31,9 +31,35 @@ export const ERINNERUNG_TAGE = 14;
 /** Einwilligungsfrage höchstens so oft je Chat (Einladung bzw. erste Frage und einmal erneut). */
 export const MAX_EINWILLIGUNGSFRAGEN = 2;
 /** Version des Einwilligungstexts (steht im Protokoll; bei jeder inhaltlichen Änderung hochzählen). */
-export const EINWILLIGUNG_VERSION = "2026-11-17.2";
+export const EINWILLIGUNG_VERSION = "2026-11-17.3";
 /** Vermerk, wenn der Vermittler eine Unterlage behält. */
 export const BEHALTEN_VERMERK = "Beratungsdokumentation (§ 61 VVG)";
+
+/** Einwilligung zu Gesundheitsunterlagen erst ab diesem Alter (docs/recht-gesundheitsunterlagen.md Abschnitt e, Punkt 11). */
+export const VOLLJAEHRIG_AB = 18;
+
+/**
+ * Minderjährig laut Formularangaben (Lead.formData: Label/Wert-Liste)? Nur wenn ein Geburtsdatum bzw. Alter der Person
+ * eindeutig unter 18 ergibt; Tierangaben („Geburtsjahr (Tier)“) zählen nicht. Unbekannt: false (dann gilt der Satz im
+ * Einwilligungstext „Zustimmen können Sie ab 18 Jahren.“).
+ */
+export function minderjaehrig(formData: unknown, now = new Date()): boolean {
+  if (!Array.isArray(formData)) return false;
+  for (const x of formData as { label?: unknown; value?: unknown }[]) {
+    const label = typeof x?.label === "string" ? x.label.toLowerCase() : "";
+    const value = typeof x?.value === "string" || typeof x?.value === "number" ? String(x.value).trim() : "";
+    if (!label || !value || /tier|hund|katze|pferd|kind/.test(label)) continue;
+    if (/^(alter|ihr alter|dein alter)\b/.test(label) && /^\d{1,3}$/.test(value)) return Number(value) < VOLLJAEHRIG_AB;
+    if (!/geburtsdatum|geburtstag|geboren am/.test(label)) continue;
+    const m = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/) ?? value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) continue;
+    const [j, mo, t] = m[0].includes("-") ? [Number(m[1]), Number(m[2]), Number(m[3])] : [Number(m[3]), Number(m[2]), Number(m[1])];
+    if (j < 1900 || mo < 1 || mo > 12 || t < 1 || t > 31) continue;
+    const volljaehrigAm = Date.UTC(j + VOLLJAEHRIG_AB, mo - 1, t);
+    return now.getTime() < volljaehrigAm;
+  }
+  return false;
+}
 
 /** Gesundheitsbezogene Unterlagen erlaubt? Railway-Variable POLICEN_GESUNDHEIT_AN, Standard aus (bis der Anwalt geprüft hat). */
 export function policenGesundheitAn(env: Record<string, string | undefined> = process.env): boolean {
@@ -228,8 +254,8 @@ function mitFirma(v: Verantwortlicher): string {
 
 /**
  * Ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a DSGVO), Wortlaut aus docs/recht-gesundheitsunterlagen.md
- * Abschnitt b. In der Einladung (Schalter an, Lead nennt eine Gesundheitssparte) bzw. nach einer Datei
- * (nachDatei, erster Satz angepasst). Genau dieser Text wird mit EINWILLIGUNG_VERSION protokolliert. Höchstens 1.024
+ * Abschnitt b, ergänzt um den Altershinweis (Abschnitt e, Punkt 11; Fassung 2026-11-17.3). In der Einladung
+ * (Schalter an, Lead nennt eine Gesundheitssparte) bzw. nach einer Datei (nachDatei, erster Satz angepasst). Genau dieser Text wird mit EINWILLIGUNG_VERSION protokolliert. Höchstens 1.024
  * Zeichen (interaktive WhatsApp-Nachricht).
  */
 export function einwilligungText(an: Ansprache, v: Verantwortlicher, o: { nachDatei?: boolean } = {}): string {
@@ -253,8 +279,8 @@ export function einwilligungText(an: Ansprache, v: Verantwortlicher, o: { nachDa
     ),
     a(
       an,
-      "Unterlagen von mitversicherten Personen schick bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Du kannst jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
-      "Unterlagen von mitversicherten Personen schicken Sie bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Sie können jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
+      "Zustimmen kannst du ab 18 Jahren. Unterlagen von mitversicherten Personen schick bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Du kannst jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
+      "Zustimmen können Sie ab 18 Jahren. Unterlagen von mitversicherten Personen schicken Sie bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Sie können jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
     ),
     v.link ? `Mehr dazu: ${v.link}` : null,
   ];

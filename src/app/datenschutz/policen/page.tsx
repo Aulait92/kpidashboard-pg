@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { loadErstinfoByToken } from "@/lib/erstinformation";
 import { datenschutzPolicenAbschnitte } from "@/lib/policen/datenschutz-text";
-import { EINWILLIGUNG_VERSION } from "@/lib/policen/regeln";
+import { EINWILLIGUNG_VERSION, policenKiEu } from "@/lib/policen/regeln";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 
 // Langfassung zur Einwilligung „Unterlagen per WhatsApp“ (Ole, 17.11.2026, lib/policen): öffentliche Seite des
@@ -17,7 +17,7 @@ export default async function DatenschutzPolicenPage({ searchParams }: Props) {
   const token = Array.isArray(k) ? k[0] : k;
   const e = token ? await loadErstinfoByToken(token) : null;
   if (!e) notFound();
-  const abschnitte = datenschutzPolicenAbschnitte(e.an, { name: e.daten.name, firma: e.daten.firma, anschrift: e.daten.anschrift, telefon: e.daten.telefon, email: e.daten.email });
+  const abschnitte = datenschutzPolicenAbschnitte(e.an, { name: e.daten.name, firma: e.daten.firma, anschrift: e.daten.anschrift, telefon: e.daten.telefon, email: e.daten.email }, { kiEu: policenKiEu() !== null });
 
   return (
     <>

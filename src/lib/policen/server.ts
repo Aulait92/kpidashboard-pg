@@ -44,6 +44,7 @@ import {
   loeschDatum,
   MAX_EINWILLIGUNGSFRAGEN,
   mimeErlaubt,
+  minderjaehrig,
   nichtGeladenText,
   PAYLOAD_JA,
   PAYLOAD_NEIN,
@@ -69,16 +70,22 @@ export const CONSENT_SOURCE = "policen_gesundheit";
 
 export type EingehendesMedium = { type: string; id?: string | null; mime_type?: string | null; filename?: string | null; caption?: string | null };
 
-type Chat = { id: string; customerId: string; leadId: string; contactPhone: string; contactName: string | null };
+type Chat = { id: string; customerId: string; leadId: string; contactPhone: string; contactName: string | null; minderjaehrig: boolean };
 
 async function chatOf(conversationId: string): Promise<Chat | null> {
   const c = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { id: true, customerId: true, leadId: true, contactPhone: true, contactName: true, lead: { select: { erasedAt: true } } },
+    select: { id: true, customerId: true, leadId: true, contactPhone: true, contactName: true, lead: { select: { erasedAt: true, formData: true } } },
   });
   if (!c?.leadId || c.lead?.erasedAt) return null;
-  return { id: c.id, customerId: c.customerId, leadId: c.leadId, contactPhone: c.contactPhone, contactName: c.contactName };
+  return { id: c.id, customerId: c.customerId, leadId: c.leadId, contactPhone: c.contactPhone, contactName: c.contactName, minderjaehrig: minderjaehrig(c.lead?.formData) };
 }
+
+/**
+ * Gesundheitsunterlagen für diesen Chat erlaubt? Schalter POLICEN_GESUNDHEIT_AN und kein minderjähriger Lead laut
+ * Formular (docs/recht-gesundheitsunterlagen.md Abschnitt e, Punkt 11): sonst wie Schalter aus (verwerfen, Hinweis).
+ */
+const gesundheitErlaubt = (chat: Chat) => policenGesundheitAn() && !chat.minderjaehrig;
 
 /** Ansprache und Vermittler als Person (wie im Assistenten, lib/whatsapp/bot.ts). */
 async function sprecher(chat: Chat): Promise<{ an: Ansprache; person: Person }> {
@@ -217,7 +224,7 @@ export async function handleInboundMedia(o: {
     return { data: dl.data, typ };
   };
 
-  const gesundheitAn = policenGesundheitAn();
+  const gesundheitAn = gesundheitErlaubt(chat);
   if (gesundheitAn) {
     // Vor dem Laden, ohne KI: nur Dateiname, Begleittext und Angaben des Leads
     const vorab = vorabEinordnung({ text: `${o.medium.filename ?? ""} ${caption}`, leadAngaben: await leadAngaben(chat) });
@@ -251,8 +258,10 @@ export async function handleInboundMedia(o: {
   const { data, typ } = geladen;
   const fileName = dateiname(o.medium.filename, typ, now);
   // Nur Zuordnung (Sparte, Gesundheitsbezug), keine Inhalte. Schalter an: nur Dateien, die laut Name, Begleittext und
-  // Angaben des Leads Sachversicherungen sind.
-  const ki = await klassifiziere(data, typ);
+  // Angaben des Leads Sachversicherungen sind; auch sie gehen über den EU-Endpunkt, wenn er eingerichtet ist (eine
+  // Datei kann trotzdem Gesundheitsangaben enthalten, Abschnitt e Punkt 8).
+  const eu = gesundheitAn ? policenKiEu() : null;
+  const ki = await klassifiziere(data, typ, { endpunkt: eu });
   const e = entscheide({ ki, text: `${fileName} ${caption}` });
 
   if (e.gesundheit) {
@@ -278,7 +287,7 @@ export async function handleInboundMedia(o: {
   await setzeBody(o.messageId, `Dokument empfangen: ${fileName}${caption ? `\n${caption}` : ""}`);
   if (o.botErlaubt) await bestaetige(chat, now);
   // Vertragsdaten auslesen (nur Sachversicherungen; Fehler stören den Chat nicht)
-  if (ki?.police !== false && e.sparte !== "sonstig") await auslesen(id, data, typ, e.sparte, null);
+  if (ki?.police !== false && e.sparte !== "sonstig") await auslesen(id, data, typ, e.sparte, eu);
   return { handled: o.botErlaubt, gespeichert: id };
 }
 
@@ -414,7 +423,7 @@ export async function handlePolicenAntwort(
 
 async function beantworteEinwilligung(chat: Chat, o: { ja: boolean; waMessageId: string | null; now: Date }): Promise<{ handled: boolean }> {
   const pending = await prisma.leadDocument.findMany({ where: { leadId: chat.leadId, status: "wartet" }, orderBy: { createdAt: "asc" } });
-  const gesundheitAn = policenGesundheitAn();
+  const gesundheitAn = gesundheitErlaubt(chat);
   const { an, person } = await sprecher(chat);
 
   if (!o.ja || !gesundheitAn) {

@@ -4,7 +4,8 @@
 //   - policenGeschickt: für die Bereitlegen-Liste ohne „bisherige Policen“ (regeln.ts ohneBisherigePolicen).
 // Schalter POLICEN_GESUNDHEIT_AN an und der Lead nennt eine Gesundheitssparte (bzw. das Produkt hat Gesundheitsbezug):
 // Die Einladung enthält gleich die ausdrückliche Einwilligung mit zwei Knöpfen (docs/recht-gesundheitsunterlagen.md
-// Abschnitt b), damit vor der Einwilligung nichts geladen und nichts an die KI gegeben werden muss.
+// Abschnitt b), damit vor der Einwilligung nichts geladen und nichts an die KI gegeben werden muss. Minderjährige laut
+// Formular (regeln.ts minderjaehrig, Abschnitt e Punkt 11): wie Schalter aus.
 
 import { prisma } from "@/lib/prisma";
 import type { Ansprache } from "@/lib/ansprache";
@@ -15,6 +16,7 @@ import {
   einladungText,
   gesundheitInText,
   gesundheitInVertraegen,
+  minderjaehrig,
   policenGesundheitAn,
   type Person,
 } from "@/lib/policen/regeln";
@@ -36,10 +38,11 @@ async function einladung(o: { customerId: string; phone: string; an: Ansprache; 
 export async function einladungJetzt(o: { conversationId: string; an: Ansprache; person: Person }): Promise<Einladung | null> {
   const c = await prisma.conversation.findUnique({
     where: { id: o.conversationId },
-    select: { customerId: true, contactPhone: true, qualificationData: true, lead: { select: { source: true, erasedAt: true } } },
+    select: { customerId: true, contactPhone: true, qualificationData: true, lead: { select: { source: true, erasedAt: true, formData: true } } },
   });
   if (!c?.lead || c.lead.erasedAt) return null;
-  const gesundheitAn = policenGesundheitAn();
+  // Minderjährige (laut Formular): wie Schalter aus, keine Einwilligungsfrage zu Gesundheitsunterlagen
+  const gesundheitAn = policenGesundheitAn() && !minderjaehrig(c.lead.formData);
   // Produkt mit Gesundheitsangaben (z. B. PKV, Zahn, BU) und Schalter aus: nicht um Policen bitten
   if (!gesundheitAn && gesundheitInText(c.lead.source)) return null;
   const outbound = await prisma.message.findMany({ where: { conversationId: o.conversationId, direction: "outbound" }, select: { body: true } });
@@ -61,9 +64,12 @@ export async function policenGeschickt(leadId: string | null): Promise<boolean> 
  */
 export async function einladungNachVertraegen(o: { conversationId: string; an: Ansprache; person: Person; vertraegeText: string; anzahl: number }): Promise<Einladung | null> {
   if (o.anzahl <= 0) return null;
-  const c = await prisma.conversation.findUnique({ where: { id: o.conversationId }, select: { customerId: true, contactPhone: true, lead: { select: { source: true, erasedAt: true } } } });
+  const c = await prisma.conversation.findUnique({
+    where: { id: o.conversationId },
+    select: { customerId: true, contactPhone: true, lead: { select: { source: true, erasedAt: true, formData: true } } },
+  });
   if (!c?.lead || c.lead.erasedAt) return null;
-  const gesundheitAn = policenGesundheitAn();
+  const gesundheitAn = policenGesundheitAn() && !minderjaehrig(c.lead.formData);
   if (!gesundheitAn && gesundheitInText(c.lead.source)) return null;
   const outbound = await prisma.message.findMany({ where: { conversationId: o.conversationId, direction: "outbound" }, select: { body: true } });
   if (outbound.some((m) => EINLADUNG_RE.test(m.body ?? ""))) return null;

@@ -36,6 +36,7 @@ import {
   vorabEinordnung,
   widerrufVerdacht,
   EINWILLIGUNG_VERSION,
+  minderjaehrig,
 } from "@/lib/policen/regeln";
 import { datenschutzPolicenAbschnitte } from "@/lib/policen/datenschutz-text";
 import { angabenOhneGesundheit, ohneGesundheitsangaben } from "@/lib/gesundheitsdaten";
@@ -155,13 +156,14 @@ describe("Texte an den Lead", () => {
       [
         "Vor dem Termin können Sie uns Fotos oder PDFs Ihrer bisherigen Versicherungen hier schicken. Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu Ihrer Gesundheit enthalten.",
         "Sind Sie einverstanden, dass Herr Kannapinn (Kannapinn Versicherungen) Ihre Unterlagen einschließlich dieser Gesundheitsangaben speichert und zur Vorbereitung Ihres Termins nutzt? Eine KI ordnet jede Unterlage einer Versicherungsart zu, Gesundheitsangaben werden nicht ausgewertet. Dafür setzen wir Dienstleister ein, auch in den USA. Sehen kann die Unterlagen nur Ihr Berater.",
-        "Unterlagen von mitversicherten Personen schicken Sie bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Sie können jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
+        "Zustimmen können Sie ab 18 Jahren. Unterlagen von mitversicherten Personen schicken Sie bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Sie können jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
         "Mehr dazu: https://termine.example.de/datenschutz/policen?k=abcDEF123",
       ].join("\n\n"),
     );
     const du = einwilligungText("du", vOle);
     expect(du).toContain("Bist du einverstanden, dass Ole (Kannapinn Versicherungen) deine Unterlagen einschließlich dieser Gesundheitsangaben speichert");
     expect(du).toContain("Du kannst jederzeit widerrufen");
+    expect(du).toContain("Zustimmen kannst du ab 18 Jahren.");
     expect(EINWILLIGUNG_RE.test(du)).toBe(true);
     expect(einwilligungText("sie", vHerr, { nachDatei: true })).toMatch(/^Danke für Ihre Unterlage\. Unterlagen zur Kranken-/);
     // Firma gleich Name: keine Klammer; ohne Link keine Zeile „Mehr dazu“
@@ -174,16 +176,48 @@ describe("Texte an den Lead", () => {
     }
     const inv = einladungMitEinwilligung("sie", vHerr);
     expect(inv.buttons.map((b) => b.title)).toEqual([KNOPF_JA, KNOPF_NEIN]);
-    expect(EINWILLIGUNG_VERSION).toMatch(/^2026-11-17/);
+    expect(EINWILLIGUNG_VERSION).toBe("2026-11-17.3");
     // WhatsApp-Knöpfe: höchstens 20 Zeichen
     expect(KNOPF_JA.length).toBeLessThanOrEqual(20);
     expect(KNOPF_NEIN.length).toBeLessThanOrEqual(20);
+  });
+
+  it("Langfassung: EU-Verarbeitung der KI nur, wenn der EU-Endpunkt eingerichtet ist; Altersgrenze; Datei vor der Einwilligung nicht gespeichert", () => {
+    const v = { name: "Ole Kannapinn", firma: "Kannapinn Versicherungen", anschrift: "Lorenzstraße 58, 12209 Berlin", telefon: "030 123", email: "ole@example.de" };
+    const text = (kiEu: boolean) => datenschutzPolicenAbschnitte("sie", v, { kiEu }).map((b) => `${b.ueberschrift}: ${b.text}`).join("\n");
+    expect(text(true)).toContain("Anthropic für die KI-Zuordnung (Claude, verarbeitet in einem Rechenzentrum in der EU)");
+    expect(text(true)).toContain("Die KI-Zuordnung der Unterlagen findet in der EU statt.");
+    expect(text(false)).not.toContain("in der EU statt");
+    expect(text(false)).toContain("Anthropic für die KI-Zuordnung. Versicherer");
+    expect(text(false)).toContain("Alter: Die Einwilligung können Sie ab 18 Jahren geben.");
+    expect(text(false)).toContain("Eine Datei, die Gesundheitsangaben enthalten kann und vor Ihrer Einwilligung kommt, wird nicht gespeichert");
+    for (const an of ["sie", "du"] as const) for (const kiEu of [false, true])
+      for (const b of datenschutzPolicenAbschnitte(an, v, { kiEu })) expect(`${b.ueberschrift} ${b.text}`).not.toMatch(/[–—]|Garantie/);
   });
 
   it("keine Gedankenstriche, Du-Fassung ohne Sie, Sie-Fassung ohne du", () => {
     for (const t of [...alle("sie"), ...alle("du")]) expect(t).not.toMatch(/[–—]/);
     for (const t of alle("du")) expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?n?)\b/);
     for (const t of alle("sie")) expect(t).not.toMatch(/\b(du|dir|dein\w*)\b/i);
+  });
+});
+
+describe("Minderjährige (Abschnitt e, Punkt 11)", () => {
+  const jetzt = new Date("2026-11-17T12:00:00Z");
+  it("erkennt ein Geburtsdatum unter 18 Jahren, sonst nicht", () => {
+    expect(minderjaehrig([{ label: "Geburtsdatum", value: "18.11.2008" }], jetzt)).toBe(true);
+    expect(minderjaehrig([{ label: "Geburtsdatum", value: "17.11.2008" }], jetzt)).toBe(false);
+    expect(minderjaehrig([{ label: "Geburtsdatum", value: "2010-03-01" }], jetzt)).toBe(true);
+    expect(minderjaehrig([{ label: "Geburtsdatum", value: "14.05.1978" }], jetzt)).toBe(false);
+    expect(minderjaehrig([{ label: "Alter", value: "17" }], jetzt)).toBe(true);
+    expect(minderjaehrig([{ label: "Alter", value: "42" }], jetzt)).toBe(false);
+  });
+  it("Tier, Kind und Unbekanntes zählen nicht", () => {
+    expect(minderjaehrig([{ label: "Geburtsjahr (Tier)", value: "2021" }], jetzt)).toBe(false);
+    expect(minderjaehrig([{ label: "Geburtsdatum Kind", value: "01.01.2020" }], jetzt)).toBe(false);
+    expect(minderjaehrig([{ label: "Geburtsdatum", value: "unbekannt" }], jetzt)).toBe(false);
+    expect(minderjaehrig(null, jetzt)).toBe(false);
+    expect(minderjaehrig({ Geburtsdatum: "01.01.2015" }, jetzt)).toBe(false);
   });
 });
 
