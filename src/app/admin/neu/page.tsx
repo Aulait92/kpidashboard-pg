@@ -7,12 +7,12 @@ import { HEUTE_FILTERS, berlinHour, greeting, summary } from "@/lib/admin-heute"
 import { ladeHeuteSeite } from "@/lib/admin-heute-laden";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
-export const metadata = { title: "Heute | performancegrowth Admin" };
+export const metadata = { title: "Mein Tag | performancegrowth Admin" };
 
-// Heute im neuen Admin: alle Aufgaben und Freigaben aus allen Bereichen mit Schnellknöpfen, daneben Vertrieb
+// Mein Tag (früher Heute) im neuen Admin: alle Aufgaben und Freigaben aus allen Bereichen mit Schnellknöpfen, daneben Vertrieb
 // (Termine, Anfragen, Pipeline), neue Buchungen, Hochrechnung und „Läuft von allein“.
 // Dieselben Bausteine, Daten und Server Actions wie /admin/heute (components/admin/heute-*, app/admin/heute/actions.ts).
-// Die Aufgabenliste (früher Reiter „Aufgaben“) liegt unter Vertrieb → Aufgaben.
+// Die Aufgabenliste (früher Reiter „Aufgaben“) liegt unter Mein Tag → Aufgaben (/admin/neu/vertrieb/aufgaben).
 const LISTE = [
   "heute-list--liste-braucht-sie-aus-allen-bereichen-mit",
   // Schnellknöpfe in den Zeilen (components/admin/heute-list.tsx)

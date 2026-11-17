@@ -13,7 +13,7 @@ export default async function Page() {
   await requireAuth();
   const d = await loadLebenszyklus();
   return (
-    <Seite titel="Zahlen" reiter="zahlen" breit>
+    <Seite titel="Geld" reiter="geld" breit>
       <LebenszyklusAnsicht
         d={d}
         funktionen={{

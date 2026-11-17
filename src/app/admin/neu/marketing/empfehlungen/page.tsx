@@ -14,7 +14,7 @@ export default async function Page() {
   await requireAuth();
   return (
     <Seite
-      titel="Marketing"
+      titel="Verkaufen"
       reiter="marketing"
       aktionen={
         <ButtonLink href="/admin/einstellungen/empfehlungen" variant="ghost" icon={Settings}>

@@ -61,8 +61,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
 
   return (
     <Seite
-      titel="Leads & Kampagnen"
-      reiter="leads"
+      titel="Liefern"
+      reiter="liefern"
       breit
       aktionen={
         <span data-funktion="actions-savesubscriptionaction--bezug-anlegen-bearbeiten-kunde-produkt-menge">

@@ -54,7 +54,7 @@ export default async function TerminePage({ searchParams }: { searchParams: Prom
   const einstellungen = "/admin/neu/einstellungen/buchungsseiten";
 
   return (
-    <Seite titel="Vertrieb" reiter="vertrieb" aktionen={<TerminBuchen offen={!!buchen} key={buchen ?? "zu"} />}>
+    <Seite titel="Verkaufen" reiter="verkaufen" aktionen={<TerminBuchen offen={!!buchen} key={buchen ?? "zu"} />}>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)]">
         <Card>
           <CardHeader title="Kommende Termine" count={kommend.length} icon={CalendarDays} />

@@ -194,7 +194,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
   const href = (k: string) => (k ? `/admin/neu/kunden?filter=${k}` : "/admin/neu/kunden");
 
   return (
-    <Seite titel="Kunden" reiter="kunden" untertitel={`${kunden.length} Kunden · ${eur(mrrAktiv)} Monatsumsatz aktiv`}>
+    <Seite titel="Betreuen" reiter="betreuen" untertitel={`${kunden.length} Kunden · ${eur(mrrAktiv)} Monatsumsatz aktiv`}>
       <div className="space-y-4">
         <div data-funktion="page-filters--filter-alle-zahlung-offen-onboarding-pausiert page-filters--filter-intern-test-interne-konten-und-testkunden actions-dragcustomer--kunden-pipeline-vertrag-onboarding-test-aktiv">
           <Chips

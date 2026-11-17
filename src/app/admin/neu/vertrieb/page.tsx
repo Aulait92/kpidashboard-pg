@@ -79,8 +79,8 @@ export default async function PipelinePage() {
   const importHref = neuerPfad("/admin/vertrieb/import", { nurFertige: false }) ?? "/admin/vertrieb/import";
   return (
     <Seite
-      titel="Vertrieb"
-      reiter="vertrieb"
+      titel="Verkaufen"
+      reiter="verkaufen"
       breit
       aktionen={
         <>

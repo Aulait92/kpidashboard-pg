@@ -11,7 +11,7 @@ import { loadVertriebZahlen } from "@/lib/vertrieb-zahlen";
 import { loadZahlen } from "@/lib/zahlen";
 import { parseSicht } from "@/lib/zahlen-sicht";
 
-export const metadata = { title: "Zahlen | performancegrowth Admin" };
+export const metadata = { title: "Geld | performancegrowth Admin" };
 
 // Zahlen → Übersicht: Kennzahlen-Kacheln, Sicht (Kerngeschäft/Gesamt), Investoren-Ansicht und -Update wie /admin/zahlen.
 // EINE Reiterebene (Ole, 16.11.2026): Die früheren Reiter in der Seite (Wachstum, Kunden, …, BWA) stehen hier als
@@ -25,7 +25,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ z
   const [data, produkte, vertrieb, bwa] = await Promise.all([loadZahlen(new Date(), parseSicht(sicht)), loadProdukte(zeitraum), loadVertriebZahlen(vzeitraum), loadBwa(bwaParam)]);
 
   return (
-    <Seite titel="Zahlen" reiter="zahlen" breit>
+    <Seite titel="Geld" reiter="geld" breit>
       <ZahlenView
         data={data}
         produkte={produkte}
