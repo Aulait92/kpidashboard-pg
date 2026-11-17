@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://edge.sitecorecloud.io/zurichinsur2cd7-zwpde6f08-prodd5db-4bb2/media/project/zurich-headless/germany/br/documents/verbraucherinformationen/871331182_pflegerente-lauf-beitragszahlung_verbraucherinformationen_2401.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -37,6 +36,7 @@
     "Pflegerente der IDEAL Lebensversicherung a.G., an der Zurich Deutscher Herold einen Teil zeichnet (Verbraucherinformation Stand 01/2024, AB-IPR-2022A). Produktseiten auf zurich.de für automatische Abrufe gesperrt; Aktualität bitte prüfen.",
     "Rentenhöhe je Pflegegrad bei Abschluss festgelegt: PG 2 und 3 50 bis 4.000 €, PG 4 und 5 250 bis 4.000 € im Monat; Pflegegrad 1 nicht versichert. Leistung unabhängig von der Pflegeform (nicht nach ambulant oder stationär unterschieden).",
     "Beitragsbefreiung ab PG 2 wählbar; nach 12 Monaten Rente in PG 4 oder 5 beitragsfrei. Dynamik: jährlich 10 % der Anfangsrente oder 1 bis 5 %. Einmalleistung, Wartezeit und eigene Demenz-Regel nicht gefunden.",
-    "Seiten Pflegezusatzversicherung und PflegeStarter (Krankenversicherung über den Partner DKV) gesperrt und nicht ausgewertet."
+    "Seiten Pflegezusatzversicherung und PflegeStarter (Krankenversicherung über den Partner DKV) gesperrt und nicht ausgewertet.",
+    "Geprüft am 17.11.2026 an der Verbraucherinformation PflegeRente (Stand 01/2024, PDF); ob diese Fassung noch aktuell angeboten wird, ist offen (Produktseite für Abrufe gesperrt)."
   ]
 }

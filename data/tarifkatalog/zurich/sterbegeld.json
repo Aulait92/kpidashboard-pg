@@ -20,8 +20,7 @@
         "ohne-gp": "ja"
       },
       "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/einfache-sprache/sterbegeldversicherung_db_2025_12.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -32,6 +31,7 @@
     "Versicherer laut Produktinformation (12/2025): IDEAL Lebensversicherung a.G. und Zurich Deutscher Herold Lebensversicherung AG gemeinsam. Laufender Beitrag oder Einmalbeitrag.",
     "Wartezeit: bei laufendem Beitrag in den ersten 9 Monaten nur Beitragsrückzahlung, vom 10. bis 18. Monat anteilige Leistung; gegen Einmalbeitrag 6 Monate. Bei Unfalltod sofort die volle Summe (keine doppelte Leistung).",
     "Summe bis 20.000 € und „ohne Gesundheitsprüfung“ nur aus dem Suchauszug der Produktseite (Seite für automatische Abrufe gesperrt); bitte prüfen. Beitragszahlung bis (Endalter) nicht genannt.",
-    "Rückholung bei Tod im Ausland bis 5.200 € (Europa) bzw. 10.300 € (außerhalb), Mehrkosten des Partners bis 2.560 €."
+    "Rückholung bei Tod im Ausland bis 5.200 € (Europa) bzw. 10.300 € (außerhalb), Mehrkosten des Partners bis 2.560 €.",
+    "Geprüft am 17.11.2026 an der Produktinformation (12/2025, PDF); Summe bis 20.000 € und Abschluss ohne Gesundheitsprüfung stehen laut Suchindex auf der Produktseite zurich.de (Seite selbst für Abrufe gesperrt)."
   ]
 }
