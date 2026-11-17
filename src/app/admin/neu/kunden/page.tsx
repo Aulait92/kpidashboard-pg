@@ -3,6 +3,8 @@ import { connection } from "next/server";
 import { ChevronRight, Users } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
+import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
 import { Chips } from "@/components/admin-neu/kunden/chips";
 import { packageLabel, testKennung } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
@@ -57,7 +59,9 @@ type Zeile = {
 // Kunden › Liste: alle Kunden mit Status, Paket, Leads, WhatsApp und Hinweis; Klick öffnet die Kundenakte.
 export default async function KundenListe({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   await connection();
-  await requireAuth();
+  const session = await requireAuth();
+  // Startseite der Rolle Betreuen (Admin v2): oben „Braucht Aufmerksamkeit“, parallel zur Kundenliste geladen
+  const punkteLaden = punkteDerRolle(session.userId, "betreuen");
   const roh = (await searchParams).filter ?? "";
   const filter: FilterKey = FILTER.some((f) => f.key === roh) ? (roh as FilterKey) : "";
 
@@ -195,6 +199,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
 
   return (
     <Seite titel="Betreuen" reiter="betreuen" untertitel={`${kunden.length} Kunden · ${eur(mrrAktiv)} Monatsumsatz aktiv`}>
+      <Aufmerksamkeit punkte={await punkteLaden} />
       <div className="space-y-4">
         <div data-funktion="page-filters--filter-alle-zahlung-offen-onboarding-pausiert page-filters--filter-intern-test-interne-konten-und-testkunden actions-dragcustomer--kunden-pipeline-vertrag-onboarding-test-aktiv">
           <Chips

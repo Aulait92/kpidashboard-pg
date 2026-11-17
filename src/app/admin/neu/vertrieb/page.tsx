@@ -4,6 +4,8 @@ import { Clock, Plus, Upload } from "lucide-react";
 import { Badge, ButtonLink } from "@/components/ui";
 import { Kanban, type KanbanCard, type KanbanColumn } from "@/components/vertrieb/kanban";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
+import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
 import { KONTAKTE, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { dragStage } from "@/app/admin/vertrieb/actions";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
@@ -16,13 +18,13 @@ import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Pipeline | performancegrowth Admin" };
 
-// Vertrieb → Pipeline: Akquise-Board wie /admin/vertrieb/pipeline (gleiche Daten aus lib/vertrieb/pipeline.ts,
+// Verkaufen → Pipeline (Startseite der Rolle, Admin v2: oben „Braucht Aufmerksamkeit“): Akquise-Board wie /admin/vertrieb/pipeline (gleiche Daten aus lib/vertrieb/pipeline.ts,
 // gleiche Kanban-Komponente und Server Action dragStage, „Verloren“ fragt nach dem Grund).
 // Karte: Name, Ort, Cold-Mail-Stand, LinkedIn, Verlustgrund, nächste Aufgabe. Antippen öffnet die Kontaktakte.
 export default async function PipelinePage() {
   await connection();
-  await requireAuth();
-  const { countOf, contacts } = await ladePipeline();
+  const session = await requireAuth();
+  const [{ countOf, contacts }, punkte] = await Promise.all([ladePipeline(), punkteDerRolle(session.userId, "verkaufen")]);
 
   const columns: KanbanColumn[] = STAGES.map((s) => {
     const count = countOf(s.id);
@@ -93,6 +95,7 @@ export default async function PipelinePage() {
         </>
       }
     >
+      <Aufmerksamkeit punkte={punkte} />
       <div data-funktion="actions-dragstage--akquise-pipeline-per-drag-drop kanban--beim-verschieben-auf-verloren-grund-abfragen">
         <Kanban columns={columns} cards={cards} move={dragStage} reasonColumn="VERLOREN" reasons={LOSS_REASONS} topOffset={230} />
       </div>

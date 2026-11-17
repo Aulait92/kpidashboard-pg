@@ -3,6 +3,8 @@ import { ArrowRight } from "lucide-react";
 import { ZahlenView } from "@/components/admin/zahlen-view";
 import { ButtonLink } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
+import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
+import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
 import { KundenNachKanal } from "@/components/admin-neu/zahlen/kunden-nach-kanal";
 import { loadBwa } from "@/lib/bwa";
 import { loadProdukte } from "@/lib/produkte";
@@ -20,12 +22,20 @@ export const metadata = { title: "Geld | performancegrowth Admin" };
 // Einrichtungsgebühren und „Kunden ohne Betreuungsgebühr“ stehen unter Umsatz & Buchungen.
 export default async function Page({ searchParams }: { searchParams: Promise<{ zeitraum?: string; vzeitraum?: string; bwa?: string; sicht?: string }> }) {
   await connection();
-  await requireAuth();
+  const session = await requireAuth();
   const { zeitraum, vzeitraum, bwa: bwaParam, sicht } = await searchParams;
-  const [data, produkte, vertrieb, bwa] = await Promise.all([loadZahlen(new Date(), parseSicht(sicht)), loadProdukte(zeitraum), loadVertriebZahlen(vzeitraum), loadBwa(bwaParam)]);
+  const [data, produkte, vertrieb, bwa, punkte] = await Promise.all([
+    loadZahlen(new Date(), parseSicht(sicht)),
+    loadProdukte(zeitraum),
+    loadVertriebZahlen(vzeitraum),
+    loadBwa(bwaParam),
+    punkteDerRolle(session.userId, "geld"),
+  ]);
 
   return (
     <Seite titel="Geld" reiter="geld" breit>
+      {/* Startseite der Rolle Geld (Admin v2): oben „Braucht Aufmerksamkeit“ (Zahlung offen, Bank, Steuernummer) */}
+      <Aufmerksamkeit punkte={punkte} />
       <ZahlenView
         data={data}
         produkte={produkte}
