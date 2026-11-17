@@ -201,6 +201,18 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "schon_abgeschlossen",
+    description:
+      "Nutzen, wenn der Lead schreibt, dass er den Vertrag bzw. das Angebot des Beraters schon abgeschlossen oder unterschrieben hat (z. B. „Habe den Antrag unterschrieben“, „Ich habe schon abgeschlossen“). Nicht, wenn er woanders abgeschlossen hat (dann handover_to_advisor). Der Berater wird benachrichtigt und trägt den Abschluss selbst ein; das Nachfassen stoppt. Trage nichts ein und versprich nichts zu Police oder Unterlagen.",
+    input_schema: {
+      type: "object",
+      properties: {
+        aussage: { type: "string", description: "Was der Lead geschrieben hat, kurz (für den Berater), z. B. „Antrag gestern unterschrieben“." },
+      },
+      required: ["aussage"],
+    },
+  },
+  {
     name: "schedule_followup",
     description:
       "Wiedervorlage für dich selbst: nutzen, wenn der Lead bittet, sich später zu melden (z. B. „Melden Sie sich morgen“, „nächste Woche passt besser“, „heute Abend“). Du meldest dich dann automatisch zur genannten Zeit per WhatsApp. Der Berater sieht die Wiedervorlage im Kontakt.",
@@ -424,6 +436,7 @@ export function buildSystemPrompt(
         ? "- Termine nur per Video (der Berater zeigt die Angebote am Bildschirm). Telefon nur, wenn der Lead Video ausdrücklich ablehnt oder nicht kann."
         : "- Empfiehl Video zuerst (der Berater zeigt die Angebote am Bildschirm). Möchte der Lead lieber telefonieren, ist das in Ordnung.",
       "- Bei Telefonterminen ruft der Berater auf dieser Nummer an, sofern keine andere bekannt ist.",
+      "- Schreibt der Lead, dass er das Angebot schon abgeschlossen bzw. den Antrag unterschrieben hat, nutze schon_abgeschlossen und frag nicht weiter nach.",
       "- Bittet der Lead, sich später zu melden (morgen, nächste Woche, heute Abend …), lege mit schedule_followup eine Wiedervorlage für dich an und bestätige ihm kurz, wann du dich meldest. Bedränge ihn nicht weiter.",
       "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: sag, dass du nicht zu Tarifen berätst, und biete einen Termin an („Das klärt " + state.advisorName + " im Termin.“).",
       GESUNDHEITS_REGEL,
@@ -1096,6 +1109,17 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         await flagAttention(conversation.id, grund);
         content =
           "Übergabe erfolgt, der Berater ist benachrichtigt. Sag dem Lead kurz und freundlich, dass sich der Berater persönlich bei ihm meldet. Mach keine Zusagen zu Preisen oder Tarifen.";
+      } else if (tu.name === "schon_abgeschlossen") {
+        const aussage = typeof (tu.input as { aussage?: unknown }).aussage === "string" ? (tu.input as { aussage: string }).aussage : null;
+        await persistInternal(conversation.id, "abschluss_gemeldet", tu.input);
+        const r = conversation.leadId
+          ? await (await import("@/lib/abschluss-server")).meldeAbschlussVomLead(conversation.leadId, { conversationId: conversation.id, aussage }).catch((e) => {
+              console.error("[whatsapp bot] Abschluss gemeldet", e);
+              return "kein_lead" as const;
+            })
+          : "kein_lead";
+        if (r === "kein_lead") await flagAttention(conversation.id, `Meldet Abschluss${aussage ? `: „${aussage.slice(0, 80)}“` : ""}`);
+        content = `${person.nom} ist informiert und meldet sich bei Bedarf. Bedanke dich kurz und herzlich für die Rückmeldung (ein bis zwei Sätze, keine Frage). Sag nicht, dass etwas eingetragen oder bestätigt ist, und mach keine Zusagen zu Police, Unterlagen oder Beiträgen.`;
       } else if (tu.name === "schedule_followup") {
         const input = tu.input as { zeitpunkt?: unknown; anlass?: unknown };
         const at = typeof input.zeitpunkt === "string" ? parseBerlinTime(input.zeitpunkt) : null;

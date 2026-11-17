@@ -291,8 +291,10 @@ export async function startSequence(leadId: string, kind: SequenceKind, now = ne
  * ansteht oder der Lead abgeschlossen ist.
  */
 export async function restartSilentSequence(leadId: string, now = new Date()) {
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true, status: true, stornoState: true, waUnavailableAt: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, erasedAt: true, status: true, stornoState: true, waUnavailableAt: true, abschlussGemeldetAt: true } });
   if (!lead || lead.erasedAt || lead.stornoState) return null;
+  // Lead hat im Chat gemeldet, dass er abgeschlossen hat (lib/abschluss-server.ts): kein Nachfassen, der Vermittler trägt ein
+  if (lead.abschlussGemeldetAt) return null;
   // Kein WhatsApp (lib/whatsapp/kein-whatsapp.ts): kein Nachfassen im Chat, der Vermittler ruft an
   if (lead.waUnavailableAt) return null;
   if (DONE_STATUSES.has((lead.status ?? "").trim().toLowerCase())) return null;
@@ -378,9 +380,10 @@ export function topicOf(formData: Prisma.JsonValue | null, source: string | null
 export async function stopReasonFor(seq: { leadId: string; customerId: string; startedAt: Date; kind?: string }, now = new Date()): Promise<string | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: seq.leadId },
-    select: { status: true, stornoState: true, erasedAt: true, phone: true },
+    select: { status: true, stornoState: true, erasedAt: true, phone: true, abschlussGemeldetAt: true },
   });
   if (!lead || lead.erasedAt) return "Lead gelöscht";
+  if (lead.abschlussGemeldetAt && lead.abschlussGemeldetAt.getTime() >= seq.startedAt.getTime()) return "Lead meldet: schon abgeschlossen";
   if (lead.stornoState) return "Lead reklamiert";
   const s = (lead.status ?? "").trim().toLowerCase();
   if (DONE_STATUSES.has(s)) return `Phase: ${lead.status}`;

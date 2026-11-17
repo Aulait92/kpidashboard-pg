@@ -5,7 +5,6 @@ import { LEAD_BOOKED_EVENT, openLeadBooking } from "@/components/lead-booking";
 import { terminArtLabel } from "@/lib/termin-art";
 
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
-import { useProvisionRates } from "@/components/provision-context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -48,7 +47,8 @@ import { Button, ButtonLink, Card, CardHeader, EmptyState } from "@/components/u
 import { ActionSheet, TapRow, type SheetAction } from "@/components/ui/sheet";
 import type { InboxData } from "@/lib/inbox";
 import { CallOutcomeSheet, useCallReturn, type CallOutcomeTarget } from "@/components/call-outcome";
-import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { abschlussEinTipp } from "@/components/abschluss-nachher";
+import { BeitragFehltKarte } from "@/components/beitrag-fehlt-karte";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
 import { attemptMessage, emitNotReachedOffer, LostSheet, NextStepSheet } from "@/components/next-step";
 import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
@@ -94,7 +94,6 @@ type CallItem = {
 
 type SheetState =
   | { kind: "actions"; title: string; message?: string; actions: SheetAction[] }
-  | { kind: "win"; name: string; source: string | null; save: (value: number | null, sparte: string | null) => void }
   | { kind: "date"; title: string; save: (date: string, time?: string) => void }
   | { kind: "reschedule"; appointmentId: string }
   | { kind: "lost"; key: string; leadId: string; name: string; appointmentId?: string | null }
@@ -147,7 +146,6 @@ export function TodayInbox({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<SheetState>(null);
   const [showAll, setShowAll] = useState(false);
-  const provisionRates = useProvisionRates();
   const hide = (key: string) => setHidden((h) => new Set(h).add(key));
   const unhide = (key: string) =>
     setHidden((h) => {
@@ -186,11 +184,8 @@ export function TodayInbox({
     });
   }
 
-  // Fester Provisionsbetrag (Regelart „fixed“): ohne Eingabe direkt speichern.
-  const askWin = (name: string, source: string | null, save: (value: number | null, sparte: string | null) => void) => {
-    if (!asksCloseValue(source, provisionRates)) return save(null, null);
-    setSheet({ kind: "win", name, source, save });
-  };
+  // Abschluss mit einem Tipp (P4): sofort speichern, danach Blatt mit Beitrag, Provision und Glückwunsch (abschluss-nachher)
+  const askWin = (leadId: string, name: string, save: (value: number | null, sparte: string | null) => void) => abschlussEinTipp(leadId, name, save);
 
   const appointments = data.appointments.filter((a) => !hidden.has(`a:${a.id}`));
   const outcomes = data.outcomes.filter((o) => !hidden.has(`o:${o.id}`));
@@ -326,7 +321,7 @@ export function TodayInbox({
         label: "Abschluss",
         icon: Trophy,
         onSelect: () =>
-          setTimeout(() => askWin(c.name, c.source, (v, sp) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v, sp))), 0),
+          setTimeout(() => askWin(c.leadId, c.name, (v, sp) => run(c.key, `${c.name}: Abschluss`, () => callbackOutcomeResult(c.leadId, "won", v, sp))), 0),
       },
       ...(c.kind === "followup" && c.erledigtOk
         ? [{ label: "Erledigt, kein weiterer Anruf nötig", icon: Check, onSelect: () => run(c.key, `${c.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(c.leadId)) }]
@@ -520,7 +515,7 @@ export function TodayInbox({
                       label: "Abschluss",
                       icon: Trophy,
                       onSelect: () =>
-                        setTimeout(() => askWin(o.name, o.source, (v, sp) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp))), 0),
+                        setTimeout(() => askWin(o.leadId, o.name, (v, sp) => run(key, `${o.name}: Abschluss`, () => appointmentOutcomeResult(o.id, "closed", v, sp))), 0),
                     },
                     { label: "Nicht erschienen", icon: UserX, onSelect: () => run(key, `${o.name}: steht jetzt bei Anrufen`, () => appointmentOutcomeResult(o.id, "no_show", null)) },
                     { label: "Verloren", icon: ThumbsDown, tone: "danger", onSelect: () => setTimeout(() => setSheet({ kind: "lost", key, leadId: o.leadId, name: o.name, appointmentId: o.id }), 0) },
@@ -604,6 +599,9 @@ export function TodayInbox({
           ) : null}
         </Card>
       ) : null}
+
+      {/* Abschluss mit einem Tipp (P4): typische Beiträge vom Vortag gesammelt ergänzen */}
+      {data.beitragFehlt?.length ? <BeitragFehltKarte items={data.beitragFehlt} /> : null}
 
       {data.upcoming.length > 0 ? (
         <UpcomingCard
@@ -733,18 +731,6 @@ export function TodayInbox({
         appointmentId={sheet?.kind === "reschedule" ? sheet.appointmentId : null}
         open={sheet?.kind === "reschedule"}
         onClose={() => setSheet(null)}
-      />
-      <AbschlussSheet
-        open={sheet?.kind === "win"}
-        title={sheet?.kind === "win" ? `Abschluss mit ${sheet.name}` : ""}
-        source={sheet?.kind === "win" ? sheet.source : null}
-        onClose={() => setSheet(null)}
-        onSave={(v, sp) => {
-          if (sheet?.kind !== "win") return;
-          const save = sheet.save;
-          setSheet(null);
-          save(v, sp);
-        }}
       />
     </div>
   );

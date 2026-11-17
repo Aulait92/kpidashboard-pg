@@ -2,7 +2,6 @@
 
 import { berlinTodayIso } from "@/lib/offer-pricing";
 import { LEAD_MAIL_EVENT } from "@/components/lead-mail";
-import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -35,7 +34,7 @@ import { PHASE_DOT, findPhaseIn, statusToneClass, type LeadStatus, type Pipeline
 import { formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CallOutcomeSheet, useCallReturn, useLeadResult } from "@/components/call-outcome";
-import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { abschlussEinTipp } from "@/components/abschluss-nachher";
 import { emitLeadAction, LostSheet, useStepDone } from "@/components/next-step";
 
 // Kopf des Lead-Details: Status antippen → Phase wählen; darunter eine Reihe
@@ -92,20 +91,18 @@ export function LeadHeaderActions(p: Props) {
   const router = useRouter();
   const toast = useToast();
   const [, start] = useTransition();
-  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | "termin" | "chat" | null>(null);
+  const [open, setOpen] = useState<"phase" | "more" | "followup" | "storno" | "erase" | "lost" | "termin" | "chat" | null>(null);
   const { done: stepDone } = useStepDone();
   const [erasing, setErasing] = useState(false);
   const [note, setNote] = useState(p.followUpNote ?? "");
   const [date, setDate] = useState("");
   const phase = findPhaseIn(p.phases, p.status);
   const [afterCall, setAfterCall] = useState(false);
-  const provisionRates = useProvisionRates();
   const markCall = useCallReturn(() => setAfterCall(true));
 
-  // Fester Provisionsbetrag (Regelart „fixed“): Abschluss ohne Eingabe direkt speichern.
+  // Abschluss mit einem Tipp (P4): sofort speichern, Beitrag und Glückwunsch danach im Blatt (abschluss-nachher)
   function askWin() {
-    if (asksCloseValue(p.source, provisionRates)) setTimeout(() => setOpen("win"), 0);
-    else setStatus("Abschluss" as LeadStatus, "Abschluss", null);
+    abschlussEinTipp(p.leadId, p.name ?? "Kontakt", (v, sp) => setStatus("Abschluss" as LeadStatus, "Abschluss", v, undefined, sp));
   }
 
   function setStatus(status: LeadStatus, label: string, closeValue?: number | null, disqualifyReason?: string, sparte?: string | null) {
@@ -416,16 +413,6 @@ export function LeadHeaderActions(p: Props) {
         />
       ) : null}
 
-      <AbschlussSheet
-        open={open === "win"}
-        title="Abschluss"
-        source={p.source}
-        onClose={() => setOpen(null)}
-        onSave={(v, sp) => {
-          setOpen(null);
-          setStatus("Abschluss" as LeadStatus, "Abschluss", v, undefined, sp);
-        }}
-      />
 
       {open === "termin" ? (
         <TerminSheet leadId={p.leadId} bookingSlug={p.bookingSlug} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); router.refresh(); emitLeadAction(p.leadId); }} />

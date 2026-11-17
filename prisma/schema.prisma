@@ -805,6 +805,13 @@ model Lead {
   contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
   crossSellRemindedAt DateTime?
+  // Aufgaben nach dem Abschluss, die auf die Wiedervorlage warten (lib/lead-aufgaben.ts, P7): keine verdrängt die andere
+  tasks               LeadTask[]
+  // Abschluss erkennen (P4, Ole 17.11.2026, lib/abschluss-server.ts): Vorabend-Push „Hat Frau Becker abgeschlossen?“
+  // zuletzt gesendet (je Lead höchstens einmal am Tag) und der Lead hat im Chat gesagt, er habe abgeschlossen (Werkzeug
+  // schon_abgeschlossen: Vermittler benachrichtigt, Nachfassen gestoppt, Abschluss trägt nur der Vermittler ein)
+  abschlussFrageAt    DateTime?
+  abschlussGemeldetAt DateTime?
   // Aufgabe „Police da und erste Zahlung erfolgt?“ gestellt (einmal je Lead)
   policeRemindedAt    DateTime?
   // Kunde mit Abschluss im Bestand (ExistingCustomer.leadId)
@@ -2834,6 +2841,33 @@ model LeadSequence {
 // „Heute“ der Admin-Oberfläche: Punkte, die ein Admin abgehakt oder auf später
 // gelegt hat (Schlüssel wie in lib/admin-heute.ts). Bis `until` ausgeblendet,
 // danach erscheinen sie wieder, falls das Problem noch besteht.
+// Aufgaben am Lead nach dem Abschluss (P7, Ole 17.11.2026, lib/lead-aufgaben.ts): „Police da?“, „Weiteres Produkt anbieten?“,
+// später Willkommen, Unterlagen fehlen, Kündigung (M6). Heute zeigt je Lead eine Wiedervorlage (Lead.followUpAt); ist sie
+// belegt, wartet die Aufgabe und rückt nach, sobald die Wiedervorlage erledigt ist. So verdrängt keine Aufgabe eine andere.
+model LeadTask {
+  id             String    @id @default(cuid())
+  leadId         String
+  customerId     String
+  // police | cross_sell | (M6) willkommen | unterlagen_fehlen | kuendigung …
+  kind           String
+  // Text der Wiedervorlage
+  note           String
+  // frühestens ab dann
+  dueAt          DateTime
+  // wartet | aktiv | entfallen
+  status         String    @default("wartet")
+  // nur aktivieren, solange der Lead in dieser Phase ist (z. B. „Abschluss“); null = immer
+  requiresStatus String?
+  activatedAt    DateTime?
+  endedReason    String?
+  createdAt      DateTime  @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, kind])
+  @@index([status, dueAt])
+}
+
 model AdminDismissal {
   id        String   @id @default(cuid())
   userId    String
@@ -3246,7 +3280,7 @@ model ReviewSettings {
   // Link „Bewertung schreiben“ des Google-Unternehmensprofils
   googleReviewUrl          String?
   // Tage nach dem Abschluss: Zufriedenheitsfrage bzw. Bitte um Empfehlung
-  reviewDelayDays          Int       @default(7)
+  reviewDelayDays          Int       @default(14)
   referralDelayDays        Int       @default(21)
   // Eigene Texte (null = Standard): Anfrage (direkter Draht + Google-Link),
   // Dank bei positiver Antwort, Antwort bei Kritik, Bitte um Empfehlung
@@ -3871,6 +3905,11 @@ model LeadContract {
   // Police als Dokument am Lead
   fileId         String?
   file           LeadFile? @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  // Herkunft des Beitrags (Abschluss mit einem Tipp, Ole 17.11.2026): angebot (aus der Terminvorbereitung) | vermittler
+  // (eingetragen bzw. bestätigt) | standard (typischer Beitrag der Sparte, geschätzt, „≈“). null = Altbestand
+  premiumSource  String?
+  // Einheitlicher Jahresbeitrag netto (PKV und Kranken-Zusatz: Monatsbeitrag × 12; Tarifoptimierung: null)
+  premiumYear    Decimal?  @db.Decimal(12, 2)
   // aktiv | storniert
   status         String    @default("aktiv")
   // Vertrag gekündigt bzw. storniert zum (ab hier kein Bestand mehr); Rückbelastung wird in diesem Monat gebucht
