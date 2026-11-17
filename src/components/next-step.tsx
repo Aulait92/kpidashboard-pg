@@ -576,7 +576,7 @@ export function NextStepSheet({
         open
         title={`Wiedervorlage für ${name}`}
         onClose={() => setStep("pick")}
-        onPick={(date) => run(`${name}: Wiedervorlage am ${fmtDay(date)}`, () => setFollowUpResult(leadId, { date }))}
+        onPick={(date, time) => run(time ? `${name}: Rückruf ${fmtDay(date)} ${time} Uhr` : `${name}: Wiedervorlage am ${fmtDay(date)}`, () => setFollowUpResult(leadId, { date, time }))}
       />
     );
   }
