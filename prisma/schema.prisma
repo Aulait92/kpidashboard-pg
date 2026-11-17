@@ -301,6 +301,10 @@ model Customer {
   brandLogoConfirmedAt           DateTime?
   // Stand der Standard-E-Mail-Vorlagen (lib/mail/vorlagen.ts VORLAGEN_STAND): neue Standards beim nächsten Laden ergänzen
   mailVorlagenStand              Int                       @default(0)
+  // E-Mails in der Customer Journey (Ole, 17.11.2026, docs/plan-mail-vorlagen.md, lib/mail/ablauf.ts): Stufe je Vorlage
+  // (auto | tipp | aus), BCC-Kopie (an, Adresse; null = eigene) und wann „Ja, Mails in meinem Namen senden“ bestätigt
+  // wurde. null = Voreinstellungen laut Plan, BCC aus.
+  mailAblauf                     Json?
   existingCustomers              ExistingCustomer[]
   whatsAppErrorAlerts            WhatsAppErrorAlert[]
   manualRevenues                 ManualRevenue[]
@@ -801,6 +805,8 @@ model Lead {
   documents           LeadDocument[]
   // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
   mails               ContactMail[]
+  // Automatische Vorlagen-Mails: Idempotenz je Vorlage und Anlass, höchstens eine je Tag (lib/mail/vorlagen-mail.ts)
+  mailVersand         LeadMailVersand[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
   contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
@@ -3761,6 +3767,32 @@ model ContactMail {
   @@index([leadId, createdAt])
   @@index([existingCustomerId, createdAt])
   @@index([providerMessageId])
+}
+
+// Vorlagen-Mails an Leads (Ole, 17.11.2026, Paket M0, lib/mail/vorlagen-mail.ts): Reservierung vor dem Versand.
+// Je Lead, Vorlage und Anlass höchstens eine Mail (unique); tagesSchluessel („<leadId>:<YYYY-MM-DD>“, Berlin) nur bei
+// automatischen Mails ohne Pflicht, damit je Lead und Tag höchstens eine rausgeht. Scheitert der Versand, wird die
+// Zeile gelöscht (später neuer Versuch möglich). Keine personenbezogenen Inhalte; gelöscht mit dem Lead.
+model LeadMailVersand {
+  id              String   @id @default(cuid())
+  customerId      String
+  leadId          String
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  // VorlageKey (lib/mail/vorlagen.ts)
+  vorlage         String
+  // Anlass, z. B. Termin-ID oder „anruf-2“
+  anlass          String
+  automatisch     Boolean  @default(true)
+  // Berliner Kalendertag YYYY-MM-DD
+  tag             String
+  tagesSchluessel String?  @unique
+  // reserviert | gesendet
+  status          String   @default("reserviert")
+  contactMailId   String?
+  createdAt       DateTime @default(now())
+
+  @@unique([leadId, vorlage, anlass])
+  @@index([leadId, tag])
 }
 
 // Dokumente am Lead (Ole, 13.11.2026): z. B. das Angebot, das der Vermittler geschickt hat,

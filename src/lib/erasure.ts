@@ -117,6 +117,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.leadHistory.deleteMany({ where: { leadId: { in: ids } } }),
     // Ausgehende E-Mails (Betreff, Text, Empfänger) im Kontaktverlauf
     prisma.contactMail.deleteMany({ where: { leadId: { in: ids } } }),
+    // Reservierungen der Vorlagen-Mails (lib/mail/vorlagen-mail.ts)
+    prisma.leadMailVersand.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.leadFile.deleteMany({ where: { leadId: { in: ids } } }),
     // Unterlagen per WhatsApp (Policen, lib/policen) und deren Einwilligungen
     prisma.leadDocument.deleteMany({ where: { leadId: { in: ids } } }),
