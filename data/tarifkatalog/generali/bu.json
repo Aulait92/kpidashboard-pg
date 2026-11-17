@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente ab 50 % Berufsunfähigkeit",
+    "Vorableistung bei Krebs",
+    "Schutz bei Dienstunfähigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung",
+      "kurz": "BU",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "pflege": "ab Pflegegrad 2",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeits-Police plus extra",
+      "kurz": "plus extra",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "pflege": "ab Pflegegrad 2",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "au": "nach 6 Monaten AU"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/vorsorge-finanzen/berufsunfaehigkeitsversicherung"
+  ],
+  "offen": [
+    "Werte aus den Kernpunkten und FAQ der Produktseite; Bedingungen nicht ausgewertet (auf der Seite nicht verlinkt).",
+    "Verzicht auf Verweisung nur in der Erstprüfung; in der Nachprüfung konkrete Verweisung möglich (Einkommensgrenze 20 %).",
+    "plus extra kombiniert BU und Grundfähigkeit: Rente auch nach 6 Monaten ununterbrochener Krankschreibung oder bei Verlust einer von 13 Grundfähigkeiten. Übrige Werte von der BU übernommen, bitte prüfen.",
+    "AU-Klausel im Grundtarif nicht ausgewiesen.",
+    "Nachversicherung (Anpassungsgarantie): alle 5 Jahre bis 300 € und je Anlass bis 500 € Monatsrente, insgesamt höchstens 2.500 €, bis Alter 50.",
+    "Leistungsdynamik 0,5 bis 3 % wählbar. Stundung: bis 18 Monate (Arbeitslosigkeit u. a.), bis 24 Monate (Elternzeit).",
+    "Umorganisation (Selbstständige) und Infektionsklausel nicht genannt. Starter BU, Young & Life und Schüler-BU (Mein Zukunftsplan) nicht aufgenommen.",
+    "Generali markiert keinen Tarif (empfehlung keine)."
+  ]
+}

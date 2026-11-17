@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung (Generali Deutschland Krankenversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Für Angestellte und Selbstständige",
+    "Arzt, Krankenhaus und Zahn"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenvollversicherung Grundschutz",
+      "kurz": "Grundschutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "bis 70 %",
+        "primaerarzt": "nein, freie Arztwahl"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung/selbststaendige-arbeitnehmer",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenvollversicherung Komfortschutz",
+      "kurz": "Komfortschutz",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "stationaer": "2-Bett, Chefarzt",
+        "zahnersatz": "bis 80 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung/selbststaendige-arbeitnehmer",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenvollversicherung Top-Schutz",
+      "kurz": "Top-Schutz",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "stationaer": "1- oder 2-Bett, Chefarzt",
+        "zahnersatz": "bis 90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung/selbststaendige-arbeitnehmer",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung/selbststaendige-arbeitnehmer",
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung"
+  ],
+  "offen": [
+    "Produktseite nennt je Stufe nur Unterbringung, Chefarzt und Zahnersatz; Tarifnamen, ambulante Erstattung, Selbstbehalt und Beitragsrückerstattung fehlen.",
+    "Grundschutz: Unterbringung im Krankenhaus nicht genannt.",
+    "Eigene Tarife für Beamte, Studenten und Auszubildende sowie Ärzte nicht aufgenommen. Krankentagegeld und Pflegepflicht als Ergänzung angeboten.",
+    "Generali markiert keine Stufe; Komfortschutz als mittlere Stufe."
+  ]
+}

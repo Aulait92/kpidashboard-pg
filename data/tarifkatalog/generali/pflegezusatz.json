@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung PflegeBahr und PflegePlus",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Pflegegeld je Monat",
+    "Leistung in allen Pflegegraden"
+  ],
+  "tarife": [
+    {
+      "name": "PflegeBahr",
+      "kurz": "PflegeBahr",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 %, 600 bis 1.980 €",
+        "ab-pg": "Pflegegrad 1",
+        "ambulant-gleich": "ja",
+        "wartezeit": "5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegePlus",
+      "kurz": "PflegePlus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Pflegegelds",
+        "ab-pg": "Pflegegrad 1",
+        "einmal": "2-fach Pflegegeld PG 5",
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "nein, gleich ab PG 4",
+        "dynamik": "alle 3 Jahre 10 %"
+      },
+      "bausteine": {
+        "einmal": "inklusive",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/pflegezusatzversicherung"
+  ],
+  "offen": [
+    "PflegeBahr: staatlich gefördert (60 € im Jahr), ohne Gesundheitsprüfung, Pflegegeld 600 bis 1.980 € im Monat; Leistung 10/20/30/40/100 % in Pflegegrad 1 bis 5, Wartezeit entfällt bei Unfall.",
+    "PflegePlus erweitert PflegeBahr: häuslich 10/30/60/100/100 %, vollstationär 10 % in PG 1, sonst 100 %. Optionsrecht zwischen Alter 30 und 55 alle fünf Jahre.",
+    "PflegePlus: Wartezeit und Höhe des Pflegegelds nicht genannt; Demenz nicht ausdrücklich genannt.",
+    "Mein Pflegeschutz (Rundum-Schutz) nicht aufgenommen. Generali markiert keinen Tarif (empfehlung keine)."
+  ]
+}

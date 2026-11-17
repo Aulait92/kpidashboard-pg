@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "Dialog",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung RISK-vario",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Vorläufiger Schutz bis 200.000 €",
+    "Motorradfahren mitversichert",
+    "Stundung bis 24 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "RISK-vario Classic",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis Alter 50",
+        "vorgezogen": "ja",
+        "weltweit": "ja",
+        "laufzeit": "85 Jahre",
+        "verlaengerung": "nein"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/3702/5fb1229318c6dc2c4d33167d6009ef2a/Highlightblatt%20Risikoleben.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "RISK-vario",
+      "kurz": "vario",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, bis Alter 50",
+        "vorgezogen": "ja",
+        "weltweit": "ja",
+        "laufzeit": "85 Jahre",
+        "verlaengerung": "bis 15 Jahre"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/3702/5fb1229318c6dc2c4d33167d6009ef2a/Highlightblatt%20Risikoleben.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "RISK-vario Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis Alter 50",
+        "vorgezogen": "ja",
+        "weltweit": "ja",
+        "laufzeit": "85 Jahre",
+        "verlaengerung": "bis 15 Jahre"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/3702/5fb1229318c6dc2c4d33167d6009ef2a/Highlightblatt%20Risikoleben.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dialog-versicherung.de/resource/blob/3702/5fb1229318c6dc2c4d33167d6009ef2a/Highlightblatt%20Risikoleben.pdf",
+    "https://www.dialog-versicherung.de/produkte/privatkunden-leben/risikolebensversicherung",
+    "https://www.dialog-versicherung.de/resource/blob/5602/9648e2ef087fd44838dd4e852e21e1b5/Steckbrief%20Risikoleben.pdf",
+    "https://www.dialog-versicherung.de/resource/blob/5598/00b4e9e8e4b5d0e49f088548a26f5f34/Bedingungen%20Risikoleben.pdf"
+  ],
+  "offen": [
+    "Highlightblatt, Steckbrief und Bedingungen Stand 10/2026.",
+    "Nachversicherung bei 20 Ereignissen bis zum 50. Lebensjahr (je Ereignis bis 50.000 €, insgesamt 100.000 €), in den ersten 5 Jahren auch ohne Anlass.",
+    "Vorgezogene Leistung bei Lebenserwartung unter 12 Monaten. Endalter 85 Jahre (risikoadäquate Beitragszahlung 70 Jahre).",
+    "RISK-vario und Premium zusätzlich: Anschlussversicherung bei verbundenen Leben, Erhöhung um 10 % (max. 30.000 €) im Jahr nach Erwerb einer Wohnimmobilie.",
+    "Nur Premium: Mehrfachleistung bei verbundenen Leben, Kinderbonus 20 % (max. 50.000 €), Kindermitversicherung bis 18 Jahre (5.000 €), Soforthilfe bis 15.000 €, Pflege-Zusatzleistung bis 25.000 €, Zusatzleistung bei Tod im Ausland.",
+    "Umtauschrecht in eine Kapitalversicherung nicht genannt. Zusatzversicherungen Dread Disease und Unfalltod wählbar.",
+    "Dialog markiert keine Stufe; RISK-vario als mittlere Stufe."
+  ]
+}

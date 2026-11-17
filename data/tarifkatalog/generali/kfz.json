@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung Optimal",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Automatische Leistungsupdates",
+    "Eigenschäden bis 100.000 €",
+    "Erweiterte Elementarschäden"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Optimal",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "neuwert": "36 Monate",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "nein (freie Wahl)",
+        "elektro": "ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/fahrzeug-zuhause/kfz-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/fahrzeug-zuhause/kfz-versicherung",
+    "https://www.generali.de/privatkunden/fahrzeug-zuhause/elektro-fahrzeuge"
+  ],
+  "offen": [
+    "generali.de zeigt nur Highlights, keinen Tarifvergleich: Deckungssumme Haftpflicht, grobe Fahrlässigkeit, Zusammenstoß mit Tieren und Marderbiss sind nicht genannt.",
+    "Neupreis- und Kaufpreisentschädigung je 36 Monate (inkl. Autoradio).",
+    "Tierbissfolgeschäden nur auf der Seite für Elektro-Fahrzeuge genannt (Zusatzleistung für E-Kennzeichen), daher nicht als Wert erfasst.",
+    "Werkstattservice bzw. Werkstattmanagement wählbar (15 % Nachlass auf Kasko bei Partnerwerkstatt-Angebot); Werkstattbindung daher nicht Standard.",
+    "Zuwahlbausteine laut Seite: Beitragsschutz, Rabattschutz mit SF-Sofortschutz, Kfz-Schutzbrief, Fahrer Plus, Auslandsschaden Plus, GAP-Deckung, Kasko Plus und Kfz-Haftpflicht Plus.",
+    "Nur ein Tarif (Optimal); Vertrieb über die Deutsche Vermögensberatung (DVAG)."
+  ]
+}

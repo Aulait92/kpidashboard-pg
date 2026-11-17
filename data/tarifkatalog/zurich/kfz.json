@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "kfz",
+  "produkt": "Kraftfahrtversicherung Basis und Top",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Teilkasko: Zusammenstoß mit allen Tieren"
+  ],
+  "tarife": [
+    {
+      "name": "Kraftfahrtversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grob": "ja, außer Alkohol",
+        "tiere": "ja, alle Tiere",
+        "neuwert": "nein",
+        "marder": "nur Marder, ohne Folge"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/docs/privatkunden/fahrzeuge/zurichgruppe_vi_kfz_basis_top_213130280.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kraftfahrtversicherung Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grob": "ja, außer Alkohol",
+        "tiere": "ja, alle Tiere",
+        "neuwert": "12 Monate",
+        "marder": "Folgeschäden 5.000 €"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media/project/zwp/germany/docs/privatkunden/fahrzeuge/zurichgruppe_vi_kfz_basis_top_213130280.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media/project/zwp/germany/docs/privatkunden/fahrzeuge/zurichgruppe_vi_kfz_basis_top_213130280.pdf",
+    "https://www.zurich.de/de-de/pk/fahrzeuge/kfz-versicherung"
+  ],
+  "offen": [
+    "Quelle sind die Versicherungsbedingungen Basis und Top mit Stand 01.10.2016, die zurich.de (Seite Fahrerschutz) weiterhin für Neuverträge verlinkt; die Produktseite war für automatische Abrufe gesperrt. Aktualität bitte prüfen.",
+    "Laut Suchtreffer zeigt die aktuelle Produktseite drei Stufen Basis-, Top- und Premium-Schutz; Premium-Schutz nicht aufgenommen, da keine Unterlage abrufbar.",
+    "Deckungssumme Haftpflicht steht im Versicherungsschein, nicht in den Bedingungen; daher offen.",
+    "Neu- bzw. Kaufpreisentschädigung in der Vollkasko: Top 12 Monate. Top mit Schadenkomfortschutz erweitert weitere Leistungen.",
+    "Tarif- und Leistungsbausteine laut Bedingungen: Rabattschutz, Fahrerschutz, Schutzbrief, KH-Plus, Leasing-Differenz-Deckung, Werkstatt Plus, Akku-Ausgleich, Elektro-Plus."
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Werkstattbonus in Partnerwerkstätten",
+    "Kündigungsservice beim Wechsel"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grob": "ja",
+        "mallorca": "ja",
+        "deckung": "100 Mio., 8 Mio./Person",
+        "tiere": "nur Haarwild",
+        "neuwert": "nein",
+        "marder": "nein",
+        "gap": "nein",
+        "werkstatt": "ja, abwählbar"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/autoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grob": "ja",
+        "mallorca": "ja",
+        "deckung": "100 Mio., 15 Mio./Person",
+        "tiere": "ja, alle Tiere",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "gap": "ja",
+        "werkstatt": "ja, abwählbar"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/autoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Komfort Plus",
+      "kurz": "Komfort Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grob": "ja",
+        "mallorca": "ja",
+        "deckung": "100 Mio., 15 Mio./Person",
+        "tiere": "ja, alle Tiere",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "gap": "ja",
+        "werkstatt": "nein"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/autoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/autoversicherung",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/auto/da-direkt-kraftfahrt-versicherungsbedingungen.pdf"
+  ],
+  "offen": [
+    "Werte aus der Tariftabelle (Vollkasko) der Produktseite; DA Direkt markiert Komfort als „Kundenliebling“.",
+    "Basis: Zusammenstoß nur mit Haarwild, 500 € zusätzliche Selbstbeteiligung. Grobe Fahrlässigkeit: Verzicht laut Tabelle in allen Tarifen, Einschränkung bei Entwendung.",
+    "Werkstattbindung ist Standard und gegen Aufpreis abwählbar; Komfort Plus mit freier Werkstattwahl inkl. Ersatzwagen.",
+    "Neuwert 24 Monate in der Kasko, gegen Aufpreis auf 36 Monate verlängerbar; Kaufpreisentschädigung für Gebrauchtwagen 24 Monate (erweiterbar). Fahrerschutz nur in Komfort Plus.",
+    "Rabattschutz und Schutzbrief zuwählbar. Elektroauto: Allgefahrendeckung für den Akku laut Produktseite, Tarifzuordnung nicht ausgewiesen."
+  ]
+}

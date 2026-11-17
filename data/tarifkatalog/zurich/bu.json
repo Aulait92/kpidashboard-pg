@@ -1,0 +1,51 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "bu",
+  "produkt": "Selbständige Berufsunfähigkeitsversicherung (Zurich Deutscher Herold)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente ab 50 % Berufsunfähigkeit",
+    "Dienstunfähigkeit wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Selbständige Berufsunfähigkeitsversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, bis 24 Monate",
+        "nachversicherung": "ja, Lebensphasenkonzept",
+        "weltweit": "ja",
+        "teilzeit": "ja, Günstigerprüfung",
+        "umorganisation": "teilweise verzichtet",
+        "pflege": "ja, volle Rente",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35020_selbststaendige-berufs-und-erwerbsunfaehigkeit_verbraucherinformationen_2026_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35020_selbststaendige-berufs-und-erwerbsunfaehigkeit_verbraucherinformationen_2026_01.pdf",
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/einfache-sprache/berufsunfaehigkeits-schutzbrief_2025_07.pdf",
+    "https://www.zurich.de/de-de/pk/vorsorge-vermoegen/berufsunfaehigkeits-versicherung"
+  ],
+  "offen": [
+    "Die Produktseiten auf zurich.de waren für automatische Abrufe gesperrt; Werte aus den Verbraucherinformationen (Bedingungen, PDF). Stand der Bedingungen 01/2026.",
+    "Rückwirkende Leistung bei verspäteter Meldung: Bedingungen regeln nur die Meldung nach Ablauf der Versicherungsdauer; bitte prüfen.",
+    "Umorganisation: Verzicht für bestimmte Berufe (u. a. Akademiker), sonst zumutbare Einkommensminderung höchstens 20 %.",
+    "Arbeitsunfähigkeit: nach 6 Monaten ununterbrochener AU, höchstens 24 Monate, nur wenn vereinbart. Dienstunfähigkeit nur wenn vereinbart.",
+    "Nachversicherung über das Lebensphasenkonzept (Ereignisse wie Heirat, Kind, Immobilie) und einmalig ohne Anlass bis Ende des 5. Versicherungsjahres.",
+    "Ein Tarif; Berufsunfähigkeits-Zusatzversicherung (BUZ) nicht aufgenommen."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "sterbegeld",
+  "produkt": "Persönliche Sterbefallvorsorge",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Abschluss bis Alter 80"
+  ],
+  "tarife": [
+    {
+      "name": "Persönliche Sterbefallvorsorge",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "wartezeit": "3 Jahre, Beiträge zurück",
+        "ohne-gp": "nein, wenige Fragen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/vorsorge-finanzen/sterbegeldversicherung"
+  ],
+  "offen": [
+    "In den ersten drei Versicherungsjahren werden die gezahlten Beiträge erstattet, ab dem vierten Jahr die volle Summe.",
+    "Bis 15.000 € Versicherungssumme nur wenige Gesundheitsfragen; Höchstsumme, Unfall-Zusatz und Beitragszahlungsdauer nicht genannt."
+  ]
+}

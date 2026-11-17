@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "rente",
+  "produkt": "Vermögensaufbau & Sicherheitsplan (Rentenversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Bausteine BU, GF, Pflege, Tod",
+    "Kundenbonus ab 3 Bausteinen"
+  ],
+  "tarife": [
+    {
+      "name": "Vermögensaufbau & Sicherheitsplan",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "ja, garantiert",
+        "anlage": "Fonds, Gold, klassisch",
+        "flexibel": "Entnahmen möglich",
+        "hinterbliebene": "optional",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/rundum-schutz/vermoegensaufbau-und-sicherheitsplan",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/rundum-schutz/vermoegensaufbau-und-sicherheitsplan",
+    "https://www.generali.de/resource/blob/17988/e3892fac545512cc3fc78b58635b2b57/SPIBIB0017.pdf"
+  ],
+  "offen": [
+    "Beitragsgarantie: Bei chancenorientierter Anlage (Fonds, Gold) verzichtet der Kunde laut Basisinformationsblatt auf Garantien; ob die konventionelle Anlage eine Beitragsgarantie gibt, ist nicht belegt.",
+    "Anlage per Schieberegler: konventionelle Anlage, Fondspalette, Generali Exklusiv Fonds (Infrastruktur, Private Debt), Gold; Aufteilung jederzeit änderbar.",
+    "Zum Rentenbeginn Kapitalauszahlung ganz oder teilweise oder lebenslange Rente; Verfügung über das Guthaben bis Alter 90.",
+    "Kundenbonus 10 % auf die Leistung bei mindestens drei von vier Absicherungen (Arbeitskraft, Schwere Krankheiten, Hinterbliebene, Pflege), aus der Überschussbeteiligung, für 2025 zugesagt.",
+    "Kosten (Effektivkosten), Beitragspause und Dynamik nicht auf der Seite. Kapitalplan Plus, Vermögensaufbau4you und Riester nicht aufgenommen."
+  ]
+}

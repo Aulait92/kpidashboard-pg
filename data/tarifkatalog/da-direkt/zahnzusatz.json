@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsfragen",
+    "Unfallschäden ohne Zahnstaffel",
+    "Ab 5. Jahr unbegrenzt"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnzusatzversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "90 %, extern 75 %",
+        "implantate": "90 %, extern 75 %",
+        "behandlung": "90 %, extern 75 %",
+        "prophylaxe": "bis 150 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "750 € im 1. Jahr",
+        "inlays": "90 %, extern 75 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.da-direkt.de/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatzversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %, extern 90 %",
+        "implantate": "100 %, extern 90 %",
+        "behandlung": "100 %, extern 90 %",
+        "prophylaxe": "bis 180 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "1.100 € im 1. Jahr",
+        "kfo": "90 %, bis 1.800 €",
+        "inlays": "100 %, extern 90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.da-direkt.de/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatzversicherung Premium Plus",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 200 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "1.500 € im 1. Jahr",
+        "kfo": "100 %, bis 2.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.da-direkt.de/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/zahnzusatzversicherung",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/zahnzusatz/dadirekt_zahnschutz_einfacheuebersicht_125_0625.pdf"
+  ],
+  "offen": [
+    "Erster Wert gilt im Zahnarzt-Netzwerk von DA Direkt, „extern“ außerhalb des Netzwerks. Regelversorgung in allen Tarifen 100 %.",
+    "Prophylaxe: im Netzwerk 100 %, außerhalb bis 150/180/200 € im Jahr (Satz der Seite abgeschnitten, bitte prüfen).",
+    "Zahnstaffel: 750/1.100/1.500 € im 1. Jahr, 1.500/2.200/3.000 € in 2 Jahren, 2.250/3.300/4.500 € in 3 Jahren, 3.000/4.400/6.000 € in 4 Jahren, ab dem 5. Jahr unbegrenzt.",
+    "Kieferorthopädie ohne GKV-Leistungspflicht: Premium 90 % (max. 1.800 €), Premium Plus 100 % (max. 2.000 €); Komfort nicht eindeutig ausgewiesen.",
+    "DA Direkt hebt Premium Plus als „Testsieger“ (Stiftung Warentest 2026) hervor."
+  ]
+}

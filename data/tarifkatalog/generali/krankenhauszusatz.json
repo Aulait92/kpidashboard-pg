@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "krankenhauszusatz",
+  "produkt": "PlanStationär (Mein Gesundheitsplan)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 % Erstattung",
+    "Rooming-in für Kinder",
+    "Gesundheitsgarantie bis 49"
+  ],
+  "tarife": [
+    {
+      "name": "PlanStationär",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "1- oder 2-Bett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "ambulant-op": "50 % ärztl. Leistungen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-krankenhausschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-krankenhausschutz"
+  ],
+  "offen": [
+    "Wartezeit nicht auf der Produktseite genannt.",
+    "Krankentransporte bis 100 km; Transportkosten bei Wunschverlegung innerhalb Deutschlands.",
+    "Krankenhaustagegeld als eigenes Produkt (Krankenhaustagegeld-Versicherung), nicht aufgenommen."
+  ]
+}
