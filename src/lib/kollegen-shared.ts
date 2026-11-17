@@ -184,6 +184,42 @@ export function referralOfferLines(settings: ReferralSettingsLike): { kollege: s
   return { kollege: benefitShort(settings), sie: rewardShort(settings) };
 }
 
+// ─── Zugang zur Seite /buyer/empfehlen ─────────────────────────────────
+/**
+ * Wer sieht „Kollegen empfehlen“? Gilt für die Kachel in den Einstellungen UND die Seite selbst,
+ * damit die Kachel nie ins Leere führt: alle Inhaber, auch interne Testkunden und die Admin-Vorschau, keine Berater.
+ */
+export function canOpenReferralPage(ctx: { teamRole: "owner" | "advisor" }): boolean {
+  return ctx.teamRole !== "advisor";
+}
+
+/**
+ * Untertitel der Kachel in den Einstellungen, aus der Prämie laut Einstellung (Sie-Form, wie der Teilen-Text ohne „netto“).
+ * Standard: „300 € Gutschrift für jeden Kollegen, der Kunde wird“.
+ */
+export function referralTileText(settings: ReferralSettingsLike): string {
+  if (!settings.enabled) return "Ihr Empfehlungslink und der Stand Ihrer Empfehlungen";
+  const praemie =
+    settings.rewardKind === "fixed" && settings.rewardFixed != null && settings.rewardFixed > 0
+      ? `${eur(round2(settings.rewardFixed))} Gutschrift`
+      : settings.rewardKind === "bestand"
+        ? `${months(rewardMonthsOf(settings))} Bestandskunden-Modul gratis`
+        : "1 Monat Betreuung gratis";
+  return `${praemie} für jeden Kollegen, der Kunde wird`;
+}
+
+/**
+ * Persönlicher Link auf /buyer/empfehlen: anlegen, zeigen oder stattdessen ein Hinweis?
+ * - Vorschau: nie anlegen (schreibgeschützt); vorhandenen Link zeigen, sonst Hinweis.
+ * - Interner Kunde: kein Link (die Landingpage nimmt interne Codes nicht an, referrerByCode), nur Hinweis.
+ * - Sonst: anlegen, falls noch keiner da ist, und zeigen.
+ */
+export function referralLinkState(c: { preview: boolean; internal: boolean; hasCode: boolean }): { create: boolean; show: boolean; hinweis: string | null } {
+  if (c.internal) return { create: false, show: false, hinweis: "Interne Testkonten bekommen keinen Empfehlungslink. Kunden sehen hier ihren persönlichen Link." };
+  if (c.preview && !c.hasCode) return { create: false, show: false, hinweis: "Der Kunde hat noch keinen Empfehlungslink. Er entsteht, sobald der Kunde diese Seite selbst öffnet." };
+  return { create: !c.preview && !c.hasCode, show: true, hinweis: null };
+}
+
 /**
  * Satz für Hinweise, Mails und KI-Hilfe (an den Empfehler), z. B.
  * „Ihr Kollege spart 300 € bei der Einrichtung. Sie bekommen 300 € auf Ihre nächste Rechnung gutgeschrieben.“

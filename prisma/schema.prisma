@@ -944,6 +944,10 @@ model User {
   id                  String              @id @default(cuid())
   // Einführungsvideo auf „Heute“ angesehen oder weggeklickt (Ole, 13.11.2026)
   introVideoSeenAt    DateTime?
+  // Nutzungsanalyse (Sentry Session Replay, maskiert) nur mit Einwilligung: ja | nein, Zeitpunkt, Textversion
+  analyseEinwilligung        String?
+  analyseEinwilligungAt      DateTime?
+  analyseEinwilligungVersion String?
   email               String              @unique
   passwordHash        String
   role                UserRole
