@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "Canada Life",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Garantierter Beitrag",
+    "Überbrückungshilfe bis 6 Monate",
+    "Reha bis 6-fache BU-Rente"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsschutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, 36 Monate",
+        "nachversicherung": "ja, 23 Anlässe",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "bei < 5 Mitarbeitern",
+        "pflege": "ab Pflegegrad 2",
+        "stundung": "bis 24 Monate",
+        "dynamik": "1 bis 5 % wählbar",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.canadalife.de/berufsunfaehigkeitsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.canadalife.de/berufsunfaehigkeitsschutz/",
+    "https://www.canadalife.de/berufsunfaehigkeitsversicherung/",
+    "https://www.canadalife.de/media/kundenflyer-berufsunfaehigkeitsschutz.pdf",
+    "https://www.canadalife.de/media/versicherungsbedingungen-berufsunfaehigkeitsschutz.pdf"
+  ],
+  "offen": [
+    "Nur ein Tarif mit Zusatzoptionen Arbeitsunfähigkeit (bis 36 Monate Rente, Kundenflyer KF BU 01 05/2026) und Schwere Krankheiten (Einmalzahlung 12-fache BU-Rente bei 55 Krankheiten).",
+    "Rückwirkende Leistung: Anspruch entsteht laut Bedingungen (Stand April 2025) mit Ablauf des Monats, in dem die Berufsunfähigkeit eingetreten ist; eine Frist für verspätete Meldung ist nicht genannt. Bitte gegenprüfen.",
+    "Umorganisation: Verzicht bei Betrieben mit weniger als 5 Mitarbeitern und bei Akademikern mit mindestens 90 % kaufmännischer Tätigkeit; sonst Umorganisationshilfe 6-fache Monatsrente.",
+    "Pflegerente als eigener Baustein ist für die BU nicht beschrieben; Pflegegrad 2 gilt als Berufsunfähigkeit.",
+    "Bedingungen Stand April 2025; Flyer und Produktseite 05/2026. Ob die Bedingungen noch aktuell sind, bitte bestätigen."
+  ]
+}

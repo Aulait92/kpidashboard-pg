@@ -1,0 +1,35 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Auch an Sonn- und Feiertagen",
+    "Entbindung: 12 Tagessätze"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "wählbar, ab 15. Tag",
+        "hoehe": "bis zum Nettoeinkommen",
+        "dauer": "zeitlich unbegrenzt",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankentagegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/krankenzusatzversicherung/krankentagegeldversicherung"
+  ],
+  "offen": [
+    "Ein Tarif ohne Stufen; Karenzzeit wählbar, nicht kürzer als die Lohnfortzahlung (Angestellte meist 6 Wochen), für Selbstständige ab zwei Wochen.",
+    "Wartezeit, Ende bei Berufsunfähigkeit und Leistung im Ausland nicht genannt. Tarifnamen nicht genannt."
+  ]
+}

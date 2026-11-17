@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Abzug Neu für Alt",
+    "Glasreparatur ohne SB",
+    "Sonderausstattung versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "mallorca": "ja",
+        "elektro": "ja",
+        "werkstatt": "optional",
+        "rabattschutz": "optional",
+        "neuwert": "12 Monate",
+        "marder": "Folgeschäden 5.000 €",
+        "gap": "nein"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Comfort",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "Tiere aller Art",
+        "mallorca": "ja",
+        "elektro": "ja",
+        "werkstatt": "optional",
+        "rabattschutz": "optional",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden unbegrenzt",
+        "gap": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/autoversicherung/"
+  ],
+  "offen": [
+    "Zwei Stufen ohne Markierung von CosmosDirekt: keine Empfehlung gesetzt.",
+    "Haftpflicht 100 Mio. € pauschal, Personenschäden höchstens 15 Mio. € je Person. Grobe Fahrlässigkeit nicht nach Alkohol- oder Drogenkonsum. Neuwert gilt für Neuwagen; Kaufwert bei Gebrauchtwagen ebenfalls 12 bzw. 24 Monate.",
+    "Comfort zusätzlich: Leistungen bei Eigenschaden (Haftpflicht), 50 € Gutschrift auf die Selbstbeteiligung je schadenfreiem Jahr, Dachlawinen und Erdbeben, Leuchtmittel, höhere Entsorgungskosten.",
+    "Zusatzbausteine laut Seite: Werkstattbindung, Rabattschutz (bis 3 Schäden frei), Schutzbrief, Fahrerschutz, Verkehrs-Rechtsschutz, Auslandsschadenschutz. Die Seite nennt außerdem eine Variante „Basis light“ (nicht aufgenommen).",
+    "E-Auto: Akku-Schutz, Neupreisentschädigung für Akkus 36 Monate, Wallbox und Ladekabel mitversichert."
+  ]
+}

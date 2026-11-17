@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Sturm schon ab Windstärke 7",
+    "Akku ohne Abzug bei Tausch",
+    "Kasko SELECT wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Basis-Tarif",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "nur Haarwild",
+        "neuwert": "6 Monate",
+        "marder": "nein",
+        "gap": "nein",
+        "mallorca": "nein",
+        "elektro": "Akku, Wallbox, Kabel",
+        "rabattschutz": "nein"
+      },
+      "bausteine": {
+        "rabattschutz": "nein"
+      },
+      "quelle": "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/allgemeine_versicherungsbedingungen_kfz.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Classic",
+      "kurz": "Classic",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "gap": "ja",
+        "mallorca": "ja, 6 Monate",
+        "elektro": "Akku, Wallbox, Kabel",
+        "werkstatt": "wählbar (SELECT)",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.huk.de/fahrzeuge/kfz-versicherung/autoversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Classic mit Kasko PLUS",
+      "kurz": "Classic PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "gap": "ja",
+        "mallorca": "ja, 6 Monate",
+        "elektro": "Akku, Wallbox, Kabel",
+        "werkstatt": "wählbar (SELECT)",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.huk.de/fahrzeuge/kfz-versicherung/autoversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/fahrzeuge/kfz-versicherung/autoversicherung.html",
+    "https://www.huk.de/fahrzeuge/kfz-versicherung/elektroautos.html",
+    "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/allgemeine_versicherungsbedingungen_kfz.pdf"
+  ],
+  "offen": [
+    "Stufen: Basis-Tarif (Verzicht auf Leistungen, nur in den AKB beschrieben, nicht auf der Produktseite), Classic (Produktlinie der Produktseite, laut HUK rund 9 Mio. Kunden) und Classic mit Baustein Kasko PLUS. HUK markiert keine Stufe; Classic als mittlere Stufe.",
+    "Basis laut AKB (Stand 01.01.2027): nur Haarwild, kein Tierbiss, keine Lawinen, Neupreis nur 6 Monate, keine GAP-Deckung, keine Mallorca-Police, schärfere Rückstufung. Deckungssumme Basis nicht belegt (steht im Versicherungsschein).",
+    "Rabattschutz laut Produktseite nur in der Produktlinie Classic, ab SF 4; Basis daher als „nein“ erfasst, bitte gegenprüfen.",
+    "Grobe Fahrlässigkeit: Verzicht in der Kasko, Kürzung nur bei Alkohol/Rauschmitteln und ermöglichter Entwendung (AKB A.2.9). Kein Basis-Ausschluss gefunden.",
+    "Kasko PLUS: Neupreis bzw. Kaufwert 36 Monate, Eigenschäden bis 100.000 € je Jahr (500 € SB), Brems-, Betriebs-, Bruchschäden, Sportgeräte bis 5.000 €.",
+    "Kasko SELECT (Werkstattbindung, 20 % Kasko-Nachlass) ist eine Option in Classic; ob auch im Basis-Tarif wählbar, nicht belegt. Telematik Plus als Sparoption nicht als Stufe geführt.",
+    "Personenschäden max. 15 Mio. € je Person. Schutzbrief im Basis-Tarif nicht belegt. HUK24 (Online-Tochter) nicht aufgenommen: auf huk.de nur als Verweis, nicht als Tarif."
+  ]
+}

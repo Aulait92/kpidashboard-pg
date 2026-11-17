@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhaus-Zusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ambulante OP privatärztlich",
+    "Vor- und nachstationär",
+    "Weltweit"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif WKplus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "ja, 100 %",
+        "krankenhauswahl": "nur nach KHEntgG/BPflV",
+        "ueber-hoechstsatz": "nein, GOÄ",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "80 €, Zweibett 30 €",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV112.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/krankenhauszusatztariftagegeld.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV112.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV111.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_54.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (WKplus) mit 100 % Erstattung für gesetzlich Versicherte; die Stufen WK10plus bis WK90plus sind für Beihilfeberechtigte (Ergänzung zur Beihilfe) und nicht aufgenommen.",
+    "Leistung nur in Krankenhäusern nach Bundespflegesatzverordnung bzw. Krankenhausentgeltgesetz (keine reinen Privatkliniken, außer im Ausland). Keine Erstattung über die Gebührenordnung hinaus.",
+    "Wartezeit: allgemeine Wartezeit 3 Monate laut Produktseite (MB/KK); Schwangerschaft ab Beginn. Krankenhaustagegeld als eigener Tarif KHT (5 bis 150 € am Tag) wählbar.",
+    "Ersatz-Krankenhaustagegeld 80 € ohne Wahlleistungen, 30 € bei Zweibett statt Einbett; Pauschale 80 € bei Verzicht auf Leistungen für ambulante OP."
+  ]
+}

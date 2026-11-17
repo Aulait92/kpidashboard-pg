@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "pkv",
+  "produkt": "Private Krankenvollversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Krankenhauswahl",
+    "Zahnbehandlung 100 %",
+    "BRE trotz Vorsorge-Rechnungen"
+  ],
+  "tarife": [
+    {
+      "name": "E-Tarif",
+      "kurz": "E",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "80 %, Erstarzt 100 %",
+        "stationaer": "Mehrbett, Stationsarzt",
+        "zahnersatz": "60 %, Partner 70 %",
+        "selbstbehalt": "300 oder 1.500 €",
+        "bre": "ja",
+        "heilpraktiker": "nein",
+        "psychotherapie": "70 %, bis 50 Sitzungen",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "100 € in 2 Jahren",
+        "ausland": "Europa, weltweit 2 Mon."
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenvollversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SelectPro-Tarif",
+      "kurz": "SelectPro",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "80 %, Erstarzt 100 %",
+        "stationaer": "2-Bett, Chefarzt",
+        "zahnersatz": "60 %, Partner bis 80 %",
+        "selbstbehalt": "0, 300, 600 o. 1.500 €",
+        "bre": "ja",
+        "heilpraktiker": "60 %, Partner 80 %",
+        "psychotherapie": "80 %, bis 50 Sitzungen",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "300 € in 2 Jahren",
+        "ausland": "Europa, weltweit 2 Mon."
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenvollversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komfort-Tarif",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "1-Bett, Chefarzt",
+        "zahnersatz": "80 %, Partner 90 %",
+        "selbstbehalt": "0, 300, 600 o. 1.500 €",
+        "bre": "ja",
+        "heilpraktiker": "100 %",
+        "psychotherapie": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "600 € in 2 Jahren",
+        "ausland": "Europa, weltweit 2 Mon."
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenvollversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenvollversicherung.html"
+  ],
+  "offen": [
+    "Werte aus den Leistungstabellen der Produktseite. E-Tarif laut HUK „Grundschutz für Neuselbstständige“.",
+    "Ambulant (E, SelectPro): 80 %, 100 % bei Erstbehandlung durch Allgemein-, Frauen-, Kinder-, Augen-, Not- oder Bereitschaftsarzt bzw. Gesundheitspartner; als Primärarztprinzip erfasst.",
+    "Zahnersatz: SelectPro 60 % Honorar (70 % beim Gesundheitspartner), 80 % Material/Labor beim Partner. Zahnstaffel in den ersten 3 Jahren 1.000/2.000/3.000 € (entfällt bei Unfall).",
+    "Beitragsrückerstattung: Produktseite beschreibt sie allgemein (unschädlich: Vorsorge, Zahnreinigung, Impfungen), Höhe und Zuordnung je Tarif nicht belegt.",
+    "Ausland: europaweit, weltweit bis 2 Monate; Krankenrücktransport nur Komfort und SelectPro, nicht im E-Tarif.",
+    "Hilfsmittel: Komfort 100 % bis 1.200 € (Partner), SelectPro/E 80 %; ob offener Katalog, nicht belegt.",
+    "Krankentagegeld und Pflegezusatz als Ergänzung nicht je Tarif beschrieben. HUK markiert keinen Tarif; SelectPro als mittlere Stufe."
+  ]
+}

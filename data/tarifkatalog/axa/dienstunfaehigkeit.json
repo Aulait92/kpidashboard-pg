@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Dienstunfähigkeitsversicherung (DBV)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Folgt dem Dienstherrn",
+    "Für Beamte und Soldaten",
+    "Rente bis höchstens 67"
+  ],
+  "tarife": [
+    {
+      "name": "DBV Dienstunfähigkeitsversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "nachversicherung": "ja",
+        "teil-du": "optional",
+        "verweisung": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.dbv.de/beruf-vorsorge/p/dienstunfaehigkeitsversicherung-beamte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dbv.de/beruf-vorsorge/p/dienstunfaehigkeitsversicherung-beamte",
+    "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung"
+  ],
+  "offen": [
+    "AXA bietet die Dienstunfähigkeitsversicherung über ihre Beamten-Marke DBV an (axa.de verlinkt auf dbv.de, „Eine Marke der AXA Gruppe“).",
+    "Beamte auf Probe und Widerruf: Die Seite nennt sie als Zielgruppe und beschreibt die Entlassung als Versicherungsfall, ohne eigene Klausel zu zitieren.",
+    "Ob Berufsunfähigkeit mitversichert ist, steht nicht auf der Seite.",
+    "Dynamik: optionale Leistungsfall-Dynamik (Rente steigt im Leistungsfall); Beitragsdynamik nicht genannt. AU-Klausel nicht genannt.",
+    "Varianten Dienstanfänger-Police und DU SmartFlex (mit Altersvorsorge) nicht als eigene Stufen aufgenommen; Bedingungen nicht ausgewertet."
+  ]
+}

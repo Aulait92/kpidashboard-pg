@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "krankenhauszusatz",
+  "produkt": "DKV Krankenhauszusatzversicherung KombiMed",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ein- oder Zweibettzimmer",
+    "Krankenhaustagegeld wählbar",
+    "Nur für gesetzlich Versicherte"
+  ],
+  "tarife": [
+    {
+      "name": "DKV KombiMed Krankenhaus Basisschutz (Tarif UZ1/UZ2)",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein-/Zweibett (UZ1)",
+        "chefarzt": "nein",
+        "krankenhauswahl": "nur Kassen-Häuser",
+        "ueber-hoechstsatz": "nein",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "50 € (UZ1), 25 € (UZ2)",
+        "ambulant-op": "nein"
+      },
+      "bausteine": {
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ergo.de/content/dam/ergo/pdf/kranken/krankenhauszusatzversicherung-dkv.pdf.coredownload.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV KombiMed Krankenhaus Unfall Komfortschutz (Tarif KSU)",
+      "kurz": "Komfort Unfall",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Ein-/Zweibett",
+        "chefarzt": "ja, nur nach Unfall",
+        "krankenhauswahl": "ja, inkl. Privatklinik",
+        "ueber-hoechstsatz": "in bestimmten Fällen",
+        "wartezeit": "keine",
+        "ersatztagegeld": "25 €",
+        "ambulant-op": "200 € Pauschale"
+      },
+      "bausteine": {
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ergo.de/content/dam/ergo/pdf/kranken/krankenhauszusatzversicherung-dkv.pdf.coredownload.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV KombiMed Krankenhaus Premiumschutz (Tarif KGZ1/2 oder KS1/2)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein-/Zweibett (Tarif 1)",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja, inkl. Privatklinik",
+        "ueber-hoechstsatz": "in bestimmten Fällen",
+        "wartezeit": "entfällt bis 02/2028",
+        "ersatztagegeld": "25 € (Tarif 1)",
+        "ambulant-op": "200 € Pauschale"
+      },
+      "bausteine": {
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ergo.de/content/dam/ergo/pdf/kranken/krankenhauszusatzversicherung-dkv.pdf.coredownload.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankenhauszusatzversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/kranken/krankenhauszusatzversicherung-dkv",
+    "https://www.ergo.de/content/dam/ergo/pdf/kranken/krankenhauszusatzversicherung-dkv.pdf.coredownload.pdf",
+    "https://www.ergo.de/content/dam/ergo/pdf/kranken/urkunde-wartezeitverzicht-kgz1-kgz2-ks1-ks2.pdf"
+  ],
+  "offen": [
+    "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Broschüre ohne aktuelles Datum (Beitragsstände 2017 bis 2021), bitte gegen die AVB prüfen.",
+    "Basis (UZ): keine ärztlichen Leistungen, Krankenhauswahl unter den Vertragshäusern der Kasse, UZ1 Ein- oder Zweibett, UZ2 nur Zweibett; ohne Gesundheitsfragen. Komfort (KSU) leistet nur nach Unfällen, ohne Gesundheitsprüfung, mit Übernahme der gesetzlichen Zuzahlung.",
+    "Premium: KGZ mit Alterungsrückstellung, KS ohne (läuft bis zum Jahr des 44. Geburtstags, dann Umstellung auf KGZ); Tarif 1 Ein- oder Zweibett, Tarif 2 nur Zweibett; Zugang zu Top-Experten (Best Care) hinzubuchbar. Allgemeine Wartezeit 3 Monate, laut DKV-Urkunde entfällt sie bei Beginn zwischen 01.03.2023 und 01.02.2028; besondere Wartezeiten 8 Monate.",
+    "Krankenhaustagegeld (KKHT) in allen Stufen hinzubuchbar. Daneben bietet ERGO eine eigene Krankenhauszusatzversicherung (SZS/SZL: Chefarzt, Ein- oder Zweibett, Ersatztagegeld bis 100 €, keine Wartezeit) an, die nicht als Stufe geführt ist. ERGO markiert keine Empfehlung; Komfort als mittlere Stufe, obwohl sie nur bei Unfall leistet."
+  ]
+}

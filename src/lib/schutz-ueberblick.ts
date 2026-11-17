@@ -79,6 +79,10 @@ export const SCHUTZ_SPARTEN: Record<string, string> = {
   kfz: "Kfz",
   "reise-kranken": "Auslandsreisekranken",
   sterbegeld: "Sterbegeld",
+  dienstunfaehigkeit: "Dienstunfähigkeit",
+  krankentagegeld: "Krankentagegeld",
+  kinderinvaliditaet: "Kinderinvalidität",
+  reiseruecktritt: "Reiserücktritt",
 };
 
 /**

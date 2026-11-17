@@ -57,7 +57,7 @@ describe("Tarifkatalog: Schema", () => {
   it("hat alle Sparten mit eindeutigen Keys, kurzen Kurznamen und höchstens 5 Standardmerkmalen", () => {
     const keys = ["katze-kranken", "katze-op", "hund-kranken", "hund-op", "pferd-op", "pferd-kranken", "haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd", "unfall",
       // Alle Versicherungsprodukte für das Cross-Selling (Ole, 17.11.2026)
-      "bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld"];
+      "bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld", "dienstunfaehigkeit", "krankentagegeld", "kinderinvaliditaet", "reiseruecktritt"];
     expect([...sparten.keys()].sort()).toEqual([...keys].sort());
     for (const s of schema.sparten) {
       const mk = s.merkmale.map((m) => m.key);

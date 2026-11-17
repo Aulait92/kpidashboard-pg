@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "Swiss Life",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Swiss Life Vitalschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Demenz mitversichert",
+    "Infektionsklausel",
+    "Beitragsstundung bis 24 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Swiss Life Vitalschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "24 Leistungsauslöser",
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ab Pflegegrad 2",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "pflege": "optional",
+        "ernst": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/06/15711.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Swiss Life Vitalschutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "35 Leistungsauslöser",
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ab Pflegegrad 2",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "pflege": "optional",
+        "ernst": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/06/15711.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.swisslife.de/content/dam/de/documents/06/15711.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/58/9858.pdf"
+  ],
+  "offen": [
+    "Quelle sind nur die Allgemeinen Bedingungen (AVB_EV_GFV_2025_01, Stand 01.2025); die Produktseite auf swisslife.de war für automatische Abrufe gesperrt. Bitte gegenprüfen.",
+    "Anzahl selbst gezählt: Komfort 21 Grundfähigkeiten plus Pflegebedürftigkeit, Demenz und Infektion (24); Premium zusätzlich 11 (u. a. Intellekt, Bildschirmtätigkeit, Fahrrad fahren, ÖPNV), zusammen 35.",
+    "Wählbare Optionen: AU-Option (bis 36 Monate Rente), Psyche-Option, Berufe-Option, BU-Wechseloption; Zusatzversicherungen Schwere-Krankheiten-Option und care-Option (Pflegerente).",
+    "Das in älteren Unterlagen genannte Vital Protect bzw. Vitalschutz Power, Spirit, Complete und Flex sind ältere Tarifgenerationen und nicht aufgenommen.",
+    "Swiss Life markiert keine Variante."
+  ]
+}

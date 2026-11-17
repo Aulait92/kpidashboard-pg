@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Hallesche",
+  "sparte": "ambulant",
+  "produkt": "Zusatzversicherung für Brille, Zahn, Heilpraktiker",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zahnersatz 30 %, mit GKV 80 %",
+    "Brille 200 € alle 2 Jahre",
+    "Auslandsreiseschutz inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Ambulanter Schutz (Tarif AE.1)",
+      "kurz": "AE.1",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "nein",
+        "sehhilfen": "200 € alle 2 Jahre",
+        "hoergeraete": "nein",
+        "ausland": "100 % nach GKV"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/brille-zahn-heilpraktiker-ae",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mehr ambulanter Schutz (Tarif AE.2)",
+      "kurz": "AE.2",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "nein",
+        "sehhilfen": "200 € alle 2 Jahre",
+        "hoergeraete": "Hilfsmittel 1.100 €/J.",
+        "ausland": "100 % nach GKV"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/brille-zahn-heilpraktiker-ae",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Noch mehr ambulanter Schutz (Tarif AE.3)",
+      "kurz": "AE.3",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "50 %, bis 780 € Rechn.",
+        "sehhilfen": "200 € alle 2 Jahre",
+        "hoergeraete": "Hilfsmittel 1.100 €/J.",
+        "ausland": "100 % nach GKV"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/brille-zahn-heilpraktiker-ae",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hallesche.de/privatkunden/zusatzversicherung/brille-zahn-heilpraktiker-ae"
+  ],
+  "offen": [
+    "Nur die Produktseite ausgewertet; Tarifbedingungen AE.1 bis AE.3 sind dort nicht verlinkt.",
+    "Sehhilfen: 200 € alle 2 Jahre bei Änderung um mindestens 0,5 Dioptrien, sonst alle 3 Jahre. Ausland: 100 % nach Vorleistung der GKV, inklusive Rücktransport.",
+    "Hörgeräte nicht ausdrücklich genannt; AE.2 und AE.3 erstatten Hilfsmittel zu 100 % bis 1.100 € im Jahr nach GKV-Vorleistung. AE.2 zusätzlich gezielte Behandlung im Ausland.",
+    "Heilpraktiker (nur AE.3): 50 % bis 260 € Rechnungsbetrag im 1., 520 € im 2. und 780 € ab dem 3. Kalenderjahr; dazu Kurtagegeld 11 € (max. 21 Tage) und Inlays 30 %.",
+    "Vorsorgeuntersuchungen, Arznei- und Verbandmittel, Wartezeit und Augenlaser nicht genannt. Keine Stufe markiert; AE.2 als mittlere Stufe."
+  ]
+}

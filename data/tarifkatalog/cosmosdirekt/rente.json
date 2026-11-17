@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung FlexInvest",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Abschlusskosten",
+    "Monatlich kündbar ohne Kosten",
+    "Auszahlung zwischen 62 und 85"
+  ],
+  "tarife": [
+    {
+      "name": "Privatrente FlexInvest",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "keine",
+        "anlage": "Fonds, ETF, Zinsguthaben",
+        "flexibel": "Zuzahlung und Entnahme",
+        "hinterbliebene": "Rentengarantiezeit",
+        "kapital": "ja",
+        "kosten": "0,7 % p. a. vom Guthaben"
+      },
+      "bausteine": {},
+      "quelle": "https://www.cosmosdirekt.de/flexinvest-altersvorsorge/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/flexinvest-altersvorsorge/"
+  ],
+  "offen": [
+    "Ein Tarif (laut Seite „Privatrente FlexInvest ohne Garantie“). Anlage frei aufteilbar zwischen Fonds bzw. ETFs und einem sicherheitsorientierten Guthaben mit jährlich neu festgelegtem Zins.",
+    "Garantierter Rentenfaktor nicht genannt. Beitragspause nicht ausdrücklich genannt (Beitrag zu jeder Fälligkeit anpassbar).",
+    "Kosten: laut Seite 0,7 % pro Jahr auf das Guthaben nach Überschussbeteiligung, keine Abschlusskosten; Fondskosten kommen hinzu (Basisinformationsblätter).",
+    "BU-Zusatz und Dynamik nicht belegt. Rente ab 62 oder Auszahlplan bis längstens 85; lebenslange Rente oder Einmalbetrag frei wählbar."
+  ]
+}

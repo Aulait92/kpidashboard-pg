@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung (Verdienstausfall)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auch Sonn- und Feiertage",
+    "Steuer- und abgabenfrei",
+    "Ohne Gesundheitsprüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Verdienstausfall Premium (Tarif KTS)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab dem 43. Tag",
+        "hoehe": "bis 20 €/Tag",
+        "wartezeit": "3 Monate",
+        "selbststaendige": "nein, nur Arbeitnehmer",
+        "ausland": "ja, bei Urlaubsreisen"
+      },
+      "quelle": "https://www.hansemerkur.de/krankentagegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/krankentagegeldversicherung"
+  ],
+  "offen": [
+    "Nur für gesetzlich versicherte Arbeitnehmer mit 6 Wochen Lohnfortzahlung; Tagegeld 5, 10, 15 oder 20 € nach Nettoeinkommen.",
+    "Leistungsdauer und Ende bei Berufsunfähigkeit nicht auf der Produktseite genannt (nur: leistet bei vorübergehender Arbeitsunfähigkeit). Wartezeit 3 Monate, bei Unfall keine.",
+    "Ausland: bei Erkrankung im Urlaub ab dem 43. Tag; kein Schutz bei Arbeit im Ausland.",
+    "Für Privatversicherte und Selbstständige: Krankentagegeld als Tarif T zur privaten Krankenversicherung (siehe pkv.json), Werte nicht veröffentlicht.",
+    "Nur ein Tarif, daher Stufe „Tarif“."
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufsunfähigkeitsversicherung mit DU-Klausel",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Spezielle DU-Klausel inklusive",
+    "DU-Klausel ab Vertragsbeginn",
+    "Zinslose Stundung bis 24 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "BU classic mit DU-Klausel",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung/dienstunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU comfort mit DU-Klausel",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung/dienstunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU premium mit DU-Klausel",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung/dienstunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/berufsunfaehigkeitsversicherung/dienstunfaehigkeitsversicherung",
+    "https://www.ruv.de/berufsunfaehigkeitsversicherung",
+    "https://www.ruv.de/dam/jcr:038d2022-558e-46d7-b161-e37647ff9a2d/PLG0426.2026-04-30-12-59-13.pdf"
+  ],
+  "offen": [
+    "R+V hat keine eigene DU-Versicherung: Die echte, vollständige und spezielle DU-Klausel ist laut Produktseite fester Bestandteil der BU classic, comfort und premium (AVB Stand 01.04.2026). Stufen deshalb wie bei der BU.",
+    "AU-Option: laut BU-Seite nur in comfort und premium wählbar.",
+    "Teildienstunfähigkeit nicht genannt.",
+    "Ob der Zahlungsbeginn nach 18 Monaten in classic auch bei Dienstunfähigkeit gilt, ist auf der Seite nicht beschrieben.",
+    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+  ]
+}

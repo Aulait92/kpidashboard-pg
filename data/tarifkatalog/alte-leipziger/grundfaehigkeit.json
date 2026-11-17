@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente ab Verlust einer Fähigkeit",
+    "Beitragspause bis 24 Monate",
+    "Wechsel in BU ohne Prüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitsversicherung Basis-Baustein (individuelles Konzept)",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "12 Fähigkeiten",
+        "prognose": "6 Monate",
+        "psyche": "nur mit Baustein",
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/privatkunden/einkommensschutz/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitsversicherung Komfort-Konzept",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "18 Fähigkeiten",
+        "prognose": "6 Monate",
+        "psyche": "nur mit Baustein",
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/privatkunden/einkommensschutz/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitsversicherung KomfortPlus-Konzept",
+      "kurz": "KomfortPlus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "24 Fähigkeiten",
+        "prognose": "6 Monate",
+        "psyche": "Baustein Geist inkl.",
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/privatkunden/einkommensschutz/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/einkommensschutz/grundfaehigkeitsversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/broschuere/pav/710/broschueregrundfaehigkeitsschutzpav710pdf/broschuere-grundfaehigkeitsschutz-pav710.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2370/allgemeinebedingungengrundfaehigkeitpm2370pdf/allgemeine-bedingungen-grundfaehigkeit-pm2370.pdf",
+    "https://www.alte-leipziger.de/privatkunden/einkommensschutz/grundfaehigkeitsversicherung-kinder"
+  ],
+  "offen": [
+    "Modularer Schutz aus 11 Bausteinen. Anzahl selbst gezählt aus der Liste der Produktseite: Basis 12, Komfort = Basis, Körper (5) und Auto fahren (1) = 18, KomfortPlus zusätzlich Digital (4) und Geist (2) = 24. Ob KomfortPlus auch den Baustein Mobilität enthält, ist in der Broschüre (Grafik) nicht eindeutig; bitte prüfen.",
+    "Psyche: Verlust aus psychischen Ursachen ist ausgeschlossen, außer bei den Bausteinen Geist, Arbeitsunfähigkeit und Psyche (Depression, Schizophrenie); Psyche ist ein wählbarer Zusatzbaustein (§ 8).",
+    "Pflege: „Pflegebedürftig sein“ gehört zum Basis-Baustein; Leistungsdefinition steht im Anhang Grundfähigkeiten, der nicht ausgewertet wurde.",
+    "Zusatzbaustein Arbeitsunfähigkeit wählbar (nicht im Schema). Schwere Krankheiten nur im Kinder-Konzept (Einmalzahlung bis Alter 3); für Erwachsene nicht genannt. Pflegerente als Baustein nicht genannt.",
+    "Zielgruppen-Konzepte je Beruf (auch als Plus-Variante) nicht als Stufen aufgenommen. Keine Stufe von der Alte Leipziger markiert; Komfort als mittlere Stufe."
+  ]
+}

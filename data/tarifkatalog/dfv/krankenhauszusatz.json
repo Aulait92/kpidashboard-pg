@@ -1,0 +1,95 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung DFV-KlinikSchutz",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Auslandsreiseschutz inklusive",
+    "Zuzahlung 10 €/Tag (28 Tage)"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-KlinikSchutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbett, nur Unfall",
+        "chefarzt": "ja, 100 %",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "tagegeld": "Reha 100 €/Tag",
+        "ersatztagegeld": "bis 100 €/Tag",
+        "ambulant-op": "ja, 100 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-KlinikSchutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbett, schwere Krankh.",
+        "chefarzt": "ja, 100 %",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "tagegeld": "Reha 100 €/Tag",
+        "ersatztagegeld": "bis 100 €/Tag",
+        "ambulant-op": "ja, 100 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-KlinikSchutz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja, 100 %",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "tagegeld": "Reha 100 €/Tag",
+        "ersatztagegeld": "bis 100 €/Tag",
+        "ambulant-op": "ja, 100 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DFV-KlinikSchutz Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "ja, 100 %",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "tagegeld": "Reha 100 €/Tag",
+        "ersatztagegeld": "bis 100 €/Tag",
+        "ambulant-op": "ja, 100 %"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/"
+  ],
+  "offen": [
+    "Versicherte Fälle: Basis nur Unfall (ohne Gesundheitsfragen), Komfort Unfall und schwere Krankheiten, Premium und Exklusiv alle Krankheiten und Entbindung.",
+    "Premium hat laut Tarifvergleich das Zweibettzimmer, Basis, Komfort und Exklusiv das Einbettzimmer.",
+    "Ersatztagegeld bei Verzicht: Unterkunft 40 €, privatärztliche Leistungen 60 €, beides 100 € am Tag. Reha-Tagegeld 100 €/Tag bis 21 Tage. Ambulante Behandlung statt Klinikaufenthalt 100 %.",
+    "Erstattung über dem GOÄ-Höchstsatz nicht im Tarifvergleich genannt. Exklusiv zusätzlich Facharzttermin in 5 Werktagen (sonst bis 5.000 € Ausgleich), Kinderbetreuung bis 2.000 €.",
+    "Empfehlung: DFV markiert Premium als „Unsere Empfehlung“."
+  ]
+}

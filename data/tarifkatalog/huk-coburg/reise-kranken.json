@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Privatpatient im Krankenhaus",
+    "Weltweiter Schutz",
+    "Ohne Selbstbeteiligung"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandskrankenversicherung (Reisen bis 56 Tage)",
+      "kurz": "bis 56 Tage",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 56 Tage",
+        "ruecktransport": "ja, wenn sinnvoll",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/auslandskrankenversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Langzeit-Auslandsreisekrankenversicherung",
+      "kurz": "bis 365 Tage",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "57 bis 365 Tage",
+        "ruecktransport": "ja, wenn sinnvoll",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/auslandskrankenversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/auslandskrankenversicherung.html"
+  ],
+  "offen": [
+    "Jahresvertrag für beliebig viele Reisen bis 56 Tage (verlängert sich jährlich); Langzeitschutz je Reise 57 bis 365 Tage, muss ab dem ersten Reisetag gelten.",
+    "Familientarif: Ehe- oder Lebenspartner und unverheiratete Kinder bis 21 Jahre; ob auch für Langzeit, nicht belegt.",
+    "USA und Kanada nicht ausdrücklich genannt; Geltungsbereich „weltweit“, Beitragsbeispiel mit Reise nach Amerika.",
+    "Zahn: schmerzstillende Behandlung, Füllungen und Provisorien. Bekannte Erkrankungen und Schwangerschaft nicht genannt.",
+    "Keine Empfehlung markiert."
+  ]
+}

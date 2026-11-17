@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "krankentagegeld",
+  "produkt": "DKV Krankentagegeld",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Steuerfrei, auch an Sonntagen",
+    "Anteilig bei Teil-AU",
+    "Endet mit Altersrente"
+  ],
+  "tarife": [
+    {
+      "name": "DKV KombiMed KTAG (gesetzlich versicherte Arbeitnehmer)",
+      "kurz": "GKV-Angest.",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "hoehe": "bis 520 €/Tag",
+        "dauer": "unbegrenzt",
+        "bu-ende": "noch 3 Monate",
+        "selbststaendige": "nein",
+        "ausland": "Europa, nur stationär"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankentagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV KombiMed KTC (privat versicherte Arbeitnehmer)",
+      "kurz": "PKV-Angest.",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "hoehe": "bis 520 €/Tag",
+        "dauer": "unbegrenzt",
+        "bu-ende": "noch 3 Monate",
+        "selbststaendige": "nein",
+        "ausland": "Europa, nur stationär"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankentagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DKV Krankentagegeld für Selbstständige und Freiberufler",
+      "kurz": "Selbstständige",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 4. Tag",
+        "hoehe": "300 €, Freiberufl. 520 €",
+        "dauer": "unbegrenzt",
+        "bu-ende": "noch 3 Monate",
+        "selbststaendige": "ja",
+        "ausland": "Europa, nur stationär"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankentagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankentagegeld"
+  ],
+  "offen": [
+    "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Die drei „Stufen“ sind Varianten je Berufsgruppe, keine Leistungsstufen; mittlere Stufe nur formal als Empfehlung gesetzt.",
+    "Wartezeit nicht auf der Seite genannt. Wählbarer Leistungsbeginn: Arbeitnehmer ab 43., 64., 85., 92., 106., 127., 169., 183., 274. oder 365. Tag; Selbstständige ab 4., 8., 15., 22., 29., 43., 92. oder 183. Tag.",
+    "Tagegeld von 5 bis 520 € (Selbstständige höchstens 300 €, Freiberufler 520 €), bei PKV-Versicherten bis zum Nettoeinkommen. Bei Übergang in Berufsunfähigkeit längstens 3 Monate weiter. Tarifname für Selbstständige nicht genannt. Bausteine (Dynamik, frühere Leistung) nicht belegt."
+  ]
+}

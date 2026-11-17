@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "ambulant",
+  "produkt": "Sehhilfen und Vorsorge (Tarife Blick + Check)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Augenlaser statt Brille möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Blick + Check classic (BC3U)",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "optional",
+        "wartezeit": "keine",
+        "sehhilfen": "100 € in 2 Jahren",
+        "vorsorge": "100 € in 2 Jahren",
+        "lasik": "100 € in 2 Jahren"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/brillenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Blick + Check comfort (BC2U)",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "optional",
+        "wartezeit": "keine",
+        "sehhilfen": "200 € in 2 Jahren",
+        "vorsorge": "200 € in 2 Jahren",
+        "lasik": "200 € in 2 Jahren"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/brillenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Blick + Check premium (BC1U)",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "optional",
+        "wartezeit": "keine",
+        "sehhilfen": "400 € in 2 Jahren",
+        "vorsorge": "400 € in 2 Jahren",
+        "lasik": "400 € in 2 Jahren"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/brillenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/krankenzusatzversicherung/brillenversicherung",
+    "https://www.ruv.de/krankenzusatzversicherung/zusatzversicherung-heilpraktiker",
+    "https://www.ruv.de/krankenzusatzversicherung/ambulante-zusatzversicherung",
+    "https://www.ruv.de/krankenzusatzversicherung/kombitarif-vorsorge"
+  ],
+  "offen": [
+    "Stufen sind die Tarife Blick + Check (Sehhilfen und Vorsorgeuntersuchungen); Sehhilfen und Augenlaser teilen sich einen Betrag je 2 Kalenderjahre.",
+    "Heilpraktiker nur über den eigenen Tarif NaturMedizin (N1U): 80 %, höchstens 2.400 € in zwei Kalenderjahren, in den ersten zwei Jahren höchstens 400 €.",
+    "Arzneimittel und Hörgeräte nicht in Blick + Check; Arznei, Heil- und Verbandmittel nur im Tarif Kostenerstattung ambulant (AGU, 80 % der Restkosten, Wartezeit 3 Monate).",
+    "Auslandsreise nicht als Baustein genannt. Kombitarife plus (P3U, P2U, P1U) verbinden Blick + Check mit Zahnersatz.",
+    "R+V markiert comfort als „Topseller“."
+  ]
+}

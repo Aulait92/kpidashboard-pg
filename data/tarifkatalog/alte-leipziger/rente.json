@@ -1,0 +1,113 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "BU-Zusatzschutz kombinierbar",
+    "Rentengarantiezeit wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Moderne klassische Rente",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Rente garantiert",
+        "rentenfaktor": "Rente fest bei Abschluss",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "ja",
+        "hinterbliebene": "Rentengarantiezeit",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Moderne flexible Rente",
+      "kurz": "Flexibel",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "für klassischen Teil",
+        "rentenfaktor": "95 % (Fondsteil)",
+        "anlage": "Fonds und klassisch",
+        "flexibel": "ja",
+        "hinterbliebene": "Rentengarantiezeit",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Smarte Rente (AL_DuoSmart)",
+      "kurz": "Smart",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "garantiertes Kapital",
+        "rentenfaktor": "80 %",
+        "anlage": "klassisch und dynamisch",
+        "flexibel": "Zuzahlungen ja",
+        "hinterbliebene": "Rentengarantiezeit",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Flexible Fondsrente (AL_RenteFlex)",
+      "kurz": "Fondsrente",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "wählbar 1 bis 90 %",
+        "rentenfaktor": "95 % (mit Garantie)",
+        "anlage": "Fonds und ETFs",
+        "flexibel": "ja",
+        "hinterbliebene": "Rentengarantiezeit",
+        "kapital": "ja",
+        "beitragspause": "nur mit Garantie"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/private-vorsorge/private-rentenversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2151/allgemeinebedingungenmoderneklassischerentepm2151pdf/allgemeine-bedingungen-moderne-klassische-rente-pm2151.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2150/allgemeinebedingungenmoderneflexiblerentepm2150pdf/allgemeine-bedingungen-moderne-flexible-rente-pm2150.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2450/allgemeinebedingungensmarterentepm2450pdf/allgemeine-bedingungen-smarte-rente-pm2450.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2404/bedingungenallgemeinebedingungenfondsgebundenervmitflexiblengarantienpm2404pdf/bedingungen-allgemeine-bedingungen-fondsgebundene-rv-mit-flexiblen-garantien-pm2404.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2400/bedingungenallgemeinebedingungenfondsgebundenervohnegarantienpm2400pdf/bedingungen-allgemeine-bedingungen-fondsgebundene-rv-ohne-garantien-pm2400.pdf"
+  ],
+  "offen": [
+    "Die Stufen sind Anlagekonzepte, keine Leistungsstufen (von sicherheits- zu chancenorientiert). Keine Markierung der Alte Leipziger; bei vier Stufen die dritte (Smart) als mittlere Stufe gesetzt. Bitte im Termin nach Risikoneigung wählen.",
+    "Rentenfaktor: Klassik garantiert die Rente bereits bei Abschluss; Flexibel 95 % für das Fondsguthaben (klassischer Teil mit 1 % Rechnungszins); Smart 80 %; Fondsrente mit Garantien 95 %. Fondsrente ohne Garantien (FR10) hat ebenfalls einen garantierten Rentenfaktor, Höhe nicht ausgewertet.",
+    "Beitragsgarantie: Fondsrente wahlweise 1 bis 90 % der Beiträge oder ohne Garantie; Höhe des garantierten Kapitals bei Smart steht im Vertrag (nicht auf der Seite).",
+    "Beitragspause: in den Bedingungen von Klassik, Flexibel, Smart und Fondsrente mit Garantien geregelt, in der Fondsrente ohne Garantien (PM 2400) nicht. Entnahmen bei Smart nicht ausgewertet.",
+    "Hinterbliebenenschutz: Rentengarantiezeit vereinbar; Todesfallleistung vor Rentenbeginn nicht je Produkt ausgewertet. Norwegen-Konzept (Basis Moderne flexible Rente) und Fondsanlage mit Einmalzahlung nicht als Stufe aufgenommen.",
+    "Effektivkosten und Dynamik je Produkt nicht ausgewertet (Basisinformationsblätter). Keine Renditeangaben."
+  ]
+}

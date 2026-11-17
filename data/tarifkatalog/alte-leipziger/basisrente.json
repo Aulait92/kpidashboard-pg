@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "BU-Zusatzschutz kombinierbar"
+  ],
+  "tarife": [
+    {
+      "name": "Moderne flexible Basisrente",
+      "kurz": "Flexibel",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "für klassischen Teil",
+        "rentenfaktor": "95 % (Fondsteil)",
+        "anlage": "Fonds und klassisch",
+        "flexibel": "ja",
+        "hinterbliebene": "Rente an Hinterbliebene",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/basisrente-ruerup",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Basisrente",
+      "kurz": "Fonds",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "wählbar 1 bis 90 %",
+        "rentenfaktor": "95 %",
+        "anlage": "Fonds, bis 20 zugleich",
+        "flexibel": "ja",
+        "hinterbliebene": "Rente an Hinterbliebene",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/basisrente-ruerup",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/private-vorsorge/basisrente-ruerup",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2153/allgemeinebedingungenmoderneflexiblebasisrentepm2153pdf/allgemeine-bedingungen-moderne-flexible-basisrente-pm2153.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2401/allgemeinebedingungenfondsgebundenebasisrentenversicherungpm2401pdf/allgemeine-bedingungen-fondsgebundene-basisrentenversicherung-pm2401.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2405/allgemeinebedingungenfondsgebundenebasisrentenversicherungmitflexiblengarantienpm2405pdf/allgemeine-bedingungen-fondsgebundene-basisrentenversicherung-mit-flexiblen-garantien-pm2405.pdf"
+  ],
+  "offen": [
+    "Zwei Produkte, die sich in der Anlage unterscheiden (Mix aus klassischer Anlage und rund 170 Fonds bzw. reine Fondsanlage mit wählbarer Beitragsgarantie 1 bis 90 %); keine Markierung der Alte Leipziger.",
+    "Garantien: Flexibel garantiert Guthaben und Rente für den klassischen Topf, Rentenfaktor 95 % für das Fondsguthaben; Fonds mit und ohne Garantie jeweils garantierter Rentenfaktor 95 %.",
+    "Hinterbliebene: Bei Tod vor Rentenbeginn Rente aus dem Guthaben an leistungsberechtigte Hinterbliebene, nach Rentenbeginn über eine Rentengarantiezeit; Einzelheiten je Produkt nicht ausgewertet.",
+    "„flexibel“: Beiträge erhöhen oder kürzen und Zuzahlungen laut Produktseite. Effektivkosten nicht ausgewertet (Produktinformationsblätter). Norwegen-Konzept auch als Basisrente möglich, nicht aufgenommen."
+  ]
+}

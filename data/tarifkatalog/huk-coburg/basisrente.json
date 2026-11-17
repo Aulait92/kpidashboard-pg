@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "basisrente",
+  "produkt": "Premium Rente Rürup (Basisrente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "Insolvenz- und pfändungssicher"
+  ],
+  "tarife": [
+    {
+      "name": "Premium Rente Rürup",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "0, 50, 70 oder 90 %",
+        "anlage": "Fonds + Garantieguthaben",
+        "flexibel": "ja, Zuzahlungen",
+        "hinterbliebene": "ja, abwählbar",
+        "beitragspause": "ja, kostenlos"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/altersvorsorge/ruerup-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/altersvorsorge/ruerup-rente.html"
+  ],
+  "offen": [
+    "Beitragsgarantie als Garantieniveau wählbar (0, 50, 70 oder 90 %), als ein Tarif erfasst.",
+    "Garantierter Rentenfaktor und Effektivkosten nicht auf der Produktseite; Muster-Produktinformationsblätter nicht ausgewertet.",
+    "Hinterbliebene: Tod vor Rentenbeginn lebenslange Rente an Ehe- oder Lebenspartner, sonst Waisenrente bis 25; nach Rentenbeginn über Rentengarantiezeit; Verzicht möglich.",
+    "Reduzierung und Beitragsfreistellung jederzeit kostenlos; Dynamik jährlich, bis zu 2 Mal in Folge aussetzbar.",
+    "BU-Zusatz nicht genannt. Keine Kapitalauszahlung (gesetzlich)."
+  ]
+}

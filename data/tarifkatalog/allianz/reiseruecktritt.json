@@ -1,0 +1,110 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Reisen bis 999 Tage",
+    "24h Reise-Assistance",
+    "Kinder bis 21 im Familientarif"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktritt Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 25.000 €",
+        "sb": "wählbar: 0 oder 20 %",
+        "abbruch": "ja",
+        "jahr": "nein",
+        "pandemie": "ja",
+        "familie": "Familientarif wählbar",
+        "gruende": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/reise-und-freizeit/reiseruecktrittsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Reiserücktritt-Schutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 25.000 €",
+        "sb": "wählbar: 0 oder 20 %",
+        "abbruch": "ja",
+        "jahr": "nein",
+        "pandemie": "ja",
+        "familie": "Familientarif wählbar",
+        "gruende": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/reise-und-freizeit/reiseruecktrittsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktritt Smart",
+      "kurz": "Jahr Smart",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "sb": "wählbar: 0 oder 20 %",
+        "abbruch": "ja",
+        "jahr": "ja",
+        "pandemie": "ja",
+        "familie": "Familientarif wählbar",
+        "gruende": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/reise-und-freizeit/reiseruecktrittsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktritt-Schutz Premium",
+      "kurz": "Jahr Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "sb": "wählbar: 0 oder 20 %",
+        "abbruch": "ja",
+        "jahr": "ja",
+        "pandemie": "ja",
+        "familie": "Familientarif wählbar",
+        "gruende": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.allianz.de/reise-und-freizeit/reiseruecktrittsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/reise-und-freizeit/reiseruecktrittsversicherung/"
+  ],
+  "offen": [
+    "Premium enthält zusätzlich Verspätungs-Versicherung (Verspätung ab 4 Stunden, bis 1.500 € je Person) und Sport & Aktiv-Versicherung; dafür gibt es kein Merkmal im Schema.",
+    "Selbstbeteiligung je Tarif wählbar: ohne oder 20 % des Schadens, mindestens 25 € je Person.",
+    "Summe: Reisekosten bis 25.000 € je Person, Familie oder Paar bei Einzelreisen, bis 20.000 € beim Jahresschutz (Text der Produktseite, nicht je Tarif in der Tabelle).",
+    "Allianz markiert keinen Tarif; dritte Stufe nach Regel als Empfehlung gesetzt. Für Senioren gibt es eigene Tarife (nur beim Ansprechpartner)."
+  ]
+}

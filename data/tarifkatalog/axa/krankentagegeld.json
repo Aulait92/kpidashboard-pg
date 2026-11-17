@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung Krankengeld easy",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Kinderkrankengeld inklusive",
+    "Monatlich kündbar",
+    "Online abschließbar"
+  ],
+  "tarife": [
+    {
+      "name": "Krankengeld easy",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "wartezeit": "3 Monate",
+        "dauer": "wie GKV, max. 72 Wo.",
+        "selbststaendige": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.axa.de/pk/gesundheit/p/krankentagegeld-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/krankentagegeld-versicherung"
+  ],
+  "offen": [
+    "Nur für gesetzlich versicherte Arbeitnehmer; Selbstständige und privat Versicherte nur über Krankentagegeld innerhalb der privaten Krankenversicherung (nicht aufgenommen).",
+    "Höchstes Tagegeld nicht genannt (Beispiel: 15 € je Tag).",
+    "Wartezeit 3 Monate, danach in den Monaten 4 bis 12 höchstens 60 Leistungstage; beides entfällt bei Unfall. Bei Krankheit eines Kindes Leistung ohne Karenzzeit.",
+    "Ende bei Berufsunfähigkeit, Leistung im Ausland und Dynamik nicht genannt; Bedingungen nicht ausgewertet."
+  ]
+}

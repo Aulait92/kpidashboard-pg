@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente oder Kapital wählbar",
+    "Beiträge flexibel anpassbar"
+  ],
+  "tarife": [
+    {
+      "name": "Fondsrente",
+      "kurz": "Fondsrente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "über 120 Fonds, ETFs",
+        "flexibel": "ja, Zuzahlung, Entnahme",
+        "hinterbliebene": "ja",
+        "kapital": "Rente, Kapital, Entnahme",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/private-rente-fonds/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GarantieRente Invest",
+      "kurz": "GarantieRente",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "bis 90 % wählbar",
+        "anlage": "5 Anlageoptionen",
+        "flexibel": "ja, Zuzahlung, Entnahme",
+        "hinterbliebene": "Beiträge zurück",
+        "kapital": "Rente oder Kapital",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/anlagegebundene-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/private-rente-fonds/",
+    "https://www.barmeniagothaer.de/anlagegebundene-rentenversicherung/"
+  ],
+  "offen": [
+    "Die beiden Produkte sind Anlagekonzepte, keine Leistungsstufen. Keine Aussage zu Rendite oder Wertentwicklung.",
+    "Fondsrente: Beitragsgarantie nicht genannt; bis zu 10 Anlageoptionen gleichzeitig, Stabilisierungs- und Zins-Baustein, kostenlose Fondswechsel; zum Rentenbeginn klassische oder investmentorientierte Rente. Hinterbliebenenschutz nur als Stichwort.",
+    "GarantieRente Invest: wählbare Beitragsgarantie bis 90 %, garantierte Mindestrente, jährliche Sicherung von 70 % der Kursgewinne; bei Tod vor Rentenbeginn mindestens die eingezahlten Beiträge.",
+    "Garantierter Rentenfaktor und Effektivkosten nicht auf den Produktseiten genannt.",
+    "Zusatz: Beitragsbefreiung oder Zusatzrente bei Berufsunfähigkeit; Fondsrente auch Pflegerente (PflegeRent-Option). Weitere Produkte (Sofortrente, Kapitallebensversicherung) nicht aufgenommen.",
+    "Zwei Produkte ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+  ]
+}

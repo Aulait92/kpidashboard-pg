@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "rente",
+  "produkt": "Premium Rente (private Rentenversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Fondswechsel kostenlos",
+    "Gewinnsicherung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Premium Rente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "0, 50, 70 oder 90 %",
+        "anlage": "Fonds + Garantieguthaben",
+        "flexibel": "ja, jederzeit",
+        "hinterbliebene": "Guthaben, RLV optional",
+        "kapital": "ja, ganz oder teilweise",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/altersvorsorge/privatrente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/altersvorsorge/privatrente.html"
+  ],
+  "offen": [
+    "Beitragsgarantie als Garantieniveau wählbar (chancenorientiert 0 %, ausgewogen 50 %, sicherheitsorientiert 70 %, risikoscheu 90 %); als ein Tarif erfasst, nicht als Stufen.",
+    "Garantierter Rentenfaktor und Effektivkosten nicht auf der Produktseite; Basisinformationsblätter nicht ausgewertet.",
+    "Zuzahlungen bis 25.000 € im Jahr, Entnahmen jederzeit (mindestens 1.000 € Restguthaben), Mindestbeitrag 25 €.",
+    "Tod in der Ansparphase: Vertragsguthaben; Risikolebens-Zusatzversicherung wählbar; nach Rentenbeginn Rentengarantiezeit vereinbar.",
+    "BU: Kombination mit BU oder DU, die die Beiträge im Leistungsfall weiterzahlt (über Berater). Dynamik nicht genannt."
+  ]
+}

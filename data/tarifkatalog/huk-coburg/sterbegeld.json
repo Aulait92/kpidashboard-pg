@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Auszahlung meist in 5 Tagen",
+    "Abschluss von 40 bis 80 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "5.000 bis 20.000 €",
+        "wartezeit": "3 Jahre",
+        "unfall": "nein, voll ab Tag 1",
+        "ohne-gp": "ja",
+        "beitragsende": "bis Alter 85"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/sterbegeldversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/sterbegeldversicherung.html"
+  ],
+  "offen": [
+    "Summen wählbar: 5.000, 7.500, 10.000, 15.000 oder 20.000 €.",
+    "Wartezeit: Tod in den ersten 3 Jahren erstattet die eingezahlten Beiträge; bei Unfalltod sofort volle Summe (keine doppelte Leistung genannt).",
+    "Bestattungsvorsorge-Service und Dynamik nicht genannt; Erhöhung nur über Überschüsse.",
+    "Nur ein Tarif."
+  ]
+}

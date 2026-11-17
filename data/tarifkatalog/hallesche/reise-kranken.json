@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Hallesche",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreisekrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beliebig viele Reisen im Jahr",
+    "Alarmzentrale rund um die Uhr"
+  ],
+  "tarife": [
+    {
+      "name": "Hallesche.Kolumbus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 8 Wochen",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "schmerzstillend",
+        "schwanger": "bei Komplikationen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hallesche.de/privatkunden/auslandskrankenversicherung/kurzfristige-auslandsreisekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hallesche.de/privatkunden/auslandskrankenversicherung/kurzfristige-auslandsreisekrankenversicherung",
+    "https://www.hallesche.de/-/media/druckstuecke/tarif/pm/257/tarifhalleschekolumbuspm257pdf/tarif-hallesche-kolumbus-pm257.pdf"
+  ],
+  "offen": [
+    "Ein Jahrestarif ohne Stufen. Selbstbeteiligung in Produktseite und Bedingungen nicht genannt; bitte prüfen.",
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparaturen von Zahnersatz. Schwangerschaft: Komplikationen, Fehlgeburt und Frühgeburt vor der 37. Woche. Sehhilfen und Hörgeräte nicht erstattet.",
+    "Bekannte Erkrankungen nicht ausgewertet. Kinder nur zusammen mit einem Erwachsenen; Familientarif nicht genannt.",
+    "Für längere Reisen gibt es eigene Produkte (mittelfristig und langfristig), nicht aufgenommen."
+  ]
+}

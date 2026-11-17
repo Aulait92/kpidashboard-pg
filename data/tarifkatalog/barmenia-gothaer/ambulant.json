@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung Mehr Gesundheit",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Arznei- und Heilmittel 100 %",
+    "Gesetzliche Zuzahlungen 100 %",
+    "Budget im Jahr nach Stufe"
+  ],
+  "tarife": [
+    {
+      "name": "Mehr Gesundheit 500 D",
+      "kurz": "Budget 500 €",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %",
+        "sehhilfen": "nein",
+        "vorsorge": "100 %",
+        "arznei": "100 %",
+        "hoergeraete": "100 %",
+        "wartezeit": "keine, Heilpr. 3 Monate"
+      },
+      "bausteine": {
+        "sehhilfen": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mehr Gesundheit 1.000 D",
+      "kurz": "Budget 1.000 €",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %",
+        "sehhilfen": "nein",
+        "vorsorge": "100 %",
+        "arznei": "100 %",
+        "hoergeraete": "100 %",
+        "wartezeit": "keine, Heilpr. 3 Monate"
+      },
+      "bausteine": {
+        "sehhilfen": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mehr Gesundheit 2.000 D",
+      "kurz": "Budget 2.000 €",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %",
+        "sehhilfen": "nein",
+        "vorsorge": "100 %",
+        "arznei": "100 %",
+        "hoergeraete": "100 %",
+        "wartezeit": "keine, Heilpr. 3 Monate"
+      },
+      "bausteine": {
+        "sehhilfen": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/ambulante-zusatzversicherung/"
+  ],
+  "offen": [
+    "Die Stufen unterscheiden sich nur im jährlichen Leistungsbudget (bis 500, 1.000 oder 2.000 €); alle Leistungen zählen auf das Budget.",
+    "Hörgeräte als Hilfsmittel 100 % (Hilfsmittel ohne Sehhilfen). Brillen und Kontaktlinsen nicht enthalten, über die Augenversicherung „Mehr Sehen“ zusätzlich wählbar.",
+    "Wartezeit nur für Naturheilverfahren und Heilpraktiker 3 Monate. Schutzimpfungen (auch Reiseimpfungen) 100 %. Auslandsreise-Krankenschutz nicht enthalten (eigenes Produkt).",
+    "BarmeniaGothaer markiert keine Stufe; 1.000 D als mittlere Stufe."
+  ]
+}

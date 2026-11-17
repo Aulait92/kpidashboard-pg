@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "ambulant",
+  "produkt": "Gesundheit & Vorsorge",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Gesundheitsfragen",
+    "Erblindung nach Unfall 40.000 €",
+    "Nach 2 Jahren monatlich kündbar"
+  ],
+  "tarife": [
+    {
+      "name": "Gesundheit & Vorsorge Basic",
+      "kurz": "Basic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sehhilfen": "300 € alle 2 Jahre",
+        "vorsorge": "nur Augen, 300 €/Jahr",
+        "hoergeraete": "nein",
+        "wartezeit": "keine",
+        "lasik": "bis 1.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/gesundheitsvorsorge",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Gesundheit & Vorsorge Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "sehhilfen": "400 € alle 2 Jahre",
+        "vorsorge": "400 €/Jahr, mit Impfung",
+        "hoergeraete": "im Sehhilfen-Budget",
+        "wartezeit": "keine",
+        "lasik": "bis 1.250 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/gesundheitsvorsorge",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Gesundheit & Vorsorge Best",
+      "kurz": "Best",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "sehhilfen": "600 € alle 2 Jahre",
+        "vorsorge": "600 €, mit Impfung",
+        "hoergeraete": "im Sehhilfen-Budget",
+        "wartezeit": "keine",
+        "lasik": "bis 1.500 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/gesundheitsvorsorge",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Krankenversicherung/gesundheitsvorsorge",
+    "https://www.ergo.de/fragments/produkttabelle/kranken/gesundheitsvorsorge",
+    "https://www.ergo.de/content/dam/ergo/pdf/kranken/gesundheitsvorsorge-leistungen.pdf.coredownload.pdf",
+    "https://www.ergo.de/de/Produkte/Krankenversicherung/Ambulante-Zusatzversicherung"
+  ],
+  "offen": [
+    "Heilpraktiker und Arzneimittel sind in Gesundheit & Vorsorge nicht genannt. Dafür bietet die DKV einzelne Tarife: KombiMed Balance KAB (Naturheilverfahren und Heilpraktiker 80 % bis 600 € im Jahr, Vorsorge und Impfungen bis 600 €), KombiMed Arzneimittel KAZM (80 % bis 1.000 € im Jahr), Hilfsmittel und Sehhilfen KHMR (Sehhilfen 90 % bis 300 €, Hörgerät 80 % bis 600 €).",
+    "Sehhilfen: Smart und Best teilen sich das Budget mit weiteren Hilfsmitteln wie Hörgeräten, Rollatoren und Rollstühlen. In den ersten beiden Versicherungsjahren gelten etwa halbe Höchstbeträge (z. B. Basic Vorsorge je 150 €, Sehhilfen 150 €).",
+    "Vorsorge Best: Leistungsvergleich der Seite nennt bis 600 € innerhalb von zwei Versicherungsjahren, das Leistungsblatt (PDF) bis 600 € pro Jahr; bitte prüfen. Auslandsreisekranken nicht enthalten.",
+    "ERGO kennzeichnet keine Empfehlung; Smart als mittlere Stufe."
+  ]
+}
