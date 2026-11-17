@@ -18,7 +18,15 @@ import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ErstinfoPdfFehltError, firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
-import { erstanschreibenText, outreachProdukt, tierWort, type Herkunft } from "@/lib/whatsapp/erstanschreiben";
+import {
+  ersteFrageKnoepfe,
+  erstanschreibenText,
+  erstanschreibenV6Params,
+  outreachProdukt,
+  tierWort,
+  type Herkunft,
+} from "@/lib/whatsapp/erstanschreiben";
+import { vermittlerName } from "@/lib/whatsapp/gespraech";
 import { abVariantFor } from "@/lib/whatsapp/ab-test";
 import { restartSilentSequence } from "@/lib/lead-sequences";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
@@ -75,8 +83,14 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   ).normal;
   const kurz = who.kurz || who.firm;
   const first = firstNameOf(opts.name);
-  // Parameter je gewählter Vorlage: Produkt (v5 mit Tier, v4) bzw. allgemeine Fassung (nur Name), v3 mit Link
+  // v6 (Ole, 17.11.2026): Vermittler als Person im Dativ („von Herrn Kannapinn“, Du Vorname), Rückfall Agentur
+  const person = (an: Ansprache) => vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.firm || kurz });
+  // Parameter je gewählter Vorlage: v6 Thema, Vermittler, erste offene Frage (ohne „?“); Produkt (v5 mit Tier, v4) bzw.
+  // allgemeine Fassung (nur Name), v3 mit Link
   const paramsFor = (p: { version: number; ansprache: Ansprache; purpose?: NoticePurpose }): string[] => {
+    if (p.version >= 6) {
+      return [first, ...erstanschreibenV6Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
+    }
     if ((p.purpose ?? purpose) === "outreach") return p.version >= 4 ? [first] : [first, url];
     if (p.version >= 5) return [first, ...rest, ...(produkt?.purpose === "outreach_tkv" ? [tierWort(produkt.tier, p.ansprache)] : [])];
     if (p.version === 4) return [first, ...rest];
@@ -86,13 +100,15 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     who,
     purpose,
     variant,
-    params: paramsFor({ version: 5, ansprache: opts.an }),
+    params: paramsFor({ version: 6, ansprache: opts.an }),
     paramsFor,
     legacyParams: [first, url],
+    // Knöpfe im offenen Fenster nur, wenn sie zur gestellten Frage passen (Frage 1 bzw. Telefonat)
+    textButtons: ersteFrageKnoepfe(opts.source, formular),
     document,
     documentEntwurf,
     herkunft,
-    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: opts.source, herkunft, formular }),
+    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, source: opts.source, herkunft, formular }),
   };
 }
 
@@ -107,9 +123,10 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     customerId: opts.customerId,
     to: opts.phone,
     purpose: m.purpose,
-    params: m.paramsFor({ version: 5, ansprache: opts.an }),
+    params: m.paramsFor({ version: 6, ansprache: opts.an }),
     paramsFor: m.paramsFor,
     legacyParams: m.legacyParams,
+    textButtons: m.textButtons,
     text: m.text,
     leadId: opts.leadId,
     contactName: opts.name,

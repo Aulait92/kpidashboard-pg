@@ -73,7 +73,7 @@ export function VorbereitungNeu(p: {
   id: string;
   leadId: string | null;
   readOnly: boolean;
-  kopf: { name: string; zeit: string; modus: string; produkt: string; vorbereitet: boolean; zugesagt?: boolean };
+  kopf: { name: string; zeit: string; modus: string; produkt: string; vorbereitet: boolean; zugesagt?: boolean; komplettcheck?: boolean };
   willKarte: ReactNode;
   mehr: ReactNode;
   klaeren: { punkte: string[]; erledigt: string[] };
@@ -203,6 +203,12 @@ export function VorbereitungNeu(p: {
             {p.kopf.zugesagt ? (
               <span className="inline-flex h-7 items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-[13px] font-medium text-emerald-700" data-termin-zugesagt>
                 <Check className="h-3.5 w-3.5" /> zugesagt
+              </span>
+            ) : null}
+            {/* Lead möchte auch einen kurzen Blick auf seine gesamte Absicherung (WhatsApp nach der Buchung, Ole 17.11.2026) */}
+            {p.kopf.komplettcheck ? (
+              <span className="inline-flex h-7 items-center rounded-full bg-[color:var(--brand-soft)] px-2.5 text-[13px] font-medium text-[color:var(--brand-dark)]" data-termin-komplettcheck>
+                Komplettcheck gewünscht
               </span>
             ) : null}
             {vorbereitet ? (

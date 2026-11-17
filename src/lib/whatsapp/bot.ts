@@ -34,7 +34,20 @@ import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
 import { enthaeltErsteFrage, erstanschreibenKopf, ersteFrageRegel, formularRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
-import { abschlussText, bereitlegenListe, buchungsText, KALENDER_FRAGE_RE, nachBuchungRegel, terminRegeln, terminVorschlagText, vermittlerName, zeitKurz, type VermittlerName } from "@/lib/whatsapp/gespraech";
+import {
+  buchungsText,
+  istFamilie,
+  KALENDER_FRAGE_RE,
+  knoepfeFuerText,
+  nachBuchungRegel,
+  terminKnoepfe,
+  terminRegeln,
+  terminVorschlagText,
+  vermittlerName,
+  zeitKurz,
+  type Knopf,
+  type VermittlerName,
+} from "@/lib/whatsapp/gespraech";
 import { folgefragen, folgefrageText, spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
@@ -73,6 +86,33 @@ const TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: "object",
       properties: {},
+    },
+  },
+  {
+    name: "termin_vorschlagen",
+    description:
+      "Schickt dem Lead den Terminvorschlag: die App schreibt die Nachricht selbst (kurzer Nutzen, zwei freie Videozeiten als Knöpfe und „Andere Zeit“). Ohne starts wählt die App die zwei nächsten freien Zeiten. Nach diesem Werkzeug schreibst du nichts mehr.",
+    input_schema: {
+      type: "object",
+      properties: {
+        starts: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional: genau zwei start-Werte aus get_available_slots (z. B. nach einem Wunschtag des Leads).",
+        },
+        erneut: { type: "boolean", description: "true, wenn schon einmal Zeiten vorgeschlagen wurden (kürzer, ohne Nutzensatz)." },
+        einleitung: { type: "string", description: "Optional: ein kurzer Satz vorweg, z. B. die Antwort auf eine Frage des Leads (statt „Danke!“)." },
+      },
+    },
+  },
+  {
+    name: "komplettcheck",
+    description:
+      "Der Lead hat auf die Frage geantwortet, ob der Berater im Termin auch schauen soll, ob er insgesamt gut abgesichert ist. Die App vermerkt das am Termin und schickt die nächste Nachricht selbst.",
+    input_schema: {
+      type: "object",
+      properties: { ja: { type: "boolean", description: "true = ja, gern; false = nein." } },
+      required: ["ja"],
     },
   },
   {
@@ -242,6 +282,8 @@ export function buildSystemPrompt(
     videoOnly?: boolean;
     /** Nach der Buchung: Angebotsfragen, Abschluss, Zusage (nachBuchungRegel) */
     nachBuchung?: string | null;
+    /** Zuletzt vorgeschlagene Zeiten (termin_vorschlagen), damit „die erste passt“ genau diese Zeit bucht */
+    vorschlag?: { starts: string[] } | null;
   },
 ): string {
   // Bestandskunden werden immer gesiezt (wie Kampagnen und Empfehlungen)
@@ -287,6 +329,9 @@ export function buildSystemPrompt(
   ].filter(Boolean);
   const known = [
     booked,
+    !state.upcoming && state.vorschlag?.starts.length
+      ? `Zuletzt vorgeschlagene Zeiten (Knöpfe unter unserer Nachricht): ${state.vorschlag.starts.map((st, i) => `${i + 1}. ${formatSlotDE(st)} Uhr (start=${st})`).join("; ")}. Wählt der Lead eine davon (Knopf oder Text wie „die erste“, „morgen passt“), buche genau diesen start-Wert.`
+      : "",
     state.recallAt
       ? `Geplante Wiedervorlage: Du meldest dich ${formatSlotDE(state.recallAt.toISOString())} Uhr (auf Wunsch des Leads). Lege keine zweite an; ändert der Lead die Zeit, nutze schedule_followup erneut. Schreibt er jetzt schon weiter, mach einfach normal weiter.`
       : "",
@@ -359,7 +404,7 @@ export function buildSystemPrompt(
     ].join("\n"),
     [
       "Regeln:",
-      `- Jetzt ist ${nowText} (deutsche Zeit). Nenne nie einen Termin, der schon vorbei ist. Zeiten aus früheren Nachrichten im Verlauf können veraltet sein: hole vor jedem Terminvorschlag frische Zeiten mit get_available_slots.`,
+      `- Jetzt ist ${nowText} (deutsche Zeit). Nenne nie einen Termin, der schon vorbei ist. Zeiten aus früheren Nachrichten im Verlauf können veraltet sein: für jeden Terminvorschlag nutze termin_vorschlagen (die App holt frische Zeiten).`,
       "- Antworte immer auf Deutsch, warmherzig und kurz (WhatsApp-tauglich, max. 2-3 Sätze).",
       // Ansprache je Kunde einstellbar (Ole, 14.11.2026); Bestandskunden werden oben ohnehin gesiezt
       an === "du"
@@ -505,7 +550,7 @@ async function recentMailsFor(c: { id: string; leadId: string | null }) {
  * `anstoss`: Kontext-Nachricht der App (kein Text des Leads), nach der der Assistent von sich aus schreibt, z. B. nach
  * einem Telefonat die offenen Punkte abfragen (lib/telefonat-server.ts runOffeneFragen).
  */
-export async function runBotTurn(conversationId: string, opts: { hint?: string | null; anstoss?: string | null } = {}): Promise<void> {
+export async function runBotTurn(conversationId: string, opts: { hint?: string | null; anstoss?: string | null; knopfZeit?: string | null } = {}): Promise<void> {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
     select: {
@@ -601,7 +646,15 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const aiDisclosed = notice !== "erst";
   const prefix = [
     notice === "erst"
-      ? erstanschreibenKopf({ an: ansprache, kontakt: who.kontakt, name: kurz, source: lead?.source ?? null, herkunft: "nachricht", ohneLead: !conversation.leadId })
+      ? erstanschreibenKopf({
+          an: ansprache,
+          kontakt: who.kontakt,
+          name: kurz,
+          vermittler: vermittlerName(ansprache, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisorName }).dat,
+          source: lead?.source ?? null,
+          herkunft: "nachricht",
+          ohneLead: !conversation.leadId,
+        })
       : notice === "erneut"
         ? kiHinweisErneut(ansprache, names)
         : null,
@@ -644,22 +697,41 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const videoOnly = agent.videoOnly !== false;
   const angabenQuelle = (angaben: unknown) => ({ formular: form.normal, angaben });
   const offeneFolgefragen = (angaben: unknown) => folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
-  const abschlussFuer = (email: string | null, nachFragen: boolean) =>
-    abschlussText({ an: ansprache, person, bereitlegen: bereitlegenListe(lead?.source ?? null, spartenDesLeads(lead?.source ?? null, angabenQuelle(conversation.qualificationData)), ansprache), email, nachFragen });
+  const strecke = await import("@/lib/whatsapp/termin-strecke");
+  const stand = upcoming ? await strecke.streckenStand(conversation.id, upcoming.id) : null;
+  const folgeVorher = upcoming ? offeneFolgefragen(conversation.qualificationData) : [];
+  // Antwort auf die Vertragsfrage (Komplettcheck „Ja, gern“): auswerten, am Lead speichern, Abschluss (ohne Assistent)
+  if (upcoming && stand?.vertragsfrageAt && !stand.vorvertraegeErfasst && !stand.abschlussAt && latest?.direction === "inbound" && latest.createdAt > stand.vertragsfrageAt && !opts.anstoss) {
+    await strecke.vertraegeAntwort(conversation.id, latest.body ?? "");
+    logTestLead(lead, "vorvertraege erfasst");
+    return;
+  }
   const nachBuchung = upcoming
     ? nachBuchungRegel({
         an: ansprache,
         person,
-        fragen: offeneFolgefragen(conversation.qualificationData).map((f) => ({ text: ansprache === "du" ? f.du : f.sie, feld: f.feld })),
-        abschluss: abschlussFuer(conversation.contactEmail ?? lead?.email ?? null, true),
-        abschlussGesendet: outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? "")),
+        fragen: folgeVorher.map((f) => ({ text: ansprache === "du" ? f.du : f.sie, feld: f.feld })),
+        komplettcheckOffen: !!stand?.komplettFrageAt && !stand.komplettBeantwortet,
+        abschlussGesendet: !!stand?.abschlussAt || outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? "")),
         zugesagt: !!upcoming.confirmedAt,
       })
     : null;
+  // Zuletzt vorgeschlagene Zeiten (termin_vorschlagen), solange noch kein Termin steht
+  const vorschlagStarts = await (async () => {
+    if (upcoming) return [];
+    const v = await prisma.message.findFirst({ where: { conversationId: conversation.id, direction: "internal", kind: strecke.STRECKE.vorschlag }, orderBy: { createdAt: "desc" }, select: { body: true } });
+    try {
+      const raw = (JSON.parse(v?.body ?? "{}") as { starts?: unknown }).starts;
+      return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string" && new Date(x).getTime() > Date.now()) : [];
+    } catch {
+      return [];
+    }
+  })();
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     person,
     videoOnly,
     nachBuchung,
+    vorschlag: vorschlagStarts.length ? { starts: vorschlagStarts } : null,
     advisorName,
     firmName: firm,
     anrede: who.kontakt,
@@ -697,9 +769,137 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const client = new Anthropic();
   let finalText = "";
   // Gebucht in diesem Zug: die App schickt die Buchungsnachricht (und die erste Angebotsfrage) selbst
-  let gebucht: { start: Date; mode: "video" | "phone"; meetUrl: string | null; email: string | null } | null = null;
+  const zug: {
+    gebucht: { start: Date; mode: "video" | "phone"; meetUrl: string | null; email: string | null } | null;
+    /** Terminvorschlag der App (termin_vorschlagen) */
+    vorschlag: { starts: [string, string]; text: string } | null;
+    /** Komplettcheck vom Assistenten erkannt (Werkzeug komplettcheck) */
+    komplett: boolean | null;
+  } = { gebucht: null, vorschlag: null, komplett: null };
+  /** Termin buchen (Werkzeug book_appointment bzw. Zeit-Knopf); Rückgabe = Ergebnis für den Assistenten. */
+  const buche = async (input: { modus?: unknown; start?: unknown; email?: unknown }): Promise<string> => {
+    let content = "ok";
+    const mode: "video" | "phone" = input.modus === "phone" ? "phone" : "video";
+    const start = typeof input.start === "string" ? input.start : "";
+    const rawEmail =
+      typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+    const email = EMAIL_RE.test(rawEmail)
+      ? rawEmail
+      : knownEmail; // bereits bekannt (z. B. aus Leadformular)
+    if (email && email !== conversation.contactEmail) {
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { contactEmail: email },
+      });
+    }
+    if (!start || Number.isNaN(new Date(start).getTime())) {
+      content =
+        "Ungültiger start-Wert. Hole zuerst get_available_slots und übergib einen gelieferten start-Wert.";
+    } else {
+      try {
+        const product = lead?.source ?? null;
+        // Aktuellen Stand frisch laden — record_qualification kann im
+        // selben Turn gerade erst geschrieben haben.
+        const fresh = await prisma.conversation.findUnique({
+          where: { id: conversation.id },
+          select: { qualificationSummary: true },
+        });
+        const name = lead?.name || conversation.contactName || conversation.contactPhone;
+        const res = await bookAppointment({
+          customerId: conversation.customerId,
+          leadId: conversation.leadId,
+          conversationId: conversation.id,
+          start,
+          mode,
+          summary: eventSummary(mode, name, product),
+          description: buildEventDescription({
+            bookedVia: "bot",
+            name,
+            phone: conversation.contactPhone,
+            email,
+            product,
+            mode,
+            summary: fresh?.qualificationSummary ?? null,
+            conversationId: conversation.id,
+          }),
+          attendeeEmail: email,
+          leadName: lead?.name || conversation.contactName,
+          leadPhone: conversation.contactPhone,
+        });
+        await persistInternal(conversation.id, "appointment_booked", {
+          ...input,
+          appointmentId: res.appointmentId,
+          meetUrl: res.meetUrl,
+        });
+        logTestLead(lead, "booking via bot", { appointment: res.appointmentId, mode });
+        zug.gebucht = { start: new Date(res.start), mode, meetUrl: res.meetUrl, email: email ?? null };
+        content =
+          `Termin gebucht für ${formatSlotDE(res.start)}` +
+          (mode === "video" && res.meetUrl
+            ? `. Video-Link: ${res.meetUrl}`
+            : "") +
+          (email ? `. Bestätigung mit Kalenderdatei geht per E-Mail an ${email}` : "") +
+          ". Bestätige dem Lead Datum/Uhrzeit" +
+          (mode === "video" ? " und sende den Video-Link." : ".");
+      } catch (err) {
+        if (err instanceof SlotBusyError) {
+          content =
+            "Diese Zeit ist im Kalender bereits belegt: NICHT buchen. Entschuldige dich kurz (einleitung) und nutze termin_vorschlagen mit erneut=true.";
+        } else {
+          console.error("[whatsapp bot] Buchung", err);
+          content =
+            "Buchung fehlgeschlagen (Kalender evtl. nicht verbunden). Nutze propose_appointment als Fallback.";
+        }
+      }
+    }
+    return content;
+  };
 
-  for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+  /** Terminvorschlag der App: zwei freie Zeiten (gewählt oder die nächsten), Text mit Nutzen, Knöpfe. */
+  const schlageVor = async (input: { starts?: unknown; erneut?: unknown; einleitung?: unknown }): Promise<string> => {
+    const now = new Date();
+    let starts: string[] = Array.isArray(input.starts) ? input.starts.filter((x): x is string => typeof x === "string" && new Date(x).getTime() > now.getTime() + 30 * 60 * 1000) : [];
+    if (starts.length < 2) {
+      try {
+        const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
+        const { pickTwoSlots } = await import("@/lib/whatsapp/termin-vorschlaege");
+        const two = pickTwoSlots(await suggestSlots(conversation.customerId, durationMin, 8, "lead", 10, conversation.leadId));
+        starts = two ? [two[0].start, two[1].start] : [];
+      } catch (err) {
+        console.error("[whatsapp bot] Terminvorschlag", err);
+        return "Kalender ist nicht verbunden. Nutze stattdessen propose_appointment, um die Wunschzeit festzuhalten.";
+      }
+    }
+    if (starts.length < 2) return "Keine zwei freien Zeiten gefunden. Frag den Lead nach seiner Wunschzeit und nutze propose_appointment.";
+    const pair: [string, string] = [starts[0], starts[1]];
+    const text = terminVorschlagText({
+      an: ansprache,
+      source: lead?.source ?? null,
+      formular: form.normal,
+      angaben: (await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } }))?.qualificationData ?? conversation.qualificationData,
+      person,
+      zeiten: [zeitKurz(new Date(pair[0]), now), zeitKurz(new Date(pair[1]), now)],
+      einleitung: typeof input.einleitung === "string" ? input.einleitung : null,
+      erneut: input.erneut === true,
+      video: true,
+    });
+    zug.vorschlag = { starts: pair, text };
+    return "Der Terminvorschlag ist vorbereitet, die App schickt ihn mit Knöpfen. Schreib nichts weiter.";
+  };
+
+  // Zeit-Knopf (Payload slot:<ISO>, lib/whatsapp/knopf.ts): genau diese Zeit buchen, ohne Assistent, wenn die E-Mail
+  // bekannt ist; ist sie belegt, bekommt der Assistent den Hinweis (Entschuldigung und neuer Vorschlag)
+  if (opts.knopfZeit && !upcoming && knownEmail && new Date(opts.knopfZeit).getTime() > Date.now() + 15 * 60 * 1000) {
+    const r = await buche({ modus: "video", start: opts.knopfZeit });
+    if (!zug.gebucht) {
+      const note = `[Hinweis der App: ${r}]`;
+      const last = messages[messages.length - 1];
+      if (last?.role === "user" && typeof last.content === "string") last.content = `${last.content}\n\n${note}`;
+      else messages.push({ role: "user", content: note });
+    }
+  }
+
+  for (let i = 0; i < MAX_TOOL_ITERATIONS && !zug.gebucht; i++) {
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
@@ -764,7 +964,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       } else if (tu.name === "get_available_slots") {
         try {
           const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
-          const slots: Slot[] = await suggestSlots(conversation.customerId, durationMin, 3, "lead", 10, conversation.leadId);
+          const slots: Slot[] = await suggestSlots(conversation.customerId, durationMin, 6, "lead", 10, conversation.leadId);
           // Berater abwesend (Urlaub, Krank …): ab wann wieder Termine gehen – ohne Grund.
           const pausedUntil = await bookingPausedUntil(conversation.customerId, conversation.leadId).catch(() => null);
           const absenceNote = pausedUntil
@@ -775,7 +975,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
               "Aktuell keine freien Slots in den nächsten Werktagen gefunden. Frage den Lead nach seiner Wunschzeit und nutze propose_appointment." + absenceNote;
           } else {
             content =
-              "Freie Zeiten (schlage dem Lead genau zwei davon vor, so geschrieben wie hier; zum Buchen den exakten start-Wert an book_appointment übergeben):\n" +
+              "Freie Zeiten (für den Vorschlag termin_vorschlagen mit genau zwei start-Werten nutzen; zum Buchen den exakten start-Wert an book_appointment übergeben):\n" +
               slots
                 .map((s) => `- ${zeitKurz(new Date(s.start))} (start=${s.start})`)
                 .join("\n") + absenceNote;
@@ -789,83 +989,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         content =
           "NICHT gebucht: Der Lead hat bereits einen Termin (siehe System-Prompt). Bestätige diesen stattdessen.";
       } else if (tu.name === "book_appointment") {
-        const input = tu.input as {
-          modus?: unknown;
-          start?: unknown;
-          email?: unknown;
-        };
-        const mode = input.modus === "video" ? "video" : "phone";
-        const start = typeof input.start === "string" ? input.start : "";
-        const rawEmail =
-          typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
-        const email = EMAIL_RE.test(rawEmail)
-          ? rawEmail
-          : knownEmail; // bereits bekannt (z. B. aus Leadformular)
-        if (email && email !== conversation.contactEmail) {
-          await prisma.conversation.update({
-            where: { id: conversation.id },
-            data: { contactEmail: email },
-          });
-        }
-        if (!start || Number.isNaN(new Date(start).getTime())) {
-          content =
-            "Ungültiger start-Wert. Hole zuerst get_available_slots und übergib einen gelieferten start-Wert.";
-        } else {
-          try {
-            const product = lead?.source ?? null;
-            // Aktuellen Stand frisch laden — record_qualification kann im
-            // selben Turn gerade erst geschrieben haben.
-            const fresh = await prisma.conversation.findUnique({
-              where: { id: conversation.id },
-              select: { qualificationSummary: true },
-            });
-            const name = lead?.name || conversation.contactName || conversation.contactPhone;
-            const res = await bookAppointment({
-              customerId: conversation.customerId,
-              leadId: conversation.leadId,
-              conversationId: conversation.id,
-              start,
-              mode,
-              summary: eventSummary(mode, name, product),
-              description: buildEventDescription({
-                bookedVia: "bot",
-                name,
-                phone: conversation.contactPhone,
-                email,
-                product,
-                mode,
-                summary: fresh?.qualificationSummary ?? null,
-                conversationId: conversation.id,
-              }),
-              attendeeEmail: email,
-              leadName: lead?.name || conversation.contactName,
-              leadPhone: conversation.contactPhone,
-            });
-            await persistInternal(conversation.id, "appointment_booked", {
-              ...(tu.input as Record<string, unknown>),
-              appointmentId: res.appointmentId,
-              meetUrl: res.meetUrl,
-            });
-            logTestLead(lead, "booking via bot", { appointment: res.appointmentId, mode });
-            gebucht = { start: new Date(res.start), mode, meetUrl: res.meetUrl, email: email ?? null };
-            content =
-              `Termin gebucht für ${formatSlotDE(res.start)}` +
-              (mode === "video" && res.meetUrl
-                ? `. Video-Link: ${res.meetUrl}`
-                : "") +
-              (email ? `. Bestätigung mit Kalenderdatei geht per E-Mail an ${email}` : "") +
-              ". Bestätige dem Lead Datum/Uhrzeit" +
-              (mode === "video" ? " und sende den Video-Link." : ".");
-          } catch (err) {
-            if (err instanceof SlotBusyError) {
-              content =
-                "Diese Zeit ist im Kalender bereits belegt: NICHT buchen. Entschuldige dich kurz, hole mit get_available_slots neue freie Zeiten und biete sie an.";
-            } else {
-              console.error("[whatsapp bot] Buchung", err);
-              content =
-                "Buchung fehlgeschlagen (Kalender evtl. nicht verbunden). Nutze propose_appointment als Fallback.";
-            }
-          }
+        content = await buche(tu.input as { modus?: unknown; start?: unknown; email?: unknown });
+      } else if (tu.name === "termin_vorschlagen") {
+        content = await schlageVor(tu.input as { starts?: unknown; erneut?: unknown; einleitung?: unknown });
+      } else if (tu.name === "komplettcheck") {
+        if (!upcoming) content = "Es gibt noch keinen Termin.";
+        else {
+          zug.komplett = (tu.input as { ja?: unknown }).ja === true;
+          content = "Vermerkt. Die App schickt die nächste Nachricht selbst. Schreib nichts weiter.";
         }
       } else if (tu.name === "termin_zugesagt") {
         // Zusage (Kalenderfrage mit ja beantwortet): Badge „zugesagt“ am Termin und in der Terminvorbereitung
@@ -979,7 +1110,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   // Iterationslimit erreicht, aber noch keine Antwort (z. B. nach mehreren
   // Tool-Aufrufen): einmal ohne Tool-Nutzung nachfragen, damit der Lead
   // garantiert eine Antwort/Bestätigung bekommt.
-  if (!finalText) {
+  if (!finalText && !zug.gebucht && !zug.vorschlag && zug.komplett === null) {
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
@@ -995,15 +1126,53 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       .trim();
   }
 
-  // Gebucht: feste Buchungsnachricht (Termin fett, Link, „reserviert nur für Sie“); fehlen Angaben fürs Angebot, folgt
-  // die erste Angebotsfrage als eigene Nachricht, sonst gleich der Abschluss mit der Kalenderfrage (Ole, 17.11.2026)
-  let ersteFolgefrage: string | null = null;
+  // Komplettcheck vom Assistenten erkannt (Lead hat getippt statt geklickt): die App schickt Vertragsfrage bzw. Abschluss
+  if (zug.komplett !== null) {
+    await strecke.komplettcheckAntwort(conversation.id, zug.komplett);
+    logTestLead(lead, "komplettcheck", { ja: zug.komplett });
+    return;
+  }
+
+  // Gebucht: feste Buchungsnachricht (Termin fett, Link, verbindlicher Absatz); fehlen Angaben fürs Angebot, folgt die
+  // erste Angebotsfrage als eigene Nachricht, sonst gleich der Komplettcheck (Ole, 17.11.2026)
+  let zweite: { text: string; buttons: Knopf[] | null; merker?: string } | null = null;
+  let knoepfe: Knopf[] | null = null;
+  let merkerErste: string | null = null;
+  const gebucht = zug.gebucht;
   if (gebucht) {
-    const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true, contactEmail: true } });
+    const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } });
     const offen = offeneFolgefragen(fresh?.qualificationData ?? conversation.qualificationData);
-    const email = gebucht.email ?? fresh?.contactEmail ?? null;
-    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person, abschluss: offen.length ? null : abschlussFuer(email, false) });
-    ersteFolgefrage = offen[0] ? folgefrageText(offen[0], ansprache, person.nom, true) : null;
+    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person });
+    if (offen[0]) {
+      const t = folgefrageText(offen[0], ansprache, person.nom, true);
+      zweite = { text: t, buttons: knoepfeFuerText(t, offen) };
+    } else {
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData) });
+      zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+    }
+  } else if (zug.vorschlag) {
+    finalText = zug.vorschlag.text;
+    knoepfe = terminKnoepfe(zug.vorschlag.starts);
+  } else if (upcoming && finalText && folgeVorher.length && stand && !stand.komplettFrageAt) {
+    // Letzte Angebotsfrage beantwortet: statt eigener Worte des Assistenten der Komplettcheck (mit Knöpfen)
+    const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } });
+    if (!offeneFolgefragen(fresh?.qualificationData).length) {
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData) });
+      finalText = k.text;
+      knoepfe = k.buttons;
+      merkerErste = strecke.STRECKE.komplettFrage;
+    } else {
+      knoepfe = knoepfeFuerText(finalText, folgeVorher);
+    }
+  } else {
+    knoepfe = knoepfeFuerText(finalText, folgeVorher);
+    // Termin ohne offene Angebotsfragen (z. B. über die Buchungsseite gebucht), Strecke noch nicht begonnen: nach der
+    // Antwort des Assistenten der Komplettcheck als eigene Nachricht (danach Abschluss mit Kalenderfrage)
+    const abschlussDa = !!stand?.abschlussAt || outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? ""));
+    if (upcoming && stand && !folgeVorher.length && !stand.komplettFrageAt && !abschlussDa && !knoepfe) {
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData) });
+      zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+    }
   }
 
   if (finalText) {
@@ -1012,23 +1181,35 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     if (hits.length) {
       await persistInternal(conversation.id, "advice_blocked", { original: finalText, treffer: hits });
       finalText = sichereAntwort(ansprache, advisorName, !!upcoming);
+      knoepfe = null;
+      merkerErste = null;
+      zug.vorschlag = null;
     }
     const sent = await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,
       body: [...prefix, finalText].join("\n\n"),
       sentBy: "bot",
+      buttons: knoepfe,
     });
-    logTestLead(lead, "bot reply sent", { waMessageId: sent.messageId ?? "none", blocked: hits.length > 0 });
-    // Erste Angebotsfrage nach der Buchung als eigene Nachricht (nie in der Buchungsnachricht)
-    if (ersteFolgefrage) {
-      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: ersteFolgefrage, sentBy: "bot" });
+    logTestLead(lead, "bot reply sent", { waMessageId: sent.messageId ?? "none", blocked: hits.length > 0, buttons: knoepfe?.length ?? 0 });
+    // Merker: Terminvorschlag (Zeiten fürs Nachfassen und für „die erste passt“), Komplettcheck gefragt
+    if (zug.vorschlag) await persistInternal(conversation.id, strecke.STRECKE.vorschlag, { starts: zug.vorschlag.starts });
+    if (merkerErste && upcoming) await persistInternal(conversation.id, merkerErste, { appointmentId: upcoming.id });
+    // Nach der Buchung als eigene Nachricht: erste Angebotsfrage bzw. Komplettcheck (nie in der Buchungsnachricht)
+    if (zweite) {
+      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: zweite.text, sentBy: "bot", buttons: zweite.buttons });
+      if (zweite.merker) {
+        const appt = await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } });
+        if (appt) await persistInternal(conversation.id, zweite.merker, { appointmentId: appt.id });
+      }
       logTestLead(lead, "folgefrage sent");
     }
     // Erstinformation als PDF (§ 16 VersVermV), einmal je Unterhaltung, sobald das Fenster offen ist; Rückfall Link
     // (lib/whatsapp/erstinfo-pdf.ts)
     await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName });
-    // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“)
+    // Antwortet der Lead nicht mehr: nach wenigen Stunden nachfassen (lib/lead-sequences.ts, „Chat ruht“; nach einem
+    // Terminvorschlag mit denselben Zeit-Knöpfen)
     if (conversation.leadId) await restartSilentSequence(conversation.leadId).catch((e) => console.error("[lead-sequences silent]", e));
   }
 }

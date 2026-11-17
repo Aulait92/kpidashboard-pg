@@ -10,7 +10,9 @@
 //   pg_<zweck>_v3_sie             Sie     „Guten Tag {{1}}, …“ ({{1}} = Frau Schneider / Julia Schneider)
 //   pg_<zweck>_v3_sie_ohne_name   Sie     „Guten Tag, …“ (für Kontakte ohne Nachnamen)
 // A/B-Fassung b (TEMPLATE_BODY_B) mit „_b“ hinter der Version: pg_<zweck>_v4_b, pg_<zweck>_v4_b_sie …
-// Erstanschreiben mit PDF der Erstinformation im Kopf (TEMPLATE_HEADER) und Fußzeile (ERSTINFO_FOOTER).
+// Erstanschreiben mit PDF der Erstinformation im Kopf (TEMPLATE_HEADER) und Fußzeile (ERSTINFO_FOOTER). Ab v6 je Fassung
+// zusätzlich eine Fassung ohne Kopf („_ohnepdf“, Rückfall, wenn die Erstinformation als PDF fehlt; rankOutreach):
+//   pg_outreach_tkv_v6_sie (mit PDF), pg_outreach_tkv_v6_ohnepdf_sie (ohne PDF) …
 
 import {
   ERSTINFO_FOOTER,
@@ -70,21 +72,32 @@ export function formOf(purpose: NoticePurpose, form: TemplateForm | Ansprache): 
   return form === "du" && hasDuVariant(purpose) ? "du" : "sie";
 }
 
-/** Alle einzureichenden Vorlagen eines Kunden: je Zweck jede Fassung (Ansprache) und jede A/B-Fassung. */
-export function plannedTemplates(purposes: NoticePurpose[]): { purpose: NoticePurpose; form: TemplateForm; variant: TemplateVariant }[] {
-  return purposes.flatMap((purpose) => variantsFor(purpose).flatMap((variant) => formsFor(purpose).map((form) => ({ purpose, form, variant }))));
+/** Ab dieser Textversion wird das Erstanschreiben je Fassung auch ohne PDF-Kopf eingereicht (Ole, 17.11.2026). */
+export const OHNE_KOPF_AB_VERSION = 6;
+
+/** Kopf-Fassungen eines Zwecks: mit PDF (true) und ab v6 bei Zwecken mit Kopf zusätzlich ohne (false). */
+export function kopfFassungen(purpose: NoticePurpose): boolean[] {
+  const v = Number(/^v(\d+)$/.exec(templateVersionFor(purpose))?.[1] ?? 0);
+  return TEMPLATE_HEADER[purpose] && v >= OHNE_KOPF_AB_VERSION ? [true, false] : [true];
+}
+
+/** Alle einzureichenden Vorlagen eines Kunden: je Zweck jede Fassung (Ansprache), jede A/B-Fassung und Kopf-Fassung. */
+export function plannedTemplates(purposes: NoticePurpose[]): { purpose: NoticePurpose; form: TemplateForm; variant: TemplateVariant; kopf: boolean }[] {
+  return purposes.flatMap((purpose) =>
+    variantsFor(purpose).flatMap((variant) => formsFor(purpose).flatMap((form) => kopfFassungen(purpose).map((kopf) => ({ purpose, form, variant, kopf })))),
+  );
 }
 
 /**
  * Stabiler Name je Zweck, Textversion und Fassung, z. B. pg_outreach_v2, pg_outreach_v2_sie,
  * pg_outreach_v2_sie_ohne_name (Meta: Kleinbuchstaben, Ziffern, Unterstrich).
  */
-export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSION, form: TemplateForm | Ansprache = "du", variant: TemplateVariant = "a"): string {
+export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSION, form: TemplateForm | Ansprache = "du", variant: TemplateVariant = "a", kopf = true): string {
   // Allgemeine Version → ggf. feste Version des Zwecks (PURPOSE_VERSION, z. B. review_request v3)
   if (version === TEMPLATE_VERSION) version = templateVersionFor(purpose);
   const f = formOf(purpose, form);
   const suffix = f === "du" ? "" : `_${f}`;
-  return `pg_${purpose}_${version}${variant === "b" ? "_b" : ""}${suffix}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  return `pg_${purpose}_${version}${variant === "b" ? "_b" : ""}${kopf ? "" : "_ohnepdf"}${suffix}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
 }
 
 /**
@@ -139,6 +152,15 @@ const EXAMPLES: Record<string, string> = {
   Tier: "Ihre Katze",
 };
 
+/** Beispiele fürs Erstanschreiben ab v6 (Thema, Vermittler im Dativ, erste Frage ohne „?“) je Zweck und Ansprache. */
+const V6_BEISPIEL: Partial<Record<NoticePurpose, { thema: string; frage: { sie: string; du: string } }>> = {
+  outreach: { thema: "Versicherung", frage: { sie: "Wann erreicht Herr Schmidt Sie am besten für ein kurzes Telefonat", du: "Wann erreicht Thomas dich am besten für ein kurzes Telefonat" } },
+  outreach_tkv: { thema: "Katzenversicherung", frage: { sie: "Wie alt ist Ihre Katze", du: "Wie alt ist deine Katze" } },
+  outreach_zahn: { thema: "Zahnzusatzversicherung", frage: { sie: "Welcher Tarifbaustein ist Ihnen am wichtigsten", du: "Welcher Tarifbaustein ist dir am wichtigsten" } },
+  outreach_pkv: { thema: "private Krankenversicherung", frage: { sie: "Wie sind Sie aktuell beruflich aufgestellt", du: "Wie bist du aktuell beruflich aufgestellt" } },
+  outreach_privatschutz: { thema: "Privatschutz", frage: { sie: "Worum geht es Ihnen vor allem", du: "Worum geht es dir vor allem" } },
+};
+
 /** Beispiel für das Produkt im Erstanschreiben (passt zum Artikel im Text: „zur …“ bzw. „zum Thema …“). */
 const PRODUKT_BEISPIEL: Partial<Record<NoticePurpose, string>> = {
   outreach_tkv: "Katzenversicherung",
@@ -147,8 +169,10 @@ const PRODUKT_BEISPIEL: Partial<Record<NoticePurpose, string>> = {
   outreach_privatschutz: "Privatschutz",
 };
 
-export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du"): string[] {
+export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du", names?: TemplateNames | null): string[] {
   const f = formOf(purpose, form);
+  // Vermittler (v6): in der Vorschau des Kunden sein eigener Name (Sie: Vor- und Nachname, Du: Kurzname)
+  const vermittler = names ? (f === "du" ? names.kurz || names.advisor : names.advisor) : f === "du" ? "Thomas" : "Herrn Schmidt";
   return paramLabelsFor(purpose, f).map((label) =>
     label === "Link/Hinweis" && f !== "du"
       ? "Wir rufen Sie unter Ihrer Nummer an."
@@ -156,7 +180,13 @@ export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | An
         ? "deine Katze"
       : label === "Produkt"
         ? (PRODUKT_BEISPIEL[purpose] ?? "Versicherung")
-        : (EXAMPLES[label] ?? label),
+        : label === "Thema"
+          ? (V6_BEISPIEL[purpose]?.thema ?? "Versicherung")
+          : label === "Vermittler"
+            ? vermittler
+            : label === "Erste Frage"
+              ? (V6_BEISPIEL[purpose]?.frage[f === "du" ? "du" : "sie"] ?? "Wann passt Ihnen ein kurzer Videotermin")
+              : (EXAMPLES[label] ?? label),
   );
 }
 
@@ -175,13 +205,14 @@ export function buildTemplateRequest(
   names: TemplateNames | string,
   version = TEMPLATE_VERSION,
   form: TemplateForm | Ansprache = "du",
-  opts: { variant?: TemplateVariant; documentExample?: string | null } = {},
+  opts: { variant?: TemplateVariant; documentExample?: string | null; kopf?: boolean } = {},
 ): CreateTemplateInput {
   const variant = opts.variant ?? "a";
+  const kopf = opts.kopf !== false;
   const text = templateBodyFor(purpose, names, form, variant);
   const examples = exampleValuesFor(purpose, form);
   const components: unknown[] = [];
-  const header = opts.documentExample ? TEMPLATE_HEADER[purpose] : undefined;
+  const header = opts.documentExample && kopf ? TEMPLATE_HEADER[purpose] : undefined;
   if (header) components.push({ type: "HEADER", format: header, example: { header_handle: [opts.documentExample] } });
   const body: Record<string, unknown> = { type: "BODY", text };
   if (examples.length) body.example = { body_text: [examples] };
@@ -190,7 +221,7 @@ export function buildTemplateRequest(
   const buttons = TEMPLATE_BUTTONS[purpose] ?? [];
   if (buttons.length) components.push({ type: "BUTTONS", buttons: buttons.map((text) => ({ type: "QUICK_REPLY", text })) });
   return {
-    name: templateNameFor(purpose, version, form, variant),
+    name: templateNameFor(purpose, version, form, variant, kopf),
     category: categoryFor(purpose),
     language: TEMPLATE_LANGUAGE,
     components,
@@ -237,7 +268,7 @@ export function metaTemplateProblems(text: string, examples: string[]): string[]
 
 /** Vorschau mit eingesetzten Beispielwerten (Kundenansicht). */
 export function previewBodyFor(purpose: NoticePurpose, names: TemplateNames | string, form: TemplateForm | Ansprache = "du", variant: TemplateVariant = "a"): string {
-  return renderTemplate(templateBodyFor(purpose, names, form, variant), exampleValuesFor(purpose, form));
+  return renderTemplate(templateBodyFor(purpose, names, form, variant), exampleValuesFor(purpose, form, typeof names === "string" ? { firm: names, advisor: names } : names));
 }
 
 /** Verständliche Titel für die Kundenansicht. */

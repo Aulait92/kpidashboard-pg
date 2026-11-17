@@ -130,6 +130,9 @@ export async function recordBooking(inv: Invitee, ev: ScheduledEvent, matcher?: 
   const startAt = new Date(ev.start_time);
   const loc = ev.location ?? null;
   const utm = inv.tracking?.utm_source ?? null;
+  // Nummer aus der Buchung (SMS-Erinnerung, Frage, bei „wir rufen an“ der Ort): Bestätigung und Erinnerungen gehen an sie
+  const { bookingPhone } = await import("@/lib/vertrieb/termin-whatsapp");
+  const phone = bookingPhone(inv, null, loc);
 
   const task = await prisma.salesTask.create({
     data: {
@@ -156,6 +159,7 @@ export async function recordBooking(inv: Invitee, ev: ScheduledEvent, matcher?: 
       utmSource: utm,
       inviteeName: inv.name ?? null,
       inviteeEmail: inv.email,
+      inviteePhone: phone ? `+${phone}` : null,
       taskId: task.id,
     },
   });
@@ -168,8 +172,6 @@ export async function recordBooking(inv: Invitee, ev: ScheduledEvent, matcher?: 
     },
   });
   // Abweichende E-Mail und Telefonnummer aus der Buchung als weitere Angabe übernehmen (Hauptwerte bleiben)
-  const { bookingPhone } = await import("@/lib/vertrieb/termin-whatsapp");
-  const phone = bookingPhone(inv, null);
   await captureFromBooking(contactId, { email: inv.email, phone: phone ? `+${phone}` : null, answers: answersText(inv), source: "CALENDLY" }).catch((e) =>
     reportError(e, "kontaktdaten-calendly"),
   );

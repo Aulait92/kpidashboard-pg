@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { rankOutreach, rankTemplates, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { anredeName, anredeZeile } from "@/lib/ansprache";
-import { frageplan, ersteFrage, ersteFrageRegel, outreachProdukt, MAX_FRAGEN_VOR_TERMIN } from "@/lib/whatsapp/erstanschreiben";
+import { frageplan, ersteFrage, ersteFrageRegel, erstanschreibenText, outreachProdukt, MAX_FRAGEN_VOR_TERMIN } from "@/lib/whatsapp/erstanschreiben";
 import { testLeadAnswers } from "@/lib/testlead";
 import { buildSystemPrompt } from "@/lib/whatsapp/bot";
 import { abschlussText, bereitlegenListe, buchungsText, nachBuchungRegel, terminVorschlagText, vermittlerName, versicherungWort, zeitKurz } from "@/lib/whatsapp/gespraech";
@@ -14,6 +14,9 @@ import { buildIcs, type CustomerEvent } from "@/lib/calendar/add-to-calendar";
 
 const tpl = (name: string, purpose: NoticePurpose, header: boolean, body = "x") => ({ name, purpose, body, headerFormat: header ? "DOCUMENT" : null });
 const v = (purpose: NoticePurpose, form: "sie" | "sie_ohne_name" | "du") => templateTextFor(purpose, form);
+// Freigegebener Text der v5 (seit v6 nicht mehr in TEMPLATE_BODY): Frage fest im Text
+const V5_PRIVATSCHUTZ_SIE =
+  "Hallo {{1}}, danke für Ihre Anfrage zum Thema {{2}}!\nIch bin der digitale KI-Assistent von Ole und kläre kurz zwei, drei Fragen, damit Ole Ihnen ein passendes Angebot machen kann.\n\n*Worum geht es Ihnen vor allem?*";
 
 // Freigegeben bei Meta für „Ole Agentur“ (Sie): Privatschutz v5/v4 und allgemein v5/v4 mit PDF-Kopf, v3 ohne Kopf
 const FREIGEGEBEN = [
@@ -114,8 +117,9 @@ describe("3./4. Frageplan je Produkt (Testlead mit vollständigen Formularangabe
       const formular = testLeadAnswers(produkt);
       const p = outreachProdukt(produkt);
       const purpose = p?.purpose ?? "outreach";
-      // a) Vorlage v5 (fester Text) ist das Erstanschreiben
-      const gesendet = templateTextFor(purpose, "sie");
+      // a) Vorlage v6 mit der ersten offenen Frage ist das Erstanschreiben
+      void purpose;
+      const gesendet = erstanschreibenText({ an: "sie", kontakt: TESTLEAD, name: "Ole", vermittler: "Herrn Kannapinn", source: produkt, formular });
       const plan = frageplan(produkt, formular, { gesendet });
       for (const f of plan.offen) expect(f.bekannt, `${produkt}: ${f.sie}`).toBeNull();
       const fragenGesamt = (plan.gestellt ? 1 : 0) + plan.offen.length;
@@ -133,7 +137,7 @@ describe("3./4. Frageplan je Produkt (Testlead mit vollständigen Formularangabe
 
   it("Privatschutz live: Vorlagenfrage „Worum geht es Ihnen vor allem?“ gilt als beantwortet, danach nur „schon versichert?“", () => {
     const formular = testLeadAnswers("Privatschutz");
-    const gesendet = `Hallo Ole Kannapinn Testlead, ${templateTextFor("outreach_privatschutz", "sie").replace(/^Hallo \{\{1\}\}, /, "")}`;
+    const gesendet = V5_PRIVATSCHUTZ_SIE.replace("{{1}}", "Ole Kannapinn Testlead").replace("{{2}}", "Privatschutz");
     const plan = frageplan("Privatschutz", formular, { gesendet });
     expect(plan.gestellt?.key).toBe("frage1");
     expect(plan.gestellt?.bekannt).toBe("Versicherungsinteresse: Haftpflicht, Hausrat");
@@ -164,7 +168,8 @@ describe("3./4. Frageplan je Produkt (Testlead mit vollständigen Formularangabe
     expect(s).toMatch(/nie „Worum geht es Ihnen dabei vor allem\?“/);
     expect(s).not.toMatch(/Pflichtangaben für das Angebot/);
     expect(s).not.toMatch(/Hund oder Pferd im Haushalt/);
-    expect(s).toContain("Herr Kannapinn zeigt Ihnen in einem kurzen Videotermin, welcher Schutz zu Ihnen passt.");
+    expect(s).toContain("In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten.");
+    expect(s).toMatch(/Nutze termin_vorschlagen/);
     expect(s).toMatch(/Die E-Mail-Adresse ist bekannt, frag nicht danach/);
     expect(s).toMatch(/Nur Videotermine/);
     expect(s).not.toMatch(/Telefon geht natürlich auch/);
@@ -203,7 +208,7 @@ describe("Terminvorschlag (Nutzen, Vermittler als Person, zwei Videozeiten, kein
       zeiten: ["heute um 16 Uhr", "morgen um 10 Uhr"],
     });
     expect(t).toBe(
-      "Danke! Gerade mit Kindern ist eine gute Haftpflicht- und Hausratversicherung wichtig, damit Ihre Familie im Ernstfall gut abgesichert ist. Herr Kannapinn zeigt Ihnen in einem kurzen Videotermin, welcher Schutz zu Ihnen passt. Passt Ihnen heute um 16 Uhr oder morgen um 10 Uhr?",
+      "Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten. Passt Ihnen heute um 16 Uhr oder morgen um 10 Uhr?",
     );
     expect(versicherungWort("Haftpflicht, Hausrat, Unfall")).toBe("Haftpflicht-, Hausrat- und Unfallversicherung");
   });
@@ -227,7 +232,8 @@ describe("Folgefragen nach der Buchung (Rechner-Tabelle docs/preise-pilot.md)", 
     expect(sparten).toEqual(["haftpflicht", "hausrat"]);
     const fr = folgefragen(sparten, s);
     expect(fr.map((f) => f.key)).toEqual(["geburt", "wohnflaeche", "oeffentlicherDienst"]);
-    expect(fr.map((f) => f.sie)).toEqual(["Wie lautet Ihr Geburtsdatum?", "Wie groß ist Ihre Wohnung ungefähr?", "Sind Sie im öffentlichen Dienst tätig? (ja oder nein)"]);
+    expect(fr.map((f) => f.sie)).toEqual(["Wie lautet Ihr Geburtsdatum?", "Wie groß ist Ihre Wohnung ungefähr?", "Sind Sie im öffentlichen Dienst tätig?"]);
+    expect(fr[2].knoepfe).toEqual(["Ja", "Nein"]);
     expect(folgefrageText(fr[0], "sie", "Herr Kannapinn", true)).toBe("Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Wie lautet Ihr Geburtsdatum?");
     // Beantwortet im Chat: fällt weg
     expect(keys(sparten, src(formular, { geburt: "14.05.1985", wohnflaeche: "90 m²" }))).toEqual(["oeffentlicherDienst"]);
@@ -262,7 +268,9 @@ describe("Buchungsnachricht und Abschluss (eine Bestätigungsfrage ganz am Schlu
 
   it("mit offenen Angebotsfragen: Buchungsnachricht ohne Frage", () => {
     const t = buchungsText({ an: "sie", start, mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person });
-    expect(t).toBe("Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\nHerr Kannapinn reserviert diese Zeit nur für Sie.");
+    expect(t).toBe(
+      "Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
+    );
     expect(t).not.toMatch(/\?/);
   });
 
@@ -271,7 +279,7 @@ describe("Buchungsnachricht und Abschluss (eine Bestätigungsfrage ganz am Schlu
     const ab = abschlussText({ an: "sie", person, bereitlegen: bereitlegenListe("Privatschutz", sparten, "sie"), email: "ole@example.com", nachFragen: true });
     expect(ab).toMatch(/^Danke, damit sind alle wichtigen Angaben für Herrn Kannapinn notiert\./);
     expect(ab).toContain("• Ihre IBAN, falls Sie direkt abschließen möchten");
-    expect(ab).toContain("• bei Hausrat: die Wohnfläche");
+    expect(ab).toContain("• die Wohnfläche Ihrer Wohnung");
     expect(ab).not.toContain("Chipnummer");
     expect(ab.endsWith("Die Einladung mit Kalendereintrag habe ich Ihnen an ole@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*")).toBe(true);
     expect((ab.match(/\?/g) ?? []).length).toBe(1);
@@ -281,9 +289,11 @@ describe("Buchungsnachricht und Abschluss (eine Bestätigungsfrage ganz am Schlu
   });
 
   it("Prompt nach der Buchung: Fragen in Reihenfolge, Abschluss, Zusage per termin_zugesagt, E-Mail nur bestätigen", () => {
-    const r = nachBuchungRegel({ an: "sie", person, fragen: [{ text: "Wie lautet Ihr Geburtsdatum?", feld: "geburt" }], abschluss: "ABSCHLUSS", abschlussGesendet: false, zugesagt: false });
+    const r = nachBuchungRegel({ an: "sie", person, fragen: [{ text: "Wie lautet Ihr Geburtsdatum?", feld: "geburt" }], abschlussGesendet: false, zugesagt: false });
     expect(r).toContain("1. „Wie lautet Ihr Geburtsdatum?“ (angaben.geburt)");
-    expect(r).toContain("„ABSCHLUSS“");
+    expect(r).toMatch(/Die App schickt die nächste Nachricht selbst/);
+    const k = nachBuchungRegel({ an: "sie", person, fragen: [], komplettcheckOffen: true, abschlussGesendet: false, zugesagt: false });
+    expect(k).toMatch(/nutze komplettcheck mit ja=true bzw\. ja=false/);
     expect(r).toMatch(/termin_zugesagt/);
     expect(r).toMatch(/update_email/);
   });

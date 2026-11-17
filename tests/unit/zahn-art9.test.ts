@@ -3,22 +3,23 @@
 import { describe, expect, it } from "vitest";
 import { buildEventsData } from "@/lib/capi/shared";
 import { scrubSentryEvent } from "@/lib/sentry-redact";
-import { erstanschreibenText, ersteFrageRegel, istZahnLead, neutralZahnAngaben, outreachProdukt, ZAHN_KNOEPFE_V4 } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenText, ersteFrageKnoepfe, ersteFrageRegel, istZahnLead, neutralZahnAngaben, outreachProdukt, ZAHN_KNOEPFE_V4 } from "@/lib/whatsapp/erstanschreiben";
 import { freitextButtonsOf, TEMPLATE_BODY, TEMPLATE_BUTTONS } from "@/lib/whatsapp/templates";
 
 describe("Zahnzusatz: neutrale Frage und Knöpfe", () => {
-  it("v5 fragt nach dem Tarifbaustein, Knöpfe ohne eigenen Bedarf und höchstens 20 Zeichen", () => {
-    const b = TEMPLATE_BODY.outreach_zahn;
-    expect(b.sie).toContain("*Welcher Tarifbaustein ist Ihnen am wichtigsten?*");
-    expect(b.du).toContain("*Welcher Tarifbaustein ist dir am wichtigsten?*");
-    expect(TEMPLATE_BUTTONS.outreach_zahn).toEqual(["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"]);
-    for (const k of TEMPLATE_BUTTONS.outreach_zahn!) expect(k.length).toBeLessThanOrEqual(20);
-    expect(b.sie).not.toMatch(/brauchen sie|ihre zähne|befund|[–—]/i);
+  it("fragt nach dem Tarifbaustein, Knöpfe ohne eigenen Bedarf und höchstens 20 Zeichen (ab v6 Frage als Platzhalter)", () => {
+    const p = outreachProdukt("Zahnzusatz")!;
+    expect(p.frage1).toBe("Welcher Tarifbaustein ist Ihnen am wichtigsten?");
+    expect(p.frage1Du).toBe("Welcher Tarifbaustein ist dir am wichtigsten?");
+    expect(p.knoepfe).toEqual(["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"]);
+    for (const k of p.knoepfe) expect(k.length).toBeLessThanOrEqual(20);
+    expect(TEMPLATE_BODY.outreach_zahn.sie).not.toMatch(/brauchen sie|ihre zähne|befund|[–—]/i);
+    expect(TEMPLATE_BUTTONS.outreach_zahn).toBeUndefined();
   });
 
   it("Freitext und Vorlage nutzen die neutralen Knöpfe; Erstanschreiben ohne Gesundheitsfrage", () => {
-    expect(freitextButtonsOf("outreach_zahn")).toEqual(["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"]);
-    expect(outreachProdukt("Zahnzusatz")?.knoepfe).toEqual(TEMPLATE_BUTTONS.outreach_zahn);
+    expect(freitextButtonsOf("outreach_zahn")).toBeUndefined();
+    expect(ersteFrageKnoepfe("Zahnzusatz", [])).toEqual(["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"]);
     for (const an of ["sie", "du"] as const) {
       const t = erstanschreibenText({ an, kontakt: { fullName: "Julia Schneider", salutation: "Frau" }, name: "Ole", source: "Zahnzusatz" });
       expect(t).toContain("Tarifbaustein");

@@ -27,11 +27,9 @@ import {
   tagIso,
   verschobenerStart,
   zahlungEingerichtet,
-  ZAHLUNG_TEMPLATE_BODY_DU,
-  ZAHLUNG_TEMPLATE_BODY_SIE,
-  ZAHLUNG_TEMPLATE_DU,
-  ZAHLUNG_TEMPLATE_SIE,
+  zahlungVorlage,
 } from "@/lib/angebot-zahlungserinnerung";
+import { anredeName } from "@/lib/ansprache";
 
 export type SetResult = { ok: true } | { ok: false; error: string };
 
@@ -241,25 +239,26 @@ async function sendeErinnerung(o: OfferRow, stufe: number, now: Date): Promise<{
 export async function sendeZahlungWhatsApp(o: OfferRow, link: string, now = new Date()): Promise<string> {
   try {
     if (!o.salesContactId) return "no_contact";
-    const contact = await prisma.salesContact.findUnique({ where: { id: o.salesContactId }, select: { phone: true, firstName: true, lastName: true } });
+    const contact = await prisma.salesContact.findUnique({ where: { id: o.salesContactId }, select: { phone: true, firstName: true, lastName: true, salutation: true } });
     const phone = contact?.phone ? normalizePhone(contact.phone) : null;
     if (!phone) return "no_phone";
     const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { id: true, status: true, apiKeyEnc: true } });
     if (acc?.status !== "connected" || !acc.apiKeyEnc) return "no_account";
-    const name = o.mailDu ? ZAHLUNG_TEMPLATE_DU : ZAHLUNG_TEMPLATE_SIE;
-    const body = o.mailDu ? ZAHLUNG_TEMPLATE_BODY_DU : ZAHLUNG_TEMPLATE_BODY_SIE;
-    const tpl = await prisma.messageTemplate.findUnique({
-      where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name, language: "de" } },
-      select: { status: true },
-    });
-    if (tpl?.status !== "approved") return "no_template";
+    // Fassung 2 (Ole Kannapinn), sobald bei Meta freigegeben, sonst Fassung 1 (Team)
+    const { supportVorlagenNutzbar } = await import("@/lib/vertrieb/termin-whatsapp");
+    const tpl = zahlungVorlage(o.mailDu, await supportVorlagenNutzbar());
+    if (!tpl) return "no_template";
+    const { name, body } = tpl;
     const prior = await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: phone } }, select: { optedOutAt: true } });
     if (prior?.optedOutAt) return "opted_out";
 
     const clean = (v: string) => v.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() || "-";
     const anrede = o.mailDu
       ? contact?.firstName?.trim() || o.contactName.trim().replace(/^(herr|frau)\s+/i, "").split(/\s+/)[0]
-      : [contact?.firstName, contact?.lastName].filter(Boolean).join(" ").trim() || o.contactName.trim();
+      : // Sie: „Herr Mustermann“ nur bei bekannter Anrede, sonst Vor- und Nachname (nie geraten)
+        anredeName("sie", { salutation: contact?.salutation, firstName: contact?.firstName, lastName: contact?.lastName, fullName: o.contactName }) ||
+        [contact?.firstName, contact?.lastName].filter(Boolean).join(" ").trim() ||
+        o.contactName.trim();
     const params = [clean(anrede), clean(o.number), clean(link)].map((v) => v.slice(0, 300));
     const { sendTemplate } = await import("@/lib/whatsapp/dialog360");
     const r = await sendTemplate(decryptSecret(acc.apiKeyEnc), phone, name, "de", [{ type: "body", parameters: params.map((text) => ({ type: "text", text })) }]);

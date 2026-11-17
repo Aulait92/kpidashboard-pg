@@ -626,6 +626,9 @@ model Lead {
   // Adresse. Ab contactEditedAt überschreibt der Airtable-Abgleich Name, Telefon und E-Mail nicht mehr.
   contactOverrides     Json?
   contactEditedAt      DateTime?
+  // Bestehende Verträge laut Lead (Komplettcheck im WhatsApp-Assistenten, Ole 17.11.2026, lib/whatsapp/vorvertraege.ts):
+  // { at, liste: [{ sparte, gesellschaft?, fuer? }], keine? }. Nur Sparte, Gesellschaft und Person, nie Gesundheitsangaben.
+  vorvertraege         Json?
   // WhatsApp-Erstanschreiben (Outreach-Job): Zeitpunkt + Ergebnis
   // (sent | skipped_booked | skipped_contact | no_template | failed: …).
   outreachAt           DateTime?
@@ -1277,6 +1280,9 @@ model Appointment {
   soonReminderSentAt DateTime? // „Gleich ist es so weit, passt alles?“ etwa 1 Std. vorher (Ole, 15.11.2026)
   // Lead hat per Knopf „Ja, passt“ bestätigt (Erinnerung am Vortag bzw. kurz vorher)
   confirmedAt        DateTime?
+  // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,
+  // ob er insgesamt gut abgesichert ist; false = nein; null = nicht gefragt bzw. offen
+  komplettcheck      Boolean?
   // Terminvorbereitung (Angebot gerechnet) vom Berater abgehakt (Ole, 15.11.2026)
   preparedAt         DateTime?
   preparedById       String?
@@ -1931,6 +1937,15 @@ model SalesMeeting {
   /// WhatsApp-Erinnerungen von der Support-Nummer (auch Calendly): 24 Stunden und 1 Stunde vorher
   waReminderAt       DateTime?
   waSoonAt           DateTime?
+  /// Ergebnis je Erinnerung (sent | opted_out | gesperrt | no_phone | kurzfristig | failed …), letzter Fehler und
+  /// Versuche: bei einem Sendefehler wird die Markierung zurückgesetzt, der nächste Cron-Lauf versucht es erneut
+  /// (höchstens 3 Versuche, nur solange der Termin im Fenster liegt)
+  waReminderStatus   String?
+  waReminderError    String?
+  waReminderTries    Int               @default(0)
+  waSoonStatus       String?
+  waSoonError        String?
+  waSoonTries        Int               @default(0)
   /// Danke-Seite nach der Buchung (nur mit Buchungs-Token): Vorbereitungsvideo angesehen, Demo geöffnet
   videoWatchedAt     DateTime?
   demoOpenedAt       DateTime?

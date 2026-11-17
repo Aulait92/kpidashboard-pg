@@ -2,7 +2,7 @@
 // Knöpfe und ihre Verarbeitung, Terminvorschläge, Selbstbezeichnung nach Status, A/B-Statistik. Ohne Datenbank.
 import { describe, expect, it } from "vitest";
 import { decideAbWinner, normalCdf, variantForKey, zTest } from "@/lib/whatsapp/ab-test";
-import { ersteFrageRegel, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { ersteFrageKnoepfe, ersteFrageRegel, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import { knopfAktion, knopfHinweis, slotPayload } from "@/lib/whatsapp/knopf";
 import { pickTwoSlots, slotLabel } from "@/lib/whatsapp/termin-vorschlaege";
 import { buildTemplateRequest, categoryFor, metaTemplateProblems, requestShape, withoutHeader } from "@/lib/whatsapp/template-plan";
@@ -40,10 +40,11 @@ describe("Erstanschreiben je Produkt", () => {
     expect(outreachProdukt("Hundehalter-Haftpflicht")?.purpose).not.toBe("outreach_tkv");
     expect(outreachProdukt("Sterbegeldversicherung")).toBeNull();
     expect(outreachProdukt(null)).toBeNull();
-    // Knöpfe der Vorlage = Knöpfe im Prompt (Zahnzusatz: v5 neutral, Art. 9 DSGVO; Tier ohne Knöpfe)
+    // Knöpfe im Freitext = Knöpfe im Prompt, solange Frage 1 gestellt wird (Zahnzusatz neutral, Art. 9 DSGVO; Tier ohne)
     for (const s of ["TKV Katze", "Zahnzusatz", "PKV", "Privatschutz"]) {
       const p = outreachProdukt(s)!;
-      expect(freitextButtonsOf(p.purpose) ?? []).toEqual(p.knoepfe);
+      expect(freitextButtonsOf(p.purpose)).toBeUndefined();
+      expect(ersteFrageKnoepfe(s, [])).toEqual(p.knoepfe);
     }
   });
 
@@ -92,7 +93,11 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
     const plain = withoutHeader(req);
     expect((plain.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
     const zahn = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
-    expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER", "BUTTONS"]);
+    // ab v6 ohne Knöpfe in der Vorlage (erste Frage als Platzhalter)
+    expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
+    const ohneKopf = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf, kopf: false });
+    expect((ohneKopf.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
+    expect(ohneKopf.name).toBe("pg_outreach_zahn_v6_ohnepdf_sie");
     expect(requestShape(plain).headerFormat).toBeNull();
     // Andere Zwecke bekommen nie einen Kopf
     const rem = buildTemplateRequest("reminder", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
@@ -136,11 +141,13 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
   const lA = { name: "pg_followup_last_v4_sie", body: "Guten Tag {{1}}, A ok?", headerFormat: null };
   const lB = { name: "pg_followup_last_v4_b_sie", body: "Guten Tag {{1}}, B ok?", headerFormat: null };
 
-  it("Erstanschreiben v5, übrige v4, unveränderte Zwecke behalten v3", () => {
+  it("Erstanschreiben v6, übrige v4, unveränderte Zwecke behalten v3", () => {
     expect(TEMPLATE_VERSION).toBe("v4");
     expect(templateVersionFor("review_request")).toBe("v3");
-    expect(templateVersionFor("outreach_tkv")).toBe("v5");
-    expect(isCurrentTemplateName("pg_outreach_v5_sie", "outreach")).toBe(true);
+    expect(templateVersionFor("outreach_tkv")).toBe("v6");
+    expect(isCurrentTemplateName("pg_outreach_v6_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v6_ohnepdf_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v5_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v4_sie", "outreach")).toBe(false);
     // „outreach_tkv“ ist ein eigener Zweck, nicht die aktuelle Fassung von „outreach“
     expect(isCurrentTemplateName("pg_outreach_tkv_v5_sie", "outreach")).toBe(false);
@@ -148,8 +155,8 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
     expect(variantOfName("pg_outreach_tkv_v4_sie")).toBe("a");
   });
 
-  it("bis zur Freigabe von v5 bleibt v4 (bzw. v3) im Einsatz; ohne PDF keine Vorlage mit Kopf", () => {
-    expect(rankTemplates([v3, v4, v5], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v5_sie" }, current: true });
+  it("bis zur Freigabe von v6 bleibt die neueste ältere (v5, v4 bzw. v3) im Einsatz; ohne PDF keine Vorlage mit Kopf", () => {
+    expect(rankTemplates([v3, v4, v5], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v5_sie" }, current: false });
     expect(rankTemplates([v3, v4], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v4_sie" }, current: false });
     expect(rankTemplates([v3], "outreach", "sie", k)).toMatchObject({ tpl: { name: "pg_outreach_v3_sie" }, current: false });
     expect(rankTemplates([v3, v4], "outreach", "sie", k, { documentHeader: false })?.tpl.name).toBe("pg_outreach_v3_sie");

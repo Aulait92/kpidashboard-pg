@@ -8,13 +8,35 @@
 // Kein „Mensch“-Angebot und kein „berate nicht zu Tarifen“ in der ersten Nachricht: beides regelt der Assistent im
 // Gespräch (bot.ts). Name: Vorname des Vermittlers laut Profil, sonst der Agenturname, höchstens zweimal.
 // Die Erstinformation folgt direkt danach als PDF-Dokument (lib/whatsapp/erstinfo-pdf.ts).
+//
+// v6 (Ole, 17.11.2026, ERSTANSCHREIBEN_V6): eine Fassung für alle Produkte, die erste Frage ist ein Platzhalter, damit
+// nichts gefragt wird, was das Formular schon beantwortet; beantwortet es alles, die Frage nach dem Videotermin. Der
+// Vermittler steht als Person im Dativ („von Herrn Kannapinn“). Das „?“ und das Fett-Sternchen stehen fest hinter dem
+// Platzhalter (Meta: kein Platzhalter am Ende), die Frage geht ohne „?“ in den Platzhalter (frageOhneFragezeichen).
 
 import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import type { NoticePurpose } from "@/lib/whatsapp/templates";
 
+/**
+ * Erstanschreiben v6 (Ole, 17.11.2026), zentral zum Feilen: Text nach „Hallo {{1}}, “ (ohne Namen „Hallo, “, dann
+ * rücken die Platzhalter auf). {{2}} Thema, {{3}} Vermittler im Dativ, {{4}} erste offene Frage ohne „?“.
+ * Gleicher Aufbau im Freitext (erstanschreibenText). Neuer Text = neue Version (PURPOSE_VERSION in templates.ts).
+ */
+export const ERSTANSCHREIBEN_V6 = {
+  sie: "danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*",
+  du: "danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*",
+} as const;
+
+/** Frage für den Platzhalter {{4}} (v6): ohne abschließendes „?“ (steht fest in der Vorlage). */
+export function frageOhneFragezeichen(frage: string): string {
+  return frage.trim().replace(/[?？]+\s*$/, "").trim();
+}
+
 export type OutreachProdukt = {
   purpose: NoticePurpose;
+  /** Thema im Nominativ für v6 („zum Thema private Krankenversicherung“). */
+  thema: string;
   /** Wert für {{Produkt}}, passend zum Text („zur Tierkrankenversicherung“, „zum Thema Privatschutz“). */
   produkt: string;
   /** „zur“ bzw. „zum Thema“ vor dem Produkt. */
@@ -69,6 +91,7 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
     // Frage 1 ab v5 (Ole, 16.11.2026): das Alter des Tieres, frei beantwortet (Tierart steht im Formular)
     return {
       purpose: "outreach_tkv",
+      thema: produkt,
       produkt,
       praep: "zur",
       frage1: `Wie alt ist ${tierWort(tier, "sie")}?`,
@@ -89,6 +112,7 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
     // mit neutralZahnAngaben auf dieselben neutralen Werte gebracht.
     return {
       purpose: "outreach_zahn",
+      thema: "Zahnzusatzversicherung",
       produkt: "Zahnzusatzversicherung",
       praep: "zur",
       frage1: "Welcher Tarifbaustein ist Ihnen am wichtigsten?",
@@ -105,6 +129,7 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
   if (PKV.test(s) && !/kinderwunsch/i.test(s)) {
     return {
       purpose: "outreach_pkv",
+      thema: "private Krankenversicherung",
       produkt: "privaten Krankenversicherung",
       praep: "zur",
       frage1: "Wie sind Sie aktuell beruflich aufgestellt?",
@@ -118,9 +143,11 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
     };
   }
   if (PRIVATSCHUTZ.test(s) && !/tier|hund|katze|pferd/i.test(s)) {
+    const produkt = /privatschutz/i.test(s) ? "Privatschutz" : displayProduct(s);
     return {
       purpose: "outreach_privatschutz",
-      produkt: /privatschutz/i.test(s) ? "Privatschutz" : displayProduct(s),
+      thema: produkt,
+      produkt,
       praep: "zum Thema",
       frage1: "Worum geht es Ihnen vor allem?",
       frage1Du: "Worum geht es dir vor allem?",
@@ -159,6 +186,14 @@ export function bekannteAntworten(p: OutreachProdukt | null, formular: FormAntwo
     return hit ? `${hit.label}: ${hit.value.trim()}` : null;
   };
   return { frage1: find(re?.frage1), frage2: find(re?.frage2) };
+}
+
+/** Thema für v6 {{2}}: Produkt im Nominativ, ohne Produkt der Produktname laut Katalog bzw. „Versicherung“. */
+export function erstanschreibenThema(source: string | null | undefined): string {
+  const p = outreachProdukt(source);
+  if (p) return p.thema;
+  const s = (source ?? "").trim();
+  return s ? displayProduct(s) : "Versicherung";
 }
 
 /** Frage nach dem Termin, wenn das Formular alle Fragen vor dem Termin schon beantwortet (nur Video, Ole 17.11.2026). */
@@ -352,6 +387,10 @@ export type ErstanschreibenOpts = {
   kontakt?: AnredeKontakt | null;
   /** Vorname des Vermittlers laut Profil, sonst Agenturname (kurzNameFuerLeads) */
   name: string;
+  /** Vermittler als Person im Dativ („Herrn Kannapinn“, Du: Vorname), v6; ohne: name */
+  vermittler?: string | null;
+  /** Vermittler im Nominativ („Herr Kannapinn“) für die Frage nach dem Telefonat; ohne: name */
+  vermittlerNom?: string | null;
   /** Produkt aus dem Leadformular (Lead.source) */
   source?: string | null;
   herkunft?: Herkunft;
@@ -374,42 +413,58 @@ export function erstGruss(an: Ansprache, kontakt?: AnredeKontakt | null): string
  * Erste Zeilen (Begrüßung, Dank, KI-Assistent mit Nutzen), ohne Frage. Auch Kopf der ersten Antwort des Assistenten,
  * wenn der Lead zuerst geschrieben hat (bot.ts).
  */
-export function erstanschreibenKopf(o: ErstanschreibenOpts): string {
-  const p = outreachProdukt(o.source);
+export function erstanschreibenKopf(o: ErstanschreibenOpts, opts: { themaImmer?: boolean } = {}): string {
   const an = o.an;
+  const von = o.vermittler || o.name;
   const was = o.herkunft === "nachricht" ? a(an, "deine Nachricht", "Ihre Nachricht") : a(an, "deine Anfrage", "Ihre Anfrage");
-  const dank = p ? `danke für ${was} ${p.praep} ${p.produkt}!${p.emoji ? ` ${p.emoji}` : ""}` : `danke für ${was}!`;
-  const nutzen = p
-    ? `Ich bin der digitale KI-Assistent von ${o.name} und kläre kurz zwei, drei Fragen, damit ${o.name} ${a(an, "dir", "Ihnen")} ein passendes Angebot machen kann.`
-    : o.ohneLead
-      ? `Ich bin der digitale KI-Assistent von ${o.name} und helfe ${a(an, "dir", "Ihnen")} gern weiter.`
-      : `Ich bin der digitale KI-Assistent von ${o.name} und helfe ${a(an, "dir", "Ihnen")}, schnell einen passenden Gesprächstermin zu finden.`;
-  return `${erstGruss(an, o.kontakt)} ${dank}\n${nutzen}`;
+  // v6: „danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.“
+  if (o.ohneLead) return `${erstGruss(an, o.kontakt)} danke für ${was}! Ich bin der digitale KI-Assistent von ${von} und helfe ${a(an, "dir", "Ihnen")} gern weiter.`;
+  // Ohne Produkt nur im Erstanschreiben „zum Thema Versicherung“ (gleich der Vorlage), in der ersten Antwort ohne Thema
+  const thema = opts.themaImmer || (o.source ?? "").trim() ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
+  return `${erstGruss(an, o.kontakt)} danke für ${was}${thema}! Ich bin der digitale KI-Assistent von ${von}.`;
 }
 
 /**
  * Erste Frage des Erstanschreibens (Produkt bzw. allgemein: Telefonat), ohne Sternchen. Mit Formularangaben: die erste
  * noch offene Frage; beantwortet das Formular beide, gleich die Frage nach einem Videotermin.
  */
-export function ersteFrage(source: string | null | undefined, an: Ansprache, name: string, formular?: FormAntwort[] | null): string {
+export function ersteFrage(source: string | null | undefined, an: Ansprache, name: string, formular?: FormAntwort[] | null, person?: { nom: string; dat: string } | null): string {
   const p = outreachProdukt(source);
   if (p) {
     const offen = frageplan(source, formular).offen[0];
-    return offen ? a(an, offen.du, offen.sie) : terminFrage(an, name);
+    return offen ? a(an, offen.du, offen.sie) : terminFrage(an, person?.dat ?? name);
   }
-  return a(an, `Wann erreicht ${name} dich am besten für ein kurzes Telefonat?`, `Wann erreicht ${name} Sie am besten für ein kurzes Telefonat?`);
+  const wer = person?.nom ?? name;
+  return a(an, `Wann erreicht ${wer} dich am besten für ein kurzes Telefonat?`, `Wann erreicht ${wer} Sie am besten für ein kurzes Telefonat?`);
+}
+
+/**
+ * Parameter der v6-Vorlage nach dem Namen: [Thema, Vermittler im Dativ, erste offene Frage ohne „?“] (rein, testbar).
+ * Die erste Frage folgt dem Frageplan mit den Formularangaben; ist alles beantwortet, die Frage nach dem Videotermin.
+ */
+export function erstanschreibenV6Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string }): [string, string, string] {
+  return [erstanschreibenThema(o.source), o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
+}
+
+/** Knöpfe zur ersten Frage im Freitext: nur bei Frage 1 des Produkts bzw. der Telefonatsfrage, sonst keine. */
+export function ersteFrageKnoepfe(source: string | null | undefined, formular?: FormAntwort[] | null): string[] {
+  const p = outreachProdukt(source);
+  if (!p) return [...OUTREACH_ALLGEMEIN.knoepfe];
+  return frageplan(source, formular).offen[0]?.key === "frage1" ? [...p.knoepfe] : [];
 }
 
 /**
  * Nachricht 1 des Erstanschreibens (Freitext im offenen Fenster), z. B.
- *   Hallo Herr Müller, danke für Ihre Anfrage zur Katzenversicherung! 🐱
- *   Ich bin der digitale KI-Assistent von Ole und kläre kurz zwei, drei Fragen, damit Ole Ihnen ein passendes Angebot machen kann.
+ *   Hallo Herr Müller, danke für Ihre Anfrage zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von Herrn Kannapinn.
  *
  *   *Wie alt ist Ihre Katze?*
+ * (Aufbau wie ERSTANSCHREIBEN_V6.)
  * Nachricht 2 ist das PDF der Erstinformation (lib/whatsapp/erstinfo-pdf.ts).
  */
 export function erstanschreibenText(o: ErstanschreibenOpts): string {
-  return `${erstanschreibenKopf(o)}\n\n*${ersteFrage(o.source, o.an, o.name, o.formular)}*`;
+  const person = o.vermittler ? { nom: o.vermittlerNom || o.vermittler, dat: o.vermittler } : null;
+  const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person));
+  return `${erstanschreibenKopf(o, { themaImmer: true })}\n\n*${frage}?*`;
 }
 
 /** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */

@@ -517,6 +517,14 @@ async function moveMeeting(m: MovableMeeting, t: SalesBookingType, start: Date, 
   );
   if (!admin) await pushOle(`🔁 ${t.title} verschoben: ${input.name}`, `Neu: ${whenShort(start)} Uhr (war ${whenShort(m.startAt)})`, m.contactId, `sales-booking:${res.meetingId}`);
   await sendInviteeMail(res.meetingId, "rescheduled");
+  // WhatsApp-Bestätigung zur neuen Zeit (Ole, 17.11.2026). Erinnerungen: der neue Termin startet ohne Markierungen,
+  // das Fenster wird an der ursprünglichen Buchung gemessen (urspruenglichGebucht in termin-whatsapp.ts).
+  const { sendTerminConfirmation } = await import("@/lib/vertrieb/termin-whatsapp");
+  await sendTerminConfirmation(
+    res.meetingId,
+    { text_reminder_number: input.phone ? `+${input.phone}` : null, name: input.name, reschedule_url: manageLink(res.manageToken) },
+    res.joinUrl ? { type: "video", join_url: res.joinUrl } : { type: t.mode === "video" ? "video" : "outbound_call" },
+  );
   return { ok: true, token: res.manageToken };
 }
 
@@ -818,13 +826,15 @@ export async function runSalesBookingReminders(now = new Date()): Promise<{ day:
   }
   const soonDue = await prisma.salesMeeting.findMany({
     where: { ...base, soonReminderSentAt: null, startAt: { gt: new Date(now.getTime() + 10 * MIN), lte: new Date(now.getTime() + HOUR) } },
-    select: { id: true, startAt: true, createdAt: true },
+    select: { id: true, startAt: true, createdAt: true, rescheduledFromId: true },
     take: 100,
   });
+  const { urspruenglichGebucht } = await import("@/lib/vertrieb/termin-whatsapp");
   for (const m of soonDue) {
     const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, soonReminderSentAt: null }, data: { soonReminderSentAt: now } });
     if (!claimed.count) continue;
-    if (m.startAt.getTime() - m.createdAt.getTime() < 3 * HOUR) continue;
+    // Verschoben: gemessen an der ursprünglichen Buchung (wie bei WhatsApp)
+    if (m.startAt.getTime() - (await urspruenglichGebucht(m)).getTime() < 3 * HOUR) continue;
     if (await sendInviteeMail(m.id, "soon")) soon++;
   }
   // WhatsApp von der Support-Nummer (auch für Calendly-Termine), eigene Markierung je Art

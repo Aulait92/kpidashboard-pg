@@ -158,6 +158,13 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Termin-Strecke nach der Buchung: Komplettcheck bzw. Vertragsfrage ohne Antwort → nach 1 Std. trotzdem abschließen
+  const strecke = await import("@/lib/whatsapp/termin-strecke")
+    .then((m) => m.runStreckeAbschliessen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-strecke");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
   // A/B-Tests der Vorlagen: einmal je Stunde prüfen, ob eine Fassung genug Vorsprung hat (lib/whatsapp/ab-test.ts)
   const abTests =
     now.getUTCMinutes() < 5
@@ -320,7 +327,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;
