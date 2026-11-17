@@ -19,6 +19,7 @@ import { SlackTest } from "./slack-test";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 import { HvkAbrechnungen, HvkReklamationenReview } from "./hvk-abrechnungen";
 import { PplVersandPostfach } from "./ppl-versand";
+import { HvkReabgleich } from "./hvk-client";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -107,7 +108,7 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
           <Review hideEmpty={hvkOpenCount > 0} />
         </div>
       ) : ansicht === "hvk" ? (
-        <HvkAbrechnungen postfach={postfach} versand={<PplVersandPostfach meldung={versand} />} />
+        <HvkAbrechnungen postfach={postfach} versand={<PplVersandPostfach meldung={versand} />} abgleich={<HvkReabgleich />} />
       ) : ansicht === "geliefert" ? (
         <Delivered subs={subs} q={q ?? ""} bezug={bezug ?? ""} />
       ) : ansicht === "eingang" ? (

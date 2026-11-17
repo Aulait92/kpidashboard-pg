@@ -10,6 +10,9 @@
 // austauschbarem Speicher (HvkStore), damit Idempotenz und Zuordnung ohne Datenbank testbar sind.
 // Datenbank, Mail und PDF: lib/ppl/hvk-abrechnung-server.ts, lib/ppl/hvk-mail.ts, lib/ppl/hvk-pdf-text.ts.
 
+import type { Prisma } from "@/generated/prisma/client";
+import { canonicalProductKey } from "@/lib/products";
+
 export const HVK_CUSTOMER_NAME = () => process.env.HVK_CUSTOMER_NAME?.trim() || "Heinrich von Kleist";
 export const HVK_PRODUCT = () => process.env.HVK_PRODUCT?.trim() || "PKV-Tarifoptimierung";
 export const HVK_SENDER = "info@lead-production.de";
@@ -135,6 +138,34 @@ export type HvkDeliveredLead = {
   name: string | null;
   stornoState: string | null;
 };
+
+/**
+ * Welche Leads sind HvK-Leads (ohne Zeitraum)? Der Airtable-Abgleich speichert Lead.source als
+ * canonicalProductKey(Produkt): aus „PKV-Tarifoptimierung“ wird dort „Wechsel“ (lib/products.ts). Bis 17.11.2026 suchte
+ * der Abgleich nur nach „PKV-Tarifoptimierung“ und fand die Airtable-Leads nicht (Geliefert 0, Reklamationen offen).
+ * Daher: Kunde HvK und (Produkt wie in der App ODER kanonischer Schlüssel ODER Bezug der App ODER Airtable-Bezug
+ * eines HvK-Bezugs, Lead.bezugAirtableId = LeadSubscription.airtableId). HvK-Bezug = Bezug des Kunden mit diesem
+ * Produkt (gleicher Name oder gleicher kanonischer Schlüssel). Testleads zählen nie.
+ */
+export function hvkLeadFilter(
+  customerIds: string[],
+  product: string,
+  subscriptions: { id: string; airtableId: string | null; productKey: string }[],
+): Prisma.LeadWhereInput {
+  const key = canonicalProductKey(product);
+  const subs = subscriptions.filter((s) => s.productKey.trim().toLowerCase() === product.toLowerCase() || canonicalProductKey(s.productKey) === key);
+  const bezugIds = subs.flatMap((s) => (s.airtableId ? [s.airtableId] : []));
+  return {
+    customerId: { in: customerIds },
+    isTest: false,
+    OR: [
+      { source: { equals: product, mode: "insensitive" } },
+      ...(key.toLowerCase() !== product.toLowerCase() ? [{ source: { equals: key, mode: "insensitive" as const } }] : []),
+      ...(subs.length ? [{ subscriptionId: { in: subs.map((s) => s.id) } }] : []),
+      ...(bezugIds.length ? [{ bezugAirtableId: { in: bezugIds } }] : []),
+    ],
+  };
+}
 
 /** Datum in Berlin als YYYY-MM-DD */
 export function berlinDate(d: Date): string {
@@ -286,6 +317,9 @@ export interface HvkStore {
 const shiftDay = (iso: string, days: number) => new Date(Date.parse(`${iso}T12:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
 export const hvkStornoReason = (invoiceNo: string) => `Reklamation HvK-Abrechnung ${invoiceNo}`;
+/** Notiz am Storno (gleich bei Import und Neuabgleich) */
+export const hvkStornoNote = (r: { hvkLeadId: string; plz: string; ort: string; date: string }) =>
+  `HvK Lead ID ${r.hvkLeadId}, ${r.plz} ${r.ort}, geliefert ${r.date.split("-").reverse().join(".")}`;
 
 /**
  * Eine Rechnung verarbeiten. Idempotent über die Rechnungsnummer: Ist sie schon da, passiert nichts (status „vorhanden“).
@@ -340,8 +374,7 @@ export async function processHvkInvoice(input: HvkInvoiceInput, store: HvkStore,
   result.invoiceId = created.id;
   for (const r of result.reklamationen) {
     if (r.outcome !== "eindeutig" || !r.leadId) continue;
-    const note = `HvK Lead ID ${r.hvkLeadId}, ${r.plz} ${r.ort}, geliefert ${r.date.split("-").reverse().join(".")}`;
-    const s = await store.recordStorno(r.leadId, hvkStornoReason(p.invoiceNo), note).catch((e: unknown) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }));
+    const s = await store.recordStorno(r.leadId, hvkStornoReason(p.invoiceNo), hvkStornoNote(r)).catch((e: unknown) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }));
     r.storno = s.ok ? (s.already ? "schon storniert" : "eingetragen") : "fehler";
     if (!s.ok) r.error = s.error;
   }
@@ -361,6 +394,225 @@ export function hvkCronDue(now: Date): boolean {
   const hour = Number(get("hour"));
   const minute = Number(get("minute"));
   return ["Mon", "Tue", "Wed"].includes(get("weekday")) && hour >= 7 && hour <= 20 && minute < 5;
+}
+
+// ─── Neuabgleich übernommener Rechnungen (Ole, 17.11.2026) ──────────────────
+// Bis 17.11.2026 fand der Abgleich die Leads aus dem Airtable-Abgleich nicht (Produktfilter, siehe loadHvkLeads):
+// „Geliefert“ stand auf 0, Reklamationen blieben offen. Der Neuabgleich rechnet jede Rechnung aus den gespeicherten
+// Zeilen neu (PDF, Zeilen und Rechnungsdaten bleiben) und ordnet offene Reklamationen erneut zu.
+
+export type HvkReabgleichReklamation = {
+  id: string;
+  hvkLeadId: string;
+  /** Lieferdatum laut HvK (YYYY-MM-DD) */
+  date: string;
+  plz: string;
+  ort: string;
+  /** auto | offen | erledigt | verworfen */
+  status: string;
+  leadId: string | null;
+  candidateIds: string[];
+};
+
+export type HvkReabgleichInvoice = {
+  id: string;
+  invoiceNo: string;
+  periodStart: string;
+  periodEnd: string;
+  lines: HvkLine[];
+  result: Partial<HvkProcessResult>;
+  deliveredCount: number;
+  stornoAuto: number;
+  stornoReview: number;
+  reklamationen: HvkReabgleichReklamation[];
+};
+
+export interface HvkReabgleichStore {
+  invoices(): Promise<HvkReabgleichInvoice[]>;
+  deliveredLeads(fromDate: string, toDate: string): Promise<HvkDeliveredLead[]>;
+  /** Storno wie „Storno eintragen“ (Admin), wie beim Import */
+  recordStorno(leadId: string, reason: string, note: string): Promise<{ ok: true; already: boolean } | { ok: false; error: string }>;
+  updateInvoice(id: string, data: { deliveredCount: number; stornoAuto: number; stornoReview: number; result: HvkProcessResult }): Promise<void>;
+  /** Nur solange die Reklamation „offen“ ist (schon entschieden: nichts ändern) */
+  updateReklamation(id: string, data: { status: "auto" | "offen"; leadId: string | null; candidateIds: string[]; decidedAt: Date | null }): Promise<void>;
+}
+
+export type HvkReabgleichWeek = {
+  invoiceNo: string;
+  periodStart: string;
+  periodEnd: string;
+  delivered: number;
+  /** vorher gespeichert */
+  deliveredBefore: number;
+  billed: number;
+  /** geliefert minus abgerechnet */
+  diff: number;
+  unbilled: number;
+  foreign: number;
+  /** Stornos aus offenen Reklamationen: jetzt eingetragen (Vorschau: würden eingetragen) */
+  stornoNew: number;
+  /** schon vorher eingetragen (auto oder von Hand) */
+  stornoBefore: number;
+  /** danach noch offen („Storno prüfen“) */
+  open: number;
+  /** Rechnung oder Reklamationen ändern sich */
+  changed: boolean;
+  errors: string[];
+};
+
+export type HvkReabgleichSummary = {
+  dryRun: boolean;
+  weeks: HvkReabgleichWeek[];
+  totals: { invoices: number; changed: number; delivered: number; billed: number; stornoNew: number; stornoBefore: number; open: number; errors: number };
+};
+
+/** JSON mit sortierten Schlüsseln (jsonb ordnet Schlüssel um), für „hat sich etwas geändert?“ */
+function stableJson(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stableJson).join(",")}]`;
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return `{${Object.keys(o)
+      .filter((k) => o[k] !== undefined)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson(o[k])}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(v ?? null);
+}
+
+const DONE = new Set(["auto", "erledigt"]);
+type RekAfter = { status: "auto" | "offen"; outcome: HvkReklamationResult["outcome"]; leadId: string | null; candidateIds: string[]; storno: HvkStornoState | null; error?: string };
+
+/**
+ * Alle übernommenen Rechnungen neu abgleichen. Je Rechnung: geliefert (Woche), zugeordnet, nicht abgerechnet, nicht von
+ * uns → deliveredCount und result. Je offener Reklamation: Kandidaten neu (Lieferdatum + PLZ, matchReklamation);
+ * eindeutig → Storno wie beim Import und status „auto“, sonst Kandidaten aktualisieren und offen lassen.
+ * auto/erledigt/verworfen bleiben unberührt. Geschrieben wird nur, was sich ändert (zweiter Lauf ändert nichts).
+ * dryRun: dieselben Zahlen, nichts wird geschrieben.
+ */
+export async function reabgleichHvkInvoices(store: HvkReabgleichStore, opts: { dryRun?: boolean; now?: Date } = {}): Promise<HvkReabgleichSummary> {
+  const dryRun = !!opts.dryRun;
+  const invoices = await store.invoices();
+  const weeks: HvkReabgleichWeek[] = [];
+  const dates = invoices.flatMap((i) => [i.periodStart, i.periodEnd, ...i.reklamationen.filter((r) => r.status === "offen").map((r) => r.date)]).sort();
+  const leads = dates.length ? await store.deliveredLeads(dates[0], dates[dates.length - 1]) : [];
+  // Ein Lead deckt höchstens eine Reklamation: schon zugeordnete (auto/erledigt, auch aus diesem Lauf) nicht nochmal
+  // automatisch eintragen, sondern zum Prüfen offen lassen
+  const taken = new Set(invoices.flatMap((i) => i.reklamationen.filter((r) => DONE.has(r.status) && r.leadId).map((r) => r.leadId!)));
+
+  for (const inv of invoices) {
+    const bought = inv.lines.filter((l): l is HvkBoughtLine => l.kind === "gekauft");
+    const inWeek = leads.filter((l) => l.date >= inv.periodStart && l.date <= inv.periodEnd);
+    const rec = reconcileWeek(bought, inWeek);
+    const errors: string[] = [];
+    let stornoNew = 0;
+    let rekChanged = false;
+    const after = new Map<string, RekAfter>();
+
+    for (const r of inv.reklamationen) {
+      if (r.status !== "offen") continue;
+      const m = matchReklamation(r, leads);
+      if (m.outcome !== "eindeutig" || taken.has(m.lead.id)) {
+        const ids = m.outcome === "eindeutig" ? [m.lead.id] : m.candidates.map((c) => c.id);
+        if (stableJson(ids) !== stableJson(r.candidateIds) || r.leadId) {
+          if (!dryRun) await store.updateReklamation(r.id, { status: "offen", leadId: null, candidateIds: ids, decidedAt: null });
+          rekChanged = true;
+        }
+        after.set(r.id, {
+          status: "offen",
+          outcome: m.outcome,
+          leadId: null,
+          candidateIds: ids,
+          storno: null,
+          ...(m.outcome === "eindeutig" ? { error: "Lead gehört schon zu einer anderen Reklamation" } : {}),
+        });
+        continue;
+      }
+      const lead = m.lead;
+      let storno: HvkStornoState = lead.stornoState === "approved" ? "schon storniert" : "würde eingetragen";
+      if (!dryRun) {
+        const s = await store
+          .recordStorno(lead.id, hvkStornoReason(inv.invoiceNo), hvkStornoNote(r))
+          .catch((e: unknown) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }));
+        if (!s.ok) {
+          // Wie beim Import: offen lassen, Lead als einzigen Kandidaten zeigen
+          errors.push(`Reklamation ${r.hvkLeadId}: ${s.error}`);
+          if (stableJson([lead.id]) !== stableJson(r.candidateIds) || r.leadId !== lead.id) {
+            await store.updateReklamation(r.id, { status: "offen", leadId: lead.id, candidateIds: [lead.id], decidedAt: null });
+            rekChanged = true;
+          }
+          after.set(r.id, { status: "offen", outcome: "eindeutig", leadId: lead.id, candidateIds: [lead.id], storno: "fehler", error: s.error });
+          continue;
+        }
+        storno = s.already ? "schon storniert" : "eingetragen";
+        await store.updateReklamation(r.id, { status: "auto", leadId: lead.id, candidateIds: [lead.id], decidedAt: opts.now ?? new Date() });
+      }
+      taken.add(lead.id);
+      stornoNew++;
+      rekChanged = true;
+      after.set(r.id, { status: "auto", outcome: "eindeutig", leadId: lead.id, candidateIds: [lead.id], storno });
+    }
+
+    const statusOf = (r: HvkReabgleichReklamation) => after.get(r.id)?.status ?? r.status;
+    const open = inv.reklamationen.filter((r) => statusOf(r) === "offen").length;
+    const stornoAuto = inv.reklamationen.filter((r) => DONE.has(statusOf(r))).length;
+    // Reklamationen im gespeicherten Ergebnis nachziehen
+    const reklamationen: HvkReklamationResult[] = (Array.isArray(inv.result.reklamationen) ? inv.result.reklamationen : []).map((x) => {
+      const row = inv.reklamationen.find((r) => r.hvkLeadId === x.hvkLeadId);
+      const a = row ? after.get(row.id) : undefined;
+      if (!a) return x;
+      const rest: HvkReklamationResult = { ...x };
+      delete rest.error;
+      return { ...rest, outcome: a.outcome, leadId: a.leadId, candidateIds: a.candidateIds, storno: a.storno, ...(a.error ? { error: a.error } : {}) };
+    });
+    const result: HvkProcessResult = {
+      ...(inv.result as HvkProcessResult),
+      invoiceNo: inv.invoiceNo,
+      periodStart: inv.periodStart,
+      periodEnd: inv.periodEnd,
+      delivered: inWeek.length,
+      billed: bought.length,
+      matched: rec.matched.length,
+      unbilled: rec.unbilled.map((d) => ({ id: d.id, date: d.date, plz: d.plz, ort: d.ort, name: d.name })),
+      foreign: rec.foreign.map((b) => ({ hvkLeadId: b.hvkLeadId, plz: b.plz, ort: b.ort, product: b.product })),
+      reklamationen,
+      stornoAuto,
+      stornoReview: open,
+    };
+    const invChanged = inv.deliveredCount !== result.delivered || inv.stornoAuto !== stornoAuto || inv.stornoReview !== open || stableJson(inv.result) !== stableJson(result);
+    if (invChanged && !dryRun) await store.updateInvoice(inv.id, { deliveredCount: result.delivered, stornoAuto, stornoReview: open, result });
+    weeks.push({
+      invoiceNo: inv.invoiceNo,
+      periodStart: inv.periodStart,
+      periodEnd: inv.periodEnd,
+      delivered: result.delivered,
+      deliveredBefore: inv.deliveredCount,
+      billed: result.billed,
+      diff: result.delivered - result.billed,
+      unbilled: result.unbilled.length,
+      foreign: result.foreign.length,
+      stornoNew,
+      stornoBefore: inv.reklamationen.filter((r) => DONE.has(r.status)).length,
+      open,
+      changed: invChanged || rekChanged,
+      errors,
+    });
+  }
+  const sum = (k: "delivered" | "billed" | "stornoNew" | "stornoBefore" | "open") => weeks.reduce((n, w) => n + w[k], 0);
+  return {
+    dryRun,
+    weeks,
+    totals: {
+      invoices: weeks.length,
+      changed: weeks.filter((w) => w.changed).length,
+      delivered: sum("delivered"),
+      billed: sum("billed"),
+      stornoNew: sum("stornoNew"),
+      stornoBefore: sum("stornoBefore"),
+      open: sum("open"),
+      errors: weeks.reduce((n, w) => n + w.errors.length, 0),
+    },
+  };
 }
 
 export { shiftDay as hvkShiftDay };

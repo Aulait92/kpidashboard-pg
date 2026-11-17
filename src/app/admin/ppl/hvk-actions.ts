@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
-import type { HvkProcessResult } from "@/lib/ppl/hvk-abrechnung";
+import type { HvkProcessResult, HvkReabgleichWeek } from "@/lib/ppl/hvk-abrechnung";
 
 async function requireAdmin() {
   const s = await getCurrentSession();
@@ -87,6 +87,35 @@ export async function hvkUploadAction(_prev: HvkRunState, fd: FormData): Promise
   revalidatePath("/admin/ppl", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
   return { rows: rowsOf([r]), message: r.result.status === "vorhanden" ? `${r.result.invoiceNo} war schon übernommen.` : `${r.result.invoiceNo} übernommen.` };
+}
+
+export type HvkReabgleichState = { error?: string; message?: string; dryRun?: boolean; weeks?: HvkReabgleichWeek[] };
+
+/** „Neu abgleichen“: alle übernommenen Rechnungen neu rechnen. mode=vorschau (ändert nichts) oder mode=uebernehmen. */
+export async function hvkReabgleichAction(_prev: HvkReabgleichState, fd: FormData): Promise<HvkReabgleichState> {
+  const actor = await requireAdmin();
+  const dryRun = fd.get("mode") !== "uebernehmen";
+  const { reabgleichHvk } = await import("@/lib/ppl/hvk-abrechnung-server");
+  try {
+    const s = await reabgleichHvk({ dryRun, actor });
+    if (!dryRun) {
+      revalidatePath("/admin/ppl", "layout");
+      revalidatePath("/admin/neu", "layout"); // neuer Admin (Leads › Pay-per-Lead)
+    }
+    const t = s.totals;
+    const stornos = `${t.stornoNew} Storno${t.stornoNew === 1 ? "" : "s"}`;
+    return {
+      dryRun,
+      weeks: s.weeks,
+      message: dryRun
+        ? `Vorschau: ${t.changed} von ${t.invoices} Wochen ändern sich, ${stornos} aus Reklamationen, ${t.open} bleiben zu prüfen. Nichts wurde geändert.`
+        : t.changed
+          ? `${t.changed} Wochen neu abgeglichen, ${stornos} eingetragen, ${t.open} bleiben zu prüfen.${t.errors ? ` ${t.errors} Fehler.` : ""}`
+          : "Alles war schon aktuell, nichts geändert.",
+    };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err), dryRun };
+  }
 }
 
 export type HvkReklamationState = { error?: string; message?: string };

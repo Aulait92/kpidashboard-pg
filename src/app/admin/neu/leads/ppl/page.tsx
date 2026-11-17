@@ -17,6 +17,7 @@ import { ImportButton } from "@/app/admin/ppl/import/import-button";
 import { SlackTest } from "@/app/admin/ppl/slack-test";
 import { HvkAbrechnungen, HvkReklamationenReview } from "@/app/admin/ppl/hvk-abrechnungen";
 import { PplVersandPostfach } from "@/app/admin/ppl/ppl-versand";
+import { HvkReabgleich } from "@/app/admin/ppl/hvk-client";
 import { AirtableNachholen } from "@/app/admin/ppl/nachholen";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 
@@ -99,6 +100,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
             versand={
               <div data-funktion="ppl-versand-pplversandpostfach--versand-postfach-fuer-pivacom-verbinden">
                 <PplVersandPostfach meldung={sp.versand} />
+              </div>
+            }
+            abgleich={
+              <div data-funktion="hvk-client-hvkreabgleich--hvk-abrechnungen-neu-abgleichen-vorschau-je">
+                <HvkReabgleich />
               </div>
             }
           />

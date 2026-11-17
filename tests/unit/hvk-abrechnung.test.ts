@@ -5,16 +5,21 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import {
   centsOf,
   hvkCronDue,
+  hvkLeadFilter,
   leadPlzOrt,
   matchReklamation,
   parseHvkInvoiceText,
   processHvkInvoice,
+  reabgleichHvkInvoices,
   reconcileWeek,
   sameOrt,
   type HvkBoughtLine,
   type HvkDeliveredLead,
   type HvkInvoiceInput,
   type HvkProcessResult,
+  type HvkReabgleichInvoice,
+  type HvkReabgleichReklamation,
+  type HvkReabgleichStore,
   type HvkReklamationResult,
   type HvkStore,
 } from "@/lib/ppl/hvk-abrechnung";
@@ -290,5 +295,160 @@ describe("HvK-Abrechnung: Abruf im Cron", () => {
     expect(hvkCronDue(new Date("2026-11-16T05:01:00Z"))).toBe(false); // Mo 06:01
     expect(hvkCronDue(new Date("2026-07-28T06:07:00Z"))).toBe(false); // nicht in den ersten 5 Minuten
     expect(hvkCronDue(new Date("2026-07-30T06:02:00Z"))).toBe(false); // Donnerstag
+  });
+});
+
+// ─── Fehler bis 17.11.2026: Airtable-Leads (source „Wechsel“) wurden nicht gefunden ──────────
+
+/** Mini-Auswertung der Prisma-Bedingung (nur die Formen, die hvkLeadFilter erzeugt) */
+type Row = Record<string, unknown>;
+function matches(row: Row, where: Row): boolean {
+  return Object.entries(where).every(([k, cond]) => {
+    if (k === "OR") return (cond as Row[]).some((w) => matches(row, w));
+    if (k === "AND") return (cond as Row[]).every((w) => matches(row, w));
+    const v = row[k];
+    if (cond && typeof cond === "object") {
+      const c = cond as { equals?: string; mode?: string; in?: unknown[] };
+      if (c.in) return c.in.includes(v);
+      if (c.equals != null) return typeof v === "string" && (c.mode === "insensitive" ? v.toLowerCase() === c.equals.toLowerCase() : v === c.equals);
+    }
+    return v === cond;
+  });
+}
+
+describe("HvK-Abrechnung: welche Leads zählen (hvkLeadFilter)", () => {
+  const subs = [
+    { id: "sub-muenchen", airtableId: "recKik4hja6EKhkuy", productKey: "PKV-Tarifoptimierung" },
+    { id: "sub-stuttgart", airtableId: "rechwC8VDQRfaZBJ3", productKey: "PKV-Tarifoptimierung" },
+    { id: "sub-sterbegeld", airtableId: "recSterbegeld", productKey: "Sterbegeld" },
+  ];
+  const where = hvkLeadFilter(["hvk"], "PKV-Tarifoptimierung", subs) as Row;
+  const base = { customerId: "hvk", isTest: false, source: null, subscriptionId: null, bezugAirtableId: null };
+
+  it("findet Airtable-Leads mit source „Wechsel“ (canonicalProductKey) und über den Airtable-Bezug", () => {
+    expect(matches({ ...base, source: "Wechsel", bezugAirtableId: "recKik4hja6EKhkuy" }, where)).toBe(true);
+    expect(matches({ ...base, source: "Wechsel" }, where)).toBe(true);
+    expect(matches({ ...base, source: "irgendwas", bezugAirtableId: "rechwC8VDQRfaZBJ3" }, where)).toBe(true);
+    expect(matches({ ...base, source: "pkv-tarifoptimierung" }, where)).toBe(true);
+    expect(matches({ ...base, source: "Sterbegeld", subscriptionId: "sub-muenchen" }, where)).toBe(true);
+  });
+
+  it("nicht: anderer Kunde, Testlead, anderes Produkt bzw. anderer Bezug", () => {
+    expect(matches({ ...base, customerId: "anderer", source: "Wechsel" }, where)).toBe(false);
+    expect(matches({ ...base, source: "Wechsel", isTest: true }, where)).toBe(false);
+    expect(matches({ ...base, source: "Sterbegeld", bezugAirtableId: "recSterbegeld" }, where)).toBe(false);
+    expect(matches({ ...base, source: "Neugeschäft" }, where)).toBe(false);
+  });
+});
+
+// Speicher für den Neuabgleich: zählt Schreibzugriffe, liefert Daten wie aus jsonb (Kopie)
+function reabgleichStore(leads: HvkDeliveredLead[], invoices: HvkReabgleichInvoice[]) {
+  const stornos: { leadId: string; reason: string; note: string }[] = [];
+  const writes = { invoices: 0, reklamationen: 0 };
+  const store: HvkReabgleichStore = {
+    invoices: async () => JSON.parse(JSON.stringify(invoices)) as HvkReabgleichInvoice[],
+    deliveredLeads: async (from, to) => leads.filter((l) => l.date >= from && l.date <= to),
+    recordStorno: async (leadId, reason, note) => {
+      const already = stornos.some((s) => s.leadId === leadId);
+      stornos.push({ leadId, reason, note });
+      return { ok: true, already };
+    },
+    updateInvoice: async (id, data) => {
+      writes.invoices++;
+      const inv = invoices.find((i) => i.id === id)!;
+      Object.assign(inv, { deliveredCount: data.deliveredCount, stornoAuto: data.stornoAuto, stornoReview: data.stornoReview, result: JSON.parse(JSON.stringify(data.result)) });
+    },
+    updateReklamation: async (id, data) => {
+      const r = invoices.flatMap((i) => i.reklamationen).find((x) => x.id === id)!;
+      if (r.status !== "offen") return;
+      writes.reklamationen++;
+      Object.assign(r, { status: data.status, leadId: data.leadId, candidateIds: data.candidateIds });
+    },
+  };
+  return { store, stornos, writes, invoices };
+}
+
+/** Rechnung wie vor dem Fix übernommen: nichts gefunden, Reklamation offen */
+async function brokenInvoice(extraReks: HvkReabgleichReklamation[] = []): Promise<HvkReabgleichInvoice> {
+  const old = await processHvkInvoice(input(), memoryStore([]).store, { dryRun: true });
+  const p = input().parsed;
+  return {
+    id: "inv1",
+    invoiceNo: p.invoiceNo,
+    periodStart: p.periodStart,
+    periodEnd: p.periodEnd,
+    lines: p.lines,
+    result: { ...old, status: "neu", invoiceId: "inv1" },
+    deliveredCount: 0,
+    stornoAuto: 0,
+    stornoReview: 1,
+    reklamationen: [{ id: "rk1", hvkLeadId: "4596925", date: "2026-07-19", plz: "84032", ort: "Landshut", status: "offen", leadId: null, candidateIds: [] }, ...extraReks],
+  };
+}
+
+describe("HvK-Abrechnung: Neuabgleich übernommener Rechnungen", () => {
+  it("Vorschau: richtige Zahlen, schreibt nichts", async () => {
+    const m = reabgleichStore(WEEK, [await brokenInvoice()]);
+    const s = await reabgleichHvkInvoices(m.store, { dryRun: true });
+    expect(s.weeks[0]).toMatchObject({ invoiceNo: "369-G-000034", delivered: 8, deliveredBefore: 0, billed: 7, diff: 1, unbilled: 1, foreign: 0, stornoNew: 1, stornoBefore: 0, open: 0, changed: true });
+    expect(s.totals).toMatchObject({ invoices: 1, changed: 1, stornoNew: 1, open: 0 });
+    expect(m.stornos).toHaveLength(0);
+    expect(m.writes).toEqual({ invoices: 0, reklamationen: 0 });
+  });
+
+  it("offene Reklamation wird eindeutig: Storno wie beim Import, status auto; zweiter Lauf ändert nichts", async () => {
+    const m = reabgleichStore(WEEK, [await brokenInvoice()]);
+    const s = await reabgleichHvkInvoices(m.store, { now: new Date("2026-11-17T10:00:00Z") });
+    expect(s.weeks[0]).toMatchObject({ delivered: 8, stornoNew: 1, open: 0, changed: true });
+    expect(m.stornos).toEqual([{ leadId: "rek", reason: "Reklamation HvK-Abrechnung 369-G-000034", note: "HvK Lead ID 4596925, 84032 Landshut, geliefert 19.07.2026" }]);
+    const inv = m.invoices[0];
+    expect(inv.reklamationen[0]).toMatchObject({ status: "auto", leadId: "rek", candidateIds: ["rek"] });
+    expect(inv).toMatchObject({ deliveredCount: 8, stornoAuto: 1, stornoReview: 0 });
+    expect(inv.result).toMatchObject({ delivered: 8, billed: 7, matched: 7, stornoAuto: 1, stornoReview: 0, status: "neu", invoiceId: "inv1" });
+    expect(inv.result.reklamationen?.[0]).toMatchObject({ outcome: "eindeutig", leadId: "rek", storno: "eingetragen" });
+    expect(inv.lines).toEqual(input().parsed.lines);
+
+    const again = await reabgleichHvkInvoices(m.store);
+    expect(again.weeks[0]).toMatchObject({ delivered: 8, stornoNew: 0, stornoBefore: 1, open: 0, changed: false });
+    expect(again.totals.changed).toBe(0);
+    expect(m.stornos).toHaveLength(1);
+    expect(m.writes).toEqual({ invoices: 1, reklamationen: 1 });
+  });
+
+  it("ein Lead deckt nur eine Reklamation: zweite Reklamation mit demselben Lead bleibt offen", async () => {
+    const first = await brokenInvoice();
+    const second: HvkReabgleichInvoice = { ...(await brokenInvoice()), id: "inv2", invoiceNo: "369-G-000041", reklamationen: [{ ...first.reklamationen[0], id: "rk9" }] };
+    const m = reabgleichStore(WEEK, [first, second]);
+    const preview = await reabgleichHvkInvoices(m.store, { dryRun: true });
+    expect(preview.weeks.map((w) => [w.stornoNew, w.open])).toEqual([
+      [1, 0],
+      [0, 1],
+    ]);
+    await reabgleichHvkInvoices(m.store);
+    expect(m.stornos).toHaveLength(1);
+    expect(m.invoices[1].reklamationen[0]).toMatchObject({ status: "offen", leadId: null, candidateIds: ["rek"] });
+    const writes = { ...m.writes };
+    expect((await reabgleichHvkInvoices(m.store)).totals.changed).toBe(0);
+    expect(m.writes).toEqual(writes);
+  });
+
+  it("mehrere Kandidaten bleiben offen (Kandidaten aktualisiert); erledigt und verworfen bleiben unberührt", async () => {
+    const reks: HvkReabgleichReklamation[] = [
+      { id: "rk2", hvkLeadId: "1", date: "2026-07-26", plz: "50667", ort: "Köln", status: "verworfen", leadId: null, candidateIds: [] },
+      { id: "rk3", hvkLeadId: "2", date: "2026-07-26", plz: "71364", ort: "Winnenden", status: "erledigt", leadId: "l7", candidateIds: [] },
+    ];
+    const m = reabgleichStore([...WEEK, lead("rek2", "2026-07-19", "84032", "Landshut")], [await brokenInvoice(reks)]);
+    const s = await reabgleichHvkInvoices(m.store);
+    expect(s.weeks[0]).toMatchObject({ stornoNew: 0, stornoBefore: 1, open: 1, changed: true });
+    expect(m.stornos).toHaveLength(0);
+    expect(m.invoices[0].reklamationen.map((r) => [r.status, r.candidateIds])).toEqual([
+      ["offen", ["rek", "rek2"]],
+      ["verworfen", []],
+      ["erledigt", []],
+    ]);
+    expect(m.writes.reklamationen).toBe(1);
+    const again = await reabgleichHvkInvoices(m.store);
+    expect(again.totals.changed).toBe(0);
+    expect(m.writes).toEqual({ invoices: 1, reklamationen: 1 });
   });
 });
