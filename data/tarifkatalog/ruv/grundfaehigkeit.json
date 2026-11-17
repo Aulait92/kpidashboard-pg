@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente schon bei einer Fähigkeit",
+    "Sehen, Hören, Hand, Gehen u. a.",
+    "Wechsel in die BU möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitsversicherung classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "dynamik": "vereinbar",
+        "anzahl": "15",
+        "psyche": "nein",
+        "pflege": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitsversicherung comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "dynamik": "vereinbar",
+        "anzahl": "21",
+        "psyche": "nein",
+        "pflege": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitsversicherung premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "dynamik": "vereinbar",
+        "anzahl": "23",
+        "psyche": "ja",
+        "pflege": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/grundfaehigkeitsversicherung",
+    "https://www.ruv.de/dam/jcr:038d2022-558e-46d7-b161-e37647ff9a2d/PLG0426.2026-04-30-12-59-13.pdf"
+  ],
+  "offen": [
+    "Anzahl der Grundfähigkeiten selbst aus der Leistungstabelle gezählt (Riechen und Schmecken als eine Fähigkeit): classic Sinne, Gehen, Stehen, Sitzen, Treppensteigen, Hand, Arm, Knien, Bücken, Heben und Tragen; comfort zusätzlich geistige Leistungsfähigkeit, eigenverantwortliches Handeln, Demenz, Pflege, Bus und Bahn, Autofahren; premium zusätzlich Schizophrenie und schwere Depression.",
+    "Psyche: nur premium nennt Schizophrenie und schwere Depression; Demenz und geistige Leistungsfähigkeit ab comfort.",
+    "Pflege als versicherte Fähigkeit ab comfort; eigene Pflegerente oder Baustein schwere Krankheiten nicht genannt.",
+    "Weltweiter Schutz nicht genannt. AU-Option laut Seite nicht einschließbar.",
+    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+  ]
+}
