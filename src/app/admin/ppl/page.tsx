@@ -264,12 +264,12 @@ async function Review({ hideEmpty = false }: { hideEmpty?: boolean }) {
                 {l.stornoNote ? `: „${l.stornoNote}“` : ""} · geliefert {l.deliveredAt ? dt(l.deliveredAt) : "–"} · {eur(Number(l.revenues[0]?.amount ?? 0))}
               </div>
             </div>
-            {(["approve", "reject"] as const).map((d) => (
+            {(["approve", "half", "reject"] as const).map((d) => (
               <form key={d} action={decideStornoAction}>
                 <input type="hidden" name="leadId" value={l.id} />
                 <input type="hidden" name="decision" value={d} />
                 <button className={`h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold ${d === "approve" ? "bg-emerald-600 text-white" : "border border-[color:var(--border)] bg-white"}`}>
-                  {d === "approve" ? "Gutschreiben" : "Ablehnen"}
+                  {d === "approve" ? "Gutschreiben" : d === "half" ? "50:50" : "Ablehnen"}
                 </button>
               </form>
             ))}
