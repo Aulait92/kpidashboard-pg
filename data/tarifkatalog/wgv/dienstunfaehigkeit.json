@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufsunfähigkeitsversicherung mit Dienstunfähigkeitsklausel",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Unter 30: Startbeitrag reduziert",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung (Beamte)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja, allgemeine DU",
+        "bu": "ja",
+        "nachversicherung": "ja, bis 50 %",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/vorsorge/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/gesundheit-vorsorge/vorsorge/berufsunfaehigkeitsversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/bu.pdf"
+  ],
+  "offen": [
+    "Kein eigenes DU-Produkt: die BU-Versicherung leistet bei Beamten, Richtern und Kirchenbeamten, wenn sie wegen allgemeiner Dienstunfähigkeit entlassen oder in den Ruhestand versetzt werden (§ 2 Abs. 13 bis 15 der Bedingungen).",
+    "Beamte auf Probe/Widerruf: nicht ausdrücklich genannt (Entlassung ist eingeschlossen). Teildienstunfähigkeit und spezielle DU (z. B. Polizeivollzug) nicht genannt."
+  ]
+}

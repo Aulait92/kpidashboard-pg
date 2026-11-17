@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Unter 30: Startbeitrag reduziert",
+    "Wiedereingliederungshilfe"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "ja",
+        "nachversicherung": "ja, bis 50 %",
+        "rueckwirkend": "bis 3 Jahre",
+        "weltweit": "ja",
+        "pflege": "ja, BU bei Pflege",
+        "stundung": "ja, in Leistungsprüfung",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/vorsorge/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/gesundheit-vorsorge/vorsorge/berufsunfaehigkeitsversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/bu.pdf"
+  ],
+  "offen": [
+    "Ein Tarif ohne Stufen (Produktseite und Versicherungsbedingungen, Abruf 17.11.2026). Versicherer: WGV-Lebensversicherung AG.",
+    "AU-Klausel: auf der Produktseite und in den Bedingungen nicht genannt.",
+    "Nachversicherung ohne Gesundheitsprüfung bis 50 % bei Ereignissen, in den ersten 5 Jahren einmal ohne Anlass (bis 40 Jahre). Verlängerungsrecht bei Anhebung der Regelaltersgrenze.",
+    "Für Selbstständige gilt eine zumutbare Umorganisation. Beamte: Leistung bei Entlassung oder Ruhestand wegen allgemeiner Dienstunfähigkeit.",
+    "Auch als BU-Zusatzversicherung zu Risiko-, Kapital- oder Rentenversicherung."
+  ]
+}

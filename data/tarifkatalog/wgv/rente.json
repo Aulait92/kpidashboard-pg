@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Rentengarantiezeit wählbar",
+    "Beitragsrückgewähr bei Tod"
+  ],
+  "tarife": [
+    {
+      "name": "Rentenversicherung Tarif L1 (aufgeschoben)",
+      "kurz": "Tarif L1",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "garantierte Monatsrente",
+        "anlage": "klassisch",
+        "flexibel": "ja",
+        "hinterbliebene": "Garantiezeit, Rückgewähr",
+        "kapital": "ja, auch teilweise",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional",
+        "bu": "optional"
+      },
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/vorsorge/rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/gesundheit-vorsorge/vorsorge/rentenversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/rente.pdf",
+    "https://www.wgv.de/docs/wdb/cms/sonstiges/basisinformationsblatt_L1L.pdf"
+  ],
+  "offen": [
+    "Klassische Leibrentenversicherung L1 mit laufendem Beitrag oder Einmalbeitrag (Produktseite, Abruf 17.11.2026). Tarif L3 (Sofortrente gegen Einmalbeitrag) nicht als Stufe geführt. Versicherer: WGV-Lebensversicherung AG.",
+    "Beitragsgarantie: als klassische Versicherung mit garantierter Monatsrente und garantierter Kapitalabfindung; eine ausdrückliche Beitragsgarantie ist nicht genannt.",
+    "Rentenbeginn in den letzten 7 Jahren der Aufschubzeit ab 60 vorziehbar. Beiträge herabsetzen, aussetzen, bei Arbeitslosigkeit zinslos stunden; Zuzahlungen und Teilentnahmen möglich.",
+    "Effektivkosten: im Basisinformationsblatt, hier nicht übernommen."
+  ]
+}

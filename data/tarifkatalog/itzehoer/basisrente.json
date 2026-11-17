@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup-Rente)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Beiträge steuerlich absetzbar",
+    "Rentenbeginn ab 62 wählbar",
+    "Lebenslange Rente"
+  ],
+  "tarife": [
+    {
+      "name": "Basisrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "garantierte Rente",
+        "anlage": "klassisch",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/leben-vorsorge/basisrente-ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/leben-vorsorge/basisrente-ruerup-rente/",
+    "https://www.itzehoer.de/dokumente/produkte/leben-und-vorsorge/private-rente/a-14-000_12-2024-private_vorsorge-edk_mimfs.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Produktseite, Abruf 17.11.2026). Versicherer: Itzehoer Lebensversicherungs-AG.",
+    "Beitragsgarantie, Beitragspause und Effektivkosten: auf der Produktseite nicht genannt (Basisinformationsblätter verlinkt).",
+    "Hinterbliebenenrente optional; BU-Schutz optional."
+  ]
+}
