@@ -103,6 +103,30 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   hallesche: "Hallesche",
   hannoversche: "Hannoversche",
   "swiss-life": "Swiss Life",
+  // Welle 2 (Ole, 17.11.2026: „alle wichtigen Gesellschaften“)
+  basler: "Basler",
+  concordia: "Concordia",
+  continentale: "Continentale",
+  "da-direkt": "DA Direkt",
+  "die-bayerische": "die Bayerische",
+  dialog: "Dialog",
+  erv: "ERV",
+  helvetia: "Helvetia",
+  ideal: "IDEAL",
+  inter: "INTER",
+  itzehoer: "Itzehoer",
+  lv1871: "LV 1871",
+  monuta: "Monuta",
+  "muenchener-verein": "Münchener Verein",
+  nuernberger: "NÜRNBERGER",
+  sdk: "SDK",
+  stuttgarter: "Stuttgarter",
+  ukv: "UKV",
+  universa: "uniVersa",
+  "volkswohl-bund": "Volkswohl Bund",
+  wgv: "WGV",
+  wuerttembergische: "Württembergische",
+  wuerzburger: "Würzburger",
 };
 /** Reihenfolge in Listen (Ole, 16.11.2026): die Vertreter-Gesellschaften zuerst, dann alle übrigen alphabetisch nach Anzeigename. */
 const REIHENFOLGE = [
@@ -164,6 +188,30 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/hallesche/i.test(t)) return "hallesche";
   if (/hannoversche/i.test(t)) return "hannoversche";
   if (/swiss\s*life/i.test(t)) return "swiss-life";
+  // Welle 2: Allerweltswörter (Inter, Ideal, Dialog, Stuttgarter) nur als Marke bzw. mit „Versicherung“
+  if (/\bbasler\b/i.test(t)) return "basler";
+  if (/\bconcordia\b/i.test(t)) return "concordia";
+  if (/continentale/i.test(t)) return "continentale";
+  if (/\bda\s*direkt\b/i.test(t)) return "da-direkt";
+  if (/die\s*bayerische/i.test(t)) return "die-bayerische";
+  if (/dialog[\s-]*(lebens)?versicherung/i.test(t)) return "dialog";
+  if (/\bERV\b|europ[äa]ische\s*reise/i.test(t)) return "erv";
+  if (/helvetia/i.test(t)) return "helvetia";
+  if (/\bIDEAL\b/.test(t) || /\bideal[\s-]*(lebens)?versicherung/i.test(t)) return "ideal";
+  if (/\bINTER\b/.test(t) || /\binter[\s-]*(kranken)?versicherung/i.test(t)) return "inter";
+  if (/itzehoer/i.test(t)) return "itzehoer";
+  if (/\blv\s*1871\b/i.test(t)) return "lv1871";
+  if (/\bmonuta\b/i.test(t)) return "monuta";
+  if (/m[üu]nchener\s*verein/i.test(t)) return "muenchener-verein";
+  if (/n[üu]rnberger/i.test(t)) return "nuernberger";
+  if (/\bsdk\b|s[üu]ddeutsche\s*kranken/i.test(t)) return "sdk";
+  if (/die\s*stuttgarter|stuttgarter[\s-]*(lebens)?versicherung/i.test(t)) return "stuttgarter";
+  if (/\bukv\b|union\s*kranken|versicherungskammer/i.test(t)) return "ukv";
+  if (/\buniversa\b/i.test(t)) return "universa";
+  if (/volkswohl\s*-?\s*bund/i.test(t)) return "volkswohl-bund";
+  if (/\bwgv\b/i.test(t)) return "wgv";
+  if (/w[üu]rttembergische/i.test(t)) return "wuerttembergische";
+  if (/w[üu]rzburger/i.test(t)) return "wuerzburger";
   return null;
 }
 
