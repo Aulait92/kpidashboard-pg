@@ -2,7 +2,8 @@
 // automatischen Nachrichten und Aufgaben mit Zeit, Kanal und Vorschautext. Quellen:
 //   Erinnerungen zum Termin   Vortag (WhatsApp und E-Mail), 1 Stunde, 15 Minuten (lib/showup.ts)
 //   Terminbeginn              Push „Ist Frau Becker da?“ an den Vermittler (nur Video)
-//   Abfolgen                  offene Schritte laufender Nachfass-Abfolgen (lib/lead-sequences.ts), WhatsApp bzw. Anruf
+//   Abfolgen                  offene Schritte laufender Nachfass-Abfolgen (lib/lead-sequences.ts), WhatsApp, E-Mail
+//                             (Angebot Tag 5 mit [Rückruf wünschen]) bzw. Anruf, beim Angebot Tag 3 mit Push an Sie
 //   Anrufplan                 nächster Versuch „Anrufversuch X von 6“ und die weiteren voraussichtlichen Versuche
 //                             (lib/call-plan.ts); vor dem Start der Auslöser 30 Min. nach dem Erstanschreiben
 // Rein (ohne Datenbank, testbar); Laden: lib/nachrichtenplan-server.ts. Noch ohne Oberfläche.
@@ -14,6 +15,8 @@ import { CALL_ATTEMPTS_TARGET, callPlanNote, isCallPlanNote, nextCallAttemptAt }
 import { SEQUENCES, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
 import { erinnerungsPlan, gleichText, startPush, stundeText, vortagText } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
+import { angebotAnrufPush, mailWerte, naechsterVersand, vorabCheckPush, vorabCheckZeit, vorlagenMail, type MailVorlageText } from "@/lib/angebot-senden";
+import { STANDARD_VORLAGEN_JE, type VorlageKey } from "@/lib/mail/vorlagen";
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -72,9 +75,13 @@ export type PlanEingabe = {
   mailBetreff?: Record<string, string>;
   /** Hat der Lead eine E-Mail-Adresse (Vortags-Mail)? */
   email: boolean;
+  /** Mail-Vorlagen des Vermittlers für E-Mail-Schritte (sonst die Standardtexte) */
+  mailVorlagen?: Partial<Record<VorlageKey, MailVorlageText>>;
+  /** Adresse am Kontakt oder aus dem Chat (Nachfass-Mail zum Angebot); ohne Angabe wie email */
+  emailKontakt?: boolean;
   /** Kann WhatsApp gehen (Nummer, kein STOPP, Einwilligung)? */
   whatsapp: boolean;
-  abfolgen: { id: string; kind: string; step: number; startedAt: Date; nextAt: Date | null; stoppedAt: Date | null }[];
+  abfolgen: { id: string; kind: string; step: number; startedAt: Date; nextAt: Date | null; stoppedAt: Date | null; vorabCheckStep?: number | null }[];
   abfolgeKontext: SequenceCtx;
   anrufplan: { followUpAt: Date | null; followUpNote: string | null; callAttempts: number; callPlanStartedAt: Date | null; lastCallAttemptAt: Date | null };
   /** Auslöser „keine Antwort 30 Min. nach dem Erstanschreiben“, falls noch offen: wann er greift */
@@ -136,11 +143,51 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
   let prev = a.nextAt;
   for (let i = a.step; i < def.steps.length; i++) {
     const step = def.steps[i];
-    const at = i === a.step ? fruehestens(a.nextAt, p.now) : new Date(Math.max(a.startedAt.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
+    const roh = i === a.step ? fruehestens(a.nextAt, p.now) : new Date(Math.max(a.startedAt.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
+    // Angebot (P3): WhatsApp und E-Mail gehen erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr) raus
+    const angebot = a.kind === "offer" || a.kind === "offer_selbst";
+    const at = angebot && step.action !== "call" ? naechsterVersand(roh) : roh;
     prev = at;
     const nr = `(Schritt ${i + 1} von ${def.steps.length})`;
+    // Angebot (P3): Vorab-Check-Push an den Vermittler am Vorabend jedes automatischen Nachfassens (WhatsApp, E-Mail)
+    if (angebot && step.action !== "call" && !(i === a.step && a.vorabCheckStep === a.step)) {
+      const versand = at;
+      const zeit = vorabCheckZeit(versand);
+      if (zeit.getTime() > p.now.getTime()) {
+        const push = vorabCheckPush({ leadId: p.leadId, name: p.label, kanal: step.action, versand, now: zeit });
+        out.push({ at: iso(zeit), kanal: "push", quelle: "abfolge", titel: `${def.label}: Vorab-Check an Sie ${nr}`, vorschau: push.title, voraussichtlich: true, abfolgeId: a.id });
+      }
+    }
     if (step.action === "call") {
       out.push({ at: iso(at), kanal: "anruf", quelle: "abfolge", titel: `${def.label}: Anruf-Aufgabe ${nr}`, vorschau: step.note, voraussichtlich: i > a.step, abfolgeId: a.id });
+      // Angebot Tag 3: dazu ein Push an den Vermittler (nur, wenn die Aufgabe neu angelegt wird)
+      if (step.push) {
+        out.push({ at: iso(at), kanal: "push", quelle: "abfolge", titel: `${def.label}: Push an Sie ${nr}`, vorschau: angebotAnrufPush({ leadId: p.leadId, name: p.label }).title, voraussichtlich: true, abfolgeId: a.id });
+      }
+    } else if (step.action === "email") {
+      // Text aus der Vorlage des Vermittlers (geladen in lib/nachrichtenplan-server.ts), sonst der Standardtext
+      const c = p.abfolgeKontext;
+      const vorlage = p.mailVorlagen?.[step.vorlage] ?? STANDARD_VORLAGEN_JE[c.an].find((v) => v.key === step.vorlage)!;
+      const knoepfe = step.knoepfe ?? [];
+      const m = vorlagenMail({
+        vorlage,
+        werte: mailWerte({ an: c.an, kontakt: c.kontakt, thema: c.topic, meinname: c.person?.nom ?? "", now: at, extra: { ...(knoepfe.includes("rueckruf") ? { rueckruf_link: "[Link Rückruf]" } : {}), ...step.zusatz?.(c) } }),
+        knoepfe: [
+          ...(knoepfe.includes("angebot") ? [{ label: "Angebot ansehen", href: "[Link zum Angebot]" }] : []),
+          ...(knoepfe.includes("rueckruf") ? [{ label: "Rückruf wünschen", href: "[Link Rückruf]" }] : []),
+        ],
+        signatur: { text: "", html: "" },
+      });
+      out.push({
+        at: iso(at),
+        kanal: "email",
+        quelle: "abfolge",
+        titel: `${def.label}: ${step.titel} ${nr}${(p.emailKontakt ?? p.email) ? "" : " (entfällt ohne E-Mail-Adresse)"}`,
+        vorschau: `Betreff: ${m.subject}\n\n${m.text.trim()}`,
+        // E-Mail nur Mo bis Sa 9 bis 19 Uhr und nur, solange der Lead nicht antwortet
+        voraussichtlich: true,
+        abfolgeId: a.id,
+      });
     } else {
       const zeiten = step.purpose === "followup" || step.slots ? " (mit zwei freien Zeiten, falls der Kalender verbunden ist)" : "";
       out.push({

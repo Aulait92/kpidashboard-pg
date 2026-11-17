@@ -27,8 +27,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/perspektive/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PrivatRente IndexSelect",
@@ -48,8 +47,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/indexselect/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PrivatRente KomfortDynamik",
@@ -69,8 +67,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/komfortdynamik/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PrivatRente InvestFlex",
@@ -89,8 +86,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/vorsorgekonzept/invest-flex/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -107,6 +103,7 @@
     "Garantierter Rentenfaktor nicht veröffentlicht; die Seiten nennen eine garantierte Mindestrente (bei InvestFlex nicht genannt).",
     "Effektivkosten nicht auf der Produktseite (Basisinformationsblätter nicht ausgewertet).",
     "Zusatzbausteine Hinterbliebenen- und BU-Vorsorge nur bei Abschluss vor Ort, nicht online. Dynamik nicht genannt.",
-    "Allianz markiert kein Konzept; KomfortDynamik als dritte von vier Stufen gesetzt."
+    "Allianz markiert kein Konzept; KomfortDynamik als dritte von vier Stufen gesetzt.",
+    "Geprüft am 17.11.2026 an den Seiten der vier Vorsorgekonzepte und der Produktseite PrivatRente auf allianz.de."
   ]
 }

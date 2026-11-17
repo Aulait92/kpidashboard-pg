@@ -3,8 +3,9 @@
 // Broker ID). Darin:
 //   - gekaufte Leads:  „Lead ID: 4595123, KVV-Opt, 41239 Mönchengladbach 1 -45,00 € 19 % -45,00 €“
 //   - Reklamationen:   „Reklamation (100.00% des Kaufpreises) Lead ID: 4596925, KVV-Opt, 2026-07-19, 84032 Landshut 1 45,00 € …“
-// Die Lead ID ist die Nummer von HvK, nicht unsere. Zuordnung daher über Lieferdatum + PLZ (Reklamation) bzw.
-// PLZ + Ort (gekaufte Leads der Woche).
+// Die Lead ID ist die Nummer von HvK, nicht unsere. Zuordnung der gekauften Leads der Woche über PLZ + Ort; sichere
+// Treffer speichern wir als Lead.hvkLeadId (17.11.2026). Reklamationen dann zuerst über diese ID, sonst über
+// Lieferdatum + PLZ, Ort und ±1 Tag (matchReklamation).
 //
 // Diese Datei ist rein (ohne Datenbank): Text auslesen, zuordnen, abgleichen und der Ablauf je Rechnung mit
 // austauschbarem Speicher (HvkStore), damit Idempotenz und Zuordnung ohne Datenbank testbar sind.
@@ -137,6 +138,8 @@ export type HvkDeliveredLead = {
   ort: string | null;
   name: string | null;
   stornoState: string | null;
+  /** gespeicherte HvK-Lead-ID (Lead.hvkLeadId), null = noch nicht zugeordnet */
+  hvkLeadId?: string | null;
 };
 
 /**
@@ -210,21 +213,59 @@ export function sameOrt(a: string | null | undefined, b: string | null | undefin
   return !!x && !!y && (x === y || x.startsWith(y) || y.startsWith(x));
 }
 
-// ─── Reklamation → Lead (Lieferdatum + PLZ) ─────────────────────────────────
+// ─── Reklamation → Lead ──────────────────────────────────────────────────────
 
-export type ReklamationMatch = { outcome: "eindeutig"; lead: HvkDeliveredLead } | { outcome: "keiner" | "mehrere"; candidates: HvkDeliveredLead[] };
+/** Über welchen Weg eine Reklamation zugeordnet wurde (Admin-Liste zeigt es als ein Wort) */
+export type HvkMatchVia = "id" | "datum_plz" | "ort" | "tag_versatz";
+export const HVK_VIA_LABEL: Record<HvkMatchVia, string> = { id: "ID", datum_plz: "Datum+PLZ", ort: "Ort", tag_versatz: "±1 Tag" };
 
-/** Nur bei genau einem Lead mit gleichem Lieferdatum und gleicher PLZ wird zugeordnet. Sonst nicht raten. */
-export function matchReklamation(r: Pick<HvkReklamationLine, "date" | "plz">, leads: HvkDeliveredLead[]): ReklamationMatch {
-  const c = leads.filter((l) => l.date === r.date && l.plz === r.plz);
-  if (c.length === 1) return { outcome: "eindeutig", lead: c[0] };
-  return { outcome: c.length ? "mehrere" : "keiner", candidates: c };
+export type ReklamationMatch = { outcome: "eindeutig"; lead: HvkDeliveredLead; via: HvkMatchVia } | { outcome: "keiner" | "mehrere"; candidates: HvkDeliveredLead[] };
+
+/**
+ * Reklamation → unser Lead. Nie raten: bleibt es mehrdeutig, wird nicht zugeordnet. Reihenfolge:
+ *  (a) gespeicherte HvK-Lead-ID (Lead.hvkLeadId oder eine erledigte Reklamation mit derselben ID)
+ *  (b) genau ein Lead mit gleichem Lieferdatum und gleicher PLZ
+ *  (c) mehrere: Leads ausschließen, die nachweislich ein anderer HvK-Lead sind (andere ID, andere Reklamation) oder
+ *      schon storniert sind, und über den Ort eingrenzen; genau einer übrig → zugeordnet
+ *  (d) keiner: Lieferdatum ±1 Tag (Lieferung um Mitternacht) mit gleicher PLZ, nur wenn genau einer
+ * taken: Leads, die schon einer Reklamation zugeordnet sind (Lead-ID → HvK-Lead-ID der Reklamation).
+ * Ob ein über (a)/(b) gefundener Lead schon vergeben ist, prüft der Aufrufer (taken), damit ein Lead nie zwei
+ * Reklamationen deckt.
+ */
+export function matchReklamation(
+  r: Pick<HvkReklamationLine, "date" | "plz"> & { hvkLeadId?: string; ort?: string },
+  leads: HvkDeliveredLead[],
+  taken: ReadonlyMap<string, string> = new Map(),
+): ReklamationMatch {
+  const id = r.hvkLeadId;
+  if (id) {
+    const byId = leads.filter((l) => l.hvkLeadId === id || (!l.hvkLeadId && taken.get(l.id) === id));
+    if (byId.length === 1) return { outcome: "eindeutig", lead: byId[0], via: "id" };
+  }
+  // Nachweislich ein anderer HvK-Lead: andere gespeicherte ID oder einer anderen Reklamation zugeordnet
+  const otherHvk = (l: HvkDeliveredLead) => !!id && ((!!l.hvkLeadId && l.hvkLeadId !== id) || (taken.has(l.id) && taken.get(l.id) !== id));
+  const same = leads.filter((l) => l.date === r.date && l.plz === r.plz && !(id && l.hvkLeadId && l.hvkLeadId !== id));
+  if (same.length === 1) return { outcome: "eindeutig", lead: same[0], via: "datum_plz" };
+  if (same.length > 1) {
+    // Schon stornierte Leads NICHT ausschließen: reklamiert HvK einen bereits in der App stornierten Lead noch einmal,
+    // würde sonst ein anderer Lead mit gleichem Datum, PLZ und Ort zusätzlich storniert (Geld). Lieber offen lassen.
+    const free = same.filter((l) => !otherHvk(l));
+    // Lead ohne Ort lässt sich nicht ausschließen: bleibt Kandidat
+    const byOrt = free.filter((l) => !ortKey(l.ort) || sameOrt(l.ort, r.ort));
+    if (ortKey(r.ort) && byOrt.length === 1) return { outcome: "eindeutig", lead: byOrt[0], via: "ort" };
+    return { outcome: "mehrere", candidates: same };
+  }
+  const near = new Set([shiftDay(r.date, -1), shiftDay(r.date, 1)]);
+  const shifted = leads.filter((l) => near.has(l.date) && l.plz === r.plz && !otherHvk(l));
+  if (shifted.length === 1) return { outcome: "eindeutig", lead: shifted[0], via: "tag_versatz" };
+  return { outcome: shifted.length ? "mehrere" : "keiner", candidates: shifted };
 }
 
 // ─── Wochenabgleich: gekaufte Leads ↔ gelieferte Leads ──────────────────────
 
 export type HvkReconcile = {
-  matched: { hvkLeadId: string; leadId: string }[];
+  /** sure: im jeweiligen Durchgang eindeutig (nur diese werden als Lead.hvkLeadId gespeichert) */
+  matched: { hvkLeadId: string; leadId: string; sure: boolean }[];
   /** geliefert, aber nicht abgerechnet */
   unbilled: HvkDeliveredLead[];
   /** abgerechnet, aber nicht von uns geliefert */
@@ -232,29 +273,59 @@ export type HvkReconcile = {
 };
 
 /**
- * Jeder gekaufte Lead wird höchstens einem gelieferten Lead der Woche zugeordnet: zuerst PLZ und Ort gleich, dann nur PLZ,
- * zuletzt nur Ort (falls unser Lead keine PLZ hat).
+ * Jeder gekaufte Lead wird höchstens einem gelieferten Lead der Woche zugeordnet: zuerst über die gespeicherte
+ * HvK-Lead-ID, dann PLZ und Ort gleich, dann nur PLZ, zuletzt nur Ort (falls unser Lead keine PLZ hat). Leads mit einer
+ * anderen gespeicherten HvK-Lead-ID kommen nicht in Frage.
+ * sicher (sure) ist ein Treffer nur, wenn die Zeile zu Beginn des Durchgangs genau einen freien Kandidaten hat und
+ * dieser Kandidat zu keiner anderen offenen Zeile im selben Durchgang passt.
  */
 export function reconcileWeek(bought: HvkBoughtLine[], delivered: HvkDeliveredLead[]): HvkReconcile {
   const free = new Set(delivered.map((d) => d.id));
   const open = new Set(bought.map((_, i) => i));
   const matched: HvkReconcile["matched"] = [];
+  const allowed = (b: HvkBoughtLine, d: HvkDeliveredLead) => !d.hvkLeadId || d.hvkLeadId === b.hvkLeadId;
   const passes: ((b: HvkBoughtLine, d: HvkDeliveredLead) => boolean)[] = [
-    (b, d) => d.plz === b.plz && sameOrt(d.ort, b.ort),
-    (b, d) => d.plz === b.plz,
-    (b, d) => !d.plz && sameOrt(d.ort, b.ort),
+    (b, d) => !!d.hvkLeadId && d.hvkLeadId === b.hvkLeadId,
+    (b, d) => allowed(b, d) && d.plz === b.plz && sameOrt(d.ort, b.ort),
+    (b, d) => allowed(b, d) && d.plz === b.plz,
+    (b, d) => allowed(b, d) && !d.plz && sameOrt(d.ort, b.ort),
   ];
   for (const fits of passes) {
-    for (const i of [...open]) {
+    const openAtStart = [...open];
+    const freeAtStart = delivered.filter((x) => free.has(x.id));
+    const candidates = new Map(openAtStart.map((i) => [i, freeAtStart.filter((x) => fits(bought[i], x))]));
+    for (const i of openAtStart) {
       const b = bought[i];
       const d = delivered.find((x) => free.has(x.id) && fits(b, x));
       if (!d) continue;
       free.delete(d.id);
       open.delete(i);
-      matched.push({ hvkLeadId: b.hvkLeadId, leadId: d.id });
+      const c = candidates.get(i)!;
+      const sure = c.length === 1 && c[0].id === d.id && !openAtStart.some((j) => j !== i && fits(bought[j], d));
+      matched.push({ hvkLeadId: b.hvkLeadId, leadId: d.id, sure });
     }
   }
   return { matched, unbilled: delivered.filter((d) => free.has(d.id)), foreign: [...open].map((i) => bought[i]) };
+}
+
+export type HvkLeadLink = { hvkLeadId: string; leadId: string };
+
+/**
+ * Zuordnungen HvK-Lead-ID → Lead in die geladenen Leads übernehmen (im Speicher), ohne eine bestehende andere
+ * Zuordnung zu überschreiben: weder am Lead noch eine ID, die schon ein anderer Lead trägt. Gibt die neuen zurück.
+ */
+export function applyHvkLinks(leads: HvkDeliveredLead[], links: HvkLeadLink[]): HvkLeadLink[] {
+  const byId = new Map(leads.map((l) => [l.id, l]));
+  const used = new Map(leads.flatMap((l) => (l.hvkLeadId ? [[l.hvkLeadId, l.id] as const] : [])));
+  const added: HvkLeadLink[] = [];
+  for (const k of links) {
+    const l = byId.get(k.leadId);
+    if (!l || l.hvkLeadId || used.has(k.hvkLeadId)) continue;
+    l.hvkLeadId = k.hvkLeadId;
+    used.set(k.hvkLeadId, l.id);
+    added.push(k);
+  }
+  return added;
 }
 
 // ─── Ablauf je Rechnung (Speicher austauschbar) ─────────────────────────────
@@ -271,6 +342,8 @@ export type HvkReklamationResult = {
   leadId: string | null;
   candidateIds: string[];
   storno: HvkStornoState | null;
+  /** Weg der Zuordnung (nur bei eindeutig) */
+  via?: HvkMatchVia | null;
   error?: string;
 };
 
@@ -312,6 +385,10 @@ export interface HvkStore {
   /** Storno wie „Storno eintragen“ (Admin) */
   recordStorno(leadId: string, reason: string, note: string): Promise<{ ok: true; already: boolean } | { ok: false; error: string }>;
   saveReklamationen(invoiceId: string, rows: HvkReklamationResult[]): Promise<void>;
+  /** Leads, die schon einer Reklamation zugeordnet sind (auto/erledigt): Lead-ID → HvK-Lead-ID der Reklamation */
+  takenLeads(): Promise<Map<string, string>>;
+  /** Lead.hvkLeadId setzen, nur wo noch leer und die ID frei ist (idempotent). Gibt die Zahl neuer Zuordnungen zurück. */
+  saveHvkLeadIds(links: HvkLeadLink[]): Promise<number>;
 }
 
 const shiftDay = (iso: string, days: number) => new Date(Date.parse(`${iso}T12:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
@@ -334,16 +411,21 @@ export async function processHvkInvoice(input: HvkInvoiceInput, store: HvkStore,
   const week = await store.deliveredLeads(p.periodStart, p.periodEnd);
   const inWeek = week.filter((l) => l.date >= p.periodStart && l.date <= p.periodEnd);
   const rec = reconcileWeek(bought, inWeek);
+  const weekLinks = rec.matched.filter((m) => m.sure).map(({ hvkLeadId, leadId }) => ({ hvkLeadId, leadId }));
 
-  // Reklamationen: Kandidaten am jeweiligen Lieferdatum (liegt meist in einer Vorwoche)
+  // Reklamationen: Kandidaten am jeweiligen Lieferdatum ±1 Tag (liegt meist in einer Vorwoche)
   const dates = reks.map((r) => r.date).sort();
-  const around = dates.length ? await store.deliveredLeads(dates[0], dates[dates.length - 1]) : [];
+  const around = dates.length ? await store.deliveredLeads(shiftDay(dates[0], -1), shiftDay(dates[dates.length - 1], 1)) : [];
+  applyHvkLinks(around, weekLinks);
+  const taken = reks.length ? await store.takenLeads() : new Map<string, string>();
   const reklamationen: HvkReklamationResult[] = reks.map((r) => {
-    const m = matchReklamation(r, around);
+    const m = matchReklamation(r, around, taken);
     const base = { hvkLeadId: r.hvkLeadId, date: r.date, plz: r.plz, ort: r.ort, cents: r.cents };
-    return m.outcome === "eindeutig"
-      ? { ...base, outcome: m.outcome, leadId: m.lead.id, candidateIds: [m.lead.id], storno: m.lead.stornoState === "approved" ? "schon storniert" : "würde eingetragen" }
-      : { ...base, outcome: m.outcome, leadId: null, candidateIds: m.candidates.map((c) => c.id), storno: null };
+    if (m.outcome !== "eindeutig") return { ...base, outcome: m.outcome, leadId: null, candidateIds: m.candidates.map((c) => c.id), storno: null };
+    // Ein Lead deckt höchstens eine Reklamation: schon vergeben → offen zum Prüfen
+    if (taken.has(m.lead.id)) return { ...base, outcome: "mehrere", leadId: null, candidateIds: [m.lead.id], storno: null, error: "Lead gehört schon zu einer anderen Reklamation" };
+    taken.set(m.lead.id, r.hvkLeadId);
+    return { ...base, outcome: m.outcome, leadId: m.lead.id, candidateIds: [m.lead.id], storno: m.lead.stornoState === "approved" ? "schon storniert" : "würde eingetragen", via: m.via };
   });
 
   const result: HvkProcessResult = {
@@ -372,13 +454,16 @@ export async function processHvkInvoice(input: HvkInvoiceInput, store: HvkStore,
     return { ...result, status: "vorhanden", ...(again ? { invoiceId: again.id } : {}) };
   }
   result.invoiceId = created.id;
+  const links: HvkLeadLink[] = [...weekLinks];
   for (const r of result.reklamationen) {
     if (r.outcome !== "eindeutig" || !r.leadId) continue;
     const s = await store.recordStorno(r.leadId, hvkStornoReason(p.invoiceNo), hvkStornoNote(r)).catch((e: unknown) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) }));
     r.storno = s.ok ? (s.already ? "schon storniert" : "eingetragen") : "fehler";
     if (!s.ok) r.error = s.error;
+    else links.push({ hvkLeadId: r.hvkLeadId, leadId: r.leadId });
   }
   await store.saveReklamationen(created.id, result.reklamationen);
+  await store.saveHvkLeadIds(links);
   return result;
 }
 
@@ -434,7 +519,9 @@ export interface HvkReabgleichStore {
   recordStorno(leadId: string, reason: string, note: string): Promise<{ ok: true; already: boolean } | { ok: false; error: string }>;
   updateInvoice(id: string, data: { deliveredCount: number; stornoAuto: number; stornoReview: number; result: HvkProcessResult }): Promise<void>;
   /** Nur solange die Reklamation „offen“ ist (schon entschieden: nichts ändern) */
-  updateReklamation(id: string, data: { status: "auto" | "offen"; leadId: string | null; candidateIds: string[]; decidedAt: Date | null }): Promise<void>;
+  updateReklamation(id: string, data: { status: "auto" | "offen"; leadId: string | null; candidateIds: string[]; decidedAt: Date | null; via?: HvkMatchVia | null }): Promise<void>;
+  /** wie HvkStore.saveHvkLeadIds */
+  saveHvkLeadIds(links: HvkLeadLink[]): Promise<number>;
 }
 
 export type HvkReabgleichWeek = {
@@ -463,7 +550,8 @@ export type HvkReabgleichWeek = {
 export type HvkReabgleichSummary = {
   dryRun: boolean;
   weeks: HvkReabgleichWeek[];
-  totals: { invoices: number; changed: number; delivered: number; billed: number; stornoNew: number; stornoBefore: number; open: number; errors: number };
+  /** linked: neue Zuordnungen HvK-Lead-ID → Lead (Vorschau: würden gespeichert) */
+  totals: { invoices: number; changed: number; delivered: number; billed: number; stornoNew: number; stornoBefore: number; open: number; errors: number; linked: number };
 };
 
 /** JSON mit sortierten Schlüsseln (jsonb ordnet Schlüssel um), für „hat sich etwas geändert?“ */
@@ -481,11 +569,12 @@ function stableJson(v: unknown): string {
 }
 
 const DONE = new Set(["auto", "erledigt"]);
-type RekAfter = { status: "auto" | "offen"; outcome: HvkReklamationResult["outcome"]; leadId: string | null; candidateIds: string[]; storno: HvkStornoState | null; error?: string };
+type RekAfter = { status: "auto" | "offen"; outcome: HvkReklamationResult["outcome"]; leadId: string | null; candidateIds: string[]; storno: HvkStornoState | null; via?: HvkMatchVia; error?: string };
 
 /**
  * Alle übernommenen Rechnungen neu abgleichen. Je Rechnung: geliefert (Woche), zugeordnet, nicht abgerechnet, nicht von
- * uns → deliveredCount und result. Je offener Reklamation: Kandidaten neu (Lieferdatum + PLZ, matchReklamation);
+ * uns → deliveredCount und result. Sichere Treffer der Wochen und entschiedene Reklamationen werden als
+ * Lead.hvkLeadId gespeichert. Je offener Reklamation: Kandidaten neu (ID, Lieferdatum + PLZ, Ort, ±1 Tag: matchReklamation);
  * eindeutig → Storno wie beim Import und status „auto“, sonst Kandidaten aktualisieren und offen lassen.
  * auto/erledigt/verworfen bleiben unberührt. Geschrieben wird nur, was sich ändert (zweiter Lauf ändert nichts).
  * dryRun: dieselben Zahlen, nichts wird geschrieben.
@@ -494,16 +583,31 @@ export async function reabgleichHvkInvoices(store: HvkReabgleichStore, opts: { d
   const dryRun = !!opts.dryRun;
   const invoices = await store.invoices();
   const weeks: HvkReabgleichWeek[] = [];
-  const dates = invoices.flatMap((i) => [i.periodStart, i.periodEnd, ...i.reklamationen.filter((r) => r.status === "offen").map((r) => r.date)]).sort();
-  const leads = dates.length ? await store.deliveredLeads(dates[0], dates[dates.length - 1]) : [];
+  const dates = invoices.flatMap((i) => [i.periodStart, i.periodEnd, ...i.reklamationen.map((r) => r.date)]).sort();
+  // ±1 Tag für Reklamationen mit Lieferung um Mitternacht
+  const leads = dates.length ? await store.deliveredLeads(shiftDay(dates[0], -1), shiftDay(dates[dates.length - 1], 1)) : [];
   // Ein Lead deckt höchstens eine Reklamation: schon zugeordnete (auto/erledigt, auch aus diesem Lauf) nicht nochmal
-  // automatisch eintragen, sondern zum Prüfen offen lassen
-  const taken = new Set(invoices.flatMap((i) => i.reklamationen.filter((r) => DONE.has(r.status) && r.leadId).map((r) => r.leadId!)));
+  // automatisch eintragen, sondern zum Prüfen offen lassen. Wert: HvK-Lead-ID der Reklamation.
+  const taken = new Map(invoices.flatMap((i) => i.reklamationen.filter((r) => DONE.has(r.status) && r.leadId).map((r) => [r.leadId!, r.hvkLeadId] as const)));
+
+  // Zuordnungen HvK-Lead-ID → Lead: aus entschiedenen Reklamationen und sicheren Treffern der Wochen (vor den
+  // Reklamationen, damit ältere Reklamationen über die ID gefunden werden)
+  const links = applyHvkLinks(leads, [...taken].map(([leadId, hvkLeadId]) => ({ hvkLeadId, leadId })));
+  const recs = new Map<string, HvkReconcile>();
+  for (const inv of invoices) {
+    const bought = inv.lines.filter((l): l is HvkBoughtLine => l.kind === "gekauft");
+    const rec = reconcileWeek(
+      bought,
+      leads.filter((l) => l.date >= inv.periodStart && l.date <= inv.periodEnd),
+    );
+    recs.set(inv.id, rec);
+    links.push(...applyHvkLinks(leads, rec.matched.filter((m) => m.sure).map(({ hvkLeadId, leadId }) => ({ hvkLeadId, leadId }))));
+  }
 
   for (const inv of invoices) {
     const bought = inv.lines.filter((l): l is HvkBoughtLine => l.kind === "gekauft");
     const inWeek = leads.filter((l) => l.date >= inv.periodStart && l.date <= inv.periodEnd);
-    const rec = reconcileWeek(bought, inWeek);
+    const rec = recs.get(inv.id)!;
     const errors: string[] = [];
     let stornoNew = 0;
     let rekChanged = false;
@@ -511,16 +615,16 @@ export async function reabgleichHvkInvoices(store: HvkReabgleichStore, opts: { d
 
     for (const r of inv.reklamationen) {
       if (r.status !== "offen") continue;
-      const m = matchReklamation(r, leads);
+      const m = matchReklamation(r, leads, taken);
       if (m.outcome !== "eindeutig" || taken.has(m.lead.id)) {
         const ids = m.outcome === "eindeutig" ? [m.lead.id] : m.candidates.map((c) => c.id);
         if (stableJson(ids) !== stableJson(r.candidateIds) || r.leadId) {
-          if (!dryRun) await store.updateReklamation(r.id, { status: "offen", leadId: null, candidateIds: ids, decidedAt: null });
+          if (!dryRun) await store.updateReklamation(r.id, { status: "offen", leadId: null, candidateIds: ids, decidedAt: null, via: null });
           rekChanged = true;
         }
         after.set(r.id, {
           status: "offen",
-          outcome: m.outcome,
+          outcome: m.outcome === "eindeutig" ? "mehrere" : m.outcome,
           leadId: null,
           candidateIds: ids,
           storno: null,
@@ -538,19 +642,20 @@ export async function reabgleichHvkInvoices(store: HvkReabgleichStore, opts: { d
           // Wie beim Import: offen lassen, Lead als einzigen Kandidaten zeigen
           errors.push(`Reklamation ${r.hvkLeadId}: ${s.error}`);
           if (stableJson([lead.id]) !== stableJson(r.candidateIds) || r.leadId !== lead.id) {
-            await store.updateReklamation(r.id, { status: "offen", leadId: lead.id, candidateIds: [lead.id], decidedAt: null });
+            await store.updateReklamation(r.id, { status: "offen", leadId: lead.id, candidateIds: [lead.id], decidedAt: null, via: m.via });
             rekChanged = true;
           }
-          after.set(r.id, { status: "offen", outcome: "eindeutig", leadId: lead.id, candidateIds: [lead.id], storno: "fehler", error: s.error });
+          after.set(r.id, { status: "offen", outcome: "eindeutig", leadId: lead.id, candidateIds: [lead.id], storno: "fehler", via: m.via, error: s.error });
           continue;
         }
         storno = s.already ? "schon storniert" : "eingetragen";
-        await store.updateReklamation(r.id, { status: "auto", leadId: lead.id, candidateIds: [lead.id], decidedAt: opts.now ?? new Date() });
+        await store.updateReklamation(r.id, { status: "auto", leadId: lead.id, candidateIds: [lead.id], decidedAt: opts.now ?? new Date(), via: m.via });
       }
-      taken.add(lead.id);
+      taken.set(lead.id, r.hvkLeadId);
+      links.push(...applyHvkLinks(leads, [{ hvkLeadId: r.hvkLeadId, leadId: lead.id }]));
       stornoNew++;
       rekChanged = true;
-      after.set(r.id, { status: "auto", outcome: "eindeutig", leadId: lead.id, candidateIds: [lead.id], storno });
+      after.set(r.id, { status: "auto", outcome: "eindeutig", leadId: lead.id, candidateIds: [lead.id], storno, via: m.via });
     }
 
     const statusOf = (r: HvkReabgleichReklamation) => after.get(r.id)?.status ?? r.status;
@@ -563,7 +668,8 @@ export async function reabgleichHvkInvoices(store: HvkReabgleichStore, opts: { d
       if (!a) return x;
       const rest: HvkReklamationResult = { ...x };
       delete rest.error;
-      return { ...rest, outcome: a.outcome, leadId: a.leadId, candidateIds: a.candidateIds, storno: a.storno, ...(a.error ? { error: a.error } : {}) };
+      delete rest.via;
+      return { ...rest, outcome: a.outcome, leadId: a.leadId, candidateIds: a.candidateIds, storno: a.storno, ...(a.via ? { via: a.via } : {}), ...(a.error ? { error: a.error } : {}) };
     });
     const result: HvkProcessResult = {
       ...(inv.result as HvkProcessResult),
@@ -598,6 +704,7 @@ export async function reabgleichHvkInvoices(store: HvkReabgleichStore, opts: { d
       errors,
     });
   }
+  const linked = dryRun ? links.length : links.length ? await store.saveHvkLeadIds(links) : 0;
   const sum = (k: "delivered" | "billed" | "stornoNew" | "stornoBefore" | "open") => weeks.reduce((n, w) => n + w[k], 0);
   return {
     dryRun,
@@ -611,6 +718,7 @@ export async function reabgleichHvkInvoices(store: HvkReabgleichStore, opts: { d
       stornoBefore: sum("stornoBefore"),
       open: sum("open"),
       errors: weeks.reduce((n, w) => n + w.errors.length, 0),
+      linked,
     },
   };
 }

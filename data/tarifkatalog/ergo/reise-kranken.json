@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/reise/master",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV Auslandskrankenversicherung Familie",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/reise/master",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -49,6 +47,7 @@
   "offen": [
     "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Jahresvertrag für beliebig viele Reisen bis je 10 Wochen; Leistungen von Einzel- und Familientarif gleich, Familie zusätzlich 500 € Pauschale je bestimmter Erkrankung bei stationärer Behandlung (auch ohne Reise).",
     "Weltweit laut Seite „auch bei Pandemien und Reisewarnungen“; USA und Kanada nicht ausdrücklich als Geltungsbereich genannt (nur Fallbeispiel USA). Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft nicht genannt.",
-    "Für Reisen bis 12 Monate gibt es eine eigene Langzeit-Auslandskrankenversicherung. ERGO Reiseversicherung bietet zusätzlich Reisekranken in Jahres- und Einzelreisepaketen (nicht als Stufe geführt). Keine Empfehlung markiert (zwei Stufen)."
+    "Für Reisen bis 12 Monate gibt es eine eigene Langzeit-Auslandskrankenversicherung. ERGO Reiseversicherung bietet zusätzlich Reisekranken in Jahres- und Einzelreisepaketen (nicht als Stufe geführt). Keine Empfehlung markiert (zwei Stufen).",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseite auf ergo.de."
   ]
 }

@@ -68,7 +68,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
         conversationId: true,
       },
     }),
-    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true, step: true, startedAt: true, nextAt: true, stoppedAt: true } }),
+    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true, step: true, startedAt: true, nextAt: true, stoppedAt: true, vorabCheckStep: true } }),
     prisma.conversation.findFirst({
       where: { customerId: lead.customerId, OR: [{ leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
       orderBy: { lastMessageAt: "desc" },
@@ -113,10 +113,26 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     mailBetreff,
     // Die Vortags-Mail geht an die Adresse aus dem Chat (lib/calendar/lead-email.ts)
     email: !!conv?.contactEmail,
+    // Nachfass-Mail zum Angebot: Adresse am Kontakt bzw. aus dem Chat (lib/angebot-senden-server.ts)
+    emailKontakt: !!lead.email || !!conv?.contactEmail,
     whatsapp,
     abfolgen,
-    abfolgeKontext: { firstName: firstNameOf(lead.name), hi: anredeZeile(an, who.kontakt), kontakt: who.kontakt, topic: topicOf(lead.formData, lead.source, an), an },
+    abfolgeKontext: {
+      firstName: firstNameOf(lead.name),
+      hi: anredeZeile(an, who.kontakt),
+      kontakt: who.kontakt,
+      // Angebot (P3): Thema aus der Auswahl im Termin, wie beim Senden (lib/lead-sequences.ts sendStep)
+      topic:
+        (abfolgen.some((s) => s.kind === "offer" || s.kind === "offer_selbst") ? await import("@/lib/angebot-senden-server").then((m) => m.angebotThemaFuerLead(leadId)) : null) ??
+        topicOf(lead.formData, lead.source, an),
+      an,
+      person,
+    },
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,
+    // E-Mail-Schritte (Angebot Tag 5): Text aus der Vorlage des Vermittlers
+    mailVorlagen: abfolgen.some((s) => s.kind === "offer")
+      ? { nachfassen_angebot: await import("@/lib/angebot-senden-server").then((m) => m.mailVorlage(lead.customerId, "nachfassen_angebot", an)) }
+      : undefined,
   });
 }

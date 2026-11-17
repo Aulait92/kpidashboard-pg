@@ -625,8 +625,10 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
+//   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
+  "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),
 };
 
 export async function GET(req: Request): Promise<Response> {

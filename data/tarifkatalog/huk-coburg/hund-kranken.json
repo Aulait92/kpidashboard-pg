@@ -32,8 +32,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/tierkrankenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tierkrankenversicherung Voll-Schutz Classic",
@@ -58,8 +57,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/tierkrankenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -72,6 +70,7 @@
     "Fehlentwicklungen nur in den Classic-Tarifen (Wartezeit 12 Monate). Prothesen, Implantate, Hilfsmittel höchstens 500 € je Vertrag (Wartezeit 12 Monate). Kastration und Sterilisation nur, wenn medizinisch notwendig.",
     "Neuabschluss für Hunde ab 8 Wochen und Katzen ab 12 Wochen bis zum vollendeten 8. Lebensjahr; ein Tier je Vertrag. Innovationsgarantie. Schadenbearbeitung über den Dienstleister Inca.",
     "HUK-COBURG markiert den Voll-Schutz Classic als „Unsere Empfehlung“ (ohne Selbstbeteiligung).",
-    "Physiotherapie: nach OP im Rahmen der Nachbehandlung (Basis 28, Classic 42 Tage), sonst bis 250 € je Jahr. Alternative Heilmethoden nach OP bis 28 Tage. Reiserücktritt und Rücktransport bei OP nach Unfall im Ausland je bis 500 €."
+    "Physiotherapie: nach OP im Rahmen der Nachbehandlung (Basis 28, Classic 42 Tage), sonst bis 250 € je Jahr. Alternative Heilmethoden nach OP bis 28 Tage. Reiserücktritt und Rücktransport bei OP nach Unfall im Ausland je bis 500 €.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de."
   ]
 }

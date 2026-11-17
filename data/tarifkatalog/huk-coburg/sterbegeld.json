@@ -17,14 +17,13 @@
       "werte": {
         "summe": "5.000 bis 20.000 €",
         "wartezeit": "3 Jahre",
-        "unfall": "nein, voll ab Tag 1",
+        "unfall": "volle Summe ab Tag 1",
         "ohne-gp": "ja",
         "beitragsende": "bis Alter 85"
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/sterbegeldversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -34,6 +33,7 @@
     "Summen wählbar: 5.000, 7.500, 10.000, 15.000 oder 20.000 €.",
     "Wartezeit: Tod in den ersten 3 Jahren erstattet die eingezahlten Beiträge; bei Unfalltod sofort volle Summe (keine doppelte Leistung genannt).",
     "Bestattungsvorsorge-Service und Dynamik nicht genannt; Erhöhung nur über Überschüsse.",
-    "Nur ein Tarif."
+    "Nur ein Tarif.",
+    "Geprüft am 17.11.2026 an der Produktseite auf huk.de. Unfalltod: Seite nennt sofortige volle Leistung, eine Verdopplung ist nicht genannt; Wert deshalb ohne „nein“."
   ]
 }

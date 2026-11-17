@@ -8,6 +8,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { BEREICHE, NEU, bereichFuer, type NeuBereich } from "@/lib/admin-neu/navigation";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
 import { cn } from "@/lib/utils";
+import { AdminNutzungMessung } from "@/components/admin/nutzung-messung";
 import { BEREICH_SYMBOL } from "./symbole";
 import { NeuMenue } from "./neu-menue";
 import { ProfilMenue } from "./profil-menue";
@@ -121,6 +122,7 @@ export function AdminNeuShell({ email, zaehler, children }: { email: string; zae
 
   return (
     <div data-admin-shell="" data-admin-neu="" className="flex min-h-dvh flex-1 flex-col">
+      <AdminNutzungMessung />
       {/* Rechner: Seitenleiste */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-y-auto border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 lg:flex">
         <div className="mb-5 px-2">

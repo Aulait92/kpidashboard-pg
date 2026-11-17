@@ -17,7 +17,6 @@
       "werte": {
         "heilpraktiker": "80 %, bis 800 €/Jahr",
         "sehhilfen": "100 €/Jahr, ansparbar",
-        "vorsorge": "nein",
         "arznei": "bis 500 €/Jahr",
         "ausland": "weltweit, 6 Wochen",
         "wartezeit": "3 Monate",
@@ -28,8 +27,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/ambulante-zusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Ambulante Zusatzversicherung AZpremium",
@@ -50,8 +48,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/ambulante-zusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -62,6 +59,7 @@
     "Sehhilfen ansparbar bis 1.000 €, alternativ Lasik bis 200 € im Jahr (ansparbar bis 2.000 €); Vorsorge AZpremium ansparbar bis 1.000 €.",
     "Gesetzliche Zuzahlungen für Arznei-, Verbands-, Heil- und Hilfsmittel sowie Fahrtkosten bis 500 € im Jahr. OTC-Arzneimittel 80 % bis 160 € im Jahr (laut Tabelle in AZpremium nur teilweise, bitte prüfen). AZpremium zusätzlich Prävention bis 100 € im Jahr.",
     "Hörgeräte nicht genannt. Wartezeit 3 Monate, entfällt bei Unfall und für die Auslandsreise.",
-    "Keine Empfehlung markiert (zwei Tarife)."
+    "Keine Empfehlung markiert (zwei Tarife).",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de (Spalten dort: Premium, Plus). Korrigiert: Vorsorge bei AZplus nicht mehr „nein“, die Tabelle zeigt nur einen Strich (Screenreader „keine Angabe“)."
   ]
 }

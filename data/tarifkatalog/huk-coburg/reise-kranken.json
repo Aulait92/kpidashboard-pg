@@ -25,8 +25,7 @@
         "familie": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/auslandskrankenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Langzeit-Auslandsreisekrankenversicherung",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/auslandskrankenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
     "Familientarif: Ehe- oder Lebenspartner und unverheiratete Kinder bis 21 Jahre; ob auch für Langzeit, nicht belegt.",
     "USA und Kanada nicht ausdrücklich genannt; Geltungsbereich „weltweit“, Beitragsbeispiel mit Reise nach Amerika.",
     "Zahn: schmerzstillende Behandlung, Füllungen und Provisorien. Bekannte Erkrankungen und Schwangerschaft nicht genannt.",
-    "Keine Empfehlung markiert."
+    "Keine Empfehlung markiert.",
+    "Geprüft am 17.11.2026 an Produktseite und Bedingungen auf huk.de."
   ]
 }

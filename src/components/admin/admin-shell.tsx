@@ -8,6 +8,7 @@ import { AdminProfileMenu } from "@/components/admin/admin-profile-menu";
 import { adminBereich, type AdminBereich } from "@/lib/admin-bereiche";
 import { cn } from "@/lib/utils";
 import { NotificationsButton } from "@/components/notifications-button";
+import { AdminNutzungMessung } from "@/components/admin/nutzung-messung";
 
 // Admin-Oberfläche (Admin-Makeover Runde 2, Ole 16.11.2026): fünf Bereiche – Heute, Vertrieb, Kunden, Chats, Zahlen –
 // in der Seitenleiste am Rechner und in der Leiste unten am Handy (ohne „Mehr“). Einstellungen unten in der
@@ -58,6 +59,7 @@ export function AdminShell({ email, counts }: { email: string; counts: Counts })
 
   return (
     <div data-admin-shell="">
+      <AdminNutzungMessung />
       {/* Rechner: Seitenleiste */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 lg:flex">
         <div className="mb-5 px-2">

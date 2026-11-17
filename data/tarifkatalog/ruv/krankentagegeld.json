@@ -14,15 +14,14 @@
       "stufe": 1,
       "empfohlen": false,
       "werte": {
-        "ab-tag": "wählbar, ab 15. Tag",
+        "ab-tag": "Karenz wählbar, ab 2 Wo.",
         "hoehe": "bis zum Nettoeinkommen",
         "dauer": "zeitlich unbegrenzt",
         "selbststaendige": "ja"
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankentagegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -30,6 +29,7 @@
   ],
   "offen": [
     "Ein Tarif ohne Stufen; Karenzzeit wählbar, nicht kürzer als die Lohnfortzahlung (Angestellte meist 6 Wochen), für Selbstständige ab zwei Wochen.",
-    "Wartezeit, Ende bei Berufsunfähigkeit und Leistung im Ausland nicht genannt. Tarifnamen nicht genannt."
+    "Wartezeit, Ende bei Berufsunfähigkeit und Leistung im Ausland nicht genannt. Tarifnamen nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite auf ruv.de. Leistungsbeginn wie auf der Seite als Karenzzeit „ab zwei Wochen“ (Selbstständige) angegeben statt umgerechnet „ab 15. Tag“."
   ]
 }

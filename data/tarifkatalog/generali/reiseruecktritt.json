@@ -6,7 +6,7 @@
   "inAllenTarifen": [
     "Weltweit, Reisen bis 90 Tage",
     "Familie mitversichert",
-    "Auch in der VSP wählbar"
+    "Reisegepäck und Assistance inkl."
   ],
   "tarife": [
     {
@@ -16,13 +16,12 @@
       "empfohlen": true,
       "werte": {
         "abbruch": "ja",
-        "jahr": "ja, Jahresvertrag",
+        "jahr": "ja, alle Reisen",
         "familie": "ja"
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/reiseversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -32,6 +31,7 @@
     "Werte aus der Produktseite auf generali.de (nur Highlights, keine Bedingungen verlinkt). Vertrieb über die Deutsche Vermögensberatung (DVAG).",
     "Versicherungssumme, Selbstbeteiligung, Pandemie und Leistungsgründe (z. B. Jobverlust) nicht genannt.",
     "Die Reiseversicherung gilt für alle während der Vertragslaufzeit gebuchten Reisen bis 90 Tage; vorher gebuchte Reisen nur, wenn zwischen Abschluss und Reiseantritt mindestens 30 Tage liegen.",
-    "Bestandteile: Reisegepäck, Reiserücktrittskosten (inkl. Reiseabbruch) und Reiseassistance mit Auslandsreisekrankenversicherung; auch als Baustein der Vermögenssicherungspolice."
+    "Bestandteile: Reisegepäck, Reiserücktrittskosten (inkl. Reiseabbruch) und Reiseassistance mit Auslandsreisekrankenversicherung.",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de. Korrigiert: „Auch in der VSP wählbar“ stand nicht auf der Produktseite und wurde ersetzt; Jahresschutz als „ja, alle Reisen“ (gilt für alle in der Vertragslaufzeit gebuchten Reisen)."
   ]
 }

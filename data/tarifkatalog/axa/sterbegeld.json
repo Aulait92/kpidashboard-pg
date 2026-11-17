@@ -25,8 +25,7 @@
         "unfall": "optional"
       },
       "quelle": "https://www.axa.de/pk/existenzsicherung/p/sterbegeld-versicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -37,6 +36,7 @@
     "Wartezeit: voller Schutz nach 6 Monaten bei Einmalbeitrag, nach 18 Monaten bei monatlichem Beitrag (Produktseite nennt an anderer Stelle den 19. Monat); bei Unfalltod sofort.",
     "Beitragszahlung bis 85: belegt nur durch das Beispiel der Produktseite (danach beitragsfrei); Einmalbeitrag wählbar.",
     "Beitragsbefreiung bei Pflegebedürftigkeit ab Pflegegrad 4 vereinbar. Bestattungsvorsorge-Service und Dynamik nicht belegt (Erhöhung nur über Überschüsse).",
-    "Nur ein Tarif."
+    "Nur ein Tarif.",
+    "Geprüft am 17.11.2026 an der Produktseite auf axa.de."
   ]
 }

@@ -51,8 +51,14 @@
 4. **Kontingent**: Wochenbestellung im Kundenbereich (Vorkasse über Stripe, „jede Woche
    wiederholen“, Verlängerung freitags ab 10 Uhr) oder Monats-/Einmal-Ziel von Hand
    (Heinrich von Kleist, Convexa: rechnen selbst ab, nur gezählt).
-5. **Storno** (`storno.ts`): im Fenster, mit erlaubtem Grund, ersatzlos; Gutschrift auf
-   die nächste Bestellung. „Sonstiges“ oder Quote > 20 % (30 Tage) → Admin prüft.
+5. **Storno** (`storno.ts`, seit 17.11.2026): im Fenster, ersatzlos; Gutschrift auf die nächste
+   Bestellung. Zugelassener Grund → sofort voll gutgeschrieben, auch bei Quote > 20 % (30 Tage);
+   dann bekommt der Admin eine Push-Meldung, um mit dem Kunden zu sprechen. „Sonstiges“ →
+   automatisch 50:50 (halbe Gutschrift, Umsatz zur Hälfte bleibt), keine Prüfung mehr.
+   Bezug mit „immer automatisch anerkennen“ (`stornoAutoApprove`): alles voll.
+6. **Reklamationen Heinrich von Kleist** (`hvk-abrechnung.ts`): kommen über die wöchentliche
+   Abrechnung (PDF), nicht über die App. Zuordnung zu unserem Lead automatisch, siehe
+   `docs/ppl-abloesung-plan.md` Abschnitt 4; nur Unklares landet unter **Storno prüfen**.
 
 ## Unterschiede zum bisherigen Zap (bewusst)
 - Dubletten wie im Zap produktübergreifend (bis 15.11.2026 prüfte die App nur im selben

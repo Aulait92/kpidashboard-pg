@@ -24,8 +24,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/brillenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Blick + Check comfort (BC2U)",
@@ -43,8 +42,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/brillenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Blick + Check premium (BC1U)",
@@ -62,8 +60,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/brillenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -77,6 +74,7 @@
     "Heilpraktiker nur über den eigenen Tarif NaturMedizin (N1U): 80 %, höchstens 2.400 € in zwei Kalenderjahren, in den ersten zwei Jahren höchstens 400 €.",
     "Arzneimittel und Hörgeräte nicht in Blick + Check; Arznei, Heil- und Verbandmittel nur im Tarif Kostenerstattung ambulant (AGU, 80 % der Restkosten, Wartezeit 3 Monate).",
     "Auslandsreise nicht als Baustein genannt. Kombitarife plus (P3U, P2U, P1U) verbinden Blick + Check mit Zahnersatz.",
-    "R+V markiert comfort als „Topseller“."
+    "R+V markiert comfort als „Topseller“.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf ruv.de."
   ]
 }

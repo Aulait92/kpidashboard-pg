@@ -27,8 +27,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.axa.de/pk/kfz/p/kfz-vollkaskoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Kfz-Versicherung M Best-Preis-Leistung",
@@ -48,8 +47,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.axa.de/pk/kfz/p/kfz-vollkaskoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Kfz-Versicherung L rundum sorglos",
@@ -70,8 +68,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.axa.de/pk/kfz/p/kfz-vollkaskoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -85,6 +82,7 @@
     "Neupreisentschädigung: laut Vergleichstabelle bis 12 Monate, mit Fahrzeugwert Top 24 Monate; an anderer Stelle nennt AXA bei Diebstahl 3 Monate ab Zulassung. Leistung von Fahrzeugwert Extra (Tarif M) nicht beziffert.",
     "Tier Extra: Marder- und andere Tierbisse sowie Kollision mit Tieren aller Art. Ohne Tier Extra nur Haarwild; Tierbiss mit Folgeschäden laut Vergleichstabelle je nach Schadensfall bis 5.000 €. Marder in Tarif S daher nicht eindeutig.",
     "Grobe Fahrlässigkeit: Verzicht laut Produktseite in Teil- und Vollkasko, nicht je Tarif ausgewiesen. Werkstattbindung wählbar (Werkstattservice: 15 % Rabatt, Ersatzwagen).",
-    "GAP-Deckung und Akku-Schutz für E-Autos nicht belegt. AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe."
+    "GAP-Deckung und Akku-Schutz für E-Autos nicht belegt. AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an den Tariftabellen (Voll- und Teilkasko) auf axa.de."
   ]
 }
