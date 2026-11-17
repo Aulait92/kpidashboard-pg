@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente bis Endalter 67",
+    "Wechsel in die BU möglich",
+    "Leistungsfall 12 Monate melden"
+  ],
+  "tarife": [
+    {
+      "name": "Grundtarif Body",
+      "kurz": "Body",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "15 Fähigkeiten",
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "nein",
+        "nachversicherung": "ja",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/arbeitskraftsicherung/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundtarif Body mit Option Mind",
+      "kurz": "Body + Mind",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "24 inkl. Pflege",
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ja, inkl. Demenz",
+        "nachversicherung": "ja",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/arbeitskraftsicherung/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/arbeitskraftsicherung/grundfaehigkeitsversicherung/",
+    "https://www.diebayerische.de/dam/jcr:f43614b5-c82c-48ca-8399-992e64f4d2eb/660771_highlightblatt_grundfaehigkeitsversicherung_bf.pdf",
+    "https://www.diebayerische.de/dam/jcr:6dafe8d5-2833-4df2-81c6-5d903767371e/B%20660702_AVB-GF_07-2026.pdf"
+  ],
+  "offen": [
+    "Body: 15 Fähigkeiten (Sehen, Hören, Sprechen, Gleichgewicht, Hand, Arm, Fingerfertigkeit, Heben/Tragen, Schieben/Ziehen, Sitzen, Stehen, Gehen, Bücken, Knien, Treppensteigen). Mind ergänzt 9 Leistungsauslöser (u. a. Tasten, Riechen/Schmecken, geistige Leistungsfähigkeit, Pflege inkl. Demenz, Bildschirmtätigkeit); Zählung „24 inkl. Pflege“ selbst gebildet.",
+    "Weitere Optionen zu beiden Stufen: Mobilität, Fürsorge, Infektion, Psyche (Leistung, wenn keine 3 Stunden täglich Arbeit möglich), Arbeitsunfähigkeit (bis 24 Monate), Familienhalt (Einmalleistungen).",
+    "Weltweiter Schutz nicht ausdrücklich genannt. Dynamik über eigene Bedingungen (AVB GF Dynamik) wählbar.",
+    "Zwei Stufen ohne Markierung der Gesellschaft, daher keine Empfehlung gesetzt."
+  ]
+}

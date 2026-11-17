@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Photovoltaik mitversichert",
+    "Grobe Fahrlässigkeit versichert",
+    "Undichte Fugen mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Ambiente",
+      "kurz": "Ambiente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "ja",
+        "kosten": "Aufräumen 300.000 €",
+        "ueberspannung": "bis 25.000 €",
+        "fugen": "ja",
+        "allgefahren": "nein",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/gebauedeversicherung/BAS_3117_Wohngebaeude_LUE_2026_10_05.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Ambiente Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 20.000 €",
+        "pv": "ja",
+        "kosten": "ja, Hotel 150 €/Tag",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "allgefahren": "ja (SB 750 €)",
+        "vandalismus": "ja",
+        "tiere": "Tierbiss ja",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/gebauedeversicherung/BAS_3117_Wohngebaeude_LUE_2026_10_05.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/gebaeude.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/gebauedeversicherung/BAS_3117_Wohngebaeude_LUE_2026_10_05.pdf",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/gebauedeversicherung/BAS_0112_Wohngebaeude_PRO_2026_10_06.pdf"
+  ],
+  "offen": [
+    "Auf helvetia.de angeboten (Marke Helvetia seit der Fusion zur Helvetia Baloise Gruppe), Risikoträger laut Unterlage aber die Baloise Sachversicherung AG Deutschland (früher Basler). Gleiche Werte wie in der Basler-Datei.",
+    "Werte aus der Leistungsübersicht BAS 3117 (10.26); Zuordnung nach Spaltenposition. Ableitungsrohre in Top bis 20.000 € mit 1.000 € SB; unbenannte Gefahren (u. a. Vandalismus, Tierbiss, Diebstahl außen angebrachter Sachen) in Top mit 750 € SB.",
+    "Kosten: Ambiente Aufräum-, Abbruch- und Schutzkosten bis 300.000 €, Top bis zur VS; Hotelkosten (150 €, max. 365 Tage) nur Top.",
+    "Optional: Elementar (2.500 € SB), Photovoltaik-Allgefahren, Smarthome/Haustechnik, Sofortschutzbrief, Notfallschutz bzw. Top Select mit hoher SB; Zuordnung zu den Stufen nicht eindeutig, daher nur Elementar als Baustein erfasst. Gleitender Neuwert nicht ausdrücklich genannt.",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt."
+  ]
+}

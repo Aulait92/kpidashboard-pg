@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung BU PROTECT",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Echte DU-Klausel für Beamte",
+    "Rückwirkende Leistung"
+  ],
+  "tarife": [
+    {
+      "name": "BU PROTECT",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "pflege": "ja, ab 1 Pflegepunkt",
+        "infektion": "ja",
+        "dynamik": "optional",
+        "stundung": "bei Leistungsprüfung"
+      },
+      "bausteine": {
+        "au": "optional",
+        "pflege": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:b9c01104-0fdb-4e6d-9ead-d54d151eb2cf/660302_leistungs%C3%BCbersicht_bu_protect.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/arbeitskraftsicherung/berufsunfaehigkeitsversicherung/",
+    "https://www.diebayerische.de/dam/jcr:b9c01104-0fdb-4e6d-9ead-d54d151eb2cf/660302_leistungs%C3%BCbersicht_bu_protect.pdf",
+    "https://www.diebayerische.de/dam/jcr:9bea4056-0bdf-48dc-86c9-2aee3b9f63be/660301_highlightblatt_bu_protect.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit Optionen: AU-Schutz (Leistung bei Krankschreibung ab 6 Monaten, bis 36 Monate), Pflege-Schutz (lebenslange Pflegerente), Prestige-Schutz (Verzicht auf konkrete Verweisung, Soforthilfe, Wiedereingliederungs- und Umorganisationshilfe). Optionen sind nicht als Stufen geführt.",
+    "Pflege: Leistung bei Pflegebedürftigkeit ab 1 von 6 Pflegepunkten während der Laufzeit; lebenslang nur mit Pflege-Schutz (Baustein „Pflegerente“ = optional).",
+    "Nachversicherung: ohne Anlass einmalig in den ersten 5 Jahren bis Alter 45, mit Anlass (23 Ereignisse) bis Alter 50, je Ereignis 500 bis 1.000 €, höchstens 48.000 € Jahresrente.",
+    "Verzicht auf Umorganisation (Selbstständige) nicht belegt; Prestige-Schutz enthält nur eine Umorganisationshilfe.",
+    "BU PROTECT young (Einsteigervariante) und Dienstunfähigkeit (eigene Produkte) nicht aufgenommen."
+  ]
+}

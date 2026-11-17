@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "Fondswechsel kostenfrei"
+  ],
+  "tarife": [
+    {
+      "name": "Basisrente Hallo Zukunft",
+      "kurz": "Hallo Zukunft",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds oder Portfolios",
+        "flexibel": "ja",
+        "hinterbliebene": "Hinterbliebenenrente",
+        "beitragspause": "Freistellung möglich"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/rentenversicherung/basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basisrente Blue Invest",
+      "kurz": "Blue Invest",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "nachhaltige Fonds",
+        "flexibel": "ja",
+        "hinterbliebene": "Hinterbliebenenrente",
+        "beitragspause": "Freistellung möglich"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/rentenversicherung/basisrente-blue-invest/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/rentenversicherung/basisrente/",
+    "https://www.diebayerische.de/rentenversicherung/basisrente-blue-invest/",
+    "https://www.diebayerische.de/dam/jcr:b7b814ec-f346-4062-8baa-c577912a277d/B%20191072%20Highlightblatt_Basisrente_Hallo_Zukunft_0926_bf.pdf",
+    "https://www.diebayerische.de/dam/jcr:48e4a5cd-a10d-4f17-9205-6cffc11a338d/B%20541013%20Produktsteckbrief_Basisrente_Blue_Invest_0926.pdf"
+  ],
+  "offen": [
+    "Beitragsgarantie und garantierter Rentenfaktor in den Unterlagen nicht beziffert. Effektivkosten nicht ausgewertet.",
+    "Hinterbliebenenrente aus dem Hinterbliebenenkapital vor Rentenbeginn; nach Rentenbeginn nur mit gewählter Rentengarantiezeit.",
+    "BU-Zusatz als Beitragsbefreiung und/oder BU-Rente. Dynamik 1 bis 15 % (mit BUZ 3 bis 5 % bzw. 3 bis 10 %).",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt. Keine Renditeangaben."
+  ]
+}

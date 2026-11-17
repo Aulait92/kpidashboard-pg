@@ -1,0 +1,124 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "haftpflicht",
+  "produkt": "Private Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Selbstbehalt bis 500 € wählbar",
+    "Update-Garantie",
+    "Hüten fremder Hunde, Pferde"
+  ],
+  "tarife": [
+    {
+      "name": "Haftpflicht Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ab 2.000 € Schaden",
+        "schluessel": "bis 50.000 €",
+        "delikt": "nein",
+        "geliehen": "20.000 € (SB 250 €)",
+        "miete": "ja",
+        "gefaelligkeit": "20.000 € (SB 250 €)",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "drohne": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "25 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "bis 20.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "100.000 € (SB 150 €)",
+        "neuwert": "bis 2.500 €",
+        "mallorca": "ja",
+        "drohne": "bis 0,5 kg mit Motor",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Haftpflicht Prestige",
+      "kurz": "Prestige",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "bis 30.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 5 kg mit Motor",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Haftpflicht Prestige Plus",
+      "kurz": "Prestige Plus",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 20.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 5 kg mit Motor",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/haftpflichtversicherung/private-haftpflichtversicherung/",
+    "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
+    "https://www.diebayerische.de/dam/jcr:f16f3933-ce83-41b1-96df-0fb379faa09a/299300_avb_bbr_privathaftpflichtversicherung_2025_bf.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Highlightblatt B 299340 (08.26); die Tabelle ist mehrspaltig gesetzt, Zuordnung der Zellen bei Schlüsselverlust, Mietsachschäden und Forderungsausfall bitte am Dokument gegenprüfen (Forderungsausfall Smart: Mindestschaden 2.000 € vermutlich nur in dieser Spalte).",
+    "Schlüssel: Smart bis 50.000 € (privat, ehrenamtlich, laut Produktseite auch beruflich); Prestige Plus vermutlich inklusive Folgeschäden. Mietsachschäden: Prestige und Prestige Plus auch an Heizungs-, Kessel- und Warmwasseranlagen.",
+    "Prestige Plus steht nur im Highlightblatt, nicht im Online-Rechner (Smart, Komfort, Prestige). Selbstbehalt bis 500 € je Schaden wählbar.",
+    "Keine Markierung; bei vier Stufen die dritte (Prestige) als mittlere Stufe gesetzt. Stiftung-Warentest-Garantie erst ab Prestige."
+  ]
+}

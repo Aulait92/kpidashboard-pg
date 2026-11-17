@@ -1,0 +1,129 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unterversicherungsverzicht",
+    "Überspannung mitversichert",
+    "Update-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "wert": "25 % der VS",
+        "fahrrad": "optional bis 1.000 €",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "1.000 €",
+        "garten": "nein",
+        "auto": "nein",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "aussen": "20 % der VS, 6 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 % der VS",
+        "fahrrad": "optional bis 5.000 €",
+        "elementar": "optional",
+        "online": "bis 2.500 €",
+        "bargeld": "3.000 €",
+        "garten": "ja",
+        "auto": "bis 3.000 €",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "aussen": "50 % der VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Prestige",
+      "kurz": "Prestige",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "75 % der VS",
+        "fahrrad": "optional bis 10.000 €",
+        "elementar": "optional",
+        "online": "bis 3.500 €",
+        "bargeld": "4.000 €",
+        "garten": "ja",
+        "auto": "ja, weltweit",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "aussen": "100 % der VS, 12 Mon."
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Prestige Plus (Allgefahren)",
+      "kurz": "Prestige Plus",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "100 % der VS",
+        "fahrrad": "optional bis zur VS",
+        "elementar": "optional",
+        "online": "bis 5.000 €",
+        "bargeld": "5.000 €",
+        "garten": "ja",
+        "auto": "ja, weltweit",
+        "allgefahren": "ja",
+        "ueberspannung": "ja",
+        "aussen": "100 % der VS, 24 Mon."
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/versicherungen/hausratversicherung/",
+    "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
+    "https://www.diebayerische.de/dam/jcr:eed970a7-ff5c-4e17-8e68-4948de415345/B%20299400%20Besondere%20Bedingungen%20Hausrat%202025%20Smart%20bis%20Prestige%20Plus_bf.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungsübersicht Hausrat 2026 (B 299442, 08.26); die Tabelle ist mehrspaltig gesetzt, bitte Zuordnung gegenprüfen.",
+    "Einfacher Diebstahl in der Wohnung nicht als eigene Zeile; Trickdiebstahl in der Wohnung: Smart 500 €, Komfort 2.500 €, Prestige und Prestige Plus bis Versicherungssumme. Prestige Plus zusätzlich nicht aufklärbares Abhandenkommen bis 5.000 € (SB 500 €).",
+    "Online-Betrug: Wert ist Phishing (Cyberdeckung); Online-Handel-Betrug nur in Prestige Plus (1.000 €, SB 250 €). Grobe Fahrlässigkeit: Smart bis 10.000 €, sonst ohne Grenze.",
+    "Fahrrad über Baustein „Fahrrad Plus“, Elementar über Baustein „weitere Naturgefahren“. Hotelkosten und Selbstbeteiligung je Stufe nicht sicher zuzuordnen. Unterversicherungsverzicht ab 650 €/m².",
+    "Prestige Plus nur über Berater (Online-Rechner: Smart, Komfort, Prestige). Keine Markierung; Prestige als mittlere Stufe gesetzt."
+  ]
+}

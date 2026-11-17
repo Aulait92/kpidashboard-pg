@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Kapital statt Rente möglich",
+    "Steuervorteile der Rentenform"
+  ],
+  "tarife": [
+    {
+      "name": "Helvetia CleVesto Favorites",
+      "kurz": "Favorites",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "über 300 Fonds",
+        "flexibel": "ja, jederzeit",
+        "kapital": "ja"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente/Prospekt-CleVesto-Favorites.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Helvetia CleVesto Select",
+      "kurz": "Select",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "über 300 Fonds",
+        "flexibel": "Entnahmen jederzeit",
+        "kapital": "ja"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente/Prospekt-CleVesto-Select.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Baloise Best Invest (Fondsrente)",
+      "kurz": "Best Invest",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "wählbar 0 bis 90 %",
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds, ETF, Sicherung",
+        "flexibel": "Zuzahlung ab 250 €",
+        "hinterbliebene": "60 bis 100 % wählbar",
+        "kapital": "ja",
+        "beitragspause": "bis 3 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente-best-invest/Produktsteckbrief-Baloise-Best-Invest--BAL8813-.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/private-rente.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente-best-invest/Produktsteckbrief-Baloise-Best-Invest--BAL8813-.pdf",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente-best-invest/Bedingungen-Baloise-Best-Invest--BAL8812-.pdf",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente/Prospekt-CleVesto-Favorites.pdf",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente/Prospekt-CleVesto-Select.pdf",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/private-rente/L-FSX-bed-clevesto-select.pdf"
+  ],
+  "offen": [
+    "CleVesto Favorites und Select: Helvetia schweizerische Lebensversicherungs-AG (Prospekte 04.25 bzw. 11.24). Best Invest: Risikoträger Baloise Lebensversicherung AG Deutschland (früher Basler), seit der Fusion auf helvetia.de angeboten.",
+    "Die Stufen sind unterschiedliche Fondsrenten, keine Leistungsstufen. Keine Markierung; Select als mittlere Stufe gesetzt. Favorites ab 30 € im Monat mit flexibler Laufzeit; Select als Whole-Life-Tarif mit Auszahlplan und fünf gemanagten Anlagestrategien.",
+    "CleVesto: Beitragsgarantie, Rentenfaktor, Hinterbliebenenschutz und Beitragspause in den Prospekten nicht beziffert (Bedingungen FSI, FSG, FSX nicht ausgewertet).",
+    "Beitragsgarantie: bei Vertragsabschluss 0 bis 90 % des Anlagebeitrags im Garantievermögen, später bis 100 %; ohne Garantievermögen keine garantierte Mindestleistung. Garantierter Rentenfaktor ohne Zahl.",
+    "Hinterbliebene: Rentengarantiezeit bis Alter 90, Hinterbliebenenrente 60 bis 100 % oder Kapitaloption wählbar. Effektivkosten nicht ausgewertet. Keine Renditeangaben."
+  ]
+}

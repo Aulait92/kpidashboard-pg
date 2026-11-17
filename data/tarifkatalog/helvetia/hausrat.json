@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Überspannung bis zur VS",
+    "Bargeld bis 3.000 €",
+    "Hotel bis 150 € pro Tag"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Ambiente",
+      "kurz": "Ambiente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "fahrrad": "optional bis 20.000 €",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "3.000 €",
+        "garten": "nein",
+        "auto": "nein",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "150 € pro Tag",
+        "aussen": "15 %, max. 10.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "reise": "optional",
+        "notfall": "nein"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/hausratversicherung/Baloise-Hausratversicherung-Leistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Ambiente Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "wert": "50 % der VS",
+        "fahrrad": "3.000 €, bis 20.000 €",
+        "elementar": "optional",
+        "online": "bis 5.000 €",
+        "bargeld": "3.000 €",
+        "garten": "ja",
+        "auto": "bis 2.000 €, Europa",
+        "allgefahren": "ja (SB 500 €)",
+        "ueberspannung": "ja",
+        "hotel": "150 € pro Tag",
+        "aussen": "30 % der VS, 12 Mon."
+      },
+      "bausteine": {
+        "fahrrad": "inklusive",
+        "elementar": "optional",
+        "reise": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/hausratversicherung/Baloise-Hausratversicherung-Leistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/hausrat.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/hausratversicherung/Baloise-Hausratversicherung-Leistungen",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/hausratversicherung/Baloise-Hausratversicherung-Bedingungen--BAS3584-.pdf"
+  ],
+  "offen": [
+    "Auf helvetia.de angeboten (Marke Helvetia seit der Fusion zur Helvetia Baloise Gruppe), Risikoträger laut Unterlage aber die Baloise Sachversicherung AG Deutschland (früher Basler). Gleiche Werte wie in der Basler-Datei.",
+    "Werte aus der Leistungsübersicht BAS 3111 (05.26); Zuordnung nach Spaltenposition. Einfacher Diebstahl in der Wohnung nicht genannt; Taschen- und Trickdiebstahl nur Top (bis 1.000 €).",
+    "Wertsachen bei Ambiente nicht beziffert (Top erhöht auf 50 % der VS). Grobe Fahrlässigkeit: Verzicht auf Kürzung bis 10.000 € nur in Top genannt.",
+    "Unbenannte Gefahren (Allgefahren) in Top mit 500 € SB. Elementar gegen Mehrbeitrag mit 1 % der VS SB (500 bis 2.500 €). Fahrradkasko und Sofortschutzbrief nur zu Top.",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt."
+  ]
+}

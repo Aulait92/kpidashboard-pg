@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "risikoleben",
+  "produkt": "Risikoversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Soforthilfe 10 %, max. 10.000 €",
+    "Bau- und Kinder-Bonus",
+    "Vorläufiger Schutz 2 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Baloise Risikoversicherung",
+      "kurz": "Risiko",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "bei Anlässen",
+        "vorgezogen": "ja (12 Monate)",
+        "verlaengerung": "nein",
+        "laufzeit": "Endalter 75",
+        "summe": "bis 1 Mio. €"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/risikolebensversicherung/Baloise-RisikoVersicherung-Produktsteckbrief",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Baloise Risikoversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "auch ohne Anlass",
+        "vorgezogen": "ja (12 Monate)",
+        "verlaengerung": "bis 15 Jahre",
+        "laufzeit": "Endalter 75",
+        "summe": "bis 1 Mio. €"
+      },
+      "bausteine": {
+        "fallend": "nein"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/risikolebensversicherung/Baloise-RisikoVersicherung-Produktsteckbrief",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/risikolebensversicherung.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/risikolebensversicherung/Baloise-RisikoVersicherung-Produktsteckbrief",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/risikolebensversicherung/Baloise-RisikoVersicherung-Bedingungen"
+  ],
+  "offen": [
+    "Auf helvetia.de angeboten (Marke Helvetia seit der Fusion zur Helvetia Baloise Gruppe), Risikoträger laut Unterlage aber die Baloise Lebensversicherung AG Deutschland (früher Basler). Gleiche Werte wie in der Basler-Datei.",
+    "Wert „Summe“ ist die Höchstsumme des Tarifs (100.000 € bis 1 Mio. €), nicht die Summe ohne Zusatzprüfung.",
+    "Umtauschrecht und weltweiter Schutz stehen nicht im Produktsteckbrief BAL 8590 (05.26).",
+    "Premium zusätzlich: Hochzeits- und Existenzgründungs-Bonus, weitere Nachversicherungsanlässe, Erhöhung ohne Anlass (in den ersten drei Jahren bzw. zu Beginn des 6. und des 11. Jahres). Fallende Summe nur im Grundtarif.",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt."
+  ]
+}

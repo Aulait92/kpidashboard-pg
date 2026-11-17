@@ -1,0 +1,108 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ausland bis 5 Jahre",
+    "Update-Garantie",
+    "Tagesmutter mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Ambiente",
+      "kurz": "Ambiente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "schluessel": "ja, inkl. Dienst",
+        "drohne": "bis 5 kg",
+        "ehrenamt": "ja",
+        "vs": "15 Mio. €",
+        "forderungsausfall": "nein",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "bis 5 Mio. €",
+        "gefaelligkeit": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "nebenberuf": "nein",
+        "neuwert": "nein"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "tiere": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/privathaftpflicht/Baloise-Privathaftpflicht-Leistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Ambiente Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "schluessel": "ja, inkl. Dienst",
+        "drohne": "bis 5 kg",
+        "ehrenamt": "ja",
+        "vs": "50 Mio. €",
+        "forderungsausfall": "bis 50.000 €",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "mallorca": "ja",
+        "rabattretter": "Kfz-Haftpflicht",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "neuwert": "nein"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "tiere": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/privathaftpflicht/Baloise-Privathaftpflicht-Leistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Ambiente Top mit All-in+",
+      "kurz": "Top All-in+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "schluessel": "ja, inkl. Dienst",
+        "drohne": "bis 5 kg",
+        "ehrenamt": "ja",
+        "vs": "50 Mio. €",
+        "forderungsausfall": "bis 50.000 €",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "mallorca": "ja",
+        "rabattretter": "Haftpflicht und Kasko",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "neuwert": "bis 5.000 €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "tiere": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/privathaftpflicht/Baloise-Privathaftpflicht-Leistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/privathaftpflicht.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/privathaftpflicht/Baloise-Privathaftpflicht-Leistungen",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/privathaftpflicht/Baloise-Privathaftpflicht-Bedingungen"
+  ],
+  "offen": [
+    "Auf helvetia.de angeboten (Marke Helvetia seit der Fusion zur Helvetia Baloise Gruppe), Risikoträger laut Unterlage aber die Baloise Sachversicherung AG Deutschland (früher Basler). Gleiche Werte wie in der Basler-Datei.",
+    "Werte aus der Leistungsübersicht BAS 3112 (05.26); Zuordnung zu Ambiente bzw. Ambiente Top nach der Spaltenposition der Punkte. Die Produktseite listet die meisten Leistungen (z. B. deliktunfähige Kinder, Gefälligkeit, Mallorca, Forderungsausfall) für alle Tarife; das widerspricht der Leistungsübersicht und ist zu prüfen.",
+    "All-in+ ist ein Zusatzbaustein zu Ambiente Top (Bestands- und Marktinnovationsgarantie, Neuwert bis 5.000 €, Kasko-Rabattretter, Opferschutz). Selbstbeteiligung nicht genannt.",
+    "Markierungen der Gesellschaft: Ambiente „empfohlener Basisschutz“, Top „bestes Preis-Leistungs-Verhältnis“, All-in+ „Maximalschutz“; Top als mittlere Stufe gesetzt."
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "Basler",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Mallorca-Police 100 Mio. €",
+    "Begleitetes Fahren ohne Zuschlag",
+    "Tiere aller Art (Teilkasko)"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "weitgehend ja",
+        "tiere": "ja",
+        "neuwert": "6 Monate",
+        "marder": "nein",
+        "gap": "nein",
+        "werkstatt": "optional",
+        "elektro": "nein",
+        "mallorca": "ja"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/kfz-versicherung/Kfz-Versicherung-Kurzbeschreibung-Basis--BAK4126-.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz All-in",
+      "kurz": "All-in",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "weitgehend ja",
+        "tiere": "ja",
+        "neuwert": "24 Monate",
+        "marder": "ja",
+        "gap": "ja",
+        "werkstatt": "optional",
+        "elektro": "ja",
+        "mallorca": "ja",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "inklusive",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/kfz-versicherung/Kfz-Versicherung-Kurzbeschreibung-All-in--BAK-4125-.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/kfz.html",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/kfz-versicherung/Baloise-Kfz-Versicherung-Leistungen",
+    "https://www.helvetia.de/dam/helvetia-de/privatkunden/de/documents/kfz-versicherung/Baloise-Kfz-Versicherung-Bedingungen"
+  ],
+  "offen": [
+    "Basler-Produkt der Baloise (Risikoträger laut Unterlage: die Baloise Sachversicherung AG Deutschland). basler.de und baloise.de sind nicht mehr erreichbar bzw. leiten auf helvetia.de um; seit der Fusion zur Helvetia Baloise Gruppe wird das Produkt auf helvetia.de unter der Marke Helvetia angeboten. Gleiche Werte wie in der Helvetia-Datei.",
+    "Werte aus der Leistungsübersicht BAK 4124 (10.26); Zuordnung nach Spaltenposition. Neuwert- und Kaufwertentschädigung: Basis 6, All-in 24 Monate (auch bei Diebstahl).",
+    "Marderbiss: Tierbiss an Kabeln und Schläuchen in beiden Tarifen, Folgeschäden nur All-in. GAP-Deckung (Leasing, bankfinanziert) und Akku-Schutz nur All-in.",
+    "Werkstattservice Premium (Partnerwerkstatt) in beiden Tarifen wählbar; freie Werkstattwahl in Basis gegen Zuschlag. Rabattschutz Premium und Fahrerschutz gegen Aufpreis, Stufenzuordnung nicht eindeutig (vermutlich All-in).",
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt."
+  ]
+}

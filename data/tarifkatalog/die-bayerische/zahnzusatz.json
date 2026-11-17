@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zahlung in spätestens 10 Tagen",
+    "Bleaching nur in Prestige",
+    "Zweite Zahnarztmeinung"
+  ],
+  "tarife": [
+    {
+      "name": "ZAHN Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "75 %",
+        "implantate": "75 %",
+        "behandlung": "75 %",
+        "prophylaxe": "80 € im Jahr",
+        "wartezeit": "6 Monate",
+        "staffel": "500 € im 1. Jahr",
+        "kfo": "nein",
+        "inlays": "75 %"
+      },
+      "quelle": "https://www.diebayerische.de/versicherungen/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZAHN Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "80 bis 90 %",
+        "implantate": "80 bis 90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 150 € im Jahr",
+        "wartezeit": "6 Monate",
+        "staffel": "1.250 € im 1. Jahr",
+        "kfo": "bis 2.000 €",
+        "inlays": "80 bis 90 %"
+      },
+      "quelle": "https://www.diebayerische.de/versicherungen/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZAHN Prestige",
+      "kurz": "Prestige",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 200 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "1.500 € im 1. Jahr",
+        "kfo": "bis 2.000 €",
+        "inlays": "100 %"
+      },
+      "quelle": "https://www.diebayerische.de/versicherungen/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/versicherungen/zahnzusatzversicherung/",
+    "https://www.diebayerische.de/dam/jcr:1cb0b640-ed32-40ad-9092-6ba1afa0abe3/333501_besondere-bedingungen_zahn-smart.pdf",
+    "https://www.diebayerische.de/dam/jcr:1c6e61d6-2e5b-44b4-833b-18044b4a862a/333502_besondere-bedingungen_zahn-komfort.pdf",
+    "https://www.diebayerische.de/dam/jcr:021db602-5bb4-4fbd-aa8f-de1381a7a11f/333503_besondere-bedingungen_zahn-prestige.pdf"
+  ],
+  "offen": [
+    "Zahnersatz Komfort: 80 bis 90 %, bei Regelversorgung 100 % (Produktseite). Erstattung jeweils inklusive Kassenleistung.",
+    "Begrenzung erste Jahre: Smart 500/1.000/1.500/2.000 €, Komfort 1.250/2.500/3.750/5.000 €, Prestige 1.500/3.000/4.500/6.000 € in den ersten 1 bis 4 Kalenderjahren; ab dem 5. Jahr unbegrenzt, bei Unfall ohne Begrenzung.",
+    "Wartezeit Smart und Komfort 6 Monate (Zahnreinigung ohne Wartezeit); Prestige ohne Wartezeiten. Kieferorthopädie 1.500 € inkl. bzw. 2.000 € ohne Kassenleistung über die Laufzeit, auch für Erwachsene.",
+    "Prestige als „Testsieger“ beworben, Komfort als „Top Preis-Leistung“; keine ausdrückliche Empfehlung, Komfort als mittlere Stufe gesetzt. Beitrag hängt von der Postleitzahl ab. Zusatzbaustein ZAHN Sofort für begonnene Behandlungen nicht als Stufe geführt."
+  ]
+}
