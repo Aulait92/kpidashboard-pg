@@ -73,7 +73,7 @@ h1,h2,h3{text-wrap:balance;margin:0;letter-spacing:-.015em}
 .me{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin-top:8px;border:1px solid var(--line)}
 .me:hover{background:var(--hover)}
 .av{width:34px;height:34px;border-radius:99px;display:grid;place-items:center;font-weight:600;font-size:13px;flex:none;background:var(--brand-soft);color:var(--brand-ink)}
-.me b{display:block;font-size:14px;font-weight:600}.me span{font-size:13px;color:var(--faint)}
+.me b{display:block;font-size:14px;font-weight:600;color:var(--fg)}.me>span>span{font-size:13px;color:var(--faint)}
 
 .main{min-width:0;display:flex;flex-direction:column}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:12px;padding-block:14px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px));background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent}
@@ -96,7 +96,7 @@ kbd{font:500 12px var(--font);color:var(--muted);border:1px solid var(--line);ba
 .btn.ghost:hover{background:var(--hover);color:var(--fg)}
 .btn.sm{height:34px;padding:0 12px;font-size:14px;border-radius:10px}
 .btn.icon{width:40px;padding:0}
-.link{color:var(--brand);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:4px}
+.link{color:var(--brand);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:4px;text-decoration:none}
 .link:hover{text-decoration:underline}
 
 /* Page head */
@@ -225,7 +225,7 @@ button.nowc:hover{border-color:var(--line2);background:var(--sunken)}
 .role{background:var(--surface);border:1px solid var(--line);border-radius:var(--r3);display:flex;flex-direction:column;min-width:0;box-shadow:var(--sh1)}
 .role-h{display:flex;align-items:center;gap:12px;padding:18px 20px 10px}
 .role-h .ri{width:36px;height:36px;border-radius:11px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
-.role-h b{font-size:16px;font-weight:600;display:block}.role-h span{font-size:13px;color:var(--faint)}
+.role-h b{font-size:16px;font-weight:600;display:block;color:var(--fg)}.role-h>span>span{font-size:13px;color:var(--faint)}
 .role-h .pill{margin-left:auto}
 .role ul{list-style:none;margin:0;padding:0 8px 6px}
 .role li button{display:flex;gap:12px;align-items:center;width:100%;padding:11px 12px;border-radius:12px;font-size:15px}
@@ -334,7 +334,7 @@ details.auto li b{color:var(--fg);font-variant-numeric:tabular-nums}
 .tl li{display:grid;grid-template-columns:18px 1fr auto;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
 .tl li:first-child{border-top:0}
 .tl li i{width:8px;height:8px;border-radius:99px;background:var(--line2);margin:7px 5px}
-.tl li i.b{background:var(--brand)}.tl li i.g{background:var(--ok)}
+.tl li i.tb{background:var(--brand)}.tl li i.tg{background:var(--ok)}
 .tl li span{color:var(--faint);font-size:13.5px;white-space:nowrap}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
 .setrow:first-of-type{border-top:0}
@@ -820,7 +820,7 @@ V['betreuen-nutzung']=()=>head({area:'betreuen',eyebrow:'Rolle Kundenbetreuung',
   row([who('Heinrich von Kleist','Allianz Agentur von Kleist'),`<span class="mt">Bestandskunden-Modul: 340 Kunden ohne Kontakt seit 1 Jahr</span>`],'data-open="kunde:k1"'),
   row([who('Lukas Socki','Allianz Generalvertretung Socki'),`<span class="mt">Empfehlungen: 9 Bewertungen mit 5 Sternen</span>`],'data-open="kunde:k2"'),
   row([who('Tobias Brenner','ERGO Agentur Brenner'),`<span class="mt">Nutzt die App kaum, 9 Tage nicht geöffnet</span>`],'data-open="kunde:k6"')],{nohead:true}))+
- card('Neuigkeiten',`<div class="card-b"><ul class="tl"><li><i class="g"></i><span style="color:var(--fg)"><b>Termine direkt aus WhatsApp verschieben</b><br><span>Veröffentlicht, Push an alle</span></span><span>12.11.</span></li><li><i class="b"></i><span style="color:var(--fg)"><b>Monatsbericht mit Abschlussquote</b><br><span>Entwurf</span></span><span>Heute</span></li></ul></div>`,`<button class="link" data-menu="news">Mehr${I('more',16)}</button>`)+`</div>`;
+ card('Neuigkeiten',`<div class="card-b"><ul class="tl"><li><i class="tg"></i><span style="color:var(--fg)"><b>Termine direkt aus WhatsApp verschieben</b><br><span>Veröffentlicht, Push an alle</span></span><span>12.11.</span></li><li><i class="tb"></i><span style="color:var(--fg)"><b>Monatsbericht mit Abschlussquote</b><br><span>Entwurf</span></span><span>Heute</span></li></ul></div>`,`<button class="link" data-menu="news">Mehr${I('more',16)}</button>`)+`</div>`;
 
 V.liefern=()=>{const today=LEADS.filter(l=>l.tag==='Heute'&&!l.test);return head({area:'liefern',eyebrow:'Rolle Pay-per-Lead',title:'Liefern',sub:'Leads annehmen, an Käufer verteilen und sauber abrechnen.',pri:['Bezug anlegen','data-open="neu:Bezug"'],more:'liefern'})+
  att([
@@ -842,7 +842,7 @@ V['liefern-leads']=()=>{
  const all=L;L=L.filter(f[S.lf]);
  if(S.lq){const q=S.lq.toLowerCase();L=L.filter(l=>(l.n+l.ort+l.p+l.k).toLowerCase().includes(q));}
  const days=[...new Set(L.map(l=>l.tag))];
- const rows=[];days.forEach(d=>{const g=L.filter(l=>l.tag===d).sort((a,b)=>(PROB.includes(b.st)?1:0)-(PROB.includes(a.st)?1:0));const p=g.filter(l=>PROB.includes(l.st)).length;rows.push(`<div class="grp">${d}<span>${g.length} Leads${p?` · ${p} mit Problem`:''}</span></div>`);g.forEach(l=>rows.push(row([who(l.n,l.ort,false),`<span class="mt">${l.p}</span>`,`<span class="mt">${l.k||'kein Bezug'}</span>`,`<span>${tag(LST[l.st][0],LST[l.st][1])}</span>`,`<span class="big r">${l.st==='geliefert'?eur(l.preis):'<span class="mt">'+eur(l.preis)+'</span>'}</span>`],`data-open="lead:${l.id}"`)))});
+ const rows=[];days.forEach(d=>{const g=L.filter(l=>l.tag===d).sort((a,b)=>(PROB.includes(b.st)?1:0)-(PROB.includes(a.st)?1:0));const p=g.filter(l=>PROB.includes(l.st)).length;rows.push(`<div class="grp">${d}<span>${g.length} Leads${p?` · ${p} mit Problem`:''}</span></div>`);g.forEach(l=>rows.push(row([who(l.n,l.ort,false),`<span class="mt">${l.p}</span>`,`<span class="mt">${l.k||'kein Bezug'}</span>`,`<span>${tag(LST[l.st][0],LST[l.st][1])}</span>`,`<span class="big r" style="${l.st==='geliefert'?'':'color:var(--faint)'}">${eur(l.preis)}</span>`],`data-open="lead:${l.id}"`)))});
  return head({area:'liefern',eyebrow:'Rolle Pay-per-Lead',title:'Liefern',sub:'Alle Leads nach Tag. Probleme stehen oben, Tests sind ausgeblendet.',pri:['Stornos prüfen','data-open="stornos:1"','check'],more:'leads'})+
  att([{sev:'warn',t:'4 Leads mit Problem in den letzten 2 Tagen',s:'2 nicht zugestellt, 2 geparkt. Stornos separat.',b:'Filtern',a:'data-set="lf=probleme"'}])+
  kpis([['Eingegangen (7 Tage)','121','<b>+8 %</b> ggü. Vorwoche','up'],['Zustellquote','97,5 %','Vorwoche 98,1 %'],['Stornoquote (30 Tage)','6,2 %','Vorwoche 6,8 %']])+
@@ -902,7 +902,7 @@ V.werkzeuge=()=>{const q=S.tq.toLowerCase();const G=TOOLS.map(g=>[g[0],g[1],g[2]
  return head({eyebrow:'Technik und Einrichtung',title:'Werkzeuge',sub:'Alles, was die App am Laufen hält. Im Tagesgeschäft nicht nötig, Hinweise erscheinen nur bei Fehlern auf Mein Tag.',pri:['Alle Prüfungen starten','data-toast="9 Prüfungen ohne Befund"','pulse'],more:'werkzeuge'})+
  att([],{empty:'Alles läuft ✓',emptySub:'9 Prüfungen ohne Befund, zuletzt heute 08:12. 11 von 11 Verbindungen aktiv.'})+
  kpis([['Verbindungen aktiv','11 / 11','Vorwoche 10 / 11'],['Hintergrund-Jobs (24 h)','1.284','0 Fehler'],['Letzter Import','Gestern','Instantly, 38 Kontakte']])+
- `<label class="field" style="max-width:520px;height:46px">${I('search',18)}<input id="tq" placeholder="Werkzeug suchen, z. B. Webhook, CSV, Vorlage" value="${esc(S.tq)}"></label>`+
+ `<label class="field" style="max-width:520px;height:46px;flex:none">${I('search',18)}<input id="tq" placeholder="Werkzeug suchen, z. B. Webhook, CSV, Vorlage" value="${esc(S.tq)}"></label>`+
  (G.length?`<section class="groups">${G.map(g=>card(`<span style="display:flex;gap:10px;align-items:center"><span class="sev ${g[0].startsWith('Übergang')?'warn':'info'}" style="width:30px;height:30px;border-radius:9px">${I(g[1],16)}</span>${g[0]}</span>`,`<ul class="gl">${g[2].map(t=>`<li><button data-open="tool:${esc(t[0])}"><span class="tx"><b>${t[0]}</b><span>${t[1]}</span></span>${I('chev',16)}</button></li>`).join('')}</ul>`,`<span class="hint">${g[2].length}</span>`)).join('')}</section>`:`<div class="empty-state"><b>Nichts gefunden</b>Die Suche oben rechts (⌘K) findet auch Funktionen.</div>`);};
 
 V.einstellungen=()=>head({eyebrow:'Einmal einstellen, dann laufen lassen',title:'Einstellungen',sub:'Wenige Regeln, nach Rollen gruppiert. Technische Einrichtung liegt in den Werkzeugen.',pri:['Zwei-Faktor einrichten','data-open="setting:Zwei-Faktor"','shield']})+
@@ -923,7 +923,7 @@ V['was-wo']=()=>{const q=S.mq.toLowerCase().trim();const c={v:0,b:0,w:0,x:0};MAP
 const D={};
 const dl=pairs=>`<dl class="kvl">${pairs.map(p=>`<dt>${p[0]}</dt><dd>${p[1]}</dd>`).join('')}</dl>`;
 const box=(t,b,c='')=>`<div class="box ${c}">${t?`<h3>${t}</h3>`:''}${b}</div>`;
-const tlist=items=>`<ul class="tl">${items.map(i=>`<li><i class="${i[2]||''}"></i><span style="color:var(--fg)">${i[0]}</span><span>${i[1]}</span></li>`).join('')}</ul>`;
+const tlist=items=>`<ul class="tl">${items.map(i=>`<li><i class="${i[2]?'t'+i[2]:''}"></i><span style="color:var(--fg)">${i[0]}</span><span>${i[1]}</span></li>`).join('')}</ul>`;
 const setr=(t,s,on)=>`<div class="setrow"><div>${t}${s?`<span>${s}</span>`:''}</div><button data-sw>${sw(on)}</button></div>`;
 D.kunde=id=>{const k=KUNDEN.find(x=>x.id===id)||KUNDEN[0];const bad=k.h.map((v,i)=>v!=='ok'?i:-1).filter(i=>i>=0);
  return {wide:true,av:ini(k.n),t:k.n,s:`${k.f}, ${k.o}${k.seit?' · Kunde seit '+k.seit:''}`,chips:`${tag(k.ph,k.ph==='Aktiv'?'info':k.ph==='Onboarding'?'info':'')} ${health(k.h)}`,
