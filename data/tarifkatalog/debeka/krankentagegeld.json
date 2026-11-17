@@ -23,8 +23,7 @@
         "selbststaendige": "nein"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV109.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif KT (zur Debeka PKV)",
@@ -39,8 +38,7 @@
         "selbststaendige": "ja"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV108.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
     "Leistungsbeginn wählbar: KG ab dem 43., 64., 85., 92., 106., 127., 183., 244., 274. oder 366. Tag; KT zusätzlich ab dem 15. oder 29. Tag. Bei Angestellten nie vor Ende der Lohnfortzahlung.",
     "Höhe KG: Lücke zwischen Nettokrankengeld und Nettoeinkommen (Produktseite). Höchstes versicherbares Tagegeld in Euro nicht veröffentlicht.",
     "Wartezeit: Produktseite nennt 3 Monate für gesetzlich Versicherte (entfällt bei Unfall); zusammen mit der Debeka Vollversicherung entfällt sie laut Produktseite. Ende bei Berufsunfähigkeit nach MB/KT (mehr als 50 %), Wortlaut nicht im Einzelnen geprüft.",
-    "KT: Selbstständige erhalten bei Teil-Arbeitsunfähigkeit anteilig bis 3 Monate; bei Wiedereingliederung bis 3 Monate. Tarif KTmed für Heilberufe nicht aufgenommen. Debeka markiert keinen Tarif."
+    "KT: Selbstständige erhalten bei Teil-Arbeitsunfähigkeit anteilig bis 3 Monate; bei Wiedereingliederung bis 3 Monate. Tarif KTmed für Heilberufe nicht aufgenommen. Debeka markiert keinen Tarif.",
+    "Geprüft am 17.11.2026 an Tarifbedingungen und Produktseite auf debeka.de."
   ]
 }

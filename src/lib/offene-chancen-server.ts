@@ -27,20 +27,30 @@ async function quotenFaelle(customerId: string, now: Date): Promise<QuotenFall[]
     select: { id: true, status: true, closedAt: true, lostAt: true, appointments: { select: { status: true } } },
   });
   if (!leads.length) return [];
-  const angebotVerlauf = new Set(
-    (
-      await prisma.leadHistory.findMany({
-        where: { customerId, leadId: { in: leads.map((l) => l.id) }, text: { contains: "Angebot gesendet" } },
-        select: { leadId: true },
-      })
-    ).map((h) => h.leadId),
-  );
+  // Verlauf: Angebot gesendet bzw. Termin (Status „Termin vereinbart“, gebucht oder von Hand eingetragen). So zählt ein
+  // verlorener Lead, der einen Termin hatte, auch ohne Termin-Eintrag im Kalender in der Termin-Quote mit.
+  const verlauf = await prisma.leadHistory.findMany({
+    where: {
+      customerId,
+      leadId: { in: leads.map((l) => l.id) },
+      OR: [
+        { text: { contains: "Angebot gesendet" } },
+        { text: { startsWith: "Status: Termin vereinbart" } },
+        { text: { startsWith: "Termin gebucht" } },
+        { text: { startsWith: "Termin von Hand eingetragen" } },
+      ],
+    },
+    select: { leadId: true, text: true },
+  });
+  const angebotVerlauf = new Set(verlauf.filter((h) => h.text.includes("Angebot gesendet")).map((h) => h.leadId));
+  const terminVerlauf = new Set(verlauf.filter((h) => !h.text.includes("Angebot gesendet")).map((h) => h.leadId));
   return leads.map((l) => {
     const abschluss = l.status === "Abschluss" || !!l.closedAt;
     const verloren = !abschluss && (!!l.lostAt || VERLOREN_STATUS.includes(l.status ?? ""));
     const hatteAngebot = angebotVerlauf.has(l.id) || ANGEBOT_STATUS.includes(l.status ?? "");
     // Abschluss zählt als Termin (wie der Trichter, lib/kpis TERMIN_PHASE_KEYS)
-    const hatteTermin = abschluss || hatteAngebot || TERMIN_STATUS.includes(l.status ?? "") || l.appointments.some((a) => a.status === "booked" || a.status === "completed");
+    const hatteTermin =
+      abschluss || hatteAngebot || terminVerlauf.has(l.id) || TERMIN_STATUS.includes(l.status ?? "") || l.appointments.some((a) => a.status === "booked" || a.status === "completed");
     return { hatteTermin, hatteAngebot, abschluss, verloren };
   });
 }

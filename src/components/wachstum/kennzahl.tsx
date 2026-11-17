@@ -22,16 +22,16 @@ export function KennzahlInhalt({
   wert: string;
   unter: React.ReactNode;
   ton?: KennzahlTon;
-  /** Rechts neben der Bezeichnung, z. B. Pfeil bei klickbaren Kacheln. */
+  /** Rechts neben der Zahl, z. B. Pfeil bei klickbaren Kacheln. */
   ecke?: React.ReactNode;
 }) {
   return (
     <>
-      <span className="flex items-center justify-between gap-2">
-        <span className="text-[15px] font-medium text-[color:var(--muted)]">{label}</span>
+      <span className="block text-[15px] font-medium text-[color:var(--muted)]">{label}</span>
+      <span className="mt-1.5 flex items-center justify-between gap-2">
+        <span className={cn("block text-[32px] font-bold leading-tight tracking-tight tabular-nums sm:text-[40px]", KENNZAHL_FARBE[ton])}>{wert}</span>
         {ecke}
       </span>
-      <span className={cn("mt-1.5 block text-[32px] font-bold leading-tight tracking-tight tabular-nums sm:text-[40px]", KENNZAHL_FARBE[ton])}>{wert}</span>
       <span className="mt-1 block text-[15px] leading-snug text-[color:var(--muted)]">{unter}</span>
     </>
   );

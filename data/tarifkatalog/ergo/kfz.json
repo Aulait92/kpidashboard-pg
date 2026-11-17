@@ -31,8 +31,7 @@
         "rabattschutz": "nein"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kfz/master",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Kfz-Versicherung Smart",
@@ -56,8 +55,7 @@
         "rabattschutz": "nein"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kfz/master",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Kfz-Versicherung Best",
@@ -81,8 +79,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kfz/master",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -94,6 +91,7 @@
     "ERGO markiert Best als „Bestseller“. Basic nur für Pkw; Basic und Smart mit stärkerer Rückstufung im Schadenfall, Best mit normaler Rückstufung.",
     "Deckung pauschal 100 Mio. €, Personenschäden je Person max. 15 Mio. €. Neupreis- bzw. Kaufpreisentschädigung 12 Monate (Neufahrzeug ab Erstzulassung, Gebrauchte bis 4 Jahre ab Vertragsbeginn); Wertschutz 24 (Smart, Best) und Wertschutz 36 (nur Best) zuwählbar.",
     "Werkstatt: In Basic ist der Werkstattbonus (Reparatur in Premiumwerkstatt, keine freie Werkstattwahl) laut Tabelle enthalten; in Smart und Best freie Werkstattwahl, Werkstattbonus zuwählbar. Akku-Schutz (Allgefahrendeckung Akku, Ladestation u. a.) nur Smart und Best.",
-    "Zuwählbar außerdem: Ersatzfahrzeug Plus (Smart, Best), Fahrerschutz, Safe Drive (Telematik, Smart, Best), Eigenschadendeckung in Smart und Best enthalten."
+    "Zuwählbar außerdem: Ersatzfahrzeug Plus (Smart, Best), Fahrerschutz, Safe Drive (Telematik, Smart, Best), Eigenschadendeckung in Smart und Best enthalten.",
+    "Geprüft am 17.11.2026 an der Produkttabelle (Spalten aus dem Seitenquelltext zugeordnet) und Produktseite auf ergo.de."
   ]
 }

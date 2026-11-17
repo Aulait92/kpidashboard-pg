@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankentagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV KombiMed KTC (privat versicherte Arbeitnehmer)",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankentagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV Krankentagegeld für Selbstständige und Freiberufler",
@@ -60,8 +58,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/de/Produkte/Krankenversicherung/Krankentagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -70,6 +67,7 @@
   "offen": [
     "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Die drei „Stufen“ sind Varianten je Berufsgruppe, keine Leistungsstufen; mittlere Stufe nur formal als Empfehlung gesetzt.",
     "Wartezeit nicht auf der Seite genannt. Wählbarer Leistungsbeginn: Arbeitnehmer ab 43., 64., 85., 92., 106., 127., 169., 183., 274. oder 365. Tag; Selbstständige ab 4., 8., 15., 22., 29., 43., 92. oder 183. Tag.",
-    "Tagegeld von 5 bis 520 € (Selbstständige höchstens 300 €, Freiberufler 520 €), bei PKV-Versicherten bis zum Nettoeinkommen. Bei Übergang in Berufsunfähigkeit längstens 3 Monate weiter. Tarifname für Selbstständige nicht genannt. Bausteine (Dynamik, frühere Leistung) nicht belegt."
+    "Tagegeld von 5 bis 520 € (Selbstständige höchstens 300 €, Freiberufler 520 €), bei PKV-Versicherten bis zum Nettoeinkommen. Bei Übergang in Berufsunfähigkeit längstens 3 Monate weiter. Tarifname für Selbstständige nicht genannt. Bausteine (Dynamik, frühere Leistung) nicht belegt.",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseite auf ergo.de."
   ]
 }

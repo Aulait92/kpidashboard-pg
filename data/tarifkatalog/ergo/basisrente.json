@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/rente/basis-rente-vergleich",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Basis-Rente Balance",
@@ -46,8 +45,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/rente/basis-rente-vergleich",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Basis-Rente Dynamik",
@@ -66,8 +64,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/rente/basis-rente-vergleich",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
   "offen": [
     "Die drei Varianten sind Anlagekonzepte, keine Leistungsstufen; Empfehlung nur formal als mittlere Stufe.",
     "Beitragsgarantie: Index 100 % ab 12 Jahren Laufzeit (Einmalbeitrag ab 5 Jahren), Balance garantierter Mindestwert nur für den klassisch angelegten Teil, Dynamik 10 bis 100 % wählbar. Rentenfaktor laut Vergleich: Index zusätzlich garantierte Mindestrente, Balance optional „Rentenfaktor-Plus“, Dynamik „höherer garantierter Rentenfaktor“; Höhe nicht genannt.",
-    "BU-Absicherung als Beitragsbefreiung ohne Gesundheitsfragen mit 3 Jahren Wartezeit (im Rahmen tariflicher Grenzen). Fonds: bis 20 aus über 80 Fonds und ETFs (Balance, Dynamik). Kosten (Effektivkosten) nicht genannt; DANV-Tarif für Juristen und Wirtschaftsberufe möglich."
+    "BU-Absicherung als Beitragsbefreiung ohne Gesundheitsfragen mit 3 Jahren Wartezeit (im Rahmen tariflicher Grenzen). Fonds: bis 20 aus über 80 Fonds und ETFs (Balance, Dynamik). Kosten (Effektivkosten) nicht genannt; DANV-Tarif für Juristen und Wirtschaftsberufe möglich.",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseiten auf ergo.de."
   ]
 }

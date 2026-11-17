@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung/dienstunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "BU comfort mit DU-Klausel",
@@ -48,8 +47,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung/dienstunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "BU premium mit DU-Klausel",
@@ -69,8 +67,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung/dienstunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -83,6 +80,7 @@
     "AU-Option: laut BU-Seite nur in comfort und premium wählbar.",
     "Teildienstunfähigkeit nicht genannt.",
     "Ob der Zahlungsbeginn nach 18 Monaten in classic auch bei Dienstunfähigkeit gilt, ist auf der Seite nicht beschrieben.",
-    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+    "Keine Markierung; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf ruv.de (Symbole aus dem Seitenquelltext)."
   ]
 }

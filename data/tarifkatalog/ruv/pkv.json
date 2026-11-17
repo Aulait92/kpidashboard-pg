@@ -23,8 +23,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ruv.de/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "AGIL comfort",
@@ -42,8 +41,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ruv.de/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "AGIL premium",
@@ -62,8 +60,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ruv.de/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -76,6 +73,7 @@
     "Heilpraktiker bei comfort ausdrücklich genannt, bei classic pro und premium nicht. Primärarztprinzip nicht genannt.",
     "Selbstbehalt in vier Stufen je Tarif wählbar (Erhöhung jederzeit, Senkung alle 5 Jahre bis Alter 50). Beitragsrückerstattung bei Leistungsfreiheit, Höhe nicht genannt.",
     "Krankentagegeld und Pflegemonatsgeld als Ergänzung genannt; dazu Beitragsentlastung im Alter.",
-    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+    "Keine Markierung; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an Produktseite und Grafik GesundheitsKonzept AGIL (Selbstbehalt-Stufen) auf ruv.de."
   ]
 }

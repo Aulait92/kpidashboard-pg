@@ -28,8 +28,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "MED Komfort",
@@ -49,8 +48,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -61,6 +59,7 @@
     "Auslandsreiseschutz (100 %, bis 6 Wochen, inkl. Rücktransport) für Tarif MED belegt; laut Seite ergänzt MED Komfort das Leistungspaket von MED, ob der Auslandsschutz darin enthalten ist, nicht ausdrücklich genannt.",
     "Wartezeit MED nicht genannt; MED Komfort 3 Monate (Entbindung 8 Monate, keine Wartezeit bei Unfall).",
     "Zuzahlungen für Heil- und Hilfsmittel: MED nein, MED Komfort 80 %.",
-    "Zwei Tarife ohne Markierung der Gesellschaft (MED Komfort mit „Beste Preis-Leistung“ beschriftet, nicht als Empfehlung hervorgehoben); keine Empfehlung gesetzt."
+    "Zwei Tarife ohne Markierung der Gesellschaft (MED Komfort mit „Beste Preis-Leistung“ beschriftet, nicht als Empfehlung hervorgehoben); keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf axa.de."
   ]
 }
