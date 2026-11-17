@@ -36,6 +36,7 @@ const PUBLIC_PREFIXES = [
   "/einwilligung", // Einwilligungs-Abfrage für Bestandskunden mit Double-Opt-in (signierter Token)
   "/email-bestaetigen", // Bestätigung einer neuen Login-E-Mail (Token aus der Mail, lib/email-aendern.ts)
   "/erstinformation", // Erstinformation des Vermittlers (§ 15 VersVermV), Link in der ersten WhatsApp-Nachricht (Token)
+  "/datenschutz", // Datenschutzhinweis zu Unterlagen per WhatsApp (Langfassung der Einwilligung, Token der Erstinformation)
   "/demo", // Live-Demo der Beratungspräsentation (feste Beispieldaten, keine Datenbank)
   "/termin", // Vertriebs-Buchungsseite (eingebettet auf performancegrowth.de/termin), verwalten per Token
   "/praesentation", // Vertriebspräsentation für Interessenten (geheimer Link je Kontakt, 14 Tage)
@@ -213,6 +214,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/abmelden/") ||
     pathname.startsWith("/einwilligung/") ||
     pathname.startsWith("/erstinformation/") ||
+    pathname.startsWith("/datenschutz/") ||
     pathname.startsWith("/beratung/") ||
     pathname === "/demo" ||
     pathname.startsWith("/demo/")

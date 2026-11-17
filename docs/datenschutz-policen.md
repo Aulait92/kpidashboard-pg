@@ -6,84 +6,127 @@ Gesundheitsbezug ist hinter dem Schalter `POLICEN_GESUNDHEIT_AN` (Railway-Variab
 
 ## 1. Was die App macht
 
+Aktualisiert 17.11.2026 nach der Rechtsprüfung (`docs/recht-gesundheitsunterlagen.md`, Abschnitt b). Muster-DSFA:
+`docs/dsfa-policen-gesundheit.md`.
+
 - **Zweck:** Leads können vor dem Termin Fotos oder PDFs ihrer bestehenden Policen in den WhatsApp-Chat schicken, damit
   sich der Vermittler vorbereiten kann (Komplettcheck). Freiwillig; ohne Unterlagen wird im Termin gemeinsam geschaut.
-- **Einladung:** Der Assistent bittet einmal darum, nachdem der Lead bestehende Verträge genannt hat (Vertragsfrage bzw.
-  Komplettcheck „Ja“). Bei Schalter aus nur um Sachversicherungen (Haftpflicht, Hausrat, Kfz …), bei Leads zu
-  Gesundheitsprodukten (PKV, Zahn, BU) gar nicht.
 - **Eingang:** Nur in Chats mit zugeordnetem Lead. Private Chats aus der WhatsApp-Business-App und das Support-Postfach
   werden nicht geladen. Erlaubt: PDF, JPG, PNG, WebP bis 10 MB (Typ am Inhalt geprüft), höchstens 30 je Lead. HEIC,
   Word usw.: nicht gespeichert, Bitte um Foto oder PDF.
-- **Zuordnung (KI, Anthropic):** Je Datei ein Aufruf, der nur die Sparte und „Gesundheitsbezug möglich ja/nein“
-  zurückgibt (keine Inhalte). Dateiname und Begleittext können einen Gesundheitsbezug nur ergänzen. Ohne KI-Ergebnis
-  und ohne erkennbare Sparte gilt vorsichtig: Gesundheitsbezug möglich.
 - **Sachversicherungen** (Haftpflicht, Hausrat, Wohngebäude, Kfz, Rechtsschutz, Tier): verschlüsselt gespeichert, kurz
-  bestätigt („Danke, ist angekommen.“), dann ausgelesen (Gesellschaft, Sparte, Beitrag, Zahlweise, Versicherungssumme,
-  Selbstbeteiligung, Ablauf/Hauptfälligkeit; Prompt: keine Namen, Anschriften, Geburtsdaten, Vertrags-, Kunden- oder
-  Kennzeichennummern, Bankdaten, Gesundheitsangaben).
-- **Gesundheitsbezug** (Kranken, Zahn, BU, Leben/Rente, Pflege, Unfall):
-  - Schalter aus: Datei wird verworfen (nicht gespeichert), freundlicher Hinweis, dass wir sie im Termin anschauen.
-  - Schalter an, ohne Einwilligung: Es wird nur die WhatsApp-Media-ID gemerkt (kein Inhalt), dann die
-    Einwilligungsfrage mit zwei Knöpfen. „Ja, einverstanden“: Einwilligung protokolliert, Datei erneut bei 360dialog
-    geladen und verschlüsselt gespeichert. „Lieber im Termin“: Media-ID gelöscht, „Kein Problem, dann schauen wir sie im
-    Termin an.“ Ohne Antwort: nach 24 Stunden gelöscht. Hat der Vermittler den Chat übernommen (Assistent aus), wird
-    nicht gefragt und nicht gespeichert.
-  - Mit Einwilligung: gespeichert, **nie ausgelesen**, nur dem Vermittler gezeigt, mit Kennzeichen „Gesundheitsangaben
-    möglich, mit Einwilligung vom …“.
-- **Widerruf:** „Widerruf“ bzw. „Unterlagen löschen“ im Chat löscht sofort alle Unterlagen des Leads und protokolliert
-  den Widerruf. Der Vermittler kann jede Unterlage im Kontakt löschen.
-- **Löschung:** automatisch 30 Tage nach dem letzten Termin (ohne Termin: nach dem Eingang), wenn kein Abschluss; mit dem
-  Lead (Art. 17, `eraseLead`) und bei Vertragsende (`eraseCustomerData`). Bei Abschluss bleibt die Unterlage, bis der
-  Vermittler sie löscht (offene Frage 6).
+  bestätigt („Danke, ist angekommen.“), Zuordnung und Auslesen per KI (Gesellschaft, Sparte, Beitrag, Zahlweise,
+  Versicherungssumme, Selbstbeteiligung, Ablauf/Hauptfälligkeit; keine Namen, Nummern, Bankdaten, Gesundheitsangaben).
+
+### Schalter `POLICEN_GESUNDHEIT_AN` aus (Stand heute, unverändert)
+
+- Einladung nach der Vertragsfrage nur für Sachversicherungen; bei Leads zu Gesundheitsprodukten (PKV, Zahn, BU) gar keine.
+- Jede Datei wird geladen und von der KI zugeordnet (nur Sparte und „Gesundheitsbezug möglich ja/nein“). Gesundheitsbezug:
+  Datei verworfen, freundlicher Hinweis, dass sie im Termin angeschaut wird.
+
+### Schalter an (Umsetzung nach Abschnitt b, erst nach DSFA und Anwalt einschalten)
+
+- **Einwilligung vor dem Senden:** Nennt der Lead eine Gesundheitssparte (Vertragsliste) oder hat das Produkt
+  Gesundheitsbezug, enthält schon die Einladung die ausdrückliche Einwilligung (Wortlaut Abschnitt 2) mit den Knöpfen
+  [Ja, einverstanden] [Lieber im Termin] (`lib/policen/assistent.ts`). Sonst die normale Einladung.
+- **Datei ohne Einwilligung:** Einordnung nur nach Dateiname, Begleittext und Angaben des Leads (`vorabEinordnung`).
+  Gesundheitsbezug möglich (auch: unbekannt, z. B. „IMG_1234.jpg“, außer der Lead hat nur Sachversicherungen genannt):
+  Inhalt **nicht geladen, keine KI**, nur die WhatsApp-Media-ID höchstens 24 Stunden gemerkt, Einwilligungsfrage
+  (zweite Fassung „Danke für Ihre Unterlage …“). Höchstens zwei Fragen je Chat (Einladung bzw. erste Frage und einmal
+  erneut), danach wird verworfen mit Hinweis. „Lieber im Termin“: Media-IDs gelöscht. Keine Antwort: nach 24 Stunden
+  gelöscht (`prunePolicen`). Vermittler hat übernommen (Assistent aus): keine Rückfrage, verworfen.
+  Klar Sachversicherung laut Dateiname bzw. Angaben: wie bisher geladen und zugeordnet; meldet die KI dann doch
+  Gesundheitsbezug, wird der Inhalt verworfen und nach der Einwilligung gefragt.
+- **Nach der Einwilligung:** Protokoll mit Wortlaut der beantworteten Frage, Version (`EINWILLIGUNG_VERSION`),
+  Zeitpunkt, WhatsApp-Nummer, Lead und ID der Knopf-Antwort (`BestandConsentLog.leadId`, `version`, `waMessageId`).
+  Dateien mit möglichem Gesundheitsbezug werden erst jetzt geladen. KI-Zuordnung nur über einen EU-Endpunkt
+  (`POLICEN_KI_REGION=eu`, `POLICEN_KI_EU_URL`, `POLICEN_KI_EU_KEY`, optional `POLICEN_KI_EU_MODEL`; Anthropic-kompatible
+  Messages-API, z. B. Claude über AWS Bedrock Frankfurt hinter einem Gateway). Ohne EU-Endpunkt: **keine KI**, Sparte nur
+  laut Dateiname bzw. Angaben des Leads, Kennzeichen „Gesundheitsangaben möglich“. Gesundheitsunterlagen werden nie
+  ausgelesen, nur dem Vermittler gezeigt.
+- **Gesundheitsangaben im Chat:** gehen ausgeblendet an die KI (`redactHealthText`); was der Assistent festhält
+  (`record_qualification`: Felder, Zusammenfassung, Protokoll), wird zusätzlich gefiltert (`angabenOhneGesundheit`,
+  `ohneGesundheitsangaben`). Die Vertragsliste speichert nur Sparte, Gesellschaft und Person.
+- **Widerruf:** im Chat nach Regeln („Widerruf“, „Unterlagen löschen“, „Einwilligung zurück“, „nicht mehr
+  einverstanden“ …) und sinngemäß per KI (nur bei Verdacht, nur die eine Nachricht, Gesundheitsangaben ausgeblendet;
+  ohne KI gilt die Regel). Sofort alles gelöscht (Dateien, Auszüge, Media-IDs), bestätigt, protokolliert, Vermittler
+  per Push benachrichtigt. Im Kontakt: „Einwilligung widerrufen / Unterlagen löschen“ für Widerrufe, die den Vermittler
+  anders erreichen.
+
+### Löschung (für alle Unterlagen, auch bei Schalter aus)
+
+- Ohne Abschluss: 30 Tage nach dem letzten Termin (ohne Termin: nach dem Eingang).
+- Mit Abschluss: 90 Tage nach dem Abschluss (frühestens nach dem Eingang). 14 Tage vorher Erinnerung an den Vermittler
+  (Push und Verlauf: „In die Kundenakte übernehmen“); kommt die Erinnerung später, bleiben ihm trotzdem 14 Tage.
+- „Als Beratungsdokumentation behalten“ (Kontakt → Dokumente, nur bei Abschluss): keine automatische Löschung, mit Vermerk
+  („Beratungsdokumentation (§ 61 VVG)“), Zeitpunkt und Login; aufhebbar. Bleibt bis zur Löschung durch den Vermittler,
+  zum Widerruf (Standard: alles löschen), Art. 17 (`eraseLead`) bzw. Vertragsende (`eraseCustomerData`).
 
 ## 2. Einwilligungstext (Art. 9 Abs. 2 lit. a DSGVO)
 
-Wortlaut, wie er gesendet und im Einwilligungsprotokoll gespeichert wird (`lib/policen/regeln.ts einwilligungText`):
+Wortlaut aus `lib/policen/regeln.ts einwilligungText` (Version `2026-11-17.2`), so gesendet und protokolliert.
+`{Berater}` = Vermittler in der Ansprache des Assistenten, `{Firma}` = Firma laut Anbieterangaben (entfällt, wenn
+gleich dem Namen), `{Link}` = `/datenschutz/policen?k=<Token der Erstinformation>` (Langfassung, Abschnitt 3a).
 
-> **Sie:** Unterlagen zur Kranken-, BU- oder Lebensversicherung können Gesundheitsangaben enthalten. Dürfen wir sie für
-> Herrn Kannapinn zur Vorbereitung speichern? Sie können das jederzeit widerrufen.
+> **Sie (Einladung):** Vor dem Termin können Sie uns Fotos oder PDFs Ihrer bisherigen Versicherungen hier schicken.
+> Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu Ihrer
+> Gesundheit enthalten.
 >
-> **Du:** Unterlagen zur Kranken-, BU- oder Lebensversicherung können Gesundheitsangaben enthalten. Dürfen wir sie für
-> Ole zur Vorbereitung speichern? Du kannst das jederzeit widerrufen.
+> Sind Sie einverstanden, dass {Berater} ({Firma}) Ihre Unterlagen einschließlich dieser Gesundheitsangaben speichert
+> und zur Vorbereitung Ihres Termins nutzt? Eine KI ordnet jede Unterlage einer Versicherungsart zu, Gesundheitsangaben
+> werden nicht ausgewertet. Dafür setzen wir Dienstleister ein, auch in den USA. Sehen kann die Unterlagen nur Ihr Berater.
+>
+> Unterlagen von mitversicherten Personen schicken Sie bitte nur mit deren Einverständnis (bei Kindern als Elternteil).
+> Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Sie können jederzeit widerrufen, zum Beispiel mit
+> der Nachricht „Widerruf“.
+>
+> Mehr dazu: {Link}
 >
 > Knöpfe: [Ja, einverstanden] [Lieber im Termin]
 
-Protokoll (`BestandConsentLog`, dasselbe Einwilligungsprotokoll wie im Bestandskunden-Modul): Kanal `whatsapp`, Aktion
-`erteilt` bzw. `widerrufen`, Quelle `policen_gesundheit`, Wortlaut, WhatsApp-Nummer, Zeitpunkt. Die Unterlage verweist
-auf den Eintrag (`LeadDocument.consentId`, `consentAt`). Zusätzlich Änderungsprotokoll (`policen.einwilligung`,
-`policen.widerruf`, `policen.verworfen`, `policen.ansehen`), ohne Inhalte.
+Nach einer Datei beginnt der Text mit „Danke für Ihre Unterlage. Unterlagen zur Kranken-, … können Angaben zu Ihrer
+Gesundheit enthalten.“, der Rest ist gleich. Du-Fassung entsprechend („Bist du einverstanden, dass {Berater} …“).
+Höchstens 1.024 Zeichen (Test). Protokoll: `BestandConsentLog` (Kanal `whatsapp`, Aktion `erteilt` bzw. `widerrufen`,
+Quelle `policen_gesundheit`, Wortlaut, Version, Nummer, Lead, Knopf-Antwort, Zeitpunkt); die Unterlage verweist auf den
+Eintrag (`LeadDocument.consentId`, `consentAt`). Änderungsprotokoll: `policen.einwilligung`,
+`policen.einwilligung_abgelehnt`, `policen.widerruf`, `policen.verworfen`, `policen.ansehen`, `policen.behalten`
+(ohne Inhalte).
 
-**Vorschlag für eine ausführlichere Fassung** (falls der Anwalt mehr Information in der Frage verlangt; WhatsApp erlaubt
-bis 1.024 Zeichen):
+## 3. Datenschutzhinweise
 
-> Unterlagen zur Kranken-, BU- oder Lebensversicherung können Gesundheitsangaben enthalten. Dürfen wir sie für Herrn
-> Kannapinn zur Vorbereitung Ihres Termins speichern? Gespeichert wird verschlüsselt, ausgelesen wird nichts. Ohne
-> Abschluss löschen wir sie 30 Tage nach dem Termin. Sie können das jederzeit widerrufen, schreiben Sie einfach
-> „Widerruf“. Mehr: [Link Datenschutzhinweise des Vermittlers]
+### 3a. Langfassung zur Einwilligung (öffentliche Seite)
 
-## 3. Ergänzung Datenschutzhinweise für Leads (Entwurf)
+`/datenschutz/policen?k=<Token>` (`app/datenschutz/policen/page.tsx`, Texte `lib/policen/datenschutz-text.ts`), je
+Vermittler mit seinen Anbieterangaben, in der Ansprache des Vermittlers, nicht indexiert. Verlinkt nur im
+Einwilligungstext, also erst mit Schalter an. Inhalt: Verantwortlicher, Zweck, Datenarten, Rechtsgrundlagen, was mit den
+Unterlagen passiert (KI nur Zuordnung), Empfänger, USA (DPF/SCC), Speicherdauer, Widerruf, Mitversicherte, Rechte.
+
+### 3b. Ergänzung der Datenschutzhinweise (Entwurf, nicht live verlinken, solange der Schalter aus ist)
 
 Für die Datenschutzhinweise des Vermittlers (Buchungsseite, Rückfall performancegrowth.de/datenschutz), Sie-Form, ohne
-Gedankenstriche:
+Gedankenstriche. Erst nach Freigabe durch den Anwalt übernehmen:
 
 > **Unterlagen, die Sie uns per WhatsApp schicken**
 >
 > Wenn Sie möchten, können Sie uns vor dem Termin Fotos oder PDFs Ihrer bestehenden Versicherungsverträge per WhatsApp
-> schicken. Wir nutzen sie, um Ihren Termin vorzubereiten (Art. 6 Abs. 1 lit. b DSGVO, vorvertragliche Maßnahmen auf
-> Ihre Anfrage). Die Unterlagen werden verschlüsselt gespeichert und sind nur für Ihren Berater sichtbar.
+> schicken. Wir nutzen sie, um Ihren Termin vorzubereiten. Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-,
+> Pflege- oder Unfallversicherung können Angaben zu Ihrer Gesundheit enthalten; wir fragen deshalb vorher ausdrücklich
+> nach Ihrer Einwilligung (Art. 6 Abs. 1 lit. a und Art. 9 Abs. 2 lit. a DSGVO), für Sachversicherungen zusätzlich
+> Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahmen auf Ihre Anfrage). Schicken Sie eine solche Unterlage vor der
+> Einwilligung, laden wir sie nicht; der Verweis darauf wird nach spätestens 24 Stunden gelöscht.
 >
-> Damit Ihr Berater sie schneller vorbereiten kann, ordnet eine Software mit künstlicher Intelligenz (Anthropic, PBC,
-> USA; EU-US Data Privacy Framework bzw. Standardvertragsklauseln, keine Nutzung zum Training) jede Unterlage einer
-> Sparte zu. Bei Sachversicherungen (z. B. Haftpflicht, Hausrat, Kfz) liest sie außerdem Versicherer, Beitrag,
-> Zahlweise, Versicherungssumme, Selbstbeteiligung und Ablauf aus.
+> Die Unterlagen werden verschlüsselt in der EU gespeichert und sind nur für Ihren Berater sichtbar. Eine Software mit
+> künstlicher Intelligenz ordnet jede Unterlage einer Versicherungsart zu (Unterlagen mit möglichen Gesundheitsangaben
+> nur über einen Dienst in der EU oder gar nicht). Bei Sachversicherungen liest sie außerdem Versicherer, Beitrag,
+> Zahlweise, Versicherungssumme, Selbstbeteiligung und Ablauf aus (Anthropic, PBC, USA; EU-US Data Privacy Framework bzw.
+> Standardvertragsklauseln, keine Nutzung zum Training). Gesundheitsangaben werden nicht ausgewertet.
 >
-> Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu Ihrer
-> Gesundheit enthalten. Diese speichern wir nur mit Ihrer ausdrücklichen Einwilligung (Art. 9 Abs. 2 lit. a DSGVO) und
-> lesen sie nicht aus. Sie können die Einwilligung jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“; die
-> Unterlagen werden dann sofort gelöscht. Die Rechtmäßigkeit der bis dahin erfolgten Verarbeitung bleibt unberührt.
+> Sie können die Einwilligung jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“, per E-Mail oder telefonisch;
+> die Unterlagen werden dann sofort gelöscht. Die Rechtmäßigkeit der bis dahin erfolgten Verarbeitung bleibt unberührt.
 >
-> Kommt kein Vertrag zustande, löschen wir die Unterlagen 30 Tage nach dem Termin. Schließen Sie einen Vertrag ab,
-> bewahren wir sie auf, solange wir sie für Ihre Betreuung und unsere gesetzlichen Pflichten brauchen.
+> Kommt kein Vertrag zustande, löschen wir die Unterlagen 30 Tage nach dem letzten Termin. Nach einem Vertragsabschluss
+> löschen wir sie nach 90 Tagen, soweit wir sie nicht zur Dokumentation unserer Beratung (§ 61 VVG) aufbewahren
+> (Art. 9 Abs. 2 lit. f DSGVO).
 
 ## 4. Ergänzung AVV und TOM (Entwurf)
 
@@ -98,7 +141,8 @@ Gedankenstriche:
   (Verantwortlicher) über den Assistenten einholt.
 - *Betroffene:* Leads (Interessenten) des Kunden und in den Unterlagen genannte mitversicherte Personen.
 - *Unterauftragsverarbeiter:* 360dialog (Transport, Abruf der Datei), Anthropic (Zuordnung; Auslesen nur
-  Sachversicherungen), Railway (Hosting, verschlüsselt). Keine neuen Empfänger.
+  Sachversicherungen; bei möglichem Gesundheitsbezug nur über den EU-Endpunkt, z. B. AWS Bedrock Frankfurt, dann
+  zusätzlich AWS als Unterauftragsverarbeiter aufnehmen), Railway (Hosting, verschlüsselt).
 - *Weisung:* Gesundheitsbezogene Unterlagen werden nur verarbeitet, wenn der Kunde die Funktion nutzt und die
   Einwilligung vorliegt; ohne Einwilligung wird die Datei verworfen.
 
@@ -107,17 +151,21 @@ Gedankenstriche:
 | Maßnahme | Umsetzung |
 |---|---|
 | Verschlüsselung der Inhalte | AES-256-GCM je Datei mit zufälligem IV, Schlüssel `ENCRYPTION_KEY` (nicht in der Datenbank), `lib/encryption.ts encryptBytes`; Datenbank zusätzlich nur intern erreichbar, TLS nach außen |
-| Datensparsamkeit | Ohne Einwilligung kein Inhalt gespeichert (nur Media-ID, 24 Stunden); KI-Zuordnung gibt nur Sparte und Ja/Nein zurück; Gesundheitsunterlagen nie ausgelesen; Chatverlauf ohne Dateinamen bei Gesundheitsbezug |
+| Datensparsamkeit | Schalter an: Dateien mit möglichem Gesundheitsbezug vor der Einwilligung weder geladen noch an die KI gegeben (nur Media-ID, 24 Stunden); danach KI-Zuordnung nur über einen EU-Endpunkt, sonst keine; KI gibt nur Sparte und Ja/Nein zurück, ohne Dateinamen; Gesundheitsunterlagen nie ausgelesen; Chatverlauf ohne Dateinamen bei Gesundheitsbezug; Angaben des Assistenten ohne Gesundheitsangaben |
 | Zugriff | Nur Logins des Kunden, die den Lead sehen dürfen (Inhaber, zuständiger Berater; `leadScope`). Admin in „Als Kunde ansehen“: keine Inhalte und keine Dateinamen gesundheitsbezogener Unterlagen. Abruf nur über die App (`Cache-Control: no-store`), kein öffentlicher Link, kein Objektspeicher |
 | Protokollierung | Einwilligung und Widerruf im Einwilligungsprotokoll; Ansehen gesundheitsbezogener Unterlagen, Verwerfen und Widerruf im Änderungsprotokoll (ohne Inhalte) |
-| Löschfristen | 30 Tage nach dem letzten Termin ohne Abschluss (Cron täglich 03:00 UTC, `prunePolicen`), ausstehende Einwilligung 24 Stunden, Widerruf sofort, Art. 17 und Vertragsende (`erasure.ts`) |
+| Löschfristen | 30 Tage nach dem letzten Termin ohne Abschluss, 90 Tage nach dem Abschluss mit Erinnerung 14 Tage vorher, außer „Beratungsdokumentation behalten“ (Cron täglich 03:00 UTC, `prunePolicen`); ausstehende Einwilligung 24 Stunden; Widerruf sofort (Chat oder Knopf im Kontakt); Art. 17 und Vertragsende (`erasure.ts`) |
 | Schalter | `POLICEN_GESUNDHEIT_AN` (Standard aus): ohne ihn werden Unterlagen mit Gesundheitsbezug nie gespeichert |
 
 **Löschkonzept (`docs/datenschutz.md`, Abschnitt 4), neue Zeile nach Freigabe:**
-„Unterlagen per WhatsApp (`LeadDocument`) | 30 Tage nach dem letzten Termin ohne Abschluss; ausstehende Einwilligung
-24 Stunden; Widerruf sofort; mit dem Lead bzw. Vertragsende | automatisch (`prunePolicen`), `eraseLead`/`eraseCustomerData`“
+„Unterlagen per WhatsApp (`LeadDocument`) | 30 Tage nach dem letzten Termin ohne Abschluss; 90 Tage nach Abschluss
+(Erinnerung 14 Tage vorher), außer als Beratungsdokumentation behalten; ausstehende Einwilligung 24 Stunden; Widerruf
+sofort; mit dem Lead bzw. Vertragsende | automatisch (`prunePolicen`), `eraseLead`/`eraseCustomerData`“
 
 ## 5. Offene Fragen an den Anwalt
+
+Beantwortet nach bestem Wissen in `docs/recht-gesundheitsunterlagen.md` (Abschnitt a), umgesetzt nach Abschnitt b.
+Was der Anwalt noch klären muss: dort Abschnitt c. Die ursprüngliche Liste:
 
 1. **Zuordnung vor der Einwilligung:** Darf die Datei vor der Einwilligung kurz an die KI gehen, nur um die Sparte und
    den möglichen Gesundheitsbezug zu erkennen (nichts gespeichert, nur Ja/Nein zurück)? Alternative: vor jeder Datei
@@ -148,9 +196,17 @@ Gedankenstriche:
 - Code: `src/lib/policen/` (`regeln.ts` Regeln und Texte, `server.ts` Ablauf, `ki.ts` Zuordnung und Auslesen,
   `media.ts` Abruf bei 360dialog, `assistent.ts` Einladung), Einhängepunkte in `lib/whatsapp/gateway.ts` und
   `lib/whatsapp/bot.ts`, Ansicht `components/lead-files.tsx` (Kontakt → Dokumente → „Unterlagen vom Kunden“) und
-  `components/unterlagen-vom-kunden.tsx` (Terminvorbereitung), Abruf `api/buyer/leads/[id]/unterlagen/[docId]`.
-- Datenmodell: `LeadDocument` (Migration `20261118706700_lead_unterlagen_whatsapp`).
+  `components/unterlagen-vom-kunden.tsx` (Terminvorbereitung), Abruf `api/buyer/leads/[id]/unterlagen/[docId]`
+  (GET ansehen, DELETE löschen, PATCH behalten), Widerruf durch den Vermittler `api/buyer/leads/[id]/unterlagen`
+  (DELETE). Verantwortlicher im Text `lib/policen/verantwortlicher.ts`, Langfassung `app/datenschutz/policen/page.tsx`
+  mit `lib/policen/datenschutz-text.ts`. Gesundheitsfilter für Angaben des Assistenten `lib/gesundheitsdaten.ts`.
+- Datenmodell: `LeadDocument` (Migration `20261118706700_lead_unterlagen_whatsapp`), dazu `erinnertAt`, `behaltenAt`,
+  `behaltenVonId`, `behaltenVermerk` und im Einwilligungsprotokoll `leadId`, `version`, `waMessageId`
+  (Migration `20261118706900_policen_gesundheit_einwilligung`).
 - Tests: `tests/unit/policen.test.ts`, `tests/integration/policen-whatsapp.test.ts` (Speichern/Verschlüsseln,
-  Einwilligung ja/nein, Schalter aus, Widerruf, Löschfrist, Art. 17, Rechte, Einladung).
+  Einwilligung vorher bzw. nach der Datei, keine KI und kein Laden ohne Einwilligung, Verwerfen nach 24 Stunden, Frage
+  höchstens einmal erneut, EU-Endpunkt, Widerruf nach Regeln und sinngemäß, Widerruf durch den Vermittler, Löschfristen
+  mit Abschluss, Erinnerung und Behalten, Schalter aus unverändert, Art. 17, Rechte, Einladung, Gesundheitsangaben nicht
+  in den Angaben des Assistenten).
 - Nicht im Datenexport des Kunden (Konto → Export) enthalten: **offen**, nach Freigabe ergänzen (nur Metadaten oder
   auch Dateien?).

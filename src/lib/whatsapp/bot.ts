@@ -51,7 +51,7 @@ import {
 } from "@/lib/whatsapp/gespraech";
 import { folgefragen, folgefrageText, spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
-import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
+import { angabenOhneGesundheit, GESUNDHEITS_REGEL, istTierLead, ohneGesundheitsangaben, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 import { logTestLead } from "@/lib/testlead";
 import { ohneBisherigePolicen } from "@/lib/policen/regeln";
@@ -942,8 +942,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           angaben?: unknown;
         };
         // Zahnzusatz: Knopfantworten nur als neutrales Produktinteresse speichern (Art. 9 DSGVO, erstanschreiben.ts)
-        const angaben = istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben;
-        await persistInternal(conversation.id, "qualification", angaben === input.angaben ? tu.input : { ...input, angaben }); // Audit-Log
+        // Sicherheitsnetz: keine Gesundheitsangaben in Feldern, Zusammenfassung und Protokoll (lib/gesundheitsdaten.ts)
+        const tier = istTierLead(lead?.source);
+        const angaben = angabenOhneGesundheit(istZahnLead(lead?.source) ? neutralZahnAngaben(input.angaben) : input.angaben, { tier });
+        if (typeof input.zusammenfassung === "string") input.zusammenfassung = ohneGesundheitsangaben(input.zusammenfassung, { tier });
+        await persistInternal(conversation.id, "qualification", { ...input, angaben }); // Audit-Log
         // Strukturierte Punkte zusätzlich zum Fließtext; neue Angaben ergänzen die bisherigen.
         const prevData = (
           await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } })
@@ -1201,7 +1204,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     // Policen vor dem Termin (Ole, 17.11.2026, lib/policen/assistent.ts): nach der Vertragsfrage einmal einladen, als
     // eigene Nachricht vor der Antwort (die mit der nächsten Frage endet); nicht im Zug der Buchung
     const policen = gebucht ? null : await import("@/lib/policen/assistent").then((m) => m.einladungJetzt({ conversationId: conversation.id, an: ansprache, person })).catch(() => null);
-    if (policen) await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen, sentBy: "bot" });
+    if (policen) await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.text, sentBy: "bot", buttons: policen.buttons });
     const sent = await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,

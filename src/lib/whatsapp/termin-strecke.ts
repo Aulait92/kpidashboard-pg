@@ -261,7 +261,7 @@ export async function vertraegeAntwort(conversationId: string, text: string, now
     : await import("@/lib/policen/assistent")
         .then((m) => m.einladungNachVertraegen({ conversationId, an: k.an, person: k.person, vertraegeText: text, anzahl: liste.length }))
         .catch(() => null);
-  if (policen) await sende(k, policen);
+  if (policen) await sende(k, policen.text, policen.buttons);
   await sendeAbschluss(k, "vertraege");
   return true;
 }

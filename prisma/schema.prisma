@@ -2706,10 +2706,15 @@ model BestandConsentLog {
   // Double-Opt-in: Hash des Bestätigungstokens (Klartext nur im Link)
   tokenHash          String?           @unique
   confirmedAt        DateTime?
+  // Policen per WhatsApp (lib/policen): Lead, Version des Wortlauts, WhatsApp-ID der Knopf-Antwort
+  leadId             String?
+  version            String?
+  waMessageId        String?
   createdAt          DateTime          @default(now())
 
   @@index([customerId, createdAt])
   @@index([existingCustomerId])
+  @@index([leadId])
 }
 
 // Sperrliste je Vermittler (Ole, 14.11.2026): Abmeldungen wirken dauerhaft, auch nach erneutem Import oder wenn
@@ -3766,8 +3771,14 @@ model LeadDocument {
   // Ausgelesene Vertragsdaten (nur Sachversicherungen): Gesellschaft, Sparte, Beitrag, Zahlweise, Summe, SB, Ablauf
   extracted        Json?
   extractedAt      DateTime?
-  // Geplante Löschung (Cron: 30 Tage nach dem Termin ohne Abschluss)
+  // Geplante Löschung (Cron: 30 Tage nach dem Termin ohne Abschluss, 90 Tage nach dem Abschluss)
   deleteAfter      DateTime?
+  // Erinnerung an den Vermittler „In die Kundenakte übernehmen“ (14 Tage vor der Löschung nach Abschluss)
+  erinnertAt       DateTime?
+  // „Beratungsdokumentation behalten“ (Vermittler): keine automatische Löschung; Zeitpunkt, Login und Vermerk
+  behaltenAt       DateTime?
+  behaltenVonId    String?
+  behaltenVermerk  String?
   createdAt        DateTime  @default(now())
 
   @@index([leadId])
