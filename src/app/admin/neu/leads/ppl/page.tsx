@@ -273,7 +273,7 @@ function StornoPruefen({
                 </div>
               </div>
               <div className="flex gap-2">
-                {(["approve", "reject"] as const).map((d) => (
+                {(["approve", "half", "reject"] as const).map((d) => (
                   <form key={d} action={decideStornoAction}>
                     <input type="hidden" name="leadId" value={l.id} />
                     <input type="hidden" name="decision" value={d} />
@@ -281,7 +281,7 @@ function StornoPruefen({
                       pendingLabel="…"
                       className={`h-10 rounded-[var(--radius-sm)] px-3 text-[13px] font-semibold sm:h-8 sm:text-xs ${d === "approve" ? "bg-[color:var(--brand)] text-white" : "border border-[color:var(--border)] bg-white"}`}
                     >
-                      {d === "approve" ? "Gutschreiben" : "Ablehnen"}
+                      {d === "approve" ? "Gutschreiben" : d === "half" ? "50:50" : "Ablehnen"}
                     </SubmitButton>
                   </form>
                 ))}
