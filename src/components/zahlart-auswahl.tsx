@@ -1,4 +1,4 @@
-import { ZAHLART_HINWEIS, ZAHLART_OPTIONEN, ZAHLART_STANDARD, type Zahlart } from "@/lib/zahlart";
+import { ueberweisungOption, ZAHLART_HINWEIS, ZAHLART_OPTIONEN, ZAHLART_STANDARD, type Zahlart } from "@/lib/zahlart";
 
 /**
  * Auswahl der Zahlart vor dem Weiterleiten zu Stripe: Lastschrift zuerst und vorausgewählt,
@@ -9,8 +9,11 @@ export function ZahlartAuswahl({
   hint = ZAHLART_HINWEIS,
   value,
   onChange,
+  ueberweisungTage = null,
 }: {
   hint?: string;
+  /** Überweisung am Angebot freigegeben (nur auf Anfrage): dritte Option mit Zahlungsziel in Tagen */
+  ueberweisungTage?: number | null;
   /** gesteuert (Client-Komponente); sonst Lastschrift vorausgewählt */
   value?: Zahlart;
   onChange?: (z: Zahlart) => void;
@@ -18,7 +21,7 @@ export function ZahlartAuswahl({
   return (
     <fieldset className="space-y-2" data-zahlart-auswahl>
       <legend className="mb-2 text-sm font-medium">Zahlart</legend>
-      {ZAHLART_OPTIONEN.map((o) => (
+      {(ueberweisungTage ? [...ZAHLART_OPTIONEN, ueberweisungOption(ueberweisungTage)] : ZAHLART_OPTIONEN).map((o) => (
         <label
           key={o.value}
           className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 py-2.5 text-sm transition has-[:checked]:border-[color:var(--brand)] has-[:checked]:ring-2 has-[:checked]:ring-[color:var(--brand)]/20"

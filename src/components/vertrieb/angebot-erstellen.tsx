@@ -1,4 +1,5 @@
 import { OfferForm } from "@/components/offer-form";
+import { ueberweisungAktiv } from "@/lib/mahnwesen";
 import { legalUrls } from "@/lib/offers";
 import { prisma } from "@/lib/prisma";
 import { loadReferralSettings, referralForContact, referralSetupDiscount } from "@/lib/kollegen";
@@ -55,6 +56,7 @@ export async function AngebotErstellen({ c, backHref }: { c: AngebotKontakt; bac
       <div className="mt-6">
         <OfferForm
           target={{ salesContactId: c.id }}
+          ueberweisungVerfuegbar={ueberweisungAktiv()}
           backHref={backHref}
           referralDiscount={
             discount

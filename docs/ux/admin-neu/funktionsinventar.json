@@ -5098,5 +5098,77 @@
   "bereich": "heute",
   "status_neu": "vorhanden",
   "ort_neu": "src/components/admin-neu/rahmen/suche.tsx"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Zahlweise und Mahnungen: offene Posten des Kunden",
+  "quelle": "app/admin/kunden/[id]/abrechnung/zahlweise-card.tsx",
+  "neu": "Kundenakte › Abrechnung & Pause › Zahlweise und Mahnungen",
+  "status": "neu",
+  "demo_view": "kunde-abrechnung",
+  "id": "zahlweise-card--zahlweise-und-mahnungen-offene-posten-des-kunden",
+  "bereich": "kunden",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Überweisung erlauben, Zahlungsziel (Audit)",
+  "quelle": "app/admin/kunden/[id]/abrechnung/zahlweise-actions.ts:saveUeberweisungAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Zahlweise und Mahnungen",
+  "status": "neu",
+  "demo_view": "kunde-abrechnung",
+  "id": "zahlweise-actions--ueberweisung-erlauben-zahlungsziel",
+  "bereich": "kunden",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
+ },
+ {
+  "heute": "/admin/kunden/[id]/abrechnung",
+  "funktion": "Mahnungen je Kunde stoppen (Audit)",
+  "quelle": "app/admin/kunden/[id]/abrechnung/zahlweise-actions.ts:saveMahnStoppAction",
+  "neu": "Kundenakte › Abrechnung & Pause › Zahlweise und Mahnungen",
+  "status": "neu",
+  "demo_view": "kunde-abrechnung",
+  "id": "zahlweise-actions--mahnungen-je-kunde-stoppen",
+  "bereich": "kunden",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/[id]/abrechnung/page.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Zahlungseingang auf dem Geschäftskonto bestätigen oder verwerfen",
+  "quelle": "app/admin/neu/zahlen/offene-posten/actions.ts:vorschlagAction",
+  "neu": "Zahlen › Offene Posten",
+  "status": "neu",
+  "demo_view": "zahlen-offene-posten",
+  "id": "offene-posten--zahlungseingang-bestaetigen-oder-verwerfen",
+  "bereich": "zahlen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/offene-posten/page.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Offene Rechnungen mit Mahnstufe",
+  "quelle": "app/admin/neu/zahlen/offene-posten/page.tsx",
+  "neu": "Zahlen › Offene Posten",
+  "status": "neu",
+  "demo_view": "zahlen-offene-posten",
+  "id": "offene-posten--offene-rechnungen-mit-mahnstufe",
+  "bereich": "zahlen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/offene-posten/page.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Ablauf und vorbereitete Schalter (Verzugspauschale, Leads-Pause)",
+  "quelle": "app/admin/neu/zahlen/offene-posten/page.tsx",
+  "neu": "Zahlen › Offene Posten",
+  "status": "neu",
+  "demo_view": "zahlen-offene-posten",
+  "id": "offene-posten--ablauf-und-vorbereitete-schalter",
+  "bereich": "zahlen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/zahlen/offene-posten/page.tsx"
  }
 ]

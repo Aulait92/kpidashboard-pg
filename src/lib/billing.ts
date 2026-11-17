@@ -386,13 +386,19 @@ async function paymentMethodOf(stripe: Stripe, session: Stripe.Checkout.Session)
  * Startdatum (oder sofort, wenn es schon erreicht ist), ggf. Startpreis-Phase.
  * Idempotent über den Idempotency-Key und stripeScheduleId.
  */
-export async function createScheduleForOffer(offerId: string, session: Stripe.Checkout.Session): Promise<void> {
+export async function createScheduleForOffer(
+  offerId: string,
+  session: Stripe.Checkout.Session | null,
+  opts: { ueberweisung?: { days: number } } = {},
+): Promise<void> {
   const stripe = stripeClient();
   if (!stripe) return;
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
   if (!offer || offer.stripeScheduleId || offer.stripeSubscriptionId) return;
-  const customerId = offer.stripeCustomerId ?? (typeof session.customer === "string" ? session.customer : session.customer?.id);
+  const customerId = offer.stripeCustomerId ?? (typeof session?.customer === "string" ? session.customer : session?.customer?.id);
   if (!customerId) throw new Error(`Angebot ${offer.number}: kein Stripe-Kunde`);
+  // Überweisung (lib/ueberweisung.ts): Rechnungen mit Zahlungsziel statt Einzug, ohne gespeicherte Zahlungsart
+  const ueberweisung = opts.ueberweisung ?? null;
 
   const [software, service, seat, bestand, empfehlung, tax, pm, taxIds] = await Promise.all([
     productId(stripe, "software"),
@@ -401,7 +407,7 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
     productId(stripe, "bestand"),
     productId(stripe, "empfehlung"),
     resolveTax(stripe),
-    paymentMethodOf(stripe, session),
+    session && !ueberweisung ? paymentMethodOf(stripe, session) : Promise.resolve(null),
     accountTaxIdParams(stripe),
   ]);
   if (pm) {
@@ -456,25 +462,153 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
       billing_mode: { type: "flexible" },
       metadata: meta,
       default_settings: {
-        collection_method: "charge_automatically",
-        ...(pm ? { default_payment_method: pm } : {}),
+        ...(ueberweisung
+          ? {
+              collection_method: "send_invoice" as const,
+              invoice_settings: { days_until_due: ueberweisung.days, ...(taxIds.account_tax_ids ? { account_tax_ids: taxIds.account_tax_ids } : {}) },
+            }
+          : {
+              collection_method: "charge_automatically" as const,
+              ...(pm ? { default_payment_method: pm } : {}),
+              // Steuer-ID auf Abo-Rechnungen (nur ohne Standard-Steuer-ID im Stripe-Konto)
+              ...(taxIds.account_tax_ids ? { invoice_settings: { account_tax_ids: taxIds.account_tax_ids } } : {}),
+            }),
         ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
-        // Steuer-ID auf Abo-Rechnungen (nur ohne Standard-Steuer-ID im Stripe-Konto)
-        ...(taxIds.account_tax_ids ? { invoice_settings: { account_tax_ids: taxIds.account_tax_ids } } : {}),
         description: `${packageName(offer)} (${products}), Angebot ${offer.number}`,
       },
       phases,
     },
     // Je Bezahlseite: nach geplatzter Lastschrift und neuer Zahlung entsteht ein neuer Zeitplan
-    { idempotencyKey: `offer-schedule-${offer.id}-${session.id}` },
+    { idempotencyKey: `offer-schedule-${offer.id}-${session?.id ?? "ueberweisung"}` },
   );
+  const subId = schedule.subscription ? (typeof schedule.subscription === "string" ? schedule.subscription : schedule.subscription.id) : null;
   await prisma.offer.update({
     where: { id: offer.id },
     data: {
       stripeScheduleId: schedule.id,
-      ...(schedule.subscription ? { stripeSubscriptionId: typeof schedule.subscription === "string" ? schedule.subscription : schedule.subscription.id } : {}),
+      ...(subId ? { stripeSubscriptionId: subId } : {}),
     },
   });
+  // Abo startet sofort: Banküberweisung als Zahlungsart der Abo-Rechnungen (sonst im Webhook beim Start)
+  if (ueberweisung && subId) await setBankTransferOnSubscription(subId);
+}
+
+/** Zahlungsart der Rechnungen per Überweisung: Stripe-Banküberweisung (virtuelle IBAN je Kunde, EUR, DE). */
+export const BANK_TRANSFER_PAYMENT_SETTINGS = {
+  payment_method_types: ["customer_balance"],
+  payment_method_options: {
+    customer_balance: { funding_type: "bank_transfer", bank_transfer: { type: "eu_bank_transfer", eu_bank_transfer: { country: "DE" } } },
+  },
+} satisfies Stripe.InvoiceCreateParams.PaymentSettings;
+
+/** Abo auf Überweisung stellen (Rechnung mit Zahlungsziel, Banküberweisung). Idempotent. */
+export async function setBankTransferOnSubscription(subscriptionId: string, days?: number): Promise<void> {
+  const stripe = stripeClient();
+  if (!stripe) return;
+  await stripe.subscriptions.update(subscriptionId, {
+    ...(days ? { collection_method: "send_invoice", days_until_due: days } : {}),
+    payment_settings: BANK_TRANSFER_PAYMENT_SETTINGS as Stripe.SubscriptionUpdateParams.PaymentSettings,
+  });
+}
+
+/** Stripe-Kunden zum Angebot anlegen bzw. lesen (für Überweisung ohne Bezahlseite). */
+export async function ensureStripeCustomerForOffer(offerId: string): Promise<string> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  const offer = await prisma.offer.findUnique({ where: { id: offerId } });
+  if (!offer) throw new Error("Angebot nicht gefunden.");
+  return ensureCustomer(stripe, offer);
+}
+
+/** Virtuelle IBAN des Kunden für Banküberweisungen (Stripe legt sie beim ersten Abruf an). */
+export async function bankTransferIban(stripeCustomerId: string): Promise<string | null> {
+  const stripe = stripeClient();
+  if (!stripe) return null;
+  const fi = await stripe.customers.createFundingInstructions(stripeCustomerId, {
+    currency: "eur",
+    funding_type: "bank_transfer",
+    bank_transfer: { type: "eu_bank_transfer", eu_bank_transfer: { country: "DE" } },
+  });
+  const iban = fi.bank_transfer.financial_addresses.find((a) => a.type === "iban")?.iban?.iban ?? null;
+  return iban;
+}
+
+/**
+ * Setup-Rechnung per Überweisung (Rechnung mit Zahlungsziel, Banküberweisung): Listenpreis als Posten,
+ * Empfehlungsrabatt und Abschlussbonus als einmaliger Gutschein, wie auf der Bezahlseite. Wird finalisiert und
+ * von Stripe per E-Mail verschickt. Gibt null zurück, wenn nach Rabatt und Bonus nichts zu zahlen ist.
+ */
+export async function createSetupInvoiceForOffer(
+  offerId: string,
+  days: number,
+): Promise<{ invoiceId: string; bonusCents: number } | null> {
+  const stripe = stripeClient();
+  if (!stripe) throw new Error("Stripe ist nicht eingerichtet.");
+  const offer = await prisma.offer.findUnique({ where: { id: offerId } });
+  if (!offer) throw new Error("Angebot nicht gefunden.");
+  const setupFee = Number(offer.setupFee);
+  const discount = setupFee > 0 ? offerSetupDiscount(offer) : null;
+  const bonus = setupFee > 0 ? abschlussBonusJetzt(offer) : null;
+  const zuZahlen = round2Billing(setupFee - (bonus?.betrag ?? 0));
+  if (!(setupFee > 0) || zuZahlen < STRIPE_MIN_EUR) return null;
+  const [setup, tax, invoiceDefaults, taxIds] = await Promise.all([
+    productId(stripe, offer.package === "service" ? "setup_service" : "setup"),
+    resolveTax(stripe),
+    loadInvoiceDefaults(),
+    accountTaxIdParams(stripe),
+  ]);
+  const customerId = await ensureCustomer(stripe, offer);
+  const meta = { ...offerMeta(offer), pg_kind: "offer_setup" };
+  const products = offerProducts(offer.products).map((p) => p.name).join(", ");
+  const description = `Setup ${packageName(offer)} (${products}), Angebot ${offer.number}`;
+  const nachlass = round2Billing((discount?.discount ?? 0) + (bonus?.betrag ?? 0));
+  const listPreis = discount ? discount.list : setupFee;
+  const coupon =
+    nachlass > 0.005
+      ? await stripe.coupons.create(
+          {
+            amount_off: cents(nachlass),
+            currency: "eur",
+            duration: "once",
+            max_redemptions: 1,
+            name: discount && bonus ? "Empfehlungsrabatt und Abschlussbonus" : bonus ? "Abschlussbonus" : "Empfehlungsrabatt",
+            applies_to: { products: [setup] },
+            metadata: { ...meta, referral_id: offer.referralId ?? "" },
+          },
+          { idempotencyKey: `offer-coupon-ueberweisung-${offer.id}-${cents(nachlass)}` },
+        )
+      : null;
+  const invoice = await stripe.invoices.create(
+    {
+      customer: customerId,
+      collection_method: "send_invoice",
+      days_until_due: days,
+      auto_advance: true,
+      pending_invoice_items_behavior: "exclude",
+      description,
+      metadata: meta,
+      payment_settings: BANK_TRANSFER_PAYMENT_SETTINGS,
+      ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
+      ...(coupon ? { discounts: [{ coupon: coupon.id }] } : {}),
+      ...invoiceFooterParams(invoiceDefaults),
+      ...taxIds,
+    },
+    { idempotencyKey: `offer-setup-invoice-${offer.id}` },
+  );
+  await stripe.invoiceItems.create(
+    {
+      customer: customerId,
+      invoice: invoice.id!,
+      description,
+      price_data: { currency: "eur", product: setup, unit_amount: cents(listPreis), tax_behavior: "exclusive" },
+      ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
+      metadata: meta,
+    },
+    { idempotencyKey: `offer-setup-invoice-item-${offer.id}` },
+  );
+  const final = await stripe.invoices.finalizeInvoice(invoice.id!, {}, { idempotencyKey: `offer-setup-invoice-final-${offer.id}` });
+  await stripe.invoices.sendInvoice(final.id!, {}, { idempotencyKey: `offer-setup-invoice-send-${offer.id}` });
+  return { invoiceId: final.id!, bonusCents: bonus ? cents(bonus.betrag) : 0 };
 }
 
 /** Zeitplan stoppen, z. B. wenn die SEPA-Lastschrift für das Setup platzt. */

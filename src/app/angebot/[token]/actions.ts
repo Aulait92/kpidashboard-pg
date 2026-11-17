@@ -8,6 +8,7 @@ import { billingEnabled, createCheckoutForOffer } from "@/lib/billing";
 import { checkLimit, clientIp, RATE_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { parseZahlart } from "@/lib/zahlart";
 import { setzeErinnerungPerToken } from "@/lib/angebot-zahlungserinnerung-server";
+import { richteUeberweisungEin, ueberweisungMoeglich } from "@/lib/ueberweisung";
 
 export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string };
 
@@ -40,7 +41,14 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
     // Testangebot: keine Zahlung, das Onboarding startet schon mit der Annahme.
     // „Später zahlen erlaubt“: nicht direkt weiterleiten, die Seite zeigt „Zahlung einrichten“ und „Ich zahle später“.
     if (offer && !offer.isTest && !offer.allowPayLater) {
-      const checkout = await createCheckoutForOffer(offer.id, parseZahlart(formData.get("zahlart")));
+      const zahlart = parseZahlart(formData.get("zahlart"), { ueberweisung: ueberweisungMoeglich(offer) });
+      // Überweisung (nur auf Anfrage freigegeben): Rechnung statt Bezahlseite, die Seite zeigt danach die Bankdaten
+      if (zahlart === "ueberweisung") {
+        const res = await richteUeberweisungEin(offer.id);
+        revalidatePath(`/angebot/${token}`);
+        return res.ok ? { ok: true } : { error: res.error };
+      }
+      const checkout = await createCheckoutForOffer(offer.id, zahlart);
       if ("url" in checkout) redirect(checkout.url);
     }
   }
@@ -48,11 +56,17 @@ export async function acceptOfferAction(token: string, _prev: AcceptState, formD
 }
 
 /** Zahlung (erneut) starten – z. B. nach Abbruch auf der Bezahlseite. */
-export async function startPaymentAction(token: string, zahlart?: string): Promise<{ url?: string; error?: string }> {
+export async function startPaymentAction(token: string, zahlart?: string): Promise<{ url?: string; ok?: boolean; error?: string }> {
   if (!checkLimit("offerAccept", clientIp(await headers())).ok) return { error: RATE_LIMIT_MESSAGE };
   const offer = await getOfferByToken(token);
   if (!offer) return { error: "Angebot nicht gefunden." };
-  const res = await createCheckoutForOffer(offer.id, parseZahlart(zahlart));
+  const gewaehlt = parseZahlart(zahlart, { ueberweisung: ueberweisungMoeglich(offer) });
+  if (gewaehlt === "ueberweisung") {
+    const r = await richteUeberweisungEin(offer.id);
+    revalidatePath(`/angebot/${token}`);
+    return r.ok ? { ok: true } : { error: r.error };
+  }
+  const res = await createCheckoutForOffer(offer.id, gewaehlt);
   return "url" in res ? { url: res.url } : { error: res.error };
 }
 

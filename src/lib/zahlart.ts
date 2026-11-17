@@ -11,7 +11,9 @@
 // Deshalb wählt der Kunde bei uns (Lastschrift vorausgewählt), und Checkout bekommt genau
 // diese Zahlart. Apple Pay und Google Pay laufen in Checkout über „card“.
 
-export type Zahlart = "sepa" | "card";
+// Überweisung (Ole, 17.11.2026): nur auf Anfrage, wenn Ole sie am Angebot freigegeben hat (lib/ueberweisung.ts).
+// Kein Stripe Checkout, sondern Rechnung mit Zahlungsziel über die Stripe-Banküberweisung.
+export type Zahlart = "sepa" | "card" | "ueberweisung";
 
 export const ZAHLART_STANDARD: Zahlart = "sepa";
 
@@ -23,9 +25,19 @@ export const ZAHLART_OPTIONEN: { value: Zahlart; label: string; detail: string }
   { value: "card", label: "Karte, Apple Pay oder Google Pay", detail: "Kreditkarte oder Wallet auf dem Handy." },
 ];
 
-/** Formularwert lesen: alles außer „card“ ist Lastschrift (Standard). */
-export function parseZahlart(v: unknown): Zahlart {
-  return v === "card" ? "card" : ZAHLART_STANDARD;
+/** Auswahl „Per Überweisung zahlen“ (nur, wenn am Angebot freigegeben). */
+export function ueberweisungOption(tage: number): { value: Zahlart; label: string; detail: string } {
+  return { value: "ueberweisung", label: "Per Überweisung zahlen", detail: `Rechnung per E-Mail, zahlbar innerhalb von ${tage} Tagen.` };
+}
+
+/**
+ * Formularwert lesen: „card“ ist Karte, „ueberweisung“ nur mit Freigabe am Angebot, alles andere Lastschrift
+ * (Standard).
+ */
+export function parseZahlart(v: unknown, opts: { ueberweisung?: boolean } = {}): Zahlart {
+  if (v === "card") return "card";
+  if (v === "ueberweisung" && opts.ueberweisung) return "ueberweisung";
+  return ZAHLART_STANDARD;
 }
 
 type CheckoutType = "sepa_debit" | "card";

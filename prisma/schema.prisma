@@ -127,6 +127,15 @@ model Customer {
   // Zahlungsverzug: seit wann eine Rechnung offen/fehlgeschlagen ist, Warnung verschickt
   paymentOverdueSince DateTime?
   paymentWarnedAt     DateTime?
+  // Überweisung (Ole, 17.11.2026, lib/ueberweisung.ts): erlaubt (aus dem Angebot übernommen, in der Kundenakte
+  // änderbar), Zahlungsziel in Tagen und ob der Kunde tatsächlich per Rechnung/Überweisung zahlt
+  allowBankTransfer   Boolean   @default(false)
+  bankTransferDays    Int       @default(14)
+  zahltPerUeberweisung Boolean  @default(false)
+  // Mahnwesen (lib/mahnwesen.ts): Stopp je Kunde (z. B. Absprache), mit Grund und Zeitpunkt
+  mahnStopp           Boolean   @default(false)
+  mahnStoppGrund      String?
+  mahnStoppAt         DateTime?
 
   // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
   // Lead-Ziele, Preise und Startdaten je Produkt liegen seit dem Product-/
@@ -201,6 +210,7 @@ model Customer {
 
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
   onboarding                     Onboarding?
+  mahnfaelle                     Mahnfall[]
   feedback                       CustomerFeedback[]
   pauses                         CustomerPause[]
   absences                       UserAbsence[]
@@ -1554,6 +1564,16 @@ model Offer {
   mailDu                  Boolean       @default(false)
   // Startdatum wurde verschoben, weil erst nach dem Start gezahlt wurde: ursprünglicher Start
   startShiftedFrom        DateTime?
+  // Überweisung nur auf Anfrage (Ole, 17.11.2026, lib/ueberweisung.ts): Ole schaltet sie je Angebot frei
+  // (Standard aus). Dann zusätzlich „Per Überweisung zahlen“: Rechnung mit Zahlungsziel über die
+  // Stripe-Banküberweisung (virtuelle IBAN je Kunde). Geht beim Onboarding an den Kunden über.
+  allowBankTransfer       Boolean       @default(false)
+  bankTransferDays        Int           @default(14)
+  // Gewählte Zahlweise bei der Einrichtung: null (Stripe Checkout) | "ueberweisung"
+  zahlweise               String?
+  // Setup-Rechnung (Überweisung) und virtuelle IBAN zur Anzeige auf der Angebotsseite
+  stripeSetupInvoiceId    String?
+  ueberweisungIban        String?
   createdById             String?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
@@ -3040,8 +3060,11 @@ model BankTransaction {
   rule         CostRule?       @relation(fields: [ruleId], references: [id], onDelete: SetNull)
   note         String?
   assignedAt   DateTime?
+  // Bankabgleich Mahnwesen: Eingang einem offenen Mahnfall zugeordnet (eindeutig) bzw. Vorschläge
+  mahnfallId   String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+  zahlungsVorschlaege ZahlungsVorschlag[]
 
   @@unique([accountKey, externalId])
   @@index([status, bookingDate])
@@ -4416,4 +4439,78 @@ model AdminMailbox {
   connectedById   String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+// ─── Mahnwesen (Ole, 17.11.2026, lib/mahnwesen.ts) ─────────────────────
+// Ein Fall je offener Stripe-Rechnung: Überweisung (send_invoice, Zahlungsziel) oder fehlgeschlagene
+// Lastschrift/Karte. Stufen: 1 Erinnerung 3 Tage vor Fälligkeit (nur Überweisung), 2 Zahlungserinnerung am
+// Fälligkeitstag (Mail + WhatsApp), 3 1. Mahnung (+7, PDF), 4 2. Mahnung (+14), 5 Aufgabe „Kunde anrufen“ (+21).
+// status: offen | bezahlt | geschlossen (storniert, uneinbringlich, nicht mehr offen in Stripe)
+model Mahnfall {
+  id               String    @id @default(cuid())
+  stripeInvoiceId  String    @unique
+  stripeCustomerId String
+  customerId       String?
+  customer         Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  offerId          String?
+  invoiceNumber    String?
+  // Rechnungsempfänger aus Stripe (Rückfall: Logins des Kunden)
+  email            String?
+  // offener Betrag in Cent
+  amountDue        Int
+  currency         String    @default("eur")
+  // ueberweisung | lastschrift | karte | sonstige
+  art              String
+  // Fälligkeitstag (12:00 UTC des Berliner Tages); bei fehlgeschlagener Zahlung der Tag des Fehlschlags
+  dueDate          DateTime
+  status           String    @default("offen")
+  // erreichte Stufe 0..5 (siehe oben), je Stufe höchstens einmal
+  stufe            Int       @default(0)
+  letzteMailAt     DateTime?
+  erinnertAt       DateTime?
+  faelligAt        DateTime?
+  mahnung1At       DateTime?
+  mahnung2At       DateTime?
+  anrufAufgabeAt   DateTime?
+  anrufAufgabeId   String?
+  bezahltAt        DateTime?
+  // stripe | bank | manuell
+  bezahltVia       String?
+  hostedUrl        String?
+  pdfUrl           String?
+  lastError        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  vorschlaege      ZahlungsVorschlag[]
+
+  @@index([status])
+  @@index([customerId])
+  @@index([stripeCustomerId])
+}
+
+// Bankabgleich (Enable Banking): Eingang auf dem Geschäftskonto, der zu einem offenen Mahnfall passen könnte,
+// aber nicht eindeutig ist (Betrag ODER Rechnungsnummer). status: offen | bestaetigt | verworfen
+model ZahlungsVorschlag {
+  id                String          @id @default(cuid())
+  mahnfallId        String
+  mahnfall          Mahnfall        @relation(fields: [mahnfallId], references: [id], onDelete: Cascade)
+  bankTransactionId String
+  bankTransaction   BankTransaction @relation(fields: [bankTransactionId], references: [id], onDelete: Cascade)
+  grund             String
+  status            String          @default("offen")
+  entschiedenAt     DateTime?
+  entschiedenVon    String?
+  createdAt         DateTime        @default(now())
+
+  @@unique([mahnfallId, bankTransactionId])
+  @@index([status])
+}
+
+// Einstellungen Mahnwesen (eine Zeile „default“). Vorbereitete Schalter, Standard aus (Ole, 17.11.2026):
+// Verzugspauschale (40 € nach § 288 Abs. 5 BGB) und Leads-Pause (Anzeigen pausieren) sind noch nicht eingebaut.
+model MahnwesenSettings {
+  id               String   @id @default("default")
+  verzugspauschale Boolean  @default(false)
+  leadsPause       Boolean  @default(false)
+  updatedAt        DateTime @updatedAt
 }

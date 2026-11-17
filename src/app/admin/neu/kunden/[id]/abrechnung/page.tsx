@@ -25,6 +25,9 @@ const FUNKTIONEN = [
   "erase-actions-erasecustomerdataaction--kundendaten-endgueltig-loeschen-mit-grund",
   "page-invoices--rechnungen-mit-status-und-pdf",
   "page--in-stripe-oeffnen",
+  "zahlweise-card--zahlweise-und-mahnungen-offene-posten-des-kunden",
+  "zahlweise-actions--ueberweisung-erlauben-zahlungsziel",
+  "zahlweise-actions--mahnungen-je-kunde-stoppen",
   "ruhend--push-an-admins-mit-sprungziel-kundenakte",
 ].join(" ");
 
@@ -35,7 +38,7 @@ export default async function KundeAbrechnung({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; fehler?: string }>;
+  searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; fehler?: string }>;
 }) {
   const { id } = await params;
   return (

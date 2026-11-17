@@ -242,3 +242,29 @@ export async function setPaymentReminderAction(
   revalidatePath("/admin/vertrieb/angebote");
   return { ok: true };
 }
+
+/** Überweisung am Angebot erlauben bzw. Zahlungsziel ändern (nur auf Anfrage des Kunden, Ole 17.11.2026). */
+export async function setBankTransferAction(offerId: string, input: { allow: boolean; days?: string | number | null }): Promise<OfferActionResult> {
+  const session = await requireAdmin();
+  const { ueberweisungAktiv, parseZahlungsziel } = await import("@/lib/mahnwesen");
+  if (!ueberweisungAktiv()) return { ok: false, error: "Überweisung ist noch nicht freigeschaltet." };
+  const offer = await prisma.offer.findUnique({ where: { id: offerId } });
+  if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
+  if (offer.isTest) return { ok: false, error: "Testangebote laufen ohne Zahlung." };
+  if (offer.zahlweise || offer.paymentStatus === "paid" || offer.paymentStatus === "processing" || offer.stripeScheduleId) {
+    return { ok: false, error: "Die Zahlung ist bereits eingerichtet." };
+  }
+  const days = parseZahlungsziel(input.days);
+  if (offer.allowBankTransfer === input.allow && offer.bankTransferDays === days) return { ok: true };
+  await prisma.offer.update({ where: { id: offer.id }, data: { allowBankTransfer: input.allow, bankTransferDays: days } });
+  await logOfferActivity(
+    offer,
+    input.allow ? `Überweisung erlaubt (${offer.number}, Zahlungsziel ${days} Tage)` : `Überweisung nicht mehr erlaubt (${offer.number})`,
+    undefined,
+    session.userId,
+  );
+  revalidatePath(offerAdminHref(offer));
+  revalidatePath(`/angebot/${offer.token}`);
+  revalidatePath("/admin/vertrieb/angebote");
+  return { ok: true };
+}

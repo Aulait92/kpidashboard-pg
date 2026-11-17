@@ -128,34 +128,141 @@ Gedankenstriche. Erst nach Freigabe durch den Anwalt übernehmen:
 > löschen wir sie nach 90 Tagen, soweit wir sie nicht zur Dokumentation unserer Beratung (§ 61 VVG) aufbewahren
 > (Art. 9 Abs. 2 lit. f DSGVO).
 
-## 4. Ergänzung AVV und TOM (Entwurf)
+## 4. Ergänzung AVV und TOM (fertiger Entwurf, 17.11.2026)
 
-**AVV, Art und Umfang der Verarbeitung (neuer Punkt):**
+**Status:** Text fertig zur Prüfung durch den Anwalt, **nicht in Kraft**. Gültig bleibt der AVV in `src/lib/legal-texts.ts`
+(`AVV`, `TOMS`, `SUBPROCESSORS`, Seite `/rechtliches/avv`). Die Ergänzung baut auf dem gekürzten Entwurf
+`docs/rechtstexte/avv-kurzfassung-entwurf-2026-11-17.md` auf (Paragrafen dort), passt aber auch in die geltende
+Fassung (Abschnittstitel in Klammern).
 
-- *Gegenstand:* Empfang, verschlüsselte Speicherung, Zuordnung und (nur Sachversicherungen) Auslesen von Unterlagen,
-  die Leads des Kunden per WhatsApp schicken; Anzeige für die berechtigten Logins des Kunden; Löschung nach Frist.
-- *Datenarten:* Vertragsunterlagen (Versicherer, Sparte, Beitrag, Zahlweise, Summen, Selbstbeteiligung, Laufzeit; im
-  Dokument zusätzlich z. B. Name, Anschrift, Geburtsdatum, Vertragsnummer, Kfz-Kennzeichen, Bankverbindung,
-  mitversicherte Personen). **Besondere Kategorie (Art. 9):** Gesundheitsdaten in Unterlagen zur Kranken-, BU-, Lebens-,
-  Pflege- oder Unfallversicherung, nur mit ausdrücklicher Einwilligung der betroffenen Person, die der Kunde
-  (Verantwortlicher) über den Assistenten einholt.
-- *Betroffene:* Leads (Interessenten) des Kunden und in den Unterlagen genannte mitversicherte Personen.
-- *Unterauftragsverarbeiter:* 360dialog (Transport, Abruf der Datei), Anthropic (Zuordnung; Auslesen nur
-  Sachversicherungen; bei möglichem Gesundheitsbezug nur über den EU-Endpunkt, z. B. AWS Bedrock Frankfurt, dann
-  zusätzlich AWS als Unterauftragsverarbeiter aufnehmen), Railway (Hosting, verschlüsselt).
-- *Weisung:* Gesundheitsbezogene Unterlagen werden nur verarbeitet, wenn der Kunde die Funktion nutzt und die
-  Einwilligung vorliegt; ohne Einwilligung wird die Datei verworfen.
+**Übernahme in die App (nach Freigabe, vor dem Einschalten von `POLICEN_GESUNDHEIT_AN`):**
+1. Texte 4.1 bis 4.5 in `AVV` übernehmen, Anlage 2 (4.6) in `SUBPROCESSORS`, TOM (4.7) in `TOMS`; `LEGAL_VERSION` erhöhen.
+2. Neuer Unterauftragsverarbeiter AWS: Kunden mit Vertrag **vor** dem Einsatz in Textform informieren, 14 Tage
+   Widerspruchsfrist (AVV § 6 „Unterauftragsverarbeiter“). Erst danach `POLICEN_KI_REGION=eu` mit Bedrock nutzen.
+3. Fundstellen der Vertraulichkeitsklauseln je Unterauftragsverarbeiter in `docs/datenschutz.md` Abschnitt 3
+   (Nachweistabelle) eintragen, auch für AWS; § 203-Hinweis aus `docs/vorlage-verpflichtung-203-stgb.md` an AWS schicken.
 
-**TOM (Anlage 1), Ergänzung:**
+Warum noch nicht im Code: AWS ist noch nicht im Einsatz (Kontoprüfung bei AWS läuft), ein neuer Unterauftragsverarbeiter
+setzt die Mitteilung mit Widerspruchsfrist voraus, und Abschnitt 2 bis 4 dieses Dokuments gehen erst nach Prüfung durch
+den Anwalt in die Rechtstexte. Eine Änderung von `SUBPROCESSORS` jetzt würde den geltenden Vertrag vorzeitig ändern.
+
+### 4.1 AVV § 2 (Art, Zweck und Umfang), neuer Absatz nach „Terminvorbereitung und Beratungspräsentation“
+
+> **Unterlagen vom Interessenten per WhatsApp.** Interessenten können dem Auftraggeber vor einem Termin Fotos oder PDFs
+> ihrer bestehenden Versicherungsunterlagen über WhatsApp schicken. Der Auftragnehmer empfängt diese Dateien über die
+> WhatsApp Business API, prüft Dateityp und Größe, speichert sie verschlüsselt und zeigt sie den berechtigten Nutzern
+> des Auftraggebers an. Der in Anlage 2 genannte KI-Anbieter ordnet jede Unterlage einer Versicherungsart zu und gibt
+> an, ob sie Gesundheitsangaben enthalten kann; nur bei Sachversicherungen liest er Versicherer, Beitrag, Zahlweise,
+> Versicherungssumme, Selbstbeteiligung und Ablauf aus, ohne Namen, Nummern, Bankverbindungen und Gesundheitsangaben.
+> Unterlagen mit möglichen Gesundheitsangaben werden nicht ausgelesen, nicht zusammengefasst und nicht bewertet.
+>
+> **Unterlagen mit Gesundheitsangaben (Art. 9 DSGVO).** Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege-
+> oder Unfallversicherung verarbeitet der Auftragnehmer nur, wenn der Auftraggeber diese Funktion nutzt und die
+> betroffene Person vorher über den digitalen Assistenten ausdrücklich eingewilligt hat. Ohne Einwilligung lädt der
+> Auftragnehmer den Inhalt solcher Dateien nicht, gibt sie nicht an einen KI-Anbieter und merkt sich nur den Verweis
+> auf die Datei, höchstens 24 Stunden. Die Zuordnung dieser Unterlagen erfolgt ausschließlich durch einen KI-Anbieter
+> mit Verarbeitung in der EU (Anlage 2); steht er nicht zur Verfügung, unterbleibt die Zuordnung durch KI. Von Personen
+> unter 18 Jahren werden keine solchen Einwilligungen eingeholt.
+>
+> **Datenarten:** Versicherungsunterlagen (Versicherer, Sparte, Beitrag, Zahlweise, Versicherungssummen,
+> Selbstbeteiligung, Laufzeit; im Dokument außerdem zum Beispiel Name, Anschrift, Geburtsdatum, Vertragsnummer,
+> Kfz-Kennzeichen, Bankverbindung, mitversicherte Personen); bei Personenversicherungen Gesundheitsdaten (Art. 9 DSGVO);
+> Nachweis der Einwilligung (Wortlaut, Version, Zeitpunkt, WhatsApp-Nummer, Antwort-ID) und des Widerrufs.
+>
+> **Betroffene:** Interessenten des Auftraggebers und in den Unterlagen genannte mitversicherte Personen, auch Kinder.
+
+### 4.2 AVV § 4 (Pflichten des Auftragnehmers), Verschwiegenheit nach § 203 StGB (Mitwirkende)
+
+Die geltende Klausel („Verschwiegenheit nach § 203 StGB“ und „Verschwiegenheit der Unterauftragsverarbeiter“) bleibt.
+Ergänzt wird ein Satz, der die Unterlagen und die Kette der Mitwirkenden ausdrücklich nennt:
+
+> **Mitwirkende Personen bei Unterlagen der Personenversicherung.** Die Verschwiegenheit nach § 203 StGB erfasst
+> insbesondere Unterlagen, die Interessenten über WhatsApp schicken, und die Tatsache, dass eine Person eine Kranken-,
+> Unfall- oder Lebensversicherung hat oder anfragt. Der Auftragnehmer wirkt dabei als sonstige mitwirkende Person im
+> Sinne von § 203 Abs. 3 Satz 2 StGB mit; dasselbe gilt für die in Anlage 2 genannten Unterauftragsverarbeiter, die
+> diese Unterlagen übertragen, speichern oder verarbeiten. Der Auftragnehmer hat sie vertraglich zur Vertraulichkeit
+> verpflichtet und in Textform auf die Strafbarkeit einer unbefugten Offenbarung nach § 203 Abs. 4 StGB hingewiesen;
+> er sorgt dafür, dass sie von ihnen eingesetzte Personen und weitere Unterauftragsverarbeiter ebenso verpflichten
+> (§ 203 Abs. 4 Satz 2 Nr. 2 StGB). Mitarbeitende des Auftragnehmers sehen weder Inhalt noch Dateinamen von
+> Unterlagen mit möglichen Gesundheitsangaben, außer auf dokumentierte Weisung des Auftraggebers im Einzelfall.
+
+### 4.3 AVV § 5 (Pflichten des Auftraggebers), neuer Satz
+
+> Die Funktion für Unterlagen mit Gesundheitsangaben schaltet der Auftragnehmer nur auf Anforderung des Auftraggebers in
+> Textform ein. Mit der Anforderung bestätigt der Auftraggeber, dass er eine Datenschutz-Folgenabschätzung durchgeführt
+> hat (der Auftragnehmer stellt dafür eine Vorlage bereit) und, als gebundener Versicherungsvertreter, dass sein
+> Agenturvertrag die Nutzung erlaubt bzw. die Zustimmung des Versicherers vorliegt. Für diese Bestätigung gilt die
+> Zusicherung und Freistellung nach Satz 2 und den AGB.
+
+### 4.4 AVV § 3 (Weisungen) bzw. § 9 (Löschung und Rückgabe), Löschfristen als Weisung
+
+> **Löschung der Unterlagen vom Interessenten.** Der Auftraggeber weist den Auftragnehmer an (Art. 28 Abs. 3 lit. g
+> DSGVO), Unterlagen, die Interessenten über WhatsApp schicken, automatisch zu löschen:
+> 1. ohne Vertragsabschluss 30 Tage nach dem letzten Termin, ohne Termin 30 Tage nach dem Eingang;
+> 2. nach einem Vertragsabschluss 90 Tage nach dem Abschluss; der Auftragnehmer erinnert den Auftraggeber 14 Tage
+>    vorher, damit er beratungsrelevante Unterlagen in seine eigene Kundenakte übernehmen kann. Kennzeichnet der
+>    Auftraggeber eine Unterlage als Dokumentation seiner Beratung, entfällt die automatische Löschung; sie bleibt bis
+>    zur Löschung durch den Auftraggeber, längstens bis zur Löschung nach § 9;
+> 3. Verweise auf Dateien, für die noch keine Einwilligung vorliegt, nach spätestens 24 Stunden;
+> 4. nach einem Widerruf der Einwilligung sofort alle Unterlagen der betroffenen Person, auch als Dokumentation
+>    gekennzeichnete, sowie mit der Löschung des Leads.
+>
+> Kopien bei Meta (WhatsApp) unterliegen Metas eigener Frist von bis zu 30 Tagen.
+
+### 4.5 AVV § 7 (Drittländer), kein neuer Text
+
+Der geltende Absatz deckt die Übermittlung ab (DPF bzw. Standardvertragsklauseln). Die Verarbeitung durch AWS findet in
+der EU statt; der Hinweis auf die US-Muttergesellschaft steht in Anlage 2.
+
+### 4.6 Anlage 2 (Unterauftragsverarbeiter), neue und geänderte Einträge
+
+Grundlage: `SUBPROCESSORS` in `src/lib/legal-texts.ts`; nur die Zeilen, die sich für diese Funktion ändern. Die
+übrigen Einträge (Resend, Airtable, Zapier, OpenAI, Cloudflare, Sentry, Google/Microsoft) bleiben unverändert.
+
+| Unterauftragsverarbeiter | Zweck | Ort | Änderung |
+|---|---|---|---|
+| Amazon Web Services EMEA SARL, Luxemburg | KI-System (Claude von Anthropic über Amazon Bedrock, Region eu-central-1 Frankfurt) für die Zuordnung von Unterlagen, die Interessenten per WhatsApp schicken, und das Auslesen von Sachversicherungen; keine Speicherung der Ein- und Ausgaben, keine Nutzung zum Training | Verarbeitung in der EU (Frankfurt); Muttergesellschaft USA | **neu** |
+| Anthropic, PBC | wie bisher; zusätzlich, solange die Funktion für Unterlagen mit Gesundheitsangaben aus ist: Zuordnung der Unterlagen, die Interessenten per WhatsApp schicken (Unterlagen mit möglichen Gesundheitsangaben werden danach verworfen), und Auslesen von Sachversicherungen. Bei eingeschalteter Funktion mit EU-Zugang erhält Anthropic keine Unterlagen (dann AWS) | USA | Zweck ergänzt |
+| Meta Platforms Ireland Ltd. | wie bisher; zusätzlich: Übertragung der Dateien, die Interessenten per WhatsApp schicken (Speicherung bei Meta bis zu 30 Tage) | Irland / USA | Zweck ergänzt |
+| 360dialog GmbH | Anbindung der WhatsApp Business API, einschließlich Abruf der Dateien, die Interessenten schicken | Deutschland | Zweck ergänzt |
+| Railway Corporation | Hosting von Anwendung und Datenbank, einschließlich der verschlüsselt gespeicherten Unterlagen | Serverstandort EU (Amsterdam); Unternehmen USA | Zweck ergänzt |
+
+Für den Code nach Freigabe (Einträge in `SUBPROCESSORS`):
+
+```ts
+{ name: "Amazon Web Services EMEA SARL", purpose: "KI-System (Claude über Amazon Bedrock) für die Zuordnung von Unterlagen, die Interessenten per WhatsApp schicken, und das Auslesen von Sachversicherungen; keine Speicherung der Ein- und Ausgaben, keine Nutzung zum Training", location: "EU (Frankfurt); Unternehmen USA" },
+```
+
+Nachweis je Unterauftragsverarbeiter (in `docs/datenschutz.md` Abschnitt 3 eintragen, Fundstelle der
+Vertraulichkeitsklausel nach § 203 Abs. 4 Satz 2 Nr. 2 StGB):
+
+| Dienst | Vertrag | Fundstelle Vertraulichkeit | Drittland |
+|---|---|---|---|
+| AWS | AWS Customer Agreement mit AWS GDPR Data Processing Addendum (Teil der Service Terms) | **offen: Klausel ablegen** | Amazon.com, Inc. DPF; SCC im DPA |
+| Anthropic | Commercial Terms mit DPA | **offen** | DPF bzw. SCC |
+| Meta | WhatsApp Business Data Processing Terms | **offen** | DPF (WhatsApp LLC, Meta Platforms, Inc.) bzw. SCC |
+| 360dialog | AVV 360dialog | **offen** | EU |
+| Railway | Railway DPA | **offen** | DPF bzw. SCC |
+
+### 4.7 TOM (Anlage 1), Ergänzung
 
 | Maßnahme | Umsetzung |
 |---|---|
 | Verschlüsselung der Inhalte | AES-256-GCM je Datei mit zufälligem IV, Schlüssel `ENCRYPTION_KEY` (nicht in der Datenbank), `lib/encryption.ts encryptBytes`; Datenbank zusätzlich nur intern erreichbar, TLS nach außen |
-| Datensparsamkeit | Schalter an: Dateien mit möglichem Gesundheitsbezug vor der Einwilligung weder geladen noch an die KI gegeben (nur Media-ID, 24 Stunden); danach KI-Zuordnung nur über einen EU-Endpunkt, sonst keine; KI gibt nur Sparte und Ja/Nein zurück, ohne Dateinamen; Gesundheitsunterlagen nie ausgelesen; Chatverlauf ohne Dateinamen bei Gesundheitsbezug; Angaben des Assistenten ohne Gesundheitsangaben |
+| KI in der EU | Zuordnung und Auslesen von Unterlagen bei eingeschalteter Funktion nur über Amazon Bedrock, Region eu-central-1, regionaler Endpunkt (`lib/ki-eu.ts`); eigener IAM-Nutzer nur mit Bedrock-Aufrufrecht, Zugangsdaten nur als Railway-Variablen (`KI_EU_AWS_ACCESS_KEY_ID`, `KI_EU_AWS_SECRET_ACCESS_KEY`); nur `eu-*`-Regionen zugelassen; ohne EU-Zugang keine KI für Unterlagen mit möglichem Gesundheitsbezug |
+| Datensparsamkeit | Schalter an: Dateien mit möglichem Gesundheitsbezug vor der Einwilligung weder geladen noch an die KI gegeben (nur Media-ID, 24 Stunden); KI gibt nur Sparte und Ja/Nein zurück, ohne Dateinamen; Gesundheitsunterlagen nie ausgelesen; Chatverlauf ohne Dateinamen bei Gesundheitsbezug; Gesundheitsangaben im Chat vor jeder KI ausgeblendet (`redactHealthText`), Angaben des Assistenten ohne Gesundheitsangaben |
+| Minderjährige | Alter unter 18 laut Leadformular (`minderjaehrig`): keine Einwilligungsfrage, Gesundheitsunterlagen verworfen; Einwilligungstext „ab 18 Jahren“ |
 | Zugriff | Nur Logins des Kunden, die den Lead sehen dürfen (Inhaber, zuständiger Berater; `leadScope`). Admin in „Als Kunde ansehen“: keine Inhalte und keine Dateinamen gesundheitsbezogener Unterlagen. Abruf nur über die App (`Cache-Control: no-store`), kein öffentlicher Link, kein Objektspeicher |
 | Protokollierung | Einwilligung und Widerruf im Einwilligungsprotokoll; Ansehen gesundheitsbezogener Unterlagen, Verwerfen und Widerruf im Änderungsprotokoll (ohne Inhalte) |
 | Löschfristen | 30 Tage nach dem letzten Termin ohne Abschluss, 90 Tage nach dem Abschluss mit Erinnerung 14 Tage vorher, außer „Beratungsdokumentation behalten“ (Cron täglich 03:00 UTC, `prunePolicen`); ausstehende Einwilligung 24 Stunden; Widerruf sofort (Chat oder Knopf im Kontakt); Art. 17 und Vertragsende (`erasure.ts`) |
+| Verschwiegenheit | Mitarbeitende nach `docs/vorlage-verpflichtung-203-stgb.md` verpflichtet; Unterauftragsverarbeiter über DPA und Hinweis in Textform |
 | Schalter | `POLICEN_GESUNDHEIT_AN` (Standard aus): ohne ihn werden Unterlagen mit Gesundheitsbezug nie gespeichert |
+
+Vorschlag für `TOMS` (Satz für die öffentliche Anlage 1):
+
+> Unterlagen, die Interessenten per WhatsApp schicken, werden je Datei verschlüsselt gespeichert und nur den
+> zuständigen Nutzern des Auftraggebers angezeigt. Unterlagen mit möglichen Gesundheitsangaben werden erst nach
+> Einwilligung geladen, nur in der EU durch KI zugeordnet, nie ausgelesen und nach festen Fristen automatisch gelöscht.
 
 **Löschkonzept (`docs/datenschutz.md`, Abschnitt 4), neue Zeile nach Freigabe:**
 „Unterlagen per WhatsApp (`LeadDocument`) | 30 Tage nach dem letzten Termin ohne Abschluss; 90 Tage nach Abschluss
