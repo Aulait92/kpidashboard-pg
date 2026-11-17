@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "basisrente",
+  "produkt": "ERGO Basis-Rente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ab 25 € im Monat",
+    "Rentenbeginn ab 62 bis 85",
+    "BU-Beitragsbefreiung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "ERGO Basis-Rente Index",
+      "kurz": "Index",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "100 % ab 12 J. Laufzeit",
+        "rentenfaktor": "ja, plus Mindestrente",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "Zuzahlung ab 500 €",
+        "hinterbliebene": "vor und nach Rente",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/rente/basis-rente-vergleich",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Basis-Rente Balance",
+      "kurz": "Balance",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "für klassischen Teil",
+        "rentenfaktor": "optional (Plus)",
+        "anlage": "Fonds, ETF, Sicherung",
+        "flexibel": "Zuzahlung ab 500 €",
+        "hinterbliebene": "vor und nach Rente",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/rente/basis-rente-vergleich",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Basis-Rente Dynamik",
+      "kurz": "Dynamik",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "10 bis 100 % wählbar",
+        "rentenfaktor": "ja, höher",
+        "anlage": "Fonds, ETF, Sicherung",
+        "flexibel": "Zuzahlung ab 500 €",
+        "hinterbliebene": "vor und nach Rente",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/rente/basis-rente-vergleich",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Rentenversicherung/Basis-Rente",
+    "https://www.ergo.de/fragments/produkttabelle/rente/basis-rente-vergleich",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rente/basis-rente-index-highlightblatt.pdf.coredownload.pdf",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rente/basis-rente-balance-highlightblatt.pdf.coredownload.pdf",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/rente/basis-rente-dynamik-highlightblatt.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "Die drei Varianten sind Anlagekonzepte, keine Leistungsstufen; Empfehlung nur formal als mittlere Stufe.",
+    "Beitragsgarantie: Index 100 % ab 12 Jahren Laufzeit (Einmalbeitrag ab 5 Jahren), Balance garantierter Mindestwert nur für den klassisch angelegten Teil, Dynamik 10 bis 100 % wählbar. Rentenfaktor laut Vergleich: Index zusätzlich garantierte Mindestrente, Balance optional „Rentenfaktor-Plus“, Dynamik „höherer garantierter Rentenfaktor“; Höhe nicht genannt.",
+    "BU-Absicherung als Beitragsbefreiung ohne Gesundheitsfragen mit 3 Jahren Wartezeit (im Rahmen tariflicher Grenzen). Fonds: bis 20 aus über 80 Fonds und ETFs (Balance, Dynamik). Kosten (Effektivkosten) nicht genannt; DANV-Tarif für Juristen und Wirtschaftsberufe möglich."
+  ]
+}

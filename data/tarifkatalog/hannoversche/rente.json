@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "Hannoversche",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente oder Kapitalauszahlung",
+    "Zuzahlungen ab 200 €",
+    "Abruf ab 62 Jahren möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Klassische Rentenversicherung (Bausteinrente)",
+      "kurz": "Bausteinrente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "klassisch",
+        "flexibel": "Zuzahlung und Entnahme",
+        "hinterbliebene": "Garantiezeit oder Rente",
+        "kapital": "ja",
+        "beitragspause": "bis 2 Jahre"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/altersvorsorge/private-rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Rentenversicherung (Fondsrente)",
+      "kurz": "Fondsrente",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "über 30 Fonds und ETFs",
+        "flexibel": "Zuzahlung und Entnahme",
+        "hinterbliebene": "Guthaben, mind. Beiträge",
+        "kapital": "ja",
+        "beitragspause": "bis 3 Jahre"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/altersvorsorge/fondsgebundene-rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hannoversche.de/altersvorsorge/private-rentenversicherung",
+    "https://www.hannoversche.de/altersvorsorge/fondsgebundene-rentenversicherung",
+    "https://www.hannoversche.de/dam/baust-re/werbedruckstuecke/broschuere-bausteinrente.pdf",
+    "https://www.hannoversche.de/dam/fonds-re/werbedruckstuecke/broschuere-fondsgebundene-rentenversicherung.pdf"
+  ],
+  "offen": [
+    "Die beiden Varianten sind Anlagekonzepte (klassisch bzw. fondsgebunden), keine Leistungsstufen; keine Empfehlung markiert. Sofortrente (Einmalbeitrag ab 5.000 €) nicht aufgenommen.",
+    "Beitragsgarantie und garantierter Rentenfaktor sind für keine Variante beziffert (Bausteinrente: „hohe garantierte Leistungen“; Fondsrente: Umwandlung in eine garantierte Rente zum Rentenbeginn).",
+    "Hinterbliebene: Bausteinrente mit Rentengarantiezeit oder zusätzlicher Hinterbliebenenrente; Fondsrente vor Rentenbeginn Fondsguthaben, mindestens die gezahlten Beiträge, danach Rentengarantiezeit.",
+    "Bausteinrente: Rentenbeginn 62 bis 80 Jahre, Beitragsfreistellung bis 2 Jahre, BU-Beitragsübernahme als Zusatzbaustein. Fondsrente: Teilentnahmen, Beitragspause bis 3 Jahre, Beitragsdynamik; 5 Musterportfolios (auch reines ETF-Portfolio) oder bis zu 5 Fonds frei.",
+    "BU-Zusatz bei der Fondsrente und Kosten (Effektivkosten) nicht belegt; Kosten stehen in den Basisinformationsblättern."
+  ]
+}

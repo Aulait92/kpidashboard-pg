@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Elementar, alle Tiere, Tierbiss",
+    "Mallorca-Police",
+    "Kein Abzug neu für alt"
+  ],
+  "tarife": [
+    {
+      "name": "ERGO Kfz-Versicherung Basic",
+      "kurz": "Basic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "nein",
+        "marder": "ja, mit Folgeschäden",
+        "rabattschutz": "nein",
+        "gap": "nein",
+        "werkstatt": "ja (Werkstattbonus)",
+        "elektro": "nein",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "nein"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kfz/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Kfz-Versicherung Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "12 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "rabattschutz": "nein",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "nein"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kfz/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Kfz-Versicherung Best",
+      "kurz": "Best",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "12 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/kfz/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/KFZ-Versicherung/Autoversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/kfz/master",
+    "https://www.ergo.de/content/dam/ergo/pdf/sach/kfz/kfz-leistungstabelle.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "ERGO markiert Best als „Bestseller“. Basic nur für Pkw; Basic und Smart mit stärkerer Rückstufung im Schadenfall, Best mit normaler Rückstufung.",
+    "Deckung pauschal 100 Mio. €, Personenschäden je Person max. 15 Mio. €. Neupreis- bzw. Kaufpreisentschädigung 12 Monate (Neufahrzeug ab Erstzulassung, Gebrauchte bis 4 Jahre ab Vertragsbeginn); Wertschutz 24 (Smart, Best) und Wertschutz 36 (nur Best) zuwählbar.",
+    "Werkstatt: In Basic ist der Werkstattbonus (Reparatur in Premiumwerkstatt, keine freie Werkstattwahl) laut Tabelle enthalten; in Smart und Best freie Werkstattwahl, Werkstattbonus zuwählbar. Akku-Schutz (Allgefahrendeckung Akku, Ladestation u. a.) nur Smart und Best.",
+    "Zuwählbar außerdem: Ersatzfahrzeug Plus (Smart, Best), Fahrerschutz, Safe Drive (Telematik, Smart, Best), Eigenschadendeckung in Smart und Best enthalten."
+  ]
+}

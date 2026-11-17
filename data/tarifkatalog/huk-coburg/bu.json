@@ -1,0 +1,103 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Verzicht Arztanordnungsklausel",
+    "Start Police bis 30 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "BU Classic Schutz",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "36 Monate",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "rueckwirkend": "nein",
+        "weltweit": "ja",
+        "teilzeit": "nein",
+        "pflege": "nein",
+        "stundung": "nein",
+        "dynamik": "optional",
+        "infektion": "nein"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU Premium Schutz",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja, erweitert",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "nein",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU Premium Plus Schutz",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja, erweitert",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeitsversicherung.html"
+  ],
+  "offen": [
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole „ja“ bzw. Strich „keine Angabe“ aus dem Seitenquelltext); Strich als „nein“ erfasst. Bedingungen nicht ausgewertet.",
+    "Prognose: Classic 36 Monate, Leistung bei andauernder BU ab 7. Monat; Premium und Premium Plus 6 Monate, ab 1. Tag.",
+    "AU-Option (Rente bei 6 Monaten Krankschreibung) in allen Varianten optional.",
+    "Nachversicherung: Erhöhungsoptionen (Geburt, Immobilie) in allen Varianten, erweiterte Optionen (Heirat, Einkommen, Selbstständigkeit, einmalig ohne Anlass bis 35) ab Premium.",
+    "Beitragspause: Classic 6 Monate, Premium 12 Monate; zinslose Stundung bis 24 Monate laut Tabelle erst ab Premium.",
+    "Premium Plus zusätzlich: Rente bis 18 Monate bei Krebs/schweren Krankheiten, Notfallpaket Kind, Wiedereingliederungshilfe, Reha bis 2.000 €. Verzicht auf Umorganisation nicht genannt.",
+    "HUK markiert keine Variante; Premium als mittlere Stufe gesetzt."
+  ]
+}

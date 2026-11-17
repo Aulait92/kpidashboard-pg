@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ambulant und stationär",
+    "Leistung ab Pflegegrad 1",
+    "Pflege-Assistance wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Staatlich geförderte Pflegezusatzversicherung (Pflege-Bahr)",
+      "kurz": "Pflege-Bahr",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "wählbar, z. B. 600 €",
+        "ab-pg": "ab PG 1 (10 %)",
+        "ambulant-gleich": "ja",
+        "wartezeit": "5 Jahre",
+        "dynamik": "alle 3 J., max. 10 %"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/pflegeversicherung/pflegezusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegemonatsgeld-Versicherung PMvario",
+      "kurz": "PMvario",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "frei wählbar",
+        "ab-pg": "ab PG 1",
+        "einmal": "optional, ab PG 2",
+        "ambulant-gleich": "getrennt wählbar",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 J., max. 10 %"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/pflegeversicherung/pflegetagegeldversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/pflegeversicherung/pflegezusatzversicherung.html",
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/pflegeversicherung/pflegetagegeldversicherung.html"
+  ],
+  "offen": [
+    "Pflege-Bahr: staatliche Zulage 5 € im Monat, Abschluss ohne Gesundheitsprüfung (gesetzlich); Leistung in % des Monatsgelds PG 5: PG 1 10 %, PG 2 25 %, PG 3 50 %, PG 4 75 %, PG 5 100 %. Wartezeit 5 Jahre, entfällt bei Unfall.",
+    "PMvario: Monatsgeld je Pflegegrad und getrennt für ambulant/stationär wählbar (ab 100 € je Grad), Nachversicherung bis 30 % bei bestimmten Ereignissen, weltweit, ohne Kostennachweis.",
+    "Optionaler Baustein PMvario: Einmalzahlung bei erstmaliger Pflegebedürftigkeit ab PG 2 und Beitragsunterstützung ab PG 4 (Höhe nicht genannt); Beitragsbefreiung im Pflegefall daher nicht als Wert erfasst.",
+    "Demenz nicht gesondert genannt. Zwei unterschiedliche Produkte, kombinierbar; keine Empfehlung markiert."
+  ]
+}

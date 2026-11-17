@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Hilfe beim Wiedereinstieg",
+    "Steuerfreie Ablaufleistung"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "weltweit": "ja",
+        "stundung": "zinslos",
+        "dynamik": "optional",
+        "rueckwirkend": "erst nach 18 Monaten",
+        "au": "nein",
+        "pflege": "nein"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional",
+        "pflege": "nein"
+      },
+      "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "weltweit": "ja",
+        "stundung": "zinslos",
+        "dynamik": "optional",
+        "rueckwirkend": "ab Beginn der BU",
+        "au": "optional",
+        "pflege": "nein"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional",
+        "pflege": "nein"
+      },
+      "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "weltweit": "ja",
+        "stundung": "zinslos",
+        "dynamik": "optional",
+        "rueckwirkend": "ab Beginn der BU",
+        "au": "optional",
+        "pflege": "Pflegerente in BU-Höhe"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional",
+        "pflege": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/berufsunfaehigkeitsversicherung",
+    "https://www.ruv.de/dam/jcr:038d2022-558e-46d7-b161-e37647ff9a2d/PLG0426.2026-04-30-12-59-13.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungstabelle der Produktseite (AVB classic BV29, comfort BV30, premium BV31, Stand 01.04.2026); Bedingungsheft nicht im Detail ausgewertet.",
+    "Rückwirkende Leistung: Die Tabelle nennt nur den Zahlungsbeginn (classic erst nach 18 Monaten BU, comfort und premium rückwirkend ab Beginn). Regel bei verspäteter Meldung nicht genannt.",
+    "AU-Klausel: in comfort und premium wählbar (nach 6 Monaten Krankschreibung, höchstens 36 Monate), nicht in classic.",
+    "Sofortleistung bei Krebs, Herzinfarkt, Schlaganfall (bis 15 Monatsrenten) nur comfort und premium; Sofortkapital (12 Monatsrenten) nur premium.",
+    "Infektionsklausel steht im Überblick als versichert, je Stufe aber nicht in der Tabelle; Teilzeitklausel und Verzicht auf Umorganisation nicht genannt.",
+    "R+V hebt comfort in der Tabelle farblich hervor, ohne Beschriftung; comfort als mittlere Stufe gesetzt."
+  ]
+}

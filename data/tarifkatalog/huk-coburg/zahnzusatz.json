@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Implantate mitversichert",
+    "Schmerzausschaltung versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnzusatz Pro (Kinder und Jugendliche)",
+      "kurz": "Pro (Kinder)",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "doppelter Festzuschuss",
+        "implantate": "doppelter Festzuschuss",
+        "behandlung": "bis 200 € im Jahr",
+        "prophylaxe": "bis 100 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "keine",
+        "kfo": "90 %, max. 1.500 €",
+        "inlays": "90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz Pro90",
+      "kurz": "Pro90",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "bis 200 € im Jahr",
+        "prophylaxe": "bis 200 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "5 Jahre, je 1.000 €",
+        "kfo": "nur Unfall, 90 %",
+        "inlays": "90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz Pro100",
+      "kurz": "Pro100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %",
+        "wartezeit": "keine",
+        "staffel": "5 Jahre, je 1.000 €",
+        "kfo": "nur Unfall, 100 %",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html"
+  ],
+  "offen": [
+    "Pro ist der Tarif für Kinder und Jugendliche; für Erwachsene gelten Pro90 und Pro100.",
+    "Zahnersatz und Implantate jeweils zusammen mit der Leistung der GKV. Pro: Verdoppelung des GKV-Festzuschusses.",
+    "Begrenzung Pro90 und Pro100 für Zahnersatz und Inlays: 1.000 € im 1. Jahr, kumuliert bis 5.000 € in 5 Jahren; Pro ohne Begrenzung.",
+    "Kieferorthopädie: Pro bis 18 Jahre oder bei Unfall 90 % (max. 1.500 €); Pro90 und Pro100 nur nach Unfall (max. 1.500 € bzw. 3.000 €).",
+    "HUK markiert keinen Tarif; Pro90 als mittlere Stufe."
+  ]
+}

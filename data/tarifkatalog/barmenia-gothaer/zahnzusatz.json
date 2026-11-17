@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung Mehr Zahn Kompakt",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Bleaching 250 € alle 2 Jahre",
+    "Implantate ohne Anzahlgrenze"
+  ],
+  "tarife": [
+    {
+      "name": "Mehr Zahn Kompakt 80",
+      "kurz": "Kompakt 80",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "80 %",
+        "implantate": "80 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, 1x im Jahr",
+        "wartezeit": "keine",
+        "staffel": "max. 1.000 € im 1. Jahr",
+        "kfo": "80 %, bis 2.500 €",
+        "inlays": "80 %"
+      },
+      "quelle": "https://www.barmeniagothaer.de/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mehr Zahn Kompakt 90",
+      "kurz": "Kompakt 90",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, 1x im Jahr",
+        "wartezeit": "keine",
+        "staffel": "max. 1.000 € im 1. Jahr",
+        "kfo": "90 %, bis 2.500 €",
+        "inlays": "90 %"
+      },
+      "quelle": "https://www.barmeniagothaer.de/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mehr Zahn Kompakt 100",
+      "kurz": "Kompakt 100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, 1x im Jahr",
+        "wartezeit": "keine",
+        "staffel": "max. 1.000 € im 1. Jahr",
+        "kfo": "100 %, bis 2.500 €",
+        "inlays": "100 %"
+      },
+      "quelle": "https://www.barmeniagothaer.de/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/zahnzusatzversicherung/"
+  ],
+  "offen": [
+    "Zahnersatz inklusive Vorleistung der GKV; ohne GKV-Vorleistung nur 40, 50 bzw. 60 %. Zahnbehandlung 100 % auch ohne GKV-Vorleistung.",
+    "Leistungsbegrenzung (außer Prophylaxe): 1.000 € im 1., 2.000 € bis 2., 4.000 € bis 3., 5.000 € bis 4. Kalenderjahr, danach unbegrenzt; entfällt bei Unfall.",
+    "Kieferorthopädie Kinder (Beginn vor 18): 80/90/100 %, höchstens 2.500 € (1. Jahr 500 €, bis 2. Jahr 1.000 €); Erwachsene nach Unfall oder schwerer Krankheit bis 5.000 €.",
+    "Nur für gesetzlich Versicherte und Heilfürsorgeberechtigte. Mindestlaufzeit 24 Monate.",
+    "BarmeniaGothaer markiert keine Stufe; Kompakt 90 als mittlere Stufe."
+  ]
+}

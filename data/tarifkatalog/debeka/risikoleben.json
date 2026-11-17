@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Schutz ab Beginn, keine Wartezeit",
+    "Unfall-Zusatz wählbar",
+    "Dynamik 5 % wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif Ri (konstante Summe)",
+      "kurz": "Konstant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis 50.000 €",
+        "umtausch": "in Rente, ersten 10 J."
+      },
+      "bausteine": {
+        "fallend": "nein"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV9.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif RiF (fallende Summe)",
+      "kurz": "Fallend",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "umtausch": "in Rente, ersten 10 J."
+      },
+      "bausteine": {
+        "fallend": "inklusive"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV9.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/vorsorgensparen/risikovorsorge/risikolebensversicherung.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV9.pdf",
+    "https://www.debeka.de/service/vertragsgrundlagen.html#lebensversicherung_rentenversicherung"
+  ],
+  "offen": [
+    "Werte aus den Allgemeinen Bedingungen ABRi 01/2025. Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und weltweiter Schutz sind dort nicht genannt.",
+    "Nachversicherung nur bei Tarif Ri: Anlass (Heirat, Kind, Berufsstart, Einkommensplus, Immobilienkredit), bis zum 51. Lebensjahr, je Anlass höchstens 50 % der Anfangssumme und 50.000 €, insgesamt 100.000 €.",
+    "Umtausch: Umwandlung in eine aufgeschobene Rentenversicherung ohne neue Risikoprüfung in den ersten 10 Jahren (nicht in eine Kapitallebensversicherung).",
+    "Verbundene Leben, Kinder-Nachversicherung und höchste Summe ohne Zusatzprüfung nicht veröffentlicht. Debeka markiert keinen Tarif."
+  ]
+}

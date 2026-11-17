@@ -1,0 +1,51 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeits-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Kein Melden eines Berufswechsels",
+    "Pflegegrad 4 oder 5 gilt als BU"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeits-Versicherung (ABBV 01/2026)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "nein",
+        "nachversicherung": "ja, bis Alter 50",
+        "rueckwirkend": "bis 3 Jahre",
+        "weltweit": "ja",
+        "umorganisation": "teilweise",
+        "pflege": "PG 4 oder 5",
+        "stundung": "zinslos, max. 24 Mon.",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Berufsunf%C3%A4higkeit/BLV19.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/einkommensvorsorge/erwerbsundberufsunfaehigkeitsversicherung.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Berufsunf%C3%A4higkeit/BLV19.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Berufsunf%C3%A4higkeit/BLV26.pdf",
+    "https://www.debeka.de/service/vertragsgrundlagen.html#berufsunfaehigkeit"
+  ],
+  "offen": [
+    "Ein Tarif; Werte aus den Allgemeinen Bedingungen ABBV 01/2026. Eine Klausel für Arbeitsunfähigkeit (AU) ist darin nicht enthalten.",
+    "Nachversicherung ohne Risikoprüfung bei Heirat, Kind, Berufsstart, Einkommensplus ab 10 %, Immobilienkredit; bis zum 51. Lebensjahr, je Anlass höchstens 500 € Monatsrente.",
+    "Umorganisation (Selbstständige): Verzicht nur bei Akademikern mit mindestens 90 % Bürotätigkeit oder Betrieben unter 5 Mitarbeitern.",
+    "Stundung: bei Arbeitslosigkeit bis 6 Monate je Fall, insgesamt 24 Monate; während der Leistungsprüfung zinslos bis 5 Jahre. Garantierte Rentensteigerung im Leistungsfall wählbar.",
+    "Teilzeit- und Infektionsklausel nicht genannt. Für Beamte gibt es einen eigenen Tarif mit Dienstunfähigkeit (siehe Sparte Dienstunfähigkeit)."
+  ]
+}

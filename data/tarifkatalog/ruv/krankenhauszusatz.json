@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung (Tarife Klinik)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Rooming-in für Kinder",
+    "Ambulante OPs mitversichert",
+    "Beitragsfrei nach 8 Wochen"
+  ],
+  "tarife": [
+    {
+      "name": "Klinik classic (K3U), nur Unfall",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "ambulant-op": "ja",
+        "zimmer": "Zweibettzimmer",
+        "ueber-hoechstsatz": "nein",
+        "ersatztagegeld": "20 € bzw. 40 € je Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Klinik comfort (K2U)",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "ambulant-op": "ja",
+        "zimmer": "Zweibettzimmer",
+        "ueber-hoechstsatz": "nein",
+        "ersatztagegeld": "20 € bzw. 40 € je Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Klinik premium (K1U)",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "ambulant-op": "ja",
+        "zimmer": "Ein- oder Zweibett",
+        "ueber-hoechstsatz": "ja",
+        "ersatztagegeld": "30 € bzw. 40 € je Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/krankenzusatzversicherung/krankenhauszusatzversicherung"
+  ],
+  "offen": [
+    "Wichtig: classic leistet nur nach Unfall; comfort und premium bei Krankheit, Unfall und Schwangerschaft.",
+    "Ersatz-Krankenhaustagegeld: erster Betrag bei Verzicht auf Ein- oder Zweibettzimmer, zweiter bei Verzicht auf Chefarzt.",
+    "Behandlung im Ausland oder in Privatkliniken ohne GKV-Vorleistung: classic und comfort 60 € Krankenhaustagegeld, premium 90 % bis 6.000 € im Jahr.",
+    "Wartezeit: Seite nennt Schutz sofort ab Versicherungsbeginn. Krankenhaustagegeld als eigener Baustein nicht genannt.",
+    "R+V markiert comfort als „Topseller“."
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Dienstunfähigkeitsversicherung SI WorkLife",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Keine eigene DU-Prüfung",
+    "Vollzugsdienst-DU wählbar",
+    "Ausbau ohne Anlass 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "SI WorkLife EXKLUSIV",
+      "kurz": "EXKLUSIV",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja",
+        "verweisung": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/content/dam/si-documents/2/27/27360xx.pdf.coredownload.inline.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SI WorkLife EXKLUSIV-PLUS",
+      "kurz": "EXKLUSIV-PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja",
+        "verweisung": "ja",
+        "teil-du": "optional, ab 20 %"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/content/dam/si-documents/2/27/27360xx.pdf.coredownload.inline.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/dienstunfaehigkeitsversicherung/",
+    "https://www.signal-iduna.de/content/dam/si-documents/2/27/27360xx.pdf.coredownload.inline.pdf"
+  ],
+  "offen": [
+    "Werte aus der Broschüre „SI WorkLife EXKLUSIV Beamte“ (2736009, März 2026); Bedingungen nicht ausgewertet.",
+    "Teildienstunfähigkeit (ab 20 % Arbeitszeitreduzierung) nur für EXKLUSIV-PLUS genannt; für EXKLUSIV nicht genannt.",
+    "EXKLUSIV-PLUS zusätzlich: 50 % höhere DU-Rente in den ersten 8 Jahren für Beamte auf Probe oder Widerruf, Verzicht auf konkrete Verweisung, garantierte Rentensteigerung im Leistungsfall wählbar.",
+    "Nachversicherung als Ausbaugarantie (mit Anlass, in den ersten 5 Jahren auch ohne Anlass). Dynamik: Beitragsdynamik 1 bis 5 % jährlich. AU-Klausel nicht genannt.",
+    "BU mitversichert: Produkt ist eine Berufsunfähigkeitsversicherung mit eingeschlossener Dienstunfähigkeitsabsicherung."
+  ]
+}

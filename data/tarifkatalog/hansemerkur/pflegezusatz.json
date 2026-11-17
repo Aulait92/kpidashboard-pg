@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung (Pflegemonatsgeld)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Kostennachweis",
+    "Pflegeplatz in 24 Stunden",
+    "Leistung ohne Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "Pflege Schutz (Tarif PGA + PGS)",
+      "kurz": "Pflege Schutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "frei wählbar",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "nein",
+        "befreiung": "nein",
+        "ambulant-gleich": "nein, getrennt wählbar",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.hansemerkur.de/pflegeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflege Schutz + (Tarif PGA + PGS + PZG)",
+      "kurz": "Pflege Schutz+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "frei wählbar",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "1.500 € ab PG 2",
+        "befreiung": "ab Pflegegrad 3",
+        "ambulant-gleich": "nein, getrennt wählbar",
+        "wartezeit": "keine"
+      },
+      "quelle": "https://www.hansemerkur.de/pflegeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/pflegeversicherung",
+    "https://www.hansemerkur.de/pflege"
+  ],
+  "offen": [
+    "Pflegemonatsgeld für ambulante und stationäre Pflege getrennt wählbar: ambulant 100 % erst bei Pflegegrad 5, stationär 100 % ab Pflegegrad 2, darunter anteilig. Staffel je Pflegegrad nicht veröffentlicht.",
+    "Einmalige Erhöhung um je 300 € ohne Risikoprüfung bei Ereignissen (z. B. Heirat, Geburt); Vorauszahlung ab Pflegegrad 2. Pflege Schutz + übernimmt zusätzlich Assistance-Kosten bis 2.500 €.",
+    "Einsteigertarif „Pflege für Einsteiger“ (PGE, 1.000 € Pflegemonatsgeld, bis 49 Jahre) nicht als Stufe aufgenommen. Dynamik und Demenz nicht genannt.",
+    "Zwei Stufen ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+  ]
+}

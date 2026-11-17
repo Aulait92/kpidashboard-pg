@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit ohne Ausnahme",
+    "Notruf rund um die Uhr",
+    "Such- und Bergung bis 5.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif AR",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "70 Tage je Reise",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "Schmerz, Füllungen",
+        "chronisch": "nur Verschlechterung",
+        "schwanger": "bis 36. Woche"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/BKV24.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/zuhausefahrenreisen/reisenimausland/auslandsreisekrankenversicherung.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/BKV24.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_56.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_57.pdf"
+  ],
+  "offen": [
+    "Ein Tarif für beliebig viele Reisen im Versicherungsjahr, jeweils die ersten 70 Tage; Verlängerung, solange die Rückreise aus medizinischen Gründen nicht möglich ist.",
+    "Selbstbeteiligung in Bedingungen und IPID nicht genannt. Familien: Beitrag je Person (Kinder günstiger), kein eigener Familientarif.",
+    "Vor der Reise bestehende Erkrankungen nur bei unerwarteter Verschlechterung; nicht, wenn die Behandlung Reisegrund war. Neuanfertigung von Zahnersatz und Kieferorthopädie ausgeschlossen.",
+    "Langzeitreisen bis 36 Monate (Ausbildung, Studium, Au-pair) über Tarif ARL, nicht aufgenommen."
+  ]
+}

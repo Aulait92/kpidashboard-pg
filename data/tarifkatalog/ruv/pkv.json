@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung (GesundheitsKonzept AGIL)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Telemedizin rund um die Uhr",
+    "Wechsel nach 5, 10, 15 Jahren",
+    "Vorsorge ohne Altersgrenzen"
+  ],
+  "tarife": [
+    {
+      "name": "AGIL classic pro",
+      "kurz": "classic pro",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "selbstbehalt": "0, 480, 960, 1.920 €",
+        "bre": "ja"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ruv.de/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AGIL comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "selbstbehalt": "0, 480, 960, 1.920 €",
+        "bre": "ja",
+        "stationaer": "2-Bett, Privatarzt",
+        "heilpraktiker": "ja"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ruv.de/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AGIL premium",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "selbstbehalt": "0, 480, 960, 1.920 €",
+        "bre": "ja",
+        "stationaer": "1-Bett, Privatarzt",
+        "ambulant": "über GOÄ-Höchstsatz",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.ruv.de/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/private-krankenversicherung",
+    "https://www.ruv.de/dam/privatkunden/images/gesundheit-pflege/staticfiles-auto/PK-Konzept-20AGIL.png"
+  ],
+  "offen": [
+    "Die Produktseite beschreibt die drei Tarife nur in Sätzen, ohne Leistungstabelle; Erstattungssätze (ambulant, Zahnersatz, Hilfsmittel, Psychotherapie, Sehhilfen) nicht beziffert. Bedingungsheft der R+V Krankenversicherung nicht ausgewertet.",
+    "classic pro: nur beschrieben als Schutz, der in großen Teilen über das gesetzliche Maß hinausgeht; Unterbringung im Krankenhaus nicht genannt.",
+    "Heilpraktiker bei comfort ausdrücklich genannt, bei classic pro und premium nicht. Primärarztprinzip nicht genannt.",
+    "Selbstbehalt in vier Stufen je Tarif wählbar (Erhöhung jederzeit, Senkung alle 5 Jahre bis Alter 50). Beitragsrückerstattung bei Leistungsfreiheit, Höhe nicht genannt.",
+    "Krankentagegeld und Pflegemonatsgeld als Ergänzung genannt; dazu Beitragsentlastung im Alter.",
+    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+  ]
+}

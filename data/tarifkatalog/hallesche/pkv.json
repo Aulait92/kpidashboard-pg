@@ -1,0 +1,105 @@
+{
+  "gesellschaft": "Hallesche",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Kinder im 1. Jahr beitragsfrei",
+    "Vorsorge ohne Altersgrenze",
+    "Bonus-Variante 100 € im Monat"
+  ],
+  "tarife": [
+    {
+      "name": "NK.select S",
+      "kurz": "S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, Facharzt 75 %",
+        "stationaer": "Mehrbett, Belegarzt",
+        "zahnersatz": "70 %",
+        "selbstbehalt": "600 bis 3.000 €",
+        "bre": "ja",
+        "heilpraktiker": "nein",
+        "hilfsmittel": "80 %, ab 4.000 € 100 %",
+        "psychotherapie": "70 %",
+        "primaerarzt": "ja, sonst 75 %",
+        "sehhilfen": "150 € alle 2 Jahre",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NK.select L",
+      "kurz": "L",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Zweibett, Privatarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "600 bis 3.000 €",
+        "bre": "ja",
+        "heilpraktiker": "80 %, bis 1.200 €/Jahr",
+        "hilfsmittel": "80 %, ab 2.000 € 100 %",
+        "psychotherapie": "80 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "300 € alle 2 Jahre",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NK.select XL",
+      "kurz": "XL",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Einbett, Privatarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "600 bis 3.000 €",
+        "bre": "ja",
+        "heilpraktiker": "80 %, bis 2.400 €/Jahr",
+        "hilfsmittel": "100 %, offener Katalog",
+        "psychotherapie": "90 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "450 € alle 2 Jahre",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige",
+    "https://www.hallesche.de/-/media/druckstuecke/broschuere/w/107/broschuerenkselectsw107pdf/broschuere-nk-select-s-w107.pdf",
+    "https://www.hallesche.de/-/media/druckstuecke/broschuere/w/105/broschuerenkselectlw105pdf/broschuere-nk-select-l-w105.pdf",
+    "https://www.hallesche.de/-/media/druckstuecke/broschuere/w/103/broschueretarifnkselectxlfuerangestellteselbstaendigew103pdf/broschuere-tarif-nk-select-xl-fuer-angestellte-selbstaendige-w103.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite (Tarifkonzept NK.select für Angestellte und Selbstständige); Broschüren S und XL ergänzend gelesen, Broschüre L und Tarifbedingungen nicht ausgewertet.",
+    "Empfehlung: Die Hallesche kennzeichnet NK.select XL im Vergleich als „Unser Top-Schutz“; als Markierung der Gesellschaft gewertet, bitte prüfen.",
+    "Selbstbehalt je Tarif 600, 1.200 oder 3.000 € im Jahr (Kinder die Hälfte) oder Bonus-Variante mit garantiertem Gesundheitsbonus von 100 € im Monat. Beitragsrückerstattung bei Leistungsfreiheit genannt, Höhe nicht beziffert.",
+    "Hilfsmittel: S und XL ohne Begrenzung auf einen Hilfsmittelkatalog (Broschüren); bei L nicht bestätigt. Arznei- und Heilmittel S 80 % bis 4.000 €, L 80 % bis 2.000 € Rechnungsbetrag, darüber 100 %; XL 100 %.",
+    "Ausland: weltweiter Schutz laut Broschüren; Rücktransport bei S über Tarif URZ.",
+    "Wechseloption NK.select FLEX (Wechsel zwischen S, L, XL ohne neue Gesundheitsprüfung) nicht im Schema. Ältere Tarife PRIMO, KS und NK nicht aufgenommen."
+  ]
+}

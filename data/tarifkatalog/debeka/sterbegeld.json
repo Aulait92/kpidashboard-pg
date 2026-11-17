@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Abschluss bis Alter 80",
+    "Bezugsperson änderbar"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung (Tarif L1)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "wartezeit": "keine",
+        "unfall": "optional, doppelt",
+        "ohne-gp": "nein, kurze Angaben",
+        "beitragsende": "wählbar, z. B. 67"
+      },
+      "bausteine": {
+        "unfall": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/risikovorsorge/sterbegeldversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/vorsorgensparen/risikovorsorge/sterbegeldversicherung.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV1.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (L1, Bedingungen ABL 01/2025). Versicherungssumme frei vereinbar; Höchst- und Mindestsumme nicht veröffentlicht (nach Herabsetzung mindestens 4.000 €).",
+    "Keine ärztliche Untersuchung, aber schriftliche Angaben zur Gesundheit; daher nicht „ohne Gesundheitsfragen“.",
+    "Bestattungsvorsorge-Service nicht genannt. Unfall-Zusatzversicherung verdoppelt die Summe bei Unfalltod."
+  ]
+}

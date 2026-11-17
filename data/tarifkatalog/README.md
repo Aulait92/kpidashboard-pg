@@ -400,3 +400,40 @@ Zum Gegenprüfen besonders: Rente (Stufen sind Anlagekonzepte, keine Leistungsst
 Stufe“), AXA Kfz (Neupreisentschädigung 12 bzw. 3 Monate widersprüchlich), SIGNAL IDUNA Krankenhaus (Stufen
 unterscheiden sich vor allem darin, wann sie leisten), selbst vergebene Kurznamen (SIGNAL IDUNA Risikoleben).
 Folien-Test: `tests/unit/vergleichsfolie-passt.test.ts` misst jede Sparte aller drei Gesellschaften.
+
+### Welle 1: Marktführer Leben und Gesundheit (17.11.2026)
+
+Weitere Sparten `dienstunfaehigkeit, krankentagegeld, kinderinvaliditaet, reiseruecktritt`; neue Gesellschaften
+Debeka, Alte Leipziger, Hallesche, Swiss Life, Canada Life, Hannoversche, Europa, CosmosDirekt; ERGO (mit DKV),
+HUK-COBURG, R+V, HanseMerkur, BarmeniaGothaer und DFV um Leben, Gesundheit und Vorsorge ergänzt. Zahl = Stufen,
+„·“ = kein Produkt bei der Gesellschaft bzw. nicht recherchiert. Alles `ungeprueft: true`.
+
+| Sparte | Allianz | AXA | SI | ERGO | HUK | R+V | Debeka | HM | BG | DFV | AL | Hall. | SL | CL | Hann. | Europa | Cosmos |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| bu | 3 | 3 | 2 | 2 | 3 | 3 | 1 | · | 2 | · | 1 | · | 2 | 1 | 3 | 2 | 2 |
+| dienstunfaehigkeit | 1 | 1 | 2 | · | · | 3 | 1 | · | · | · | · | · | · | · | · | · | · |
+| grundfaehigkeit | 1 | 1 | 2 | · | · | 3 | · | · | · | · | 3 | · | 2 | 1 | · | · | · |
+| risikoleben | 3 | 2 | 3 | 3 | 3 | 3 | 2 | · | 3 | · | 2 | · | · | 2 | 3 | 2 | 3 |
+| kinderinvaliditaet | 1 | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| sterbegeld | 1 | 1 | 1 | 3 | 1 | 1 | 1 | · | · | · | · | · | · | · | 3 | · | 1 |
+| pkv | 2 | 3 | 3 | 3 | 3 | 3 | 4 | 3 | 4 | · | · | 3 | · | · | · | · | · |
+| krankentagegeld | 4 | 1 | 3 | 3 | · | 1 | 2 | 1 | 1 | · | · | 2 | · | · | · | · | · |
+| zahnzusatz | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 4 | · | 3 | · | · | · | · | · |
+| krankenhauszusatz | 3 | 3 | 4 | 3 | 2 | 3 | 1 | 3 | 2 | 4 | · | 3 | · | · | · | · | · |
+| ambulant | 2 | 2 | 2 | 3 | 2 | 3 | 2 | 3 | 3 | 4 | · | 3 | · | · | · | · | · |
+| pflegezusatz | 1 | 3 | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 3 | · | 2 | · | · | · | · | · |
+| reise-kranken | 2 | 2 | 2 | 2 | 2 | · | 1 | 2 | · | 1 | · | 1 | · | · | · | 1 | · |
+| rente | 4 | 3 | 2 | 4 | 1 | 3 | 3 | · | 2 | · | 4 | · | 1 | 3 | 2 | 3 | 1 |
+| basisrente | 1 | 2 | 2 | 3 | 1 | 2 | 1 | · | · | · | 2 | · | 1 | 2 | · | · | · |
+| kfz | 4 | 3 | 2 | 3 | 3 | 3 | 2 | · | · | · | · | · | · | · | · | · | 2 |
+| reiseruecktritt | 4 | 2 | 3 | 3 | · | · | · | 3 | · | · | · | · | · | · | · | · | · |
+
+Kein eigenes Produkt laut Seiten der Gesellschaft: Kinderinvalidität bei SIGNAL IDUNA, HUK, R+V, ERGO, Alte Leipziger;
+Dienstunfähigkeit bei Alte Leipziger und Swiss Life (BU ohne DU-Klausel); Sterbegeld bei DFV und Europa; Basisrente
+bei CosmosDirekt (kein Neugeschäft). Swiss Life Risikoleben fehlt (Produktseite für Abrufe gesperrt).
+
+Zum Gegenprüfen besonders: Stufen, die Zielgruppen oder Varianten sind statt Leistungsstufen (Krankentagegeld,
+Rente, Basisrente, Pflege, Reise); Allianz und AXA Kinderinvalidität (Baustein der Kinderunfall bzw. Rente nach
+medizinischen Kriterien); Swiss Life (Werte aus Bedingungen, Produktseiten gesperrt); Debeka PKV (Stufen selbst
+gebildet, Beihilfetarife fehlen); Hannoversche „110 % Vorabauszahlung“ nur bis 30.11.2026.
+Folien-Test misst jetzt jede Sparte jeder Gesellschaft.

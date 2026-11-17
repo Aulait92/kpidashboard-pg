@@ -94,6 +94,15 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   uelzener: "Uelzener",
   vhv: "VHV",
   zurich: "Zurich",
+  // Marktführer Leben, Gesundheit und Vorsorge (Ole, 17.11.2026: alle Versicherungsprodukte)
+  "alte-leipziger": "Alte Leipziger",
+  "canada-life": "Canada Life",
+  cosmosdirekt: "CosmosDirekt",
+  debeka: "Debeka",
+  europa: "Europa",
+  hallesche: "Hallesche",
+  hannoversche: "Hannoversche",
+  "swiss-life": "Swiss Life",
 };
 /** Reihenfolge in Listen (Ole, 16.11.2026): die Vertreter-Gesellschaften zuerst, dann alle übrigen alphabetisch nach Anzeigename. */
 const REIHENFOLGE = [
@@ -147,6 +156,14 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   // „Roland“ ist auch ein Vorname: nur die Großschreibung der Marke oder mit Rechtsschutz bzw. Versicherung.
   if (/\bROLAND\b/.test(t) || /\broland[\s-]*(rechtsschutz|versicherung)/i.test(t)) return "roland";
   if (/advocard/i.test(t)) return "advocard";
+  if (/alte\s*leipziger/i.test(t)) return "alte-leipziger";
+  if (/canada\s*life/i.test(t)) return "canada-life";
+  if (/cosmos\s*direkt/i.test(t)) return "cosmosdirekt";
+  if (/\bdebeka\b/i.test(t)) return "debeka";
+  if (/europa[\s-]*(versicherung|lebensversicherung)/i.test(t)) return "europa";
+  if (/hallesche/i.test(t)) return "hallesche";
+  if (/hannoversche/i.test(t)) return "hannoversche";
+  if (/swiss\s*life/i.test(t)) return "swiss-life";
   return null;
 }
 
@@ -212,10 +229,10 @@ const TIERHALTER = (key: string, label: string, pferd: boolean): KatalogSparte =
 export const SPARTEN_GRUPPEN: { label: string; keys: string[] }[] = [
   { label: "Haftpflicht und Sach", keys: ["haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "unfall"] },
   { label: "Tiere", keys: ["katze-kranken", "katze-op", "hund-kranken", "hund-op", "pferd-kranken", "pferd-op", "tierhalter-hund", "tierhalter-pferd"] },
-  { label: "Leben und Arbeitskraft", keys: ["bu", "grundfaehigkeit", "risikoleben", "sterbegeld"] },
-  { label: "Gesundheit", keys: ["pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "reise-kranken"] },
+  { label: "Leben und Arbeitskraft", keys: ["bu", "dienstunfaehigkeit", "grundfaehigkeit", "risikoleben", "kinderinvaliditaet", "sterbegeld"] },
+  { label: "Gesundheit", keys: ["pkv", "krankentagegeld", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "reise-kranken"] },
   { label: "Vorsorge", keys: ["rente", "basisrente"] },
-  { label: "Kfz", keys: ["kfz"] },
+  { label: "Kfz und Reise", keys: ["kfz", "reiseruecktritt"] },
 ];
 
 /**

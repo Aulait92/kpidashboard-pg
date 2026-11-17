@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Mit Alterungsrückstellungen",
+    "Mind. doppelter GKV-Zuschuss"
+  ],
+  "tarife": [
+    {
+      "name": "Zahn classic (Z3U)",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "wartezeit": "keine",
+        "behandlung": "optional",
+        "prophylaxe": "optional",
+        "inlays": "optional",
+        "zahnersatz": "doppelter GKV-Zuschuss",
+        "implantate": "doppelter GKV-Zuschuss",
+        "kfo": "nein"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "nein"
+      },
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn comfort (Z2U)",
+      "kurz": "comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "wartezeit": "keine",
+        "behandlung": "optional",
+        "prophylaxe": "optional",
+        "inlays": "optional",
+        "zahnersatz": "70 %",
+        "implantate": "70 %",
+        "staffel": "10.000 € in 4 Jahren",
+        "kfo": "70 %, bis 1.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn premium (Z1U)",
+      "kurz": "premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "wartezeit": "keine",
+        "behandlung": "optional",
+        "prophylaxe": "optional",
+        "inlays": "optional",
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "staffel": "10.000 € in 4 Jahren",
+        "kfo": "90 %, bis 2.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.ruv.de/krankenzusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/krankenzusatzversicherung/zahnzusatzversicherung"
+  ],
+  "offen": [
+    "Zahnersatz: classic verdoppelt den GKV-Festzuschuss bis zu den Restkosten; comfort 70 % und premium 90 % der erstattungsfähigen Kosten unter Anrechnung des GKV-Zuschusses, mindestens aber den doppelten Zuschuss.",
+    "Zahnstaffel nur für comfort und premium genannt: 1.000, 2.000, 3.000, 4.000 € in den ersten vier Kalenderjahren (außer Unfälle), ab dem 5. Jahr ohne Grenze. Für classic keine Staffel genannt.",
+    "Zahnbehandlung, Prophylaxe (100 %, 1x jährlich) und Kunststofffüllungen nur über den Zusatztarif ZahnVorsorge (ZV), mit jedem Tarif kombinierbar.",
+    "Kieferorthopädie bei Behandlungsbeginn bis 18: comfort 70 % bis 1.000 € (KIG 1 bis 2) bzw. 500 € (KIG 3 bis 5), premium 90 % bis 2.000 € bzw. 1.000 €.",
+    "R+V empfiehlt nur, jeden Tarif mit ZahnVorsorge zu ergänzen; comfort als mittlere Stufe gesetzt."
+  ]
+}

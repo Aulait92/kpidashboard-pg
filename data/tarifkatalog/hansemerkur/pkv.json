@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Zahnbehandlung 100 %",
+    "Vorsorge 100 %, Krebs-Scan",
+    "Zahnreinigung bis 120 €"
+  ],
+  "tarife": [
+    {
+      "name": "Smart Fit",
+      "kurz": "Smart Fit",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, sonst 80 %",
+        "stationaer": "Mehrbett, Belegarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "500 oder 1.000 €",
+        "bre": "bis 500 €, erfolgsabh.",
+        "heilpraktiker": "80 %, max. 1.000 €",
+        "psychotherapie": "70 %, 50 Sitzungen/Jahr",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "100 € alle 3 Jahre"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/private-krankenversicherung/angestellte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Advanced Fit",
+      "kurz": "Advanced Fit",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, sonst 80 %",
+        "stationaer": "Mehrbett, Belegarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "0 €",
+        "bre": "1.000 € garantiert",
+        "heilpraktiker": "80 %, max. 1.000 €",
+        "psychotherapie": "70 %, 50 Sitzungen/Jahr",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "100 € alle 3 Jahre"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/private-krankenversicherung/angestellte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Best Fit",
+      "kurz": "Best Fit",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Mehrbett, Belegarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "0 €",
+        "bre": "6 Monatsbeiträge AZP",
+        "heilpraktiker": "100 %",
+        "psychotherapie": "90 %, 50 Sitzungen/Jahr",
+        "sehhilfen": "600 € alle 2 Jahre"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/private-krankenversicherung/angestellte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/private-krankenversicherung/angestellte",
+    "https://www.hansemerkur.de/private-krankenversicherung"
+  ],
+  "offen": [
+    "Quelle ist der Tarifvergleich für Angestellte; für Selbstständige und Beamte gibt es eigene Seiten, nicht ausgewertet.",
+    "Stationär: Regelleistung Mehrbettzimmer und Belegarzt; Ein- oder Zweibettzimmer mit Spezialist und Leistung über GOÄ-Höchstsatz über den Zusatztarif PSV in allen Stufen wählbar.",
+    "Beitragsrückerstattung: Smart Fit bis 500 € erfolgsabhängig (Selbstbeteiligung 500 oder 1.000 € für ambulant und Zahn, 10 % Gesundheitsrabatt); Advanced Fit 1.000 € garantiert plus bis 500 € erfolgsabhängig (Variante Advanced Fit S: 83,33 € monatliche Beitragsstundung); Best Fit 6 Monatsbeiträge des Tarifs AZP (Variante Best Fit S: Stundung 50 % auf AZP).",
+    "Primärarztprinzip in Best Fit nicht genannt (ambulant 100 % ohne Einschränkung). Hilfsmittel und Ausland nicht im Tarifvergleich.",
+    "Bausteine: Krankentagegeld (Tarif T) und Pflegemonatsgeld (Tarif PG) in allen Stufen optional; ebenso Kurtagegeld (KUT) und Beitragsreduzierung ab 65 (BEN). Best Fit zusätzlich LASIK bis 4.000 € in 60 Monaten.",
+    "Empfehlung: HanseMerkur markiert Best Fit als „Bestseller“."
+  ]
+}

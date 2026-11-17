@@ -1,0 +1,93 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnersatzversicherung Dental-Schutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Gesundheitsfragen",
+    "Monatlich kündbar",
+    "Weltweit bei Auslandsreisen"
+  ],
+  "tarife": [
+    {
+      "name": "Dental-Schutz 75 (DS75)",
+      "kurz": "DS 75",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "75 %",
+        "implantate": "75 %",
+        "behandlung": "nein",
+        "prophylaxe": "nein",
+        "wartezeit": "keine",
+        "staffel": "4 Jahre, bis 2.000 €",
+        "kfo": "nein",
+        "inlays": "Inlays 75 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Zahnzusatzversicherung/zahnersatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Dental-Schutz 90 (DS75 + DS90)",
+      "kurz": "DS 90",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "nein",
+        "prophylaxe": "nein",
+        "wartezeit": "keine",
+        "staffel": "4 Jahre, bis 3.000 €",
+        "kfo": "nein",
+        "inlays": "Inlays 90 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Zahnzusatzversicherung/zahnersatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Dental-Schutz 100 (DS75 + DS90 + DS100)",
+      "kurz": "DS 100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "nein",
+        "prophylaxe": "nein",
+        "wartezeit": "keine",
+        "staffel": "4 Jahre, bis 4.000 €",
+        "kfo": "nein",
+        "inlays": "Inlays 100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Zahnzusatzversicherung/zahnersatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Zahnzusatzversicherung/zahnersatz",
+    "https://www.ergo.de/content/dam/ergo/pdf/kranken/zahnzusatz/zahn_broschuere.pdf.coredownload.pdf",
+    "https://www.ergo.de/de/Produkte/Zahnzusatzversicherung"
+  ],
+  "offen": [
+    "Dental-Schutz ist ein reiner Zahnersatztarif: Zahnerhalt (Füllungen, Wurzelbehandlung), Prophylaxe und Kieferorthopädie sind nicht versichert. ERGO empfiehlt dafür zusätzlich Dental-Vorsorge (DVB, Prophylaxe 1x im Jahr) bzw. Dental-Vorsorge Premium (DVB + DVE, Prophylaxe ohne Begrenzung) oder für Kinder Kieferorthopädie Sofort (KFO); deshalb Bausteine als „optional“ geführt.",
+    "Erstattung jeweils inklusive Vorleistung der Krankenkasse; bei Regelversorgung oder Unfall leisten DS75 und DS90 100 %. Ohne Festzuschuss der Kasse (Privatzahnarzt) werden pauschal 35 % angerechnet.",
+    "Zahnstaffel: Summe in den ersten 4 Versicherungsjahren (DS75 500/1.000/1.500/2.000 €, DS90 750/1.500/2.250/3.000 €, DS100 1.000/2.000/3.000/4.000 €); entfällt bei Unfall.",
+    "Weitere ERGO Zahntarife (Verdoppelter Festzuschuss ZEF, Zahnersatz mit Implantaten ZZP, Zahnzusatz Sofort ZEK) und der DKV-Tarif „Rundumschutz Zahn“ sind nicht als Stufen geführt. ERGO markiert keine Empfehlung; DS 90 als mittlere Stufe."
+  ]
+}

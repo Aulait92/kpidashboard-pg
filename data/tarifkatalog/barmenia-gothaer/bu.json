@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Soforthilfe bei Krebs 18 Mon.",
+    "Überbrückungsgeld 5 Monate",
+    "Work-Life-Balance-Option"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, bis 36 Monate",
+        "nachversicherung": "ja",
+        "pflege": "lebenslang, BU vor 45",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung Invest",
+      "kurz": "Invest",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "ja, bis 36 Monate",
+        "nachversicherung": "ja",
+        "pflege": "lebenslang, BU vor 45",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "inklusive"
+      },
+      "quelle": "https://www.barmeniagothaer.de/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/berufsunfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "Rückwirkende Leistung bei verspäteter Meldung nicht im Tarifvergleich; Bedingungen (AVB) nicht ausgewertet.",
+    "AU-Klausel: Rente bis 36 Monate bei mindestens 3 Monaten Krankschreibung und voraussichtlich weiteren 3 Monaten; Premium mit oder ohne AU wählbar.",
+    "Nachversicherung: anlassbezogen (z. B. Heirat, Geburt), ohne Anlass in den ersten 5 Jahren (Premium) bzw. 15 Jahren (Invest); Karrieregarantie bis 6.000 € Rente.",
+    "Invest: Beiträge werden in Fonds angelegt, verbleibendes Fondsguthaben am Vertragsende. Premium zusätzlich Leistung bei schwerer Krankheit eigener Kinder.",
+    "Pflege: lebenslange Zahlung nach Ende der Leistungsdauer, wenn die BU vor dem 45. Lebensjahr durch Pflegebedürftigkeit eintritt.",
+    "Zwei Tarife ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+  ]
+}

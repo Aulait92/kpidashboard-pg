@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "reiseruecktritt",
+  "produkt": "ERGO Reiserücktrittsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Stornokosten und Reiseabbruch",
+    "Stornoberatung per Telefon",
+    "Panne oder Unfall des Autos"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktrittsversicherung für eine Reise",
+      "kurz": "Eine Reise",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "voller Reisepreis",
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja",
+        "jahr": "nein",
+        "pandemie": "ja, Covid-19",
+        "familie": "wählbar",
+        "gruende": "inkl. Jobverlust"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Reiseversicherung/Reiseruecktrittsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktrittsversicherung Sparfuchs (24 Monate Mindestlaufzeit)",
+      "kurz": "Jahr Sparfuchs",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "summe": "voller Reisepreis",
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja",
+        "jahr": "ja, 24 Monate Laufzeit",
+        "pandemie": "ja, Covid-19",
+        "familie": "wählbar",
+        "gruende": "inkl. Jobverlust"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Reiseversicherung/Reiseruecktrittsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktrittsversicherung",
+      "kurz": "Jahr",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "summe": "voller Reisepreis",
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja",
+        "jahr": "ja",
+        "pandemie": "ja, Covid-19",
+        "familie": "wählbar",
+        "gruende": "inkl. Jobverlust"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Reiseversicherung/Reiseruecktrittsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Reiseversicherung/Reiseruecktrittsversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/reise/reiseruecktrittsversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/reise/reiseruecktrittsversicherung-jahr"
+  ],
+  "offen": [
+    "Produkt der ERGO Reiseversicherung AG. Die Stufen sind Vertragsarten (eine Reise, Jahresvertrag mit 24 Monaten Mindestlaufzeit „Sparfuchs“, Jahresvertrag), keine Leistungsstufen; Leistungen laut Seite gleich. ERGO zeigt Sparfuchs in der Mitte mit eigener Markierung; als mittlere Stufe gesetzt.",
+    "Versicherungssumme nach vollem Reisepreis. Selbstbeteiligung wählbar: mit SB 20 % des erstattungsfähigen Schadens, mindestens 25 € je Person (Storno und Abbruch).",
+    "Covid-19 als unerwartete schwere Erkrankung oder Tod mitversichert. Gründe u. a. betriebsbedingte Kündigung, Arbeitsplatzwechsel, Schaden am Eigentum, Ausfall des Fahrzeugs; nicht versichert z. B. Trennung, Streik, Krieg. Für Einzelpersonen, Paare und Familien; im Jahresvertrag gilt die volle Summe für alle Familienmitglieder.",
+    "Für eine Reise gibt es zusätzlich die günstigere Variante „Sichere Fahrt“ (Auto, Bus, Bahn in Europa); nicht als Stufe geführt."
+  ]
+}

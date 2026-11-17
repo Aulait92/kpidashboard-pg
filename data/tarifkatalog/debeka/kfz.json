@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € Deckung",
+    "Mallorca-Police",
+    "Paket E-Mobilität"
+  ],
+  "tarife": [
+    {
+      "name": "Leistungspaket Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Rausch u. a.",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional (Nachlass)",
+        "elektro": "Paket E-Mobilität",
+        "mallorca": "ja",
+        "tiere": "Haarwild, Bär, Wolf",
+        "neuwert": "6 Monate",
+        "marder": "ohne Folgeschäden"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Kfz-Versicherung/IIIAV610.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Leistungspaket Comfort Plus",
+      "kurz": "Comfort Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Rausch u. a.",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional (Nachlass)",
+        "elektro": "Paket E-Mobilität",
+        "mallorca": "ja",
+        "tiere": "Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgesch. bis 10.000 €"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Kfz-Versicherung/IIIAV610.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/zuhausefahrenreisen/automotorradco/kfzversicherung.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Kfz-Versicherung/IIIAV610.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Kfz-Versicherung/BFZ1.pdf"
+  ],
+  "offen": [
+    "Haftpflicht 100 Mio. € pauschal, Personenschäden höchstens 15 Mio. € je Person. Grobe Fahrlässigkeit: Verzicht auf den Einwand laut AKB 2025, nicht bei Alkohol oder Drogen und weiteren genannten Fällen.",
+    "Neupreisentschädigung: Comfort 6 Monate, Comfort Plus 24 Monate (bis 60.000 km); Comfort Plus zusätzlich Kaufwertentschädigung 12 Monate, kein Abzug Neu für Alt, Auslandsschadenschutz, Eigenschadendeckung bis 100.000 €.",
+    "Wildschäden: Comfort Haarwild plus Bär, Waschbär, Marderhund, Wolf; Comfort Plus Tiere aller Art.",
+    "Werkstattbindung (Unfallreparatur-Service) senkt den Beitrag, nicht für Leasing und Tesla. Fahrerschutz gegen Mehrbeitrag. Debeka markiert kein Paket."
+  ]
+}

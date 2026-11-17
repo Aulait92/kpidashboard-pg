@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Zahnstaffel",
+    "Wartezeit 8 Monate",
+    "Erstattung nach Rechnung"
+  ],
+  "tarife": [
+    {
+      "name": "Zahn50 (Tarif EZ50)",
+      "kurz": "Zahn50",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "50 % der Rechnung",
+        "implantate": "50 %",
+        "behandlung": "Füllungen 50 %",
+        "prophylaxe": "nein",
+        "wartezeit": "8 Monate",
+        "staffel": "keine",
+        "inlays": "50 %"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn70 (Tarif EZ70plus)",
+      "kurz": "Zahn70",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "70 % der Rechnung",
+        "implantate": "70 %",
+        "behandlung": "Füllungen 70 %",
+        "prophylaxe": "2x im Jahr, 100 %",
+        "wartezeit": "8 Monate",
+        "staffel": "keine",
+        "inlays": "70 %"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn100 (Tarife EZ70plus und EZ-Comfort)",
+      "kurz": "Zahn100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 % der Rechnung",
+        "implantate": "100 %",
+        "behandlung": "inkl. Wurzel, 100 %",
+        "prophylaxe": "2x im Jahr, 100 %",
+        "wartezeit": "8 Monate",
+        "staffel": "keine",
+        "inlays": "100 %"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/zahnzusatzversicherung.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV114.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV115.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV146.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_54.pdf"
+  ],
+  "offen": [
+    "Prozentsatz vom Rechnungsbetrag; zusammen mit der gesetzlichen Kasse höchstens 100 % der Rechnung. Nur GOZ/GOÄ-konforme Rechnungen.",
+    "Zahn100 = EZ70plus plus EZ-Comfort: Wurzelbehandlung 100 % bis 5.000 € im Jahr, Funktionsanalyse bis 1.000 €, Narkose bei Implantaten bis 500 € im Jahr. Zahn50 und Zahn70 ohne Wurzelbehandlung.",
+    "Kieferorthopädie steht nicht in der Leistungstabelle. Varianten ohne Alterungsrückstellung (EZ50-Easy, EZ70-Easy, EZ-Comf-Easy) nicht aufgenommen.",
+    "Debeka nennt Zahn70 „Top-Schutz zum Bestpreis“, Zahn50 „Top-Einstiegstarif“, Zahn100 „Premium-Schutz“; keine ausdrückliche Empfehlung, Zahn70 als mittlere Stufe gesetzt."
+  ]
+}

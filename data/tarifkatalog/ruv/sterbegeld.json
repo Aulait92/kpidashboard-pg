@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "R+V",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Unfalltod auch in der Wartezeit",
+    "Überschussbeteiligung"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "1.000 bis 15.000 €",
+        "wartezeit": "18 Monate",
+        "ohne-gp": "ja",
+        "beitragsende": "max. 25 Jahre, bis 85"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ruv.de/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ruv.de/sterbegeldversicherung"
+  ],
+  "offen": [
+    "Ein Tarif ohne Stufen; Summe frei wählbar zwischen 1.000 und 15.000 €.",
+    "Tod in der Wartezeit: Beiträge zurück; bei Unfalltod volles Sterbegeld auch in den ersten 18 Monaten. Doppelte Leistung bei Unfalltod nicht genannt.",
+    "Bestattungsvorsorge-Service und Dynamik nicht genannt."
+  ]
+}

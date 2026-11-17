@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "Hallesche",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Auszahlung steuerfrei",
+    "Auch an Sonn- und Feiertagen"
+  ],
+  "tarife": [
+    {
+      "name": "Krankengeld.plus (für gesetzlich Versicherte)",
+      "kurz": "Krankengeld+",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab GKV-Krankengeld",
+        "hoehe": "Netto inkl. Krankengeld",
+        "wartezeit": "3 Monate",
+        "dauer": "bis 78 Wochen",
+        "selbststaendige": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/kranken-tagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld KT/FKT (Selbstständige, Freiberufler)",
+      "kurz": "KT/FKT",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 22. Tag",
+        "dauer": "ohne zeitliche Grenze",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/kranken-tagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hallesche.de/privatkunden/zusatzversicherung/kranken-tagegeld",
+    "https://www.hallesche.de/-/media/druckstuecke/tarif/pm/251/bedingungentarifkrankengeldpluspm251updf/bedingungen-tarif-krankengeldplus-pm251u.pdf",
+    "https://www.hallesche.de/-/media/druckstuecke/broschuere/w/222/broschuerekrankengeldplusw222pdf/broschuere-krankengeldplus-w222.pdf",
+    "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige"
+  ],
+  "offen": [
+    "Zwei Produkte für verschiedene Zielgruppen, keine Leistungsstufen: Krankengeld.plus für gesetzlich versicherte Angestellte (leistet, solange die GKV Krankengeld zahlt, also in der Regel ab dem 43. Tag; auch bei Krankheit des Kindes), KT/FKT für Selbstständige und Freiberufler (Mediziner MKT ab dem 15. Tag).",
+    "Krankengeld.plus: Tagegeld zusammen mit dem GKV-Krankengeld höchstens bis zum Nettoeinkommen (80 % des Brutto); Wartezeit 3 Monate, entfällt bei Unfall; monatlich kündbar (Bedingungen PM 251u, 06.25).",
+    "KT/FKT: Tarifbedingungen sind auf hallesche.de nicht verlinkt; nur Angaben der Produktseite (ab dem 22. Tag, ohne zeitliche Begrenzung solange Arbeitsunfähigkeit). Höchstes Tagegeld und Wartezeit offen.",
+    "Ende bei Berufsunfähigkeit, Leistung im Ausland und Dynamik nicht belegt."
+  ]
+}

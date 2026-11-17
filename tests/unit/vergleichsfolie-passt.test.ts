@@ -121,11 +121,12 @@ describe("Vergleichsfolie passt (Chromium)", () => {
     }
   }, 60_000);
 
-  it("echter Katalog, neue Sparten (17.11.2026): AXA und SIGNAL IDUNA passen ebenfalls", async (ctx) => {
+  it("echter Katalog, neue Sparten (17.11.2026): jede weitere Gesellschaft passt ebenfalls", async (ctx) => {
     if (!browser) return ctx.skip();
     const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
-    const neu = ["bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld"];
-    for (const g of ["axa", "signal-iduna"]) {
+    const neu = ["bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld", "dienstunfaehigkeit", "krankentagegeld", "kinderinvaliditaet", "reiseruecktritt"];
+    const alle = [...new Set(echt.tarife.map((t) => t.gesellschaft))].filter((g) => g !== "allianz").sort();
+    for (const g of alle) {
       for (const s of echt.sparten.filter((x) => neu.includes(x.key))) {
         const a = startAuswahl(echt, [s.key], { rolle: "vertreter", gesellschaften: [g] });
         const sp = a.sparten[0];
@@ -145,7 +146,7 @@ describe("Vergleichsfolie passt (Chromium)", () => {
         expect(f.breiter, `${g}/${s.key}`).toBe(false);
       }
     }
-  }, 120_000);
+  }, 600_000);
 
   it("4 Stufen: eine Merkmalzeile weniger, nichts unter der Fußzeile", async (ctx) => {
     if (!browser) return ctx.skip();

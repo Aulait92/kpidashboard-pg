@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Anpassung alle 3 Jahre",
+    "Steuerfreie Leistung",
+    "Übergang zur SI-BU nahtlos"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld Angestellte (PKV bei SIGNAL IDUNA)",
+      "kurz": "Angest. PKV",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab Tag 43 wählbar",
+        "wartezeit": "keine",
+        "selbststaendige": "nein"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/krankentagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld Selbstständige und Freiberufler (PKV bei SIGNAL IDUNA)",
+      "kurz": "Selbst. PKV",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab Tag 8 wählbar",
+        "wartezeit": "keine",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/krankentagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld Selbstständige und Angestellte (ohne PKV bei SIGNAL IDUNA)",
+      "kurz": "Ohne SI-PKV",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab Tag 8 wählbar",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/krankentagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/krankentagegeldversicherung/"
+  ],
+  "offen": [
+    "Die drei Spalten sind Zielgruppen, keine Leistungsstufen; mittlere Spalte nach Regel als Empfehlung gesetzt.",
+    "Höchstes Tagegeld und Leistungsdauer nicht genannt. Ende bei Berufsunfähigkeit nicht genannt (nur „nahtloser Übergang“ zur SIGNAL IDUNA BU).",
+    "Wartezeit ohne SIGNAL IDUNA PKV: Wartezeiten gelten, Dauer nicht genannt (Mutterschutz: 8 Monate).",
+    "Dynamik: Anpassung alle 3 Jahre an die Inflation und bei Gehaltssteigerung ohne Gesundheitsprüfung. Kinderkrankentagegeld (10 Tage je Kind, höchstens 25) nur für Angestellte mit SI-PKV.",
+    "Leistung im Ausland nicht genannt; Bedingungen nicht ausgewertet."
+  ]
+}

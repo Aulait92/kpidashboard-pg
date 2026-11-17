@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegemonatsgeld Mehr Pflege",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistung ab Pflegegrad 1",
+    "Keine Wartezeit",
+    "Monatsgeld 100 bis 3.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Mehr Pflege Stationär",
+      "kurz": "Stationär",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "150 % des Monatsgelds",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "nein",
+        "befreiung": "ab Pflegegrad 4",
+        "wartezeit": "keine",
+        "dynamik": "10 % alle 3 Jahre"
+      },
+      "quelle": "https://www.barmeniagothaer.de/pflegemonatsgeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mehr Pflege Ambulant",
+      "kurz": "Ambulant",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "150 % des Monatsgelds",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "5fach, ab Pflegegrad 4",
+        "befreiung": "ab Pflegegrad 4",
+        "wartezeit": "keine",
+        "dynamik": "10 % alle 3 Jahre"
+      },
+      "quelle": "https://www.barmeniagothaer.de/pflegemonatsgeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/pflegemonatsgeld/"
+  ],
+  "offen": [
+    "Die beiden Tarife sind Bausteine, einzeln oder kombiniert wählbar, keine Leistungsstufen. Monatsgeld frei wählbar von 100 bis 3.000 € in 10-€-Schritten.",
+    "Auszahlung: Pflegegrad 1 20 %, PG 2 Stationär 100 % bzw. Ambulant 50 %, PG 3 100 % bzw. 80 %, PG 4 100 %, PG 5 150 %. Ob „Stationär“ auch bei häuslicher Pflege zahlt, ist auf der Produktseite nicht eindeutig; Merkmal „ambulant wie stationär“ deshalb offen.",
+    "Einmalzahlung im Ambulant-Tarif: das 5fache des für Pflegegrad 5 vereinbarten Monatsgelds bei erstmals Pflegegrad 4 oder 5. Bei Unfall 150 % ab PG 4.",
+    "Dynamik zwischen 21 und 70 Jahren alle 3 Jahre plus 10 %, auch im Pflegefall; Nachversicherung bis 3x um bis 25 % (21 bis 60 Jahre). Weltweiter Schutz. Demenz nicht gesondert genannt.",
+    "Zwei Tarife ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+  ]
+}
