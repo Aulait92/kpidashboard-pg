@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "100 Mio. € Sach- und Vermögen",
+    "Personenschäden 15 Mio. €",
+    "Autoschutzbrief wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "nur Haarwild",
+        "neuwert": "3 Monate",
+        "marder": "nein",
+        "mallorca": "nein"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "nein"
+      },
+      "quelle": "https://www.vgh.de/de/auto-mobilitaet/kfz-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "18 Monate",
+        "marder": "bis 10.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/auto-mobilitaet/kfz-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "bis 20.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/auto-mobilitaet/kfz-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/auto-mobilitaet/kfz-versicherung",
+    "https://www.vgh.de/vgh/resources/pdf/produkt/kfz/Leistungsuebersicht_Kfz__VGH.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
+    "VGH nennt Premium „unsere Empfehlung für neuere Fahrzeuge“.",
+    "Kaskoleistungen je Stufe: Kaufwertentschädigung Komfort 12, Premium 18 Monate; Premium zusätzlich Wertminderung, Autoinhalt 1.000 €, Eigenschäden bis 100.000 €. Rabattschutz nur mit Autoschutzbrief, in Komfort und Premium.",
+    "Mallorca-Police laut Leistungsübersicht nicht in Basis. Grobe Fahrlässigkeit, GAP und Akku-Schutz: Zeichen der Leistungsübersicht nicht lesbar, deshalb offen."
+  ]
+}

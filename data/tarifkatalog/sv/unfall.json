@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "unfall",
+  "produkt": "SV PrivatSchutz Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Persönlicher Unfallmanager",
+    "Bergungskosten bis 100.000 €",
+    "Kosmetische OP bis 30.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Kids",
+      "kurz": "Kids",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "optional, bis 600 %",
+        "unfallrente": "optional, ab 30/50 %",
+        "khtg": "optional",
+        "sofort": "Bruch 500 €",
+        "todesfall": "optional",
+        "bergung": "bis 100.000 €",
+        "kosmetik": "bis 30.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:06bbcc94-b8de-4d4c-a692-843c373dd6fe/leistungsuebersicht-unfall.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Active",
+      "kurz": "Active",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "progression": "optional, bis 600 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional, ab 30/50 %",
+        "khtg": "optional",
+        "sofort": "Bruch 1.000 €",
+        "todesfall": "optional",
+        "bergung": "bis 100.000 €",
+        "kosmetik": "bis 30.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/unfallversicherung-active.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Best Ager",
+      "kurz": "Best Ager",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "progression": "optional, bis 600 %",
+        "unfallrente": "optional, ab 30/50 %",
+        "khtg": "optional",
+        "sofort": "optional, Bruch 500 €",
+        "todesfall": "optional",
+        "bergung": "bis 100.000 €",
+        "kosmetik": "bis 30.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:06bbcc94-b8de-4d4c-a692-843c373dd6fe/leistungsuebersicht-unfall.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/unfallversicherung.html",
+    "https://www.sparkassenversicherung.de/privatkunden/unfallversicherung-active.html",
+    "https://www.sparkassenversicherung.de/dam/jcr:06bbcc94-b8de-4d4c-a692-843c373dd6fe/leistungsuebersicht-unfall.pdf?view"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Quelle: Leistungsübersicht Unfall 63-842-0925-01 (PDF) und Produktseite Unfallversicherung Active.",
+    "Leistungsübersicht mit Zeichen ● versichert, ○ individuell wählbar, - nicht versichert; ○ ist als „optional“ erfasst.",
+    "Die drei Stufen sind Zielgruppen, keine Leistungsstufen: Kids (0 bis 17), Active (18 bis 64), Best Ager (65 bis 80). Keine Empfehlung; Active als mittlere Stufe.",
+    "Invaliditätssumme (Grundsumme) individuell, nicht beziffert. Progression 225, 400 oder 600 %. Leistung ab 1 % Invalidität laut Produktseite Active; für Kids und Best Ager nicht genannt.",
+    "Sofortleistung bei Schwerverletzungen 15.000 € (Kids und Best Ager wählbar). Best Ager: Sofortleistung Oberschenkelhalsbruch 3.000 €. Krankenhaustagegeld erweitert wählbar."
+  ]
+}

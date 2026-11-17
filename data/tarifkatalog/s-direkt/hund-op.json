@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "hund-op",
+  "produkt": "Hunde-OP-Versicherung (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Alle Operationen versichert",
+    "Freie Tierarztwahl",
+    "Telediagnostik, Notdienstgebühr"
+  ],
+  "tarife": [
+    {
+      "name": "OP-Versicherung basis",
+      "kurz": "basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "GOT-unabhängig",
+        "jhl": "1.500 €",
+        "nachbehandlung": "7 Tage",
+        "vorsorge": "nur Chip 25 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate Europa",
+        "sb": "ab 6 Jahren 150 €",
+        "physio": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "OP-Versicherung premium",
+      "kurz": "premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "GOT-unabhängig",
+        "jhl": "3.000 €",
+        "nachbehandlung": "14 Tage",
+        "vorsorge": "nur Chip 25 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit",
+        "sb": "ab 6 Jahren 150 €",
+        "physio": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "OP-Versicherung premium plus",
+      "kurz": "premium plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "GOT-unabhängig",
+        "jhl": "ohne Jahreslimit",
+        "nachbehandlung": "21 Tage",
+        "vorsorge": "nur Chip 25 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit",
+        "physio": "optional (Reha)"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/hundeversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Die Stufen basis, premium, premium plus weichen vom Uelzener-Ordner (dort ein Tarif, Unterlagen 2024 bis 2025) ab; die S-Direkt-Unterlage ist älter, bitte Aktualität prüfen.",
+    "Leistungsübersicht HUOPKV_IB_1121. Keine Empfehlung; premium als mittlere Stufe.",
+    "premium plus nur bis zum 6. Geburtstag abschließbar; besondere Operationen (z. B. HD, Herz) dort bis 3.000 € im Jahr. Wartezeit für besondere Operationen und Kastration 1 Jahr. Reha- und Zahnzusatz-Baustein (je bis 1.000 € im Jahr) nur zu premium plus.",
+    "Erstattung laut Produktseite bis zu 100 %, unabhängig vom GOT-Satz."
+  ]
+}

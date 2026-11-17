@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung (ÖRAG)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rechtsservice MEINRECHT",
+    "RadMobilSchutz, CarSharingSchutz",
+    "Bausteine einzeln wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Rundum-Schutz",
+      "kurz": "Rundum",
+      "stufe": 1,
+      "werte": {
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "telefon": "ja",
+        "mediation": "ja",
+        "privatPlus": "nein"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/rechtsschutzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundum-Schutz PLUS",
+      "kurz": "Rundum PLUS",
+      "stufe": 2,
+      "werte": {
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "telefon": "ja",
+        "mediation": "ja",
+        "privatPlus": "1 Fall im Jahr"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/rechtsschutzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/rechtsschutzversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/5VqA6JWsgZ9XEDp0OdnGBp/a0663016711854370e2abcf80eeb9ce9/rechtsschutzversicherung-produktinformation.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Risikoträger ist die ÖRAG Rechtsschutzversicherungs-AG. Bausteine Privat, Haus und Wohnung, Verkehr, Beruf einzeln kombinierbar; Rundum-Schutz enthält alle vier mit Preisvorteil, Rundum-Schutz PLUS zusätzlich je Jahr einen nicht versicherten privaten Fall (z. B. Vertragsprüfung). Keine Empfehlung.",
+    "Versicherungssumme, Strafkaution, Selbstbeteiligung und Wartezeit nicht beziffert (Selbstbeteiligung wählbar; Wartezeit entfällt bei lückenlosem Wechsel). Beitragsgarantie für 3 Jahre wählbar."
+  ]
+}

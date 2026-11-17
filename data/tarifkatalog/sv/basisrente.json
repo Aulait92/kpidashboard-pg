@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "basisrente",
+  "produkt": "BasisRente (Rürup-Rente)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente ab 62",
+    "Zuzahlungen möglich",
+    "BU-Absicherung zuwählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Klassische BasisRente",
+      "kurz": "Klassisch",
+      "stufe": 1,
+      "werte": {
+        "garantie": "garantierte Verzinsung",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "ja, Zuzahlung",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/ruerup-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente IndexGarant",
+      "kurz": "IndexGarant",
+      "stufe": 2,
+      "werte": {
+        "garantie": "Kapital bleibt erhalten",
+        "anlage": "Index (5 zur Wahl)",
+        "flexibel": "ja, Zuzahlung",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/ruerup-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/ruerup-rente.html"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Zwei Produktvarianten laut Seite: klassische BasisRente und BasisRente IndexGarant (TrendPortfolio Index, EURO STOXX 50, VolaIndexPerform, Deka-MultiAktiv Global, Climate Objective Index). Keine Empfehlung.",
+    "Absicherung von Ehepartner und Kindern zusätzlich möglich. Garantierter Rentenfaktor nicht genannt."
+  ]
+}

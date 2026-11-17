@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "bu",
+  "produkt": "BerufsunfähigkeitsSchutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Dienstunfähigkeit mitversichert",
+    "Krebs: 18 Monate Soforthilfe"
+  ],
+  "tarife": [
+    {
+      "name": "BerufsunfähigkeitsSchutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "bis 36 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "max. 3 Jahre",
+        "weltweit": "ja",
+        "teilzeit": "Günstigerprüfung",
+        "umorganisation": "Verzicht unter 5 MA",
+        "stundung": "in Leistungsprüfung",
+        "dynamik": "optional",
+        "infektion": "ja",
+        "pflege": "nein"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BerufsunfähigkeitsSchutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "bis 36 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "max. 3 Jahre",
+        "weltweit": "ja",
+        "teilzeit": "Günstigerprüfung",
+        "umorganisation": "Verzicht unter 5 MA",
+        "stundung": "in Leistungsprüfung",
+        "dynamik": "optional",
+        "infektion": "ja",
+        "pflege": "lebenslang ab PG 3"
+      },
+      "bausteine": {
+        "dynamik": "optional",
+        "pflege": "inklusive"
+      },
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
+    "https://www.vgh.de/vgh/resources/pdf/produkt/berufsunf%C3%A4higkeit/VGH_Leistungsuebersicht_BerufsunfaehigkeitsSchutz.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "Stufen Komfort und Premium; Premium zusätzlich lebenslange Pflegerente ab Pflegegrad 3. Variante „Junge Erwachsene Komfort“ mit gleichen Leistungen wie Komfort (Dynamik über Umtauschrecht). Keine Empfehlung.",
+    "Leistungsübersicht mit Häkchen, die nicht lesbar sind; übernommen sind Zeilen, die als Leistung beschrieben sind. Verzicht auf Umorganisation bei Kleinbetrieben unter 5 Mitarbeitern. Nachversicherung in den ersten 5 Jahren ohne Anlass (bis 35) und bei Ereignissen (bis 50). Bitte prüfen.",
+    "Dienstunfähigkeit ist im BU-Schutz enthalten; eine eigene DU-Versicherung gibt es nicht."
+  ]
+}

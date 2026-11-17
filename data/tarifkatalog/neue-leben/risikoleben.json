@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "neue leben",
+  "sparte": "risikoleben",
+  "produkt": "Risikoschutz (Risikolebensversicherung)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Konstante oder fallende Summe",
+    "Vorläufiger Schutz bis 2 Monate",
+    "Sofort-Leistung bei Tod"
+  ],
+  "tarife": [
+    {
+      "name": "Risikoschutz Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "werte": {},
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.neueleben.de/Risikoversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikoschutz Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "werte": {
+        "nachversicherung": "ja, bei Ereignissen",
+        "vorgezogen": "ja, Lebenserw. 1 Jahr"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.neueleben.de/Risikoversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.neueleben.de/Risikoversicherung.html"
+  ],
+  "offen": [
+    "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
+    "Zwei Varianten: umfangreiche Premium-Variante und preisgünstige Smart-Variante. Keine Empfehlung.",
+    "Die Vorteile (Nachversicherung ohne Gesundheitsprüfung, vorgezogene Leistung bei schwerer Krankheit mit Lebenserwartung von höchstens einem Jahr) stehen für das Produkt insgesamt; welche davon in Smart enthalten sind, ist nicht angegeben. Deshalb nur bei Premium erfasst. Bitte prüfen.",
+    "Verlängerungsoption, Umtauschrecht und weltweiter Schutz nicht genannt."
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Beitragsübernahme bei BU",
+    "Anpassung bei Heirat, Geburt"
+  ],
+  "tarife": [
+    {
+      "name": "WeiterdenkerBU",
+      "kurz": "Weiterdenker",
+      "stufe": 1,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bei Anlässen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/berufsunfaehigkeitsversicherung-berufsstarter.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung",
+      "kurz": "BU",
+      "stufe": 2,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bei Anlässen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/berufsunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/berufsunfaehigkeitsversicherung.html",
+    "https://www.sparkassenversicherung.de/privatkunden/berufsunfaehigkeitsversicherung-berufsstarter.html"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Zwei Varianten: WeiterdenkerBU für junge Leute mit niedrigem Einstiegsbeitrag (Startphase 5 oder 10 Jahre) und die Berufsunfähigkeitsversicherung. Keine Leistungsstufen, keine Empfehlung.",
+    "Prognosezeitraum: Leistung, wenn 6 Monate in Folge zu mindestens 50 % berufsunfähig (FAQ). AU-Klausel, rückwirkende Leistung, weltweit, Teilzeit, Umorganisation, Pflege, Stundung und Dynamik stehen nicht auf den Seiten.",
+    "Eine Geld-zurück-Option ist auf der Produktseite genannt, ohne Einzelheiten. Keine eigene Dienstunfähigkeits- oder Grundfähigkeitsversicherung auf sparkassenversicherung.de gefunden."
+  ]
+}

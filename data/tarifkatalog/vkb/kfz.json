@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw, Kfz Vario)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € pauschal",
+    "Mallorca-Police",
+    "Systeme für autonomes Fahren"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Haftpflicht",
+      "kurz": "Haftpflicht",
+      "stufe": 1,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "nein",
+        "neuwert": "nein",
+        "marder": "nein",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/kfz-versicherung/auto.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Haftpflicht mit TeilkaskoPLUS",
+      "kurz": "TeilkaskoPLUS",
+      "stufe": 2,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "Verzicht (Kasko)",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "nein",
+        "marder": "Folgeschäden unbegr.",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/kfz-versicherung/auto.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Haftpflicht mit VollkaskoPLUS",
+      "kurz": "VollkaskoPLUS",
+      "stufe": 3,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "Verzicht (Kasko)",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden unbegr.",
+        "gap": "ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/kfz-versicherung/auto.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/kfz-versicherung/auto.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Drei Stufen laut Tarifvergleich; VollkaskoPLUS ist als „Tarif mit den meisten Leistungen“ beschrieben, keine Empfehlung markiert.",
+    "Teilkasko (ohne PLUS): Tierbiss mit Folgeschäden bis 5.000 €; TeilkaskoPLUS: Folgeschäden bei Tierbiss unbegrenzt. VollkaskoPLUS: Neupreis 36 Monate, Kaufwert 24 Monate, GAP, Auslandsschadenschutz, Eigenschäden bis 100.000 €.",
+    "Verzicht auf den Einwand grober Fahrlässigkeit laut FAQ für die Kasko, Ausnahmen (Alkohol, Diebstahl) nicht im Einzelnen genannt. Rabattschutz als Baustein. Schutzbrief nicht genannt.",
+    "Deckung je verletzter Person 15 Mio. €."
+  ]
+}

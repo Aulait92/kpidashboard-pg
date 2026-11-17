@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit, rund um die Uhr",
+    "Progression 225, 350 oder 500 %",
+    "Laufzeit 3 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "keine",
+        "progression": "0 %",
+        "unfallrente": "500 €",
+        "khtg": "10 €/Tag",
+        "todesfall": "10.000 €",
+        "sofort": "1.500 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/unfall/private-unfallversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "wählbar",
+        "khtg": "wählbar",
+        "todesfall": "wählbar",
+        "sofort": "wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/unfall/private-unfallversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "100.000 €",
+        "progression": "500 %",
+        "unfallrente": "500 €",
+        "khtg": "10 €/Tag",
+        "todesfall": "10.000 €",
+        "sofort": "3.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/unfall/private-unfallversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/unfall/private-unfallversicherung.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Drei Stufen laut Tarifvergleich: Basis (feste Leistungen, nur Rente), Smart (alle Leistungen individuell wählbar), Premium (feste Leistungen). Keine Markierung; Smart als mittlere Stufe gesetzt, obwohl es eine frei wählbare Variante ist.",
+    "Unfallrente laut FAQ ab 30 % oder 50 % Invalidität wählbar, lebenslang oder bis 67; Leistung ab Invaliditätsgrad je Stufe nicht belegt.",
+    "Premium zusätzlich AlltagsManager, RehaManager, Dynamisierung. Bergungskosten, Kosmetik, Zecken und Gliedertaxe nicht im Tarifvergleich."
+  ]
+}

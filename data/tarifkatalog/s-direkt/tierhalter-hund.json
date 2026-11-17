@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflicht (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Deckakt, kein Leinenzwang",
+    "Keine Rasse- oder Größengrenze",
+    "Hundeplatz und Hundepension"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalter-Haftpflicht basis",
+      "kurz": "basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "sb": "ohne oder 150 €",
+        "miete": "nein",
+        "fremdhueter": "ja, nicht gewerblich",
+        "welpen": "bis 6. Lebensmonat",
+        "forderungsausfall": "nein",
+        "geliehen": "nein",
+        "ausland": "1 Jahr, ohne USA, CAN"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1KSkR2RzLUHmPEZuwB7jQx/75f2238005aaaf9d76ec2cd90b30a871/hundehalter-haftpflichtversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalter-Haftpflicht premium",
+      "kurz": "premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "ohne oder 150 €",
+        "miete": "ja",
+        "fremdhueter": "ja, nicht gewerblich",
+        "welpen": "bis 6. Lebensmonat",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 10.000 €",
+        "ausland": "1 Jahr, ohne USA, CAN"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1KSkR2RzLUHmPEZuwB7jQx/75f2238005aaaf9d76ec2cd90b30a871/hundehalter-haftpflichtversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalter-Haftpflicht premium plus",
+      "kurz": "premium plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "sb": "ohne oder 150 €",
+        "miete": "ja",
+        "fremdhueter": "ja, nicht gewerblich",
+        "welpen": "bis 6. Lebensmonat",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 10.000 €",
+        "ausland": "1 Jahr, ohne USA, CAN"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1KSkR2RzLUHmPEZuwB7jQx/75f2238005aaaf9d76ec2cd90b30a871/hundehalter-haftpflichtversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/hundeversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/1KSkR2RzLUHmPEZuwB7jQx/75f2238005aaaf9d76ec2cd90b30a871/hundehalter-haftpflichtversicherung-leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Die Stufen basis, premium, premium plus weichen vom Uelzener-Ordner (dort ein Tarif, Unterlagen 2024 bis 2025) ab; die S-Direkt-Unterlage ist älter, bitte Aktualität prüfen.",
+    "Leistungsübersicht HUHAF_IB_1121 mit Strich für „nicht versichert“. Keine Empfehlung; premium als mittlere Stufe.",
+    "Geliehene bewegliche Sachen und gemietete Pkw mit 10 % Selbstbeteiligung (mindestens 300 €), höchstens 10.000 €. Forderungsausfall ab 2.500 € Forderung. Selbstbeteiligung 150 € als Beitragsnachlass wählbar. Bergungskosten in basis nicht versichert.",
+    "Eine Pferdehalter-Haftpflicht bietet S-Direkt nicht an."
+  ]
+}

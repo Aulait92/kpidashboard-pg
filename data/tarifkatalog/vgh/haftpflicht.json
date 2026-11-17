@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "haftpflicht",
+  "produkt": "Private Haftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Mietsachschäden, Allmählichkeit",
+    "Gefälligkeit bis 50.000 €",
+    "Europa bis zur Versicherungssumme"
+  ],
+  "tarife": [
+    {
+      "name": "PHV Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 50.000 €",
+        "delikt": "nein",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 50.000 €",
+        "neuwert": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "sb": "höchstens 250 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/haftung-recht/haftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PHV Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15, 25 oder 50 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 50.000 €",
+        "delikt": "nein",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 50.000 €",
+        "neuwert": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/haftung-recht/haftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PHV Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vs": "15, 25 oder 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "bis VS, max. 100.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 50.000 €",
+        "neuwert": "bis 5.000 €",
+        "rabattretter": "ja",
+        "drohne": "bis 250 g"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/haftung-recht/haftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/haftung-recht/haftpflichtversicherung",
+    "https://www.vgh.de/vgh/resources/pdf/produkt/phv/VGH_Leistungsuebersicht_PHV.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
+    "VGH markiert PHV Premium als „Unsere Empfehlung“.",
+    "Versicherungssumme Komfort und Premium wählbar 15, 25 oder 50 Mio. € (VGH empfiehlt mindestens 25 Mio. €). Schlüssel in Premium ohne Betrag als enthalten markiert. Geliehene Sachen in Premium bis zur Versicherungssumme, höchstens 100.000 € im Jahr.",
+    "Selbstbeteiligung: Basis höchstens 250 €; Komfort laut Text mit reduzierter Selbstbeteiligung, Betrag nicht genannt. Drohnen über 250 g als Zusatzbaustein PHV Drohnen. Außerhalb Europas 3 Jahre (Basis, Komfort) bzw. 5 Jahre (Premium).",
+    "Mallorca-Deckung, Ehrenamt und Nebentätigkeit nicht im Tarifvergleich."
+  ]
+}

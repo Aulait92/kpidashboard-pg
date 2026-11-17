@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Einmalbeitrag oder laufend",
+    "Überschüsse erhöhen die Summe",
+    "Ohne Gesundheitsprüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "wartezeit": "3 J., Beiträge zurück",
+        "unfall": "volle Summe sofort",
+        "ohne-gp": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/sterbegeldversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/sterbegeldversicherung.html"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Ein Tarif. Keine Wartezeit im engeren Sinn: Bei Tod in den ersten drei Jahren werden die eingezahlten Beiträge erstattet, bei Unfall die volle Summe.",
+    "Höhe der Versicherungssumme und Dauer der Beitragszahlung nicht genannt."
+  ]
+}

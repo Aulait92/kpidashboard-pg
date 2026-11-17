@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 Mio. €, je Person 15 Mio. €",
+    "Mallorca-Police",
+    "Zusammenstoß mit allen Tierarten"
+  ],
+  "tarife": [
+    {
+      "name": "AutoBasis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Diebstahl",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "Wiederbeschaffungswert",
+        "marder": "Folgeschäden 5.000 €",
+        "mallorca": "ja",
+        "werkstatt": "frei, nicht bei Glas",
+        "elektro": "nein"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1ilIyfP2nQuN9zJjlv65Zv/ef92341f0a4f633f8af8357af5dd87d1/Autoversicherung_Leistungsvergleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AutoPlusProtect",
+      "kurz": "PlusProtect",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Diebstahl",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 10.000 €",
+        "mallorca": "ja",
+        "werkstatt": "frei",
+        "elektro": "Akku All-Risk (VK)"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1ilIyfP2nQuN9zJjlv65Zv/ef92341f0a4f633f8af8357af5dd87d1/Autoversicherung_Leistungsvergleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AutoPremium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Diebstahl",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "mallorca": "ja",
+        "werkstatt": "frei",
+        "elektro": "Akku All-Risk (VK)"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1ilIyfP2nQuN9zJjlv65Zv/ef92341f0a4f633f8af8357af5dd87d1/Autoversicherung_Leistungsvergleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/autoversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/1ilIyfP2nQuN9zJjlv65Zv/ef92341f0a4f633f8af8357af5dd87d1/Autoversicherung_Leistungsvergleich.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Quelle: Leistungsvergleich Autoversicherung (Stand 01.10.2025). Keine Empfehlung markiert; PlusProtect als mittlere Stufe.",
+    "Grobe Fahrlässigkeit mit Ausnahmen Diebstahl, Alkohol und Drogen. Neupreis und Kaufpreis 24 bzw. 36 Monate; Basis bis Wiederbeschaffungswert. Premium zusätzlich Eigenschäden auf dem eigenen Grundstück, AuslandSchadenschutz, Überspannung bis 20.000 €.",
+    "Rückstufung im Schadenfall: Basis marktüblich, sonst verbessert; einen Rabattschutz-Baustein nennt der Vergleich nicht. GAP als eigenes Produkt GAPcare. Werkstattservice und AutoSchutzbrief optional."
+  ]
+}

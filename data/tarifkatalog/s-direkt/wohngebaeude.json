@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gleitender Neuwert",
+    "Rohbau mitversichert",
+    "Elementar wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "WohngebäudeBasis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "elementar": "optional",
+        "neuwert": "ja",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "sb": "250 €"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/wohngebaeudeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "WohngebäudePlusProtect",
+      "kurz": "PlusProtect",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "elementar": "optional",
+        "neuwert": "ja",
+        "vandalismus": "bis 5.000 €",
+        "tiere": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/wohngebaeudeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "WohngebäudePremium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "neuwert": "ja",
+        "vandalismus": "bis 5.000 €",
+        "tiere": "ja, Marder, Wildtiere"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/wohngebaeudeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/wohngebaeudeversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/2FuAOIxofCkVXJLcyf7Yl3/5ed5b5c7cff13edc4b2a375981751277/kundeninformation-wohngebaeudeversicherung.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Stufen laut Produktseite. Keine Empfehlung markiert; PlusProtect als mittlere Stufe.",
+    "Grobe Fahrlässigkeit: Basis bis 5.000 €; für PlusProtect und Premium nur allgemein „Versicherungsschutz auch bei grober Fahrlässigkeit“, Grenze nicht genannt. Selbstbeteiligung 250 € nur bei Basis genannt.",
+    "PlusProtect zusätzlich: Diebstahl fest verbundener Sachen, Aufräumen umgestürzter Bäume, Rohrverstopfung, Graffiti. Premium: undichte Gasleitungen, Pool. Ableitungsrohre, Photovoltaik, Kosten und Überspannung nicht genannt."
+  ]
+}

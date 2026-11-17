@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "reise-kranken",
+  "produkt": "VGH ReisekrankenSchutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Selbstbehalt",
+    "Bergung bis 5.000 €",
+    "24-Stunden-Notruf"
+  ],
+  "tarife": [
+    {
+      "name": "VGH ReisekrankenSchutz AK-E (Einzelperson)",
+      "kurz": "Einzel",
+      "stufe": 1,
+      "werte": {
+        "dauer": "je Reise bis 8 Wochen",
+        "ruecktransport": "medizinisch sinnvoll",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/reiseversicherung/reisekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VGH ReisekrankenSchutz AK-F (Familie)",
+      "kurz": "Familie",
+      "stufe": 2,
+      "werte": {
+        "dauer": "je Reise bis 8 Wochen",
+        "ruecktransport": "medizinisch sinnvoll",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "familie": "inklusive"
+      },
+      "quelle": "https://www.vgh.de/de/reiseversicherung/reisekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/reiseversicherung/reisekrankenversicherung"
+  ],
+  "offen": [
+    "VGH Versicherungen (vgh.de), Jahresvertrag für alle Urlaubs- und Geschäftsreisen. Abruf 17.11.2026.",
+    "Zwei Varianten: Einzelperson und Familie, sonst gleiche Leistungen. Keine Empfehlung.",
+    "Risikoträger nicht ausdrücklich genannt; die Seite erwähnt Tarife der ALTE OLDENBURGER. Langzeitschutz ab 365 Tagen vermittelt die VGH über die HanseMerkur Reiseversicherung (nicht erfasst). Weltweit inkl. USA nicht ausdrücklich genannt."
+  ]
+}

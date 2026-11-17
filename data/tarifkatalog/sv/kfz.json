@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw, Tarif 05/2024)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "100 Mio. € pauschal",
+    "Mallorca-Deckung",
+    "Werkstatt-Bonus 20 % wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Haftpflichtversicherung",
+      "kurz": "Haftpflicht",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "nein",
+        "neuwert": "nein",
+        "marder": "nein",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "rabattschutz": "optional",
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/kfz-versicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Haftpflicht inkl. Teilkasko",
+      "kurz": "Teilkasko",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 5.000 €",
+        "mallorca": "ja",
+        "elektro": "nein"
+      },
+      "bausteine": {
+        "rabattschutz": "optional",
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/kfz-versicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Haftpflicht inkl. Vollkasko",
+      "kurz": "Vollkasko",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 5.000 €",
+        "mallorca": "ja",
+        "elektro": "Akku 10.000 € All-Risk",
+        "gap": "optional"
+      },
+      "bausteine": {
+        "rabattschutz": "optional",
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/kfz-versicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/kfz-versicherung.html",
+    "https://www.sparkassenversicherung.de/dam/jcr:f00ea2b4-be8f-4051-a168-9d88d13c6cbf/leistungsuebersicht-kfz-2024.pdf?view"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Quelle: Tarifvergleich der Produktseite, Leistungsübersicht Kfz ab Tarif 05/2024 (PDF; Häkchen nicht lesbar, nur Beträge übernommen).",
+    "SV markiert Haftpflicht inkl. Vollkasko als „Empfehlung“.",
+    "Baustein Topschutz (zur Vollkasko): Neupreis bzw. Kaufpreis 48 Monate, Tierbiss-Folgeschäden 20.000 €, Eigenschäden. Verzicht auf den Einwand grober Fahrlässigkeit steht in der Leistungsübersicht, die Zuordnung zu Kasko oder Topschutz ist nicht lesbar.",
+    "Weitere Bausteine: Fahrerschutz, Auslandsschadenschutz, SV Copilot, GAP (mit Vollkasko), Werkstatt-Bonus. Personenschäden 15 Mio. € je Person."
+  ]
+}

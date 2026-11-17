@@ -1,0 +1,93 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Strafkaution 500.000 €",
+    "Rechtsschutz-Telefon 24/7",
+    "Meldebonus 150 € auf die SB"
+  ],
+  "tarife": [
+    {
+      "name": "Privat, Beruf und Verkehr",
+      "kurz": "Grundtarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "1 Mio. €",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "500.000 €",
+        "privatPlus": "nein",
+        "wartezeit": "teils 3 Monate",
+        "mediation": "bis 3.000 €",
+        "telefon": "ja, 24/7"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.vgh.de/vgh/resources/pdf/produkt/rechtsschutz/VGH_LU_Rechtsschutz_VGH_Privat.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat, Beruf, Verkehr mit RechtsschutzPlus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "500.000 €",
+        "privatPlus": "ja (RechtsschutzPlus)",
+        "wartezeit": "teils 3 Monate",
+        "mediation": "bis 3.000 €",
+        "telefon": "ja, 24/7"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.vgh.de/vgh/resources/pdf/produkt/rechtsschutz/VGH_LU_Rechtsschutz_VGH_Privat.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mit RechtsschutzPlus, StrafrechtPlus, Immobilien",
+      "kurz": "Plus komplett",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "kaution": "500.000 €",
+        "privatPlus": "ja (RechtsschutzPlus)",
+        "straf": "StrafrechtPlus",
+        "wartezeit": "teils 3 Monate",
+        "mediation": "bis 3.000 €",
+        "telefon": "ja, 24/7"
+      },
+      "bausteine": {
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.vgh.de/vgh/resources/pdf/produkt/rechtsschutz/VGH_LU_Rechtsschutz_VGH_Privat.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/haftung-recht/rechtsschutzversicherung",
+    "https://www.vgh.de/vgh/resources/pdf/produkt/rechtsschutz/VGH_LU_Rechtsschutz_VGH_Privat.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "Stufen laut Leistungsübersicht (Stand 01.10.2024): Grundtarif Privat, Beruf und Verkehr; dazu RechtsschutzPlus; dazu StrafrechtPlus und Immobilien und Grundstücke. Keine Empfehlung; Plus als mittlere Stufe.",
+    "Versicherungssumme im StrafrechtPlus Privat höchstens 2 Mio. €. Weltdeckung 1 Jahr (Grundtarif) bzw. 3 Jahre. RechtsschutzPlus u. a. Betreuungsverfahren und selbstständige Nebentätigkeit.",
+    "Höhe der Selbstbeteiligung nicht genannt; Meldebonus 150 € bei Online-Meldung vor Anwaltsbeauftragung. Wartezeit 3 Monate u. a. für Wohnungs- und Grundstücks-Rechtsschutz."
+  ]
+}

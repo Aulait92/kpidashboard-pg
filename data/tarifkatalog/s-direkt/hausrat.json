@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwertentschädigung",
+    "Wasser auch durch Überschwemmung",
+    "Glas und Fahrrad zuwählbar"
+  ],
+  "tarife": [
+    {
+      "name": "HausratBasis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "fahrrad": "optional",
+        "auto": "nein",
+        "sb": "150 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HausratPlusProtect",
+      "kurz": "PlusProtect",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja, unbegrenzt",
+        "fahrrad": "optional",
+        "auto": "bis 500 €",
+        "sb": "keine"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HausratPremium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, unbegrenzt",
+        "fahrrad": "optional",
+        "auto": "bis 1.000 €",
+        "online": "Bankkarten-Missbrauch",
+        "sb": "keine"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/hausratversicherung"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Stufen laut Produktseite (HausratBasis, HausratPlusProtect, HausratPremium). Keine Empfehlung markiert; PlusProtect als mittlere Stufe.",
+    "Auto: einfacher Diebstahl aus verschlossenen Fahrzeugen. Premium zusätzlich Bargeld, Wertsachen und Schmuck (ohne Beträge) sowie Sengschäden.",
+    "Wertsachen-Grenzen, einfacher Diebstahl in der Wohnung und Elementar (Starkregen im Rechenbeispiel genannt, Überschwemmung laut Text versichert) nicht beziffert. Die Allgemeinen Bedingungen wurden nicht ausgewertet."
+  ]
+}

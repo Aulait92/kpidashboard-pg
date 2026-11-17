@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Rente, Kapital oder Kombination",
+    "Steuervorteile in der Rente"
+  ],
+  "tarife": [
+    {
+      "name": "Private Rentenversicherung (klassisch)",
+      "kurz": "Klassisch",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Sicherungsvermögen",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/private-rentenversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IndexGarant",
+      "kurz": "IndexGarant",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "Beiträge garantiert",
+        "anlage": "Index oder klassisch",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/indexgarant.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VermögensPolice Invest",
+      "kurz": "Fonds",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds, auch ETF",
+        "flexibel": "ja, Pause, Zuzahlung",
+        "hinterbliebene": "Vertragsguthaben",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/fondsgebundene-rentenversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/private-rentenversicherung.html",
+    "https://www.sparkassenversicherung.de/privatkunden/indexgarant.html",
+    "https://www.sparkassenversicherung.de/privatkunden/fondsgebundene-rentenversicherung.html"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Stufen sind Anlagekonzepte: klassische private Rentenversicherung, IndexGarant (Beiträge zum Rentenbeginn garantiert, jährlich Wahl zwischen Index und klassischer Verzinsung), VermögensPolice Invest (fondsgebunden, Ablaufmanagement). Keine Empfehlung; IndexGarant als mittlere Stufe.",
+    "Berufsunfähigkeits-Zusatzversicherung (BUZ) zur klassischen Rente wählbar; bei IndexGarant nicht ausdrücklich genannt. Rentenfaktor bei klassisch und IndexGarant nicht genannt. Keine Renditeangaben übernommen."
+  ]
+}

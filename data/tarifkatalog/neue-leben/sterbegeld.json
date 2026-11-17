@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "neue leben",
+  "sparte": "sterbegeld",
+  "produkt": "Nachlassschutz (Sterbegeldversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Leistungen bei Tod im Ausland",
+    "Monatliche Teilentnahmen"
+  ],
+  "tarife": [
+    {
+      "name": "Nachlassschutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "ohne GF bis 20.000 €",
+        "wartezeit": "18 Monate",
+        "unfall": "voll ab dem 1. Tag",
+        "ohne-gp": "ja, bis 80 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.neueleben.de/Nachlassschutz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.neueleben.de/Nachlassschutz.html"
+  ],
+  "offen": [
+    "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
+    "Ein Tarif. Volle Leistung nach 18 Monaten, bei Unfalltod ab dem ersten Tag (keine doppelte Leistung genannt). Ohne Gesundheitsfragen bis 80 Jahre und bis 20.000 € Versicherungssumme.",
+    "Dauer der Beitragszahlung nicht genannt. Daneben gibt es den „Aktivplan Nachlass“ (nicht ausgewertet)."
+  ]
+}

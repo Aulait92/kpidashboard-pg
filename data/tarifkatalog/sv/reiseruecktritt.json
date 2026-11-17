@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung (URV)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Mit oder ohne Selbstbehalt",
+    "Jobverlust als Grund versichert",
+    "Notfall-Service"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktrittsversicherung Einmalpolice",
+      "kurz": "Einmalpolice",
+      "stufe": 1,
+      "werte": {
+        "sb": "ohne oder 20 %",
+        "abbruch": "optional",
+        "jahr": "nein",
+        "gruende": "z. B. Jobverlust"
+      },
+      "bausteine": {
+        "abbruch": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/reiseversicherungen/reiseruecktritt-einmal.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktrittsversicherung",
+      "kurz": "Jahrespolice",
+      "stufe": 2,
+      "werte": {
+        "abbruch": "ja",
+        "jahr": "ja",
+        "gruende": "z. B. Jobverlust"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/reiseversicherungen/reiseruecktritt-jahres.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/reiseversicherungen/reiseruecktritt-einmal.html",
+    "https://www.sparkassenversicherung.de/privatkunden/reiseversicherungen/reiseruecktritt-jahres.html"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Produktgeber ist die URV Union Reiseversicherung AG (wie bei der Versicherungskammer Bayern). Einmalpolice mit oder ohne Selbstbehalt (20 %, mindestens 25 €) und mit oder ohne Reiseabbruch; Jahrespolice laut Seite mit Reiseabbruchschutz.",
+    "Versicherungssumme, Pandemie und Familie nicht beziffert. Auslandsreisekranken siehe Ordner ukv."
+  ]
+}

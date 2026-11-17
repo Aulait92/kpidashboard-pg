@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Elementarschäden im Kernschutz",
+    "Hotelkosten 200 €/Tag, 365 Tage",
+    "20 % Schadenfreiheitsbonus"
+  ],
+  "tarife": [
+    {
+      "name": "Kernschutz",
+      "kurz": "Kernschutz",
+      "stufe": 1,
+      "werte": {
+        "elementar": "ja",
+        "ableitung": "nein",
+        "pv": "nein",
+        "kosten": "Hotel 200 €/Tag",
+        "tiere": "ja",
+        "mietausfall": "gewerblich nein",
+        "sb": "150 bis 10.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/haus-wohnen/wohngebaeudeversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kernschutz und Ergänzungsschutz",
+      "kurz": "Ergänzung",
+      "stufe": 2,
+      "werte": {
+        "elementar": "ja",
+        "ableitung": "ja",
+        "pv": "ja, mit Ertragsausfall",
+        "kosten": "Hotel 200 €/Tag",
+        "tiere": "ja",
+        "mietausfall": "auch gewerblich",
+        "sb": "150 bis 10.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/haus-wohnen/wohngebaeudeversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/haus-wohnen/wohngebaeudeversicherung.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Zwei Stufen: Kernschutz sowie Kernschutz mit Ergänzungsschutz (individuelle Zusatzbausteine). Keine Empfehlung markiert.",
+    "Grobe Fahrlässigkeit, gleitender Neuwert, Überspannung und undichte Fugen stehen nicht im Tarifvergleich.",
+    "Schäden durch wildlebende Tiere als Leistung genannt, Stufe nicht angegeben. Selbstbehalt wählbar in 50-€-Schritten von 150 bis 10.000 € (FAQ).",
+    "Ergänzungsschutz zusätzlich: Carports, Gewächshäuser, Pools, Aufräumen umgestürzter Bäume, Gartenbepflanzung."
+  ]
+}

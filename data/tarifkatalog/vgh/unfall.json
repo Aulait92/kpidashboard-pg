@@ -1,0 +1,93 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "unfall",
+  "produkt": "VGH Unfallschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Progression 350 oder 500 %",
+    "Erweiterter Unfallbegriff",
+    "Todesfall wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallschutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "350 oder 500 %",
+        "abGrad": "ab 20 %",
+        "unfallrente": "nein",
+        "khtg": "nein",
+        "todesfall": "optional",
+        "sofort": "nein",
+        "kosmetik": "nein",
+        "bergung": "nein",
+        "gliedertaxe": "wie AUB 2016"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/unfallversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "progression": "350 oder 500 %",
+        "abGrad": "ab 0,1 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "ja, Bruch 200 €",
+        "kosmetik": "bis 10.000 €",
+        "bergung": "bis 20.000 €",
+        "gliedertaxe": "+5 %-Punkte"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/unfallversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallschutz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "progression": "350 oder 500 %",
+        "abGrad": "ab 0,1 %",
+        "unfallrente": "opt., doppelt ab 90 %",
+        "khtg": "optional",
+        "todesfall": "optional",
+        "sofort": "ja, Bruch 200 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 75.000 €",
+        "gliedertaxe": "+10 %-Punkte"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/unfallversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/unfall-vorsorge/unfallversicherung",
+    "https://www.vgh.de/vgh/export/sites/vgh/_resources/downloads/pdf/privat_versicherungen/einkommensschutzundunfall/VGH_Unfallversicherung_Leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
+    "Keine Empfehlung markiert; Komfort als mittlere Stufe.",
+    "Werte aus Tarifvergleich und Leistungsübersicht. Unfallrente ab 50 % Invalidität (Premium mit Mehrleistung ab 90 %). Krankenhaustagegeld mit Verdopplung ab dem 4. Tag. Mitwirkung von Vorerkrankungen: Basis ab 25 %, Komfort ab 60 %, Premium keine Anrechnung.",
+    "Grundsumme individuell, nicht beziffert. Zusatzpaket SofortPlus (u. a. 5.000 € bei Schwerverletzung) wählbar. Zecken nicht ausdrücklich genannt."
+  ]
+}

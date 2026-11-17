@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe und Laufzeit flexibel",
+    "Gleichbleibende Summe",
+    "Gegenseitige Absicherung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "laufzeit": "frei wählbar"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/risikolebensversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/risikolebensversicherung.html"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Ein Tarif mit konstanter oder fallender Summe (für Finanzierungen) und als verbundene Leben (Paare, Geschäftspartner, zwei Darlehensnehmer).",
+    "Nachversicherung, vorgezogene Leistung, Verlängerungsoption, Umtauschrecht, weltweiter Schutz und Höchstsumme stehen nicht auf der Produktseite."
+  ]
+}

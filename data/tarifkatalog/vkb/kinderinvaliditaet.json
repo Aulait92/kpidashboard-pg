@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "kinderinvaliditaet",
+  "produkt": "Kinder-Invaliditäts-Zusatzversorgung (KIZ)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Abschluss ab U3 bis 16 Jahre",
+    "Beitragsfreiheit im Leistungsfall",
+    "Endet mit dem 18. Geburtstag"
+  ],
+  "tarife": [
+    {
+      "name": "Kinder-Invaliditäts-Zusatzversorgung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "rente": "ja, lebenslang",
+        "krankheit": "ja",
+        "ab-grad": "ab GdB 50"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/unfall/kiz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/unfall/kiz.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Ein Tarif, Rentenhöhe frei wählbar, Dynamik zuwählbar. Beitragsfreie Weiterführung bei Tod des Versicherungsnehmers.",
+    "Kapitalleistung, Weiterversicherung als Erwachsener und psychische Erkrankungen sind auf der Produktseite nicht genannt."
+  ]
+}

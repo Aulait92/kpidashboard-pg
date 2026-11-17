@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung Rundum-Schutz (ÖRAG)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Unbegrenzte Versicherungssumme",
+    "Telefonische Erstberatung",
+    "Rechtsservice MEINRECHT"
+  ],
+  "tarife": [
+    {
+      "name": "Rundum-Schutz",
+      "kurz": "Rundum",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "telefon": "ja, ohne SB",
+        "mediation": "ja, ohne SB",
+        "privatPlus": "nein"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/rechtsschutz/rundum-schutz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundum-Schutz PLUS",
+      "kurz": "Rundum PLUS",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "telefon": "ja, ohne SB",
+        "mediation": "ja, ohne SB",
+        "privatPlus": "1 Fall/Jahr bis 1.000 €"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/privatkunden/rechtsschutz/rundum-schutz-plus.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/rechtsschutz.html",
+    "https://www.sparkassenversicherung.de/privatkunden/rechtsschutz/rundum-schutz.html",
+    "https://www.sparkassenversicherung.de/privatkunden/rechtsschutz/rundum-schutz-plus.html",
+    "https://www.sparkassenversicherung.de/dam/jcr:f21fb722-8700-426d-b91d-30e3e4c25533/dlang_AO_flyer_privat-rechtsschutz_2024_final.pdf"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Risikoträger ist die ÖRAG Rechtsschutzversicherungs-AG. Rundum-Schutz enthält Privat-, Verkehrs-, Haus- und Wohnungs- sowie Berufs-Rechtsschutz; die Bereiche sind auch einzeln kombinierbar.",
+    "SV empfiehlt den Rundum-Schutz PLUS („Dann empfehlen wir Ihnen unseren Rundum-Schutz PLUS“). PLUS übernimmt für nicht versicherte private Angelegenheiten einmal im Kalenderjahr Anwaltskosten bis 1.000 € (z. B. Vertragsprüfung, Testament).",
+    "Strafkaution, Selbstbeteiligung (SB-Bonus 150 € bei Kanzlei-Empfehlung, Höhe der SB nicht genannt) und Wartezeit nicht beziffert."
+  ]
+}

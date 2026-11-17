@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "hund-kranken",
+  "produkt": "Hunde-Krankenversicherung (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ambulant und stationär",
+    "Vor- und Nachsorge unbegrenzt",
+    "Freie Tierarztwahl"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenversicherung basis",
+      "kurz": "basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "ohneOp": "ja",
+        "vorsorge": "nein",
+        "nachbehandlung": "unbegrenzt",
+        "wartezeit": "30 Tage"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenversicherung premium",
+      "kurz": "premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "ohneOp": "ja",
+        "vorsorge": "100 € im Jahr",
+        "nachbehandlung": "unbegrenzt",
+        "wartezeit": "30 Tage"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenversicherung premium plus",
+      "kurz": "premium plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "ohneOp": "ja",
+        "vorsorge": "200 € im Jahr",
+        "nachbehandlung": "unbegrenzt",
+        "physio": "optional (Reha)",
+        "wartezeit": "30 Tage"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/hundeversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Die Stufen basis, premium, premium plus weichen vom Uelzener-Ordner (dort ein Tarif, Unterlagen 2024 bis 2025) ab; die S-Direkt-Unterlage ist älter, bitte Aktualität prüfen.",
+    "Leistungsübersicht HUOPKV_IB_1121; enthält die OP-Leistungen der jeweiligen Stufe. Keine Empfehlung; premium als mittlere Stufe.",
+    "Ob das Erstattungslimit der OP-Stufe (1.500 €, 3.000 €, ohne Limit) auch für die übrigen Behandlungen gilt, steht nicht in der Übersicht; deshalb ohne Jahreshöchstleistung erfasst. GOT-Satz für Behandlungen ohne OP nicht genannt. Gesundheitspauschale ohne Wartezeit."
+  ]
+}

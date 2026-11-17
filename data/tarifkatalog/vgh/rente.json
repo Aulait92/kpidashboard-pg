@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "rente",
+  "produkt": "PrivatRente und InvestRente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Rente, Kapital oder Kombination",
+    "Ökologische, soziale Kriterien"
+  ],
+  "tarife": [
+    {
+      "name": "VGH PrivatRente Sicherheit",
+      "kurz": "Sicherheit",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "Zuzahlung bis 3x",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/altersvorsorge/rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VGH PrivatRente Balance",
+      "kurz": "Balance",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Mix mit Fonds",
+        "flexibel": "Zuzahlung bis 3x",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/altersvorsorge/rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VGH InvestRente",
+      "kurz": "InvestRente",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "bis 5 Fonds oder ETF"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/altersvorsorge/fondsgebundene-rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/altersvorsorge/rentenversicherung",
+    "https://www.vgh.de/de/altersvorsorge/fondsgebundene-rentenversicherung"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "Stufen sind Anlagemodelle: PrivatRente Sicherheit (Sparbeiträge im Sicherungsvermögen, Überschüsse im VGH Altersvorsorge Fonds), Balance (teils Fonds), InvestRente (bis zu 5 Fonds oder ETFs, Anlaufmanagement). Keine Empfehlung; Balance als mittlere Stufe.",
+    "Beide PrivatRente-Varianten garantieren bei Abschluss eine lebenslange Mindestrente. Zuzahlungen bis zum dreifachen Jahresbeitrag. Hinterbliebenenschutz und Kosten nicht beziffert. Keine Renditeangaben übernommen."
+  ]
+}

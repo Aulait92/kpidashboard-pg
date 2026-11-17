@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "tierhalter-hund",
+  "produkt": "SV PrivatSchutz Hundehalterhaftpflicht",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ungewollter Deckakt",
+    "Flurschäden, Ausscheidungen",
+    "Hundesport und Prüfungen"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "miete": "nein",
+        "welpen": "ja, bis 12 Monate",
+        "forderungsausfall": "nein",
+        "neuwert": "nein",
+        "ausland": "Welt 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:6e9582e5-4071-42ce-8632-cbd07d804911/leistungs%C3%BCbersicht-haftpflicht-tierhalter.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalterhaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10 Mio. €",
+        "miete": "ja",
+        "welpen": "ja, bis 12 Monate",
+        "forderungsausfall": "ja",
+        "neuwert": "nein",
+        "ausland": "Welt 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:6e9582e5-4071-42ce-8632-cbd07d804911/leistungs%C3%BCbersicht-haftpflicht-tierhalter.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalterhaftpflicht Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "30 Mio. €",
+        "miete": "ja",
+        "welpen": "ja, bis 12 Monate",
+        "forderungsausfall": "ja",
+        "neuwert": "bis 3.000 €",
+        "ausland": "Welt 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:6e9582e5-4071-42ce-8632-cbd07d804911/leistungs%C3%BCbersicht-haftpflicht-tierhalter.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/tierhalterhaftpflicht.html",
+    "https://www.sparkassenversicherung.de/dam/jcr:6e9582e5-4071-42ce-8632-cbd07d804911/leistungs%C3%BCbersicht-haftpflicht-tierhalter.pdf?view"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Quelle: Leistungsübersicht Tierhalterhaftpflicht 63-838-0526 (PDF).",
+    "Leistungsübersicht mit Zeichen ● versichert, ○ individuell wählbar, - nicht versichert; ○ ist als „optional“ erfasst.",
+    "Stufen Basis, Komfort, Top; keine Empfehlung markiert, Komfort als mittlere Stufe.",
+    "Versicherungssumme: Basis 5 Mio. €, Komfort 10 Mio. € (P/S/V pauschal), Top 30 Mio. € P/S und 15 Mio. € V. Selbstbeteiligung nicht genannt. Ausland: Europa unbegrenzt, weltweit 1 Jahr (Basis) bzw. 5 Jahre.",
+    "Fremde Hüter: Produktseite nennt Schutz für „Tierhüter“, ohne Einschränkung; nicht in der Leistungsübersicht. Top zusätzlich Tierarztkosten bis 1.500 €, wenn ein fremder Hund den eigenen verletzt."
+  ]
+}

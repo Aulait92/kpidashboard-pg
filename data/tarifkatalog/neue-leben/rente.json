@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "neue leben",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "Höhere Rente bei Pflege wählbar",
+    "Steuervorteile"
+  ],
+  "tarife": [
+    {
+      "name": "Aktivplan",
+      "kurz": "Aktivplan",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "konventioneller Teil",
+        "anlage": "Mix konventionell, Fonds",
+        "flexibel": "ja",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.neueleben.de/Aktivplan.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PlanX",
+      "kurz": "PlanX",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "Indexbeteiligung",
+        "flexibel": "Zuzahlung, Entnahme",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.neueleben.de/PlanX.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Sofortrente",
+      "kurz": "Sofortrente",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Einmalbeitrag",
+        "hinterbliebene": "Guthaben, wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.neueleben.de/Sofortrente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.neueleben.de/Aktivplan.html",
+    "https://www.neueleben.de/PlanX.html",
+    "https://www.neueleben.de/Sofortrente.html"
+  ],
+  "offen": [
+    "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
+    "Stufen sind Produkte: Aktivplan (Hybrid aus konventioneller und Fondsanlage, endfälliger Beitragserhalt für den konventionellen Teil, Versorger-Zusatzversicherung wählbar), PlanX (konventionell mit Indexbeteiligung, jährliche Sicherung der Erträge), Sofortrente (gegen Einmalbeitrag). Keine Empfehlung; PlanX als mittlere Stufe.",
+    "Garantierter Rentenfaktor und Kosten nicht genannt. Keine Renditeangaben übernommen."
+  ]
+}

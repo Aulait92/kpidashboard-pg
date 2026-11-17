@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalterhaftpflicht",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Pferdehüter und Gastreiter",
+    "Turniere und Rennen",
+    "Reitutensilien gemietet"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "5, 10 oder 50 Mio. €",
+        "miete": "ja, Boxen, Hallen",
+        "reitbeteiligung": "ja, nicht gewerblich",
+        "flurschaden": "ja",
+        "fohlen": "bis 3. Lebensjahr",
+        "forderungsausfall": "ja",
+        "ausland": "Welt 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/tierversicherung/pferdehaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/tierversicherung/pferdehaftpflicht",
+    "https://www.vgh.de/vgh/export/sites/vgh/_resources/downloads/pdf/privat_versicherungen/haftpflichtundrechtsschutz/VGH_Tierhalterhaftpflicht_Pferd_Prospekt.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "Ein Tarif mit wählbarer Versicherungssumme. Flurschäden sind auf der Produktseite als Leistung genannt, ohne Betrag.",
+    "Selbstbeteiligung nicht genannt. Mietsachschäden an Boxen, Reithallen, Zäunen, Pferdeanhängern und Reitutensilien."
+  ]
+}

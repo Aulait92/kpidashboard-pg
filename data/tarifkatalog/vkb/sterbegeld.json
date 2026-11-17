@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe 5.000 bis 12.500 €",
+    "Bezugsberechtigung frei wählbar",
+    "Ohne Gesundheitsfragen"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "5.000 bis 12.500 €",
+        "wartezeit": "3 Jahre",
+        "unfall": "volle Summe sofort",
+        "ohne-gp": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/leben/sterbegeldversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/leben/sterbegeldversicherung.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Ein Tarif. Volle Versicherungssumme nach drei Jahren; bei Unfalltod auch in den ersten drei Jahren die volle Summe (keine doppelte Leistung genannt).",
+    "Dauer der Beitragszahlung und Bestattungsvorsorge-Service nicht genannt."
+  ]
+}

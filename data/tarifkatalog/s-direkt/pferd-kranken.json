@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "pferd-kranken",
+  "produkt": "Pferde-Krankenversicherung (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ambulant und stationär",
+    "Alle OP wie premium plus",
+    "Prophylaxe bis 100 €"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-Krankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "100 %, ab 12 J. 80 %",
+        "got": "bis 2-fach GOT",
+        "jhl": "keine Höchstsumme",
+        "kolik": "7 Tage",
+        "wartezeit": "3 Monate",
+        "ohneOp": "ja",
+        "vorsorge": "Prophylaxe bis 100 €",
+        "chips": "bis 1.500 €",
+        "nachbehandlung": "10 Tage"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1eXtOQXwn1rkzAPXFl0nHx/ab3fecddb8dc6c80778e7274db50043b/pferdeversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/pferdeversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/1eXtOQXwn1rkzAPXFl0nHx/ab3fecddb8dc6c80778e7274db50043b/pferdeversicherung-leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Leistungsübersicht PFOPKV_IB_1019 (Stand 10/2019, bitte Aktualität prüfen).",
+    "Ein Tarif; enthält alle Operationen und Leistungen der Pferde-OP premium plus sowie ambulante und stationäre Behandlungen. Selbstbeteiligung nicht genannt."
+  ]
+}

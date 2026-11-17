@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "ambulant",
+  "produkt": "Krankenzusatzversicherung Top fit",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Heilpraktiker 80 %, bis 520 €",
+    "Kurtagegeld 13 € je Tag",
+    "Impfungen vor Auslandsreisen"
+  ],
+  "tarife": [
+    {
+      "name": "Top fit 30",
+      "kurz": "Top fit 30",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 520 €",
+        "sehhilfen": "260 € in 36 Monaten",
+        "vorsorge": "Zuzahlungen",
+        "arznei": "Zuzahlungen",
+        "ausland": "ja"
+      },
+      "bausteine": {
+        "ausland": "inklusive"
+      },
+      "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankenzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Top fit 50",
+      "kurz": "Top fit 50",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, bis 520 €",
+        "sehhilfen": "260 € in 36 Monaten",
+        "vorsorge": "Zuzahlungen",
+        "arznei": "Zuzahlungen",
+        "ausland": "ja"
+      },
+      "bausteine": {
+        "ausland": "inklusive"
+      },
+      "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankenzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Top fit 90",
+      "kurz": "Top fit 90",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 520 €",
+        "sehhilfen": "260 € in 36 Monaten",
+        "vorsorge": "Zuzahlungen",
+        "arznei": "Zuzahlungen",
+        "ausland": "ja"
+      },
+      "bausteine": {
+        "ausland": "inklusive"
+      },
+      "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankenzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/gesundheit-versicherung/krankenzusatzversicherung"
+  ],
+  "offen": [
+    "Risikoträger: Provinzial Krankenversicherung Hannover AG (VGH Versicherungen). Abruf 17.11.2026.",
+    "Die ambulanten Leistungen sind in allen drei Tarifen gleich; die Stufen unterscheiden sich nur im Zahnteil (Top fit 30 und 50 mit Zahnersatz 30 bzw. 50, Top fit 90 mit Zahnbehandlung 90, laut Tarifvergleich). Keine Empfehlung.",
+    "Zuzahlungen und Vorsorge: Kostenbeteiligung, Betrag nicht genannt. Hörgeräte, Wartezeit und Augenlasern nicht genannt."
+  ]
+}

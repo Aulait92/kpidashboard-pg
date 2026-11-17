@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "neue leben",
+  "sparte": "basisrente",
+  "produkt": "Aktivplan Basis (Basisrente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beiträge steuerlich abzugsfähig",
+    "Anlagestrategie änderbar",
+    "Höhere Rente bei Pflege wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Aktivplan Basis",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "Mix konventionell, Fonds",
+        "flexibel": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.neueleben.de/Aktivplan-Basis.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.neueleben.de/Aktivplan-Basis.html"
+  ],
+  "offen": [
+    "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
+    "Ein Tarif mit jederzeit veränderbarem Mix aus konventioneller und fondsgebundener Anlage. Beitragsgarantie, Rentenfaktor und Hinterbliebenenschutz nicht beziffert."
+  ]
+}

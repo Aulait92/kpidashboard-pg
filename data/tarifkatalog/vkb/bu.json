@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "bu",
+  "produkt": "EinkommensSicherung (Berufsunfähigkeitsversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Dienstunfähigkeit im Grundbaustein",
+    "Beitragsstundung bis 24 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "EinkommensSicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "rueckwirkend": "AU-Option: ab 1. Tag",
+        "umorganisation": "Hilfe: 6 Monatsrenten",
+        "stundung": "bis 24 Monate",
+        "dynamik": "Ausbau in 5 Jahren"
+      },
+      "bausteine": {
+        "au": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/einkommenssicherung/berufsunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/einkommenssicherung/berufsunfaehigkeitsversicherung.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Ein Tarif mit Grundbaustein und zuwählbaren Bausteinen (Familienabsicherung, Kapitalleistung, Leistungen bei Krankschreibung, Dread Disease). StartSchutz für 15 bis 30 Jahre mit reduziertem Anfangsbeitrag ist eine Variante, keine eigene Stufe.",
+    "AU-Option: Rente nach 3 Monaten ununterbrochener Arbeitsunfähigkeit bei Prognose von 6 Monaten, rückwirkend ab dem ersten Tag der Krankschreibung (Meldefrist 12 Monate). Rückwirkende Leistung bei verspäteter BU-Meldung allgemein nicht belegt.",
+    "Nachversicherung: ereignisunabhängig in den ersten 5 Jahren bis 500 € Rente, bei bestimmten Anlässen bis 50 Jahre. Umorganisation: als Hilfe genannt; ein ausdrücklicher Verzicht auf Umorganisation für Selbstständige steht nicht auf der Seite.",
+    "Weltweit, Teilzeit, Pflege und Infektionsklausel nicht genannt. Dienstunfähigkeit ist im Grundbaustein enthalten; eine eigene DU-Versicherung gibt es nicht."
+  ]
+}

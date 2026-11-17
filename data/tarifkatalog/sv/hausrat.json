@@ -1,0 +1,112 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "hausrat",
+  "produkt": "SV PrivatSchutz Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Überspannung durch Blitz",
+    "Wohnungsschlösser nach Einbruch",
+    "Elementar individuell wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "20 % der VS",
+        "diebstahl": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 1.500 €",
+        "garten": "nein",
+        "auto": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 Tage, 100 €/Tag",
+        "aussen": "10 %, max. 10.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:8f003417-6e11-4958-9b8e-68882589a367/leistungs%C3%BCbersicht-hausrat.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 % der VS",
+        "diebstahl": "nein",
+        "fahrrad": "bis 1.000 €, erhöhbar",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 1.000 €",
+        "auto": "bis 2.500 €",
+        "ueberspannung": "ja",
+        "hotel": "100 Tage, 150 €/Tag",
+        "aussen": "20 %, max. 20.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "inklusive",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:8f003417-6e11-4958-9b8e-68882589a367/leistungs%C3%BCbersicht-hausrat.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 % der VS",
+        "diebstahl": "bis 2.000 €",
+        "fahrrad": "bis 2.000 €, erhöhbar",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "bargeld": "bis 3.000 €",
+        "garten": "bis 3.000 €",
+        "auto": "bis 5.000 €",
+        "ueberspannung": "ja",
+        "hotel": "bis 250 €/Tag",
+        "aussen": "30 %, max. 30.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "inklusive",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:8f003417-6e11-4958-9b8e-68882589a367/leistungs%C3%BCbersicht-hausrat.pdf?view",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/hausratversicherung.html",
+    "https://www.sparkassenversicherung.de/dam/jcr:8f003417-6e11-4958-9b8e-68882589a367/leistungs%C3%BCbersicht-hausrat.pdf?view"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Quelle: Tarifvergleich der Produktseite und Leistungsübersicht Hausrat 63-844-0926 (PDF).",
+    "Leistungsübersicht mit Zeichen ● versichert, ○ individuell wählbar, - nicht versichert; ○ ist als „optional“ erfasst.",
+    "SV markiert Top als „Empfehlung“.",
+    "Wertsachen zusätzlich je m²: 140, 210 bzw. 280 €. Einfacher Diebstahl und Taschendiebstahl nur in Top (bis 2.000 €, sofern unmittelbarer Zugriff bestand). Garten: einfacher Diebstahl vom Versicherungsgrundstück. Auto: Einbruchdiebstahl aus Kfz und Wohnmobilen ohne Bargeld und Wertsachen.",
+    "Hotel in Top bis zur Wiederbewohnbarkeit. Fahrrad in Basis individuell wählbar, sonst erhöhbar. Notfall-Service als Schutzbrief SorglosWohnen. Selbstbeteiligung nicht genannt."
+  ]
+}

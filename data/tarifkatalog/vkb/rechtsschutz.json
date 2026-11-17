@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung (ÖRAG)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unbegrenzte Versicherungssumme",
+    "Telefonische Erstberatung",
+    "Rechtsservice MEINRECHT"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz der ÖRAG",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "ja",
+        "sb": "300 bis 1.000 €",
+        "wartezeit": "teils 3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja, ohne SB",
+        "telefon": "ja, ohne SB"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/rechtsschutz/privat-rechtsschutz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/rechtsschutz/privat-rechtsschutz.html",
+    "https://www.vkb.de/dam/jcr:cd4fa4af-27c9-4d05-b223-84b118b3269d/oerag-rechtsschutz-leistungen.pdf?view"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Risikoträger ist die ÖRAG Rechtsschutzversicherungs-AG. Ein Tarif aus den Lebensbereichen Privat, Verkehr, Haus und Wohnung sowie Beruf frei kombinierbar, alle vier auch als Komplett-Paket.",
+    "Die Seite nennt ein Rating für den Rundum-Schutz PLUS, beschreibt aber keine Stufen Rundum-Schutz und Rundum-Schutz PLUS; deshalb nur ein Tarif.",
+    "Selbstbeteiligung wählbar 300, 400, 500 oder 1.000 €; SB-Bonus 150 € bei Kanzlei-Empfehlung. Strafkaution nicht genannt."
+  ]
+}

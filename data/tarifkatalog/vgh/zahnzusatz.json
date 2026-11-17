@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Für gesetzlich Versicherte",
+    "ZB 90 mit ZE kombinierbar",
+    "Kieferorthopädie bis 18"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnersatz 30",
+      "kurz": "ZE 30",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "30 % der Rechnung",
+        "implantate": "30 %",
+        "behandlung": "nein",
+        "prophylaxe": "nein",
+        "inlays": "30 %",
+        "kfo": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/gesundheit-versicherung/zahnzusatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnersatz 50",
+      "kurz": "ZE 50",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "50 % der Rechnung",
+        "implantate": "50 %",
+        "behandlung": "Füllungen",
+        "prophylaxe": "ja",
+        "inlays": "50 %",
+        "kfo": "ja, bis 18"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/gesundheit-versicherung/zahnzusatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnbehandlung 90",
+      "kurz": "ZB 90",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "nein",
+        "implantate": "nein",
+        "behandlung": "90 % des Restanteils",
+        "prophylaxe": "50 € im Jahr",
+        "kfo": "90 %, bis 18"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/gesundheit-versicherung/zahnzusatz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/gesundheit-versicherung/zahnzusatz"
+  ],
+  "offen": [
+    "Risikoträger: Provinzial Krankenversicherung Hannover AG (VGH Versicherungen). Abruf 17.11.2026.",
+    "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
+    "Drei Tarife; Zahnbehandlung 90 ist laut Seite mit ZE 30 oder ZE 50 kombinierbar. Keine Empfehlung; ZE 50 als mittlere Stufe.",
+    "ZE 30 mit Höchstbeträgen je Jahr (Rechnungsbeträge 2.000 € bzw. 400 € je nach Leistung). ZB 90 mit weiteren Höchstgrenzen, Beträge nicht genannt.",
+    "Wartezeit und Begrenzungen in den ersten Jahren nicht beziffert. Die Zuordnung von Füllungen, Zahnreinigung und KFO zu ZE 50 stammt aus dem Tarifvergleich; bitte prüfen."
+  ]
+}

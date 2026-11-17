@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "risikoleben",
+  "produkt": "Risiko-Lebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Hinterbliebenenschutz im Todesfall",
+    "Konstante oder fallende Summe",
+    "Über-Kreuz-Versicherung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "RisikoLeben Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "vorgezogen": "nein",
+        "verlaengerung": "nein",
+        "summe": "max. 600.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/leben/risikolebensversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "RisikoLeben Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, bei Anlässen",
+        "vorgezogen": "ja",
+        "verlaengerung": "ja",
+        "summe": "unbeschränkt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/leben/risikolebensversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "RisikoLeben Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bei Anlässen",
+        "vorgezogen": "ja",
+        "verlaengerung": "ja",
+        "summe": "unbeschränkt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/leben/risikolebensversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/leben/risikolebensversicherung.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Drei Stufen laut Tarifvergleich; Premium als „Tarif mit den meisten Leistungen“ beschrieben, keine Empfehlung; Plus als mittlere Stufe gesetzt. Plus und Premium unterscheiden sich im Tarifvergleich nicht; der Unterschied ist auf der Seite nicht beschrieben.",
+    "Basis: Eintrittsalter 18 bis 49, Plus und Premium 14 bis 73. Plus und Premium: kostenfreier Schutz bis 6 Monate bei Immobilienerwerb, Heirat, Geburt; Unfall-Zusatz und Kapitalleistung bei Erkrankung eines Kindes.",
+    "Verlängerung ohne erneute Gesundheitsprüfung bis 3 Jahre vor Ablauf (Plus, Premium). Umtauschrecht und weltweiter Schutz nicht genannt."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung (URV)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Mit oder ohne Selbstbehalt",
+    "Abbruch-Schutz zuwählbar",
+    "Jobverlust als Grund versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktrittsversicherung Einmalpolice",
+      "kurz": "Einmalpolice",
+      "stufe": 1,
+      "werte": {
+        "sb": "ohne oder 20 %",
+        "abbruch": "optional",
+        "jahr": "nein",
+        "gruende": "z. B. Jobverlust"
+      },
+      "bausteine": {
+        "abbruch": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/reiseversicherungen/reiseruecktritt-einmal.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktrittsversicherung",
+      "kurz": "Jahrespolice",
+      "stufe": 2,
+      "werte": {
+        "abbruch": "ja",
+        "jahr": "ja",
+        "gruende": "z. B. Jobverlust"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.vkb.de/v/reiseversicherungen/reiseruecktritt-jahres.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/reiseversicherungen/reiseruecktritt-einmal.html",
+    "https://www.vkb.de/v/reiseversicherungen/reiseruecktritt-jahres.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Produktgeber ist die URV Union Reiseversicherung AG. Stufen Einmalpolice und Jahrespolice; Tarife jeweils mit oder ohne Selbstbehalt (20 % des Schadens, mindestens 25 €) und mit oder ohne Reiseabbruch.",
+    "Versicherungssumme, Erkrankung an Pandemien und Mitversicherung der Familie sind auf den Seiten nicht beziffert. Selbstbehalt für die Jahrespolice nicht genannt; laut Seite deckt sie Rücktritt und Abbruch.",
+    "Auslandsreisekranken (UKV/URV) siehe Ordner ukv; nicht hier."
+  ]
+}

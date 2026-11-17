@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "neue leben",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung (EGO)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Leistung ab dem 1. Tag",
+    "Erste-Hilfe-Leistung bei Krebs"
+  ],
+  "tarife": [
+    {
+      "name": "EGO Young",
+      "kurz": "EGO Young",
+      "stufe": 1,
+      "werte": {
+        "verweisung": "ja, jede Verweisung",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bei Ereignissen",
+        "rueckwirkend": "ja, ab 1. Tag",
+        "weltweit": "ja",
+        "pflege": "ja, auch Demenz",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.neueleben.de/Einkommensschutz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung EGO",
+      "kurz": "EGO",
+      "stufe": 2,
+      "werte": {
+        "verweisung": "ja, jede Verweisung",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bei Ereignissen",
+        "rueckwirkend": "ja, ab 1. Tag",
+        "weltweit": "ja",
+        "pflege": "ja, auch Demenz",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.neueleben.de/Einkommensschutz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.neueleben.de/Einkommensschutz.html"
+  ],
+  "offen": [
+    "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
+    "Produkt der HDI-Gruppe („EGO“). Zwei Varianten: EGO Young für Ausbildung, Studium und Berufseinstieg (niedriger Anfangsbeitrag bis 10 Jahre) und die reguläre BU. Keine Leistungsstufen, keine Empfehlung.",
+    "Leistung bei Berufsunfähigkeit wegen Pflegebedürftigkeit oder Demenz laut Seite; eine eigene Pflegerente ist nicht genannt. Inflationsschutz (Dynamik) wählbar.",
+    "AU-Klausel, Teilzeit, Umorganisation, Stundung und Infektionsklausel stehen nicht auf der Seite. Keine eigene Dienstunfähigkeitsversicherung gefunden."
+  ]
+}

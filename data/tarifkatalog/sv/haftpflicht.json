@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "SV SparkassenVersicherung",
+  "sparte": "haftpflicht",
+  "produkt": "SV PrivatSchutz Private Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gefälligkeits- und Mietsachschäden",
+    "Ehrenamt mitversichert",
+    "Europa ohne zeitliche Grenze"
+  ],
+  "tarife": [
+    {
+      "name": "Private Haftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. € pauschal",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 30.000 €, privat",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 250 g",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "tiere": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:5b8d8e25-06ba-48ca-a86e-c91e8cdccc86/leistungs%C3%BCbersicht-haftpflicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Private Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "30 Mio. € (P/S)",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 30.000 €",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "bis 2 kg",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "tiere": "optional"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:5b8d8e25-06ba-48ca-a86e-c91e8cdccc86/leistungs%C3%BCbersicht-haftpflicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Private Haftpflicht Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "75 Mio. € (P/S)",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 100.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 3.000 €",
+        "mallorca": "ja, inkl. Kasko-SB",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 18.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "tiere": "optional",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.sparkassenversicherung.de/dam/jcr:5b8d8e25-06ba-48ca-a86e-c91e8cdccc86/leistungs%C3%BCbersicht-haftpflicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassenversicherung.de/privatkunden/private-haftpflichtversicherung.html",
+    "https://www.sparkassenversicherung.de/dam/jcr:5b8d8e25-06ba-48ca-a86e-c91e8cdccc86/leistungs%C3%BCbersicht-haftpflicht.pdf"
+  ],
+  "offen": [
+    "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
+    "Quelle: Leistungsübersicht Privathaftpflicht 63-840-0925-01 (PDF) und Produktseite.",
+    "Leistungsübersicht mit Zeichen ● versichert, ○ individuell wählbar, - nicht versichert; ○ ist als „optional“ erfasst.",
+    "Drei Deckungsstufen Basis, Komfort, Top. Keine Empfehlung markiert; Komfort als mittlere Stufe.",
+    "Vermögensschäden: Basis 10 Mio. € pauschal (P/S/V), Komfort und Top je 15 Mio. €; je geschädigter Person 10 bzw. 15 Mio. €. Top mit Best-Leistungs-, Besserstellungs- und Update-Garantie.",
+    "Hunde, Pferde und andere Tiere als Zusatzbaustein; Heizöltank nur in Top. Selbstbeteiligung nicht genannt. Zusatzbaustein BeitragsSchutz (Beitragsbefreiung bei Arbeitslosigkeit oder Arbeitsunfähigkeit)."
+  ]
+}

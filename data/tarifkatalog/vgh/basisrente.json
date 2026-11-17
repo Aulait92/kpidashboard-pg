@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "basisrente",
+  "produkt": "VGH BasisRente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Steuerliche Förderung",
+    "VGH Altersvorsorge Fonds"
+  ],
+  "tarife": [
+    {
+      "name": "BasisRente Sicherheit",
+      "kurz": "Sicherheit",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Sicherungsvermögen",
+        "hinterbliebene": "Guthaben als Rente"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/altersvorsorge/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente Balance",
+      "kurz": "Balance",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Mix mit Fonds",
+        "hinterbliebene": "Guthaben als Rente"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/altersvorsorge/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente Chance",
+      "kurz": "Chance",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "VGH Altersvorsorge Fonds",
+        "hinterbliebene": "Guthaben als Rente"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/altersvorsorge/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/altersvorsorge/basisrente"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "Drei Anlagemodelle; Sicherheit und Balance garantieren bei Abschluss eine lebenslange Mindestrente, Chance legt Sparbeiträge und Überschüsse im VGH Altersvorsorge Fonds an. Keine Empfehlung; Balance als mittlere Stufe.",
+    "Todesfall: Vertragsguthaben wird als Hinterbliebenen- bzw. Waisenrente gezahlt (vor Rentenbeginn und bis 85). Flexibilität und Beitragsgarantie nicht beziffert."
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung (PrivatRente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Zuzahlungen und Entnahmen",
+    "Beitragspausen möglich"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatRente WachstumGarant",
+      "kurz": "WachstumGarant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "90 oder 100 %",
+        "anlage": "Index (IOK2), Lock-in",
+        "flexibel": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/private-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PrivatRente FlexVario",
+      "kurz": "FlexVario",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "Fonds, ROK, NOA, MSCI",
+        "flexibel": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.vkb.de/v/private-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PrivatRente FlexInvest",
+      "kurz": "FlexInvest",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds, ROK, MSCI World",
+        "flexibel": "ja",
+        "hinterbliebene": "Beiträge im Todesfall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/private-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PrivatRente VisionInvest",
+      "kurz": "VisionInvest",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Nachhaltige Fonds",
+        "flexibel": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/private-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/private-rente.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Stufen sind Anlagekonzepte, keine Leistungsstufen: WachstumGarant (Beitragsgarantie 90 oder 100 %, 10 % Lock-in der IOK2), FlexVario (Chance-Profil wählbar, lebenslang garantierte Rente, BU-Absicherung zuwählbar), FlexInvest (reine Fondsanlage), VisionInvest (nachhaltige Fonds). Keine Empfehlung; FlexVario als mittlere Stufe gesetzt.",
+    "Garantierter Rentenfaktor, Kapitalwahlrecht und Kosten stehen nicht auf der Seite. Garantie bei FlexVario, FlexInvest und VisionInvest nicht beziffert.",
+    "Keine Renditeangaben übernommen."
+  ]
+}

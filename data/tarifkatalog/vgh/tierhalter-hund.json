@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflicht",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Deckakt und Ausscheidungen",
+    "Hundeschule und Hundesport",
+    "Bergungskosten bis 25.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "5, 10 oder 50 Mio. €",
+        "sb": "0 oder 250 €",
+        "miete": "ja",
+        "fremdhueter": "ja (Familie, Nachbarn)",
+        "welpen": "bis 6. Lebensmonat",
+        "forderungsausfall": "ja",
+        "geliehen": "ja",
+        "ausland": "Europa, Welt 5 Jahre"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/tierversicherung/hundehaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/tierversicherung/hundehaftpflicht",
+    "https://www.vgh.de/vgh/resources/pdf/produkt/haftpflicht/VGH_Hundehalterhaftpflicht_LU.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "Ein Tarif mit wählbarer Versicherungssumme. Selbstbeteiligung wahlweise 0 oder 250 € (bei behördlich als gefährlich eingestuften Hunden 250 €), laut Leistungsübersicht.",
+    "Fremde Hüter: In der Leistungsübersicht ist „Tierhüter (z. B. Familienmitglieder und Nachbarn)“ aufgeführt; das Zeichen ist nicht lesbar. Bitte prüfen.",
+    "Kaution im Ausland 150.000 €. Einsatz als Therapie-, Assistenz-, Rettungs- oder Suchhund mitversichert."
+  ]
+}

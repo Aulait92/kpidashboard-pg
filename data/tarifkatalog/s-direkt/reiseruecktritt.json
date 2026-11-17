@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiseversicherung (URV)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Stornokosten und Umbuchung",
+    "24-Stunden-Notruf-Service",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktritt",
+      "kurz": "Rücktritt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sb": "optional",
+        "abbruch": "optional",
+        "jahr": "nein"
+      },
+      "bausteine": {
+        "abbruch": "optional"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/reiseversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Travel-Paket",
+      "kurz": "Travel-Paket",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "abbruch": "ja",
+        "jahr": "nein"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/reiseversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahresrücktritt plus",
+      "kurz": "Jahr plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "sb": "keine",
+        "abbruch": "ja",
+        "jahr": "ja"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.sparkassen-direkt.de/produkte/reiseversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/reiseversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/2BQ2rrTtkKbfhGnJDAUK0E/1064528f777fdc119d3e471a78880039/Reiseruecktrittsversicherung.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Produkt der URV Union Reiseversicherung AG. Drei Tarife laut Produktseite; Travel-Paket zusätzlich Auslandskrankenschutz und Krankenrücktransport für eine Reise. Keine Empfehlung; Travel-Paket als mittlere Stufe.",
+    "Familientarif für bis zu zwei Erwachsene und Kinder unter 21. Versicherungssumme, Pandemie und Selbstbehalt-Höhe nicht genannt.",
+    "Eine eigenständige Auslandsreise-Krankenversicherung gibt es nicht; sie ist nur im Travel-Paket enthalten."
+  ]
+}

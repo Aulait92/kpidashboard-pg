@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "basisrente",
+  "produkt": "BasisRente (Rürup-Rente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Steuerliche Förderung",
+    "Anlage kostenfrei änderbar"
+  ],
+  "tarife": [
+    {
+      "name": "BasisRente WachstumGarant",
+      "kurz": "WachstumGarant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "90 oder 100 %",
+        "anlage": "Index, Lock-in 10 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/gefoerderte-rente/ruerup-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente FlexInvest",
+      "kurz": "FlexInvest",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "Fonds oder ROK",
+        "flexibel": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/gefoerderte-rente/ruerup-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente VisionInvest",
+      "kurz": "VisionInvest",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Nachhaltige Fonds"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/gefoerderte-rente/ruerup-rente.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/gefoerderte-rente/ruerup-rente.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Stufen sind Anlagekonzepte: WachstumGarant (Beitragsgarantie 90 oder 100 %, monatliche Wertzuwächse zu 10 % gesichert), FlexInvest (Einzelfonds oder ROK, Teilertragssicherung), VisionInvest (nachhaltige Fonds). Keine Empfehlung; FlexInvest als mittlere Stufe.",
+    "Garantierter Rentenfaktor, Hinterbliebenenschutz und Beitragsflexibilität je Variante nicht beziffert."
+  ]
+}

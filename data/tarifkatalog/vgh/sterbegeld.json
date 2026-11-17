@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Eintrittsalter 50 bis 80",
+    "Überschussbeteiligung",
+    "Service für Hinterbliebene"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "5.000 bis 10.000 €",
+        "wartezeit": "3 Jahre",
+        "unfall": "sofort, ohne Wartezeit",
+        "ohne-gp": "ja",
+        "vorsorge": "Service-Leistungen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/unfall-vorsorge/sterbegeldversicherung"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "Ein Tarif. Bei Unfalltod sofortige Leistung ohne Wartezeit (keine doppelte Leistung genannt). Dauer der Beitragszahlung nicht genannt."
+  ]
+}

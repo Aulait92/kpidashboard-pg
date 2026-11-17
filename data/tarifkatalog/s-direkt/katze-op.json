@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Versicherung (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Altersgrenze",
+    "Gleicher Beitrag für alle Rassen",
+    "Freie Tierarztwahl"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-OP-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "80 %, 100 % wählbar",
+        "got": "1- oder 2-fach wählbar",
+        "jhl": "ohne Jahreslimit",
+        "kastration": "Zuschuss 20 bzw. 35 €",
+        "wartezeit": "30 Tage",
+        "ausland": "6 Monate Europa",
+        "nachbehandlung": "bis 12 Tage",
+        "vorsorge": "nur Chip 25 €"
+      },
+      "bausteine": {},
+      "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6R378FMKu8hlN5YqIERzfF/06601ede6122a8d5da21a107cd726c68/katenzversicherung-leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/katzenversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/6R378FMKu8hlN5YqIERzfF/06601ede6122a8d5da21a107cd726c68/katenzversicherung-leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Leistungsübersicht KAOPKV_IB_0423.",
+    "Ein Tarif. Erstattung 80 %, gegen Mehrbeitrag 100 % (Produktseite). Kastration: Zuschuss Kater 20 €, Katze 35 €."
+  ]
+}

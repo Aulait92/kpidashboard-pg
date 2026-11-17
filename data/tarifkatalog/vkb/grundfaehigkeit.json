@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "grundfaehigkeit",
+  "produkt": "EinkommensSicherung Aktiv (Grundfähigkeitsversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente schon bei einer Fähigkeit",
+    "Abschluss ab 5 Jahren",
+    "Unabhängig vom Beruf"
+  ],
+  "tarife": [
+    {
+      "name": "EinkommensSicherung Aktiv",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "19 plus Bausteine",
+        "prognose": "6 Mon., Psyche 12",
+        "psyche": "optional (Baustein)"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/einkommenssicherung/grundfaehigkeit.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/einkommenssicherung/grundfaehigkeit.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Ein Tarif aus Bausteinen: 19 Basisfähigkeiten immer versichert, dazu Mobilitätsbaustein (Auto, Fahrrad, öffentliche Verkehrsmittel), berufsspezifische Bausteine sowie Psyche und Psyche Plus (volle Erwerbsminderung durch psychische Erkrankung).",
+    "Pflegebedürftigkeit ist in der Liste der Fähigkeiten erwähnt, die Zuordnung zu einem Baustein ist nicht eindeutig. Nachversicherung, weltweiter Schutz und Dynamik nicht belegt; Rente kann im Leistungsfall um einen vereinbarten Prozentsatz steigen."
+  ]
+}

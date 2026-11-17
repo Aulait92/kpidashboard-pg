@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Laufzeit individuell",
+    "Als Partnertarif möglich",
+    "Todesfallbonus wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Absicherung der Familie (konstante Summe)",
+      "kurz": "Konstant",
+      "stufe": 1,
+      "werte": {
+        "nachversicherung": "ja, bei Ereignissen",
+        "umtausch": "ja, erste 5 Jahre",
+        "laufzeit": "individuell"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Absicherung einer Immobilie (fallende Summe)",
+      "kurz": "Fallend",
+      "stufe": 2,
+      "werte": {
+        "nachversicherung": "nein",
+        "umtausch": "nein",
+        "laufzeit": "individuell"
+      },
+      "bausteine": {
+        "fallend": "inklusive",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/unfall-vorsorge/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/unfall-vorsorge/risikolebensversicherung"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
+    "Zwei Varianten nach Zweck: konstante Summe (Familie, Dynamik bis 5 % wählbar) und fallende Summe (Immobilie, vereinfachte Gesundheitsprüfung bei Immobilienfinanzierung). Keine Empfehlung.",
+    "Vorgezogene Leistung, Verlängerungsoption und weltweiter Schutz nicht genannt."
+  ]
+}

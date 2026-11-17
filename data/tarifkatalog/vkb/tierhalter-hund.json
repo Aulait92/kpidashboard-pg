@@ -1,0 +1,61 @@
+{
+  "gesellschaft": "Versicherungskammer Bayern",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalter-Haftpflichtversicherung (Hund)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Deckakt mitversichert",
+    "Turniere und Veranstaltungen",
+    "Bergungskosten bis 3.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "werte": {
+        "vs": "30 Mio. €",
+        "miete": "nein",
+        "welpen": "ja, bis 12 Monate",
+        "geliehen": "nein",
+        "neuwert": "bis 3.000 €",
+        "ausland": "Europa unbegr., Welt 1 J",
+        "sb": "wählbar, z. B. 150 €",
+        "fremdhueter": "ja, nicht gewerblich"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/haftpflicht/hundehaftpflicht.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierhalter-Haftpflicht Optimal",
+      "kurz": "Optimal",
+      "stufe": 2,
+      "werte": {
+        "vs": "30 Mio. €",
+        "miete": "ja",
+        "welpen": "ja, bis 12 Monate",
+        "geliehen": "ja",
+        "neuwert": "bis 3.000 €",
+        "ausland": "Europa unbegr., Welt 1 J",
+        "sb": "wählbar, z. B. 150 €",
+        "fremdhueter": "ja, nicht gewerblich"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vkb.de/v/haftpflicht/hundehaftpflicht.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vkb.de/v/haftpflicht/hundehaftpflicht.html"
+  ],
+  "offen": [
+    "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
+    "Ein Produkt für Hunde und Pferde, Stufen Kompakt und Optimal. Keine Empfehlung markiert.",
+    "Optimal zusätzlich: Mietsachschäden an Gebäuden, Grundstücken und Garagen, durch tierische Ausscheidungen und an Einrichtung in Reiseunterkünften sowie geliehene, gemietete Sachen.",
+    "Welpen bis 12 Monate beitragsfrei.",
+    "Selbstbeteiligung nur im Rechenbeispiel (150 €). 50 % Nachlass ab dem zweiten Tier."
+  ]
+}

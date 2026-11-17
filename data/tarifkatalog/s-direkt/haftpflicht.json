@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "Sparkassen DirektVersicherung",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gefälligkeits- und Mietsachschäden",
+    "Forderungsausfalldeckung",
+    "Single, Paar, Familie wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "HaftpflichtBasis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "Sachschäden 10 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja, nicht dienstlich",
+        "delikt": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "sb": "150 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassen-direkt.de/produkte/privathaftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HaftpflichtPlusProtect",
+      "kurz": "PlusProtect",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja, auch dienstlich",
+        "delikt": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "sb": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassen-direkt.de/produkte/privathaftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HaftpflichtPremium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja, auch dienstlich",
+        "delikt": "bis 50.000 €",
+        "geliehen": "ja, bis Summe",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "ja",
+        "sb": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sparkassen-direkt.de/produkte/privathaftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sparkassen-direkt.de/produkte/privathaftpflichtversicherung",
+    "https://assets.ctfassets.net/4b9zk5bbf1ft/3lZ56guKMKsX3qhhjFsMt4/58e946379adb581ea3817aff06bf6eb7/Privathaftpflichtversicherung_Kundeninformation.pdf"
+  ],
+  "offen": [
+    "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
+    "Stufen laut Produktseite; Einzelwerte aus den Bedingungen (AVB HaftpflichtBasis 2024, HaftpflichtPlusProtect 2024, Zusatzbedingungen HaftpflichtPremium 2024). Keine Empfehlung markiert; PlusProtect als mittlere Stufe.",
+    "Versicherungssumme laut Seite: Basis Sachschäden bis 10 Mio. €, PlusProtect bis 50 Mio. €. Schlüssel: Basis private und ehrenamtliche, PlusProtect auch dienstliche Schlüssel (Folgeschäden bis 100.000 €). Deliktunfähige bis 50.000 € je Fall (100.000 € im Jahr). Premium: geliehene, gemietete Sachen bis zur Versicherungssumme, Ansprüche von Arbeitskollegen.",
+    "Mallorca, Rabattretter, Drohnen und Nebentätigkeit nicht ausgewertet (Bedingungen sehr umfangreich). Geliehene Sachen in Basis und PlusProtect nicht beziffert."
+  ]
+}

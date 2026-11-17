@@ -1,0 +1,103 @@
+{
+  "gesellschaft": "VGH",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwertversicherung",
+    "Starkregen und Rückstau",
+    "Einbruchschäden am Gebäude"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Basispaket",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "20 % der VS",
+        "fahrrad": "optional",
+        "elementar": "Starkregen ja, Rest opt.",
+        "bargeld": "bis 2.500 €",
+        "garten": "nein",
+        "auto": "nein",
+        "ueberspannung": "nein",
+        "hotel": "100 €/Tag",
+        "aussen": "20 %, max. 20.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/bauen-wohnen/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Komfortpaket",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "Starkregen ja, Rest opt.",
+        "bargeld": "bis 5.000 €",
+        "garten": "nein",
+        "auto": "nein",
+        "ueberspannung": "ja",
+        "hotel": "200 €/Tag",
+        "aussen": "30 %, max. 30.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.vgh.de/de/bauen-wohnen/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Premiumpaket",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 % der VS",
+        "fahrrad": "optional",
+        "elementar": "Starkregen ja, Rest opt.",
+        "bargeld": "bis 5.000 €",
+        "garten": "bis 10.000 €",
+        "auto": "bis 5.000 €",
+        "ueberspannung": "ja",
+        "hotel": "200 €/Tag",
+        "aussen": "30 %, max. 30.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.vgh.de/de/bauen-wohnen/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vgh.de/de/bauen-wohnen/hausratversicherung",
+    "https://www.vgh.de/vgh/resources/pdf/produkt/hausrat/vgh_leistungsuebersicht_hausratversicherung.pdf"
+  ],
+  "offen": [
+    "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
+    "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
+    "Keine Empfehlung markiert; Komfort als mittlere Stufe.",
+    "Wertsachen, Bargeld und Hotelkosten aus der Leistungsübersicht (VHB 2024). Die Häkchen der Leistungsübersicht sind nicht lesbar; einfacher Diebstahl und Online-Betrug deshalb nicht belegt. Premium: Diebstahl am Arbeitsplatz bis 5.000 €, Notdienst- und Handwerkerleistungen bis 1.000 € je Fall.",
+    "Elementar: Starkregen und Rückstau in allen Paketen; der Baustein „Weitere Naturgefahren“ ist laut Seite inzwischen integriert, zugleich als Zusatzbaustein beschrieben. Bitte prüfen. Bausteine Fahrraddiebstahl, Glas, Wertsachen. Selbstbeteiligung nicht genannt."
+  ]
+}
