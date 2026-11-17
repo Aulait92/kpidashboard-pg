@@ -169,7 +169,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(appt?.startsAt.toISOString()).toBe(starts[1]);
     const [buchung, komplett] = gesendet();
     expect(buchung.art).toBe("text");
-    expect(buchung.body).toMatch(/^Ihr Videotermin ist gebucht: \*.+\*\.\nHier ist Ihr Link: https:\/\/meet\.google\.com\/abc-defg-hij\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei/);
+    expect(buchung.body).toMatch(/^Ihr Videotermin ist gebucht: \*.+\*\.\nHier ist Ihr Link: https:\/\/meet\.google\.com\/abc-defg-hij\nDie Einladung mit Kalendereintrag ist an \S+@\S+ unterwegs\. Falls die Adresse nicht stimmt, schreiben Sie mir einfach die richtige\.\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei/);
     // alle Angaben fürs Angebot bekannt: gleich der Komplettcheck mit Knöpfen
     expect(komplett.art).toBe("buttons");
     expect(komplett.body).toBe(

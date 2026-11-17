@@ -18,6 +18,7 @@
 import { a, asAnsprache } from "@/lib/ansprache";
 import { prisma } from "@/lib/prisma";
 import { KNOPF } from "@/lib/whatsapp/templates";
+import { WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
 
 export type KnopfAktion =
   | { aktion: "bestaetigt" }
@@ -76,7 +77,7 @@ export function knopfHinweis(k: KnopfAktion, now = new Date()): string | null {
     case "angebot":
       return `Der Lead hat zum Angebot per Knopf geantwortet: Für ihn ist eher ${k.fokus === "beitrag" ? "der Beitrag" : "die Leistung"} entscheidend. Halte das fest (angaben.wunsch). Nenne keine Beträge, Tarife oder Vergleiche: Biete ein kurzes Gespräch an, in dem der Berater das Angebot genau darauf abstimmt, mit zwei freien Zeiten (get_available_slots).`;
     case "andere_zeit":
-      return "Der Lead hat per Knopf „Andere Zeit“ geantwortet: die vorgeschlagenen Zeiten passen nicht. Frag kurz, wann es ihm grundsätzlich passt (Tag oder Tageszeit). Nennt er einen Wunsch, hole mit get_available_slots freie Zeiten und nutze termin_vorschlagen mit erneut=true und den zwei passenden start-Werten.";
+      return "Der Lead hat per Knopf „Andere Zeit“ geantwortet: die vorgeschlagenen Zeiten passen nicht. Frag kurz, wann es ihm grundsätzlich passt (Tag oder Tageszeit). Nennt er einen Wunsch, hole mit get_available_slots freie Zeiten. " + WUNSCHZEIT_REGEL;
     case "folge":
       return `Der Lead hat per Knopf „${k.wert}“ geantwortet: Das ist die Antwort auf unsere letzte Angebotsfrage (${k.key === "oeffentlicherDienst" ? "öffentlicher Dienst" : k.key}). Halte sie mit record_qualification fest und mach weiter.`;
     case "zeit": {
