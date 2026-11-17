@@ -54,7 +54,7 @@ Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am
   und `assistent.mp4` neu; Folienliste und Sonderfolien in `src/lib/vertrieb/verkaufspraesentation.ts` prüfen
   (Nummern von Rechnung, Paket und Demo).
 
-## Folie „Ihr Abschlussbonus“ in PPTX und PDF (17.11.2026, wartet auf Oles OK)
+## Folie „Ihr Abschlussbonus“ in PPTX und PDF (17.11.2026, nach Oles OK hochgeladen am 17.11.2026, 10:40 Uhr)
 
 Vorletzte Folie (vor „Ihr Start in 3 Schritten“), gleiche Gestaltung wie in der Web-Präsentation, aber mit fester
 Frist „bis zur Frist in Ihrem Angebot“ (die PDF geht mit der Angebotsmail raus und wird später gelesen) und ohne
