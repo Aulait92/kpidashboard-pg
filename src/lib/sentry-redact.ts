@@ -42,7 +42,25 @@ const PREFIX_RE = new RegExp(
 /** Ersetzt geheime Pfadsegmente in einem beliebigen Text (Pfad, volle URL oder Fehlermeldung). */
 export function redactTokenPaths(text: string): string {
   if (!text || text.indexOf("/") === -1) return text;
-  return text.replace(PREFIX_RE, (_m, start: string, prefix: string) => `${start}${prefix}/${REDACTED_TOKEN}`);
+  return text.replace(PREFIX_RE, (_m, start: string, prefix: string) => `${start}${prefix}/${REDACTED_TOKEN}`).replace(ID_SEGMENT_RE, "/[id]");
+}
+
+/**
+ * Kennungen einzelner Leads, Kontakte, Termine in Pfaden (cuid bzw. UUID), z. B. /buyer/kontakte/ckx…:
+ * durch „[id]“ ersetzen (Sitzungsaufnahme, Rechtsprüfung docs/rechtstexte/sitzungsaufnahme-2026-11-17.md).
+ */
+const ID_SEGMENT_RE = /\/(?:c[a-z0-9]{20,32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?=[/?#\s"')<>]|$)/g;
+
+/** Sitzungsaufnahme nur im eingeloggten Vermittlerbereich (Positivliste), nie auf Endkunden- oder Token-Seiten. */
+export function isReplayAllowedPath(pathOrUrl: string): boolean {
+  let path = pathOrUrl;
+  try {
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(pathOrUrl)) path = new URL(pathOrUrl).pathname;
+  } catch {
+    // ungültige URL: als Pfad prüfen
+  }
+  path = path.split(/[?#]/)[0].toLowerCase();
+  return (path === "/buyer" || path.startsWith("/buyer/")) && !isReplayBlockedPath(path);
 }
 
 /** Pfad ohne Query und Hash und ohne geheime Segmente (für request.url). */

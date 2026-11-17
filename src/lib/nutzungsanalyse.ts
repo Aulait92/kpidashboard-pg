@@ -9,14 +9,25 @@ export const ANALYSE_VERSION = "2026-11-17";
 /** Anteil der Sitzungen mit Aufnahme (Kosten bei Sentry). */
 export const ANALYSE_ANTEIL = 0.3;
 
+// Texte nach Rechtsprüfung (docs/rechtstexte/sitzungsaufnahme-2026-11-17.md, Abschnitt 2): informiert, freiwillig,
+// beide Knöpfe gleich gestaltet, Link vor den Knöpfen, keine Gedankenstriche.
 export const ANALYSE_TEXT = {
-  titel: "Helfen Sie mit, die App noch einfacher zu machen?",
-  text: "Wir sehen dann, wo Sie klicken und wo es hakt, nie Ihre Kunden, Texte oder Eingaben (alles unkenntlich). So verbessern wir genau das, was Sie im Alltag aufhält. Jederzeit in den Einstellungen widerrufbar.",
-  ja: "Ja, ich helfe mit",
+  titel: "Helfen Sie mit, die App einfacher zu machen?",
+  text: "Mit Ihrem Ja zeichnen wir bei einem Teil Ihrer Sitzungen über unseren Dienstleister Sentry (Datenregion EU) auf, wie Sie durch die App klicken, damit wir umständliche Stellen finden und verbessern. Alle Texte, Eingaben und Kundendaten sind dabei unkenntlich, die Teilnahme ist freiwillig und lässt sich jederzeit unter Einstellungen beenden.",
+  ja: "Ja, gern",
   nein: "Nein, danke",
   mehr: "Mehr erfahren",
-  link: "/datenschutz#nutzungsanalyse",
+  link: "/rechtliches/sitzungsaufnahmen",
+  danke: "Danke! Sie können das jederzeit unter Einstellungen wieder ausschalten.",
+  schalter: "Sitzungsaufnahme zur Verbesserung der App",
+  schalterHinweis: "Wir sehen, wie Sie klicken, nicht was Sie lesen oder eingeben.",
 } as const;
+
+/** Erst fragen, wenn der Nutzer angekommen ist: nicht in den ersten 2 Tagen und nicht während der Einrichtung. */
+export function darfAnalyseFragen(o: { createdAt: Date; einrichtungOffen: number; now?: Date }): boolean {
+  const now = o.now ?? new Date();
+  return now.getTime() - o.createdAt.getTime() >= 2 * 24 * 60 * 60 * 1000 && o.einrichtungOffen === 0;
+}
 
 export type AnalyseStatus = "ja" | "nein" | null;
 export const asAnalyseStatus = (v: unknown): AnalyseStatus => (v === "ja" || v === "nein" ? v : null);

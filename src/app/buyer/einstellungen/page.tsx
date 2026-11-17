@@ -6,6 +6,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
 import { AnalyseSchalter } from "@/components/nutzungsanalyse";
 import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
+import { analysePseudonym } from "@/lib/nutzungsanalyse-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -85,7 +86,7 @@ export default async function EinstellungenPage() {
           <section>
             <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Datenschutz</h2>
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
-              <AnalyseSchalter status={analyse} />
+              <AnalyseSchalter status={analyse} pseudonym={ctx.userId ? analysePseudonym(ctx.userId) : null} />
             </div>
           </section>
         ) : null}
