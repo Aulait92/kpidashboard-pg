@@ -10,7 +10,7 @@ describe("Meine Provisionen: speichern, Rechte, wirksame Sätze", () => {
     requireTestDb();
     customerId = (await makeCustomer()).id;
     await prisma.lead.create({ data: { customerId, source: "Allianz Privatschutz" } });
-    await prisma.lead.create({ data: { customerId, source: "Sterbegeld" } });
+    await prisma.lead.create({ data: { customerId, source: "Handyversicherung" } });
   });
   afterAll(async () => {
     await cleanupCustomer(customerId);
