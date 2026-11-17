@@ -696,7 +696,7 @@ model Lead {
   lastCallAttemptAt    DateTime?
   callPlanStartedAt    DateTime?
   // Telefonate sauber erfassen (lib/telefonat.ts, Ole 15.11.2026): „Anrufen“ in der App getippt, Ergebnis noch offen.
-  // Solange gesetzt (höchstens 12 Stunden), pausiert der WhatsApp-Assistent für diesen Lead (keine Fragen, kein Nachfassen).
+  // Solange gesetzt (höchstens 3 Stunden), pausiert der WhatsApp-Assistent für diesen Lead (keine Fragen, kein Nachfassen).
   callStartedAt        DateTime?
   // Erinnerung „Was ist bei … rausgekommen?“ (Push) für diesen Anruf schon gesendet
   callReminderAt       DateTime?

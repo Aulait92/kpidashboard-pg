@@ -6,7 +6,7 @@ import { openLeadBooking } from "@/components/lead-booking";
 // Auswahl. Nutzt ausschließlich die bestehenden Aktionen (inbox-actions).
 
 import { useProvisionRates } from "@/components/provision-context";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { CalendarPlus, Check, Clock, PhoneMissed, Send, ThumbsDown, Trophy } from "lucide-react";
 import {
   callbackOutcomeResult,
@@ -18,7 +18,7 @@ import {
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
-import { LostSheet } from "@/components/next-step";
+import { emitLeadAction, emitNotReachedOffer, LostSheet, useStepDone } from "@/components/next-step";
 import { BedarfSheet } from "@/components/bedarf-sheet";
 import { callStartedAction } from "@/app/buyer/telefonat-actions";
 
@@ -70,6 +70,59 @@ export function useCallReturn(onReturn: (key: string) => void) {
     pending.current = { key, at: Date.now(), hidden: false };
     if (leadId) void callStartedAction(leadId).catch(() => undefined);
   }, []);
+}
+
+/**
+ * Ergebnis aus „Wie lief es?“ (oder einer Wiedervorlage) für einen Kontakt ausführen: Toast mit „Rückgängig“,
+ * Seite neu laden; nach „nicht erreicht“ die Nachricht anbieten, sonst nach dem nächsten Schritt fragen.
+ */
+export function useLeadResult(leadId: string, name: string) {
+  const { done } = useStepDone();
+  const [, start] = useTransition();
+  return useCallback(
+    (message: string, action: () => Promise<InboxResult>) =>
+      start(async () => {
+        const res = await action();
+        done(res, message);
+        if (!res.ok) return;
+        if (res.attempt && !res.attempt.offered) emitNotReachedOffer(leadId, name, res.attempt);
+        else if (!res.attempt) emitLeadAction(leadId);
+      }),
+    [done, leadId, name],
+  );
+}
+
+/**
+ * „Anrufen“ als Link mit „Wie lief es?“ nach der Rückkehr, z. B. im Chat (Ole, 17.11.2026: wie im Kontakt). Pausiert
+ * den Assistenten für diesen Lead wie überall (lib/telefonat.ts). Ohne Lead nur ein normaler tel:-Link.
+ */
+export function AnrufLink({
+  lead,
+  href,
+  children,
+  ...rest
+}: {
+  lead: { id: string; name: string; source?: string | null; followUp?: boolean } | null;
+  href: string;
+  children: React.ReactNode;
+} & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "onClick">) {
+  const [open, setOpen] = useState(false);
+  const markCall = useCallReturn(() => setOpen(true));
+  const run = useLeadResult(lead?.id ?? "", lead?.name ?? "Lead");
+  return (
+    <>
+      <a {...rest} href={href} onClick={lead ? () => markCall(lead.id, lead.id) : undefined}>
+        {children}
+      </a>
+      {lead ? (
+        <CallOutcomeSheet
+          target={open ? { leadId: lead.id, name: lead.name, source: lead.source, kind: lead.followUp ? "followup" : "lead" } : null}
+          onClose={() => setOpen(false)}
+          onPick={run}
+        />
+      ) : null}
+    </>
+  );
 }
 
 export type CallOutcomeTarget = {

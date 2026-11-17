@@ -2,7 +2,7 @@
 //
 // - Tippt der Vermittler in der App auf „Anrufen“, läuft ein Anruf (Lead.callStartedAt). Bis ein Ergebnis eingetragen
 //   ist, pausiert der WhatsApp-Assistent für diesen Lead: keine Antworten, keine Fragen, kein Nachfassen. Höchstens
-//   12 Stunden, damit ein vergessenes Ergebnis den Lead nicht dauerhaft stumm schaltet.
+//   3 Stunden (Ole, 17.11.2026; vorher 12), damit ein vergessenes Ergebnis den Lead nicht lange stumm schaltet.
 // - Nach dem Gespräch („Wie lief's?“) erfasst der Vermittler den Bedarf strukturiert: dieselben Punkte, die der
 //   Assistent sammelt und die Terminvorbereitung zeigt (lib/whatsapp/qualification.ts), je Produkt und Sparte. Bekanntes
 //   ist vorbelegt, abgefragt wird nur, was noch offen ist.
@@ -13,7 +13,7 @@ import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { spartenAus, tierWunsch } from "@/lib/termin-vorbereitung";
 
 /** Höchstdauer der Pause des Assistenten nach „Anrufen“ ohne Ergebnis. */
-export const CALL_PAUSE_MAX_MS = 12 * 60 * 60 * 1000;
+export const CALL_PAUSE_MAX_MS = 3 * 60 * 60 * 1000;
 /** Erinnerung „Was ist bei … rausgekommen?“ nach so vielen Minuten ohne Ergebnis. */
 export const CALL_REMINDER_AFTER_MS = 15 * 60 * 1000;
 /** Nachfrage der offenen Punkte so lange nach dem Telefonat (Termin ist dann gebucht, Bestätigung ist raus). */

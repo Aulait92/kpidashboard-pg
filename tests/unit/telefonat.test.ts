@@ -4,12 +4,16 @@ import { anrufLaeuft, anstossNachTelefonat, bedarfFelder, bedarfStand, felderMit
 const now = new Date("2026-11-17T10:00:00Z");
 
 describe("Telefonat: Pause des Assistenten", () => {
-  it("läuft nach „Anrufen“ bis zum Ergebnis, höchstens 12 Stunden", () => {
+  it("läuft nach „Anrufen“ bis zum Ergebnis, höchstens 3 Stunden", () => {
     expect(anrufLaeuft({ callStartedAt: null }, now)).toBe(false);
     expect(anrufLaeuft({ callStartedAt: new Date(now.getTime() - 5 * 60_000) }, now)).toBe(true);
     expect(anrufLaeuft({ callStartedAt: new Date(now.getTime() - CALL_PAUSE_MAX_MS + 1000) }, now)).toBe(true);
     expect(anrufLaeuft({ callStartedAt: new Date(now.getTime() - CALL_PAUSE_MAX_MS - 1000) }, now)).toBe(false);
     expect(anrufLaeuft(null, now)).toBe(false);
+    // Ole, 17.11.2026: 3 statt 12 Stunden
+    expect(CALL_PAUSE_MAX_MS).toBe(3 * 60 * 60 * 1000);
+    expect(anrufLaeuft({ callStartedAt: new Date(now.getTime() - 2.5 * 60 * 60_000) }, now)).toBe(true);
+    expect(anrufLaeuft({ callStartedAt: new Date(now.getTime() - 3.5 * 60 * 60_000) }, now)).toBe(false);
   });
 });
 

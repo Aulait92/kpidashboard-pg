@@ -132,9 +132,11 @@ describe("Telefonat: Assistent pausiert beim Anruf", () => {
     expect(waSend).toHaveBeenCalled();
   });
 
-  it("Pause endet von selbst nach 12 Stunden", async () => {
+  it("Pause endet von selbst nach 3 Stunden", async () => {
     const { lead } = await leadMitChat();
-    await prisma.lead.update({ where: { id: lead.id }, data: { callStartedAt: new Date(Date.now() - 13 * 60 * 60 * 1000) } });
+    await prisma.lead.update({ where: { id: lead.id }, data: { callStartedAt: new Date(Date.now() - 2.5 * 60 * 60 * 1000) } });
+    expect(await anrufPausiert(lead.id)).toBe(true);
+    await prisma.lead.update({ where: { id: lead.id }, data: { callStartedAt: new Date(Date.now() - 3 * 60 * 60 * 1000 - 60_000) } });
     expect(await anrufPausiert(lead.id)).toBe(false);
   });
 
