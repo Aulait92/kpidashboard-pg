@@ -8,6 +8,7 @@ import { isStorno, loadAdminLeads, priceOf, type LeadFilter } from "@/lib/admin-
 import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
 import { prisma } from "@/lib/prisma";
 import { StornoEintragen, StornoZuruecknehmen } from "@/app/admin/ppl/storno-eintragen";
+import { ErneutZustellen } from "@/app/admin/ppl/erneut-zustellen";
 import { TestLeadBadge } from "@/components/test-lead-badge";
 
 export const metadata = { title: "Alle Leads | performancegrowth Admin" };
@@ -258,6 +259,9 @@ async function Geliefert({ sp }: { sp: Suche }) {
                       <StornoEintragen leadId={l.id} reasons={l.subscription?.stornoReasons ?? []} outsideWindow={l.outsideWindow} />
                     </div>
                   )}
+                  <div data-funktion="erneut-zustellen-erneutzustellen--gelieferten-lead-nochmal-zustellen">
+                    <ErneutZustellen leadId={l.id} />
+                  </div>
                 </li>
               );
             })}
