@@ -172,3 +172,12 @@ Im Repo wurde nichts geändert.
   - Screenshots 390 und 1280 px. Aufwand ca. 1 bis 1,5 Tage.
 
 Neue Summe: etwa 10 bis 12 Personentage. Noch offen bei Ole: Fragen 2 (zwei früheste Zeiten), 3 (Cross-Selling 3 Monate), 4 (Frage fett) und 6 (Sie-Form in der Vermittler-Oberfläche).
+
+## Entscheidungen Ole (17.11.2026, abends)
+
+1. **Angebot senden:** Der Vermittler entscheidet. Vorausgewählt ist das abgelegte PDF der Gesellschaft. Gibt es einen Kundenlink zur Beratungspräsentation, kann er ihn optional mitsenden.
+2. **Terminvorschlag:** bleibt die früheste Zeit plus die früheste an einem anderen Tag (zwei Tage).
+3. **Cross-Selling:** Empfehlung 6 Wochen nach dem Abschluss (siehe Rückmeldung), Entscheidung Ole offen.
+4. **Erste Frage im Erstanschreiben:** nicht fett (bleibt wie v7).
+5. **Glückwunsch:** Text laut Ergänzung D, einverstanden.
+6. **Vermittler-Oberfläche:** Sie-Form („wenn Sie es hier senden“).
