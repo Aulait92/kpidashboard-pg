@@ -14,5 +14,6 @@ Free-Plan: wenige Abfragen pro Tag. Jeden Tag die nächsten offenen Fragen abfra
 | 8 | Art. 50 KI-VO Abs. 1, 2, 4: Bot-Kennzeichnung, KI-Zusammenfassungen auf Kundenfolien, Fristen/Digital-Omnibus | offen | |
 | 9 | § 7a VVG: Hinweis bei Paketen (Bestandteile auch einzeln erhältlich) im Kombi-Flow der Beratungspräsentation | offen | |
 | 10 | Gesundheitsdaten im CRM für PKV/BU-Vorabprüfung: Art. 9 Abs. 2 lit. a/h DSGVO, Art. 35 DSFA, § 203 Abs. 3/4 StGB (Software als mitwirkende Person, US-Unterauftragnehmer), Einwilligung im WhatsApp-Flow, Meta/WhatsApp-Richtlinien zu Gesundheitsdaten | offen | |
+| 11 | Anonymisierte, aggregierte Branchenstatistiken („Benchmarks“) aus Auftragsverarbeitung: Art. 28 Abs. 3 lit. a DSGVO (Weisung), Art. 4 Nr. 1 und ErwG 26 (Anonymisierung), EuGH C-413/23 P (EDSB/SRB, Pseudonymisierung aus Empfängersicht), Zulässigkeit einer AVV-Klausel für eigene Statistikzwecke des Auftragsverarbeiters; DSK/EDPB-Leitlinien 07/2020 (Verantwortlicher/Auftragsverarbeiter); dazu eigene Pay-per-Lead-Daten (Zweckbindung Art. 5 Abs. 1 lit. b, Art. 6 Abs. 4) | offen | |
 
-Letzter Lauf: 16.11.2026, Limit erreicht, Reset laut Tool 17.11.2026 12:50 UTC. Nächste: 6, 7, 8, 9, dann Rest von 1, 2, 4, 5.
+Letzter Lauf: 16.11.2026, Limit erreicht, Reset laut Tool 17.11.2026 12:50 UTC. Nächste: 11 (Priorität, Ole 17.11.), 6, 7, 8, 9, dann Rest von 1, 2, 4, 5.
