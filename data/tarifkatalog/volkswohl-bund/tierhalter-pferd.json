@@ -1,0 +1,69 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalterhaftpflicht Pferd (PROKUNDO)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Forderungsausfall ohne Mindesthöhe",
+    "Reiten ohne Sattel",
+    "Turniere und Reitunterricht"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht Pferd Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "150 € bei Mietsachen",
+        "miete": "Stall bis 100.000 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "ausland": "EU/EFTA unbegrenzt"
+      },
+      "bausteine": {
+        "sb0": "nein"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/332/documents/Tarifhighlights_Tierhalterhaftpflicht_Pferd.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierhalterhaftpflicht Pferd Komplett",
+      "kurz": "Komplett",
+      "stufe": 2,
+      "werte": {
+        "vs": "25 Mio. €",
+        "sb": "150 € bei Mietsachen",
+        "miete": "Stall bis 100.000 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 50.000 €",
+        "neuwert": "optional",
+        "ausland": "EU/EFTA unbegrenzt"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/332/documents/Tarifhighlights_Tierhalterhaftpflicht_Pferd.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/hausrat-haftpflicht-und-kfz-versicherung/tierhalterhaftpflicht/",
+    "https://www.prokundo.de/versicherungen/tierhalterhaftpflicht/",
+    "https://rechner.prokundo.de/druckstuecke/api/products/332/documents/Tarifhighlights_Tierhalterhaftpflicht_Pferd.pdf"
+  ],
+  "offen": [
+    "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungshighlights PK PIB THV Pferd 02.2023; Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
+    "Mietsachschäden an Stall, Box, Reithalle, Weide und Koppel bis 100.000 €, an Räumen in Gebäuden mitversichert, jeweils mit 150 € SB; eine allgemeine SB ist nicht genannt. Geliehene Reitutensilien, Kutschen und Anhänger über 10.000 € nur Komplett.",
+    "Jungtiere 12 Monate beitragsfrei. Plus-Baustein nur Komplett: Neuwert bis 12 Monate ab Kauf, Verzicht auf alle SB. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

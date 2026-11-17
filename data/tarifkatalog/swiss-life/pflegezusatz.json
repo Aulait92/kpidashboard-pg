@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "Swiss Life",
+  "sparte": "pflegezusatz",
+  "produkt": "Swiss Life Pflege- & Vermögensschutz (Pflegerente)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente ab Pflegegrad 2",
+    "Beitragsfrei ab Pflegegrad 1",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "Pflege- & Vermögensschutz Aufbauplan",
+      "kurz": "Aufbauplan",
+      "stufe": 1,
+      "werte": {
+        "ab-pg": "ab Pflegegrad 2",
+        "einmal": "optional, 6× PG5-Rente",
+        "befreiung": "ja, ab Pflegegrad 1",
+        "wartezeit": "mind. 8 Jahre"
+      },
+      "bausteine": {
+        "einmal": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/e5/22094.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflege- & Vermögensschutz Sofortschutz",
+      "kurz": "Sofortschutz",
+      "stufe": 2,
+      "werte": {
+        "ab-pg": "ab Pflegegrad 2",
+        "einmal": "optional, 6× PG5-Rente",
+        "befreiung": "ja, ab Pflegegrad 1",
+        "wartezeit": "keine"
+      },
+      "bausteine": {
+        "einmal": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/e5/22094.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.swisslife.de/content/dam/de/documents/e5/22094.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/3a/11864.pdf"
+  ],
+  "offen": [
+    "Quellen: „Wesentliche Vertragsinhalte der selbstständigen Pflegerentenversicherung“ (Bm2845, 06/2025) und Allgemeine Bedingungen Pflegerentenversicherung mit Sofortschutz (AVB_EV_SPV_2025_01) der Swiss Life; Produktseiten auf swisslife.de für automatische Abrufe gesperrt.",
+    "Die Varianten sind keine Leistungsstufen: Sofortschutz leistet sofort, Aufbauplan erst nach mindestens 8 Jahren leistungsfreier Zeit (Todesfallleistung dort nur 65 %).",
+    "Rente in vereinbarter Höhe je Pflegegrad 2 bis 5; Prozentsätze je Pflegegrad, Leistung ambulant wie stationär und Demenz nicht genannt. Einmalleistung gegen Mehrbeitrag: 6 garantierte Monatsrenten des Pflegegrads 5. Todesfallleistung (65 bis 80 % der Beiträge) optional.",
+    "Zwei Varianten ohne Markierung, daher keine Empfehlung."
+  ]
+}

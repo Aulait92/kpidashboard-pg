@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Swiss Life",
+  "sparte": "risikoleben",
+  "produkt": "Swiss Life Risikoversicherung (Tarif 940)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Raucher- und Nichtrauchertarif",
+    "Umwandlung bis zum 10. Jahr",
+    "Beitragsfreistellung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Swiss Life Risikoversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "optional, bis +100 %",
+        "umtausch": "ja, bis Jahr 10"
+      },
+      "bausteine": {},
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/0f/4975.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.swisslife.de/content/dam/de/documents/0f/4975.pdf"
+  ],
+  "offen": [
+    "Quelle sind nur die Allgemeinen Bedingungen für die Risikoversicherung (Tarif 940, AVB_EV_RIS_2025_01, Stand 01.2025) der Swiss Life Lebensversicherung SE; die Produktseiten auf swisslife.de sind für automatische Abrufe gesperrt (403). Bitte an der Produktseite gegenprüfen.",
+    "Nachversicherung „sofern vereinbart“: ohne erneute Gesundheitsprüfung zu Beginn des 6. Versicherungsjahres und bei Ereignissen (Heirat, Geburt, Einkommensplus 10 %, Immobilienkredit ab 50.000 € u. a.), insgesamt bis 100 % der Anfangssumme und bis 300.000 € Todesfallsumme, Restlaufzeit mindestens 20 Jahre.",
+    "Umwandlung in eine Versicherung mit Kapitalbildung bis zum Ablauf des 10. Versicherungsjahres ohne neue Gesundheitsprüfung, wenn Summe und Ablauf gleich bleiben.",
+    "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und weltweiter Schutz sind in den Bedingungen nicht genannt. Fallende Summe und verbundene Leben nicht belegt."
+  ]
+}

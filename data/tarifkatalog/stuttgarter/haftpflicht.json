@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung (Privat-Paket)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Mitversicherte untereinander",
+    "Bestleistungsgarantie",
+    "Opferhilfe bis 50.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "5 Mio. €, ab 1.000 €",
+        "schluessel": "bis 2.500 €, nur privat",
+        "delikt": "bis 2.500 €, nur Kinder",
+        "miete": "bis 500.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "forderungsausfall": "5 Mio. €, ohne Mindest",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 5.000 €, nur Kinder",
+        "miete": "bis 20 Mio. €",
+        "gefaelligkeit": "bis 10.000 €",
+        "neuwert": "ja (bis 12 Monate alt)",
+        "nebenberuf": "bis 17.500 € Umsatz"
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "50 Mio. €, ohne Mindest",
+        "schluessel": "bis 100.000 €",
+        "delikt": "bis 50 Mio. €",
+        "miete": "bis 50 Mio. €",
+        "gefaelligkeit": "bis 50 Mio. €",
+        "neuwert": "ja (bis 12 Monate alt)",
+        "nebenberuf": "bis 22.000 € Umsatz"
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/wohnen-alltag/privat-haftpflicht",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.1.004_Privat-Haftpflicht.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre Stuttgarter Privat-Paket 7.2.009 (Stand 9/2025) der Stuttgarter Versicherung AG, Tabelle „Versichert ist bzw. sind (Auszug)“. Komfort und Premium höchstens 15 Mio. € je geschädigter Person.",
+    "Spaltenzuordnung bitte prüfen: Bei Zeilen mit nur zwei Werten (Gefälligkeit 10.000 €/50 Mio. €, Neuwert, Nebenberuf 17.500 €/22.000 €, Kaution 50.000 €/100.000 €) wurden Komfort und Premium angenommen; Basis daher offen.",
+    "Schlüssel ab Komfort privat und dienstlich; deliktunfähige Erwachsene nur Premium. Geliehene Sachen, Rabattretter und Drohnen stehen nicht in der Paket-Tabelle (ältere Broschüre 7.1.004: geliehene Sachen bis 20.000 €, SFR-Ausgleich bis 5 Jahre).",
+    "Mallorca-Deckung genannt, Zuordnung zu den Paketen nicht lesbar. Allgemeiner Selbstbehalt 150 € wählbar; Beitragsbefreiung bei Arbeitslosigkeit optional. Keine Empfehlung markiert, Komfort als mittlere Stufe."
+  ]
+}

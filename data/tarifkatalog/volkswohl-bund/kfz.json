@@ -1,0 +1,97 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung Pkw (PROKUNDO)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Haftpflicht 100 Mio. €",
+    "Mallorca-Police",
+    "Grobe Fahrlässigkeit versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung EASY",
+      "kurz": "EASY",
+      "stufe": 1,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "12 Monate",
+        "marder": "nur Biss",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "Akku bis 10.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/204/documents/Tarifhighlights_PKW.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung COMFORT",
+      "kurz": "COMFORT",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "18 Monate",
+        "marder": "Folgeschäden 10.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "Akku bis 20.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/204/documents/Tarifhighlights_PKW.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung BEST",
+      "kurz": "BEST",
+      "stufe": 3,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "Akku bis 25.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/204/documents/Tarifhighlights_PKW.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/hausrat-haftpflicht-und-kfz-versicherung/kraftfahrzeug/",
+    "https://www.prokundo.de/versicherungen/kraftfahrzeug/",
+    "https://rechner.prokundo.de/druckstuecke/api/products/204/documents/Tarifhighlights_PKW.pdf",
+    "https://druckstuecke.volkswohl-bund.de/api/products/1198/documents/Verbraucherinformationen_Kraftfahrt_10.2024.pdf"
+  ],
+  "offen": [
+    "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungshighlights Pkw PK PIB K PKW 10.2025; COMFORT laut Produktseite der Tarif, „für den sich die meisten Kunden entscheiden“.",
+    "Haftpflicht 100 Mio. €, je Person höchstens 15 Mio. €. Neuwert bei Totalschaden oder Diebstahl; Kaufpreisentschädigung ebenfalls 12, 18 bzw. 24 Monate.",
+    "Akku-Werte gelten für Folgeschäden durch Kurzschluss bzw. Tierbiss am Akku; eine eigene Allgefahren-Deckung für den Akku ist nicht genannt. Eigenschäden ab COMFORT, Ausland-Schadenschutz nur BEST."
+  ]
+}

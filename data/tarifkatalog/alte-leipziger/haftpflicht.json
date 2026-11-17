@@ -1,0 +1,108 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Mietsachschäden mitversichert",
+    "Mallorca-Deckung",
+    "Beitragsfrei bei Arbeitslosigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht compact",
+      "kurz": "compact",
+      "stufe": 1,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 5.000 €",
+        "delikt": "bis 5.000 €",
+        "geliehen": "bis 5.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 5.000 €",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 6.000 € Umsatz"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "cyber": "optional",
+        "tiere": "optional",
+        "wohnung": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht classic",
+      "kurz": "classic",
+      "stufe": 2,
+      "werte": {
+        "vs": "30 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 200.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 500.000 €",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 12.000 € Umsatz"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "cyber": "optional",
+        "tiere": "optional",
+        "wohnung": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht comfort",
+      "kurz": "comfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 oder 100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis Versicherungssumme",
+        "delikt": "bis Versicherungssumme",
+        "geliehen": "bis 100.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis Versicherungssumme",
+        "neuwert": "bis 10.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 25.000 € Umsatz"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "cyber": "optional",
+        "tiere": "optional",
+        "wohnung": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/haftpflicht/private-haftpflichtversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/703/deklarationsvergleichprivathaftpflichtpp703pdf/deklarationsvergleich-privathaftpflicht-pp703.pdf"
+  ],
+  "offen": [
+    "Quelle: Deklarationsvergleich PP 703 (Stand 04.2025) der Alte Leipziger Versicherung AG. Symbole (Haken) sind im PDF-Text nicht lesbar; leere Felder wurden als „mitversichert bzw. bis zur Versicherungssumme“ gelesen.",
+    "Forderungsausfall in allen Stufen mitversichert; die Mindestschadenhöhe (compact 2.500 €, classic 500 €, comfort ohne) steht direkt unter Gewaltopferschutz, Zuordnung bitte prüfen.",
+    "Versicherungssumme classic und comfort höchstens 15 Mio. € je geschädigter Person. Rabattretter: Rabattausgleich bei geliehenen Kfz ab classic.",
+    "Pakete gegen Aufpreis: Diensthaftpflicht, Cyber, Hund, weitere Eigentumswohnung bzw. Garage. comfort ist auf der Produktseite als „Unser Top-Angebot“ markiert. Selbstbeteiligung nicht genannt."
+  ]
+}

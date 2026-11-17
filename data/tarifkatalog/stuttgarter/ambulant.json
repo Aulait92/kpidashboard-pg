@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "ambulant",
+  "produkt": "Krankenzusatz ambulant",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Ohne Gesundheitsfragen",
+    "Zuzahlungen nach SGB V"
+  ],
+  "tarife": [
+    {
+      "name": "AmbulantBasis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "werte": {
+        "sehhilfen": "100 € in 2 Jahren",
+        "vorsorge": "300 € in 2 Jahren",
+        "arznei": "100 € in 2 Jahren",
+        "hoergeraete": "nein",
+        "wartezeit": "keine",
+        "lasik": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F05_Krankenzusatzambulant%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.2.057_BR_Krankenzusatzambulant.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AmbulantKomfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "sehhilfen": "200 € in 2 Jahren",
+        "vorsorge": "400 € in 2 Jahren",
+        "arznei": "200 € in 2 Jahren",
+        "hoergeraete": "mit LASIK 600 €/2 J.",
+        "wartezeit": "keine",
+        "lasik": "mit Hörhilfe 600 €/2 J."
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F05_Krankenzusatzambulant%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.2.057_BR_Krankenzusatzambulant.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AmbulantPremium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "werte": {
+        "sehhilfen": "400 € in 2 Jahren",
+        "vorsorge": "600 € in 2 Jahren",
+        "arznei": "300 € in 2 Jahren",
+        "hoergeraete": "mit LASIK 800 €/2 J.",
+        "wartezeit": "keine",
+        "lasik": "mit Hörhilfe 800 €/2 J."
+      },
+      "bausteine": {},
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F05_Krankenzusatzambulant%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.2.057_BR_Krankenzusatzambulant.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/unfall-krankheit/krankenzusatz-ambulant",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F05_Krankenzusatzambulant%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.2.057_BR_Krankenzusatzambulant.pdf"
+  ],
+  "offen": [
+    "Quelle: Broschüre Krankenzusatz ambulant 7.2.057 (Stand 1/2024) der Stuttgarter Versicherung AG. Alle Beträge 100 % bis zur genannten Summe in zwei Versicherungsjahren, teils unter Anrechnung der Kassenleistung.",
+    "Arznei- und Verbandmittel als Zuzahlungen nach SGB V gelesen. Vorsorge umfasst Vorsorge- und Früherkennungsuntersuchungen sowie Reise- und Schutzimpfungen. Sehschärfenkorrektur (LASIK) und Hörhilfen teilen sich eine Summe.",
+    "Heilpraktiker und Auslandsreise nicht genannt. Prävention (Kurse nach § 20 SGB V) nur Premium bis 400 €. Leistungsstaffel in den ersten 24 Monaten (Basis 200 €, Komfort 300 €, Premium 500 €). Keine Empfehlung markiert, Komfort als mittlere Stufe."
+  ]
+}

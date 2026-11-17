@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Leinen- oder Maulkorbzwang",
+    "Hundesport mitversichert",
+    "Forderungsausfall"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalter-Haftpflicht classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "werte": {
+        "vs": "10 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja, ab 500 €",
+        "geliehen": "bis 5.000 €",
+        "neuwert": "bis 5.000 €",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/702/deklarationsvergleichhundehalterhaftpflichtpp702pdf/deklarationsvergleich-hundehalterhaftpflicht-pp702.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehalter-Haftpflicht comfort",
+      "kurz": "comfort",
+      "stufe": 2,
+      "werte": {
+        "vs": "20 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja, ohne Mindesthöhe",
+        "geliehen": "bis 10.000 €",
+        "neuwert": "bis 10.000 €",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/702/deklarationsvergleichhundehalterhaftpflichtpp702pdf/deklarationsvergleich-hundehalterhaftpflicht-pp702.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/haftpflicht/hundehaftpflicht",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/702/deklarationsvergleichhundehalterhaftpflichtpp702pdf/deklarationsvergleich-hundehalterhaftpflicht-pp702.pdf"
+  ],
+  "offen": [
+    "Quelle: Deklarationsvergleich PP 702 (Fußzeile 09.2026, Seiten Stand 04.2025) der Alte Leipziger Versicherung AG; Symbole im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
+    "Selbstbeteiligung im Vergleich nicht genannt. Verzicht auf Mitschuld des Hüters (Tiergefahr) nicht genannt; Ansprüche fremder Tierhüter gegen den Versicherungsnehmer sind mitversichert.",
+    "comfort höchstens 15 Mio. € je geschädigter Person; Ausland außerhalb Europas 3 bzw. 5 Jahre. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

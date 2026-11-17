@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Haftpflicht 100 Mio. € pauschal",
+    "Mallorca-Deckung",
+    "Partnerwerkstatt optional"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung compact",
+      "kurz": "compact",
+      "stufe": 1,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "12 Monate",
+        "marder": "nur Biss",
+        "rabattschutz": "nein",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "nein",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "nein"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pp/019/infoblattleistungsvergleichkfzpp019pdf/infoblatt-leistungsvergleich-kfz-pp019.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung classic",
+      "kurz": "classic",
+      "stufe": 2,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 10.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "Akku bis 20.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pp/019/infoblattleistungsvergleichkfzpp019pdf/infoblatt-leistungsvergleich-kfz-pp019.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung comfort",
+      "kurz": "comfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "Akku bis 25.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pp/019/infoblattleistungsvergleichkfzpp019pdf/infoblatt-leistungsvergleich-kfz-pp019.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/fahrzeuge/autoversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pp/019/infoblattleistungsvergleichkfzpp019pdf/infoblatt-leistungsvergleich-kfz-pp019.pdf"
+  ],
+  "offen": [
+    "Quelle: Infoblatt Leistungsvergleich Kfz PP 019 (Stand 10.2026) der Alte Leipziger Versicherung AG und Produktseite; comfort ist dort als „Unser Top Angebot“ markiert.",
+    "Haftpflicht 100 Mio. € pauschal, je geschädigter Person 15 Mio. €. Neuwert für Neufahrzeuge; Kaufwertentschädigung für Gebrauchte classic 12, comfort 24 Monate.",
+    "Tierbiss in allen Stufen; Folgeschäden durch Tierbiss erst ab classic. Rabattschutz, Auslandschadenschutz und Mobilitätspolice nur classic und comfort; Schutzbrief, GAP, Fahrerschutz in allen Stufen wählbar.",
+    "Höchster Neuwert des Fahrzeugs compact 75.000 €, classic 125.000 €, comfort 150.000 €."
+  ]
+}
