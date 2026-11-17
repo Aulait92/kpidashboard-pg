@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "Rhion",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Photovoltaik und Wärmepumpe",
+    "Überspannung durch Blitz",
+    "Elementar als Baustein"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Standard",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "ja",
+        "kosten": "ja, ohne Hotel",
+        "ueberspannung": "ja",
+        "tiere": "nein",
+        "mietausfall": "18 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/2_Pauschaldeklarationen/SP2701_2025_04_Vergleich_Pauschaldekla_Wohngebaeude_VGB2025_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 10.000 €",
+        "pv": "ja",
+        "kosten": "ja, mit Hotel",
+        "ueberspannung": "ja",
+        "tiere": "bis 3.000 €",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/2_Pauschaldeklarationen/SP2701_2025_04_Vergleich_Pauschaldekla_Wohngebaeude_VGB2025_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 20.000 €",
+        "pv": "ja",
+        "kosten": "ja, Hotel bis 1 Jahr",
+        "ueberspannung": "ja",
+        "tiere": "ja",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/2_Pauschaldeklarationen/SP2701_2025_04_Vergleich_Pauschaldekla_Wohngebaeude_VGB2025_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.rhion.de/versicherungen/privatkunden/haus-und-wohnung/wohngebaeude-versicherung",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/2_Pauschaldeklarationen/SP2701_2025_04_Vergleich_Pauschaldekla_Wohngebaeude_VGB2025_Std_Plus_Premium.pdf",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/1_Allgemeine_Bedingungen_und_Informationen/NSP4901_2022_03c_IPID_Wohngebaeude_Wohnflaeche.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Vergleich der Pauschaldeklarationen Wohngebäude VGB 2025 (SP 2701, 04/2025) und der Produktseite. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
+    "Grobe Fahrlässigkeit: Verzicht bei Herbeiführung in Plus und Premium; bei Obliegenheiten nur Premium bis 50.000 €. Ableitungsrohre auf dem und außerhalb des Grundstücks. Tiere: Bissschäden durch wild lebende Kleintiere an Leitungen und Dämmung.",
+    "Kosten: Aufräumungs- und Abbruchkosten in allen Stufen; Hotelkosten nur Plus und Premium (Premium bis 150 € am Tag, bis 1 Jahr). Weitere Elementargefahren und Starkregen als Baustein; Allgefahren in der Übersicht genannt, Stufen nicht belegt."
+  ]
+}

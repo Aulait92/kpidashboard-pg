@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeits-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente bis 67 Jahre möglich",
+    "Ab 6 Jahren, Umtausch in BU",
+    "Pakete Aktiv und Mobil"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeits-Versicherung Basis-Plus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "15, mit Paketen 23",
+        "prognose": "6 Monate",
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {},
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/grundfaehigkeiten_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/vorsorge-vermoegen/grundfaehigkeitsversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/grundfaehigkeiten_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/Vertragsinformationen-zu-Leben/grundfaehigkeit_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Absicherung Basis-Plus, 15 Fähigkeiten, darunter Pflegebedürftigkeit, Intellekt und eigenverantwortliches Handeln) mit Zusatzpaketen Aktiv (Schieben, Knien, Heben: 3) und Mobil (Auto, Fahrrad, Kraftrad, Zugmaschine, ÖPNV: 5); zusammen 23.",
+    "Leistung bei psychischen Erkrankungen nicht ausdrücklich genannt. Weltweiter Schutz nicht genannt.",
+    "Eintrittsalter 6 bis 55 Jahre; Pakete unter Voraussetzungen ohne neue Gesundheitsprüfung hinzubuchbar. Kinder können später in eine BU umtauschen (eigene Seite Grundfähigkeit Kinder)."
+  ]
+}

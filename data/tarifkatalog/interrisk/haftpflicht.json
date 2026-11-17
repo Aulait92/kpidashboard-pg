@@ -1,0 +1,95 @@
+{
+  "gesellschaft": "InterRisk",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe 3 bis 50 Mio. € wählbar",
+    "Forderungsausfall ohne SB",
+    "Ehrenamt und Babysitter"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht L",
+      "kurz": "L",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "nein",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "bis 300.000 €",
+        "gefaelligkeit": "nein",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "drohne": "bis 250 g",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/broschueren-und-leistungsueberblick/PH_pdf-09.26.12.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht XL",
+      "kurz": "XL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 30.000 €",
+        "delikt": "bis 10.000 €",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 10.000 €",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "drohne": "bis 250 g",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/broschueren-und-leistungsueberblick/PH_pdf-09.26.12.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht XXL",
+      "kurz": "XXL",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja, mit Rechtsschutz",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 18.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/broschueren-und-leistungsueberblick/PH_pdf-09.26.12.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.interrisk.de/de/produkte/haftpflichtversicherungen/privathaftpflicht.php",
+    "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/broschueren-und-leistungsueberblick/PH_pdf-09.26.12.pdf",
+    "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/informationsblaetter/IPID_PHV_XXL_pdf-06.26.3.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Leistungsprofil Privathaftpflicht (PH 09.26, Symboltabelle L / XL / XXL). Deckungssumme je Vertrag wählbar (3, 5, 10, 25 oder 50 Mio. €), nicht je Konzept.",
+    "Gefälligkeit: Schäden durch unentgeltliche Hilfeleistungen für Dritte. Neuwert: höchstens 1 Jahr alte Sachen bis 5.000 €, nur XXL. Drohnen mit Motor bis 250 g (L, XL) bzw. bis 5 kg (XXL).",
+    "Selbstbeteiligung wählbar (150, 300 oder 500 €) gegen Nachlass. Rabattretter: SFR-Ausgleich bis 5 Jahre nur XXL. InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt."
+  ]
+}

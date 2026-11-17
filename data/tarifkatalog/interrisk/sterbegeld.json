@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "InterRisk",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung Nachsorge-Plan",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Eintritt 25 bis 75 Jahre",
+    "Rückholkosten bis 10.000 €",
+    "Lebenslanger Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "Nachsorge-Plan",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "3.000 bis 15.000 €",
+        "wartezeit": "1 Jahr",
+        "unfall": "ja, ab Tag 1",
+        "ohne-gp": "ja",
+        "beitragsende": "86 Jahre bzw. 35 Jahre"
+      },
+      "bausteine": {
+        "unfall": "inklusive"
+      },
+      "quelle": "https://www.interrisk.de/de/produkte/hinterbliebenenschutz/sterbegeldversicherung.php",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.interrisk.de/de/produkte/hinterbliebenenschutz/sterbegeldversicherung.php",
+    "https://www.interrisk.de/wMedia/docs/sterbegeld-downloads/broschueren-und-leistungsueberblick/FS_pdf-12.25.1.pdf",
+    "https://www.interrisk.de/wMedia/docs/zentrale-inhalte-downloads/tarifbestimmungen-zur-lebensversicherung/LTI1_pdf-06.26.18.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (AK12SG, Nachsorge-Plan) ohne Gesundheitsprüfung. Wartezeit: im ersten Jahr werden die eingezahlten Beiträge erstattet; bei Unfalltod ab dem ersten Tag die doppelte Summe.",
+    "Beitragszahlung: Eintritt 25 bis 49 Jahre 35 Jahre lang, Eintritt 50 bis 75 Jahre bis zur Hauptfälligkeit im Jahr des 85. Lebensjahres (Factsheet: keine Beiträge mehr nach dem 86. Geburtstag). Ab 50 Jahren auch Einmalbeitrag bis 20.000 €.",
+    "Rückholkosten bei Tod auf Auslandsreisen bis 5.000 € (Europa) bzw. 10.000 € (außerhalb Europas). Bestattungsvorsorge-Service nicht genannt."
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "Rhion",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalterhaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Flurschäden",
+    "Reiten ohne Sattel und Zaumzeug",
+    "Fremde Hüter mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalterhaftpflicht Standard",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "miete": "nein",
+        "reitbeteiligung": "nein",
+        "flurschaden": "ja",
+        "fohlen": "nein",
+        "forderungsausfall": "nein",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "Europa bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2703_2026_10_Vergleich_Pauschaldekla_THV2026_Pferdehalter_Std_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferdehalterhaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "miete": "bis 50.000 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 2 Jahre",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 5.000 €",
+        "neuwert": "bis 10.000 €",
+        "nebenberuf": "bis 25.000 € Umsatz",
+        "ausland": "Europa unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2703_2026_10_Vergleich_Pauschaldekla_THV2026_Pferdehalter_Std_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.rhion.de/versicherungen/privatkunden/haftpflicht/tierhalter-haftpflicht",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2703_2026_10_Vergleich_Pauschaldekla_THV2026_Pferdehalter_Std_Premium.pdf",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/1_Allgemeine_Bedingungen_und_Informationen/NHP4911_2026_10_IPID_Pferdehalter_Haftpflicht.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Vergleich der Pauschaldeklarationen THV 2026 Pferdehalter (HP 2703, 10/2026). Selbstbeteiligung in der Übersicht nicht genannt. Zwei Stufen ohne Empfehlung.",
+    "Mietsachschäden: Stallungen, Reithallen, Weiden, Boxen und Koppeln nur Premium bis 50.000 €; gemietete Wohnräume in beiden Stufen (Standard bis 300.000 €). Geliehene bewegliche Sachen Premium bis 5.000 €, Pferdeanhänger bis 10.000 €.",
+    "Standard: Vermögensschäden nur bis 50.000 €. Turniere in beiden Stufen. Premium zusätzlich Kutschfahrten, Bergungskosten bis 100.000 €; zuwählbar Pferdeschutz Plus, Rechtsschutz zum Forderungsausfall, Best-Leistungsgarantie."
+  ]
+}

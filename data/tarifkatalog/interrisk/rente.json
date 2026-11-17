@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "InterRisk",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "BU-Zusatz wählbar",
+    "Mindestrente 300 € im Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "Klassische Rentenversicherung",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "ja",
+        "rentenfaktor": "ja",
+        "anlage": "Sicherungsvermögen",
+        "hinterbliebene": "Garantiezeit/Rückgewähr",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.interrisk.de/de/produkte/altersvorsorge/klassische-rente.php",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IRis FondsRente",
+      "kurz": "IRis",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "optional",
+        "anlage": "über 100 Fonds, ETFs",
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.interrisk.de/de/produkte/altersvorsorge/iris-fondsrente.php",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.interrisk.de/de/produkte/altersvorsorge/klassische-rente.php",
+    "https://www.interrisk.de/de/produkte/altersvorsorge/iris-fondsrente.php",
+    "https://www.interrisk.de/wMedia/docs/zentrale-inhalte-downloads/tarifbestimmungen-zur-lebensversicherung/LTI1_pdf-06.26.18.pdf"
+  ],
+  "offen": [
+    "Zwei Vorsorgekonzepte statt Leistungsstufen: klassische Rente (garantierte Verzinsung, Sicherungsvermögen) und fondsgebundene Rente IRis. Keine Empfehlung der Gesellschaft.",
+    "Klassik: Hinterbliebenenschutz über Rentengarantiezeit oder Beitragsrückgewähr (Tarif ALR1 Plus); Kapitalabfindung bis 3 Monate vor Rentenbeginn. Zuzahlungen und Entnahmen nicht genannt.",
+    "IRis: Beitragsgarantie nur mit Erlebensfall-Zusatzversicherung (EZV); garantierter Rentenfaktor auf der Seite nicht genannt; Kapitalabfindung laut Steuerhinweis möglich. Nicht aufgenommen: myIndex next (Honorartarif für Honorarberater) und Altersvorsorgedepot."
+  ]
+}

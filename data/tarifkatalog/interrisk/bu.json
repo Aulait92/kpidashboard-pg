@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "InterRisk",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung ab 50 % BU",
+    "Keine Meldefristen",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "BU S-M.A.R.T",
+      "kurz": "S-M.A.R.T",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "au": "nein",
+        "nachversicherung": "ja, bis 30.000 € Rente",
+        "rueckwirkend": "ja, keine Meldefrist",
+        "weltweit": "ja",
+        "umorganisation": "nur Arbeitnehmer",
+        "pflege": "ab 1 Pflegepunkt",
+        "stundung": "bis 36 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/berufsunfaehigkeit-downloads/broschueren-und-leistungsueberblick/BU_pdf-09.26.8.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU XL",
+      "kurz": "XL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "au": "ja, bis 36 Monate",
+        "nachversicherung": "ja, bis 36.000 € Rente",
+        "rueckwirkend": "ja, keine Meldefrist",
+        "weltweit": "ja",
+        "umorganisation": "unter 5 Mitarbeitern",
+        "pflege": "ab 1 Pflegepunkt",
+        "stundung": "bis 36 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/berufsunfaehigkeit-downloads/broschueren-und-leistungsueberblick/BU_pdf-09.26.8.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU XXL",
+      "kurz": "XXL",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "au": "ja, bis 36 Monate",
+        "nachversicherung": "ja, bis 36.000 € Rente",
+        "rueckwirkend": "ja, keine Meldefrist",
+        "weltweit": "ja",
+        "umorganisation": "unter 5 Mitarbeitern",
+        "pflege": "ab 1 Pflegepunkt",
+        "stundung": "bis 36 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/berufsunfaehigkeit-downloads/broschueren-und-leistungsueberblick/BU_pdf-09.26.8.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.interrisk.de/de/produkte/einkommenssicherung/berufsunfaehigkeitsversicherung.php",
+    "https://www.interrisk.de/wMedia/docs/berufsunfaehigkeit-downloads/broschueren-und-leistungsueberblick/BU_pdf-09.26.8.pdf",
+    "https://www.interrisk.de/wMedia/docs/zentrale-inhalte-downloads/tarifbestimmungen-zur-lebensversicherung/LTI1_pdf-06.26.18.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Leistungsprofil BU (BU 09.26, Symboltabelle S-M.A.R.T / XL / XXL). Prognosezeitraum im Leistungsprofil nicht genannt. InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt.",
+    "S-M.A.R.T leistet nicht bei psychischen Erkrankungen und nicht bei Demenz (Tarif-Kurzübersicht LTI 1). AU-Klausel: Rente ab 6 Monaten Arbeitsunfähigkeit, bis 36 Monate; XXL zusätzlich Assistance-Leistungen und Verlängerungsoption.",
+    "Rückwirkend: keine Anzeigefristen für BU-Leistungsfälle. Umorganisation: Verzicht bei Arbeitnehmern, in XL und XXL auch bei Selbstständigen mit weniger als 5 Mitarbeitern oder Akademikern mit 90 % Bürotätigkeit."
+  ]
+}

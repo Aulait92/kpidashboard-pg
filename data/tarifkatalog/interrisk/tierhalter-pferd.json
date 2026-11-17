@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "InterRisk",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalterhaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kutsche und Tieranhänger",
+    "Turniere und Reitunterricht",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht XXL",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "sb": "ohne, 150 bis 500 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 1 Jahr",
+        "geliehen": "bis 10.000 €",
+        "ausland": "weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/tierhalterhaftpflicht/broschueren-und-leistungsueberblick/TH_pdf-06.26.7.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.interrisk.de/de/produkte/haftpflichtversicherungen/tierhalterhaftpflicht.php",
+    "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/tierhalterhaftpflicht/broschueren-und-leistungsueberblick/TH_pdf-06.26.7.pdf",
+    "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/tierhalterhaftpflicht/informationsblaetter/IPID_THV_pdf-06.26.3.pdf"
+  ],
+  "offen": [
+    "Ein Konzept (XXL, B69) für Hunde und Pferde; Deckungssumme wahlweise 3, 5, 10, 25 oder 50 Mio. € (Leistungsprofil TH 06.26).",
+    "Selbstbehalt freiwillig 150, 300 oder 500 € gegen Nachlass, sonst ohne. Forderungsausfall im Leistungsprofil nicht genannt.",
+    "Mietsachen: Weide, Koppel, Paddock, Stallungen, Boxen und Reithallen mitversichert; sonstige bewegliche Sachen bis 10.000 €."
+  ]
+}

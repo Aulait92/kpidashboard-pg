@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "NV-Versicherungen",
+  "sparte": "haftpflicht",
+  "produkt": "NV Privathaftpflicht 6.0",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe bis 50 Mio. € wählbar",
+    "Ehrenamt und Babysitter",
+    "NV Lückenlos-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "NV PrivatSpar 6.0",
+      "kurz": "PrivatSpar",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "schluessel": "bis 30.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 500 €",
+        "miete": "bis 1 Mio. €",
+        "gefaelligkeit": "bis 15.000 €",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 100 g",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja",
+        "sb": "ohne oder 150 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Produktvergleich_NV_Privat_6.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV Privatmax. 6.0",
+      "kurz": "Privatmax.",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 100.000 €",
+        "neuwert": "bis 1.000 €",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "bis 500 g",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "ohne oder 150 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Produktvergleich_NV_Privat_6.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV PrivatPremium 6.0",
+      "kurz": "PrivatPremium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "forderungsausfall": "ja, mit Rechtsschutz",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 2.500 €",
+        "mallorca": "ja",
+        "rabattretter": "ja, bis 5 Jahre",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 18.000 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "ohne oder 150 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Produktvergleich_NV_Privat_6.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nv-online.de/versicherungen/privathaftpflicht",
+    "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Produktvergleich_NV_Privat_6.0.pdf",
+    "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Leistung_NV_PrivatSpar_6.0.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Produktvergleich NV Privat 6.0 (Symboltabelle). Deckungssumme je Stufe nicht genannt; die Produktseite nennt bis zu 50 Mio. €, Beispielbeiträge mit 5 Mio. €. NV markiert keine Empfehlung; Privatmax. als mittlere Stufe gesetzt.",
+    "Geliehene, gemietete Sachen: PDF nennt für PrivatPremium bis 50.000 €, die Vergleichstabelle der Produktseite bis zur Versicherungssumme. Forderungsausfall PrivatSpar erst ab 2.500 € Schaden. Schlüssel: privat und beruflich.",
+    "Selbstbeteiligung 150 € je Schaden freiwillig wählbar (günstigerer Beitrag). Privatmax. auch als Variante bessergrün mit Mehrleistungsklausel."
+  ]
+}

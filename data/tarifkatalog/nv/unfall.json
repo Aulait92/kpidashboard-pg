@@ -1,0 +1,95 @@
+{
+  "gesellschaft": "NV-Versicherungen",
+  "sparte": "unfall",
+  "produkt": "NV Unfall 5.0",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Progression wählbar",
+    "Unfallrente ab 50 % wählbar",
+    "Mehrpersonenrabatt 10 %"
+  ],
+  "tarife": [
+    {
+      "name": "NV UnfallSpar 5.0",
+      "kurz": "UnfallSpar",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "nein",
+        "kosmetik": "bis 20.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "nur FSME",
+        "gliedertaxe": "ja (Arm 75 %)"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Produktvergleich_NV_Unfall_5.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV Unfallmax. 5.0",
+      "kurz": "Unfallmax.",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "10 %, max. 15.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 500.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja (Arm 80 %)"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Produktvergleich_NV_Unfall_5.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV UnfallPremium 5.0",
+      "kurz": "UnfallPremium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "20 %, max. 20.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 2 Mio. €",
+        "zecken": "ja",
+        "gliedertaxe": "ja (Arm 80 %)"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Produktvergleich_NV_Unfall_5.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nv-online.de/versicherungen/unfall",
+    "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Produktvergleich_NV_Unfall_5.0.pdf",
+    "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Leistungen-Assistance-Pflegepakete_NV_Unfall_5.0.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Produktvergleich NV Unfall 5.0 (Symboltabelle) und der Produktseite. Invaliditätssumme, Progression (mit oder ohne), Unfallrente, Todesfall und Krankenhaustagegeld werden je Vertrag vereinbart; Progressionsstufen nicht genannt. NV markiert keine Empfehlung; Unfallmax. als mittlere Stufe gesetzt.",
+    "Sofortleistung bei schweren Verletzungen in Prozent der Invaliditätssumme. Zecken: FSME in allen Stufen, Infektionen durch Tierbisse und Insektenstiche nur max. und Premium. Gliedertaxe Arm: Spar 75 %, max. und Premium 80 % (Hand 70 / 70 / 75 %).",
+    "Mitwirkung von Krankheiten erst ab 50 / 75 / 100 % angerechnet. Rehabilitations-Paket mit Assistance wählbar; Assistance-Pflegepaket für Dritte nur in UnfallPremium. Auch Kinder- und Senioren-Unfall (eigene Seiten), hier nicht ausgewertet."
+  ]
+}

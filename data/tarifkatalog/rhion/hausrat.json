@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "Rhion",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwert",
+    "Bis 500.000 € nach Wohnfläche",
+    "Unterversicherungsverzicht"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Standard",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 1.000 €",
+        "auto": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/2_Vergleich_Leistungsuebersichten/SP2711_2024_08_Vergleich_Pauschaldekla_Hausrat_VHB2024_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 3.000 €",
+        "bargeld": "bis 3.000 €",
+        "auto": "bis 3.000 €, Europa"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/2_Vergleich_Leistungsuebersichten/SP2711_2024_08_Vergleich_Pauschaldekla_Hausrat_VHB2024_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 10.000 €",
+        "bargeld": "bis 3.500 €",
+        "auto": "bis 3.000 €, Europa"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/2_Vergleich_Leistungsuebersichten/SP2711_2024_08_Vergleich_Pauschaldekla_Hausrat_VHB2024_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.rhion.de/versicherungen/privatkunden/haus-und-wohnung/hausratversicherung",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/2_Vergleich_Leistungsuebersichten/SP2711_2024_08_Vergleich_Pauschaldekla_Hausrat_VHB2024_Std_Plus_Premium.pdf",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/1_Allgemeine_Bedingungen_und_Informationen/NSP4911_2024_08_IPID_Hausrat.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Vergleich der Pauschaldeklarationen Hausrat VHB 2024 (SP 2711, 08/2024) und der Produktseite. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
+    "Wertsachen nicht als Anteil der Summe, sondern je Art begrenzt (z. B. Schmuck außerhalb Tresor 20.000 / 30.000 / 50.000 €). Einfacher Diebstahl aus der Wohnung nicht ausdrücklich genannt; Trickdiebstahl Plus bis 1.500 €, Premium bis 5.000 €.",
+    "Grobe Fahrlässigkeit: Verzicht bei Herbeiführung in Plus und Premium, bei Obliegenheiten nur Premium. Fahrraddiebstahl, weitere Elementargefahren (Starkregen), Smart Home und Cyber als Bausteine wählbar; Stufen dafür nicht einzeln genannt."
+  ]
+}

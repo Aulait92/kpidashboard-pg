@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Auch Sonn- und Feiertage",
+    "Anpassung ohne Prüfung",
+    "Ruheversicherung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "wählbar",
+        "hoehe": "nach Einkommen, ab 10 €",
+        "dauer": "ganze Arbeitsunfähigkeit",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.mecklenburgische.de/privat/gesundheit-freizeit/krankentagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/gesundheit-freizeit/krankentagegeld",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankentagegeld_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/krankenversicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif für Arbeitnehmer, Selbstständige, Freiberufler und Landwirte laut Produktseite und Kundeninformation (VF 1120.0231.01.26); Tarifnamen und Stufen nicht genannt.",
+    "Leistungsbeginn wählbar, konkrete Karenztage nicht genannt. Tagegeld nach Einkommen, in 5-€-Schritten, mindestens 10 €; Anpassung bei Einkommenssteigerung ohne Gesundheitsprüfung.",
+    "Wartezeit, Ende bei Berufsunfähigkeit und Leistung im Ausland nicht genannt. Beitragsfreie Ruheversicherung bei finanzieller Notlage oder Arbeitslosigkeit."
+  ]
+}

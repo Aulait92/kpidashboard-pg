@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflicht-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Summe 15, 30 oder 50 Mio. €",
+    "Photovoltaik und Wärmepumpe",
+    "Tarife für Familie bis 55plus"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "optional",
+        "schluessel": "bis 100.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 500 €",
+        "mallorca": "optional",
+        "rabattretter": "optional",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "sb": "ohne oder 150 €"
+      },
+      "bausteine": {
+        "auto": "optional",
+        "tiere": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/haftpflichtversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/recht-haftung/privathaftpflichtversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/haftpflichtversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/haftpflichtversicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit Zielgruppenvarianten (Familie, Junge Leute, Single, Alleinerziehende, Paare, 55plus); Werte laut Kundeninformation und Produktseite (Tarif Stand 09/2026).",
+    "Forderungsausfall und Gewaltopferhilfe (bis 25.000 €) nur mit Zusatzbaustein Eigenschäden. Mallorca-Deckung, Rabattretter (SFR-Ausgleich bis 2.500 €, max. 5 Jahre) und Kasko-SB bei geliehenen Kfz nur mit Zusatzbaustein Kraftfahrzeuge.",
+    "Schlüssel privat und beruflich bis 100.000 €. Geliehene Sachen: Abhandenkommen bis 500 €. Drohnen nicht genannt. Hunde und Pferde können mit eingeschlossen werden. Selbstbeteiligung 150 € wählbar (20 % günstiger)."
+  ]
+}

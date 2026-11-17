@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahn-Zusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unabhängig von der Kasse",
+    "Staffel in den Jahren 1 bis 4",
+    "Bei Unfall ohne Staffel"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnersatz ZE 70",
+      "kurz": "ZE 70",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "implantate": "70 %",
+        "behandlung": "optional (ZB)",
+        "prophylaxe": "optional (ZB)",
+        "staffel": "700 € im 1. Jahr",
+        "inlays": "70 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnersatz ZE 80",
+      "kurz": "ZE 80",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "80 %",
+        "implantate": "80 %",
+        "behandlung": "optional (ZB)",
+        "prophylaxe": "optional (ZB)",
+        "staffel": "800 € im 1. Jahr",
+        "inlays": "80 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnersatz ZE 90",
+      "kurz": "ZE 90",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "optional (ZB)",
+        "prophylaxe": "optional (ZB)",
+        "staffel": "900 € im 1. Jahr",
+        "inlays": "90 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnersatz ZE 100",
+      "kurz": "ZE 100",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "optional (ZB)",
+        "prophylaxe": "optional (ZB)",
+        "staffel": "1.000 € im 1. Jahr",
+        "inlays": "100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional",
+        "kfo": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/gesundheit-freizeit/zahnzusatzversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/krankenversicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Stufen = Zahnersatztarife ZE 70 bis ZE 100 (Erstattung der erstattungsfähigen Aufwendungen, unabhängig von der Kasse). Wartezeit nicht genannt. Keine Empfehlung der Gesellschaft; bei 4 Stufen die dritte gesetzt.",
+    "Zahnbehandlung und Prophylaxe über die Zusatztarife ZB bzw. ZBplus: Zahnreinigung bis 100 bzw. 200 € im Jahr, Füllungen, Wurzel- und Parodontosebehandlung, Kieferorthopädie bis 19 Jahre bis 1.200 bzw. 2.000 €.",
+    "Zahnstaffel ZE je Jahr: 1. Jahr 700 / 800 / 900 / 1.000 €, steigend bis zum 4. Jahr (2.800 / 3.200 / 3.600 / 4.000 €), ab dem 5. Jahr unbegrenzt."
+  ]
+}

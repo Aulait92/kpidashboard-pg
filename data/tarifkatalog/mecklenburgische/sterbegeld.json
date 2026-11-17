@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeld-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Eintritt 40 bis 80 Jahre",
+    "Lebenslanger Schutz",
+    "Auch Einmalbeitrag möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeld-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 25.000 €",
+        "wartezeit": "2 Jahre",
+        "unfall": "sofort volle Summe",
+        "ohne-gp": "vereinfachte Fragen",
+        "beitragsende": "wählbar, bis 85 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/sterbegeldversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/vorsorge-vermoegen/sterbegeldversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/sterbegeldversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/Vertragsinformationen-zu-Leben/vertragsinformationen-sterbegeld.pdf"
+  ],
+  "offen": [
+    "Ein Tarif laut Kundeninformation (VF1120.0220.07.23). Wartezeit: voller Schutz ab dem 3. Versicherungsjahr, davor Beitragsrückgewähr; bei Einmalbeitrag ab Beginn.",
+    "Unfalltod: sofort voller Schutz, eine doppelte Leistung wird nicht genannt. Abschluss ohne aufwändige Gesundheitsfragen (vereinfachte Fragen, nicht ganz ohne).",
+    "Bestattungsvorsorge-Service nicht genannt. Abschluss auch durch Angehörige möglich."
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "gesellschaft": "NV-Versicherungen",
+  "sparte": "tierhalter-hund",
+  "produkt": "NV Hundehaftpflicht 3.0",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Leinen- und Maulkorbzwang",
+    "Hundeschule und Hundeschau",
+    "NV Lückenlos-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "NV HundePremium 3.0",
+      "kurz": "HundePremium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "miete": "bis 5 Mio. €",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "nein",
+        "nebenberuf": "nein",
+        "ausland": "EU 5 J., weltweit 1 J."
+      },
+      "bausteine": {},
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hund/3-0/Produktvergleich_NV_Hund_3.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV HundePremium Plus 3.0",
+      "kurz": "HundePremium+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 18 Monate",
+        "forderungsausfall": "ja, mit Rechtsschutz",
+        "geliehen": "bis 50.000 €",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ausland": "weltweit bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hund/3-0/Produktvergleich_NV_Hund_3.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nv-online.de/versicherungen/hundehaftpflicht",
+    "https://www.nv-online.de/fileadmin/downloadcenter/hund/3-0/Produktvergleich_NV_Hund_3.0.pdf",
+    "https://www.nv-online.de/fileadmin/downloadcenter/hund/3-0/Leistung_NV_HundePremium_3.0.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Produktvergleich NV Hund 3.0 (Symboltabelle). Deckungssumme je Stufe nicht genannt; die Produktseite nennt bis zu 50 Mio. €. Selbstbeteiligung nicht genannt (nur Verzicht auf Anrechnung einer Mithaftung bis 250 € bzw. 500 €). Zwei Stufen ohne Empfehlung.",
+    "Mietsachschäden: HundePremium an Wohnräumen und beweglichen Sachen in Ferienunterkünften bis 5 Mio. €. Geliehene Sachen: HundePremium Plus bis 50.000 €, gemietete Kfz bis 5.000 €.",
+    "Nur HundePremium Plus: Rettungs- und Bergungskosten, Tierpension bis 500 €, Besitzstands- und Best-Leistungs-Garantie. Kampfhunde und Rottweiler sind nicht versicherbar."
+  ]
+}

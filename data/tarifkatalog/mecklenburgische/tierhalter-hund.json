@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalter-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Leine und Maulkorb",
+    "Hundesport und Hundeschau",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalter-Haftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15, 30 oder 50 Mio. €",
+        "sb": "ohne oder 150 €",
+        "miete": "ja",
+        "welpen": "bis 12 Monate",
+        "ausland": "weltweit"
+      },
+      "bausteine": {},
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/tierhalterhaftpflicht_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/recht-haftung/tierhalterhaftpflicht",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/tierhalterhaftpflicht_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/haftpflichtversicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif laut Kundeninformation Tierhalter-Haftpflicht. Fremde Hüter in der Kundeninformation nicht ausdrücklich genannt (Halter und Hüter haften laut Gesetz). Forderungsausfall nur über den Baustein Eigenschäden der Privathaftpflicht.",
+    "Mietsachschäden: gemietete Wohnräume; Einrichtung von Hotelzimmern und Ferienwohnungen bis 100.000 €. Selbstbeteiligung 150 € je Sach- und Vermögensschaden wählbar (20 % Nachlass).",
+    "Nachlässe: 10 % in Kombination mit der Privathaftpflicht, 25 % ab 55 Jahren, 50 % für jeden weiteren Hund."
+  ]
+}

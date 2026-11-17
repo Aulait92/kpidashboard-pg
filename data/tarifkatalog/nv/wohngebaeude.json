@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "NV-Versicherungen",
+  "sparte": "wohngebaeude",
+  "produkt": "NV Wohngebäude 2.0",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Überspannung durch Blitz",
+    "Unterversicherungsverzicht",
+    "Elementar als Zusatz wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "NV WohnhausSpar 2.0",
+      "kurz": "WohnhausSpar",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "kosten": "Aufräumen 10.000 €",
+        "ueberspannung": "ja",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.nv-online.de/versicherungen/wohngebaeude",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV Wohnhausmax. 2.0",
+      "kurz": "Wohnhausmax.",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "elementar": "optional",
+        "ableitung": "optional, bis 2.500 €",
+        "pv": "Diebstahl bis 5.000 €",
+        "kosten": "ja, Hotel 50 €/Tag",
+        "ueberspannung": "ja",
+        "vandalismus": "bis 2.500 €",
+        "tiere": "bis 1.000 €",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.nv-online.de/versicherungen/wohngebaeude",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV WohnhausPremium 2.0",
+      "kurz": "WohnhausPrem.",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 2.500 €",
+        "pv": "Diebstahl voll",
+        "kosten": "ja, Hotel 100 €/Tag",
+        "ueberspannung": "ja",
+        "vandalismus": "bis 5.000 €",
+        "tiere": "bis 5.000 €",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.nv-online.de/versicherungen/wohngebaeude",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nv-online.de/versicherungen/wohngebaeude",
+    "https://www.nv-online.de/fileadmin/downloadcenter/wohngebaeude/2-0/Produktvergleich_NV_Wohn_2.0.pdf",
+    "https://www.nv-online.de/versicherungen/elementarschaden"
+  ],
+  "offen": [
+    "Werte aus der Vergleichstabelle und den Texten der Produktseite sowie dem Produktvergleich NV Wohn 2.0 (Stand 01/2015, ältere Fassung). Bitte gegen die aktuellen Leistungsübersichten prüfen. NV markiert keine Empfehlung; Wohnhausmax. als mittlere Stufe gesetzt.",
+    "Grobe Fahrlässigkeit: Wohnhausmax. ohne Kürzung bis 10.000 €, WohnhausPremium voll. Ableitungsrohre auf und außerhalb des Grundstücks: Wohnhausmax. nur wenn vereinbart. Photovoltaik: nur Diebstahl regenerativer Anlagen belegt, für WohnhausSpar nicht genannt; Elektronikversicherung für PV-Anlagen separat.",
+    "Kosten: Aufräumungs- und Abbruchkosten (Spar bis 10.000 €), Hotelkosten nur max. und Premium (bis 100 bzw. 200 Tage). Vandalismus = Gebäudeschäden durch unbefugte Dritte. Tiere = Tierbissschäden an Elektrik und Dämmung. Elementarschäden über die eigene NV Elementarschadenversicherung."
+  ]
+}

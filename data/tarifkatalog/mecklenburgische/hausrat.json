@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "hausrat",
+  "produkt": "Hausrat-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Neuwert",
+    "Unterversicherungsverzicht",
+    "Überspannung bis 5 % der Summe"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Grunddeckung",
+      "kurz": "Grunddeckung",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "675 € je m²",
+        "bargeld": "bis 1.500 €",
+        "garten": "nein",
+        "auto": "nein",
+        "ueberspannung": "bis 5 % der Summe",
+        "hotel": "100 € je Tag, 100 Tage",
+        "aussen": "15 %, max. 10.000 €",
+        "sb": "ohne oder 150 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/hausratversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Komfortdeckung",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "675 € je m²",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 2.500 €",
+        "auto": "bis 2.500 €",
+        "ueberspannung": "bis 5 % der Summe",
+        "hotel": "200 € je Tag, 200 Tage",
+        "aussen": "25 %, max. 25.000 €",
+        "sb": "ohne oder 150 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/hausratversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/haus-wohnen/hausratversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/hausratversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/hausratversicherung_kundeninfo_fahrradschutz.pdf"
+  ],
+  "offen": [
+    "Werte aus der Kundeninformation Hausrat (Tabelle Grund- und Komfortdeckung, VF1120.0217.10.23). Wertsachen nicht als Anteil der Summe genannt, sondern je Art begrenzt (z. B. Schmuck außerhalb Tresor 20.000 / 25.000 €). Einfacher Diebstahl in der Wohnung nur als Trickdiebstahl (250 / 2.500 €). Zwei Stufen ohne Empfehlung.",
+    "Grobe Fahrlässigkeit bei Herbeiführung nur Komfort, bis zur Summe; bei Obliegenheiten bis 2.500 €. Fahrrad-Schutz (1.000 bis 10.000 € je Rad, mit Schutzbrief), Internet-Schutz (Phishing, Pharming, Online-Shops) und weitere Naturgefahren in beiden Stufen als Baustein wählbar.",
+    "Unterversicherungsverzicht ab 675 € je m² (einfach ausgestattet ab 575 €). Überspannung auf bis 100 % der Summe erhöhbar. Selbstbeteiligung 150 € gegen 10 % Nachlass."
+  ]
+}

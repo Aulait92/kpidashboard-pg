@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "risikoleben",
+  "produkt": "Risiko-Lebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Summe und Laufzeit frei wählbar",
+    "Konstante oder fallende Summe",
+    "BU-Beitragsbefreiung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Risiko-Lebensversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bei fester Summe",
+        "umtausch": "ja, bis 10. Jahr"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/risikolebensversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/vorsorge-vermoegen/risikolebensversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/risikolebensversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/Vertragsinformationen-zu-Leben/risikoleben-vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit Varianten (konstante Summe mit konstanten oder altersabhängigen Beiträgen, linear oder annuitätisch fallende Summe) laut Kundeninformation (VF1120.0222.01.25).",
+    "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und weltweiter Schutz nicht genannt. Umtausch in eine Rentenversicherung ohne Gesundheitsprüfung innerhalb der ersten 10 Jahre. Verbundene Leben nicht genannt.",
+    "Je nach Tarif einschließbar: Beitragsbefreiung bei Berufsunfähigkeit (nur konstante Beiträge), Dynamik, Unfall-Zusatzversicherung."
+  ]
+}

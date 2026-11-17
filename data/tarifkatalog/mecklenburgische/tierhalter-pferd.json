@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalter-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Turniere und Pferderennen",
+    "Kutsch- und Schlittenfahrten",
+    "Schutz im europäischen Ausland"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalter-Haftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15, 30 oder 50 Mio. €",
+        "sb": "ohne oder 150 €",
+        "miete": "Stall bis 10.000 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 12 Monate",
+        "ausland": "Europa"
+      },
+      "bausteine": {},
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/tierhalterhaftpflicht_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/recht-haftung/tierhalterhaftpflicht",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/tierhalterhaftpflicht_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/haftpflichtversicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif laut Kundeninformation Tierhalter-Haftpflicht. Reitbeteiligung: Personenschäden von Fremdreitern und Reitbeteiligten mitversichert. Flurschäden anlässlich des Weidebetriebes.",
+    "Mietsachschäden an Reithallen, Stallungen, Koppeln, Boxen und Pferdeanhängern bis 10.000 €. Selbstbeteiligung 150 € je Sach- und Vermögensschaden wählbar (20 % Nachlass). Forderungsausfall nur über den Baustein Eigenschäden der Privathaftpflicht.",
+    "Sondertarif für Kleinpferde und Ponys bis 148 cm Stockmaß (30 % Ermäßigung); 10 % Nachlass in Kombination mit der Privathaftpflicht."
+  ]
+}

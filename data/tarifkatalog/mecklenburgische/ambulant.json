@@ -1,0 +1,108 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherungen",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zuzahlungen bis 500 € im Jahr",
+    "Brille alle 2 Jahre",
+    "Belege per App einreichen"
+  ],
+  "tarife": [
+    {
+      "name": "proME Ambulant",
+      "kurz": "Ambulant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "optional (proME Natur)",
+        "sehhilfen": "bis 200 € in 2 Jahren",
+        "vorsorge": "bis 300 € in 2 Jahren",
+        "arznei": "bis 500 € im Jahr",
+        "hoergeraete": "nein",
+        "lasik": "nein"
+      },
+      "bausteine": {
+        "ausland": "optional",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatzversicherung-ambulant_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "proME Ambulantplus",
+      "kurz": "Ambulantplus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "optional (proME Natur)",
+        "sehhilfen": "bis 400 € in 2 Jahren",
+        "vorsorge": "bis 600 € in 2 Jahren",
+        "arznei": "bis 500 € im Jahr",
+        "hoergeraete": "bis 1.000 €",
+        "lasik": "bis 1.000 €",
+        "wartezeit": "3 Jahre (Hören, Laser)"
+      },
+      "bausteine": {
+        "ausland": "optional",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatzversicherung-ambulant_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, bis 1.000 €",
+        "sehhilfen": "bis 200 € in 2 Jahren",
+        "vorsorge": "bis 300 € in 2 Jahren",
+        "arznei": "bis 500 € im Jahr",
+        "hoergeraete": "nein",
+        "lasik": "nein"
+      },
+      "bausteine": {
+        "ausland": "optional",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatz-kompakt_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant Kompaktplus",
+      "kurz": "Kompaktplus",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 1.000 €",
+        "sehhilfen": "bis 400 € in 2 Jahren",
+        "vorsorge": "bis 600 € in 2 Jahren",
+        "arznei": "bis 500 € im Jahr",
+        "hoergeraete": "nein",
+        "lasik": "nein"
+      },
+      "bausteine": {
+        "ausland": "optional",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatz-kompakt_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/gesundheit-freizeit/krankenzusatzversicherung-ambulant",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatzversicherung-ambulant_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatz-kompakt_kundeninfo.pdf"
+  ],
+  "offen": [
+    "Stufen sind zwei Baukastentarife (proME Ambulant, Ambulantplus) und zwei Kompakttarife (Ambulant Kompakt, Kompaktplus) mit unterschiedlichem Zuschnitt, keine reine Leistungsleiter. Keine Empfehlung der Gesellschaft; bei 4 Stufen die dritte gesetzt.",
+    "Heilpraktiker in den proME-Tarifen nur mit Zusatztarif proME Natur (80 %, bis 1.000 € im Jahr). Kompakttarife enthalten zusätzlich Zahnersatz 70 % bzw. 90 % mit Zahnstaffel (1. Jahr 700 bzw. 900 €). Vorsorge einschließlich Schutzimpfungen.",
+    "Wartezeit allgemein nicht genannt; Hörgeräte und Augenlaser (nur Ambulantplus) 3 Jahre Wartezeit. Auslandsreise-Krankenversicherung als eigener Tarif."
+  ]
+}

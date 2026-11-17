@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "Rhion",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung Privat",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 Mio. € Haftpflicht",
+    "Mallorca-Police",
+    "Zusammenstoß mit Tieren aller Art"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, mit Ausnahmen",
+        "tiere": "ja",
+        "neuwert": "6 Monate",
+        "marder": "bis 3.000 €",
+        "rabattschutz": "nein",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "nein",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "nein"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NKP2901_2026_10_Kfz_Infoheft_Privat_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, mit Ausnahmen",
+        "tiere": "ja",
+        "neuwert": "24 Monate",
+        "marder": "bis 20.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NKP2901_2026_10_Kfz_Infoheft_Privat_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, mit Ausnahmen",
+        "tiere": "ja",
+        "neuwert": "36 Monate",
+        "marder": "ja, unbegrenzt",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja, Akku 4 Jahre",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NKP2901_2026_10_Kfz_Infoheft_Privat_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.rhion.de/versicherungen/privatkunden/kfz",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NKP2901_2026_10_Kfz_Infoheft_Privat_01.pdf",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NK4901_2019_10d_IPID_Kfz.pdf"
+  ],
+  "offen": [
+    "Werte aus Anhang 8 (Vergleich Leistungsübersicht Kfz-Privat) des Kfz-Infohefts 10/2026 und der Produktseite. Premium nur für Pkw. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
+    "Grobe Fahrlässigkeit: Kürzung in allen Stufen nur bei Alkohol oder Drogen und bei grob fahrlässig ermöglichtem Diebstahl (AKB A.2.18.1). Neupreisentschädigung nach Erstzulassung (Smart und Plus nur Pkw); Kaufpreisentschädigung entsprechend 6, 24 bzw. 36 Monate nach Kauf.",
+    "Marderbiss: Tierbissschäden inklusive Folgeschäden. E-Auto: erweiterte Leistungen für Elektrofahrzeuge ab Plus, in Premium kein Abzug neu für alt bei Akkus in den ersten 4 Jahren. GAP-Deckung bis 10.000 €, Werkstatt-Service und Schutzbrief ONroad wählbar."
+  ]
+}

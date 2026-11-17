@@ -1,0 +1,104 @@
+{
+  "gesellschaft": "Rhion",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ehrenamt und Sport",
+    "Fahrräder und Pedelecs",
+    "Single, Familie, Aktiv 60"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Standard",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 oder 10 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 5.000 €",
+        "delikt": "nein",
+        "geliehen": "nein",
+        "miete": "bis 500.000 €",
+        "gefaelligkeit": "nein",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "dienst": "nein"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2701_2026_10_Vergleich_Pauschaldekla_PHV2026_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "beruflich 50.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 100.000 €",
+        "neuwert": "bis 2.500 €",
+        "mallorca": "ja",
+        "rabattretter": "3 Jahre",
+        "drohne": "nein",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2701_2026_10_Vergleich_Pauschaldekla_PHV2026_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 10.000 €",
+        "mallorca": "ja",
+        "rabattretter": "5 Jahre",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 25.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2701_2026_10_Vergleich_Pauschaldekla_PHV2026_Std_Plus_Premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.rhion.de/versicherungen/privatkunden/haftpflicht/privat-haftpflicht",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2701_2026_10_Vergleich_Pauschaldekla_PHV2026_Std_Plus_Premium.pdf",
+    "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/1_Allgemeine_Bedingungen_und_Informationen/NHP4901_2026_10_IPID_Privat_Haftpflicht.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Vergleich der Pauschaldeklarationen PHV 2026 (HP 2701, 10/2026). Standard: Vermögensschäden nur bis 50.000 €. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
+    "Plus: Schlüssel privat voll, beruflich bis 50.000 €; deliktunfähige Personen, geliehene Sachen mit 150 € Selbstbeteiligung. Premium ohne Selbstbeteiligung. Rabattretter = Rabattausgleich bei SFR-Rückstufung.",
+    "Forderungsausfall in Plus und Premium, auch bei Vorsatz bis 2.500 €. Drohne: nur Premium (unbemannte Luftfahrtsysteme bis 5 kg). Zuwählbar in Plus und Premium: Diensthaftpflicht, Opferhilfe, Rechtsschutz zum Forderungsausfall; Best-Leistungsgarantie nur Premium."
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "rente",
+  "produkt": "Private Altersvorsorge",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente oder Kapital wählbar",
+    "Zuzahlungen und Entnahmen",
+    "BU-Beitragsbefreiung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Rente Garant",
+      "kurz": "Garant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "ja",
+        "rentenfaktor": "ja",
+        "anlage": "klassisch",
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/rentenversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Rente Flex",
+      "kurz": "Flex",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds und klassisch",
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/kundeninfo_privat-rente-flex_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/vorsorge-vermoegen/rentenversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/rentenversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/kundeninfo_privat-rente-flex_bf.pdf"
+  ],
+  "offen": [
+    "Zwei Vorsorgekonzepte statt Leistungsstufen: Privat-Rente Garant (klassische Anlage, garantierte Leistungen bei Abschluss bekannt) und Privat-Rente Flex (Mix aus Fonds und klassischem Guthaben in 10-%-Schritten, bis 5 Fonds). Keine Empfehlung der Gesellschaft.",
+    "Flex: Beitragsgarantie und garantierter Rentenfaktor nicht genannt; An- und Ablaufmanagement und Sicherungsumschichtung gegen Kursschwankungen. Garant: Dynamik nicht ausdrücklich genannt.",
+    "Hinterbliebene: Todesfallabsicherung vor und nach Rentenbeginn wählbar (Beitragsrückgewähr oder 50, 75 bzw. 100 % der Beiträge). Kosten nicht genannt."
+  ]
+}

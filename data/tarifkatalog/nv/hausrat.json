@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "NV-Versicherungen",
+  "sparte": "hausrat",
+  "produkt": "NV Hausrat 7.0",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Überspannung durch Blitz",
+    "Vandalismus nach Einbruch",
+    "Elementar als Zusatz wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "NV HausratSpar 7.0",
+      "kurz": "HausratSpar",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "wert": "20 %",
+        "fahrrad": "optional, bis 5.000 €",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 1.000 €",
+        "garten": "bis 250 €",
+        "auto": "bis 150 €, Nachbarländer",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hausrat/7-0/Produktvergleich_NV_Hausrat_7.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV Hausratmax. 7.0",
+      "kurz": "Hausratmax.",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis 50.000 €",
+        "wert": "50 %",
+        "fahrrad": "bis 5.000 €",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 1.000 €",
+        "auto": "bis 3.000 €, weltweit",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "200 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hausrat/7-0/Produktvergleich_NV_Hausrat_7.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV HausratPremium 7.0",
+      "kurz": "HausratPremium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "100 %",
+        "fahrrad": "bis 10.000 €",
+        "elementar": "optional",
+        "online": "bis 3.500 €",
+        "bargeld": "bis 4.000 €",
+        "garten": "bis 3.000 €",
+        "auto": "ja, weltweit",
+        "allgefahren": "optional",
+        "ueberspannung": "ja",
+        "hotel": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hausrat/7-0/Produktvergleich_NV_Hausrat_7.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nv-online.de/versicherungen/hausrat",
+    "https://www.nv-online.de/fileadmin/downloadcenter/hausrat/7-0/Produktvergleich_NV_Hausrat_7.0.pdf",
+    "https://www.nv-online.de/versicherungen/elementarschaden"
+  ],
+  "offen": [
+    "Werte aus dem Produktvergleich NV Hausrat 7.0 (Symboltabelle). Einfacher Diebstahl aus der Wohnung nicht als eigener Punkt genannt; einfacher Diebstahl auf dem Grundstück (Wäsche, Gartenmöbel) 250 / 1.000 / 3.000 €. NV markiert keine Empfehlung; Hausratmax. als mittlere Stufe gesetzt.",
+    "Grobe Fahrlässigkeit bei Herbeiführung; bei Obliegenheiten HausratSpar nicht versichert. Fahrrad: HausratSpar nur wenn vereinbart (bis 5.000 €), Hausratmax. 5.000 € beitragsfrei (bis 10.000 € wählbar), HausratPremium 10.000 € beitragsfrei (bis zur Summe wählbar).",
+    "Elementarschäden über die eigene NV Elementarschadenversicherung; Rückstau 2 % (max.) bzw. 5 % (Premium) der Summe. Diebstahl aus Kfz: HausratSpar nur Benelux, Frankreich, Schweiz, Österreich, Skandinavien. Hotelkosten: Spar 1 ‰, max. 2 ‰ der Summe. Phishing = Online."
+  ]
+}

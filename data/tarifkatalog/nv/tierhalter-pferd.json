@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "NV-Versicherungen",
+  "sparte": "tierhalter-pferd",
+  "produkt": "NV Pferdehaftpflicht 3.0",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Flurschäden",
+    "Turniere und Reitunterricht",
+    "Weltweit bis 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "NV PferdePremium 3.0",
+      "kurz": "PferdePremium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "miete": "Stall bis 20.000 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 15 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "Reitzubehör 20.000 €",
+        "neuwert": "bis 1.000 €",
+        "nebenberuf": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/pferd/3-0/Produktvergleich_NV_Pferd_3.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NV PferdePremium Plus 3.0",
+      "kurz": "PferdePremium+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 18 Monate",
+        "forderungsausfall": "ja, mit Rechtsschutz",
+        "geliehen": "ja",
+        "neuwert": "bis 2.500 €",
+        "nebenberuf": "bis 12.000 € Umsatz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/pferd/3-0/Produktvergleich_NV_Pferd_3.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nv-online.de/versicherungen/pferdehaftpflicht",
+    "https://www.nv-online.de/fileadmin/downloadcenter/pferd/3-0/Produktvergleich_NV_Pferd_3.0.pdf",
+    "https://www.nv-online.de/fileadmin/downloadcenter/pferd/3-0/Leistung_NV_PferdePremium_3.0.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Produktvergleich NV Pferd 3.0 (Symboltabelle). Deckungssumme je Stufe nicht genannt. Selbstbeteiligung nicht genannt (nur Verzicht auf Anrechnung einer Mithaftung bis 500 € bzw. 1.000 €). Zwei Stufen ohne Empfehlung.",
+    "Miete: Mietsachschäden an Stallungen, Reithallen und Weiden; Wohnräume in PferdePremium bis 5 Mio. €. Geliehen: fremdes gemietetes oder geliehenes Reitzubehör; gemietete Fuhrwerke PferdePremium bis 20.000 €.",
+    "Fremdreiter in beiden Stufen. Nur PferdePremium Plus: Schäden am eigenen Pferd durch Ripper oder Wölfe bis 3.000 €, gemietete Kfz bis 5.000 €, Rettungs- und Bergungskosten."
+  ]
+}

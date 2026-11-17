@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "InterRisk",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neubauwert (gleitend)",
+    "Überspannung durch Blitz",
+    "Naturgefahren wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude L",
+      "kurz": "L",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "nur am Gebäude",
+        "kosten": "bis 50.000 €",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/broschueren-und-leistungsueberblick/WH_pdf-09.26.17.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude XL",
+      "kurz": "XL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "elementar": "optional",
+        "ableitung": "nur Regenwasser",
+        "pv": "ja",
+        "kosten": "bis 500.000 €",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "bis 3.000 €",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/broschueren-und-leistungsueberblick/WH_pdf-09.26.17.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude XXL",
+      "kurz": "XXL",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "ja",
+        "pv": "ja",
+        "kosten": "ohne Begrenzung",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "ja",
+        "tiere": "ja",
+        "allgefahren": "optional",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/broschueren-und-leistungsueberblick/WH_pdf-09.26.17.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.interrisk.de/de/produkte/gebaeudeversicherungen/wohngebaeude.php",
+    "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/broschueren-und-leistungsueberblick/WH_pdf-09.26.17.pdf",
+    "https://www.interrisk.de/wMedia/docs/gebaeudeversicherungen-downloads/wohngebaeude/informationsblaetter/IPID_Wohngebaeude_XXL_pdf-06.26.3.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Leistungsprofil Wohngebäude (WH 09.26, Symboltabelle L / XL / XXL). InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt.",
+    "Ableitungsrohre: XL nur unterirdische Regenwasserableitungsrohre auf dem Grundstück; Zuleitungen außerhalb des Grundstücks XL bis 10.000 €. Photovoltaik: L nur als Gebäudebestandteil, XL und XXL auch auf dem Grundstück.",
+    "Kosten: Aufräumungs- und Abbruchkosten (L 50.000 €, XL 500.000 €, XXL ohne Grenze). Unbenannte Gefahren nur XXL und nur mit weiteren Naturgefahren. Wildtiere (Marder, Waschbär) nur XXL."
+  ]
+}

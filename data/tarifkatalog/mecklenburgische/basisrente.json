@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "basisrente",
+  "produkt": "Basis-Rente",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Beiträge steuerlich absetzbar",
+    "Lebenslange Rente",
+    "Rente ab 62 Jahren möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Basis-Rente klassisch",
+      "kurz": "Klassisch",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "hohe Garantie",
+        "anlage": "klassisch",
+        "flexibel": "Sonderzahlungen",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/basis-rente_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Basis-Rente",
+      "kurz": "Fonds",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "7 Fonds, auch Index",
+        "flexibel": "Sonderzahlungen",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/basis-rente_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/vorsorge-vermoegen/basis-rente",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/basis-rente_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/Vertragsinformationen-zu-Leben/fondsgebundene_basisrente_vertragsinformation.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife laut Kundeninformation (VF 1120.0337.01.26): klassische Kapitalanlage mit hoher Garantie oder fondsgebunden (DWS-Fonds bzw. deutscher, europäischer oder weltweiter Indexfonds, bis 3 Fonds). Keine Empfehlung der Gesellschaft.",
+    "Beitragsgarantie und garantierter Rentenfaktor nicht genau beziffert; fondsgebunden keine Garantie genannt. BU-Zusatz und Beitragspause nicht genannt.",
+    "Hinterbliebenenrente an Ehe- oder eingetragene Lebenspartner bzw. kindergeldberechtigte Kinder möglich. Jährliche Sonderzahlungen bis zum steuerlichen Höchstbetrag."
+  ]
+}

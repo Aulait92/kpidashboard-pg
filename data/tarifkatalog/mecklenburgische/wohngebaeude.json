@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäude-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gleitender Neuwert Plus",
+    "Unterversicherungsverzicht",
+    "Elementar als Zusatz wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Grunddeckung",
+      "kurz": "Grunddeckung",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "pv": "optional",
+        "kosten": "bis 10 % der Summe",
+        "neuwert": "ja",
+        "ueberspannung": "bis 5.000 €",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "sb": "ohne, 200 bis 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/wohngebaeudeversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Komfortdeckung",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "pv": "optional",
+        "kosten": "bis 100 % der Summe",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "bis 2.500 €",
+        "tiere": "bis 5.000 €",
+        "sb": "ohne, 200 bis 1.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/wohngebaeudeversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/haus-wohnen/wohngebaeudeversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/wohngebaeudeversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/wohngebaeudeversicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Werte aus der Kundeninformation Wohngebäude (Tabelle Grund- und Komfortdeckung, VF1120.0241a.10.23). Ableitungsrohre außerhalb des Gebäudes nicht genannt. Zwei Stufen ohne Empfehlung.",
+    "Grobe Fahrlässigkeit bei Herbeiführung nur Komfort; bei Obliegenheiten bis 2.500 €. Kosten = Aufräumungs-, Abbruch-, Bewegungs- und Schutzkosten; Hotel 100 bzw. 200 € je Tag. Wärmepumpen und Geothermie nur Komfort bis 25.000 €.",
+    "Photovoltaikanlagen bis 30 kWp in beiden Stufen wählbar; Baustein Photovoltaikanlagen plus (technische Gefahren, Ertragsausfall) und Mehrkosten plus. Weitere Naturgefahren als Elementarschadendeckung wählbar. Tiere = Marder oder Waschbären."
+  ]
+}

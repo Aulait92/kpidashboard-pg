@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € Haftpflicht",
+    "Mallorca-Police beitragsfrei",
+    "Zusammenstoß mit Tieren aller Art"
+  ],
+  "tarife": [
+    {
+      "name": "Kasko Grunddeckung",
+      "kurz": "Grunddeckung",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja",
+        "neuwert": "12 Monate",
+        "marder": "bis 15.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "Akku-Ersatz ja",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/fahrzeug-verkehr/kfz-versicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kasko Komfortdeckung",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja",
+        "neuwert": "36 Monate",
+        "marder": "ja, Folgen 25.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja, Akku-Allrisk",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/fahrzeug-verkehr/kfz-versicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/fahrzeug-verkehr/autoversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/fahrzeug-verkehr/kfz-versicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/kfz-versicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Werte aus der Kundeninformation Kfz (VF 1120.0201.10.26, Übersicht Grund- und Komfortdeckung in der Kasko) und der Produktseite. Verzicht auf den Einwand grober Fahrlässigkeit nicht genannt. Zwei Stufen ohne Empfehlung.",
+    "Neupreis- bzw. Kaufwertentschädigung nach Erstzulassung; Komfort 36 Monate nur für Pkw. Marderbiss: Grunddeckung bis 15.000 € (auch Folgeschäden); Komfort Biss voll, Folgeschäden bis 25.000 €.",
+    "E-Auto: Ersatz des Antriebs-Akkus bei Kaskoschaden in beiden Stufen; All-Risk-Deckung für den Akku, Wallbox bis 1.000 € und Akku-Entsorgung nur Komfort (All-Risk nur in Vollkasko). Rabattschutz, GAP-Deckung, Partnerkasko (Werkstatt), Schutzbrief und Fahrer-Versicherung als Bausteine."
+  ]
+}

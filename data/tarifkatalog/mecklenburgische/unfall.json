@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "unfall",
+  "produkt": "Unfall-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweit rund um die Uhr",
+    "Reha-Management bis 20.000 €",
+    "Rente steigt jährlich um 2 %"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "600 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "maxInvaliditaet": "600 %",
+        "todesfall": "optional",
+        "sofort": "5.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/unfallversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/gesundheit-freizeit/unfallversicherung-erwachsene",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/unfallversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/unfallversicherung_kundeninfo_pflegeleistungen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit frei wählbaren Leistungsarten und Summen (Kundeninformation VF1120.0238a.04.23). Progression: ab 26 % Invalidität steigend, bei 50 % volle Summe, bei 100 % 600 %; optional Höchstleistung schon ab 70 %. Wahlweise Leistung erst ab 20 % Invalidität (Beitragsersparnis).",
+    "Unfall-Rente lebenslang ab 50 %, verbessert ab 40 % (halbe Rente); steigt ab Rentenbezug 30 Jahre lang um 2 % jährlich. Sofortleistung bei bestimmten Schwerverletzungen 5.000 € plus Helmbonus 2.500 €.",
+    "Bausteine: Übergangsleistung, Krankenhaustagegeld, Tagegeld, Todesfall, Sofortleistung bei Knochenbruch oder Krebs, Hilfs- und Pflegeleistungen. Gliedertaxe nicht genannt."
+  ]
+}

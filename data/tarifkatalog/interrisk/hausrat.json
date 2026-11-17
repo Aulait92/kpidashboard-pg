@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "InterRisk",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Neuwert",
+    "Überspannung durch Blitz",
+    "Vandalismus nach Einbruch"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat XL",
+      "kurz": "XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "wert": "30 %",
+        "fahrrad": "bis 1.000 €",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 1.200 €",
+        "garten": "Möbel bis 1.500 €",
+        "auto": "bis 1.500 €, nur BRD",
+        "allgefahren": "nein",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "fahrrad": "nein",
+        "reise": "nein"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/hausrat-downloads/broschueren-und-leistungsueberblick/HH_pdf-09.26.19.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat XXL",
+      "kurz": "XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 %",
+        "fahrrad": "bis 10.000 €",
+        "elementar": "optional",
+        "online": "bis 3.000 €",
+        "bargeld": "bis 3.500 €",
+        "garten": "bis 10.000 €",
+        "auto": "bis 5.000 €",
+        "allgefahren": "optional",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "fahrrad": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.interrisk.de/wMedia/docs/hausrat-downloads/broschueren-und-leistungsueberblick/HH_pdf-09.26.19.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.interrisk.de/de/produkte/haushalt/hausratversicherung.php",
+    "https://www.interrisk.de/wMedia/docs/hausrat-downloads/broschueren-und-leistungsueberblick/HH_pdf-09.26.19.pdf",
+    "https://www.interrisk.de/wMedia/docs/hausrat-downloads/informationsblaetter/IPID_Hausrat_XXL_pdf-06.26.6.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Leistungsprofil Hausrat (HH 09.26, Symboltabelle XL / XXL). Einfacher Diebstahl aus der Wohnung nicht genannt; einfacher Diebstahl auf dem Grundstück (Garten, Wäsche) in XL begrenzt, in XXL bis 10.000 €.",
+    "Fahrrad XL bis 1.000 €, auf 2.500 € oder 5.000 € erhöhbar. Bargeld XXL bis 3.500 € (7.500 € bei Abhebung bis 1 Woche zuvor). Phishing bis 3.000 € nur XXL.",
+    "Weitere Naturgefahren (Überschwemmung, Rückstau) wählbar; unbenannte Gefahren nur XXL mit Naturgefahren. Zusatzbausteine BikeMobil und OnTour nur XXL. Selbstbehalt wählbar gegen Nachlass. Zwei Stufen ohne Empfehlung."
+  ]
+}

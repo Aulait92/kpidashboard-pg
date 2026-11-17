@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Arzt- und Krankenhauswahl",
+    "Abrechnung bis 3,5-fach GOÄ",
+    "Wechsel ohne neue Prüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Einsteigertarif",
+      "kurz": "Einsteiger",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "stationaer": "Mehrbettzimmer",
+        "zahnersatz": "ja",
+        "bre": "bis 3 Monatsbeiträge",
+        "heilpraktiker": "nein",
+        "psychotherapie": "ja",
+        "sehhilfen": "ja",
+        "ausland": "ja"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/privat/gesundheit-freizeit/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komforttarif",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "ja",
+        "bre": "bis 3 Monatsbeiträge",
+        "heilpraktiker": "nein",
+        "psychotherapie": "ja",
+        "sehhilfen": "ja",
+        "ausland": "ja"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/privat/gesundheit-freizeit/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Spitzentarif",
+      "kurz": "Spitze",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "stationaer": "Einbett, Chefarzt",
+        "zahnersatz": "ja",
+        "bre": "bis 3 Monatsbeiträge",
+        "heilpraktiker": "ja",
+        "psychotherapie": "ja",
+        "sehhilfen": "ja",
+        "ausland": "ja"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/privat/gesundheit-freizeit/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/gesundheit-freizeit/private-krankenversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/krankenversicherung_vertragsinformationen.pdf",
+    "https://www.mecklenburgische.de/privat/gesundheit-freizeit/krankentagegeld"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite (Symbole Einsteiger-, Komfort- und Spitzentarif); Tarifbezeichnungen und Erstattungssätze nicht genannt. Ambulante Erstattung, Zahnersatz-Prozentsatz und Selbstbehalt nicht genannt. Keine Empfehlung der Gesellschaft; Komfort als mittlere Stufe gesetzt.",
+    "Stationär: Einsteiger ohne Chefarzt und Zweibettzimmer; Komfort mit Chefarzt und Zweibettzimmer (bzw. Ersatztagegeld), Spitzentarif zusätzlich Einbettzimmer. Beitragsrückerstattung bis zu drei Monatsbeiträge in allen Tarifen.",
+    "Krankentagegeld und Pflegetagegeld als eigene Tarife ergänzbar."
+  ]
+}

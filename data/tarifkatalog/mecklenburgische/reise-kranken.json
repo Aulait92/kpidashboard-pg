@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Mecklenburgische",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "24-Stunden-Notrufservice",
+    "Bergung bis 20.000 €",
+    "Jahresvertrag, jede Reise"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise-Krankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 8 Wochen",
+        "ruecktransport": "ja, wenn sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/reisekrankenversicherung_kundeninfo.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.mecklenburgische.de/privat/gesundheit-freizeit/reisekrankenversicherung",
+    "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/reisekrankenversicherung_kundeninfo.pdf",
+    "https://www.mecklenburgische.de/pdfs/produkte/vertragsinformationen/reisekrankenversicherung_vertragsinformationen.pdf"
+  ],
+  "offen": [
+    "Ein Tarif laut Kundeninformation (VF1120.0330.02.25) und Produktseite: 100 % Erstattung der Kosten, weltweit, jede Reise bis 8 Wochen. Selbstbeteiligung nicht genannt.",
+    "Zahn: schmerzstillende Behandlung und provisorischer Zahnersatz. Überführung oder Beisetzung im Ausland bis 10.000 €. Bekannte Erkrankungen nicht genannt.",
+    "Familienvertrag für alle Personen in häuslicher Gemeinschaft inkl. Kindern unter 25 Jahren. Langzeitreisen über 8 Wochen nicht angeboten bzw. nicht genannt."
+  ]
+}
