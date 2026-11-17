@@ -9,6 +9,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { reportError } from "@/lib/monitoring";
+import { bedrockClient } from "@/lib/ki-eu";
 import { redactHealthText } from "@/lib/gesundheitsdaten";
 import { cleanAuszug, isSparte, SPARTE_KEYS, ZAHLWEISEN, type Auszug, type KiEndpunkt, type Klassifikation, type PolicenTyp } from "@/lib/policen/regeln";
 
@@ -33,7 +34,8 @@ async function fragJson(o: {
 }): Promise<Record<string, unknown> | null> {
   if (!o.endpunkt && !process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = o.endpunkt ? new Anthropic({ baseURL: o.endpunkt.baseURL, apiKey: o.endpunkt.apiKey }) : new Anthropic();
+    const e = o.endpunkt;
+    const client = !e ? new Anthropic() : e.art === "bedrock" ? bedrockClient(e) : new Anthropic({ baseURL: e.baseURL, apiKey: e.apiKey });
     const resp = await client.messages.create({
       model: o.endpunkt?.model ?? MODEL,
       max_tokens: o.maxTokens,

@@ -14,6 +14,7 @@
 //     Nach der Einwilligung ordnet die KI solche Unterlagen nur über einen EU-Endpunkt zu (policenKiEu), sonst gar nicht.
 // Texte an Leads ohne Gedankenstriche, in beiden Ansprachen (a(an, du, sie)), keine Versprechen.
 
+import { bedrockEu, type BedrockEu } from "@/lib/ki-eu-konfig";
 import { a, type Ansprache } from "@/lib/ansprache";
 
 /** Größte Datei, die angenommen wird. */
@@ -42,17 +43,21 @@ export function policenGesundheitAn(env: Record<string, string | undefined> = pr
 
 /**
  * KI für Unterlagen mit möglichem Gesundheitsbezug (nach der Einwilligung): nur über einen EU-Endpunkt.
- * POLICEN_KI_REGION=eu und POLICEN_KI_EU_URL (Anthropic-kompatible Messages-API in der EU, z. B. Claude über AWS Bedrock
- * Frankfurt hinter einem Gateway) mit POLICEN_KI_EU_KEY, optional POLICEN_KI_EU_MODEL. Fehlt etwas: null, dann keine
- * KI für diese Unterlagen, Einordnung nur nach Dateiname, Begleittext und Angaben des Leads.
+ * POLICEN_KI_REGION=eu und einer von:
+ *   1. Amazon Bedrock Frankfurt (ki-eu.ts: KI_EU_AWS_ACCESS_KEY_ID, KI_EU_AWS_SECRET_ACCESS_KEY), bevorzugt;
+ *   2. POLICEN_KI_EU_URL (Anthropic-kompatible Messages-API in der EU, z. B. Gateway) mit POLICEN_KI_EU_KEY,
+ *      optional POLICEN_KI_EU_MODEL.
+ * Fehlt beides: null, dann keine KI für diese Unterlagen, Einordnung nur nach Dateiname, Begleittext und Angaben des Leads.
  */
-export type KiEndpunkt = { baseURL: string; apiKey: string; model: string | null };
+export type KiEndpunkt = { art?: "anthropic"; baseURL: string; apiKey: string; model: string | null } | BedrockEu;
 export function policenKiEu(env: Record<string, string | undefined> = process.env): KiEndpunkt | null {
   if ((env.POLICEN_KI_REGION ?? "").trim().toLowerCase() !== "eu") return null;
+  const bedrock = bedrockEu(env);
+  if (bedrock) return { ...bedrock, model: (env.POLICEN_KI_EU_MODEL ?? "").trim() || bedrock.model };
   const baseURL = (env.POLICEN_KI_EU_URL ?? "").trim().replace(/\/$/, "");
   const apiKey = (env.POLICEN_KI_EU_KEY ?? "").trim();
   if (!/^https:\/\//i.test(baseURL) || !apiKey) return null;
-  return { baseURL, apiKey, model: (env.POLICEN_KI_EU_MODEL ?? "").trim() || null };
+  return { art: "anthropic", baseURL, apiKey, model: (env.POLICEN_KI_EU_MODEL ?? "").trim() || null };
 }
 
 export const SPARTEN = {

@@ -77,7 +77,7 @@ npx tsx scripts/bonus-folie-unterlagen.ts /tmp/bonus
 python3 scripts/bonus-folie-einfuegen.py /tmp/bonus /tmp/unterlagen-neu
 ```
 
-Ergebnis mit der Fassung bc0fecc (Komplettcheck, 17.11.2026, lokal geprüft): Vertreter 24 Folien (PDF 31 Seiten),
+Ergebnis mit der Fassung bc0fecc (Komplettcheck, 17.11.2026, nach Oles OK in Produktion hochgeladen am 17.11.2026, 15:59 Uhr): Vertreter 24 Folien (PDF 31 Seiten),
 Makler 25 Folien (PDF 32 Seiten); vorher (22/23 Folien) 23 und 24. Ohne Playwright-Chromium mit
 `E2E_CHROMIUM=/usr/bin/google-chrome`, Python mit python-pptx/pypdf/Pillow (`/usr/bin/python3`). Das Einfügen ist wiederholbar
 (erkennt eine schon vorhandene Bonusfolie). `scripts/vertrieb-folien.mjs` überspringt die Folie, weil die

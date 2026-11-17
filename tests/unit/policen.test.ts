@@ -311,6 +311,7 @@ describe("Schalter an: Einordnung ohne Inhalt und KI-Region", () => {
     expect(policenKiEu({ POLICEN_KI_REGION: "eu", POLICEN_KI_EU_URL: "http://unsicher.example", POLICEN_KI_EU_KEY: "k" })).toBeNull();
     expect(policenKiEu({ POLICEN_KI_REGION: "us", POLICEN_KI_EU_URL: "https://eu.example", POLICEN_KI_EU_KEY: "k" })).toBeNull();
     expect(policenKiEu({ POLICEN_KI_REGION: "EU", POLICEN_KI_EU_URL: "https://eu.example/", POLICEN_KI_EU_KEY: "k", POLICEN_KI_EU_MODEL: "claude-opus-5-5" })).toEqual({
+      art: "anthropic",
       baseURL: "https://eu.example",
       apiKey: "k",
       model: "claude-opus-5-5",
