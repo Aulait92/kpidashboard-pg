@@ -91,13 +91,37 @@ export function Vergleichsblatt({ terminId, leadId, v, readOnly }: { terminId: s
   );
 }
 
+type Zeile = { key: string; label: string; wert: string; pruefen: boolean };
+
+/** Anzeigezeilen einer Karte: Beitrag mit Zahlweise und Monatsbetrag, Laufzeit in einer Zeile, sonst je Feld. */
+function zeilen(k: VertragKarte): Zeile[] {
+  const f = k.felder;
+  const pr = (...keys: string[]) => keys.some((x) => f[x]?.s === "pruefen");
+  const out: Zeile[] = [];
+  const zw = f.zahlweise ? zeigeWert(felderFuer(k.sparte).find((x) => x.key === "zahlweise")!, f.zahlweise.w) : null;
+  if (typeof f.beitrag?.w === "number") {
+    const monat = k.monat != null && f.zahlweise?.w !== "monatlich" ? ` · ${euro(k.monat)} im Monat` : "";
+    out.push({ key: "beitrag", label: "Beitrag", wert: `${euro(f.beitrag.w)}${zw ? ` ${zw}` : ""}${monat}`, pruefen: pr("beitrag", "zahlweise") });
+  } else if (zw) out.push({ key: "zahlweise", label: "Zahlweise", wert: zw, pruefen: pr("zahlweise") });
+  const von = typeof f.beginn?.w === "string" ? tag(f.beginn.w) : null;
+  const bis = typeof f.ablauf?.w === "string" ? tag(f.ablauf.w) : null;
+  if (von || bis) out.push({ key: "laufzeit", label: "Laufzeit", wert: von && bis ? `${von} bis ${bis}` : von ? `ab ${von}` : `bis ${bis}`, pruefen: pr("beginn", "ablauf") });
+  const sonst = new Set(["versicherer", "beitrag", "zahlweise", "beginn", "ablauf"]);
+  for (const x of felderFuer(k.sparte)) {
+    const v = f[x.key];
+    if (!v || sonst.has(x.key)) continue;
+    const wert = x.key === "kuendigungsfrist_monate" && v.w === 1 ? "1 Monat" : zeigeWert(x, v.w);
+    out.push({ key: x.key, label: x.label, wert, pruefen: v.s === "pruefen" });
+  }
+  return out;
+}
+
 function VertragKarteAnsicht({ terminId, k, href, readOnly, bestand }: { terminId: string; k: VertragKarte; href: string; readOnly: boolean; bestand: boolean }) {
   const toast = useToast();
   const [pending, start] = useTransition();
   const [bearbeiten, setBearbeiten] = useState(false);
   const felder = felderFuer(k.sparte);
   const versicherer = typeof k.felder.versicherer?.w === "string" ? k.felder.versicherer.w : null;
-  const sichtbar = felder.filter((f) => f.key !== "versicherer" && k.felder[f.key]);
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>, ok: string) =>
     start(async () => {
       const r = await fn();
@@ -134,33 +158,26 @@ function VertragKarteAnsicht({ terminId, k, href, readOnly, bestand }: { terminI
       ) : (
         <>
           <dl className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1.5 px-5 py-3.5 text-sm">
-            {k.monat != null ? (
-              <>
-                <dt className={DT}>Im Monat</dt>
-                <dd className="font-semibold">{euro(k.monat)}</dd>
-              </>
-            ) : null}
-            {sichtbar.map((f) => {
-              const x = k.felder[f.key]!;
-              const pruefen = x.s === "pruefen" && !k.geprueft;
+            {zeilen(k).map((z) => {
+              const pruefen = z.pruefen && !k.geprueft;
               return (
-                <div key={f.key} className="contents">
-                  <dt className={`break-words hyphens-auto ${DT}`}>{f.label}</dt>
-                  <dd className={pruefen ? "font-medium text-amber-800" : "font-medium"} data-feld={f.key} data-pruefen={pruefen || undefined}>
-                    {zeigeWert(f, x.w)}
+                <div key={z.key} className="contents">
+                  <dt className={`break-words hyphens-auto ${DT}`}>{z.label}</dt>
+                  <dd className={pruefen ? "font-medium text-amber-800" : "font-medium"} data-feld={z.key} data-pruefen={pruefen || undefined}>
+                    {z.wert}
                     {pruefen ? <span className="ml-1.5 text-xs font-normal">bitte prüfen</span> : null}
                   </dd>
                 </div>
               );
             })}
-            {!sichtbar.length && k.monat == null ? <p className={`col-span-2 ${DT}`}>Keine Vertragsdaten gefunden. Bitte im Original nachsehen.</p> : null}
+            {!zeilen(k).length ? <p className={`col-span-2 ${DT}`}>Keine Vertragsdaten gefunden. Bitte im Original nachsehen.</p> : null}
           </dl>
           <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--border)] px-5 py-3">
             <a href={href} target="_blank" rel="noreferrer" className="mr-auto inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline" data-original>
               <FileText className="h-4 w-4" /> Original
             </a>
             {readOnly || k.uebernommen ? null : (
-              <>
+              <div className="ml-auto flex flex-wrap justify-end gap-2">
                 <Button variant="ghost" icon={Pencil} onClick={() => setBearbeiten(true)} disabled={pending} data-bearbeiten>
                   Bearbeiten
                 </Button>
@@ -175,7 +192,7 @@ function VertragKarteAnsicht({ terminId, k, href, readOnly, bestand }: { terminI
                     Werte stimmen
                   </Button>
                 )}
-              </>
+              </div>
             )}
           </div>
         </>

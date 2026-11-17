@@ -26,7 +26,7 @@ export async function PolicenVergleichKurz({ terminId, leadId, customerId, previ
       <Table2 className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold">Vergleichsblatt</span>
-        <span className="block truncate text-[13px] text-[color:var(--muted)]">{teile.join(" · ")}</span>
+        <span className="block text-[13px] text-[color:var(--muted)]">{teile.join(" · ")}</span>
       </span>
       {auffaellig ? (
         <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
