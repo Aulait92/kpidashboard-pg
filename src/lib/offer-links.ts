@@ -7,7 +7,7 @@ import { reportError } from "@/lib/monitoring";
 import type { SalesCustomerStage } from "@/generated/prisma/enums";
 import type { Offer } from "@/generated/prisma/client";
 import type { DealOfferRow } from "@/components/deal-offers-card";
-import { mahnwesenAktiv } from "@/lib/mahnwesen";
+import { ueberweisungAktiv } from "@/lib/mahnwesen";
 import { erinnerungsGrenzen, naechsteErinnerung, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
 import { abschlussBonusFrist, abschlussBonusGesichert, abschlussBonusJetzt, berlinTodayIso } from "@/lib/offer-pricing";
 
@@ -87,7 +87,7 @@ export function toOfferRow(o: Offer): DealOfferRow {
     allowBankTransfer: o.allowBankTransfer,
     bankTransferDays: o.bankTransferDays,
     zahlweise: o.zahlweise,
-    ueberweisungVerfuegbar: mahnwesenAktiv(),
+    ueberweisungVerfuegbar: ueberweisungAktiv(),
     mailDu: o.mailDu,
     paymentReminderAt: o.paymentReminderAt ? o.paymentReminderAt.toISOString().slice(0, 10) : null,
     paymentReminderCount: o.paymentReminderCount,

@@ -246,8 +246,8 @@ export async function setPaymentReminderAction(
 /** Überweisung am Angebot erlauben bzw. Zahlungsziel ändern (nur auf Anfrage des Kunden, Ole 17.11.2026). */
 export async function setBankTransferAction(offerId: string, input: { allow: boolean; days?: string | number | null }): Promise<OfferActionResult> {
   const session = await requireAdmin();
-  const { mahnwesenAktiv, parseZahlungsziel } = await import("@/lib/mahnwesen");
-  if (!mahnwesenAktiv()) return { ok: false, error: "Überweisung ist noch nicht freigeschaltet." };
+  const { ueberweisungAktiv, parseZahlungsziel } = await import("@/lib/mahnwesen");
+  if (!ueberweisungAktiv()) return { ok: false, error: "Überweisung ist noch nicht freigeschaltet." };
   const offer = await prisma.offer.findUnique({ where: { id: offerId } });
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
   if (offer.isTest) return { ok: false, error: "Testangebote laufen ohne Zahlung." };

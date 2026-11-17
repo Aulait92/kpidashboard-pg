@@ -193,3 +193,13 @@ describe("Bankabgleich", () => {
     expect(bankAbgleich({ amount: 55, purpose: "Miete" }, faelle)).toEqual({ eindeutig: null, vorschlaege: [] });
   });
 });
+
+describe("Überweisung einzeln freischalten (UEBERWEISUNG=on, Fall Anid)", () => {
+  it("UEBERWEISUNG=on schaltet nur die Überweisung frei, nicht die Mahnungen", async () => {
+    const { ueberweisungAktiv, mahnwesenAktiv } = await import("@/lib/mahnwesen");
+    expect(ueberweisungAktiv({ UEBERWEISUNG: "on" })).toBe(true);
+    expect(mahnwesenAktiv({ UEBERWEISUNG: "on" })).toBe(false);
+    expect(ueberweisungAktiv({ MAHNWESEN: "on" })).toBe(true);
+    expect(ueberweisungAktiv({})).toBe(false);
+  });
+});

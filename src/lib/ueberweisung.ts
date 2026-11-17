@@ -10,7 +10,7 @@
 //   Mahnwesen (lib/mahnwesen-server.ts).
 // - Beim Onboarding gehen Freigabe und Zahlungsziel an den Kunden über (lib/onboarding.ts); in der Kundenakte unter
 //   Abrechnung änderbar (mit Audit-Eintrag).
-// Freigabe der ganzen Funktion: MAHNWESEN=on (zuerst nur Staging).
+// Freigabe: UEBERWEISUNG=on (nur Überweisung) oder MAHNWESEN=on (Überweisung und Mahnungen).
 
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
@@ -26,13 +26,13 @@ import {
 } from "@/lib/billing";
 import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib/offer-links";
 import { zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
-import { mahnwesenAktiv, parseZahlungsziel } from "@/lib/mahnwesen";
+import { parseZahlungsziel, ueberweisungAktiv } from "@/lib/mahnwesen";
 
 export type UeberweisungResult = { ok: true } | { ok: false; error: string };
 
 /** Darf der Kunde für dieses Angebot per Überweisung zahlen? */
 export function ueberweisungMoeglich(o: { allowBankTransfer: boolean; isTest: boolean }): boolean {
-  return mahnwesenAktiv() && o.allowBankTransfer && !o.isTest;
+  return ueberweisungAktiv() && o.allowBankTransfer && !o.isTest;
 }
 
 /**

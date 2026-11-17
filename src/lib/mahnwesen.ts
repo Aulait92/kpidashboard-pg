@@ -18,6 +18,14 @@ import { addDaysIso, berlinTodayIso } from "@/lib/offer-pricing";
 import { fromDayKey } from "@/lib/vertrieb/dates";
 
 /** Mahnwesen und Überweisung freigeschaltet (Umgebungsvariable, zuerst nur auf Staging). */
+/**
+ * Überweisung auf Anfrage (Angebot, Kundenakte, Zahlart auf der Angebotsseite) unabhängig vom Mahnwesen freischalten
+ * (Ole, 17.11.2026, Fall Anid): UEBERWEISUNG=on oder MAHNWESEN=on. Mahnungen laufen nur mit MAHNWESEN=on.
+ */
+export function ueberweisungAktiv(env: Record<string, string | undefined> = process.env): boolean {
+  return env.UEBERWEISUNG === "on" || mahnwesenAktiv(env);
+}
+
 export function mahnwesenAktiv(env: Record<string, string | undefined> = process.env): boolean {
   return env.MAHNWESEN === "on";
 }

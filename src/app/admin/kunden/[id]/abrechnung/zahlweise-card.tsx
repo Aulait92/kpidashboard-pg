@@ -1,7 +1,7 @@
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { OffenePostenListe } from "@/components/admin/offene-posten";
 import { prisma } from "@/lib/prisma";
-import { mahnwesenAktiv, UEBERWEISUNG_TAGE_MAX, UEBERWEISUNG_TAGE_MIN } from "@/lib/mahnwesen";
+import { ueberweisungAktiv, UEBERWEISUNG_TAGE_MAX, UEBERWEISUNG_TAGE_MIN } from "@/lib/mahnwesen";
 import { ladeOffenePosten } from "@/lib/mahnwesen-server";
 import { saveMahnStoppAction, saveUeberweisungAction } from "./zahlweise-actions";
 
@@ -18,7 +18,7 @@ export async function ZahlweiseCard({ customerId, message, failed }: { customerI
     select: { allowBankTransfer: true, bankTransferDays: true, zahltPerUeberweisung: true, mahnStopp: true, mahnStoppGrund: true, mahnStoppAt: true },
   });
   if (!c) return null;
-  const aktiv = mahnwesenAktiv();
+  const aktiv = ueberweisungAktiv();
   const { posten } = await ladeOffenePosten(new Date(), { customerId });
   // Ohne Freischaltung nur zeigen, wenn es schon etwas zu sehen gibt
   if (!aktiv && !c.allowBankTransfer && !c.zahltPerUeberweisung && !posten.length) return null;
