@@ -73,6 +73,8 @@ export const LIMITS = {
   offerAccept: { limit: 10, windowMs: 10 * MIN },
   publicApi: { limit: 60, windowMs: MIN },
   cspReport: { limit: 30, windowMs: MIN },
+  // Nutzungsmessung im Admin (je Admin; der Browser sendet höchstens alle 15 s und beim Verlassen der Seite)
+  adminNutzung: { limit: 30, windowMs: MIN },
   // Webhooks mit Signaturprüfung: nur grobe Obergrenze (Stripe/Meta senden Bursts)
   webhook: { limit: 1200, windowMs: MIN },
 } satisfies Record<string, RateLimitRule>;
