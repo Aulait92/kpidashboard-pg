@@ -341,3 +341,8 @@ Bei Reset (18.11.2026, 13:50 UTC) nachholen und in `docs/recht/legal-data-hunter
 - [OpenAI-Forum: Berechtigung EU-Datenresidenz](https://community.openai.com/t/how-can-an-api-customer-become-eligible-for-eu-data-residency/1381888)
 - [CMS: Transparenzpflichten der KI-VO](https://cms.law/de/deu/legal-updates/deepfakes-chatbots-co.-die-neuen-transparenzpflichten-der-ki-vo)
 - [IHK Schleswig-Holstein: KI-Kennzeichnung](https://www.ihk.de/sh/ki-kennzeichnung)
+
+## Entscheidung Ole (17.11., Nacht)
+
+- Einwilligung nur mit zwei Knöpfen „Einverstanden“ und „Lieber nicht“. Speichern und KI-Auslesen werden gebündelt eingewilligt, ohne getrennte Option „ohne KI“. Begründung Ole: sonst wählen fast alle die Option ohne KI. Rechtliche Einordnung: Das Angebot bleibt insgesamt freiwillig (der Termin findet auch ohne Unterlagen statt), daher kein Kopplungsproblem nach Art. 7 Abs. 4 DSGVO. Offen ist, ob ErwG 43 hier eine getrennte Einwilligung verlangt (Anwaltsfrage 11). Restrisiko leicht erhöht, von Ole bewusst getragen.
+- Livegang aller Sparten. Gesundheitssparten je Vermittler erst nach Zustimmung zur AVV-Ergänzung (A5). KI-Auslesen für Kranken, BU und Leben erst mit Nachweis der Null-Speicherung (K2).
