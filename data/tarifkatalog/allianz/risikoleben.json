@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/vorsorge/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "RisikoLebensversicherung Plus",
@@ -40,8 +39,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/vorsorge/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "RisikoLebensversicherung Plus mit Unfall",
@@ -57,8 +55,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/vorsorge/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -74,6 +71,7 @@
     "Basis ist ein Angebot der Deutschen Lebensversicherungs-AG, Plus der Allianz Lebensversicherungs-AG. Plus Unfall zahlt 30.000 € mehr bei Unfalltod.",
     "Allianz markiert keinen Tarif; Plus als mittlere Stufe gesetzt.",
     "Kinder-Nachversicherung: +25 % der Summe, höchstens 50.000 € (Wert für die Folie gekürzt)",
-    "In allen Tarifen gekürzt für die Folie: Eintritt bis 74 Jahre, Dynamik 3 % im Jahr"
+    "In allen Tarifen gekürzt für die Folie: Eintritt bis 74 Jahre, Dynamik 3 % im Jahr",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de."
   ]
 }

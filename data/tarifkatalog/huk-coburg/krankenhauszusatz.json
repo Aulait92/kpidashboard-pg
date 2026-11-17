@@ -27,8 +27,7 @@
         "einbett": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/stationaere-zusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Stationäre Zusatzversicherung mit optionalen Leistungen",
@@ -48,8 +47,7 @@
         "einbett": "inklusive"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/stationaere-zusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -60,6 +58,7 @@
     "Wartezeit 3 Monate, 8 Monate für Entbindung und Psychotherapie; entfällt bei Unfall.",
     "Ersatz-Krankenhaustagegeld bei Verzicht: 30 € (Chefarzt), 20 € (Zweibettzimmer), 40 € (Ein- und Zweibettzimmer); Produktseite nennt auch „bis zu 70 €“ je nach Tarif, bitte prüfen.",
     "Optionsrecht alle 5 Jahre (optionale Leistungen ohne neue Risikoprüfung) nur im Grundtarif. Rooming-In 20 € je Tag. Start Police (21 bis 50 Jahre) mit gestaffeltem Beitrag.",
-    "Keine Empfehlung markiert (zwei Varianten)."
+    "Keine Empfehlung markiert (zwei Varianten).",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de."
   ]
 }

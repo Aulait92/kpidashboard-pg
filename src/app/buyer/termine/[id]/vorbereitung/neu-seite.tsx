@@ -25,6 +25,7 @@ import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { listUnterlagen } from "@/lib/policen/server";
 import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
 import { PolicenVergleichKurz } from "@/components/policen-vergleich-kurz";
+import { angebotStandText } from "@/lib/angebot-senden";
 
 const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
 // „Heute, 10:00 Uhr“ / „Morgen, …“ wie auf „Heute“ (UX Runde 4), sonst Datum
@@ -42,13 +43,15 @@ const LISTE = "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1";
 const BEZ = "break-words hyphens-auto text-[color:var(--muted)]";
 
 export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: VorbereitungDaten & { id: string; leadId: string | null }; von?: string }) {
-  const [tv, p, kunde, pilot, vomKunden] = await Promise.all([
+  const [tv, p, kunde, pilot, vomKunden, angebotStand] = await Promise.all([
     ladeTarifvorbereitung(d.id, ctx, d),
     loadPraesentation(d.id, ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true, vorsorgeThemenAus: true } }),
     ladePreisPilot(),
     // Policen vom Kunden per WhatsApp (lib/policen)
     d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview }) : [],
+    // Angebot nach dem Termin (Paket P3): abgelegt bzw. gesendet
+    prisma.appointment.findUnique({ where: { id: d.id }, select: { startsAt: true, angebotAbgelegtAt: true, angebotGesendetAt: true, angebotVersand: true, angebotKanaele: true } }),
   ]);
   if (!tv || !p) return null;
   // Beiträge rechnen (Pilot, docs/preise-pilot.md): nur Rechner-Angaben der freigeschalteten Sparten
@@ -208,6 +211,13 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           schutzNeu: tv.schutzNeu,
           // Teil C2: höchstens ein Vorsorge-Thema, nur als Hinweis (nichts gespeichert)
           vorsorge: vorsorgeThema(d, kunde?.vorsorgeThemenAus ?? [], asAnsprache(kunde?.leadAddress)),
+        }}
+        angebot={{
+          stand: angebotStand
+            ? angebotStandText({ abgelegtAt: angebotStand.angebotAbgelegtAt, gesendetAt: angebotStand.angebotGesendetAt, versand: angebotStand.angebotVersand, kanaele: angebotStand.angebotKanaele })
+            : null,
+          gesendet: !!angebotStand?.angebotGesendetAt,
+          vorbei: d.termin.startsAt.getTime() <= nowMs(),
         }}
         vorschau={{
           termin: { ...d, termin: { ...d.termin, startsAt: d.termin.startsAt.toISOString() }, vorbereitetAm: null },

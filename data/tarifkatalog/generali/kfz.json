@@ -18,7 +18,7 @@
         "neuwert": "36 Monate",
         "rabattschutz": "optional",
         "gap": "optional",
-        "werkstatt": "nein (freie Wahl)",
+        "werkstatt": "wählbar, 15 % Nachlass",
         "elektro": "ja",
         "mallorca": "ja"
       },
@@ -27,8 +27,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/fahrzeug-zuhause/kfz-versicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -41,6 +40,7 @@
     "Tierbissfolgeschäden nur auf der Seite für Elektro-Fahrzeuge genannt (Zusatzleistung für E-Kennzeichen), daher nicht als Wert erfasst.",
     "Werkstattservice bzw. Werkstattmanagement wählbar (15 % Nachlass auf Kasko bei Partnerwerkstatt-Angebot); Werkstattbindung daher nicht Standard.",
     "Zuwahlbausteine laut Seite: Beitragsschutz, Rabattschutz mit SF-Sofortschutz, Kfz-Schutzbrief, Fahrer Plus, Auslandsschaden Plus, GAP-Deckung, Kasko Plus und Kfz-Haftpflicht Plus.",
-    "Nur ein Tarif (Optimal); Vertrieb über die Deutsche Vermögensberatung (DVAG)."
+    "Nur ein Tarif (Optimal); Vertrieb über die Deutsche Vermögensberatung (DVAG).",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de. Korrigiert: Werkstattbindung als „wählbar, 15 % Nachlass“ statt „nein (freie Wahl)“."
   ]
 }

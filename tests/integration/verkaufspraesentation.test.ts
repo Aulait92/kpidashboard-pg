@@ -54,7 +54,7 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
     const ohne = await ladeVerkaufsPraesentation(contactId);
     expect(ohne).toMatchObject({ audience: "makler", angebotNr: null });
     // Listenpreise: mit Folie „Ihr Abschlussbonus“ (300 € bis morgen)
-    expect(ohne!.folien).toHaveLength(25);
+    expect(ohne!.folien).toHaveLength(26);
     expect(ohne!.folien.map((f) => f.titel)).toContain("Ihr Abschlussbonus");
     expect(ohne!.preise.quelle).toBe("liste");
     const offer = await createOffer(
@@ -66,7 +66,7 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
     expect(mit).toMatchObject({ audience: offer.vermittlerTyp === "makler" ? "makler" : "vertreter", angebotNr: offer.number });
     expect(mit!.preise).toMatchObject({ quelle: "angebot", name: "Finanzkontor Test", monatlichNetto: Number(offer.monthlyFee) });
     // Angebot ohne Abschlussbonus: keine Bonusfolie
-    expect((await ladeVerkaufsPraesentation(contactId, "makler"))!.folien).toHaveLength(24);
+    expect((await ladeVerkaufsPraesentation(contactId, "makler"))!.folien).toHaveLength(25);
     // Angebot mit Abschlussbonus bis morgen: Folie mit Betrag und Frist
     const morgen = addDaysIso(berlinTodayIso(), 1);
     await createOffer(
@@ -75,7 +75,7 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
       null,
     );
     const bonus = await ladeVerkaufsPraesentation(contactId, "makler");
-    expect(bonus!.folien).toHaveLength(25);
+    expect(bonus!.folien).toHaveLength(26);
     expect(bonus!.preise.bonus).toMatchObject({ betrag: 300 });
     expect(berlinTodayIso(bonus!.preise.bonus!.bis!)).toBe(morgen);
     const folie = bonus!.folien.find((f) => f.titel === "Ihr Abschlussbonus")!;

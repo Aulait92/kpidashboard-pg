@@ -32,8 +32,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.allianz.de/gesundheit/private-krankenversicherung/arbeitnehmer/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "MeinGesundheitsschutz Best",
@@ -58,8 +57,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.allianz.de/gesundheit/private-krankenversicherung/arbeitnehmer/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -72,6 +70,7 @@
     "Beitragsrückerstattung: 10 % fest, bis 20 % zusätzlicher Bonus, abhängig von den Überschüssen.",
     "Zahnersatz nur über die Zahnbausteine MeinGesundheitsschutz Zahn 75, 90 oder 100 (Zahnbehandlung und Prophylaxe dort 100 %).",
     "Primärarztprinzip: laut Produktseite in beiden Tarifen direkt zum Facharzt.",
-    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt."
+    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de (Arbeitnehmer); Krankentagegeld und Pflegezusatz dort als ergänzende Angebote genannt."
   ]
 }

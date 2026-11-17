@@ -103,6 +103,8 @@ async function handle(req: Request): Promise<Response> {
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5
       ? {
           usage: await pruneUsage().catch(() => null),
+          // Nutzungsmessung im Admin (AdminUsageEvent): 180 Tage
+          adminNutzung: await import("@/lib/admin-nutzung-server").then((m) => m.pruneAdminNutzung(now)).catch(() => null),
           audit: await pruneAudit(now).catch(() => null),
           // „Kollegen empfehlen“: Angaben von Empfohlenen ohne Abschluss nach 12 Monaten entfernen
           referrals: await import("@/lib/kollegen").then((m) => m.pruneReferrals(now)).catch(() => null),
@@ -178,6 +180,11 @@ async function handle(req: Request): Promise<Response> {
   const sequences = await runSequences(now).catch((e: unknown) => {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
+  });
+  // Angebot (Paket P3): Vorab-Check-Push am Vorabend jedes automatischen Nachfassens (lib/angebot-senden-server.ts)
+  const angebotVorab = await import("@/lib/angebot-senden-server").then((m) => m.runAngebotVorabCheck(now)).catch((e: unknown) => {
+    reportError(e, "cron-angebot-vorab");
+    return null;
   });
   // Lead antwortet 30 Min. nach dem Erstanschreiben nicht: Anrufplan starten, Push an den Vermittler (lib/anruf-ausloeser.ts)
   const anrufAusloeser = await import("@/lib/anruf-ausloeser-server").then((m) => m.runAntwortAusloeser(now)).catch((e: unknown) => {
@@ -371,7 +378,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, anrufAusloeser, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, angebotVorab, anrufAusloeser, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

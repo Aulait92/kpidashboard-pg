@@ -760,6 +760,9 @@ model Lead {
   callPlanStartedAt    DateTime?
   // Anrufplan automatisch gestartet: 30 Min. nach dem Erstanschreiben ohne Antwort (Ole, 17.11.2026, lib/anruf-ausloeser.ts)
   autoCallAt           DateTime?
+  // Rückruf wünschen (Link in der Nachfass-Mail zum Angebot, Minimalseite /rueckruf/<token>, Ausbau in P5)
+  rueckrufToken        String?           @unique
+  rueckrufGewuenschtAt DateTime?
   // Telefonate sauber erfassen (lib/telefonat.ts, Ole 15.11.2026): „Anrufen“ in der App getippt, Ergebnis noch offen.
   // Solange gesetzt (höchstens 3 Stunden), pausiert der WhatsApp-Assistent für diesen Lead (keine Fragen, kein Nachfassen).
   callStartedAt        DateTime?
@@ -1004,6 +1007,7 @@ model User {
   deviceTokens        DeviceToken[]
   appHandoffs         AppHandoff[]
   emailChangeRequests EmailChangeRequest[]
+  adminUsageEvents    AdminUsageEvent[]
 
   @@index([customerId])
 }
@@ -1387,6 +1391,15 @@ model Appointment {
   klaerenErledigt    String[]  @default([])
   shareToken         String?   @unique // Kundenlink zur Präsentation (nur Stand, ohne Sprechzettel), /beratung/<token>
   shareExpiresAt     DateTime? // Link läuft nach 14 Tagen ab
+  // Angebot nach dem Termin (Paket P3, Ole 17.11.2026, lib/angebot-senden.ts): abgelegt (PDF unter Dokumente am Kontakt),
+  // gesendet über die App bzw. vom Vermittler selbst gesendet; Versand: app | selbst; Kanäle z. B. „whatsapp,email“.
+  // angebotToken: geheimer Link /ihr-angebot/<token> auf das PDF (LeadFile angebotDateiId).
+  angebotAbgelegtAt  DateTime?
+  angebotGesendetAt  DateTime?
+  angebotVersand     String?
+  angebotKanaele     String?
+  angebotDateiId     String?
+  angebotToken       String?   @unique
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
   referralAskedAt    DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
@@ -1469,6 +1482,27 @@ model UsageEvent {
 
   @@index([customerId, at])
   @@index([type, at])
+}
+
+// Nutzungsmessung im Admin (Ole, 18.11.2026; docs/ux/admin-neu/nutzungs-audit-2026-11-17.md): Seitenaufrufe
+// (normalisierter Pfad, IDs als :id) und Klicks auf Elemente mit data-funktion (Inventar-ID). Nur eingeloggte
+// Admins, keine Inhalte, keine Lead-/Kundendaten. Auswertung nur als Zahlen (Diagnose q=admin-nutzung).
+// Löschung nach 180 Tagen (pruneAdminNutzung, Cron 03:00 UTC) und mit dem Login (Kaskade).
+model AdminUsageEvent {
+  id          String   @id @default(cuid())
+  at          DateTime @default(now())
+  adminUserId String
+  /// seite | funktion
+  art         String
+  /// Seite: normalisierter Pfad (/admin/neu/kunden/:id); Funktion: ID aus funktionsinventar.json
+  schluessel  String
+  /// alt | neu
+  oberflaeche String
+  admin       User     @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([at])
+  @@index([art, at])
+  @@index([adminUserId, at])
 }
 
 // Angebot / Auftragsbestätigung aus dem Cold-CRM. Konditionen werden beim
@@ -2815,7 +2849,7 @@ model LeadSequence {
   id         String    @id @default(cuid())
   leadId     String
   customerId String
-  // not_reached | offer | no_show
+  // not_reached | offer | offer_selbst | no_show | silent | recall
   kind       String
   // Index des nächsten Schritts
   step       Int       @default(0)
@@ -2825,6 +2859,8 @@ model LeadSequence {
   stopReason String?
   // Verlauf ohne Inhalte: [{ at, step, action, result, detail }]
   log        Json      @default("[]")
+  // Vorab-Check-Push an den Vermittler (Angebot, Paket P3): für diesen Schritt schon gesendet (je Schritt einmal)
+  vorabCheckStep Int?
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 

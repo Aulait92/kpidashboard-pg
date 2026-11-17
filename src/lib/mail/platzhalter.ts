@@ -18,6 +18,9 @@ export const PLATZHALTER = [
   "{rueckruf_1}",
   "{rueckruf_2}",
   "{anruf_tag}",
+  // Angebot nachfassen (Paket P3, Ole 17.11.2026): Link „Rückruf wünschen“ (/rueckruf/<token>), automatisch gefüllt;
+  // ohne Link entfällt der Satz
+  "{rueckruf_link}",
 ] as const;
 
 /**
@@ -66,13 +69,15 @@ export type Werte = {
   rueckruf_2?: string;
   /** Tag des Anrufs nach dem Angebot („Donnerstag“) */
   anruf_tag?: string;
+  /** Link „Rückruf wünschen“ (nur in automatischen Mails zum Angebot); leer = Satz entfällt */
+  rueckruf_link?: string | null;
 } & Partial<Record<ZusatzKey, string | null>>;
 
 /** Ohne eigene Signatur steht an ihrer Stelle ein schlichter Gruß (Ole, 14.11.2026: Signatur standardmäßig in den Vorlagen). */
 export const GRUSS_OHNE_SIGNATUR = "Viele Grüße\n{meinname}";
 
 /** Platzhalter, deren ganzer Satz entfällt, wenn sie leer sind (Link fehlt). */
-const SATZ_ENTFAELLT = ["terminlink", "videolink"] as const;
+const SATZ_ENTFAELLT = ["terminlink", "videolink", "rueckruf_link"] as const;
 
 /** Satz mit {key} entfernen (z. B. kein Terminlink, weil der Termin schon steht). */
 function ohneSatzMit(text: string, key: string): string {
@@ -102,6 +107,7 @@ export function fuelle(text: string, w: Werte): string {
     rueckruf_1: () => w.rueckruf_1 ?? "",
     rueckruf_2: () => w.rueckruf_2 ?? "",
     anruf_tag: () => w.anruf_tag ?? "",
+    rueckruf_link: () => (w.rueckruf_link ?? "").trim(),
   };
   // Ein Durchgang: eingesetzte Werte (z. B. die Musterkündigung) werden nicht noch einmal ersetzt.
   const out = base.replace(/\{([a-z0-9_]+)\}/g, (all, k: string) => {

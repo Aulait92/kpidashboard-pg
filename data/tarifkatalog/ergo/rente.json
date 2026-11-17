@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/Index-Rente/Indexbeteiligung-Rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Rente Dynamik",
@@ -46,8 +45,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/dynamik-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Rente Balance",
@@ -66,8 +64,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/Index-Rente/Indexbeteiligung-Balance",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Rente Chance",
@@ -85,8 +82,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/chance",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -100,6 +96,7 @@
     "Die vier Varianten sind Anlagekonzepte (von sicher bis renditeorientiert), keine Leistungsstufen; Reihenfolge wie auf ergo.de. Empfehlung nur formal als mittlere Stufe (dritte von vier). Die Rente Dynamik hat laut Seite das Rating FFF von Franke und Bornberg; keine Empfehlung der Gesellschaft.",
     "Garantierter Rentenfaktor nicht genannt; die Seiten nennen eine garantierte Mindestrente (Index, Dynamik, Balance aus dem garantierten Teil). Beitragsgarantie Index: 100 % der Beiträge ab 12 Jahren Laufzeit (Einmalbeitrag ab 5 Jahren); Dynamik 10 bis 100 % wählbar; Balance nur für den klassisch angelegten Teil; Chance ohne Angabe zur Garantie.",
     "Hinterbliebenenschutz in allen Varianten kombinierbar; bei Dynamik Todesfallleistung bis 50.000 € ohne Gesundheitsprüfung (Wartezeit 3 Jahre, entfällt bei Unfall), bei Chance Todesfallschutz und BU-Schutz ohne Gesundheitsprüfung wählbar (Höhe nicht genannt). BU-Kombination wählbar, bei Dynamik als Beitragsbefreiung ohne Gesundheitsprüfung bis 250 € Monatsbeitrag.",
-    "Kosten (Effektivkosten) nicht auf den Seiten genannt; siehe Basisinformationsblätter. Fondswechsel bis 12-mal im Jahr kostenlos (Dynamik, Balance, Chance)."
+    "Kosten (Effektivkosten) nicht auf den Seiten genannt; siehe Basisinformationsblätter. Fondswechsel bis 12-mal im Jahr kostenlos (Dynamik, Balance, Chance).",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseiten auf ergo.de."
   ]
 }

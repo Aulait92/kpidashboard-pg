@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/altersvorsorge/ruerup-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -37,6 +36,7 @@
     "Garantierter Rentenfaktor und Effektivkosten nicht auf der Produktseite; Muster-Produktinformationsblätter nicht ausgewertet.",
     "Hinterbliebene: Tod vor Rentenbeginn lebenslange Rente an Ehe- oder Lebenspartner, sonst Waisenrente bis 25; nach Rentenbeginn über Rentengarantiezeit; Verzicht möglich.",
     "Reduzierung und Beitragsfreistellung jederzeit kostenlos; Dynamik jährlich, bis zu 2 Mal in Folge aussetzbar.",
-    "BU-Zusatz nicht genannt. Keine Kapitalauszahlung (gesetzlich)."
+    "BU-Zusatz nicht genannt. Keine Kapitalauszahlung (gesetzlich).",
+    "Geprüft am 17.11.2026 an Produktseite und Bedingungen auf huk.de."
   ]
 }

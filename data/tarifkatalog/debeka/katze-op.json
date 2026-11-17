@@ -28,8 +28,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -39,6 +38,7 @@
     "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
     "Ein Tarif mit wählbarer Erstattungshöhe (1.000 €, 5.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
     "Kastrationszuschuss Kater 100 €, Katze 150 €.",
-    "Vorsorge (Baustein Gesundheit PLUS) auf debeka.de nur bei der Krankenversicherung genannt."
+    "Vorsorge (Baustein Gesundheit PLUS) auf debeka.de nur bei der Krankenversicherung genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite Tierversicherung auf debeka.de."
   ]
 }

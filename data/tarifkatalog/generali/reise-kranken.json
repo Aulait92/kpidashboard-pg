@@ -26,8 +26,7 @@
         "familie": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/reise-krankenversicherung/einzelpersonen",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -40,6 +39,7 @@
     "USA und Kanada: Die Seite nennt Auslandsreisen ohne Länderausschluss, aber nicht ausdrücklich weltweit; bitte in den AVB prüfen.",
     "Selbstbeteiligung: versicherte Kosten werden zu 100 % erstattet, eine Selbstbeteiligung ist nicht genannt.",
     "Familie: eigener Tarif ReiseF (Partner und Kinder unter 18), hier als Baustein „Familie“. Keine Langzeitvariante genannt.",
-    "Nicht versichert: geplante Behandlungen und solche, deren Notwendigkeit vor Reiseantritt absehbar war. Zahn: schmerzstillend inkl. Füllungen, Provisorien, einfache Reparaturen."
+    "Nicht versichert: geplante Behandlungen und solche, deren Notwendigkeit vor Reiseantritt absehbar war. Zahn: schmerzstillend inkl. Füllungen, Provisorien, einfache Reparaturen.",
+    "Geprüft am 17.11.2026 an Produktseite und Produktinformation (10.2025) auf generali.de."
   ]
 }

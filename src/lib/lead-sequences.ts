@@ -15,6 +15,11 @@
 //   Kein Interesse / Disqualifiziert, Reklamation, Löschung, „Stopp“, Schalter aus
 // - Verlauf (log) ohne Nachrichteninhalte
 //
+// Angebot (Paket P3, Ole 17.11.2026, lib/angebot-senden.ts): startet erst, wenn der Vermittler das Angebot über die App
+// sendet („offer“: Tag 2 WhatsApp, Tag 3 Anruf-Aufgabe plus Push, Tag 5 E-Mail mit [Rückruf wünschen], Tag 10 letzte
+// WhatsApp, danach Anruf-Aufgabe) bzw. „Habe ich selbst gesendet“ tippt („offer_selbst“: ohne E-Mail, nur WhatsApp und
+// Anruf). Der Status „Angebot gesendet“ allein startet nichts mehr (onLeadStatus), dann gilt die klassische Wiedervorlage.
+//
 // Termin-Nachfassen (Ole, 17.11.2026): Antwortet der Lead 2 Std. nach dem Terminvorschlag des Assistenten nicht, ist der
 // erste Schritt von „Chat ruht“ ein kurzes Nachfassen mit denselben (bzw. neu berechneten, noch freien) Zeit-Knöpfen:
 // nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
@@ -30,8 +35,11 @@ import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { isCallPlanNote } from "@/lib/call-plan";
 import { anrufPausiert } from "@/lib/telefonat-server";
+import type { VermittlerName } from "@/lib/whatsapp/gespraech";
+import type { VorlageKey } from "@/lib/mail/vorlagen";
+import type { Werte } from "@/lib/mail/platzhalter";
 
-export type SequenceKind = "not_reached" | "offer" | "no_show" | "silent" | "recall";
+export type SequenceKind = "not_reached" | "offer" | "offer_selbst" | "no_show" | "silent" | "recall";
 
 const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
@@ -39,7 +47,7 @@ const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nich
 
 /** hi = Anrede-Zeile nach Regel („Hallo Julia,“ bzw. „Guten Tag Frau Schneider,“ / „Guten Tag,“). */
 // Kein Buchungslink in Nachrichten an Leads (Ole, 15.11.2026: „nur per Chat“): Termine bucht der Assistent im Gespräch.
-type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; an: Ansprache };
+type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; an: Ansprache; person?: VermittlerName };
 /** Angaben für die Texte einer Abfolge (auch für die Vorschau im Nachrichtenplan, lib/nachrichtenplan.ts). */
 export type SequenceCtx = Ctx;
 const HOUR = 60 * 60 * 1000;
@@ -60,8 +68,63 @@ type Step =
       slotText?: (c: Ctx, zeiten: [string, string]) => string;
       /** Auch bei anderem Zweck zwei freie Zeiten anbieten (Freitext mit slotText und Zeit-Knöpfen; Vorlage ohne Zeiten). */
       slots?: boolean;
+      /** Neue Vorlage noch nicht freigegeben: stattdessen diese (freigegebene) Vorlage, bevor es eine Anruf-Aufgabe wird. */
+      fallback?: { purpose: NoticePurpose; params: (c: Ctx) => string[] };
     }
-  | { day: number; action: "call"; note: string };
+  | {
+      day: number;
+      action: "call";
+      note: string;
+      /** Push an den Vermittler (Ole, 17.11.2026: „Frau Becker anrufen: Fragen zum Angebot?“), nur wenn die Aufgabe neu ist */
+      push?: boolean;
+    }
+  | {
+      day: number;
+      /** E-Mail an den Lead über den Lead-Mail-Baustein (lib/mail/lead-versand.ts); ohne Adresse übersprungen */
+      action: "email";
+      titel: string;
+      /** Text aus der Vermittler-Vorlage (Kunden-Vorlage mit diesem Schlüssel, sonst Standardtext, lib/mail/vorlagen.ts) */
+      vorlage: VorlageKey;
+      /** Knöpfe im Rahmen: [Angebot ansehen] (falls das PDF noch da ist), [Rückruf wünschen] ({rueckruf_link}) */
+      knoepfe?: ("angebot" | "rueckruf")[];
+      /** Weitere Platzhalter-Werte */
+      zusatz?: (c: Ctx) => Partial<Werte>;
+    };
+
+/** Vermittler für „das Angebot, das Herr Kannapinn Ihnen geschickt hat“ (ohne Namen neutral). */
+const vom = (c: Ctx): VermittlerName => c.person ?? { nom: a(c.an, "dein Berater", "Ihr Berater"), dat: a(c.an, "deinem Berater", "Ihrem Berater") };
+
+/** Angebot nach dem Termin, Tag 2: WhatsApp (gleiche Frage wie die freigegebene Vorlage followup_offer). */
+const angebotTag2: Extract<Step, { action: "whatsapp" }> = {
+  day: 2,
+  action: "whatsapp",
+  purpose: "followup_offer",
+  params: (c) => [c.firstName, c.topic],
+  text: (c) =>
+    a(c.an, `${c.hi} konntest du dir das Angebot zu ${c.topic} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`, `${c.hi} konnten Sie sich das Angebot zu ${c.topic} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`),
+  fallbackNote: "Angebot nachfassen: anrufen",
+};
+const angebotAnruf: Extract<Step, { action: "call" }> = { day: 3, action: "call", note: "Angebot nachfassen: anrufen", push: true };
+const angebotLetzteWa = (selbst: boolean): Extract<Step, { action: "whatsapp" }> => ({
+  day: 10,
+  action: "whatsapp",
+  purpose: "followup_last",
+  params: (c) => [c.firstName],
+  text: (c) =>
+    selbst
+      ? a(
+          c.an,
+          `${c.hi} ich melde mich ein letztes Mal zum Angebot, das ${vom(c).nom} dir geschickt hat: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ich melde mich ein letztes Mal zum Angebot, das ${vom(c).nom} Ihnen geschickt hat: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+        )
+      : a(
+          c.an,
+          `${c.hi} ich melde mich ein letztes Mal zu deinem Angebot für ${c.topic}: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+          `${c.hi} ich melde mich ein letztes Mal zu Ihrem Angebot für ${c.topic}: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melde ich mich nicht weiter.`,
+        ),
+  fallbackNote: "Angebot: letzter Versuch, anrufen",
+});
+const angebotSchluss: Extract<Step, { action: "call" }> = { day: 12, action: "call", note: "Angebot nachfassen: zum Schluss anrufen" };
 
 export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> = {
   not_reached: {
@@ -90,19 +153,43 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
       },
     ],
   },
+  // Angebot über die App gesendet (Ole, 17.11.2026, Ergänzung C)
   offer: {
     label: "Angebot gesendet",
     steps: [
+      angebotTag2,
+      angebotAnruf,
       {
-        day: 3,
-        action: "whatsapp",
-        purpose: "followup_offer",
-        params: (c) => [c.firstName, c.topic],
-        text: (c) =>
-          a(c.an, `${c.hi} konntest du dir das Angebot zu ${c.topic} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`, `${c.hi} konnten Sie sich das Angebot zu ${c.topic} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`),
-        fallbackNote: "Angebot nachfassen: anrufen",
+        day: 5,
+        action: "email",
+        titel: "E-Mail mit [Rückruf wünschen]",
+        vorlage: "nachfassen_angebot",
+        knoepfe: ["angebot", "rueckruf"],
       },
-      { day: 7, action: "call", note: "Angebot nachfassen: anrufen" },
+      angebotLetzteWa(false),
+      angebotSchluss,
+    ],
+  },
+  // Angebot vom Vermittler selbst gesendet (Ergänzung B): keine E-Mail von uns, nur WhatsApp und Anruf
+  offer_selbst: {
+    label: "Angebot selbst gesendet",
+    steps: [
+      {
+        ...angebotTag2,
+        purpose: "followup_offer_selbst",
+        params: (c) => [c.firstName, vom(c).nom],
+        text: (c) =>
+          a(
+            c.an,
+            `${c.hi} konntest du dir das Angebot, das ${vom(c).nom} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?`,
+            `${c.hi} konnten Sie sich das Angebot, das ${vom(c).nom} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?`,
+          ),
+        // Bis zur Freigabe der neuen Vorlage: die freigegebene followup_offer („das Angebot zu Haftpflicht und Hausrat“)
+        fallback: { purpose: "followup_offer", params: (c) => [c.firstName, c.topic] },
+      },
+      angebotAnruf,
+      angebotLetzteWa(true),
+      angebotSchluss,
     ],
   },
   // No-Show-Rettung (Ole, 17.11.2026): am gleichen Tag zwei neue Zeiten, am nächsten Tag einmal nachfassen, dann Ende.
@@ -230,7 +317,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
 export type SequenceLogEntry = {
   at: string;
   step: number;
-  action: "whatsapp" | "call" | "stop" | "plan";
+  action: "whatsapp" | "call" | "email" | "stop" | "plan";
   /** sent | template | call_task | kept_followup | skipped | failed | stopped | planned */
   result: string;
   detail?: string;
@@ -358,11 +445,14 @@ export async function onLeadStatus(leadId: string, status: string | null | undef
     await stopSequences(leadId, `Phase: ${status}`, { now });
     return { started: false };
   }
-  if (s === "angebot gesendet") {
-    const seq = await startSequence(leadId, "offer", now);
-    return { started: !!seq };
-  }
+  // „Angebot gesendet“ allein startet kein Nachfassen mehr (Paket P3): erst der Versand über die App bzw. „Habe ich selbst
+  // gesendet“ (startAngebotNachfassen). Bis dahin gilt die klassische Wiedervorlage (lib/lead-followup.ts).
   return { started: false };
+}
+
+/** Nachfassen zum Angebot starten (Weg „app“ bzw. „selbst“, lib/angebot-senden-server.ts). Liefert die Abfolge oder null. */
+export async function startAngebotNachfassen(leadId: string, weg: "app" | "selbst", now = new Date()) {
+  return startSequence(leadId, weg === "app" ? "offer" : "offer_selbst", now);
 }
 
 /** Thema für „Angebot zu …“ – wie beim manuellen Nachfassen (lib/whatsapp/followup.ts). */
@@ -466,8 +556,8 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr
     const terminNachfass =
       seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
-    // WhatsApp nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
-    if (step.action === "whatsapp" && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
+    // WhatsApp und E-Mail nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
+    if ((step.action === "whatsapp" || step.action === "email") && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
       res.waiting++;
       continue;
     }
@@ -491,6 +581,17 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
       const r = await createCallTask(seq.leadId, step.note, now);
       entry = { at: now.toISOString(), step: seq.step, action: "call", result: r };
       if (r === "call_task") res.tasks++;
+      if (r === "call_task" && step.push) {
+        await import("@/lib/angebot-senden-server")
+          .then((m) => m.angebotAnrufPushSenden(seq.leadId))
+          .catch((e) => console.error("[lead-sequences push]", e));
+      }
+    } else if (step.action === "email") {
+      entry = await import("@/lib/angebot-senden-server")
+        .then((m) => m.sendeNachfassMail(seq, step, now))
+        .catch((e): SequenceLogEntry => ({ at: now.toISOString(), step: seq.step, action: "email", result: "failed", detail: (e instanceof Error ? e.message : String(e)).slice(0, 160) }));
+      if (entry.result === "sent") res.sent++;
+      else if (entry.result === "failed") res.failed++;
     } else {
       entry = terminNachfass ? await sendTerminNachfass(seq, terminNachfass, now) : await sendStep(seq, step, now);
       if (entry.result === "sent" || entry.result === "template") res.sent++;
@@ -543,7 +644,7 @@ async function sendTerminNachfass(
 }
 
 async function sendStep(
-  seq: { leadId: string; customerId: string; step: number },
+  seq: { leadId: string; customerId: string; step: number; kind?: string },
   step: Extract<Step, { action: "whatsapp" }>,
   now: Date,
 ): Promise<SequenceLogEntry> {
@@ -566,12 +667,15 @@ async function sendStep(
   }
   const an = await anspracheOf(seq.customerId);
   const who = await ansprechpartner({ customerId: seq.customerId, leadId: seq.leadId, phone: lead.phone, name: lead.name });
+  const angebot = seq.kind === "offer" || seq.kind === "offer_selbst";
   const ctx: Ctx = {
     firstName: firstNameOf(lead.name),
     hi: anredeZeile(an, who.kontakt),
     kontakt: who.kontakt,
-    topic: topicOf(lead.formData, lead.source, an),
+    // Angebot: Thema aus der Auswahl im Termin („Haftpflicht und Hausrat“), sonst aus dem Leadformular
+    topic: (angebot ? await import("@/lib/angebot-senden-server").then((m) => m.angebotThemaFuerLead(seq.leadId)).catch(() => null) : null) ?? topicOf(lead.formData, lead.source, an),
     an,
+    person: (await import("@/lib/whatsapp/gespraech")).vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm }),
   };
   if (step.onlyInWindow) {
     const conv = await prisma.conversation.findUnique({
@@ -624,6 +728,24 @@ async function sendStep(
     });
     return { ...base, result: mode === "template" ? "template" : "sent" };
   } catch (err) {
+    if (err instanceof NoTemplateError && step.fallback) {
+      // Neue Vorlage noch nicht freigegeben: die bisherige (freigegebene) Vorlage
+      try {
+        const { mode } = await sendWhatsAppNotice({
+          customerId: seq.customerId,
+          to: lead.phone,
+          purpose: step.fallback.purpose,
+          params: step.fallback.params(ctx),
+          text,
+          leadId: seq.leadId,
+          contactName: lead.name,
+          anrede: ctx.kontakt,
+        });
+        return { ...base, result: mode === "template" ? "template" : "sent", detail: `Vorlage ${step.fallback.purpose}` };
+      } catch (err2) {
+        if (!(err2 instanceof NoTemplateError)) return { ...base, result: "failed", detail: (err2 instanceof Error ? err2.message : String(err2)).slice(0, 160) };
+      }
+    }
     if (err instanceof NoTemplateError) {
       const r = await createCallTask(seq.leadId, step.fallbackNote, now);
       return { ...base, result: r, detail: "Keine freigegebene Vorlage, Anruf-Aufgabe statt WhatsApp" };
@@ -647,7 +769,7 @@ export async function loadLeadSequences(leadId: string) {
       active: !s.stoppedAt,
       startedAt: s.startedAt.toISOString(),
       stopReason: s.stopReason,
-      next: !s.stoppedAt && nextStep && s.nextAt ? { at: s.nextAt.toISOString(), text: nextStep.action === "whatsapp" ? "WhatsApp" : "Anruf-Aufgabe" } : null,
+      next: !s.stoppedAt && nextStep && s.nextAt ? { at: s.nextAt.toISOString(), text: nextStep.action === "whatsapp" ? "WhatsApp" : nextStep.action === "email" ? "E-Mail" : "Anruf-Aufgabe" } : null,
       entries: log,
     };
   });
@@ -658,6 +780,11 @@ export function describe(e: SequenceLogEntry, total: number): string {
   if (e.action === "stop") return `Abfolge beendet: ${e.detail ?? "gestoppt"}`;
   if (e.action === "plan") return `Wiedervorlage vom Assistenten: ${e.detail ?? "meldet sich später"}`;
   if (e.action === "call") return e.result === "kept_followup" ? `Anruf fällig, Ihre eigene Wiedervorlage bleibt ${n}` : `Anruf-Aufgabe auf „Heute“ angelegt ${n}`;
+  if (e.action === "email") {
+    if (e.result === "sent") return `Nachfassen: E-Mail gesendet ${n}`;
+    if (e.result === "skipped") return `E-Mail übersprungen${e.detail ? ` (${e.detail})` : ""} ${n}`;
+    return `E-Mail konnte nicht gesendet werden ${n}`;
+  }
   switch (e.result) {
     case "sent":
     case "template":

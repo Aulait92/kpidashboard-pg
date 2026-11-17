@@ -23,6 +23,8 @@ export const MAIL_ARTEN = {
   nummer_erfragen: "Richtige Nummer erfragen",
   bewertungsbitte: "Bewertungsbitte",
   einwilligung: "Einwilligung",
+  angebot: "Angebot",
+  angebot_nachfassen: "Angebot nachfassen",
   manuell: "E-Mail",
 } as const;
 export type MailArt = keyof typeof MAIL_ARTEN;
