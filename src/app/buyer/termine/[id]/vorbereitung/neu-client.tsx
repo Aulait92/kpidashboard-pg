@@ -3,14 +3,13 @@
 // Neue Terminvorbereitung (Ole, 15.11.2026), Oberfläche nach docs/ux/terminvorbereitung-entwurf.html:
 // Kopf mit einer Hauptaktion („Präsentation öffnen“, am Handy in fester Leiste), „Noch klären“ zum Abhaken,
 // Angebote aus dem Tarifkatalog mit Sparten-Reitern, Beitrag je Tarif, „Meine Merkmale“ 5 von 5, Bausteine 2 von 2,
-// Tarife ändern, eigener Tarif, Angebot ablegen (KI übernimmt nur Preise), Live-Vorschau der echten Vergleichsfolie.
+// Tarife ändern, eigener Tarif, Beiträge von Hand (Ole, 17.11.2026: kein Angebots-Upload mehr), Live-Vorschau der echten Vergleichsfolie.
 // Autosave ohne Speichern-Knopf.
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Calculator, CalendarDays, Check, ChevronDown, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Star, Video, X } from "lucide-react";
 import { Button, buttonClass, Card } from "@/components/ui";
-import { FileDrop } from "@/components/ui/file-drop";
 import { ActionSheet, Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
@@ -18,7 +17,8 @@ import { folienEinpassen } from "@/lib/folien-einpassen";
 import { folien, type Marke } from "@/lib/praesentation";
 import type { Ansprache } from "@/lib/ansprache";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { angebotAuslesbar, auswahlDazu, auswahlWeg, gesellschaftName, spartenGruppiert, tarifeFuer, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
+import { handleNewVersionError, isNewVersionError } from "@/lib/neue-version";
+import { auswahlDazu, auswahlWeg, gesellschaftName, spartenGruppiert, tarifeFuer, type Katalog, type Vertrieb } from "@/lib/tarifkatalog";
 import {
   betrag,
   empfehlungVon,
@@ -39,7 +39,7 @@ import {
 import type { EigenerTarifZeile } from "@/lib/tarifauswahl-server";
 import { angabenText, pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib/preise/pilot";
 import { setPreparedAction } from "./actions";
-import { eigenerTarifAction, gesellschaftAction, klaerenAction, preiseAuslesenAction, tarifauswahlSpeichernAction } from "./neu-actions";
+import { eigenerTarifAction, gesellschaftAction, klaerenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 import { BeitragGesamt, ChanceImTermin } from "./schutz-client";
 import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 
@@ -68,6 +68,8 @@ export type AngeboteProps = {
   /** Vorsorge-Thema (Teil C2), nur Hinweis */
   vorsorge?: VorsorgeThema | null;
 };
+
+const entwurfKey = (id: string) => `pg-tarifauswahl-entwurf-${id}`;
 
 export function VorbereitungNeu(p: {
   id: string;
@@ -102,7 +104,19 @@ export function VorbereitungNeu(p: {
     let ok = false;
     const pr = tarifauswahlSpeichernAction(p.id, a).then(
       (r) => void (ok = r.ok),
-      () => void (ok = false),
+      (e) => {
+        ok = false;
+        // Neue App-Version, alte Seite (Ole, 17.11.2026: „Fehler beim Speichern“ nach einem Deploy): Auswahl merken,
+        // neu laden, nach dem Laden wieder einsetzen und speichern (lib/neue-version.ts)
+        if (isNewVersionError(e)) {
+          try {
+            window.sessionStorage.setItem(entwurfKey(p.id), JSON.stringify(a));
+          } catch {}
+          offen.current = null;
+          laeuft.current = null;
+          handleNewVersionError(e);
+        }
+      },
     );
     laeuft.current = pr;
     await pr;
@@ -137,8 +151,26 @@ export function VorbereitungNeu(p: {
   useEffect(() => {
     if (erst.current) return;
     erst.current = true;
+    // Nach dem Neuladen wegen neuer Version: gemerkte Auswahl wieder einsetzen
+    let entwurf: Tarifauswahl | null = null;
+    try {
+      const raw = window.sessionStorage.getItem(entwurfKey(p.id));
+      if (raw) {
+        window.sessionStorage.removeItem(entwurfKey(p.id));
+        entwurf = JSON.parse(raw) as Tarifauswahl;
+      }
+    } catch {}
+    if (entwurf && !p.readOnly) {
+      ref.current = entwurf;
+      setAuswahl(entwurf);
+      setVersion((v) => v + 1);
+      planen(entwurf);
+      return;
+    }
     if ((p.angebote.quelle === "neu" || (p.angebote.schutzNeu && p.angebote.quelle !== "angebote")) && !p.readOnly) planen(ref.current);
-  });
+    // nur beim ersten Anzeigen (erst-Ref)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const weg = () => void speichern();
     const warnen = (e: BeforeUnloadEvent) => {
@@ -349,7 +381,6 @@ function Klaeren({ id, punkte, erledigt: start, readOnly }: { id: string; punkte
 
 // ─── Angebote ───────────────────────────────────────────────────────────────────────────────
 
-type DateiZeile = { id: number; name: string; status: "laedt" | "liest" | "fertig" | "fehler"; text?: string };
 
 function Angebote(p: {
   id: string;
@@ -379,7 +410,6 @@ function Angebote(p: {
   }
   const sp = p.auswahl.sparten.find((s) => s.key === aktiv) ?? p.auswahl.sparten[0] ?? null;
   const [eigene, setEigene] = useState(p.daten.eigene);
-  const [dateien, setDateien] = useState<DateiZeile[]>([]);
   const ro = p.readOnly;
 
   /** Änderung an der aktiven Sparte */
@@ -441,33 +471,6 @@ function Angebote(p: {
     });
   };
 
-  // Angebot ablegen: im Kontakt speichern, dann liest die KI nur die Preise
-  const ablegen = async (files: File[]) => {
-    if (!p.leadId || !files.length) return;
-    const zeile: DateiZeile = { id: Date.now(), name: files.map((f) => f.name).join(", "), status: "laedt" };
-    const setze = (x: Partial<DateiZeile>) => setDateien((ds) => ds.map((d) => (d.id === zeile.id ? { ...d, ...x } : d)));
-    setDateien((ds) => [...ds, zeile]);
-    try {
-      for (const file of files) {
-        const res = await fetch(`/api/buyer/leads/${p.leadId}/dateien?kind=angebot`, {
-          method: "POST",
-          headers: { "x-file-name": encodeURIComponent(file.name), "content-type": "application/octet-stream" },
-          body: file,
-        });
-        const j = (await res.json().catch(() => ({}))) as { error?: string };
-        if (!res.ok) throw new Error(`${file.name}: ${j.error ?? "Hochladen hat nicht geklappt."}`);
-      }
-    } catch (e) {
-      return setze({ status: "fehler", text: e instanceof Error ? e.message : "Hochladen hat nicht geklappt." });
-    }
-    setze({ status: "liest" });
-    await p.vorSpeichern();
-    const r = await preiseAuslesenAction(p.id, p.auswahl).catch(() => ({ ok: false as const, error: "Auslesen hat nicht geklappt. Bitte Beiträge eintragen." }));
-    if (!r.ok) return setze({ status: "fehler", text: r.error });
-    p.aendern((a) => void (a.sparten = r.auswahl.sparten), true);
-    setze({ status: "fertig", text: r.anzahl ? `Beiträge übernommen: ${r.sparten.join(", ")}` : "Keine passenden Beiträge gefunden, bitte eintragen." });
-  };
-
   const gesellschaftWaehlen = async (keys: string[]) => {
     await p.vorSpeichern();
     const r = await gesellschaftAction(p.id, keys, p.auswahl);
@@ -483,7 +486,6 @@ function Angebote(p: {
   const rechnerTarif = sp?.tarife.find((t) => rechnerUrl(p.daten.rechnen.aktiv, t.gesellschaftKey, sp.key));
   const rechnerAdresse = sp && rechnerTarif ? rechnerUrl(p.daten.rechnen.aktiv, rechnerTarif.gesellschaftKey, sp.key) : null;
   const rechner = sp && rechnerTarif && rechnerAdresse ? { url: rechnerAdresse, gesellschaft: rechnerTarif.gesellschaft, angaben: p.daten.rechnen.angaben[sp.key] ?? [] } : null;
-  const ablegenLaeuft = dateien.some((d) => d.status === "laedt" || d.status === "liest");
 
   const gesellschaftsListe = [...new Map([...p.daten.gesellschaften, ...STANDARD_GESELLSCHAFTEN.map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()];
 
@@ -611,64 +613,14 @@ function Angebote(p: {
                 <Button size="md" icon={Calculator} onClick={() => setRechnenOffen(true)} data-beitraege-rechnen>
                   Beiträge rechnen
                 </Button>
-                {p.leadId && !ro && angebotAuslesbar(sp.key) ? (
-                  <FileDrop
-                    variant="button"
-                    size="md"
-                    instant
-                    multiple
-                    maxFiles={5}
-                    accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
-                    maxBytes={15 * 1024 * 1024}
-                    label="Angebot ablegen"
-                    hint={null}
-                    busy={ablegenLaeuft}
-                    pendingLabel="Wird gelesen …"
-                    buttonClassName="w-full sm:w-auto"
-                    onFiles={(fs) => void ablegen(fs)}
-                  />
-                ) : null}
                 <BeitraegeRechnen
                   open={rechnenOffen}
                   onClose={() => setRechnenOffen(false)}
                   sparte={sp.label}
                   {...rechner}
-                  ablegen={
-                    p.leadId && !ro
-                      ? (fs) => {
-                          setRechnenOffen(false);
-                          void ablegen(fs);
-                        }
-                      : null
-                  }
-                  busy={ablegenLaeuft}
                 />
               </div>
-            ) : p.leadId && !ro && angebotAuslesbar(sp.key) ? (
-              <FileDrop
-                variant="zone"
-                instant
-                multiple
-                maxFiles={5}
-                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
-                maxBytes={15 * 1024 * 1024}
-                label="Angebot ablegen"
-                hint="Nur Sach-, Haftpflicht-, Rechtsschutz-, Unfall- und Tierangebote; die Beiträge werden übernommen."
-                busy={dateien.some((d) => d.status === "laedt" || d.status === "liest")}
-                pendingLabel="Wird gelesen …"
-                onFiles={(fs) => void ablegen(fs)}
-              />
             ) : null}
-            {dateien.map((d) => (
-              <div key={d.id} className="mt-2 flex items-center gap-2.5 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-[13px]" data-angebot-datei>
-                <span className="min-w-0 flex-1 truncate">{d.name}</span>
-                {d.status === "laedt" || d.status === "liest" ? (
-                  <span className="text-[color:var(--muted)]">{d.status === "laedt" ? "Wird hochgeladen …" : "Wird gelesen …"}</span>
-                ) : (
-                  <span className={d.status === "fertig" ? "text-emerald-700" : "text-amber-700"}>{d.text}</span>
-                )}
-              </div>
-            ))}
 
             <div className="mt-3.5 grid grid-cols-1 gap-2.5" data-tarife>
               {sp.tarife.length ? (
@@ -738,8 +690,6 @@ function BeitraegeRechnen({
   gesellschaft,
   url,
   angaben,
-  ablegen,
-  busy,
 }: {
   open: boolean;
   onClose: () => void;
@@ -747,8 +697,6 @@ function BeitraegeRechnen({
   gesellschaft: string;
   url: string;
   angaben: RechnerAngabe[];
-  ablegen: ((files: File[]) => void) | null;
-  busy: boolean;
 }) {
   const toast = useToast();
   const kopieren = async (a: RechnerAngabe) => {
@@ -803,23 +751,6 @@ function BeitraegeRechnen({
               ))}
             </ul>
           </div>
-        ) : null}
-        {ablegen ? (
-          <FileDrop
-            variant="button"
-            size="md"
-            instant
-            multiple
-            maxFiles={5}
-            accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
-            maxBytes={15 * 1024 * 1024}
-            label="Screenshot ablegen"
-            hint={null}
-            busy={busy}
-            pendingLabel="Wird gelesen …"
-            buttonClassName="w-full"
-            onFiles={ablegen}
-          />
         ) : null}
         {/* Zweite Wahl (Ole, 16.11.2026): öffentlicher Rechner nur als unauffälliger Textlink */}
         <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1.5 text-sm text-[color:var(--muted)] hover:underline" data-rechner-oeffnen>
