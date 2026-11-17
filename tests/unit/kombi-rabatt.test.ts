@@ -95,6 +95,11 @@ describe("Kombi-Rabatt: Staffel", () => {
     expect(e.anzahl).toBe(1);
   });
 
+  it("ohne eingetragenen Beitrag zählt ein Vertrag noch nicht (die Folie zeigt keine Stufe, deren Beitrag fehlt)", () => {
+    const e = kombiFuer(ALLIANZ, [item("haftpflicht", 8.4), item("hausrat", 9.8), { ...item("tierhalter-hund", 0), beitragMonat: null }]);
+    expect(e).toMatchObject({ anzahl: 2, prozent: 5 });
+  });
+
   it("Bausteine zählen zum Beitrag; zwei Stufen derselben Sparte zählen einmal", () => {
     const mitBaustein = item("hausrat", 9.8, "Komfort", { bausteine: [{ name: "Fahrrad", beitrag: 3.4, aktiv: true }] });
     expect(kombiFuer(ALLIANZ, [item("haftpflicht", 8.4), mitBaustein]).basis).toBe(21.6);

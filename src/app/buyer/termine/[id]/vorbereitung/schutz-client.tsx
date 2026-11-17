@@ -94,8 +94,7 @@ export function ChanceImTermin({
 
 function SchutzFenster({ open, onClose, auswahl, ro, aendern, anbieten }: { open: boolean; onClose: () => void; auswahl: Tarifauswahl; ro: boolean; aendern: Aendern; anbieten: SparteAnbieten }) {
   const schutz = auswahl.schutz ?? [];
-  const keys = auswahl.sparten.map((s) => s.key);
-  const setze = (key: string, fn: (s: SchutzEintrag) => void) =>
+  const setze =(key: string, fn: (s: SchutzEintrag) => void) =>
     aendern((a) => {
       const s = a.schutz?.find((x) => x.key === key);
       if (s) fn(s);
@@ -105,7 +104,8 @@ function SchutzFenster({ open, onClose, auswahl, ro, aendern, anbieten }: { open
     <Sheet open={open} onClose={onClose} title="Schutz im Überblick" message="Erscheint so in der Präsentation. Was hat der Kunde und wo?">
       <ul className="divide-y divide-[color:var(--border)]" data-schutz-liste>
         {schutz.map((s) => {
-          const imAngebot = keys.includes(s.key);
+          const sp = auswahl.sparten.find((x) => x.key === s.key);
+          const imAngebot = !!sp && !sp.zusatz;
           return (
             <li key={s.key} className="px-5 py-3" data-schutz-zeile={s.key}>
               <div className="flex items-center gap-2">
@@ -115,6 +115,9 @@ function SchutzFenster({ open, onClose, auswahl, ro, aendern, anbieten }: { open
                   <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                     <Check className="h-3.5 w-3.5" /> Im Angebot
                   </span>
+                ) : sp ? (
+                  // vorbereitet „bei Bedarf“: kommt in der Präsentation mit „Mit anschauen“
+                  <span className="text-xs font-medium text-[color:var(--muted)]">Bei Bedarf</span>
                 ) : !ro ? (
                   <Button size="sm" icon={Plus} onClick={() => anbieten(s.key)}>
                     Ins Angebot

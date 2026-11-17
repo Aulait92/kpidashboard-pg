@@ -96,7 +96,8 @@ export function anzahlFuer(r: KombiRegel, sparten: string[]): number {
 
 /** Kombi-Rabatt einer Regel über die gewählten Angebote. */
 export function kombiFuer(r: KombiRegel, items: MitKombi[]): KombiErgebnis {
-  const gruppe = items.filter((i) => i.gewaehlt && i.kombi?.gruppe === r.gruppe && passtSparte(r, i.kombi.sparte));
+  // Nur Verträge mit Beitrag zählen: sonst zeigte die Folie eine Stufe, deren Beitrag noch fehlt
+  const gruppe = items.filter((i) => i.gewaehlt && i.beitragMonat != null && i.kombi?.gruppe === r.gruppe && passtSparte(r, i.kombi.sparte));
   const blockiert: KombiErgebnis["blockiert"] = [];
   const zaehlen: MitKombi[] = [];
   for (const i of gruppe) {
@@ -106,7 +107,7 @@ export function kombiFuer(r: KombiRegel, items: MitKombi[]): KombiErgebnis {
   }
   const anzahl = new Set(zaehlen.map((i) => zaehlKey(r, i.kombi!.sparte))).size;
   const prozent = prozentFuer(r.staffel, anzahl);
-  // Rabatt auf die Summe aller zählenden Beiträge (inkl. gewählter Bausteine); ohne Beitrag zählt der Vertrag mit, kostet aber nichts
+  // Rabatt auf die Summe aller zählenden Beiträge (inkl. gewählter Bausteine)
   const basis = zaehlen.reduce((s, i) => s + effektiv(i), 0);
   const { euro } = rabattAuf(basis, prozent);
   const naechste = naechsteStufe(r.staffel, anzahl);
