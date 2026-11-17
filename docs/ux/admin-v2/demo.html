@@ -425,6 +425,8 @@ details.auto li b{color:var(--fg);font-variant-numeric:tabular-nums}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .kt{display:flex;flex-direction:column;font-size:13px}.kh,.kr{display:grid;grid-template-columns:minmax(0,1fr) 52px 92px 62px;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.kh{color:var(--faint);font-size:12px;padding-top:0}.kr:last-child{border-bottom:0}.kf{border-top:1px solid var(--line2)}.kt .r{text-align:right;justify-self:end}@media (max-width:520px){.kh,.kr{grid-template-columns:minmax(0,1fr) 30px 76px 40px;gap:6px}.kh{font-size:11px}.kr .mt{white-space:normal}}
+.note-line{display:flex;gap:10px;align-items:flex-start;padding:12px 16px;border:1px dashed var(--line2);border-radius:12px;color:var(--muted);font-size:13px;margin:0 0 16px}.note-line svg{flex:none;margin-top:1px}
+@media (max-width:760px){.kampt .tr.th{display:none!important}.kampt .tr{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}.kampt .tr>.who{grid-column:1/-1}.kampt [data-l]{display:flex;flex-direction:column;align-items:flex-start;text-align:left;justify-self:start}.kampt [data-l]::before{content:attr(data-l);font-size:11px;color:var(--faint);font-weight:500;margin-bottom:2px}}
 </style>
 
 <div class="app">
@@ -581,7 +583,7 @@ const PROB=['fehler','storno','geparkt'];
 const AREAS={
  tag:{l:'Mein Tag',i:'sun',hint:'Was jetzt dran ist',cnt:10},
  verkaufen:{l:'Verkaufen',i:'up',hint:'Vertrieb, Marketing',tabs:[['verkaufen','Überblick'],['verkaufen-kontakte','Kontakte'],['verkaufen-angebote','Angebote',3],['verkaufen-marketing','Marketing',3]],cnt:4},
- betreuen:{l:'Betreuen',i:'users',hint:'Kundenbetreuung',tabs:[['betreuen','Kunden'],['betreuen-chats','Chats',2],['betreuen-berichte','Monatsberichte',3],['betreuen-nutzung','Nutzung & News']],cnt:5},
+ betreuen:{l:'Betreuen',i:'users',hint:'Kundenbetreuung',tabs:[['betreuen','Kunden'],['betreuen-kampagnen','Kampagnen'],['betreuen-chats','Chats',2],['betreuen-berichte','Monatsberichte',3],['betreuen-nutzung','Nutzung & News']],cnt:5},
  liefern:{l:'Liefern',i:'send',hint:'Pay-per-Lead',tabs:[['liefern','Überblick'],['liefern-leads','Leads'],['liefern-bezuege','Bezüge'],['liefern-werbekonten','Werbekonten',4]],cnt:5},
  geld:{l:'Geld',i:'euro',hint:'Finanzen',tabs:[['geld','Überblick'],['geld-rechnungen','Rechnungen'],['geld-kosten','Kosten',7],['geld-auswertung','Auswertung']],cnt:4},
  werkzeuge:{l:'Werkzeuge',i:'wrench',hint:'Technik, Einrichtung'},
@@ -590,7 +592,7 @@ const AREAS={
 };
 const ROUTES={};
 for(const [a,o] of Object.entries(AREAS)){ROUTES[a]=a;(o.tabs||[]).forEach(t=>ROUTES[t[0]]=a);}
-const PAGES=[['tag','Mein Tag','Start, Tagesplan nach Rollen'],['verkaufen','Verkaufen: Überblick','Termine, Follow-ups, Pipeline'],['verkaufen-kontakte','Verkaufen: Kontakte','Pipeline als Board oder Liste'],['verkaufen-angebote','Verkaufen: Angebote','Offen, angenommen, abgelaufen'],['verkaufen-marketing','Verkaufen: Marketing','LinkedIn, Unterlagen, Präsentationen, Empfehlungen'],['betreuen','Betreuen: Kunden','Kundenliste mit Gesundheitsampel'],['betreuen-chats','Betreuen: Chats','WhatsApp-Gespräche'],['betreuen-berichte','Betreuen: Monatsberichte','Prüfen und senden'],['betreuen-nutzung','Betreuen: Nutzung & News','Hilfe-Anfragen, NPS, Neuigkeiten'],['liefern','Liefern: Überblick','Pay-per-Lead heute'],['liefern-leads','Liefern: Leads','Alle Leads nach Tag'],['liefern-bezuege','Liefern: Bezüge','Kontingente der Käufer'],['liefern-werbekonten','Liefern: Werbekonten','Pools, Optimierung, Media Buyer'],['geld','Geld: Überblick','MRR, Umsatz, offene Zahlungen'],['geld-rechnungen','Geld: Rechnungen','Kunden, Pay-per-Lead, HvK, Buchungen'],['geld-kosten','Geld: Kosten','Ausgaben, laufende Kosten, BWA'],['geld-auswertung','Geld: Auswertung','Lebenszyklus, Kohorten, Investoren'],['werkzeuge','Werkzeuge','Technik und Einrichtung'],['einstellungen','Einstellungen','Konto, Automatik, Finanzen'],['was-wo','Was wo ist','Alle 409 Funktionen und ihr Ort']];
+const PAGES=[['tag','Mein Tag','Start, Tagesplan nach Rollen'],['betreuen-kampagnen','Betreuen: Kampagnen','Alle Kunden und Kampagnen vergleichen: Leadpreis, Termine, Abschlüsse, Umsatz'],['verkaufen','Verkaufen: Überblick','Termine, Follow-ups, Pipeline'],['verkaufen-kontakte','Verkaufen: Kontakte','Pipeline als Board oder Liste'],['verkaufen-angebote','Verkaufen: Angebote','Offen, angenommen, abgelaufen'],['verkaufen-marketing','Verkaufen: Marketing','LinkedIn, Unterlagen, Präsentationen, Empfehlungen'],['betreuen','Betreuen: Kunden','Kundenliste mit Gesundheitsampel'],['betreuen-chats','Betreuen: Chats','WhatsApp-Gespräche'],['betreuen-berichte','Betreuen: Monatsberichte','Prüfen und senden'],['betreuen-nutzung','Betreuen: Nutzung & News','Hilfe-Anfragen, NPS, Neuigkeiten'],['liefern','Liefern: Überblick','Pay-per-Lead heute'],['liefern-leads','Liefern: Leads','Alle Leads nach Tag'],['liefern-bezuege','Liefern: Bezüge','Kontingente der Käufer'],['liefern-werbekonten','Liefern: Werbekonten','Pools, Optimierung, Media Buyer'],['geld','Geld: Überblick','MRR, Umsatz, offene Zahlungen'],['geld-rechnungen','Geld: Rechnungen','Kunden, Pay-per-Lead, HvK, Buchungen'],['geld-kosten','Geld: Kosten','Ausgaben, laufende Kosten, BWA'],['geld-auswertung','Geld: Auswertung','Lebenszyklus, Kohorten, Investoren'],['werkzeuge','Werkzeuge','Technik und Einrichtung'],['einstellungen','Einstellungen','Konto, Automatik, Finanzen'],['was-wo','Was wo ist','Alle 409 Funktionen und ihr Ort']];
 
 /* ---------- Werkzeuge ---------- */
 const TOOLS=[
@@ -671,7 +673,7 @@ const SETTINGS=[
 ];
 
 /* ---------- Zustand ---------- */
-const S={bf:'Alle',tests:false,kf:'alle',lf:'alle',lq:'',kview:'board',kst:'alle',kq:'',af:'Offen',rf:'Alle',wq:'',mq:'',ms:'alle',mlim:60,done:{},chat:0,tq:''};
+const S={kp:'PKV-Tarifoptimierung',kg:'kampagne',ks:'roas',kz:'30',bf:'Alle',tests:false,kf:'alle',lf:'alle',lq:'',kview:'board',kst:'alle',kq:'',af:'Offen',rf:'Alle',wq:'',mq:'',ms:'alle',mlim:60,done:{},chat:0,tq:''};
 try{const v=localStorage.getItem('v2view');if(v)S.kview=v;}catch(e){}
 
 /* ---------- Bausteine ---------- */
@@ -775,6 +777,40 @@ V['verkaufen-marketing']=()=>head({area:'verkaufen',eyebrow:'Rolle Marketing',ti
   row([who('Heinrich von Kleist','Allianz Agentur von Kleist'),`<span class="mt">Felix Ortmann</span>`,`<span class="big r">890 €</span>`,`<span class="r">${tag('Gutgeschrieben','ok')}</span>`],'data-open="empfehlung:2"'),
   row([who('Lukas Socki','Allianz Generalvertretung Socki'),`<span class="mt">Thomas Krause</span>`,`<span class="big r">1.150 €</span>`,`<span class="r">${tag('Angebot offen')}</span>`],'data-open="empfehlung:3"')]));
 
+/* Kampagnen aller Kunden: [kundeId, Kampagne, Status, Ausgaben, Leads, Termine, Abschlüsse, Umsatz Vermittler] */
+const KAMP=[
+ ['k1','Tarifcheck in 2 Minuten','läuft',1180,41,15,6,7400],['k1','Beitrag senken ab 55','läuft',620,14,4,1,1150],
+ ['k3','Tarif zu teuer? (Video)','läuft',472,9,2,0,0],['k3','Tarifcheck in 2 Minuten','läuft',596,18,6,2,2300],['k3','Erfahrungsbericht Kunde','neu',237,8,3,1,980],
+ ['k7','Tarifcheck in 2 Minuten','läuft',910,22,5,1,1200],['k7','Beitrag senken ab 55','pausiert',540,9,1,0,0],
+ ['k2','Haftpflicht + Hausrat Paket','läuft',890,48,17,7,2450],['k2','Komplettcheck Familie','läuft',610,25,11,5,3900],
+ ['k8','Haftpflicht + Hausrat Paket','läuft',720,27,6,2,640],['k6','Haftpflicht + Hausrat Paket','läuft',450,19,7,3,980],['k9','Komplettcheck Familie','neu',260,9,2,0,0],
+ ['k4','Katze krank? Kosten sichern','läuft',830,18,5,2,610],['k4','Katzen-OP bis 5.000 €','läuft',410,11,4,2,690],['k5','Katze krank? Kosten sichern','pausiert',380,10,3,1,290]
+];
+const kname=id=>(KUNDEN.find(k=>k.id===id)||{}).n||id, kprod=id=>(KUNDEN.find(k=>k.id===id)||{}).prod||'';
+const pct=(a,b)=>b?Math.round(a/b*100)+' %':'–';
+V['betreuen-kampagnen']=()=>{
+ const P=['PKV-Tarifoptimierung','Privatschutz','Katzenkrankenversicherung'];
+ let R=KAMP.filter(c=>S.kp==='alle'||kprod(c[0])===S.kp).map(c=>({id:c[0],k:kname(c[0]),p:kprod(c[0]),n:c[1],st:c[2],a:c[3],l:c[4],t:c[5],ab:c[6],u:c[7]}));
+ if(S.kg==='kunde'){const m={};R.forEach(r=>{const g=m[r.id]||(m[r.id]={id:r.id,k:r.k,p:r.p,n:0,st:'',a:0,l:0,t:0,ab:0,u:0});g.n++;g.a+=r.a;g.l+=r.l;g.t+=r.t;g.ab+=r.ab;g.u+=r.u;});R=Object.values(m);}
+ const lp=r=>r.a/r.l, roas=r=>r.u/r.a;
+ const sorts={roas:(x,y)=>roas(y)-roas(x),lp:(x,y)=>lp(y)-lp(x),ab:(x,y)=>y.ab-x.ab,u:(x,y)=>y.u-x.u};R.sort(sorts[S.ks]);
+ const T=R.reduce((s,r)=>({a:s.a+r.a,l:s.l+r.l,t:s.t+r.t,ab:s.ab+r.ab,u:s.u+r.u}),{a:0,l:0,t:0,ab:0,u:0});
+ const med=a=>{const v=[...a].sort((x,y)=>x-y);return v.length?v[Math.floor(v.length/2)]:0};
+ const mLp=med(R.map(lp)), best=R.length?R.reduce((b,r)=>roas(r)>roas(b)?r:b,R[0]):null;
+ const lpTag=r=>{const v=lp(r);return tag(eur(v,2),S.kp==='alle'?'':v>mLp*1.2?'err':v>mLp*1.05?'warn':'ok')};
+ const roTag=r=>{const v=roas(r);return v?`<b class="num" style="color:var(--fg)">${v.toFixed(1).replace('.',',')} €</b>`:'<span class="mt">0 €</span>'};
+ const flop=R.filter(r=>r.ab===0&&r.a>400);
+ const fair=S.kp==='alle'?`<div class="note-line">${I('info')}<span>Leadpreise sind nur innerhalb eines Produkts vergleichbar. Wähle oben ein Produkt, dann werden die Farben gegen den Mittelwert dieses Produkts gesetzt.</span></div>`:'';
+ return head({area:'betreuen',eyebrow:'Rolle Kundenbetreuung',title:'Betreuen',sub:'Alle Kampagnen deiner Kunden auf einen Blick, vom Lead bis zum Umsatz.',more:'betreuen'})+
+ `<div class="tools" style="margin-bottom:4px">${chips('kp',[['PKV-Tarifoptimierung','PKV'],['Privatschutz','Privatschutz'],['Katzenkrankenversicherung','Katze'],['alle','Alle Produkte']])}<span style="flex:1"></span><div class="seg"><button class="${S.kg==='kampagne'?'on':''}" data-set="kg=kampagne">Je Kampagne</button><button class="${S.kg==='kunde'?'on':''}" data-set="kg=kunde">Je Kunde</button></div><div class="seg"><button class="${S.kz==30?'on':''}" data-set="kz=30">30 Tage</button><button class="${S.kz==90?'on':''}" data-set="kz=90">90 Tage</button></div></div>`+
+ (flop.length||best?att([...(best&&S.kp!=='alle'?[{sev:'info',t:`${S.kg==='kunde'?'Bester Kunde':'Beste Kampagne'}: ${best.k}${S.kg==='kunde'?'':', „'+best.n+'“'}`,s:`${roas(best).toFixed(1).replace('.',',')} € Umsatz je 1 € Werbung, Leadpreis ${eur(lp(best),2)}. Als Vorlage für die anderen Kunden mit ${S.kp} nutzen?`,b:'Vorlage nutzen',a:'data-toast="Als Vorlage für alle Kunden mit diesem Produkt vorgeschlagen (Demo)"'}]:[]),...flop.map(r=>({sev:'warn',t:`${r.k}${S.kg==='kunde'?'':': „'+r.n+'“'}`,s:`${eur(r.a)} ausgegeben, ${r.l} Leads, ${r.t} Termine, noch kein Abschluss`,b:'Ansehen',a:`data-open="kunde:${r.id}"`}))]):'')+
+ kpis([['Werbeausgaben',eur(T.a),`${R.length} ${S.kg==='kunde'?'Kunden':'Kampagnen'}`,'money'],['Leads',String(T.l),`Ø Leadpreis ${eur(T.a/(T.l||1),2)}`],['Termine',String(T.t),`${pct(T.t,T.l)} der Leads`],['Abschlüsse',String(T.ab),`${pct(T.ab,T.t)} der Termine`],['Umsatz Vermittler',eur(T.u),`${(T.u/(T.a||1)).toFixed(1).replace('.',',')} € je 1 € Werbung`,'up']])+
+ fair+
+ card(S.kg==='kunde'?'Kunden':'Kampagnen',`<div class="tools"><span class="mt">Sortieren nach</span>${chips('ks',[['roas','Umsatz je €'],['lp','Leadpreis'],['ab','Abschlüsse'],['u','Umsatz']])}</div>`+
+ '<div class="kampt">'+tbl([[S.kg==='kunde'?'Kunde':'Kampagne und Kunde','minmax(0,1.6fr)'],['Ausgaben','84px','r'],['Leads','56px','r'],['Leadpreis','96px','r'],['Termine','78px','r'],['Abschl.','70px','r'],['Umsatz','86px','r'],['Je 1 € Werbung','104px','r']],
+ R.map(r=>row([who(S.kg==='kunde'?r.k:r.n,S.kg==='kunde'?`${r.n} ${r.n===1?'Kampagne':'Kampagnen'} · ${r.p}`:`${r.k}${S.kp==='alle'?' · '+r.p:''}${r.st!=='läuft'?' · '+r.st:''}`,S.kg==='kunde'),`<span data-l="Ausgaben" class="num r">${eur(r.a)}</span>`,`<span data-l="Leads" class="num r">${r.l}</span>`,`<span data-l="Leadpreis" class="r">${lpTag(r)}</span>`,`<span data-l="Termine" class="num r">${r.t} <span class="mt">${pct(r.t,r.l)}</span></span>`,`<span data-l="Abschlüsse" class="num r">${r.ab||'<span class="mt">0</span>'}</span>`,`<span data-l="Umsatz" class="num r">${r.u?eur(r.u):'<span class="mt">0 €</span>'}</span>`,`<span data-l="Je 1 € Werbung" class="r">${roTag(r)}${best===r&&S.kp!=='alle'?' '+tag('Bester','ok'):''}</span>`],`data-open="kunde:${r.id}"`)))+'</div>'+
+ `<p class="mt" style="white-space:normal;padding:12px 22px 16px;margin:0">Umsatz = Provision bzw. Courtage aus Abschlüssen, die der Vermittler in der App als „Abschluss“ markiert. Farbe beim Leadpreis: gegen den Mittelwert aller Kampagnen mit diesem Produkt.</p>`);
+};
 V.betreuen=()=>{
  const all=KUNDEN.filter(k=>S.tests||!k.test);
  const f={alle:()=>true,achtung:k=>k.h.some(x=>x!=='ok'),onboarding:k=>k.ph==='Onboarding',pausiert:k=>k.ph==='Pausiert'};

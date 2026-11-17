@@ -449,3 +449,4 @@ Einstufung: **vorne** = ohne Klick sichtbar auf Mein Tag oder oben auf einer Rol
 - LinkedIn-Statistik als Excel (F310) und Zahlen nachtragen (F309): bleiben.
 - Kontoauszug als CSV (F399): entfernen, Bankverbindung reicht.
 - Fundtest Aufgabe 13: Leadpreis je Werbekonto fehlte. Jetzt in Liefern › Werbekonten als Spalte „Leadpreis 7 Tage“ gegen Ziel, teuerste zuerst, plus Hinweis in „Braucht Aufmerksamkeit“, sobald ein Konto mehr als 5 € über Ziel liegt.
+- Neu (Ole 17.11.): Betreuen › Kampagnen. Alle Kunden und Kampagnen auf einen Blick, Filter nach Produkt (PKV, Privatschutz, Katze, alle), Umschalter je Kampagne oder je Kunde, 30 oder 90 Tage. Spalten: Ausgaben, Leads, Leadpreis (Farbe gegen Mittelwert des Produkts), Termine mit Quote, Abschlüsse, Umsatz Vermittler, Umsatz je 1 € Werbung. Oben: beste Kampagne je Produkt als Vorlage, Kampagnen mit über 400 € Ausgaben ohne Abschluss. Kundenakte › Leads & Kampagne zeigt dieselben Zahlen für einen Kunden.
