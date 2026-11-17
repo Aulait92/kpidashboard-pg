@@ -8,6 +8,7 @@
 // - runAnrufErinnerungen (Cron): Push „Was ist bei … rausgekommen?“ 15 Minuten nach „Anrufen“ ohne Ergebnis.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import { prisma } from "@/lib/prisma";
 import { logLeadHistory } from "@/lib/lead-history";
 import { advisorDisplayName } from "@/lib/advisor-name";
@@ -149,22 +150,14 @@ export async function bedarfAusNotiz(text: string, felder: BedarfFeld[], opts: {
     max_tokens: 600,
     system:
       "Ein Versicherungsvermittler hat nach einem Telefonat mit einem Interessenten kurz notiert, was besprochen wurde. Ordne die Notiz den Punkten zu. Nur, was ausdrücklich in der Notiz steht, als kurze Stichworte. Nichts erfinden, nichts ergänzen. Punkte ohne Angabe weglassen. Keine Gedankenstriche.",
-    tools: [
-      {
-        name: "save_points",
-        description: "Speichert die zugeordneten Punkte.",
-        input_schema: {
-          type: "object",
-          properties: Object.fromEntries(felder.map((f) => [f.key, { type: "string", description: `${f.label} (${f.hint})` }])),
-        },
-      },
-    ],
-    tool_choice: { type: "tool", name: "save_points" },
+    output_config: jsonAusgabe({
+      type: "object",
+      properties: Object.fromEntries(felder.map((f) => [f.key, { type: "string", description: `${f.label} (${f.hint})` }])),
+    }),
     messages: [{ role: "user", content: `Notiz:\n${t.slice(0, 3000)}` }],
   });
-  const tool = resp.content.find((c) => c.type === "tool_use");
   const keys = new Set(felder.map((f) => f.key));
-  const out = cleanQualificationData(tool && tool.type === "tool_use" ? tool.input : {});
+  const out = cleanQualificationData(jsonAusAntwort(resp) ?? {});
   for (const k of Object.keys(out) as (keyof QualificationData)[]) if (!keys.has(k)) delete out[k];
   return out;
 }

@@ -4,6 +4,7 @@
 // Ergebnis landet in Onboarding.websiteInfo – geprüft wird von Hand.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import { reportError } from "@/lib/monitoring";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
@@ -179,24 +180,14 @@ export async function readImpressum(website: string | null | undefined): Promise
       max_tokens: 1024,
       system:
         "Du liest Pflichtangaben aus dem Impressum einer deutschen Versicherungsagentur. Übernimm Werte wörtlich aus dem Text. Erfinde nichts: Fehlt eine Angabe, setze null.",
-      tools: [
-        {
-          name: "save_impressum",
-          description: "Speichert die aus dem Impressum gelesenen Angaben.",
-          input_schema: {
-            type: "object",
-            properties: Object.fromEntries(
-              Object.entries(FIELDS).map(([k, d]) => [k, { type: ["string", "null"], description: d }]),
-            ),
-            required: Object.keys(FIELDS),
-          },
-        },
-      ],
-      tool_choice: { type: "tool", name: "save_impressum" },
+      output_config: jsonAusgabe({
+        type: "object",
+        properties: Object.fromEntries(Object.entries(FIELDS).map(([k, d]) => [k, { type: ["string", "null"], description: d }])),
+        required: Object.keys(FIELDS),
+      }),
       messages: [{ role: "user", content: `Impressum (${impressumUrl}):\n\n${text}` }],
     });
-    const tool = resp.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-    const data = (tool?.input ?? {}) as Partial<Record<keyof typeof FIELDS, string | null>>;
+    const data = (jsonAusAntwort(resp) ?? {}) as Partial<Record<keyof typeof FIELDS, string | null>>;
     const info: ImpressumInfo = { ...empty, impressumUrl, privacyUrl };
     for (const k of Object.keys(FIELDS) as (keyof typeof FIELDS)[]) {
       const v = data[k];

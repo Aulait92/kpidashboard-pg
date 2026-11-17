@@ -5,6 +5,7 @@
 
 import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
@@ -864,18 +865,10 @@ export async function classifyReply(text: string): Promise<Sentiment> {
       max_tokens: 200,
       system:
         "Ein Versicherungsvertreter hat seinem Kunden einige Tage nach dem Vertragsabschluss geschrieben: ob alles gepasst hat, und wenn ja, um eine Google-Bewertung gebeten. Ordne die Antwort des Kunden ein. negative = Kritik, Beschwerde, Ärger, Enttäuschung, Problem oder Wunsch nach Klärung/Kündigung. positive = Zufriedenheit, Dank, Lob. neutral = alles andere (Fragen, organisatorisches, unklar). Im Zweifel zwischen negativ und neutral: negative.",
-      tools: [
-        {
-          name: "save_sentiment",
-          description: "Speichert die Einordnung der Antwort.",
-          input_schema: { type: "object", properties: { sentiment: { type: "string", enum: ["positive", "negative", "neutral"] } }, required: ["sentiment"] },
-        },
-      ],
-      tool_choice: { type: "tool", name: "save_sentiment" },
+      output_config: jsonAusgabe({ type: "object", properties: { sentiment: { type: "string", enum: ["positive", "negative", "neutral"] } }, required: ["sentiment"] }),
       messages: [{ role: "user", content: `Antwort des Kunden:\n\n${redactHealthText(text.slice(0, 2000))}` }],
     });
-    const tool = resp.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-    const s = (tool?.input as { sentiment?: string } | undefined)?.sentiment;
+    const s = jsonAusAntwort(resp)?.sentiment;
     // Sicherheitsnetz: Erkennen die Regeln Kritik, gilt die Antwort als negativ
     if (fallback === "negative") return "negative";
     return s === "positive" || s === "negative" || s === "neutral" ? s : fallback;
