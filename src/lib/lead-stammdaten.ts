@@ -106,8 +106,8 @@ export function currentStammdaten(
     phone: lead.phone,
     email: lead.email,
     // Adresse auch aus dem Leadformular (Leads ohne Airtable: Perspective, Meta), Ole 17.11.2026
-    street: o.street ?? (f("Straße") || f("Strasse") || f("Straße und Hausnummer") || formAntwort(lead.formData, /^(stra(ß|ss)e( und hausnummer)?|street)$/i)),
-    zip: o.zip ?? (f("Postleitzahl") || formAntwort(lead.formData, /^(postleitzahl|plz|zip|post_?code|postal code)$/i)),
+    street: o.street ?? (f("Straße") || f("Strasse") || f("Straße und Hausnummer") || formAntwort(lead.formData, /^(stra(ß|ss)e( und hausnummer)?|street( address)?|street_address)$/i)),
+    zip: o.zip ?? (f("Postleitzahl") || formAntwort(lead.formData, /^(postleitzahl|plz|zip( code)?|post[ _]?code|postal[ _]code)$/i)),
     city: o.city ?? (f("Ort") || formAntwort(lead.formData, /^(ort|wohnort|stadt|city)$/i)),
   };
 }

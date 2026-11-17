@@ -111,5 +111,8 @@ describe("Adresse aus dem Leadformular", () => {
     expect(currentStammdaten(lead)).toMatchObject({ zip: "80331", city: "München", street: "" });
     expect(currentStammdaten({ ...lead, contactOverrides: { zip: "10115" } }).zip).toBe("10115");
     expect(currentStammdaten(lead, { Postleitzahl: "20095", Ort: "Hamburg" })).toMatchObject({ zip: "20095", city: "Hamburg" });
+    // Meta-Standardfelder (post_code, city, street_address → „Post code“, „City“, „Street address“)
+    const meta = [{ label: "Post code", value: "50667" }, { label: "City", value: "Köln" }, { label: "Street address", value: "Domkloster 4" }];
+    expect(currentStammdaten({ ...lead, formData: meta })).toMatchObject({ zip: "50667", city: "Köln", street: "Domkloster 4" });
   });
 });
