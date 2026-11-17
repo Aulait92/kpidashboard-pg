@@ -7,6 +7,7 @@
 // Steht die Nummer nur in einer Mail oder Buchung, bietet der Treffer „Als weitere Nummer übernehmen“ an
 // (adoptFoundPhone → addContactPhone aus der Kontaktdaten-Übernahme).
 
+import { testKennung } from "@/lib/customer-package";
 import { formatPhone } from "@/lib/format";
 import { htmlToText } from "@/lib/impressum";
 import { reportError } from "@/lib/monitoring";
@@ -26,6 +27,8 @@ export type AdminSearchHit = {
   match?: string;
   /** Zusatzknopf im Treffer (POST an url mit body) */
   action?: { label: string; url: string; body: Record<string, string> };
+  /** Kennzeichen neben dem Titel, z. B. „Intern“ oder „Test“ (interne Konten, Testkunden) */
+  badge?: string;
 };
 
 const reverse = (s: string) => [...s].reverse().join("");
@@ -163,7 +166,6 @@ export async function searchPhonesAdmin(q: PhoneQuery): Promise<AdminSearchHit[]
     if (!c) continue;
     if (c.customer) {
       // Vertriebskontakt eines Kunden = Kunden-Stammdaten
-      if (c.customer.plan === "internal") continue;
       if (!customerMatch.has(c.customer.id)) customerMatch.set(c.customer.id, m.match);
       continue;
     }
@@ -185,8 +187,8 @@ export async function searchPhonesAdmin(q: PhoneQuery): Promise<AdminSearchHit[]
   }
   if (customerMatch.size) {
     const customers = await prisma.customer.findMany({
-      where: { id: { in: [...customerMatch.keys()] }, plan: { not: "internal" } },
-      select: { id: true, name: true, archived: true },
+      where: { id: { in: [...customerMatch.keys()] } },
+      select: { id: true, name: true, archived: true, plan: true, isTest: true },
     });
     const order = [...customerMatch.keys()];
     customers.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -198,6 +200,8 @@ export async function searchPhonesAdmin(q: PhoneQuery): Promise<AdminSearchHit[]
         subtitle: `Kunde${c.archived ? " (archiviert)" : ""}`,
         href: `/admin/kunden/${c.id}`,
         match: customerMatch.get(c.id),
+        // Interne Konten und Testkunden werden mitgefunden, aber gekennzeichnet (Ole, 17.11.2026)
+        ...(testKennung(c) ? { badge: testKennung(c)! } : {}),
       })),
     );
   }

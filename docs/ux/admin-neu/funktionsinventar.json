@@ -5062,5 +5062,29 @@
   "bereich": "leads",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
+ },
+ {
+  "heute": "/admin/kunden",
+  "funktion": "Filter Intern/Test: interne Konten und Testkunden mit Badge",
+  "quelle": "app/admin/kunden/(liste)/page.tsx:FILTERS/intern",
+  "neu": "Kunden › Chips › Intern/Test",
+  "status": "ergänzt (17.11.2026, Testkunden finden)",
+  "demo_view": "kunden",
+  "id": "page-filters--filter-intern-test-interne-konten-und-testkunden",
+  "bereich": "kunden",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Suche findet interne und Test-Kunden mit Badge",
+  "quelle": "app/api/admin/search/route.ts:GET/intern",
+  "neu": "Globale Suche › Kunden",
+  "status": "ergänzt (17.11.2026, Testkunden finden)",
+  "demo_view": "heute",
+  "id": "route-get--suche-findet-interne-und-test-kunden-mit-badge",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/suche.tsx"
  }
 ]

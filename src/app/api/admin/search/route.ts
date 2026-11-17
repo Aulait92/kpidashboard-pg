@@ -1,11 +1,12 @@
 import { getCurrentSession } from "@/lib/auth";
-import { packageLabel } from "@/lib/customer-package";
+import { packageLabel, testKennung } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { phoneQuery } from "@/lib/telefonsuche";
 import { searchPhonesAdmin, type AdminSearchHit } from "@/lib/telefonsuche-server";
 import { kontaktSucheWhere, nameVarianten } from "@/lib/vertrieb/suche";
 
 // Globale Admin-Suche (Cmd+K): Kunden, Vertriebskontakte, Leads und Logins der Kunden (E-Mail, Name).
+// Kunden auch interne Konten und Testkunden (Ole, 17.11.2026), mit Badge „Intern“ bzw. „Test“.
 // Telefonnummern (Ole, 16.11.2026) in jeder Schreibweise und über die Endziffern, in allen Nummernfeldern
 // und in Signaturen eingehender Mails (lib/telefonsuche-server.ts).
 // Genutzt von der alten (components/command-palette.tsx) und der neuen Oberfläche (components/admin-neu/rahmen/suche.tsx).
@@ -25,10 +26,10 @@ export async function GET(req: Request): Promise<Response> {
 
   const [customers, contacts, leads, logins] = await Promise.all([
     prisma.customer.findMany({
-      where: { OR: nameVarianten("name", q), plan: { not: "internal" } },
+      where: { OR: nameVarianten("name", q) },
       take: 5,
       orderBy: { name: "asc" },
-      select: { id: true, name: true, archived: true, plan: true, retainerMonthly: true, onboarding: { select: { id: true } } },
+      select: { id: true, name: true, archived: true, plan: true, isTest: true, retainerMonthly: true, onboarding: { select: { id: true } } },
     }),
     prisma.salesContact.findMany({
       where: {
@@ -61,8 +62,9 @@ export async function GET(req: Request): Promise<Response> {
       kind: "kunde" as const,
       id: c.id,
       title: short(c.name),
-      subtitle: `Kunde${c.archived ? " (archiviert)" : ""} · ${packageLabel(c)}`,
+      subtitle: `Kunde${c.archived ? " (archiviert)" : ""}${c.plan === "internal" ? "" : ` · ${packageLabel(c)}`}`,
       href: `/admin/kunden/${c.id}`,
+      ...(testKennung(c) ? { badge: testKennung(c)! } : {}),
     })),
     ...contacts.map((c) => ({
       kind: "kontakt" as const,
