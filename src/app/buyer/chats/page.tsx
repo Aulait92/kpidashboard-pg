@@ -1,6 +1,6 @@
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import Link from "next/link";
-import { ArrowLeft, Bot, CalendarClock, ChevronRight, MessageCircle, Phone, SendHorizontal, UserRound } from "lucide-react";
+import { ArrowLeft, Bot, Check, ChevronDown, ChevronRight, MessageCircle, Phone, Search, SendHorizontal } from "lucide-react";
 import { redirect } from "next/navigation";
 import { NewMessageHint, StickToBottom } from "@/components/live-refresh";
 import { lastInboundAt } from "@/lib/live";
@@ -12,7 +12,7 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { appointmentScope, conversationScope } from "@/lib/team";
 import { formatDateTime, formatPhone } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { displayProduct, statusLabel, statusToneClass } from "@/lib/products";
+import { displayProduct, statusLabel } from "@/lib/products";
 import { hasWhatsAppInbox, showChatsTeaser } from "@/lib/whatsapp/access";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { RescheduleButton } from "@/components/reschedule-dialog";
@@ -24,13 +24,25 @@ import {
   toggleBotBuyerAction,
 } from "../chat-actions";
 import { nowMs } from "@/lib/now";
-import { NextStepPrompt } from "@/components/next-step";
+import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { AnrufLink } from "@/components/call-outcome";
 import { isNewUi } from "@/lib/new-ui";
+import { nextStepStateOf } from "@/lib/lead-next-step-server";
+import { pastOpenAppointmentWhere } from "@/lib/lead-next-step";
+import { qualificationPoints } from "@/lib/whatsapp/qualification";
+import { terminArtKurz } from "@/lib/termin-art";
+import { kalenderblatt, listenZeit, phasenPunkt, sparten, terminKurz, uhrzeit } from "@/lib/chat-ansicht";
+import { chatNaechsterSchritt, type ChatSchritt } from "@/lib/chat-naechster-schritt";
+import { ChatAvatar, ChatVerlauf, NichtZugestellt, StatusPunkt } from "@/components/chat/chat-verlauf";
+import { SprungKnopf, TerminBuchenKnopf } from "@/components/chat/chat-knoepfe";
+import { cn } from "@/lib/utils";
 import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
 // Strikte Mandantentrennung: alle Abfragen mit customerId des Buyers.
+// Gestaltung (Ole, 17.11.2026, Entwurf docs/ux/chat-neu): Liste links, Chat in der Mitte mit drei klar
+// unterscheidbaren Absendern, rechts „Nächster Schritt“, Termin, Anfrage, Angaben fürs Angebot, Kontakt.
+// Handy: Liste und Chat als zwei Ansichten, der nächste Schritt steht oben im Chat, der Rest unter „Details“.
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Chats | performancegrowth" };
 
@@ -48,32 +60,8 @@ const ERRORS: Record<string, string> = {
   neuer_kontakt: "Der Assistent antwortet erst, wenn Sie den Kontakt als Lead übernehmen.",
 };
 
-const TZ = "Europe/Berlin";
-
-/** Heute → „14:05", gestern → „Gestern", sonst „07.11." (Intl liefert den Punkt schon mit). */
-function shortTime(d: Date): string {
-  const day = (x: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(x);
-  const now = new Date();
-  if (day(d) === day(now)) {
-    return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
-  }
-  if (day(d) === day(new Date(now.getTime() - 86400000))) return "Gestern";
-  return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(d);
-}
-function formatAppt(d: Date): string {
-  return new Intl.DateTimeFormat("de-DE", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: TZ,
-  }).format(d);
-}
-
-function initials(s: string): string {
-  return s.replace(/[^A-Za-zÄÖÜäöü0-9]/g, "").slice(0, 2).toUpperCase() || "··";
-}
+/** Termin gilt als vorbei (nicht mehr in der Karte), wenn er zu Ende ist. */
+const TERMIN_DAUER_MS = 60 * 60 * 1000;
 
 function parseFormAnswers(raw: unknown): { label: string; value: string }[] {
   if (!Array.isArray(raw)) return [];
@@ -83,20 +71,6 @@ function parseFormAnswers(raw: unknown): { label: string; value: string }[] {
       : [],
   );
 }
-
-const INTERNAL_LABELS: Record<string, string> = {
-  qualification: "Qualifizierung aktualisiert",
-  appointment_proposal: "Terminwunsch notiert",
-  appointment_booked: "Termin gebucht",
-  appointment_cancelled: "Termin abgesagt",
-  appointment_rescheduled: "Termin verschoben",
-  appointment_declined: "Einladung abgelehnt",
-  handover: "An Sie übergeben",
-  ki_handover: "Möchte einen Menschen: an Sie übergeben, Assistent pausiert",
-  advice_blocked: "Antwort ersetzt: keine Tarif-, Preis- oder Versichereraussagen",
-  opt_out: "„STOPP“: keine weiteren WhatsApp-Nachrichten",
-  erneut_eingetragen: "Hat sich erneut eingetragen",
-};
 
 export default async function BuyerChatsPage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
@@ -141,6 +115,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const sp = await searchParams;
   const activeId = sp.c ?? null;
   const error = sp.err ? (ERRORS[sp.err] ?? null) : null;
+  const now = nowMs();
 
   const filter = sp.f === "attention" ? "attention" : "all";
   const q = (sp.q ?? "").trim();
@@ -183,7 +158,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         where: { direction: { in: ["inbound", "outbound"] } },
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { body: true, direction: true },
+        select: { body: true, direction: true, sentBy: true },
       },
     },
   });
@@ -211,37 +186,43 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           needsAttention: true,
           attentionReason: true,
           qualificationSummary: true,
+          qualificationData: true,
           windowExpiresAt: true,
           optedOutAt: true,
           lead: {
-            select: { id: true, name: true, source: true, status: true, formData: true, createdAt: true, followUpAt: true },
+            select: { id: true, name: true, source: true, status: true, formData: true, createdAt: true, followUpAt: true, followUpNote: true },
           },
           messages: {
             orderBy: { createdAt: "asc" },
-            select: { id: true, direction: true, kind: true, body: true, sentBy: true, createdAt: true },
+            select: { id: true, direction: true, kind: true, body: true, sentBy: true, status: true, createdAt: true },
           },
         },
       })
     : null;
 
-  const appointments = active
-    ? await prisma.appointment.findMany({
-        where: {
-          ...appointmentScope(ctx),
-          status: "booked",
-          OR: [
-            { conversationId: active.id },
-            ...(active.lead ? [{ leadId: active.lead.id }] : []),
-          ],
-        },
-        orderBy: { startsAt: "asc" },
-        select: { id: true, startsAt: true, mode: true, meetUrl: true },
-      })
-    : [];
+  const terminWhere = active
+    ? { ...appointmentScope(ctx), OR: [{ conversationId: active.id }, ...(active.lead ? [{ leadId: active.lead.id }] : [])] }
+    : null;
+  const [alleTermine, stepState, ergebnisTermin] = !active
+    ? ([[], "none", null] as const)
+    : await Promise.all([
+        prisma.appointment.findMany({
+          where: terminWhere!,
+          orderBy: { startsAt: "asc" },
+          select: { id: true, status: true, startsAt: true, endsAt: true, mode: true, meetUrl: true, confirmedAt: true, komplettcheck: true, preparedAt: true },
+        }),
+        active.lead ? nextStepStateOf(active.lead.id, new Date(now)) : ("none" as const),
+        active.lead
+          ? prisma.appointment.findFirst({ where: { leadId: active.lead.id, ...pastOpenAppointmentWhere(new Date(now)) }, orderBy: { startsAt: "desc" }, select: { id: true } })
+          : null,
+      ]);
+  // Gebuchte Termine, die noch nicht zu Ende sind (Karte „Termin“ und nächster Schritt)
+  const appointments = alleTermine.filter((a) => a.status === "booked" && (a.endsAt?.getTime() ?? a.startsAt.getTime() + TERMIN_DAUER_MS) > now);
+  const terminZeiten = new Map(alleTermine.map((a) => [a.id, a.startsAt]));
+
   // Gesundheitsangaben vertraulich nur im Kontakt (lib/gesundheitsdaten.ts)
   const { normal: formAnswers, health: healthAnswers } = splitHealthAnswers(parseFormAnswers(active?.lead?.formData));
-  const windowOpen =
-    !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > nowMs();
+  const windowOpen = !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > now;
   const followup = active && !windowOpen ? await chooseFollowup(active.id) : null;
   // „Anrufen“ wie im Kontakt (Ole, 17.11.2026): Assistent pausiert, danach „Wie lief es?“ (components/call-outcome.tsx)
   const anrufLead =
@@ -249,205 +230,360 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       ? { id: active.lead.id, name: active.contactName ?? active.lead.name ?? "Lead", source: active.lead.source, followUp: !!active.lead.followUpAt }
       : null;
 
-  const leadInfo = active ? (
-    <div className="space-y-5 text-sm">
-      <InfoSection title="Kontakt">
-        <InfoRow label="Telefon">
-          <AnrufLink lead={anrufLead} href={`tel:+${active.contactPhone}`} className="text-[color:var(--brand)] hover:underline">
-            {formatPhone(active.contactPhone)}
+  const name = active ? (active.contactName ?? formatPhone(active.contactPhone)) : "";
+  const schritt: ChatSchritt | null = active
+    ? chatNaechsterSchritt({
+        leadId: active.lead?.id ?? null,
+        status: active.lead?.status ?? null,
+        stepState,
+        botActive: active.botActive,
+        wartet: active.needsAttention ? { grund: waOhneMarker(active.attentionReason) ?? null } : null,
+        fensterOffen: windowOpen,
+        optOut: !!active.optedOutAt,
+        termin: appointments[0] ?? null,
+        ergebnisTerminId: ergebnisTermin?.id ?? null,
+        wiedervorlage: active.lead?.followUpAt ? { at: active.lead.followUpAt, note: active.lead.followUpNote } : null,
+        nachfassenBereit: followup?.kind === "ok" && !!followup.approved,
+        now,
+      })
+    : null;
+
+  // Angaben fürs Angebot: Leadformular, dann Angaben des Assistenten (ohne Doppeltes, wie im Kontakt)
+  const qPoints = qualificationPoints(active?.qualificationData);
+  const formWerte = new Set(formAnswers.map((a) => a.value.trim().toLowerCase()));
+  const angaben = [
+    ...formAnswers.map((a) => ({ key: `f:${a.label}`, label: a.label, value: a.value })),
+    ...qPoints.filter((p) => p.key !== "interesse" && !formWerte.has(p.value.trim().toLowerCase())).map((p) => ({ key: `q:${p.key}`, label: p.label, value: p.value })),
+  ];
+  const chips = active?.lead
+    ? [
+        ...(active.lead.source ? [{ label: displayProduct(active.lead.source), gruen: false }] : []),
+        ...sparten(qPoints.find((p) => p.key === "interesse")?.value, active.lead.source ? displayProduct(active.lead.source) : null).map((s) => ({ label: s, gruen: false })),
+        ...(appointments.some((a) => a.komplettcheck) ? [{ label: "Komplettcheck", gruen: true }] : []),
+      ]
+    : [];
+
+  /** Hauptknopf des nächsten Schritts. kompakt: Handy-Leiste oben im Chat. */
+  const schrittKnopf = (s: ChatSchritt, kompakt: boolean) => {
+    if (!active || !s.knopf) return null;
+    const cls = kompakt ? buttonClass("primary", "sm", "shrink-0") : buttonClass("primary", "md", "w-full");
+    switch (s.art) {
+      case "lead_uebernehmen":
+        return (
+          <form action={takeAsLeadBuyerAction} className={kompakt ? "shrink-0" : ""}>
+            <input type="hidden" name="conversationId" value={active.id} />
+            <SubmitButton pendingLabel="…" className={cls}>
+              {s.knopf}
+            </SubmitButton>
+          </form>
+        );
+      case "ergebnis":
+      case "festlegen":
+        return active.lead ? (
+          <NextStepButton
+            leadId={active.lead.id}
+            name={name}
+            source={active.lead.source}
+            appointmentId={s.art === "ergebnis" ? (ergebnisTermin?.id ?? null) : null}
+            resultMissing={s.art === "ergebnis"}
+            label={s.knopf}
+            className={cn(cls, "border-transparent sm:px-4 sm:py-0 [&>svg]:hidden", kompakt ? "sm:h-8" : "sm:h-10 sm:text-sm")}
+          />
+        ) : null;
+      case "antworten":
+        return (
+          <SprungKnopf ziel="antwort" className={cls}>
+            {s.knopf}
+          </SprungKnopf>
+        );
+      case "nachfassen_senden":
+        return (
+          <SprungKnopf ziel="nachfassen" className={cls}>
+            {s.knopf}
+          </SprungKnopf>
+        );
+      case "anrufen":
+        return (
+          <AnrufLink lead={anrufLead} href={`tel:+${active.contactPhone}`} className={cls}>
+            <Phone className="h-4 w-4" />
+            {s.knopf}
           </AnrufLink>
-        </InfoRow>
-        {active.contactEmail ? (
-          <InfoRow label="E-Mail">
-            <a href={`mailto:${active.contactEmail}`} className="break-all text-[color:var(--brand)] hover:underline">
-              {active.contactEmail}
-            </a>
-          </InfoRow>
-        ) : null}
-      </InfoSection>
+        );
+      case "termin_buchen":
+        return active.lead ? (
+          <TerminBuchenKnopf leadId={active.lead.id} name={name} className={cls}>
+            {s.knopf}
+          </TerminBuchenKnopf>
+        ) : null;
+      default:
+        return s.href ? (
+          <a href={s.href} className={cls} {...(s.art === "videocall" ? { target: "_blank", rel: "noreferrer" } : {})}>
+            {s.knopf}
+          </a>
+        ) : null;
+    }
+  };
+
+  const erledigt = active?.needsAttention ? (
+    <form action={markChatDoneBuyerAction}>
+      <input type="hidden" name="conversationId" value={active.id} />
+      <SubmitButton pendingLabel="…" className="min-h-10 text-sm font-medium text-[color:var(--muted)] hover:text-[color:var(--foreground)] hover:underline sm:min-h-0 sm:text-xs">
+        Als erledigt markieren
+      </SubmitButton>
+    </form>
+  ) : null;
+
+  // Rechte Spalte ohne „Nächster Schritt“ (der steht am Handy immer sichtbar oben im Chat)
+  const details = active ? (
+    <>
+      <Karte titel="Termin">
+        {appointments.length === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[color:var(--muted)]">
+            <span>Kein Termin geplant.</span>
+            {active.lead && schritt?.art !== "termin_buchen" && schritt?.art !== "keiner" ? (
+              <TerminBuchenKnopf leadId={active.lead.id} name={name} className="min-h-10 font-semibold text-[color:var(--brand)] hover:underline sm:min-h-0">
+                Termin buchen
+              </TerminBuchenKnopf>
+            ) : null}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {appointments.map((a) => {
+              const blatt = kalenderblatt(a.startsAt);
+              const kuenftig = a.startsAt.getTime() > now;
+              return (
+                <div key={a.id} data-chat-termin>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-[52px] w-12 shrink-0 flex-col items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--brand)] text-white" aria-hidden>
+                      <span className="text-[10px] font-semibold leading-none opacity-85">{blatt.wochentag}</span>
+                      <span className="mt-1 text-lg font-bold leading-none">{blatt.tag}</span>
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-[15px] font-semibold">
+                        {uhrzeit(a.startsAt)} Uhr · {terminArtKurz(a.mode)}
+                      </div>
+                      <div className="mt-0.5 flex flex-wrap gap-x-3 text-[13px] font-medium text-[color:var(--brand)]">
+                        {a.meetUrl ? (
+                          <a href={a.meetUrl} target="_blank" rel="noreferrer" className="min-h-10 content-center hover:underline sm:min-h-0">
+                            Video-Link
+                          </a>
+                        ) : null}
+                        {kuenftig ? (
+                          <RescheduleButton appointmentId={a.id} className="min-h-10 hover:underline sm:min-h-0">
+                            Verschieben
+                          </RescheduleButton>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[13px] text-[color:var(--muted)]">
+                    {a.confirmedAt ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-700" data-termin-zugesagt>
+                        Zugesagt <Check className="h-3.5 w-3.5" />
+                      </span>
+                    ) : (
+                      <span>Noch nicht zugesagt</span>
+                    )}
+                    {kuenftig ? (
+                      <>
+                        <span aria-hidden>·</span>
+                        <RescheduleButton appointmentId={a.id} initialStep="cancel" className="min-h-10 hover:text-[color:var(--foreground)] hover:underline sm:min-h-0">
+                          Absagen
+                        </RescheduleButton>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Karte>
 
       {active.lead ? (
-        <InfoSection title="Anfrage">
-          {active.lead.source ? <InfoRow label="Produkt">{displayProduct(active.lead.source)}</InfoRow> : null}
-          {active.lead.status ? (
-            <InfoRow label="Phase">{statusLabel(active.lead.status, true)}</InfoRow>
-          ) : null}
-          <InfoRow label="Eingang">{formatDateTime(active.lead.createdAt)}</InfoRow>
-          <Link
-            href={`/buyer/leads/${active.lead.id}`}
-            className="mt-1 inline-block text-xs font-semibold text-[color:var(--brand)] hover:underline"
-          >
-            Kontakt öffnen →
-          </Link>
-        </InfoSection>
-      ) : null}
-
-      <InfoSection title="Termin">
-        {appointments.length === 0 ? (
-          <p className="text-xs text-[color:var(--muted)]">Kein Termin gebucht.</p>
-        ) : (
-          appointments.map((a) => (
-            <div key={a.id} className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-              <div className="flex items-center gap-1.5 font-semibold text-blue-900">
-                <CalendarClock className="h-4 w-4" /> {formatAppt(a.startsAt)} Uhr
-              </div>
-              <div className="mt-0.5 text-xs text-blue-800">
-                {a.mode === "video" ? "Videocall" : a.mode === "onsite" ? "Vor Ort" : "Telefonat, Sie rufen an"}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                {a.meetUrl ? (
-                  <a href={a.meetUrl} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 underline">
-                    Video-Link
-                  </a>
-                ) : null}
-                {a.startsAt.getTime() > nowMs() ? (
-                  <>
-                    <RescheduleButton appointmentId={a.id} className="font-semibold text-blue-700 underline">
-                      Verschieben
-                    </RescheduleButton>
-                    <RescheduleButton appointmentId={a.id} initialStep="cancel" className="font-medium text-rose-700 hover:underline">
-                      Termin absagen
-                    </RescheduleButton>
-                  </>
-                ) : null}
-              </div>
+        <Karte titel="Anfrage">
+          {chips.length ? (
+            <div className="flex flex-wrap gap-1.5">
+              {chips.map((c) => (
+                <span
+                  key={c.label}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-xs font-medium",
+                    c.gruen ? "bg-emerald-50 text-emerald-700" : "bg-[color:var(--surface-sunken)] text-[color:var(--foreground)] ring-1 ring-inset ring-[color:var(--border)]",
+                  )}
+                >
+                  {c.label}
+                </span>
+              ))}
             </div>
-          ))
-        )}
-      </InfoSection>
-
-      {formAnswers.length > 0 ? (
-        <InfoSection title="Angaben">
-          {formAnswers.map((a) => (
-            <InfoRow key={a.label} label={a.label}>
-              {a.value}
-            </InfoRow>
-          ))}
-          {healthAnswers.length ? <p className="text-xs text-[color:var(--muted)]">Gesundheitsangaben: vertraulich im Kontakt (nicht beim Assistenten).</p> : null}
-        </InfoSection>
+          ) : null}
+          <div className={cn("flex flex-col items-start gap-0.5 text-xs text-[color:var(--muted)]", chips.length ? "mt-3" : "")}>
+            {active.lead.status ? <StatusPunkt farbe={phasenPunkt(active.lead.status)}>{statusLabel(active.lead.status, true)}</StatusPunkt> : null}
+            <span>Eingang {formatDateTime(active.lead.createdAt)}</span>
+          </div>
+        </Karte>
       ) : null}
 
-      {active.qualificationSummary ? (
-        <InfoSection title={active.qualified ? "Qualifizierung" : "Bisher erfasst"}>
-          <p className="text-sm leading-relaxed">{active.qualificationSummary}</p>
-        </InfoSection>
+      {angaben.length || active.qualificationSummary ? (
+        <Karte titel="Angaben fürs Angebot">
+          {angaben.length ? (
+            <dl className="space-y-1.5 text-sm" data-lead-angaben>
+              {angaben.map((a) => (
+                <div key={a.key} className="flex items-baseline justify-between gap-3">
+                  <dt className="min-w-0 text-[color:var(--muted)]">{a.label}</dt>
+                  <dd className="max-w-[60%] shrink-0 break-words text-right font-medium">{a.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          {healthAnswers.length ? <p className="mt-2 text-xs text-[color:var(--muted)]">Gesundheitsangaben: vertraulich im Kontakt.</p> : null}
+          {active.qualificationSummary ? (
+            <details className={cn("group/q", angaben.length ? "mt-3 border-t border-[color:var(--border)] pt-2" : "")} open={!angaben.length}>
+              <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1 text-xs font-semibold text-[color:var(--brand)] sm:min-h-0 [&::-webkit-details-marker]:hidden">
+                Zusammenfassung des Assistenten
+                <ChevronDown className="h-3.5 w-3.5 transition group-open/q:rotate-180" />
+              </summary>
+              <p className="mt-1.5 text-sm leading-relaxed">{active.qualificationSummary}</p>
+            </details>
+          ) : null}
+        </Karte>
       ) : null}
-    </div>
+
+      <Karte titel="Kontakt">
+        <div className="space-y-1 text-sm">
+          <AnrufLink lead={anrufLead} href={`tel:+${active.contactPhone}`} className="block min-h-10 content-center hover:text-[color:var(--brand)] sm:min-h-0">
+            {formatPhone(active.contactPhone)}
+          </AnrufLink>
+          {active.contactEmail ? (
+            <a href={`mailto:${active.contactEmail}`} className="block break-all hover:text-[color:var(--brand)]">
+              {active.contactEmail}
+            </a>
+          ) : null}
+          {active.lead ? (
+            <Link href={`/buyer/leads/${active.lead.id}`} className="inline-flex min-h-10 items-center gap-0.5 pt-1 text-xs font-semibold text-[color:var(--brand)] hover:underline sm:min-h-0">
+              Kontakt öffnen <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : null}
+        </div>
+      </Karte>
+    </>
   ) : null;
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
+    <main className="mx-auto w-full max-w-[1440px] flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
       {/* Chat übernommen bzw. Ergebnis nach „Anrufen“: fragen, wie es mit dem Lead weitergeht (falls kein Schritt) */}
       {active?.lead ? (
         <NextStepPrompt key={active.lead.id} leadId={active.lead.id} name={active.contactName ?? "Lead"} source={active.lead.source} autoOpen={sp.schritt === "1"} />
       ) : null}
       <div className="hidden sm:block">
-        <PageHeader
-          title="Nachrichten"
-          subtitle="WhatsApp-Gespräche mit Ihren Kontakten"
-        />
+        <PageHeader title="Nachrichten" subtitle="WhatsApp-Gespräche mit Ihren Kontakten" />
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
+        <div className="mb-4 rounded-lg bg-amber-50 px-4 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
           {error}
         </div>
       ) : null}
 
-      <div className="relative flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[520px] sm:rounded-2xl sm:border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]">
+      <div className="relative flex h-[calc(100dvh-56px-64px)] overflow-hidden border-[color:var(--border)] bg-white sm:h-[calc(100dvh-56px-140px)] sm:min-h-[560px] sm:rounded-[20px] sm:border sm:shadow-[var(--shadow-md)]">
         <NewMessageHint key={listQs || "alle"} items={hintItems} activeId={active?.id ?? null} />
-        {/* Liste — auf dem Handy ausgeblendet, sobald ein Chat offen ist */}
-        <aside
-          className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[300px]`}
-        >
-          <div className="space-y-2 border-b border-[color:var(--border)] p-2">
+        {/* Liste: auf dem Handy ausgeblendet, sobald ein Chat offen ist */}
+        <aside className={`${active ? "hidden md:flex" : "flex"} w-full flex-none flex-col border-r border-[color:var(--border)] md:w-[280px] xl:w-[264px] 2xl:w-[330px]`}>
+          <div className="space-y-2.5 px-3 pb-2.5 pt-3 sm:px-4 sm:pt-4">
             {/* Handy: Seitentitel wie auf den anderen Seiten (UX Runde 4, Vorschlag 6) */}
-            <h1 className="px-2 pt-2 text-[22px] font-bold tracking-tight sm:hidden">Nachrichten</h1>
-            <div className="flex gap-1 text-sm font-semibold sm:text-xs">
+            <h1 className="px-1 text-[22px] font-bold tracking-tight sm:hidden">Nachrichten</h1>
+            <div className="flex gap-1.5 text-sm font-semibold xl:text-[13px] 2xl:text-sm">
               <Link
                 href={`/buyer/chats${q ? `?q=${encodeURIComponent(q)}` : ""}`}
-                className={`flex-1 rounded-lg px-2 py-2.5 sm:py-1.5 text-center ${filter === "all" ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)]"}`}
+                className={cn(
+                  "flex min-h-10 flex-1 items-center justify-center rounded-[10px] px-2",
+                  filter === "all" ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]",
+                )}
               >
                 Alle
               </Link>
               <Link
                 href={`/buyer/chats?f=attention${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-                className={`flex-1 rounded-lg px-2 py-2.5 sm:py-1.5 text-center ${filter === "attention" ? "bg-rose-100 text-rose-800" : "text-[color:var(--muted)]"}`}
+                className={cn(
+                  "flex min-h-10 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-2",
+                  filter === "attention" ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]",
+                )}
+                data-chats-wartet
               >
-                Wartet auf Sie{attentionTotal > 0 ? ` (${attentionTotal})` : ""}
+                Wartet auf Sie
+                {attentionTotal > 0 ? (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[color:var(--brand)] px-1.5 text-xs font-semibold text-white">{attentionTotal}</span>
+                ) : null}
               </Link>
             </div>
-            <form action="/buyer/chats" className="flex gap-1">
+            <form action="/buyer/chats" className="relative">
               {filter === "attention" ? <input type="hidden" name="f" value="attention" /> : null}
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
               <input
                 name="q"
                 defaultValue={q}
-                placeholder="Name, Nummer oder E-Mail suchen"
-                className="min-w-0 flex-1 rounded-lg border border-[color:var(--border)] px-2.5 py-2 text-xs sm:py-1.5 focus:border-[color:var(--brand)] focus:outline-none"
+                placeholder="Name, Nummer oder E-Mail"
+                aria-label="Chats durchsuchen"
+                className="h-10 w-full rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white pl-9 pr-3 text-sm focus:border-[color:var(--brand)] focus:outline-none"
               />
             </form>
           </div>
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className="flex-1 overflow-y-auto pb-2">
             {conversations.length === 0 ? (
-              <p className="p-4 text-sm text-[color:var(--muted)]">
-                {q
-                  ? "Keine Treffer."
-                  : filter === "attention"
-                    ? "Niemand wartet gerade auf Sie."
-                    : "Noch keine Nachrichten. Sobald der Assistent einen Lead anschreibt, steht das Gespräch hier."}
-              </p>
+              <div className="px-5 py-6 text-sm text-[color:var(--muted)]">
+                {q ? (
+                  <>
+                    Keine Treffer.{" "}
+                    <Link href={`/buyer/chats${filter === "attention" ? "?f=attention" : ""}`} className="font-semibold text-[color:var(--brand)] hover:underline">
+                      Suche zurücksetzen
+                    </Link>
+                  </>
+                ) : filter === "attention" ? (
+                  <>
+                    Niemand wartet gerade auf Sie.{" "}
+                    <Link href="/buyer/chats" className="font-semibold text-[color:var(--brand)] hover:underline">
+                      Alle Chats
+                    </Link>
+                  </>
+                ) : (
+                  "Noch keine Nachrichten. Sobald der Assistent einen Lead anschreibt, steht das Gespräch hier."
+                )}
+              </div>
             ) : (
               conversations.map((c) => {
                 const last = c.messages[0];
                 const isActive = c.id === activeId;
+                const cname = c.contactName ?? formatPhone(c.contactPhone);
+                const von = last?.direction === "outbound" ? (last.sentBy === "agent" || last.sentBy === "app" ? "Sie: " : "Assistent: ") : "";
                 return (
                   <Link
                     key={c.id}
                     href={`/buyer/chats?c=${c.id}${listQs ? `&${listQs}` : ""}`}
-                    className={`mb-0.5 flex gap-3 rounded-xl px-3 py-2.5 ${
-                      isActive
-                        ? "bg-[color:var(--brand-soft)] ring-1 ring-[color:var(--brand)]/30"
-                        : "hover:bg-[color:var(--background)]"
-                    }`}
+                    aria-current={isActive ? "true" : undefined}
+                    className={cn(
+                      "flex gap-3 border-l-[3px] px-4 py-3",
+                      isActive ? "border-l-[color:var(--brand)] bg-[#f5f8ff]" : "border-l-transparent hover:bg-[color:var(--surface-sunken)]",
+                    )}
                   >
-                    <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-[11px] font-bold text-[color:var(--brand-dark)]">
-                      {initials(c.contactName ?? c.contactPhone)}
-                      {c.needsAttention ? (
-                        <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-rose-600" />
-                      ) : null}
-                    </span>
+                    <ChatAvatar name={cname} dot={c.needsAttention} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className={`truncate text-sm ${c.needsAttention ? "font-bold" : "font-semibold"}`}>
-                          {c.contactName ?? formatPhone(c.contactPhone)}
-                        </span>
-                        <span className="shrink-0 text-[11px] text-[color:var(--muted)]">
-                          {c.lastMessageAt ? shortTime(c.lastMessageAt) : ""}
-                        </span>
+                        <span className={cn("truncate text-[15px]", c.needsAttention ? "font-bold" : "font-semibold")}>{cname}</span>
+                        <span className="shrink-0 text-xs text-[color:var(--muted)]">{c.lastMessageAt ? listenZeit(c.lastMessageAt, now) : ""}</span>
                       </div>
-                      <p className="truncate text-xs text-[color:var(--muted)]">
-                        {last ? `${last.direction === "outbound" ? (c.botActive ? "Assistent: " : "Sie: ") : ""}${waOhneMarker(last.body ?? "")}` : ""}
-                      </p>
-                      <div className="mt-1 flex gap-1.5">
+                      <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{last ? `${von}${waOhneMarker(last.body ?? "")}` : ""}</p>
+                      <div className="mt-1 flex min-w-0 items-center">
                         {c.needsAttention ? (
-                          <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">
+                          <StatusPunkt farbe="bg-rose-500" className="font-semibold text-rose-700">
                             Wartet auf Sie
-                          </span>
-                        ) : null}
-                        {c.lead?.status ? (
-                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${statusToneClass(c.lead.status)}`}>
-                            {statusLabel(c.lead.status, true)}
-                          </span>
-                        ) : null}
-                        {/* Ohne Lead: der Vermittler entscheidet (lib/whatsapp/nur-leads.ts), kein Assistent */}
-                        {!c.lead ? (
-                          <span className="rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-800 ring-1 ring-inset ring-sky-200" data-neuer-kontakt>
-                            Neuer Kontakt
-                          </span>
-                        ) : !c.botActive ? (
-                          <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200">
-                            Sie schreiben
-                          </span>
+                          </StatusPunkt>
+                        ) : !c.lead ? (
+                          // Ohne Lead: der Vermittler entscheidet (lib/whatsapp/nur-leads.ts), kein Assistent
+                          <StatusPunkt farbe="bg-sky-500" className="text-sky-800">
+                            <span data-neuer-kontakt>Neuer Kontakt</span>
+                          </StatusPunkt>
+                        ) : c.lead.status ? (
+                          <StatusPunkt farbe={phasenPunkt(c.lead.status)}>{statusLabel(c.lead.status, true)}</StatusPunkt>
                         ) : null}
                       </div>
                     </div>
@@ -459,7 +595,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         </aside>
 
         {/* Chat */}
-        <section className={`${active ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col bg-[color:var(--background)]`}>
+        <section className={`${active ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col bg-[#fafbfd]`}>
           {!active ? (
             <div className="flex flex-1 items-center justify-center p-6 text-sm text-[color:var(--muted)]">
               <span className="flex flex-col items-center gap-2 text-center">
@@ -467,34 +603,43 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   <MessageCircle className="h-5 w-5" />
                 </span>
                 <span className="font-medium text-[color:var(--foreground)]">Wählen Sie links ein Gespräch aus</span>
-
+                {attentionTotal > 0 && filter !== "attention" ? (
+                  <Link href="/buyer/chats?f=attention" className="font-semibold text-[color:var(--brand)] hover:underline">
+                    {attentionTotal === 1 ? "1 Chat wartet auf Sie" : `${attentionTotal} Chats warten auf Sie`}
+                  </Link>
+                ) : null}
               </span>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 border-b border-[color:var(--border)] bg-white px-3 py-2.5 sm:px-4">
-                <Link href="/buyer/chats" aria-label="Zurück" className="-ml-1 rounded-full p-1.5 text-[color:var(--brand)] md:hidden">
+              <header className="flex items-center gap-2 border-b border-[color:var(--border)] bg-white px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
+                <Link href={`/buyer/chats${listQs ? `?${listQs}` : ""}`} aria-label="Zurück" className="-ml-1 rounded-full p-1.5 text-[color:var(--brand)] md:hidden">
                   <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div className="min-w-0 flex-1">
-                  {/* UX Runde 4: Name öffnet den Kontakt (am Handy war der Weg nur über „Infos“ erreichbar) */}
+                  {/* UX Runde 4: Name öffnet den Kontakt */}
                   {active.lead ? (
-                    <Link href={`/buyer/leads/${active.lead.id}`} className="flex min-w-0 items-center gap-0.5 font-bold hover:underline" data-chat-kontakt>
-                      <span className="truncate">{active.contactName ?? formatPhone(active.contactPhone)}</span>
+                    <Link href={`/buyer/leads/${active.lead.id}`} className="flex min-w-0 items-center gap-0.5 text-[17px] font-semibold hover:underline" data-chat-kontakt>
+                      <span className="truncate">{name}</span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
                     </Link>
                   ) : (
-                    <div className="truncate font-bold">{active.contactName ?? formatPhone(active.contactPhone)}</div>
+                    <div className="truncate text-[17px] font-semibold">{name}</div>
                   )}
                   {!active.lead && !active.botActive ? (
-                    <div className="flex items-center gap-1 text-xs font-medium text-sky-800">
-                      <UserRound className="h-3.5 w-3.5" />
+                    <div className="mt-0.5 flex min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] font-medium text-sky-800">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
                       Neuer Kontakt
                     </div>
+                  ) : active.botActive ? (
+                    <div className="mt-0.5 flex min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] text-emerald-700" data-chat-status="assistent">
+                      <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />
+                      <span className="truncate">Assistent antwortet für Sie</span>
+                    </div>
                   ) : (
-                    <div className={`flex items-center gap-1 text-xs ${active.botActive ? "text-emerald-700" : "text-[color:var(--muted)]"}`}>
-                      <Bot className="h-3.5 w-3.5" />
-                      {active.botActive ? "Assistent antwortet" : "Sie schreiben selbst"}
+                    <div className="mt-0.5 flex min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] text-[color:var(--muted)]" data-chat-status="selbst">
+                      <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[color:var(--brand)]" />
+                      Sie schreiben
                     </div>
                   )}
                 </div>
@@ -503,115 +648,71 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   href={`tel:+${active.contactPhone}`}
                   aria-label="Anrufen"
                   title={formatPhone(active.contactPhone)}
-                  className="inline-flex h-10 w-10 items-center sm:h-9 sm:w-9 justify-center rounded-full bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
+                  className={buttonClass("secondary", "md", "w-10 shrink-0 px-0 sm:w-auto sm:px-4 xl:w-10 xl:px-0 2xl:w-auto 2xl:px-4")}
                   data-chat-anrufen
                 >
                   <Phone className="h-4 w-4" />
+                  <span className="hidden sm:inline xl:hidden 2xl:inline">Anrufen</span>
                 </AnrufLink>
+                {/* Handy: Schreiben übernimmt automatisch; dort nur „Assistent an“ zum Zurückgeben */}
                 {active.lead ? (
-                  <Link
-                    href={`/buyer/leads/${active.lead.id}`}
-                    aria-label="Kontakt öffnen"
-                    title="Kontakt öffnen"
-                    className="hidden sm:inline-flex xl:hidden h-9 w-9 items-center justify-center rounded-full border border-[color:var(--border)] bg-white text-[color:var(--foreground)] hover:border-[color:var(--border-strong)]"
+                  <form
+                    action={toggleBotBuyerAction}
+                    className={active.botActive ? "hidden shrink-0 sm:block" : "shrink-0"}
+                    title={active.botActive ? "Selbst schreiben, der Assistent pausiert in diesem Chat" : "Der Assistent antwortet wieder für Sie"}
                   >
-                    <UserRound className="h-4 w-4" />
-                  </Link>
-                ) : null}
-                {/* Neuer Kontakt (kein Lead): der Vermittler entscheidet. Erst dann darf der Assistent antworten. */}
-                {!active.lead ? (
-                  <form action={takeAsLeadBuyerAction}>
                     <input type="hidden" name="conversationId" value={active.id} />
-                    <SubmitButton
-                      pendingLabel="…"
-                      className="h-10 rounded-full bg-[color:var(--brand)] px-3 text-xs font-semibold text-white hover:bg-[color:var(--brand-dark)] sm:h-9"
-                    >
-                      Als Lead übernehmen
+                    <SubmitButton pendingLabel="…" className={buttonClass("secondary", "md", "px-3 sm:px-4")}>
+                      {active.botActive ? (
+                        "Übernehmen"
+                      ) : (
+                        <>
+                          <Bot className="h-4 w-4" /> Assistent an
+                        </>
+                      )}
                     </SubmitButton>
                   </form>
                 ) : null}
-                {/* Handy: Schreiben übernimmt automatisch; Knopf nur zum Zurückgeben an den Assistenten */}
-                <form action={toggleBotBuyerAction} className={!active.lead ? "hidden" : active.botActive ? "hidden sm:block" : ""}>
-                  <input type="hidden" name="conversationId" value={active.id} />
-                  <SubmitButton
-                    pendingLabel="…"
-                    className={`h-10 rounded-full px-3 sm:h-9 text-xs font-semibold ${
-                      active.botActive
-                        ? "border border-[color:var(--border)] bg-white hover:border-[color:var(--brand)]"
-                        : "bg-emerald-600 text-white hover:bg-emerald-700"
-                    }`}
-                  >
-                    {active.botActive ? "Selbst schreiben" : "Assistent an"}
-                  </SubmitButton>
-                </form>
+              </header>
+
+              {/* Handy und schmale Fenster: nächster Schritt immer sichtbar, Details zum Aufklappen */}
+              <div className="border-b border-[color:var(--border)] bg-white xl:hidden" data-chat-details-mobil>
+                {schritt && schritt.art !== "keiner" ? (
+                  <div className={cn("flex items-center gap-3 bg-gradient-to-b to-white px-4 py-2.5", schritt.dringend ? "from-rose-50" : "from-[#f5f8ff]")} data-chat-schritt>
+                    <div className="min-w-0 flex-1">
+                      <div className={cn("truncate text-sm font-semibold", schritt.dringend ? "text-rose-800" : "")}>{schritt.titel}</div>
+                      {schritt.text ? <div className={cn("text-xs text-[color:var(--muted)]", schritt.dringend ? "line-clamp-2" : "truncate")}>{schritt.text}</div> : null}
+                    </div>
+                    {schrittKnopf(schritt, true)}
+                  </div>
+                ) : null}
+                <details className="group/d">
+                  <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 border-t border-[color:var(--border)] px-4 text-xs font-semibold text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
+                    <span className="min-w-0 flex-1 truncate">
+                      Details
+                      <span className="font-normal text-[color:var(--muted)]">
+                        {appointments[0] ? ` · Termin ${terminKurz(appointments[0].startsAt, now)}` : ""}
+                        {angaben.length ? " · Angaben" : ""}
+                        {" · Kontakt"}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-4 w-4 transition group-open/d:rotate-180" />
+                  </summary>
+                  {/* Ole, 16.11.2026: am Handy unten abgeschnitten (fester Chat-Rahmen). Eigener Scrollbereich. */}
+                  <div className="max-h-[55dvh] space-y-3 overflow-y-auto overscroll-contain bg-[color:var(--surface-sunken)] p-3" data-lead-infos>
+                    {erledigt}
+                    {details}
+                  </div>
+                </details>
               </div>
 
-              {active.needsAttention ? (
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-900">
-                  <span>
-                    <b>Wartet auf Sie:</b> {waOhneMarker(active.attentionReason) ?? "Bitte melden Sie sich beim Kontakt."}
-                  </span>
-                  <form action={markChatDoneBuyerAction}>
-                    <input type="hidden" name="conversationId" value={active.id} />
-                    <SubmitButton pendingLabel="…" className="min-h-10 rounded-lg border border-rose-300 bg-white px-4 py-1 text-sm font-semibold text-rose-800 sm:min-h-0 sm:px-3 sm:text-xs">
-                      Erledigt
-                    </SubmitButton>
-                  </form>
-                </div>
-              ) : null}
-
-              {/* Lead-Infos: unter xl als aufklappbarer Block, ab xl rechts */}
-              <details className="border-b border-[color:var(--border)] bg-white xl:hidden">
-                <summary className="cursor-pointer px-4 py-2 text-xs font-semibold text-[color:var(--brand)]">
-                  {appointments.length > 0 ? `Termin ${formatAppt(appointments[0].startsAt)} Uhr · Infos` : "Infos zum Kontakt"}
-                </summary>
-                {/* Ole, 16.11.2026: am Handy unten abgeschnitten (fester Chat-Rahmen). Eigener Scrollbereich. */}
-                <div className="max-h-[55dvh] overflow-y-auto overscroll-contain px-4 pb-4" data-lead-infos>
-                  {leadInfo}
-                </div>
-              </details>
-
-              <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-                {active.messages.map((m) => {
-                  if (m.direction === "internal") {
-                    const label = INTERNAL_LABELS[m.kind ?? ""];
-                    return label ? (
-                      <div key={m.id} className="flex justify-center">
-                        <span className="rounded-full bg-amber-50 px-3 py-1 text-[11px] text-amber-800 ring-1 ring-amber-200">
-                          {label}
-                        </span>
-                      </div>
-                    ) : null;
-                  }
-                  const outbound = m.direction === "outbound";
-                  const who =
-                    m.sentBy === "agent"
-                      ? "Sie"
-                      : m.sentBy === "app"
-                        ? "Sie (WhatsApp-App)"
-                        : m.sentBy === "bot" || m.sentBy === "system"
-                          ? "Assistent"
-                          : "";
-                  return (
-                    <div key={m.id} className={`flex ${outbound ? "justify-end" : "justify-start"}`}>
-                      <div className="max-w-[80%]">
-                        <div
-                          className={`whitespace-pre-wrap break-words px-3.5 py-2 text-sm leading-relaxed ${
-                            outbound
-                              ? "rounded-[16px_4px_16px_16px] bg-[color:var(--brand)] text-white"
-                              : "rounded-[4px_16px_16px_16px] border border-[color:var(--border)] bg-white"
-                          }`}
-                        >
-                          {waFormatKnoten(m.body)}
-                        </div>
-                        <div className={`mt-1 text-[10px] text-[color:var(--muted)] ${outbound ? "text-right" : ""}`}>
-                          {outbound && who ? `${who} · ` : ""}
-                          {formatDateTime(m.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="flex-1 overflow-y-auto px-3 pb-4 sm:px-6" data-messages>
+                <ChatVerlauf
+                  messages={active.messages}
+                  now={now}
+                  termine={terminZeiten}
+                  fuss={(m) => (m.direction === "outbound" && m.status === "failed" ? <NichtZugestellt /> : null)}
+                />
                 <StickToBottom count={active.messages.length} chatId={active.id} />
               </div>
 
@@ -620,43 +721,37 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   Der Kontakt hat „STOPP“ geschrieben. Er bekommt keine WhatsApp-Nachrichten mehr, auch nicht vom Assistenten. Schreibt er selbst wieder, können Sie antworten.
                 </p>
               ) : windowOpen ? (
-                <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-3 py-2.5">
+                <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-3 py-2.5 sm:px-5 sm:py-3">
                   <input type="hidden" name="conversationId" value={active.id} />
-                  <div className="flex items-end gap-2">
+                  <div className="flex items-end gap-2 rounded-[14px] border border-[color:var(--border-strong)] bg-white py-1.5 pl-4 pr-1.5 focus-within:border-[color:var(--brand)]">
                     <textarea
+                      id="antwort"
                       name="body"
                       rows={1}
                       required
                       placeholder="Nachricht schreiben"
-                      className="max-h-40 min-h-[40px] flex-1 resize-none rounded-[20px] border border-[color:var(--border)] px-4 py-2.5 text-sm focus:border-[color:var(--brand)] focus:outline-none [field-sizing:content]"
+                      aria-label="Nachricht schreiben"
+                      className="max-h-40 min-h-[36px] flex-1 resize-none bg-transparent py-1.5 text-[15px] leading-[1.5] focus:outline-none [field-sizing:content]"
                     />
                     <SubmitButton
                       pendingLabel="…"
-                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)] disabled:opacity-50"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)] disabled:opacity-50"
                     >
                       <SendHorizontal className="h-4 w-4" />
                     </SubmitButton>
                   </div>
-                  {active.botActive ? (
-                    <p className="mt-1 px-2 text-[11px] text-[color:var(--muted)]">Wenn Sie schreiben, pausiert der Assistent in diesem Chat.</p>
-                  ) : null}
+                  {active.botActive ? <p className="mt-1.5 px-1 text-xs text-[color:var(--muted)]">Wenn Sie schreiben, pausiert der Assistent in diesem Chat.</p> : null}
                 </form>
               ) : (
-                <div className="border-t border-[color:var(--border)] bg-white px-4 py-3">
-                  <p className="text-xs text-[color:var(--muted)]">
-                    Freies Schreiben geht erst wieder, wenn der Lead antwortet. Jetzt: anrufen oder nachfassen.
-                  </p>
+                <div id="nachfassen" className="border-t border-[color:var(--border)] bg-white px-4 py-3 sm:px-5">
+                  <p className="text-xs text-[color:var(--muted)]">Freies Schreiben geht erst wieder, wenn der Lead antwortet. Jetzt: anrufen oder nachfassen.</p>
                   {followup?.kind === "blocked" ? (
-                    <p className="mt-2 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">
-                      {followup.reason}
-                    </p>
+                    <p className="mt-2 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2 text-sm">{followup.reason}</p>
                   ) : followup?.kind === "ok" ? (
                     <form action={followupBuyerAction} className="mt-2 space-y-2">
                       <input type="hidden" name="conversationId" value={active.id} />
                       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 py-2">
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-                          Vorschau · {followup.label}
-                        </div>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">Vorschau · {followup.label}</div>
                         <p className="mt-1 whitespace-pre-wrap text-sm">{waFormatKnoten(followup.preview)}</p>
                       </div>
                       {followup.approved ? (
@@ -677,8 +772,20 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         </section>
 
         {active ? (
-          <aside className="hidden w-[300px] flex-none overflow-y-auto border-l border-[color:var(--border)] bg-white p-4 xl:block">
-            {leadInfo}
+          <aside className="hidden w-[296px] flex-none space-y-3 overflow-y-auto border-l border-[color:var(--border)] bg-white p-3.5 xl:block 2xl:w-[340px] 2xl:p-5" data-chat-seite>
+            {schritt && schritt.art !== "keiner" ? (
+              <section
+                className={cn("rounded-[var(--radius-lg)] border bg-gradient-to-b to-white p-4", schritt.dringend ? "border-rose-200 from-rose-50" : "border-[#dbe6ff] from-[#f5f8ff]")}
+                data-chat-schritt
+              >
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Nächster Schritt</h3>
+                <div className={cn("text-base font-semibold", schritt.dringend ? "text-rose-800" : "")}>{schritt.titel}</div>
+                {schritt.text ? <p className="mt-0.5 text-[13px] text-[color:var(--muted)]">{schritt.text}</p> : null}
+                <div className="mt-3">{schrittKnopf(schritt, false)}</div>
+                {erledigt ? <div className="mt-1 text-center">{erledigt}</div> : null}
+              </section>
+            ) : null}
+            {details}
           </aside>
         ) : null}
       </div>
@@ -686,22 +793,11 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   );
 }
 
-function InfoSection({ title, children }: { title: string; children: React.ReactNode }) {
+function Karte({ titel, children }: { titel: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--muted)]">
-        {title}
-      </h3>
-      <div className="space-y-1.5">{children}</div>
+    <section className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4">
+      <h3 className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">{titel}</h3>
+      {children}
     </section>
-  );
-}
-
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-[11px] text-[color:var(--muted)]">{label}</div>
-      <div className="text-sm">{children}</div>
-    </div>
   );
 }
