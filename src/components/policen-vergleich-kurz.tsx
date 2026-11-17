@@ -13,7 +13,7 @@ export async function PolicenVergleichKurz({ terminId, leadId, customerId, previ
   const k = await vergleichKurz(leadId, customerId).catch(() => null);
   if (!k) return null;
   const teile = [
-    k.vertraege ? `${k.vertraege} ${k.vertraege === 1 ? "Vertrag" : "Verträge"}` : "Wird ausgelesen",
+    k.vertraege ? `${k.vertraege} ${k.vertraege === 1 ? "Vertrag" : "Verträge"}` : `${k.offen} ${k.offen === 1 ? "Unterlage" : "Unterlagen"}, noch nicht ausgelesen`,
     k.monat != null ? `${euro(k.monat)} im Monat` : null,
   ].filter(Boolean);
   const auffaellig = k.kuendigungen + k.hinweise;

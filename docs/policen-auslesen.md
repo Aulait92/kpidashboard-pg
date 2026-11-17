@@ -22,8 +22,9 @@ Stand: 18.11.2026 (Ole). Code: `src/lib/policen/auslesen/`. Vorgaben: Rechtsprü
    `POLICEN_AUSLESEN_ANBIETER=bedrock-eu` mit `KI_EU_AWS_*`. Notschalter `POLICEN_AUSLESEN_AN=0`. Nicht pausiert (401).
 2. Kunde freigeschaltet: `POLICEN_AUSLESEN_KUNDEN` leer (alle) oder enthält die Kunden-ID.
 3. **Einwilligung mit KI** (K1): letzter Eintrag im Nachweis `PolicenNachweis` (Policen per WhatsApp,
-   `lib/policen/bitte.ts`) zum Lead ist `art = einwilligung`, `ki = true`, `textVersion` im Format `a-JJJJ-MM-TT` ab
-   `a-2026-11-17`. „Ohne KI“, Ablehnung, Widerruf oder alte Einwilligungen: nie. Fehlt die Tabelle: nie.
+   `lib/policen/bitte.ts`) zum Lead ist `art = einwilligung`, `ki = true`, Textversion ab `2026-11-18.s1` bzw.
+   `.g1` (`konfig.ts textVersionKi`). PKV, BU und Leben nur mit der Fassung, die Gesundheitsangaben nennt (`.gN`).
+   Ablehnung, Widerruf, alte Einwilligungen oder fehlende Tabelle: nie.
 4. **Sparte vorab, ohne KI** (K2): Wahl des Vermittlers, sonst Sparte der Unterlage (Dateiname/Begleittext) und
    Stichworte auf Seite 1 der PDF-Textebene (lokal mit pdf.js). Widerspruch, mehrere Sparten oder unklar: nicht
    auslesen, der Vermittler wählt. Meldet die KI danach eine andere Sparte: nichts übernommen.

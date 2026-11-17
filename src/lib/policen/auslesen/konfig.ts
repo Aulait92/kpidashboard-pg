@@ -2,8 +2,9 @@
 // und ohne SDK, damit Regeln, Diagnose und Tests es ohne Netz nutzen können.
 //
 // Vorgaben der Rechtsprüfung (docs/recht/policen-whatsapp-gesundheitsdaten.md, K1 bis K8) und Freigabe Ole 18.11.2026:
-//   K1  Auslesen nur mit Einwilligung „Einverstanden“ (ki = true) in der KI-Textversion AUSLESEN_MIN_TEXTVERSION oder
-//       neuer (PolicenNachweis, gebaut von Policen per WhatsApp); alte Einwilligungen und „ohne KI“ nie.
+//   K1  Auslesen nur mit Einwilligung „Einverstanden“ (ki = true) in einer KI-Textversion (textVersionKi, ab
+//       2026-11-18); PolicenNachweis aus Policen per WhatsApp. Alte Einwilligungen und „ohne KI“ nie. PKV/BU/Leben nur,
+//       wenn die Fassung Gesundheitsangaben nennt („.gN“).
 //   K2  Sach (Haftpflicht, Hausrat, Kfz, Wohngebäude, Rechtsschutz): an, sobald der Schlüssel gesetzt ist.
 //       Kranken (PKV), BU und Leben: erst, wenn der Nachweis „keine Speicherung“ im Admin hinterlegt ist
 //       (PolicenAuslesenEinstellung.zdrNachweisAm), dann automatisch.
@@ -28,16 +29,23 @@ type Env = Record<string, string | undefined>;
 const aus = (v: string | undefined) => /^(0|false|nein|aus|off)$/i.test((v ?? "").trim());
 
 /**
- * Älteste Textversion der Einwilligung, die das KI-Auslesen abdeckt (Text (a) der Rechtsprüfung, lib/policen/bitte.ts
- * EINWILLIGUNG_TEXT_VERSION, Format „a-JJJJ-MM-TT“). Neuere Versionen im selben Format gelten auch.
+ * Textversionen der Einwilligung, die das KI-Auslesen abdecken (lib/policen/bitte.ts EINWILLIGUNG_TEXT_VERSION):
+ *   „JJJJ-MM-TT.gN“ (mit Gesundheitsangaben) bzw. „JJJJ-MM-TT.sN“ (nur Sach) ab AUSLESEN_AB_DATUM, dazu Text (a) der
+ *   Rechtsprüfung „a-JJJJ-MM-TT“ ab 2026-11-17 (nennt Gesundheitsangaben). Neuere Versionen im selben Format gelten auch.
  */
-export const AUSLESEN_MIN_TEXTVERSION = "a-2026-11-17";
+export const AUSLESEN_AB_DATUM = "2026-11-18";
+export const AUSLESEN_MIN_TEXTVERSION = `${AUSLESEN_AB_DATUM}.s1`;
 
-/** Deckt diese Textversion das KI-Auslesen ab? Nur Format „a-JJJJ-MM-TT“ ab AUSLESEN_MIN_TEXTVERSION. */
-export function textVersionDecktKi(v: string | null | undefined): boolean {
+/** Deckt diese Textversion das KI-Auslesen ab, und auch Unterlagen mit Gesundheitsangaben? null = gar nicht. */
+export function textVersionKi(v: string | null | undefined): { gesundheit: boolean } | null {
   const x = (v ?? "").trim();
-  return /^a-\d{4}-\d{2}-\d{2}(\.\d+)?$/.test(x) && x >= AUSLESEN_MIN_TEXTVERSION;
+  const a = /^a-(\d{4}-\d{2}-\d{2})(\.\d+)?$/.exec(x);
+  if (a) return a[1] >= "2026-11-17" ? { gesundheit: true } : null;
+  const m = /^(\d{4}-\d{2}-\d{2})\.([gs])(\d+)$/.exec(x);
+  if (!m || m[1] < AUSLESEN_AB_DATUM) return null;
+  return { gesundheit: m[2] === "g" };
 }
+export const textVersionDecktKi = (v: string | null | undefined) => textVersionKi(v) !== null;
 
 export const STANDARD_MAX_PRO_TAG = 200;
 export const MAX_JE_LEAD = 15;

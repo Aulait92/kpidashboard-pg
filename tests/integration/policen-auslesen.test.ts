@@ -136,7 +136,7 @@ describe("Policen auslesen", () => {
     const doc = await prisma.leadDocument.create({
       data: { customerId, leadId: lead.id, status: "gespeichert", mimeType: o.mime ?? "application/pdf", fileName: "Julia Schneider Police.pdf", size: o.data.length, data: encryptBytes(o.data), sparte: o.sparte ?? null },
     });
-    if (o.nachweis !== null) await nachweis(lead.id, phone, o.nachweis ?? { ki: true, version: "a-2026-11-18" });
+    if (o.nachweis !== null) await nachweis(lead.id, phone, o.nachweis ?? { ki: true, version: "2026-11-18.g1" });
     return { lead, doc, phone };
   }
   async function nachweis(leadId: string, phone: string, n: { ki: boolean | null; version: string; art?: string }) {
@@ -253,6 +253,10 @@ describe("Policen auslesen", () => {
     expect(oa.calls).toHaveLength(0);
 
     await setzeZdrNachweis({ am: new Date("2026-11-18T00:00:00Z"), referenz: "OpenAI ZDR Test", userId: null });
+    // Einwilligung nur in der Fassung ohne Gesundheitsangaben („.s1“): PKV trotzdem nicht
+    const nurSach = await leadMitUnterlage({ data, sparte: null, nachweis: { ki: true, version: "2026-11-18.s1" } });
+    expect(await liesUnterlageAus(nurSach.doc.id)).toEqual({ status: "gesperrt" });
+    expect(oa.calls).toHaveLength(0);
     expect(await liesUnterlageAus(a.doc.id)).toEqual({ status: "ausgelesen" });
     expect(oa.calls).toHaveLength(1);
     const z = await prisma.policenAuszug.findUniqueOrThrow({ where: { documentId: a.doc.id } });

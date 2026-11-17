@@ -29,11 +29,12 @@ import {
   schluesselFinger,
   ABLAUF_HINWEIS_TAGE,
   tageBisAblauf,
-  textVersionDecktKi,
+  textVersionKi,
 } from "@/lib/policen/auslesen/konfig";
 import {
   bereinige,
   felderAus,
+  GESUNDHEITS_SPARTEN,
   isAuslesenSparte,
   korrigiere,
   monatsbetrag,
@@ -74,16 +75,16 @@ export async function pausiert(): Promise<boolean> {
  * letzte Eintrag zu Einwilligung, Ablehnung oder Widerruf. Fehlt die Tabelle (Policen per WhatsApp noch nicht
  * eingespielt): keine Einwilligung.
  */
-export async function kiEinwilligung(leadId: string): Promise<boolean> {
+export async function kiEinwilligung(leadId: string): Promise<{ gesundheit: boolean } | null> {
   try {
     const rows = await prisma.$queryRaw<{ art: string; ki: boolean | null; textVersion: string | null }[]>`
       SELECT "art", "ki", "textVersion" FROM "PolicenNachweis"
       WHERE "leadId" = ${leadId} AND "art" IN ('einwilligung', 'abgelehnt', 'widerruf')
       ORDER BY "createdAt" DESC LIMIT 1`;
     const r = rows[0];
-    return !!r && r.art === "einwilligung" && r.ki === true && textVersionDecktKi(r.textVersion);
+    return r && r.art === "einwilligung" && r.ki === true ? textVersionKi(r.textVersion) : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -214,7 +215,10 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
     await setze({ status: "sparte_offen", sparte: null, sparteQuelle: null });
     return { status: "sparte_offen" };
   }
-  if (!freigegebeneSparten({ zdr: await zdrHinterlegt() }).includes(vorab.sparte)) {
+  // PKV/BU/Leben: Nachweis „keine Speicherung“ beim Anbieter und eine Einwilligung, die Gesundheitsangaben nennt
+  const einwilligung = await kiEinwilligung(doc.leadId);
+  const gesundheitOk = !GESUNDHEITS_SPARTEN.includes(vorab.sparte) || !!einwilligung?.gesundheit;
+  if (!gesundheitOk || !freigegebeneSparten({ zdr: await zdrHinterlegt() }).includes(vorab.sparte)) {
     await setze({ status: "gesperrt", sparte: vorab.sparte, sparteQuelle: vorab.quelle });
     return { status: "gesperrt" };
   }
