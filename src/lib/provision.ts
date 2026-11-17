@@ -851,17 +851,21 @@ export type TrailContract = {
 /**
  * Bestandsprovision eines Vertrags in den nächsten `years` Jahren ab `now` (je Jahr ein Betrag),
  * mit Storno pro Jahr. Vertreter (trailFromYear2): erst ab dem ersten Jahrestag. Gekündigte Verträge
- * nur bis zum Kündigungsdatum (ohne Storno-Annahme, das Ende ist ja bekannt).
+ * nur bis zum Kündigungsdatum (ohne Storno-Annahme, das Ende ist ja bekannt). Storno ab heute (wie
+ * cohortFutureTrail): Ein laufender Vertrag hat die Jahre bis heute schon überstanden; künftige
+ * Verträge (bestandGrowth) ab ihrem Abschluss.
  */
 export function trailNextYears(c: TrailContract, now: Date, years = BESTAND_JAHRE, storno = STORNO_PRO_JAHR): number[] {
   const q = c.storno ?? storno;
   const age0 = (now.getTime() - c.signedAt.getTime()) / YEAR_MS;
   const ageEnd = c.endsAt ? (c.endsAt.getTime() - c.signedAt.getTime()) / YEAR_MS : Infinity;
+  // Storno zählt ab heute bzw. ab Abschluss, wenn der in der Zukunft liegt (Alter in Jahren)
+  const stornoFrom = Math.max(0, age0);
   const out: number[] = [];
   for (let j = 0; j < years; j++) {
     const a = age0 + j;
     const share = payingShare(a, c.trailFromYear2, ageEnd);
-    const survive = c.endsAt ? 1 : Math.pow(1 - q, Math.max(0, a + 0.5));
+    const survive = c.endsAt ? 1 : Math.pow(1 - q, Math.max(0, a + 0.5 - stornoFrom));
     out.push(c.trailPerYear * share * survive);
   }
   return out;

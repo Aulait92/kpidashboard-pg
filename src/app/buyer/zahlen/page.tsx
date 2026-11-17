@@ -6,8 +6,6 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
 import { WerbungKarten } from "@/app/buyer/konto/werbung-karten";
-import { loadBestandVisible } from "@/lib/bestand/sichtbar-server";
-import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
 import { FunnelHero } from "@/components/funnel-hero";
 import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
@@ -30,10 +28,9 @@ import { MonatsberichteKunde } from "@/components/monatsberichte-kunde";
 // Kunden sehen den Garantie-Stand nicht mehr, die Prüfung läuft nur im Admin. Wieder einbauen mit
 //   import { GarantieKundeCard } from "@/components/garantie-kunde-card";  und  <GarantieKundeCard customerId={session.customerId} />
 import { nowMs } from "@/lib/now";
-import { bestandOf, contractsPerCustomer, ertragForRange, loadErtragData } from "@/lib/ertrag";
+import { bestandOf, contractsPerCustomer, ertragForRange, loadErtragData, provisionAusText } from "@/lib/ertrag";
 import { loadGewinnMitBestand } from "@/lib/gewinn-modus";
 import { GewinnModusSwitch } from "@/components/gewinn-modus";
-import { STORNO_MIN_VERTRAEGE } from "@/lib/provision";
 import { originWhere } from "@/lib/lead-herkunft";
 import { earlyHint, pickTips } from "@/lib/zahlen-tipps";
 import { loadTipSignals, monthsSinceStart } from "@/lib/zahlen-tipps-server";
@@ -74,7 +71,8 @@ export default async function BuyerPage({
   const sp = await searchParams;
   const { key: rangeKey, range } = parseRangeFromSearchParams(sp);
   const renderedAt = nowMs();
-
+  // Bestandskunden-Modul: Link, Kampagnen-Zahlen und Hinweise nur, wenn es freigeschaltet ist (Ole, 17.11.2026)
+  const bestandAn = !!(await prisma.customer.findUnique({ where: { id: session.customerId }, select: { existingCustomersEnabled: true } }))?.existingCustomersEnabled;
 
   // Vor dem ersten Lead: Hinweis statt Nullen (Ole, 15.11.2026)
   if (await nochOhneLeads(session.customerId)) {
@@ -115,7 +113,7 @@ export default async function BuyerPage({
           <a href="#produkte" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Produkte</a>
           <a href="#pause" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Pause</a>
           <a href="#monatsberichte" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline" data-sprung-monatsberichte>Monatsberichte</a>
-          {(await loadBestandVisible(session.customerId, { preview: session.preview })) ? (
+          {bestandAn ? (
             <a href="/buyer/bestand" className="font-medium text-[color:var(--brand)] hover:underline">Bestandskunden</a>
           ) : null}
           {(await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } })) > 0 ? (
@@ -136,6 +134,7 @@ export default async function BuyerPage({
             customerId={session.customerId}
             range={range}
             params={sp}
+            bestandAn={bestandAn}
           />
           <TeamStats customerId={session.customerId} range={range} mitBestand={await loadGewinnMitBestand(session)} />
           <div className="mt-6">
@@ -168,10 +167,13 @@ async function BuyerDashboardBody({
   customerId,
   range,
   params,
+  bestandAn,
 }: {
   customerId: string;
   range: { from: Date; to: Date };
   params: Record<string, string | undefined>;
+  /** Bestandskunden-Modul freigeschaltet: sonst keine Bestandskampagnen und keine Kundenliste erwähnen. */
+  bestandAn: boolean;
 }) {
   const prev = previousRange(range);
   const now = new Date();
@@ -232,7 +234,7 @@ async function BuyerDashboardBody({
   const extras = [
     empfClosed > 0 ? `+ ${formatNumber(empfClosed)} ${empfClosed === 1 ? "Abschluss" : "Abschlüsse"} aus Empfehlungen` : null,
     // Bestandskampagnen: Abschlüsse je Vertrag (60 Tage nach dem Anschreiben, letzte Kampagne zählt), wie in „Kosten & Ertrag“
-    prov.byOrigin.bestand.contracts > 0 ? `+ ${formatNumber(prov.byOrigin.bestand.contracts)} aus Bestandskampagnen` : bestandClosed > 0 ? `+ ${formatNumber(bestandClosed)} aus Bestandskampagnen` : null,
+    !bestandAn ? null : prov.byOrigin.bestand.contracts > 0 ? `+ ${formatNumber(prov.byOrigin.bestand.contracts)} aus Bestandskampagnen` : bestandClosed > 0 ? `+ ${formatNumber(bestandClosed)} aus Bestandskampagnen` : null,
   ].filter(Boolean);
   const breakdown: [string, number][] = [
     [makler ? "Courtage 1. Jahr" : "Abschlussprovision", prov.firstYear + prov.chargeback],
@@ -247,7 +249,8 @@ async function BuyerDashboardBody({
   // Rückbelastungen gekündigter Verträge mindern die Provision im Monat der Kündigung (eigene Zeile)
   if (prov.chargeback > 0) breakdown.splice(1, 0, ["Rückbelastung (gekündigte Verträge)", -prov.chargeback]);
   // „Inkl. Bestand“: künftige Bestandsprovision der Verträge dieses Zeitraums (Kohorte, 5 Jahre, Prognose)
-  if (mitBestand) breakdown.push([`künftige ${makler ? "Bestandscourtage" : "Bestandsprovision"} (5 Jahre, Prognose)`, prov.futureTrail]);
+  const bestandWort = makler ? "Bestandscourtage" : "Bestandsprovision";
+  if (mitBestand) breakdown.push(["Bestand dieser Abschlüsse (5 Jahre)", prov.futureTrail]);
   const gewinnShown = mitBestand ? cur.gewinnMitBestand : cur.gewinn;
   const gewinnBefore = mitBestand ? before.gewinnMitBestand : before.gewinn;
   const gewinnLabel = mitBestand ? "ergibt Gewinn mit künftigem Bestand" : "ergibt Gewinn";
@@ -258,7 +261,7 @@ async function BuyerDashboardBody({
       ? `davon Cross-Selling: ${formatNumber(prov.crossSell.contracts)} ${prov.crossSell.contracts === 1 ? "Vertrag" : "Verträge"}, ${formatEUR(prov.crossSell.amount)}`
       : null,
     prov.byOrigin.empfehlung.amount > 0 ? `davon aus Empfehlungen: ${formatEUR(prov.byOrigin.empfehlung.amount)}` : null,
-    prov.byOrigin.bestand.contracts > 0
+    bestandAn && prov.byOrigin.bestand.contracts > 0
       ? `aus Bestandskampagnen: ${formatNumber(prov.byOrigin.bestand.contracts)} ${prov.byOrigin.bestand.contracts === 1 ? "Abschluss" : "Abschlüsse"}, ${formatEUR(prov.byOrigin.bestand.amount)}`
       : null,
     perCustomer != null && perCustomer > 1 ? `Verträge pro Kunde: ${perCustomer.toLocaleString("de-DE")}` : null,
@@ -266,6 +269,7 @@ async function BuyerDashboardBody({
     prov.chargeback > 0 ? `abzüglich Rückbelastung: ${formatEUR(prov.chargeback)}` : null,
   ].filter((x): x is string => !!x);
   const perClose = k.closedLeads > 0 ? cur.costs / k.closedLeads : null;
+  const provAus = provisionAusText(prov, makler);
 
   return (
     <div className="mt-6 space-y-6">
@@ -302,7 +306,7 @@ async function BuyerDashboardBody({
             tone="positive"
             hint={
               <>
-                aus {formatNumber(prov.leads)} {prov.leads === 1 ? "Abschluss" : "Abschlüssen"}, {makler ? "im 1. Jahr" : "einmalig"}
+                <span data-prov-aus>{provAus}</span>
                 {provSub.length ? (
                   <Info>
                     {provSub.map((t) => (
@@ -322,26 +326,25 @@ async function BuyerDashboardBody({
             tone={bestand.perYear > 0 ? "positive" : "neutral"}
             hint={
               <>
-                <span className="font-medium text-[color:var(--foreground)]">in 5 Jahren: {formatEUR(bestand.inYears)}</span>
+                <span className="font-medium text-[color:var(--foreground)]">in 5 Jahren (nach Storno): {formatEUR(bestand.inYears)}</span>
                 <Info>
                   <span className="block">
-                    aus {formatNumber(bestand.contracts)} {bestand.contracts === 1 ? "Vertrag" : "Verträgen"}, {bestand.fromYear2 ? "ab dem 2. Jahr" : "ab sofort"}
+                    {formatNumber(bestand.contracts)} {bestand.contracts === 1 ? "Vertrag" : "Verträge"}
+                    {prov.trailPerYear > 0 ? ` · davon + ${formatEUR(prov.trailPerYear)} pro Jahr aus diesem Zeitraum` : ""}
                   </span>
-                  {prov.trailPerYear > 0 ? <span className="block">+ {formatEUR(prov.trailPerYear)} pro Jahr aus diesem Zeitraum</span> : null}
-                  <span className="block" data-storno-real>
-                    {bestand.real.quote != null
-                      ? `Tatsächliche Stornoquote: ${(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} % pro Jahr`
-                      : `Tatsächliche Stornoquote: zu wenig Daten (ab ${STORNO_MIN_VERTRAEGE} Verträgen)`}
-                  </span>
-                  <span className="mt-1 block">
-                  {makler ? "Bestandscourtage" : "Bestandsprovision"} aus allen laufenden Verträgen seit Start, mit Ihren Sätzen aus Meine Provisionen
-                  {bestand.fromYear2 ? " (als Vertreter bei Sach ab dem 2. Vertragsjahr)" : ""}. Gerechnet mit dem eingetragenen Beitrag, ohne Angabe
-                  mit dem Standardbeitrag der Sparte. Gekündigte bzw. stornierte Verträge zählen ab dem Kündigungsdatum nicht mehr. Für „in 5 Jahren“
-                  nehmen wir an, dass jedes Jahr {stornoPct} der Verträge wegfallen ({bestand.stornoCustom ? "Ihre Stornoquote" : "Standard"},{" "}
-                  <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">
-                    ändern
-                  </a>
-                  ). Neue Abschlüsse sind nicht eingerechnet. Hochgeladene Bestandsverträge (Kundenliste) zählen nicht dazu, nur Abschlüsse in der App.
+                  {bestand.real.quote != null ? (
+                    <span className="block" data-storno-real>
+                      Tatsächliche Stornoquote: {(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} % pro Jahr
+                    </span>
+                  ) : null}
+                  <span className="mt-1 block space-y-0.5">
+                    <Punkt k="Pro Jahr:">
+                      {bestandWort} aller laufenden Verträge, die Sie über die App abgeschlossen haben (Ihre Sätze aus Meine Provisionen).
+                    </Punkt>
+                    <Punkt k="In 5 Jahren:">
+                      geschätzt, wenn jedes Jahr {stornoPct} der Verträge wegfallen (<StornoLink />). Neue Abschlüsse sind nicht eingerechnet.
+                    </Punkt>
+                    {bestandAn ? <Punkt k="Nicht enthalten:">Ihre hochgeladene Kundenliste.</Punkt> : null}
                   </span>
                 </Info>
               </>
@@ -364,14 +367,13 @@ async function BuyerDashboardBody({
                 <>
                   {mitBestand ? (
                     <span className="font-medium text-[color:var(--foreground)]" data-kuenftiger-bestand>
-                      davon künftige {makler ? "Bestandscourtage" : "Bestandsprovision"}: {formatEUR(prov.futureTrail)} (5 Jahre)
+                      davon Bestand aus Abschlüssen dieses Zeitraums (5 Jahre): {formatEUR(prov.futureTrail)}
                     </span>
                   ) : (
                     "Provision minus Lead-Kosten und Betreuung"
                   )}
                   <Info>
-                    {mitBestand ? <span className="block">Provision minus Lead-Kosten und Betreuung</span> : null}
-                    {!mitBestand && prov.futureTrail > 0 ? <span className="block">mit künftigem Bestand: {formatEUR(cur.gewinnMitBestand)}</span> : null}
+                    {!mitBestand && prov.futureTrail > 0 ? <span className="block">Inkl. Bestand: {formatEUR(cur.gewinnMitBestand)}</span> : null}
                     <span className="mt-1 block space-y-0.5">
                       {breakdown.map(([l, v]) => (
                         <span key={l} className="flex justify-between gap-3 tabular-nums">
@@ -384,19 +386,17 @@ async function BuyerDashboardBody({
                         <span>{formatEUR(gewinnShown)}</span>
                       </span>
                     </span>
-                    <span className="mt-1 block">
-                      Betreuung &amp; Software inklusive USt., weil Versicherungsvermittler meist keine Vorsteuer ziehen. Die Einrichtung verteilen
-                      wir über die Mindestlaufzeit.{a.baseInLeadCosts ? " Der Retainer steckt schon in den Lead-Kosten." : ""}
-                    </span>
-                    <span className="mt-1 block">
-                    „Inkl. Bestand“ (Standard) rechnet zu dem, was im Zeitraum verdient ist, die künftige{" "}
-                    {makler ? "Bestandscourtage" : "Bestandsprovision"} der Verträge dazu, die in diesem Zeitraum abgeschlossen wurden, über ihre ersten
-                    5 Jahre ({makler ? "das 1. Jahr steckt schon in der Courtage" : "als Vertreter bei Sach ab dem 2. Jahr"}). Das ist eine Prognose: mit
-                    Ihrer Stornoquote von {stornoPct} pro Jahr (
-                    <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">
-                      ändern
-                    </a>
-                    ), ohne Abzinsung, gekündigte Verträge nur bis zum Kündigungsdatum. Ihr bisheriger Bestand zählt hier nicht mit: Hochgeladene Bestandsverträge zählen nicht zum Gewinn, nur neue Abschlüsse, auch aus Bestandskampagnen. „Nur jetzt“ zählt nur, was im Zeitraum verdient ist.
+                    <span className="mt-1 block space-y-0.5" data-gewinn-erklaerung>
+                      <Punkt k="Gewinn">
+                        = Provision aus Ihren Abschlüssen minus Ihre Kosten (Leads, Betreuung und Software inkl. USt., Einrichtung verteilt über
+                        die Laufzeit).{a.baseInLeadCosts ? " Der Retainer steckt in den Lead-Kosten." : ""}
+                      </Punkt>
+                      <Punkt k="Inkl. Bestand:">
+                        Für die Verträge, die Sie in diesem Zeitraum abgeschlossen haben, rechnen wir die {bestandWort} der nächsten 5 Jahre
+                        dazu. Geschätzt, mit Ihrer Stornoquote von {stornoPct} pro Jahr (<StornoLink />).
+                      </Punkt>
+                      <Punkt k="Nur jetzt:">nur, was im Zeitraum schon verdient ist.</Punkt>
+                      <Punkt k="Nicht enthalten:">Ihr bisheriger Bestand.</Punkt>
                     </span>
                   </Info>
                 </>
@@ -438,13 +438,30 @@ async function BuyerDashboardBody({
       {bestand.growth.some((g) => g.total > 0) ? (
         <BestandGrowthSection
           points={bestand.growth}
-          intro={`${makler ? "Bestandscourtage" : "Bestandsprovision"} pro Jahr, wenn Sie im aktuellen Tempo weitermachen: ${bestand.perMonth.toLocaleString("de-DE")} ${bestand.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat wie in den letzten 3 Monaten, ${Math.round(bestand.storno * 100)} % Storno pro Jahr.`}
+          intro={`${bestandWort} pro Jahr, wenn Sie so weitermachen wie in den letzten 3 Monaten (${bestand.perMonth.toLocaleString("de-DE")} ${bestand.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat), mit ${stornoPct} Storno pro Jahr.`}
         />
       ) : null}
 
       {/* BuyerComparison/Leaderboard temporär ausgeblendet —
           wird wieder eingebaut, sobald der Vergleich freigegeben ist. */}
     </div>
+  );
+}
+
+/** Stichpunkt im Infotext: fetter Begriff, dann Erklärung (hängender Einzug). */
+function Punkt({ k, children }: { k: string; children: React.ReactNode }) {
+  return (
+    <span className="block pl-2.5 -indent-2.5">
+      • <strong className="font-semibold text-[color:var(--foreground)]">{k}</strong> {children}
+    </span>
+  );
+}
+
+function StornoLink() {
+  return (
+    <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">
+      ändern
+    </a>
   );
 }
 

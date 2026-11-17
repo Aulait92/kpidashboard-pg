@@ -6,6 +6,7 @@
 // pickTips ist rein (getestet); Daten lädt lib/zahlen-tipps-server.
 
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
+import { CROSS_SELL_HREF } from "@/lib/cross-sell-offen";
 /**
  * Tipp „Kollegen empfehlen“ zeigen? Ole bewirbt das Programm vorerst nicht aktiv (14.11.2026):
  * Standard aus. Gilt auch für den Monatsbericht, sobald er Tipps zeigt.
@@ -48,9 +49,12 @@ export type TipSignals = {
   /** Eigener Bestand importiert (nicht nur aus Abschlüssen übernommen). */
   bestandImported: boolean;
   bestandCampaigns: number;
-  /** Bestandskunden-Modul für diesen Kunden sichtbar (lib/bestand/sichtbar.ts); ohne Angabe kein Bestand-Tipp. */
-  bestandVisible?: boolean;
-  /** Kunden mit Abschluss seit 3 Wochen ohne weiteren Vertrag. */
+  /**
+   * Bestandskunden-Modul beim Kunden freigeschaltet (Customer.existingCustomersEnabled); ohne Angabe kein Bestand-Tipp.
+   * Nur sichtbar (Schalter, Vorschau) reicht nicht (Ole, 17.11.2026).
+   */
+  bestandEnabled?: boolean;
+  /** Kunden mit Abschluss seit 3 Wochen ohne weiteren Vertrag (lib/cross-sell-offen, gleich dem Listen-Filter). */
   withoutCrossSell: number;
   /** Abschlüsse ohne eingetragenen Beitrag. */
   missingPremium: number;
@@ -111,7 +115,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       key: "cross_sell",
       title: "Weiteres Produkt anbieten",
       text: `${s.withoutCrossSell} ${s.withoutCrossSell === 1 ? "Kunde hat" : "Kunden haben"} noch kein weiteres Produkt angeboten bekommen. Ein zweiter Vertrag kostet keinen neuen Lead.`,
-      href: "/buyer/leads",
+      href: CROSS_SELL_HREF,
       cta: "Kunden ansehen",
       impact: s.withoutCrossSell * 0.15 * prov,
     });
@@ -150,7 +154,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       impact: stale * 0.1 * Math.max(closing, 0.05) * prov,
     });
   }
-  if (s.bestandVisible === true && (!s.bestandImported || s.bestandCampaigns === 0)) {
+  if (s.bestandEnabled === true && (!s.bestandImported || s.bestandCampaigns === 0)) {
     out.push({
       key: "bestand",
       title: "Bestand nutzen",
