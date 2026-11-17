@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "katze-kranken",
+  "produkt": "Tierversicherung Katze: Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Alle Leistungen der OP-Versicherung",
+    "Wartezeit Unfall 5 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenversicherung Katze",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "1.000/5.000 €/unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "Zuschuss 100 bis 150 €",
+        "nachbehandlung": "unbegrenzt",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/tiere/tierversicherung.html"
+  ],
+  "offen": [
+    "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (1.000 €, 5.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
+    "Baustein Gesundheit PLUS: 500 € im Jahr u. a. für Impfungen, Zahnreinigung, Physiotherapie, 25 % Selbstbeteiligung je Rechnung.",
+    "Zahnbehandlung als eigene Zahnversicherung (Tarif 3) auf debeka.de; ob sie in der Krankenversicherung enthalten ist, nennt die Seite nicht."
+  ]
+}

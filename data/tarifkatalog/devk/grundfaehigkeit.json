@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kinder ab 10 Jahren",
+    "Wechsel in BU ohne neue Prüfung",
+    "Verlängerungsoption"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitsversicherung Basis-Schutz",
+      "kurz": "Basis-Schutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "14",
+        "prognose": "6 Monate",
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/beruf/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitsversicherung mit Grundfähigkeiten Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "22",
+        "prognose": "6 Monate",
+        "psyche": "geistige Fähigkeiten",
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/beruf/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/beruf/grundfaehigkeitsversicherung/",
+    "https://medien.devk.de/assets/content/download/produkte/altersvorsorge---leben/devk-produktinfo-grundfaehigkeitsversicherung-07706-002-2026-02.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktseite devk.de und Produktinformation 07706 (02/2026). Plus ist der Zusatzbaustein „Grundfähigkeiten Plus“ zum Basis-Schutz.",
+    "Basis-Schutz: Arme, Bücken, Gehen, Greifen und Halten, Hand, Heben und Tragen, Hören, Knien, Pflegebedürftigkeit, Sehen, Sitzen, Sprechen, Stehen, Treppensteigen.",
+    "Plus zusätzlich: Autofahren, eigenverantwortliches Handeln, Fingerfertigkeit, geistige Fähigkeiten, Gleichgewichtssinn, Infektionsschutz (Tätigkeitsverbot), Orientierung, Schreiben.",
+    "Psychische Erkrankungen als eigener Leistungsauslöser nicht genannt; im Basis-Schutz nur über Pflegebedürftigkeit.",
+    "Schwere Krankheiten (Krebs, Herzinfarkt, Schlaganfall) zusätzlich absicherbar. Weltweiter Schutz nicht genannt."
+  ]
+}

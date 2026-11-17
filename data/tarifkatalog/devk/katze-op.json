@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "katze-op",
+  "produkt": "Tierkrankenversicherung Katze: OP-Versicherung (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Ab 1. Lebenstag, ohne Höchstalter",
+    "Wartezeit Unfall 5 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-OP-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "1.000/5.000 €/unbegrenzt",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "Zuschuss 100 bis 150 €",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/tiere/"
+  ],
+  "offen": [
+    "DEVK bietet die Tierkrankenversicherungen über den Kooperationspartner Uelzener an (Risikoträger Uelzener); Tarifangaben aus der Leistungstabelle auf devk.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (1.000 €, 5.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
+    "Kastrationszuschuss Kater 100 €, Katze 150 €. Zusatzbaustein Gesundheit PLUS bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung.",
+    "Dauer der Nachbehandlung in der OP-Versicherung nicht lesbar; Beitrag steigt jährlich um 9 %."
+  ]
+}

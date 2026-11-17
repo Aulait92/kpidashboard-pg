@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "basisrente",
+  "produkt": "Rürup-Rente (Basisrente)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente ab 62",
+    "Beiträge voll absetzbar",
+    "Kein Kapitalwahlrecht"
+  ],
+  "tarife": [
+    {
+      "name": "BasisVorsorge GarantieRente Invest",
+      "kurz": "GarantieRente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "bis 12 Zuzahlungen/Jahr",
+        "hinterbliebene": "Rente an Partner, Kinder",
+        "garantie": "50 bis 90 % wählbar",
+        "anlage": "Garantie und Fonds"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisVorsorge-Fonds",
+      "kurz": "Fonds",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "bis 12 Zuzahlungen/Jahr",
+        "hinterbliebene": "Rente an Partner, Kinder",
+        "anlage": "Fonds und ETFs"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/ruerup-rente/"
+  ],
+  "offen": [
+    "Quelle: Produktseite barmeniagothaer.de; zwei Varianten, keine Leistungsstufen.",
+    "Beitragsgarantie der GarantieRente Invest wählbar 50 bis 90 %; beim BasisVorsorge-Fonds keine Garantie genannt.",
+    "Garantierter Rentenfaktor, Effektivkosten und Beitragspause nicht genannt (Muster-Produktinformationsblätter auf der Seite).",
+    "Ergänzungszahlungen ab 500 €. Hinterbliebene: Ehe- oder eingetragene Lebenspartner und Kinder bis 25 Jahre.",
+    "Zusatzleistung Beitragsbefreiung bei Berufsunfähigkeit."
+  ]
+}

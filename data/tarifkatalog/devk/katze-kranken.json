@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "katze-kranken",
+  "produkt": "Tierkrankenversicherung Katze (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Alle Leistungen der OP-Versicherung",
+    "Wartezeit Unfall 5 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-Tierkrankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "1.000/5.000 €/unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "optional, bis 500 €",
+        "zahn": "ja, ohne Zahnreinigung",
+        "kastration": "Zuschuss 100 bis 150 €",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/tiere/"
+  ],
+  "offen": [
+    "DEVK bietet die Tierkrankenversicherungen über den Kooperationspartner Uelzener an (Risikoträger Uelzener); Tarifangaben aus der Leistungstabelle auf devk.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (1.000 €, 5.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
+    "Enthält alle Leistungen der Katzen-Zahnversicherung außer der vorbeugenden Zahnreinigung.",
+    "Zusatzbaustein Gesundheit PLUS bis 500 € im Jahr (u. a. Impfungen, Zahnreinigung, Physiotherapie) mit 25 % Selbstbeteiligung je Rechnung; Beitrag steigt jährlich um 9 %."
+  ]
+}

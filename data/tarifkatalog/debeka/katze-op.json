@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "katze-op",
+  "produkt": "Tierversicherung Katze: OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Jede Katze versicherbar",
+    "Wartezeit Unfall 5 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "OP-Versicherung Katze",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "1.000/5.000 €/unbegrenzt",
+        "nachbehandlung": "bis 42 Tage",
+        "kastration": "Zuschuss 100 bis 150 €",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/tiere/tierversicherung.html"
+  ],
+  "offen": [
+    "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (1.000 €, 5.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
+    "Kastrationszuschuss Kater 100 €, Katze 150 €.",
+    "Vorsorge (Baustein Gesundheit PLUS) auf debeka.de nur bei der Krankenversicherung genannt."
+  ]
+}

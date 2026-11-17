@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Schutz bis Alter 102",
+    "Garantiezins und Überschüsse",
+    "Beitragsfreistellung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "wartezeit": "2 Jahre",
+        "unfall": "sofort volle Summe",
+        "ohne-gp": "bis 15.000 €",
+        "beitragsende": "höchstens bis 85"
+      },
+      "quelle": "https://www.barmeniagothaer.de/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/sterbegeldversicherung/"
+  ],
+  "offen": [
+    "Quelle: Produktseite barmeniagothaer.de.",
+    "Höchste Versicherungssumme nicht genannt; ohne Gesundheitsfragen bis 15.000 €.",
+    "Wartezeit 2 Jahre, in dieser Zeit Rückzahlung der Beiträge; bei Unfalltod sofort volle Summe (keine Verdopplung genannt).",
+    "Beitragszahlung mindestens 5 Jahre, längstens bis 85; bei Erreichen des Ablaufalters Ablaufleistung."
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Personenschäden je Person 15 Mio. €",
+    "EU unbegrenzt, Welt 5 Jahre",
+    "Selbst genutztes Haus inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "nein",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 250 g",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "nein",
+        "oeltank": "nein"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/privathaftpflichtversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht ComfortPlus",
+      "kurz": "Comfort Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "15 Mio. €, ab 1.500 €",
+        "schluessel": "ja, privat und beruflich",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 5 kg",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/privathaftpflichtversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/privathaftpflichtversicherung.html"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite debeka.de (Tarife Comfort und ComfortPlus); Allgemeine Versicherungsbedingungen nur über die Seite verlinkt, nicht ausgewertet.",
+    "Deliktunfähige Kinder: 50.000 € ohne Prüfung der Aufsichtspflicht.",
+    "Öltank: Gewässerschäden durch Heizöltank bis 10.000 Liter nur in ComfortPlus (15 Mio. €).",
+    "Neuwert statt Zeitwert und Selbstbeteiligung auf der Seite nicht genannt.",
+    "Debeka markiert keine Stufe."
+  ]
+}

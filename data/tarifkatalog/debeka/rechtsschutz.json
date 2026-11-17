@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Anwaltswahl",
+    "Mobiler Anwalt im Notfall",
+    "Familientarif"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz Comfort",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt (Europa)",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "ja",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja, versicherte Fälle"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/haftungsrecht/rechtsschutzversicherung/allgemeinerechtsschutzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/haftungsrecht/rechtsschutzversicherung/allgemeinerechtsschutzversicherung.html"
+  ],
+  "offen": [
+    "Quelle: Produktseite debeka.de; kein Tarifvergleich veröffentlicht, deshalb eine Stufe (Tarif Comfort).",
+    "Erweiterungen Comfort Plus und Profi Plus werden in den Wartezeiten genannt, Leistungsunterschiede aber nicht beschrieben; Pakete LeistungsPlus und BeratungsPlus gegen Beitrag.",
+    "Verkehrs-Rechtsschutz und Wohnungs- und Grundstücks-Rechtsschutz als eigene Ergänzungen.",
+    "Strafkaution und Selbstbeteiligung auf der Seite nicht genannt.",
+    "Telefonische Rechtsberatung für versicherte Angelegenheiten; mit BeratungsPlus fünfmal im Jahr auch für nicht versicherte.",
+    "Wartezeit 3 Monate gilt u. a. für Arbeits-, Wohnungs- und Vertragsrecht; keine Wartezeit u. a. bei Schadenersatz, Straf- und Opfer-Rechtsschutz."
+  ]
+}

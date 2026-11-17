@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Dienstunfähigkeitsversicherung Be Care",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Weltweiter Schutz",
+    "Sofortleistung bei schweren Krankheiten"
+  ],
+  "tarife": [
+    {
+      "name": "Be Care",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja, echt und vollständig",
+        "probe": "ja, Probe und Widerruf",
+        "bu": "ja",
+        "nachversicherung": "ja, z. B. Besoldung",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/dienstunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/dienstunfaehigkeitsversicherung",
+    "https://www.hansemerkur.de/resource/blob/36802/957625c0755c5b8cfbf79ce10a2a7a2e/ml-206-informationsbroschuere-dienstunfaehigkeit-data.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktseite hansemerkur.de und Informationsbroschüre Be Care (ML 206).",
+    "Echte DU: amtsärztliches Zeugnis und Versetzungsbescheid reichen; vollständig ab Eintritt in das Beamtenverhältnis, auch für Richter.",
+    "Leistung bei in bestimmten Berufen beschränkter Dienstunfähigkeit genannt; Teildienstunfähigkeit nicht ausdrücklich.",
+    "Rente fällt ab Lebenszeitverbeamtung linear (abgestimmt auf die staatliche Versorgung). Arbeitsunfähigkeit zusätzlich einschließbar."
+  ]
+}

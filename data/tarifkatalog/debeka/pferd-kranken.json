@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "pferd-kranken",
+  "produkt": "Tierversicherung Pferd: Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Alle Leistungen der OP-Versicherung",
+    "Bildgebung auch ohne Behandlung"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenversicherung Pferd",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "15.000/25.000/50.000 €",
+        "ohneOp": "ja",
+        "vorsorge": "500 € im Jahr",
+        "kolik": "5 Tage",
+        "nachbehandlung": "unbegrenzt",
+        "sb": "0, 500 oder 1.000 €",
+        "wartezeit": "2 Monate",
+        "ausland": "12 Monate"
+      },
+      "bausteine": {
+        "reha": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/tiere/tierversicherung.html"
+  ],
+  "offen": [
+    "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (15.000 €, 25.000 € oder 50.000 € je Jahr) und Selbstbeteiligung.",
+    "Reha-Baustein bis 3.000 € im Jahr mit 20 % Selbstbeteiligung je Rechnung (auf debeka.de beim Pferd allgemein genannt).",
+    "Gelenk-Chips auf debeka.de nicht genannt."
+  ]
+}

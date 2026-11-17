@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweit bis 365 Tage",
+    "Stornoberatung, Umbuchung",
+    "24h-Notfall-Service"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktritt für eine Reise",
+      "kurz": "Einmalreise",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja",
+        "pandemie": "Quarantäne bis 1.000 €",
+        "familie": "2 Erw., bis 7 Kinder",
+        "gruende": "Kündigung, Kurzarbeit",
+        "jahr": "nein"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/reiseversicherungen/reiseruecktrittsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Reiserücktritt Jahresvertrag",
+      "kurz": "Jahresvertrag",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja",
+        "pandemie": "Quarantäne bis 1.000 €",
+        "familie": "2 Erw., bis 7 Kinder",
+        "gruende": "Kündigung, Kurzarbeit",
+        "jahr": "ja"
+      },
+      "bausteine": {
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/reiseversicherungen/reiseruecktrittsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/reiseversicherungen/reiseruecktrittsversicherung"
+  ],
+  "offen": [
+    "Quelle: Produktseite lvm.de; Einmalreise oder Jahresvertrag, jeweils Rücktritt und Reiseabbruch.",
+    "Versicherungssumme und Höhe der Selbstbeteiligung auf der Seite nicht genannt.",
+    "Quarantäne: Mehrkosten bei Reiseabbruch bis 1.000 € je Person; Erkrankung an Infektionskrankheit mit behördlicher Quarantäne ist Rücktrittsgrund.",
+    "Familientarif: zwei Erwachsene mit bis zu sieben Kindern bis 30 Jahre. Jobgründe: betriebsbedingte Kündigung, Kurzarbeit, Arbeitsplatzwechsel."
+  ]
+}

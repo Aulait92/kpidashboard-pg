@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung (KT)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Auch an Sonn- und Feiertagen",
+    "Steuerfreie Auszahlung",
+    "Kein Nachweis bis 20 € je Tag"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld für Arbeitnehmer (KT 43N, 92, 183, 365)",
+      "kurz": "Arbeitnehmer",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 43. Tag (wählbar)",
+        "wartezeit": "keine bei Unfall",
+        "dauer": "zeitlich unbegrenzt",
+        "selbststaendige": "nein"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld für Selbstständige (KT 15, KT 29)",
+      "kurz": "Selbstständige",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 15. oder 29. Tag",
+        "wartezeit": "keine bei Unfall",
+        "dauer": "zeitlich unbegrenzt",
+        "selbststaendige": "ja"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/krankentagegeld/",
+    "https://medien.devk.de/assets/content/download/produkte/kranken/devk-krankentagegeld-produktinfo-08506-205-2024-11.pdf"
+  ],
+  "offen": [
+    "Stufen sind Zielgruppen, keine Leistungsstufen. Arbeitnehmer: Karenz ab dem 43., 92., 183. oder 365. Tag; Selbstständige ab dem 15. oder 29. Tag, bei stationärer Behandlung ab dem 3. Tag.",
+    "Höchstes Tagegeld nicht genannt (Gehaltsnachweis erst über 20 € je Tag).",
+    "Allgemeine Wartezeit nicht beziffert, sie entfällt bei Unfall. Ende bei Berufsunfähigkeit nicht genannt."
+  ]
+}

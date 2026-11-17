@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalterhaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Private Hüter mitversichert",
+    "Kaution im Ausland 250.000 €",
+    "Außerhalb EU bis 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "50 Mio. €",
+        "miete": "Immobilien bis 50 Mio.",
+        "fohlen": "ja, 12 Monate",
+        "forderungsausfall": "bis 15 Mio. €",
+        "geliehen": "bis 50.000 €",
+        "ausland": "EU unbegrenzt"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/tierhalterhaftpflicht.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/tierhalterhaftpflicht.html"
+  ],
+  "offen": [
+    "Quelle: Produktseite debeka.de, ein Tarif für Hunde und Pferde.",
+    "Selbstbeteiligung, Reitbeteiligung bzw. Fremdreiter und Flurschäden auf der Seite nicht genannt; mitversichert sind nicht gewerbsmäßige Hüter.",
+    "Personenschäden je Person bis 15 Mio. €."
+  ]
+}
