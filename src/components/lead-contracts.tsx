@@ -15,7 +15,8 @@ import { LEAD_FILE_ACCEPT, LEAD_FILE_MAX_BYTES } from "@/components/lead-files";
 import { useToast } from "@/components/ui/toast";
 import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
 import { META_LERNT } from "@/lib/zahlen-tipps";
-import { anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
+import { abschlussWert, anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
+import { abschlussAnzeige, artAusSparte, artInfo } from "@/lib/eigene-produkte";
 import { addContractAction, cancelContractAction, setContractStatusAction, updateContractAction } from "@/app/buyer/vertrag-actions";
 import {
   CANCEL_REASONS,
@@ -55,7 +56,7 @@ type Draft = {
   beitragssumme: string;
 } & ProduktEingabe;
 
-const leerProdukt: ProduktEingabe = { productName: "", rateAbschluss: "", rateBestand: "" };
+const leerProdukt: ProduktEingabe = { productName: "", rateAbschluss: "", rateBestand: "", art: "sach" };
 
 export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId: string; contracts: LeadContractView[]; readOnly?: boolean }) {
   const router = useRouter();
@@ -74,7 +75,8 @@ export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId:
     setEdit({
       id: c.id,
       draft: {
-        sparte: c.sparte,
+        // Eigenes Produkt (auch Leben/Kranken in deren Sparte): im Formular als „Anderes Produkt“ mit Art
+        sparte: c.productName ? "sonstiges" : c.sparte,
         premium: fmtNum(c.premium == null ? null : c.premium / premiumFactor(c.sparte)),
         signedAt: isoDay(c.signedAt),
         insurer: c.insurer ?? "",
@@ -86,7 +88,8 @@ export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId:
         endAge: c.endAge != null ? String(c.endAge) : "",
         beitragssumme: fmtNum(c.beitragssumme),
         productName: c.productName ?? "",
-        rateAbschluss: c.rateAbschluss != null ? fmtNum(c.rateAbschluss * 100) : "",
+        art: artAusSparte(c.sparte),
+        rateAbschluss: abschlussAnzeige(artAusSparte(c.sparte), c.rateAbschluss),
         rateBestand: c.rateBestand != null ? fmtNum(c.rateBestand * 100) : "",
       },
     });
@@ -278,21 +281,23 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
   };
   const [pending, start] = useTransition();
   const [uploading, setUploading] = useState(false);
-  const field = d.sparte ? premiumFieldForSparte(d.sparte, rates) : null;
-  const leben = !!d.sparte && sparteKind(d.sparte) === "beitragssumme";
+  // Eigenes Produkt rechnet in der Sparte seiner Art (Ole, 17.11.2026)
+  const wirk = eigen ? artInfo(d.art).sparte : d.sparte;
+  const field = wirk ? premiumFieldForSparte(wirk, rates) : null;
+  const leben = !!wirk && sparteKind(wirk) === "beitragssumme";
   // Vorschau der Schätzung mit den Eingaben
   const preview = useMemo(() => {
     if (!d.sparte) return null;
     const entered = parseNum(d.premium);
     const p = contractProvision(
       {
-        sparte: d.sparte,
-        premium: entered == null ? null : entered * premiumFactor(d.sparte),
+        sparte: wirk,
+        premium: entered == null ? null : entered * premiumFactor(wirk),
         termYears: parseNum(d.termYears),
         customerAge: parseNum(d.customerAge),
         endAge: parseNum(d.endAge),
         beitragssumme: parseNum(d.beitragssumme),
-        ...(eigen ? { productName: d.productName, rateAbschluss: anteil(d.rateAbschluss), rateBestand: anteil(d.rateBestand) } : {}),
+        ...(eigen ? { productName: d.productName, rateAbschluss: abschlussWert(d), rateBestand: anteil(d.rateBestand) } : {}),
       },
       rates,
     );
@@ -301,7 +306,7 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
     if (p.abschluss > 0) parts.push(`≈ ${eur(p.abschluss)} ${p.honorar ? "Honorar (vom Kunden)" : "Abschlussprovision"}`);
     if (p.trailPerYear > 0) parts.push(`≈ ${eur(p.trailPerYear)} Bestand pro Jahr${p.trailFromYear2 ? " ab dem 2. Jahr" : ""}`);
     return parts.length ? parts.join(", ") : null;
-  }, [d, rates]);
+  }, [d, rates, eigen, wirk]);
 
   async function upload(file: File) {
     setUploading(true);
@@ -337,6 +342,7 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
         productName: d.productName,
         rateAbschluss: d.rateAbschluss,
         rateBestand: d.rateBestand,
+        art: d.art ?? "sach",
       };
       const res = id ? await updateContractAction(id, raw) : await addContractAction(leadId, raw);
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
@@ -375,7 +381,7 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
           </select>
         </label>
         {eigen ? (
-          <EigenesProduktFelder value={{ productName: d.productName, rateAbschluss: d.rateAbschluss, rateBestand: d.rateBestand }} onChange={(v) => setD({ ...d, ...v })} inputCls={inputCls} />
+          <EigenesProduktFelder value={{ productName: d.productName, rateAbschluss: d.rateAbschluss, rateBestand: d.rateBestand, art: d.art }} onChange={(v) => setD({ ...d, ...v })} rates={rates} inputCls={inputCls} />
         ) : null}
         <label className="block">
           <span className="text-sm text-[color:var(--muted)]">{field ? field.label : "Beitrag netto"}</span>

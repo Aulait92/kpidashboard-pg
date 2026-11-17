@@ -69,23 +69,29 @@ export async function setCrossSellReminderAction(on: boolean): Promise<{ ok: tru
   return { ok: true };
 }
 
-/** Eigene Produkte (Sparte „Sonstiges“) bearbeiten: Sätze ändern oder entfernen. Bestehende Verträge behalten ihre Sätze. */
+/**
+ * Eigene Produkte bearbeiten: Sätze ändern oder entfernen. Bestehende Verträge behalten ihre Sätze. Art (Ole,
+ * 17.11.2026): Sach (Abschluss % vom Jahresbeitrag), Leben (‰ der Beitragssumme), Kranken (Monatsbeiträge);
+ * Bestand immer % vom Jahresbeitrag pro Jahr.
+ */
 export async function saveEigeneProdukteAction(
-  list: { name: string; rateAbschluss: string; rateBestand: string }[],
+  list: { name: string; art?: string; rateAbschluss: string; rateBestand: string }[],
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
   if (ctx.preview) return { ok: false, error: "In der Vorschau nicht möglich." };
   if (!canEditProvision(ctx)) return { ok: false, error: "Nur der Inhaber kann die Provisionen ändern." };
-  const { asEigeneProdukte, normName, prozentAnteil } = await import("@/lib/eigene-produkte");
-  const out: { name: string; rateAbschluss: number; rateBestand: number }[] = [];
+  const { abschlussAusEingabe, artInfo, asArt, asEigeneProdukte, normName, prozentAnteil } = await import("@/lib/eigene-produkte");
+  const out: { name: string; art: ReturnType<typeof asArt>; rateAbschluss: number; rateBestand: number }[] = [];
   for (const p of list.slice(0, 100)) {
     const name = normName(String(p.name ?? ""));
     if (name.length < 2) return { ok: false, error: "Jedes Produkt braucht einen Namen." };
-    const a = prozentAnteil(p.rateAbschluss, 200);
+    const art = asArt(p.art);
+    const a = abschlussAusEingabe(art, p.rateAbschluss);
     const b = prozentAnteil(p.rateBestand, 100);
-    if (a === "invalid" || b === "invalid") return { ok: false, error: `${name}: Bitte gültige Sätze in Prozent eintragen.` };
-    out.push({ name, rateAbschluss: a ?? 0, rateBestand: b ?? 0 });
+    if (a === "invalid" || b === "invalid")
+      return { ok: false, error: art === "sach" ? `${name}: Bitte gültige Sätze in Prozent eintragen.` : `${name}: Abschluss in ${artInfo(art).einheit} (höchstens ${artInfo(art).max}), Bestand in Prozent.` };
+    out.push({ name, art, rateAbschluss: a ?? 0, rateBestand: b ?? 0 });
   }
   await prisma.customer.update({ where: { id: ctx.customerId }, data: { customProducts: asEigeneProdukte(out) } });
   await audit("customer.provision", { entity: "Customer", entityId: ctx.customerId, customerId: ctx.customerId, details: { eigeneProdukte: out.length } });
