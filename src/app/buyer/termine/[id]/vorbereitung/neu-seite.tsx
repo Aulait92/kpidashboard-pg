@@ -19,6 +19,9 @@ import { ladePreisPilot } from "@/lib/preise/pilot-server";
 import { rechnerAngaben } from "@/lib/preise/pilot";
 import { VorbereitungNeu } from "./neu-client";
 import { vorsorgeThema } from "@/lib/schutz-ueberblick";
+import { BestehendeVertraege } from "@/components/bestehende-vertraege";
+import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
+import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 
 const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
 // „Heute, 10:00 Uhr“ / „Morgen, …“ wie auf „Heute“ (UX Runde 4), sonst Datum
@@ -73,6 +76,8 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           <p className="text-[color:var(--muted)]">Noch keine Angaben. Fragen Sie im Termin zuerst nach dem Bedarf.</p>
         )}
         {will.quelle ? <p className="mt-2 text-xs text-[color:var(--muted)]">{will.quelle}</p> : null}
+        {/* Komplettcheck (Ole, 17.11.2026): was der Kunde schon hat, neutral „noch nicht genannt“ */}
+        <BestehendeVertraege v={vorvertraegeAus(d.vorvertraege)} lebenssituation={lebenssituationAus(d.formular, d.angaben)} className="mt-3 border-t border-[color:var(--border)] pt-3" />
       </div>
     </Card>
   );
@@ -172,7 +177,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
         id={d.id}
         leadId={d.leadId}
         readOnly={ctx.preview}
-        kopf={{ name: d.lead.name, zeit: chipZeit(d.termin.startsAt), modus, produkt: d.lead.produkt, vorbereitet: !!d.vorbereitetAm, zugesagt: !!d.zugesagtAm }}
+        kopf={{ name: d.lead.name, zeit: chipZeit(d.termin.startsAt), modus, produkt: d.lead.produkt, vorbereitet: !!d.vorbereitetAm, zugesagt: !!d.zugesagtAm, komplettcheck: d.komplettcheck === true }}
         willKarte={willKarte}
         mehr={mehr}
         klaeren={{ punkte: klaeren.slice(0, KLAEREN_MAX), erledigt: tv.klaerenErledigt }}

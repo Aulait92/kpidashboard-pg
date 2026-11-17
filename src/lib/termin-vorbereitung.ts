@@ -26,6 +26,10 @@ export type VorbereitungDaten = {
   vorbereitetAm: Date | null;
   /** Lead hat zugesagt (Kalenderfrage im Chat bzw. „Ja, passt“), Ole 17.11.2026 */
   zugesagtAm?: Date | null;
+  /** Komplettcheck gewünscht (Knopf nach der Buchung, Appointment.komplettcheck), Ole 17.11.2026 */
+  komplettcheck?: boolean | null;
+  /** Bestehende Verträge laut Lead (Lead.vorvertraege, lib/whatsapp/vorvertraege.ts) */
+  vorvertraege?: unknown;
 };
 
 type Sparte = "haftpflicht" | "hausrat" | "rechtsschutz" | "wohngebaeude" | "tier" | "unfall";

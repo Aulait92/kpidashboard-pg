@@ -36,8 +36,9 @@ export async function loadVorbereitung(appointmentId: string, ctx: TeamCtx): Pro
       calendarKey: true,
       preparedAt: true,
       confirmedAt: true,
+      komplettcheck: true,
       customer: { select: { name: true } },
-      lead: { select: { name: true, phone: true, email: true, source: true, formData: true, contactOverrides: true, assignedUserId: true } },
+      lead: { select: { name: true, phone: true, email: true, source: true, formData: true, contactOverrides: true, assignedUserId: true, vorvertraege: true } },
     },
   });
   if (!appt) return null;
@@ -66,6 +67,8 @@ export async function loadVorbereitung(appointmentId: string, ctx: TeamCtx): Pro
     angaben: conv?.qualificationData ?? null,
     vorbereitetAm: appt.preparedAt,
     zugesagtAm: appt.confirmedAt ?? null,
+    komplettcheck: appt.komplettcheck ?? null,
+    vorvertraege: appt.lead?.vorvertraege ?? null,
   };
 }
 

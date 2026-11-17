@@ -31,9 +31,10 @@ describe("Vorlagen-Plan", () => {
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    // Erstanschreiben v5 (16.11.2026), übrige Zwecke v4
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v5");
-    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v5_sie");
+    // Erstanschreiben v6 (17.11.2026, je Fassung auch ohne PDF-Kopf), übrige Zwecke v4
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v6");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v6_sie");
+    expect(templateNameFor("outreach_tkv", undefined, "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
     expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v4_b_sie");
     // Unveränderte Texte behalten ihre Version (keine erneute Einreichung)
     expect(templateNameFor("referral_thanks", undefined, "sie")).toBe("pg_referral_thanks_v3_sie");
@@ -55,9 +56,11 @@ describe("Vorlagen-Plan", () => {
   it("Beraternamen einsetzen (ohne „Allianz“ vorne)", () => {
     expect(advisorDisplayName("Allianz Anid Brand")).toBe("Anid Brand");
     expect(advisorDisplayName("Agentur Müller")).toBe("Agentur Müller");
-    const body = templateBodyFor("outreach", "Anid Brand");
+    const body = templateBodyFor("followup_noshow", "Anid Brand");
     expect(body).toContain("Anid Brand");
     expect(body).not.toContain("[Berater]");
+    // Erstanschreiben ab v6: Vermittler als Platzhalter (Dativ, „von Herrn Kannapinn“)
+    expect(templateBodyFor("outreach", "Anid Brand")).toContain("digitale KI-Assistent von {{3}}.");
   });
 
   it("Antrag: Beispielwerte je Platzhalter, Knöpfe wo eine Antwort erwartet wird, Abmeldeknopf bei Werbung", () => {
@@ -79,16 +82,14 @@ describe("Vorlagen-Plan", () => {
       expect((buttons?.buttons ?? []).length).toBeLessThanOrEqual(3);
     }
     // Knöpfe überall, wo eine Antwort erwartet wird
-    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => x !== "outreach_tkv")) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
+    // Erstanschreiben ab v6: die erste Frage ist ein Platzhalter, daher ohne Knöpfe in der Vorlage
+    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => !(OUTREACH_PURPOSES as readonly string[]).includes(x))) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
     expect(TEMPLATE_BUTTONS.reminder).toEqual(["Ja, passt", "Bitte verschieben"]);
     expect(TEMPLATE_BUTTONS.followup_noshow).toEqual(["Ja, neuer Termin", "Kein Bedarf mehr"]);
     expect(TEMPLATE_BUTTONS.followup_last).toEqual(["Ja, noch aktuell", "Nein, danke"]);
     expect(TEMPLATE_BUTTONS.booking_confirmation).toEqual(["Termin verschieben"]);
     expect(TEMPLATE_BUTTONS.campaign_cross_sell).toEqual(["Ja, gern prüfen", "Kein Bedarf", OPT_OUT_BUTTON]);
-    // Tierkrankenversicherung ab v5: Frage nach dem Alter, frei beantwortet (keine Knöpfe)
-    expect(TEMPLATE_BUTTONS.outreach_tkv).toBeUndefined();
-    expect(TEMPLATE_BUTTONS.outreach_zahn).toEqual(["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"]);
-    expect(TEMPLATE_BUTTONS.outreach).toEqual(["Heute", "Morgen", "Lieber schriftlich"]);
+    for (const p of OUTREACH_PURPOSES) expect(TEMPLATE_BUTTONS[p]).toBeUndefined();
     // Erstanschreiben: kein „Später“ und keine Erlaubnisfrage
     for (const p of OUTREACH_PURPOSES) {
       expect(TEMPLATE_BUTTONS[p] ?? []).not.toContain("Später");

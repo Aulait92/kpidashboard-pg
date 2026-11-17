@@ -14,6 +14,11 @@
 // - Stopp vor jedem Schritt, wenn: Lead antwortet, Termin gebucht, Phase Abschluss /
 //   Kein Interesse / Disqualifiziert, Reklamation, Löschung, „Stopp“, Schalter aus
 // - Verlauf (log) ohne Nachrichteninhalte
+//
+// Termin-Nachfassen (Ole, 17.11.2026): Antwortet der Lead 2 Std. nach dem Terminvorschlag des Assistenten nicht, ist der
+// erste Schritt von „Chat ruht“ ein kurzes Nachfassen mit denselben (bzw. neu berechneten, noch freien) Zeit-Knöpfen:
+// nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
+// gebucht, „Stopp“, Kein Interesse, Assistent pausiert, Anruf läuft).
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -204,13 +209,16 @@ export type SequenceLogEntry = {
   detail?: string;
 };
 
-/** Mo–Sa 9–19 Uhr Berlin (wie Bestandskunden-Kampagnen). */
-export function inSendWindow(now: Date): boolean {
+/** Mo–Sa 9–19 Uhr Berlin (wie Bestandskunden-Kampagnen); Termin-Nachfassen: 8–20 Uhr. */
+export function inSendWindow(now: Date, stunden: { von: number; bis: number } = { von: 9, bis: 19 }): boolean {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", hourCycle: "h23" }).formatToParts(now);
   const wd = parts.find((p) => p.type === "weekday")?.value;
   const hour = Number(parts.find((p) => p.type === "hour")?.value);
-  return wd !== "Sun" && hour >= 9 && hour < 19;
+  return wd !== "Sun" && hour >= stunden.von && hour < stunden.bis;
 }
+
+/** Zeitfenster für das Termin-Nachfassen nach einem Terminvorschlag (Ole, 17.11.2026). */
+export const TERMIN_NACHFASS_STUNDEN = { von: 8, bis: 20 } as const;
 
 async function enabledFor(customerId: string): Promise<boolean> {
   const agent = await prisma.agentConfig.findUnique({ where: { customerId }, select: { active: true, followUpSequencesEnabled: true } });
@@ -428,8 +436,11 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
       res.stopped++;
       continue;
     }
+    // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr
+    const terminNachfass =
+      seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
     // WhatsApp nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
-    if (step.action === "whatsapp" && !windowOpen) {
+    if (step.action === "whatsapp" && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
       res.waiting++;
       continue;
     }
@@ -454,7 +465,7 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
       entry = { at: now.toISOString(), step: seq.step, action: "call", result: r };
       if (r === "call_task") res.tasks++;
     } else {
-      entry = await sendStep(seq, step, now);
+      entry = terminNachfass ? await sendTerminNachfass(seq, terminNachfass, now) : await sendStep(seq, step, now);
       if (entry.result === "sent" || entry.result === "template") res.sent++;
       else if (entry.result === "call_task") res.tasks++;
       else if (entry.result === "failed") res.failed++;
@@ -463,6 +474,45 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     await prisma.leadSequence.update({ where: { id: seq.id }, data: { log: appendLog(fresh?.log ?? [], entry) } });
   }
   return res;
+}
+
+/**
+ * Termin-Nachfassen: „Kurze Nachfrage: Passt Ihnen heute um 16 Uhr oder morgen um 10 Uhr für den Videotermin mit Herrn
+ * Kannapinn?“ mit [Heute 16 Uhr] [Morgen 10 Uhr] [Andere Zeit]. Nur als Freitext im offenen 24-h-Fenster, sonst still
+ * übersprungen (die weiteren Schritte von „Chat ruht“ bleiben).
+ */
+async function sendTerminNachfass(
+  seq: { leadId: string; customerId: string; step: number },
+  v: { conversationId: string; starts: string[]; windowExpiresAt: Date | null },
+  now: Date,
+): Promise<SequenceLogEntry> {
+  const base = { at: now.toISOString(), step: seq.step, action: "whatsapp" as const };
+  if (!v.windowExpiresAt || v.windowExpiresAt.getTime() <= now.getTime()) return { ...base, result: "skipped", detail: "Termin-Nachfassen: 24h-Fenster geschlossen" };
+  const strecke = await import("@/lib/whatsapp/termin-strecke");
+  const zeiten = await strecke.noch2FreieZeiten(seq.customerId, seq.leadId, v.starts, now);
+  if (!zeiten) return { ...base, result: "skipped", detail: "Termin-Nachfassen: keine freien Zeiten" };
+  const k = await strecke.streckenKontext(v.conversationId, now);
+  if (!k) return { ...base, result: "skipped", detail: "Termin-Nachfassen: Chat nicht gefunden" };
+  const { terminKnoepfe, terminNachfassText, zeitKurz } = await import("@/lib/whatsapp/gespraech");
+  const text = terminNachfassText(k.an, k.person, [zeitKurz(new Date(zeiten[0]), now), zeitKurz(new Date(zeiten[1]), now)]);
+  const knoepfe = terminKnoepfe(zeiten, now);
+  try {
+    const { mode } = await sendWhatsAppNotice({
+      customerId: seq.customerId,
+      to: k.phone,
+      purpose: "followup",
+      params: [],
+      text,
+      leadId: seq.leadId,
+      textButtons: knoepfe.map((b) => b.title),
+      buttonPayloads: knoepfe.map((b) => b.id),
+    });
+    if (mode !== "text") return { ...base, result: "failed", detail: "Termin-Nachfassen: unerwartet als Vorlage" };
+    await strecke.merke(v.conversationId, strecke.STRECKE.vorschlag, { starts: zeiten, nachfassen: true });
+    return { ...base, result: "sent", detail: "Termin-Nachfassen mit Zeit-Knöpfen" };
+  } catch (err) {
+    return { ...base, result: "failed", detail: (err instanceof Error ? err.message : String(err)).slice(0, 160) };
+  }
 }
 
 async function sendStep(

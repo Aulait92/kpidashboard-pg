@@ -44,6 +44,9 @@ import { contractProvision, sparteInfo } from "@/lib/provision";
 import { listLeadContracts, syncPrimaryContract } from "@/lib/vertraege";
 import { LeadContracts } from "@/components/lead-contracts";
 import { anrufZiel } from "@/lib/anruf-ziel";
+import { BestehendeVertraege } from "@/components/bestehende-vertraege";
+import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
+import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
 import {
   ALL_GROUP_KEYS,
@@ -159,6 +162,7 @@ export async function LeadDetailBody({
       formData: true,
       contactOverrides: true,
       contactEditedAt: true,
+      vorvertraege: true,
       contactAttempts: true,
       reached: true,
       firstContactAt: true,
@@ -262,7 +266,7 @@ export async function LeadDetailBody({
     prisma.appointment.findFirst({
       where: { leadId: lead.id, status: "booked", startsAt: { gt: twoHoursAgo() } },
       orderBy: { startsAt: "asc" },
-      select: { id: true, startsAt: true, mode: true, meetUrl: true, confirmedAt: true },
+      select: { id: true, startsAt: true, mode: true, meetUrl: true, confirmedAt: true, komplettcheck: true },
     }),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } }),
     // Nächster Schritt (lib/lead-next-step.ts): Hinweis im Kontakt und Dialog nach jeder Aktion
@@ -279,6 +283,10 @@ export async function LeadDetailBody({
           ? Object.values(x as Record<string, unknown>).flatMap(werteAus)
           : [];
   const formWerte = new Set([...werteAus(formWithOverrides(lead.formData, lead.contactOverrides)), ...werteAus(fields)].map((v) => v.trim().toLowerCase()));
+  const vorvertraege = (() => {
+    const v = vorvertraegeAus(lead.vorvertraege);
+    return v && (v.liste.length || v.keine) ? v : null;
+  })();
   const qPoints = qualificationPoints(conv?.qualificationData).filter((q) => !formWerte.has(q.value.trim().toLowerCase()));
   // Wiedervorlage des Assistenten (schedule_followup), sichtbar unter den Aktionen
   const recallSeq = await prisma.leadSequence.findFirst({ where: { leadId: lead.id, kind: "recall", stoppedAt: null }, select: { nextAt: true, log: true } });
@@ -500,7 +508,7 @@ export async function LeadDetailBody({
         />
       ) : null}
 
-      {nextAppt || ziel || conv?.qualificationSummary || qPoints.length ? (
+      {nextAppt || ziel || conv?.qualificationSummary || qPoints.length || vorvertraege ? (
         <Card className="mb-6">
           {ziel ? (
             <div className="px-5 py-3.5" data-kontakt-ziel>
@@ -529,6 +537,11 @@ export async function LeadDetailBody({
                   {nextAppt.confirmedAt ? (
                     <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700" data-termin-zugesagt>
                       zugesagt
+                    </span>
+                  ) : null}
+                  {nextAppt.komplettcheck ? (
+                    <span className="ml-2 inline-flex items-center rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 font-medium text-[color:var(--brand-dark)]" data-termin-komplettcheck>
+                      Komplettcheck
                     </span>
                   ) : null}
                 </div>
@@ -569,6 +582,17 @@ export async function LeadDetailBody({
                 </div>
               ))}
             </dl>
+          ) : null}
+          {/* Bestehende Verträge laut Lead (Komplettcheck im Chat, Ole 17.11.2026) */}
+          {vorvertraege ? (
+            <BestehendeVertraege
+              v={vorvertraege}
+              lebenssituation={lebenssituationAus(
+                ((x) => (Array.isArray(x) ? x.filter((f): f is { label: string; value: string } => typeof f?.label === "string" && typeof f?.value === "string") : []))(formWithOverrides(lead.formData, lead.contactOverrides)),
+                conv?.qualificationData,
+              )}
+              className="border-t border-[color:var(--border)] px-5 py-3.5 text-sm"
+            />
           ) : null}
         </Card>
       ) : null}

@@ -7,6 +7,11 @@
 //   „Ja, neuer Termin“, „Andere Zeit“ → Assistent mit Hinweis: zwei freie Zeiten anbieten
 //   „Erste/Zweite Zeit passt“ (Payload slot:<ISO>) → Assistent mit genauer Startzeit, bucht bzw. verschiebt
 //   „Eher der Beitrag“/„Eher die Leistung“ (Angebot) → Assistent: Gespräch zum Anpassen anbieten, ohne Beträge
+// Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/termin-strecke.ts), immer am Payload erkannt:
+//   Zeit-Knopf „Heute 16 Uhr“ (slot:<ISO>)        → die App bucht genau diese Zeit (bot.ts, E-Mail bekannt), sonst Hinweis
+//   „Ja, gern“/„Nein, danke“ (komplettcheck:ja|nein) → Komplettcheck am Termin, dann Vertragsfrage bzw. Abschluss
+//   „Ja“/„Mache ich gleich“ (kalender:ja|gleich)   → zugesagt, kurze Antwort
+//   „Ja“/„Nein“ zu einer Angebotsfrage (folge:<key>:ja|nein) → Assistent mit Hinweis, welche Frage beantwortet ist
 // Alle anderen Knöpfe (z. B. „Katze“, „Heute“, „Ja, gern prüfen“) gehen als normale Antwort an den Assistenten.
 // Nur echte Knopf-Klicks zählen: getippt „Nein, danke“ kann eine Antwort auf eine ganz andere Frage sein.
 
@@ -21,7 +26,10 @@ export type KnopfAktion =
   | { aktion: "neuer_termin" }
   | { aktion: "zeit"; start: string | null }
   | { aktion: "andere_zeit" }
-  | { aktion: "angebot"; fokus: "beitrag" | "leistung" };
+  | { aktion: "angebot"; fokus: "beitrag" | "leistung" }
+  | { aktion: "komplettcheck"; ja: boolean }
+  | { aktion: "kalender"; art: "ja" | "gleich" }
+  | { aktion: "folge"; key: string; wert: string };
 
 const norm = (t: string | null | undefined) => (t ?? "").trim().toLowerCase();
 const is = (t: string, k: string) => t === k.toLowerCase();
@@ -37,6 +45,11 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
     const iso = p.slice(5);
     return { aktion: "zeit", start: Number.isNaN(new Date(iso).getTime()) ? null : iso };
   }
+  if (p === "komplettcheck:ja" || p === "komplettcheck:nein") return { aktion: "komplettcheck", ja: p.endsWith(":ja") };
+  if (p === "kalender:ja" || p === "kalender:gleich") return { aktion: "kalender", art: p.endsWith(":ja") ? "ja" : "gleich" };
+  const folge = /^folge:([a-zA-Z]+):(.+)$/.exec(p);
+  if (folge) return { aktion: "folge", key: folge[1], wert: (text ?? folge[2]).trim() };
+  if (p === "andere_zeit") return { aktion: "andere_zeit" };
   const t = norm(text);
   if (is(t, KNOPF.passt)) return { aktion: "bestaetigt" };
   if (is(t, KNOPF.verschieben) || is(t, KNOPF.terminVerschieben)) return { aktion: "verschieben" };
@@ -63,13 +76,15 @@ export function knopfHinweis(k: KnopfAktion, now = new Date()): string | null {
     case "angebot":
       return `Der Lead hat zum Angebot per Knopf geantwortet: Für ihn ist eher ${k.fokus === "beitrag" ? "der Beitrag" : "die Leistung"} entscheidend. Halte das fest (angaben.wunsch). Nenne keine Beträge, Tarife oder Vergleiche: Biete ein kurzes Gespräch an, in dem der Berater das Angebot genau darauf abstimmt, mit zwei freien Zeiten (get_available_slots).`;
     case "andere_zeit":
-      return "Der Lead hat per Knopf „Andere Zeit“ geantwortet: die vorgeschlagenen Zeiten passen nicht. Frag kurz, wann es ihm grundsätzlich passt (Tag oder Tageszeit), oder biete zwei andere freie Zeiten an (get_available_slots).";
+      return "Der Lead hat per Knopf „Andere Zeit“ geantwortet: die vorgeschlagenen Zeiten passen nicht. Frag kurz, wann es ihm grundsätzlich passt (Tag oder Tageszeit). Nennt er einen Wunsch, hole mit get_available_slots freie Zeiten und nutze termin_vorschlagen mit erneut=true und den zwei passenden start-Werten.";
+    case "folge":
+      return `Der Lead hat per Knopf „${k.wert}“ geantwortet: Das ist die Antwort auf unsere letzte Angebotsfrage (${k.key === "oeffentlicherDienst" ? "öffentlicher Dienst" : k.key}). Halte sie mit record_qualification fest und mach weiter.`;
     case "zeit": {
       const d = k.start ? new Date(k.start) : null;
       if (!d || d.getTime() <= now.getTime() + 15 * 60 * 1000) {
         return "Der Lead hat per Knopf eine der vorgeschlagenen Zeiten gewählt, die genaue Zeit ist aber nicht mehr bekannt oder schon vorbei. Hole mit get_available_slots frische Zeiten und biete zwei an.";
       }
-      return `Der Lead hat per Knopf diese Zeit gewählt: ${wann(d)} (start=${k.start}). Hat er schon einen Termin, verschiebe ihn mit reschedule_appointment auf diese Zeit. Sonst buche sie mit book_appointment; frag vorher nur, falls noch nicht geklärt, ob Telefon oder Video. Ist die Zeit inzwischen belegt, entschuldige dich kurz und biete zwei neue an.`;
+      return `Der Lead hat per Knopf diese Zeit gewählt: ${wann(d)} (start=${k.start}). Hat er schon einen Termin, verschiebe ihn mit reschedule_appointment auf diese Zeit. Sonst buche sie mit book_appointment (modus video) mit genau diesem start-Wert; ist die E-Mail-Adresse nicht bekannt, frag zuerst danach. Ist die Zeit inzwischen belegt, entschuldige dich kurz und nutze termin_vorschlagen.`;
     }
     default:
       return null;
@@ -114,7 +129,7 @@ export async function handleButtonReply(
   conversationId: string,
   inbound: { kind: string | null | undefined; text: string | null | undefined; payload?: string | null },
   now = new Date(),
-): Promise<{ handled: boolean; hint?: string | null }> {
+): Promise<{ handled: boolean; hint?: string | null; zeit?: string | null }> {
   const k = knopfAktion(inbound.kind, inbound.text, inbound.payload);
   if (!k) return { handled: false };
   const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { id: true, customerId: true, leadId: true } });
@@ -144,5 +159,15 @@ export async function handleButtonReply(
     return { handled: true };
   }
 
-  return { handled: false, hint: knopfHinweis(k, now) };
+  // Termin-Strecke nach der Buchung (lib/whatsapp/termin-strecke.ts): ohne Assistent
+  if (k.aktion === "komplettcheck") {
+    const { komplettcheckAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await komplettcheckAntwort(conversationId, k.ja, now) };
+  }
+  if (k.aktion === "kalender") {
+    const { kalenderAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await kalenderAntwort(conversationId, k.art, now) };
+  }
+  // Zeit-Knopf: bot.ts bucht genau diese Zeit selbst (Payload), der Hinweis ist der Rückfall
+  return { handled: false, hint: knopfHinweis(k, now), zeit: k.aktion === "zeit" ? k.start : null };
 }

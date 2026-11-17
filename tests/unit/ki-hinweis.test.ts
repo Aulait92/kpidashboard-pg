@@ -146,13 +146,13 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
     for (const an of ["du", "sie"] as const) expect(kiHinweisErneut(an, names)).toContain("Ich bin kein Mensch und berate nicht zu Tarifen.");
   });
 
-  it("Erstanschreiben v5 (Ole, 16.11.2026): KI-Kennzeichnung im Nutzen-Satz, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
+  it("Erstanschreiben v6 (Ole, 17.11.2026): KI-Kennzeichnung mit dem Vermittler, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
     for (const p of OUTREACH_PURPOSES) {
-      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v5_sie`);
-      expect(buildTemplateRequest(p, names, undefined, "sie").name, p).toBe(`pg_${p}_v5_sie`);
+      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v6_sie`);
+      expect(buildTemplateRequest(p, names, undefined, "sie").name, p).toBe(`pg_${p}_v6_sie`);
       expect(NAECHSTE_FASSUNG[p], p).toBeUndefined();
       for (const t of [TEMPLATE_BODY[p].du!, TEMPLATE_BODY[p].sie]) {
-        expect(t, p).toContain("digitale KI-Assistent von [Kurzname]");
+        expect(t, p).toContain("digitale KI-Assistent von {{3}}");
         expect(t, p).not.toMatch(/Mensch|berate nicht|[–—]/);
         expect(hasKiHinweis(t), p).toBe(true);
       }
@@ -162,7 +162,7 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
   it("Freitext im offenen Fenster: gleicher Aufbau wie die Vorlage, ohne „Mensch“", () => {
     for (const p of OUTREACH_PURPOSES) {
       for (const an of ["sie", "du"] as const) {
-        const t = noticeText(p, an, { ...names, kurz: "Susanne" }, FRAU, ["Zahnzusatzversicherung", "Ihre Katze"]);
+        const t = noticeText(p, an, { ...names, kurz: "Susanne" }, FRAU, ["Zahnzusatzversicherung", "Susanne", "Welcher Tarifbaustein ist Ihnen am wichtigsten"]);
         expect(t, `${p} ${an}`).toContain("digitale KI-Assistent von Susanne");
         expect(t, `${p} ${an}`).not.toMatch(/Mensch|berate nicht/);
       }

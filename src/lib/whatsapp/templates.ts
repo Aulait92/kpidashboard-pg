@@ -30,6 +30,7 @@ import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, typ
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
+import { ERSTANSCHREIBEN_V6 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -105,12 +106,13 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   review_request: "v3",
   referral_thanks: "v3",
   referral_update: "v3",
-  // Erstanschreiben v5 (Ole, 16.11.2026): wird eingereicht; bis zur Freigabe sendet die App die freigegebene v4
-  outreach: "v5",
-  outreach_tkv: "v5",
-  outreach_zahn: "v5",
-  outreach_pkv: "v5",
-  outreach_privatschutz: "v5",
+  // Erstanschreiben v6 (Ole, 17.11.2026, ERSTANSCHREIBEN_V6): wird eingereicht (je Fassung mit PDF-Kopf und ohne);
+  // bis zur Freigabe sendet die App die neueste freigegebene (v5, rankOutreach)
+  outreach: "v6",
+  outreach_tkv: "v6",
+  outreach_zahn: "v6",
+  outreach_pkv: "v6",
+  outreach_privatschutz: "v6",
 };
 
 /**
@@ -134,12 +136,13 @@ export type TemplateVariant = "a" | "b";
 
 /** Weitere Parameter je Zweck (nach dem Namen; Reihenfolge wie im Text). */
 export const REST_PARAMS: Record<NoticePurpose, string[]> = {
-  outreach: [],
-  // {{3}} ab v5: „Ihre Katze“, „dein Hund“ … (erstanschreiben.ts tierWort, je nach Fassung der Vorlage)
-  outreach_tkv: ["Produkt", "Tier"],
-  outreach_zahn: ["Produkt"],
-  outreach_pkv: ["Produkt"],
-  outreach_privatschutz: ["Produkt"],
+  // Erstanschreiben ab v6 (alle Fassungen gleich aufgebaut): Thema, Vermittler im Dativ, erste Frage ohne „?“.
+  // Ältere freigegebene Fassungen: v5 Produkt (TKV mit Tier), v4 Produkt, v3 Link (outreach.ts paramsFor)
+  outreach: ["Thema", "Vermittler", "Erste Frage"],
+  outreach_tkv: ["Thema", "Vermittler", "Erste Frage"],
+  outreach_zahn: ["Thema", "Vermittler", "Erste Frage"],
+  outreach_pkv: ["Thema", "Vermittler", "Erste Frage"],
+  outreach_privatschutz: ["Thema", "Vermittler", "Erste Frage"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder_soon: ["Uhrzeit", "Art", "Link/Hinweis"],
@@ -162,42 +165,20 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
 /** Bezeichnung des Namensplatzhalters je Fassung. */
 export const NAME_PARAM: Record<"du" | "sie", string> = { du: "Vorname", sie: "Anrede und Nachname" };
 
-/** Nutzen-Satz der Erstanschreiben mit Produkt (v5): KI-Kennzeichnung, Name höchstens zweimal. */
-const ANGEBOT_SATZ = {
-  du: "Ich bin der digitale KI-Assistent von [Kurzname] und kläre kurz zwei, drei Fragen, damit [Kurzname] dir ein passendes Angebot machen kann.",
-  sie: "Ich bin der digitale KI-Assistent von [Kurzname] und kläre kurz zwei, drei Fragen, damit [Kurzname] Ihnen ein passendes Angebot machen kann.",
-};
-
 /**
  * Text NACH der Anrede-Zeile. {{2}}, {{3}} … = REST_PARAMS. [Firma] = Kundenname („Buchung bei …“),
  * [Berater] = Person („hier ist …“, „Herzliche Grüße, …“), [Rolle] = Status laut Erstinformation
  * (z. B. „ von der Allianz“ oder „, Ihr Versicherungsmakler“, rolleText). Ohne „du“: nur gesiezt.
  */
 export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> = {
-  // Erste Nachricht an neue Leads (v5, Ole 16.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): Dank mit
-  // Produkt, KI-Assistent mit Nutzen, erste Frage fett als letzte Zeile. [Kurzname] = Vorname des Vermittlers laut
-  // Profil, sonst Agentur. Die Erstinformation (§ 15/16 VersVermV) steht als PDF im Kopf (TEMPLATE_HEADER).
-  outreach: {
-    du: "danke für deine Anfrage!\nIch bin der digitale KI-Assistent von [Kurzname] und helfe dir, schnell einen passenden Gesprächstermin zu finden.\n\n*Wann erreicht [Kurzname] dich am besten für ein kurzes Telefonat?*",
-    sie: "danke für Ihre Anfrage!\nIch bin der digitale KI-Assistent von [Kurzname] und helfe Ihnen, schnell einen passenden Gesprächstermin zu finden.\n\n*Wann erreicht [Kurzname] Sie am besten für ein kurzes Telefonat?*",
-  },
-  outreach_tkv: {
-    du: `danke für deine Anfrage zur {{2}}!\n${ANGEBOT_SATZ.du}\n\n*Wie alt ist {{3}}?*`,
-    sie: `danke für Ihre Anfrage zur {{2}}!\n${ANGEBOT_SATZ.sie}\n\n*Wie alt ist {{3}}?*`,
-  },
-  // Zahnzusatz: neutral nach dem Tarifbaustein (Art. 9 DSGVO, Rechtsprüfung Nachtrag 16.11.2026)
-  outreach_zahn: {
-    du: `danke für deine Anfrage zur {{2}}!\n${ANGEBOT_SATZ.du}\n\n*Welcher Tarifbaustein ist dir am wichtigsten?*`,
-    sie: `danke für Ihre Anfrage zur {{2}}!\n${ANGEBOT_SATZ.sie}\n\n*Welcher Tarifbaustein ist Ihnen am wichtigsten?*`,
-  },
-  outreach_pkv: {
-    du: `danke für deine Anfrage zur {{2}}!\n${ANGEBOT_SATZ.du}\n\n*Wie bist du aktuell beruflich aufgestellt?*`,
-    sie: `danke für Ihre Anfrage zur {{2}}!\n${ANGEBOT_SATZ.sie}\n\n*Wie sind Sie aktuell beruflich aufgestellt?*`,
-  },
-  outreach_privatschutz: {
-    du: `danke für deine Anfrage zum Thema {{2}}!\n${ANGEBOT_SATZ.du}\n\n*Worum geht es dir vor allem?*`,
-    sie: `danke für Ihre Anfrage zum Thema {{2}}!\n${ANGEBOT_SATZ.sie}\n\n*Worum geht es Ihnen vor allem?*`,
-  },
+  // Erste Nachricht an neue Leads (v6, Ole 17.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): Dank mit
+  // Thema, KI-Assistent des Vermittlers, erste offene Frage fett als letzte Zeile (Platzhalter, ERSTANSCHREIBEN_V6).
+  // Die Erstinformation (§ 15/16 VersVermV) steht als PDF im Kopf (TEMPLATE_HEADER), je Fassung auch ohne Kopf.
+  outreach: { ...ERSTANSCHREIBEN_V6 },
+  outreach_tkv: { ...ERSTANSCHREIBEN_V6 },
+  outreach_zahn: { ...ERSTANSCHREIBEN_V6 },
+  outreach_pkv: { ...ERSTANSCHREIBEN_V6 },
+  outreach_privatschutz: { ...ERSTANSCHREIBEN_V6 },
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -639,12 +620,9 @@ export const KNOPF = {
  * Startzeit eines Terminvorschlags). Werbung trägt immer den Abmeldeknopf.
  */
 export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
-  outreach: ["Heute", "Morgen", "Lieber schriftlich"],
-  // outreach_tkv ab v5 ohne Knöpfe (Frage nach dem Alter des Tieres, frei beantwortet)
-  // Zahnzusatz ab v5 neutral nach dem Tarifbaustein (Art. 9 DSGVO); die freigegebene v4 hatte „Zahnersatz/Prophylaxe/Beides“
-  outreach_zahn: ["Starker Zahnersatz", "Mit Zahnreinigung", "Beides vergleichen"],
-  outreach_pkv: ["Angestellt", "Selbstständig", "Beamter"],
-  outreach_privatschutz: ["Haftpflicht", "Hausrat", "Mehreres"],
+  // Erstanschreiben ab v6 ohne Knöpfe in der Vorlage (die erste Frage ist ein Platzhalter). Freigegebene ältere Fassungen
+  // tragen ihre Knöpfe weiter (MessageTemplate.buttons); im Freitext passen sie zur gestellten Frage
+  // (erstanschreiben.ts ersteFrageKnoepfe).
   booking_confirmation: [KNOPF.terminVerschieben],
   reminder: [KNOPF.passt, KNOPF.verschieben],
   reminder_soon: [KNOPF.passt, KNOPF.verschieben],

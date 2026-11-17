@@ -32,8 +32,14 @@ export type AngabenQuelle = {
 
 type Ctx = { tierart: string; q: (k: QualificationKey) => string | null; form: (re: RegExp) => string | null; adresse: string | null; plz: string | null };
 
-/** Eine Folgefrage (Sie/Du); feld = wohin der Assistent die Antwort schreibt (record_qualification). */
-export type Folgefrage = { key: string; feld: QualificationKey; sie: string; du: string };
+/**
+ * Eine Folgefrage (Sie/Du); feld = wohin der Assistent die Antwort schreibt (record_qualification). knoepfe: Antwort
+ * per Knopf („Ja“/„Nein“, Ole 17.11.2026), im offenen Fenster als interaktive Nachricht.
+ */
+export type Folgefrage = { key: string; feld: QualificationKey; sie: string; du: string; knoepfe?: string[] };
+
+/** Knöpfe für Ja/Nein-Angaben der Rechner-Tabelle. */
+export const JA_NEIN = ["Ja", "Nein"] as const;
 
 type AngabeDef = {
   /** Beschriftung in „Beiträge rechnen“ */
@@ -56,7 +62,14 @@ export function plzAus(...texte: (string | null | undefined)[]): string | null {
   return null;
 }
 
-const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt?: RegExp) => ({ key, feld, sie, du, ...(bekannt ? { bekannt } : {}) });
+const f = (key: string, feld: QualificationKey, sie: string, du: string, bekannt?: RegExp, knoepfe?: readonly string[]) => ({
+  key,
+  feld,
+  sie,
+  du,
+  ...(bekannt ? { bekannt } : {}),
+  ...(knoepfe ? { knoepfe: [...knoepfe] } : {}),
+});
 
 /** Alle Angaben der Rechner. */
 export const ANGABEN = {
@@ -74,7 +87,7 @@ export const ANGABEN = {
     wer: "lead",
     rang: 3,
     wert: (c) => c.q("beruf"),
-    fragen: [f("oeffentlicherDienst", "beruf", "Sind Sie im öffentlichen Dienst tätig? (ja oder nein)", "Bist du im öffentlichen Dienst tätig? (ja oder nein)")],
+    fragen: [f("oeffentlicherDienst", "beruf", "Sind Sie im öffentlichen Dienst tätig?", "Bist du im öffentlichen Dienst tätig?", undefined, JA_NEIN)],
   },
   wohnflaeche: { label: "Wohnfläche", wer: "lead", rang: 2, wert: (c) => c.q("wohnflaeche") ?? c.form(/wohnfl(ä|a)che/i), fragen: [f("wohnflaeche", "wohnflaeche", "Wie groß ist Ihre Wohnung ungefähr?", "Wie groß ist deine Wohnung ungefähr?")] },
   lebensbereiche: { label: "Lebensbereiche", wer: "termin", rang: 99, wert: (c) => c.q("bereiche") },
@@ -97,7 +110,7 @@ export const ANGABEN = {
       f("gebaeudeFlaeche", "gebaeude", "Wie groß ist die Wohnfläche des Hauses ungefähr?", "Wie groß ist die Wohnfläche des Hauses ungefähr?", /m²|m2|qm|quadratmeter/i),
       f("baujahr", "gebaeude", "In welchem Jahr wurde das Haus gebaut?", "In welchem Jahr wurde das Haus gebaut?", /baujahr|\bbj\b|\b(1[89]|20)\d{2}\b/i),
       f("wohneinheiten", "gebaeude", "Wie viele Wohneinheiten hat das Haus?", "Wie viele Wohneinheiten hat das Haus?", /einheit|\bwe\b|einfamilien|zweifamilien|mehrfamilien/i),
-      f("keller", "gebaeude", "Hat das Haus einen Keller?", "Hat das Haus einen Keller?", /keller/i),
+      f("keller", "gebaeude", "Hat das Haus einen Keller?", "Hat das Haus einen Keller?", /keller/i, JA_NEIN),
       f("bauweise", "gebaeude", "Ist das Haus massiv gebaut, oder ist es zum Beispiel ein Holz- oder Fertighaus?", "Ist das Haus massiv gebaut, oder ist es zum Beispiel ein Holz- oder Fertighaus?", /massiv|holz|fertighaus|bauweise|stein|beton|ziegel/i),
     ],
   },
@@ -207,11 +220,11 @@ export function folgefragen(sparten: readonly RechnerSparte[], src: AngabenQuell
         // Mehrteilige Angabe (Gebäude): ein Teil gilt als bekannt, wenn er im bisherigen Wert erkennbar ist
         const bekannt = fr.bekannt ? !!wert && fr.bekannt.test(wert) : !!wert;
         seen.add(fr.key);
-        if (!bekannt) out.push({ key: fr.key, feld: fr.feld, sie: fr.sie, du: fr.du, rang: def.rang, i: out.length });
+        if (!bekannt) out.push({ key: fr.key, feld: fr.feld, sie: fr.sie, du: fr.du, ...("knoepfe" in fr && fr.knoepfe ? { knoepfe: fr.knoepfe } : {}), rang: def.rang, i: out.length });
       }
     }
   }
-  return out.sort((x, y) => x.rang - y.rang || x.i - y.i).map(({ key, feld, sie, du }) => ({ key, feld, sie, du }));
+  return out.sort((x, y) => x.rang - y.rang || x.i - y.i).map(({ key, feld, sie, du, knoepfe }) => ({ key, feld, sie, du, ...(knoepfe ? { knoepfe } : {}) }));
 }
 
 /** Folgefrage als Text; die erste mit Nutzen: „Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: …“. */

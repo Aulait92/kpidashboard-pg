@@ -7,7 +7,7 @@ import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
-import { sendText, type SendResult } from "@/lib/whatsapp/dialog360";
+import { sendButtons, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import type { StatusError } from "@/lib/whatsapp/zustellfehler";
 
@@ -375,12 +375,14 @@ async function persistInbound(
   // Knopf-Antworten (lib/whatsapp/knopf.ts): „Ja, passt“ bestätigt den Termin, „Kein Bedarf mehr“ schließt den Lead
   // ab (beides ohne Assistent); Terminwahl und Verschieben bekommt der Assistent mit Hinweis.
   let botHint: string | null = null;
+  let knopfZeit: string | null = null;
   if (botErlaubt && (type === "button" || type === "interactive")) {
     try {
       const { handleButtonReply } = await import("@/lib/whatsapp/knopf");
       const r = await handleButtonReply(conversation.id, { kind: type, text: body, payload: inboundPayload(m) }, now);
       if (r.handled) return;
       botHint = r.hint ?? null;
+      knopfZeit = r.zeit ?? null;
     } catch (e) {
       console.error("[whatsapp knopf]", e);
     }
@@ -403,7 +405,7 @@ async function persistInbound(
   if (botErlaubt) {
     try {
       const { runBotTurn } = await import("@/lib/whatsapp/bot");
-      await runBotTurn(conversation.id, { hint: botHint });
+      await runBotTurn(conversation.id, { hint: botHint, knopfZeit });
     } catch (e) {
       console.error("[whatsapp bot]", e);
     }
@@ -501,6 +503,11 @@ export async function sendWhatsAppMessage(opts: {
   body: string;
   sentBy?: "bot" | "agent" | "system";
   sentByUserId?: string | null;
+  /**
+   * Antwort-Knöpfe (höchstens 3, je 20 Zeichen; id = Payload, lib/whatsapp/knopf.ts), nur im offenen Fenster.
+   * Passen sie nicht, geht die Nachricht als reiner Text.
+   */
+  buttons?: { id: string; title: string }[] | null;
 }): Promise<SendResult> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
@@ -516,7 +523,8 @@ export async function sendWhatsAppMessage(opts: {
   const apiKey = decryptSecret(account.apiKeyEnc);
   // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)
   opts = { ...opts, body: ohneGedankenstriche(opts.body) };
-  const result = await sendText(apiKey, opts.to, opts.body);
+  const knoepfe = opts.buttons?.length && opts.buttons.length <= 3 && opts.buttons.every((b) => b.title.length <= 20) ? opts.buttons : null;
+  const result = knoepfe ? await sendButtons(apiKey, opts.to, opts.body, knoepfe) : await sendText(apiKey, opts.to, opts.body);
 
   const now = new Date();
   const conversation = await prisma.conversation.upsert({
