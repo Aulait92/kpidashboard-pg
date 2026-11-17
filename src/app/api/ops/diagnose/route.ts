@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|instantly[&email=…|&name=…|&nachholen=1]
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -513,13 +513,41 @@ async function instantly(params: URLSearchParams) {
   return out;
 }
 
+/**
+ * Instantly-Auswertung je Kampagne und Postfach (docs/instantly-auswertung.md): nur Zahlen und Kategorien, keine
+ * Mailtexte, keine Kontaktadressen. Antworttexte werden nur im Speicher für die Einwand-Kategorien gelesen.
+ * Ausgabe zusätzlich als Markdown (data.markdown).
+ */
+async function instantlyAuswertung() {
+  const { auswerten, alsMarkdown } = await import("@/lib/vertrieb/instantly-auswertung");
+  const { stripQuoted } = await import("@/lib/vertrieb/instantly");
+  const [kampagnen, leads, mails, termine] = await Promise.all([
+    prisma.salesCampaign.findMany({ select: { id: true, name: true, ignored: true } }),
+    prisma.salesCampaignLead.findMany({
+      select: { contactId: true, campaignId: true, sentAt: true, openCount: true, lastOpenAt: true, replyCount: true, lastReplyAt: true, bounced: true, unsubscribed: true, interest: true },
+    }),
+    prisma.salesEmail.findMany({
+      where: { direction: "IN" },
+      select: { contactId: true, campaign: true, eaccount: true, subject: true, text: true, sentiment: true, isAutoReply: true, sentAt: true },
+    }),
+    prisma.salesMeeting.findMany({ select: { contactId: true, status: true, createdAt: true } }),
+  ]);
+  const antworten = mails.map((m) => ({
+    ...m,
+    // Text nur für Absagen/Später (Einwand-Kategorien), sonst gar nicht weitergeben
+    text: m.sentiment === "NEGATIV" || m.sentiment === "SPAETER" ? stripQuoted(m.text ?? "") : null,
+  }));
+  const ergebnis = auswerten({ kampagnen, leads, antworten, termine });
+  return { ...ergebnis, markdown: alsMarkdown(ergebnis) };
+}
+
 /** Pflichtvariablen: nur Status je Name, nie Werte (lib/env-check.ts). */
 async function variablen() {
   const { pruefeVariablen } = await import("@/lib/env-check");
   return pruefeVariablen();
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, instantly };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, instantly, "instantly-auswertung": instantlyAuswertung };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

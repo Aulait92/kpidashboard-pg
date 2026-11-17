@@ -1,4 +1,4 @@
-# Pay-per-Lead: Umstellungs-Drehbuch Zapier/Airtable → App (Stand 15.11.2026)
+# Pay-per-Lead: Umstellungs-Drehbuch Zapier/Airtable → App (Stand 15.11.2026, Abschalt-Checkliste 17.11.2026)
 
 Code-Vorbereitungen umgesetzt (Schalter `AIRTABLE_SYNC_OFF`, „Storno eintragen“, Dubletten über Produkte,
 Import behält App-Einstellungen), noch nichts umgeschaltet, Import nicht ausgeführt. Ergänzt `docs/pay-per-lead.md` (Abschnitt „Umstellung“) und
@@ -56,10 +56,12 @@ von Hand um die schon gelieferten Airtable-Leads verringern.
 
 ## 4. Abschalten danach
 
-- [ ] Zaps: „Zap 0 - Verteil-Zap“, „Verteil-Zap (SMS-Verifizierung)“, „Auslieferungs-Zap“, „Monatlich erhaltene Leads zurücksetzen“. **Nicht** abschalten: „Allianz Lead Ads“ (Anids Privatschutz, bis ihr Meta-Formular zugeordnet ist).
-- [ ] Airtable-Sync: per `AIRTABLE_SYNC_OFF` (cron-job.org weiterlaufen lassen, er holt die Werbekosten).
-- [ ] Zugangsdaten tauschen, die im Zap-Code im Klartext stehen: Airtable-Token, HMAC-Secret, Google-Service-Account.
-- [ ] Datenschutz: Airtable und Zapier aus der Liste der Unterauftragsverarbeiter (`SUBPROCESSORS`), Stand der Rechtstexte anheben.
+Genaue Liste mit Reihenfolge, Prüfpunkt und Rückweg je Schritt: **Abschnitt 6** (Stand 17.11.2026). Kurzfassung:
+
+- [ ] Zaps aus: „Zap 0 - Verteil-Zap“, „Verteil-Zap (SMS-Verifizierung)“, „Auslieferungs-Zap“, „Monatlich erhaltene Leads zurücksetzen“, nach Anids Zuordnung auch Anids Privatschutz-Zap (Meta → Airtable). **Bleiben an:** „Allianz Lead Ads“ und „Gmail to Webhooks on New Email Match“ (eigener Vertrieb, schreiben in die App, nicht nach Airtable).
+- [ ] Airtable-Sync: per `AIRTABLE_SYNC_OFF` (cron-job.org weiterlaufen lassen, er holt die Werbekosten). Erst wenn auch Anids Zap aus ist.
+- [ ] Zugangsdaten tauschen, die im Zap-Code im Klartext stehen: Airtable-Token, HMAC-Secret, Google-Service-Account; Brokercode liegt schon in Railway (`PPL_HVK_BROKERCODE`).
+- [ ] Datenschutz: Airtable und Zapier aus der Liste der Unterauftragsverarbeiter (`SUBPROCESSORS`), Stand der Rechtstexte anheben (Commit liegt bereit, erst nach dem Abschalten deployen).
 - [ ] Airtable-Base erst archivieren, wenn der Sync aus ist (sonst löscht der Abgleich Leads/Kunden in der App).
 - **Alte Oberfläche für Kunden:** Kunden nutzen schon `/buyer`; eine eigene alte Kundenoberfläche gibt es laut Code nicht. Für Login-Kunden ändert sich nur, dass sie wöchentlich bestellen.
 
@@ -84,3 +86,56 @@ von Hand um die schon gelieferten Airtable-Leads verringern.
 - „Storno zurücknehmen“ (Fehleintrag): nur solange die Gutschrift auf keiner Bestellung verrechnet ist; Status
   geht auf den Stand vor dem Storno zurück.
 - Keine Nachricht an den Kunden (HvK rechnet selbst ab).
+
+## 6. Abschalt-Checkliste Airtable/Zapier (vorbereitet 17.11.2026, nichts ausgeführt)
+
+Nur vorbereitet: In Zapier, Airtable, Railway und Google wurde nichts geändert. Grundlage: `docs/pay-per-lead.md`,
+`docs/livegang.md` (Schritt 6), `docs/datenschutz.md`, Code. Zapier wurde nur gelesen (Zapier-MCP `list_workflows`):
+Die Schnittstelle zeigt **nur die neuen Zapier-Workflows, nicht die klassischen Zaps**. Gefunden: ein Workflow
+„meta-privatschutz-anid-to-airtable“ (angelegt 08.11.2026, **aus**, Auslöser fehlgeschlagen). Die klassischen Zaps
+unten stammen aus den Doku-Dateien; vor Schritt B in Zapier → Zaps einmal nach App „Airtable“ und „Webhooks by
+Zapier“ filtern und die Liste abgleichen.
+
+### 6.1 Zaps
+
+| Zap | Was er tut | Entscheidung | Wann |
+|---|---|---|---|
+| „Zap 0 - Verteil-Zap“ | Perspective-Funnel → Airtable (Verteilung) | **aus** | je Funnel bei dessen Umstellung (Abschnitt 2, Schritt 4 bis 8), spätestens Schritt B |
+| „Verteil-Zap (SMS-Verifizierung)“ | wie oben für Funnels mit SMS-Prüfung | **aus** | wie oben |
+| „Auslieferungs-Zap“ | Airtable → Kunde (PDF-Mail, Convexa, HvK-Mail) | **aus** | Schritt B, erst wenn in Airtable kein Lead mehr auf Auslieferung wartet |
+| „Monatlich erhaltene Leads zurücksetzen“ | setzt Monatszähler in Airtable zurück (veraltet) | **aus** | Schritt B |
+| Anids Privatschutz-Zap (Meta-Formular 1909684100014197 → Airtable) | Kundenleads von Anid nach Airtable | **bleibt an**, bis das Formular in der App Anid zugeordnet ist (`docs/livegang.md` Schritt 6), dann **aus** | Schritt A2/B. **Blockiert Schritt C:** solange er läuft, kommen Anids Leads nur über den Airtable-Sync in die App |
+| Workflow „meta-privatschutz-anid-to-airtable“ (neue Zapier-Workflows) | Versuch vom 08.11. für denselben Weg | ist schon **aus**; nicht einschalten, nach Schritt B löschen (Ole) | Schritt B |
+| „Allianz Lead Ads“ | eigene Meta-Kampagnen → `/api/vertrieb/leads/webhook` | **bleibt an** (eigener Vertrieb, nicht Airtable) | nie im Rahmen dieser Abschaltung |
+| „Gmail to Webhooks on New Email Match“ | LinkedIn-Nachrichten → `/api/vertrieb/linkedin/message` | **bleibt an** (eigener Vertrieb) | nie im Rahmen dieser Abschaltung |
+| Lead-Webhook nach `/api/leads/eingang` (falls noch aktiv) | Kundenleads über Zapier in die App | **prüfen**: wenn aktiv, durch Meta-Webhook bzw. `/api/leads/pool` ersetzen, dann **aus** | vor Schritt D (sonst läuft Kunden-Leadverkehr weiter über Zapier) |
+
+Nach Schritt B laufen über Zapier nur noch eigene Vertriebsdaten, keine Leads der Kunden. Deshalb kann Zapier aus
+der AVV-Anlage 2 heraus, obwohl das Zapier-Konto bleibt.
+
+### 6.2 Zugangsdaten im Zap-Code (Klartext): tauschen bzw. löschen
+
+Werte hier nie eintragen. In der App liegen Geheimnisse nur in Railway-Variablen bzw. verschlüsselt in der Datenbank.
+
+| Zugang | Gegenstück in der App (nur Namen) | Was tun (Schritt F) | Prüfpunkt | Rückweg |
+|---|---|---|---|---|
+| Airtable-Token (PAT) | `AIRTABLE_TOKEN` (dazu `AIRTABLE_BASE_ID`, `AIRTABLE_TABLE_*`, `AIRTABLE_FIELD_*`); genutzt von `lib/airtable.ts`, `lib/airtable-write.ts`, `lib/ppl/airtable-nachholen.ts`, `/api/admin/airtable-fields` | Token aus dem Zap-Code im Airtable Developer Hub widerrufen. Ist es derselbe wie in Railway: vorher neuen PAT nur lesend (`data.records:read`, `schema.bases:read`) für diese eine Base anlegen und in live-app und staging-app als `AIRTABLE_TOKEN` setzen. Nach Schritt E alle `AIRTABLE_*` in Railway löschen | Admin → Pay-per-Lead → „Lead aus Airtable nachholen“ findet einen alten Lead; Stornogründe eines alten Leads laden | widerrufene Tokens kommen nicht zurück: neuen PAT anlegen und setzen |
+| HMAC-Secret (in `docs/pay-per-lead.md` genannt) | kein Gegenstück nötig: Funnel-Eingang prüft `LEAD_WEBHOOK_TOKEN`, Webhook-Auslieferung nutzt das Secret je Bezug (verschlüsselt, `ENCRYPTION_KEY`), HvK-Mail-Links `AUTH_SECRET` | Im Zap-Code (nur lesen) nachsehen, wer das Secret auf der anderen Seite kennt (z. B. SMS-Dienst, Funnel); dort entfernen bzw. wechseln. Danach ist es wertlos | keine Fehler beim Funnel-Eingang (Admin → Pay-per-Lead → Eingang), SMS-Abzeichen kommt weiter (`sms_verifiziert` vom Funnel) | altes Secret dort wieder eintragen (nur solange die Zaps noch laufen müssten) |
+| Google-Service-Account (JSON-Schlüssel) | kein Gegenstück: das Lead-PDF erzeugt die App selbst (`lib/ppl/lead-pdf.ts`). `FIREBASE_SERVICE_ACCOUNT` ist ein **anderer** Schlüssel (App-Push), nicht anfassen | Google Cloud Console → IAM → Dienstkonten: Schlüssel des Zap-Kontos löschen; Konto deaktivieren, wenn es sonst nichts nutzt; Freigaben in Drive/Sheets entziehen | 24 h keine Fehler in Zapier-Verlauf/Sentry; App-Push geht weiter | Schlüssel neu erzeugen (nur falls doch ein Zap ihn braucht) |
+| HvK-Brokercode | `PPL_HVK_BROKERCODE` in Railway, Platzhalter `{brokercode}` in der E-Mail-Vorlage des HvK-Bezugs (`lib/ppl/template.ts`) | Kein Passwort, sondern unsere Kennung bei Pivacom: nicht selbst rotierbar. Mit dem Abschalten des Auslieferungs-Zaps steht er nur noch in Railway. Optional Pivacom fragen, ob ein neuer Code sinnvoll ist; dann nur `PPL_HVK_BROKERCODE` ändern | Test-Lead an den HvK-Bezug (Test-Modus): Mail enthält die Brokercode-Zeile | alten Code wieder setzen |
+| Nebenbei: Convexa-Webhook-Adresse (Token im Pfad) | am Convexa-Bezug in der App (aus Airtable übernommen) | steht auch im Zap und in Airtable. Optional bei Convexa eine neue Adresse anfragen und am Bezug eintragen | Convexa bestätigt Eingang | alte Adresse am Bezug |
+| Nebenbei: `LEAD_WEBHOOK_TOKEN` | Railway | nur wenn er in einem Zap stand (Lead-Webhook nach `/api/leads/eingang`): wechseln und **gleichzeitig** alle Perspective-Webhooks anpassen. Sonst lassen | Testlead je Funnel kommt an | alten Wert zurück |
+
+### 6.3 Reihenfolge
+
+| # | Wer | Schritt | Prüfpunkt | Rückweg |
+|---|---|---|---|---|
+| A1 | Ole + PG | Alle Funnels auf die App (Abschnitt 2, Schritt 4 bis 8) | Admin → Pay-per-Lead → Eingang: jedes Produkt bekommt Leads über `/api/leads/pool`; Auswertung Tag: eingegangen = geliefert + abgelehnt + geparkt | Webhook in Perspective zurück auf Zapier, Zap an |
+| A2 | Ole + PG | Anids Formular in der App zuordnen (`docs/livegang.md` Schritt 6) | Testlead erscheint bei Anid in der App | Zuordnung entfernen, Zap bleibt an |
+| A3 | Ole | Airtable: Ansicht „noch nicht ausgeliefert“ leer, letzte HvK-/Convexa-Lieferung aus Airtable bestätigt | keine offenen Leads in Airtable | Auslieferungs-Zap noch nicht ausschalten |
+| B | Ole | Zaps aus (Tabelle 6.1), Workflow löschen | Zapier-Verlauf 24 h ohne Läufe dieser Zaps; Airtable bekommt keine neuen Leads; App bekommt weiter Leads | Zap wieder an (Einstellungen bleiben erhalten) |
+| C | PG | `AIRTABLE_SYNC_OFF=1` in Railway (live-app), Dienst neu starten (Abschnitt 5) | Herzschlag „sync“ grün mit Notiz „Airtable übersprungen“, `/api/sync?wait=1` liefert `airtable.skipped: true`, Admin zeigt „aus (AIRTABLE_SYNC_OFF)“, Werbekosten laufen weiter | Variable entfernen, neu starten. Vorsicht: der nächste Abgleich löscht in der App, was inzwischen in Airtable gelöscht wurde, also bis E in Airtable nichts löschen |
+| D | PG, dann Ole | Rechtstexte: vorbereiteten Commit „Rechtstexte: Airtable und Zapier aus Anlage 2“ (Branch `nacht-doku`, **erst nach B und C deployen**) auf staging, prüfen, dann live. Datum `LEGAL_VERSION` vorher auf den echten Deploy-Tag setzen. `docs/datenschutz.md`: Nachweis-Tabelle „beendet am“ eintragen, Punkt „Dezember: Airtable/Zapier aus Anlage 2“ abhaken. Kunden mit angenommenem Vertrag in Textform informieren (Streichung, keine Widerspruchsfrist nötig) | `/rechtliches/avv` (Anlage 2) und `/sicherheit` ohne Airtable und Zapier, „Stand“ neu; Gedankenstrich-Test grün | Commit zurücknehmen und neu deployen |
+| E | Ole | Airtable-Base archivieren (erst nach C, frühestens nach Abschluss der Stornos alter Leads, siehe Abschnitt 3); vorher Export (CSV je Tabelle) ablegen | App läuft weiter, Herzschlag grün; keine Airtable-Fehler in Sentry | Base aus dem Archiv wiederherstellen |
+| F | Ole + PG | Zugangsdaten tauschen bzw. löschen (Tabelle 6.2); nach E alle `AIRTABLE_*` aus Railway (live-app, staging-app) entfernen | Prüfpunkte aus 6.2; `q=variablen` der Diagnose zeigt keine Fehler | siehe 6.2 |
+| G | Ole | Zapier-Tarif prüfen (nur noch Vertriebs-Zaps), laufende Kosten unter Einstellungen → Laufende Kosten anpassen | Rechnung | Tarif zurück |
