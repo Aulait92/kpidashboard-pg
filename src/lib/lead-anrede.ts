@@ -92,18 +92,24 @@ export async function ansprechpartner(opts: {
   }
   const profilName = erstinfoName(profil?.name, (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer?.name) || null;
   const zustaendig = lead?.assignedUser?.displayName?.replace(/\s+/g, " ").trim() || null;
+  // Team (Ole, 17.11.2026): Zuständiger ohne Anzeigenamen → nie den Inhaber nennen, sondern neutral die Agentur
+  const ohneName = !!lead?.assignedUser && !zustaendig;
   // Anrede gilt nur für die Person der Anbieterangaben (anderer Berater im Team: Vor- und Nachname)
-  const vermittler = zustaendig && zustaendig !== profilName ? { name: zustaendig, anrede: null } : { name: profilName, anrede: salutationOf(profil?.anrede) };
+  const vermittler = ohneName
+    ? { name: null, anrede: null }
+    : zustaendig && zustaendig !== profilName
+      ? { name: zustaendig, anrede: null }
+      : { name: profilName, anrede: salutationOf(profil?.anrede) };
   return {
     kontakt,
     vermittler,
-    advisor: advisorPerson(customer?.name, lead?.assignedUser?.displayName),
+    advisor: ohneName ? firmDisplayName(customer?.name) : advisorPerson(customer?.name, lead?.assignedUser?.displayName),
     firm: firmDisplayName(customer?.name),
     kurz: kurzNameFuerLeads({
       assignedDisplayName: lead?.assignedUser?.displayName,
       // wie in den Anbieterangaben (gespeichert bzw. Vorschlag), damit Vorlage und Freitext denselben Vornamen tragen
-      profilName: erstinfoName(profil?.name, (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer?.name),
-      customerName: customer?.name,
+      profilName: ohneName ? null : erstinfoName(profil?.name, (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer?.name),
+      customerName: ohneName ? firmDisplayName(customer?.name) : customer?.name,
     }),
   };
 }

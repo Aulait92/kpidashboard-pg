@@ -116,7 +116,6 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   inter: "INTER",
   itzehoer: "Itzehoer",
   lv1871: "LV 1871",
-  monuta: "Monuta",
   "muenchener-verein": "Münchener Verein",
   nuernberger: "NÜRNBERGER",
   sdk: "SDK",
@@ -201,7 +200,6 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/\bINTER\b/.test(t) || /\binter[\s-]*(kranken)?versicherung/i.test(t)) return "inter";
   if (/itzehoer/i.test(t)) return "itzehoer";
   if (/\blv\s*1871\b/i.test(t)) return "lv1871";
-  if (/\bmonuta\b/i.test(t)) return "monuta";
   if (/m[üu]nchener\s*verein/i.test(t)) return "muenchener-verein";
   if (/n[üu]rnberger/i.test(t)) return "nuernberger";
   if (/\bsdk\b|s[üu]ddeutsche\s*kranken/i.test(t)) return "sdk";
