@@ -11,3 +11,9 @@ export function packageLabel(c: PackageInput): string {
   if (!hasRetainer && !c.onboarding) return "Pay-per-Lead";
   return "Betreuung + Software";
 }
+
+/** Kennzeichen interner Konten und Testkunden in Admin-Listen und Admin-Suche („Intern“ geht vor „Test“), sonst null. */
+export function testKennung(c: { plan: string; isTest?: boolean | null }): "Intern" | "Test" | null {
+  if (c.plan === "internal") return "Intern";
+  return c.isTest ? "Test" : null;
+}

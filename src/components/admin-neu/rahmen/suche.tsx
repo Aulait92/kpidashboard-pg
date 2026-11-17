@@ -32,7 +32,7 @@ export function Suche({ variante }: { variante: "breit" | "kopf" }) {
         ref={knopf}
         type="button"
         onClick={() => setOpen(true)}
-        data-funktion="command-palette--befehlspalette-mit-seiten-spruengen-35-ziele route-get--suche-nach-kunden-kontakten-leads-api page--login-liste-aller-kunden-suche-nach-e-mail"
+        data-funktion="command-palette--befehlspalette-mit-seiten-spruengen-35-ziele route-get--suche-nach-kunden-kontakten-leads-api route-get--suche-findet-interne-und-test-kunden-mit-badge page--login-liste-aller-kunden-suche-nach-e-mail"
         className={
           variante === "breit"
             ? "flex h-10 w-full max-w-[520px] items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-3 text-left text-sm text-[color:var(--muted)] shadow-[var(--shadow-sm)] transition hover:border-[color:var(--border-strong)]"

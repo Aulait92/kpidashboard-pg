@@ -4,7 +4,7 @@ import { ChevronRight, Users } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState } from "@/components/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Chips } from "@/components/admin-neu/kunden/chips";
-import { packageLabel } from "@/lib/customer-package";
+import { packageLabel, testKennung } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
 import { onboardingProgressFor } from "@/lib/onboarding";
@@ -13,6 +13,7 @@ import { ensureSource } from "@/lib/vertrieb/source";
 import { nextStepRatesByCustomer, type NextStepRate } from "@/lib/lead-next-step-server";
 import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
 import { requireAuth } from "@/lib/vertrieb/auth";
+import type { Prisma } from "@/generated/prisma/client";
 import type { SalesCustomerStage as Stufe } from "@/generated/prisma/enums";
 
 export const metadata = { title: "Kunden | performancegrowth Admin" };
@@ -32,14 +33,18 @@ const FILTER = [
   { key: "gekuendigt", label: "Gekündigt" },
   { key: "ruhend", label: "Ruhend" },
   { key: "zahlung", label: "Zahlung offen" },
+  // Interne Konten (plan „internal“, z. B. Oles Testkunde) und Testkunden; sonst ausgeblendet (Ole, 17.11.2026)
+  { key: "intern", label: "Intern/Test" },
 ] as const;
+const INTERN_ODER_TEST: Prisma.CustomerWhereInput = { OR: [{ plan: "internal" }, { isTest: true }], dataDeletedAt: null };
 type FilterKey = (typeof FILTER)[number]["key"];
 
 type Zeile = {
   key: string;
   href: string;
   name: string;
-  isTest: boolean;
+  /** „Intern“ oder „Test“ (lib/customer-package.ts: testKennung) */
+  kennung: string | null;
   stufe: Stufe | null;
   status: { label: string; tone: "success" | "warning" | "danger" | "brand" | "neutral" } | null;
   unter: string;
@@ -63,26 +68,28 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
   }
 
   const seit = new Date(nowMs() - 30 * 24 * 60 * 60 * 1000);
-  const [kunden, ruhende, ohneKonto] = await Promise.all([
+  const auswahl = {
+    id: true,
+    name: true,
+    isTest: true,
+    plan: true,
+    retainerMonthly: true,
+    paymentOverdueSince: true,
+    cancelEffectiveAt: true,
+    onboarding: { select: { id: true } },
+    salesContact: { select: { customerStage: true, monthlyValue: true, products: true } },
+    pauses: { where: { status: "active" }, select: { kind: true, endsAt: true }, take: 1 },
+    agentConfig: { select: { active: true } },
+    whatsAppAccount: { select: { status: true } },
+    _count: { select: { leads: { where: { createdAt: { gte: seit } } }, users: { where: { role: "BUYER" } } } },
+  } satisfies Prisma.CustomerSelect;
+  const [kunden, interne, ruhende, ohneKonto] = await Promise.all([
     prisma.customer.findMany({
       where: { plan: { not: "internal" }, archived: false, OR: [{ dormantSince: null }, { dataDeletedAt: { not: null } }] },
       orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        isTest: true,
-        plan: true,
-        retainerMonthly: true,
-        paymentOverdueSince: true,
-        cancelEffectiveAt: true,
-        onboarding: { select: { id: true } },
-        salesContact: { select: { customerStage: true, monthlyValue: true, products: true } },
-        pauses: { where: { status: "active" }, select: { kind: true, endsAt: true }, take: 1 },
-        agentConfig: { select: { active: true } },
-        whatsAppAccount: { select: { status: true } },
-        _count: { select: { leads: { where: { createdAt: { gte: seit } } }, users: { where: { role: "BUYER" } } } },
-      },
+      select: auswahl,
     }),
+    prisma.customer.findMany({ where: INTERN_ODER_TEST, orderBy: { name: "asc" }, select: auswahl }),
     prisma.customer.findMany({
       where: { plan: { not: "internal" }, dormantSince: { not: null }, dataDeletedAt: null },
       orderBy: { dormantSince: "desc" },
@@ -95,55 +102,62 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
       select: { id: true, name: true, city: true, customerStage: true, monthlyValue: true, products: true },
     }),
   ]);
+  const alle = [...new Map([...kunden, ...interne].map((c) => [c.id, c])).values()];
   const [fortschritt, schritte] = await Promise.all([
-    onboardingProgressFor(kunden.filter((c) => c.onboarding).map((c) => c.id)),
-    nextStepRatesByCustomer(kunden.map((c) => c.id)).catch(() => new Map<string, NextStepRate>()),
+    onboardingProgressFor(alle.filter((c) => c.onboarding).map((c) => c.id)),
+    nextStepRatesByCustomer(alle.map((c) => c.id)).catch(() => new Map<string, NextStepRate>()),
   ]);
 
+  // Zeile eines Kundenkontos; Intern/Test-Konten erscheinen nur im Filter „Intern/Test“
+  const kundeZeile = (c: (typeof kunden)[number], nurIntern = false): Zeile => {
+    const ob = fortschritt.get(c.id);
+    const stufe = c.salesContact?.customerStage ?? null;
+    const pause = c.pauses[0];
+    const einrichtung = (!!ob && !ob.live) || stufe === "VERTRAG" || stufe === "ONBOARDING";
+    const pausiert = !!pause || stufe === "PAUSIERT";
+    const st = schritte.get(c.id);
+    const wa = c.plan === "service" ? null : c.agentConfig?.active && c.whatsAppAccount?.status === "connected" ? "WhatsApp aktiv" : "WhatsApp aus";
+    const mrr = c.salesContact?.monthlyValue ?? (c.retainerMonthly ? Number(c.retainerMonthly) : null);
+    return {
+      key: c.id,
+      href: `/admin/neu/kunden/${c.id}`,
+      name: c.name.replace(/^Allianz\s+/i, ""),
+      kennung: testKennung(c),
+      stufe,
+      status: c.paymentOverdueSince
+        ? { label: "Zahlung offen", tone: "danger" }
+        : pause
+          ? { label: pause.kind === "dunning" ? "Pausiert (Zahlung)" : "Pausiert", tone: "warning" }
+          : ob && !ob.live
+            ? { label: `Einrichtung ${ob.percent} %`, tone: "brand" }
+            : null,
+      unter: [c.plan === "internal" ? null : packageLabel(c), c.salesContact?.products, mrr ? `${eur(mrr)}/Monat` : null, `${c._count.leads} Leads in 30 T.`, wa, `${c._count.users} ${c._count.users === 1 ? "Login" : "Logins"}`]
+        .filter(Boolean)
+        .join(" · "),
+      hinweis: pause?.endsAt ? `Pause bis ${tag(pause.endsAt)}` : c.cancelEffectiveAt ? `Vertrag endet ${tag(c.cancelEffectiveAt)}` : ob && !ob.live && ob.waitingYou ? `${ob.waitingYou} Schritt${ob.waitingYou === 1 ? "" : "e"} bei Ihnen` : null,
+      warnung: st?.rate != null && st.open >= 5 && st.rate < NEXT_STEP_WARN_BELOW ? `Nächster Schritt ${Math.round(st.rate * 100)} %` : null,
+      fortschritt: ob && !ob.live ? ob.percent : null,
+      passt: (k) =>
+        nurIntern
+          ? k === "intern"
+          : k === "" ||
+            (k === "einrichtung" && einrichtung) ||
+            (k === "test" && stufe === "TEST") ||
+            (k === "aktiv" && stufe === "AKTIV" && !pausiert) ||
+            (k === "pausiert" && pausiert) ||
+            (k === "gekuendigt" && (stufe === "GEKUENDIGT" || !!c.cancelEffectiveAt)) ||
+            (k === "zahlung" && !!c.paymentOverdueSince),
+    };
+  };
+  const internZeilen = interne.map((c) => kundeZeile(c, true));
+
   const zeilen: Zeile[] = [
-    ...kunden.map((c): Zeile => {
-      const ob = fortschritt.get(c.id);
-      const stufe = c.salesContact?.customerStage ?? null;
-      const pause = c.pauses[0];
-      const einrichtung = (!!ob && !ob.live) || stufe === "VERTRAG" || stufe === "ONBOARDING";
-      const pausiert = !!pause || stufe === "PAUSIERT";
-      const st = schritte.get(c.id);
-      const wa = c.plan === "service" ? null : c.agentConfig?.active && c.whatsAppAccount?.status === "connected" ? "WhatsApp aktiv" : "WhatsApp aus";
-      const mrr = c.salesContact?.monthlyValue ?? (c.retainerMonthly ? Number(c.retainerMonthly) : null);
-      return {
-        key: c.id,
-        href: `/admin/neu/kunden/${c.id}`,
-        name: c.name.replace(/^Allianz\s+/i, ""),
-        isTest: c.isTest,
-        stufe,
-        status: c.paymentOverdueSince
-          ? { label: "Zahlung offen", tone: "danger" }
-          : pause
-            ? { label: pause.kind === "dunning" ? "Pausiert (Zahlung)" : "Pausiert", tone: "warning" }
-            : ob && !ob.live
-              ? { label: `Einrichtung ${ob.percent} %`, tone: "brand" }
-              : null,
-        unter: [packageLabel(c), c.salesContact?.products, mrr ? `${eur(mrr)}/Monat` : null, `${c._count.leads} Leads in 30 T.`, wa, `${c._count.users} ${c._count.users === 1 ? "Login" : "Logins"}`]
-          .filter(Boolean)
-          .join(" · "),
-        hinweis: pause?.endsAt ? `Pause bis ${tag(pause.endsAt)}` : c.cancelEffectiveAt ? `Vertrag endet ${tag(c.cancelEffectiveAt)}` : ob && !ob.live && ob.waitingYou ? `${ob.waitingYou} Schritt${ob.waitingYou === 1 ? "" : "e"} bei Ihnen` : null,
-        warnung: st?.rate != null && st.open >= 5 && st.rate < NEXT_STEP_WARN_BELOW ? `Nächster Schritt ${Math.round(st.rate * 100)} %` : null,
-        fortschritt: ob && !ob.live ? ob.percent : null,
-        passt: (k) =>
-          k === "" ||
-          (k === "einrichtung" && einrichtung) ||
-          (k === "test" && stufe === "TEST") ||
-          (k === "aktiv" && stufe === "AKTIV" && !pausiert) ||
-          (k === "pausiert" && pausiert) ||
-          (k === "gekuendigt" && (stufe === "GEKUENDIGT" || !!c.cancelEffectiveAt)) ||
-          (k === "zahlung" && !!c.paymentOverdueSince),
-      };
-    }),
+    ...kunden.map((c) => kundeZeile(c)),
     ...ohneKonto.map((k): Zeile => ({
       key: `kontakt-${k.id}`,
       href: `/admin/vertrieb/kontakte/${k.id}`,
       name: k.name,
-      isTest: false,
+      kennung: null,
       stufe: k.customerStage,
       status: null,
       unter: ["noch kein Kundenkonto", k.city, k.products, k.monthlyValue ? `${eur(k.monthlyValue)}/Monat` : null].filter(Boolean).join(" · "),
@@ -163,7 +177,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
     key: r.id,
     href: `/admin/neu/kunden/${r.id}/abrechnung`,
     name: r.name.replace(/^Allianz\s+/i, ""),
-    isTest: r.isTest,
+    kennung: r.isTest ? "Test" : null,
     stufe: null,
     status: { label: "Ruhend", tone: "neutral" },
     unter: [`ruht seit ${tag(r.dormantSince!)}`, r.deleteAfter ? `Löschung am ${tag(r.deleteAfter)}` : null, r.retentionChoice ? `Aufbewahrung ${AUFBEWAHRUNG[r.retentionChoice] ?? r.retentionChoice}` : null]
@@ -175,20 +189,20 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
     passt: (k) => k === "ruhend",
   }));
 
-  const sichtbar = filter === "ruhend" ? ruhendZeilen : zeilen.filter((z) => z.passt(filter));
+  const sichtbar = filter === "ruhend" ? ruhendZeilen : filter === "intern" ? internZeilen : zeilen.filter((z) => z.passt(filter));
   const mrrAktiv = kunden.reduce((a, c) => a + (c.salesContact?.customerStage === "AKTIV" ? (c.salesContact.monthlyValue ?? 0) : 0), 0);
   const href = (k: string) => (k ? `/admin/neu/kunden?filter=${k}` : "/admin/neu/kunden");
 
   return (
     <Seite titel="Kunden" reiter="kunden" untertitel={`${kunden.length} Kunden · ${eur(mrrAktiv)} Monatsumsatz aktiv`}>
       <div className="space-y-4">
-        <div data-funktion="page-filters--filter-alle-zahlung-offen-onboarding-pausiert actions-dragcustomer--kunden-pipeline-vertrag-onboarding-test-aktiv">
+        <div data-funktion="page-filters--filter-alle-zahlung-offen-onboarding-pausiert page-filters--filter-intern-test-interne-konten-und-testkunden actions-dragcustomer--kunden-pipeline-vertrag-onboarding-test-aktiv">
           <Chips
             label="Status"
             eintraege={FILTER.map((f) => ({
               label: f.label,
               href: href(f.key),
-              anzahl: f.key === "ruhend" ? ruhendZeilen.length : zeilen.filter((z) => z.passt(f.key)).length,
+              anzahl: f.key === "ruhend" ? ruhendZeilen.length : f.key === "intern" ? internZeilen.length : zeilen.filter((z) => z.passt(f.key)).length,
               aktiv: f.key === filter,
               immer: !f.key,
             }))}
@@ -208,8 +222,8 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
                       <span className="mr-0.5 truncate font-medium">{z.name}</span>
                       {z.status ? <Badge tone={z.status.tone}>{z.status.label}</Badge> : null}
                       {!z.status && z.stufe ? <span className={`badge ${CUSTOMER_COLOR[z.stufe]}`}>{CUSTOMER_LABEL[z.stufe]}</span> : null}
-                      {!z.status && !z.stufe ? <Badge>Leads (Airtable)</Badge> : null}
-                      {z.isTest ? <span className="badge bg-amber-100 text-amber-900">Test</span> : null}
+                      {!z.status && !z.stufe && z.kennung !== "Intern" ? <Badge>Leads (Airtable)</Badge> : null}
+                      {z.kennung ? <span className="badge bg-amber-100 text-amber-900">{z.kennung}</span> : null}
                       {z.warnung ? <Badge tone="danger">{z.warnung}</Badge> : null}
                     </div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">{z.unter}</div>
