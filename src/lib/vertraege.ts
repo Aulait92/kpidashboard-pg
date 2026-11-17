@@ -662,12 +662,14 @@ export async function cancelLeadContract(contractId: string, customerId: string,
  * gleicher Kunde aus dem Import (Telefon oder E-Mail). Verträge aus dem Import mit gleicher
  * Vertragsnummer gehen vor (kein zweiter Spiegel).
  */
-export async function syncLeadToBestand(leadId: string, now = new Date()): Promise<{ existingCustomerId: string } | null> {
-  const lead = await prisma.lead.findUnique({
-    where: { id: leadId },
-    select: { id: true, customerId: true, name: true, phone: true, email: true, status: true, erasedAt: true, closedAt: true, contracts: { select: { id: true, sparte: true, productName: true, premium: true, signedAt: true, insurer: true, contractNo: true, status: true } } },
-  });
-  if (!lead || lead.erasedAt || !isClosed(lead.status) || !lead.contracts.length) return null;
+/**
+ * Bestandskunde zum Lead: schon verknüpft, sonst per Telefon bzw. E-Mail gefunden (und verknüpft) oder neu angelegt.
+ * Genutzt beim Abschluss (syncLeadToBestand) und für „In Bestand übernehmen“ (lib/policen/auslesen).
+ */
+export async function bestandskundeZuLead(
+  lead: { id: string; customerId: string; name: string | null; phone: string | null; email: string | null },
+  opts: { consentAt: Date | null; note: string },
+): Promise<{ id: string }> {
   let ec = await prisma.existingCustomer.findUnique({ where: { leadId: lead.id }, select: { id: true } });
   if (!ec && (lead.phone || lead.email)) {
     ec = await prisma.existingCustomer.findFirst({
@@ -676,24 +678,23 @@ export async function syncLeadToBestand(leadId: string, now = new Date()): Promi
     });
     if (ec) await prisma.existingCustomer.update({ where: { id: ec.id }, data: { leadId: lead.id } });
   }
-  if (!ec) {
-    const parts = (lead.name ?? "").trim().split(/\s+/).filter(Boolean);
-    const firstName = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] ?? null);
-    const lastName = parts.length > 1 ? parts[parts.length - 1] : null;
-    ec = await prisma.existingCustomer.create({
-      data: {
-        customerId: lead.customerId,
-        leadId: lead.id,
-        firstName,
-        lastName,
-        phone: lead.phone,
-        email: lead.email,
-        consentAt: lead.closedAt ?? now,
-        consentNote: BESTAND_FROM_LEAD_NOTE,
-      },
-      select: { id: true },
-    });
-  }
+  if (ec) return ec;
+  const parts = (lead.name ?? "").trim().split(/\s+/).filter(Boolean);
+  const firstName = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] ?? null);
+  const lastName = parts.length > 1 ? parts[parts.length - 1] : null;
+  return prisma.existingCustomer.create({
+    data: { customerId: lead.customerId, leadId: lead.id, firstName, lastName, phone: lead.phone, email: lead.email, consentAt: opts.consentAt, consentNote: opts.note },
+    select: { id: true },
+  });
+}
+
+export async function syncLeadToBestand(leadId: string, now = new Date()): Promise<{ existingCustomerId: string } | null> {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true, customerId: true, name: true, phone: true, email: true, status: true, erasedAt: true, closedAt: true, contracts: { select: { id: true, sparte: true, productName: true, premium: true, signedAt: true, insurer: true, contractNo: true, status: true } } },
+  });
+  if (!lead || lead.erasedAt || !isClosed(lead.status) || !lead.contracts.length) return null;
+  const ec = await bestandskundeZuLead(lead, { consentAt: lead.closedAt ?? now, note: BESTAND_FROM_LEAD_NOTE });
   const imported = await prisma.existingContract.findMany({ where: { existingCustomerId: ec.id, leadContractId: null }, select: { contractNo: true } });
   const importedNos = new Set(imported.map((i) => i.contractNo).filter((x): x is string => !!x));
   for (const c of lead.contracts) {

@@ -416,6 +416,11 @@ async function persistInbound(
       const r = media
         ? await policen.handleInboundMedia({ conversationId: conversation.id, messageId: inboundMsg.id, medium: { type, ...media }, botErlaubt, now })
         : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m), waMessageId: m.id ?? null }, now);
+      // Policen auslesen (lib/policen/auslesen, eigener KI-Zugang nur für Dokumente): nach Eingang bzw. Einwilligung im
+      // Hintergrund; ohne Schlüssel, Einwilligung mit KI oder freigegebene Sparte passiert nichts
+      void import("@/lib/policen/auslesen/server")
+        .then((x) => x.nachEingang(linkedLead.leadId!, now))
+        .catch(() => console.error("[policen-auslesen] nach eingang fehlgeschlagen"));
       if (r.handled) return;
       if (media && botErlaubt) botErlaubt = false;
     } catch (e) {

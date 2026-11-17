@@ -117,6 +117,11 @@ async function handle(req: Request): Promise<Response> {
             reportError(e, "cron-policen");
             return null;
           }),
+          // Policen auslesen: Hinweis vor Ablauf des Schlüssels, „Schlüssel ungültig“ täglich (lib/policen/auslesen)
+          policenAuslesen: await import("@/lib/policen/auslesen/server").then((m) => m.auslesenTaeglich(now)).catch((e: unknown) => {
+            reportError(e, "cron-policen-auslesen");
+            return null;
+          }),
           // Vertragsende: Konto ruht, Erinnerungen 30/7 Tage vor der Löschung, endgültige Löschung (lib/ruhend.ts)
           retention: await import("@/lib/ruhend").then((m) => m.runRetentionCron(now)).catch((e: unknown) => {
             reportError(e, "cron-retention");

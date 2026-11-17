@@ -13,6 +13,7 @@ import { NeueVorbereitung } from "./neu-seite";
 import { neueTerminvorbereitung } from "@/lib/terminvorbereitung-neu";
 import { listUnterlagen } from "@/lib/policen/server";
 import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
+import { PolicenVergleichKurz } from "@/components/policen-vergleich-kurz";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Terminvorbereitung | performancegrowth" };
@@ -98,6 +99,9 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
           <CardHeader title="Unterlagen vom Kunden" icon={FileText} />
           <div className="px-5 py-3.5 text-sm">
             <UnterlagenVomKunden leadId={d.leadId} unterlagen={unterlagenVomKunden} titel={false} />
+            <div className="mt-2.5">
+              <PolicenVergleichKurz terminId={d.id} leadId={d.leadId} customerId={ctx.customerId} preview={ctx.preview} />
+            </div>
           </div>
         </Card>
       ) : null}
