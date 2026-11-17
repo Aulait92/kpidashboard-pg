@@ -168,6 +168,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "customer.logo": "Logo für Präsentationen geändert",
   "customer.markthinweis": "Makler: Hinweis auf die Marktauswahl in der Präsentation geändert",
   "angebote.gesundheit_verworfen": "Angebot mit Gesundheitssparte ausgelesen und verworfen (nichts gespeichert)",
+  "anzeige.rueckfuellung": "Anzeige am Lead nachgetragen (Rückfüllung, nur leere Felder)",
 };
 
 export async function audit(

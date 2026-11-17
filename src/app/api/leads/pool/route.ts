@@ -3,6 +3,7 @@ import { ingestPoolLead } from "@/lib/ppl/engine";
 import { prisma } from "@/lib/prisma";
 import { isPerspectivePayload, translatePerspective } from "@/lib/ppl/perspective";
 import { reportError } from "@/lib/monitoring";
+import { adFromTracking } from "@/lib/anzeige";
 
 // Pay-per-Lead-Eingang (eigene Funnels, z. B. Perspective „PKV-Tarifoptimierung“):
 // POST https://<domain>/api/leads/pool?token=<LEAD_WEBHOOK_TOKEN>&produkt=<Produkt>
@@ -61,6 +62,8 @@ export async function POST(req: Request) {
         fields,
         smsVerified: sms === "true" || sms === "1" || sms === "ja" || sms === "sms",
         score: item.score != null && item.score !== "" ? Number(item.score) : null,
+        // Anzeige/UTM aus dem Funnel, falls mitgeschickt (nur diese Schlüssel, keine Personendaten)
+        ad: adFromTracking(item),
       });
       results.push({ status: r.status, reason: r.reason });
     } catch (err) {

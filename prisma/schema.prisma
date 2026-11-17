@@ -197,6 +197,7 @@ model Customer {
   costs            Cost[]
   users            User[]
   customerProducts CustomerProduct[]
+  adSpendDaily     AdSpendDaily[]
 
   // ─── WhatsApp-CRM (Phase 0) ─────────────────────────────────────────
   onboarding                     Onboarding?
@@ -457,6 +458,38 @@ model ProductCatalogItem {
 
 // Tagesspend aus dem EIGENEN Werbekonto eines Kunden (Retainer-Modell).
 // Bewusst getrennt von Cost: das ist Geld des Kunden, keine Agentur-Kosten.
+// Meta-Kosten je Anzeige und Tag (Ole, 17.11.2026, lib/anzeige-kosten.ts): Insights level=ad, täglicher Abgleich
+// der letzten Tage, beim ersten Lauf bis 90 Tage zurück, nie vor dem Startdatum des Kunden. customerId leer =
+// Agentur-/Pool-Kampagne ohne eindeutigen Kunden. Damit werden Kosten pro Termin/Abschluss je Anzeige rechenbar.
+model AdSpendDaily {
+  id           String    @id @default(cuid())
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // Werbekonto (nur Ziffern, ohne „act_“)
+  adAccountId  String
+  campaignId   String?
+  campaignName String?
+  adSetId      String?
+  adSetName    String?
+  adId         String
+  adName       String?
+  // Tag, 12:00 UTC (wie CustomerAdSpend)
+  date         DateTime
+  spend        Decimal   @db.Decimal(12, 2)
+  impressions  Int       @default(0)
+  clicks       Int       @default(0)
+  // Leads laut Meta (actions lead/leadgen_grouped)
+  metaLeads    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([adAccountId, adId, date])
+  @@index([customerId, date])
+  @@index([campaignId, date])
+  @@index([adSetId])
+  @@index([adId])
+}
+
 model CustomerAdSpend {
   id         String   @id @default(cuid())
   customerId String
@@ -666,6 +699,17 @@ model Lead {
   // Werte: "Meta" | "Outbrain" | null (= unbekannt). Wird in Channel-KPIs
   // und im Media-Buyer-Steuerlauf verwendet, um CPL pro Kanal zu berechnen.
   adChannel            String?
+  // Anzeige, aus der der Lead kam (Ole, 17.11.2026, lib/anzeige.ts): Plattform (fb, ig …), Formular, Kampagne,
+  // Anzeigengruppe und Anzeige (IDs und Namen). Aus dem Meta-Lead-Abruf, Zapier oder dem Perspective-Funnel (UTM);
+  // die Rückfüllung (lib/anzeige-rueckfuellung.ts) setzt nur leere Felder, nur für Leads ab dem Startdatum des Kunden.
+  adPlatform           String?
+  adFormId             String?
+  adCampaignId         String?
+  adCampaignName       String?
+  adSetId              String?
+  adSetName            String?
+  adId                 String?
+  adName               String?
   acquisitionCost      Decimal           @default(0) @db.Decimal(12, 2)
   // Abschlusswert in EUR — vom Buyer beim Drop auf "Abschluss" in der
   // Pipeline-Ansicht eingegeben (oder im Lead-Detail editierbar). Wird
@@ -785,6 +829,10 @@ model Lead {
   @@index([phoneDigitsRev])
   @@index([callStartedAt])
   @@index([openQuestionsAt])
+  @@index([adFormId])
+  @@index([adCampaignId])
+  @@index([adSetId])
+  @@index([adId])
 }
 
 model Revenue {
@@ -2409,6 +2457,9 @@ model PoolLead {
   smsVerified  Boolean   @default(false)
   score        Int?
   answers      Json?
+  // Anzeige/UTM aus dem Funnel ohne Personendaten ({ adPlatform, adCampaignName, … }, lib/anzeige.ts); geht bei der
+  // Lieferung an den Lead
+  adInfo       Json?
   // delivered | duplicate | invalid | parked
   status       String
   reason       String?
@@ -3581,18 +3632,29 @@ model LeadHistory {
 // E-Mail) beim selben Kunden noch einmal ein, entsteht kein zweiter Lead. Je Einsendung eine Zeile: Meta-Lead-ID
 // gegen doppelte Zustellung (Meta + Zapier), Formular, Produkt und Einwilligungsnachweis dieser Einsendung.
 model LeadReentry {
-  id          String   @id @default(cuid())
-  leadId      String
-  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  customerId  String
-  externalId  String?  @unique
-  formId      String?
-  productKey  String?
-  consentData Json?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  leadId         String
+  lead           Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customerId     String
+  externalId     String?  @unique
+  formId         String?
+  productKey     String?
+  consentData    Json?
+  // Anzeige dieser Einsendung (jede kann aus einer anderen Anzeige kommen), wie am Lead (lib/anzeige.ts)
+  adPlatform     String?
+  adFormId       String?
+  adCampaignId   String?
+  adCampaignName String?
+  adSetId        String?
+  adSetName      String?
+  adId           String?
+  adName         String?
+  createdAt      DateTime @default(now())
 
   @@index([leadId])
   @@index([customerId, createdAt])
+  @@index([adCampaignId])
+  @@index([adId])
 }
 
 // Ausgehende E-Mails an Leads und Bestandskunden (Ole, 15.11.2026): jede Mail (automatisch oder vom Vermittler)

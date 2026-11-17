@@ -116,7 +116,7 @@ export function classifyProduct(campaignName: string): MetaProduct | null {
   return classifyCampaignProduct(campaignName) as MetaProduct | null;
 }
 
-function dayAtNoonUtc(dateStart: string): Date {
+export function dayAtNoonUtc(dateStart: string): Date {
   // Meta liefert Datum als "YYYY-MM-DD". Bei time_increment=1 ist
   // date_start = der konkrete Tag. Noon-UTC vermeidet Tag-Drift durch
   // Zeitzonen-Offsets bei der Anzeige.
@@ -424,6 +424,52 @@ async function fetchAccountDailySpend(
     while (nextUrl) {
       const json = await fetchMetaPage(nextUrl, accountId, s, u);
       if (json.data) rows.push(...(json.data as { spend?: string; date_start?: string }[]));
+      nextUrl = json.paging?.next ?? null;
+    }
+    chunkStart = addDays(chunkEnd, 1);
+  }
+  return rows;
+}
+
+// ─── Kosten je Anzeige und Tag (lib/anzeige-kosten.ts) ──────────────────────
+
+export type AdInsightRow = {
+  ad_id?: string;
+  ad_name?: string;
+  adset_id?: string;
+  adset_name?: string;
+  campaign_id?: string;
+  campaign_name?: string;
+  spend?: string;
+  impressions?: string;
+  clicks?: string;
+  actions?: { action_type: string; value: string }[];
+  date_start?: string;
+};
+
+/** Insights level=ad, eine Zeile je Anzeige und Tag (90-Tage-Fenster, Retry wie beim Kampagnen-Abgleich). */
+export async function fetchAdInsightsDaily(accountId: string, since: string, until: string): Promise<AdInsightRow[]> {
+  const token = cleanToken(process.env.META_ACCESS_TOKEN);
+  if (!token) throw new Error("META_ACCESS_TOKEN nicht gesetzt.");
+  const rows: AdInsightRow[] = [];
+  let chunkStart = new Date(`${since}T00:00:00Z`);
+  const end = new Date(`${until}T00:00:00Z`);
+  while (chunkStart.getTime() <= end.getTime()) {
+    const chunkEndCandidate = addDays(chunkStart, 89);
+    const chunkEnd = chunkEndCandidate < end ? chunkEndCandidate : end;
+    const s = format(chunkStart, "yyyy-MM-dd");
+    const u = format(chunkEnd, "yyyy-MM-dd");
+    const url = new URL(`${META_GRAPH}/act_${accountId}/insights`);
+    url.searchParams.set("access_token", token);
+    url.searchParams.set("level", "ad");
+    url.searchParams.set("fields", "ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,spend,impressions,clicks,actions,date_start");
+    url.searchParams.set("time_increment", "1");
+    url.searchParams.set("time_range", JSON.stringify({ since: s, until: u }));
+    url.searchParams.set("limit", "500");
+    let nextUrl: string | null = url.toString();
+    while (nextUrl) {
+      const json = await fetchMetaPage(nextUrl, accountId, s, u);
+      if (json.data) rows.push(...(json.data as AdInsightRow[]));
       nextUrl = json.paging?.next ?? null;
     }
     chunkStart = addDays(chunkEnd, 1);

@@ -285,6 +285,16 @@ async function handle(req: Request): Promise<Response> {
       after(() => import("@/lib/monatsbericht/server").then((m) => m.runMonthlyReports(now, { limit: 3 })).catch((e: unknown) => reportError(e, "cron-monatsbericht")));
     }
   }
+  // Meta-Kosten je Anzeige und Tag (lib/anzeige-kosten.ts): einmal täglich gegen 5/6 Uhr Berlin die letzten 7 Tage,
+  // beim ersten Lauf je Werbekonto bis 90 Tage zurück, nie vor dem Startdatum des Kunden (nach der Antwort)
+  if (now.getUTCHours() === 4 && now.getUTCMinutes() < 5) {
+    after(() =>
+      import("@/lib/anzeige-kosten")
+        .then((m) => m.syncAnzeigeKosten({ now }))
+        .then((r) => console.log(`[anzeige-kosten] ${r.übersprungen ?? `${r.gespeichert} Zeilen, ${r.konten.length} Konten, ${r.fehler} Fehler`}`))
+        .catch((e: unknown) => reportError(e, "cron-anzeige-kosten")),
+    );
+  }
   // LinkedIn: geplante Posts veröffentlichen, Zahlen holen, abends Entwürfe schreiben (nach der Antwort)
   after(() => import("@/lib/linkedin/cron").then((m) => m.runLinkedIn(now)).catch((e: unknown) => reportError(e, "cron-linkedin")));
   // Bank & Karten: Kontoumsätze täglich abrufen, an Neuverbindung erinnern (nach der Antwort)

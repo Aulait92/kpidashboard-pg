@@ -10,6 +10,7 @@ import { effectivePlzRanges, isWeak, openAreasFor, pickWithAreas, rejectReason, 
 import { monthRange, weekRange } from "@/lib/ppl/periods";
 import { pruefeTelefon } from "@/lib/ppl/telefon-pruefung";
 import type { DeliveryReport } from "@/lib/ppl/delivery";
+import { adData, cleanAd, hasAd, type LeadAd } from "@/lib/anzeige";
 
 const DAY = 86_400_000;
 export const DUPLICATE_DAYS = 30;
@@ -43,6 +44,8 @@ export type PoolInput = {
   fields: Record<string, string>;
   smsVerified?: boolean;
   score?: number | null;
+  /** Anzeige/UTM aus dem Funnel (lib/anzeige.ts), ohne Personendaten */
+  ad?: LeadAd | null;
 };
 
 const norm = (k: string) => k.toLowerCase().replace(/[^a-z0-9äöüß]/g, "");
@@ -139,6 +142,7 @@ export async function ingestPoolLead(input: PoolInput, now = new Date()): Promis
     smsVerified: facts.smsVerified,
     score: facts.score,
     answers: answers.length ? (answers as Prisma.InputJsonValue) : Prisma.DbNull,
+    adInfo: hasAd(input.ad) ? (adData(input.ad) as Prisma.InputJsonValue) : Prisma.DbNull,
   };
   const save = (status: string, reason?: string) => prisma.poolLead.create({ data: { ...base, status, reason } });
 
@@ -248,6 +252,8 @@ export async function deliver(poolLeadId: string, sub: SubRow, orderId: string |
       orderId,
       deliveredAt: now,
       createdAt: now,
+      // Anzeige/UTM aus dem Funnel (lib/anzeige.ts)
+      ...adData(cleanAd(pl.adInfo as Record<string, unknown> | null)),
     },
     select: { id: true },
   });
