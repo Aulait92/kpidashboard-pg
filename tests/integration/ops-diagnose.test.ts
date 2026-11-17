@@ -59,4 +59,25 @@ describe("Diagnose-API", () => {
     await cleanupCustomer(c.id);
     await prisma.user.deleteMany({ where: { id: u.id } });
   });
+
+  it("instantly-auswertung: nur Zahlen, keine Texte oder Kontaktadressen", async () => {
+    const tag = Math.random().toString(36).slice(2, 8);
+    const camp = await prisma.salesCampaign.create({ data: { name: `Diagnose ${tag}` } });
+    const contact = await prisma.salesContact.create({ data: { name: `Agentur ${tag}`, email: `kontakt-${tag}@agentur.test` } });
+    await prisma.salesCampaignLead.create({ data: { contactId: contact.id, campaignId: camp.id, sentAt: new Date(), openCount: 2, lastOpenAt: new Date(), replyCount: 1, lastReplyAt: new Date() } });
+    await prisma.salesEmail.create({
+      data: { contactId: contact.id, campaign: camp.name, direction: "IN", subject: "Re: Neue Kunden", text: `Geheimtext ${tag}, kein Bedarf`, eaccount: `postfach-${tag}@pg.test`, sentiment: "NEGATIV", sentAt: new Date() },
+    });
+    const r = await GET(req("instantly-auswertung", TOKEN));
+    expect(r.status).toBe(200);
+    const j = (await r.json()) as { data: { kampagnen: { gesamt: { kampagne: string; absagen: number }[] }; markdown: string } };
+    expect(j.data.kampagnen.gesamt.find((z) => z.kampagne === camp.name)).toMatchObject({ absagen: 1 });
+    expect(j.data.markdown).toContain(`| ${camp.name} |`);
+    const s = JSON.stringify(j);
+    expect(s).not.toContain(`kontakt-${tag}`);
+    expect(s).not.toContain(`postfach-${tag}@`);
+    expect(s).not.toContain("Geheimtext");
+    await prisma.salesContact.delete({ where: { id: contact.id } });
+    await prisma.salesCampaign.delete({ where: { id: camp.id } });
+  });
 });
