@@ -17,6 +17,7 @@ export const MAIL_ARTEN = {
   terminverschiebung: "Terminverschiebung",
   terminabsage: "Terminabsage",
   terminerinnerung: "Terminerinnerung",
+  terminaenderung: "Terminänderung",
   bestandskampagne: "Bestandskampagne",
   kein_whatsapp: "Kein WhatsApp",
   bewertungsbitte: "Bewertungsbitte",

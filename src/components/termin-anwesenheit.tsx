@@ -78,7 +78,18 @@ export function TerminAnwesenheit({
     });
 
   if (jetzt === "fertig") return null;
-  const frage = jetzt === "nachher" ? `Ist ${label} noch gekommen?` : jetzt === "wartet" ? waJetzt === "nicht_moeglich" ? `${label} fehlt noch. WhatsApp nicht möglich, bitte anrufen.` : `${label} fehlt noch. Der Link ist per WhatsApp raus.` : `Ist ${label} da?`;
+  // Auf „Heute“ steht der Name schon in der Zeile: kürzer
+  const fehlt = gross ? `${label} fehlt noch.` : "Fehlt noch:";
+  const frage =
+    jetzt === "nachher"
+      ? `Ist ${label} noch gekommen?`
+      : jetzt === "wartet"
+        ? waJetzt === "nicht_moeglich"
+          ? `${fehlt} ${gross ? "WhatsApp nicht möglich, bitte anrufen." : "bitte anrufen."}`
+          : waJetzt
+            ? `${fehlt} ${gross ? "Der Link ist per WhatsApp raus." : "Link ist per WhatsApp raus."}`
+            : `${label} fehlt noch.`
+        : `Ist ${label} da?`;
   const size = gross ? "md" : "sm";
   const reihe = gross ? "mt-3 grid gap-2 sm:flex sm:flex-wrap" : "mt-1.5 flex flex-wrap gap-2";
   const anrufen = phone ? (

@@ -869,7 +869,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       try {
         const durationMin = await bookingDurationMin(conversation.customerId, conversation.leadId).catch(() => 30);
         const { pickTwoSlots } = await import("@/lib/whatsapp/termin-vorschlaege");
-        const two = pickTwoSlots(await suggestSlots(conversation.customerId, durationMin, 8, "lead", 10, conversation.leadId));
+        // Vorlauf höchstens 3 Werktage (Ole, 17.11.2026), mehr nur auf Wunsch (get_available_slots mit Wunschzeit)
+        const two = pickTwoSlots(await suggestSlots(conversation.customerId, durationMin, 8, "lead", 10, conversation.leadId), { now });
         starts = two ? [two[0].start, two[1].start] : [];
       } catch (err) {
         console.error("[whatsapp bot] Terminvorschlag", err);

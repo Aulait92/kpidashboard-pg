@@ -440,7 +440,7 @@ export function TodayInbox({
                     <p className="truncate text-xs text-[color:var(--muted)]">{a.summary ?? terminArtLabel(a.mode)}</p>
                     {frage === "start" || frage === "wartet" ? (
                       <div className="mt-1.5">
-                        <TerminAnwesenheit appointmentId={a.id} label={a.label ?? a.name} stand={frage} phone={a.phone} />
+                        <TerminAnwesenheit appointmentId={a.id} label={a.label ?? a.name} stand={frage} phone={a.phone} wa={a.wa ?? null} />
                       </div>
                     ) : null}
                     {frage !== "start" && frage !== "wartet" && vorbereiten.has(a.id) ? (

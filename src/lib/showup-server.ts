@@ -94,6 +94,14 @@ export async function runTerminBeginn(now = new Date(), deps: { push?: PushFn } 
 
 export type WartetErgebnis = "gesendet" | "vorlage" | "nicht_moeglich";
 
+/** Ging nach „Fehlt noch“ die WhatsApp „wartet im Videoraum“ raus? (für Heute und das Blatt nach dem Neuladen) */
+export async function wartetStand(t: { conversationId: string | null; attendance: string | null; attendanceAt: Date | null }): Promise<WartetErgebnis | null> {
+  if (t.attendance !== "fehlt" || !t.attendanceAt) return null;
+  if (!t.conversationId) return "nicht_moeglich";
+  const n = await prisma.message.count({ where: { conversationId: t.conversationId, direction: "outbound", purpose: "appt_waiting", createdAt: { gte: new Date(t.attendanceAt.getTime() - 60 * 1000) } } });
+  return n ? "gesendet" : "nicht_moeglich";
+}
+
 /** WhatsApp „Herr Kannapinn wartet schon im Videoraum auf Sie: <Link>“ (nach „Fehlt noch“). */
 export async function sendeWartetNachricht(appointmentId: string): Promise<WartetErgebnis> {
   const t = await prisma.appointment.findUnique({

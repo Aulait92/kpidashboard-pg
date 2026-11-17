@@ -15,6 +15,7 @@ import { isErneutNote } from "@/lib/lead-erneut";
 import { CALL_PAUSE_MAX_MS } from "@/lib/telefonat";
 import { kontaktFromLead } from "@/lib/lead-anrede";
 import { leadLabel } from "@/lib/showup";
+import { wartetStand } from "@/lib/showup-server";
 
 const TZ = "Europe/Berlin";
 const DAY = 24 * 60 * 60 * 1000;
@@ -46,6 +47,8 @@ export type InboxAppointment = {
   attendance?: string | null;
   /** Name für die Frage „Ist Frau Becker da?“ */
   label?: string;
+  /** Nach „Fehlt noch“: ging die WhatsApp mit dem Link raus? */
+  wa?: "gesendet" | "vorlage" | "nicht_moeglich" | null;
 };
 export type InboxOutcome = {
   id: string;
@@ -156,6 +159,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         leadId: true,
         conversationId: true,
         attendance: true,
+        attendanceAt: true,
         lead: { select: { name: true, phone: true, formData: true, contactOverrides: true } },
       },
     }),
@@ -229,6 +233,8 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       })
     : [];
   const convById = new Map(convs.map((c) => [c.id, c]));
+  // „Fehlt noch“: Stand der WhatsApp mit dem Link (Show-up-Paket)
+  const waStand = new Map(await Promise.all(upcoming.filter((a) => a.attendance === "fehlt").map(async (a) => [a.id, await wartetStand(a)] as const)));
 
   return {
     upcoming: [
@@ -279,6 +285,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         endsAt: a.endsAt?.toISOString() ?? null,
         attendance: a.attendance,
         label: leadLabel(kontaktFromLead(a.lead, conv?.contactName ?? null)),
+        wa: waStand.get(a.id) ?? null,
       };
     }),
     outcomes: past

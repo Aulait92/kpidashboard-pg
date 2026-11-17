@@ -9,6 +9,7 @@ import { kontaktFromLead } from "@/lib/lead-anrede";
 import { prisma } from "@/lib/prisma";
 import { anwesenheitsFrage, asAnwesenheit, leadLabel, terminArtWort } from "@/lib/showup";
 import { appointmentScope } from "@/lib/team";
+import { wartetStand } from "@/lib/showup-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Termin | performancegrowth" };
@@ -32,6 +33,7 @@ export default async function TerminPage({ params }: { params: Promise<{ id: str
       status: true,
       meetUrl: true,
       attendance: true,
+      attendanceAt: true,
       leadId: true,
       conversationId: true,
       lead: { select: { name: true, phone: true, formData: true, contactOverrides: true } },
@@ -45,6 +47,7 @@ export default async function TerminPage({ params }: { params: Promise<{ id: str
   const frage = anwesenheitsFrage(t, new Date());
   const att = asAnwesenheit(t.attendance);
   const video = t.mode === "video";
+  const wa = await wartetStand(t);
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6 sm:px-6">
@@ -55,7 +58,7 @@ export default async function TerminPage({ params }: { params: Promise<{ id: str
         </p>
         <div className="mt-3">
           {frage ? (
-            <TerminAnwesenheit appointmentId={t.id} label={label} stand={frage} phone={phone} gross />
+            <TerminAnwesenheit appointmentId={t.id} label={label} stand={frage} phone={phone} wa={wa} gross />
           ) : t.status === "no_show" || att === "nicht_erschienen" ? (
             <p className="flex items-center gap-2 text-lg font-semibold">
               <UserX className="h-5 w-5 text-rose-600" /> Nicht erschienen
