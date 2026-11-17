@@ -25,8 +25,7 @@
         "lang": "optional"
       },
       "quelle": "https://www.allianz.de/reise-und-freizeit/auslandskrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Reise-Krankenschutz",
@@ -41,8 +40,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/reise-und-freizeit/auslandskrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "Bekannte Erkrankungen und Schwangerschaft nicht im Tarifvergleich.",
     "Familie: Jahres-Reise-Krankenschutz als Familien- oder Paartarif, Kinder bis 21 beitragsfrei. Längere Reisen über die Kombination mit dem Reise-Krankenschutz (bis 365 Tage).",
     "Zahn: schmerzstillende Behandlung, einfache Füllungen, provisorischer Zahnersatz.",
-    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt."
+    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de."
   ]
 }
