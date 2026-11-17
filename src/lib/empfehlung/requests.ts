@@ -702,9 +702,12 @@ export async function handleReferralInbound(conversationId: string, from: string
   const stamp = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" }).format(now);
   const rs = await prisma.reviewSettings.findUnique({ where: { customerId: conv.customerId }, select: { offerKind: true, offerHeadline: true, offerText: true } });
   const offer = resolveOffer(rs ?? { offerKind: null }, await advisorOf(conv.customerId));
+  const { inboundLeadIsTest } = await import("@/lib/testlead");
   const lead = await prisma.lead.create({
     data: {
       customerId: conv.customerId,
+      // Testkunde bzw. interner Kunde (z. B. Sandbox-Nummer): Testlead, zählt nirgends
+      isTest: await inboundLeadIsTest(conv.customerId),
       source: "Empfehlung",
       adChannel: "Empfehlung",
       name: contactName,
