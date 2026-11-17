@@ -225,6 +225,10 @@ Seiten aus der Liste „Seiten“ unten.
   Kombi-Rabatt. **Gleich zeigen** nimmt sie direkt ins Angebot. Unter **Schutz im Überblick** stellen Sie je Sparte ein,
   was Ihr Kunde schon hat und wo (Versicherer, Ablauf, ungefährer Beitrag); bei „woanders versichert“ zeigt die Folie
   den Bündelvorteil und den Wechsel-Service.
+- **Vorsorge-Thema:** Unter „Chance im Termin“ steht höchstens ein großes Thema (PKV-Check, Berufsunfähigkeit,
+  Risikoleben und Altersvorsorge, Pflegevorsorge) mit einem Satz als Gesprächsöffner, abgeleitet nur aus Beruf,
+  Lebenslage und Alter, nie aus Gesundheitsangaben. Dafür vereinbaren Sie einen eigenen Termin; gespeichert wird
+  nichts. Themen, die Sie nicht anbieten, schalten Sie unter **Einstellungen → Präsentation** ab.
 - **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
   dem Termin, ohne Schalter zum Umstellen, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
   Bedarf **Link beenden**.
