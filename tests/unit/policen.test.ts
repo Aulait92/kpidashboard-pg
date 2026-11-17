@@ -37,8 +37,6 @@ import {
   widerrufVerdacht,
   EINWILLIGUNG_VERSION,
   minderjaehrig,
-  policenBitteEng,
-  policenBitteKurz,
 } from "@/lib/policen/regeln";
 import { datenschutzPolicenAbschnitte } from "@/lib/policen/datenschutz-text";
 import { angabenOhneGesundheit, ohneGesundheitsangaben } from "@/lib/gesundheitsdaten";
@@ -375,26 +373,3 @@ describe("Gesundheitsangaben nicht in Felder und Notizen", () => {
   });
 });
 
-describe("Policen-Bitte der Termin-Strecke (P2, Ole 17.11.2026): jeder Lead genau einmal", () => {
-  const HERR = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" };
-  const OLE = { nom: "Ole", dat: "Ole" };
-  it("eng (Nein bzw. ohne Antwort): nur der Vertrag der angefragten Sparte, freiwillig, Sie und Du", () => {
-    expect(policenBitteEng("sie", HERR, "Haftpflicht- und Hausratversicherung")).toBe(
-      "Falls Sie schon eine Haftpflicht- und Hausratversicherung haben: Schicken Sie mir gern ein Foto der Police, dann vergleicht Herr Kannapinn direkt und achtet auf die Kündigungsfrist.",
-    );
-    expect(policenBitteEng("du", OLE, "Katzenversicherung")).toBe(
-      "Falls du schon eine Katzenversicherung hast: Schick mir gern ein Foto der Police, dann vergleicht Ole direkt und achtet auf die Kündigungsfrist.",
-    );
-    expect(policenBitteEng("sie", HERR, null)).toMatch(/^Falls Sie schon dafür eine Versicherung haben:/);
-  });
-  it("voll (Ja, ohne Antwort auf die Vertragsfrage): alle Policen, ohne Gesundheitsschalter nur Sach", () => {
-    expect(policenBitteKurz("sie", HERR, { gesundheitAn: false })).toContain("Policen für Sachversicherungen");
-    expect(policenBitteKurz("du", OLE, { gesundheitAn: true })).toBe("Gern kannst du vorab Fotos oder PDFs deiner Policen hier in den Chat schicken, dann schaut Ole sie mit an.");
-  });
-  it("beide Fassungen zählen als Bitte (EINLADUNG_RE), ohne Gedankenstriche", () => {
-    for (const t of [policenBitteEng("sie", HERR, "Hausratversicherung"), policenBitteEng("du", OLE, null), policenBitteKurz("sie", HERR, { gesundheitAn: false }), policenBitteKurz("du", OLE, { gesundheitAn: true })]) {
-      expect(t).toMatch(EINLADUNG_RE);
-      expect(t).not.toMatch(/[–—]/);
-    }
-  });
-});

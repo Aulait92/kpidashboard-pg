@@ -186,6 +186,20 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-strecke");
       return { error: e instanceof Error ? e.message : String(e) };
     });
+  // Einladung an den Lead ohne Antwort: 15 Min. (kurzfristig 5 Min.), spätestens 60 Min. vor Beginn (lib/calendar/einladung.ts)
+  const einladungen = await import("@/lib/calendar/einladung")
+    .then((m) => m.runEinladungNachholen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-einladung");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
+  // Policen-Erinnerung 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin)
+  const policenErinnerung = await import("@/lib/whatsapp/termin-strecke")
+    .then((m) => m.runPolicenErinnerung(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-policen-erinnerung");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
   // A/B-Tests der Vorlagen: einmal je Stunde prüfen, ob eine Fassung genug Vorsprung hat (lib/whatsapp/ab-test.ts)
   const abTests =
     now.getUTCMinutes() < 5
@@ -366,7 +380,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, anrufAusloeser, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

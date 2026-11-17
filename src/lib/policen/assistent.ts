@@ -17,8 +17,6 @@ import {
   gesundheitInText,
   gesundheitInVertraegen,
   minderjaehrig,
-  policenBitteEng,
-  policenBitteKurz,
   policenGesundheitAn,
   type Person,
 } from "@/lib/policen/regeln";
@@ -51,47 +49,6 @@ export async function einladungJetzt(o: { conversationId: string; an: Ansprache;
   if (!einladungFaellig({ qualificationData: c.qualificationData, outbound: outbound.map((m) => m.body) })) return null;
   const gesundheitGenannt = gesundheitInVertraegen(c.qualificationData) || (gesundheitAn && gesundheitInText(c.lead.source));
   return einladung({ customerId: c.customerId, phone: c.contactPhone, an: o.an, person: o.person, gesundheitAn, gesundheitGenannt });
-}
-
-/**
- * Policen-Bitte der Termin-Strecke (Ole, 17.11.2026, P2): Jeder Lead wird genau einmal gebeten, bestehende Policen vorab
- * zu schicken, auch bei Komplettcheck „Nein“ oder wenn er nicht mehr antwortet (dann im Abschluss).
- *   voll (Komplettcheck „Ja“): alle Verträge (policenBitteKurz),
- *   sonst (Nein bzw. unbekannt): eng, nur der Vertrag in der angefragten Sparte (policenBitteEng).
- * null = schon gebeten bzw. nicht erlaubt: Gesundheitsprodukt bei Schalter aus (Art. 9 DSGVO), Lead sagt „keine
- * Versicherungen“, gelöschter Lead. kurz = Satz für den Abschluss; einladung = eigene Nachricht mit
- * Einwilligungsknöpfen (Schalter an und Gesundheitsbezug ohne Einwilligung).
- */
-export async function policenBitteFuerStrecke(o: { conversationId: string; an: Ansprache; person: Person; voll: boolean }): Promise<{ kurz: string | null; einladung: Einladung | null } | null> {
-  const c = await prisma.conversation.findUnique({
-    where: { id: o.conversationId },
-    select: { customerId: true, contactPhone: true, qualificationData: true, lead: { select: { source: true, erasedAt: true, formData: true, vorvertraege: true } } },
-  });
-  if (!c?.lead || c.lead.erasedAt) return null;
-  const outbound = await prisma.message.findMany({ where: { conversationId: o.conversationId, direction: "outbound" }, select: { body: true } });
-  if (outbound.some((m) => EINLADUNG_RE.test(m.body ?? ""))) return null;
-  const gesundheitAn = policenGesundheitAn() && !minderjaehrig(c.lead.formData);
-  if (!gesundheitAn && gesundheitInText(c.lead.source)) return null;
-  const vv = c.lead.vorvertraege as { keine?: unknown; liste?: unknown } | null;
-  if (vv && vv.keine === true && !(Array.isArray(vv.liste) && vv.liste.length)) return null;
-  const gesundheitGenannt = gesundheitInVertraegen(c.qualificationData) || (gesundheitAn && gesundheitInText(c.lead.source));
-  if (gesundheitAn && gesundheitGenannt) {
-    const e = await einladung({ customerId: c.customerId, phone: c.contactPhone, an: o.an, person: o.person, gesundheitAn, gesundheitGenannt });
-    if (e.buttons?.length) return { kurz: null, einladung: e };
-  }
-  if (o.voll) return { kurz: policenBitteKurz(o.an, o.person, { gesundheitAn }), einladung: null };
-  const { versicherungWort } = await import("@/lib/whatsapp/gespraech");
-  const { outreachProdukt } = await import("@/lib/whatsapp/erstanschreiben");
-  const formular = Array.isArray(c.lead.formData) ? (c.lead.formData as { label?: unknown; value?: unknown }[]) : [];
-  const interesse = formular.find((x) => typeof x?.label === "string" && /versicherungsinteresse|^interesse\b|sparte/i.test(x.label))?.value;
-  const p = outreachProdukt(c.lead.source);
-  const wort =
-    p?.purpose === "outreach_privatschutz" || !p
-      ? ((w) => (w === "Absicherung" ? null : w))(versicherungWort(typeof interesse === "string" ? interesse : (c.lead.source ?? null)))
-      : p.purpose === "outreach_pkv"
-        ? "private Krankenversicherung"
-        : p.thema;
-  return { kurz: policenBitteEng(o.an, o.person, wort), einladung: null };
 }
 
 /** Hat der Lead schon Policen geschickt (gespeichert)? */

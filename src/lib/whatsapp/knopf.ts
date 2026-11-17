@@ -11,7 +11,10 @@
 // Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/termin-strecke.ts), immer am Payload erkannt:
 //   Zeit-Knopf „Heute 16 Uhr“ (slot:<ISO>)        → die App bucht genau diese Zeit (bot.ts, E-Mail bekannt), sonst Hinweis
 //   „Ja, gern“/„Nein, danke“ (komplettcheck:ja|nein) → Komplettcheck am Termin, dann Vertragsfrage bzw. Abschluss
-//   „Ja“/„Mache ich gleich“ (kalender:ja|gleich)   → zugesagt, kurze Antwort
+//   Zeit mit 45 Min. (lang:<ISO>) / „Zeit behalten“ (lang:behalten) → Komplettcheck-Termin verlegen bzw. behalten
+//   „Schicke ich gleich“/„Nicht zur Hand“ (policenbitte:<Titel>) → Reaktion auf die Policen-Bitte, dann der Schluss
+//   „Ja, stimmt“/„Andere Adresse“ (email:ja|andere) → Einladung (einmal) bzw. Frage nach der neuen Adresse
+//   „Ja“/„Mache ich gleich“ (kalender:ja|gleich, frühere Kalenderfrage) → zugesagt, kurze Antwort
 //   „Ja“/„Nein“ zu einer Angebotsfrage (folge:<key>:ja|nein) → Assistent mit Hinweis, welche Frage beantwortet ist
 // Alle anderen Knöpfe (z. B. „Katze“, „Heute“, „Ja, gern prüfen“) gehen als normale Antwort an den Assistenten.
 // Nur echte Knopf-Klicks zählen: getippt „Nein, danke“ kann eine Antwort auf eine ganz andere Frage sein.
@@ -31,6 +34,9 @@ export type KnopfAktion =
   | { aktion: "angebot"; fokus: "beitrag" | "leistung" }
   | { aktion: "komplettcheck"; ja: boolean }
   | { aktion: "kalender"; art: "ja" | "gleich" }
+  | { aktion: "email"; art: "ja" | "andere" }
+  | { aktion: "lang"; wahl: string }
+  | { aktion: "policenbitte"; titel: string }
   | { aktion: "folge"; key: string; wert: string };
 
 const norm = (t: string | null | undefined) => (t ?? "").trim().toLowerCase();
@@ -49,6 +55,12 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
   }
   if (p === "komplettcheck:ja" || p === "komplettcheck:nein") return { aktion: "komplettcheck", ja: p.endsWith(":ja") };
   if (p === "kalender:ja" || p === "kalender:gleich") return { aktion: "kalender", art: p.endsWith(":ja") ? "ja" : "gleich" };
+  if (p === "email:ja" || p === "email:andere") return { aktion: "email", art: p.endsWith(":ja") ? "ja" : "andere" };
+  if (p.startsWith("lang:")) {
+    const w = p.slice(5);
+    if (w === "behalten" || !Number.isNaN(new Date(w).getTime())) return { aktion: "lang", wahl: w };
+  }
+  if (p.startsWith("policenbitte:")) return { aktion: "policenbitte", titel: p.slice(13) || (text ?? "") };
   const folge = /^folge:([a-zA-Z]+):(.+)$/.exec(p);
   if (folge) return { aktion: "folge", key: folge[1], wert: (text ?? folge[2]).trim() };
   if (p === "andere_zeit") return { aktion: "andere_zeit" };
@@ -170,6 +182,21 @@ export async function handleButtonReply(
   if (k.aktion === "kalender") {
     const { kalenderAntwort } = await import("@/lib/whatsapp/termin-strecke");
     return { handled: await kalenderAntwort(conversationId, k.art, now) };
+  }
+  if (k.aktion === "email") {
+    const s = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: k.art === "ja" ? await s.emailBestaetigt(conversationId, now) : await s.emailAndere(conversationId, now) };
+  }
+  if (k.aktion === "lang") {
+    const { langeZeitAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await langeZeitAntwort(conversationId, k.wahl, now) };
+  }
+  if (k.aktion === "policenbitte") {
+    // Einwilligungsknöpfe (Gesundheitsunterlagen) verarbeitet das Policen-Modul
+    const { istPolicenEinwilligungsKnopf } = await import("@/lib/policen/bitte");
+    if (istPolicenEinwilligungsKnopf(k.titel)) return { handled: false };
+    const s = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await s.policenBitteAntwort(conversationId, s.policenKnopfArt(k.titel), now) };
   }
   // „Bitte verschieben“ (Show-up-Paket, Ole 17.11.2026): keine weiteren Erinnerungen zur alten Zeit; das Verschieben
   // selbst übernimmt der Assistent wie bisher (reschedule_appointment legt einen neuen Termin an)

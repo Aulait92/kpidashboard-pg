@@ -1370,6 +1370,14 @@ model Appointment {
   verlaengerungAt       DateTime?
   // Lead hat per Knopf „Ja, passt“ bestätigt (Erinnerung am Vortag bzw. kurz vorher)
   confirmedAt        DateTime?
+  // Einladung mit Kalendereintrag an den Lead (Ole, 17.11.2026, lib/calendar/einladung.ts): genau einmal, gesendet am
+  // und an welche Adresse; Änderungen danach als Aktualisierung (gleiche UID, einladungSeq + 1). Bei Buchung im
+  // WhatsApp-Assistenten ausstehend (einladungAusstehend = Buchungszeit), bis Adresse und Komplettcheck feststehen bzw.
+  // der Lead nicht mehr antwortet (15 Min., kurzfristig 5 Min., spätestens 60 Min. vor Beginn)
+  einladungAt          DateTime?
+  einladungAn          String?
+  einladungSeq         Int       @default(0)
+  einladungAusstehend  DateTime?
   // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,
   // ob er insgesamt gut abgesichert ist; false = nein; null = nicht gefragt bzw. offen
   komplettcheck      Boolean?
@@ -1405,6 +1413,7 @@ model Appointment {
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
 
   @@index([customerId, startsAt])
+  @@index([einladungAusstehend])
 }
 
 // WhatsApp-Vorlage je Kunde (für Erstansprache / außerhalb des 24h-Fensters).

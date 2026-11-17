@@ -211,7 +211,7 @@ export async function sendLeadEmail(
   appointmentId: string,
   kind: LeadEmailKind,
   opts: { now?: Date } = {},
-): Promise<{ sent: boolean; reason?: string }> {
+): Promise<{ sent: boolean; reason?: string; to?: string }> {
   const res = await sendLeadEmailInner(appointmentId, kind, opts.now ?? new Date());
   // Nur Termin-ID + Ergebnis loggen, keine E-Mail-Adresse (DSGVO).
   console.log(
@@ -224,7 +224,7 @@ async function sendLeadEmailInner(
   appointmentId: string,
   kind: LeadEmailKind,
   now: Date,
-): Promise<{ sent: boolean; reason?: string }> {
+): Promise<{ sent: boolean; reason?: string; to?: string }> {
   const appt = await prisma.appointment.findUnique({
     where: { id: appointmentId },
     select: {
@@ -270,7 +270,12 @@ async function sendLeadEmailInner(
     if (res.reason !== "not_configured") console.error("[lead email]", kind, res.reason);
     return { sent: false, reason: res.reason };
   }
-  return { sent: true };
+  // Einladung mit Kalendereintrag (lib/calendar/einladung.ts): gesendet am (einmal) und an welche Adresse
+  if (c.calendar && kind !== "reminder") {
+    await prisma.appointment.updateMany({ where: { id: appointmentId, einladungAt: null }, data: { einladungAt: now } });
+    await prisma.appointment.update({ where: { id: appointmentId }, data: { einladungAn: to } }).catch(() => null);
+  }
+  return { sent: true, to };
 }
 
 /** Satz zum Anhang mit der Erstinformation (beide Fassungen, ohne Gedankenstriche). */

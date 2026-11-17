@@ -1,15 +1,21 @@
 // Ablauf der Termin-Strecke nach der Buchung (Ole, 17.11.2026; Reihenfolge P2), Texte in lib/whatsapp/gespraech.ts:
-//   Buchungsnachricht (Termin sofort reserviert)
-//     → nur ohne bekannte E-Mail-Adresse: Frage nach der Adresse; kommt sie, geht die Einladung nach (emailAntwort)
-//     → Komplettcheck [Ja, gern] [Nein, danke] (Kennzeichen am Termin, bei Ja 45 Min.)
+//   Buchungsnachricht kurz (Zeit fest im Kalender des Vermittlers, Link; die Einladung an den Lead ist ausstehend)
+//     → Komplettcheck [Ja, gern] [Nein, danke] (Kennzeichen am Termin); bei Ja 45 Min.: frei → verlängert, belegt →
+//       zwei andere Zeiten mit 45 Min. [Zeit 1] [Zeit 2] [Zeit behalten] (lib/komplettcheck-dauer.ts)
 //     → fehlende Angaben fürs Angebot (Rechner-Tabelle), eine Frage pro Nachricht (Assistent, bot.ts)
-//     → nur bei „Ja, gern“: Frage nach bestehenden Verträgen → Antwort (KI-Extraktion, tolerant) am Lead, Policen-Einladung
-//     → Abschluss: Bereitlegen (höchstens 3 Punkte) und Kalenderfrage [Ja] [Mache ich gleich] → zugesagt.
-// Die Daten fürs Hauptangebot kommen vor den Freitext-Schritten (Verträge, Policen); der Ja/Nein-Knopf bleibt vorne.
+//     → nur bei „Ja, gern“: Frage nach bestehenden Verträgen → Antwort (KI-Extraktion, tolerant) am Lead
+//     → Policen-Bitte (nur Sachprodukte, genau einmal) [Schicke ich gleich] [Nicht zur Hand]
+//     → Schluss: Bereitlegen in einer Zeile, „Zum Schluss: Die Einladung … geht an … Stimmt die Adresse?“
+//       [Ja, stimmt] [Andere Adresse] bzw. ohne Adresse die freiwillige Frage danach.
+// Die Einladung an den Lead geht genau einmal, sobald Adresse und Komplettcheck feststehen (lib/calendar/einladung.ts),
+// ohne Antwort spätestens nach 15 Min. (kurzfristig 5 Min., spätestens 60 Min. vor Beginn).
 // Antwortet der Lead nicht, wird nicht nachgehakt, aber nach einer Stunde der nächste Schritt geschickt
-// (runStreckeAbschliessen, WhatsApp-Cron; nur im 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr): E-Mail-Frage → Komplettcheck,
-// Komplettcheck → erste Angebotsfrage (sonst Abschluss), Vertragsfrage → Abschluss (die Verträge entfallen). Solange
-// Angebotsfragen offen sind, nie der Abschluss.
+// (runStreckeAbschliessen, WhatsApp-Cron; nur im 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr): Komplettcheck → erste
+// Angebotsfrage, Zeitangebot → Zeit behalten, Vertragsfrage → Policen-Bitte (die Verträge entfallen, die Bitte nicht),
+// Policen-Bitte → Schluss. Solange Angebotsfragen offen sind, nie der Schluss.
+// Policen-Erinnerungen (höchstens 2): 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin,
+// runPolicenErinnerung) und eine Zeile in der Vortags-Erinnerung (policenVortagSatzFuer, lib/whatsapp/reminders.ts);
+// Schluss, sobald eine Police da ist oder der Lead keine hat.
 // Merker je Termin als interne Nachrichten (kind, body mit appointmentId), damit nichts doppelt geht.
 //
 // Außerdem: offener Terminvorschlag (für das Nachfassen nach 2 Std., lib/lead-sequences.ts) und freie Zeiten dafür.
@@ -26,17 +32,22 @@ import { folgefragen, folgefrageText, spartenDesLeads, type Folgefrage } from "@
 import {
   abschlussEinleitung,
   abschlussText,
+  adresseUnvollstaendig,
+  andereAdresseFrage,
   bereitlegenListe,
+  EMAIL_KNOEPFE,
   einladungUnterwegs,
   istFamilie,
-  KALENDER_KNOEPFE,
   KOMPLETTCHECK_KNOEPFE,
   komplettcheckFrage,
   knoepfeFuerText,
+  knopfZeit,
   VERTRAEGE_BEREITLEGEN_RE,
   vermittlerName,
   vertragsFrage,
+  zeitKurz,
   zeitLang,
+  spartenWorte,
   zusageDank,
   type Knopf,
   type VermittlerName,
@@ -46,18 +57,96 @@ import { normalisiereVertraege, sagtKeine, VORVERTRAEGE_SCHEMA, vertraegeAusText
 /** Merker (interne Nachrichten) der Strecke. */
 export const STRECKE = {
   vorschlag: "termin_vorschlag",
-  /** Frage nach der E-Mail-Adresse (Termin ohne bekannte Adresse reserviert) */
+  /** Frage nach der E-Mail-Adresse (Schluss ohne Adresse bzw. nach „Andere Adresse“, body.andere) */
   emailFrage: "email_frage",
+  /** Adresse bestätigt bzw. neue genannt */
+  emailOk: "email_ok",
   komplettFrage: "komplettcheck_frage",
   komplett: "komplettcheck",
+  /** Komplettcheck „Ja“, Zeit danach belegt: zwei andere Zeiten mit 45 Min. angeboten */
+  langAngebot: "komplett_zeiten",
+  langAntwort: "komplett_zeiten_antwort",
   vertragsfrage: "vertragsfrage",
   vorvertraege: "vorvertraege",
   /** Erste Angebotsfrage von der App gestellt (nach dem Komplettcheck bzw. als Rückfall) */
   angebotsfragen: "angebotsfragen",
+  /** Policen-Bitte (body.police: Wort für die Erinnerung, null = alle Policen) */
+  policenBitte: "policen_bitte",
+  /** Reaktion auf die Policen-Bitte (Knopf bzw. Antwort; body.art: gleich, spaeter, keine, ohne_antwort) */
+  policenAntwort: "policen_antwort",
+  /** Policen-Erinnerung 24 Std. nach der Buchung bzw. am Vortag (body.art: tag, vortag) */
+  policenErinnerung: "policen_erinnerung",
   abschluss: "strecke_abschluss",
 } as const;
 
 const HOUR = 60 * 60 * 1000;
+/** Dauer mit Komplettcheck (wie lib/showup.ts KOMPLETTCHECK_DAUER_MIN). */
+const LANG_MIN = 45;
+
+// ─── Policen-Bitte in der Strecke (Text und Knöpfe: lib/policen/bitte.ts) ────────────────────────────────────────────
+
+/** Höchstens so viele Policen-Erinnerungen (24 Std. nach Buchung und Vortag). */
+export const MAX_POLICEN_ERINNERUNGEN = 2;
+
+/** „Hausrat-Police“, „Haftpflicht- und Hausrat-Policen“; sonst „Police zur <Produkt>“; null = alle Policen. */
+export function policeWort(woerter: string[], produkt?: string | null): string | null {
+  if (woerter.length === 1) return `${woerter[0]}-Police`;
+  if (woerter.length > 1) return `${woerter.slice(0, -1).map((w) => `${w}-`).join(", ")} und ${woerter.at(-1)}-Policen`;
+  return produkt ? `Police zur ${produkt}` : null;
+}
+
+/** Sagt der Lead, er habe keine Policen bzw. Versicherungen („habe keine“, „keine“, „nichts“)? */
+export function sagtKeinePolicen(text: string | null | undefined): boolean {
+  const t = (text ?? "").toLowerCase().trim();
+  return sagtKeine(t) || /^(ich )?(hab(e)?|habe ich|hab ich) (noch |leider |gar )?(keine|nichts)\b|(gibt('s| es)|sind) (noch |leider )?keine\b/.test(t);
+}
+
+/** Antwort auf „Nicht zur Hand“ (erster Satz des Schlusses). */
+export function policenSpaeterText(an: Ansprache): string {
+  return a(an, "Kein Problem, ich erinnere dich rechtzeitig vor dem Termin daran.", "Kein Problem, ich erinnere Sie rechtzeitig vor dem Termin daran.");
+}
+
+/** Eigene Erinnerung 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin). police = null: alle Policen. */
+export function policenErinnerungText(an: Ansprache, person: { nom: string }, police: string | null): string {
+  const was = police ? a(an, `deine ${police}`, `Ihre ${police}`) : a(an, "deine Policen für Haftpflicht, Hausrat oder Kfz", "Ihre Policen für Haftpflicht, Hausrat oder Kfz");
+  return a(
+    an,
+    `Kurze Erinnerung: Hast du ${was} schon zur Hand? Einfach abfotografieren und hier schicken, dann kann ${person.nom} alles vorbereiten.\n\nKeine Nachrichten mehr? Antworte einfach STOP.`,
+    `Kurze Erinnerung: Haben Sie ${was} schon zur Hand? Einfach abfotografieren und hier schicken, dann kann ${person.nom} alles vorbereiten.\n\nKeine Nachrichten mehr? Antworten Sie einfach STOP.`,
+  );
+}
+
+/** Zeile im Nutzensatz der Vortags-Erinnerung (zweite und letzte Policen-Erinnerung). */
+export function policenVortagSatz(an: Ansprache): string {
+  return a(an, "Falls noch nicht geschehen: Schick gern noch kurz deine Policen hier in den Chat.", "Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.");
+}
+
+/** Knöpfe der Policen-Bitte als Payload policenbitte:<Titel> (der Titel sagt, was gemeint ist). */
+function policenKnoepfe(titel: string[]): Knopf[] {
+  return titel.slice(0, 3).map((t) => ({ id: `policenbitte:${t}`, title: t.slice(0, 20) }));
+}
+
+/**
+ * Policen-Bitte der Strecke (Ole, 17.11.2026 spät): jeder Lead genau einmal, für alle Produkte. Komplettcheck „Ja“: alle
+ * Policen; sonst nur die angefragte Sparte (Vorschlag). null = schon gebeten, Lead sagt „keine Versicherungen“ bzw.
+ * gelöschter Lead.
+ */
+async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null): Promise<Schritt | null> {
+  if (!k.leadId) return null;
+  const lead = await prisma.lead.findUnique({ where: { id: k.leadId }, select: { erasedAt: true, vorvertraege: true } });
+  if (!lead || lead.erasedAt) return null;
+  const vv = lead.vorvertraege as { keine?: unknown; liste?: unknown } | null;
+  if (vv && vv.keine === true && !(Array.isArray(vv.liste) && vv.liste.length)) return null;
+  const { outreachProdukt, vermittlerSubjekt } = await import("@/lib/whatsapp/erstanschreiben");
+  const p = outreachProdukt(k.source);
+  const voll = k.termin?.komplettcheck === true;
+  const interesse = k.formular.find((x) => /versicherungsinteresse|^interesse\b|sparte/i.test(x.label))?.value ?? null;
+  const police = voll ? null : !p || p.purpose === "outreach_privatschutz" ? policeWort(spartenWorte(interesse ?? k.source)) : policeWort([], p.thema);
+  const { policenBitte } = await import("@/lib/policen/bitte");
+  const b = policenBitte({ an: k.an, vermittler: k.person, er: vermittlerSubjekt(k.person.nom), voll, police, source: k.source });
+  const text = [[einleitung, b.text].filter(Boolean).join(" "), b.fusszeile ?? ""].filter(Boolean).join("\n\n");
+  return { text, buttons: policenKnoepfe(b.knoepfe), merker: STRECKE.policenBitte, daten: { police } };
+}
 
 /** Mo bis Sa 8 bis 20 Uhr (deutsche Zeit): Nachrichten der App ohne Anstoß des Leads. */
 export function inStreckenFenster(now: Date): boolean {
@@ -130,32 +219,84 @@ export async function merke(conversationId: string, kind: string, payload: Recor
 
 export type StreckenStand = {
   emailFrageAt: Date | null;
+  /** Letzte Frage nach der Adresse bzw. letzte Bestätigung (mehrmals „Andere Adresse“ möglich) */
+  emailFrageLetzte: Date | null;
+  emailFrageAndere: boolean;
+  emailOkLetzte: Date | null;
   komplettFrageAt: Date | null;
   komplettBeantwortet: boolean;
+  langAngebotAt: Date | null;
+  langAntwortAt: Date | null;
   angebotsfragenAt: Date | null;
   vertragsfrageAt: Date | null;
   vorvertraegeErfasst: boolean;
+  policenBitteAt: Date | null;
+  /** Wort der Policen-Bitte für die Erinnerung (null = alle Policen) */
+  policenPolice: string | null;
+  policenAntwortAt: Date | null;
+  policenKeine: boolean;
+  policenErinnerungen: number;
   abschlussAt: Date | null;
+  abschlussMitEmail: boolean;
 };
 
-const STAND_KINDS: string[] = [STRECKE.emailFrage, STRECKE.komplettFrage, STRECKE.komplett, STRECKE.angebotsfragen, STRECKE.vertragsfrage, STRECKE.vorvertraege, STRECKE.abschluss];
+const STAND_KINDS: string[] = [
+  STRECKE.emailFrage,
+  STRECKE.emailOk,
+  STRECKE.komplettFrage,
+  STRECKE.komplett,
+  STRECKE.langAngebot,
+  STRECKE.langAntwort,
+  STRECKE.angebotsfragen,
+  STRECKE.vertragsfrage,
+  STRECKE.vorvertraege,
+  STRECKE.policenBitte,
+  STRECKE.policenAntwort,
+  STRECKE.policenErinnerung,
+  STRECKE.abschluss,
+];
+
+const daten = (body: string | null): Record<string, unknown> => {
+  try {
+    const x = JSON.parse(body ?? "{}");
+    return x && typeof x === "object" ? (x as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+};
 
 /** Stand der Strecke für einen Termin (aus den Merkern). */
 export async function streckenStand(conversationId: string, appointmentId: string): Promise<StreckenStand> {
   const rows = await prisma.message.findMany({
     where: { conversationId, direction: "internal", kind: { in: STAND_KINDS }, body: { contains: appointmentId } },
     orderBy: { createdAt: "asc" },
-    select: { kind: true, createdAt: true },
+    select: { kind: true, createdAt: true, body: true },
   });
-  const at = (k: string) => rows.find((r) => r.kind === k)?.createdAt ?? null;
+  const erste = (k: string) => rows.find((r) => r.kind === k) ?? null;
+  const letzte = (k: string) => rows.filter((r) => r.kind === k).at(-1) ?? null;
+  const at = (k: string) => erste(k)?.createdAt ?? null;
+  const frage = letzte(STRECKE.emailFrage);
+  const bitte = erste(STRECKE.policenBitte);
+  const abschluss = erste(STRECKE.abschluss);
   return {
     emailFrageAt: at(STRECKE.emailFrage),
+    emailFrageLetzte: frage?.createdAt ?? null,
+    emailFrageAndere: daten(frage?.body ?? null).andere === true,
+    emailOkLetzte: letzte(STRECKE.emailOk)?.createdAt ?? null,
     komplettFrageAt: at(STRECKE.komplettFrage),
     komplettBeantwortet: !!at(STRECKE.komplett),
+    langAngebotAt: at(STRECKE.langAngebot),
+    langAntwortAt: at(STRECKE.langAntwort),
     angebotsfragenAt: at(STRECKE.angebotsfragen),
     vertragsfrageAt: at(STRECKE.vertragsfrage),
     vorvertraegeErfasst: !!at(STRECKE.vorvertraege),
-    abschlussAt: at(STRECKE.abschluss),
+    policenBitteAt: bitte?.createdAt ?? null,
+    policenPolice: typeof daten(bitte?.body ?? null).police === "string" ? (daten(bitte!.body).police as string) : null,
+    policenAntwortAt: at(STRECKE.policenAntwort),
+    policenKeine: rows.some((r) => r.kind === STRECKE.policenAntwort && daten(r.body).art === "keine"),
+    policenErinnerungen: rows.filter((r) => r.kind === STRECKE.policenErinnerung && daten(r.body).gesendet !== false).length,
+    abschlussAt: abschluss?.createdAt ?? null,
+    abschlussMitEmail: daten(abschluss?.body ?? null).mitEmail === true,
   };
 }
 
@@ -164,9 +305,37 @@ export function komplettcheckErledigt(s: StreckenStand): boolean {
   return s.komplettBeantwortet || !!s.angebotsfragenAt;
 }
 
-/** Ist die Frage nach der E-Mail-Adresse offen (gestellt, Komplettcheck noch nicht)? */
+/** Angebot längerer Zeiten (Komplettcheck, Zeit belegt) offen? */
+export function langAngebotOffen(s: StreckenStand): boolean {
+  return !!s.langAngebotAt && !s.langAntwortAt;
+}
+
+/** Ist eine Frage nach der Adresse offen (Schluss ohne Adresse bzw. nach „Andere Adresse“)? */
 export function emailFrageOffen(s: StreckenStand): boolean {
-  return !!s.emailFrageAt && !s.komplettFrageAt && !s.abschlussAt;
+  return !!s.emailFrageLetzte && (!s.emailOkLetzte || s.emailOkLetzte < s.emailFrageLetzte);
+}
+
+/** Ist die Schlussfrage „Stimmt die Adresse?“ offen? */
+export function adresseBestaetigenOffen(s: StreckenStand): boolean {
+  return !!s.abschlussAt && s.abschlussMitEmail && !s.emailOkLetzte && !s.emailFrageLetzte;
+}
+
+/** Wartet die Strecke auf eine Reaktion auf die Policen-Bitte? */
+export function policenBitteOffen(s: StreckenStand): boolean {
+  return !!s.policenBitteAt && !s.policenAntwortAt && !s.abschlussAt;
+}
+
+/** Steht fest, ob es ein Komplettcheck wird (für die Einladung mit der endgültigen Dauer)? */
+function komplettFest(s: StreckenStand, termin: { komplettcheck: boolean | null }): boolean {
+  return termin.komplettcheck !== null || komplettcheckErledigt(s) || !!s.abschlussAt;
+}
+
+/** Einladung an den Lead, sobald Adresse und Komplettcheck feststehen (lib/calendar/einladung.ts). */
+async function einladungPruefen(k: StreckenKontext, now: Date): Promise<void> {
+  if (!k.termin) return;
+  const s = await streckenStand(k.conversationId, k.termin.id);
+  const { einladungWennFertig } = await import("@/lib/calendar/einladung");
+  await einladungWennFertig(k.termin.id, { adresseFest: !!s.emailOkLetzte, komplettFest: komplettFest(s, k.termin) }, now);
 }
 
 async function sende(k: StreckenKontext, body: string, buttons?: Knopf[] | null): Promise<void> {
@@ -175,8 +344,8 @@ async function sende(k: StreckenKontext, body: string, buttons?: Knopf[] | null)
 }
 
 /**
- * Komplettcheck-Frage mit Knöpfen (Text und Knöpfe; der Aufrufer sendet und setzt den Merker). Mit prefix (z. B. „Danke!
- * Die Einladung … ist unterwegs.“) entfällt das „Danke!“ am Anfang der Frage.
+ * Komplettcheck-Frage mit Knöpfen (Text und Knöpfe; der Aufrufer sendet und setzt den Merker). Mit prefix entfällt das
+ * „Danke!“ am Anfang der Frage.
  */
 export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" | "familie">, prefix?: string | null): { text: string; buttons: Knopf[] } {
   const frage = komplettcheckFrage(k.an, k.person, k.familie);
@@ -215,77 +384,107 @@ export async function sendeAngebotsfrage(k: StreckenKontext, prefix?: string | n
   return true;
 }
 
+/** Nachricht der Strecke mit Merker (der Merker steht vor dem Senden, damit nichts doppelt geht). */
+export type Schritt = { text: string; buttons: Knopf[] | null; merker: string; daten?: Record<string, unknown>; nachMerker?: string | null };
+
 /**
- * Nachricht nach der letzten Angebotsfrage (für bot.ts, ohne Senden): bei Komplettcheck „Ja“ die Vertragsfrage (falls
- * noch nicht gestellt), sonst der Abschluss. merker = Art der Nachricht (der Aufrufer setzt ihn nach dem Senden).
+ * Nächster Schritt nach den Angebotsfragen (ohne Senden): bei Komplettcheck „Ja“ die Vertragsfrage, dann die
+ * Policen-Bitte (nur Sachprodukte, einmal), dann der Schluss. null = warten (Antwort offen) bzw. schon fertig.
+ *   einleitung: vor Vertragsfrage bzw. Policen-Bitte („Super!“), schlussEinleitung: erster Satz des Schlusses
+ *   vertraegeUeberspringen / policenUeberspringen: Rückfall ohne Antwort
  */
-export async function nachAngebotsfragen(k: StreckenKontext): Promise<{ text: string; buttons: Knopf[] | null; merker: string; vorher?: Vorher | null } | null> {
+export async function naechsterSchritt(
+  k: StreckenKontext,
+  o: { einleitung?: string | null; schlussEinleitung?: string | null; vertraegeUeberspringen?: boolean; policenUeberspringen?: boolean } = {},
+): Promise<Schritt | null> {
   if (!k.termin) return null;
   const stand = await streckenStand(k.conversationId, k.termin.id);
   if (stand.abschlussAt) return null;
-  if (k.termin.komplettcheck === true && !stand.vertragsfrageAt) return { text: vertragsFrage(k.an, k.familie, "Danke!"), buttons: null, merker: STRECKE.vertragsfrage };
-  if (stand.vertragsfrageAt && !stand.vorvertraegeErfasst) return null;
-  const m = await abschlussNachricht(k, "direkt");
-  return { ...m, merker: STRECKE.abschluss };
+  if (k.termin.komplettcheck === true && !stand.vertragsfrageAt) return { text: vertragsFrage(k.an, k.familie, o.einleitung ?? "Danke!"), buttons: null, merker: STRECKE.vertragsfrage };
+  if (stand.vertragsfrageAt && !stand.vorvertraegeErfasst && !o.vertraegeUeberspringen) return null;
+  if (!stand.policenBitteAt && (await import("@/lib/policen/bitte")).policenBitteAktiv()) {
+    const bitte = await policenBitteSchritt(k, o.einleitung ?? null).catch(() => null);
+    if (bitte) return bitte;
+  }
+  if (policenBitteOffen(stand) && !o.policenUeberspringen) return null;
+  const m = await abschlussNachricht(k, o.schlussEinleitung ?? null);
+  return { text: m.text, buttons: m.buttons, merker: STRECKE.abschluss, daten: { mitEmail: !!k.email }, nachMerker: k.email ? null : STRECKE.emailFrage };
+}
+
+/** Schritt senden und merken. */
+export async function sendeSchritt(k: StreckenKontext, s: Schritt): Promise<void> {
+  if (!k.termin) return;
+  await merkeSchritt(k.conversationId, k.termin.id, s);
+  await sende(k, s.text, s.buttons);
+}
+
+/** Merker eines Schritts (auch für bot.ts, wenn die Antwort des Assistenten ersetzt wird). */
+export async function merkeSchritt(conversationId: string, appointmentId: string, s: Pick<Schritt, "merker" | "daten" | "nachMerker">): Promise<void> {
+  await merke(conversationId, s.merker, { appointmentId, ...(s.daten ?? {}) });
+  if (s.nachMerker) await merke(conversationId, s.nachMerker, { appointmentId });
 }
 
 /**
- * Policen vorab (lib/policen): Wurde der Lead eingeladen, Policen zu schicken, heißt der Punkt „übrige Policen, falls
- * nicht geschickt“ (nur bei Komplettcheck „Ja“ steht er überhaupt in der Liste).
+ * Bereitlegen: Wurde der Lead um Policen gebeten, heißt der Punkt „übrige Policen“ (nur bei Komplettcheck „Ja“ steht er
+ * überhaupt in der Liste).
  */
 async function mitPolicenHinweis(k: StreckenKontext, liste: string[]): Promise<string[]> {
   if (!liste.some((x) => VERTRAEGE_BEREITLEGEN_RE.test(x))) return liste;
-  const eingeladen = (await prisma.message.count({ where: { conversationId: k.conversationId, direction: "outbound", body: { contains: "Fotos oder PDFs" } } })) > 0;
-  if (!eingeladen) return liste;
+  if (!k.termin || !(await streckenStand(k.conversationId, k.termin.id)).policenBitteAt) return liste;
   const ersatz = a(k.an, "deine übrigen Policen, falls du sie nicht geschickt hast", "Ihre übrigen Policen, falls Sie sie nicht geschickt haben");
   return liste.map((x) => (VERTRAEGE_BEREITLEGEN_RE.test(x) ? ersatz : x));
 }
 
-type AbschlussArt = "komplett_nein" | "vertraege" | "ohne_antwort" | "direkt";
-
-/** Eigene Nachricht vor dem Abschluss (Policen-Einladung mit Einwilligungsknöpfen). */
-export type Vorher = { text: string; buttons: Knopf[] | null };
-
-/**
- * Abschluss-Nachricht (Bereitlegen-Liste, Policen-Bitte, Einladung, Kalenderfrage), ohne Senden. Die Policen-Bitte
- * bekommt jeder Lead genau einmal (Ole, 17.11.2026, P2): kam sie noch nicht (Komplettcheck „Nein“, keine Antwort), steht
- * sie hier, bei Komplettcheck „Ja“ für alle Verträge, sonst eng für die angefragte Sparte; braucht sie
- * Einwilligungsknöpfe, geht sie als eigene Nachricht vorher (vorher).
- */
-export async function abschlussNachricht(k: StreckenKontext, art: AbschlussArt): Promise<{ text: string; buttons: Knopf[] | null; vorher: Vorher | null }> {
+/** Schluss der Strecke (Bereitlegen in einer Zeile, Frage nach der Adresse), ohne Senden. */
+export async function abschlussNachricht(k: StreckenKontext, einleitung: string | null): Promise<{ text: string; buttons: Knopf[] | null }> {
   const quelle = { formular: k.formular, angaben: k.angaben };
   const sparten = spartenDesLeads(k.source, quelle);
-  const bitte = await import("@/lib/policen/assistent")
-    .then((m) => m.policenBitteFuerStrecke({ conversationId: k.conversationId, an: k.an, person: k.person, voll: k.termin?.komplettcheck === true }))
-    .catch(() => null);
   const text = abschlussText({
-    policen: bitte?.kurz ?? null,
     an: k.an,
     person: k.person,
     bereitlegen: await mitPolicenHinweis(k, bereitlegenListe(k.source, sparten, k.an, { quelle, komplettcheck: k.termin?.komplettcheck === true })),
     email: k.email,
     nachFragen: true,
-    einleitung: art === "direkt" ? null : abschlussEinleitung(k.an, k.person, art),
+    einleitung,
   });
-  return { text, buttons: k.termin?.confirmedAt ? null : KALENDER_KNOEPFE, vorher: bitte?.einladung ?? null };
+  return { text, buttons: k.email ? EMAIL_KNOEPFE : null };
 }
 
-/** Abschluss mit Bereitlegen-Liste und Kalenderfrage senden (einmal je Termin). */
-export async function sendeAbschluss(k: StreckenKontext, art: AbschlussArt): Promise<boolean> {
-  if (!k.termin) return false;
-  const stand = await streckenStand(k.conversationId, k.termin.id);
-  if (stand.abschlussAt) return false;
-  const m = await abschlussNachricht(k, art);
-  await merke(k.conversationId, STRECKE.abschluss, { appointmentId: k.termin.id, art });
-  if (m.vorher) await sende(k, m.vorher.text, m.vorher.buttons);
-  await sende(k, m.text, m.buttons);
-  return true;
+/** Weiter nach dem Komplettcheck: erste offene Angebotsfrage, sonst der nächste Schritt. */
+async function weiterNachKomplettcheck(k: StreckenKontext, prefix: string, schlussEinleitung: string | null): Promise<void> {
+  if (await sendeAngebotsfrage(k, prefix)) return;
+  const s = await naechsterSchritt(k, { einleitung: prefix, schlussEinleitung });
+  if (s) await sendeSchritt(k, s);
+}
+
+/** Zwei freie Zeiten mit 45 Min. (früheste und früheste an einem anderen Tag), null = keine. */
+async function langeZeiten(k: StreckenKontext, now: Date): Promise<[string, string] | null> {
+  try {
+    const { suggestSlots } = await import("@/lib/calendar");
+    const { pickTwoSlots } = await import("@/lib/whatsapp/termin-vorschlaege");
+    const frei = (await suggestSlots(k.customerId, LANG_MIN, 8, "lead", 10, k.leadId)).filter((s) => new Date(s.start).getTime() > now.getTime() + HOUR);
+    const two = pickTwoSlots(frei, { now });
+    return two ? [two[0].start, two[1].start] : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Angebot längerer Zeiten (Komplettcheck, Zeit danach belegt) mit Knöpfen [Zeit 1] [Zeit 2] [Zeit behalten]. */
+export function langAngebotNachricht(k: Pick<StreckenKontext, "an" | "person">, zeiten: [string, string], now = new Date()): { text: string; buttons: Knopf[] } {
+  const [z1, z2] = zeiten.map((x) => zeitKurz(new Date(x), now));
+  const text = a(
+    k.an,
+    `Super! Für den Komplettcheck braucht ${k.person.nom} etwa ${LANG_MIN} Minuten, direkt nach deinem Termin ist aber schon etwas anderes geplant. Passt dir auch ${z1} oder ${z2}? Sonst bleibt es bei deiner Zeit.`,
+    `Super! Für den Komplettcheck braucht ${k.person.nom} etwa ${LANG_MIN} Minuten, direkt nach Ihrem Termin ist aber schon etwas anderes geplant. Passt Ihnen auch ${z1} oder ${z2}? Sonst bleibt es bei Ihrer Zeit.`,
+  );
+  return { text, buttons: [...zeiten.map((iso) => ({ id: `lang:${iso}`, title: knopfZeit(new Date(iso), now) })), { id: "lang:behalten", title: "Zeit behalten" }] };
 }
 
 /**
- * Antwort auf den Komplettcheck (Knopf oder vom Assistenten erkannt): Kennzeichen am Termin, dann die nächste offene
- * Angebotsfrage; sind keine offen, bei ja die Vertragsfrage, bei nein der Abschluss. true = erledigt (der Assistent
- * schreibt nichts dazu).
+ * Antwort auf den Komplettcheck (Knopf oder vom Assistenten erkannt): Kennzeichen am Termin; bei Ja 45 Min. (frei:
+ * verlängert, belegt: zwei andere Zeiten anbieten), dann die nächste offene Angebotsfrage bzw. der nächste Schritt.
+ * true = erledigt (der Assistent schreibt nichts dazu).
  */
 export async function komplettcheckAntwort(conversationId: string, ja: boolean, now = new Date()): Promise<boolean> {
   const k = await streckenKontext(conversationId, now);
@@ -299,34 +498,126 @@ export async function komplettcheckAntwort(conversationId: string, ja: boolean, 
     const { logLeadHistory } = await import("@/lib/lead-history");
     await logLeadHistory(k.leadId, "notiz", "Komplettcheck gewünscht (per WhatsApp)", { customerId: k.customerId, userId: null });
   }
-  // Komplettcheck braucht Zeit (Ole, 17.11.2026): Termin auf 45 Min. verlängern, sonst Hinweis an den Vermittler
-  if (ja) await import("@/lib/komplettcheck-dauer").then((m) => m.komplettcheckVerlaengern(k.termin!.id, { now }));
-  if (stand.abschlussAt) return true;
-  // Erst die Angaben fürs Hauptangebot (P2), dann bei ja die Verträge
-  if (await sendeAngebotsfrage(k, ja ? "Super!" : "Alles klar.")) return true;
   if (ja) {
-    if (!stand.vertragsfrageAt) {
-      await merke(conversationId, STRECKE.vertragsfrage, { appointmentId: k.termin.id });
-      await sende(k, vertragsFrage(k.an, k.familie));
+    const dauer = await import("@/lib/komplettcheck-dauer");
+    const r = await dauer.komplettcheckVerlaengern(k.termin.id, { now, angebot: true });
+    if (r === "belegt" && !stand.abschlussAt) {
+      const zeiten = await langeZeiten(k, now);
+      if (zeiten) {
+        const m = langAngebotNachricht(k, zeiten, now);
+        await merke(conversationId, STRECKE.langAngebot, { appointmentId: k.termin.id, starts: zeiten });
+        await sende(k, m.text, m.buttons);
+        return true;
+      }
     }
-    return true;
+    if (r === "belegt") await dauer.komplettcheckHinweis(k.termin.id, { now });
   }
-  await sendeAbschluss(k, "komplett_nein");
+  if (!stand.abschlussAt) await weiterNachKomplettcheck(k, ja ? "Super!" : "Alles klar.", ja ? null : abschlussEinleitung(k.an, k.person, "komplett_nein"));
+  await einladungPruefen(k, now);
   return true;
 }
 
 /**
- * Antwort auf die Frage nach der E-Mail-Adresse (Termin schon reserviert): enthält die Nachricht eine Adresse, wird sie
- * übernommen, die Einladung geht nach, und gleich folgt der Komplettcheck. false = keine Adresse erkannt (Assistent).
+ * Antwort auf das Angebot längerer Zeiten: gewählte Zeit (derselbe Termin wird verlegt, wenn noch frei) bzw. „Zeit
+ * behalten“ (Hinweis an den Vermittler), dann weiter wie nach dem Komplettcheck.
+ */
+export async function langeZeitAntwort(conversationId: string, wahl: string, now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (!langAngebotOffen(stand)) return true;
+  await merke(conversationId, STRECKE.langAntwort, { appointmentId: k.termin.id, wahl });
+  const dauer = await import("@/lib/komplettcheck-dauer");
+  const bleibt = (t: Date) =>
+    a(k.an, `Alles klar, es bleibt bei *${zeitLang(t)}*. ${k.person.nom} plant etwas mehr Zeit ein.`, `Alles klar, es bleibt bei *${zeitLang(t)}*. ${k.person.nom} plant etwas mehr Zeit ein.`);
+  let prefix: string;
+  if (wahl !== "behalten" && (await dauer.komplettcheckVerlegen(k.termin.id, wahl, { now })) === "verlegt") {
+    k.termin.startsAt = new Date(wahl);
+    prefix = a(k.an, `Super, dein Termin ist jetzt am *${zeitLang(k.termin.startsAt)}*, mit ${LANG_MIN} Minuten.`, `Super, Ihr Termin ist jetzt am *${zeitLang(k.termin.startsAt)}*, mit ${LANG_MIN} Minuten.`);
+  } else {
+    await dauer.komplettcheckHinweis(k.termin.id, { now });
+    prefix = wahl === "behalten" ? bleibt(k.termin.startsAt) : `${a(k.an, "Die Zeit ist leider gerade weg.", "Die Zeit ist leider gerade weg.")} ${bleibt(k.termin.startsAt).replace(/^Alles klar, es/, "Dann")}`;
+  }
+  if (!stand.abschlussAt) await weiterNachKomplettcheck(k, prefix, null);
+  else await sende(k, prefix);
+  await einladungPruefen(k, now);
+  return true;
+}
+
+/** Art der Reaktion aus dem Knopftitel der Policen-Bitte („Nicht zur Hand“ → später). */
+export function policenKnopfArt(titel: string): "gleich" | "spaeter" {
+  return /nicht|später|spaeter|gerade/i.test(titel) ? "spaeter" : "gleich";
+}
+
+/** Reaktion auf die Policen-Bitte (Knopf): „Schicke ich gleich“ bzw. „Nicht zur Hand“, dann der Schluss. */
+export async function policenBitteAntwort(conversationId: string, art: "gleich" | "spaeter" | "keine", now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (!stand.policenBitteAt || stand.policenAntwortAt) return true;
+  await merke(conversationId, STRECKE.policenAntwort, { appointmentId: k.termin.id, art });
+  const einleitung = art === "gleich" ? a(k.an, "Super, danke!", "Super, vielen Dank!") : art === "spaeter" ? policenSpaeterText(k.an) : "Alles klar, danke!";
+  const s = await naechsterSchritt(k, { schlussEinleitung: einleitung, vertraegeUeberspringen: true, policenUeberspringen: true });
+  if (s) await sendeSchritt(k, s);
+  else await sende(k, einleitung);
+  return true;
+}
+
+/** Schluss: „Ja, stimmt“ (Knopf bzw. vom Assistenten erkannt). Einladung jetzt (einmal), kurze Antwort. */
+export async function emailBestaetigt(conversationId: string, now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin || !k.email) return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (stand.emailOkLetzte && !emailFrageOffen(stand)) return true; // doppelter Klick
+  if (langAngebotOffen(stand)) {
+    await merke(conversationId, STRECKE.langAntwort, { appointmentId: k.termin.id, wahl: "behalten" });
+    await import("@/lib/komplettcheck-dauer").then((m) => m.komplettcheckHinweis(k.termin!.id, { now }));
+  }
+  await merke(conversationId, STRECKE.emailOk, { appointmentId: k.termin.id });
+  await zusagen(k, now, "email_bestaetigt");
+  await einladungPruefen(k, now);
+  await sende(k, einladungUnterwegs(k.an));
+  return true;
+}
+
+/** Schluss: „Andere Adresse“. Bis eine neue kommt, geht keine Einladung an die alte. */
+export async function emailAndere(conversationId: string, now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  await merke(conversationId, STRECKE.emailFrage, { appointmentId: k.termin.id, andere: true });
+  await sende(k, andereAdresseFrage(k.an));
+  return true;
+}
+
+/** Termin als zugesagt vermerken (Adresse bestätigt bzw. genannt). */
+async function zusagen(k: StreckenKontext, now: Date, via: string): Promise<void> {
+  if (!k.termin || k.termin.confirmedAt) return;
+  await prisma.appointment.update({ where: { id: k.termin.id }, data: { confirmedAt: now } });
+  await prisma.message.create({ data: { conversationId: k.conversationId, direction: "internal", kind: "appointment_confirmed", body: JSON.stringify({ appointmentId: k.termin.id, via }), sentBy: "system" } });
+}
+
+/**
+ * Antwort mit einer E-Mail-Adresse (Frage nach der Adresse offen bzw. update_email): übernehmen, Einladung (einmal bzw.
+ * als Aktualisierung an die neue Adresse), kurze Antwort. Mit „@“, aber unvollständig: noch einmal fragen.
+ * false = keine Adresse erkannt (Assistent).
  */
 export async function emailAntwort(conversationId: string, text: string, now = new Date()): Promise<boolean> {
   const email = emailAus(text);
-  if (!email) return false;
+  if (!email) {
+    if (!/@/.test(text ?? "")) return false;
+    const k = await streckenKontext(conversationId, now);
+    if (!k) return false;
+    await sende(k, adresseUnvollstaendig(k.an));
+    return true;
+  }
   await emailUebernehmen(conversationId, email, now);
   const k = await streckenKontext(conversationId, now);
   if (!k?.termin) return false;
   k.email = email;
-  if (!(await sendeKomplettcheck(k, einladungUnterwegs(email)))) await sende(k, einladungUnterwegs(email));
+  await merke(conversationId, STRECKE.emailOk, { appointmentId: k.termin.id });
+  await zusagen(k, now, "email_genannt");
+  await einladungPruefen(k, now);
+  await sende(k, einladungUnterwegs(k.an, email));
   return true;
 }
 
@@ -337,21 +628,24 @@ export function emailAus(text: string | null | undefined): string | null {
 }
 
 /**
- * Neue E-Mail-Adresse übernehmen (Chat, Lead; die bisherige bleibt als weitere Adresse) und die Einladung zum
- * kommenden Termin (neu) schicken. true = Einladung gesendet.
+ * Neue E-Mail-Adresse übernehmen (Chat, Lead; die bisherige bleibt als weitere Adresse). Ging die Einladung schon an
+ * eine andere Adresse: EINE Aktualisierung an die neue (gleiche UID), die alte bekommt nichts mehr.
  */
-export async function emailUebernehmen(conversationId: string, email: string, now = new Date()): Promise<boolean> {
+export async function emailUebernehmen(conversationId: string, email: string, now = new Date()): Promise<void> {
   const conv = await prisma.conversation.update({ where: { id: conversationId }, data: { contactEmail: email }, select: { leadId: true } });
   if (conv.leadId) {
     const bisher = await prisma.lead.findUnique({ where: { id: conv.leadId }, select: { email: true, weitereEmails: true } }).catch(() => null);
     const { mitNeuerEmail } = await import("@/lib/lead-emails");
     await prisma.lead.update({ where: { id: conv.leadId }, data: mitNeuerEmail({ alt: bisher?.email, weitere: bisher?.weitereEmails, neu: email }) }).catch(() => null);
   }
-  const appt = await prisma.appointment.findFirst({ where: { conversationId, status: "booked", startsAt: { gt: now } }, orderBy: { startsAt: "asc" }, select: { id: true } });
-  const { sendLeadEmail } = await import("@/lib/calendar/lead-email");
-  const r = appt ? await sendLeadEmail(appt.id, "booked").catch(() => ({ sent: false })) : { sent: false };
-  await merke(conversationId, "email_updated", { resent: r.sent });
-  return r.sent;
+  const appt = await prisma.appointment.findFirst({
+    where: { conversationId, status: "booked", startsAt: { gt: now } },
+    orderBy: { startsAt: "asc" },
+    select: { id: true, einladungAt: true, einladungAn: true },
+  });
+  const neu = !!appt?.einladungAt && appt.einladungAn !== email;
+  if (appt && neu) await import("@/lib/calendar/einladung").then((m) => m.einladungAktualisieren(appt.id, "adresse", now));
+  await merke(conversationId, "email_updated", { resent: neu });
 }
 
 /** Ist die Vertragsfrage offen (gestellt, noch nicht ausgewertet, kein Abschluss)? */
@@ -391,7 +685,8 @@ export async function extrahiereVertraege(text: string): Promise<{ liste: Vorver
   return { liste: vertraegeAusText(sauber), keine: false };
 }
 
-/** Antwort auf die Vertragsfrage: auswerten, am Lead speichern, Abschluss senden. true = erledigt. */
+
+/** Antwort auf die Vertragsfrage: auswerten, am Lead speichern, dann die Policen-Bitte bzw. der Schluss. true = erledigt. */
 export async function vertraegeAntwort(conversationId: string, text: string, now = new Date()): Promise<boolean> {
   const k = await streckenKontext(conversationId, now);
   if (!k?.termin) return false;
@@ -399,25 +694,16 @@ export async function vertraegeAntwort(conversationId: string, text: string, now
   const wert: Vorvertraege = { at: now.toISOString(), liste, ...(keine ? { keine: true } : {}) };
   if (k.leadId) await prisma.lead.update({ where: { id: k.leadId }, data: { vorvertraege: wert as unknown as Prisma.InputJsonValue } });
   await merke(conversationId, STRECKE.vorvertraege, { appointmentId: k.termin.id, anzahl: liste.length, keine });
-  // Policen vorab (Ole, 17.11.2026, lib/policen): Einladung als eigene Nachricht vor dem Abschluss
-  const policen = keine
-    ? null
-    : await import("@/lib/policen/assistent")
-        .then((m) => m.einladungNachVertraegen({ conversationId, an: k.an, person: k.person, vertraegeText: text, anzahl: liste.length }))
-        .catch(() => null);
-  if (policen) await sende(k, policen.text, policen.buttons);
-  await sendeAbschluss(k, "vertraege");
+  const s = await naechsterSchritt(k, { einleitung: "Danke!", schlussEinleitung: abschlussEinleitung(k.an, k.person, "vertraege") });
+  if (s) await sendeSchritt(k, s);
   return true;
 }
 
-/** Kalenderfrage per Knopf: „Ja“ bzw. „Mache ich gleich“ → zugesagt, kurze Antwort. */
+/** Frühere Kalenderfrage per Knopf (Nachrichten bis 17.11.2026): „Ja“ bzw. „Mache ich gleich“ → zugesagt. */
 export async function kalenderAntwort(conversationId: string, art: "ja" | "gleich", now = new Date()): Promise<boolean> {
   const k = await streckenKontext(conversationId, now);
   if (!k?.termin) return false;
-  if (!k.termin.confirmedAt) {
-    await prisma.appointment.update({ where: { id: k.termin.id }, data: { confirmedAt: now } });
-    await prisma.message.create({ data: { conversationId, direction: "internal", kind: "appointment_confirmed", body: JSON.stringify({ appointmentId: k.termin.id, via: `kalender_${art}` }), sentBy: "system" } });
-  }
+  await zusagen(k, now, `kalender_${art}`);
   const bis = `Bis ${zeitLang(k.termin.startsAt)}.`;
   const text =
     art === "ja"
@@ -432,16 +718,21 @@ export async function kalenderAntwort(conversationId: string, art: "ja" | "gleic
 /**
  * Strecke weiterführen, wenn der Lead nicht antwortet (Ole, 17.11.2026: nicht nachhaken; Reihenfolge P2): Nach über einer
  * Stunde ohne Antwort folgt der nächste Schritt.
- *   E-Mail-Frage → Komplettcheck
- *   Komplettcheck → erste offene Angebotsfrage, sind keine offen, der Abschluss
- *   Vertragsfrage → Abschluss (die Verträge entfallen)
- * Solange Angebotsfragen offen sind, nie der Abschluss; eine unbeantwortete Angebotsfrage bleibt stehen. Nur im offenen
+ *   Komplettcheck → erste offene Angebotsfrage, sind keine offen, der nächste Schritt
+ *   Zeitangebot (Komplettcheck, belegt) → Zeit behalten, weiter
+ *   Vertragsfrage → Policen-Bitte (die Verträge entfallen, die Bitte nicht)
+ *   Policen-Bitte → Schluss
+ * Solange Angebotsfragen offen sind, nie der Schluss; eine unbeantwortete Angebotsfrage bleibt stehen. Nur im offenen
  * 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, nicht nach „Stopp“ und nicht, wenn der Assistent pausiert ist.
  */
 export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesendet: number }> {
   if (!inStreckenFenster(now)) return { gesendet: 0 };
   const offen = await prisma.message.findMany({
-    where: { direction: "internal", kind: { in: [STRECKE.emailFrage, STRECKE.komplettFrage, STRECKE.vertragsfrage] }, createdAt: { lte: new Date(now.getTime() - HOUR), gte: new Date(now.getTime() - 48 * HOUR) } },
+    where: {
+      direction: "internal",
+      kind: { in: [STRECKE.komplettFrage, STRECKE.langAngebot, STRECKE.vertragsfrage, STRECKE.policenBitte] },
+      createdAt: { lte: new Date(now.getTime() - HOUR), gte: new Date(now.getTime() - 48 * HOUR) },
+    },
     orderBy: { createdAt: "asc" },
     take: 50,
     select: { conversationId: true, body: true, createdAt: true },
@@ -449,12 +740,7 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
   let gesendet = 0;
   const erledigt = new Set<string>();
   for (const m of offen) {
-    let appointmentId = "";
-    try {
-      appointmentId = String((JSON.parse(m.body ?? "{}") as { appointmentId?: unknown }).appointmentId ?? "");
-    } catch {
-      continue;
-    }
+    const appointmentId = String(daten(m.body).appointmentId ?? "");
     if (!appointmentId || erledigt.has(appointmentId)) continue;
     erledigt.add(appointmentId);
     try {
@@ -462,14 +748,15 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
       if (!conv?.botActive || conv.optedOutAt || !conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) continue;
       const stand = await streckenStand(m.conversationId, appointmentId);
       if (stand.abschlussAt) continue;
-      // offen ist der jüngste Schritt: Vertragsfrage (ohne Auswertung), Komplettcheck (ohne Antwort) bzw. E-Mail-Frage
-      const schritt: { art: "vertraege" | "komplett" | "email"; seit: Date } | null =
-        stand.vertragsfrageAt && !stand.vorvertraegeErfasst
+      // offen ist der jüngste Schritt
+      const schritt: { art: "policen" | "vertraege" | "lang" | "komplett"; seit: Date } | null = policenBitteOffen(stand)
+        ? { art: "policen", seit: stand.policenBitteAt! }
+        : stand.vertragsfrageAt && !stand.vorvertraegeErfasst
           ? { art: "vertraege", seit: stand.vertragsfrageAt }
-          : stand.komplettFrageAt && !komplettcheckErledigt(stand)
-            ? { art: "komplett", seit: stand.komplettFrageAt }
-            : stand.emailFrageAt && emailFrageOffen(stand)
-              ? { art: "email", seit: stand.emailFrageAt }
+          : langAngebotOffen(stand)
+            ? { art: "lang", seit: stand.langAngebotAt! }
+            : stand.komplettFrageAt && !komplettcheckErledigt(stand)
+              ? { art: "komplett", seit: stand.komplettFrageAt }
               : null;
       if (!schritt || schritt.seit.getTime() > now.getTime() - HOUR) continue;
       const antwort = await prisma.message.count({ where: { conversationId: m.conversationId, direction: "inbound", createdAt: { gt: schritt.seit } } });
@@ -477,15 +764,96 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
       const k = await streckenKontext(m.conversationId, now);
       if (!k?.termin || k.termin.id !== appointmentId) continue;
       let ok = false;
-      if (schritt.art === "email") ok = await sendeKomplettcheck(k);
-      else if (offeneAngebotsfragen(k).length) ok = schritt.art === "komplett" ? await sendeAngebotsfrage(k) : false;
-      else ok = await sendeAbschluss(k, "ohne_antwort");
+      if (schritt.art === "lang") {
+        await langeZeitAntwort(m.conversationId, "behalten", now);
+        ok = true;
+      } else if (schritt.art === "komplett") {
+        ok = (await sendeAngebotsfrage(k)) || (await sendeNaechsten(k, {}));
+      } else if (!offeneAngebotsfragen(k).length) {
+        if (schritt.art === "policen") await merke(m.conversationId, STRECKE.policenAntwort, { appointmentId, art: "ohne_antwort" });
+        ok = await sendeNaechsten(k, { vertraegeUeberspringen: true, policenUeberspringen: schritt.art === "policen" });
+      }
       if (ok) gesendet++;
     } catch (err) {
       console.error("[strecke abschluss]", err instanceof Error ? err.message.slice(0, 160) : err);
     }
   }
   return { gesendet };
+}
+
+async function sendeNaechsten(k: StreckenKontext, o: Parameters<typeof naechsterSchritt>[1]): Promise<boolean> {
+  const s = await naechsterSchritt(k, { schlussEinleitung: abschlussEinleitung(k.an, k.person, "ohne_antwort"), ...o });
+  if (!s) return false;
+  await sendeSchritt(k, s);
+  return true;
+}
+
+/** „Lieber nicht“ (Einwilligungsnachricht des Policen-Moduls) bzw. Widerruf: keine Policen-Erinnerungen mehr. */
+const POLICEN_STOPP_RE = /^\s*lieber nicht\b|widerruf|lösch|loesch|keine (policen|unterlagen) (mehr|schicken)/i;
+
+/**
+ * Sind Policen-Erinnerungen erlaubt und sinnvoll? Schalter an, Rechtsprüfung A8 (darfPolicenErinnern: protokolliertes
+ * WhatsApp-Opt-in), gebeten, noch kein Dokument, nicht „habe keine“, „Lieber nicht“ oder Widerruf, höchstens 2.
+ */
+async function policenErinnernErlaubt(conversationId: string, leadId: string | null, stand: StreckenStand): Promise<boolean> {
+  if (!stand.policenBitteAt || stand.policenKeine || stand.policenErinnerungen >= MAX_POLICEN_ERINNERUNGEN) return false;
+  const bitte = await import("@/lib/policen/bitte");
+  if (!bitte.policenBitteAktiv() || !(await bitte.darfPolicenErinnern(leadId))) return false;
+  if (leadId && (await prisma.leadDocument.count({ where: { leadId } })) > 0) return false;
+  // Lead sagt nach der Bitte, er habe keine bzw. möchte nicht
+  const nachher = await prisma.message.findMany({ where: { conversationId, direction: "inbound", createdAt: { gt: stand.policenBitteAt } }, select: { body: true }, take: 30 });
+  return !nachher.some((x) => sagtKeinePolicen(x.body ?? "") || POLICEN_STOPP_RE.test(x.body ?? ""));
+}
+
+/**
+ * Policen-Erinnerung 24 Std. nach der Buchung (Ole, 17.11.2026 spät): nur bei mehr als 2 Tagen zwischen Buchung und
+ * Termin, nur im offenen 24-h-Fenster (Freitext; die Vorlage ist nur vorbereitet, docs/beispielverlauf-p2.md). Da das
+ * Fenster meist kurz nach 24 Std. schließt, geht sie spätestens 30 Min. vor dessen Ende raus (frühestens 12 Std. nach der
+ * Buchung). Höchstens 2 Policen-Erinnerungen insgesamt (mit der Zeile am Vortag).
+ */
+export async function runPolicenErinnerung(now = new Date()): Promise<{ gesendet: number }> {
+  if (!inStreckenFenster(now)) return { gesendet: 0 };
+  const bitten = await prisma.message.findMany({
+    where: { direction: "internal", kind: STRECKE.policenBitte, createdAt: { gte: new Date(now.getTime() - 7 * 24 * HOUR) } },
+    select: { conversationId: true, body: true },
+    take: 200,
+  });
+  let gesendet = 0;
+  for (const b of bitten) {
+    try {
+      const appointmentId = String(daten(b.body).appointmentId ?? "");
+      const t = appointmentId ? await prisma.appointment.findUnique({ where: { id: appointmentId }, select: { status: true, startsAt: true, createdAt: true, leadId: true } }) : null;
+      if (!t || t.status !== "booked" || t.startsAt.getTime() <= now.getTime()) continue;
+      if (t.startsAt.getTime() - t.createdAt.getTime() <= 2 * 24 * HOUR) continue;
+      const stand = await streckenStand(b.conversationId, appointmentId);
+      if (stand.policenErinnerungen > 0 || !(await policenErinnernErlaubt(b.conversationId, t.leadId, stand))) continue;
+      const conv = await prisma.conversation.findUnique({ where: { id: b.conversationId }, select: { botActive: true, optedOutAt: true, windowExpiresAt: true } });
+      if (!conv?.botActive || conv.optedOutAt || !conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= now.getTime()) continue;
+      const nachBuchung = now.getTime() - t.createdAt.getTime();
+      const faellig = nachBuchung >= 24 * HOUR || (nachBuchung >= 12 * HOUR && conv.windowExpiresAt.getTime() - now.getTime() <= 30 * 60 * 1000);
+      if (!faellig) continue;
+      const k = await streckenKontext(b.conversationId, now);
+      if (!k?.termin) continue;
+      await merke(b.conversationId, STRECKE.policenErinnerung, { appointmentId, art: "tag" });
+      await sende(k, policenErinnerungText(k.an, k.person, stand.policenPolice));
+      gesendet++;
+    } catch (err) {
+      console.error("[policen erinnerung]", err instanceof Error ? err.message.slice(0, 160) : err);
+    }
+  }
+  return { gesendet };
+}
+
+/**
+ * Zeile für den Nutzensatz der Vortags-Erinnerung (lib/whatsapp/reminders.ts), wenn noch keine Police da ist; zählt als
+ * Policen-Erinnerung (merken = true beim Versand). null = keine Zeile.
+ */
+export async function policenVortagSatzFuer(appt: { id: string; conversationId: string | null; leadId: string | null }, an: Ansprache, o: { merken: boolean } = { merken: false }): Promise<string | null> {
+  if (!appt.conversationId) return null;
+  const stand = await streckenStand(appt.conversationId, appt.id);
+  if (!(await policenErinnernErlaubt(appt.conversationId, appt.leadId, stand))) return null;
+  if (o.merken) await merke(appt.conversationId, STRECKE.policenErinnerung, { appointmentId: appt.id, art: "vortag" });
+  return policenVortagSatz(an);
 }
 
 /** Letzter Terminvorschlag im Chat, solange der Lead danach nicht geschrieben hat (für das Nachfassen). */

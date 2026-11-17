@@ -188,15 +188,12 @@ describe("Bereitlegen: höchstens 3 Punkte, nichts doppelt", () => {
 });
 
 describe("Buchung, Komplettcheck und Abschluss", () => {
-  it("Buchungsnachricht verbindlich, ohne Frage, ohne erfundene Knappheit", () => {
+  it("Buchungsnachricht kurz, ohne Frage, ohne erfundene Knappheit (Sie und Du)", () => {
     const t = buchungsText({ an: "sie", start: new Date("2026-11-18T09:00:00Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: PERSON });
-    expect(t).toBe(
-      "Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\n\n" +
-        "Herr Kannapinn reserviert diese Zeit nur für Sie und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
-    );
-    expect(t).not.toMatch(/\?|nur noch|knapp|letzte/);
+    expect(t).toBe("Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*. Herr Kannapinn hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor.\nIhr Link: https://meet.google.com/abc-defg-hij");
+    expect(t).not.toMatch(/\?|nur noch|knapp|letzte|[–—]/);
     const du = buchungsText({ an: "du", start: new Date("2026-11-18T09:00:00Z"), mode: "video", meetUrl: "https://meet.google.com/x", person: PERSON_DU });
-    expect(du).toContain("Ole reserviert diese Zeit nur für dich und bereitet deine Beiträge vorab vor. Bitte sei pünktlich dabei");
+    expect(du).toBe("Dein Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*. Ole hält sich die Zeit nur für dich frei und bereitet deine Beiträge vor.\nDein Link: https://meet.google.com/x");
   });
 
   it("Komplettcheck: Sie, Familie, Du", () => {
@@ -226,7 +223,7 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
     }
   });
 
-  it("Abschluss nach den Verträgen: Policen oben, Kalenderfrage zuletzt", () => {
+  it("Schluss nach den Verträgen: Bereitlegen in einer Zeile (Verträge zuerst), Adresse zuletzt", () => {
     const ab = abschlussText({
       an: "sie",
       person: PERSON,
@@ -236,10 +233,11 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
       einleitung: abschlussEinleitung("sie", PERSON, "vertraege"),
     });
     expect(ab).toBe(
-      "Danke, das schaut sich Herr Kannapinn im Termin mit an.\n\nBitte legen Sie zum Termin bereit:\n• Ihre bestehenden Verträge und Policen\n• die Geburtsdaten aller Personen, die mitversichert werden sollen\n• Ihre IBAN, falls Sie direkt abschließen möchten\n\n" +
-        "Die Einladung mit Kalendereintrag habe ich Ihnen an julia@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*",
+      "Danke, das schaut sich Herr Kannapinn im Termin mit an. Legen Sie zum Termin gern bereit: Ihre bestehenden Verträge, die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.\n\n" +
+        "Zum Schluss: Die Einladung mit Kalendereintrag geht an julia@example.com. Stimmt die Adresse?",
     );
     expect((ab.match(/\?/g) ?? []).length).toBe(1);
+    expect(knoepfeFuerText(ab)?.map((k) => k.id)).toEqual(["email:ja", "email:andere"]);
   });
 });
 

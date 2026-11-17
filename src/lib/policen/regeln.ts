@@ -244,35 +244,8 @@ export function einladungText(an: Ansprache, person: Person, o: { gesundheitAn: 
   return `${satz} ${rest}`;
 }
 
-/**
- * Kurze Policen-Bitte im Abschluss der Termin-Strecke bei Komplettcheck „Ja“ (Ole, 17.11.2026, P2: jeder Lead wird
- * einmal gebeten; kam die Einladung nach der Vertragsfrage nicht, z. B. ohne Antwort, steht sie hier). Schalter aus:
- * nur Sachversicherungen. Erkennbar an EINLADUNG_RE.
- */
-export function policenBitteKurz(an: Ansprache, person: Person, o: { gesundheitAn: boolean }): string {
-  const was = o.gesundheitAn ? "" : " für Sachversicherungen (z. B. Haftpflicht, Hausrat, Kfz)";
-  return a(
-    an,
-    `Gern kannst du vorab Fotos oder PDFs deiner Policen${was} hier in den Chat schicken, dann schaut ${person.nom} sie mit an.`,
-    `Gern können Sie vorab Fotos oder PDFs Ihrer Policen${was} hier in den Chat schicken, dann schaut ${person.nom} sie mit an.`,
-  );
-}
-
-/**
- * Enge Policen-Bitte (Ole, 17.11.2026, P2) bei Komplettcheck „Nein“ bzw. unbekannt: nur der bestehende Vertrag in der
- * angefragten Sparte, freiwillig, ein Satz im Abschluss. wort = „Haftpflicht- und Hausratversicherung“ (ohne Artikel).
- */
-export function policenBitteEng(an: Ansprache, person: Person, wort: string | null): string {
-  const was = wort ? `eine ${wort}` : "dafür eine Versicherung";
-  return a(
-    an,
-    `Falls du schon ${was} hast: Schick mir gern ein Foto der Police, dann vergleicht ${person.nom} direkt und achtet auf die Kündigungsfrist.`,
-    `Falls Sie schon ${was} haben: Schicken Sie mir gern ein Foto der Police, dann vergleicht ${person.nom} direkt und achtet auf die Kündigungsfrist.`,
-  );
-}
-
 /** Erkennt die Einladung in einer unserer Nachrichten (nur einmal je Chat), auch die Einladung mit Einwilligung. */
-export const EINLADUNG_RE = /(Fotos oder PDFs (deiner|Ihrer) (Policen|bisherigen Versicherungen))|ein Foto der Police, dann vergleicht/;
+export const EINLADUNG_RE = /(Fotos oder PDFs (deiner|Ihrer) (Policen|bisherigen Versicherungen))/;
 
 /** Verantwortlicher im Einwilligungstext: Vermittler (Name in der Ansprache), Firma, Link zur Langfassung. */
 export type Verantwortlicher = { person: Person; firma: string | null; link: string | null };
@@ -430,7 +403,7 @@ export function gesundheitInVertraegen(qualificationData: unknown): boolean {
   return gesundheitInText([q.vorhanden, q.komplettcheck].filter((x) => typeof x === "string").join(" "));
 }
 
-/** Bereitlegen-Liste ohne „bestehende Verträge und Policen“, wenn der Lead schon welche geschickt hat. */
+/** Bereitlegen-Liste ohne „bisherige Policen“, wenn der Lead schon welche geschickt hat. */
 export function ohneBisherigePolicen(liste: string[], geschickt: boolean): string[] {
   if (!geschickt) return liste;
   return liste
