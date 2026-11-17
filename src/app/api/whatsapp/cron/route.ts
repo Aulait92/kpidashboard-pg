@@ -34,6 +34,7 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 //   5. Erinnerung „Leads ohne nächsten Schritt“ um 8 Uhr (siehe lib/next-step-reminder.ts)
 //   6. Rückmeldung an Meta (Conversions API für CRM) alle 15 Minuten (siehe lib/capi/server.ts)
 //   7. Zahlungserinnerung für angenommene, unbezahlte Angebote (siehe lib/angebot-zahlungserinnerung.ts)
+//   8. Mahnwesen für offene Rechnungen (nur mit MAHNWESEN=on, lib/mahnwesen-server.ts)
 // Per WHATSAPP_WEBHOOK_SECRET gesichert: Header „Authorization: Bearer …“ oder
 // x-cron-token (x-webhook-secret und ?token= nur noch im Übergang, lib/cron-auth.ts).
 export const dynamic = "force-dynamic";
@@ -225,6 +226,14 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-zahlungserinnerung");
       return null;
     });
+  // Mahnwesen (nur mit MAHNWESEN=on): stündlich Stripe- und Bankabgleich, dann Erinnerung, Mahnungen, Anruf-Aufgabe
+  // (9 bis 19 Uhr, lib/mahnwesen-server.ts)
+  const mahnwesen = await import("@/lib/mahnwesen-server")
+    .then((m) => m.runMahnlauf(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-mahnwesen");
+      return null;
+    });
   // Vertrieb: Kontakte anreichern (Website + Google Places) – nach der Antwort,
   // damit der Cron nicht auf langsame Websites wartet (gedrosselt, je Kontakt einmal).
   after(() =>
@@ -342,7 +351,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

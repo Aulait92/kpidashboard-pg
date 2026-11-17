@@ -692,6 +692,9 @@ function billingTermsOf(offer: {
   bestandMonthly: unknown;
   empfehlungMonthly?: unknown;
   annualPrepay: boolean;
+  allowBankTransfer?: boolean;
+  bankTransferDays?: number;
+  zahlweise?: string | null;
 }) {
   const seatsBilled = offer.seats != null && offer.seatsIncluded != null && Number(offer.seatMonthly ?? 0) > 0
     ? Math.max(0, offer.seats - offer.seatsIncluded)
@@ -706,5 +709,8 @@ function billingTermsOf(offer: {
     ...(offer.empfehlungMonthly != null
       ? { empfehlungMonthly: Number(offer.empfehlungMonthly), empfehlungEnabled: true, empfehlungSince: new Date(), empfehlungCancelAt: null }
       : {}),
+    // Überweisung nur auf Anfrage (lib/ueberweisung.ts): Freigabe und Zahlungsziel gehen an den Kunden über
+    ...(offer.allowBankTransfer ? { allowBankTransfer: true, bankTransferDays: offer.bankTransferDays ?? 14 } : {}),
+    ...(offer.zahlweise === "ueberweisung" ? { zahltPerUeberweisung: true } : {}),
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { UEBERWEISUNG_TAGE_STANDARD } from "@/lib/mahnwesen";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -38,6 +39,7 @@ export function OfferForm({
   backHref,
   initial,
   referralDiscount = null,
+  ueberweisungVerfuegbar = false,
 }: {
   target: OfferTarget;
   backHref: string;
@@ -55,6 +57,8 @@ export function OfferForm({
   };
   /** Empfohlener Kontakt: Einrichtungsrabatt (vorbelegt, übersteuerbar). */
   referralDiscount?: { amount: number; label: string; note: string | null } | null;
+  /** Überweisung freigeschaltet (MAHNWESEN=on, zuerst nur Staging): Schalter „Überweisung erlauben“ zeigen */
+  ueberweisungVerfuegbar?: boolean;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -85,6 +89,9 @@ export function OfferForm({
   const [customerChoice, setCustomerChoice] = useState(true);
   // „Ich zahle später“ auf der Angebotsseite (Ole, 16.11.2026): nur für Kunden mit spätem Start, Standard aus
   const [allowPayLater, setAllowPayLater] = useState(false);
+  // Überweisung nur auf Anfrage des Kunden (Ole, 17.11.2026): Standard aus, Zahlungsziel Standard 14 Tage
+  const [allowBankTransfer, setAllowBankTransfer] = useState(false);
+  const [bankTransferDays, setBankTransferDays] = useState(String(UEBERWEISUNG_TAGE_STANDARD));
   // Abschlussbonus (Ole, 16.11.2026): Standard an, 300 € auf die Einrichtung bei Annahme und Zahlung am Versandtag
   const [bonusAn, setBonusAn] = useState(true);
   const [bonusBetrag, setBonusBetrag] = useState("300");
@@ -143,6 +150,8 @@ export function OfferForm({
         vermittlerTyp: vermittler,
         customerChoice,
         allowPayLater: allowPayLater && !test,
+        allowBankTransfer: ueberweisungVerfuegbar && allowBankTransfer && !test,
+        bankTransferDays: num(bankTransferDays),
         abschlussBonus: bonusAn && !test ? (num(bonusBetrag) ?? 300) : 0,
         abschlussBonusBis: bonusAn && !test ? bonusBis : null,
         test,
@@ -383,6 +392,34 @@ export function OfferForm({
                 </span>
               </span>
             </label>
+            {ueberweisungVerfuegbar ? (
+              <label className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3 text-sm" data-ueberweisung-toggle>
+                <input
+                  type="checkbox"
+                  name="allowBankTransfer"
+                  className="mt-0.5 h-4 w-4"
+                  checked={allowBankTransfer && !test}
+                  disabled={test}
+                  onChange={(e) => setAllowBankTransfer(e.target.checked)}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2 font-semibold">
+                    Überweisung erlauben, Zahlungsziel
+                    <input
+                      aria-label="Zahlungsziel in Tagen"
+                      inputMode="numeric"
+                      value={bankTransferDays}
+                      disabled={!allowBankTransfer || test}
+                      onChange={(e) => setBankTransferDays(e.target.value)}
+                      className="h-7 w-14 rounded border border-[color:var(--border)] px-2 text-right text-sm font-normal"
+                      data-ueberweisung-tage
+                    />
+                    Tage
+                  </span>
+                  <span className="block text-xs text-[color:var(--muted)]">Nur auf Anfrage des Kunden. Sonst zahlt er wie üblich per Lastschrift oder Karte.</span>
+                </span>
+              </label>
+            ) : null}
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${test ? "border-amber-300 bg-amber-50" : "border-[color:var(--border)] bg-white"}`}>
               <input type="checkbox" name="test" className="mt-0.5 h-4 w-4" checked={test} onChange={(e) => setTest(e.target.checked)} data-testangebot />
               <span>

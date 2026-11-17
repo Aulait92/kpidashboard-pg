@@ -10,6 +10,7 @@ import { logOfferActivity, offerAdminHref, setContactCustomerStage } from "@/lib
 import { cancelScheduleForOffer, createScheduleForOffer } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
 import { markPaymentOverdue, markPaymentReceived } from "@/lib/pause";
+import { mahnwesenAktiv } from "@/lib/mahnwesen";
 
 export const HANDLED_EVENTS = [
   "checkout.session.completed",
@@ -70,6 +71,24 @@ async function rewardReferral(offerId: string) {
     await rewardReferralForOffer(offerId);
   } catch (err) {
     reportError(err, "referral-reward", { offer: offerId });
+  }
+}
+
+/** Typ der Zahlungsart einer fehlgeschlagenen Rechnung (Lastschrift oder Karte), für den Mahntext. Wirft nie. */
+async function zahlartTyp(invoice: Stripe.Invoice): Promise<string | null> {
+  if (invoice.collection_method === "send_invoice") return null;
+  try {
+    const { stripeClient } = await import("@/lib/billing");
+    const stripe = stripeClient();
+    const customerId = idOf(invoice.customer as string | { id: string } | null);
+    if (!stripe || !customerId) return null;
+    const pm = idOf(invoice.default_payment_method as string | { id: string } | null);
+    if (pm) return (await stripe.paymentMethods.retrieve(pm)).type;
+    const c = await stripe.customers.retrieve(customerId);
+    const def = "deleted" in c ? null : idOf(c.invoice_settings?.default_payment_method as string | { id: string } | null);
+    return def ? (await stripe.paymentMethods.retrieve(def)).type : null;
+  } catch {
+    return null;
   }
 }
 
@@ -189,6 +208,16 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
         where: { id: offer.id },
         data: nachFehlschlag ? { subscriptionStatus: sub.status } : { stripeSubscriptionId: sub.id, subscriptionStatus: sub.status },
       });
+      // Überweisung (lib/ueberweisung.ts): Abo aus dem Zeitplan startet → Banküberweisung als Zahlungsart der Rechnungen
+      if (
+        event.type === "customer.subscription.created" &&
+        offer.zahlweise === "ueberweisung" &&
+        sub.collection_method === "send_invoice" &&
+        !(sub.payment_settings?.payment_method_types ?? []).includes("customer_balance")
+      ) {
+        const { setBankTransferOnSubscription } = await import("@/lib/billing");
+        await setBankTransferOnSubscription(sub.id).catch((err) => reportError(err, "billing-ueberweisung-abo", { offer: offer.number }));
+      }
       if (event.type === "customer.subscription.deleted" && !nachFehlschlag) {
         await setContactCustomerStage(offer, "GEKUENDIGT");
         await logActivity(offer, `Abo zu ${offer.number} beendet`);
@@ -204,6 +233,25 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       if (invoice.metadata?.kind === "ppl_order" && invoice.metadata.order_id && event.type !== "invoice.overdue") {
         const { orderInvoiceEvent } = await import("@/lib/ppl/orders");
         await orderInvoiceEvent(invoice.metadata.order_id, event.type === "invoice.paid").catch((err) => reportError(err, "ppl-order-webhook"));
+      }
+      // Setup-Rechnung per Überweisung (lib/ueberweisung.ts): bezahlt → Angebot bezahlt
+      if (event.type === "invoice.paid" && invoice.metadata?.pg_kind === "offer_setup" && invoice.metadata.offer_id) {
+        const setupOffer = await prisma.offer.findUnique({ where: { id: invoice.metadata.offer_id } });
+        if (setupOffer && setupOffer.paymentStatus !== "paid") {
+          await prisma.offer.update({ where: { id: setupOffer.id }, data: { paymentStatus: "paid", paidAt: setupOffer.paidAt ?? new Date() } });
+          await logActivity(setupOffer, `Setup-Rechnung ${invoice.number ?? invoice.id} per Überweisung bezahlt`, eur(invoice.amount_paid));
+          await notify(`💶 Überweisung eingegangen: ${setupOffer.company ?? setupOffer.contactName}`, `${setupOffer.number} · ${eur(invoice.amount_paid)}`, offerAdminHref(setupOffer), `pay:${setupOffer.id}`);
+          if ((invoice.amount_paid ?? 0) > 0) await rewardReferral(setupOffer.id);
+        }
+      }
+      // Mahnwesen (lib/mahnwesen-server.ts): bezahlt → Mahnlauf sofort beenden; fehlgeschlagen/überfällig → Fall anlegen
+      try {
+        const m = await import("@/lib/mahnwesen-server");
+        if (event.type === "invoice.paid") await m.rechnungBezahlt(invoice.id!, "stripe");
+        else if (event.type === "invoice.payment_failed" && mahnwesenAktiv()) await m.mahnfallAusRechnung(invoice, { fehlgeschlagen: true, pmType: await zahlartTyp(invoice) });
+        else await m.mahnfallAusRechnung(invoice);
+      } catch (err) {
+        reportError(err, "billing-mahnwesen", { invoice: invoice.id });
       }
       // Zahlungsverzug je Kunde führen (unabhängig vom Angebot).
       const stripeCustomerId = idOf(invoice.customer as string | { id: string } | null);

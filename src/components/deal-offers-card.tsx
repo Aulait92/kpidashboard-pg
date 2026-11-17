@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send, Trash2 } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
-import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
+import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setBankTransferAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
 
 export type DealOfferRow = {
@@ -32,6 +32,11 @@ export type DealOfferRow = {
   startShiftedFrom: string | null;
   /** „Ich zahle später“ auf der Angebotsseite erlaubt */
   allowPayLater: boolean;
+  /** Überweisung nur auf Anfrage (lib/ueberweisung.ts): erlaubt, Zahlungsziel, gewählte Zahlweise, Funktion freigeschaltet */
+  allowBankTransfer: boolean;
+  bankTransferDays: number;
+  zahlweise: string | null;
+  ueberweisungVerfuegbar: boolean;
   mailDu: boolean;
   /** Zahlung erinnern am (YYYY-MM-DD), null = Standardplan */
   paymentReminderAt: string | null;
@@ -149,7 +154,9 @@ export function DealOffersCard({
               <span className="font-semibold">{current.number}</span>
               {current.version > 1 ? <span className="text-xs text-[color:var(--muted)]">Version {current.version}</span> : null}
               <Badge tone={STATUS[current.status]?.tone ?? "neutral"}>{STATUS[current.status]?.label ?? current.status}</Badge>
-              {PAYMENT[current.paymentStatus] ? (
+              {current.zahlweise === "ueberweisung" && current.paymentStatus === "processing" ? (
+                <Badge tone="info">Rechnung offen (Überweisung)</Badge>
+              ) : PAYMENT[current.paymentStatus] ? (
                 <Badge tone={PAYMENT[current.paymentStatus].tone}>{PAYMENT[current.paymentStatus].label}</Badge>
               ) : null}
               {current.subscriptionStatus ? <Badge tone={current.subscriptionStatus === "active" ? "success" : "warning"}>{SUB[current.subscriptionStatus] ?? `Abo: ${current.subscriptionStatus}`}</Badge> : null}
@@ -284,6 +291,7 @@ export function DealOffersCard({
                 ) : null}
                 <p className="text-xs text-[color:var(--muted)]">Der Rechner öffnet sich mit Budget aus dem Angebot und der gewählten Zielgruppe.</p>
                 {!current.isTest ? <PayLaterToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
+                {!current.isTest ? <BankTransferToggle offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
               </div>
             ) : null}
             {msg ? <p className="text-xs font-medium text-emerald-700">{msg}</p> : null}
@@ -377,6 +385,42 @@ function PayLaterToggle({ offer, onDone }: { offer: DealOfferRow; onDone: (msg: 
   );
 }
 
+/** „Überweisung erlauben“ (nur auf Anfrage, Ole 17.11.2026): Option „Per Überweisung zahlen“ auf der Angebotsseite. */
+function BankTransferToggle({ offer, onDone }: { offer: DealOfferRow; onDone: (msg: string) => void }) {
+  const [pending, start] = useTransition();
+  const [days, setDays] = useState(String(offer.bankTransferDays));
+  if (!offer.ueberweisungVerfuegbar) return null;
+  if (offer.zahlweise === "ueberweisung") {
+    return (
+      <p className="border-t border-[color:var(--border)] pt-2 text-xs" data-ueberweisung-gewaehlt>
+        Zahlt per Überweisung (Rechnung, Zahlungsziel {offer.bankTransferDays} Tage)
+      </p>
+    );
+  }
+  const save = (allow: boolean, d: string) =>
+    start(async () => {
+      const res = await setBankTransferAction(offer.id, { allow, days: d });
+      if (!res.ok) alert(res.error);
+      else onDone(allow ? `Überweisung erlaubt (${d} Tage)` : "Überweisung nicht mehr erlaubt");
+    });
+  return (
+    <label className="flex flex-wrap items-center gap-2 border-t border-[color:var(--border)] pt-2" data-ueberweisung-toggle>
+      <input type="checkbox" className="h-4 w-4" disabled={pending || offer.paymentSetUp} checked={offer.allowBankTransfer} onChange={(e) => save(e.target.checked, days)} />
+      Überweisung erlauben, nur auf Anfrage, Zahlungsziel
+      <input
+        aria-label="Zahlungsziel in Tagen"
+        inputMode="numeric"
+        value={days}
+        disabled={pending || offer.paymentSetUp}
+        onChange={(e) => setDays(e.target.value)}
+        onBlur={() => offer.allowBankTransfer && days !== String(offer.bankTransferDays) && save(true, days)}
+        className="h-7 w-12 rounded border border-[color:var(--border)] px-1.5 text-right text-xs"
+      />
+      Tage
+    </label>
+  );
+}
+
 /** Angenommen, Zahlung offen: „Zahlung erinnern am“, Anrede der Erinnerung, Stand des Plans (Ole, 16.11.2026). */
 function PaymentReminder({ offer, onDone }: { offer: DealOfferRow; onDone: (msg: string) => void }) {
   const [date, setDate] = useState(offer.paymentReminderAt ?? "");
@@ -439,6 +483,7 @@ function PaymentReminder({ offer, onDone }: { offer: DealOfferRow; onDone: (msg:
         </div>
       </div>
       <PayLaterToggle offer={offer} onDone={onDone} />
+      <BankTransferToggle offer={offer} onDone={onDone} />
     </div>
   );
 }

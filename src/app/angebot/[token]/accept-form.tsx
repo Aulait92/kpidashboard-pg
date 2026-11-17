@@ -35,6 +35,7 @@ export function AcceptForm({
   choice,
   payment = false,
   payLater = false,
+  ueberweisungTage = null,
 }: {
   token: string;
   termsUrl: string;
@@ -48,6 +49,8 @@ export function AcceptForm({
   payment?: boolean;
   /** „Später zahlen“ erlaubt (Ole am Angebot): Hinweis vor der Annahme, die Wahl kommt danach im Zahlungsfeld */
   payLater?: boolean;
+  /** Überweisung am Angebot freigegeben (nur auf Anfrage): Zahlungsziel in Tagen */
+  ueberweisungTage?: number | null;
 }) {
   const [state, action, pending] = useActionState<AcceptState, FormData>(
     acceptOfferAction.bind(null, token),
@@ -174,7 +177,7 @@ export function AcceptForm({
       </label>
       {payment ? (
         <div className="max-w-md">
-          <ZahlartAuswahl />
+          <ZahlartAuswahl ueberweisungTage={ueberweisungTage} />
         </div>
       ) : payLater ? (
         <p className="flex items-start gap-2 text-sm text-[color:var(--muted)]" data-pay-later-hinweis>
