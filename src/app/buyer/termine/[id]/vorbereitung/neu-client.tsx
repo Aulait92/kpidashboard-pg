@@ -194,6 +194,7 @@ export function VorbereitungNeu(p: {
   const [pruefHinweis, setPruefHinweis] = useState(false);
   const [springeZu, setSpringeZu] = useState<{ key: string; n: number } | null>(null);
   const ungeprueft = ungepruefteBeitraege(auswahl);
+  const fertigFuerPraesentation = beitraegeVollstaendig(auswahl);
   const oeffnen = async (e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     if (ungepruefteBeitraege(ref.current).length) {
@@ -254,7 +255,8 @@ export function VorbereitungNeu(p: {
           <Button variant="ghost" size="md" icon={vorbereitet ? RotateCcw : Check} disabled={p.readOnly} onClick={vorbereitetUmschalten} data-termin-vorbereitet>
             {vorbereitet ? "Doch nicht vorbereitet" : "Als vorbereitet markieren"}
           </Button>
-          <a href={praesentation} onClick={oeffnen} className={buttonClass("primary", "md")} data-praesentation-oeffnen>
+          {/* Hauptknopf ist Schritt 3 unten; oben nur als Abkürzung (eine Hauptaktion je Seite) */}
+          <a href={praesentation} onClick={oeffnen} className={buttonClass("secondary", "md")} data-praesentation-oeffnen>
             <Presentation className="h-4 w-4" /> Präsentation öffnen
           </a>
         </div>
@@ -286,6 +288,27 @@ export function VorbereitungNeu(p: {
         neuLaden={() => router.refresh()}
         springeZu={springeZu}
       />
+
+      {/* Schritt 3 (Ole, 17.11.2026): Abschluss mit klarer nächster Handlung; am Handy übernimmt die feste Leiste */}
+      <Card className="mt-3 hidden md:block" data-schritt-3>
+        <div className="flex flex-wrap items-center gap-3 px-5 py-4">
+          <span
+            className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", fertigFuerPraesentation ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
+            aria-hidden
+          >
+            3
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[15px] font-semibold tracking-tight">Präsentation öffnen</h3>
+            <p className="mt-0.5 text-[13px] text-[color:var(--muted)]">
+              {fertigFuerPraesentation ? "Alles eingetragen. Im Termin teilen Sie diese Präsentation." : "Erst Beiträge eintragen, dann zeigt die Präsentation Ihre Preise."}
+            </p>
+          </div>
+          <a href={praesentation} onClick={oeffnen} className={buttonClass("primary", "md")} data-praesentation-schritt>
+            <Presentation className="h-4 w-4" /> Präsentation öffnen
+          </a>
+        </div>
+      </Card>
 
       <ActionSheet
         open={pruefHinweis}
@@ -411,6 +434,10 @@ function Angebote(p: {
   const sp = p.auswahl.sparten.find((s) => s.key === aktiv) ?? p.auswahl.sparten[0] ?? null;
   const [eigene, setEigene] = useState(p.daten.eigene);
   const ro = p.readOnly;
+  const schritt1 = p.auswahl.sparten.length > 0 && !p.daten.gesellschaftFehlt;
+  const schritt2 = beitraegeVollstaendig(p.auswahl);
+  // Selten Gebrauchtes (Merkmale, Bausteine, Tarife ändern, „In Präsentation“) erst nach „Anpassen“
+  const [anpassen, setAnpassen] = useState(false);
 
   /** Änderung an der aktiven Sparte */
   const anSparte = (fn: (s: SparteWahl) => void, extern = false) =>
@@ -492,9 +519,11 @@ function Angebote(p: {
   return (
     <Card id="angebote" className="mt-5" menus>
       <div className="flex items-center gap-3 border-b border-[color:var(--border)] px-4 py-3.5 sm:px-5">
-        <h2 className="text-[15px] font-semibold tracking-tight">Angebote</h2>
+        <h2 className="text-[15px] font-semibold tracking-tight">Angebot erstellen</h2>
         <SpeicherStatus status={p.status} readOnly={ro} erneut={p.erneut} />
       </div>
+
+      <Schritt nr={1} titel="Versicherungen wählen" hinweis="Was möchten Sie im Termin anbieten?" fertig={schritt1} />
 
       {p.daten.gesellschaftFehlt ? (
         <div className="mx-4 mt-4 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm sm:mx-5" data-gesellschaft-waehlen>
@@ -593,8 +622,19 @@ function Angebote(p: {
 
       <ChanceImTermin auswahl={p.auswahl} ro={ro} aendern={p.aendern} anbieten={(key) => anbieten(key)} vorsorge={p.daten.vorsorge ?? null} />
 
+      <div className="mx-4 mt-4 border-t border-[color:var(--border)] sm:mx-5" />
+      <Schritt
+        nr={2}
+        titel={sp ? `Beiträge eintragen: ${sp.label}` : "Beiträge eintragen"}
+        hinweis={
+          p.auswahl.sparten.length > 1
+            ? "Im eigenen Tarifrechner rechnen und hier eintragen, je Versicherung oben im Reiter. Der Stern markiert Ihre Empfehlung."
+            : "Im eigenen Tarifrechner rechnen und hier eintragen. Der Stern markiert Ihre Empfehlung."
+        }
+        fertig={schritt2}
+      />
       {sp ? (
-        <div className="grid gap-5 px-4 pb-5 pt-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="grid gap-5 px-4 pb-5 pt-3 sm:px-5 lg:grid-cols-[minmax(0,1fr)_400px]">
           <div className="min-w-0">
             {sp.zusatz ? (
               // Cross-Selling: erst bei Bedarf, in der Präsentation über „Mit anschauen“
@@ -624,7 +664,7 @@ function Angebote(p: {
 
             <div className="mt-3.5 grid grid-cols-1 gap-2.5" data-tarife>
               {sp.tarife.length ? (
-                sp.tarife.map((t) => <TarifKarte key={t.id} sp={sp} t={t} version={p.version} ro={ro} anTarif={anTarif} anSparte={anSparte} />)
+                sp.tarife.map((t) => <TarifKarte key={t.id} sp={sp} t={t} version={p.version} ro={ro} anpassen={anpassen} anTarif={anTarif} anSparte={anSparte} />)
               ) : (
                 <p className="py-3 text-sm text-[color:var(--muted)]">
                   Noch kein Tarif gewählt. Öffnen Sie unten „Tarife ändern“ oder legen Sie einen eigenen Tarif an.
@@ -632,38 +672,53 @@ function Angebote(p: {
               )}
             </div>
 
-            <Auswahl
-              titel="Meine Merkmale"
-              weitere="Weitere Merkmale"
-              schema={sp.schema.merkmale}
-              gewaehlt={sp.merkmale}
-              max={grenzenFuer(sp).merkmale}
-              nummern
-              ro={ro}
-              setze={(liste) => anSparte((s) => void (s.merkmale = liste))}
-            />
-            <Auswahl
-              titel="Bausteine"
-              weitere="Weitere Bausteine"
-              schema={sp.schema.bausteine}
-              gewaehlt={sp.bausteine}
-              max={grenzenFuer(sp).bausteine}
-              ro={ro}
-              setze={(liste) => anSparte((s) => void (s.bausteine = liste))}
-            />
+            {/* Anpassen (zugeklappt): Merkmale, Bausteine, Tarife und was auf der Folie steht */}
+            <button
+              type="button"
+              aria-expanded={anpassen}
+              onClick={() => setAnpassen((x) => !x)}
+              className="mt-4 inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-[color:var(--brand)] hover:underline"
+              data-anpassen
+            >
+              Anpassen: Tarife, Merkmale, Bausteine
+              <ChevronDown className={cn("h-4 w-4 transition", anpassen && "rotate-180")} />
+            </button>
+            {anpassen ? (
+              <>
+                <Auswahl
+                  titel="Meine Merkmale"
+                  weitere="Weitere Merkmale"
+                  schema={sp.schema.merkmale}
+                  gewaehlt={sp.merkmale}
+                  max={grenzenFuer(sp).merkmale}
+                  nummern
+                  ro={ro}
+                  setze={(liste) => anSparte((s) => void (s.merkmale = liste))}
+                />
+                <Auswahl
+                  titel="Bausteine"
+                  weitere="Weitere Bausteine"
+                  schema={sp.schema.bausteine}
+                  gewaehlt={sp.bausteine}
+                  max={grenzenFuer(sp).bausteine}
+                  ro={ro}
+                  setze={(liste) => anSparte((s) => void (s.bausteine = liste))}
+                />
 
-            {!ro ? (
-              <TarifeAendern
-                key={sp.key}
-                sp={sp}
-                katalog={katalog}
-                vertrieb={vertrieb}
-                gesellschaften={p.daten.gesellschaften}
-                eigene={eigene}
-                anSparte={anSparte}
-                eigenerDazu={(e) => setEigene((xs) => [...xs, e])}
-                sparteWeg={sparteWeg}
-              />
+                {!ro ? (
+                  <TarifeAendern
+                    key={sp.key}
+                    sp={sp}
+                    katalog={katalog}
+                    vertrieb={vertrieb}
+                    gesellschaften={p.daten.gesellschaften}
+                    eigene={eigene}
+                    anSparte={anSparte}
+                    eigenerDazu={(e) => setEigene((xs) => [...xs, e])}
+                    sparteWeg={sparteWeg}
+                  />
+                ) : null}
+              </>
             ) : null}
           </div>
 
@@ -761,6 +816,37 @@ function BeitraegeRechnen({
   );
 }
 
+/** Schritt-Kopf (Ole, 17.11.2026: „idiotensicherer in Schritte unterteilen“): Nummer bzw. Haken, Titel, ein Satz. */
+function Schritt({ nr, titel, hinweis, fertig, rechts }: { nr: number; titel: string; hinweis?: ReactNode; fertig: boolean; rechts?: ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 px-4 pt-4 sm:px-5" data-schritt={nr} data-schritt-fertig={fertig ? "ja" : "nein"}>
+      <span
+        className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", fertig ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
+        aria-hidden
+      >
+        {fertig ? <Check className="h-4 w-4" strokeWidth={3} /> : nr}
+      </span>
+      <div className="min-w-0 flex-1">
+        <h3 className="text-[15px] font-semibold tracking-tight">{titel}</h3>
+        {hinweis ? <p className="mt-0.5 text-[13px] text-[color:var(--muted)]">{hinweis}</p> : null}
+      </div>
+      {rechts}
+    </div>
+  );
+}
+
+/** Sind für alle Versicherungen (außer „bei Bedarf“) Beiträge zur Empfehlung eingetragen? */
+export function beitraegeVollstaendig(a: Tarifauswahl): boolean {
+  const pflicht = a.sparten.filter((s) => !s.zusatz);
+  return (
+    pflicht.length > 0 &&
+    pflicht.every((s) => {
+      const e = empfehlungVon(s);
+      return !!e && tarifMonat(s, e) != null;
+    })
+  );
+}
+
 function SpeicherStatus({ status, readOnly, erneut }: { status: Status; readOnly: boolean; erneut: () => void }) {
   if (readOnly) return <span className="ml-auto text-xs text-[color:var(--muted)]">Vorschau: wird nicht gespeichert</span>;
   if (status === "fehler")
@@ -819,6 +905,7 @@ function TarifKarte({
   t,
   version,
   ro,
+  anpassen,
   anTarif,
   anSparte,
 }: {
@@ -826,13 +913,16 @@ function TarifKarte({
   t: TarifWahl;
   version: number;
   ro: boolean;
+  /** Schalter „In Präsentation“ und nicht gewählte Bausteine erst nach „Anpassen“ */
+  anpassen: boolean;
   anTarif: (id: string, fn: (t: TarifWahl, s: SparteWahl) => void) => void;
   anSparte: (fn: (s: SparteWahl) => void) => void;
 }) {
   const empf = empfehlungVon(sp)?.id === t.id;
   const m = tarifMonat(sp, t);
   const mitExtra = m != null && (t.zahlweise === "jahr" || Object.values(t.bausteine).some((b) => b.an));
-  const bs = sp.bausteine.filter((k) => t.bausteinStatus[k] === "inklusive" || t.bausteinStatus[k] === "optional");
+  // Bausteine: ohne „Anpassen“ nur die gewählten (ihr Preis gehört zum Beitrag), sonst alle der Folie
+  const bs = sp.bausteine.filter((k) => (t.bausteinStatus[k] === "inklusive" || t.bausteinStatus[k] === "optional") && (anpassen || !!t.bausteine[k]?.an));
   const bName = (k: string) => sp.schema.bausteine.find((b) => b.key === k)?.kurz ?? k;
   // Nicht gegengeprüfte Katalogwerte: „bitte prüfen“ statt des Stands (wie der Richtwert beim Beitrag)
   const pruefen = t.herkunft === "katalog" && t.werteUngeprueft;
@@ -925,8 +1015,9 @@ function TarifKarte({
           ) : null}
         </div>
       ) : null}
-      <div className="mt-1.5 flex min-h-8 items-center gap-2">
+      <div className={cn("mt-1.5 flex items-center gap-2", (mitExtra || anpassen) && "min-h-8")}>
         {mitExtra ? <span className="text-xs text-[color:var(--muted)]">{eur(m!)} im Monat</span> : null}
+        {anpassen ? (
         <label className="ml-auto inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap text-xs text-[color:var(--muted)]">
           In Präsentation
           <button
@@ -940,6 +1031,7 @@ function TarifKarte({
             <span className={cn("absolute top-[3px] h-4 w-4 rounded-full bg-white shadow transition-all", t.zeigen ? "left-[19px]" : "left-[3px]")} />
           </button>
         </label>
+        ) : null}
       </div>
       {t.zeigen && !gezeigteTarife(sp).some((x) => x.id === t.id) ? (
         <p className="mt-2 text-xs text-amber-700">Nicht auf der Folie: Es passen höchstens {grenzenFuer(sp).tarife} Tarife. Blenden Sie einen anderen aus.</p>
