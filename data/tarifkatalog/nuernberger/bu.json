@@ -1,0 +1,111 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "bu",
+  "produkt": "Selbstständige Berufsunfähigkeitsversicherung (SBU)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beitragspause ab 6 Wochen AU",
+    "Krebs-Vorschuss bis 15 Monate",
+    "Reha-Hilfe bis 2.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Selbstständige BU (Komfort-Schutz)",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis 4.000 €",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "umorganisation": "eingeschränkt",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja, alle Berufe",
+        "au": "nur Beitragsschutz",
+        "pflege": "BU ab Pflegegrad 2"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional",
+        "pflege": "nein"
+      },
+      "quelle": "https://www.nuernberger.de/medien/4allportal/gn331072_p.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Selbstständige BU mit Arbeitsunfähigkeitsschutz (Komfort-Schutz)",
+      "kurz": "Komfort + AU",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis 4.000 €",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "umorganisation": "eingeschränkt",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja, alle Berufe",
+        "au": "ja, bis 36 Monate",
+        "pflege": "BU ab Pflegegrad 2"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/medien/4allportal/gn331073_p.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Selbstständige BU (Premium-Schutz)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis 4.000 €",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "umorganisation": "eingeschränkt",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja, alle Berufe",
+        "au": "ja, bis 36 Monate",
+        "pflege": "+ Pflegerente lebenslang"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional",
+        "pflege": "inklusive"
+      },
+      "quelle": "https://www.nuernberger.de/medien/4allportal/gn331075_p.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/beruf-vorsorge/existenzsicherung/berufsunfaehigkeitsversicherung/",
+    "https://www.nuernberger.de/medien/4allportal/lv005_565_pf.pdf",
+    "https://www.nuernberger.de/medien/4allportal/gn331072_p.pdf",
+    "https://www.nuernberger.de/medien/4allportal/gn331073_p.pdf",
+    "https://www.nuernberger.de/medien/4allportal/gn331075_p.pdf"
+  ],
+  "offen": [
+    "Stufen aus den Bedingungen der Produktseite: Komfort-Schutz, Komfort-Schutz mit Arbeitsunfähigkeitsschutz und Premium-Schutz (AU- und Pflege-Schutz). Laut Kundeninformation ist der Pflege-Schutz nur zusammen mit dem AU-Schutz wählbar. NÜRNBERGER markiert keine Stufe; Komfort + AU als mittlere Stufe gesetzt.",
+    "AU in Komfort: nur AU-Beitragsschutz (Beitragsaussetzung bis 6 Monate ab 6 Wochen Krankschreibung), keine AU-Rente. AU-Schutz: Rente in Höhe der BU-Rente bis 36 Monate; Einschluss nachträglich über die Upgrade-Option in den ersten 5 Jahren vor dem 40. Geburtstag ohne erneute Risikoprüfung.",
+    "Nachversicherung: ereignisabhängig vor dem 50. Geburtstag bis 4.000 € Monatsrente (Karrieregarantie bis 7.500 €), ereignisunabhängig in den ersten 5 Jahren vor dem 40. Geburtstag bis 3.000 €.",
+    "Rückwirkend: Leistung rückwirkend zum Monatsersten nach Eintritt, laut Bedingungen besteht keine Meldefrist.",
+    "Umorganisation: Verzicht nur für Selbstständige, Gesellschafter und Freiberufler unter bestimmten Voraussetzungen (Kundeninformation); Beteiligung an Umorganisationskosten 6 Monatsrenten, höchstens 15.000 €.",
+    "Pflege: volle BU-Rente ab 1 Pflegepunkt (ADL) oder Pflegegrad 2; zusätzliche lebenslange Pflegerente nur im Premium-Schutz.",
+    "Teilzeitklausel nur in der Kundeninformation der BU-Zusatzversicherung genannt, für die SBU nicht belegt.",
+    "Einsteiger-BU (günstiger Anfangsbeitrag bis Eintrittsalter 30) und Schüler-BU als Varianten nicht als eigene Stufen aufgenommen; Dread-Disease-Zusatz und Krankentagegeld kombinierbar."
+  ]
+}

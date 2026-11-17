@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung (Kompakt-Schutz)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung unabhängig vom Beruf",
+    "Wechsel in BU bis Alter 27",
+    "Für Schüler ab 5 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitsversicherung Kompakt-Schutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "15 + 3 Auslöser",
+        "prognose": "6 Monate",
+        "psyche": "optional (Baustein)",
+        "pflege": "ja",
+        "nachversicherung": "ja, vor Alter 50"
+      },
+      "bausteine": {
+        "pflege": "optional",
+        "ernst": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/existenzsicherung/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/beruf-vorsorge/existenzsicherung/grundfaehigkeitsversicherung/",
+    "https://www.nuernberger.de/medien/4allportal/lv105_500_pf.pdf",
+    "https://www.nuernberger.de/medien/4allportal/gn331010_p.pdf"
+  ],
+  "offen": [
+    "Kompakt-Schutz mit 15 Grundfähigkeiten (Kopf 7, Arm und Hand 4, Bein 4) plus Pflegebedürftigkeit, gesetzliche Betreuung und Infektionsklausel als Leistungsauslöser.",
+    "Zusatzbausteine: Mobilität, Büro, Körperliche Arbeit, Berufsfahrer, Psyche (volle Erwerbsminderung infolge psychischer Erkrankung, Prognose 12 Monate), Arbeitsunfähigkeit (bis 24 Monate), Pflege (zusätzliche lebenslange Rente), Dread Disease.",
+    "Bausteine in den ersten 5 Jahren vor Alter 40 ohne erneute Risikoprüfung einschließbar; Psyche nur mit einer Gesundheitsfrage.",
+    "Nachversicherung: ereignisabhängig vor dem 50. Geburtstag, einmalig ohne Ereignis in den ersten 5 Jahren vor dem 40. Geburtstag.",
+    "Weltweiter Schutz und Dynamik auf der Produktseite nicht genannt."
+  ]
+}

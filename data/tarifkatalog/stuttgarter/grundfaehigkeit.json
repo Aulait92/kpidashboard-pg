@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung GrundSchutz+",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung unabhängig vom Beruf",
+    "Für Kinder ab 5 Jahren",
+    "4 Zusatzpakete wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Der Stuttgarter GrundSchutz+ (Tarif 95)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "15, mit Paketen bis 21",
+        "prognose": "6 Monate",
+        "psyche": "optional (Paket smart)",
+        "pflege": "ja, auch Demenz",
+        "nachversicherung": "ja"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.stuttgarter.de/einkommensabsicherung/grundfaehigkeit",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/einkommensabsicherung/grundfaehigkeit",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F10_Arbeitskraftsicherung%2F02_Produktunterlagen_fuer_Ihre_Kunden&files=5_2_009_BR_GrundSchutz%2B.pdf",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F10_Arbeitskraftsicherung%2F04_Vertragsunterlagen&files=V95.PDF"
+  ],
+  "offen": [
+    "Ein Tarif mit 15 Grundfähigkeiten inklusive Pflegebedürftigkeit und Demenz; Zusatzpakete fit (Knien, Bücken, Heben), drive (Auto fahren), ride (Fahrrad, öffentlicher Verkehr) und smart (geistige Leistungsfähigkeit, schwere Depression, Schizophrenie).",
+    "Eine Zusatzversicherung wählbar: Leistung bei Arbeitsunfähigkeit (bis 24 Monate), Schwere Krankheiten oder Beitragsbefreiung bei Tod des Versorgers.",
+    "Nachversicherung (easilife) ereignisunabhängig in den ersten Vertragsjahren und bei bestimmten Ereignissen; Altersgrenzen in der GF-Broschüre nicht ausgewiesen.",
+    "Weltweiter Schutz, Dynamik und eine Pflegerente als Baustein nicht auf der Produktseite genannt."
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "rente",
+  "produkt": "FlexRente (Privatrente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "Teilauszahlung möglich",
+    "Flexibler Rentenbeginn"
+  ],
+  "tarife": [
+    {
+      "name": "FlexRente classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "ja, je nach Konzept",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "Beiträge verzinst",
+        "anlage": "Sicherungsvermögen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.stuttgarter.de/rente-vorsorge/privatrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FlexRente index-safe (Tarif 63oG)",
+      "kurz": "index-safe",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "ja, je nach Konzept",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "85 % der Beiträge",
+        "anlage": "Index M-A-X"
+      },
+      "bausteine": {},
+      "quelle": "https://www.stuttgarter.de/rente-vorsorge/privatrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FlexRente performance+ (Tarif 73oG)",
+      "kurz": "performance+",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "ja, je nach Konzept",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "0 bis 80 % wählbar",
+        "anlage": "Fonds und ETF"
+      },
+      "bausteine": {},
+      "quelle": "https://www.stuttgarter.de/rente-vorsorge/privatrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FlexRente alpha+ (Tarif 53oG)",
+      "kurz": "alpha+",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "ja, je nach Konzept",
+        "kapital": "ja",
+        "beitragspause": "ja",
+        "garantie": "keine",
+        "anlage": "100 % Fonds und ETF"
+      },
+      "bausteine": {},
+      "quelle": "https://www.stuttgarter.de/rente-vorsorge/privatrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/rente-vorsorge/privatrente",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F16_Tarifuebergreifend%2F01_performance%2B&files=9_2_007_BR_Fondsrente_performance%2B.pdf",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F16_Tarifuebergreifend%2F04_alphaPlus&files=13_2_001_BR_Fondsrente_alphaPlus.pdf"
+  ],
+  "offen": [
+    "Stufen sind die vier Anlagekonzepte der FlexRente (classic, index-safe, performance+, alpha+), keine Leistungsstufen; Die Stuttgarter markiert keines, performance+ als dritte von vier Stufen gesetzt.",
+    "classic: garantierte Leistung mindestens aus den mit dem Rechnungszins verzinsten Sparbeiträgen; für classic ist auf der Seite keine eigene Bedingung verlinkt.",
+    "index-safe: 85 % Beitragsgarantie und Beteiligung am Stuttgarter M-A-X Multi-Asset Index.",
+    "Hinterbliebene: Todesfallleistung abhängig vom Anlagekonzept (Produktseite), Höhe nicht beziffert.",
+    "Garantierter Rentenfaktor, BU-Zusatz, Dynamik und Effektivkosten nicht auf der Produktseite oder in den Broschüren gefunden."
+  ]
+}

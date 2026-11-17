@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "sterbegeld",
+  "produkt": "BestattungsVorsorge (DIREKTE LEBEN)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Laufend oder Einmalbeitrag",
+    "Service der Malteser",
+    "Bezugsrecht frei wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "BestattungsVorsorge der DIREKTE LEBEN Versicherung AG",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "18 Monate gestaffelt",
+        "unfall": "einfach, ohne Wartezeit",
+        "ohne-gp": "ja",
+        "vorsorge": "ja, Malteser-Service"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://direkte-leben.de/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/bestattungsvorsorge",
+    "https://direkte-leben.de/",
+    "https://direkte-leben.de/wp-content/uploads/2025/12/2_2_002_DLV_BR_BestattungsVorsorge_0126.pdf"
+  ],
+  "offen": [
+    "Die Stuttgarter verweist für die Sterbegeldversicherung auf die BestattungsVorsorge der DIREKTE LEBEN Versicherung AG (Unternehmen der Stuttgarter Versicherungsgruppe); Werte von direkte-leben.de.",
+    "Bei laufender Beitragszahlung in den ersten 18 Monaten (Aufbauzeit) gestaffelte Leistung, danach volle Summe; bei Einmalbeitrag und bei Unfalltod volle Summe ab Beginn. Doppelte Leistung bei Unfalltod nicht genannt.",
+    "Beitragsdynamik 5 % pro Jahr wählbar. Ende der Beitragszahlung und Eintrittsalter nicht auf der Seite."
+  ]
+}

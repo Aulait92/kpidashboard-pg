@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "rente",
+  "produkt": "Privatrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "RENTE PLUS mit Pflegeschutz",
+    "Teilauszahlung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "KLASSIK MODERN",
+      "kurz": "KLASSIK",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "garantie": "Guthaben garantiert",
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Index über Überschüsse",
+        "flexibel": "Teilauszahlung"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/klassik-modern/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FONDS MODERN",
+      "kurz": "FONDS MODERN",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "garantie": "50 bis 80 % wählbar",
+        "anlage": "Fonds, bis 10 wählbar",
+        "flexibel": "Zuzahlung, Entnahme"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-modern/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FONDS FITTERY",
+      "kurz": "FONDS FITTERY",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "rentenfaktor": "garantiert (Mindest)",
+        "anlage": "ETF-Fondsboxen (DWS)",
+        "flexibel": "Zuzahlung, Entnahme"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-fittery/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FONDS PUR",
+      "kurz": "FONDS PUR",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "garantie": "optional anteilig",
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds und ETF",
+        "flexibel": "Zuzahlung, Entnahme",
+        "beitragspause": "bis 12 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-pur/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/versicherungen/rente/privatrente/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/klassik-modern/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/fonds-modern/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/fonds-fittery/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/fonds-pur/"
+  ],
+  "offen": [
+    "Stufen sind die vier Produkte der Privatrente (KLASSIK MODERN, FONDS MODERN, FONDS FITTERY, FONDS PUR), keine Leistungsstufen; keine Markierung, FONDS FITTERY als dritte von vier Stufen gesetzt.",
+    "KLASSIK MODERN: Guthaben und Mindestrente garantiert; Überschüsse wahlweise INDEX CHANCE, INDEX ZINS oder KLASSIK ZINS (DAX, DAX Risk Control 10, EURO STOXX 50, MSCI World SRI).",
+    "FONDS MODERN: Beitragsgarantie 50 bis 80 % wählbar, mit GARANTIE PLUS auch über 100 %; Rentenfaktor nicht genannt.",
+    "FONDS FITTERY: 7 gemanagte ETF-Fondsboxen; Faktor für die Monatsrente wird schon bei Abschluss mindestens zugesagt. Garantie nicht genannt.",
+    "FONDS PUR: garantierter Rentenfaktor, Beitragspause bis 12 Monate (Elternzeit bis 36), Variante mit anteiliger Beitragserhaltungsgarantie; Rentenbeginn bis Alter 88.",
+    "Hinterbliebene laut Privatrente-Seite wählbar: Beitragsrückzahlung bei Tod in der Ansparphase, Rentengarantiezeit oder Restkapital in der Rentenphase.",
+    "BU-Zusatz, Dynamik und Effektivkosten nicht auf den Produktseiten der Privatrente."
+  ]
+}

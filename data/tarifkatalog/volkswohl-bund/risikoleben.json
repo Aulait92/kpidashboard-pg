@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "risikoleben",
+  "produkt": "Risikorente (Hinterbliebenenrente statt Einmalsumme)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Monatliche Rente statt Summe",
+    "Mindestens 5 Jahre Rente",
+    "Einmalleistung statt Rente"
+  ],
+  "tarife": [
+    {
+      "name": "Risikorente (Tarif NLR)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, bei Ereignissen"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.volkswohl-bund.de/pflege-und-tod/risikorente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/pflege-und-tod/risikorente/"
+  ],
+  "offen": [
+    "Auf volkswohl-bund.de ist als Hinterbliebenenschutz nur die Risikorente beschrieben: Im Todesfall zahlt sie eine monatliche Rente (Dauer frei wählbar, auf Wunsch lebenslang, mindestens 5 Jahre garantiert); im Leistungsfall ist eine einmalige Todesfallleistung statt der Rente möglich. Eine klassische Risikolebensversicherung mit Einmalsumme ist auf der Seite nicht als eigenes Produkt dargestellt.",
+    "Partner-Rente auf verbundene Leben wählbar. Längere Rentengarantiezeit im Leistungsfall einschließbar.",
+    "Der verlinkte Bedingungs-PDF (Risikolebensversicherung) war beim Abruf nicht erreichbar (404); vorgezogene Leistung, Verlängerung, Umtausch und weltweiter Schutz deshalb offen."
+  ]
+}

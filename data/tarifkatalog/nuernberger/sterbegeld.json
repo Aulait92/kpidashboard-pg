@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "sterbegeld",
+  "produkt": "Bestattungsvorsorge (Sterbegeldversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Abschluss bis Alter 80",
+    "Auslandsrückholung weltweit",
+    "Digitaler Vertragsmanager"
+  ],
+  "tarife": [
+    {
+      "name": "NÜRNBERGER Bestattungsvorsorge",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "2.500 bis 10.000 €",
+        "wartezeit": "24 Monate",
+        "unfall": "einfach, ohne Wartezeit",
+        "ohne-gp": "ja",
+        "beitragsende": "max. 25 J. bzw. Alter 85",
+        "vorsorge": "ja, mit Kuratorium"
+      },
+      "bausteine": {},
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/lebensversicherung/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/beruf-vorsorge/lebensversicherung/sterbegeldversicherung/",
+    "https://www.nuernberger.de/medien/4allportal/lv009_502_pf.pdf",
+    "https://www.nuernberger.de/medien/4allportal/gn332184_p.pdf"
+  ],
+  "offen": [
+    "Bei Unfalltod volle Summe ohne Wartezeit, keine doppelte Leistung genannt.",
+    "Tod in der Wartezeit: Rückzahlung der Beiträge (ohne Anteil für Assistance-Leistungen), höchstens die Versicherungssumme.",
+    "Beitragszahlung höchstens 25 Jahre bei Eintrittsalter bis 60, sonst längstens bis Alter 85; Schutz lebenslang.",
+    "Bestattungsvorsorge-Vertrag mit der Kuratorium Deutsche Bestattungskultur GmbH; Assistance mit Notfallnummer, Vorsorge-Card, Hilfe im Trauerfall.",
+    "Personen unter gesetzlicher Betreuung nicht versicherbar. Dynamik als Baustein nicht genannt."
+  ]
+}
