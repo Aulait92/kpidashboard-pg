@@ -576,7 +576,7 @@ Drittland.
   ([ABl. C/2025/6610](https://eur-lex.europa.eu/eli/C/2025/6610/oj)); einen Verhandlungstermin oder Schlussanträge habe
   ich nicht gefunden. Fällt der Beschluss, gelten die Standardvertragsklauseln in Metas Bedingungen; dann die
   Transfer-Folgenabschätzung nachziehen.
-- **Muss:** `POLICEN_KI_REGION=eu`, `POLICEN_KI_EU_URL` und `POLICEN_KI_EU_KEY` setzen und testen; den tatsächlichen
+- **Muss:** `POLICEN_KI_REGION=eu` mit Amazon Bedrock Frankfurt (`KI_EU_AWS_ACCESS_KEY_ID`, `KI_EU_AWS_SECRET_ACCESS_KEY`, src/lib/ki-eu.ts) setzen und mit Diagnose `ki-eu` testen; den tatsächlichen
   EU-Anbieter (z. B. AWS Frankfurt oder Google EU) in AVV Anlage 2 aufnehmen. Sollte: Meta „Local Storage“ über
   360dialog prüfen.
 
@@ -652,7 +652,7 @@ Drittland.
 - Tests: `tests/unit/policen.test.ts`, `tests/integration/policen-whatsapp.test.ts`.
 
 **Muss vor dem Einschalten von `POLICEN_GESUNDHEIT_AN`:**
-1. EU-Zugang einrichten und testen (`POLICEN_KI_REGION=eu`, `POLICEN_KI_EU_URL`, `POLICEN_KI_EU_KEY`); den Anbieter in
+1. EU-Zugang einrichten und testen (`POLICEN_KI_REGION=eu`, Bedrock Frankfurt: `KI_EU_AWS_ACCESS_KEY_ID`, `KI_EU_AWS_SECRET_ACCESS_KEY`); den Anbieter in
    AVV Anlage 2 aufnehmen und die Fundstelle seiner Vertraulichkeitsklausel ablegen (Punkte 5, 8).
 2. DPF-Einträge von Meta Platforms, Inc. bzw. WhatsApp LLC und des EU-KI-Anbieters (US-Mutter) ausdrucken und ablegen
    (Punkt 8).
