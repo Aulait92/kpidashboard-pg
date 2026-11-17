@@ -103,3 +103,13 @@ describe("Hund wie Katze (Tierkrankenversicherung)", () => {
     expect(felder).toMatchObject({ Tierart: "Hund", Rasse: "Labrador Retriever", "Geburtsmonat / -jahr": "Juni 2021", "Gewünschter Schutz (OP oder voll)": "volle Krankenversicherung" });
   });
 });
+
+describe("Adresse aus dem Leadformular", () => {
+  it("Postleitzahl und Ort aus formData, Korrektur und Airtable gehen vor", async () => {
+    const { currentStammdaten } = await import("@/lib/lead-stammdaten");
+    const lead = { name: "Jule Sommer", phone: null, email: null, formData: testLeadAnswers("TKV-Katze"), contactOverrides: null };
+    expect(currentStammdaten(lead)).toMatchObject({ zip: "80331", city: "München", street: "" });
+    expect(currentStammdaten({ ...lead, contactOverrides: { zip: "10115" } }).zip).toBe("10115");
+    expect(currentStammdaten(lead, { Postleitzahl: "20095", Ort: "Hamburg" })).toMatchObject({ zip: "20095", city: "Hamburg" });
+  });
+});

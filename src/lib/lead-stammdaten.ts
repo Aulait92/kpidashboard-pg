@@ -75,6 +75,16 @@ function formOffen(formData: unknown): boolean {
   });
 }
 
+/** Antwort aus dem Leadformular (Lead.formData) zu einer Frage, z. B. Postleitzahl aus dem Perspective- oder Meta-Formular. */
+function formAntwort(formData: unknown, re: RegExp): string {
+  if (!Array.isArray(formData)) return "";
+  for (const x of formData) {
+    const { label, value } = (x ?? {}) as { label?: unknown; value?: unknown };
+    if (typeof label === "string" && re.test(label.trim()) && str(value)) return str(value);
+  }
+  return "";
+}
+
 /** Aktuelle Stammdaten eines Leads (Korrekturen vor Formular vor Airtable-Feldern) */
 export function currentStammdaten(
   lead: { name: string | null; phone: string | null; email: string | null; formData: unknown; contactOverrides: unknown },
@@ -95,9 +105,10 @@ export function currentStammdaten(
     lastName: o.lastName ?? parts.lastName ?? (f("Nachname") || words.slice(1).join(" ")),
     phone: lead.phone,
     email: lead.email,
-    street: o.street ?? (f("Straße") || f("Strasse") || f("Straße und Hausnummer")),
-    zip: o.zip ?? f("Postleitzahl"),
-    city: o.city ?? f("Ort"),
+    // Adresse auch aus dem Leadformular (Leads ohne Airtable: Perspective, Meta), Ole 17.11.2026
+    street: o.street ?? (f("Straße") || f("Strasse") || f("Straße und Hausnummer") || formAntwort(lead.formData, /^(stra(ß|ss)e( und hausnummer)?|street)$/i)),
+    zip: o.zip ?? (f("Postleitzahl") || formAntwort(lead.formData, /^(postleitzahl|plz|zip|post_?code|postal code)$/i)),
+    city: o.city ?? (f("Ort") || formAntwort(lead.formData, /^(ort|wohnort|stadt|city)$/i)),
   };
 }
 
