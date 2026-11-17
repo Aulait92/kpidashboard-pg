@@ -190,6 +190,22 @@ describe("Preise: Annahme → Abo-Positionen und Kundenkonto", () => {
     await prisma.onboarding.deleteMany({ where: { customerId: c.id } });
   });
 
+  it("bestehendes Konto ohne Verknüpfung am Kontakt (Fall Anid): Annahme erkennt es über die Login-E-Mail, kein zweites Konto", async () => {
+    const c = await makeCustomer({ plan: "software" });
+    customers.push(c.id);
+    const mail = `anid-${uid()}@example.de`;
+    await prisma.user.create({ data: { email: mail, role: "BUYER", customerId: c.id, passwordHash: "x" } });
+    const alt = await makeOffer({ stripeCustomerId: null });
+    offers.push(alt.id);
+    await prisma.onboarding.create({ data: { customerId: c.id, offerId: alt.id, package: "software" } });
+    const neu = await makeOffer({ stripeCustomerId: null, email: mail.toUpperCase() });
+    offers.push(neu.id);
+    const r = await startOnboarding(neu.id);
+    expect(r).toMatchObject({ ok: true, customerId: c.id });
+    await prisma.onboarding.deleteMany({ where: { customerId: c.id } });
+    await prisma.user.deleteMany({ where: { email: mail } });
+  });
+
   it("Makler-Angebot: Modul kostet 149 € wie bei Vertretern, Annahme setzt Kunde auf Makler", async () => {
     const offer = await makeOffer({ vermittlerTyp: "makler", bestandMonthly: 149, annualPrepay: false, annualFreeMonths: null });
     offers.push(offer.id);

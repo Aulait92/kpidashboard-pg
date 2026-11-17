@@ -41,6 +41,25 @@ async function uniqueCustomerName(base: string, city: string | null): Promise<st
   return `${base} (${crypto.randomBytes(3).toString("hex")})`;
 }
 
+/**
+ * Bestehendes Kundenkonto ohne Verknüpfung am Vertriebskontakt (Fall Anid 17.11.2026: Kontakte aus dem Cold-CRM-Import
+ * haben keine customerId mehr): Kundenkonto, dessen Login die E-Mail des Angebots bzw. des Kontakts hat. Nur eindeutig
+ * (genau ein Konto, nicht archiviert, kein Testkunde); sonst null und es entsteht wie bisher ein neues Konto.
+ */
+async function bestehendesKonto(
+  offer: { email: string | null; isTest: boolean },
+  contact: { email: string | null } | null,
+): Promise<string | null> {
+  if (offer.isTest) return null;
+  const mails = [...new Set([offer.email, contact?.email].map((e) => (e ?? "").trim().toLowerCase()).filter((e) => e.includes("@") && !e.endsWith(".invalid")))];
+  if (!mails.length) return null;
+  const users = await prisma.user
+    .findMany({ where: { email: { in: mails, mode: "insensitive" }, customerId: { not: null }, customer: { archived: false, isTest: false } }, select: { customerId: true } })
+    .catch(() => []);
+  const ids = [...new Set(users.map((u) => u.customerId).filter((x): x is string => !!x))];
+  return ids.length === 1 ? ids[0] : null;
+}
+
 /** Fälligkeit einer Aufgabe: X Tage vor Start, aber nie in der Vergangenheit. */
 function dueBefore(start: Date | null, daysBefore: number, minDaysFromNow: number): Date {
   const min = new Date(Date.now() + minDaysFromNow * DAY);
@@ -65,7 +84,7 @@ export async function startOnboarding(offerId: string, opts: StartOpts = {}): Pr
   const pkg = offer.package === "service" ? "service" : "software";
 
   // 1) Kundenkonto: vorgegeben, schon am Kontakt verknüpft oder neu.
-  let customerId = opts.customerId || contact?.customerId || null;
+  let customerId = opts.customerId || contact?.customerId || (await bestehendesKonto(offer, contact)) || null;
   if (customerId) {
     const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { id: true } });
     if (!c) return { ok: false, error: "Kundenkonto nicht gefunden." };
