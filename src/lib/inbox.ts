@@ -61,6 +61,11 @@ export type InboxOutcome = {
   attendance?: string | null;
   label?: string;
 };
+/**
+ * Angebot ablegen und senden (Paket P3, Ole 17.11.2026): Termin mit Ergebnis „Angebot gesendet“, aber noch nicht über
+ * die App gesendet bzw. als „selbst gesendet“ vermerkt. Das Nachfassen startet erst mit einem der beiden Wege.
+ */
+export type InboxAngebot = { id: string; startsAt: string; mode: string; leadId: string; name: string };
 /** Angerufen, Ergebnis fehlt (lib/telefonat.ts): Assistent pausiert, bis das Ergebnis eingetragen ist. */
 export type InboxOpenCall = { leadId: string; name: string; source: string | null; at: string };
 export type InboxChat = { conversationId: string; name: string; reason: string | null; at: string | null };
@@ -102,6 +107,8 @@ export type InboxData = {
   upcoming: InboxUpcoming[];
   appointments: InboxAppointment[];
   outcomes: InboxOutcome[];
+  /** „Angebot ablegen und senden“ (Paket P3) */
+  angebote?: InboxAngebot[];
   openCalls?: InboxOpenCall[];
   chats: InboxChat[];
   callbacks: InboxCallback[];
@@ -216,6 +223,20 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     take: 20,
     select: { id: true, name: true, source: true, callStartedAt: true },
   });
+  // Angebot ablegen und senden (Paket P3): Ergebnis „Angebot gesendet“, noch nicht gesendet, kein Nachfassen läuft
+  const angebote = await prisma.appointment.findMany({
+    where: {
+      ...apptScope,
+      leadId: { not: null },
+      status: { in: ["completed", "booked"] },
+      angebotGesendetAt: null,
+      startsAt: { lte: now, gt: new Date(now.getTime() - 14 * DAY) },
+      lead: { status: "Angebot gesendet", erasedAt: null, sequences: { none: { stoppedAt: null, kind: { in: ["offer", "offer_selbst"] } } } },
+    },
+    orderBy: { startsAt: "desc" },
+    take: 20,
+    select: { id: true, startsAt: true, mode: true, leadId: true, lead: { select: { name: true } } },
+  });
   // „X Leads ohne nächsten Schritt“: Termine ohne Ergebnis, die schon unter „Wie lief's?“ stehen, nicht doppelt
   const noStep = await listWithoutNextStep(leadScope(ctx), { now, take: 30 });
   const outcomeLeadIds = new Set(past.filter((a) => !POST_STATUSES.includes(a.lead?.status ?? "")).map((a) => a.leadId));
@@ -300,6 +321,10 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         attendance: a.attendance,
         label: leadLabel(kontaktFromLead(a.lead)),
       })),
+    // Je Lead nur der neueste Termin
+    angebote: angebote
+      .filter((t, i) => angebote.findIndex((x) => x.leadId === t.leadId) === i)
+      .map((t) => ({ id: t.id, startsAt: t.startsAt.toISOString(), mode: t.mode, leadId: t.leadId!, name: t.lead?.name ?? "Lead" })),
     openCalls: openCalls.map((l) => ({ leadId: l.id, name: l.name ?? "Lead", source: l.source, at: l.callStartedAt!.toISOString() })),
     chats: chats.map((c) => ({
       conversationId: c.id,
