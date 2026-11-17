@@ -12,6 +12,7 @@
 // Außerdem: offener Terminvorschlag (für das Nachfassen nach 2 Std., lib/lead-sequences.ts) und freie Zeiten dafür.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { advisorDisplayName } from "@/lib/advisor-name";
@@ -217,7 +218,7 @@ export async function vertragsfrageOffen(conversationId: string, appointmentId: 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 
 /**
- * Freie Antwort auf die Vertragsfrage in eine Liste je Sparte bringen (KI-Extraktion mit festem Werkzeug, tolerant).
+ * Freie Antwort auf die Vertragsfrage in eine Liste je Sparte bringen (KI-Extraktion als JSON nach Schema, tolerant).
  * Gesundheitsangaben werden vorher ausgeblendet; gespeichert werden nur Sparte, Gesellschaft und Person. Rückfall ohne
  * KI: Erkennung per Muster (vertraegeAusText).
  */
@@ -231,13 +232,11 @@ export async function extrahiereVertraege(text: string): Promise<{ liste: Vorver
       max_tokens: 600,
       system:
         "Du liest die Antwort eines Interessenten auf die Frage, welche Versicherungen er schon hat. Trage jede genannte Versicherung mit Sparte ein, die Gesellschaft und für wen nur, wenn genannt. Sei tolerant bei Abkürzungen und Tippfehlern (z. B. „PHV“ = Haftpflicht, „BU“ = Berufsunfähigkeit, „Auto“ = Kfz). Nichts erfinden. Keine Gesundheitsangaben, Beträge oder Tarifdetails.",
-      tools: [{ name: "vertraege_festhalten", description: "Bestehende Versicherungen des Interessenten festhalten.", input_schema: VORVERTRAEGE_SCHEMA as unknown as Anthropic.Tool.InputSchema }],
-      tool_choice: { type: "tool", name: "vertraege_festhalten" },
+      output_config: jsonAusgabe(VORVERTRAEGE_SCHEMA),
       messages: [{ role: "user", content: sauber.slice(0, 2000) }],
     });
-    const tu = resp.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-    if (tu) {
-      const input = tu.input as { vertraege?: unknown; keine?: unknown };
+    const input = jsonAusAntwort(resp) as { vertraege?: unknown; keine?: unknown } | null;
+    if (input) {
       const liste = normalisiereVertraege(input.vertraege);
       if (liste.length || input.keine === true) return { liste, keine: input.keine === true && !liste.length };
     }
@@ -261,7 +260,7 @@ export async function vertraegeAntwort(conversationId: string, text: string, now
     : await import("@/lib/policen/assistent")
         .then((m) => m.einladungNachVertraegen({ conversationId, an: k.an, person: k.person, vertraegeText: text, anzahl: liste.length }))
         .catch(() => null);
-  if (policen) await sende(k, policen);
+  if (policen) await sende(k, policen.text, policen.buttons);
   await sendeAbschluss(k, "vertraege");
   return true;
 }

@@ -407,7 +407,7 @@ async function persistInbound(
       const media = type === "image" ? m.image : type === "document" ? m.document : null;
       const r = media
         ? await policen.handleInboundMedia({ conversationId: conversation.id, messageId: inboundMsg.id, medium: { type, ...media }, botErlaubt, now })
-        : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m) }, now);
+        : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m), waMessageId: m.id ?? null }, now);
       if (r.handled) return;
       if (media && botErlaubt) botErlaubt = false;
     } catch (e) {

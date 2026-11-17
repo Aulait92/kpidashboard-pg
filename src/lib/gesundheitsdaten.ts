@@ -66,6 +66,33 @@ export function redactHealthText(text: string, opts: { tier?: boolean } = {}): s
   return out.filter(Boolean).join(" ");
 }
 
+/**
+ * Sicherheitsnetz für Felder und Notizen (Ole, 17.11.2026, docs/recht-gesundheitsunterlagen.md Abschnitt b „Was die KI
+ * darf“): Was der Assistent festhält (record_qualification), enthält keine Gesundheitsangaben einer Person. Sätze bzw.
+ * Stichworte mit eindeutigen Begriffen fallen weg (kein Platzhalter), Tierangaben bleiben.
+ */
+export function ohneGesundheitsangaben(text: string, opts: { tier?: boolean } = {}): string {
+  if (opts.tier || !VALUE_RE.test(norm(text))) return text;
+  return text
+    .split(/(?<=[.!?\n;,])\s*/)
+    .filter((s) => {
+      const n = norm(s);
+      return !(VALUE_RE.test(n) && !TIER_RE.test(n));
+    })
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .replace(/[\s,;]+$/, "")
+    .trim();
+}
+
+/** Strukturierte Angaben des Assistenten ohne Gesundheitsangaben (Feld „tier“ bleibt, Tier-Leads unverändert). */
+export function angabenOhneGesundheit(angaben: unknown, opts: { tier?: boolean } = {}): unknown {
+  if (!angaben || typeof angaben !== "object" || Array.isArray(angaben)) return angaben;
+  return Object.fromEntries(
+    Object.entries(angaben as Record<string, unknown>).map(([k, v]) => [k, typeof v === "string" && k !== "tier" ? ohneGesundheitsangaben(v, opts) : v]),
+  );
+}
+
 /** Regel für den System-Prompt des Assistenten. */
 export const GESUNDHEITS_REGEL =
   `- Frage nie nach Gesundheitsangaben (Vorerkrankungen, Diagnosen, Behandlungen, Medikamente, Größe und Gewicht). Nennt der Lead welche, wiederhole sie nicht, halte sie nicht fest (auch nicht in record_qualification) und sag freundlich, dass das der Berater persönlich im Termin bespricht. Steht im Verlauf „${HEALTH_REDACTED}“, hat der Lead dort etwas zu seiner Gesundheit geschrieben: nicht nachfragen, nur kurz sagen, dass der Berater das im Termin bespricht.`;

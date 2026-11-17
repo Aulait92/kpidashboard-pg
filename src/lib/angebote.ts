@@ -8,6 +8,7 @@
 // wie im AVV zugesagt (angebotOhneGesundheitsdaten). Notschalter: ANGEBOTE_AUSLESEN=0.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import { reportError } from "@/lib/monitoring";
 import { audit } from "@/lib/audit";
 import { cleanAngebote, type AngeboteDaten } from "@/lib/angebote-daten";
@@ -131,12 +132,10 @@ export async function angeboteAuslesen(files: AngebotDatei[], kontext?: Auslesen
       max_tokens: 2048,
       system:
         "Du liest Versicherungsangebote für einen Vermittler aus. Übernimm Werte nur aus den Dokumenten, erfinde nichts. Fehlt eine Angabe, setze null bzw. eine leere Liste. Je Tarifstufe bzw. Angebot ein Eintrag. Kurz und sachlich, keine Wertung. Übernimm nur Tarif- und Leistungsdaten: keine Namen, Anschriften, Geburtsdaten, Vertrags- oder Kundennummern und keine Angaben zur Gesundheit von Personen.",
-      tools: [{ name: "save_angebote", description: "Speichert die ausgelesenen Angebote.", input_schema: SCHEMA as unknown as Anthropic.Tool.InputSchema }],
-      tool_choice: { type: "tool", name: "save_angebote" },
+      output_config: jsonAusgabe(SCHEMA),
       messages: [{ role: "user", content: [...blocks, { type: "text", text: "Lies diese Angebote aus." }] }],
     });
-    const tool = resp.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-    const out = cleanAngebote({ ...(tool?.input as object), quelle: usable.map((f) => f.fileName) });
+    const out = cleanAngebote({ ...(jsonAusAntwort(resp) ?? {}), quelle: usable.map((f) => f.fileName) });
     // Gespeichert wird der Grundbeitrag ohne Bausteine: Gesamtbeitrag minus enthaltene Bausteine
     out.items = out.items.map((i) => {
       const drin = i.bausteine.filter((b) => b.aktiv).reduce((s, b) => s + b.beitrag, 0);

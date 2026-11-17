@@ -42,7 +42,7 @@ const PUB = "https://www.dein-beratungstermin.de";
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 let customerId = "";
-const sent: Array<{ to: string; type: string; template?: { name: string; components?: { parameters: { text: string }[] }[] } }> = [];
+const sent: Array<{ to: string; type: string; template?: { name: string; components?: { type: string; parameters: { text: string }[] }[] } }> = [];
 
 function fake360(input: string | URL | Request, init?: RequestInit): Promise<Response> {
   const url = String(input instanceof Request ? input.url : input);
@@ -131,13 +131,15 @@ describe("WhatsApp-Erstkontakt: Link zur Erstinformation", () => {
         category: "marketing",
         status: "approved",
         auto: true,
+        // Erstanschreiben nur noch mit PDF der Erstinformation im Kopf (17.11.2026)
+        headerFormat: "DOCUMENT",
         body: "Guten Tag {{1}}, hier schreibt der digitale KI-Assistent von X. Erstinformation: {{2}} Haben Sie kurz Zeit?",
       },
     });
     await prisma.lead.create({ data: { customerId, name: "Max Weber", phone: "4917644440004", status: "Neuer Lead" } });
     await runOutreach(customerId);
     const t = sent.find((s) => s.to === "4917644440004");
-    return t?.template?.components?.[0].parameters.map((p) => p.text) ?? [];
+    return t?.template?.components?.find((c) => c.type === "body")?.parameters.map((p) => p.text) ?? [];
   }
 
   it("mit PUBLIC_BOOKING_URL: Buchungsadresse", async () => {

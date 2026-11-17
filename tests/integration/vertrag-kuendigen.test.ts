@@ -1,7 +1,7 @@
 // „Vertrag hier kündigen“ im Kundenbereich: Termin nach AGB, gespeichert, Aufgabe für Ole, Push,
 // Bestätigungsmail mit Eingang und Vertragsende, zweite Kündigung ändert nichts. Stripe (gemockt): Abo(s) enden
 // zum Ende des letzten Vertragstags (cancel_at), bei Fehlern bleibt die Kündigung und die Aufgabe sagt „von Hand prüfen“.
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const sent = vi.hoisted(() => ({ mails: [] as { to: string | string[]; subject: string; paragraphs: string[] }[], pushes: [] as { title: string }[] }));
 type Phase = { start_date: number; end_date: number; metadata: Record<string, string>; items: { price: string; quantity: number; tax_rates: string[] }[] };
@@ -109,6 +109,7 @@ describe("Vertrag hier kündigen", () => {
     st.fail = false;
     delete process.env.STRIPE_SECRET_KEY;
   });
+  afterEach(() => vi.useRealTimers());
   afterAll(async () => {
     await prisma.salesTask.deleteMany({ where: { contactId: { in: contacts } } });
     await prisma.onboarding.deleteMany({ where: { customerId: { in: customers } } });
@@ -204,6 +205,10 @@ describe("Vertrag hier kündigen", () => {
 
   it("Stripe: Startpreis-Phase läuft, der Zeitplan endet zum Termin (spätere Phasen gekürzt, end_behavior cancel); geplanter Start ebenso", async () => {
     process.env.STRIPE_SECRET_KEY = "sk_test_mock";
+    // Uhr auf den Kündigungszeitpunkt stellen: ob die letzte Phase des Zeitplans noch bevorsteht, prüft
+    // endSubscriptionsAt gegen die echte Uhrzeit; ab Februar 2027 lägen alle Phasen sonst in der Vergangenheit.
+    vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-11-15T10:00:00Z"));
     const x = await setup({ term: "3m", start: "2026-11-01", stripe: true });
     // Effektiv 31.01.2027 → Ende 31.01.2027 23:00 UTC (Winterzeit)
     const end = Math.floor(Date.UTC(2027, 0, 31, 23) / 1000);
