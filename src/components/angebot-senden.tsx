@@ -13,7 +13,7 @@ import { Button } from "@/components/ui";
 import { FileDrop } from "@/components/ui/file-drop";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { ANGEBOT_HINWEIS, SELBST_UPLOAD_HINWEIS, angebotStandText } from "@/lib/angebot-senden";
+import { SELBST_UPLOAD_HINWEIS, angebotStandText } from "@/lib/angebot-senden";
 import type { AngebotInfo } from "@/lib/angebot-senden-server";
 import { angebotAblegenResult, angebotInfoResult, angebotSelbstResult, angebotSendenResult } from "@/app/buyer/angebot-actions";
 
@@ -116,7 +116,7 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
   const kanalFehlt = !!info && !waGeht && !info.email;
 
   return (
-    <Sheet open onClose={onClose} title={schritt === "app" ? "Über die App senden" : `Angebot senden: ${ziel.name}`} message={schritt === "wahl" ? ANGEBOT_HINWEIS : undefined}>
+    <Sheet open onClose={onClose} title={schritt === "app" ? "Über die App senden" : `Angebot senden: ${ziel.name}`}>
       {!info ? (
         <div className="flex items-center gap-2 px-5 py-6 text-sm text-[color:var(--muted)]">
           {fehler ? (
