@@ -30,6 +30,8 @@ import { angebotSelbst, angebotSenden, ladeAngebotDatei, ladeAngebotInfo, rueckr
 import { runSequences } from "@/lib/lead-sequences";
 import { loadInbox } from "@/lib/inbox";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
+import { rueckrufTage } from "@/lib/rueckruf";
+import { DEFAULT_LEAD_TIMES } from "@/lib/calendar/lead-times";
 
 const DAY = 24 * 60 * 60 * 1000;
 // Di 17.11.2026, 10:00 Uhr Berlin
@@ -135,14 +137,17 @@ describe("Angebot senden und nachfassen (P3)", () => {
     expect(meine[0].text).toMatch(/Rückruf wünschen: \S+\/rueckruf\//);
     expect(meine[0].text).toMatch(/Angebot ansehen: \S+\/ihr-angebot\//);
 
-    // Rückruf gewünscht: Aufgabe, Push, Nachfassen endet
+    // Rückruf gewünscht (Ausbau P5): Aufgabe mit Zeitfenster, Push, Nachfassen pausiert (nicht beendet)
     const token = (await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).rueckrufToken!;
     const rpush = vi.fn(async () => undefined);
-    expect(await rueckrufWunsch(token, { now: new Date("2026-11-23T10:00:00Z"), push: rpush })).toBe("ok");
-    expect(await rueckrufWunsch(token, { now: new Date("2026-11-23T10:05:00Z"), push: rpush })).toBe("schon");
+    const jetzt = new Date("2026-11-23T10:00:00Z");
+    const fenster = rueckrufTage(jetzt, DEFAULT_LEAD_TIMES)[0].fenster[0];
+    expect(await rueckrufWunsch(token, { fenster: fenster.key }, { now: jetzt, push: rpush })).toMatchObject({ ok: true, schon: false });
+    expect(await rueckrufWunsch(token, { fenster: fenster.key }, { now: new Date("2026-11-23T10:05:00Z"), push: rpush })).toMatchObject({ ok: true, schon: true });
     expect(rpush).toHaveBeenCalledTimes(1);
-    expect(await prisma.leadSequence.count({ where: { leadId: lead.id, stoppedAt: null } })).toBe(0);
-    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpNote).toBe("Rückruf gewünscht (Angebot)");
+    const pausiert = await prisma.leadSequence.findFirstOrThrow({ where: { leadId: lead.id, stoppedAt: null } });
+    expect(pausiert.nextAt!.getTime()).toBeGreaterThanOrEqual(fenster.bis.getTime() + 2 * DAY);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).followUpNote).toBe("Rückrufwunsch: 11:30 bis 12 Uhr");
   });
 
   it("„Habe ich selbst gesendet“: ein Tipp, Nachfassen ohne E-Mail, Text mit dem Vermittler", async () => {

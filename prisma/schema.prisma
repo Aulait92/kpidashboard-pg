@@ -2826,7 +2826,7 @@ model LeadSequence {
   id         String    @id @default(cuid())
   leadId     String
   customerId String
-  // not_reached | offer | offer_selbst | no_show | silent | recall
+  // not_reached | offer | offer_selbst | offer_bedenkzeit | offer_selbst_bedenkzeit | no_show | silent | recall
   kind       String
   // Index des nächsten Schritts
   step       Int       @default(0)
@@ -2838,6 +2838,8 @@ model LeadSequence {
   log        Json      @default("[]")
   // Vorab-Check-Push an den Vermittler (Angebot, Paket P3): für diesen Schritt schon gesendet (je Schritt einmal)
   vorabCheckStep Int?
+  // Bedenkzeit zum Angebot (Paket P5): Die Abfolge startet an diesem Tag neu, die Schritt-Tage zählen ab hier statt ab startedAt
+  neustartAt DateTime?
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 

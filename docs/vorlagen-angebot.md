@@ -54,4 +54,29 @@ Tag 2 nach „Habe ich selbst gesendet“, nur ohne Antwort des Leads.
 | 10 | letzte WhatsApp (`followup_last`) | letzte WhatsApp („das Angebot, das Herr Kannapinn Ihnen geschickt hat“) |
 | 12 | Anruf-Aufgabe zum Schluss | gleich |
 
-Stopp wie bei allen Abfolgen: Antwort des Leads, Abschluss, Absage, „Stopp“, Rückruf gewünscht, Schalter aus.
+Stopp wie bei allen Abfolgen: Antwort des Leads, Abschluss, Absage, „Stopp“, Schalter aus. „Rückruf gewünscht“ (P5)
+pausiert die Abfolge bis zwei Tage nach dem gewählten Zeitfenster, danach geht sie mit den übrigen Schritten weiter.
+
+## 3. Nach der Bedenkzeit (neuer Zweck `offer_bedenkzeit`, v5, MARKETING; Paket P5)
+
+Stand 17.11.2026, **nur vorbereitet** (`VORBEREITET_BEDENKZEIT` in `src/lib/whatsapp/template-plan.ts`), nicht eingereicht.
+Geht raus an dem Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte („meldet sich am …“, Standard
+14 Tage), wenn der Chat länger als 24 Stunden ruht. Bewusst **ohne** Terminvorschläge (nicht `followup`).
+
+- Sie: „Guten Tag {{1}}, hier ist der digitale KI-Assistent von [Firma]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?“
+- Du: „Hallo {{1}}, hier ist der digitale KI-Assistent von [Firma]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?“
+- Knöpfe wie `followup_offer`: „Eher der Beitrag“ · „Eher die Leistung“ · „Kein Bedarf mehr“
+- {{2}} Thema aus der Auswahl im Termin („Haftpflicht und Hausrat“)
+
+Bis zur Freigabe: im offenen Fenster als Freitext (beim selbst gesendeten Angebot „zum Angebot, das Herr Kannapinn
+Ihnen geschickt hat“), sonst die freigegebene Vorlage `followup_offer`, fehlt auch die, eine Anruf-Aufgabe.
+
+Abfolge nach der Bedenkzeit (`offer_bedenkzeit` bzw. `offer_selbst_bedenkzeit`), Tage ab dem gewählten Tag: 0 WhatsApp
+(oben), 3 Anruf-Aufgabe plus Push, 5 E-Mail mit [Rückruf wünschen] (nur beim Versand über die App), 10 letzte WhatsApp,
+12 Anruf-Aufgabe. Antwortet der Kontakt vorher, endet sie, der Tag bleibt als Aufgabe „Bedenkzeit vorbei: Angebot
+nachfassen“ auf „Heute“.
+
+Im Chat (keine Vorlage nötig, immer im offenen Fenster): „ich überlege noch“ → „Gern, nehmen Sie sich ruhig Zeit. Wann
+darf ich mich wieder bei Ihnen melden?“ mit [1 Woche] [2 Wochen] [Ende des Monats], danach „Alles klar, dann melde ich
+mich am Dienstag, 1. Dezember wieder. Wenn vorher Fragen aufkommen, schreiben Sie einfach hier.“ Die Bestätigung eines
+Rückrufwunschs geht ebenfalls nur im offenen Fenster als Freitext, sonst zeigt sie nur die Seite.

@@ -15,7 +15,6 @@
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { fuelle, werteFuer, type Werte } from "@/lib/mail/platzhalter";
-import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 
 export type AngebotWeg = "app" | "selbst";
 
@@ -27,9 +26,6 @@ export const SELBST_UPLOAD_HINWEIS = "Freiwillig, hilft bei Ihren Zahlen.";
 
 /** Notiz der klassischen Wiedervorlage (lib/lead-followup.ts), die mit dem Versand entfällt. */
 export const ANGEBOT_WIEDERVORLAGE = "Angebot nachfassen";
-/** Aufgabe nach „Rückruf wünschen“ (Minimalseite /rueckruf/<token>). */
-export const RUECKRUF_NOTIZ = "Rückruf gewünscht (Angebot)";
-
 /** Gültigkeit des Links auf das Angebots-PDF. */
 export const ANGEBOT_LINK_TAGE = 60;
 
@@ -271,26 +267,6 @@ export function angebotAnrufTag(now: Date, tage = 3): string {
   let d = new Date(berlinUm(berlinTeile(now).tag, 12).getTime() + tage * 24 * HOUR_MS);
   if (berlinTeile(d).sonntag) d = new Date(d.getTime() + 24 * HOUR_MS);
   return new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long" }).format(d);
-}
-
-/** Push an den Vermittler, wenn der Lead auf der Rückruf-Seite „Rückruf wünschen“ getippt hat. */
-export function rueckrufPush(o: { leadId: string; name: string }) {
-  return {
-    title: `${o.name} wünscht einen Rückruf`,
-    body: "Zum Angebot. Tippen Sie, um direkt anzurufen.",
-    url: `/buyer?anrufen=${encodeURIComponent(o.leadId)}#anrufen`,
-    tag: `rueckruf:${o.leadId}`,
-  };
-}
-
-/** Texte der Rückruf-Seite (an den Lead). */
-export function rueckrufSeite(an: Ansprache, person: VermittlerName) {
-  return {
-    titel: "Rückruf wünschen",
-    text: a(an, `${person.nom} ruft dich gern an und beantwortet deine Fragen zum Angebot.`, `${person.nom} ruft Sie gern an und beantwortet Ihre Fragen zum Angebot.`),
-    knopf: "Ja, bitte anrufen",
-    danke: a(an, `Danke! ${person.nom} meldet sich bei dir.`, `Danke! ${person.nom} meldet sich bei Ihnen.`),
-  };
 }
 
 /** „Angebot gesendet am 17.11.“ bzw. „selbst gesendet am 17.11.“ / „abgelegt am 17.11.“ für Terminvorbereitung und Kontakt. */

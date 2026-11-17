@@ -231,7 +231,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
       status: { in: ["completed", "booked"] },
       angebotGesendetAt: null,
       startsAt: { lte: now, gt: new Date(now.getTime() - 14 * DAY) },
-      lead: { status: "Angebot gesendet", erasedAt: null, sequences: { none: { stoppedAt: null, kind: { in: ["offer", "offer_selbst"] } } } },
+      lead: { status: "Angebot gesendet", erasedAt: null, sequences: { none: { stoppedAt: null, kind: { in: ["offer", "offer_selbst", "offer_bedenkzeit", "offer_selbst_bedenkzeit"] } } } },
     },
     orderBy: { startsAt: "desc" },
     take: 20,
