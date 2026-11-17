@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung Basis-Plus",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ortsüblicher Neubauwert",
+    "Rohbauschutz 24 Monate",
+    "Unterversicherungsverzicht"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Basis-Plus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "Bestandteil, Technik opt",
+        "kosten": "Mietausfall 24 Monate",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "optional",
+        "tiere": "bis 5.000 €",
+        "mietausfall": "bis 24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/haus-wohnen/wohngebaeude/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/haus-wohnen/wohngebaeude/"
+  ],
+  "offen": [
+    "Concordia bietet einen Tarif (Basis-Plus) für Ein- und Zweifamilienhäuser mit Erweiterungen Gebäude-Optimal (u. a. böswillige Beschädigung inkl. Graffiti), Ableitungsrohre und Naturgefahren-Plus. Werte aus der Produktseite.",
+    "Grobe Fahrlässigkeit mitversichert; grob fahrlässige Obliegenheitsverletzungen bis 5.000 €. Weitere Naturgefahren (Überschwemmung, Rückstau u. a.) einschließbar.",
+    "Photovoltaik, Solarthermie und Wärmepumpe als Gebäudebestandteil versichert; technische Gefahren für Sonnenkollektoren und Wärmepumpen als Zusatzbaustein. Hotelkosten bis 100 €/Tag für 150 Tage.",
+    "Tiere: Schäden durch wild lebende Tiere bis 5.000 € (unter Feuer genannt). Fugen: Austritt aus Fugen oder Abdichtungen sanitärer Einrichtungen. Selbstbeteiligung nicht genannt."
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung (Pkw)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € Deckungssumme",
+    "Sturm ab Windstärke 7",
+    "Ladezubehör E-Auto versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, weitgehend",
+        "tiere": "nur Haarwild",
+        "neuwert": "6 Monate",
+        "marder": "nein",
+        "gap": "nein",
+        "mallorca": "nein",
+        "werkstatt": "wählbar (Kasko SELECT)",
+        "elektro": "Kasko, ohne Allgefahren",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.wgv.de/auto-mobilitaet/fahrzeuge/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung OPTIMAL",
+      "kurz": "OPTIMAL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, weitgehend",
+        "tiere": "ja, alle Tiere",
+        "neuwert": "24 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "gap": "ja",
+        "mallorca": "ja",
+        "werkstatt": "wählbar (Kasko SELECT)",
+        "elektro": "ja, Allgefahren (VK)",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.wgv.de/auto-mobilitaet/fahrzeuge/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/auto-mobilitaet/fahrzeuge/autoversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/kfz.pdf"
+  ],
+  "offen": [
+    "Werte aus der Tabelle „Leistungen & Tarife im Vergleich“ der Produktseite (Haken/Strich als Text im Seitenquelltext). Bedingungen (kfz.pdf) nicht ausgewertet.",
+    "Personenschäden max. 15 Mio. € je Person. Grobe Fahrlässigkeit: „weitgehender Verzicht“ in beiden Tarifen, Ausnahmen nicht auf der Seite genannt.",
+    "Marderbiss: Merkmal „Schäden durch Tierbiss (inkl. Folgeschäden)“ nur OPTIMAL. Kaufwertentschädigung Gebrauchtwagen 24 Monate nur OPTIMAL.",
+    "Akku: Allgefahrenschutz für den Akku nur OPTIMAL in der Vollkasko; Ladezubehör (Wallbox, Kabel) in beiden Tarifen in der Teilkasko.",
+    "Rabattschutz ab SF 4 für Haftpflicht und Vollkasko wählbar; ob in beiden Tarifen, nicht ausdrücklich genannt. OPTIMAL zusätzlich Eigenschäden, SmartRepair bis 300 €, Schlinger-Deckung.",
+    "WGV markiert keinen Tarif (zwei Stufen): keine Empfehlung gesetzt."
+  ]
+}

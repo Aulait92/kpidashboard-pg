@@ -1,0 +1,111 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Gleitender Neuwert Plus",
+    "Wärmepumpe, Balkonkraftwerk",
+    "Unterversicherungsverzicht"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "wählbar",
+        "ableitung": "nein",
+        "pv": "optional",
+        "kosten": "Mietausfall 12 Monate",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "nein"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/haus/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude OPTIMAL",
+      "kurz": "OPTIMAL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "wählbar",
+        "ableitung": "nein",
+        "pv": "optional",
+        "kosten": "Mietausfall 24 Monate",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "ja",
+        "tiere": "nein",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "nein"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/haus/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude PLUS",
+      "kurz": "PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "wählbar",
+        "ableitung": "Grundstück bis 20.000 €",
+        "pv": "optional",
+        "kosten": "Mietausfall 36 Monate",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "ja",
+        "tiere": "bis 5.000 €",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "inklusive"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/haus/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/recht-eigentum/haus/wohngebaeudeversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/gebaeude.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungsübersicht der Produktseite. WGV markiert OPTIMAL als „Unsere Empfehlung“ (Preis-Leistungs-Sieger).",
+    "Weitere Elementargefahren stehen in der Tabelle in allen Tarifen, laut Preisbeispiel aber als Gefahr gewählt; daher „wählbar“. PLUS zusätzlich Oberflächenwasser über Balkon/Garage nach Starkregen.",
+    "Photovoltaik ist im Grundschutz mitversichert (sofern vereinbart); erweiterter Schutz (Elektronik, Ertragsausfall, bis 30 kWp) gegen Mehrbeitrag in allen Tarifen, daher „optional“.",
+    "Ableitungsrohre nur auf dem Grundstück und nur PLUS (bis 20.000 €); Zuleitungsrohre außerhalb des Grundstücks ab OPTIMAL. Hotelkosten BASIS 100 €/Tag (50 Tage), OPTIMAL 150 €/Tag (70 Tage), PLUS 200 €/Tag (365 Tage).",
+    "Vandalismus: „Böswillige Beschädigung (auch Graffiti)“ ab OPTIMAL. Tiere: Wildtierschäden (Marder, Waschbär, Specht) nur PLUS. Selbstbeteiligung wählbar (Preisbeispiel 250 €)."
+  ]
+}

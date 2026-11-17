@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "hausrat",
+  "produkt": "Sorglos-Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Neuwertentschädigung",
+    "Hotelkosten bis 365 Tage",
+    "Leistungs-Update automatisch"
+  ],
+  "tarife": [
+    {
+      "name": "Sorglos-Hausrat",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja, bis Summe",
+        "wert": "40 % der VS",
+        "fahrrad": "1 % der VS je Rad",
+        "elementar": "optional",
+        "online": "optional",
+        "garten": "bis 8.000 €",
+        "auto": "bis 3.000 €, weltweit",
+        "ueberspannung": "ja, bis Summe",
+        "hotel": "365 Tage",
+        "aussen": "bis 30.000 €, 12 Mon."
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/haus-wohnen/hausrat/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/haus-wohnen/hausrat/"
+  ],
+  "offen": [
+    "Concordia bietet einen Tarif (Sorglos). Werte aus der Produktseite.",
+    "Einfacher Diebstahl in der Wohnung nicht als Leistung genannt; Trickdiebstahl in der Wohnung bis 5.000 €. Einfacher Diebstahl am Arbeitsplatz bis 1.000 €, auf dem Grundstück bis 8.000 €.",
+    "Fahrraddiebstahl bis 1 % der Versicherungssumme je Fahrrad inklusive; Baustein „Fahrrad Plus“ für hochwertige Räder. Naturgefahren, Naturgefahren-Plus, Internet und Glas als Erweiterungen wählbar (Leistungsumfang „Internet“ nicht beschrieben).",
+    "Hotelkosten bis 2 ‰ der Versicherungssumme je Tag. Bargeld und Selbstbeteiligung nicht genannt."
+  ]
+}

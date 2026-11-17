@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "unfall",
+  "produkt": "Erwachsenen-Unfallschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Progression 225 %, 400 %, 600 %",
+    "Rente ab 50 % Invalidität"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall PUR",
+      "kurz": "PUR",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "225/400/600 % wählbar",
+        "unfallrente": "wählbar, ab 50 %",
+        "khtg": "wählbar",
+        "todesfall": "wählbar",
+        "kosmetik": "bis 10.000 €",
+        "bergung": "bis 30.000 €",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/unfall-schutz/erwachsenen-unfallschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfall KOMFORT",
+      "kurz": "KOMFORT",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "225/400/600 % wählbar",
+        "unfallrente": "wählbar, ab 50 %",
+        "khtg": "wählbar",
+        "todesfall": "wählbar",
+        "sofort": "Oberschenkelhals 5.000 €",
+        "kosmetik": "bis 25.000 €",
+        "bergung": "bis 30.000 €",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/unfall-schutz/erwachsenen-unfallschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfall TOP",
+      "kurz": "TOP",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "225/400/600 % wählbar",
+        "unfallrente": "wählbar, ab 50 %",
+        "khtg": "wählbar",
+        "todesfall": "wählbar",
+        "sofort": "10.000 €",
+        "kosmetik": "bis 75.000 €",
+        "bergung": "bis 30.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/unfall-schutz/erwachsenen-unfallschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/unfall-schutz/erwachsenen-unfallschutz/",
+    "https://www.itzehoer.de/dokumente/produkte/unfall/a-12-000_folder-unfall_12-2025_web.pdf",
+    "https://www.itzehoer.de/dokumente/produkte/unfall/informationsblatt-fuer-versicherungsprodukte-fuer-die-unfallversicherung-ipid-12-22.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungstabelle PUR / KOMFORT / TOP der Produktseite. Itzehoer markiert keine Stufe; KOMFORT als mittlere Stufe gesetzt.",
+    "Invaliditätssumme, Progression (225 %, 400 % oder 600 %), Unfallrente, Todesfall und Krankenhaustagegeld werden je Vertrag vereinbart (Bausteine), nicht je Stufe. Leistung ab Invaliditätsgrad für die Kapitalleistung nicht genannt.",
+    "Unfallrente ab 50 % Invalidität, ab 90 % doppelt; halbe Rente ab 35 % und 1,5-fache ab 75 % vereinbar. Krankenhaustagegeld längstens 3 Jahre, Tag 1 bis 100 doppelt.",
+    "Bergung bis 30.000 € nur bei PUR genannt; KOMFORT und TOP schließen PUR ein. Zecken: Infektionen nach Tierbissen/-stichen (z. B. Borreliose) nur TOP genannt; für PUR und KOMFORT nicht belegt."
+  ]
+}

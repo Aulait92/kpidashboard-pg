@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Neuwertentschädigung",
+    "Bargeld bis 3.000 €",
+    "Fahrrad, Elementar wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat KOMFORT",
+      "kurz": "KOMFORT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, Feuer/Wasser/Sturm",
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "650 € je m²",
+        "bargeld": "bis 3.000 €",
+        "garten": "bis 2.000 €",
+        "auto": "bis 2.000 €",
+        "hotel": "bis 200 €/Tag",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "notfall": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/wohnen-eigentum/fuer-privatpersonen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat TOP",
+      "kurz": "TOP",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, Feuer/Wasser/Sturm",
+        "wert": "40 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "650 € je m²",
+        "bargeld": "bis 3.000 €",
+        "garten": "bis 5.000 €",
+        "auto": "bis 5.000 €",
+        "hotel": "bis 300 €/Tag",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "notfall": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/wohnen-eigentum/fuer-privatpersonen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/wohnen-eigentum/fuer-privatpersonen/hausratversicherung/",
+    "https://www.itzehoer.de/dokumente/produkte/wohnen-und-eigentum/hausratversicherung/a-06-000_folder_hausrat-schutz_07-2025_web.pdf",
+    "https://www.itzehoer.de/dokumente/produkte/wohnen-und-eigentum/fuer-privatpersonen/hausratversicherung/informationsblatt-fuer-die-hausratversicherung.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungstabelle der Produktseite und dem Folder Hausrat-Schutz 07/2025.",
+    "Einfacher Diebstahl in der Wohnung nicht genannt. Erfasst ist Diebstahl von Sachen auf dem Versicherungsgrundstück (Gartenmöbel, Grills, Wallboxen u. a.) als „Diebstahl aus dem Garten“; Trickdiebstahl bis 2.000 € bzw. 5.000 €.",
+    "Grobe Fahrlässigkeit nur bei Brand, Leitungswasser, Sturm und Hagel (nicht bei Einbruchdiebstahl). Wertsachen über 30 % bzw. 40 % hinaus vereinbar.",
+    "Online-Betrug (Phishing) nicht genannt; TOP versichert Vermögensschäden durch Identitätsmissbrauch bis 5.000 €. Fahrraddiebstahl, weitere Elementargefahren (TOP auch Sturmflut) und Zusatzschutz Haus und Wohnung wählbar; Glas als eigener Vertrag.",
+    "Selbstbeteiligung im Preisbeispiel „keine“, Stufen nicht genannt. Itzehoer markiert keinen Tarif (zwei Stufen)."
+  ]
+}

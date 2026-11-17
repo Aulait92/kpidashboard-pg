@@ -1,0 +1,96 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung (Pkw)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 Mio. € Deckungssumme",
+    "Grobe Fahrlässigkeit mitversichert",
+    "Partnerwerkstatt-Service"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Tarif Classic",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alk./Diebst.",
+        "tiere": "nur Haarwild",
+        "neuwert": "6 Monate",
+        "marder": "Folgeschäden 1.500 €",
+        "rabattschutz": "nein",
+        "werkstatt": "ja, Partnerwerkstatt"
+      },
+      "bausteine": {
+        "rabattschutz": "nein",
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/fahrzeuge-verkehr/auto/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Tarif Premium Partner",
+      "kurz": "Premium Partn.",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alk./Diebst.",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden 10.000 €",
+        "rabattschutz": "optional",
+        "gap": "ja (Vollkasko)",
+        "werkstatt": "ja, Partnerwerkstatt",
+        "elektro": "optional (ElektroDrive)",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "rabattschutz": "optional",
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/fahrzeuge-verkehr/auto/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Tarif Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alk./Diebst.",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden 10.000 €",
+        "rabattschutz": "optional",
+        "gap": "ja (Vollkasko)",
+        "werkstatt": "nein, freiwillig",
+        "elektro": "optional (ElektroDrive)",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "rabattschutz": "optional",
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/fahrzeuge-verkehr/auto/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/fahrzeuge-verkehr/auto/",
+    "https://www.concordia.de/fileadmin/user_upload/Website/Produkte/Fahrzeuge-Verkehr/Dateien/K-8021-2026-10.pdf"
+  ],
+  "offen": [
+    "Werte aus den Leistungsbeschreibungen der Produktseite („Was ist in den Kfz-Tarifen …“); die Vergleichstabelle K-8021 (10/2026) nutzt Symbole, die sich nicht lesen ließen.",
+    "Premium Partner und Premium haben denselben Leistungsumfang; Premium Partner verpflichtet bei Kaskoschäden zur Partnerwerkstatt (Kasko rund 15 % günstiger), Premium nutzt sie freiwillig. Classic: Partnerwerkstatt Pflicht, kein Rabattschutz, stärkere Rückstufung.",
+    "Classic: Mallorca-Deckung, GAP-Deckung und ElektroDrive auf der Produktseite nicht genannt (in der Symboltabelle nicht lesbar). Kurzschluss-Folgeschäden Premium bis 10.000 €.",
+    "Neuwert Premium: Neuwert bis 36 Monate nach Erstzulassung, Kaufpreis bis 36 Monate nach Kauf; Classic Neuwert 6 Monate. Tierbiss ohne Innenraum.",
+    "Schutzbrief MobilPlus, Rabattschutz (ab SF 4), Fahrerschutz, ElektroDrive und VollkaskoPlus sind Zusatzbausteine; Zuordnung je Tarif nur für Rabattschutz belegt. Concordia markiert keinen Tarif; Premium Partner als mittlere Stufe."
+  ]
+}

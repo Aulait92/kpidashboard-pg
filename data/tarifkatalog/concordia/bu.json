@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Leistung im Pflegefall",
+    "Schutz bei Berufswechsel"
+  ],
+  "tarife": [
+    {
+      "name": "Concordia BUZ futur",
+      "kurz": "BUZ futur",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "bis 3 Jahre",
+        "weltweit": "ja",
+        "pflege": "ja, ab 2 Punkten"
+      },
+      "bausteine": {},
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/berufsunfaehigkeit/fuer-berufstaetige/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Concordia startBUZ futur",
+      "kurz": "startBUZ futur",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis 30 jederzeit",
+        "rueckwirkend": "bis 3 Jahre",
+        "weltweit": "ja",
+        "pflege": "ja, ab 2 Punkten"
+      },
+      "bausteine": {},
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/berufsunfaehigkeit/fuer-berufseinsteiger/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/zukunft-vorsorge/berufsunfaehigkeit/fuer-berufstaetige/",
+    "https://www.concordia.de/produkte/zukunft-vorsorge/berufsunfaehigkeit/fuer-berufseinsteiger/"
+  ],
+  "offen": [
+    "BUZ futur für Berufstätige; startBUZ futur für junge Leute mit günstigerem Einstiegsbeitrag bei vollem Schutz und „Zukunftspaket Young Professionals“ (bis 30 Jahre Erhöhung jederzeit, Verdopplung bei Abschluss von Ausbildung/Studium). Keine Empfehlung markiert (zwei Stufen).",
+    "AU-Klausel, Teilzeitklausel, Verzicht auf Umorganisation, Beitragsstundung, Dynamik und Infektionsklausel auf den Produktseiten nicht genannt; Bedingungen nicht verlinkt.",
+    "Verlängerungsoption ohne erneute Prüfung genannt. Pflege: Leistung, wenn bei zwei Punkten des Punktekatalogs dauerhaft fremde Hilfe nötig ist."
+  ]
+}

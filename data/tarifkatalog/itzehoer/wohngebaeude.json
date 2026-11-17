@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäude-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gleitender Neuwert",
+    "Rohbauschutz bis 24 Monate",
+    "Elementar inkl. Sturmflut wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude KOMFORT",
+      "kurz": "KOMFORT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "elementar": "optional",
+        "ableitung": "bis 5.000 €",
+        "pv": "vereinbar",
+        "kosten": "Mietausfall 24 Monate",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "nach Vereinbarung",
+        "vandalismus": "Graffiti bis 5.000 €",
+        "tiere": "bis 5.000 €",
+        "mietausfall": "bis 24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "inklusive"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/wohnen-eigentum/fuer-privatpersonen/wohngebaeude-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude TOP",
+      "kurz": "TOP",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 10.000 €",
+        "pv": "vereinbar",
+        "kosten": "Mietausfall 36 Monate",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "Graffiti ja",
+        "tiere": "bis 10.000 €",
+        "mietausfall": "bis 36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "inklusive"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/wohnen-eigentum/fuer-privatpersonen/wohngebaeude-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/wohnen-eigentum/fuer-privatpersonen/wohngebaeude-versicherung/",
+    "https://www.itzehoer.de/dokumente/produkte/wohnen-und-eigentum/wohngebaeudeversicherung/a-07000_folder-wohngebaeude-09_2025_web.pdf",
+    "https://www.itzehoer.de/dokumente/produkte/wohnen-und-eigentum/fuer-privatpersonen/wohngebaeude/informationsblatt-fuer-die-wohngebaeudeversicherung.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungstabelle KOMFORT / TOP der Produktseite (Symbole aus dem Seitenquelltext gelesen). Folder 09/2025 nicht gesondert ausgewertet.",
+    "Grobe Fahrlässigkeit: KOMFORT bis 10.000 €, TOP ohne Grenze („Verzicht … (TOP Deckung)“). Ableitungsrohre auf und außerhalb des Grundstücks je bis 5.000 € bzw. 10.000 €, Selbstbehalt 500 €.",
+    "Weitere Elementarschäden vereinbar (Wartezeit 30 Tage, Selbstbehalt 1.000 bis 20.000 €), auch Sturmflut. Photovoltaik (technische Gefahren, Ertragsausfall) vereinbar, sofern in der Versicherungssumme berücksichtigt.",
+    "Tiere: Tierbiss durch Wildtiere an Leitungen und Dämmung; an PV und Wärmepumpe nur TOP bis 5.000 €. Vandalismus: nur Graffiti genannt (bei Mehrfamilienhäusern 500 € Selbstbehalt).",
+    "Selbstbeteiligung allgemein nicht genannt. Itzehoer markiert keinen Tarif (zwei Stufen)."
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Max. 15 Mio. € je Person",
+    "Mietsachschäden an Wohnräumen",
+    "Gefälligkeitsschäden"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "nein",
+        "delikt": "bis 20.000 €",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 250 g",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/recht-eigentum/haftung/privathaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht OPTIMAL",
+      "kurz": "OPTIMAL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "75 Mio. €",
+        "forderungsausfall": "ja, mit Rechtsschutz",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "ja",
+        "rabattretter": "nein",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/recht-eigentum/haftung/privathaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht PLUS",
+      "kurz": "PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja, mit Rechtsschutz",
+        "schluessel": "ja, inkl. Folgeschäden",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja, 5 Jahre",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/recht-eigentum/haftung/privathaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/recht-eigentum/haftung/privathaftpflichtversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/php_dienst.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungsübersicht „Leistungen & Tarife“ der Produktseite. WGV markiert OPTIMAL als „Unsere Empfehlung“ (Preis-Leistungs-Sieger).",
+    "Forderungsausfall in allen Tarifen inkl. Vorsatz ohne Mindestschaden; OPTIMAL und PLUS zusätzlich reine Vermögensschäden und Rechtsschutz für den Forderungsausfall.",
+    "Deliktunfähige Kinder: BASIS bis 20.000 €, OPTIMAL und PLUS ohne genannten Betrag. Schlüssel: PLUS auch Tresor-, Schließfach- und Kfz-Schlüssel, Folgeschäden bis 100.000 €.",
+    "Geliehen: „sonstige gemietete oder geliehene bewegliche Sachen“ erst ab OPTIMAL. Selbstbeteiligung und Bausteine (z. B. Dienst-Haftpflicht) nicht in der Übersicht; Vertragsbedingungen nur für den öffentlichen Dienst verlinkt."
+  ]
+}

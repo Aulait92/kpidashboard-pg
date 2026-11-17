@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "haftpflicht",
+  "produkt": "Sorglos-Privathaftpflicht",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe 10, 30 oder 50 Mio. €",
+    "Leistungs-Update automatisch",
+    "Europa 5 Jahre, Welt 3 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Sorglos-Privathaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10, 30 oder 50 Mio. €",
+        "forderungsausfall": "ja, bis Summe",
+        "schluessel": "ja, privat und beruflich",
+        "delikt": "ja, bis Summe",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja, bis Summe",
+        "gefaelligkeit": "ja, bis Summe",
+        "neuwert": "bis 3.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 250 g",
+        "nebenberuf": "bis 17.500 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "150 € bei Einzelpunkten"
+      },
+      "bausteine": {},
+      "quelle": "https://www.concordia.de/produkte/recht-haftpflicht/haftpflicht/sorglos-privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/recht-haftpflicht/haftpflicht/sorglos-privathaftpflicht/"
+  ],
+  "offen": [
+    "Concordia bietet einen Tarif (Sorglos) mit wählbarer Versicherungssumme 10, 30 oder 50 Mio. €. Werte aus „Leistungen der Sorglos-Haftpflicht im Detail“ der Produktseite.",
+    "Schlüsselverlust: private und fremde berufliche Schlüssel mitversichert, Höchstbetrag auf der Seite nicht genannt. Forderungsausfall bis zur Versicherungssumme, Rechtsstreit mit 250 € Selbstbeteiligung.",
+    "Selbstbeteiligung 150 € bei geliehenen/gemieteten beweglichen Sachen, Be- und Entladeschäden (bis 10.000 €) und Ansprüchen von Arbeitgebern (bis 10.000 €). Neuwert für Sachen bis 1 Jahr alt.",
+    "Drohnen bis 250 g; bis 5 kg gegen Zuschlag. Mallorca-Deckung bis 10 bzw. 30 Mio. € je nach Summe. Rabattretter nicht genannt."
+  ]
+}

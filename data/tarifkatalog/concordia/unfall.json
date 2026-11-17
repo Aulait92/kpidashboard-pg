@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "unfall",
+  "produkt": "Sorglos-Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit rund um die Uhr",
+    "Eigenbewegungen mitversichert",
+    "Familien 15 % Nachlass"
+  ],
+  "tarife": [
+    {
+      "name": "Sorglos-Unfallversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar, z. B. 500 %",
+        "unfallrente": "wählbar, lebenslang",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "L, XL oder XXL wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/unfallschutz/sorglos-unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/unfallschutz/sorglos-unfallversicherung/"
+  ],
+  "offen": [
+    "Concordia bietet einen Tarif (Sorglos) mit individuell gestaltbarem Schutz; Gliedertaxe wählbar L, XL oder XXL (z. B. Daumen 20 % bzw. 30 %). Werte aus der Produktseite.",
+    "Leistung ab Invaliditätsgrad, Rente ab welchem Grad und Höhe des Krankenhaustagegelds nicht genannt (Krankenhaustagegeld laut Seite Teil der Leistungen, nicht beziffert).",
+    "Kosmetische Operationen inkl. Zahnbehandlung genannt, ohne Betrag. Baustein „Kinder Plus“ (Waisenrente, Rooming-in u. a.) nicht im Schema."
+  ]
+}

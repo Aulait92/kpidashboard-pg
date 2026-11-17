@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Würzburger",
+  "sparte": "reise-kranken",
+  "produkt": "TravelSecure Auslandskrankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Behandlungskosten unbegrenzt",
+    "Bergung bis 15.000 €",
+    "24-Stunden-Notfallservice"
+  ],
+  "tarife": [
+    {
+      "name": "TravelSecure Auslandskrankenversicherung für Urlaubsreisen",
+      "kurz": "bis 56 Tage",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 56 Tage je Reise",
+        "ruecktransport": "ja, med. sinnvoll",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "mit oder ohne SB",
+        "zahn": "schmerzstillend",
+        "schwanger": "bis 36. SSW"
+      },
+      "bausteine": {},
+      "quelle": "https://www.travelsecure.de/reiseversicherungen/auslandskrankenversicherung/akv-urlaubsreisen.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "TravelSecure Auslandskrankenversicherung für Langzeiturlauber",
+      "kurz": "bis 365 Tage",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 365 Tage",
+        "ruecktransport": "ja, med. sinnvoll",
+        "usa": "gegen Aufpreis",
+        "selbstbeteiligung": "ohne SB",
+        "zahn": "schmerzstillend",
+        "schwanger": "bis 36. SSW"
+      },
+      "bausteine": {},
+      "quelle": "https://www.travelsecure.de/reiseversicherungen/auslandskrankenversicherung/langzeit-auslandskrankenversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.travelsecure.de/reiseversicherungen/auslandskrankenversicherung/akv-urlaubsreisen.html",
+    "https://www.travelsecure.de/reiseversicherungen/auslandskrankenversicherung/langzeit-auslandskrankenversicherung.html",
+    "https://www.travelsecure.de/bedingungen/IPID_AKV.pdf",
+    "https://www.travelsecure.de/bedingungen/PI_AKV_365.pdf",
+    "https://www.travelsecure.de/reiseversicherungen/reiseversicherungen-vergleich/auslandskrankenversicherung-vergleich.html",
+    "https://www.wuerzburger.com/reiseversicherungen"
+  ],
+  "offen": [
+    "TravelSecure ist die Reiseversicherungsmarke der Würzburger Versicherungs-AG (laut wuerzburger.com); Werte von travelsecure.de.",
+    "Urlaubsreisen: Jahresvertrag für beliebig viele Reisen bis je 56 Tage, weltweit außer Heimatland; Selbstbeteiligung wählbar, Höhe nicht genannt. Langzeit: eine Reise bis 365 Tage, ohne Selbstbeteiligung, USA/Kanada laut Vergleichsseite mit Aufpreis.",
+    "Rücktransport medizinisch notwendig und medizinisch sinnvoll (bei mehr als 14 Tagen Behandlungsdauer). Zahn: schmerzstillende Behandlung, einfache Füllungen, Reparaturen, provisorischer Ersatz nach Unfall.",
+    "Schwangerschaft: Behandlung bei Beschwerden und Komplikationen, Frühgeburt bis Ende der 36. Woche (Langzeit Neugeborenes bis 50.000 €). Bekannte Erkrankungen nicht genannt. Weitere Tarife (Young, Work & Travel, Au-Pair, Jahrespaket Reisekarte4you) nicht als Stufen geführt. Keine Empfehlung markiert."
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gefälligkeitsschäden",
+    "Mietsachschäden an Wohnräumen",
+    "Europa unbegrenzt, Welt 1 Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht KOMFORT",
+      "kurz": "KOMFORT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "25 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "mallorca": "nein",
+        "drohne": "bis 500 g",
+        "nebenberuf": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.itzehoer.de/produkte/haftpflicht/privat-haftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht TOP",
+      "kurz": "TOP",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja, mit Rechtsschutz",
+        "schluessel": "bis 100.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 200.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "mallorca": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 12.000 € Umsatz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.itzehoer.de/produkte/haftpflicht/privat-haftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/haftpflicht/privat-haftpflicht/",
+    "https://www.itzehoer.de/dokumente/produkte/haftpflicht-und-recht/fuer-privatpersonen/a-05-000_11-2025_folder-haftpflicht_web.pdf",
+    "https://www.itzehoer.de/dokumente/produkte/haftpflicht-und-recht/fuer-privatpersonen/informationsblatt-fuer-versicherungsprodukte-fuer-die-allgemeine-haftpflichtversicherung-ipid-01-24.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungstabelle KOMFORT / TOP der Produktseite (Symbole aus dem Seitenquelltext gelesen). Folder 11/2025 nicht gesondert ausgewertet.",
+    "Forderungsausfall mit 15 Mio. € und Gewaltopferschutz bis 50.000 € in beiden Tarifen; Spezial-Schadenersatzrechtsschutz bis 150.000 € nur TOP.",
+    "Geliehene bewegliche Sachen (nicht Kfz) mit 150 € Selbstbeteiligung. Ehrenamtliche Tätigkeit nicht ausdrücklich genannt (nur ehrenamtlich übernommene Schlüssel).",
+    "Kasko-Selbstbeteiligung bei geliehenem Pkw laut Tabelle in KOMFORT enthalten, in TOP bis 3.000 €; Rabattretter nicht genannt. Selbstbeteiligung allgemein und Neuwert nicht genannt. Itzehoer markiert keinen Tarif (zwei Stufen)."
+  ]
+}

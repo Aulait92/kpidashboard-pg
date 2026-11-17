@@ -1,0 +1,115 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit versichert",
+    "Sturm ab Windstärke 7",
+    "Neuwertentschädigung"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "20 % der VS",
+        "diebstahl": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "vs": "650 € je m²",
+        "bargeld": "bis 1.500 €",
+        "auto": "nein",
+        "hotel": "bis 100 €/Tag",
+        "aussen": "10 %, max. 3 Monate",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional",
+        "reise": "nein"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/haus/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat OPTIMAL",
+      "kurz": "OPTIMAL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 % der VS",
+        "diebstahl": "Grundstück bis 1.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "vs": "650 € je m²",
+        "bargeld": "bis 3.000 €",
+        "garten": "ja",
+        "auto": "ja",
+        "hotel": "bis 200 €/Tag",
+        "aussen": "40 %, max. 12 Monate",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional",
+        "reise": "nein"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/haus/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat PLUS",
+      "kurz": "PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 % der VS",
+        "diebstahl": "Grundstück bis 3.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 10.000 €",
+        "vs": "650 € je m²",
+        "bargeld": "bis 5.000 €",
+        "garten": "ja",
+        "auto": "ja",
+        "hotel": "bis 200 €/Tag",
+        "aussen": "100 %, max. 12 Monate",
+        "ueberspannung": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional",
+        "reise": "inklusive"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/haus/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/recht-eigentum/haus/hausratversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/hausrat.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungsübersicht der Produktseite. WGV markiert OPTIMAL als „Unsere Empfehlung“ (Preis-Leistungs-Sieger).",
+    "Einfacher Diebstahl in der Wohnung ist nicht als Zeile genannt. Erfasst ist „Einfacher Diebstahl weiterer Sachen vom Versicherungsgrundstück“ (OPTIMAL bis 1.000 €, PLUS bis 3.000 €); PLUS zusätzlich Trickdiebstahl am Versicherungsort bis 5.000 € und Taschendiebstahl bis 2.000 €.",
+    "Grobe Fahrlässigkeit in allen Tarifen ohne genannte Grenze. Fahrraddiebstahl, weitere Elementargefahren, Glas und Haus- und Wohnungsschutzbrief als Bausteine wählbar. Reisegepäck bis 5.000 € nur PLUS.",
+    "Phishing beim Onlinebanking bis 10.000 € nur im PLUS-Tarif genannt. Selbstbeteiligung wählbar (Preisbeispiel 1.000 €), Stufen nicht genannt. Diebstahl aus dem Auto: elektronische Geräte OPTIMAL bis 2.500 €, PLUS bis 5.000 €."
+  ]
+}

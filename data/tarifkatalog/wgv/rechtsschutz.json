@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "rechtsschutz",
+  "produkt": "Privat-, Berufs- und Verkehrs-Rechtsschutz",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Telefonische Rechtsberatung",
+    "Keine Wartezeit im Verkehr",
+    "Wohnen als Baustein"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. € (Europa)",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "300.000 € (Europa)",
+        "privat": "ja",
+        "vsWelt": "300.000 €",
+        "sb": "150 € oder 300 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/recht/privat-beruf-verkehrsrechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rechtsschutz OPTIMAL",
+      "kurz": "OPTIMAL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt (Europa)",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "unbegrenzt (Europa)",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "vsWelt": "500.000 €",
+        "sb": "fallend bis 0 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "erweitert",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.wgv.de/recht-eigentum/recht/privat-beruf-verkehrsrechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/recht-eigentum/recht/privat-beruf-verkehrsrechtsschutz/",
+    "https://www.wgv.de/docs/vertragsunterlagen/rechtsschutz_pbv.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungsübersicht und den FAQ der Produktseite. WGV markiert OPTIMAL als „Unsere Empfehlung“ (Preis-Leistungs-Sieger).",
+    "Versicherungssumme und Strafkaution: Europa und Mittelmeer-Anrainer BASIS 5 Mio. € bzw. 300.000 €, OPTIMAL unbegrenzt; weltweit 300.000 € bzw. 500.000 €.",
+    "Selbstbeteiligung 150 € oder 300 €; im OPTIMAL-Tarif sinkt sie bei Schadenfreiheit und entfällt nach drei schadenfreien Jahren. Wartezeit 3 Monate, nicht für Verkehr und bestimmte Leistungsarten.",
+    "Wohnungs- und Grundstücks-Rechtsschutz als optionaler Baustein. Daneben gibt es Privat-Berufs-Rechtsschutz und Verkehrs-Rechtsschutz einzeln (nicht als Stufen geführt). Mediation nicht genannt."
+  ]
+}
