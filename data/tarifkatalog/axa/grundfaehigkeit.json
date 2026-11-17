@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Existenzschutzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente bei Verlust von Grundfähigkeiten",
+    "Auch bei schwerer Krankheit und Unfall",
+    "Rente wählbar von 250 bis 3.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Existenzschutzversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "pflege": "ab Pflegegrad 3",
+        "nachversicherung": "ja, bis 45 Jahre",
+        "dynamik": "ja, bis 45 Jahre"
+      },
+      "bausteine": {
+        "pflege": "inklusive",
+        "ernst": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/existenzschutzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/existenzsicherung/p/existenzschutzversicherung",
+    "https://www.axa.de/site/axa-de/get/documents_E986428519/axade/medien/privatkunden/existenzsicherung/existenzschutzversicherung/flyer-existenzschutzversicherung-leistungen.pdf"
+  ],
+  "offen": [
+    "AXA führt keine reine Grundfähigkeitsversicherung; die Existenzschutzversicherung (Multi-Risk) leistet u. a. bei Verlust der Grundfähigkeiten Sehen, Hören, Sprechen, sich orientieren und bei schweren Störungen des Stütz- und Bewegungsapparates.",
+    "Anzahl der versicherten Grundfähigkeiten, Prognosezeitraum und Leistung bei psychischen Erkrankungen nicht veröffentlicht.",
+    "Weltweiter Schutz nicht belegt.",
+    "Wartefrist 6 Monate bei Krankheit, Grundfähigkeiten und Pflege (MS 12 Monate), entfällt bei Unfällen. Rente bei Krebs höchstens 60 Monate.",
+    "Zwei Beitragsvarianten (konstanter Beitrag oder Start mit steigendem Beitrag), Leistung gleich; daher ein Tarif. Option auf BU-Schutz innerhalb von 5 Jahren. Flyer Stand 9.18."
+  ]
+}

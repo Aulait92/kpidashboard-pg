@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € Pauschaldeckung",
+    "Verzicht auf grobe Fahrlässigkeit",
+    "Mallorca-Police"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "nur Haarwild",
+        "neuwert": "12 Monate",
+        "marder": "bis 5.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "wählbar",
+        "elektro": "Basis E-Paket",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "36 Monate",
+        "marder": "bis 20.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "wählbar",
+        "elektro": "Premium E-Paket",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/autoversicherung/"
+  ],
+  "offen": [
+    "Zwei Tarife ohne Markierung; keine Empfehlung gesetzt.",
+    "Tiere, Neuwert, Marder und E-Paket gelten für die Kasko (Teil- bzw. Vollkasko). Kaufwertentschädigung 12 bzw. 36 Monate.",
+    "Werkstatt: Sorglos-Kasko mit Partnerwerkstatt oder freie Werkstattwahl wählbar.",
+    "E-Auto: Akku-Tierbiss bis 2.500 € (Basis) bzw. 30.000 € (Premium), Neuwert für den Akku 36 Monate.",
+    "Premium zusätzlich u. a. Brems-, Betriebs- und Bruchschäden, Eigenschäden bis 100.000 € (SB 500 €), Fährrisiko, Dashcam."
+  ]
+}

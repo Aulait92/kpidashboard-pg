@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "krankenhauszusatz",
+  "produkt": "MeinKrankenhausschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rooming-in für Kinder bis 16 Jahre",
+    "Anschlussheilbehandlung mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "MeinKrankenhausschutz Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "chefarzt": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine allgemeine",
+        "ambulant-op": "ja",
+        "zimmer": "Zweibettzimmer",
+        "krankenhauswahl": "ja",
+        "ersatztagegeld": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinKrankenhausschutz Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "chefarzt": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine allgemeine",
+        "ambulant-op": "ja",
+        "zimmer": "Ein- oder Zweibettzimmer",
+        "krankenhauswahl": "ja",
+        "ersatztagegeld": "bis 100 € je Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinKrankenhausschutz Best",
+      "kurz": "Best",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "chefarzt": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine allgemeine",
+        "ambulant-op": "ja",
+        "zimmer": "Ein- oder Zweibettzimmer",
+        "krankenhauswahl": "ja, auch Privatklinik",
+        "ersatztagegeld": "bis 100 € je Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/gesundheit/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+    "https://goa-eportale.allianz.de/content/dam/onemarketing/dechap/dlc/APK/V-0/APKV-0275Z0.pdf.azde.download.pdf/APKV-0275Z0_Version-00_19-08-2026.pdf"
+  ],
+  "offen": [
+    "Wartezeit: keine allgemeine, aber 8 Monate für Entbindung und Psychotherapie.",
+    "Ersatz-Krankenhaustagegeld: je 50 € bei Verzicht auf Zimmer bzw. Chefarzt (Plus, Best).",
+    "Krankenhaustagegeld als eigener Baustein auf der Seite nicht genannt.",
+    "Anschlussheilbehandlung in Smart und Plus nur bei Vorleistung der Kasse; Kur und Reha nur in Best.",
+    "Allianz markiert keinen Tarif; Plus als mittlere Stufe gesetzt."
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % Berufsunfähigkeit",
+    "Vorläufiger Schutz bei Unfällen ab Antrag",
+    "Krebs als Ursache mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "BU Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "stundung": "bis 2 Jahre",
+        "au": "nein",
+        "pflege": "optional"
+      },
+      "bausteine": {
+        "au": "nein",
+        "pflege": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "stundung": "bis 2 Jahre",
+        "au": "bis 36 Monate",
+        "pflege": "nein"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "pflege": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU Premium mit Pflege",
+      "kurz": "Premium Pflege",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "stundung": "bis 2 Jahre",
+        "au": "bis 36 Monate",
+        "pflege": "bis 2.000 € mtl."
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "pflege": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/vorsorge/berufsunfaehigkeitsversicherung/",
+    "https://www.allianz.de/service/dokumente/#berufsunfaehigkeits-versicherung"
+  ],
+  "offen": [
+    "Werte aus der Produktvergleichstabelle der Produktseite (Symbole aus dem Seitenquelltext gelesen); Produktinformationsblatt und Bedingungen nicht ausgewertet, da auf der Produktseite nicht verlinkt.",
+    "Verzicht auf Umorganisation (Selbstständige) und Infektionsklausel stehen nicht auf der Produktseite.",
+    "Dynamik (bei der Allianz „Zuwachs“) nur im Ratgebertext genannt, nicht je Tarif in der Tabelle.",
+    "Nachversicherung: anlassunabhängig in den ersten 5 Jahren bis Alter 40, mit Anlass bis Alter 50, je Anlass 600 bis 6.000 € Jahresrente, insgesamt höchstens 18.000 €.",
+    "Allianz markiert keinen Tarif; Premium als mittlere Stufe gesetzt. BU StartPolice (reduzierte Anfangsbeiträge) nicht aufgenommen."
+  ]
+}

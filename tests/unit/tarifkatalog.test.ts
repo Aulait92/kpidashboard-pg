@@ -435,8 +435,10 @@ describe("Preise aus dem Angebot (PDF)", () => {
 describe("Echte Katalogdaten (data/tarifkatalog)", () => {
   const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
   it("Allianz-Vertreter: je Sparte 3 Stufen um die Empfehlung, Stern auf Komfort; Halterhaftpflicht 3 Stufen", () => {
-    expect(echt.sparten).toHaveLength(13);
-    for (const s of echt.sparten) {
+    // 13 Sach- und Tiersparten mit vollständigen Allianz-Daten; seit 17.11.2026 dazu 13 weitere Sparten (alle Produkte)
+    expect(echt.sparten).toHaveLength(26);
+    const sachTier = ["katze-kranken", "katze-op", "hund-kranken", "hund-op", "pferd-op", "pferd-kranken", "haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd", "unfall"];
+    for (const s of echt.sparten.filter((x) => sachTier.includes(x.key))) {
       const v = vorauswahl(echt, s.key, { rolle: "vertreter", gesellschaften: ["allianz"] });
       expect(v.tarife.length, s.key).toBe(3);
       expect(v.tarife.find((t) => t.id === v.empfohlen)?.kurz, s.key).toBe("Komfort");

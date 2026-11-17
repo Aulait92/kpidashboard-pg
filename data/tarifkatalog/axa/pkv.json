@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ambulante Arztbehandlung 100 %",
+    "Zahnbehandlung und Prophylaxe 100 %",
+    "Krankentagegeld für Angestellte"
+  ],
+  "tarife": [
+    {
+      "name": "Private Krankenversicherung S Grundschutz",
+      "kurz": "Tarif S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, Facharzt 75 %",
+        "stationaer": "Mehrbett, Stationsarzt",
+        "zahnersatz": "60 bis 70 %",
+        "selbstbehalt": "360 €",
+        "bre": "ab 600 €, erfolgsabh.",
+        "heilpraktiker": "75 %, bis 1.000 €/Jahr",
+        "psychotherapie": "70 %, 50 Sitzungen/Jahr",
+        "primaerarzt": "ja, sonst 75 %",
+        "sehhilfen": "100 € alle 2 Jahre"
+      },
+      "bausteine": {
+        "ktg": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Private Krankenversicherung M Gut versichert",
+      "kurz": "Tarif M",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %, Facharzt 80 %",
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "75 bis 85 %",
+        "selbstbehalt": "20 %, max. 500 €",
+        "bre": "ab 800 €, erfolgsabh.",
+        "heilpraktiker": "80 %, bis 1.000 €/Jahr",
+        "psychotherapie": "80 %, unbegrenzt",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "250 € alle 2 Jahre"
+      },
+      "bausteine": {
+        "ktg": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Private Krankenversicherung L Premiumschutz",
+      "kurz": "Tarif L",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Einbett, Chefarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "0 €",
+        "bre": "ab 1.200 €, erfolgsabh.",
+        "heilpraktiker": "100 %, bis 2.000 €/Jahr",
+        "psychotherapie": "100 %, unbegrenzt",
+        "primaerarzt": "nein",
+        "sehhilfen": "600 € alle 2 Jahre"
+      },
+      "bausteine": {
+        "ktg": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/private-krankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/private-krankenversicherung"
+  ],
+  "offen": [
+    "Tarifpakete laut Produktseite: S = El Bonus, Kompakt Zahn-U, KTGV42-U/140, PVN; M = ActiveMe, Komfort-Zahn-U, KTGV42-U/140, PVN; L = GesundExtra 1, Premium Zahn-U, KTGV42-U/140, KHT-U/50, PVN.",
+    "Facharzt ohne Überweisung: S 75 %, M 80 %, L 100 % (Hausarzt zuerst, sonst gekürzte Erstattung). Selbstbehalt für Erwachsene im Jahr.",
+    "Beitragsrückerstattung erfolgsabhängig ab dem ersten leistungsfreien Jahr; L zusätzlich Pauschalerstattung 900 € im Jahr.",
+    "Hilfsmittel: S und M 100 % bei Bezug über AXA (sonst 75 bzw. 80 %), L 100 %; ob offener oder geschlossener Katalog, nicht belegt.",
+    "Krankentagegeld für Angestellte 140 € ab dem 42. Tag in allen Paketen; Pflegezusatz nicht im Paket (PVN ist die Pflegepflichtversicherung). Ausland nicht im Tarifvergleich. AXA kennzeichnet keine Empfehlung; M als mittlere Stufe."
+  ]
+}

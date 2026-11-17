@@ -1,0 +1,61 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung SI WorkLife",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistung bei Pflegebedürftigkeit und Demenz",
+    "Ausbaugarantie ohne neue Gesundheitsprüfung",
+    "Wechsel in BU bis 30 vereinbar"
+  ],
+  "tarife": [
+    {
+      "name": "SI WorkLife KOMFORT",
+      "kurz": "KOMFORT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "16",
+        "prognose": "6 Monate",
+        "pflege": "ja",
+        "nachversicherung": "ja (Ausbaugarantie)",
+        "dynamik": "optional 1 bis 5 %"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SI WorkLife KOMFORT-PLUS",
+      "kurz": "KOMFORT-PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "25",
+        "prognose": "6 Monate",
+        "pflege": "ja",
+        "nachversicherung": "ja (Ausbaugarantie)",
+        "dynamik": "optional 1 bis 5 %"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/grundfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "Zwei Tarife ohne Markierung; keine Empfehlung gesetzt.",
+    "Anzahl laut Tariftabelle und FAQ 16 bzw. 25 Grundfähigkeiten (Fließtext nennt „acht weitere“, die Tabelle neun).",
+    "Psychische Erkrankungen und weltweiter Schutz auf der Produktseite nicht genannt; Bedingungen (2319704, 2319804 Jan25) bitte prüfen.",
+    "Schwere Krankheiten: Worst-Case Kapitalhilfe (12 Monatsrenten einmalig) als Zusatz. Infektionsklausel nur KOMFORT-PLUS.",
+    "Pflegerente als eigener Baustein nicht genannt (Leistung bei Pflege ist in der Rente enthalten)."
+  ]
+}

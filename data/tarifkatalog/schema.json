@@ -1,8 +1,20 @@
 {
   "version": 1,
-  "stand": "2026-11-16",
-  "grenzen": { "tarife": 3, "merkmale": 5, "bausteine": 2, "stufenJeDatei": 4, "tarifKurz": 14, "merkmalKurz": 28, "wert": 24 },
-  "bausteinWerte": ["optional", "inklusive", "nein"],
+  "stand": "2026-11-17",
+  "grenzen": {
+    "tarife": 3,
+    "merkmale": 5,
+    "bausteine": 2,
+    "stufenJeDatei": 4,
+    "tarifKurz": 14,
+    "merkmalKurz": 28,
+    "wert": 24
+  },
+  "bausteinWerte": [
+    "optional",
+    "inklusive",
+    "nein"
+  ],
   "sparten": [
     {
       "key": "katze-kranken",
@@ -10,24 +22,93 @@
       "produkt": "katze",
       "formularMatch": "Katze",
       "merkmale": [
-        { "key": "erstattung", "label": "Erstattung der Tierarztkosten", "kurz": "Erstattung", "standard": true },
-        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
-        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
-        { "key": "ohneOp", "label": "Behandlungen ohne Operation", "kurz": "Behandlung ohne OP", "standard": true },
-        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
-        { "key": "zahn", "label": "Zahnbehandlung", "kurz": "Zahnbehandlung" },
-        { "key": "kastration", "label": "Kastration und Sterilisation", "kurz": "Kastration" },
-        { "key": "physio", "label": "Physiotherapie", "kurz": "Physiotherapie" },
-        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
-        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "erstattung",
+          "label": "Erstattung der Tierarztkosten",
+          "kurz": "Erstattung",
+          "standard": true
+        },
+        {
+          "key": "got",
+          "label": "Erstattung bis zum GOT-Satz",
+          "kurz": "GOT bis",
+          "standard": true
+        },
+        {
+          "key": "jhl",
+          "label": "Jahreshöchstleistung",
+          "kurz": "Jahreshöchstleistung",
+          "standard": true
+        },
+        {
+          "key": "ohneOp",
+          "label": "Behandlungen ohne Operation",
+          "kurz": "Behandlung ohne OP",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge (Impfungen, Entwurmung, Chip)",
+          "kurz": "Vorsorge (Impfung u. a.)",
+          "standard": true
+        },
+        {
+          "key": "zahn",
+          "label": "Zahnbehandlung",
+          "kurz": "Zahnbehandlung"
+        },
+        {
+          "key": "kastration",
+          "label": "Kastration und Sterilisation",
+          "kurz": "Kastration"
+        },
+        {
+          "key": "physio",
+          "label": "Physiotherapie",
+          "kurz": "Physiotherapie"
+        },
+        {
+          "key": "nachbehandlung",
+          "label": "Nachbehandlung nach OP",
+          "kurz": "Nachbehandlung nach OP"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit bei Krankheit",
+          "kurz": "Wartezeit Krankheit"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
-        { "key": "vorsorge", "label": "Vorsorge-Paket", "kurz": "Vorsorge-Paket" },
-        { "key": "zahn", "label": "Zahn-Paket", "kurz": "Zahn-Paket" },
-        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge-Paket",
+          "kurz": "Vorsorge-Paket"
+        },
+        {
+          "key": "zahn",
+          "label": "Zahn-Paket",
+          "kurz": "Zahn-Paket"
+        },
+        {
+          "key": "wechsel",
+          "label": "Wechseloption ohne Gesundheitsprüfung",
+          "kurz": "Wechseloption"
+        }
       ]
     },
     {
@@ -36,22 +117,83 @@
       "produkt": "katze",
       "formularMatch": "Katze",
       "merkmale": [
-        { "key": "erstattung", "label": "Erstattung der OP-Kosten", "kurz": "Erstattung", "standard": true },
-        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
-        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
-        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP", "standard": true },
-        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
-        { "key": "zahn", "label": "Zahnbehandlung und OP im Maul", "kurz": "Zahnbehandlung" },
-        { "key": "kastration", "label": "Kastration und Sterilisation", "kurz": "Kastration" },
-        { "key": "physio", "label": "Physiotherapie nach OP", "kurz": "Physiotherapie" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
-        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "erstattung",
+          "label": "Erstattung der OP-Kosten",
+          "kurz": "Erstattung",
+          "standard": true
+        },
+        {
+          "key": "got",
+          "label": "Erstattung bis zum GOT-Satz",
+          "kurz": "GOT bis",
+          "standard": true
+        },
+        {
+          "key": "jhl",
+          "label": "Jahreshöchstleistung",
+          "kurz": "Jahreshöchstleistung",
+          "standard": true
+        },
+        {
+          "key": "nachbehandlung",
+          "label": "Nachbehandlung nach OP",
+          "kurz": "Nachbehandlung nach OP",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge (Impfungen, Entwurmung, Chip)",
+          "kurz": "Vorsorge (Impfung u. a.)",
+          "standard": true
+        },
+        {
+          "key": "zahn",
+          "label": "Zahnbehandlung und OP im Maul",
+          "kurz": "Zahnbehandlung"
+        },
+        {
+          "key": "kastration",
+          "label": "Kastration und Sterilisation",
+          "kurz": "Kastration"
+        },
+        {
+          "key": "physio",
+          "label": "Physiotherapie nach OP",
+          "kurz": "Physiotherapie"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit bei Krankheit",
+          "kurz": "Wartezeit Krankheit"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
-        { "key": "vorsorge", "label": "Vorsorge-Paket", "kurz": "Vorsorge-Paket" },
-        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge-Paket",
+          "kurz": "Vorsorge-Paket"
+        },
+        {
+          "key": "wechsel",
+          "label": "Wechseloption ohne Gesundheitsprüfung",
+          "kurz": "Wechseloption"
+        }
       ]
     },
     {
@@ -60,24 +202,93 @@
       "produkt": "hund",
       "formularMatch": "Hund",
       "merkmale": [
-        { "key": "erstattung", "label": "Erstattung der Tierarztkosten", "kurz": "Erstattung", "standard": true },
-        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
-        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
-        { "key": "ohneOp", "label": "Behandlungen ohne Operation", "kurz": "Behandlung ohne OP", "standard": true },
-        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
-        { "key": "zahn", "label": "Zahnbehandlung", "kurz": "Zahnbehandlung" },
-        { "key": "kastration", "label": "Kastration und Sterilisation", "kurz": "Kastration" },
-        { "key": "physio", "label": "Physiotherapie", "kurz": "Physiotherapie" },
-        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
-        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "erstattung",
+          "label": "Erstattung der Tierarztkosten",
+          "kurz": "Erstattung",
+          "standard": true
+        },
+        {
+          "key": "got",
+          "label": "Erstattung bis zum GOT-Satz",
+          "kurz": "GOT bis",
+          "standard": true
+        },
+        {
+          "key": "jhl",
+          "label": "Jahreshöchstleistung",
+          "kurz": "Jahreshöchstleistung",
+          "standard": true
+        },
+        {
+          "key": "ohneOp",
+          "label": "Behandlungen ohne Operation",
+          "kurz": "Behandlung ohne OP",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge (Impfungen, Entwurmung, Chip)",
+          "kurz": "Vorsorge (Impfung u. a.)",
+          "standard": true
+        },
+        {
+          "key": "zahn",
+          "label": "Zahnbehandlung",
+          "kurz": "Zahnbehandlung"
+        },
+        {
+          "key": "kastration",
+          "label": "Kastration und Sterilisation",
+          "kurz": "Kastration"
+        },
+        {
+          "key": "physio",
+          "label": "Physiotherapie",
+          "kurz": "Physiotherapie"
+        },
+        {
+          "key": "nachbehandlung",
+          "label": "Nachbehandlung nach OP",
+          "kurz": "Nachbehandlung nach OP"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit bei Krankheit",
+          "kurz": "Wartezeit Krankheit"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
-        { "key": "vorsorge", "label": "Vorsorge-Paket", "kurz": "Vorsorge-Paket" },
-        { "key": "zahn", "label": "Zahn-Paket", "kurz": "Zahn-Paket" },
-        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge-Paket",
+          "kurz": "Vorsorge-Paket"
+        },
+        {
+          "key": "zahn",
+          "label": "Zahn-Paket",
+          "kurz": "Zahn-Paket"
+        },
+        {
+          "key": "wechsel",
+          "label": "Wechseloption ohne Gesundheitsprüfung",
+          "kurz": "Wechseloption"
+        }
       ]
     },
     {
@@ -86,22 +297,83 @@
       "produkt": "hund",
       "formularMatch": "Hund",
       "merkmale": [
-        { "key": "erstattung", "label": "Erstattung der OP-Kosten", "kurz": "Erstattung", "standard": true },
-        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
-        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
-        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP", "standard": true },
-        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
-        { "key": "zahn", "label": "Zahnbehandlung und OP im Maul", "kurz": "Zahnbehandlung" },
-        { "key": "kastration", "label": "Kastration und Sterilisation", "kurz": "Kastration" },
-        { "key": "physio", "label": "Physiotherapie nach OP", "kurz": "Physiotherapie" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
-        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "erstattung",
+          "label": "Erstattung der OP-Kosten",
+          "kurz": "Erstattung",
+          "standard": true
+        },
+        {
+          "key": "got",
+          "label": "Erstattung bis zum GOT-Satz",
+          "kurz": "GOT bis",
+          "standard": true
+        },
+        {
+          "key": "jhl",
+          "label": "Jahreshöchstleistung",
+          "kurz": "Jahreshöchstleistung",
+          "standard": true
+        },
+        {
+          "key": "nachbehandlung",
+          "label": "Nachbehandlung nach OP",
+          "kurz": "Nachbehandlung nach OP",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge (Impfungen, Entwurmung, Chip)",
+          "kurz": "Vorsorge (Impfung u. a.)",
+          "standard": true
+        },
+        {
+          "key": "zahn",
+          "label": "Zahnbehandlung und OP im Maul",
+          "kurz": "Zahnbehandlung"
+        },
+        {
+          "key": "kastration",
+          "label": "Kastration und Sterilisation",
+          "kurz": "Kastration"
+        },
+        {
+          "key": "physio",
+          "label": "Physiotherapie nach OP",
+          "kurz": "Physiotherapie"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit bei Krankheit",
+          "kurz": "Wartezeit Krankheit"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
-        { "key": "vorsorge", "label": "Vorsorge-Paket", "kurz": "Vorsorge-Paket" },
-        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge-Paket",
+          "kurz": "Vorsorge-Paket"
+        },
+        {
+          "key": "wechsel",
+          "label": "Wechseloption ohne Gesundheitsprüfung",
+          "kurz": "Wechseloption"
+        }
       ]
     },
     {
@@ -110,24 +382,93 @@
       "produkt": "pferd",
       "formularMatch": "Pferde-OP",
       "merkmale": [
-        { "key": "erstattung", "label": "Erstattung der OP-Kosten", "kurz": "Erstattung", "standard": true },
-        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
-        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
-        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP", "standard": true },
-        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
-        { "key": "chips", "label": "Operative Entfernung von Gelenk-Chips (z. B. OCD)", "kurz": "Gelenk-Chips" },
-        { "key": "kolik", "label": "Wartezeit bei Kolik", "kurz": "Wartezeit Kolik" },
-        { "key": "zahn", "label": "Zahnbehandlung und OP im Maul", "kurz": "Zahnbehandlung" },
-        { "key": "kastration", "label": "Kastration (Zuschuss oder Erstattung)", "kurz": "Kastration" },
-        { "key": "physio", "label": "Physiotherapie nach OP", "kurz": "Physiotherapie" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
-        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "erstattung",
+          "label": "Erstattung der OP-Kosten",
+          "kurz": "Erstattung",
+          "standard": true
+        },
+        {
+          "key": "got",
+          "label": "Erstattung bis zum GOT-Satz",
+          "kurz": "GOT bis",
+          "standard": true
+        },
+        {
+          "key": "jhl",
+          "label": "Jahreshöchstleistung",
+          "kurz": "Jahreshöchstleistung",
+          "standard": true
+        },
+        {
+          "key": "nachbehandlung",
+          "label": "Nachbehandlung nach OP",
+          "kurz": "Nachbehandlung nach OP",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge (Impfungen, Entwurmung, Chip)",
+          "kurz": "Vorsorge (Impfung u. a.)",
+          "standard": true
+        },
+        {
+          "key": "chips",
+          "label": "Operative Entfernung von Gelenk-Chips (z. B. OCD)",
+          "kurz": "Gelenk-Chips"
+        },
+        {
+          "key": "kolik",
+          "label": "Wartezeit bei Kolik",
+          "kurz": "Wartezeit Kolik"
+        },
+        {
+          "key": "zahn",
+          "label": "Zahnbehandlung und OP im Maul",
+          "kurz": "Zahnbehandlung"
+        },
+        {
+          "key": "kastration",
+          "label": "Kastration (Zuschuss oder Erstattung)",
+          "kurz": "Kastration"
+        },
+        {
+          "key": "physio",
+          "label": "Physiotherapie nach OP",
+          "kurz": "Physiotherapie"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit bei Krankheit",
+          "kurz": "Wartezeit Krankheit"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
-        { "key": "reha", "label": "Reha-Baustein (Physiotherapie nach OP)", "kurz": "Reha-Baustein" },
-        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "reha",
+          "label": "Reha-Baustein (Physiotherapie nach OP)",
+          "kurz": "Reha-Baustein"
+        },
+        {
+          "key": "wechsel",
+          "label": "Wechseloption ohne Gesundheitsprüfung",
+          "kurz": "Wechseloption"
+        }
       ]
     },
     {
@@ -136,25 +477,98 @@
       "produkt": "pferd",
       "formularMatch": "Pferdekranken",
       "merkmale": [
-        { "key": "erstattung", "label": "Erstattung der Tierarztkosten", "kurz": "Erstattung", "standard": true },
-        { "key": "got", "label": "Erstattung bis zum GOT-Satz", "kurz": "GOT bis", "standard": true },
-        { "key": "jhl", "label": "Jahreshöchstleistung", "kurz": "Jahreshöchstleistung", "standard": true },
-        { "key": "ohneOp", "label": "Behandlungen ohne Operation", "kurz": "Behandlung ohne OP", "standard": true },
-        { "key": "vorsorge", "label": "Vorsorge (Impfungen, Entwurmung, Chip)", "kurz": "Vorsorge (Impfung u. a.)", "standard": true },
-        { "key": "chips", "label": "Operative Entfernung von Gelenk-Chips (z. B. OCD)", "kurz": "Gelenk-Chips" },
-        { "key": "kolik", "label": "Wartezeit bei Kolik", "kurz": "Wartezeit Kolik" },
-        { "key": "zahn", "label": "Zahnbehandlung", "kurz": "Zahnbehandlung" },
-        { "key": "kastration", "label": "Kastration (Zuschuss oder Erstattung)", "kurz": "Kastration" },
-        { "key": "physio", "label": "Physiotherapie", "kurz": "Physiotherapie" },
-        { "key": "nachbehandlung", "label": "Nachbehandlung nach OP", "kurz": "Nachbehandlung nach OP" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
-        { "key": "wartezeit", "label": "Wartezeit bei Krankheit", "kurz": "Wartezeit Krankheit" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "erstattung",
+          "label": "Erstattung der Tierarztkosten",
+          "kurz": "Erstattung",
+          "standard": true
+        },
+        {
+          "key": "got",
+          "label": "Erstattung bis zum GOT-Satz",
+          "kurz": "GOT bis",
+          "standard": true
+        },
+        {
+          "key": "jhl",
+          "label": "Jahreshöchstleistung",
+          "kurz": "Jahreshöchstleistung",
+          "standard": true
+        },
+        {
+          "key": "ohneOp",
+          "label": "Behandlungen ohne Operation",
+          "kurz": "Behandlung ohne OP",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorge (Impfungen, Entwurmung, Chip)",
+          "kurz": "Vorsorge (Impfung u. a.)",
+          "standard": true
+        },
+        {
+          "key": "chips",
+          "label": "Operative Entfernung von Gelenk-Chips (z. B. OCD)",
+          "kurz": "Gelenk-Chips"
+        },
+        {
+          "key": "kolik",
+          "label": "Wartezeit bei Kolik",
+          "kurz": "Wartezeit Kolik"
+        },
+        {
+          "key": "zahn",
+          "label": "Zahnbehandlung",
+          "kurz": "Zahnbehandlung"
+        },
+        {
+          "key": "kastration",
+          "label": "Kastration (Zuschuss oder Erstattung)",
+          "kurz": "Kastration"
+        },
+        {
+          "key": "physio",
+          "label": "Physiotherapie",
+          "kurz": "Physiotherapie"
+        },
+        {
+          "key": "nachbehandlung",
+          "label": "Nachbehandlung nach OP",
+          "kurz": "Nachbehandlung nach OP"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit bei Krankheit",
+          "kurz": "Wartezeit Krankheit"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
-        { "key": "reha", "label": "Reha-Baustein (Physiotherapie nach OP)", "kurz": "Reha-Baustein" },
-        { "key": "wechsel", "label": "Wechseloption ohne Gesundheitsprüfung", "kurz": "Wechseloption" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "reha",
+          "label": "Reha-Baustein (Physiotherapie nach OP)",
+          "kurz": "Reha-Baustein"
+        },
+        {
+          "key": "wechsel",
+          "label": "Wechseloption ohne Gesundheitsprüfung",
+          "kurz": "Wechseloption"
+        }
       ]
     },
     {
@@ -163,32 +577,133 @@
       "produkt": "privatschutz",
       "formularMatch": "Haftpflicht",
       "merkmale": [
-        { "key": "vs", "label": "Deckungssumme für Personen-, Sach- und Vermögensschäden", "kurz": "Deckungssumme", "standard": true },
-        { "key": "forderungsausfall", "label": "Forderungsausfall (Schaden durch zahlungsunfähige Dritte)", "kurz": "Forderungsausfall", "standard": true },
-        { "key": "schluessel", "label": "Verlust fremder Schlüssel (privat und beruflich)", "kurz": "Schlüsselverlust", "standard": true },
-        { "key": "delikt", "label": "Schäden durch deliktunfähige Kinder", "kurz": "Deliktunfähige Kinder", "standard": true },
-        { "key": "geliehen", "label": "Schäden an geliehenen oder gemieteten Sachen", "kurz": "Geliehene Sachen", "standard": true },
-        { "key": "miete", "label": "Mietsachschäden an Wohnräumen", "kurz": "Mietsachschäden Wohnung" },
-        { "key": "gefaelligkeit", "label": "Gefälligkeitsschäden", "kurz": "Gefälligkeitsschäden" },
-        { "key": "neuwert", "label": "Neuwert statt Zeitwert für beschädigte Sachen", "kurz": "Neuwert statt Zeitwert" },
-        { "key": "mallorca", "label": "Fremde Autos im Ausland (Mallorca-Deckung)", "kurz": "Mallorca-Deckung" },
-        { "key": "rabattretter", "label": "Rabattretter bei Unfall mit geliehenem Auto", "kurz": "Rabattretter (fremdes Auto)" },
-        { "key": "drohne", "label": "Drohnen und Flugmodelle", "kurz": "Drohnen und Flugmodelle" },
-        { "key": "nebenberuf", "label": "Selbstständige Nebentätigkeit", "kurz": "Nebenberufliche Tätigkeit" },
-        { "key": "ehrenamt", "label": "Ehrenamtliche Tätigkeit", "kurz": "Ehrenamt" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" }
+        {
+          "key": "vs",
+          "label": "Deckungssumme für Personen-, Sach- und Vermögensschäden",
+          "kurz": "Deckungssumme",
+          "standard": true
+        },
+        {
+          "key": "forderungsausfall",
+          "label": "Forderungsausfall (Schaden durch zahlungsunfähige Dritte)",
+          "kurz": "Forderungsausfall",
+          "standard": true
+        },
+        {
+          "key": "schluessel",
+          "label": "Verlust fremder Schlüssel (privat und beruflich)",
+          "kurz": "Schlüsselverlust",
+          "standard": true
+        },
+        {
+          "key": "delikt",
+          "label": "Schäden durch deliktunfähige Kinder",
+          "kurz": "Deliktunfähige Kinder",
+          "standard": true
+        },
+        {
+          "key": "geliehen",
+          "label": "Schäden an geliehenen oder gemieteten Sachen",
+          "kurz": "Geliehene Sachen",
+          "standard": true
+        },
+        {
+          "key": "miete",
+          "label": "Mietsachschäden an Wohnräumen",
+          "kurz": "Mietsachschäden Wohnung"
+        },
+        {
+          "key": "gefaelligkeit",
+          "label": "Gefälligkeitsschäden",
+          "kurz": "Gefälligkeitsschäden"
+        },
+        {
+          "key": "neuwert",
+          "label": "Neuwert statt Zeitwert für beschädigte Sachen",
+          "kurz": "Neuwert statt Zeitwert"
+        },
+        {
+          "key": "mallorca",
+          "label": "Fremde Autos im Ausland (Mallorca-Deckung)",
+          "kurz": "Mallorca-Deckung"
+        },
+        {
+          "key": "rabattretter",
+          "label": "Rabattretter bei Unfall mit geliehenem Auto",
+          "kurz": "Rabattretter (fremdes Auto)"
+        },
+        {
+          "key": "drohne",
+          "label": "Drohnen und Flugmodelle",
+          "kurz": "Drohnen und Flugmodelle"
+        },
+        {
+          "key": "nebenberuf",
+          "label": "Selbstständige Nebentätigkeit",
+          "kurz": "Nebenberufliche Tätigkeit"
+        },
+        {
+          "key": "ehrenamt",
+          "label": "Ehrenamtliche Tätigkeit",
+          "kurz": "Ehrenamt"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        }
       ],
       "bausteine": [
-        { "key": "dienst", "label": "Dienst-Haftpflicht (öffentlicher Dienst)", "kurz": "Diensthaftpflicht" },
-        { "key": "schluesselBeruf", "label": "Verlust beruflicher Schlüssel", "kurz": "Berufsschlüssel" },
-        { "key": "oeltank", "label": "Öltank-Haftpflicht", "kurz": "Öltank" },
-        { "key": "wohnung", "label": "Haftpflicht für eine vermietete Wohnung", "kurz": "Vermietete Wohnung" },
-        { "key": "delikt", "label": "Schäden durch deliktunfähige Kinder", "kurz": "Deliktunfähigkeit" },
-        { "key": "hausbesitz", "label": "Selbst genutztes Haus (Haus- und Grundbesitz)", "kurz": "Hausbesitz" },
-        { "key": "auto", "label": "Schäden an geliehenen oder gemieteten Autos", "kurz": "Geliehenes Auto" },
-        { "key": "tiere", "label": "Hund oder Pferd mitversichern", "kurz": "Hund oder Pferd" },
-        { "key": "cyber", "label": "Cyber (Urheberrecht, Cyber-Mobbing)", "kurz": "Cyber" },
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" }
+        {
+          "key": "dienst",
+          "label": "Dienst-Haftpflicht (öffentlicher Dienst)",
+          "kurz": "Diensthaftpflicht"
+        },
+        {
+          "key": "schluesselBeruf",
+          "label": "Verlust beruflicher Schlüssel",
+          "kurz": "Berufsschlüssel"
+        },
+        {
+          "key": "oeltank",
+          "label": "Öltank-Haftpflicht",
+          "kurz": "Öltank"
+        },
+        {
+          "key": "wohnung",
+          "label": "Haftpflicht für eine vermietete Wohnung",
+          "kurz": "Vermietete Wohnung"
+        },
+        {
+          "key": "delikt",
+          "label": "Schäden durch deliktunfähige Kinder",
+          "kurz": "Deliktunfähigkeit"
+        },
+        {
+          "key": "hausbesitz",
+          "label": "Selbst genutztes Haus (Haus- und Grundbesitz)",
+          "kurz": "Hausbesitz"
+        },
+        {
+          "key": "auto",
+          "label": "Schäden an geliehenen oder gemieteten Autos",
+          "kurz": "Geliehenes Auto"
+        },
+        {
+          "key": "tiere",
+          "label": "Hund oder Pferd mitversichern",
+          "kurz": "Hund oder Pferd"
+        },
+        {
+          "key": "cyber",
+          "label": "Cyber (Urheberrecht, Cyber-Mobbing)",
+          "kurz": "Cyber"
+        },
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        }
       ]
     },
     {
@@ -197,30 +712,123 @@
       "produkt": "privatschutz",
       "formularMatch": "Hausrat",
       "merkmale": [
-        { "key": "gf", "label": "Grobe Fahrlässigkeit", "kurz": "Grobe Fahrlässigkeit", "standard": true },
-        { "key": "wert", "label": "Wertsachen (Anteil der Versicherungssumme)", "kurz": "Wertsachen", "standard": true },
-        { "key": "diebstahl", "label": "Einfacher Diebstahl in der Wohnung", "kurz": "Einfacher Diebstahl", "standard": true },
-        { "key": "fahrrad", "label": "Fahrraddiebstahl", "kurz": "Fahrraddiebstahl", "standard": true },
-        { "key": "elementar", "label": "Elementarschäden (Überschwemmung, Rückstau)", "kurz": "Elementarschäden", "standard": true },
-        { "key": "online", "label": "Online-Betrug (Phishing, Pharming)", "kurz": "Online-Betrug" },
-        { "key": "vs", "label": "Empfohlene Versicherungssumme je m²", "kurz": "Versicherungssumme je m²" },
-        { "key": "bargeld", "label": "Bargeld außerhalb eines Tresors", "kurz": "Bargeld (ohne Tresor)" },
-        { "key": "garten", "label": "Diebstahl aus dem Garten", "kurz": "Diebstahl im Garten" },
-        { "key": "auto", "label": "Diebstahl aus dem Auto", "kurz": "Diebstahl aus dem Auto" },
-        { "key": "allgefahren", "label": "Allgefahrendeckung (Beschädigung aller Art)", "kurz": "Allgefahrendeckung" },
-        { "key": "ueberspannung", "label": "Überspannung durch Blitz", "kurz": "Überspannung durch Blitz" },
-        { "key": "hotel", "label": "Hotelkosten nach einem Schaden", "kurz": "Hotelkosten" },
-        { "key": "aussen", "label": "Außenversicherung (Hausrat unterwegs)", "kurz": "Außenversicherung" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" }
+        {
+          "key": "gf",
+          "label": "Grobe Fahrlässigkeit",
+          "kurz": "Grobe Fahrlässigkeit",
+          "standard": true
+        },
+        {
+          "key": "wert",
+          "label": "Wertsachen (Anteil der Versicherungssumme)",
+          "kurz": "Wertsachen",
+          "standard": true
+        },
+        {
+          "key": "diebstahl",
+          "label": "Einfacher Diebstahl in der Wohnung",
+          "kurz": "Einfacher Diebstahl",
+          "standard": true
+        },
+        {
+          "key": "fahrrad",
+          "label": "Fahrraddiebstahl",
+          "kurz": "Fahrraddiebstahl",
+          "standard": true
+        },
+        {
+          "key": "elementar",
+          "label": "Elementarschäden (Überschwemmung, Rückstau)",
+          "kurz": "Elementarschäden",
+          "standard": true
+        },
+        {
+          "key": "online",
+          "label": "Online-Betrug (Phishing, Pharming)",
+          "kurz": "Online-Betrug"
+        },
+        {
+          "key": "vs",
+          "label": "Empfohlene Versicherungssumme je m²",
+          "kurz": "Versicherungssumme je m²"
+        },
+        {
+          "key": "bargeld",
+          "label": "Bargeld außerhalb eines Tresors",
+          "kurz": "Bargeld (ohne Tresor)"
+        },
+        {
+          "key": "garten",
+          "label": "Diebstahl aus dem Garten",
+          "kurz": "Diebstahl im Garten"
+        },
+        {
+          "key": "auto",
+          "label": "Diebstahl aus dem Auto",
+          "kurz": "Diebstahl aus dem Auto"
+        },
+        {
+          "key": "allgefahren",
+          "label": "Allgefahrendeckung (Beschädigung aller Art)",
+          "kurz": "Allgefahrendeckung"
+        },
+        {
+          "key": "ueberspannung",
+          "label": "Überspannung durch Blitz",
+          "kurz": "Überspannung durch Blitz"
+        },
+        {
+          "key": "hotel",
+          "label": "Hotelkosten nach einem Schaden",
+          "kurz": "Hotelkosten"
+        },
+        {
+          "key": "aussen",
+          "label": "Außenversicherung (Hausrat unterwegs)",
+          "kurz": "Außenversicherung"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        }
       ],
       "bausteine": [
-        { "key": "fahrrad", "label": "Fahrraddiebstahl", "kurz": "Fahrrad" },
-        { "key": "elementar", "label": "Elementarschäden", "kurz": "Elementar" },
-        { "key": "glas", "label": "Glasbruch", "kurz": "Glas" },
-        { "key": "internet", "label": "Internetschutz (Online-Betrug)", "kurz": "Internetschutz" },
-        { "key": "notfall", "label": "Notfall-Service Zuhause", "kurz": "Notfall-Service" },
-        { "key": "reise", "label": "Reisegepäck und Sachen unterwegs", "kurz": "Unterwegs" },
-        { "key": "smarthome", "label": "Smart Home (vernetzte Geräte, Allgefahren)", "kurz": "Smart Home" }
+        {
+          "key": "fahrrad",
+          "label": "Fahrraddiebstahl",
+          "kurz": "Fahrrad"
+        },
+        {
+          "key": "elementar",
+          "label": "Elementarschäden",
+          "kurz": "Elementar"
+        },
+        {
+          "key": "glas",
+          "label": "Glasbruch",
+          "kurz": "Glas"
+        },
+        {
+          "key": "internet",
+          "label": "Internetschutz (Online-Betrug)",
+          "kurz": "Internetschutz"
+        },
+        {
+          "key": "notfall",
+          "label": "Notfall-Service Zuhause",
+          "kurz": "Notfall-Service"
+        },
+        {
+          "key": "reise",
+          "label": "Reisegepäck und Sachen unterwegs",
+          "kurz": "Unterwegs"
+        },
+        {
+          "key": "smarthome",
+          "label": "Smart Home (vernetzte Geräte, Allgefahren)",
+          "kurz": "Smart Home"
+        }
       ]
     },
     {
@@ -229,27 +837,108 @@
       "produkt": "privatschutz",
       "formularMatch": "Rechtsschutz",
       "merkmale": [
-        { "key": "vs", "label": "Versicherungssumme", "kurz": "Versicherungssumme", "standard": true },
-        { "key": "beruf", "label": "Berufs-Rechtsschutz (Arbeitsrecht)", "kurz": "Beruf", "standard": true },
-        { "key": "verkehr", "label": "Verkehrs-Rechtsschutz", "kurz": "Verkehr", "standard": true },
-        { "key": "wohnen", "label": "Wohnungs- und Grundstücks-Rechtsschutz", "kurz": "Wohnen (Miete, Eigentum)", "standard": true },
-        { "key": "kaution", "label": "Strafkaution (als Darlehen)", "kurz": "Strafkaution (Darlehen)", "standard": true },
-        { "key": "privat", "label": "Privat-Rechtsschutz", "kurz": "Privat" },
-        { "key": "privatPlus", "label": "Erweiterte Leistungen im Privat-Rechtsschutz", "kurz": "Privat erweitert" },
-        { "key": "vsWelt", "label": "Versicherungssumme weltweit", "kurz": "Summe weltweit" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" },
-        { "key": "wartezeit", "label": "Wartezeit (Privat, Beruf, Wohnen)", "kurz": "Wartezeit" },
-        { "key": "opfer", "label": "Opfer-Rechtsschutz", "kurz": "Opfer-Rechtsschutz" },
-        { "key": "straf", "label": "Straf-Rechtsschutz", "kurz": "Straf-Rechtsschutz" },
-        { "key": "mediation", "label": "Mediation", "kurz": "Mediation" },
-        { "key": "telefon", "label": "Telefonische Rechtsberatung", "kurz": "Telefonberatung" }
+        {
+          "key": "vs",
+          "label": "Versicherungssumme",
+          "kurz": "Versicherungssumme",
+          "standard": true
+        },
+        {
+          "key": "beruf",
+          "label": "Berufs-Rechtsschutz (Arbeitsrecht)",
+          "kurz": "Beruf",
+          "standard": true
+        },
+        {
+          "key": "verkehr",
+          "label": "Verkehrs-Rechtsschutz",
+          "kurz": "Verkehr",
+          "standard": true
+        },
+        {
+          "key": "wohnen",
+          "label": "Wohnungs- und Grundstücks-Rechtsschutz",
+          "kurz": "Wohnen (Miete, Eigentum)",
+          "standard": true
+        },
+        {
+          "key": "kaution",
+          "label": "Strafkaution (als Darlehen)",
+          "kurz": "Strafkaution (Darlehen)",
+          "standard": true
+        },
+        {
+          "key": "privat",
+          "label": "Privat-Rechtsschutz",
+          "kurz": "Privat"
+        },
+        {
+          "key": "privatPlus",
+          "label": "Erweiterte Leistungen im Privat-Rechtsschutz",
+          "kurz": "Privat erweitert"
+        },
+        {
+          "key": "vsWelt",
+          "label": "Versicherungssumme weltweit",
+          "kurz": "Summe weltweit"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit (Privat, Beruf, Wohnen)",
+          "kurz": "Wartezeit"
+        },
+        {
+          "key": "opfer",
+          "label": "Opfer-Rechtsschutz",
+          "kurz": "Opfer-Rechtsschutz"
+        },
+        {
+          "key": "straf",
+          "label": "Straf-Rechtsschutz",
+          "kurz": "Straf-Rechtsschutz"
+        },
+        {
+          "key": "mediation",
+          "label": "Mediation",
+          "kurz": "Mediation"
+        },
+        {
+          "key": "telefon",
+          "label": "Telefonische Rechtsberatung",
+          "kurz": "Telefonberatung"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" },
-        { "key": "beruf", "label": "Berufs-Rechtsschutz", "kurz": "Beruf" },
-        { "key": "verkehr", "label": "Verkehrs-Rechtsschutz", "kurz": "Verkehr" },
-        { "key": "wohnen", "label": "Wohnungs- und Grundstücks-Rechtsschutz", "kurz": "Wohnen" },
-        { "key": "vermieter", "label": "Rechtsschutz für vermietete Immobilien", "kurz": "Vermieter" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "beruf",
+          "label": "Berufs-Rechtsschutz",
+          "kurz": "Beruf"
+        },
+        {
+          "key": "verkehr",
+          "label": "Verkehrs-Rechtsschutz",
+          "kurz": "Verkehr"
+        },
+        {
+          "key": "wohnen",
+          "label": "Wohnungs- und Grundstücks-Rechtsschutz",
+          "kurz": "Wohnen"
+        },
+        {
+          "key": "vermieter",
+          "label": "Rechtsschutz für vermietete Immobilien",
+          "kurz": "Vermieter"
+        }
       ]
     },
     {
@@ -258,30 +947,123 @@
       "produkt": "privatschutz",
       "formularMatch": "Wohngebäude",
       "merkmale": [
-        { "key": "gf", "label": "Grobe Fahrlässigkeit", "kurz": "Grobe Fahrlässigkeit", "standard": true },
-        { "key": "elementar", "label": "Elementarschäden (Überschwemmung, Rückstau)", "kurz": "Elementarschäden", "standard": true },
-        { "key": "ableitung", "label": "Bruchschäden an Ableitungsrohren außerhalb des Gebäudes", "kurz": "Ableitungsrohre", "standard": true },
-        { "key": "pv", "label": "Photovoltaik, Solarthermie und Wärmepumpe (erweiterte Deckung)", "kurz": "Photovoltaik, Wärmepumpe", "standard": true },
-        { "key": "kosten", "label": "Kosten nach einem Schaden (z. B. Aufräumen, Hotel, Mietausfall)", "kurz": "Kosten nach Schaden", "standard": true },
-        { "key": "neuwert", "label": "Gleitender Neuwert", "kurz": "Gleitender Neuwert" },
-        { "key": "ueberspannung", "label": "Überspannung durch Blitz", "kurz": "Überspannung durch Blitz" },
-        { "key": "fugen", "label": "Nässeschäden durch undichte Fugen (Bad, Dusche)", "kurz": "Undichte Fugen" },
-        { "key": "vandalismus", "label": "Vandalismus und Diebstahl im Freien", "kurz": "Vandalismus, Diebstahl" },
-        { "key": "tiere", "label": "Schäden durch wildlebende Tiere (z. B. Marder)", "kurz": "Marder und Wildtiere" },
-        { "key": "allgefahren", "label": "Allgefahrenschutz (unbenannte Gefahren)", "kurz": "Allgefahrenschutz" },
-        { "key": "mietausfall", "label": "Mietausfall nach einem Schaden", "kurz": "Mietausfall" },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung" }
+        {
+          "key": "gf",
+          "label": "Grobe Fahrlässigkeit",
+          "kurz": "Grobe Fahrlässigkeit",
+          "standard": true
+        },
+        {
+          "key": "elementar",
+          "label": "Elementarschäden (Überschwemmung, Rückstau)",
+          "kurz": "Elementarschäden",
+          "standard": true
+        },
+        {
+          "key": "ableitung",
+          "label": "Bruchschäden an Ableitungsrohren außerhalb des Gebäudes",
+          "kurz": "Ableitungsrohre",
+          "standard": true
+        },
+        {
+          "key": "pv",
+          "label": "Photovoltaik, Solarthermie und Wärmepumpe (erweiterte Deckung)",
+          "kurz": "Photovoltaik, Wärmepumpe",
+          "standard": true
+        },
+        {
+          "key": "kosten",
+          "label": "Kosten nach einem Schaden (z. B. Aufräumen, Hotel, Mietausfall)",
+          "kurz": "Kosten nach Schaden",
+          "standard": true
+        },
+        {
+          "key": "neuwert",
+          "label": "Gleitender Neuwert",
+          "kurz": "Gleitender Neuwert"
+        },
+        {
+          "key": "ueberspannung",
+          "label": "Überspannung durch Blitz",
+          "kurz": "Überspannung durch Blitz"
+        },
+        {
+          "key": "fugen",
+          "label": "Nässeschäden durch undichte Fugen (Bad, Dusche)",
+          "kurz": "Undichte Fugen"
+        },
+        {
+          "key": "vandalismus",
+          "label": "Vandalismus und Diebstahl im Freien",
+          "kurz": "Vandalismus, Diebstahl"
+        },
+        {
+          "key": "tiere",
+          "label": "Schäden durch wildlebende Tiere (z. B. Marder)",
+          "kurz": "Marder und Wildtiere"
+        },
+        {
+          "key": "allgefahren",
+          "label": "Allgefahrenschutz (unbenannte Gefahren)",
+          "kurz": "Allgefahrenschutz"
+        },
+        {
+          "key": "mietausfall",
+          "label": "Mietausfall nach einem Schaden",
+          "kurz": "Mietausfall"
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung"
+        }
       ],
       "bausteine": [
-        { "key": "elementar", "label": "Elementarschäden (Extremwetter)", "kurz": "Elementar" },
-        { "key": "glas", "label": "Glasbruch Gebäude", "kurz": "Glas" },
-        { "key": "technik", "label": "Haus- und Technikschutz", "kurz": "Haus- und Technik" },
-        { "key": "erneuerbar", "label": "Erneuerbare Energien (Photovoltaik, Wärmepumpe)", "kurz": "Erneuerbare Energien" },
-        { "key": "smarthome", "label": "Smart Home (Haustechnik, Photovoltaik)", "kurz": "Smart Home" },
-        { "key": "ableitung", "label": "Ableitungsrohre auf und außerhalb des Grundstücks", "kurz": "Ableitungsrohre" },
-        { "key": "oeltank", "label": "Öltank-Haftpflicht", "kurz": "Öltank" },
-        { "key": "hausHaftpflicht", "label": "Haus- und Grundbesitzer-Haftpflicht", "kurz": "Haus-Haftpflicht" },
-        { "key": "notfall", "label": "Notfall-Service Zuhause", "kurz": "Notfall-Service" }
+        {
+          "key": "elementar",
+          "label": "Elementarschäden (Extremwetter)",
+          "kurz": "Elementar"
+        },
+        {
+          "key": "glas",
+          "label": "Glasbruch Gebäude",
+          "kurz": "Glas"
+        },
+        {
+          "key": "technik",
+          "label": "Haus- und Technikschutz",
+          "kurz": "Haus- und Technik"
+        },
+        {
+          "key": "erneuerbar",
+          "label": "Erneuerbare Energien (Photovoltaik, Wärmepumpe)",
+          "kurz": "Erneuerbare Energien"
+        },
+        {
+          "key": "smarthome",
+          "label": "Smart Home (Haustechnik, Photovoltaik)",
+          "kurz": "Smart Home"
+        },
+        {
+          "key": "ableitung",
+          "label": "Ableitungsrohre auf und außerhalb des Grundstücks",
+          "kurz": "Ableitungsrohre"
+        },
+        {
+          "key": "oeltank",
+          "label": "Öltank-Haftpflicht",
+          "kurz": "Öltank"
+        },
+        {
+          "key": "hausHaftpflicht",
+          "label": "Haus- und Grundbesitzer-Haftpflicht",
+          "kurz": "Haus-Haftpflicht"
+        },
+        {
+          "key": "notfall",
+          "label": "Notfall-Service Zuhause",
+          "kurz": "Notfall-Service"
+        }
       ]
     },
     {
@@ -290,20 +1072,73 @@
       "produkt": "hund",
       "formularMatch": "Hundehaftpflicht",
       "merkmale": [
-        { "key": "vs", "label": "Deckungssumme für Personen-, Sach- und Vermögensschäden", "kurz": "Deckungssumme", "standard": true },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung", "standard": true },
-        { "key": "miete", "label": "Mietsachschäden an gemieteten Räumen", "kurz": "Mietsachschäden", "standard": true },
-        { "key": "fremdhueter", "label": "Fremde Hüter mitversichert (nicht gewerbsmäßig)", "kurz": "Fremde Hüter mitversichert", "standard": true },
-        { "key": "welpen", "label": "Welpen mitversichert", "kurz": "Welpen mitversichert", "standard": true },
-        { "key": "forderungsausfall", "label": "Forderungsausfall", "kurz": "Forderungsausfall" },
-        { "key": "geliehen", "label": "Schäden an geliehenen oder gemieteten Sachen", "kurz": "Geliehene Sachen" },
-        { "key": "neuwert", "label": "Neuwert statt Zeitwert für beschädigte Sachen", "kurz": "Neuwert statt Zeitwert" },
-        { "key": "tiergefahr", "label": "Verzicht auf Mitschuld des Hüters (Tiergefahr)", "kurz": "Verzicht Mitschuld Hüter" },
-        { "key": "nebenberuf", "label": "Nebenberufliche Nutzung des Hundes", "kurz": "Nebenberufliche Nutzung" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "vs",
+          "label": "Deckungssumme für Personen-, Sach- und Vermögensschäden",
+          "kurz": "Deckungssumme",
+          "standard": true
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung",
+          "standard": true
+        },
+        {
+          "key": "miete",
+          "label": "Mietsachschäden an gemieteten Räumen",
+          "kurz": "Mietsachschäden",
+          "standard": true
+        },
+        {
+          "key": "fremdhueter",
+          "label": "Fremde Hüter mitversichert (nicht gewerbsmäßig)",
+          "kurz": "Fremde Hüter mitversichert",
+          "standard": true
+        },
+        {
+          "key": "welpen",
+          "label": "Welpen mitversichert",
+          "kurz": "Welpen mitversichert",
+          "standard": true
+        },
+        {
+          "key": "forderungsausfall",
+          "label": "Forderungsausfall",
+          "kurz": "Forderungsausfall"
+        },
+        {
+          "key": "geliehen",
+          "label": "Schäden an geliehenen oder gemieteten Sachen",
+          "kurz": "Geliehene Sachen"
+        },
+        {
+          "key": "neuwert",
+          "label": "Neuwert statt Zeitwert für beschädigte Sachen",
+          "kurz": "Neuwert statt Zeitwert"
+        },
+        {
+          "key": "tiergefahr",
+          "label": "Verzicht auf Mitschuld des Hüters (Tiergefahr)",
+          "kurz": "Verzicht Mitschuld Hüter"
+        },
+        {
+          "key": "nebenberuf",
+          "label": "Nebenberufliche Nutzung des Hundes",
+          "kurz": "Nebenberufliche Nutzung"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        }
       ]
     },
     {
@@ -312,21 +1147,78 @@
       "produkt": "pferd",
       "formularMatch": "Pferdehaftpflicht",
       "merkmale": [
-        { "key": "vs", "label": "Deckungssumme für Personen-, Sach- und Vermögensschäden", "kurz": "Deckungssumme", "standard": true },
-        { "key": "sb", "label": "Selbstbeteiligung", "kurz": "Selbstbeteiligung", "standard": true },
-        { "key": "miete", "label": "Mietsachschäden (z. B. Stall, Box, Koppelzaun)", "kurz": "Mietsachschäden", "standard": true },
-        { "key": "reitbeteiligung", "label": "Reitbeteiligung und Fremdreiter mitversichert", "kurz": "Reitbeteiligung, Fremdreiter", "standard": true },
-        { "key": "flurschaden", "label": "Flurschäden", "kurz": "Flurschäden", "standard": true },
-        { "key": "fohlen", "label": "Fohlen mitversichert", "kurz": "Fohlen mitversichert" },
-        { "key": "forderungsausfall", "label": "Forderungsausfall", "kurz": "Forderungsausfall" },
-        { "key": "geliehen", "label": "Schäden an geliehenen oder gemieteten Sachen", "kurz": "Geliehene Sachen" },
-        { "key": "neuwert", "label": "Neuwert statt Zeitwert für beschädigte Sachen", "kurz": "Neuwert statt Zeitwert" },
-        { "key": "tiergefahr", "label": "Verzicht auf Mitschuld des Hüters (Tiergefahr)", "kurz": "Verzicht Mitschuld Hüter" },
-        { "key": "nebenberuf", "label": "Nebenberufliche Nutzung des Pferdes", "kurz": "Nebenberufliche Nutzung" },
-        { "key": "ausland", "label": "Schutz im Ausland", "kurz": "Schutz im Ausland" }
+        {
+          "key": "vs",
+          "label": "Deckungssumme für Personen-, Sach- und Vermögensschäden",
+          "kurz": "Deckungssumme",
+          "standard": true
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung",
+          "standard": true
+        },
+        {
+          "key": "miete",
+          "label": "Mietsachschäden (z. B. Stall, Box, Koppelzaun)",
+          "kurz": "Mietsachschäden",
+          "standard": true
+        },
+        {
+          "key": "reitbeteiligung",
+          "label": "Reitbeteiligung und Fremdreiter mitversichert",
+          "kurz": "Reitbeteiligung, Fremdreiter",
+          "standard": true
+        },
+        {
+          "key": "flurschaden",
+          "label": "Flurschäden",
+          "kurz": "Flurschäden",
+          "standard": true
+        },
+        {
+          "key": "fohlen",
+          "label": "Fohlen mitversichert",
+          "kurz": "Fohlen mitversichert"
+        },
+        {
+          "key": "forderungsausfall",
+          "label": "Forderungsausfall",
+          "kurz": "Forderungsausfall"
+        },
+        {
+          "key": "geliehen",
+          "label": "Schäden an geliehenen oder gemieteten Sachen",
+          "kurz": "Geliehene Sachen"
+        },
+        {
+          "key": "neuwert",
+          "label": "Neuwert statt Zeitwert für beschädigte Sachen",
+          "kurz": "Neuwert statt Zeitwert"
+        },
+        {
+          "key": "tiergefahr",
+          "label": "Verzicht auf Mitschuld des Hüters (Tiergefahr)",
+          "kurz": "Verzicht Mitschuld Hüter"
+        },
+        {
+          "key": "nebenberuf",
+          "label": "Nebenberufliche Nutzung des Pferdes",
+          "kurz": "Nebenberufliche Nutzung"
+        },
+        {
+          "key": "ausland",
+          "label": "Schutz im Ausland",
+          "kurz": "Schutz im Ausland"
+        }
       ],
       "bausteine": [
-        { "key": "sb0", "label": "Ohne Selbstbeteiligung", "kurz": "Ohne SB" }
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        }
       ]
     },
     {
@@ -335,22 +1227,940 @@
       "produkt": "privatschutz",
       "formularMatch": "Unfall",
       "merkmale": [
-        { "key": "grundsumme", "label": "Invaliditätssumme (Grundsumme)", "kurz": "Invaliditätssumme", "standard": true },
-        { "key": "progression", "label": "Progression", "kurz": "Progression", "standard": true },
-        { "key": "abGrad", "label": "Leistung ab Invaliditätsgrad", "kurz": "Leistung ab Invalidität", "standard": true },
-        { "key": "unfallrente", "label": "Unfallrente (monatlich)", "kurz": "Unfallrente", "standard": true },
-        { "key": "khtg", "label": "Krankenhaustagegeld", "kurz": "Krankenhaustagegeld", "standard": true },
-        { "key": "maxInvaliditaet", "label": "Höchstleistung bei Vollinvalidität", "kurz": "Höchstleistung Invalidität" },
-        { "key": "todesfall", "label": "Todesfallleistung", "kurz": "Todesfallleistung" },
-        { "key": "sofort", "label": "Sofortleistung bei schweren Verletzungen", "kurz": "Sofortleistung" },
-        { "key": "kosmetik", "label": "Kosmetische Operationen", "kurz": "Kosmetische OP" },
-        { "key": "bergung", "label": "Such-, Rettungs- und Bergungskosten", "kurz": "Bergungskosten" },
-        { "key": "zecken", "label": "Infektionen durch Zeckenstich", "kurz": "Zeckenstich" },
-        { "key": "gliedertaxe", "label": "Verbesserte Gliedertaxe", "kurz": "Verbesserte Gliedertaxe" }
+        {
+          "key": "grundsumme",
+          "label": "Invaliditätssumme (Grundsumme)",
+          "kurz": "Invaliditätssumme",
+          "standard": true
+        },
+        {
+          "key": "progression",
+          "label": "Progression",
+          "kurz": "Progression",
+          "standard": true
+        },
+        {
+          "key": "abGrad",
+          "label": "Leistung ab Invaliditätsgrad",
+          "kurz": "Leistung ab Invalidität",
+          "standard": true
+        },
+        {
+          "key": "unfallrente",
+          "label": "Unfallrente (monatlich)",
+          "kurz": "Unfallrente",
+          "standard": true
+        },
+        {
+          "key": "khtg",
+          "label": "Krankenhaustagegeld",
+          "kurz": "Krankenhaustagegeld",
+          "standard": true
+        },
+        {
+          "key": "maxInvaliditaet",
+          "label": "Höchstleistung bei Vollinvalidität",
+          "kurz": "Höchstleistung Invalidität"
+        },
+        {
+          "key": "todesfall",
+          "label": "Todesfallleistung",
+          "kurz": "Todesfallleistung"
+        },
+        {
+          "key": "sofort",
+          "label": "Sofortleistung bei schweren Verletzungen",
+          "kurz": "Sofortleistung"
+        },
+        {
+          "key": "kosmetik",
+          "label": "Kosmetische Operationen",
+          "kurz": "Kosmetische OP"
+        },
+        {
+          "key": "bergung",
+          "label": "Such-, Rettungs- und Bergungskosten",
+          "kurz": "Bergungskosten"
+        },
+        {
+          "key": "zecken",
+          "label": "Infektionen durch Zeckenstich",
+          "kurz": "Zeckenstich"
+        },
+        {
+          "key": "gliedertaxe",
+          "label": "Verbesserte Gliedertaxe",
+          "kurz": "Verbesserte Gliedertaxe"
+        }
       ],
       "bausteine": [
-        { "key": "rente", "label": "Unfallrente", "kurz": "Unfallrente" },
-        { "key": "tagegeld", "label": "Krankenhaustagegeld", "kurz": "Krankenhaustagegeld" }
+        {
+          "key": "rente",
+          "label": "Unfallrente",
+          "kurz": "Unfallrente"
+        },
+        {
+          "key": "tagegeld",
+          "label": "Krankenhaustagegeld",
+          "kurz": "Krankenhaustagegeld"
+        }
+      ]
+    },
+    {
+      "key": "bu",
+      "label": "Berufsunfähigkeit",
+      "formularMatch": "Berufsunfähigkeit",
+      "merkmale": [
+        {
+          "key": "verweisung",
+          "label": "Verzicht auf abstrakte Verweisung",
+          "kurz": "Keine abstrakte Verweisung",
+          "standard": true
+        },
+        {
+          "key": "prognose",
+          "label": "Prognosezeitraum (6 Monate)",
+          "kurz": "Prognose 6 Monate",
+          "standard": true
+        },
+        {
+          "key": "au",
+          "label": "Leistung bei Arbeitsunfähigkeit (AU-Klausel)",
+          "kurz": "AU-Klausel",
+          "standard": true
+        },
+        {
+          "key": "nachversicherung",
+          "label": "Nachversicherung ohne Gesundheitsprüfung",
+          "kurz": "Nachversicherung",
+          "standard": true
+        },
+        {
+          "key": "rueckwirkend",
+          "label": "Rückwirkende Leistung bei verspäteter Meldung",
+          "kurz": "Rückwirkende Leistung",
+          "standard": true
+        },
+        {
+          "key": "weltweit",
+          "label": "Weltweiter Versicherungsschutz",
+          "kurz": "Weltweit"
+        },
+        {
+          "key": "teilzeit",
+          "label": "Teilzeitklausel",
+          "kurz": "Teilzeitklausel"
+        },
+        {
+          "key": "umorganisation",
+          "label": "Verzicht auf Umorganisation (Selbstständige)",
+          "kurz": "Keine Umorganisation"
+        },
+        {
+          "key": "pflege",
+          "label": "Leistung bei Pflegebedürftigkeit",
+          "kurz": "Leistung bei Pflege"
+        },
+        {
+          "key": "stundung",
+          "label": "Beitragsstundung",
+          "kurz": "Beitragsstundung"
+        },
+        {
+          "key": "dynamik",
+          "label": "Beitrags- und Leistungsdynamik",
+          "kurz": "Dynamik"
+        },
+        {
+          "key": "infektion",
+          "label": "Infektionsklausel",
+          "kurz": "Infektionsklausel"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "au",
+          "label": "AU-Klausel",
+          "kurz": "AU-Klausel"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        },
+        {
+          "key": "pflege",
+          "label": "Pflegerente",
+          "kurz": "Pflegerente"
+        }
+      ]
+    },
+    {
+      "key": "risikoleben",
+      "label": "Risikolebensversicherung",
+      "formularMatch": "Risikoleben",
+      "merkmale": [
+        {
+          "key": "nachversicherung",
+          "label": "Nachversicherung ohne Gesundheitsprüfung",
+          "kurz": "Nachversicherung",
+          "standard": true
+        },
+        {
+          "key": "vorgezogen",
+          "label": "Vorgezogene Leistung bei schwerer Krankheit",
+          "kurz": "Vorgezogene Leistung",
+          "standard": true
+        },
+        {
+          "key": "verlaengerung",
+          "label": "Verlängerungsoption ohne Gesundheitsprüfung",
+          "kurz": "Verlängerungsoption",
+          "standard": true
+        },
+        {
+          "key": "umtausch",
+          "label": "Umtauschrecht in Kapitalversicherung",
+          "kurz": "Umtauschrecht",
+          "standard": true
+        },
+        {
+          "key": "weltweit",
+          "label": "Weltweiter Versicherungsschutz",
+          "kurz": "Weltweit",
+          "standard": true
+        },
+        {
+          "key": "laufzeit",
+          "label": "Höchstes Endalter",
+          "kurz": "Höchstes Endalter"
+        },
+        {
+          "key": "kinder",
+          "label": "Kinder-Nachversicherung",
+          "kurz": "Kinder-Nachversicherung"
+        },
+        {
+          "key": "summe",
+          "label": "Höchste Versicherungssumme ohne Zusatzprüfung",
+          "kurz": "Summe ohne Zusatzprüfung"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "fallend",
+          "label": "Fallende Summe (Kredit)",
+          "kurz": "Für Kredite"
+        },
+        {
+          "key": "verbunden",
+          "label": "Verbundene Leben (Paare)",
+          "kurz": "Für Paare"
+        }
+      ]
+    },
+    {
+      "key": "grundfaehigkeit",
+      "label": "Grundfähigkeit",
+      "formularMatch": "Grundfähigkeit",
+      "merkmale": [
+        {
+          "key": "anzahl",
+          "label": "Versicherte Grundfähigkeiten",
+          "kurz": "Grundfähigkeiten",
+          "standard": true
+        },
+        {
+          "key": "prognose",
+          "label": "Prognosezeitraum",
+          "kurz": "Prognosezeitraum",
+          "standard": true
+        },
+        {
+          "key": "psyche",
+          "label": "Leistung bei psychischen Erkrankungen",
+          "kurz": "Psyche",
+          "standard": true
+        },
+        {
+          "key": "pflege",
+          "label": "Leistung bei Pflegebedürftigkeit",
+          "kurz": "Leistung bei Pflege",
+          "standard": true
+        },
+        {
+          "key": "nachversicherung",
+          "label": "Nachversicherung ohne Gesundheitsprüfung",
+          "kurz": "Nachversicherung",
+          "standard": true
+        },
+        {
+          "key": "weltweit",
+          "label": "Weltweiter Versicherungsschutz",
+          "kurz": "Weltweit"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "pflege",
+          "label": "Pflegerente",
+          "kurz": "Pflegerente"
+        },
+        {
+          "key": "ernst",
+          "label": "Schwere Krankheiten",
+          "kurz": "Schwere Krankheiten"
+        }
+      ]
+    },
+    {
+      "key": "pkv",
+      "label": "Private Krankenversicherung",
+      "formularMatch": "Krankenvoll",
+      "merkmale": [
+        {
+          "key": "ambulant",
+          "label": "Ambulante Erstattung",
+          "kurz": "Ambulant",
+          "standard": true
+        },
+        {
+          "key": "stationaer",
+          "label": "Stationär (Zimmer, Chefarzt)",
+          "kurz": "Stationär",
+          "standard": true
+        },
+        {
+          "key": "zahnersatz",
+          "label": "Zahnersatz",
+          "kurz": "Zahnersatz",
+          "standard": true
+        },
+        {
+          "key": "selbstbehalt",
+          "label": "Selbstbehalt im Jahr",
+          "kurz": "Selbstbehalt",
+          "standard": true
+        },
+        {
+          "key": "bre",
+          "label": "Beitragsrückerstattung",
+          "kurz": "Beitragsrückerstattung",
+          "standard": true
+        },
+        {
+          "key": "heilpraktiker",
+          "label": "Heilpraktiker",
+          "kurz": "Heilpraktiker"
+        },
+        {
+          "key": "hilfsmittel",
+          "label": "Hilfsmittel (offener Katalog)",
+          "kurz": "Hilfsmittel"
+        },
+        {
+          "key": "psychotherapie",
+          "label": "Psychotherapie",
+          "kurz": "Psychotherapie"
+        },
+        {
+          "key": "primaerarzt",
+          "label": "Primärarztprinzip",
+          "kurz": "Primärarztprinzip"
+        },
+        {
+          "key": "sehhilfen",
+          "label": "Sehhilfen",
+          "kurz": "Sehhilfen"
+        },
+        {
+          "key": "ausland",
+          "label": "Ausland",
+          "kurz": "Ausland"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "ktg",
+          "label": "Krankentagegeld",
+          "kurz": "Krankentagegeld"
+        },
+        {
+          "key": "pflege",
+          "label": "Pflegezusatz",
+          "kurz": "Pflegezusatz"
+        }
+      ]
+    },
+    {
+      "key": "zahnzusatz",
+      "label": "Zahnzusatz",
+      "formularMatch": "Zahnzusatz",
+      "merkmale": [
+        {
+          "key": "zahnersatz",
+          "label": "Zahnersatz (inkl. Kassenanteil)",
+          "kurz": "Zahnersatz",
+          "standard": true
+        },
+        {
+          "key": "implantate",
+          "label": "Implantate",
+          "kurz": "Implantate",
+          "standard": true
+        },
+        {
+          "key": "behandlung",
+          "label": "Zahnbehandlung",
+          "kurz": "Zahnbehandlung",
+          "standard": true
+        },
+        {
+          "key": "prophylaxe",
+          "label": "Professionelle Zahnreinigung",
+          "kurz": "Zahnreinigung",
+          "standard": true
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit",
+          "kurz": "Wartezeit",
+          "standard": true
+        },
+        {
+          "key": "staffel",
+          "label": "Begrenzung in den ersten Jahren",
+          "kurz": "Begrenzung erste Jahre"
+        },
+        {
+          "key": "kfo",
+          "label": "Kieferorthopädie (Kinder)",
+          "kurz": "Kieferorthopädie"
+        },
+        {
+          "key": "inlays",
+          "label": "Inlays und Kunststofffüllungen",
+          "kurz": "Inlays, Füllungen"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "prophylaxe",
+          "label": "Prophylaxe",
+          "kurz": "Prophylaxe"
+        },
+        {
+          "key": "kfo",
+          "label": "Kieferorthopädie",
+          "kurz": "Kieferorthopädie"
+        }
+      ]
+    },
+    {
+      "key": "krankenhauszusatz",
+      "label": "Krankenhauszusatz",
+      "formularMatch": "Krankenhaus",
+      "merkmale": [
+        {
+          "key": "zimmer",
+          "label": "Unterbringung (Ein- oder Zweibettzimmer)",
+          "kurz": "Ein-/Zweibettzimmer",
+          "standard": true
+        },
+        {
+          "key": "chefarzt",
+          "label": "Chefarzt bzw. Spezialist",
+          "kurz": "Chefarzt",
+          "standard": true
+        },
+        {
+          "key": "krankenhauswahl",
+          "label": "Freie Krankenhauswahl",
+          "kurz": "Freie Krankenhauswahl",
+          "standard": true
+        },
+        {
+          "key": "ueber-hoechstsatz",
+          "label": "Erstattung über GOÄ-Höchstsatz",
+          "kurz": "Über GOÄ-Höchstsatz",
+          "standard": true
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit",
+          "kurz": "Wartezeit",
+          "standard": true
+        },
+        {
+          "key": "tagegeld",
+          "label": "Krankenhaustagegeld",
+          "kurz": "Krankenhaustagegeld"
+        },
+        {
+          "key": "ersatztagegeld",
+          "label": "Ersatz-Krankenhaustagegeld",
+          "kurz": "Ersatztagegeld"
+        },
+        {
+          "key": "ambulant-op",
+          "label": "Ambulante Operationen",
+          "kurz": "Ambulante OP"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "tagegeld",
+          "label": "Krankenhaustagegeld",
+          "kurz": "Tagegeld"
+        },
+        {
+          "key": "einbett",
+          "label": "Einbettzimmer",
+          "kurz": "Einbettzimmer"
+        }
+      ]
+    },
+    {
+      "key": "ambulant",
+      "label": "Ambulante Zusatz",
+      "formularMatch": "ambulant",
+      "merkmale": [
+        {
+          "key": "heilpraktiker",
+          "label": "Heilpraktiker und Naturheilverfahren",
+          "kurz": "Heilpraktiker",
+          "standard": true
+        },
+        {
+          "key": "sehhilfen",
+          "label": "Brillen und Kontaktlinsen",
+          "kurz": "Sehhilfen",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Vorsorgeuntersuchungen",
+          "kurz": "Vorsorge",
+          "standard": true
+        },
+        {
+          "key": "arznei",
+          "label": "Arznei- und Verbandmittel (Zuzahlung)",
+          "kurz": "Arzneimittel",
+          "standard": true
+        },
+        {
+          "key": "hoergeraete",
+          "label": "Hörgeräte",
+          "kurz": "Hörgeräte",
+          "standard": true
+        },
+        {
+          "key": "ausland",
+          "label": "Auslandsreisekranken",
+          "kurz": "Auslandsreise"
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit",
+          "kurz": "Wartezeit"
+        },
+        {
+          "key": "lasik",
+          "label": "Augenlaser (LASIK)",
+          "kurz": "Augenlaser"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "ausland",
+          "label": "Auslandsreise",
+          "kurz": "Auslandsreise"
+        },
+        {
+          "key": "sehhilfen",
+          "label": "Sehhilfen",
+          "kurz": "Sehhilfen"
+        }
+      ]
+    },
+    {
+      "key": "pflegezusatz",
+      "label": "Pflegezusatz",
+      "formularMatch": "Pflege",
+      "merkmale": [
+        {
+          "key": "pg5",
+          "label": "Leistung bei Pflegegrad 5 (im Monat)",
+          "kurz": "Pflegegrad 5 (Monat)",
+          "standard": true
+        },
+        {
+          "key": "ab-pg",
+          "label": "Leistung ab Pflegegrad",
+          "kurz": "Leistung ab Pflegegrad",
+          "standard": true
+        },
+        {
+          "key": "einmal",
+          "label": "Einmalleistung bei Pflegebeginn",
+          "kurz": "Einmalleistung",
+          "standard": true
+        },
+        {
+          "key": "befreiung",
+          "label": "Beitragsbefreiung im Pflegefall",
+          "kurz": "Beitragsbefreiung",
+          "standard": true
+        },
+        {
+          "key": "ambulant-gleich",
+          "label": "Ambulant wie stationär",
+          "kurz": "Ambulant wie stationär",
+          "standard": true
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit",
+          "kurz": "Wartezeit"
+        },
+        {
+          "key": "demenz",
+          "label": "Leistung bei Demenz",
+          "kurz": "Demenz"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "einmal",
+          "label": "Einmalleistung",
+          "kurz": "Einmalleistung"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ]
+    },
+    {
+      "key": "rente",
+      "label": "Private Rentenversicherung",
+      "formularMatch": "Rente",
+      "merkmale": [
+        {
+          "key": "garantie",
+          "label": "Beitragsgarantie bei Rentenbeginn",
+          "kurz": "Beitragsgarantie",
+          "standard": true
+        },
+        {
+          "key": "rentenfaktor",
+          "label": "Garantierter Rentenfaktor",
+          "kurz": "Garantierter Rentenfaktor",
+          "standard": true
+        },
+        {
+          "key": "anlage",
+          "label": "Anlage (Fonds, ETF, Sicherungsvermögen)",
+          "kurz": "Anlage",
+          "standard": true
+        },
+        {
+          "key": "flexibel",
+          "label": "Zuzahlungen und Entnahmen",
+          "kurz": "Zuzahlen, entnehmen",
+          "standard": true
+        },
+        {
+          "key": "hinterbliebene",
+          "label": "Hinterbliebenenschutz",
+          "kurz": "Hinterbliebenenschutz",
+          "standard": true
+        },
+        {
+          "key": "kapital",
+          "label": "Kapitalwahlrecht",
+          "kurz": "Kapitalwahlrecht"
+        },
+        {
+          "key": "beitragspause",
+          "label": "Beitragspause",
+          "kurz": "Beitragspause"
+        },
+        {
+          "key": "kosten",
+          "label": "Kosten (Effektivkosten)",
+          "kurz": "Effektivkosten"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "bu",
+          "label": "BU-Zusatz",
+          "kurz": "BU-Zusatz"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ]
+    },
+    {
+      "key": "basisrente",
+      "label": "Basisrente (Rürup)",
+      "formularMatch": "Basisrente",
+      "merkmale": [
+        {
+          "key": "garantie",
+          "label": "Beitragsgarantie bei Rentenbeginn",
+          "kurz": "Beitragsgarantie",
+          "standard": true
+        },
+        {
+          "key": "rentenfaktor",
+          "label": "Garantierter Rentenfaktor",
+          "kurz": "Garantierter Rentenfaktor",
+          "standard": true
+        },
+        {
+          "key": "anlage",
+          "label": "Anlage (Fonds, ETF, Sicherungsvermögen)",
+          "kurz": "Anlage",
+          "standard": true
+        },
+        {
+          "key": "flexibel",
+          "label": "Flexible Beiträge und Zuzahlungen",
+          "kurz": "Flexible Beiträge",
+          "standard": true
+        },
+        {
+          "key": "hinterbliebene",
+          "label": "Hinterbliebenenschutz",
+          "kurz": "Hinterbliebenenschutz",
+          "standard": true
+        },
+        {
+          "key": "beitragspause",
+          "label": "Beitragspause",
+          "kurz": "Beitragspause"
+        },
+        {
+          "key": "kosten",
+          "label": "Kosten (Effektivkosten)",
+          "kurz": "Effektivkosten"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "bu",
+          "label": "BU-Zusatz",
+          "kurz": "BU-Zusatz"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ]
+    },
+    {
+      "key": "kfz",
+      "label": "Kfz-Versicherung",
+      "formularMatch": "Kfz",
+      "merkmale": [
+        {
+          "key": "deckung",
+          "label": "Deckungssumme Haftpflicht",
+          "kurz": "Deckungssumme",
+          "standard": true
+        },
+        {
+          "key": "grob",
+          "label": "Grobe Fahrlässigkeit",
+          "kurz": "Grobe Fahrlässigkeit",
+          "standard": true
+        },
+        {
+          "key": "tiere",
+          "label": "Wildschäden (Tiere aller Art)",
+          "kurz": "Tiere aller Art",
+          "standard": true
+        },
+        {
+          "key": "neuwert",
+          "label": "Neuwertentschädigung",
+          "kurz": "Neuwertentschädigung",
+          "standard": true
+        },
+        {
+          "key": "marder",
+          "label": "Marderbiss mit Folgeschäden",
+          "kurz": "Marderbiss Folgeschäden",
+          "standard": true
+        },
+        {
+          "key": "rabattschutz",
+          "label": "Rabattschutz",
+          "kurz": "Rabattschutz"
+        },
+        {
+          "key": "gap",
+          "label": "GAP-Deckung (Leasing, Kredit)",
+          "kurz": "GAP-Deckung"
+        },
+        {
+          "key": "werkstatt",
+          "label": "Werkstattbindung",
+          "kurz": "Werkstattbindung"
+        },
+        {
+          "key": "elektro",
+          "label": "Akku-Schutz (E-Auto)",
+          "kurz": "Akku-Schutz"
+        },
+        {
+          "key": "mallorca",
+          "label": "Mallorca-Police",
+          "kurz": "Mallorca-Police"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "schutzbrief",
+          "label": "Schutzbrief",
+          "kurz": "Schutzbrief"
+        },
+        {
+          "key": "rabattschutz",
+          "label": "Rabattschutz",
+          "kurz": "Rabattschutz"
+        }
+      ]
+    },
+    {
+      "key": "reise-kranken",
+      "label": "Auslandsreisekranken",
+      "formularMatch": "Auslandsreise",
+      "merkmale": [
+        {
+          "key": "dauer",
+          "label": "Reisedauer je Reise",
+          "kurz": "Reisedauer je Reise",
+          "standard": true
+        },
+        {
+          "key": "ruecktransport",
+          "label": "Rücktransport (medizinisch sinnvoll)",
+          "kurz": "Rücktransport",
+          "standard": true
+        },
+        {
+          "key": "usa",
+          "label": "Weltweit inkl. USA und Kanada",
+          "kurz": "Inkl. USA, Kanada",
+          "standard": true
+        },
+        {
+          "key": "selbstbeteiligung",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung",
+          "standard": true
+        },
+        {
+          "key": "zahn",
+          "label": "Zahnbehandlung",
+          "kurz": "Zahnbehandlung",
+          "standard": true
+        },
+        {
+          "key": "chronisch",
+          "label": "Bekannte Erkrankungen",
+          "kurz": "Bekannte Erkrankungen"
+        },
+        {
+          "key": "schwanger",
+          "label": "Schwangerschaft",
+          "kurz": "Schwangerschaft"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "familie",
+          "label": "Familie",
+          "kurz": "Familie"
+        },
+        {
+          "key": "lang",
+          "label": "Langzeitreise",
+          "kurz": "Langzeitreise"
+        }
+      ]
+    },
+    {
+      "key": "sterbegeld",
+      "label": "Sterbegeld",
+      "formularMatch": "Sterbegeld",
+      "merkmale": [
+        {
+          "key": "summe",
+          "label": "Versicherungssumme",
+          "kurz": "Versicherungssumme",
+          "standard": true
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit",
+          "kurz": "Wartezeit",
+          "standard": true
+        },
+        {
+          "key": "unfall",
+          "label": "Doppelte Leistung bei Unfalltod",
+          "kurz": "Doppelt bei Unfall",
+          "standard": true
+        },
+        {
+          "key": "ohne-gp",
+          "label": "Ohne Gesundheitsfragen",
+          "kurz": "Ohne Gesundheitsfragen",
+          "standard": true
+        },
+        {
+          "key": "beitragsende",
+          "label": "Beitragszahlung bis",
+          "kurz": "Beitragszahlung bis",
+          "standard": true
+        },
+        {
+          "key": "vorsorge",
+          "label": "Bestattungsvorsorge-Service",
+          "kurz": "Vorsorge-Service"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "unfall",
+          "label": "Unfall-Zusatz",
+          "kurz": "Unfall-Zusatz"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
       ]
     }
   ]

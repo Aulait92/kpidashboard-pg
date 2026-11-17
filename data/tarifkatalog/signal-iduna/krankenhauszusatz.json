@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Freie Krankenhauswahl",
+    "Gesetzliche Zuzahlung erstattet"
+  ],
+  "tarife": [
+    {
+      "name": "KlinikUNFALLpur",
+      "kurz": "Unfall",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "nur bei Unfall",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nein",
+        "wartezeit": "keine",
+        "ersatztagegeld": "40 €",
+        "ambulant-op": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KlinikSTART",
+      "kurz": "Start",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "Unfall, schwere Krankh.",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nein",
+        "wartezeit": "keine",
+        "ersatztagegeld": "40 €",
+        "ambulant-op": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KlinikPLUS",
+      "kurz": "Plus",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "wie Start, ab 60 immer",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nein",
+        "wartezeit": "keine",
+        "ersatztagegeld": "40 €",
+        "ambulant-op": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KlinikTOP1",
+      "kurz": "Top",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "immer",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "25 € plus 15 €",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {
+        "einbett": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/"
+  ],
+  "offen": [
+    "Vier Tarife ohne Markierung; bei vier Stufen die dritte (KlinikPLUS) als Empfehlung.",
+    "Wichtigster Unterschied ist der Leistungsauslöser: UNFALL nur nach Unfall, START zusätzlich schwere Erkrankungen (z. B. Herzinfarkt, Schlaganfall, Krebs), PLUS ab 60 unabhängig vom Anlass, TOP immer.",
+    "Zimmer und freie Krankenhauswahl gelten nur im jeweils versicherten Fall. KlinikTOP1pur hat eine Selbstbeteiligung für das Einbettzimmer (abdeckbar mit EKH 45).",
+    "Ersatz-Krankenhaustagegeld TOP: 25 € bei Verzicht auf Chefarzt und freie Wahl, 15 € bei Verzicht auf Ein- oder Zweibettzimmer.",
+    "Krankenhaustagegeld ist ein eigenes Produkt, kein Baustein; nicht aufgenommen."
+  ]
+}

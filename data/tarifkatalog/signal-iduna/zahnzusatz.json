@@ -1,0 +1,93 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Regelversorgung 100 %",
+    "Kieferorthopädie für Kinder"
+  ],
+  "tarife": [
+    {
+      "name": "Zahn PLUS pur",
+      "kurz": "PLUS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "implantate": "70 %",
+        "behandlung": "70 %",
+        "prophylaxe": "70 %, bis 105 €",
+        "wartezeit": "keine",
+        "staffel": "ab 5. Jahr 4.000 €/Jahr",
+        "kfo": "70 % bis 20 Jahre",
+        "inlays": "70 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn TOP pur",
+      "kurz": "TOP",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "90 %",
+        "prophylaxe": "90 %, bis 135 €",
+        "wartezeit": "keine",
+        "staffel": "ab 5. Jahr unbegrenzt",
+        "kfo": "90 % bis 20 Jahre",
+        "inlays": "90 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn EXKLUSIV pur",
+      "kurz": "EXKLUSIV",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, unbegrenzt",
+        "wartezeit": "keine",
+        "staffel": "ab 5. Jahr unbegrenzt",
+        "kfo": "100 % bis 20 Jahre",
+        "inlays": "100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/zahnzusatzversicherung/"
+  ],
+  "offen": [
+    "Drei Tarife ohne Markierung; TOP als mittlere Stufe. Stiftung Warentest 27.02.2026: ZahnEXKLUSIVpur SEHR GUT (0,6).",
+    "Prozentwerte inklusive Kassenleistung laut Tarifvergleich (Zahnersatz, Implantate, Behandlung, KFO bis 20 Jahre).",
+    "Begrenzung: PLUS und TOP im 1. Jahr bis 1.000 €, 2. bis 4. Jahr insgesamt 2.000 €; EXKLUSIV 1.000 €, 3.000 €, 4.500 €, 6.000 € in den ersten 1 bis 4 Jahren; danach siehe Wert.",
+    "Zahnreinigung: Werte für Erwachsene ab 21 Jahren je Jahr; bis 20 Jahre nur EXKLUSIV.",
+    "Inlays sind laut Tarifvergleich Teil des hochwertigen Zahnersatzes; Kunststofffüllungen nicht ausdrücklich genannt.",
+    "Es gibt auch Varianten ohne „pur“; nicht aufgenommen."
+  ]
+}

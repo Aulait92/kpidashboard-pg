@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Haftpflicht mit Kasko)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Haftpflicht 100 Mio. € Deckungssumme",
+    "Verzicht auf grobe Fahrlässigkeit",
+    "Mallorca-Police inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung S günstig & flexibel",
+      "kurz": "Tarif S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Drogen",
+        "tiere": "nur Haarwild",
+        "neuwert": "bis 12 Monate",
+        "werkstatt": "wählbar",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/kfz/p/kfz-vollkaskoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung M Best-Preis-Leistung",
+      "kurz": "Tarif M",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Drogen",
+        "tiere": "ja (Tier Extra)",
+        "marder": "ja (Tier Extra)",
+        "werkstatt": "wählbar",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/kfz/p/kfz-vollkaskoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung L rundum sorglos",
+      "kurz": "Tarif L",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Drogen",
+        "tiere": "ja (Tier Extra)",
+        "neuwert": "bis 24 Monate",
+        "marder": "ja (Tier Extra)",
+        "werkstatt": "wählbar",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/kfz/p/kfz-vollkaskoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/kfz/p/kfz-vollkaskoversicherung",
+    "https://www.axa.de/pk/kfz/p/kfz-teilkaskoversicherung",
+    "https://www.axa.de/pk/kfz/p/kfz-versicherung",
+    "https://www.axa.de/pk/kfz/p/kfz-haftpflichtversicherung"
+  ],
+  "offen": [
+    "Tarifvergleich (Teil- und Vollkasko): Extraschutz nur L; Tier Extra M und L; Fahrzeugwert Extra nur M; Fahrzeugwert Top nur L. Personenschäden bis 15 Mio. € je Person.",
+    "Neupreisentschädigung: laut Vergleichstabelle bis 12 Monate, mit Fahrzeugwert Top 24 Monate; an anderer Stelle nennt AXA bei Diebstahl 3 Monate ab Zulassung. Leistung von Fahrzeugwert Extra (Tarif M) nicht beziffert.",
+    "Tier Extra: Marder- und andere Tierbisse sowie Kollision mit Tieren aller Art. Ohne Tier Extra nur Haarwild; Tierbiss mit Folgeschäden laut Vergleichstabelle je nach Schadensfall bis 5.000 €. Marder in Tarif S daher nicht eindeutig.",
+    "Grobe Fahrlässigkeit: Verzicht laut Produktseite in Teil- und Vollkasko, nicht je Tarif ausgewiesen. Werkstattbindung wählbar (Werkstattservice: 15 % Rabatt, Ersatzwagen).",
+    "GAP-Deckung und Akku-Schutz für E-Autos nicht belegt. AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe."
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beitragsrückerstattung bis 2 Monatsbeiträge",
+    "Optionsrecht nach 3, 5 und 7 Jahren",
+    "Künstliche Befruchtung"
+  ],
+  "tarife": [
+    {
+      "name": "START-SI",
+      "kurz": "START",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "Facharzt mit Überweisung",
+        "stationaer": "Wahlleistung bei Unfall",
+        "zahnersatz": "75 %",
+        "bre": "2 Monatsbeiträge",
+        "heilpraktiker": "Budget 750 €",
+        "psychotherapie": "80 %, max. 50 Sitzungen",
+        "primaerarzt": "ja",
+        "sehhilfen": "bis 300 € in 2 Jahren"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KOMFORT-SI",
+      "kurz": "KOMFORT",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "Haus- und Facharzt",
+        "stationaer": "Chefarzt, 2-Bett",
+        "zahnersatz": "85 %",
+        "bre": "2 Monatsbeiträge",
+        "heilpraktiker": "Budget 1.500 €",
+        "psychotherapie": "80 %, max. 50 Sitzungen",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 450 € in 2 Jahren"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "EXKLUSIV-SI",
+      "kurz": "EXKLUSIV",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "Haus- und Facharzt",
+        "stationaer": "Chefarzt, 1-Bett",
+        "zahnersatz": "90 %",
+        "bre": "2 Monatsbeiträge",
+        "heilpraktiker": "Budget 2.250 €",
+        "psychotherapie": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 600 € in 2 Jahren"
+      },
+      "bausteine": {},
+      "quelle": "https://www.signal-iduna.de/produkte/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/private-krankenversicherung/"
+  ],
+  "offen": [
+    "Drei Tarife ohne Markierung; KOMFORT-SI als mittlere Stufe.",
+    "Selbstbehalt je Tarif nicht im Tarifvergleich (Stufen wählbar); bitte im Angebot ergänzen.",
+    "Primärarzt: Nur bei START-SI ist der Facharzt an eine Überweisung gebunden (aus dem Tarifvergleich abgeleitet).",
+    "START-SI: Zweibettzimmer und Chefarzt nur bei unfallbedingtem Aufenthalt. KOMFORT-SI: Einbettzimmer bei Unfall oder gegen 60 €/Tag.",
+    "Zusätzlich: Gesundheitsbonus bis 900 € (KOMFORT, EXKLUSIV), Verhaltensbonus bis 300 € (EXKLUSIV); Zahnersatz inkl. Implantate ohne Bonusheft.",
+    "Hilfsmittel (offener Katalog nicht ausdrücklich genannt), Ausland, Krankentagegeld und Pflegezusatz als Baustein nicht belegt."
+  ]
+}

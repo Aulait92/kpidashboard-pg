@@ -25,7 +25,9 @@ describe("Schalter je Gesellschaft und Sparte", () => {
     const katalog = echt.sparten.map((s) => s.key);
     for (const k of pilot) expect(katalog).toContain(k);
     // Pferde-Sparten kamen am 16.11. mit den Tiertarifen dazu, im Pilot noch ohne Rechner
-    expect(katalog.filter((k) => !pilot.includes(k)).sort()).toEqual(["pferd-kranken", "pferd-op"]);
+    // Neue Sparten vom 17.11.2026 (alle Versicherungsprodukte) haben noch keinen Pilot-Rechner
+    const neu = ["bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld"];
+    expect(katalog.filter((k) => !pilot.includes(k) && !neu.includes(k)).sort()).toEqual(["pferd-kranken", "pferd-op"]);
     for (const url of Object.values(RECHNER.allianz)) expect(url).toMatch(/^https:\/\/www\.allianz\.de\/.+\/rechner\//);
     expect(rechnerUrl([], "allianz", "hausrat")).toBeNull();
     expect(rechnerUrl(cleanPilot(null), "allianz", "hausrat")).toBeNull();

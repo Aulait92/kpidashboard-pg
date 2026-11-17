@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Stationär ab Pflegegrad 2 voller Tagessatz",
+    "Pflegeberatung und Hausnotruf bis 30 € mtl.",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "PflegetagegeldBest",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "100 %, bis 4.500 €",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "optional",
+        "befreiung": "ab Pflegegrad 5",
+        "ambulant-gleich": "optional",
+        "wartezeit": "keine",
+        "dynamik": "10 % alle 3 Jahre"
+      },
+      "bausteine": {
+        "einmal": "optional"
+      },
+      "quelle": "https://www.allianz.de/gesundheit/pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/gesundheit/pflegezusatzversicherung/",
+    "https://goa-eportale.allianz.de/PZT/A03/PZTA03--EZ0.pdf.download.pdf",
+    "https://goa-eportale.allianz.de/PZT/B03/PZTB03--EZ0.pdf.download.pdf",
+    "https://goa-eportale.allianz.de/PZT/E03/PZTE03--EZ0.pdf.download.pdf"
+  ],
+  "offen": [
+    "Ambulant: Pflegegrad 1 20 %, 2 30 %, 3 50 %, 4 80 %, 5 100 % des Tagessatzes; mit Baustein „Erhöhung ambulant“ in Grad 2 bis 4 bis 100 %.",
+    "Einmalauszahlung als Zusatztarif bis 15.000 € ab Pflegegrad 2.",
+    "Tagessatz frei wählbar bis 150 € (4.500 € im Monat); Allianz empfiehlt 105 € Tagessatz.",
+    "Leistung bei Demenz nicht gesondert genannt.",
+    "Nur Pflegetagegeld erfasst; Pflegerentenversicherung und Pflege-Bahr nicht aufgenommen."
+  ]
+}

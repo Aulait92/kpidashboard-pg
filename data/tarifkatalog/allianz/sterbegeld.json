@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "sterbegeld",
+  "produkt": "BestattungsSchutzbrief",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Organisation der Bestattung nach Wunsch",
+    "Rückholung bei Tod im Ausland",
+    "Testaments- und Nachlassberatung"
+  ],
+  "tarife": [
+    {
+      "name": "Allianz BestattungsSchutzbrief",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "3.000 bis 20.000 €",
+        "wartezeit": "12 Monate (Einmal 6)",
+        "unfall": "doppeltes Kapital",
+        "ohne-gp": "ja",
+        "beitragsende": "lebenslang, abgekürzt",
+        "vorsorge": "ja"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.allianz.de/vorsorge/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/vorsorge/sterbegeldversicherung/"
+  ],
+  "offen": [
+    "Wartezeit 12 Monate bei laufender, 6 Monate bei Einmalbeitrag; bei Unfalltod keine Wartezeit. Bei Tod in der Wartezeit werden die Beiträge erstattet.",
+    "Beitragszahlung lebenslang, abgekürzt (mindestens 1 Jahr) oder als Einmalbeitrag. Dynamik 3 % im Jahr, nicht bei Einmalbeitrag."
+  ]
+}
