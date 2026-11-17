@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Kapitalwahlrecht",
+    "Klassische Anlage, ohne Fonds"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL ZukunftsRente",
+      "kurz": "ZukunftsRente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "Rente garantiert",
+        "anlage": "klassisch",
+        "flexibel": "Zuzahlungen jederzeit",
+        "hinterbliebene": "Beitragsrückgewähr",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/Versicherungen/Altersvorsorge/Rentenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL UniversalLife",
+      "kurz": "UniversalLife",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "klassisch",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Kontostand bis Alter 80",
+        "kapital": "ja, auch anteilig",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/Versicherungen/Altersvorsorge/Universallife",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Altersvorsorge/Rentenversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IZR/Produktbeschreibung_IDEAL_ZukunftsRente_0119.pdf",
+    "https://www.ideal-versicherung.de/Versicherungen/Altersvorsorge/Universallife",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IUL/ideal-universallife-produktbeschreibung.pdf"
+  ],
+  "offen": [
+    "Zwei verschiedene Produkte (beide klassisch, ohne Fonds), keine Leistungsstufen; keine Empfehlung.",
+    "ZukunftsRente gegen Einmalbeitrag (bis 250.000 €), mit Rentengarantiezeit bis 25 Jahre und PflegeOption: bei Rentenbeginn PflegeRente ohne Gesundheitsfragen.",
+    "Beitragsgarantie bei Rentenbeginn (garantie): in beiden Produktbeschreibungen nicht als eigener Wert genannt.",
+    "UniversalLife: garantierter Rentenfaktor nicht ausdrücklich genannt; Rentenbeginn zwischen 50 und 80 frei wählbar; Vertragsschutz bei Berufsunfähigkeit, Todesfall- und Pflegefallschutz zubuchbar.",
+    "Dynamik UniversalLife: Beitragsdynamik ist im flexiblen Beitragsplan enthalten, als Baustein nicht eindeutig.",
+    "Keine Angaben zu Verzinsung oder Rendite übernommen."
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung uni RISK",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Schutz ab erstem Beitrag",
+    "Partnerabsicherung möglich",
+    "Dynamik wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "uni RISK",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, mit Dynamik",
+        "verlaengerung": "ja, in ersten 10 Jahren",
+        "umtausch": "nur in neue RLV"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/hinterbliebenenvorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/hinterbliebenenvorsorge/risikolebensversicherung/",
+    "https://www.universa.de/site/assets/files/111604/074-103_highlightblatt_uni_risk.pdf",
+    "https://www.universa.de/site/assets/files/111610/074-088_broschuere_uni_risk.pdf",
+    "https://www.universa.de/site/assets/files/112013/lvb-010.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Nichtraucher und Raucher mit eigenen Bedingungen).",
+    "Nachversicherung bei Heirat, Geburt, Immobilienerwerb u. a. ohne Gesundheitsprüfung, laut Bedingungen nur für Verträge mit Dynamik; je Anlass bis 100 % der Summe, max. 25.000 €.",
+    "Umtauschrecht laut Bedingungen nur in eine neue Risikoversicherung, nicht in eine Kapitalversicherung.",
+    "Vorgezogene Leistung bei schwerer Krankheit, weltweiter Schutz, fallende Summe und verbundene Leben: in Seite und Highlightblatt nicht genannt.",
+    "Beitragsbefreiung bei Pflegebedürftigkeit (ab 4 ADL-Punkten) bis längstens Alter 60."
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld uni-KT",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Steuerfrei",
+    "Anpassung alle 2 Jahre",
+    "10-faches Tagegeld bei Geburt"
+  ],
+  "tarife": [
+    {
+      "name": "uni-KT 43",
+      "kurz": "uni-KT 43",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja, noch max. 3 Monate",
+        "selbststaendige": "ja",
+        "ausland": "Europa, sonst stationär",
+        "ab-tag": "43. Tag"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-KT 92",
+      "kurz": "uni-KT 92",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja, noch max. 3 Monate",
+        "selbststaendige": "ja",
+        "ausland": "Europa, sonst stationär",
+        "ab-tag": "92. Tag"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-KT 183",
+      "kurz": "uni-KT 183",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja, noch max. 3 Monate",
+        "selbststaendige": "ja",
+        "ausland": "Europa, sonst stationär",
+        "ab-tag": "183. Tag"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/private-zusatzversicherung/krankentagegeld/",
+    "https://www.universa.de/site/assets/files/133757/bedingungen-private_zusatzversicherung-krankentagegeld-uni_kt.pdf",
+    "https://www.universa.de/site/assets/files/133653/075-306-folder_private_zusatzversicherung.pdf"
+  ],
+  "offen": [
+    "Stufen: die drei auf der Seite genannten Tarifstufen für gesetzlich versicherte Arbeitnehmer; laut Bedingungen auch Stufen ab dem 15., 22. und 29. Tag.",
+    "Höhe: Tagegeld darf das Nettoeinkommen nicht übersteigen (bei Selbständigen höchstens 75 % des Gewinns als Nettoeinkommen); Höchstbetrag in Euro nicht genannt.",
+    "Wartezeit: allgemeine Wartezeit 3 Monate, entfällt bei Unfall.",
+    "bu-ende: Vertrag endet bei Berufsunfähigkeit, Leistung höchstens noch 3 Monate danach (Bedingungen § 15).",
+    "Ausland: Europa auch ambulant, außerhalb Europas nur bei stationärer Behandlung.",
+    "Dynamik: alle zwei Jahre Anpassung an die Einkommensentwicklung ohne Gesundheitsprüfung (als inklusive erfasst)."
+  ]
+}
