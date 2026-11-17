@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveKpiSettingsAction, saveRecurringCostAction, type KostenState } from "@/app/admin/zahlen/actions";
+import { saveChanceQuotenAction, saveKpiSettingsAction, saveRecurringCostAction, type KostenState } from "@/app/admin/zahlen/actions";
 
 const input = "mt-1 h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-sm outline-none focus:border-[color:var(--brand)]";
 
@@ -71,6 +71,28 @@ export function KpiSettingsForm({ hours, rate, campaigns, pplPilotEnd }: { hours
         Pay-per-Lead-Pilotphase endet mit Monat (leer = läuft noch)
         <input name="pplPilotEnd" type="month" defaultValue={pplPilotEnd ?? ""} className={input} />
         <span className="mt-1 block text-sm text-[color:var(--muted)]">Erscheint im Reiter „Pay-per-Lead“ und im Investoren-Update („Pilot Juni–… abgeschlossen“).</span>
+      </label>
+      <div className="flex items-center gap-3 sm:col-span-2">
+        <button className="btn-primary" disabled={pending}>{pending ? "Speichere …" : "Speichern"}</button>
+        <Result state={state} />
+      </div>
+    </form>
+  );
+}
+
+/** Standardquoten der offenen Chancen (Kundenbereich → Wachstum), in Prozent. */
+export function ChanceQuotenForm({ angebot, termin }: { angebot: number; termin: number }) {
+  const [state, action, pending] = useActionState<KostenState, FormData>(saveChanceQuotenAction, {});
+  const pct = (n: number) => String(Math.round(n * 1000) / 10).replace(".", ",");
+  return (
+    <form action={action} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <label className="text-sm">
+        Angebot → Abschluss (%)
+        <input name="angebot" defaultValue={pct(angebot)} inputMode="decimal" className={input} />
+      </label>
+      <label className="text-sm">
+        Termin → Abschluss (%)
+        <input name="termin" defaultValue={pct(termin)} inputMode="decimal" className={input} />
       </label>
       <div className="flex items-center gap-3 sm:col-span-2">
         <button className="btn-primary" disabled={pending}>{pending ? "Speichere …" : "Speichern"}</button>
