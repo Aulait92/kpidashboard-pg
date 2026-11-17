@@ -58,6 +58,7 @@ import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { useProvisionRates } from "@/components/provision-context";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
+import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { useToast } from "@/components/ui/toast";
 import { CALL_ATTEMPTS_TARGET, LOST_REASONS, lostWarningText, needsLostWarning, type LostReasonKey } from "@/lib/lead-lost";
 import { cn } from "@/lib/utils";
@@ -497,7 +498,7 @@ export function NextStepSheet({
   const toast = useToast();
   const rates = useProvisionRates();
   const { info } = useStepInfo(leadId);
-  const [step, setStep] = useState<"pick" | "date" | "termin" | "terminMail" | "win" | "lost" | "offer">("pick");
+  const [step, setStep] = useState<"pick" | "date" | "termin" | "terminMail" | "win" | "lost" | "offer" | "angebot">("pick");
   const [busy, startBusy] = useTransition();
   const [termin, setTermin] = useState<{ link: string; whatsapp: string; subject: string; body: string } | null>(null);
   const [offer, setOffer] = useState<{ res: InboxResult; attempt: Attempt } | null>(null);
@@ -566,6 +567,21 @@ export function NextStepSheet({
         onDone={(res, msg, status) => {
           chosen.current = true;
           onDone(res, msg, status);
+        }}
+      />
+    );
+  }
+  // „Angebot senden“ (Paket P3): die zwei Wege statt „Angebot gesendet“ ohne Versand
+  if (step === "angebot" && appointmentId) {
+    return (
+      <AngebotSendenSheet
+        ziel={{ appointmentId, name }}
+        spaeter={() => run(`${name}: Angebot steht auf Heute unter „Angebote senden“`, () => appointmentOutcomeResult(appointmentId, "offer", null))}
+        onClose={() => (chosen.current ? onClose() : setStep("pick"))}
+        onError={(message) => toast.show({ message, tone: "error" })}
+        onDone={(message) => {
+          chosen.current = true;
+          onDone({ ok: true }, message);
         }}
       />
     );
@@ -683,8 +699,8 @@ export function NextStepSheet({
                 <Clock className="h-3.5 w-3.5" /> Ergebnis des Termins
               </h3>
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" className={chip} disabled={busy} onClick={() => run(`${name}: Angebot gesendet`, () => appointmentOutcomeResult(appointmentId, "offer", null))}>
-                  <Send className="h-4 w-4" /> Angebot gesendet
+                <button type="button" className={chip} disabled={busy} onClick={() => setStep("angebot")} data-step="angebot">
+                  <Send className="h-4 w-4" /> Angebot senden
                 </button>
                 <button type="button" className={chip} disabled={busy} onClick={() => run(`${name}: nicht erschienen`, () => appointmentOutcomeResult(appointmentId, "no_show", null))}>
                   <UserX className="h-4 w-4" /> Nicht erschienen
