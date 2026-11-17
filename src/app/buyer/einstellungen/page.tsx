@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, CreditCard, Gift, Mail, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { prisma } from "@/lib/prisma";
+import { AnalyseSchalter } from "@/components/nutzungsanalyse";
+import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -14,6 +17,7 @@ export default async function EinstellungenPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const owner = ctx.teamRole !== "advisor";
+  const analyse = ctx.userId && !ctx.preview ? asAnalyseStatus((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true } }))?.analyseEinwilligung) : null;
   const groups: { title: string; items: Item[] }[] = [
     {
       title: "Mein Konto",
@@ -77,6 +81,14 @@ export default async function EinstellungenPage() {
               </ul>
             </section>
           ))}
+        {ctx.userId && !ctx.preview ? (
+          <section>
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Datenschutz</h2>
+            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
+              <AnalyseSchalter status={analyse} />
+            </div>
+          </section>
+        ) : null}
         <p className="flex flex-wrap gap-x-4 px-1 text-sm text-[color:var(--muted)] [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center">
           <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">Impressum</a>
           <a href="https://performancegrowth.de/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:underline">Datenschutz</a>

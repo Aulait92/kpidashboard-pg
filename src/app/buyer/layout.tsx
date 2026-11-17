@@ -3,6 +3,8 @@ import { BuyerShell } from "@/components/buyer-shell";
 import { hilfeGruss } from "@/lib/hilfe-gruss";
 import { InhaberHinweis } from "@/components/inhaber-hinweis";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { Nutzungsanalyse } from "@/components/nutzungsanalyse";
+import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
 import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox, showChatsTeaser } from "@/lib/whatsapp/access";
 import { attentionCount } from "@/lib/whatsapp/attention";
@@ -66,6 +68,7 @@ export default async function BuyerLayout({
       ? await prisma.salesContact.findUnique({ where: { customerId: ctx.customerId }, select: { salutation: true, lastName: true } }).catch(() => null)
       : null,
   );
+  const analyse = ctx?.userId && !ctx.preview ? asAnalyseStatus((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true } }))?.analyseEinwilligung) : null;
   const demo = !!ctx?.demo;
   const previewName = ctx?.preview && !demo ? customerName : null;
   const newUi = ctx ? await isNewUi(ctx.customerId) : false;
@@ -157,6 +160,8 @@ export default async function BuyerLayout({
             ) : null}
             {/* Live: neue Leads und Chat-Nachrichten ohne Neuladen, auch der Zähler „Braucht dich“ (components/live-refresh.tsx) */}
             <LiveRefresh fullPaths={LIVE_PATHS} />
+            {/* Nutzungsanalyse nur mit Einwilligung (components/nutzungsanalyse.tsx, lib/nutzungsanalyse.ts) */}
+            <Nutzungsanalyse status={analyse} darfFragen={!ctx.preview && !!ctx.userId} />
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}
