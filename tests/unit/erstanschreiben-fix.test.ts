@@ -242,7 +242,7 @@ describe("Folgefragen nach der Buchung (Rechner-Tabelle docs/preise-pilot.md)", 
     const ort = [{ label: "Postleitzahl", value: "80331" }, { label: "Lebenssituation", value: "Single" }];
     expect(keys(["haftpflicht"], src(ort))).toEqual(["geburt", "oeffentlicherDienst"]);
     expect(keys(["hausrat"], src(ort))).toEqual(["geburt", "wohnflaeche"]);
-    expect(keys(["rechtsschutz"], src(ort))).toEqual(["geburt", "beruf"]); // Lebensbereiche legt der Vermittler fest
+    expect(keys(["rechtsschutz"], src(ort))).toEqual(["geburt", "lebensbereiche", "beruf"]); // Lebensbereiche braucht der Rechner (P2)
     expect(keys(["unfall"], src(ort))).toEqual(["geburt", "versichern", "beruf"]); // Summen legt der Vermittler fest
     expect(keys(["wohngebaeude"], src(ort))).toEqual(["adresseGebaeude", "gebaeudeFlaeche", "baujahr", "wohneinheiten", "keller", "bauweise"]);
     expect(keys(["wohngebaeude"], src(ort, { plz: "Lindenweg 3, 80331 München", gebaeude: "Bj. 1998, 140 m², Einfamilienhaus, Keller, massiv" }))).toEqual([]);
@@ -267,7 +267,7 @@ describe("Buchungsnachricht und Abschluss (eine Bestätigungsfrage ganz am Schlu
   it("mit offenen Angebotsfragen: Buchungsnachricht ohne Frage", () => {
     const t = buchungsText({ an: "sie", start, mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person });
     expect(t).toBe(
-      "Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
+      "Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\n\nHerr Kannapinn reserviert diese Zeit nur für Sie und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
     );
     expect(t).not.toMatch(/\?/);
   });
@@ -294,6 +294,13 @@ describe("Buchungsnachricht und Abschluss (eine Bestätigungsfrage ganz am Schlu
     expect(k).toMatch(/nutze komplettcheck mit ja=true bzw\. ja=false/);
     expect(r).toMatch(/termin_zugesagt/);
     expect(r).toMatch(/update_email/);
+    // Lebensbereiche werden gefragt, wenn der Rechner sie braucht (P2): kein Widerspruch im Prompt
+    expect(r).not.toMatch(/Lebensbereiche/);
+    // P2: vor dem Komplettcheck keine Angebotsfragen, offene E-Mail-Frage mit update_email
+    const vor = nachBuchungRegel({ an: "sie", person, fragen: [], komplettcheckGestellt: false, abschlussGesendet: false, zugesagt: false });
+    expect(vor).toMatch(/Die App schickt gleich selbst die nächste Frage/);
+    const mail = nachBuchungRegel({ an: "sie", person, fragen: [], emailOffen: true, komplettcheckGestellt: false, abschlussGesendet: false, zugesagt: false });
+    expect(mail).toMatch(/Frage nach der E-Mail-Adresse[\s\S]*update_email/);
   });
 
   it("Bestätigungs-Mail: Kalenderdatei mit Meet-Link", () => {

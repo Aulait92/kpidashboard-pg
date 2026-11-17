@@ -1,12 +1,13 @@
-// Termin-Strecke des WhatsApp-Assistenten (Ole, 17.11.2026), reine Textbausteine, testbar ohne LLM:
+// Termin-Strecke des WhatsApp-Assistenten (Ole, 17.11.2026; Reihenfolge P2), reine Textbausteine, testbar ohne LLM:
 //   1. Terminvorschlag (von der App, Werkzeug termin_vorschlagen): ein Satz Nutzen, konkret aus den bekannten Angaben
 //      („In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Ihre Familie kosten und
 //      worauf Sie achten sollten.“), genau zwei Videozeiten als Knöpfe plus „Andere Zeit“ (Payload slot:<ISO>).
-//   2. Buchungsnachricht: Termin fett, Videolink, verbindlicher Absatz (BUCHUNG_VERBINDLICH), ohne Frage.
-//   3. Angebotsfragen nach der Rechner-Tabelle (lib/preise/rechner-angaben.ts), Ja/Nein-Angaben mit Knöpfen.
-//   4. Komplettcheck (Knöpfe „Ja, gern“ / „Nein, danke“); bei „Ja“ die Frage nach bestehenden Verträgen
-//      (lib/whatsapp/vorvertraege.ts), Kennzeichen am Termin (Appointment.komplettcheck).
-//   5. Abschluss: höchstens 3 Punkte zum Bereitlegen, E-Mail mit Kalendereintrag und als einzige Bestätigungsfrage ganz
+//   2. Buchungsnachricht: Termin fett, Videolink, verbindlicher Absatz (BUCHUNG_VERBINDLICH), ohne Frage. Ist die
+//      E-Mail-Adresse unbekannt, ist der Termin trotzdem sofort reserviert; danach die Frage nach der Adresse (emailFrage).
+//   3. Komplettcheck (Knöpfe „Ja, gern“ / „Nein, danke“), Kennzeichen am Termin (Appointment.komplettcheck).
+//   4. Angebotsfragen nach der Rechner-Tabelle (lib/preise/rechner-angaben.ts), eine pro Nachricht, Ja/Nein mit Knöpfen.
+//   5. Nur bei Komplettcheck „Ja“: Frage nach bestehenden Verträgen (lib/whatsapp/vorvertraege.ts), Policen-Einladung.
+//   6. Abschluss: höchstens 3 Punkte zum Bereitlegen, E-Mail mit Kalendereintrag und als einzige Bestätigungsfrage ganz
 //      am Schluss die Kalenderfrage (Knöpfe „Ja“ / „Mache ich gleich“ → zugesagt).
 // Ablauf und Versand: lib/whatsapp/termin-strecke.ts. Keine Gedankenstriche, kurze Sätze, keine Versprechen.
 
@@ -209,9 +210,15 @@ export function terminNachfassText(an: Ansprache, person: VermittlerName, zeiten
 /** Höchstens so viele Punkte in der Bereitlegen-Liste (Ole, 17.11.2026). */
 export const MAX_BEREITLEGEN = 3;
 
+/** Punkt „bestehende Verträge und Policen“ (nur bei Komplettcheck „Ja“). */
+export const VERTRAEGE_BEREITLEGEN_RE = /bestehenden Verträge und Policen/;
+
 /**
- * Was der Lead zum Termin bereitlegen soll: höchstens 3 Punkte je Produkt, die wichtigsten, nichts doppelt zu bereits
- * Erfragtem (Ole, 17.11.2026). Die bisherigen Policen stehen oben (TKV: nach der Chipnummer), die IBAN zuletzt.
+ * Was der Lead zum Termin bereitlegen soll (Ole, 17.11.2026; P2): höchstens 3 Punkte je Produkt, die wichtigsten,
+ * nichts doppelt zu bereits Erfragtem.
+ *   - „bestehende Verträge und Policen“ nur bei Komplettcheck „Ja“ (dann oben),
+ *   - bei Familie die Geburtsdaten der Mitversicherten, für alle Sparten (nicht nur Unfall),
+ *   - die IBAN immer zuletzt.
  */
 export function bereitlegenListe(
   source: string | null | undefined,
@@ -221,22 +228,21 @@ export function bereitlegenListe(
 ): string[] {
   const purpose = outreachProdukt(source)?.purpose;
   const iban = a(an, "deine IBAN, falls du direkt abschließen möchtest", "Ihre IBAN, falls Sie direkt abschließen möchten");
-  const policen = opts.komplettcheck
-    ? a(an, "deine bisherigen Policen, gern auch von deinen anderen Verträgen", "Ihre bisherigen Policen, gern auch von Ihren anderen Verträgen")
-    : a(an, "deine bisherigen Policen, falls vorhanden", "Ihre bisherigen Policen, falls vorhanden");
-  if (purpose === "outreach_tkv") return opts.komplettcheck ? [policen, a(an, "die Chipnummer deines Tieres", "die Chipnummer Ihres Tieres"), iban] : [a(an, "die Chipnummer deines Tieres", "die Chipnummer Ihres Tieres"), policen, iban];
-  if (purpose === "outreach_pkv") return [...(opts.komplettcheck ? [policen] : []), a(an, "deine aktuelle Police mit dem letzten Beitragsschreiben", "Ihre aktuelle Police mit dem letzten Beitragsschreiben"), iban];
-  if (purpose === "outreach_zahn") return opts.komplettcheck ? [policen, iban] : [iban];
-  if (purpose !== "outreach_privatschutz" && !sparten.length) return opts.komplettcheck ? [policen] : [];
+  const vertraege = opts.komplettcheck ? [a(an, "deine bestehenden Verträge und Policen", "Ihre bestehenden Verträge und Policen")] : [];
   const quelle = opts.quelle ?? { formular: [], angaben: null };
-  const unbekannt = (sparte: RechnerSparte, key: string) => !angabenFuerSparte(quelle, sparte).find((x) => x.key === key)?.wert;
   const familie = istFamilie(quelle.formular, quelle.angaben);
-  const extra = [
+  const geburtsdaten = "die Geburtsdaten aller Personen, die mitversichert werden sollen";
+  const mit = (extra: string[]) => [...vertraege, ...extra.slice(0, Math.max(0, MAX_BEREITLEGEN - 1 - vertraege.length)), iban];
+  if (purpose === "outreach_tkv") return mit([a(an, "die Chipnummer deines Tieres", "die Chipnummer Ihres Tieres")]);
+  if (purpose === "outreach_pkv") return mit([a(an, "deine aktuelle Police mit dem letzten Beitragsschreiben", "Ihre aktuelle Police mit dem letzten Beitragsschreiben"), ...(familie ? [geburtsdaten] : [])]);
+  if (purpose === "outreach_zahn") return mit(familie ? [geburtsdaten] : []);
+  if (purpose !== "outreach_privatschutz" && !sparten.length) return vertraege;
+  const unbekannt = (sparte: RechnerSparte, key: string) => !angabenFuerSparte(quelle, sparte).find((x) => x.key === key)?.wert;
+  return mit([
     ...(sparten.includes("hausrat") && unbekannt("hausrat", "wohnflaeche") ? [a(an, "die Wohnfläche deiner Wohnung", "die Wohnfläche Ihrer Wohnung")] : []),
-    ...(sparten.includes("unfall") && familie ? ["die Geburtsdaten aller Personen, die mitversichert werden sollen"] : []),
+    ...(familie ? [geburtsdaten] : []),
     ...(sparten.some((s) => s.startsWith("tierhalter")) ? ["die Chipnummer jedes Tieres"] : []),
-  ];
-  return [policen, ...extra.slice(0, MAX_BEREITLEGEN - 2), iban];
+  ]);
 }
 
 /** Die einzige Bestätigungsfrage, ganz am Schluss der Termin-Strecke (Knöpfe „Ja“ / „Mache ich gleich“). */
@@ -287,12 +293,15 @@ export const KOMPLETTCHECK_KNOEPFE: Knopf[] = [
   { id: "komplettcheck:nein", title: "Nein, danke" },
 ];
 
-/** Nach „Ja, gern“: Frage nach den bestehenden Verträgen (eigene Nachricht, ohne Knöpfe). */
-export function vertragsFrage(an: Ansprache, familie: boolean): string {
+/**
+ * Bei Komplettcheck „Ja“ (nach den Angebotsfragen, P2): Frage nach den bestehenden Verträgen (eigene Nachricht, ohne
+ * Knöpfe). einleitung: „Super!“ direkt nach dem Knopf, „Danke!“ nach der letzten Angebotsfrage.
+ */
+export function vertragsFrage(an: Ansprache, familie: boolean, einleitung = "Super!"): string {
   const wer = familie
     ? a(an, "Welche Versicherungen habt ihr als Familie heute schon?", "Welche Versicherungen haben Sie und Ihre Familie heute schon?")
     : a(an, "Welche Versicherungen hast du heute schon?", "Welche Versicherungen haben Sie heute schon?");
-  return `Super! ${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Gesellschaft.`;
+  return `${einleitung} ${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Gesellschaft.`;
 }
 
 /** Erkennt die Vertragsfrage in einer Nachricht von uns. */
@@ -303,11 +312,21 @@ export const VERTRAGSFRAGE_RE = /Welche Versicherungen ha(ben|st|bt) .*heute sch
  * … Die Einladung mit Kalendereintrag habe ich Ihnen an … geschickt. *Haben Sie sich den Termin schon im Kalender
  * eingetragen?*“ (Knöpfe „Ja“ / „Mache ich gleich“). einleitung ersetzt den ersten Satz (nach dem Komplettcheck).
  */
-export function abschlussText(o: { an: Ansprache; person: VermittlerName; bereitlegen: string[]; email: string | null; nachFragen: boolean; einleitung?: string | null }): string {
+export function abschlussText(o: {
+  an: Ansprache;
+  person: VermittlerName;
+  bereitlegen: string[];
+  email: string | null;
+  nachFragen: boolean;
+  einleitung?: string | null;
+  /** Policen-Bitte (P2: jeder Lead einmal), wenn sie noch nicht kam (lib/policen/regeln.ts policenBitteKurz) */
+  policen?: string | null;
+}): string {
   const teile: string[] = [];
   if (o.einleitung) teile.push(o.einleitung);
   else if (o.nachFragen) teile.push(`Danke, damit sind alle wichtigen Angaben für ${o.person.dat} notiert.`);
   if (o.bereitlegen.length) teile.push(`${a(o.an, "Bitte leg zum Termin bereit:", "Bitte legen Sie zum Termin bereit:")}\n${o.bereitlegen.slice(0, MAX_BEREITLEGEN).map((x) => `• ${x}`).join("\n")}`);
+  if (o.policen) teile.push(o.policen);
   const mail = o.email ? a(o.an, `Die Einladung mit Kalendereintrag habe ich dir an ${o.email} geschickt.`, `Die Einladung mit Kalendereintrag habe ich Ihnen an ${o.email} geschickt.`) : "";
   teile.push([mail, kalenderFrage(o.an)].filter(Boolean).join(" "));
   return teile.join("\n\n");
@@ -336,18 +355,18 @@ export function knoepfeFuerText(text: string | null | undefined, folgefragen: re
  */
 export const BUCHUNG_VERBINDLICH = {
   video: {
-    sie: "[Person] hält sich diese Zeit nur für Sie frei und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
-    du: "[Person] hält sich diese Zeit nur für dich frei und bereitet deine Beiträge vorab vor. Bitte sei pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreib mir einfach hier, dann finden wir eine neue Zeit.",
+    sie: "[Person] reserviert diese Zeit nur für Sie und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
+    du: "[Person] reserviert diese Zeit nur für dich und bereitet deine Beiträge vorab vor. Bitte sei pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreib mir einfach hier, dann finden wir eine neue Zeit.",
   },
   phone: {
-    sie: "[Person] hält sich diese Zeit nur für Sie frei und bereitet Ihre Beiträge vorab vor. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
-    du: "[Person] hält sich diese Zeit nur für dich frei und bereitet deine Beiträge vorab vor. Falls doch etwas dazwischenkommt, schreib mir einfach hier, dann finden wir eine neue Zeit.",
+    sie: "[Person] reserviert diese Zeit nur für Sie und bereitet Ihre Beiträge vorab vor. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
+    du: "[Person] reserviert diese Zeit nur für dich und bereitet deine Beiträge vorab vor. Falls doch etwas dazwischenkommt, schreib mir einfach hier, dann finden wir eine neue Zeit.",
   },
 } as const;
 
 /**
  * Buchungsnachricht (Ole, 17.11.2026): „Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link:
- * …\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei …“ (BUCHUNG_VERBINDLICH). Ohne Frage; mit abschluss gleich
+ * …\n\nHerr Kannapinn reserviert diese Zeit nur für Sie …“ (BUCHUNG_VERBINDLICH). Ohne Frage; mit abschluss gleich
  * mit Bereitlegen und Kalenderfrage am Ende.
  */
 export function buchungsText(o: { an: Ansprache; start: Date; mode: "video" | "phone"; meetUrl: string | null; person: VermittlerName; abschluss?: string | null; email?: string | null }): string {
@@ -373,6 +392,26 @@ export function einladungAnText(an: Ansprache, email: string): string {
 }
 
 /**
+ * E-Mail-Adresse unbekannt (P2, Ole 17.11.2026): Der Termin ist schon reserviert, danach diese Frage als eigene
+ * Nachricht. Kommt eine Adresse, geht die Einladung nach (termin-strecke.ts emailAntwort bzw. update_email).
+ */
+export function emailFrage(an: Ansprache): string {
+  return a(
+    an,
+    "Damit ich dir die Einladung mit Kalendereintrag schicken kann: An welche E-Mail-Adresse darf sie gehen?",
+    "Damit ich Ihnen die Einladung mit Kalendereintrag schicken kann: An welche E-Mail-Adresse darf sie gehen?",
+  );
+}
+
+/** Erkennt die Frage nach der E-Mail-Adresse in einer Nachricht von uns. */
+export const EMAIL_FRAGE_RE = /An welche E-Mail-Adresse darf sie gehen\?/;
+
+/** Dank, wenn die Adresse nach der Buchung kommt: „Danke! Die Einladung mit Kalendereintrag ist an … unterwegs.“ */
+export function einladungUnterwegs(email: string): string {
+  return `Danke! Die Einladung mit Kalendereintrag ist an ${email} unterwegs.`;
+}
+
+/**
  * Wunschzeit (Live-Test Ole, 17.11.2026: „Mittwoch um 16h“ ist frei, trotzdem kamen zwei Zeiten zur Auswahl): Nennt der
  * Lead Tag und Uhrzeit und ist sie frei, wird direkt gebucht. Nur bei belegter Zeit oder nur Tag/Tageszeit: zwei Zeiten.
  */
@@ -394,35 +433,49 @@ export function terminRegeln(o: { an: Ansprache; person: VermittlerName; videoOn
     `- ${WUNSCHZEIT_REGEL}`,
     o.emailBekannt
       ? "- Wählt der Lead eine Zeit (Knopf oder Text): Die E-Mail-Adresse ist bekannt, frag nicht danach. Buche sofort mit book_appointment (modus video) und genau dem start-Wert der gewählten Zeit."
-      : "- Wählt der Lead eine Zeit (Knopf oder Text): frag in einer eigenen Nachricht nach seiner E-Mail-Adresse für die Einladung mit Kalendereintrag, dann buche mit book_appointment (modus video) und genau dem start-Wert der gewählten Zeit. Möchte er keine angeben, buche ohne.",
-    "- Nach book_appointment schickt die App die Buchungsnachricht mit Link selbst und danach die erste Angebotsfrage. Schreib dazu nichts Eigenes.",
+      : "- Wählt der Lead eine Zeit (Knopf oder Text): Buche sofort mit book_appointment (modus video) und genau dem start-Wert der gewählten Zeit, auch ohne E-Mail-Adresse. Frag vorher nicht danach: Die App reserviert den Termin und fragt danach selbst nach der Adresse für die Einladung.",
+    "- Nach book_appointment schickt die App die Buchungsnachricht mit Link selbst und danach die nächste Frage. Schreib dazu nichts Eigenes.",
   ].join("\n");
 }
 
-/** Prompt-Block nach der Buchung: Angebotsfragen je eine Nachricht, Komplettcheck, Abschluss mit Kalenderfrage, Zusage. */
+/**
+ * Prompt-Block nach der Buchung (Reihenfolge P2): E-Mail-Frage (nur ohne bekannte Adresse), Komplettcheck,
+ * Angebotsfragen je eine Nachricht, bei Komplettcheck „Ja“ Vertragsfrage, Abschluss mit Kalenderfrage, Zusage.
+ */
 export function nachBuchungRegel(o: {
   an: Ansprache;
   person: VermittlerName;
   fragen: { text: string; feld: string }[];
+  /** Frage nach der E-Mail-Adresse gestellt, noch keine Adresse und noch kein Komplettcheck */
+  emailOffen?: boolean;
+  /** Komplettcheck-Frage schon gestellt (sonst schickt die App sie gleich selbst) */
+  komplettcheckGestellt?: boolean;
   /** Komplettcheck-Frage schon gestellt, aber noch nicht beantwortet */
   komplettcheckOffen?: boolean;
   abschlussGesendet: boolean;
   zugesagt: boolean;
 }): string {
   const lines = ["Nach der Buchung (der Termin steht):"];
-  if (o.fragen.length) {
+  const gestellt = o.komplettcheckGestellt ?? true;
+  if (o.emailOffen) {
     lines.push(
-      `- Angebotsfragen, nur für die Beitragsberechnung, genau in dieser Reihenfolge, je eine eigene Nachricht, jede Antwort mit record_qualification festhalten: ${o.fragen.map((f, i) => `${i + 1}. „${f.text}“ (angaben.${f.feld})`).join(" ")}`,
-      "- Was der Lead im Chat schon beantwortet hat, überspringst du. Frag nichts anderes: keine Selbstbeteiligung, Summen, Lebensbereiche oder Tarife (legt der Vermittler im Termin fest), keine Tiere ohne Tierhalterhaftpflicht, nie Gesundheitsangaben.",
-      "- Kommt die Antwort per Knopf („Ja“, „Nein“), ist sie die Antwort auf genau diese Frage.",
-      "- Nach der Antwort auf die letzte Frage: festhalten und nichts weiter fragen. Die App schickt die nächste Nachricht selbst.",
+      "- Offen ist die Frage nach der E-Mail-Adresse für die Einladung. Nennt der Lead eine Adresse, nutze update_email. Möchte er keine angeben, ist das in Ordnung: kurz bestätigen (der Termin bleibt reserviert), keine weitere Frage. Die App schickt danach die nächste Nachricht selbst.",
     );
+  } else if (!gestellt) {
+    lines.push("- Die App schickt gleich selbst die nächste Frage. Beantworte nur kurz, was der Lead geschrieben hat, und stell keine eigene Frage.");
   } else if (o.komplettcheckOffen) {
     lines.push(
       `- Offen ist die Frage, ob ${o.person.nom} im Termin auch schauen soll, ob der Lead insgesamt gut abgesichert ist. Antwortet er darauf (ja oder nein, auch frei formuliert), nutze komplettcheck mit ja=true bzw. ja=false. Die App schickt dann die nächste Nachricht selbst: schreib nichts dazu.`,
     );
+  } else if (o.fragen.length) {
+    lines.push(
+      `- Angebotsfragen, nur für die Beitragsberechnung, genau in dieser Reihenfolge, je eine eigene Nachricht, jede Antwort mit record_qualification festhalten: ${o.fragen.map((f, i) => `${i + 1}. „${f.text}“ (angaben.${f.feld})`).join(" ")}`,
+      "- Was der Lead im Chat schon beantwortet hat, überspringst du. Frag nichts anderes: keine Selbstbeteiligung, Summen oder Tarife (legt der Vermittler im Termin fest), keine Tiere ohne Tierhalterhaftpflicht, nie Gesundheitsangaben.",
+      "- Kommt die Antwort per Knopf („Ja“, „Nein“), ist sie die Antwort auf genau diese Frage.",
+      "- Nach der Antwort auf die letzte Frage: festhalten und nichts weiter fragen. Die App schickt die nächste Nachricht selbst.",
+    );
   } else if (!o.abschlussGesendet) {
-    lines.push("- Alle Angaben fürs Angebot liegen vor. Die App schickt die Abschlussnachricht mit der Kalenderfrage selbst: stell keine weitere Frage.");
+    lines.push("- Alle Angaben fürs Angebot liegen vor. Die App schickt die nächsten Nachrichten (bei Komplettcheck die Frage nach den Verträgen, dann den Abschluss mit der Kalenderfrage) selbst: stell keine weitere Frage.");
   } else {
     lines.push("- Alle Angaben fürs Angebot liegen vor: stell keine weiteren Fragen dazu.");
   }
@@ -430,8 +483,8 @@ export function nachBuchungRegel(o: {
     o.zugesagt
       ? "- Der Lead hat den Termin schon im Kalender (zugesagt): frag nicht mehr danach."
       : `- Antwortet der Lead auf die Kalenderfrage mit ja (sinngemäß, auch „erledigt“, „hab ich“, „mache ich gleich“): nutze termin_zugesagt und bedank dich kurz. Mit nein: bitte ihn freundlich, es gleich zu tun, die Einladung mit Kalendereintrag ${a(o.an, "hast du", "haben Sie")} per E-Mail.`,
-    "- Nennt der Lead eine andere E-Mail-Adresse: nutze update_email, die Einladung geht dann neu raus.",
-    `- ${o.person.nom} hält sich die Zeit nur für den Lead frei. Kommt etwas dazwischen, lieber verschieben als ausfallen lassen. Keine erfundene Knappheit.`,
+    "- Nennt der Lead eine (andere) E-Mail-Adresse: nutze update_email, die Einladung geht dann (neu) raus.",
+    `- ${o.person.nom} reserviert die Zeit nur für den Lead. Kommt etwas dazwischen, lieber verschieben als ausfallen lassen. Keine erfundene Knappheit.`,
   );
   return lines.join("\n");
 }

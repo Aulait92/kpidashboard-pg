@@ -31,8 +31,10 @@ import { inStreckenFenster } from "@/lib/whatsapp/termin-strecke";
 import {
   ERSTANSCHREIBEN_V6,
   ERSTANSCHREIBEN_V7,
+  ERSTANSCHREIBEN_V8,
   erstanschreibenText,
   erstanschreibenV6Params,
+  erstanschreibenV8Params,
   ersteFrage,
   ersteFrageKnoepfe,
   frageOhneFragezeichen,
@@ -160,18 +162,26 @@ describe("Bereitlegen: höchstens 3 Punkte, nichts doppelt", () => {
           expect(l.length, produkt).toBeLessThanOrEqual(MAX_BEREITLEGEN);
           expect(new Set(l).size).toBe(l.length);
           for (const x of l) expect(x).not.toMatch(/[–—]/);
-          if (komplettcheck) expect(l[0]).toMatch(/bisherigen Policen/);
+          // P2: „bestehende Verträge und Policen“ nur bei Komplettcheck, dann oben; IBAN zuletzt
+          if (komplettcheck) expect(l[0]).toMatch(/bestehenden Verträge und Policen/);
+          else expect(l.join(" ")).not.toMatch(/bestehenden Verträge|bisherigen Policen/);
         }
       });
     }
   }
 
-  it("Privatschutz: Policen, Wohnfläche nur, falls nicht schon erfragt, IBAN; nie mehr als 3 bei vielen Sparten", () => {
+  it("Privatschutz: Wohnfläche nur, falls nicht schon erfragt, Geburtsdaten bei Familie, IBAN; Verträge nur mit Komplettcheck; nie mehr als 3", () => {
     const sparten: RechnerSparte[] = ["haftpflicht", "hausrat"];
+    const GEB = "die Geburtsdaten aller Personen, die mitversichert werden sollen";
+    const IBAN = "Ihre IBAN, falls Sie direkt abschließen möchten";
     const offen = bereitlegenListe("Privatschutz", sparten, "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: {} } });
-    expect(offen).toEqual(["Ihre bisherigen Policen, falls vorhanden", "die Wohnfläche Ihrer Wohnung", "Ihre IBAN, falls Sie direkt abschließen möchten"]);
+    expect(offen).toEqual(["die Wohnfläche Ihrer Wohnung", GEB, IBAN]);
     const erfragt = bereitlegenListe("Privatschutz", sparten, "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: { wohnflaeche: "90 m²" } } });
-    expect(erfragt).toEqual(["Ihre bisherigen Policen, falls vorhanden", "Ihre IBAN, falls Sie direkt abschließen möchten"]);
+    expect(erfragt).toEqual([GEB, IBAN]);
+    // Geburtsdaten bei Familie für alle Sparten (nicht nur Unfall), ohne Familie nicht
+    expect(bereitlegenListe("Privatschutz", ["haftpflicht"], "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: {} } })).toEqual([GEB, IBAN]);
+    expect(bereitlegenListe("Privatschutz", ["haftpflicht"], "sie", { quelle: { formular: [{ label: "Lebenssituation", value: "Single" }], angaben: {} } })).toEqual([IBAN]);
+    expect(bereitlegenListe("Privatschutz", ["haftpflicht"], "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: {} }, komplettcheck: true })).toEqual(["Ihre bestehenden Verträge und Policen", GEB, IBAN]);
     const viele = bereitlegenListe("Privatschutz", ["haftpflicht", "hausrat", "unfall", "wohngebaeude", "tierhalter-hund"], "sie", { quelle: { formular: [{ label: "Lebenssituation", value: "Familie mit Kindern" }], angaben: {} } });
     expect(viele).toHaveLength(3);
   });
@@ -182,11 +192,11 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
     const t = buchungsText({ an: "sie", start: new Date("2026-11-18T09:00:00Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: PERSON });
     expect(t).toBe(
       "Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\n\n" +
-        "Herr Kannapinn hält sich diese Zeit nur für Sie frei und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
+        "Herr Kannapinn reserviert diese Zeit nur für Sie und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
     );
     expect(t).not.toMatch(/\?|nur noch|knapp|letzte/);
     const du = buchungsText({ an: "du", start: new Date("2026-11-18T09:00:00Z"), mode: "video", meetUrl: "https://meet.google.com/x", person: PERSON_DU });
-    expect(du).toContain("Ole hält sich diese Zeit nur für dich frei und bereitet deine Beiträge vorab vor. Bitte sei pünktlich dabei");
+    expect(du).toContain("Ole reserviert diese Zeit nur für dich und bereitet deine Beiträge vorab vor. Bitte sei pünktlich dabei");
   });
 
   it("Komplettcheck: Sie, Familie, Du", () => {
@@ -226,7 +236,7 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
       einleitung: abschlussEinleitung("sie", PERSON, "vertraege"),
     });
     expect(ab).toBe(
-      "Danke, das schaut sich Herr Kannapinn im Termin mit an.\n\nBitte legen Sie zum Termin bereit:\n• Ihre bisherigen Policen, gern auch von Ihren anderen Verträgen\n• Ihre IBAN, falls Sie direkt abschließen möchten\n\n" +
+      "Danke, das schaut sich Herr Kannapinn im Termin mit an.\n\nBitte legen Sie zum Termin bereit:\n• Ihre bestehenden Verträge und Policen\n• die Geburtsdaten aller Personen, die mitversichert werden sollen\n• Ihre IBAN, falls Sie direkt abschließen möchten\n\n" +
         "Die Einladung mit Kalendereintrag habe ich Ihnen an julia@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*",
     );
     expect((ab.match(/\?/g) ?? []).length).toBe(1);
@@ -308,7 +318,10 @@ describe("Erstanschreiben v7: Text und Parameter", () => {
       source: "Privatschutz",
       formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }],
     });
-    expect(t).toBe("Hallo Julia Schneider, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\nWer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?");
+    // Freitext ab sofort v8 (P2): konkretes Interesse mit Emoji, Nutzen-Halbsatz; ohne Familie „persönlich“
+    expect(t).toBe(
+      "Hallo Julia Schneider, danke für Ihre Anfrage zu Haftpflicht und Hausrat 🏠! Ich bin der digitale KI-Assistent von Herrn Kannapinn und kläre kurz ein paar Angaben, damit er Ihnen persönlich den passenden Schutz zeigen kann.\n\nWer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?",
+    );
   });
 
   it("Parameter je Lage: Formular leer, teilweise, vollständig (Privatschutz, Sie)", () => {
@@ -326,7 +339,7 @@ describe("Erstanschreiben v7: Text und Parameter", () => {
 
   for (const source of PRODUKTE) {
     for (const [lage, formular] of Object.entries(LAGEN)) {
-      it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“ gleich dem Freitext`, () => {
+      it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“; Freitext gleich der vorbereiteten v8`, () => {
         const purpose: NoticePurpose = outreachProdukt(source)?.purpose ?? "outreach";
         for (const an of ["sie", "du"] as const) {
           for (const kontakt of [{ fullName: "Julia Schneider", salutation: "Frau" as const }, { fullName: "Julia" }]) {
@@ -344,7 +357,11 @@ describe("Erstanschreiben v7: Text und Parameter", () => {
             expect(tpl.endsWith(`\n\n${frage}`)).toBe(true);
             expect(tpl).not.toContain("*");
             const frei = erstanschreibenText({ an, kontakt, name: "Ole", vermittler: person.dat, vermittlerNom: person.nom, source, formular: f });
-            expect(frei, `${source} ${an}`).toBe(tpl);
+            // Freitext = v8 (P2), die Vorlage v8 ist nur vorbereitet
+            const p8 = erstanschreibenV8Params({ source, an, formular: f, person, kurz: "Ole" });
+            const v8 = mitName ? `Hallo {{1}}, ${ERSTANSCHREIBEN_V8[an]}` : `Hallo, ${ERSTANSCHREIBEN_V8.sie.replace(/\{\{(\d+)\}\}/g, (_, n: string) => `{{${Number(n) - 1}}}`)}`;
+            expect(frei, `${source} ${an}`).toBe(renderTemplate(v8, mitName ? [name, ...p8] : p8));
+            expect(frei.endsWith(`\n\n${frage}`)).toBe(true);
             if (an === "du") expect(tpl).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
           }
         }
