@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "pferd-op",
+  "produkt": "Pferde-OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Alle Operationen versichert",
+    "Freie Tierarztwahl weltweit",
+    "Keine Wartezeit bei Unfällen"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-OP-Versicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "jhl": "2.500 € je OP",
+        "got": "2-fach, Notfall 4-fach",
+        "chips": "nein",
+        "nachbehandlung": "bis 7 Tage",
+        "sb": "0 bis 1.000 € je Fall",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit",
+        "erstattung": "100 %"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/tierversicherungen/pferde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferde-OP-Versicherung Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "jhl": "unbegrenzt",
+        "got": "2-fach, Notfall 4-fach",
+        "chips": "bis 1.500 € je OP",
+        "nachbehandlung": "bis 7 Tage",
+        "sb": "0 bis 1.000 € je Fall",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit",
+        "erstattung": "100 %"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/tierversicherungen/pferde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferde-OP-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "jhl": "unbegrenzt",
+        "got": "2-fach, Notfall 4-fach",
+        "chips": "ja",
+        "nachbehandlung": "bis 10 Tage",
+        "sb": "0 bis 1.000 € je Fall",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate weltweit",
+        "erstattung": "100 %"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/tierversicherungen/pferde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/tierversicherungen/pferde-op-versicherung/"
+  ],
+  "offen": [
+    "Angebot der Bayerischen mit dem Partner Barmenia (Risikoträger Barmenia Allgemeine, Marke BarmeniaGothaer); gleiche Tarife wie im Ordner barmenia-gothaer, Stufen und Tabelle auf diebayerische.de geprüft (Abruf 17.11.2026). Die Bayerische markiert keine Stufe.",
+    "Laut Seite der Bayerischen Nachbehandlung Basis und Top 7 Tage, Premium 10 Tage, Notdienst in allen Stufen bis 4-fach GOT; Unterbringung Basis 15 €/Tag (7 Tage), Top 30 €/Tag (10 Tage), Premium bis 14 Tage. Weicht teils von der Barmenia-Übersicht ab; bitte prüfen.",
+    "Erstattung laut Seite der Bayerischen 100 % zum 2-fachen GOT-Satz; Basis laut Barmenia-Übersicht bis 2.500 € je OP.",
+    "Selbstbeteiligung wählbar 0, 250, 500 oder 1.000 € je Versicherungsfall.",
+    "Gelenk-Chip-OPs: besondere Wartezeit 12 Monate.",
+    "Unterbringung: Basis 15 € am Tag (7 Tage), Top 30 € am Tag (10 Tage), Premium bis 14 Tage.",
+    "Vorsorge, Physiotherapie, Kastration und Kolik ohne OP auf der Produktseite nicht genannt.",
+    "Pferdekranken-Vollversicherung bietet die Bayerische nicht an (nur OP)."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Chefarzt in allen Tarifen",
+    "Bei Unfall und Krankheit"
+  ],
+  "tarife": [
+    {
+      "name": "Komfort Start (SG2R)",
+      "kurz": "Komfort Start",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "ersatztagegeld": "bis 40 €/Tag",
+        "ambulant-op": "nur im Krankenhaus"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komfort (SG2)",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "ersatztagegeld": "bis 40 €/Tag",
+        "ambulant-op": "nur im Krankenhaus"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Premium (SG1)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "ersatztagegeld": "bis 50 €/Tag",
+        "ambulant-op": "ja"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/krankenhauszusatzversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert; Komfort (SG2) als mittlere Stufe. Komfort Start nur bis Eintrittsalter 49 (günstiger Einstieg).",
+    "Freie Krankenhauswahl, Erstattung über GOÄ-Höchstsatz und Wartezeit in der Tabelle nicht genannt. Rooming-in bis 15 (SG2R) bzw. 12 Jahre."
+  ]
+}

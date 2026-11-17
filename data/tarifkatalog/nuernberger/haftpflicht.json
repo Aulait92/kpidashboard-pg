@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Gefälligkeitsschäden",
+    "Forderungsausfall",
+    "Ehrenamt ohne Leitung"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 500.000 €",
+        "geliehen": "25.000 € (SB 150 €)",
+        "gefaelligkeit": "ja",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ohne Leitungsfunktion"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/privathaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "75 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "50.000 € (SB 150 €)",
+        "gefaelligkeit": "ja",
+        "drohne": "ja",
+        "nebenberuf": "bis 15.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/privathaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "bis 50.000 €",
+        "gefaelligkeit": "ja",
+        "drohne": "ja",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/privathaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/privathaftpflichtversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Komfort ist als „Unsere Empfehlung“ markiert.",
+    "Schlüsselverlust privat: Kompakt bis 50.000 €, Komfort und Premium ohne eigene Grenze; ohne Verschulden Komfort 50.000 €, Premium 100.000 €; beruflich 50.000 €/100.000 €/ohne Grenze.",
+    "Geliehene und gemietete Sachen (beweglich und unbeweglich zusammen): Kompakt 25.000 €, Komfort 50.000 € je mit SB 150 €, Premium 50.000 € ohne SB. Mietsachschäden an der Wohnung nicht getrennt ausgewiesen.",
+    "Ausland: europaweit unbegrenzt, weltweit 5/7 Jahre bzw. unbegrenzt. Sachschäden beim Arbeitgeber Komfort 100.000 €, Premium ohne Grenze. Neuwert, Mallorca, Rabattretter nicht im Vergleich."
+  ]
+}

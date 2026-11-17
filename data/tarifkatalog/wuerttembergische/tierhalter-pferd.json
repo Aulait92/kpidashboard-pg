@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Reitturniere und Reitunterricht",
+    "Weltweit bis 5 Jahre",
+    "Tierarzt fremdes Pferd 10.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflichtversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 36 Monate",
+        "geliehen": "Anhänger 10.000 €",
+        "ausland": "weltweit bis 5 Jahre"
+      },
+      "quelle": "https://www.wuerttembergische.de/freizeit/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/freizeit/pferdehaftpflichtversicherung/",
+    "https://www.wuerttembergische.de/freizeit/tierhalterhaftpflichtversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/haftpflicht/tierhalter_haftpflichtversicherung/3083_AVB_Pferdehalter-HV_privat.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit wählbarer Versicherungssumme (10, 20 oder 50 Mio. € pauschal, höchstens 15 Mio. € je geschädigter Person). Werte von der Produktseite (Abruf 17.11.2026).",
+    "Mietsachschäden an Gebäuden, Stall- und Pferdeboxen sowie Koppelzäunen; geliehene oder gemietete Pferdeanhänger bis 10.000 €. Hüter und Fremdreiter mitversichert.",
+    "Selbstbeteiligung nicht veröffentlicht. Forderungsausfall nur als Ratgeberthema erwähnt, nicht als Leistung der Pferdehaftpflicht."
+  ]
+}

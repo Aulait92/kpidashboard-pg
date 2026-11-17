@@ -1,0 +1,35 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auch Sonn- und Feiertage",
+    "Steuerfrei"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld (Tarif KTG)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab 43. Tag (Arbeitn.)",
+        "dauer": "zeitlich unbegrenzt",
+        "selbststaendige": "ja, früherer Beginn",
+        "ausland": "weltweit"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/verdienstausfall/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/verdienstausfall/",
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/"
+  ],
+  "offen": [
+    "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Tarif; Leistungsbeginn für Arbeitnehmer nach der Lohnfortzahlung (ab dem 43. Tag), für Selbstständige früher wählbar (Seite Vollversicherung).",
+    "Höhe des Tagegelds, Wartezeit und Ende bei Berufsunfähigkeit auf der Seite nicht genannt."
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Fahrrad auch ohne Einbruch",
+    "Undichte Fugen und Fliesen",
+    "Ohne Rauchmelder versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "Quotelung",
+        "wert": "bis 40.000 €",
+        "fahrrad": "ja",
+        "elementar": "optional",
+        "garten": "1.500 €",
+        "auto": "2.000 €",
+        "aussen": "4 Monate, 20.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "fahrrad": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "wert": "bis 60.000 €",
+        "fahrrad": "ja",
+        "elementar": "optional",
+        "garten": "7.500 €",
+        "auto": "15.000 €",
+        "aussen": "12 Monate, 50.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "fahrrad": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 15.000 €",
+        "wert": "bis 80.000 € (erhöhbar)",
+        "fahrrad": "ja",
+        "elementar": "optional",
+        "garten": "20.000 €",
+        "auto": "ja",
+        "aussen": "12 Monate, unbegrenzt",
+        "allgefahren": "bis 10.000 € (SB 250)"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "fahrrad": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/hausratversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert; Komfort als mittlere Stufe. Kompakt mit fester Versicherungssumme je Wohnfläche, Komfort und Premium mit unbegrenzter Leistung.",
+    "Grobe Fahrlässigkeit bei Verletzung von Obliegenheiten: Kompakt Kürzung nach Verschulden, Komfort bis 10.000 €, Premium bis 15.000 €; bei Herbeiführung des Schadens in allen Stufen versichert.",
+    "Einfacher Diebstahl außerhalb von Fahrrad, Garten und Auto nicht als eigene Leistung genannt. Fahrraddiebstahl ohne Einbruch laut Tabelle in allen Stufen (erhöhbar bis 50.000 €), laut Fließtext als Zusatzbaustein.",
+    "Weitere Naturgefahren (Elementar) und Glasschutz als Zusatzbausteine. Premium mit unbenannten Gefahren bis 10.000 € (SB 250 €)."
+  ]
+}

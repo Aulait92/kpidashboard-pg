@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Ohne Gesundheitsprüfung",
+    "Über GOZ-Höchstsätze"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnzusatz Komfort 80",
+      "kurz": "Komfort 80",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "80 %",
+        "implantate": "80 %",
+        "behandlung": "80 %",
+        "prophylaxe": "100 €/Jahr",
+        "wartezeit": "keine",
+        "kfo": "80 %, max. 1.600 €",
+        "inlays": "80 %"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz Komfort 90",
+      "kurz": "Komfort 90",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "90 %",
+        "prophylaxe": "150 €/Jahr",
+        "wartezeit": "keine",
+        "kfo": "90 %, max. 1.800 €",
+        "inlays": "90 %"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz Komfort 100",
+      "kurz": "Komfort 100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "200 €/Jahr",
+        "wartezeit": "keine",
+        "kfo": "100 %, max. 2.000 €",
+        "inlays": "100 %"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/zahnzusatzversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Komfort 90 ist als „Unser Tipp“ markiert.",
+    "Zahnersatz einschließlich Implantate, Inlays und Verblendungen; Zahnbehandlung hier Füllungen, Wurzel- und Parodontosebehandlung. Kieferorthopädie für Kinder (ab 18 nur nach Unfall).",
+    "Begrenzung in den ersten Jahren in der Tabelle nicht genannt; bitte prüfen. Schmerzausschaltung und Bleaching 100/150/200 €."
+  ]
+}

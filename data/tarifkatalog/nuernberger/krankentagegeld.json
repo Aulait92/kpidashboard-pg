@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auch Sonn- und Feiertage",
+    "Anpassung ohne Gesundheitsprüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "nach gewählter Karenz",
+        "hoehe": "ab 15 €/Tag",
+        "dauer": "zeitlich unbegrenzt"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/krankentagegeld/"
+  ],
+  "offen": [
+    "Werte von der Produktseite auf nuernberger.de (Abruf 17.11.2026); keine Tariftabelle. Leistung nach Ablauf der gewählten Karenzzeit für jeden Tag der Arbeitsunfähigkeit, Tagessatz ab 15 €.",
+    "Anpassung an steigendes Einkommen ohne erneute Gesundheitsprüfung und Wartezeit (als Baustein Dynamik „optional“). Wartezeit, Ende bei Berufsunfähigkeit und Tarif für Selbstständige nicht genannt; eigener Tarif für vollversicherte Arbeitnehmer (PDF)."
+  ]
+}

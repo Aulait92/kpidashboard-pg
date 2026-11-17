@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "basisrente",
+  "produkt": "Basis-Rente (Rürup) Invest plus",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Fonds ohne Ausgabeaufschlag",
+    "Steuerlich gefördert"
+  ],
+  "tarife": [
+    {
+      "name": "Basis-Rente Invest plus",
+      "kurz": "Invest plus",
+      "stufe": 1,
+      "werte": {
+        "anlage": "Fonds und ETFs",
+        "flexibel": "Zuzahlung, Anpassung",
+        "hinterbliebene": "mind. Beitragssumme"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basis-Rente oecoinvest plus",
+      "kurz": "oecoinvest",
+      "stufe": 2,
+      "werte": {
+        "anlage": "nachhaltige Fonds",
+        "flexibel": "Zuzahlung, Anpassung",
+        "hinterbliebene": "mind. Beitragssumme"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/ruerup-rente/"
+  ],
+  "offen": [
+    "Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Zwei Anlagevarianten statt Leistungsstufen; keine Empfehlung.",
+    "Bei Tod vor Rentenbeginn erhalten berechtigte Hinterbliebene das Fondsguthaben, mindestens die eingezahlten Beiträge, als Rente; nach Rentenbeginn das Restkapital als Rente. Beitragsgarantie, Rentenfaktor und Kosten nicht beziffert."
+  ]
+}

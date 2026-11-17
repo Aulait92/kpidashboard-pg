@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "pferd-op",
+  "produkt": "Pferde-OP-Versicherung (TierVital-Schutz)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Klinikwahl",
+    "Ausland bis 12 Monate",
+    "Kolik-OP nach 5 Tagen"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-Operationsversicherung",
+      "kurz": "OP",
+      "stufe": 1,
+      "werte": {
+        "got": "2-fach + Notdienst",
+        "jhl": "15.000 €",
+        "nachbehandlung": "bis 14 Tage",
+        "vorsorge": "nein",
+        "kolik": "5 Tage",
+        "kastration": "nein",
+        "physio": "nein",
+        "ausland": "bis 12 Monate"
+      },
+      "bausteine": {
+        "reha": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/pferd/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferde-Operationsversicherung mit Plus-Baustein",
+      "kurz": "OP mit Plus",
+      "stufe": 2,
+      "werte": {
+        "got": "2-fach + Notdienst",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 14 Tage",
+        "vorsorge": "nein",
+        "kolik": "5 Tage",
+        "kastration": "medizinisch notwendig",
+        "physio": "1.000 €/Jahr",
+        "ausland": "bis 12 Monate"
+      },
+      "bausteine": {
+        "reha": "inklusive"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/pferd/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/pferd/"
+  ],
+  "offen": [
+    "Ein Tarif (TierVital-Schutz) mit wählbarem Plus-Baustein; Stufe 2 zeigt den Tarif mit Plus-Baustein. Keine Empfehlung markiert. Werte aus der Leistungsübersicht der Produktseite (Abruf 17.11.2026).",
+    "Plus-Baustein: keine Jahreshöchstentschädigung, Physiotherapie/Osteopathie und regenerative Therapien je 1.000 € im Jahr, Kastration bei medizinischer Notwendigkeit, Kaiserschnitt einmalig. Zahn-Baustein für Zahnoperationen wählbar.",
+    "Erstattungssatz in Prozent und Gelenk-Chips nicht genannt. Stationäre Unterbringung bis 14 Tage. Wartezeit allgemein nicht genannt (Kolik und Unfall 5 Tage). Neuabschluss bis 20 Jahre. Keine Krankenvollversicherung für Pferde."
+  ]
+}

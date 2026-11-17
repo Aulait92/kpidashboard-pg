@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Behandlung als Privatpatient",
+    "Telemedizin Medgate",
+    "Bergung bis 10.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandskrankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 56 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "ja"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/auslandskrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/auslandskrankenversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Ein Tarif als Jahresvertrag, für Einzelpersonen oder Familien.",
+    "Weltweit beruflich und privat; USA und Kanada nicht ausgeschlossen. Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft nicht in der Tabelle."
+  ]
+}

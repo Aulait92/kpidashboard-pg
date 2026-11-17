@@ -1,0 +1,61 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeldversicherung PflegePRIVAT",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Leistung ab Pflegegrad 1",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "PflegePRIVAT Premium",
+      "kurz": "Premium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "ab-pg": "Pflegegrad 1",
+        "einmal": "60-facher Tagessatz",
+        "befreiung": "ab Pflegegrad 3",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/private-pflegeversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegePRIVAT Premium Plus",
+      "kurz": "Premium Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "ab-pg": "Pflegegrad 1",
+        "einmal": "100-facher Tagessatz",
+        "befreiung": "ab Pflegegrad 3",
+        "ambulant-gleich": "nein, stationär höher",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/private-pflegeversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/gesundheit/private-pflegeversicherung.html",
+    "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/336908"
+  ],
+  "offen": [
+    "Region West. Produktgeber ist die Union Krankenversicherung AG (UKV); Tarife und Werte wie im Ordner ukv, auf provinzial.de mit eigener Produktseite angeboten (Abruf 17.11.2026).",
+    "Tagegeld in vereinbarter Höhe; Anteile: Premium ambulant und stationär PG1 10 %, PG2 30 %, PG3 60 %, PG4 90 %, PG5 100 %. Premium Plus ambulant PG4 und PG5 100 %, stationär ab PG2 100 %.",
+    "Einmalzahlung beim erstmaligen Eintritt in Pflegegrad 2 bis 5. Dynamik alle 3 Jahre nach Verbraucherpreisindex (bis 80 Jahre); Premium Plus zusätzlich zweimal 10 % Erhöhung ohne Gesundheitsprüfung (bis 65).",
+    "Demenz nicht eigens geregelt (Leistung nach Pflegegrad). Staatlich geförderte Pflegezusatzversicherung (Förderpflege) als eigenes Produkt nicht aufgenommen. Keine Empfehlung markiert."
+  ]
+}

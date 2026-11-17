@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "rente",
+  "produkt": "Fondsgebundene Privat-Rente",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Fonds ohne Ausgabeaufschlag",
+    "Kapitalwahlrecht"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Rente invest plus",
+      "kurz": "invest plus",
+      "stufe": 1,
+      "werte": {
+        "anlage": "Fonds und ETFs",
+        "flexibel": "Zuzahlung, Entnahme",
+        "kapital": "ja"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/privat-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Rente oecoinvest plus",
+      "kurz": "oecoinvest",
+      "stufe": 2,
+      "werte": {
+        "anlage": "nachhaltige Fonds",
+        "flexibel": "Zuzahlung, Entnahme",
+        "kapital": "ja"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/privat-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/privat-rente/",
+    "https://www.concordia.de/produkte/zukunft-vorsorge/altersvorsorge/plan-zukunft/"
+  ],
+  "offen": [
+    "Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Zwei Anlagevarianten statt Leistungsstufen; keine Empfehlung. Plan Zukunft ist die Privat-Rente für Kinder (ab 15 € monatlich, ab Geburt).",
+    "Beitragsgarantie und garantierter Rentenfaktor auf der Seite nicht beziffert; Hinterbliebenenschutz, Beitragspause und Effektivkosten nicht genannt (Basisinformationsblätter verlinkt). Fondswelt Komfort nur bei invest plus."
+  ]
+}

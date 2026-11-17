@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufsunfähigkeitsversicherung mit Dienstunfähigkeits-Absicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Für Beamte, Soldaten, Richter",
+    "Folgt dem Dienstherrn"
+  ],
+  "tarife": [
+    {
+      "name": "Selbständige Berufsunfähigkeitsversicherung mit Leistung bei allgemeiner Dienstunfähigkeit",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja, bei Entlassung",
+        "bu": "ja",
+        "nachversicherung": "ja, bis 1.600 €/Monat",
+        "verweisung": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35020_selbststaendige-berufs-und-erwerbsunfaehigkeit_verbraucherinformationen_2026_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35020_selbststaendige-berufs-und-erwerbsunfaehigkeit_verbraucherinformationen_2026_01.pdf",
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/einfache-sprache/berufskasko_db-pb_2025_12.pdf",
+    "https://www.zurich.de/de-de/pk/vorsorge-vermoegen/dienstunfaehigkeitsversicherung"
+  ],
+  "offen": [
+    "Kein eigenständiger DU-Tarif: Leistung bei allgemeiner Dienstunfähigkeit ist eine Vereinbarung in der Berufsunfähigkeitsversicherung von Zurich Deutscher Herold (Bedingungen 01/2026, § 2 Abs. 13). Produktseite für automatische Abrufe gesperrt.",
+    "Leistung, wenn der Beamte ausschließlich aus gesundheitlichen Gründen in den Ruhestand versetzt oder entlassen wird; gilt entsprechend für Kirchenbeamte, Soldaten und Richter. Konkrete Verweisung bleibt möglich, abstrakte Verweisung ausgeschlossen (wie BU).",
+    "Nachträglicher Einschluss bei erstmaliger Verbeamtung ohne Ausschluss oder Zuschlag möglich; versicherbare DU-Leistung höchstens 1.600 € im Monat.",
+    "Teildienstunfähigkeit (begrenzte Dienstfähigkeit) in den Bedingungen nicht gefunden."
+  ]
+}

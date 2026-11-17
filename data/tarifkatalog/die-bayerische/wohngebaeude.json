@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung (Einfamilienhauskonzept)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Elementarschutz enthalten",
+    "Neuwertersatz",
+    "Photovoltaik, Wärmepumpe"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäudeversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "ja, SB 10 %",
+        "ableitung": "nein",
+        "pv": "ja",
+        "kosten": "50.000 €",
+        "neuwert": "ja",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "mietausfall": "24 Monate",
+        "sb": "0, 500, 1.000, 2.000 €"
+      },
+      "bausteine": {
+        "technik": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:092a53f0-46a4-43ae-96be-caf259f7ed31/333243_tarifuebersicht_wohngebaeude_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäudeversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "ja, SB 10 %",
+        "ableitung": "bis 5.000 €",
+        "pv": "ja",
+        "kosten": "1 Mio. €",
+        "neuwert": "ja",
+        "vandalismus": "bis 10.000 €",
+        "tiere": "nein",
+        "mietausfall": "24 Monate",
+        "sb": "0, 500, 1.000, 2.000 €"
+      },
+      "bausteine": {
+        "technik": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:092a53f0-46a4-43ae-96be-caf259f7ed31/333243_tarifuebersicht_wohngebaeude_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäudeversicherung Prestige",
+      "kurz": "Prestige",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "ja, SB 10 %",
+        "ableitung": "unbegrenzt",
+        "pv": "ja",
+        "kosten": "unbegrenzt",
+        "neuwert": "ja",
+        "vandalismus": "ja",
+        "tiere": "bis 5.000 €",
+        "allgefahren": "optional",
+        "mietausfall": "36 Monate",
+        "sb": "0, 500, 1.000, 2.000 €"
+      },
+      "bausteine": {
+        "technik": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:092a53f0-46a4-43ae-96be-caf259f7ed31/333243_tarifuebersicht_wohngebaeude_bf.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/dam/jcr:092a53f0-46a4-43ae-96be-caf259f7ed31/333243_tarifuebersicht_wohngebaeude_bf.pdf",
+    "https://www.diebayerische.de/versicherungen/wohngebaeudeversicherung/"
+  ],
+  "offen": [
+    "Quelle: Tarifübersicht Wohngebäude Einfamilienhauskonzept 2025 und Produktseite (Abruf 17.11.2026). Laut Produktseite über den Kooperationspartner asspario (Schadenservice); Risikoträger nicht genannt. Keine Stufe markiert; Komfort als mittlere Stufe.",
+    "Grobe Fahrlässigkeit bei Herbeiführung des Schadens: Komfort und Prestige; bei Obliegenheitsverletzung nur Prestige bis 50.000 €. Ableitungsrohre: Komfort 5.000 €, Prestige unbegrenzt, jeweils nur bei Gebäude bis 30 Jahre oder Dichtigkeitsprüfung, sonst 1.000 € bzw. 20.000 €.",
+    "Elementar in allen Stufen mit SB 10 %, mind. 500 €, max. 5.000 €; Starkregen-Erweiterung optional. Kosten (Abbruch, Bewegung, Schutz): 50.000 €, 1 Mio. €, unbegrenzt. Marder und Wildtiere nur Prestige bis 5.000 €.",
+    "Bausteine: Zukunft-Plus, Allgefahren Haustechnik, Allgefahren Erneuerbare Energien, Allgefahren Gebäude und Grundstück (nur Prestige). Überspannung durch Blitz in allen Stufen versichert."
+  ]
+}

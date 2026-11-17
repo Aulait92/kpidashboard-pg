@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung smartGrundschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente schon bei 1 Fähigkeit",
+    "Krankheit und Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "smartGrundschutz 15",
+      "kurz": "15",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "15",
+        "prognose": "6 Monate",
+        "psyche": "nein"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/grundfaehigkeit/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "smartGrundschutz 15+9",
+      "kurz": "15+9",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "24",
+        "prognose": "6 Monate",
+        "psyche": "teilweise (z. B. Demenz)"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/grundfaehigkeit/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "smartGrundschutz 15+10",
+      "kurz": "15+10",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "25",
+        "prognose": "6 Monate",
+        "psyche": "ja, EU 12 Monate"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/grundfaehigkeit/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/zukunft-vorsorge/grundfaehigkeit/"
+  ],
+  "offen": [
+    "Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Keine Stufe markiert; 15+9 als mittlere Stufe. Risikoträger (Concordia Lebensversicherung) auf der Seite nicht ausdrücklich genannt.",
+    "15+9: zusätzlich geistige Leistungsfähigkeit (Hirnschädigung, Schizophrenie, Psychose, Alzheimer-Demenz), gerichtliche Betreuung, Radfahren, Schreiben, Tippen, Smartphone. 15+10: zusätzlich volle Erwerbsunfähigkeit wegen psychischer Erkrankung (Prognose 12 Monate).",
+    "Leistung bei Pflegebedürftigkeit, Nachversicherung, Dynamik und Weltweit-Schutz auf der Seite nicht genannt."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung ZahnPRIVAT",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Kein Bonusheft nötig",
+    "Labor- und Materialkosten"
+  ],
+  "tarife": [
+    {
+      "name": "ZahnPRIVAT 75",
+      "kurz": "ZahnPRIVAT 75",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "75 % inkl. GKV",
+        "implantate": "75 % inkl. GKV",
+        "behandlung": "75 %",
+        "prophylaxe": "75 %, bis 100 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1.000/2.000/3.000 €",
+        "kfo": "nein (unter 19 J.)",
+        "inlays": "75 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnPRIVAT 90",
+      "kurz": "ZahnPRIVAT 90",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 % inkl. GKV",
+        "implantate": "90 % inkl. GKV",
+        "behandlung": "90 %",
+        "prophylaxe": "90 %",
+        "wartezeit": "keine",
+        "staffel": "1.000/3.000/6.000 €",
+        "kfo": "90 %, bis 5.000 €",
+        "inlays": "90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnPRIVAT 100",
+      "kurz": "ZahnPRIVAT 100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 % inkl. GKV",
+        "implantate": "100 % inkl. GKV",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %",
+        "wartezeit": "keine",
+        "staffel": "1.000/3.000/6.000 €",
+        "kfo": "100 %, bis 5.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/zahnzusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/gesundheit/zahnzusatzversicherung.html",
+    "https://www.ukv.de/v/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html"
+  ],
+  "offen": [
+    "Region West. Produktgeber ist die Union Krankenversicherung AG (UKV); Tarife und Werte wie im Ordner ukv, auf provinzial.de mit eigener Produktseite angeboten (Abruf 17.11.2026). Provinzial markiert keinen Tarif; ZahnPRIVAT 90 als mittlere Stufe.",
+    "Werte aus den Tarifbedingungen ZahnPRIVAT (Stand 01.08.2024) und der Produktseite. Prozentsätze beziehen sich auf den Rechnungsbetrag einschließlich der GKV-Vorleistung; Regelversorgung in ZahnPRIVAT 90 und 75 zu 100 % abzüglich GKV.",
+    "Begrenzung erste Jahre: Zahnbehandlung, Zahnersatz, schmerzstillende Maßnahmen und Kieferorthopädie zusammen im 1., in den ersten 2 und 3 Kalenderjahren; entfällt bei Unfall nach Versicherungsbeginn.",
+    "Kieferorthopädie: Beginn vor dem 19. Lebensjahr nur in ZahnPRIVAT 90 und 100 (bis 5.000 € Tariflaufzeit); ab 19 bei Unfall oder Krankheit mit GKV-Leistung in allen Tarifen bis 5.000 €. Bleaching nur in 90 und 100 (bis 180 bzw. 200 € in zwei Jahren)."
+  ]
+}

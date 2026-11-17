@@ -1,0 +1,61 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "hund-kranken",
+  "produkt": "Hunde-Krankenversicherung (TierVital-Schutz)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Ausland bis 12 Monate",
+    "Auch bei Fehlentwicklung"
+  ],
+  "tarife": [
+    {
+      "name": "Hunde-Krankenvollversicherung",
+      "kurz": "Vollschutz",
+      "stufe": 1,
+      "werte": {
+        "got": "3-fach + Notdienst",
+        "jhl": "5.000 € OP",
+        "ohneOp": "bis 2.500 €/Jahr",
+        "vorsorge": "100 €/Jahr",
+        "zahn": "optional",
+        "physio": "nein",
+        "ausland": "bis 12 Monate"
+      },
+      "bausteine": {
+        "zahn": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/hund/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hunde-Krankenvollversicherung mit Plus-Baustein",
+      "kurz": "Mit Plus",
+      "stufe": 2,
+      "werte": {
+        "got": "4-fach + Notdienst",
+        "jhl": "5.000 € OP",
+        "ohneOp": "bis 2.500 €/Jahr",
+        "vorsorge": "200 €/Jahr",
+        "zahn": "optional",
+        "physio": "nach OP",
+        "ausland": "bis 12 Monate"
+      },
+      "bausteine": {
+        "zahn": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/hund/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/tier-krankenversicherung/hund/"
+  ],
+  "offen": [
+    "Ein Tarif (TierVital-Schutz) mit wählbarem Plus-Baustein; Stufe 2 zeigt den Tarif mit Plus-Baustein. Keine Empfehlung markiert. Werte aus der Leistungsübersicht der Produktseite (Abruf 17.11.2026).",
+    "Jahreshöchstentschädigung getrennt: Operationen 5.000 €, allgemeine Heilbehandlungen 2.500 €. Gesundheitspauschale (Impfungen, Wurmkur, Zeckenschutz) 100 €, mit Plus 200 €, mit Zahn-Baustein weitere 100 € (zusammen bis 300 €).",
+    "Erstattungssatz in Prozent und Selbstbeteiligung (wählbar) nicht beziffert. Wartezeit nicht genannt. Neuabschluss bis 10 Jahre."
+  ]
+}
