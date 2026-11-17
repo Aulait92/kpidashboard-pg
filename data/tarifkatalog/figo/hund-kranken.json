@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Figo",
+  "sparte": "hund-kranken",
+  "produkt": "Figo Tierkrankenversicherung für Hunde",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Altersgrenze nach oben",
+    "Videosprechstunde (FirstVet)"
+  ],
+  "tarife": [
+    {
+      "name": "Figo Tierkrankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "50, 70 oder 90 %",
+        "got": "bis 4-fach",
+        "jhl": "3.000 € bis unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "75 € im Jahr",
+        "zahn": "optional, 500 € im Jahr",
+        "kastration": "med. notwendig ab 4 J.",
+        "physio": "bis 500 € im Jahr",
+        "sb": "0, 100, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "optional, 1.000 €/Jahr"
+      },
+      "bausteine": {
+        "vorsorge": "inklusive",
+        "zahn": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://figopet.de/hundekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://figopet.de/hundekrankenversicherung/",
+    "https://figopet.de/leistungsuebersicht/",
+    "https://figopet.de/wp-content/uploads/sites/5/2023/05/Figo-Produktinformationsblatter-Produktinfo-TKV_Web.pdf",
+    "https://figopet.de/wp-content/uploads/sites/5/2024/12/Terms-and-Conditions-Versicherungsbedingungen_Fassung-01-2025-FIGO-Agila.pdf"
+  ],
+  "offen": [
+    "Figo hat keine Tarifstufen, nur einen Tarif mit wählbarem Erstattungssatz (50, 70 oder 90 %), Jahreshöchstbetrag (3.000 €, 6.000 € oder unbegrenzt) und Selbstbeteiligung; deshalb eine Stufe „Tarif“.",
+    "Versicherer ist die AGILA Haustierversicherung AG, Figo tritt als Marke bzw. Vermittler auf (Produktinformationsblatt).",
+    "Selbstbeteiligung freiwillig je Versicherungsjahr: 0, 100, 250 oder 500 €.",
+    "Zahn-Baustein „Gebiss“ bis 500 € im Jahr, abschließbar für Hunde und Katzen bis 8 Jahre; Zahnbehandlung nach Unfall ist ohne Baustein enthalten.",
+    "Ausland nur mit Baustein „Reise“ (bis 1.000 € im Jahr); laut Bedingungen sind Kosten in den Niederlanden und Belgien auch ohne Baustein erstattungsfähig.",
+    "Wartezeit 30 Tage, bei Unfall 2 Tage; Vorsorge und Chip ohne Wartezeit.",
+    "Physiotherapie bis 500 € (auch nach OP), Verhaltenstherapie bis 300 € im Jahr; SOS-Budget 300 € im Jahr.",
+    "Kastration nur medizinisch notwendig und ab 4 Jahren; vorbeugende Kastration nicht versichert.",
+    "Nachbehandlung nach OP: keine gesonderte Frist genannt (im Krankenschutz enthalten).",
+    "Wechseloption ohne Gesundheitsprüfung: nicht genannt."
+  ]
+}

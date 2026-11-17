@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "Petolo",
+  "sparte": "katze-kranken",
+  "produkt": "Katzenkrankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "OP nach Verkehrsunfall 100 %",
+    "Videosprechstunde (FirstVet)"
+  ],
+  "tarife": [
+    {
+      "name": "Katzenkrankenversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "60 %, 80 % mit FirstVet",
+        "got": "bis 4-fach",
+        "jhl": "500 €, dann unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "Budget 80 € im Jahr",
+        "zahn": "schmerzstillende Beh.",
+        "kastration": "med. ja, sonst Budget",
+        "physio": "nach OP, 5 Sitzungen",
+        "nachbehandlung": "inklusive",
+        "sb": "40 %, 20 % mit FirstVet",
+        "wartezeit": "keine",
+        "ausland": "weltweit 12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "inklusive"
+      },
+      "quelle": "https://www.petolo.de/katzenkrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Katzenkrankenversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "80 %, 100 % mit FirstVet",
+        "got": "bis 4-fach",
+        "jhl": "1.000 €, dann unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "Budget 100 € im Jahr",
+        "zahn": "schmerzstillende Beh.",
+        "kastration": "med. ja, sonst Budget",
+        "physio": "nach OP, 5 Sitzungen",
+        "nachbehandlung": "inklusive",
+        "sb": "20 %, 0 % mit FirstVet",
+        "wartezeit": "keine",
+        "ausland": "weltweit 12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "inklusive"
+      },
+      "quelle": "https://www.petolo.de/katzenkrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Katzenkrankenversicherung Premium Plus",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "jhl": "1.500 €, dann unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "Budget 120 € im Jahr",
+        "zahn": "schmerzstillende Beh.",
+        "kastration": "med. ja, sonst Budget",
+        "physio": "nach OP, 5 Sitzungen",
+        "nachbehandlung": "inklusive",
+        "sb": "keine",
+        "wartezeit": "keine",
+        "ausland": "weltweit 12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "inklusive"
+      },
+      "quelle": "https://www.petolo.de/katzenkrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petolo.de/katzenkrankenversicherung",
+    "https://assets.petolo.de/cms_files/production/shared/policy_documents/pet_health/cat/Combined/Vertragsunterlagen.pdf"
+  ],
+  "offen": [
+    "petolo markiert Premium als „Preis-Leistungs-Sieger“.",
+    "Erstattung bzw. Selbstbehalt hängt davon ab, ob vor der Erstbehandlung eine Videosprechstunde bei FirstVet stattfand (nicht nötig bei Notfällen und Folgebehandlungen). OP nach Verkehrsunfall in allen Tarifen 100 %.",
+    "Jahreshöchstleistung im 1. Versicherungsjahr 500, 1.000 bzw. 1.500 € einschließlich Budgets (nicht bei Verkehrsunfall), ab dem 2. Jahr unbegrenzt.",
+    "Gesundheitsbudget 80, 100 bzw. 120 € im Jahr (u. a. Vorsorge, Impfung, Zahnprophylaxe, Chip, Kastration ohne Indikation); SOS-Budget 160, 200 bzw. 240 € im Jahr.",
+    "Fehlentwicklungen (z. B. HD, ED) bis 2.500 € je Fehlentwicklung; Prothesen einmalig bis 500 €.",
+    "Physiotherapie nach versicherter OP bis 5 Sitzungen je Versicherungsfall, sonst über das Gesundheitsbudget.",
+    "Versicherer ist die DA Deutsche Allgemeine Versicherung AG (DA Direkt), Tarifblatt und AVB Fassung 01.11.2025.",
+    "Neuabschluss bis einen Tag vor dem 9. Geburtstag.",
+    "Zahnstein und Zahnprophylaxe nur über das Gesundheitsbudget; Zahnersatz nicht versichert.",
+    "Die Tarifkarten oben auf der Katzenseite nennen teils SOS-Budgets von 80, 100 bzw. 120 €; Leistungstabelle und Tarifblatt nennen 160, 200 bzw. 240 €."
+  ]
+}

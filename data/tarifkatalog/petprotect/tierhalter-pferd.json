@@ -1,0 +1,97 @@
+{
+  "gesellschaft": "Petprotect",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Fremdreiter mitversichert",
+    "Deckschäden mitversichert",
+    "Reiten gebisslos, ohne Sattel"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "sb": "0 oder 150 €",
+        "miete": "nein",
+        "reitbeteiligung": "nur Fremdreiter",
+        "flurschaden": "ja",
+        "fohlen": "bis 12 Monate",
+        "forderungsausfall": "ab 5.000 € Schaden",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "EU 5 J., weltweit 3 J."
+      },
+      "quelle": "https://www.petprotect.de/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferdehaftpflicht Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10 oder 50 Mio. €",
+        "sb": "0 oder 150 €",
+        "miete": "bis 10.000 €, 150 € SB",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 12 Monate",
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "geliehen": "bis 10.000 €, 150 € SB",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "EU unbegr., Welt 5 J."
+      },
+      "quelle": "https://www.petprotect.de/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferdehaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 oder 50 Mio. €",
+        "sb": "0 oder 150 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 12 Monate",
+        "forderungsausfall": "ja, ohne Mindesthöhe",
+        "geliehen": "ja",
+        "neuwert": "bis 5.000 € Neupreis",
+        "nebenberuf": "bis 15.000 € Umsatz",
+        "ausland": "unbegrenzt"
+      },
+      "quelle": "https://www.petprotect.de/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petprotect.de/pferdehaftpflichtversicherung/",
+    "https://a.storyblok.com/f/288340637667316/68a8b50865/petprotect_versicherungsbedingungen_pferdehaftpflicht_basis.pdf",
+    "https://a.storyblok.com/f/288340637667316/d791b90ba2/petprotect_versicherungsbedingungen_pferdehaftpflicht_top.pdf",
+    "https://a.storyblok.com/f/288340637667316/4895520388/petprotect_versicherungsbedingungen_pferdehaftpflicht_premium.pdf"
+  ],
+  "offen": [
+    "PETPROTECT markiert keinen Tarif; Top als mittlere Stufe.",
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen je Tarif.",
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole aus den Seitendaten gelesen) und den Bedingungen; bitte am Bildschirm gegenprüfen.",
+    "Deckungssumme Top 10 oder 50 Mio. €, Premium 20 oder 50 Mio. €.",
+    "Forderungsausfall laut Bedingungen: Basis ab 5.000 €, Top ab 2.500 € Schaden, Premium ohne Mindesthöhe.",
+    "Selbstbeteiligung 0 oder 150 € aus der Beispielrechnung der Produktseite.",
+    "Mietsachschäden an Stall, Box, Koppel und Pferdeanhänger: Basis nicht, Top bis 10.000 € mit 150 € SB, Premium ohne Angabe (auch Pferdetransporter). Mietsachschäden an Wohnräumen: Basis 250 €, Top 150 € SB.",
+    "Reitbeteiligungen erst ab Top; Fremd- und Gastreiter in allen Tarifen.",
+    "Flurschäden laut Bedingungen (Ziffer A1-6.4) in allen Tarifen versichert.",
+    "Premium zusätzlich: Wertersatz bei widerrechtlicher Tötung bis 10.000 €, Rettungs- und Bergungskosten, Nottötung."
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "Petprotect",
+  "sparte": "pferd-op",
+  "produkt": "Pferde-OP-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Bildgebende Verfahren",
+    "Kolik-OP nach 5 Tagen"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-OP-Versicherung Top",
+      "kurz": "Top",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "got": "bis 2-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "10 Tage",
+        "vorsorge": "nein",
+        "chips": "bis 1.500 € je OP",
+        "kolik": "5 Tage",
+        "kastration": "nur med. Indikation",
+        "physio": "in der Nachsorge",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate"
+      },
+      "quelle": "https://www.petprotect.de/pferde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferde-OP-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "got": "2-fach, Notfall 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "14 Tage",
+        "vorsorge": "nein",
+        "chips": "ja",
+        "kolik": "5 Tage",
+        "kastration": "nur med. Indikation",
+        "physio": "Nachsorge + 5 Sitzungen",
+        "wartezeit": "3 Monate",
+        "ausland": "12 Monate"
+      },
+      "quelle": "https://www.petprotect.de/pferde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petprotect.de/pferde-op-versicherung/",
+    "https://a.storyblok.com/f/288340637667316/1c4cd42993/petprotect_versicherungsbedingungen_op-versicherung_pferd_2024-01.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife ohne Markierung einer Empfehlung.",
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen Stand 01.01.2024.",
+    "Erstattungssatz und Selbstbeteiligung laut Bedingungen nach Versicherungsschein; auf der Seite nicht genannt.",
+    "Gelenkchip-OPs (OC, OCD, Chips, Birkelandfrakturen) mit besonderer Wartezeit 12 Monate; bei Top bis 1.500 € je OP.",
+    "Wartezeit Krankheit 3 Monate, Kolik-OP 5 Tage, Unfall ohne; Kastration aus medizinischem Grund 6 Monate.",
+    "Unterbringung 30 € je Tag laut Vergleichstabelle (nur ein Wert für beide Tarife angegeben).",
+    "Premium: bis zu 5 Physiotherapie-Sitzungen nach Ablauf der Nachsorgefrist; Kündigungsverzicht, wenn das Pferd bei Beginn höchstens 7 Jahre alt war.",
+    "Ausgeschlossen u. a. Hufabszesse und Hufgeschwüre, Kryptorchismus, Goldakupunktur.",
+    "Kein Krankenvollschutz für Pferde."
+  ]
+}

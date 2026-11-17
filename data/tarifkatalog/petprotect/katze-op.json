@@ -1,0 +1,69 @@
+{
+  "gesellschaft": "Petprotect",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "OP-Kosten zu 100 %",
+    "Hausbesuch bei Transportunfähigkeit",
+    "Prothesen nach 12 Monaten"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-OP-Versicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "30 Tage",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "sb": "0 % oder 20 %",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "quelle": "https://www.petprotect.de/katzenkrankenversicherung/katzen-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Katzen-OP-Versicherung Exklusiv+",
+      "kurz": "Exklusiv+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "90 Tage",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "sb": "0 % oder 20 %",
+        "wartezeit": "30 Tage",
+        "ausland": "unbegrenzt"
+      },
+      "quelle": "https://www.petprotect.de/katzenkrankenversicherung/katzen-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petprotect.de/katzenkrankenversicherung/katzen-op-versicherung/",
+    "https://www.petprotect.de/katzenkrankenversicherung/",
+    "https://a.storyblok.com/f/288340637667316/043ad40715/petprotect_versicherungsbedingungen_katze-op_exklusiv_2024-01.pdf",
+    "https://a.storyblok.com/f/288340637667316/128ff83935/petprotect_versicherungsbedingungen_katze-op_exklusiv-plus_2024-01.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife ohne Markierung einer Empfehlung.",
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen Stand 01.01.2024.",
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole aus den Seitendaten gelesen) und den Bedingungen; bitte am Bildschirm gegenprüfen.",
+    "Selbstbeteiligung wählbar: keine (Katzen bis 5 Jahre) oder 20 %, höchstens 250 € je Einreichung. Neuabschluss bis zum 7. Geburtstag.",
+    "Prothesen bis 500 € (Exklusiv+ unbegrenzt) nach 12 Monaten Wartezeit.",
+    "Kastration bei Exklusiv+ in der Tabelle nicht genannt (Bedingungen nicht ausgewertet).",
+    "Physiotherapie nach OP im Nachsorgezeitraum (Heilmittel), keine gesonderte Angabe."
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "gesellschaft": "Petprotect",
+  "sparte": "katze-kranken",
+  "produkt": "Katzenkrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "OP-Kosten zu 100 %",
+    "Unfall ohne Wartezeit",
+    "Videosprechstunde (FirstVet)"
+  ],
+  "tarife": [
+    {
+      "name": "Katzenkrankenversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "vorsorge": "optional, 50 € im Jahr",
+        "zahn": "optional, Budget 300 €",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "physio": "10 Sitzungen je Indik.",
+        "wartezeit": "30 Tage",
+        "sb": "0 % oder 20 %",
+        "jhl": "OP unbegr., sonst 500 €",
+        "ohneOp": "bis 500 € im Jahr",
+        "nachbehandlung": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "zahn": "optional"
+      },
+      "quelle": "https://www.petprotect.de/katzenkrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Katzenkrankenversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "vorsorge": "optional, 50 € im Jahr",
+        "zahn": "optional, Budget 300 €",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "physio": "10 Sitzungen je Indik.",
+        "wartezeit": "30 Tage",
+        "sb": "0 % oder 20 %",
+        "jhl": "unbegrenzt",
+        "ohneOp": "ja, unbegrenzt",
+        "nachbehandlung": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "zahn": "optional"
+      },
+      "quelle": "https://www.petprotect.de/katzenkrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Katzenkrankenversicherung Exklusiv+",
+      "kurz": "Exklusiv+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "vorsorge": "optional, 50 € im Jahr",
+        "zahn": "optional, Budget 300 €",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "physio": "10 Sitzungen je Indik.",
+        "wartezeit": "30 Tage",
+        "sb": "0 % oder 20 %",
+        "jhl": "unbegrenzt",
+        "ohneOp": "ja, unbegrenzt",
+        "nachbehandlung": "90 Tage",
+        "ausland": "unbegrenzt"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "zahn": "optional"
+      },
+      "quelle": "https://www.petprotect.de/katzenkrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petprotect.de/katzenkrankenversicherung/",
+    "https://a.storyblok.com/f/288340637667316/978e8d6864/petprotect_versicherungsbedingungen_tier-krankenversicherung_katze_2024-01.pdf",
+    "https://a.storyblok.com/f/288340637667316/f44eeacc54/petprotect_versicherungsbedingungen_tier-krankenversicherung_katze_exklusiv-plus_2024-01.pdf"
+  ],
+  "offen": [
+    "PETPROTECT markiert keinen Tarif; Exklusiv als mittlere Stufe. Der OP-Tarif der Vergleichstabelle (OP-Exklusiv) steht unter OP-Versicherung.",
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen Stand 01.01.2024.",
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole aus den Seitendaten gelesen) und den Bedingungen; bitte am Bildschirm gegenprüfen.",
+    "Selbstbeteiligung wählbar: keine (Katzen bis 3 Jahre) oder 20 %, höchstens 250 € je Einreichung. Neuabschluss bis zum 5. Geburtstag.",
+    "Vorsorge- und Zahnpaket optional: Vorsorge 50 € im Jahr (u. a. Kastration ohne Indikation, Chip, Impfung, Zahnreinigung), Zahn-Budget 300 € (Füllungen, Zahnersatz, Korrekturen). Zahnextraktion und Wurzelbehandlung über die OP-Leistung.",
+    "Prothesen bis 500 € (Exklusiv+ unbegrenzt) nach 12 Monaten Wartezeit.",
+    "Besondere Wartezeit 12 Monate u. a. für HD, ED, Patellaluxation und Kastration aus medizinischem Grund; Unfall ohne Wartezeit.",
+    "Exklusiv+: Bestattungskostenzuschuss 300 € ab dem 4. Jahr, Goldakupunktur nach 12 Monaten, Reiserücktritt bis 1.500 €.",
+    "Ausgeschlossen: Brachycephales Syndrom, Kryptorchismus, Herstellung des Rassestandards."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "Petolo",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Deckschäden mitversichert",
+    "Hundesport und Hundeschule",
+    "Keine Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht",
+      "kurz": "Haftpflicht",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "250 € je Schaden",
+        "miete": "ja",
+        "welpen": "bis 12 Monate",
+        "geliehen": "ja",
+        "ausland": "weltweit"
+      },
+      "quelle": "https://www.petolo.de/hundehaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehaftpflicht +",
+      "kurz": "Haftpflicht +",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "sb": "keine",
+        "miete": "ja",
+        "welpen": "bis 12 Monate",
+        "geliehen": "ja",
+        "ausland": "weltweit"
+      },
+      "quelle": "https://www.petolo.de/hundehaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petolo.de/hundehaftpflicht"
+  ],
+  "offen": [
+    "Zwei Tarife, die sich nur in der Selbstbeteiligung unterscheiden; petolo hebt „Hundehaftpflicht +“ farblich hervor, ohne es als Empfehlung zu bezeichnen.",
+    "Listenhunde nur im Tarif mit 250 € Selbstbehalt versicherbar.",
+    "Fremde Hüter, Forderungsausfall und Neuwert auf der Seite nicht genannt; Versicherungsbedingungen nicht öffentlich verlinkt.",
+    "Mietsachschäden und Flurschäden an gemieteten, geliehenen oder gepachteten Sachen laut Seite mitversichert (ohne Summenangabe).",
+    "Halterschutz auch für Familienmitglieder im Haushalt; private Nutzung als Therapie-, Assistenz-, Rettungs- oder Suchhund mitversichert."
+  ]
+}

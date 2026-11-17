@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "Petprotect",
+  "sparte": "hund-op",
+  "produkt": "Hunde-OP-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "OP-Kosten zu 100 %",
+    "Hausbesuch bei Transportunfähigkeit",
+    "Prothesen nach 12 Monaten"
+  ],
+  "tarife": [
+    {
+      "name": "Hunde-OP-Versicherung Unfall",
+      "kurz": "Unfall",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "nachbehandlung": "30 Tage",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "kastration": "nein",
+        "wartezeit": "keine (nur Unfall)",
+        "ausland": "12 Monate"
+      },
+      "quelle": "https://www.petprotect.de/hundekrankenversicherung/hunde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hunde-OP-Versicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "30 Tage",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "quelle": "https://www.petprotect.de/hundekrankenversicherung/hunde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hunde-OP-Versicherung Exklusiv+",
+      "kurz": "Exklusiv+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "90 Tage",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "kastration": "Zuschuss 150 € einmalig",
+        "wartezeit": "30 Tage",
+        "ausland": "unbegrenzt"
+      },
+      "quelle": "https://www.petprotect.de/hundekrankenversicherung/hunde-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petprotect.de/hundekrankenversicherung/hunde-op-versicherung/",
+    "https://a.storyblok.com/f/288340637667316/67cb77a4fa/petprotect_versicherungsbedingungen_hunde-unfall-op_2024-01.pdf",
+    "https://a.storyblok.com/f/288340637667316/fae2fc7fbf/petprotect_versicherungsbedingungen_hunde-op_exklusiv_2024-01.pdf",
+    "https://a.storyblok.com/f/288340637667316/ecca200b37/petprotect_versicherungsbedingungen_hunde-op_exklusiv-plus_2024-01.pdf"
+  ],
+  "offen": [
+    "PETPROTECT markiert keinen Tarif; Exklusiv als mittlere Stufe. Exklusiv heißt in der Krankenversicherungs-Tabelle „OP-Exklusiv“.",
+    "Unfall versichert nur OPs nach Unfällen; Jahreshöchstleistung dort nicht genannt.",
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen Stand 01.01.2024.",
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole aus den Seitendaten gelesen) und den Bedingungen; bitte am Bildschirm gegenprüfen.",
+    "Selbstbeteiligung laut Bedingungen nach Versicherungsschein; Höhe auf der Seite nicht genannt.",
+    "Prothesen bis 500 € (Exklusiv+ unbegrenzt) nach 12 Monaten Wartezeit.",
+    "Exklusiv+: einmaliger Zuschuss zur Kastration auch ohne medizinische Indikation bis 150 €.",
+    "Physiotherapie nach OP im Nachsorgezeitraum (Heilmittel), keine gesonderte Angabe."
+  ]
+}

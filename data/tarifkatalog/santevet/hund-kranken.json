@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "SantéVet",
+  "sparte": "hund-kranken",
+  "produkt": "Hundekrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Kein Limit je Behandlung",
+    "Stationär ohne Tageslimit",
+    "Alternativmedizin mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "SantéVet Light",
+      "kurz": "Light",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "70 %",
+        "got": "bis 4-fach",
+        "jhl": "3.000 €",
+        "ohneOp": "ja",
+        "vorsorge": "30 € im Jahr",
+        "zahn": "ja, Zahnstein ab 3. J.",
+        "kastration": "med. ja, sonst Vorsorge",
+        "physio": "ja",
+        "nachbehandlung": "ja",
+        "sb": "keine",
+        "wartezeit": "45 Tage",
+        "ausland": "bis 3 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "inklusive"
+      },
+      "quelle": "https://www.santevet.de/hundekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SantéVet Comfort",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "80 %",
+        "got": "bis 4-fach",
+        "jhl": "5.000 €, später 7.000 €",
+        "ohneOp": "ja",
+        "vorsorge": "50 € im Jahr",
+        "zahn": "ja, Zahnstein ab 3. J.",
+        "kastration": "med. ja, sonst Vorsorge",
+        "physio": "ja",
+        "nachbehandlung": "ja",
+        "sb": "keine",
+        "wartezeit": "45 Tage",
+        "ausland": "bis 3 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "inklusive"
+      },
+      "quelle": "https://www.santevet.de/hundekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SantéVet Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "90 %",
+        "got": "bis 4-fach",
+        "jhl": "8.000 €, später 10.000 €",
+        "ohneOp": "ja",
+        "vorsorge": "90 € im Jahr",
+        "zahn": "ja, Zahnstein ab 3. J.",
+        "kastration": "med. ja, sonst Vorsorge",
+        "physio": "ja",
+        "nachbehandlung": "ja",
+        "sb": "keine",
+        "wartezeit": "45 Tage",
+        "ausland": "bis 3 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "inklusive"
+      },
+      "quelle": "https://www.santevet.de/hundekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.santevet.de/hundekrankenversicherung",
+    "https://www.santevet.de/wp-content/uploads/2026/03/260211_SVDE_DIN.pdf",
+    "https://www.santevet.de/wp-content/uploads/2026/03/AV_-_AZ_-_SVG_DE_-_01042025__1_.pdf"
+  ],
+  "offen": [
+    "SantéVet markiert keinen Tarif; Comfort als mittlere Stufe.",
+    "Jahreslimit laut Produktseite ab dem 3. Vertragsjahr bei Comfort 7.000 € und bei Premium 10.000 €; die AVB (Stand 01.01.2025) nennen nur 3.000, 5.000 bzw. 8.000 €.",
+    "Wartezeit: Unfall 48 Stunden, Krankheit 45 Tage, Operationen nach Krankheit sowie Kreuzbandriss und Tränendrüse 3 Monate; Vorsorgepauschale sofort.",
+    "Zahnsteinentfernung ab dem 3. Versicherungsjahr einmal im Jahr, vorher über die Vorsorgepauschale; medizinisch notwendige Zahnbehandlung im Rahmen des Tarifs.",
+    "Kastration ohne medizinischen Grund nur über die Vorsorgepauschale.",
+    "Ausgeschlossen u. a. Hüftdysplasie, alle Ellbogenerkrankungen, Kniescheibenluxation und Brachyzephales Syndrom (Produktinformationsblatt).",
+    "Kein reiner OP-Tarif. Versicherer ist die Allianz IARD (Frankreich), Vermittler VetAssur unter der Marke SantéVet.",
+    "Ausland: Reisen unter drei aufeinanderfolgenden Monaten.",
+    "Neuabschluss je nach Rasse bis zum 5. bzw. 7. Geburtstag."
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "Petprotect",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Leine oder Maulkorb",
+    "Deckschäden mitversichert",
+    "Hundeschauen und Turniere"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "sb": "0 oder 150 €",
+        "miete": "ja, 250 € SB",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ab 5.000 € Schaden",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "EU 5 J., weltweit 3 J."
+      },
+      "quelle": "https://www.petprotect.de/hundehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehaftpflicht Top",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10 oder 50 Mio. €",
+        "sb": "0 oder 150 €",
+        "miete": "ja, 150 € SB",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "geliehen": "bis 10.000 €, 150 € SB",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "EU unbegr., Welt 5 J."
+      },
+      "quelle": "https://www.petprotect.de/hundehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 oder 50 Mio. €",
+        "sb": "0 oder 150 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja, ohne Mindesthöhe",
+        "geliehen": "ja",
+        "neuwert": "bis 5.000 € Neupreis",
+        "nebenberuf": "bis 15.000 € Umsatz",
+        "ausland": "unbegrenzt"
+      },
+      "quelle": "https://www.petprotect.de/hundehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petprotect.de/hundehaftpflichtversicherung/",
+    "https://a.storyblok.com/f/288340637667316/537f3a5392/petprotect_versicherungsbedingungen_hundehaftpflicht_basis_.pdf",
+    "https://a.storyblok.com/f/288340637667316/f471d0b9a0/petprotect_versicherungsbedingungen_hundehaftpflicht_top.pdf",
+    "https://a.storyblok.com/f/288340637667316/0d178f00b6/petprotect_versicherungsbedingungen_hundehaftpflicht_premium.pdf"
+  ],
+  "offen": [
+    "PETPROTECT markiert keinen Tarif; Top als mittlere Stufe.",
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen je Tarif.",
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole aus den Seitendaten gelesen) und den Bedingungen; bitte am Bildschirm gegenprüfen.",
+    "Deckungssumme Top 10 oder 50 Mio. €, Premium 20 oder 50 Mio. €.",
+    "Forderungsausfall laut Bedingungen: Basis ab 5.000 €, Top ab 2.500 € Schaden, Premium ohne Mindesthöhe.",
+    "Mietsachschäden an Wohnräumen: Basis mit 250 €, Top mit 150 € Selbstbeteiligung, Premium ohne Angabe.",
+    "Neuwert für Sachen bis 5.000 € Neupreis, höchstens 12 Monate alt (nur Premium). Gewerbliche Nutzung bis 15.000 € Umsatz im Jahr (nur Premium).",
+    "Kaution bei Auslandsschäden: Top 100.000 €, Premium 250.000 € weltweit."
+  ]
+}

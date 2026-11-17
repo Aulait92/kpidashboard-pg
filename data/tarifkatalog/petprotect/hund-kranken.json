@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "Petprotect",
+  "sparte": "hund-kranken",
+  "produkt": "Hundekrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "OP-Kosten zu 100 %",
+    "Unfall ohne Wartezeit",
+    "Videosprechstunde (FirstVet)"
+  ],
+  "tarife": [
+    {
+      "name": "Hundekrankenversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "vorsorge": "optional, 50 € im Jahr",
+        "zahn": "optional, Budget 300 €",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "physio": "10 Sitzungen je Indik.",
+        "wartezeit": "30 Tage",
+        "jhl": "OP unbegr., sonst 500 €",
+        "ohneOp": "bis 500 € im Jahr",
+        "nachbehandlung": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "zahn": "optional"
+      },
+      "quelle": "https://www.petprotect.de/hundekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundekrankenversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "vorsorge": "optional, 50 € im Jahr",
+        "zahn": "optional, Budget 300 €",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "physio": "10 Sitzungen je Indik.",
+        "wartezeit": "30 Tage",
+        "jhl": "unbegrenzt",
+        "ohneOp": "ja, unbegrenzt",
+        "nachbehandlung": "30 Tage",
+        "ausland": "12 Monate"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "zahn": "optional"
+      },
+      "quelle": "https://www.petprotect.de/hundekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundekrankenversicherung Exklusiv+",
+      "kurz": "Exklusiv+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "got": "bis 4-fach",
+        "vorsorge": "optional, 50 € im Jahr",
+        "zahn": "optional, Budget 300 €",
+        "kastration": "med. Indik. nach 12 Mon.",
+        "physio": "10 Sitzungen je Indik.",
+        "wartezeit": "30 Tage",
+        "jhl": "unbegrenzt",
+        "ohneOp": "ja, unbegrenzt",
+        "nachbehandlung": "90 Tage",
+        "ausland": "unbegrenzt"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "zahn": "optional"
+      },
+      "quelle": "https://www.petprotect.de/hundekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petprotect.de/hundekrankenversicherung/",
+    "https://a.storyblok.com/f/288340637667316/ef804fbd37/petprotect_versicherungsbedingungen_tier-krankenversicherung_hund_2024-01.pdf",
+    "https://a.storyblok.com/f/288340637667316/a06ae70373/petprotect_versicherungsbedingungen_tier-krankenversicherung_hund_exklusiv-plus_2024-01.pdf"
+  ],
+  "offen": [
+    "PETPROTECT markiert keinen Tarif; Exklusiv als mittlere Stufe. Der OP-Tarif der Vergleichstabelle (OP-Exklusiv) steht unter OP-Versicherung.",
+    "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen Stand 01.01.2024.",
+    "Werte aus der Vergleichstabelle der Produktseite (Symbole aus den Seitendaten gelesen) und den Bedingungen; bitte am Bildschirm gegenprüfen.",
+    "Selbstbeteiligung laut Bedingungen nach Versicherungsschein; Höhe für Hunde auf der Seite nicht genannt.",
+    "Vorsorge- und Zahnpaket optional: Vorsorge 50 € im Jahr (u. a. Kastration ohne Indikation, Chip, Impfung, Zahnreinigung), Zahn-Budget 300 € (Füllungen, Zahnersatz, Korrekturen). Zahnextraktion und Wurzelbehandlung über die OP-Leistung.",
+    "Prothesen bis 500 € (Exklusiv+ unbegrenzt) nach 12 Monaten Wartezeit.",
+    "Besondere Wartezeit 12 Monate u. a. für HD, ED, Patellaluxation und Kastration aus medizinischem Grund; Unfall ohne Wartezeit.",
+    "Exklusiv+: Bestattungskostenzuschuss 300 € ab dem 4. Jahr, Goldakupunktur nach 12 Monaten, Reiserücktritt bis 1.500 €.",
+    "Ausgeschlossen: Brachycephales Syndrom, Kryptorchismus, Herstellung des Rassestandards."
+  ]
+}

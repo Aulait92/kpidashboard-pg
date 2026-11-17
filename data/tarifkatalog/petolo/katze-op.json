@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "Petolo",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Schutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "OP nach Verkehrsunfall 100 %",
+    "Videosprechstunde (FirstVet)"
+  ],
+  "tarife": [
+    {
+      "name": "Katzen-OP-Schutz",
+      "kurz": "OP-Schutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "80 %",
+        "jhl": "1.000 €, dann unbegrenzt",
+        "nachbehandlung": "ja, OP-bezogen",
+        "vorsorge": "nur Chip (Extra-Budget)",
+        "wartezeit": "keine",
+        "ausland": "weltweit"
+      },
+      "quelle": "https://www.petolo.de/katzen-op-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Katzen-OP-Schutz Plus",
+      "kurz": "OP-Schutz Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "100 %",
+        "jhl": "1.500 €, dann unbegrenzt",
+        "nachbehandlung": "ja, OP-bezogen",
+        "vorsorge": "nur Chip (Extra-Budget)",
+        "wartezeit": "keine",
+        "ausland": "weltweit"
+      },
+      "quelle": "https://www.petolo.de/katzen-op-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.petolo.de/katzen-op-versicherung"
+  ],
+  "offen": [
+    "Zwei Tarife ohne Markierung einer Empfehlung.",
+    "Versicherungsbedingungen zum OP-Schutz sind nicht öffentlich verlinkt; Werte nur von der Produktseite.",
+    "GOT-Satz für den OP-Schutz auf der Seite nicht genannt.",
+    "Jahreshöchstleistung im 1. Versicherungsjahr 1.000 bzw. 1.500 € einschließlich Extra- und SOS-Budget, ab dem 2. Jahr unbegrenzt.",
+    "Extra-Budget 100 bzw. 120 € im Jahr (OP-Nachsorge, Chippen, Lasertherapie, alternative Heilmethoden), SOS-Budget 200 bzw. 240 € im Jahr.",
+    "OPs wegen Fehlentwicklungen bis 2.500 € je Fehlentwicklung; Prothesen einmalig 500 €.",
+    "Selbstbeteiligung, Zahn, Kastration und Physiotherapie im OP-Schutz nicht gesondert genannt.",
+    "Neuabschluss bis einschließlich 8. Lebensjahr."
+  ]
+}

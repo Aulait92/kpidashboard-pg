@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "Figo",
+  "sparte": "hund-op",
+  "produkt": "Figo OP-Kostenschutz für Hunde",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Notdienstgebühr übernommen",
+    "Keine Altersgrenze nach oben"
+  ],
+  "tarife": [
+    {
+      "name": "Figo OP-Kostenschutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "80 %",
+        "got": "bis 4-fach",
+        "jhl": "2.000 €",
+        "nachbehandlung": "bis 10 Tage",
+        "vorsorge": "nur Chip",
+        "zahn": "nur nach Unfall",
+        "kastration": "med. notwendig ab 4 J.",
+        "physio": "nein",
+        "sb": "0, 100, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "Europa bis 3 Monate"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://figopet.de/op-kostenschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://figopet.de/op-kostenschutz/",
+    "https://figopet.de/leistungsuebersicht/",
+    "https://figopet.de/wp-content/uploads/sites/5/2023/05/Figo-Produktinformationsblatter-Produktinfo-OP_Web.pdf",
+    "https://figopet.de/wp-content/uploads/sites/5/2024/12/Terms-and-Conditions-Versicherungsbedingungen_Fassung-01-2025-FIGO-Agila.pdf"
+  ],
+  "offen": [
+    "Figo hat nur einen OP-Tarif (80 % Erstattung, bis 2.000 € im Versicherungsjahr); deshalb eine Stufe „Tarif“. Gleicher Tarif für Hunde und Katzen.",
+    "Versicherer ist die AGILA Haustierversicherung AG (Produktinformationsblatt).",
+    "Selbstbeteiligung freiwillig je Versicherungsjahr: 0, 100, 250 oder 500 €.",
+    "Klinikaufenthalt, Folgebehandlung und Medikamente bis 10 Tage nach der OP.",
+    "Nicht versichert laut Produktinformationsblatt (Stand 30.07.2025): Reha, Gelenkprothesen, Implantate, Zahnbehandlungen sowie chirurgische Eingriffe bei Hüft- und Ellenbogenerkrankungen.",
+    "Wartezeit 30 Tage, bei Unfall 2 Tage (Leistungsübersicht).",
+    "Videosprechstunde (FirstVet) ist im OP-Kostenschutz nicht enthalten."
+  ]
+}
