@@ -2,7 +2,7 @@ import { isCronAuthorized } from "@/lib/cron-auth";
 import { after as nextAfter } from "next/server";
 import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
-import { runReminders, runSoonReminders } from "@/lib/whatsapp/reminders";
+import { runReminders, runSoonReminders, runStartReminders } from "@/lib/whatsapp/reminders";
 import { pruneUsage } from "@/lib/usage";
 import { pruneAudit } from "@/lib/audit";
 import { pruneTransient } from "@/lib/erasure";
@@ -28,7 +28,7 @@ import { syncTemplates } from "@/lib/whatsapp/template-submit";
 
 // Zentraler Cron (z. B. cron-job.org alle 5 Minuten):
 //   1. Erstanschreiben neuer Leads ohne Termin
-//   2. Termin-Erinnerungen ~24 h vorher
+//   2. Termin-Erinnerungen: Vortag, 1 Std. und 15 Min. vorher (lib/showup.ts)
 //   3. Onboarding-Automatik (siehe lib/onboarding-cron.ts)
 //   4. Nachfass-Abfolgen (siehe lib/lead-sequences.ts)
 //   5. Erinnerung „Leads ohne nächsten Schritt“ um 8 Uhr (siehe lib/next-step-reminder.ts)
@@ -70,6 +70,16 @@ async function handle(req: Request): Promise<Response> {
   // Etwa 1 Std. vor dem Termin: „Gleich ist es so weit, passt alles?“
   const soonReminders = await runSoonReminders().catch((e: unknown) => {
     reportError(e, "cron-soon-reminders");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+  // 15 Min. vor einem Videotermin: Link zum Videoraum (Show-up-Paket, lib/showup.ts)
+  const startReminders = await runStartReminders().catch((e: unknown) => {
+    reportError(e, "cron-start-reminders");
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+  // Terminbeginn: Push „Ist … da?“ an den Vermittler, nach „Fehlt noch“ die Rückfrage nach dem Termin (lib/showup-server.ts)
+  const terminBeginn = await import("@/lib/showup-server").then((m) => m.runTerminBeginn()).catch((e: unknown) => {
+    reportError(e, "cron-termin-beginn");
     return { error: e instanceof Error ? e.message : String(e) };
   });
   // Onboarding: Erinnerungen, Leads per E-Mail (Nur Betreuung), Feedback, Tag 90.
@@ -163,6 +173,11 @@ async function handle(req: Request): Promise<Response> {
   const sequences = await runSequences(now).catch((e: unknown) => {
     reportError(e, "cron-sequences");
     return { error: e instanceof Error ? e.message : String(e) };
+  });
+  // Lead antwortet 30 Min. nach dem Erstanschreiben nicht: Anrufplan starten, Push an den Vermittler (lib/anruf-ausloeser.ts)
+  const anrufAusloeser = await import("@/lib/anruf-ausloeser-server").then((m) => m.runAntwortAusloeser(now)).catch((e: unknown) => {
+    reportError(e, "cron-anruf-ausloeser");
+    return null;
   });
   // Termin-Strecke nach der Buchung: Komplettcheck bzw. Vertragsfrage ohne Antwort → nach 1 Std. trotzdem abschließen
   const strecke = await import("@/lib/whatsapp/termin-strecke")
@@ -329,7 +344,7 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-d360-connect");
     return null;
   });
-  const failed = Object.entries({ outreach, responses, reminders, soonReminders, onboarding, sequences })
+  const failed = Object.entries({ outreach, responses, reminders, soonReminders, startReminders, onboarding, sequences })
     .filter(([, r]) => r && typeof r === "object" && "error" in r)
     .map(([k]) => k);
   await beat("cron", failed.length === 0, failed.length ? `Fehler in: ${failed.join(", ")}` : null);
@@ -351,7 +366,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, anrufAusloeser, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

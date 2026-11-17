@@ -20,7 +20,8 @@ import {
 } from "@/lib/calendar/add-to-calendar";
 import { prisma } from "@/lib/prisma";
 
-export type LeadEmailKind = "booked" | "rescheduled" | "cancelled" | "reminder";
+/** updated: gleicher Termin, neue Dauer (Komplettcheck auf 45 Min., lib/komplettcheck-dauer.ts) mit neuer Kalenderdatei */
+export type LeadEmailKind = "booked" | "rescheduled" | "cancelled" | "reminder" | "updated";
 
 /** Art im Kontaktverlauf (lib/mail/kontakt-mail.ts). */
 const MAIL_ART: Record<LeadEmailKind, MailArt> = {
@@ -28,6 +29,7 @@ const MAIL_ART: Record<LeadEmailKind, MailArt> = {
   rescheduled: "terminverschiebung",
   cancelled: "terminabsage",
   reminder: "terminerinnerung",
+  updated: "terminaenderung",
 };
 
 const TZ = "Europe/Berlin";
@@ -141,6 +143,23 @@ export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeK
         lines: [hi, `kurze Erinnerung an ${a(an, "deine", "Ihre")} ${art} mit ${person.dat}: ${w}.`, ...how],
         calendar: true,
       };
+    case "updated": {
+      const min = Math.round((ev.end.getTime() - ev.start.getTime()) / 60000);
+      return {
+        subject: `${dein} Termin mit ${person.dat}: jetzt ${min} Minuten`,
+        lines: [
+          hi,
+          a(
+            an,
+            `damit ${person.nom} im Termin auch kurz deine bestehenden Verträge mit dir anschauen kann, haben wir ${a(an, "deinen", "Ihren")} Termin auf ${min} Minuten verlängert. Die Uhrzeit bleibt: ${w}.`,
+            `damit ${person.nom} im Termin auch kurz Ihre bestehenden Verträge mit Ihnen anschauen kann, haben wir Ihren Termin auf ${min} Minuten verlängert. Die Uhrzeit bleibt: ${w}.`,
+          ),
+          a(an, "Den aktualisierten Kalendereintrag findest du unten.", "Den aktualisierten Kalendereintrag finden Sie unten."),
+          ...how,
+        ],
+        calendar: true,
+      };
+    }
     case "cancelled":
       return {
         subject: `Abgesagt: ${dein} Termin mit ${person.dat} am ${w}`,

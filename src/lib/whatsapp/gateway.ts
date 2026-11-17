@@ -330,6 +330,13 @@ async function persistInbound(
   if (conversation.leadId && !conversation.botActive && !conversation.optedOutAt) {
     conversation.botActive = await nurLeads.nachLeadZuordnung(conversation.id);
   }
+  // Lead antwortet im Chat: ein laufender Anrufplan („Anrufversuch X von 6“) endet (Show-up-Paket, lib/anruf-ausloeser.ts).
+  // Nicht bei „STOPP“: das betrifft nur WhatsApp, angerufen werden darf weiter.
+  if (conversation.leadId && !isStop) {
+    await import("@/lib/anruf-ausloeser-server")
+      .then((m) => m.anrufplanBeiAntwortStoppen(conversation.leadId!))
+      .catch((e) => console.error("[anrufplan stoppen]", e));
+  }
   const pipeline = await nurLeads.istPipelineChat(conversation);
   // Unbekannter Kontakt: Assistent nur mit dem Schalter „Assistent auch für neue Kontakte“ (nie für App-Kontakte)
   if (!pipeline && isNew && (await nurLeads.assistentDarfAntworten(conversation))) {

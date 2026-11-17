@@ -169,6 +169,17 @@ export async function googleCreateEvent(customerId: string, ev: NewEvent): Promi
   return { eventId: json.id, videoUrl };
 }
 
+/** Ende eines Termins ändern (Komplettcheck: 45 Min.); Google schickt den Teilnehmern die Aktualisierung. */
+export async function googleUpdateEventEnd(customerId: string, eventId: string, end: Date): Promise<void> {
+  const token = await accessToken(customerId);
+  const res = await fetch(`${CAL_BASE}/calendars/primary/events/${encodeURIComponent(eventId)}?sendUpdates=all`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ end: { dateTime: end.toISOString() } }),
+  });
+  if (!res.ok) throw new Error(`Google-Termin konnte nicht geändert werden (${res.status}).`);
+}
+
 /** Termin löschen; Google schickt den Teilnehmern eine Absage. 404/410 = schon weg. */
 export async function googleDeleteEvent(customerId: string, eventId: string): Promise<void> {
   const token = await accessToken(customerId);

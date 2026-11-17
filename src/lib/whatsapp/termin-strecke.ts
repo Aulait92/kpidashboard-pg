@@ -203,6 +203,8 @@ export async function komplettcheckAntwort(conversationId: string, ja: boolean, 
   if (ja) {
     await merke(conversationId, STRECKE.vertragsfrage, { appointmentId: k.termin.id });
     await sende(k, vertragsFrage(k.an, k.familie));
+    // Komplettcheck braucht Zeit (Ole, 17.11.2026): Termin auf 45 Min. verlängern, sonst Hinweis an den Vermittler
+    await import("@/lib/komplettcheck-dauer").then((m) => m.komplettcheckVerlaengern(k.termin!.id, { now }));
     return true;
   }
   await sendeAbschluss(k, "komplett_nein");

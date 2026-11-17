@@ -41,6 +41,8 @@ export type NoticePurpose =
   | "booking_confirmation"
   | "reminder"
   | "reminder_soon"
+  | "reminder_start"
+  | "appt_waiting"
   | "reschedule"
   | "followup"
   | "followup_nudge"
@@ -65,6 +67,8 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
   reminder_soon: "Termin gleich: passt alles?",
+  reminder_start: "Termin in 15 Minuten: Link zum Videoraum",
+  appt_waiting: "Vermittler wartet im Videoraum",
   reschedule: "Termin verschoben",
   followup: "Nachfassen mit zwei Terminvorschlägen",
   followup_nudge: "Nachfassen: kurze Nachfrage (Chat ruht)",
@@ -113,6 +117,9 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_zahn: "v7",
   outreach_pkv: "v7",
   outreach_privatschutz: "v7",
+  // Show-up-Paket (Ole, 17.11.2026): neue Zwecke, nur vorbereitet (VORBEREITETE_PURPOSES in template-plan.ts), nicht eingereicht
+  reminder_start: "v5",
+  appt_waiting: "v5",
 };
 
 /**
@@ -146,6 +153,8 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   reminder_soon: ["Uhrzeit", "Art", "Link/Hinweis"],
+  reminder_start: ["Vermittler (Nominativ)", "Uhrzeit", "Videolink"],
+  appt_waiting: ["Vermittler (Nominativ)", "Videolink"],
   reschedule: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   followup: ["Terminvorschlag 1", "Terminvorschlag 2"],
   followup_nudge: [],
@@ -192,6 +201,16 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   reminder_soon: {
     du: "gleich ist es so weit: Dein Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei dir alles?",
     sie: "gleich ist es so weit: Ihr Termin bei [Firma] ist um {{2}} ({{3}}). {{4}} Passt bei Ihnen alles?",
+  },
+  // Show-up-Paket (Ole, 17.11.2026), nur vorbereitet, nicht eingereicht (VORBEREITETE_PURPOSES): 15 Minuten vorher mit
+  // Link (nur Videotermine) und „wartet schon im Videoraum“ nach „Fehlt noch“. Freitext: lib/showup.ts.
+  reminder_start: {
+    du: "gleich geht es los: {{2}} ist um {{3}} für dich im Videoraum. Der Link funktioniert direkt im Handy-Browser, ohne App: {{4}} Bis gleich!",
+    sie: "gleich geht es los: {{2}} ist um {{3}} für Sie im Videoraum. Der Link funktioniert direkt im Handy-Browser, ohne App: {{4}} Bis gleich!",
+  },
+  appt_waiting: {
+    du: "{{2}} wartet schon im Videoraum auf dich. Hier ist der Link: {{3}} Bis gleich!",
+    sie: "{{2}} wartet schon im Videoraum auf Sie. Hier ist der Link: {{3}} Bis gleich!",
   },
   reschedule: {
     du: "dein Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt dir die neue Zeit?",
@@ -282,6 +301,37 @@ export type NaechsteFassung = {
   b?: { du?: string; sie: string };
   /** Neue Schnellantwort-Knöpfe (im Freitext sofort, in der Vorlage ab dieser Version). */
   knoepfe?: string[];
+};
+
+/**
+ * Vorbereitete neue Fassung mit ANDEREN Platzhaltern (Show-up-Paket, Ole 17.11.2026): wird NICHT eingereicht und als
+ * Vorlage nicht gesendet, bis Ole die Texte freigibt (docs/vorlagen-showup.md). Im offenen 24-h-Fenster sendet die App
+ * schon den neuen Text als Freitext (lib/showup.ts). Aktivieren: Text nach TEMPLATE_BODY, REST_PARAMS des Zwecks auf
+ * `params`, PURPOSE_VERSION auf `version`, Eintrag hier löschen. Die Absender (lib/whatsapp/reminders.ts) belegen die
+ * Platzhalter je Version der gewählten Vorlage (paramsFor): ab dieser Version die neue Belegung, sonst die bisherige.
+ */
+export type VorbereiteteFassung = { version: string; du: string; sie: string; params: string[]; beispiele: { du: string[]; sie: string[] } };
+
+export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFassung>> = {
+  // Vortag (ca. 24 h vorher): Nutzensatz aus den Angaben, bei Komplettcheck der Satz zu den Verträgen, Zugang, Frage
+  reminder: {
+    version: "v5",
+    du: "kurze Erinnerung an deinen Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?",
+    sie: "kurze Erinnerung an Ihren Termin {{2}}. {{3}} So geht es los: {{4}} Passt es weiterhin?",
+    params: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
+    beispiele: {
+      du: ["Julia", "morgen um 10 Uhr", "In einem kurzen Videotermin zeigt dir Thomas, was Haftpflicht und Hausrat für deine Familie kosten und worauf du achten solltest.", "https://meet.google.com/abc-defg-hij"],
+      sie: ["Frau Schneider", "morgen um 10 Uhr", "In einem kurzen Videotermin zeigt Ihnen Herr Schmidt, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten. Legen Sie gern Ihre bestehenden Verträge bereit.", "https://meet.google.com/abc-defg-hij"],
+    },
+  },
+  // 1 Stunde vorher, ohne Link
+  reminder_soon: {
+    version: "v5",
+    du: "in einer Stunde ist dein {{2}} mit {{3}}. Passt bei dir alles? Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.",
+    sie: "in einer Stunde ist Ihr {{2}} mit {{3}}. Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.",
+    params: ["Terminart (Videotermin bzw. Telefontermin)", "Vermittler (Dativ)"],
+    beispiele: { du: ["Julia", "Videotermin", "Thomas"], sie: ["Frau Schneider", "Videotermin", "Herrn Schmidt"] },
+  },
 };
 
 export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, NaechsteFassung>> = {
@@ -624,6 +674,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   booking_confirmation: [KNOPF.terminVerschieben],
   reminder: [KNOPF.passt, KNOPF.verschieben],
   reminder_soon: [KNOPF.passt, KNOPF.verschieben],
+  reminder_start: [KNOPF.verschieben],
   reschedule: [KNOPF.passt, KNOPF.verschieben],
   followup: [KNOPF.ersteZeit, KNOPF.zweiteZeit, KNOPF.andereZeit],
   followup_nudge: [KNOPF.weiter, KNOPF.keinBedarfMehr],

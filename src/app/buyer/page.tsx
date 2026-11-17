@@ -24,7 +24,7 @@ import { listVorbereitungen } from "@/lib/termin-vorbereitung-server";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Heute | performancegrowth" };
 
-type SearchParams = Promise<{ range?: string; from?: string; to?: string; lead?: string }>;
+type SearchParams = Promise<{ range?: string; from?: string; to?: string; lead?: string; anrufen?: string }>;
 
 export default async function BuyerHomePage({ searchParams }: { searchParams: SearchParams }) {
   const ctx = await getBuyerContext();
@@ -63,6 +63,9 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
   ]);
   // Termine, die noch vorzubereiten sind (Angebot rechnen): Link direkt in der Terminzeile statt eigener Karte
   const zuVorbereiten = vorb.map((v) => v.id);
+  // Push „Jetzt anrufen?“ (lib/anruf-ausloeser.ts): Anruf-Blatt für diesen Kontakt öffnen
+  const anrufenRaw = (await searchParams).anrufen;
+  const anrufen = anrufenRaw && /^[\w-]{1,64}$/.test(anrufenRaw) ? anrufenRaw : null;
   // Hinweise, die nicht dringend sind, stehen unter den Aufgaben (UX, Ole 15.11.2026)
   const hinweise = (
     <div className="mt-6 space-y-4">
@@ -105,7 +108,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {erstinfoHint}
-            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} />
+            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} />
             {hinweise}
           </section>
           <section
@@ -145,7 +148,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {erstinfoHint}
-      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} />
+      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} />
       {hinweise}
     </main>
   );
