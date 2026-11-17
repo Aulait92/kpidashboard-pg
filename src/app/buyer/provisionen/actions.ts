@@ -57,7 +57,7 @@ export async function setPoliceReminderAction(on: boolean): Promise<{ ok: true }
   return { ok: true };
 }
 
-/** Erinnerung „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss an/aus (nur Inhaber). */
+/** Erinnerung „Weiteres Produkt anbieten?“ 6 Wochen nach dem Abschluss an/aus (nur Inhaber). */
 export async function setCrossSellReminderAction(on: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Bitte neu anmelden." };

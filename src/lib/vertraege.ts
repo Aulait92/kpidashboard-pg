@@ -748,8 +748,8 @@ function lueckenAusTermin(tarifauswahl: unknown): SchutzEintrag[] {
 }
 
 export { CROSS_SELL_TODO };
-export const CROSS_SELL_AFTER_DAYS = 21;
-/** Nur Abschlüsse der letzten Woche nach Ablauf der 3 Wochen (kein Schwall alter Aufgaben beim Start). */
+export const CROSS_SELL_AFTER_DAYS = 42; // 6 Wochen (Ole, 17.11.2026; vorher 21 Tage)
+/** Nur Abschlüsse der letzten Woche nach Ablauf der 6 Wochen (kein Schwall alter Aufgaben beim Start). */
 export const CROSS_SELL_WINDOW_DAYS = 7;
 
 /**
@@ -766,7 +766,7 @@ export function crossSellNote(sparten: string[], luecken: Pick<SchutzEintrag, "l
 }
 
 /**
- * Cron: 3 Wochen nach dem ersten Abschluss die Wiedervorlage „Weiteres Produkt anbieten?“ auf „Heute“.
+ * Cron: 6 Wochen nach dem ersten Abschluss die Wiedervorlage „Weiteres Produkt anbieten?“ auf „Heute“.
  * Einmal je Lead (crossSellRemindedAt), nicht bei weiterem Abschluss, nicht wenn der Lead nicht mehr im
  * Abschluss ist, nicht über eine offene Wiedervorlage (z. B. Police) hinweg, nur wenn beim Kunden an.
  */

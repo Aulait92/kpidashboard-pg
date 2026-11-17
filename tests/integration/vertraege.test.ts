@@ -133,7 +133,7 @@ describe("Verträge je Lead", () => {
     const off = await makeCustomer({ crossSellReminder: false });
     ids.push(c.id, off.id);
     const now = new Date();
-    const closedAt = new Date(now.getTime() - 22 * DAY);
+    const closedAt = new Date(now.getTime() - 43 * DAY);
     const a = await prisma.lead.create({ data: { customerId: c.id, source: "TKV-Katze", status: "Abschluss", closedAt } });
     const b = await prisma.lead.create({ data: { customerId: c.id, source: "TKV-Katze", status: "Abschluss", closedAt } });
     const old = await prisma.lead.create({ data: { customerId: c.id, source: "TKV-Katze", status: "Abschluss", closedAt: new Date(now.getTime() - 90 * DAY) } });
@@ -160,7 +160,7 @@ describe("Verträge je Lead", () => {
     const c = await makeCustomer();
     ids.push(c.id);
     const now = new Date();
-    const closedAt = new Date(now.getTime() - 22 * DAY);
+    const closedAt = new Date(now.getTime() - 43 * DAY);
     const l = await prisma.lead.create({ data: { customerId: c.id, source: "Privatschutz", status: "Abschluss", closedAt } });
     await syncPrimaryContract(l.id);
     const tarifauswahl = {
