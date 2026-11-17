@@ -13,7 +13,7 @@ import {
 } from "@/lib/provision";
 import { agencyCostsForRange, proratedMonthly, seatSegments, setupMonths, type AgencyCostConfig } from "@/lib/agenturkosten";
 import { leadOrigin, originWhere } from "@/lib/lead-herkunft";
-import { contractsPerCustomer, gewinnOf, summarizeBestand, summarizeProvision } from "@/lib/ertrag";
+import { contractsPerCustomer, gewinnOf, provisionAusText, summarizeBestand, summarizeProvision } from "@/lib/ertrag";
 import type { CustomerContract } from "@/lib/vertraege";
 import { crossSellNote, parseContractInput } from "@/lib/vertraege";
 import { candidateTips, earlyHint, isDismissed, KOLLEGEN_TIPP_AKTIV, pickTips, withDismissed, type TipSignals } from "@/lib/zahlen-tipps";
@@ -91,6 +91,22 @@ describe("Bestandsprovision: in 5 Jahren, Storno, Wachstum", () => {
     expect(bestandInYears([{ trailPerYear: 100, trailFromYear2: false, signedAt: now }], now, 5, 0)).toBe(500);
   });
 
+  it("Storno zählt ab heute, nicht ab Abschluss: ein Vertrag von vor 3 Jahren hat diese Jahre überstanden", () => {
+    const alt = { trailPerYear: 100, trailFromYear2: false, signedAt: D("2023-11-14") };
+    const neu = { trailPerYear: 100, trailFromYear2: false, signedAt: now };
+    // gleiche Zukunft wie ein heute abgeschlossener Vertrag (Makler, Bestand ab sofort)
+    expect(trailNextYears(alt, now).map((v) => Math.round(v * 100))).toEqual(trailNextYears(neu, now).map((v) => Math.round(v * 100)));
+    // 100 € pro Jahr, 10 % Storno: 100 · 0,9^(j+0,5) über 5 Jahre ≈ 388 € (vorher ab Abschluss gerechnet ≈ 283 €)
+    expect(bestandInYears([alt], now)).toBeCloseTo(100 * Math.sqrt(0.9) * ((1 - 0.9 ** 5) / 0.1), 0);
+    // Vertreter (ab dem 2. Jahr): ein 2 Jahre alter Vertrag zahlt sofort, Storno ebenfalls ab heute
+    const v = trailNextYears({ trailPerYear: 100, trailFromYear2: true, signedAt: D("2024-11-14") }, now);
+    expect(v[0]).toBeCloseTo(100 * Math.sqrt(0.9), 0);
+    // halbes Jahr alt: erst ab dem Jahrestag bezahlt, Storno ab heute bis zur Mitte des bezahlten Teils
+    const halb = trailNextYears({ trailPerYear: 100, trailFromYear2: true, signedAt: D("2026-05-15") }, now);
+    expect(halb[0]).toBeGreaterThan(45);
+    expect(halb[0]).toBeLessThan(50);
+  });
+
   it("Wachstum bei gleichem Tempo steigt Jahr für Jahr", () => {
     const g = bestandGrowth({ existing: [], newPerMonth: 2, avgTrail: 40, fromYear2: true, now });
     expect(g).toHaveLength(5);
@@ -137,6 +153,17 @@ describe("Provision im Zeitraum: Cross-Selling, Empfehlungen, Zeitraumwechsel", 
     expect(s.trailPerYear).toBe(60 + 50 + 20);
     expect(summarizeProvision(rows, vertreter, okt).firstYear).toBe(220);
     expect(contractsPerCustomer(rows)).toBe(1.3);
+  });
+
+  it("Zeile „aus N Abschlüssen“: Verträge und Cross-Selling nennen, „einmalig“ nur ohne Bestand im 1. Jahr", () => {
+    const s = summarizeProvision(rows, vertreter, nov);
+    expect(provisionAusText(s, false)).toBe("aus 2 Abschlüssen (3 Verträge, davon 1 Cross-Selling), einmalig");
+    expect(provisionAusText(summarizeProvision(rows, vertreter, okt), false)).toBe("aus 1 Abschluss, einmalig");
+    // KFZ: Bestand ab dem 1. Jahr steckt im Betrag, also nicht „einmalig“
+    const kfz = summarizeProvision([contract({ sparte: "kfz", premium: 600 })], vertreter, nov);
+    expect(kfz.firstYear).toBeGreaterThan(kfz.abschluss);
+    expect(provisionAusText(kfz, false)).toBe("aus 1 Abschluss, inkl. Bestand im 1. Jahr");
+    expect(provisionAusText(s, true)).toBe("aus 2 Abschlüssen (3 Verträge, davon 1 Cross-Selling), im 1. Jahr");
   });
 
   it("Bestand aus allen Verträgen seit Start, Vertreter ab dem 2. Jahr", () => {

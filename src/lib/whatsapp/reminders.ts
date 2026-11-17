@@ -296,7 +296,7 @@ export async function runReminders(): Promise<ReminderResult> {
       if (err instanceof WhatsAppKeinLeadError) keinLead = true;
       else result.errors.push(`${appt.id} (WhatsApp): ${err instanceof Error ? err.message : String(err)}`);
     }
-    const mail = await sendLeadEmail(appt.id, "reminder").catch(() => ({ sent: false }));
+    const mail = await sendLeadEmail(appt.id, "reminder", { now }).catch(() => ({ sent: false }));
     if (mail.sent) delivered = true;
     if (delivered || keinLead) {
       await prisma.appointment.update({

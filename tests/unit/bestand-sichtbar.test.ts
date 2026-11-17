@@ -54,10 +54,10 @@ describe("Tipp „Bestand nutzen“", () => {
     missingPremium: 0,
     rates: { reach: { own: null, avg: null }, termin: { own: null, avg: null }, close: { own: null, avg: null } },
   };
-  it("nur mit sichtbarem Modul", () => {
+  it("nur mit freigeschaltetem Modul", () => {
     expect(candidateTips(s).some((t) => t.key === "bestand")).toBe(false);
-    expect(candidateTips({ ...s, bestandVisible: false }).some((t) => t.key === "bestand")).toBe(false);
-    expect(candidateTips({ ...s, bestandVisible: true }).some((t) => t.key === "bestand")).toBe(true);
+    expect(candidateTips({ ...s, bestandEnabled: false }).some((t) => t.key === "bestand")).toBe(false);
+    expect(candidateTips({ ...s, bestandEnabled: true }).some((t) => t.key === "bestand")).toBe(true);
   });
 });
 

@@ -167,6 +167,14 @@ function BookedRow({ b, readOnly }: { b: BookedProduct; readOnly: boolean }) {
   );
 }
 
+/** Neuer Monatspreis Betreuung + Software: Listenpreis der neuen Stufe, bei individuellem Preis bisher + Aufschlag. */
+function neuerMonatspreis(p: ReturnType<typeof previewBooking>): number | null {
+  if (p.overIndividual) return null;
+  if (p.bookingPricing === "list" && p.feeTo != null) return p.feeTo;
+  if (p.manualReason === "individual_terms" && p.feeFrom != null) return p.feeFrom + p.extraMonthly;
+  return null;
+}
+
 function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableProduct; lines: BudgetLine[]; ctx: BudgetContext; today: string; onClose: () => void }) {
   const [daily, setDaily] = useState(DEFAULT_DAILY);
   const [when, setWhen] = useState<"asap" | "date">("asap");
@@ -220,9 +228,17 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
               <dt className="text-sm text-[color:var(--muted)]">Einrichtung (einmalig)</dt>
               <dd className="mt-1 font-semibold tabular-nums">{p.setupFee > 0 ? `${eur0(p.setupFee)} netto` : "kostenlos"}</dd>
             </div>
-            <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
-              <dt className="text-sm text-[color:var(--muted)]">Monatlich ab Start</dt>
-              <dd className="mt-1 font-semibold tabular-nums">+{eur0(p.extraMonthly)} netto</dd>
+            {/* Neuer Monatsbetrag für Betreuung + Software klar sichtbar (Ole, 17.11.2026) */}
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3" data-book-fee>
+              <dt className="text-sm text-[color:var(--muted)]">Betreuung + Software</dt>
+              {neuerMonatspreis(p) != null ? (
+                <dd className="mt-1 tabular-nums">
+                  <span className="font-semibold">{eur0(neuerMonatspreis(p)!)} netto im Monat</span>
+                  {p.feeFrom != null ? <span className="block text-sm text-[color:var(--muted)]">bisher {eur0(p.feeFrom)}, ab Start</span> : null}
+                </dd>
+              ) : (
+                <dd className="mt-1 font-semibold tabular-nums">+{eur0(p.extraMonthly)} netto im Monat</dd>
+              )}
             </div>
             <div className="col-span-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] p-3">
               <dt className="text-sm text-[color:var(--muted)]">Werbebudget gesamt pro Monat</dt>
@@ -233,11 +249,6 @@ function BookSheet({ product, lines, ctx, today, onClose }: { product: BookableP
                 {p.leadsNew != null ? <span className="ml-1 text-sm font-normal text-[color:var(--muted)]">(neu ca. {p.leadsNew} Leads im Monat)</span> : null}
               </dd>
             </div>
-            {p.bookingPricing === "list" && p.feeTo != null && p.feeFrom != null && !p.overIndividual ? (
-              <p className="col-span-2 -mt-1 text-sm">
-                Betreuung + Software: <b>{eur0(p.feeTo)}</b> statt {eur0(p.feeFrom)} netto im Monat, ab dem Start (nächster Abrechnungsmonat).
-              </p>
-            ) : null}
           </dl>
 
           {sentence && (p.tierChange || p.overIndividual || p.bookingPricing === "individual") ? (
