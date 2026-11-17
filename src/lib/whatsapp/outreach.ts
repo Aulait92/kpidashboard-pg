@@ -308,6 +308,9 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
   return result;
 }
 
+/** Grund auf der Anrufliste, wenn kein WhatsApp-Erstanschreiben läuft: neuer Lead, sofort anrufen. */
+export const NEUER_LEAD_REASON = "Neuer Lead, noch nicht kontaktiert";
+
 export type CallbackLead = {
   id: string;
   name: string | null;
@@ -383,6 +386,9 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
     },
   });
 
+  // Ohne WhatsApp-Erstanschreiben (Assistent oder Erstanschreiben aus) schreibt niemand den Lead an: dann sofort anrufen
+  // statt erst nach 24 Stunden (Nacht-QA 17.11.2026: neue Leads standen sonst einen Tag lang nirgends auf „Heute“).
+  const outreachOn = leads.some((l) => !l.outreachAt) ? await hasWhatsAppOutreach(customerId) : true;
   const out: CallbackLead[] = [];
   for (const l of leads) {
     // Termine, die nur an der Konversation hängen (Altfälle), ebenfalls prüfen.
@@ -421,6 +427,9 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       reason = replied
         ? "Hat im Chat geantwortet, aber keinen Termin gebucht"
         : "Keine Reaktion auf WhatsApp";
+    } else if (!l.outreachAt && !outreachOn && !replied) {
+      reason = NEUER_LEAD_REASON;
+      urgent = true;
     } else if (!l.outreachAt && now - l.createdAt.getTime() >= CALLBACK_AFTER_MS) {
       reason = "Nicht per WhatsApp angeschrieben";
     }
