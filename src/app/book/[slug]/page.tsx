@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import { a, asAnsprache, type Ansprache } from "@/lib/ansprache";
@@ -75,6 +76,17 @@ export default async function BookingPage({ params, searchParams }: Props) {
       customer: { select: { name: true, leadAddress: true, onboarding: { select: { websiteInfo: true } } } },
     },
   });
+  // Früherer Kurzname (Link geändert, Ole 17.11.2026): auf den aktuellen weiterleiten, Parameter bleiben
+  if (!conn) {
+    const { aktuellerSlugFuer } = await import("@/lib/calendar/buchungslink");
+    const neu = await aktuellerSlugFuer(slug);
+    if (neu) {
+      const q = new URLSearchParams(Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string")).toString();
+      const { bookingPageUrl } = await import("@/lib/public-url");
+      const ziel = bookingPageUrl(neu) ?? `/book/${neu}`;
+      redirect(q ? `${ziel}?${q}` : ziel);
+    }
+  }
   // Datenschutzhinweis des Beraters (verantwortlich für die Termindaten),
   // sonst der allgemeine Link.
   const customerPrivacy = (conn?.customer.onboarding?.websiteInfo as { privacyUrl?: string | null } | null)?.privacyUrl;

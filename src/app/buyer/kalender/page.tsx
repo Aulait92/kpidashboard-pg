@@ -77,7 +77,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
       {consentUrl ? <MicrosoftAdminConsent url={consentUrl} /> : null}
 
       {/* Erst verbinden, dann teilen: ohne Kalender steht die Buchungsseite unter „Ihr Kalender“ (16.11.2026) */}
-      {mainConnected || ownConnected ? <BookingLinkCard url={bookingUrl} calendarConnected /> : null}
+      {mainConnected || ownConnected ? <BookingLinkCard url={bookingUrl} slug={slug} kannAendern={owner && !ro} calendarConnected /> : null}
 
       <Card>
         <CardHeader title="Ihr Kalender" icon={CalendarDays} />
@@ -158,7 +158,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
 
       {!(mainConnected || ownConnected) ? (
         <div className="mt-5 [&>*]:mb-0">
-          <BookingLinkCard url={bookingUrl} calendarConnected={false} />
+          <BookingLinkCard url={bookingUrl} slug={slug} kannAendern={owner && !ro} calendarConnected={false} />
         </div>
       ) : null}
 

@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { canEditProvision, customerProductKeys, loadCustomerProvision } from "@/lib/provision-server";
 import { ProvisionForm } from "./provision-form";
 import { EigeneProdukte } from "./eigene-produkte";
-import Link from "next/link";
 import { realStornoQuote, sparteInfo } from "@/lib/provision";
 import { loadCustomerContracts } from "@/lib/vertraege";
 
@@ -55,13 +54,6 @@ export default async function ProvisionenPage() {
         real={{ quote: real.quote, contracts: real.contracts, cancelled: real.cancelled }}
       />
       <EigeneProdukte products={provision.products} canEdit={canEdit} />
-      <p className="mt-5 px-1 text-sm text-[color:var(--muted)]">
-        Aufgaben nach einem Abschluss („Weiteres Produkt anbieten?“, „Police da und erste Zahlung erfolgt?“) schalten Sie unter{" "}
-        <Link href="/buyer/einstellungen/erinnerungen#aufgaben" className="font-medium text-[color:var(--brand)] underline">
-          Einstellungen → Erinnerungen &amp; Aufgaben
-        </Link>
-        .
-      </p>
     </main>
   );
 }
