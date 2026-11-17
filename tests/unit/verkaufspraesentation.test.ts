@@ -42,18 +42,27 @@ const angebot = (x: Partial<AngebotFuerFolien> = {}): AngebotFuerFolien => ({
 const text = (html: string) => html.replace(/<style[\s\S]*?<\/style>/g, "").replace(/<[^>]+>/g, " ");
 
 describe("Folienliste", () => {
-  it("Vertreter 22, Makler 23 (Makler mit Tarifvergleich nach Folie 19)", () => {
+  it("Vertreter 23, Makler 24 (Folie 18 Komplettcheck; Makler mit Tarifvergleich nach Folie 20)", () => {
     const v = folienListe("vertreter", false);
     const m = folienListe("makler", false);
-    expect(v).toHaveLength(22);
-    expect(m).toHaveLength(23);
+    expect(v).toHaveLength(23);
+    expect(m).toHaveLength(24);
     expect(v[12]).toMatchObject({ nr: 13, art: "video" });
     expect(v[16]).toMatchObject({ nr: 17, art: "demo", titel: "Beraten mit echten Preisen" });
-    expect(v.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([19]);
-    expect(v.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([20]);
-    expect(m.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([19]);
-    expect(m[19]).toMatchObject({ nr: 20, art: "bild" });
-    expect(m.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([21]);
+    for (const l of [v, m]) expect(l[17]).toMatchObject({ nr: 18, bild: 18, art: "bild", titel: "Viele wollen den Komplettcheck" });
+    expect(v.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([20]);
+    expect(v.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([21]);
+    expect(m.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([20]);
+    expect(m[20]).toMatchObject({ nr: 21, art: "bild", titel: "Mit Tarifvergleich: alles zurück nach 7 Monaten" });
+    expect(m.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([22]);
+  });
+
+  it("mit Abschlussbonus: vorletzte Folie, Bildnummern bleiben wie in der PPTX", () => {
+    const v = folienListe("vertreter");
+    expect(v).toHaveLength(24);
+    expect(v[22]).toMatchObject({ nr: 23, art: "bonus", bild: 0 });
+    expect(v[23]).toMatchObject({ nr: 24, bild: 23, titel: "Ihr Start in 3 Schritten" });
+    expect(folienListe("makler").at(-1)).toMatchObject({ nr: 25, bild: 24 });
   });
 
   it("jedes Folienbild liegt in public/ (scripts/vertrieb-folien.mjs)", () => {
@@ -120,16 +129,16 @@ describe("Rechnungen", () => {
 
   it("Angebotspreise fließen in die Folien ein", () => {
     const fs = verkaufsFolien("vertreter", paketDaten(angebot(), "vertreter"));
-    const rechnung = fs[18].html;
+    const rechnung = fs.find((f) => f.titel === "Rechnet sich das?")!.html;
     expect(rechnung).toContain("Ihr Angebot PG-2026-0042 für Agentur Muster");
     expect(rechnung).toContain("1.049 € + USt.");
     expect(rechnung).toContain("1.248 €"); // 1.049 € × 1,19
     expect(rechnung).toContain("+ 2.800 €");
-    expect(fs[19].html).toContain("1.049 € netto");
+    expect(fs[20].html).toContain("1.049 € netto");
     expect(fs[16].html).toContain('src="/demo/beratung?eingebettet=1"');
     const m = verkaufsFolien("makler", paketDaten(angebot({ vermittlerTyp: "makler", monthlyFee: 1400, seats: 3 }), "makler"));
-    expect(m[18].html).toContain("12 × 1.400 €");
-    expect(m[20].html).toContain("1.400 € netto");
+    expect(m[19].html).toContain("12 × 1.400 €");
+    expect(m[21].html).toContain("1.400 € netto");
   });
 
   it("Texte an Interessenten ohne Gedankenstriche, Firmenname maskiert", () => {
