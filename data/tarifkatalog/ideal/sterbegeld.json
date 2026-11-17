@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "sterbegeld",
+  "produkt": "IDEAL SterbeGeld",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsfragen",
+    "Unfalltod: volle Summe sofort",
+    "Summe +500 € alle 3 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL SterbeGeldpur",
+      "kurz": "pur",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "2.000 bis 15.000 €",
+        "wartezeit": "36 Monate",
+        "unfall": "nein",
+        "ohne-gp": "ja",
+        "beitragsende": "lebenslang, abgekürzt"
+      },
+      "bausteine": {
+        "unfall": "nein",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld-Tarife_im_Vergleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL SterbeGeldpur+",
+      "kurz": "pur+",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "summe": "2.000 bis 15.000 €",
+        "wartezeit": "36 Monate",
+        "unfall": "optional",
+        "ohne-gp": "ja",
+        "beitragsende": "lebenslang, abgekürzt"
+      },
+      "bausteine": {
+        "unfall": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld-Tarife_im_Vergleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL SterbeGeld",
+      "kurz": "Original",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "summe": "2.000 bis 15.000 €",
+        "wartezeit": "18 Monate (Einmal 6)",
+        "unfall": "optional",
+        "ohne-gp": "ja",
+        "beitragsende": "abgekürzt, max. Alter 90"
+      },
+      "bausteine": {
+        "unfall": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld-Tarife_im_Vergleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Todesfallabsicherung/Sterbegeldversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld-Tarife_im_Vergleich.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeldpur_mit_Sofortrabatt_Produktbeschreibung.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld_Produktbeschreibung.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/Flyer_IDEAL_SterbeGeld.pdf"
+  ],
+  "offen": [
+    "Stufen sind die drei Tarife pur, pur+ und original SterbeGeld (Produktvergleich Stand Juli 2026). Keine Stufe von IDEAL hervorgehoben, Empfehlung daher mittlere Stufe.",
+    "Original SterbeGeld: bei Einmalbeitrag bis 20.000 € versicherbar, Wartezeit 6 Monate; bei laufendem Beitrag ab dem 10. Monat anteilige Leistung (25, 50, 75 %), volle Summe ab dem 19. Monat.",
+    "pur und pur+: Tod in der Wartezeit erstattet die gezahlten Beiträge; Unfalltod in allen Tarifen sofort volle Summe ohne Wartezeit.",
+    "Dynamik: Summe steigt automatisch alle 3 Jahre um 500 € ohne neue Wartezeit (beim Original nicht bei Einmalbeitrag).",
+    "Bestattungsvorsorge-Service (vorsorge): eigenes Produkt IDEAL BestattungsVorsorge (verbindliche Regelung der Bestattung), nicht als Merkmal der drei Tarife erfasst.",
+    "Rückholung bei Tod im Ausland und digitaler Nachlassmanager nur in pur+ und Original, nicht in pur.",
+    "Abschluss für Eintrittsalter 40 bis 85 Jahre."
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "krankenhauszusatz",
+  "produkt": "KlinikGesund",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Zweitmeinungs-Service",
+    "Transportkosten bis 300 €"
+  ],
+  "tarife": [
+    {
+      "name": "KlinikGesund Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "100 %",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "bis 80 € pro Tag",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KlinikGesund Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibettzimmer",
+        "chefarzt": "100 %",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "bis 100 € pro Tag",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/gesundheit/krankenhauszusatzversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/11-Produktsteckbriefe/KlinikGesund_Produktsteckbrief_02-02_ES-komp.pdf",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/KlinikGesund-AVB/stationaer_T538_Komfort_Bedingungen_MuenchenerVerein_PKV-Zusatz_KlinikGesund.pdf",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/KlinikGesund-AVB/stationaer_T539_Premium_Bedingungen_MuenchenerVerein_PKV-Zusatz_KlinikGesund.pdf"
+  ],
+  "offen": [
+    "Beide Tarife als Beitragsvariante Supergünstig (ohne Alterungsrückstellungen) oder Ansparen (mit Alterungsrückstellungen).",
+    "Privatärztliche Behandlung durch Chef- oder Belegarzt; Erstattung auch über den 3,5-fachen GOÄ-Satz.",
+    "Kurtagegeld nach Krankenhaus: Komfort 20 €, Premium 50 € pro Tag, bis 28 Tage je Versicherungsjahr.",
+    "Zwei Stufen ohne Hervorhebung: keine Empfehlung."
+  ]
+}

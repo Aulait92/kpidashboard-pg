@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "ambulant",
+  "produkt": "Deutsche AmbulantVersicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Naturmedizin zuwählbar",
+    "Online abschließbar"
+  ],
+  "tarife": [
+    {
+      "name": "Ambulant Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "optional, bis 85 %",
+        "sehhilfen": "bis 175 € im Jahr",
+        "vorsorge": "100 % nach GKV-Programm",
+        "hoergeraete": "optional (Zusatztarif)",
+        "wartezeit": "keine"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant Premium+",
+      "kurz": "Premium+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "optional, bis 85 %",
+        "sehhilfen": "optional (Zusatztarif)",
+        "vorsorge": "bis 1.000 € in 2 Jahren",
+        "hoergeraete": "optional (Zusatztarif)",
+        "wartezeit": "keine"
+      },
+      "bausteine": {
+        "sehhilfen": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/gesundheit/ambulante-zusatzversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/DAV-AVB/Ambulant_T510515_Bedingungen_MuenchenerVerein_PKV-Zusatz_DeutscheAmbulantV.pdf",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/DAV-AVB/Ambulant_T172_Bedingungen_MuenchenerVerein_PKV-Zusatz_DeutscheAmbulantV.pdf"
+  ],
+  "offen": [
+    "Naturmedizin (Heilpraktiker, Akupunktur, Osteopathie, Homöopathie) zu beiden Tarifen wählbar, bis 85 %.",
+    "Sehhilfen Kompakt: bis 175 € jährlich bei Änderung der Sehstärke um 0,5 Dioptrien; Premium+ ohne Sehhilfen, Zusatztarif „Sehhilfen & Hilfsmittel“ (auch Hörgeräte) nur telefonisch buchbar.",
+    "Vorsorge Premium+: Vorsorgeuntersuchungen und Schutzimpfungen bis 1.000 € in zwei Versicherungsjahren, dazu Prävention bis 100 €.",
+    "Kompakt zusätzlich 20 % Zahnersatz (bis 200 € in den ersten zwei Jahren, danach 500 € im Jahr).",
+    "Arznei- und Verbandmittel: nicht genannt. Zwei Stufen ohne Hervorhebung: keine Empfehlung."
+  ]
+}

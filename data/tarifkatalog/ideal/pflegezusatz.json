@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "pflegezusatz",
+  "produkt": "IDEAL PflegeRente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslang stabiler Beitrag",
+    "Weltweiter Schutz",
+    "Pflegeplatz in 24 Stunden"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL PflegeRente BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "250 bis 4.000 € im Monat",
+        "einmal": "optional",
+        "befreiung": "ja, ab versichertem PG",
+        "wartezeit": "keine",
+        "dynamik": "optional",
+        "ab-pg": "Pflegegrad 4"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Produktbeschreibung_IDEAL_PflegeRente.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL PflegeRente KLASSIK",
+      "kurz": "KLASSIK",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "250 bis 4.000 € im Monat",
+        "einmal": "optional",
+        "befreiung": "ja, ab versichertem PG",
+        "wartezeit": "keine",
+        "dynamik": "optional",
+        "ab-pg": "Pflegegrad 3"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Produktbeschreibung_IDEAL_PflegeRente.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL PflegeRente EXKLUSIV",
+      "kurz": "EXKLUSIV",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "250 bis 4.000 € im Monat",
+        "einmal": "optional",
+        "befreiung": "ja, ab versichertem PG",
+        "wartezeit": "keine",
+        "dynamik": "optional",
+        "ab-pg": "Pflegegrad 2"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Produktbeschreibung_IDEAL_PflegeRente.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Pflegeversicherung/Pflegeversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Produktbeschreibung_IDEAL_PflegeRente.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Endkundenflyer_IDEAL_PflegeRente.pdf"
+  ],
+  "offen": [
+    "Stufen sind die drei Produktlinien der PflegeRente (Produktbeschreibung pb_ipr_1124). Keine Linie hervorgehoben, Empfehlung daher mittlere Stufe.",
+    "pg5: wählbare Pflegerente ab Pflegegrad 4 (250 bis 4.000 € monatlich); Höhe der Rente in Pflegegrad 2 und 3 nicht beziffert.",
+    "Einmalleistung: optionale Sofortleistung von 1 bis 12 Monatsrenten der Pflegegrade 4 und 5.",
+    "Ambulant wie stationär: in den Unterlagen nicht ausdrücklich genannt.",
+    "Dynamik optional: alle drei Jahre 10 % oder jährlich 1 bis 5 % der Anfangsrente; Rentendynamik im Leistungsbezug wählbar.",
+    "Weitere Produkte: IDEAL PflegeTagegeld (Krankenversicherung, ab Pflegegrad 1) und IDEAL PflegeRente kompakt (online, bis 750 € Rente) nicht als Stufe erfasst."
+  ]
+}

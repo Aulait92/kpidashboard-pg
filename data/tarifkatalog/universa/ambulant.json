@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung uni-med|A",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Osteopathie mitversichert",
+    "Vorsorge ohne Altersgrenzen",
+    "Brille auch ohne neue Stärke"
+  ],
+  "tarife": [
+    {
+      "name": "uni-med|A-Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "50 %, max. 600 €/2 Jahre",
+        "sehhilfen": "200 € in 2 Jahren",
+        "vorsorge": "125 € in 2 Jahren",
+        "lasik": "bis 500 €"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/uni-med-a/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-med|A-Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "70 %, max. 1.200 €/2 J.",
+        "sehhilfen": "250 € in 2 Jahren",
+        "vorsorge": "250 € in 2 Jahren",
+        "lasik": "bis 1.000 €"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/uni-med-a/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-med|A-Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "90 %, max. 1.800 €/2 J.",
+        "sehhilfen": "300 € in 2 Jahren",
+        "vorsorge": "375 € in 2 Jahren",
+        "lasik": "bis 1.500 €"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/uni-med-a/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/",
+    "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/uni-med-a/",
+    "https://www.universa.de/site/assets/files/133653/075-306-folder_private_zusatzversicherung.pdf"
+  ],
+  "offen": [
+    "Arznei- und Verbandmittel sowie Hörgeräte: in uni-med|A nicht enthalten bzw. nicht genannt (Zuzahlungen und Arzneimittel deckt der Tarif uni-EZ).",
+    "Wartezeit nicht genannt. Augenlaser (refraktive Chirurgie) erst nach dem 2. Versicherungsjahr zur Hälfte, nach dem 4. voll.",
+    "Heilpraktiker inklusive Osteopathie und Hufeland-Verfahren; Vorsorge inklusive Schutzimpfungen und IGeL.",
+    "Weiterer Tarif uni-EZ 1 und 2 sowie uni-GZ (ambulant und Zahn) nicht als Stufe erfasst. Keine Stufe hervorgehoben, Empfehlung mittlere Stufe."
+  ]
+}

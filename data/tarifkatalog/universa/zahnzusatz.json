@@ -1,0 +1,93 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung uni-dent|Top",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Bleaching alle 2 Jahre",
+    "Schmerzlinderung (Narkose)",
+    "Innovationsgarantie"
+  ],
+  "tarife": [
+    {
+      "name": "uni-dent|Top 75",
+      "kurz": "dent|Top 75",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "75 %",
+        "implantate": "75 %",
+        "behandlung": "100 %",
+        "prophylaxe": "150 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "4.000 € in 4 Jahren",
+        "kfo": "75 %, bis 2.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/zahnzusatzversicherung/uni-dent-top/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-dent|Top 90",
+      "kurz": "dent|Top 90",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "200 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "5.500 € in 4 Jahren",
+        "kfo": "90 %, bis 2.500 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/zahnzusatzversicherung/uni-dent-top/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-dent|Top 100",
+      "kurz": "dent|Top 100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "250 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "6.000 € in 4 Jahren",
+        "kfo": "100 %, bis 3.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/zahnzusatzversicherung/uni-dent-top/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/private-zusatzversicherung/zahnzusatzversicherung/",
+    "https://www.universa.de/produkte/private-zusatzversicherung/zahnzusatzversicherung/uni-dent-top/",
+    "https://www.universa.de/site/assets/files/164166/075-350-highlightblatt_zahnzusatzversicherung-uni-dent_top.pdf"
+  ],
+  "offen": [
+    "Zahnersatz und Implantate: Prozent für höherwertigen Zahnersatz (Brücken, Kronen, Implantate inkl. Knochenaufbau); Zahnersatz der Regelversorgung 100 % in allen Stufen. Ob inklusive Kassenanteil, nicht ausdrücklich genannt.",
+    "Begrenzung: erstattungsfähig in den ersten 4 Kalenderjahren gestaffelt, ab dem 5. Kalenderjahr und bei Unfall unbegrenzt.",
+    "Kieferorthopädie bis zum 21. Lebensjahr bzw. nach Unfall.",
+    "Weiterer Tarif uni-dent|Privat (80 bis 90 % je nach Bonusheft, 75 € Prophylaxe) nicht als Stufe erfasst. Keine Stufe hervorgehoben, Empfehlung mittlere Stufe."
+  ]
+}

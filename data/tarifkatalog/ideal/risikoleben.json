@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "risikoleben",
+  "produkt": "IDEAL RisikoLeben",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Vorläufiger Schutz bis 100.000 €",
+    "Dynamik 2 bis 5 % im Jahr",
+    "Laufzeit 5 bis 45 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL RisikoLeben Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, 19 Ereignisse",
+        "vorgezogen": "ja (12 Monate Prognose)",
+        "verlaengerung": "nein",
+        "laufzeit": "75 Jahre",
+        "summe": "bis 600.000 €"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/Versicherungen/Todesfallabsicherung/Risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL RisikoLeben Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, auch ohne Anlass",
+        "vorgezogen": "ja (12 Monate Prognose)",
+        "verlaengerung": "ja, bis 15 Jahre",
+        "laufzeit": "75 Jahre",
+        "summe": "bis 600.000 €",
+        "kinder": "5.000 € je Kind"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/Versicherungen/Todesfallabsicherung/Risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Todesfallabsicherung/Risikolebensversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IRL/IDEAL%20RisikoLeben_Produktbeschreibung_barrierefrei.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IRL/IDEAL_RisikoLeben_Flyer.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Klassik und Exklusiv, keine Empfehlung von IDEAL (beide mit gleichen Ratings beworben).",
+    "Umtauschrecht in eine Kapitalversicherung und weltweiter Schutz: in Produktseite und Produktbeschreibung nicht genannt.",
+    "summe: ärztliches Zeugnis erst über 600.000 € Versicherungssumme; versicherbar 50.000 € bis 3 Mio. €.",
+    "kinder (Exklusiv): Extra-Kindergeld 5.000 € je Kind unter 7 Jahren bei Tod der versicherten Person, dazu Todesfallschutz Kind 5.000 € und 10 % (max. 25.000 €) bei schwerer Erkrankung eines Kindes.",
+    "Optional in beiden Tarifen: doppelte Leistung bei Unfalltod (max. 500.000 € extra), 10 % bei schwerer Krankheit (max. 50.000 €), 10 % bei Pflegebedürftigkeit ab Pflegegrad 2 (max. 30.000 €); nicht bei fallender Summe.",
+    "Verbundene Leben (Paare): nicht genannt. Fallende Summe linear oder annuitätisch wählbar.",
+    "Exklusiv zusätzlich: Soforthilfe bei Tod (10 %, max. 10.000 €, nach 3 Jahren), Auslandsrückholung, Trauerberatung, Bonus 25 % bei Tod binnen 12 Monaten nach Hochzeit, Geburt, Immobilienkauf."
+  ]
+}

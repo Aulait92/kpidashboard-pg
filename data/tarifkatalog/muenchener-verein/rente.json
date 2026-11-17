@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "rente",
+  "produkt": "PrivatRente Balance",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Ausgabeaufschlag",
+    "12 Fondswechsel im Jahr frei",
+    "Rebalancing"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatRente Balance",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "wählbar, bis 87 %",
+        "anlage": "80+ Fonds, 6 Strategien",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "wählbar",
+        "beitragspause": "bis 24 Monate"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/vorsorge-vermoegen/geldanlage-absicherung/fondsgebundene-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/vorsorge-vermoegen/geldanlage-absicherung/fondsgebundene-rentenversicherung/",
+    "https://www.muenchener-verein.de/downloadcenter/LV/Werbeunterlagen/7700140.pdf",
+    "https://www.muenchener-verein.de/downloadcenter/LV/Verkaufsunterlagen/7701368.pdf"
+  ],
+  "offen": [
+    "Ein fondsgebundenes Produkt mit oder ohne Beitragsgarantie (bis 87 %, mit Option GarantiePLUS kapitalmarktabhängig bis 150 % angestrebt).",
+    "Garantierter Rentenfaktor und Kapitalwahlrecht: in Seite und Prospekt nicht ausdrücklich genannt.",
+    "CashOption: regelmäßige Entnahmen schon vor Rentenbeginn; Zuzahlungen ab 200 €; Rentenbeginn bis 5 Jahre früher oder bis Alter 85.",
+    "BU-Zusatz: Beitragsbefreiung bei Berufsunfähigkeit, auch ohne Gesundheitsprüfung; RentenSchutzbrief übernimmt bis 3.000 € Beitrag im Jahr. Dynamik bis 10 %.",
+    "HandwerkerRente als Variante nicht erfasst. Keine Renditeangaben übernommen."
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "pkv",
+  "produkt": "BestensGesund Premium",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "SB-Wechsel ohne Prüfung",
+    "Augenlaser bis 5.000 €",
+    "Arzt-Terminservice"
+  ],
+  "tarife": [
+    {
+      "name": "BestensGesund Premium, Selbstbehalt 0 €",
+      "kurz": "SB 0 €",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über GOÄ",
+        "stationaer": "1-/2-Bett, Chefarzt",
+        "zahnersatz": "90 %, bis 21 J. 100 %",
+        "bre": "Cash-Back bis 3.190 €",
+        "heilpraktiker": "bis 2.000 € im Jahr",
+        "sehhilfen": "600 € alle 2 Jahre",
+        "hilfsmittel": "offener Katalog",
+        "primaerarzt": "nein",
+        "selbstbehalt": "0 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/krankenvollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BestensGesund Premium, Selbstbehalt 500 €",
+      "kurz": "SB 500 €",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %, über GOÄ",
+        "stationaer": "1-/2-Bett, Chefarzt",
+        "zahnersatz": "90 %, bis 21 J. 100 %",
+        "bre": "Cash-Back bis 3.190 €",
+        "heilpraktiker": "bis 2.000 € im Jahr",
+        "sehhilfen": "600 € alle 2 Jahre",
+        "hilfsmittel": "offener Katalog",
+        "primaerarzt": "nein",
+        "selbstbehalt": "500 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/krankenvollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BestensGesund Premium, Selbstbehalt 1.000 €",
+      "kurz": "SB 1.000 €",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über GOÄ",
+        "stationaer": "1-/2-Bett, Chefarzt",
+        "zahnersatz": "90 %, bis 21 J. 100 %",
+        "bre": "Cash-Back bis 3.190 €",
+        "heilpraktiker": "bis 2.000 € im Jahr",
+        "sehhilfen": "600 € alle 2 Jahre",
+        "hilfsmittel": "offener Katalog",
+        "primaerarzt": "nein",
+        "selbstbehalt": "1.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/krankenvollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/gesundheit/krankenvollversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/BestensGesund/KK2026_Bedingungen_MuenchenerVerein_Krankheitskostenvoll-und-Krankenhaustagegeldversicherung.pdf"
+  ],
+  "offen": [
+    "Stufen sind die drei Selbstbehalte von BestensGesund Premium (Tarifstufen 895, 896, 897); Leistungen sonst gleich. Keine Stufe hervorgehoben, Empfehlung mittlere Stufe.",
+    "BestensGesund ist für Arbeitnehmer gedacht; für Handwerker, Selbstständige und Freiberufler nennt der Münchener Verein weitere Tarife (nicht erfasst).",
+    "Cash-Back bei Leistungsfreiheit: ab einem vollen Kalenderjahr bis 2.210 €, ab dem 5. Jahr bis 3.190 €; ob die Höhe je Selbstbehalt gleich ist, nicht genannt.",
+    "Zahnersatz und Kieferorthopädie 100 % bis zum 21. Lebensjahr, danach 90 %; Zahnstaffel ab 1.500 € im 1. Jahr (entfällt mit Vorversicherung).",
+    "Hilfsmittel: bis 1.000 € immer 100 %, darüber 100 % im offenen Hilfsmittelkatalog laut Seite.",
+    "Krankentagegeld und Pflegezusatz als Bausteine nicht auf der Seite beschrieben; Beitragsentlastung im Alter optional."
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Freie Verfügung über die Summe",
+    "Gleichbleibende Beiträge"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung Tarif 10S",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 15.000 €",
+        "wartezeit": "36 Monate",
+        "ohne-gp": "ja",
+        "beitragsende": "bis Alter 85"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/existenz/sterbegeldversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/SVG-AVB/A_2022_1_AVB_Teil_I_Tarif10.pdf"
+  ],
+  "offen": [
+    "Wartezeit: Text und FAQ der Seite nennen 36 Monate (Tod in der Wartezeit: eingezahlte Beiträge zurück); die Vergleichstabelle derselben Seite nennt 12 Monate. Bitte gegenprüfen.",
+    "Unfalltod: volle Summe von Anfang an; eine doppelte Leistung bei Unfalltod ist nicht genannt.",
+    "Beiträge bis zum 85. Lebensjahr, danach beitragsfrei; nur laufende Zahlung, kein Einmalbeitrag.",
+    "Bestattungsvorsorge-Service nicht genannt; Auszahlung direkt an den Bestatter per Abtretung möglich."
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeld uni-PT",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Tagegeld 15 bis 100 € wählbar",
+    "Leistung ohne Kostennachweis"
+  ],
+  "tarife": [
+    {
+      "name": "uni-PT-Komfort",
+      "kurz": "PT-Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "einmal": "10-faches Tagegeld",
+        "befreiung": "ab Pflegegrad 4",
+        "wartezeit": "keine",
+        "dynamik": "ja, auch im Pflegefall",
+        "ab-pg": "Pflegegrad 4"
+      },
+      "bausteine": {
+        "einmal": "inklusive",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.universa.de/site/assets/files/124758/075-326-highlightblatt_pflegetagegeld-uni_pt_komfort_premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-PT-Premium",
+      "kurz": "PT-Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "einmal": "10-faches Tagegeld",
+        "befreiung": "ab Pflegegrad 4",
+        "wartezeit": "keine",
+        "dynamik": "ja, auch im Pflegefall",
+        "ab-pg": "Pflegegrad 1"
+      },
+      "bausteine": {
+        "einmal": "inklusive",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.universa.de/site/assets/files/124758/075-326-highlightblatt_pflegetagegeld-uni_pt_komfort_premium.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/private-zusatzversicherung/pflegezusatzversicherung/",
+    "https://www.universa.de/produkte/private-zusatzversicherung/pflegezusatzversicherung/pflegetagegeld/",
+    "https://www.universa.de/site/assets/files/124758/075-326-highlightblatt_pflegetagegeld-uni_pt_komfort_premium.pdf",
+    "https://www.universa.de/site/assets/files/133653/075-306-folder_private_zusatzversicherung.pdf"
+  ],
+  "offen": [
+    "Pflegetagegeld frei wählbar von 15 bis 100 € pro Tag; Komfort leistet 50 % in Pflegegrad 4, Premium 10/30/60/80 % in Pflegegrad 1 bis 4, beide 100 % in Pflegegrad 5.",
+    "Einmalleistung: Sonderzahlung 10-faches Tagegeld bei erstmaliger Feststellung (Komfort ab Pflegegrad 4), danach alle zwei Jahre.",
+    "Ambulant wie stationär: nicht ausdrücklich genannt (Tagegeld zur freien Verfügung).",
+    "Doppelte Leistung bei Pflege durch Unfall (bis 65) oder mit Kindern unter 18 im Haushalt.",
+    "Weiterer Tarif Pflegeergänzung uni-PV plus 50/100 (erhöht die gesetzlichen Leistungen um 50 oder 100 %) nicht als Stufe erfasst.",
+    "Zwei Stufen ohne Hervorhebung durch uniVersa: keine Empfehlung."
+  ]
+}

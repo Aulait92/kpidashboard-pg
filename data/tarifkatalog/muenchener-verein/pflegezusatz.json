@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "pflegezusatz",
+  "produkt": "Deutsche PrivatPflege",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweite Leistung",
+    "Pflegeplatz in 24 Stunden",
+    "Persönliche Pflegehotline"
+  ],
+  "tarife": [
+    {
+      "name": "Deutsche PrivatPflege Premium-Schutz 450",
+      "kurz": "Premium 450",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "450 € im Monat",
+        "ab-pg": "Pflegegrad 1",
+        "ambulant-gleich": "nein, ab PG 2 weniger",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/pflege/private-pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Deutsche PrivatPflege Premium-Schutz 600",
+      "kurz": "Premium 600",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "600 € im Monat",
+        "ab-pg": "Pflegegrad 1",
+        "ambulant-gleich": "nein, ab PG 2 weniger",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/pflege/private-pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Deutsche PrivatPflege Premium-Schutz 750",
+      "kurz": "Premium 750",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "750 € im Monat",
+        "ab-pg": "Pflegegrad 1",
+        "ambulant-gleich": "nein, ab PG 2 weniger",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/pflege/private-pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/pflege/private-pflegezusatzversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/DPP-AVB/Pflege_tDPP_Bedingungen_MuenchenerVerein_PKV-Zusatz_Deutsche_PrivatPflege.pdf",
+    "https://www.muenchener-verein.de/downloadcenter/KV/Werbeunterlagen/6700158.pdf"
+  ],
+  "offen": [
+    "Stufen nach Monatsleistung in Pflegegrad 5 (450, 600, 750 €). Stationär in Pflegegrad 2 bis 5 volle Leistung, häuslich in Pflegegrad 4: 75 %, 3: 50 %, 2: 25 %; Pflegegrad 1: 10 %.",
+    "Einmalleistung bei Pflegebeginn und Beitragsbefreiung im Pflegefall: auf der Seite nicht genannt.",
+    "Höherversicherung ohne Gesundheitsprüfung, wenn die Option bei Abschluss gewählt wurde.",
+    "Keine Stufe hervorgehoben, Empfehlung mittlere Stufe."
+  ]
+}

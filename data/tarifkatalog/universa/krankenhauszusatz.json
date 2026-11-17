@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Stationäre Zusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Krankenhauswahl",
+    "Chefarzt und Spezialisten",
+    "Privatpatient im Krankenhaus"
+  ],
+  "tarife": [
+    {
+      "name": "uni-SZ II",
+      "kurz": "uni-SZ II",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja, wenn notwendig",
+        "wartezeit": "3 Monate",
+        "ambulant-op": "nein",
+        "ersatztagegeld": "bis 90 € pro Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/stationaere-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-SZ II plus",
+      "kurz": "uni-SZ II plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja, wenn notwendig",
+        "wartezeit": "3 Monate",
+        "ambulant-op": "ja",
+        "ersatztagegeld": "bis 90 € pro Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/stationaere-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-SZ",
+      "kurz": "uni-SZ",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja, wenn notwendig",
+        "wartezeit": "3 Monate",
+        "ambulant-op": "nein",
+        "ersatztagegeld": "bis 100 € pro Tag"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/stationaere-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/private-zusatzversicherung/stationaere-zusatzversicherung/",
+    "https://www.universa.de/site/assets/files/133653/075-306-folder_private_zusatzversicherung.pdf",
+    "https://www.universa.de/site/assets/files/145477/bedingungen-private_zusatzversicherung-stationaer-uni_sz_ii.pdf",
+    "https://www.universa.de/site/assets/files/133735/bedingungen-private_zusatzversicherung-stationaer-uni_sz_ii_plus.pdf",
+    "https://www.universa.de/site/assets/files/133732/bedingungen-private_zusatzversicherung-stationaer-uni_sz.pdf"
+  ],
+  "offen": [
+    "uni-SZ II mit Selbstbeteiligung 25 € pro Tag (längstens 10 Tage); uni-SZ II plus und uni-SZ ohne.",
+    "Ambulante Operationen laut Folder (01.2026) nur in uni-SZ II plus; die Webseite zeigt die Tabelle nur mit Symbolen.",
+    "Ersatz-Krankenhaustagegeld: SZ II und SZ II plus 30 € bzw. 60 € bei Verzicht auf Zimmer oder Chefarzt, 90 € statt Kostenerstattung; uni-SZ 40 € bzw. 60 €, 100 € statt Kostenerstattung.",
+    "Wartezeit: allgemeine Wartezeit 3 Monate laut Bedingungen (SZ II plus); Entfall bei Unfall nicht geprüft.",
+    "Über GOÄ-Höchstsatz bei medizinischer Notwendigkeit; in uni-SZ II Kapazitäten-OP bis zum 5-fachen Satz mit Honorarvereinbarung.",
+    "Einsteigertarife uni-SZ II-E und uni-SZ-E bis 40 Jahre nicht erfasst. Keine Stufe hervorgehoben, Empfehlung mittlere Stufe."
+  ]
+}

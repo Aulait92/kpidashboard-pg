@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "zahnzusatz",
+  "produkt": "ZahnGesund",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Ohne Heil- und Kostenplan",
+    "Innovationsgarantie"
+  ],
+  "tarife": [
+    {
+      "name": "ZahnGesund 75+",
+      "kurz": "ZahnGesund 75+",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "bis 80 % inkl. GKV",
+        "implantate": "bis 80 % inkl. GKV",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 150 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "3.600 € in 4 Jahren",
+        "kfo": "bis 75 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnGesund 85+",
+      "kurz": "ZahnGesund 85+",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "bis 90 % inkl. GKV",
+        "implantate": "bis 90 % inkl. GKV",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 170 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "4.000 € in 4 Jahren",
+        "kfo": "bis 85 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnGesund 100",
+      "kurz": "ZahnGesund 100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 % inkl. GKV",
+        "implantate": "100 % inkl. GKV",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 200 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "6.000 € in 4 Jahren",
+        "kfo": "bis 100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/gesundheit/zahnzusatzversicherung/",
+    "https://www.muenchener-verein.de/downloadcenter/KV/Werbeunterlagen/6700179.pdf",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/ZahnGesund-AVB/zahn_T577_Bedingungen_MuenchenerVerein_PKV-Zusatz_ZahnGesund.pdf",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/ZahnGesund-AVB/zahn_T578_Bedingungen_MuenchenerVerein_PKV-Zusatz_ZahnGesund.pdf",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/ZahnGesund-AVB/zahn_T579_Bedingungen_MuenchenerVerein_PKV-Zusatz_ZahnGesund.pdf"
+  ],
+  "offen": [
+    "Zahnersatz 75+ und 85+: 75 bzw. 85 % inklusive Kassenleistung, plus 5 % bei geführtem Bonusheft. Implantate gehören laut Seite zum Zahnersatz (gleicher Satz).",
+    "Zahnbehandlung 100 %; Wurzel- und Parodontosebehandlung ohne Vorleistung der Kasse in 75+ nur 75 %, in 85+ 85 %.",
+    "Prophylaxe: 2 Behandlungen je Versicherungsjahr à 75, 85 bzw. 100 €.",
+    "Leistungsbegrenzung in den ersten 4 Versicherungsjahren (75+: 900 € je Jahr, 85+: 1.000 €, 100: 1.500 €), ab dem 5. Jahr unbegrenzt.",
+    "Kieferorthopädie für Kinder und Erwachsene; bei Unfall begrenzt (75+: 1.000 €, 85+: 2.500 €, 100: 5.000 € bzw. 2.500 € Erwachsene). Inlays nicht je Tarif beziffert.",
+    "ZahnGesund 100 wird mit Testergebnis beworben, aber nicht als Empfehlung markiert; Empfehlung daher mittlere Stufe."
+  ]
+}

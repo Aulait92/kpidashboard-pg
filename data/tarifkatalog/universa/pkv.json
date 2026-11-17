@@ -1,0 +1,128 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Augenlaser-OP 100 %",
+    "Kein Leistungsverzeichnis",
+    "Vorsorge ohne Altersgrenze"
+  ],
+  "tarife": [
+    {
+      "name": "uni-intro|Privat 600",
+      "kurz": "intro|Privat",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 % mit Überweisung",
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "600 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "75 %",
+        "psychotherapie": "75 %, 50 Sitzungen",
+        "primaerarzt": "ja",
+        "sehhilfen": "75 %, bis 125 €"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/private-krankenversicherung/intro-privat/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ECONOMY uni-VE 1300/2000",
+      "kurz": "ECONOMY",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über GOÄ",
+        "stationaer": "1-/2-Bett, Chefarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "1.300 oder 2.000 €",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "100 %",
+        "psychotherapie": "100 %, 50 Sitzungen",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 310 € in 2 Jahren"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/private-krankenversicherung/economy/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "CLASSIC uni-A, uni-ST 1/100, uni-ZA",
+      "kurz": "CLASSIC",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %, über GOÄ",
+        "stationaer": "1-/2-Bett, Chefarzt",
+        "zahnersatz": "60 bis 80 %",
+        "selbstbehalt": "0 bis 1.360 € ambulant",
+        "bre": "erfolgsabhängig",
+        "heilpraktiker": "100 %",
+        "psychotherapie": "100 %, unbegrenzt",
+        "primaerarzt": "nein",
+        "sehhilfen": "Gläser bis 600 €"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/private-krankenversicherung/classic/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "uni-Top|Privat 300/1000",
+      "kurz": "Top|Privat",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über GOÄ",
+        "stationaer": "1-/2-Bett, Chefarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "300 oder 1.000 €",
+        "bre": "erfolgsabh. + garantiert",
+        "heilpraktiker": "bis 2.000 € im Jahr",
+        "psychotherapie": "100 %, ab 21. Sitz. 90 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "bis 600 €"
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/private-krankenversicherung/top-privat/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/private-krankenversicherung/",
+    "https://www.universa.de/produkte/private-krankenversicherung/intro-privat/",
+    "https://www.universa.de/produkte/private-krankenversicherung/economy/",
+    "https://www.universa.de/produkte/private-krankenversicherung/classic/",
+    "https://www.universa.de/produkte/private-krankenversicherung/top-privat/",
+    "https://www.universa.de/site/assets/files/121687/075-181-highlightblatt_uni-top_privat_300.pdf",
+    "https://www.universa.de/site/assets/files/114764/075-201-highlightblatt_classic.pdf",
+    "https://www.universa.de/site/assets/files/114806/075-206-highlightblatt_economy-uni_ve_1300_2000.pdf",
+    "https://www.universa.de/site/assets/files/114893/075-209-highlightblatt_uni_intro_privat_600.pdf"
+  ],
+  "offen": [
+    "Stufen sind die vier Produktlinien von Einstieg bis Hochleistung (eigene Reihenfolge); uniVersa hebt keine hervor, Empfehlung nach README die dritte Stufe.",
+    "intro|Privat als Stufe 600 erfasst; Stufe 300 hat Mehrbettzimmer ohne Chefarzt und 60 % Zahnersatz (mit Ergänzungstarifen mehr). Hausarztmodell: Fachärzte 100 % nur mit Überweisung, sonst 75 %.",
+    "ECONOMY: Werte für die G- und H-Stufen 1.300 und 2.000 €; Stufe uni-VE 900 K mit Primärarztprinzip und teils 80 % Erstattung.",
+    "CLASSIC ist ein Bausteintarif: Werte für uni-A, uni-ST 1/100 (Ein- oder Zweibettzimmer) und uni-ZA (Zahnersatz 60 % in ZA 90, sonst 80 %). Selbstbehalt nur ambulant; uni-A 80: 20 %, max. 500 €.",
+    "Top|Privat: Beitragsrückerstattung aktuell 2,5 Monatsbeiträge (erfolgsabhängig), in Stufe 300 zusätzlich garantiert 600 € (Kinder 300 €).",
+    "Zahnleistungen in allen Linien in den ersten Jahren begrenzt (Zahnstaffel)."
+  ]
+}

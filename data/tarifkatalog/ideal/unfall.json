@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "unfall",
+  "produkt": "IDEAL UnfallSchutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsfragen",
+    "Leistung ab 1 % Invalidität",
+    "Helm- und Sozialbonus"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL UnfallSchutz Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "225 bis 1.000 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "5 %, max. 5.000 €",
+        "kosmetik": "15.000 €",
+        "bergung": "15.000 €",
+        "zecken": "FSME",
+        "gliedertaxe": "GDV-Standard + Organe",
+        "todesfall": "optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IUS/Produktbeschreibung%20IDEAL%20UnfallSchutz.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL UnfallSchutz Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "progression": "225 bis 1.000 %",
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "20 %, max. 20.000 €",
+        "kosmetik": "unbegrenzt",
+        "bergung": "unbegrenzt",
+        "zecken": "FSME und Borreliose",
+        "gliedertaxe": "verbessert",
+        "todesfall": "optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IUS/Produktbeschreibung%20IDEAL%20UnfallSchutz.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Schaden%20und%20Unfall/Unfallversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IUS/Produktbeschreibung%20IDEAL%20UnfallSchutz.pdf"
+  ],
+  "offen": [
+    "Zwei Produktlinien Klassik und Exklusiv (Produktbeschreibung prod_ius_nt9_0823, Stand 08/2023); keine Linie hervorgehoben.",
+    "Invaliditätsgrundsumme individuell wählbar, auf Seite und in der Produktbeschreibung nicht beziffert.",
+    "Progression wählbar 225 %, 350 %, 500 % oder 1.000 %; Exklusiv zusätzlich Baustein Progression+, Mitwirkung+, Gliedertaxe+.",
+    "Unfallrente ab 50 % Invalidität, Krankenhaustagegeld mit Genesungsgeld, Tagegeld, Todesfallleistung, Schmerzensgeld und Unfallhilfe sind Zusatzbausteine.",
+    "Mitwirkung von Vorerkrankungen: Klassik 50 %, Exklusiv 75 % (100 % mit Mitwirkung+).",
+    "IDEAL UnfallRente (für Ältere, lebenslange Rente) ist ein eigenes Produkt und nicht erfasst."
+  ]
+}

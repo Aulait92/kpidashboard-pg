@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rentenbeginn flexibel bis 85",
+    "Rentengarantiezeit wählbar",
+    "Teilauszahlungen möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Aktiv RENTE",
+      "kurz": "Aktiv RENTE",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Leistung garantiert",
+        "rentenfaktor": "Rente garantiert",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Beitragsrückgewähr",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/altersvorsorge/klassische-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "topinvest RENTE garant",
+      "kurz": "invest garant",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "50 bis 80 % wählbar",
+        "rentenfaktor": "ja",
+        "anlage": "Fonds mit Garantie",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Deckungskapital"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/altersvorsorge/fondsgebundene-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "topinvest RENTE",
+      "kurz": "topinvest",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "keine",
+        "rentenfaktor": "ja",
+        "anlage": "rund 50 Fonds und ETF",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Rückgewähr wählbar"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/altersvorsorge/fondsgebundene-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/altersvorsorge/klassische-rente/",
+    "https://www.universa.de/produkte/altersvorsorge/fondsgebundene-rente/",
+    "https://www.universa.de/site/assets/files/111603/074-101_highlightblatt_aktiv_rente.pdf",
+    "https://www.universa.de/site/assets/files/111384/074-118_highlightblatt_topinvest_rente-_topgreeninvest_rente.pdf",
+    "https://www.universa.de/site/assets/files/111385/074-132_highlightblatt_topinvest_rentegarant.pdf"
+  ],
+  "offen": [
+    "Stufen sind Anlagekonzepte (klassisch, Fonds mit Garantie, Fonds ohne Garantie), keine Leistungsstufen; Empfehlung nur mittlere Stufe.",
+    "topinvest RENTE auch als nachhaltige topgreeninvest RENTE (Art. 8 Offenlegungsverordnung).",
+    "Aktiv RENTE: garantierte monatliche Rente bzw. Kapitalzahlung ab Vertragsbeginn; Zuzahlungen bis 30.000 € im Jahr; auch als sofort beginnende Rente gegen Einmalbeitrag.",
+    "Fondsrenten: garantierter Rentenfaktor; Todesfallschutz vor Rentenbeginn wählbar (Beitragsrückgewähr, Deckungskapital oder bis 50.000 € Todesfallleistung), bei garant nur Deckungskapital.",
+    "Kapitalwahlrecht bei den Fondsrenten auf der Seite nicht ausdrücklich genannt. BU-Zusatz nicht genannt. Keine Renditeangaben übernommen."
+  ]
+}

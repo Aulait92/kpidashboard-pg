@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "bu",
+  "produkt": "SBU Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Beitragsanpassung",
+    "Berufswechsel ohne Meldung",
+    "Berufsgruppenwechselprüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Exklusiv SBU",
+      "kurz": "Exklusiv",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "rueckwirkend": "ab 1. Tag der BU",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "ja, bis 10 Mitarbeiter",
+        "infektion": "ja",
+        "pflege": "optional",
+        "dynamik": "optional",
+        "au": "nein",
+        "nachversicherung": "ja, auch ohne Anlass"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/lebensversicherung/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Premium SBU",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "rueckwirkend": "ab 1. Tag der BU",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "ja, bis 10 Mitarbeiter",
+        "infektion": "ja",
+        "pflege": "optional",
+        "dynamik": "optional",
+        "au": "ja, ab 3 Monaten AU",
+        "nachversicherung": "ja, auch ohne Anlass"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/lebensversicherung/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/lebensversicherung/berufsunfaehigkeitsversicherung/",
+    "https://www.universa.de/site/assets/files/111607/074-180_highlightsblatt_exklusiv_sbu.pdf",
+    "https://www.universa.de/site/assets/files/111606/074-121_highlightblatt_premium_sbu.pdf",
+    "https://www.universa.de/site/assets/files/112017/lvb-002_avb_premium_sbu.pdf",
+    "https://www.universa.de/site/assets/files/112016/lvb-001-09_26.pdf"
+  ],
+  "offen": [
+    "Reihenfolge: Premium SBU hat die meisten Leistungen (AU-Klausel, Wiedereingliederungshilfe bis 9.000 €, Dread-Disease-Leistung bis 24 Monatsrenten, Umorganisationshilfe), daher Stufe 2. Keine Empfehlung.",
+    "AU-Klausel Premium: volle Rente rückwirkend ab Beginn der Arbeitsunfähigkeit, wenn diese 3 Monate besteht und weitere 3 Monate erwartet werden; höchstens 36 Monate.",
+    "Nachversicherung ohne Anlass: Premium alle 5 Jahre, Exklusiv nach 5 und 10 Jahren; mit Anlass in beiden.",
+    "rueckwirkend: laut Highlightblättern volle Leistung ab dem ersten Tag der Berufsunfähigkeit (ohne vereinbarte Karenzzeit); Meldefrist in den Unterlagen nicht genannt.",
+    "Pflege: Baustein SBU PFLEGEplus mit lebenslanger Pflegerente (50 oder 100 % der BU-Rente)."
+  ]
+}
