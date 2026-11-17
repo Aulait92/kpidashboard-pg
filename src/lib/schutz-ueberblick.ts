@@ -274,6 +274,68 @@ export function schutzZeilen(schutz: SchutzEintrag[], angebot: string[]): Schutz
   }));
 }
 
+// ─── Vorsorge-Thema (Teil C2): große Produkte nur als Thema, ohne Gesundheitsangaben ─────────
+
+export type VorsorgeKey = "pkv" | "bu" | "risikoleben" | "pflege";
+export const VORSORGE_THEMEN: Record<VorsorgeKey, string> = {
+  pkv: "PKV-Check",
+  bu: "Berufsunfähigkeit",
+  risikoleben: "Risikoleben und Altersvorsorge",
+  pflege: "Pflegevorsorge",
+};
+export type VorsorgeThema = { key: VorsorgeKey; label: string; oeffner: string };
+
+/** Alter in Jahren aus „22.08.1992“ bzw. „1992-08-22“; null, wenn unklar. */
+export function alterAus(text: string | null | undefined, heute: Date): number | null {
+  const t = text ?? "";
+  const m = t.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/) ?? t.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if (!m) return null;
+  const [j, mo, ta] = m[3].length === 4 ? [Number(m[3]), Number(m[2]), Number(m[1])] : [Number(m[1]), Number(m[2]), Number(m[3])];
+  let alter = heute.getUTCFullYear() - j;
+  if (heute.getUTCMonth() + 1 < mo || (heute.getUTCMonth() + 1 === mo && heute.getUTCDate() < ta)) alter--;
+  return alter >= 0 && alter < 120 ? alter : null;
+}
+
+/**
+ * Höchstens ein Vorsorge-Thema (Teil C2), getrennt von den Sach-Chancen, nur aus Beruf, Lebenslage und Alter, nie aus
+ * Gesundheitsangaben: selbständig oder Beamter → PKV-Check; jung, Azubi oder Studium → Berufsunfähigkeit; Kinder oder
+ * Immobilie → Risikoleben und Altersvorsorge; ab 50 → Pflegevorsorge. aus = vom Vermittler abgeschaltete Themen.
+ * Gespeichert wird nichts (Teil C4: nur Thema, Termin, Ergebnis, wenn der Vermittler einen Termin macht).
+ */
+export function vorsorgeThema(d: VorbereitungDaten, aus: string[] = [], an: Ansprache = "sie", heute = d.termin.startsAt): VorsorgeThema | null {
+  const q = angabenVon(d);
+  const beruf = [q.beruf, formWert(d, /beruf|tätigkeit|status/i)].filter(Boolean).join(" ").toLocaleLowerCase("de");
+  const lage = [q.lebenssituation, q.kinder, q.gebaeude, formWert(d, /lebenssituation|wohnsituation/i)].filter(Boolean).join(" ").toLocaleLowerCase("de");
+  const alter = alterAus(q.geburt ?? formWert(d, /geburt/i), heute);
+  const kinder = !!q.kinder?.trim() && !/^(keine?|nein|0)\b/i.test(q.kinder.trim()) ? true : /kind|familie/.test(lage);
+  const immobilie = /eigentum|eigenheim|eigenes haus|einfamilienhaus|reihenhaus|eigentumswohnung|immobilie/.test(lage) || !!q.gebaeude;
+  const kandidaten: [VorsorgeKey, boolean, [string, string]][] = [
+    [
+      "pkv",
+      /selbst(st)?ändig|freiberuf|unternehmer|beamt/.test(beruf),
+      /beamt/.test(beruf)
+        ? ["Als Beamter trägt dein Dienstherr einen Teil der Krankheitskosten. Hast du deinen Restschutz schon einmal vergleichen lassen?", "Als Beamter trägt Ihr Dienstherr einen Teil der Krankheitskosten. Haben Sie Ihren Restschutz schon einmal vergleichen lassen?"]
+        : ["Als Selbständiger zahlst du in der GKV den Höchstbeitrag. Hast du das schon einmal vergleichen lassen?", "Als Selbständiger zahlen Sie in der GKV den Höchstbeitrag. Haben Sie das schon einmal vergleichen lassen?"],
+    ],
+    [
+      "bu",
+      /azubi|ausbildung|student|studium|berufsstart|berufseinst/.test(beruf) || (alter != null && alter < 30),
+      ["Deine Arbeitskraft bringt dir dein ganzes Berufsleben Einkommen. Hast du schon überlegt, wie du es absicherst?", "Ihre Arbeitskraft bringt Ihnen Ihr ganzes Berufsleben Einkommen. Haben Sie schon überlegt, wie Sie es absichern?"],
+    ],
+    [
+      "risikoleben",
+      kinder || immobilie,
+      ["Wäre deine Familie finanziell abgesichert, wenn dein Einkommen wegfällt?", "Wäre Ihre Familie finanziell abgesichert, wenn Ihr Einkommen wegfällt?"],
+    ],
+    ["pflege", alter != null && alter >= 50, ["Ab 50 lohnt ein Blick auf die Pflegevorsorge. Hast du dafür schon einen Plan?", "Ab 50 lohnt ein Blick auf die Pflegevorsorge. Haben Sie dafür schon einen Plan?"]],
+  ];
+  const hit = kandidaten.find(([key, ok]) => ok && !aus.includes(key));
+  return hit ? { key: hit[0], label: VORSORGE_THEMEN[hit[0]], oeffner: a(an, hit[2][0], hit[2][1]) } : null;
+}
+
+export const cleanVorsorgeAus = (raw: unknown): VorsorgeKey[] =>
+  [...new Set((Array.isArray(raw) ? raw : []).filter((x): x is VorsorgeKey => typeof x === "string" && x in VORSORGE_THEMEN))];
+
 // ─── Bereinigen ─────────────────────────────────────────────────────────────────────────────
 
 const STATUS = new Set<string>(SCHUTZ_REIHENFOLGE);

@@ -269,6 +269,9 @@ model Customer {
   empfehlungSince                DateTime?
   // Weggeklickte Hinweise auf Zusatzmodule (Schlüssel je Stelle)
   moduleHintsDismissed           String[]                  @default([])
+  // Cross-Selling Teil C (Ole, 16.11.2026): Vorsorge-Themen, die die Terminvorbereitung nicht vorschlagen soll
+  // (pkv | bu | risikoleben | pflege), z. B. Vertreter ohne PKV-Angebot. Leer = alle an.
+  vorsorgeThemenAus              String[]                  @default([])
   // Erinnerung „Weiteres Produkt anbieten?“ 3 Wochen nach dem ersten Abschluss (Cross-Selling, Standard an)
   crossSellReminder              Boolean                   @default(true)
   // Aufgabe „Police da und erste Zahlung erfolgt?“ 2 Wochen nach dem ersten Abschluss (Standard an)

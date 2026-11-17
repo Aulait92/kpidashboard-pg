@@ -18,6 +18,7 @@ import { ladeTarifvorbereitung } from "@/lib/tarifauswahl-server";
 import { ladePreisPilot } from "@/lib/preise/pilot-server";
 import { rechnerAngaben } from "@/lib/preise/pilot";
 import { VorbereitungNeu } from "./neu-client";
+import { vorsorgeThema } from "@/lib/schutz-ueberblick";
 
 const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
 // „Heute, 10:00 Uhr“ / „Morgen, …“ wie auf „Heute“ (UX Runde 4), sonst Datum
@@ -38,7 +39,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
   const [tv, p, kunde, pilot] = await Promise.all([
     ladeTarifvorbereitung(d.id, ctx, d),
     loadPraesentation(d.id, ctx),
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true, vorsorgeThemenAus: true } }),
     ladePreisPilot(),
   ]);
   if (!tv || !p) return null;
@@ -186,6 +187,8 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           meine: tv.meine,
           rechnen,
           schutzNeu: tv.schutzNeu,
+          // Teil C2: höchstens ein Vorsorge-Thema, nur als Hinweis (nichts gespeichert)
+          vorsorge: vorsorgeThema(d, kunde?.vorsorgeThemenAus ?? [], asAnsprache(kunde?.leadAddress)),
         }}
         vorschau={{
           termin: { ...d, termin: { ...d.termin, startsAt: d.termin.startsAt.toISOString() }, vorbereitetAm: null },

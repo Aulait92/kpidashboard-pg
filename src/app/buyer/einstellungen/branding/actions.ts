@@ -6,6 +6,9 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { canEditProvision } from "@/lib/provision-server";
 import { logoBestaetigen, logoEntfernen, logoHochladen, logoHolen, markthinweisSpeichern } from "@/lib/branding-logo-server";
 
+import { prisma } from "@/lib/prisma";
+import { cleanVorsorgeAus } from "@/lib/schutz-ueberblick";
+
 type Res = { ok: true } | { ok: false; error: string };
 
 type Ctx = NonNullable<Awaited<ReturnType<typeof getBuyerContext>>>;
@@ -67,4 +70,15 @@ export async function markthinweisAction(text: string): Promise<Res> {
   if (r.ok) await audit("customer.markthinweis", { entity: "Customer", entityId: o.ctx.customerId, customerId: o.ctx.customerId });
   done();
   return r;
+}
+
+/** Vorsorge-Themen, die die Terminvorbereitung nicht vorschlagen soll (Cross-Selling Teil C2, z. B. kein PKV-Angebot). */
+export async function vorsorgeThemenAction(aus: string[]): Promise<Res> {
+  const o = await owner();
+  if ("error" in o) return { ok: false, error: o.error };
+  const clean = cleanVorsorgeAus(aus);
+  await prisma.customer.update({ where: { id: o.ctx.customerId }, data: { vorsorgeThemenAus: clean } });
+  await audit("customer.vorsorgeThemen", { entity: "Customer", entityId: o.ctx.customerId, customerId: o.ctx.customerId, details: { aus: clean } });
+  done();
+  return { ok: true };
 }

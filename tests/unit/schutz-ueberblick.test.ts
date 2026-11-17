@@ -2,7 +2,7 @@
 // Pflicht aus der PLZ, Folie „Ihr Schutz im Überblick“ aus der Tarifauswahl.
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { chancen, cleanSchutz, hundePflichtLand, schutzVorschlag, schutzZeilen, woandersInfo, type SchutzEintrag } from "@/lib/schutz-ueberblick";
+import { alterAus, chancen, cleanSchutz, cleanVorsorgeAus, hundePflichtLand, schutzVorschlag, schutzZeilen, vorsorgeThema, woandersInfo, type SchutzEintrag } from "@/lib/schutz-ueberblick";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
 import { cleanTarifauswahl, sparteNeu, startAuswahl, zuAngebote } from "@/lib/tarifauswahl";
 import { folien, markeFuer } from "@/lib/praesentation";
@@ -63,6 +63,29 @@ describe("Ampel: Vorschlag aus Formular, Chat und Verträgen", () => {
     expect(sie.find((x) => x.key === "rechtsschutz")!.oeffner).toContain("bei Ihnen");
     expect(du.find((x) => x.key === "rechtsschutz")!.oeffner).toContain("bei dir");
     for (const x of [...sie, ...du]) expect(hatGedankenstrich(x.oeffner ?? "")).toBe(false);
+  });
+});
+
+describe("Vorsorge-Thema (Teil C2): höchstens eins, nur aus Beruf, Lebenslage und Alter", () => {
+  it("selbständig → PKV-Check; Azubi bzw. unter 30 → BU; Kinder oder Immobilie → Risikoleben; ab 50 → Pflege", () => {
+    expect(vorsorgeThema(termin({ angaben: { beruf: "selbstständig, Grafikdesigner" } }))).toMatchObject({ key: "pkv", label: "PKV-Check" });
+    expect(vorsorgeThema(termin({ angaben: { beruf: "Beamter" } }))?.oeffner).toContain("Dienstherr");
+    expect(vorsorgeThema(termin({ angaben: { beruf: "Azubi Mechatroniker" } }))?.key).toBe("bu");
+    expect(vorsorgeThema(termin({ angaben: { geburt: "01.01.2000" } }))?.key).toBe("bu");
+    expect(vorsorgeThema(termin({ angaben: { kinder: "Sohn, 9", geburt: "01.01.1985" } }))?.key).toBe("risikoleben");
+    expect(vorsorgeThema(termin({ angaben: { kinder: "keine", geburt: "01.01.1970" } }))?.key).toBe("pflege");
+    expect(vorsorgeThema(termin({ angaben: { beruf: "Angestellte", geburt: "01.01.1985" } }))).toBeNull();
+  });
+
+  it("abgeschaltete Themen fallen weg, das nächste passende kommt; Du und Sie ohne Gedankenstriche", () => {
+    const d = termin({ angaben: { beruf: "selbständig", kinder: "Tochter, 4" } });
+    expect(vorsorgeThema(d, ["pkv"])?.key).toBe("risikoleben");
+    expect(vorsorgeThema(d, ["pkv", "risikoleben"])).toBeNull();
+    expect(vorsorgeThema(d, [], "du")?.oeffner).toContain("zahlst du");
+    for (const an of ["du", "sie"] as const) expect(hatGedankenstrich(vorsorgeThema(d, [], an)!.oeffner)).toBe(false);
+    expect(cleanVorsorgeAus(["pkv", "x", "pkv", 3])).toEqual(["pkv"]);
+    expect(alterAus("22.08.1992", new Date("2026-08-21T12:00:00Z"))).toBe(33);
+    expect(alterAus("1992-08-22", new Date("2026-08-22T12:00:00Z"))).toBe(34);
   });
 });
 

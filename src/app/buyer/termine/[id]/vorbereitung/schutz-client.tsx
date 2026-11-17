@@ -16,7 +16,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { tarifMitSparte } from "@/lib/praesentation";
 import { naechsteText, prozentMit } from "@/lib/kombi-rabatt";
-import { chancen, SCHUTZ_REIHENFOLGE, SCHUTZ_SPARTEN, SCHUTZ_STATUS, type SchutzEintrag, type SchutzStatus } from "@/lib/schutz-ueberblick";
+import { chancen, SCHUTZ_REIHENFOLGE, SCHUTZ_SPARTEN, SCHUTZ_STATUS, type SchutzEintrag, type SchutzStatus, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 import type { BuendelRegel, Katalog } from "@/lib/tarifkatalog";
 import { beitragsUebersicht, betrag, type Tarifauswahl } from "@/lib/tarifauswahl";
 
@@ -28,10 +28,22 @@ type Aendern = (fn: (a: Tarifauswahl) => void, extern?: boolean) => void;
 /** Sparte als „bei Bedarf“ in die Angebote (oder, wenn sie schon da ist, dorthin springen). */
 export type SparteAnbieten = (key: string) => void;
 
-export function ChanceImTermin({ auswahl, ro, aendern, anbieten }: { auswahl: Tarifauswahl; ro: boolean; aendern: Aendern; anbieten: SparteAnbieten }) {
+export function ChanceImTermin({
+  auswahl,
+  ro,
+  aendern,
+  anbieten,
+  vorsorge,
+}: {
+  auswahl: Tarifauswahl;
+  ro: boolean;
+  aendern: Aendern;
+  anbieten: SparteAnbieten;
+  vorsorge: VorsorgeThema | null;
+}) {
   const [offen, setOffen] = useState(false);
   const schutz = auswahl.schutz ?? [];
-  if (!schutz.length) return null;
+  if (!schutz.length && !vorsorge) return null;
   const keys = auswahl.sparten.map((s) => s.key);
   const liste = chancen(schutz, keys);
   return (
@@ -62,9 +74,19 @@ export function ChanceImTermin({ auswahl, ro, aendern, anbieten }: { auswahl: Ta
             </li>
           ))}
         </ul>
-      ) : (
+      ) : schutz.length ? (
         <p className="mt-1 text-[13px] text-[color:var(--muted)]">Keine Lücke erkannt. Fragen Sie im Termin kurz nach dem übrigen Schutz.</p>
-      )}
+      ) : null}
+      {vorsorge ? (
+        // Teil C2: großes Thema getrennt von den Sach-Chancen, nur Thema, kein Tarif, keine Gesundheitsfragen
+        <div className="mt-2 flex items-start gap-2.5 border-t border-[color:var(--border)] pt-2" data-vorsorge-thema={vorsorge.key}>
+          <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-violet-500" aria-hidden />
+          <div className="min-w-0 flex-1 text-sm">
+            <span className="font-semibold">Vorsorge: {vorsorge.label}</span> <span className="text-[13px] text-[color:var(--muted)]">eigener Termin</span>
+            <p className="text-[13px] text-[color:var(--muted)]">„{vorsorge.oeffner}“</p>
+          </div>
+        </div>
+      ) : null}
       <SchutzFenster open={offen} onClose={() => setOffen(false)} auswahl={auswahl} ro={ro} aendern={aendern} anbieten={anbieten} />
     </div>
   );

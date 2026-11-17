@@ -41,7 +41,7 @@ import { angabenText, pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib
 import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, preiseAuslesenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 import { BeitragGesamt, ChanceImTermin } from "./schutz-client";
-import { SCHUTZ_SPARTEN } from "@/lib/schutz-ueberblick";
+import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const geld = (n: number | null) => (n == null ? "" : n.toFixed(2).replace(".", ","));
@@ -65,6 +65,8 @@ export type AngeboteProps = {
   rechnen: { aktiv: string[]; angaben: Record<string, RechnerAngabe[]> };
   /** Schutz-Überblick eben vorgeschlagen: gleich mitspeichern, damit die Präsentation ihn zeigt */
   schutzNeu?: boolean;
+  /** Vorsorge-Thema (Teil C2), nur Hinweis */
+  vorsorge?: VorsorgeThema | null;
 };
 
 export function VorbereitungNeu(p: {
@@ -570,7 +572,7 @@ function Angebote(p: {
         ) : null}
       </div>
 
-      <ChanceImTermin auswahl={p.auswahl} ro={ro} aendern={p.aendern} anbieten={(key) => anbieten(key)} />
+      <ChanceImTermin auswahl={p.auswahl} ro={ro} aendern={p.aendern} anbieten={(key) => anbieten(key)} vorsorge={p.daten.vorsorge ?? null} />
 
       {sp ? (
         <div className="grid gap-5 px-4 pb-5 pt-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_400px]">
