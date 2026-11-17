@@ -16,7 +16,8 @@
     "vapid:generate": "web-push generate-vapid-keys",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration"
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

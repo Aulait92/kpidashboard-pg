@@ -333,3 +333,11 @@ Daten, `_prisma_migrations` mit den 3 alten Einträgen). Darauf Stand `70386ef`
   `_prisma_migrations` 3 alte + 35 neue = 38 Einträge.
 - Dauer: ca. 40 Sekunden (Vergleich + Migration), dazu die normale Deploy-Zeit.
 - Danach aufgeräumt: Probe-Services, Kopie und deren Volume gelöscht.
+
+## Klick-Tests (17.11.2026)
+
+`npm run test:e2e` startet einen Dev-Server gegen die Test-Datenbank (`DATABASE_URL` mit test/ci/localhost) und
+klickt im Browser: Angebot mit Abschlussbonus und „später zahlen“ annehmen, nächsten Schritt bei einem Kontakt
+setzen, Verkaufspräsentation mit Bonusfolie, Rundgang über alle Vermittlerseiten auf 390 px (ohne Fehler, ohne
+seitliches Scrollen). Dateien: `tests/e2e/*.e2e.ts`, Server-Start `tests/e2e/server.ts`. Mit `E2E_BASE_URL` gegen
+einen schon laufenden Server, `E2E_SERVER_LOG=1` zeigt die Server-Ausgabe. In GitHub als eigener Job „klicktests“.

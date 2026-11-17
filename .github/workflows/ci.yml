@@ -49,3 +49,36 @@ jobs:
         run: node scripts/migrate.mjs
       - name: Integrationstests
         run: npm run test:integration
+
+  # Klick-Tests (Ole, 17.11.2026): echte Browser-Abläufe gegen einen Dev-Server (tests/e2e, npm run test:e2e).
+  # Eigener Job, damit die schnelle Prüfung oben nicht wartet; keine Zahlungen, Mails oder WhatsApp-Nachrichten.
+  klicktests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: citest
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d citest"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/citest
+      AUTH_SECRET: ci-only-secret-not-used-anywhere-else
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Browser für die Klick-Tests
+        run: npx playwright install --with-deps chromium
+      - name: Migrationen
+        run: node scripts/migrate.mjs
+      - name: Klick-Tests
+        run: npm run test:e2e
