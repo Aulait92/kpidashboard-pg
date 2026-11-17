@@ -99,6 +99,8 @@ const newPhone = () => `4917${String(Date.now()).slice(-6)}${String(++seq).padSt
 const HOUR = 3600_000;
 /** Policen-Bitte (Text aus lib/policen/bitte.ts) */
 const POLICEN_BITTE_RE = /Termin gut vorbereiten kann: Schick(en Sie)? bitte vorab/;
+/** Termindauer in einem Text an den Lead */
+const DAUER_RE = /\d+\s*(Minuten|Min\.)/i;
 
 type Sent = { art: string; to: string; body: string; buttons: { id: string; title: string }[] | null };
 const gesendet = (): Sent[] =>
@@ -182,6 +184,11 @@ describe("Termin-Strecke mit Knöpfen", () => {
 
   // Policen-Bitte (P2, Ole 17.11.2026): jeder Lead genau einmal, ob Ja, Nein oder ohne Antwort
   const policenBitten = (s: Sent[]) => s.filter((x) => POLICEN_BITTE_RE.test(x.body)).length;
+  // Keine konkrete Termindauer an den Lead (Ole, 17.11.2026 spät): keine Zahl mit Minuten (die Komplettcheck-Frage
+  // „ein paar Minuten länger“ ist ausdrücklich erlaubt)
+  afterEach(() => {
+    for (const s of gesendet()) expect(s.body, s.body).not.toMatch(DAUER_RE);
+  });
   const art = (s: Sent): string =>
     /ist gebucht:/.test(s.body)
       ? "buchung"
@@ -326,7 +333,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     cal.langBelegt = true;
     await knopf(phone, "komplettcheck:ja", "Ja, gern");
     const angebot = gesendet().at(-1)!;
-    expect(angebot.body).toMatch(/^Super! Für den Komplettcheck braucht Herr Kannapinn etwa 45 Minuten, direkt nach Ihrem Termin ist aber schon etwas anderes geplant\. Passt Ihnen auch .+ oder .+\? Sonst bleibt es bei Ihrer Zeit\.$/);
+    expect(angebot.body).toMatch(/^Super! Für den Komplettcheck nimmt sich Herr Kannapinn gern etwas mehr Zeit, direkt nach Ihrem Termin ist aber schon etwas anderes geplant\. Passt Ihnen auch .+ oder .+\? Sonst bleibt es bei Ihrer Zeit\.$/);
     expect(angebot.buttons!.map((b) => b.id.split(":")[0])).toEqual(["lang", "lang", "lang"]);
     expect(angebot.buttons![2]).toEqual({ id: "lang:behalten", title: "Zeit behalten" });
     expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).verlaengerung).toBe("angebot");
@@ -340,7 +347,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(t.endsAt!.getTime() - t.startsAt.getTime()).toBe(45 * 60_000);
     expect(t.verlaengerung).toBe("verlaengert");
     expect(cal.verlegt).toContainEqual(["ev1", wahl]);
-    expect(gesendet().at(-1)!.body).toMatch(/^Super, Ihr Termin ist jetzt am \*.+\*, mit 45 Minuten\. Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig\?$/);
+    expect(gesendet().at(-1)!.body).toMatch(/^Super, Ihr Termin ist jetzt am \*.+\*\. Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig\?$/);
     expect(mails).toHaveLength(0);
   });
 
@@ -476,7 +483,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       // Dieselbe Adresse noch einmal: nichts
       await emailUebernehmen(a.conv.id, "julia.neu@example.com");
       expect(mails).toHaveLength(2);
-      // Komplettcheck „Ja“ danach: Kalender frei → EINE Aktualisierung „jetzt 45 Minuten“
+      // Komplettcheck „Ja“ danach: Kalender frei → EINE Aktualisierung (aktualisierter Kalendereintrag, ohne Dauer)
       await komplettcheckVerlaengern(a.appt.id, { angebot: true });
       t = await prisma.appointment.findUniqueOrThrow({ where: { id: a.appt.id } });
       expect(t.einladungSeq).toBe(2);

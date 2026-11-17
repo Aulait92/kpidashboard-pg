@@ -88,13 +88,13 @@ Einladung kommt später mit 45 Min.)._
 
 _Jetzt geht die Einladung genau einmal raus, mit 45 Minuten._
 
-Variante, 45 Minuten belegt:
+Variante, die längere Zeit ist im Kalender belegt (an den Lead nie eine Dauer in Minuten, nur „etwas mehr Zeit“):
 
-> Super! Für den Komplettcheck braucht Herr Kannapinn etwa 45 Minuten, direkt nach Ihrem Termin ist aber schon etwas anderes geplant. Passt Ihnen auch Freitag, 20.11. um 9 Uhr oder Montag, 23.11. um 10 Uhr?
+> Super! Für den Komplettcheck nimmt sich Herr Kannapinn gern etwas mehr Zeit, direkt nach Ihrem Termin ist aber schon etwas anderes geplant. Passt Ihnen auch Freitag, 20.11. um 9 Uhr oder Montag, 23.11. um 10 Uhr?
 >
 > _Knöpfe: [Fr. 20.11. 9 Uhr] [Mo. 23.11. 10 Uhr] [Zeit behalten]_
 
-Gewählte Zeit: „Super, Ihr Termin ist jetzt am *Freitag, 20.11. um 9 Uhr*, mit 45 Minuten.“ (derselbe Termin wird
+Gewählte Zeit: „Super, Ihr Termin ist jetzt am *Freitag, 20.11. um 9 Uhr*.“ (derselbe Termin wird
 verlegt), danach die erste Angebotsfrage. „Zeit behalten“: „Alles klar, es bleibt bei *Donnerstag, 19.11. um 10 Uhr*.
 Herr Kannapinn plant etwas mehr Zeit ein.“ (Hinweis an den Vermittler).
 

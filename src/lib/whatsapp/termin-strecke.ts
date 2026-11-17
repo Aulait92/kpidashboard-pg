@@ -470,13 +470,13 @@ async function langeZeiten(k: StreckenKontext, now: Date): Promise<[string, stri
   }
 }
 
-/** Angebot längerer Zeiten (Komplettcheck, Zeit danach belegt) mit Knöpfen [Zeit 1] [Zeit 2] [Zeit behalten]. */
+/** Angebot längerer Zeiten (Komplettcheck, Zeit danach belegt) mit Knöpfen [Zeit 1] [Zeit 2] [Zeit behalten]; nie mit Dauer. */
 export function langAngebotNachricht(k: Pick<StreckenKontext, "an" | "person">, zeiten: [string, string], now = new Date()): { text: string; buttons: Knopf[] } {
   const [z1, z2] = zeiten.map((x) => zeitKurz(new Date(x), now));
   const text = a(
     k.an,
-    `Super! Für den Komplettcheck braucht ${k.person.nom} etwa ${LANG_MIN} Minuten, direkt nach deinem Termin ist aber schon etwas anderes geplant. Passt dir auch ${z1} oder ${z2}? Sonst bleibt es bei deiner Zeit.`,
-    `Super! Für den Komplettcheck braucht ${k.person.nom} etwa ${LANG_MIN} Minuten, direkt nach Ihrem Termin ist aber schon etwas anderes geplant. Passt Ihnen auch ${z1} oder ${z2}? Sonst bleibt es bei Ihrer Zeit.`,
+    `Super! Für den Komplettcheck nimmt sich ${k.person.nom} gern etwas mehr Zeit, direkt nach deinem Termin ist aber schon etwas anderes geplant. Passt dir auch ${z1} oder ${z2}? Sonst bleibt es bei deiner Zeit.`,
+    `Super! Für den Komplettcheck nimmt sich ${k.person.nom} gern etwas mehr Zeit, direkt nach Ihrem Termin ist aber schon etwas anderes geplant. Passt Ihnen auch ${z1} oder ${z2}? Sonst bleibt es bei Ihrer Zeit.`,
   );
   return { text, buttons: [...zeiten.map((iso) => ({ id: `lang:${iso}`, title: knopfZeit(new Date(iso), now) })), { id: "lang:behalten", title: "Zeit behalten" }] };
 }
@@ -533,7 +533,7 @@ export async function langeZeitAntwort(conversationId: string, wahl: string, now
   let prefix: string;
   if (wahl !== "behalten" && (await dauer.komplettcheckVerlegen(k.termin.id, wahl, { now })) === "verlegt") {
     k.termin.startsAt = new Date(wahl);
-    prefix = a(k.an, `Super, dein Termin ist jetzt am *${zeitLang(k.termin.startsAt)}*, mit ${LANG_MIN} Minuten.`, `Super, Ihr Termin ist jetzt am *${zeitLang(k.termin.startsAt)}*, mit ${LANG_MIN} Minuten.`);
+    prefix = a(k.an, `Super, dein Termin ist jetzt am *${zeitLang(k.termin.startsAt)}*.`, `Super, Ihr Termin ist jetzt am *${zeitLang(k.termin.startsAt)}*.`);
   } else {
     await dauer.komplettcheckHinweis(k.termin.id, { now });
     prefix = wahl === "behalten" ? bleibt(k.termin.startsAt) : `${a(k.an, "Die Zeit ist leider gerade weg.", "Die Zeit ist leider gerade weg.")} ${bleibt(k.termin.startsAt).replace(/^Alles klar, es/, "Dann")}`;

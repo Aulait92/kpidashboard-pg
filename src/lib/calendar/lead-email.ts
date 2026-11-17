@@ -144,15 +144,15 @@ export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeK
         calendar: true,
       };
     case "updated": {
-      const min = Math.round((ev.end.getTime() - ev.start.getTime()) / 60000);
+      // Ohne Dauer (Ole, 17.11.2026 spät): die längere Zeit steht nur in der Kalenderdatei
       return {
-        subject: `${dein} Termin mit ${person.dat}: jetzt ${min} Minuten`,
+        subject: `${dein} Termin mit ${person.dat}: aktualisierter Kalendereintrag`,
         lines: [
           hi,
           a(
             an,
-            `damit ${person.nom} im Termin auch kurz deine bestehenden Verträge mit dir anschauen kann, haben wir ${a(an, "deinen", "Ihren")} Termin auf ${min} Minuten verlängert. Die Uhrzeit bleibt: ${w}.`,
-            `damit ${person.nom} im Termin auch kurz Ihre bestehenden Verträge mit Ihnen anschauen kann, haben wir Ihren Termin auf ${min} Minuten verlängert. Die Uhrzeit bleibt: ${w}.`,
+            `damit ${person.nom} im Termin auch deine übrigen Verträge mit dir durchsehen kann, haben wir den Kalendereintrag aktualisiert. Die Uhrzeit bleibt: ${w}.`,
+            `damit ${person.nom} im Termin auch Ihre übrigen Verträge mit Ihnen durchsehen kann, haben wir den Kalendereintrag aktualisiert. Die Uhrzeit bleibt: ${w}.`,
           ),
           a(an, "Den aktualisierten Kalendereintrag findest du unten.", "Den aktualisierten Kalendereintrag finden Sie unten."),
           ...how,

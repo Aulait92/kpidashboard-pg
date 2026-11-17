@@ -532,6 +532,7 @@ export function nachBuchungRegel(o: {
     o.zugesagt ? "- Die Adresse für die Einladung ist bestätigt: frag nicht mehr danach." : "- Frag nicht selbst nach der E-Mail-Adresse oder dem Kalendereintrag: Das macht die App am Schluss.",
     "- Nennt der Lead eine (andere) E-Mail-Adresse: nutze update_email, die Einladung geht dann (neu) raus.",
     `- ${o.person.nom} hält sich die Zeit nur für den Lead frei. Kommt etwas dazwischen, lieber verschieben als ausfallen lassen. Keine erfundene Knappheit.`,
+    "- Nenne nie eine konkrete Dauer des Termins in Minuten (z. B. „45 Minuten“, „60 statt 30 Minuten“): Die Dauer passt die App nur im Kalender an.",
   );
   return lines.join("\n");
 }
