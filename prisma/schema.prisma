@@ -1012,6 +1012,7 @@ model User {
   deviceTokens        DeviceToken[]
   appHandoffs         AppHandoff[]
   emailChangeRequests EmailChangeRequest[]
+  adminUsageEvents    AdminUsageEvent[]
 
   @@index([customerId])
 }
@@ -1486,6 +1487,27 @@ model UsageEvent {
 
   @@index([customerId, at])
   @@index([type, at])
+}
+
+// Nutzungsmessung im Admin (Ole, 18.11.2026; docs/ux/admin-neu/nutzungs-audit-2026-11-17.md): Seitenaufrufe
+// (normalisierter Pfad, IDs als :id) und Klicks auf Elemente mit data-funktion (Inventar-ID). Nur eingeloggte
+// Admins, keine Inhalte, keine Lead-/Kundendaten. Auswertung nur als Zahlen (Diagnose q=admin-nutzung).
+// Löschung nach 180 Tagen (pruneAdminNutzung, Cron 03:00 UTC) und mit dem Login (Kaskade).
+model AdminUsageEvent {
+  id          String   @id @default(cuid())
+  at          DateTime @default(now())
+  adminUserId String
+  /// seite | funktion
+  art         String
+  /// Seite: normalisierter Pfad (/admin/neu/kunden/:id); Funktion: ID aus funktionsinventar.json
+  schluessel  String
+  /// alt | neu
+  oberflaeche String
+  admin       User     @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([at])
+  @@index([art, at])
+  @@index([adminUserId, at])
 }
 
 // Angebot / Auftragsbestätigung aus dem Cold-CRM. Konditionen werden beim
