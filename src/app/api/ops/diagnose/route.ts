@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -598,7 +598,19 @@ async function variablen() {
   return pruefeVariablen();
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, kette: async (p) => (await import("@/lib/ops/kette")).kette(p) };
+/**
+ * WhatsApp zu Vertriebsterminen (Support-Nummer): gesendete Bestätigungen und Erinnerungen seit 11.11.2026 (bzw. &seit=YYYY-MM-DD)
+ * mit Termin, Quelle, Art, Zustellstatus und Auffälligkeiten. &link=1: Verschieben-Link der letzten 3 Termine gültig ja/nein.
+ * Ohne Telefonnummern, Nachnamen, Inhalte und Tokens (lib/vertrieb/termin-whatsapp-diagnose.ts).
+ */
+async function vertriebTermine(params: URLSearchParams) {
+  const { berlinMidnight } = await import("@/lib/absence");
+  const { diagnoseVertriebTermine } = await import("@/lib/vertrieb/termin-whatsapp-diagnose");
+  const seit = params.get("seit") ?? "";
+  return diagnoseVertriebTermine({ seit: berlinMidnight(/^\d{4}-\d{2}-\d{2}$/.test(seit) ? seit : "2026-11-11"), link: params.get("link") === "1" });
+}
+
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p) };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

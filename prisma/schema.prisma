@@ -1937,6 +1937,15 @@ model SalesMeeting {
   /// WhatsApp-Erinnerungen von der Support-Nummer (auch Calendly): 24 Stunden und 1 Stunde vorher
   waReminderAt       DateTime?
   waSoonAt           DateTime?
+  /// Ergebnis je Erinnerung (sent | opted_out | gesperrt | no_phone | kurzfristig | failed …), letzter Fehler und
+  /// Versuche: bei einem Sendefehler wird die Markierung zurückgesetzt, der nächste Cron-Lauf versucht es erneut
+  /// (höchstens 3 Versuche, nur solange der Termin im Fenster liegt)
+  waReminderStatus   String?
+  waReminderError    String?
+  waReminderTries    Int               @default(0)
+  waSoonStatus       String?
+  waSoonError        String?
+  waSoonTries        Int               @default(0)
   /// Danke-Seite nach der Buchung (nur mit Buchungs-Token): Vorbereitungsvideo angesehen, Demo geöffnet
   videoWatchedAt     DateTime?
   demoOpenedAt       DateTime?

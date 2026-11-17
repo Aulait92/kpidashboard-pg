@@ -213,6 +213,9 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(neu).toMatchObject({ status: "GEPLANT", contactId: old.contactId, rescheduledFromId: old.id });
     expect(neu.startAt.toISOString()).toBe(at("16:00", 2).toISOString());
     expect(calls.mails[0].subject).toContain("Neuer Termin");
+    // WhatsApp-Bestätigung zur neuen Zeit; der neue Termin startet ohne Erinnerungs-Markierungen
+    expect(calls.whatsapp.at(-1)).toBe(neu.id);
+    expect(neu).toMatchObject({ waReminderAt: null, waSoonAt: null, reminderSentAt: null, soonReminderSentAt: null, waConfirmStatus: null });
     // Alter Link funktioniert nicht mehr
     expect(await rescheduleSalesMeeting(res.manageToken, at("17:00", 2))).toEqual({ ok: false, error: "closed" });
   });
