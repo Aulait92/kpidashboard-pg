@@ -152,7 +152,7 @@ export function LeadHeaderActions(p: Props) {
   // Die Kacheln E-Mail und Wiedervorlage stehen auf jeder Breite (Handy: Raster mit 3 Spalten).
   const moreActions: SheetAction[] = [
     ...(p.hasUpcomingAppointment ? [{ label: "Weiteren Termin eintragen", icon: CalendarPlus, onSelect: () => setTimeout(() => setOpen("termin"), 0) }] : []),
-    ...(!p.mailReady && !p.mailOff && p.email ? [{ label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
+    ...(!p.mailReady && !p.mailOff && p.email ? [{ label: "E-Mails aus Ihrem Postfach: verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
       : []),
@@ -194,7 +194,7 @@ export function LeadHeaderActions(p: Props) {
   const showBar = !p.storniert && !won && !lost && stepPhases.length > 1;
 
   // Anrufen, Chat, Wiedervorlage, Mehr immer; E-Mail und Termin je nach Lage (siehe Kacheln unten)
-  const tileCount = 4 + (p.mailOff ? 0 : 1) + (p.hasUpcomingAppointment ? 0 : 1);
+  const tileCount = 5 + (p.hasUpcomingAppointment ? 0 : 1);
 
   const dueOverdue = !!p.followUpAt && berlinTodayIso(new Date(p.followUpAt)) < berlinTodayIso();
   const dueLabel = p.followUpAt
@@ -343,16 +343,14 @@ export function LeadHeaderActions(p: Props) {
             href={p.conversationId ? `/buyer/chats?c=${p.conversationId}` : undefined}
             onClick={p.conversationId ? undefined : () => setOpen("chat")}
           />
-          {/* E-Mail direkt sichtbar (Ole, 14.11.2026: war unter „Mehr“ versteckt). Mit Postfach aus der App, sonst Mailprogramm. */}
-          {p.mailOff ? null : (
+          {/* E-Mail direkt sichtbar (Ole, 14.11.2026: war unter „Mehr“ versteckt). Öffnet immer den Dialog (17.11.2026):
+              über die App, im eigenen Mailprogramm oder Text kopieren; bei „E-Mail-Funktionen aus“ nur die beiden letzten. */}
           <ActionTile
             icon={Mail}
             label="E-Mail"
-            href={!p.mailReady && p.email ? `mailto:${p.email}` : undefined}
-            onClick={p.mailReady && p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
+            onClick={p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
             explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
-          )}
           {/* Steht schon ein Termin an, zeigt die Terminkarte ihn (Verschieben, Vorbereiten); kein zweiter Knopf (16.11.2026) */}
           {p.hasUpcomingAppointment ? null : <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />}
           {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt). Steht schon eine an,

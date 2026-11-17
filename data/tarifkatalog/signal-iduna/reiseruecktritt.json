@@ -28,8 +28,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/reiseruecktrittsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Reiserücktrittsversicherung 2.500 €",
@@ -50,8 +49,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/reiseruecktrittsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Reiserücktrittsversicherung 5.000 €",
@@ -72,8 +70,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/reiseruecktrittsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Stufen sind die Deckungssummen der Tarifübersicht (1.000, 2.500, 5.000 € je Reise), jeweils als Jahresvertrag oder Einzelabschluss, für Singles oder Familien. Ob höhere Summen im Rechner wählbar sind, ist offen.",
     "Jahresvertrag: beliebig viele private Reisen bis 65 Tage und dienstliche Reisen bis 10 Tage.",
     "Pandemie: Zusatzpaket Corona-Protect laut Seite inklusive (Diagnose einer Covid-19-Infektion). Jobverlust: betriebsbedingte Kündigung, Arbeitsplatzwechsel und konjunkturbedingte Kurzarbeit.",
-    "Keine Markierung durch SIGNAL IDUNA; mittlere Summe nach Regel als Empfehlung gesetzt."
+    "Keine Markierung durch SIGNAL IDUNA; mittlere Summe nach Regel als Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseite auf signal-iduna.de."
   ]
 }

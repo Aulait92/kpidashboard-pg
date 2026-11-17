@@ -44,7 +44,8 @@ export default async function EinstellungenPage() {
         { href: "/buyer/provisionen", icon: Percent, color: "bg-amber-500", title: "Meine Provisionen", text: "Ihre Sätze, daraus rechnet die App Provision und Zahlen" },
         { href: "/buyer/einstellungen/meta", icon: Send, color: "bg-indigo-500", title: "Rückmeldung an Meta", text: "Meta lernt aus Ihren Ergebnissen, welche Leads abschließen" },
         { href: "/buyer/postfach", icon: Mail, color: "bg-blue-500", title: "E-Mail-Postfach", text: "Eigenes Postfach verbinden, Signatur, E-Mail-Vorlagen" },
-        { href: "/buyer/vorlagen", icon: MessageSquareText, color: "bg-emerald-500", title: "WhatsApp-Vorlagen", text: "Nachrichten, die Ihr Assistent in Ihrem Namen schickt" },
+        // Assistent (Ole, 17.11.2026, Paket M9): E-Mails in Ihrem Namen und die WhatsApp-Vorlagen an einer Stelle
+        { href: "/buyer/einstellungen/assistent", icon: MessageSquareText, color: "bg-emerald-500", title: "Assistent", text: "WhatsApp-Nachrichten und E-Mails, die in Ihrem Namen rausgehen" },
         { href: "/buyer/einstellungen/erinnerungen", icon: BellRing, color: "bg-orange-500", title: "Erinnerungen & Aufgaben", text: "Erinnerung an den nächsten Schritt, Aufgaben nach dem Abschluss" },
         ...(owner ? [{ href: "/buyer/einstellungen/branding", icon: ImageIcon, color: "bg-teal-500", title: "Präsentation", text: "Ihr Logo auf der Beratungspräsentation, als Makler der Hinweis zur Marktauswahl" }] : []),
       ],

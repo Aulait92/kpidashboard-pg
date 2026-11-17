@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/private-pflegeversicherung/pflegetagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PflegeTOP",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/private-pflegeversicherung/pflegetagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
   "offen": [
     "Zwei Tarife ohne Markierung; keine Empfehlung gesetzt. PflegeBAHR (staatlich gefördert) nicht aufgenommen.",
     "Staffel je Pflegegrad: 10, 35, 55, 75, 100 % des vereinbarten Tagegelds; bei START Pflegegrad 1 bis 3 nur nach Unfall.",
-    "Dynamik bei TOP auch im Leistungsfall. Wartezeit und Demenz-Leistung auf der Produktseite nicht genannt; Bedingungen bitte prüfen."
+    "Dynamik bei TOP auch im Leistungsfall. Wartezeit und Demenz-Leistung auf der Produktseite nicht genannt; Bedingungen bitte prüfen.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseite auf signal-iduna.de."
   ]
 }

@@ -33,6 +33,8 @@ import { loadLeadHistory } from "@/lib/lead-history";
 import { listLeadFiles } from "@/lib/lead-files";
 import { listUnterlagen } from "@/lib/policen/server";
 import { mailFeaturesOffFor, postfachOf } from "@/lib/mail/postfach";
+import { leadVersandKontext, resendBereit } from "@/lib/mail/lead-versand";
+import { leadAnzeigename, leadSignatur } from "@/lib/mail/lead-absender";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
 import { passendeVorlagen } from "@/lib/mail/phasen";
 import { istSpaeter } from "@/lib/mail/termin-erinnerung";
@@ -377,20 +379,22 @@ export async function LeadDetailBody({
     const text = angebotStandText({ abgelegtAt: t.angebotAbgelegtAt, gesendetAt: t.angebotGesendetAt, versand: t.angebotVersand, kanaele: t.angebotKanaele });
     if (t.angebotDateiId && text && !angebotStand.has(t.angebotDateiId)) angebotStand.set(t.angebotDateiId, text);
   }
-  // „Meine Gesellschaft erlaubt das nicht“: E-Mail-Knopf, E-Mail-Fenster und Vorlagen ausblenden (Ole, 15.11.2026)
+  // E-Mail an den Lead (Pakete M0/M1, Ole 17.11.2026): Dialog immer. Über die App aus dem eigenen Postfach, sonst von
+  // unserer Versanddomain mit „Name | Agentur“; „Meine Gesellschaft erlaubt das nicht“ (mailOff): nur eigenes
+  // Mailprogramm und Kopieren.
   const postfach = mailOff ? null : postfachRaw;
-  const vorlagen = postfach ? await loadVorlagen(customerId) : [];
+  const vorlagen = await loadVorlagen(customerId);
   // Vorlagen nach Phase (Ole, 14.11.2026): letzter vergangener Termin, Notizen für die Gesprächszusammenfassung
-  const [lastAppt, notizen] = postfach
-    ? await Promise.all([
-        prisma.appointment.findFirst({
-          where: { leadId: lead.id, startsAt: { lte: new Date() }, status: { in: ["booked", "completed", "no_show"] } },
-          orderBy: { startsAt: "desc" },
-          select: { status: true },
-        }),
-        prisma.leadHistory.findMany({ where: { leadId: lead.id, kind: "notiz" }, orderBy: { createdAt: "desc" }, take: 3, select: { text: true } }),
-      ])
-    : [null, []];
+  const [lastAppt, notizen, versand, customerAn] = await Promise.all([
+    prisma.appointment.findFirst({
+      where: { leadId: lead.id, startsAt: { lte: new Date() }, status: { in: ["booked", "completed", "no_show"] } },
+      orderBy: { startsAt: "desc" },
+      select: { status: true },
+    }),
+    prisma.leadHistory.findMany({ where: { leadId: lead.id, kind: "notiz" }, orderBy: { createdAt: "desc" }, take: 3, select: { text: true } }),
+    leadVersandKontext(customerId, { leadId: lead.id, schreiber: team.userId, nurLesen: true }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }),
+  ]);
   const empfohlen = passendeVorlagen({
     status: lead.status,
     contactAttempts: lead.contactAttempts,
@@ -401,10 +405,16 @@ export async function LeadDetailBody({
   });
   // E-Mail: Ansprache des Kunden und persönlicher Buchungslink für diesen Lead (Ole, 14.11.2026).
   // Steht schon ein Termin an, entfällt der Satz mit dem Link.
-  const ansprache = postfach
-    ? asAnsprache((await prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }))?.leadAddress)
-    : "sie";
-  const terminlink = postfach && !nextAppt && cal?.status === "connected" && cal.bookingSlug ? bookingPageUrl(cal.bookingSlug, { lead: lead.id }) : null;
+  const ansprache = asAnsprache(customerAn?.leadAddress);
+  const terminlink = !nextAppt && cal?.status === "connected" && cal.bookingSlug ? bookingPageUrl(cal.bookingSlug, { lead: lead.id }) : null;
+  const appVersand = !mailOff && (!!postfach || resendBereit());
+  // Signatur im Text: eigene des Postfachs, sonst aus den Anbieterangaben (wie beim automatischen Versand)
+  const mailSignatur = (postfach ? me?.mailSignature?.trim() : "") || leadSignatur(versand.daten).text;
+  const mailVon = !appVersand
+    ? "Über Ihr eigenes Mailprogramm"
+    : postfach
+      ? `Von ${postfach.email}`
+      : `Von ${leadAnzeigename(versand.daten.name, versand.daten.agentur)}, Antworten an Sie`;
   let beitrag: string | null = null;
   let provision: string | null = null;
   // Verträge (Cross-Selling): der erste aus dem Abschluss, weitere im Kontakt eingetragen
@@ -504,14 +514,15 @@ export async function LeadDetailBody({
         </div>
       ) : null}
       {team.userId ? <NextStepPrompt leadId={lead.id} name={lead.name ?? "Lead"} source={lead.source} resultMissingAppointmentId={resultMissingAppt} /> : null}
-      {postfach ? (
+      {lead.erasedAt ? null : (
         <LeadMailComposer
           leadId={lead.id}
           lead={{ name: lead.name, source: lead.source, salutation: anredeRohAusForm(formWithOverrides(lead.formData, lead.contactOverrides)), ...namePartsFromForm(formWithOverrides(lead.formData, lead.contactOverrides)) }}
           to={lead.email}
-          from={postfach.email}
-          meinname={postfach.fromName ?? me?.displayName ?? ""}
-          signatur={me?.mailSignature ?? ""}
+          from={mailVon}
+          appVersand={appVersand}
+          meinname={postfach?.fromName ?? me?.displayName ?? versand.daten.name}
+          signatur={mailSignatur}
           ansprache={ansprache}
           terminlink={terminlink}
           vorlagen={vorlagen}
@@ -523,7 +534,7 @@ export async function LeadDetailBody({
           }}
           dateien={files.map((f) => ({ id: f.id, fileName: f.fileName, kind: f.kind }))}
         />
-      ) : null}
+      )}
 
       {won ? (
         <AbschlussCard
@@ -532,7 +543,7 @@ export async function LeadDetailBody({
           beitrag={beitrag}
           provision={provision}
           policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
-          mailVorschlag={!!postfach && vorlagen.some((v) => v.standardKey === "willkommen")}
+          mailVorschlag={!lead.erasedAt && vorlagen.some((v) => v.standardKey === "willkommen")}
         >
           <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
         </AbschlussCard>
@@ -657,7 +668,7 @@ export async function LeadDetailBody({
 
       <LeadFiles leadId={lead.id} files={files.map((f) => ({ ...f, stand: angebotStand.get(f.id) ?? null }))} unterlagen={unterlagen} defaultKind={won ? "police" : "angebot"} />
 
-      <LeadHistory mailReady={!!postfach} leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
+      <LeadHistory mailReady={!lead.erasedAt} leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>
   );
 }

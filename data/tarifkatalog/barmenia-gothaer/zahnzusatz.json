@@ -25,8 +25,7 @@
         "inlays": "80 %"
       },
       "quelle": "https://www.barmeniagothaer.de/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Mehr Zahn Kompakt 90",
@@ -44,8 +43,7 @@
         "inlays": "90 %"
       },
       "quelle": "https://www.barmeniagothaer.de/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Mehr Zahn Kompakt 100",
@@ -63,8 +61,7 @@
         "inlays": "100 %"
       },
       "quelle": "https://www.barmeniagothaer.de/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Leistungsbegrenzung (außer Prophylaxe): 1.000 € im 1., 2.000 € bis 2., 4.000 € bis 3., 5.000 € bis 4. Kalenderjahr, danach unbegrenzt; entfällt bei Unfall.",
     "Kieferorthopädie Kinder (Beginn vor 18): 80/90/100 %, höchstens 2.500 € (1. Jahr 500 €, bis 2. Jahr 1.000 €); Erwachsene nach Unfall oder schwerer Krankheit bis 5.000 €.",
     "Nur für gesetzlich Versicherte und Heilfürsorgeberechtigte. Mindestlaufzeit 24 Monate.",
-    "BarmeniaGothaer markiert keine Stufe; Kompakt 90 als mittlere Stufe."
+    "BarmeniaGothaer markiert keine Stufe; Kompakt 90 als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produkttabelle auf barmeniagothaer.de."
   ]
 }
