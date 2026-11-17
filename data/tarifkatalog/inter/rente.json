@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "rente",
+  "produkt": "Fondsgebundene Rentenversicherung INTER MeinLeben",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente, Auszahlplan oder Kapital",
+    "Kapitalzugriff ab 1 Monat"
+  ],
+  "tarife": [
+    {
+      "name": "INTER MeinLeben Privatrente",
+      "kurz": "Privatrente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds, ETF, klassisch",
+        "flexibel": "ja",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/fondsgebundene-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "INTER MeinLeben GarantIndex (Einmalbeitrag)",
+      "kurz": "GarantIndex",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Sicherungsverm., ETF",
+        "hinterbliebene": "Beitragsrückgewähr",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/fondsgebundene-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/vorsorge-vermoegen/fondsgebundene-rentenversicherung/"
+  ],
+  "offen": [
+    "Privatrente: Anteil Fonds bzw. klassisches Sicherungsvermögen frei wählbar (Sicherungsniveau), Strategieassistent, Anlauf- und Ablaufmanagement; Fondskosten ab 0,15 % im Jahr (keine Effektivkosten veröffentlicht). Zuzahlungen und Entnahmen jederzeit möglich.",
+    "GarantIndex: Einmalbeitrag im klassischen Sicherungsvermögen, Überschüsse in einen ETF; Beitragsrückgewähr im Todesfall. Ob eine Beitragsgarantie zum Rentenbeginn besteht und wie hoch der Rentenfaktor ist, steht nicht auf der Produktseite.",
+    "Hinterbliebenenschutz der Privatrente, Beitragspause und BU-Zusatz nicht belegt. Keine Renditeangaben übernommen."
+  ]
+}

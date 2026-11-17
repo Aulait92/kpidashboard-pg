@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "SDK",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Über 3,5-fachen GOÄ-Satz",
+    "Rooming-In für Kinder"
+  ],
+  "tarife": [
+    {
+      "name": "Klinik bei Unfall",
+      "kurz": "Unfall",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbett bei Unfall",
+        "chefarzt": "nur nach Unfall",
+        "krankenhauswahl": "nur nach Unfall",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "100 €",
+        "ambulant-op": "nur nach Unfall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Klinik 2-Bett",
+      "kurz": "2-Bett",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "80 €",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Klinik 1-Bett",
+      "kurz": "1-Bett",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "100 €",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sdk.de/versicherungen/zusatzversicherung/krankenhauszusatzversicherung",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-Krankenhauszusatzversicherung-1.782.pdf",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-Zusatzversicherungen-1.013c.pdf"
+  ],
+  "offen": [
+    "SDK markiert Klinik 2-Bett als „Am beliebtesten“.",
+    "Klinik bei Unfall leistet nur nach Unfällen (laut Produktseite ohne Gesundheitsprüfung, mit allen Leistungen von Klinik 1-Bett). Wechsel zwischen den Tarifen alle fünf Jahre bis zum 65. Geburtstag ohne erneute Gesundheitsfragen möglich.",
+    "Ersatz-Krankenhaustagegeld laut Tarifvergleich ohne Angabe, ob je Tag; Zuzahlung im Krankenhaus (10 €) bei Unfall und 1-Bett ohne zeitliche Begrenzung, Familienzimmer bei 1-Bett. Krankenhaustagegeld als Baustein nicht belegt."
+  ]
+}

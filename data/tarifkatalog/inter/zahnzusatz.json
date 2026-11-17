@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung INTER QualiMed Z",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Regelversorgung 85 bis 100 %"
+  ],
+  "tarife": [
+    {
+      "name": "INTER QualiMed Z Basis (Z70)",
+      "kurz": "Basis Z70",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "55 bis 70 %",
+        "behandlung": "optional (ZPro)",
+        "prophylaxe": "optional (ZPro)",
+        "wartezeit": "keine",
+        "staffel": "750/1.500/3.000 €",
+        "kfo": "60 % (KIG 1 bis 2)",
+        "inlays": "70 %, bis 200 € je Inlay"
+      },
+      "bausteine": {
+        "prophylaxe": "optional"
+      },
+      "quelle": "https://www.inter.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "INTER QualiMed Z Exklusiv (Z80)",
+      "kurz": "Exklusiv Z80",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "65 bis 80 %",
+        "implantate": "65 bis 80 %",
+        "behandlung": "optional (ZPro)",
+        "prophylaxe": "optional (ZPro)",
+        "wartezeit": "keine",
+        "staffel": "750/1.500/3.000 €",
+        "kfo": "60 % (KIG 1 bis 2)",
+        "inlays": "80 %"
+      },
+      "bausteine": {
+        "prophylaxe": "optional"
+      },
+      "quelle": "https://www.inter.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "INTER QualiMed Z Premium (Z90Plus)",
+      "kurz": "Premium Z90+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "90 %, Unfall 100 %",
+        "implantate": "90 %, Unfall 100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, bis 150 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "5 J., 1.000 bis 5.000 €",
+        "kfo": "90 %, bis 2.500 €",
+        "inlays": "90 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive"
+      },
+      "quelle": "https://www.inter.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/gesundheit/zahnzusatzversicherung/"
+  ],
+  "offen": [
+    "Zahnersatz in Basis und Exklusiv abhängig vom Bonusheft (Spanne); Regelversorgung Basis und Exklusiv 85 bis 100 %, Premium 100 %. Implantate stehen für Basis nicht in der Tarifübersicht (nicht belegt).",
+    "Zahnbehandlung, Prophylaxe und Schmerzausschaltung in Basis und Exklusiv nur über den Zusatzbaustein ZPro (100 %, eine Zahnreinigung im Jahr, Schmerzausschaltung bis 250 €; Zahnstaffel ZPro 750/1.500/3.000 €).",
+    "Zahnstaffel Z70 und Z80: 750 € im 1., 1.500 € im 2., 3.000 € im 3. Jahr, ab dem 4. Jahr unbegrenzt; Z90: 1.000 bis 5.000 € in den ersten fünf Jahren. Ob die Beträge je Jahr oder kumuliert gelten, ist auf der Seite nicht erklärt.",
+    "Kieferorthopädie Basis und Exklusiv: KIG 1 bis 2 60 %, KIG 3 bis 5 60 % für Mehrleistungen bis 350 € je Kiefer; Premium einmalig 90 % bis 2.500 € (auch nach dem 18. Lebensjahr). Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+  ]
+}

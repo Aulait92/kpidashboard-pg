@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Leistung zeitlich unbegrenzt",
+    "Verzicht auf Kündigungsrecht"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld für Angestellte (KTA)",
+      "kurz": "KTA",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "meist ab 43. Tag",
+        "hoehe": "bis 500 €, mehr mögl.",
+        "wartezeit": "keine",
+        "dauer": "unbegrenzt",
+        "bu-ende": "6 Monate Nachleistung",
+        "selbststaendige": "nein",
+        "ausland": "weltweit, stat., 6 Mon."
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld für Selbstständige (KTS)",
+      "kurz": "KTS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 4. Tag wählbar",
+        "hoehe": "bis 500 €, mehr mögl.",
+        "wartezeit": "keine",
+        "dauer": "unbegrenzt",
+        "bu-ende": "6 Monate Nachleistung",
+        "selbststaendige": "ja",
+        "ausland": "weltweit, stat., 6 Mon."
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/gesundheit/krankentagegeld/"
+  ],
+  "offen": [
+    "Zwei Tarife für verschiedene Zielgruppen, keine Leistungsstufen; Tarife für Ärzte (KTMA, KTMN) nicht aufgenommen. KTA bis 80 % des Bruttoentgelts, KTS bis 80 % des Gewinns vor Steuern.",
+    "Leistung bis zur Genesung oder Feststellung der Berufsunfähigkeit; danach laut Produktseite 6 Monate Nachleistung. Ausland: bei vollstationärer Behandlung weltweit bis 6 Monate. Auch Leistung bei Wiedereingliederung, Reha und schwangerschaftsbedingten Erkrankungen.",
+    "Karriereklausel in der Tabelle als Symbol, nicht ausgewertet; Dynamik nicht belegt."
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "gesellschaft": "SDK",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Offener Hilfsmittelkatalog",
+    "Auslandsreise bis 56 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Ambulant 50 (Tarif AP5)",
+      "kurz": "Ambulant 50",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "50 %, bis 500 €/2 J.",
+        "sehhilfen": "200 € in 2 Jahren",
+        "vorsorge": "50 %, bis 200 €/2 J.",
+        "arznei": "Zuzahl. 50 %, 500 €",
+        "hoergeraete": "als Hilfsmittel 50 %",
+        "ausland": "bis 56 Tage",
+        "wartezeit": "keine",
+        "lasik": "bis 500 € je Auge"
+      },
+      "bausteine": {
+        "ausland": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant 70 (Tarif AP7)",
+      "kurz": "Ambulant 70",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "70 %, bis 700 €/2 J.",
+        "sehhilfen": "300 € in 2 Jahren",
+        "vorsorge": "70 %, bis 300 €/2 J.",
+        "arznei": "Zuzahl. 70 %, 700 €",
+        "hoergeraete": "als Hilfsmittel 70 %",
+        "ausland": "bis 56 Tage",
+        "wartezeit": "keine",
+        "lasik": "bis 700 € je Auge"
+      },
+      "bausteine": {
+        "ausland": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant 90 (Tarif AP9)",
+      "kurz": "Ambulant 90",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "90 %, bis 900 €/2 J.",
+        "sehhilfen": "400 € in 2 Jahren",
+        "vorsorge": "90 %, bis 400 €/2 J.",
+        "arznei": "Zuzahl. 90 %, 900 €",
+        "hoergeraete": "als Hilfsmittel 90 %",
+        "ausland": "bis 56 Tage",
+        "wartezeit": "keine",
+        "lasik": "bis 900 € je Auge"
+      },
+      "bausteine": {
+        "ausland": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant 100 (Tarif AP1)",
+      "kurz": "Ambulant 100",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "100 %, bis 1.000 €/2 J.",
+        "sehhilfen": "500 € in 2 Jahren",
+        "vorsorge": "100 %, bis 500 €/2 J.",
+        "arznei": "Zuzahl. 100 %, 1.000 €",
+        "hoergeraete": "als Hilfsmittel 100 %",
+        "ausland": "bis 56 Tage",
+        "wartezeit": "keine",
+        "lasik": "bis 1.000 € je Auge"
+      },
+      "bausteine": {
+        "ausland": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-Ambulante-Zusatzversicherung-1.781.pdf",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-Zusatzversicherungen-1.013c.pdf"
+  ],
+  "offen": [
+    "SDK markiert Ambulant 90 als „Am beliebtesten“.",
+    "Alle Höchstbeträge gelten alle 2 Kalenderjahre (Broschüre 1.781/07.23). Hilfsmittel nach GKV-Vorleistung und gesetzliche Zuzahlungen zu Arznei-, Verband-, Heil- und Hilfsmitteln teilen sich einen Höchstbetrag; Hörgeräte als Beispiel für Hilfsmittel genannt, kein eigener Betrag.",
+    "Augenlaser: Betrag ab dem 5. Kalenderjahr je Auge; im 1. bis 4. Kalenderjahr 250/350/450/500 €. Heilpraktiker und Arzt für Naturheilverfahren einschließlich Hufelandverzeichnis.",
+    "Praxis-Zusatzversicherung (Privatpatient beim Arzt bzw. Zahnarzt, 80 %) ist ein eigenes Produkt und hier nicht aufgenommen."
+  ]
+}

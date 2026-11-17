@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "UKV",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Selbstbehalt",
+    "Ohne Wartezeit",
+    "Notruf-Service weltweit"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise-Krankenversicherung AKD (Jahresvertrag)",
+      "kurz": "Jahresvertrag",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 56 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend",
+        "chronisch": "unerwartete Verschl.",
+        "schwanger": "nur Komplikationen"
+      },
+      "bausteine": {},
+      "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/335592",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Auslandsreise-Krankenversicherung AKE (Einzelreise)",
+      "kurz": "Einzelreise",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 365 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend",
+        "chronisch": "unerwartete Verschl.",
+        "schwanger": "nur Komplikationen"
+      },
+      "bausteine": {},
+      "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/335591",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ukv.de/v/reiseversicherungen/auslandsreisekranken-urlaubsreisen.html",
+    "https://www.ukv.de/v/reiseversicherungen/auslandsreisekranken-langzeit.html",
+    "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/335592",
+    "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/335591",
+    "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/335597"
+  ],
+  "offen": [
+    "Zwei Vertragsformen statt Leistungsstufen: AKD als Jahresvertrag für beliebig viele Reisen bis je 56 Tage, AKE für eine Reise mit gewählter Anzahl Reisetage (höchstens 365). Leistungen laut Tarifen weitgehend gleich.",
+    "Geltungsbereich: Ausland ohne Deutschland, USA und Kanada nicht ausgeschlossen (Produktseite: weltweiter Schutz). Chronische Erkrankungen: unerwartete Verschlechterungen versichert, planbare Behandlungen nicht.",
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen, Reparatur von Prothesen. Schwangerschaft nur Komplikationen, Frühgeburt, Fehlgeburt. Familie und Langzeit (Seite Langzeitaufenthalte) nicht als Baustein ausgewertet."
+  ]
+}

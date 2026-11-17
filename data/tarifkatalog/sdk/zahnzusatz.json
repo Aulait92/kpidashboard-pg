@@ -1,0 +1,104 @@
+{
+  "gesellschaft": "SDK",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Bis 3,5-facher GOZ-Satz",
+    "Schmerzausschaltung bis 200 €"
+  ],
+  "tarife": [
+    {
+      "name": "Zahn 50 (Tarif ZP5)",
+      "kurz": "Zahn 50",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "50 %, Regelvers. 100 %",
+        "implantate": "50 %",
+        "behandlung": "50 %",
+        "prophylaxe": "100 %, bis 50 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "4 J., 500 bis 2.000 €",
+        "kfo": "50 %, bis 1.500 €",
+        "inlays": "50 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn 70 (Tarif ZP7)",
+      "kurz": "Zahn 70",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %, Regelvers. 100 %",
+        "implantate": "70 %",
+        "behandlung": "70 %",
+        "prophylaxe": "100 %, bis 100 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "4 J., 700 bis 2.800 €",
+        "kfo": "70 %, bis 2.100 €",
+        "inlays": "70 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn 90 (Tarif ZP9)",
+      "kurz": "Zahn 90",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "90 %, Regelvers. 100 %",
+        "implantate": "90 %",
+        "behandlung": "90 %",
+        "prophylaxe": "100 %, bis 150 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "4 J., 900 bis 3.600 €",
+        "kfo": "90 %, bis 2.700 €",
+        "inlays": "90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn 100 (Tarif ZP1)",
+      "kurz": "Zahn 100",
+      "stufe": 4,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "100 %, Regelvers. 100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, bis 200 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "4 J., 1.000 bis 4.000 €",
+        "kfo": "100 %, bis 3.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
+    "https://www.sdk.de/downloads/Broschueren/1.780_Ansprechhilfe_Zahnzusatzversicherung.pdf",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-Zusatzversicherungen-1.013c.pdf"
+  ],
+  "offen": [
+    "SDK markiert Zahn 100 als „Am häufigsten gewählt“.",
+    "Zahnstaffel: Höchsterstattung im 1. Kalenderjahr bzw. in den ersten 2, 3 und 4 Jahren zusammen (Zahn 50: 500/1.000/1.500/2.000 €; Zahn 70: 700/1.400/2.100/2.800 €; Zahn 90: 900/1.800/2.700/3.600 €; Zahn 100: 1.000/2.000/3.000/4.000 €).",
+    "Kieferorthopädie für Kinder bis 18 Jahre in allen KIG-Stufen (Höchstbetrag je Tarif), bei Unfall auch Erwachsene. Implantate laut Tarifübersicht als Zahnersatz zum jeweiligen Prozentsatz; Regelversorgung 100 %.",
+    "Prophylaxe-Baustein entfällt, da professionelle Zahnreinigung in allen Tarifen enthalten ist. Ansprechhilfe ohne Datum, Zusatzversicherungs-Broschüre 01/2026."
+  ]
+}

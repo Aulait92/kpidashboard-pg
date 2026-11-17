@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "SDK",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Zahlung auch Sonn- und Feiertage",
+    "Steuerfreie Leistung"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld Tarif TG6/TA (Arbeitnehmer)",
+      "kurz": "TG6/TA",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "hoehe": "10 bis 30 €, mehr mögl.",
+        "dauer": "ohne zeitliche Grenze",
+        "selbststaendige": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/downloads/Broschueren/Broschuere-Zusatzversicherungen-1.013c.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld für Selbstständige",
+      "kurz": "Selbstständige",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 2. Woche wählbar",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankentagegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sdk.de/versicherungen/zusatzversicherung/krankentagegeldversicherung",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-Zusatzversicherungen-1.013c.pdf",
+    "https://www.sdk.de/downloads/Broschueren/Programm-GesundheitsFAIR-fuer-Selbststaendige-1.713.pdf"
+  ],
+  "offen": [
+    "Zwei Zielgruppen statt Leistungsstufen. Arbeitnehmer: Tarif TG6/TA laut Broschüre Zusatzversicherungen (01/2026), ab dem 43. Tag ohne zeitliche Begrenzung; Produktseite nennt 10 bis 30 € am Tag, auf Anfrage höher.",
+    "Selbstständige: Produktseite nennt flexible Karenzzeiten ab der 2., 4., 6., 13., 26. oder 52. Woche; Tarifname, Höchstbetrag und Leistungsdauer nicht veröffentlicht. Höhe höchstens bis zum Nettoeinkommen (PKV-Broschüre Selbstständige).",
+    "Widerspruch: Ein Vorteilstext der Produktseite nennt Absicherung „bis zu sechs Monate“, die Broschüre „ohne zeitliche Begrenzung“; bitte prüfen. Wartezeit, Ende bei Berufsunfähigkeit und Ausland nicht veröffentlicht."
+  ]
+}
