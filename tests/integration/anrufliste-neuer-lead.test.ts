@@ -18,6 +18,10 @@ describe("Anrufliste: neuer Lead ohne Erstanschreiben", () => {
     const lead = await prisma.lead.create({ data: { customerId: c.id, name: "Paul Neumann", phone: "4915100000778", status: "Neuer Lead" } });
     const list = await getCallbackLeads(c.id);
     expect(list[0]).toMatchObject({ id: lead.id, reason: NEUER_LEAD_REASON, urgent: true });
+    // Älter als 24 Stunden: wie bisher, nicht mehr „Sofort“
+    const alt = await prisma.lead.create({ data: { customerId: c.id, name: "Alt", phone: "4915100000779", status: "Neuer Lead", createdAt: new Date(Date.now() - 3 * 86_400_000) } });
+    expect((await getCallbackLeads(c.id)).find((x) => x.id === alt.id)).toMatchObject({ reason: "Nicht per WhatsApp angeschrieben" });
+    expect((await getCallbackLeads(c.id)).find((x) => x.id === alt.id)?.urgent).toBeUndefined();
 
     // Mit Termin nicht mehr
     const a = await prisma.appointment.create({ data: { customerId: c.id, leadId: lead.id, mode: "video", startsAt: new Date(Date.now() + 86_400_000), status: "booked" } });

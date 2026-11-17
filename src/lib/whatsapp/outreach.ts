@@ -427,7 +427,7 @@ export async function getCallbackLeads(customerId: string, scope?: Prisma.LeadWh
       reason = replied
         ? "Hat im Chat geantwortet, aber keinen Termin gebucht"
         : "Keine Reaktion auf WhatsApp";
-    } else if (!l.outreachAt && !outreachOn && !replied) {
+    } else if (!l.outreachAt && !outreachOn && !replied && now - l.createdAt.getTime() < CALLBACK_AFTER_MS) {
       reason = NEUER_LEAD_REASON;
       urgent = true;
     } else if (!l.outreachAt && now - l.createdAt.getTime() >= CALLBACK_AFTER_MS) {
