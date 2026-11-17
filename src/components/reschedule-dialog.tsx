@@ -10,6 +10,7 @@ import {
   cancelAppointmentBuyerAction,
   loadRescheduleDialog,
   rescheduleAppointmentBuyerAction,
+  rescheduleManualBuyerAction,
 } from "@/app/buyer/appointment-actions";
 import type { AppointmentChangeResult, RescheduleLoadResult } from "@/lib/calendar/manage";
 import { Button } from "@/components/ui";
@@ -34,6 +35,8 @@ export type RescheduleActions = {
   load: (appointmentId: string) => Promise<RescheduleLoadResult>;
   reschedule: (appointmentId: string, start: string) => Promise<AppointmentChangeResult>;
   cancel: (appointmentId: string) => Promise<AppointmentChangeResult>;
+  /** Von Hand eingetragenen Termin (ohne Kalender) auf Datum und Uhrzeit legen. */
+  rescheduleManual?: (appointmentId: string, date: string, time: string) => Promise<AppointmentChangeResult>;
   /** Hinweis, wenn freie Zeiten fehlen (wo der Kalender verbunden wird). */
   calendarHint?: string;
 };
@@ -42,6 +45,7 @@ const BUYER_ACTIONS: RescheduleActions = {
   load: loadRescheduleDialog,
   reschedule: rescheduleAppointmentBuyerAction,
   cancel: cancelAppointmentBuyerAction,
+  rescheduleManual: rescheduleManualBuyerAction,
 };
 
 export function RescheduleDialog({
@@ -130,6 +134,8 @@ function RescheduleContent({
   const [step, setStep] = useState<RescheduleStep>(initialStep);
   const [dayIdx, setDayIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
+  const [handDate, setHandDate] = useState("");
+  const [handTime, setHandTime] = useState("");
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -183,6 +189,20 @@ function RescheduleContent({
         return;
       }
       toast.show({ message: `Termin verschoben auf ${shortWhen(r.start ?? start)}` });
+      onDone();
+    });
+  };
+  // Von Hand eingetragener Termin: neue Zeit von Hand (wie beim Eintragen)
+  const hand = !!d.manual && !!actions.rescheduleManual;
+  const moveHand = () => {
+    if (!handDate || !handTime || !actions.rescheduleManual) return;
+    startTransition(async () => {
+      const r = await actions.rescheduleManual!(d.id, handDate, handTime);
+      if (!r.ok) {
+        toast.show({ message: r.error, tone: "error" });
+        return;
+      }
+      toast.show({ message: `Termin verschoben auf ${shortWhen(r.start ?? d.startsAt)}` });
       onDone();
     });
   };
@@ -240,7 +260,18 @@ function RescheduleContent({
   return (
     <div className="max-h-[70vh] space-y-4 overflow-y-auto p-5" data-move-step>
       {current}
-      {d.slotsError ? (
+      {hand ? (
+        <div className="grid grid-cols-2 gap-3" data-hand-verschieben>
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium">Neues Datum</span>
+            <input type="date" className="input w-full" value={handDate} onChange={(e) => setHandDate(e.target.value)} disabled={!d.canEdit || pending} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium">Uhrzeit</span>
+            <input type="time" step={300} className="input w-full" value={handTime} onChange={(e) => setHandTime(e.target.value)} disabled={!d.canEdit || pending} />
+          </label>
+        </div>
+      ) : d.slotsError ? (
         <p className="text-sm text-[color:var(--muted)]">
           Freie Zeiten konnten gerade nicht geladen werden.{" "}
           {actions.calendarHint ?? (
@@ -302,9 +333,15 @@ function RescheduleContent({
         </p>
       )}
       <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-center sm:justify-between">
-        <Button variant="primary" size="md" onClick={move} disabled={!picked || pending || !d.canEdit} className="w-full sm:w-auto">
-          {pending ? "Wird verschoben …" : picked ? `Auf ${shortWhen(picked)} verschieben` : "Verschieben"}
-        </Button>
+        {hand ? (
+          <Button variant="primary" size="md" onClick={moveHand} disabled={!handDate || !handTime || pending || !d.canEdit} className="w-full sm:w-auto">
+            {pending ? "Wird verschoben …" : "Verschieben"}
+          </Button>
+        ) : (
+          <Button variant="primary" size="md" onClick={move} disabled={!picked || pending || !d.canEdit} className="w-full sm:w-auto">
+            {pending ? "Wird verschoben …" : picked ? `Auf ${shortWhen(picked)} verschieben` : "Verschieben"}
+          </Button>
+        )}
         <Button variant="ghost" size="md" icon={CalendarX} onClick={() => setStep("cancel")} disabled={pending} className="text-rose-700 hover:text-rose-800">
           Termin absagen
         </Button>

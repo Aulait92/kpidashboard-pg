@@ -79,6 +79,47 @@ export async function createManualAppointment(opts: {
   return { ok: true, appointmentId: appt.id, startsAt };
 }
 
+/** Ist der Termin von Hand eingetragen (kein Kalendereintrag)? Dann wird er auch von Hand verschoben. */
+export function istHandTermin(a: { calendarEventId: string | null; calendarKey: string | null }): boolean {
+  return !a.calendarEventId && !a.calendarKey;
+}
+
+/**
+ * Von Hand eingetragenen Termin verschieben (Ole, 17.11.2026, Nacht-QA): ohne Kalender gab es im Dialog
+ * „Verschieben“ keine freien Zeiten und damit keinen Weg. Dauer und Art bleiben, Verlauf am Lead.
+ */
+export async function rescheduleManualAppointment(opts: {
+  appointmentId: string;
+  customerId: string;
+  userId: string | null;
+  date: string;
+  time: string;
+  now?: Date;
+}): Promise<{ ok: true; startsAt: Date } | { ok: false; error: string }> {
+  const startsAt = berlinDateTime(opts.date, opts.time);
+  if (!startsAt) return { ok: false, error: "Bitte Datum und Uhrzeit angeben." };
+  const now = opts.now ?? new Date();
+  if (startsAt.getTime() < now.getTime()) return { ok: false, error: "Die neue Zeit liegt in der Vergangenheit." };
+  const appt = await prisma.appointment.findFirst({
+    where: { id: opts.appointmentId, customerId: opts.customerId, status: "booked" },
+    select: { id: true, leadId: true, startsAt: true, endsAt: true, mode: true, calendarEventId: true, calendarKey: true },
+  });
+  if (!appt) return { ok: false, error: "Termin nicht gefunden." };
+  if (!istHandTermin(appt)) return { ok: false, error: "Dieser Termin steht im Kalender: bitte eine freie Zeit wählen." };
+  const dauer = appt.endsAt ? appt.endsAt.getTime() - appt.startsAt.getTime() : 30 * 60_000;
+  await prisma.appointment.update({
+    where: { id: appt.id },
+    data: { startsAt, endsAt: new Date(startsAt.getTime() + dauer) },
+  });
+  if (appt.leadId) {
+    await logLeadHistory(appt.leadId, "status", `Termin verschoben: von ${fmt(appt.startsAt)} Uhr auf ${fmt(startsAt)} Uhr, ${terminArtLabel(asTerminArt(appt.mode))}`, {
+      customerId: opts.customerId,
+      userId: opts.userId,
+    });
+  }
+  return { ok: true, startsAt };
+}
+
 export type StartChatResult =
   | { ok: true; conversationId: string }
   | { ok: false; reason: "no_whatsapp" | "no_phone" | "no_consent" | "no_template" | "exists" | "not_found" | "send"; error: string; conversationId?: string };

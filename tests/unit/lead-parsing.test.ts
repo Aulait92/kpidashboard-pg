@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fromFlatPayload, fromMetaLead } from "@/lib/lead-intake";
+import { extract, fromFlatPayload, fromMetaLead } from "@/lib/lead-intake";
 import { leadScope, conversationScope } from "@/lib/team";
 
 describe("Lead-Eingang: Formate", () => {
@@ -55,5 +55,20 @@ describe("Team: Sichtbarkeit", () => {
       customerId: "c1",
       AND: [{ OR: [{ lead: { assignedUserId: "u2" } }, { assignedUserId: "u2" }] }],
     });
+  });
+});
+
+describe("Lead-Eingang: Meta-Standardfelder auf Deutsch", () => {
+  it("post_code, city, street_address, date_of_birth werden zu deutschen Bezeichnungen; eigene Fragen bleiben", () => {
+    const r = extract({ fields: { full_name: "Katrin Vogel", post_code: "50667", city: "Köln", street_address: "Domkloster 4", date_of_birth: "1985-03-12", wie_viele_kinder: "2" } }, {});
+    expect(r.answers).toEqual([
+      { label: "Postleitzahl", value: "50667" },
+      { label: "Ort", value: "Köln" },
+      { label: "Straße", value: "Domkloster 4" },
+      { label: "Geburtsdatum", value: "1985-03-12" },
+      { label: "Wie viele kinder", value: "2" },
+    ]);
+    // Bezeichnung aus dem Formular (questionLabels) geht vor
+    expect(extract({ fields: { city: "Köln" } }, { city: "Wohnort" }).answers).toEqual([{ label: "Wohnort", value: "Köln" }]);
   });
 });

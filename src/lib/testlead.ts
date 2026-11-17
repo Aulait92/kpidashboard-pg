@@ -15,9 +15,12 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { normalizePhone } from "@/lib/whatsapp/phone";
+import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 
 export const TEST_LEAD_DEFAULT_NAME = "Test Lead";
 export const TEST_LEAD_CONFIRM_TEXT = "Der Kunde sieht diesen Lead";
+/** Rückmeldung bei einem eingehenden Testlead: kein Erstanschreiben, der Admin schreibt zuerst. */
+export const TEST_EINGEHEND_TEXT = "Jetzt selbst an die WhatsApp-Nummer des Kunden schreiben: Der Assistent antwortet wie bei einer eingehenden Anfrage.";
 
 type LogValue = string | number | boolean | null | undefined;
 
@@ -65,7 +68,95 @@ export async function testLeadProducts(customerId: string): Promise<string[]> {
   return all.map((p) => p.name);
 }
 
-export type TestLeadInput = { customerId: string; name?: string | null; product: string; phone: string; confirmed?: boolean };
+/** meta = Leadformular, der Assistent schreibt zuerst; eingehend = der Lead schreibt zuerst per WhatsApp. */
+export type TestLeadHerkunft = "meta" | "eingehend";
+
+export type TestLeadInput = {
+  customerId: string;
+  name?: string | null;
+  product: string;
+  phone: string;
+  confirmed?: boolean;
+  herkunft?: TestLeadHerkunft;
+  /** Ansprache der Leads; nur bei Testkunden änderbar (Einstellung des Kunden, gilt für alle seine Leads). */
+  ansprache?: Ansprache | null;
+};
+
+type Answer = { label: string; value: string };
+
+const ORT: Answer[] = [
+  { label: "Postleitzahl", value: "80331" },
+  { label: "Ort", value: "München" },
+];
+
+/**
+ * Formularangaben wie bei einem echten Lead des Produkts (Ole, 17.11.2026). Feldnamen wie aus den echten Eingängen:
+ * Perspective-Funnel (lib/ppl/perspective.ts) für Tier und PKV, Meta-Leadformular für Privatschutz (wie
+ * lib/demo-data.ts). Zahnzusatz ohne Gesundheitsangaben (Art. 9 DSGVO): kein „Fehlende Zähne“.
+ */
+export function testLeadAnswers(product: string): Answer[] {
+  const p = product.toLowerCase();
+  const tier = /katze|kater|\bhund|pferd|\btkv\b|tierkranken|tier-?op/.test(p) && !/futter|halter|privatschutz/.test(p);
+  if (tier && /hund/.test(p)) {
+    return [
+      { label: "Tierart", value: "Hund" },
+      { label: "Anzahl Tiere", value: "1" },
+      { label: "Tiername", value: "Balu" },
+      { label: "Geschlecht (Tier)", value: "männlich" },
+      { label: "Rasse (Tier)", value: "Labrador Retriever" },
+      { label: "Geburtsmonat (Tier)", value: "Juni" },
+      { label: "Geburtsjahr (Tier)", value: "2021" },
+      { label: "Kastriert (Tier)", value: "Nein" },
+      { label: "Haltung (Tier)", value: "Im Haus mit Garten" },
+      ...ORT,
+    ];
+  }
+  if (tier && /pferd/.test(p)) {
+    return [
+      { label: "Tierart", value: "Pferd" },
+      { label: "Anzahl Tiere", value: "1" },
+      { label: "Tiername", value: "Luna" },
+      { label: "Geschlecht (Tier)", value: "Stute" },
+      { label: "Rasse (Tier)", value: "Haflinger" },
+      { label: "Geburtsjahr (Tier)", value: "2016" },
+      ...ORT,
+    ];
+  }
+  if (tier) {
+    return [
+      { label: "Tierart", value: "Katze" },
+      { label: "Anzahl Tiere", value: "1" },
+      { label: "Tiername", value: "Minka" },
+      { label: "Geschlecht (Tier)", value: "weiblich" },
+      { label: "Rasse (Tier)", value: "Europäisch Kurzhaar" },
+      { label: "Geburtsmonat (Tier)", value: "März" },
+      { label: "Geburtsjahr (Tier)", value: "2022" },
+      { label: "Kastriert (Tier)", value: "Ja" },
+      { label: "Haltung (Tier)", value: "Wohnungskatze" },
+      ...ORT,
+    ];
+  }
+  if (/zahn/.test(p)) return [{ label: "Interesse (Zahnzusatz)", value: "Ja" }, ...ORT];
+  if (/privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|a)ude|unfall/.test(p)) {
+    return [
+      { label: "Lebenssituation", value: "Familie mit Kindern" },
+      { label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" },
+      ...ORT,
+    ];
+  }
+  if (/\bpkv\b|kranken|wechsel|tarifoptim|neugesch/.test(p)) {
+    return [
+      { label: "Geburtsdatum", value: "14.05.1978" },
+      ...ORT,
+      { label: "Situation", value: "Angestellt" },
+      { label: "Gesetzlich oder privat?", value: "Privat" },
+      { label: "Aktuelle Versicherung", value: "Debeka" },
+      { label: "Wie lange in PKV?", value: "Mehr als 10 Jahre" },
+      { label: "Monatlicher Beitrag", value: "780" },
+    ];
+  }
+  return [...ORT];
+}
 
 export type CreateTestLeadResult =
   | { ok: true; leadId: string; outreach: string }
@@ -153,7 +244,7 @@ export async function createTestLead(input: TestLeadInput, actor: AuditActor, no
   const checked = checkTestLeadInput(input);
   if (!checked.ok) return checked;
   const { name, product, phone } = checked;
-  const customer = await prisma.customer.findUnique({ where: { id: input.customerId }, select: { id: true, isTest: true, dormantSince: true } });
+  const customer = await prisma.customer.findUnique({ where: { id: input.customerId }, select: { id: true, isTest: true, dormantSince: true, leadAddress: true } });
   if (!customer) return { ok: false, error: "Kunde nicht gefunden." };
   if (customer.dormantSince) return { ok: false, error: "Das Konto ruht (Vertrag beendet): keine Leads." };
   if (!customer.isTest && !input.confirmed) return { ok: false, error: `${TEST_LEAD_CONFIRM_TEXT}.`, needsConfirm: true };
@@ -168,27 +259,38 @@ export async function createTestLead(input: TestLeadInput, actor: AuditActor, no
   const previous = await prisma.lead.findMany({ where: { customerId: customer.id, phone, isTest: true }, select: { id: true } });
   for (const p of previous) await deleteTestLead(p.id, { customerId: customer.id, actor });
 
+  // Ansprache: Einstellung des Kunden. Nur bei Testkunden hier umstellbar (gilt dann für alle seine Leads).
+  const ansprache = input.ansprache && customer.isTest ? asAnsprache(input.ansprache) : asAnsprache(customer.leadAddress);
+  if (ansprache !== asAnsprache(customer.leadAddress)) await prisma.customer.update({ where: { id: customer.id }, data: { leadAddress: ansprache } });
+  const eingehend = input.herkunft === "eingehend";
+
   const lead = await prisma.lead.create({
     data: {
       customerId: customer.id,
       isTest: true,
       name,
       phone,
+      // E-Mail des Admins: Terminbestätigungen landen bei ihm (wie bei einem echten Lead mit E-Mail im Formular)
+      email: actor.email?.trim().toLowerCase() || null,
       source: product,
       status: "Neuer Lead",
+      // Formularangaben wie bei einem echten Lead dieses Produkts
+      formData: testLeadAnswers(product),
       // Wie ein Lead aus dem Meta-Formular, ohne Meta-Lead-ID (geht so ohnehin nie an Meta)
       adChannel: "Meta",
+      // Eingehend: kein Erstanschreiben (wie „Lead hat schon selbst geschrieben“), der Admin schreibt selbst zuerst
+      ...(eingehend ? { outreachAt: now, outreachStatus: "skipped_contact" } : {}),
       waConsent: "ja",
       consentData: { at: now.toISOString(), formId: null, textVersion: null, text: "Testlead aus dem Admin an die eigene Nummer", responses: [] },
       createdAt: now,
     },
     select: { id: true },
   });
-  console.log(testLeadLine(lead.id, "intake", { customer: customer.id, testCustomer: customer.isTest, product, replaced: previous.length, chatReset: !!conv }));
+  console.log(testLeadLine(lead.id, "intake", { customer: customer.id, testCustomer: customer.isTest, product, herkunft: eingehend ? "eingehend" : "meta", ansprache, replaced: previous.length, chatReset: !!conv }));
 
   // Einrichtung: Schritt „Testlead durchgespielt“
   await prisma.onboarding.updateMany({ where: { customerId: customer.id, testLeadAt: null }, data: { testLeadAt: now } }).catch((e) => reportError(e, "testlead-onboarding"));
-  await audit("lead.test_create", { entity: "Lead", entityId: lead.id, customerId: customer.id, details: { name, product, testCustomer: customer.isTest }, actor });
+  await audit("lead.test_create", { entity: "Lead", entityId: lead.id, customerId: customer.id, details: { name, product, testCustomer: customer.isTest, herkunft: eingehend ? "eingehend" : "meta", ansprache }, actor });
 
   // Der echte Ablauf neuer Leads (lib/lead-intake.ts)
   const { processNewLead } = await import("@/lib/lead-intake");
@@ -198,5 +300,6 @@ export async function createTestLead(input: TestLeadInput, actor: AuditActor, no
     prisma.lead.findUnique({ where: { id: lead.id }, select: { outreachStatus: true } }),
     prisma.agentConfig.findUnique({ where: { customerId: customer.id }, select: { active: true, outreachEnabled: true, outreachDelayMin: true } }),
   ]);
+  if (eingehend) return { ok: true, leadId: lead.id, outreach: TEST_EINGEHEND_TEXT };
   return { ok: true, leadId: lead.id, outreach: outreachText(after?.outreachStatus ?? null, agent?.outreachDelayMin ?? null, !!agent?.active && !!agent.outreachEnabled) };
 }

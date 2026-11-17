@@ -140,6 +140,8 @@ export type RescheduleDialogData = {
   slots: Slot[];
   /** Freie Zeiten konnten nicht geladen werden (z. B. Kalender getrennt). */
   slotsError: boolean;
+  /** Von Hand eingetragen (kein Kalendereintrag): neue Zeit von Hand statt freier Zeiten. */
+  manual?: boolean;
 };
 
 export type RescheduleLoadResult = { ok: true; data: RescheduleDialogData } | { ok: false; error: string };
@@ -163,9 +165,12 @@ export async function rescheduleDialogData(
         select: { contactName: true, contactEmail: true },
       })
     : null;
+  // Von Hand eingetragener Termin: keine freien Zeiten aus dem Kalender, neue Zeit von Hand (lib/lead-manual.ts)
+  const kal = await prisma.appointment.findUnique({ where: { id: appt.id }, select: { calendarEventId: true, calendarKey: true } });
+  const manual = !!kal && !kal.calendarEventId && !kal.calendarKey;
   let slots: Slot[] = [];
   let slotsError = false;
-  try {
+  if (!manual) try {
     // Die bisherige Uhrzeit selbst ist keine neue Zeit.
     const current = appt.startsAt.toISOString();
     slots = (await rescheduleSlots(appt, DIALOG_SLOTS, DIALOG_DAYS)).filter((s) => s.start !== current);
@@ -183,6 +188,7 @@ export async function rescheduleDialogData(
     notify: { whatsapp: !!conv, email: !!conv?.contactEmail?.trim() },
     slots,
     slotsError,
+    manual,
   };
 }
 

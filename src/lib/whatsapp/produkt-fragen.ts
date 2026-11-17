@@ -25,7 +25,7 @@ export type ProduktCheckliste = {
 const PRIVATSCHUTZ = /privatschutz|haftpflicht|hausrat|rechtsschutz|wohngeb(ä|a)ude|\bunfall/i;
 
 /** Tierkrankenversicherung (TKV), z. B. „TKV-Katze“; nicht Hundefutter oder Hundehalter-Haftpflicht. */
-const TKV = /\btkv\b|tierkranken|tier-?op|katze/i;
+const TKV = /\btkv\b|tierkranken|tier-?op|katze|hundekranken|hunde-?op|pferdekranken|pferde-?op/i;
 
 /**
  * TKV (Ole, 15.11.2026): Gesundheitsfragen fragt das Formular nicht ab, und das Geburtsdatum des Halters braucht
