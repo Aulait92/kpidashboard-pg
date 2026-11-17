@@ -37,7 +37,7 @@ describe("Sparten und Provision je Vertrag", () => {
     expect(sparteForSource("BU-Absicherung")).toBe("bu");
     expect(sparteForSource("Berufsunfähigkeit")).toBe("bu");
     expect(sparteForSource("Private Rente")).toBe("leben_bu");
-    expect(sparteForSource("Risikoleben")).toBe("leben_bu");
+    expect(sparteForSource("Risikoleben")).toBe("risikoleben");
     expect(sparteForSource("Kindersparplan")).toBe("kindersparplan");
     expect(sparteForSource("Empfehlung")).toBeNull();
     expect(sparteForSource(null)).toBeNull();

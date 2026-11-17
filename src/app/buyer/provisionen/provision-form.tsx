@@ -22,7 +22,7 @@ import { saveProvisionAction, saveStornoAction, type ProvisionFormState } from "
 // Werte im Formular in „Menschen-Einheiten“: Prozent als 55, nicht 0,55. storno = eigene Stornoquote der
 // Sparte in % (leer = allgemeine Quote).
 type Row =
-  | { kind: "monthly"; months: string; fallbackAmount: string; storno: string }
+  | { kind: "monthly"; months: string; fallbackAmount: string; trail: string; defaultMonthly: string; storno: string }
   | { kind: "percent"; rate: string; trail: string; defaultPremium: string; storno: string }
   | { kind: "beitragssumme"; promille: string; trail: string; defaultMonthly: string; defaultYears: string; defaultEndAge: string; haftungMonate: string; storno: string }
   | { kind: "honorar"; months: string; fixedAmount: string; defaultSavings: string; storno: string };
@@ -38,7 +38,8 @@ const pct = (r: number) => `${(Math.round(r * 1000) / 10).toLocaleString("de-DE"
 
 function toRow(r: RateSpec): Row {
   const storno = r.storno != null ? fmt(r.storno * 100) : "";
-  if (r.kind === "monthly") return { kind: "monthly", months: fmt(r.months), fallbackAmount: fmt(r.fallbackAmount), storno };
+  if (r.kind === "monthly")
+    return { kind: "monthly", months: fmt(r.months), fallbackAmount: fmt(r.fallbackAmount), trail: r.trail ? fmt(r.trail * 100) : "", defaultMonthly: r.defaultMonthly ? fmt(r.defaultMonthly) : "", storno };
   if (r.kind === "percent") return { kind: "percent", rate: fmt(r.rate * 100), trail: fmt((r.trail ?? 0) * 100), defaultPremium: fmt(r.defaultPremium), storno };
   if (r.kind === "beitragssumme") {
     return {
@@ -54,7 +55,7 @@ function toRow(r: RateSpec): Row {
   }
   if (r.kind === "honorar") return { kind: "honorar", months: fmt(r.months), fixedAmount: r.fixedAmount ? fmt(r.fixedAmount) : "", defaultSavings: fmt(r.defaultSavings), storno };
   // fester Betrag (nur über Admin/Altbestand möglich): als Monatsregel ohne Monate zeigen
-  return { kind: "monthly", months: "0", fallbackAmount: fmt(r.amount), storno };
+  return { kind: "monthly", months: "0", fallbackAmount: fmt(r.amount), trail: "", defaultMonthly: "", storno };
 }
 
 function toSpec(r: Row): RateSpec | null {
@@ -62,8 +63,11 @@ function toSpec(r: Row): RateSpec | null {
   if (storno != null && !Number.isFinite(storno)) return null;
   const withStorno = <T extends RateSpec>(x: T): T => (storno != null ? { ...x, storno: storno / 100 } : x);
   if (r.kind === "monthly") {
-    const months = parse(r.months), fallbackAmount = parse(r.fallbackAmount);
-    return Number.isFinite(months) && Number.isFinite(fallbackAmount) ? withStorno({ kind: "monthly", months, fallbackAmount }) : null;
+    // Kranken-Zusatz: typischer Monatsbeitrag statt fester Betrag ohne Angabe (Ole, 17.11.2026)
+    const months = parse(r.months), trail = opt(r.trail), defaultMonthly = opt(r.defaultMonthly);
+    const fallbackAmount = defaultMonthly != null && Number.isFinite(defaultMonthly) && Number.isFinite(months) ? Math.round(defaultMonthly * months) : parse(r.fallbackAmount);
+    if (!Number.isFinite(months) || !Number.isFinite(fallbackAmount) || (trail != null && !Number.isFinite(trail)) || (defaultMonthly != null && !Number.isFinite(defaultMonthly))) return null;
+    return withStorno({ kind: "monthly", months, fallbackAmount, ...(trail ? { trail: trail / 100 } : {}), ...(defaultMonthly ? { defaultMonthly } : {}) });
   }
   if (r.kind === "beitragssumme") {
     const promille = parse(r.promille), trail = r.trail.trim() === "" ? 0 : parse(r.trail), defaultMonthly = parse(r.defaultMonthly);
@@ -89,6 +93,12 @@ function example(r: Row, typ: VermittlerTyp): string {
   const s = toSpec(r);
   if (!s) return "Bitte gültige Zahlen eintragen.";
   if (s.kind === "monthly") {
+    if (s.defaultMonthly != null || s.trail) {
+      // Kranken-Zusatz
+      const m = s.defaultMonthly ?? 30;
+      const bestand = m * 12 * (s.trail ?? 0);
+      return `Bei ${eur(m)} im Monat: ≈ ${eur(m * s.months)} Abschlussprovision${bestand > 0 ? `, ≈ ${eur(bestand)} Bestand pro Jahr` : ""}`;
+    }
     if (s.months > PKV_MAX_MONTHS) return `Höchstens ${fmt(PKV_MAX_MONTHS)} Monatsbeiträge (§ 50 VAG).`;
     const beitrag = 250;
     return `Bei ${eur(beitrag)} Monatsbeitrag: ≈ ${eur(beitrag * s.months)} Provision · ohne Angabe ${eur(s.fallbackAmount)}`;
@@ -192,7 +202,7 @@ export function ProvisionForm({
     const r = rowFor(p.key);
     const ownVal = isOwn(p.key);
     const stornoField =
-      r.kind === "percent" || r.kind === "beitragssumme" ? (
+      r.kind === "percent" || r.kind === "beitragssumme" || (r.kind === "monthly" && p.key !== "pkv") ? (
         <Field
           label="Stornoquote pro Jahr für diese Sparte (optional)"
           suffix="%"
@@ -225,7 +235,15 @@ export function ProvisionForm({
                   value={r.months}
                   onChange={(v) => update(p.key, { months: v })}
                 />
-                <Field label="Ohne Beitragsangabe" suffix="€" value={r.fallbackAmount} onChange={(v) => update(p.key, { fallbackAmount: v })} />
+                {p.key === "pkv" ? (
+                  <Field label="Ohne Beitragsangabe" suffix="€" value={r.fallbackAmount} onChange={(v) => update(p.key, { fallbackAmount: v })} />
+                ) : (
+                  <>
+                    <Field label="Bestandsprovision pro Jahr" suffix="% vom Jahresbeitrag" value={r.trail} onChange={(v) => update(p.key, { trail: v })} />
+                    <Field label="Typischer Monatsbeitrag (wenn keiner eingetragen ist)" suffix="€" value={r.defaultMonthly} onChange={(v) => update(p.key, { defaultMonthly: v })} />
+                    {stornoField}
+                  </>
+                )}
                 {p.key === "pkv" ? (
                   <p className="text-xs text-[color:var(--muted)] sm:col-span-2">
                     Nach § 50 VAG höchstens 3,3 % der Bruttobeitragssumme über 25 Jahre, also höchstens {fmt(PKV_MAX_MONTHS)} Monatsbeiträge.
