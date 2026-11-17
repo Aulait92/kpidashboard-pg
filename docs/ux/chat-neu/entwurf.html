@@ -1,0 +1,94 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Geist,system-ui,sans-serif;background:#f4f7fc;color:#0b1220;padding:28px;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:330px 1fr 340px;height:1040px;background:#fff;border-radius:20px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 12px 32px -12px rgba(15,23,42,.12);overflow:hidden;border:1px solid #e8edf5}
+.list{border-right:1px solid #eef2f7;display:flex;flex-direction:column}
+.tabs{display:flex;gap:6px;padding:16px 16px 10px}
+.tab{flex:1;text-align:center;font-size:14px;font-weight:600;padding:9px;border-radius:10px;color:#5b6883}
+.tab.on{background:#eef3ff;color:#2563eb}
+.badge{display:inline-flex;min-width:20px;height:20px;border-radius:99px;background:#2563eb;color:#fff;font-size:12px;align-items:center;justify-content:center;margin-left:6px;padding:0 6px}
+.search{margin:0 16px 10px;border:1px solid #e8edf5;border-radius:12px;padding:10px 14px;font-size:14px;color:#94a0b8}
+.item{display:flex;gap:12px;padding:12px 16px;border-left:3px solid transparent}
+.item.on{background:#f5f8ff;border-left-color:#2563eb}
+.av{width:40px;height:40px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex:none}
+.nm{display:flex;justify-content:space-between;font-weight:600;font-size:15px}
+.nm span{font-weight:400;color:#94a0b8;font-size:12px}
+.pv{font-size:13px;color:#5b6883;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px;margin-top:2px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#5b6883;margin-top:6px}
+.dot{width:7px;height:7px;border-radius:99px}
+.chat{display:flex;flex-direction:column;background:#fafbfd}
+.head{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef2f7;background:#fff}
+.head h2{font-size:18px;font-weight:600}
+.sub{font-size:13px;color:#059669;display:flex;align-items:center;gap:6px;margin-top:2px}
+.pulse{width:7px;height:7px;border-radius:99px;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:10px 16px;border-radius:12px;border:1px solid #e3e8f0;background:#fff;color:#0b1220}
+.btn.pri{background:#2563eb;color:#fff;border-color:#2563eb}
+.msgs{flex:1;padding:22px 28px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.day{align-self:center;font-size:12px;font-weight:600;color:#94a0b8;background:#fff;border:1px solid #eef2f7;padding:4px 12px;border-radius:99px;margin:6px 0 10px}
+.row{display:flex;flex-direction:column;max-width:72%}
+.row.in{align-self:flex-start}.row.out{align-self:flex-end;align-items:flex-end}
+.who{font-size:12px;color:#94a0b8;margin:10px 4px 4px;display:flex;align-items:center;gap:6px}
+.b{font-size:15px;line-height:1.5;padding:11px 15px;border-radius:18px}
+.in .b{background:#fff;border:1px solid #e8edf5;border-bottom-left-radius:6px}
+.bot .b{background:#eef3ff;color:#1e2b4a;border-bottom-right-radius:6px}
+.me .b{background:#2563eb;color:#fff;border-bottom-right-radius:6px}
+.b b{font-weight:600}
+.t{font-size:11px;color:#a3adc2;margin:3px 6px 0}
+.event{align-self:center;font-size:12px;color:#5b6883;display:flex;gap:8px;align-items:center;margin:10px 0}
+.event i{width:18px;height:18px;border-radius:99px;background:#ecfdf5;color:#059669;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:11px}
+.comp{border-top:1px solid #eef2f7;background:#fff;padding:14px 24px}
+.box{display:flex;gap:10px;align-items:center;border:1px solid #e3e8f0;border-radius:14px;padding:10px 10px 10px 16px;color:#94a0b8;font-size:14px}
+.send{margin-left:auto;width:36px;height:36px;border-radius:10px;background:#2563eb}
+.hint{font-size:12px;color:#94a0b8;margin-top:8px}
+.side{padding:20px;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+.card{border:1px solid #eef2f7;border-radius:16px;padding:16px}
+.cap{font-size:12px;font-weight:600;color:#94a0b8;letter-spacing:.04em;margin-bottom:10px}
+.next{background:linear-gradient(180deg,#f5f8ff,#fff);border-color:#dbe6ff}
+.next h3{font-size:16px;font-weight:600;margin-bottom:4px}
+.next p{font-size:13px;color:#5b6883;margin-bottom:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:14px}
+.kv dt{color:#5b6883}.kv dd{font-weight:500;text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:500;padding:5px 10px;border-radius:99px;background:#f1f5fb;color:#334155}
+.chip.g{background:#ecfdf5;color:#047857}
+.term{display:flex;gap:12px;align-items:center}
+.cal{width:46px;height:50px;border-radius:12px;background:#2563eb;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:18px;line-height:1}
+.cal small{font-size:10px;font-weight:600;opacity:.85;margin-bottom:3px}
+.lnk{font-size:13px;color:#2563eb;font-weight:500}
+.muted{font-size:13px;color:#94a0b8}
+</style></head><body>
+<div class="app">
+ <div class="list">
+  <div class="tabs"><div class="tab on">Alle</div><div class="tab">Wartet auf Sie<span class="badge">1</span></div></div>
+  <div class="search">Name, Nummer oder E-Mail</div>
+  <div class="item on"><div class="av" style="background:#e0e9ff;color:#2563eb">OK</div><div style="flex:1"><div class="nm">Ole Kannapinn<span>17:55</span></div><div class="pv">Assistent: Das klärt Herr Kannapinn im Termin …</div><div class="st"><span class="dot" style="background:#2563eb"></span>Termin Mi 16:00</div></div></div>
+  <div class="item"><div class="av" style="background:#fef3c7;color:#b45309">DS</div><div style="flex:1"><div class="nm">Dominik Schmid<span>15:00</span></div><div class="pv">Assistent: Guten Tag Dominik Schmid …</div><div class="st"><span class="dot" style="background:#2563eb"></span>Termin vereinbart</div></div></div>
+  <div class="item"><div class="av" style="background:#fce7f3;color:#be185d">SS</div><div style="flex:1"><div class="nm">Sarah Scholz<span>Gestern</span></div><div class="pv">Sie: Guten Tag Sarah Scholz, hier ist …</div><div class="st"><span class="dot" style="background:#7c3aed"></span>Angebot gesendet</div></div></div>
+  <div class="item"><div class="av" style="background:#dcfce7;color:#15803d">EP</div><div style="flex:1"><div class="nm">Eva Pohl<span>15.11.</span></div><div class="pv">Telefon ist gut</div><div class="st"><span class="dot" style="background:#059669"></span>Abschluss</div></div></div>
+  <div class="item"><div class="av" style="background:#ede9fe;color:#6d28d9">NW</div><div style="flex:1"><div class="nm">Nina Winter<span>14.11.</span></div><div class="pv">Assistent: Perfekt, dein Videocall …</div><div class="st"><span class="dot" style="background:#94a0b8"></span>Disqualifiziert</div></div></div>
+ </div>
+ <div class="chat">
+  <div class="head"><div><h2>Ole Kannapinn</h2><div class="sub"><span class="pulse"></span>Assistent antwortet für Sie</div></div>
+   <div style="display:flex;gap:8px"><span class="btn">📞 Anrufen</span><span class="btn">Übernehmen</span></div></div>
+  <div class="msgs">
+   <div class="day">Heute</div>
+   <div class="row out bot"><div class="who">🤖 Assistent</div><div class="b">Super! Welche Versicherungen haben Sie und Ihre Familie heute schon? Zum Beispiel Haftpflicht, Hausrat, Unfall oder Rechtsschutz. Gern auch mit Gesellschaft.</div><div class="t">16:15</div></div>
+   <div class="row in"><div class="b">PKV bei Allianz</div><div class="t">16:15</div></div>
+   <div class="row out bot"><div class="b">Danke, das schaut sich Herr Kannapinn im Termin mit an.<br><br>Bitte legen Sie bereit:<br>• Ihre übrigen Policen<br>• Ihre IBAN, falls Sie direkt abschließen möchten<br><br>Die Einladung habe ich Ihnen per E-Mail geschickt. <b>Haben Sie sich den Termin schon eingetragen?</b></div><div class="t">16:15</div></div>
+   <div class="row in"><div class="b">Mache ich gleich</div><div class="t">16:20</div></div>
+   <div class="event"><i>✓</i>Termin zugesagt · Mi, 18.11. um 16:00</div>
+   <div class="row in"><div class="b">was kosten die versicherungen denn?</div><div class="t">17:55</div></div>
+   <div class="row out bot"><div class="b">Das kann ich Ihnen als KI-Assistent leider nicht sagen. Herr Kannapinn zeigt Ihnen die Beiträge im Termin am Mittwoch um 16 Uhr.</div><div class="t">17:55</div></div>
+  </div>
+  <div class="comp"><div class="box">Nachricht schreiben<span class="send"></span></div><div class="hint">Wenn Sie schreiben, pausiert der Assistent in diesem Chat.</div></div>
+ </div>
+ <div class="side">
+  <div class="card next"><div class="cap">NÄCHSTER SCHRITT</div><h3>Termin vorbereiten</h3><p>Morgen 16:00 · Komplettcheck gewünscht</p><span class="btn pri" style="width:100%;justify-content:center">Vorbereitung öffnen</span></div>
+  <div class="card"><div class="cap">TERMIN</div><div class="term"><div class="cal"><small>MI</small>18</div><div><div style="font-weight:600">16:00 Uhr · Video</div><div style="display:flex;gap:14px;margin-top:4px"><span class="lnk">Video-Link</span><span class="lnk">Verschieben</span></div></div></div><div class="muted" style="margin-top:10px">Zugesagt ✓ · Absagen</div></div>
+  <div class="card"><div class="cap">ANFRAGE</div><div class="chips"><span class="chip">Privatschutz</span><span class="chip">Haftpflicht</span><span class="chip">Hausrat</span><span class="chip g">Komplettcheck</span></div></div>
+  <div class="card"><div class="cap">ANGABEN FÜRS ANGEBOT</div><dl class="kv"><dt>Lebenslage</dt><dd>Familie mit Kindern</dd><dt>Geburtsdatum</dt><dd>22.08.1992</dd><dt>Wohnfläche</dt><dd>78 m²</dd><dt>Öffentl. Dienst</dt><dd>Nein</dd><dt>Ort</dt><dd>80331 München</dd><dt>Bestehend</dt><dd>PKV Allianz</dd></dl></div>
+  <div class="card"><div class="cap">KONTAKT</div><div style="font-size:14px">+49 151 52418846</div><div style="font-size:14px;color:#5b6883;margin-top:4px">ole.kannapinn@…</div></div>
+ </div>
+</div></body></html>
