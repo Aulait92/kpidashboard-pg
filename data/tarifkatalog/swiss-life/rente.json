@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Swiss Life",
+  "sparte": "rente",
+  "produkt": "Swiss Life Maximo Privatrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rentenbeginn ab 50 wählbar",
+    "Gewinnsicherung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Swiss Life Maximo Privatrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "0 bis 80 % wählbar",
+        "rentenfaktor": "ja",
+        "anlage": "über 200 Fonds und ETFs",
+        "flexibel": "ja, Zuzahlung, Entnahme",
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "beitragspause": "Beiträge aussetzbar"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.swisslife.de/content/dam/de/documents/f6/16193.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.swisslife.de/content/dam/de/documents/f6/16193.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/3d/22222.pdf",
+    "https://www.swisslife.de/content/dam/de/documents/a7/15164.pdf"
+  ],
+  "offen": [
+    "Quelle: Produkthighlights Maximo Privatrente (Bm2056-4266-09/2026), Allgemeine Bedingungen AVB_FD_REN_2025_04 und Antrag 4277/07.2026; die Produktseiten auf swisslife.de waren für automatische Abrufe gesperrt.",
+    "Garantie: Kapital zum Rentenbeginn wählbar zwischen 0 und 80 % der Beitragssumme; Rentenfaktor laut Bedingungen in voller Höhe garantiert.",
+    "Automatische Gewinnsicherung und Ablaufmanagement sind wählbare Zusatzbausteine, keine Pflicht.",
+    "Swiss Life Investo (fondsgebundene Rentenversicherung mit Komfort- und Aktiv-Variante) nicht aufgenommen: keine öffentliche Produktübersicht gefunden.",
+    "Effektivkosten nicht veröffentlicht (nur Basisinformationsblätter je Muster)."
+  ]
+}
