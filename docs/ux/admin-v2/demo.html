@@ -144,7 +144,7 @@ button.kpi:hover{border-color:var(--line2);background:var(--sunken)}
 .kv{font-size:30px;font-weight:650;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
 .kv small{font-size:16px;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:4px}
 .kd{font-size:13.5px;color:var(--muted);display:flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
-.kd b{font-weight:600;padding:1px 7px;border-radius:7px;background:var(--sunken);color:var(--muted)}
+.kd{flex-wrap:wrap;row-gap:2px}.kd b{white-space:nowrap;font-weight:600;padding:1px 7px;border-radius:7px;background:var(--sunken);color:var(--muted)}
 .kd.money b{background:var(--ok-soft);color:var(--ok)}
 .kd.up b{background:var(--brand-soft);color:var(--brand-ink)}
 
@@ -183,7 +183,7 @@ button.tr:hover{background:var(--hover)}
 .big{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .r{text-align:right;justify-self:end}
 .who{display:flex;align-items:center;gap:12px;min-width:0}
-.who>div{min-width:0}
+.who>span{min-width:0}
 .more-row{padding:14px 22px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;justify-content:space-between;align-items:center;width:100%}
 .more-row:hover{background:var(--hover)}
 
@@ -199,7 +199,7 @@ button.tr:hover{background:var(--hover)}
 .hp .dot{background:var(--ok)}
 .hp.warn{color:var(--warn);background:var(--warn-soft);border-color:var(--warn-line)}.hp.warn .dot{background:var(--warn)}
 .hp.err{color:var(--err);background:var(--err-soft);border-color:var(--err-line)}.hp.err .dot{background:var(--err)}
-.hp.ok{color:var(--muted)}
+.hp.ok{color:var(--muted);background:transparent;border-color:transparent;padding-inline:4px}
 .bar{height:8px;border-radius:99px;background:var(--sunken);border:1px solid var(--line);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--brand);border-radius:99px}
 .bar.full i{background:var(--ok)}
@@ -401,7 +401,7 @@ details.auto li b{color:var(--fg);font-variant-numeric:tabular-nums}
   .ph{align-items:flex-start}.ph-t{flex-basis:100%}
   .ph-a{width:100%}.ph-a .btn.pri{flex:1}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .kpi{padding:14px 16px}.kv{font-size:24px}
+  .kpi{padding:14px 16px}.kv{font-size:24px}.kpis[style*="--n:3"] .kpi:first-child{grid-column:1/-1}
   .now{grid-template-columns:minmax(0,1fr)}
   .att-h{padding:16px 16px 8px}.att-l{padding:2px 4px 6px}.att-i{padding:12px 10px;gap:12px}
   .att-cta{font-size:0;gap:0}.att-cta .ic{width:18px;height:18px}
