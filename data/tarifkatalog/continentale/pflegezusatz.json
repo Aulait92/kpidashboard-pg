@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeld",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Tagegeld 10 bis 150 € wählbar",
+    "Keine Warte- und Karenzzeit",
+    "Anpassung bei Gesetzesänderung"
+  ],
+  "tarife": [
+    {
+      "name": "Pflegetagegeld Einsteiger PG-E",
+      "kurz": "PG-E",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "10 bis 150 € je Tag",
+        "ab-pg": "ab Pflegegrad 4",
+        "einmal": "optional",
+        "befreiung": "PG4 50 %, PG5 100 %",
+        "ambulant-gleich": "wählbar",
+        "wartezeit": "keine",
+        "dynamik": "ja"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/pflegeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegetagegeld Komfort PG-K",
+      "kurz": "PG-K",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "10 bis 150 € je Tag",
+        "ab-pg": "ab Pflegegrad 2",
+        "einmal": "optional",
+        "befreiung": "PG4 50 %, PG5 100 %",
+        "ambulant-gleich": "wählbar",
+        "wartezeit": "keine",
+        "dynamik": "ja"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/pflegeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegetagegeld Komfort-plus PG-K-plus",
+      "kurz": "PG-K-plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "10 bis 150 € je Tag",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "optional",
+        "befreiung": "PG4 50 %, PG5 100 %",
+        "ambulant-gleich": "wählbar",
+        "wartezeit": "keine",
+        "dynamik": "ja"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/pflegeversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/pflegeversicherung",
+    "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true"
+  ],
+  "offen": [
+    "Werte aus der Tarifübersicht der Produktseite (Pflegetagegeldtarife PG-E, PG-K, PG-K-plus); Continentale markiert keinen Tarif, PG-K als mittlere Stufe gesetzt.",
+    "Tagessatz 10 bis 150 € frei wählbar und je Pflegegrad bzw. ambulant und stationär unterschiedlich vereinbar; die tatsächliche Leistung bei Pflegegrad 5 hängt von der Vereinbarung ab.",
+    "Einmalleistung über den Kapitalleistungstarif PG-C (ab Pflegegrad 2, 1.000 bis 10.000 €), kombinierbar mit allen drei Tarifen. PG-K und PG-K-plus mit Nachversicherungsgarantie und Sofortleistung bei Erstfeststellung durch den behandelnden Arzt; PG-E mit Optionsrecht auf Wechsel in PG-K bzw. PG-K-plus.",
+    "Dynamik laut Produktseite („dynamische Erhöhung ohne Gesundheitsprüfung“), Bedingungen dazu nicht ausgewertet. Leistung bei Demenz nicht gesondert genannt.",
+    "Nicht aufgenommen: Pflegekostentarif PZ-U (erhöht die gesetzlichen Pflegeleistungen in Tarifstufen zu je 10 %)."
+  ]
+}

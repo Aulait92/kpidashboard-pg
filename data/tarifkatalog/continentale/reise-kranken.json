@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung ERK-56",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Einzel- oder Familientarif",
+    "24/7 Notfall-Hotline",
+    "Auch online abschließbar"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise-Krankenversicherung ERK-56",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "56 Tage je Reise",
+        "ruecktransport": "100 %, wenn sinnvoll",
+        "usa": "ja (weltweit)",
+        "selbstbeteiligung": "keine genannt",
+        "zahn": "schmerzstillend 100 %",
+        "chronisch": "akute Verschlechterung",
+        "schwanger": "Komplikationen"
+      },
+      "bausteine": {
+        "familie": "optional",
+        "lang": "optional"
+      },
+      "quelle": "https://www.continentale.de/auslandreisekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/auslandreisekrankenversicherung",
+    "https://www.continentale.de/documents/39054/16670191/AVB+ERK-56.pdf/7db6161b-5265-6395-82ed-9bc55a80302d?version=1.4&t=1766062630189&download=true"
+  ],
+  "offen": [
+    "Tarif ERK-56 der EUROPA Versicherung AG (Tochter der Continentale), angeboten auf continentale.de; AVB gültig ab 01.01.2022. Leistungen aus der Produktseite: 100 % ambulant, schmerzstillende Zahnbehandlung und stationär, Ersatz-Krankenhaustagegeld 25 € je Tag, Rettungs- und Bergungskosten bis 5.000 €, Überführung und Bestattung 30.000 €, Kinderbetreuung bis 14 Tage.",
+    "Geltungsbereich laut AVB: Ausland ist das Gebiet außerhalb Deutschlands, USA und Kanada nicht ausgeschlossen; Selbstbeteiligung in den AVB nicht genannt.",
+    "Baustein „Langzeitreise“: ERK-V verlängert den Schutz auf bis zu 90, 180 oder 365 Tage, nur zusätzlich zu ERK-56 oder einem Kostentarif der Continentale. Familie: Familienversicherung statt Einzelversicherung wählbar.",
+    "Schwangerschaft: nur Komplikationen und Frühgeburten vor der 36. Woche sowie Fehlgeburten; chronische Erkrankungen nur bei akuter Verschlechterung. Ambulante Zusatztarife der Continentale enthalten Auslandsschutz bis 42 Tage."
+  ]
+}

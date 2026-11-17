@@ -1,0 +1,117 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Für gesetzlich Versicherte",
+    "Staffel entfällt bei Unfall",
+    "Auch online abschließbar"
+  ],
+  "tarife": [
+    {
+      "name": "StartZahn (StartZ)",
+      "kurz": "StartZahn",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "doppelter Festzuschuss",
+        "implantate": "Festzuschuss doppelt",
+        "behandlung": "nein",
+        "prophylaxe": "50 € im Jahr",
+        "wartezeit": "8 Monate",
+        "staffel": "1.250 € in 4 Jahren",
+        "kfo": "nein",
+        "inlays": "nein"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "nein"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670191/Versicherungsbedingungen+f%C3%BCr+Zusatzversicherte.pdf/71308ae8-ca9b-550a-8e09-877027d815ad?version=3.3&t=1767602243027&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KomfortVorsorge CEZK-U",
+      "kurz": "CEZK-U",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "75 %",
+        "implantate": "4 je Kiefer",
+        "behandlung": "nein",
+        "prophylaxe": "nein",
+        "wartezeit": "8 Monate",
+        "staffel": "3.000 € in 4 Jahren",
+        "kfo": "nein",
+        "inlays": "75 % (als Zahnersatz)"
+      },
+      "bausteine": {
+        "prophylaxe": "nein",
+        "kfo": "nein"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ProfiVorsorge CEZP-U",
+      "kurz": "CEZP-U",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "80 bzw. 90 %",
+        "implantate": "6 je Kiefer",
+        "behandlung": "100 % (Wurzel, Paro)",
+        "prophylaxe": "80 € im Jahr",
+        "wartezeit": "3 Mon., Ersatz 8 Mon.",
+        "staffel": "4.000 € in 4 Jahren",
+        "kfo": "nein",
+        "inlays": "ja"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "nein"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Exklusiv-Tarif CEZE",
+      "kurz": "CEZE",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "unbegrenzt",
+        "behandlung": "100 %",
+        "prophylaxe": "250 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "6.000 € in 4 Jahren",
+        "kfo": "nein",
+        "inlays": "100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "nein"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/zahnzusatzversicherung",
+    "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
+    "https://www.continentale.de/documents/39054/16670191/Versicherungsbedingungen+f%C3%BCr+Zusatzversicherte.pdf/71308ae8-ca9b-550a-8e09-877027d815ad?version=3.3&t=1767602243027&download=true"
+  ],
+  "offen": [
+    "Leistungen aus der Tarifübersicht der Produktseite, Wartezeiten und Leistungsstaffel aus den Tarifbedingungen (AVB Zusatzversicherte, Stand 01.10.2025; STARTLinie, Stand 01.01.2025).",
+    "Zahnersatz-Prozente jeweils inklusive Vorleistung der GKV; CEZP-U 90 % bei mindestens fünfjähriger lückenloser Vorsorge (Bonusheft), sonst 80 %. StartZahn verdoppelt den GKV-Festzuschuss, höchstens bis zum Rechnungsbetrag; Implantate dort nur über den Festzuschuss.",
+    "Leistungsstaffel: StartZahn 750/1.000/1.250 € in 2/3/4 Jahren; CEZK-U 1.000/1.500/3.000 €; CEZP-U 1.000/2.000/4.000 €; CEZE 1.500/3.000/4.500/6.000 € im 1. bis 4. Jahr.",
+    "Wartezeiten: CEZK-U 8 Monate (Zahnersatz, durch Zahnarztzeugnis erlassbar); CEZP-U 3 Monate für Behandlung und Prophylaxe, 8 Monate für Zahnersatz; CEZE ohne Wartezeit.",
+    "Kieferorthopädie nur über den Kindertarif CEJ (Junior-Police), nicht als Baustein dieser Tarife. Continentale markiert keinen Tarif (CEZP-U und CEZE „Sehr gut“ bewertet); CEZP-U als dritte von vier Stufen gesetzt."
+  ]
+}

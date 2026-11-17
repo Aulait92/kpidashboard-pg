@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente ab 62",
+    "Einmalbeiträge, Teilrente",
+    "Beitragspause und Stundung"
+  ],
+  "tarife": [
+    {
+      "name": "BasisRente Classic Pro (Tarif BRCP)",
+      "kurz": "Classic Pro",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "100 % der Beiträge",
+        "anlage": "ohne Fonds",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "optional",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.continentale.de/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente Invest Garant (Tarif BRIG)",
+      "kurz": "Invest Garant",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "50 bis 100 % wählbar",
+        "anlage": "Fonds mit Garantie",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "optional",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.continentale.de/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente Invest (Tarif BRI)",
+      "kurz": "Invest",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "nein",
+        "anlage": "Fonds, bis 10 Fonds",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "optional",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.continentale.de/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/basisrente",
+    "https://www.continentale.de/documents/39054/16717972/continentale-lv-basisrente-classic-pro-allgemeine-vertragsinformationen.pdf/4b113d5d-8515-bc96-844a-be97bd62b419?version=5.0&t=1787120283678&download=true",
+    "https://www.continentale.de/documents/39054/16717972/continentale-lv-basisrente-invest-garant-allgemeine-vertragsinformationen.pdf/f2dda35c-cdf7-5bf8-e5ea-a7317e7b9032?version=5.0&t=1787120349198&download=true",
+    "https://www.continentale.de/documents/39054/16717972/continentale-lv-basisrente-invest-allgemeine-vertragsinformationen.pdf/8dc5e961-54b8-c97b-f6ff-31734df020c2?version=5.0&t=1787120211393&download=true"
+  ],
+  "offen": [
+    "Drei Anlagevarianten statt Leistungsstufen (klassisch, Fonds mit Mindestgarantie, reine Fonds); Werte aus der Produktseite, Vertragsinformationen nicht ausgewertet. Continentale markiert keine Variante, Invest Garant als mittlere Stufe gesetzt.",
+    "Garantierter Rentenfaktor nicht auf der Produktseite genannt. Fondsvarianten: Fondswechsel 6x jährlich gebührenfrei, Fondsanlage auch nach Rentenbeginn möglich.",
+    "Hinterbliebenenleistung im Todesfall als Hinterbliebenenrente vereinbar; BU- bzw. EU-Zusatzversicherung zahlt die Beiträge weiter. Effektivkosten und Dynamik nicht ausgewertet."
+  ]
+}

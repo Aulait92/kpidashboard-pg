@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung PremiumBU",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Bis 15 Monate bei Krebs u. a.",
+    "Zuletzt ausgeübter Beruf"
+  ],
+  "tarife": [
+    {
+      "name": "PremiumBU Start (PBUS)",
+      "kurz": "BU Start",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16717966/continentale-lv-premiumbu-start-schueler-und-premiumeu-start-allgemeine-vertragsinformationen.pdf/c5ce5d88-2faa-2861-61ae-73f00861b347?version=7.0&t=1787214293553&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PremiumBU (PBU)",
+      "kurz": "PremiumBU",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "Verzicht teils",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16717966/continentale-lv-premiumbu-berufsunfaehigkeit-allgemeine-vertragsinformationen.pdf/f13f523e-60a3-aa51-5f8d-a9b55731a8a7?version=6.0&t=1787120508412&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/berufsunfaehigkeit",
+    "https://www.continentale.de/documents/39054/16717966/continentale-lv-premiumbu-berufsunfaehigkeit-allgemeine-vertragsinformationen.pdf/f13f523e-60a3-aa51-5f8d-a9b55731a8a7?version=6.0&t=1787120508412&download=true",
+    "https://www.continentale.de/documents/39054/16717966/continentale-lv-premiumbu-start-schueler-und-premiumeu-start-allgemeine-vertragsinformationen.pdf/c5ce5d88-2faa-2861-61ae-73f00861b347?version=7.0&t=1787214293553&download=true"
+  ],
+  "offen": [
+    "Zwei Varianten derselben Leistung, keine Leistungsstufen: PremiumBU Start (15 bis 35 Jahre, in den ersten 3 Jahren halber Zielbeitrag, voller Beitrag ab dem 8. Jahr) und PremiumBU. Werte der Start-Variante aus der Produktseite; die Bedingungen PBUS wurden nicht einzeln ausgewertet (Teilzeit, Umorganisation und Infektion dort offen).",
+    "PremiumBU (Bedingungen Stand 08.2026): Verzicht auf abstrakte Verweisung, BU ab 6 Monaten Prognose, Rente ab Monatsende des BU-Eintritts unabhängig von der Meldung, weltweit, Teilzeitklausel, berufliches Tätigkeitsverbot (Infektion) mitversichert. Umorganisation: Verzicht bei Selbstständigen mit überwiegend Innendienst bzw. bei Arbeitnehmern ohne Prüfung.",
+    "Leistung wegen Arbeitsunfähigkeit als Zusatzbaustein, insgesamt bis 24 Monate. Dynamik (Beitrags- und Leistungsdynamik) und Karriere X Paket als Zusatzoptionen.",
+    "Nicht aufgenommen: PremiumBU Beamte (Dienstunfähigkeit), PremiumBU Start Schüler, PremiumEU und PremiumEU Start (Erwerbsunfähigkeit). Continentale markiert keinen Tarif."
+  ]
+}

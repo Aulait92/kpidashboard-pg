@@ -1,0 +1,126 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflicht ProtectionPlus",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Schutz auf Reisen",
+    "Vorsorgeversicherung",
+    "SB 150 € wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "ProtectionPlus XL",
+      "kurz": "XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 oder 15 Mio. €",
+        "forderungsausfall": "optional",
+        "schluessel": "bis 100.000 €",
+        "delikt": "bis 20.000 €",
+        "geliehen": "bis 500 €",
+        "miete": "bis 2 Mio. €",
+        "gefaelligkeit": "bis 5.000 €",
+        "neuwert": "nein",
+        "mallorca": "optional",
+        "rabattretter": "optional",
+        "drohne": "bis 250 g",
+        "nebenberuf": "optional",
+        "ehrenamt": "ja",
+        "sb": "0 oder 150 €"
+      },
+      "bausteine": {
+        "schluesselBeruf": "nein",
+        "hausbesitz": "inklusive",
+        "oeltank": "optional",
+        "tiere": "optional",
+        "auto": "optional",
+        "sb0": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/continentale-sv-protectionplus-xl-versicherungsbedingungen-5178.pdf/83b982ab-6ed8-a40e-7a21-862a8a04b671?version=8.1&t=1766489072137&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ProtectionPlus XXL",
+      "kurz": "XXL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "5 bis 50 Mio. €",
+        "forderungsausfall": "ja (ab 1.500 €)",
+        "schluessel": "bis 200.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 30.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "bis 100.000 €",
+        "neuwert": "bis 3.000 €",
+        "mallorca": "optional",
+        "rabattretter": "optional",
+        "drohne": "bis 1 kg",
+        "nebenberuf": "optional",
+        "ehrenamt": "ja",
+        "sb": "0 oder 150 €"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "hausbesitz": "inklusive",
+        "oeltank": "optional",
+        "tiere": "optional",
+        "auto": "optional",
+        "sb0": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/continentale-sv-protectionplus-xxl-versicherungsbedingungen-5179.pdf/6eb45ee1-c21b-cbed-6a13-d6d066e2818a?version=8.1&t=1766489056542&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ProtectionPlus TOP-Schutz",
+      "kurz": "TOP-Schutz",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja (ohne Mindestwert)",
+        "schluessel": "bis 300.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 10.000 €",
+        "mallorca": "ja",
+        "rabattretter": "ja",
+        "drohne": "bis 2,5 kg",
+        "nebenberuf": "optional",
+        "ehrenamt": "ja",
+        "sb": "0 oder 150 €"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "hausbesitz": "inklusive",
+        "oeltank": "inklusive",
+        "tiere": "optional",
+        "auto": "inklusive",
+        "sb0": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/continentale-sv-protectionplus-top-schutz-versicherungsbedingungen-5180.pdf/060ba90a-89bd-ce90-fa12-ee1240694288?version=6.1&t=1766488955665&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/privathaftpflicht",
+    "https://www.continentale.de/documents/39054/16670358/continentale-sv-protectionplus-xl-versicherungsbedingungen-5178.pdf/83b982ab-6ed8-a40e-7a21-862a8a04b671?version=8.1&t=1766489072137&download=true",
+    "https://www.continentale.de/documents/39054/16670358/continentale-sv-protectionplus-xxl-versicherungsbedingungen-5179.pdf/6eb45ee1-c21b-cbed-6a13-d6d066e2818a?version=8.1&t=1766489056542&download=true",
+    "https://www.continentale.de/documents/39054/16670358/continentale-sv-protectionplus-top-schutz-versicherungsbedingungen-5180.pdf/060ba90a-89bd-ce90-fa12-ee1240694288?version=6.1&t=1766488955665&download=true"
+  ],
+  "offen": [
+    "Werte aus der Leistungsübersicht „Die Leistungen der Privat-Haftpflichtversicherung im Überblick“ in den Vertragsinformationen XL2024, XXL2024 und TOP2024 (Stand 01.10.2024, Seite 3 bis 6).",
+    "Continentale markiert keinen Tarif; XXL als mittlere Stufe gesetzt.",
+    "Mallorca-Deckung und Rabattretter gehören zum Kfz-Baustein (XL und XXL gegen Zuschlag, TOP-Schutz enthalten); Öltank bis 6.000 l: XL und XXL gegen Zuschlag, im TOP-Schutz für die beitragsfrei mitversicherten Objekte enthalten. Selbst genutztes Einfamilienhaus in allen Tarifen mitversichert; der Baustein Haus- und Grundbesitzer gilt für Vermieter.",
+    "Baustein „Ohne Selbstbeteiligung“: Standard ist 0 € SB, 150 € SB gegen 15 % Nachlass wählbar.",
+    "Mietsachschäden an Wohnräumen in XXL und TOP-Schutz ohne eigenen Betrag (●), daher „ja“; geliehene Sachen höchstens 12 Wochen.",
+    "Dienst-Haftpflicht, Cyber und Mitversicherung deliktunfähiger Kinder als eigener Baustein nicht auf der Produktseite genannt."
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung UnfallGiro",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Bausteine frei kombinierbar",
+    "Weltweit, rund um die Uhr",
+    "Auslands-Assistance, Bergung"
+  ],
+  "tarife": [
+    {
+      "name": "UnfallGiro XL",
+      "kurz": "XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "bis 1.000 %",
+        "abGrad": "Rente ab 35 %",
+        "unfallrente": "optional",
+        "khtg": "optional, bis 3 Jahre",
+        "maxInvaliditaet": "ab 100 % Invalidität",
+        "todesfall": "optional",
+        "sofort": "optional",
+        "kosmetik": "optional",
+        "bergung": "ja",
+        "zecken": "ja",
+        "gliedertaxe": "Standard (Arm 70 %)"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/1527910327/continentale-sv-unfallgiro-unfallgirovita-und-unfallgiroteam-xl-versicherungsbedingungen-5376.pdf/f5408d03-fd6c-8347-4dc0-e8f4c9d1024b?version=11.1&t=1793632026012&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "UnfallGiro XXL",
+      "kurz": "XXL",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "bis 1.000 %",
+        "abGrad": "Rente ab 35 %",
+        "unfallrente": "optional",
+        "khtg": "optional, bis 4 Jahre",
+        "maxInvaliditaet": "ab 100 % Invalidität",
+        "todesfall": "optional",
+        "sofort": "optional",
+        "kosmetik": "optional",
+        "bergung": "ja",
+        "zecken": "ja",
+        "gliedertaxe": "verbessert (Arm 80 %)"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/1527910327/continentale-sv-unfallgiro-unfallgirovita-und-unfallgiroteam-xxl-versicherungsbedingungen-5377.pdf/49b85811-fd77-36f8-af20-0ea3aeeb2d98?version=10.1&t=1793632077293&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "UnfallGiro XXL mit TOP-Schutz",
+      "kurz": "TOP-Schutz",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "bis 1.000 %",
+        "abGrad": "Rente ab 35 %",
+        "unfallrente": "optional",
+        "khtg": "optional, bis 5 Jahre",
+        "maxInvaliditaet": "ab 75 % Invalidität",
+        "todesfall": "optional",
+        "sofort": "optional",
+        "kosmetik": "optional",
+        "bergung": "ja, erhöht",
+        "zecken": "ja",
+        "gliedertaxe": "verbessert (Arm 80 %)"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/1527910327/continentale-sv-unfallgiro-unfallgirovita-und-unfallgiroteam-xxl-versicherungsbedingungen-5377.pdf/49b85811-fd77-36f8-af20-0ea3aeeb2d98?version=10.1&t=1793632077293&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/unfallversicherung",
+    "https://www.continentale.de/documents/39054/1527910327/continentale-sv-unfallgiro-unfallgirovita-und-unfallgiroteam-xl-versicherungsbedingungen-5376.pdf/f5408d03-fd6c-8347-4dc0-e8f4c9d1024b?version=11.1&t=1793632026012&download=true",
+    "https://www.continentale.de/documents/39054/1527910327/continentale-sv-unfallgiro-unfallgirovita-und-unfallgiroteam-xxl-versicherungsbedingungen-5377.pdf/49b85811-fd77-36f8-af20-0ea3aeeb2d98?version=10.1&t=1793632077293&download=true"
+  ],
+  "offen": [
+    "UnfallGiro ist ein Baukasten: Invaliditätsleistung (Progression 225, 350, 500 oder 1.000 %), Unfallrente (Pakete Komfort, Aktiv, Aktiv Plus, Forte), Krankenhaustagegeld Plus, Sofortleistung Plus, Todesfall-Leistung, Schmerzensgeld und Schutzbriefe werden einzeln vereinbart; Summen frei wählbar, daher „optional“ bzw. „frei wählbar“.",
+    "Stufen XL und XXL sind eigene Bedingungswerke (AUB 2020 XL bzw. XXL); TOP-Schutz ist eine Erweiterung des XXL (volle Leistung ab 75 % Invalidität, Krankenhaustagegeld bis 5 Jahre und Tag 1 bis 20 doppelt, erhöhte Assistance- und Kurleistungen). Continentale markiert keinen Tarif; XXL als mittlere Stufe gesetzt.",
+    "Unfallrente: Aktiv und Aktiv Plus ab 35 % Invaliditätsgrad, Forte und Komfort ab 50 %. Kosmetische Operationen in allen Rentenpaketen außer Komfort enthalten.",
+    "Krankenhaustagegeld XXL: Tag 1 bis 10 doppelt, Genesungsgeld bis 200 Tage (XL bis 100 Tage). Infektionen durch Tierbisse, Tierkratzer und Insektenstiche laut Produktseite mitversichert.",
+    "Die Bedingungswerke im Download tragen den Stand 01.05.2020, die Produktseite nennt 10.2026; Beträge der Such-, Rettungs- und Bergungskosten nicht ausgewertet."
+  ]
+}

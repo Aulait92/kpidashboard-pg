@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auslandsreisen bis 42 Tage",
+    "Für gesetzlich Versicherte",
+    "Rechnung per App einreichen"
+  ],
+  "tarife": [
+    {
+      "name": "StartAmbulant (StartA)",
+      "kurz": "StartAmbulant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "50 % bis 150 € im Jahr",
+        "sehhilfen": "150 € alle 2 Jahre",
+        "vorsorge": "100 % bis 150 € im Jahr",
+        "ausland": "bis 42 Tage",
+        "wartezeit": "3 Monate"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/zusatzversicherung-ambulant",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basis-Schutz CEB-PLUS-U",
+      "kurz": "CEB-PLUS",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "bis 50 %",
+        "sehhilfen": "bis 77 €",
+        "arznei": "Zuzahlung 100 %",
+        "ausland": "bis 42 Tage",
+        "wartezeit": "3 Monate"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/zusatzversicherung-ambulant",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komfort-Schutz CEK-PLUS-U",
+      "kurz": "CEK-PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "bis 80 %",
+        "sehhilfen": "bis 150 €",
+        "vorsorge": "80 % bis 200 €",
+        "arznei": "bis 80 % und 150 €",
+        "hoergeraete": "Zuzahlung 100 %",
+        "ausland": "bis 42 Tage",
+        "wartezeit": "3 Monate"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.continentale.de/zusatzversicherung-ambulant",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/zusatzversicherung-ambulant",
+    "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true",
+    "https://www.continentale.de/documents/39054/16670191/Versicherungsbedingungen+f%C3%BCr+Zusatzversicherte.pdf/71308ae8-ca9b-550a-8e09-877027d815ad?version=3.3&t=1767602243027&download=true"
+  ],
+  "offen": [
+    "Leistungen aus der Tarifübersicht der Produktseite („Einsteiger-, Basis-, Komfort-Schutz“); Continentale markiert keinen Tarif, CEB-PLUS als mittlere Stufe gesetzt.",
+    "Heilpraktiker/Naturheilverfahren: CEB-PLUS bis 50 % ohne GKV-Leistung, 100 % unter Anrechnung der GKV-Leistung; CEK-PLUS bis 80 % ohne GKV-Leistung. CEB-PLUS Arzneimittel außerdem bis 50 % und 100 €; Sehhilfen bei CEB-PLUS unter Anrechnung der GKV-Leistung.",
+    "Hörgeräte: nur „100 % Zuzahlungen für Hilfsmittel“ im CEK-PLUS genannt; eigene Hörgeräte-Leistung nicht belegt. Augenlaser nicht belegt; Vorsorge im CEB-PLUS nicht genannt.",
+    "Wartezeit: allgemeine Wartezeit 3 Monate (MB/KK 2009 bzw. StartA), erlassbar mit ärztlichem Zeugnis, entfällt bei Unfall und für den Auslandsschutz. CEB-PLUS und CEK-PLUS zahlen bei Leistungsfreiheit eine Pauschalleistung (mindestens 3/12 des Vorjahresbeitrags)."
+  ]
+}

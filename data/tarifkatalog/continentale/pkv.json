@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "pkv",
+  "produkt": "Private Krankenvollversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Impfungen nach STIKO",
+    "Zahnbehandlung 100 %",
+    "Europa unbegrenzt"
+  ],
+  "tarife": [
+    {
+      "name": "COMFORT + SP2",
+      "kurz": "COMFORT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "bis GOÄ-Höchstsatz",
+        "stationaer": "2-Bett, Chefarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "20 € je Leistung",
+        "bre": "bis 6 Monatsbeiträge",
+        "sehhilfen": "300 € alle 2 Jahre",
+        "ausland": "außerh. Europas 6 Mon."
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.continentale.de/pkv",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SELECT + SP2",
+      "kurz": "SELECT",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "bis GOÄ-Höchstsatz",
+        "stationaer": "2-Bett, Chefarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "max. 300 bis 1.000 €",
+        "bre": "500 € garantiert",
+        "sehhilfen": "300 € alle 2 Jahre",
+        "ausland": "außerh. Europas 6 Mon."
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.continentale.de/pkv",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PREMIUM + SP1",
+      "kurz": "PREMIUM",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "über GOÄ-Höchstsatz",
+        "stationaer": "1-Bett, Chefarzt",
+        "zahnersatz": "85 %",
+        "selbstbehalt": "max. 500 € im Jahr",
+        "bre": "bis 6 Monatsbeiträge",
+        "sehhilfen": "400 € alle 2 Jahre",
+        "ausland": "außerh. Europas 12 Mon."
+      },
+      "bausteine": {
+        "ktg": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.continentale.de/pkv",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/pkv",
+    "https://www.continentale.de/krankentagegeld",
+    "https://www.continentale.de/pflegeversicherung"
+  ],
+  "offen": [
+    "Werte aus der Tarifübersicht der Produktseite (COMFORT, SELECT und PREMIUM, jeweils mit stationärem Baustein SP2 bzw. SP1); Versicherungsbedingungen Krankenvollversicherung (Stand 04.2026) nicht ausgewertet.",
+    "Continentale markiert PREMIUM mit „Ausgezeichnet“ (Bewertung, keine Empfehlung); SELECT als mittlere Stufe gesetzt.",
+    "Selbstbeteiligung: COMFORT 20 € je Leistung, 50 € bei Hilfsmitteln (Jahreshöchstbetrag nicht genannt); SELECT 30 € je Leistung, 60 € bei Hilfsmitteln, höchstens 300, 600 oder 1.000 € je Tarifstufe; PREMIUM 20 € je Leistung, höchstens 500 € (Kinder 250 €). Generika und Sehhilfen ohne SB.",
+    "Beitragsrückerstattung: COMFORT und PREMIUM bis 6 Monatsbeiträge, davon 2 garantiert; SELECT 500 € garantiert plus erfolgsabhängig bis 3 Monatsbeiträge (vorbehaltlich Beschluss).",
+    "Zahnbehandlung in allen Stufen 100 %. Heilpraktiker, Hilfsmittelkatalog, Psychotherapie und Primärarztprinzip nicht auf der Produktseite genannt. Krankentagegeld (Tarif V-U) und Pflegetagegeld als eigene Tarife ergänzbar, daher „optional“."
+  ]
+}
