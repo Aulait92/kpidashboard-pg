@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung SI RisikofreiLeben",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Vorläufiger Schutz ab Antrag bei Unfalltod",
+    "BU-Zusatz mit Beitragsbefreiung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "SI RisikofreiLeben-Immo",
+      "kurz": "Immo",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "vorgezogen": "nein",
+        "verlaengerung": "nein"
+      },
+      "bausteine": {
+        "fallend": "inklusive"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SI RisikofreiLeben",
+      "kurz": "Standard",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja (Ausbaugarantie)",
+        "vorgezogen": "ja",
+        "verlaengerung": "nein"
+      },
+      "bausteine": {
+        "fallend": "nein"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SI RisikofreiLeben-PLUS",
+      "kurz": "PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja (Ausbaugarantie)",
+        "vorgezogen": "ja",
+        "verlaengerung": "bis 15 Jahre",
+        "kinder": "Kinderbonus 25 %"
+      },
+      "bausteine": {
+        "fallend": "nein"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/risikolebensversicherung/",
+    "https://www.signal-iduna.de/content/dam/si-documents/2/27/27453xx.pdf.coredownload.inline.pdf"
+  ],
+  "offen": [
+    "Drei Varianten ohne Markierung der Gesellschaft; Reihenfolge nach Leistungsumfang (Immo, Standard, PLUS), Standard als mittlere Stufe. Kurzname „Standard“ ist von uns vergeben (Produkt heißt SI RisikofreiLeben).",
+    "Immo ist die Variante mit fallender Versicherungssumme für Kredite (Wechseloption in konstante Summe); Standard und PLUS haben eine konstante Summe.",
+    "PLUS zusätzlich: Hochzeits-, Bau- und Kinderbonus (Summe 6 Monate plus 25 %, max. 25.000 €). Kinderbonus ist keine Kinder-Nachversicherung im engeren Sinn.",
+    "Weltweiter Schutz, Umtauschrecht in eine Kapitalversicherung und höchstes Endalter auf Produktseite und Broschüre (Okt24) nicht genannt.",
+    "Verbundene Leben: nur im Ratgebertext erklärt, nicht als Tarif belegt."
+  ]
+}

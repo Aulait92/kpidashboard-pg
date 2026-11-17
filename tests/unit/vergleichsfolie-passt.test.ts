@@ -103,6 +103,8 @@ describe("Vergleichsfolie passt (Chromium)", () => {
       const sp = a.sparten[0];
       // alle Stufen (bis 4), längste Merkmal-Kurznamen bevorzugt, 2 Bausteine mit Preis
       sp.tarife = echt.tarife.filter((t) => t.gesellschaft === "allianz" && t.sparte === s.key).map(tarifAusKatalog);
+      // Sparte ohne Allianz-Tarife (noch nicht recherchiert): nichts zu messen
+      if (!sp.tarife.length) continue;
       sp.bausteine = s.bausteine.slice(0, 2).map((b) => b.key);
       sp.tarife.forEach((t, i) => {
         t.beitrag = 123.45 + i;
@@ -112,10 +114,38 @@ describe("Vergleichsfolie passt (Chromium)", () => {
         }
       });
       const [f] = await messen(a);
+      // Nur ein Tarif (z. B. Basisrente, Sterbegeld): keine Vergleichsfolie
+      if (!f) continue;
       expect(f.unten, `${s.key}: Inhalt ${f.unten} px, Fußzeile ${f.fuss} px`).toBeLessThanOrEqual(f.fuss);
       expect(f.breiter, s.key).toBe(false);
     }
   }, 60_000);
+
+  it("echter Katalog, neue Sparten (17.11.2026): AXA und SIGNAL IDUNA passen ebenfalls", async (ctx) => {
+    if (!browser) return ctx.skip();
+    const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
+    const neu = ["bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld"];
+    for (const g of ["axa", "signal-iduna"]) {
+      for (const s of echt.sparten.filter((x) => neu.includes(x.key))) {
+        const a = startAuswahl(echt, [s.key], { rolle: "vertreter", gesellschaften: [g] });
+        const sp = a.sparten[0];
+        sp.tarife = echt.tarife.filter((t) => t.gesellschaft === g && t.sparte === s.key).map(tarifAusKatalog);
+        if (!sp.tarife.length) continue;
+        sp.bausteine = s.bausteine.slice(0, 2).map((b) => b.key);
+        sp.tarife.forEach((t, i) => {
+          t.beitrag = 123.45 + i;
+          for (const b of sp.bausteine) {
+            t.bausteinStatus[b] = "optional";
+            t.bausteine[b] = { an: i % 2 === 0, beitrag: 12.34 };
+          }
+        });
+        const [f] = await messen(a);
+        if (!f) continue;
+        expect(f.unten, `${g}/${s.key}: Inhalt ${f.unten} px, Fußzeile ${f.fuss} px`).toBeLessThanOrEqual(f.fuss);
+        expect(f.breiter, `${g}/${s.key}`).toBe(false);
+      }
+    }
+  }, 120_000);
 
   it("4 Stufen: eine Merkmalzeile weniger, nichts unter der Fußzeile", async (ctx) => {
     if (!browser) return ctx.skip();

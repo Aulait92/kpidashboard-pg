@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % Berufsunfähigkeit",
+    "Keine Beitragserhöhung bei Jobwechsel",
+    "Sofortrente 15 Monate bei Krebs, Infarkt"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung S Basisschutz",
+      "kurz": "Tarif S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "nein",
+        "nachversicherung": "ja",
+        "dynamik": "Leistungsdynamik nein"
+      },
+      "bausteine": {
+        "au": "nein"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung M Gut versichert",
+      "kurz": "Tarif M",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "ja, ab 6 Monaten",
+        "nachversicherung": "ja",
+        "dynamik": "Leistungsdynamik nein"
+      },
+      "bausteine": {
+        "au": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung L Premiumschutz",
+      "kurz": "Tarif L",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "ja, ab 6 Monaten",
+        "nachversicherung": "ja",
+        "dynamik": "Leistungsdynamik inkl."
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung"
+  ],
+  "offen": [
+    "Rückwirkende Leistung bei verspäteter Meldung nicht auf der Produktseite genannt; Bedingungen nicht öffentlich verlinkt.",
+    "Weltweiter Schutz, Teilzeitklausel, Umorganisation, Pflegerente, Beitragsstundung und Infektionsklausel nicht belegt.",
+    "Dynamik: belegt ist nur die Leistungsdynamik im Leistungsfall (nur Tarif L); die Beitragsdynamik nennt die Seite allgemein, nicht je Tarif.",
+    "Nachversicherung: Erhöhung bei Lebensereignissen, in den ersten 5 Jahren auch ohne Anlass (alle Tarife). Keine Karenzzeit.",
+    "AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe gesetzt. Starter-BU (Azubis, Einsteiger) und Erwerbsunfähigkeitsversicherung nicht aufgenommen."
+  ]
+}

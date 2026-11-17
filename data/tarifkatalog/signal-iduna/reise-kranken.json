@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "SIGNAL IDUNA",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit und Selbstbeteiligung",
+    "Rücktransport, auch im Ambulanzflugzeug",
+    "24h Notfall-Telefon"
+  ],
+  "tarife": [
+    {
+      "name": "Tages-Reise-KV",
+      "kurz": "Einzelreise",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 365 Tage",
+        "ruecktransport": "ja",
+        "usa": "wählbar",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend",
+        "schwanger": "Beschwerden versichert"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/auslandskrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reise-KV",
+      "kurz": "Jahrestarif",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 65 Tage je Reise",
+        "ruecktransport": "ja",
+        "usa": "ja",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend",
+        "schwanger": "Beschwerden versichert"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.signal-iduna.de/produkte/auslandskrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.signal-iduna.de/produkte/auslandskrankenversicherung/"
+  ],
+  "offen": [
+    "SIGNAL IDUNA markiert den Jahres-Reise-KV als „Empfohlen“.",
+    "Tages-Reise-KV: weltweit oder weltweit ohne USA, Kanada und Karibik wählbar. Jahres-Reise-KV: Dienstreisen bis 10 Tage.",
+    "Familientarif: Kinder bis 25 Jahre mitversichert. Bekannte Erkrankungen und Langzeitreise als Baustein auf der Produktseite nicht genannt.",
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparatur von Zahnersatz."
+  ]
+}

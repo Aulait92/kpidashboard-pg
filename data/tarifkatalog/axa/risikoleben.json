@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Weltweiter Versicherungsschutz",
+    "Sofortschutz bei Unfalltod ab Antrag",
+    "Dynamik ohne neue Gesundheitsprüfung"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Standard",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "weltweit": "ja",
+        "kinder": "nein"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, bei Lebensereignis",
+        "weltweit": "ja",
+        "kinder": "ja, plus Kinder-Extra"
+      },
+      "quelle": "https://www.axa.de/pk/existenzsicherung/p/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/existenzsicherung/p/risikolebensversicherung",
+    "https://www.axa.de/site/axa-de/get/documents_E-1420869249/axade/medien/privatkunden/existenzsicherung/risikolebensversicherung/risikolebensversicherung-standard-axa.pdf",
+    "https://www.axa.de/site/axa-de/get/documents_E1008474426/axade/medien/privatkunden/existenzsicherung/risikolebensversicherung/flyer-risikolebensversicherung-komfort-axa.pdf"
+  ],
+  "offen": [
+    "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und Umtauschrecht weder auf der Produktseite noch in den Flyern genannt.",
+    "Höchstes Endalter und höchste Summe ohne Zusatzprüfung nicht veröffentlicht.",
+    "Komfort zusätzlich: Beitragsstundung 6 Monate, Kinder-Extra und Eigenheim-Extra (+25 % für 6 Monate, max. 50.000 €), +25 % bei Unfalltod (max. 50.000 €).",
+    "Fallende Summe und verbundene Leben nur allgemein im Ratgeber erwähnt, nicht als Tarifoption belegt. BU-Zusatzversicherung kombinierbar.",
+    "Empfehlung: AXA markiert Komfort als „Unser Tipp“. Flyer Stand 4.21."
+  ]
+}

@@ -208,6 +208,34 @@ const TIERHALTER = (key: string, label: string, pferd: boolean): KatalogSparte =
   ],
   bausteine: [b("sb", "Selbstbeteiligung")],
 });
+/** Gruppen der Sparten-Auswahl („+ Versicherung“, Ole 17.11.2026: alle Versicherungsprodukte), in Anzeige-Reihenfolge. */
+export const SPARTEN_GRUPPEN: { label: string; keys: string[] }[] = [
+  { label: "Haftpflicht und Sach", keys: ["haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "unfall"] },
+  { label: "Tiere", keys: ["katze-kranken", "katze-op", "hund-kranken", "hund-op", "pferd-kranken", "pferd-op", "tierhalter-hund", "tierhalter-pferd"] },
+  { label: "Leben und Arbeitskraft", keys: ["bu", "grundfaehigkeit", "risikoleben", "sterbegeld"] },
+  { label: "Gesundheit", keys: ["pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "reise-kranken"] },
+  { label: "Vorsorge", keys: ["rente", "basisrente"] },
+  { label: "Kfz", keys: ["kfz"] },
+];
+
+/**
+ * Angebote dieser Sparte darf die KI auslesen? Nein bei Leben, Gesundheit und Vorsorge (AVV: keine Produkte mit
+ * Gesundheitsangaben an den KI-Anbieter, lib/angebote.ts); dort trägt der Vermittler nur den Beitrag ein.
+ */
+export function angebotAuslesbar(key: string): boolean {
+  const ohne = SPARTEN_GRUPPEN.filter((g) => ["Leben und Arbeitskraft", "Gesundheit", "Vorsorge"].includes(g.label)).flatMap((g) => g.keys);
+  return !ohne.includes(key);
+}
+
+/** Sparten nach Gruppen; unbekannte Sparten am Ende unter „Weitere“. */
+export function spartenGruppiert<T extends { key: string }>(sparten: T[]): { label: string; sparten: T[] }[] {
+  const out = SPARTEN_GRUPPEN.map((g) => ({ label: g.label, sparten: g.keys.map((k) => sparten.find((s) => s.key === k)).filter((s): s is T => !!s) }));
+  const bekannt = new Set(SPARTEN_GRUPPEN.flatMap((g) => g.keys));
+  const rest = sparten.filter((s) => !bekannt.has(s.key));
+  if (rest.length) out.push({ label: "Weitere", sparten: rest });
+  return out.filter((g) => g.sparten.length);
+}
+
 export const SPARTEN_STANDARD: KatalogSparte[] = [
   TIERKRANKEN("katze-kranken", "Katzenkranken"),
   TIERKRANKEN("katze-op", "Katzen-OP"),

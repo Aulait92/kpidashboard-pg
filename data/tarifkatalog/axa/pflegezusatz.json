@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung (Pflegevorsorge VARIO)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Keine Wartezeiten",
+    "Pflegegeld alle 3 Jahre +10 %",
+    "Gilt in EU, EWR und Schweiz"
+  ],
+  "tarife": [
+    {
+      "name": "Pflegevorsorge VARIO Basis (Pflegegrade 4 bis 5)",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "500 €",
+        "ab-pg": "Pflegegrad 4",
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 Jahre +10 %"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegevorsorge VARIO Komfort (Pflegegrade 2 bis 5)",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "1.400 €",
+        "ab-pg": "Pflegegrad 2",
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 Jahre +10 %"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegevorsorge VARIO Premium (Pflegegrade 1 bis 5)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "1.900 €",
+        "ab-pg": "Pflegegrad 1",
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 Jahre +10 %"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/pflegezusatzversicherung",
+    "https://www.axa.de/site/axa-de/get/documents_E-435231806/axade/medien/privatkunden/gesundheit/pflegezusatzversicherung/persoflyer-pflegevorsorge-vario.pdf"
+  ],
+  "offen": [
+    "Monatliches Pflegegeld je Pflegegrad (1 bis 5): Basis 0/0/0/500/500 €, Komfort 0/100/700/1.100/1.400 €, Premium 100/600/1.200/1.600/1.900 €. Pflegegeld je Pflegegrad individuell wählbar, die Stufen sind Beispiele der Produktseite.",
+    "Ambulant wie stationär: laut Flyer volles Pflegegeld frei verfügbar für Pflege zu Hause oder im Heim.",
+    "Einmalleistung bei Pflegebeginn nicht Teil von VARIO; ergänzend Pflegevorsorge Akut (Soforthilfe bis 2.500 € für 3 Monate) als eigenes Produkt.",
+    "Dynamik ohne neue Gesundheitsprüfung von Alter 21 bis 71, auch im Pflegefall. Leistung bei Demenz nicht gesondert genannt.",
+    "Empfehlung: AXA markiert Komfort als „Unser Tipp“. Flyer Stand 1.21."
+  ]
+}

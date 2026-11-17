@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "basisrente",
+  "produkt": "BasisRente (Rürup)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente, Beginn 62 bis 85",
+    "Beiträge steuerlich absetzbar",
+    "BU- und Hinterbliebenenschutz wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Relax BasisRente",
+      "kurz": "Relax",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "80 % der Beiträge",
+        "anlage": "Index + freie Fonds",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "einschließbar"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/altersvorsorge/p/basisrenten",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fonds-BasisRente",
+      "kurz": "Fonds",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Garantie-Option bis 50 %",
+        "anlage": "Fonds-Mix, Einzelfonds",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "einschließbar"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.axa.de/pk/altersvorsorge/p/basisrenten",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/altersvorsorge/p/basisrenten",
+    "https://www.axa.de/site/axa-de/get/documents_E-749234210/axade/medien/privatkunden/altersvorsorge/basisrente/infoblatt-basisrente.pdf"
+  ],
+  "offen": [
+    "Relax BasisRente: mindestens 80 % der regelmäßig gezahlten Beiträge zum Ende der Laufzeit garantiert (Sicherungsvermögen), dazu Indexbeteiligung und freie Investmentanlage.",
+    "Fonds-BasisRente: keine Beitragsgarantie genannt; Gewinnsicherung über die Garantie-Option (bis 50 % des Fondsguthabens ins Sicherungsvermögen).",
+    "Garantierter Rentenfaktor, Beitragspause und Kosten (Effektivkosten) auf der Produktseite nicht genannt.",
+    "Zuzahlungen in der Ansparphase laut Merkblatt (Stand 11.22) für die BasisRente allgemein, nicht je Tarif.",
+    "Zwei Varianten ohne Markierung der Gesellschaft; keine Empfehlung gesetzt."
+  ]
+}

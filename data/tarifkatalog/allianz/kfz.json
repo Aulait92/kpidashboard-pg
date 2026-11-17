@@ -1,0 +1,109 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Personenschäden bis 15 Mio. € je Person",
+    "Glasschäden, Naturgewalten mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Allianz Direct",
+      "kurz": "Direct",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja",
+        "marder": "ja",
+        "neuwert": "nein",
+        "gap": "nein",
+        "werkstatt": "ja, abwählbar",
+        "elektro": "Akku, Ladekabel"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/auto/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Allianz Direct Plus",
+      "kurz": "Direct Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja",
+        "marder": "ja",
+        "neuwert": "bis 24 Monate",
+        "gap": "ja",
+        "werkstatt": "ja, abwählbar",
+        "elektro": "Akku, Ladekabel"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/auto/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Allianz Kfz-Versicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja",
+        "marder": "ja",
+        "neuwert": "bis 24 Monate",
+        "gap": "ja",
+        "grob": "ja, außer Diebstahl",
+        "rabattschutz": "optional",
+        "werkstatt": "wählbar, 20 % Nachlass",
+        "elektro": "Allgefahren für Akku"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.allianz.de/auto/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Allianz Kfz-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "tiere": "ja",
+        "marder": "ja",
+        "neuwert": "bis 36 Monate",
+        "gap": "ja",
+        "grob": "ja, außer Diebstahl",
+        "rabattschutz": "optional",
+        "werkstatt": "wählbar, 20 % Nachlass",
+        "elektro": "Allgefahren für Akku"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.allianz.de/auto/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/auto/kfz-versicherung/",
+    "https://goa-cdeportale.allianz.de/PKR/B-4/PKRB-4014Z0.pdf.06.download.pdf"
+  ],
+  "offen": [
+    "Direct und Direct Plus sind Tarife der Allianz Direct (eigene Bedingungen); grobe Fahrlässigkeit und Rabattschutz dort nicht belegt.",
+    "Grobe Fahrlässigkeit Komfort und Premium aus den AKB (PKRB 4014/06): Verzicht in Teil- und Vollkasko, nicht bei Entwendung und Alkohol oder Drogen.",
+    "Neupreisentschädigung mit WerterhaltGarantie verlängerbar (Komfort 48, Premium 60 Monate); Direct und Direct Plus bis 100.000 €.",
+    "Mallorca-Police nicht genannt. Schutzbrief bei Direct und Direct Plus als „Mobilitätsgarantie“ wählbar.",
+    "Allianz markiert keinen Tarif; Komfort als dritte von vier Stufen gesetzt."
+  ]
+}

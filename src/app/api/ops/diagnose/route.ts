@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung
+//   GET /api/ops/diagnose?q=zustellfehler|variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -95,6 +95,17 @@ async function whatsapp() {
   });
   const last = await prisma.conversation.groupBy({ by: ["whatsAppAccountId"], _max: { lastMessageAt: true } });
   return { anzahl: rows.length, rows, letzteNachricht: last };
+}
+
+/** Letzte nicht zugestellte WhatsApp-Nachrichten (Ole, 17.11.2026): Meta-Fehlercode, Zweck, Kunde; ohne Nummer und Inhalt */
+async function zustellfehler() {
+  const rows = await prisma.message.findMany({
+    where: { direction: "outbound", status: "failed" },
+    orderBy: { createdAt: "desc" },
+    take: 25,
+    select: { createdAt: true, kind: true, purpose: true, variant: true, errorCode: true, errorTitle: true, sentBy: true, conversation: { select: { customer: { select: { name: true } } } } },
+  });
+  return rows.map((r) => ({ at: r.createdAt, kunde: r.conversation.customer.name, kind: r.kind, purpose: r.purpose, variant: r.variant, sentBy: r.sentBy, errorCode: r.errorCode, errorTitle: r.errorTitle }));
 }
 
 /** Gespeicherte Texte mit Gedankenstrichen (Regel AGENTS.md): nur Anzahlen und Namen, keine Inhalte */
@@ -598,7 +609,7 @@ async function variablen() {
   return pruefeVariablen();
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

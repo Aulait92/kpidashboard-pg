@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "AXA",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Sofortschutz ohne Wartezeit",
+    "Zahnbehandlung 100 %",
+    "Bleaching bis 200 € alle 2 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Zahn Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "80 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, 1 mal im Jahr",
+        "wartezeit": "keine",
+        "kfo": "80 %, max. 5.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, 1 mal im Jahr",
+        "wartezeit": "keine",
+        "staffel": "Staffel bis 6.000 €",
+        "kfo": "90 %, max. 5.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahn Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, unbegrenzt",
+        "wartezeit": "keine",
+        "staffel": "Staffel bis 6.000 €",
+        "kfo": "100 %, max. 5.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.axa.de/pk/gesundheit/p/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.axa.de/pk/gesundheit/p/zahnzusatzversicherung"
+  ],
+  "offen": [
+    "Implantate und Inlays laut Produktseite „tarifabhängig“ im Zahnersatz, je Tarif nicht beziffert.",
+    "Zahnstaffel bis 6.000 € nur für Komfort und Premium genannt; Staffel von Klassik und die Jahresgrenzen der Staffel nicht veröffentlicht. Die Tabelle nennt bei allen drei Tarifen „1. Jahr 500 €, 1. bis 2. Jahr 1.000 €“ (Zuordnung unklar).",
+    "Kieferorthopädie nur für Kinder (Behandlungsbeginn vor 18), max. 5.000 € über die Vertragslaufzeit, unabhängig von KIG.",
+    "Gebührenordnung: Klassik und Komfort bis 5-facher Satz, Premium auch darüber.",
+    "Zahn easy (ohne Gesundheitsprüfung, 0 bis 40 Jahre, 100 % bis 1.000 € im Jahr, 3 Monate Wartezeit) als vierte Variante nicht aufgenommen. AXA kennzeichnet keine Empfehlung; Komfort als mittlere Stufe."
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "Allianz",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Transportkosten 100 % bis 100 km",
+    "Freie Krankenhauswahl"
+  ],
+  "tarife": [
+    {
+      "name": "AmbulantPlus",
+      "kurz": "Plus",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "70 %, max. 400 € p. a.",
+        "sehhilfen": "150 € alle 24 Monate",
+        "vorsorge": "nein",
+        "hoergeraete": "nein",
+        "wartezeit": "3 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/ambulant/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AmbulantBest",
+      "kurz": "Best",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, max. 1.000 €/2 J.",
+        "sehhilfen": "300 € alle 24 Monate",
+        "vorsorge": "80 %",
+        "hoergeraete": "80 %, max. 500 € p. a.",
+        "wartezeit": "3 Monate"
+      },
+      "bausteine": {},
+      "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/ambulant/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.allianz.de/gesundheit/krankenzusatzversicherung/ambulant/",
+    "https://goa-eportale.allianz.de/content/dam/onemarketing/dechap/dlc/MMK/--3/MMK--3054Z0.pdf.azde.download.pdf/MMK--3054Z0_Version-4V_03-01-2024.pdf"
+  ],
+  "offen": [
+    "Arzneimittel (Zuzahlung), Auslandsreiseschutz und Augenlaser stehen nicht im Tarifvergleich.",
+    "Wartezeit 3 Monate laut Produktseite (8 Monate für Psychotherapie beim Heilpraktiker).",
+    "Heilpraktiker Best gemeinsam mit alternativmedizinischen Verfahren max. 1.000 € in 2 Versicherungsjahren.",
+    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt."
+  ]
+}
