@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -541,13 +541,64 @@ async function instantlyAuswertung() {
   return { ...ergebnis, markdown: alsMarkdown(ergebnis) };
 }
 
+/**
+ * HvK-Abrechnungen je Rechnung (nur Zahlen, keine Namen/Telefonnummern): geliefert, abgerechnet, Differenz, Stornos
+ * auto/offen. &neu=1: Vorschau des Neuabgleichs (reabgleichHvk dryRun, schreibt nichts).
+ */
+async function hvk(params: URLSearchParams) {
+  const rows = await prisma.hvkInvoice.findMany({
+    orderBy: { periodStart: "asc" },
+    select: { invoiceNo: true, periodStart: true, periodEnd: true, deliveredCount: true, boughtCount: true, netCents: true, source: true, reklamationen: { select: { status: true } } },
+  });
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const count = (r: (typeof rows)[number], ...s: string[]) => r.reklamationen.filter((k) => s.includes(k.status)).length;
+  const out: Record<string, unknown> = {
+    anzahl: rows.length,
+    rechnungen: rows.map((r) => ({
+      invoiceNo: r.invoiceNo,
+      zeitraum: `${iso(r.periodStart)}..${iso(r.periodEnd)}`,
+      geliefert: r.deliveredCount,
+      abgerechnet: r.boughtCount,
+      differenz: r.deliveredCount - r.boughtCount,
+      stornoAuto: count(r, "auto", "erledigt"),
+      stornoOffen: count(r, "offen"),
+      verworfen: count(r, "verworfen"),
+      nettoCent: r.netCents,
+      quelle: r.source,
+    })),
+  };
+  if (params.get("neu") === "1") {
+    const { reabgleichHvk } = await import("@/lib/ppl/hvk-abrechnung-server");
+    const s = await reabgleichHvk({ dryRun: true });
+    out.neuabgleich = {
+      summen: s.totals,
+      wochen: s.weeks.map((w) => ({
+        invoiceNo: w.invoiceNo,
+        zeitraum: `${w.periodStart}..${w.periodEnd}`,
+        geliefert: w.delivered,
+        geliefertVorher: w.deliveredBefore,
+        abgerechnet: w.billed,
+        differenz: w.diff,
+        nichtAbgerechnet: w.unbilled,
+        nichtVonUns: w.foreign,
+        stornoNeu: w.stornoNew,
+        stornoBisher: w.stornoBefore,
+        offen: w.open,
+        aendertSich: w.changed,
+        fehler: w.errors.length,
+      })),
+    };
+  }
+  return out;
+}
+
 /** Pflichtvariablen: nur Status je Name, nie Werte (lib/env-check.ts). */
 async function variablen() {
   const { pruefeVariablen } = await import("@/lib/env-check");
   return pruefeVariablen();
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, instantly, "instantly-auswertung": instantlyAuswertung };
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });

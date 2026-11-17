@@ -1,7 +1,18 @@
 "use client";
 
 import { useActionState } from "react";
-import { hvkAssignAction, hvkBackfillAction, hvkFetchNowAction, hvkUploadAction, type HvkReklamationState, type HvkRunRow, type HvkRunState } from "./hvk-actions";
+import type { HvkReabgleichWeek } from "@/lib/ppl/hvk-abrechnung";
+import {
+  hvkAssignAction,
+  hvkBackfillAction,
+  hvkFetchNowAction,
+  hvkReabgleichAction,
+  hvkUploadAction,
+  type HvkReabgleichState,
+  type HvkReklamationState,
+  type HvkRunRow,
+  type HvkRunState,
+} from "./hvk-actions";
 import { versandTestAction, type VersandTestState } from "./ppl-versand-actions";
 
 const btn = "h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold disabled:opacity-60";
@@ -67,6 +78,66 @@ export function HvkBackfill({ connected }: { connected: boolean }) {
       </form>
       {state.rows?.length ? <RunTable rows={state.rows} /> : null}
     </div>
+  );
+}
+
+/** „Neu abgleichen“: übernommene Wochen neu rechnen. Erst Vorschau (ändert nichts), dann übernehmen. */
+export function HvkReabgleich() {
+  const [state, action, pending] = useActionState<HvkReabgleichState, FormData>(hvkReabgleichAction, {});
+  const previewed = state.dryRun && !!state.weeks?.length;
+  return (
+    <div className="space-y-2">
+      <form action={action} className="flex flex-wrap items-center gap-2">
+        <button name="mode" value="vorschau" disabled={pending} className={`${btn} border border-[color:var(--border)] bg-white`}>
+          {pending ? "Gleiche ab …" : previewed ? "Vorschau neu" : "Neu abgleichen"}
+        </button>
+        {previewed ? (
+          <button
+            name="mode"
+            value="uebernehmen"
+            disabled={pending}
+            onClick={(e) => {
+              if (!confirm("Wochen neu abgleichen und eindeutige Reklamationen als Storno eintragen?")) e.preventDefault();
+            }}
+            className={`${btn} bg-[color:var(--brand)] text-white`}
+          >
+            Übernehmen
+          </button>
+        ) : null}
+        <Feedback state={state} />
+      </form>
+      {state.weeks?.length ? <ReabgleichTable weeks={state.weeks} /> : null}
+    </div>
+  );
+}
+
+function ReabgleichTable({ weeks }: { weeks: HvkReabgleichWeek[] }) {
+  const de = (iso: string) => iso.split("-").reverse().join(".");
+  return (
+    <ul className="divide-y divide-[color:var(--border)] rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white text-sm">
+      {weeks.map((w) => (
+        <li key={w.invoiceNo} className="space-y-0.5 px-3 py-2">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="font-medium">{w.invoiceNo}</span>
+            <span className="text-xs text-[color:var(--muted)]">
+              {de(w.periodStart).slice(0, 6)} – {de(w.periodEnd)}
+            </span>
+            {w.changed ? null : <span className="text-xs text-[color:var(--muted)]">· unverändert</span>}
+          </div>
+          <div className="text-xs tabular-nums text-[color:var(--muted)]">
+            geliefert {w.deliveredBefore !== w.delivered ? `${w.deliveredBefore} → ` : ""}
+            <span className="font-medium text-[color:var(--foreground)]">{w.delivered}</span> · abgerechnet {w.billed} · Differenz{" "}
+            <span className={w.diff ? "font-medium text-amber-700" : undefined}>{w.diff > 0 ? `+${w.diff}` : w.diff}</span> · Stornos {w.stornoNew} neu + {w.stornoBefore} bisher
+            {w.open ? <span className="text-amber-700"> · {w.open} prüfen</span> : null}
+          </div>
+          {w.errors.map((e) => (
+            <div key={e} className="text-xs text-rose-700">
+              {e}
+            </div>
+          ))}
+        </li>
+      ))}
+    </ul>
   );
 }
 

@@ -4968,6 +4968,18 @@
   "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
+  "heute": "/admin/ppl?ansicht=hvk",
+  "funktion": "HvK-Abrechnungen neu abgleichen: Vorschau je Woche (geliefert, Differenz, Stornos), dann übernehmen",
+  "quelle": "app/admin/ppl/hvk-client.tsx:HvkReabgleich",
+  "neu": "Leads & Kampagnen › Pay-per-Lead › HvK-Abrechnungen",
+  "status": "ergänzt (17.11.2026, Neuabgleich nach Produktfilter-Fehler)",
+  "demo_view": "leads-ppl",
+  "id": "hvk-client-hvkreabgleich--hvk-abrechnungen-neu-abgleichen-vorschau-je",
+  "bereich": "leads",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+ },
+ {
   "heute": "/admin/vertrieb/import (Anbindungen)",
   "funktion": "Fehlende Instantly-Antworten der letzten 90 Tage nachholen (Vorschau, dann nachholen)",
   "quelle": "components/vertrieb/import-forms.tsx:InstantlyNachholen",

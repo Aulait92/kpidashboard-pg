@@ -26,8 +26,11 @@ const POSTFACH: Record<string, { tone: "success" | "warning"; text: string }> = 
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1.2fr)_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] sm:items-center";
 const Label = ({ children }: { children: React.ReactNode }) => <span className="text-[color:var(--muted)] sm:hidden">{children} </span>;
 
-/** versand: Zeile „Versand an Pivacom“ (ppl-versand.tsx), direkt unter dem Kopf, neben „Postfach verbinden“. */
-export async function HvkAbrechnungen({ postfach, versand }: { postfach?: string; versand?: React.ReactNode }) {
+/**
+ * versand: Zeile „Versand an Pivacom“ (ppl-versand.tsx), direkt unter dem Kopf, neben „Postfach verbinden“.
+ * abgleich: „Neu abgleichen“ (HvkReabgleich) unter der Liste, nur wenn es Abrechnungen gibt.
+ */
+export async function HvkAbrechnungen({ postfach, versand, abgleich }: { postfach?: string; versand?: React.ReactNode; abgleich?: React.ReactNode }) {
   const [rows, box] = await Promise.all([listHvkInvoices(), hvkMailboxStatus()]);
   const connected = !!box;
   const notice = postfach ? POSTFACH[postfach] : null;
@@ -70,6 +73,7 @@ export async function HvkAbrechnungen({ postfach, versand }: { postfach?: string
               <InvoiceRow key={r.id} r={r} />
             ))}
           </ul>
+          {abgleich ? <div className="border-t border-[color:var(--border)] px-5 py-3">{abgleich}</div> : null}
         </div>
       )}
 

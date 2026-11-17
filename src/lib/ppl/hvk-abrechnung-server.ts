@@ -15,14 +15,19 @@ import {
   HVK_CUSTOMER_NAME,
   HVK_PRODUCT,
   berlinDate,
+  hvkLeadFilter,
   hvkShiftDay,
   hvkStornoReason,
   leadPlzOrt,
+  reabgleichHvkInvoices,
   parseHvkInvoiceText,
   processHvkInvoice,
   type HvkDeliveredLead,
   type HvkInvoiceInput,
+  type HvkLine,
   type HvkProcessResult,
+  type HvkReabgleichStore,
+  type HvkReabgleichSummary,
   type HvkStore,
 } from "@/lib/ppl/hvk-abrechnung";
 
@@ -35,20 +40,26 @@ export async function hvkCustomerIds(): Promise<string[]> {
   return rows.map((r) => r.id);
 }
 
+/** Bedingung „HvK-Lead“ ohne Zeitraum (Regeln: hvkLeadFilter in lib/ppl/hvk-abrechnung.ts). null = kein HvK-Kunde. */
+export async function hvkLeadWhere(customerIds?: string[]): Promise<Prisma.LeadWhereInput | null> {
+  const ids = customerIds ?? (await hvkCustomerIds());
+  if (!ids.length) return null;
+  const subs = await prisma.leadSubscription.findMany({ where: { customerId: { in: ids } }, select: { id: true, airtableId: true, productKey: true } });
+  return hvkLeadFilter(ids, HVK_PRODUCT(), subs);
+}
+
 /**
- * Gelieferte HvK-Leads (Produkt PKV-Tarifoptimierung) mit Lieferdatum im Bereich (Berlin, inklusive). Aus der App mit
- * Bezug (deliveredAt) und aus der Airtable-Zeit (Lead.airtableId, Zuweisungsdatum = createdAt).
+ * Gelieferte HvK-Leads mit Lieferdatum im Bereich (Berlin, inklusive). Aus der App mit Bezug (deliveredAt) und aus
+ * der Airtable-Zeit (Lead.airtableId, Zuweisungsdatum = createdAt). Welche Leads zählen: hvkLeadWhere.
  */
 export async function loadHvkLeads(fromDate: string, toDate: string): Promise<HvkDeliveredLead[]> {
-  const customerIds = await hvkCustomerIds();
-  if (!customerIds.length) return [];
+  const base = await hvkLeadWhere();
+  if (!base) return [];
   const gte = new Date(`${hvkShiftDay(fromDate, -1)}T00:00:00Z`);
   const lt = new Date(`${hvkShiftDay(toDate, 2)}T00:00:00Z`);
   const rows = await prisma.lead.findMany({
     where: {
-      customerId: { in: customerIds },
-      source: { equals: HVK_PRODUCT(), mode: "insensitive" },
-      OR: [{ deliveredAt: { gte, lt } }, { deliveredAt: null, createdAt: { gte, lt } }],
+      AND: [base, { OR: [{ deliveredAt: { gte, lt } }, { deliveredAt: null, createdAt: { gte, lt } }] }],
     },
     select: { id: true, name: true, deliveredAt: true, createdAt: true, stornoState: true, formData: true, contactOverrides: true },
     orderBy: [{ deliveredAt: "asc" }, { createdAt: "asc" }],
@@ -265,6 +276,72 @@ export async function discardHvkReklamation(reklamationId: string, actor: Actor)
   const r = await prisma.hvkReklamation.updateMany({ where: { id: reklamationId, status: "offen" }, data: { status: "verworfen", decidedAt: new Date() } });
   if (r.count) await audit("ppl.hvk_reklamation_verworfen", { entity: "HvkReklamation", entityId: reklamationId, actor });
   return r.count > 0;
+}
+
+// ─── Neuabgleich (Admin → HvK-Abrechnungen → „Neu abgleichen“, Diagnose q=hvk&neu=1) ──────────
+
+export function prismaHvkReabgleichStore(actor: Actor = SYSTEM): HvkReabgleichStore {
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return {
+    async invoices() {
+      const rows = await prisma.hvkInvoice.findMany({
+        orderBy: { periodStart: "asc" },
+        select: {
+          id: true,
+          invoiceNo: true,
+          periodStart: true,
+          periodEnd: true,
+          lines: true,
+          result: true,
+          deliveredCount: true,
+          stornoAuto: true,
+          stornoReview: true,
+          reklamationen: { orderBy: { createdAt: "asc" }, select: { id: true, hvkLeadId: true, deliveryDate: true, plz: true, ort: true, status: true, leadId: true, candidateIds: true } },
+        },
+      });
+      return rows.map((r) => ({
+        id: r.id,
+        invoiceNo: r.invoiceNo,
+        periodStart: iso(r.periodStart),
+        periodEnd: iso(r.periodEnd),
+        lines: (Array.isArray(r.lines) ? r.lines : []) as unknown as HvkLine[],
+        result: (r.result && typeof r.result === "object" ? r.result : {}) as Partial<HvkProcessResult>,
+        deliveredCount: r.deliveredCount,
+        stornoAuto: r.stornoAuto,
+        stornoReview: r.stornoReview,
+        reklamationen: r.reklamationen.map((k) => ({ ...k, date: iso(k.deliveryDate) })),
+      }));
+    },
+    deliveredLeads: loadHvkLeads,
+    recordStorno: (leadId, reason, note) => adminRecordStorno(leadId, reason, note, actor, new Date(), { allowAirtableLead: true }),
+    async updateInvoice(id, data) {
+      await prisma.hvkInvoice.update({ where: { id }, data: { deliveredCount: data.deliveredCount, stornoAuto: data.stornoAuto, stornoReview: data.stornoReview, result: json(data.result) } });
+    },
+    async updateReklamation(id, data) {
+      // Nur offene: ein Admin könnte gleichzeitig entschieden haben
+      await prisma.hvkReklamation.updateMany({ where: { id, status: "offen" }, data });
+    },
+  };
+}
+
+/**
+ * Alle übernommenen HvK-Rechnungen neu abgleichen (nach dem Produktfilter-Fehler bis 17.11.2026). dryRun = Vorschau.
+ * PDF, Zeilen und Rechnungsdaten bleiben; offene Reklamationen werden neu zugeordnet. Idempotent.
+ */
+export async function reabgleichHvk(opts: { dryRun: boolean; actor?: Actor }): Promise<HvkReabgleichSummary> {
+  const actor = opts.actor ?? SYSTEM;
+  const summary = await reabgleichHvkInvoices(prismaHvkReabgleichStore(actor), { dryRun: opts.dryRun });
+  if (!opts.dryRun && summary.totals.changed) {
+    await audit("ppl.hvk_neuabgleich", {
+      entity: "HvkInvoice",
+      actor,
+      details: {
+        ...summary.totals,
+        wochen: summary.weeks.filter((w) => w.changed).map((w) => ({ invoiceNo: w.invoiceNo, geliefert: w.delivered, vorher: w.deliveredBefore, abgerechnet: w.billed, stornoNeu: w.stornoNew, offen: w.open })),
+      },
+    });
+  }
+  return summary;
 }
 
 // ─── Übersicht ──────────────────────────────────────────────────────────────
