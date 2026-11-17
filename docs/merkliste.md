@@ -16,6 +16,14 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   src/lib/empfehlung/shared.ts. Wieder an, wenn die kritischen Teile fertig sind (u. a. Bewertungs-Wächter:
   Google-Freigabe, docs/google-bewertungs-waechter.md). Präsentationsfolie „Empfehlungen & Bewertungen (59 €)“ prüfen.
 
+- 18.11.2026 (Nacht): **Calendly ablösen: technisch bereit.** Die eigene Buchungsseite (performancegrowth.de/termin,
+  lib/vertrieb/buchung.ts) kann alles, was Calendly für uns gemacht hat: freie Zeiten aus Oles Kalender, Handynummer
+  Pflicht, Kalendereinladung mit Meet-Link, Bestätigung per E-Mail und WhatsApp, Erinnerung 24 h und 1 h vorher,
+  Verschieben/Absagen per Link, Zuordnung zum Vertriebskontakt. Die Webseite nutzt schon die eigene Seite.
+  Später-Follow-ups: steht unter Admin → Später-Follow-ups → Buchungslink `https://performancegrowth.de/termin`, bekommt
+  jeder Kontakt seinen persönlichen Link (Buchung hängt direkt am Kontakt). Ole muss noch: 1. diesen Buchungslink
+  eintragen, 2. Calendly-Links in Instantly-Kampagnen und Mail-Signaturen ersetzen, 3. Calendly kündigen, wenn keine
+  offenen Calendly-Termine mehr kommen (der Calendly-Abgleich bleibt bis dahin aktiv).
 - 15.11.2026: **Calendly später durch unser eigenes Buchungssystem ablösen** (Vertrieb). Bis dahin: Handynummer ist im
   Calendly-Formular Pflicht (für die WhatsApp-Terminbestätigung, lib/vertrieb/termin-whatsapp.ts).
 
