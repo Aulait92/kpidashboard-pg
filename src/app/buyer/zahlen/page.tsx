@@ -107,10 +107,10 @@ export default async function BuyerPage({
 
         {/* Eine Seite für Zahlen, Werbebudget, Produkte und Pause (UX, Ole 15.11.2026): Sprungmarken statt Zwischenseite */}
         <nav className="-mt-2 mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Auf dieser Seite">
-          <a href="#budget" className="font-medium text-[color:var(--brand)] hover:underline">Werbebudget</a>
-          <a href="#produkte" className="font-medium text-[color:var(--brand)] hover:underline">Produkte</a>
-          <a href="#pause" className="font-medium text-[color:var(--brand)] hover:underline">Pause</a>
-          <a href="#monatsberichte" className="font-medium text-[color:var(--brand)] hover:underline" data-sprung-monatsberichte>Monatsberichte</a>
+          <a href="#budget" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Werbebudget</a>
+          <a href="#produkte" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Produkte</a>
+          <a href="#pause" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Pause</a>
+          <a href="#monatsberichte" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline" data-sprung-monatsberichte>Monatsberichte</a>
           {(await loadBestandVisible(session.customerId, { preview: session.preview })) ? (
             <a href="/buyer/bestand" className="font-medium text-[color:var(--brand)] hover:underline">Bestandskunden</a>
           ) : null}

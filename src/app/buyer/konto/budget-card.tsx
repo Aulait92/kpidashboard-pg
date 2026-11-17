@@ -128,7 +128,7 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
                             (e.target as HTMLInputElement).blur();
                           }
                         }}
-                        className="w-[4.5ch] rounded-[var(--radius-sm)] border-b border-dashed border-[color:var(--border-strong,#cbd5e1)] bg-transparent text-right outline-none [appearance:textfield] focus:border-[color:var(--brand)] [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-[4.5ch] rounded-[var(--radius-sm)] border-b border-dashed border-[color:var(--border-strong,#cbd5e1)] bg-transparent text-center outline-none [appearance:textfield] focus:border-[color:var(--brand)] [&::-webkit-inner-spin-button]:appearance-none"
                         data-budget-input
                       />
                       <span>€</span>

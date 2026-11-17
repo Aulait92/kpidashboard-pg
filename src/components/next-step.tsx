@@ -817,7 +817,7 @@ export function NextStepButton({
           setOpen(true);
         }}
         className={cn(
-          "inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100",
+          "inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-100 sm:px-2.5 sm:py-1",
           className,
         )}
         data-next-step-button

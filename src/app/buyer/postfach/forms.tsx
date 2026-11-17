@@ -158,7 +158,7 @@ export function VorlagenListe({ vorlagen, readOnly }: { vorlagen: V[]; readOnly:
               </div>
               {!readOnly ? (
                 <>
-                  <button type="button" onClick={() => setEdit(v.id)} aria-label={`${v.name} bearbeiten`} className="rounded-full p-1.5 text-[color:var(--muted)] hover:text-[color:var(--brand)]">
+                  <button type="button" onClick={() => setEdit(v.id)} aria-label={`${v.name} bearbeiten`} className="rounded-full p-2.5 text-[color:var(--muted)] hover:text-[color:var(--brand)] sm:p-1.5">
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
@@ -166,7 +166,7 @@ export function VorlagenListe({ vorlagen, readOnly }: { vorlagen: V[]; readOnly:
                     disabled={pending}
                     onClick={() => window.confirm(`Vorlage „${v.name}“ löschen?`) && start(() => deleteVorlageAction(v.id))}
                     aria-label={`${v.name} löschen`}
-                    className="rounded-full p-1.5 text-[color:var(--muted)] hover:text-rose-700"
+                    className="rounded-full p-2.5 text-[color:var(--muted)] hover:text-rose-700 sm:p-1.5"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

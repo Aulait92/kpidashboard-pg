@@ -130,7 +130,7 @@ function BookedRow({ b, readOnly }: { b: BookedProduct; readOnly: boolean }) {
         <Badge tone={tone}>{b.status === "live" ? "Läuft" : STATUS_LABEL[b.status]}</Badge>
         <span className="text-sm text-[color:var(--muted)]">{eur0(b.dailyBudget)} pro Tag</span>
         {b.status === "live" ? (
-          <a href="#werbebudget" className="ml-auto text-sm font-medium text-[color:var(--brand)] hover:underline">
+          <a href="#werbebudget" className="-my-2 ml-auto py-2 text-sm font-medium text-[color:var(--brand)] hover:underline">
             Budget ändern
           </a>
         ) : null}
@@ -155,7 +155,7 @@ function BookedRow({ b, readOnly }: { b: BookedProduct; readOnly: boolean }) {
               </button>
             </>
           ) : (
-            <button type="button" className="text-sm text-[color:var(--muted)] hover:underline" onClick={() => setConfirm(true)}>
+            <button type="button" className="-my-2 py-2 text-sm text-[color:var(--muted)] hover:underline" onClick={() => setConfirm(true)}>
               Produkt beenden anfragen
             </button>
           )}
