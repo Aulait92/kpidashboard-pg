@@ -104,6 +104,16 @@ describe("Hund wie Katze (Tierkrankenversicherung)", () => {
   });
 });
 
+describe("Lead hat zuerst geschrieben", () => {
+  it("erkennt die erste Frage in unserer eigenen Antwort (Frageplan gilt weiter)", async () => {
+    const { enthaeltErsteFrage } = await import("@/lib/whatsapp/erstanschreiben");
+    expect(enthaeltErsteFrage("Hallo Jule, danke …\n\n*Welcher Tarifbaustein ist dir am wichtigsten?*", "Zahnzusatz")).toBe(true);
+    expect(enthaeltErsteFrage("*Soll vor allem eine Operation abgesichert sein, oder auch die normale Tierarztbehandlung?*", "TKV-Katze")).toBe(true);
+    expect(enthaeltErsteFrage("Danke, ich melde mich.", "Zahnzusatz")).toBe(false);
+    expect(enthaeltErsteFrage("*Welcher Tarifbaustein ist dir am wichtigsten?*", "Bestandskunde")).toBe(false);
+  });
+});
+
 describe("Adresse aus dem Leadformular", () => {
   it("Postleitzahl und Ort aus formData, Korrektur und Airtable gehen vor", async () => {
     const { currentStammdaten } = await import("@/lib/lead-stammdaten");

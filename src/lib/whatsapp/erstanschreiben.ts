@@ -244,6 +244,16 @@ export function ersteFrageRegel(
   ].join("\n");
 }
 
+/**
+ * Enthält eine Nachricht von uns die erste Frage des Produkts (Frage 1, Frage 2 oder die Terminfrage)? Für Chats, in
+ * denen der Lead zuerst geschrieben hat: Dort stellt der Assistent die Frage selbst, ohne Erstanschreiben-Vorlage.
+ */
+export function enthaeltErsteFrage(text: string | null | undefined, source: string | null | undefined): boolean {
+  const p = outreachProdukt(source);
+  if (!p || !text) return false;
+  return [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) || /Videotermin mit .+ in den nächsten Tagen\?/.test(text);
+}
+
 /** Woher kommt der Kontakt? „anfrage“ = Leadformular (Meta, Funnel), „nachricht“ = hat uns zuerst per WhatsApp geschrieben. */
 export type Herkunft = "anfrage" | "nachricht";
 

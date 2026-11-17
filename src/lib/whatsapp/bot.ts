@@ -34,7 +34,7 @@ import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
-import { erstanschreibenKopf, ersteFrageRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { enthaeltErsteFrage, erstanschreibenKopf, ersteFrageRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -596,7 +596,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   // Gesundheitsangaben aus dem Formular gehen nicht an die KI (lib/gesundheitsdaten.ts)
   const form = splitHealthAnswers(parseFormAnswers(lead?.formData));
   // Frage 1 und 2: was das Formular schon beantwortet, wird nicht gefragt (Ole, 17.11.2026)
-  const outreachMsg = outbound.find((m) => m.purpose && isOutreachPurpose(m.purpose));
+  // Hat der Lead zuerst geschrieben, stand die erste Frage in unserer ersten Antwort: ab der zweiten Antwort gilt der
+  // Frageplan von dort (sonst fehlte „Dann Frage 2“ und der Assistent stand ohne Plan da; Nacht-QA 17.11.2026)
+  const outreachMsg =
+    outbound.find((m) => m.purpose && isOutreachPurpose(m.purpose)) ??
+    (notice === "erst" ? undefined : outbound.find((m) => enthaeltErsteFrage(m.body, lead?.source)));
   const ersteFrage = conversation.qualified
     ? null
     : outreachMsg
