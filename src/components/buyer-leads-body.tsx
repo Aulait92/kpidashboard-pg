@@ -18,6 +18,7 @@ import { keinWhatsAppIds } from "@/lib/kein-whatsapp-kennzeichen-server";
 import { X } from "lucide-react";
 import { VERLUST_LABEL, verlustKey, type VerlustKey } from "@/lib/verlustgruende";
 import { verlorenImZeitraum } from "@/lib/verlustgruende-server";
+import { weitereEmailsSuche } from "@/lib/lead-emails";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -65,6 +66,7 @@ export async function BuyerLeadsBody({
             OR: [
               { name: { contains: q, mode: "insensitive" as const } },
               { email: { contains: q, mode: "insensitive" as const } },
+              ...weitereEmailsSuche(q),
               ...(qDigits.length >= 3 ? [{ phone: { contains: qDigits } }] : []),
             ],
           }

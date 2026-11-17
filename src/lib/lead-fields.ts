@@ -19,6 +19,7 @@ export const COMMON_FIELDS: ReadOnlyField[] = [
   { key: "Nachname", label: "Nachname" },
   { key: "Telefonnummer", label: "Telefonnummer" },
   { key: "E-Mail", label: "E-Mail" },
+  { key: "Weitere E-Mail", label: "Weitere E-Mail" },
   { key: "Straße", label: "Straße" },
   { key: "Postleitzahl", label: "Postleitzahl" },
   { key: "Ort", label: "Ort" },

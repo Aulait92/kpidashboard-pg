@@ -12,11 +12,12 @@ import { useToast } from "@/components/ui/toast";
 import { saveLeadStammdatenAction } from "@/app/buyer/stammdaten-actions";
 import type { StammdatenInput } from "@/lib/lead-stammdaten";
 
-const FIELDS: { key: keyof StammdatenInput; label: string; type?: string; autoComplete?: string; inputMode?: "tel" | "email" | "numeric" }[] = [
+const FIELDS: { key: keyof StammdatenInput & string; label: string; type?: string; autoComplete?: string; inputMode?: "tel" | "email" | "numeric" }[] = [
   { key: "firstName", label: "Vorname", autoComplete: "off" },
   { key: "lastName", label: "Nachname", autoComplete: "off" },
   { key: "phone", label: "Telefon", type: "tel", inputMode: "tel", autoComplete: "off" },
   { key: "email", label: "E-Mail", type: "email", inputMode: "email", autoComplete: "off" },
+  { key: "weitereEmails", label: "Weitere E-Mail", inputMode: "email", autoComplete: "off" },
   { key: "street", label: "Straße und Hausnummer", autoComplete: "off" },
   { key: "zip", label: "Postleitzahl", inputMode: "numeric", autoComplete: "off" },
   { key: "city", label: "Ort", autoComplete: "off" },
@@ -90,7 +91,7 @@ export function LeadStammdatenEdit({ leadId, initial }: { leadId: string; initia
                 type={f.type ?? "text"}
                 inputMode={f.inputMode}
                 autoComplete={f.autoComplete}
-                value={values[f.key]}
+                value={values[f.key] ?? ""}
                 onChange={(e) => set(f.key, e.target.value)}
               />
             </label>

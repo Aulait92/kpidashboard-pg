@@ -11,7 +11,7 @@ import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { reportError } from "@/lib/monitoring";
 import { sendToAdmins } from "@/lib/push";
-import { createTemplate, listTemplates, type RemoteTemplate } from "@/lib/whatsapp/dialog360";
+import { createTemplate, findTemplateByName, isNameInUseError, listTemplates, type RemoteTemplate } from "@/lib/whatsapp/dialog360";
 import {
   buildTemplateRequest,
   findRemote,
@@ -56,13 +56,14 @@ async function submitContext(customerId: string, customerName: string): Promise<
 
 /**
  * Einreichen; lehnt 360dialog den Antrag mit Dokument-Kopf ab (z. B. Beispiel-PDF nicht abrufbar), einmal ohne Kopf
- * und Fußzeile. Dann geht das PDF wie bisher nach der ersten Antwort des Leads raus (lib/whatsapp/erstinfo-pdf.ts).
+ * und Fußzeile. Nicht beim Erstanschreiben (TEMPLATE_HEADER): Es geht nie ohne Erstinformation raus (Live-Test
+ * 17.11.2026), eine Fassung ohne Kopf unter demselben Namen wäre nutzlos. Nicht bei „Name schon vergeben“.
  */
-async function createWithFallback(apiKey: string, req: CreateTemplateInput): Promise<{ hit: RemoteTemplate; req: CreateTemplateInput }> {
+async function createWithFallback(apiKey: string, req: CreateTemplateInput, purpose?: NoticePurpose): Promise<{ hit: RemoteTemplate; req: CreateTemplateInput }> {
   try {
     return { hit: await createTemplate(apiKey, req), req };
   } catch (err) {
-    if (!requestShape(req).headerFormat) throw err;
+    if (!requestShape(req).headerFormat || (purpose && TEMPLATE_HEADER[purpose]) || isNameInUseError(err)) throw err;
     console.error("[templates] Dokument-Kopf abgelehnt, ohne Kopf", req.name, err instanceof Error ? err.message.slice(0, 200) : err);
     const plain = withoutHeader(req);
     return { hit: await createTemplate(apiKey, plain), req: plain };
@@ -152,18 +153,30 @@ async function applyRemote(
   return status;
 }
 
+// Je Kunde nur ein Abgleich gleichzeitig (Live-Test 17.11.2026: Partner-Webhook, Cron und Ansprache-Wechsel starteten
+// mehrere Läufe in derselben Sekunde, die dieselben Namen doppelt einreichten: „already in use“, „Invalid parameter“).
+const RUNNING = new Map<string, Promise<SubmitSummary>>();
+
 /**
  * Fehlende Vorlagen einreichen und den Status aller automatisch eingereichten
- * nachziehen (ein Listen-Abruf je Aufruf). Vorlagen, die der Admin für einen
+ * nachziehen (Vorlagenliste seitenweise). Vorlagen, die der Admin für einen
  * Zweck schon von Hand angelegt hat (freigegeben oder wartend), bleiben unberührt.
  */
 export async function submitTemplatesForCustomer(customerId: string, now = new Date()): Promise<SubmitSummary> {
+  const running = RUNNING.get(customerId);
+  if (running) return running;
+  const run = submitTemplatesOnce(customerId, now).finally(() => RUNNING.delete(customerId));
+  RUNNING.set(customerId, run);
+  return run;
+}
+
+async function submitTemplatesOnce(customerId: string, now: Date): Promise<SubmitSummary> {
   const summary: SubmitSummary = { ok: true, submitted: [], approved: [], rejected: [], pending: [], skipped: [] };
   const [account, customer] = await Promise.all([
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { id: true, status: true, apiKeyEnc: true } }),
     prisma.customer.findUnique({
       where: { id: customerId },
-      select: { id: true, name: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } },
+      select: { id: true, name: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true, language: true } } },
     }),
   ]);
   if (!customer) return { ...summary, ok: false, error: "Kunde nicht gefunden" };
@@ -201,20 +214,48 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
     const body = templateBodyFor(purpose, names, form, variant);
     let hit = findRemote(remote, name);
     let submittedAt: Date | undefined;
-    if (!hit) {
-      try {
-        ({ hit, req } = await createWithFallback(apiKey, req));
-        submittedAt = now;
-        summary.submitted.push(name);
-      } catch (err) {
-        summary.ok = false;
-        const msg = err instanceof Error ? err.message.slice(0, 200) : "Einreichen fehlgeschlagen";
-        summary.error = msg;
-        console.error("[templates] Einreichen", name, msg);
+    let inUse = false;
+    // Schon von uns eingereicht, aber nicht in der Liste: nicht erneut einreichen (Meta vergibt jeden Namen nur einmal),
+    // gezielt nach dem Namen fragen; sonst bleibt der lokale Status, bis die Liste sie zeigt.
+    const local = customer.messageTemplates.find((t) => t.auto && t.name === name && t.language === TEMPLATE_LANGUAGE);
+    if (!hit && local) {
+      hit = await lookupByName(apiKey, name);
+      if (!hit) {
+        console.warn("[templates] Vorlage nicht in der Liste von 360dialog, kein erneutes Einreichen", name, local.status);
+        if (local.status === "approved") summary.approved.push(name);
+        else if (local.status === "rejected") summary.rejected.push(name);
+        else summary.pending.push(name);
         continue;
       }
     }
-    const status = await applyRemote({ id: customer.id, name: customer.name }, purpose, name, body, req.category, hit, { submittedAt, ...(submittedAt ? { shape: requestShape(req) } : {}) });
+    // Erstanschreiben nur mit PDF-Kopf einreichen: ohne Beispiel-PDF (Erstinformation nicht ladbar) später erneut
+    if (!hit && TEMPLATE_HEADER[purpose] && !requestShape(req).headerFormat) {
+      summary.ok = false;
+      summary.error = "Beispiel-PDF der Erstinformation fehlt, Erstanschreiben nicht eingereicht";
+      console.error("[templates] Einreichen ohne PDF-Kopf übersprungen", name);
+      continue;
+    }
+    if (!hit) {
+      try {
+        ({ hit, req } = await createWithFallback(apiKey, req, purpose));
+        submittedAt = now;
+        summary.submitted.push(name);
+      } catch (err) {
+        if (isNameInUseError(err)) {
+          // Gibt es bei Meta schon (z. B. von einem früheren Lauf): Status gezielt holen, sonst als eingereicht merken
+          inUse = true;
+          hit = (await lookupByName(apiKey, name)) ?? { name, language: TEMPLATE_LANGUAGE, status: "PENDING", category: req.category, rejectedReason: null };
+          console.warn("[templates] Name schon vergeben, übernommen statt neu eingereicht", name, hit.status);
+        } else {
+          summary.ok = false;
+          const msg = err instanceof Error ? err.message.slice(0, 200) : "Einreichen fehlgeschlagen";
+          summary.error = msg;
+          console.error("[templates] Einreichen", name, msg);
+          continue;
+        }
+      }
+    }
+    const status = await applyRemote({ id: customer.id, name: customer.name }, purpose, name, body, req.category, hit, { submittedAt, ...(submittedAt || (inUse && hit.headerFormat === undefined) ? { shape: requestShape(req) } : {}) });
     if (status === "approved") summary.approved.push(name);
     else if (status === "rejected") summary.rejected.push(name);
     else summary.pending.push(name);
@@ -235,6 +276,16 @@ export async function submitTemplatesForCustomer(customerId: string, now = new D
   }
   await markChecked();
   return summary;
+}
+
+/** Eine Vorlage gezielt nach Namen bei 360dialog nachschlagen (null = nicht gefunden bzw. Abruf fehlgeschlagen). */
+async function lookupByName(apiKey: string, name: string): Promise<RemoteTemplate | null> {
+  try {
+    return findRemote(await findTemplateByName(apiKey, name), name);
+  } catch (err) {
+    console.error("[templates] Suche nach Namen", name, err instanceof Error ? err.message.slice(0, 200) : err);
+    return null;
+  }
 }
 
 /**
@@ -324,12 +375,11 @@ export async function resubmitTemplate(customerId: string, purpose: NoticePurpos
   const base = templateNameFor(purpose, TEMPLATE_VERSION, chosen.form, chosen.variant, chosen.kopf);
   const existing = customer.messageTemplates.filter((t) => t.name.startsWith(`${base}_r`) && isTemplateRevisionOf(t.name, base)).length;
   const name = `${base}_r${existing + 2}`;
-  // Wurde die letzte Revision mit PDF im Kopf abgelehnt: ohne Kopf neu einreichen (das PDF geht dann nach der ersten Antwort)
-  const prev = latest(base);
-  const dropHeader = !!TEMPLATE_HEADER[purpose] && prev?.status === "rejected" && prev.headerFormat === "DOCUMENT";
-  const full = { ...buildTemplateRequest(purpose, names, TEMPLATE_VERSION, chosen.form, { variant: chosen.variant, documentExample: dropHeader ? null : documentExample, kopf: chosen.kopf }), name };
+  // Erstanschreiben auch als Revision immer mit PDF-Kopf (nie ohne Erstinformation, Live-Test 17.11.2026)
+  if (TEMPLATE_HEADER[purpose] && !documentExample) return { ok: false, error: "Beispiel-PDF der Erstinformation fehlt, bitte später erneut versuchen" };
+  const full = { ...buildTemplateRequest(purpose, names, TEMPLATE_VERSION, chosen.form, { variant: chosen.variant, documentExample, kopf: chosen.kopf }), name };
   try {
-    const { hit, req } = await createWithFallback(decryptSecret(account.apiKeyEnc), full);
+    const { hit, req } = await createWithFallback(decryptSecret(account.apiKeyEnc), full, purpose);
     await applyRemote(customer, purpose, name, templateBodyFor(purpose, names, chosen.form, variantOfName(name)), req.category, { ...hit, name }, { submittedAt: now, shape: requestShape(req) });
     return { ok: true, name };
   } catch (err) {

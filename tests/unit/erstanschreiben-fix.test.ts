@@ -47,21 +47,19 @@ describe("1. Vorlagenwahl Erstanschreiben (rankOutreach)", () => {
     expect(voll && "tpl" in voll ? [voll.tpl.name, voll.dokument] : voll).toEqual(["pg_outreach_privatschutz_v5_sie", "vollstaendig"]);
   });
 
-  it("gibt es eine v5 ohne PDF-Kopf, gewinnt sie ohne PDF (Erstinformation folgt im offenen Fenster)", () => {
+  it("nie ohne Erstinformation (Live-Test 17.11.2026): Fassungen ohne PDF-Kopf werden nicht gewählt", () => {
     const ohneKopf = [...FREIGEGEBEN, tpl("pg_outreach_privatschutz_v5_sie_r2", "outreach_privatschutz", false, v("outreach_privatschutz", "sie"))];
     const r = rankOutreach(ohneKopf, PURPOSES, "sie", TESTLEAD, { pdf: "entwurf" });
-    expect(r && "tpl" in r ? [r.tpl.name, r.dokument] : r).toEqual(["pg_outreach_privatschutz_v5_sie_r2", null]);
-    // Produkt nur mit Kopf, allgemeine v5 ohne Kopf: v5 ohne PDF vor v3
+    expect(r && "tpl" in r ? [r.tpl.name, r.dokument] : r).toEqual(["pg_outreach_privatschutz_v5_sie", "entwurf"]);
+    // Kein PDF erzeugbar: auch eine Fassung ohne Kopf geht nicht raus, das Erstanschreiben wartet
     const allgOhne = [...FREIGEGEBEN, tpl("pg_outreach_v5_sie_r2", "outreach", false, v("outreach", "sie"))];
-    const r2 = rankOutreach(allgOhne, PURPOSES, "sie", TESTLEAD, { pdf: "keins" });
-    expect(r2 && "tpl" in r2 ? r2.tpl.name : r2).toBe("pg_outreach_v5_sie_r2");
+    expect(rankOutreach(allgOhne, PURPOSES, "sie", TESTLEAD, { pdf: "keins" })).toEqual({ wartenAufPdf: true });
   });
 
-  it("kein PDF erzeugbar und v5 nur mit Kopf: warten statt v3; nur v3 freigegeben: v3", () => {
+  it("kein PDF erzeugbar: warten statt v3; nur v3 (ohne PDF-Kopf) freigegeben: keine Vorlage, nie v3", () => {
     expect(rankOutreach(FREIGEGEBEN, PURPOSES, "sie", TESTLEAD, { pdf: "keins" })).toEqual({ wartenAufPdf: true });
     const nurV3 = FREIGEGEBEN.filter((t) => t.name.includes("_v3_"));
-    const r = rankOutreach(nurV3, PURPOSES, "sie", TESTLEAD, { pdf: "keins" });
-    expect(r && "tpl" in r ? r.tpl.name : r).toBe("pg_outreach_v3_sie");
+    expect(rankOutreach(nurV3, PURPOSES, "sie", TESTLEAD, { pdf: "vollstaendig" })).toBeNull();
     expect(rankOutreach([], PURPOSES, "sie", TESTLEAD, { pdf: "vollstaendig" })).toBeNull();
   });
 

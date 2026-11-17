@@ -30,6 +30,7 @@ import {
   vermittlerName,
   vertragsFrage,
   zeitLang,
+  zusageDank,
   type Knopf,
   type VermittlerName,
 } from "@/lib/whatsapp/gespraech";
@@ -276,7 +277,7 @@ export async function kalenderAntwort(conversationId: string, art: "ja" | "gleic
   const bis = `Bis ${zeitLang(k.termin.startsAt)}.`;
   const text =
     art === "ja"
-      ? `Super, danke! ${bis}`
+      ? zusageDank(k.an, k.person, k.termin.startsAt)
       : k.email
         ? `Danke! ${a(k.an, "Die Einladung mit Kalendereintrag hast du per E-Mail.", "Die Einladung mit Kalendereintrag haben Sie per E-Mail.")} ${bis}`
         : `Danke! ${bis}`;

@@ -139,6 +139,7 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
         name: ERASED_NAME,
         phone: null,
         email: null,
+        weitereEmails: [],
         formData: Prisma.DbNull,
         notes: null,
         followUpAt: null,

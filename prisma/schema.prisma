@@ -647,6 +647,9 @@ model Lead {
   phoneDigits          String?
   phoneDigitsRev       String?
   email                String?
+  /// Weitere E-Mail-Adressen (Ole, 17.11.2026): nennt der Lead im Chat eine neue Adresse (update_email), bleibt die
+  /// bisherige hier erhalten. Kleingeschrieben, ohne Dubletten, ohne die Haupt-E-Mail (lib/lead-emails.ts)
+  weitereEmails        String[] @default([])
   // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
   // lib/lead-fields) — Kontext für den WhatsApp-Bot.
   formData             Json?

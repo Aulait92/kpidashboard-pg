@@ -25,6 +25,11 @@
 // /erstinformation/<token>), nach Hash der Angaben zwischengespeichert und über die öffentliche Adresse mit Token und
 // Hash an 360dialog gegeben (Meta lädt die Datei selbst, kein Hochladen nötig). Klappt das nicht, geht als Rückfall
 // der Link zur Erstinformation als Text raus (sendErstinfo) und der Fehler wird protokolliert.
+//
+// Live-Test (Ole, 17.11.2026): Die Erstinformation kommt IMMER mit der ersten Nachricht (PDF-Kopf der Vorlage) bzw. im
+// offenen Fenster unmittelbar als Nachricht 2 direkt nach dem Erstanschreiben, nie erst nach einer Antwort des
+// Assistenten (bot.ts schickt ein noch fehlendes PDF VOR seiner Antwort). Sind die Angaben unvollständig, geht das PDF
+// im aktuellen Stand (erstinfoPdfStand) statt nur des Links; der Link bleibt Rückfall, wenn kein PDF erzeugbar ist.
 
 import { prisma } from "@/lib/prisma";
 import { decryptSecret } from "@/lib/encryption";
@@ -47,10 +52,16 @@ export async function sendErstinfoPdf(opts: { conversationId: string; an?: Anspr
     if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() <= Date.now()) return "window_closed";
     const account = await prisma.whatsAppAccount.findUnique({ where: { customerId: conv.customerId }, select: { status: true, apiKeyEnc: true } });
     if (!account || account.status !== "connected" || !account.apiKeyEnc) return "not_possible";
-    const { erstinfoPdfFuerWhatsApp, erstinfoUrlFor } = await import("@/lib/erstinformation");
+    const { erstinfoPdfFuerWhatsApp, erstinfoPdfStand, erstinfoUrlFor } = await import("@/lib/erstinformation");
     step = "pdf";
-    const pdf = await erstinfoPdfFuerWhatsApp(conv.customerId);
-    if (!pdf) return "incomplete";
+    let pdf: { link: string; filename: string } | null = await erstinfoPdfFuerWhatsApp(conv.customerId);
+    if (!pdf) {
+      // Angaben unvollständig: PDF im aktuellen Stand (derselbe Inhalt wie die öffentliche Seite) statt nur des Links
+      const stand = await erstinfoPdfStand(conv.customerId);
+      if (!stand) return "incomplete";
+      console.warn(`[whatsapp] Erstinformation unvollständig, PDF im aktuellen Stand customer=${conv.customerId} fehlt=${stand.fehlt.join(",") || "-"}`);
+      pdf = stand;
+    }
     const page = await erstinfoUrlFor(conv.customerId);
     step = "senden";
     const res = await sendDocument(decryptSecret(account.apiKeyEnc), conv.contactPhone, { link: pdf.link, filename: pdf.filename, caption: ERSTINFO_PDF_CAPTION });

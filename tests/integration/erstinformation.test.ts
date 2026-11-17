@@ -215,21 +215,20 @@ describe("WhatsApp: Erstinformation als PDF-Dokument (§ 16 VersVermV)", () => {
     );
   });
 
-  it("nur vollständig: erste Antwort mit Link, danach das PDF als Dokument, einmal je Unterhaltung", async () => {
+  it("unvollständig: PDF im aktuellen Stand statt Link; vollständig: erste Antwort, danach das PDF, einmal je Unterhaltung", async () => {
     await setup("vertreter");
     phoneNumberId = `pn-erstinfo-${Math.random().toString(36).slice(2, 8)}`;
     await prisma.whatsAppAccount.create({ data: { customerId: st.customerId, provider: "360dialog", status: "connected", apiKeyEnc: encryptSecret("k"), phoneNumberId } });
     await prisma.agentConfig.create({ data: { customerId: st.customerId, active: true } });
 
-    // Noch nicht bestätigt: Link ja, Dokument nein
+    // Noch nicht bestätigt (unvollständig): das PDF im aktuellen Stand statt nur des Links (Ole, 17.11.2026)
     await inbound("4917699990001", "Hallo");
-    expect(sent.filter((s) => s.type === "document")).toHaveLength(0);
-    // Rückfall: Link als eigene Nachricht nach der Antwort
-    expect(sent.filter((s) => s.type === "text").at(-1)?.text?.body).toContain("/erstinformation/");
+    expect(sent.filter((s) => s.type === "document" && s.to === "4917699990001")).toHaveLength(1);
+    expect(sent.filter((s) => s.type === "text").some((s) => s.text?.body.includes("/erstinformation/"))).toBe(false);
 
     expect(await saveErstinfoAction({}, form({ ...base, status: "vertreter", versicherer: "Allianz Versicherungs-AG", verguetung: "provision" }))).toEqual({ ok: true });
     await inbound("4917699990002", "Hallo, ich möchte einen Termin");
-    const idx = sent.findIndex((s) => s.type === "document");
+    const idx = sent.findIndex((s) => s.type === "document" && s.to === "4917699990002");
     expect(idx).toBeGreaterThan(0);
     expect(sent[idx - 1].type).toBe("text"); // erst Begrüßung mit KI-Assistent und Antwort (Nachricht 1), dann das PDF (Nachricht 2)
     expect(sent[idx - 1].text?.body).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht! Ich bin der digitale KI-Assistent von Susanne Meier\.\n\n/);

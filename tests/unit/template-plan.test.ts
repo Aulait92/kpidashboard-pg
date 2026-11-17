@@ -31,10 +31,10 @@ describe("Vorlagen-Plan", () => {
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    // Erstanschreiben v6 (17.11.2026, je Fassung auch ohne PDF-Kopf), übrige Zwecke v4
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v6");
-    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v6_sie");
-    expect(templateNameFor("outreach_tkv", undefined, "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
+    // Erstanschreiben v7 (17.11.2026, erste Frage nicht fett, nur mit PDF-Kopf), übrige Zwecke v4
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v7");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v7_sie");
+    expect(templateNameFor("outreach_tkv", "v6", "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
     expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v4_b_sie");
     // Unveränderte Texte behalten ihre Version (keine erneute Einreichung)
     expect(templateNameFor("referral_thanks", undefined, "sie")).toBe("pg_referral_thanks_v3_sie");
