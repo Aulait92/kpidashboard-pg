@@ -11,6 +11,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
 import { logLeadHistory } from "@/lib/lead-history";
 import { advisorDisplayName } from "@/lib/advisor-name";
+import { HEALTH_REDACTED, istTierLead, redactHealthText } from "@/lib/gesundheitsdaten";
 import { QUALIFICATION_FIELDS, cleanQualificationData, mergeQualificationData, type QualificationData } from "@/lib/whatsapp/qualification";
 import {
   anrufLaeuft,
@@ -66,14 +67,14 @@ async function angabenFuer(l: LeadNeedRow): Promise<QualificationData> {
   return { ...merged, ...cleanQualificationData(l.needData) };
 }
 
-export type BedarfStandDaten = { felder: BedarfFeld[]; stand: NeedState | null; offen: string[] };
+export type BedarfStandDaten = { felder: BedarfFeld[]; stand: NeedState | null; offen: string[]; tier: boolean };
 
 /** Bedarfspunkte für das Fenster „Wie lief's?“ (vorbelegt mit allem, was schon bekannt ist). */
 export async function bedarfLaden(leadId: string, customerId: string): Promise<BedarfStandDaten | null> {
   const l = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: { id: true, customerId: true, source: true, formData: true, needData: true, needState: true } });
   if (!l) return null;
   const felder = bedarfFelder({ produkt: l.source, formular: formAnswers(l.formData), angaben: await angabenFuer(l) });
-  return { felder, stand: (l.needState as NeedState | null) ?? null, offen: offenePunkte(felder) };
+  return { felder, stand: (l.needState as NeedState | null) ?? null, offen: offenePunkte(felder), tier: istTierLead(l.source) };
 }
 
 /**
@@ -111,10 +112,16 @@ export async function bedarfSpeichern(
       openQuestionsAt: stand !== "komplett" && offen.length ? new Date(now.getTime() + OPEN_QUESTIONS_DELAY_MS) : null,
     },
   });
-  if (neu) {
+  // Im Chat liest der Assistent mit: Gesundheitsangaben einer Person bleiben nur am Lead (lib/gesundheitsdaten.ts)
+  const fuerChat = Object.fromEntries(
+    Object.entries(eingaben)
+      .map(([k, v]) => [k, redactHealthText(v ?? "", { tier: istTierLead(l.source) })])
+      .filter(([, v]) => v && !v.includes(HEALTH_REDACTED)),
+  );
+  if (Object.keys(fuerChat).length) {
     const convs = await prisma.conversation.findMany({ where: { customerId, leadId: l.id }, select: { id: true, qualificationData: true } });
     for (const c of convs) {
-      const merged = mergeQualificationData(c.qualificationData, eingaben);
+      const merged = mergeQualificationData(c.qualificationData, fuerChat);
       await prisma.conversation.update({ where: { id: c.id }, data: { qualificationData: merged ?? undefined } });
     }
   }
@@ -132,8 +139,9 @@ export async function bedarfSpeichern(
 }
 
 /** KI ordnet eine Notiz bzw. ein Diktat den Bedarfspunkten zu (Vermittler bestätigt). Ohne Schlüssel: leer. */
-export async function bedarfAusNotiz(text: string, felder: BedarfFeld[]): Promise<QualificationData> {
-  const t = text.trim();
+export async function bedarfAusNotiz(text: string, felder: BedarfFeld[], opts: { tier?: boolean } = {}): Promise<QualificationData> {
+  // Gesundheitsangaben einer Person gehen nicht an die KI (lib/gesundheitsdaten.ts)
+  const t = redactHealthText(text.trim(), { tier: opts.tier });
   if (!t || !process.env.ANTHROPIC_API_KEY || !felder.length) return {};
   const client = new Anthropic();
   const resp = await client.messages.create({

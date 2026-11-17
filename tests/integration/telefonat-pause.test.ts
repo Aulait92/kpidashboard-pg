@@ -210,6 +210,15 @@ describe("Telefonat: Assistent pausiert beim Anruf", () => {
     expect(st.ai).toBe(1);
   });
 
+  it("Gesundheitsangaben einer Person bleiben am Lead, nicht im Chat (Assistent liest dort mit)", async () => {
+    const { lead, conv } = await leadMitChat();
+    await bedarfSpeichern(lead.id, customerId, { angaben: { beruf: "Lehrerin", vorschaeden: "Bandscheibe operiert" } });
+    expect((await prisma.lead.findUnique({ where: { id: lead.id } }))!.needData).toMatchObject({ beruf: "Lehrerin", vorschaeden: "Bandscheibe operiert" });
+    const q = (await prisma.conversation.findUnique({ where: { id: conv.id } }))!.qualificationData as Record<string, string>;
+    expect(q.beruf).toBe("Lehrerin");
+    expect(q.vorschaeden).toBeUndefined();
+  });
+
   it("Überspringen beim Termin: Assistent fragt vorsichtig nach; alles bekannt: keine Nachfrage", async () => {
     const { lead } = await leadMitChat();
     const now = new Date("2026-11-17T10:00:00Z");

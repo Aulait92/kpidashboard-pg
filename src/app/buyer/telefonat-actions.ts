@@ -35,7 +35,7 @@ export async function needFromNoteAction(leadId: string, text: string): Promise<
   const data = await bedarfLaden(leadId, customerId);
   if (!data) return { ok: false, error: "Lead nicht gefunden." };
   try {
-    const angaben = await bedarfAusNotiz(text, data.felder);
+    const angaben = await bedarfAusNotiz(text, data.felder, { tier: data.tier });
     await recordUsage("action", "telefonat.notiz_zuordnen");
     return { ok: true, angaben };
   } catch (e) {
