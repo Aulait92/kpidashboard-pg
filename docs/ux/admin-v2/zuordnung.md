@@ -441,3 +441,11 @@ Einstufung: **vorne** = ohne Klick sichtbar auf Mein Tag oder oben auf einer Rol
 | F407 | Protokoll filtern nach Kunde und Art | /admin/einstellungen/protokoll | Werkzeuge › Protokoll › Filter | Werkzeuge | Technik oder Einrichtung |
 | F408 | Diagnose OpenAI-Erreichbarkeit (nur Technik, keine Oberfläche) | /api/admin | Werkzeuge › Diagnose › KI-Dienst erreichbar | Werkzeuge | Diagnose |
 | F409 | Diagnose Airtable-Felder (nur Technik, keine Oberfläche) | /api/admin | entfällt | entfernen vorgeschlagen | Airtable-Diagnose nach Abschaltung überholt |
+
+## Entscheidungen Ole (17.11.)
+
+- Calendly (F133): entfernen, nur noch eigene Buchungsseite.
+- Waalaxy-Import (F137): entfernen.
+- LinkedIn-Statistik als Excel (F310) und Zahlen nachtragen (F309): bleiben.
+- Kontoauszug als CSV (F399): entfernen, Bankverbindung reicht.
+- Fundtest Aufgabe 13: Leadpreis je Werbekonto fehlte. Jetzt in Liefern › Werbekonten als Spalte „Leadpreis 7 Tage“ gegen Ziel, teuerste zuerst, plus Hinweis in „Braucht Aufmerksamkeit“, sobald ein Konto mehr als 5 € über Ziel liegt.
