@@ -46,7 +46,7 @@ export function CplTrendChart({
         </p>
       </div>
       <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 1, height: 1 }}>
           <ComposedChart
             data={points}
             margin={{ top: 8, right: 8, bottom: 0, left: 0 }}

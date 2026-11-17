@@ -1,5 +1,5 @@
 import { isCronAuthorized } from "@/lib/cron-auth";
-import { after } from "next/server";
+import { after as nextAfter } from "next/server";
 import { checkAppointmentResponses } from "@/lib/calendar";
 import { runOutreach } from "@/lib/whatsapp/outreach";
 import { runReminders, runSoonReminders } from "@/lib/whatsapp/reminders";
@@ -46,6 +46,12 @@ function authorized(req: Request): boolean {
 async function handle(req: Request): Promise<Response> {
   if (!authorized(req))
     return Response.json({ error: "Unauthorized" }, { status: 401 });
+  // Hintergrundaufgaben sammeln und als EINE after()-Aufgabe ausführen (Ole, 17.11.2026): Jedes after() hängt einen
+  // „close“-Listener an die Antwort; ab 11 meldete Node bei jedem Lauf „MaxListenersExceededWarning“ (Logs).
+  const nachher: (() => unknown)[] = [];
+  const after = (fn: () => unknown) => {
+    nachher.push(fn);
+  };
   const outreach = await runOutreach().catch((e: unknown) => {
     reportError(e, "cron-outreach");
     return { error: e instanceof Error ? e.message : String(e) };
@@ -294,6 +300,7 @@ async function handle(req: Request): Promise<Response> {
       reportError(e, "cron-support-templates");
       return null;
     });
+  if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
   return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, whatsappConnect, templates, supportTemplates, status });
 }
 

@@ -36,7 +36,7 @@ export function BestandGrowthChart({ points }: { points: GrowthPoint[] }) {
   const data = points.map((p) => ({ ...p, label: `${p.year}. Jahr` }));
   return (
     <div className="h-56 min-w-0" data-bestand-chart>
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 1, height: 1 }}>
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap="30%">
           <CartesianGrid vertical={false} stroke="#e5e7eb" strokeDasharray="2 4" />
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748b" }} tickLine={false} axisLine={false} />
