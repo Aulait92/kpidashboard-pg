@@ -1,7 +1,7 @@
 // KI mit Verarbeitung in der EU (Ole, 17.11.2026: „EU-Zugang einrichten“). Claude über Amazon Bedrock, Region
 // Frankfurt (eu-central-1), regionaler Endpunkt (Daten bleiben in der gewählten Region, Aufpreis ca. 10 %).
-// Anthropic direkt kennt nur „us“ und „global“, deshalb Bedrock. Genutzt für Unterlagen mit möglichem
-// Gesundheitsbezug (policen/regeln.ts policenKiEu); weitere Aufrufe können später umgestellt werden.
+// Anthropic direkt kennt nur „us“ und „global“, deshalb Bedrock. Derzeit nur die Prüfung (/api/ops/diagnose?q=ki-eu);
+// Policen vom Kunden gehen seit 18.11.2026 an gar keine KI mehr (lib/policen), auch nicht über diesen Zugang.
 //
 // Railway-Variablen (am Service, nie im Code oder Chat):
 //   KI_EU_AWS_ACCESS_KEY_ID, KI_EU_AWS_SECRET_ACCESS_KEY  IAM-Nutzer nur mit Bedrock-Aufrufrecht
@@ -28,7 +28,7 @@ export async function kiEuStatus(): Promise<Record<string, unknown>> {
   try {
     const r = await bedrockClient(z).messages.create({ model: z.model, max_tokens: 20, messages: [{ role: "user", content: "Antworte nur mit: ok" }] });
     const text = r.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("").trim();
-    return { eingerichtet: true, region: z.region, modell: z.model, antwort: text.slice(0, 20), ms: Date.now() - start, policenRegion: process.env.POLICEN_KI_REGION ?? null };
+    return { eingerichtet: true, region: z.region, modell: z.model, antwort: text.slice(0, 20), ms: Date.now() - start };
   } catch (err) {
     const e = err as { status?: number; message?: string };
     return { eingerichtet: true, region: z.region, modell: z.model, fehler: `${e.status ?? ""} ${(e.message ?? String(err)).slice(0, 300)}`.trim(), ms: Date.now() - start };

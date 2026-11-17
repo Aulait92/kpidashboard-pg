@@ -7,6 +7,7 @@ import { BESTAND_FROM_LEAD_NOTE } from "@/lib/vertraege-shared";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
+import { loescheAb } from "@/lib/policen/ablage";
 
 export const ERASED_NAME = "Gelöscht (Datenschutz)";
 
@@ -53,6 +54,8 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor, 
     select: { id: true, customerId: true, phone: true, externalId: true, airtableId: true, erasedAt: true },
   });
   const result = await eraseLeads(customerId, leads);
+  // Policen im privaten Bucket (lib/policen/ablage.ts) vor den Einträgen löschen
+  await loescheAb((await prisma.leadDocument.findMany({ where: { customerId }, select: { storageKey: true } })).map((d) => d.storageKey)).catch(() => null);
   // Restliche Chats/Termine/Einwilligungen ohne Lead-Bezug (z. B. Leute, die
   // von sich aus geschrieben haben).
   const [conv, appt, consent] = await prisma.$transaction([
@@ -61,6 +64,9 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor, 
     prisma.consentOptIn.deleteMany({ where: { customerId } }),
     prisma.calendarConnection.deleteMany({ where: { customerId } }),
     prisma.leadDocument.deleteMany({ where: { customerId } }),
+    // Nachweise zu Policen (nur anhängen, Löschen nur so, migration 20261118725000)
+    prisma.$executeRaw`SELECT set_config('app.policen_nachweis_loeschen', 'ja', true)`,
+    prisma.policenNachweis.deleteMany({ where: { customerId } }),
     prisma.advisorCalendar.deleteMany({ where: { user: { customerId } } }),
     // Abwesenheiten (Beschäftigtendaten des Kunden) gehen mit
     prisma.userAbsence.deleteMany({ where: { customerId } }),
@@ -104,6 +110,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     select: { id: true },
   });
   const convIds = convs.map((c) => c.id);
+  // Policen im privaten Bucket (lib/policen/ablage.ts) vor den Einträgen löschen
+  await loescheAb((await prisma.leadDocument.findMany({ where: { leadId: { in: ids } }, select: { storageKey: true } })).map((d) => d.storageKey)).catch(() => null);
 
   const [messages, appointments, conversations, consents] = await prisma.$transaction([
     prisma.message.deleteMany({ where: { conversationId: { in: convIds } } }),
@@ -121,6 +129,9 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     // Unterlagen per WhatsApp (Policen, lib/policen) und deren Einwilligungen
     prisma.leadDocument.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.bestandConsentLog.deleteMany({ where: { customerId, source: "policen_gesundheit", OR: [{ address: { in: phones } }, { leadId: { in: ids } }] } }),
+    // Nachweise zu Policen (nur anhängen; Löschen nur bei Art. 17 bzw. Vertragsende, migration 20261118725000)
+    prisma.$executeRaw`SELECT set_config('app.policen_nachweis_loeschen', 'ja', true)`,
+    prisma.policenNachweis.deleteMany({ where: { customerId, OR: [{ phone: { in: phones } }, { leadId: { in: ids } }] } }),
     // Empfehlungen & Bewertungen: Antworttext, Link und Verweis auf den Empfehlenden
     prisma.reviewRequest.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.referralLink.deleteMany({ where: { leadId: { in: ids } } }),

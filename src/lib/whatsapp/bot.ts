@@ -1205,7 +1205,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     // Policen vor dem Termin (Ole, 17.11.2026, lib/policen/assistent.ts): nach der Vertragsfrage einmal einladen, als
     // eigene Nachricht vor der Antwort (die mit der nächsten Frage endet); nicht im Zug der Buchung
     const policen = gebucht ? null : await import("@/lib/policen/assistent").then((m) => m.einladungJetzt({ conversationId: conversation.id, an: ansprache, person })).catch(() => null);
-    if (policen) await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.text, sentBy: "bot", buttons: policen.buttons });
+    if (policen) {
+      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.text, sentBy: "bot", buttons: policen.buttons });
+      // Einwilligung als eigene Nachricht mit Knöpfen (lib/policen/bitte.ts, Rechtsprüfung A1)
+      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.folge.text, sentBy: "bot", buttons: policen.folge.buttons, footer: policen.folge.footer });
+    }
     const sent = await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,

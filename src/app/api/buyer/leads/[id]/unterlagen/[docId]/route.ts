@@ -2,31 +2,27 @@ import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
 import { prisma } from "@/lib/prisma";
 import { leadScope } from "@/lib/team";
-import { behalteUnterlage, ladeUnterlage, loescheUnterlage } from "@/lib/policen/server";
+import { behalteUnterlage, loescheUnterlage } from "@/lib/policen/server";
+import { signiereLink } from "@/lib/policen/ablage";
 
-// Unterlage, die der Lead per WhatsApp geschickt hat (lib/policen): ansehen (entschlüsselt), löschen oder als
-// „Beratungsdokumentation behalten“ kennzeichnen (PATCH { behalten, vermerk? }).
-// Nur für Logins, die den Lead sehen dürfen (Inhaber bzw. zuständiger Berater). Unterlagen mit möglichen
-// Gesundheitsangaben nie in der Admin-Vorschau.
+// Unterlage, die der Lead per WhatsApp geschickt hat (lib/policen): öffnen bzw. herunterladen (?download=1), löschen
+// oder als „Beratungsdokumentation behalten“ kennzeichnen (PATCH { behalten, vermerk? }).
+// Nur für Logins, die den Lead sehen dürfen (Inhaber bzw. zuständiger Berater), nie in der Admin-Vorschau.
+// GET gibt keine Datei aus, sondern leitet auf einen kurzlebigen signierten Link (2 Minuten, nur für diesen Login,
+// lib/policen/ablage.ts signiereLink) weiter; die Datei liefert api/buyer/policen/datei (Rechtsprüfung A6).
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string; docId: string }> }): Promise<Response> {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string; docId: string }> }): Promise<Response> {
   const { id, docId } = await params;
   const ctx = await getBuyerContext();
-  if (!ctx || ctx.demo) return new Response("Nicht gefunden.", { status: 404 });
+  if (!ctx || ctx.demo || ctx.preview || !ctx.userId) return new Response("Nicht gefunden.", { status: 404 });
   const lead = await prisma.lead.findFirst({ where: { id, ...leadScope(ctx) }, select: { id: true } });
   if (!lead) return new Response("Nicht gefunden.", { status: 404 });
-  const doc = await ladeUnterlage(lead.id, docId, ctx);
+  const doc = await prisma.leadDocument.findFirst({ where: { id: docId, leadId: lead.id, customerId: ctx.customerId, status: "gespeichert" }, select: { id: true } });
   if (!doc) return new Response("Nicht gefunden.", { status: 404 });
-  return new Response(new Uint8Array(doc.data), {
-    headers: {
-      "Content-Type": doc.mimeType,
-      "Content-Length": String(doc.data.length),
-      "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(doc.fileName)}`,
-      "Cache-Control": "private, no-store",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+  const download = new URL(req.url).searchParams.get("download") === "1";
+  const t = signiereLink({ leadId: lead.id, docId: doc.id, userId: ctx.userId, download });
+  return new Response(null, { status: 303, headers: { Location: `/api/buyer/policen/datei?t=${encodeURIComponent(t)}`, "Cache-Control": "private, no-store" } });
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string; docId: string }> }): Promise<Response> {

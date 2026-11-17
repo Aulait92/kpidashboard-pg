@@ -27,9 +27,7 @@ export type UnterlageView = {
   size: number;
   createdAt: string;
   sparte: string | null;
-  gesundheit: boolean;
   consentAt: string | null;
-  auszug: string | null;
   ansehen: boolean;
   loeschtAm: string | null;
   behaltenAt: string | null;
@@ -195,7 +193,6 @@ export function LeadFiles({
                     ) : (
                       kopf
                     )}
-                    {u.auszug ? <p className="mt-1 text-sm">{u.auszug}</p> : null}
                     {u.behaltenAt ? (
                       <p className="mt-1 text-xs text-[color:var(--muted)]" data-behalten>
                         Behalten seit {day(u.behaltenAt)}: {u.behaltenVermerk ?? "Beratungsdokumentation"}
@@ -221,10 +218,10 @@ export function LeadFiles({
                         ) : null}
                       </p>
                     ) : null}
-                    {u.gesundheit ? (
-                      <span className="mt-1.5 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200" data-gesundheit>
-                        Gesundheitsangaben möglich{u.consentAt ? `, mit Einwilligung vom ${day(u.consentAt)}` : ""}
-                      </span>
+                    {u.consentAt ? (
+                      <p className="mt-1 text-xs text-[color:var(--muted)]" data-einwilligung>
+                        Mit Einwilligung vom {day(u.consentAt)}
+                      </p>
                     ) : null}
                   </div>
                   {!readOnly ? (

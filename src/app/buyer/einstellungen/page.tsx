@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { AnalyseSchalter } from "@/components/nutzungsanalyse";
 import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
 import { analysePseudonym } from "@/lib/nutzungsanalyse-server";
+import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -92,6 +93,7 @@ export default async function EinstellungenPage() {
             <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
               <AnalyseSchalter status={analyse} pseudonym={ctx.userId ? analysePseudonym(ctx.userId) : null} />
             </div>
+            <PolicenFreischaltungKarte ctx={ctx} ort="einstellungen" className="mt-3 overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" />
           </section>
         ) : null}
         <p className="flex flex-wrap gap-x-4 px-1 text-sm text-[color:var(--muted)] [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center">
