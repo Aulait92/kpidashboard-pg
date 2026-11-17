@@ -211,13 +211,14 @@ export async function sendLeadEmail(
   appointmentId: string,
   kind: LeadEmailKind,
   opts: { now?: Date } = {},
-): Promise<{ sent: boolean; reason?: string; to?: string }> {
+): Promise<{ sent: boolean; reason?: string }> {
   const res = await sendLeadEmailInner(appointmentId, kind, opts.now ?? new Date());
   // Nur Termin-ID + Ergebnis loggen, keine E-Mail-Adresse (DSGVO).
   console.log(
     `[lead email] ${kind} ${appointmentId}: ${res.sent ? "gesendet" : `nicht gesendet (${res.reason})`}`,
   );
-  return res;
+  // Die Adresse steht am Termin (einladungAn), nicht im Ergebnis
+  return res.sent ? { sent: true } : { sent: false, reason: res.reason };
 }
 
 async function sendLeadEmailInner(
