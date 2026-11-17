@@ -87,7 +87,26 @@ const pick = (fields: Record<string, string>, keys: string[]) => {
   return null;
 };
 
+/** Standardfelder der Meta-Leadformulare auf Deutsch (sonst stünde „Post code“, „City“ im Kontakt). */
+const META_STANDARD: Record<string, string> = {
+  post_code: "Postleitzahl",
+  zip_code: "Postleitzahl",
+  zip: "Postleitzahl",
+  city: "Ort",
+  street_address: "Straße",
+  date_of_birth: "Geburtsdatum",
+  state: "Bundesland",
+  province: "Bundesland",
+  country: "Land",
+  job_title: "Beruf",
+  company_name: "Firma",
+  marital_status: "Familienstand",
+  gender: "Geschlecht",
+};
+
 function prettify(key: string): string {
+  const std = META_STANDARD[key.trim().toLowerCase()];
+  if (std) return std;
   const s = key.replace(/_/g, " ").replace(/\s+/g, " ").trim();
   return s ? s[0].toUpperCase() + s.slice(1) : key;
 }
