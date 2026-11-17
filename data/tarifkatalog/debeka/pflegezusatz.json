@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Pflegegeld ohne Kostennachweis",
+    "Ab Pflegegrad 1 (15 %)",
+    "Pflegeberatungs-Hotline"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif EPG (Pflege-Bahr, gefördert)",
+      "kurz": "EPG (Bahr)",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "600 € (100 %)",
+        "ab-pg": "ab PG 1 (15 %)",
+        "einmal": "nein",
+        "ambulant-gleich": "ja",
+        "dynamik": "alle 3 Jahre"
+      },
+      "bausteine": {
+        "einmal": "nein",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV118.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarife EPG und EPC (Komfort)",
+      "kurz": "EPG + Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "600 € + Wahlbetrag",
+        "ab-pg": "ab PG 1 (15 %)",
+        "einmal": "2.500 €",
+        "ambulant-gleich": "ja",
+        "wartezeit": "3 Jahre",
+        "dynamik": "alle 3 Jahre"
+      },
+      "bausteine": {
+        "einmal": "inklusive",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV119.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/pflegevorsorge/pflegebahrundpflegezusatz.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV118.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV119.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_59.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_62.pdf"
+  ],
+  "offen": [
+    "EPG (staatlich gefördert, 60 € Zulage im Jahr) rechnet mit 600 € Pflegegeld im Monat bei Pflegegrad 5 (mindestens so viel, dass der Mindestbeitrag von 15 € erreicht wird). EPC setzt EPG voraus und ergänzt Pflegegeld in Schritten von 150 € plus 2.500 € Sonderzahlung bei erstmaliger Pflegebedürftigkeit.",
+    "Staffel in beiden Tarifen: PG 1 15 %, PG 2 30 %, PG 3 65 %, PG 4 90 %, PG 5 100 %; gleich bei häuslicher und stationärer Pflege.",
+    "Wartezeit: Produktseite PKV nennt 3 Jahre für die Pflegezusatzversicherung; für EPG gilt die Wartezeit nach MB/GEPV 2022 (nicht ausgelesen). Bei Unfall entfällt sie.",
+    "Beitragsbefreiung im Pflegefall und Demenz-Regel in den Tarifbedingungen nicht gefunden. Dynamik: alle 3 Jahre nach Inflation, solange keine Leistung bezogen wird.",
+    "Debeka markiert keinen Tarif."
+  ]
+}

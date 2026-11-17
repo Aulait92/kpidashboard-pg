@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Naturheilverfahren und Heilpraktiker",
+    "Gilt auch im Ausland",
+    "Wartezeit 3 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif EA",
+      "kurz": "EA",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 500 €/Jahr",
+        "sehhilfen": "80 %, bis 100 €/Jahr",
+        "vorsorge": "nein",
+        "arznei": "80 %, Topf 100 €/Jahr",
+        "hoergeraete": "80 %, Topf 100 €/Jahr",
+        "wartezeit": "3 Monate"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV116.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif EAplus",
+      "kurz": "EAplus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "90 %",
+        "sehhilfen": "90 %, bis 1.000 €",
+        "vorsorge": "90 %, gesetzl. Programme",
+        "arznei": "90 % inkl. Zuzahlung",
+        "hoergeraete": "90 %, bis 1.500 €",
+        "wartezeit": "3 Monate"
+      },
+      "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV113.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/ergaenzendeambulanttarife.html",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV116.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV113.pdf",
+    "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/IPID_KV_54.pdf"
+  ],
+  "offen": [
+    "EA: 80 % der Restkosten; Naturheilverfahren und Heilpraktiker zusammen bis 500 € im Jahr, Sehhilfen bis 100 € im Jahr, Hilfsmittel (auch Hörgeräte), Heilmittel, Fahrten, Arznei- und Verbandmittel zusammen bis 100 € im Jahr.",
+    "EAplus: 90 % der Restkosten, Eigenanteil im Jahr höchstens 500 € (Kinder 400 €), darüber 100 %. Die Produktseite nennt 400 € als Grenze; Tarifbedingungen (Stand 2017) nennen 500 € für Erwachsene, bitte gegenprüfen. Sehhilfen bis 1.000 € Rechnungsbetrag, Zeitraum nicht genannt.",
+    "Für Versicherte ab 55 Jahren gibt es EA55plus (mit Zahnersatz 50 %), nicht aufgenommen. Auslandsreise-Krankenschutz ist ein eigener Tarif (AR). Augenlaser nicht genannt.",
+    "Debeka nennt EA „Basistarif“ und EAplus „Vorteilstarif“, keine Empfehlung markiert."
+  ]
+}
