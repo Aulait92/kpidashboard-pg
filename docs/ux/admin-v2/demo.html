@@ -424,6 +424,7 @@ details.auto li b{color:var(--fg);font-variant-numeric:tabular-nums}
   .b{max-width:88%}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.kt{display:flex;flex-direction:column;font-size:13px}.kh,.kr{display:grid;grid-template-columns:minmax(0,1fr) 52px 92px 62px;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.kh{color:var(--faint);font-size:12px;padding-top:0}.kr:last-child{border-bottom:0}.kf{border-top:1px solid var(--line2)}.kt .r{text-align:right;justify-self:end}@media (max-width:520px){.kh,.kr{grid-template-columns:minmax(0,1fr) 30px 76px 40px;gap:6px}.kh{font-size:11px}.kr .mt{white-space:normal}}
 </style>
 
 <div class="app">
@@ -934,6 +935,7 @@ D.kunde=id=>{const k=KUNDEN.find(x=>x.id===id)||KUNDEN[0];const bad=k.h.map((v,i
   box('Verlauf',tlist([['Monatsbericht Oktober gesendet','02.11.','b'],['Budget auf 1.500 € erhöht','14.10.','b'],['Check-in Telefonat: zufrieden, will mehr Termine','08.10.',''],['Anzeige „Tarif zu teuer?“ neu gestartet','01.10.','']])),
  'Leads & Kampagne':
   box('Kampagne',dl([['Produkt',k.prod||'noch keins'],['Status',k.ph==='Pausiert'?'pausiert':'läuft bei Meta'],['Budget','1.500 € im Monat'],['Ø Leadpreis','38,20 €']])+`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-toast="KI-Kampagne gestartet (Demo)">Neue Kampagne</button><button class="btn ghost sm" data-menu="kampagne">${I('more')}Mehr</button></div>`)+
+  box('Kampagnen · letzte 30 Tage, teuerste zuerst',`<div class="kt"><div class="kh"><span>Kampagne</span><span class="r">Leads</span><span class="r">Leadpreis</span><span class="r">Termine</span></div>${[['Tarif zu teuer? (Video)','Anzeige 2 von 3 läuft',9,52.40,2],['Beitrag senken mit 55+','pausiert seit 05.11.',6,44.90,1],['Tarifcheck in 2 Minuten','Bild, 3 Anzeigen',18,33.10,6],['Erfahrungsbericht Kunde','neu seit 12.11.',8,29.60,3]].map(c=>{const z=40,sev=c[3]>z+5?'err':c[3]>z?'warn':'ok';return `<div class="kr"><span style="min-width:0"><b>${c[0]}</b><span class="mt" style="display:block">${c[1]}</span></span><span class="num r">${c[2]}</span><span class="r">${tag(eur(c[3],2),sev)}</span><span class="num r">${c[4]}</span></div>`}).join('')}<div class="kr kf"><span><b>Gesamt</b> <span class="mt">Ziel-Leadpreis 40 €</span></span><span class="num r"><b>41</b></span><span class="r"><b class="num">38,20 €</b></span><span class="num r"><b>12</b></span></div></div>`)+
   box('Letzte Leads',tlist([['Eva Pohl · Termin gebucht','Heute','g'],['Jan Becker · in Beratung','Gestern','b'],['Laura Fischer · Abschluss','15.11.','g'],['Felix Wagner · Storno (falsche Nummer)','14.11.','']]))+
   box('Lead-Qualität',[['Passt',82],['Falsche Nummer',7],['Kein Interesse',6],['Falsche Sparte',5]].map(q=>`<div class="qbar"><span class="mt">${q[0]}</span><span class="bar"><i style="width:${q[1]}%"></i></span><span class="num r">${q[1]} %</span></div>`).join(''))+
   box('Maßnahmen',tlist([['Zielgruppe 35 bis 55 ergänzt','12.11.','b'],['Anzeige 3 pausiert (ermüdet)','05.11.','']])),
