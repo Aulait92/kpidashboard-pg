@@ -48,11 +48,18 @@ export type KatalogTarif = {
 };
 
 /**
- * Bündelrabatt einer Gesellschaft (vorbereitet, Ole 15.11.2026; Berechnung und Anzeige folgen): z. B. Allianz
- * PrivatSchutz, ab 2 Produkten der Linien Komfort/Premium mit 3 Jahren Laufzeit 5 bis 20 % auf die Einzelprämien.
- * Datei: data/tarifkatalog/<gesellschaft>/buendel.json.
+ * Bündelrabatt einer Gesellschaft (Ole 15.11.2026; Berechnung lib/kombi-rabatt.ts): z. B. Allianz PrivatSchutz, ab 2
+ * Produkten der Linien Komfort/Premium mit 3 Jahren Laufzeit 5 bis 20 % auf die Einzelprämien.
+ * Datei: data/tarifkatalog/<gesellschaft>/buendel.json. einmal = Sparten, die zusammen nur einmal zählen.
  */
-export type BuendelRegel = { linien: string[]; mindestLaufzeitJahre: number | null; sparten: string[]; staffel: { anzahl: number; prozent: number; abAnzahl?: boolean }[] };
+export type BuendelRegel = {
+  name?: string | null;
+  linien: string[];
+  mindestLaufzeitJahre: number | null;
+  sparten: string[];
+  staffel: { anzahl: number; prozent: number; abAnzahl?: boolean }[];
+  einmal?: string[][];
+};
 export type Katalog = { sparten: KatalogSparte[]; tarife: KatalogTarif[]; buendel: Record<string, BuendelRegel> };
 
 /**
@@ -372,7 +379,10 @@ export function parseBuendel(raw: unknown): BuendelRegel | null {
     .sort((a, b) => a.anzahl - b.anzahl);
   if (!staffel.length) return null;
   const liste = (v: unknown) => (Array.isArray(v) ? v.map((x) => text(x, 60)).filter((x): x is string => !!x) : []);
+  const einmal = (Array.isArray(r.einmal) ? r.einmal : []).map(liste).filter((g) => g.length > 1);
   return {
+    name: text(r.name, 60),
+    ...(einmal.length ? { einmal } : {}),
     linien: liste(r.linien),
     mindestLaufzeitJahre: typeof r.mindestLaufzeitJahre === "number" ? r.mindestLaufzeitJahre : null,
     sparten: liste(r.sparten),

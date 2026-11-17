@@ -4,6 +4,7 @@
   "linien": [],
   "mindestLaufzeitJahre": null,
   "sparten": ["haftpflicht", "tierhalter-hund", "tierhalter-pferd", "hausrat", "wohngebaeude", "rechtsschutz"],
+  "einmal": [["haftpflicht", "tierhalter-hund", "tierhalter-pferd"]],
   "staffel": [
     { "anzahl": 2, "prozent": 3 },
     { "anzahl": 3, "prozent": 6 },
