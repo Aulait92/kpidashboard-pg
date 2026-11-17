@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "hausrat",
+  "produkt": "IDEAL HausRat",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Unterversicherungsverzicht",
+    "Vorsorge für neue Sachen",
+    "Räuberische Erpressung"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL HausRat Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 25.000 €",
+        "wert": "30 % (im Tresor)",
+        "diebstahl": "1 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "3.000 €",
+        "auto": "1 % der VS, Inland",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHR/IDEAL_HausRat_Leistungsuebersicht_einfache_Sprache_barrierefrei.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL HausRat Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 % (im Tresor)",
+        "diebstahl": "5 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "3.000 €",
+        "auto": "10 % der VS, weltweit",
+        "ueberspannung": "bis 50 % der VS",
+        "allgefahren": "ja (250 € SB)"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHR/IDEAL_HausRat_Leistungsuebersicht_einfache_Sprache_barrierefrei.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Schaden%20und%20Unfall/Hausratversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHR/IDEAL_HausRat_Leistungsuebersicht_einfache_Sprache_barrierefrei.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHR/IDEAL%20HausRat_Flyer.pdf"
+  ],
+  "offen": [
+    "Zwei Varianten Klassik und Exklusiv (Leistungsübersicht 06/2025); keine Variante hervorgehoben.",
+    "Wertsachen im Tresor bzw. Bankschließfach; außerhalb nur kleinere Grenzen (Bargeld 3.000 €, Schmuck Klassik 25.000 €, Exklusiv doppelt).",
+    "Einfacher Diebstahl in % der Versicherungssumme, u. a. Kfz-Zubehör, Gartenmöbel, Wäsche, Kinderwagen; Exklusiv zusätzlich Handtaschen, Brillen, Hörgeräte.",
+    "Diebstahl aus dem Auto: Einbruch in Kfz, Dachbox, Anhänger, Wohnmobil.",
+    "Überspannung im Klassik in der Leistungsübersicht nicht eindeutig beziffert. Bausteine: Cyberschutz, Elementar, Fahrrad, Glas."
+  ]
+}

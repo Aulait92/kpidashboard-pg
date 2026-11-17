@@ -1,0 +1,102 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit voll",
+    "Photovoltaik und E-Ladestation",
+    "Überspannung durch Blitz"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude compact",
+      "kurz": "compact",
+      "stufe": 1,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "ja, Paket optional",
+        "kosten": "Hotel 50 €/Tag",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "mietausfall": "6 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/142/deklarationsvergleichwohngebaeudepp142pdf/deklarationsvergleich-wohngebaeude-pp142.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude classic",
+      "kurz": "classic",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 5.000 €",
+        "pv": "ja, Paket optional",
+        "kosten": "Hotel 100 €/Tag",
+        "ueberspannung": "ja",
+        "fugen": "bis 10.000 €",
+        "vandalismus": "ja",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/142/deklarationsvergleichwohngebaeudepp142pdf/deklarationsvergleich-wohngebaeude-pp142.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude comfort",
+      "kurz": "comfort",
+      "stufe": 3,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 20.000 €",
+        "pv": "ja, Paket optional",
+        "kosten": "Hotel 200 €/Tag",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "ja",
+        "tiere": "bis 10.000 €",
+        "allgefahren": "ja, SB 300 €",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/142/deklarationsvergleichwohngebaeudepp142pdf/deklarationsvergleich-wohngebaeude-pp142.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/wohnen-bauen/wohngebaeudeversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/142/deklarationsvergleichwohngebaeudepp142pdf/deklarationsvergleich-wohngebaeude-pp142.pdf"
+  ],
+  "offen": [
+    "Quelle: Deklarationsvergleich PP 142 (Fußzeile 07.2026, Seiten Stand 07.2025) der Alte Leipziger Versicherung AG. Werte für Ein- und Zweifamilienhaus; Mehrfamilienhaus teils niedriger.",
+    "Ableitungsrohre: Frost- und Bruchschäden innerhalb und außerhalb des Grundstücks. Hotel compact höchstens 120 Tage, classic und comfort 365 Tage.",
+    "Photovoltaik als Gebäudebestandteil in allen Stufen versichert; Pakete Photovoltaik und Erneuerbare Energien (Allgefahren, SB 300 €) gegen Aufpreis. Elementar als Paket (SB 10 %, mind. 500 €).",
+    "Gleitender Neuwert nicht im Vergleich genannt. Tarif #selbermacher (comfort mit 1.200 € SB) nicht als Stufe geführt. Keine Empfehlung markiert."
+  ]
+}

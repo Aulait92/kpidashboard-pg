@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Eintrittsfrist Invalidität 24 Monate",
+    "Tagegeld ambulante OP optional",
+    "Pakete ServicePlus, Unfallschutz"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "abGrad": "ab unter 1 %",
+        "unfallrente": "vereinbar, ab 50 %",
+        "khtg": "wählbar",
+        "sofort": "nein",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/uv/unfallversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfall Comfort Plus",
+      "kurz": "Comfort Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "abGrad": "ab unter 1 %",
+        "unfallrente": "vereinbar, ab 50 %",
+        "khtg": "wählbar",
+        "sofort": "20.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/uv/unfallversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/uv/unfallversicherung.html",
+    "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/uv/kinder-unfallversicherung.html"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite debeka.de (Comfort und Comfort Plus); Unfallrente ab 50 % laut Seite Kinder-Unfallversicherung, sofern vereinbart.",
+    "Progression und Höchstleistung bei Invalidität nicht genannt.",
+    "Krankenhaustagegeld und Genesungsgeld laut Seite für stationäre Behandlungen, Höhe vereinbar; ambulante OP 3 Tage.",
+    "Comfort Plus zusätzlich: Einmalzahlung bei Knochenbruch bis 2.000 €, Koma-Tagegeld bis 50.000 €, Bewusstseinsstörungen u. a. durch Herzinfarkt und Schlaganfall.",
+    "Debeka markiert keine Stufe."
+  ]
+}

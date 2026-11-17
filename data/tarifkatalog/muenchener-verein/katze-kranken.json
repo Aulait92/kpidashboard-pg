@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "katze-kranken",
+  "produkt": "Katzenkrankenversicherung KatzeGesund",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Bis 4-facher GOT-Satz",
+    "Ohne Jahreshöchstgrenze",
+    "Video-Tierarzt"
+  ],
+  "tarife": [
+    {
+      "name": "KatzeGesund Premium Voll-Schutz",
+      "kurz": "Voll-Schutz",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "optional, 200 €/Jahr",
+        "zahn": "bis 500 €/Jahr",
+        "kastration": "medizinisch nötig",
+        "physio": "bis 500 €/Jahr",
+        "sb": "0 bis 1.000 €",
+        "wartezeit": "30 Tage",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "vorsorge": "optional",
+        "wechsel": "inklusive"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/tierversicherung/katzenkrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/tierversicherung/katzenkrankenversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/Tier-KV/Muenchener_Verein_AV_-_AVB_Tier-Krankenversicherung_TKVV-10-26_-_300_02_3700.pdf"
+  ],
+  "offen": [
+    "Ein Tarif im Vollschutz; die Seite empfiehlt den Vollschutz. Zahn auch bei FORL. Dauer der Nachbehandlung im Vollschutz nicht genannt. Ohne Selbstbeteiligung je nach Textstelle bis Eintrittsalter 3 bzw. 6 Jahre.",
+    "Werte für KatzeGesund Premium aus der Produktseite; daneben gibt es Kompakt (bis 3.000 € im Jahr), in den Bedingungen auch Premium Plus. Kompakt nicht als Stufe aufgenommen, da keine weiteren Werte.",
+    "Selbstbeteiligung 0, 250, 500 oder 1.000 € im Jahr (abhängig vom Eintrittsalter); nach 3 schadenfreien Jahren einmal halbe Selbstbeteiligung. Wechseloption: zum 3. Geburtstag Upgrade ohne Gesundheitsprüfung.",
+    "Wartezeit 30 Tage, bei Unfall keine, für bestimmte Erkrankungen und medizinisch notwendige Kastration 12 Monate. Vorsorge-Baustein bis 200 € im Jahr ohne Selbstbeteiligung; Plus-Baustein mit Rücktransport aus dem Ausland."
+  ]
+}

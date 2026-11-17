@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Dynamik 10 % alle 3 Jahre",
+    "Beitragsfrei in Pflegegrad 5"
+  ],
+  "tarife": [
+    {
+      "name": "Pflegetagegeld Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "werte": {
+        "pg5": "100 % (stationär)",
+        "ab-pg": "Pflegegrad 1",
+        "einmal": "nein",
+        "befreiung": "Pflegegrad 5",
+        "ambulant-gleich": "nur stationär",
+        "wartezeit": "keine",
+        "dynamik": "10 % alle 3 Jahre"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/pflegeversicherung/pflegetagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegetagegeld Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "werte": {
+        "pg5": "100 %",
+        "ab-pg": "Pflegegrad 1",
+        "einmal": "100-facher Tagessatz",
+        "befreiung": "Pflegegrad 5",
+        "ambulant-gleich": "nein, ambulant gestuft",
+        "wartezeit": "keine",
+        "dynamik": "10 % alle 3 Jahre"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/pflegeversicherung/pflegetagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/pflegeversicherung/pflegetagegeld/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert (zwei Stufen).",
+    "Premium: ambulant PG 1 bis 5 mit 10/30/60/80/100 %, stationär PG 1 10 %, ab PG 2 100 %; Einmalzahlung bei erstmals PG 2 100-fach (Unfall 200-fach, Kinder 300-fach). Komfort nur für stationäre Pflege (PG 1 10 %, ab PG 2 100 %).",
+    "Nachversicherung bei Anlässen bis 30 % ohne Gesundheitsprüfung. Staatlich geförderte Pflegevorsorge als eigenes Produkt nicht aufgenommen."
+  ]
+}

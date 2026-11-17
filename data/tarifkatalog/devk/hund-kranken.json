@@ -1,0 +1,48 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "hund-kranken",
+  "produkt": "Tierkrankenversicherung Hund (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Alle Leistungen der OP-Versicherung",
+    "Wartezeit Unfall 5 Tage"
+  ],
+  "tarife": [
+    {
+      "name": "Hunde-Tierkrankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "3.000/6.000 €/unbegrenzt",
+        "ohneOp": "ja",
+        "vorsorge": "optional, bis 500 €",
+        "kastration": "ja, nach 6 Monaten",
+        "physio": "ohne OP bis 750 €",
+        "nachbehandlung": "unbegrenzt",
+        "sb": "0, 250 oder 500 €",
+        "wartezeit": "30 Tage",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "vorsorge": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/tiere/"
+  ],
+  "offen": [
+    "DEVK bietet die Tierkrankenversicherungen über den Kooperationspartner Uelzener an (Risikoträger Uelzener); Tarifangaben aus der Leistungstabelle auf devk.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (3.000 €, 6.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
+    "Vorbehandlung unbegrenzt; Trächtigkeitsuntersuchungen bis 200 € im Jahr.",
+    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung."
+  ]
+}

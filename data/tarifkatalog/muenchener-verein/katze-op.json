@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Versicherung KatzeGesund",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Bis 4-facher GOT-Satz",
+    "Ohne Jahreshöchstgrenze",
+    "Video-Tierarzt"
+  ],
+  "tarife": [
+    {
+      "name": "KatzeGesund Premium OP-Schutz",
+      "kurz": "OP-Schutz",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "bis 60 Tage",
+        "vorsorge": "optional, 200 €/Jahr",
+        "zahn": "Ziehen, Wurzel",
+        "kastration": "medizinisch nötig",
+        "physio": "nach OP, 500 €/Jahr",
+        "sb": "0 bis 1.000 €",
+        "wartezeit": "30 Tage",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "vorsorge": "optional",
+        "wechsel": "inklusive"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/tierversicherung/katzenkrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/tierversicherung/katzenkrankenversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/Tier-KV/Muenchener_Verein_AV_-_AVB_Tier-Operationsversicherung_TOPV-10-26_-_300_02_3800.pdf"
+  ],
+  "offen": [
+    "Ein Tarif im OP-Schutz. Zahn: Extraktion und Wurzelbehandlung, auch bei FORL; Füllungen und Zahnersatz nur im Vollschutz.",
+    "Werte für KatzeGesund Premium aus der Produktseite; daneben gibt es Kompakt (bis 3.000 € im Jahr), in den Bedingungen auch Premium Plus. Kompakt nicht als Stufe aufgenommen, da keine weiteren Werte.",
+    "Selbstbeteiligung 0, 250, 500 oder 1.000 € im Jahr (abhängig vom Eintrittsalter); nach 3 schadenfreien Jahren einmal halbe Selbstbeteiligung. Wechseloption: zum 3. Geburtstag Upgrade ohne Gesundheitsprüfung.",
+    "Wartezeit 30 Tage, bei Unfall keine, für bestimmte Erkrankungen und medizinisch notwendige Kastration 12 Monate. Vorsorge-Baustein bis 200 € im Jahr ohne Selbstbeteiligung; Plus-Baustein mit Rücktransport aus dem Ausland."
+  ]
+}

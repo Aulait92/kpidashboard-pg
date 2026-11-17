@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "haftpflicht",
+  "produkt": "IDEAL PrivatHaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Mietsachschäden",
+    "Gefälligkeitsschäden",
+    "Europa unbegrenzt"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL PrivatHaftpflicht Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ab 500 €",
+        "schluessel": "30.000 €",
+        "delikt": "50.000 €",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "mallorca": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein",
+        "ehrenamt": "ja",
+        "sb": "ohne oder 150 €"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPH/IDEAL_PrivatHaftpflicht_Produktbeschreibung.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL PrivatHaftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 oder 50 Mio. €",
+        "forderungsausfall": "ab 0 €",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "50.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "ohne oder 150 €"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPH/IDEAL_PrivatHaftpflicht_Produktbeschreibung.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Schaden%20und%20Unfall/Haftpflichtversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPH/IDEAL_PrivatHaftpflicht_Produktbeschreibung.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPH/IDEAL_PrivatHaftpflicht_Flyer.pdf"
+  ],
+  "offen": [
+    "Zwei Produktlinien Klassik und Exklusiv (Flyer 03/2026); keine Linie hervorgehoben.",
+    "„ja“ im Exklusiv heißt laut Produktbeschreibung: bis zur gewählten Deckungssumme versichert.",
+    "Forderungsausfall inklusive Vorsatz, Mindestschaden Klassik 500 €, Exklusiv 0 € (mit Schadenersatz-Rechtsschutz).",
+    "Schlüsselverlust: fremde private, berufliche und ehrenamtliche Schlüssel; Kfz- und Tresorschlüssel nur Exklusiv (5.000 €).",
+    "Exklusiv zusätzlich Besserstellungs- und Best-Leistungs-Garantie."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktritt-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beliebig viele Reisen im Jahr",
+    "Reisen bis 31 Tage, weltweit",
+    "Auch Ferienwohnungen"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktritt-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "Reisepreis frei wählbar",
+        "abbruch": "ja",
+        "jahr": "ja",
+        "gruende": "u. a. Jobverlust"
+      },
+      "bausteine": {},
+      "quelle": "https://www.alte-leipziger.de/privatkunden/reise-freizeit/reiseruecktritt-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/reise-freizeit/reiseruecktritt-versicherung"
+  ],
+  "offen": [
+    "Nur die Produktseite ist öffentlich (kein Produktinformationsblatt verlinkt). Ein Tarif als Jahresvertrag für beliebig viele Reisen bis 31 Tage weltweit; Reiseabbruch eingeschlossen.",
+    "Selbstbeteiligung und Leistung bei Erkrankung an einer Pandemie auf der Seite nicht genannt.",
+    "Versicherte Gründe laut Beispielen: Krankheit eines Kindes, unverschuldete Arbeitslosigkeit, Impfunverträglichkeit, Tod eines Angehörigen, Einbruch zu Hause. Familie mitversichert nicht ausdrücklich genannt."
+  ]
+}

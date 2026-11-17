@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Abschluss 40 bis 80 Jahre",
+    "Gewinnbeteiligung",
+    "Einmalbeitrag möglich"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "2 Jahre",
+        "unfall": "sofort volle Summe",
+        "ohne-gp": "ja",
+        "beitragsende": "wählbar, z. B. bis 85"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/sterbegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/sterbegeld"
+  ],
+  "offen": [
+    "Quelle: Produktseite lvm.de.",
+    "Wartezeit 2 Jahre: bei Tod in dieser Zeit werden die Beiträge erstattet; bei Unfalltod volle Summe ab Beginn (keine Verdopplung genannt).",
+    "Beitragsdauer frei wählbar (Beispiel bis zum 85. Lebensjahr). Vorsorge-Service nicht genannt."
+  ]
+}

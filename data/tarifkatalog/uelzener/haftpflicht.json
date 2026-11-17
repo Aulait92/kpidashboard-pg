@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "Uelzener",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflicht-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Reiten fremder Pferde mitversichert",
+    "Ausland bis 5 Jahre weltweit",
+    "Single- oder Familientarif"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "3, 10 oder 50 Mio. €",
+        "forderungsausfall": "ab 2.500 € Forderung",
+        "schluessel": "bis 100.000 €, beruflich",
+        "delikt": "bis 10.000 € Sachschaden",
+        "geliehen": "bis 100.000 €, 300 € SB",
+        "miete": "bis zur Deckungssumme",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 7.500 €",
+        "mallorca": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "schluesselBeruf": "inklusive",
+        "delikt": "inklusive",
+        "hausbesitz": "inklusive"
+      },
+      "quelle": "https://uelzener.de/mensch/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://uelzener.de/mensch/private-haftpflichtversicherung/",
+    "https://www.uelzener.de/formulare/download/256f3b7f-81bf-4265-a539-33c4d5b94873",
+    "https://www.uelzener.de/formulare/download/5d273ed3-07f1-401d-842b-5b0c4e2b3a78"
+  ],
+  "offen": [
+    "Uelzener hat keine Tarifstufen, nur einen Tarif (Single oder Familie) mit wählbarer Deckungssumme; deshalb eine Stufe „Tarif“.",
+    "Selbstbeteiligung: Preisbeispiel mit 300 € SB; ob und welche anderen Höhen wählbar sind, ist nicht veröffentlicht.",
+    "Schäden durch deliktunfähige Personen: Personenschäden bis zur Deckungssumme, Sach- und Vermögensschäden bis 10.000 € (BHAFPr 2024).",
+    "Selbst genutztes Einfamilienhaus, Wohnung und Ferienhaus im Inland sowie Stallungen und Weiden bis 5 ha mitversichert. Best-Leistungs-Baustein wählbar (im Schema kein eigener Baustein).",
+    "Tiere: Vorsorgeversicherung bei erstmaliger Anschaffung eines Hundes oder Pferdes; Mitversicherung weiterer Tiere auf Anfrage. Baustein „Hund oder Pferd mitversichern“ deshalb nicht belegt."
+  ]
+}

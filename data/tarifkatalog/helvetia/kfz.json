@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "15 Mio. € je verletzte Person",
+    "Parkschadenschutz",
+    "Schutzbrief inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "weitgehender Verzicht",
+        "tiere": "Tiere aller Art",
+        "gap": "ja",
+        "elektro": "Akku All-Risk",
+        "rabattschutz": "optional",
+        "neuwert": "6 Monate",
+        "marder": "ohne Folgeschäden",
+        "werkstatt": "freie Wahl gg. Aufpreis",
+        "mallorca": "Europa"
+      },
+      "bausteine": {
+        "schutzbrief": "inklusive",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.helvetia.de/de/privatkunden/kfz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung All-In",
+      "kurz": "All-In",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "weitgehender Verzicht",
+        "tiere": "Tiere aller Art",
+        "gap": "ja",
+        "elektro": "Akku All-Risk",
+        "rabattschutz": "optional",
+        "neuwert": "24 Monate",
+        "marder": "inkl. Folgeschäden",
+        "werkstatt": "freie Wahl inklusive",
+        "mallorca": "Deutschland und Europa"
+      },
+      "bausteine": {
+        "schutzbrief": "inklusive",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.helvetia.de/de/privatkunden/kfz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/kfz.html"
+  ],
+  "offen": [
+    "Zwei Stufen laut Leistungsvergleich der Produktseite (Abruf 17.11.2026 per Textabruf, Dokumente ohne abrufbare Adresse). Keine Stufe markiert; All-In wird als bestes Preis-Leistungs-Verhältnis beworben.",
+    "Marderbiss: Wert ist der Tierbiss-Schaden (Basis ohne, All-In mit Folgeschäden).",
+    "Neuwert-/Kaufwertentschädigung All-In 24 Monate auch bei Verlust; Baustein AutoSchutz 48 verlängert auf 48 Monate.",
+    "Sonderzubehör beitragsfrei bis 1.000 € (Basis) bzw. 10.000 € (All-In); Kurzschluss-Folgeschäden 5.000 € bzw. 20.000 €; Eigenschäden bei privat genutztem Pkw (All-In bis 100.000 €).",
+    "Weitere Bausteine: Werkstattservice Premium, Rabattschutz Premium, Fahrerschutz, Kfz Start (nur All-In). Versicherer auf der Seite nicht ausdrücklich genannt (Helvetia)."
+  ]
+}

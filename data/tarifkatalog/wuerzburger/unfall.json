@@ -1,0 +1,94 @@
+{
+  "gesellschaft": "Würzburger",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung best4you",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Grundsumme frei wählbar",
+    "Rente, KH-Tagegeld wählbar",
+    "Weltweit, rund um die Uhr"
+  ],
+  "tarife": [
+    {
+      "name": "best4you Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "Staffeln wählbar",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "kosmetik": "bis 10.000 €",
+        "bergung": "bis 10.000 €",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.wuerzburger.com/produkte/unfallversicherung/best4you",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "best4you Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "Staffeln wählbar",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "10 %, max. 10.000 €",
+        "kosmetik": "bis 25.000 €",
+        "bergung": "bis 25.000 €",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.wuerzburger.com/produkte/unfallversicherung/best4you",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "best4you Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "Staffeln wählbar",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "10 %, max. 20.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.wuerzburger.com/produkte/unfallversicherung/best4you",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerzburger.com/produkte/unfallversicherung/best4you",
+    "https://www.wuerzburger.com/images/pdf/AUB2011.pdf",
+    "https://www.wuerzburger.com/images/pdf/IPID-Unfall.pdf"
+  ],
+  "offen": [
+    "Stufen Basis, Plus, Exklusiv laut Produktseite; Werte aus den Besonderen Bedingungen Basis, Plus und Exklusiv 2011 (im Bedingungswerk AUB 2011 der Würzburger). Eine Leistungsübersicht mit Summen ist nicht veröffentlicht.",
+    "Grundsumme, Progressionsstaffel, Unfallrente und Krankenhaustagegeld werden individuell vereinbart; konkrete Werte und Invaliditätsgrad für die Rente nicht veröffentlicht. Keine Empfehlung markiert, Plus als mittlere Stufe.",
+    "Sofortleistung Basis: nach AUB 2011 nur, wenn vereinbart, höchstens 6.000 €; nicht als Wert übernommen. Infektionen durch Zeckenstich (u. a. Borreliose) nur in Exklusiv ausdrücklich eingeschlossen.",
+    "Mitwirkung von Krankheiten: Kürzung erst ab 40 % (Plus) bzw. 75 % (Exklusiv). Grobe Fahrlässigkeit in Plus und Exklusiv mitversichert.",
+    "Weitere Unfallprodukte: bestAgeCare (Generation 50+) und SB-Unfall (Heilbehandlungskosten), nicht als Stufe geführt."
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "24-Stunden-Schadensservice",
+    "Innovationsklausel",
+    "Vorsorge für Kinder"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "25 % der VS",
+        "diebstahl": "nur Einzelfälle",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "bargeld": "bis 2.000 €",
+        "auto": "bis 5.000 €",
+        "hotel": "150 €, 6 Monate",
+        "aussen": "20 % der VS, 9 Monate",
+        "garten": "bis 1.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/hausratversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Comfort Plus",
+      "kurz": "Comfort Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 % der VS",
+        "diebstahl": "Taschendieb bis 1.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "bargeld": "bis 3.000 €",
+        "auto": "ja",
+        "hotel": "200 €, 12 Monate",
+        "aussen": "40 % der VS, 18 Monate",
+        "garten": "ja"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/hausratversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/hausratversicherung.html"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite debeka.de (Comfort und Comfort Plus).",
+    "Einfacher Diebstahl: Comfort nur einzelne Fälle (z. B. am Arbeitsplatz, Gartenmöbel je bis 1.000 €); Comfort Plus zusätzlich Taschendiebstahl bis 1.000 € und Trickdiebstahl bis 5.000 €.",
+    "Wertsachen in Comfort Plus erhöhbar; Schmuck bis 20.000 € bzw. 40.000 €.",
+    "Hotelkosten je Tag inkl. Nebenkosten. Online-Betrug (Phishing) nicht genannt; Kartenmissbrauch nur Comfort Plus bis 5.000 €.",
+    "Fahrraddiebstahl mit 24-Stunden-Schutz, weitere Naturgefahren und NotfallPlus gegen Beitrag in beiden Paketen.",
+    "Debeka markiert keine Stufe."
+  ]
+}

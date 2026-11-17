@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "ambulant",
+  "produkt": "Krankenzusatzversicherung mit Gesundheitsbudget",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Chefarzt im Notfall 100 %",
+    "Reha-Tagegeld 50 €"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenzusatzversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "200 €/Jahr",
+        "sehhilfen": "100 €/Jahr",
+        "vorsorge": "ja, im Budget",
+        "arznei": "ja, im Budget",
+        "hoergeraete": "ja, im Budget",
+        "ausland": "ja",
+        "wartezeit": "keine",
+        "lasik": "einmalig 200 €"
+      },
+      "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenzusatzversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "300 €/Jahr",
+        "sehhilfen": "200 €/Jahr",
+        "vorsorge": "ja, im Budget",
+        "arznei": "ja, im Budget",
+        "hoergeraete": "ja, im Budget",
+        "ausland": "ja",
+        "wartezeit": "keine",
+        "lasik": "einmalig 300 €"
+      },
+      "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenzusatzversicherung Premium Plus",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "500 €/Jahr",
+        "sehhilfen": "300 €/Jahr",
+        "vorsorge": "ja, im Budget",
+        "arznei": "ja, im Budget",
+        "hoergeraete": "ja, im Budget",
+        "ausland": "ja",
+        "wartezeit": "keine",
+        "lasik": "einmalig 500 €"
+      },
+      "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/krankenzusatzversicherung",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/kzv/dadirekt-krankenzusatz-tarifblatt.pdf?sc_lang=de-de",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/krankenzusatz/dadirekt_krankenzusatz_einfacheuebersicht_128_0625.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Komfort, Premium, Premium Plus mit gleichen Leistungen; sie unterscheiden sich nur in der Höhe des jährlichen Gesundheitsbudgets.",
+    "Gesundheitsbudget ab dem 3. Jahr: Komfort 700 €, Premium 1.000 €, Premium Plus 2.000 € (1. Jahr 500, 600 bzw. 1.200 €).",
+    "Alle ambulanten Leistungen (Vorsorge, Impfungen, Heil- und Hilfsmittel, Arzneimittel, Zuzahlungen) laufen über das Budget; Heilpraktiker als Naturheilverfahren mit eigener Grenze.",
+    "Krankenhausleistungen (Notfall-Leistungen) desselben Tarifs siehe Datei krankenhauszusatz."
+  ]
+}

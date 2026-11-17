@@ -1,0 +1,82 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "ambulant",
+  "produkt": "Zusatztarif Naturheilverfahren (ET-GZ5 Plus)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zahnersatz bis 80 %",
+    "Zahnreinigung bis 80 € im Jahr",
+    "Rücktransport aus dem Ausland"
+  ],
+  "tarife": [
+    {
+      "name": "ET-GZ5 Plus",
+      "kurz": "GZ5 Plus",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 780 € im Jahr",
+        "vorsorge": "optional (VT-G)",
+        "hoergeraete": "Hilfsmittel bis 1.200 €",
+        "ausland": "42 Tage je Reise",
+        "sehhilfen": "bis 155 € im Jahr"
+      },
+      "bausteine": {
+        "sehhilfen": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/naturheilverfahren",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ET-GZ5 Plus mit Brille Komfort",
+      "kurz": "Brille Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, bis 780 € im Jahr",
+        "vorsorge": "optional (VT-G)",
+        "hoergeraete": "Hilfsmittel bis 1.200 €",
+        "ausland": "42 Tage je Reise",
+        "sehhilfen": "bis 300 € im Jahr"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/brillen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ET-GZ5 Plus mit Brille Premium",
+      "kurz": "Brille Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 780 € im Jahr",
+        "vorsorge": "optional (VT-G)",
+        "hoergeraete": "Hilfsmittel bis 1.200 €",
+        "ausland": "42 Tage je Reise",
+        "sehhilfen": "bis 350 € im Jahr"
+      },
+      "bausteine": {
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/brillen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/naturheilverfahren",
+    "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/brillen",
+    "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/vorsorge"
+  ],
+  "offen": [
+    "Quelle: Seiten Naturheilverfahren und Brillenversicherung auf devk.de. Stufen: Zusatztarif ET-GZ5 Plus allein bzw. mit Brillentarif Komfort oder Premium.",
+    "Naturheilkunde: 80 % nach Gebührenverzeichnis für Heilpraktiker, im 1. und 2. Jahr je 260 €, danach 780 € im Jahr; Kinder die Hälfte.",
+    "Sehhilfen mit Brillentarif: Gesamtbetrag zusammen mit ET-GZ5 Plus; Premium zusätzlich Sonnenbrillen bis 150 € alle 24 Monate.",
+    "Hilfsmittel (u. a. Hörgeräte) 100 % nach Vorleistung der GKV, im 1. und 2. Jahr je 600 €, danach 1.200 €.",
+    "Arzneimittel und Wartezeit nicht genannt; Vorsorge über eigenen Tarif VT-G (z. B. Gesundheits-Check bis 270 €)."
+  ]
+}

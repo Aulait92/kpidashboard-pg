@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Stationäre Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rooming-in für Kinder unter 14",
+    "Neugeborene ohne Wartezeit",
+    "Gesetzliche Zuzahlungen 100 %"
+  ],
+  "tarife": [
+    {
+      "name": "Stationäre Zusatzversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja, 100 %",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja, mit Vereinbarung",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "30 bzw. 50 € je Tag",
+        "ambulant-op": "ja, Chefarzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/stationaere-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/gesundheit-vorsorge/gesundheit/stationaere-zusatzversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/krankenzusatz.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Produktseite und Tarifbedingungen, Abruf 17.11.2026). Versicherer: WGV-Versicherung AG.",
+    "Wartezeit: allgemeine Wartezeit 3 Monate laut AVB (entfällt bei Unfall), Entbindung 8 Monate.",
+    "Leistungen nur nach Vorleistung der gesetzlichen Krankenkasse; über GOÄ-Höchstsatz nur bei rechtswirksamer Honorarvereinbarung.",
+    "Ersatztagegeld 30 € bei Zweibettzimmer statt Einbett, 50 € ohne Ein-/Zweibettzimmer bzw. ohne Chefarzt."
+  ]
+}

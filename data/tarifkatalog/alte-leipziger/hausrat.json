@@ -1,0 +1,111 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit voll",
+    "Überspannung durch Blitz",
+    "Beitragsfrei bei Arbeitslosigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat compact",
+      "kurz": "compact",
+      "stufe": 1,
+      "werte": {
+        "gf": "ja",
+        "wert": "20 %",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 1.000 €",
+        "garten": "bis 1.000 €",
+        "auto": "nein",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat classic",
+      "kurz": "classic",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "40 %",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 3.000 €",
+        "garten": "bis 2.500 €",
+        "auto": "2 %",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "200 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat comfort",
+      "kurz": "comfort",
+      "stufe": 3,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 %",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 4.000 €",
+        "garten": "bis 5.000 €",
+        "auto": "2 %",
+        "allgefahren": "ja, SB 300 €",
+        "ueberspannung": "ja",
+        "hotel": "365 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/wohnen-bauen/hausratversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf"
+  ],
+  "offen": [
+    "Quelle: Deklarationsvergleich PP 136 (Stand 07.2023) der Alte Leipziger Versicherung AG; Symbole im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
+    "Einfacher Diebstahl aus der Wohnung ist im Vergleich nicht genannt (nur Diebstahl vom Grundstück, Taschen- und Trickdiebstahl ab classic).",
+    "Fahrrad, weitere Naturgefahren (Elementar, SB 10 %, mind. 250 €), Cyber (Online-Shopping), Reisegepäck und Haus- und Wohnungsschutzbrief sind Pakete gegen Aufpreis.",
+    "Versicherungssumme 650 €/m² laut Produktseite mit Unterversicherungsverzicht; Diebstahl aus dem Auto in % der Versicherungssumme; Unbenannte Gefahren nur comfort (SB 300 €). Keine Empfehlung markiert."
+  ]
+}

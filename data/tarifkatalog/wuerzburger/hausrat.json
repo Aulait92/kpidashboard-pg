@@ -1,0 +1,106 @@
+{
+  "gesellschaft": "Würzburger",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung HomeSecure",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Elementar gegen Aufpreis",
+    "Kinder in Ausbildung auswärts",
+    "Leistungs- und Innovationsgarantie"
+  ],
+  "tarife": [
+    {
+      "name": "HomeSecure Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "20 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "UV-Verzicht 650 €/m²",
+        "bargeld": "2 %, max. 1.000 €",
+        "garten": "nein",
+        "auto": "nein",
+        "allgefahren": "nein",
+        "ueberspannung": "5 % der VS",
+        "hotel": "100 Tage",
+        "aussen": "15 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.wuerzburger.com/images/pdf/LUE_HomeSecure2019.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HomeSecure Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "25 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "UV-Verzicht 650 €/m²",
+        "bargeld": "2 %, max. 1.000 €",
+        "garten": "2 %, max. 1.500 €",
+        "auto": "bis 300 €",
+        "allgefahren": "nein",
+        "ueberspannung": "20 % der VS",
+        "hotel": "200 Tage",
+        "aussen": "25 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.wuerzburger.com/images/pdf/LUE_HomeSecure2019.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HomeSecure Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 % der VS",
+        "fahrrad": "1 % der VS",
+        "elementar": "optional",
+        "vs": "genereller UV-Verzicht",
+        "bargeld": "bis 1.500 €",
+        "garten": "bis 3.000 €",
+        "auto": "bis 600 €",
+        "allgefahren": "optional bis 5.000 €",
+        "ueberspannung": "ja",
+        "hotel": "360 Tage",
+        "aussen": "35 % der VS"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional"
+      },
+      "quelle": "https://www.wuerzburger.com/images/pdf/LUE_HomeSecure2019.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerzburger.com/produkte/hausratversicherung",
+    "https://www.wuerzburger.com/images/pdf/LUE_HomeSecure2019.pdf",
+    "https://www.wuerzburger.com/images/pdf/VHB_2016.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht HomeSecure Stand 03/2019, auf der Produktseite aktuell verlinkt. Keine Empfehlung markiert, Komfort als mittlere Stufe.",
+    "Einfacher Diebstahl aus der Wohnung nicht genannt (nur Wäsche/Gartenmöbel auf dem Grundstück, Kinderwagen, Krankenhaus). Online-Betrug nicht genannt.",
+    "Grobe Fahrlässigkeit: Verzicht auf den Einwand in Komfort und Exklusiv; in Basis laut Übersicht nicht enthalten. Elementar überall gegen Aufpreis (SB 10 %, mind. 500 €, max. 5.000 €).",
+    "Fahrrad: Basis und Komfort nur als Einschluss gegen Aufpreis, Exklusiv 1 % der VS inklusive; Fahrraddiebstahl ohne Nachtzeitklausel in allen Stufen wählbar. Allgefahren = unbenannte Gefahren bis 5.000 € (SB 500 €), nur Exklusiv wählbar.",
+    "Hotelkosten: Basis 1 ‰, Komfort und Exklusiv 2 ‰ der VS pro Tag. Auto = einfacher Diebstahl aus Kfz, Schiffskabinen und Schlafwagen."
+  ]
+}

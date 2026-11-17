@@ -1,0 +1,90 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Single, Partner, Familie, 50Plus",
+    "Selbstbehalt 150 € wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "3 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "nein",
+        "delikt": "optional, 10.000 €",
+        "geliehen": "nein",
+        "miete": "bis 300.000 €",
+        "gefaelligkeit": "optional",
+        "mallorca": "nein",
+        "ehrenamt": "nein",
+        "nebenberuf": "nein",
+        "sb": "150 € wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/privat-haftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "optional",
+        "schluessel": "bis 20.000 €",
+        "delikt": "10.000 €, opt. 40.000",
+        "geliehen": "nein",
+        "miete": "bis 10 Mio. €",
+        "gefaelligkeit": "bis 20.000 €",
+        "mallorca": "nein",
+        "ehrenamt": "ja",
+        "nebenberuf": "nein",
+        "sb": "150 € wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/privat-haftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Optimal",
+      "kurz": "Optimal",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 30.000 €",
+        "delikt": "bis 40.000 €",
+        "geliehen": "bis 10.000 €",
+        "miete": "bis 10 Mio. €",
+        "gefaelligkeit": "bis 30.000 €",
+        "mallorca": "bis 3 Mio. €",
+        "ehrenamt": "ja",
+        "nebenberuf": "bis 6.000 € Umsatz",
+        "sb": "150 € wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/privat-haftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/haftpflicht/privat-haftpflicht/",
+    "https://www.muenchener-verein.de/downloadcenter/Haft/Werbeunterlagen/8700145.pdf"
+  ],
+  "offen": [
+    "Werte aus der Tabelle der Produktseite und dem Prospekt „Leistungsstufen im Vergleich“ (Stand 11.2018, bitte auf Aktualität prüfen).",
+    "Schlüssel: Verlust privater Schlüssel und Code-Karten; berufliche Schlüssel nicht genannt, Ehrenamtsschlüssel nur Optimal bis 15.000 €. Deliktunfähige Kinder nur im Familien-Tarif.",
+    "Selbstbehalt 150 € nur bei Sachschäden. Neuwert und Drohnen nicht genannt. Keine Empfehlung markiert; Komfort als mittlere Stufe."
+  ]
+}

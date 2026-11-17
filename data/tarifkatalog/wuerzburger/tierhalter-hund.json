@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "Würzburger",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalterhaftpflichtversicherung (Hund)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Schauvorführungen mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflichtversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "welpen": "bis 6 Monate",
+        "ausland": "weltweit bis 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerzburger.com/produkte/haftpflichtversicherung/tierhalterhaftpflichtversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerzburger.com/produkte/haftpflichtversicherung/tierhalterhaftpflichtversicherung",
+    "https://www.wuerzburger.com/images/pdf/PI_THV_11.17.pdf"
+  ],
+  "offen": [
+    "Ein Tarif für Hunde- sowie Pferdehalter; Stufen sind nicht veröffentlicht, deshalb eine Stufe „Tarif“.",
+    "Deckungssumme, Selbstbeteiligung, Mietsachschäden und fremde Hüter sind auf wuerzburger.com nicht veröffentlicht (nur Produktinformationsblatt 11/2017 ohne Summen; Besondere Bedingungen nicht verlinkt). Bitte beim Anbieter erfragen.",
+    "Laut Produktinformationsblatt sind Schäden an gemieteten, gepachteten oder geliehenen Sachen grundsätzlich nicht versichert; Ausnahmen nicht genannt."
+  ]
+}

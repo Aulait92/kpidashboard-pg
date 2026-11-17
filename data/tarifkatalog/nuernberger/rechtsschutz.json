@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unbegrenzte Versicherungssumme",
+    "Strafkaution bis 300.000 €",
+    "Telefonberatung JURCALL"
+  ],
+  "tarife": [
+    {
+      "name": "Privat- und Berufs-Rechtsschutz für Nichtselbstständige (§ 25)",
+      "kurz": "Privat, Beruf",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "ja",
+        "kaution": "bis 300.000 €",
+        "sb": "optional",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/rechtsschutz/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-, Berufs- und Verkehrsrechtsschutz für Nichtselbstständige (§ 26)",
+      "kurz": "+ Verkehr",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "kaution": "bis 300.000 €",
+        "sb": "optional",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/rechtsschutz/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rechtsschutz Ruhestand (§ 30)",
+      "kurz": "Ruhestand",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "kaution": "bis 300.000 €",
+        "sb": "optional",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/rechtsschutz/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/recht-haftung/rechtsschutz/rechtsschutzversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Spalten sind Kombinationen nach ARB (§ 25, § 26, § 30) statt Leistungsstufen; keine markiert, § 26 als mittlere Stufe.",
+    "Wohnungs- und Grundstücks-Rechtsschutz laut Tabelle in allen drei Varianten enthalten; Verwaltungs-Rechtsschutz in Verkehrssachen nur § 26 und § 30. Verkehr zu § 25 über den Verkehrsrechtsschutz (eigenes Produkt).",
+    "Beruf im Ruhestand-Tarif nicht ausgewertet (Arbeits-Rechtsschutz laut Tabelle auch als Arbeitgeber von Haushaltskräften). Selbstbeteiligung wählbar, Höhe nicht genannt; Wartezeit nicht genannt.",
+    "Laut Seite weltweit im Privat- und Verkehrsbereich; Eltern im Haushalt über XXL-Baustein mitversichert."
+  ]
+}

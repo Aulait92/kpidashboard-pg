@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung Risiko Care",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Laufzeit frei wählbar",
+    "Nachlass für Nichtraucher",
+    "Konstante oder fallende Summe"
+  ],
+  "tarife": [
+    {
+      "name": "Risiko Care",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, z. B. Heirat, Geburt"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/risikolebensversicherung"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht der Produktseite hansemerkur.de (Tarif Risiko Care).",
+    "Vorgezogene Leistung, Verlängerungsoption, Umtauschrecht, weltweiter Schutz und höchstes Endalter auf der Seite nicht genannt.",
+    "Verbundene Leben für Partner oder Geschäftspartner möglich."
+  ]
+}

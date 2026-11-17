@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 % Rente ab 50 % BU",
+    "Kein Melden bei Berufswechsel",
+    "Beratung bei mentaler Krise"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "au": "optional",
+        "nachversicherung": "ja, mit und ohne Anlass",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "pflege": "ja, ab 1 Pflegepunkt",
+        "infektion": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/leben-vorsorge/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/leben-vorsorge/berufsunfaehigkeitsversicherung/",
+    "https://www.itzehoer.de/dokumente/produkte/leben-und-vorsorge/berufsunfaehigkeitsversicherung/a-14-010-folder-berufsunfaehigkeit-12-2025-web.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Produktseite und Folder 12/2025, Abruf 17.11.2026). Versicherer: Itzehoer Lebensversicherungs-AG.",
+    "Prognosezeitraum: nicht genannt (nur Leistung bei 6 Monaten durchgehender Arbeitsunfähigkeit).",
+    "AU-Klausel optional: bei 6 Monaten Arbeitsunfähigkeit Leistung schon nach 4 Monaten.",
+    "Nachversicherung mit Anlass bis 45 Jahre, ohne Anlass in den ersten 5 Jahren bis 35 Jahre. Konkrete Verweisung entfällt bei mehr als 20 % Einkommensverlust.",
+    "Dienstunfähigkeitsklausel für Beamte nicht genannt."
+  ]
+}

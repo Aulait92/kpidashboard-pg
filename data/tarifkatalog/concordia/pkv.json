@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung (Tarifwerk AV, SV, ZV)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ein einheitliches Tarifwerk",
+    "Psychotherapie 50 Sitzungen",
+    "Offener Hilfsmittelkatalog"
+  ],
+  "tarife": [
+    {
+      "name": "AV mit SV 3 und ZV 2",
+      "kurz": "SV 3 / ZV 2",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "Arzt und Heilpraktiker",
+        "stationaer": "Mehrbettzimmer",
+        "zahnersatz": "60 %",
+        "selbstbehalt": "0 bis 2.040 € wählbar",
+        "bre": "bis 2 Monatsbeiträge",
+        "heilpraktiker": "ja",
+        "hilfsmittel": "offener Katalog",
+        "psychotherapie": "bis 50 Sitzungen"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AV mit SV 2 und ZV 1",
+      "kurz": "SV 2 / ZV 1",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "Arzt und Heilpraktiker",
+        "stationaer": "Zweibett, Wahlarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "0 bis 2.040 € wählbar",
+        "bre": "bis 2 Monatsbeiträge",
+        "heilpraktiker": "ja",
+        "hilfsmittel": "offener Katalog",
+        "psychotherapie": "bis 50 Sitzungen"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AV mit SV 1, ZV 1 und VV PLUS",
+      "kurz": "SV 1 + VV PLUS",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "auch über GOÄ (Zusage)",
+        "stationaer": "Einbett, Wahlarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "0 bis 2.040 € wählbar",
+        "bre": "bis 2 Monatsbeiträge",
+        "heilpraktiker": "ja",
+        "hilfsmittel": "offener Katalog",
+        "psychotherapie": "bis 50 Sitzungen"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/private-vollversicherung/"
+  ],
+  "offen": [
+    "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Concordia hat ein einziges Tarifwerk aus Bausteinen (AV ambulant, SV stationär, ZV Zahn, Pflege-Pflicht) plus Ergänzungstarif VV PLUS; die Stufen sind selbst gebildete Kombinationen. Keine Empfehlung markiert.",
+    "Selbstbehalt über AV 1 bis AV 4: 0, 600, 1.080 oder 2.040 € (Kinder halb). Erstattungssatz ambulant in Prozent nicht genannt. ZV 1: Zahnbehandlung und Prophylaxe 100 %, Zahnersatz und Kieferorthopädie 80 %; ZV 2: 80 bzw. 60 %.",
+    "VV PLUS: Kosten über der GOÄ nach vorheriger Zusage, Kurtagegeld 150 €/Tag bis 28 Tage, Rooming-in 25 €/Tag. Krankentagegeld (KTG) und Krankenhaustagegeld (KHT) als Zusatztarife; Sehhilfen, Primärarzt und Ausland nicht ausgewertet."
+  ]
+}

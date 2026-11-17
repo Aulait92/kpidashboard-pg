@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalter-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "3 Mio. € pauschal"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalter-Haftpflicht Hund",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "3 Mio. € pauschal",
+        "miete": "ja",
+        "welpen": "bis 6 Monate",
+        "ausland": "weltweit, bis 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/tierhalter-haftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/haftpflicht/tierhalter-haftpflicht/"
+  ],
+  "offen": [
+    "Ein Tarif ohne Stufen; Werte aus der Produktseite. Mietsachschäden ohne Summe genannt.",
+    "Selbstbeteiligung, fremde Hüter und Forderungsausfall auf der Seite nicht genannt; bitte im Angebot prüfen."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "haftpflicht",
+  "produkt": "DFV-HaftpflichtSchutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Single- oder Familientarif",
+    "Europa unbegrenzt, Welt 5 J.",
+    "Hüten fremder Hunde, Pferde"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-HaftpflichtSchutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 oder 100 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja, privat und beruflich",
+        "delikt": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "Umsatz bis 20.000 €",
+        "ehrenamt": "ja",
+        "sb": "0 oder 300 €"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/haus-haftung-recht/privathaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/haus-haftung-recht/privathaftpflichtversicherung/"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht der Produktseite deutsche-familienversicherung.de. Single und Familie sind Personenkreise, keine Leistungsstufen; deshalb eine Stufe.",
+    "Versicherungssumme wählbar 20 oder 100 Mio. €, Personenschäden je Person höchstens 15 Mio. €.",
+    "Schlüsselverlust und Mietsachschäden bis zur Versicherungssumme; geliehene Sachen, Neuwert und Mallorca-Deckung nicht genannt.",
+    "Nebenberufliche Selbstständigkeit nur für genannte Berufe bis 20.000 € Umsatz. Mindestlaufzeit 24 Monate."
+  ]
+}

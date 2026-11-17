@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "kfz",
+  "produkt": "Autoversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Mallorca-Deckung",
+    "Windschutzscheibe gratis repariert",
+    "Zubehör bis 5.000 € (Kasko)"
+  ],
+  "tarife": [
+    {
+      "name": "Haftpflicht",
+      "kurz": "Haftpflicht",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "nein",
+        "tiere": "nein",
+        "neuwert": "nein",
+        "marder": "nein",
+        "mallorca": "ja",
+        "elektro": "nein"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Haftpflicht + Teilkasko",
+      "kurz": "Teilkasko",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja, außer Alkohol/Drogen",
+        "tiere": "Tiere aller Art",
+        "neuwert": "bis 12 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "mallorca": "ja",
+        "werkstatt": "optional (Rabatt)",
+        "elektro": "Akku bis 25.000 €"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Haftpflicht + Vollkasko",
+      "kurz": "Vollkasko",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja, außer Alkohol/Drogen",
+        "tiere": "Tiere aller Art",
+        "neuwert": "bis 12 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "mallorca": "ja",
+        "werkstatt": "optional (Rabatt)",
+        "elektro": "Akku Allgefahren 25.000"
+      },
+      "bausteine": {
+        "schutzbrief": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/autoversicherung/"
+  ],
+  "offen": [
+    "Quelle: Produkttabelle der Produktseite barmeniagothaer.de (Haftpflicht, Teilkasko, Vollkasko).",
+    "Grobe Fahrlässigkeit: Verzicht in der Kasko, ausgenommen Alkohol- und Drogenfahrten und leicht gemachte Entwendung.",
+    "Elektro und Hybrid: Teilkasko u. a. Kurzschluss-, Überspannungs- und Tierbiss-Folgeschäden am Akku je bis 25.000 €; Vollkasko zusätzlich Allgefahrendeckung für den Akku bis 25.000 €.",
+    "Rabattschutz und GAP-Deckung nicht genannt; Kaufpreisentschädigung für Gebrauchtwagen 24 bzw. 48 Monate als Zusatz erwähnt.",
+    "Werkstattservice senkt den Beitrag. Mobilitäts-Schutzbrief und Auslandsschadenschutz gegen Beitrag.",
+    "BarmeniaGothaer markiert keine Stufe; Teilkasko als mittlere Stufe."
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "pferd-kranken",
+  "produkt": "Tierkrankenversicherung Pferd (Uelzener)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Alle Leistungen der OP-Versicherung",
+    "Ab 1. Lebenstag, ohne Höchstalter"
+  ],
+  "tarife": [
+    {
+      "name": "Pferde-Krankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "unabhängig vom Satz",
+        "jhl": "15.000/25.000/50.000 €",
+        "ohneOp": "ja",
+        "vorsorge": "500 € im Jahr",
+        "kolik": "5 Tage",
+        "kastration": "Zuschuss 200 €",
+        "nachbehandlung": "unbegrenzt",
+        "sb": "0, 500 oder 1.000 €",
+        "wartezeit": "2 Monate",
+        "ausland": "12 Monate weltweit"
+      },
+      "bausteine": {
+        "reha": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/tiere/"
+  ],
+  "offen": [
+    "DEVK bietet die Tierkrankenversicherungen über den Kooperationspartner Uelzener an (Risikoträger Uelzener); Tarifangaben aus der Leistungstabelle auf devk.de.",
+    "Ein Tarif mit wählbarer Erstattungshöhe (15.000 €, 25.000 € oder 50.000 € je Jahr) und Selbstbeteiligung.",
+    "Vorsorgepauschale 500 € im Jahr, z. B. für Impfungen. Reha-Baustein bis 3.000 € im Jahr mit 20 % Selbstbeteiligung je Rechnung.",
+    "Gelenk-Chips in der Tabelle nicht genannt."
+  ]
+}

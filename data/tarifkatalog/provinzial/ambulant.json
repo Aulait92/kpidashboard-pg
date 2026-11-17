@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Für gesetzlich Versicherte"
+  ],
+  "tarife": [
+    {
+      "name": "VorsorgePRIVAT",
+      "kurz": "VorsorgePRIVAT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sehhilfen": "80 %, bis 400 €/2 Jahre",
+        "vorsorge": "100 %, bis 500 €/Jahr",
+        "hoergeraete": "80 %, bis 800 €/5 Jahre",
+        "wartezeit": "keine",
+        "lasik": "100 %, bis 1.500 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/vorsorge.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NaturPRIVAT",
+      "kurz": "NaturPRIVAT",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 1.000 €/Jahr",
+        "arznei": "nur Naturheilverfahren",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/heilpraktiker.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/gesundheit/vorsorge.html",
+    "https://www.provinzial.de/west/versicherung/gesundheit/heilpraktiker.html"
+  ],
+  "offen": [
+    "Region West. Produktgeber ist die Union Krankenversicherung AG (UKV); Tarife und Werte wie im Ordner ukv, auf provinzial.de mit eigener Produktseite angeboten (Abruf 17.11.2026).",
+    "Zwei eigenständige, kombinierbare Produkte statt Leistungsstufen: VorsorgePRIVAT (Vorsorge, Impfungen, Brillen, Augenlaser, Hörgeräte) und NaturPRIVAT (Heilpraktiker und Naturheilverfahren). Keine Empfehlung.",
+    "VorsorgePRIVAT: Vorsorge im 1. Jahr bis 200 €, in den ersten 2 Jahren bis 500 €; Schutzimpfungen und Malariaprophylaxe 100 % bis 300 € in zwei Jahren; Augenlaser 1.500 € in der Vertragslaufzeit (1. Jahr 200 €, 2 Jahre 500 €). Heilpraktiker nicht enthalten.",
+    "NaturPRIVAT: 80 % aus bis 1.250 € Rechnungsbetrag im Jahr (1. Jahr 500 €, 2 Jahre 1.000 € Erstattung); Arzneimittel nur im Zusammenhang mit Heilpraktiker- bzw. Naturheilbehandlung. Zuzahlungen zu Kassen-Arzneimitteln in keinem Tarif belegt.",
+    "Auslandsreise ist ein eigenes Produkt (siehe Auslandsreisekranken)."
+  ]
+}

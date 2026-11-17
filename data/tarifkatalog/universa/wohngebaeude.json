@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung FLEXXhouse",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Photovoltaik und Wärmepumpe",
+    "Aufräum- und Abbruchkosten",
+    "Handwerkerservice"
+  ],
+  "tarife": [
+    {
+      "name": "FLEXXhouse easy",
+      "kurz": "easy",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "ja",
+        "kosten": "ja",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FLEXXhouse allround",
+      "kurz": "allround",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 5.000 €",
+        "pv": "ja",
+        "kosten": "ja",
+        "ueberspannung": "ja",
+        "fugen": "bis 10.000 €",
+        "vandalismus": "bis 5.000 €",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FLEXXhouse best",
+      "kurz": "best",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 20.000 €",
+        "pv": "ja",
+        "kosten": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "bis 25.000 €",
+        "allgefahren": "optional"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/wohngebaeudeversicherung/",
+    "https://www.universa.de/site/assets/files/140099/076-324-leistungsvergleich-flexxhouse_wf_09_2026.pdf"
+  ],
+  "offen": [
+    "Zwei Modelle: Wohnflächenmodell (pauschal bis 2,5 Mio. €) und Versicherungssummenmodell. Werte aus der Tabelle der Produktseite.",
+    "Grobe Fahrlässigkeit bei Herbeiführung; bei Obliegenheitsverletzungen nur best. Ableitungsrohre auf und außerhalb des Grundstücks, sofern der Eigentümer die Gefahr trägt.",
+    "Photovoltaik (bis 150.000 €, 50 kW), Wärmepumpen, Solar und Wallboxen mitversichert; Baustein für erweiterte Deckung mit Ertragsausfall. Kosten: Aufräum-, Abbruch-, Bewegungs- und Schutzkosten bis zur VS. Ascore zeichnet best aus; allround als mittlere Stufe."
+  ]
+}

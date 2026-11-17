@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Kostenlose Anwaltshotline",
+    "Beratung bis 325 € je Fall",
+    "Beitragsfrei bei Jobverlust"
+  ],
+  "tarife": [
+    {
+      "name": "Privat- und Berufs-Rechtsschutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "1 Mio. €",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "60.000 €",
+        "vsWelt": "100.000 €",
+        "sb": "150, 250 oder 500 €",
+        "wartezeit": "3 Monate",
+        "opfer": "nein",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/rechtsschutzversicherung/privat-und-berufsrechtsschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat- und Berufs-Rechtsschutz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "3 Mio. €",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "200.000 €",
+        "vsWelt": "300.000 €",
+        "sb": "150, 250 oder 500 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/rechtsschutzversicherung/privat-und-berufsrechtsschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat- und Berufs-Rechtsschutz Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "500.000 €",
+        "vsWelt": "1 Mio. €",
+        "sb": "150, 250 oder 500 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/rechtsschutzversicherung/privat-und-berufsrechtsschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/rechtsschutzversicherung/privat-und-berufsrechtsschutz",
+    "https://www.da-direkt.de/rechtsschutzversicherung",
+    "https://www.da-direkt.de/rechtsschutzversicherung/verkehrsrechtsschutz",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/rechtsschutz/dadirekt_ps_rechtsschutz_einfacheuebersicht_073_0625.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Top je Baustein (Privat und Beruf, Verkehr, Immobilien); keine Stufe hervorgehoben, Komfort als mittlere Stufe.",
+    "Erfasst ist der Baustein Privat und Beruf; Verkehr und Immobilien (Wohnen) sind eigene Bausteine mit gleichen Stufen und Summen.",
+    "Arbeits-Rechtsschutz ausschließbar. Selbstbeteiligung je Fall wählbar, geringer bei von DA Direkt vermitteltem Anwalt.",
+    "Wartezeit 3 Monate für Arbeits-, Vertrags-, Steuer- und Sozial-Rechtsschutz; entfällt bei lückenloser Vorversicherung.",
+    "Weltweit: Basis 6 Wochen privat, Komfort 3 Monate, Top 2 Jahre (auch beruflich)."
+  ]
+}

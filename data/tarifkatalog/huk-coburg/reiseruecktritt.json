@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung (Partner Barmenia)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Reise-Assistance",
+    "Nachreisekosten"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktrittsversicherung Travel Day",
+      "kurz": "Travel Day",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sb": "ohne oder 25 €/20 %",
+        "abbruch": "ja",
+        "gruende": "ja",
+        "jahr": "nein, eine Reise"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/haus-haftung-recht/sport-freizeit/reiseruecktrittsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Reiserücktrittsversicherung Travel +",
+      "kurz": "Travel +",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "sb": "ohne oder 25 €/20 %",
+        "abbruch": "ja",
+        "gruende": "ja",
+        "jahr": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/haus-haftung-recht/sport-freizeit/reiseruecktrittsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/haus-haftung-recht/sport-freizeit/reiseruecktrittsversicherung.html",
+    "https://static.c.huk.de/content/dam/hukde/dokumente/produkte/barmenia-allgemeine-versicherungsbedingungen-reiseruecktritt.pdf"
+  ],
+  "offen": [
+    "Produkt der Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer); huk.de vermittelt nur, Abschluss beim Partner. Werte aus dem Tarifvergleich auf huk.de und den AVB (Stand 01.09.2026).",
+    "Versicherungssumme richtet sich nach dem Reisepreis (Höchstversicherungssumme), auf der Seite nicht beziffert. Pandemie nicht genannt.",
+    "Selbstbehalt nur, wenn vereinbart: 25 € je Person und Fall, bei Krankheit 20 %, mindestens 25 €.",
+    "Reiseabbruch laut Tarifvergleich enthalten, laut Fließtext als Baustein wählbar; bitte prüfen. Leistungsgründe u. a. unerwarteter Arbeitsplatzverlust, neue Arbeit, Impfunverträglichkeit, Schwangerschaft.",
+    "Travel Day: eine Reise von 3 bis 365 Tagen. Travel +: Jahresvertrag, jede Reise bis 8 Wochen. Abschluss bis spätestens 30 Tage vor Reisebeginn. Familientarife laut AVB möglich, auf der Seite nicht beschrieben."
+  ]
+}

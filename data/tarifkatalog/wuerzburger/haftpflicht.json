@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "Würzburger",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung Exklusiv",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Single, Familie oder Senioren",
+    "Ehrenamt mitversichert",
+    "Mallorca-Deckung"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflichtversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10 oder 15 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja, Immobilien",
+        "gefaelligkeit": "bis 1.000 €",
+        "neuwert": "bis 5.000 €",
+        "mallorca": "ja",
+        "drohne": "bis 20 kg",
+        "nebenberuf": "bis 20.000 € Umsatz",
+        "ehrenamt": "ja",
+        "sb": "0 € oder 150 €"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "delikt": "inklusive",
+        "hausbesitz": "inklusive",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.wuerzburger.com/produkte/haftpflichtversicherung/privathaftpflicht-exklusiv",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerzburger.com/produkte/haftpflichtversicherung/privathaftpflicht-exklusiv",
+    "https://www.wuerzburger.com/produkte/haftpflichtversicherung/privathaftpflichtversicherung",
+    "https://www.wuerzburger.com/images/pdf/BB_PHV_Exklusiv-2022.pdf"
+  ],
+  "offen": [
+    "Würzburger nennt zwei Varianten, Basis und Exklusiv. Für Basis sind auf wuerzburger.com keine Leistungswerte veröffentlicht (nur Produktinformationsblatt 11/2017 ohne Summen); deshalb nur Exklusiv als einzige Stufe.",
+    "Werte aus der Produktseite (Auszug der Leistungsübersicht) und den Besonderen Bedingungen PHV Exklusiv 2022. Die vollständige Leistungsübersicht ist nicht öffentlich verlinkt.",
+    "Schlüssel: eigene und fremde Schlüssel/Codekarten bis 50.000 €; beruflich oder privat nicht getrennt ausgewiesen. Mietsachschäden an privat gemieteten Immobilien und zugehörigen beweglichen Sachen; sonstige geliehene Sachen bis 10.000 €.",
+    "Nebentätigkeit ohne Beschäftigte bis 6.000 € steuerpflichtiger Ertrag und 20.000 € Umsatz. Drohnen: nicht versicherungspflichtige Luftfahrzeuge bis 20 kg.",
+    "Haltung von Hunden und Pferden nicht mitversichert (eigene Tierhalterhaftpflicht der Würzburger)."
+  ]
+}

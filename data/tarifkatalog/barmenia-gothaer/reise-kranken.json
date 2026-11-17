@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "reise-kranken",
+  "produkt": "Reisekrankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Nachleistung bis Rückreise möglich",
+    "Bergung bis 5.000 € je Person",
+    "Überführung bis 10.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Travel Day",
+      "kurz": "Travel Day",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "ja, inkl. Provisorium",
+        "dauer": "3 bis 365 Tage, einmal"
+      },
+      "quelle": "https://www.barmeniagothaer.de/krankenversicherung-ausland/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Travel+",
+      "kurz": "Travel+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "zahn": "ja, inkl. Provisorium",
+        "dauer": "8 Wochen je Reise"
+      },
+      "quelle": "https://www.barmeniagothaer.de/krankenversicherung-ausland/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/krankenversicherung-ausland/"
+  ],
+  "offen": [
+    "Quelle: Produkttabelle der Produktseite barmeniagothaer.de. Travel Day für eine Reise, Travel+ als Jahresvertrag für beliebig viele Reisen.",
+    "Rooming-in: Travel Day Kinder bis 14, Travel+ bis 18 Jahre; Travel+ zusätzlich Telemedizin und Notfallbetreuung von Kindern im Familientarif.",
+    "Krankenhaustagegeld 15 € im Zusammenhang mit telemedizinischen Leistungen.",
+    "Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft auf der Seite nicht genannt."
+  ]
+}

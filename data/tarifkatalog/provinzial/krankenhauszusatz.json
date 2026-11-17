@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung KlinikPRIVAT",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Ersatz-Tagegeld bis 50 €/Tag",
+    "Rooming-In für Kinder"
+  ],
+  "tarife": [
+    {
+      "name": "KlinikPRIVAT Unfall",
+      "kurz": "Unfall",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein-/Zweibett, Unfall",
+        "chefarzt": "nur nach Unfall",
+        "krankenhauswahl": "nur nach Unfall",
+        "ueber-hoechstsatz": "mit Honorarvereinbarung",
+        "wartezeit": "keine",
+        "ersatztagegeld": "20 bis 50 €/Tag",
+        "ambulant-op": "nur nach Unfall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/krankenhauszusatz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KlinikPRIVAT Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "mit Honorarvereinbarung",
+        "wartezeit": "keine",
+        "ersatztagegeld": "20 bis 50 €/Tag",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.provinzial.de/west/versicherung/gesundheit/krankenhauszusatz.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/gesundheit/krankenhauszusatz.html",
+    "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/342205"
+  ],
+  "offen": [
+    "Region West. Produktgeber ist die Union Krankenversicherung AG (UKV); Tarife und Werte wie im Ordner ukv, auf provinzial.de mit eigener Produktseite angeboten (Abruf 17.11.2026). Provinzial markiert keinen Tarif (zwei Stufen, keine Empfehlung).",
+    "KlinikPRIVAT Unfall leistet nur nach Unfällen (erweiterter Unfallbegriff) und wird laut Produktseite ohne Gesundheitsprüfung angeboten.",
+    "KlinikPRIVAT Option (bis 49 Jahre) ergänzt KlinikPRIVAT Unfall um ein Wechselrecht in Premium ohne neue Gesundheitsprüfung (alle 5 Jahre, Heirat, Geburt u. a.); nicht als eigene Stufe geführt.",
+    "Über GOÄ-Höchstsatz: Erstattung nur mit gültiger Honorarvereinbarung (Tarifbedingungen). Ersatz-Tagegeld 20 € (Verzicht Einbett) bzw. 50 € (Verzicht Ein- und Zweibett oder Wahlarzt).",
+    "Premium zusätzlich: Reha-Tagegeld 50 € bis 28 Tage, Fahrtkosten bis 250 €/Jahr, Entbindung. Krankenhaustagegeld ist ein eigenes Produkt (Seite Krankenhaustagegeld), daher kein Baustein belegt."
+  ]
+}

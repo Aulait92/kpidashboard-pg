@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit, beliebig viele Reisen",
+    "Bergung bis 5.000 €",
+    "Assistance-Zentrale"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise-Krankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 6 Wochen",
+        "ruecktransport": "medizinisch sinnvoll",
+        "usa": "ja, weltweit",
+        "schwanger": "Komplikationen"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/auslandsreise-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/auslandsreise-krankenversicherung/"
+  ],
+  "offen": [
+    "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Jahresvertrag für Einzelpersonen oder Familien (Partner und minderjährige Kinder).",
+    "Selbstbeteiligung, Zahnbehandlung und bekannte Erkrankungen auf der Seite nicht genannt. Bestattung im Ausland oder Überführung versichert."
+  ]
+}

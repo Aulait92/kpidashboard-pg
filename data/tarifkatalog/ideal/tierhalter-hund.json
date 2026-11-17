@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "IDEAL",
+  "sparte": "tierhalter-hund",
+  "produkt": "IDEAL HundehalterHaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Kein Leinen-, Maulkorbzwang",
+    "Rettungs-, Suchhund",
+    "Therapiehund"
+  ],
+  "tarife": [
+    {
+      "name": "IDEAL HundehalterHaftpflicht Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "miete": "ja",
+        "forderungsausfall": "ab 500 €",
+        "geliehen": "nein",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "ausland": "Europa unbegrenzt"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHH/IDEAL_HundehalterHaftpflicht_Produktbeschreibung.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "IDEAL HundehalterHaftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 oder 50 Mio. €",
+        "miete": "ja",
+        "forderungsausfall": "ab 0 €",
+        "geliehen": "5.000 €",
+        "neuwert": "bis 5.000 €",
+        "nebenberuf": "bis 12.000 € Umsatz",
+        "ausland": "Europa unbegrenzt"
+      },
+      "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHH/IDEAL_HundehalterHaftpflicht_Produktbeschreibung.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ideal-versicherung.de/Versicherungen/Schaden%20und%20Unfall/Hundehaftpflichtversicherung",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHH/IDEAL_HundehalterHaftpflicht_Produktbeschreibung.pdf",
+    "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IHH/IDEAL_HundehalterHaftpflicht_Flyer.pdf"
+  ],
+  "offen": [
+    "Zwei Produktlinien Klassik und Exklusiv; keine Linie hervorgehoben. Nur Hunde, keine Pferdehalterhaftpflicht.",
+    "Außerhalb Europas: Klassik 2 Jahre, Exklusiv 5 Jahre. Mietsachschäden in Ferienunterkünften und Hotels: Klassik 30.000 €, Exklusiv 1 Mio. €.",
+    "Selbstbeteiligung, fremde Hüter und Welpen in der Produktbeschreibung nicht genannt; Haftpflichtansprüche des Hüters an den Halter in beiden Linien versichert.",
+    "Exklusiv: Nottötung und Bestattung bis 500 €, Besserstellungs- und Best-Leistungs-Garantie."
+  ]
+}

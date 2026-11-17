@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Dialog",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalterhaftpflicht (Pferd)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Deckakt mitversichert",
+    "Kutschfahrten privat"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "15 Mio. €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 12 Monate",
+        "ausland": "weltweit"
+      },
+      "quelle": "https://www.dialog-versicherung.de/produkte/privatkunden-komposit/haftpflichtversicherungen-pkk/tierhalterhaftpflicht",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dialog-versicherung.de/produkte/privatkunden-komposit/haftpflichtversicherungen-pkk/tierhalterhaftpflicht",
+    "https://www.dialog-versicherung.de/resource/blob/3984/540a0de8161a680055c75a1d0da156f4/Leistungs%C3%BCbersicht%20Tierhalterhaftpflicht%20"
+  ],
+  "offen": [
+    "Ein Tarif (Dialog Privatschutz 2019) für Hunde und Pferde, Versicherungssumme 15 Mio. € (Jahreshöchstleistung das Doppelte).",
+    "Selbstbeteiligung nicht genannt.",
+    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali).",
+    "Private unentgeltliche Kutsch- und Schlittenfahrten mitversichert."
+  ]
+}

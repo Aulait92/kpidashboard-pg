@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Tierhalterhaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Auslandsschutz bis 5 Jahre",
+    "Gelegentliche Hüter versichert",
+    "Für Hunde und Pferde"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht Ambiente",
+      "kurz": "Ambiente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "forderungsausfall": "bis 10.000 €",
+        "ausland": "bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.helvetia.de/de/privatkunden/tierhalterhaftpflicht.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tierhalterhaftpflicht Ambiente Top",
+      "kurz": "Ambiente Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "forderungsausfall": "bis 10.000 €",
+        "ausland": "bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.helvetia.de/de/privatkunden/tierhalterhaftpflicht.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/tierhalterhaftpflicht.html"
+  ],
+  "offen": [
+    "Zwei Stufen laut Produktseite (Abruf 17.11.2026 per Textabruf; Leistungsübersicht ohne abrufbare Adresse). Keine Stufe markiert; Ambiente Top als \"Unser stärkster Schutz\" beworben.",
+    "Selbstbeteiligung, Welpen/Fohlen, geliehene Sachen und Deckschäden: auf der Produktseite nicht genannt.",
+    "Forderungsausfall: bis 10.000 € für Kosten tierärztlicher Behandlung (wenn ein Schädiger ohne Haftpflicht das eigene Tier verletzt).",
+    "Fremde Hüter: Personen, die gelegentlich auf das Tier aufpassen, sind laut Seite mitversichert.",
+    "Pferd: Mietsachschäden, Reitbeteiligung/Fremdreiter und Flurschäden auf der Produktseite nicht genannt (Mietsachschäden nur für Hundehaltung angegeben)."
+  ]
+}

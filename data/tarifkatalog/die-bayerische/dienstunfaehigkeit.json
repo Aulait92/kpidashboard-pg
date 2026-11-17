@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Dienstunfähigkeitsabsicherung (BU PROTECT)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Folgt dem Dienstherrn",
+    "Auch für Richter",
+    "Rückwirkende Leistung"
+  ],
+  "tarife": [
+    {
+      "name": "BU PROTECT mit Dienstunfähigkeitsklausel",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja, bis 48.000 €/Jahr",
+        "teil-du": "optional, ab 20 %",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/dam/jcr:05decb89-a8e7-472b-a46d-2add65a44017/660501_highlightblatt_bu-protect-beamte.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/dam/jcr:05decb89-a8e7-472b-a46d-2add65a44017/660501_highlightblatt_bu-protect-beamte.pdf",
+    "https://www.diebayerische.de/dienstunfaehigkeit/dienstunfaehigkeits-absicherung/",
+    "https://www.diebayerische.de/dam/jcr:98d4c273-82d0-49c5-9166-b99f31ed5e2b/B%20660120_AVB_BU_Protect_09-2025.pdf"
+  ],
+  "offen": [
+    "Kein eigener DU-Tarif: Die echte Dienstunfähigkeitsklausel ist in der Berufsunfähigkeitsversicherung BU PROTECT enthalten (gilt auch für Beamte auf Probe und Widerruf); Werte aus Highlightblatt und Produktseite (Abruf 17.11.2026).",
+    "Optionen statt Stufen: Teil-DU-Schutz (Leistung ab 20 % Dienstunfähigkeit), Dienstanfänger-Schutz, Vollzugsdienst-Schutz (spezielle DU-Klausel für Polizei, Justizvollzug, Feuerwehr), AU-Schutz, Pflege-Schutz, Prestige-Schutz.",
+    "Keine medizinische Nachprüfung bei Beamten auf Lebenszeit, die wegen allgemeiner Dienstunfähigkeit in den Ruhestand versetzt sind. Verzicht auf abstrakte Verweisung."
+  ]
+}

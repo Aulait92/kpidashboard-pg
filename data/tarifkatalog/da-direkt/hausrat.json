@@ -1,0 +1,101 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Neuwert unbegrenzt",
+    "Überspannung unbegrenzt",
+    "Beitragsfrei bei Jobverlust"
+  ],
+  "tarife": [
+    {
+      "name": "Hausratversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "bargeld": "1.000 €",
+        "auto": "nein",
+        "garten": "nein",
+        "online": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 €/Tag, 100 Tage",
+        "aussen": "7.500 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausratversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "bargeld": "1.000 €",
+        "auto": "1.000 €",
+        "garten": "500 €",
+        "online": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 €/Tag, 100 Tage",
+        "aussen": "20.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausratversicherung Top",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "bargeld": "2.000 €",
+        "auto": "5.000 €",
+        "online": "1.000 € (Phishing)",
+        "ueberspannung": "ja",
+        "hotel": "250 €/Tag, 2 Jahre",
+        "aussen": "40.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.da-direkt.de/hausratversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/hausratversicherung",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/versicherungen-pds/hausrat/dadirekt_ps_hausrat_einfacheuebersicht_067_0625.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Top; DA Direkt markiert Komfort als „TOPSELLER“.",
+    "Wertsachen: Tarifvergleich nennt nur „Wertsachen in Ihrer Zweitwohnung“ (15.000, 25.000, 50.000 €); Wertsachengrenze in der Wohnung nicht genannt.",
+    "Einfacher Diebstahl nicht als Leistung genannt; Komfort ersetzt Diebstahl von Gartenmöbeln und -geräten bis 500 € (Top laut Tabelle nicht).",
+    "Elementarschäden einschließbar mit 3.500 € Selbstbeteiligung (niedrigere wählbar); Fahrraddiebstahl wenn vereinbart.",
+    "Außenversicherung weltweit: Basis 90 Tage, Komfort und Top 180 Tage (erweitert je 36 Monate). Homeassistance einschließbar."
+  ]
+}

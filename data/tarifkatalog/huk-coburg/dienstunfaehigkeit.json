@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Dienstunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Spezielle DU (z. B. Polizei)",
+    "Weltweiter Schutz",
+    "Start Police bis 30 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Dienstunfähigkeitsversicherung (Tarif SDU)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja, auch Widerruf",
+        "nachversicherung": "ja, auch ohne Anlass",
+        "teil-du": "ab 50 %: halbe Rente",
+        "verweisung": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/dienstunfaehigkeitsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/dienstunfaehigkeitsversicherung.html"
+  ],
+  "offen": [
+    "Werte aus der Produktseite auf huk.de; Bedingungen nicht ausgewertet.",
+    "Ob Berufsunfähigkeit (z. B. nach Wechsel in die Privatwirtschaft) mitversichert ist, steht nicht auf der Seite; AU-Klausel nicht genannt.",
+    "Erhöhungsoptionen ohne Risikoprüfung u. a. bei Heirat, Geburt, Ernennung auf Lebenszeit, höherer Besoldungsgruppe, einmalig ohne Anlass. Garantierte Rentensteigerung im Leistungsfall wählbar.",
+    "Verzicht auf abstrakte Verweisung und Arztanordnungsklausel; keine Nachmeldung bei Tätigkeitswechsel. Endalter Polizei 63, Verwaltung und Lehrer 67.",
+    "Start Police für junge Leute bis 30 Jahre: niedriger Anfangsbeitrag, gleicher Schutz; nicht als eigene Stufe geführt."
+  ]
+}

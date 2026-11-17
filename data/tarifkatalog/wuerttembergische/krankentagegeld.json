@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne zeitliche Begrenzung",
+    "Ruhen bei Arbeitslosigkeit"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld KTZR (gesetzlich Versicherte)",
+      "kurz": "KTZR",
+      "stufe": 1,
+      "werte": {
+        "ab-tag": "ab 43. Tag",
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "dauer": "ohne zeitliche Grenze",
+        "bu-ende": "endet mit BU",
+        "selbststaendige": "nein"
+      },
+      "quelle": "https://www.wuerttembergische.de/existenz/krankentagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld für Selbstständige und privat Versicherte",
+      "kurz": "Selbstständige",
+      "stufe": 2,
+      "werte": {
+        "ab-tag": "ab 29., 43. oder 92. Tag",
+        "hoehe": "bis 80 % des Gewinns",
+        "wartezeit": "3 Monate",
+        "dauer": "ohne zeitliche Grenze",
+        "bu-ende": "endet mit BU",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/existenz/krankentagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/existenz/krankentagegeldversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/MBKT_O1K006F.PDF",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/KTZR_Teil_III_K069A.pdf"
+  ],
+  "offen": [
+    "Zielgruppen statt Leistungsstufen: KTZR für gesetzlich Versicherte mit Krankengeldanspruch (Tagegeld plus Krankengeld höchstens Nettoeinkommen); Tarife für Selbstständige (gesetzlich versichert z. B. KTVS) und privat Versicherte. Keine Empfehlung markiert. Werte von der Produktseite (Abruf 17.11.2026).",
+    "Privat versicherte Selbstständige: Beginn ab dem 29., 43. oder 92. Tag wählbar, Spezialtarif ab dem 6. Tag bei stationärem Aufenthalt; Tagegeld bis 80 % der Einkünfte. Wartezeit 3 Monate (Mutterschutz 8 Monate).",
+    "Dynamik: privat Versicherte alle 3 Jahre bis 6 % ohne Gesundheitsprüfung bzw. Anpassung bei höherem Einkommen. Ausland nicht genannt."
+  ]
+}

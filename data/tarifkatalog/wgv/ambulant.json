@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "WGV",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gesetzliche Zuzahlungen 100 %",
+    "Nur für gesetzlich Versicherte",
+    "Schutzimpfungen inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Ambulante Zusatzversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "90 %, bis 1.000 €/Jahr",
+        "sehhilfen": "400 € in 2 Jahren",
+        "vorsorge": "100 %, bis 500 €/Jahr",
+        "arznei": "Zuzahlungen 100 %",
+        "hoergeraete": "90 %, bis 1.000 €/Jahr",
+        "wartezeit": "3 Monate",
+        "lasik": "1.500 € einmalig"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wgv.de/gesundheit-vorsorge/gesundheit/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wgv.de/gesundheit-vorsorge/gesundheit/ambulante-zusatzversicherung/",
+    "https://www.wgv.de/docs/vertragsunterlagen/krankenzusatz.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Produktseite und Tarifbedingungen, Abruf 17.11.2026). Versicherer: WGV-Versicherung AG.",
+    "Arzneimittel: erstattet werden die gesetzlichen Zuzahlungen für Arznei-, Verband-, Heil- und Hilfsmittel, keine Privatrezepte.",
+    "Hörgeräte nur nach Vorleistung der Krankenkasse. Augenlaser einmalig nach 24 Monaten Vertragslaufzeit.",
+    "Heilpraktiker zusammen mit ärztlichen Naturheilverfahren höchstens 1.000 € je Jahr."
+  ]
+}

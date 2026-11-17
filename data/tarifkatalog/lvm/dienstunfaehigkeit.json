@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufsunfähigkeitsversicherung mit Dienstunfähigkeitsklausel",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung ab 50 % BU",
+    "Prognose 6 Monate",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "BU-Rente Plus mit DU-Klausel",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja, echt und vollständig",
+        "probe": "ja, Probe und Widerruf",
+        "bu": "ja",
+        "nachversicherung": "ja, bei Ereignissen",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/dienstunfaehigkeit",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/dienstunfaehigkeit",
+    "https://www.lvm.de/dam/jcr:d9bb8a70-784a-4f95-93cc-4629fb30ab07/081-leistungsuebersicht-berufsunfaehigkeitsversicherung.2024-06-14-11-58-40.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktseite Dienstunfähigkeitsabsicherung lvm.de.",
+    "LVM folgt der Entscheidung des Dienstherrn; gilt auch für Beamte auf Probe und Widerruf sowie für Richter und Kirchenbeamte.",
+    "Teildienstunfähigkeit (begrenzte Dienstfähigkeit) auf der Seite nicht genannt.",
+    "Startphase für junge Leute bis 30 Jahre: 5 Jahre halber Beitrag; Erhöhung ohne Ereignis in den ersten 5 Jahren möglich."
+  ]
+}

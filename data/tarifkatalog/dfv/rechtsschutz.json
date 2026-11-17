@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "DFV",
+  "sparte": "rechtsschutz",
+  "produkt": "DFV-VerkehrsrechtsSchutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Für die ganze Familie",
+    "Alle Fahrzeuge im Haushalt",
+    "Auch Rad, E-Scooter, Fußgänger"
+  ],
+  "tarife": [
+    {
+      "name": "DFV-VerkehrsrechtsSchutz",
+      "kurz": "Verkehr",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "Europa unbegrenzt",
+        "beruf": "nein",
+        "verkehr": "ja",
+        "wohnen": "nein",
+        "kaution": "ja, in der Summe",
+        "privat": "nein",
+        "vsWelt": "500.000 €",
+        "sb": "300 €",
+        "opfer": "ja, Verkehr",
+        "straf": "ja, Verkehr",
+        "mediation": "bis 5.000 €"
+      },
+      "quelle": "https://www.deutsche-familienversicherung.de/haus-haftung-recht/verkehrsrechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deutsche-familienversicherung.de/haus-haftung-recht/verkehrsrechtsschutz/"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht der Produktseite deutsche-familienversicherung.de. DFV bietet nur Verkehrs-Rechtsschutz an, kein Privat-, Berufs- oder Wohnungs-Rechtsschutz.",
+    "Versicherungssumme inkl. Strafkaution; wird das Verfahren nach Kaution nicht fortgesetzt, verzichtet die DFV auf 5.000 € der Forderung.",
+    "Anwaltliche Erstberatung bis 250 €; MPU-Kosten nachträglich, wenn das Gutachten den Vorwurf entkräftet.",
+    "Wartezeit nicht genannt. Mindestlaufzeit 24 Monate."
+  ]
+}

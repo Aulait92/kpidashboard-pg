@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Turniere und Rennen",
+    "Kaution Europa 100.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "10 oder 20 Mio. €",
+        "miete": "ja, z. B. Pferdebox",
+        "reitbeteiligung": "ja",
+        "fohlen": "1 Jahr",
+        "forderungsausfall": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/pferdehaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/pferdehaftpflicht/",
+    "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/tierhalterhaftpflicht/"
+  ],
+  "offen": [
+    "Werte von der Produktseite auf nuernberger.de (Abruf 17.11.2026). Ein Tarif mit wählbarer Summe (10 oder 20 Mio. €).",
+    "Flurschäden auf der Pferdeseite nicht genannt (bei Hunden ja). Selbstbeteiligung laut Fragen wählbar, Höhe nicht genannt. Forderungsausfall ab 2.500 € Schaden durch fremdes Tier."
+  ]
+}

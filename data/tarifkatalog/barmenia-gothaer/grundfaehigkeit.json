@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung (Fähigkeitenschutz)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente schon bei einer Fähigkeit",
+    "Bonus bis 1 Monatsbeitrag im Jahr",
+    "Rente auch bei Weiterarbeit"
+  ],
+  "tarife": [
+    {
+      "name": "Fähigkeitenschutz Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "11",
+        "prognose": "12 Monate",
+        "psyche": "optional"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fähigkeitenschutz Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "15",
+        "prognose": "6 Monate",
+        "psyche": "optional"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fähigkeitenschutz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "20",
+        "prognose": "6 Monate",
+        "psyche": "optional"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/grundfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "Quelle: Produkttabelle der Produktseite barmeniagothaer.de.",
+    "Basis: Hören, Sehen, Sprechen, Heben und Tragen, Stehen, eigenverantwortliches Handeln, Gehen, Treppensteigen, Knien, Bücken, geistige Leistungsfähigkeit. Plus zusätzlich Greifen, Armgebrauch, Sitzen, Gleichgewicht. Premium zusätzlich Schreiben, Computer und Smartphone, Bildschirmtätigkeit, Auto- oder Motorradfahren, Fahrrad oder öffentliche Verkehrsmittel.",
+    "Psyche: Zusatzmodul „Schwere psychische Erkrankung“ (Leistung bei stationärem Aufenthalt); Zusatzmodul schwere Krankheit zahlt einmalig eine Jahresrente.",
+    "Premium: Sofortleistung bei schwerem Unfall. Pflege, Nachversicherung, Weltweit und Dynamik in der Tabelle nicht genannt.",
+    "Für Kinder: Fähigkeitenschutz Kids ab 6 Monaten (nicht aufgenommen).",
+    "BarmeniaGothaer markiert keine Stufe."
+  ]
+}

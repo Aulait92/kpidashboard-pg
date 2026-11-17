@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "KFO Erwachsene nach Unfall",
+    "Knirscherschienen"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnzusatz Komfort (E-ZI + E-ZB)",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "bis 90 %",
+        "implantate": "bis 90 %",
+        "behandlung": "ja",
+        "prophylaxe": "250 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "ja",
+        "kfo": "Kinder 80 %, 2.000 €",
+        "inlays": "ja"
+      },
+      "quelle": "https://www.europa.de/versicherungen/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz Premium (E-ZP + E-ZB)",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "ja",
+        "prophylaxe": "250 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "ja",
+        "kfo": "Kinder 80 %, 2.000 €",
+        "inlays": "ja"
+      },
+      "quelle": "https://www.europa.de/versicherungen/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/zahnzusatzversicherung/",
+    "https://www.europa.de/fileadmin/pdf/produkte/zahn/antragsdokumente/europa_produktinformationsblatt_E-ZI_E-ZB.pdf",
+    "https://www.europa.de/fileadmin/pdf/produkte/zahn/antragsdokumente/europa_produktinformationsblatt_E-ZP_E-ZB.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Komfort (E-ZI) und Premium (E-ZP), jeweils mit Zahnbehandlungsbaustein E-ZB; Stiftung Warentest 9/2026 bewertet Premium mit 0,5, keine Stufe von der EUROPA als Empfehlung markiert.",
+    "Komfort: Eigenanteil zu 80 oder 90 % wählbar; Implantate laut Leistungsliste im Zahnersatz enthalten.",
+    "Leistungsbegrenzung in den ersten Kalenderjahren vorhanden (für Wechsler entfällt die Begrenzung im 3. und 4. Jahr); Höhen nicht auf der Seite.",
+    "Optionsrecht: alle fünf Jahre Wechsel in Premium ohne neue Gesundheitsprüfung, letztmalig mit 50 Jahren.",
+    "Bleaching und angstlindernde Maßnahmen je bis 250 € im Jahr."
+  ]
+}

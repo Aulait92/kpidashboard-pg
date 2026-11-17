@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Abschluss bis 30 Tage vor Reise",
+    "Reise-Assistance"
+  ],
+  "tarife": [
+    {
+      "name": "Travel Day",
+      "kurz": "Travel Day",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sb": "wählbar, 20 %, min. 25 €",
+        "abbruch": "wählbar",
+        "gruende": "ja, Jobverlust",
+        "jahr": "nein"
+      },
+      "bausteine": {
+        "abbruch": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/reise-ruecktritt-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Travel+",
+      "kurz": "Travel+",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "sb": "wählbar, 20 %, min. 25 €",
+        "abbruch": "wählbar",
+        "gruende": "ja, Jobverlust",
+        "jahr": "ja"
+      },
+      "bausteine": {
+        "abbruch": "optional",
+        "sb0": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/reise-ruecktritt-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/reise-ruecktritt-versicherung/"
+  ],
+  "offen": [
+    "Quelle: Produkttabelle der Produktseite barmeniagothaer.de. Travel Day für eine Reise (3 bis 365 Tage), Travel+ als Jahresschutz.",
+    "Selbstbeteiligung wählbar: 25 € je Person und Fall, bei Krankheit 20 %, mindestens 25 €.",
+    "Rücktrittsgründe u. a. unerwarteter Arbeitsplatzverlust, Aufnahme oder Wechsel der Arbeit, Schwangerschaft, Impfunverträglichkeit.",
+    "Versicherungssumme und Pandemie auf der Seite nicht genannt."
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "risikoleben",
+  "produkt": "Risiko-Lebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Sofortrabatt aus Überschüssen",
+    "Raucher-/Nichtrauchertarife"
+  ],
+  "tarife": [
+    {
+      "name": "Risiko-Lebensversicherung KOMFORT (R10)",
+      "kurz": "KOMFORT",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "vorgezogen": "nein",
+        "verlaengerung": "einmalig 5 Jahre",
+        "weltweit": "ja"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/leben-vorsorge/risiko-lebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risiko-Lebensversicherung TOP (R10)",
+      "kurz": "TOP",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis 10.000 €",
+        "vorgezogen": "ja",
+        "verlaengerung": "einmalig 5 Jahre",
+        "weltweit": "ja"
+      },
+      "bausteine": {
+        "fallend": "nein"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/leben-vorsorge/risiko-lebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/leben-vorsorge/risiko-lebensversicherung/"
+  ],
+  "offen": [
+    "Zwei Stufen laut Tarifvergleich der Produktseite (Abruf 17.11.2026); keine Stufe markiert. Versicherer: Itzehoer Lebensversicherungs-AG.",
+    "Fallende Summe (linear oder progressiv) nur als KOMFORT Tarif R20 (ohne Verlängerungsrecht und Dynamik).",
+    "TOP: Nachversicherung je Ereignis max. 10 % bzw. 10.000 €, insgesamt bis 50.000 €; Immobilie bis 100 %. Pflegebonus und Soforthilfe bei Tod bis 15.000 €.",
+    "Umtauschrecht: auf der Produktseite nicht genannt. Kinderbonus-Zeile im Tarifvergleich nicht eindeutig lesbar."
+  ]
+}

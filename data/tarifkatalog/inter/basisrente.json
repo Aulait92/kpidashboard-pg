@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "basisrente",
+  "produkt": "INTER MeinLeben Basisrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rentenbeginn ab 62 wählbar",
+    "Lebenslange Rente",
+    "Schutz bei Insolvenz"
+  ],
+  "tarife": [
+    {
+      "name": "INTER MeinLeben Basisrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "ETF oder aktive Fonds",
+        "flexibel": "Zuzahlung ab 1.000 €",
+        "hinterbliebene": "Guthaben als Rente",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/basisrente-ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/vorsorge-vermoegen/basisrente-ruerup-rente/"
+  ],
+  "offen": [
+    "Beitragsgarantie: Seite nennt „garantierte Leistung von Anfang an“, aber bei 100 % Aktienfonds keine Garantie auf die Beiträge; Höhe der Garantie nicht genannt.",
+    "Garantierter Rentenfaktor nicht ausdrücklich genannt. Altersgerechte Umschichtung in sichere Anlagen; drei Rentenvarianten.",
+    "Hinterbliebene: Guthaben in der Ansparphase als Rente an Ehe- oder Lebenspartner und kindergeldberechtigte Kinder; nach Rentenbeginn nur mit Rentengarantiezeit. BU-Zusatz nicht genannt. Keine Renditeangaben übernommen."
+  ]
+}

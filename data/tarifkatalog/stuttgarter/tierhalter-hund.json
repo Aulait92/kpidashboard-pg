@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalter-Haftpflichtversicherung (Hund)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Führen ohne Leine und Maulkorb",
+    "Tierarzt nach Hundebiss",
+    "Bergungskosten bis 50.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Stuttgarter Tierhalter-Haftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "sb": "0 € oder 150 €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "12 Monate",
+        "forderungsausfall": "ja, ohne Mindesthöhe",
+        "geliehen": "bis 20.000 €",
+        "tiergefahr": "ja (Hüterbiss)",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "ausland": "weltweit"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=Leistungsuebersicht_Tierhalterhaftpflichtversicherung_7.3.019.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/wohnen-alltag/tierhhalterhaftpflicht",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=Leistungsuebersicht_Tierhalterhaftpflichtversicherung_7.3.019.pdf"
+  ],
+  "offen": [
+    "Ein Tarif der Stuttgarter Versicherung AG ohne Stufen. Quelle: Vermittler-Info Leistungen im Überblick 7.3.019 (Stand 9/2023), auf der Produktseite verlinkt. Personenschäden höchstens 15 Mio. €.",
+    "Selbstbeteiligung 150 € optional (ohne SB als Standard gelesen, bitte prüfen). Ansprüche des Tierhüters (Hüterbiss) mitversichert; Neuwert nicht genannt.",
+    "Bestimmte Rassen (z. B. Pitbull, Staffordshire, Rottweiler) nur mit positivem Wesenstest versicherbar. Kaution im Ausland bis 50.000 €."
+  ]
+}

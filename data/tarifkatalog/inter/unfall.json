@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Invalidität ab 1 %",
+    "Weltweiter Schutz",
+    "Leistungsbausteine kombinierbar"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "bergung": "bis 10.000 €",
+        "sofort": "nein",
+        "kosmetik": "bis 10.000 €",
+        "zecken": "nur Zecken"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/existenzvorsorge/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "bergung": "bis 50.000 €",
+        "sofort": "bis 10.000 €",
+        "kosmetik": "bis 50.000 €",
+        "zecken": "nur Zecken"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/existenzvorsorge/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "abGrad": "ab 1 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "bergung": "bis 100.000 €",
+        "sofort": "bis 15.000 €",
+        "kosmetik": "bis 100.000 €",
+        "zecken": "ja, alle Tiere"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/existenzvorsorge/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/vorsorge-vermoegen/existenzvorsorge/unfallversicherung/"
+  ],
+  "offen": [
+    "Grundsumme und Progression nicht genannt (Schutz wird individuell aus Bausteinen zusammengestellt: Invaliditätsleistung, Unfall-Rente, Schmerzensgeld, Notfallkapital, Krankenhaustagegeld, PlusCare).",
+    "Unfall-Rente und Notfallkapital in der Plus-Variante ab 90 % Invalidität doppelt. Herzinfarkt, Schlaganfall und Medikamente ab Exklusiv; Impfschäden und K.-o.-Tropfen nur Premium.",
+    "Reha-Management Exklusiv bis 10.000 €, Premium bis 15.000 €. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+  ]
+}

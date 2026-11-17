@@ -1,0 +1,112 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "hausrat",
+  "produkt": "7 Sachen Hausratversicherung (PROKUNDO)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Unterversicherungsverzicht",
+    "Überspannung durch Blitz",
+    "Fahrrad ohne Nachtzeitklausel"
+  ],
+  "tarife": [
+    {
+      "name": "7 Sachen EASY",
+      "kurz": "EASY",
+      "stufe": 1,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "wert": "25 %",
+        "fahrrad": "bis 500 €",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 1.000 €",
+        "garten": "nein",
+        "auto": "bis 1.000 € (Inland)",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "1 ‰ VS, 100 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/31/documents/Verbraucherinformation.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "7 Sachen SMART",
+      "kurz": "SMART",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "bis 25.000 €",
+        "wert": "50 %",
+        "fahrrad": "bis 2.000 €",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 2.500 €",
+        "garten": "bis 2.000 €",
+        "auto": "bis 2.000 € (EU)",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "2 ‰ VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/31/documents/Verbraucherinformation.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "7 Sachen BEST",
+      "kurz": "BEST",
+      "stufe": 3,
+      "werte": {
+        "gf": "ja",
+        "wert": "100 %",
+        "fahrrad": "bis 5.000 €",
+        "elementar": "optional",
+        "online": "optional",
+        "vs": "650 €/m²",
+        "bargeld": "bis 5.000 €",
+        "garten": "ja",
+        "auto": "bis 5.000 € (weltweit)",
+        "allgefahren": "optional (Plus)",
+        "ueberspannung": "ja",
+        "hotel": "3 ‰ VS, 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/31/documents/Verbraucherinformation.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/hausrat-haftpflicht-und-kfz-versicherung/hausrat/",
+    "https://www.prokundo.de/versicherungen/hausrat/",
+    "https://rechner.prokundo.de/druckstuecke/api/products/31/documents/Verbraucherinformation.pdf"
+  ],
+  "offen": [
+    "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Produktübersicht in der Verbraucherinformation prokundo VI H 06.2026 (Seiten 8 bis 13); Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
+    "Einfacher Diebstahl aus der Wohnung nicht als eigene Zeile genannt (Schlossänderung nach einfachem Diebstahl ab SMART). Fahrrad-Werte gelten ohne Erhöhung oder Zusatzbaustein Fahrradkasko.",
+    "Zusatzbausteine laut Produktseite: Elementar, Glas, Fahrradkasko, Cyber, Haus- und Wohnungsschutzbrief; ob alle in EASY wählbar sind, nicht genannt. Plus-Baustein (unbenannte Gefahren) nur zu BEST; Tarifoption PRO (z. B. Wallbox) gegen Aufpreis.",
+    "SMART heißt auf der Produktseite „der Preis-Leistungs-Sieger“; als mittlere Stufe empfohlen."
+  ]
+}

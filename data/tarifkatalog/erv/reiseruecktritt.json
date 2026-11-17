@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "ERV",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiserücktrittsversicherung (ERGO Reiseversicherung)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Reiseabbruch inklusive",
+    "Auch Jobverlust, Jobwechsel",
+    "Medizinische Stornoberatung"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktrittsversicherung Einmalschutz",
+      "kurz": "Einmalschutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "100 bis 20.000 €",
+        "sb": "ohne oder 20 %",
+        "abbruch": "ja, inklusive",
+        "jahr": "nein, eine Reise",
+        "pandemie": "ja, Covid-19 schwer",
+        "familie": "Paar- und Familientarif",
+        "gruende": "inkl. Jobverlust"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/reiseruecktrittsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Reiserücktrittsversicherung",
+      "kurz": "Jahresschutz",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "summe": "1.000 bis 20.000 €",
+        "sb": "ohne oder 20 %",
+        "abbruch": "ja, inklusive",
+        "jahr": "ja, alle Reisen im Jahr",
+        "pandemie": "ja, Covid-19 schwer",
+        "familie": "Paar- und Familientarif",
+        "gruende": "inkl. Jobverlust"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/reiseruecktrittsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/reiseruecktrittsversicherung",
+    "https://doc.ergo-reiseversicherung.de/de/produktinformationen/produktinformationsblaetter/202504/de/40.08.736_2503_PIB_RRV.pdf",
+    "https://doc.ergo-reiseversicherung.de/de/produktinformationen/produktinformationsblaetter/202504/de/40.08.476_2503_PIB_JV_RRV-2025.pdf"
+  ],
+  "offen": [
+    "erv.de leitet auf ergo-reiseversicherung.de um (ERGO Reiseversicherung AG, Marke ERV). Die Reiserücktrittsversicherung schließt die Reiseabbruchversicherung ein.",
+    "Versicherungssumme = versicherter Reisepreis: Einmalschutz 100 bis 20.000 €, Jahresschutz 1.000 bis 20.000 €. Selbstbeteiligung wählbar: ohne oder 20 % des erstattungsfähigen Schadens, mindestens 25 € je Person.",
+    "Jahresschutz auch als Sparfuchs-Tarif mit 24 Monaten Mindestlaufzeit (gleiche Leistung, anderer Beitrag); nicht als eigene Stufe geführt. Geltungsbereich je nach Tarif Europa oder weltweit.",
+    "Covid-19: unerwartet schwere Erkrankung trotz Pandemieeinstufung versichert (Abschlüsse ab 1.8.2023); Quarantäne nur über den Ergänzungs-Schutz Covid-19. Keine Empfehlung markiert (zwei Stufen)."
+  ]
+}

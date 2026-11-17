@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Auch an Sonn- und Feiertagen",
+    "Steuerfreie Auszahlung",
+    "Anpassung ohne neue Prüfung"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-Krankentagegeld",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "hoehe": "bis 100 % netto",
+        "dauer": "bis Ende der AU",
+        "selbststaendige": "ja, freiw. in der GKV"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/krankenzusatzversicherungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/krankenzusatzversicherungen",
+    "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf"
+  ],
+  "offen": [
+    "Quelle: Seite Krankenzusatzversicherungen und Broschüre W 1113 auf lvm.de; für Arbeitnehmer zum Ausgleich des Krankengelds.",
+    "Beginn (Karenztag), Wartezeit und Ende bei Berufsunfähigkeit nicht genannt.",
+    "Tagessatz bei höherem Einkommen ohne neue Gesundheitsprüfung anpassbar."
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Verzicht auf grobe Fahrlässigkeit",
+    "Mallorca-Police",
+    "Werkstattbindung spart 15 %"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grob": "ja (außer Diebstahl)",
+        "tiere": "Haarwild, Nutztiere",
+        "neuwert": "nein",
+        "marder": "nein",
+        "mallorca": "ja",
+        "werkstatt": "optional, 15 % günstiger"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/kfz-versicherung/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grob": "ja (außer Diebstahl)",
+        "tiere": "alle Tiere",
+        "neuwert": "18 Monate (optional)",
+        "marder": "bis 3.000 € (Zuschlag)",
+        "mallorca": "ja",
+        "werkstatt": "optional, 15 % günstiger"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/kfz-versicherung/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Prestige",
+      "kurz": "Prestige",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grob": "ja (außer Diebstahl)",
+        "tiere": "alle Tiere",
+        "neuwert": "36 Monate (optional)",
+        "marder": "bis 20.000 € (Zuschlag)",
+        "mallorca": "ja",
+        "werkstatt": "optional, 15 % günstiger"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/kfz-versicherung/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/kfz-versicherung/autoversicherung/",
+    "https://www.diebayerische.de/dam/jcr:a29f5b5d-1055-4289-b6b4-563473f18b13/B%20250147%20AKB%20Kfz%2010.2026_bf.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich der Produktseite und AKB B 250147 (10.26) der BA die Bayerische Allgemeine (Abruf 17.11.2026). Keine Stufe ausdrücklich empfohlen; Komfort als mittlere Stufe.",
+    "Deckungssumme der Kfz-Haftpflicht steht im Versicherungsschein, auf Seite und in den AKB nicht beziffert.",
+    "Grobe Fahrlässigkeit: Verzicht in der Kasko außer bei Entwendung und Alkohol oder Drogen (AKB A.2.9.1). Neupreisentschädigung „sofern abgeschlossen“ bei Totalschaden innerhalb 18 (Komfort) bzw. 36 Monaten (Prestige).",
+    "Tierbiss-Folgeschäden auf Antrag gegen Zuschlag (Komfort 3.000 €, Prestige 20.000 €); Kurzschluss-Folgeschäden in Komfort und Prestige inklusive. Sonderzubehör 2.500/7.500/20.000 €. GAP-Deckung und Best-Leistungs-Garantie optional."
+  ]
+}

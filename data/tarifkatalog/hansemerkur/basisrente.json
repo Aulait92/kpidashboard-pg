@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "basisrente",
+  "produkt": "Rürup-Rente (Basisrente)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente ab 62",
+    "Verlängerung bis 10 Jahre",
+    "Erhöhte Rente bei Pflege möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Basis Care",
+      "kurz": "Basis Care",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "ja, auch aussetzen",
+        "hinterbliebene": "optional",
+        "beitragspause": "ja",
+        "anlage": "klassisch"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/ruerup-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basis Care Invest",
+      "kurz": "Invest",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "ja, auch aussetzen",
+        "hinterbliebene": "optional",
+        "beitragspause": "ja",
+        "anlage": "Fonds und ETFs"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.hansemerkur.de/ruerup-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/ruerup-rente"
+  ],
+  "offen": [
+    "Quelle: Produktseite hansemerkur.de; zwei Anlagemodelle, keine Leistungsstufen.",
+    "Basis Care mit „hohen Garantien“; Beitragsgarantie und Rentenfaktor nicht beziffert.",
+    "Hinterbliebenenversorgung vor Rentenbeginn frei vererbbar (mit Beitragsrückgewähr); nach Rentenbeginn Kapitalerhalt oder 5 Jahre Rentengarantie.",
+    "Effektivkosten in den Muster-Produktinformationsblättern, nicht ausgewertet."
+  ]
+}

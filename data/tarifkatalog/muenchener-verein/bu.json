@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "bu",
+  "produkt": "Deutsche Handwerker Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistung ab 50 % BU",
+    "Leistung auch bei Pflege",
+    "Beitragspause bis 36 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung Aktiv-Schutz",
+      "kurz": "Aktiv-Schutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "nein",
+        "nachversicherung": "ja, 23 Ereignisse",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung Premium-Schutz",
+      "kurz": "Premium-Schutz",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "bis 36 Monate",
+        "nachversicherung": "ja, 23 Ereignisse",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "pflege": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/existenz/berufsunfaehigkeitsversicherung/",
+    "https://www.muenchener-verein.de/downloadcenter/LV/Werbeunterlagen/7700195.pdf"
+  ],
+  "offen": [
+    "Tarife 55 und 56 als Aktiv-Schutz und Premium-Schutz. Prognose, Rückwirkung ohne Meldefrist und weltweiter Schutz aus dem Prospekt für Nichthandwerker.",
+    "AU-Klausel Premium: Produktseite nennt 6 Monate AU oder 3 Monate mit Prognose für weitere 3 Monate, der Prospekt 2 Monate AU mit Prognose für weitere 4 Monate; bitte prüfen. Nachversicherung ohne Anlass in den ersten 5 Jahren bis Alter 40.",
+    "Teilzeitklausel, Umorganisation und Infektionsklausel nicht genannt. Wiedereingliederungshilfe 6 Monatsrenten bis 10.000 €; Soforthilfe bei schweren Krankheiten 15 Monate. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

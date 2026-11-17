@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "Debeka",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Wallbox und Balkonkraftwerk",
+    "Innovationsklausel",
+    "24-Stunden-Schadensservice"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Comfort",
+      "kurz": "Comfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "optional (Paket)",
+        "kosten": "Aufräumen ja, kein Hotel",
+        "ueberspannung": "ja",
+        "fugen": "bis 5.000 €",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "mietausfall": "15 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "nein",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/wohngebaeudeversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Comfort Plus",
+      "kurz": "Comfort Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 15.000 €",
+        "pv": "optional (Paket)",
+        "kosten": "Hotel 200 €, 12 Mon.",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "bis 30.000 €",
+        "tiere": "bis 15.000 €",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/wohngebaeudeversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/wohngebaeudeversicherung.html"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite debeka.de (Comfort und Comfort Plus).",
+    "Ableitungsrohre: Comfort Plus Abwasserleitungen auf dem Grundstück bis 15.000 €; Leitungswasser- und Rohrpaket nur zu Comfort Plus wählbar.",
+    "Photovoltaik und Wärmepumpe über das Paket Erneuerbare Energien (Allgefahrendeckung) gegen Beitrag; Balkonkraftwerke bis 900 Watt und Ladestationen sind enthalten.",
+    "Hotelkosten in Comfort nicht enthalten; Aufräumungs- und Abbruchkosten in beiden Paketen.",
+    "Gleitender Neuwert und Selbstbeteiligung auf der Seite nicht genannt.",
+    "Debeka markiert keine Stufe."
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "HanseMerkur",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Schadenrückkauf bis 1.500 €",
+    "Cyberangriff mitversichert (VK)",
+    "Kein Abzug neu für alt (Lack)"
+  ],
+  "tarife": [
+    {
+      "name": "Drive Smart",
+      "kurz": "Drive Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, volle Höhe",
+        "tiere": "Tiere aller Art",
+        "mallorca": "ja",
+        "neuwert": "12 Monate",
+        "marder": "Folgeschäden 5.000 €",
+        "gap": "nein",
+        "elektro": "Akku, Ladekabel"
+      },
+      "quelle": "https://www.hansemerkur.de/kfz-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Drive Easy",
+      "kurz": "Drive Easy",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, volle Höhe",
+        "tiere": "Tiere aller Art",
+        "mallorca": "ja",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 20.000 €",
+        "gap": "ja",
+        "elektro": "Akku, Kabel, Wallbox"
+      },
+      "quelle": "https://www.hansemerkur.de/kfz-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Drive Best",
+      "kurz": "Drive Best",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, volle Höhe",
+        "tiere": "Tiere aller Art",
+        "mallorca": "ja",
+        "neuwert": "36 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "gap": "ja",
+        "elektro": "Akku, Wallbox, Ladegerät"
+      },
+      "quelle": "https://www.hansemerkur.de/kfz-versicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hansemerkur.de/kfz-versicherung"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite hansemerkur.de (Drive Smart, Easy, Best).",
+    "Tierbiss und Kurzschluss inkl. Folgeschäden: Smart 5.000 €, Easy 20.000 €, Best ohne Betragsgrenze angegeben.",
+    "Kaufpreisentschädigung 6, 24 bzw. 36 Monate. Eigenschadendeckung 50.000 € bzw. 100.000 €.",
+    "Rabattschutz und Werkstattbindung nicht genannt.",
+    "HanseMerkur markiert keine Stufe."
+  ]
+}

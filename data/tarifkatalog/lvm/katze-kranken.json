@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "katze-kranken",
+  "produkt": "Katzekrankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Freie Tierarztwahl",
+    "Keine Wartezeit bei Unfall",
+    "Tierärztliche Videoberatung"
+  ],
+  "tarife": [
+    {
+      "name": "MeineKlassik mit Heilbehandlungen",
+      "kurz": "MeineKlassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "bis 4-fach",
+        "jhl": "2.500/5.000 €/unbegrenzt",
+        "zahn": "Extraktion, Wurzel",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate weltweit",
+        "ohneOp": "ja",
+        "nachbehandlung": "14 Tage",
+        "vorsorge": "100 € im Jahr",
+        "kastration": "nein",
+        "physio": "bis 250 €"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/tierversicherungen/katzenkrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MeinPremium mit Heilbehandlungen",
+      "kurz": "MeinPremium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "erstattung": "bis 100 %",
+        "got": "bis 4-fach",
+        "jhl": "2.500/5.000 €/unbegrenzt",
+        "zahn": "Extraktion, Wurzel",
+        "sb": "0, 10 oder 20 %",
+        "wartezeit": "1 Monat",
+        "ausland": "12 Monate weltweit",
+        "ohneOp": "ja",
+        "nachbehandlung": "28 Tage",
+        "vorsorge": "100 € im Jahr",
+        "kastration": "ja, nach 12 Monaten",
+        "physio": "500 € OP, sonst 250 €"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/tierversicherungen/katzenkrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/tierversicherungen/katzenkrankenversicherung",
+    "https://www.lvm.de/dam/jcr:e21c8472-bdc6-4562-bb78-5fa2088ea799/051-leistungsuebersicht-s205.2024-05-06-13-33-41.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungstabelle der Produktseite lvm.de und Leistungsübersicht Tierkrankenversicherung (S 205). Krankenversicherung = OP-Tarif mit Zusatzschutz Heilbehandlungen.",
+    "Höchstentschädigung je Jahr für OP und Heilbehandlung jeweils wählbar 2.500 €, 5.000 € oder unbegrenzt; Selbstbeteiligung wählbar 0 %, 10 % oder 20 %.",
+    "Physiotherapie in der Heilbehandlung bis 250 €; MeinPremium nach OP zusätzlich Physio- und Lasertherapie bis 500 €. Chemo- und Radiotherapie bis 1.000 €.",
+    "Vorsorgepauschale 100 € im Jahr u. a. für Impfungen, Mikrochip, Zahnreinigung, Parasitenmittel.",
+    "Abschluss ab 8 Wochen bis 8 Jahre. LVM markiert MeinPremium als „Beliebt“."
+  ]
+}

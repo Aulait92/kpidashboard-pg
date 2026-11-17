@@ -1,0 +1,33 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "rechtsschutz",
+  "produkt": "Privat-Rechtsschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit, auch Internetkäufe",
+    "Mediation mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz für das Privatleben",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "mediation": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/rechtsschutz/rechtsschutz-fuer-das-privatleben/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/rechtsschutz/rechtsschutz-fuer-das-privatleben/"
+  ],
+  "offen": [
+    "Produktseite nennt nur unbegrenzte Versicherungssumme in Europa, weltweiten Schutz (auch bei Internetverträgen) und Mediation.",
+    "Berufs-, Verkehrs- und Wohnungs-Rechtsschutz, Strafkaution, Selbstbeteiligung und Wartezeit nicht genannt; Unterlagen nicht verlinkt. Bitte im Angebot prüfen."
+  ]
+}

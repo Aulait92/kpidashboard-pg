@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "die Bayerische",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Tierarzt- und Klinikwahl",
+    "Keine Wartezeit bei Unfällen",
+    "Direktabrechnung mit der Tierarztpraxis"
+  ],
+  "tarife": [
+    {
+      "name": "OP-Schutz Premium",
+      "kurz": "Premium",
+      "stufe": 1,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "sb": "0 oder 20 %, max. 250 €",
+        "wartezeit": "30 Tage",
+        "kastration": "nur bei Diagnose",
+        "nachbehandlung": "bis 30 Tage",
+        "ausland": "12 Monate weltweit",
+        "got": "3-fach, Notfall 4-fach",
+        "jhl": "unbegrenzt",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "physio": "bis 10 Behandlungen"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/tierversicherungen/katzen-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "OP-Schutz Premium Plus",
+      "kurz": "Premium Plus",
+      "stufe": 2,
+      "werte": {
+        "erstattung": "100 %, SB wählbar",
+        "sb": "0 oder 20 %, max. 250 €",
+        "wartezeit": "30 Tage",
+        "kastration": "Zuschuss 150 €",
+        "nachbehandlung": "bis 120 Tage",
+        "ausland": "weltweit, unbegrenzt",
+        "got": "3-fach, Notfall 4-fach",
+        "jhl": "unbegrenzt",
+        "vorsorge": "nein",
+        "zahn": "Extraktion, Wurzelbeh.",
+        "physio": "bis 10 Behandlungen"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.diebayerische.de/tierversicherungen/katzen-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.diebayerische.de/tierversicherungen/katzen-op-versicherung/",
+    "https://media.barmenia.de/media/global_media/dokumente/dokumentencenter/ba/verkaufshilfen/WS1281.pdf"
+  ],
+  "offen": [
+    "Angebot der Bayerischen mit dem Partner Barmenia (Risikoträger Barmenia Allgemeine, Marke BarmeniaGothaer); gleiche Tarife wie im Ordner barmenia-gothaer, Stufen und Tabelle auf diebayerische.de geprüft (Abruf 17.11.2026). Die Bayerische markiert keine Stufe.",
+    "Selbstbeteiligung wählbar: 20 %, höchstens 250 € je Einreichung; sonst 100 % Erstattung.",
+    "Besondere Operationen (z. B. HD, ED, Patellaluxation): Wartezeit 18 Monate, im Premium Plus 6 Monate.",
+    "Physiotherapie in der Nachbehandlung einer OP: bis zu 10 Behandlungen je 30 Minuten.",
+    "Prothesen 500 € (Premium), unbegrenzt (Premium Plus); Goldakupunktur nur Premium Plus.",
+    "Tiere ab 2 Monate bis einschließlich 9 Jahre versicherbar.",
+    "Ausland Premium Plus laut Produktseite ohne zeitliche Begrenzung."
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "sterbegeld",
+  "produkt": "Bestattungsgeld-Vorsorge",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Aufnahme bis 80 Jahre",
+    "Beiträge zurück im 1. Jahr",
+    "Überschussbeteiligung"
+  ],
+  "tarife": [
+    {
+      "name": "Bestattungsgeld",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "wartezeit": "1 Jahr",
+        "unfall": "volle Summe sofort",
+        "ohne-gp": "ja",
+        "beitragsende": "mind. 5 J., bis 85"
+      },
+      "bausteine": {},
+      "quelle": "https://www.itzehoer.de/produkte/leben-vorsorge/bestattungsgeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/leben-vorsorge/bestattungsgeld/",
+    "https://www.itzehoer.de/dokumente/produkte/leben-und-vorsorge/lebensversicherung/a-14-120-bestattungsgeld_02-2024_mimfs.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Produktseite und Flyer 02/2024, Abruf 17.11.2026). Versicherer: Itzehoer Lebensversicherungs-AG.",
+    "Versicherungssumme: Mindest- und Höchstsumme nicht genannt.",
+    "Aufnahme unabhängig vom Gesundheitszustand; bei Tod im ersten Jahr Rückgewähr der Beiträge, bei Unfalltod sofort volle Leistung (keine doppelte Summe)."
+  ]
+}

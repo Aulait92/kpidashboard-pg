@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "pflegezusatz",
+  "produkt": "PflegeVorsorge (Pflegerentenversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Pflegerente",
+    "Ambulant wie stationär",
+    "Konstanter Beitrag"
+  ],
+  "tarife": [
+    {
+      "name": "PflegeVorsorge Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "werte": {
+        "ab-pg": "6 Pflegepunkte (ADL)",
+        "ambulant-gleich": "ja",
+        "demenz": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/pflege-und-tod/pflege/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegeVorsorge Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ab-pg": "ab 4 Pflegepunkten",
+        "ambulant-gleich": "ja",
+        "demenz": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/pflege-und-tod/pflege/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegeVorsorge Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "werte": {
+        "ab-pg": "ab 3 Pflegepunkten",
+        "ambulant-gleich": "ja",
+        "demenz": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/pflege-und-tod/pflege/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/pflege-und-tod/pflege/"
+  ],
+  "offen": [
+    "Pflegerentenversicherung der VOLKSWOHL BUND Lebensversicherung a.G.; Leistung richtet sich nach Pflegepunkten (Hilfebedarf bei 6 Tätigkeiten des täglichen Lebens, ADL), nicht nach Pflegegrad. Bedingungen-PDF war beim Abruf leer, Werte nur von der Produktseite.",
+    "Rentenhöhe: Basis 100 % bei 6 Punkten; Komfort 50 % bei 4/5, 100 % bei 6 Punkten; Exklusiv 50 % bei 3, 75 % bei 4/5, 100 % bei 6 Punkten. Leistung bei Pflegegrad 5, Einmalleistung und Beitragsbefreiung im Pflegefall nicht genannt.",
+    "Vierte Variante „Flexibel“ (auch mit Demenzleistung) ohne Angaben auf der Seite, daher nicht aufgenommen. Nachversicherung ohne Gesundheitsprüfung und Beitragspausen möglich. Keine Empfehlung markiert, Komfort als mittlere Stufe."
+  ]
+}

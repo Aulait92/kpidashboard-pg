@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung AusGleich (PROKUNDO)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Progression 225 % bis 500 %",
+    "Zeckenstich (FSME) versichert",
+    "Täglich kündbar"
+  ],
+  "tarife": [
+    {
+      "name": "AusGleich EASY",
+      "kurz": "EASY",
+      "stufe": 1,
+      "werte": {
+        "progression": "225 % bis 500 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "nein",
+        "kosmetik": "bis 25.000 €",
+        "bergung": "bis 25.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/516/documents/Leistungs%C3%BCbersicht_AusGleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AusGleich SMART",
+      "kurz": "SMART",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "progression": "225 % bis 500 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "10 %, max. 20.000 €",
+        "kosmetik": "bis 50.000 €",
+        "bergung": "bis 50.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/516/documents/Leistungs%C3%BCbersicht_AusGleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "AusGleich BEST",
+      "kurz": "BEST",
+      "stufe": 3,
+      "werte": {
+        "progression": "225 % bis 500 %",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "10 %, max. 20.000 €",
+        "kosmetik": "unbegrenzt",
+        "bergung": "unbegrenzt",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/516/documents/Leistungs%C3%BCbersicht_AusGleich.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/einkommenssicherung/unfall/",
+    "https://www.prokundo.de/versicherungen/unfall/ausgleich",
+    "https://rechner.prokundo.de/druckstuecke/api/products/516/documents/Leistungs%C3%BCbersicht_AusGleich.pdf",
+    "https://rechner.prokundo.de/druckstuecke/api/products/147/documents/Verbraucherinformation_Unfall_AusGleich.pdf"
+  ],
+  "offen": [
+    "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungsübersicht PK AusGleich 07.2025 und Verbraucherinformation; Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
+    "Grundsumme frei wählbar (Beispiele mit 100.000 €). Progressionen laut Bedingungen 225 %, 350 %, 20/350 %, 500 % und 20/500 %; Leistung ab welchem Invaliditätsgrad nicht genannt.",
+    "Unfallrente, Krankenhaustagegeld und Genesungsgeld „sofern vereinbart“; Unfallrente ab 50 % Invalidität. Krankenhaustagegeld bis 3 bzw. 5 Jahre.",
+    "„Leistungsturbo“ (Verdopplung der Gliedertaxe bis 100 %) laut Produktseite; ob er in jeder Stufe gilt, ist nicht genannt. Keine Empfehlung markiert, SMART als mittlere Stufe."
+  ]
+}

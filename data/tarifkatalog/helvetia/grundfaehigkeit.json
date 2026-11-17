@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "Helvetia",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente ab 6 Monaten Verlust",
+    "Auto- und Motorradfahren",
+    "Umtausch in BU möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitenversicherung Bronze",
+      "kurz": "Bronze",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ja, als Fähigkeit",
+        "nachversicherung": "ja, mit und ohne Anlass",
+        "weltweit": "ja",
+        "dynamik": "optional",
+        "anzahl": "25"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.helvetia.de/de/privatkunden/grundfaehigkeit.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitenversicherung Silber",
+      "kurz": "Silber",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ja, als Fähigkeit",
+        "nachversicherung": "ja, mit und ohne Anlass",
+        "weltweit": "ja",
+        "dynamik": "optional",
+        "anzahl": "29"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.helvetia.de/de/privatkunden/grundfaehigkeit.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitenversicherung Gold",
+      "kurz": "Gold",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ja, als Fähigkeit",
+        "nachversicherung": "ja, mit und ohne Anlass",
+        "weltweit": "ja",
+        "dynamik": "optional",
+        "anzahl": "34"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.helvetia.de/de/privatkunden/grundfaehigkeit.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.helvetia.de/de/privatkunden/grundfaehigkeit.html",
+    "https://medienportal.privatepilot.de/medienportal/pdf/BAL8673/BAL8673.pdf",
+    "https://medienportal.privatepilot.de/medienportal/pdf/BAL8708/BAL8708.pdf"
+  ],
+  "offen": [
+    "Drei Stufen laut Produktseite und Produktsteckbrief BAL 8673 (10.26) der Baloise Lebensversicherung AG Deutschland (Teil der Helvetia Baloise Gruppe), abgerufen 17.11.2026 über das von helvetia.de verlinkte Medienportal (Dokumentenübersicht Biometrie).",
+    "Anzahl der Grundfähigkeiten aus dem Produktsteckbrief gezählt (Bronze 25, Silber zusätzlich 4, Gold zusätzlich 5); die Produktseite listet 29 Fähigkeiten je Tarif ohne Unterschied. Bitte gegenprüfen.",
+    "Keine Stufe markiert; Silber als mittlere Stufe empfohlen.",
+    "Psyche: Baustein Erwerbs- und Psycheschutz (Rente bei weniger als 3 Std. Erwerbstätigkeit für 12 Monate; bei Bronze nur psychisch bedingt). Weitere Bausteine: Arbeitsunfähigkeitsschutz (max. 24 Monate), Beruf Plus, Krankheitenschutz (Einmalzahlung), Inflationsschutz 1 bis 3 %.",
+    "Pflegebedürftigkeit ist als versicherte Grundfähigkeit genannt; eine eigene Pflegerente ist nicht als Baustein aufgeführt. Start-Tarif für Silber und Gold mit 40 % reduziertem Startbeitrag."
+  ]
+}

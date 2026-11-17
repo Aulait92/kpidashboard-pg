@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung FLEXXprotect",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Innovationsgarantie",
+    "Gefälligkeitsschäden",
+    "Mietsachschäden Wohnräume"
+  ],
+  "tarife": [
+    {
+      "name": "FLEXXprotect easy",
+      "kurz": "easy",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 30.000 €",
+        "delikt": "ja",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "drohne": "bis 250 g",
+        "sb": "150 € wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FLEXXprotect allround",
+      "kurz": "allround",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 oder 50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "bis 50.000 €",
+        "delikt": "ja",
+        "geliehen": "bis 10.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "drohne": "bis 2 kg",
+        "sb": "150 € wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FLEXXprotect best",
+      "kurz": "best",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 oder 50 Mio. €",
+        "forderungsausfall": "ja, auch Vorsatz",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 10.000 €",
+        "drohne": "bis 5 kg",
+        "sb": "150 € wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/private-haftpflichtversicherung/",
+    "https://www.universa.de/site/assets/files/113024/076-108-leistungsvergleich-flexxprotect_08_2026.pdf"
+  ],
+  "offen": [
+    "Werte aus der Tabelle der Produktseite und dem Leistungsvergleich 08.2026. Je geschädigte Person höchstens 15 Mio. €. Haken = bis zur gewählten Versicherungssumme.",
+    "Schlüssel easy mit 150 € Selbstbeteiligung. Forderungsausfall: Leistungsvergleich zeigt Vorsatz in easy und allround nicht versichert; Gewaltopferschutz nur best. Deliktunfähige: im Leistungsvergleich ohne Summe, Werte als Haken gelesen, bitte prüfen.",
+    "Neuwert best für Sachen bis 24 Monate. Mallorca-Deckung im Leistungsvergleich als Zeile vorhanden, Stufen nicht lesbar. Hundehalter und Dienst-Haftpflicht als Bausteine. Franke und Bornberg zeichnet best aus, keine Tarifmarkierung; allround als mittlere Stufe."
+  ]
+}
