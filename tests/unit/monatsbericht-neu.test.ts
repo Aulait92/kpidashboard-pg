@@ -44,13 +44,14 @@ const full = (over: Partial<ReportModel> = {}): ReportModel => ({
   },
   empfehlungen: { asked: 5, empfehlungen: 2, abschluesse: 1, provision: 330 },
   bestandskampagnen: { leads: 3, abschluesse: 1, provision: 120 },
+  verluste: { total: 20, gruende: [{ key: "nicht_erreicht", label: "Nicht erreicht", count: 8, share: 0.4, tipp: "Früher und öfter anrufen." }] },
   measures: ["Wir haben neue Anzeigenmotive erstellt, damit Ihre Anzeigen frisch bleiben."],
   tips: [{ key: "beitrag", title: "Abschlüsse vollständig eintragen", text: "Bei 2 Abschlüssen fehlt der Beitrag.", href: "/buyer/leads", cta: "Abschlüsse ergänzen" }],
   links: { zahlen: `${APP}/buyer/zahlen?range=custom&from=2026-10-01&to=2026-10-31`, gespraech: "https://cal.test/ole" },
   ...over,
 });
 
-const empty = (): ReportModel => full({ closings: 0, funnel: null, result: null, bestand: null, empfehlungen: null, bestandskampagnen: null, measures: [], tips: [] });
+const empty = (): ReportModel => full({ closings: 0, funnel: null, result: null, bestand: null, empfehlungen: null, bestandskampagnen: null, verluste: null, measures: [], tips: [] });
 
 describe("Monatsbericht neu: Betreff", () => {
   it("positiver Gewinn: Abschlüsse und Gewinn", () => {
