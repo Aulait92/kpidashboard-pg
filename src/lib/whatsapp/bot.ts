@@ -515,7 +515,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const lead = conversation.leadId
     ? await prisma.lead.findUnique({
         where: { id: conversation.leadId },
-        select: { id: true, source: true, formData: true, isTest: true },
+        select: { id: true, source: true, formData: true, isTest: true, name: true, email: true },
       })
     : null;
   // Testlead (lib/testlead.ts): Logzeilen ohne Inhalte
@@ -591,17 +591,19 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
 
   // Erstanschreiben mit erster Frage (Zweck gespeichert): Antwort per Knopf = Antwort auf Frage 1. Hat der Lead zuerst
   // geschrieben, stellt der Assistent Frage 1 jetzt (fett am Ende), damit die erste Nachricht gleich aufgebaut ist.
+  // Gesundheitsangaben aus dem Formular gehen nicht an die KI (lib/gesundheitsdaten.ts)
+  const form = splitHealthAnswers(parseFormAnswers(lead?.formData));
+  // Frage 1 und 2: was das Formular schon beantwortet, wird nicht gefragt (Ole, 17.11.2026)
   const outreachMsg = outbound.find((m) => m.purpose && isOutreachPurpose(m.purpose));
   const ersteFrage = conversation.qualified
     ? null
     : outreachMsg
-      ? ersteFrageRegel(lead?.source ?? null, kurz, { gesendet: outreachMsg.body, an: ansprache })
+      ? ersteFrageRegel(lead?.source ?? null, kurz, { gesendet: outreachMsg.body, an: ansprache, formular: form.normal })
       : notice === "erst" && outreachProdukt(lead?.source)
-        ? ersteFrageRegel(lead?.source ?? null, kurz, { jetzt: true, an: ansprache }) || null
+        ? ersteFrageRegel(lead?.source ?? null, kurz, { jetzt: true, an: ansprache, formular: form.normal }) || null
         : null;
-
-  // Gesundheitsangaben aus dem Formular gehen nicht an die KI (lib/gesundheitsdaten.ts)
-  const form = splitHealthAnswers(parseFormAnswers(lead?.formData));
+  // E-Mail aus dem Leadformular (Lead.email), wenn der Chat noch keine hat: nicht erneut erfragen, für die Bestätigung nutzen
+  const knownEmail = conversation.contactEmail ?? lead?.email ?? null;
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     advisorName,
     firmName: firm,
@@ -622,9 +624,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     summary: conversation.qualificationSummary,
     points: qualificationLines(conversation.qualificationData) || undefined,
     contact: {
-      name: conversation.contactName,
+      // Name aus dem Leadformular vor dem WhatsApp-Profilnamen
+      name: lead?.name || conversation.contactName,
       phone: conversation.contactPhone,
-      email: conversation.contactEmail,
+      email: knownEmail,
     },
   });
   const messages = toApiMessages(history, { tier: istTierLead(lead?.source) });
@@ -734,7 +737,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
         const email = EMAIL_RE.test(rawEmail)
           ? rawEmail
-          : conversation.contactEmail; // bereits bekannt (z. B. aus Leadformular)
+          : knownEmail; // bereits bekannt (z. B. aus Leadformular)
         if (email && email !== conversation.contactEmail) {
           await prisma.conversation.update({
             where: { id: conversation.id },
@@ -753,7 +756,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
               where: { id: conversation.id },
               select: { qualificationSummary: true },
             });
-            const name = conversation.contactName ?? conversation.contactPhone;
+            const name = lead?.name || conversation.contactName || conversation.contactPhone;
             const res = await bookAppointment({
               customerId: conversation.customerId,
               leadId: conversation.leadId,
@@ -772,7 +775,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
                 conversationId: conversation.id,
               }),
               attendeeEmail: email,
-              leadName: conversation.contactName,
+              leadName: lead?.name || conversation.contactName,
               leadPhone: conversation.contactPhone,
             });
             await persistInternal(conversation.id, "appointment_booked", {

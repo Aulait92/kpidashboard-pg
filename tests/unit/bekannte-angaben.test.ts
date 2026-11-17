@@ -1,0 +1,81 @@
+// Ole, 17.11.2026: Der Assistent fragt nicht erneut, was das Leadformular schon beantwortet, und der Testlead
+// bringt Formularangaben wie ein echter Lead des Produkts mit.
+import { describe, expect, it } from "vitest";
+import { bekannteAntworten, ersteFrage, ersteFrageRegel, erstanschreibenText, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { testLeadAnswers } from "@/lib/testlead";
+import { isHealthAnswer } from "@/lib/gesundheitsdaten";
+import { buildSystemPrompt } from "@/lib/whatsapp/bot";
+
+const labels = (p: string) => testLeadAnswers(p).map((a) => a.label);
+
+describe("Testlead: Formularangaben je Produkt", () => {
+  it("Katze und Hund: Felder des Tier-Funnels", () => {
+    for (const p of ["TKV-Katze", "Hundekrankenversicherung"]) {
+      expect(labels(p)).toEqual(expect.arrayContaining(["Tierart", "Rasse (Tier)", "Geburtsjahr (Tier)", "Geschlecht (Tier)", "Kastriert (Tier)", "Haltung (Tier)"]));
+    }
+    expect(testLeadAnswers("TKV-Katze")).toContainEqual({ label: "Tierart", value: "Katze" });
+    expect(testLeadAnswers("Hundekrankenversicherung")).toContainEqual({ label: "Tierart", value: "Hund" });
+  });
+
+  it("PKV: Beitrag, Versicherung, Situation, Geburtsdatum, wie lange in PKV", () => {
+    expect(labels("PKV Wechsel")).toEqual(expect.arrayContaining(["Monatlicher Beitrag", "Aktuelle Versicherung", "Situation", "Geburtsdatum", "Wie lange in PKV?"]));
+  });
+
+  it("Privatschutz: Lebenssituation und Versicherungsinteresse", () => {
+    expect(labels("Privatschutz")).toEqual(expect.arrayContaining(["Lebenssituation", "Versicherungsinteresse"]));
+  });
+
+  it("Zahnzusatz ohne Gesundheitsangaben (Art. 9 DSGVO)", () => {
+    const a = testLeadAnswers("Zahnzusatz");
+    expect(a.some((x) => /zähne|zahnersatz|befund/i.test(`${x.label} ${x.value}`))).toBe(false);
+    expect(a.some(isHealthAnswer)).toBe(false);
+  });
+});
+
+describe("Bekannte Antworten aus dem Formular", () => {
+  it("PKV-Funnel beantwortet Frage 1 und 2, Katze nur Frage 1, Zahn keine", () => {
+    expect(bekannteAntworten(outreachProdukt("PKV Wechsel"), testLeadAnswers("PKV Wechsel"))).toEqual({ frage1: "Situation: Angestellt", frage2: "Gesetzlich oder privat?: Privat" });
+    expect(bekannteAntworten(outreachProdukt("TKV-Katze"), testLeadAnswers("TKV-Katze"))).toEqual({ frage1: "Geburtsjahr (Tier): 2022", frage2: null });
+    expect(bekannteAntworten(outreachProdukt("Zahnzusatz"), testLeadAnswers("Zahnzusatz"))).toEqual({ frage1: null, frage2: null });
+    expect(bekannteAntworten(outreachProdukt("TKV-Katze"), [])).toEqual({ frage1: null, frage2: null });
+  });
+
+  it("Freitext-Erstanschreiben fragt die erste offene Frage, sonst nach dem Videotermin", () => {
+    expect(ersteFrage("TKV-Katze", "sie", "Ole", testLeadAnswers("TKV-Katze"))).toBe("Soll vor allem eine Operation abgesichert sein, oder auch die normale Tierarztbehandlung?");
+    expect(ersteFrage("PKV Wechsel", "du", "Ole", testLeadAnswers("PKV Wechsel"))).toBe("Passt dir ein kurzer Videotermin mit Ole in den nächsten Tagen?");
+    expect(ersteFrage("Privatschutz", "sie", "Ole", [{ label: "Versicherungsinteresse", value: "Hausrat" }])).toBe("Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?");
+    // ohne Formular wie bisher
+    expect(ersteFrage("TKV-Katze", "sie", "Ole")).toBe("Wie alt ist Ihre Katze?");
+    const t = erstanschreibenText({ an: "du", name: "Ole", source: "Privatschutz", formular: testLeadAnswers("Privatschutz") });
+    expect(t.split("\n").at(-1)).toBe("*Passt dir ein kurzer Videotermin mit Ole in den nächsten Tagen?*");
+    expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
+  });
+
+  it("Assistent: bekannte Frage 2 nicht stellen, direkt Termine", () => {
+    const vorlage = "Hallo Herr Müller, danke für Ihre Anfrage zur privaten Krankenversicherung!\n…\n\n*Wie sind Sie aktuell beruflich aufgestellt?*";
+    const r = ersteFrageRegel("PKV Wechsel", "Ole", { gesendet: vorlage, an: "sie", formular: testLeadAnswers("PKV Wechsel") });
+    expect(r).toMatch(/beantwortet das Formular schon/);
+    expect(r).not.toMatch(/Dann Frage 2/);
+    // ohne Formular wie bisher
+    expect(ersteFrageRegel("PKV Wechsel", "Ole", { gesendet: vorlage, an: "sie" })).toMatch(/Dann Frage 2/);
+    // Freitext hat schon Frage 2 gestellt: danach Termine
+    const frei = erstanschreibenText({ an: "sie", name: "Ole", source: "TKV-Katze", formular: testLeadAnswers("TKV-Katze") });
+    expect(ersteFrageRegel("TKV-Katze", "Ole", { gesendet: frei, an: "sie", formular: testLeadAnswers("TKV-Katze") })).toMatch(/Operation[\s\S]*biete direkt zwei konkrete Termine/);
+    // Lead schreibt zuerst: erste offene Frage
+    expect(ersteFrageRegel("TKV-Katze", "Ole", { jetzt: true, an: "du", formular: testLeadAnswers("TKV-Katze") })).toMatch(/^Erste Frage: „Soll vor allem eine Operation/);
+  });
+
+  it("E-Mail aus dem Formular steht als bekannt im Prompt", () => {
+    const s = buildSystemPrompt({ systemPrompt: "", knowledge: "", personality: "" }, "TKV-Katze", {
+      qualified: false,
+      summary: null,
+      contact: { name: "Jule Sommer", phone: "4915100000000", email: "jule@example.com" },
+      upcoming: null,
+      formAnswers: testLeadAnswers("TKV-Katze"),
+      advisorName: "Ole Sommer",
+      aiDisclosed: true,
+    });
+    expect(s).toMatch(/E-Mail: jule@example.com \(bekannt: NICHT erfragen/);
+    expect(s).toMatch(/Rasse \(Tier\): Europäisch Kurzhaar/);
+  });
+});

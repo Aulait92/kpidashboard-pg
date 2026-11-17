@@ -28,6 +28,13 @@ import { erstinfoUrlFor } from "@/lib/erstinformation";
 import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { KEIN_WHATSAPP_REASON } from "@/lib/whatsapp/kein-whatsapp";
 import { logTestLead } from "@/lib/testlead";
+import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
+
+/** formData-JSON des Leads defensiv als Label/Wert-Paare. */
+function asFormAnswers(raw: unknown): { label: string; value: string }[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((x) => (x && typeof x === "object" && typeof x.label === "string" && typeof x.value === "string" ? [{ label: x.label, value: x.value }] : []));
+}
 
 /**
  * Erstanschreiben (v5, Ole 16.11.2026, lib/whatsapp/erstanschreiben.ts): eine Begrüßung, Dank mit Produkt,
@@ -57,6 +64,10 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     ? "nachricht"
     : "anfrage";
   const variant = await abVariantFor(purpose, opts.leadId);
+  // Angaben aus dem Leadformular: der Freitext fragt nicht, was schon bekannt ist (Gesundheitsangaben nie)
+  const formular = splitHealthAnswers(
+    asFormAnswers((await prisma.lead.findUnique({ where: { id: opts.leadId }, select: { formData: true } }).catch(() => null))?.formData),
+  ).normal;
   const kurz = who.kurz || who.firm;
   const first = firstNameOf(opts.name);
   const paramsFor = (p: { version: number; ansprache: Ansprache }): string[] => {
@@ -73,7 +84,7 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     legacyParams: [first, url],
     document,
     herkunft,
-    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: opts.source, herkunft }),
+    text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: opts.source, herkunft, formular }),
     /** Allgemeine Fassung (ohne Produkt), falls die Vorlage des Produkts noch fehlt */
     textAllgemein: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: null, herkunft }),
   };
