@@ -81,6 +81,18 @@ export async function rescheduleAppointmentBuyerAction(appointmentId: string, st
   }
 }
 
+/** Von Hand eingetragenen Termin auf eine neue Zeit legen (ohne Kalender). */
+export async function rescheduleManualBuyerAction(appointmentId: string, date: string, time: string): Promise<AppointmentChangeResult> {
+  const w = await writable(appointmentId);
+  if ("denied" in w) return w.denied;
+  const { rescheduleManualAppointment } = await import("@/lib/lead-manual");
+  const r = await rescheduleManualAppointment({ appointmentId: w.appt.id, customerId: w.appt.customerId, userId: w.userId, date: String(date ?? ""), time: String(time ?? "") });
+  if (!r.ok) return { ok: false, error: r.error, code: "error" };
+  await recordUsage("action", "appointment.reschedule_manual");
+  revalidatePath("/buyer", "layout");
+  return { ok: true, start: r.startsAt.toISOString() };
+}
+
 /** Termin absagen (Kalendereintrag wird gelöscht, der Kontakt bekommt eine Absage). */
 export async function cancelAppointmentBuyerAction(appointmentId: string): Promise<AppointmentChangeResult> {
   const w = await writable(appointmentId);
