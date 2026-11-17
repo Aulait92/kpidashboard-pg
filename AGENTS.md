@@ -82,6 +82,11 @@ Prüfung vor dem Commit:
 - In der Rückmeldung an Ole den Screenshot bzw. die UX-Entscheidung in zwei Sätzen nennen.
 - Priorität: Vermittlerbereich (/buyer) zuerst, der Admin-Bereich wird später nachgezogen.
 
+Qualitätsziel (Ole, 17.11.2026) für alle neuen Screens und UX/UI-Arbeiten: Champions-League-Niveau, Ziel-Score mindestens 90/100.
+Vor jedem Screenshot an Ole und vor jedem Livegang fragen: „Warum ist das noch schwer zu verstehen?“ Gründe auflisten (Nutzer,
+Aufgabe, erster Blick, Hauptaktion, Begriffe, Standardwerte, Farben, Dichte, Handy) und zuerst lösen. Erst dann vorlegen, mit Score
+und kurzer Liste der behobenen Punkte.
+
 ## Erklärvideos aktuell halten (Ole, 15.11.2026)
 
 Ändert ein Commit eine Oberfläche, Navigation, Knopfbeschriftung oder einen Ablauf, der in einem Erklärvideo vorkommt

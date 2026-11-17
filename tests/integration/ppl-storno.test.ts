@@ -28,37 +28,53 @@ describe("Pay-per-Lead: Storno und Bestellung", () => {
 
   it("genehmigt erlaubte Gründe sofort (ersatzlos, mit Gutschrift)", async () => {
     const r = await requestStorno(leadIds[0], "Bestandskunde", "", { role: "BUYER" });
-    expect(r).toEqual({ ok: true, state: "approved" });
+    expect(r).toEqual({ ok: true, state: "approved", anteil: 1 });
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[0] } });
     expect(l.status).toBe("Storno");
     expect(Number(l.creditAmount)).toBe(50);
     expect((await prisma.revenue.findFirstOrThrow({ where: { leadId: leadIds[0] } })).cancelled).toBe(true);
   });
 
-  it("lehnt unerlaubte Gründe und abgelaufene Fenster ab, „Sonstiges“ geht in Prüfung", async () => {
+  it("lehnt unerlaubte Gründe und abgelaufene Fenster ab, „Sonstiges“ ist ein Grenzfall: 50:50", async () => {
     expect((await requestStorno(leadIds[1], "Gefällt mir nicht", "", { role: "BUYER" })).ok).toBe(false);
     const late = await prisma.lead.create({ data: { customerId, subscriptionId: subId, deliveredAt: new Date(Date.now() - 8 * 86_400_000) } });
     expect((await requestStorno(late.id, "Bestandskunde", "", { role: "BUYER" })).ok).toBe(false);
     const r = await requestStorno(leadIds[1], "Sonstiges", "Nummer gehört jemand anderem", { role: "BUYER" });
-    expect(r).toEqual({ ok: true, state: "review" });
-    expect(await decideStorno(leadIds[1], false)).toBe(true);
-    expect((await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[1] } })).stornoState).toBe("rejected");
+    expect(r).toEqual({ ok: true, state: "approved", anteil: 0.5 });
+    const l = await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[1] } });
+    expect(l.status).toBe("Storno");
+    expect(Number(l.creditAmount)).toBe(25);
+    const rev = await prisma.revenue.findFirstOrThrow({ where: { leadId: leadIds[1] } });
+    expect(rev.cancelled).toBe(false);
+    expect(Number(rev.amount)).toBe(25);
   });
 
-  it("Quote über 20 % → Prüfung", async () => {
+  it("50:50 zurücknehmen stellt den vollen Umsatz wieder her", async () => {
+    const { undoStorno } = await import("@/lib/ppl/storno");
+    expect(await undoStorno(leadIds[1], { role: "ADMIN" })).toEqual({ ok: true, already: false });
+    expect(Number((await prisma.revenue.findFirstOrThrow({ where: { leadId: leadIds[1] } })).amount)).toBe(50);
+    expect((await requestStorno(leadIds[1], "Sonstiges", "Nummer gehört jemand anderem", { role: "BUYER" })).ok).toBe(true);
+  });
+
+  it("Quote über 20 % → Grenzfall 50:50, Altfälle in Prüfung per Admin 50:50", async () => {
     await requestStorno(leadIds[2], "Nicht erreichbar", "", { role: "BUYER" });
     const r = await requestStorno(leadIds[3], "Nicht erreichbar", "", { role: "BUYER" });
-    expect(r).toEqual({ ok: true, state: "review" });
+    expect(r).toEqual({ ok: true, state: "approved", anteil: 0.5 });
+    const alt = await prisma.lead.create({ data: { customerId, subscriptionId: subId, deliveredAt: new Date(), stornoState: "review" } });
+    await prisma.revenue.create({ data: { customerId, leadId: alt.id, amount: 50 } });
+    expect(await decideStorno(alt.id, "half")).toBe(true);
+    expect(Number((await prisma.lead.findUniqueOrThrow({ where: { id: alt.id } })).creditAmount)).toBe(25);
+    expect(await decideStorno(alt.id, false)).toBe(false);
   });
 
   it("verrechnet Gutschriften mit der nächsten Bestellung", async () => {
     const r = await placeOrder({ subscriptionId: subId, weekOffset: 1, quantity: 10, autoRenew: true, markPaid: true });
     expect(r.ok).toBe(true);
     const order = await prisma.leadOrder.findFirstOrThrow({ where: { subscriptionId: subId } });
-    // 10 × 50 € − 2 genehmigte Stornos à 50 €
-    expect(Number(order.amount)).toBe(400);
+    // 10 × 50 € − 1 voller Storno à 50 € − 4 Grenzfälle à 25 € (Quote > 20 % ab dem 3. Storno)
+    expect(Number(order.amount)).toBe(350);
     expect(order.status).toBe("paid");
-    expect(await prisma.lead.count({ where: { subscriptionId: subId, creditedAt: { not: null } } })).toBe(2);
+    expect(await prisma.lead.count({ where: { subscriptionId: subId, creditedAt: { not: null } } })).toBe(5);
     const again = await placeOrder({ subscriptionId: subId, weekOffset: 1, quantity: 10, autoRenew: true, markPaid: true });
     expect(again.ok).toBe(false);
   });
@@ -67,7 +83,7 @@ describe("Pay-per-Lead: Storno und Bestellung", () => {
     await prisma.leadSubscription.update({ where: { id: subId }, data: { stornoAutoApprove: true } });
     try {
       const other = await requestStorno(leadIds[4], "Sonstiges", "Hat nie angefragt", { role: "BUYER" });
-      expect(other).toEqual({ ok: true, state: "approved" });
+      expect(other).toEqual({ ok: true, state: "approved", anteil: 1 });
       expect((await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[4] } })).status).toBe("Storno");
       // Grund-Regeln gelten weiter
       expect((await requestStorno(leadIds[5], "Gefällt mir nicht", "", { role: "BUYER" })).ok).toBe(false);

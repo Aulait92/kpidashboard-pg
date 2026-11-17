@@ -452,3 +452,46 @@ export async function setNextStepReminderAction(on: boolean): Promise<{ ok: true
   revalidatePath("/buyer/einstellungen");
   return { ok: true };
 }
+
+// ─── Falsche Nummer: richtige Nummer per E-Mail erfragen ──────────────────────
+
+/** Notiz der Wiedervorlage nach der Nummer-Mail */
+const NUMMER_MAIL_NOTE = "Antwort auf Nummer-Mail prüfen";
+
+/**
+ * „Falsche oder ungültige Daten“ mit E-Mail-Adresse (Ole, 17.11.2026): statt verloren kurze E-Mail mit der Bitte um die
+ * richtige Nummer (lib/mail/nummer-mail.ts), Kontakt bleibt offen, Wiedervorlage in 2 Werktagen.
+ */
+export async function nummerPerMailResult(leadId: string): Promise<InboxResult> {
+  const customerId = await writableCustomerId(leadId);
+  if (!customerId) return { ok: false, error: PREVIEW };
+  const lead = await loadLead(leadId, customerId);
+  if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  const full = await prisma.lead.findUnique({ where: { id: lead.id }, select: { email: true, phone: true, name: true, source: true, customer: { select: { leadAddress: true } } } });
+  const to = full?.email?.trim();
+  if (!to) return { ok: false, error: "Keine E-Mail-Adresse hinterlegt." };
+  if (await mailFeaturesOffFor(customerId)) return { ok: false, error: "E-Mail-Funktionen sind ausgeschaltet." };
+  const undo = undoOf(lead);
+  await anrufErledigt(lead.id);
+  const [{ ansprechpartner }, { leadVersandKontext, sendeLeadMail }, { nummerMail }, link] = await Promise.all([
+    import("@/lib/lead-anrede"),
+    import("@/lib/mail/lead-versand"),
+    import("@/lib/mail/nummer-mail"),
+    terminlinkFor(customerId, lead.id),
+  ]);
+  const who = await ansprechpartner({ customerId, leadId: lead.id, phone: full?.phone ?? null, name: full?.name ?? null });
+  const an = asAnsprache(full?.customer.leadAddress);
+  const k = await leadVersandKontext(customerId, { leadId: lead.id, who });
+  const res = await sendeLeadMail(k, {
+    to,
+    inhalt: (sig) => nummerMail({ an, kontakt: who.kontakt, source: full?.source ?? null, advisor: k.daten.name, link, signatur: sig.text }),
+    protokoll: { customerId, leadId: lead.id, art: "nummer_erfragen" },
+  });
+  if (!res.sent) return { ok: false, error: "Die E-Mail konnte nicht gesendet werden. Bitte später erneut versuchen." };
+  const at = workdaysFromNow(2);
+  await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: at, followUpNote: NUMMER_MAIL_NOTE, callbackSnoozedUntil: at } });
+  await logLeadHistory(lead.id, "wiedervorlage", `Richtige Nummer per E-Mail erfragt, Wiedervorlage ${fmtDayShort(at)}`, { customerId });
+  await recordUsage("action", "lost.falsche_daten.nummer_mail");
+  refresh(lead.id);
+  return { ok: true, undo };
+}
