@@ -9,11 +9,16 @@ import { LOESCHFRIST_ABSCHLUSS_TAGE, LOESCHFRIST_TAGE } from "@/lib/policen/rege
 
 export type Vermittler = { name: string; firma: string; anschrift: string; telefon: string; email: string };
 
-export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler): { ueberschrift: string; text: string }[] {
+/**
+ * kiEu: Die KI-Zuordnung der Unterlagen läuft über den EU-Endpunkt (regeln.ts policenKiEu); dann steht das bei den
+ * Empfängern (docs/recht-gesundheitsunterlagen.md Abschnitt e, Punkt 8). Meta bleibt Drittland.
+ */
+export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler, o: { kiEu?: boolean } = {}): { ueberschrift: string; text: string }[] {
   const wer = [v.firma && v.firma !== v.name ? `${v.name}, ${v.firma}` : v.name, v.anschrift, v.telefon ? `Telefon ${v.telefon}` : "", v.email ? `E-Mail ${v.email}` : ""]
     .filter((x) => x && x.trim())
     .join("\n");
   const du = an === "du";
+  const ki = o.kiEu ? " (Claude, verarbeitet in einem Rechenzentrum in der EU)" : "";
   return [
     {
       ueberschrift: "Verantwortlich",
@@ -55,20 +60,20 @@ export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler): { ue
       ueberschrift: "Empfänger",
       text: a(
         an,
-        "Dein Berater setzt Dienstleister ein, die nur nach seiner Weisung arbeiten (Auftragsverarbeiter) und zur Verschwiegenheit verpflichtet sind: den Anbieter der Software (Ole Kannapinn UG, Berlin), 360dialog (Berlin) und Meta Platforms Ireland für WhatsApp, Railway für das Hosting (Rechenzentrum in der EU) und Anthropic für die KI-Zuordnung. Versicherer oder andere Dritte bekommen deine Unterlagen nicht.",
-        "Ihr Berater setzt Dienstleister ein, die nur nach seiner Weisung arbeiten (Auftragsverarbeiter) und zur Verschwiegenheit verpflichtet sind: den Anbieter der Software (Ole Kannapinn UG, Berlin), 360dialog (Berlin) und Meta Platforms Ireland für WhatsApp, Railway für das Hosting (Rechenzentrum in der EU) und Anthropic für die KI-Zuordnung. Versicherer oder andere Dritte bekommen Ihre Unterlagen nicht.",
+        `Dein Berater setzt Dienstleister ein, die nur nach seiner Weisung arbeiten (Auftragsverarbeiter) und zur Verschwiegenheit verpflichtet sind: den Anbieter der Software (Ole Kannapinn UG, Berlin), 360dialog (Berlin) und Meta Platforms Ireland für WhatsApp, Railway für das Hosting (Rechenzentrum in der EU) und Anthropic für die KI-Zuordnung${ki}. Versicherer oder andere Dritte bekommen deine Unterlagen nicht.`,
+        `Ihr Berater setzt Dienstleister ein, die nur nach seiner Weisung arbeiten (Auftragsverarbeiter) und zur Verschwiegenheit verpflichtet sind: den Anbieter der Software (Ole Kannapinn UG, Berlin), 360dialog (Berlin) und Meta Platforms Ireland für WhatsApp, Railway für das Hosting (Rechenzentrum in der EU) und Anthropic für die KI-Zuordnung${ki}. Versicherer oder andere Dritte bekommen Ihre Unterlagen nicht.`,
       ),
     },
     {
       ueberschrift: "Übermittlung in die USA",
-      text: "Meta, Railway und Anthropic sind Unternehmen mit Sitz bzw. Muttergesellschaft in den USA. Grundlage ist der Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Durchführungsbeschluss (EU) 2023/1795), hilfsweise Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO). Anthropic nutzt die Daten nicht zum Training.",
+      text: `Meta, Railway und Anthropic sind Unternehmen mit Sitz bzw. Muttergesellschaft in den USA. Grundlage ist der Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Durchführungsbeschluss (EU) 2023/1795), hilfsweise Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).${o.kiEu ? " Die KI-Zuordnung der Unterlagen findet in der EU statt." : ""} Anthropic nutzt die Daten nicht zum Training.`,
     },
     {
       ueberschrift: "Speicherdauer",
       text: a(
         an,
-        `Ohne Vertragsabschluss werden die Unterlagen ${LOESCHFRIST_TAGE} Tage nach dem letzten Termin gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang). Nach einem Abschluss werden sie ${LOESCHFRIST_ABSCHLUSS_TAGE} Tage danach gelöscht, außer dein Berater bewahrt sie als Dokumentation seiner Beratung auf. Eine Datei, die vor deiner Einwilligung kommt, wird nicht geladen; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Nachrichten nach eigenen Regeln bis zu 30 Tage.`,
-        `Ohne Vertragsabschluss werden die Unterlagen ${LOESCHFRIST_TAGE} Tage nach dem letzten Termin gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang). Nach einem Abschluss werden sie ${LOESCHFRIST_ABSCHLUSS_TAGE} Tage danach gelöscht, außer Ihr Berater bewahrt sie als Dokumentation seiner Beratung auf. Eine Datei, die vor Ihrer Einwilligung kommt, wird nicht geladen; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Nachrichten nach eigenen Regeln bis zu 30 Tage.`,
+        `Ohne Vertragsabschluss werden die Unterlagen ${LOESCHFRIST_TAGE} Tage nach dem letzten Termin gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang). Nach einem Abschluss werden sie ${LOESCHFRIST_ABSCHLUSS_TAGE} Tage danach gelöscht, außer dein Berater bewahrt sie als Dokumentation seiner Beratung auf. Eine Datei, die Gesundheitsangaben enthalten kann und vor deiner Einwilligung kommt, wird nicht gespeichert; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Nachrichten nach eigenen Regeln bis zu 30 Tage.`,
+        `Ohne Vertragsabschluss werden die Unterlagen ${LOESCHFRIST_TAGE} Tage nach dem letzten Termin gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang). Nach einem Abschluss werden sie ${LOESCHFRIST_ABSCHLUSS_TAGE} Tage danach gelöscht, außer Ihr Berater bewahrt sie als Dokumentation seiner Beratung auf. Eine Datei, die Gesundheitsangaben enthalten kann und vor Ihrer Einwilligung kommt, wird nicht gespeichert; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Nachrichten nach eigenen Regeln bis zu 30 Tage.`,
       ),
     },
     {
@@ -85,6 +90,14 @@ export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler): { ue
         an,
         "Schick Unterlagen, in denen andere Personen stehen (zum Beispiel Partner oder Kinder), bitte nur mit deren Einverständnis, bei Kindern als Elternteil. Dein Berater informiert die Mitversicherten im Termin.",
         "Schicken Sie Unterlagen, in denen andere Personen stehen (zum Beispiel Partner oder Kinder), bitte nur mit deren Einverständnis, bei Kindern als Elternteil. Ihr Berater informiert die Mitversicherten im Termin.",
+      ),
+    },
+    {
+      ueberschrift: "Alter",
+      text: a(
+        an,
+        "Die Einwilligung kannst du ab 18 Jahren geben. Bist du jünger, schick bitte keine Unterlagen per WhatsApp; ihr schaut sie dann im Termin gemeinsam an.",
+        "Die Einwilligung können Sie ab 18 Jahren geben. Sind Sie jünger, schicken Sie bitte keine Unterlagen per WhatsApp; Sie schauen sie dann im Termin gemeinsam an.",
       ),
     },
     {

@@ -1157,7 +1157,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   if (gebucht) {
     const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } });
     const offen = offeneFolgefragen(fresh?.qualificationData ?? conversation.qualificationData);
-    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person });
+    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person, email: gebucht.email });
     if (offen[0]) {
       const t = folgefrageText(offen[0], ansprache, person.nom, true);
       zweite = { text: t, buttons: knoepfeFuerText(t, offen) };

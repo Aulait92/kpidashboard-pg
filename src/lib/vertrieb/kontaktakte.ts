@@ -14,6 +14,8 @@ import { listPresentations } from "@/lib/vertrieb/praesentationen";
 import { aktuellesAngebot, audienceFuer } from "@/lib/vertrieb/verkaufspraesentation";
 import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspraesentation-server";
 import { DECISION_BOOKING_TYPE, DEFAULT_BOOKING_TYPE, decisionBookingLink } from "@/lib/vertrieb/buchung";
+import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server";
+import { entscheidungsCallHinweis } from "@/lib/vertrieb/entscheidungs-call";
 
 // Kontaktakte eines Vertriebskontakts: alle Daten an einer Stelle, gemeinsam für
 // /admin/vertrieb/kontakte/[id] (alt) und /admin/neu/vertrieb/kontakte/[id] (neu).
@@ -77,6 +79,8 @@ export async function ladeKontaktakte(c: Kontakt) {
   const duplicates = await likelyDuplicates(c.id);
   // Entscheidungs-Call: persönlicher Buchungslink (signiert, Buchung hängt direkt an diesem Kontakt)
   const decisionLink = await decisionBookingLink(c.id).catch(() => null);
+  // Angebotsmail: welche Variante zum Entscheidungs-Call rausgeht (schon gebucht → Termin, sonst Buchungslink)
+  const entscheidungsHinweis = c.offers.length ? entscheidungsCallHinweis(await entscheidungsCallStand(c.id)) : null;
   // „Termin“: Admin bucht selbst (Termintyp, Datum, Uhrzeit frei); nach einem Angebot ist der Entscheidungs-Call vorgewählt
   const bookingTypes = await prisma.salesBookingType.findMany({ orderBy: { sortOrder: "asc" }, select: { slug: true, title: true, durationMin: true } });
   const defaultTermin = c.offers.length && bookingTypes.some((t) => t.slug === DECISION_BOOKING_TYPE) ? DECISION_BOOKING_TYPE : DEFAULT_BOOKING_TYPE;
@@ -97,7 +101,7 @@ export async function ladeKontaktakte(c: Kontakt) {
   const praesFassung = audienceFuer(c, aktuellesAngebot(c.offers));
   return {
     emailSources, extraPhones, extrasSummary, open, done, activeFollowup, threadMail, followupMail, suggested,
-    onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, bookingTypes, defaultTermin,
+    onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, entscheidungsHinweis, bookingTypes, defaultTermin,
     referral, referralBenefit, referralDiscount, pdfs, appUrl, praesLink, praesAufrufe, praesFassung,
   };
 }

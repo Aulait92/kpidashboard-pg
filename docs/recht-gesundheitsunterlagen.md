@@ -325,6 +325,8 @@ dort die Aussage „Einwilligung nur bei Gesundheitsbezug“ an den neuen Ablauf
 
 ## (c) Restrisiken und Punkte für den Anwalt
 
+Bearbeitet nach bestem Wissen in Abschnitt e (17.11.2026); drei Punkte bleiben für den Anwalt.
+
 1. **Knopf als ausdrückliche Einwilligung:** Reicht „Ja, einverstanden“ in WhatsApp (bestes Wissen: ja), und ist der
    Kurztext mit Link ausreichend informiert? Muss der Dienstleister-Hinweis (USA) in den Kurztext?
 2. **Einwilligung für alle Policen vorab:** Ist die Bündelung (eine Einwilligung, auch wenn der Lead nur Sach schickt)
@@ -402,3 +404,305 @@ Anbieter
 
 Literatur
 - Dr. Datenschutz, Geheimhaltungspflicht nach StGB für selbstständige Versicherungsmakler? (18.3.2010): [dr-datenschutz.de](https://www.dr-datenschutz.de/geheimhaltungspflicht-nach-stgb-fuer-selbstaendige-versicherungsmakler/)
+
+---
+
+## (e) Bearbeitung der Anwaltsfragen (bestes Wissen, 17.11.2026)
+
+**Das ist keine anwaltliche Prüfung.** Ole hat entschieden, die 12 Punkte aus Abschnitt c selbst nach bestem Wissen
+zu bearbeiten. Grundlage sind die unten verlinkten Primärquellen. Heute im Wortlaut abgerufen wurden die EDSA-Leitlinien
+05/2020 als PDF, § 203 StGB, §§ 1629, 1687 BGB und § 34d GewO auf gesetze-im-internet.de, BT-Drs. 18/11936 und die
+GDV-Verhaltensregeln. Legal Data Hunter war auch heute im Tageslimit (kostenloser Plan, Rücksetzung 17.11.2026,
+18:25 UTC). Zitierte EuGH-Urteile ohne Volltextprüfung sind markiert. Annahme laut Ole: Die KI-Zuordnung der
+Unterlagen läuft über einen EU-Zugang (`POLICEN_KI_REGION=eu`, wird parallel eingerichtet). Meta/WhatsApp bleibt
+Drittland.
+
+| Nr. | Frage | Ergebnis | Risiko |
+|---|---|---|---|
+| 1 | Knopf als ausdrückliche Einwilligung, Kurztext, USA-Satz | Ja, mit Bedingungen | niedrig |
+| 2 | Eine Einwilligung für alle Policen | Ja | niedrig |
+| 3 | Media-ID 24 Stunden, Transport vor Einwilligung | Ja, mit Bedingungen | niedrig |
+| 4 | Mitversicherte, Kinder | Mit Bedingungen | mittel |
+| 5 | § 203 StGB (Makler, Großanbieter) | Makler eher nein, Vertreter ja; Vertragsklauseln reichen nach bestem Wissen | mittel |
+| 6 | Ausschließlichkeitsvertreter | Mit Bedingungen (eigener Verantwortlicher, Agenturvertrag prüfen) | mittel |
+| 7 | Aufbewahrung nach Abschluss und Widerruf | Ja, mit Bedingungen | niedrig |
+| 8 | Drittland | Ja, mit Bedingungen (KI in der EU, Meta über DPF/SCC) | mittel |
+| 9 | Gesundheitsangaben im Freitext | Mit Bedingungen, die Einwilligung deckt sie nicht | mittel |
+| 10 | DSFA | Ja, Pflicht; unser Muster genügt als Vorlage | niedrig |
+| 11 | Minderjährige | Ja: keine Einwilligung unter 18 | niedrig |
+| 12 | Haftung und AGB | Mit Bedingungen, keine Sonderklausel | mittel |
+
+### 1. Knopf als ausdrückliche Einwilligung, Kurztext, USA-Satz
+
+- **Ergebnis: ja, mit Bedingungen. Risiko: niedrig.**
+- „Ausdrücklich“ betrifft die Art der Erklärung: Der Betroffene muss eine ausdrückliche Einwilligungserklärung abgeben.
+  Online genügt ein elektronisches Formular. Der EDSA nennt als Beispiel einen Bildschirm mit Ja/Nein, wenn der Text die
+  Einwilligung klar ausdrückt („Ich willige ein …“, nicht „Mir ist klar, dass …“)
+  ([EDSA, Leitlinien 05/2020, Rn. 93, 94, 96](https://edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf)).
+  Unsere Frage „Sind Sie einverstanden, dass … speichert und … nutzt?“ mit dem Knopf **[Ja, einverstanden]** entspricht
+  diesem Beispiel. Eine zweistufige Bestätigung (Rn. 98) ist möglich, aber keine Pflicht.
+- **Nachweis (Art. 7 Abs. 1):** Wortlaut wie gesendet, Version, Zeitpunkt, Nummer und ID der Knopf-Antwort werden
+  protokolliert (`lib/policen/server.ts`, `beantworteEinwilligung`). Getipptes „Ja“ zählt nur direkt nach der Frage.
+  Die Beweislast für eine wirksame, aktive Einwilligung trägt der Verantwortliche (EuGH, Urt. v. 11.11.2020, C-61/19,
+  Orange Romania, [EUR-Lex 62019CJ0061](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:62019CJ0061), nicht im
+  Volltext geprüft).
+- **Informiert:** Nötig sind mindestens Verantwortlicher, Zweck, Datenart, Widerrufsrecht, gegebenenfalls automatisierte
+  Entscheidung und, nur ohne Angemessenheitsbeschluss oder Schutzmaßnahmen nach Art. 46, die Risiken einer Drittlandübermittlung
+  ([EDSA 05/2020, Rn. 64](https://edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf)).
+  Der Kurztext enthält alle Pflichtangaben; eine Entscheidung nach Art. 22 trifft die KI nicht. Auftragsverarbeiter
+  müssen in der Einwilligung nicht genannt werden, wohl aber in der Information nach Art. 13 (Rn. 65); das leistet die
+  Langfassung. Die Form ist frei, gestaffelte Information ist zulässig, die Sprache muss einfach sein (Rn. 66, 67).
+- **USA-Satz:** Für die Einwilligung nicht zwingend (das DPF ist ein Angemessenheitsbeschluss, Rn. 64 vi greift nicht).
+  Er bleibt trotzdem: Meta bleibt Drittland, und bei § 203 StGB wirkt die Einwilligung nur dann als Befugnis zur
+  Offenbarung an Dienstleister, wenn der Lead erkennen kann, dass solche beteiligt sind (Punkt 5).
+- **Bedingungen:** Die Langfassung muss erreichbar sein (Link im Text, `/datenschutz/policen`); bei jeder inhaltlichen
+  Änderung des Wortlauts eine neue Version (heute 2026-11-17.3). Sollte: „Sehen kann die Unterlagen nur Ihr Berater“
+  stimmt bei Team-Kunden nur ungefähr (Inhaber und zuständiger Berater sehen sie); bei Gelegenheit präzisieren.
+
+### 2. Eine Einwilligung für alle Policen
+
+- **Ergebnis: ja. Risiko: niedrig.**
+- Granularität verlangt getrennte Einwilligungen für **verschiedene Zwecke**, nicht für verschiedene Datenarten
+  desselben Zwecks; die Einwilligung soll alle Verarbeitungen zum selben Zweck abdecken (ErwG 32, 43;
+  [EDSA 05/2020, Rn. 42 bis 44](https://edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf)).
+  Hier gibt es einen Zweck (Terminvorbereitung) und eine Datenart (eigene Versicherungsunterlagen); die Sparten mit
+  Gesundheitsbezug sind genannt. Das ist bestimmt genug.
+- Freiwillig: **[Lieber im Termin]** hat keinen Nachteil, der Termin hängt nicht davon ab (Art. 7 Abs. 4).
+- Hinweis zur App: Die Einwilligung steht heute nur dann in der Einladung, wenn der Lead eine Gesundheitssparte nennt.
+  Nennt er nur Sachversicherungen, wird eine Datei vor der Einwilligung geladen und von der KI zugeordnet; zeigt sich
+  ein Gesundheitsbezug, wird der Inhalt sofort verworfen und die Einwilligung erfragt. Das ist vertretbar (unerwarteter
+  Inhalt, nur Zuordnung, keine Speicherung), und die Zuordnung läuft jetzt über den EU-Zugang (umgesetzt, Punkt 8).
+  Sauberer wäre die Einwilligung in jeder Einladung bei eingeschaltetem Schalter (wie ursprünglich in Abschnitt b);
+  das macht die Nachricht für Sach-Leads länger. Sollte, Entscheidung bei Ole.
+
+### 3. Unaufgefordert geschickte Dateien
+
+- **Ergebnis: ja, mit Bedingungen. Risiko: niedrig.**
+- Wer aufgedrängte sensible Daten erhält, holt unverzüglich die Einwilligung ein und informiert; sonst beendet er die
+  Bearbeitung und löscht ([Dr. Datenschutz, Aufgedrängte Datenverarbeitung](https://www.dr-datenschutz.de/aufgedraengte-datenverarbeitung/)).
+  Ähnlich für freiwillig übermittelte Bewerberdaten der [LfD Niedersachsen](https://www.lfd.niedersachsen.de/download/76437):
+  nicht erforderliche Unterlagen unverzüglich löschen, außer der Betroffene willigt in die weitere Speicherung ein.
+  Genau das macht der Ablauf: kein Inhalt, keine KI, Frage einmal, höchstens 24 Stunden (`prunePolicen`), dann weg.
+- Die Media-ID ist ein Verweis ohne Inhalt. Sie bis zur Antwort zu merken, ist für die Rückfrage erforderlich
+  (Art. 6 Abs. 1 lit. f; der Lead hat selbst geschickt). Der Transport über Meta und 360dialog ist die vom Lead gewählte
+  Übermittlung an den Vermittler; Meta handelt dabei als dessen Auftragsverarbeiter (Abschnitt a, Frage 3). Im
+  Chatverlauf steht nur „Dokument empfangen“.
+- **Sollte:** Vor der Einwilligung wird heute auch der Original-Dateiname gespeichert (`LeadDocument.fileName`, Status
+  „wartet“). Er kann selbst einen Gesundheitsbezug verraten („Befund_….pdf“). Besser einen neutralen Namen speichern
+  und den Originalnamen erst nach der Einwilligung übernehmen.
+
+### 4. Mitversicherte Personen und Kinder
+
+- **Ergebnis: mit Bedingungen. Risiko: mittel.**
+- Die Einwilligung nach Art. 9 Abs. 2 lit. a gibt „die betroffene Person“; der Lead kann für erwachsene Mitversicherte
+  nicht einwilligen. Für deren Gesundheitsangaben passt vor dem Termin keine Ausnahme in Art. 9 Abs. 2. Der Hinweis „nur
+  mit deren Einverständnis“ verlagert die Verantwortung teilweise auf den Lead, schafft beim Vermittler aber keine
+  Rechtsgrundlage. Praktisch: Der Vermittler informiert die Mitversicherten (Art. 14) und holt deren Einwilligung ein,
+  sobald er die Angaben im Termin oder für einen Antrag nutzt (die Versicherer tun das ohnehin mit eigenen Erklärungen).
+- **Kinder:** Eltern vertreten gemeinschaftlich (§ 1629 Abs. 1 Satz 2 [BGB](https://www.gesetze-im-internet.de/bgb/__1629.html)).
+  Allein entscheidet ein Elternteil in Angelegenheiten des täglichen Lebens; ausdrücklich geregelt ist das für getrennt
+  lebende Eltern (§ 1687 Abs. 1 Satz 2, 3 [BGB](https://www.gesetze-im-internet.de/bgb/__1687.html)). Eine bestehende
+  Police zur Beratung vorzulegen, dürfte eine solche Alltagsangelegenheit sein; bei zusammenlebenden Eltern spricht viel
+  für eine gegenseitige Ermächtigung. Nicht sicher. Die Versicherungswirtschaft holt Erklärungen für Minderjährige beim
+  gesetzlichen Vertreter ein ([GDV-Verhaltensregeln, Fassung 29.6.2018, Art. 5 Abs. 2](https://www.vermittlerportal.de/code-of-conduct.pdf)).
+- **Umsetzung:** Text im Chat und Langfassung bleiben wie sie sind. Sollte: in der Unterlagen-Ansicht des Vermittlers
+  ein Satz „Mitversicherte im Termin informieren und deren Einwilligung einholen“; in der Muster-DSFA als Restrisiko
+  führen.
+
+### 5. § 203 StGB
+
+- **Ergebnis: Vertreter ja, Makler eher nein; die Vertraulichkeitsklauseln der Großanbieter reichen nach bestem Wissen.
+  Risiko: mittel.**
+- Wortlaut: „Angehörigen eines Unternehmens der privaten Kranken-, Unfall- oder Lebensversicherung“ (§ 203 Abs. 1 Nr. 7
+  [StGB](https://www.gesetze-im-internet.de/stgb/__203.html)). Der selbstständige Vertreter gehört dazu (BGH VIII ZR
+  53/09, Abschnitt a, Frage 4). Der Makler steht auf der Seite des Kunden; wegen des strafrechtlichen Analogieverbots
+  (Art. 103 Abs. 2 GG) spricht viel dagegen, ihn darunter zu fassen
+  ([Fiala/Schramm, Cash., 2.3.2018](https://www.cash-online.de/a/vermittler-privat-und-geschaeftsgeheimnisse-meist-ungeschuetzt-415592/):
+  „Für … Versicherungsmakler gilt dies hingegen nicht.“). Rechtsprechung zu Maklern fehlt. Wir bauen weiter so, als
+  gelte § 203 für alle.
+- „Zur Geheimhaltung verpflichtet“ (§ 203 Abs. 4 Satz 2 Nr. 1 und 2): Laut Gesetzesbegründung kommt es für das StGB auf
+  berufsrechtliche Formvorgaben (etwa § 43e BRAO) nicht an. Der Berufsgeheimnisträger kann die Verpflichtung selbst
+  vornehmen oder übertragen, in mehrstufigen Verhältnissen durch vertragliche Vereinbarung bis zum Unterauftragnehmer
+  ([BT-Drs. 18/11936, S. 28 f.](https://dserver.bundestag.de/btd/18/119/1811936.pdf)). Damit genügen nach bestem Wissen
+  die Vertraulichkeitsklauseln in den Auftragsverarbeitungsverträgen von Meta, 360dialog, Railway und dem EU-KI-Anbieter
+  (Art. 28 Abs. 3 lit. b verlangt sie ohnehin). Strafbar ist das Unterlassen nur, wenn die mitwirkende Person
+  tatsächlich unbefugt offenbart.
+- **Umsetzung:** AVV § 4 enthält die Klausel bereits (`docs/rechtstexte/avv-kurzfassung-entwurf-2026-11-17.md`). Muss:
+  in AVV Anlage 2 je Unterauftragsverarbeiter die Fundstelle seiner Vertraulichkeitsklausel ablegen, auch für den neuen
+  EU-KI-Anbieter. Mitarbeitende unterschreiben `docs/vorlage-verpflichtung-203-stgb.md`.
+
+### 6. Ausschließlichkeitsvertreter
+
+- **Ergebnis: mit Bedingungen. Risiko: mittel.**
+- Für die Leads, die der Vertreter selbst gewinnt (bei uns gekauft), entscheidet er über Zweck und Mittel; dafür ist er
+  eigener Verantwortlicher. Auch die Versicherungswirtschaft behandelt Vermittler (Vertreter und Makler) als
+  selbstständige Empfänger von „Übermittlungen“ und gibt ihnen Gesundheitsdaten grundsätzlich nur mit Einwilligung
+  ([GDV-Verhaltensregeln, Begriff „Vermittler“, Art. 20 Abs. 1 und 5](https://www.vermittlerportal.de/code-of-conduct.pdf);
+  vgl. § 34d Abs. 1 [GewO](https://www.gesetze-im-internet.de/gewo/__34d.html)). Ob ein Agenturvertrag externe Werkzeuge
+  für Gesundheitsdaten verbietet oder eine Zustimmung verlangt, ist eine Vertragsfrage je Versicherer, kein
+  Datenschutzrecht; das kann auch ein Anwalt nur am einzelnen Vertrag beantworten.
+- **Umsetzung:** AGB § 13 und AVV § 5 enthalten die Zusicherung „nötige Zustimmung des Versicherers liegt vor“ mit
+  Freistellung (mit Verschulden). Muss vor dem Einschalten: Freischaltung je Kunde mit der Bestätigung, dass der
+  Agenturvertrag geprüft ist (Liste unten).
+
+### 7. Aufbewahrung nach Abschluss und Widerruf
+
+- **Ergebnis: ja, mit Bedingungen. Risiko: niedrig.**
+- Nach einem Widerruf endet jede Verarbeitung, die auf der Einwilligung beruht. Weiter speichern darf man nur auf einer
+  anderen Grundlage, die von Anfang an für diesen Zweck genannt wurde; ein stiller Wechsel der Rechtsgrundlage ist
+  unzulässig ([EDSA 05/2020, Rn. 117 bis 123](https://edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf)).
+  Die Langfassung nennt § 61 VVG und Art. 9 Abs. 2 lit. f schon vorab (Abschnitt „Rechtsgrundlage“). Damit wäre die
+  Aufbewahrung beratungsrelevanter Unterlagen nach Abschluss auch nach einem Widerruf vertretbar (Art. 17 Abs. 3 lit. e).
+- Die App löscht beim Widerruf trotzdem **alles**, auch als „Beratungsdokumentation“ markierte Unterlagen. Das ist die
+  vorsichtige Variante und bleibt so. 90 Tage nach Abschluss, Erinnerung 14 Tage vorher und die Markierung sind
+  angemessen (Speicherbegrenzung, Art. 5 Abs. 1 lit. e).
+
+### 8. Drittland
+
+- **Ergebnis: ja, mit Bedingungen. Risiko: mittel (wegen Meta).**
+- **KI:** Mit EU-Zugang findet die Zuordnung der Unterlagen in der EU statt. Neu umgesetzt: Bei eingeschaltetem Schalter
+  laufen **alle** KI-Aufrufe zu Unterlagen über den EU-Zugang, auch für Dateien, die laut Lead Sachversicherungen sind
+  (vorher nur nach der Einwilligung). Die Langfassung nennt die EU-Verarbeitung nur, wenn der EU-Zugang eingerichtet
+  ist. Der Chat-Assistent nutzt weiter Anthropic (USA), bekommt aber keine Unterlagen, und Gesundheitsangaben im Chat
+  werden vorher ausgeblendet (Punkt 9).
+- **Meta/WhatsApp:** Der Angemessenheitsbeschluss zum DPF
+  ([Durchführungsbeschluss (EU) 2023/1795](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32023D1795)) gilt
+  für alle Datenkategorien; eine zusätzliche Einwilligung nach Art. 49 ist nicht nötig. WhatsApp LLC erklärt seine
+  DPF-Zertifizierung ([WhatsApp, DPF Disclosure, gültig ab 3.12.2025](https://www.whatsapp.com/legal/data-privacy-framework)),
+  ebenso Meta Platforms, Inc. ([Meta, DPF-Hinweis](https://privacycenter.instagram.com/policies/data_privacy_framework)).
+  Den Eintrag auf der amtlichen Liste ([dataprivacyframework.gov](https://www.dataprivacyframework.gov/list)) ausdrucken
+  und ablegen.
+- **Bestand des DPF:** Das Rechtsmittel C-703/25 P (Latombe) ist anhängig
+  ([ABl. C/2025/6610](https://eur-lex.europa.eu/eli/C/2025/6610/oj)); einen Verhandlungstermin oder Schlussanträge habe
+  ich nicht gefunden. Fällt der Beschluss, gelten die Standardvertragsklauseln in Metas Bedingungen; dann die
+  Transfer-Folgenabschätzung nachziehen.
+- **Muss:** `POLICEN_KI_REGION=eu` mit Amazon Bedrock Frankfurt (`KI_EU_AWS_ACCESS_KEY_ID`, `KI_EU_AWS_SECRET_ACCESS_KEY`, src/lib/ki-eu.ts) setzen und mit Diagnose `ki-eu` testen; den tatsächlichen
+  EU-Anbieter (z. B. AWS Frankfurt oder Google EU) in AVV Anlage 2 aufnehmen. Sollte: Meta „Local Storage“ über
+  360dialog prüfen.
+
+### 9. Gesundheitsangaben im Freitext
+
+- **Ergebnis: mit Bedingungen. Risiko: mittel.**
+- Die Einwilligung deckt nur Unterlagen, keine Chattexte. Für ungefragt geschriebene Gesundheitsangaben gilt dasselbe
+  wie für aufgedrängte Dateien (Punkt 3): nicht weiterverarbeiten, nicht nachfragen. Art. 9 Abs. 2 lit. e
+  („offensichtlich öffentlich gemacht“) greift in einem privaten Chat nicht.
+- Was die App schon tut: Gesundheitsangaben werden vor der KI satzweise ausgeblendet (`redactHealthText` in
+  `lib/gesundheitsdaten.ts`), der Assistent fragt nie danach und verweist auf den Termin (`GESUNDHEITS_REGEL`), Felder
+  und Zusammenfassungen bleiben ohne Gesundheitsangaben (`ohneGesundheitsangaben`). Die Nachricht selbst bleibt im
+  Chatverlauf für den Vermittler; das ist für die Kommunikation nötig, eine saubere Art.-9-Grundlage gibt es dafür vor
+  dem Termin aber nicht (Restrisiko, gleiche Frage wie Punkt 4).
+- **Nicht empfohlen:** die Einwilligung auf Chattexte auszuweiten (der Zweck würde unbestimmt). **Sollte:** die
+  Begriffsliste in `lib/gesundheitsdaten.ts` regelmäßig erweitern und im Datenschutzhinweis des Assistenten einen Satz
+  zum Umgang mit Gesundheitsangaben im Chat ergänzen.
+
+### 10. Datenschutz-Folgenabschätzung
+
+- **Ergebnis: ja, Pflicht; unsere Muster-DSFA genügt als Vorlage. Risiko: niedrig, wenn erledigt.**
+- DSK-Muss-Liste Nr. 11 trifft den Assistenten (Abschnitt a, Frage 6). Für gleichartige Verarbeitungen genügt eine
+  gemeinsame DSFA (Art. 35 Abs. 1 Satz 2, ErwG 92); wir unterstützen nach Art. 28 Abs. 3 lit. f. Verantwortlich bleibt
+  jeder Vermittler: Er muss das Muster übernehmen, ergänzen und unterschreiben, **bevor** die Verarbeitung beginnt.
+- **Umsetzung:** Das Muster liegt vor (`docs/dsfa-policen-gesundheit.md`). Muss: um Punkt 8 (EU-KI), Punkt 9 (Freitext)
+  und Punkt 11 (Alter) ergänzen und den Kunden bereitstellen; Freischaltung je Kunde erst nach Bestätigung.
+
+### 11. Minderjährige
+
+- **Ergebnis: ja, keine Einwilligung unter 18. Risiko: niedrig.**
+- Art. 8 DSGVO passt nicht: Er gilt nur für Dienste der Informationsgesellschaft, die sich direkt an Kinder richten,
+  und nur für Einwilligungen nach Art. 6 ([EDSA 05/2020, Rn. 125, 127, 130](https://edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf)).
+  Für die Art.-9-Einwilligung gibt es keine feste Altersgrenze, es kommt auf die Einsichtsfähigkeit an. Die
+  Versicherungswirtschaft holt Erklärungen erst ab 16 und nur bei Einsichtsfähigkeit beim Minderjährigen selbst ein
+  ([GDV-Verhaltensregeln, Art. 5 Abs. 2](https://www.vermittlerportal.de/code-of-conduct.pdf)). Ein Versicherungsvertrag
+  braucht bei Minderjährigen ohnehin die Eltern. 18 ist die einfache, sichere Grenze. Bei geringem Risiko genügt eine
+  Selbstauskunft zum Alter ([EDSA 05/2020, Rn. 135](https://edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf)).
+- **Umgesetzt:** Satz „Zustimmen können Sie ab 18 Jahren.“ im Einwilligungstext (Version 2026-11-17.3) und Abschnitt
+  „Alter“ in der Langfassung. Ergibt das Geburtsdatum bzw. Alter im Leadformular unter 18 Jahre (`minderjaehrig`),
+  wird der Lead wie bei ausgeschaltetem Schalter behandelt: keine Einwilligungsfrage, Gesundheitsunterlagen werden
+  verworfen.
+
+### 12. Haftung und AGB
+
+- **Ergebnis: mit Bedingungen, keine Sonderklausel für diese Funktion. Risiko: mittel.**
+- Gegenüber Leads gilt Art. 82 DSGVO: Wir haften als Auftragsverarbeiter nur für Verstöße gegen unsere eigenen Pflichten
+  oder gegen Weisungen (Abs. 2 Satz 2), nach außen gesamtschuldnerisch (Abs. 4), mit Rückgriff im Innenverhältnis
+  (Abs. 5). Gegenüber Betroffenen lässt sich das nicht vertraglich begrenzen. Wer sich entlasten will, muss die
+  Angemessenheit seiner Maßnahmen beweisen (EuGH, Urt. v. 14.12.2023, C-340/21,
+  [EUR-Lex 62021CJ0340](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:62021CJ0340), nicht im Volltext geprüft).
+- Gegenüber Vermittlern: Ein Ausschluss für grobe Fahrlässigkeit wäre auch zwischen Unternehmern unwirksam (§ 309 Nr. 7
+  BGB als Indiz im Rahmen von § 307; [BGH, Urt. v. 19.9.2007, VIII ZR 141/06](https://lexetius.com/2007,3190)). AGB § 15
+  hält das ein (unbeschränkt bei Vorsatz und grober Fahrlässigkeit, bei Kardinalpflichten auf den vorhersehbaren Schaden
+  begrenzt). Offen ist, ob die Obergrenze „Vergütung der letzten 12 Monate“ bei einem Datenleck mit Gesundheitsdaten den
+  vertragstypisch vorhersehbaren Schaden noch abdeckt (§ 307 Abs. 2 Nr. 2 [BGB](https://www.gesetze-im-internet.de/bgb/__307.html)).
+- Freistellung bei Weisungsverstoß des Kunden: AGB § 13 mit Verschuldenserfordernis und § 254 BGB (siehe
+  `docs/rechtstexte/agb-entwurf-2026-11-16.md`, Thema 2). Sollte: in AVV § 5 klarstellen, dass der Kunde die Funktion
+  nur nach eigener DSFA und, als Vertreter, nach Prüfung seines Agenturvertrags freischaltet; das fällt dann unter
+  dieselbe Zusicherung und Freistellung.
+
+### Was sich dadurch an Code, Texten, AVV und AGB ändert
+
+**Schon umgesetzt (dieser Commit, Schalter bleibt aus):**
+- Einwilligungstext: „Zustimmen können Sie ab 18 Jahren.“ (Du-Fassung entsprechend), Version `2026-11-17.3`
+  (`lib/policen/regeln.ts`).
+- Minderjährige laut Leadformular: keine Einwilligungsfrage, Gesundheitsunterlagen verworfen (`minderjaehrig`,
+  `lib/policen/assistent.ts`, `lib/policen/server.ts`).
+- Schalter an: KI-Zuordnung und Auslesen aller Unterlagen über den EU-Zugang, sobald er eingerichtet ist
+  (`lib/policen/server.ts`).
+- Langfassung (`lib/policen/datenschutz-text.ts`, Seite `/datenschutz/policen`): EU-Verarbeitung der KI, wenn
+  eingerichtet; Abschnitt „Alter“; „Eine Datei, die Gesundheitsangaben enthalten kann und vor Ihrer Einwilligung kommt,
+  wird nicht gespeichert“ (vorher „nicht geladen“, was für Sach-Leads nicht stimmte).
+- Tests: `tests/unit/policen.test.ts`, `tests/integration/policen-whatsapp.test.ts`.
+
+**Muss vor dem Einschalten von `POLICEN_GESUNDHEIT_AN`:**
+1. EU-Zugang einrichten und testen (`POLICEN_KI_REGION=eu`, Bedrock Frankfurt: `KI_EU_AWS_ACCESS_KEY_ID`, `KI_EU_AWS_SECRET_ACCESS_KEY`); den Anbieter in
+   AVV Anlage 2 aufnehmen und die Fundstelle seiner Vertraulichkeitsklausel ablegen (Punkte 5, 8).
+2. DPF-Einträge von Meta Platforms, Inc. bzw. WhatsApp LLC und des EU-KI-Anbieters (US-Mutter) ausdrucken und ablegen
+   (Punkt 8).
+3. Muster-DSFA um die Punkte 8, 9 und 11 ergänzen und den Kunden bereitstellen (Punkt 10).
+4. Freischaltung je Kunde statt nur global: Der Kunde bestätigt, dass er die DSFA übernommen und, als Vertreter, seinen
+   Agenturvertrag geprüft hat bzw. die Zustimmung des Versicherers vorliegt. Größerer Umbau (Kundenfeld und
+   Einstellung), daher hier nur als Empfehlung (Punkte 6, 10).
+5. Bestätigung der drei Anwaltspunkte unten.
+
+**Sollte:**
+- Vor der Einwilligung einen neutralen Dateinamen speichern (Punkt 3).
+- Einwilligung in jeder Einladung bei eingeschaltetem Schalter, nicht nur bei genannter Gesundheitssparte (Punkt 2,
+  Entscheidung Ole).
+- „Sehen kann die Unterlagen nur Ihr Berater“ für Team-Kunden präzisieren (Punkt 1).
+- Satz für Vermittler in der Unterlagen-Ansicht: Mitversicherte informieren und deren Einwilligung einholen (Punkt 4).
+- Begriffsliste in `lib/gesundheitsdaten.ts` erweitern und den Datenschutzhinweis des Assistenten um Gesundheitsangaben
+  im Chat ergänzen (Punkt 9).
+- AVV § 5: Freischaltung der Funktion als Teil der Zusicherung (Punkt 12); Meta Local Storage prüfen (Punkt 8).
+
+### Was trotzdem ein Anwalt bestätigen sollte (höchstens 3)
+
+1. **Punkt 5, § 203 StGB:** Strafrecht mit persönlicher Strafbarkeit unserer Kunden und unserer Mitarbeitenden. Zu
+   Maklern gibt es keine Rechtsprechung, und dass die Standard-Vertraulichkeitsklauseln der Großanbieter „zur
+   Geheimhaltung verpflichtet“ erfüllen, ist nur über die Gesetzesbegründung belegt.
+2. **Punkt 4 (mit derselben Frage aus Punkt 9):** Gesundheitsangaben Dritter bzw. ungefragte Angaben im Chat haben vor
+   dem Termin keine saubere Ausnahme in Art. 9 Abs. 2. Das ist die größte verbleibende Lücke bei der Rechtsgrundlage.
+3. **Punkt 12, AGB § 15:** Ob die Haftungsobergrenze bei Kardinalpflichten für ein Datenleck mit Gesundheitsdaten hält,
+   ist eine Wertungsfrage der AGB-Kontrolle mit spürbarem finanziellem Risiko.
+
+### Quellen zu Abschnitt e (zusätzlich zu Abschnitt d)
+
+- EDSA, Leitlinien 05/2020 zur Einwilligung, Version 1.1, Rn. 42 bis 44, 64 bis 67, 93 bis 98, 113 bis 123, 125 bis 135
+  (Wortlaut geprüft): [PDF](https://edpb.europa.eu/system/files/documents/files/file1/edpb_guidelines_202005_consent_en.pdf)
+- [§ 203 StGB](https://www.gesetze-im-internet.de/stgb/__203.html), [§ 1629 BGB](https://www.gesetze-im-internet.de/bgb/__1629.html),
+  [§ 1687 BGB](https://www.gesetze-im-internet.de/bgb/__1687.html), [§ 307 BGB](https://www.gesetze-im-internet.de/bgb/__307.html),
+  [§ 34d GewO](https://www.gesetze-im-internet.de/gewo/__34d.html) (Wortlaut geprüft)
+- Gesetzentwurf zur Neuregelung des Schutzes von Geheimnissen bei der Mitwirkung Dritter, BT-Drs. 18/11936, S. 28 f.
+  (Wortlaut geprüft): [PDF](https://dserver.bundestag.de/btd/18/119/1811936.pdf)
+- GDV, Verhaltensregeln für den Umgang mit personenbezogenen Daten durch die deutsche Versicherungswirtschaft, Stand
+  29.6.2018, Begriffe, Art. 5, Art. 20 (Wortlaut geprüft; ob es eine neuere Fassung gibt, nicht geprüft):
+  [PDF](https://www.vermittlerportal.de/code-of-conduct.pdf)
+- BGH, Urt. v. 19.9.2007, VIII ZR 141/06 (Indizwirkung des § 309 BGB im Unternehmensverkehr, Leitsatz geprüft):
+  [lexetius.com](https://lexetius.com/2007,3190)
+- EuGH, Urt. v. 11.11.2020, C-61/19, Orange Romania: [EUR-Lex 62019CJ0061](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:62019CJ0061) (nicht im Volltext geprüft)
+- EuGH, Urt. v. 14.12.2023, C-340/21, Natsionalna agentsia za prihodite: [EUR-Lex 62021CJ0340](https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:62021CJ0340) (nicht im Volltext geprüft)
+- Rechtsmittel C-703/25 P, Latombe/Kommission: [ABl. C/2025/6610](https://eur-lex.europa.eu/eli/C/2025/6610/oj)
+- WhatsApp LLC, EU-U.S. DPF Disclosure (gültig ab 3.12.2025, geprüft): [whatsapp.com](https://www.whatsapp.com/legal/data-privacy-framework);
+  Meta, DPF-Hinweis: [privacycenter.instagram.com](https://privacycenter.instagram.com/policies/data_privacy_framework)
+- Fiala/Schramm, Vermittler: Privat- und Geschäftsgeheimnisse meist ungeschützt, Cash., 2.3.2018 (geprüft):
+  [cash-online.de](https://www.cash-online.de/a/vermittler-privat-und-geschaeftsgeheimnisse-meist-ungeschuetzt-415592/)
+- Dr. Datenschutz, Aufgedrängte Datenverarbeitung (geprüft): [dr-datenschutz.de](https://www.dr-datenschutz.de/aufgedraengte-datenverarbeitung/)
+- LfD Niedersachsen, Verarbeitung personenbezogener Daten von Bewerberinnen und Bewerbern (geprüft):
+  [lfd.niedersachsen.de](https://www.lfd.niedersachsen.de/download/76437)

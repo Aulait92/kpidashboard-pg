@@ -46,7 +46,7 @@ describe("Angebotsmail im Verlauf", () => {
       null,
     );
     sent.length = 0;
-    expect(await sendOfferEmailAction(offer.id, { du: true, rechner: true, praesentation: true, audience: "makler" })).toEqual({ ok: true });
+    expect(await sendOfferEmailAction(offer.id, { du: true, rechner: true, praesentation: true, audience: "makler" })).toMatchObject({ ok: true });
     const m = sent[0];
     expect(m.subject).toMatch(/^Dein Angebot von performancegrowth/);
     expect(m.text.startsWith("Hallo Max,")).toBe(true);

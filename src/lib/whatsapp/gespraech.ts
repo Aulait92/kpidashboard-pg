@@ -350,7 +350,7 @@ export const BUCHUNG_VERBINDLICH = {
  * …\n\nHerr Kannapinn hält sich diese Zeit nur für Sie frei …“ (BUCHUNG_VERBINDLICH). Ohne Frage; mit abschluss gleich
  * mit Bereitlegen und Kalenderfrage am Ende.
  */
-export function buchungsText(o: { an: Ansprache; start: Date; mode: "video" | "phone"; meetUrl: string | null; person: VermittlerName; abschluss?: string | null }): string {
+export function buchungsText(o: { an: Ansprache; start: Date; mode: "video" | "phone"; meetUrl: string | null; person: VermittlerName; abschluss?: string | null; email?: string | null }): string {
   const wann = `*${zeitLang(o.start)}*`;
   const kopf =
     o.mode === "video"
@@ -358,8 +358,26 @@ export function buchungsText(o: { an: Ansprache; start: Date; mode: "video" | "p
       : `${a(o.an, "Dein Telefontermin ist gebucht:", "Ihr Telefontermin ist gebucht:")} ${wann}. ${a(o.an, `${o.person.nom} ruft dich auf dieser Nummer an.`, `${o.person.nom} ruft Sie auf dieser Nummer an.`)}`;
   const t = BUCHUNG_VERBINDLICH[o.mode === "video" && o.meetUrl ? "video" : "phone"];
   const verbindlich = a(o.an, t.du, t.sie).split("[Person]").join(o.person.nom);
-  return [kopf, verbindlich, o.abschluss].filter(Boolean).join("\n\n");
+  // Adresse der Einladung gleich nennen (Live-Test Ole, 17.11.2026), ohne zweite Frage: Korrektur per Antwort (update_email)
+  const mail = o.email ? einladungAnText(o.an, o.email) : null;
+  return [mail ? `${kopf}\n${mail}` : kopf, verbindlich, o.abschluss].filter(Boolean).join("\n\n");
 }
+
+/** „Die Einladung mit Kalendereintrag ist an … unterwegs. Falls die Adresse nicht stimmt, schreiben Sie mir einfach die richtige.“ */
+export function einladungAnText(an: Ansprache, email: string): string {
+  return a(
+    an,
+    `Die Einladung mit Kalendereintrag ist an ${email} unterwegs. Falls die Adresse nicht stimmt, schreib mir einfach die richtige.`,
+    `Die Einladung mit Kalendereintrag ist an ${email} unterwegs. Falls die Adresse nicht stimmt, schreiben Sie mir einfach die richtige.`,
+  );
+}
+
+/**
+ * Wunschzeit (Live-Test Ole, 17.11.2026: „Mittwoch um 16h“ ist frei, trotzdem kamen zwei Zeiten zur Auswahl): Nennt der
+ * Lead Tag und Uhrzeit und ist sie frei, wird direkt gebucht. Nur bei belegter Zeit oder nur Tag/Tageszeit: zwei Zeiten.
+ */
+export const WUNSCHZEIT_REGEL =
+  "Nennt der Lead eine konkrete Zeit (Tag und Uhrzeit, z. B. „Mittwoch um 16 Uhr“) und ist genau diese Zeit unter den freien Zeiten von get_available_slots: frag nicht noch einmal nach und biete keine zweite Zeit an, sondern buche sie direkt mit book_appointment (gleiche Regeln zur E-Mail-Adresse wie unten). Nur wenn sie belegt ist oder er nur einen Tag bzw. eine Tageszeit nennt: termin_vorschlagen mit erneut=true und den zwei nächstgelegenen freien start-Werten (bei belegter Zeit als einleitung kurz: „Um 16 Uhr ist leider schon belegt.“).";
 
 /** Prompt-Block Terminvorschlag und Buchung (vor dem Termin). beispiel = terminVorschlagText mit Platzhaltern. */
 export function terminRegeln(o: { an: Ansprache; person: VermittlerName; videoOnly: boolean; beispiel: string; emailBekannt: boolean }): string {
@@ -372,7 +390,8 @@ export function terminRegeln(o: { an: Ansprache; person: VermittlerName; videoOn
     o.videoOnly
       ? "- Nur Videotermine: Biete ausschließlich Video an und erwähne Telefon nicht. Nur wenn der Lead Video ausdrücklich ablehnt oder nicht kann, buche einen Telefontermin (modus phone)."
       : "- Biete die Zeiten als Videotermin an (Video zuerst). Möchte der Lead lieber telefonieren, buche Telefon.",
-    "- Passt keine der beiden Zeiten („Andere Zeit“): frag kurz nach Wunschtag oder Tageszeit. Nennt er einen, hole mit get_available_slots freie Zeiten und nutze termin_vorschlagen mit erneut=true und den zwei passenden start-Werten.",
+    "- Passt keine der beiden Zeiten („Andere Zeit“): frag kurz nach Wunschtag oder Tageszeit und hole dann mit get_available_slots freie Zeiten.",
+    `- ${WUNSCHZEIT_REGEL}`,
     o.emailBekannt
       ? "- Wählt der Lead eine Zeit (Knopf oder Text): Die E-Mail-Adresse ist bekannt, frag nicht danach. Buche sofort mit book_appointment (modus video) und genau dem start-Wert der gewählten Zeit."
       : "- Wählt der Lead eine Zeit (Knopf oder Text): frag in einer eigenen Nachricht nach seiner E-Mail-Adresse für die Einladung mit Kalendereintrag, dann buche mit book_appointment (modus video) und genau dem start-Wert der gewählten Zeit. Möchte er keine angeben, buche ohne.",

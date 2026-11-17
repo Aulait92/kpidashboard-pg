@@ -20,7 +20,9 @@ import { PayButton } from "./pay-button";
 import { PayLater } from "./pay-later";
 import { erinnerungsGrenzen, tagIso } from "@/lib/angebot-zahlungserinnerung";
 import { billingEnabled, STRIPE_MIN_EUR } from "@/lib/billing";
-import { CheckCircle2, Clock } from "lucide-react";
+import { CalendarClock, CheckCircle2, Clock } from "lucide-react";
+import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server";
+import { entscheidungsCallText, type EntscheidungsCallText } from "@/lib/vertrieb/entscheidungs-call";
 import { nowMs } from "@/lib/now";
 
 // Öffentliches Angebot per geheimem Link. ?print=1 liefert die reine
@@ -71,6 +73,10 @@ export default async function OfferPage({
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;
   // Abschlussbonus (Ole, 16.11.2026): nur echte Angebote mit Online-Zahlung, solange die Frist läuft
   const bonus = !offer.isTest && billingEnabled() ? abschlussBonusJetzt(offer, new Date(nowMs())) : null;
+  // Entscheidungs-Call (Ole, 17.11.2026), geprüft beim Aufruf: schon gebucht → Termin mit Link zum Verschieben,
+  // sonst Buchungslink. Nach der Annahme nur noch ein gebuchter Termin, kein Buchungslink mehr.
+  const call = offer.salesContactId && offer.status !== "superseded" ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
+  const callText = call && (offer.status !== "accepted" || call.art === "gebucht") ? entscheidungsCallText(call) : null;
 
   return (
     <main className="min-h-screen bg-[#eef2f8] px-3 py-6 sm:px-4 sm:py-12">
@@ -103,6 +109,7 @@ export default async function OfferPage({
           />
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
+        {callText ? <EntscheidungsCallBox text={callText} /> : null}
         {offer.status === "accepted" ? null : (
           <div id="annehmen" className="mx-auto mt-6 max-w-[880px] scroll-mt-4 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-8 sm:px-12">
             <section>
@@ -189,6 +196,26 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     freeMonths: offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
     start: startDateBounds(berlinTodayIso(new Date(nowMs())), offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null),
   };
+}
+
+/** Kasten zum Entscheidungs-Call: gebuchter Termin (Link zum Verschieben) bzw. Buchungslink. */
+function EntscheidungsCallBox({ text }: { text: EntscheidungsCallText }) {
+  return (
+    <div className="mx-auto mt-6 flex max-w-[880px] items-start gap-3 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-5 sm:px-12" data-entscheidungs-call>
+      <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand)]" />
+      <div className="min-w-0 text-sm text-[#374151]">
+        <div className="font-semibold text-[#0b1220]">Ihr Entscheidungs-Call</div>
+        <p className="mt-1">
+          {text.satz}{" "}
+          {text.url ? (
+            <a href={text.url} className="font-semibold text-[color:var(--brand)] underline">
+              {text.linkLabel}
+            </a>
+          ) : null}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 /** „Ich zahle später“ nur, wenn Ole es am Angebot erlaubt hat und der Start nicht zu nah ist. */

@@ -187,7 +187,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 newOfferHref={`${pfad}/angebot`}
                 appUrl={a.appUrl}
                 offers={c.offers.map(toOfferRow)}
-                mail={{ audience: audienceForContact(c), pdf: { vertreter: a.pdfs.has("vertreter"), makler: a.pdfs.has("makler") }, link: true }}
+                mail={{ audience: audienceForContact(c), pdf: { vertreter: a.pdfs.has("vertreter"), makler: a.pdfs.has("makler") }, link: true, entscheidung: a.entscheidungsHinweis }}
                 knopf={false}
               />
             </div>
