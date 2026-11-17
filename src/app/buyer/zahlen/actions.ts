@@ -8,9 +8,22 @@ import { GEWINN_MODUS_COOKIE } from "@/lib/gewinn-modus";
 import { prisma } from "@/lib/prisma";
 import { withDismissed, type TipKey } from "@/lib/zahlen-tipps";
 
-const KEYS: readonly TipKey[] = ["empfehlung_an", "empfehlung_fragen", "kollegen", "bestand", "cross_sell", "erreichbarkeit", "terminquote", "abschlussquote", "beitrag"];
+const KEYS: readonly TipKey[] = [
+  "empfehlung_an",
+  "empfehlung_fragen",
+  "kollegen",
+  "bestand",
+  "cross_sell",
+  "erreichbarkeit",
+  "terminquote",
+  "abschlussquote",
+  "beitrag",
+  "naechster_schritt",
+  "meta_lernen",
+  "kein_whatsapp",
+];
 
-/** Tipp der Karte „So holen Sie mehr raus“ für 30 Tage wegklicken (nur Inhaber, nicht in der Vorschau). */
+/** Hebel bzw. Tipp („Ihre 3 Hebel diese Woche“) für 30 Tage wegklicken (nur Inhaber, nicht in der Vorschau). */
 export async function dismissTipAction(key: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
@@ -21,10 +34,11 @@ export async function dismissTipAction(key: string): Promise<{ ok: true } | { ok
   const next = withDismissed(c?.zahlenTipsDismissed, key);
   await prisma.customer.update({ where: { id: ctx.customerId }, data: { zahlenTipsDismissed: next as Prisma.InputJsonValue } });
   revalidatePath("/buyer/zahlen");
+  revalidatePath("/buyer/wachstum");
   return { ok: true };
 }
 
-/** Karte „Gewinn“: „Nur jetzt“ (false) oder „Inkl. Bestand“ (true), gespeichert je Login. */
+/** Wachstum „Rechnet sich das?“: „Nur Abschlussprovision“ (false) oder „Inkl. Bestand (5 Jahre)“ (true), gespeichert je Login. */
 export async function setGewinnModusAction(mitBestand: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
   if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
@@ -34,5 +48,6 @@ export async function setGewinnModusAction(mitBestand: boolean): Promise<{ ok: t
     (await cookies()).set(GEWINN_MODUS_COOKIE, mitBestand ? "1" : "0", { path: "/buyer", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", httpOnly: true });
   }
   revalidatePath("/buyer/zahlen");
+  revalidatePath("/buyer/wachstum");
   return { ok: true };
 }

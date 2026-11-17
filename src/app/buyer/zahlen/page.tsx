@@ -6,8 +6,6 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { BuyerFilterBar } from "@/components/buyer-filter-bar";
 import { PageHeader } from "@/components/buyer-shell";
 import { WerbungKarten } from "@/app/buyer/konto/werbung-karten";
-import { FunnelHero } from "@/components/funnel-hero";
-import { KpiCard, type Delta } from "@/components/kpi-card";
 import { LiveUpdated } from "@/components/live-updated";
 import { MonthlyForecast } from "@/components/monthly-forecast";
 import { PullToRefresh } from "@/components/pull-to-refresh";
@@ -16,11 +14,7 @@ import { parseRangeFromSearchParams, previousRange } from "@/lib/date-ranges";
 import { computeCustomerSpend, loadRetainerConfig } from "@/lib/customer-spend";
 import { computeMonthlyForecast } from "@/lib/forecast";
 import { computeKpis, type Kpis } from "@/lib/kpis";
-import {
-  formatDate,
-  formatEUR,
-  formatNumber,
-} from "@/lib/format";
+import { formatDate, formatNumber } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { TeamStats } from "@/components/team-stats";
 import { MonatsberichteKunde } from "@/components/monatsberichte-kunde";
@@ -28,18 +22,25 @@ import { MonatsberichteKunde } from "@/components/monatsberichte-kunde";
 // Kunden sehen den Garantie-Stand nicht mehr, die Prüfung läuft nur im Admin. Wieder einbauen mit
 //   import { GarantieKundeCard } from "@/components/garantie-kunde-card";  und  <GarantieKundeCard customerId={session.customerId} />
 import { nowMs } from "@/lib/now";
-import { bestandOf, contractsPerCustomer, ertragForRange, loadErtragData, provisionAusText } from "@/lib/ertrag";
+import { bestandOf, contractsPerCustomer, ertragForRange, loadErtragData, provisionAusText, summarizeProvision } from "@/lib/ertrag";
 import { loadGewinnMitBestand } from "@/lib/gewinn-modus";
-import { GewinnModusSwitch } from "@/components/gewinn-modus";
 import { originWhere } from "@/lib/lead-herkunft";
-import { earlyHint, pickTips } from "@/lib/zahlen-tipps";
-import { loadTipSignals, monthsSinceStart } from "@/lib/zahlen-tipps-server";
-import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
+import { pickTips } from "@/lib/zahlen-tipps";
+import { loadTipSignals } from "@/lib/zahlen-tipps-server";
 import { BestandGrowthSection } from "@/components/bestand-growth-chart";
-import { NextStepKpi } from "@/components/next-step-kpi";
 import { nochOhneLeads, ZahlenNochLeer } from "@/components/zahlen-noch-leer";
-import { KeinWhatsAppKpi } from "@/components/kein-whatsapp-kpi";
 import { VerlustKarte } from "@/components/verlust-karte";
+import { verlustKarte } from "@/lib/verlustgruende-server";
+import { LOST_STATUSES } from "@/lib/lead-lost";
+import { CLOSED_STATUS } from "@/lib/products";
+import { loadOffeneChancen } from "@/lib/offene-chancen-server";
+import { chancenAufteilung } from "@/lib/offene-chancen";
+import { antwort, euro, euroCent, euroMitVorzeichen, rechnetSich } from "@/lib/wachstum";
+import { RechnetSich, type RechnungZeile } from "@/components/wachstum/rechnet-sich";
+import { Kennzahl } from "@/components/wachstum/kennzahl";
+import { ChancenKachel } from "@/components/wachstum/chancen-kachel";
+import { Trichter } from "@/components/wachstum/trichter";
+import { HebelKarte } from "@/components/wachstum/hebel";
 
 type SearchParams = Promise<{
   range?: string;
@@ -55,6 +56,8 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Wachstum | performancegrowth",
 };
+
+const SPRUNG = "-my-1.5 py-2 text-[color:var(--muted)] hover:text-[color:var(--foreground)] hover:underline";
 
 export default async function BuyerPage({
   searchParams,
@@ -90,7 +93,7 @@ export default async function BuyerPage({
   return (
     <PullToRefresh>
       <AutoRefresh />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 text-[15px] sm:px-6 lg:px-8">
         <PageHeader
           title="Wachstum"
           subtitle={
@@ -107,21 +110,19 @@ export default async function BuyerPage({
           }
         />
 
-        {/* Eine Seite für Zahlen, Werbebudget, Produkte und Pause (UX, Ole 15.11.2026): Sprungmarken statt Zwischenseite */}
+        {/* Eine Seite für Zahlen, Werbebudget, Produkte und Pause (UX, Ole 15.11.2026): Sprungmarken, seit 18.11.2026 dezent */}
         <nav className="-mt-2 mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Auf dieser Seite">
-          <a href="#budget" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Werbebudget</a>
-          <a href="#produkte" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Produkte</a>
-          <a href="#pause" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline">Pause</a>
-          <a href="#monatsberichte" className="-my-1.5 py-2 font-medium text-[color:var(--brand)] hover:underline" data-sprung-monatsberichte>Monatsberichte</a>
+          <a href="#budget" className={SPRUNG}>Werbebudget</a>
+          <a href="#produkte" className={SPRUNG}>Produkte</a>
+          <a href="#pause" className={SPRUNG}>Pause</a>
+          <a href="#monatsberichte" className={SPRUNG} data-sprung-monatsberichte>Monatsberichte</a>
           {bestandAn ? (
-            <a href="/buyer/bestand" className="font-medium text-[color:var(--brand)] hover:underline">Bestandskunden</a>
+            <a href="/buyer/bestand" className={SPRUNG}>Bestandskunden</a>
           ) : null}
           {(await prisma.leadSubscription.count({ where: { customerId: session.customerId, active: true, delivery: { in: ["app", "app_pdf"] } } })) > 0 ? (
-            <a href="/buyer/bestellen" className="font-medium text-[color:var(--brand)] hover:underline">Leads bestellen</a>
+            <a href="/buyer/bestellen" className={SPRUNG}>Leads bestellen</a>
           ) : null}
         </nav>
-
-        <EmpfehlungGrowthRow ctx={{ customerId: session.customerId, teamRole: session.teamRole }} />
 
         <Suspense
           fallback={
@@ -135,8 +136,14 @@ export default async function BuyerPage({
             range={range}
             params={sp}
             bestandAn={bestandAn}
+            canDismiss={!session.preview && session.teamRole === "owner"}
           />
-          <TeamStats customerId={session.customerId} range={range} mitBestand={await loadGewinnMitBestand(session)} />
+          <div className="mt-6">
+            <TeamStats customerId={session.customerId} range={range} mitBestand={await loadGewinnMitBestand(session)} />
+          </div>
+          <div className="mt-6">
+            <EmpfehlungGrowthRow ctx={{ customerId: session.customerId, teamRole: session.teamRole }} />
+          </div>
           <div className="mt-6">
             <MonatsberichteKunde customerId={session.customerId} />
           </div>
@@ -150,40 +157,27 @@ export default async function BuyerPage({
   );
 }
 
-function delta(
-  current: number | null,
-  previous: number | null,
-  lowerIsBetter = false,
-): Delta {
-  if (current == null || previous == null) return { pct: null, lowerIsBetter };
-  if (previous === 0) {
-    if (current === 0) return { pct: 0, lowerIsBetter };
-    return { pct: null, lowerIsBetter };
-  }
-  return { pct: (current - previous) / Math.abs(previous), lowerIsBetter };
-}
-
 async function BuyerDashboardBody({
   customerId,
   range,
   params,
   bestandAn,
+  canDismiss,
 }: {
   customerId: string;
   range: { from: Date; to: Date };
   params: Record<string, string | undefined>;
   /** Bestandskunden-Modul freigeschaltet: sonst keine Bestandskampagnen und keine Kundenliste erwähnen. */
   bestandAn: boolean;
+  /** Hebel ausblenden: nur Inhaber, nicht in der Admin-Vorschau. */
+  canDismiss: boolean;
 }) {
   const prev = previousRange(range);
   const now = new Date();
-  // BuyerComparison/Leaderboard ist aktuell ausgeblendet — die Berechnung
-  // (computeCustomerLeaderboard) sparen wir uns hier, bis der Vergleich
-  // wieder eingeblendet wird.
   // Trichter, Quoten und Kosten pro Lead/Termin/Abschluss nur aus bezahlten Leads (lib/lead-herkunft);
   // Provision und Gewinn zählen alle Herkünfte (Empfehlungen, Bestandskampagnen). Rechnung: lib/ertrag.
   const retainerCfg = await loadRetainerConfig(customerId);
-  const [k, p, forecast, spend, spendPrev, data, extraClosed, mitBestand] = await Promise.all([
+  const [k, p, forecast, spend, spendPrev, data, extraClosed, mitBestand, verlust, keinWhatsApp, dismissed] = await Promise.all([
     computeKpis({ range, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
     computeKpis({ range: prev, customerId, product: null, origin: "paid" }) as Promise<Kpis>,
     computeMonthlyForecast({ customerId, includeCloseValue: true }),
@@ -195,50 +189,94 @@ async function BuyerDashboardBody({
         prisma.lead.count({ where: { customerId, createdAt: { gte: range.from, lte: range.to }, closedAt: { not: null }, ...originWhere(o) } }),
       ),
     ),
-    // Gewinn-Schalter „Nur jetzt“ / „Inkl. Bestand“ (je Login gespeichert)
+    // „Inkl. Bestand (5 Jahre)“ / „Nur Abschlussprovision“ (je Login gespeichert)
     getBuyerContext().then((c) => loadGewinnMitBestand(c)),
+    verlustKarte(customerId, range, { produkt: params.vgp ?? null, berater: params.vgb ?? null }),
+    // Offene Leads ohne WhatsApp, noch nicht erreicht: Hebel „anrufen“ (stehen oben auf der Anrufliste)
+    prisma.lead.count({
+      where: {
+        customerId,
+        isTest: false,
+        erasedAt: null,
+        waUnavailableAt: { not: null },
+        reached: false,
+        closedAt: null,
+        lostAt: null,
+        OR: [{ status: null }, { status: { notIn: [CLOSED_STATUS, "Storno", ...LOST_STATUSES] } }],
+      },
+    }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { zahlenTipsDismissed: true } }).then((c) => c?.zahlenTipsDismissed ?? null),
   ]);
 
   // Lead-Kosten aus Kundensicht: Pro-Lead-Kunden = Lead-Preis (Revenue),
-  // Retainer-Kunden = eigenes Werbebudget + Retainer.
+  // Paket-Kunden (Retainer) = eigenes Werbebudget + Retainer.
   const cost = spend ? spend.total : Number(k.revenue);
   const costPrev = spendPrev ? spendPrev.total : Number(p.revenue);
-  const costHint = spend
-    ? `Werbebudget ${formatEUR(spend.adSpend)} + Retainer ${formatEUR(spend.retainer)}`
-    : "Brutto im Zeitraum";
 
-  const [cur, before] = await Promise.all([
+  const [cur, before, chancen, tipSignals] = await Promise.all([
     ertragForRange(customerId, data, range, now, cost),
     ertragForRange(customerId, data, prev, now, costPrev),
+    loadOffeneChancen(customerId, data.rates, now),
+    loadTipSignals(customerId, data, now).catch(() => null),
   ]);
-  // Bestand mit der Stornoquote des Kunden (Meine Provisionen), gekündigte Verträge ab dem Datum raus
+  // Gesamtbestand (alle bisherigen Verträge) nur in den Details; im Hero nur der Bestand dieser Kunden (prov.futureTrail)
   const bestand = bestandOf(data, now);
   const makler = data.typ === "makler";
   const prov = cur.provision;
   const perCustomer = contractsPerCustomer(data.contracts);
   const a = cur.agency;
+  const paket = !!spend;
 
-  // Tipps, wenn der Gewinn im Zeitraum oder in der Hochrechnung negativ ist (Seite nur für Inhaber)
-  const negative = cur.gewinn < 0 || (forecast.buyer?.gewinnProjected ?? 0) < 0;
-  const [tipSignals, months, dismissed] = negative
-    ? await Promise.all([
-        loadTipSignals(customerId, data, now).catch(() => null),
-        monthsSinceStart(customerId, now),
-        prisma.customer.findUnique({ where: { id: customerId }, select: { zahlenTipsDismissed: true } }).then((c) => c?.zahlenTipsDismissed ?? null),
-      ])
-    : [null, null, null];
-  const tips = tipSignals ? pickTips(tipSignals, dismissed, now) : [];
-  const ctx = await getBuyerContext();
+  // Neue Kunden = erste Verträge im Zeitraum (wie der Trichter nach Eingang des Leads), alle Herkünfte
+  const inRange = (d: Date) => d >= range.from && d <= range.to;
+  const neueKunden = new Set(data.contracts.filter((c) => c.primary && inRange(c.periodAt)).map((c) => c.leadId)).size;
+  // Wert pro Kunde aus allen bisherigen Abschlüssen, falls im Zeitraum noch keiner da ist (für „X bis Y Abschlüsse“)
+  const alle = summarizeProvision(data.contracts, data.rates, { from: new Date(0), to: now }, { now, storno: data.storno });
+  const kundenBisher = new Set(data.contracts.filter((c) => c.primary).map((c) => c.leadId)).size;
+  const wertProKundeBisher = kundenBisher > 0 ? (alle.firstYear + (mitBestand ? alle.futureTrail : 0)) / kundenBisher : null;
+
+  const rechnung = rechnetSich({ provision: prov.firstYear, bestand: prov.futureTrail, kosten: cur.costs, mitBestand, kunden: neueKunden, wertProKundeBisher });
+  const satz = antwort(rechnung, { kunden: neueKunden, vertraege: prov.contracts, chancen: chancen.anzahl, mitBestand });
+
+  // Rechnung im Hero: Summe der Zeilen = Ergebnis
+  const provLabel = makler ? "Courtage 1. Jahr" : "Abschlussprovision";
+  const zeilen: RechnungZeile[] = [{ label: provLabel, betrag: prov.firstYear + prov.chargeback }];
+  if (prov.chargeback > 0) zeilen.push({ label: "Rückbelastung (gekündigte Verträge)", betrag: -prov.chargeback });
+  if (mitBestand) zeilen.push({ label: `${makler ? "Bestandscourtage" : "Bestandsprovision"} dieser Kunden (5 Jahre)`, betrag: prov.futureTrail });
+  if (paket) {
+    zeilen.push({ label: "Kosten (Betreuung und Werbebudget)", betrag: -cur.costs });
+  } else {
+    const n = k.nettoLeads;
+    zeilen.push({ label: n > 0 && cur.leadCosts > 0 ? `Kosten (${formatNumber(n)} ${n === 1 ? "Lead" : "Leads"} à ${euro(cur.leadCosts / n)})` : "Kosten (Leads)", betrag: -cur.leadCosts });
+    if (Math.abs(a.total) >= 0.5) zeilen.push({ label: "Kosten (Betreuung und Software)", betrag: -a.total });
+  }
+
+  // Hebel: bisherige Hinweise (nächster Schritt, Cross-Selling, ohne WhatsApp, Tipps) nach Wirkung, höchstens 3
+  const hebel = tipSignals
+    ? pickTips({ ...tipSignals, keinWhatsApp }, dismissed, now).map((t) => ({
+        key: t.key,
+        title: t.kurz?.title ?? t.title,
+        text: t.kurz?.text ?? t.text,
+        href: t.href,
+        cta: t.kurz?.cta ?? t.cta,
+      }))
+    : [];
 
   const [empfClosed, bestandClosed] = extraClosed;
   const extras = [
     empfClosed > 0 ? `+ ${formatNumber(empfClosed)} ${empfClosed === 1 ? "Abschluss" : "Abschlüsse"} aus Empfehlungen` : null,
     // Bestandskampagnen: Abschlüsse je Vertrag (60 Tage nach dem Anschreiben, letzte Kampagne zählt), wie in „Kosten & Ertrag“
     !bestandAn ? null : prov.byOrigin.bestand.contracts > 0 ? `+ ${formatNumber(prov.byOrigin.bestand.contracts)} aus Bestandskampagnen` : bestandClosed > 0 ? `+ ${formatNumber(bestandClosed)} aus Bestandskampagnen` : null,
-  ].filter(Boolean);
+  ].filter((x): x is string => !!x);
+
+  const top = verlust.verteilung.gruende.find((g) => g.key !== "ohne") ?? verlust.verteilung.gruende[0];
+  const keep = new URLSearchParams();
+  keep.set("range", "max");
+
+  // Details „Kosten und Gewinn“
   const breakdown: [string, number][] = [
-    [makler ? "Courtage 1. Jahr" : "Abschlussprovision", prov.firstYear + prov.chargeback],
-    ["Lead-Kosten", -cur.leadCosts],
+    [provLabel, prov.firstYear + prov.chargeback],
+    [paket ? "Werbebudget und Betreuung" : "Lead-Kosten", -cur.leadCosts],
     [a.baseInLeadCosts ? "USt. auf den Retainer" : "Betreuung & Software", -a.betreuung],
   ];
   if (a.logins > 0) breakdown.push(["Weitere Logins", -a.logins]);
@@ -246,231 +284,211 @@ async function BuyerDashboardBody({
   if (a.whatsapp > 0) breakdown.push(["WhatsApp-Gebühren", -a.whatsapp]);
   if (a.setup > 0) breakdown.push(["Einrichtung (verteilt)", -a.setup]);
   if (a.gutschrift > 0) breakdown.push(["Gutschrift Empfehlung", a.gutschrift]);
-  // Rückbelastungen gekündigter Verträge mindern die Provision im Monat der Kündigung (eigene Zeile)
   if (prov.chargeback > 0) breakdown.splice(1, 0, ["Rückbelastung (gekündigte Verträge)", -prov.chargeback]);
-  // „Inkl. Bestand“: künftige Bestandsprovision der Verträge dieses Zeitraums (Kohorte, 5 Jahre, Prognose)
   const bestandWort = makler ? "Bestandscourtage" : "Bestandsprovision";
-  if (mitBestand) breakdown.push(["Bestand dieser Abschlüsse (5 Jahre)", prov.futureTrail]);
-  const gewinnShown = mitBestand ? cur.gewinnMitBestand : cur.gewinn;
-  const gewinnBefore = mitBestand ? before.gewinnMitBestand : before.gewinn;
-  const gewinnLabel = mitBestand ? "ergibt Gewinn mit künftigem Bestand" : "ergibt Gewinn";
-  const breakdownTitle = [...breakdown.map(([l, v]) => `${l}: ${formatEUR(v)}`), `${gewinnLabel}: ${formatEUR(gewinnShown)}`].join("\n");
   const stornoPct = `${(Math.round(bestand.storno * 1000) / 10).toLocaleString("de-DE")} %`;
   const provSub = [
     prov.crossSell.contracts > 0
-      ? `davon Cross-Selling: ${formatNumber(prov.crossSell.contracts)} ${prov.crossSell.contracts === 1 ? "Vertrag" : "Verträge"}, ${formatEUR(prov.crossSell.amount)}`
+      ? `davon Cross-Selling: ${formatNumber(prov.crossSell.contracts)} ${prov.crossSell.contracts === 1 ? "Vertrag" : "Verträge"}, ${euro(prov.crossSell.amount)}`
       : null,
-    prov.byOrigin.empfehlung.amount > 0 ? `davon aus Empfehlungen: ${formatEUR(prov.byOrigin.empfehlung.amount)}` : null,
+    prov.byOrigin.empfehlung.amount > 0 ? `davon aus Empfehlungen: ${euro(prov.byOrigin.empfehlung.amount)}` : null,
     bestandAn && prov.byOrigin.bestand.contracts > 0
-      ? `aus Bestandskampagnen: ${formatNumber(prov.byOrigin.bestand.contracts)} ${prov.byOrigin.bestand.contracts === 1 ? "Abschluss" : "Abschlüsse"}, ${formatEUR(prov.byOrigin.bestand.amount)}`
+      ? `aus Bestandskampagnen: ${formatNumber(prov.byOrigin.bestand.contracts)} ${prov.byOrigin.bestand.contracts === 1 ? "Abschluss" : "Abschlüsse"}, ${euro(prov.byOrigin.bestand.amount)}`
       : null,
-    perCustomer != null && perCustomer > 1 ? `Verträge pro Kunde: ${perCustomer.toLocaleString("de-DE")}` : null,
-    prov.honorar > 0 ? `davon Honorar (vom Kunden): ${formatEUR(prov.honorar)}` : null,
-    prov.chargeback > 0 ? `abzüglich Rückbelastung: ${formatEUR(prov.chargeback)}` : null,
+    perCustomer != null && perCustomer > 1 ? `Verträge pro Kunde (seit Start): ${perCustomer.toLocaleString("de-DE")}` : null,
+    prov.honorar > 0 ? `davon Honorar (vom Kunden): ${euro(prov.honorar)}` : null,
   ].filter((x): x is string => !!x);
-  const perClose = k.closedLeads > 0 ? cur.costs / k.closedLeads : null;
-  const provAus = provisionAusText(prov, makler);
+  const proStufe: [string, number | null][] = [
+    ["pro Lead", k.nettoLeads > 0 ? cost / k.nettoLeads : null],
+    ["pro Termin", k.terminLeads > 0 ? cur.costs / k.terminLeads : null],
+    ["pro Abschluss", k.closedLeads > 0 ? cur.costs / k.closedLeads : null],
+  ];
+  const ergebnisVorher = mitBestand ? before.gewinnMitBestand : before.gewinn;
+
+  const r = rechnung.ausEinemEuro;
+  const wert = rechnung.wertProKunde;
+  const chancenUnter = { aufteilung: chancenAufteilung(chancen), realistisch: `realistisch ≈ ${euro(chancen.realistisch)} Provision` };
 
   return (
-    <div className="mt-6 space-y-6">
-      <FunnelHero
-        kpis={k}
-        kopfzahlen={false}
-        footer={
-          <>
-            Nur bezahlte Leads, damit die Quoten stimmen.
-            {extras.length ? <span className="ml-1 font-medium text-[color:var(--foreground)]">{extras.join(" · ")}</span> : null}
-          </>
-        }
+    <div className="space-y-5 sm:space-y-6">
+      <RechnetSich
+        rechnung={rechnung}
+        antwort={satz}
+        zeilen={zeilen}
+        mitBestand={mitBestand}
+        makler={makler}
+        aktion={rechnung.status === "ohne_kosten" ? { href: "#budget", label: "Werbebudget ansehen" } : null}
       />
 
-      <NextStepKpi customerId={customerId} />
-
-      <KeinWhatsAppKpi customerId={customerId} range={range} />
-
-      <VerlustKarte customerId={customerId} range={range} params={params} />
-
-      <section>
-        <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kosten &amp; Ertrag</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <KpiCard
-            label="Lead-Kosten"
-            value={formatEUR(cost)}
-            tone="neutral"
-            hint={k.nettoLeads > 0 ? `${formatEUR(cost / k.nettoLeads)} pro Lead` : costHint}
-            delta={delta(cost, costPrev, true)}
-          />
-          <KpiCard
-            label={makler ? "Courtage 1. Jahr (geschätzt)" : "Abschlussprovision (geschätzt)"}
-            value={formatEUR(prov.firstYear)}
-            tone="positive"
-            hint={
-              <>
-                <span data-prov-aus>{provAus}</span>
-                {provSub.length ? (
-                  <Info>
-                    {provSub.map((t) => (
-                      <span key={t} className="block">
-                        {t}
-                      </span>
-                    ))}
-                  </Info>
-                ) : null}
-              </>
-            }
-            delta={delta(prov.firstYear, before.provision.firstYear)}
-          />
-          <KpiCard
-            label={makler ? "Bestandscourtage" : "Bestandsprovision"}
-            value={`+ ${formatEUR(bestand.perYear)} pro Jahr`}
-            tone={bestand.perYear > 0 ? "positive" : "neutral"}
-            hint={
-              <>
-                <span className="font-medium text-[color:var(--foreground)]">in 5 Jahren (nach Storno): {formatEUR(bestand.inYears)}</span>
-                <Info>
-                  <span className="block">
-                    {formatNumber(bestand.contracts)} {bestand.contracts === 1 ? "Vertrag" : "Verträge"}
-                    {prov.trailPerYear > 0 ? ` · davon + ${formatEUR(prov.trailPerYear)} pro Jahr aus diesem Zeitraum` : ""}
-                  </span>
-                  {bestand.real.quote != null ? (
-                    <span className="block" data-storno-real>
-                      Tatsächliche Stornoquote: {(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} % pro Jahr
-                    </span>
-                  ) : null}
-                  <span className="mt-1 block space-y-0.5">
-                    <Punkt k="Pro Jahr:">
-                      {bestandWort} aller laufenden Verträge, die Sie über die App abgeschlossen haben (Ihre Sätze aus Meine Provisionen).
-                    </Punkt>
-                    <Punkt k="In 5 Jahren:">
-                      geschätzt, wenn jedes Jahr {stornoPct} der Verträge wegfallen (<StornoLink />). Neue Abschlüsse sind nicht eingerechnet.
-                    </Punkt>
-                    {bestandAn ? <Punkt k="Nicht enthalten:">Ihre hochgeladene Kundenliste.</Punkt> : null}
-                  </span>
-                </Info>
-              </>
-            }
-          />
-          <div title={breakdownTitle} data-gewinn-karte data-gewinn-modus={mitBestand ? "bestand" : "jetzt"}>
-            <KpiCard
-              label={
-                <>
-                  Gewinn
-                  {mitBestand ? (
-                    <span className="ml-1.5 rounded-full bg-[color:var(--brand-soft,#eff6ff)] px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--brand)]">mit künftigem Bestand</span>
-                  ) : null}
-                </>
-              }
-              extra={<GewinnModusSwitch mitBestand={mitBestand} />}
-              value={formatEUR(gewinnShown)}
-              tone={gewinnShown >= 0 ? "positive" : "negative"}
-              hint={
-                <>
-                  {mitBestand ? (
-                    <span className="font-medium text-[color:var(--foreground)]" data-kuenftiger-bestand>
-                      davon Bestand aus Abschlüssen dieses Zeitraums (5 Jahre): {formatEUR(prov.futureTrail)}
-                    </span>
-                  ) : (
-                    "Provision minus Lead-Kosten und Betreuung"
-                  )}
-                  <Info>
-                    {!mitBestand && prov.futureTrail > 0 ? <span className="block">Inkl. Bestand: {formatEUR(cur.gewinnMitBestand)}</span> : null}
-                    <span className="mt-1 block space-y-0.5">
-                      {breakdown.map(([l, v]) => (
-                        <span key={l} className="flex justify-between gap-3 tabular-nums">
-                          <span>{l}</span>
-                          <span>{formatEUR(v)}</span>
-                        </span>
-                      ))}
-                      <span className="flex justify-between gap-3 border-t border-[color:var(--border)] pt-0.5 font-semibold tabular-nums">
-                        <span>{gewinnLabel}</span>
-                        <span>{formatEUR(gewinnShown)}</span>
-                      </span>
-                    </span>
-                    <span className="mt-1 block space-y-0.5" data-gewinn-erklaerung>
-                      <Punkt k="Gewinn">
-                        = Provision aus Ihren Abschlüssen minus Ihre Kosten (Leads, Betreuung und Software inkl. USt., Einrichtung verteilt über
-                        die Laufzeit).{a.baseInLeadCosts ? " Der Retainer steckt in den Lead-Kosten." : ""}
-                      </Punkt>
-                      <Punkt k="Inkl. Bestand:">
-                        Für die Verträge, die Sie in diesem Zeitraum abgeschlossen haben, rechnen wir die {bestandWort} der nächsten 5 Jahre
-                        dazu. Geschätzt, mit Ihrer Stornoquote von {stornoPct} pro Jahr (<StornoLink />).
-                      </Punkt>
-                      <Punkt k="Nur jetzt:">nur, was im Zeitraum schon verdient ist.</Punkt>
-                      <Punkt k="Nicht enthalten:">Ihr bisheriger Bestand.</Punkt>
-                    </span>
-                  </Info>
-                </>
-              }
-              delta={delta(gewinnShown, gewinnBefore)}
-            />
-          </div>
-          <KpiCard
-            label="Kosten pro Abschluss"
-            value={formatEUR(perClose)}
-            hint={k.terminLeads > 0 ? `${formatEUR(cur.costs / k.terminLeads)} pro Termin · alle Kosten` : "Lead-Kosten plus Betreuung"}
-            delta={delta(perClose, p.closedLeads > 0 ? before.costs / p.closedLeads : null, true)}
-          />
-        </div>
-      </section>
-
-      {tips.length ? (
-        <ZahlenTippsCard
-          tips={tips.map(({ key, title, text, href, cta }) => ({ key, title, text, href, cta }))}
-          intro={
-            cur.gewinn < 0
-              ? (earlyHint(months, bestand.inYears) ?? "Ihre Zahlen sind gerade im Minus. Diese Schritte bringen am meisten:")
-              : "Für diesen Monat zeichnet sich ein Minus ab. Diese Schritte bringen am meisten:"
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4" data-kennzahlen>
+        <Kennzahl
+          data="kunden"
+          label="Neue Kunden"
+          wert={formatNumber(neueKunden)}
+          unter={
+            prov.contracts > 0
+              ? `mit ${formatNumber(prov.contracts)} ${prov.contracts === 1 ? "Vertrag" : "Verträgen"}${prov.crossSell.contracts > 0 ? `, davon ${formatNumber(prov.crossSell.contracts)} Cross-Selling` : ""}`
+              : "noch kein Abschluss im Zeitraum"
           }
-          canDismiss={!!ctx && !ctx.preview}
         />
-      ) : null}
-
-      <details className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden">
-        <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[15px] font-semibold">
-          Hochrechnung für diesen Monat
-          <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open:rotate-180" />
-        </summary>
-        <div className="border-t border-[color:var(--border)] p-2 sm:p-3">
-          <MonthlyForecast forecast={forecast} />
-        </div>
-      </details>
-
-      {bestand.growth.some((g) => g.total > 0) ? (
-        <BestandGrowthSection
-          points={bestand.growth}
-          intro={`${bestandWort} pro Jahr, wenn Sie so weitermachen wie in den letzten 3 Monaten (${bestand.perMonth.toLocaleString("de-DE")} ${bestand.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat), mit ${stornoPct} Storno pro Jahr.`}
+        <Kennzahl
+          data="wert"
+          label="Wert pro Kunde"
+          wert={wert != null ? euro(wert) : "–"}
+          ton={wert != null ? "geld" : "normal"}
+          unter={
+            wert == null
+              ? "nach dem ersten Abschluss"
+              : `${rechnung.wertAusFrueher ? "Schnitt bisher, " : ""}${mitBestand ? "Provision inkl. 5 Jahre Bestand" : makler ? "Courtage 1. Jahr" : "Abschlussprovision"}`
+          }
         />
-      ) : null}
+        <Kennzahl
+          data="euro"
+          label="Aus 1 € werden"
+          wert={r != null ? euroCent(r) : "–"}
+          ton={r != null && r >= 1 ? "geld" : "normal"}
+          unter={r == null ? "ohne Kosten im Zeitraum" : `${mitBestand ? "inkl. Bestand" : "ohne Bestand"}${r < 1 ? ", Ziel über 1 €" : ""}`}
+        />
+        <ChancenKachel
+          anzahl={chancen.anzahl}
+          unter={chancenUnter}
+          schaetzung={chancen.schaetzung}
+          liste={chancen.liste.map((c) => ({ leadId: c.leadId, name: c.name, stufe: c.stufe, provision: c.provision, erwartet: c.erwartet, naechsterSchritt: c.naechsterSchritt }))}
+          quoten={{ angebot: chancen.quoten.angebot.quote, termin: chancen.quoten.termin.quote, angebotEigen: chancen.quoten.angebot.eigen, terminEigen: chancen.quoten.termin.eigen }}
+        />
+      </div>
 
-      {/* BuyerComparison/Leaderboard temporär ausgeblendet —
-          wird wieder eingebaut, sobald der Vergleich freigegeben ist. */}
+      <div className="space-y-5 sm:space-y-6">
+        <Trichter
+          kpis={k}
+          verloren={verlust.verteilung.total > 0 ? { anzahl: verlust.verteilung.total, grund: top && top.key !== "ohne" ? top.label : null } : null}
+          zusatz={extras}
+          alleHref={`?${keep.toString()}`}
+        />
+        {hebel.length ? <HebelKarte hebel={hebel} canDismiss={canDismiss} /> : null}
+      </div>
+
+      <section
+        className="divide-y divide-[color:var(--border)] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]"
+        aria-label="Details"
+        data-details
+      >
+        <VerlustKarte customerId={customerId} range={range} params={params} daten={verlust} eingebettet />
+
+        <details className="group [&>summary::-webkit-details-marker]:hidden" id="kosten-gewinn" data-kosten-gewinn>
+          <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
+            <span className="text-base font-semibold">Kosten und Gewinn im Detail</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+          <div className="space-y-5 border-t border-[color:var(--border)] p-5">
+            <div className="grid grid-cols-3 gap-3" data-kosten-pro>
+              {proStufe.map(([l, v]) => (
+                <div key={l} className="rounded-[var(--radius-md)] bg-[color:var(--background)] p-3 ring-1 ring-inset ring-[color:var(--border)]">
+                  <div className="text-sm text-[color:var(--muted)]">Kosten {l}</div>
+                  <div className="mt-0.5 text-lg font-semibold tabular-nums sm:text-xl">{v != null ? euro(v) : "–"}</div>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <h3 className="text-[15px] font-semibold">Gewinn in diesem Zeitraum</h3>
+              <dl className="mt-2 space-y-1 tabular-nums">
+                {breakdown.map(([l, v]) => (
+                  <div key={l} className="flex justify-between gap-3">
+                    <dt className="text-[color:var(--muted)]">{l}</dt>
+                    <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(v)}</dd>
+                  </div>
+                ))}
+                <div className="flex justify-between gap-3 border-t border-[color:var(--border)] pt-1 font-semibold" data-gewinn-nur-jetzt>
+                  <dt>Gewinn nur aus {makler ? "Courtage 1. Jahr" : "Abschlussprovision"}</dt>
+                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinn)}</dd>
+                </div>
+                <div className="flex justify-between gap-3 font-semibold" data-kuenftiger-bestand>
+                  <dt>Inkl. Bestand dieser Kunden (5 Jahre)</dt>
+                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(cur.gewinnMitBestand)}</dd>
+                </div>
+                <div className="flex justify-between gap-3 text-[color:var(--muted)]">
+                  <dt>Ergebnis im Vorzeitraum</dt>
+                  <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(ergebnisVorher)}</dd>
+                </div>
+              </dl>
+              <p className="mt-2 text-sm text-[color:var(--muted)]" data-prov-aus>
+                {provLabel} {provisionAusText(prov, makler)}
+                {provSub.length ? `; ${provSub.join("; ")}` : ""}.
+              </p>
+            </div>
+
+            <div data-gesamtbestand>
+              <h3 className="text-[15px] font-semibold">{bestandWort} aller Ihrer Verträge</h3>
+              <p className="mt-1">
+                <span className="font-semibold text-emerald-700">{euroMitVorzeichen(bestand.perYear)} pro Jahr</span> aus {formatNumber(bestand.contracts)}{" "}
+                {bestand.contracts === 1 ? "laufendem Vertrag" : "laufenden Verträgen"}, in 5 Jahren nach Storno{" "}
+                <span className="font-semibold">{euro(bestand.inYears)}</span>.
+              </p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">
+                Alle Verträge, die Sie über die App abgeschlossen haben, auch aus früheren Zeiträumen. Stornoquote {stornoPct} pro Jahr (
+                <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">ändern</a>).
+                {bestand.real.quote != null ? (
+                  <span data-storno-real> Tatsächlich: {(Math.round(bestand.real.quote * 1000) / 10).toLocaleString("de-DE")} % pro Jahr.</span>
+                ) : null}
+              </p>
+            </div>
+
+            <details className="group/f rounded-[var(--radius-md)] ring-1 ring-inset ring-[color:var(--border)] [&>summary::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-[15px] font-semibold">
+                Hochrechnung für diesen Monat
+                <ChevronDown className="h-4 w-4 text-[color:var(--muted)] transition group-open/f:rotate-180" />
+              </summary>
+              <div className="border-t border-[color:var(--border)] p-2 sm:p-3">
+                <MonthlyForecast forecast={forecast} />
+              </div>
+            </details>
+
+            {bestand.growth.some((g) => g.total > 0) ? (
+              <BestandGrowthSection
+                points={bestand.growth}
+                intro={`${bestandWort} pro Jahr, wenn Sie so weitermachen wie in den letzten 3 Monaten (${bestand.perMonth.toLocaleString("de-DE")} ${bestand.perMonth === 1 ? "Vertrag" : "Verträge"} pro Monat), mit ${stornoPct} Storno pro Jahr.`}
+              />
+            ) : null}
+          </div>
+        </details>
+
+        <details className="group [&>summary::-webkit-details-marker]:hidden" id="so-rechnen-wir" data-so-rechnen-wir>
+          <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4">
+            <span className="text-base font-semibold">So rechnen wir</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+          </summary>
+          <ul className="space-y-2 border-t border-[color:var(--border)] p-5 text-[15px] leading-relaxed text-[color:var(--muted)]" data-gewinn-erklaerung>
+            <Punkt k="Ergebnis:">
+              {provLabel} aus Ihren Abschlüssen{mitBestand ? ` plus ${bestandWort} dieser Kunden` : ""} minus Ihre Kosten im Zeitraum (
+              {paket ? "Betreuung und Werbebudget" : "Leads, Betreuung und Software"} inkl. USt., Einrichtung verteilt über die Laufzeit).
+            </Punkt>
+            <Punkt k="Inkl. Bestand (5 Jahre):">
+              die {bestandWort} der Verträge aus diesem Zeitraum für die nächsten 5 Jahre, geschätzt mit Ihrer Stornoquote von {stornoPct} pro Jahr. Ihr
+              übriger Bestand zählt hier nicht, er steht unter Kosten und Gewinn im Detail.
+            </Punkt>
+            <Punkt k={makler ? "Nur 1. Jahr:" : "Nur Abschlussprovision:"}>nur, was im Zeitraum schon verdient ist.</Punkt>
+            <Punkt k="Wert pro Kunde:">Provision geteilt durch die neuen Kunden; daraus die fehlenden Abschlüsse bis zum Break-even.</Punkt>
+            <Punkt k="Offene Chancen:">
+              Angebote ohne Entscheidung, gebuchte Termine, Termine ohne Ergebnis und Bedenkzeiten. Realistisch = Provision bei Abschluss mal Ihre Quote
+              (Angebot {Math.round(chancen.quoten.angebot.quote * 100)} %, Termin {Math.round(chancen.quoten.termin.quote * 100)} %)
+              {chancen.schaetzung ? ", bis 10 eigene Fälle je Stufe da sind mit einer Standardquote (Schätzung)" : ", aus Ihren Fällen der letzten 12 Monate"}.
+            </Punkt>
+            <Punkt k="Vom Lead zum Kunden:">nur bezahlte Leads, damit die Quoten stimmen. Provision zählt alle Abschlüsse, auch aus Empfehlungen.</Punkt>
+            <Punkt k="Provision:">mit Ihren Sätzen aus <a href="/buyer/provisionen" className="font-medium text-[color:var(--brand)] underline">Meine Provisionen</a>, geschätzt.</Punkt>
+          </ul>
+        </details>
+      </section>
     </div>
   );
 }
 
-/** Stichpunkt im Infotext: fetter Begriff, dann Erklärung (hängender Einzug). */
+/** Stichpunkt: fetter Begriff, dann Erklärung (hängender Einzug). */
 function Punkt({ k, children }: { k: string; children: React.ReactNode }) {
   return (
-    <span className="block pl-2.5 -indent-2.5">
+    <li className="pl-3 -indent-3">
       • <strong className="font-semibold text-[color:var(--foreground)]">{k}</strong> {children}
-    </span>
+    </li>
   );
 }
 
-function StornoLink() {
-  return (
-    <a href="/buyer/provisionen#storno" className="font-medium text-[color:var(--brand)] underline">
-      ändern
-    </a>
-  );
-}
-
-/** Kurzer Infotext zum Antippen (in Karten). */
-function Info({ label = "So rechnen wir", children }: { label?: string; children: React.ReactNode }) {
-  return (
-    <details className="mt-1 [&>summary::-webkit-details-marker]:hidden">
-      <summary className="inline-flex min-h-10 cursor-pointer list-none items-center font-medium text-[color:var(--brand)] sm:min-h-0">{label}</summary>
-      <span className="mt-1 block text-[11px] leading-snug text-[color:var(--muted)]">{children}</span>
-    </details>
-  );
-}

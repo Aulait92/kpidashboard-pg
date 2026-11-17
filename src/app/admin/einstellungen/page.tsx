@@ -46,7 +46,7 @@ const GROUPS = [
   {
     title: "Finanzen",
     items: [
-      { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools und eigene Werbung" },
+      { href: "/admin/einstellungen/kosten", icon: Wallet, color: "bg-emerald-600", title: "Laufende Kosten", text: "Tools, eigene Werbung, Quoten offener Chancen" },
       { href: "/admin/einstellungen/bank", icon: Landmark, color: "bg-teal-600", title: "Bank & Karten", text: "Ausgaben holen und zuordnen" },
       { href: "/admin/einstellungen/rechnungsangaben", icon: Receipt, color: "bg-slate-500", title: "Rechnungsangaben", text: "Steuernummer, Pflichtangaben, Stripe" },
     ],

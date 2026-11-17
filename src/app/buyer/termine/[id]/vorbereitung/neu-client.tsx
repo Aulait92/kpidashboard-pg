@@ -8,7 +8,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Calculator, CalendarDays, Check, ChevronDown, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Star, Video, X } from "lucide-react";
+import { Calculator, CalendarDays, Check, ChevronDown, Copy, ExternalLink, Phone, Plus, Presentation, RotateCcw, Search, Send, Star, Video, X } from "lucide-react";
 import { Button, buttonClass, Card } from "@/components/ui";
 import { ActionSheet, Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -42,6 +42,8 @@ import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 import { BeitragGesamt, ChanceImTermin } from "./schutz-client";
 import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
+import { AngebotSendenSheet } from "@/components/angebot-senden";
+import { ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const geld = (n: number | null) => (n == null ? "" : n.toFixed(2).replace(".", ","));
@@ -81,6 +83,8 @@ export function VorbereitungNeu(p: {
   klaeren: { punkte: string[]; erledigt: string[] };
   angebote: AngeboteProps;
   vorschau: { termin: Omit<VorbereitungDaten, "termin"> & { termin: Omit<VorbereitungDaten["termin"], "startsAt"> & { startsAt: string } }; marke: Marke; css: string; ansprache: Ansprache };
+  /** Schritt 4 nach dem Termin (Paket P3): Stand („Angebot gesendet am …“) und ob der Termin schon begonnen hat */
+  angebot?: { stand: string | null; gesendet: boolean; vorbei: boolean };
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -208,6 +212,9 @@ export function VorbereitungNeu(p: {
     router.push(praesentation);
   };
 
+  // Schritt 4 (Paket P3): nach dem Termin ist „Angebot senden“ die Hauptaktion, solange es noch nicht raus ist
+  const [angebotBlatt, setAngebotBlatt] = useState(false);
+  const angebotJetzt = !!p.leadId && !!p.angebot?.vorbei && !p.angebot.gesendet;
   const [vorbereitet, setVorbereitet] = useState(p.kopf.vorbereitet);
   const vorbereitetUmschalten = async () => {
     const next = !vorbereitet;
@@ -304,11 +311,52 @@ export function VorbereitungNeu(p: {
               {fertigFuerPraesentation ? "Alles eingetragen. Im Termin teilen Sie diese Präsentation." : "Erst Beiträge eintragen, dann zeigt die Präsentation Ihre Preise."}
             </p>
           </div>
-          <a href={praesentation} onClick={oeffnen} className={buttonClass("primary", "md")} data-praesentation-schritt>
+          <a href={praesentation} onClick={oeffnen} className={buttonClass(angebotJetzt ? "secondary" : "primary", "md")} data-praesentation-schritt>
             <Presentation className="h-4 w-4" /> Präsentation öffnen
           </a>
         </div>
       </Card>
+
+      {/* Schritt 4 (Paket P3, Ole 17.11.2026): nach dem Termin das Angebot der Gesellschaft senden; startet das Nachfassen */}
+      {p.leadId ? (
+        <Card className="mt-3">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-5" data-schritt-4>
+            <span
+              className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", p.angebot?.gesendet ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
+              aria-hidden
+            >
+              {p.angebot?.gesendet ? <Check className="h-4 w-4" strokeWidth={3} /> : 4}
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-[15px] font-semibold tracking-tight">Angebot senden</h3>
+              <p className={cn("mt-0.5 text-[13px]", p.angebot?.gesendet ? "font-medium text-emerald-700" : "text-[color:var(--muted)]")} data-angebot-stand>
+                {p.angebot?.stand ?? (p.angebot?.vorbei ? ANGEBOT_HINWEIS : "Nach dem Termin: PDF der Gesellschaft hochladen und senden.")}
+              </p>
+            </div>
+            <Button
+              variant={angebotJetzt ? "primary" : "secondary"}
+              size="md"
+              icon={Send}
+              disabled={p.readOnly}
+              onClick={() => setAngebotBlatt(true)}
+              // Handy: steht als Hauptaktion schon unten in der Leiste, hier nicht doppelt (UX-Regel: ein primärer Knopf)
+              className={cn("w-full sm:w-auto", angebotJetzt && "max-md:hidden")}
+              data-angebot-senden
+            >
+              {p.angebot?.gesendet ? "Erneut senden" : "Angebot senden"}
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+      <AngebotSendenSheet
+        ziel={angebotBlatt ? { appointmentId: p.id, name: p.kopf.name } : null}
+        onClose={() => setAngebotBlatt(false)}
+        onError={(message) => toast.show({ message, tone: "error" })}
+        onDone={(message) => {
+          toast.show({ message });
+          router.refresh();
+        }}
+      />
 
       <ActionSheet
         open={pruefHinweis}
@@ -351,9 +399,15 @@ export function VorbereitungNeu(p: {
           {/* Beschriftet statt nur Haken (16.11.2026): ohne Text war unklar, was der Knopf tut */}
           <Check className="h-5 w-5" /> Vorbereitet
         </button>
-        <a href={praesentation} onClick={oeffnen} className={buttonClass("primary", "md", "h-11 flex-1 text-[15px]")}>
-          <Presentation className="h-4 w-4" /> Präsentation öffnen
-        </a>
+        {angebotJetzt ? (
+          <button type="button" onClick={() => setAngebotBlatt(true)} disabled={p.readOnly} className={buttonClass("primary", "md", "h-11 flex-1 text-[15px]")} data-angebot-senden-leiste>
+            <Send className="h-4 w-4" /> Angebot senden
+          </button>
+        ) : (
+          <a href={praesentation} onClick={oeffnen} className={buttonClass("primary", "md", "h-11 flex-1 text-[15px]")}>
+            <Presentation className="h-4 w-4" /> Präsentation öffnen
+          </a>
+        )}
       </div>
     </div>
   );
