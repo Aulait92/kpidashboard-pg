@@ -328,13 +328,21 @@ export async function runDunningCron(now = new Date(), sendMails = true) {
   });
   let warned = 0;
   let paused = 0;
+  // Mahnwesen aktiv (lib/mahnwesen-server.ts, Ole 17.11.2026): Erinnerung und Mahnungen kommen von dort, die Warnung
+  // nach 21 Tagen entfällt für Kunden im Mahnlauf (nicht doppelt mahnen). Die Anzeigen-Pause nach 30 Tagen ist dann
+  // der vorbereitete Schalter „Leads-Pause“ (Standard aus).
+  const { mahnwesenAktiv } = await import("@/lib/mahnwesen");
+  const mahnwesen = mahnwesenAktiv();
+  const m = mahnwesen ? await import("@/lib/mahnwesen-server") : null;
+  const leadsPause = m ? (await m.mahnwesenSettings()).leadsPause : true;
   for (const c of overdue) {
     const days = (now.getTime() - c.paymentOverdueSince!.getTime()) / DAY_MS;
     const { customer, offer, contactId } = await context(c.id);
     const to = customer.users.map((u) => u.email);
     const greeting = await customerGreeting({ salesContactId: contactId, contactName: offer?.contactName ?? null });
+    const imMahnlauf = m ? await m.kundeImMahnlauf(c.id) : false;
 
-    if (days >= DUNNING_WARN_DAYS && !c.paymentWarnedAt && sendMails && to.length) {
+    if (days >= DUNNING_WARN_DAYS && !c.paymentWarnedAt && sendMails && to.length && !imMahnlauf) {
       const url = (await openInvoiceUrl(c.stripeCustomerId!)) ?? `${getAppUrl()}/buyer/konto`;
       await sendCustomerMail({
         to,
@@ -352,7 +360,7 @@ export async function runDunningCron(now = new Date(), sendMails = true) {
       warned++;
     }
 
-    if (days >= DUNNING_PAUSE_DAYS) {
+    if (days >= DUNNING_PAUSE_DAYS && leadsPause) {
       const active = await prisma.customerPause.findFirst({ where: { customerId: c.id, status: "active" } });
       if (active) continue; // schon pausiert (Urlaub oder Verzug)
       let campaignIds: string[] = [];

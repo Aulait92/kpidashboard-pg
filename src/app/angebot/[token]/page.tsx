@@ -20,6 +20,7 @@ import { PayButton } from "./pay-button";
 import { PayLater } from "./pay-later";
 import { erinnerungsGrenzen, tagIso } from "@/lib/angebot-zahlungserinnerung";
 import { billingEnabled, STRIPE_MIN_EUR } from "@/lib/billing";
+import { ueberweisungMoeglich } from "@/lib/ueberweisung";
 import { CheckCircle2, Clock } from "lucide-react";
 import { nowMs } from "@/lib/now";
 
@@ -99,6 +100,8 @@ export default async function OfferPage({
             enabled={billingEnabled()}
             payLater={payLaterProps(offer)}
             bonus={bonus}
+            ueberweisungTage={ueberweisungMoeglich(offer) ? offer.bankTransferDays : null}
+            ueberweisung={offer.zahlweise === "ueberweisung" ? { iban: offer.ueberweisungIban, tage: offer.bankTransferDays } : null}
             rechnung={Number(offer.setupFee) - Number(offer.abschlussBonusGewaehrt ?? 0) >= STRIPE_MIN_EUR}
           />
         ) : null}
@@ -128,6 +131,7 @@ export default async function OfferPage({
                     choice={choiceProps(offer)}
                     payment={billingEnabled() && !offer.isTest && !offer.allowPayLater}
                     payLater={billingEnabled() && !!payLaterProps(offer)}
+                    ueberweisungTage={ueberweisungMoeglich(offer) ? offer.bankTransferDays : null}
                   />
                 </div>
               ) : (
@@ -235,6 +239,8 @@ function PaymentBox({
   payLater,
   bonus,
   rechnung,
+  ueberweisungTage = null,
+  ueberweisung = null,
 }: {
   token: string;
   status: string;
@@ -244,8 +250,36 @@ function PaymentBox({
   bonus: { betrag: number; bis: Date; gesichert: boolean } | null;
   /** Setup-Rechnung entsteht nur, wenn nach Rabatt und Bonus etwas zu zahlen war. */
   rechnung: boolean;
+  /** Überweisung am Angebot freigegeben: Zahlungsziel in Tagen (dritte Zahlart) */
+  ueberweisungTage?: number | null;
+  /** Kunde hat „Per Überweisung zahlen“ gewählt: virtuelle IBAN und Zahlungsziel */
+  ueberweisung?: { iban: string | null; tage: number } | null;
 }) {
   const box = "mx-auto mb-6 max-w-[880px] rounded-[20px] border px-6 py-5 sm:px-10";
+  if (ueberweisung && status !== "paid") {
+    return (
+      <div className={`${box} flex items-start gap-3 border-sky-200 bg-sky-50 text-sky-900`} data-ueberweisung-bestaetigt>
+        <Clock className="mt-0.5 h-5 w-5 shrink-0" />
+        <div>
+          <div className="font-semibold">Vielen Dank! Ihre Rechnung kommt per E-Mail.</div>
+          <p className="mt-1 text-sm">
+            {rechnung
+              ? `Bitte überweisen Sie das Setup innerhalb von ${ueberweisung.tage} Tagen. Die laufende Vergütung bekommen Sie ab dem Start ebenfalls als Rechnung.`
+              : "Die laufende Vergütung bekommen Sie ab dem Start als Rechnung."}{" "}
+            Ihren Zugang zur Einrichtung erhalten Sie gleich per E-Mail.
+          </p>
+          {ueberweisung.iban ? (
+            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+              <dt className="text-sky-800">IBAN</dt>
+              <dd className="font-mono font-semibold tabular-nums">{ueberweisung.iban.replace(/(.{4})/g, "$1 ").trim()}</dd>
+              <dt className="text-sky-800">Verwendungszweck</dt>
+              <dd>Rechnungsnummer (steht auf der Rechnung)</dd>
+            </dl>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
   if (status === "paid") {
     return (
       <div className={`${box} flex items-start gap-3 border-emerald-200 bg-emerald-50 text-emerald-900`}>
@@ -276,7 +310,7 @@ function PaymentBox({
   }
   if (!enabled) return null;
   return (
-    <div className={`${box} border-[#e5e7eb] bg-white`}>
+    <div id="zahlung" className={`${box} scroll-mt-4 border-[#e5e7eb] bg-white`}>
       <div className="font-semibold">
         {returned === "abgebrochen" ? "Die Zahlung wurde nicht abgeschlossen." : "Angebot angenommen. Es fehlt nur noch die Zahlung."}
       </div>
@@ -284,7 +318,7 @@ function PaymentBox({
         Richten Sie jetzt die Zahlung ein. Fällig ist jetzt nur das Setup; die laufende Vergütung (monatlich bzw. bei Jahreszahlung jährlich) wird ab dem Startdatum automatisch eingezogen. Die Zahlung läuft sicher über Stripe.
       </p>
       {bonus ? <BonusHinweis bonus={bonus} zahlung /> : null}
-      <PayButton token={token} />
+      <PayButton token={token} ueberweisungTage={ueberweisungTage} />
       {payLater ? <PayLater token={token} {...payLater} /> : null}
     </div>
   );

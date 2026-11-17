@@ -1,6 +1,7 @@
 // Angebote / Auftragsbestätigungen (zu einem Vertriebskontakt oder alten Deal): anlegen (Konditionen
 // werden eingefroren), per geheimem Link anzeigen, online annehmen.
 
+import { parseZahlungsziel } from "@/lib/mahnwesen";
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
@@ -75,6 +76,9 @@ export type OfferFormInput = {
   customerChoice?: boolean;
   /** „Ich zahle später, erinnern Sie mich am …“ auf der Angebotsseite erlauben (Standard aus, Ole 16.11.2026). */
   allowPayLater?: boolean;
+  /** Überweisung erlauben (nur auf Anfrage des Kunden, Standard aus, Ole 17.11.2026) und Zahlungsziel in Tagen (Standard 14). */
+  allowBankTransfer?: boolean;
+  bankTransferDays?: number | null;
   /**
    * Abschlussbonus auf die Einrichtung (netto) bei Annahme und Zahlung am Versandtag (Ole, 16.11.2026).
    * Das Formular schlägt 300 € vor (ABSCHLUSSBONUS_STANDARD); leer/0 = kein Bonus. Nicht bei Testangeboten oder ohne Einrichtung.
@@ -249,6 +253,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
             allowPayLater: input.allowPayLater === true && !test,
+            allowBankTransfer: input.allowBankTransfer === true && !test,
+            bankTransferDays: parseZahlungsziel(input.bankTransferDays),
             abschlussBonus:
               test || !(price.setupFee > 0)
                 ? null

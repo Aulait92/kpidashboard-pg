@@ -120,6 +120,8 @@ const OFFEN_WHERE = {
   paymentStatus: { notIn: ["paid", "processing"] },
   stripeSubscriptionId: null,
   stripeScheduleId: null,
+  // Überweisung gewählt: Rechnung läuft, das Mahnwesen übernimmt (keine Doppelnachrichten)
+  zahlweise: null,
 } satisfies Prisma.OfferWhereInput;
 
 /** Kontakt auf der Sperrliste (Cold-Mail abgemeldet)? */
@@ -237,29 +239,61 @@ async function sendeErinnerung(o: OfferRow, stufe: number, now: Date): Promise<{
 
 /** WhatsApp über die Support-Nummer (nur verbunden und mit freigegebener Vorlage). Wirft nie. */
 export async function sendeZahlungWhatsApp(o: OfferRow, link: string, now = new Date()): Promise<string> {
+  // Fassung 2 (Ole Kannapinn), sobald bei Meta freigegeben, sonst Fassung 1 (Team)
+  return sendeVorlageAnKontakt({
+    salesContactId: o.salesContactId,
+    contactName: o.contactName,
+    du: o.mailDu,
+    vorlage: async () => {
+      const { supportVorlagenNutzbar } = await import("@/lib/vertrieb/termin-whatsapp");
+      return zahlungVorlage(o.mailDu, await supportVorlagenNutzbar());
+    },
+    params: (anrede) => [anrede, o.number, link],
+    activity: "Zahlungserinnerung per WhatsApp gesendet",
+    logRef: o,
+    errorLabel: "zahlungserinnerung-whatsapp",
+    now,
+  });
+}
+
+/**
+ * Vorlage über die Support-Nummer an einen Vertriebskontakt (Zahlungserinnerung zum Angebot, Mahnwesen
+ * lib/mahnwesen-server.ts): nur verbunden, mit freigegebener Vorlage und ohne Abmeldung. Legt die Nachricht im
+ * Support-Chat ab und vermerkt sie im Verlauf. Wirft nie; Ergebnis „sent“ oder der Grund.
+ */
+export async function sendeVorlageAnKontakt(opts: {
+  salesContactId: string | null;
+  contactName: string;
+  du: boolean;
+  vorlage: () => Promise<{ name: string; body: string } | null>;
+  params: (anrede: string) => string[];
+  activity: string;
+  logRef: { dealId: string | null; salesContactId: string | null };
+  errorLabel: string;
+  now?: Date;
+}): Promise<string> {
+  const now = opts.now ?? new Date();
   try {
-    if (!o.salesContactId) return "no_contact";
-    const contact = await prisma.salesContact.findUnique({ where: { id: o.salesContactId }, select: { phone: true, firstName: true, lastName: true, salutation: true } });
+    if (!opts.salesContactId) return "no_contact";
+    const contact = await prisma.salesContact.findUnique({ where: { id: opts.salesContactId }, select: { phone: true, firstName: true, lastName: true, salutation: true } });
     const phone = contact?.phone ? normalizePhone(contact.phone) : null;
     if (!phone) return "no_phone";
     const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { id: true, status: true, apiKeyEnc: true } });
     if (acc?.status !== "connected" || !acc.apiKeyEnc) return "no_account";
-    // Fassung 2 (Ole Kannapinn), sobald bei Meta freigegeben, sonst Fassung 1 (Team)
-    const { supportVorlagenNutzbar } = await import("@/lib/vertrieb/termin-whatsapp");
-    const tpl = zahlungVorlage(o.mailDu, await supportVorlagenNutzbar());
+    const tpl = await opts.vorlage();
     if (!tpl) return "no_template";
     const { name, body } = tpl;
     const prior = await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: phone } }, select: { optedOutAt: true } });
     if (prior?.optedOutAt) return "opted_out";
 
     const clean = (v: string) => v.replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim() || "-";
-    const anrede = o.mailDu
-      ? contact?.firstName?.trim() || o.contactName.trim().replace(/^(herr|frau)\s+/i, "").split(/\s+/)[0]
+    const anrede = opts.du
+      ? contact?.firstName?.trim() || opts.contactName.trim().replace(/^(herr|frau)\s+/i, "").split(/\s+/)[0]
       : // Sie: „Herr Mustermann“ nur bei bekannter Anrede, sonst Vor- und Nachname (nie geraten)
-        anredeName("sie", { salutation: contact?.salutation, firstName: contact?.firstName, lastName: contact?.lastName, fullName: o.contactName }) ||
+        anredeName("sie", { salutation: contact?.salutation, firstName: contact?.firstName, lastName: contact?.lastName, fullName: opts.contactName }) ||
         [contact?.firstName, contact?.lastName].filter(Boolean).join(" ").trim() ||
-        o.contactName.trim();
-    const params = [clean(anrede), clean(o.number), clean(link)].map((v) => v.slice(0, 300));
+        opts.contactName.trim();
+    const params = opts.params(clean(anrede)).map((v) => clean(v).slice(0, 300));
     const { sendTemplate } = await import("@/lib/whatsapp/dialog360");
     const r = await sendTemplate(decryptSecret(acc.apiKeyEnc), phone, name, "de", [{ type: "body", parameters: params.map((text) => ({ type: "text", text })) }]);
     const conv = await prisma.conversation.upsert({
@@ -272,7 +306,7 @@ export async function sendeZahlungWhatsApp(o: OfferRow, link: string, now = new 
         botActive: false,
         status: "open",
         lastMessageAt: now,
-        salesContactId: o.salesContactId,
+        salesContactId: opts.salesContactId,
         contactMatchedAt: now,
       },
       update: { lastMessageAt: now },
@@ -290,10 +324,10 @@ export async function sendeZahlungWhatsApp(o: OfferRow, link: string, now = new 
         pricingCategory: "utility",
       },
     });
-    await logOfferActivity(o, `Zahlungserinnerung per WhatsApp gesendet`);
+    await logOfferActivity(opts.logRef, opts.activity);
     return "sent";
   } catch (err) {
-    reportError(err, "zahlungserinnerung-whatsapp", { offer: o.number });
+    reportError(err, opts.errorLabel, { contact: opts.salesContactId ?? "" });
     return "failed";
   }
 }

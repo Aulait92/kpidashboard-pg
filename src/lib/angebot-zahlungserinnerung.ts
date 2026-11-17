@@ -39,6 +39,8 @@ export type ErinnerungsAngebot = {
   paymentReminderAt: Date | null;
   paymentReminderCount: number;
   paymentReminderLastAt: Date | null;
+  /** „Per Überweisung zahlen“ gewählt (lib/ueberweisung.ts): Rechnung läuft, ab dann übernimmt das Mahnwesen */
+  zahlweise?: string | null;
 };
 
 export type NaechsteErinnerung = {
@@ -56,9 +58,12 @@ export const tagIso = (d: Date | null | undefined): string | null => (d ? isoOf(
 /** YYYY-MM-DD → gespeichertes Datum (12:00 UTC, wie startDate) */
 export const tagDatum = (iso: string): Date => new Date(`${iso}T12:00:00Z`);
 
-/** Zahlung bzw. SEPA-Mandat eingerichtet (Webhook) oder Abo vorhanden. */
-export function zahlungEingerichtet(o: Pick<ErinnerungsAngebot, "paymentStatus" | "stripeSubscriptionId" | "stripeScheduleId">): boolean {
-  return o.paymentStatus === "paid" || o.paymentStatus === "processing" || !!o.stripeSubscriptionId || !!o.stripeScheduleId;
+/**
+ * Zahlung bzw. SEPA-Mandat eingerichtet (Webhook), Abo vorhanden oder Überweisung gewählt (Rechnung verschickt;
+ * Erinnerung und Mahnungen kommen dann aus dem Mahnwesen, lib/mahnwesen-server.ts, keine Doppelnachrichten).
+ */
+export function zahlungEingerichtet(o: Pick<ErinnerungsAngebot, "paymentStatus" | "stripeSubscriptionId" | "stripeScheduleId" | "zahlweise">): boolean {
+  return o.paymentStatus === "paid" || o.paymentStatus === "processing" || !!o.stripeSubscriptionId || !!o.stripeScheduleId || o.zahlweise === "ueberweisung";
 }
 
 /** Grund, nicht (mehr) zu erinnern, oder null. */

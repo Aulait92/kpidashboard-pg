@@ -12,6 +12,8 @@ import { RetainerCard } from "./retainer-card";
 import { BudgetHistoryCard } from "./budget-card";
 import { ProductBookingsCard } from "./produkt-card";
 import { LebenszyklusCard } from "./lebenszyklus-card";
+import { ZahlweiseCard } from "./zahlweise-card";
+import { mahnwesenAktiv } from "@/lib/mahnwesen";
 
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -24,10 +26,10 @@ const STATUS: Record<string, { label: string; tone: "success" | "warning" | "dan
 };
 
 // Reiter „Abrechnung & Pause“.
-export default async function KundenAbrechnung({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; fehler?: string }> }) {
+export default async function KundenAbrechnung({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pause?: string; zusatz?: string; retainer?: string; budget?: string; produkt?: string; zahlweise?: string; fehler?: string }> }) {
   await connection();
   const { id } = await params;
-  const { pause: pauseError, zusatz, retainer, budget, produkt, fehler } = await searchParams;
+  const { pause: pauseError, zusatz, retainer, budget, produkt, zahlweise, fehler } = await searchParams;
   const c = await prisma.customer.findUnique({
     where: { id },
     select: { id: true, name: true, archived: true, stripeCustomerId: true, paymentOverdueSince: true, paymentWarnedAt: true, salesContact: { select: { id: true } } },
@@ -54,9 +56,10 @@ export default async function KundenAbrechnung({ params, searchParams }: { param
           <div className="rounded-[var(--radius-lg)] border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-900">
             <b>Zahlung offen seit {fmt(c.paymentOverdueSince)}.</b>{" "}
             {c.paymentWarnedAt ? `Warnung verschickt am ${fmt(c.paymentWarnedAt)}. ` : ""}
-            Nach 30 Tagen werden die Anzeigen automatisch pausiert.
+            {mahnwesenAktiv() ? "Erinnerung und Mahnungen laufen automatisch (siehe Zahlweise und Mahnungen)." : "Nach 30 Tagen werden die Anzeigen automatisch pausiert."}
           </div>
         ) : null}
+        <ZahlweiseCard customerId={id} message={zahlweise ?? null} failed={!!fehler && !!zahlweise} />
         <LebenszyklusCard customerId={id} />
         <RetainerCard customerId={id} message={retainer ?? null} failed={!!fehler && !!retainer} />
         <BudgetHistoryCard customerId={id} message={budget ?? null} failed={!!fehler && !!budget} />
