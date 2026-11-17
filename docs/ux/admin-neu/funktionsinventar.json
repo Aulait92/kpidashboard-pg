@@ -4956,6 +4956,30 @@
   "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
+  "heute": "/admin/ppl?ansicht=hvk",
+  "funktion": "Versand-Postfach für Pivacom verbinden (Microsoft 365), Status, Testmail in ISO-8859-1",
+  "quelle": "app/admin/ppl/ppl-versand.tsx:PplVersandPostfach",
+  "neu": "Leads & Kampagnen › Pay-per-Lead › HvK-Abrechnungen",
+  "status": "ergänzt (17.11.2026, Versand an Pivacom über Microsoft 365)",
+  "demo_view": "leads-ppl",
+  "id": "ppl-versand-pplversandpostfach--versand-postfach-fuer-pivacom-verbinden",
+  "bereich": "leads",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+ },
+ {
+  "heute": "/admin/ppl?ansicht=hvk",
+  "funktion": "HvK-Abrechnungen neu abgleichen: Vorschau je Woche (geliefert, Differenz, Stornos), dann übernehmen",
+  "quelle": "app/admin/ppl/hvk-client.tsx:HvkReabgleich",
+  "neu": "Leads & Kampagnen › Pay-per-Lead › HvK-Abrechnungen",
+  "status": "ergänzt (17.11.2026, Neuabgleich nach Produktfilter-Fehler)",
+  "demo_view": "leads-ppl",
+  "id": "hvk-client-hvkreabgleich--hvk-abrechnungen-neu-abgleichen-vorschau-je",
+  "bereich": "leads",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+ },
+ {
   "heute": "/admin/vertrieb/import (Anbindungen)",
   "funktion": "Fehlende Instantly-Antworten der letzten 90 Tage nachholen (Vorschau, dann nachholen)",
   "quelle": "components/vertrieb/import-forms.tsx:InstantlyNachholen",
@@ -5050,5 +5074,29 @@
   "bereich": "leads",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
+ },
+ {
+  "heute": "/admin/kunden",
+  "funktion": "Filter Intern/Test: interne Konten und Testkunden mit Badge",
+  "quelle": "app/admin/kunden/(liste)/page.tsx:FILTERS/intern",
+  "neu": "Kunden › Chips › Intern/Test",
+  "status": "ergänzt (17.11.2026, Testkunden finden)",
+  "demo_view": "kunden",
+  "id": "page-filters--filter-intern-test-interne-konten-und-testkunden",
+  "bereich": "kunden",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
+ },
+ {
+  "heute": "Rahmen (alle Admin-Seiten)",
+  "funktion": "Suche findet interne und Test-Kunden mit Badge",
+  "quelle": "app/api/admin/search/route.ts:GET/intern",
+  "neu": "Globale Suche › Kunden",
+  "status": "ergänzt (17.11.2026, Testkunden finden)",
+  "demo_view": "heute",
+  "id": "route-get--suche-findet-interne-und-test-kunden-mit-badge",
+  "bereich": "heute",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/rahmen/suche.tsx"
  }
 ]

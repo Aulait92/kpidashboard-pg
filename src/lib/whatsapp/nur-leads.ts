@@ -186,9 +186,12 @@ export async function alsLeadUebernehmen(opts: { conversationId: string; custome
   if (!leadId) {
     const { EIGEN_CHANNEL } = await import("@/lib/lead-herkunft");
     const stamp = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" }).format(now);
+    const { inboundLeadIsTest } = await import("@/lib/testlead");
     const lead = await prisma.lead.create({
       data: {
         customerId: opts.customerId,
+        // Testkunde bzw. interner Kunde (z. B. Sandbox-Nummer): Testlead, zählt nirgends
+        isTest: await inboundLeadIsTest(opts.customerId),
         adChannel: EIGEN_CHANNEL,
         name: conv.contactName,
         phone: conv.contactPhone,

@@ -31,6 +31,7 @@ export function TestLeadButton({ subscriptionId, targets, last, pdfOnly = false 
                 {t.ok ? "✓" : "✗"} {t.target}
                 {t.blocked ? " (Testumgebung: gesperrt)" : ""}
                 {t.error ? `: ${t.error}` : ""}
+                {t.hinweis ? <span className="text-amber-800">{` (${t.hinweis})`}</span> : null}
               </li>
             ))}
           </ul>

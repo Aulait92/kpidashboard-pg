@@ -38,7 +38,8 @@ vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => "al
 import { prisma } from "@/lib/prisma";
 import { encryptSecret } from "@/lib/encryption";
 import { handleInboundPayload } from "@/lib/whatsapp/gateway";
-import { createTestLead, deleteTestLead } from "@/lib/testlead";
+import { createTestLead, deleteTestLead, testLeadProducts } from "@/lib/testlead";
+import { alsLeadUebernehmen } from "@/lib/whatsapp/nur-leads";
 import { computeKpis } from "@/lib/kpis";
 import { detectForCustomer, sendDue } from "@/lib/capi/server";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
@@ -94,10 +95,10 @@ describe("Testlead", () => {
     waSend.mockImplementation(async () => ({ messageId: `wamid.out-${uid()}`, raw: {} }));
   });
 
-  it("echter Kunde: erst Rückfrage „Der Kunde sieht diesen Lead“, ohne Bestätigung kein Lead", async () => {
+  it("echter Kunde: ohne Häkchen „Verstanden, an echten Kunden senden“ kein Lead", async () => {
     const phone = newPhone();
     const r = await createTestLead({ customerId, name: "Test Lead", product: "PKV Wechsel", phone }, ADMIN);
-    expect(r).toEqual({ ok: false, error: "Der Kunde sieht diesen Lead.", needsConfirm: true });
+    expect(r).toEqual({ ok: false, error: "Echter Kunde: Bitte „Verstanden, an echten Kunden senden“ anhaken.", needsConfirm: true });
     expect(await prisma.lead.count({ where: { customerId, phone } })).toBe(0);
     expect(waSend).not.toHaveBeenCalled();
   });
@@ -198,5 +199,60 @@ describe("Testlead", () => {
     expect(await deleteTestLead(test.id, { customerId })).toEqual({ ok: true, customerId });
     expect(await prisma.lead.count({ where: { id: test.id } })).toBe(0);
     expect(await prisma.capiEvent.count({ where: { leadId: test.id } })).toBe(0);
+  });
+});
+
+describe("Testlead bei Testkunden und internen Kunden (Ole, 17.11.2026)", () => {
+  const ids: string[] = [];
+  const product = `Katzenkrankenversicherung ${uid()}`;
+  let productId = "";
+  let otherId = "";
+
+  beforeAll(async () => {
+    requireTestDb();
+    productId = (await prisma.product.create({ data: { name: product, active: true } })).id;
+    otherId = (await makeCustomer({ name: `Anderer ${uid()}` })).id;
+    ids.push(otherId);
+    vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+  afterAll(async () => {
+    for (const id of ids) await cleanupCustomer(id);
+    await prisma.product.delete({ where: { id: productId } }).catch(() => {});
+  });
+
+  it.each([
+    ["Testkunde", { isTest: true }],
+    ["interner Kunde", { plan: "internal" }],
+  ])("%s: alle aktiven Produkte wählbar, ohne Bestätigung, ohne Buchung; echter Lead derselben Nummer wird ersetzt", async (_l, extra) => {
+    const c = await makeCustomer({ name: `Ole Agentur ${uid()}`, ...extra });
+    ids.push(c.id);
+    expect(await testLeadProducts(c.id)).toContain(product);
+
+    const phone = newPhone();
+    const real = await prisma.lead.create({ data: { customerId: c.id, phone, name: "Echt", source: "PKV Wechsel", status: "Neuer Lead", outreachAt: new Date() } });
+    const otherLeads = await prisma.lead.count({ where: { customerId: otherId } });
+    const r = await createTestLead({ customerId: c.id, product, phone }, ADMIN);
+    expect(r).toMatchObject({ ok: true });
+    if (!r.ok) return;
+    expect(await prisma.lead.count({ where: { id: real.id } })).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: "lead.test_mark", entityId: real.id } })).toBe(1);
+    const lead = await prisma.lead.findUniqueOrThrow({ where: { id: r.leadId } });
+    expect(lead).toMatchObject({ isTest: true, source: product, customerId: c.id });
+    expect(lead.formData).toEqual(expect.arrayContaining([{ label: "Tierart", value: "Katze" }]));
+    expect(await prisma.customerProduct.count({ where: { customerId: c.id } })).toBe(0);
+    expect(await prisma.revenue.count({ where: { customerId: c.id } })).toBe(0);
+    expect(await prisma.lead.count({ where: { customerId: otherId } })).toBe(otherLeads);
+  });
+
+  it("eingehender Chat beim Testkunden: „Als Lead übernehmen“ legt einen Testlead an, beim echten Kunden nicht", async () => {
+    for (const [extra, isTest] of [[{ isTest: true }, true], [{}, false]] as const) {
+      const c = await makeCustomer({ name: `Sandbox ${uid()}`, ...extra });
+      ids.push(c.id);
+      const conv = await prisma.conversation.create({ data: { customerId: c.id, contactPhone: newPhone(), contactName: "Ole" } });
+      const r = await alsLeadUebernehmen({ conversationId: conv.id, customerId: c.id, userId: null });
+      expect(r.ok).toBe(true);
+      if (!r.ok) continue;
+      expect((await prisma.lead.findUniqueOrThrow({ where: { id: r.leadId } })).isTest).toBe(isTest);
+    }
   });
 });

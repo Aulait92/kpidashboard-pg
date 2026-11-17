@@ -166,6 +166,9 @@ Seiten aus der Liste „Seiten“ unten.
 - Liste mit Filter „Alle“ / „Wartet auf Sie“ und Suche.
 - **Selbst schreiben:** Sobald Sie antworten, pausiert der Assistent in diesem Chat. Mit dem Schalter
   „Assistent“ schalten Sie ihn für diesen Chat wieder ein oder aus.
+- **Anrufen:** Tippen Sie in der App auf „Anrufen“ (im Chat, im Kontakt, auf „Heute“ oder in der Anrufliste), pausiert
+  der Assistent für diesen Kontakt, bis Sie unter „Wie lief es?“ das Ergebnis eintragen, höchstens 3 Stunden.
+  „Wie lief es?“ öffnet sich, sobald Sie nach dem Anruf in die App zurückkommen.
 - **24-Stunden-Regel von WhatsApp:** Hat der Kunde länger als 24 Stunden nicht geschrieben, dürfen nur
   freigegebene Vorlagen raus. Dann erscheint „Nachfassen senden“ statt des Textfelds. Antwortet der Kunde,
   können Sie wieder frei schreiben.

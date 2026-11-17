@@ -768,9 +768,12 @@ type RecipientWithCampaign = Prisma.CampaignRecipientGetPayload<{ include: { cam
 async function createCampaignLead(customerId: string, recipient: RecipientWithCampaign, extra: { label: string; value: string }[] = []): Promise<string> {
   const ec = recipient.existingCustomer;
   const occasion = OCCASIONS[recipient.campaign.occasion as Occasion]?.label ?? recipient.campaign.occasion;
+  const { inboundLeadIsTest } = await import("@/lib/testlead");
   const lead = await prisma.lead.create({
     data: {
       customerId,
+      // Testkunde bzw. interner Kunde (z. B. Sandbox-Nummer): Testlead, zählt nirgends
+      isTest: await inboundLeadIsTest(customerId),
       source: BESTAND_SOURCE,
       name: [ec.firstName, ec.lastName].filter(Boolean).join(" ") || ec.company || null,
       phone: ec.phone,

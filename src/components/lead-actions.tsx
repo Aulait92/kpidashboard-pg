@@ -26,7 +26,7 @@ import { TestLeadBadge } from "@/components/test-lead-badge";
 import { eraseLeadAction, setLeadStatusAction, updateLeadDetailsAction } from "@/app/buyer/actions";
 import { startLeadChatAction } from "@/app/buyer/lead-manual-actions";
 import { ManualTerminForm, SlotPicker } from "@/components/lead-booking";
-import { clearFollowUpResult, setFollowUpResult, undoInboxAction } from "@/app/buyer/inbox-actions";
+import { clearFollowUpResult, setFollowUpResult } from "@/app/buyer/inbox-actions";
 import { Button, Card } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
@@ -34,9 +34,9 @@ import { StornoDialog, type StornogrundOption } from "@/components/storno-dialog
 import { PHASE_DOT, findPhaseIn, statusToneClass, type LeadStatus, type PipelinePhase } from "@/lib/products";
 import { formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { CallOutcomeSheet, useCallReturn } from "@/components/call-outcome";
+import { CallOutcomeSheet, useCallReturn, useLeadResult } from "@/components/call-outcome";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
-import { attemptMessage, emitLeadAction, emitNotReachedOffer, LostSheet, useStepDone } from "@/components/next-step";
+import { emitLeadAction, LostSheet, useStepDone } from "@/components/next-step";
 
 // Kopf des Lead-Details: Status antippen → Phase wählen; darunter eine Reihe
 // mit den Aktionen. Alles Seltene steckt unter „Mehr".
@@ -127,23 +127,9 @@ export function LeadHeaderActions(p: Props) {
     });
   }
 
-  function followUp(fn: () => ReturnType<typeof setFollowUpResult>, message: string) {
-    start(async () => {
-      const res = await fn();
-      if (!res.ok) return toast.show({ message: res.error, tone: "error" });
-      const undo = res.undo;
-      toast.show({
-        message: res.attempt ? attemptMessage(message, res.attempt) : message,
-        ...(undo
-          ? { actionLabel: "Rückgängig", onAction: () => start(async () => { await undoInboxAction(undo); router.refresh(); }) }
-          : {}),
-      });
-      router.refresh();
-      // Nach „nicht erreicht“: Nachricht anbieten; sonst prüfen, ob es einen nächsten Schritt gibt
-      if (res.attempt && !res.attempt.offered) emitNotReachedOffer(p.leadId, p.name ?? "Lead", res.attempt);
-      else if (!res.attempt) emitLeadAction(p.leadId);
-    });
-  }
+  // Toast mit „Rückgängig“; nach „nicht erreicht“ Nachricht anbieten, sonst nach dem nächsten Schritt fragen
+  const leadResult = useLeadResult(p.leadId, p.name ?? "Lead");
+  const followUp = (fn: () => ReturnType<typeof setFollowUpResult>, message: string) => leadResult(message, fn);
 
   // Verloren mit Grund, auch über das Status-Menü (Ole, 16.11.2026)
   const LOST_KEYS_ALL = new Set(["kein-interesse", "disqualifiziert", "verloren"]);

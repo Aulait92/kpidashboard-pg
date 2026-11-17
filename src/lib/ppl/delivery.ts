@@ -36,7 +36,8 @@ export type DeliveryLead = {
   test?: boolean;
 };
 
-export type DeliveryTarget = { target: string; ok: boolean; error?: string; blocked?: boolean };
+/** hinweis: zugestellt, aber mit Vorbehalt (z. B. Pivacom über Resend, weil das Versand-Postfach nicht verbunden ist) */
+export type DeliveryTarget = { target: string; ok: boolean; error?: string; blocked?: boolean; hinweis?: string };
 export type DeliveryChannel = "app" | "app_pdf" | "email" | "webhook";
 export type DeliveryReport = {
   channel: DeliveryChannel;
@@ -45,6 +46,8 @@ export type DeliveryReport = {
   targets: DeliveryTarget[];
   ok: boolean;
   error?: string;
+  /** Hinweis trotz Zustellung (Admin-Push, Slack), z. B. „Versand-Postfach nicht verbunden“ */
+  hinweis?: string;
 };
 
 /** Art der Lead-Mail am Bezug. */
@@ -59,17 +62,33 @@ export const APP_TARGET = "Kundenbereich";
 export const APP_PDF_LABEL = "Kundenbereich + PDF per Mail";
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-type SendFn = (address: string) => Promise<{ ok: boolean; error?: string; blocked?: boolean }>;
+type SendResult = { ok: boolean; error?: string; blocked?: boolean; hinweis?: string };
+type SendFn = (address: string) => Promise<SendResult>;
 
 /** Je Adresse eine eigene Mail (Empfänger sehen sich nicht, ein Fehler hält die anderen nicht auf). */
 async function sendEach(to: string[], send: SendFn): Promise<DeliveryTarget[]> {
   const targets: DeliveryTarget[] = [];
   for (const [i, address] of to.entries()) {
     if (i > 0) await pause(400); // Resend: wenige Anfragen je Sekunde
-    const res: { ok: boolean; error?: string; blocked?: boolean } = await send(address).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
-    targets.push({ target: address, ok: res.ok, ...(res.ok ? {} : { error: res.error }), ...(res.blocked ? { blocked: true } : {}) });
+    const res: SendResult = await send(address).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
+    targets.push({ target: address, ok: res.ok, ...(res.ok ? {} : { error: res.error }), ...(res.blocked ? { blocked: true } : {}), ...(res.hinweis ? { hinweis: res.hinweis } : {}) });
   }
   return targets;
+}
+
+export const VERSAND_NICHT_VERBUNDEN = "Versand-Postfach nicht verbunden";
+
+/**
+ * Latin-1-Mail (Pivacom): über das Microsoft-365-Versand-Postfach (lib/ppl/versand-postfach.ts), weil Resend den
+ * Zeichensatz auf utf-8 umschreibt. Ist es nicht verbunden: wie bisher über Resend-SMTP, mit Hinweis bzw. Fehlertext.
+ */
+async function sendLatin1(mail: { to: string; subject: string; text: string }): Promise<SendResult> {
+  const v = await import("@/lib/ppl/versand-postfach");
+  if (await v.versandPostfachVerbunden()) return v.sendViaVersandPostfach(mail);
+  const r = await sendPlainMailLatin1(mail);
+  if (r.blocked) return r;
+  const hinweis = `${VERSAND_NICHT_VERBUNDEN}, über Resend gesendet (Pivacom lehnt das wahrscheinlich ab)`;
+  return r.ok ? { ok: true, hinweis } : { ok: false, error: `${VERSAND_NICHT_VERBUNDEN}, Ersatzweg Resend: ${r.error ?? "Fehler"}` };
 }
 
 const failText = (targets: DeliveryTarget[]) =>
@@ -150,7 +169,7 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
       const body = lead.test ? `TEST: Dies ist ein Testdatensatz, bitte nicht bearbeiten.\n\n${text}` : text;
       // Pivacom (HvK) nimmt nur ISO-8859-1 an (Ole, 17.11.2026): für diese Empfänger eigene Latin-1-Mail
       const { brauchtLatin1 } = await import("@/lib/mail/latin1");
-      send = (address) => (brauchtLatin1(address) ? sendPlainMailLatin1({ to: address, subject, text: body }) : sendPlainMail({ to: address, subject, text: body }));
+      send = (address) => (brauchtLatin1(address) ? sendLatin1({ to: address, subject, text: body }) : sendPlainMail({ to: address, subject, text: body }));
     } else {
       send = (address) =>
         sendCustomerMail({
@@ -171,7 +190,8 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
     }
     const targets = await sendEach(to, send);
     const error = failText(targets);
-    return { channel: "email", label: MAIL_LABEL[kind], targets, ok: !error, ...(error ? { error } : {}) };
+    const hinweis = [...new Set(targets.flatMap((t) => (t.hinweis ? [`${t.target}: ${t.hinweis}`] : [])))].join("; ");
+    return { channel: "email", label: MAIL_LABEL[kind], targets, ok: !error, ...(error ? { error } : {}), ...(hinweis ? { hinweis } : {}) };
   }
 
   // webhook
@@ -259,6 +279,13 @@ export async function sendDelivery(leadId: string, sub: Sub): Promise<DeliveryRe
       body: `${sub.label ?? sub.productKey}: ${report.error ?? "unbekannter Fehler"}. Lead ist gespeichert, bitte von Hand nachliefern.`,
       url: `/admin/ppl`,
       tag: `ppl-fail:${sub.id}`,
+    }).catch(() => {});
+  } else if (report.hinweis) {
+    await sendToAdmins({
+      title: `⚠️ ${VERSAND_NICHT_VERBUNDEN}`,
+      body: `${sub.label ?? sub.productKey}: ${report.hinweis}. Bitte unter Pay-per-Lead › HvK-Abrechnungen verbinden und den Lead nochmal zustellen.`,
+      url: `/admin/ppl?ansicht=hvk`,
+      tag: "ppl-versand-postfach",
     }).catch(() => {});
   }
   return report;

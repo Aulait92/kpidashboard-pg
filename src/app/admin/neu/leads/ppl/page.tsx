@@ -16,6 +16,8 @@ import { assignParkedAction, decideStornoAction, discardParkedAction } from "@/a
 import { ImportButton } from "@/app/admin/ppl/import/import-button";
 import { SlackTest } from "@/app/admin/ppl/slack-test";
 import { HvkAbrechnungen, HvkReklamationenReview } from "@/app/admin/ppl/hvk-abrechnungen";
+import { PplVersandPostfach } from "@/app/admin/ppl/ppl-versand";
+import { HvkReabgleich } from "@/app/admin/ppl/hvk-client";
 import { AirtableNachholen } from "@/app/admin/ppl/nachholen";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 
@@ -26,7 +28,8 @@ export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 //   Auswertung: Übersicht je Kunde und Auswertung mit Zeitraum/Produkt untereinander
 //   Eingang: alle Pool-Leads mit Ergebnis
 //   HvK-Abrechnungen: Gutschriften je Woche (gleicher Baustein wie /admin/ppl?ansicht=hvk); offene
-//   HvK-Reklamationen stehen auf dem Start bei „Storno prüfen“
+//   HvK-Reklamationen stehen auf dem Start bei „Storno prüfen“; darin oben die Zeile „Versand an Pivacom“
+//   (Microsoft-365-Versand-Postfach, ppl-versand.tsx)
 // Gelieferte Leads (Suche, Storno von Hand) → Alle Leads › „Pay-per-Lead geliefert“; Media Buyer → Werbekonten.
 // Alte Adressen (?ansicht=storno|geparkt|uebersicht|geliefert, Push-Ziele) werden verstanden.
 // „Aus Airtable übernehmen“ ist selten: Ansicht ?ansicht=import ohne eigenen Schalter.
@@ -44,7 +47,7 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   invalid: { label: "ungültig", tone: "danger" },
 };
 
-type Suche = { ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; gespeichert?: string; postfach?: string };
+type Suche = { ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; gespeichert?: string; postfach?: string; versand?: string };
 
 export default async function Page({ searchParams }: { searchParams: Promise<Suche> }) {
   const sp = await searchParams;
@@ -92,7 +95,19 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
         ) : ansicht === "eingang" ? (
           <Eingang />
         ) : ansicht === "hvk" ? (
-          <HvkAbrechnungen postfach={sp.postfach} />
+          <HvkAbrechnungen
+            postfach={sp.postfach}
+            versand={
+              <div data-funktion="ppl-versand-pplversandpostfach--versand-postfach-fuer-pivacom-verbinden">
+                <PplVersandPostfach meldung={sp.versand} />
+              </div>
+            }
+            abgleich={
+              <div data-funktion="hvk-client-hvkreabgleich--hvk-abrechnungen-neu-abgleichen-vorschau-je">
+                <HvkReabgleich />
+              </div>
+            }
+          />
         ) : ansicht === "import" ? (
           <Import />
         ) : (

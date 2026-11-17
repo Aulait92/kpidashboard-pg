@@ -18,6 +18,8 @@ export type SearchHit = {
   match?: string;
   /** Zusatzknopf unter dem Treffer, z. B. „Als weitere Nummer übernehmen“: POST (JSON) an url, Antwort { text } */
   action?: { label: string; url: string; body: Record<string, string> };
+  /** Kennzeichen neben dem Titel, z. B. „Intern“ oder „Test“ */
+  badge?: string;
 };
 
 const noop = () => () => {};
@@ -274,7 +276,10 @@ export function SearchDialog({
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium">{h.title}</span>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate text-[15px] font-medium">{h.title}</span>
+                      {h.badge ? <span className="badge shrink-0 bg-amber-100 text-amber-900">{h.badge}</span> : null}
+                    </span>
                     <span className="block truncate text-[13px] text-[color:var(--muted)]">{h.subtitle}</span>
                     {h.match ? <span className="block text-[13px] text-[color:var(--foreground)]">{h.match}</span> : null}
                   </span>

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FlaskConical, Trash2 } from "lucide-react";
+import { AlertTriangle, FlaskConical, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { deleteTestLeadAdminAction, sendTestLeadAction } from "./testlead-actions";
@@ -12,17 +12,21 @@ const field = "h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(-
 
 /**
  * Admin → Kunde → Leads: „Testlead schicken“. Ein Lead an die eigene Nummer läuft durch den echten Ablauf
- * (Push, Erstanschreiben, Assistent, Termin), zählt aber nirgends. Bei echten Kunden mit Rückfrage.
+ * (Push, Erstanschreiben, Assistent, Termin), zählt aber nirgends. Bei echten Kunden (weder Testkunde noch intern)
+ * Warnhinweis oben und Pflicht-Häkchen, ohne Häkchen ist „Senden“ aus (die Action lehnt ohne Bestätigung ebenfalls ab).
  */
 export function TestLeadButton({
   customerId,
   testCustomer,
+  realCustomerName = null,
   products,
   defaultPhone,
   leadAddress = "sie",
 }: {
   customerId: string;
   testCustomer: boolean;
+  /** Name des Kunden, wenn er echt ist (weder Testkunde noch intern): Warnhinweis und Pflicht-Häkchen. */
+  realCustomerName?: string | null;
   products: string[];
   defaultPhone: string | null;
   /** Ansprache der Leads laut Kunde; bei Testkunden hier umstellbar. */
@@ -30,7 +34,8 @@ export function TestLeadButton({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"form" | "confirm" | "done">("form");
+  const [step, setStep] = useState<"form" | "done">("form");
+  const [confirmed, setConfirmed] = useState(false);
   const [name, setName] = useState("Test Lead");
   const [product, setProduct] = useState(products[0] ?? "");
   const [phone, setPhone] = useState(defaultPhone ?? "");
@@ -56,20 +61,18 @@ export function TestLeadButton({
   const close = () => {
     setOpen(false);
     setStep("form");
+    setConfirmed(false);
     setError(null);
     setDone(null);
   };
 
-  const send = (confirmed: boolean) => {
+  const blocked = realCustomerName != null && !confirmed;
+  const send = () => {
     setError(null);
     start(async () => {
       const r = await sendTestLeadAction({ customerId, name, product, phone, confirmed, herkunft, ansprache });
       if (!r.ok) {
-        if (r.needsConfirm) setStep("confirm");
-        else {
-          setStep("form");
-          setError(r.error);
-        }
+        setError(r.error);
         return;
       }
       try {
@@ -94,9 +97,17 @@ export function TestLeadButton({
             className="space-y-3 p-5"
             onSubmit={(e) => {
               e.preventDefault();
-              send(testCustomer);
+              if (!blocked) send();
             }}
           >
+            {realCustomerName != null ? (
+              <p className="flex items-start gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert" data-testlead-echt>
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  <b>Echter Kunde:</b> Der Lead erscheint bei {realCustomerName}, der Assistent schreibt von dessen Nummer.
+                </span>
+              </p>
+            ) : null}
             <label className="block text-sm">
               <span className="mb-1 block font-medium">Name</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className={field} />
@@ -147,25 +158,17 @@ export function TestLeadButton({
               />
               <span className="mt-1 block text-xs text-[color:var(--muted)]">Dorthin schreibt der Assistent per WhatsApp.</span>
             </label>
+            {realCustomerName != null ? (
+              <label className="flex min-h-11 items-center gap-3 text-sm font-medium">
+                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="h-5 w-5 shrink-0" data-testlead-confirm />
+                Verstanden, an echten Kunden senden
+              </label>
+            ) : null}
             {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
-            <Button type="submit" variant="primary" size="md" disabled={pending || !product} className="w-full">
+            <Button type="submit" variant="primary" size="md" disabled={pending || !product || blocked} className="w-full">
               {pending ? "Wird geschickt…" : "Testlead schicken"}
             </Button>
           </form>
-        ) : step === "confirm" ? (
-          <div className="space-y-3 p-5" data-testlead-confirm>
-            <p className="text-[15px] font-semibold">Der Kunde sieht diesen Lead</p>
-            <p className="text-sm text-[color:var(--muted)]">Er bekommt Push und Mail, der Lead steht mit Abzeichen „Test“ in seinen Kontakten.</p>
-            {error ? <p className="text-sm font-medium text-rose-700">{error}</p> : null}
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="md" onClick={() => setStep("form")} disabled={pending}>
-                Zurück
-              </Button>
-              <Button variant="primary" size="md" onClick={() => send(true)} disabled={pending}>
-                {pending ? "Wird geschickt…" : "Trotzdem schicken"}
-              </Button>
-            </div>
-          </div>
         ) : (
           <div className="space-y-3 p-5" data-testlead-done>
             <p className="text-[15px] font-semibold text-emerald-700">Testlead ist angelegt.</p>

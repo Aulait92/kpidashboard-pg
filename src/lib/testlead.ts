@@ -18,7 +18,8 @@ import { normalizePhone } from "@/lib/whatsapp/phone";
 import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 
 export const TEST_LEAD_DEFAULT_NAME = "Test Lead";
-export const TEST_LEAD_CONFIRM_TEXT = "Der Kunde sieht diesen Lead";
+/** Pflicht-Häkchen bei echten Kunden (Dialog und Fehlermeldung der Action). */
+export const TEST_LEAD_CONFIRM_LABEL = "Verstanden, an echten Kunden senden";
 /** Rückmeldung bei einem eingehenden Testlead: kein Erstanschreiben, der Admin schreibt zuerst. */
 export const TEST_EINGEHEND_TEXT = "Jetzt selbst an die WhatsApp-Nummer des Kunden schreiben: Der Assistent antwortet wie bei einer eingehenden Anfrage.";
 
@@ -48,9 +49,45 @@ export async function logIfTestLead(leadId: string | null | undefined, step: str
   }
 }
 
-/** Produkte für die Auswahl: gebuchte Produkte des Kunden, Leadformulare und zuletzt genutzte Produkte. */
+/**
+ * Testkunde (Customer.isTest) oder interner Kunde (plan „internal“): Testleads ohne Bestätigung, Auswahl aller aktiven
+ * Produkte. Alle anderen sind echte Kunden: der Lead erscheint bei ihnen, nur mit ausdrücklicher Bestätigung.
+ */
+export function isTestLeadSandbox(c: { isTest?: boolean | null; plan?: string | null } | null | undefined): boolean {
+  return !!c && (!!c.isTest || c.plan === "internal");
+}
+
+/**
+ * Neue Leads aus eingehenden Chats (WhatsApp „Als Lead übernehmen“, Empfehlungscode, Antwort auf eine Kampagne):
+ * bei Testkunden und internen Kunden als Testlead (Ole, 17.11.2026; die Sandbox-Nummer gehört einem Testkunden).
+ */
+export async function inboundLeadIsTest(customerId: string): Promise<boolean> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { isTest: true, plan: true } });
+  return isTestLeadSandbox(c);
+}
+
+/** Namen zusammenführen: Reihenfolge bleibt, leere und doppelte (ohne Groß-/Kleinschreibung) fallen weg. */
+export function mergeProductNames(...lists: string[][]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const n of lists.flat()) {
+    const name = n.trim();
+    const key = name.toLowerCase();
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
+/**
+ * Produkte für die Auswahl: gebuchte Produkte des Kunden, Leadformulare und zuletzt genutzte Produkte. Testkunden und
+ * interne Kunden (Ole, 17.11.2026) bekommen dahinter alle übrigen aktiven Produkte, damit jedes Produkt testbar ist;
+ * echte Kunden ohne bekannte Produkte ebenfalls alle aktiven.
+ */
 export async function testLeadProducts(customerId: string): Promise<string[]> {
-  const [cps, sources, recent] = await Promise.all([
+  const [customer, cps, sources, recent] = await Promise.all([
+    prisma.customer.findUnique({ where: { id: customerId }, select: { isTest: true, plan: true } }),
     prisma.customerProduct.findMany({ where: { customerId }, select: { product: { select: { name: true } } } }),
     prisma.leadSource.findMany({ where: { customerId, active: true }, select: { productKey: true } }),
     prisma.lead.findMany({
@@ -61,11 +98,14 @@ export async function testLeadProducts(customerId: string): Promise<string[]> {
       select: { source: true },
     }),
   ]);
-  const names = [...cps.map((c) => c.product.name), ...sources.map((s) => s.productKey), ...recent.map((l) => l.source ?? "")];
-  const out = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
-  if (out.length) return out;
+  const known = mergeProductNames(
+    cps.map((c) => c.product.name),
+    sources.map((s) => s.productKey),
+    recent.map((l) => l.source ?? ""),
+  );
+  if (known.length && !isTestLeadSandbox(customer)) return known;
   const all = await prisma.product.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { name: true } });
-  return all.map((p) => p.name);
+  return mergeProductNames(known, all.map((p) => p.name));
 }
 
 /** meta = Leadformular, der Assistent schreibt zuerst; eingehend = der Lead schreibt zuerst per WhatsApp. */
@@ -237,21 +277,31 @@ export async function deleteTestLead(leadId: string, opts: { customerId?: string
 }
 
 /**
- * Testlead anlegen und durch den echten Ablauf schicken (processNewLead). Bei echten Kunden (nicht Testkunde) nur mit
- * Bestätigung „Der Kunde sieht diesen Lead“. Setzt den Einrichtungsschritt „Testlead durchgespielt“.
+ * Testlead anlegen und durch den echten Ablauf schicken (processNewLead). Bei echten Kunden (weder Testkunde noch intern)
+ * nur mit Bestätigung (Häkchen „Verstanden, an echten Kunden senden“). Setzt den Einrichtungsschritt „Testlead durchgespielt“.
  */
 export async function createTestLead(input: TestLeadInput, actor: AuditActor, now = new Date()): Promise<CreateTestLeadResult> {
   const checked = checkTestLeadInput(input);
   if (!checked.ok) return checked;
   const { name, product, phone } = checked;
-  const customer = await prisma.customer.findUnique({ where: { id: input.customerId }, select: { id: true, isTest: true, dormantSince: true, leadAddress: true } });
+  const customer = await prisma.customer.findUnique({ where: { id: input.customerId }, select: { id: true, isTest: true, plan: true, dormantSince: true, leadAddress: true } });
   if (!customer) return { ok: false, error: "Kunde nicht gefunden." };
   if (customer.dormantSince) return { ok: false, error: "Das Konto ruht (Vertrag beendet): keine Leads." };
-  if (!customer.isTest && !input.confirmed) return { ok: false, error: `${TEST_LEAD_CONFIRM_TEXT}.`, needsConfirm: true };
+  if (!isTestLeadSandbox(customer) && input.confirmed !== true) {
+    return { ok: false, error: `Echter Kunde: Bitte „${TEST_LEAD_CONFIRM_LABEL}“ anhaken.`, needsConfirm: true };
+  }
 
-  // Nummer gehört zu einem echten Lead dieses Kunden: nicht anfassen
-  const real = await prisma.lead.count({ where: { customerId: customer.id, phone, isTest: false } });
-  if (real) return { ok: false, error: "Diese Nummer gehört bei diesem Kunden zu einem echten Lead. Bitte eine andere Nummer nehmen." };
+  // Nummer gehört zu einem echten Lead dieses Kunden: bei echten Kunden nicht anfassen. Bei Testkunden und internen
+  // Kunden (Ole, 17.11.2026) wird er als Test markiert und unten wie ein voriger Testlead ersetzt.
+  const real = await prisma.lead.findMany({ where: { customerId: customer.id, phone, isTest: false }, select: { id: true, name: true } });
+  if (real.length && !isTestLeadSandbox(customer)) {
+    return { ok: false, error: "Diese Nummer gehört bei diesem Kunden zu einem echten Lead. Bitte eine andere Nummer nehmen." };
+  }
+  for (const r of real) {
+    await prisma.lead.update({ where: { id: r.id }, data: { isTest: true } });
+    console.log(testLeadLine(r.id, "marked test", { customer: customer.id }));
+    await audit("lead.test_mark", { entity: "Lead", entityId: r.id, customerId: customer.id, details: { name: r.name, grund: "Testlead an dieselbe Nummer" }, actor });
+  }
 
   // Frischer Durchlauf: Chat zurücksetzen (Fenster bleibt), vorige Testleads mit dieser Nummer ersetzen
   const conv = await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId: customer.id, contactPhone: phone } }, select: { id: true } });

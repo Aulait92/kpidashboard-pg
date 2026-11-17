@@ -7,7 +7,7 @@ import { isStorno } from "@/lib/admin-leads";
 import { MetaAccountCard } from "./meta-account-card";
 import { CapiCard } from "./capi-card";
 import { TestLeadBadge } from "@/components/test-lead-badge";
-import { testLeadProducts } from "@/lib/testlead";
+import { isTestLeadSandbox, testLeadProducts } from "@/lib/testlead";
 import { TestLeadButton, TestLeadDeleteButton } from "./testlead-button";
 
 const fmt = (d: Date) =>
@@ -19,7 +19,7 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
   await connection();
   const { id } = await params;
   const [customer, sources, leads, total, products] = await Promise.all([
-    prisma.customer.findUnique({ where: { id }, select: { metaAdAccountId: true, isTest: true, leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id }, select: { name: true, metaAdAccountId: true, isTest: true, plan: true, leadAddress: true } }),
     prisma.leadSource.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" } }),
     prisma.lead.findMany({
       where: { customerId: id },
@@ -78,7 +78,14 @@ export default async function KundenLeads({ params }: { params: Promise<{ id: st
           actions={
             <div className="flex items-center gap-3">
               {/* Admin-Profil hat keine eigene Telefonnummer: leer mit Platzhalter, zuletzt genutzte Nummer aus dem Browser */}
-              <TestLeadButton customerId={id} testCustomer={!!customer?.isTest} products={products} defaultPhone={null} leadAddress={customer?.leadAddress === "du" ? "du" : "sie"} />
+              <TestLeadButton
+                customerId={id}
+                testCustomer={!!customer?.isTest}
+                realCustomerName={customer && !isTestLeadSandbox(customer) ? customer.name : null}
+                products={products}
+                defaultPhone={null}
+                leadAddress={customer?.leadAddress === "du" ? "du" : "sie"}
+              />
               <Link href={`/admin/leads?kunde=${id}`} className="hidden text-sm font-medium text-[color:var(--brand)] hover:underline sm:inline">
                 Alle anzeigen →
               </Link>

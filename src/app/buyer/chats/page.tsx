@@ -25,6 +25,8 @@ import {
 } from "../chat-actions";
 import { nowMs } from "@/lib/now";
 import { NextStepPrompt } from "@/components/next-step";
+import { AnrufLink } from "@/components/call-outcome";
+import { isNewUi } from "@/lib/new-ui";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
 // Strikte Mandantentrennung: alle Abfragen mit customerId des Buyers.
@@ -211,7 +213,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           windowExpiresAt: true,
           optedOutAt: true,
           lead: {
-            select: { id: true, source: true, status: true, formData: true, createdAt: true },
+            select: { id: true, name: true, source: true, status: true, formData: true, createdAt: true, followUpAt: true },
           },
           messages: {
             orderBy: { createdAt: "asc" },
@@ -240,14 +242,19 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
   const windowOpen =
     !!active?.windowExpiresAt && active.windowExpiresAt.getTime() > nowMs();
   const followup = active && !windowOpen ? await chooseFollowup(active.id) : null;
+  // „Anrufen“ wie im Kontakt (Ole, 17.11.2026): Assistent pausiert, danach „Wie lief es?“ (components/call-outcome.tsx)
+  const anrufLead =
+    active?.lead && (await isNewUi(ctx.customerId))
+      ? { id: active.lead.id, name: active.contactName ?? active.lead.name ?? "Lead", source: active.lead.source, followUp: !!active.lead.followUpAt }
+      : null;
 
   const leadInfo = active ? (
     <div className="space-y-5 text-sm">
       <InfoSection title="Kontakt">
         <InfoRow label="Telefon">
-          <a href={`tel:+${active.contactPhone}`} className="text-[color:var(--brand)] hover:underline">
+          <AnrufLink lead={anrufLead} href={`tel:+${active.contactPhone}`} className="text-[color:var(--brand)] hover:underline">
             {formatPhone(active.contactPhone)}
-          </a>
+          </AnrufLink>
         </InfoRow>
         {active.contactEmail ? (
           <InfoRow label="E-Mail">
@@ -329,9 +336,9 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
 
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-6 sm:py-6 lg:px-8">
-      {/* Chat übernommen bzw. selbst geantwortet: fragen, wie es mit dem Lead weitergeht (falls kein Schritt) */}
-      {sp.schritt === "1" && active?.lead ? (
-        <NextStepPrompt leadId={active.lead.id} name={active.contactName ?? "Lead"} source={active.lead.source} autoOpen />
+      {/* Chat übernommen bzw. Ergebnis nach „Anrufen“: fragen, wie es mit dem Lead weitergeht (falls kein Schritt) */}
+      {active?.lead ? (
+        <NextStepPrompt key={active.lead.id} leadId={active.lead.id} name={active.contactName ?? "Lead"} source={active.lead.source} autoOpen={sp.schritt === "1"} />
       ) : null}
       <div className="hidden sm:block">
         <PageHeader
@@ -490,14 +497,16 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     </div>
                   )}
                 </div>
-                <a
+                <AnrufLink
+                  lead={anrufLead}
                   href={`tel:+${active.contactPhone}`}
                   aria-label="Anrufen"
                   title={formatPhone(active.contactPhone)}
                   className="inline-flex h-10 w-10 items-center sm:h-9 sm:w-9 justify-center rounded-full bg-[color:var(--brand)] text-white hover:bg-[color:var(--brand-dark)]"
+                  data-chat-anrufen
                 >
                   <Phone className="h-4 w-4" />
-                </a>
+                </AnrufLink>
                 {active.lead ? (
                   <Link
                     href={`/buyer/leads/${active.lead.id}`}

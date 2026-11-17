@@ -18,6 +18,8 @@ import { ErneutZustellen } from "./erneut-zustellen";
 import { SlackTest } from "./slack-test";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 import { HvkAbrechnungen, HvkReklamationenReview } from "./hvk-abrechnungen";
+import { PplVersandPostfach } from "./ppl-versand";
+import { HvkReabgleich } from "./hvk-client";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -33,10 +35,10 @@ const POOL_STATUS: Record<string, { label: string; tone: "success" | "warning" |
   invalid: { label: "ungültig", tone: "danger" },
 };
 
-export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; postfach?: string }> }) {
+export default async function PplPage({ searchParams }: { searchParams: Promise<{ ansicht?: string; zeitraum?: string; produkt?: string; q?: string; bezug?: string; postfach?: string; versand?: string }> }) {
   const session = await getCurrentSession();
   if (!session || session.role !== "ADMIN") redirect("/login");
-  const { ansicht = "", zeitraum, produkt, q, bezug, postfach } = await searchParams;
+  const { ansicht = "", zeitraum, produkt, q, bezug, postfach, versand } = await searchParams;
   const [subs, parkedCount, leadReviewCount, hvkOpenCount] = await Promise.all([
     prisma.leadSubscription.findMany({ include: { customer: { select: { name: true } } }, orderBy: [{ productKey: "asc" }, { active: "desc" }, { createdAt: "asc" }] }),
     prisma.poolLead.count({ where: { status: "parked" } }),
@@ -106,7 +108,7 @@ export default async function PplPage({ searchParams }: { searchParams: Promise<
           <Review hideEmpty={hvkOpenCount > 0} />
         </div>
       ) : ansicht === "hvk" ? (
-        <HvkAbrechnungen postfach={postfach} />
+        <HvkAbrechnungen postfach={postfach} versand={<PplVersandPostfach meldung={versand} />} abgleich={<HvkReabgleich />} />
       ) : ansicht === "geliefert" ? (
         <Delivered subs={subs} q={q ?? ""} bezug={bezug ?? ""} />
       ) : ansicht === "eingang" ? (

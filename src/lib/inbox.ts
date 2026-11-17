@@ -185,7 +185,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     }),
   ]);
   const followUpIds = new Set(followUps.map((f) => f.id));
-  // Angerufen, aber noch kein Ergebnis (älter als 2 Minuten, höchstens 12 Stunden)
+  // Angerufen, aber noch kein Ergebnis (älter als 2 Minuten, höchstens 3 Stunden)
   const openCalls = await prisma.lead.findMany({
     where: { ...leadScope(ctx), callStartedAt: { lt: new Date(now.getTime() - 2 * 60 * 1000), gt: new Date(now.getTime() - CALL_PAUSE_MAX_MS) } },
     orderBy: { callStartedAt: "desc" },

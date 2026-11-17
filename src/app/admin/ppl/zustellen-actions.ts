@@ -23,5 +23,5 @@ export async function erneutZustellenAction(_prev: ZustellenState, fd: FormData)
   revalidatePath("/admin/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
   const ziele = report.targets.map((t) => `${t.target} ${t.ok ? "✓" : `✗ ${t.error ?? ""}`}`).join(", ");
-  return report.ok ? { message: `Erneut zugestellt: ${ziele || report.label}.` } : { error: `Nicht zugestellt: ${report.error ?? ziele}` };
+  return report.ok ? { message: `Erneut zugestellt: ${ziele || report.label}.${report.hinweis ? ` Achtung: ${report.hinweis}.` : ""}` } : { error: `Nicht zugestellt: ${report.error ?? ziele}` };
 }

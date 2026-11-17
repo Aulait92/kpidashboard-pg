@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { packageLabel } from "@/lib/customer-package";
+import { packageLabel, testKennung } from "@/lib/customer-package";
 import { connection } from "next/server";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
@@ -21,7 +22,14 @@ const FILTERS = [
   { key: "pausiert", label: "Pausiert" },
   // Ruhende Konten (Vertrag beendet, lib/ruhend.ts) sind archiviert und sonst ausgeblendet
   { key: "ruhend", label: "Ruhend" },
+  // Interne Konten (plan „internal“, z. B. Oles Testkunde) und Testkunden; sonst ausgeblendet (Ole, 17.11.2026)
+  { key: "intern", label: "Intern/Test" },
 ] as const;
+// Ruhende und Intern/Test sind eigene Mengen neben der normalen Liste (Anzahl „Alle“ und Umsatz bleiben gleich)
+const EIGENE: Record<string, Prisma.CustomerWhereInput> = {
+  ruhend: { plan: { not: "internal" }, dormantSince: { not: null }, dataDeletedAt: null },
+  intern: { OR: [{ plan: "internal" }, { isTest: true }], dataDeletedAt: null },
+};
 
 // Alle Kunden auf einen Blick; Klick öffnet die Kundenakte.
 export default async function KundenUebersicht({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
@@ -29,27 +37,29 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
   const { filter: rawFilter = "" } = await searchParams;
   const filter = FILTERS.some((f) => f.key === rawFilter) ? rawFilter : "";
   const since = daysAgo(30);
-  const customers = await prisma.customer.findMany({
-    where: filter === "ruhend" ? { plan: { not: "internal" }, dormantSince: { not: null }, dataDeletedAt: null } : { plan: { not: "internal" }, archived: false },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      isTest: true,
-      plan: true,
-      retainerMonthly: true,
-      paymentOverdueSince: true,
-      onboarding: { select: { id: true } },
-      salesContact: { select: { customerStage: true, monthlyValue: true } },
-      pauses: { where: { status: "active" }, select: { kind: true }, take: 1 },
-      _count: { select: { leads: { where: { createdAt: { gte: since } } }, users: { where: { role: "BUYER" } } } },
-    },
-  });
-  const dormantCount = await prisma.customer.count({ where: { plan: { not: "internal" }, dormantSince: { not: null }, dataDeletedAt: null } });
+  const select = {
+    id: true,
+    name: true,
+    isTest: true,
+    plan: true,
+    retainerMonthly: true,
+    paymentOverdueSince: true,
+    onboarding: { select: { id: true } },
+    salesContact: { select: { customerStage: true, monthlyValue: true } },
+    pauses: { where: { status: "active" }, select: { kind: true }, take: 1 },
+    _count: { select: { leads: { where: { createdAt: { gte: since } } }, users: { where: { role: "BUYER" } } } },
+  } satisfies Prisma.CustomerSelect;
+  const [customers, eigene, dormantCount, internCount] = await Promise.all([
+    prisma.customer.findMany({ where: { plan: { not: "internal" }, archived: false }, orderBy: { name: "asc" }, select }),
+    EIGENE[filter] ? prisma.customer.findMany({ where: EIGENE[filter], orderBy: { name: "asc" }, select }) : null,
+    prisma.customer.count({ where: EIGENE.ruhend }),
+    prisma.customer.count({ where: EIGENE.intern }),
+  ]);
+  const geladen = [...customers, ...(eigene ?? [])];
   const [progress, steps] = await Promise.all([
-    onboardingProgressFor(customers.filter((c) => c.onboarding).map((c) => c.id)),
+    onboardingProgressFor(geladen.filter((c) => c.onboarding).map((c) => c.id)),
     // Kundenerfolg: Leads mit nächstem Schritt je Kunde, Warnung unter 80 % (lib/lead-next-step.ts)
-    nextStepRatesByCustomer(customers.map((c) => c.id)).catch(() => new Map<string, NextStepRate>()),
+    nextStepRatesByCustomer([...new Set(geladen.map((c) => c.id))]).catch(() => new Map<string, NextStepRate>()),
   ]);
   const matches = (c: (typeof customers)[number], key: string) => {
     const ob = progress.get(c.id);
@@ -58,7 +68,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
     if (key === "pausiert") return c.pauses.length > 0;
     return true;
   };
-  const visible = customers.filter((c) => matches(c, filter));
+  const visible = eigene ?? customers.filter((c) => matches(c, filter));
   const mrr = customers.reduce((a, c) => a + (c.salesContact?.customerStage === "AKTIV" ? (c.salesContact.monthlyValue ?? 0) : 0), 0);
 
   return (
@@ -68,7 +78,7 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
       </p>
       <div className="flex gap-1.5 overflow-x-auto" role="group" aria-label="Filter">
         {FILTERS.map((f) => {
-          const n = f.key === "ruhend" ? dormantCount : customers.filter((c) => matches(c, f.key)).length;
+          const n = f.key === "ruhend" ? dormantCount : f.key === "intern" ? internCount : customers.filter((c) => matches(c, f.key)).length;
           if (f.key && !n) return null;
           const active = f.key === filter;
           return (
@@ -101,8 +111,12 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-medium">{c.name.replace(/^Allianz\s+/i, "")}</span>
-                      {c.isTest ? <span className="badge bg-amber-100 text-amber-900">Test</span> : null}
-                      {stage ? <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span> : <Badge>Leads (Airtable)</Badge>}
+                      {testKennung(c) ? <span className="badge bg-amber-100 text-amber-900">{testKennung(c)}</span> : null}
+                      {stage ? (
+                        <span className={`badge ${CUSTOMER_COLOR[stage]}`}>{CUSTOMER_LABEL[stage]}</span>
+                      ) : c.plan === "internal" ? null : (
+                        <Badge>Leads (Airtable)</Badge>
+                      )}
                       {c.paymentOverdueSince ? <Badge tone="danger">Zahlung offen</Badge> : null}
                       {pause ? <Badge tone="warning">{pause.kind === "dunning" ? "pausiert (Zahlung)" : "pausiert"}</Badge> : null}
                       {(() => {
@@ -113,9 +127,14 @@ export default async function KundenUebersicht({ searchParams }: { searchParams:
                       })()}
                     </div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                      {packageLabel(c)}
-                      {c.salesContact?.monthlyValue ? ` · ${eur(c.salesContact.monthlyValue)}/Monat` : ""}
-                      {` · ${c._count.leads} Leads in 30 Tagen · ${c._count.users} ${c._count.users === 1 ? "Login" : "Logins"}`}
+                      {[
+                        c.plan === "internal" ? null : packageLabel(c),
+                        c.salesContact?.monthlyValue ? `${eur(c.salesContact.monthlyValue)}/Monat` : null,
+                        `${c._count.leads} Leads in 30 Tagen`,
+                        `${c._count.users} ${c._count.users === 1 ? "Login" : "Logins"}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </div>
                   </div>
                   {ob && !ob.live ? (

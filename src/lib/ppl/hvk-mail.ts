@@ -30,7 +30,8 @@ export function userFromHvkMailState(state: string): string | null {
   return a.length === b.length && crypto.timingSafeEqual(a, b) ? m[1] : null;
 }
 
-function microsoft() {
+/** App-Daten der Microsoft-Anmeldung (auch für das PPL-Versand-Postfach, lib/ppl/versand-postfach.ts). */
+export function microsoft() {
   const clientId = process.env.MICROSOFT_CLIENT_ID;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
   const redirectUri = process.env.MICROSOFT_REDIRECT_URI;
@@ -61,9 +62,9 @@ export function hvkMailAuthUrl(userId: string): string {
   return `${m.authorizeUrl}?${p}`;
 }
 
-type TokenJson = { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string; error?: string; error_description?: string };
+export type TokenJson = { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string; error?: string; error_description?: string };
 
-async function postForm(url: string, body: Record<string, string>): Promise<TokenJson> {
+export async function postForm(url: string, body: Record<string, string>): Promise<TokenJson> {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(body) });
   const json = (await res.json().catch(() => ({}))) as TokenJson;
   if (!res.ok || !json.access_token) throw new Error(json.error_description || json.error || `Anmeldung fehlgeschlagen (${res.status})`);
