@@ -198,7 +198,7 @@ export function anwesenheitsFrage(
 export function startPush(o: { appointmentId: string; name: string; startsAt: Date }) {
   return {
     title: `Ist ${o.name} da?`,
-    body: `Ihr Videotermin um ${uhrKurz(o.startsAt)}. Tippen Sie: Ja, da oder Fehlt noch.`,
+    body: `Ihr Videotermin um ${uhrKurz(o.startsAt)}. Tippen Sie: Ja, da oder Fehlt noch, erinnern.`,
     url: `/buyer/termine/${o.appointmentId}`,
     tag: `termin-start:${o.appointmentId}`,
   };

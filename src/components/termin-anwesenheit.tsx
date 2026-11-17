@@ -107,7 +107,7 @@ export function TerminAnwesenheit({
             Ja, da
           </Button>
           <Button size={size} icon={UserX} disabled={pending} onClick={() => antworte("fehlt")}>
-            Fehlt noch
+            Fehlt noch, erinnern
           </Button>
         </div>
       ) : jetzt === "wartet" ? (
