@@ -10,6 +10,7 @@ import { RescheduleButton, type RescheduleActions, type RescheduleStep } from "@
 import { Button } from "@/components/ui";
 import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { waFormatKnoten } from "@/lib/wa-format";
 import { sendReplyAction, sendTemplateAction, takeOverAction } from "./actions";
 import { cancelAppointmentAdminAction, loadRescheduleDialogAdmin, rescheduleAppointmentAdminAction } from "./appointment-actions";
 
@@ -383,7 +384,7 @@ function ClosedWindow({
           </div>
           {option ? (
             <div className="mt-2 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 py-2">
-              <p className="whitespace-pre-wrap text-sm">{option.preview}</p>
+              <p className="whitespace-pre-wrap text-sm">{waFormatKnoten(option.preview)}</p>
             </div>
           ) : null}
           <div className="mt-2 flex items-center justify-end gap-3">

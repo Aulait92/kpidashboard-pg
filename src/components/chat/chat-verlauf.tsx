@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { waFormatKnoten } from "@/lib/wa-format";
 import {
   avatarFarbe,
   initialen,
@@ -137,7 +138,7 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
   /** Wortlaut der Ereignisse („an Sie“ bzw. „an den Berater“) */
   sicht?: Sicht;
   etikett?: (m: M, a: Absender) => Etikett;
-  /** Darstellung des Nachrichtentexts (WhatsApp-Formatierung); Standard: Text wie geschrieben */
+  /** Darstellung des Nachrichtentexts; Standard: WhatsApp-Formatierung (lib/wa-format.ts) */
   text?: (body: string, a: Absender) => React.ReactNode;
   /** Zusatz neben der Uhrzeit (z. B. Zustellstatus im Admin, „nicht zugestellt“) */
   fuss?: (m: M) => React.ReactNode;
@@ -180,7 +181,7 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
               </div>
             ) : null}
             <div className={cn("max-w-[85%] whitespace-pre-wrap break-words px-[15px] py-[10px] text-[15px] leading-[1.5] sm:max-w-[72%]", BLASE[absender])}>
-              {text ? text(m.body ?? "", absender) : m.body}
+              {text ? text(m.body ?? "", absender) : waFormatKnoten(m.body)}
             </div>
             <div className="mt-1 flex items-center gap-1.5 px-1.5 text-[11px] text-[color:var(--muted)]" data-message-meta>
               <time dateTime={m.createdAt.toISOString()} title={formatDateTime(m.createdAt)}>

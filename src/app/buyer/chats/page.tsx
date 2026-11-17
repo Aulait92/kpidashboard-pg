@@ -36,6 +36,7 @@ import { chatNaechsterSchritt, type ChatSchritt } from "@/lib/chat-naechster-sch
 import { ChatAvatar, ChatVerlauf, NichtZugestellt, StatusPunkt } from "@/components/chat/chat-verlauf";
 import { SprungKnopf, TerminBuchenKnopf } from "@/components/chat/chat-knoepfe";
 import { cn } from "@/lib/utils";
+import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
 // Strikte Mandantentrennung: alle Abfragen mit customerId des Buyers.
@@ -236,7 +237,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         status: active.lead?.status ?? null,
         stepState,
         botActive: active.botActive,
-        wartet: active.needsAttention ? { grund: active.attentionReason } : null,
+        wartet: active.needsAttention ? { grund: waOhneMarker(active.attentionReason) ?? null } : null,
         fensterOffen: windowOpen,
         optOut: !!active.optedOutAt,
         termin: appointments[0] ?? null,
@@ -570,7 +571,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         <span className={cn("truncate text-[15px]", c.needsAttention ? "font-bold" : "font-semibold")}>{cname}</span>
                         <span className="shrink-0 text-xs text-[color:var(--muted)]">{c.lastMessageAt ? listenZeit(c.lastMessageAt, now) : ""}</span>
                       </div>
-                      <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{last ? `${von}${last.body ?? ""}` : ""}</p>
+                      <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{last ? `${von}${waOhneMarker(last.body ?? "")}` : ""}</p>
                       <div className="mt-1 flex min-w-0 items-center">
                         {c.needsAttention ? (
                           <StatusPunkt farbe="bg-rose-500" className="font-semibold text-rose-700">
@@ -751,7 +752,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                       <input type="hidden" name="conversationId" value={active.id} />
                       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 py-2">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">Vorschau · {followup.label}</div>
-                        <p className="mt-1 whitespace-pre-wrap text-sm">{followup.preview}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm">{waFormatKnoten(followup.preview)}</p>
                       </div>
                       {followup.approved ? (
                         <div className="flex justify-end">

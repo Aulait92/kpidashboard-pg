@@ -74,11 +74,19 @@ describe("Show-up: drei Erinnerungen", () => {
     expect(c.text).toContain("Legen Sie gern Ihre bestehenden Verträge bereit.");
     expect(c.text).toContain("So geht es los: https://meet.google.com/abc-defg-hij");
     expect(c.text).toMatch(/Passt es weiterhin\?$/);
-    // Vorlage: bis zur Freigabe v4 mit bisheriger Belegung, ab v5 die neue
-    expect(c.paramsFor!({ version: 4, current: true, ansprache: "sie", purpose: "reminder" })).toHaveLength(4);
+    // Vorlage: v5 (aktuell) mit Wann, Nutzen, Zugang
     const v5 = c.paramsFor!({ version: 5, current: true, ansprache: "sie", purpose: "reminder" });
+    expect(v5).toHaveLength(4);
+    expect(v5[1]).toMatch(/^morgen um /);
     expect(v5[2]).toContain("Legen Sie gern Ihre bestehenden Verträge bereit.");
     expect(v5[3]).toBe("https://meet.google.com/abc-defg-hij");
+    // Rückfall, solange Meta v5 für den Kunden nicht freigegeben hat: v4 (nicht mehr aktuell) mit bisheriger Belegung
+    const v4 = c.paramsFor!({ version: 4, current: false, ansprache: "sie", purpose: "reminder" });
+    expect(v4).toHaveLength(4);
+    expect(v4[2]).toBe("Videocall");
+    expect(v4[3]).toBe("https://meet.google.com/abc-defg-hij");
+    // noch ältere bzw. von Hand angelegte: Satz zum Verschieben im letzten Parameter
+    for (const version of [3, 0]) expect(c.paramsFor!({ version, current: false, ansprache: "sie", purpose: "reminder" })[3]).toMatch(/^https:\/\/meet\.google\.com\/abc-defg-hij Falls etwas dazwischenkommt/);
     expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).reminderSentAt).not.toBeNull();
   });
 
@@ -98,6 +106,10 @@ describe("Show-up: drei Erinnerungen", () => {
       "Guten Tag Frau Becker, in einer Stunde ist Ihr Videotermin mit Herrn Kannapinn. Passt bei Ihnen alles? Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.",
     );
     expect(c.paramsFor!({ version: 5, current: true, ansprache: "sie", purpose: "reminder_soon" })).toEqual(["Anna", "Videotermin", "Herrn Kannapinn"]);
+    // Rückfall v4 (noch nicht freigegeben): Uhrzeit, Art, Link
+    const v4 = c.paramsFor!({ version: 4, current: false, ansprache: "sie", purpose: "reminder_soon" });
+    expect(v4.slice(2)).toEqual(["Videocall", "https://meet.google.com/abc-defg-hij"]);
+    expect(v4[1]).toMatch(/^\d{2}:\d{2} Uhr$/);
     expect(callsFor(b.phone)).toHaveLength(0);
     expect((await prisma.appointment.findUniqueOrThrow({ where: { id: b.appt.id } })).soonReminderSentAt).not.toBeNull();
   });

@@ -23,10 +23,12 @@ const ALL = [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES];
 
 describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
-    expect(purposesFor({ bestand: false })).toHaveLength(14);
+    // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“
+    expect(purposesFor({ bestand: false })).toHaveLength(16);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
+    expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting"]));
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(18);
+    expect(purposesFor({ bestand: true })).toHaveLength(20);
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz"]));
   });
 
@@ -82,8 +84,10 @@ describe("Vorlagen-Plan", () => {
       expect((buttons?.buttons ?? []).length).toBeLessThanOrEqual(3);
     }
     // Knöpfe überall, wo eine Antwort erwartet wird
-    // Erstanschreiben ab v6: die erste Frage ist ein Platzhalter, daher ohne Knöpfe in der Vorlage
-    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => !(OUTREACH_PURPOSES as readonly string[]).includes(x))) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
+    // Erstanschreiben ab v6: die erste Frage ist ein Platzhalter, daher ohne Knöpfe in der Vorlage. „Wartet im Videoraum“
+    // erwartet keine Antwort (nur der Link), daher ohne Knöpfe.
+    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => !(OUTREACH_PURPOSES as readonly string[]).includes(x) && x !== "appt_waiting")) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
+    expect(TEMPLATE_BUTTONS.appt_waiting).toBeUndefined();
     expect(TEMPLATE_BUTTONS.reminder).toEqual(["Ja, passt", "Bitte verschieben"]);
     expect(TEMPLATE_BUTTONS.followup_noshow).toEqual(["Ja, neuer Termin", "Kein Bedarf mehr"]);
     expect(TEMPLATE_BUTTONS.followup_last).toEqual(["Ja, noch aktuell", "Nein, danke"]);

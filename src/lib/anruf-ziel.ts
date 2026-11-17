@@ -13,7 +13,18 @@ export function bedarfsfragen(produkt: string | null | undefined): string {
   return "Was abgesichert werden soll, bestehende Verträge";
 }
 
-export function anrufZiel(c: { kind: "callback" | "followup"; reason: string; source: string | null; known?: string | null }): AnrufZiel {
+const tag = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "numeric" }).format(d);
+/** Eigene Notiz statt Standardtext der App (z. B. „Nochmal anrufen“) */
+const GENERISCH = /^(nochmal (anrufen|melden)|wiedervorlage|nächsten schritt festlegen|rückruf)\.?$/i;
+
+export function anrufZiel(c: {
+  kind: "callback" | "followup";
+  reason: string;
+  source: string | null;
+  known?: string | null;
+  /** Letzter Termin mit dem Kontakt (schon vorbei), für konkretes Nachfassen (Ole, 17.11.2026: „1 und 2 nichtssagend“). */
+  letzterTermin?: Date | null;
+}): AnrufZiel {
   const r = c.reason.toLowerCase();
   // Weiß der Assistent schon etwas (steht im Anrufmodus darüber), nur bestätigen statt neu abfragen (16.11.2026)
   const bedarf = (verb: string) => (c.known ? "Bekanntes kurz bestätigen, nur Fehlendes fragen" : `${verb}: ${bedarfsfragen(c.source)}`);
@@ -22,7 +33,27 @@ export function anrufZiel(c: { kind: "callback" | "followup"; reason: string; so
   }
   if (c.kind === "followup") {
     if (/angebot/.test(r)) return { ziel: "Entscheidung zum Angebot", schritte: ["Offene Fragen zum Angebot klären", "Abschluss machen oder nächsten Schritt festlegen"] };
-    return { ziel: "Nachfassen", schritte: ["An das letzte Gespräch anknüpfen", "Nächsten Schritt festlegen"] };
+    // Konkret statt „An das letzte Gespräch anknüpfen / Nächsten Schritt festlegen“ (Ole, 17.11.2026)
+    const thema = c.source ? ` zu ${c.source}` : "";
+    const notiz = c.reason.trim() && !GENERISCH.test(c.reason.trim()) ? `Ihre Notiz aufgreifen: „${c.reason.trim().slice(0, 80)}“` : null;
+    if (c.letzterTermin) {
+      return {
+        ziel: "Entscheidung nach dem Termin",
+        schritte: [
+          `An den Termin vom ${tag(c.letzterTermin)}${thema} anknüpfen: „Konnten Sie schon in Ruhe drüber schauen?“`,
+          ...(notiz ? [notiz] : []),
+          "Direkt fragen: „Sollen wir das so festmachen?“ Bei Zögern: Was fehlt noch zur Entscheidung?",
+        ],
+      };
+    }
+    return {
+      ziel: "Termin vereinbaren",
+      schritte: [
+        c.source ? `Auf die Anfrage${thema} Bezug nehmen` : "Auf das letzte Gespräch Bezug nehmen",
+        ...(notiz ? [notiz] : [bedarf("Bedarf kurz abfragen")]),
+        "Termin vereinbaren: zwei Zeiten zur Wahl anbieten, am besten per Video",
+      ],
+    };
   }
   if (/im chat geantwortet/.test(r)) {
     return { ziel: "Termin vereinbaren", schritte: ["Auf den Chat Bezug nehmen", bedarf("Bedarf klären"), "Termin vereinbaren, am besten per Video"] };
