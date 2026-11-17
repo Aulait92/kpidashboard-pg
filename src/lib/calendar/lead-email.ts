@@ -206,8 +206,8 @@ async function sendLeadEmailInner(
 export function erstinfoMailZeile(an: Ansprache, advisor: string): string {
   return a(
     an,
-    `Im Anhang findest du die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF). Auf Wunsch bekommst du sie auch kostenlos auf Papier.`,
-    `Im Anhang finden Sie die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF). Auf Wunsch erhalten Sie sie auch kostenlos auf Papier.`,
+    `Im Anhang findest du die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF).`,
+    `Im Anhang finden Sie die Erstinformation zu ${advisor} als Versicherungsvermittler (PDF).`,
   );
 }
 
