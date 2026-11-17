@@ -164,9 +164,13 @@ describe("HvK-Abrechnung: Reklamation zuordnen (ID, Ort, ±1 Tag)", () => {
     const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("d", "2026-07-19", "84032", "Ergolding")];
     expect(via(matchReklamation(r, leads))).toEqual(["a", "ort"]);
   });
-  it("(c) mehrere mit gleichem Ort: schon stornierte und anderen Reklamationen zugeordnete ausschließen", () => {
-    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("s", "2026-07-19", "84032", "Landshut", { stornoState: "approved" }), lead("t", "2026-07-19", "84032", "Landshut")];
+  it("(c) mehrere mit gleichem Ort: anderen Reklamationen zugeordnete ausschließen", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("t", "2026-07-19", "84032", "Landshut")];
     expect(via(matchReklamation(r, leads, new Map([["t", "999"]])))).toEqual(["a", "ort"]);
+  });
+  it("(c) schon stornierter Lead bleibt Kandidat: nie einen zweiten Lead stornieren, lieber offen", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("s", "2026-07-19", "84032", "Landshut", { stornoState: "approved" })];
+    expect(via(matchReklamation(r, leads))).toEqual(["mehrere", ["a", "s"]]);
   });
   it("(c) bleibt es mehrdeutig, offen lassen (alle Kandidaten zeigen)", () => {
     const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("b", "2026-07-19", "84032", "Landshut"), lead("d", "2026-07-19", "84032", "Ergolding")];

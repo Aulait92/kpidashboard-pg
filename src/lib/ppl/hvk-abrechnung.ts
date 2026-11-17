@@ -247,7 +247,9 @@ export function matchReklamation(
   const same = leads.filter((l) => l.date === r.date && l.plz === r.plz && !(id && l.hvkLeadId && l.hvkLeadId !== id));
   if (same.length === 1) return { outcome: "eindeutig", lead: same[0], via: "datum_plz" };
   if (same.length > 1) {
-    const free = same.filter((l) => !otherHvk(l) && l.stornoState !== "approved");
+    // Schon stornierte Leads NICHT ausschließen: reklamiert HvK einen bereits in der App stornierten Lead noch einmal,
+    // würde sonst ein anderer Lead mit gleichem Datum, PLZ und Ort zusätzlich storniert (Geld). Lieber offen lassen.
+    const free = same.filter((l) => !otherHvk(l));
     // Lead ohne Ort lässt sich nicht ausschließen: bleibt Kandidat
     const byOrt = free.filter((l) => !ortKey(l.ort) || sameOrt(l.ort, r.ort));
     if (ortKey(r.ort) && byOrt.length === 1) return { outcome: "eindeutig", lead: byOrt[0], via: "ort" };
