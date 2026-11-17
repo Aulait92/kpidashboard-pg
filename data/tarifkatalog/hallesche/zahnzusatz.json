@@ -1,0 +1,95 @@
+{
+  "gesellschaft": "Hallesche",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung Dent",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeit",
+    "Zahnbehandlung 100 %",
+    "Prophylaxe 2x 80 € im Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "SMART.Dent (dentZB.100 und dentPro.80)",
+      "kurz": "SMART.Dent",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "nein",
+        "implantate": "nein",
+        "behandlung": "100 %",
+        "prophylaxe": "2x 80 € im Jahr",
+        "wartezeit": "keine",
+        "kfo": "Kinder bis 1.000 €",
+        "inlays": "nur Kunststofffüllung"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MEGA.Dent (SMART.Dent und dentZE.90)",
+      "kurz": "MEGA.Dent",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "80 bis 90 % inkl. GKV",
+        "implantate": "80 bis 90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "2x 80 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "1.000 € je Jahr, 5 J.",
+        "kfo": "Kinder bis 1.000 €",
+        "inlays": "80 bis 90 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GIGA.Dent (SMART.Dent und dentZE.100)",
+      "kurz": "GIGA.Dent",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "90 bis 100 % inkl. GKV",
+        "implantate": "90 bis 100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "2x 80 € im Jahr",
+        "wartezeit": "keine",
+        "staffel": "1.000 € je Jahr, 5 J.",
+        "kfo": "Kinder bis 1.000 €",
+        "inlays": "90 bis 100 %"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hallesche.de/privatkunden/zusatzversicherung/zahnzusatzversicherung",
+    "https://www.vermittlerportal.de/tarif-dentze90-pm99u.pdf",
+    "https://www.vermittlerportal.de/tarif-dentze100-pm98u.pdf",
+    "https://www.vermittlerportal.de/tarif-dentzb100-pm97u.pdf",
+    "https://www.hallesche.de/-/media/druckstuecke/broschuere/w/241/broschuerezahnvorsorgedentw241pdf/broschuere-zahnvorsorge-dent-w241.pdf"
+  ],
+  "offen": [
+    "Die Stufen sind Tarifkombinationen: SMART.Dent = Zahnbehandlung und Kieferorthopädie (dentZB.100) plus Prophylaxe (dentPro.80); MEGA.Dent zusätzlich Zahnersatz 90 (dentZE.90); GIGA.Dent zusätzlich Zahnersatz 100 (dentZE.100). Tarifbeschreibungen liegen auf vermittlerportal.de (von hallesche.de verlinkt).",
+    "Zahnersatz, Implantate und Inlays: 100 % bei reiner Regelversorgung; mit Privatanteil 80 % (ZE.90) bzw. 90 % (ZE.100), der höhere Satz nur mit 5 Jahren lückenlosem Bonusheft; GKV-Vorleistung wird abgezogen.",
+    "Begrenzung Zahnersatz: 1.000 € im 1. Jahr, bis 5.000 € in den ersten 5 Kalenderjahren, danach unbegrenzt; um 75 % reduziert, wenn bei Abschluss ein Zahn fehlt. Begrenzung bei SMART.Dent (Zahnbehandlung) nicht ausgewertet.",
+    "Kieferorthopädie: 100 % für Kinder bis 18 Jahre bis 1.000 € sowie nach Unfall. Inlays zählen bei SMART.Dent nicht als Füllung.",
+    "Die Produktseite zeigt bei MEGA.Dent den Hinweis „Top Preis-Leistung“; da MEGA.Dent ohnehin die mittlere Stufe ist, als mittlere Stufe gesetzt."
+  ]
+}

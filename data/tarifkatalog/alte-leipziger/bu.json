@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "Alte Leipziger",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Soforthilfe bei Krebs 18 Monate",
+    "Beitragspause bis 24 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung SecurAL (BV10)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja, bis Alter 50",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "eingeschränkt",
+        "pflege": "BU ab Pflegegrad 2",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.alte-leipziger.de/privatkunden/einkommensschutz/berufsunfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.alte-leipziger.de/privatkunden/einkommensschutz/berufsunfaehigkeitsversicherung",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/allgemeine-bedingungen/pm/2300/bedingungenallgemeinebedingungenberufsunfaehigkeitsversicherungpm2300pdf/bedingungen-allgemeine-bedingungen-berufsunfaehigkeitsversicherung-pm2300.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/broschuere/pav/401/broschuereundflyerkundenprospektberufsunfaehigkeitsschutzpav401pdf/broschuere-und-flyer-kundenprospekt-berufsunfaehigkeitsschutz-pav401.pdf",
+    "https://www.alte-leipziger.de/-/media/druckstuecke/infoblatt/pv/483/infoblatthighlightsauklauselpv483pdf/infoblatt-highlights-au-klausel-pv483.pdf"
+  ],
+  "offen": [
+    "Die Alte Leipziger hat einen BU-Tarif (SecurAL, BV10, Bedingungen PM 2300) ohne Stufen; Varianten Komfort/Basis gibt es auf alte-leipziger.de nicht. Daher eine Stufe „Tarif“.",
+    "AU-Klausel als Zusatzbaustein gegen Mehrbeitrag: Leistung nach 6 Monaten Krankschreibung (oder 4 Monate plus Facharztprognose), rückwirkend ab Beginn, höchstens 24 Monate je Vertrag (Infoblatt PV 483, 12/2025).",
+    "Nachversicherung: mit Ereignis (Heirat, Kind, Immobilie, Selbstständigkeit, Einkommen u. a.) bis Alter 50, ohne Ereignis in den ersten 5 Vertragsjahren; Berufsstart bis 1.500 € zusätzlich.",
+    "Umorganisation (Selbstständige): Verzicht nur für Akademiker mit mindestens 90 % kaufmännischer Tätigkeit oder Betriebe unter 5 Mitarbeitern, sonst zumutbare Umorganisation möglich (§ 8 Abs. 3).",
+    "Pflege: Pflegegrad 2 oder Hilfebedarf bei Tätigkeiten des täglichen Lebens gilt als Berufsunfähigkeit (§ 11); eine eigene Pflegerente als Baustein ist auf der Produktseite nicht genannt.",
+    "Stundung: zinslose Stundung während der Leistungsprüfung, auf Antrag bis 24 Monate; zusätzlich Beitragspause bis 24 Monate (insgesamt 48).",
+    "Zusatzbaustein garantierte Rentensteigerung im Leistungsfall (1 bis 3 %) nicht im Schema. BU für Schüler, Studenten und als Direktversicherung nicht gesondert aufgenommen."
+  ]
+}

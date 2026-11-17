@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "Hallesche",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhaus-Zusatzversicherung Clinic",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Krankenhaustagegeld wählbar",
+    "Rooming-in bis 16 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "SMART.Clinic (Krankenhaustagegeld)",
+      "kurz": "SMART.Clinic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "nein",
+        "chefarzt": "nein",
+        "tagegeld": "10 bis 150 € am Tag"
+      },
+      "bausteine": {
+        "tagegeld": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "MEGA.Clinic",
+      "kurz": "MEGA.Clinic",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "Privat- oder Belegarzt",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "tagegeld": "optional",
+        "ersatztagegeld": "30 bis 60 € am Tag",
+        "ambulant-op": "ja, nach GKV"
+      },
+      "bausteine": {
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GIGA.Clinic",
+      "kurz": "GIGA.Clinic",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "Privat- oder Belegarzt",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "tagegeld": "optional",
+        "ersatztagegeld": "20 bis 60 € am Tag",
+        "ambulant-op": "ja, nach GKV"
+      },
+      "bausteine": {
+        "tagegeld": "optional",
+        "einbett": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hallesche.de/privatkunden/zusatzversicherung/krankenhauszusatzversicherung",
+    "https://www.hallesche.de/-/media/druckstuecke/broschuere/w/256/broschueretarifclinicw256pdf/broschuere-tarif-clinic-w256.pdf",
+    "https://www.hallesche.de/-/media/druckstuecke/tarif/pm/243/tarifmegaclinicpm243updf/tarifmegaclinicpm243u.pdf",
+    "https://www.hallesche.de/-/media/druckstuecke/tarif/pm/244/tarifgigaclinicpm244updf/tarifgigaclinicpm244u.pdf"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite; Tarifbeschreibungen MEGA.Clinic und GIGA.Clinic nicht im Einzelnen ausgewertet.",
+    "SMART.Clinic ist ein reines Krankenhaustagegeld (10 bis 150 € am Tag frei wählbar, ab dem 1. Tag); Unterbringung und Arztwahl sind darin nicht versichert. Wartezeit und freie Krankenhauswahl bei SMART.Clinic nicht genannt.",
+    "Ersatz-Krankenhaustagegeld: MEGA 30 € (Verzicht Zweibettzimmer) bzw. 60 € (Verzicht Privatarzt); GIGA 20 € (Verzicht Einbettzimmer), 50 € (Verzicht Zweibettzimmer) bzw. 60 € (Verzicht Privatarzt).",
+    "MEGA und GIGA in zwei Beitragsvarianten (mit oder bis 60 ohne Alterungsrückstellungen); Gesundheitsbonus bei Leistungsfreiheit nur in der Variante mit Alterungsrückstellungen. Einbettzimmer als Baustein bei MEGA nicht genannt.",
+    "Keine Stufe von der Hallesche markiert; MEGA.Clinic als mittlere Stufe."
+  ]
+}

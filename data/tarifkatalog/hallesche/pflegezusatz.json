@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "Hallesche",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistung ab Pflegegrad 1",
+    "Pflegegrad 5: 100 %"
+  ],
+  "tarife": [
+    {
+      "name": "FÖRDERbar (staatlich gefördert)",
+      "kurz": "FÖRDERbar",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 %, mind. 600 €",
+        "ab-pg": "Pflegegrad 1 (10 %)",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine bei Unfall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "OLGAflex",
+      "kurz": "OLGAflex",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 %, bis 4.500 €",
+        "ab-pg": "Pflegegrad 1 (10 %)",
+        "einmal": "PG 4/5: 2 Monatssätze",
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "nein, gleich ab PG 4",
+        "dynamik": "lebenslang"
+      },
+      "bausteine": {
+        "einmal": "inklusive",
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.hallesche.de/privatkunden/zusatzversicherung/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hallesche.de/privatkunden/zusatzversicherung/pflegezusatzversicherung"
+  ],
+  "offen": [
+    "Zwei Produkte, keine Leistungsstufen: FÖRDERbar (staatlich gefördert mit 5 € im Monat, ohne Gesundheitsprüfung) und OLGAflex (Pflegemonatsgeld bis 4.500 €, 150 € am Tag). Keine Markierung der Hallesche.",
+    "FÖRDERbar: Pflegegrad 1 bis 5 = 10, 20, 30, 50, 100 % des versicherten Pflegegeldes, ambulant und stationär gleich. Gesetzliche Wartezeit außer bei Unfall auf der Seite nicht beziffert. Einmalleistung und Beitragsbefreiung nicht genannt.",
+    "OLGAflex: ambulant 10, 30, 70, 100, 100 %, stationär 10 % in Pflegegrad 1 und 100 % ab Pflegegrad 2. Extrazahlung bei erstmals Pflegegrad 4 oder 5: 60 Tagessätze (bis 9.000 €), nach Unfall 210 Tagessätze (bis 31.500 €). Weltweit gültig; Beitrag bis 60 frei wählbar.",
+    "Wartezeit OLGAflex und Leistung bei Demenz nicht genannt; Produktseite ohne verlinkte Tarifbedingungen."
+  ]
+}
