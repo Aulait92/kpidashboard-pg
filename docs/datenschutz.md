@@ -541,6 +541,6 @@ Sentry Session Replay nur mit Einwilligung je Nutzer (§ 25 TDDDG, Art. 6 Abs. 1
 docs/rechtstexte/sitzungsaufnahme-2026-11-17.md. Umsetzung: lib/nutzungsanalyse.ts, components/nutzungsanalyse.tsx,
 src/instrumentation-client.ts (Replay-Integration erst nach Ja), lib/sentry-redact.ts (Positivliste /buyer, Kennungen
 geschwärzt). Nachweis: User.analyseEinwilligung/-At/-Version und AuditLog. Speicherdauer bei Sentry je Plan 30 bzw. 90
-Tage (Text: „spätestens nach 90 Tagen“). Offen: in Sentry „Prevent Storing of IP Addresses“ und „Hide AI Features“
-einschalten (Org-Einstellungen, Token ohne Schreibrecht), Sentry-DPA und DPF-Eintrag ablegen, Abschnitt auf
+Tage (Text: „spätestens nach 90 Tagen“). In Sentry eingeschaltet (Ole, 17.11.2026): „Prevent Storing of IP Addresses“, KI-Funktionen aus, Data Scrubber
+Pflicht. Offen: Sentry-DPA und DPF-Eintrag ablegen, Abschnitt auf
 performancegrowth.de/datenschutz (docs/webseite-offen.md), AVV-Klarstellung mit der nächsten Fassung (Abschnitt 4.2).
