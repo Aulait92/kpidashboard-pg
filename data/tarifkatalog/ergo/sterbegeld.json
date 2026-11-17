@@ -1,0 +1,87 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "sterbegeld",
+  "produkt": "ERGO Sterbevorsorge",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Doppelte Summe bei Unfalltod",
+    "Erstberatung Erbrecht",
+    "Vorsorgevollmacht, Verfügung"
+  ],
+  "tarife": [
+    {
+      "name": "ERGO Sterbevorsorge Grundschutz",
+      "kurz": "Grundschutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 15.000 €",
+        "wartezeit": "30 Monate",
+        "unfall": "ja, ohne Wartezeit",
+        "ohne-gp": "ja",
+        "beitragsende": "wählbar",
+        "vorsorge": "nein"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/sterben/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Sterbevorsorge Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 15.000 €",
+        "wartezeit": "12 Monate",
+        "unfall": "ja, ohne Wartezeit",
+        "ohne-gp": "ja",
+        "beitragsende": "wählbar",
+        "vorsorge": "nein"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/sterben/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Sterbevorsorge Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "12 Monate",
+        "unfall": "ja, ohne Wartezeit",
+        "ohne-gp": "ja",
+        "beitragsende": "wählbar",
+        "vorsorge": "ja, Pakete wählbar"
+      },
+      "bausteine": {
+        "unfall": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.ergo.de/fragments/produkttabelle/sterben/master",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Sterbegeldversicherungen/Sterbegeldversicherung",
+    "https://www.ergo.de/fragments/produkttabelle/sterben/master",
+    "https://www.ergo.de/content/dam/ergo/pdf/leben/kundeninformation-bestattungspakete.pdf.coredownload.pdf"
+  ],
+  "offen": [
+    "Aufbauzeit laut Leistungsvergleich und FAQ 30 Monate (Grundschutz) bzw. 12 Monate (Komfort, Premium); an einer Stelle der FAQ steht „z. B. schon nach 18 Monaten bei Komfort und Premium“, bitte prüfen. Stirbt die versicherte Person in der Aufbauzeit, werden die gezahlten Beiträge erstattet.",
+    "Eintrittsalter 40 bis 80 Jahre, Komfort und Premium bis 85. Beitragszahlungsdauer frei wählbar (Beispiel bis Alter 90); Flex-Option gegen Aufpreis. Dynamik (jährliche Anpassung von Beitrag und Leistung) wählbar.",
+    "Nur Premium: Bestattungsberatung und wählbare Bestattungspakete des Partners ANTERNIA (5.000, 7.500, 10.000 €), vorgezogene Leistung bei unheilbarer Krankheit, Einmalzahlung bei Pflegebedürftigkeit (ausstehende Beiträge), Zweitmeinung, digitaler Nachlassverwalter.",
+    "ERGO kennzeichnet keine Empfehlung; Komfort als mittlere Stufe."
+  ]
+}

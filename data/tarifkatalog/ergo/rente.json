@@ -1,0 +1,105 @@
+{
+  "gesellschaft": "ERGO",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ab 25 € im Monat",
+    "Rente oder Kapitalauszahlung",
+    "Beitrag ändern oder pausieren"
+  ],
+  "tarife": [
+    {
+      "name": "ERGO Rente Index",
+      "kurz": "Index",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "100 % ab 12 J. Laufzeit",
+        "anlage": "Sicherung, Indexchance",
+        "flexibel": "ja",
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/Index-Rente/Indexbeteiligung-Rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Rente Dynamik",
+      "kurz": "Dynamik",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "10 bis 100 % wählbar",
+        "anlage": "Fonds, ETF, Sicherung",
+        "flexibel": "ja",
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/dynamik-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Rente Balance",
+      "kurz": "Balance",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "für klassischen Teil",
+        "anlage": "Fonds, ETF, Sicherung",
+        "flexibel": "ja",
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/Index-Rente/Indexbeteiligung-Balance",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ERGO Rente Chance",
+      "kurz": "Chance",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds, bis 20 aus 90",
+        "flexibel": "ja",
+        "hinterbliebene": "wählbar",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.ergo.de/de/Produkte/Rentenversicherung/chance",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo.de/de/Produkte/Rentenversicherung/Private-Rentenversicherung",
+    "https://www.ergo.de/de/Produkte/Rentenversicherung/Index-Rente/Indexbeteiligung-Rente",
+    "https://www.ergo.de/de/Produkte/Rentenversicherung/dynamik-rente",
+    "https://www.ergo.de/de/Produkte/Rentenversicherung/Index-Rente/Indexbeteiligung-Balance",
+    "https://www.ergo.de/de/Produkte/Rentenversicherung/chance"
+  ],
+  "offen": [
+    "Die vier Varianten sind Anlagekonzepte (von sicher bis renditeorientiert), keine Leistungsstufen; Reihenfolge wie auf ergo.de. Empfehlung nur formal als mittlere Stufe (dritte von vier). Die Rente Dynamik hat laut Seite das Rating FFF von Franke und Bornberg; keine Empfehlung der Gesellschaft.",
+    "Garantierter Rentenfaktor nicht genannt; die Seiten nennen eine garantierte Mindestrente (Index, Dynamik, Balance aus dem garantierten Teil). Beitragsgarantie Index: 100 % der Beiträge ab 12 Jahren Laufzeit (Einmalbeitrag ab 5 Jahren); Dynamik 10 bis 100 % wählbar; Balance nur für den klassisch angelegten Teil; Chance ohne Angabe zur Garantie.",
+    "Hinterbliebenenschutz in allen Varianten kombinierbar; bei Dynamik Todesfallleistung bis 50.000 € ohne Gesundheitsprüfung (Wartezeit 3 Jahre, entfällt bei Unfall), bei Chance Todesfallschutz und BU-Schutz ohne Gesundheitsprüfung wählbar (Höhe nicht genannt). BU-Kombination wählbar, bei Dynamik als Beitragsbefreiung ohne Gesundheitsprüfung bis 250 € Monatsbeitrag.",
+    "Kosten (Effektivkosten) nicht auf den Seiten genannt; siehe Basisinformationsblätter. Fondswechsel bis 12-mal im Jahr kostenlos (Dynamik, Balance, Chance)."
+  ]
+}
