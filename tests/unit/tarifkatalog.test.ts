@@ -83,6 +83,18 @@ describe("Katalog laden", () => {
     expect(parseBuendel({ staffel: [] })).toBeNull();
   });
 
+  it("Welle 2: Gesellschaft aus Text, Allerweltswörter nur als Marke", () => {
+    expect(gesellschaftAusText("INTER Krankenversicherung")).toBe("inter");
+    expect(gesellschaftAusText("Inter Versicherung Agentur Meyer")).toBe("inter");
+    expect(gesellschaftAusText("international tätig")).toBeNull();
+    expect(gesellschaftAusText("ideale Lösung")).toBeNull();
+    expect(gesellschaftAusText("IDEAL Lebensversicherung")).toBe("ideal");
+    expect(gesellschaftAusText("Nürnberger Versicherung")).toBe("nuernberger");
+    expect(gesellschaftAusText("Württembergische Versicherung AG")).toBe("wuerttembergische");
+    expect(gesellschaftAusText("Stuttgarter Straße 5")).toBeNull();
+    expect(gesellschaftAusText("Die Stuttgarter")).toBe("stuttgarter");
+  });
+
   it("Reihenfolge: Vertreter-Gesellschaften zuerst, dann alphabetisch nach Anzeigename (Ole, 16.11.2026)", () => {
     expect(bekannteGesellschaften().map(gesellschaftName)).toEqual([
       "Allianz",
@@ -93,26 +105,49 @@ describe("Katalog laden", () => {
       "Alte Leipziger",
       "ARAG",
       "BarmeniaGothaer",
+      "Basler",
       "Canada Life",
+      "Concordia",
+      "Continentale",
       "CosmosDirekt",
+      "DA Direkt",
       "Debeka",
       "DEVK",
       "DFV",
+      "Dialog",
+      "die Bayerische",
       "Die Haftpflichtkasse",
       "ERGO",
+      "ERV",
       "Europa",
       "Generali",
       "Hallesche",
       "Hannoversche",
       "HanseMerkur",
+      "Helvetia",
       "HUK-COBURG",
+      "IDEAL",
+      "INTER",
+      "Itzehoer",
+      "LV 1871",
       "LVM",
+      "Monuta",
+      "Münchener Verein",
+      "NÜRNBERGER",
       "Provinzial",
       "R+V",
       "ROLAND",
+      "SDK",
+      "Stuttgarter",
       "Swiss Life",
       "Uelzener",
+      "UKV",
+      "uniVersa",
       "VHV",
+      "Volkswohl Bund",
+      "WGV",
+      "Württembergische",
+      "Würzburger",
       "Zurich",
     ]);
     expect(sortiereGesellschaften(["zurich", "ruv", "advocard", "axa", "barmenia-gothaer", "allianz", "vhv"])).toEqual([
