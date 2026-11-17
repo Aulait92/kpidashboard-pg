@@ -11,7 +11,7 @@ import type { TipSignals } from "@/lib/zahlen-tipps";
 import { nextStepRate } from "@/lib/lead-next-step-server";
 import { LOST_STATUSES } from "@/lib/lead-lost";
 import { DEFAULT_SETTINGS } from "@/lib/kollegen-shared";
-import { bestandVisible } from "@/lib/bestand/sichtbar";
+import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
 
 const DAY = 86_400_000;
 
@@ -38,7 +38,7 @@ async function averageKpis(now: Date): Promise<Kpis | null> {
 export async function loadTipSignals(customerId: string, data: ErtragData, now = new Date()): Promise<TipSignals> {
   const since90 = new Date(now.getTime() - 90 * DAY);
   const [customer, own, avg, paidLeads, notAsked, settings, imported, campaigns, withoutCross, steps, capiSent, staleMeta] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungEnabled: true, retainerMonthly: true, existingCustomersEnabled: true, bestandSichtbar: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { empfehlungEnabled: true, retainerMonthly: true, existingCustomersEnabled: true } }),
     computeKpis({ range: { from: since90, to: now }, customerId, origin: "paid" }),
     averageKpis(now),
     prisma.lead.count({ where: { customerId, createdAt: { gte: since90 }, ...PAID_LEAD_WHERE } }),
@@ -46,15 +46,8 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
     prisma.referralSettings.findUnique({ where: { id: "default" }, select: { enabled: true, rewardKind: true, rewardFixed: true } }).catch(() => null),
     prisma.existingCustomer.count({ where: { customerId, leadId: null } }),
     prisma.customerCampaign.count({ where: { customerId } }),
-    prisma.lead.count({
-      where: {
-        customerId,
-        status: CLOSED_STATUS,
-        erasedAt: null,
-        closedAt: { lte: new Date(now.getTime() - 21 * DAY) },
-        contracts: { none: { primaryLeadId: null, status: "aktiv" } },
-      },
-    }),
+    // gleiche Bedingung wie der Filter „Ohne weiteres Produkt“ der Kontakte-Liste (Knopf „Kunden ansehen“)
+    prisma.lead.count({ where: { customerId, ...crossSellOffenWhere(now) } }),
     nextStepRate(customerId, { now }).catch(() => null),
     // Rückmeldung an Meta (lib/capi): in den letzten 30 Tagen gesendet? Meta-Leads (14 bis 90 Tage alt) ohne Ergebnis
     prisma.capiEvent.count({ where: { customerId, status: "sent", sentAt: { gte: new Date(now.getTime() - 30 * DAY) } } }).catch(() => 0),
@@ -88,7 +81,7 @@ export async function loadTipSignals(customerId: string, data: ErtragData, now =
     kollegenPraemie: kollegenPraemie(settings, customer?.retainerMonthly ?? null),
     bestandImported: imported > 0,
     bestandCampaigns: campaigns,
-    bestandVisible: bestandVisible(customer),
+    bestandEnabled: !!customer?.existingCustomersEnabled,
     withoutCrossSell: withoutCross,
     missingPremium,
     withoutNextStep: steps?.withoutNextStep ?? 0,

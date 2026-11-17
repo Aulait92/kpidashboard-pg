@@ -213,6 +213,22 @@ export function summarizeBestand(
   };
 }
 
+const zahl = (n: number) => n.toLocaleString("de-DE");
+
+/**
+ * Zeile unter der Abschlussprovision (Ole, 17.11.2026). Der Betrag enthält alle Verträge des Zeitraums, auch
+ * Cross-Selling; „Abschlüsse“ sind die ersten Verträge (einer je Kontakt). Mit Cross-Selling also beides:
+ * „aus 3 Abschlüssen (4 Verträge, davon 1 Cross-Selling)“, sonst kurz. „einmalig“ nur, wenn kein Bestand des
+ * 1. Jahres im Betrag steckt (Sparten mit Bestand ab dem 1. Jahr: „inkl. Bestand im 1. Jahr“).
+ */
+export function provisionAusText(prov: Pick<ProvisionSummary, "contracts" | "crossSell" | "firstYear" | "abschluss">, makler: boolean): string {
+  const cross = prov.crossSell.contracts;
+  const abschluesse = prov.contracts - cross;
+  const vertraege = cross > 0 ? ` (${zahl(prov.contracts)} ${prov.contracts === 1 ? "Vertrag" : "Verträge"}, davon ${zahl(cross)} Cross-Selling)` : "";
+  const art = makler ? "im 1. Jahr" : prov.firstYear > prov.abschluss + 0.005 ? "inkl. Bestand im 1. Jahr" : "einmalig";
+  return `aus ${zahl(abschluesse)} ${abschluesse === 1 ? "Abschluss" : "Abschlüssen"}${vertraege}, ${art}`;
+}
+
 /** Gewinn eines Zeitraums aus den Teilen (rein). */
 export function gewinnOf(provisionFirstYear: number, leadCosts: number, agencyTotal: number): number {
   return r2(provisionFirstYear - leadCosts - agencyTotal);

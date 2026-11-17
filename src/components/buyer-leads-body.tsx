@@ -19,6 +19,7 @@ import { X } from "lucide-react";
 import { VERLUST_LABEL, verlustKey, type VerlustKey } from "@/lib/verlustgruende";
 import { verlorenImZeitraum } from "@/lib/verlustgruende-server";
 import { weitereEmailsSuche } from "@/lib/lead-emails";
+import { CROSS_SELL_FILTER, CROSS_SELL_LABEL, crossSellOffenWhere } from "@/lib/cross-sell-offen";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -51,7 +52,9 @@ export async function BuyerLeadsBody({
   // (gleiche Regel wie Zähler in der Navigation und „Heute“, lib/lead-next-step.ts).
   const noStepView = view === "ohne-schritt" && !q;
   // Aus „Warum Leads verloren gehen“ (Zahlen): verlorene Leads mit diesem Grund, verloren im Zeitraum (lib/verlustgruende.ts)
-  const verlust = !noStepView && !q && params.verlust && params.verlust in VERLUST_LABEL ? (params.verlust as VerlustKey) : null;
+  // Aus dem Tipp „Weiteres Produkt anbieten“ (Zahlen): genau die dort gezählten Kunden, unabhängig vom Zeitraum
+  const crossSell = !noStepView && !q && params.filter === CROSS_SELL_FILTER;
+  const verlust = !noStepView && !crossSell && !q && params.verlust && params.verlust in VERLUST_LABEL ? (params.verlust as VerlustKey) : null;
   const leadRowsAll = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
@@ -59,6 +62,8 @@ export async function BuyerLeadsBody({
       // Bei einer Suche über alle Zeiträume (Rückrufer sind oft älter).
       ...(noStepView
         ? {}
+        : crossSell
+        ? crossSellOffenWhere(now)
         : verlust
         ? { ...verlorenImZeitraum(range.from, range.to), ...(params.produkt ? { source: params.produkt } : {}) }
         : q
@@ -133,6 +138,7 @@ export async function BuyerLeadsBody({
     }
   }
   const noStepTotal = await countWithoutNextStep(leadScope(team), now);
+  const crossSellTotal = crossSell ? await prisma.lead.count({ where: { ...leadScope(team), ...crossSellOffenWhere(now) } }) : 0;
   const pastByLead = new Map<string, string>();
   for (const a of pastAppts) if (a.leadId && !pastByLead.has(a.leadId)) pastByLead.set(a.leadId, a.id);
 
@@ -195,6 +201,16 @@ export async function BuyerLeadsBody({
           </span>
         </p>
       ) : null}
+      {crossSell ? (
+        <p className="flex flex-wrap items-center gap-2 text-sm" data-cross-sell-filter>
+          <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 font-medium text-[color:var(--brand-dark)]">
+            {CROSS_SELL_LABEL}: <span className="tabular-nums">{crossSellTotal}</span>
+            <Link href={basePath} aria-label="Filter entfernen" className="-mr-1 inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/60">
+              <X className="h-3.5 w-3.5" />
+            </Link>
+          </span>
+        </p>
+      ) : null}
       <FilterChips
         searchPlaceholder="Name, Telefon oder E-Mail"
         fields={[{ kind: "select", key: "phase", label: "Phase", options: phases.map((p) => ({ value: p.key, label: p.label })) }]}
@@ -221,14 +237,21 @@ export async function BuyerLeadsBody({
       </nav>
       <BuyerLeadsTable
         leads={shown}
-        title={[activeView.key ? activeView.label : "Alle Kontakte", phase?.label].filter(Boolean).join(" · ")}
+        title={[activeView.key ? activeView.label : crossSell ? CROSS_SELL_LABEL : "Alle Kontakte", phase?.label].filter(Boolean).join(" · ")}
         statusLabels={WHATSAPP_STATUS_LABELS}
         showLeadCost={!(await loadRetainerConfig(customerId))}
         detailBase={detailBase}
         detailSuffix={detailSuffix}
         empty={
           // Leerer Zustand mit nächster Handlung (UX-Regel): Filter lösen bzw. Zeitraum erweitern
-          leads.length > 0 ? (
+          crossSell && leads.length === 0 ? (
+            <>
+              Alle Kunden mit Abschluss haben schon ein weiteres Produkt.{" "}
+              <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
+                Alle Kontakte anzeigen
+              </Link>
+            </>
+          ) : leads.length > 0 ? (
             <>
               Keine Kontakte in dieser Ansicht.{" "}
               <Link href={basePath} className="font-medium text-[color:var(--brand)] underline">
