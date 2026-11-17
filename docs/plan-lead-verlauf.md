@@ -181,3 +181,12 @@ Neue Summe: etwa 10 bis 12 Personentage. Noch offen bei Ole: Fragen 2 (zwei frü
 4. **Erste Frage im Erstanschreiben:** nicht fett (bleibt wie v7).
 5. **Glückwunsch:** Text laut Ergänzung D, einverstanden.
 6. **Vermittler-Oberfläche:** Sie-Form („wenn Sie es hier senden“).
+
+## Korrektur zu A (Ole, 17.11.2026, 18:34 Uhr)
+
+Es kommt **keine eigene Anruf-Logik**. Es gilt der bestehende Anrufplan aus `src/lib/call-plan.ts`: 6 Versuche über mindestens 3 Tage, „Anrufversuch X von 6“ auf Heute, der Verlustgrund „nicht erreichbar“ erst nach 6 Versuchen.
+
+- **Auslöser:** Antwortet der Lead 30 Min nach dem Erstanschreiben nicht (in den Geschäftszeiten), startet der Anrufplan. Versuch 1 kommt als Push „Frau Becker hat noch nicht geantwortet. Jetzt anrufen?“ mit Anruf-Knopf.
+- **WA-Nachfassen:** mit der bestehenden Nicht-erreicht-Abfolge (`lead-sequences.ts`) abstimmen, nicht doppeln. Antwortet der Lead im Chat, stoppt der Anrufplan.
+- **Entfällt:** „Tag 2 / Tag 5 / Status kein Kontakt“ aus A.
+- **Anzeige:** Onboarding-Grafik und „Nächste Nachrichten“ zeigen den 6er-Plan.
