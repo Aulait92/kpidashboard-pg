@@ -92,10 +92,11 @@ export function EigeneProdukte({ products, canEdit }: { products: EigenesProdukt
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              {/* items-end: Felder bleiben auf einer Linie, auch wenn eine Beschriftung am Handy umbricht */}
+              <div className="grid grid-cols-2 items-end gap-2">
                 <label className="block min-w-0">
-                  <span className="text-xs text-[color:var(--muted)]">Abschluss in {info.einheit}</span>
-                  <input className={`${inputCls} mt-1`} inputMode="decimal" aria-label={`Abschluss in ${info.einheit}`} value={r.rateAbschluss} disabled={!canEdit} onChange={(e) => set(i, { rateAbschluss: e.target.value })} />
+                  <span className="text-xs text-[color:var(--muted)]">Abschluss in {info.kurz === "MB" ? "Monatsbeiträgen" : info.einheit}</span>
+                  <input className={`${inputCls} mt-1`} inputMode="decimal" aria-label={`Abschluss in ${info.kurz === "MB" ? "Monatsbeiträgen" : info.einheit}`} value={r.rateAbschluss} disabled={!canEdit} onChange={(e) => set(i, { rateAbschluss: e.target.value })} />
                 </label>
                 <label className="block min-w-0">
                   <span className="text-xs text-[color:var(--muted)]">Bestand in % pro Jahr</span>
