@@ -253,6 +253,10 @@ describe("Eingabe und Erinnerung", () => {
   it("Hinweis auf naheliegende Sparten", () => {
     expect(crossSellNote(["katze"])).toBe("Weiteres Produkt anbieten? Naheliegend: Privatschutz/Haftpflicht, Unfall");
     expect(crossSellNote(["privatschutz"])).toContain("Hausrat");
+    // Cross-Selling A6: erkannte Lücken aus der Terminvorbereitung gehen vor
+    expect(crossSellNote(["privatschutz"], [{ label: "Rechtsschutz", status: "luecke" }, { label: "Unfall", status: "woanders" }])).toBe(
+      "Weiteres Produkt anbieten? Aus dem Termin: Rechtsschutz (Lücke), Unfall (woanders versichert)",
+    );
   });
 });
 
