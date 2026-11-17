@@ -143,7 +143,8 @@ export async function discardParkedAction(fd: FormData): Promise<void> {
 
 export async function decideStornoAction(fd: FormData): Promise<void> {
   await requireAdmin();
-  await decideStorno(String(fd.get("leadId") ?? ""), fd.get("decision") === "approve");
+  const d = fd.get("decision");
+  await decideStorno(String(fd.get("leadId") ?? ""), d === "half" ? "half" : d === "approve");
   revalidatePath("/admin/ppl", "layout");
   revalidatePath("/admin/neu", "layout");
 }
