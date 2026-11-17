@@ -474,3 +474,49 @@ Zum Gegenprüfen besonders: Basler und Helvetia (seit 05.05.2026 verkauft helvet
 Risikoträger Baloise; gleiche Werte in beiden Ordnern), Zurich (Produktseiten gesperrt, Werte aus Bedingungen, Kfz
 von 2016, Premium fehlt), Generali (dünne Produktseiten), ERV-Reiserücktritt gleich ERGO (keine eigene Datei),
 selbst gebildete Stufen (LVM PKV, SDK PKV, uniVersa PKV). Helvetia ist mit curl abrufbar (früherer Hinweis „gesperrt“ überholt).
+
+### Welle 3: möglichst alle Gesellschaften (17.11.2026)
+
+Ole: „Ich hätte gerne möglichst alle Gesellschaften und Tarife drin.“ Stand: 766 Dateien, 82 Gesellschaften.
+Nicht aufgenommen: FRIDAY (gehört zu Allianz Direct, Name wird der Allianz zugeordnet), Heidelberger Leben (kein
+Neugeschäft seit 2014), GVV (Seite sperrt automatische Abrufe, von Hand erfassen), Monuta (kein Versicherer mehr).
+Folien-Test misst jetzt jede Sparte jeder Gesellschaft.
+
+| Gesellschaft | Sparten (Stufen) |
+|---|---|
+| vkb | basisrente 3, bu 1, grundfaehigkeit 1, haftpflicht 2, hausrat 2, kfz 3, kinderinvaliditaet 1, rechtsschutz 1, reiseruecktritt 2, rente 4, risikoleben 3, sterbegeld 1, tierhalter-hund 2, tierhalter-pferd 2, unfall 3, wohngebaeude 2 |
+| sv | basisrente 2, bu 2, haftpflicht 3, hausrat 3, kfz 3, rechtsschutz 2, reiseruecktritt 2, rente 3, risikoleben 1, sterbegeld 1, tierhalter-hund 3, tierhalter-pferd 3, unfall 3, wohngebaeude 3 |
+| vgh | ambulant 3, basisrente 3, bu 2, grundfaehigkeit 3, haftpflicht 3, hausrat 3, kfz 3, krankenhauszusatz 3, krankentagegeld 3, pflegezusatz 3, pkv 2, rechtsschutz 3, reise-kranken 2, rente 3, risikoleben 2, sterbegeld 1, tierhalter-hund 1, tierhalter-pferd 1, unfall 3, wohngebaeude 3, zahnzusatz 3 |
+| s-direkt | haftpflicht 3, hausrat 3, hund-kranken 3, hund-op 3, katze-kranken 1, katze-op 1, kfz 3, pferd-kranken 1, pferd-op 3, rechtsschutz 2, reiseruecktritt 3, tierhalter-hund 3, wohngebaeude 3, zahnzusatz 2 |
+| neue-leben | basisrente 1, bu 2, grundfaehigkeit 1, rente 3, risikoleben 2, sterbegeld 1, unfall 2 |
+| hdi | ambulant 3, basisrente 1, bu 3, grundfaehigkeit 1, haftpflicht 3, hausrat 2, kfz 2, krankentagegeld 2, pflegezusatz 3, rechtsschutz 1, rente 1, risikoleben 1, tierhalter-hund 2, tierhalter-pferd 2, unfall 2, wohngebaeude 2, zahnzusatz 3 |
+| wwk | basisrente 2, bu 1, grundfaehigkeit 1, haftpflicht 2, hausrat 2, kfz 2, rente 3, risikoleben 1, sterbegeld 1, tierhalter-hund 1, tierhalter-pferd 1, unfall 2, wohngebaeude 2 |
+| vpv | bu 2, grundfaehigkeit 2, haftpflicht 2, hausrat 2, kfz 2, rechtsschutz 2, rente 4, risikoleben 1, sterbegeld 2, tierhalter-hund 2, tierhalter-pferd 2, unfall 2, wohngebaeude 2 |
+| condor | bu 3, dienstunfaehigkeit 3 |
+| adam-riese | haftpflicht 3, hausrat 2, rechtsschutz 2, tierhalter-hund 2, unfall 2, wohngebaeude 2 |
+| getsafe | haftpflicht 2, hausrat 2, hund-kranken 2, hund-op 1, katze-kranken 2, katze-op 1, tierhalter-hund 2, zahnzusatz 3 |
+| verti | haftpflicht 2, kfz 3 |
+| neodigital | kfz 2 |
+| janitos | haftpflicht 3, hausrat 3, kfz 2, krankenhauszusatz 1, tierhalter-hund 2, tierhalter-pferd 1, unfall 3, wohngebaeude 2, zahnzusatz 3 |
+| ammerlaender | haftpflicht 2, hausrat 4, tierhalter-hund 2, unfall 2, wohngebaeude 2 |
+| interrisk | bu 3, haftpflicht 3, hausrat 2, rente 2, risikoleben 3, sterbegeld 1, tierhalter-hund 1, tierhalter-pferd 1, unfall 3, wohngebaeude 3 |
+| rhion | haftpflicht 3, hausrat 3, kfz 3, tierhalter-hund 2, tierhalter-pferd 2, unfall 3, wohngebaeude 3 |
+| nv | haftpflicht 3, hausrat 3, tierhalter-hund 2, tierhalter-pferd 2, unfall 3, wohngebaeude 3 |
+| mecklenburgische | ambulant 4, basisrente 2, bu 1, grundfaehigkeit 1, haftpflicht 1, hausrat 2, kfz 2, krankenhauszusatz 2, krankentagegeld 1, pflegezusatz 2, pkv 3, rechtsschutz 2, reise-kranken 1, rente 2, risikoleben 1, sterbegeld 1, tierhalter-hund 1, tierhalter-pferd 1, unfall 1, wohngebaeude 2, zahnzusatz 4 |
+| ostangler | haftpflicht 2, hausrat 2, tierhalter-hund 1, tierhalter-pferd 1, unfall 3, wohngebaeude 1 |
+| domcura | haftpflicht 3, hausrat 3, rechtsschutz 2, tierhalter-hund 1, tierhalter-pferd 1, unfall 3, wohngebaeude 4 |
+| auxilia | rechtsschutz 3 |
+| oerag | rechtsschutz 2 |
+| deurag | rechtsschutz 4 |
+| standard-life | basisrente 1, rente 3 |
+| ottonova | krankenhauszusatz 2, krankentagegeld 2, pkv 4, zahnzusatz 3 |
+| envivas | ambulant 2, krankenhauszusatz 3, krankentagegeld 2, pflegezusatz 3, reise-kranken 4, zahnzusatz 3 |
+| arag | ambulant 3, grundfaehigkeit 2, haftpflicht 3, hausrat 3, hund-kranken 3, hund-op 1, katze-kranken 3, katze-op 1, krankenhauszusatz 4, krankentagegeld 1, pflegezusatz 3, pkv 3, rechtsschutz 3, reise-kranken 1, reiseruecktritt 2, tierhalter-hund 3, tierhalter-pferd 3, unfall 4, zahnzusatz 4 |
+| petprotect | hund-kranken 3, hund-op 3, katze-kranken 3, katze-op 2, pferd-op 2, tierhalter-hund 3, tierhalter-pferd 3 |
+| figo | hund-kranken 1, hund-op 1, katze-kranken 1, katze-op 1 |
+| petolo | hund-kranken 3, hund-op 2, katze-kranken 3, katze-op 2, tierhalter-hund 2 |
+| santevet | hund-kranken 3, katze-kranken 3 |
+
+Zum Gegenprüfen besonders: Partnerprodukte stehen bei mehreren Gesellschaften (ÖRAG-Rechtsschutz bei VKB, SV, S-Direkt;
+URV-Reiserücktritt bei VKB, SV, S-Direkt; Uelzener-Tier bei S-Direkt mit älteren Unterlagen), Symboltabellen als Bild
+gelesen (InterRisk, NV, VGH, Itzehoer), WWK und HDI nur Produktseiten (PDFs nicht abrufbar).
