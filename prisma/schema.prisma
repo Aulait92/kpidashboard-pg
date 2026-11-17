@@ -4209,8 +4209,8 @@ model Erstinformation {
   // Pflichtangaben nach § 15 Abs. 1 VersVermV (Ole, 15.11.2026). null = Vorschlag aus Impressum/Angebot
   // (lib/erstinformation-shared.ts erstinfoDaten), gespeichert wird beim Bestätigen in der Einrichtung.
   name           String?
-  // Anrede des Vermittlers (Herr | Frau), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
-  // null = nicht angegeben, dann Vor- und Nachname. Kein Pflichtfeld der Erstinformation.
+  // Anrede des Vermittlers (Herr | Frau | keine), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
+  // Pflicht in der Einrichtung; „keine“ (bewusst ohne) bzw. null (nicht angegeben): Vor- und Nachname.
   anrede         String?
   firma          String?
   anschrift      String?

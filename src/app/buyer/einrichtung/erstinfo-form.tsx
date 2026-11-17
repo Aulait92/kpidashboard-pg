@@ -142,11 +142,14 @@ export function ErstinfoForm({
             <div className="grid gap-3 sm:grid-cols-2">
               <Field id="name" label="Vor- und Nachname">
                 <div className="flex gap-2">
-                  {/* Anrede nur für den Assistenten („Herr Kannapinn zeigt Ihnen …“), Ole 17.11.2026 */}
-                  <select id="anrede" name="anrede" aria-label="Anrede" className={`${input} w-28 shrink-0`} defaultValue={initial.anrede ?? ""}>
-                    <option value="">Anrede</option>
+                  {/* Anrede Pflicht für den Assistenten („Herr Kannapinn zeigt Ihnen …“), Ole 17.11.2026; „keine“ = Vor- und Nachname */}
+                  <select id="anrede" name="anrede" aria-label="Anrede" required className={`${input} w-28 shrink-0`} defaultValue={initial.anrede ?? ""}>
+                    <option value="" disabled>
+                      Anrede
+                    </option>
                     <option value="Herr">Herr</option>
                     <option value="Frau">Frau</option>
+                    <option value="keine">Keine</option>
                   </select>
                   <input id="name" name="name" className={`${input} min-w-0 flex-1`} defaultValue={d.name} autoComplete="name" />
                 </div>

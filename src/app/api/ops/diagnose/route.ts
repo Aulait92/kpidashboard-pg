@@ -625,8 +625,10 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
+//   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
+  "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
 };
 
 export async function GET(req: Request): Promise<Response> {

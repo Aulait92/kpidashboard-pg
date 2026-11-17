@@ -74,12 +74,13 @@ export async function sendBookingConfirmation(opts: {
   // Verschieben per Knopf „Termin verschieben“ (v4) bzw. per Chat (ältere Vorlagen: Satz im Parameter)
   const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an)];
   const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
-  // „Guten Tag Frau Schneider, Ihr Videocall mit Susanne Meier ist bestätigt: …“
+  // „Guten Tag Frau Schneider, Ihr Videocall mit Herrn Kannapinn ist bestätigt: …“ (Nennungsregel, lib/vermittler-nennung.ts)
+  const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
   const text =
-    `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${who.advisor} ist bestätigt: ${params[1]}. ` +
+    `${anredeZeile(an, who.kontakt)} ${terminWort(opts.mode, an)} mit ${person.dat} ist bestätigt: ${params[1]}. ` +
     (opts.mode === "video" && opts.meetUrl
       ? `Hier der Link zum Videocall: ${opts.meetUrl}`
-      : a(an, `${who.advisor} ruft dich zur vereinbarten Zeit an.`, `${who.advisor} ruft Sie zur vereinbarten Zeit an.`)) +
+      : a(an, `${person.nom} ruft dich zur vereinbarten Zeit an.`, `${person.nom} ruft Sie zur vereinbarten Zeit an.`)) +
     `\n\n${prepHint(an)} Bis dann! 🙂`;
   await sendWhatsAppNotice({
     customerId: opts.customerId,
@@ -114,8 +115,9 @@ export async function sendRescheduleNotice(opts: {
   // v4: Frage „Passt die neue Zeit?“ mit Knöpfen „Ja, passt“/„Bitte verschieben“; ältere Vorlagen mit Satz im Parameter
   const params = [firstNameOf(opts.name), formatWhenDE(opts.startsAt), modeLabel(opts.mode), linkOrHint(opts.mode, opts.meetUrl, an)];
   const legacyParams = [...params.slice(0, 3), `${params[3]} ${change}`];
+  const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
   const text =
-    `${anredeZeile(an, who.kontakt)} wir mussten ${a(an, "deinen", "Ihren")} Termin mit ${who.advisor} leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
+    `${anredeZeile(an, who.kontakt)} wir mussten ${a(an, "deinen", "Ihren")} Termin mit ${person.dat} leider verschieben. Neue Zeit: ${params[1]} (${params[2]}).` +
     `\n\n${a(an, "Danke für dein Verständnis! Passt dir die neue Zeit?", "Danke für Ihr Verständnis! Passt Ihnen die neue Zeit?")}`;
   const send = (purpose: "reschedule" | "booking_confirmation") =>
     sendWhatsAppNotice({

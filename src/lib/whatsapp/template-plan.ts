@@ -10,12 +10,13 @@
 //   pg_<zweck>_v3_sie             Sie     „Guten Tag {{1}}, …“ ({{1}} = Frau Schneider / Julia Schneider)
 //   pg_<zweck>_v3_sie_ohne_name   Sie     „Guten Tag, …“ (für Kontakte ohne Nachnamen)
 // A/B-Fassung b (TEMPLATE_BODY_B) mit „_b“ hinter der Version: pg_<zweck>_v4_b, pg_<zweck>_v4_b_sie …
-// Erstanschreiben mit PDF der Erstinformation im Kopf (TEMPLATE_HEADER) und Fußzeile (ERSTINFO_FOOTER). Nur v6 wurde je
+// Erstanschreiben mit PDF der Erstinformation im Kopf (TEMPLATE_HEADER) und Fußzeile (erstinfoFooterFor, ab v8 mit
+// KI-Kennzeichnung). Nur v6 wurde je
 // Fassung zusätzlich ohne Kopf eingereicht („_ohnepdf“); seit dem Live-Test 17.11.2026 geht das Erstanschreiben nie ohne
 // Erstinformation raus, die _ohnepdf-Fassungen werden nicht mehr gesendet und ab v7 nicht mehr eingereicht.
 
 import {
-  ERSTINFO_FOOTER,
+  erstinfoFooterFor,
   TEMPLATE_BUTTONS,
   TEMPLATE_HEADER,
   TEMPLATE_VERSION,
@@ -34,7 +35,8 @@ import {
   type TemplateNames,
   type TemplateVariant,
 } from "@/lib/whatsapp/templates";
-import type { Ansprache } from "@/lib/ansprache";
+import { salutationOf, type Ansprache } from "@/lib/ansprache";
+import { vermittlerName } from "@/lib/vermittler-nennung";
 import { firmDisplayName, kurzNameFuerLeads, personFromCustomerName } from "@/lib/advisor-name";
 import type { CreateTemplateInput, RemoteTemplate } from "@/lib/whatsapp/dialog360";
 
@@ -132,18 +134,26 @@ export function advisorDisplayName(customerName: string): string {
  * [Firma] = Kundenname, [Berater] = Person (Ole, 14.11.2026), [Rolle] = Status laut Erstinformation (rolleText),
  * [Kurzname] = Vorname laut Profil (Anbieterangaben), sonst Agentur (Erstanschreiben ab v5, Ole 16.11.2026).
  */
-export function templateNamesOf(customerName: string, role?: string, profilName?: string | null): TemplateNames {
+export function templateNamesOf(customerName: string, role?: string, profilName?: string | null, anrede?: string | null): TemplateNames {
+  const firm = firmDisplayName(customerName);
+  const advisor = personFromCustomerName(customerName);
+  const kurz = kurzNameFuerLeads({ profilName, customerName });
+  // Vermittler als Person (Ole, 17.11.2026, lib/vermittler-nennung.ts): Name laut Anbieterangaben, Anrede aus der Einrichtung
+  const name = profilName || advisor;
+  const sal = salutationOf(anrede);
   return {
-    firm: firmDisplayName(customerName),
-    advisor: personFromCustomerName(customerName),
-    kurz: kurzNameFuerLeads({ profilName, customerName }),
+    firm,
+    advisor,
+    kurz,
+    person: { sie: vermittlerName("sie", { name, anrede: sal, fallback: advisor }), du: vermittlerName("du", { name, anrede: sal, fallback: kurz }) },
     ...(role ? { role } : {}),
   };
 }
 
 /** Text der Vorlage für diesen Kunden (names: Firma und Berater, oder ein Name für beide). */
 export function templateBodyFor(purpose: NoticePurpose, names: TemplateNames | string, form: TemplateForm | Ansprache = "du", variant: TemplateVariant = "a"): string {
-  return fillNames(templateTextFor(purpose, formOf(purpose, form), variant), names);
+  const f = formOf(purpose, form);
+  return fillNames(templateTextFor(purpose, f, variant), names, f === "du" ? "du" : "sie");
 }
 
 /** Beispielwerte für die Prüfung durch Meta (je Platzhalter, Reihenfolge wie paramLabelsFor). */
@@ -190,7 +200,7 @@ const V6_BEISPIEL: Partial<Record<NoticePurpose, { thema: string; frage: { sie: 
   outreach_tkv: { thema: "Katzenversicherung", frage: { sie: "Wie alt ist Ihre Katze", du: "Wie alt ist deine Katze" } },
   outreach_zahn: { thema: "Zahnzusatzversicherung", frage: { sie: "Welcher Tarifbaustein ist Ihnen am wichtigsten", du: "Welcher Tarifbaustein ist dir am wichtigsten" } },
   outreach_pkv: { thema: "private Krankenversicherung", frage: { sie: "Wie sind Sie aktuell beruflich aufgestellt", du: "Wie bist du aktuell beruflich aufgestellt" } },
-  outreach_privatschutz: { thema: "Privatschutz", frage: { sie: "Worum geht es Ihnen vor allem", du: "Worum geht es dir vor allem" } },
+  outreach_privatschutz: { thema: "Privatschutz", frage: { sie: "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu", du: "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu" } },
 };
 
 /** Beispiel für das Produkt im Erstanschreiben (passt zum Artikel im Text: „zur …“ bzw. „zum Thema …“). */
@@ -203,8 +213,9 @@ const PRODUKT_BEISPIEL: Partial<Record<NoticePurpose, string>> = {
 
 export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du", names?: TemplateNames | null, labels?: string[]): string[] {
   const f = formOf(purpose, form);
-  // Vermittler (v6): in der Vorschau des Kunden sein eigener Name (Sie: Vor- und Nachname, Du: Kurzname)
-  const vermittler = names ? (f === "du" ? names.kurz || names.advisor : names.advisor) : f === "du" ? "Thomas" : "Herrn Schmidt";
+  // Vermittler (ab v6, im Dativ): in der Vorschau des Kunden sein eigener Name nach der Nennungsregel (Sie „Herrn
+  // Kannapinn“, ohne Anrede Vor- und Nachname; Du Vorname)
+  const vermittler = names ? (names.person?.[f === "du" ? "du" : "sie"].dat ?? (f === "du" ? names.kurz || names.advisor : names.advisor)) : f === "du" ? "Thomas" : "Herrn Schmidt";
   return (labels ?? paramLabelsFor(purpose, f)).map((label) =>
     label === "Link/Hinweis" && f !== "du"
       ? "Wir rufen Sie unter Ihrer Nummer an."
@@ -238,7 +249,7 @@ export function exampleRestFor(purpose: NoticePurpose, an: Ansprache, version?: 
 /**
  * Antrag für POST /v1/configs/templates. Mit opts.documentExample (öffentliche Adresse eines Beispiel-PDFs) bekommen
  * Zwecke mit TEMPLATE_HEADER einen Dokument-Kopf (example.header_handle mit Link, wie in der 360dialog-Doku
- * „Template Elements“) und die Fußzeile ERSTINFO_FOOTER. Ohne Beispiel (null): ohne Kopf und Fußzeile.
+ * „Template Elements“) und die Fußzeile (erstinfoFooterFor). Ohne Beispiel (null): ohne Kopf und Fußzeile.
  */
 export function buildTemplateRequest(
   purpose: NoticePurpose,
@@ -257,7 +268,7 @@ export function buildTemplateRequest(
   const body: Record<string, unknown> = { type: "BODY", text };
   if (examples.length) body.example = { body_text: [examples] };
   components.push(body);
-  if (header) components.push({ type: "FOOTER", text: ERSTINFO_FOOTER });
+  if (header) components.push({ type: "FOOTER", text: erstinfoFooterFor(version === TEMPLATE_VERSION ? templateVersionFor(purpose) : version) });
   const buttons = TEMPLATE_BUTTONS[purpose] ?? [];
   if (buttons.length) components.push({ type: "BUTTONS", buttons: buttons.map((text) => ({ type: "QUICK_REPLY", text })) });
   return {

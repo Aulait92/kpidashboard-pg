@@ -33,9 +33,9 @@ describe("Vorlagen-Plan", () => {
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
-    // Erstanschreiben v7 (17.11.2026, erste Frage nicht fett, nur mit PDF-Kopf), übrige Zwecke v4
-    expect(templateNameFor("outreach")).toBe("pg_outreach_v7");
-    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v7_sie");
+    // Erstanschreiben v8 (17.11.2026, kurz, nur mit PDF-Kopf), übrige Zwecke v4
+    expect(templateNameFor("outreach")).toBe("pg_outreach_v8");
+    expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v8_sie");
     expect(templateNameFor("outreach_tkv", "v6", "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
     expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v4_b_sie");
     // Unveränderte Texte behalten ihre Version (keine erneute Einreichung)
@@ -61,8 +61,8 @@ describe("Vorlagen-Plan", () => {
     const body = templateBodyFor("followup_noshow", "Anid Brand");
     expect(body).toContain("Anid Brand");
     expect(body).not.toContain("[Berater]");
-    // Erstanschreiben ab v6: Vermittler als Platzhalter (Dativ, „von Herrn Kannapinn“)
-    expect(templateBodyFor("outreach", "Anid Brand")).toContain("digitale KI-Assistent von {{3}}.");
+    // Erstanschreiben ab v6: Vermittler als Platzhalter (Dativ, „von Herrn Kannapinn“), ab v8 {{2}}
+    expect(templateBodyFor("outreach", "Anid Brand")).toContain("digitale Assistent von {{2}}.");
   });
 
   it("Antrag: Beispielwerte je Platzhalter, Knöpfe wo eine Antwort erwartet wird, Abmeldeknopf bei Werbung", () => {

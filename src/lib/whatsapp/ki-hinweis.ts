@@ -28,12 +28,17 @@ export const KI_HINWEIS_KERN: Record<Ansprache, string> = {
   sie: `${kurzKlein} Ich helfe Ihnen, einen Termin mit [Berater] zu vereinbaren. Wenn Sie direkt mit [Berater] sprechen möchten, schreiben Sie ‚Mensch‘.`,
 };
 
-export type KiNamen = { firm: string; advisor: string };
+/** person: Vermittler nach der Nennungsregel (lib/vermittler-nennung.ts, Sie „Herr/Herrn Kannapinn“); ohne: advisor. */
+export type KiNamen = { firm: string; advisor: string; person?: { nom: string; dat: string } };
 
-const fill = (t: string, n: KiNamen) => t.split("[Firma]").join(n.firm).split("[Berater]").join(n.advisor);
+const nom = (n: KiNamen) => n.person?.nom ?? n.advisor;
+const dat = (n: KiNamen) => n.person?.dat ?? n.advisor;
+// [Berater] steht in den Texten hier nur nach „mit“ (Dativ)
+const fill = (t: string, n: KiNamen) => t.split("[Firma]").join(n.firm).split("[Berater]").join(dat(n));
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 /** Satz zur Erstinformation (§ 15 VersVermV) mit Link. */
+/** advisor im Dativ nach der Nennungsregel („zu Herrn Kannapinn“, lib/vermittler-nennung.ts). */
 export function erstinfoZeile(advisor: string, url: string): string {
   return `Erstinformation zu ${advisor} als Versicherungsvermittler: ${url}`;
 }
@@ -66,8 +71,8 @@ export function kiHinweis(an: Ansprache, names: KiNamen, kontakt?: AnredeKontakt
 export function kiHinweisErneut(an: Ansprache, names: KiNamen): string {
   return a(
     an,
-    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}. Ich bin kein Mensch und berate nicht zu Tarifen. Wenn du direkt mit ${names.advisor} sprechen möchtest, schreib ‚Mensch‘.`,
-    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}. Ich bin kein Mensch und berate nicht zu Tarifen. Wenn Sie direkt mit ${names.advisor} sprechen möchten, schreiben Sie ‚Mensch‘.`,
+    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}. Ich bin kein Mensch und berate nicht zu Tarifen. Wenn du direkt mit ${dat(names)} sprechen möchtest, schreib ‚Mensch‘.`,
+    `Kurzer Hinweis: Hier schreibt weiterhin der digitale KI-Assistent von ${names.firm}. Ich bin kein Mensch und berate nicht zu Tarifen. Wenn Sie direkt mit ${dat(names)} sprechen möchten, schreiben Sie ‚Mensch‘.`,
   );
 }
 
@@ -165,5 +170,5 @@ export function humanHandoverReply(an: Ansprache, names: KiNamen, kontakt?: Anre
   const wer = opts.greet
     ? `${anredeZeile(an, kontakt)} ${fill(kurzKlein, names)}`
     : `Ich bin der digitale KI-Assistent von ${names.firm}, kein Mensch.`;
-  return `${wer} ${a(an, `Ich habe ${names.advisor} Bescheid gegeben, ${names.advisor} meldet sich persönlich bei dir.`, `Ich habe ${names.advisor} Bescheid gegeben, ${names.advisor} meldet sich persönlich bei Ihnen.`)}`;
+  return `${wer} ${a(an, `Ich habe ${dat(names)} Bescheid gegeben, ${nom(names)} meldet sich persönlich bei dir.`, `Ich habe ${dat(names)} Bescheid gegeben, ${nom(names)} meldet sich persönlich bei Ihnen.`)}`;
 }

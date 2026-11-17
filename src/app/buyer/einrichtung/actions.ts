@@ -210,7 +210,8 @@ export async function saveErstinfoAction(_prev: ErstinfoState, fd: FormData): Pr
     status: str(fd, "status", 40),
     registerNummer: str(fd, "registerNummer", 40),
     name: str(fd, "name", 160),
-    anrede: str(fd, "anrede", 10),
+    // Pflicht im Formular (Ole, 17.11.2026); fehlt das Feld ganz (ältere Formulare), bleibt die Anrede unverändert
+    anrede: fd.has("anrede") ? str(fd, "anrede", 10) : undefined,
     firma: str(fd, "firma", 160),
     anschrift: str(fd, "anschrift", 400),
     telefon: str(fd, "telefon", 60),

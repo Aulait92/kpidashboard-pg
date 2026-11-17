@@ -203,3 +203,39 @@ Es kommt **keine eigene Anruf-Logik**. Es gilt der bestehende Anrufplan aus `src
 - **Vergleich bisheriger Vertrag (P3b, ca. 6 bis 8 h):** Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie, ein- und ausblendbar. Policen-Auszug liest zusätzlich den Tarifnamen; ist der Tarif im Tarifkatalog, kommen dessen Merkmale in die Spalte, sonst nur Werte der Police (Beitrag, Versicherungssumme, Selbstbeteiligung). Unbekanntes neutral „laut Police prüfen“, nie „nicht enthalten“. Darunter Beitragsunterschied pro Jahr und Hinweis auf die Kündigungsfrist (Ablauf, Hauptfälligkeit). Auch ohne Police, wenn der Lead den Tarif im Chat nennt (`vorvertraege`). Gesundheitssparten erst nach Freischaltung der Gesundheitsunterlagen.
 - **Schutz im Überblick verständlicher (nach P2 und P3, weil beide dort ändern):** Frage „Hat <Name> das schon?“ über den Knöpfen; Antworten „Ja, bei mir“ (bisher „Bei uns“), „Ja, woanders“, „Weiß nicht“ (bisher „Prüfen“), „Nein“ (bisher „Lücke“); Präsentation behält die Ampel-Begriffe. Vorbelegung aus Formular, Chat und Komplettcheck mit Hinweis „aus dem Chat“; Unbekanntes = „Weiß nicht“ dezent grau. Schalter je Zeile „In heutiges Angebot aufnehmen“. Farbpunkt folgt der Antwort (grün ja, grau weiß nicht, rot nein). Oben Live-Vorschau der Ampel wie in der Präsentation. Unten Hauptknopf „Fertig“, automatisches Speichern mit „Gespeichert“, „Abbrechen“ nur, wenn es wirklich verwirft. Staging, Screenshots 390/1280, Score ≥ 90.
   - Ergänzung: Kasten „Chance im Termin“ (Terminvorbereitung): Status-Text „Prüfen“ (orange) neben der Sparte weglassen; nur bei „Nein“ klein „fehlt“. Satz unter der Überschrift: „Was Sie zusätzlich ansprechen können, ausgewählt aus Lebenslage und Angaben.“ Farbpunkt wie im Überblick (rot fehlt, grau weiß nicht, lila Vorsorge).
+
+## Umgesetzt: Erstnachricht v8, Zwischenfrage, Vermittler-Nennung (Ole, Testchat 17.11.2026, abends)
+
+Ersetzt für die Punkte 1 und 2 das SOLL oben und die Entscheidung 4 („nicht fett“): Die Frage ist in v8 wieder fett,
+wie in Oles neuem Text.
+
+**1. Erstkontakt (SOLL neu, umgesetzt):** Vorlage v8 je Produkt mit PDF der Erstinformation im Kopf, kurz (klappt in
+WhatsApp Desktop nicht mehr ein), Fußzeile fest „KI-Assistent · Oben: Erstinformation (gesetzlich)“. Texte und
+Platzhalter: `docs/vorlagen-erstanschreiben-v8.md`. Bis zur Freigabe bei Meta gehen v7 bzw. v6 raus (`PLATZHALTER_AB`).
+
+> Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von Herrn Kannapinn.
+>
+> **Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?**
+
+**2. Zwischenfrage und Terminvorschlag (SOLL neu, umgesetzt für Privatschutz):** Öffnungsfrage → Antwort → genau eine
+Zwischenfrage mit Knöpfen (die App stellt sie, `src/lib/whatsapp/zwischenfrage.ts`) → Antwort → Terminvorschlag, der die
+Antwort aufgreift. Terminwunsch, Rückfrage, Absage oder Freitext: nicht weiterfragen, direkt der Termin. Andere Produkte:
+Vorschlag in `docs/vorschlag-zwischenfrage.md`.
+
+> Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?
+> [Nur ich] [Zu zweit] [Familie mit Kindern]
+>
+> (Lead: „Nur ich“)
+>
+> Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten und worauf
+> Sie achten sollten. Passt Ihnen heute um 16 Uhr oder morgen um 10 Uhr?
+> [Heute 16 Uhr] [Morgen 10 Uhr] [Andere Zeit]
+
+**Vermittler-Nennung (überall):** gesiezt immer „Herr/Frau Nachname“, gebeugt („Herr Kannapinn zeigt Ihnen“, „von
+Herrn Kannapinn“, „Termin mit Herrn Kannapinn“), Du der Vorname; ohne Anrede Vor- und Nachname. Zentral in
+`src/lib/vermittler-nennung.ts` (`vermittlerName`, Sicherheitsnetz `vermittlerNennungKorrigieren` für KI-Antworten,
+Prompt-Regel `nennungsRegel`). Anrede ist Pflicht in der Einrichtung (Erstinformation, „Herr“, „Frau“ oder „Keine“).
+Kunden ohne Anrede: `GET /api/ops/diagnose?q=vermittler-anrede`.
+
+**Für P8 (Onboarding, Beispielverlauf in WhatsApp-Optik):** dieselben Bausteine nutzen, nicht abschreiben:
+`erstanschreibenText`, `zwischenfrageText` und `zwischenKnoepfe`, `terminVorschlagText` und `terminKnoepfe`.
