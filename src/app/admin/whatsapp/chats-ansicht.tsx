@@ -4,13 +4,9 @@ import {
   AlertCircle,
   ArrowLeft,
   Bot,
-  CalendarCheck,
-  CalendarClock,
-  CalendarX,
   Check,
   CheckCheck,
   ChevronDown,
-  ClipboardCheck,
   ExternalLink,
   FileText,
   Mail,
@@ -39,7 +35,9 @@ import { cn } from "@/lib/utils";
 import { nowMs } from "@/lib/now";
 import { LiveRefresh, NewMessageHint, StickToBottom } from "@/components/live-refresh";
 import { lastInboundAt } from "@/lib/live";
-import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
+import { avatarFarbe, initialen, type Absender } from "@/lib/chat-ansicht";
+import { ChatAvatar, ChatVerlauf, type Etikett } from "@/components/chat/chat-verlauf";
+import { waOhneMarker } from "@/lib/wa-format";
 
 // Chats (WhatsApp): Liste, Verlauf und Lead-Seitenleiste. Gemeinsam für /admin/whatsapp (Chat per ?c=) und den
 // neuen Admin (/admin/neu/leads/chats, Chat als eigene Adresse /admin/neu/leads/chats/<id>).
@@ -81,27 +79,12 @@ const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeForm
 const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);
 const clock = (d: Date) => fmt(d, { hour: "2-digit", minute: "2-digit" });
 
-/** Datumstrenner im Verlauf: „Heute“, „Gestern“, „Fr., 13.11.“. */
-function dayLabel(d: Date, now: number): string {
-  const k = dayKey(d);
-  if (k === dayKey(new Date(now))) return "Heute";
-  if (k === dayKey(new Date(now - 86_400_000))) return "Gestern";
-  const sameYear = k.slice(0, 4) === dayKey(new Date(now)).slice(0, 4);
-  return fmt(d, { weekday: "short", day: "2-digit", month: "2-digit", ...(sameYear ? {} : { year: "numeric" }) });
-}
-
 /** Chatliste: heute Uhrzeit, gestern „Gestern“, sonst Datum. */
 function shortTime(d: Date, now: number): string {
   const k = dayKey(d);
   if (k === dayKey(new Date(now))) return clock(d);
   if (k === dayKey(new Date(now - 86_400_000))) return "Gestern";
   return fmt(d, { day: "2-digit", month: "2-digit" }) + ".";
-}
-
-function initials(s: string): string {
-  const parts = s.trim().split(/\s+/).filter(Boolean);
-  const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : s.replace(/[^A-Za-zÄÖÜäöü0-9]/g, "").slice(0, 2);
-  return letters.toUpperCase() || "··";
 }
 
 function parseJson(body: string | null): Record<string, unknown> | null {
@@ -120,19 +103,11 @@ function parseFormAnswers(raw: unknown): { label: string; value: string }[] {
   );
 }
 
-const INTERNAL: Record<string, { label: string; icon: typeof Bot }> = {
-  qualification: { label: "Qualifizierung aktualisiert", icon: ClipboardCheck },
-  appointment_proposal: { label: "Terminwunsch notiert", icon: CalendarClock },
-  appointment_booked: { label: "Termin gebucht", icon: CalendarCheck },
-  appointment_cancelled: { label: "Termin abgesagt", icon: CalendarX },
-  appointment_rescheduled: { label: "Termin verschoben", icon: CalendarClock },
-  appointment_declined: { label: "Einladung abgelehnt", icon: CalendarX },
-  handover: { label: "An den Berater übergeben", icon: UserRound },
-  erneut_eingetragen: { label: "Hat sich erneut eingetragen", icon: UserRound },
-};
-
-/** Absender ausgehender Nachrichten als kleines Etikett. */
-function senderOf(sentBy: string | null, kind: string): { label: string; icon: typeof Bot } | null {
+/** Absender als kleines Etikett (beim Wechsel des Absenders, components/chat/chat-verlauf.tsx). */
+function etikettAdmin(m: { sentBy: string | null; kind: string | null }, a: Absender): Etikett {
+  if (a === "lead") return null;
+  const sentBy = m.sentBy;
+  const kind = m.kind ?? "text";
   if (sentBy === "bot") return { label: "KI-Bot", icon: Bot };
   if (sentBy === "agent") return { label: "Agent", icon: UserRound };
   if (sentBy === "app") return { label: "WhatsApp-App", icon: Smartphone };
@@ -312,10 +287,7 @@ export async function ChatsAnsicht({
                       isActive ? "bg-[color:var(--brand-soft)] ring-1 ring-[color:var(--brand)]/30" : "hover:bg-[color:var(--background)]"
                     }`}
                   >
-                    <span className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-xs font-bold text-[color:var(--brand-dark)]">
-                      {initials(c.contactName ?? c.contactPhone)}
-                      {c.needsAttention ? <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-rose-600" /> : null}
-                    </span>
+                    <ChatAvatar name={c.contactName ?? c.contactPhone} dot={c.needsAttention} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="truncate text-sm font-semibold">{c.contactName ?? formatPhone(c.contactPhone)}</span>
@@ -430,64 +402,15 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
   }
   if (snippets.length === 0) for (const o of options) snippets.push({ label: o.label, text: o.preview });
 
-  // Verlauf mit Datumstrennern
-  let lastDay = "";
-  const items: React.ReactNode[] = [];
-  for (const m of active.messages) {
-    const k = dayKey(m.createdAt);
-    if (k !== lastDay) {
-      lastDay = k;
-      items.push(
-        <div key={`d:${k}`} className="sticky top-0 z-10 flex justify-center py-1" data-day-separator>
-          <span className="rounded-full bg-white/95 px-3 py-0.5 text-xs font-medium text-[color:var(--muted)] shadow-[var(--shadow-sm)] ring-1 ring-[color:var(--border)]">
-            {dayLabel(m.createdAt, now)}
-          </span>
-        </div>,
-      );
-    }
-    if (m.direction === "internal") {
-      const info = INTERNAL[m.kind];
-      const Icon = info?.icon ?? ClipboardCheck;
-      items.push(
-        <div key={m.id} className="flex justify-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-900 ring-1 ring-amber-200">
-            <Icon className="h-3.5 w-3.5" />
-            {info?.label ?? m.kind} · {clock(m.createdAt)}
-          </span>
-        </div>,
-      );
-      continue;
-    }
-    const outbound = m.direction === "outbound";
-    const sender = outbound ? senderOf(m.sentBy, m.kind) : null;
-    items.push(
-      <div key={m.id} className={`flex ${outbound ? "justify-end" : "justify-start"}`}>
-        <div className="max-w-[80%] sm:max-w-[72%]">
-          <div
-            className={`whitespace-pre-wrap break-words px-3.5 py-2 text-sm leading-relaxed ${
-              outbound
-                ? "rounded-[16px_4px_16px_16px] bg-[color:var(--brand)] text-white"
-                : "rounded-[4px_16px_16px_16px] border border-[color:var(--border)] bg-white"
-            }`}
-          >
-            {waFormatKnoten(m.body)}
-          </div>
-          <div className={`mt-1 flex items-center gap-1.5 text-xs text-[color:var(--muted)] ${outbound ? "justify-end" : ""}`} data-message-meta>
-            {sender ? (
-              <span className="inline-flex items-center gap-1" title={`Gesendet von: ${sender.label}`}>
-                <sender.icon className="h-3.5 w-3.5" />
-                {sender.label}
-              </span>
-            ) : null}
-            <time dateTime={m.createdAt.toISOString()} title={formatDateTime(m.createdAt)}>
-              {clock(m.createdAt)}
-            </time>
-            {outbound ? <DeliveryStatus status={m.status} /> : null}
-          </div>
-        </div>
-      </div>,
-    );
-  }
+  // Startzeiten der Termine für Ereignisse wie „Termin zugesagt · Mi., 18.11. um 16:00“
+  const termine = new Map(
+    (
+      await prisma.appointment.findMany({
+        where: { OR: [{ conversationId: active.id }, ...(active.leadId ? [{ leadId: active.leadId }] : [])] },
+        select: { id: true, startsAt: true },
+      })
+    ).map((a) => [a.id, a.startsAt]),
+  );
 
   return (
     <>
@@ -546,8 +469,16 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
         </div>
       </details>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6" data-messages>
-        {items}
+      <div className="flex-1 overflow-y-auto bg-[#fafbfd] px-3 pb-4 sm:px-6" data-messages>
+        <ChatVerlauf
+          messages={active.messages}
+          now={now}
+          termine={termine}
+          sicht="admin"
+          unbekannteZeigen
+          etikett={etikettAdmin}
+          fuss={(m) => (m.direction === "outbound" ? <DeliveryStatus status={m.status} /> : null)}
+        />
         <StickToBottom count={active.messages.length} chatId={active.id} />
       </div>
 
@@ -604,8 +535,8 @@ async function LeadPanel({ active, now }: { active: Active; now: number }) {
     <div className="text-sm">
       {/* Kopf */}
       <div className="flex flex-col items-center px-5 pb-4 pt-5 text-center" data-lead-head>
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--brand-soft)] text-lg font-bold text-[color:var(--brand-dark)]">
-          {initials(active.contactName ?? active.contactPhone)}
+        <div className="flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold" style={{ background: avatarFarbe(active.contactName ?? active.contactPhone).bg, color: avatarFarbe(active.contactName ?? active.contactPhone).fg }}>
+          {initialen(active.contactName ?? active.contactPhone)}
         </div>
         <div className="mt-2 text-base font-semibold">{name}</div>
         <div className="text-sm text-[color:var(--muted)] tabular-nums">{formatPhone(active.contactPhone)}</div>

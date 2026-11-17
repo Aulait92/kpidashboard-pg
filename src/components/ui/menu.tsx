@@ -15,11 +15,14 @@ export function ActionMenu({
   icon: Icon,
   items,
   className,
+  labelClassName,
 }: {
   label: string;
   icon?: LucideIcon;
   items: MenuItem[];
   className?: string;
+  /** z. B. "sr-only sm:not-sr-only": am Handy nur das Symbol */
+  labelClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -38,9 +41,9 @@ export function ActionMenu({
   }, [open]);
   return (
     <div ref={ref} className={cn("relative", className)}>
-      <button type="button" onClick={() => setOpen((o) => !o)} className={buttonClass("secondary", "sm", "w-full")}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className={buttonClass("secondary", "sm", "w-full")} aria-label={labelClassName ? label : undefined}>
         {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-        {label}
+        {labelClassName ? <span className={labelClassName}>{label}</span> : label}
         <ChevronDown className="h-3.5 w-3.5 text-[color:var(--muted)]" />
       </button>
       {open ? (
