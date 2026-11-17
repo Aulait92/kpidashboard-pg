@@ -185,6 +185,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           eigene: tv.eigene,
           meine: tv.meine,
           rechnen,
+          schutzNeu: tv.schutzNeu,
         }}
         vorschau={{
           termin: { ...d, termin: { ...d.termin, startsAt: d.termin.startsAt.toISOString() }, vorbereitetAm: null },

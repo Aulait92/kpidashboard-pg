@@ -7,7 +7,9 @@
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 import { produktCheckliste } from "@/lib/whatsapp/produkt-fragen";
 import { spartenVon, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
-import { beitragEffektiv, summeEmpfohlen, type AngebotItem, type AngeboteDaten } from "@/lib/angebote-daten";
+import { beitragAus, beitragEffektiv, type AngebotItem, type AngeboteDaten } from "@/lib/angebote-daten";
+import { anzahlFuer, bedingungText, naechsteText, prozentFuer, staffelLeiste, type KombiErgebnis } from "@/lib/kombi-rabatt";
+import { SCHUTZ_STATUS, type SchutzZeile } from "@/lib/schutz-ueberblick";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { folienEinpassen } from "@/lib/folien-einpassen";
 
@@ -196,6 +198,19 @@ export function praesentationCss(m: Marke): string {
 .alternative{border:2px solid #e3e9f3}
 .sicher{display:flex;align-items:center;gap:16px;color:var(--f);font-size:24px;font-weight:600}
 .kontakt{display:flex;align-items:center;gap:16px;margin-top:40px;color:var(--f);font-size:24px}
+.statt{font-size:24px;color:#4b5568;margin:0 0 6px}.statt s{color:#66758f}.statt b{color:#15803d}
+.staffel{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 4px}
+.stf{display:inline-flex;align-items:baseline;gap:6px;border:2px solid #e3e9f3;border-radius:10px;padding:6px 12px;font-size:17px;color:#66758f}
+.stf b{font-size:20px;color:#334155}.stf.an{border-color:var(--f);background:var(--f);color:#fff}.stf.an b{color:#fff}
+.staffel .naechste{font-size:18px;font-weight:700;color:var(--f);margin-left:6px}
+.slide .fussnote{font-size:15px;line-height:1.35;color:#66758f;margin:14px 0 0}
+.schutz{display:grid;gap:10px}
+.sz{display:grid;grid-template-columns:22px 270px minmax(0,1fr) auto;align-items:center;gap:6px 16px;border:2px solid #e3e9f3;border-radius:16px;padding:10px 16px;min-height:64px}
+.sz .ampel{width:18px;height:18px;border-radius:99px}
+.sz b{font-size:22px}.sz .stl{font-size:17px;font-weight:700}.sz .info{display:block;font-size:17px;color:#4b5568;font-weight:400;margin-top:2px}
+.mit{font:inherit;border:2px solid var(--f);background:#fff;color:var(--f);border-radius:10px;padding:6px 14px;font-size:17px;font-weight:700;cursor:pointer;white-space:nowrap}
+.mit.an{background:var(--f);color:#fff}
+.kombi-zeile{margin-top:14px;font-size:20px;color:#1f2937}.kombi-zeile b{color:var(--f)}
 .kontakt span{color:#1f2937}
 `;
 }
@@ -362,6 +377,9 @@ const ersterDesMonats = (d: Date, plus: number) => {
   return new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, mo, 1)));
 };
 
+/** Cross-Selling-Sparte, die (noch) nicht im Vergleich ist: kein Vergleich, kein Beitrag, nur im Überblick. */
+const zusatzAus = (i: AngebotItem, items?: AngebotItem[]) => !!i.zusatz && !(items ?? []).some((x) => x.sparte === i.sparte && x.gewaehlt) && !i.gewaehlt;
+
 /**
  * Folien für einen Termin, nach Vertriebsforschung (Ole, 15.11.2026): eine Aussage je Folie, eigene Worte des Kunden,
  * Schadenbeispiel vor der Lösung, Lösung zuerst ohne Preis, Preis erst im Vergleich bzw. auf „Ihr Beitrag“, Beitrag
@@ -379,13 +397,15 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   // Leistungen und Beitrag: die im Termin gewählte Stufe je Sparte (Standard: Empfehlung)
   const wahl: AngebotItem[] = empf.length || items.some((i) => i.gewaehlt) ? items.filter((i) => i.gewaehlt) : items.slice(0, 3);
   const sparten = (() => {
-    const fromOffers = [...new Set(items.map((i) => sparteKey(i.sparte)))];
+    const fromOffers = [...new Set(items.filter((i) => !zusatzAus(i)).map((i) => sparteKey(i.sparte)))];
     if (fromOffers.length) return fromOffers;
     if (tier) return ["tier"];
     const s = spartenVon(d);
     return s.length ? s : ["haftpflicht", "hausrat"];
   })();
   const R = (inhalt: string, frage?: string, cls = "", hinweis?: string | null) => rahmen(m, inhalt, cls, frage, hinweis);
+  // Kombi-Rabatt (lib/kombi-rabatt.ts) über die gewählten Angebote, für Überblick und Beitrag
+  const beitrag = angebote ? beitragAus(angebote) : null;
   const out: Folie[] = [];
 
   out.push({
@@ -490,8 +510,12 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   // Vergleich je Sparte mit mehreren echten Stufen: Preise erscheinen hier zum ersten Mal
   const nachSparte = new Map<string, AngebotItem[]>();
   for (const i of items) nachSparte.set(i.sparte, [...(nachSparte.get(i.sparte) ?? []), i]);
+  let spNr = -1;
   for (const [sparte, varianten] of nachSparte) {
+    spNr++;
     if (varianten.length < 2) continue;
+    // Cross-Selling: erst nach „Mit anschauen“ (Folie „Ihr Schutz im Überblick“) im Vergleich
+    if (varianten.every((i) => zusatzAus(i, varianten))) continue;
     // höchstens 4 Spalten; die gewählte Stufe ist immer dabei
     const g = varianten.find((i) => i.gewaehlt);
     const v = varianten.length <= 4 || !g || varianten.indexOf(g) < 4 ? varianten.slice(0, 4) : [...varianten.slice(0, 3), g];
@@ -507,15 +531,19 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
           )
           .join("")}</div>`;
     out.push({
-      id: `vergleich-${sparteKey(sparte)}-${out.length}`,
+      // feste ID je Sparte: das Deck bleibt beim Umschalten auf derselben Folie, auch wenn eine Sparte dazukommt
+      id: `vergleich-${sparteKey(sparte)}-${spNr}`,
       titel: `Auswahl ${sparte}`,
       html: R(`<h2>${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: ${e(sparte)}</h2>${html}`, undefined, "", markthinweisText(m.markthinweis, varianten)),
     });
   }
 
-  const summe = angebote ? summeEmpfohlen(angebote) : null;
-  // Produkte als Schalter: antippen nimmt eine Sparte heraus bzw. wieder hinein
-  const sparten1 = [...new Map(items.map((i) => [i.sparte, i])).values()];
+  // Ihr Schutz im Überblick (Cross-Selling, Ole 16.11.2026): Ampel je Sparte, „Mit anschauen“, Kombi-Rabatt
+  if (angebote?.schutz?.length) out.push(ueberblickFolie(angebote.schutz, items, beitrag?.kombi ?? null, an, R));
+
+  const summe = beitrag?.endbeitrag ?? null;
+  // Produkte als Schalter: antippen nimmt eine Sparte heraus bzw. wieder hinein (Cross-Selling-Sparten erst nach „Mit anschauen“)
+  const sparten1 = [...new Map(items.filter((i) => !zusatzAus(i, items)).map((i) => [i.sparte, i])).values()];
   const produkte =
     sparten1.length > 1
       ? `<div class="teile">${sparten1
@@ -532,7 +560,7 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     html: R(
       `<h2>${e(a(an, "Dein Beitrag", "Ihr Beitrag"))}</h2>${
         summe != null
-          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div><p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>${produkte}${wahl.some((i) => i.bausteine.length) ? wahl.map((i) => schalter(items, i, mehrere)).join("") : ""}${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}`
+          ? `<div class="gross">${eur(summe)} <span class="einheit">im Monat</span></div>${kombiBeitrag(beitrag, an)}<p class="sub">Das sind rund ${eur(summe / 30)} am Tag.</p>${staffelHtml(beitrag?.kombi ?? null)}${produkte}${wahl.some((i) => i.bausteine.length) ? wahl.map((i) => schalter(items, i, mehrere)).join("") : ""}${sb.length ? `<p class="sub">Selbstbeteiligung: ${e(sb.join(", "))}</p>` : ""}${kombiFussnote(beitrag?.kombi ?? null)}`
           : `<div class="leer">${e(a(an, "Deinen Beitrag rechnen wir gemeinsam.", "Ihren Beitrag rechnen wir gemeinsam."))}</div>${produkte}`
       }`,
       a(an, "Passt das für dich?", "Passt das für Sie?"),
@@ -575,6 +603,104 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
     ),
   });
   return out;
+}
+
+// ─── Kombi-Rabatt und Schutz-Überblick (Ole, 16.11.2026) ─────────────────────────────────────
+
+const prozent = (n: number) => `${String(n).replace(".", ",")} %`;
+
+/** „statt 36,23 €: Kombi-Rabatt 10 % (−3,63 €)“; bei einem Tarif, der nicht zählt, ein kurzer Hinweis. */
+function kombiBeitrag(b: ReturnType<typeof beitragAus> | null, an: Ansprache): string {
+  if (!b?.kombi) return "";
+  const blockiert = b.kombi.blockiert.length
+    ? ` <span>${e(
+        b.kombi.blockiert.length === 1
+          ? tarifMitSparte(b.kombi.blockiert[0]) + (b.kombi.blockiert[0].grund === "linie" ? ` zählt nicht (nur ${aufzaehlungOder(b.kombi.regel.linien)}).` : " zählt nicht (Laufzeit).")
+          : a(an, "Nicht alle gewählten Tarife zählen zum Kombi-Rabatt.", "Nicht alle gewählten Tarife zählen zum Kombi-Rabatt."),
+      )}</span>`
+    : "";
+  if (!b.rabatt || b.einzelSumme == null) return blockiert ? `<p class="statt">${blockiert}</p>` : "";
+  return `<p class="statt" data-kombi-rabatt>statt <s>${eur(b.einzelSumme)}</s>: <b>Kombi-Rabatt ${prozent(b.rabatt.prozent)} (−${eur(b.rabatt.euro)})</b>${blockiert}</p>`;
+}
+
+/** „Hausrat Smart“ (ohne doppeltes Spartenwort, wenn der Tarifname es schon enthält). */
+export const tarifMitSparte = (b: { sparte: string; tarif: string | null }) =>
+  !b.tarif ? b.sparte : b.tarif.toLocaleLowerCase("de").startsWith(b.sparte.toLocaleLowerCase("de")) ? b.tarif : `${b.sparte} ${b.tarif}`;
+
+const aufzaehlungOder = (xs: string[]) => (xs.length < 2 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} oder ${xs[xs.length - 1]}`);
+
+/** Staffel-Leiste wie bei der Allianz: Stufen, aktuelle hervorgehoben, Hinweis auf die nächste. */
+function staffelHtml(k: KombiErgebnis | null): string {
+  if (!k) return "";
+  const naechste = naechsteText(k);
+  return `<div class="staffel" data-staffel>${staffelLeiste(k)
+    .map((s) => `<span class="stf${s.aktiv ? " an" : ""}">${e(s.text)} <b>${prozent(s.prozent)}</b></span>`)
+    .join("")}${naechste ? `<span class="naechste">${e(naechste)}</span>` : ""}</div>`;
+}
+
+/**
+ * Fußnote zum Kombi-Rabatt: Bedingung (Linie, Laufzeit) und der Pflichthinweis nach § 7a VVG (Teil A9), dass die
+ * Versicherungen auch einzeln abschließbar sind. Die Deckung im Paket entspricht den Einzelverträgen, deshalb keine
+ * eigene Beschreibung der Bestandteile.
+ */
+function kombiFussnote(k: KombiErgebnis | null): string {
+  if (!k) return "";
+  const text = `${k.regel.name ? `${k.regel.name}: Kombi-Rabatt` : "Kombi-Rabatt"} ${bedingungText(k.regel)}. Die Versicherungen sind auch einzeln abschließbar.`;
+  return `<p class="fussnote" data-7a-vvg>${e(text)}</p>`;
+}
+
+/**
+ * Folie „Ihr Schutz im Überblick“ (Teil A3, A7): je Sparte eine Ampel mit 4 Zuständen. Sparten im Angebot gelten als
+ * „bei uns“; Lücken und Prüfpunkte mit Angeboten bekommen „Mit anschauen“ (nimmt die Sparte in Vergleich und Beitrag);
+ * „woanders versichert“ rechnet den Bündelvorteil und bietet den Wechsel-Service an. Ohne Druck: die Frage in der
+ * Fußzeile lässt den nächsten Termin offen.
+ */
+function ueberblickFolie(
+  schutz: SchutzZeile[],
+  items: AngebotItem[],
+  k: KombiErgebnis | null,
+  an: Ansprache,
+  R: (inhalt: string, frage?: string, cls?: string) => string,
+): Folie {
+  const key = (i: AngebotItem) => i.kombi?.sparte ?? sparteKey(i.sparte);
+  const gewaehlt = items.filter((i) => i.gewaehlt);
+  // Bündelvorteil, wenn diese Sparte dazukommt (gleiche Gesellschaft wie die gewählten Tarife)
+  const mitProzent = (sparte: string): number | null => {
+    if (!k) return null;
+    const zaehlend = gewaehlt.filter((i) => i.kombi?.gruppe === k.regel.gruppe && !k.blockiert.some((b) => b.sparte === i.sparte)).map(key);
+    const p = prozentFuer(k.regel.staffel, anzahlFuer(k.regel, [...zaehlend, sparte]));
+    return p > k.prozent ? p : null;
+  };
+  const zeilen = schutz.map((z) => {
+    const varianten = items.filter((i) => key(i) === z.key);
+    const imAngebot = varianten.some((i) => i.gewaehlt);
+    const knopf = varianten.length
+      ? varianten.some((i) => i.zusatz)
+        ? `<button type="button" class="mit${imAngebot ? " an" : ""}" data-sparte="${items.indexOf(varianten[0])}">${imAngebot ? "✓ Im Vergleich" : "Mit anschauen"}</button>`
+        : ""
+      : "";
+    const status = imAngebot ? "bei-uns" : z.status;
+    const label = imAngebot ? "Im Angebot" : SCHUTZ_STATUS[z.status].label;
+    const zusatz: string[] = [];
+    if (!imAngebot && z.info) zusatz.push(z.info);
+    if (imAngebot && z.status === "woanders") zusatz.push(a(an, "ersetzt deinen bisherigen Vertrag, Wechsel-Service inklusive", "ersetzt Ihren bisherigen Vertrag, Wechsel-Service inklusive"));
+    if (!imAngebot && z.status !== "bei-uns") {
+      const p = mitProzent(z.key);
+      if (p) zusatz.push(a(an, `Mit ${z.label} dazu sparst du ${p} % auf alles`, `Mit ${z.label} dazu sparen Sie ${p} % auf alles`));
+      if (z.status === "woanders") zusatz.push(a(an, "Wechsel-Service: Wir kümmern uns um die Kündigung", "Wechsel-Service: Wir kümmern uns um die Kündigung"));
+    }
+    return `<div class="sz" data-schutz="${e(z.key)}" data-status="${status}"><span class="ampel" style="background:${SCHUTZ_STATUS[status].farbe}"></span><b>${e(z.label)}</b><span><span class="stl" style="color:${SCHUTZ_STATUS[status].farbe}">${e(label)}</span>${zusatz.length ? `<span class="info">${e(zusatz.join(". "))}</span>` : ""}</span>${knopf || "<span></span>"}</div>`;
+  });
+  // Stand des Kombi-Rabatts nur, wenn er schon greift (vorher steht der Vorteil an den Zeilen)
+  const kombiZeile = k?.prozent ? `<div class="kombi-zeile">Kombi-Rabatt jetzt: <b>${prozent(k.prozent)} auf alles</b>${naechsteText(k) ? `. ${e(naechsteText(k)!)}.` : "."}</div>` : "";
+  return {
+    id: "ueberblick",
+    titel: "Ihr Schutz im Überblick",
+    html: R(
+      `<h2>${e(a(an, "Dein Schutz im Überblick", "Ihr Schutz im Überblick"))}</h2><div class="schutz">${zeilen.join("")}</div>${kombiZeile}`,
+      a(an, "Wollen wir das gleich mit anschauen oder beim nächsten Termin?", "Wollen wir das gleich mit anschauen oder beim nächsten Termin?"),
+    ),
+  };
 }
 
 /** Alle Folien als HTML-Dokument (PDF, Querformat 1280×720 je Seite); eingepasst wie in der Ansicht. */

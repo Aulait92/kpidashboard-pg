@@ -1,0 +1,148 @@
+// Cross-Selling (Ole, 16.11.2026, Teil A2, A7, A10): Ampel mit 4 Zuständen je Sparte, „Chance im Termin“, Hundehaftpflicht-
+// Pflicht aus der PLZ, Folie „Ihr Schutz im Überblick“ aus der Tarifauswahl.
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { chancen, cleanSchutz, hundePflichtLand, schutzVorschlag, schutzZeilen, woandersInfo, type SchutzEintrag } from "@/lib/schutz-ueberblick";
+import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
+import { cleanTarifauswahl, sparteNeu, startAuswahl, zuAngebote } from "@/lib/tarifauswahl";
+import { folien, markeFuer } from "@/lib/praesentation";
+import { hatGedankenstrich } from "@/lib/gedankenstriche";
+import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
+
+const termin = (x: { produkt?: string; angaben?: Record<string, string>; formular?: { label: string; value: string }[]; adresse?: string | null } = {}): VorbereitungDaten => ({
+  lead: { name: "Dominik Schmid", telefon: null, email: null, adresse: x.adresse ?? null, produkt: x.produkt ?? "Privatschutz" },
+  termin: { startsAt: new Date("2026-11-17T09:00:00Z"), mode: "video", berater: "Max Berger", meetUrl: null },
+  zusammenfassung: null,
+  formular: x.formular ?? [],
+  angaben: x.angaben ?? {},
+  vorbereitetAm: null,
+});
+const status = (xs: SchutzEintrag[]) => Object.fromEntries(xs.map((x) => [x.key, x.status]));
+
+describe("Ampel: Vorschlag aus Formular, Chat und Verträgen", () => {
+  it("Angebot zuerst; Genanntes woanders, „sonst nichts“ heißt Lücke, Rechtsschutz und Unfall vor Haftpflicht", () => {
+    const s = schutzVorschlag(termin({ angaben: { vorhanden: "alte Haftpflicht von 2012, sonst nichts", lebenssituation: "Single, Mietwohnung" } }), { angebot: ["hausrat"] });
+    expect(s[0].key).toBe("hausrat");
+    expect(status(s)).toEqual({ hausrat: "luecke", haftpflicht: "woanders", rechtsschutz: "luecke", unfall: "luecke" });
+    expect(s.map((x) => x.key)).toEqual(["hausrat", "rechtsschutz", "unfall", "haftpflicht"]);
+  });
+
+  it("ohne Angaben: alles „prüfen“; ausdrücklich „keine Hausrat“ ist eine Lücke", () => {
+    expect(new Set(Object.values(status(schutzVorschlag(termin(), { angebot: ["haftpflicht"] }))))).toEqual(new Set(["pruefen"]));
+    const s = schutzVorschlag(termin({ angaben: { vorhanden: "Haftpflicht bei HUK, keine Hausrat" } }), { angebot: [] });
+    expect(status(s)).toMatchObject({ haftpflicht: "woanders", hausrat: "luecke", rechtsschutz: "pruefen" });
+  });
+
+  it("Verträge bei uns: grün mit „seit“", () => {
+    const s = schutzVorschlag(termin(), { angebot: [], vertraege: [{ sparte: "unfall", seit: new Date("2026-03-10T10:00:00Z") }, { sparte: "privatschutz", seit: null }] });
+    expect(s.find((x) => x.key === "unfall")).toMatchObject({ status: "bei-uns", seit: "seit 03/2026" });
+    // „privatschutz“ ist nicht eindeutig: keine Zuordnung
+    expect(s.find((x) => x.key === "haftpflicht")?.status).toBe("pruefen");
+  });
+
+  it("Lebenslage: Eigentum → Wohngebäude, Hund → Hundehaftpflicht (Pflicht in Niedersachsen), Privatschutz mit Katze → Tier-OP", () => {
+    const s = schutzVorschlag(termin({ angaben: { lebenssituation: "Familie im Eigenheim", tier: "Hund Bello, 3 Jahre" }, adresse: "30159 Hannover" }), { angebot: ["haftpflicht"] });
+    expect(s.map((x) => x.key)).toEqual(expect.arrayContaining(["wohngebaeude", "tierhalter-hund", "hausrat", "hund-op"]));
+    const hund = s.find((x) => x.key === "tierhalter-hund")!;
+    expect(hund.oeffner).toBe("Hat Bello eine eigene Haftpflicht? Die Privathaftpflicht zahlt für Hundeschäden nicht. In Niedersachsen ist sie Pflicht.");
+    const katze = schutzVorschlag(termin({ angaben: { tier: "Katze Mia" } }), { angebot: ["haftpflicht"] });
+    expect(katze.map((x) => x.key)).toContain("katze-op");
+    expect(katze.map((x) => x.key)).not.toContain("tierhalter-hund");
+  });
+
+  it("Tier-Lead (Katze): Privathaftpflicht als Öffner, keine Gesundheitsprodukte, keine Tierhalterhaftpflicht für Katzen", () => {
+    const s = schutzVorschlag(termin({ produkt: "Katzenversicherung", angaben: { tier: "Katze Mia, Wohnungskatze" } }), { angebot: ["katze-kranken"] });
+    expect(s[0].key).toBe("katze-kranken");
+    expect(s.map((x) => x.key)).toEqual(expect.arrayContaining(["haftpflicht", "rechtsschutz", "unfall"]));
+    expect(s.map((x) => x.key).some((k) => /pkv|bu|leben|pflege|tierhalter/.test(k))).toBe(false);
+  });
+
+  it("Du und Sie, ohne Gedankenstriche", () => {
+    const sie = schutzVorschlag(termin({ angaben: { tier: "Hund" } }), { angebot: [] }, "sie");
+    const du = schutzVorschlag(termin({ angaben: { tier: "Hund" } }), { angebot: [] }, "du");
+    expect(sie.find((x) => x.key === "rechtsschutz")!.oeffner).toContain("bei Ihnen");
+    expect(du.find((x) => x.key === "rechtsschutz")!.oeffner).toContain("bei dir");
+    for (const x of [...sie, ...du]) expect(hatGedankenstrich(x.oeffner ?? "")).toBe(false);
+  });
+});
+
+describe("Hundehaftpflicht-Pflicht aus der PLZ", () => {
+  it("eindeutige Bereiche; an Landesgrenzen und in anderen Ländern keine Angabe", () => {
+    expect(hundePflichtLand("10115 Berlin")).toBe("Berlin");
+    expect(hundePflichtLand("20095")).toBe("Hamburg");
+    expect(hundePflichtLand("28195 Bremen")).toBe("Bremen");
+    expect(hundePflichtLand("27570 Bremerhaven")).toBe("Bremen");
+    expect(hundePflichtLand("24103 Kiel")).toBe("Schleswig-Holstein");
+    expect(hundePflichtLand("30159")).toBe("Niedersachsen");
+    expect(hundePflichtLand("39104 Magdeburg")).toBe("Sachsen-Anhalt");
+    expect(hundePflichtLand("99084 Erfurt")).toBe("Thüringen");
+    expect(hundePflichtLand("80331 München")).toBeNull();
+    expect(hundePflichtLand("50667 Köln")).toBeNull();
+    expect(hundePflichtLand("14467 Potsdam")).toBeNull();
+    expect(hundePflichtLand("21481 Lauenburg")).toBeNull();
+    expect(hundePflichtLand(null)).toBeNull();
+  });
+});
+
+describe("Chance im Termin", () => {
+  it("höchstens 2, nicht im Angebot, nicht bei uns; Pflicht und Lücken vorn", () => {
+    const s: SchutzEintrag[] = [
+      { key: "haftpflicht", label: "Privathaftpflicht", status: "luecke" },
+      { key: "hausrat", label: "Hausrat", status: "pruefen" },
+      { key: "rechtsschutz", label: "Rechtsschutz", status: "pruefen" },
+      { key: "unfall", label: "Unfall", status: "bei-uns" },
+      { key: "tierhalter-hund", label: "Hundehalterhaftpflicht", status: "pruefen" },
+    ];
+    expect(chancen(s, ["hausrat"]).map((c) => c.key)).toEqual(["tierhalter-hund", "rechtsschutz"]);
+    expect(chancen(s, ["hausrat"], 6).map((c) => c.key)).not.toContain("unfall");
+    expect(chancen([], [])).toEqual([]);
+  });
+
+  it("woanders: Versicherer, Ablauf, ungefährer Beitrag", () => {
+    expect(woandersInfo({ versicherer: "HUK-COBURG", ablauf: "2027-03", beitrag: 8 })).toBe("bei HUK-COBURG, Ablauf 03/2027, ca. 8 € im Monat");
+    expect(woandersInfo({})).toBeNull();
+  });
+});
+
+describe("Überblick in Tarifauswahl, Angeboten und Folie", () => {
+  const k = ladeTarifkatalog(path.join(__dirname, "..", "fixtures", "tarifkatalog"));
+
+  it("Sparte „bei Bedarf“ (zusatz) bleibt aus Vergleich und Beitrag, steht im Überblick mit „Mit anschauen“", () => {
+    const a = startAuswahl(k, ["haftpflicht"], { rolle: "vertreter", gesellschaften: ["allianz"] });
+    const hausrat = sparteNeu(k, "hausrat", { rolle: "vertreter", gesellschaften: ["allianz"] })!;
+    hausrat.zusatz = true;
+    a.sparten.push(hausrat);
+    a.schutz = [
+      { key: "haftpflicht", label: "Privathaftpflicht", status: "woanders", versicherer: "HUK-COBURG" },
+      { key: "hausrat", label: "Hausrat", status: "pruefen" },
+      { key: "unfall", label: "Unfall", status: "luecke" },
+    ];
+    const c = cleanTarifauswahl(JSON.parse(JSON.stringify(a)))!;
+    expect(c.sparten[1].zusatz).toBe(true);
+    expect(c.schutz).toEqual(a.schutz);
+    const ang = zuAngebote(c);
+    expect(ang.items.filter((i) => i.sparte === "Hausrat").every((i) => i.zusatz && !i.gewaehlt)).toBe(true);
+    expect(ang.schutz?.map((z) => [z.key, z.status])).toEqual([
+      ["haftpflicht", "woanders"],
+      ["hausrat", "pruefen"],
+      ["unfall", "luecke"],
+    ]);
+    const fs = folien(termin(), ang, markeFuer({ name: "Allianz Agentur Test" }));
+    expect(fs.some((f) => f.id.startsWith("vergleich-hausrat"))).toBe(false);
+    const u = fs.find((f) => f.id === "ueberblick")!.html;
+    expect(u).toContain("Mit anschauen");
+    expect(u).toContain('data-schutz="unfall" data-status="luecke"');
+    // Unfall hat keine Angebote: kein Knopf
+    expect(u.match(/data-sparte=/g)).toHaveLength(1);
+  });
+
+  it("ohne Überblick (ältere Termine): keine neue Folie; Zeilen höchstens 6", () => {
+    const a = startAuswahl(k, ["hausrat"], { rolle: "vertreter", gesellschaften: ["allianz"] });
+    expect(folien(termin(), zuAngebote(a), markeFuer({ name: "X" })).some((f) => f.id === "ueberblick")).toBe(false);
+    const viele = ["haftpflicht", "hausrat", "rechtsschutz", "unfall", "wohngebaeude", "tierhalter-hund", "tierhalter-pferd"].map((key): SchutzEintrag => ({ key, label: key, status: "pruefen" }));
+    expect(schutzZeilen(viele, [])).toHaveLength(6);
+    expect(cleanSchutz([{ key: "X Y", label: "a", status: "pruefen" }, { key: "unfall", label: "Unfall", status: "kaputt" }, { key: "unfall", label: "Unfall", status: "luecke", ablauf: "2027-13" }])).toEqual([
+      { key: "unfall", label: "Unfall", status: "luecke" },
+    ]);
+  });
+});
