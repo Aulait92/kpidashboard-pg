@@ -83,6 +83,7 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 |---|---|---|---|
 | Railway | Hosting, Datenbank (EU, Amsterdam) | | |
 | Anthropic | KI-Assistent, Impressum auslesen, Angebote auslesen (nur ohne Gesundheitsangaben) | | |
+| AWS (Amazon Web Services EMEA SARL) | KI in der EU (Bedrock, eu-central-1 Frankfurt) für Unterlagen per WhatsApp; erst nach AVV-Mitteilung und mit `POLICEN_KI_REGION=eu` (Entwurf `docs/datenschutz-policen.md` Abschnitt 4.6) | | |
 | Google (Places API) | Öffentliche Unternehmensdaten von Vertriebskontakten abrufen (nur Suchtext: Agentur/Name und Ort; Antwort: öffentlicher Google-Eintrag) | | |
 | 360dialog | WhatsApp Business API; seit 14.11. auch Partner-API für das Selbst-Verbinden der Kundennummer (Konto-/Channel-ID, Telefonnummer, Anzeigename; API-Key verschlüsselt gespeichert) | | |
 | Meta | WhatsApp, Lead-Formulare, Rückmeldung der Lead-Stufen (Conversions API, seit 15.11.2026) | | |

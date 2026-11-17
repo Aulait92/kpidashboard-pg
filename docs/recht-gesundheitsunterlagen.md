@@ -314,12 +314,17 @@ dort die Aussage „Einwilligung nur bei Gesundheitsbezug“ an den neuen Ablauf
 
 ### Weitere Schritte vor dem Einschalten
 
-1. Ablauf auf „Einwilligung in der Einladung“ umstellen (Abschnitt b, Punkte 1 bis 6).
+Aktueller Stand: Abschnitt e, „Was vor dem Einschalten von `POLICEN_GESUNDHEIT_AN` noch fehlt“.
+
+1. Ablauf auf „Einwilligung in der Einladung“ umstellen (Abschnitt b, Punkte 1 bis 6). **Erledigt.**
 2. KI-Zuordnung für Unterlagen auf EU-Region umstellen oder ZDR beantragen; DPF-Einträge von Anthropic und Meta
-   prüfen und ablegen.
-3. Muster-DSFA erstellen (Nr. 11 DSK-Liste, für den Assistenten insgesamt) und Kunden bereitstellen.
+   prüfen und ablegen. **Code erledigt (Bedrock Frankfurt), Test des AWS-Zugangs und Ablage offen.**
+3. Muster-DSFA erstellen (Nr. 11 DSK-Liste, für den Assistenten insgesamt) und Kunden bereitstellen. **Erstellt
+   (Fassung 2), Bereitstellung nach Anwalt.**
 4. AVV ergänzen (Entwurf in `docs/datenschutz-policen.md` Abschnitt 4), § 203-Klausel prüfen, Langfassung `{Link}`.
-5. Anwaltsfragen aus Abschnitt c klären, dann `POLICEN_GESUNDHEIT_AN` einschalten.
+   **Text fertig, Übernahme in die App nach Anwalt.**
+5. Anwaltsfragen aus Abschnitt c klären, dann `POLICEN_GESUNDHEIT_AN` einschalten. **Bearbeitet (Abschnitt e),
+   3 Punkte offen für den Anwalt.**
 
 ---
 
@@ -542,7 +547,7 @@ Drittland.
   für Gesundheitsdaten verbietet oder eine Zustimmung verlangt, ist eine Vertragsfrage je Versicherer, kein
   Datenschutzrecht; das kann auch ein Anwalt nur am einzelnen Vertrag beantworten.
 - **Umsetzung:** AGB § 13 und AVV § 5 enthalten die Zusicherung „nötige Zustimmung des Versicherers liegt vor“ mit
-  Freistellung (mit Verschulden). Muss vor dem Einschalten: Freischaltung je Kunde mit der Bestätigung, dass der
+  Freistellung (mit Verschulden). Vor dem Einschalten (Stand 17.11.: optional, Ersatz siehe Liste unten): Freischaltung je Kunde mit der Bestätigung, dass der
   Agenturvertrag geprüft ist (Liste unten).
 
 ### 7. Aufbewahrung nach Abschluss und Widerruf
@@ -601,8 +606,8 @@ Drittland.
 - DSK-Muss-Liste Nr. 11 trifft den Assistenten (Abschnitt a, Frage 6). Für gleichartige Verarbeitungen genügt eine
   gemeinsame DSFA (Art. 35 Abs. 1 Satz 2, ErwG 92); wir unterstützen nach Art. 28 Abs. 3 lit. f. Verantwortlich bleibt
   jeder Vermittler: Er muss das Muster übernehmen, ergänzen und unterschreiben, **bevor** die Verarbeitung beginnt.
-- **Umsetzung:** Das Muster liegt vor (`docs/dsfa-policen-gesundheit.md`). Muss: um Punkt 8 (EU-KI), Punkt 9 (Freitext)
-  und Punkt 11 (Alter) ergänzen und den Kunden bereitstellen; Freischaltung je Kunde erst nach Bestätigung.
+- **Umsetzung:** Das Muster liegt vor (`docs/dsfa-policen-gesundheit.md`). Um Punkt 8 (EU-KI), Punkt 9 (Freitext)
+  und Punkt 11 (Alter) ergänzt (Fassung 2, 17.11.2026); offen: den Kunden bereitstellen; Freischaltung je Kunde erst nach Bestätigung.
 
 ### 11. Minderjährige
 
@@ -651,16 +656,35 @@ Drittland.
   wird nicht gespeichert“ (vorher „nicht geladen“, was für Sach-Leads nicht stimmte).
 - Tests: `tests/unit/policen.test.ts`, `tests/integration/policen-whatsapp.test.ts`.
 
-**Muss vor dem Einschalten von `POLICEN_GESUNDHEIT_AN`:**
-1. EU-Zugang einrichten und testen (`POLICEN_KI_REGION=eu`, Bedrock Frankfurt: `KI_EU_AWS_ACCESS_KEY_ID`, `KI_EU_AWS_SECRET_ACCESS_KEY`); den Anbieter in
-   AVV Anlage 2 aufnehmen und die Fundstelle seiner Vertraulichkeitsklausel ablegen (Punkte 5, 8).
-2. DPF-Einträge von Meta Platforms, Inc. bzw. WhatsApp LLC und des EU-KI-Anbieters (US-Mutter) ausdrucken und ablegen
-   (Punkt 8).
-3. Muster-DSFA um die Punkte 8, 9 und 11 ergänzen und den Kunden bereitstellen (Punkt 10).
-4. Freischaltung je Kunde statt nur global: Der Kunde bestätigt, dass er die DSFA übernommen und, als Vertreter, seinen
-   Agenturvertrag geprüft hat bzw. die Zustimmung des Versicherers vorliegt. Größerer Umbau (Kundenfeld und
-   Einstellung), daher hier nur als Empfehlung (Punkte 6, 10).
-5. Bestätigung der drei Anwaltspunkte unten.
+**Was vor dem Einschalten von `POLICEN_GESUNDHEIT_AN` noch fehlt (Stand 17.11.2026, abends):**
+
+Erledigt:
+- ✅ **Muster-DSFA** ergänzt (Fassung 2, `docs/dsfa-policen-gesundheit.md`): Drittland mit KI in der EU (Punkt 8),
+  Gesundheitsangaben im Freitext (Punkt 9), Minderjährige (Punkt 11), Mitversicherte und Kinder (Punkt 4), § 203 und
+  Ausschließlichkeitsvertreter, neue Risiken R12 bis R14, Restrisiko, Aufgabenliste für den Vermittler, Prüfliste
+  Art. 35 Abs. 7. Als Vorlage mit Feldern zum Ausfüllen (Punkt 10).
+- ✅ **AVV-Ergänzung** fertig formuliert (`docs/datenschutz-policen.md` Abschnitt 4): Unterlagen per WhatsApp in § 2,
+  § 203-Klausel für Mitwirkende in § 4, Freischaltung nur nach DSFA bzw. Prüfung des Agenturvertrags in § 5,
+  Löschfristen 30/90 Tage, 24 Stunden und Widerruf als Weisung, Anlage 2 mit Amazon Web Services EMEA SARL (Bedrock,
+  eu-central-1 Frankfurt) sowie ergänzten Zwecken für Anthropic, Meta, 360dialog und Railway, TOM (Punkte 5, 8, 12).
+
+Noch offen:
+1. **AWS-Zugang testen:** Ole wartet auf die AWS-Kontoprüfung. Danach `KI_EU_AWS_ACCESS_KEY_ID`,
+   `KI_EU_AWS_SECRET_ACCESS_KEY` und `POLICEN_KI_REGION=eu` in Railway setzen und mit der Diagnose `ki-eu` prüfen.
+   Ohne getesteten EU-Zugang nicht einschalten (sonst gehen Sach-Unterlagen weiter an Anthropic in den USA).
+2. **Anwaltsbestätigung der 3 Punkte** unten (§ 203 StGB, Mitversicherte und Freitext, AGB § 15), dabei auch die
+   AVV-Ergänzung und die Muster-DSFA gegenlesen lassen.
+3. **Optional: Freischaltung je Kunde** statt nur global (Kundenfeld und Einstellung; Kunde bestätigt DSFA und, als
+   Vertreter, den Agenturvertrag). Bis dahin: Ole schaltet nur ein, wenn alle Kunden mit WhatsApp-Assistent die
+   Bestätigung in Textform geschickt haben (AVV § 5 neu).
+
+Nach Freigabe durch den Anwalt (Ablage und Übernahme, kein eigener Entscheidungsbedarf):
+- AVV-Text in `src/lib/legal-texts.ts` übernehmen (`AVV`, `SUBPROCESSORS`, `TOMS`, `LEGAL_VERSION`); AWS ist ein neuer
+  Unterauftragsverarbeiter, also Kunden vorher in Textform informieren (14 Tage Widerspruchsfrist, AVV § 6).
+- Fundstellen der Vertraulichkeitsklauseln je Unterauftragsverarbeiter (auch AWS) und die DPF-Einträge (Meta
+  Platforms, Inc. bzw. WhatsApp LLC, Amazon.com, Inc., Anthropic, Railway) in `docs/datenschutz.md` Abschnitt 3 ablegen
+  (Punkte 5, 8).
+- Muster-DSFA den Kunden bereitstellen (z. B. als PDF auf Anfrage oder im Kundenbereich).
 
 **Sollte:**
 - Vor der Einwilligung einen neutralen Dateinamen speichern (Punkt 3).
