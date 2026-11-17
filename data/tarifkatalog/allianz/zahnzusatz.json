@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "MeinZahnschutz 90",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "MeinZahnschutz 100",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -81,6 +78,7 @@
     "Prozentsätze inklusive Vorleistung der gesetzlichen Kasse, bis GOZ/GOÄ-Höchstsatz; Implantate laut Tarifvergleich unter Zahnersatz.",
     "Kieferorthopädie für Versicherte unter 21 Jahren (ab 21 nur bei Unfall oder schwerer Erkrankung).",
     "Allianz markiert keinen Tarif (MeinZahnschutz 100 mit Testsiegel); 90 als mittlere Stufe gesetzt.",
-    "Varianten mit Alterungsrückstellungen (ab 21 Jahren) nicht getrennt erfasst."
+    "Varianten mit Alterungsrückstellungen (ab 21 Jahren) nicht getrennt erfasst.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de."
   ]
 }

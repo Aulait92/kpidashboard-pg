@@ -41,6 +41,8 @@ const PUBLIC_PREFIXES = [
   "/termin", // Vertriebs-Buchungsseite (eingebettet auf performancegrowth.de/termin), verwalten per Token
   "/praesentation", // Vertriebspräsentation für Interessenten (geheimer Link je Kontakt, 14 Tage)
   "/beratung", // Beratungspräsentation zum Nachlesen für den Kunden des Vermittlers (geheimer Link, 14 Tage)
+  "/ihr-angebot", // Angebots-PDF nach dem Termin (geheimer Link je Termin, lib/angebot-senden-server.ts)
+  "/rueckruf", // „Rückruf wünschen“ aus der Nachfass-Mail zum Angebot (geheimer Link je Lead)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
@@ -216,6 +218,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/erstinformation/") ||
     pathname.startsWith("/datenschutz/") ||
     pathname.startsWith("/beratung/") ||
+    pathname.startsWith("/ihr-angebot/") ||
+    pathname.startsWith("/rueckruf/") ||
     pathname === "/demo" ||
     pathname.startsWith("/demo/")
   ) {

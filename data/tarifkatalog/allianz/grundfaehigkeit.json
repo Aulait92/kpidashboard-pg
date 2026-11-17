@@ -27,8 +27,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/koerperschutzpolice/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
   "offen": [
     "Anzahl der versicherten Grundfähigkeiten nennt die Produktseite nicht (nur Beispiele wie Gebrauch einer Hand, Heben und Tragen, Autofahren).",
     "Psyche: Leistung bei schwerer Depression oder Erwerbsunfähigkeit wegen psychischer Erkrankung als Wahlbaustein; auch Krankschreibung (bis 36 Monate) und spezielle Berufe wählbar.",
-    "Nur ein Tarif mit Wahlbausteinen; Eintrittsalter 15 bis 54, Laufzeit bis 67."
+    "Nur ein Tarif mit Wahlbausteinen; Eintrittsalter 15 bis 54, Laufzeit bis 67.",
+    "Geprüft am 17.11.2026 an der Produktseite KörperSchutzPolice auf allianz.de (weltweiter Schutz, Dynamik 1 bis 5 %, Psyche und Pflege als Wahlbausteine)."
   ]
 }

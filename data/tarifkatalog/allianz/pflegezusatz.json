@@ -27,8 +27,7 @@
         "einmal": "optional"
       },
       "quelle": "https://www.allianz.de/gesundheit/pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -42,6 +41,7 @@
     "Einmalauszahlung als Zusatztarif bis 15.000 € ab Pflegegrad 2.",
     "Tagessatz frei wählbar bis 150 € (4.500 € im Monat); Allianz empfiehlt 105 € Tagessatz.",
     "Leistung bei Demenz nicht gesondert genannt.",
-    "Nur Pflegetagegeld erfasst; Pflegerentenversicherung und Pflege-Bahr nicht aufgenommen."
+    "Nur Pflegetagegeld erfasst; Pflegerentenversicherung und Pflege-Bahr nicht aufgenommen.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de."
   ]
 }

@@ -17,7 +17,7 @@ export async function LeadSequenceCard({ leadId, readOnly }: { leadId: string; r
   const recall = active?.kind === "recall" ? active : null;
   const Icon = recall ? CalendarClock : Repeat;
   return (
-    <Card className="mb-6" data-lead-sequences>
+    <Card id="nachfassen" className="mb-6 scroll-mt-20" data-lead-sequences>
       <div className="flex flex-wrap items-center gap-3 border-b border-[color:var(--border)] px-5 py-3.5">
         <Icon className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
         <div className="min-w-0 flex-1">
