@@ -29,7 +29,7 @@ export default async function DemoBeratungPage({ searchParams }: { searchParams:
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6" data-demo-beratung>
         <h1 className="text-xl font-bold [text-wrap:balance] sm:text-2xl">So sieht Ihre Beratung im Termin aus</h1>
         <p className="mt-1 max-w-3xl text-sm text-[color:var(--muted)]">
-          Klicken Sie sich durch wie im echten Termin: Tarif auswählen, Bausteine an- und abwählen, der Beitrag rechnet sich sofort neu. Blättern mit den
+          Klicken Sie sich durch wie im echten Termin: Tarif auswählen, Bausteine an- und abwählen, weitere Versicherungen mit anschauen, der Beitrag rechnet sich sofort neu. Blättern mit den
           Pfeiltasten oder per Wischen, „Vollbild“ zum Teilen im Videocall.
         </p>
         <div className="mt-4">
