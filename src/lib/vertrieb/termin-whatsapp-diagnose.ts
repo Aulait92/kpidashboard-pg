@@ -69,6 +69,12 @@ function ladeTermine(seit: Date) {
       waConfirmError: true,
       waReminderAt: true,
       waSoonAt: true,
+      waReminderStatus: true,
+      waReminderError: true,
+      waReminderTries: true,
+      waSoonStatus: true,
+      waSoonError: true,
+      waSoonTries: true,
       contact: { select: { firstName: true, phone: true } },
     },
     take: 2000,
@@ -235,10 +241,8 @@ export async function diagnoseVertriebTermine(opts: { seit: Date; link?: boolean
     (["erinnerung", "gleich"] as const).flatMap((art) => {
       const mark = m[FIELD[art]];
       if (!mark || mark < seit || gesendet.has(`${m.id}|${art}`)) return [];
-      const minLead = art === "erinnerung" ? 26 * HOUR : 3 * HOUR;
-      const grund =
-        m.startAt.getTime() - m.createdAt.getTime() < minLead ? "kurzfristig gebucht" : !phoneOf(m) ? "ohne Nummer" : "nicht gesendet (Sperrliste, STOPP, Vorlage oder Fehler beim Senden)";
-      return [{ terminId: m.id, art: ART_LABEL[art], markiertAt: mark.toISOString(), grund }];
+      const [status, fehler, versuche] = art === "erinnerung" ? [m.waReminderStatus, m.waReminderError, m.waReminderTries] : [m.waSoonStatus, m.waSoonError, m.waSoonTries];
+      return [{ terminId: m.id, art: ART_LABEL[art], markiertAt: mark.toISOString(), status: status ?? "unbekannt", fehler: ohneNummern(fehler), versuche }];
     }),
   );
   const bestaetigungen = meetings

@@ -269,6 +269,27 @@ async function persistInbound(
         .then((sc) => sc.linkSupportConversation(conversation.id, now))
         .catch((e) => console.error("[whatsapp support link]", e));
     }
+    // „STOPP“ an die Support-Nummer (Ole, 17.11.2026): Sperre am Chat, danach keine Terminerinnerungen und
+    // Zahlungserinnerungen mehr (sie prüfen optedOutAt), einmal eine kurze Bestätigung, keine KI. Schreibt der
+    // Kontakt danach wieder, bleibt die Sperre (anders als bei Leads); aufheben nur bewusst durch das Team.
+    const stopp = await import("@/lib/whatsapp/stopp");
+    if (stopp.isStopMessage(body)) {
+      await stopp
+        .applyOptOut(conversation.id, { confirm: true, now, text: stopp.SUPPORT_STOP_CONFIRMATION })
+        .catch((e) => console.error("[whatsapp support stopp]", e));
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { needsAttention: true, attentionReason: "Support: abgemeldet (STOPP)", attentionAt: now },
+      });
+      const { sendToAdmins } = await import("@/lib/push");
+      await sendToAdmins({
+        title: `🛟 Support-WhatsApp abgemeldet: ${contactName ?? "Kontakt"}`,
+        body: "Hat STOPP geschrieben: keine Termin- und Zahlungserinnerungen mehr per WhatsApp.",
+        url: `/admin/whatsapp?c=${conversation.id}`,
+        tag: `support-wa:${conversation.id}`,
+      }).catch((e) => console.error("[whatsapp support push]", e));
+      return;
+    }
     await prisma.conversation.update({
       where: { id: conversation.id },
       data: { needsAttention: true, attentionReason: (body ? `Support: ${body}` : "Support-Nachricht").slice(0, 200), attentionAt: now },

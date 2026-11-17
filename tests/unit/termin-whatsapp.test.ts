@@ -47,6 +47,9 @@ describe("Terminbestätigung", () => {
     expect(bookingPhone({ questions_and_answers: [{ question: "Ihre Handynummer", answer: "0176 2223334" }] }, null)).toBe("491762223334");
     expect(bookingPhone({ questions_and_answers: [{ question: "Firma", answer: "Agentur 1234567" }] }, "+49 30 123456")).toBe("4930123456");
     expect(bookingPhone({}, null)).toBeNull();
+    // Calendly „wir rufen Sie an“: Nummer steht im Ort, vor der Hauptnummer des Kontakts
+    expect(bookingPhone({}, "+49 30 123456", { type: "outbound_call", location: "0176 5556667" })).toBe("491765556667");
+    expect(bookingPhone({}, "+49 30 123456", { type: "inbound_call", location: "0176 5556667" })).toBe("4930123456");
   });
 });
 

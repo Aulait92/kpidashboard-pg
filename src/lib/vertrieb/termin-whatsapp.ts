@@ -278,13 +278,18 @@ export function vorlageParams(
   return v.params.map((p) => clean(werte[p]).slice(0, 300));
 }
 
-/** Telefonnummer aus Calendly: SMS-Erinnerungsnummer, dann Fragen (Telefon/Handy/WhatsApp), dann Kontakt. */
+/**
+ * Telefonnummer aus Calendly: SMS-Erinnerungsnummer, dann Fragen (Telefon/Handy/WhatsApp), dann die Nummer aus dem
+ * Ort bei „wir rufen Sie an“ (outbound_call), dann Kontakt.
+ */
 export function bookingPhone(
   inv: { text_reminder_number?: string | null; questions_and_answers?: { question: string; answer: string }[] },
   contactPhone: string | null,
+  loc?: { type?: string | null; location?: string | null } | null,
 ): string | null {
   const fromQa = (inv.questions_and_answers ?? []).find((qa) => /telefon|handy|mobil|whatsapp|phone|rufnummer/i.test(qa.question) && /\d{5,}/.test(qa.answer.replace(/\D/g, "")))?.answer;
-  for (const raw of [inv.text_reminder_number, fromQa, contactPhone]) {
+  const fromLoc = loc?.type === "outbound_call" ? loc.location : null;
+  for (const raw of [inv.text_reminder_number, fromQa, fromLoc, contactPhone]) {
     const p = raw ? normalizePhone(raw) : null;
     if (p) return p;
   }
@@ -347,6 +352,16 @@ async function sendSupportTemplate(opts: {
   if (prior?.optedOutAt) return "opted_out";
   const apiKey = decryptSecret(acc.apiKeyEnc);
   const res = await sendTemplate(apiKey, opts.phone, opts.template.name, LANGUAGE, [{ type: "body", parameters: opts.params.map((text) => ({ type: "text", text })) }]);
+  // Ab hier ist gesendet: Fehler beim Vermerken nur melden, nie werfen (sonst würde eine Erinnerung erneut gesendet)
+  await vermerkeVersand(acc, opts, res.messageId).catch((err) => reportError(err, "vertrieb-termin-whatsapp-vermerk", { contact: opts.contactId }));
+  return "sent";
+}
+
+async function vermerkeVersand(
+  acc: SupportAccount,
+  opts: { contactId: string; phone: string; name: string | null; template: { name: string; body: string }; params: string[]; activity: string; now: Date },
+  messageId: string | null,
+): Promise<void> {
   const conv = await prisma.conversation.upsert({
     where: { customerId_contactPhone: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: opts.phone } },
     create: {
@@ -372,14 +387,13 @@ async function sendSupportTemplate(opts: {
       direction: "outbound",
       kind: "template",
       body: renderTemplate(opts.template.body, opts.params),
-      waMessageId: res.messageId,
+      waMessageId: messageId,
       status: "sent",
       sentBy: "system",
       pricingCategory: "utility",
     },
   });
   await prisma.salesActivity.create({ data: { contactId: opts.contactId, type: "TERMIN", outcome: opts.activity, note: null } }).catch(() => {});
-  return "sent";
 }
 
 const CONTACT_SELECT = { phone: true, firstName: true, lastName: true, salutation: true } as const;
@@ -408,6 +422,7 @@ export async function sendTerminConfirmation(
         joinUrl: true,
         location: true,
         inviteeName: true,
+        inviteePhone: true,
         waConfirmStatus: true,
         contactId: true,
         bookingType: { select: { slug: true } },
@@ -417,10 +432,12 @@ export async function sendTerminConfirmation(
     if (!m) return "missing";
     if (m.waConfirmStatus === "sent") return "sent";
     if (m.startAt.getTime() <= now.getTime()) return await mark("past");
-    const phone = bookingPhone(inv, m.contact.phone);
+    // Nummer aus der Buchung vor der Hauptnummer des Kontakts (dieselbe Nummer für Bestätigung und Erinnerungen)
+    const phone = bookingPhone(inv, (m.inviteePhone ? normalizePhone(m.inviteePhone) : null) ?? m.contact.phone, loc);
     if (!phone) return await mark("no_phone");
-    // Nummer am Kontakt merken, damit Support-Chats ihn erkennen
+    // Nummer am Kontakt merken, damit Support-Chats ihn erkennen; am Termin für die Erinnerungen
     if (!m.contact.phone) await prisma.salesContact.update({ where: { id: m.contactId }, data: { phone: `+${phone}` } }).catch(() => {});
+    if (!m.inviteePhone) await prisma.salesMeeting.update({ where: { id: m.id }, data: { inviteePhone: `+${phone}` } }).catch(() => {});
     const anrede = terminAnrede(m.contact, inv.name ?? m.inviteeName);
     const videolink = loc?.join_url ?? m.joinUrl;
     const modus = terminModus({ joinUrl: videolink, locType: loc?.type, location: loc?.location ?? m.location });
@@ -462,23 +479,45 @@ function rescheduleLink(m: { manageToken: string | null; rescheduleUrl: string |
   return m.manageToken ? manageUrl(m.manageToken) : m.rescheduleUrl;
 }
 
-export type WaReminderResult = { day: number; soon: number; skipped: number; errors: number };
+export type WaReminderResult = { day: number; soon: number; skipped: number; errors: number; retry: number };
+
+/** Höchstens so viele Versuche je Erinnerung bei Sendefehlern (je Cron-Lauf einer, solange im Fenster). */
+export const MAX_REMINDER_TRIES = 3;
+
+/**
+ * Zeitpunkt der ursprünglichen Buchung: bei verschobenen Terminen (rescheduledFromId) der erste Termin der Kette.
+ * Daran wird gemessen, ob „im Voraus gebucht“ (Erinnerungsfenster), nicht am Zeitpunkt des Verschiebens.
+ */
+export async function urspruenglichGebucht(m: { createdAt: Date; rescheduledFromId: string | null }): Promise<Date> {
+  let at = m.createdAt;
+  let prev = m.rescheduledFromId;
+  for (let i = 0; prev && i < 10; i++) {
+    const p = await prisma.salesMeeting.findUnique({ where: { id: prev }, select: { createdAt: true, rescheduledFromId: true } });
+    if (!p) break;
+    at = p.createdAt;
+    prev = p.rescheduledFromId;
+  }
+  return at;
+}
 
 /**
  * WhatsApp-Erinnerungen von der Support-Nummer für geplante Vertriebstermine (eigene Buchungsseite und
  * Calendly). 24 Stunden vorher nur, wenn mehr als 26 Stunden im Voraus gebucht; 1 Stunde vorher nur, wenn
- * mindestens 3 Stunden im Voraus gebucht. Jede Art höchstens einmal je Termin (waReminderAt, waSoonAt).
+ * mindestens 3 Stunden im Voraus gebucht (bei verschobenen Terminen gemessen an der ursprünglichen Buchung).
+ * Die 24-Stunden-Erinnerung entfällt, wenn die Bestätigung keine 2 Stunden her ist (z. B. kurz vorher verschoben).
+ * Jede Art höchstens einmal je Termin (waReminderAt, waSoonAt); Ergebnis in waReminderStatus bzw. waSoonStatus.
+ * Sendefehler: Markierung zurück, der nächste Lauf versucht es erneut (höchstens MAX_REMINDER_TRIES, nur im Fenster).
  * Solange die Nummer nicht verbunden bzw. keine passende Vorlage freigegeben ist, wird nichts gesendet
  * und nichts markiert.
  */
 export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (token: string) => string): Promise<WaReminderResult> {
-  const result: WaReminderResult = { day: 0, soon: 0, skipped: 0, errors: 0 };
+  const result: WaReminderResult = { day: 0, soon: 0, skipped: 0, errors: 0, retry: 0 };
   if (!(await supportAccount())) return result;
   const nutzbar = await supportVorlagenNutzbar();
   const morgen = addDaysYmd(berlinYmd(now), 1);
   const kinds = [
-    { field: "waReminderAt", art: "erinnerung", from: 2 * HOUR, to: 24 * HOUR, minLead: 26 * HOUR, key: "day" },
-    { field: "waSoonAt", art: "gleich", from: 10 * 60 * 1000, to: HOUR, minLead: 3 * HOUR, key: "soon" },
+    { field: "waReminderAt", status: "waReminderStatus", error: "waReminderError", tries: "waReminderTries", art: "erinnerung", from: 2 * HOUR, to: 24 * HOUR, minLead: 26 * HOUR, key: "day" },
+    { field: "waSoonAt", status: "waSoonStatus", error: "waSoonError", tries: "waSoonTries", art: "gleich", from: 10 * 60 * 1000, to: HOUR, minLead: 3 * HOUR, key: "soon" },
   ] as const;
   for (const k of kinds) {
     if (!TERMIN_VORLAGEN.some((v) => v.art === k.art && nutzbar(v.name, v.version))) continue;
@@ -489,6 +528,11 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         title: true,
         startAt: true,
         createdAt: true,
+        rescheduledFromId: true,
+        waConfirmAt: true,
+        waConfirmStatus: true,
+        waReminderTries: true,
+        waSoonTries: true,
         joinUrl: true,
         location: true,
         manageToken: true,
@@ -511,15 +555,27 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         continue;
       }
       // Markierung zuerst: parallel laufende Crons senden nie doppelt
-      const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, [k.field]: null }, data: { [k.field]: now } });
+      const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, [k.field]: null }, data: { [k.field]: now, [k.tries]: { increment: 1 } } });
       if (!claimed.count) continue;
-      if (m.startAt.getTime() - m.createdAt.getTime() < k.minLead) {
+      const setStatus = (status: string, error: string | null = null) =>
+        prisma.salesMeeting.update({ where: { id: m.id }, data: { [k.status]: status, [k.error]: error?.slice(0, 300) ?? null } }).catch(() => {});
+      const skip = async (status: string) => {
         result.skipped++;
+        await setStatus(status);
+      };
+      if (m.startAt.getTime() - (await urspruenglichGebucht(m)).getTime() < k.minLead) {
+        await skip("kurzfristig");
         continue;
       }
+      // Gerade erst bestätigt (z. B. kurz vorher verschoben): keine 24-Stunden-Erinnerung direkt hinterher
+      if (k.key === "day" && m.waConfirmStatus === "sent" && m.waConfirmAt && now.getTime() - m.waConfirmAt.getTime() < 2 * HOUR) {
+        await skip("nach_bestaetigung");
+        continue;
+      }
+      // Dieselbe Nummer wie die Bestätigung: Nummer aus der Buchung vor der Hauptnummer des Kontakts
       const phone = [m.inviteePhone, m.contact.phone].map((p) => (p ? normalizePhone(p) : null)).find(Boolean) ?? null;
       if (!phone) {
-        result.skipped++;
+        await skip("no_phone");
         continue;
       }
       const anrede = terminAnrede(m.contact, m.inviteeName);
@@ -536,9 +592,17 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         });
         if (out === "sent") result[k.key]++;
         else result.skipped++;
+        await setStatus(out);
       } catch (err) {
         result.errors++;
         reportError(err, "vertrieb-termin-erinnerung", { meeting: m.id, kind: k.key });
+        const tries = m[k.tries] + 1;
+        await setStatus("failed", err instanceof Error ? err.message : String(err));
+        // Nächster Cron-Lauf versucht es erneut, solange der Termin im Fenster liegt
+        if (tries < MAX_REMINDER_TRIES) {
+          await prisma.salesMeeting.updateMany({ where: { id: m.id, [k.field]: now }, data: { [k.field]: null } });
+          result.retry++;
+        }
       }
     }
   }

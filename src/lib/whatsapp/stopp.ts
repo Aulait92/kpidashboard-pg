@@ -17,6 +17,8 @@ export function isStopMessage(body: string | null | undefined): boolean {
 
 export const STOP_CONFIRMATION = "Alles klar, wir schreiben Ihnen hier keine weiteren Nachrichten.";
 export const STOP_CONFIRMATION_DU = "Alles klar, wir schreiben dir hier keine weiteren Nachrichten.";
+/** Bestätigung auf der Support-Nummer von performancegrowth (Vertriebstermine, Zahlungserinnerung). */
+export const SUPPORT_STOP_CONFIRMATION = "Alles klar, Sie bekommen von uns keine Nachrichten mehr.";
 
 export class WhatsAppOptOutError extends Error {
   constructor() {
@@ -54,7 +56,7 @@ export async function isOptedOut(customerId: string, phone: string): Promise<boo
  * Stopp anwenden: Chat sperren, Assistent aus, laufende Nachfass-Abfolgen des Leads stoppen, Hinweis im Chat.
  * confirm = Bestätigung senden (nicht, wenn eine Kampagne oder Empfehlung sie schon geschickt hat).
  */
-export async function applyOptOut(conversationId: string, opts: { confirm: boolean; now?: Date }): Promise<void> {
+export async function applyOptOut(conversationId: string, opts: { confirm: boolean; now?: Date; text?: string }): Promise<void> {
   const now = opts.now ?? new Date();
   const conv = await prisma.conversation.findUnique({
     where: { id: conversationId },
@@ -64,7 +66,7 @@ export async function applyOptOut(conversationId: string, opts: { confirm: boole
   if (opts.confirm && !conv.optedOutAt) {
     const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
     const c = await prisma.customer.findUnique({ where: { id: conv.customerId }, select: { leadAddress: true } });
-    const body = c?.leadAddress === "du" ? STOP_CONFIRMATION_DU : STOP_CONFIRMATION;
+    const body = opts.text ?? (c?.leadAddress === "du" ? STOP_CONFIRMATION_DU : STOP_CONFIRMATION);
     await sendWhatsAppMessage({ customerId: conv.customerId, to: conv.contactPhone, body, sentBy: "system" }).catch((e) =>
       console.error("[whatsapp stopp] Bestätigung", e instanceof Error ? e.message : e),
     );
