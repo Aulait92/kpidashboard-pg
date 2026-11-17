@@ -1,0 +1,47 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rooming-in bis 15 Jahre",
+    "Weltweit bei akuter Erkrankung",
+    "Komfortleistungen (TV, Internet)"
+  ],
+  "tarife": [
+    {
+      "name": "Stationäre Zusatzversicherung SZ",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibett, Einbett opt.",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "tagegeld": "optional",
+        "ersatztagegeld": "30 €/Tag"
+      },
+      "bausteine": {
+        "tagegeld": "optional",
+        "einbett": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/gesundheit/krankenhauszusatzversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/SZ_Teil_III_O1K138A_20170901.PDF",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/SZE_Teil_III_O1K140A_20170901.PDF",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/SZR_Teil_III_O1K139A_20170601.PDF"
+  ],
+  "offen": [
+    "Ein Leistungsumfang (Tarif SZ mit Alterungsrückstellungen; SZR ab 21 Jahren ohne Alterungsrückstellungen mit denselben Leistungen). Einbettzimmer über Baustein SZE.",
+    "Über die GOÄ-Höchstsätze laut Tarifbedingungen SZ, soweit eine Honorarvereinbarung nach GOÄ vorliegt.",
+    "Ersatz-Krankenhaustagegeld 30 € bei Verzicht auf Zweibettzimmer, 50 € bei Verzicht auf Wahlarzt, 20 € bei Verzicht auf gebuchtes Einbettzimmer. Krankenhaustagegeld wählbar bis 50 bzw. 100 € (altersabhängig).",
+    "Ambulante OP nicht genannt."
+  ]
+}

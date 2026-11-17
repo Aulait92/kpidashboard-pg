@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung (PrivatRente Genius Vorsorge)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "Rentenbeginn 55 bis 85 Jahre",
+    "Ab 25 € im Monat"
+  ],
+  "tarife": [
+    {
+      "name": "PrivatRente Genius Vorsorge",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "wählbar, 0 bis 100 %",
+        "rentenfaktor": "ja",
+        "anlage": "Fonds, ETFs, Sicherung",
+        "flexibel": "Entnahme 20.000 €/Jahr",
+        "hinterbliebene": "Guthaben vererbbar",
+        "kapital": "ja",
+        "beitragspause": "Beitragsfreistellung"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/private-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/vermoegen-vorsorge/private-rentenversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/altersvorsorge_und_bu/AVB--PrivatRente-Genius.pdf",
+    "https://www.wuerttembergische.de/vermoegen-vorsorge/produktinformationsblaetter-altersvorsorge/"
+  ],
+  "offen": [
+    "Fondsgebundene Rentenversicherung (Bedingungen gültig ab 01.06.2026). Laut Produktseite fünf Tariflinien (u. a. Flex), deren Namen und Unterschiede auf der Seite nicht aufgeführt sind; daher als ein Tarif geführt.",
+    "Anlage: Sicherungsguthaben, Wertsicherungsfonds (monatlicher Werterhalt 80 %) und über 50 freie Fonds und ETFs; Garantieplan und Fix-Plus optional.",
+    "Beitragsgarantie als Prozentsatz der Beiträge wählbar und änderbar; garantierter Rentenfaktor laut Bedingungen. Einmalbeitrag ab 7.000 €.",
+    "Keine Renditeaussage übernommen. Effektivkosten nicht ausgewertet (siehe Basisinformationsblätter)."
+  ]
+}

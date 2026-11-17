@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ambulant und Arzneimittel 100 %",
+    "Rooming-in für Kinder",
+    "Module frei kombinierbar"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenvollversicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "selbstbehalt": "wählbar, bis 1.440 €",
+        "bre": "bis 4 Monatsbeiträge",
+        "hilfsmittel": "100 %",
+        "ausland": "Europa, weltweit 6 Mon.",
+        "stationaer": "Mehrbett, kein Wahlarzt",
+        "zahnersatz": "60 %",
+        "psychotherapie": "80 %"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenvollversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "selbstbehalt": "wählbar, bis 1.440 €",
+        "bre": "bis 4 Monatsbeiträge",
+        "hilfsmittel": "100 %",
+        "ausland": "Europa, weltweit 6 Mon.",
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "75 %",
+        "psychotherapie": "80 %"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankenvollversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %",
+        "selbstbehalt": "wählbar, bis 1.440 €",
+        "bre": "bis 4 Monatsbeiträge",
+        "hilfsmittel": "100 %",
+        "ausland": "Europa, weltweit 6 Mon.",
+        "stationaer": "Einbett, Chefarzt",
+        "zahnersatz": "90 %",
+        "psychotherapie": "100 %"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/gesundheit/private-krankenversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/prospekte_dokumente_pdf/gesundheit_1/40801_Booklet_Vollversicherung_2022.pdf"
+  ],
+  "offen": [
+    "Quelle: Tabellen Ambulant, Stationär, Zahn der Produktseite (Abruf 17.11.2026); Württembergische markiert Premiumschutz mit „Tipp“. Pakete sind aus Modulen frei kombinierbar.",
+    "Wahlarzt: Komfort und Premium auch über die Höchstsätze der GOÄ; Kompakt nur Belegärzte bis zu den Höchstsätzen. Zahnprophylaxe 300, 400 bzw. 500 € im Jahr.",
+    "Selbstbehalt nur ambulant, frei wählbar bis 1.440 €. Beitragsrückerstattung ab dem ersten leistungsfreien Jahr (2 Monatsbeiträge, steigend bis 4).",
+    "Heilpraktiker, Osteopathie und Sehhilfen laut Seite versichert, Höhe je Paket nicht genannt. Hausarzt- und Generikaprinzip als Sparoption. Pflegezusatz im Paket nicht genannt."
+  ]
+}

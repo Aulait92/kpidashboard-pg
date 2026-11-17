@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Genius BasisRente)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "Rentenbeginn ab 62 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Genius BasisRente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Beitragsgarantie wählbar",
+        "rentenfaktor": "ja",
+        "anlage": "klassisch bis Fonds",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "Rentengarantiezeit opt.",
+        "beitragspause": "Beitragsfreistellung"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/vermoegen-vorsorge/ruerup-rente/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/altersvorsorge_und_bu/AVB-Vorsorge-BasisRente-Genius.pdf"
+  ],
+  "offen": [
+    "Genius Vorsorge als BasisRente (Bedingungen gültig ab 01.06.2026); Tariflinien nicht einzeln veröffentlicht, daher ein Tarif.",
+    "Beitragsgarantie ein- und ausschließbar sowie anpassbar; garantierter Rentenfaktor laut Bedingungen. Rentengarantiezeit vereinbar (Beispiel der Seite: 24 Jahre).",
+    "Kein Kapitalwahlrecht (gesetzlich). Hinterbliebenenrente für Ehepartner nicht ausdrücklich genannt. Effektivkosten nicht ausgewertet; keine Renditeaussage übernommen."
+  ]
+}

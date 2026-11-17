@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung (Tarif PZ)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Pflege-Assistance",
+    "Erhöhung zu Anlässen möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Pflegezusatz Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "nein",
+        "dynamik": "4 % jährlich bis 70",
+        "pg5": "1.500 € (amb. 1.100 €)",
+        "ab-pg": "ab Pflegegrad 2",
+        "einmal": "nein"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/private-pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegezusatz Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "nein",
+        "dynamik": "4 % jährlich bis 70",
+        "pg5": "1.750 € (amb. 1.300 €)",
+        "ab-pg": "ab Pflegegrad 2",
+        "einmal": "2.000 €"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/private-pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pflegezusatz Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "befreiung": "ab Pflegegrad 4",
+        "ambulant-gleich": "nein",
+        "dynamik": "4 % jährlich bis 70",
+        "pg5": "2.050 € (amb. 1.500 €)",
+        "ab-pg": "ab Pflegegrad 1",
+        "einmal": "4.000 €"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/private-pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/gesundheit/private-pflegezusatzversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/40257_AVB-Pflegezusatzversicherung.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich und Leistungen je Pflegegrad auf der Produktseite (Abruf 17.11.2026). Keine Stufe markiert, Komfort als mittlere Stufe.",
+    "Monatsgeld stationär in Pflegegrad 2 bis 5 gleich (1.500, 1.750 bzw. 2.050 €); ambulant gestaffelt (Pflegegrad 2: 350, 550 bzw. 750 €). Pflegegrad 1 nur Premium 200 €.",
+    "Pflege-Einmalleistung bei erstmaliger Pflegebedürftigkeit ab Pflegegrad 2. Premium zusätzlich Pflege-Airbag 1.500 €.",
+    "Dynamik ab dem 4. Versicherungsjahr auf Wunsch. Wartezeit und Demenzregelung nicht genannt."
+  ]
+}

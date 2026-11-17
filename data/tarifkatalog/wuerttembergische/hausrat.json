@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Neuwertentschädigung",
+    "Kein Abzug bis 5.000 € Schaden",
+    "Balkonkraftwerk, Wallbox"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat KompaktSchutz",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "wert": "bis 20 % der VS",
+        "fahrrad": "optional (FahrradPlus)",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "1.500 €",
+        "auto": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/wohnen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat KomfortSchutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis 30 % der VS",
+        "fahrrad": "optional (FahrradPlus)",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "bargeld": "2.500 €",
+        "auto": "bis 2.500 € weltweit",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/wohnen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat PremiumSchutz",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis 100 % der VS",
+        "fahrrad": "optional (FahrradPlus)",
+        "elementar": "optional",
+        "online": "bis 2.500 €",
+        "bargeld": "5.000 €",
+        "auto": "ja, weltweit",
+        "allgefahren": "optional (PremiumPlus)"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/wohnen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/wohnen/hausratversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/hausratversicherung/0014_Besondere_Bedingungen_Hausrat_Kompakt_2025.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/hausratversicherung/0015_Besondere_Bedingungen_Hausrat_Komfort_2025.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/hausratversicherung/0017_Besondere_Bedingungen_Hausratversicherung_Premiumschutz.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich der Produktseite (Abruf 17.11.2026); Württembergische markiert PremiumSchutz mit „Tipp“.",
+    "Einfacher Diebstahl (z. B. aus dem Garten) nicht im Tarifvergleich; nur Sturmschäden an Gartenmöbeln in Premium bis 5.000 €.",
+    "Fahrrad nur über Baustein FahrradPlus belegt (Neuwert, bis zur Versicherungssumme, SB 150 €); ob in allen Stufen wählbar, nicht ausdrücklich genannt.",
+    "Bausteine laut Produktseite: CyberPlus (Internet), ElektronikPlus, PremiumPlus (Allgefahren, nur zu Premium), FahrradPlus, Elementar, Hausrat Schutzbrief (Notfall), MobilPlus (Unterwegs), Glas.",
+    "Selbstbeteiligung, Überspannung und Hotelkosten je Stufe nicht im Tarifvergleich (Bedingungen nicht ausgewertet). Wertsachen: Urkunden und Schmuck 20.000, 25.000 bzw. 50.000 €."
+  ]
+}

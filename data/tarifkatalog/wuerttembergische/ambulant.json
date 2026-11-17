@@ -1,0 +1,55 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung (Privatpatient)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Privatarzt-Abrechnung (GOÄ)",
+    "Vorsorge ohne Altersgrenze",
+    "STIKO-Schutzimpfungen"
+  ],
+  "tarife": [
+    {
+      "name": "Ambulant Privatpatient Premium (AGU)",
+      "kurz": "Premium",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "separat (NaturMedPlus)",
+        "sehhilfen": "nein",
+        "vorsorge": "ja",
+        "arznei": "100 %, nur schwer krank"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerttembergische.de/gesundheit/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Ambulant Privatpatient PremiumPlus (AKU)",
+      "kurz": "PremiumPlus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "separat (NaturMedPlus)",
+        "sehhilfen": "nein",
+        "vorsorge": "ja",
+        "arznei": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerttembergische.de/gesundheit/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/gesundheit/ambulante-zusatzversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/255055_Bedingungen_AGU.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/238188_Bedingungen_AKU.pdf"
+  ],
+  "offen": [
+    "Premium (AGU) leistet als Privatpatient nur bei bestimmten schweren Erkrankungen (z. B. Krebs, Herzinfarkt, Schlaganfall, Pflegegrad 2); PremiumPlus (AKU) bei allen ambulanten Arztbesuchen. Württembergische empfiehlt PremiumPlus für alle, die stets Privatpatient sein möchten.",
+    "Arznei-, Verband-, Heil- und Hilfsmittel 100 % (Hilfsmittel ohne Sehhilfen); Hörgeräte nicht ausdrücklich genannt. Psychotherapie: Premium 100 % bis 30 Sitzungen Krisenintervention, sonst 80 % der Restkosten.",
+    "Heilpraktiker nur über den eigenen Tarif NaturMedPlus, Sehhilfen über Zahn & Brille; beide nicht ausgewertet. Auslandsreise und Wartezeit nicht genannt."
+  ]
+}

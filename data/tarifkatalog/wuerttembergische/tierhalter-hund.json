@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweit bis 5 Jahre",
+    "Tierarztkosten bis 10.000 €",
+    "Ohne Leinen- oder Maulkorbzwang"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 18 Monate",
+        "forderungsausfall": "ja",
+        "neuwert": "ja, bis 24 Monate alt",
+        "ausland": "weltweit bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerttembergische.de/freizeit/hundehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/freizeit/hundehaftpflichtversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/haftpflicht/tierhalter_haftpflichtversicherung/Allgemeine_Bedingungen_private_Hundehalterhaftpflichtversicherung.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit wählbarer Versicherungssumme (10, 20 oder 50 Mio. €), dazu Baustein HundePlus (Giftköder bis 10.000 €, Notfallrücktransport, Gassi-Service).",
+    "Fremde Hüter: laut Produktseite ist der Nachbar mitversichert, der aus Gefälligkeit Gassi geht (nicht gewerbsmäßig).",
+    "Selbstbeteiligung nicht veröffentlicht. Neuwert laut Leistungsbeispiel für Sachen bis 24 Monate alt."
+  ]
+}

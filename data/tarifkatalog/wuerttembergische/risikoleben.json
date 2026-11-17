@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Nachversicherungsoption",
+    "BU- und Unfall-Zusatz möglich",
+    "Partnerbaustein"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "nein",
+        "verlaengerung": "nein",
+        "umtausch": "nein",
+        "kinder": "nein"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja, schwere Krankheit",
+        "verlaengerung": "ja, einmalig",
+        "umtausch": "ja, in Rente",
+        "kinder": "Erhöhung 6 Monate"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/vermoegen-vorsorge/risikolebensversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/altersvorsorge_und_bu/Risiko_Kompakt_Premium.pdf"
+  ],
+  "offen": [
+    "Quelle: Leistungsübersicht Kompakt und Premium der Produktseite sowie Bedingungen Risiko Kompakt/Premium. Keine Stufe markiert.",
+    "Verlängerungsoption und Umtausch in eine Rentenversicherung laut Bedingungen nur in Premium (Verlängerung höchstens 15 Jahre, Umtausch in den ersten 10 Jahren).",
+    "Premium erhöht die Leistung bis zu 6 Monate bei Geburt eines Kindes und bei Immobilienkauf oder Darlehen; vorläufiger Schutz ab Antrag nur Premium.",
+    "Weltweiter Schutz und höchstes Endalter nicht genannt. Fallender Todesfallschutz laut Bedingungen möglich."
+  ]
+}

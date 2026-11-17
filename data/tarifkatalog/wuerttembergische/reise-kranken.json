@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreisekrankenversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweit, 58 Tage je Reise",
+    "Reise-Assistance rund um die Uhr",
+    "Bergungskosten bis 10.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif RK (Einzelperson)",
+      "kurz": "Einzel",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "58 Tage",
+        "ruecktransport": "ja, med. sinnvoll",
+        "usa": "ja (weltweit)",
+        "zahn": "Schmerz, Füllung",
+        "chronisch": "nur bei Verschlechterung",
+        "schwanger": "Komplikationen ja"
+      },
+      "bausteine": {
+        "familie": "nein"
+      },
+      "quelle": "https://www.wuerttembergische.de/freizeit/auslandsreisekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif RKF (Familie)",
+      "kurz": "Familie",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "58 Tage",
+        "ruecktransport": "ja, med. sinnvoll",
+        "usa": "ja (weltweit)",
+        "zahn": "Schmerz, Füllung",
+        "chronisch": "nur bei Verschlechterung",
+        "schwanger": "Komplikationen ja"
+      },
+      "bausteine": {
+        "familie": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/freizeit/auslandsreisekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/freizeit/auslandsreisekrankenversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/AllgemeineVersicherungsbedingungen-Tarif-RK.pdf"
+  ],
+  "offen": [
+    "Ein Leistungsumfang als Einzel- (RK) und Familientarif (RKF), Jahresvertrag mit automatischer Verlängerung, bis 70 Jahre.",
+    "Familientarif zusätzlich Begleitperson im Krankenhaus für Kinder bis 18 Jahre und Kinderbetreuung.",
+    "Selbstbeteiligung auf der Produktseite und in den Bedingungen nicht genannt. Bekannte Erkrankungen nur bei unerwarteter Verschlechterung; Schwangerschaftsbeschwerden und Frühgeburten versichert, Entbindung nicht."
+  ]
+}
