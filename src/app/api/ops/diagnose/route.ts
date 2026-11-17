@@ -609,9 +609,6 @@ async function variablen() {
   return pruefeVariablen();
 }
 
-<<<<<<< HEAD
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung };
-=======
 /**
  * WhatsApp zu Vertriebsterminen (Support-Nummer): gesendete Bestätigungen und Erinnerungen seit 11.11.2026 (bzw. &seit=YYYY-MM-DD)
  * mit Termin, Quelle, Art, Zustellstatus und Auffälligkeiten. &link=1: Verschieben-Link der letzten 3 Termine gültig ja/nein.
@@ -624,8 +621,7 @@ async function vertriebTermine(params: URLSearchParams) {
   return diagnoseVertriebTermine({ seit: berlinMidnight(/^\d{4}-\d{2}-\d{2}$/.test(seit) ? seit : "2026-11-11"), link: params.get("link") === "1" });
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p) };
->>>>>>> origin/claude/whatsapp-crm
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p) };
 
 export async function GET(req: Request): Promise<Response> {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
