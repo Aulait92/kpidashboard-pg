@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung (Tarif Reise)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Jahresvertrag, alle Reisen",
+    "Bergung bis 2.500 €",
+    "24-h-Notrufservice"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise-Krankenversicherung Tarif ReiseE",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "60 Tage je Reise",
+        "ruecktransport": "ja, wenn sinnvoll",
+        "selbstbeteiligung": "100 % Erstattung",
+        "zahn": "schmerzstillend",
+        "schwanger": "ja, inkl. Frühgeburt",
+        "chronisch": "nicht, wenn absehbar"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/reise-krankenversicherung/einzelpersonen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/reise-krankenversicherung/einzelpersonen",
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/reise-krankenversicherung/familien",
+    "https://www.generali.de/resource/blob/104838/07ad4ed50632c3a66e145e7e16849431/Reise_10.2025_BFSG.pdf"
+  ],
+  "offen": [
+    "Werte aus den Produktseiten und der Kurzinformation Tarif Reise (Stand 15.10.2025) der Generali Deutschland Krankenversicherung.",
+    "USA und Kanada: Die Seite nennt Auslandsreisen ohne Länderausschluss, aber nicht ausdrücklich weltweit; bitte in den AVB prüfen.",
+    "Selbstbeteiligung: versicherte Kosten werden zu 100 % erstattet, eine Selbstbeteiligung ist nicht genannt.",
+    "Familie: eigener Tarif ReiseF (Partner und Kinder unter 18), hier als Baustein „Familie“. Keine Langzeitvariante genannt.",
+    "Nicht versichert: geplante Behandlungen und solche, deren Notwendigkeit vor Reiseantritt absehbar war. Zahn: schmerzstillend inkl. Füllungen, Provisorien, einfache Reparaturen."
+  ]
+}

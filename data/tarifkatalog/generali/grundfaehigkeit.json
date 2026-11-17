@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeits-Police",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente schon bei 1 Fähigkeit",
+    "Rückwirkend ohne Meldefrist",
+    "Für alle Berufe bis 67"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeits-Police",
+      "kurz": "Police",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "dynamik": "optional",
+        "anzahl": "13"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeits-Police pro",
+      "kurz": "Police pro",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "dynamik": "optional",
+        "anzahl": "17"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/vorsorge-finanzen/grundfaehigkeitsversicherung"
+  ],
+  "offen": [
+    "Werte aus der Produktseite auf generali.de (Bildtexte der Leistungspakete); Bedingungen nicht ausgewertet. Vertrieb über die Deutsche Vermögensberatung (DVAG).",
+    "Police: u. a. Sehen, Sprechen, Hören, Greifen, Hand und Arm gebrauchen, Schreiben, Heben/Tragen, Sitzen, Stehen, Gehen (Seite: bis zu 17, Police pro zusätzlich Autofahren, Gleichgewicht, eigenverantwortliches Handeln, Intellekt; Anzahl 13 daraus abgeleitet, bitte prüfen).",
+    "Psyche und Leistung bei Pflege auf der Seite nicht genannt.",
+    "Anpassungsgarantie bis Alter 50: je Anlass bis 500 €, ohne Anlass alle 5 Jahre bis 300 €, insgesamt höchstens 2.500 € Monatsrente. Umtausch in eine BU zu Beginn von Ausbildung oder Studium bzw. nach 5 Jahren.",
+    "Beitragsstundung bis 18 Monate (u. a. Arbeitslosigkeit) bzw. 24 Monate (Elternzeit). Leistungsdynamik 0,5 bis 3 %. Weltweiter Schutz nicht genannt.",
+    "Generali markiert keine Variante (zwei Stufen, empfehlung keine)."
+  ]
+}

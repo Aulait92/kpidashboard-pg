@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Höhe frei bis Nettoeinkommen",
+    "Anpassung ohne Risikoprüfung",
+    "Unfall ohne Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld für gesetzlich Versicherte (EKTZ)",
+      "kurz": "GKV-Versich.",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "ab-tag": "ab 43. Tag",
+        "bu-ende": "BU nicht versichert",
+        "ausland": "Europa, stationär"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-zusatzversicherte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld für Arbeitnehmer (KTAN)",
+      "kurz": "PKV-Angest.",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "ab-tag": "ab 43. Tag oder später",
+        "bu-ende": "endet mit BU",
+        "selbststaendige": "nein",
+        "ausland": "EU, EWR, Schweiz"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-vollversicherte/arbeitnehmer",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld für Freiberufler (KTFB)",
+      "kurz": "Freiberufler",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "ab-tag": "ab 22. Tag oder später",
+        "selbststaendige": "ja, Freiberufler"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-vollversicherte/freiberufler",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Krankentagegeld für Gewerbetreibende (KTGT)",
+      "kurz": "Gewerbetreib.",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "ab-tag": "ab 22. Tag oder später",
+        "selbststaendige": "ja, Gewerbetreibende"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-vollversicherte/gewerbetreibende",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-zusatzversicherte",
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-vollversicherte/arbeitnehmer",
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-vollversicherte/freiberufler",
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankentagegeld-vollversicherte/gewerbetreibende",
+    "https://www.generali.de/resource/blob/21284/630792b178ac097b234257f1cc948045/KTAN_08.2021_T648_IPID.pdf",
+    "https://www.generali.de/resource/blob/21286/60217291648d4db9c6c25fc120c539c8/KTAN_08.2026_T647_AVB.pdf",
+    "https://www.generali.de/resource/blob/21420/bd0320eb51b29bca57f6f4698625b018/KTFB_08.2026_T651_AVB.pdf",
+    "https://www.generali.de/resource/blob/21374/6541c23e093919728e4a74a954cbbcdd/KTGT_08.2026_T649_AVB.pdf",
+    "https://www.generali.de/resource/blob/21452/a4e8a79b29de40002236bb409a0c865f/ektz-07-2020-t457-ipid-data.pdf",
+    "https://www.generali.de/resource/blob/21454/8c81948a4557c33f90df17faaa3154cf/EKTZ_08.2026_T388_AVB.pdf"
+  ],
+  "offen": [
+    "Stufen sind Zielgruppen (GKV-Versicherte, privat vollversicherte Angestellte, Freiberufler, Gewerbetreibende), keine Leistungsstufen. KTAN, KTFB und KTGT setzen eine Krankenvollversicherung bei der Generali voraus. Keine Markierung; nach Regel die dritte Stufe als Empfehlung, bitte prüfen.",
+    "Karenzzeiten: KTAN 42, 91, 182 oder 364 Tage; KTFB und KTGT 21, 42, 91, 182 oder 364 Tage; KTFB und KTGT bei Krankenhausaufenthalt verkürzt auf 4 Tage; EKTZ 42 Tage.",
+    "Allgemeine Wartezeit 3 Monate laut AVB aller vier Tarife, entfällt bei Unfällen. Leistungsdauer nicht genannt.",
+    "Ende bei BU: KTAN endet mit Eintritt der Berufsunfähigkeit (AVB), EKTZ leistet nicht für Zeiten der BU (IPID); bei KTFB und KTGT nicht ausgewertet.",
+    "Ausland EKTZ: europäisches Ausland bei stationärer Behandlung, EU, EWR, Schweiz bis 3 Monate höchstens 30 Tage auch ambulant. Ausland KTFB und KTGT nicht ausgewertet."
+  ]
+}

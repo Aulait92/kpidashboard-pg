@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Existenzschutzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rente schon bei 1 Fähigkeit",
+    "Rückwirkend ohne Meldefrist",
+    "Kinder ab 7 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Existenzschutzversicherung Classic Schutz",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "16",
+        "prognose": "6 Monate",
+        "psyche": "nein",
+        "pflege": "nein",
+        "nachversicherung": "Geburt, Immobilie",
+        "weltweit": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/existenzschutzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Existenzschutzversicherung Premium Schutz",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "24",
+        "prognose": "6 Monate",
+        "psyche": "nein",
+        "pflege": "ja",
+        "nachversicherung": "erweitert + ohne Anlass",
+        "weltweit": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/existenzschutzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Existenzschutzversicherung Premium Plus Schutz",
+      "kurz": "Premium Plus",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "24",
+        "prognose": "6 Monate",
+        "psyche": "ja, volle EM",
+        "pflege": "ja",
+        "nachversicherung": "erweitert + ohne Anlass",
+        "weltweit": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/existenzschutzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/existenzschutzversicherung.html"
+  ],
+  "offen": [
+    "Werte aus dem Tarifvergleich der Produktseite auf huk.de; Bedingungen nicht ausgewertet.",
+    "Classic: 16 körperliche Grundfähigkeiten. Premium zusätzlich 8 weitere (u. a. geistige Leistungsfähigkeit, Bildschirmarbeit, Smartphone, ÖPNV, Fahrrad, Ziehen/Schieben) sowie Pflegebedürftigkeit und Infektionsklausel. Premium Plus zusätzlich volle Erwerbsminderung durch psychische Erkrankung.",
+    "Psyche und Pflege bei Classic bzw. Premium als „nein“ erfasst, weil die Seite sie erst ab der höheren Variante nennt.",
+    "Nachversicherung: Classic Erhöhungsoption bei Geburt und Immobilienerwerb; Premium und Premium Plus zusätzlich Heirat, Einkommen, Meister, Selbstständigkeit und einmalig ohne Anlass in den ersten 5 Jahren (unter 35), dazu Beitragsstundung und Verlängerungsoption.",
+    "Für Kinder ab 7 Jahren, ab 15 Jahren Umtausch in eine BU ohne neue Risikoprüfung; Notfallpaket Kind (12 Monatsrenten, höchstens 12.000 €). Dynamik nicht genannt.",
+    "HUK-COBURG markiert keine Variante; Premium als mittlere Stufe."
+  ]
+}
