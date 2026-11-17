@@ -34,6 +34,7 @@ Unterauftragsverarbeiter (Anlage 2) in `src/lib/legal-texts.ts`, öffentlich unt
 | Logins und Sicherheit | Zugang, Missbrauch verhindern | Nutzer: E-Mail, Passwort-Hash, 2FA-Geheimnis (verschlüsselt), Anmeldungen, Fehlversuche | Art. 6 Abs. 1 b, f; Art. 32 | Railway | Konto: bis Löschung; Fehlversuche 30 Tage |
 | Änderungsprotokoll | Nachweis, Sicherheit | Nutzer: Person, Zeitpunkt, Aktion (keine Lead-Inhalte) | Art. 6 Abs. 1 c, f | Railway | 1 Jahr (automatisch) |
 | Nutzungsmessung | Bedienung verbessern | Nutzer pseudonym: Seitenaufrufe, Aktionen, Fehler | Art. 6 Abs. 1 f | Railway | 180 Tage (automatisch) |
+| Nutzungsmessung im Admin (seit 18.11.2026) | Admin-Bereich aufräumen: welche Funktionen und Seiten werden genutzt | nur Mitarbeiter (Admins): Login-ID, Zeitpunkt, Seite (Pfad ohne Parameter, IDs als „:id“), Funktions-ID bei Klick, alte/neue Oberfläche; keine Inhalte, keine Lead- oder Kundendaten (`AdminUsageEvent`). Auswertung nur als Zahlen je Funktion/Seite ohne Personenbezug (Diagnose `q=admin-nutzung`), keine Leistungs- oder Verhaltenskontrolle einzelner Mitarbeiter | Art. 6 Abs. 1 f | Railway | 180 Tage (automatisch), mit dem Login |
 | Fehlerüberwachung | Betrieb | technische Fehler; Texte im Replay maskiert, keine Nutzerkennung, keine URL-Parameter | Art. 6 Abs. 1 f | Sentry (EU) | laut Sentry-Einstellung (90 Tage Standard, **Prüfen**) |
 | Werbeanzeigen-Steuerung | Kampagnen der Kunden | nur Kennzahlen (Kosten, Klicks), keine Personen | – | Meta, Google, Outbrain, TikTok | – |
 | Werbemittel erstellen | Bilder, Videos, Untertitel | keine personenbezogenen Daten | – | OpenAI, Google (Gemini/Veo), Unsplash, Pexels, Telegram | – |
@@ -153,6 +154,7 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 | Daten | Frist | Wie |
 |---|---|---|
 | Nutzungsmessung (`UsageEvent`) | 180 Tage | automatisch, Cron 03:00 UTC (`pruneUsage`) |
+| Nutzungsmessung im Admin (`AdminUsageEvent`, nur Mitarbeiter) | 180 Tage | automatisch, Cron 03:00 UTC (`pruneAdminNutzung`); mit dem Login (Kaskade) |
 | Postausgang Rückmeldung an Meta (`CapiEvent`: Lead-Bezug, Stufe, Zeitpunkt, Wert) | 13 Monate | automatisch im Lauf alle 15 Minuten (`runCapi`) |
 | Änderungsprotokoll (`AuditLog`) | 1 Jahr | automatisch (`pruneAudit`) |
 | Messpunkte der Statusseite (`StatusSample`, ohne Personenbezug) | 90 Tage | automatisch je Cron-Lauf (`recordStatusSample`) |

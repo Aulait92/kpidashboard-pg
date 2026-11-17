@@ -31,8 +31,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -43,6 +42,7 @@
     "Ein Tarif mit wählbarer Erstattungshöhe (3.000 €, 6.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
     "Diagnostik auch ohne OP; Physiotherapie und alternative Behandlungen ohne OP bis 750 € im Jahr.",
     "Dauer der Nachbehandlung nach OP für die Krankenversicherung auf debeka.de nicht genannt (DEVK nennt für denselben Uelzener-Tarif unbegrenzt).",
-    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung."
+    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung.",
+    "Geprüft am 17.11.2026 an der Produktseite Tierversicherung auf debeka.de."
   ]
 }

@@ -16,7 +16,7 @@
       "empfohlen": false,
       "werte": {
         "verweisung": "ja",
-        "prognose": "ja",
+        "prognose": "6 Monate",
         "au": "optional (AU-Plus)",
         "nachversicherung": "ja",
         "rueckwirkend": "ja",
@@ -31,8 +31,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/leben/selbststaendige-berufsunfaehigkeit",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO BU Best Plus",
@@ -41,7 +40,7 @@
       "empfohlen": false,
       "werte": {
         "verweisung": "ja",
-        "prognose": "ja",
+        "prognose": "6 Monate",
         "au": "optional (AU-Plus)",
         "nachversicherung": "ja",
         "rueckwirkend": "ja",
@@ -56,8 +55,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/leben/selbststaendige-berufsunfaehigkeit",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -70,6 +68,7 @@
     "Best Plus zusätzlich: Rente bei Krebs, Herzinfarkt oder Schlaganfall (bis 18 Monate, mit Beitragsbefreiung), Rente bei Verlust einer Grundfähigkeit (Sehen, Hören, Sprechen, Fortbewegen; bis 24 Monate plus einmalig 6 Monatsrenten, max. 15.000 €), Reha-Service bis 2.000 €, medizinische Zweitmeinung, Online-Programme für mentale Gesundheit.",
     "AU-Plus (Rente bei Arbeitsunfähigkeit bis 36 Monate), Pflege Plus (lebenslange Pflegerente) und garantierte Rentenerhöhung im Leistungsfall sind zuwählbar. Nachversicherung ohne erneute Risikoprüfung z. B. bei Heirat, Geburt, Immobilienerwerb.",
     "Weltweiter Schutz und Infektionsklausel nicht genannt. Umorganisationshilfe für Selbstständige ist eine Kostenbeteiligung, kein Verzicht auf Umorganisation; deshalb Merkmal „Verzicht auf Umorganisation“ offen.",
-    "Daneben gibt es BU Start (für Schüler) und den DANV-Sondertarif für Juristen und Wirtschaftsberufe; nicht als Stufen geführt. Keine Empfehlung markiert (zwei Stufen)."
+    "Daneben gibt es BU Start (für Schüler) und den DANV-Sondertarif für Juristen und Wirtschaftsberufe; nicht als Stufen geführt. Keine Empfehlung markiert (zwei Stufen).",
+    "Geprüft am 17.11.2026 an der Produkttabelle auf ergo.de und den Highlightblättern (6.2026)."
   ]
 }

@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/existenzschutzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Existenzschutzversicherung Premium Schutz",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/existenzschutzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Existenzschutzversicherung Premium Plus Schutz",
@@ -60,8 +58,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/existenzschutzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -73,6 +70,7 @@
     "Psyche und Pflege bei Classic bzw. Premium als „nein“ erfasst, weil die Seite sie erst ab der höheren Variante nennt.",
     "Nachversicherung: Classic Erhöhungsoption bei Geburt und Immobilienerwerb; Premium und Premium Plus zusätzlich Heirat, Einkommen, Meister, Selbstständigkeit und einmalig ohne Anlass in den ersten 5 Jahren (unter 35), dazu Beitragsstundung und Verlängerungsoption.",
     "Für Kinder ab 7 Jahren, ab 15 Jahren Umtausch in eine BU ohne neue Risikoprüfung; Notfallpaket Kind (12 Monatsrenten, höchstens 12.000 €). Dynamik nicht genannt.",
-    "HUK-COBURG markiert keine Variante; Premium als mittlere Stufe."
+    "HUK-COBURG markiert keine Variante; Premium als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Tariftabelle und den Listen der versicherten Grundfähigkeiten auf huk.de."
   ]
 }

@@ -16,8 +16,6 @@
       "empfohlen": false,
       "werte": {
         "nachversicherung": "ja (Kind, Immobilie)",
-        "vorgezogen": "nein",
-        "verlaengerung": "nein",
         "weltweit": "ja",
         "kinder": "ja"
       },
@@ -25,8 +23,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/risikolebensversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikoleben Premium Schutz",
@@ -44,8 +41,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/risikolebensversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikoleben Premium Plus Schutz",
@@ -63,8 +59,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/existenzsicherung/risikolebensversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -76,6 +71,7 @@
     "Vorgezogene Leistung bei unheilbarer Krankheit (Lebenserwartung unter 1 Jahr) ab Premium. Premium Plus zusätzlich 10 % der Summe (bis 10.000 €) bei Krebs, Herzinfarkt, Schlaganfall, Querschnittslähmung.",
     "Kinder: Erhöhungsoption bei Geburt in allen Varianten; Premium Plus erhöht die Summe bei Geburt oder Immobilienkauf zusätzlich automatisch um 20 % für 12 Monate (Kinder- und Baubonus).",
     "Fallende Summe: Risikolebensversicherung nach Tilgungsplan (linear oder progressiv fallend) laut Produktseite; Zuordnung je Variante nicht belegt. Verbundene Leben nur als Ratgeberhinweis (über Kreuz), nicht als Tarif belegt.",
-    "Vorläufiger Schutz bei Unfalltod ab Online-Antrag bis 100.000 €. HUK markiert keine Variante; Premium als mittlere Stufe."
+    "Vorläufiger Schutz bei Unfalltod ab Online-Antrag bis 100.000 €. HUK markiert keine Variante; Premium als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de (Spalten dort in der Reihenfolge Premium Plus, Premium, Classic). Korrigiert: Classic vorgezogene Leistung und Verlängerungsoption nicht mehr „nein“, da die Tabelle nur einen Strich zeigt (Screenreader „keine Angabe“)."
   ]
 }

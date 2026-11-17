@@ -26,8 +26,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Pflegevorsorge VARIO Komfort (Pflegegrade 2 bis 5)",
@@ -46,8 +45,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Pflegevorsorge VARIO Premium (Pflegegrade 1 bis 5)",
@@ -66,8 +64,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -79,6 +76,7 @@
     "Ambulant wie stationär: laut Flyer volles Pflegegeld frei verfügbar für Pflege zu Hause oder im Heim.",
     "Einmalleistung bei Pflegebeginn nicht Teil von VARIO; ergänzend Pflegevorsorge Akut (Soforthilfe bis 2.500 € für 3 Monate) als eigenes Produkt.",
     "Dynamik ohne neue Gesundheitsprüfung von Alter 21 bis 71, auch im Pflegefall. Leistung bei Demenz nicht gesondert genannt.",
-    "Empfehlung: AXA markiert Komfort als „Unser Tipp“. Flyer Stand 1.21."
+    "Empfehlung: AXA markiert Komfort als „Unser Tipp“. Flyer Stand 1.21.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf axa.de (Empfehlung im Seitenquelltext als hervorgehobene Spalte 2 bestätigt)."
   ]
 }

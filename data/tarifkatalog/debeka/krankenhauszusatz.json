@@ -27,8 +27,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV112.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -41,6 +40,7 @@
     "Ein Tarif (WKplus) mit 100 % Erstattung für gesetzlich Versicherte; die Stufen WK10plus bis WK90plus sind für Beihilfeberechtigte (Ergänzung zur Beihilfe) und nicht aufgenommen.",
     "Leistung nur in Krankenhäusern nach Bundespflegesatzverordnung bzw. Krankenhausentgeltgesetz (keine reinen Privatkliniken, außer im Ausland). Keine Erstattung über die Gebührenordnung hinaus.",
     "Wartezeit: allgemeine Wartezeit 3 Monate laut Produktseite (MB/KK); Schwangerschaft ab Beginn. Krankenhaustagegeld als eigener Tarif KHT (5 bis 150 € am Tag) wählbar.",
-    "Ersatz-Krankenhaustagegeld 80 € ohne Wahlleistungen, 30 € bei Zweibett statt Einbett; Pauschale 80 € bei Verzicht auf Leistungen für ambulante OP."
+    "Ersatz-Krankenhaustagegeld 80 € ohne Wahlleistungen, 30 € bei Zweibett statt Einbett; Pauschale 80 € bei Verzicht auf Leistungen für ambulante OP.",
+    "Geprüft am 17.11.2026 an Tarifbedingungen und Produktseite auf debeka.de."
   ]
 }

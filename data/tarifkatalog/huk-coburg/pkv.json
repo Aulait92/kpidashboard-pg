@@ -20,7 +20,6 @@
         "zahnersatz": "60 %, Partner 70 %",
         "selbstbehalt": "300 oder 1.500 €",
         "bre": "ja",
-        "heilpraktiker": "nein",
         "psychotherapie": "70 %, bis 50 Sitzungen",
         "primaerarzt": "ja, sonst 80 %",
         "sehhilfen": "100 € in 2 Jahren",
@@ -28,8 +27,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenvollversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SelectPro-Tarif",
@@ -50,8 +48,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenvollversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Komfort-Tarif",
@@ -72,8 +69,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenvollversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -86,6 +82,7 @@
     "Beitragsrückerstattung: Produktseite beschreibt sie allgemein (unschädlich: Vorsorge, Zahnreinigung, Impfungen), Höhe und Zuordnung je Tarif nicht belegt.",
     "Ausland: europaweit, weltweit bis 2 Monate; Krankenrücktransport nur Komfort und SelectPro, nicht im E-Tarif.",
     "Hilfsmittel: Komfort 100 % bis 1.200 € (Partner), SelectPro/E 80 %; ob offener Katalog, nicht belegt.",
-    "Krankentagegeld und Pflegezusatz als Ergänzung nicht je Tarif beschrieben. HUK markiert keinen Tarif; SelectPro als mittlere Stufe."
+    "Krankentagegeld und Pflegezusatz als Ergänzung nicht je Tarif beschrieben. HUK markiert keinen Tarif; SelectPro als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de (Spalten dort: Komfort, SelectPro, E). Korrigiert: Heilpraktiker im E-Tarif nicht mehr „nein“, die Tabelle zeigt nur einen Strich (Screenreader „keine Angabe“)."
   ]
 }

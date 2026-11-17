@@ -30,8 +30,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/tierkrankenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tierkrankenversicherung OP-Schutz Classic",
@@ -54,8 +53,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.huk.de/haus-haftung-recht/haftpflichtversicherung/tierhalterhaftpflichtversicherung/tierkrankenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -68,6 +66,7 @@
     "Fehlentwicklungen nur in den Classic-Tarifen (Wartezeit 12 Monate). Prothesen, Implantate, Hilfsmittel höchstens 500 € je Vertrag (Wartezeit 12 Monate). Kastration und Sterilisation nur, wenn medizinisch notwendig.",
     "Neuabschluss für Hunde ab 8 Wochen und Katzen ab 12 Wochen bis zum vollendeten 8. Lebensjahr; ein Tier je Vertrag. Innovationsgarantie. Schadenbearbeitung über den Dienstleister Inca.",
     "OP-Schutz: Heilbehandlungen ohne OP, Vorsorge und Zahnbehandlung ohne OP sind nicht versichert. Physiotherapie nach OP steht im Tarifvergleich nur beim Voll-Schutz.",
-    "HUK-COBURG empfiehlt den Voll-Schutz Classic; im OP-Schutz keine Markierung (zwei Stufen, empfehlung keine)."
+    "HUK-COBURG empfiehlt den Voll-Schutz Classic; im OP-Schutz keine Markierung (zwei Stufen, empfehlung keine).",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de."
   ]
 }
