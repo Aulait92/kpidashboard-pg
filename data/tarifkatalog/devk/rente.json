@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "rente",
+  "produkt": "Rente ZukunftPlus (private Rentenversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ab 50 € im Monat",
+    "Rentenbeginn ±7 Jahre",
+    "Strategie monatlich änderbar"
+  ],
+  "tarife": [
+    {
+      "name": "Rente ZukunftPlus sicherheitsorientiert",
+      "kurz": "Sicherheit",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "maximal, ohne Fonds",
+        "anlage": "klassisch",
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/altersvorsorge/rente-zukunftplus/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rente ZukunftPlus ausgewogen",
+      "kurz": "Ausgewogen",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "60 % der Beiträge",
+        "anlage": "Garantie und Fonds",
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/altersvorsorge/rente-zukunftplus/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rente ZukunftPlus chancenorientiert",
+      "kurz": "Chance",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "keine",
+        "anlage": "Fonds und ETFs",
+        "flexibel": "ja",
+        "hinterbliebene": "optional",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/altersvorsorge/rente-zukunftplus/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/altersvorsorge/rente-zukunftplus/",
+    "https://medien.devk.de/assets/content/download/produkte/altersvorsorge---leben/devk-rente-zukunftplus-produktbroschuere-07038-502-2026-02.pdf"
+  ],
+  "offen": [
+    "Stufen sind die Garantieniveaus der Rente ZukunftPlus (Produktseite, Broschüre 07038-502, 02/2026), keine Leistungsstufen: sicherheitsorientiert (maximales Garantiekapital, ohne Fonds), ausgewogen bzw. risikobewusst (60 % Garantiekapital zum Rentenbeginn), chancenorientiert (kein Garantiekapital). 20, 40 oder 80 % ebenfalls wählbar. DEVK markiert keine Stufe.",
+    "Garantierter Rentenfaktor und Effektivkosten nicht auf der Produktseite bzw. in der Broschüre genannt (nur in den Vertragsunterlagen).",
+    "Hinterbliebenenabsicherung optional, bis Alter 50 bis 20.000 € ohne Gesundheitsprüfung; zusätzlich Risikoleben-Zusatzversicherung wählbar.",
+    "Flexibel: Beiträge erhöhen, senken, pausieren, Zuzahlungen und Kapitalentnahmen möglich. Auszahlung als lebenslange Rente, Kapital oder Mischung.",
+    "BU-Zusatzversicherung (Beitragsübernahme bei Berufsunfähigkeit) wählbar; Dynamik nicht genannt."
+  ]
+}

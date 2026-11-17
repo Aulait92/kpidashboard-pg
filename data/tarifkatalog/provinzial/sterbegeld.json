@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "sterbegeld",
+  "produkt": "BestattungsVorsorge",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslanger Schutz",
+    "Beitragsrückgabe in Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "BestattungsVorsorge",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "3 Jahre",
+        "unfall": "volle Summe sofort",
+        "beitragsende": "15 Jahre, max. bis 85"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/risiko-vorsorge/bestattungsvorsorge.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/leben-und-rente/risiko-vorsorge/bestattungsvorsorge.html",
+    "https://www.provinzial.de/dam/jcr:db51bd12-3eeb-420f-8f13-416f2b42c1c7/KIB_BestattungsVorsorge_KB_30_internet_West.pdf"
+  ],
+  "offen": [
+    "Region West, ein Tarif laut Produktseite. Wartezeit: volle Summe nach drei Jahren, bei früherem Tod Rückzahlung der Beiträge; bei Unfalltod von Anfang an volle Summe (nicht doppelt).",
+    "Ob ohne Gesundheitsfragen abgeschlossen wird, steht nicht auf der Produktseite; Mindestsumme, Dynamik und Vorsorge-Service ebenfalls nicht genannt.",
+    "Beitragszahlungsdauer 15 Jahre, höchstens bis zum 85. Lebensjahr."
+  ]
+}

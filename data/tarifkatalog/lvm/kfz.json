@@ -1,0 +1,50 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Freie Werkstattwahl",
+    "Update-Garantie",
+    "Kein Abzug „neu für alt“"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-Kfz-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Alkohol/Diebst",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "Folgeschäden 10.000 €",
+        "gap": "ja (Vollkasko)",
+        "mallorca": "ja",
+        "werkstatt": "freie Werkstattwahl",
+        "elektro": "Akku Allgefahren (VK)",
+        "rabattschutz": "optional, ab SF 4"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/kfz-versicherungen/autoversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/kfz-versicherungen/autoversicherung",
+    "https://www.lvm.de/dam/jcr:7ab82ff3-4f1f-45f8-a27b-38e37011a494/041-kfz-w4141.2025-06-12-14-57-27.pdf",
+    "https://www.lvm.de/dam/jcr:54ee3325-2efc-4468-b78a-ae57c7ff56be/041-eauto-hybrid-versichern-w41403.b6766672d25781621a437a1e87cb06e4.pdf"
+  ],
+  "offen": [
+    "LVM hat keine Tarifstufen: Haftpflicht, Teilkasko oder Vollkasko plus Zusatzbausteine (Schutzbrief, FahrerKasko, RabattSchutz, AuslandPlus) laut Produktseite und Broschüre W 4141 (05/2025). Die Broschüre nennt eine „LVM-AutoPlus“ mit Schutzbrief als Standard; ob das ein eigenes Paket ist, nicht geklärt.",
+    "Deckung 100 Mio. €, Personenschäden bis 15 Mio. € je Person; Eigenschäden bis 100.000 € (500 € SB).",
+    "Neuwert: 36 Monate Neupreis nach Erstzulassung für Ersterwerber; Gebrauchtwagen 24 Monate Kaufwert (nur Vollkasko).",
+    "Tierbiss: Produktseite nennt Folgeschäden bis 10.000 €, die Broschüre für E-Autos bis 20.000 €. Grobe Fahrlässigkeit mitversichert außer Diebstahl und Alkohol (Broschüre).",
+    "Werkstatt: freie Wahl; LVM-SchadenService mit Partnerwerkstatt freiwillig (Ersatzwagen, Hol- und Bringservice). Keine Werkstattbindung mit Rabatt genannt. Schutzbrief ab 8,21 € im Jahr als Zusatzbaustein."
+  ]
+}

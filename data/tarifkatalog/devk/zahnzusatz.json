@@ -1,0 +1,83 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung Zahnersatz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Höchstgrenze und Staffel",
+    "Auslandsreiseschutz inklusive",
+    "Zuschuss Brille bis 105 €/Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnersatz Aktiv (ET-G Z)",
+      "kurz": "Aktiv",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "30 %",
+        "implantate": "30 %",
+        "behandlung": "optional",
+        "wartezeit": "8 Monate",
+        "staffel": "nein"
+      },
+      "bausteine": {
+        "kfo": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/zahnschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnersatz Komfort (ET-G Z2)",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "40 %",
+        "implantate": "40 %",
+        "behandlung": "optional",
+        "prophylaxe": "bis 50 €/Jahr",
+        "wartezeit": "8 Monate",
+        "staffel": "nein"
+      },
+      "bausteine": {
+        "kfo": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/zahnschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnersatz Premium (ET-G Z5)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %, Regelvers. 100 %",
+        "implantate": "70 %",
+        "behandlung": "optional",
+        "prophylaxe": "bis 80 €/Jahr",
+        "wartezeit": "8 Monate",
+        "staffel": "nein"
+      },
+      "bausteine": {
+        "kfo": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/zahnschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/zahnschutz",
+    "https://medien.devk.de/assets/content/download/produkte/kranken/devk-krankenzusatz-produktinfo-zahnzusatz-08506-201-2026-01.pdf"
+  ],
+  "offen": [
+    "Stufen Aktiv, Komfort, Premium (Zahnersatz-Tarife ET-G Z, Z2, Z5) laut Tariftabelle der Produktseite. DEVK markiert keine Stufe; Komfort als mittlere Stufe. Tarif ET-G Plus (80 %, mit Naturheilverfahren) nicht als Stufe geführt.",
+    "Zahnreinigung: Die Tabelle nennt 50 € und 80 € pro Jahr für zwei der drei Stufen; Zuordnung zu Komfort und Premium angenommen, für Aktiv nicht belegt. Bitte am Bildschirm gegenprüfen.",
+    "Zahnbehandlung nur zusätzlich zu einem Zahnersatz-Tarif wählbar (D-G 2, mit IT-G bzw. KL-G): Füllungen, Wurzel- und Parodontosebehandlung, Narkose in den ersten zwei Jahren je 250 €, im dritten 500 €, danach unbegrenzt; Inlays bis 600 € bzw. ab dem dritten Jahr 1.200 €; zusätzlich 80 € Zahnreinigung.",
+    "Kieferorthopädie (und Laser-OP der Augen) nur im Zahnbehandlungs-Tarif Premium (KL-G), Grenzen 300 € je Jahr, ab dem vierten Jahr 1.000 €.",
+    "Wartezeit 8 Monate für Zahnersatz, entfällt bei Unfall; Zahnreinigung ohne Wartezeit. Bereits fehlende Zähne und angeratene Behandlungen nicht versichert."
+  ]
+}

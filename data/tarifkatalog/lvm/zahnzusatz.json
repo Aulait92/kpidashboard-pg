@@ -1,0 +1,107 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Prophylaxe ohne Wartezeit",
+    "Unfall sofort ohne Wartezeit",
+    "Bis 3,5-facher GOZ-Satz"
+  ],
+  "tarife": [
+    {
+      "name": "Dental",
+      "kurz": "Dental",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "40 % zzgl. GKV",
+        "implantate": "40 % zzgl. GKV",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 150 €/Jahr",
+        "inlays": "40 % zzgl. GKV"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Dental-Plus",
+      "kurz": "Dental-Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 % zzgl. GKV",
+        "implantate": "70 % zzgl. GKV",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 150 €/Jahr",
+        "inlays": "70 % zzgl. GKV"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnKomfort",
+      "kurz": "ZahnKomfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "80 % inkl. GKV",
+        "implantate": "80 % inkl. GKV",
+        "behandlung": "80 %",
+        "prophylaxe": "bis 100 €/Jahr",
+        "wartezeit": "8 Monate",
+        "kfo": "Kinder 80 %, 1.000 €",
+        "inlays": "80 % inkl. GKV"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnPremium",
+      "kurz": "ZahnPremium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 % inkl. GKV",
+        "implantate": "100 % inkl. GKV",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 200 €/Jahr",
+        "wartezeit": "8 Monate",
+        "kfo": "auch Erw., bis 2.000 €",
+        "inlays": "100 % inkl. GKV"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/zahnzusatzversicherung",
+    "https://www.lvm.de/dam/jcr:507baae0-673b-48a4-a161-1b35573639a8/011-broschuere-zu-den-zahnzusatztarifen-zahnpremium-zahnkomfort-w11412.2025-11-17-15-22-20.pdf",
+    "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf"
+  ],
+  "offen": [
+    "Vier Tarife laut Übersicht der Broschüre Krankenzusatz W 1113 (04/2026): Dental und Dental-Plus erstatten zusätzlich zur GKV-Leistung, ZahnKomfort und ZahnPremium inklusive GKV-Leistung. Die Prozente sind deshalb nicht direkt vergleichbar (Beispiel Implantat: Eigenanteil Dental-Plus 178 €, ZahnKomfort 646 €). Die Produktseite stellt nur ZahnKomfort und ZahnPremium vor.",
+    "Keine Markierung; ZahnKomfort als dritte von vier Stufen gesetzt.",
+    "Wartezeit: ZahnKomfort und ZahnPremium 8 Monate (Bedingungen KV 160, § 14), entfällt bei Unfall und Prophylaxe. Dental und Dental-Plus: Wartezeit in den Broschüren nicht genannt, entfällt bei nachgewiesener Vorversicherung. Begrenzung in den ersten Jahren in den Broschüren nicht genannt.",
+    "Kieferorthopädie: Dental und Dental-Plus ohne KFO-Leistung (nur 100 % bei Zahnbehandlung genannt). ZahnKomfort bis 17 Jahre 80 % bis 1.000 €; ZahnPremium bis 17 Jahre und ab 18 Jahren 100 % bis 2.000 €.",
+    "Dental und Dental-Plus ohne Beitragssprünge wegen Alters; ZahnKomfort und ZahnPremium mit Altersgruppen (6, 18, 41, 51, 61). Kindertarife K-Dental und K-Dental-Plus nicht aufgenommen."
+  ]
+}

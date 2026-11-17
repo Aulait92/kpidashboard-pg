@@ -1,0 +1,44 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Eintritt 18 bis 75 Jahre",
+    "Überführung aus dem Ausland",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "DEVK-Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "5.000 bis 20.000 €",
+        "wartezeit": "24 Monate",
+        "unfall": "optional (UZV)",
+        "ohne-gp": "ja",
+        "beitragsende": "laufend oder einmalig"
+      },
+      "bausteine": {
+        "unfall": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/altersvorsorge/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/altersvorsorge/sterbegeldversicherung/",
+    "https://medien.devk.de/assets/content/download/produkte/altersvorsorge---leben/devk-l-produktinfo-sterbegeld-07055-001-2026-01.pdf",
+    "https://medien.devk.de/assets/content/download/produkte/altersvorsorge---leben/devk-sterbegeldversicherung-kundeninformation-03112-2026-01.pdf"
+  ],
+  "offen": [
+    "Tarif S2 laut Tarifbestimmungen (Kundeninformation 03112, 01/2026). Mindestsumme 5.000 € (beitragspflichtig), Höchstsumme 20.000 €.",
+    "Wartezeit: Tod in den ersten 24 Monaten, dann Beitragsrückzahlung; gilt nicht bei Einmalbeitrag und nicht bei Unfalltod.",
+    "Unfall-Zusatzversicherung (UZV) nur bei laufender Beitragszahlung wählbar; ob die Summe dabei verdoppelt wird, hängt von der vereinbarten UZV-Summe ab.",
+    "Beitragszahlung: Ende der Zahlungsdauer wählbar (Beispiel der Broschüre bis Alter 85), nicht als feste Grenze genannt. Dynamik und Vorsorge-Service nicht genannt.",
+    "Überführung bei Tod im Ausland: bis 10.000 € in der EU, bis 15.000 € außerhalb."
+  ]
+}

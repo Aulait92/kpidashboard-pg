@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Summe konstant oder fallend",
+    "Kinder- und Bau-Bonus 10 %",
+    "Sofortschutz"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-Risikolebensversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja, 12 Monate",
+        "umtausch": "ja, erste 10 Jahre",
+        "weltweit": "ja",
+        "kinder": "Kinder-Bonus 10 %"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/risikoleben",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/risikoleben",
+    "https://www.lvm.de/dam/jcr:00599abe-de16-4782-b11f-264eba286214/081-leistungsuebersicht-risiko-lebensversicherung.2024-05-06-13-36-12.pdf",
+    "https://www.lvm.de/dam/jcr:ccde22b4-3f29-4d97-b650-51c82f0e66a6/081-risiko-lebensversicherung-w8012.2026-01-27-11-27-10.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Produktseite, Leistungsübersicht, Produktinformation W 8012). Versicherungssumme gleichbleibend oder fallend (für Kredite) wählbar.",
+    "Verlängerungsoption nicht genannt. Umtauschrecht in den ersten 10 Jahren in eine Rentenversicherung mit Todesfallschutz, ohne Gesundheitsprüfung.",
+    "Vorgezogene Leistung, wenn eine unheilbare Krankheit voraussichtlich binnen 12 Monaten zum Tod führt. Kinder- und Bau-Bonus: Leistung +10 % bei Tod in den ersten 4 Monaten nach Geburt/Adoption bzw. Baugenehmigung/Immobilienkauf.",
+    "Nachversicherung bei Ereignissen wie Heirat oder Geburt; Grenzen nicht genannt. Dynamik wählbar; BU- bzw. EU-Zusatzversicherung wählbar. Verbundene Leben für Paare nicht genannt."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung (LVM-BU-RentePlus)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Echte DU-Klausel",
+    "Keine Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-BU-RentePlus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, auch ohne Anlass",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "pflege": "ja, plus Kapital",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/berufsunfaehigkeit",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/berufsunfaehigkeit",
+    "https://www.lvm.de/dam/jcr:d9bb8a70-784a-4f95-93cc-4629fb30ab07/081-leistungsuebersicht-berufsunfaehigkeitsversicherung.2024-06-14-11-58-40.pdf",
+    "https://www.lvm.de/dam/jcr:d46e4b9c-c1b8-4550-9dcc-1e1fa124b21b/081-vertragsbedingungen-berufsunfaehigkeitsversicherung-l324.2025-06-17-14-03-19.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (LVM-BU-RentePlus) laut Produktseite und Leistungsübersicht. Startphase für junge Leute bis 30 (5 Jahre 50 % des Zielbeitrags) und Abschluss für Schüler ab 10 Jahren sind Beitragsvarianten, keine Stufen.",
+    "AU-Klausel (Leistung bei Arbeitsunfähigkeit) steht nicht auf der Produktseite und nicht in der Leistungsübersicht.",
+    "Beitragsstundung: Stundung nur während der Leistungsprüfung zinslos (L 324, 06/2025); allgemeine Stundung nicht genannt. Wiederherstellung nach Beitragsfreistellung binnen 6 Monaten, in Elternzeit 12 Monaten.",
+    "Nachversicherung bei Ereignissen (z. B. Heirat, Geburt, Abschluss der Ausbildung) und in den ersten 5 Jahren auch ohne Ereignis; Grenzen nicht genannt.",
+    "Keine Umschulungspflicht, kein Melden bei Berufswechsel. Teilzeit, Umorganisation und Infektionsklausel nicht auf der Produktseite."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "DEVK",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreisekrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Urlaubs- und Dienstreisen",
+    "Sofortschutz ohne Wartezeit",
+    "Digitale Sprechstunde"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreisekrankenversicherung (Tarif R2)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 2 Monate",
+        "ruecktransport": "ja, sinnvoll/vertretbar",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "Schmerz, Provisorien",
+        "chronisch": "Verschlechterung",
+        "schwanger": "nur Komplikationen"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.devk.de/produkte/reiseversicherung/auslandsreisekrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.devk.de/produkte/reiseversicherung/auslandsreisekrankenversicherung/",
+    "https://medien.devk.de/assets/content/download/produkte/kranken/devk-ark-kundeninfo-90006-008-2024-10.pdf"
+  ],
+  "offen": [
+    "Ein Jahrestarif (AVB/R2H, Stand 10/2024): alle Auslandsreisen bis 2 Monate je Reise; Ausland ist alles außerhalb Deutschlands, USA und Kanada nicht ausgeschlossen.",
+    "Erstattung bis 100 % der Kosten, eine Selbstbeteiligung ist in den Bedingungen nicht vorgesehen. Rücktransport, wenn medizinisch sinnvoll und vertretbar oder Behandlung länger als 14 Tage.",
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen, Reparaturen, provisorischer Zahnersatz bis 2.000 €.",
+    "Bekannte Erkrankungen: Mehraufwendungen bei Verschlechterung während der Reise; Behandlungen, die Reisegrund waren, nicht versichert. Schwangerschaft nur bei unvorhersehbaren Komplikationen.",
+    "Familie: weitere Personen (z. B. Kinder) können mitversichert werden, Neugeborene ab Geburt bei Anmeldung binnen 2 Monaten; ob es einen eigenen Familientarif gibt, nicht genannt. Keine Langzeitreise-Variante auf der Produktseite."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "rente",
+  "produkt": "LVM-Fonds-Rente (private Rentenversicherung)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "ETFs ohne Ausgabeaufschlag",
+    "Fondswechsel kostenlos",
+    "Ablaufmanagement"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-Fonds-Rente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "keine",
+        "rentenfaktor": "ja, garantiert",
+        "anlage": "ETFs (Aktien, Renten)",
+        "flexibel": "ja",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/fondsrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/fondsrente",
+    "https://www.lvm.de/dam/jcr:817bdcad-b5af-47d5-9462-caeef6de5396/081-fonds-rente-w8118.0f1abb2477eb5c735c351a152167354f.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (fondsgebundene LVM-Fonds-Rente) laut Produktseite und Broschüre W 8118. Fondskonzepte (vordefinierte ETF-Mischungen) und freie Fondsauswahl sind Anlagewahl, keine Stufen. Rente gegen Einmalbeitrag (W 8127) nicht aufgenommen.",
+    "Beitragsgarantie: Die Broschüre nennt keine Garantie, das Verlustrisiko trägt der Kunde. Rentenfaktor laut Broschüre garantiert.",
+    "Flexibel: Beitrag online anpassen, Zuzahlungen und Kapitalentnahmen, Rentenbeginn wählbar; Auszahlung als Rente oder auf einmal.",
+    "Hinterbliebenenschutz, Beitragspause und Effektivkosten nicht auf der Produktseite bzw. in der Broschüre genannt (Effektivkosten stehen in den Produktinformationsblättern je Laufzeit und Fonds).",
+    "BU-Absicherung als Zusatz wählbar; Dynamik nicht genannt."
+  ]
+}

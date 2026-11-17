@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Krankenzusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Für gesetzlich Versicherte",
+    "Rechnungen per App einreichen"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif EG-Komfort",
+      "kurz": "EG-Komfort",
+      "stufe": 1,
+      "werte": {
+        "heilpraktiker": "80 %, bis 680 €/Jahr",
+        "sehhilfen": "80 %, 230 € in 3 J."
+      },
+      "quelle": "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarife LVM-Natur, LVM-Check, LVM-A&O",
+      "kurz": "Einzeltarife",
+      "stufe": 2,
+      "werte": {
+        "heilpraktiker": "80 %, bis 1.000 €/Jahr",
+        "sehhilfen": "80 %, 400 € in 3 J.",
+        "vorsorge": "100 %, 600 € in 2 J.",
+        "hoergeraete": "bis 800 € je Gerät",
+        "lasik": "1.000 € je Maßnahme"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/krankenzusatzversicherungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/kranken-und-pflegeversicherung/krankenzusatzversicherungen",
+    "https://www.lvm.de/dam/jcr:5c38d9f9-619a-437c-bcc2-c341da3c0fbc/011-krankenzusatzversicherung-w1113.e3c36cbe2b0c3c27dd5f694e096ddb76.pdf"
+  ],
+  "offen": [
+    "LVM hat keine Stufen im ambulanten Bereich: EG-Komfort ist ein Paket (Heilpraktiker, Sehhilfen, dazu bis 30 % für Zahnersatz und Implantate); LVM-Natur (Naturheilkunde), LVM-Check (Vorsorge und Impfungen) und LVM-A&O (Augen und Ohren) sind einzeln wählbare Tarife. Die zweite Stufe fasst die drei Einzeltarife zusammen (selbst gebildet). Vorsorge, Hörgeräte und Laser-OP stehen nicht in der Paketbeschreibung von EG-Komfort.",
+    "Quelle: Broschüre Krankenzusatz W 1113 (04/2026) und Produktseite. Heilpraktiker in EG-Komfort bis 680 € je Versicherungsjahr; LVM-Natur 80 % bis 1.000 € im Jahr für Ärzte und Heilpraktiker (Hufeland-Verzeichnis).",
+    "Arzneimittel und Auslandsreise stehen nicht in den Beschreibungen (Auslandsreise als eigener Tarif ARTop). Wartezeiten nicht in der Broschüre genannt.",
+    "LVM-A&O: Laser-OP bis 1.000 € je Maßnahme, höchstens zwei Maßnahmen während der Laufzeit; Hörgeräte 100 % der Restkosten nach GKV bis 800 € je Gerät."
+  ]
+}

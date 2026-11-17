@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "LVM",
+  "sparte": "basisrente",
+  "produkt": "Basis-Rente (Rürup)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rentenbeginn ab 62 wählbar",
+    "Insolvenzsicher angespart",
+    "Lebenslange Rente"
+  ],
+  "tarife": [
+    {
+      "name": "LVM-Basis-RenteChance",
+      "kurz": "RenteChance",
+      "stufe": 1,
+      "werte": {
+        "garantie": "garantierte Leistung",
+        "anlage": "sicher, Gewinn in Fonds",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "Todesfallrente"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/basis-ruerup-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "LVM-Fonds-Basis-Rente",
+      "kurz": "Fonds",
+      "stufe": 2,
+      "werte": {
+        "garantie": "keine",
+        "anlage": "Fonds, ETFs",
+        "flexibel": "Zuzahlungen möglich",
+        "hinterbliebene": "Todesfallrente"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/basis-ruerup-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.lvm.de/versicherungen-und-finanzen/vorsorge/basis-ruerup-rente",
+    "https://www.lvm.de/dam/jcr:2c66fb37-4830-48dd-b6aa-79747db5e25b/081-basis-rente-w8111.be8f41734e69af1f88be4cef2e34a8aa.pdf"
+  ],
+  "offen": [
+    "Zwei Varianten laut Broschüre W 8111 (09/2026): LVM-Basis-RenteChance (garantierte Leistungen auf die Sparanteile, Gewinnanteile in Fonds) und LVM-Fonds-Basis-Rente (Fonds und ETFs, keine Garantie, Verlustrisiko beim Kunden). Anlagevarianten, keine Leistungsstufen; LVM markiert keine.",
+    "Garantierter Rentenfaktor und Effektivkosten nicht in der Broschüre genannt (Produktinformationsblätter je Laufzeit).",
+    "Hinterbliebene: Tod vor Rentenbeginn, vereinbarte Todesfallleistung als Rente an Ehe- bzw. Lebenspartner oder kindergeldberechtigte Kinder.",
+    "Zuzahlungen innerhalb bestimmter Grenzen; Beitragspause nicht genannt. Dynamik: LVM bietet regelmäßig eine Erhöhung an. BU-Vorsorge einschließbar."
+  ]
+}

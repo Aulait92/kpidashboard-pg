@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "Provinzial",
+  "sparte": "risikoleben",
+  "produkt": "Risiko-Lebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Wechsel in Nichtrauchertarif",
+    "Direkte Auszahlung der Summe"
+  ],
+  "tarife": [
+    {
+      "name": "Risiko-Lebensversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "kinder": "nein"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/risiko-vorsorge/risiko-lebensversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risiko-Lebensversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, Erhöhungsoption",
+        "kinder": "Bonus +25 %, 12 Monate"
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/risiko-vorsorge/risiko-lebensversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risiko-Lebensversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, Erhöhungsoption",
+        "kinder": "Bonus +25 %, 12 Monate",
+        "vorgezogen": "Extra bei Krebs u. a."
+      },
+      "quelle": "https://www.provinzial.de/west/versicherung/leben-und-rente/risiko-vorsorge/risiko-lebensversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.provinzial.de/west/versicherung/leben-und-rente/risiko-vorsorge/risiko-lebensversicherung.html",
+    "https://www.provinzial.de/dam/jcr:98d259a2-78ef-4ab2-bbd4-4a8827517983/KIB_Kapital_KA_30_internet.pdf"
+  ],
+  "offen": [
+    "Region West. Varianten Basis, Smart, Komfort laut Produktseite; keine Markierung, Smart als mittlere Stufe.",
+    "„nein“ bei Basis: Erhöhungsoption und Boni nennt die Seite erst ab Smart. Kinder-, Immobilien- und Hochzeitsbonus: Summe +25 % bei Tod binnen 12 Monaten nach dem Ereignis.",
+    "Komfort: zusätzliche Leistung bei Krebs, Schlaganfall, Herzinfarkt, Erblindung, Gehörverlust und Querschnittslähmung; Höhe nicht genannt. Ob es eine vorgezogene Todesfallleistung im engeren Sinn gibt, steht nicht auf der Seite.",
+    "Verlängerungsoption, Umtauschrecht in eine Kapital- oder Rentenversicherung, weltweiter Schutz, fallende Summe und verbundene Leben nicht genannt."
+  ]
+}
