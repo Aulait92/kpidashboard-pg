@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { BellRing, CalendarDays, Image as ImageIcon, ChevronRight, CreditCard, Gift, Mail, MessageSquareText, Percent, Send, ShieldCheck, UsersRound } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
+import { loadReferralSettings } from "@/lib/kollegen";
+import { canOpenReferralPage, referralTileText } from "@/lib/kollegen-shared";
 import { prisma } from "@/lib/prisma";
 import { AnalyseSchalter } from "@/components/nutzungsanalyse";
 import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
@@ -18,6 +20,8 @@ export default async function EinstellungenPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const owner = ctx.teamRole !== "advisor";
+  // Kachel „Kollegen empfehlen“: gleiche Bedingung wie die Seite selbst, Untertitel aus der eingestellten Prämie
+  const referralText = canOpenReferralPage(ctx) ? referralTileText(await loadReferralSettings()) : null;
   const analyse = ctx.userId && !ctx.preview ? asAnalyseStatus((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true } }))?.analyseEinwilligung) : null;
   const groups: { title: string; items: Item[] }[] = [
     {
@@ -47,7 +51,7 @@ export default async function EinstellungenPage() {
     {
       title: "Mehr",
       items: [
-        ...(owner ? [{ href: "/buyer/empfehlen", icon: Gift, color: "bg-rose-500", title: "Kollegen empfehlen", text: "Kollegen empfehlen und Vorteil sichern" }] : []),
+        ...(referralText ? [{ href: "/buyer/empfehlen", icon: Gift, color: "bg-rose-500", title: "Kollegen empfehlen", text: referralText }] : []),
       ],
     },
   ];

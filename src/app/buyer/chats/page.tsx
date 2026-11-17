@@ -27,6 +27,7 @@ import { nowMs } from "@/lib/now";
 import { NextStepPrompt } from "@/components/next-step";
 import { AnrufLink } from "@/components/call-outcome";
 import { isNewUi } from "@/lib/new-ui";
+import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
 
 // WhatsApp-Chats im Kunden-CRM. Nur für Kunden mit WhatsApp-Assistent.
 // Strikte Mandantentrennung: alle Abfragen mit customerId des Buyers.
@@ -425,7 +426,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         </span>
                       </div>
                       <p className="truncate text-xs text-[color:var(--muted)]">
-                        {last ? `${last.direction === "outbound" ? (c.botActive ? "Assistent: " : "Sie: ") : ""}${last.body ?? ""}` : ""}
+                        {last ? `${last.direction === "outbound" ? (c.botActive ? "Assistent: " : "Sie: ") : ""}${waOhneMarker(last.body ?? "")}` : ""}
                       </p>
                       <div className="mt-1 flex gap-1.5">
                         {c.needsAttention ? (
@@ -548,7 +549,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
               {active.needsAttention ? (
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-900">
                   <span>
-                    <b>Wartet auf Sie:</b> {active.attentionReason ?? "Bitte melden Sie sich beim Kontakt."}
+                    <b>Wartet auf Sie:</b> {waOhneMarker(active.attentionReason) ?? "Bitte melden Sie sich beim Kontakt."}
                   </span>
                   <form action={markChatDoneBuyerAction}>
                     <input type="hidden" name="conversationId" value={active.id} />
@@ -601,7 +602,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                               : "rounded-[4px_16px_16px_16px] border border-[color:var(--border)] bg-white"
                           }`}
                         >
-                          {m.body}
+                          {waFormatKnoten(m.body)}
                         </div>
                         <div className={`mt-1 text-[10px] text-[color:var(--muted)] ${outbound ? "text-right" : ""}`}>
                           {outbound && who ? `${who} · ` : ""}
@@ -656,7 +657,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
                           Vorschau · {followup.label}
                         </div>
-                        <p className="mt-1 whitespace-pre-wrap text-sm">{followup.preview}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm">{waFormatKnoten(followup.preview)}</p>
                       </div>
                       {followup.approved ? (
                         <div className="flex justify-end">
