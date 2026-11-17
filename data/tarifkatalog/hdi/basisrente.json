@@ -26,8 +26,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/altersvorsorge/rueruprente-basisrente/cleverinvest-basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -35,6 +34,7 @@
   ],
   "offen": [
     "Ein Tarif. Beitragsgarantie nicht genannt. Hinterbliebenenschutz: Rente aus dem Fondsguthaben bei Tod vor Rentenbeginn.",
-    "Dynamik als Inflationsschutz beschrieben, ob inklusive oder wählbar nicht eindeutig. Kosten nicht beziffert."
+    "Dynamik als Inflationsschutz beschrieben, ob inklusive oder wählbar nicht eindeutig. Kosten nicht beziffert.",
+    "Geprüft am 17.11.2026 an der Produktseite auf hdi.de."
   ]
 }

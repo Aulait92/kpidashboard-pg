@@ -21,8 +21,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -30,6 +29,7 @@
   ],
   "offen": [
     "Modulares Bausteinkonzept: Basisschutz plus Bausteine Schwere Erkrankungen (Kapitalleistung), Mobilität, für Kinder Autofahren.",
-    "Anzahl der Grundfähigkeiten, Prognosezeitraum, Psyche und Pflege nicht auf der Produktseite. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+    "Anzahl der Grundfähigkeiten, Prognosezeitraum, Psyche und Pflege nicht auf der Produktseite. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Geprüft am 17.11.2026 an der Produktseite auf hdi.de."
   ]
 }
