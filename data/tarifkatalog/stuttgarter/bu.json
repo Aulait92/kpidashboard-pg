@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung BU PLUS",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente bei schwerer Krankheit",
+    "Leistung bei Verkehrsdelikten",
+    "Schüler ab 10 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Die Stuttgarter BU PLUS (Tarif 91)",
+      "kurz": "BU PLUS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "rueckwirkend": "ja, ab Eintritt",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "eingeschränkt",
+        "pflege": "ja, auch Demenz",
+        "dynamik": "bis 5 % wählbar",
+        "infektion": "ja",
+        "au": "nein"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.stuttgarter.de/einkommensabsicherung/berufsunfaehigkeit",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Die Stuttgarter BU PLUS premium (Tarif 91A)",
+      "kurz": "PLUS premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "nachversicherung": "ja, bis Alter 50",
+        "rueckwirkend": "ja, ab Eintritt",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "eingeschränkt",
+        "pflege": "ja, auch Demenz",
+        "dynamik": "bis 5 % wählbar",
+        "infektion": "ja",
+        "au": "ja, bis 24 Monate"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.stuttgarter.de/einkommensabsicherung/berufsunfaehigkeit",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/einkommensabsicherung/berufsunfaehigkeit",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F10_Arbeitskraftsicherung%2F02_Produktunterlagen_fuer_Ihre_Kunden&files=5_2_007_BR_BUPLUS_BUPLUSpremium.pdf",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F10_Arbeitskraftsicherung%2F04_Vertragsunterlagen&files=V91.PDF",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F10_Arbeitskraftsicherung%2F04_Vertragsunterlagen&files=V91A.PDF"
+  ],
+  "offen": [
+    "Zwei Tarife: BU PLUS und BU PLUS premium (zusätzlich Zahlung bei Arbeitsunfähigkeit). Die Stuttgarter empfiehlt premium nur für den Fall, dass schon bei längerer Krankheit Schutz gewünscht ist; keine allgemeine Markierung, daher keine Empfehlung gesetzt.",
+    "AU (nur premium): Rente schon ab 3 Monaten Arbeitsunfähigkeit bei Prognose weiterer 3 Monate oder nach 6 Monaten, rückwirkend ab dem ersten Tag, bis 24 Monate.",
+    "Nachversicherung (easilife): ereignisunabhängig in den ersten 5 Jahren bis Alter 35, bei bestimmten Ereignissen bis Alter 50.",
+    "Rückwirkend: Rentenzahlung rückwirkend ab Eintritt der Berufsunfähigkeit (Broschüre); ob ohne Meldefrist, in den Bedingungen nicht geprüft.",
+    "Umorganisation: Verzicht bei Betrieben unter 10 Vollzeitmitarbeitern oder Akademikern mit mindestens 90 % Innendienst; Umorganisationshilfe 6 Monatsrenten, höchstens 12.000 €.",
+    "Zusätzlich: Leistung bei bestimmten schweren Krankheiten bis 15 Monate, volle Erwerbsminderung ab Alter 55, Überbrückungshilfe bis 6 Monatsrenten, garantierte Rentensteigerung bis 3 % wählbar.",
+    "Stundung möglich (schriftliche Vereinbarung, Stundungszinsen); Dauer nicht beziffert. Eine Pflegerente als Baustein ist nicht genannt."
+  ]
+}

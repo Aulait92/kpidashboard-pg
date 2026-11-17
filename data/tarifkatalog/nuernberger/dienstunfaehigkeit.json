@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufs- und Dienstunfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Beitragspause ab 6 Wochen AU",
+    "Polizei-DU wählbar",
+    "BU-Schutz bei Wechsel"
+  ],
+  "tarife": [
+    {
+      "name": "Selbstständige Berufs- und Dienstunfähigkeitsversicherung mit Flexibilitätsgarantie (Komfort-Schutz)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "probe": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja, vor Alter 50",
+        "teil-du": "optional",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/beamte-oeffentlicher-dienst/dienstunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/beruf-vorsorge/beamte-oeffentlicher-dienst/dienstunfaehigkeitsversicherung/",
+    "https://www.nuernberger.de/medien/4allportal/gn331082_p.pdf",
+    "https://www.nuernberger.de/medien/4allportal/gn331083_p.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit Zusatzbausteinen: Dienstanfänger-Schutz, Teil-Dienstunfähigkeit, Polizeidienstunfähigkeit, Inflations-Schutz, Dread-Disease-Zusatz.",
+    "Echte DU-Klausel für Beamte und Richter: Die Entscheidung des Dienstherrn über Ruhestand oder Entlassung wegen allgemeiner Dienstunfähigkeit ist bindend. Beamte auf Widerruf und auf Probe sind bei Entlassung versichert.",
+    "Nachversicherung: ereignisabhängig vor dem 50. Geburtstag, ereignisunabhängig in den ersten 5 Jahren vor dem 40. Geburtstag.",
+    "Ein AU-Baustein (AU-Rente) wird für die DU auf der Produktseite nicht genannt, nur der AU-Beitragsschutz.",
+    "Verzicht auf abstrakte Verweisung in der DU-Variante nicht gesondert geprüft."
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "basisrente",
+  "produkt": "BasisRente (Rürup-Rente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "Rentenbeginn frei wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "BasisRente index-safe (Tarif 69)",
+      "kurz": "index-safe",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "Zuzahlung möglich",
+        "hinterbliebene": "Ehegattenrente",
+        "beitragspause": "ja",
+        "garantie": "85 % der Beiträge",
+        "anlage": "Index M-A-X"
+      },
+      "bausteine": {},
+      "quelle": "https://www.stuttgarter.de/rente-vorsorge/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente performance+ (Tarif 79)",
+      "kurz": "performance+",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "flexibel": "Zuzahlung möglich",
+        "hinterbliebene": "Ehegattenrente",
+        "beitragspause": "ja",
+        "garantie": "0 bis 80 % wählbar",
+        "anlage": "Fonds und ETF"
+      },
+      "bausteine": {},
+      "quelle": "https://www.stuttgarter.de/rente-vorsorge/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BasisRente alpha+ (Tarif 59)",
+      "kurz": "alpha+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "flexibel": "Zuzahlung möglich",
+        "hinterbliebene": "Ehegattenrente",
+        "beitragspause": "ja",
+        "garantie": "keine",
+        "anlage": "100 % Fonds und ETF"
+      },
+      "bausteine": {},
+      "quelle": "https://www.stuttgarter.de/rente-vorsorge/basisrente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/rente-vorsorge/basisrente",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F16_Tarifuebergreifend%2F01_performance%2B&files=9_2_007_BR_Fondsrente_performance%2B.pdf",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F16_Tarifuebergreifend%2F04_alphaPlus&files=13_2_001_BR_Fondsrente_alphaPlus.pdf"
+  ],
+  "offen": [
+    "Stufen sind die Anlagekonzepte index-safe, performance+ und alpha+, keine Leistungsstufen; keine Markierung, performance+ als mittlere Stufe gesetzt.",
+    "Hinterbliebene: Ehegattenrente für Ehe- bzw. eingetragene Lebenspartner wählbar.",
+    "Flexibel laut Produktseite: Beitragspause und Zuzahlung außer der Reihe möglich, Rentenbeginn individuell.",
+    "Garantierter Rentenfaktor, BU-Zusatz, Dynamik und Effektivkosten nicht auf der Produktseite."
+  ]
+}

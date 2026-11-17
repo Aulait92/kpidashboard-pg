@@ -1,0 +1,104 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup-Rente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "Pflegeschutz wählbar (PLUS)"
+  ],
+  "tarife": [
+    {
+      "name": "Basisrente KLASSIK MODERN (mit Indexbeteiligung)",
+      "kurz": "KLASSIK",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "hinterbliebene": "Ehepartner möglich",
+        "flexibel": "Zuzahlungen jederzeit",
+        "beitragspause": "ja",
+        "garantie": "Guthaben garantiert",
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Index über Überschüsse"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/klassik-modern/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basisrente FONDS MODERN (mit Garantie)",
+      "kurz": "FONDS MODERN",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "hinterbliebene": "Ehepartner möglich",
+        "flexibel": "Zuzahlungen jederzeit",
+        "beitragspause": "ja",
+        "garantie": "50 bis 80 % wählbar",
+        "anlage": "Fonds, bis 10 wählbar"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-modern/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basisrente FONDS FITTERY (gemanagte Portfolios)",
+      "kurz": "FONDS FITTERY",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "hinterbliebene": "Ehepartner möglich",
+        "flexibel": "Zuzahlungen jederzeit",
+        "beitragspause": "ja",
+        "rentenfaktor": "garantiert (Mindest)",
+        "anlage": "ETF-Fondsboxen (DWS)"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-fittery/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basisrente FONDS PUR",
+      "kurz": "FONDS PUR",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "hinterbliebene": "Ehepartner möglich",
+        "flexibel": "Zuzahlungen jederzeit",
+        "beitragspause": "ja",
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds und ETF"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-pur/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/versicherungen/rente/basisrente/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/klassik-modern/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/fonds-modern/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/fonds-fittery/",
+    "https://www.volkswohl-bund.de/versicherungen/rente/fonds-pur/",
+    "https://druckstuecke.volkswohl-bund.de/api/products/2408/documents/Allgemeine_Bedingungen_f%C3%BCr_die_Fondsgebundene_Basis-Rente.pdf"
+  ],
+  "offen": [
+    "Stufen sind die vier Produkte (KLASSIK MODERN, FONDS MODERN, FONDS FITTERY, FONDS PUR), keine Leistungsstufen; keine Markierung, FONDS FITTERY als dritte von vier Stufen gesetzt.",
+    "Garantie- und Rentenfaktor-Werte von den Produktseiten der Privatrente übernommen (gleiche Produkte); für die Basisrente selbst nicht gesondert bestätigt.",
+    "Hinterbliebene: Auszahlung an den Ehepartner im Todesfall möglich. BU-Absicherung laut Basisrente-Seite kombinierbar. Basisrente PLUS mit Pflegeschutz.",
+    "Beitragspause befristet oder dauerhaft vereinbar; Zuzahlungen jederzeit. Dynamik und Effektivkosten nicht genannt."
+  ]
+}

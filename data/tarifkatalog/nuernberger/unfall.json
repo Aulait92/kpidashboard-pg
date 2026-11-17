@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Wartezeiten",
+    "Innovationsgarantie",
+    "Familienvorsorge 12 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar",
+        "unfallrente": "wählbar, ab 50 %",
+        "khtg": "wählbar, bis 2 Jahre",
+        "todesfall": "wählbar",
+        "sofort": "2.500 €",
+        "kosmetik": "25.000 €",
+        "bergung": "30.000 €",
+        "zecken": "nein",
+        "gliedertaxe": "Standard"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/existenzsicherung/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar, Plus ab 70 %",
+        "unfallrente": "wählbar, ab 40 %",
+        "khtg": "wählbar, bis 5 Jahre",
+        "todesfall": "wählbar",
+        "sofort": "10.000 €",
+        "kosmetik": "50.000 €",
+        "bergung": "75.000 €",
+        "zecken": "ja, Borreliose",
+        "gliedertaxe": "Plus optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/existenzsicherung/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "wählbar, Max ab 50 %",
+        "unfallrente": "wählbar, ab 40 %",
+        "khtg": "wählbar, bis 5 Jahre",
+        "todesfall": "wählbar",
+        "sofort": "20.000 €",
+        "kosmetik": "100.000 €",
+        "bergung": "100.000 €",
+        "zecken": "ja, Borreliose",
+        "gliedertaxe": "Plus optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/existenzsicherung/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/beruf-vorsorge/existenzsicherung/unfallversicherung/"
+  ],
+  "offen": [
+    "NÜRNBERGER markiert keinen Tarif; Komfort als mittlere Stufe gesetzt.",
+    "Invaliditätsleistung, Unfallrente, Krankenhaustagegeld, Tagegeld und Todesfallleistung sind Wahlleistungen in allen Tarifen; Summen individuell. Leistung ab welchem Invaliditätsgrad (Kapital) nicht genannt.",
+    "Progression wählbar; Progression Plus (Höchstentschädigung ab 70 % Invalidität) bei Komfort, Progression Max (ab 50 %) bei Premium; ob inklusive oder gegen Aufpreis, ist aus der Tabelle nicht eindeutig.",
+    "Unfallrente ab 50 % Invalidität in allen Tarifen, ab 40 % in Komfort und Premium; Unfall-Pflege-Rente nur Komfort und Premium.",
+    "Krankenhaustagegeld Plus 100, 200 bzw. 365 Tage; Mitwirkungsanteil 40, 50 bzw. 60 %; Fristen für Invaliditätseintritt 15, 18 bzw. 24 Monate.",
+    "Höchstleistung bei Vollinvalidität nicht beziffert (abhängig von Grundsumme und Progression).",
+    "Zusätzlich 6 Bausteine (z. B. Reha-Schutzbrief) außerhalb der Tarife; nicht im Schema."
+  ]
+}

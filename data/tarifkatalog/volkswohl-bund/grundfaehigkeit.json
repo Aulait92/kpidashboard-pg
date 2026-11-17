@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung EXISTENZ",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Leistung unabhängig vom Beruf",
+    "Sofortleistung bis 18 Renten",
+    "Schutz ohne Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "EXISTENZ (Tarif SKV)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "25 Fähigkeiten",
+        "psyche": "optional (PSYCHE PLUS)",
+        "pflege": "ja, auch Demenz",
+        "nachversicherung": "ja, bei Ereignissen",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {},
+      "quelle": "https://www.volkswohl-bund.de/einkommenssicherung/grundfaehigkeit/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/einkommenssicherung/grundfaehigkeit/",
+    "https://www.volkswohl-bund.de/wp-content/uploads/2024/07/Bedingungen_Existenz-06-2023.pdf"
+  ],
+  "offen": [
+    "Ein Tarif mit 25 Fähigkeiten als Leistungsauslöser, dazu Pflegebedürftigkeit, Demenz und Tätigkeitsverbot wegen Infektionsgefahr.",
+    "Prognosezeitraum je Fähigkeit in den Bedingungen (06/2023) nicht einheitlich ausgewiesen: Pflege 6 Monate, psychische Erkrankung (PSYCHE PLUS) 12 Monate.",
+    "Bausteine laut Produktseite PSYCHE PLUS und DYNAMIK; eine Pflegerente oder ein Baustein für schwere Krankheiten ist nicht genannt (Sofortleistung bis 18 Monatsrenten bei schwerer Krankheit ist enthalten).",
+    "Bedingungen von 06/2023; Aktualität bitte prüfen."
+  ]
+}

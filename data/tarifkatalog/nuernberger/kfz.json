@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "kfz",
+  "produkt": "NÜRNBERGER Autoversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Elektro Plus inklusive",
+    "Kasko-Zahlung in 3 Werktagen",
+    "Max. 15 Mio. € je Person"
+  ],
+  "tarife": [
+    {
+      "name": "NÜRNBERGER Autoversicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "je nach Verschulden",
+        "tiere": "alle Tiere",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja, Akku inklusive",
+        "mallorca": "ja",
+        "neuwert": "12 Monate",
+        "marder": "ja, bis 5.000 €"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/kfz-versicherung/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NÜRNBERGER Autoversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "je nach Verschulden",
+        "tiere": "alle Tiere",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja, Akku inklusive",
+        "mallorca": "ja",
+        "neuwert": "24 Monate",
+        "marder": "ja, bis 10.000 €"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/kfz-versicherung/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NÜRNBERGER Autoversicherung Premium (Komfort mit Komfort Plus)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "je nach Verschulden",
+        "tiere": "alle Tiere",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "optional",
+        "elektro": "ja, Akku inklusive",
+        "mallorca": "ja",
+        "neuwert": "36 Monate",
+        "marder": "ja, bis 15.000 €"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/kfz-versicherung/autoversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/mobilitaet-eigentum/kfz-versicherung/autoversicherung/"
+  ],
+  "offen": [
+    "Premium ist der Komfort-Tarif mit dem Zusatzbaustein Komfort Plus (Eigenschadendeckung bis 100.000 € je Jahr mit 500 € SB, Parkschadendeckung bis 200 €, Ersatzwagen, Kaufpreisersatz bis 36 Monate).",
+    "Empfehlung je Fahrzeugalter: Neuwagen Premium, Gebrauchtwagen 1 bis 2 Jahre Komfort mit Komfort Plus, älter als 5 Jahre Kompakt mit Teilkasko. Keine allgemeine Markierung; Komfort als mittlere Stufe gesetzt.",
+    "Grobe Fahrlässigkeit: Leistung je nach Schwere des Verschuldens; nicht bei Entwendung durch unzureichende Sicherung und bei Rauschmitteln. Ein voller Verzicht ist nicht belegt.",
+    "Neuwert: Kaufpreisersatz für Neuwagen 12, 24 bzw. 36 Monate nach Erstzulassung; Gebrauchtwagen Wiederbeschaffungswert plus 15 % für 12, 24 bzw. 36 Monate.",
+    "Marder: Tierbiss mit Folgeschäden 5.000, 10.000 bzw. 15.000 €; bei Elektro- und Hybridfahrzeugen ohne Obergrenze.",
+    "Auslandsschadenschutz nur Komfort und Premium; Fahrerschutz nur Komfort und Premium; Sonderausstattung bis 5.000, 10.000 bzw. 15.000 €.",
+    "Rabattschutz (1 Schaden frei), GAP-Versicherung, Werkstatt Plus und Schutzbrief laut Tarifvergleich in allen Tarifen optional. Die Marke GARANTA ist auf nuernberger.de nicht gesondert dargestellt."
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "basisrente",
+  "produkt": "Basisrente (Rürup-Rente)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Beiträge steuerlich absetzbar",
+    "Rentenbeginn 62 bis 84"
+  ],
+  "tarife": [
+    {
+      "name": "NÜRNBERGER Fondsgebundene Basisrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "0 bis 80 % wählbar",
+        "rentenfaktor": "garantiert ab Beginn",
+        "anlage": "Fonds, ETF, Strategien",
+        "flexibel": "ja, Zuzahlung ab 250 €",
+        "hinterbliebene": "Rentengarantiezeit"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/ruerup-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/ruerup-rente/",
+    "https://www.nuernberger.de/medien/4allportal/lv002_500_pf.pdf",
+    "https://www.nuernberger.de/medien/4allportal/gn331538_p.pdf"
+  ],
+  "offen": [
+    "Auf der Produktseite ist nur die fondsgebundene Basisrente ausführlich beschrieben; die Übersichtsseite nennt zusätzlich eine klassische Basisrente und die DAX-Basisrente (nicht als Stufen aufgenommen, Details fehlen).",
+    "Garantie in 10 %-Schritten von 0 bis 80 % der eingezahlten Beiträge zum Rentenbeginn; Rentenfaktor laut Kundeninformation von Beginn an garantiert.",
+    "Hinterbliebene: Rentengarantiezeit; zusätzlich Hinterbliebenen-Rentenversicherung als Zusatzpaket. Todesfallleistung vor Rentenbeginn nur an Ehe- oder Lebenspartner bzw. kindergeldberechtigte Kinder.",
+    "BU-Zusatz: Beitragsbefreiung bei Berufsunfähigkeit, bis 250 € Monatsbeitrag mit vereinfachten Gesundheitsfragen. Dynamik 3 bis 20 %.",
+    "Beitragspause und Effektivkosten nicht auf der Produktseite."
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Stuttgarter",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Vereinfachte Prüfung bei Kredit",
+    "Nichtrauchertarif"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung (Tarife T20, T21, T22)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, bei Ereignissen",
+        "weltweit": "ja"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.stuttgarter.de/familie-gesundheit/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.stuttgarter.de/familie-gesundheit/risikolebensversicherung",
+    "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F01_Leben%2F11_Risikolebensversicherung%2F03_Vertragsunterlagen&files=V20.PDF"
+  ],
+  "offen": [
+    "Drei Varianten: konstante (T20), linear fallende (T21) und annuitätisch fallende Summe (T22), jeweils auch auf zwei Leben. Das sind Summenverläufe, keine Leistungsstufen; daher ein Tarif mit Bausteinen fallend und verbunden (ob mit Aufpreis, nicht belegt).",
+    "Nachversicherung laut Bedingungen V20 bei Ereignissen wie Geburt oder Adoption, Einkommenserhöhung ab 20 % u. a. innerhalb von 6 Monaten; höchstens 100 % der Anfangssumme, Gesamtsumme bis 400.000 €.",
+    "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und Umtauschrecht weder auf der Produktseite noch in den Bedingungen V20 gefunden. Schwere Krankheiten als Zusatzversicherung erwähnt (Details nicht ausgewertet).",
+    "Kinder-Nachversicherung und Endalter nicht auf der Produktseite."
+  ]
+}

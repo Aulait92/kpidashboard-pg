@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente oder Kapital",
+    "BU-Zusatz kombinierbar",
+    "Flexibler Rentenbeginn"
+  ],
+  "tarife": [
+    {
+      "name": "Klassische Rentenversicherung",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Rente garantiert",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "Entnahme möglich",
+        "hinterbliebene": "Beitragsrückgewähr, RGZ",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/klassische-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "NÜRNBERGER DAX-Rente",
+      "kurz": "DAX-Rente",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "garantierte Leistung",
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Indexbeteiligung DAX",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Guthaben, mind. Beiträge",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/dax-rente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Fondsgebundene Privatrente (NFX3300)",
+      "kurz": "Fondsrente",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "0 bis 80 % wählbar",
+        "rentenfaktor": "garantiert ab Beginn",
+        "anlage": "Fonds, ETF, Strategien",
+        "flexibel": "ja, Zuzahlung ab 250 €",
+        "hinterbliebene": "Rentengarantiezeit",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/fondsgebundene-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/",
+    "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/klassische-rentenversicherung/",
+    "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/dax-rente/",
+    "https://www.nuernberger.de/beruf-vorsorge/rentenversicherung/fondsgebundene-rentenversicherung/",
+    "https://www.nuernberger.de/medien/4allportal/lv003_500_pf.pdf",
+    "https://www.nuernberger.de/medien/4allportal/lv003_501_p.pdf",
+    "https://www.nuernberger.de/medien/4allportal/lv003_502_pf.pdf"
+  ],
+  "offen": [
+    "Stufen sind Anlagekonzepte (klassisch, Indexbeteiligung, Fonds), keine Leistungsstufen. NÜRNBERGER markiert keines; DAX-Rente als mittlere Stufe gesetzt.",
+    "Klassik: aufgeschobene Rente mit garantierter lebenslanger Rente, Beitragsrückgewähr und Rentengarantiezeit; NÜRNBERGER Plus (Dynamik). Rentenfaktor nicht gesondert genannt. Sofort beginnende Rente gegen Einmalbeitrag nicht als Stufe aufgenommen.",
+    "DAX-Rente: konventionelle Rente, Überschüsse jährlich wahlweise in Indexbeteiligung (DAX oder DAX RC 20, mit Cap) oder sichere Verzinsung; Lock-in, Verluste ausgeschlossen. Garantie im Erlebensfall mindestens die garantierte Leistung; Todesfall Vertragsguthaben, mindestens eingezahlte Beiträge.",
+    "Fondsrente: Garantie in 10 %-Schritten von 0 bis 80 % (gilt nur zum Rentenbeginn), Rentenfaktor ohne Treuhänderklausel garantiert (Garantieurkunde), Zuzahlungen 250 bis 500.000 €, Entnahmen ab 500 €, Dynamik 3 bis 20 %, Tarif mit oder ohne Pflege-Option.",
+    "BU-Zusatz: Beitragsfreiheit bei Berufs- oder Dienstunfähigkeit als Zusatzpaket genannt (Klassik als BUZ und DUZ).",
+    "Beitragspause und Effektivkosten nicht auf den Produktseiten."
+  ]
+}

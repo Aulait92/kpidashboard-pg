@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "NÜRNBERGER",
+  "sparte": "kinderinvaliditaet",
+  "produkt": "Ernstfallschutz Kids (Baustein der Kindervorsorge)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Baustein der Kindervorsorge",
+    "Später BU ohne Gesundheitsfragen",
+    "Abschluss ab Geburt"
+  ],
+  "tarife": [
+    {
+      "name": "Vermögensaufbau4Kids mit Ernstfallschutz Kids",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "krankheit": "ja, schwere Krankheit",
+        "ab-grad": "ab GdB 50",
+        "kapital": "ja, einmalig"
+      },
+      "bausteine": {
+        "kapital": "inklusive"
+      },
+      "quelle": "https://www.nuernberger.de/gesundheit-freizeit/kinder-und-jugendliche/kindervorsorge/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.nuernberger.de/gesundheit-freizeit/kinder-und-jugendliche/kindervorsorge/"
+  ],
+  "offen": [
+    "NÜRNBERGER hat keine eigenständige Kinderinvaliditätsversicherung. Der Ernstfallschutz Kids ist ein Baustein der Kindervorsorge Vermögensaufbau4Kids (fondsgebundene Rentenversicherung).",
+    "Ernstfallschutz Kids: einmalige Kapitalleistung bei 55 schweren Erkrankungen, 8 kinderspezifischen Krankheiten, Grad der Behinderung ab 50 sowie Pflegegrad ab 2. Eine monatliche Rente ist nicht genannt.",
+    "Höhe der Kapitalleistung, Psyche und Weiterversicherung als Erwachsener nicht auf der Produktseite; Besondere Bedingungen Ernstfallschutz Kids nicht ausgewertet.",
+    "Einkommensschutz-Option ohne Mehrbeitrag: späterer Abschluss einer Schulunfähigkeits-, Grundfähigkeits- oder BU-Versicherung ohne erneute Gesundheitsfragen."
+  ]
+}

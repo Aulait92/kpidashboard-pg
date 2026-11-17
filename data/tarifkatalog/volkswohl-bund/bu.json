@@ -1,0 +1,54 @@
+{
+  "gesellschaft": "Volkswohl Bund",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung BU MODERN",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Sofortleistung bis 18 Renten",
+    "Schutz ohne Wartezeit",
+    "Schüler ab 10 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "BU MODERN (Tarif SBU)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, bis 36 Monate",
+        "nachversicherung": "ja, bei Ereignissen",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "eingeschränkt",
+        "pflege": "BU ab 2 Pflegepunkten",
+        "stundung": "zinslos in Prüfung",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional",
+        "pflege": "optional"
+      },
+      "quelle": "https://www.volkswohl-bund.de/einkommenssicherung/berufsunfaehigkeit/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.volkswohl-bund.de/einkommenssicherung/berufsunfaehigkeit/",
+    "https://druckstuecke.volkswohl-bund.de/api/products/1574/documents/Allgemeine_Bedingungen_f%C3%BCr_die_Selbstst%C3%A4ndige_Berufsunf%C3%A4higkeits-Versicherung.pdf"
+  ],
+  "offen": [
+    "Ein BU-Tarif (BU MODERN, Tarif SBU; Bedingungen für SBU, SBUJ, SBU+, SBUJ+) mit Bausteinen; PERFECT START (günstiger Startbeitrag für Schüler, Studenten, Azubis, Berufseinsteiger) nicht als eigene Stufe aufgenommen.",
+    "Bausteine: AU-Baustein (Rente in Höhe der BU-Rente bei längerer Arbeitsunfähigkeit, rückwirkend bis 36 Monate), BU PLUS (lebenslange Pflegerente zusätzlich zur BU-Rente), Dynamik, Einmalleistung (12 Monatsrenten bei Eintritt der BU; nicht im Schema).",
+    "Rückwirkend: laut Bedingungen auch bei späterer Anzeige rückwirkend, grundsätzlich Verzicht auf eine Meldefrist.",
+    "Umorganisation: Prüfung nur bei Selbstständigen mit Gewerbe, mindestens 5 Mitarbeitern und unter 90 % kaufmännischer Tätigkeit; bei Freiberuflern Verzicht.",
+    "Pflege: BU auch bei Hilfebedarf für 2 oder mehr Verrichtungen des täglichen Lebens; zusätzliche Pflegerente nur mit BU PLUS.",
+    "Stundung: zinslose Stundung während der Leistungsprüfung; Dauer nicht beziffert.",
+    "Nachversicherung ohne Gesundheitsprüfung bei zahlreichen Ereignissen; genaue Altersgrenzen hier nicht ausgewertet."
+  ]
+}
