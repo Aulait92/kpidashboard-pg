@@ -135,6 +135,46 @@ describe("Support-Nummer: Kunde oder Interessent", () => {
     expect(ours()).toHaveLength(2);
   });
 
+  it("Fassung 2 (Ole Kannapinn): Variante nach Terminart, Anrede Frau Nachname, Rückfall auf Fassung 1 bei MARKETING", async () => {
+    const PH_V = `49175${Math.floor(1e6 + Math.random() * 8e6)}`;
+    const c = await prisma.salesContact.create({
+      data: { name: `Agentur V2 ${tag}`, email: `v2-${tag}@example.test`, phone: `+${PH_V}`, salutation: "Frau", firstName: "Julia", lastName: `Schneider${tag}`, stage: "TERMIN" },
+    });
+    contactIds.push(c.id);
+    const tpl = (name: string, category = "utility") =>
+      prisma.messageTemplate.updateMany({ where: { customerId: SUPPORT_CUSTOMER_ID, name }, data: { status: "approved", category } });
+    const ofV = () => sent.filter((x) => x.to === PH_V);
+    const params = (i: number) => JSON.stringify(ofV()[i]?.components);
+
+    // Bestätigung mit Videolink: Link-Variante, sobald freigegeben
+    const now = new Date("2030-03-05T10:00:00Z"); // 11:00 Berlin
+    const m = await prisma.salesMeeting.create({ data: { contactId: c.id, title: "Meta-Leads-Call", startAt: new Date("2030-03-08T09:00:00Z"), joinUrl: "https://meet.google.com/v2" } });
+    await tpl("pg_vertrieb_termin_link_v2");
+    expect(await sendTerminConfirmation(m.id, { name: `Julia Schneider${tag}`, reschedule_url: "https://app.example/termin/verwalten/v2" }, { type: "video", join_url: "https://meet.google.com/v2" }, now)).toBe("sent");
+    expect(ofV()[0].name).toBe("pg_vertrieb_termin_link_v2");
+    expect(params(0)).toContain(`Frau Schneider${tag}`);
+    expect(params(0)).toContain("https://meet.google.com/v2");
+    const conv = await prisma.conversation.findFirstOrThrow({ where: { customerId: SUPPORT_CUSTOMER_ID, contactPhone: PH_V }, include: { messages: true } });
+    expect(conv.messages.at(-1)?.body).toMatch(/^Guten Tag Frau Schneider\w+, danke für Ihre Buchung! .*Viele Grüße, Ole Kannapinn$/);
+
+    // 24 Stunden vorher, Entscheidungs-Call am Telefon: Variante als MARKETING eingestuft → Fassung 1
+    const day = await prisma.salesMeeting.create({
+      data: { contactId: c.id, title: "Entscheidungs-Call", startAt: new Date("2030-03-06T09:00:00Z"), createdAt: new Date("2030-03-01T09:00:00Z"), location: "Telefon" },
+    });
+    // 1 Stunde vorher am Telefon: Fassung 2
+    const soon = await prisma.salesMeeting.create({
+      data: { contactId: c.id, title: "Meta-Leads-Call", startAt: new Date(now.getTime() + 50 * 60_000), createdAt: new Date("2030-03-01T09:00:00Z"), location: "Telefon" },
+    });
+    await tpl("pg_vertrieb_erinnerung_ent_tel_v2", "marketing");
+    await tpl("pg_vertrieb_gleich_tel_v2");
+    await runSalesWhatsAppReminders(now, (t) => `https://app.example/termin/verwalten/${t}`);
+    expect(ofV().map((x) => x.name)).toEqual(["pg_vertrieb_termin_link_v2", ERINNERUNG_TEMPLATE_NAME, "pg_vertrieb_gleich_tel_v2"]);
+    expect(params(1)).toContain("telefonisch, wir rufen Sie an");
+    expect(params(2)).toContain(`Frau Schneider${tag}`);
+    expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: day.id } })).waReminderAt).not.toBeNull();
+    expect((await prisma.salesMeeting.findUniqueOrThrow({ where: { id: soon.id } })).waSoonAt).not.toBeNull();
+  });
+
   it("ohne Nummer wird nichts gesendet", async () => {
     const c = await prisma.salesContact.create({ data: { name: `Ohne ${tag}`, email: `o-${tag}@example.test`, stage: "TERMIN" } });
     contactIds.push(c.id);

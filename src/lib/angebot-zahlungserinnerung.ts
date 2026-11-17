@@ -228,3 +228,18 @@ export const ZAHLUNG_TEMPLATE_BODY_DU =
   "Hier geht es direkt dazu: {{3}} Den Zugang zur Einrichtung bekommst du, sobald die Zahlung eingerichtet ist. " +
   "Bei Fragen antworte einfach auf diese Nachricht. Viele Grüße, dein Team von performancegrowth";
 export const ZAHLUNG_TEMPLATE_EXAMPLES = ["Max Mustermann", "PG-2026-0007", "https://app.performancegrowth.de/angebot/abc/zahlen"];
+
+// Fassung 2 (Ole, 17.11.2026): persönlich von Ole Kannapinn statt „Ihr Team“. Fassung 1 läuft weiter, bis
+// Fassung 2 bei Meta freigegeben ist (sendeZahlungWhatsApp).
+export const ZAHLUNG_TEMPLATE_SIE_V2 = "pg_vertrieb_zahlung_sie_v2";
+export const ZAHLUNG_TEMPLATE_DU_V2 = "pg_vertrieb_zahlung_du_v2";
+export const ZAHLUNG_TEMPLATE_BODY_SIE_V2 = ZAHLUNG_TEMPLATE_BODY_SIE.replace("Viele Grüße, Ihr Team von performancegrowth", "Viele Grüße, Ole Kannapinn");
+export const ZAHLUNG_TEMPLATE_BODY_DU_V2 = ZAHLUNG_TEMPLATE_BODY_DU.replace("Viele Grüße, dein Team von performancegrowth", "Viele Grüße, Ole Kannapinn");
+
+/** Vorlage der Zahlungserinnerung: Fassung 2, sobald nutzbar, sonst Fassung 1; null, wenn keine freigegeben ist. */
+export function zahlungVorlage(du: boolean, nutzbar: (name: string, version: 1 | 2) => boolean): { name: string; body: string } | null {
+  const v2 = du ? { name: ZAHLUNG_TEMPLATE_DU_V2, body: ZAHLUNG_TEMPLATE_BODY_DU_V2 } : { name: ZAHLUNG_TEMPLATE_SIE_V2, body: ZAHLUNG_TEMPLATE_BODY_SIE_V2 };
+  if (nutzbar(v2.name, 2)) return v2;
+  const v1 = du ? { name: ZAHLUNG_TEMPLATE_DU, body: ZAHLUNG_TEMPLATE_BODY_DU } : { name: ZAHLUNG_TEMPLATE_SIE, body: ZAHLUNG_TEMPLATE_BODY_SIE };
+  return nutzbar(v1.name, 1) ? v1 : null;
+}

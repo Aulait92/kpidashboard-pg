@@ -3,11 +3,15 @@
 // 24 Stunden und 1 Stunde vorher (runSalesWhatsAppReminders). Läuft erst, wenn die Support-Nummer
 // verbunden und die jeweilige Vorlage von Meta freigegeben ist; Einreichen und Freigabe-Abgleich im
 // WhatsApp-Cron (syncSupportTemplates).
+// Fassung 2 (Ole, 17.11.2026): persönlich mit Ole Kannapinn als Absender, Varianten je Thema und Terminart.
+// Fassung 1 läuft weiter, bis die passende Variante bei Meta freigegeben ist (waehleTerminVorlage).
 
 import { kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 import { decryptSecret } from "@/lib/encryption";
 import { reportError } from "@/lib/monitoring";
 import { prisma } from "@/lib/prisma";
+import { addDaysYmd, berlinYmd } from "@/lib/absence";
+import { anredeName } from "@/lib/ansprache";
 import { createTemplate, listTemplates, sendTemplate, type CreateTemplateInput } from "@/lib/whatsapp/dialog360";
 import { normalizePhone } from "@/lib/whatsapp/phone";
 import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
@@ -15,11 +19,15 @@ import { findRemote, mapRemoteStatus, metaTemplateProblems } from "@/lib/whatsap
 import { renderTemplate } from "@/lib/whatsapp/templates";
 import {
   ZAHLUNG_TEMPLATE_BODY_DU,
+  ZAHLUNG_TEMPLATE_BODY_DU_V2,
   ZAHLUNG_TEMPLATE_BODY_SIE,
+  ZAHLUNG_TEMPLATE_BODY_SIE_V2,
   ZAHLUNG_TEMPLATE_DU,
+  ZAHLUNG_TEMPLATE_DU_V2,
   ZAHLUNG_TEMPLATE_EXAMPLES,
   ZAHLUNG_TEMPLATE_PURPOSE,
   ZAHLUNG_TEMPLATE_SIE,
+  ZAHLUNG_TEMPLATE_SIE_V2,
 } from "@/lib/angebot-zahlungserinnerung";
 
 export const TERMIN_TEMPLATE_NAME = "pg_vertrieb_termin_v1";
@@ -52,15 +60,104 @@ export const GLEICH_TEMPLATE_BODY =
   "Falls etwas dazwischenkommt, verschieben Sie den Termin bitte hier: {{4}} Viele Grüße, Ihr Team von performancegrowth";
 export const GLEICH_TEMPLATE_EXAMPLES = ["Max Mustermann", "14:30", "per Video: https://meet.google.com/abc-defg-hij", "https://app.performancegrowth.de/termin/verwalten/abc"];
 
+// ─── Fassung 2 (Ole, 17.11.2026): persönlich von Ole Kannapinn ─────────
+// Je Terminart Varianten nach Thema (Meta-Leads-Call bzw. Entscheidungs-Call) und Art (Video mit Link als Parameter,
+// Video mit Link in der Kalendereinladung, Telefon). Der Nutzen-Satz steht fest im Text: als Parameter wäre er für
+// UTILITY zu werblich.
+const NUTZEN = "wie Sie mit exklusiven Leads planbar neue Kundentermine bekommen";
+const OLE = "Ole Kannapinn";
+
+export type TerminArtKey = "termin" | "erinnerung" | "gleich";
+export type Thema = "leads" | "entscheidung";
+/** link: Video mit Link als Parameter; video: Link steht in der Kalendereinladung; telefon: Ole ruft an. */
+export type Modus = "video" | "link" | "telefon";
+type Param = "anrede" | "datum" | "zeit" | "art" | "videolink" | "link" | "linkV1";
+
 type SupportTemplate = { name: string; body: string; examples: string[]; purpose: string };
-/** Alle Vorlagen der Support-Nummer für Vertriebstermine (Einreichung im WhatsApp-Cron). */
+export type TerminVorlage = SupportTemplate & { art: TerminArtKey; version: 1 | 2; thema: Thema | null; modus: Modus | null; params: Param[] };
+
+const BEISPIEL: Record<Param, string> = {
+  anrede: "Herr Mustermann",
+  datum: "Dienstag, 18. November",
+  zeit: "14:30",
+  art: "per Video, den Link finden Sie in Ihrer Bestätigungsmail",
+  videolink: "https://meet.google.com/abc-defg-hij",
+  link: "https://app.performancegrowth.de/termin/verwalten/abc",
+  linkV1: "https://calendly.com/reschedulings/abc",
+};
+const PURPOSE: Record<TerminArtKey, string> = { termin: TERMIN_TEMPLATE_PURPOSE, erinnerung: "vertrieb_erinnerung", gleich: "vertrieb_gleich" };
+
+function v2(name: string, art: TerminArtKey, thema: Thema | null, modus: Modus, params: Param[], body: string): TerminVorlage {
+  return { name, body, examples: params.map((p) => BEISPIEL[p]), purpose: PURPOSE[art], art, version: 2, thema, modus, params };
+}
+
+function bestaetigungText(thema: Thema, modus: Modus): string {
+  const kanal = modus === "telefon" ? "am Telefon" : "per Video";
+  const was =
+    thema === "leads" ? `Wir sprechen am {{2}} um {{3}} Uhr ${kanal} darüber, ${NUTZEN}.` : `Am {{2}} um {{3}} Uhr besprechen wir ${kanal} Ihre offenen Fragen zum Angebot.`;
+  const wie = modus === "telefon" ? "Ich rufe Sie an." : modus === "link" ? "Ihr Link zum Gespräch: {{4}}" : "Ihren Link finden Sie in der Kalendereinladung.";
+  const n = modus === "link" ? 5 : 4;
+  return `Guten Tag {{1}}, danke für Ihre Buchung! ${was} ${wie} Falls etwas dazwischenkommt: {{${n}}} Ich freue mich auf Sie! Viele Grüße, ${OLE}`;
+}
+
+function erinnerungText(thema: Thema, modus: "video" | "telefon"): string {
+  const was =
+    thema === "leads"
+      ? modus === "telefon"
+        ? `rufe ich Sie an und wir sprechen darüber, ${NUTZEN}.`
+        : `sprechen wir per Video darüber, ${NUTZEN}.`
+      : modus === "telefon"
+        ? "rufe ich Sie an und wir besprechen Ihre offenen Fragen zum Angebot."
+        : "besprechen wir per Video Ihre offenen Fragen zum Angebot.";
+  return `Guten Tag {{1}}, morgen um {{2}} Uhr ${was} Ich freue mich darauf! Falls etwas dazwischenkommt: {{3}} Viele Grüße, ${OLE}`;
+}
+
+const T = ["anrede", "datum", "zeit", "link"] as Param[];
+const T_LINK = ["anrede", "datum", "zeit", "videolink", "link"] as Param[];
+const E = ["anrede", "zeit", "link"] as Param[];
+
+/** Alle Vorlagen für Vertriebstermine, Fassung 1 (Team) und Fassung 2 (Ole persönlich). */
+export const TERMIN_VORLAGEN: TerminVorlage[] = [
+  { name: TERMIN_TEMPLATE_NAME, body: TERMIN_TEMPLATE_BODY, examples: TERMIN_TEMPLATE_EXAMPLES, purpose: TERMIN_TEMPLATE_PURPOSE, art: "termin", version: 1, thema: null, modus: null, params: ["anrede", "datum", "zeit", "art", "linkV1"] },
+  { name: ERINNERUNG_TEMPLATE_NAME, body: ERINNERUNG_TEMPLATE_BODY, examples: ERINNERUNG_TEMPLATE_EXAMPLES, purpose: PURPOSE.erinnerung, art: "erinnerung", version: 1, thema: null, modus: null, params: ["anrede", "datum", "zeit", "art", "linkV1"] },
+  { name: GLEICH_TEMPLATE_NAME, body: GLEICH_TEMPLATE_BODY, examples: GLEICH_TEMPLATE_EXAMPLES, purpose: PURPOSE.gleich, art: "gleich", version: 1, thema: null, modus: null, params: ["anrede", "zeit", "art", "linkV1"] },
+  v2("pg_vertrieb_termin_v2", "termin", "leads", "video", T, bestaetigungText("leads", "video")),
+  v2("pg_vertrieb_termin_link_v2", "termin", "leads", "link", T_LINK, bestaetigungText("leads", "link")),
+  v2("pg_vertrieb_termin_tel_v2", "termin", "leads", "telefon", T, bestaetigungText("leads", "telefon")),
+  v2("pg_vertrieb_termin_ent_v2", "termin", "entscheidung", "video", T, bestaetigungText("entscheidung", "video")),
+  v2("pg_vertrieb_termin_ent_link_v2", "termin", "entscheidung", "link", T_LINK, bestaetigungText("entscheidung", "link")),
+  v2("pg_vertrieb_termin_ent_tel_v2", "termin", "entscheidung", "telefon", T, bestaetigungText("entscheidung", "telefon")),
+  v2("pg_vertrieb_erinnerung_v2", "erinnerung", "leads", "video", E, erinnerungText("leads", "video")),
+  v2("pg_vertrieb_erinnerung_tel_v2", "erinnerung", "leads", "telefon", E, erinnerungText("leads", "telefon")),
+  v2("pg_vertrieb_erinnerung_ent_v2", "erinnerung", "entscheidung", "video", E, erinnerungText("entscheidung", "video")),
+  v2("pg_vertrieb_erinnerung_ent_tel_v2", "erinnerung", "entscheidung", "telefon", E, erinnerungText("entscheidung", "telefon")),
+  v2(
+    "pg_vertrieb_gleich_v2",
+    "gleich",
+    null,
+    "video",
+    E,
+    `Guten Tag {{1}}, in einer Stunde sehen wir uns per Video, um {{2}} Uhr. Den Link finden Sie in Ihrer Kalendereinladung. Falls etwas dazwischenkommt: {{3}} Bis gleich, ${OLE}`,
+  ),
+  v2(
+    "pg_vertrieb_gleich_link_v2",
+    "gleich",
+    null,
+    "link",
+    ["anrede", "zeit", "videolink", "link"],
+    `Guten Tag {{1}}, in einer Stunde sehen wir uns per Video, um {{2}} Uhr. Ihr Link zum Gespräch: {{3}} Falls etwas dazwischenkommt: {{4}} Bis gleich, ${OLE}`,
+  ),
+  v2("pg_vertrieb_gleich_tel_v2", "gleich", null, "telefon", E, `Guten Tag {{1}}, in einer Stunde, um {{2}} Uhr, rufe ich Sie an. Falls etwas dazwischenkommt: {{3}} Bis gleich, ${OLE}`),
+];
+
+/** Alle Vorlagen der Support-Nummer (Einreichung im WhatsApp-Cron). */
 export const SUPPORT_TEMPLATES: SupportTemplate[] = [
-  { name: TERMIN_TEMPLATE_NAME, body: TERMIN_TEMPLATE_BODY, examples: TERMIN_TEMPLATE_EXAMPLES, purpose: TERMIN_TEMPLATE_PURPOSE },
-  { name: ERINNERUNG_TEMPLATE_NAME, body: ERINNERUNG_TEMPLATE_BODY, examples: ERINNERUNG_TEMPLATE_EXAMPLES, purpose: "vertrieb_erinnerung" },
-  { name: GLEICH_TEMPLATE_NAME, body: GLEICH_TEMPLATE_BODY, examples: GLEICH_TEMPLATE_EXAMPLES, purpose: "vertrieb_gleich" },
-  // Zahlungserinnerung zum Angebot (lib/angebot-zahlungserinnerung.ts), Sie und Du
+  ...TERMIN_VORLAGEN.map(({ name, body, examples, purpose }) => ({ name, body, examples, purpose })),
+  // Zahlungserinnerung zum Angebot (lib/angebot-zahlungserinnerung.ts), Sie und Du, Fassung 1 (Team) und 2 (Ole)
   { name: ZAHLUNG_TEMPLATE_SIE, body: ZAHLUNG_TEMPLATE_BODY_SIE, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
   { name: ZAHLUNG_TEMPLATE_DU, body: ZAHLUNG_TEMPLATE_BODY_DU, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
+  { name: ZAHLUNG_TEMPLATE_SIE_V2, body: ZAHLUNG_TEMPLATE_BODY_SIE_V2, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
+  { name: ZAHLUNG_TEMPLATE_DU_V2, body: ZAHLUNG_TEMPLATE_BODY_DU_V2, examples: ZAHLUNG_TEMPLATE_EXAMPLES, purpose: ZAHLUNG_TEMPLATE_PURPOSE },
 ];
 
 export function supportTemplateRequest(t: SupportTemplate): CreateTemplateInput {
@@ -116,6 +213,71 @@ export function terminParams(opts: {
   ].map((v) => v.slice(0, 300));
 }
 
+/** Freigabe je Vorlage (version 2 nur, solange Meta sie nicht als MARKETING eingestuft hat). */
+export type Nutzbar = (name: string, version: 1 | 2) => boolean;
+
+/**
+ * Vorlage für einen Termin wählen: passende Variante der Fassung 2 (bei „Video mit Link“ ersatzweise die ohne Link),
+ * sonst Fassung 1. Die 24-Stunden-Erinnerung der Fassung 2 sagt „morgen“: nur, wenn der Termin morgen ist.
+ * null: keine passende Vorlage freigegeben.
+ */
+export function waehleTerminVorlage(art: TerminArtKey, ctx: { thema: Thema; modus: Modus | null; morgen?: boolean }, nutzbar: Nutzbar): TerminVorlage | null {
+  const modi: Modus[] = !ctx.modus ? [] : ctx.modus === "link" ? (art === "erinnerung" ? ["video"] : ["link", "video"]) : [ctx.modus];
+  if (art !== "erinnerung" || ctx.morgen) {
+    for (const modus of modi) {
+      const v = TERMIN_VORLAGEN.find((x) => x.version === 2 && x.art === art && x.modus === modus && (x.thema === null || x.thema === ctx.thema));
+      if (v && nutzbar(v.name, 2)) return v;
+    }
+  }
+  const v1 = TERMIN_VORLAGEN.find((x) => x.version === 1 && x.art === art)!;
+  return nutzbar(v1.name, 1) ? v1 : null;
+}
+
+/** Entscheidungs-Call (Termintyp „entscheidung“ = DECISION_BOOKING_TYPE in lib/vertrieb/buchung.ts), sonst Meta-Leads-Call. */
+export function terminThema(m: { title?: string | null; bookingType?: { slug: string } | null }): Thema {
+  return m.bookingType?.slug === "entscheidung" || /entscheid/i.test(m.title ?? "") ? "entscheidung" : "leads";
+}
+
+/**
+ * Video mit Link, Video (Link in der Einladung) oder Telefon. null bei vor Ort, „Kontakt ruft an“ und Unbekanntem
+ * (dann Fassung 1 mit der allgemeinen Beschreibung). Die eigene Buchungsseite speichert „Videocall“ bzw. „Telefon“,
+ * Calendly den Ort bzw. die Art (bei „wir rufen an“ steht dort die Nummer des Kontakts).
+ */
+export function terminModus(o: { joinUrl?: string | null; locType?: string | null; location?: string | null }): Modus | null {
+  if (o.joinUrl) return "link";
+  const t = (o.locType ?? "").toLowerCase();
+  const l = (o.location ?? "").trim();
+  if (t === "inbound_call" || t === "physical" || t === "in_person_meeting") return null;
+  if (t === "outbound_call" || /^telefon/i.test(t) || /^telefon/i.test(l) || /^\+?[\d\s()/.-]{6,}$/.test(l)) return "telefon";
+  if (/zoom|google|teams|webex|conference|video|gotomeeting/i.test(`${t} ${l}`)) return "video";
+  return null;
+}
+
+/**
+ * Anrede für {{1}} (Sie-Form): „Herr Mustermann“ nur bei bekannter Anrede, sonst Vor- und Nachname (nie geraten).
+ * Hat jemand anderes gebucht als der Kontakt (Nachname passt nicht), zählt der Name aus der Buchung.
+ */
+export function terminAnrede(
+  contact: { salutation?: string | null; firstName?: string | null; lastName?: string | null } | null | undefined,
+  inviteeName: string | null | undefined,
+): string | null {
+  const inv = (inviteeName ?? "").replace(/\s+/g, " ").trim();
+  const last = contact?.lastName?.trim() ?? "";
+  const same = !inv || !last || inv.toLowerCase().includes(last.toLowerCase());
+  const k = same ? { salutation: contact?.salutation, firstName: contact?.firstName, lastName: contact?.lastName, fullName: inv } : { fullName: inv };
+  return anredeName("sie", k) || inv || [contact?.firstName, contact?.lastName].filter(Boolean).join(" ").trim() || null;
+}
+
+/** Parameter einer Vorlage in ihrer Reihenfolge (ohne Zeilenumbrüche, je höchstens 300 Zeichen). */
+export function vorlageParams(
+  v: Pick<TerminVorlage, "params">,
+  o: { anrede: string | null; startAt: Date; loc: Parameters<typeof terminArt>[0]; videolink: string | null; link: string | null },
+): string[] {
+  const [anrede, datum, zeit, art, linkV1] = terminParams({ name: o.anrede, startAt: o.startAt, loc: o.loc, rescheduleUrl: o.link });
+  const werte: Record<Param, string> = { anrede, datum, zeit, art, linkV1, videolink: o.videolink ?? "", link: o.link || "antworten Sie einfach kurz auf diese Nachricht." };
+  return v.params.map((p) => clean(werte[p]).slice(0, 300));
+}
+
 /** Telefonnummer aus Calendly: SMS-Erinnerungsnummer, dann Fragen (Telefon/Handy/WhatsApp), dann Kontakt. */
 export function bookingPhone(
   inv: { text_reminder_number?: string | null; questions_and_answers?: { question: string; answer: string }[] },
@@ -142,6 +304,19 @@ async function templateApproved(name: string): Promise<boolean> {
     select: { status: true },
   });
   return tpl?.status === "approved";
+}
+
+/** Freigabestand aller Vorlagen der Support-Nummer: Fassung 1 freigegeben, Fassung 2 freigegeben und nicht MARKETING. */
+export async function supportVorlagenNutzbar(): Promise<Nutzbar> {
+  const rows = await prisma.messageTemplate.findMany({
+    where: { customerId: SUPPORT_CUSTOMER_ID, language: LANGUAGE, name: { in: SUPPORT_TEMPLATES.map((t) => t.name) } },
+    select: { name: true, status: true, category: true },
+  });
+  const map = new Map(rows.map((r) => [r.name, r]));
+  return (name, version) => {
+    const r = map.get(name);
+    return r?.status === "approved" && (version === 1 || (r.category ?? "").toLowerCase() !== "marketing");
+  };
 }
 
 type SendOutcome = "sent" | "no_account" | "no_template" | "opted_out" | "gesperrt";
@@ -207,6 +382,8 @@ async function sendSupportTemplate(opts: {
   return "sent";
 }
 
+const CONTACT_SELECT = { phone: true, firstName: true, lastName: true, salutation: true } as const;
+
 /**
  * Bestätigung für einen neu gebuchten Vertriebstermin senden und am Termin vermerken.
  * Wirft nie; Ergebnis steht in SalesMeeting.waConfirmStatus.
@@ -224,7 +401,18 @@ export async function sendTerminConfirmation(
   try {
     const m = await prisma.salesMeeting.findUnique({
       where: { id: meetingId },
-      select: { id: true, startAt: true, waConfirmStatus: true, contactId: true, contact: { select: { phone: true, firstName: true, lastName: true, name: true } } },
+      select: {
+        id: true,
+        startAt: true,
+        title: true,
+        joinUrl: true,
+        location: true,
+        inviteeName: true,
+        waConfirmStatus: true,
+        contactId: true,
+        bookingType: { select: { slug: true } },
+        contact: { select: CONTACT_SELECT },
+      },
     });
     if (!m) return "missing";
     if (m.waConfirmStatus === "sent") return "sent";
@@ -233,13 +421,18 @@ export async function sendTerminConfirmation(
     if (!phone) return await mark("no_phone");
     // Nummer am Kontakt merken, damit Support-Chats ihn erkennen
     if (!m.contact.phone) await prisma.salesContact.update({ where: { id: m.contactId }, data: { phone: `+${phone}` } }).catch(() => {});
-    const name = inv.name?.trim() || [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || null;
-    const params = terminParams({ name, startAt: m.startAt, loc, rescheduleUrl: inv.reschedule_url ?? null });
+    const anrede = terminAnrede(m.contact, inv.name ?? m.inviteeName);
+    const videolink = loc?.join_url ?? m.joinUrl;
+    const modus = terminModus({ joinUrl: videolink, locType: loc?.type, location: loc?.location ?? m.location });
+    const v = waehleTerminVorlage("termin", { thema: terminThema(m), modus }, await supportVorlagenNutzbar());
+    if (!v) return await mark((await supportAccount()) ? "no_template" : "no_account");
+    const params = vorlageParams(v, { anrede, startAt: m.startAt, loc, videolink, link: inv.reschedule_url ?? null });
     const out = await sendSupportTemplate({
       contactId: m.contactId,
       phone,
-      name,
-      template: { name: TERMIN_TEMPLATE_NAME, body: TERMIN_TEMPLATE_BODY },
+      // Name im Support-Chat: voller Name wie gebucht
+      name: inv.name?.trim() || [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || anrede,
+      template: v,
       params,
       activity: "Terminbestätigung per WhatsApp gesendet",
       now,
@@ -259,6 +452,8 @@ const HOUR = 60 * 60 * 1000;
 function meetingLoc(m: { joinUrl: string | null; location: string | null }): Parameters<typeof terminArt>[0] {
   if (m.joinUrl) return { type: "video", join_url: m.joinUrl };
   if (m.location && /video/i.test(m.location)) return { type: "video" };
+  // „Telefon“ (eigene Buchungsseite) bzw. Nummer (Calendly „wir rufen an“): wie in der Bestätigung
+  if (terminModus({ locType: m.location, location: m.location }) === "telefon") return { type: "outbound_call" };
   return m.location ? { type: m.location, location: null } : null;
 }
 
@@ -273,22 +468,25 @@ export type WaReminderResult = { day: number; soon: number; skipped: number; err
  * WhatsApp-Erinnerungen von der Support-Nummer für geplante Vertriebstermine (eigene Buchungsseite und
  * Calendly). 24 Stunden vorher nur, wenn mehr als 26 Stunden im Voraus gebucht; 1 Stunde vorher nur, wenn
  * mindestens 3 Stunden im Voraus gebucht. Jede Art höchstens einmal je Termin (waReminderAt, waSoonAt).
- * Solange die Nummer nicht verbunden bzw. die Vorlage nicht freigegeben ist, wird nichts gesendet
+ * Solange die Nummer nicht verbunden bzw. keine passende Vorlage freigegeben ist, wird nichts gesendet
  * und nichts markiert.
  */
 export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (token: string) => string): Promise<WaReminderResult> {
   const result: WaReminderResult = { day: 0, soon: 0, skipped: 0, errors: 0 };
   if (!(await supportAccount())) return result;
+  const nutzbar = await supportVorlagenNutzbar();
+  const morgen = addDaysYmd(berlinYmd(now), 1);
   const kinds = [
-    { field: "waReminderAt", template: { name: ERINNERUNG_TEMPLATE_NAME, body: ERINNERUNG_TEMPLATE_BODY }, from: 2 * HOUR, to: 24 * HOUR, minLead: 26 * HOUR, key: "day" },
-    { field: "waSoonAt", template: { name: GLEICH_TEMPLATE_NAME, body: GLEICH_TEMPLATE_BODY }, from: 10 * 60 * 1000, to: HOUR, minLead: 3 * HOUR, key: "soon" },
+    { field: "waReminderAt", art: "erinnerung", from: 2 * HOUR, to: 24 * HOUR, minLead: 26 * HOUR, key: "day" },
+    { field: "waSoonAt", art: "gleich", from: 10 * 60 * 1000, to: HOUR, minLead: 3 * HOUR, key: "soon" },
   ] as const;
   for (const k of kinds) {
-    if (!(await templateApproved(k.template.name))) continue;
+    if (!TERMIN_VORLAGEN.some((v) => v.art === k.art && nutzbar(v.name, v.version))) continue;
     const due = await prisma.salesMeeting.findMany({
       where: { status: "GEPLANT", [k.field]: null, startAt: { gt: new Date(now.getTime() + k.from), lte: new Date(now.getTime() + k.to) } },
       select: {
         id: true,
+        title: true,
         startAt: true,
         createdAt: true,
         joinUrl: true,
@@ -298,12 +496,20 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         inviteeName: true,
         inviteePhone: true,
         contactId: true,
-        contact: { select: { phone: true, firstName: true, lastName: true } },
+        bookingType: { select: { slug: true } },
+        contact: { select: CONTACT_SELECT },
       },
       orderBy: { startAt: "asc" },
       take: 100,
     });
     for (const m of due) {
+      const modus = terminModus({ joinUrl: m.joinUrl, locType: m.location, location: m.location });
+      const v = waehleTerminVorlage(k.art, { thema: terminThema(m), modus, morgen: berlinYmd(m.startAt) === morgen }, nutzbar);
+      // Keine passende Vorlage freigegeben: nicht markieren, der nächste Lauf versucht es wieder
+      if (!v) {
+        result.skipped++;
+        continue;
+      }
       // Markierung zuerst: parallel laufende Crons senden nie doppelt
       const claimed = await prisma.salesMeeting.updateMany({ where: { id: m.id, [k.field]: null }, data: { [k.field]: now } });
       if (!claimed.count) continue;
@@ -316,16 +522,14 @@ export async function runSalesWhatsAppReminders(now = new Date(), manageUrl: (to
         result.skipped++;
         continue;
       }
-      const name = m.inviteeName?.trim() || [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || null;
-      const base = terminParams({ name, startAt: m.startAt, loc: meetingLoc(m), rescheduleUrl: rescheduleLink(m, manageUrl) });
-      // [Name, Datum, Uhrzeit, Art, Link] bzw. kurz vorher [Name, Uhrzeit, Art, Link]
-      const params = k.key === "day" ? base : [base[0], base[2], base[3], base[4]];
+      const anrede = terminAnrede(m.contact, m.inviteeName);
+      const params = vorlageParams(v, { anrede, startAt: m.startAt, loc: meetingLoc(m), videolink: m.joinUrl, link: rescheduleLink(m, manageUrl) });
       try {
         const out = await sendSupportTemplate({
           contactId: m.contactId,
           phone,
-          name,
-          template: k.template,
+          name: m.inviteeName?.trim() || [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || anrede,
+          template: v,
           params,
           activity: k.key === "day" ? "Terminerinnerung (24 Stunden) per WhatsApp gesendet" : "Terminerinnerung (1 Stunde) per WhatsApp gesendet",
           now,
@@ -355,7 +559,8 @@ const LABEL: Record<string, string> = {
 
 /**
  * Im WhatsApp-Cron: Vorlagen der Support-Nummer einreichen bzw. Status abgleichen (gedrosselt).
- * `status` = Stand der Terminbestätigung, `statuses` = Stand je Vorlage.
+ * `status` = Stand der Terminbestätigung, `statuses` = Stand je Vorlage. Ein Fehler bei einer Vorlage
+ * (z. B. Einreichen abgelehnt) hält die anderen nicht auf; er wird gemeldet und steht als „error“ in `statuses`.
  */
 export async function syncSupportTemplates(now = new Date(), opts: { force?: boolean } = {}): Promise<{ status: string; statuses: Record<string, string> } | null> {
   const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId: SUPPORT_CUSTOMER_ID }, select: { status: true, apiKeyEnc: true, templatesCheckedAt: true } });
@@ -376,38 +581,45 @@ export async function syncSupportTemplates(now = new Date(), opts: { force?: boo
   const remoteList = await listTemplates(apiKey);
   const statuses: Record<string, string> = {};
   for (const t of SUPPORT_TEMPLATES) {
-    let remote = findRemote(remoteList, t.name);
-    let submittedAt: Date | null = null;
-    if (!remote) {
-      remote = await createTemplate(apiKey, supportTemplateRequest(t));
-      submittedAt = now;
-    }
-    const status = mapRemoteStatus(remote.status);
-    statuses[t.name] = status;
-    await prisma.messageTemplate.upsert({
-      where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: t.name, language: LANGUAGE } },
-      create: {
-        customerId: SUPPORT_CUSTOMER_ID,
-        name: t.name,
-        language: LANGUAGE,
-        purpose: t.purpose,
-        category: "utility",
-        status,
-        body: t.body,
-        auto: true,
-        submittedAt,
-        rejectionReason: status === "rejected" ? remote.rejectedReason : null,
-      },
-      update: { status, rejectionReason: status === "rejected" ? remote.rejectedReason : null, ...(submittedAt ? { submittedAt } : {}) },
-    });
-    if (status === "rejected" && localStatus.get(t.name) !== "rejected") {
-      const { sendToAdmins } = await import("@/lib/push");
-      await sendToAdmins({
-        title: `WhatsApp-Vorlage ${LABEL[t.purpose] ?? t.name} abgelehnt`,
-        body: `${t.name}: ${(remote.rejectedReason ?? "Grund unbekannt").slice(0, 100)}`,
-        url: "/admin/whatsapp/settings",
-        tag: `tpl:support-${t.name}`,
-      }).catch(() => {});
+    try {
+      let remote = findRemote(remoteList, t.name);
+      let submittedAt: Date | null = null;
+      if (!remote) {
+        remote = await createTemplate(apiKey, supportTemplateRequest(t));
+        submittedAt = now;
+      }
+      const status = mapRemoteStatus(remote.status);
+      // Kategorie von Meta (stuft Meta eine UTILITY-Vorlage als MARKETING ein, wird Fassung 2 nicht genutzt)
+      const category = (remote.category ?? "utility").toLowerCase();
+      statuses[t.name] = status;
+      await prisma.messageTemplate.upsert({
+        where: { customerId_name_language: { customerId: SUPPORT_CUSTOMER_ID, name: t.name, language: LANGUAGE } },
+        create: {
+          customerId: SUPPORT_CUSTOMER_ID,
+          name: t.name,
+          language: LANGUAGE,
+          purpose: t.purpose,
+          category,
+          status,
+          body: t.body,
+          auto: true,
+          submittedAt,
+          rejectionReason: status === "rejected" ? remote.rejectedReason : null,
+        },
+        update: { status, category, rejectionReason: status === "rejected" ? remote.rejectedReason : null, ...(submittedAt ? { submittedAt } : {}) },
+      });
+      if (status === "rejected" && localStatus.get(t.name) !== "rejected") {
+        const { sendToAdmins } = await import("@/lib/push");
+        await sendToAdmins({
+          title: `WhatsApp-Vorlage ${LABEL[t.purpose] ?? t.name} abgelehnt`,
+          body: `${t.name}: ${(remote.rejectedReason ?? "Grund unbekannt").slice(0, 100)}`,
+          url: "/admin/whatsapp/settings",
+          tag: `tpl:support-${t.name}`,
+        }).catch(() => {});
+      }
+    } catch (err) {
+      statuses[t.name] = "error";
+      reportError(err, "support-vorlage", { template: t.name });
     }
   }
   await prisma.whatsAppAccount.update({ where: { customerId: SUPPORT_CUSTOMER_ID }, data: { templatesCheckedAt: now } });
