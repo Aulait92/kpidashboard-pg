@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "ambulant",
+  "produkt": "PlanAmbulant (Mein Gesundheitsplan)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Telemedizin inkl. Arzneimittel",
+    "STIKO-Impfungen inkl. Reise",
+    "Gesundheitsgarantie bis 49"
+  ],
+  "tarife": [
+    {
+      "name": "PlanAmbulant",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, 1.200 € in 2 J.",
+        "vorsorge": "ja, ohne Altersgrenze"
+      },
+      "bausteine": {
+        "ausland": "optional",
+        "sehhilfen": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-schutz-aerztliche-versorgung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-schutz-aerztliche-versorgung",
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-plan"
+  ],
+  "offen": [
+    "80 % Erstattung, zusammen bis 1.200 € in zwei Kalenderjahren für Naturheilverfahren und Telemedizin (jeweils inkl. Arzneimittel).",
+    "Sehhilfen und Auslandsreiseschutz nicht in PlanAmbulant, sondern in Mein Plan (Plan1 bis 3: Sehhilfen 300/200/100 € in zwei Jahren, auch LASIK; Auslandsreisen 60 Tage); als optional erfasst.",
+    "Arzneimittel-Zuzahlungen, Hörgeräte und Wartezeit nicht genannt."
+  ]
+}

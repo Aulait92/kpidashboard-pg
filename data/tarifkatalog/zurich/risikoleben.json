@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung (Zurich Deutscher Herold)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Soforthilfe 10 %, max. 10.000 €",
+    "Kind mitversichert (5.000 €)"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, Lebensphasenkonzept",
+        "vorgezogen": "ja",
+        "verlaengerung": "optional",
+        "umtausch": "ja, bis 10. Jahr"
+      },
+      "bausteine": {
+        "fallend": "optional",
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/34020_risikolebensversicherung_verbraucherinformationen_2026_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/34020_risikolebensversicherung_verbraucherinformationen_2026_01.pdf",
+    "https://www.zurich.de/de-de/pk/vorsorge-vermoegen/risikoleben-komfort"
+  ],
+  "offen": [
+    "Die Produktseiten auf zurich.de waren für automatische Abrufe gesperrt; Werte aus den Verbraucherinformationen (Bedingungen, PDF). Stand 01/2026.",
+    "Vorgezogene Leistung bei schwerer Krankheit mit Lebenserwartung von höchstens 12 Monaten.",
+    "Verlängerungsoption nur wenn vereinbart, Antrag bis 5 Jahre vor Ablauf. Umtausch in eine kapitalbildende Versicherung ab dem 2. bis Ende des 10. Versicherungsjahres.",
+    "Soforthilfe nach mindestens 3 Vertragsjahren. Todesfallleistung für ein Kind der versicherten Person (3 Monate bis 16 Jahre): 5.000 €.",
+    "Weltweiter Schutz, Endalter und Höchstsumme nicht in den Bedingungen gefunden. Basisschutz zur Absicherung von Baufinanzierungen nicht als eigene Stufe aufgenommen."
+  ]
+}

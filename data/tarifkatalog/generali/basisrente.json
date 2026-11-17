@@ -1,0 +1,42 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "basisrente",
+  "produkt": "Basisrente Vermögensaufbau",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Steuerlich gefördert",
+    "Risikoplan zuwählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Basisrente Vermögensaufbau",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "nein",
+        "rentenfaktor": "ja, garantiert",
+        "anlage": "Fonds, Gold, klassisch",
+        "flexibel": "Sonderzahlungen",
+        "hinterbliebene": "Rente Ehegatte, Kinder"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/basis-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/vorsorge-finanzen/basis-rente",
+    "https://www.generali.de/resource/blob/24004/09048a68d4d2873e67a004a8e51f45fc/Muster_pib_BRVA25_30.pdf"
+  ],
+  "offen": [
+    "Garantie laut Muster-Produktinformationsblatt: Rentenversicherung ohne gesonderte Garantieabsicherung; der Rentenfaktor ist garantiert.",
+    "Hinterbliebenenschutz: Todesfallschutz mit Rente für Ehegatten und kindergeldberechtigte Kinder. Zusätzlich Risikoplan (separate Risikolebensversicherung, Wartezeit 5 Jahre außer bei Unfall).",
+    "Bei Rentenbeginn Wahl zwischen sicherheitsorientierter und chancenorientierter Rente (mit Mindestrente).",
+    "Kosten (Effektivkosten) nur im Musterbeispiel, nicht übernommen. Beitragspause und Dynamik nicht genannt."
+  ]
+}

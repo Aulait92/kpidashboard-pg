@@ -1,0 +1,53 @@
+{
+  "gesellschaft": "Dialog",
+  "sparte": "bu",
+  "produkt": "Selbstständige Berufsunfähigkeitsversicherung SBU",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Dienstunfähigkeit ohne Mehrbeitrag",
+    "Vorableistung bei Krebs",
+    "Leistung bei Demenz ab GDS 5"
+  ],
+  "tarife": [
+    {
+      "name": "SBU (professional, go-professional, solution)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, bis 24 Monate",
+        "nachversicherung": "ja, bis Alter 51",
+        "rueckwirkend": "ja, ohne Meldefrist",
+        "weltweit": "ja",
+        "teilzeit": "ja, Günstigerprüfung",
+        "umorganisation": "teilweise verzichtet",
+        "pflege": "ab 1 Pflegepunkt",
+        "stundung": "bis 24 Monate",
+        "dynamik": "2 bis 5 %",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/5586/2a5d5625334a345d15a8e89ca02fa100/Steckbrief%20Berufsunf%C3%A4higkeit.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dialog-versicherung.de/resource/blob/5586/2a5d5625334a345d15a8e89ca02fa100/Steckbrief%20Berufsunf%C3%A4higkeit.pdf",
+    "https://www.dialog-versicherung.de/bu",
+    "https://www.dialog-versicherung.de/resource/blob/5580/44f4975b1bdedd68cb9d0a695fb3c0ae/Bedingungen%20Berufsunf%C3%A4higkeit%20.pdf"
+  ],
+  "offen": [
+    "Dialog ist Maklerversicherer der Generali-Gruppe; Seiten und Unterlagen richten sich an Vermittler. Steckbrief und Bedingungen Stand 10/2026.",
+    "SBU-professional (konstanter Beitrag), SBU-go-professional (Stufenmodell, geringer Beitrag in den ersten 5 Jahren) und SBU-solution (risikoadäquat) sind Beitragsvarianten mit gleichem Schutz, daher ein Tarif.",
+    "AU-Option, Dread-Disease-Option und Zusatzzahlung nicht mit SBU-solution kombinierbar.",
+    "Nachversicherung bei 18 Ereignissen bis zur Vollendung des 51. Lebensjahres, je Erhöhung bis 50 % bzw. 1.000 €, gesamt bis 4.000 € (bei Startrente über 3.000 € bis 5.000 €), in den ersten 5 Jahren auch ohne Anlass; dazu Karrieregarantie.",
+    "Umorganisation: Verzicht für Kammerberufe und Betriebe unter 10 Mitarbeitern; sonst Umorganisationshilfe (6 Monatsrenten, max. 12.000 €).",
+    "Zuwählbar: Dread Disease (Einmalzahlung bis 150.000 €), Pflegerentenoption, garantierte Rentendynamik im Leistungsfall 1 bis 5 %."
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "basisrente",
+  "produkt": "Fondsgebundene Basisrente (Zurich Deutscher Herold)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Steuerlich gefördert"
+  ],
+  "tarife": [
+    {
+      "name": "Fondsgebundene Basisversorgung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "wählbar",
+        "rentenfaktor": "ja, garantiert",
+        "anlage": "Fonds",
+        "flexibel": "Zuzahlungen ab 200 €",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/11220_fondgebundene-basisversorgung_verbraucherinformationen_2026_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/11220_fondgebundene-basisversorgung_verbraucherinformationen_2026_01.pdf",
+    "https://www.zurich.de/de-de/pk/altersvorsorge/basisrente"
+  ],
+  "offen": [
+    "Die Produktseiten auf zurich.de waren für automatische Abrufe gesperrt; Werte aus den Verbraucherinformationen (Bedingungen, PDF). Stand 01/2026.",
+    "Garantierte Erlebensfallsumme wählbar; Rentenfaktor garantiert (höherer von garantiertem und aktuellem Faktor).",
+    "Hinterbliebenenschutz in der Rentenzahlungszeit wählbar (Rente an Ehegatten bzw. kindergeldberechtigte Kinder).",
+    "Kosten und Beitragspause nicht ausgewertet."
+  ]
+}

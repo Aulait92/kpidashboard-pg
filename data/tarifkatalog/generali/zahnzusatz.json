@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "Generali",
+  "sparte": "zahnzusatz",
+  "produkt": "PlanZahn (Mein Gesundheitsplan)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Staffel bis 5.000 € in 5 Jahren",
+    "Unfall ohne Begrenzung",
+    "Parodontose mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "PlanZahn3",
+      "kurz": "PlanZahn3",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 % inkl. GKV",
+        "implantate": "ja, 70 %",
+        "behandlung": "70 % inkl. GKV",
+        "staffel": "1.000 € im 1. Jahr",
+        "inlays": "70 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-zahnschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PlanZahn2",
+      "kurz": "PlanZahn2",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "80 % inkl. GKV",
+        "implantate": "ja, 80 %",
+        "behandlung": "80 % inkl. GKV",
+        "staffel": "1.000 € im 1. Jahr",
+        "inlays": "80 %",
+        "prophylaxe": "100 € in 2 Jahren"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-zahnschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PlanZahn1",
+      "kurz": "PlanZahn1",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "90 % inkl. GKV",
+        "implantate": "ja, 90 %",
+        "behandlung": "90 % inkl. GKV",
+        "staffel": "1.000 € im 1. Jahr",
+        "inlays": "90 %",
+        "prophylaxe": "200 € in 2 Jahren"
+      },
+      "bausteine": {},
+      "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-zahnschutz",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-zahnschutz",
+    "https://www.generali.de/resource/blob/20990/141fe0de5b15e6c2fd2a277b74ecb5cb/Mein_Gesundheitsplan_(inkl._VSP)_12.2022_T639_AVB.pdf"
+  ],
+  "offen": [
+    "Bei Generali ist PlanZahn1 der stärkste Tarif (90 %), PlanZahn3 der günstigste (70 %); hier aufsteigend sortiert.",
+    "Erstattung unter Anrechnung der GKV-Vorleistung; ohne GKV-Vorleistung die Hälfte (35/40/45 %).",
+    "Prophylaxe im PlanZahn3: Tabellenzelle leer, daher nicht erfasst.",
+    "Wartezeit nicht auf der Produktseite; die verlinkten Bedingungen (12/2022) nennen 8 Monate für Zahnbehandlung und Zahnersatz, beziehen sich aber auf ältere Tarifnamen (PlanZ1 bis Z3). Bitte prüfen.",
+    "Kieferorthopädie nur im Kindertarif PlanJunior. Mein Plan (Plan1 bis 3) kombiniert dieselben Zahnleistungen mit Sehhilfen und Auslandsschutz.",
+    "Generali markiert keinen Tarif; PlanZahn2 als mittlere Stufe."
+  ]
+}

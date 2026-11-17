@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "DA Direkt",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenzusatzversicherung (Notfall-Leistungen im Krankenhaus)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Nur Unfall, schwere Krankheit",
+    "Reha-Tagegeld 50 € (21 Tage)",
+    "SOS-Budget 500 € im Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "Krankenzusatzversicherung Komfort, Premium, Premium Plus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "1-/2-Bett, nur Ernstfall",
+        "chefarzt": "ja, nur Ernstfall",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "bis 50 € je Tag",
+        "ambulant-op": "ja, nur Ernstfall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.da-direkt.de/krankenzusatzversicherung",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/kzv/dadirekt-krankenzusatz-tarifblatt.pdf?sc_lang=de-de",
+    "https://www.da-direkt.de/zurichinsur200c-zwpdadd1dc-prodf075-c74a/media/project/zurich-headless/dadirekt/website/dateien-pdf/kzv/kzv-tariblatt-und-avbs.pdf?sc_lang=de-de"
+  ],
+  "offen": [
+    "DA Direkt hat keine eigene Krankenhauszusatzversicherung: Die Krankenzusatzversicherung (Komfort, Premium, Premium Plus) kombiniert ein ambulantes Gesundheitsbudget mit Notfall-Leistungen im Krankenhaus. Die Krankenhausleistungen sind in allen drei Tarifen gleich, daher ein Tarif.",
+    "Krankenhausleistungen nur bei stationärer Behandlung nach Unfall oder schwerer Krankheit (laut AVB definiert), zu 100 %, nicht auf das Budget angerechnet.",
+    "Ersatz-Krankenhaustagegeld: 50 € bei Verzicht auf Chefarzt, 20 € bei Zweibettzimmer statt Einbettzimmer, 50 € bei Verzicht auf Ein- und Zweibettzimmer. Rooming-in für Kinder bis 10 Tage.",
+    "Tarifblatt und AVB Stand 01.04.2024 (Wartezeiten bestehen nicht); Budgethöhen im Tarifblatt weichen von der Produktseite ab, für das Krankenhaus ohne Bedeutung."
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Zurich",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Absicherung von Grundfähigkeiten (Zurich Deutscher Herold)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gerichtliche Betreuung versichert",
+    "Wechsel in BU möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Absicherung von Grundfähigkeiten",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "21 Grundfähigkeiten",
+        "prognose": "6 Monate",
+        "pflege": "ja, ab 3 Verrichtungen",
+        "nachversicherung": "ja, Lebensphasenkonzept",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {},
+      "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35320_absicherung-grundfaehigkeiten_verbraucherinformationen_2026_01.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35320_absicherung-grundfaehigkeiten_verbraucherinformationen_2026_01.pdf",
+    "https://www.zurich.de/de-de/pk/vorsorge-vermoegen/grundfaehigkeits-versicherung"
+  ],
+  "offen": [
+    "Die Produktseiten auf zurich.de waren für automatische Abrufe gesperrt; Werte aus den Verbraucherinformationen (Bedingungen, PDF). Stand 01/2026.",
+    "Versichert sind 21 Grundfähigkeiten (u. a. Sehen, Hören, Sprechen, Gehen, Autofahren, Gleichgewicht, geistige Leistungsfähigkeit) sowie Pflegebedürftigkeit und gerichtlich angeordnete Betreuung.",
+    "Leistung bei psychischen Erkrankungen nicht ausdrücklich geregelt (nur über geistige Leistungsfähigkeit und Betreuung); bitte prüfen.",
+    "Wechseloption in eine selbständige BU ohne erneute Gesundheitsprüfung unter Voraussetzungen."
+  ]
+}
