@@ -284,7 +284,7 @@ export function vertragsFrage(an: Ansprache, familie: boolean): string {
   const wer = familie
     ? a(an, "Welche Versicherungen habt ihr als Familie heute schon?", "Welche Versicherungen haben Sie und Ihre Familie heute schon?")
     : a(an, "Welche Versicherungen hast du heute schon?", "Welche Versicherungen haben Sie heute schon?");
-  return `Super! ${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz oder Altersvorsorge. Gern auch mit Gesellschaft.`;
+  return `Super! ${wer} Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Gesellschaft.`;
 }
 
 /** Erkennt die Vertragsfrage in einer Nachricht von uns. */

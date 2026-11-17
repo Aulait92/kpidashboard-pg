@@ -186,7 +186,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect((await prisma.appointment.findUnique({ where: { id: appt!.id } }))?.komplettcheck).toBe(true);
     expect((await prisma.lead.findUnique({ where: { id: lead.id } }))?.status).not.toBe("Kein Interesse");
     expect(gesendet().map((s) => s.body)).toEqual([
-      "Super! Welche Versicherungen haben Sie und Ihre Familie heute schon? Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz oder Altersvorsorge. Gern auch mit Gesellschaft.",
+      "Super! Welche Versicherungen haben Sie und Ihre Familie heute schon? Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Gesellschaft.",
     ]);
 
     // 4. Antwort frei: ausgewertet (hier ohne KI-Werkzeug: Rückfall per Muster), am Lead gespeichert, Abschluss
