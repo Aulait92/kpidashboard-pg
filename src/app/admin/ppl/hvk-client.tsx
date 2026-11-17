@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { hvkAssignAction, hvkBackfillAction, hvkFetchNowAction, hvkUploadAction, type HvkReklamationState, type HvkRunRow, type HvkRunState } from "./hvk-actions";
+import { versandTestAction, type VersandTestState } from "./ppl-versand-actions";
 
 const btn = "h-9 rounded-[var(--radius-sm)] px-3 text-sm font-semibold disabled:opacity-60";
 const eur = (c: number | null) => (c == null ? "–" : (Math.abs(c) / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" }));
@@ -22,6 +23,19 @@ export function HvkFetchNow() {
       <Feedback state={state} />
       <button disabled={pending} className={`${btn} bg-[color:var(--foreground)] text-white`}>
         {pending ? "Prüfe Postfach …" : "Jetzt abrufen"}
+      </button>
+    </form>
+  );
+}
+
+/** Versand an Pivacom: Latin-1-Testmail an den angemeldeten Admin */
+export function VersandTest() {
+  const [state, action, pending] = useActionState<VersandTestState, FormData>(versandTestAction, {});
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <Feedback state={state} />
+      <button disabled={pending} className={`${btn} border border-[color:var(--border)] bg-white`}>
+        {pending ? "Sende …" : "Testmail senden"}
       </button>
     </form>
   );

@@ -22,7 +22,7 @@ export type SlackLeadInfo = {
   bezug?: string | null;
   /** war vorher geparkt (Nachlieferung) */
   wasParked?: boolean;
-  delivery?: Pick<DeliveryReport, "label" | "targets" | "ok" | "error"> | null;
+  delivery?: Pick<DeliveryReport, "label" | "targets" | "ok" | "error" | "hinweis"> | null;
   adminUrl?: string | null;
 };
 
@@ -57,7 +57,8 @@ function deliveryLine(d: NonNullable<SlackLeadInfo["delivery"]>): string {
   const blocked = d.targets.some((t) => t.blocked) ? ", Testumgebung: teilweise gesperrt" : "";
   const failed = d.targets.filter((t) => !t.ok);
   const why = failed.length ? failed.map((t) => `${targetName(t.target)}: ${t.error ?? "Fehler"}`).join("; ") : (d.error ?? "unbekannt");
-  const state = d.ok ? `zugestellt${blocked}` : `FEHLER: ${maskEmails(why)}`;
+  const hinweis = d.ok && d.hinweis ? `, ACHTUNG: ${maskEmails(d.hinweis)}` : "";
+  const state = d.ok ? `zugestellt${blocked}${hinweis}` : `FEHLER: ${maskEmails(why)}`;
   return `Lieferweg: ${esc(d.label)}${esc(where)}: ${esc(state)}`;
 }
 

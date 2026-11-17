@@ -217,7 +217,7 @@ export async function deleteAreaAction(fd: FormData): Promise<void> {
   revalidatePath("/admin/neu", "layout");
 }
 
-export type TestLeadState = { error?: string; message?: string; targets?: { target: string; ok: boolean; error?: string; blocked?: boolean }[] };
+export type TestLeadState = { error?: string; message?: string; targets?: { target: string; ok: boolean; error?: string; blocked?: boolean; hinweis?: string }[] };
 
 /** Bezug → „Testdatensatz senden“: Test-Lead an alle Lieferadressen, zählt nirgends mit. */
 export async function sendTestLeadAction(_prev: TestLeadState, fd: FormData): Promise<TestLeadState> {

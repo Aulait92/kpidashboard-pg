@@ -29,6 +29,22 @@
    - Bezug → **Testdatensatz senden**: „TEST Lead“ mit allen Feldern des echten Funnels, Betreff mit [TEST], an
      alle Lieferadressen (bei `app_pdf` nur die PDF-Mail); legt keinen Lead an (zählt nicht ins Kontingent, Umsatz,
      Auswertung), steht im Änderungsprotokoll („Testdatensatz gesendet“).
+   - **Pivacom (Heinrich von Kleist) nur ISO-8859-1** (17.11.2026): Pivacom lehnt Mails mit `charset=utf-8` ab.
+     Für Adressen aus `PPL_LATIN1_DOMAINS` (Standard `pivacom.com`) baut die App eine eigene Textmail in
+     ISO-8859-1 (`src/lib/mail/latin1.ts`) und schickt sie über das **Versand-Postfach** in Microsoft 365
+     (`src/lib/ppl/versand-postfach.ts`, Postfach `PPL_VERSAND_POSTFACH`, Standard `leads@performancegrowth.de`):
+     Graph `POST /users/{postfach}/sendMail` mit der kompletten MIME-Mail (base64, `text/plain`), so bleibt der
+     Zeichensatz erhalten. Resend schreibt ihn auf utf-8 um. Ist das Postfach nicht verbunden, geht die Mail wie
+     vorher über Resend-SMTP raus, mit Admin-Push und Slack-Hinweis „Versand-Postfach nicht verbunden“.
+     `MAIL_NUR_AN` gilt auch hier. Notausgang: `PPL_VERSAND_FORMAT=json` sendet eine normale Graph-Nachricht
+     (wie der alte Zap, Exchange wählt den Zeichensatz).
+     **Einrichtung:** Entra (portal.azure.com) → App-Registrierungen → die App der Microsoft-Anmeldung
+     (`MICROSOFT_CLIENT_ID`) → API-Berechtigungen → Berechtigung hinzufügen → Microsoft Graph → Delegierte
+     Berechtigungen → `Mail.Send` und `Mail.Send.Shared` → hinzufügen → „Administratorzustimmung für … erteilen“.
+     Dann Admin → Pay-per-Lead → HvK-Abrechnungen → **Versand-Postfach verbinden** und mit
+     `leads@performancegrowth.de` anmelden (oder mit einem eigenen Konto, das „Senden als“ für leads@ hat).
+     **Testmail senden** schickt eine Mail mit Umlauten an die eigene Adresse; in Outlook „Quelle anzeigen“ muss
+     `Content-Type: text/plain; charset=ISO-8859-1` stehen. Danach am Bezug „Nochmal zustellen“ bzw. Testdatensatz.
    - **Slack** je Lead (`src/lib/ppl/slack.ts`): Railway-Variable `SLACK_PPL_WEBHOOK_URL` (Incoming Webhook);
      Ergebnis, Produkt, Bezieher, Vorname und PLZ/Ort, Lieferweg mit Status, Link in den Admin; bei
      Zustellfehler eigene Warnung. Schalter „Slack-Nachricht je Lead“ am Bezug. Prüfen: Pay-per-Lead → **Slack testen**.

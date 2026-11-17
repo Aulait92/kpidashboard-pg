@@ -4956,6 +4956,18 @@
   "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  },
  {
+  "heute": "/admin/ppl?ansicht=hvk",
+  "funktion": "Versand-Postfach für Pivacom verbinden (Microsoft 365), Status, Testmail in ISO-8859-1",
+  "quelle": "app/admin/ppl/ppl-versand.tsx:PplVersandPostfach",
+  "neu": "Leads & Kampagnen › Pay-per-Lead › HvK-Abrechnungen",
+  "status": "ergänzt (17.11.2026, Versand an Pivacom über Microsoft 365)",
+  "demo_view": "leads-ppl",
+  "id": "ppl-versand-pplversandpostfach--versand-postfach-fuer-pivacom-verbinden",
+  "bereich": "leads",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+ },
+ {
   "heute": "/admin/vertrieb/import (Anbindungen)",
   "funktion": "Fehlende Instantly-Antworten der letzten 90 Tage nachholen (Vorschau, dann nachholen)",
   "quelle": "components/vertrieb/import-forms.tsx:InstantlyNachholen",

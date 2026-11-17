@@ -26,7 +26,8 @@ const POSTFACH: Record<string, { tone: "success" | "warning"; text: string }> = 
 const GRID = "grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1.2fr)_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] sm:items-center";
 const Label = ({ children }: { children: React.ReactNode }) => <span className="text-[color:var(--muted)] sm:hidden">{children} </span>;
 
-export async function HvkAbrechnungen({ postfach }: { postfach?: string }) {
+/** versand: Zeile „Versand an Pivacom“ (ppl-versand.tsx), direkt unter dem Kopf, neben „Postfach verbinden“. */
+export async function HvkAbrechnungen({ postfach, versand }: { postfach?: string; versand?: React.ReactNode }) {
   const [rows, box] = await Promise.all([listHvkInvoices(), hvkMailboxStatus()]);
   const connected = !!box;
   const notice = postfach ? POSTFACH[postfach] : null;
@@ -38,6 +39,7 @@ export async function HvkAbrechnungen({ postfach }: { postfach?: string }) {
   return (
     <Card>
       <CardHeader title="HvK-Abrechnungen" count={rows.length} actions={connected && box.status === "ok" ? <HvkFetchNow /> : hvkMailAvailable() ? connect : undefined} />
+      {versand}
       {notice ? <p className={`border-b border-[color:var(--border)] px-5 py-2 text-sm ${notice.tone === "success" ? "text-emerald-700" : "text-amber-800"}`}>{notice.text}</p> : null}
       {box?.status === "error" ? (
         <p className="flex items-center gap-2 border-b border-[color:var(--border)] px-5 py-2 text-sm text-amber-800">

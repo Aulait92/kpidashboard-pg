@@ -57,6 +57,15 @@ describe("Slack je PPL-Lead", () => {
     expect(warn).not.toContain("geheim123");
   });
 
+  it("zugestellt mit Hinweis (Pivacom ohne Versand-Postfach): ACHTUNG, Adresse nur als Domain", () => {
+    const t = pplSlackText({
+      ...base,
+      status: "delivered",
+      delivery: { label: "E-Mail (Vorlage)", ok: true, hinweis: "leads@pivacom.com: Versand-Postfach nicht verbunden, über Resend gesendet", targets: [{ target: "leads@pivacom.com", ok: true }] },
+    });
+    expect(t).toContain("zugestellt, ACHTUNG: …@pivacom.com: Versand-Postfach nicht verbunden");
+  });
+
   it("Hilfen", () => {
     expect(targetDomain("A@Example.COM")).toBe("example.com");
     expect(targetDomain("hooks.example.com")).toBe("hooks.example.com");
