@@ -1,0 +1,115 @@
+{
+  "gesellschaft": "AUXILIA",
+  "sparte": "rechtsschutz",
+  "produkt": "AUXILIA Rechtsschutzversicherung (Privatkunden)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Unbegrenzte Summe, auch weltweit",
+    "Strafkaution bis 1 Mio. €",
+    "Telefonischer Rechtsrat"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Rechtsschutz",
+      "kurz": "Privat",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "nein",
+        "verkehr": "nein",
+        "wohnen": "optional",
+        "kaution": "1 Mio. €",
+        "privat": "ja",
+        "vsWelt": "unbegrenzt",
+        "sb": "fest, fallend oder flex",
+        "wartezeit": "bis 3 Monate",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.ks-auxilia.de/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-, Berufs- und Verkehrs-Rechtsschutz",
+      "kurz": "Privat Beruf",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "1 Mio. €",
+        "privat": "ja",
+        "vsWelt": "unbegrenzt",
+        "sb": "fest, fallend oder flex",
+        "wartezeit": "3 Mon., Beruf 6 Mon.",
+        "straf": "ja",
+        "opfer": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.ks-auxilia.de/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "JURPRIVAT",
+      "kurz": "JURPRIVAT",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "kaution": "1 Mio. €",
+        "privat": "ja",
+        "privatPlus": "Spezial-Straf-RS",
+        "vsWelt": "unbegrenzt",
+        "sb": "fest, fallend oder flex",
+        "wartezeit": "3 Mon., Beruf 6 Mon.",
+        "straf": "ja",
+        "opfer": "ja",
+        "mediation": "ja",
+        "telefon": "ja"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.ks-auxilia.de/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ks-auxilia.de/rechtsschutzversicherung/",
+    "https://www.ks-auxilia.de/rechtsschutzversicherung/privat/",
+    "https://www.ks-auxilia.de/fileadmin/user_upload/Mustertexte/I-016_Produktbroschuere_Privatkunden_10-23.pdf"
+  ],
+  "offen": [
+    "auxilia.de ist passwortgeschützt; die öffentliche Seite der Gesellschaft ist ks-auxilia.de (KS/AUXILIA). Quelle: Tarifoptionen und „Tarifdetails im Vergleich“ der Produktseite Rechtsschutz (Abruf 17.11.2026), ergänzt aus der Produktbroschüre Privatkunden (ARB/2026).",
+    "Drei Tarifoptionen der Seite: Privat, Privat Beruf und Verkehr, JURPRIVAT (von AUXILIA als „Beliebt“ markiert). Weitere Hauptprodukte laut Broschüre: JURSENIOR (Senioren, ohne Beruf), JURSELECT, Privat und Verkehr, Verkehrs-Rechtsschutz; nicht aufgenommen.",
+    "Wohnen: im Vergleich bei Privat und Privat Beruf nicht enthalten, laut Broschüre als Ergänzung „Rechtsschutz für selbst bewohnte Wohneinheiten“ zuwählbar. Vermieter-Rechtsschutz als Ergänzung bzw. eigenes Produkt.",
+    "Selbstbeteiligung wählbar: fallend 400 bis 0 € (Schadenfreiheitssystem), fest 150, 250, 500 oder 1.000 €, flexibel 300/150 € (geringere SB mit von AUXILIA empfohlenem Anwalt). Ein Tarif ganz ohne SB ist auf der Seite nicht genannt.",
+    "Opfer-Rechtsschutz steht im Vergleich nur im Abschnitt Verkehr (Privat: nein); laut Broschüre ist Opfer-Rechtsschutz bei JURPRIVAT Leistungsart. Für Privat daher offen gelassen.",
+    "Wartezeit: Privat bis zu 3 Monate, Beruf 6 Monate, Verkehr und Spezial-Straf-Rechtsschutz ohne Wartezeit.",
+    "Mitgliedschaft im KS e.V. (Automobilclub, u. a. Pannen- und Abschlepphilfe) ist in allen Tarifen enthalten."
+  ]
+}

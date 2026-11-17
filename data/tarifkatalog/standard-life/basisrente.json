@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Standard Life",
+  "sparte": "basisrente",
+  "produkt": "Maxxellence Invest Basisvorsorge",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Fondswechsel monatlich kostenlos",
+    "Nicht kündbar, nicht beleihbar"
+  ],
+  "tarife": [
+    {
+      "name": "Maxxellence Invest Basisvorsorge",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds, MyFolio, Index",
+        "flexibel": "Zuzahlung ab 500 €",
+        "hinterbliebene": "ja"
+      },
+      "bausteine": {
+        "bu": "nein"
+      },
+      "quelle": "https://www.standardlife.de/produkte/maxxellence-invest/#tab-basisvorsorge",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.standardlife.de/produkte/maxxellence-invest/#tab-basisvorsorge",
+    "https://www.standardlife.de/dl-4ee6c9b",
+    "https://www.standardlife.de/dl-2a47b92"
+  ],
+  "offen": [
+    "Quelle: Produktseite Maxxellence Invest (Reiter Basisvorsorge) und Flyer „Clever sparen, sicher vorsorgen“ (Stand 03/2026) auf standardlife.de (Abruf 17.11.2026). Ein Tarif, daher Stufe „Tarif“.",
+    "Beitragsgarantie nicht genannt; Chancen-Risiko-Klasse 3 bzw. 4 laut Produktinformationsstelle Altersvorsorge. Garantierter Rentenfaktor aus der Produktbeschreibung von Maxxellence Invest (höherer Wert aus Fondsguthaben oder garantiertem Rentenfaktor); Höhe nicht veröffentlicht.",
+    "Zuzahlungen ab Vertragsbeginn einmal im Monat, je mindestens 500 €, bis zum steuerlichen Höchstbeitrag. Beitragspause nicht genannt.",
+    "BU-Rente und Kapitalauszahlung in der Basisvorsorge ausgeschlossen; ob eine Beitragsbefreiung bei BU wählbar ist, ist nicht belegt.",
+    "Hinterbliebenenschutz ist laut Flyer enthalten, Umfang nicht beschrieben. Kosten nur in den vertragsindividuellen Verbraucherinformationen."
+  ]
+}

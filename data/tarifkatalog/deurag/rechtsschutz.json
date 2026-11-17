@@ -1,0 +1,155 @@
+{
+  "gesellschaft": "DEURAG",
+  "sparte": "rechtsschutz",
+  "produkt": "DEURAG Rechtsschutz für Privatkunden",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Spezial-Straf-RS inklusive",
+    "Telefonberatung ohne SB",
+    "Upgrade-Garantie"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz für Privatkunden EASY",
+      "kurz": "EASY",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "1 Mio. € in Europa",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "1 Mio. € in Europa",
+        "privat": "ja",
+        "vsWelt": "100.000 € (1 Monat)",
+        "sb": "0 bis 1.000 € wählbar",
+        "wartezeit": "6 Mon. (Vertrag, Arbeit)",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja, ohne SB",
+        "telefon": "ja, ohne SB"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.deurag.de/fileadmin/deurag/Dokumente/4_Produkte/Highlightblatt_RS_fuer_Privatkunden.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rechtsschutz für Privatkunden SAFE",
+      "kurz": "SAFE",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "unbegrenzt in Europa",
+        "privat": "ja",
+        "privatPlus": "Photovoltaik, Cyber-RS",
+        "vsWelt": "500.000 €",
+        "sb": "0 bis 1.000 € wählbar",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja, ohne SB",
+        "telefon": "ja, ohne SB"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.deurag.de/fileadmin/deurag/Dokumente/4_Produkte/Highlightblatt_RS_fuer_Privatkunden.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rechtsschutz für Privatkunden FREE",
+      "kurz": "FREE",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "unbegrenzt in Europa",
+        "privat": "ja",
+        "privatPlus": "Kapitalanlagen, Erbrecht",
+        "vsWelt": "1 Mio. €",
+        "sb": "0 bis 1.000 € wählbar",
+        "wartezeit": "3 Mon., Vertrag keine",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja, ohne SB",
+        "telefon": "ja, ohne SB"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.deurag.de/fileadmin/deurag/Dokumente/4_Produkte/Highlightblatt_RS_fuer_Privatkunden.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rechtsschutz für Privatkunden FREE plus",
+      "kurz": "FREE plus",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt in Europa",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "kaution": "unbegrenzt in Europa",
+        "privat": "ja",
+        "privatPlus": "Ehe- und Unterhalts-RS",
+        "vsWelt": "1 Mio. €",
+        "sb": "0 bis 1.000 € wählbar",
+        "wartezeit": "3 Mon., Vertrag keine",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja, ohne SB",
+        "telefon": "ja, ohne SB"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.deurag.de/fileadmin/deurag/Dokumente/4_Produkte/Highlightblatt_RS_fuer_Privatkunden.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.deurag.de/rechtsschutzversicherung/privatrechtsschutz/",
+    "https://www.deurag.de/fileadmin/deurag/Dokumente/4_Produkte/Highlightblatt_RS_fuer_Privatkunden.pdf",
+    "https://www.deurag.de/fileadmin/deurag/Dokumente/1_Tarif_Antrag/Tarif-Eiskarte.pdf",
+    "https://www.deurag.de/fileadmin/deurag/Dokumente/4_Produkte/Broschuere_RS_fuer_Privatkunden.pdf"
+  ],
+  "offen": [
+    "Quelle: Highlightblatt Privatkunden (Stand 08/2025) mit den Produktlinien EASY, SAFE („Bestseller“), FREE und FREE plus, dazu Produktseite Privatrechtsschutz und Tarif-Informationen (Abruf 17.11.2026). DEURAG gehört zur SIGNAL IDUNA Gruppe.",
+    "Grundprodukt ist die Kombination Privat, Beruf und Verkehr mit Spezial-Straf-Rechtsschutz; alternativ Privat und Beruf ohne Verkehr. Wohnungs- und Grundstücks-Rechtsschutz für selbst genutzte Immobilien ist zuwählbar, ebenso für vermietete Immobilien.",
+    "FREE plus ergänzt FREE um gerichtlichen Ehe- und Unterhalts-Rechtsschutz (je bis 30.000 € je Fall, Wartezeit 3 Jahre bzw. 1 Jahr); in den Tarif-Informationen 10/2024 noch nicht als eigene Spalte geführt.",
+    "Selbstbeteiligung: SB-Fix 0, 150, 250, 500 oder 1.000 €; SB-Vario (z. B. 150/300 €, geringere SB mit DEURAG-Partneranwalt); SB-Bonus 400 € fallend bis 0 € nach schadenfreien Jahren.",
+    "Wartezeit: EASY 6 Monate im Vertrags- und Arbeitsrecht, sonst 3 Monate; SAFE 3 Monate; FREE ohne Wartezeit im Vertragsrecht, Arbeitsrecht 3 Monate laut SAFE (bei FREE nicht eigens genannt).",
+    "Erweiterte Privat-Leistungen nur beispielhaft genannt: SAFE u. a. Familien- und Erbrecht bis 1.000 €, Photovoltaik-RS, aktiver Straf-RS (Cyber); FREE u. a. Kapitalanlagen bis 100.000 € Anlagesumme, gerichtlicher Erb-RS bis 10.000 €.",
+    "Beitragsbefreiung bei Arbeitslosigkeit in SAFE und FREE inklusive, nicht bei EASY."
+  ]
+}

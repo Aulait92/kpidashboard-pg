@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "Standard Life",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung (Sofortrente und Fondspolicen)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Rentenhöhe ab Beginn fest",
+    "Hinterbliebenenschutz wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "FREELAXSOFORT Sofortrente",
+      "kurz": "Sofortrente",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Kapitalschutz optional",
+        "rentenfaktor": "Rente bei Abschluss fest",
+        "flexibel": "1 Entnahme in Rente",
+        "hinterbliebene": "Garantiezeit wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.standardlife.de/produkte/freelax-sofortrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ParkAllee",
+      "kurz": "ParkAllee",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds, MyFolio, Index",
+        "flexibel": "Zuzahlung, Entnahme",
+        "hinterbliebene": "Kapitalschutz optional",
+        "kapital": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.standardlife.de/produkte/parkallee/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Maxxellence Invest (Privatrente)",
+      "kurz": "Maxxellence",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "rentenfaktor": "garantiert",
+        "anlage": "Fonds, MyFolio, Index",
+        "flexibel": "Zuzahlung, Entnahme",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.standardlife.de/produkte/maxxellence-invest/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.standardlife.de/",
+    "https://www.standardlife.de/produkte/freelax-sofortrente/",
+    "https://www.standardlife.de/dl-25980b3",
+    "https://www.standardlife.de/produkte/parkallee/",
+    "https://www.standardlife.de/dl-8e96cae",
+    "https://www.standardlife.de/produkte/maxxellence-invest/",
+    "https://www.standardlife.de/dl-2a47b92",
+    "https://www.standardlife.de/private-altersvorsorge-und-bu-absicherung/"
+  ],
+  "offen": [
+    "Stufen sind drei eigenständige Produkte, geordnet von sicherheits- nach chancenorientiert: FREELAXSOFORT (Sofortrente gegen Einmalbeitrag, ohne Überschussbeteiligung), ParkAllee (fondsgebunden, Einmalbeitrag ab 10.000 €), Maxxellence Invest (fondsgebunden, laufender Beitrag ab 50 €). Standard Life markiert keines; ParkAllee als mittlere Stufe gesetzt.",
+    "Quelle: Produktseiten und Broschüren auf standardlife.de (Abruf 17.11.2026): Flyer Sofortrente 10/2026, Broschüre ParkAllee 06/2026, Broschüre Maxxellence Invest 03/2026. Basisinformationsblätter nicht ausgewertet.",
+    "Beitragsgarantie bei ParkAllee und Maxxellence Invest nicht genannt; das optionale Capital Security Management (CSM) gibt ausdrücklich keine Garantien. Rente aus dem höheren Wert von Fondsguthaben und garantiertem Rentenfaktor; Höhe des Rentenfaktors nicht veröffentlicht.",
+    "Sofortrente: garantierter Rentenzins für den aktuellen Rentenbeginn veröffentlicht, für spätere Beginne freibleibend (hier nicht übernommen). Kapitalschutz bis Alter 90 oder Rentengarantiezeit wählbar; einmalige Kapitalentnahme in der Rentenphase. Anlage nicht genannt.",
+    "Maxxellence Invest: BU-Schutz nur als Zusatz (Beitragsbefreiung, BU-Rente), Low Start (bis 70 % geringerer Beitrag bis 4 Jahre), Rentendynamik optional. Hinterbliebenenschutz der Privatrente nicht beschrieben.",
+    "Kosten (Effektivkosten) nicht auf den Produktseiten; Verweis auf die vertragsindividuellen Verbraucherinformationen.",
+    "WeitBlick (fondsgebundene Lebensversicherung mit Auszahlplan, Einmalbeitrag ab 15.000 €) ist keine Rentenversicherung und nicht aufgenommen."
+  ]
+}

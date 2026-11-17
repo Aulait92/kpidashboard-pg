@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "ÖRAG",
+  "sparte": "rechtsschutz",
+  "produkt": "ÖRAG Privat-Rechtsschutz (Rundum-Schutz)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Unbegrenzte Versicherungssumme",
+    "Telefonberatung ohne SB",
+    "Servicepaket MEINRECHT"
+  ],
+  "tarife": [
+    {
+      "name": "Rundum-Schutz",
+      "kurz": "Rundum",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "nein",
+        "wartezeit": "3 Monate (Verkehr keine)",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja, ohne SB"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.oerag.de/rechtsschutzversicherungen/rundum-schutz-privat.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rundum-Schutz PLUS",
+      "kurz": "Rundum PLUS",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja",
+        "privat": "ja",
+        "privatPlus": "1 Fall im Jahr 1.000 €",
+        "wartezeit": "3 Monate (Verkehr keine)",
+        "opfer": "ja",
+        "straf": "ja",
+        "mediation": "ja",
+        "telefon": "ja, ohne SB"
+      },
+      "bausteine": {
+        "beruf": "inklusive",
+        "verkehr": "inklusive",
+        "wohnen": "inklusive"
+      },
+      "quelle": "https://www.oerag.de/rechtsschutzversicherungen/rundum-schutz-plus-privat.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.oerag.de/rechtsschutzversicherungen/privat.html",
+    "https://www.oerag.de/rechtsschutzversicherungen/rundum-schutz-privat.html",
+    "https://www.oerag.de/rechtsschutzversicherungen/rundum-schutz-plus-privat.html",
+    "https://www.oerag.de/dam/jcr:8fde1fd6-a149-484f-8f17-89d0f4652596/I-PDF_Unsere-Leistungen-P-LEISTUNGEN-450124_V02_v130324_x.pdf",
+    "https://www.oerag.de/dam/jcr:f21fb722-8700-426d-b91d-30e3e4c25533/dlang_AO_flyer_privat-rechtsschutz_2024_final.pdf",
+    "https://www.oerag.de/dam/jcr:534686cb-0124-4f21-bbe0-50180e1f0492/2026_06_03_0726%20ARB%20%C3%96RAG%20FMA%20TARB%20D%20450726_final_A-1bRGB.pdf"
+  ],
+  "offen": [
+    "Quelle: Produktseiten Rundum-Schutz und Rundum-Schutz PLUS auf oerag.de (Abruf 17.11.2026), Leistungsübersicht (FMA P-LEISTUNGEN 450124), Flyer Privat-Rechtsschutz 2024 und ARB der ÖRAG (Fassung 07/2026).",
+    "ÖRAG empfiehlt auf der Produktseite ausdrücklich den Rundum-Schutz PLUS. Die Einzelbausteine Privat, Verkehr, Haus und Wohnung sowie Beruf sind auch einzeln kombinierbar.",
+    "Rundum-Schutz PLUS: für nicht versicherte private Angelegenheiten Anwaltskosten bis 1.000 € für einen Fall im Kalenderjahr.",
+    "Strafkaution: laut ARB zinsloses Darlehen „bis zu der vereinbarten Höhe“, Betrag nicht veröffentlicht. Versicherungssumme weltweit nicht beziffert.",
+    "Selbstbeteiligung: Höhe nicht veröffentlicht; SB-Bonus 150 € weniger, wenn eine von MEINRECHT empfohlene Kanzlei beauftragt wird.",
+    "Wartezeit laut ARB: 3 Monate u. a. für Arbeits-, Wohnungs- und Vertrags-Rechtsschutz, 12 Monate für Studienplatzverfahren; Verkehrs-Rechtsschutz ohne Wartezeit.",
+    "Vertrieb vor allem über Sparkassen und öffentliche Versicherer (z. B. Provinzial)."
+  ]
+}
