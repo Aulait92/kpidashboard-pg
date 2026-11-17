@@ -1,78 +1,113 @@
 "use client";
 
-// Nutzungsanalyse (lib/nutzungsanalyse.ts): einmalige Frage im Vermittlerbereich, danach Aufnahme per Sentry Session
-// Replay (maskiert) bei einem Teil der Sitzungen. Ohne „Ja“ wird nichts aufgenommen (nur wie bisher bei Fehlern).
-// Widerruf: Schalter unter Einstellungen (AnalyseSchalter), stoppt sofort.
+// Nutzungsanalyse (lib/nutzungsanalyse.ts, Rechtsprüfung docs/rechtstexte/sitzungsaufnahme-2026-11-17.md):
+// einmalige Frage im Vermittlerbereich. Erst nach „Ja“ lädt Sentry die Replay-Integration (vorher gar nicht),
+// nimmt bei einem Teil der Sitzungen auf, nur unter /buyer, alles maskiert, ohne Konsolenausgaben.
+// Widerruf: Schalter unter Einstellungen (AnalyseSchalter), stoppt sofort, auch in anderen Tabs.
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui";
+import { useToast } from "@/components/ui/toast";
 import { setAnalyseEinwilligungAction } from "@/app/buyer/actions";
 import { ANALYSE_ANTEIL, ANALYSE_TEXT, type AnalyseStatus } from "@/lib/nutzungsanalyse";
+import { isReplayAllowedPath, redactDeep } from "@/lib/sentry-redact";
 
 const KEY = "pg-analyse-sitzung";
+const WIDERRUF = "pg-analyse-widerruf";
+
+type RecordingEvent = { data?: { tag?: string; payload?: { category?: string } } };
+
+/** Replay-Integration nach Einwilligung laden (einmal). */
+function integrationLaden() {
+  if (Sentry.getReplay()) return;
+  Sentry.addIntegration(
+    Sentry.replayIntegration({
+      maskAllText: true,
+      maskAllInputs: true,
+      blockAllMedia: true,
+      // Kennungen und geheime Segmente aus Adressen entfernen, Konsolenausgaben nicht aufnehmen
+      beforeAddRecordingEvent: (event) => {
+        const e = event as unknown as RecordingEvent;
+        if (e.data?.tag === "breadcrumb" && e.data.payload?.category === "console") return null;
+        return redactDeep(event);
+      },
+    }),
+  );
+}
 
 /** Aufnahme für diese Sitzung starten (Anteil per Zufall, je Tab einmal entschieden). */
-function aufnahmeStarten() {
+function aufnahmeStarten(pseudonym: string | null) {
+  if (!isReplayAllowedPath(window.location.pathname)) return;
   try {
+    if (window.localStorage.getItem(WIDERRUF) === "1") return;
     let wahl = window.sessionStorage.getItem(KEY);
     if (!wahl) {
       wahl = Math.random() < ANALYSE_ANTEIL ? "ja" : "nein";
       window.sessionStorage.setItem(KEY, wahl);
     }
-    if (wahl !== "ja") return;
-  } catch {
-    return;
-  }
-  const r = Sentry.getReplay();
-  if (!r) return;
-  try {
-    // Läuft schon im Fehler-Puffer: in eine volle Aufnahme umschalten, sonst starten
+    integrationLaden();
+    if (pseudonym) Sentry.setTag("nutzer", pseudonym);
+    const r = Sentry.getReplay();
+    if (!r || wahl !== "ja") return; // ohne Auswahl nur Fehler-Puffer (replaysOnErrorSampleRate)
     if (r.getRecordingMode() === "buffer") void r.flush();
     else r.start();
   } catch {
-    /* läuft bereits */
+    /* läuft bereits bzw. kein Speicher */
   }
 }
 
 function aufnahmeStoppen() {
   try {
     window.sessionStorage.setItem(KEY, "nein");
+    window.localStorage.setItem(WIDERRUF, "1");
   } catch {}
   void Sentry.getReplay()?.stop();
 }
 
 /** Im Layout: startet die Aufnahme bei Einwilligung bzw. zeigt einmal die Frage. */
-export function Nutzungsanalyse({ status, darfFragen }: { status: AnalyseStatus; darfFragen: boolean }) {
+export function Nutzungsanalyse({ status, darfFragen, pseudonym }: { status: AnalyseStatus; darfFragen: boolean; pseudonym: string | null }) {
   const [s, setS] = useState(status);
   const [pending, start] = useTransition();
+  const toast = useToast();
   useEffect(() => {
-    if (s === "ja") aufnahmeStarten();
-  }, [s]);
+    if (s === "ja") {
+      try {
+        window.localStorage.removeItem(WIDERRUF);
+      } catch {}
+      aufnahmeStarten(pseudonym);
+    }
+    // Widerruf in einem anderen Tab: hier sofort stoppen
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === WIDERRUF && e.newValue === "1") void Sentry.getReplay()?.stop();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [s, pseudonym]);
   if (s !== null || !darfFragen) return null;
   const antwort = (ja: boolean) =>
     start(async () => {
       setS(ja ? "ja" : "nein");
       await setAnalyseEinwilligungAction(ja);
+      if (ja) toast.show({ message: ANALYSE_TEXT.danke });
     });
   return (
     <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-lg)] md:bottom-5 md:left-auto md:right-5 md:mx-0" role="dialog" aria-labelledby="analyse-titel" data-nutzungsanalyse>
       <p id="analyse-titel" className="text-[15px] font-semibold">
         {ANALYSE_TEXT.titel}
       </p>
-      <p className="mt-1 text-sm text-[color:var(--muted)]">
-        {ANALYSE_TEXT.text}{" "}
-        <Link href={ANALYSE_TEXT.link} target="_blank" className="font-medium text-[color:var(--brand)] underline">
-          {ANALYSE_TEXT.mehr}
-        </Link>
-      </p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <p className="mt-1 text-sm text-[color:var(--muted)]">{ANALYSE_TEXT.text}</p>
+      <Link href={ANALYSE_TEXT.link} target="_blank" className="mt-1 inline-flex min-h-9 items-center text-sm font-medium text-[color:var(--brand)] underline">
+        {ANALYSE_TEXT.mehr}
+      </Link>
+      {/* Beide Knöpfe gleich gestaltet (Rechtsprüfung: kein hervorgehobenes Ja) */}
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Button variant="secondary" size="md" disabled={pending} onClick={() => antwort(true)} data-analyse-ja>
+          {ANALYSE_TEXT.ja}
+        </Button>
         <Button variant="secondary" size="md" disabled={pending} onClick={() => antwort(false)} data-analyse-nein>
           {ANALYSE_TEXT.nein}
-        </Button>
-        <Button variant="primary" size="md" disabled={pending} onClick={() => antwort(true)} data-analyse-ja>
-          {ANALYSE_TEXT.ja}
         </Button>
       </div>
     </div>
@@ -80,23 +115,27 @@ export function Nutzungsanalyse({ status, darfFragen }: { status: AnalyseStatus;
 }
 
 /** Schalter unter Einstellungen (Widerruf bzw. nachträgliche Zustimmung). */
-export function AnalyseSchalter({ status }: { status: AnalyseStatus }) {
+export function AnalyseSchalter({ status, pseudonym }: { status: AnalyseStatus; pseudonym: string | null }) {
   const [an, setAn] = useState(status === "ja");
   const [pending, start] = useTransition();
   const umschalten = () =>
     start(async () => {
       const neu = !an;
       setAn(neu);
-      if (neu) aufnahmeStarten();
-      else aufnahmeStoppen();
+      if (neu) {
+        try {
+          window.localStorage.removeItem(WIDERRUF);
+        } catch {}
+        aufnahmeStarten(pseudonym);
+      } else aufnahmeStoppen();
       await setAnalyseEinwilligungAction(neu);
     });
   return (
     <div className="flex items-center gap-3 px-4 py-3.5" data-analyse-schalter>
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] font-medium">App verbessern helfen</p>
+        <p className="text-[15px] font-medium">{ANALYSE_TEXT.schalter}</p>
         <p className="text-sm text-[color:var(--muted)]">
-          Wir sehen, wo Sie klicken und wo es hakt, nie Ihre Kunden oder Eingaben.{" "}
+          {ANALYSE_TEXT.schalterHinweis}{" "}
           <Link href={ANALYSE_TEXT.link} target="_blank" className="text-[color:var(--brand)] underline">
             {ANALYSE_TEXT.mehr}
           </Link>
@@ -106,7 +145,7 @@ export function AnalyseSchalter({ status }: { status: AnalyseStatus }) {
         type="button"
         role="switch"
         aria-checked={an}
-        aria-label="App verbessern helfen"
+        aria-label={ANALYSE_TEXT.schalter}
         disabled={pending}
         onClick={umschalten}
         className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition ${an ? "bg-[color:var(--brand)]" : "bg-slate-300"}`}

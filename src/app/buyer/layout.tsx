@@ -4,7 +4,8 @@ import { hilfeGruss } from "@/lib/hilfe-gruss";
 import { InhaberHinweis } from "@/components/inhaber-hinweis";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { Nutzungsanalyse } from "@/components/nutzungsanalyse";
-import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
+import { asAnalyseStatus, darfAnalyseFragen } from "@/lib/nutzungsanalyse";
+import { analysePseudonym } from "@/lib/nutzungsanalyse-server";
 import { prisma } from "@/lib/prisma";
 import { hasWhatsAppInbox, showChatsTeaser } from "@/lib/whatsapp/access";
 import { attentionCount } from "@/lib/whatsapp/attention";
@@ -68,7 +69,10 @@ export default async function BuyerLayout({
       ? await prisma.salesContact.findUnique({ where: { customerId: ctx.customerId }, select: { salutation: true, lastName: true } }).catch(() => null)
       : null,
   );
-  const analyse = ctx?.userId && !ctx.preview ? asAnalyseStatus((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true } }))?.analyseEinwilligung) : null;
+  // Nutzungsanalyse: Einwilligung, Erstellt-Datum (erst nach 2 Tagen fragen), Pseudonym für Sentry
+  const analyseUser = ctx?.userId && !ctx.preview ? await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true, createdAt: true } }) : null;
+  const analyse = asAnalyseStatus(analyseUser?.analyseEinwilligung);
+  const analysePseudo = ctx?.userId && analyse === "ja" ? analysePseudonym(ctx.userId) : null;
   const demo = !!ctx?.demo;
   const previewName = ctx?.preview && !demo ? customerName : null;
   const newUi = ctx ? await isNewUi(ctx.customerId) : false;
@@ -161,7 +165,11 @@ export default async function BuyerLayout({
             {/* Live: neue Leads und Chat-Nachrichten ohne Neuladen, auch der Zähler „Braucht dich“ (components/live-refresh.tsx) */}
             <LiveRefresh fullPaths={LIVE_PATHS} />
             {/* Nutzungsanalyse nur mit Einwilligung (components/nutzungsanalyse.tsx, lib/nutzungsanalyse.ts) */}
-            <Nutzungsanalyse status={analyse} darfFragen={!ctx.preview && !!ctx.userId} />
+            <Nutzungsanalyse
+              status={analyse}
+              pseudonym={analysePseudo}
+              darfFragen={!ctx.preview && !!analyseUser && darfAnalyseFragen({ createdAt: analyseUser.createdAt, einrichtungOffen: setupOpen })}
+            />
             {children}
             {/* Lead-Detail-Modal innerhalb der Shell → Toasts funktionieren dort auch */}
             {modal}
