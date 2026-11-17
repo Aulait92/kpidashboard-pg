@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { buchungsText, einladungAnText, terminRegeln, vermittlerName, WUNSCHZEIT_REGEL } from "@/lib/whatsapp/gespraech";
 
-const person = vermittlerName("sie", { name: "Ole Kannapinn", anrede: "herr", fallback: "Ole" });
+const person = vermittlerName("sie", { name: "Ole Kannapinn", anrede: "Herr", fallback: "Ole" });
 
 describe("Live-Test 17.11.2026", () => {
   it("Wunschzeit frei: direkt buchen, keine zweite Zeit; Regel steht im Prompt", () => {
