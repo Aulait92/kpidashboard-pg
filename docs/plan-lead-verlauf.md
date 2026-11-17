@@ -151,3 +151,24 @@ Legende Aufwand: S unter 1 h, M 1 bis 3 h, L 3 bis 8 h, XL mehr als 1 Tag. Pfade
 14. **Offene Fragen an Ole:** Was ist mit „genau diese Fassung“ beim Angebot gemeint (Gesellschafts-PDF oder Kundenlink und Präsentations-PDF)? Wie lautet der No-Show-Auftrag? Sollen es die zwei frühesten Zeiten sein oder eine pro Tag? Bleibt es bei 3 Monaten statt 21 Tagen?
 
 Im Repo wurde nichts geändert.
+
+---
+
+## Ergänzungen von Ole (17.11.2026, 18:28 Uhr), in die Pakete eingeordnet
+
+- **A) Lead antwortet nicht** (neu, ins Paket P1, nutzt die bestehende Anrufliste für Leads ohne Erstanschreiben):
+  - 30 Min nach dem Erstanschreiben ohne Antwort (in den Geschäftszeiten des Vermittlers, sonst zu Arbeitsbeginn am nächsten Morgen): Push „Frau Becker hat noch nicht geantwortet. Jetzt anrufen?“ und Eintrag auf der Anrufliste.
+  - Tag 2: WA-Nachfassen und erneut die Aufgabe „Anrufen“.
+  - Tag 5: letzte WA, danach Status „kein Kontakt“. Abbruch bei Antwort oder STOPP.
+- **B) Angebot, zwei Wege** (P3):
+  - „Über die App senden“: Upload nötig, also das abgelegte PDF. Damit ist Frage 1 beantwortet.
+  - „Habe ich selbst gesendet“: ein Tipp, Upload optional. Nachfassen nur per WA mit dem Text „das Angebot, das Herr Kannapinn Ihnen geschickt hat“, keine Angebots-Mail.
+- **C) Nachfassen zum Angebot** (P3): Tag 2 WA, Tag 3 Anruf-Aufgabe plus Push „Frau Becker anrufen: Fragen zum Angebot?“, Tag 5 Mail mit Rückruf-Link, Tag 10 WA, danach Anruf-Aufgabe. Vorab-Check-Push vor jedem automatischen Nachfassen.
+- **D) Glückwunsch** (P4): nicht automatisch und nicht per Mail. Beim Eintragen des Abschlusses der Haken „Glückwunsch per WhatsApp senden“, vorausgewählt nur, wenn der Termin höchstens 3 Tage zurückliegt. Text: „Schön, dass Sie sich für Ihren neuen Schutz entschieden haben, Frau Becker! Bei Fragen erreichen Sie Herrn Kannapinn jederzeit hier.“ Damit ist Frage 5 beantwortet.
+- **E) Onboarding** (neues Paket P8, nach P6, weil es den Nachrichtenplan und die Texte daraus nutzt):
+  - Schritt „So arbeitet dein Assistent“: Zeitleiste mit drei Spuren und den 5 Momenten für den Vermittler plus den Anruf-Momenten.
+  - Beispielverlauf in WhatsApp-Optik (eigene Komponente) aus denselben Texten wie der Assistent, im gewählten Produkt, in der eingestellten Ansprache und mit dem Namen des Vermittlers.
+  - Dauerhaft erreichbar unter Einstellungen → Assistent → Ablauf.
+  - Screenshots 390 und 1280 px. Aufwand ca. 1 bis 1,5 Tage.
+
+Neue Summe: etwa 10 bis 12 Personentage. Noch offen bei Ole: Fragen 2 (zwei früheste Zeiten), 3 (Cross-Selling 3 Monate), 4 (Frage fett) und 6 (Sie-Form in der Vermittler-Oberfläche).
