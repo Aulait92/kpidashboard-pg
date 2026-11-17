@@ -5,6 +5,10 @@ import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { loadReferralSettings } from "@/lib/kollegen";
 import { canOpenReferralPage, referralTileText } from "@/lib/kollegen-shared";
+import { prisma } from "@/lib/prisma";
+import { AnalyseSchalter } from "@/components/nutzungsanalyse";
+import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
+import { analysePseudonym } from "@/lib/nutzungsanalyse-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -18,6 +22,7 @@ export default async function EinstellungenPage() {
   const owner = ctx.teamRole !== "advisor";
   // Kachel „Kollegen empfehlen“: gleiche Bedingung wie die Seite selbst, Untertitel aus der eingestellten Prämie
   const referralText = canOpenReferralPage(ctx) ? referralTileText(await loadReferralSettings()) : null;
+  const analyse = ctx.userId && !ctx.preview ? asAnalyseStatus((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true } }))?.analyseEinwilligung) : null;
   const groups: { title: string; items: Item[] }[] = [
     {
       title: "Mein Konto",
@@ -81,6 +86,14 @@ export default async function EinstellungenPage() {
               </ul>
             </section>
           ))}
+        {ctx.userId && !ctx.preview ? (
+          <section>
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Datenschutz</h2>
+            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]">
+              <AnalyseSchalter status={analyse} pseudonym={ctx.userId ? analysePseudonym(ctx.userId) : null} />
+            </div>
+          </section>
+        ) : null}
         <p className="flex flex-wrap gap-x-4 px-1 text-sm text-[color:var(--muted)] [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center">
           <a href="https://performancegrowth.de/impressum" target="_blank" rel="noopener noreferrer" className="hover:underline">Impressum</a>
           <a href="https://performancegrowth.de/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:underline">Datenschutz</a>

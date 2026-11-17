@@ -30,9 +30,13 @@
 // | Rechenart      | Sparten                                   | Grundlage                                        |
 // |----------------|-------------------------------------------|--------------------------------------------------|
 // | percent        | Sach (TKV, Privatschutz, Hausrat, …), KFZ | % vom Jahresbeitrag (+ laufender Bestand)        |
-// | beitragssumme  | Leben/Rente, BU, Kindersparplan           | ‰ der Beitragssumme (Monatsbeitrag × 12 × Jahre) |
+// | beitragssumme  | Leben/Rente, BU, Kindersparplan,          | ‰ der Beitragssumme (Monatsbeitrag × 12 × Jahre) |
+// |                | Risikoleben, Grundfähigkeit, Basisrente,  |                                                  |
+// |                | Sterbegeld (Ole, 17.11.2026)              |                                                  |
 // |                |                                           | + 1,5 % Bestand vom Jahresbeitrag ab dem 1. Jahr |
 // | monthly        | PKV-Neugeschäft                           | Monatsbeiträge, höchstens 9,9 (§ 50 VAG)         |
+// | monthly        | Kranken-Zusatz (Zahn, Krankenhaus/ambulant,| Monatsbeiträge + Bestand % vom Jahresbeitrag     |
+// |                | Pflege, Krankentagegeld)                  | (Ole, 17.11.2026)                                |
 // | honorar        | PKV-Tarifoptimierung (§ 204 VVG)          | Ersparnis × Monate oder fester Betrag (vom Kunden)|
 //
 // Bei beitragssumme ist LeadContract.premium der Jahresbeitrag (Eingabe als Monatsbeitrag × 12), bei
@@ -50,6 +54,14 @@ export type ProductKey =
   | "kfz"
   | "leben_bu"
   | "bu"
+  | "risikoleben"
+  | "grundfaehigkeit"
+  | "basisrente"
+  | "sterbegeld"
+  | "zahnzusatz"
+  | "krankenzusatz"
+  | "pflegezusatz"
+  | "krankentagegeld"
   | "sonstiges";
 
 /** Eigene Stornoquote pro Jahr für dieses Produkt (Anteil, 0,1 = 10 %); ohne Angabe gilt die allgemeine. */
@@ -60,7 +72,9 @@ export type RateSpec = (
   // rate = Abschlussprovision vom Jahresbeitrag (darf 0 sein),
   // trail = laufende Bestandsprovision pro Jahr vom Jahresbeitrag
   | { kind: "percent"; rate: number; defaultPremium: number; trail?: number; trailFromYear2?: boolean }
-  | { kind: "monthly"; months: number; fallbackAmount: number }
+  // Monatsbeiträge (PKV-Neugeschäft; Kranken-Zusatz mit trail = Bestand pro Jahr vom Jahresbeitrag und
+  // defaultMonthly = typischer Monatsbeitrag, wenn keiner eingetragen ist; ohne defaultMonthly gilt fallbackAmount)
+  | { kind: "monthly"; months: number; fallbackAmount: number; trail?: number; defaultMonthly?: number }
   // Leben/BU/Rente/Kindersparplan: promille = Abschlussprovision in ‰ der Beitragssumme, trail = Bestand
   // pro Jahr vom Jahresbeitrag (ab dem 1. Jahr), haftungMonate = Stornohaftungszeit
   | {
@@ -91,6 +105,8 @@ export const PKV_MAX_MONTHS = 9.9;
 export const HAFTUNG_MONATE = 60;
 
 const sach = (defaultPremium: number): RateSpec => ({ kind: "percent", rate: 0.55, trail: 0.1, trailFromYear2: true, defaultPremium });
+/** Kranken-Zusatz: Monatsbeiträge + Bestand vom Jahresbeitrag (Ole, 17.11.2026). */
+const kranken = (defaultMonthly: number, months = 6, trail = 0.02): RateSpec => ({ kind: "monthly", months, fallbackAmount: Math.round(defaultMonthly * months), trail, defaultMonthly });
 const leben = (defaultMonthly: number, defaultYears: number, defaultEndAge: number | null = null): RateSpec => ({
   kind: "beitragssumme",
   promille: 25,
@@ -121,6 +137,15 @@ export const PROVISION_PRODUCTS: readonly { key: ProductKey; label: string; matc
   { key: "leben_bu", label: "Leben/Rente", match: /leben|rente/i, standard: leben(100, 30) },
   { key: "bu", label: "BU", match: /\bbu\b|berufsunf/i, standard: leben(80, 30, 67) },
   { key: "kindersparplan", label: "Kindersparplan", match: /sparplan/i, standard: leben(50, 18) },
+  // Weitere Produkte (Ole, 17.11.2026: „hier fehlen noch Produkte“)
+  { key: "risikoleben", label: "Risikoleben", match: /risiko-?leben/i, standard: leben(20, 20) },
+  { key: "grundfaehigkeit", label: "Grundfähigkeit", match: /grundf(ä|a)hig/i, standard: leben(50, 30, 67) },
+  { key: "basisrente", label: "Basisrente (Rürup)", match: /basis-?rente|r(ü|u)rup/i, standard: leben(100, 30) },
+  { key: "sterbegeld", label: "Sterbegeld", match: /sterbegeld/i, standard: leben(30, 20) },
+  { key: "zahnzusatz", label: "Zahnzusatz", match: /zahn/i, standard: kranken(30) },
+  { key: "krankenzusatz", label: "Krankenzusatz (Krankenhaus, ambulant)", match: /krankenhaus|station(ä|a)r|ambulant|krankenzusatz/i, standard: kranken(30) },
+  { key: "pflegezusatz", label: "Pflegezusatz", match: /pflege/i, standard: kranken(40) },
+  { key: "krankentagegeld", label: "Krankentagegeld", match: /krankentagegeld/i, standard: kranken(30) },
   { key: "sonstiges", label: "Sonstiges", match: /^$/, standard: sach(300) },
 ];
 
@@ -152,6 +177,14 @@ export type SparteKey =
   | "bu"
   | "pkv"
   | "pkv_tarif"
+  | "risikoleben"
+  | "grundfaehigkeit"
+  | "basisrente"
+  | "sterbegeld"
+  | "zahnzusatz"
+  | "krankenzusatz"
+  | "pflegezusatz"
+  | "krankentagegeld"
   | "sonstiges";
 
 export type Sparte = {
@@ -181,6 +214,14 @@ export const SPARTEN: readonly Sparte[] = [
   { key: "bu", label: "BU", rateKey: "bu", bestandLine: "BU", related: ["leben_bu", "unfall"] },
   { key: "pkv", label: "PKV-Neugeschäft", rateKey: "pkv", bestandLine: "Kranken", related: ["bu", "unfall"] },
   { key: "pkv_tarif", label: "PKV-Tarifoptimierung (§ 204 VVG)", rateKey: "pkv_tarif", bestandLine: "Kranken", related: ["bu", "unfall"] },
+  { key: "risikoleben", label: "Risikoleben", rateKey: "risikoleben", bestandLine: "Vorsorge", related: ["bu", "unfall"] },
+  { key: "grundfaehigkeit", label: "Grundfähigkeit", rateKey: "grundfaehigkeit", bestandLine: "BU", related: ["risikoleben", "unfall"] },
+  { key: "basisrente", label: "Basisrente (Rürup)", rateKey: "basisrente", bestandLine: "Vorsorge", related: ["bu", "risikoleben"] },
+  { key: "sterbegeld", label: "Sterbegeld", rateKey: "sterbegeld", bestandLine: "Vorsorge", related: ["unfall", "pflegezusatz"] },
+  { key: "zahnzusatz", label: "Zahnzusatz", rateKey: "zahnzusatz", bestandLine: "Kranken", related: ["krankenzusatz", "unfall"] },
+  { key: "krankenzusatz", label: "Krankenzusatz (Krankenhaus, ambulant)", rateKey: "krankenzusatz", bestandLine: "Kranken", related: ["zahnzusatz", "pflegezusatz"] },
+  { key: "pflegezusatz", label: "Pflegezusatz", rateKey: "pflegezusatz", bestandLine: "Kranken", related: ["krankenzusatz", "unfall"] },
+  { key: "krankentagegeld", label: "Krankentagegeld", rateKey: "krankentagegeld", bestandLine: "Kranken", related: ["bu", "krankenzusatz"] },
   { key: "sonstiges", label: "Sonstiges", rateKey: "sonstiges", bestandLine: "Sonstiges", related: ["privatschutz", "unfall"] },
 ];
 
@@ -193,6 +234,11 @@ export function spartenAuswahl(current?: string | null): readonly Sparte[] {
 // „PKV-Tarifoptimierung“ (lib/products.displayProduct). „Neugeschäft“ ist das PKV-Neugeschäft.
 const SPARTE_RULES: [RegExp, SparteKey][] = [
   [/tarif-?optim|§\s*204|^\s*(pkv[\s-]*)?wechsel/i, "pkv_tarif"],
+  // Kranken-Zusatz vor „PKV“ (z. B. „PKV Zahnzusatz“) und vor „Pflege“ im Wort „Krankenpflege“ (Ole, 17.11.2026)
+  [/zahn/i, "zahnzusatz"],
+  [/krankentagegeld/i, "krankentagegeld"],
+  [/pflege-?(zusatz|tagegeld|monatsgeld|rente|versicherung)|pflegebahr/i, "pflegezusatz"],
+  [/krankenhaus|station(ä|a)r|ambulant|krankenzusatz/i, "krankenzusatz"],
   [/pkv|^\s*neugesch/i, "pkv"],
   [/privatschutz|haftpflicht|\bphv\b/i, "privatschutz"],
   [/katze/i, "katze"],
@@ -206,6 +252,11 @@ const SPARTE_RULES: [RegExp, SparteKey][] = [
   [/sparplan/i, "kindersparplan"],
   [/\bkfz\b|kraftfahrt|\bauto/i, "kfz"],
   [/\bbu\b|berufsunf/i, "bu"],
+  // Vor den allgemeinen Leben-/Rente-Regeln (Ole, 17.11.2026)
+  [/risiko-?leben/i, "risikoleben"],
+  [/grundf(ä|a)hig/i, "grundfaehigkeit"],
+  [/basis-?rente|r(ü|u)rup/i, "basisrente"],
+  [/sterbegeld|bestattung/i, "sterbegeld"],
   [/leben|rente|altersvorsorge/i, "leben_bu"],
 ];
 
@@ -293,7 +344,7 @@ export function closeValueField(source: string | null | undefined, overrides?: P
       label: "Monatsbeitrag netto (optional)",
       placeholder: "z. B. 300",
       factor: 1,
-      hint: `Daraus schätzen wir Ihre Provision (${num0(r.months)} Monatsbeiträge). Ohne Angabe rechnen wir mit ${r.fallbackAmount.toLocaleString("de-DE")} €.`,
+      hint: `Daraus schätzen wir Ihre Provision (${num0(r.months)} Monatsbeiträge${(r.trail ?? 0) > 0 ? ` + ${pctText(r.trail!)} Bestand pro Jahr` : ""}). ${r.defaultMonthly ? `Ohne Angabe rechnen wir mit ${eur0(r.defaultMonthly)} im Monat.` : `Ohne Angabe rechnen wir mit ${r.fallbackAmount.toLocaleString("de-DE")} €.`}`,
     };
   }
   if (r.kind === "percent") {
@@ -401,6 +452,10 @@ const MAKLER_STANDARD: ProvisionOverrides = {
   leben_bu: maklerLeben("leben_bu"),
   bu: maklerLeben("bu"),
   kindersparplan: maklerLeben("kindersparplan"),
+  risikoleben: maklerLeben("risikoleben"),
+  grundfaehigkeit: maklerLeben("grundfaehigkeit"),
+  basisrente: maklerLeben("basisrente"),
+  sterbegeld: maklerLeben("sterbegeld"),
 };
 
 export function asVermittlerTyp(v: unknown): VermittlerTyp {
@@ -476,7 +531,13 @@ export function parseCustomRates(raw: unknown): { rates: ProvisionOverrides; err
         if (n != null && n > max) months = max;
       }
       if (fallbackAmount == null) errors.push(`${p.label}: Betrag ohne Beitragsangabe ab 0 €`);
-      if (months != null && fallbackAmount != null) rates[p.key] = withStorno({ kind: "monthly", months, fallbackAmount });
+      // Kranken-Zusatz: Bestand pro Jahr und typischer Monatsbeitrag (Ole, 17.11.2026)
+      const trail = o.trail == null || o.trail === "" ? 0 : num(o.trail, 0, 0.5);
+      const defaultMonthly = o.defaultMonthly == null || o.defaultMonthly === "" ? null : num(o.defaultMonthly, 0.01, 100_000);
+      if (trail == null) errors.push(`${p.label}: Bestandsprovision zwischen 0 und 50 %`);
+      if (o.defaultMonthly != null && o.defaultMonthly !== "" && defaultMonthly == null) errors.push(`${p.label}: typischer Monatsbeitrag über 0 €`);
+      const extra = { ...(trail ? { trail } : {}), ...(defaultMonthly ? { defaultMonthly } : {}) };
+      if (months != null && fallbackAmount != null) rates[p.key] = withStorno({ kind: "monthly", months, fallbackAmount, ...extra });
     } else if (o.kind === "percent") {
       const rate = num(o.rate, 0, 1);
       const trail = o.trail == null || o.trail === "" ? 0 : num(o.trail, 0, 1);
@@ -550,7 +611,7 @@ export function effectiveRates(typ: unknown, custom?: unknown): ProvisionOverrid
 /** Enthält die Schätzung Bestandsprovision? (für den Hinweis „inkl. Bestand 1. Jahr“) */
 export function includesTrail(overrides?: ProvisionOverrides): boolean {
   return Object.values(overrides ?? {}).some(
-    (r) => (r?.kind === "percent" && (r.trail ?? 0) > 0 && !r.trailFromYear2) || (r?.kind === "beitragssumme" && r.trail > 0),
+    (r) => (r?.kind === "percent" && (r.trail ?? 0) > 0 && !r.trailFromYear2) || (r?.kind === "beitragssumme" && r.trail > 0) || (r?.kind === "monthly" && (r.trail ?? 0) > 0),
   );
 }
 
@@ -608,7 +669,8 @@ export type ContractLike = {
 /** Anzeigename eines Vertrags: eigenes Produkt (z. B. „Rechtsschutz Gewerbe“) statt „Sonstiges“. */
 export function contractLabel(c: { sparte: string; productName?: string | null }): string {
   const name = (c.productName ?? "").trim();
-  return asSparte(c.sparte) === "sonstiges" && name ? name : sparteInfo(c.sparte).label;
+  // Eigenes Produkt (auch Leben/Kranken in deren Sparte, Ole 17.11.2026) heißt wie vom Vermittler angelegt
+  return name ? name : sparteInfo(c.sparte).label;
 }
 
 export type ContractBasis = "beitrag" | "beitragssumme" | "monatsbeitraege" | "honorar" | "fest";
@@ -663,13 +725,20 @@ export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): 
   const sparte = asSparte(c.sparte);
   const rateKey = sparteInfo(sparte).rateKey;
   const base: RateSpec = rates?.[rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === rateKey)!.standard;
-  // Eigenes Produkt (Sparte „Sonstiges“): Sätze am Vertrag, Bestand ab dem 2. Jahr (Ole, 14.11.2026)
-  const ownA = sparte === "sonstiges" ? asNumber(c.rateAbschluss) : null;
-  const ownB = sparte === "sonstiges" ? asNumber(c.rateBestand) : null;
-  const spec: RateSpec =
-    ownA != null || ownB != null
-      ? { kind: "percent", rate: ownA ?? 0, trail: ownB ?? 0, trailFromYear2: true, defaultPremium: base.kind === "percent" ? base.defaultPremium : 300, ...(base.storno != null ? { storno: base.storno } : {}) }
-      : base;
+  // Eigenes Produkt: Sätze am Vertrag (Ole, 14.11.2026). Die Sparte bestimmt die Rechenart (17.11.2026):
+  // Sach („sonstiges“) % vom Jahresbeitrag, Bestand ab dem 2. Jahr; Leben (Beitragssumme) ‰ der Beitragssumme;
+  // Kranken (Monatsbeiträge) Anzahl Monatsbeiträge. Bestand jeweils Anteil vom Jahresbeitrag pro Jahr.
+  const eigen = !!(c.productName ?? "").trim() || sparte === "sonstiges";
+  const ownA = eigen ? asNumber(c.rateAbschluss) : null;
+  const ownB = eigen ? asNumber(c.rateBestand) : null;
+  const hatEigene = ownA != null || ownB != null;
+  const spec: RateSpec = !hatEigene
+    ? base
+    : base.kind === "beitragssumme"
+      ? { ...base, promille: ownA ?? 0, trail: ownB ?? 0 }
+      : base.kind === "monthly"
+        ? { ...base, months: ownA ?? 0, trail: ownB ?? 0 }
+        : { kind: "percent", rate: ownA ?? 0, trail: ownB ?? 0, trailFromYear2: true, defaultPremium: base.kind === "percent" ? base.defaultPremium : 300, ...(base.storno != null ? { storno: base.storno } : {}) };
   const premium = asNumber(c.premium);
   const zero: ContractProvision = {
     sparte,
@@ -699,8 +768,11 @@ export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): 
     return { ...zero, basis: "honorar", premiumUsed: fixed > 0 ? null : (premium ?? spec.defaultSavings), premiumMissing: fixed > 0 ? false : premium == null, abschluss: a, firstYear: a };
   }
   if (spec.kind === "monthly") {
-    const a = premium ? r2(premium * spec.months) : spec.fallbackAmount;
-    return { ...zero, basis: "monatsbeitraege", premiumUsed: premium, abschluss: a, firstYear: a };
+    // Kranken-Zusatz (Ole, 17.11.2026): ohne Beitrag mit dem typischen Monatsbeitrag; Bestand vom Jahresbeitrag
+    const monthly = premium ?? spec.defaultMonthly ?? null;
+    const a = monthly != null ? r2(monthly * spec.months) : spec.fallbackAmount;
+    const trailPerYear = monthly != null && (spec.trail ?? 0) > 0 ? r2(monthly * 12 * spec.trail!) : 0;
+    return { ...zero, basis: "monatsbeitraege", premiumUsed: monthly, abschluss: a, trailPerYear, firstYear: r2(a + trailPerYear), monthlyPremium: monthly };
   }
   if (spec.kind === "beitragssumme") {
     const term = resolveTermYears(c, spec);
@@ -767,7 +839,14 @@ export function premiumFieldForSparte(sparte: string, rates?: ProvisionOverrides
     };
   }
   if (spec.kind === "monthly") {
-    return { label: "Monatsbeitrag netto", placeholder: "z. B. 300", monthly: true, factor: 1, hint: `Provision: ${num0(spec.months)} Monatsbeiträge.` };
+    const trail = spec.trail ?? 0;
+    return {
+      label: "Monatsbeitrag netto",
+      placeholder: spec.defaultMonthly ? `z. B. ${num0(spec.defaultMonthly)}` : "z. B. 300",
+      monthly: true,
+      factor: 1,
+      hint: `Provision: ${num0(spec.months)} Monatsbeiträge${trail > 0 ? `, ${pctText(trail)} Bestand pro Jahr vom Jahresbeitrag` : ""}.`,
+    };
   }
   if (spec.kind === "percent") {
     const trail = spec.trail ?? 0;

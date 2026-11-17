@@ -27,4 +27,14 @@ describe("Ziel des Anrufs", () => {
     expect(bedarfsfragen("PKV")).toContain("Beruf");
     for (const p of ["Katze", "Privatschutz", "PKV", "BU", null]) expect(hatGedankenstrich(bedarfsfragen(p))).toBe(false);
   });
+  it("Nachfassen konkret statt allgemein (Ole, 17.11.2026)", () => {
+    const nach = anrufZiel({ kind: "followup", reason: "Nochmal anrufen", source: "Rechtsschutz", letzterTermin: new Date("2026-11-12T10:00:00Z") });
+    expect(nach.ziel).toBe("Entscheidung nach dem Termin");
+    expect(nach.schritte[0]).toContain("Termin vom 12.11.");
+    expect(nach.schritte[0]).toContain("Rechtsschutz");
+    expect(nach.schritte.join(" ")).not.toContain("Nächsten Schritt festlegen");
+    const ohne = anrufZiel({ kind: "followup", reason: "Will mit Partnerin sprechen", source: "Hausrat" });
+    expect(ohne.ziel).toBe("Termin vereinbaren");
+    expect(ohne.schritte[1]).toContain("Will mit Partnerin sprechen");
+  });
 });
