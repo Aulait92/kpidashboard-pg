@@ -1,9 +1,9 @@
 // Storno beim Pay-per-Lead: innerhalb des Storno-Fensters, nur mit erlaubtem
 // Grund. Ersatzlos – der Käufer bekommt eine Gutschrift (nächste Rechnung).
 // Ole, 17.11.2026: „klare Stornos einfach annehmen, bei Grenzfällen 50:50“.
-// Klar = erlaubter Grund bei Stornoquote ≤ 20 % (letzte 30 Tage) → volle Gutschrift.
-// Grenzfall = „Sonstiges“ oder Quote > 20 % → automatisch halbe Gutschrift (Umsatz zur
-// Hälfte bleibt), keine Prüfung mehr. Am Bezug (`stornoAutoApprove`): jede Reklamation
+// Klar = erlaubter Grund → volle Gutschrift, auch bei Stornoquote > 20 % (letzte 30 Tage);
+// dann bekommt der Admin eine Meldung, um mit dem Kunden zu sprechen.
+// Grenzfall = „Sonstiges“ → automatisch halbe Gutschrift (Umsatz zur Hälfte bleibt), keine Prüfung mehr. Am Bezug (`stornoAutoApprove`): jede Reklamation
 // im Fenster voll anerkannt.
 
 import { prisma } from "@/lib/prisma";
@@ -71,8 +71,10 @@ export async function requestStorno(
     prisma.lead.count({ where: { subscriptionId: sub.id, deliveredAt: { gte: since }, stornoState: { in: ["approved", "review", "requested"] } } }),
   ]);
   const quota = delivered ? (stornos + 1) / delivered : 1;
-  // Grenzfall: „Sonstiges“ oder hohe Quote → 50:50; am Bezug „immer automatisch anerkennen“ → voll
-  const grenzfall = !sub.stornoAutoApprove && (other || quota > REVIEW_QUOTA);
+  // Grenzfall nur „Sonstiges“ → 50:50; zugelassene Gründe immer voll (Ole, 17.11.2026), auch bei hoher Quote.
+  // Am Bezug „immer automatisch anerkennen“ → alles voll.
+  const grenzfall = !sub.stornoAutoApprove && other;
+  const hoheQuote = quota > REVIEW_QUOTA;
   const anteil = grenzfall ? GRENZFALL_ANTEIL : 1;
 
   await prisma.lead.update({
@@ -80,11 +82,20 @@ export async function requestStorno(
     data: { stornoState: "approved", stornoReason: reason, stornoNote: note.trim() || null, stornoRequestedAt: now },
   });
   await approve(lead.id, now, anteil);
-  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, grenzfall, anteil, quota: Math.round(quota * 100), prevStatus: lead.status } });
-  if (grenzfall) {
+  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, grenzfall, hoheQuote, anteil, quota: Math.round(quota * 100), prevStatus: lead.status } });
+  const bezug = sub.label ?? lead.source ?? "Pay-per-Lead";
+  if (hoheQuote) {
+    // Hohe Quote: gutgeschrieben, Ole spricht mit dem Kunden (eine Meldung je Bezug, ersetzt die vorige)
     await sendToAdmins({
-      title: `Storno 50:50: ${sub.label ?? lead.source ?? "Pay-per-Lead"}`,
-      body: `${reason}${other ? `: ${note.trim().slice(0, 80)}` : ""} · Quote ${Math.round(quota * 100)} %`,
+      title: `Stornoquote ${Math.round(quota * 100)} %: mit dem Kunden sprechen`,
+      body: `${bezug}: ${reason}${grenzfall ? " (50:50)" : " (voll gutgeschrieben)"}`,
+      url: "/admin/ppl?ansicht=geliefert",
+      tag: `ppl-storno-quote:${sub.id}`,
+    }).catch(() => {});
+  } else if (grenzfall) {
+    await sendToAdmins({
+      title: `Storno 50:50: ${bezug}`,
+      body: `${reason}: ${note.trim().slice(0, 80)} · Quote ${Math.round(quota * 100)} %`,
       url: "/admin/ppl?ansicht=geliefert",
       tag: `ppl-storno:${lead.id}`,
     }).catch(() => {});
