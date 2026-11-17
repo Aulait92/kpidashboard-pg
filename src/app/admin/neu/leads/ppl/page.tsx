@@ -16,6 +16,7 @@ import { assignParkedAction, decideStornoAction, discardParkedAction } from "@/a
 import { ImportButton } from "@/app/admin/ppl/import/import-button";
 import { SlackTest } from "@/app/admin/ppl/slack-test";
 import { HvkAbrechnungen, HvkReklamationenReview } from "@/app/admin/ppl/hvk-abrechnungen";
+import { AirtableNachholen } from "@/app/admin/ppl/nachholen";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 
 export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
@@ -29,6 +30,8 @@ export const metadata = { title: "Pay-per-Lead | performancegrowth Admin" };
 // Gelieferte Leads (Suche, Storno von Hand) → Alle Leads › „Pay-per-Lead geliefert“; Media Buyer → Werbekonten.
 // Alte Adressen (?ansicht=storno|geparkt|uebersicht|geliefert, Push-Ziele) werden verstanden.
 // „Aus Airtable übernehmen“ ist selten: Ansicht ?ansicht=import ohne eigenen Schalter.
+// „Lead aus Airtable nachholen“ (alter Admin: unter Geparkt) steht oben im Eingang: Dort landet der Lead mit Ergebnis,
+// und der Eingang ist immer erreichbar (die Karte Geparkt nur, wenn etwas geparkt ist).
 
 const PFAD = "/admin/neu/leads/ppl";
 const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
@@ -332,6 +335,9 @@ async function Eingang() {
   return (
     <Card>
       <CardHeader title="Eingang" count={rows.length} hint="neueste 100" />
+      <div data-funktion="nachholen-airtablenachholen--lead-aus-airtable-nachholen-lead-nr-laeuft-durch">
+        <AirtableNachholen />
+      </div>
       {rows.length ? (
         <ul className="divide-y divide-[color:var(--border)]">
           {rows.map((r) => (

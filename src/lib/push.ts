@@ -1,6 +1,7 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 import { sendToDevices } from "@/lib/native-push";
+import { pushAdresse } from "@/lib/admin-neu/push-ziel";
 
 let configured = false;
 function configure() {
@@ -70,9 +71,12 @@ async function sendToSubscriptions(
 
 // An alle Admin-User. Legacy-Subscriptions mit userId=NULL werden hier
 // mitbehandelt (vor der Auth-Einführung gab's nur den Admin).
+// Ziele unter /admin bekommen die Marke ?von=push: Die Middleware führt Admins mit eingeschalteter neuer Oberfläche
+// damit auf die neue Seite (lib/admin-neu/push-ziel.ts), alle anderen auf die alte.
 export async function sendToAdmins(
-  payload: PushPayload,
+  eingabe: PushPayload,
 ): Promise<SendOutcome> {
+  const payload = { ...eingabe, url: pushAdresse(eingabe.url) };
   const adminIds = (
     await prisma.user.findMany({
       where: { role: "ADMIN" },

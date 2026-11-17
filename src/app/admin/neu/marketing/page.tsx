@@ -34,7 +34,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ l
 
   return (
     <Seite titel="Marketing" reiter="marketing">
-      <div className="space-y-4">
+      {/* Push an Admins (LinkedIn, Bank, Monatsberichte, Status, Empfehlungsprämie) landet mit eingeschalteter neuer
+          Oberfläche auf der neuen Seite: Marke ?von=push, Weiche in der Middleware (lib/admin-neu/push-ziel.ts) */}
+      <div className="space-y-4" data-funktion="cron--push-an-admins-linkedin-bank-neu-verbinden">
         <LinkedInHinweise d={d} li={li} />
         <LinkedInEinrichten d={d} />
 
