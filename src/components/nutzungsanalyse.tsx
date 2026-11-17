@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
@@ -16,6 +17,7 @@ import { isReplayAllowedPath, redactDeep } from "@/lib/sentry-redact";
 
 const KEY = "pg-analyse-sitzung";
 const WIDERRUF = "pg-analyse-widerruf";
+const SPAETER = "pg-analyse-spaeter";
 
 type RecordingEvent = { data?: { tag?: string; payload?: { category?: string } } };
 
@@ -85,7 +87,33 @@ export function Nutzungsanalyse({ status, darfFragen, pseudonym }: { status: Ana
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [s, pseudonym]);
-  if (s !== null || !darfFragen) return null;
+  // Erst nach einem Erfolgsmoment fragen (Termin gebucht, Abschluss), wenn die Bestätigung schon zu sehen war;
+  // ohne Entscheidung geschlossen: frühestens nach 7 Tagen wieder (Rechtsprüfung Abschnitt 7)
+  const [zeigen, setZeigen] = useState(false);
+  useEffect(() => {
+    if (s !== null || !darfFragen) return;
+    try {
+      const zu = Number(window.localStorage.getItem(SPAETER) ?? 0);
+      if (zu && Date.now() - zu < 7 * 24 * 60 * 60 * 1000) return;
+    } catch {}
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const onErfolg = () => {
+      if (t) return;
+      t = setTimeout(() => setZeigen(true), 2500);
+    };
+    window.addEventListener("pg:erfolg", onErfolg);
+    return () => {
+      window.removeEventListener("pg:erfolg", onErfolg);
+      if (t) clearTimeout(t);
+    };
+  }, [s, darfFragen]);
+  if (s !== null || !darfFragen || !zeigen) return null;
+  const spaeter = () => {
+    try {
+      window.localStorage.setItem(SPAETER, String(Date.now()));
+    } catch {}
+    setZeigen(false);
+  };
   const antwort = (ja: boolean) =>
     start(async () => {
       setS(ja ? "ja" : "nein");
@@ -93,11 +121,15 @@ export function Nutzungsanalyse({ status, darfFragen, pseudonym }: { status: Ana
       if (ja) toast.show({ message: ANALYSE_TEXT.danke });
     });
   return (
-    <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-lg)] md:bottom-5 md:left-auto md:right-5 md:mx-0" role="dialog" aria-labelledby="analyse-titel" data-nutzungsanalyse>
-      <p id="analyse-titel" className="text-[15px] font-semibold">
+    <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-lg)] md:bottom-5 md:left-auto md:right-5 md:mx-0" role="region" aria-labelledby="analyse-titel" data-nutzungsanalyse>
+      <button type="button" onClick={spaeter} aria-label="Später entscheiden" className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]" data-analyse-spaeter>
+        <X className="h-4 w-4" />
+      </button>
+      <p id="analyse-titel" className="pr-8 text-[15px] font-semibold">
         {ANALYSE_TEXT.titel}
       </p>
       <p className="mt-1 text-sm text-[color:var(--muted)]">{ANALYSE_TEXT.text}</p>
+      <p className="mt-1.5 text-xs text-[color:var(--muted)]">{ANALYSE_TEXT.unterzeile}</p>
       <Link href={ANALYSE_TEXT.link} target="_blank" className="mt-1 inline-flex min-h-9 items-center text-sm font-medium text-[color:var(--brand)] underline">
         {ANALYSE_TEXT.mehr}
       </Link>

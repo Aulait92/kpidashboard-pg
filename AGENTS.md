@@ -68,12 +68,24 @@ Gestaltungsregeln:
 - Handy zuerst: Vermittler nutzen die App unterwegs. Jede Änderung auf 390 px Breite prüfen.
 - Leere Zustände und Fehler mit einer klaren nächsten Handlung, nicht nur Text.
 
+Qualitätsziel (Ole, 17.11.2026): Bei jeder Design-Entscheidung streben wir einen Usability-Score von 90+ an (System
+Usability Scale, „Champions League“). Vor dem Commit die betroffene Seite ehrlich an den 10 SUS-Fragen messen (würde ein
+Vermittler sie gern oft nutzen, ist sie unnötig komplex, ohne Hilfe nutzbar, Funktionen gut eingebunden, einheitlich,
+schnell erlernbar, nicht umständlich, sicher bedienbar, ohne Vorwissen nutzbar) und den geschätzten Wert in der
+Rückmeldung nennen. Unter 90: erst nachbessern (weniger Elemente, klarere Beschriftung, eine Hauptaktion, bessere
+Standardwerte), dann committen. Die wöchentliche UX-Auswertung der Sitzungsaufnahmen prüft, ob das in der Praxis hält.
+
 Prüfung vor dem Commit:
 - Screenshot Desktop und Handy (390 px) der betroffenen Seite ansehen und ehrlich fragen: Ist die Seite übersichtlicher
   oder voller geworden? Würde ein Vermittler ohne Erklärung verstehen, was zu tun ist?
 - Wenn die Seite voller geworden ist: aufräumen, bevor committet wird.
 - In der Rückmeldung an Ole den Screenshot bzw. die UX-Entscheidung in zwei Sätzen nennen.
 - Priorität: Vermittlerbereich (/buyer) zuerst, der Admin-Bereich wird später nachgezogen.
+
+Qualitätsziel (Ole, 17.11.2026) für alle neuen Screens und UX/UI-Arbeiten: Champions-League-Niveau, Ziel-Score mindestens 90/100.
+Vor jedem Screenshot an Ole und vor jedem Livegang fragen: „Warum ist das noch schwer zu verstehen?“ Gründe auflisten (Nutzer,
+Aufgabe, erster Blick, Hauptaktion, Begriffe, Standardwerte, Farben, Dichte, Handy) und zuerst lösen. Erst dann vorlegen, mit Score
+und kurzer Liste der behobenen Punkte.
 
 ## Erklärvideos aktuell halten (Ole, 15.11.2026)
 

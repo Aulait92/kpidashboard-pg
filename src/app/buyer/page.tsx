@@ -7,6 +7,8 @@ import { TodayInbox } from "@/components/today-inbox";
 import { FirstDay } from "@/components/first-day";
 import { IntroVideoCard } from "@/components/intro-video";
 import { LeadDetailBody } from "@/components/lead-detail-body";
+import { HeuteRechtsSchliessen } from "@/components/heute-rechts";
+import { cookies } from "next/headers";
 import { isNewUi } from "@/lib/new-ui";
 import { EmpfehlungHeuteHint } from "@/components/empfehlung/server";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -101,26 +103,27 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
       data.callbacks[0]?.leadId ??
       data.noNextStep.leads[0]?.leadId ??
       null;
-    const rechts = selected ?? ersteAufgabe;
+    // Rechte Seite zu (X bzw. Esc, components/heute-rechts.tsx): ohne Auswahl volle Breite für die Liste
+    const rechtsZu = (await cookies()).get("pg-heute-rechts")?.value === "zu";
+    const rechts = selected ?? (rechtsZu ? null : ersteAufgabe);
+    const breit = !rechts;
     return (
       <main className="w-full flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6">
+        <div className={breit ? "mx-auto max-w-3xl" : "xl:grid xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:items-start xl:gap-6"}>
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {erstinfoHint}
             <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} />
             {hinweise}
           </section>
+          {breit ? null : (
           <section
-            className={
-              rechts
-                ? `${selected ? "" : "hidden "}xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto xl:rounded-[var(--radius-lg)] xl:border xl:border-[color:var(--border)] xl:bg-white xl:p-5 xl:block`
-                : "hidden xl:sticky xl:top-6 xl:block"
-            }
+            className={`${selected ? "" : "hidden "}relative xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:overflow-y-auto xl:rounded-[var(--radius-lg)] xl:border xl:border-[color:var(--border)] xl:bg-white xl:p-5 xl:block`}
             aria-label="Kontakt"
           >
             {rechts ? (
               <>
+                <HeuteRechtsSchliessen ausgewaehlt={!!selected} />
                 <Link
                   href="/buyer"
                   scroll={false}
@@ -139,6 +142,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
               </div>
             )}
           </section>
+          )}
         </div>
       </main>
     );
