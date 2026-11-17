@@ -109,6 +109,8 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           ...(paid ? { paidAt: offer.paidAt ?? new Date() } : {}),
           // Abschlussbonus: auf der bezahlten Seite abgezogen (Metadaten der Bezahlseite, Ole 16.11.2026)
           ...(!failed && session.metadata?.pg_bonus ? { abschlussBonusGewaehrt: Number(session.metadata.pg_bonus) / 100 } : {}),
+          // Lastschrift geplatzt: Bonus gilt nicht als genutzt (Admin kann die Frist wieder verschieben, neue Zahlung rechnet neu)
+          ...(failed && session.metadata?.pg_bonus ? { abschlussBonusGewaehrt: null } : {}),
         },
       });
       // Zahlung erst nach dem Startdatum: Start auf den nächsten Monatsersten verschieben (nichts rückwirkend),
