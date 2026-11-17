@@ -205,3 +205,74 @@ Die Sitzungsaufnahme ist keine Vertragsleistung und darf auch nicht als Pflicht 
 5. **Drittland:** Zugriff aus den USA möglich; Bestand des DPF hängt am weiteren Verfahren vor dem EuGH. SCC im Sentry-DPA als Rückfall.
 6. **Mitarbeiter größerer Vermittler** könnten sich überwacht fühlen; bei Betriebsräten ist das Thema sensibel. Gegenmittel: Einzelentscheidung je Zugang, keine Weitergabe an den Vermittler, klare Aussage im Text.
 7. **Nebenbefund:** Die eigene pseudonyme Nutzungsmessung (`docs/datenschutz.md`, Art. 6 Abs. 1 lit. f) und die reine Fehlerüberwachung im Browser stehen ebenfalls unter § 25 TDDDG, soweit sie Informationen im Endgerät speichern oder auslesen; gesondert prüfen, nicht Gegenstand dieser Prüfung.
+
+---
+
+## 7. Fassung 2 (konversionsoptimiert)
+
+Prüfung des Entwurfs vom 17.11.2026 (Ole: „zu viele klicken auf Nein“). Knöpfe bleiben gleich gestaltet, „Ja“ zuerst.
+
+### 7.1 Ist der Entwurf ausreichend informiert?
+
+Weitgehend ja. Zweck, Empfänger (Sentry, Datenregion EU), Umfang („Teil Ihrer Sitzungen“), Maskierung und Widerrufsweg sind
+genannt; die Freiwilligkeit ergibt sich aus dem gleichwertigen „Nein“ und muss nicht ausdrücklich dastehen. Zwei Punkte
+müssen geändert werden:
+
+- **„30 Sekunden Hilfe“ ist irreführend.** Die Aufnahme läuft über viele Sitzungen und bis zum Widerruf, nicht 30 Sekunden.
+  Eine Einwilligung auf Grundlage einer falschen Vorstellung vom Umfang ist nicht „in informierter Weise“ abgegeben
+  (Art. 4 Nr. 11 DSGVO; EDPB Guidelines 05/2020, Rn. 62 ff.). Streichen.
+- **„Darf die App von Ihren Klicks lernen?“** weckt, weil die App einen KI-Assistenten hat, die Vorstellung von KI-Training.
+  Nicht verwenden.
+- „sehen wir nie“: Ein absolutes Versprechen ist nur haltbar, wenn die Maskierung lückenlos ist. Besser: „sind unkenntlich“.
+
+**Mindestens drinbleiben muss auf der ersten Ebene:** dass **aufgezeichnet** wird (das Wort selbst, nicht nur „sehen“), wozu
+(Stellen finden und verbessern), durch wen (Sentry, Datenregion EU), bei welchem Umfang (Teil der Sitzungen), dass Inhalte
+und Kundendaten unkenntlich sind, und wo man es abschaltet (Einstellungen). Alles Weitere (Datenarten im Einzelnen,
+Speicherdauer, USA-Bezug, Rechte) darf auf der verlinkten Seite stehen.
+
+### 7.2 Nudging?
+
+- **„30 Sekunden Hilfe“:** unzulässig (siehe 7.1, Irreführung über den Umfang).
+- **Gründer-Unterzeile** („Danke, Ole Kannapinn, Gründer“): zulässig. Ein persönlicher, wahrer Dank ist kein Druck und kein
+  Confirmshaming. Grenze: keine Schuldgefühle beim Nein („Ole wäre enttäuscht“), keine Unterzeile am Nein-Knopf.
+- **Abfrage nach einem Erfolgsmoment:** zulässig. Das ist eine Wahl des Zeitpunkts, kein Ausnutzen einer Zwangslage.
+  Bedingungen: Die Erfolgsbestätigung (Abschluss gespeichert, Termin gebucht) ist vorher sichtbar und wird nicht von der
+  Abfrage abhängig gemacht oder verdeckt; das Fenster blockiert keinen Arbeitsschritt und lässt sich schließen; nicht
+  mitten in einem Ablauf und nicht so, dass ein schneller Weiterklick versehentlich „Ja“ trifft (Knöpfe nicht an die
+  Stelle legen, an der vorher „Speichern“ stand).
+
+### 7.3 Erneut fragen nach einem Nein?
+
+Nach 90 Tagen mit spürbarem Risiko: Wiederholte Abfragen nach einer Ablehnung gelten als Druckmittel (EDPB Guidelines
+03/2022 zu Deceptive Design Patterns, „Continuous prompting“; EDPB Guidelines 05/2020, Rn. 87 f.). Eine feste Frist gibt
+es in Deutschland nicht; als Maßstab nennt die CNIL in ihren Leitlinien eine Aufbewahrung der Ablehnung von 6 Monaten.
+**Empfehlung:** einmal erneut fragen frühestens nach **6 Monaten**, danach nie wieder automatisch (Schalter in den
+Einstellungen bleibt). 90 Tage sind vertretbar, aber angreifbarer.
+
+### 7.4 Fassung 2 (einsatzfertig, Textversion „sitzungsaufnahme-2026-11-17-f2“)
+
+**Titel:**
+> Helfen Sie uns, Ihnen Klicks zu sparen?
+
+**Text (2 Sätze):**
+> Mit Ihrem Ja zeichnen wir bei einem Teil Ihrer Sitzungen über Sentry (Datenregion EU) auf, wo Klicks hängen bleiben, und bauen genau diese Stellen um. Ihre Kunden, Texte und Eingaben sind dabei unkenntlich, und Sie können die Aufnahme jederzeit unter **Einstellungen** abschalten.
+
+**Unterzeile (optional):**
+> Danke für Ihre Hilfe, Ole Kannapinn, Gründer
+
+**Link vor den Knöpfen:**
+> Was genau aufgenommen wird
+
+Ziel: eine Seite mit dem vollständigen Text aus Abschnitt 3 (z. B. `/rechtliches/sitzungsaufnahmen`, auch ohne Anmeldung
+erreichbar) oder `performancegrowth.de/datenschutz#sitzungsaufnahmen`. Die Seite muss vor dem Livegang existieren.
+
+**Knöpfe (gleich gestaltet, „Ja“ zuerst):**
+> „Ja, ich helfe mit“ · „Nein, danke“
+
+**Zeitpunkt:** nach einem Erfolgsmoment (Abschluss eingetragen, Termin gebucht), nachdem die Bestätigung sichtbar war,
+nicht beim Einloggen und nicht während der Einrichtung. Bei Wegklicken ohne Entscheidung höchstens noch einmal nach
+frühestens 7 Tagen, nach „Nein“ höchstens noch einmal nach frühestens 6 Monaten.
+
+**Protokoll:** Die Textversion `sitzungsaufnahme-2026-11-17-f2` und der Wortlaut (einschließlich Unterzeile) werden wie in
+Abschnitt 5 Nr. 1 gespeichert. Gilt diese Fassung, ersetzt sie die Fassung aus Abschnitt 2.1; Gestaltung (2.3) und
+Technik (5) bleiben unverändert.
