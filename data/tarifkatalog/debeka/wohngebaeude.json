@@ -33,8 +33,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/wohngebaeudeversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Wohngebäude Comfort Plus",
@@ -60,8 +59,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/wohngebaeudeversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -73,6 +71,7 @@
     "Photovoltaik und Wärmepumpe über das Paket Erneuerbare Energien (Allgefahrendeckung) gegen Beitrag; Balkonkraftwerke bis 900 Watt und Ladestationen sind enthalten.",
     "Hotelkosten in Comfort nicht enthalten; Aufräumungs- und Abbruchkosten in beiden Paketen.",
     "Gleitender Neuwert und Selbstbeteiligung auf der Seite nicht genannt.",
-    "Debeka markiert keine Stufe."
+    "Debeka markiert keine Stufe.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf debeka.de."
   ]
 }

@@ -26,8 +26,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV118.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarife EPG und EPC (Komfort)",
@@ -47,8 +46,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/krankenversicherung-unisex-tarife/CKV119.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -63,6 +61,7 @@
     "Staffel in beiden Tarifen: PG 1 15 %, PG 2 30 %, PG 3 65 %, PG 4 90 %, PG 5 100 %; gleich bei häuslicher und stationärer Pflege.",
     "Wartezeit: Produktseite PKV nennt 3 Jahre für die Pflegezusatzversicherung; für EPG gilt die Wartezeit nach MB/GEPV 2022 (nicht ausgelesen). Bei Unfall entfällt sie.",
     "Beitragsbefreiung im Pflegefall und Demenz-Regel in den Tarifbedingungen nicht gefunden. Dynamik: alle 3 Jahre nach Inflation, solange keine Leistung bezogen wird.",
-    "Debeka markiert keinen Tarif."
+    "Debeka markiert keinen Tarif.",
+    "Geprüft am 17.11.2026 an Tarifbedingungen und Produktseite auf debeka.de."
   ]
 }

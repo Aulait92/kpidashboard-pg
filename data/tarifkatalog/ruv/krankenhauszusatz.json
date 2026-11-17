@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Klinik comfort (K2U)",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Klinik premium (K1U)",
@@ -63,8 +61,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Ersatz-Krankenhaustagegeld: erster Betrag bei Verzicht auf Ein- oder Zweibettzimmer, zweiter bei Verzicht auf Chefarzt.",
     "Behandlung im Ausland oder in Privatkliniken ohne GKV-Vorleistung: classic und comfort 60 € Krankenhaustagegeld, premium 90 % bis 6.000 € im Jahr.",
     "Wartezeit: Seite nennt Schutz sofort ab Versicherungsbeginn. Krankenhaustagegeld als eigener Baustein nicht genannt.",
-    "R+V markiert comfort als „Topseller“."
+    "R+V markiert comfort als „Topseller“.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf ruv.de."
   ]
 }

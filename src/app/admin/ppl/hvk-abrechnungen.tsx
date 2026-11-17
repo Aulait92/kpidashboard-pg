@@ -5,12 +5,14 @@ import { AlertTriangle, FileText } from "lucide-react";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { hvkMailAvailable, hvkMailbox, hvkMailboxStatus } from "@/lib/ppl/hvk-mail";
 import { listHvkInvoices, openHvkReklamationen, type HvkInvoiceRow } from "@/lib/ppl/hvk-abrechnung-server";
+import { HVK_VIA_LABEL } from "@/lib/ppl/hvk-abrechnung";
 import { HvkAssign, HvkBackfill, HvkFetchNow, HvkUpload } from "./hvk-client";
 import { hvkDiscardAction } from "./hvk-actions";
 
 const eur = (c: number) => (c / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const dm = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.`;
 const dmy = (iso: string) => iso.split("-").reverse().join(".");
+const REK_STATUS: Record<string, string> = { auto: "automatisch storniert", erledigt: "von Hand storniert", offen: "zu prüfen", verworfen: "verworfen" };
 const dt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(d);
 
 const POSTFACH: Record<string, { tone: "success" | "warning"; text: string }> = {
@@ -111,6 +113,7 @@ export async function HvkAbrechnungen({ postfach, versand, abgleich }: { postfac
 function InvoiceRow({ r }: { r: HvkInvoiceRow }) {
   const diff = r.delivered - r.billed;
   const hasDetails = r.unbilled.length || r.foreign.length || r.warnings.length;
+  const reks = r.reklamationen.map((k) => `HvK Lead ID ${k.hvkLeadId} · ${k.plz} ${k.ort} · ${REK_STATUS[k.status] ?? k.status}${k.via ? ` über ${HVK_VIA_LABEL[k.via]}` : ""}`);
   return (
     <li>
       <details className="group">
@@ -150,6 +153,7 @@ function InvoiceRow({ r }: { r: HvkInvoiceRow }) {
           </span>
         </summary>
         <div className="space-y-3 bg-[color:var(--background)] px-5 py-3 text-xs">
+          {reks.length ? <DiffList title="Reklamationen" items={reks} /> : null}
           <DiffList
             title="Geliefert, aber nicht abgerechnet"
             items={r.unbilled.map((u) => `${u.name ?? "Lead"} · ${[u.plz, u.ort].filter(Boolean).join(" ") || "PLZ fehlt"} · geliefert ${dmy(u.date)} · ID ${u.id}`)}
@@ -189,7 +193,7 @@ export async function HvkReklamationenReview() {
   if (!rows.length) return null;
   return (
     <Card tone="attention">
-      <CardHeader title="HvK-Reklamationen zuordnen" count={rows.length} hint="aus der Abrechnung, Lieferdatum und PLZ nicht eindeutig" />
+      <CardHeader title="HvK-Reklamationen zuordnen" count={rows.length} hint="aus der Abrechnung, nicht eindeutig zuzuordnen" />
       <ul className="divide-y divide-[color:var(--border)]">
         {rows.map((r) => {
           const date = r.deliveryDate.toISOString().slice(0, 10);
@@ -205,7 +209,7 @@ export async function HvkReklamationenReview() {
                 </span>
               </div>
               <div className="text-xs text-[color:var(--muted)]">
-                {r.candidates.length ? `${r.candidates.length} Leads mit gleichem Lieferdatum und gleicher PLZ:` : "Kein Lead mit diesem Lieferdatum und dieser PLZ. Lead-ID unter „Gelieferte Leads“ suchen oder verwerfen."}
+                {r.candidates.length ? `${r.candidates.length === 1 ? "1 möglicher Lead" : `${r.candidates.length} mögliche Leads`} (gleiche PLZ, Lieferdatum gleich oder ±1 Tag):` : "Kein Lead mit dieser PLZ am Lieferdatum (±1 Tag). Lead-ID unter „Gelieferte Leads“ suchen oder verwerfen."}
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <HvkAssign

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import type { HvkReabgleichWeek } from "@/lib/ppl/hvk-abrechnung";
+import { HVK_VIA_LABEL, type HvkReabgleichWeek } from "@/lib/ppl/hvk-abrechnung";
 import {
   hvkAssignAction,
   hvkBackfillAction,
@@ -176,7 +176,10 @@ function RunTable({ rows }: { rows: HvkRunRow[] }) {
               <div key={k.hvkLeadId} className="text-xs">
                 Reklamation {k.hvkLeadId} ({k.plz} {k.ort}, {k.date.split("-").reverse().join(".")}):{" "}
                 {k.outcome === "eindeutig" ? (
-                  <span className="text-emerald-700">{STORNO[k.storno ?? ""] ?? "zugeordnet"}</span>
+                  <span className="text-emerald-700">
+                    {STORNO[k.storno ?? ""] ?? "zugeordnet"}
+                    {k.via ? <span className="text-[color:var(--muted)]"> · über {HVK_VIA_LABEL[k.via]}</span> : null}
+                  </span>
                 ) : (
                   <span className="text-amber-700">{k.outcome === "keiner" ? "kein passender Lead, zu prüfen" : `${k.candidateIds.length} mögliche Leads, zu prüfen`}</span>
                 )}

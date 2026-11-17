@@ -28,8 +28,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ruv.de/pflegeversicherung/pflege-zusatzversicherung/pflegemonatsgeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PflegeVorsorge comfort (PM2)",
@@ -50,8 +49,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ruv.de/pflegeversicherung/pflege-zusatzversicherung/pflegemonatsgeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PflegeVorsorge premium (PM1)",
@@ -72,8 +70,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ruv.de/pflegeversicherung/pflege-zusatzversicherung/pflegemonatsgeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -85,6 +82,7 @@
     "Einmalleistung über den Zusatztarif PflegeVorsorge cash (PE): 4.000, 8.000 oder 12.000 € bei erstmaliger Pflegebedürftigkeit.",
     "Dynamik: alle drei Jahre +10 % bis Alter 70, auch im Pflegefall. Beitragspause bis 2 Jahre nach Geburt; doppeltes Monatsgeld bis zur Volljährigkeit des jüngsten Kindes.",
     "Leistung bei Demenz nicht gesondert genannt.",
-    "Keine Markierung; comfort als mittlere Stufe gesetzt."
+    "Keine Markierung; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf ruv.de."
   ]
 }

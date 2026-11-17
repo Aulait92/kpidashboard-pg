@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Kfz-Versicherung/IIIAV610.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Leistungspaket Comfort Plus",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/Kfz-Versicherung/IIIAV610.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -69,6 +67,7 @@
     "Haftpflicht 100 Mio. € pauschal, Personenschäden höchstens 15 Mio. € je Person. Grobe Fahrlässigkeit: Verzicht auf den Einwand laut AKB 2025, nicht bei Alkohol oder Drogen und weiteren genannten Fällen.",
     "Neupreisentschädigung: Comfort 6 Monate, Comfort Plus 24 Monate (bis 60.000 km); Comfort Plus zusätzlich Kaufwertentschädigung 12 Monate, kein Abzug Neu für Alt, Auslandsschadenschutz, Eigenschadendeckung bis 100.000 €.",
     "Wildschäden: Comfort Haarwild plus Bär, Waschbär, Marderhund, Wolf; Comfort Plus Tiere aller Art.",
-    "Werkstattbindung (Unfallreparatur-Service) senkt den Beitrag, nicht für Leasing und Tesla. Fahrerschutz gegen Mehrbeitrag. Debeka markiert kein Paket."
+    "Werkstattbindung (Unfallreparatur-Service) senkt den Beitrag, nicht für Leasing und Tesla. Fahrerschutz gegen Mehrbeitrag. Debeka markiert kein Paket.",
+    "Geprüft am 17.11.2026 an Produktseite und Produktinformationen bzw. Tarifbedingungen auf debeka.de."
   ]
 }

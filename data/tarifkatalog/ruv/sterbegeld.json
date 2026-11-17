@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/sterbegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -32,6 +31,7 @@
   "offen": [
     "Ein Tarif ohne Stufen; Summe frei wählbar zwischen 1.000 und 15.000 €.",
     "Tod in der Wartezeit: Beiträge zurück; bei Unfalltod volles Sterbegeld auch in den ersten 18 Monaten. Doppelte Leistung bei Unfalltod nicht genannt.",
-    "Bestattungsvorsorge-Service und Dynamik nicht genannt."
+    "Bestattungsvorsorge-Service und Dynamik nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite auf ruv.de."
   ]
 }

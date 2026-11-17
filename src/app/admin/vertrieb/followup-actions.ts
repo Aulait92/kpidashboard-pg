@@ -78,7 +78,9 @@ export async function redraftFollowupNowAction(_p: FollowupState, fd: FormData):
     const f = await draftFollowup(s(fd, "id")!, { force: true });
     refresh(f.contactId);
     const settings = await loadFollowupSettings();
-    const link = settings.bookingUrl && f.body1?.includes(settings.bookingUrl) ? " mit Buchungslink" : settings.bookingUrl ? "" : " (kein Buchungslink eingestellt)";
+    const { vertriebsLinkFuerKontakt } = await import("@/lib/vertrieb/buchung");
+    const url = await vertriebsLinkFuerKontakt(settings.bookingUrl, f.contactId);
+    const link = url && f.body1?.includes(url) ? " mit Buchungslink" : url ? "" : " (kein Buchungslink eingestellt)";
     return { ok: true, message: `Texte neu geschrieben (${f.textSource === "KI" ? "per KI" : "Vorlage"})${link}.` };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Texte konnten nicht neu geschrieben werden." };

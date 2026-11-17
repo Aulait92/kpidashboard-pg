@@ -1,10 +1,24 @@
-# Vertriebsunterlagen (Stand 17.11.2026: Commit bc0fecc, Folie 18 „Komplettcheck“)
+# Vertriebsunterlagen (Stand 17.11.2026: Commit eca12945, Folie 19 „Policen vorab“)
 
 Aktuelle Präsentationen für Admin → Marketing → Unterlagen (je Zielgruppe PPTX und PDF).
 
 Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unverändert, neu: Terminvorbereitung,
-Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 23 Folien, Makler 24. Die Folien sind Bilder (Text nicht
+Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 24 Folien, Makler 25 (Fassung eca12945). Die Folien sind Bilder (Text nicht
 durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
+
+Fassung eca12945 (17.11.2026, Branch `claude/loving-mendel-j965x3`, nur die vier Präsentationen und
+`sprechzettel-vertrieb.md` übernommen; `docs/webseite/policen-abschnitt.md` nicht, siehe docs/webseite-offen.md):
+- Neue Folie 19 „Ihr Kunde schickt seine Policen. Sie sehen vorher, wo er doppelt zahlt.“ (Rubrik „Ihre Software“),
+  direkt nach dem Komplettcheck (18). Folie 20 „Sie wissen jederzeit …“ mit dem Satz zur laufenden Kampagnen-Optimierung
+  nach Umsatz je Werbe-Euro. Alle Folien danach eine Nummer weiter: „Rechnet sich das?“ 21, Makler „Mit Tarifvergleich“ 22,
+  Paket Vertreter 22 / Makler 23, „Und wenn es schlecht läuft?“ Vertreter 23 / Makler 24, „Ihr Start in 3 Schritten“
+  Vertreter 24 / Makler 25. Folie 13 (Video) und 17 (Live-Demo) bleiben.
+- PDF: Vertreter 31 Seiten, Makler 32 (Folie 13 als 8 Einzelbilder). Ohne Bonusfolie; mit Bonusfolie beim Upload
+  (Abschnitt „Ihr Abschlussbonus“ unten): Vertreter 25 Folien / PDF 32 Seiten, Makler 26 Folien / PDF 33 Seiten.
+- Folienbilder der Web-Präsentation alle neu erzeugt (Seitenzahl „n / 24“ bzw. „n / 25“; neu: vertreter/24.webp,
+  makler/25.webp). Folienliste in `src/lib/vertrieb/verkaufspraesentation.ts` um Folie 19 „Policen vorab“ ergänzt;
+  Web-Präsentation mit Bonusfolie: Vertreter 25, Makler 26 Folien.
+- Sprechzettel `sprechzettel-vertrieb.md` (Vertreter 24 / Makler 25 Folien) neu im Ordner.
 
 Fassung bc0fecc (17.11.2026, Branch `claude/loving-mendel-j965x3`, nur diese vier Dateien übernommen):
 - Neue Folie 18 „Viele wollen den Komplettcheck. Ein Termin, mehrere Verträge.“ (Cross-Selling im Termin, Rubrik
@@ -30,10 +44,10 @@ In Produktion erst nach Oles OK hochladen.
 
 | Datei | Zielgruppe | Format | Hinweis |
 |---|---|---|---|
-| `Vertreter-Praesentation.pptx` | vertreter | pptx | neues Design, 23 Folien (ohne Bonusfolie) |
-| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung, 30 Seiten (ohne Bonusfolie) |
-| `Makler-Praesentation.pptx` | makler | pptx | neues Design, 24 Folien (ohne Bonusfolie) |
-| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, 31 Seiten (ohne Bonusfolie) |
+| `Vertreter-Praesentation.pptx` | vertreter | pptx | neues Design, 24 Folien (ohne Bonusfolie) |
+| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung, 31 Seiten (ohne Bonusfolie) |
+| `Makler-Praesentation.pptx` | makler | pptx | neues Design, 25 Folien (ohne Bonusfolie) |
+| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, 32 Seiten (ohne Bonusfolie) |
 
 Hochladen ohne Admin-Login über den geschützten Upload (docs/sicherheit-cron.md):
 
@@ -55,8 +69,8 @@ Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am
 - **Admin → Vertrieb → Kontakt → „Präsentation“**: Fassung nach Angebot (Vertreter/Makler) bzw. Kontakt („Makler“
   laut Anreicherung), umschaltbar. „Rechnet sich das?“ und „Ihr Paket“ sind HTML-Folien mit Namen und Preisen aus dem
   aktuellen Angebot des Kontakts, ohne Angebot mit Listenpreisen. Folie 17 zeigt rechts die Live-Demo
-  (`/demo/beratung`, zum Anklicken), Folie 13 das Video des Assistenten, Folie 18 den Komplettcheck (Bild).
-  Mit Bonusfolie: Vertreter 24, Makler 25 Folien.
+  (`/demo/beratung`, zum Anklicken), Folie 13 das Video des Assistenten, Folie 18 den Komplettcheck und Folie 19
+  „Policen vorab“ (Bilder). Mit Bonusfolie: Vertreter 25, Makler 26 Folien.
 - **Link für den Interessenten** (`/praesentation/<token>`, nur App-Adresse): im Kontakt oder als Häkchen beim Versand des
   Angebots; 14 Tage gültig, verlängerbar, beendbar. Aufrufe stehen im Kontakt („Präsentation geöffnet am …“), eigene
   Aufrufe als Admin zählen nicht.
@@ -76,6 +90,9 @@ Seitenzahl. Listenpreise: Vertreter 2.490 € → 2.190 €, Makler 990 € → 
 npx tsx scripts/bonus-folie-unterlagen.ts /tmp/bonus
 python3 scripts/bonus-folie-einfuegen.py /tmp/bonus /tmp/unterlagen-neu
 ```
+
+Ergebnis mit der Fassung eca12945 (Policen vorab, 17.11.2026): Vertreter 25 Folien (PDF 32 Seiten), Makler 26 Folien
+(PDF 33 Seiten); Upload in Produktion nach dem Deploy (Ole: „überall ersetzen“).
 
 Ergebnis mit der Fassung bc0fecc (Komplettcheck, 17.11.2026, nach Oles OK in Produktion hochgeladen am 17.11.2026, 15:59 Uhr): Vertreter 24 Folien (PDF 31 Seiten),
 Makler 25 Folien (PDF 32 Seiten); vorher (22/23 Folien) 23 und 24. Ohne Playwright-Chromium mit

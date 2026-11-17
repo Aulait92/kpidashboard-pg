@@ -12,6 +12,8 @@ import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
 const tag = Math.random().toString(36).slice(2, 8);
 const invoiceNo = `369-G-6${String(Math.floor(Math.random() * 1e6)).padStart(6, "0")}`;
+// Spätere Rechnung: reklamiert 4597002 (München) mit abweichendem Lieferdatum, nur über die HvK-Lead-ID auflösbar
+const laterNo = `369-G-2${String(Math.floor(Math.random() * 1e6)).padStart(6, "0")}`;
 const FIXTURE = readFileSync(path.join(__dirname, "..", "fixtures", "hvk-abrechnung", "369-G-000034.txt"), "utf8");
 const admin = { id: null, email: "admin@test.local", role: "ADMIN" };
 const TOKEN = "test-read-token-0123456789-0123456789-abcdef";
@@ -58,6 +60,11 @@ describe("HvK-Abrechnung: Airtable-Leads finden und bestehende Rechnungen neu ab
     // Rechnung übernehmen, solange wir (wie vor dem Fix) keine passenden Leads finden: Geliefert 0, Reklamation offen
     const r = await importHvkPdf(await pdfOf(FIXTURE.replace("369-G-000034", invoiceNo)), { pdfName: "Gutschrift.pdf", source: "upload" }, { actor: admin });
     expect(r.ok && r.result).toMatchObject({ status: "neu", delivered: 0, stornoAuto: 0, stornoReview: 1 });
+    const later = FIXTURE.replace("369-G-000034", laterNo)
+      .replace("Zeitraum:   20.07.2026 - 26.07.2026", "Zeitraum:   27.07.2026 - 02.08.2026")
+      .replace("Lead ID: 4596925, KVV-Opt, 2026-07-19, 84032 Landshut", "Lead ID: 4597002, KVV-Opt, 2026-07-24, 80331 München");
+    const r2 = await importHvkPdf(await pdfOf(later), { pdfName: null, source: "upload" }, { actor: admin });
+    expect(r2.ok && r2.result).toMatchObject({ status: "neu", stornoAuto: 0, stornoReview: 1 });
 
     const mk = async (key: string, d: { day: string; plz: string; ort: string; source: string; bezug?: string; app?: boolean; test?: boolean; customer?: string }) => {
       const l = await prisma.lead.create({
@@ -91,7 +98,7 @@ describe("HvK-Abrechnung: Airtable-Leads finden und bestehende Rechnungen neu ab
   });
 
   afterAll(async () => {
-    await prisma.hvkInvoice.deleteMany({ where: { invoiceNo } });
+    await prisma.hvkInvoice.deleteMany({ where: { invoiceNo: { in: [invoiceNo, laterNo] } } });
     await prisma.auditLog.deleteMany({ where: { OR: [{ customerId }, { entity: "HvkInvoice" }] } });
     await cleanupCustomer(customerId);
     await cleanupCustomer(otherCustomerId);
@@ -114,6 +121,9 @@ describe("HvK-Abrechnung: Airtable-Leads finden und bestehende Rechnungen neu ab
     expect(inv.deliveredCount).toBe(0);
     expect(inv.reklamationen[0].status).toBe("offen");
     expect(await prisma.auditLog.count({ where: { action: "ppl.hvk_neuabgleich" } })).toBe(0);
+    expect(s.weeks.find((x) => x.invoiceNo === laterNo)).toMatchObject({ stornoNew: 1, open: 0 });
+    expect(s.totals.linked).toBeGreaterThan(0);
+    expect(await prisma.lead.count({ where: { customerId, hvkLeadId: { not: null } } })).toBe(0);
   });
 
   it("Übernehmen: Geliefert neu, offene Reklamation wird Storno (auto); zweiter Lauf ändert nichts", async () => {
@@ -132,11 +142,19 @@ describe("HvK-Abrechnung: Airtable-Leads finden und bestehende Rechnungen neu ab
     expect(Buffer.from(inv.pdf).equals(Buffer.from(before.pdf))).toBe(true);
     expect(inv.reklamationen[0]).toMatchObject({ status: "auto", leadId: ids.rek, candidateIds: [ids.rek] });
     expect(inv.reklamationen[0].decidedAt).not.toBeNull();
+    expect(inv.reklamationen[0].via).toBe("datum_plz");
+    // Zuordnungen gespeichert: sichere Treffer der Woche und die Reklamation
+    const hvkIds = Object.fromEntries((await prisma.lead.findMany({ where: { customerId }, select: { id: true, hvkLeadId: true } })).map((x) => [x.id, x.hvkLeadId]));
+    expect(hvkIds).toMatchObject({ [ids.rek]: "4596925", [ids.mg]: "4595123", [ids.muc]: "4597002", [ids.test]: null });
+    // Alte offene Reklamation der späteren Rechnung über die ID aufgelöst
+    const later = await prisma.hvkInvoice.findUniqueOrThrow({ where: { invoiceNo: laterNo }, include: { reklamationen: true } });
+    expect(later.reklamationen[0]).toMatchObject({ status: "auto", leadId: ids.muc, via: "id" });
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: ids.muc } })).stornoState).toBe("approved");
     expect((await listHvkInvoices()).find((x) => x.invoiceNo === invoiceNo)).toMatchObject({ delivered: 2, billed: 7, stornoAuto: 1, stornoOpen: 0 });
     expect(await prisma.auditLog.count({ where: { action: "ppl.hvk_neuabgleich" } })).toBe(1);
 
     const again = await reabgleichHvk({ dryRun: false, actor: admin });
-    expect(again.totals.changed).toBe(0);
+    expect(again.totals).toMatchObject({ changed: 0, linked: 0 });
     expect(again.weeks.find((x) => x.invoiceNo === invoiceNo)).toMatchObject({ stornoNew: 0, stornoBefore: 1, changed: false });
     expect(await prisma.auditLog.count({ where: { action: "ppl.hvk_neuabgleich" } })).toBe(1);
     expect(await prisma.auditLog.count({ where: { entityId: ids.rek, action: "storno.admin" } })).toBe(1);
