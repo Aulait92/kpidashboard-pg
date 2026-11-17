@@ -224,7 +224,13 @@ export function hatVertraege(qualificationData: unknown): boolean {
   if (ja(q.komplettcheck)) return true;
   const v = typeof q.vorhanden === "string" ? q.vorhanden.trim() : "";
   if (!v) return false;
-  return !/^(keine?|nein|nichts|noch keine?|bisher keine?|ohne)\b/i.test(v);
+  if (/^(keine?|nein|nichts|noch keine?|bisher keine?|ohne|neu)\b/i.test(v)) return false;
+  // „beides neu“, „wäre alles neu“, „noch nicht versichert“ (Ole, 17.11.2026: Einladung kam trotz „beides neu“).
+  // Gemischte Antworten („Haftpflicht bei HUK, Hausrat neu“) zählen weiter als vorhanden.
+  const neu =
+    /\b(beides|beide|alles|alle|komplett|w[äa]re|w[äa]ren|ist|sind)\s+(noch\s+)?(ganz\s+)?neu\b/i.test(v) ||
+    /\b(noch\s+)?(nicht|nirgends|nirgendwo)\s+(\w+\s+)?versichert\b/i.test(v);
+  return !(neu && !/\bbei\s+\S/i.test(v));
 }
 
 /** Einladung jetzt schicken? Nur bei bestehenden Verträgen und nur einmal je Chat. */
