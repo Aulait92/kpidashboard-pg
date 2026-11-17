@@ -1,8 +1,9 @@
-# WhatsApp-Vorlagen Show-up-Paket (P1) zur Freigabe durch Ole
+# WhatsApp-Vorlagen Show-up-Paket (P1)
 
-Stand 17.11.2026. Alle vier Vorlagen sind **nur vorbereitet** und werden **nicht** bei Meta eingereicht, bis Ole sie
-freigibt. Kategorie jeweils UTILITY. Im offenen 24-h-Fenster gehen die Texte schon jetzt als Freitext raus (ohne
-Vorlagenkosten). Ist das Fenster zu und die neue Vorlage noch nicht freigegeben, gilt die bisherige Regel:
+Stand 17.11.2026. Alle vier Vorlagen sind von Ole **freigegeben und eingereicht ab 17.11.2026** (Texte unverändert;
+der Cron reicht sie je Kunde bei Meta ein). Kategorie jeweils UTILITY. Im offenen 24-h-Fenster gehen die Texte als
+Freitext raus (ohne Vorlagenkosten). Ist das Fenster zu und hat Meta die neue Vorlage für den Kunden noch nicht
+freigegeben, gilt die bisherige Regel:
 
 - Vortag und 1 Stunde: die bisher freigegebenen Vorlagen `reminder` bzw. `reminder_soon` (v4) mit ihrem alten Text.
 - 15 Minuten vorher: entfällt (bisher gab es keine).
@@ -61,14 +62,17 @@ Geht raus, wenn der Vermittler zum Terminbeginn „Fehlt noch“ antippt.
 - Freitext im Fenster genau wie von Ole vorgegeben: „Guten Tag Frau Becker, Herr Kannapinn wartet schon im Videoraum
   auf Sie: <Link>“. In der Vorlage darf der Link nicht am Ende stehen (Meta-Regel), daher „Bis gleich!“ dahinter.
 
-## Abweichungen von Oles Wortlaut (bitte bestätigen)
+## Abweichungen von Oles Wortlaut (mit der Freigabe bestätigt)
 
 - Alle Nachrichten beginnen mit der üblichen Anrede-Zeile („Guten Tag Frau Becker,“ bzw. „Hallo Julia,“), so wie alle
   anderen Termin-Nachrichten. Danach folgt Oles Text mit kleinem Anfangsbuchstaben.
 - Vortag: Der Nutzensatz nennt den Vermittler schon („zeigt Ihnen Herr Kannapinn …“), deshalb heißt es davor nur
   „kurze Erinnerung an Ihren Termin morgen um 10 Uhr“.
 
-## Freigeben (Technik)
+## Freigeben (Technik, erledigt am 17.11.2026)
+
+Die bisherige Platzhalter-Belegung von Vortag und 1 Stunde (v4) steht jetzt in `PLATZHALTER_AB` (templates.ts).
+
 
 - Vortag und 1 Stunde: in `src/lib/whatsapp/templates.ts` den Text aus `VORBEREITETE_FASSUNG` nach `TEMPLATE_BODY`
   übernehmen, `REST_PARAMS` auf die neuen Platzhalter setzen, `PURPOSE_VERSION` auf „v5“, Eintrag löschen. Die

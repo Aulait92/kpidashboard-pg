@@ -31,6 +31,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     // In der App: kurzes Vibrieren als Bestätigung (Erledigt, Gespeichert …)
     if (t.tone === "error") hapticError();
     else hapticSuccess();
+    // Erfolgsmoment (Termin gebucht, Abschluss): Anlass für die Frage nach der Nutzungsanalyse (components/nutzungsanalyse.tsx)
+    if (t.tone !== "error" && /termin gebucht|termin eingetragen|: abschluss/i.test(t.message)) window.dispatchEvent(new Event("pg:erfolg"));
     const id = Date.now();
     setToast({ ...t, id });
     timer.current = setTimeout(() => setToast((cur) => (cur?.id === id ? null : cur)), t.durationMs ?? 6000);

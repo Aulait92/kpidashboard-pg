@@ -5,18 +5,21 @@
 // Aufnahme bei einem Teil der Sitzungen (ANTEIL), Auswertung einmal pro Woche (Rage- und Dead-Clicks).
 
 /** Version des Einwilligungstexts (am Nutzer gespeichert, Nachweis). Bei Textänderung hochzählen. */
-export const ANALYSE_VERSION = "2026-11-17";
+export const ANALYSE_VERSION = "2026-11-17-f2";
 /** Anteil der Sitzungen mit Aufnahme (Kosten bei Sentry). */
 export const ANALYSE_ANTEIL = 0.3;
 
 // Texte nach Rechtsprüfung (docs/rechtstexte/sitzungsaufnahme-2026-11-17.md, Abschnitt 2): informiert, freiwillig,
 // beide Knöpfe gleich gestaltet, Link vor den Knöpfen, keine Gedankenstriche.
+// Fassung 2 (konversionsoptimiert, Rechtsprüfung Abschnitt 7): Nutzen zuerst, „aufzeichnen“, Sentry EU, Teil der
+// Sitzungen, unkenntlich, Abschalten unter Einstellungen; gleichrangige Knöpfe, Ja zuerst; Frage nach einem Erfolgsmoment.
 export const ANALYSE_TEXT = {
-  titel: "Helfen Sie mit, die App einfacher zu machen?",
-  text: "Mit Ihrem Ja zeichnen wir bei einem Teil Ihrer Sitzungen über unseren Dienstleister Sentry (Datenregion EU) auf, wie Sie durch die App klicken, damit wir umständliche Stellen finden und verbessern. Alle Texte, Eingaben und Kundendaten sind dabei unkenntlich, die Teilnahme ist freiwillig und lässt sich jederzeit unter Einstellungen beenden.",
-  ja: "Ja, gern",
+  titel: "Helfen Sie uns, Ihnen Klicks zu sparen?",
+  text: "Mit Ihrem Ja zeichnen wir bei einem Teil Ihrer Sitzungen über Sentry (Datenregion EU) auf, wo Klicks hängen bleiben, und bauen genau diese Stellen um. Ihre Kunden, Texte und Eingaben sind dabei unkenntlich, und Sie können die Aufnahme jederzeit unter Einstellungen abschalten.",
+  unterzeile: "Danke für Ihre Hilfe, Ole Kannapinn, Gründer",
+  ja: "Ja, ich helfe mit",
   nein: "Nein, danke",
-  mehr: "Mehr erfahren",
+  mehr: "Was genau aufgenommen wird",
   link: "/rechtliches/sitzungsaufnahmen",
   danke: "Danke! Sie können das jederzeit unter Einstellungen wieder ausschalten.",
   schalter: "Sitzungsaufnahme zur Verbesserung der App",

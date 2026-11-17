@@ -5,7 +5,7 @@
 
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
-import { firstNameOf, NoTemplateError, sendWhatsAppNotice, VORBEREITETE_FASSUNG } from "@/lib/whatsapp/templates";
+import { firstNameOf, neuePlatzhalter, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
 import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { advisorDisplayName } from "@/lib/advisor-name";
@@ -202,16 +202,22 @@ async function erinnerungsKontext(appt: TerminZeile) {
   return { conv, an, who, person, source: lead?.source ?? null, formular, angaben: conv.qualificationData, hi: anredeZeile(an, who.kontakt), optedOut: !!conv.optedOutAt };
 }
 
-/** Version der gewählten Vorlage ab der vorbereiteten neuen Fassung (VORBEREITETE_FASSUNG)? */
-const neueFassung = (purpose: "reminder" | "reminder_soon", version: number) =>
-  version >= Number((VORBEREITETE_FASSUNG[purpose]?.version ?? "v99").slice(1)) && version > 0;
+/**
+ * Erinnerungs-Vorlage: Platzhalter je Version der gewählten Vorlage. Ab v5 (Show-up-Paket, freigegeben 17.11.2026):
+ * Wann, Nutzen, Zugang (vortagParams). Bis Meta v5 für den Kunden freigegeben hat, die bisherige v4 mit Datum/Uhrzeit,
+ * Art, Link bzw. Hinweis; noch ältere bzw. von Hand angelegte Fassungen mit dem Satz zum Verschieben im letzten Parameter.
+ */
+function erinnerungsParams(version: number, o: { v5: () => string[]; v4: string[]; aelter: string[] }): string[] {
+  if (neuePlatzhalter("reminder", version)) return o.v5();
+  return version >= 4 ? o.v4 : o.aelter;
+}
 
 /**
  * 1 Stunde vorher (Ole, 17.11.2026): „In einer Stunde ist Ihr Videotermin mit Herrn Kannapinn. Passt bei Ihnen alles?
  * Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.“ mit „Ja, passt“ / „Bitte verschieben“, ohne Link.
  * Nicht, wenn weniger als 2 h vorher gebucht, nach „Bitte verschieben“ oder die Erinnerung gerade erst rausging.
- * Vorlage (Fenster zu): bis zur Freigabe der vorbereiteten Fassung die bisherige „Kurz vor dem Termin“ mit ihren
- * Platzhaltern, sonst die Erinnerungs-Vorlage (bisherige Regel).
+ * Vorlage (Fenster zu): „Kurz vor dem Termin“ v5 (Terminart, Vermittler im Dativ); bis Meta sie für den Kunden
+ * freigegeben hat, die bisherige v4 mit ihren Platzhaltern; ist gar keine freigegeben, die Erinnerungs-Vorlage.
  */
 export async function runSoonReminders(now = new Date()): Promise<ReminderResult> {
   const due = await prisma.appointment.findMany({
@@ -239,22 +245,26 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
     // Bisherige Vorlage v4: Uhrzeit, Art, Link bzw. Hinweis
     const alt = [firstNameOf(k.conv.contactName), uhr, modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an)];
     const text = stundeText({ an: k.an, hi: k.hi, mode: appt.mode, person: k.person });
+    const neu = [alt[0], terminArtWort(appt.mode), k.person.dat];
+    // Rückfall Erinnerungs-Vorlage: v4 Datum/Uhrzeit, Art, Link bzw. Hinweis; ab v5 wie am Vortag mit „heute um …“
     const remParams = [alt[0], formatWhenDE(appt.startsAt), alt[2], alt[3]];
+    const remAelter = [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(k.an)}`];
+    const remV5 = () => {
+      const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
+      return [alt[0], ...vortagParams({ an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, person: k.person })];
+    };
     const send = (purpose: "reminder_soon" | "reminder") =>
       sendWhatsAppNotice({
         customerId: appt.customerId,
         to: k.conv.contactPhone,
         purpose,
         params: purpose === "reminder" ? remParams : alt,
-        ...(purpose === "reminder" ? { legacyParams: [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(k.an)}`] } : {}),
-        paramsFor: ({ version, current }) =>
-          purpose === "reminder_soon" && neueFassung("reminder_soon", version)
-            ? [alt[0], terminArtWort(appt.mode), k.person.dat]
-            : purpose === "reminder" && !current
-              ? [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(k.an)}`]
-              : purpose === "reminder"
-                ? remParams
-                : alt,
+        paramsFor: ({ version }) =>
+          purpose === "reminder_soon"
+            ? neuePlatzhalter("reminder_soon", version)
+              ? neu
+              : alt
+            : erinnerungsParams(version, { v5: remV5, v4: remParams, aelter: remAelter }),
         text,
         leadId: appt.leadId,
         contactName: k.conv.contactName,
@@ -282,8 +292,8 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
 /**
  * 15 Minuten vorher, nur Videotermine mit Link (Ole, 17.11.2026): „Gleich geht es los: Herr Kannapinn ist um 10 Uhr für
  * Sie im Videoraum. Der Link funktioniert direkt im Handy-Browser, ohne App: <Link>. Bis gleich!“ mit „Bitte
- * verschieben“. Im 24-h-Fenster Freitext, sonst die Vorlage „reminder_start“ (nur vorbereitet; ohne freigegebene
- * Vorlage entfällt sie, wie bisher gab es keine 15-Min.-Erinnerung).
+ * verschieben“. Im 24-h-Fenster Freitext, sonst die Vorlage „reminder_start“ (v5, eingereicht ab 17.11.2026); ohne
+ * freigegebene Vorlage entfällt sie (wie bisher, als es keine 15-Min.-Erinnerung gab).
  */
 export async function runStartReminders(now = new Date()): Promise<ReminderResult> {
   const due = await prisma.appointment.findMany({
@@ -367,7 +377,7 @@ export async function runReminders(now = new Date()): Promise<ReminderResult> {
         purpose: "reminder",
         params,
         legacyParams,
-        paramsFor: ({ version, current }) => (neueFassung("reminder", version) ? [params[0], ...vortagParams(eingabe)] : current ? params : legacyParams),
+        paramsFor: ({ version }) => erinnerungsParams(version, { v5: () => [params[0], ...vortagParams(eingabe)], v4: params, aelter: legacyParams }),
         text: vortagText(eingabe),
         leadId: appt.leadId,
         contactName: k.conv.contactName,
