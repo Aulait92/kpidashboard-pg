@@ -75,6 +75,10 @@ type Props = {
   hasUpcomingAppointment?: boolean;
   /** Testlead (lib/testlead.ts): Abzeichen „Test“ und „Testlead löschen“ unter „Mehr“. */
   isTest?: boolean;
+  /** Neben dem Namen, z. B. Etikett „Einwilligung“ (components/einwilligung-kontakt.tsx) */
+  nameZusatz?: React.ReactNode;
+  /** Terminkarte darunter hat den Hauptknopf: „Anrufen“ ruhig statt blau (eine Hauptaktion je Seite) */
+  anrufenNeutral?: boolean;
 };
 
 /** Öffnet „Angaben bearbeiten“ im Kontakt (components/lead-stammdaten-edit.tsx). */
@@ -206,6 +210,7 @@ export function LeadHeaderActions(p: Props) {
           <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
             {p.name ?? "Lead"}
             {p.isTest ? <TestLeadBadge /> : null}
+            {p.nameZusatz}
           </h1>
           {!p.storniert ? (
             <div className="hidden shrink-0 gap-2 sm:flex">
@@ -328,7 +333,7 @@ export function LeadHeaderActions(p: Props) {
             label="Anrufen"
             href={p.phone ? `tel:+${p.phone}` : undefined}
             onClick={p.phone && p.askAfterCall ? () => markCall(p.leadId, p.leadId) : undefined}
-            primary
+            primary={!p.anrufenNeutral}
             title={p.phone ? formatPhone(p.phone) : undefined}
             explain={{ title: "Keine Telefonnummer hinterlegt", text: "Tragen Sie die Nummer bei den Angaben ein, dann können Sie direkt anrufen.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />

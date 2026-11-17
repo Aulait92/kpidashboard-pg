@@ -8,20 +8,26 @@ import { FilterChips } from "@/components/ui/filter-chips";
 import { ZahlenTippsCard } from "@/components/zahlen-tipps-card";
 import { formatNumber } from "@/lib/format";
 import { CALL_ATTEMPTS_TARGET } from "@/lib/lead-lost";
-import { verlustKarte } from "@/lib/verlustgruende-server";
+import { verlustKarte, type VerlustKarteDaten } from "@/lib/verlustgruende-server";
 import { prozent } from "@/lib/verlustgruende";
 
 export async function VerlustKarte({
   customerId,
   range,
   params,
+  daten,
+  eingebettet = false,
 }: {
   customerId: string;
   range: { from: Date; to: Date };
   /** Suchparameter der Seite: Zeitraum für die Links, Filter vgp (Produkt) und vgb (Berater). */
   params: Record<string, string | undefined>;
+  /** Schon geladen (Wachstum braucht den häufigsten Grund auch für den Trichter). */
+  daten?: VerlustKarteDaten;
+  /** Als Zeile im Kasten „Details“ auf Wachstum (Ole, 18.11.2026): ohne eigenen Rahmen. */
+  eingebettet?: boolean;
 }) {
-  const d = await verlustKarte(customerId, range, { produkt: params.vgp ?? null, berater: params.vgb ?? null });
+  const d = daten ?? (await verlustKarte(customerId, range, { produkt: params.vgp ?? null, berater: params.vgb ?? null }));
   const filterAktiv = !!(params.vgp || params.vgb);
   if (d.verteilung.total === 0 && !filterAktiv) return null;
   const top = d.verteilung.gruende.find((g) => g.key !== "ohne") ?? d.verteilung.gruende[0];
@@ -38,13 +44,18 @@ export async function VerlustKarte({
 
   return (
     <details
-      className="group rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden"
-      open={d.tipps.length > 0 || filterAktiv}
+      id="verlust"
+      className={
+        eingebettet
+          ? "group scroll-mt-20 [&>summary::-webkit-details-marker]:hidden"
+          : "group scroll-mt-20 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)] [&>summary::-webkit-details-marker]:hidden"
+      }
+      open={eingebettet ? filterAktiv : d.tipps.length > 0 || filterAktiv}
       data-verlust-karte
     >
-      <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-3.5">
+      <summary className={`flex cursor-pointer items-center justify-between gap-3 ${eingebettet ? "px-5 py-4" : "px-5 py-3.5"}`}>
         <span className="min-w-0">
-          <span className="block text-[15px] font-semibold">Warum Leads verloren gehen</span>
+          <span className={`block font-semibold ${eingebettet ? "text-base" : "text-[15px]"}`}>Warum Leads verloren gehen</span>
           {top ? (
             <span className="block truncate text-sm text-[color:var(--muted)]">
               {formatNumber(d.verteilung.total)} verloren, am häufigsten: {top.label} ({prozent(top.share)})

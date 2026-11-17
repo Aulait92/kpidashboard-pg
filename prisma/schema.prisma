@@ -2901,6 +2901,10 @@ model KpiSettings {
   updateNext           String?
   // Letzter Monat der Pay-per-Lead-Pilotphase („YYYY-MM“), leer = läuft noch
   pplPilotEnd          String?
+  // Offene Chancen auf „Wachstum“ (lib/offene-chancen.ts): Standardquoten, solange ein Kunde weniger als 10
+  // entschiedene Fälle je Stufe hat (Anteile, 0,4 = 40 %)
+  chanceQuoteAngebot   Decimal  @default(0.4) @db.Decimal(4, 3)
+  chanceQuoteTermin    Decimal  @default(0.25) @db.Decimal(4, 3)
   updatedAt            DateTime @updatedAt
 }
 

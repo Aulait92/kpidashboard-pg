@@ -1,13 +1,16 @@
 import { LeadLegalCard } from "@/components/lead-legal-card";
 import { isHealthLabel, splitHealthAnswers } from "@/lib/gesundheitsdaten";
-import { terminArtLabel } from "@/lib/termin-art";
-import { AlertTriangle, CalendarClock, ClipboardList, MessageCircle, PhoneCall } from "lucide-react";
+import { AlertTriangle, ClipboardList, MessageCircle, PhoneCall } from "lucide-react";
 import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
 import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
-import { ButtonLink, buttonClass, Card, CardHeader } from "@/components/ui";
-import { RescheduleButton } from "@/components/reschedule-dialog";
+import { Card, CardHeader } from "@/components/ui";
+import { TerminKarte } from "@/components/termin-karte";
+import { EinwilligungEtikett } from "@/components/einwilligung-kontakt";
+import { einwilligungStand } from "@/lib/einwilligung-stand";
+import { optOutHash } from "@/lib/bestand/links";
+import { angebotOffen, terminKartenAktionen } from "@/lib/termin-karte";
 import { formatPhone } from "@/lib/format";
 import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
@@ -274,13 +277,39 @@ export async function LeadDetailBody({
     prisma.appointment.findFirst({
       where: { leadId: lead.id, status: "booked", startsAt: { gt: twoHoursAgo() } },
       orderBy: { startsAt: "asc" },
-      select: { id: true, startsAt: true, mode: true, meetUrl: true, confirmedAt: true, komplettcheck: true },
+      select: TERMIN_SELECT,
     }),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } }),
     // Nächster Schritt (lib/lead-next-step.ts): Hinweis im Kontakt und Dialog nach jeder Aktion
     nextStepStateOf(lead.id),
-    prisma.appointment.findFirst({ where: { leadId: lead.id, ...pastOpenAppointmentWhere(new Date(nowMs())) }, orderBy: { startsAt: "desc" }, select: { id: true } }),
+    prisma.appointment.findFirst({ where: { leadId: lead.id, ...pastOpenAppointmentWhere(new Date(nowMs())) }, orderBy: { startsAt: "desc" }, select: TERMIN_SELECT }),
   ]);
+  // Einwilligung (lib/einwilligung-stand.ts): Häkchen im Formular, „STOPP“ und Abmeldungen (Sperrliste des Vermittlers)
+  const [stopp, abmeldungen] = await Promise.all([
+    prisma.conversation.findFirst({
+      where: { customerId, optedOutAt: { not: null }, OR: [{ leadId: lead.id }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
+      orderBy: { optedOutAt: "asc" },
+      select: { optedOutAt: true },
+    }),
+    lead.email || lead.phone
+      ? prisma.bestandOptOut.findMany({
+          where: {
+            customerId,
+            OR: [...(lead.email ? [{ kind: "email", hash: optOutHash("email", lead.email) }] : []), ...(lead.phone ? [{ kind: "phone", hash: optOutHash("phone", lead.phone) }] : [])],
+          },
+          orderBy: { createdAt: "asc" },
+          select: { scope: true, createdAt: true },
+        })
+      : [],
+  ]);
+  const einwilligung = einwilligungStand({
+    waConsent: lead.waConsent,
+    consentData: lead.consentData,
+    meta: !!lead.externalId,
+    whatsappStoppAt: stopp?.optedOutAt ?? null,
+    mailAbgemeldetAt: abmeldungen.find((o) => o.scope !== "all")?.createdAt ?? null,
+    alleAbgemeldetAt: abmeldungen.find((o) => o.scope === "all")?.createdAt ?? null,
+  });
   // Angaben des Assistenten ohne das, was schon im Leadformular steht (UX, Ole 15.11.2026: nicht doppelt)
   const werteAus = (x: unknown): string[] =>
     typeof x === "string"
@@ -303,6 +332,8 @@ export async function LeadDetailBody({
     : null;
   const botRecall = recallSeq?.nextAt ? { at: recallSeq.nextAt.toISOString(), note: recallNote } : null;
   const resultMissingAppt = stepState === "result_missing" ? (pastAppt?.id ?? null) : null;
+  // Terminkarte unter den Aktionen (lib/termin-karte.ts): kommender bzw. laufender Termin, sonst der vergangene ohne Ergebnis
+  const kartenTermin = nextAppt ?? (resultMissingAppt ? pastAppt : null);
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
   const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
@@ -436,8 +467,31 @@ export async function LeadDetailBody({
         mailOff={mailOff}
         whatsappConnected={waConnected}
         hasUpcomingAppointment={!!nextAppt && nextAppt.startsAt.getTime() > nowMs()}
+        nameZusatz={<EinwilligungEtikett stand={einwilligung} />}
+        anrufenNeutral={!!kartenTermin}
       />
-      {stepState === "missing" || stepState === "result_missing" ? (
+      {kartenTermin ? (
+        <TerminKarte
+          t={{
+            id: kartenTermin.id,
+            wann: apptFmt(kartenTermin.startsAt),
+            mode: kartenTermin.mode,
+            meetUrl: kartenTermin.meetUrl,
+            zugesagt: !!kartenTermin.confirmedAt,
+            komplettcheck: !!kartenTermin.komplettcheck,
+            erschienen: kartenTermin.attendance === "erschienen",
+            begonnen: kartenTermin.startsAt.getTime() <= nowMs(),
+          }}
+          a={terminKartenAktionen(kartenTermin, { now: new Date(nowMs()), telefon: !!lead.phone, angebotOffen: angebotOffen(lead.status) })}
+          leadId={lead.id}
+          name={lead.name ?? "Lead"}
+          source={lead.source}
+          phone={lead.phone}
+          mailReady={!!postfach}
+        />
+      ) : null}
+      {/* „Ergebnis fehlt“ übernimmt die Terminkarte („Ergebnis eintragen“) */}
+      {stepState === "missing" || (stepState === "result_missing" && !kartenTermin) ? (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900" data-next-step-hint>
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
@@ -522,7 +576,7 @@ export async function LeadDetailBody({
 
       <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
 
-      <LeadLegalCard waConsent={lead.waConsent} consentData={lead.consentData} health={health} meta={!!lead.externalId} />
+      <LeadLegalCard einwilligung={einwilligung} health={health} />
 
       {members.length > 1 ? (
         <LeadAssignee
@@ -533,7 +587,7 @@ export async function LeadDetailBody({
         />
       ) : null}
 
-      {nextAppt || ziel || conv?.qualificationSummary || qPoints.length || vorvertraege ? (
+      {ziel || conv?.qualificationSummary || qPoints.length || vorvertraege ? (
         <Card className="mb-6">
           {ziel ? (
             <div className="px-5 py-3.5" data-kontakt-ziel>
@@ -550,56 +604,15 @@ export async function LeadDetailBody({
               </ol>
             </div>
           ) : null}
-          {nextAppt ? (
-            <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
-              <CalendarClock className="h-5 w-5 shrink-0 text-[color:var(--brand)]" />
-              {/* Zeit nie abschneiden: im schmalen Fenster rutschen die Knöpfe in die nächste Zeile */}
-              <div className="min-w-fit flex-1">
-                <div className="whitespace-nowrap font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
-                <div className="text-xs text-[color:var(--muted)]">
-                  {terminArtLabel(nextAppt.mode)}
-                  {/* Zusage des Leads (Kalenderfrage im Chat bzw. „Ja, passt“), Ole 17.11.2026 */}
-                  {nextAppt.confirmedAt ? (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700" data-termin-zugesagt>
-                      zugesagt
-                    </span>
-                  ) : null}
-                  {nextAppt.komplettcheck ? (
-                    <span className="ml-2 inline-flex items-center rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 font-medium text-[color:var(--brand-dark)]" data-termin-komplettcheck>
-                      Komplettcheck
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-              <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap [&>*]:px-2 sm:[&>*]:px-3">
-              <ButtonLink href={`/buyer/termine/${nextAppt.id}/vorbereitung?von=kontakt`} variant="secondary" data-termin-vorbereiten>
-                Vorbereiten
-              </ButtonLink>
-              <ButtonLink href={`/buyer/termine/${nextAppt.id}/praesentation`} variant="secondary" data-termin-praesentation>
-                Präsentation
-              </ButtonLink>
-              {nextAppt.mode === "video" && nextAppt.meetUrl ? (
-                <ButtonLink href={nextAppt.meetUrl} variant="primary" external>
-                  Videocall
-                </ButtonLink>
-              ) : null}
-              {nextAppt.startsAt.getTime() > nowMs() ? (
-                <RescheduleButton appointmentId={nextAppt.id} className={buttonClass("secondary", "sm")}>
-                  Verschieben
-                </RescheduleButton>
-              ) : null}
-              </div>
-            </div>
-          ) : null}
           {conv?.qualificationSummary ? (
-            <p className={`px-5 py-3.5 text-sm ${nextAppt || ziel ? "border-t border-[color:var(--border)]" : ""}`}>
+            <p className={`px-5 py-3.5 text-sm ${ziel ? "border-t border-[color:var(--border)]" : ""}`}>
               <span className="text-[color:var(--muted)]">Assistent: </span>
               {conv.qualificationSummary}
             </p>
           ) : null}
           {/* Einzelne Angaben des Assistenten, z. B. fürs Privatschutz-Angebot (Ole, 15.11.2026) */}
           {qPoints.length ? (
-            <dl className={`grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 px-5 py-3.5 text-sm ${nextAppt || ziel || conv?.qualificationSummary ? "border-t border-[color:var(--border)]" : ""}`} data-lead-angaben>
+            <dl className={`grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 px-5 py-3.5 text-sm ${ziel || conv?.qualificationSummary ? "border-t border-[color:var(--border)]" : ""}`} data-lead-angaben>
               {qPoints.map((q) => (
                 <div key={q.key} className="contents">
                   <dt className="text-[color:var(--muted)]">{q.label}</dt>
@@ -827,6 +840,8 @@ function statusTone(status: string): "emerald" | "amber" | "rose" | "blue" | "zi
   return "zinc";
 }
 
+
+const TERMIN_SELECT = { id: true, startsAt: true, endsAt: true, mode: true, meetUrl: true, confirmedAt: true, komplettcheck: true, attendance: true } as const;
 
 /** Termine ab 2 Stunden vor jetzt (laufende Termine bleiben sichtbar). */
 function twoHoursAgo(): Date {
