@@ -1,6 +1,6 @@
 // Entscheidungs-Call in Texten an Interessenten (Ole, 17.11.2026): Meist ist der Entscheidungs-Call schon im
 // Sales-Termin gebucht. Dann nennen Angebotsmail, Angebotsseite und Zahlungserinnerung den gebuchten Termin
-// (mit Link zum Verschieben) statt des Buchungslinks; nur ohne Buchung steht der persönliche Buchungslink da.
+// (mit Link zum Verschieben). Ohne Buchung steht dort nichts (Ole bucht den Call immer selbst im Sales-Call).
 // Geprüft wird beim Versand bzw. Aufruf (lib/vertrieb/entscheidungs-call-server.ts), nicht bei der Angebotserstellung.
 // Reine Texte hier (Sie- und Du-Form, ohne Gedankenstriche), Zeiten in Europe/Berlin.
 
@@ -44,16 +44,8 @@ export type EntscheidungsCallText = {
 
 /** Text zum Entscheidungs-Call für Mails und die Angebotsseite. null: nichts zu sagen. */
 export function entscheidungsCallText(s: EntscheidungsCall, du = false): EntscheidungsCallText | null {
-  if (s.art === "keiner") return null;
-  if (s.art === "link") {
-    return {
-      satz: du
-        ? "Lass uns das Angebot gemeinsam durchgehen. Hier wählst du direkt einen Termin für deinen Entscheidungs-Call:"
-        : "Lassen Sie uns das Angebot gemeinsam durchgehen. Hier wählen Sie direkt einen Termin für Ihren Entscheidungs-Call:",
-      url: s.url,
-      linkLabel: "Termin wählen",
-    };
-  }
+  // Ole bucht den Entscheidungs-Call immer selbst im Sales-Call (17.11.2026): ohne Buchung kein Satz und kein Link
+  if (s.art !== "gebucht") return null;
   const { tag, zeit } = terminTagZeit(s.startAt);
   const kanal = s.telefon ? "am Telefon" : "per Video";
   const wie = s.telefon
@@ -78,6 +70,5 @@ export function entscheidungsCallMailText(s: EntscheidungsCall, du = false): str
 /** Hinweis im Admin beim Versenden: welche Variante rausgeht. */
 export function entscheidungsCallHinweis(s: EntscheidungsCall): string {
   if (s.art === "gebucht") return `Entscheidungs-Call ist gebucht: ${terminKurz(s.startAt)}, die Mail nennt den Termin`;
-  if (s.art === "link") return "Noch kein Entscheidungs-Call gebucht: die Mail enthält den Buchungslink";
-  return "Noch kein Entscheidungs-Call gebucht und online nicht buchbar: die Mail enthält keinen Termin";
+  return "Kein Entscheidungs-Call gebucht: die Mail nennt keinen Termin";
 }

@@ -98,15 +98,16 @@ describe("Entscheidungs-Call: gebuchter Termin statt Buchungslink", () => {
     await prisma.calendarConnection.deleteMany({ where: { customerId: VERTRIEB_CUSTOMER_ID } });
   });
 
-  it("noch nicht gebucht: Angebotsmail mit persönlichem Buchungslink, Hinweis im Admin", async () => {
+  it("noch nicht gebucht: Angebotsmail ohne Satz und ohne Buchungslink, Hinweis im Admin", async () => {
     const c = await kontakt();
     const offer = await angebot(c.id, c.email!);
     const res = await sendOfferEmailAction(offer.id);
-    expect(res).toEqual({ ok: true, hinweis: "Noch kein Entscheidungs-Call gebucht: die Mail enthält den Buchungslink" });
+    expect(res).toEqual({ ok: true, hinweis: "Kein Entscheidungs-Call gebucht: die Mail nennt keinen Termin" });
     const m = st.offerMails[0];
-    expect(m.text).toContain("Hier wählen Sie direkt einen Termin für Ihren Entscheidungs-Call:\nhttps://app.test/termin/entscheidung?k=");
+    expect(m.text).not.toContain("/termin/entscheidung?k=");
+    expect(m.html).not.toContain("/termin/entscheidung?k=");
+    expect(m.text).not.toContain("Entscheidungs-Call");
     expect(m.text).not.toContain("Wir sprechen am");
-    expect(m.html).toContain(">Termin wählen</a>");
   });
 
   it("schon gebucht: Angebotsmail nennt den Termin mit Link zum Verschieben, kein Buchungslink", async () => {

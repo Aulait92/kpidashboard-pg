@@ -25,17 +25,15 @@ describe("Entscheidungs-Call: Texte", () => {
     );
   });
 
-  it("nicht gebucht: Buchungslink wie bisher; ohne Online-Buchung nichts", () => {
-    expect(entscheidungsCallMailText(link)).toBe(
-      `Lassen Sie uns das Angebot gemeinsam durchgehen. Hier wählen Sie direkt einen Termin für Ihren Entscheidungs-Call:\n${link.url}`,
-    );
-    expect(entscheidungsCallText(link)).toMatchObject({ url: link.url, linkLabel: "Termin wählen" });
+  it("nicht gebucht: kein Satz und kein Buchungslink (Ole bucht den Call selbst im Sales-Call)", () => {
+    expect(entscheidungsCallText(link)).toBeNull();
+    expect(entscheidungsCallMailText(link)).toBeNull();
     expect(entscheidungsCallText({ art: "keiner" })).toBeNull();
     expect(entscheidungsCallMailText({ art: "keiner" })).toBeNull();
   });
 
   it("Sie-Form ohne Du, keine Gedankenstriche", () => {
-    for (const s of [gebucht, { ...gebucht, telefon: true }, { ...gebucht, verschiebenUrl: null }, link]) {
+    for (const s of [gebucht, { ...gebucht, telefon: true }, { ...gebucht, verschiebenUrl: null }]) {
       const sie = entscheidungsCallMailText(s)!;
       const du = entscheidungsCallMailText(s, true)!;
       expect(sie).not.toMatch(/\b(du|dein|deine|dich|dir)\b/);
@@ -48,7 +46,7 @@ describe("Entscheidungs-Call: Texte", () => {
     expect(terminKurz(START)).toBe("Do 16.01. 10 Uhr");
     expect(terminKurz(new Date("2031-01-16T09:30:00Z"))).toBe("Do 16.01. 10:30 Uhr");
     expect(entscheidungsCallHinweis(gebucht)).toBe("Entscheidungs-Call ist gebucht: Do 16.01. 10 Uhr, die Mail nennt den Termin");
-    expect(entscheidungsCallHinweis(link)).toBe("Noch kein Entscheidungs-Call gebucht: die Mail enthält den Buchungslink");
+    expect(entscheidungsCallHinweis(link)).toBe("Kein Entscheidungs-Call gebucht: die Mail nennt keinen Termin");
   });
 
   it("Zahlungserinnerung: gebuchter Termin als eigener Absatz vor „Fragen?“", () => {
