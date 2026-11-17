@@ -1,0 +1,61 @@
+{
+  "gesellschaft": "ottonova",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld zur Vollversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Nur mit ottonova Vollversicherung",
+    "Ohne Wartezeit",
+    "Alle 3 Jahre plus 5 %"
+  ],
+  "tarife": [
+    {
+      "name": "ottonova Krankentagegeld für Arbeitnehmer (KTA)",
+      "kurz": "Angestellte",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab Tag 43, 92 oder 183",
+        "hoehe": "bis 315 € je Tag",
+        "wartezeit": "keine",
+        "selbststaendige": "nein"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://assets.ottonova.de/root/TB_KTA.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ottonova Krankentagegeld für Selbstständige (KTS)",
+      "kurz": "Selbstständige",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "nach 42 Tagen Karenz",
+        "hoehe": "bis 331 € je Tag",
+        "wartezeit": "keine",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {
+        "dynamik": "inklusive"
+      },
+      "quelle": "https://assets.ottonova.de/root/TB_KTS.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://assets.ottonova.de/root/TB_KTA.pdf",
+    "https://assets.ottonova.de/root/TB_KTS.pdf",
+    "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen"
+  ],
+  "offen": [
+    "Kein eigenständiges Produkt: versicherungsfähig nur mit einer ottonova Krankheitskostenvollversicherung (Baustein der PKV).",
+    "Höchstes Tagegeld laut Tarifleistungen der Produktseite (315 € bzw. 331 €); die Tarifbedingungen nennen 300 € plus 5 % alle 36 Monate. Selbstständige: Höchstgrenze nach Beruf bzw. Mitarbeiterzahl (100 € bis 300 €).",
+    "KTS: Leistung nach 42 Karenztagen (Tarifstufe KTS 42); weitere Karenzzeiten für Selbstständige nicht belegt.",
+    "Dynamik: ottonova erhöht das Tagegeld alle 36 Monate um 5 % ohne neue Gesundheitsprüfung. Erhöhung bei Gehaltserhöhung (Angestellte) möglich.",
+    "Leistungsdauer, Ende bei Berufsunfähigkeit und Leistung im Ausland stehen in den AVB (AVB/KTA, AVB/KTS), nicht ausgewertet."
+  ]
+}

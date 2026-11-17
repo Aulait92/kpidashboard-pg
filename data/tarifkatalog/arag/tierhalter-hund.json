@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Welpen mitversichert",
+    "Ohne Leine und Maulkorb versichert",
+    "Mietsachschäden an Räumen"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Hundehaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "0, 150 oder 250 €",
+        "miete": "ja",
+        "welpen": "ja",
+        "geliehen": "nein"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.arag.de/tierversicherung/hundehaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Hundehaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "sb": "0, 150 oder 250 €",
+        "miete": "ja",
+        "welpen": "ja",
+        "geliehen": "bis 100.000 €"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.arag.de/tierversicherung/hundehaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Hundehaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "30 Mio. €",
+        "sb": "0, 150 oder 250 €",
+        "miete": "ja",
+        "welpen": "ja",
+        "geliehen": "ja"
+      },
+      "bausteine": {
+        "sb0": "optional"
+      },
+      "quelle": "https://www.arag.de/tierversicherung/hundehaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/tierversicherung/hundehaftpflicht/",
+    "https://www.arag.de/tierversicherung/tierhalterhaftpflicht/",
+    "https://www.arag.de/assets/document/arag-bedingungen-phv-thv.pdf"
+  ],
+  "offen": [
+    "Empfehlung: ARAG markiert Komfort als Bestseller.",
+    "Deckungssumme Sach- und Vermögensschäden 10, 20, 30 Mio. €; Personenschäden 10, 15, 20 Mio. €.",
+    "Fremde Hüter nicht im Tarifvergleich genannt. Alle Stufen: Deckakt, Ausscheidungen, gelegentliche Nutzung als Therapie-, Besuchs-, Rettungshund, Hundeschule und Turniere.",
+    "Komfort und Premium: Inventar in Ferienunterkünften; Premium: Rettung und Bergung des Hundes bis 10.000 €, Eigenschäden bis 10.000 €."
+  ]
+}

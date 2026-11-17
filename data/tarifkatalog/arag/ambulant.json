@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Heilmittel-Zuzahlung 100 %",
+    "Auslandsreise-Krankenschutz",
+    "Sehhilfen auch ohne Kassenanteil"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Ambulant Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "50 %, bis 260 €/Jahr",
+        "sehhilfen": "80 %, bis 155 €",
+        "arznei": "nein",
+        "ausland": "bis 6 Wochen weltweit",
+        "lasik": "nein"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Ambulant Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "60 %",
+        "sehhilfen": "bis 175 € alle 2 Jahre",
+        "arznei": "100 % Zuzahlung",
+        "ausland": "bis 6 Wochen weltweit"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Ambulant Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "90 %, 2.500 € in 2 J.",
+        "sehhilfen": "bis 330 € alle 3 Jahre",
+        "arznei": "100 % Zuzahlung",
+        "ausland": "bis 8 Wochen weltweit",
+        "lasik": "bis 1.000 € einmalig"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/krankenzusatzversicherung/ambulante-zusatzversicherung/",
+    "https://www.arag.de/krankenzusatzversicherung/heilpraktiker-zusatzversicherung/",
+    "https://www.arag.de/krankenzusatzversicherung/vorsorgeversicherung/"
+  ],
+  "offen": [
+    "Keine Markierung durch ARAG; Komfort als mittlere Stufe.",
+    "Komfort: 25 € (bis 20 Jahre) bzw. 50 € Selbstbeteiligung je Kalenderjahr (außer Auslandsreisen). Premium: Pauschalerstattung 25 € bzw. 50 € bei Leistungsfreiheit.",
+    "Heilpraktiker inklusive verordneter Medikamente; Premium auch Arzt für Naturheilverfahren (Hufeland), Rechnungsbetrag bis 2.500 € in 2 Jahren. Komfort ohne genannte Obergrenze.",
+    "Augenlaser: Die Seite Ambulante Zusatzversicherung nennt nur Premium (36 Monate Wartezeit), die Seite Heilpraktiker-Zusatzversicherung Komfort und Premium; Komfort offen.",
+    "Vorsorgeuntersuchungen über die eigene Vorsorge-Zusatzversicherung (bis 1.000 €, Impfungen bis 200 € in 2 Jahren, ohne Gesundheitsprüfung), nicht als Stufe. Hörgeräte und Wartezeit nicht genannt.",
+    "Option auf ARAG Vollversicherung ohne Gesundheitsprüfung: Komfort bis 40, Premium bis 50 Jahre."
+  ]
+}

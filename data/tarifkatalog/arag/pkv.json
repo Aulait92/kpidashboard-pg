@@ -1,0 +1,94 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Chefarzt, Ein- oder Zweibettzimmer",
+    "Zahnbehandlung 100 %",
+    "Vorsorge 100 %"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, Facharzt 80 %",
+        "stationaer": "Ein-/Zweibett, Chefarzt",
+        "zahnersatz": "80 %",
+        "bre": "pauschal bis 600 €",
+        "heilpraktiker": "80 %, bis 500 €/Jahr",
+        "hilfsmittel": "80 %, Zusage ab 1.000 €",
+        "psychotherapie": "80 %, 50 Sitzungen/Jahr",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "150 € alle 3 Jahre"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.arag.de/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG MedExtra",
+      "kurz": "MedExtra",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Ein-/Zweibett, Chefarzt",
+        "zahnersatz": "80 %",
+        "bre": "pauschal bis 600 €",
+        "heilpraktiker": "100 %, bis 1.000 €/Jahr",
+        "hilfsmittel": "100 %, Zusage ab 1.000 €",
+        "psychotherapie": "80 %, ab 31. Sitz. 100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "300 € alle 2 Jahre"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.arag.de/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG MedBest",
+      "kurz": "MedBest",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Ein-/Zweibett, Chefarzt",
+        "zahnersatz": "90 %",
+        "bre": "pauschal bis 900 €",
+        "heilpraktiker": "100 %, bis 2.000 €/Jahr",
+        "hilfsmittel": "100 %, Zusage ab 1.000 €",
+        "psychotherapie": "100 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "600 € alle 2 Jahre"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.arag.de/private-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/private-krankenversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-pkv.pdf"
+  ],
+  "offen": [
+    "Empfehlung: ARAG hebt MedBest in der Tarifübersicht hervor.",
+    "Selbstbehalt wählbar; die Stufen der Selbstbeteiligung sind auf der Produktseite nicht beziffert. Beitragsrückerstattung als Pauschalerstattung je nach gewählter Selbstbeteiligung (bis 600 € bzw. 900 €).",
+    "Komfort: Arznei-, Heil-, Verband- und Hilfsmittel 80 % bis 2.500 € im Jahr, darüber 100 %; ob offener oder geschlossener Hilfsmittelkatalog, ist nicht genannt.",
+    "Gebührensätze: Komfort und MedExtra ambulant und Zahn bis Höchstsatz, stationär darüber; MedBest durchgehend über Höchstsatz. Zahnstaffel in den ersten Jahren (1.000 € bis 3.000 € bzw. 5 Jahre im Komfort).",
+    "Augenlaser: MedExtra 2.000 €, MedBest 4.000 € alle 5 Jahre. Beitragsbefreiung bei Elterngeld ab MedExtra. Krankentagegeld über Tarif KTV. Ausland und Pflegezusatz nicht im Tarifvergleich.",
+    "Für Beamte eigene Beihilfetarife (Seite „Krankenversicherung für Beamte“), nicht aufgenommen."
+  ]
+}

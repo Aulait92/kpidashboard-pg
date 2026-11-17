@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "katze-op",
+  "produkt": "Katzen-OP-Versicherung (TierProtect OP)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Bis 4-facher GOT-Satz, Notdienst",
+    "Weltweit bis 12 Monate",
+    "Online-Tierarzt rund um die Uhr"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Katzen-OP-Versicherung Premium",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "got": "bis 4-fach",
+        "jhl": "unbegrenzt",
+        "nachbehandlung": "ja, Arznei 30 Tage",
+        "vorsorge": "bis 100 €/Jahr",
+        "kastration": "600 € einmalig",
+        "physio": "bis 800 €",
+        "sb": "0, 150 oder 250 €",
+        "wartezeit": "1 Monat",
+        "ausland": "weltweit bis 12 Monate"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "vorsorge": "inklusive"
+      },
+      "quelle": "https://www.arag.de/tierversicherung/katzen-op-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/tierversicherung/katzen-op-versicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-tier-kv.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (von ARAG „Premium-Tarif“ genannt).",
+    "Erstattungssatz in Prozent nicht genannt („unter bestimmten Voraussetzungen vollständige Erstattung“).",
+    "OP wegen besonderer Erkrankungen bis 5.000 € je Vertragslaufzeit, Orthesen bis 1.000 €. Zahn-Schutz (außer Prothetik und Kosmetik) als Option wählbar; Baustein im Schema nicht vorhanden."
+  ]
+}

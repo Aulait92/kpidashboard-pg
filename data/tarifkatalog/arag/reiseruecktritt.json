@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "reiseruecktritt",
+  "produkt": "Reiseversicherung ReiseProtect (Reiserücktritt)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Selbstbehalt 20 %",
+    "Auch bei Jobverlust",
+    "Single, Paar oder Familie"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG ReiseProtect All Inclusive Premium",
+      "kurz": "Einzelreise",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 8.000 € je Reise",
+        "sb": "20 %",
+        "jahr": "nein",
+        "familie": "wählbar",
+        "gruende": "u. a. Jobverlust"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/reiseversicherung/reise-protect/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG ReiseProtect 365",
+      "kurz": "Jahrespolice",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "summe": "3.000 bis 6.000 €/Reise",
+        "sb": "20 %",
+        "jahr": "ja",
+        "pandemie": "nein",
+        "familie": "wählbar",
+        "gruende": "u. a. Jobverlust"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/reiseversicherung/reise-protect/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/reiseversicherung/reise-protect/",
+    "https://www.arag.de/assets/document/arag-bedingungen-reiseprotect.pdf",
+    "https://www.arag.de/assets/document/arag-bedingungen-reiseprotect365.pdf"
+  ],
+  "offen": [
+    "Reiserücktritt ist bei ReiseProtect (Einzelreise bis 90 Tage) nur in der Variante All Inclusive Premium enthalten; Basic und All Inclusive ohne Rücktritt. ReiseProtect 365 mit Rücktritt.",
+    "ReiseProtect 365: Rücktrittskosten bis 3.000 € (Single), 4.000 € (Paar), 6.000 € (Familie) je Reise. Werte aus der Leistungsbeschreibung 2020 in den Bedingungen.",
+    "Selbstbehalt 20 % des erstattungsfähigen Schadens (laut Seite 20 % der Reisekosten).",
+    "Pandemie: ReiseProtect 365 schließt Erkrankungen infolge von Pandemien aus; für die Einzelreise nicht geprüft. Reiseabbruch nicht ausgewertet."
+  ]
+}

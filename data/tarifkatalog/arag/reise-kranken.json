@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreisekrankenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 % der Behandlungskosten",
+    "24-Stunden-Notruf",
+    "Bergung bis 15.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Auslandsreisekrankenversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 56 Tage",
+        "ruecktransport": "ja",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "familie": "optional"
+      },
+      "quelle": "https://www.arag.de/reiseversicherung/auslandskrankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/reiseversicherung/auslandskrankenversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-auslandsreise-kv.pdf",
+    "https://www.arag.de/reiseversicherung/reise-protect/"
+  ],
+  "offen": [
+    "Ein Tarif; Familientarif (Ehepartner und Kinder bis 18) wählbar.",
+    "Je Reise die ersten 56 Tage; Selbstbeteiligung: Seite nennt 100 % Erstattung, keine Selbstbeteiligung genannt.",
+    "Überführung bzw. Bestattung bis 10.250 €. Zahn: schmerzstillende Behandlung, einfache Füllungen, Reparaturen.",
+    "Längere Reisen über ReiseProtect (bis 90 Tage) bzw. ReiseProtect 365 (Jahrespolice), nicht als Stufe aufgenommen."
+  ]
+}

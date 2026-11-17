@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "envivas",
+  "sparte": "ambulant",
+  "produkt": "Kompakttarife PraxisExtra und PraxisTop",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Nur für TK-Versicherte",
+    "Heilpraktiker 80 % bis 1.000 €",
+    "Krankenhaus-Zuzahlung"
+  ],
+  "tarife": [
+    {
+      "name": "PraxisExtra",
+      "kurz": "PraxisExtra",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, 1.000 € in 2 J.",
+        "sehhilfen": "150 € in 2 Jahren",
+        "vorsorge": "nein",
+        "ausland": "bis 6 Wochen, weltweit",
+        "wartezeit": "3 Monate, Zahn 8"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.envivas.de/tarife/arzt-und-heilpraktiker",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PraxisTop",
+      "kurz": "PraxisTop",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, 1.000 € in 2 J.",
+        "sehhilfen": "150 € in 2 Jahren",
+        "vorsorge": "80 % (IGeL)",
+        "ausland": "bis 6 Wochen, weltweit",
+        "wartezeit": "3 Monate, Zahn 8"
+      },
+      "bausteine": {
+        "ausland": "inklusive",
+        "sehhilfen": "inklusive"
+      },
+      "quelle": "https://www.envivas.de/tarife/arzt-und-heilpraktiker",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.envivas.de/tarife/arzt-und-heilpraktiker",
+    "https://www.envivas.de/tarife/pro-ergaenzungstarif",
+    "https://www.envivas.de/tarife/starterplus-unter-30-jahre",
+    "https://www.envivas.de/tarife/vitalxtra-ab-60-jahren"
+  ],
+  "offen": [
+    "Nur für TK-Versicherte. Empfehlung: envivas markiert PraxisExtra als „Unser Bestseller“.",
+    "Beide Tarife zusätzlich: Zahnersatz, Kronen, Inlays bis 40 % (Extra) bzw. 50 % (Top) des Rechnungsbetrags, Staffel 1.000 € bis 5.000 € in 5 Jahren; Krankenhaus-Zuzahlung bis 280 € im Jahr und Mehrkosten eines anderen Krankenhauses.",
+    "Heilpraktiker inklusive verordneter Arzneimittel (außer Psychotherapie). Arznei-Zuzahlungen und Hörgeräte nicht genannt.",
+    "Weitere ambulante Tarife (nicht als Stufe): StarterPlus unter 30 Jahre (mit Chefarzt und Zweibettzimmer), VitalXtra ab 60 Jahre (Zahnersatz 30 %, Heilmittel-Zuzahlung bis 100 €), Ergänzungstarif Pro (Zahnvorsorge bis 100 € in 2 Jahren, Kunststofffüllungen 100 %)."
+  ]
+}

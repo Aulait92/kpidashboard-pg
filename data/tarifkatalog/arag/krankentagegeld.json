@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Zeitlich unbegrenzte Zahlung",
+    "Auch an Sonn- und Feiertagen",
+    "Tagessatz frei wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Krankentagegeld",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ab-tag": "ab Tag 8 oder 43",
+        "hoehe": "bis Nettoeinkommen",
+        "dauer": "unbegrenzt",
+        "selbststaendige": "ja, ab 8. Tag",
+        "ausland": "Europa, nur stationär"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/krankentagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/krankenzusatzversicherung/krankentagegeldversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-kv-zusatz.pdf"
+  ],
+  "offen": [
+    "Ein Produkt für Arbeitnehmer und Selbstständige; Preisbeispiel nennt Tarif 37. Weitere Karenzzeiten und Tarifnamen nicht belegt.",
+    "Arbeitnehmer: Leistung nach Ende der Lohnfortzahlung (6 Wochen); Selbstständige ab dem 8. Krankheitstag.",
+    "Ausland: bei vorübergehendem Aufenthalt im europäischen Ausland für die Dauer einer vollstationären Behandlung.",
+    "Wartezeit und Ende bei Berufsunfähigkeit nicht auf der Produktseite genannt. Für Vollversicherte als Baustein KTV."
+  ]
+}

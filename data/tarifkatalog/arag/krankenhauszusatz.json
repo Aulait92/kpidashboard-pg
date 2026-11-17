@@ -1,0 +1,99 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Chefarzt und freie Krankenhauswahl",
+    "Leistung über GOÄ-Höchstsatz",
+    "Ohne allgemeine Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG 2-Bett S (MK2S)",
+      "kurz": "2-Bett S",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "ersatztagegeld": "50 € bzw. 30 €",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine allgemeine",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG 1-Bett S (MK1S)",
+      "kurz": "1-Bett S",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "ersatztagegeld": "50 € bzw. 50 €",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine allgemeine",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG 2-Bett L (MK2L)",
+      "kurz": "2-Bett L",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "ersatztagegeld": "50 € bzw. 30 €",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine allgemeine",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG 1-Bett L (MK1L)",
+      "kurz": "1-Bett L",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "ersatztagegeld": "50 € bzw. 50 €",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine allgemeine",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-kv-zusatz.pdf"
+  ],
+  "offen": [
+    "Keine Markierung durch ARAG; bei vier Stufen die dritte gesetzt. S-Tarife ohne, L-Tarife mit Alterungsrückstellungen; die Leistungen sind sonst gleich.",
+    "Ersatz-Krankenhaustagegeld: 50 € bei Verzicht auf Chefarzt, 30 € (Zweibett) bzw. 50 € (Einbett) bei Verzicht auf die Unterbringung; Kinder halbe Sätze.",
+    "Verzicht auf allgemeine Wartezeiten; 8 Monate Wartezeit bei besonderen Leistungen laut Seite (z. B. Entbindung, Psychotherapie).",
+    "Zweibett-Tarife mit Option auf Umstellung in einen Einbettzimmer-Tarif. Krankenhaustagegeld als eigenes Produkt, nicht aufgenommen."
+  ]
+}

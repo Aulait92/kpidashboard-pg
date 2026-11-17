@@ -1,0 +1,105 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Sofortschutz ohne Wartezeit",
+    "Kieferorthopädie für Kinder",
+    "Leistung inkl. Kassenanteil"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Dent70",
+      "kurz": "Dent70",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "implantate": "70 %",
+        "behandlung": "75 %",
+        "prophylaxe": "70 €, 1x im Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 500 €",
+        "kfo": "70 %, KIG 3 bis 1.000 €",
+        "inlays": "70 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Dent90",
+      "kurz": "Dent90",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "90 % mit Bonusheft",
+        "implantate": "90 % mit Bonusheft",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 160 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.000 €",
+        "kfo": "80 %, KIG 3 bis 1.000 €",
+        "inlays": "90 % mit Bonusheft"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Dent90+",
+      "kurz": "Dent90+",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 160 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.000 €",
+        "kfo": "90 %, KIG 3 bis 1.500 €",
+        "inlays": "90 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Dent100",
+      "kurz": "Dent100",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 % mit Bonusheft",
+        "implantate": "100 % mit Bonusheft",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 200 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.500 €",
+        "kfo": "90 %, KIG 3 bis 2.000 €",
+        "inlays": "100 % mit Bonusheft"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/zahnzusatzversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-zahnzusatz.pdf"
+  ],
+  "offen": [
+    "Empfehlung: ARAG markiert Dent90+ als Bestseller.",
+    "Zahnersatz ohne Bonusheft: Dent90 80 %, Dent100 90 %. Werte inklusive Kassenleistung.",
+    "Zahnreinigung: Dent70 70 € einmal im Jahr; Dent90 und Dent90+ bis 100 € je Reinigung, max. 160 €; Dent100 bis 120 €, max. 200 € (Erwachsene ab 18).",
+    "Zahnstaffel (5 Jahre): Dent70 500 € bis 2.500 €; Dent90 und Dent90+ 1.000 € bis 5.000 €; Dent100 1.500 € bis 7.500 €.",
+    "Kieferorthopädie Kinder: KIG 1 bis 2 70 %, 80 %, 90 %, 90 %; bei KIG 3 bis 5 Mehrkosten mit Höchstbetrag (Wert). Erwachsene: Dent90 und Dent90+ nur bei Unfall, Dent100 90 %.",
+    "Dent90+ zusätzlich Angstpatienten 250 € im Jahr, Dent100 350 € und Bleaching 300 € in 2 Jahren."
+  ]
+}

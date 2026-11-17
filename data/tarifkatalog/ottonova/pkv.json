@@ -1,0 +1,128 @@
+{
+  "gesellschaft": "ottonova",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ambulant und Zahnbehandlung 100 %",
+    "Offener Hilfsmittelkatalog",
+    "Concierge-Service per App"
+  ],
+  "tarife": [
+    {
+      "name": "ottonova Premium Economy",
+      "kurz": "Premium Eco.",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "60 %",
+        "selbstbehalt": "10 % bis 500 €/Jahr",
+        "bre": "keine",
+        "heilpraktiker": "100 %, bis 500 €/Jahr",
+        "hilfsmittel": "offener Katalog",
+        "psychotherapie": "75 %, 50 Sitzungen/Jahr",
+        "primaerarzt": "ja, sonst 80 %",
+        "sehhilfen": "150 € alle 3 Jahre",
+        "ausland": "6 Monate außerhalb EWR"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ottonova Business Class Pro",
+      "kurz": "Business Pro",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Zweibett, Chefarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "0 €",
+        "bre": "bis 1 Monatsbeitrag",
+        "heilpraktiker": "100 %, bis 1.000 €/Jahr",
+        "hilfsmittel": "offener Katalog",
+        "psychotherapie": "90 %, ab 26. Sitz. 75 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "300 € alle 2 Jahre",
+        "ausland": "6 Monate außerhalb EWR"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ottonova First Class",
+      "kurz": "First Class",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Einbett, Chefarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "10 % bis 500 €/Jahr",
+        "bre": "keine",
+        "heilpraktiker": "100 %, bis 1.500 €/Jahr",
+        "hilfsmittel": "offener Katalog",
+        "psychotherapie": "90 %, ab 51. Sitz. 75 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "500 € alle 2 Jahre",
+        "ausland": "6 Monate außerhalb EWR"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ottonova First Class Pro+",
+      "kurz": "First Pro+",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %",
+        "stationaer": "Einbett, Chefarzt",
+        "zahnersatz": "90 %",
+        "selbstbehalt": "0 €",
+        "bre": "bis 1 Monatsbeitrag",
+        "heilpraktiker": "100 %, bis 2.000 €/Jahr",
+        "hilfsmittel": "offener Katalog",
+        "psychotherapie": "100 %, ab 51. Sitz. 80 %",
+        "primaerarzt": "nein",
+        "sehhilfen": "500 € alle 2 Jahre",
+        "ausland": "6 Monate außerhalb EWR"
+      },
+      "bausteine": {
+        "ktg": "optional"
+      },
+      "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
+    "https://www.ottonova.de/v/private-krankenversicherung/angestellte",
+    "https://www.ottonova.de/v/tarife",
+    "https://assets.ottonova.de/root/TB_KTA.pdf"
+  ],
+  "offen": [
+    "ottonova hat fünf Tarife; aufgenommen sind vier. Business Class (ohne Pro) entspricht Business Class Pro, aber mit Selbstbehalt 10 % (max. 500 €) oder 25 % (max. 1.250 €) und ohne Beitragsrückerstattung.",
+    "Empfehlung: ottonova markiert Business Class Pro als „Experten-Empfehlung“, First Class Pro+ als „Top-Leistung“.",
+    "Selbstbehalt wählbar: Premium Economy 10 % je Rechnung (max. 500 €) oder 50 % (max. 1.000 €); First Class 10 % (max. 500 €) oder 25 % (max. 1.250 €). Gilt nicht für Zahn, Vorsorge, Hilfsmittel, ambulante Psychotherapie.",
+    "Premium Economy: Primärarztprinzip (100 % mit Überweisung oder über den Concierge, sonst 80 %); Augenarzt, Zahnarzt, Frauenarzt, Kinderarzt direkt. Beitragsrückerstattung nur in den Pro-Tarifen (max. ein Durchschnitts-Monatsbeitrag).",
+    "First Class: Einbettzimmer, wahlweise First Class Zweibett. Zahnersatz inkl. Inlays und Implantate; Zahnstaffel 500 € bis 4.000 € in den ersten 4 Jahren (First Class Pro+ 1.000 € bis 4.000 € in 3 Jahren).",
+    "Hilfsmittel: 100 % bis 500 €, darüber 100 % nach Zusage, sonst 75 %. Krankentagegeld (Tarife KTA, KTS) nur zusammen mit der Vollversicherung, max. 315 € (Angestellte) bzw. 331 € (Selbstständige) je Tag.",
+    "Pflegezusatz als Baustein nicht belegt (Pflegepflichtversicherung ist enthalten). Für Beamte gibt es eigene Beihilfetarife, nicht aufgenommen."
+  ]
+}

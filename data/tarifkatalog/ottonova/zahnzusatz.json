@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "ottonova",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Zahnbehandlung 100 %",
+    "Kündbar monatlich nach 2 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "ottonova Zahn 70 (Economy Class)",
+      "kurz": "Zahn 70",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "70 %",
+        "implantate": "70 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 70 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 800 €",
+        "kfo": "nein",
+        "inlays": "70 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ottonova.de/v/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ottonova Zahn 85 (Business Class)",
+      "kurz": "Zahn 85",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "85 %",
+        "implantate": "85 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 140 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.000 €",
+        "kfo": "100 %, KIG 3 bis 5",
+        "inlays": "85 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ottonova.de/v/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ottonova Zahn 100 (First Class)",
+      "kurz": "Zahn 100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "bis 180 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.250 €",
+        "kfo": "100 %",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ottonova.de/v/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ottonova.de/v/zahnzusatzversicherung",
+    "https://assets.ottonova.de/root/TVB_Zusatzversicherung_Zahn_85.pdf",
+    "https://assets.ottonova.de/root/TVB_Zusatzversicherung_Care_BC.pdf"
+  ],
+  "offen": [
+    "Empfehlung: ottonova markiert Business Class (Zahn 85) als „Unser beliebtester Tarif“ und „Experten-Empfehlung“.",
+    "Wählbare Tarifoptionen je Stufe: Zahnersatz 75 % statt 70 % bzw. 90 % statt 85 %; Zahnreinigung 80 € statt 70 € (Zahn 70), 170 € statt 140 € (Zahn 85), 200 € statt 180 € (Zahn 100).",
+    "Werte inklusive Kassenleistung; bei Privatzahnärzten ohne Kassenzulassung gelten niedrigere Sätze (z. B. Zahnersatz 40 %, 55 %, 70 %).",
+    "Zahnstaffel: Zahn 70 800 €, 1.600 €, 2.400 €, 3.200 €; Zahn 85 1.000 € bis 4.000 €; Zahn 100 1.250 € bis 5.000 € in den ersten 4 Jahren, danach unbegrenzt. Gilt nicht für Prophylaxe und Unfälle.",
+    "Kieferorthopädie Kinder: Tabelle nennt bei Zahn 85 100 % bei KIG 3 bis 5, die Tarifkarte „85 % bis 100 %“; bitte gegenprüfen. Zahn 70 ohne KFO."
+  ]
+}

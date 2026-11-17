@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Weltweiter Schutz",
+    "Mietsachschäden an Räumen",
+    "Schlüsselverlust mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Privathaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "nein",
+        "ehrenamt": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Privathaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "30 Mio. €",
+        "schluessel": "bis 100.000 €",
+        "delikt": "bis 100.000 €",
+        "geliehen": "bis 100.000 €",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "ehrenamt": "bis 10.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "60 Mio. €",
+        "schluessel": "ja",
+        "delikt": "ja",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "mallorca": "bis 10 Mio. €",
+        "ehrenamt": "bis 100.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/haftpflichtversicherung/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/haftpflichtversicherung/privathaftpflicht/",
+    "https://www.arag.de/assets/document/arag-bedingungen-phv-thv.pdf"
+  ],
+  "offen": [
+    "Empfehlung: ARAG hebt Komfort in der Tarifübersicht hervor.",
+    "Deckungssumme Personenschäden: Komfort max. 15 Mio. €, Premium max. 20 Mio. €. USA und Kanada: 5, 7,5 bzw. 10 Mio. €.",
+    "Premium: Schlüssel, deliktunfähige Kinder und geliehene Sachen ohne eigene Grenze (Haken in der Tabelle, vermutlich bis zur Deckungssumme); Verlust geliehener Sachen bis 20.000 €; Falschbetankung; Rückstufung nach Be- und Entladeschaden bis 5 Jahre, max. 1.000 €; Schäden durch Enkel bis 1.000 €.",
+    "Forderungsausfall, Neuwert, Drohnen, Selbstbeteiligung nicht im Tarifvergleich. Mallorca-Deckung nur für Premium genannt."
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "envivas",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung (Pflegetagegeld)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Nur für TK-Versicherte",
+    "Pflegegeld ohne Kostennachweis",
+    "Leistung auch im Krankenhaus"
+  ],
+  "tarife": [
+    {
+      "name": "PflegePlus Pflege3",
+      "kurz": "Pflege3",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "ab-pg": "ab Pflegegrad 4",
+        "ambulant-gleich": "ja",
+        "wartezeit": "3 Jahre",
+        "dynamik": "Anpassung möglich"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegePlus Pflege2+3",
+      "kurz": "Pflege2+3",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "ab-pg": "ab Pflegegrad 3",
+        "ambulant-gleich": "ja",
+        "wartezeit": "3 Jahre",
+        "dynamik": "Anpassung möglich"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "PflegeAktiv (gefördert)",
+      "kurz": "PflegeAktiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "100 % des Tagegelds",
+        "ab-pg": "ab Pflegegrad 1",
+        "ambulant-gleich": "ja",
+        "wartezeit": "5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/pflegezusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.envivas.de/tarife/pflegezusatzversicherung",
+    "https://www.envivas.de/resource/blob/1162/f6e5fd66d570fd28dd3d331348d9848d/wichtige-vertragsunterlagen-pflegeplus-04-25-data.pdf"
+  ],
+  "offen": [
+    "Nur für TK-Versicherte. Keine Markierung durch envivas; Pflege2+3 als mittlere Stufe. Stufen sind Varianten, Tagegeld frei wählbar.",
+    "Leistung in % des vereinbarten Tagegelds: Pflege2+3 PG 3 60 %, PG 4 80 %, PG 5 100 %; Pflege3 PG 4 60 %, PG 5 100 %; PflegeAktiv PG 1 10 %, PG 2 20 %, PG 3 30 %, PG 4 60 %, PG 5 100 %.",
+    "PflegeAktiv: staatlich gefördert (5 € im Monat), ohne Gesundheitsprüfung. Höherstufung Pflege3 in Pflege2+3 ohne Prüfung bis 55 Jahre.",
+    "Ambulant wie stationär: laut Seite unabhängig von der Art der Pflege (PflegePlus); bei PflegeAktiv nicht ausdrücklich genannt.",
+    "Einmalleistung und Beitragsbefreiung im Pflegefall nicht belegt. Ergänzungsbaustein PflegeXtra (Pflege-Soforthilfe, Vermittlung von Diensten) nicht im Schema."
+  ]
+}

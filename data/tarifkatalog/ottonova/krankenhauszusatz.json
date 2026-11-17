@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "ottonova",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung (Klinik)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Chefarzt und freie Krankenhauswahl",
+    "Rooming-in bei Kindern unter 12",
+    "Über Höchstsatz bis 5-fach"
+  ],
+  "tarife": [
+    {
+      "name": "ottonova Klinik Zweibett",
+      "kurz": "Zweibett",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "bis 5-fach GOÄ",
+        "wartezeit": "3 Monate",
+        "ambulant-op": "stationsersetzend ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ottonova.de/v/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ottonova Klinik Einbett",
+      "kurz": "Einbett",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "bis 5-fach GOÄ",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "35 € ohne Einbett",
+        "ambulant-op": "stationsersetzend ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ottonova.de/v/krankenhauszusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ottonova.de/v/krankenhauszusatzversicherung",
+    "https://assets.ottonova.de/root/TVB_Zusatzversicherung_Stationaer_2Bett_v4.pdf",
+    "https://assets.ottonova.de/root/TVB_Zusatzversicherung_Stationaer_1Bett_v3.pdf"
+  ],
+  "offen": [
+    "Empfehlung: ottonova markiert Klinik Zweibett als „Experten-Empfehlung“.",
+    "Klinik Zweibett Flex: gleiche Leistungen wie Klinik Zweibett, ohne Alterungsrückstellungen bis 39 Jahre (danach automatisch Klinik Zweibett).",
+    "Über Höchstsatz nur mit gültiger Honorarvereinbarung, max. 5-facher Satz (Tarifbedingungen). Wartezeit 3 Monate, Entbindung und Psychotherapie 8 Monate, bei Unfall keine.",
+    "Krankenhaustagegeld bei schwerer Erkrankung: 50 € (Zweibett) bzw. 70 € (Einbett). Einbett: 35 € je Tag, wenn kein Einbettzimmer verfügbar ist; Ersatztagegeld bei Zweibett nicht eindeutig belegt.",
+    "Home-Assistance (z. B. Haushaltshilfe) nur in Klinik Einbett."
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "gesellschaft": "envivas",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreisekrankenversicherung TravelPlus und TravelXL",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Nur für TK-Versicherte",
+    "100 % Erstattung",
+    "24-Stunden-Notruf"
+  ],
+  "tarife": [
+    {
+      "name": "TravelXN (Einzel)",
+      "kurz": "TravelXN",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 60 Tage",
+        "ruecktransport": "ja",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "familie": "nein",
+        "lang": "nein"
+      },
+      "quelle": "https://www.envivas.de/tarife/reisekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "TravelXF (Familie)",
+      "kurz": "TravelXF",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 60 Tage",
+        "ruecktransport": "ja",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "familie": "inklusive",
+        "lang": "nein"
+      },
+      "quelle": "https://www.envivas.de/tarife/reisekrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "TravelXLOU (Langzeit ohne USA und Kanada)",
+      "kurz": "XL ohne USA",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "61 bis 365 Tage",
+        "ruecktransport": "ja",
+        "usa": "nein",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "lang": "inklusive"
+      },
+      "quelle": "https://www.envivas.de/tarife/langzeit-auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "TravelXLMU (Langzeit mit USA und Kanada)",
+      "kurz": "XL mit USA",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "61 bis 365 Tage",
+        "ruecktransport": "ja",
+        "usa": "ja",
+        "selbstbeteiligung": "keine",
+        "zahn": "schmerzstillend"
+      },
+      "bausteine": {
+        "lang": "inklusive"
+      },
+      "quelle": "https://www.envivas.de/tarife/langzeit-auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.envivas.de/tarife/reisekrankenversicherung",
+    "https://www.envivas.de/tarife/langzeit-auslandskrankenversicherung",
+    "https://www.envivas.de/resource/blob/21226/66727ea0fb427efec589ac2bf1dfd77d/barrierefreie-tarifinformation-travelxn-travelxf-10-25-data.pdf",
+    "https://www.envivas.de/resource/blob/21224/1b1ced3c83c5cf704b95effcc1add93f/barrierefreie-tarifinformation-travelxl-01-26-data.pdf"
+  ],
+  "offen": [
+    "Nur für TK-Versicherte. Stufen sind Varianten (Einzel, Familie mit Kindern unter 18, Langzeit), keine Markierung durch envivas.",
+    "Selbstbeteiligung: Die Tarifinformationen nennen 100 % Erstattung der versicherten Kosten; eine Selbstbeteiligung ist nicht genannt.",
+    "TravelXN/XF: Jahresvertrag, je Reise die ersten 60 Tage. TravelXL: tagesgenau für Reisen über 60 Tage bis 1 Jahr, Überführung bis 30.000 €.",
+    "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparaturen; provisorischer Zahnersatz bei TravelXL nur nach Unfall. Bergung bis 2.500 €.",
+    "Bekannte Erkrankungen: keine Leistung für Behandlungen, deren Notwendigkeit vor Reiseantritt absehbar war. Schwangerschaft: Komplikationen und Frühgeburt versichert."
+  ]
+}

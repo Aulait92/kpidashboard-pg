@@ -1,0 +1,59 @@
+{
+  "gesellschaft": "envivas",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld KT-Plus",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Nur für TK-Versicherte",
+    "Zeitlich unbegrenzte Zahlung",
+    "Auch bei Arbeitsunfällen"
+  ],
+  "tarife": [
+    {
+      "name": "KT-Plus für Angestellte",
+      "kurz": "Angestellte",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab Tag 43 oder 183",
+        "hoehe": "bis 100 € je Tag",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja",
+        "selbststaendige": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/krankentagegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KT-Plus für Selbstständige",
+      "kurz": "Selbstständige",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab Tag 22, 43 oder 183",
+        "hoehe": "bis 100 bzw. 200 €",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/krankentagegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.envivas.de/tarife/krankentagegeldversicherung",
+    "https://www.envivas.de/resource/blob/754/134a3ca482408ef062ffea38c4aec570/wichtige-vertragsunterlagen-kt-plus-08-26-data.pdf"
+  ],
+  "offen": [
+    "Nur für TK-Versicherte. Tarife KTP21, KTP42, KTP182 (Zahlung ab dem 22., 43. bzw. 183. Tag); Angestellte nur 42 oder 182 Tage Karenz.",
+    "Tagegeld bis zur Höhe des Nettoeinkommens, Arbeitnehmer bis 100 €, Selbstständige je nach Leistungsbeginn bis 100 € oder 200 € je Tag; im ersten Jahr der Selbstständigkeit gelten Grenzen.",
+    "Ende bei Berufsunfähigkeit laut FAQ („Vertrag endet, z. B. weil Sie berufsunfähig werden“). Anpassung an gestiegenes Nettoeinkommen innerhalb von 2 Monaten ohne Gesundheitsprüfung.",
+    "Wartezeit 3 Monate, entfällt bei Unfall. Leistung im Ausland nicht ausgewertet."
+  ]
+}

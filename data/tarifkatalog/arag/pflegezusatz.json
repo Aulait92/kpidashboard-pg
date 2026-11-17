@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegezusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Drei Varianten wählbar",
+    "Staatliche Förderung möglich"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG FörderPflege (Pflege-Bahr, Tarif PF)",
+      "kurz": "FörderPflege",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant-gleich": "ja, jede Pflegeart",
+        "wartezeit": "5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Pflegetagegeld (Tarif 69)",
+      "kurz": "Pflegetagegeld",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "5 bis 100 € je Tag",
+        "ambulant-gleich": "nein, nur stationär",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Pflegekostenversicherung (Tarif 68)",
+      "kurz": "Pflegekosten",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "20 bis 200 % der Kasse",
+        "ambulant-gleich": "ja, jede Pflegeart",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.arag.de/pflegezusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/pflegezusatzversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-pflegezusatz.pdf"
+  ],
+  "offen": [
+    "Stufen sind Varianten (Pflege-Bahr, Pflegetagegeld, Pflegekosten); keine Markierung durch ARAG, Pflegetagegeld als mittlere Stufe.",
+    "Pflegetagegeld: Absicherung der vollstationären Pflege im Heim mit festem Tagessatz (5 bis 100 € in 1-€-Schritten), frei verfügbar; laut Seite Erstattung bei stationärer Pflege und Pflegegrad 2 ohne Wartezeit. Leistung je Pflegegrad nicht beziffert.",
+    "Pflegekosten: Erstattung realer Pflegekosten als Aufstockung der gesetzlichen Leistungen um 20 bis 200 %, jede Pflegeart, ohne Wartezeit.",
+    "FörderPflege: Pflegemonatsgeld für jede Pflegeart, ohne Gesundheitsprüfung, Wartezeit 5 Jahre; Leistungshöhe je Pflegegrad nicht auf der Seite.",
+    "Leistung ab Pflegegrad, Einmalleistung, Beitragsbefreiung, Dynamik nicht belegt."
+  ]
+}

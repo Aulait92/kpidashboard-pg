@@ -1,0 +1,118 @@
+{
+  "gesellschaft": "ARAG",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Invaliditätssumme wählbar",
+    "Mehrleistung im Ausland (2-fach)",
+    "Erweiterte Übergangsleistung"
+  ],
+  "tarife": [
+    {
+      "name": "ARAG Unfall Basis light",
+      "kurz": "Basis light",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "120.000 bis 180.000 €",
+        "progression": "nein",
+        "abGrad": "ab 20 %",
+        "unfallrente": "nein",
+        "khtg": "nein",
+        "todesfall": "nein",
+        "kosmetik": "30.000 €",
+        "bergung": "bis 30.000 €",
+        "gliedertaxe": "Standard"
+      },
+      "bausteine": {
+        "rente": "nein",
+        "tagegeld": "nein"
+      },
+      "quelle": "https://www.arag.de/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Unfall Basis",
+      "kurz": "Basis",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "40.000 bis 60.000 €",
+        "progression": "350 %",
+        "unfallrente": "400, 500 oder 600 €",
+        "khtg": "10 oder 30 €",
+        "todesfall": "nein",
+        "kosmetik": "30.000 €",
+        "bergung": "bis 30.000 €",
+        "gliedertaxe": "Standard"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.arag.de/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Unfall Komfort",
+      "kurz": "Komfort",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "48.000 bis 72.000 €",
+        "progression": "500 %",
+        "unfallrente": "400, 500 oder 600 €",
+        "khtg": "10 oder 30 €",
+        "todesfall": "8.000 bis 12.000 €",
+        "kosmetik": "60.000 €",
+        "bergung": "bis 500.000 €",
+        "gliedertaxe": "Extra"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.arag.de/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ARAG Unfall Premium",
+      "kurz": "Premium",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "56.000 bis 84.000 €",
+        "progression": "500 %",
+        "unfallrente": "400, 500 oder 600 €",
+        "khtg": "10 oder 30 €",
+        "todesfall": "16.000 bis 24.000 €",
+        "kosmetik": "90.000 €",
+        "bergung": "bis 1 Mio. €",
+        "gliedertaxe": "Best"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.arag.de/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.arag.de/unfallversicherung/",
+    "https://www.arag.de/assets/document/arag-bedingungen-unfall-schutz.pdf",
+    "https://www.arag.de/unfallversicherung/existenz-schutz/"
+  ],
+  "offen": [
+    "Keine Markierung durch ARAG; bei vier Stufen die dritte (Komfort) gesetzt.",
+    "Invaliditätssumme je Stufe in drei Höhen wählbar (Wert). Basis light mit Integralfranchise: Leistung ab 20 % Invalidität; Leistung ab Grad in den übrigen Stufen nicht genannt.",
+    "Progression Plus: maximale Invaliditätsleistung bereits ab 75 % Invalidität (unter 67 Jahren).",
+    "Unfallrente (ab 50 % Invalidität) und Krankenhaustagegeld (mit optionalem Arbeitsunfähigkeitstagegeld) sind Zusatzleistungen „falls vereinbart“, in Basis light nicht wählbar.",
+    "Premium zusätzlich: Synkope, posttraumatische Belastungsstörung (5 %), beschädigte Sachen bis 3.000 €; Reha-Manager ab Komfort."
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "envivas",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung DentFlex",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Nur für TK-Versicherte",
+    "Zahnbehandlung 100 %",
+    "Höherstufung ohne Prüfung bis 49"
+  ],
+  "tarife": [
+    {
+      "name": "DentFlex.70",
+      "kurz": "DentFlex.70",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "70 %",
+        "implantate": "70 %",
+        "behandlung": "100 %",
+        "prophylaxe": "70 %, bis 150 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.000 €",
+        "kfo": "100 %, bis 3.000 €",
+        "inlays": "70 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DentFlex.80",
+      "kurz": "DentFlex.80",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "80 %",
+        "implantate": "80 %",
+        "behandlung": "100 %",
+        "prophylaxe": "80 %, bis 150 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.000 €",
+        "kfo": "100 %, bis 3.000 €",
+        "inlays": "80 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "DentFlex.100",
+      "kurz": "DentFlex.100",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "100 %, bis 150 €/Jahr",
+        "wartezeit": "keine",
+        "staffel": "1. Jahr 1.000 €",
+        "kfo": "100 %, bis 3.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.envivas.de/tarife/zahnzusatzversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.envivas.de/tarife/zahnzusatzversicherung",
+    "https://www.envivas.de/resource/blob/24490/ca2ab71955228d018dc4aa86087f0dea/barrierefreie-tarifinformation-dentflex-10-25-data.pdf"
+  ],
+  "offen": [
+    "Nur für Mitglieder der Techniker Krankenkasse und mitversicherte Angehörige.",
+    "Empfehlung: envivas markiert DentFlex.70 als „Unser Bestseller“.",
+    "Prozentwerte mit TK-Leistung; ohne GKV-Vorleistung halber Satz (z. B. Zahnersatz 35 %, 40 %, 50 %, Behandlung 50 %).",
+    "Zahnstaffel für Zahnersatz, Kronen, Inlays: 1.000 €, 2.000 €, 3.000 €, 4.000 € in den ersten 4 Jahren, ab dem 5. Jahr unbegrenzt.",
+    "Kieferorthopädie: Beginn bis 20 Jahre, insgesamt max. 3.000 €; KFO-Staffel 200 € bis 800 € in den ersten 4 Jahren. Ab 21 nur unfallbedingt.",
+    "Wechselrecht: bis 49 Jahre alle 3 Jahre in eine höhere Stufe ohne Gesundheitsprüfung."
+  ]
+}
