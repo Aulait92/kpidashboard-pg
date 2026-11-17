@@ -12,7 +12,7 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { sendCustomerMail, sendPlainMail } from "@/lib/email";
+import { sendCustomerMail, sendPlainMail, sendPlainMailLatin1 } from "@/lib/email";
 import { sendToAdmins } from "@/lib/push";
 import { decryptSecret } from "@/lib/encryption";
 import { isContactLabel, machineMail, parseAddresses } from "@/lib/ppl/lead-mail";
@@ -147,7 +147,10 @@ export async function deliverTo(sub: Sub, lead: DeliveryLead): Promise<DeliveryR
       const { renderTemplate } = await import("@/lib/ppl/template");
       const text = renderTemplate(sub.emailTemplate ?? "", tl);
       const subject = `${tag}${sub.emailSubject || "Neuer Lead - Performancegrowth"}`;
-      send = (address) => sendPlainMail({ to: address, subject, text: lead.test ? `TEST: Dies ist ein Testdatensatz, bitte nicht bearbeiten.\n\n${text}` : text });
+      const body = lead.test ? `TEST: Dies ist ein Testdatensatz, bitte nicht bearbeiten.\n\n${text}` : text;
+      // Pivacom (HvK) nimmt nur ISO-8859-1 an (Ole, 17.11.2026): für diese Empfänger eigene Latin-1-Mail
+      const { brauchtLatin1 } = await import("@/lib/mail/latin1");
+      send = (address) => (brauchtLatin1(address) ? sendPlainMailLatin1({ to: address, subject, text: body }) : sendPlainMail({ to: address, subject, text: body }));
     } else {
       send = (address) =>
         sendCustomerMail({

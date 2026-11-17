@@ -501,6 +501,42 @@ export async function sendCustomerMail(opts: CustomerMailOpts): Promise<SendResu
 }
 
 /** Reine Text-Mail ohne HTML (für Empfänger, deren System die Mail ausliest). */
+/**
+ * Wie sendPlainMail, aber in ISO-8859-1 (Ole, 17.11.2026, Pivacom verlangt Latin-1, lib/mail/latin1.ts):
+ * eigene MIME-Mail über den SMTP-Zugang von Resend (gleicher Absender und Schlüssel). Ohne Anhänge.
+ * Beachtet MAIL_NUR_AN wie der Resend-Client (Testumgebung).
+ */
+export async function sendPlainMailLatin1(opts: { to: string; subject: string; text: string; replyTo?: string | null }): Promise<SendResult & { id?: string | null; blocked?: boolean }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = brandFrom(process.env.LEAD_EMAIL_FROM ?? process.env.OFFER_EMAIL_FROM ?? process.env.RESEND_FROM ?? "performancegrowth <onboarding@resend.dev>");
+  if (!apiKey) return { ok: false, error: "E-Mail-Versand ist nicht konfiguriert (RESEND_API_KEY fehlt)." };
+  const { mailAllowed } = await import("@/lib/mail-guard");
+  if (!mailAllowed(opts.to)) {
+    console.warn(`[mail-sperre] nicht gesendet (Latin-1): „${opts.subject}“`);
+    return { ok: true, id: "gesperrt", blocked: true };
+  }
+  try {
+    const { adresseAus, latin1Mail } = await import("@/lib/mail/latin1");
+    const nodemailer = (await import("nodemailer")).default;
+    const transport = nodemailer.createTransport({
+      host: process.env.RESEND_SMTP_HOST ?? "smtp.resend.com",
+      port: Number(process.env.RESEND_SMTP_PORT ?? 465),
+      secure: Number(process.env.RESEND_SMTP_PORT ?? 465) === 465,
+      auth: { user: "resend", pass: apiKey },
+      connectionTimeout: 15_000,
+      greetingTimeout: 15_000,
+      socketTimeout: 30_000,
+    });
+    const info = await transport.sendMail({
+      envelope: { from: adresseAus(from), to: [opts.to] },
+      raw: latin1Mail({ from, to: opts.to, subject: opts.subject, text: opts.text, replyTo: opts.replyTo }),
+    });
+    return { ok: true, id: info.messageId ?? null };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export async function sendPlainMail(opts: {
   to: string | string[];
   subject: string;
