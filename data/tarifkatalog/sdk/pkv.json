@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "SDK",
+  "sparte": "pkv",
+  "produkt": "Private Krankenversicherung GesundheitsFAIR",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Baukasten aus 15 Tarifbausteinen",
+    "Vorsorge ohne Selbstbeteiligung",
+    "Zahnbehandlung 100 %"
+  ],
+  "tarife": [
+    {
+      "name": "GesundheitsFAIR Basis-Schutz (AM13, S3, Z8)",
+      "kurz": "Basis-Schutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über GOÄ-Satz",
+        "bre": "derzeit 2 Monatsbeiträge",
+        "heilpraktiker": "ja",
+        "psychotherapie": "ohne Begrenzung",
+        "sehhilfen": "1.000 € in 3 Jahren",
+        "stationaer": "Mehrbett, Stationsarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "30 %, max. 960 €"
+      },
+      "bausteine": {
+        "ktg": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-angestellte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GesundheitsFAIR Komfort-Schutz (AM12, S1, Z8)",
+      "kurz": "Komfort-Schutz",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ambulant": "100 %, über GOÄ-Satz",
+        "bre": "derzeit 2 Monatsbeiträge",
+        "heilpraktiker": "ja",
+        "psychotherapie": "ohne Begrenzung",
+        "sehhilfen": "1.000 € in 3 Jahren",
+        "stationaer": "Einbett, Chefarzt",
+        "zahnersatz": "80 %",
+        "selbstbehalt": "20 %, max. 480 €"
+      },
+      "bausteine": {
+        "ktg": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-angestellte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "GesundheitsFAIR Premium-Schutz (AM12, S1, Z9)",
+      "kurz": "Premium-Schutz",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "ambulant": "100 %, über GOÄ-Satz",
+        "bre": "derzeit 2 Monatsbeiträge",
+        "heilpraktiker": "ja",
+        "psychotherapie": "ohne Begrenzung",
+        "sehhilfen": "1.000 € in 3 Jahren",
+        "stationaer": "Einbett, Chefarzt",
+        "zahnersatz": "90 %, über GOZ-Satz",
+        "selbstbehalt": "20 %, max. 480 €"
+      },
+      "bausteine": {
+        "ktg": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-angestellte",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-angestellte",
+    "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-selbststaendige",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-GesundheitsFAIR-1.645.pdf",
+    "https://www.sdk.de/downloads/Broschueren/Programm-GesundheitsFAIR-fuer-Selbststaendige-1.713.pdf"
+  ],
+  "offen": [
+    "Die drei Stufen sind die Beispiel-Kombinationen der Produktseite für Angestellte (frei kombinierbare Bausteine). SDK markiert den Premium-Schutz als „Am häufigsten gewählt“ (laut Seitenquelltext, bitte am Bildschirm gegenprüfen).",
+    "Selbstbeteiligung ambulant wählbar von 0 bis 30 % (AM10 bis AM33, Deckel 240 bis 2.400 €). Ambulant AM1x über, AM3x bis zu den GOÄ-Höchstsätzen; Sehhilfen AM1x 1.000 €, AM3x 250 € in drei Jahren (Broschüre 1.645/01.26).",
+    "Krankentagegeld in den Beispielen enthalten (140, 150 bzw. 200 € ab der 7. Woche). Beitragsrückerstattung derzeit 2 Monatsbeiträge aus Ambulant- und Zahntarifen, erfolgsabhängig.",
+    "Stationär S3: Mehrbettzimmer, diensthabender Arzt; S1: Einbettzimmer, Chefarzt, Privatklinik, über GOÄ-Höchstsätze. Hilfsmittel: lebenserhaltende Hilfsmittel ohne SB, Katalog nicht ausgewertet. Primärarzt und Ausland nicht ausgewertet."
+  ]
+}

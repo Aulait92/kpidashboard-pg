@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung INTER QualiMed Z Ambulant",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Kalkulation ohne Altersrückst."
+  ],
+  "tarife": [
+    {
+      "name": "INTER QualiMed Z Ambulant Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sehhilfen": "150 € in 2 Jahren",
+        "vorsorge": "bis 500 €/Jahr",
+        "arznei": "Zuzahlungen 100 %",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/ambulantekrankenzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "INTER QualiMed Z Ambulant Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "heilpraktiker": "80 %, bis 400 €/Jahr",
+        "sehhilfen": "250 € in 2 Jahren",
+        "vorsorge": "bis 400 € in 2 Jahren",
+        "wartezeit": "keine"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/ambulantekrankenzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "INTER QualiMed Z Ambulant Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "heilpraktiker": "80 %, bis 800 €/Jahr",
+        "sehhilfen": "375 € in 2 Jahren",
+        "vorsorge": "bis 800 € in 2 Jahren",
+        "arznei": "Zuzahlungen 100 %",
+        "wartezeit": "keine",
+        "lasik": "bis 800 € je Auge"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/ambulantekrankenzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/gesundheit/ambulantekrankenzusatzversicherung/"
+  ],
+  "offen": [
+    "Basis: alle gesetzlichen Zuzahlungen (Arznei, Heil-, Hilfsmittel, Fahrtkosten), Vorsorge 100 % bis 150 € in den ersten 12, 300 € in 24 Monaten, danach 500 € im Jahr; ohne Gesundheitsprüfung, bis GOÄ-Höchstsatz.",
+    "Exklusiv: Vorsorge und Schutzimpfungen; Heilpraktiker, Osteopathen, Hufeland; über GOÄ-Höchstsatz, Verzicht auf GKV-Vorleistung. Zuzahlungen in der Exklusiv-Spalte ohne Eintrag (nicht belegt).",
+    "Premium zusätzlich IGeL, Augenlaser (erneut frühestens nach 3 Jahren), Hilfsmittel 80 % bis 250 € und Heilmittel 100 % bis 200 € im Jahr, Prävention bis 50 €. Hörgeräte nicht eigens genannt. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+  ]
+}

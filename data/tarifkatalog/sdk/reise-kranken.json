@@ -1,0 +1,77 @@
+{
+  "gesellschaft": "SDK",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandsreise-Krankenversicherung (Tarif AR)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Jahresvertrag, alle Reisen",
+    "24-Stunden-Notrufservice",
+    "Bergungskosten nach Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandsreise-Krankenversicherung Single (bis 60 Jahre)",
+      "kurz": "Einzelperson",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 56 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "zahn": "schmerzstillend, Füllung",
+        "chronisch": "Verschlechterung",
+        "schwanger": "nur Komplikationen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Auslandsreise-Krankenversicherung Familie",
+      "kurz": "Familie",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "dauer": "bis 56 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "zahn": "schmerzstillend, Füllung",
+        "chronisch": "Verschlechterung",
+        "schwanger": "nur Komplikationen"
+      },
+      "bausteine": {
+        "familie": "inklusive"
+      },
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Auslandsreise-Krankenversicherung ab 61 Jahre",
+      "kurz": "Ab 61 Jahre",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 56 Tage",
+        "ruecktransport": "medizinisch sinnvoll",
+        "zahn": "schmerzstillend, Füllung",
+        "chronisch": "Verschlechterung",
+        "schwanger": "nur Komplikationen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.sdk.de/versicherungen/zusatzversicherung/auslandskrankenversicherung",
+    "https://www.sdk.de/downloads/Broschueren/Broschuere-Auslandskrankenversicherung-1.537.pdf",
+    "https://www.sdk.de/downloads/Bedingungen/AVB-Auslandsversicherung.pdf"
+  ],
+  "offen": [
+    "Drei Zielgruppen mit gleichen Leistungen (Tarif AR), keine Leistungsstufen. SDK markiert die Familien-Police als „Am häufigsten gewählt“. Familie: Versicherungsnehmer, Partner (beide bis 60) und Kinder bis 18.",
+    "Reisen über 56 Tage gegen Zusatzbeitrag je Verlängerungstag (bis 730 Tage, ab 61 bis 365 Tage), Broschüre 1.537/10.26.",
+    "Selbstbeteiligung und Geltung in USA und Kanada in den gelesenen Unterlagen nicht ausdrücklich genannt (Produktseite: weltweiter Rücktransport). Chronische Erkrankungen: Verschlechterung einer bestehenden Erkrankung gilt als Versicherungsfall (AVB/AR, Stand 08.10.2026).",
+    "Unfall-Leistungen (Tarif ARU) trägt die Stuttgarter Versicherung AG; Krankenhaustagegeld 50 € statt Kostenerstattung bis 30 Tage wählbar."
+  ]
+}

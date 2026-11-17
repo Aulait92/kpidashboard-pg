@@ -1,0 +1,71 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung INTER QualiMed Z Stationär",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Privatarzt vor-/nachstationär"
+  ],
+  "tarife": [
+    {
+      "name": "INTER QualiMed Z Stationär Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein-/Zweibett bei Unfall",
+        "chefarzt": "nur nach Unfall",
+        "krankenhauswahl": "nur nach Unfall",
+        "wartezeit": "keine",
+        "ambulant-op": "nur nach Unfall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "INTER QualiMed Z Stationär Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zimmer": "Zweibett, Unfall Einbett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "INTER QualiMed Z Stationär Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "wartezeit": "keine",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/krankenhauszusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/gesundheit/krankenhauszusatzversicherung/"
+  ],
+  "offen": [
+    "Basis leistet nur nach Unfall und wird laut Produktseite ohne Gesundheitsfragen angeboten. Begleitperson bei Kindern bis 12 Jahre (bis 14 Tage) in Exklusiv und Premium; Fahrt- und Transportkosten bis 300 € nur Premium.",
+    "Freie Krankenhauswahl für Exklusiv und Premium aus dem Fließtext und der Tabellenzeile (Symbole); bitte am Bildschirm prüfen. Erstattung über GOÄ-Höchstsatz und Ersatz-Krankenhaustagegeld nicht veröffentlicht.",
+    "Krankenhaustagegeld ist ein eigenes Produkt (Seite Krankenhaustagegeldversicherung). Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+  ]
+}

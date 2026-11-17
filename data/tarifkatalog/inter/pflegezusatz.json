@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "pflegezusatz",
+  "produkt": "Pflegetagegeldversicherung INTER QualiCare",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Weltweiter Schutz",
+    "Kein Höchsteintrittsalter"
+  ],
+  "tarife": [
+    {
+      "name": "INTER QualiCare (QC E)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "bis 150 €/Tag",
+        "ab-pg": "Pflegegrad 1",
+        "einmal": "bis 25.000 €, ab PG 2",
+        "befreiung": "ab Pflegegrad 5",
+        "ambulant-gleich": "ja",
+        "wartezeit": "keine",
+        "dynamik": "alle 3 Jahre, mind. 5 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/gesundheit/pflegetagegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/gesundheit/pflegetagegeldversicherung/"
+  ],
+  "offen": [
+    "Ein Tarif mit frei wählbarem Tagessatz: Pflegegrad 1 höchstens 20 € am Tag, Pflegegrade 2 bis 5 bis 150 € (bis 4.500 € im Monat); Leistung unabhängig von der Art der Pflege. Stationär kann ab Pflegegrad 2 auf das Niveau von Pflegegrad 5 erhöht werden.",
+    "Einmalleistung (Soforthilfe) bei erstmaliger Pflegebedürftigkeit ab Pflegegrad 2, bis 25.000 € vereinbar. Dynamik alle drei Jahre, auch im Pflegefall; Optionsrecht bis 20 % ohne Gesundheitsprüfung (unter 70 Jahren).",
+    "Demenz nicht eigens geregelt (Leistung nach Pflegegrad)."
+  ]
+}

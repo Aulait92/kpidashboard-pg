@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Schutz ab Vertragsbeginn",
+    "Bezugsberechtigte frei wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "INTER Risikolebensversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/vorsorge-vermoegen/risikolebensversicherung/"
+  ],
+  "offen": [
+    "Ein Tarif mit konstanter oder fallender Versicherungssumme. Nachversicherung ohne Gesundheitsprüfung bei Heirat, Geburt, Immobilienerwerb, Selbstständigkeit oder deutlicher Gehaltserhöhung (laut Produktseite optional).",
+    "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption, Umtauschrecht, weltweiter Schutz, Endalter und Höchstsummen nicht auf der Produktseite. Für Paare Einzelverträge bzw. Über-Kreuz-Abschluss, keine verbundene Leben genannt."
+  ]
+}
