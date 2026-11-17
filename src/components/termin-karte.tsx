@@ -7,7 +7,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, Check, ClipboardList, MoreHorizontal, Phone, Presentation, Send, Video, CalendarSync, type LucideIcon } from "lucide-react";
-import { ButtonLink, buttonClass, Card } from "@/components/ui";
+import Link from "next/link";
+import { buttonClass, Card } from "@/components/ui";
 import { ActionMenu } from "@/components/ui/menu";
 import { NextStepButton } from "@/components/next-step";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
@@ -124,12 +125,21 @@ export function TerminKarte({
     }
     const h = href[x];
     if (!h) return null;
-    return (
-      <span key={x} className="contents" data-termin-aktion={x}>
-        <ButtonLink href={h} variant={variant} size={size} icon={Icon} className={cls} external={x === "videocall"}>
-          {LABEL[x]}
-        </ButtonLink>
-      </span>
+    // Eigene Links statt ButtonLink, damit die Merkmale am Knopf selbst stehen (Erklärvideo klickt [data-termin-vorbereiten])
+    const daten = { "data-termin-aktion": x, ...(x === "vorbereiten" ? { "data-termin-vorbereiten": "" } : {}), ...(x === "praesentation" ? { "data-termin-praesentation": "" } : {}) };
+    const inhalt = (
+      <>
+        <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
+      </>
+    );
+    return h.startsWith("/") ? (
+      <Link key={x} href={h} className={buttonClass(variant, size, cls)} {...daten}>
+        {inhalt}
+      </Link>
+    ) : (
+      <a key={x} href={h} className={buttonClass(variant, size, cls)} {...(x === "videocall" ? { target: "_blank", rel: "noreferrer" } : {})} {...daten}>
+        {inhalt}
+      </a>
     );
   }
 
