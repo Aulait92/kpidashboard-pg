@@ -192,3 +192,27 @@ Vereinfachte betriebswirtschaftliche Auswertung je Monat, netto, Berliner Monate
 - Reiter „Pay-per-Lead (Pilot)“ rechnet immer mit allen Daten. Pilotphase ab `FIRST_MONTH`, Ende optional unter Einstellungen → Kosten (`KpiSettings.pplPilotEnd`); erscheint im Investoren-Update („Pilot Juni–November 2026 abgeschlossen; Fokus auf Software + Betreuung“).
 - BWA bleibt vollständig; Pay-per-Lead-Zeilen sind mit „(Pilot)“ beschriftet.
 - Logik ohne Datenbank in `src/lib/zahlen-sicht.ts` (getestet).
+
+## Kundenbereich „Wachstum“ neu (18.11.2026)
+
+Entwurf: `docs/ux/wachstum-neu/` (Branch claude/loving-mendel-j965x3). Seite `src/app/buyer/zahlen/page.tsx` (auch `/buyer/wachstum`),
+Bausteine `src/components/wachstum/`, Rechnung rein in `src/lib/wachstum.ts` und `src/lib/offene-chancen.ts` (getestet).
+
+- **Zwei Bestandszahlen, sauber getrennt:** „Bestand dieser Kunden (5 Jahre)“ = `ProvisionSummary.futureTrail`: künftige
+  Bestandsprovision nur der Verträge aus dem gewählten Zeitraum (Kohorte), Vertragsjahre 2 bis 5 (bzw. ab Jahr 2, was nicht
+  schon in der Abschlussprovision steckt), nach Storno, ohne Abzinsung. Nur diese Zahl steht im Hero und im Ergebnis
+  „Inkl. Bestand“. „Bestandsprovision aller Verträge“ = `BestandSummary.perYear` (laufend pro Jahr aus allen bisher über die
+  App abgeschlossenen Verträgen) und `inYears` (Summe der nächsten 5 Jahre ab heute, nach Storno). Steht nur unter
+  „Kosten und Gewinn im Detail“. Früher standen beide nebeneinander (z. B. 987 € vs. 801 €/Jahr und 2.414 €).
+- **Rechnet sich das?** Ergebnis = Abschlussprovision (abzüglich Rückbelastungen) + Bestand dieser Kunden (nur „Inkl.
+  Bestand“) − Kosten (Paket: Werbebudget und Betreuung; Pay-per-Lead: Leads à Preis plus ggf. Betreuung/Software).
+  Fehlende Abschlüsse = fehlender Betrag ÷ Wert pro Kunde, aufgerundet n, angezeigt „max(1, n−1) bis max(1, n−1)+1“.
+  Ohne neuen Kunden im Zeitraum: Wert pro Kunde aus allen bisherigen Abschlüssen.
+- **Offene Chancen** (Stand jetzt): Angebot ohne Entscheidung, Termin war ohne Ergebnis, gebuchter Termin, Bedenkzeit bzw.
+  Wiedervorlage nach einem Gespräch. Wert = Provision 1. Jahr (Beitrag aus dem abgelegten Angebot zum Termin, sonst
+  Standardbeitrag des Produkts, Sätze aus „Meine Provisionen“) × Quote. Quoten aus den eigenen entschiedenen Fällen der
+  letzten 12 Monate (Angebot → Abschluss, Termin → Abschluss, Wiedervorlage mit der Termin-Quote); unter 10 Fällen je Stufe
+  Standardquote (Admin → Einstellungen → Laufende Kosten, `KpiSettings.chanceQuoteAngebot` 40 %, `chanceQuoteTermin` 25 %),
+  dann „Schätzung“. Kein Benchmark mit anderen Vermittlern (später).
+- **Hebel der Woche:** `pickTips` (lib/zahlen-tipps) jetzt immer (nicht nur bei Minus), mit Kurzfassung je Tipp und dem neuen
+  Tipp „Leads ohne WhatsApp anrufen“ (nur Wachstum, nicht im Monatsbericht).
