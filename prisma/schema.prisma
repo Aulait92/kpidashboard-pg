@@ -1236,6 +1236,9 @@ model Message {
   // (lib/whatsapp/zustellfehler.ts, z. B. 131026 „Message undeliverable“ = Nummer nicht per WhatsApp erreichbar)
   errorCode       Int?
   errorTitle      String?
+  // SMS-Ersatz (lib/sms/ersatz.ts): WhatsApp-Terminnachricht im Vertrieb nicht zugestellt, derselbe Text per SMS
+  smsAt           DateTime?
+  smsStatus       String?
   createdAt       DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
