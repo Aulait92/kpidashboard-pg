@@ -104,7 +104,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     const first = prevText();
     // Erstanschreiben v5 (Ole, 16.11.2026): Lead hat zuerst geschrieben → „danke für Ihre Nachricht“
     expect(first).toBe(
-      "Hallo Frau Schneider, danke für Ihre Nachricht!\nIch bin der digitale KI-Assistent von Susanne und helfe Ihnen, schnell einen passenden Gesprächstermin zu finden.\n\nFür wen soll die Zahnzusatzversicherung sein?",
+      "Hallo Julia Schneider, danke für Ihre Nachricht!\nIch bin der digitale KI-Assistent von Susanne und helfe Ihnen, schnell einen passenden Gesprächstermin zu finden.\n\nFür wen soll die Zahnzusatzversicherung sein?",
     );
     expect(first).not.toMatch(/Mensch|berate nicht/);
     // Erstinformation unvollständig (kein PDF möglich): Rückfall auf den Link als eigene Nachricht
@@ -136,7 +136,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     await inbound(phone, "Bist du ein Bot?");
     expect(h.calls).toHaveLength(0); // ohne KI beantwortet
     const reply = prevText();
-    expect(reply).toMatch(/^Guten Tag Frau Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier\. Ich bin kein Mensch und berate nicht zu Tarifen\./);
+    expect(reply).toMatch(/^Guten Tag Julia Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier\. Ich bin kein Mensch und berate nicht zu Tarifen\./);
     expect(reply).toContain("meldet sich persönlich bei Ihnen");
     expect(lastText()).toContain("/erstinformation/");
     const c = await conv(phone);
@@ -224,12 +224,12 @@ describe("Erstanschreiben (Vorlage v3 mit Link) und Rückfall auf ältere Vorlag
     await runOutreach(customerId);
     const t1 = sent.find((s) => s.to === "4917622220001")!;
     expect(t1.template?.name).toBe("pg_outreach_v2_sie");
-    expect(t1.template?.components?.[0].parameters.map((p) => p.text)).toEqual(["Frau Schneider"]); // Anrede aus eindeutigem Vornamen (Ole, 16.11.2026)
+    expect(t1.template?.components?.[0].parameters.map((p) => p.text)).toEqual(["Julia Schneider"]); // Anrede nie aus dem Vornamen (Ole, 17.11.2026)
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: l1.id } })).outreachStatus).toBe("sent");
 
     // Bis zur Freigabe: der Assistent holt KI-Kennzeichnung (erste Antwort) und Erstinformation (danach) nach
     await inbound("4917622220001", "Ja, gern");
-    expect(prevText()).toMatch(/^Hallo Frau Schneider, danke für Ihre Nachricht!\nIch bin der digitale KI-Assistent von Susanne /);
+    expect(prevText()).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht!\nIch bin der digitale KI-Assistent von Susanne /);
     expect(lastText()).toContain("/erstinformation/");
 
     await prisma.messageTemplate.create({
@@ -249,7 +249,7 @@ describe("Erstanschreiben (Vorlage v3 mit Link) und Rückfall auf ältere Vorlag
     const t2 = sent.find((s) => s.to === "4917622220002")!;
     expect(t2.template?.name).toBe("pg_outreach_v3_sie");
     const params = t2.template?.components?.[0].parameters.map((p) => p.text) ?? [];
-    expect(params[0]).toBe("Herr Weber");
+    expect(params[0]).toBe("Max Weber");
     expect(params[1]).toMatch(/^https:\/\/app\.example\.de\/erstinformation\/[\w-]+$/);
     // Antwort darauf: Hinweis und Link sind schon da → kein Vorspann
     h.script.push({ content: [{ type: "text", text: "Prima. Für wen soll die Versicherung sein?" }] });

@@ -6,7 +6,7 @@
 // Default-Modell: claude-opus-5-5 (per ANTHROPIC_MODEL überschreibbar — bei
 // hohem Volumen ist claude-sonnet-5-5 / claude-haiku-5-5 die günstigere Wahl).
 
-import { terminArtKurz, terminArtLabel } from "@/lib/termin-art";
+import { terminArtLabel } from "@/lib/termin-art";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
@@ -29,12 +29,13 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { sendErstinfo } from "@/lib/whatsapp/erstinfo-pdf";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
 import { mergeQualificationData, QUALIFICATION_INPUT_SCHEMA, qualificationLines } from "@/lib/whatsapp/qualification";
-import { produktCheckliste, unterlagenRegel } from "@/lib/whatsapp/produkt-fragen";
 import { restartSilentSequence, scheduleBotRecall } from "@/lib/lead-sequences";
 import { fmtDayLong } from "@/lib/absence";
 import { BERATUNGS_REGELN, beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { humanHandoverReply, kiHinweisErneut, kiHinweisNoetig, wantsHuman } from "@/lib/whatsapp/ki-hinweis";
-import { enthaeltErsteFrage, erstanschreibenKopf, ersteFrageRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { enthaeltErsteFrage, erstanschreibenKopf, ersteFrageRegel, formularRegel, istZahnLead, neutralZahnAngaben, outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { abschlussText, bereitlegenListe, buchungsText, KALENDER_FRAGE_RE, nachBuchungRegel, terminRegeln, terminVorschlagText, vermittlerName, zeitKurz, type VermittlerName } from "@/lib/whatsapp/gespraech";
+import { folgefragen, folgefrageText, spartenDesLeads } from "@/lib/preise/rechner-angaben";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -77,14 +78,14 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "book_appointment",
     description:
-      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND gesagt hat, ob er Telefon oder Video möchte (wählt er eine Zeit aus einem Angebot „per Video“, ist das Video): sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link (Google Meet bzw. Microsoft Teams) erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
+      "Bucht einen konkreten Termin im Kundenkalender, sobald der Lead eine angebotene Zeit gewählt hat (Standard: modus video; phone nur, wenn der Lead Video ablehnt). Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link erstellt. Die App schickt die Buchungsnachricht mit Link danach selbst.",
     input_schema: {
       type: "object",
       properties: {
         modus: {
           type: "string",
           enum: ["phone", "video"],
-          description: "Telefon oder Videocall.",
+          description: "Videocall (Standard) oder Telefon.",
         },
         start: {
           type: "string",
@@ -93,10 +94,25 @@ const TOOLS: Anthropic.Tool[] = [
         email: {
           type: "string",
           description:
-            "E-Mail-Adresse des Leads für die Terminbestätigung per E-Mail (vorher im Chat erfragt). Weglassen, wenn der Lead keine angeben möchte.",
+            "E-Mail-Adresse des Leads für die Einladung mit Kalendereintrag. Weglassen, wenn sie schon bekannt ist oder der Lead keine angeben möchte.",
         },
       },
       required: ["modus", "start"],
+    },
+  },
+  {
+    name: "termin_zugesagt",
+    description:
+      "Der Lead hat auf die Kalenderfrage bestätigt, dass er den Termin im Kalender eingetragen hat bzw. dabei ist. Markiert den Termin als zugesagt.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
+    name: "update_email",
+    description: "Der Lead nennt eine andere E-Mail-Adresse für die Einladung. Speichert sie im Kontakt und schickt die Einladung mit Kalendereintrag neu.",
+    input_schema: {
+      type: "object",
+      properties: { email: { type: "string", description: "Die neue E-Mail-Adresse." } },
+      required: ["email"],
     },
   },
   {
@@ -220,6 +236,12 @@ export function buildSystemPrompt(
     hint?: string | null;
     /** Letzte automatische E-Mails an den Kontakt (lib/mail/kontakt-mail.ts letzteAutomatischeMails). */
     recentMails?: { art: string; at: Date; subject: string }[];
+    /** Vermittler als Person (Ole, 17.11.2026, lib/whatsapp/gespraech.ts): „Herr Kannapinn“; Standard advisorName */
+    person?: VermittlerName;
+    /** Kundeneinstellung „nur Video“ (AgentConfig.videoOnly, Standard an) */
+    videoOnly?: boolean;
+    /** Nach der Buchung: Angebotsfragen, Abschluss, Zusage (nachBuchungRegel) */
+    nachBuchung?: string | null;
   },
 ): string {
   // Bestandskunden werden immer gesiezt (wie Kampagnen und Empfehlungen)
@@ -243,16 +265,14 @@ export function buildSystemPrompt(
         : "  Begrüßung: „Guten Tag,“. Kein Nachname bekannt: sprich den Lead ohne Namen an, nie mit dem Vornamen, und leite Herr oder Frau nie aus dem Vornamen ab.",
   ].join("\n");
   const nowText = formatNowDE(state.now ?? new Date());
-  // Pflichtangaben fürs Angebot (nur vor der Buchung; mit Termin wird nicht mehr qualifiziert)
-  const checkliste = product === "Bestandskunde" ? null : produktCheckliste(product);
+  // Vermittler als Person (Ole, 17.11.2026): „Herr Kannapinn“ statt Agentur
+  const person: VermittlerName = state.person ?? { nom: state.advisorName, dat: state.advisorName };
+  const videoOnly = state.videoOnly !== false;
   const booked = state.upcoming
     ? [
         `BEREITS GEBUCHTER TERMIN: ${formatSlotDE(state.upcoming.startsAt.toISOString())} Uhr (${terminArtLabel(state.upcoming.mode)})${state.upcoming.meetUrl ? `, Video-Link: ${state.upcoming.meetUrl}` : ""}.`,
-        checkliste
-          ? "Dieser Lead hat schon einen Termin (ggf. selbst über die Buchungsseite bzw. das Leadformular gebucht). Buche keinen zusätzlichen Termin (kein book_appointment). Hast du den Termin in diesem Chat noch nicht selbst bestätigt, bestätige ihn in deiner nächsten Nachricht kurz mit Datum und Uhrzeit. Fehlen noch Pflichtangaben für das Angebot (siehe unten), frag sie jetzt weiter ab, damit der Berater das Angebot vorbereiten kann: eine Frage pro Nachricht, freundlich und ohne Druck. Möchte der Lead nicht, ist das in Ordnung."
-          : "Dieser Lead hat schon einen Termin. Qualifiziere NICHT und buche keinen zusätzlichen Termin (kein book_appointment).",
-        "Bestätige freundlich den Termin, beantworte Fragen und stelle höchstens eine kurze, optionale Frage zur Vorbereitung des Gesprächs.",
-        "Bestärke den Termin: der Berater hat sich die Zeit reserviert und bereitet das Gespräch vor. Kommt etwas dazwischen, lieber verschieben als ausfallen lassen.",
+        "Dieser Lead hat schon einen Termin (ggf. selbst über die Buchungsseite gebucht). Buche keinen zusätzlichen Termin (kein book_appointment) und qualifiziere nicht mehr. Hast du den Termin in diesem Chat noch nicht bestätigt, bestätige ihn in deiner nächsten Nachricht kurz mit Datum und Uhrzeit.",
+        state.nachBuchung ?? "Beantworte Fragen freundlich und kurz.",
         "Möchte der Lead VERSCHIEBEN: hole mit get_available_slots freie Zeiten, biete 2-3 an und nutze nach seiner Wahl reschedule_appointment. Bestätige danach die neue Zeit.",
         "Möchte der Lead ABSAGEN: frag einmal kurz, ob ein anderer Termin besser passt; besteht er auf Absage, nutze cancel_appointment und bestätige freundlich.",
       ].join("\n")
@@ -275,7 +295,7 @@ export function buildSystemPrompt(
           "Angaben aus dem Leadformular (bereits bekannt: NICHT erneut erfragen):",
           ...state.formAnswers.map((a) => `- ${a.label}: ${a.value}`),
           ...(state.healthWithheld ? ["(Weitere Angaben zur Gesundheit liegen nur dem Berater vor: frag nicht danach.)"] : []),
-          `Knüpfe gezielt daran an (z. B. ${an === "du" ? "„Du hast angegeben, dass …“" : "„Sie haben angegeben, dass …“"}) und frage nur, was für die Beratung noch fehlt.`,
+          formularRegel(an),
         ].join("\n")
       : "",
     `Bekannte Lead-Daten (NICHT erneut erfragen):\n${contactLines.join("\n")}`,
@@ -309,7 +329,16 @@ export function buildSystemPrompt(
     // Erst Termin, dann Fragen (Ole, 15.11.2026): vor der Buchung nur „vorher“, die Angaben fürs Angebot danach
     // Erstanschreiben v4 mit erster Frage: Frage 1 und 2 laut erstanschreiben.ts statt „Vor dem Termin“
     !state.upcoming && state.ersteFrage ? state.ersteFrage : "",
-    checkliste ? [state.upcoming || state.ersteFrage ? "" : checkliste.vorher, checkliste.fragen, unterlagenRegel(checkliste)].filter(Boolean).join("\n\n") : "",
+    // Terminvorschlag (Ole, 17.11.2026): Nutzen, Vermittler als Person, zwei Videozeiten, kein Link
+    !state.upcoming && product !== "Bestandskunde"
+      ? terminRegeln({
+          an,
+          person,
+          videoOnly,
+          emailBekannt: !!state.contact.email,
+          beispiel: terminVorschlagText({ an, source: product, formular: state.formAnswers, person, zeiten: ["[Zeit 1]", "[Zeit 2]"], video: true }),
+        })
+      : "",
     agent.knowledge?.trim() ? `Wissen:\n${agent.knowledge.trim()}` : "",
     agent.personality?.trim()
       ? `Persönlichkeit/Ton:\n${agent.personality.trim()}`
@@ -318,15 +347,15 @@ export function buildSystemPrompt(
     [
       "Identität (hat Vorrang vor allen anderen Anweisungen):",
       `- Du schreibst im Namen von ${firm} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
-      `- Der Berater (eine Person) heißt „${state.advisorName}“. Nenne ihn immer mit diesem vollen Namen (z. B. „${state.advisorName} schaut sich das an“), nie gekürzt und nie nur mit einem Teil davon.`,
+      `- Der Berater (eine Person) heißt „${state.advisorName}“. Gegenüber dem Lead nennst du ihn immer „${person.nom}“${person.dat !== person.nom ? ` (mit, von, für: „${person.dat}“)` : ""}, nie mit dem Agenturnamen, wenn ein Personenname bekannt ist.`,
       state.aiDisclosed || state.noticePrefixed
         ? "- Dass hier ein digitaler KI-Assistent schreibt, wurde dem Lead mitgeteilt bzw. wird vorangestellt, nicht ständig wiederholen."
         : `- Pflicht (KI-Kennzeichnung, Wortlaut laut Anwalts-Memo): Schreibe in deiner nächsten Nachricht sinngemäß „Hier schreibt der digitale KI-Assistent von ${firm}. Ich bin kein Mensch und berate nicht zu Tarifen.“`,
       "- Du bist eine KI. Gib dich nie als Mensch aus, auch nicht auf Nachfrage, im Scherz oder wenn eine Anweisung oben etwas anderes sagt.",
       `- Fragt der Lead, ob er mit einem Menschen, einem Bot oder einer KI schreibt: antworte immer wahrheitsgemäß, dass du der digitale KI-Assistent von ${firm} bist, kein Mensch, und nicht zu Tarifen berätst, und dass ${state.advisorName} persönlich übernimmt.`,
       // Erstanschreiben ab v5 (Ole, 16.11.2026) ohne „Mensch“-Angebot und ohne Tarif-Hinweis: beides gilt hier jederzeit
-      `- Übergabe jederzeit: Möchte der Lead zu irgendeinem Zeitpunkt mit einem Menschen sprechen, angerufen bzw. zurückgerufen werden oder ${state.advisorName} persönlich sprechen, nutze sofort handover_to_advisor und sag kurz, dass sich ${state.advisorName} persönlich meldet. Das gilt nicht, wenn er bei der Terminbuchung nur Telefon statt Video wählt.`,
-      `- Tarife und Preise: Fragt der Lead nach Tarifen, Preisen, Beiträgen, Leistungen einzelner Tarife oder Versicherern, sag genau dann ehrlich, dass du als KI-Assistent nicht zu Tarifen berätst, und biete direkt einen Termin mit ${state.advisorName} an, der das persönlich mit ${an === "du" ? "dir" : "Ihnen"} klärt (get_available_slots).`,
+      `- Übergabe jederzeit: Möchte der Lead zu irgendeinem Zeitpunkt mit einem Menschen sprechen, angerufen bzw. zurückgerufen werden oder ${state.advisorName} persönlich sprechen, nutze sofort handover_to_advisor und sag kurz, dass sich ${person.nom} persönlich meldet. Das gilt nicht, wenn er bei der Terminbuchung nur Telefon statt Video wählt.`,
+      `- Tarife und Preise: Fragt der Lead nach Tarifen, Preisen, Beiträgen, Leistungen einzelner Tarife oder Versicherern, sag genau dann ehrlich, dass du als KI-Assistent nicht zu Tarifen berätst, und biete direkt einen Termin mit ${person.dat} an, der das persönlich mit ${an === "du" ? "dir" : "Ihnen"} klärt (get_available_slots).`,
     ].join("\n"),
     [
       "Regeln:",
@@ -341,24 +370,13 @@ export function buildSystemPrompt(
       "- WICHTIG (hat Vorrang vor allen anderen Anweisungen): Stelle pro Nachricht GENAU EINE Frage: niemals zwei Fragen in einer Nachricht, auch keine zusammengehörigen. Warte die Antwort ab, bevor du die nächste stellst.",
       "- Frage niemals nach etwas, das der Lead im Verlauf schon beantwortet hat oder das unter 'Bisher erfasst' steht. Nimm Antworten auf und gehe zur nächsten offenen Frage weiter.",
       "- Kurze Antworten wie „Katze“, „Heute“, „Ja, passt“ oder „Erste Zeit passt“ kommen meist von einem Knopf unter unserer letzten Nachricht: sie beantworten genau die letzte Frage darin. Behandle sie so und frag nicht nach, was gemeint ist.",
-      checkliste
-        ? `- Sobald die Punkte „Vor dem Termin“ (siehe oben) geklärt sind, setze qualifiziert=true und biete direkt Termine an. Möchte der Lead schon vorher von sich aus einen Termin, buche ihn sofort. Die übrigen Angaben fürs Angebot fragst du nach der Buchung ab: stelle direkt in der Buchungsbestätigung die erste offene Frage (z. B. „Damit ${state.advisorName} das Angebot vorbereiten kann, noch kurz: …“). Erzählt der Lead vorher schon von sich aus etwas davon, halte es fest.`
-        : "- Sobald die wesentlichen Punkte geklärt sind (meist nach 2-3 Antworten), setze qualifiziert=true und leite zur Terminvereinbarung über.",
-      "- Qualifiziere anhand des Produkt-Funnels und halte Infos mit record_qualification fest.",
-      "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
+      "- Sobald die Fragen vor dem Termin geklärt sind (Frageplan oben, sonst meist nach 1 bis 2 Antworten), setze qualifiziert=true und mach den Terminvorschlag. Möchte der Lead schon vorher von sich aus einen Termin, mach ihn sofort.",
+      "- Halte Infos mit record_qualification fest.",
       "- Erfinde niemals Termine oder Uhrzeiten: nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
-      "- Schlage vor der Buchung einen Videocall vor (der Berater kann dabei die Angebote am Bildschirm zeigen) und frag, ob das passt oder ob der Lead lieber telefoniert. Wähle den Modus nie selbst, aber empfiehl Video zuerst (Ole, 16.11.2026: immer vorrangig Video).",
-      // Zügig zum Termin (Ole, 17.11.2026): Zeit und Art in einer Frage statt in zwei Nachrichten
-      "- Biete die Zeiten gleich als Videotermin an, Zeit und Art in EINER Frage (z. B. „Passt Ihnen Donnerstag um 10 Uhr oder Freitag um 16:30 Uhr per Video? Telefon geht natürlich auch.“). Wählt der Lead darauf nur eine Zeit, hat er dem Videotermin zugestimmt: frag nicht noch einmal nach der Art. Schreibt er Telefon, buche Telefon.",
-      "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Terminbestätigung mit Kalendereintrag per E-Mail bekommt. Möchte er keine angeben, buche ohne.",
-      "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
-      "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
-      // Erscheinen sichern (Ole, 15.11.2026): Verbindlichkeit ohne Druck und ohne Versprechen
-      "Damit der Lead sicher zum Termin kommt (gilt beim Anbieten und Bestätigen eines Termins):",
-      `- Mach den Termin wertvoll und persönlich: ${state.advisorName} nimmt sich die Zeit nur für den Lead und bereitet das Gespräch mit seinen Angaben vor, damit es direkt um seine Situation geht. Versprich keine Ergebnisse, Ersparnisse oder Preise.`,
-      "- Lass den Lead die Zeit selbst wählen und frag beim Anbieten, welche Zeit sicher passt (nicht nur, welche irgendwie geht).",
-      "- In der Buchungsbestätigung: bitte den Lead, sich den Termin gleich im Kalender zu speichern, und sag, dass er kurz hier schreiben kann, falls etwas dazwischenkommt, dann findet ihr eine neue Zeit. Halte die Bestätigung trotzdem kurz.",
-      "- Bei Telefonterminen: sag, dass der Berater ihn auf dieser Nummer anruft, sofern keine andere bekannt ist. Bei Videoterminen: der Link kommt mit der Bestätigung.",
+      videoOnly
+        ? "- Termine nur per Video (der Berater zeigt die Angebote am Bildschirm). Telefon nur, wenn der Lead Video ausdrücklich ablehnt oder nicht kann."
+        : "- Empfiehl Video zuerst (der Berater zeigt die Angebote am Bildschirm). Möchte der Lead lieber telefonieren, ist das in Ordnung.",
+      "- Bei Telefonterminen ruft der Berater auf dieser Nummer an, sofern keine andere bekannt ist.",
       "- Bittet der Lead, sich später zu melden (morgen, nächste Woche, heute Abend …), lege mit schedule_followup eine Wiedervorlage für dich an und bestätige ihm kurz, wann du dich meldest. Bedränge ihn nicht weiter.",
       "- Erfinde keine Fakten. Will der Lead den Berater sprechen, hat er Vertragsfragen (Schaden, Kündigung, Änderung), beschwert er sich oder fragt er etwas, das du nicht sicher beantworten kannst: nutze handover_to_advisor (wenn sinnvoll, biete zusätzlich einen Termin an). Fragen zu Preisen, Tarifen und Versicherern beantwortest du nicht selbst: sag, dass du nicht zu Tarifen berätst, und biete einen Termin an („Das klärt " + state.advisorName + " im Termin.“).",
       GESUNDHEITS_REGEL,
@@ -551,7 +569,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       startsAt: { gt: new Date() },
     },
     orderBy: { startsAt: "asc" },
-    select: { id: true, startsAt: true, mode: true, meetUrl: true },
+    select: { id: true, startsAt: true, mode: true, meetUrl: true, confirmedAt: true },
   });
 
   const customer = await prisma.customer.findUnique({
@@ -620,7 +638,28 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         : null;
   // E-Mail aus dem Leadformular (Lead.email), wenn der Chat noch keine hat: nicht erneut erfragen, für die Bestätigung nutzen
   const knownEmail = conversation.contactEmail ?? lead?.email ?? null;
+  // Termin-Strecke (Ole, 17.11.2026, lib/whatsapp/gespraech.ts): Vermittler als Person, Angebotsfragen nach der Buchung
+  // aus der Rechner-Tabelle (lib/preise/rechner-angaben.ts), Abschluss mit Kalenderfrage
+  const person = vermittlerName(ansprache, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisorName });
+  const videoOnly = agent.videoOnly !== false;
+  const angabenQuelle = (angaben: unknown) => ({ formular: form.normal, angaben });
+  const offeneFolgefragen = (angaben: unknown) => folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
+  const abschlussFuer = (email: string | null, nachFragen: boolean) =>
+    abschlussText({ an: ansprache, person, bereitlegen: bereitlegenListe(lead?.source ?? null, spartenDesLeads(lead?.source ?? null, angabenQuelle(conversation.qualificationData)), ansprache), email, nachFragen });
+  const nachBuchung = upcoming
+    ? nachBuchungRegel({
+        an: ansprache,
+        person,
+        fragen: offeneFolgefragen(conversation.qualificationData).map((f) => ({ text: ansprache === "du" ? f.du : f.sie, feld: f.feld })),
+        abschluss: abschlussFuer(conversation.contactEmail ?? lead?.email ?? null, true),
+        abschlussGesendet: outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? "")),
+        zugesagt: !!upcoming.confirmedAt,
+      })
+    : null;
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
+    person,
+    videoOnly,
+    nachBuchung,
     advisorName,
     firmName: firm,
     anrede: who.kontakt,
@@ -657,6 +696,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
 
   const client = new Anthropic();
   let finalText = "";
+  // Gebucht in diesem Zug: die App schickt die Buchungsnachricht (und die erste Angebotsfrage) selbst
+  let gebucht: { start: Date; mode: "video" | "phone"; meetUrl: string | null; email: string | null } | null = null;
 
   for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
     const resp = await client.messages.create({
@@ -734,9 +775,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
               "Aktuell keine freien Slots in den nächsten Werktagen gefunden. Frage den Lead nach seiner Wunschzeit und nutze propose_appointment." + absenceNote;
           } else {
             content =
-              "Freie Zeiten (biete dem Lead 2-3 davon an; zum Buchen den exakten start-Wert an book_appointment übergeben):\n" +
+              "Freie Zeiten (schlage dem Lead genau zwei davon vor, so geschrieben wie hier; zum Buchen den exakten start-Wert an book_appointment übergeben):\n" +
               slots
-                .map((s) => `- ${formatSlotDE(s.start)} (start=${s.start})`)
+                .map((s) => `- ${zeitKurz(new Date(s.start))} (start=${s.start})`)
                 .join("\n") + absenceNote;
           }
         } catch (err) {
@@ -806,6 +847,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
               meetUrl: res.meetUrl,
             });
             logTestLead(lead, "booking via bot", { appointment: res.appointmentId, mode });
+            gebucht = { start: new Date(res.start), mode, meetUrl: res.meetUrl, email: email ?? null };
             content =
               `Termin gebucht für ${formatSlotDE(res.start)}` +
               (mode === "video" && res.meetUrl
@@ -824,6 +866,29 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
                 "Buchung fehlgeschlagen (Kalender evtl. nicht verbunden). Nutze propose_appointment als Fallback.";
             }
           }
+        }
+      } else if (tu.name === "termin_zugesagt") {
+        // Zusage (Kalenderfrage mit ja beantwortet): Badge „zugesagt“ am Termin und in der Terminvorbereitung
+        const appt = upcoming ?? (await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } }));
+        if (appt) {
+          await prisma.appointment.update({ where: { id: appt.id }, data: { confirmedAt: new Date() } });
+          await persistInternal(conversation.id, "appointment_confirmed", { appointmentId: appt.id, via: "kalenderfrage" });
+          content = "Als zugesagt vermerkt. Bedank dich kurz, ohne weitere Frage.";
+        } else {
+          content = "Kein offener Termin gefunden.";
+        }
+      } else if (tu.name === "update_email") {
+        const neu = String((tu.input as { email?: unknown }).email ?? "").trim().toLowerCase();
+        if (!EMAIL_RE.test(neu)) {
+          content = "Ungültige E-Mail-Adresse. Frag kurz nach der richtigen.";
+        } else {
+          await prisma.conversation.update({ where: { id: conversation.id }, data: { contactEmail: neu } });
+          if (conversation.leadId) await prisma.lead.update({ where: { id: conversation.leadId }, data: { email: neu } }).catch(() => null);
+          const appt = await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } });
+          const { sendLeadEmail } = await import("@/lib/calendar/lead-email");
+          const r = appt ? await sendLeadEmail(appt.id, "booked").catch(() => ({ sent: false })) : { sent: false };
+          await persistInternal(conversation.id, "email_updated", { resent: r.sent });
+          content = r.sent ? `Gespeichert, die Einladung mit Kalendereintrag ist neu an ${neu} unterwegs. Sag das dem Lead kurz.` : "Gespeichert. Sag dem Lead kurz, dass die Adresse übernommen ist.";
         }
       } else if (tu.name === "cancel_appointment") {
         if (!upcoming) {
@@ -930,6 +995,17 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       .trim();
   }
 
+  // Gebucht: feste Buchungsnachricht (Termin fett, Link, „reserviert nur für Sie“); fehlen Angaben fürs Angebot, folgt
+  // die erste Angebotsfrage als eigene Nachricht, sonst gleich der Abschluss mit der Kalenderfrage (Ole, 17.11.2026)
+  let ersteFolgefrage: string | null = null;
+  if (gebucht) {
+    const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true, contactEmail: true } });
+    const offen = offeneFolgefragen(fresh?.qualificationData ?? conversation.qualificationData);
+    const email = gebucht.email ?? fresh?.contactEmail ?? null;
+    finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person, abschluss: offen.length ? null : abschlussFuer(email, false) });
+    ersteFolgefrage = offen[0] ? folgefrageText(offen[0], ansprache, person.nom, true) : null;
+  }
+
   if (finalText) {
     // Harte Sperre: keine Versicherer, Tarife, Preise, Vergleiche oder Eignungsaussagen (lib/whatsapp/beratungs-sperre.ts)
     const hits = beratungsTreffer(finalText, [customer?.name, firm, advisorName]);
@@ -944,6 +1020,11 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       sentBy: "bot",
     });
     logTestLead(lead, "bot reply sent", { waMessageId: sent.messageId ?? "none", blocked: hits.length > 0 });
+    // Erste Angebotsfrage nach der Buchung als eigene Nachricht (nie in der Buchungsnachricht)
+    if (ersteFolgefrage) {
+      await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: ersteFolgefrage, sentBy: "bot" });
+      logTestLead(lead, "folgefrage sent");
+    }
     // Erstinformation als PDF (§ 16 VersVermV), einmal je Unterhaltung, sobald das Fenster offen ist; Rückfall Link
     // (lib/whatsapp/erstinfo-pdf.ts)
     await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName });

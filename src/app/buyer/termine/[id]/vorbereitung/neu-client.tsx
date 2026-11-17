@@ -73,7 +73,7 @@ export function VorbereitungNeu(p: {
   id: string;
   leadId: string | null;
   readOnly: boolean;
-  kopf: { name: string; zeit: string; modus: string; produkt: string; vorbereitet: boolean };
+  kopf: { name: string; zeit: string; modus: string; produkt: string; vorbereitet: boolean; zugesagt?: boolean };
   willKarte: ReactNode;
   mehr: ReactNode;
   klaeren: { punkte: string[]; erledigt: string[] };
@@ -200,6 +200,11 @@ export function VorbereitungNeu(p: {
               {p.kopf.modus}
             </span>
             <span className="inline-flex h-7 items-center rounded-full border border-[color:var(--border)] bg-white px-2.5 text-[13px] font-medium">{p.kopf.produkt}</span>
+            {p.kopf.zugesagt ? (
+              <span className="inline-flex h-7 items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-[13px] font-medium text-emerald-700" data-termin-zugesagt>
+                <Check className="h-3.5 w-3.5" /> zugesagt
+              </span>
+            ) : null}
             {vorbereitet ? (
               <span className="inline-flex h-7 items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-[13px] font-medium text-emerald-700">
                 <Check className="h-3.5 w-3.5" /> Vorbereitet

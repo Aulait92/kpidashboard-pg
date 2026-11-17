@@ -48,16 +48,17 @@ describe("Erstanschreiben je Produkt", () => {
   });
 
   it("Assistent: Knopf-Antwort = Antwort auf Frage 1, dann Frage 2, dann Termine", () => {
-    const r = ersteFrageRegel("TKV Katze", "Susanne Meier");
-    expect(r).toContain("„Wie alt ist Ihre Katze?“");
-    expect(r).toContain("ist die Antwort auf diese Frage 1");
+    // Frageplan (Ole, 17.11.2026): die Frage aus dem tatsächlich gesendeten Erstanschreiben gilt
+    const r = ersteFrageRegel("TKV Katze", "Susanne Meier", { gesendet: "Hallo Frau X, danke …\n\n*Wie alt ist Ihre Katze?*" });
+    expect(r).toContain("Unsere erste WhatsApp hat gefragt: „Wie alt ist Ihre Katze?“");
+    expect(r).toContain("ist die Antwort darauf");
     // Ältere freigegebene v4 (Frage nach dem Tier mit Knöpfen) im Verlauf: deren Frage gilt
     const alt = ersteFrageRegel("TKV Katze", "Susanne Meier", { gesendet: "Guten Tag Frau X, … Für welches Tier suchen Sie den Schutz?" });
-    expect(alt).toContain("„Für welches Tier suchen Sie den Schutz?“ mit den Knöpfen „Hund“, „Katze“");
+    expect(alt).toContain("„Für welches Tier suchen Sie den Schutz?“ (Knöpfe „Hund“, „Katze“)");
     // Lead hat zuerst geschrieben: Frage 1 jetzt stellen, fett am Ende
     expect(ersteFrageRegel("TKV Katze", "Susanne", { jetzt: true, an: "du" })).toContain("*Wie alt ist deine Katze?*");
     expect(ersteFrageRegel(null, "Susanne", { jetzt: true })).toBe("");
-    expect(r).toContain("Dann Frage 2");
+    expect(r).toContain("Danach noch genau diese Frage: „Soll vor allem eine Operation abgesichert sein");
     expect(ersteFrageRegel(null, "Susanne Meier")).toContain("„Lieber schriftlich“");
     const agent = { systemPrompt: "", knowledge: "", personality: "" };
     const prompt = buildSystemPrompt(agent, "TKV Katze", {
@@ -71,7 +72,7 @@ describe("Erstanschreiben je Produkt", () => {
       ersteFrage: r,
       hint: "Der Lead hat per Knopf …",
     });
-    expect(prompt).toContain("Erste Frage (stand schon in unserer ersten WhatsApp)");
+    expect(prompt).toContain("Fragen vor dem Termin (Frageplan");
     // „Vor dem Termin: Das Formular reicht“ (TKV) entfällt, wenn die erste Frage schon gestellt ist
     expect(prompt).not.toContain("Das Formular reicht");
     expect(prompt).toContain("Zur letzten Nachricht des Leads (hat Vorrang):\nDer Lead hat per Knopf …");

@@ -59,6 +59,7 @@ export async function erstinfoPdfUrlFor(customerId: string): Promise<string> {
 
 const RECORD_SELECT = {
   token: true,
+  anrede: true,
   statusAt: true,
   bestaetigtAt: true,
   registerNummer: true,
@@ -82,6 +83,8 @@ const RECORD_SELECT = {
 
 export type ErstinfoView = {
   token: string | null;
+  /** Anrede des Vermittlers (Herr/Frau) für den Assistenten, kein Teil der Erstinformation */
+  anrede: string | null;
   status: VermittlerStatus;
   statusAt: Date | null;
   bestaetigtAt: Date | null;
@@ -123,6 +126,7 @@ export async function loadErstinfo(customerId: string): Promise<ErstinfoView> {
   const fehlt = erstinfoFehlt(daten, { upload: !!e?.fileName, bestaetigt: !!e?.bestaetigtAt });
   return {
     token: e?.token ?? null,
+    anrede: e?.anrede ?? null,
     status: daten.status,
     statusAt: e?.statusAt ?? null,
     bestaetigtAt: e?.bestaetigtAt ?? null,
@@ -168,6 +172,8 @@ export type SaveErstinfoInput = {
   /** Hochgeladenes PDF entfernen */
   removeFile?: boolean;
   userId?: string | null;
+  /** Anrede des Vermittlers (Herr/Frau, sonst leer) für den Assistenten (Ole, 17.11.2026) */
+  anrede?: string | null;
 };
 
 const txt = (v: string | null | undefined, max: number) => (v ?? "").replace(/\r\n?/g, "\n").trim().slice(0, max);
@@ -204,6 +210,7 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
     zuwendungen: input.zuwendungen ?? false,
     ihk: txt(input.ihk, 160),
   };
+  const anrede = input.anrede === undefined ? undefined : input.anrede === "Herr" || input.anrede === "Frau" ? input.anrede : null;
   // Ohne eigenes PDF erzeugen wir die Erstinformation aus den Angaben: dann alle Pflichtangaben prüfen
   if (status === "vertreter" && versicherer.length > 1) {
     return { ok: false, error: "Als Ausschließlichkeitsvertreter tragen Sie bitte genau einen Versicherer ein. Für mehrere Versicherer wählen Sie „Mehrfachvertreter“." };
@@ -236,6 +243,7 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
     where: { id },
     data: {
       ...data,
+      ...(anrede !== undefined ? { anrede } : {}),
       registerNummer: reg,
       statusAt: now,
       bestaetigtAt: now,
@@ -347,6 +355,17 @@ export async function erstinfoPdfFuerWhatsApp(customerId: string): Promise<{ lin
   const doc = await erstinfoDokument({ customerId });
   if (!doc) return null;
   return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash };
+}
+
+/**
+ * PDF der Erstinformation im aktuellen Stand, auch wenn die Angaben noch unvollständig sind (vollstaendig = false).
+ * Nur fürs Erstanschreiben, wenn die neueste freigegebene Vorlage das PDF im Kopf verlangt (templates.ts rankOutreach):
+ * derselbe Inhalt wie die öffentliche Seite hinter dem Link der älteren Fassung. null = nicht erzeugbar.
+ */
+export async function erstinfoPdfStand(customerId: string): Promise<{ link: string; filename: string; hash: string; vollstaendig: boolean } | null> {
+  const doc = await erstinfoDokument({ customerId });
+  if (!doc) return null;
+  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash, vollstaendig: doc.vollstaendig };
 }
 
 /** Ist die Erstinformation dieses Kunden vollständig (darf als PDF an Leads gehen)? */

@@ -46,25 +46,27 @@ describe("Bekannte Antworten aus dem Formular", () => {
     expect(ersteFrage("TKV-Katze", "sie", "Ole", testLeadAnswers("TKV-Katze"))).toBe("Soll vor allem eine Operation abgesichert sein, oder auch die normale Tierarztbehandlung?");
     expect(ersteFrage("PKV Wechsel", "du", "Ole", testLeadAnswers("PKV Wechsel"))).toBe("Passt dir ein kurzer Videotermin mit Ole in den nächsten Tagen?");
     expect(ersteFrage("Privatschutz", "sie", "Ole", [{ label: "Versicherungsinteresse", value: "Hausrat" }])).toBe("Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?");
+    // Interesse und Lebenssituation bekannt (Ole, 17.11.2026): die eine nützliche Frage, schon versichert?
+    expect(ersteFrage("Privatschutz", "sie", "Ole", testLeadAnswers("Privatschutz"))).toBe("Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?");
     // ohne Formular wie bisher
     expect(ersteFrage("TKV-Katze", "sie", "Ole")).toBe("Wie alt ist Ihre Katze?");
     const t = erstanschreibenText({ an: "du", name: "Ole", source: "Privatschutz", formular: testLeadAnswers("Privatschutz") });
-    expect(t.split("\n").at(-1)).toBe("*Passt dir ein kurzer Videotermin mit Ole in den nächsten Tagen?*");
+    expect(t.split("\n").at(-1)).toBe("*Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?*");
     expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
   });
 
   it("Assistent: bekannte Frage 2 nicht stellen, direkt Termine", () => {
     const vorlage = "Hallo Herr Müller, danke für Ihre Anfrage zur privaten Krankenversicherung!\n…\n\n*Wie sind Sie aktuell beruflich aufgestellt?*";
     const r = ersteFrageRegel("PKV Wechsel", "Ole", { gesendet: vorlage, an: "sie", formular: testLeadAnswers("PKV Wechsel") });
-    expect(r).toMatch(/beantwortet das Formular schon/);
-    expect(r).not.toMatch(/Dann Frage 2/);
-    // ohne Formular wie bisher
-    expect(ersteFrageRegel("PKV Wechsel", "Ole", { gesendet: vorlage, an: "sie" })).toMatch(/Dann Frage 2/);
+    expect(r).toMatch(/Aus dem Leadformular schon beantwortet \(nicht fragen\): Situation: Angestellt; Gesetzlich oder privat\?: Privat/);
+    expect(r).toMatch(/Weitere Fragen vor dem Termin gibt es nicht/);
+    // ohne Formular: danach noch Frage 2
+    expect(ersteFrageRegel("PKV Wechsel", "Ole", { gesendet: vorlage, an: "sie" })).toMatch(/Danach noch genau diese Frage: „Sind Sie aktuell gesetzlich/);
     // Freitext hat schon Frage 2 gestellt: danach Termine
     const frei = erstanschreibenText({ an: "sie", name: "Ole", source: "TKV-Katze", formular: testLeadAnswers("TKV-Katze") });
-    expect(ersteFrageRegel("TKV-Katze", "Ole", { gesendet: frei, an: "sie", formular: testLeadAnswers("TKV-Katze") })).toMatch(/Operation[\s\S]*biete direkt zwei konkrete Termine/);
-    // Lead schreibt zuerst: erste offene Frage
-    expect(ersteFrageRegel("TKV-Katze", "Ole", { jetzt: true, an: "du", formular: testLeadAnswers("TKV-Katze") })).toMatch(/^Erste Frage: „Soll vor allem eine Operation/);
+    expect(ersteFrageRegel("TKV-Katze", "Ole", { gesendet: frei, an: "sie", formular: testLeadAnswers("TKV-Katze") })).toMatch(/Operation[\s\S]*mach sofort den Terminvorschlag/);
+    // Lead schreibt zuerst: erste offene Frage, fett am Ende
+    expect(ersteFrageRegel("TKV-Katze", "Ole", { jetzt: true, an: "du", formular: testLeadAnswers("TKV-Katze") })).toMatch(/\*Soll vor allem eine Operation/);
   });
 
   it("E-Mail aus dem Formular steht als bekannt im Prompt", () => {

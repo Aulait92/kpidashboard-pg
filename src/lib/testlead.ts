@@ -218,6 +218,7 @@ export function outreachText(status: string | null, delayMin: number | null, act
   if (!status) return delayMin ? `Erstanschreiben folgt nach der Wartezeit (${delayMin} Min.).` : "Erstanschreiben läuft.";
   if (status === "sent" || status === "sent_booked") return "WhatsApp-Erstanschreiben ist raus.";
   if (status === "no_template") return "Keine freigegebene Vorlage: Bitte zuerst selbst an die WhatsApp-Nummer des Kunden schreiben (öffnet das 24-Stunden-Fenster) und erneut schicken.";
+  if (status === "no_pdf") return "Erstinformation als PDF gerade nicht verfügbar: Das Erstanschreiben wird automatisch erneut versucht.";
   if (status === "skipped_optout") return "Diese Nummer hat „STOPP“ geschrieben: kein WhatsApp.";
   if (status.startsWith("failed")) return `WhatsApp nicht zugestellt: ${status.slice(8, 160)}`;
   return `Erstanschreiben: ${status}`;

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { logLeadHistory } from "@/lib/lead-history";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { namePartsFromForm, salutationFromForm, salutationOf, type Salutation } from "@/lib/ansprache";
-import { anredeAusVorname, anredeBewusstOffen } from "@/lib/vorname-anrede";
+import { anredeBewusstOffen } from "@/lib/vorname-anrede";
 
 export type Stammdaten = {
   salutation: Salutation | null;
@@ -65,16 +65,6 @@ export function formWithOverrides(formData: unknown, overrides: unknown): unknow
 
 const str = (v: unknown) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim() : "");
 
-const ANREDE_LABEL = /^(ihre)?anrede$|^salutation$|^geschlecht$|^gender$|^title$/;
-/** Steht im Formular ausdrücklich „Divers“ oder „Keine Angabe“ als Anrede? */
-function formOffen(formData: unknown): boolean {
-  if (!Array.isArray(formData)) return false;
-  return formData.some((x) => {
-    const { label, value } = (x ?? {}) as { label?: unknown; value?: unknown };
-    return typeof label === "string" && ANREDE_LABEL.test(label.toLowerCase().normalize("NFKD").replace(/[^a-z]/g, "")) && anredeBewusstOffen(value);
-  });
-}
-
 /** Antwort aus dem Leadformular (Lead.formData) zu einer Frage, z. B. Postleitzahl aus dem Perspective- oder Meta-Formular. */
 function formAntwort(formData: unknown, re: RegExp): string {
   if (!Array.isArray(formData)) return "";
@@ -95,10 +85,8 @@ export function currentStammdaten(
   const words = (lead.name ?? "").trim().split(/\s+/).filter(Boolean);
   const f = (k: string) => str(Array.isArray(fields?.[k]) ? (fields?.[k] as unknown[])[0] : fields?.[k]);
   const firstName = o.firstName ?? parts.firstName ?? (f("Vorname") || words[0] || "");
-  // Anrede: Korrektur, Formular, Airtable; sonst aus einem eindeutigen Vornamen (Ole, 16.11.2026),
-  // außer sie wurde bewusst offen gelassen (Keine Angabe, Divers)
-  const offen = o.salutation === "keine" || formOffen(lead.formData) || anredeBewusstOffen(f("Anrede"));
-  const salutation = o.salutation === "keine" ? null : (o.salutation ?? salutationFromForm(lead.formData) ?? salutationOf(f("Anrede")) ?? (offen ? null : anredeAusVorname(firstName)));
+  // Anrede: Korrektur, Formular, Airtable. Nie aus dem Vornamen geraten (Ole, 17.11.2026)
+  const salutation = o.salutation === "keine" ? null : (o.salutation ?? salutationFromForm(lead.formData) ?? salutationOf(f("Anrede")));
   return {
     salutation,
     firstName,

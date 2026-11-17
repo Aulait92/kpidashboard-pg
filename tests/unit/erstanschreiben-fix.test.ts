@@ -1,0 +1,310 @@
+// Live-Test Ole, 17.11.2026 (Testkunde „Ole Agentur“, Privatschutz, Sie): Statt der freigegebenen v5 kam die alte v3
+// („Ich bin kein Mensch …“), der Assistent fragte Bekanntes umformuliert ab und die Termin-Strecke war zu lang.
+// Hier: Vorlagenwahl (rankOutreach), Anrede ohne Raten, Frageplan je Produkt, Terminvorschlag, Folgefragen nach der
+// Rechner-Tabelle, Buchungs- und Abschlussnachricht. Rein, ohne Datenbank und ohne echtes LLM.
+import { describe, expect, it } from "vitest";
+import { rankOutreach, rankTemplates, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { anredeName, anredeZeile } from "@/lib/ansprache";
+import { frageplan, ersteFrage, ersteFrageRegel, outreachProdukt, MAX_FRAGEN_VOR_TERMIN } from "@/lib/whatsapp/erstanschreiben";
+import { testLeadAnswers } from "@/lib/testlead";
+import { buildSystemPrompt } from "@/lib/whatsapp/bot";
+import { abschlussText, bereitlegenListe, buchungsText, nachBuchungRegel, terminVorschlagText, vermittlerName, versicherungWort, zeitKurz } from "@/lib/whatsapp/gespraech";
+import { folgefragen, folgefrageText, spartenDesLeads, type RechnerSparte } from "@/lib/preise/rechner-angaben";
+import { buildIcs, type CustomerEvent } from "@/lib/calendar/add-to-calendar";
+
+const tpl = (name: string, purpose: NoticePurpose, header: boolean, body = "x") => ({ name, purpose, body, headerFormat: header ? "DOCUMENT" : null });
+const v = (purpose: NoticePurpose, form: "sie" | "sie_ohne_name" | "du") => templateTextFor(purpose, form);
+
+// Freigegeben bei Meta für „Ole Agentur“ (Sie): Privatschutz v5/v4 und allgemein v5/v4 mit PDF-Kopf, v3 ohne Kopf
+const FREIGEGEBEN = [
+  tpl("pg_outreach_privatschutz_v5_sie", "outreach_privatschutz", true, v("outreach_privatschutz", "sie")),
+  tpl("pg_outreach_privatschutz_v4", "outreach_privatschutz", true, "Hallo {{1}}, danke für deine Anfrage zum Thema {{2}}!"),
+  tpl("pg_outreach_privatschutz_v4_sie", "outreach_privatschutz", true, "Guten Tag {{1}}, vielen Dank für Ihre Anfrage zum Thema {{2}}!"),
+  tpl("pg_outreach_v5_sie", "outreach", true, v("outreach", "sie")),
+  tpl("pg_outreach_v5_sie_ohne_name", "outreach", true, v("outreach", "sie_ohne_name")),
+  tpl("pg_outreach_v4_sie", "outreach", true, "Guten Tag {{1}}, vielen Dank für Ihre Anfrage!"),
+  tpl("pg_outreach_v3_sie", "outreach", false, "Guten Tag {{1}}, vielen Dank für Ihre Anfrage! Hier schreibt der digitale KI-Assistent von Ole Agentur. Ich bin kein Mensch {{2}}"),
+  tpl("pg_outreach_v3_sie_ohne_name", "outreach", false, "Guten Tag, vielen Dank für Ihre Anfrage! Ich bin kein Mensch {{1}}"),
+];
+const TESTLEAD = { fullName: "Ole Kannapinn Testlead" };
+const PURPOSES: NoticePurpose[] = ["outreach_privatschutz", "outreach"];
+
+describe("1. Vorlagenwahl Erstanschreiben (rankOutreach)", () => {
+  it("Ursache: ohne vollständiges PDF schloss die alte Wahl alle Vorlagen mit PDF-Kopf aus, übrig blieb v3", () => {
+    const ps = FREIGEGEBEN.filter((t) => t.purpose === "outreach_privatschutz");
+    expect(rankTemplates(ps, "outreach_privatschutz", "sie", TESTLEAD, { documentHeader: false })).toBeNull();
+    const allg = FREIGEGEBEN.filter((t) => t.purpose === "outreach");
+    expect(rankTemplates(allg, "outreach", "sie", TESTLEAD, { documentHeader: false })?.tpl.name).toBe("pg_outreach_v3_sie");
+  });
+
+  it("jetzt: v5 des Produkts gewinnt; Erstinformation unvollständig → PDF im aktuellen Stand im Kopf, nie v3", () => {
+    const r = rankOutreach(FREIGEGEBEN, PURPOSES, "sie", TESTLEAD, { pdf: "entwurf" });
+    expect(r && "tpl" in r ? [r.tpl.name, r.dokument, r.version] : r).toEqual(["pg_outreach_privatschutz_v5_sie", "entwurf", 5]);
+    const voll = rankOutreach(FREIGEGEBEN, PURPOSES, "sie", TESTLEAD, { pdf: "vollstaendig" });
+    expect(voll && "tpl" in voll ? [voll.tpl.name, voll.dokument] : voll).toEqual(["pg_outreach_privatschutz_v5_sie", "vollstaendig"]);
+  });
+
+  it("gibt es eine v5 ohne PDF-Kopf, gewinnt sie ohne PDF (Erstinformation folgt im offenen Fenster)", () => {
+    const ohneKopf = [...FREIGEGEBEN, tpl("pg_outreach_privatschutz_v5_sie_r2", "outreach_privatschutz", false, v("outreach_privatschutz", "sie"))];
+    const r = rankOutreach(ohneKopf, PURPOSES, "sie", TESTLEAD, { pdf: "entwurf" });
+    expect(r && "tpl" in r ? [r.tpl.name, r.dokument] : r).toEqual(["pg_outreach_privatschutz_v5_sie_r2", null]);
+    // Produkt nur mit Kopf, allgemeine v5 ohne Kopf: v5 ohne PDF vor v3
+    const allgOhne = [...FREIGEGEBEN, tpl("pg_outreach_v5_sie_r2", "outreach", false, v("outreach", "sie"))];
+    const r2 = rankOutreach(allgOhne, PURPOSES, "sie", TESTLEAD, { pdf: "keins" });
+    expect(r2 && "tpl" in r2 ? r2.tpl.name : r2).toBe("pg_outreach_v5_sie_r2");
+  });
+
+  it("kein PDF erzeugbar und v5 nur mit Kopf: warten statt v3; nur v3 freigegeben: v3", () => {
+    expect(rankOutreach(FREIGEGEBEN, PURPOSES, "sie", TESTLEAD, { pdf: "keins" })).toEqual({ wartenAufPdf: true });
+    const nurV3 = FREIGEGEBEN.filter((t) => t.name.includes("_v3_"));
+    const r = rankOutreach(nurV3, PURPOSES, "sie", TESTLEAD, { pdf: "keins" });
+    expect(r && "tpl" in r ? r.tpl.name : r).toBe("pg_outreach_v3_sie");
+    expect(rankOutreach([], PURPOSES, "sie", TESTLEAD, { pdf: "vollstaendig" })).toBeNull();
+  });
+
+  it("Anrede-Fassung: mit Nachnamen „Hallo Ole Kannapinn,“ (voller Name), ohne Nachnamen die Fassung ohne Namen", () => {
+    const r = rankOutreach(FREIGEGEBEN, PURPOSES, "sie", { fullName: "Ole Kannapinn" }, { pdf: "vollstaendig" });
+    if (!r || !("tpl" in r)) throw new Error("keine Vorlage");
+    expect(r.params(["Privatschutz"])).toEqual(["Ole Kannapinn", "Privatschutz"]);
+    const nurVorname = rankOutreach(FREIGEGEBEN, ["outreach"], "sie", { fullName: "Ole" }, { pdf: "vollstaendig" });
+    expect(nurVorname && "tpl" in nurVorname ? nurVorname.tpl.name : nurVorname).toBe("pg_outreach_v5_sie_ohne_name");
+  });
+});
+
+describe("2. Anrede: Herr/Frau nie aus dem Vornamen", () => {
+  it("Sie ohne bekannte Anrede: voller Name; mit Anrede aus Formular: Herr Nachname; Du: Vorname", () => {
+    expect(anredeName("sie", { fullName: "Ole Kannapinn" })).toBe("Ole Kannapinn");
+    expect(anredeName("sie", TESTLEAD)).toBe("Ole Kannapinn Testlead");
+    expect(anredeName("sie", { fullName: "Peter Meier" })).toBe("Peter Meier");
+    expect(anredeName("sie", { fullName: "Ole Kannapinn", salutation: "Herr" })).toBe("Herr Kannapinn");
+    expect(anredeName("du", { fullName: "Ole Kannapinn" })).toBe("Ole");
+    expect(anredeZeile("sie", { fullName: "Maria Schneider" })).toBe("Guten Tag Maria Schneider,");
+  });
+
+  it("Vermittler: Sie „Herr Kannapinn“ (Dativ „Herrn“), ohne Anrede Vor- und Nachname, Du Vorname, Agentur nur als Rückfall", () => {
+    expect(vermittlerName("sie", { name: "Ole Kannapinn", anrede: "Herr", fallback: "Ole Agentur" })).toEqual({ nom: "Herr Kannapinn", dat: "Herrn Kannapinn" });
+    expect(vermittlerName("sie", { name: "Julia Brand", anrede: "Frau", fallback: "X" })).toEqual({ nom: "Frau Brand", dat: "Frau Brand" });
+    expect(vermittlerName("sie", { name: "Ole Kannapinn", anrede: null, fallback: "X" }).nom).toBe("Ole Kannapinn");
+    expect(vermittlerName("du", { name: "Ole Kannapinn", anrede: "Herr", fallback: "X" }).nom).toBe("Ole");
+    expect(vermittlerName("sie", { name: "Agentur Meier", anrede: null, fallback: "Agentur Meier" }).nom).toBe("Agentur Meier");
+  });
+});
+
+// Alle Produkte aus dem Katalog bzw. testLeadAnswers (Testlead mit vollständigen Formularangaben)
+const PRODUKTE = [
+  "Privatschutz",
+  "Hausratversicherung",
+  "Rechtsschutzversicherung",
+  "Wohngebäudeversicherung",
+  "Unfallversicherung",
+  "TKV-Katze",
+  "Katzenkrankenversicherung",
+  "Hundekrankenversicherung",
+  "Pferdeversicherung",
+  "Zahnzusatz",
+  "PKV-Tarifoptimierung",
+  "PKV Wechsel",
+  "Neugeschäft",
+  "Sterbegeld",
+];
+
+describe("3./4. Frageplan je Produkt (Testlead mit vollständigen Formularangaben)", () => {
+  for (const produkt of PRODUKTE) {
+    it(`${produkt}: keine Frage, deren Antwort im Formular steht; Terminvorschlag spätestens in der 3. Nachricht`, () => {
+      const formular = testLeadAnswers(produkt);
+      const p = outreachProdukt(produkt);
+      const purpose = p?.purpose ?? "outreach";
+      // a) Vorlage v5 (fester Text) ist das Erstanschreiben
+      const gesendet = templateTextFor(purpose, "sie");
+      const plan = frageplan(produkt, formular, { gesendet });
+      for (const f of plan.offen) expect(f.bekannt, `${produkt}: ${f.sie}`).toBeNull();
+      const fragenGesamt = (plan.gestellt ? 1 : 0) + plan.offen.length;
+      expect(fragenGesamt).toBeLessThanOrEqual(MAX_FRAGEN_VOR_TERMIN);
+      // Nachricht 1 = Erstanschreiben, je offene Frage eine Nachricht, dann der Terminvorschlag
+      expect(1 + plan.offen.length + 1).toBeLessThanOrEqual(3);
+      // b) Freitext im offenen Fenster: fragt nur Offenes
+      const frei = frageplan(produkt, formular);
+      for (const f of frei.offen) expect(f.bekannt).toBeNull();
+      expect(frei.offen.length).toBeLessThanOrEqual(MAX_FRAGEN_VOR_TERMIN);
+      const erste = ersteFrage(produkt, "sie", "Ole", formular);
+      for (const f of frei.fragen.filter((x) => x.bekannt)) expect(erste).not.toBe(f.sie);
+    });
+  }
+
+  it("Privatschutz live: Vorlagenfrage „Worum geht es Ihnen vor allem?“ gilt als beantwortet, danach nur „schon versichert?“", () => {
+    const formular = testLeadAnswers("Privatschutz");
+    const gesendet = `Hallo Ole Kannapinn Testlead, ${templateTextFor("outreach_privatschutz", "sie").replace(/^Hallo \{\{1\}\}, /, "")}`;
+    const plan = frageplan("Privatschutz", formular, { gesendet });
+    expect(plan.gestellt?.key).toBe("frage1");
+    expect(plan.gestellt?.bekannt).toBe("Versicherungsinteresse: Haftpflicht, Hausrat");
+    expect(plan.offen.map((f) => f.sie)).toEqual(["Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?"]);
+    const regel = ersteFrageRegel("Privatschutz", "Herr Kannapinn", { gesendet, an: "sie", formular });
+    expect(regel).toMatch(/gilt als beantwortet/);
+    expect(regel).toMatch(/verfolge die Frage nicht weiter/);
+    expect(regel).not.toMatch(/Wer soll versichert werden/);
+    // ältere Fassung (v3) ohne Frage: nicht so tun, als sei Frage 1 gestellt worden
+    const v3 = frageplan("Privatschutz", formular, { gesendet: "Guten Tag Herr Testlead, … Haben Sie kurz Zeit für zwei Fragen?" });
+    expect(v3.gestellt).toBeNull();
+    expect(v3.offen.map((f) => f.key)).toEqual(["vorhanden"]);
+  });
+
+  it("Prompt: Formularangaben gelten als beantwortet, keine Umformulierungs-Rückfragen, keine Checkliste mit Hund/Pferd", () => {
+    const s = buildSystemPrompt({ systemPrompt: "", knowledge: "", personality: "" }, "Privatschutz", {
+      qualified: false,
+      summary: null,
+      contact: { name: "Ole Kannapinn Testlead", phone: "4915100000000", email: "ole@example.com" },
+      upcoming: null,
+      formAnswers: testLeadAnswers("Privatschutz"),
+      advisorName: "Ole Kannapinn",
+      person: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" },
+      aiDisclosed: true,
+      ansprache: "sie",
+    });
+    expect(s).toMatch(/gelten als beantwortet, auch Mehrfachauswahl/);
+    expect(s).toMatch(/nie „Worum geht es Ihnen dabei vor allem\?“/);
+    expect(s).not.toMatch(/Pflichtangaben für das Angebot/);
+    expect(s).not.toMatch(/Hund oder Pferd im Haushalt/);
+    expect(s).toContain("Herr Kannapinn zeigt Ihnen in einem kurzen Videotermin, welcher Schutz zu Ihnen passt.");
+    expect(s).toMatch(/Die E-Mail-Adresse ist bekannt, frag nicht danach/);
+    expect(s).toMatch(/Nur Videotermine/);
+    expect(s).not.toMatch(/Telefon geht natürlich auch/);
+    expect(s).not.toMatch(/bereitet das Gespräch mit seinen Angaben vor/);
+  });
+});
+
+describe("Terminvorschlag (Nutzen, Vermittler als Person, zwei Videozeiten, kein Link, kein Telefon)", () => {
+  const personen = {
+    mitAnrede: { name: "Ole Kannapinn", anrede: "Herr" as const },
+    ohneAnrede: { name: "Ole Kannapinn", anrede: null },
+  };
+  for (const produkt of ["Privatschutz", "PKV-Tarifoptimierung", "TKV-Katze", "Hundekrankenversicherung", "Zahnzusatz", "Sterbegeld"]) {
+    for (const an of ["sie", "du"] as const) {
+      for (const [k, p] of Object.entries(personen)) {
+        it(`${produkt}, ${an}, Vermittler ${k}`, () => {
+          const person = vermittlerName(an, { ...p, fallback: "Ole Agentur" });
+          const t = terminVorschlagText({ an, source: produkt, formular: testLeadAnswers(produkt), person, zeiten: ["heute um 16 Uhr", "morgen um 10 Uhr"] });
+          expect(t).toMatchSnapshot();
+          expect(t).not.toMatch(/telefon/i);
+          expect(t).not.toMatch(/https?:|\/book\//);
+          expect(t).not.toMatch(/[–—]/);
+          expect(t).not.toMatch(/vorbereit/i);
+          expect((t.match(/\?/g) ?? []).length).toBe(1);
+        });
+      }
+    }
+  }
+
+  it("Beispiel von Ole wörtlich", () => {
+    const t = terminVorschlagText({
+      an: "sie",
+      source: "Privatschutz",
+      formular: testLeadAnswers("Privatschutz"),
+      person: vermittlerName("sie", { name: "Ole Kannapinn", anrede: "Herr", fallback: "X" }),
+      zeiten: ["heute um 16 Uhr", "morgen um 10 Uhr"],
+    });
+    expect(t).toBe(
+      "Danke! Gerade mit Kindern ist eine gute Haftpflicht- und Hausratversicherung wichtig, damit Ihre Familie im Ernstfall gut abgesichert ist. Herr Kannapinn zeigt Ihnen in einem kurzen Videotermin, welcher Schutz zu Ihnen passt. Passt Ihnen heute um 16 Uhr oder morgen um 10 Uhr?",
+    );
+    expect(versicherungWort("Haftpflicht, Hausrat, Unfall")).toBe("Haftpflicht-, Hausrat- und Unfallversicherung");
+  });
+
+  it("Zeiten kurz: heute, morgen, sonst Wochentag mit Datum", () => {
+    const now = new Date("2026-11-17T10:00:00Z");
+    expect(zeitKurz(new Date("2026-11-17T15:00:00Z"), now)).toBe("heute um 16 Uhr");
+    expect(zeitKurz(new Date("2026-11-18T09:30:00Z"), now)).toBe("morgen um 10:30 Uhr");
+    expect(zeitKurz(new Date("2026-11-19T09:00:00Z"), now)).toBe("Donnerstag, 19.11. um 10 Uhr");
+  });
+});
+
+describe("Folgefragen nach der Buchung (Rechner-Tabelle docs/preise-pilot.md)", () => {
+  const src = (formular: { label: string; value: string }[], angaben: Record<string, string> = {}) => ({ formular, angaben });
+  const keys = (sparten: RechnerSparte[], s: ReturnType<typeof src>) => folgefragen(sparten, s).map((f) => f.key);
+
+  it("Pflichtfall Ole: Privatschutz, Familie, 80331, Haftpflicht + Hausrat → Geburtsdatum, Wohnfläche, öffentlicher Dienst", () => {
+    const formular = testLeadAnswers("Privatschutz");
+    const s = src(formular);
+    const sparten = spartenDesLeads("Privatschutz", s);
+    expect(sparten).toEqual(["haftpflicht", "hausrat"]);
+    const fr = folgefragen(sparten, s);
+    expect(fr.map((f) => f.key)).toEqual(["geburt", "wohnflaeche", "oeffentlicherDienst"]);
+    expect(fr.map((f) => f.sie)).toEqual(["Wie lautet Ihr Geburtsdatum?", "Wie groß ist Ihre Wohnung ungefähr?", "Sind Sie im öffentlichen Dienst tätig? (ja oder nein)"]);
+    expect(folgefrageText(fr[0], "sie", "Herr Kannapinn", true)).toBe("Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Wie lautet Ihr Geburtsdatum?");
+    // Beantwortet im Chat: fällt weg
+    expect(keys(sparten, src(formular, { geburt: "14.05.1985", wohnflaeche: "90 m²" }))).toEqual(["oeffentlicherDienst"]);
+    expect(keys(sparten, src(formular, { geburt: "14.05.1985", wohnflaeche: "90 m²", beruf: "Angestellt, kein öffentlicher Dienst" }))).toEqual([]);
+  });
+
+  it("je Sparte nur berechnungsrelevante, unbekannte Angaben; was der Vermittler festlegt, nie", () => {
+    const ort = [{ label: "Postleitzahl", value: "80331" }, { label: "Lebenssituation", value: "Single" }];
+    expect(keys(["haftpflicht"], src(ort))).toEqual(["geburt", "oeffentlicherDienst"]);
+    expect(keys(["hausrat"], src(ort))).toEqual(["geburt", "wohnflaeche"]);
+    expect(keys(["rechtsschutz"], src(ort))).toEqual(["geburt", "beruf"]); // Lebensbereiche legt der Vermittler fest
+    expect(keys(["unfall"], src(ort))).toEqual(["geburt", "versichern", "beruf"]); // Summen legt der Vermittler fest
+    expect(keys(["wohngebaeude"], src(ort))).toEqual(["adresseGebaeude", "gebaeudeFlaeche", "baujahr", "wohneinheiten", "keller", "bauweise"]);
+    expect(keys(["wohngebaeude"], src(ort, { plz: "Lindenweg 3, 80331 München", gebaeude: "Bj. 1998, 140 m², Einfamilienhaus, Keller, massiv" }))).toEqual([]);
+    expect(keys(["tierhalter-hund"], src(ort))).toEqual(["hunderasse", "hunde"]);
+    expect(keys(["katze-kranken"], src(testLeadAnswers("TKV-Katze")))).toEqual([]);
+    expect(keys(["hund-kranken"], src(testLeadAnswers("Hundekrankenversicherung")))).toEqual([]);
+    // Ohne Tierhalterhaftpflicht im Interesse kein Hund und kein Pferd
+    expect(spartenDesLeads("Privatschutz", src([{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }]))).not.toContain("tierhalter-hund");
+    expect(spartenDesLeads("Privatschutz", src([{ label: "Versicherungsinteresse", value: "Tierkrankenversicherung / Tierhalterhaftpflicht" }], { tier: "Hund, Tierhalterhaftpflicht" }))).toEqual(["tierhalter-hund"]);
+    // PKV und Zahn: keine Rechner-Tabelle, keine Folgefragen; nie Gesundheitsfragen
+    expect(spartenDesLeads("PKV-Tarifoptimierung", src(testLeadAnswers("PKV-Tarifoptimierung")))).toEqual([]);
+    expect(spartenDesLeads("Zahnzusatz", src(testLeadAnswers("Zahnzusatz")))).toEqual([]);
+    const alle = folgefragen(["haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude", "unfall", "tierhalter-hund", "tierhalter-pferd", "katze-kranken"], src([]));
+    for (const f of alle) expect(f.sie).not.toMatch(/krank|gesund|vorerkrank|behandl|selbstbeteilig|summe|tarif/i);
+  });
+});
+
+describe("Buchungsnachricht und Abschluss (eine Bestätigungsfrage ganz am Schluss)", () => {
+  const person = vermittlerName("sie", { name: "Ole Kannapinn", anrede: "Herr", fallback: "X" });
+  const start = new Date("2026-11-18T09:00:00Z");
+
+  it("mit offenen Angebotsfragen: Buchungsnachricht ohne Frage", () => {
+    const t = buchungsText({ an: "sie", start, mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person });
+    expect(t).toBe("Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\nHerr Kannapinn reserviert diese Zeit nur für Sie.");
+    expect(t).not.toMatch(/\?/);
+  });
+
+  it("Abschluss: Angaben notiert, Bereitlegen, E-Mail, Kalenderfrage zuletzt; ohne offene Fragen direkt an der Buchungsnachricht", () => {
+    const sparten: RechnerSparte[] = ["haftpflicht", "hausrat"];
+    const ab = abschlussText({ an: "sie", person, bereitlegen: bereitlegenListe("Privatschutz", sparten, "sie"), email: "ole@example.com", nachFragen: true });
+    expect(ab).toMatch(/^Danke, damit sind alle wichtigen Angaben für Herrn Kannapinn notiert\./);
+    expect(ab).toContain("• Ihre IBAN, falls Sie direkt abschließen möchten");
+    expect(ab).toContain("• bei Hausrat: die Wohnfläche");
+    expect(ab).not.toContain("Chipnummer");
+    expect(ab.endsWith("Die Einladung mit Kalendereintrag habe ich Ihnen an ole@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*")).toBe(true);
+    expect((ab.match(/\?/g) ?? []).length).toBe(1);
+    const direkt = buchungsText({ an: "sie", start, mode: "video", meetUrl: "https://meet.google.com/x", person, abschluss: abschlussText({ an: "sie", person, bereitlegen: [], email: "ole@example.com", nachFragen: false }) });
+    expect(direkt.endsWith("*Haben Sie sich den Termin schon im Kalender eingetragen?*")).toBe(true);
+    expect(direkt).not.toMatch(/Stimmt die Adresse/);
+  });
+
+  it("Prompt nach der Buchung: Fragen in Reihenfolge, Abschluss, Zusage per termin_zugesagt, E-Mail nur bestätigen", () => {
+    const r = nachBuchungRegel({ an: "sie", person, fragen: [{ text: "Wie lautet Ihr Geburtsdatum?", feld: "geburt" }], abschluss: "ABSCHLUSS", abschlussGesendet: false, zugesagt: false });
+    expect(r).toContain("1. „Wie lautet Ihr Geburtsdatum?“ (angaben.geburt)");
+    expect(r).toContain("„ABSCHLUSS“");
+    expect(r).toMatch(/termin_zugesagt/);
+    expect(r).toMatch(/update_email/);
+  });
+
+  it("Bestätigungs-Mail: Kalenderdatei mit Meet-Link", () => {
+    const ev = {
+      uid: "a@termin",
+      start,
+      end: new Date(start.getTime() + 30 * 60000),
+      summary: "Videotermin mit Ole Kannapinn",
+      description: "Link: https://meet.google.com/abc-defg-hij",
+      location: "https://meet.google.com/abc-defg-hij",
+      manageUrl: "https://app.example/book/manage/t",
+      token: "t",
+      advisorName: "Ole Kannapinn",
+      mode: "video",
+      videoUrl: "https://meet.google.com/abc-defg-hij",
+    } as CustomerEvent;
+    const ics = buildIcs(ev);
+    expect(ics).toContain("BEGIN:VEVENT");
+    expect(ics).toContain("LOCATION:https://meet.google.com/abc-defg-hij");
+    expect(ics).not.toContain("deinen");
+  });
+});

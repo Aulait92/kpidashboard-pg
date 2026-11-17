@@ -5,11 +5,12 @@
 // Anrede-Zeile (Ole, 14.11.2026: „Hallo Julia“ mit Sie wirkt wie Du):
 //   Du  → „Hallo Julia,“ (ohne Namen „Hallo,“)
 //   Sie → „Guten Tag Frau Schneider,“ bzw. „Guten Tag Herr Schneider,“, wenn die Anrede bekannt ist,
-//         sonst „Guten Tag Julia Schneider,“; ohne Nachnamen „Guten Tag,“.
-//   Die Anrede wird nie aus dem Vornamen geraten, nur aus Angaben (Formularfeld Anrede/Geschlecht,
-//   Bestandskunde, Vertriebs-CRM oder „Frau …“/„Herr …“ im Namen selbst).
+//         sonst mit vollem Namen „Guten Tag Julia Schneider,“; ohne Nachnamen „Guten Tag,“.
+//   Die Anrede wird nie aus dem Vornamen geraten (Ole, 17.11.2026; ersetzt die Regel vom 16.11.2026), nur aus
+//   Angaben: Formularfeld Anrede/Geschlecht, Korrektur im Kontakt, Bestandskunde, Vertriebs-CRM oder
+//   „Frau …“/„Herr …“ im Namen selbst.
 
-import { anredeAusVorname, anredeBewusstOffen } from "@/lib/vorname-anrede";
+import { anredeBewusstOffen } from "@/lib/vorname-anrede";
 
 export type Ansprache = "sie" | "du";
 
@@ -80,7 +81,7 @@ export function salutationFromForm(formData: unknown): Salutation | null {
 
 /**
  * Anrede-Rohwert aus Lead.formData für AnredeKontakt: „Herr“/„Frau“, „keine“ bei ausdrücklich offener Anrede
- * (Divers, keine Angabe, vom Vermittler so gewählt), sonst null (dann Anrede aus dem Vornamen, falls eindeutig).
+ * (Divers, keine Angabe, vom Vermittler so gewählt), sonst null (Anrede unbekannt).
  */
 export function anredeRohAusForm(formData: unknown): string | null {
   if (!Array.isArray(formData)) return null;
@@ -140,22 +141,28 @@ export function kontaktParts(k: AnredeKontakt | null | undefined): { first: stri
     }
   }
   if (first && last && first === last) first = "";
-  // Eindeutiger Vorname → Herr/Frau (Ole, 16.11.2026), außer die Anrede wurde bewusst offen gelassen
-  if (!salutation && !anredeBewusstOffen(k?.salutation)) salutation = anredeAusVorname(first);
+  // Herr/Frau nie aus dem Vornamen raten (Ole, 17.11.2026)
   return { first, last, salutation };
 }
 
+/** Voller Name ohne „Herr“/„Frau“ davor („Ole Kannapinn“, auch mit zweitem Vornamen); leer, wenn unbekannt. */
+function vollerName(k: AnredeKontakt | null | undefined, p: { first: string; last: string }): string {
+  if (clean(k?.firstName) || clean(k?.lastName)) return [p.first, p.last].filter(Boolean).join(" ");
+  const full = clean(k?.fullName).replace(/^(herr|herrn|frau|hr\.?|fr\.?)\s+/i, "");
+  return full.split(" ").length >= 2 ? full : [p.first, p.last].filter(Boolean).join(" ");
+}
+
 /**
- * Name, mit dem angesprochen wird (ohne Grußwort): Du → Vorname; Sie → „Frau Schneider“,
- * ohne bekannte Anrede „Julia Schneider“. null, wenn so nicht angesprochen werden kann
- * (Du ohne Vornamen, Sie ohne Nachnamen).
+ * Name, mit dem angesprochen wird (ohne Grußwort): Du → Vorname; Sie → „Frau Schneider“, wenn die Anrede bekannt
+ * ist, sonst der volle Name „Julia Schneider“. null, wenn so nicht angesprochen werden kann (Du ohne Vornamen, Sie
+ * ohne Nachnamen).
  */
 export function anredeName(an: Ansprache, k: AnredeKontakt | null | undefined): string | null {
   const p = kontaktParts(k);
   if (an === "du") return p.first || null;
   if (!p.last) return null;
   if (p.salutation) return `${p.salutation} ${p.last}`;
-  return p.first ? `${p.first} ${p.last}` : null;
+  return p.first ? vollerName(k, p) : null;
 }
 
 /** Grußwort der Anrede-Zeile. */

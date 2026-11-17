@@ -186,7 +186,7 @@ export function fuelleMitSignatur(text: string, w: Werte): string {
 
 /**
  * Werte für einen Lead (Vorname = erstes Wort des Namens). {anrede} nach der Regel in lib/ansprache.ts;
- * Herr/Frau aus dem Formularfeld Anrede, sonst aus einem eindeutigen Vornamen (lib/vorname-anrede.ts).
+ * Herr/Frau nur aus dem Formularfeld Anrede bzw. der Korrektur im Kontakt, nie aus dem Vornamen (Ole, 17.11.2026).
  */
 export function werteFuer(
   lead: { name: string | null; source: string | null } & Pick<AnredeKontakt, "firstName" | "lastName" | "salutation">,

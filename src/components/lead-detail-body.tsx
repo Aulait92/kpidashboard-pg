@@ -262,7 +262,7 @@ export async function LeadDetailBody({
     prisma.appointment.findFirst({
       where: { leadId: lead.id, status: "booked", startsAt: { gt: twoHoursAgo() } },
       orderBy: { startsAt: "asc" },
-      select: { id: true, startsAt: true, mode: true, meetUrl: true },
+      select: { id: true, startsAt: true, mode: true, meetUrl: true, confirmedAt: true },
     }),
     prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, bookingSlug: true } }),
     // Nächster Schritt (lib/lead-next-step.ts): Hinweis im Kontakt und Dialog nach jeder Aktion
@@ -523,7 +523,15 @@ export async function LeadDetailBody({
               {/* Zeit nie abschneiden: im schmalen Fenster rutschen die Knöpfe in die nächste Zeile */}
               <div className="min-w-fit flex-1">
                 <div className="whitespace-nowrap font-semibold">{apptFmt(nextAppt.startsAt)} Uhr</div>
-                <div className="text-xs text-[color:var(--muted)]">{terminArtLabel(nextAppt.mode)}</div>
+                <div className="text-xs text-[color:var(--muted)]">
+                  {terminArtLabel(nextAppt.mode)}
+                  {/* Zusage des Leads (Kalenderfrage im Chat bzw. „Ja, passt“), Ole 17.11.2026 */}
+                  {nextAppt.confirmedAt ? (
+                    <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700" data-termin-zugesagt>
+                      zugesagt
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap [&>*]:px-2 sm:[&>*]:px-3">
               <ButtonLink href={`/buyer/termine/${nextAppt.id}/vorbereitung?von=kontakt`} variant="secondary" data-termin-vorbereiten>

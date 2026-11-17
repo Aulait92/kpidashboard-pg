@@ -1108,6 +1108,9 @@ model AgentConfig {
   // einem Lead aus der Pipeline gehören (lib/whatsapp/nur-leads.ts). Kontakte aus der WhatsApp-Business-App
   // (Coexistence, WhatsAppAppContact) gelten nie als neu.
   newContactsBot           Boolean   @default(false)
+  // Terminart (Ole, 17.11.2026): Der Assistent bietet nur Videotermine an, Telefon nur, wenn der Lead Video ablehnt.
+  // Standard an; der Vermittler schaltet es unter Mein Kalender aus.
+  videoOnly                Boolean   @default(true)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl             String?
@@ -4017,6 +4020,9 @@ model Erstinformation {
   // Pflichtangaben nach § 15 Abs. 1 VersVermV (Ole, 15.11.2026). null = Vorschlag aus Impressum/Angebot
   // (lib/erstinformation-shared.ts erstinfoDaten), gespeichert wird beim Bestätigen in der Einrichtung.
   name           String?
+  // Anrede des Vermittlers (Herr | Frau), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
+  // null = nicht angegeben, dann Vor- und Nachname. Kein Pflichtfeld der Erstinformation.
+  anrede         String?
   firma          String?
   anschrift      String?
   telefon        String?

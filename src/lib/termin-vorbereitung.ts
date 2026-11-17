@@ -24,6 +24,8 @@ export type VorbereitungDaten = {
   /** Angaben des Assistenten (Conversation.qualificationData). */
   angaben: unknown;
   vorbereitetAm: Date | null;
+  /** Lead hat zugesagt (Kalenderfrage im Chat bzw. „Ja, passt“), Ole 17.11.2026 */
+  zugesagtAm?: Date | null;
 };
 
 type Sparte = "haftpflicht" | "hausrat" | "rechtsschutz" | "wohngebaeude" | "tier" | "unfall";
