@@ -1,10 +1,21 @@
-# Vertriebsunterlagen (Stand 15.11.2026, spätabends: Commit c60ca89)
+# Vertriebsunterlagen (Stand 17.11.2026: Commit bc0fecc, Folie 18 „Komplettcheck“)
 
 Aktuelle Präsentationen für Admin → Marketing → Unterlagen (je Zielgruppe PPTX und PDF).
 
 Grundlage: Oles neues Design (Logo, Seitenzahlen). Bestehende Folien unverändert, neu: Terminvorbereitung,
-Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 22 Folien, Makler 23. Die Folien sind Bilder (Text nicht
+Beratungspräsentation (mit Tarif- und Bausteinwechsel), Vorbereitung als Übersicht, „Auch an den Alltag gedacht“ entfernt, Zusatzmodul-Folien entfernt (Stand 9e7915b). Vertreter 23 Folien, Makler 24. Die Folien sind Bilder (Text nicht
 durchsuchbar). Paket-Folie: „Jedes weitere Produkt: 350 € monatlich, ohne Setup“ (hängt an der Preisänderung, die Ole noch bestätigt).
+
+Fassung bc0fecc (17.11.2026, Branch `claude/loving-mendel-j965x3`, nur diese vier Dateien übernommen):
+- Neue Folie 18 „Viele wollen den Komplettcheck. Ein Termin, mehrere Verträge.“ (Cross-Selling im Termin, Rubrik
+  „Ihre Software“), direkt nach „Beraten mit echten Preisen“. Alle Folien danach rücken eine Nummer weiter:
+  „Sie wissen jederzeit …“ 19, „Rechnet sich das?“ 20, Makler „Mit Tarifvergleich“ 21, Paket Vertreter 21 / Makler 22,
+  „Und wenn es schlecht läuft?“ Vertreter 22 / Makler 23, „Ihr Start in 3 Schritten“ Vertreter 23 / Makler 24.
+- PDF: Vertreter 30 Seiten, Makler 31 (Folie 13, der Assistent, steht im PDF als 8 Einzelbilder). Ohne Bonusfolie,
+  die kommt beim Upload dazu (Abschnitt „Ihr Abschlussbonus“ unten): dann Vertreter 24 Folien / PDF 31 Seiten,
+  Makler 25 Folien / PDF 32 Seiten.
+- Folienbilder der Web-Präsentation neu erzeugt (alle, weil die Seitenzahl „n / 23“ bzw. „n / 24“ auf jeder Folie steht;
+  neu: vertreter/23.webp, makler/24.webp). Folienliste in `src/lib/vertrieb/verkaufspraesentation.ts` um Folie 18 ergänzt.
 
 Fassung c60ca89 (Branch `claude/loving-mendel-j965x3`, nur diese vier Dateien übernommen):
 - Folie 17: aktueller Screenshot aus der Live-Demo und Karte „Live ausprobieren“ mit QR-Code und Link auf
@@ -19,10 +30,10 @@ In Produktion erst nach Oles OK hochladen.
 
 | Datei | Zielgruppe | Format | Hinweis |
 |---|---|---|---|
-| `Vertreter-Praesentation.pptx` | vertreter | pptx | neues Design, 22 Folien |
-| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung, neues Design |
-| `Makler-Praesentation.pptx` | makler | pptx | neues Design, 23 Folien |
-| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, neues Design |
+| `Vertreter-Praesentation.pptx` | vertreter | pptx | neues Design, 23 Folien (ohne Bonusfolie) |
+| `Vertreter-Praesentation.pdf` | vertreter | pdf | Versandfassung, 30 Seiten (ohne Bonusfolie) |
+| `Makler-Praesentation.pptx` | makler | pptx | neues Design, 24 Folien (ohne Bonusfolie) |
+| `Makler-Praesentation.pdf` | makler | pdf | Versandfassung, 31 Seiten (ohne Bonusfolie) |
 
 Hochladen ohne Admin-Login über den geschützten Upload (docs/sicherheit-cron.md):
 
@@ -44,7 +55,8 @@ Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am
 - **Admin → Vertrieb → Kontakt → „Präsentation“**: Fassung nach Angebot (Vertreter/Makler) bzw. Kontakt („Makler“
   laut Anreicherung), umschaltbar. „Rechnet sich das?“ und „Ihr Paket“ sind HTML-Folien mit Namen und Preisen aus dem
   aktuellen Angebot des Kontakts, ohne Angebot mit Listenpreisen. Folie 17 zeigt rechts die Live-Demo
-  (`/demo/beratung`, zum Anklicken), Folie 13 das Video des Assistenten.
+  (`/demo/beratung`, zum Anklicken), Folie 13 das Video des Assistenten, Folie 18 den Komplettcheck (Bild).
+  Mit Bonusfolie: Vertreter 24, Makler 25 Folien.
 - **Link für den Interessenten** (`/praesentation/<token>`, nur App-Adresse): im Kontakt oder als Häkchen beim Versand des
   Angebots; 14 Tage gültig, verlängerbar, beendbar. Aufrufe stehen im Kontakt („Präsentation geöffnet am …“), eigene
   Aufrufe als Admin zählen nicht.
@@ -65,7 +77,9 @@ npx tsx scripts/bonus-folie-unterlagen.ts /tmp/bonus
 python3 scripts/bonus-folie-einfuegen.py /tmp/bonus /tmp/unterlagen-neu
 ```
 
-Ergebnis: Vertreter 23 Folien (PDF 30 Seiten), Makler 24 Folien (PDF 31 Seiten). Das Einfügen ist wiederholbar
+Ergebnis mit der Fassung bc0fecc (Komplettcheck, 17.11.2026, lokal geprüft): Vertreter 24 Folien (PDF 31 Seiten),
+Makler 25 Folien (PDF 32 Seiten); vorher (22/23 Folien) 23 und 24. Ohne Playwright-Chromium mit
+`E2E_CHROMIUM=/usr/bin/google-chrome`, Python mit python-pptx/pypdf/Pillow (`/usr/bin/python3`). Das Einfügen ist wiederholbar
 (erkennt eine schon vorhandene Bonusfolie). `scripts/vertrieb-folien.mjs` überspringt die Folie, weil die
 Web-Präsentation sie selbst mit der Frist aus dem Angebot einfügt. Die Dateien liegen bewusst nicht im Repo
 (je ca. 15 MB); nach Oles OK mit dem Upload oben (Ordner `/tmp/unterlagen-neu` statt `docs/unterlagen`) hochladen.

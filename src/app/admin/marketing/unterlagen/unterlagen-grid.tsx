@@ -6,6 +6,7 @@ import { Copy, Download, ExternalLink, FileText, MonitorPlay, Presentation, Tras
 import { Button, ButtonLink, Card } from "@/components/ui";
 import { FileDrop } from "@/components/ui/file-drop";
 import { formatBytes, MB } from "@/lib/file-upload";
+import { folienListe } from "@/lib/vertrieb/verkaufspraesentation";
 
 type Audience = "vertreter" | "makler";
 type Format = "pdf" | "pptx";
@@ -83,7 +84,7 @@ function WebPraesentation({ audience, basis }: { audience: Audience; basis: stri
         <MonitorPlay className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--muted)]" />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium">Web-Präsentation zum Durchklicken</div>
-          <div className="text-sm text-[color:var(--muted)]">{audience === "makler" ? "23" : "22"} Folien mit Live-Demo, Listenpreise. Mit Angebotspreisen über den Kontakt.</div>
+          <div className="text-sm text-[color:var(--muted)]">{folienListe(audience).length} Folien mit Live-Demo, Listenpreise. Mit Angebotspreisen über den Kontakt.</div>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
