@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Wechsel nach oben im 1. Jahr",
+    "Familienbonus",
+    "Sofortschutz bei Unfall"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "nein",
+        "vorgezogen": "nein",
+        "verlaengerung": "nein"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, auch ohne Anlass",
+        "vorgezogen": "ja, unter 12 Monate",
+        "verlaengerung": "nein"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, auch ohne Anlass",
+        "vorgezogen": "ja, unter 12 Monate",
+        "verlaengerung": "bis 15 Jahre"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.barmeniagothaer.de/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/risikolebensversicherung/"
+  ],
+  "offen": [
+    "Umtauschrecht und weltweiter Schutz nicht im Tarifvergleich; Bedingungen (AVB) nicht ausgewertet.",
+    "Nachversicherung: anlassbezogen (Heirat, Geburt, Immobilie u. a.) und nach 5 Vertragsjahren ohne Anlass. Vorgezogene Leistung bei einer Lebenserwartung unter 12 Monaten.",
+    "Premium zusätzlich: Sofortschutz ab Antrag (Basis und Plus nur nach Unfall), kostenfreie Erhöhung der Summe in den ersten 3 Monaten nach besonderen Ereignissen.",
+    "Partner-Police: zwei Personen in einem Vertrag (als „verbundene Leben“ erfasst); Kombination mit BU-Zusatz möglich. Fallende Summe nicht genannt.",
+    "BarmeniaGothaer markiert keine Stufe; Plus als mittlere Stufe."
+  ]
+}

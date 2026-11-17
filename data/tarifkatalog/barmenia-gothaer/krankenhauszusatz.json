@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "BarmeniaGothaer",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Krankenhauszusatzversicherung Mehr Komfort",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Privatärztliche Behandlung",
+    "Freie Krankenhauswahl",
+    "Keine Wartezeit"
+  ],
+  "tarife": [
+    {
+      "name": "Mehr Komfort 2-Bett",
+      "kurz": "2-Bett",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "je 15 €/Tag",
+        "ambulant-op": "ja"
+      },
+      "quelle": "https://www.barmeniagothaer.de/krankenhaus-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Mehr Komfort 1-Bett",
+      "kurz": "1-Bett",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Ein- oder Zweibett",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja",
+        "wartezeit": "keine",
+        "ersatztagegeld": "je 25 €/Tag",
+        "ambulant-op": "ja"
+      },
+      "quelle": "https://www.barmeniagothaer.de/krankenhaus-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.barmeniagothaer.de/krankenhaus-zusatzversicherung/"
+  ],
+  "offen": [
+    "Ersatztagegeld jeweils bei Verzicht auf das Zimmer oder auf die privatärztliche Behandlung.",
+    "1-Bett zusätzlich: gesetzliche Zuzahlungen im Krankenhaus, Reha-Tagegeld 100 €/Tag (bis 21 Tage), Rücktransport aus dem Ausland. Beide: Rooming-in bis 16 Jahre, ambulante Entbindungspauschale 1.000 €, Zweitmeinung.",
+    "Je Stufe Variante mit Kapitaldeckung (K) für stabilere Beiträge im Alter; ohne Kapitaldeckung spätestens mit 60 umgestellt. Nur Unfallschutz ohne Gesundheitsfragen möglich.",
+    "Zwei Stufen ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+  ]
+}
