@@ -1,0 +1,103 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung FLEXXhome",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Pauschal bis 500.000 €",
+    "Seng- und Schmorschäden",
+    "Selbstbeteiligung 0 bis 500 €"
+  ],
+  "tarife": [
+    {
+      "name": "FLEXXhome easy",
+      "kurz": "easy",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "wert": "bis 20.000 €",
+        "fahrrad": "nein, Baustein",
+        "elementar": "optional",
+        "online": "nein",
+        "aussen": "20.000 €, 3 Monate",
+        "garten": "bis 1.000 €",
+        "auto": "bis 2.000 €",
+        "hotel": "100 €/Tag, 100 Tage",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FLEXXhome allround",
+      "kurz": "allround",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis 30.000 €",
+        "fahrrad": "bis 250 €",
+        "elementar": "optional",
+        "online": "nein",
+        "aussen": "50.000 €, 6 Monate",
+        "garten": "bis 3.000 €",
+        "auto": "bis 3.000 €",
+        "hotel": "100 €/Tag, 200 Tage",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "FLEXXhome best",
+      "kurz": "best",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "bis 50.000 €",
+        "fahrrad": "bis 500 €",
+        "elementar": "optional",
+        "online": "bis 5.000 €",
+        "aussen": "100.000 €, 12 Monate",
+        "garten": "bis 10.000 €",
+        "auto": "bis 5.000 €",
+        "hotel": "150 €/Tag, unbegrenzt",
+        "allgefahren": "optional"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/hausratversicherung/",
+    "https://www.universa.de/site/assets/files/113870/076-310-leistungsvergleich-flexxhome_09_2026.pdf"
+  ],
+  "offen": [
+    "Pauschale Höchstentschädigung 500.000 € in allen Stufen (kein Unterversicherungsrisiko). Selbstbeteiligung wählbar: ohne, 150, 300 oder 500 €.",
+    "Einfacher Diebstahl in der Wohnung nicht als eigener Punkt; Trickdiebstahl am Versicherungsort 500, 1.500 bzw. 3.000 €. Fahrraddiebstahl ohne Nachtzeitklausel, Erhöhung über Bausteine BIKE oder BIKEplus.",
+    "Garten: einfacher Diebstahl von Gartenmöbeln, Wäsche, Grills. Auto: Einbruchdiebstahl aus Kfz, weltweit. All-Risk und Best-Leistungs-Garantie optional nur im best. Ascore zeichnet best aus, keine Tarifmarkierung; allround als mittlere Stufe."
+  ]
+}

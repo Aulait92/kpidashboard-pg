@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "uniVersa",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung topAktiv Trend",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Beitrag unabhängig vom Beruf",
+    "Herzinfarkt, Schlaganfall",
+    "Zeckenbiss mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "topAktiv Trend Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "bis 500 % wählbar",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "optional",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "Arm 70 %"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/unfallversicherung/unfallversicherung-fuer-erwachsene/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "topAktiv Trend Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "progression": "bis 500 % wählbar",
+        "unfallrente": "optional, ab 50 %",
+        "khtg": "optional",
+        "sofort": "optional",
+        "kosmetik": "bis 200.000 €",
+        "bergung": "bis 200.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "Arm 85 %"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.universa.de/produkte/unfallversicherung/unfallversicherung-fuer-erwachsene/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.universa.de/produkte/unfallversicherung/unfallversicherung-fuer-erwachsene/",
+    "https://www.universa.de/site/assets/files/115141/076-213-gesamtvergleich_topaktiv_komfort-exklusiv_unfallversicherung.pdf"
+  ],
+  "offen": [
+    "Grundsumme individuell; Invaliditätsleistung wahlweise im Mehrleistungsmodell (ab 90 % doppelt) oder Progressionsmodell (ab 26 % steigend bis fünffach). Leistung ab Invaliditätsgrad nicht genannt.",
+    "Unfallrente monatlich und lebenslang ab 50 % Invalidität, gestaffelt doppelt ab 90 %. Krankenhaustagegeld auch bei ambulanten OPs, Übergangsleistung, Tagegeld, Gipsgeld als Gestaltungsmöglichkeiten.",
+    "Exklusiv zusätzlich Infektionen (z. B. Masern), Impfschäden, Allergien durch Insektenstiche, Eigenbewegungen und Sonnenstich. Eigene Tarife für Kinder (topAktiv Kids) und ab 50 (topAktiv Vital) nicht aufgenommen. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+  ]
+}

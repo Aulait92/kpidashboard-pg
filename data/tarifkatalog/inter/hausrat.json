@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweite Außenversicherung",
+    "Neuwertentschädigung",
+    "Balkonkraftwerk bis 3.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "1.500 €",
+        "ueberspannung": "bis 10 % der VS",
+        "auto": "bis 750 € (Inland)",
+        "hotel": "100 €/Tag, 200 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.inter.de/produkte/sach-und-haftpflicht/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "wert": "30 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "1.500 €",
+        "ueberspannung": "bis 30 % der VS",
+        "auto": "bis 750 € (Inland)",
+        "hotel": "100 €/Tag, 200 Tage"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.inter.de/produkte/sach-und-haftpflicht/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, volle Höhe",
+        "wert": "50 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "bargeld": "5.000 €",
+        "ueberspannung": "bis 100 % der VS",
+        "auto": "bis 3.000 € weltweit",
+        "hotel": "200 €/Tag, 365 Tage",
+        "aussen": "bis 12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.inter.de/produkte/sach-und-haftpflicht/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/produkte/sach-und-haftpflicht/hausratversicherung/"
+  ],
+  "offen": [
+    "Grobe Fahrlässigkeit: Kopf der Seite „beitragsfrei mitversichert“, volle Leistung laut Vorteilsliste nur im Premium; Grenze in Basis und Exklusiv nicht genannt.",
+    "Einfacher Diebstahl in der Wohnung nicht als eigener Punkt genannt; Trickdiebstahl aus der Wohnung Basis bis 750 €, Exklusiv und Premium bis 100 % der VS.",
+    "Fahrraddiebstahl, Elementar, Glas und Notfall-Schutzbrief als Zusatzbausteine zu allen Tarifstufen. Phishing nur Premium. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+  ]
+}

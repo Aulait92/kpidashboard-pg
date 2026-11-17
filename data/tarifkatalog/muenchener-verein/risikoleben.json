@@ -1,0 +1,35 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "risikoleben",
+  "produkt": "Deutsche Handwerker RisikoLebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Laufzeit bis 50 Jahre",
+    "Nichtrauchertarif",
+    "Ehrenamt-Bonus"
+  ],
+  "tarife": [
+    {
+      "name": "RisikoLebensversicherung Tarif 21 S",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, 13 Ereignisse",
+        "vorgezogen": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/risiko-lebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/existenz/risiko-lebensversicherung/",
+    "https://www.muenchener-verein.de/downloadcenter/LV/Werbeunterlagen/7700142.pdf"
+  ],
+  "offen": [
+    "Nachversicherung ohne Gesundheitsprüfung bei 13 Ereignissen, im 5. Jahr auch ohne Ereignis. Vorgezogene Leistung bei Lebenserwartung von höchstens 3 Monaten (Restlaufzeit mindestens 12 Monate).",
+    "Verlängerungsoption, Umtauschrecht, weltweiter Schutz, Endalter, Kinder-Nachversicherung, fallende Summe und verbundene Leben nicht genannt. Höchstes Eintrittsalter 66."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 Mio. € pauschal",
+    "Akku-Schutz beitragsfrei"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja (Teilkasko)",
+        "tiere": "ja",
+        "neuwert": "15 Monate",
+        "marder": "inkl. Folgeschäden",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "Sorglos-Paket",
+        "elektro": "bis 20.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/fahrzeuge/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/fahrzeuge/kfz-versicherung/",
+    "https://www.muenchener-verein.de/downloadcenter/Kraft/Werbeunterlagen/8701311.pdf"
+  ],
+  "offen": [
+    "Ein Tarif ohne Stufen. Je geschädigte Person höchstens 15 Mio. €. Grobe Fahrlässigkeit: Verzicht in der Teilkasko außer bei Alkohol und Drogen; Vollkasko nicht genannt.",
+    "Tiere: Zusammenstoß mit Tieren in der Teilkasko, Einschränkung auf Haarwild nicht genannt. Marder: Tierbiss an Leitungen inklusive Folgeschäden. Neuwert bis 15 Monate und 25.000 km, E-Fahrzeuge 24 Monate.",
+    "Werkstatt: Sorglos-Paket mit Partnerwerkstätten, ob Pflicht ist nicht genannt. Rabattschutz (Unfall-Joker) für Haftpflicht und Vollkasko. Schutzbrief KH-Plus."
+  ]
+}

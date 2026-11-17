@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsfragen",
+    "Weltweiter Schutz",
+    "Partner 12 Monate inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "progression": "500 %",
+        "unfallrente": "nein",
+        "khtg": "nein",
+        "todesfall": "nein",
+        "sofort": "10 %, max. 10.000 €",
+        "kosmetik": "bis 40.000 €",
+        "bergung": "bis 40.000 €"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "progression": "500 %",
+        "unfallrente": "nein",
+        "khtg": "ja",
+        "todesfall": "ja",
+        "sofort": "ja",
+        "kosmetik": "bis 40.000 €",
+        "bergung": "bis 40.000 €"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Exklusiv+",
+      "kurz": "Exklusiv+",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "progression": "500 %",
+        "unfallrente": "ja",
+        "khtg": "ja",
+        "todesfall": "ja",
+        "sofort": "ja",
+        "kosmetik": "bis 40.000 €",
+        "bergung": "bis 40.000 €"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/existenz/unfallversicherung/",
+    "https://www.muenchener-verein.de/fileadmin/mediadb/Homepage/07-Uebergreifend/10-AVB/PUV/3360709.pdf"
+  ],
+  "offen": [
+    "Werte aus den Beispielen der Produktseite (Basis 25.000 €, Exklusiv und Exklusiv+ 100.000 € Grundsumme mit 500 % Progression und 3 % Dynamik); Grundsumme individuell.",
+    "Beispiele: Krankenhaustagegeld mit Genesungsgeld 20 €/Tag, Todesfall 20.000 € (Exklusiv) bzw. 50.000 € (Exklusiv+), Unfallrente 500 € monatlich nur Exklusiv+. Leistung ab Invaliditätsgrad, Zecken und Gliedertaxe nicht als Text genannt.",
+    "Heilverfahrensbegleitung bis 20.000 €, Kindervorsorge 50.000 €. Basis und Exklusiv gehören laut Seite zum Tarif UnfallSchutz Komfort. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+  ]
+}

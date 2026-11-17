@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "INTER",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Eintrittsalter 50 bis 75",
+    "Lebenslange Versicherung"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "summe": "frei wählbar",
+        "ohne-gp": "ja",
+        "beitragsende": "spätestens mit 85"
+      },
+      "bausteine": {},
+      "quelle": "https://www.inter.de/vorsorge-vermoegen/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.inter.de/vorsorge-vermoegen/sterbegeldversicherung/"
+  ],
+  "offen": [
+    "Bei Unfalltod volle Versicherungssumme ab Beginn; Wartezeit bei Tod durch Krankheit und doppelte Unfallleistung auf der Seite nicht genannt.",
+    "Höhe der wählbaren Summe nicht genannt. Bestattungsvorsorge-Service nicht genannt."
+  ]
+}

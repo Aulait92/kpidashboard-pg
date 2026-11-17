@@ -1,0 +1,37 @@
+{
+  "gesellschaft": "Münchener Verein",
+  "sparte": "basisrente",
+  "produkt": "Fondsbasierte BasisRente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Rentenbeginn ab 62",
+    "Kostenlose Fondswechsel",
+    "Ablaufmanagement"
+  ],
+  "tarife": [
+    {
+      "name": "BasisRente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "anlage": "bis 10 Fonds, auch ETF",
+        "flexibel": "Zuzahlung, Einmalbeitrag",
+        "hinterbliebene": "vor und nach Beginn"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.muenchener-verein.de/privatkunden/altersvorsorge/basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.muenchener-verein.de/privatkunden/altersvorsorge/basisrente/"
+  ],
+  "offen": [
+    "Fondspolice; Beitragsgarantie, garantierter Rentenfaktor (Seite: „hoher Rentenfaktor“ ohne Zahl), Dynamik und Beitragspause nicht genannt.",
+    "Bis zu 12 kostenlose Fondswechsel je Jahr, Rebalancing. BU: Rentenschutzbrief übernimmt bei BU die Beiträge bis 3.000 € jährlich (36 Monate Wartezeit, bei Unfall sofort). Keine Renditeangaben übernommen."
+  ]
+}
