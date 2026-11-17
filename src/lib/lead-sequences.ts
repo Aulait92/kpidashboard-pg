@@ -40,6 +40,8 @@ const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nich
 /** hi = Anrede-Zeile nach Regel („Hallo Julia,“ bzw. „Guten Tag Frau Schneider,“ / „Guten Tag,“). */
 // Kein Buchungslink in Nachrichten an Leads (Ole, 15.11.2026: „nur per Chat“): Termine bucht der Assistent im Gespräch.
 type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; an: Ansprache };
+/** Angaben für die Texte einer Abfolge (auch für die Vorschau im Nachrichtenplan, lib/nachrichtenplan.ts). */
+export type SequenceCtx = Ctx;
 const HOUR = 60 * 60 * 1000;
 /** Mindestabstand zwischen zwei Schritten (z. B. wenn morgens zwei über Nacht fällige Schritte anstehen). */
 const MIN_GAP_MS = 2 * HOUR;
@@ -364,7 +366,7 @@ export async function onLeadStatus(leadId: string, status: string | null | undef
 }
 
 /** Thema für „Angebot zu …“ – wie beim manuellen Nachfassen (lib/whatsapp/followup.ts). */
-function topicOf(formData: Prisma.JsonValue | null, source: string | null, an: Ansprache = "sie"): string {
+export function topicOf(formData: Prisma.JsonValue | null, source: string | null, an: Ansprache = "sie"): string {
   if (Array.isArray(formData)) {
     const hit = (formData as { label?: unknown; value?: unknown }[]).find((a) => a?.label === "Versicherungsinteresse" && typeof a.value === "string" && a.value.trim());
     if (hit) return String(hit.value).trim().slice(0, 60);

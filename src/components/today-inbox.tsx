@@ -107,7 +107,10 @@ export function TodayInbox({
   leadHref = "/buyer/leads/{id}",
   selectedLeadId = null,
   zuVorbereiten = [],
+  anrufen = null,
 }: {
+  /** Deep-Link aus dem Push „… hat noch nicht geantwortet. Jetzt anrufen?“ (/buyer?anrufen=<leadId>): Anruf-Blatt öffnen */
+  anrufen?: string | null;
   data: InboxData;
   /** Termine, die noch vorbereitet werden müssen (Angebot rechnen): Link „Vorbereiten“ in der Zeile */
   zuVorbereiten?: string[];
@@ -333,6 +336,17 @@ export function TodayInbox({
     );
     setSheet({ kind: "actions", title: c.name, message: c.reason, actions });
   };
+
+  // Push „Jetzt anrufen?“ (lib/anruf-ausloeser.ts): Anruf-Blatt des Kontakts direkt öffnen, einmal
+  const anrufGeoeffnet = useRef(false);
+  useEffect(() => {
+    if (!anrufen || anrufGeoeffnet.current) return;
+    const c = calls.find((x) => x.leadId === anrufen);
+    if (!c) return;
+    anrufGeoeffnet.current = true;
+    setTimeout(() => callSheet(c), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anrufen]);
 
   // Kleiner Pfeil rechts: Zeile antippen öffnet weitere Aktionen.
   const more = <ChevronRight className="hidden h-4 w-4 shrink-0 text-[color:var(--border-strong)] sm:block" />;
