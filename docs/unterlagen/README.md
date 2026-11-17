@@ -53,3 +53,19 @@ Die Folien gibt es auch als Web-Präsentation (Vollbild, Pfeiltasten, Wischen am
 - Neue Fassung der PPTX: `node scripts/vertrieb-folien.mjs` erzeugt `public/praesentation/vertrieb/{vertreter,makler}/NN.webp`
   und `assistent.mp4` neu; Folienliste und Sonderfolien in `src/lib/vertrieb/verkaufspraesentation.ts` prüfen
   (Nummern von Rechnung, Paket und Demo).
+
+## Folie „Ihr Abschlussbonus“ in PPTX und PDF (17.11.2026, wartet auf Oles OK)
+
+Vorletzte Folie (vor „Ihr Start in 3 Schritten“), gleiche Gestaltung wie in der Web-Präsentation, aber mit fester
+Frist „bis zur Frist in Ihrem Angebot“ (die PDF geht mit der Angebotsmail raus und wird später gelesen) und ohne
+Seitenzahl. Listenpreise: Vertreter 2.490 € → 2.190 €, Makler 990 € → 690 €. Erzeugen und einfügen:
+
+```bash
+npx tsx scripts/bonus-folie-unterlagen.ts /tmp/bonus
+python3 scripts/bonus-folie-einfuegen.py /tmp/bonus /tmp/unterlagen-neu
+```
+
+Ergebnis: Vertreter 23 Folien (PDF 30 Seiten), Makler 24 Folien (PDF 31 Seiten). Das Einfügen ist wiederholbar
+(erkennt eine schon vorhandene Bonusfolie). `scripts/vertrieb-folien.mjs` überspringt die Folie, weil die
+Web-Präsentation sie selbst mit der Frist aus dem Angebot einfügt. Die Dateien liegen bewusst nicht im Repo
+(je ca. 15 MB); nach Oles OK mit dem Upload oben (Ordner `/tmp/unterlagen-neu` statt `docs/unterlagen`) hochladen.

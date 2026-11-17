@@ -23,7 +23,13 @@ function folien(dir) {
   const pres = readFileSync(path.join(dir, "ppt/presentation.xml"), "utf8");
   const rels = readFileSync(path.join(dir, "ppt/_rels/presentation.xml.rels"), "utf8");
   const ziel = new Map([...rels.matchAll(/<Relationship [^>]*>/g)].map((m) => [/Id="([^"]+)"/.exec(m[0])[1], /Target="([^"]+)"/.exec(m[0])[1]]));
-  return [...pres.matchAll(/<p:sldId [^>]*r:id="([^"]+)"/g)].map((m, n) => {
+  // Folie „Ihr Abschlussbonus“ (Bild abschlussbonus.png, scripts/bonus-folie-einfuegen.py) gibt es nur in PPTX/PDF;
+  // die Web-Präsentation fügt sie selbst mit der Frist aus dem Angebot ein. Deshalb hier überspringen.
+  const ohneBonus = [...pres.matchAll(/<p:sldId [^>]*r:id="([^"]+)"/g)].filter((m) => {
+    const name = path.basename(ziel.get(m[1]));
+    return !readFileSync(path.join(dir, "ppt/slides/_rels", `${name}.rels`), "utf8").includes("abschlussbonus.png");
+  });
+  return ohneBonus.map((m, n) => {
     const name = path.basename(ziel.get(m[1]));
     const sr = readFileSync(path.join(dir, "ppt/slides/_rels", `${name}.rels`), "utf8");
     const xml = readFileSync(path.join(dir, "ppt/slides", name), "utf8");

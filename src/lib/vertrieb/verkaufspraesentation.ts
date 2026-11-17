@@ -386,7 +386,7 @@ const ICON = {
 const LOGO = `<span class="vk-logo"><i><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></i><span>performance<b>growth</b></span></span>`;
 
 function rahmen(rubrik: string, inhalt: string, nr: number, gesamt: number, fuss = ""): string {
-  return `<section class="vk"><div class="vk-kopf">${LOGO}<span class="vk-rubrik">${e(rubrik)}</span></div>${inhalt}${fuss ? `<div class="vk-fuss">${fuss}</div>` : ""}<div class="vk-nr">${nr} / ${gesamt}</div></section>`;
+  return `<section class="vk"><div class="vk-kopf">${LOGO}<span class="vk-rubrik">${e(rubrik)}</span></div>${inhalt}${fuss ? `<div class="vk-fuss">${fuss}</div>` : ""}${nr > 0 ? `<div class="vk-nr">${nr} / ${gesamt}</div>` : ""}</section>`;
 }
 
 const angebotChip = (p: PaketDaten) =>
@@ -431,8 +431,9 @@ export function bonusFristText(bis: Date | null): string {
 }
 
 /** „Ihr Abschlussbonus“ (Ole, 16.11.2026): Setup günstiger bei Annahme und Zahlung am selben Tag, Start frei wählbar. */
-export function bonusFolie(p: PaketDaten, b: NonNullable<PaketDaten["bonus"]>, nr: number, gesamt: number): string {
-  const frist = bonusFristText(b.bis);
+export function bonusFolie(p: PaketDaten, b: NonNullable<PaketDaten["bonus"]>, nr: number, gesamt: number, opts: { fristText?: string } = {}): string {
+  // fristText: feste Fassung für die Unterlagen (PPTX/PDF zur Angebotsmail), dort passt kein „morgen“
+  const frist = opts.fristText ?? bonusFristText(b.bis);
   const schritt = (n: number, titel: string, text: string) =>
     `<div class="vk-karte vk-box" style="padding:18px 22px"><i style="font-weight:800">${n}</i><div><b>${e(titel)}</b><span>${e(text)}</span></div></div>`;
   const inhalt = `<div class="vk-chips"><span class="vk-chip gruen">Einmaliges Angebot</span>${angebotChip(p)}</div>

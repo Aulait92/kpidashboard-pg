@@ -87,6 +87,15 @@ describe("Abschlussbonus: Präsentation und Mail", () => {
     expect(html).not.toMatch(/[–—]/);
   });
 
+  it("Fassung für die Unterlagen: feste Frist, ohne Seitenzahl", () => {
+    const p = paketDaten(null, "makler");
+    const html = bonusFolie(p, p.bonus!, 0, 0, { fristText: "bis zur Frist in Ihrem Angebot" });
+    expect(html).toContain("bis zur Frist in Ihrem Angebot");
+    expect(html).not.toContain("morgen");
+    expect(html).not.toContain("vk-nr");
+    expect(html).not.toMatch(/[–—]/);
+  });
+
   it("Frist als Text und Mailzeile ohne Gedankenstriche", () => {
     expect(bonusFristText(berlinTagesendeIso("2026-11-17"))).toBe("bis Dienstag, 17. November, 23:59 Uhr");
     const sie = offerBonusLine({ betrag: 300, bis: berlinTagesendeIso("2026-11-17") }, false);
