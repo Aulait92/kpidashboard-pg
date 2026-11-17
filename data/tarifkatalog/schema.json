@@ -2162,6 +2162,237 @@
           "kurz": "Dynamik"
         }
       ]
+    },
+    {
+      "key": "dienstunfaehigkeit",
+      "label": "Dienstunfähigkeit",
+      "formularMatch": "Dienstunfähigkeit",
+      "merkmale": [
+        {
+          "key": "echte-du",
+          "label": "Echte DU-Klausel (Entlassung oder Ruhestand)",
+          "kurz": "Echte DU-Klausel",
+          "standard": true
+        },
+        {
+          "key": "probe",
+          "label": "Leistung für Beamte auf Probe und Widerruf",
+          "kurz": "Beamte auf Probe",
+          "standard": true
+        },
+        {
+          "key": "bu",
+          "label": "Berufsunfähigkeit mitversichert",
+          "kurz": "BU mitversichert",
+          "standard": true
+        },
+        {
+          "key": "nachversicherung",
+          "label": "Nachversicherung ohne Gesundheitsprüfung",
+          "kurz": "Nachversicherung",
+          "standard": true
+        },
+        {
+          "key": "teil-du",
+          "label": "Teildienstunfähigkeit",
+          "kurz": "Teildienstunfähigkeit",
+          "standard": true
+        },
+        {
+          "key": "verweisung",
+          "label": "Verzicht auf abstrakte Verweisung",
+          "kurz": "Keine abstrakte Verweisung"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "au",
+          "label": "AU-Klausel",
+          "kurz": "AU-Klausel"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ]
+    },
+    {
+      "key": "krankentagegeld",
+      "label": "Krankentagegeld",
+      "formularMatch": "Krankentagegeld",
+      "merkmale": [
+        {
+          "key": "ab-tag",
+          "label": "Leistung ab Tag",
+          "kurz": "Leistung ab Tag",
+          "standard": true
+        },
+        {
+          "key": "hoehe",
+          "label": "Höchstes Tagegeld",
+          "kurz": "Höchstes Tagegeld",
+          "standard": true
+        },
+        {
+          "key": "wartezeit",
+          "label": "Wartezeit",
+          "kurz": "Wartezeit",
+          "standard": true
+        },
+        {
+          "key": "dauer",
+          "label": "Leistungsdauer",
+          "kurz": "Leistungsdauer",
+          "standard": true
+        },
+        {
+          "key": "bu-ende",
+          "label": "Ende bei Berufsunfähigkeit",
+          "kurz": "Ende bei BU",
+          "standard": true
+        },
+        {
+          "key": "selbststaendige",
+          "label": "Für Selbstständige",
+          "kurz": "Für Selbstständige"
+        },
+        {
+          "key": "ausland",
+          "label": "Leistung im Ausland",
+          "kurz": "Ausland"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        },
+        {
+          "key": "frueh",
+          "label": "Frühere Leistung",
+          "kurz": "Früher Beginn"
+        }
+      ]
+    },
+    {
+      "key": "kinderinvaliditaet",
+      "label": "Kinderinvalidität",
+      "formularMatch": "Kinderinvalidität",
+      "merkmale": [
+        {
+          "key": "rente",
+          "label": "Monatliche Rente bei Invalidität",
+          "kurz": "Monatliche Rente",
+          "standard": true
+        },
+        {
+          "key": "krankheit",
+          "label": "Leistung auch bei Krankheit",
+          "kurz": "Auch bei Krankheit",
+          "standard": true
+        },
+        {
+          "key": "ab-grad",
+          "label": "Leistung ab Grad der Behinderung",
+          "kurz": "Leistung ab GdB",
+          "standard": true
+        },
+        {
+          "key": "kapital",
+          "label": "Kapitalleistung",
+          "kurz": "Kapitalleistung",
+          "standard": true
+        },
+        {
+          "key": "weiter",
+          "label": "Weiterversicherung als Erwachsener",
+          "kurz": "Weiterversicherung",
+          "standard": true
+        },
+        {
+          "key": "psyche",
+          "label": "Psychische Erkrankungen",
+          "kurz": "Psyche"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "kapital",
+          "label": "Kapitalleistung",
+          "kurz": "Kapital"
+        },
+        {
+          "key": "dynamik",
+          "label": "Dynamik",
+          "kurz": "Dynamik"
+        }
+      ]
+    },
+    {
+      "key": "reiseruecktritt",
+      "label": "Reiserücktritt",
+      "formularMatch": "Reiserücktritt",
+      "merkmale": [
+        {
+          "key": "summe",
+          "label": "Versicherungssumme",
+          "kurz": "Versicherungssumme",
+          "standard": true
+        },
+        {
+          "key": "sb",
+          "label": "Selbstbeteiligung",
+          "kurz": "Selbstbeteiligung",
+          "standard": true
+        },
+        {
+          "key": "abbruch",
+          "label": "Reiseabbruch mitversichert",
+          "kurz": "Reiseabbruch",
+          "standard": true
+        },
+        {
+          "key": "jahr",
+          "label": "Jahrespolice",
+          "kurz": "Jahrespolice",
+          "standard": true
+        },
+        {
+          "key": "pandemie",
+          "label": "Erkrankung an Pandemie",
+          "kurz": "Pandemie",
+          "standard": true
+        },
+        {
+          "key": "familie",
+          "label": "Familie mitversichert",
+          "kurz": "Familie"
+        },
+        {
+          "key": "gruende",
+          "label": "Versicherte Gründe (z. B. Jobverlust)",
+          "kurz": "Jobverlust"
+        }
+      ],
+      "bausteine": [
+        {
+          "key": "sb0",
+          "label": "Ohne Selbstbeteiligung",
+          "kurz": "Ohne SB"
+        },
+        {
+          "key": "abbruch",
+          "label": "Reiseabbruch",
+          "kurz": "Reiseabbruch"
+        }
+      ]
     }
   ]
 }

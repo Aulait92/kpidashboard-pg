@@ -124,7 +124,7 @@ describe("Vergleichsfolie passt (Chromium)", () => {
   it("echter Katalog, neue Sparten (17.11.2026): AXA und SIGNAL IDUNA passen ebenfalls", async (ctx) => {
     if (!browser) return ctx.skip();
     const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
-    const neu = ["bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld"];
+    const neu = ["bu", "risikoleben", "grundfaehigkeit", "pkv", "zahnzusatz", "krankenhauszusatz", "ambulant", "pflegezusatz", "rente", "basisrente", "kfz", "reise-kranken", "sterbegeld", "dienstunfaehigkeit", "krankentagegeld", "kinderinvaliditaet", "reiseruecktritt"];
     for (const g of ["axa", "signal-iduna"]) {
       for (const s of echt.sparten.filter((x) => neu.includes(x.key))) {
         const a = startAuswahl(echt, [s.key], { rolle: "vertreter", gesellschaften: [g] });
