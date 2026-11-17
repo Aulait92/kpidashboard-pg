@@ -54,6 +54,8 @@ import { attemptMessage, emitNotReachedOffer, LostSheet, NextStepSheet } from "@
 import { NEXT_STEP_LABEL } from "@/lib/lead-next-step";
 import { TerminAnwesenheit } from "@/components/termin-anwesenheit";
 import { anwesenheitsFrage } from "@/lib/showup";
+import { AngebotSendenSheet, type AngebotZiel } from "@/components/angebot-senden";
+import { ANGEBOT_AUFGABE, ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -146,6 +148,8 @@ export function TodayInbox({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<SheetState>(null);
   const [showAll, setShowAll] = useState(false);
+  // „Angebot senden“ (Paket P3): Blatt mit den zwei Wegen; spaeter nur aus „Wie lief der Termin?“
+  const [angebot, setAngebot] = useState<(AngebotZiel & { key: string; spaeter?: () => void }) | null>(null);
   const hide = (key: string) => setHidden((h) => new Set(h).add(key));
   const unhide = (key: string) =>
     setHidden((h) => {
@@ -189,6 +193,7 @@ export function TodayInbox({
 
   const appointments = data.appointments.filter((a) => !hidden.has(`a:${a.id}`));
   const outcomes = data.outcomes.filter((o) => !hidden.has(`o:${o.id}`));
+  const angebote = (data.angebote ?? []).filter((g) => !hidden.has(`g:${g.id}`));
   // Angerufen, Ergebnis fehlt (lib/telefonat.ts): steht bei „Wie lief es?“, Assistent pausiert bis dahin
   const openCalls = (data.openCalls ?? []).filter((c) => !hidden.has(`k:${c.leadId}`));
   const chats = data.chats.filter((c) => !hidden.has(`c:${c.conversationId}`));
@@ -260,7 +265,7 @@ export function TodayInbox({
   }, [callMode]);
   const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
   const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
-  const nothing = appointments.length + outcomes.length + openCalls.length + chats.length + calls.length + noStep.length === 0;
+  const nothing = appointments.length + outcomes.length + angebote.length + openCalls.length + chats.length + calls.length + noStep.length === 0;
   const noStepHref = leadHref.startsWith("/buyer?") ? "/buyer/kontakte?ansicht=ohne-schritt" : "/buyer/leads?ansicht=ohne-schritt";
 
   const laterSheet = (c: CallItem) =>
@@ -510,7 +515,22 @@ export function TodayInbox({
                   kind: "actions",
                   title: `Wie lief der Termin mit ${o.name}?`,
                   actions: [
-                    { label: "Angebot gesendet", icon: Send, onSelect: () => run(key, `${o.name}: Angebot gesendet`, () => appointmentOutcomeResult(o.id, "offer", null)) },
+                    // Paket P3: „Angebot gesendet“ startet das Nachfassen nicht mehr ohne Versand, sondern führt auf die zwei Wege
+                    {
+                      label: "Angebot senden",
+                      icon: Send,
+                      onSelect: () =>
+                        setTimeout(
+                          () =>
+                            setAngebot({
+                              appointmentId: o.id,
+                              name: o.name,
+                              key,
+                              spaeter: () => run(key, `${o.name}: Angebot steht unter „Angebote senden“`, () => appointmentOutcomeResult(o.id, "offer", null)),
+                            }),
+                          0,
+                        ),
+                    },
                     {
                       label: "Abschluss",
                       icon: Trophy,
@@ -537,6 +557,39 @@ export function TodayInbox({
                     }}
                   >
                     Ergebnis
+                  </Button>
+                  {more}
+                </TapRow>
+              );
+            })}
+          </ul>
+        </Card>
+      ) : null}
+
+      {angebote.length > 0 ? (
+        <Card>
+          <div id="angebote" className="scroll-mt-20" data-angebote-senden />
+          <CardHeader icon={Send} title="Angebote senden" count={angebote.length} />
+          <p className="border-b border-[color:var(--border)] px-5 py-2 text-xs text-[color:var(--muted)]">{ANGEBOT_HINWEIS}</p>
+          <ul className="divide-y divide-[color:var(--border)]">
+            {angebote.map((g) => {
+              const open = () => setAngebot({ appointmentId: g.id, name: g.name, key: `g:${g.id}` });
+              return (
+                <TapRow key={g.id} className={sel(g.leadId)} onTap={open}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{g.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]" data-angebot-aufgabe>
+                      {ANGEBOT_AUFGABE} · Termin {day(g.startsAt)}
+                    </p>
+                  </div>
+                  <Button
+                    icon={Send}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      open();
+                    }}
+                  >
+                    Senden
                   </Button>
                   {more}
                 </TapRow>
@@ -709,6 +762,17 @@ export function TodayInbox({
           onDone={(res, message) => run(sheet.key, message, async () => res, { leadId: sheet.leadId, name: sheet.name })}
         />
       ) : null}
+      <AngebotSendenSheet
+        ziel={angebot}
+        spaeter={angebot?.spaeter}
+        onClose={() => setAngebot(null)}
+        onError={(message) => toast.show({ message, tone: "error" })}
+        onDone={(message) => {
+          if (angebot) hide(angebot.key);
+          toast.show({ message });
+          router.refresh();
+        }}
+      />
       <ActionSheet
         open={sheet?.kind === "actions"}
         onClose={() => setSheet(null)}

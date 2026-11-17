@@ -31,8 +31,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "BU Premium",
@@ -56,8 +55,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "BU Premium mit Pflege",
@@ -81,8 +79,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -90,10 +87,10 @@
     "https://www.allianz.de/service/dokumente/#berufsunfaehigkeits-versicherung"
   ],
   "offen": [
-    "Werte aus der Produktvergleichstabelle der Produktseite (Symbole aus dem Seitenquelltext gelesen); Produktinformationsblatt und Bedingungen nicht ausgewertet, da auf der Produktseite nicht verlinkt.",
     "Verzicht auf Umorganisation (Selbstständige) und Infektionsklausel stehen nicht auf der Produktseite.",
     "Dynamik (bei der Allianz „Zuwachs“) nur im Ratgebertext genannt, nicht je Tarif in der Tabelle.",
     "Nachversicherung: anlassunabhängig in den ersten 5 Jahren bis Alter 40, mit Anlass bis Alter 50, je Anlass 600 bis 6.000 € Jahresrente, insgesamt höchstens 18.000 €.",
-    "Allianz markiert keinen Tarif; Premium als mittlere Stufe gesetzt. BU StartPolice (reduzierte Anfangsbeiträge) nicht aufgenommen."
+    "Allianz markiert keinen Tarif; Premium als mittlere Stufe gesetzt. BU StartPolice (reduzierte Anfangsbeiträge) nicht aufgenommen.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de (Werte laut Seite geprüft von MORGEN & MORGEN, Stand 05/2026). Bedingungen nicht ausgewertet, auf der Produktseite nicht verlinkt."
   ]
 }

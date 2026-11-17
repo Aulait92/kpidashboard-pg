@@ -161,7 +161,7 @@ describe("P4 Abschluss erkennen und melden, P7 nach dem Abschluss", () => {
     expect(await glueckwunschStand(offen.id, customerId)).toMatchObject({ offen: true, vorausgewaehlt: false });
   });
 
-  it("Vorabend-Push: Angebot mit Nachfassen morgen bzw. Termin heute, ein Push je Berater, einmal am Tag, nur abends", async () => {
+  it("Vorabend-Push: Termin heute ohne Ergebnis, ein Push je Berater, einmal am Tag, nur abends; Angebote fragt der Vorab-Check", async () => {
     const c = await makeCustomer({ name: `Agentur Vorabend ${uid()}` });
     ids.push(c.id);
     const berater = await makeBuyer(c.id, "advisor");
@@ -169,20 +169,27 @@ describe("P4 Abschluss erkennen und melden, P7 nach dem Abschluss", () => {
     const abend = new Date("2026-11-24T18:00:00Z");
     const morgen10 = new Date("2026-11-25T09:00:00Z");
     const mk = (extra: Record<string, unknown>) => prisma.lead.create({ data: { customerId: c.id, name: "Test", source: "Privatschutz", ...extra } });
-    const a = await mk({ name: "Julia Becker", status: "Angebot gesendet", formData: [{ label: "Anrede", value: "Frau" }] });
-    const b = await mk({ name: "Tom Kurz", status: "Angebot gesendet", formData: [{ label: "Anrede", value: "Herr" }] });
-    const spaeter = await mk({ status: "Angebot gesendet" });
-    const termin = await mk({ name: "Eva Lang", status: "Termin vereinbart", assignedUserId: berater.id, formData: [{ label: "Anrede", value: "Frau" }] });
+    const termin = (leadId: string, startsAt: string, extra: Record<string, unknown> = {}) =>
+      prisma.appointment.create({ data: { customerId: c.id, leadId, mode: "video", startsAt: new Date(startsAt), status: "booked", ...extra } });
+    const a = await mk({ name: "Julia Becker", status: "Termin vereinbart", formData: [{ label: "Anrede", value: "Frau" }] });
+    const b = await mk({ name: "Tom Kurz", status: "Im Gespräch", formData: [{ label: "Anrede", value: "Herr" }] });
+    const beimBerater = await mk({ name: "Eva Lang", status: "Termin vereinbart", assignedUserId: berater.id, formData: [{ label: "Anrede", value: "Frau" }] });
     const zu = await mk({ status: "Abschluss", closedAt: abend });
-    const ohneAnwesenheit = await mk({ name: "Ina Roth", status: "Im Gespräch" });
-    await prisma.appointment.create({ data: { customerId: c.id, leadId: ohneAnwesenheit.id, mode: "phone", startsAt: new Date("2026-11-24T08:00:00Z"), status: "booked" } });
-    for (const l of [a, b]) await prisma.leadSequence.create({ data: { leadId: l.id, customerId: c.id, kind: "offer", nextAt: morgen10 } });
-    await prisma.leadSequence.create({ data: { leadId: spaeter.id, customerId: c.id, kind: "offer", nextAt: new Date(morgen10.getTime() + 2 * DAY) } });
-    await prisma.appointment.create({ data: { customerId: c.id, leadId: termin.id, mode: "video", startsAt: new Date("2026-11-24T13:00:00Z"), status: "booked", attendance: "erschienen" } });
-    await prisma.appointment.create({ data: { customerId: c.id, leadId: zu.id, mode: "video", startsAt: new Date("2026-11-24T10:00:00Z"), status: "completed" } });
+    const fehlt = await mk({ status: "Termin vereinbart" });
+    const gestern = await mk({ status: "Termin vereinbart" });
+    // Angebot gesendet, Nachfassen läuft: fragt der Vorab-Check (P3) mit demselben Blatt, hier kein zweiter Push
+    const angebot = await mk({ status: "Angebot gesendet" });
+    await prisma.leadSequence.create({ data: { leadId: angebot.id, customerId: c.id, kind: "offer", nextAt: morgen10 } });
+    await termin(a.id, "2026-11-24T13:00:00Z", { attendance: "erschienen" });
+    await termin(b.id, "2026-11-24T08:00:00Z"); // ohne Anwesenheit
+    await termin(beimBerater.id, "2026-11-24T10:00:00Z", { status: "completed" });
+    await termin(zu.id, "2026-11-24T10:00:00Z", { status: "completed" });
+    await termin(fehlt.id, "2026-11-24T11:00:00Z", { attendance: "nicht_erschienen" });
+    await termin(gestern.id, "2026-11-23T11:00:00Z");
+    await termin(angebot.id, "2026-11-24T09:00:00Z", { status: "completed" });
 
     const k = (await vorabendKandidaten(abend)).filter((x) => x.customerId === c.id);
-    expect(k.map((x) => [x.leadId, x.grund]).sort()).toEqual([[a.id, "angebot"], [b.id, "angebot"], [termin.id, "termin"], [ohneAnwesenheit.id, "termin"]].sort());
+    expect(k.map((x) => x.leadId).sort()).toEqual([a.id, b.id, beimBerater.id].sort());
 
     const sent: { userId: string | null; p: { title: string; url: string; body: string } }[] = [];
     const push = async (userId: string | null, cid: string, p: { title: string; body: string; url: string; tag: string }) => {
@@ -192,21 +199,23 @@ describe("P4 Abschluss erkennen und melden, P7 nach dem Abschluss", () => {
     await runVorabendAbschluss(abend, { push });
     expect(sent).toHaveLength(2);
     const inhaber = sent.find((s) => s.userId === null)!;
-    expect(inhaber.p.title).toMatch(/^Haben .+, .+ und 1 weiterer Kontakt abgeschlossen\?$/);
+    expect(inhaber.p.title).toMatch(/^Haben (Frau Becker und Herr Kurz|Herr Kurz und Frau Becker) abgeschlossen\?$/);
     expect(inhaber.p.url).toMatch(/^\/buyer\/abschluss\?l=/);
     expect(inhaber.p.url).toContain(a.id);
     expect(inhaber.p.url).toContain(b.id);
     const fuerBerater = sent.find((s) => s.userId === berater.id)!;
-    expect(fuerBerater.p).toMatchObject({ title: "Hat Frau Lang abgeschlossen?", url: `/buyer/abschluss?l=${termin.id}` });
+    expect(fuerBerater.p).toMatchObject({ title: "Hat Frau Lang abgeschlossen?", url: `/buyer/abschluss?l=${beimBerater.id}` });
     // einmal am Tag
     await runVorabendAbschluss(new Date(abend.getTime() + 30 * 60_000), { push });
     expect(sent).toHaveLength(2);
 
-    // „Nachfassen pausieren“: nächster Schritt eine Woche später
-    const p = await pausiereNachfassen(a.id, c.id, { now: abend, userId: null });
+    // „Nachfassen pausieren“ im Blatt: nächster Schritt eine Woche später, Vorab-Check kommt dann noch einmal
+    await prisma.leadSequence.updateMany({ where: { leadId: angebot.id }, data: { vorabCheckStep: 0 } });
+    const p = await pausiereNachfassen(angebot.id, c.id, { now: abend, userId: null });
     expect(p.ok).toBe(true);
-    const s = await prisma.leadSequence.findFirstOrThrow({ where: { leadId: a.id } });
+    const s = await prisma.leadSequence.findFirstOrThrow({ where: { leadId: angebot.id } });
     expect(s.nextAt!.getTime()).toBe(morgen10.getTime() + 7 * DAY);
+    expect(s.vorabCheckStep).toBeNull();
   });
 
   it("Werkzeug schon_abgeschlossen: Push auf das Blatt, Nachfassen gestoppt, kein Abschluss eingetragen, kein „Chat ruht“", async () => {

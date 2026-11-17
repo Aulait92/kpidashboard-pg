@@ -132,3 +132,22 @@ export async function deleteManualRevenueAction(fd: FormData): Promise<void> {
   revalidatePath("/admin/zahlen");
   revalidatePath("/admin/neu", "layout");
 }
+
+/**
+ * Standardquoten der offenen Chancen auf „Wachstum“ im Kundenbereich (lib/offene-chancen.ts): gelten, solange ein
+ * Kunde weniger als 10 entschiedene Fälle je Stufe hat. Eingabe in Prozent (1 bis 100).
+ */
+export async function saveChanceQuotenAction(_prev: KostenState, fd: FormData): Promise<KostenState> {
+  await requireAuth();
+  const pct = (k: string) => Number(s(fd, k).replace("%", "").replace(",", ".").trim());
+  const angebot = pct("angebot");
+  const termin = pct("termin");
+  if (!(angebot >= 1 && angebot <= 100) || !(termin >= 1 && termin <= 100)) return { error: "Quoten: 1 bis 100 %." };
+  const data = { chanceQuoteAngebot: Math.round(angebot * 10) / 1000, chanceQuoteTermin: Math.round(termin * 10) / 1000 };
+  await prisma.kpiSettings.upsert({ where: { id: "default" }, create: { id: "default", ...data }, update: data });
+  await audit("kpi.chancen_quoten", { details: data });
+  revalidatePath("/admin/einstellungen/kosten");
+  revalidatePath("/buyer/wachstum");
+  revalidatePath("/buyer/zahlen");
+  return { ok: true };
+}

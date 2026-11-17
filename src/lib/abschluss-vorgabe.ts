@@ -2,7 +2,7 @@
 // letzten Terminvorbereitung (Summe der gewählten Tarife nach Kombi-Rabatt, Appointment.offersJson, das die Tarifauswahl
 // beim Speichern mitschreibt), sonst der typische Beitrag der Sparte aus „Meine Provisionen“. So haben Zahlen, Provision
 // und die Rückmeldung an Meta immer einen Wert; geschätzte Werte stehen mit „≈“ da (premiumSource „standard“).
-// Sobald das Angebot aus P3 (Versand mit Kennzeichen) am Lead liegt, kommt es hier als erste Quelle dazu.
+// Ein über P3 gesendetes Angebot (Appointment.angebotGesendetAt) geht vor.
 
 import { beitragAus, cleanAngebote } from "@/lib/angebote-daten";
 import { premiumAusAngebot, standardPremium, type PremiumSource } from "@/lib/abschluss";
@@ -15,7 +15,8 @@ export type BeitragVorgabe = { premium: number | null; source: PremiumSource | n
 export async function angebotMonatsbeitrag(leadId: string): Promise<number | null> {
   const appts = await prisma.appointment.findMany({
     where: { leadId, status: { not: "cancelled" } },
-    orderBy: { startsAt: "desc" },
+    // Gesendetes Angebot (P3, angebotGesendetAt) zuerst, sonst der letzte Termin
+    orderBy: [{ angebotGesendetAt: { sort: "desc", nulls: "last" } }, { startsAt: "desc" }],
     take: 5,
     select: { offersJson: true },
   });

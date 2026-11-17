@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/ambulant/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "AmbulantBest",
@@ -39,8 +38,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.allianz.de/gesundheit/krankenzusatzversicherung/ambulant/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -51,6 +49,7 @@
     "Arzneimittel (Zuzahlung), Auslandsreiseschutz und Augenlaser stehen nicht im Tarifvergleich.",
     "Wartezeit 3 Monate laut Produktseite (8 Monate für Psychotherapie beim Heilpraktiker).",
     "Heilpraktiker Best gemeinsam mit alternativmedizinischen Verfahren max. 1.000 € in 2 Versicherungsjahren.",
-    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt."
+    "Allianz markiert keinen Tarif; zwei Stufen, keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle auf allianz.de."
   ]
 }

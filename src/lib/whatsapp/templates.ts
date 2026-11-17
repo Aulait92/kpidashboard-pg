@@ -47,6 +47,8 @@ export type NoticePurpose =
   | "followup"
   | "followup_nudge"
   | "followup_offer"
+  | "followup_offer_selbst"
+  | "offer_send"
   | "followup_noshow"
   | "followup_last"
   | "glueckwunsch"
@@ -74,6 +76,8 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   followup: "Nachfassen mit zwei Terminvorschlägen",
   followup_nudge: "Nachfassen: kurze Nachfrage (Chat ruht)",
   followup_offer: "Nachfassen nach Angebot",
+  followup_offer_selbst: "Nachfassen nach Angebot (vom Vermittler selbst gesendet)",
+  offer_send: "Angebot senden (nach dem Termin)",
   followup_noshow: "Nachfassen nach verpasstem Termin",
   followup_last: "Nachfassen: letzte Nachricht (Abfolge)",
   glueckwunsch: "Glückwunsch zum Abschluss",
@@ -128,6 +132,9 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss, nur VORBEREITET (VORBEREITETE_PURPOSES in
   // template-plan.ts), nicht eingereicht. Bis zur Freigabe geht er nur im offenen 24-h-Fenster als Freitext.
   glueckwunsch: "v5",
+  // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): nur vorbereitet (VORBEREITET_ANGEBOT in template-plan.ts)
+  offer_send: "v5",
+  followup_offer_selbst: "v5",
 };
 
 /**
@@ -168,6 +175,8 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   followup: ["Terminvorschlag 1", "Terminvorschlag 2"],
   followup_nudge: [],
   followup_offer: ["Thema (z. B. Hausrat, Haftpflicht)"],
+  followup_offer_selbst: ["Vermittler (Nominativ)"],
+  offer_send: ["Thema (z. B. Haftpflicht und Hausrat)", "Angebotslink"],
   followup_noshow: [],
   followup_last: [],
   glueckwunsch: ["Vermittler (Akkusativ)"],
@@ -239,6 +248,17 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   followup_offer: {
     du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
     sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+  },
+  // Angebot nach dem Termin (Paket P3, Ole 17.11.2026), nur vorbereitet, nicht eingereicht (VORBEREITET_ANGEBOT,
+  // docs/vorlagen-angebot.md). Freitext im offenen Fenster: lib/angebot-senden.ts bzw. lib/lead-sequences.ts.
+  // Der Link steht nicht am Ende (Meta-Regel).
+  offer_send: {
+    du: "vielen Dank für das Gespräch! Wie besprochen hier dein Angebot für {{2}}: {{3}} Bei Fragen schreib mir einfach hier.",
+    sie: "vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot für {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.",
+  },
+  followup_offer_selbst: {
+    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot, das {{2}} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   followup_noshow: {
     du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
@@ -692,6 +712,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   followup: [KNOPF.ersteZeit, KNOPF.zweiteZeit, KNOPF.andereZeit],
   followup_nudge: [KNOPF.weiter, KNOPF.keinBedarfMehr],
   followup_offer: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
+  followup_offer_selbst: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
   followup_noshow: [KNOPF.neuerTermin, KNOPF.keinBedarfMehr],
   followup_last: [KNOPF.nochAktuell, KNOPF.neinDanke],
   campaign_cross_sell: [KNOPF.gernPruefen, KNOPF.keinBedarf, OPT_OUT_BUTTON],

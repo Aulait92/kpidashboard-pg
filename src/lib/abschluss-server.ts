@@ -4,8 +4,9 @@
 //   aendereAbschluss        „Ändern“: Sparte und Beitrag über das bestehende Abschluss-Blatt
 //   sendeGlueckwunsch       Haken „Glückwunsch per WhatsApp senden“: nur im offenen 24-h-Fenster (Vorlage vorbereitet,
 //                           nicht eingereicht), je Lead einmal, vom Vermittler ausgelöst
-//   runVorabendAbschluss    Cron 18 bis 21 Uhr: „Hat Frau Becker abgeschlossen?“ vor dem nächsten Nachfassen zum Angebot
-//                           bzw. am Abend eines stattgefundenen Termins, ein Push je Berater, je Lead einmal am Tag
+//   runVorabendAbschluss    Cron 18 bis 21 Uhr: „Hat Frau Becker abgeschlossen?“ am Abend eines stattgefundenen Termins
+//                           ohne Ergebnis, ein Push je Berater, je Lead einmal am Tag. Vor dem Nachfassen zum Angebot fragt
+//                           der Vorab-Check aus P3 (lib/angebot-senden-server.ts) mit demselben Blatt.
 //   meldeAbschlussVomLead   Werkzeug schon_abgeschlossen des Assistenten: Vermittler benachrichtigen, Nachfassen
 //                           stoppen, nicht selbst als Abschluss eintragen
 //   pausiereNachfassen      „Nachfassen pausieren“ im Blatt: nächster Schritt eine Woche später
@@ -238,28 +239,26 @@ export async function sendeGlueckwunsch(leadId: string, customerId: string, opts
 
 export type VorabendKandidat = { leadId: string; customerId: string; grund: VorabendGrund; userId: string | null };
 
+/** Abfolgen des Nachfassens zum Angebot (P3, lib/lead-sequences.ts): über die App bzw. selbst gesendet. */
+const ANGEBOT_ABFOLGEN = ["offer", "offer_selbst"];
+
 /**
- * Leads für den Vorabend-Push: Angebot gesendet und das Nachfassen zum Angebot hat seinen nächsten Schritt morgen, bzw.
- * heute hat ein Termin stattgefunden und es gibt noch kein Ergebnis (kein Abschluss, nicht verloren). Je Lead höchstens
- * einmal am Tag (abschlussFrageAt), nicht nach einer Meldung des Leads im Chat (dafür kam schon ein Push).
+ * Leads für den Vorabend-Push „Hat Frau Becker abgeschlossen?“ am Abend eines stattgefundenen Termins ohne Ergebnis (kein
+ * Abschluss, nicht verloren). Gesendete Angebote fragt der Vorab-Check des Nachfassens (P3, runAngebotVorabCheck) am
+ * Vorabend jedes automatischen Schritts mit demselben Blatt; Leads mit laufendem Nachfassen zum Angebot deshalb nicht
+ * hier (kein zweiter Push). Je Lead höchstens einmal am Tag (abschlussFrageAt), nicht nach einer Meldung des Leads im Chat.
  */
 export async function vorabendKandidaten(now = new Date()): Promise<VorabendKandidat[]> {
   const heute = berlinDayStart(now);
-  const morgen = berlinDayStart(now, 1);
-  const uebermorgen = berlinDayStart(now, 2);
   const leadWhere: Prisma.LeadWhereInput = {
     erasedAt: null,
     stornoState: null,
     abschlussGemeldetAt: null,
     OR: [{ abschlussFrageAt: null }, { abschlussFrageAt: { lt: heute } }],
     customer: { archived: false, dormantSince: null },
+    sequences: { none: { kind: { in: ANGEBOT_ABFOLGEN }, stoppedAt: null } },
   };
-  const [seqs, termine] = await Promise.all([
-    prisma.leadSequence.findMany({
-      where: { kind: "offer", stoppedAt: null, nextAt: { gte: morgen, lt: uebermorgen }, lead: { ...leadWhere, status: "Angebot gesendet" } },
-      select: { leadId: true, customerId: true, lead: { select: { assignedUserId: true } } },
-      take: 500,
-    }),
+  const [termine] = await Promise.all([
     prisma.appointment.findMany({
       where: {
         startsAt: { gte: heute, lt: now },
@@ -273,7 +272,6 @@ export async function vorabendKandidaten(now = new Date()): Promise<VorabendKand
     }),
   ]);
   const out = new Map<string, VorabendKandidat>();
-  for (const s of seqs) out.set(s.leadId, { leadId: s.leadId, customerId: s.customerId, grund: "angebot", userId: s.lead.assignedUserId });
   for (const t of termine) {
     if (!t.leadId || out.has(t.leadId)) continue;
     const userId = t.lead?.assignedUserId ?? (t.calendarKey?.startsWith("user:") ? t.calendarKey.slice(5) : null);
@@ -357,13 +355,14 @@ export async function meldeAbschlussVomLead(
 
 export async function pausiereNachfassen(leadId: string, customerId: string, opts: { now?: Date; userId?: string | null } = {}): Promise<{ ok: true; bis: string } | { ok: false; error: string }> {
   const now = opts.now ?? new Date();
-  const seq = await prisma.leadSequence.findFirst({ where: { leadId, customerId, kind: "offer", stoppedAt: null, nextAt: { not: null } }, select: { id: true, nextAt: true, log: true } });
+  const seq = await prisma.leadSequence.findFirst({ where: { leadId, customerId, kind: { in: ANGEBOT_ABFOLGEN }, stoppedAt: null, nextAt: { not: null } }, select: { id: true, nextAt: true, log: true } });
   if (!seq?.nextAt) return { ok: false, error: "Es läuft kein Nachfassen." };
   const next = new Date(Math.max(seq.nextAt.getTime(), now.getTime()) + NACHFASSEN_PAUSE_TAGE * DAY);
   const list = Array.isArray(seq.log) ? (seq.log as unknown[]) : [];
   await prisma.leadSequence.update({
     where: { id: seq.id },
-    data: { nextAt: next, log: [...list, { at: now.toISOString(), step: -1, action: "pause", result: "planned", detail: `vom Vermittler pausiert bis ${berlinDayKey(next)}` }] as unknown as Prisma.InputJsonValue },
+    // Vorab-Check (P3) kommt am Vorabend des verschobenen Schritts noch einmal
+    data: { nextAt: next, vorabCheckStep: null, log: [...list, { at: now.toISOString(), step: -1, action: "pause", result: "planned", detail: `vom Vermittler pausiert bis ${berlinDayKey(next)}` }] as unknown as Prisma.InputJsonValue },
   });
   await logLeadHistory(leadId, "status", `Nachfassen zum Angebot ${NACHFASSEN_PAUSE_TAGE} Tage pausiert`, { customerId, userId: opts.userId });
   return { ok: true, bis: next.toISOString() };
@@ -397,7 +396,7 @@ export async function ladeBlatt(leadIds: string[], leadScope: Prisma.LeadWhereIn
       formData: true,
       contactOverrides: true,
       abschlussGemeldetAt: true,
-      sequences: { where: { kind: "offer", stoppedAt: null }, select: { nextAt: true }, take: 1 },
+      sequences: { where: { kind: { in: ANGEBOT_ABFOLGEN }, stoppedAt: null }, select: { nextAt: true }, take: 1 },
       appointments: { where: { startsAt: { lte: now }, status: { in: ["booked", "completed"] } }, orderBy: { startsAt: "desc" }, take: 1, select: { id: true, startsAt: true, status: true } },
     },
   });

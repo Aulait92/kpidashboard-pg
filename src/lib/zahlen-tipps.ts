@@ -30,9 +30,14 @@ export type TipKey =
   | "abschlussquote"
   | "beitrag"
   | "naechster_schritt"
-  | "meta_lernen";
+  | "meta_lernen"
+  | "kein_whatsapp";
 
-export type Tip = { key: TipKey; title: string; text: string; href: string; cta: string; impact: number };
+/**
+ * kurz: Fassung für „Ihre 3 Hebel diese Woche“ auf Wachstum (Ole, 18.11.2026): Titel mit Anzahl, ein kurzer Satz,
+ * eigener Knopf. Ohne kurz zeigt die Karte title/text.
+ */
+export type Tip = { key: TipKey; title: string; text: string; href: string; cta: string; impact: number; kurz?: { title: string; text: string; cta?: string } };
 
 export type TipSignals = {
   /** Durchschnittliche Provision (1. Jahr) je Kunde mit Abschluss; ohne Daten ein vorsichtiger Standard. */
@@ -64,6 +69,8 @@ export type TipSignals = {
   /** Rückmeldung an Meta aktiv (lib/capi: in den letzten 30 Tagen gesendet) und Meta-Leads über 14 Tage ohne Ergebnis. */
   capiActive?: boolean;
   staleMetaLeads?: number;
+  /** Offene, nicht erreichte Leads ohne WhatsApp (lib/whatsapp/kein-whatsapp): stehen oben auf der Anrufliste. Nur Wachstum. */
+  keinWhatsApp?: number;
   /** Eigene Quoten (bezahlte Leads) und Schnitt aller Kunden; null = zu wenig Daten. */
   rates: {
     reach: { own: number | null; avg: number | null };
@@ -98,6 +105,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/empfehlungen",
       cta: "Empfehlungen ansehen",
       impact: Math.max(1, s.closedCustomers) * 0.1 * prov,
+      kurz: { title: "Empfehlungen anschalten", text: "Leads von zufriedenen Kunden kosten Sie nichts." },
     });
   }
   if (s.empfehlungEnabled && s.notAskedForReferral >= 3) {
@@ -108,6 +116,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/empfehlungen",
       cta: "Jetzt fragen",
       impact: s.notAskedForReferral * 0.1 * prov,
+      kurz: { title: `${s.notAskedForReferral} Kunden nach Empfehlungen fragen`, text: "Empfehlungen kosten Sie keinen Lead." },
     });
   }
   if (s.withoutCrossSell >= 1) {
@@ -118,6 +127,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: CROSS_SELL_HREF,
       cta: "Kunden ansehen",
       impact: s.withoutCrossSell * 0.15 * prov,
+      kurz: { title: `${s.withoutCrossSell} ${s.withoutCrossSell === 1 ? "Kunde" : "Kunden"}: weiteres Produkt anbieten`, text: "Ein zweiter Vertrag kostet keinen neuen Lead." },
     });
   }
   // Nächster Schritt (Ole, 14.11.2026): Leads ohne Wiedervorlage, Termin oder Ergebnis gehen verloren.
@@ -130,6 +140,20 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/kontakte?ansicht=ohne-schritt",
       cta: "Leads ansehen",
       impact: noStep * 0.3 * Math.max(closing, 0.05) * prov,
+      kurz: { title: `${noStep} Leads ohne nächsten Schritt`, text: "Mit Wiedervorlage oder Termin gehen weniger Leads verloren.", cta: "Jetzt planen" },
+    });
+  }
+  // Kein WhatsApp (Ole, 18.11.2026): diese Leads erreicht nur ein Anruf
+  const ohneWa = s.keinWhatsApp ?? 0;
+  if (ohneWa >= 1) {
+    out.push({
+      key: "kein_whatsapp",
+      title: "Leads ohne WhatsApp anrufen",
+      text: `${ohneWa} ${ohneWa === 1 ? "Lead ist" : "Leads sind"} nicht per WhatsApp erreichbar. Sie stehen oben auf Ihrer Anrufliste.`,
+      href: "/buyer#anrufen",
+      cta: "Zur Anrufliste",
+      impact: ohneWa * 0.5 * Math.max(closing, 0.05) * prov,
+      kurz: { title: `${ohneWa} ${ohneWa === 1 ? "Lead" : "Leads"} ohne WhatsApp anrufen`, text: ohneWa === 1 ? "Steht oben auf Ihrer Anrufliste." : "Stehen oben auf Ihrer Anrufliste." },
     });
   }
   if (s.missingPremium >= 1) {
@@ -140,6 +164,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/leads",
       cta: "Abschlüsse ergänzen",
       impact: s.missingPremium * 0.3 * prov,
+      kurz: { title: `${s.missingPremium} ${s.missingPremium === 1 ? "Abschluss" : "Abschlüsse"} ohne Beitrag`, text: "Mit Beitrag rechnen wir Ihre Provision genau." },
     });
   }
   // Rückmeldung an Meta (Ole, 15.11.2026): offene Meta-Leads ohne Ergebnis bremsen das Lernen von Meta
@@ -152,6 +177,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/leads",
       cta: "Leads ansehen",
       impact: stale * 0.1 * Math.max(closing, 0.05) * prov,
+      kurz: { title: `${stale} Leads ohne Ergebnis`, text: "Mit Ergebnis lernt Meta, welche Leads abschließen." },
     });
   }
   if (s.bestandEnabled === true && (!s.bestandImported || s.bestandCampaigns === 0)) {
@@ -164,6 +190,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/bestand",
       cta: s.bestandImported ? "Kampagne starten" : "Bestand importieren",
       impact: prov,
+      kurz: { title: "Bestand nutzen", text: "Kontakte aus Ihrem Bestand kosten keine Werbung." },
     });
   }
   const reachGap = weak(s.rates.reach);
@@ -175,6 +202,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer",
       cta: "Zu Heute",
       impact: s.paidLeadsPerMonth * reachGap * closing * prov,
+      kurz: { title: "Neue Leads schneller anrufen", text: "Sie erreichen weniger Leads als andere Vermittler im Schnitt." },
     });
   }
   const terminGap = weak(s.rates.termin);
@@ -186,6 +214,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/kalender",
       cta: "Terminlink ansehen",
       impact: s.paidLeadsPerMonth * (s.rates.reach.own ?? 0.5) * terminGap * (s.rates.close.own ?? 0.2) * prov,
+      kurz: { title: "Mehr Termine vereinbaren", text: "Schicken Sie Ihren Terminlink mit und fassen Sie nach." },
     });
   }
   const closeGap = weak(s.rates.close);
@@ -197,6 +226,7 @@ export function candidateTips(s: TipSignals): Tip[] {
       href: "/buyer/kanban",
       cta: "Offene Angebote",
       impact: s.paidLeadsPerMonth * (s.rates.reach.own ?? 0.5) * (s.rates.termin.own ?? 0.4) * closeGap * prov,
+      kurz: { title: "Offene Angebote nachfassen", text: "Ein kurzer Anruf nach ein paar Tagen bringt mehr Abschlüsse." },
     });
   }
   if (KOLLEGEN_TIPP_AKTIV && s.kollegenEnabled) {
