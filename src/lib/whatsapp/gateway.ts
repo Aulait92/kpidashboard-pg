@@ -23,6 +23,9 @@ type InboundMessage = {
   button?: { text?: string; payload?: string };
   // Antwort auf interaktive Knöpfe/Listen (freie Nachrichten im 24-h-Fenster)
   interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { id?: string; title?: string } };
+  // Fotos und PDFs (z. B. Policen vor dem Termin, lib/policen)
+  image?: { id?: string; mime_type?: string; caption?: string };
+  document?: { id?: string; mime_type?: string; filename?: string; caption?: string };
 };
 
 /** Lesbarer Text einer eingehenden Nachricht (Knopf-Antworten als Knopftext). */
@@ -31,6 +34,8 @@ export function inboundBody(m: InboundMessage): string | null {
   if (type === "text") return m.text?.body ?? null;
   if (type === "button") return m.button?.text ?? m.button?.payload ?? "[button]";
   if (type === "interactive") return m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "[interactive]";
+  // Ohne Dateinamen: ob er gezeigt werden darf (Gesundheitsangaben), entscheidet lib/policen/server.ts danach
+  if (type === "image" || type === "document") return "Dokument empfangen";
   return `[${type}]`;
 }
 
@@ -251,7 +256,8 @@ async function persistInbound(
   const type = m.type ?? "text";
   const body = inboundBody(m);
 
-  await prisma.message.create({
+  const inboundMsg = await prisma.message.create({
+    select: { id: true },
     data: {
       conversationId: conversation.id,
       direction: "inbound",
@@ -370,6 +376,22 @@ async function persistInbound(
     await recordLeadProgress(linkedLead.leadId, "replied");
     // Antwort auf eine Bestandskampagne hat gerade den Lead angelegt: Lead-Chat, der Assistent darf (wie bisher) antworten
     if (!botErlaubt && conversation.botActive && !conversation.leadId) botErlaubt = true;
+  }
+
+  // Policen vor dem Termin (Ole, 17.11.2026, lib/policen/server.ts): Fotos/PDFs im Lead-Chat laden und verschlüsselt
+  // speichern (Gesundheitsbezug nur mit Einwilligung), Einwilligungs-Knöpfe und „Widerruf“. Auch ohne Assistent.
+  if (linkedLead?.leadId) {
+    try {
+      const policen = await import("@/lib/policen/server");
+      const media = type === "image" ? m.image : type === "document" ? m.document : null;
+      const r = media
+        ? await policen.handleInboundMedia({ conversationId: conversation.id, messageId: inboundMsg.id, medium: { type, ...media }, botErlaubt, now })
+        : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m) }, now);
+      if (r.handled) return;
+      if (media && botErlaubt) botErlaubt = false;
+    } catch (e) {
+      console.error("[whatsapp policen]", e);
+    }
   }
 
   // Knopf-Antworten (lib/whatsapp/knopf.ts): „Ja, passt“ bestätigt den Termin, „Kein Bedarf mehr“ schließt den Lead

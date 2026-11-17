@@ -158,7 +158,10 @@ describe("Eingehende Knopf-Antworten", () => {
     expect(inboundBody({ type: "button", button: { text: "Keine Nachrichten mehr", payload: "Keine Nachrichten mehr" } })).toBe("Keine Nachrichten mehr");
     expect(inboundBody({ type: "interactive", interactive: { button_reply: { title: "Ja" } } })).toBe("Ja");
     expect(inboundBody({ type: "text", text: { body: "Hallo" } })).toBe("Hallo");
-    expect(inboundBody({ type: "image" })).toBe("[image]");
+    // Fotos und PDFs (Policen, lib/policen): ohne Dateinamen, bis klar ist, ob er gezeigt werden darf
+    expect(inboundBody({ type: "image" })).toBe("Dokument empfangen");
+    expect(inboundBody({ type: "document", document: { filename: "Kranken.pdf" } })).toBe("Dokument empfangen");
+    expect(inboundBody({ type: "audio" })).toBe("[audio]");
   });
 });
 

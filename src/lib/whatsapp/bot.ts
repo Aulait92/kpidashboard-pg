@@ -40,6 +40,7 @@ import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 import { logTestLead } from "@/lib/testlead";
+import { ohneBisherigePolicen } from "@/lib/policen/regeln";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -644,8 +645,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const videoOnly = agent.videoOnly !== false;
   const angabenQuelle = (angaben: unknown) => ({ formular: form.normal, angaben });
   const offeneFolgefragen = (angaben: unknown) => folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
+  // Policen schon per WhatsApp geschickt (lib/policen): Bereitlegen-Liste ohne „bisherige Policen“
+  const policenDa = await import("@/lib/policen/assistent").then((m) => m.policenGeschickt(conversation.leadId)).catch(() => false);
   const abschlussFuer = (email: string | null, nachFragen: boolean) =>
-    abschlussText({ an: ansprache, person, bereitlegen: bereitlegenListe(lead?.source ?? null, spartenDesLeads(lead?.source ?? null, angabenQuelle(conversation.qualificationData)), ansprache), email, nachFragen });
+    abschlussText({ an: ansprache, person, bereitlegen: ohneBisherigePolicen(bereitlegenListe(lead?.source ?? null, spartenDesLeads(lead?.source ?? null, angabenQuelle(conversation.qualificationData)), ansprache), policenDa), email, nachFragen });
   const nachBuchung = upcoming
     ? nachBuchungRegel({
         an: ansprache,
@@ -1013,6 +1016,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       await persistInternal(conversation.id, "advice_blocked", { original: finalText, treffer: hits });
       finalText = sichereAntwort(ansprache, advisorName, !!upcoming);
     }
+    // Policen vor dem Termin (Ole, 17.11.2026, lib/policen/assistent.ts): nach der Vertragsfrage einmal einladen, als
+    // eigene Nachricht vor der Antwort (die mit der nächsten Frage endet); nicht im Zug der Buchung
+    const policen = gebucht ? null : await import("@/lib/policen/assistent").then((m) => m.einladungJetzt({ conversationId: conversation.id, an: ansprache, person })).catch(() => null);
+    if (policen) await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen, sentBy: "bot" });
     const sent = await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,

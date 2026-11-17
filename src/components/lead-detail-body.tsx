@@ -28,6 +28,7 @@ import { LeadHeaderActions } from "@/components/lead-actions";
 import { AbschlussCard, LeadHistory } from "@/components/lead-history";
 import { loadLeadHistory } from "@/lib/lead-history";
 import { listLeadFiles } from "@/lib/lead-files";
+import { listUnterlagen } from "@/lib/policen/server";
 import { mailFeaturesOffFor, postfachOf } from "@/lib/mail/postfach";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
 import { passendeVorlagen } from "@/lib/mail/phasen";
@@ -303,13 +304,15 @@ export async function LeadDetailBody({
           known: conv?.qualificationSummary ?? null,
         })
       : null;
-  const [history, rates, files, postfachRaw, me, mailOff] = await Promise.all([
+  const [history, rates, files, postfachRaw, me, mailOff, unterlagen] = await Promise.all([
     loadLeadHistory(lead.id, team.userId),
     won ? loadCustomerProvision(customerId).then((p) => p.rates) : null,
     listLeadFiles(lead.id),
     postfachOf(team.userId),
     team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true, mailSignature: true } }) : null,
     mailFeaturesOffFor(customerId),
+    // Unterlagen vom Kunden per WhatsApp (lib/policen); Admin-Vorschau ohne Inhalte mit Gesundheitsbezug
+    listUnterlagen(lead.id, { preview: !team.userId }),
   ]);
   // „Meine Gesellschaft erlaubt das nicht“: E-Mail-Knopf, E-Mail-Fenster und Vorlagen ausblenden (Ole, 15.11.2026)
   const postfach = mailOff ? null : postfachRaw;
@@ -591,7 +594,7 @@ export async function LeadDetailBody({
 
       <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
-      <LeadFiles leadId={lead.id} files={files} defaultKind={won ? "police" : "angebot"} />
+      <LeadFiles leadId={lead.id} files={files} unterlagen={unterlagen} defaultKind={won ? "police" : "angebot"} />
 
       <LeadHistory mailReady={!!postfach} leadId={lead.id} initial={history} legacyNote={lead.notes ?? (fields ? (firstString(fields["Notizen"]) ?? null) : null)} />
     </>

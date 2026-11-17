@@ -101,6 +101,11 @@ async function handle(req: Request): Promise<Response> {
             return null;
           }),
           transient: await pruneTransient(now).catch(() => null),
+          // Policen per WhatsApp: 30 Tage nach dem Termin ohne Abschluss löschen, offene Einwilligungen nach 24 h (lib/policen)
+          policen: await import("@/lib/policen/server").then((m) => m.prunePolicen(now)).catch((e: unknown) => {
+            reportError(e, "cron-policen");
+            return null;
+          }),
           // Vertragsende: Konto ruht, Erinnerungen 30/7 Tage vor der Löschung, endgültige Löschung (lib/ruhend.ts)
           retention: await import("@/lib/ruhend").then((m) => m.runRetentionCron(now)).catch((e: unknown) => {
             reportError(e, "cron-retention");

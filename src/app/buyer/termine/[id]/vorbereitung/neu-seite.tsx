@@ -19,6 +19,8 @@ import { ladePreisPilot } from "@/lib/preise/pilot-server";
 import { rechnerAngaben } from "@/lib/preise/pilot";
 import { VorbereitungNeu } from "./neu-client";
 import { vorsorgeThema } from "@/lib/schutz-ueberblick";
+import { listUnterlagen } from "@/lib/policen/server";
+import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
 
 const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
 // „Heute, 10:00 Uhr“ / „Morgen, …“ wie auf „Heute“ (UX Runde 4), sonst Datum
@@ -36,11 +38,13 @@ const LISTE = "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 gap-y-1";
 const BEZ = "break-words hyphens-auto text-[color:var(--muted)]";
 
 export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: VorbereitungDaten & { id: string; leadId: string | null }; von?: string }) {
-  const [tv, p, kunde, pilot] = await Promise.all([
+  const [tv, p, kunde, pilot, vomKunden] = await Promise.all([
     ladeTarifvorbereitung(d.id, ctx, d),
     loadPraesentation(d.id, ctx),
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true, vorsorgeThemenAus: true } }),
     ladePreisPilot(),
+    // Policen vom Kunden per WhatsApp (lib/policen)
+    d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview }) : [],
   ]);
   if (!tv || !p) return null;
   // Beiträge rechnen (Pilot, docs/preise-pilot.md): nur Rechner-Angaben der freigeschalteten Sparten
@@ -73,6 +77,11 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           <p className="text-[color:var(--muted)]">Noch keine Angaben. Fragen Sie im Termin zuerst nach dem Bedarf.</p>
         )}
         {will.quelle ? <p className="mt-2 text-xs text-[color:var(--muted)]">{will.quelle}</p> : null}
+        {d.leadId && vomKunden.length ? (
+          <div className="mt-3 border-t border-[color:var(--border)] pt-3">
+            <UnterlagenVomKunden leadId={d.leadId} unterlagen={vomKunden} />
+          </div>
+        ) : null}
       </div>
     </Card>
   );

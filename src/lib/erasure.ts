@@ -60,6 +60,7 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor, 
     prisma.appointment.deleteMany({ where: { customerId } }),
     prisma.consentOptIn.deleteMany({ where: { customerId } }),
     prisma.calendarConnection.deleteMany({ where: { customerId } }),
+    prisma.leadDocument.deleteMany({ where: { customerId } }),
     prisma.advisorCalendar.deleteMany({ where: { user: { customerId } } }),
     // Abwesenheiten (Beschäftigtendaten des Kunden) gehen mit
     prisma.userAbsence.deleteMany({ where: { customerId } }),
@@ -117,6 +118,9 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     // Ausgehende E-Mails (Betreff, Text, Empfänger) im Kontaktverlauf
     prisma.contactMail.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.leadFile.deleteMany({ where: { leadId: { in: ids } } }),
+    // Unterlagen per WhatsApp (Policen, lib/policen) und deren Einwilligungen
+    prisma.leadDocument.deleteMany({ where: { leadId: { in: ids } } }),
+    prisma.bestandConsentLog.deleteMany({ where: { customerId, source: "policen_gesundheit", address: { in: phones } } }),
     // Empfehlungen & Bewertungen: Antworttext, Link und Verweis auf den Empfehlenden
     prisma.reviewRequest.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.referralLink.deleteMany({ where: { leadId: { in: ids } } }),

@@ -732,6 +732,8 @@ model Lead {
   // Erneut eingetragen (lib/lead-erneut.ts): weitere Formular-Einsendungen derselben Person beim selben Kunden
   reentries           LeadReentry[]
   files               LeadFile[]
+  // Unterlagen vom Lead per WhatsApp (Policen vor dem Termin, lib/policen)
+  documents           LeadDocument[]
   // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
   mails               ContactMail[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
@@ -3649,6 +3651,48 @@ model LeadFile {
   contracts LeadContract[]
 
   @@index([leadId])
+}
+
+// Unterlagen, die ein Lead per WhatsApp schickt (Ole, 17.11.2026, lib/policen): Fotos oder PDFs seiner Policen,
+// damit sich der Vermittler vor dem Termin einlesen kann. Inhalt app-seitig verschlüsselt (AES-256-GCM, ENCRYPTION_KEY).
+// Gesundheitsbezug (Kranken, BU, Leben, Pflege, Unfall): nur mit ausdrücklicher Einwilligung (Art. 9 Abs. 2 lit. a DSGVO,
+// consentId → BestandConsentLog) und nur bei POLICEN_GESUNDHEIT_AN; nie ausgelesen. Gelöscht 30 Tage nach dem Termin
+// ohne Abschluss, sofort bei Widerruf und mit dem Lead (Art. 17).
+model LeadDocument {
+  id               String    @id @default(cuid())
+  customerId       String
+  leadId           String
+  lead             Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  conversationId   String?
+  // Chat-Nachricht, mit der die Unterlage kam (Message.id)
+  messageId        String?
+  // gespeichert | wartet (Einwilligung ausstehend: nur die WhatsApp-Media-ID, kein Inhalt)
+  status           String    @default("gespeichert")
+  // WhatsApp-Media-ID, nur solange die Einwilligung aussteht
+  waMediaId        String?
+  mimeType         String
+  fileName         String
+  size             Int
+  // verschlüsselt (lib/encryption.ts encryptBytes); null solange status = wartet
+  data             Bytes?
+  // police | sonstig
+  kind             String    @default("police")
+  // Sparte laut Klassifikation, z. B. haftpflicht, hausrat, kfz, kranken, bu (lib/policen/regeln.ts SPARTEN)
+  sparte           String?
+  gesundheitsbezug Boolean   @default(false)
+  // Einwilligung (BestandConsentLog.id) und Zeitpunkt, nur bei Gesundheitsbezug
+  consentId        String?
+  consentAt        DateTime?
+  // Ausgelesene Vertragsdaten (nur Sachversicherungen): Gesellschaft, Sparte, Beitrag, Zahlweise, Summe, SB, Ablauf
+  extracted        Json?
+  extractedAt      DateTime?
+  // Geplante Löschung (Cron: 30 Tage nach dem Termin ohne Abschluss)
+  deleteAfter      DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([leadId])
+  @@index([customerId])
+  @@index([status, createdAt])
 }
 
 // Verträge je Lead (Cross-Selling, Ole 14.11.2026): Sparte, Beitrag, Datum, optional Versicherer,

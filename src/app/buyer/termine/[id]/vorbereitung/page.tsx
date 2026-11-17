@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { ClipboardCheck, FileDown, ListChecks, Presentation, Receipt, TriangleAlert } from "lucide-react";
+import { ClipboardCheck, FileDown, FileText, ListChecks, Presentation, Receipt, TriangleAlert } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { ZurueckLink } from "@/components/zurueck-link";
 import { ButtonLink, Card, CardHeader } from "@/components/ui";
@@ -11,6 +11,8 @@ import { AngeboteEditor } from "./angebote-editor";
 import { PreparedButton } from "./prepared-button";
 import { NeueVorbereitung } from "./neu-seite";
 import { neueTerminvorbereitung } from "@/lib/terminvorbereitung-neu";
+import { listUnterlagen } from "@/lib/policen/server";
+import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Terminvorbereitung | performancegrowth" };
@@ -36,7 +38,12 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
   const ab = abschnitte(d);
   const offen = offenePunkte(ab);
   const unterlagen = unterlagenFuer(d.lead.produkt, spartenVon(d));
-  const [ang, auslesenErlaubt, newUi] = await Promise.all([loadAngebote(id, ctx), angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt), isNewUi(ctx.customerId)]);
+  const [ang, auslesenErlaubt, newUi, unterlagenVomKunden] = await Promise.all([
+    loadAngebote(id, ctx),
+    angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt),
+    isNewUi(ctx.customerId),
+    d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview }) : [],
+  ]);
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       {von === "heute" ? (
@@ -83,6 +90,15 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
             readOnly={ctx.preview}
             leadHref={d.leadId ? `${newUi ? "/buyer/kontakte/" : "/buyer/leads/"}${d.leadId}#dokumente` : null}
           />
+        </Card>
+      ) : null}
+
+      {d.leadId && unterlagenVomKunden.length ? (
+        <Card className="mb-5">
+          <CardHeader title="Unterlagen vom Kunden" icon={FileText} />
+          <div className="px-5 py-3.5 text-sm">
+            <UnterlagenVomKunden leadId={d.leadId} unterlagen={unterlagenVomKunden} titel={false} />
+          </div>
         </Card>
       ) : null}
 
