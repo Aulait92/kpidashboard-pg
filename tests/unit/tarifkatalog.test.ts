@@ -131,7 +131,6 @@ describe("Katalog laden", () => {
       "Itzehoer",
       "LV 1871",
       "LVM",
-      "Monuta",
       "Münchener Verein",
       "NÜRNBERGER",
       "Provinzial",
