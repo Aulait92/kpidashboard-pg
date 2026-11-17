@@ -1,0 +1,51 @@
+{
+  "gesellschaft": "Ostangler",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Versicherung zum Neubauwert",
+    "Gebäude-Check inklusive",
+    "Innovationsgarantie"
+  ],
+  "tarife": [
+    {
+      "name": "Exclusiv Fair Play Plus",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "unbegrenzt",
+        "elementar": "optional",
+        "ableitung": "bis VS",
+        "pv": "bis 30.000 €",
+        "kosten": "bis VS, Hotel 200 Tage",
+        "neuwert": "ja (Neubauwert)",
+        "ueberspannung": "bis VS",
+        "vandalismus": "bis 5.000 €, SB 250 €",
+        "mietausfall": "30 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.ostangler.de/fileadmin/user_upload/Dokumente_new_sync/Ostangler/Wohngebaeudeversicherung/Leistungsuebersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ostangler.de/produkte/wohngebaeude",
+    "https://www.ostangler.de/produkte/wohngebaeude-tarif",
+    "https://www.ostangler.de/fileadmin/user_upload/Dokumente_new_sync/Ostangler/Wohngebaeudeversicherung/Leistungsuebersicht.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht OAB_Lei_VGV_3.3 (Stand 08.10.2026) zeigt nur Exclusiv Fair Play Plus; die Produktseite nennt zusätzlich einen Standard-Tarif ohne Übersicht.",
+    "Photovoltaik bis 30.000 € mitversichert; erweiterte Deckung über den Baustein Energietechnik (SB 150 €).",
+    "Hotelkosten 200 Tage à 100 €; Aufräum- und Abbruchkosten bis VS.",
+    "Tierverbiss nur im Baustein Haustechnik (bis 5.000 €); Selbstbeteiligung allgemein nicht genannt."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "Ostangler",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Neuwertentschädigung",
+    "Datenrettung bis 2.000 €",
+    "Fair-Play-Klausel"
+  ],
+  "tarife": [
+    {
+      "name": "EXCLUSIV Fair Play",
+      "kurz": "Fair Play",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 % der VS",
+        "fahrrad": "1 % VS, max. 5.000 €",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "2 %, max. 2.000 €",
+        "garten": "bis 1.000 €",
+        "auto": "1 % VS, max. 1.000 €",
+        "ueberspannung": "ja",
+        "hotel": "180 Tage, 200 €/Tag",
+        "aussen": "6 Mon., max. 30.000 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Hausratversicherung/02%20%C3%9Cbersichten%20Formulare/Leistungs%C3%BCbersicht%20Hausrat.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "EXCLUSIV Fair Play Plus",
+      "kurz": "Fair Play Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "50 % der VS",
+        "fahrrad": "1 % VS, max. 5.000 €",
+        "elementar": "optional",
+        "online": "bis 1.000 €",
+        "bargeld": "3 %, max. 2.000 €",
+        "garten": "bis VS",
+        "auto": "5 % VS, max. 2.500 €",
+        "ueberspannung": "ja",
+        "hotel": "365 Tage, 200 €/Tag",
+        "aussen": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Hausratversicherung/02%20%C3%9Cbersichten%20Formulare/Leistungs%C3%BCbersicht%20Hausrat.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ostangler.de/produkte/hausrat",
+    "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Hausratversicherung/02%20%C3%9Cbersichten%20Formulare/Leistungs%C3%BCbersicht%20Hausrat.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht HAU_ÜS_157.19 (Stand 26.11.2025).",
+    "Einfacher Diebstahl in der Wohnung nicht genannt; Fair Play Plus hat Trickdiebstahl bis 3.000 € und Taschendiebstahl bis 1.000 €.",
+    "Fahrrad: höhere Entschädigung vereinbar; Elementar mit SB 10 %, mind. 500 €, max. 5.000 €.",
+    "Haus- und Wohnungsschutzbrief (bis 300 € je Fall, 600 € im Jahr) als Notfall-Service gewertet.",
+    "Empfohlene Versicherungssumme je m² und Selbstbeteiligung nicht genannt."
+  ]
+}

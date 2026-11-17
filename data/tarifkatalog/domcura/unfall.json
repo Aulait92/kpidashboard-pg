@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "Domcura",
+  "sparte": "unfall",
+  "produkt": "Unfallkonzept",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Tauchunfälle mitversichert",
+    "Beitragsbefreiung Arbeitslos",
+    "Innovationsgarantie"
+  ],
+  "tarife": [
+    {
+      "name": "Standard-Schutz",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "khtg": "wählbar, max. 1 Jahr",
+        "sofort": "nein",
+        "kosmetik": "bis 12.500 €",
+        "bergung": "bis 12.500 €",
+        "zecken": "nein",
+        "gliedertaxe": "nein"
+      },
+      "bausteine": {
+        "rente": "nein"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/unfall/leistungsuebersicht_unfall.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "khtg": "wählbar, max. 3 Jahre",
+        "sofort": "10.000 €",
+        "kosmetik": "bis 100.000 €",
+        "bergung": "bis 100.000 €",
+        "zecken": "ja",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "nein"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/unfall/leistungsuebersicht_unfall.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Top-Schutz",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "unfallrente": "optional, ab 35 %",
+        "khtg": "wählbar, max. 5 Jahre",
+        "sofort": "20.000 €",
+        "kosmetik": "bis 500.000 €",
+        "bergung": "bis 1 Mio. €",
+        "zecken": "ja",
+        "gliedertaxe": "ja"
+      },
+      "bausteine": {
+        "rente": "optional"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/unfall/leistungsuebersicht_unfall.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.domcura.de/produkte/private-sachversicherungen/unfall",
+    "https://www.domcura.de/fileadmin/content/downloads/unfall/leistungsuebersicht_unfall.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht DC/UV/LUE 2025/05 (Vertragsgrundlagen Stand 01.05.2025).",
+    "Grundsumme, Progression und Leistung ab Invaliditätsgrad nicht genannt (Summen individuell).",
+    "Unfallrente: nur Baustein „Unfall-Rente PLUS“ im Top-Schutz (ab 35 %); ob Standard und Komfort eine Rente haben, ist nicht belegt.",
+    "Bergung Top: 500.000 € im Inland, 1 Mio. € im Ausland. Baustein „First Aid“ (Chefarzt, Zweibettzimmer) nicht im Schema.",
+    "Domcura markiert keinen Tarif; Komfort als mittlere Stufe."
+  ]
+}

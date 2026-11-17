@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Domcura",
+  "sparte": "tierhalter-hund",
+  "produkt": "Tierhalterhaftpflichtkonzept",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leistungs- und Marktgarantie",
+    "Leinenfrei mitversichert",
+    "Tierarzt-Ausfall 5.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Tierhalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "20 oder 50 Mio. €",
+        "miete": "ja",
+        "fremdhueter": "ja",
+        "welpen": "bis 18 Monate",
+        "forderungsausfall": "ja",
+        "geliehen": "bis 5.000 €",
+        "nebenberuf": "bis 15.000 €",
+        "ausland": "unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/tierhaftpflicht/leistungsuebersicht_thv.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.domcura.de/produkte/private-sachversicherungen/tierhalterhaftpflicht",
+    "https://www.domcura.de/fileadmin/content/downloads/tierhaftpflicht/leistungsuebersicht_thv.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht DC/THV/LUE 2025/02 (Vertragsgrundlagen Stand 01.02.2025); ein Konzept für Hunde und Pferde.",
+    "Selbstbeteiligung allgemein nicht genannt (nur Kfz-Schäden SB 250 €, Tierarztkosten-Ausfall SB 200 €)."
+  ]
+}

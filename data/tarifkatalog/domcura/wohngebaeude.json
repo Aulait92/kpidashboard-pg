@@ -1,0 +1,132 @@
+{
+  "gesellschaft": "Domcura",
+  "sparte": "wohngebaeude",
+  "produkt": "Einfamilienhauskonzept",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Versicherung zum Neubauwert",
+    "Überspannung durch Blitz",
+    "Innovationsgarantie"
+  ],
+  "tarife": [
+    {
+      "name": "Standard-Schutz",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "optional, SB 250 €",
+        "kosten": "bis 50.000 €",
+        "ueberspannung": "ja",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "technik": "optional",
+        "hausHaftpflicht": "optional"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "unbegrenzt",
+        "elementar": "optional",
+        "ableitung": "bis 5.000 €",
+        "pv": "optional, SB 250 €",
+        "kosten": "bis 1 Mio. €",
+        "ueberspannung": "ja",
+        "vandalismus": "bis 10.000 €",
+        "tiere": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "technik": "optional",
+        "hausHaftpflicht": "optional"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Top-Schutz",
+      "kurz": "Top",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "unbegrenzt",
+        "elementar": "optional",
+        "ableitung": "unbegrenzt",
+        "pv": "optional, SB 250 €",
+        "kosten": "unbegrenzt",
+        "ueberspannung": "ja",
+        "vandalismus": "unbegrenzt",
+        "tiere": "bis 5.000 €",
+        "allgefahren": "optional, SB 250 €"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "erneuerbar": "optional",
+        "technik": "optional",
+        "hausHaftpflicht": "optional"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Exklusiv-Schutz",
+      "kurz": "Exklusiv",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "gf": "unbegrenzt",
+        "elementar": "inklusive",
+        "ableitung": "unbegrenzt",
+        "pv": "inklusive, SB 250 €",
+        "kosten": "unbegrenzt",
+        "ueberspannung": "ja",
+        "vandalismus": "unbegrenzt",
+        "tiere": "bis 5.000 €",
+        "allgefahren": "inklusive, SB 250 €"
+      },
+      "bausteine": {
+        "elementar": "inklusive",
+        "glas": "inklusive",
+        "erneuerbar": "inklusive",
+        "technik": "inklusive",
+        "hausHaftpflicht": "optional"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.domcura.de/produkte/private-sachversicherungen/einfamilienhaus",
+    "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht DC/EFH/LUE 2024/11 (Vertragsgrundlagen Stand 15.11.2024).",
+    "Ableitungsrohre nur, wenn das Gebäude höchstens 30 Jahre alt ist oder eine Dichtigkeitsprüfung vorliegt; sonst Komfort 1.000 €, Top und Exklusiv 20.000 €.",
+    "Photovoltaik ist in allen Stufen mitversichert; „optional“ bezieht sich auf die Allgefahren-Deckung für erneuerbare Energien.",
+    "Elementar mit SB 10 %, mind. 500 €, max. 5.000 €; Starkregen zusätzlich wählbar.",
+    "Domcura markiert keinen Tarif; Top als mittlere Stufe (bei 4 Stufen die dritte)."
+  ]
+}

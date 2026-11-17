@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Ostangler",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehalterhaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Turniere und Training",
+    "Kutschfahrten privat",
+    "Fair-Play-Klausel"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 oder 20 Mio. €",
+        "miete": "bis 250.000 €",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "bis 2 Jahre",
+        "ausland": "bis 1 Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Private%20Haftpflichtversicherungen/03%20%C3%9Cbersichten%20Formulare/Pferdehalterhaftpflicht_%C3%9Cbersicht_23.0.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ostangler.de/produkte/haftpflicht/pferdehalterhaftpflicht",
+    "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Private%20Haftpflichtversicherungen/03%20%C3%9Cbersichten%20Formulare/Pferdehalterhaftpflicht_%C3%9Cbersicht_23.0.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht HV_Pferd_Übersicht_V23.0 (Stand 01.04.2016), Aktualität bitte bestätigen.",
+    "Selbstbeteiligung: Produktinformation nennt nur „wenn vereinbart“, Höhe nicht veröffentlicht.",
+    "Forderungsausfall in der Pferde-Übersicht nicht genannt."
+  ]
+}

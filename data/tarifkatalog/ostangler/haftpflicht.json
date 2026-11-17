@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "Ostangler",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ausfalldeckung ab 0 €",
+    "Selbst genutztes Haus inklusive",
+    "Fair-Play-Klausel"
+  ],
+  "tarife": [
+    {
+      "name": "EXCLUSIV Fair Play",
+      "kurz": "Fair Play",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "forderungsausfall": "ja, ab 0 €",
+        "schluessel": "bis 10 Mio. €",
+        "geliehen": "bis 10 Mio. €",
+        "miete": "bis 10 Mio. €",
+        "gefaelligkeit": "bis 10 Mio. €",
+        "neuwert": "nein",
+        "rabattretter": "nein",
+        "drohne": "bis 5 kg",
+        "nebenberuf": "nein",
+        "ehrenamt": "bis 10 Mio. €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "hausbesitz": "inklusive",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Private%20Haftpflichtversicherungen/03%20%C3%9Cbersichten%20Formulare/Privathaftpflicht_%C3%9Cbersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "EXCLUSIV Fair Play Plus",
+      "kurz": "Fair Play Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "forderungsausfall": "ja, ab 0 €",
+        "schluessel": "bis 10 Mio. €",
+        "geliehen": "bis 10 Mio. €",
+        "miete": "bis 10 Mio. €",
+        "gefaelligkeit": "bis 10 Mio. €",
+        "neuwert": "bis 2.000 €",
+        "rabattretter": "bis 10.000 €",
+        "drohne": "bis 10 kg",
+        "nebenberuf": "ja, bis 10.000 € Umsatz",
+        "ehrenamt": "bis 10 Mio. €"
+      },
+      "bausteine": {
+        "dienst": "optional",
+        "hausbesitz": "inklusive",
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Private%20Haftpflichtversicherungen/03%20%C3%9Cbersichten%20Formulare/Privathaftpflicht_%C3%9Cbersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ostangler.de/produkte/haftpflicht/privathaftpflicht",
+    "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Private%20Haftpflichtversicherungen/03%20%C3%9Cbersichten%20Formulare/Privathaftpflicht_%C3%9Cbersicht.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht OAB_Lei_PHV_16.23 (Stand 01.12.2020); Fair Play Plus ist eine zusätzlich vereinbarte Klausel auf Fair Play.",
+    "Deckungssumme wählbar 10, 20 oder 50 Mio. €; über 10 Mio. € Personenschäden je Person höchstens 15 Mio. €.",
+    "Schäden durch deliktunfähige Kinder nicht ausdrücklich genannt (nur Verzicht auf Prüfung der Aufsichtspflicht bis 10 Mio. €).",
+    "Mallorca-Deckung und Selbstbeteiligung nicht genannt.",
+    "Neuwert, Rabattretter und Nebenberuf bei Fair Play als „nein“ gesetzt, weil sie nur in der Plus-Klausel stehen.",
+    "Tarifvarianten Familie, Single und 55 Plus; 5 % Rabatt bei 3 Jahren Laufzeit."
+  ]
+}

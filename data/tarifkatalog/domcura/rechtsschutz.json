@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "Domcura",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzkonzept",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Telefon- und Online-Beratung",
+    "Internet-Rechtsschutz",
+    "SB entfällt nach 5 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt (Europa)",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "350.000 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "telefon": "ja",
+        "mediation": "bis 3.000 €",
+        "vsWelt": "350.000 €",
+        "straf": "ja"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/rechtsschutz/leistungsuebersicht_rs.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Top-Schutz",
+      "kurz": "Top",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt (Europa)",
+        "beruf": "ja",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "kaution": "350.000 €",
+        "wartezeit": "3 Monate",
+        "opfer": "ja",
+        "telefon": "ja",
+        "mediation": "bis 3.000 €",
+        "vsWelt": "500.000 €",
+        "straf": "inkl. Spezial-Straf-RS"
+      },
+      "bausteine": {
+        "verkehr": "optional",
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.domcura.de/fileadmin/content/downloads/rechtsschutz/leistungsuebersicht_rs.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.domcura.de/produkte/private-sachversicherungen/rechtsschutz",
+    "https://www.domcura.de/fileadmin/content/downloads/rechtsschutz/leistungsuebersicht_rs.pdf",
+    "https://www.domcura.de/fileadmin/content/downloads/rechtsschutz/vertragsgrundlagen_rs.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht DC/RS/LUE/2023/10 (Vertragsgrundlagen Stand 01.10.2023); Risikoträger laut Informationsblatt Concordia (über NORDVERS).",
+    "Privat und Beruf immer zusammen (§ 25); Verkehr (§ 26) und Wohnen (§ 29) laut Bedingungen wählbar.",
+    "Selbstbeteiligung 300 € oder 150 € (mit Anwalt aus dem APRAXA-Netzwerk 150 € bzw. 0 €); welche Stufe welche SB hat, ist nicht belegt.",
+    "Spezial-Straf-Rechtsschutz Top: Leistungsübersicht 2,5 Mio. €, Produktseite 2 Mio. €."
+  ]
+}

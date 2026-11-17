@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "Ostangler",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehalterhaftpflicht",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Leinenfrei mitversichert",
+    "Gewollter und ungewollter Deckakt",
+    "Fair-Play-Klausel"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehalterhaftpflicht",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10, 20 oder 50 Mio. €",
+        "miete": "bis 20 Mio. €",
+        "fremdhueter": "ja",
+        "welpen": "bis 12 Monate",
+        "forderungsausfall": "ja, ab 0 €",
+        "geliehen": "bis 3.000 €",
+        "ausland": "unbegrenzt"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Private%20Haftpflichtversicherungen/03%20%C3%9Cbersichten%20Formulare/Hundehalterhaftpflicht_%C3%9Cbersicht.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ostangler.de/produkte/haftpflicht/hundehalterhaftpflicht",
+    "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Private%20Haftpflichtversicherungen/03%20%C3%9Cbersichten%20Formulare/Hundehalterhaftpflicht_%C3%9Cbersicht.pdf"
+  ],
+  "offen": [
+    "Leistungsübersicht HV_Hund_Übersicht_15.1 (Stand 01.04.2019).",
+    "Selbstbeteiligung: Produktinformation nennt nur „wenn vereinbart“, Höhe nicht veröffentlicht.",
+    "Geliehene Sachen bis 3.000 € nur mit Bezug zum Hund; Mietsachen in Hotels bis 10 Mio. €."
+  ]
+}
