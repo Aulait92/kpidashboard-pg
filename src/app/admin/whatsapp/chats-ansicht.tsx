@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { nowMs } from "@/lib/now";
 import { LiveRefresh, NewMessageHint, StickToBottom } from "@/components/live-refresh";
 import { lastInboundAt } from "@/lib/live";
+import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
 
 // Chats (WhatsApp): Liste, Verlauf und Lead-Seitenleiste. Gemeinsam für /admin/whatsapp (Chat per ?c=) und den
 // neuen Admin (/admin/neu/leads/chats, Chat als eigene Adresse /admin/neu/leads/chats/<id>).
@@ -336,7 +337,7 @@ export async function ChatsAnsicht({
                         </span>
                       </div>
                       <p className="truncate text-xs text-[color:var(--muted)]">
-                        {last ? `${last.direction === "outbound" ? "Du: " : ""}${last.body ?? ""}` : ""}
+                        {last ? `${last.direction === "outbound" ? "Du: " : ""}${waOhneMarker(last.body ?? "")}` : ""}
                       </p>
                     </div>
                   </Link>
@@ -469,7 +470,7 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
                 : "rounded-[4px_16px_16px_16px] border border-[color:var(--border)] bg-white"
             }`}
           >
-            {m.body}
+            {waFormatKnoten(m.body)}
           </div>
           <div className={`mt-1 flex items-center gap-1.5 text-xs text-[color:var(--muted)] ${outbound ? "justify-end" : ""}`} data-message-meta>
             {sender ? (
@@ -522,7 +523,7 @@ async function ActiveChat({ active, now, backHref }: { active: Active; now: numb
 
       {active.needsAttention ? (
         <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-900">
-          <b>Braucht Aufmerksamkeit:</b> {active.attentionReason ?? "Bitte beim Lead melden."}
+          <b>Braucht Aufmerksamkeit:</b> {waOhneMarker(active.attentionReason) ?? "Bitte beim Lead melden."}
         </div>
       ) : null}
 

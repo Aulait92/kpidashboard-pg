@@ -17,6 +17,7 @@ import { syncFollowUpWithStatus } from "@/lib/lead-followup";
 import { syncPrimaryContract } from "@/lib/vertraege";
 import { recordUsage } from "@/lib/usage";
 import { prisma } from "@/lib/prisma";
+import { getBuyerContext } from "@/lib/buyer-context";
 import {
   CLOSED_STATUS,
   isReachedStatus,
@@ -95,7 +96,11 @@ export async function cancelLeadAction(
     const res = await requestStorno(lead.id, stornogrundRecordId.slice(PPL_REASON_PREFIX.length), bemerkung, { id: session.userId, email: session.email, role: session.role });
     if (!res.ok) return { error: res.error, leadId };
     revalidatePath("/buyer", "layout");
-    return { ok: true, leadId, ...(res.state === "review" ? { message: "Storno ist eingereicht und wird geprüft." } : {}) };
+    return { ok: true, leadId, ...(res.state === "review"
+        ? { message: "Storno ist eingereicht und wird geprüft." }
+        : res.anteil && res.anteil < 1
+          ? { message: `Storno ist erfasst. Als Kulanz schreiben wir Ihnen ${Math.round(res.anteil * 100)} % des Leadpreises gut.` }
+          : {}) };
   }
 
   // Storno nur, wenn für den Bezug „Erlaubte Stornogründe" vertraglich
@@ -568,5 +573,16 @@ export async function eraseLeadAction(leadId: string): Promise<{ ok: true } | { 
   const { eraseLead } = await import("@/lib/erasure");
   await eraseLead(lead.id);
   revalidatePath("/buyer", "layout");
+  return { ok: true };
+}
+
+/** Einwilligung zur Nutzungsanalyse (lib/nutzungsanalyse.ts): ja oder nein, mit Zeitpunkt und Textversion. */
+export async function setAnalyseEinwilligungAction(ja: boolean): Promise<{ ok: boolean }> {
+  const ctx = await getBuyerContext();
+  if (!ctx || ctx.preview || !ctx.userId) return { ok: false };
+  const { ANALYSE_VERSION } = await import("@/lib/nutzungsanalyse");
+  await prisma.user.update({ where: { id: ctx.userId }, data: { analyseEinwilligung: ja ? "ja" : "nein", analyseEinwilligungAt: new Date(), analyseEinwilligungVersion: ANALYSE_VERSION } });
+  const { audit } = await import("@/lib/audit");
+  await audit(ja ? "nutzer.analyse_einwilligung" : "nutzer.analyse_abgelehnt", { entity: "User", entityId: ctx.userId, customerId: ctx.customerId, details: { version: ANALYSE_VERSION } });
   return { ok: true };
 }

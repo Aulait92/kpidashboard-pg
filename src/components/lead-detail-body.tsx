@@ -50,6 +50,7 @@ import { anrufZiel } from "@/lib/anruf-ziel";
 import { BestehendeVertraege } from "@/components/bestehende-vertraege";
 import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
+import { waOhneMarker } from "@/lib/wa-format";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
 import {
   ALL_GROUP_KEYS,
@@ -309,9 +310,15 @@ export async function LeadDetailBody({
   // Nur bei offenen Kontakten ohne anstehenden Termin und ohne fehlendes Termin-Ergebnis.
   const verloren = ["kein interesse", "disqualifiziert"].includes((lead.status ?? "").trim().toLowerCase());
   const gesprochen = lead.reached || !!lead.followUpAt || lead.status === "Angebot gesendet";
+  const zielOffen = !storniert && !won && !verloren && !nextAppt && stepState !== "result_missing" && !lead.erasedAt;
+  // Letzter vergangener Termin (nicht abgesagt): Nachfassen konkret „An den Termin vom … anknüpfen“
+  const letzterTermin = zielOffen
+    ? ((await prisma.appointment.findFirst({ where: { leadId: lead.id, startsAt: { lt: new Date(nowMs()) }, status: { not: "cancelled" } }, orderBy: { startsAt: "desc" }, select: { startsAt: true } }))?.startsAt ?? null)
+    : null;
   const ziel =
-    !storniert && !won && !verloren && !nextAppt && stepState !== "result_missing" && !lead.erasedAt
+    zielOffen
       ? anrufZiel({
+          letzterTermin,
           kind: gesprochen ? "followup" : "callback",
           reason: lead.followUpNote ?? (lead.status === "Angebot gesendet" ? "Angebot nachfassen" : (conv?.attentionReason ?? "")),
           source: lead.source,
@@ -507,7 +514,7 @@ export async function LeadDetailBody({
         >
           <MessageCircle className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
-            <b>Wartet auf Sie:</b> {conv.attentionReason ?? "Bitte beim Kontakt melden."}
+            <b>Wartet auf Sie:</b> {waOhneMarker(conv.attentionReason) ?? "Bitte beim Kontakt melden."}
           </span>
           <span className="font-semibold">Antworten</span>
         </a>

@@ -20,6 +20,7 @@ export const MAIL_ARTEN = {
   terminaenderung: "Terminänderung",
   bestandskampagne: "Bestandskampagne",
   kein_whatsapp: "Kein WhatsApp",
+  nummer_erfragen: "Richtige Nummer erfragen",
   bewertungsbitte: "Bewertungsbitte",
   einwilligung: "Einwilligung",
   manuell: "E-Mail",

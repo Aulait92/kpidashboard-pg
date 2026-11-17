@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { CUSTOMER_TITLES, exampleRestFor, exampleValuesFor, formOf, previewBodyFor, purposesFor, templateNameFor, templateNamesOf, TEMPLATE_VERSION, isTemplateRevisionOf } from "@/lib/whatsapp/template-plan";
 import { AnspracheForm } from "@/components/ansprache-form";
 import { asAnsprache } from "@/lib/ansprache";
-import { rankTemplates, renderTemplate, TEMPLATE_BUTTONS, TEMPLATE_HEADER, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { rankTemplates, renderTemplate, TEMPLATE_BUTTONS, TEMPLATE_HEADER, templateVersionOfName, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +62,8 @@ export default async function VorlagenPage() {
     const text = tpl ? renderTemplate(tpl.body, exampleValuesFor(purpose, form)) : previewBodyFor(purpose, names, form);
     // Was bis zur Freigabe tatsächlich rausgeht (bisherige freigegebene Fassung)
     const sending = tpl?.status === "approved" ? null : rankTemplates(list.filter((t) => t.status === "approved"), purpose, an, beispiel);
-    const fallbackText = sending ? renderTemplate(sending.tpl.body, sending.params(exampleRestFor(purpose, an))) : null;
+    // Ältere Fassung mit anderer Platzhalter-Belegung (z. B. Erinnerung v4): deren Beispielwerte
+    const fallbackText = sending ? renderTemplate(sending.tpl.body, sending.params(exampleRestFor(purpose, an, templateVersionOfName(sending.tpl.name)))) : null;
     const failed = tpl?.status === "rejected" || tpl?.status === "paused";
     const badge: Badge =
       sending && !failed ? { label: tpl ? "Neue Fassung in Prüfung bei Meta" : "Neue Fassung wird eingereicht", cls: "bg-amber-50 text-amber-700", icon: Clock } : badgeFor(tpl?.status ?? null, connected);

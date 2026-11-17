@@ -534,3 +534,13 @@ Nicht doppelt gebaut, nur geprüft. Ergebnis: Die Rechtslage trägt alle Punkte.
 - **KI-Hinweis-Wortlaut:** Art. 50 Abs. 1 und 5 KI-VO, siehe 10.3.
 - **Impressum-Link:** Anbieterkennzeichnung leicht erkennbar, unmittelbar erreichbar und ständig verfügbar
   ([§ 5 DDG](https://www.gesetze-im-internet.de/ddg/__5.html), seit 14.05.2024 statt § 5 TMG).
+
+## Sitzungsaufnahmen im Kundenbereich (17.11.2026)
+
+Sentry Session Replay nur mit Einwilligung je Nutzer (§ 25 TDDDG, Art. 6 Abs. 1 lit. a DSGVO), Rechtsprüfung
+docs/rechtstexte/sitzungsaufnahme-2026-11-17.md. Umsetzung: lib/nutzungsanalyse.ts, components/nutzungsanalyse.tsx,
+src/instrumentation-client.ts (Replay-Integration erst nach Ja), lib/sentry-redact.ts (Positivliste /buyer, Kennungen
+geschwärzt). Nachweis: User.analyseEinwilligung/-At/-Version und AuditLog. Speicherdauer bei Sentry je Plan 30 bzw. 90
+Tage (Text: „spätestens nach 90 Tagen“). In Sentry eingeschaltet (Ole, 17.11.2026): „Prevent Storing of IP Addresses“, KI-Funktionen aus, Data Scrubber
+Pflicht. Offen: Sentry-DPA und DPF-Eintrag ablegen, Abschnitt auf
+performancegrowth.de/datenschutz (docs/webseite-offen.md), AVV-Klarstellung mit der nächsten Fassung (Abschnitt 4.2).
