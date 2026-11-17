@@ -31,8 +31,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -42,6 +41,7 @@
     "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
     "Ein Tarif mit wählbarer Erstattungshöhe (3.000 €, 6.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
     "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung; Sterbegeld-Baustein optional.",
-    "Wartezeit besondere OPs 1 Jahr."
+    "Wartezeit besondere OPs 1 Jahr.",
+    "Geprüft am 17.11.2026 an der Produktseite Tierversicherung auf debeka.de."
   ]
 }

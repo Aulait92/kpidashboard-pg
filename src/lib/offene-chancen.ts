@@ -208,7 +208,7 @@ export function bewerteChancen(leads: ChanceLead[], quoten: Quoten, rates: Provi
 export function chancenAufteilung(c: Pick<Chancen, "angebote" | "termine" | "wiedervorlagen">): string {
   const teile = [
     c.angebote ? `${c.angebote} ${c.angebote === 1 ? "Angebot" : "Angebote"}` : null,
-    c.termine ? `${c.termine} ${c.termine === 1 ? "Termin" : "Termine"}` : null,
+    c.termine ? `${c.termine} ${c.termine === 1 ? "offener Termin" : "offene Termine"}` : null,
     c.wiedervorlagen ? `${c.wiedervorlagen} ${c.wiedervorlagen === 1 ? "Bedenkzeit" : "Bedenkzeiten"}` : null,
   ].filter(Boolean);
   return teile.join(", ");

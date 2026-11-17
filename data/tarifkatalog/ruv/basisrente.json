@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/altersvorsorge/private-rentenversicherung/ruerup-rente/safe-und-smart",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Fondsgebundene Rürup-Rente (VR-RürupRente)",
@@ -35,13 +34,11 @@
         "rentenfaktor": "ja, mit Günstigerprüfung",
         "anlage": "Fonds, Union Investment",
         "flexibel": "Zuzahlungen möglich",
-        "hinterbliebene": "ja",
-        "beitragspause": "ja"
+        "hinterbliebene": "ja"
       },
       "bausteine": {},
       "quelle": "https://www.ruv.de/altersvorsorge/private-rentenversicherung/ruerup-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -54,6 +51,7 @@
     "Fondsgebundene Rürup-Rente: keine Beitragsgarantie genannt.",
     "Hinterbliebenenschutz für Ehe- und eingetragene Lebenspartner sowie waisenrentenberechtigte Kinder. Beitragspause bei Safe+Smart nicht ausdrücklich genannt (Beiträge erhöhen oder reduzieren möglich).",
     "BU-Zusatz und Dynamik je Produkt nicht belegt. Effektivkosten nur im Basisinformationsblatt.",
-    "Zwei Produkte ohne Markierung, keine Empfehlung gesetzt."
+    "Zwei Produkte ohne Markierung, keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an den Produktseiten Rürup-Rente und BasisRente Safe+Smart auf ruv.de. Entfernt: Beitragspause bei der Fondsgebundenen Rürup-Rente (auf der Seite nicht genannt)."
   ]
 }

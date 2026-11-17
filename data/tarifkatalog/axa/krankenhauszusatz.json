@@ -22,8 +22,7 @@
         "ersatztagegeld": "50 € je Tag"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankenhaus Premium (Tarif M)",
@@ -35,11 +34,10 @@
         "chefarzt": "ja",
         "ueber-hoechstsatz": "ja",
         "wartezeit": "keine",
-        "ersatztagegeld": "50 € je Tag"
+        "ersatztagegeld": "bis 100 € je Tag"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankenhaus Premium Plus (Tarif L)",
@@ -51,11 +49,10 @@
         "chefarzt": "ja",
         "ueber-hoechstsatz": "ja",
         "wartezeit": "keine",
-        "ersatztagegeld": "50 € je Tag"
+        "ersatztagegeld": "bis 100 € je Tag"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -66,6 +63,7 @@
     "Ersatztagegeld 50 € je Tag (Kinder 25 €) bei Verzicht auf Ein- oder Zweibettzimmer in allen Tarifen; M und L zusätzlich 50 € bei Verzicht auf Chefarzt.",
     "Wartezeit Entbindung und Psychotherapie 8 Monate in allen Tarifen; bei S entfällt die Wartezeit bei Unfall.",
     "Nur Tarif L bildet Alterungsrückstellungen (stabiler Beitrag im Alter). S ohne Gesundheitsprüfung und monatlich kündbar.",
-    "Krankenhaustagegeld und ambulante Operationen nicht belegt. AXA kennzeichnet keine Empfehlung; Premium als mittlere Stufe."
+    "Krankenhaustagegeld und ambulante Operationen nicht belegt. AXA kennzeichnet keine Empfehlung; Premium als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf axa.de. Korrigiert: Ersatztagegeld M und L bis 100 € je Tag (je 50 € für Zimmer und Arzt)."
   ]
 }

@@ -17,7 +17,6 @@
       "werte": {
         "rentenfaktor": "ja, garantiert",
         "anlage": "Fonds, Gold, klassisch",
-        "flexibel": "Entnahmen möglich",
         "hinterbliebene": "optional",
         "kapital": "ja"
       },
@@ -25,8 +24,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.generali.de/privatkunden/rundum-schutz/vermoegensaufbau-und-sicherheitsplan",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -38,6 +36,7 @@
     "Anlage per Schieberegler: konventionelle Anlage, Fondspalette, Generali Exklusiv Fonds (Infrastruktur, Private Debt), Gold; Aufteilung jederzeit änderbar.",
     "Zum Rentenbeginn Kapitalauszahlung ganz oder teilweise oder lebenslange Rente; Verfügung über das Guthaben bis Alter 90.",
     "Kundenbonus 10 % auf die Leistung bei mindestens drei von vier Absicherungen (Arbeitskraft, Schwere Krankheiten, Hinterbliebene, Pflege), aus der Überschussbeteiligung, für 2025 zugesagt.",
-    "Kosten (Effektivkosten), Beitragspause und Dynamik nicht auf der Seite. Kapitalplan Plus, Vermögensaufbau4you und Riester nicht aufgenommen."
+    "Kosten (Effektivkosten), Beitragspause und Dynamik nicht auf der Seite. Kapitalplan Plus, Vermögensaufbau4you und Riester nicht aufgenommen.",
+    "Geprüft am 17.11.2026 an Produktseite und Basisinformationsblatt (SPIBIB0017) auf generali.de. Entfernt: „Entnahmen möglich“ (auf Produktseite und im Basisinformationsblatt nicht belegt), Zuzahlungen und Entnahmen daher offen."
   ]
 }

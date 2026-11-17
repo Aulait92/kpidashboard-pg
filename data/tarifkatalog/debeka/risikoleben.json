@@ -22,8 +22,7 @@
         "fallend": "nein"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV9.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif RiF (fallende Summe)",
@@ -38,8 +37,7 @@
         "fallend": "inklusive"
       },
       "quelle": "https://www.debeka.de/content/dam/de/webauftritt/vertragsgrundlagen/lebens-rentenversicherung/BLV9.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -51,6 +49,7 @@
     "Werte aus den Allgemeinen Bedingungen ABRi 01/2025. Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und weltweiter Schutz sind dort nicht genannt.",
     "Nachversicherung nur bei Tarif Ri: Anlass (Heirat, Kind, Berufsstart, Einkommensplus, Immobilienkredit), bis zum 51. Lebensjahr, je Anlass höchstens 50 % der Anfangssumme und 50.000 €, insgesamt 100.000 €.",
     "Umtausch: Umwandlung in eine aufgeschobene Rentenversicherung ohne neue Risikoprüfung in den ersten 10 Jahren (nicht in eine Kapitallebensversicherung).",
-    "Verbundene Leben, Kinder-Nachversicherung und höchste Summe ohne Zusatzprüfung nicht veröffentlicht. Debeka markiert keinen Tarif."
+    "Verbundene Leben, Kinder-Nachversicherung und höchste Summe ohne Zusatzprüfung nicht veröffentlicht. Debeka markiert keinen Tarif.",
+    "Geprüft am 17.11.2026 an den Allgemeinen Bedingungen (PDF) auf debeka.de."
   ]
 }

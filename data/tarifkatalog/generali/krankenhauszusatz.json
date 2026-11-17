@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenzusatzversicherung/mein-krankenhausschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -33,6 +32,7 @@
   "offen": [
     "Wartezeit nicht auf der Produktseite genannt.",
     "Krankentransporte bis 100 km; Transportkosten bei Wunschverlegung innerhalb Deutschlands.",
-    "Krankenhaustagegeld als eigenes Produkt (Krankenhaustagegeld-Versicherung), nicht aufgenommen."
+    "Krankenhaustagegeld als eigenes Produkt (Krankenhaustagegeld-Versicherung), nicht aufgenommen.",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de."
   ]
 }

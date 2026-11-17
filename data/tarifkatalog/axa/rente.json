@@ -25,8 +25,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.axa.de/pk/altersvorsorge/p/relax-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Relax Rente Chance",
@@ -44,8 +43,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.axa.de/pk/altersvorsorge/p/relax-rente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "JustInvest Fonds-Rente",
@@ -61,8 +59,7 @@
         "beitragspause": "bis 3 Jahre"
       },
       "quelle": "https://www.axa.de/pk/altersvorsorge/p/fondsrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -76,6 +73,7 @@
     "Garantierter Rentenfaktor nur für JustInvest ausdrücklich genannt; für die Relax Rente nicht belegt.",
     "Hinterbliebenenschutz je Tarif nicht beziffert (Todesfallleistung laut Seite vereinbar). Kosten (Effektivkosten) stehen nur in den Basisinformationsblättern zum Angebot.",
     "BU-Zusatzversicherung für beide Relax-Varianten belegt; für JustInvest nur allgemein „kombinierbar“. Dynamik: regelmäßige Beitragserhöhungen bei der Relax Rente möglich.",
-    "Die drei Varianten sind keine Leistungsstufen, sondern Anlagekonzepte (von sicherheits- bis chancenorientiert). AXA kennzeichnet keine Empfehlung; Relax Rente Chance als mittlere Stufe."
+    "Die drei Varianten sind keine Leistungsstufen, sondern Anlagekonzepte (von sicherheits- bis chancenorientiert). AXA kennzeichnet keine Empfehlung; Relax Rente Chance als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an den Produktseiten auf axa.de."
   ]
 }

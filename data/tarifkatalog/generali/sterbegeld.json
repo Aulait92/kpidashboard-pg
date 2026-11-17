@@ -18,8 +18,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/vorsorge-finanzen/sterbegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -27,6 +26,7 @@
   ],
   "offen": [
     "In den ersten drei Versicherungsjahren werden die gezahlten Beiträge erstattet, ab dem vierten Jahr die volle Summe.",
-    "Bis 15.000 € Versicherungssumme nur wenige Gesundheitsfragen; Höchstsumme, Unfall-Zusatz und Beitragszahlungsdauer nicht genannt."
+    "Bis 15.000 € Versicherungssumme nur wenige Gesundheitsfragen; Höchstsumme, Unfall-Zusatz und Beitragszahlungsdauer nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de."
   ]
 }

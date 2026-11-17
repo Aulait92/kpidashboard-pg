@@ -22,8 +22,7 @@
         "zahn": "schmerzstillend"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "singleTRAVEL (Jahrespolice)",
@@ -38,8 +37,7 @@
         "zahn": "schmerzstillend"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -51,6 +49,7 @@
     "Rücktransport: medizinisch sinnvoll und vertretbar. Zahn: schmerzstillende Behandlung, singleTRAVEL auch Reparatur von Zahnersatz und Provisorien.",
     "singleTRAVEL: Leistung auch über 56 Tage hinaus, wenn die Rückreise nicht ohne Gefährdung möglich ist; Mindestlaufzeit 1 Jahr.",
     "Bekannte Erkrankungen nur allgemein im FAQ (bei Reisetauglichkeit und akuter Verschlechterung); Schwangerschaft nicht belegt.",
-    "Familien- und Langzeitvariante nicht als Baustein belegt. Die Reiseversicherung Komfort und Premium enthält keine Auslandskrankenversicherung (nur als Baustein zubuchbar). Zwei Varianten ohne Empfehlung."
+    "Familien- und Langzeitvariante nicht als Baustein belegt. Die Reiseversicherung Komfort und Premium enthält keine Auslandskrankenversicherung (nur als Baustein zubuchbar). Zwei Varianten ohne Empfehlung.",
+    "Geprüft am 17.11.2026 an der Produktseite auf axa.de."
   ]
 }

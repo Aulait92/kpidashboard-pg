@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "PflegePlus",
@@ -42,8 +41,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "PflegeBahr: staatlich gefördert (60 € im Jahr), ohne Gesundheitsprüfung, Pflegegeld 600 bis 1.980 € im Monat; Leistung 10/20/30/40/100 % in Pflegegrad 1 bis 5, Wartezeit entfällt bei Unfall.",
     "PflegePlus erweitert PflegeBahr: häuslich 10/30/60/100/100 %, vollstationär 10 % in PG 1, sonst 100 %. Optionsrecht zwischen Alter 30 und 55 alle fünf Jahre.",
     "PflegePlus: Wartezeit und Höhe des Pflegegelds nicht genannt; Demenz nicht ausdrücklich genannt.",
-    "Mein Pflegeschutz (Rundum-Schutz) nicht aufgenommen. Generali markiert keinen Tarif (empfehlung keine)."
+    "Mein Pflegeschutz (Rundum-Schutz) nicht aufgenommen. Generali markiert keinen Tarif (empfehlung keine).",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de."
   ]
 }

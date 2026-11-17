@@ -25,8 +25,7 @@
         "au": "nein"
       },
       "quelle": "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Berufsunfähigkeitsversicherung M Gut versichert",
@@ -44,8 +43,7 @@
         "au": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Berufsunfähigkeitsversicherung L Premiumschutz",
@@ -64,8 +62,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/existenzsicherung/p/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -76,6 +73,7 @@
     "Weltweiter Schutz, Teilzeitklausel, Umorganisation, Pflegerente, Beitragsstundung und Infektionsklausel nicht belegt.",
     "Dynamik: belegt ist nur die Leistungsdynamik im Leistungsfall (nur Tarif L); die Beitragsdynamik nennt die Seite allgemein, nicht je Tarif.",
     "Nachversicherung: Erhöhung bei Lebensereignissen, in den ersten 5 Jahren auch ohne Anlass (alle Tarife). Keine Karenzzeit.",
-    "AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe gesetzt. Starter-BU (Azubis, Einsteiger) und Erwerbsunfähigkeitsversicherung nicht aufgenommen."
+    "AXA kennzeichnet keine Empfehlung; Tarif M als mittlere Stufe gesetzt. Starter-BU (Azubis, Einsteiger) und Erwerbsunfähigkeitsversicherung nicht aufgenommen.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf axa.de."
   ]
 }

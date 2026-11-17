@@ -27,8 +27,7 @@
         "lang": "optional"
       },
       "quelle": "https://www.ruv.de/reiseversicherung/reisekrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -40,6 +39,7 @@
     "Längere Reisen: Verlängerung ab dem 46. Tag gegen Mehrbeitrag bis höchstens 730 Tage, hier als Baustein „Langzeitreise“.",
     "Nicht versichert sind Erkrankungen, die vor Reisebeginn behandelt wurden und weiter behandelt werden müssen, sowie Behandlungen, die Grund der Reise waren; Merkmal „Bekannte Erkrankungen“ deshalb offen.",
     "Zahn: 100 % für schmerzstillende Behandlung, Füllungen, einfache Provisorien und Reparatur von Zahnersatz; Ersatzkrankenhaustagegeld 40 € je Tag wählbar.",
-    "Keine Reiserücktrittsversicherung bei R+V (laut Produktseite nicht enthalten, kein eigenes Produkt)."
+    "Keine Reiserücktrittsversicherung bei R+V (laut Produktseite nicht enthalten, kein eigenes Produkt).",
+    "Geprüft am 17.11.2026 an der Produktseite auf ruv.de."
   ]
 }

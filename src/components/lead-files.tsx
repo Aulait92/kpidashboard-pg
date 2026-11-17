@@ -19,7 +19,15 @@ const KINDS: { key: Kind; label: string }[] = [
 ];
 const LABEL: Record<Kind, string> = { angebot: "Angebot", police: "Police", sonstiges: "Dokument" };
 
-export type LeadFileView = { id: string; kind: Kind; fileName: string; size: number; createdAt: string };
+export type LeadFileView = {
+  id: string;
+  kind: Kind;
+  fileName: string;
+  size: number;
+  createdAt: string;
+  /** Angebot nach dem Termin (Paket P3): „Angebot gesendet am 17.11. per WhatsApp und E-Mail“ bzw. „abgelegt am“ */
+  stand?: string | null;
+};
 /** Unterlage, die der Kunde per WhatsApp geschickt hat (lib/policen/server.ts UnterlageView). */
 export type UnterlageView = {
   id: string;
@@ -256,6 +264,11 @@ export function LeadFiles({
                 <span className="text-xs text-[color:var(--muted)]">
                   {LABEL[f.kind]} · {formatBytes(f.size)} · {day(f.createdAt)}
                 </span>
+                {f.stand ? (
+                  <span className="mt-1 block text-xs font-medium text-emerald-700" data-angebot-stand>
+                    {f.stand}
+                  </span>
+                ) : null}
               </a>
               {!readOnly ? (
                 <button
