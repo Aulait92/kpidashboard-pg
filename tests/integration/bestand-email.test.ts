@@ -319,14 +319,15 @@ describe("Bestandskampagnen per E-Mail und Einwilligung", () => {
       });
     const A = await mk("Hausrat", "whatsapp", new Date("2026-09-01T10:00:00Z"));
     const B = await mk("Rechtsschutz", "email", new Date("2026-10-01T10:00:00Z"));
-    const lead = await prisma.lead.create({ data: { customerId: c.id, source: "Bestandskunde", name: "Erika Muster", status: "Abschluss", closedAt: new Date("2026-10-10T10:00:00Z") } });
+    // Lead-Eingang fest setzen: der Hauptvertrag zählt im Zeitraum des Lead-Eingangs (sonst echte Uhrzeit, Test hinge vom Datum ab)
+    const lead = await prisma.lead.create({ data: { customerId: c.id, source: "Bestandskunde", name: "Erika Muster", status: "Abschluss", createdAt: new Date("2026-10-02T10:00:00Z"), closedAt: new Date("2026-10-10T10:00:00Z") } });
     await prisma.campaignRecipient.updateMany({ where: { campaignId: B.id }, data: { leadId: lead.id, repliedAt: new Date("2026-10-02T10:00:00Z"), status: "replied" } });
     await prisma.appointment.create({ data: { customerId: c.id, leadId: lead.id, mode: "phone", startsAt: new Date("2026-10-05T10:00:00Z") } });
     // Abschluss 10.10. (→ B), weiterer Vertrag 15.12. (75 Tage nach B → keine Kampagne)
     await prisma.leadContract.create({ data: { leadId: lead.id, customerId: c.id, primaryLeadId: lead.id, sparte: "rechtsschutz", premium: 300, signedAt: new Date("2026-10-10T10:00:00Z") } });
     await prisma.leadContract.create({ data: { leadId: lead.id, customerId: c.id, sparte: "hausrat", premium: 150, signedAt: new Date("2026-12-15T10:00:00Z") } });
     // Empfehlung desselben Kunden zählt nicht für die Kampagne
-    const ref = await prisma.lead.create({ data: { customerId: c.id, source: "Empfehlung", name: "Erika Muster", status: "Abschluss", closedAt: new Date("2026-10-12T10:00:00Z") } });
+    const ref = await prisma.lead.create({ data: { customerId: c.id, source: "Empfehlung", name: "Erika Muster", status: "Abschluss", createdAt: new Date("2026-10-11T10:00:00Z"), closedAt: new Date("2026-10-12T10:00:00Z") } });
     await prisma.leadContract.create({ data: { leadId: ref.id, customerId: c.id, primaryLeadId: ref.id, sparte: "hausrat", premium: 150, signedAt: new Date("2026-10-12T10:00:00Z") } });
     await prisma.campaignRecipient.updateMany({ where: { campaignId: A.id }, data: { leadId: ref.id } });
 

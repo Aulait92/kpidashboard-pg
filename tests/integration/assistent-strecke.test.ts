@@ -3,7 +3,7 @@
 //   [Ja, gern] → Vermerk am Termin, Vertragsfrage → Antwort ausgewertet am Lead → Abschluss mit Kalender-Knöpfen.
 //   Nachfassen 2 Std. nach dem Terminvorschlag: gleiche Zeit-Knöpfe, nur 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, nicht
 //   nach Antwort, Abmeldung, „Kein Interesse“ oder pausiertem Assistenten.
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 type Block = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: unknown };
 const st: { ai: number; queue: Block[][]; reqs: unknown[] } = { ai: 0, queue: [], reqs: [] };
@@ -344,11 +344,16 @@ describe("Nachfassen 2 Std. nach dem Terminvorschlag", () => {
   });
   afterAll(() => cleanupCustomer(customerId));
   beforeEach(() => {
+    // Uhr auf NOW stellen: der Versand prüft das 24-h-Fenster gegen die echte Uhrzeit (sendWhatsAppNotice),
+    // sonst wäre das Fenster (NOW + 10 Std.) nach dem 24.11.2026 zu und der Test hinge vom Datum ab.
+    vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
+    vi.setSystemTime(NOW);
     cal.base = NOW.getTime();
     cal.busy.clear();
     waSend.mockReset();
     waSend.mockImplementation(async () => ({ messageId: `wamid.out-${uid()}`, raw: {} }));
   });
+  afterEach(() => vi.useRealTimers());
   const meine = (phone: string) => gesendet().filter((s) => s.to === phone);
 
   it("einmal mit denselben Zeit-Knöpfen, solange frei; sonst neu berechnet", async () => {

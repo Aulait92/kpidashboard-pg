@@ -8,7 +8,8 @@ import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 // Telefonsuche (Ole, 16.11.2026): Ziffern-Spalten per Trigger, Admin-Suche über alle Nummernfelder und Mail-Signaturen.
 const tag = Math.random().toString(36).slice(2, 8);
 // Zufällige 8-stellige Rufnummer je Test, damit fremde Testdaten nicht stören
-const rnd = () => String(Math.floor(Math.random() * 90_000_000) + 10_000_000);
+// Achtstellig; die letzten fünf Ziffern beginnen nie mit 0 (Suche nach „00…“ wäre eine Auslandsvorwahl → zufällig rot)
+const rnd = () => String(Math.floor(Math.random() * 900) + 100) + String(Math.floor(Math.random() * 90_000) + 10_000);
 const contactIds: string[] = [];
 const customerIds: string[] = [];
 

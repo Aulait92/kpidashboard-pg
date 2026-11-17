@@ -158,6 +158,8 @@ describe("Empfehlungen & Bewertungen", () => {
         phone,
         status: "Abschluss",
         source: "Katzenversicherung (TKV)",
+        // Eingang zur festen Testzeit, nicht zur echten Uhrzeit (sonst hängen Dublettenfenster vom Datum ab)
+        createdAt: new Date(NOW.getTime() - daysAgo * DAY_MS),
         closedAt: new Date(NOW.getTime() - daysAgo * DAY_MS),
         ...(consent ? { feedbackConsentAt: new Date(NOW.getTime() - daysAgo * DAY_MS), feedbackConsentSource: "vermittler" } : {}),
       },

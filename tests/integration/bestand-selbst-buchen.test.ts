@@ -3,7 +3,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 type Item = { id: string; quantity: number; current_period_end: number; price: { product: string; unit_amount: number; recurring: { interval: string } } };
-const PERIOD_END = Math.floor(Date.UTC(2026, 11, 1, 0, 0, 0) / 1000); // 01.12.2026
+// Periodenende relativ zur echten Uhr (in 14 Tagen, 0 Uhr UTC): die Kündigung prüft „Periodenende noch nicht vorbei“
+// gegen die echte Uhrzeit, ein festes Datum würde den Test ab diesem Tag rot machen.
+const PERIOD_END = (Math.floor(Date.now() / 86_400_000) + 14) * 86_400;
 const st = vi.hoisted(() => ({
   sub: null as null | { id: string; status: string; schedule: null; default_payment_method: string | null; items: { data: Item[] } },
   customerPm: null as string | null,
@@ -151,7 +153,7 @@ describe("Bestandskunden-Modul selbst buchen/kündigen", () => {
 
   it("vor dem Startdatum: Modul geht in den geplanten Abo-Start, berechnet ab Abo-Beginn", async () => {
     st.sub = null;
-    const start = Math.floor(Date.UTC(2026, 11, 1, 8, 0, 0) / 1000);
+    const start = PERIOD_END + 8 * 3600; // geplanter Abo-Start in der Zukunft
     st.schedule = {
       id: "sub_sched_1",
       status: "not_started",

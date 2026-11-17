@@ -56,6 +56,10 @@ const MONDAY = new Date("2026-11-16T09:00:00Z");
 describe("Später-Follow-up", () => {
   beforeAll(async () => {
     requireTestDb();
+    // Uhr auf MONDAY stellen: Antworten und Zeitpunkte („ab März“, 84 Tage) entstehen mit der echten Uhrzeit, gesendet
+    // wird zu MONDAY. Ohne feste Uhr hinge der Test vom Datum ab (z. B. ab Februar: „ab März“ ist dann zu nah).
+    vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
+    vi.setSystemTime(MONDAY);
     process.env.INSTANTLY_API_KEY = "test";
     process.env.INSTANTLY_AUTO_SYNC = "1";
     delete process.env.ANTHROPIC_API_KEY;
@@ -78,6 +82,7 @@ describe("Später-Follow-up", () => {
     calls = [];
   });
   afterAll(async () => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     delete process.env.INSTANTLY_API_KEY;
     delete process.env.INSTANTLY_AUTO_SYNC;
