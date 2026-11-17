@@ -7,7 +7,7 @@
 // Zeitraum: der erste Vertrag zählt wie bisher im Zeitraum, in dem der Lead eingegangen ist
 // (passend zu den Lead-Kosten), weitere Verträge an ihrem Abschlussdatum.
 
-import { asEigeneProdukte, decodeSparte, mitProdukt, normName, prozentAnteil } from "@/lib/eigene-produkte";
+import { abschlussAusEingabe, artAusSparte, artInfo, asArt, asEigeneProdukte, decodeSparte, mitProdukt, normName, prozentAnteil } from "@/lib/eigene-produkte";
 import { prisma } from "@/lib/prisma";
 import { CLOSED_STATUS } from "@/lib/products";
 import {
@@ -81,10 +81,14 @@ const parseInt0 = (v: unknown, min: number, max: number): number | null | "inval
  */
 export function parseContractInput(raw: Record<string, unknown>, now = new Date()): { ok: true; value: ContractInput } | { ok: false; error: string } {
   if (!SPARTEN.some((s) => s.key === raw.sparte)) return { ok: false, error: "Bitte eine Sparte wählen." };
+  // Eigenes Produkt („sonstiges“ im Formular) mit Art Leben bzw. Kranken: Vertrag in deren Sparte (Ole, 17.11.2026)
+  const eigen = raw.sparte === "sonstiges";
+  const art = eigen ? asArt(raw.art) : "sach";
+  const sparte = (eigen ? artInfo(art).sparte : raw.sparte) as SparteKey;
   const entered = parseAmount(raw.premium);
   if (entered === "invalid" || (entered != null && entered > 1_000_000)) return { ok: false, error: "Bitte einen gültigen Beitrag eintragen." };
-  const premium = entered == null ? null : Math.round(entered * premiumFactor(String(raw.sparte)) * 100) / 100;
-  const leben = premiumFactor(String(raw.sparte)) === 12;
+  const premium = entered == null ? null : Math.round(entered * premiumFactor(sparte) * 100) / 100;
+  const leben = premiumFactor(sparte) === 12;
   const termYears = leben ? parseInt0(raw.termYears, 1, 80) : null;
   const customerAge = leben ? parseInt0(raw.customerAge, 1, 100) : null;
   const endAge = leben ? parseInt0(raw.endAge, 1, 120) : null;
@@ -97,12 +101,13 @@ export function parseContractInput(raw: Record<string, unknown>, now = new Date(
   let productName: string | null = null;
   let rateAbschluss: number | null = null;
   let rateBestand: number | null = null;
-  if (raw.sparte === "sonstiges") {
+  if (eigen) {
     productName = normName(String(raw.productName ?? ""));
     if (productName.length < 2) return { ok: false, error: "Bitte das Produkt angeben, zum Beispiel Hausrat, Kfz oder Rechtsschutz Gewerbe." };
-    const a = prozentAnteil(raw.rateAbschluss, 200);
+    const a = abschlussAusEingabe(art, raw.rateAbschluss);
     const b = prozentAnteil(raw.rateBestand, 100);
-    if (a === "invalid" || b === "invalid") return { ok: false, error: "Bitte gültige Provisionssätze in Prozent eintragen." };
+    if (a === "invalid" || b === "invalid")
+      return { ok: false, error: art === "sach" ? "Bitte gültige Provisionssätze in Prozent eintragen." : `Bitte gültige Sätze eintragen (Abschluss in ${artInfo(art).einheit}, Bestand in Prozent).` };
     rateAbschluss = a;
     rateBestand = b;
   }
@@ -118,7 +123,7 @@ export function parseContractInput(raw: Record<string, unknown>, now = new Date(
   return {
     ok: true,
     value: {
-      sparte: raw.sparte as SparteKey,
+      sparte,
       premium,
       signedAt,
       insurer: text(raw.insurer, 120),
@@ -142,17 +147,18 @@ function basisData(input: ContractInput) {
     customerAge: input.customerAge ?? null,
     endAge: input.endAge ?? null,
     beitragssumme: input.beitragssumme ?? null,
-    productName: input.sparte === "sonstiges" ? (input.productName ?? null) : null,
-    rateAbschluss: input.sparte === "sonstiges" ? (input.rateAbschluss ?? null) : null,
-    rateBestand: input.sparte === "sonstiges" ? (input.rateBestand ?? null) : null,
+    // Eigenes Produkt (Sach, Leben oder Kranken): Name und Sätze am Vertrag
+    productName: input.productName ?? null,
+    rateAbschluss: input.productName ? (input.rateAbschluss ?? null) : null,
+    rateBestand: input.productName ? (input.rateBestand ?? null) : null,
   };
 }
 
 /** Eigenes Produkt beim Kunden merken (Vorschlag und Vorbelegung beim nächsten Abschluss). */
 export async function rememberEigenesProdukt(customerId: string, input: Pick<ContractInput, "sparte" | "productName" | "rateAbschluss" | "rateBestand">): Promise<void> {
-  if (input.sparte !== "sonstiges" || !input.productName) return;
+  if (!input.productName) return;
   const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { customProducts: true } });
-  const list = mitProdukt(asEigeneProdukte(c?.customProducts), { name: input.productName, rateAbschluss: input.rateAbschluss ?? 0, rateBestand: input.rateBestand ?? 0 });
+  const list = mitProdukt(asEigeneProdukte(c?.customProducts), { name: input.productName, art: artAusSparte(input.sparte), rateAbschluss: input.rateAbschluss ?? 0, rateBestand: input.rateBestand ?? 0 });
   await prisma.customer.update({ where: { id: customerId }, data: { customProducts: list } });
 }
 
@@ -247,7 +253,7 @@ export async function syncPrimaryContract(
   const decoded = decodeSparte(opts.sparte);
   const chosen = decoded.sparte && SPARTEN.some((s) => s.key === decoded.sparte) ? asSparte(decoded.sparte) : null;
   const productData = chosen
-    ? chosen === "sonstiges" && decoded.product
+    ? decoded.product
       ? { productName: decoded.product.name, rateAbschluss: decoded.product.rateAbschluss, rateBestand: decoded.product.rateBestand }
       : { productName: null, rateAbschluss: null, rateBestand: null }
     : {};
@@ -279,7 +285,7 @@ export async function syncPrimaryContract(
     });
   }
   if (decoded.product) {
-    await rememberEigenesProdukt(lead.customerId, { sparte: "sonstiges", productName: decoded.product.name, rateAbschluss: decoded.product.rateAbschluss, rateBestand: decoded.product.rateBestand }).catch((err) =>
+    await rememberEigenesProdukt(lead.customerId, { sparte: artInfo(decoded.product.art).sparte, productName: decoded.product.name, rateAbschluss: decoded.product.rateAbschluss, rateBestand: decoded.product.rateBestand }).catch((err) =>
       console.error("[vertraege] eigenes produkt", err),
     );
   }

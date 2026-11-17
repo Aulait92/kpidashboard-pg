@@ -307,9 +307,15 @@ export async function LeadDetailBody({
   // Nur bei offenen Kontakten ohne anstehenden Termin und ohne fehlendes Termin-Ergebnis.
   const verloren = ["kein interesse", "disqualifiziert"].includes((lead.status ?? "").trim().toLowerCase());
   const gesprochen = lead.reached || !!lead.followUpAt || lead.status === "Angebot gesendet";
+  const zielOffen = !storniert && !won && !verloren && !nextAppt && stepState !== "result_missing" && !lead.erasedAt;
+  // Letzter vergangener Termin (nicht abgesagt): Nachfassen konkret „An den Termin vom … anknüpfen“
+  const letzterTermin = zielOffen
+    ? ((await prisma.appointment.findFirst({ where: { leadId: lead.id, startsAt: { lt: new Date(nowMs()) }, status: { not: "cancelled" } }, orderBy: { startsAt: "desc" }, select: { startsAt: true } }))?.startsAt ?? null)
+    : null;
   const ziel =
-    !storniert && !won && !verloren && !nextAppt && stepState !== "result_missing" && !lead.erasedAt
+    zielOffen
       ? anrufZiel({
+          letzterTermin,
           kind: gesprochen ? "followup" : "callback",
           reason: lead.followUpNote ?? (lead.status === "Angebot gesendet" ? "Angebot nachfassen" : (conv?.attentionReason ?? "")),
           source: lead.source,

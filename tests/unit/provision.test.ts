@@ -34,9 +34,9 @@ describe("Provision je Abschluss", () => {
   });
 
   it("unbekanntes Produkt: eingegebener Wert wie bisher", () => {
-    expect(estimatedProvision("Sterbegeld", 1200)).toBe(1200);
+    expect(estimatedProvision("Handyversicherung", 1200)).toBe(1200);
     expect(estimatedProvision(null, null)).toBeNull();
-    expect(closeValueField("Sterbegeld")?.label).toBe("Wert des Abschlusses (optional)");
+    expect(closeValueField("Handyversicherung")?.label).toBe("Wert des Abschlusses (optional)");
   });
 
   it("Kindersparplan rechnet nach Beitragssumme (50 € × 12 × 18 Jahre, 25 ‰ + 1,5 % Bestand)", () => {
@@ -54,7 +54,7 @@ describe("Provision je Abschluss", () => {
     expect(lbl("PKV-Tarifoptimierung", 120)).toBe("Ersparnis 120 €/Monat · Honorar ≈ 720 €");
     expect(lbl("PKV-Neugeschäft", 300)).toBe("Beitrag 300 €/Monat · Provision ≈ 2.700 €");
     expect(lbl("BU", 960)).toBe("Beitrag 80 €/Monat · Provision ≈ 734 €");
-    expect(lbl("Sterbegeld", null)).toBeNull();
+    expect(lbl("Handyversicherung", null)).toBeNull();
   });
 
   it("kundenspezifische Sätze gelten vor dem Standard", () => {
@@ -73,7 +73,7 @@ describe("Provision je Abschluss", () => {
   });
 
   it("Produktliste mit stabilen Schlüsseln, Summen", () => {
-    expect(PROVISION_PRODUCTS.map((p) => p.key)).toEqual(["pkv", "pkv_tarif", "privatschutz", "tkv", "unfall", "hausrat", "wohngebaeude", "rechtsschutz", "kfz", "leben_bu", "bu", "kindersparplan", "sonstiges"]);
+    expect(PROVISION_PRODUCTS.map((p) => p.key)).toEqual(["pkv", "pkv_tarif", "privatschutz", "tkv", "unfall", "hausrat", "wohngebaeude", "rechtsschutz", "kfz", "leben_bu", "bu", "kindersparplan", "risikoleben", "grundfaehigkeit", "basisrente", "sterbegeld", "zahnzusatz", "krankenzusatz", "pflegezusatz", "krankentagegeld", "sonstiges"]);
     expect(productKeyFor("Allianz TKV Hund")).toBe("tkv");
     expect(productKeyFor("Hund-OP")).toBe("tkv");
     expect(productKeyFor("Kindersparplan")).toBe("kindersparplan");
