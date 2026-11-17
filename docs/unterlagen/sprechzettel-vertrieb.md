@@ -1,6 +1,6 @@
-# Sprechzettel Vertriebspräsentation (Stand 15.11.2026)
+# Sprechzettel Vertriebspräsentation (Stand 17.11.2026)
 
-Gilt für die Vertreter-Fassung (22 Folien). Makler-Fassung: nach Folie 19 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
+Gilt für die Vertreter-Fassung (24 Folien). Makler-Fassung (25 Folien): nach Folie 21 kommt „Mit Tarifvergleich: alles zurück nach 7 Monaten“ (Notiz unten), danach verschiebt sich alles um eins.
 Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeanteil unter der Hälfte.
 
 ## 1. Alles Wichtige zur Leadgenerierung mit performancegrowth
@@ -74,11 +74,22 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - „Sie laden Ihr Angebot hoch, die KI liest Tarife und Beiträge aus. Im Termin teilen Sie den Bildschirm und beraten Ihren Kunden direkt in der Präsentation.“
 - Frage: „Wie präsentieren Sie Angebote heute?“
 
-## 18. Sie wissen jederzeit, ob es sich rechnet
+## 18. Viele wollen den Komplettcheck. Ein Termin, mehrere Verträge.
+- Viele Interessenten lassen alles prüfen, nicht nur die Versicherung aus der Anzeige.
+- Der Assistent fragt bestehende Verträge ab, im Termin sieht der Kunde seinen Schutz im Überblick.
+
+## 19. Ihr Kunde schickt seine Policen. Sie sehen vorher, wo er doppelt zahlt. (neu ab 18.11.)
+- Nach der Terminbuchung bittet der Assistent den Kunden per WhatsApp, Fotos oder PDFs seiner aktuellen Policen zu schicken, aller Sparten und nur mit seiner Einwilligung; kommt nichts, erinnert er freundlich daran.
+- Die Vertragsdaten werden automatisch ausgelesen, und Sie bekommen in der Terminvorbereitung ein Vergleichsblatt: Beiträge im Monat, Verträge mit Kündigungstermin in den nächsten 3 Monaten, Doppelversicherungen und fehlende Bausteine.
+- Kernsatz: „Ihr Kunde schickt seine Policen, Sie sehen vor dem Termin, wo er doppelt zahlt.“ Das macht Termine kürzer und besser und öffnet den Weg zum Komplettcheck und zu weiteren Verträgen.
+- Keine Zahlen versprechen; bei Datenschutzfragen: Einwilligung des Kunden, Speicherung in der EU, nur Sie sehen die Unterlagen, automatische Löschung. Nebenbei erwähnen: Der Assistent stellt Zwischenfragen vor dem Termin und schickt die Einladung erst, wenn alles feststeht.
+
+## 20. Sie wissen jederzeit, ob es sich rechnet
 - Kosten je Lead, je Termin, je Abschluss und Ertrag, automatisch aus dem Werbekonto.
+- „Ihre Kampagnen werden laufend nach Umsatz je Werbe-Euro optimiert.“ Nicht sagen, dass Daten anderer Kunden genutzt werden.
 - „Sie sehen jeden Monat schwarz auf weiß, was es Ihnen bringt.“
 
-## 19. Rechnet sich das?
+## 21. Rechnet sich das?
 - Echtes Ergebnis eines Allianz-Vertreters mit Katzenversicherung.
 - Gemeinsam mit seinen Zahlen rechnen: „Wie viel Provision bekommen Sie für einen Vertrag?“
 - Wichtig: Setup nach etwa 1,5 Monaten wieder drin.
@@ -87,17 +98,17 @@ Grundregel: Fragen stellen, zuhören, Zahlen des Gegenübers einsammeln. Redeant
 - „Unsere 12 % erzielen Vertreter mit einem Versicherer. Mit Tarifvergleich finden Sie für mehr Kunden den passenden Tarif.“
 - Ehrlich sagen: 20 % ist eine Annahme, im Rechner mit der eigenen Quote nachrechnen.
 
-## 20. Ihr Paket: Leads + Software
+## 22. Ihr Paket: Leads + Software
 - Setup je Laufzeit, Empfehlung 12 Monate mit 990 €.
 - Monatlich nach Werbebudget. Werbebudget zahlt er direkt an Meta.
 - Weitere Produkte 350 € monatlich, ohne Setup. Bestandskunden-Modul optional 149 €.
 - Frage: „Welches Budget pro Tag können Sie sich für den Start vorstellen?“
 
-## 21. Und wenn es schlecht läuft? Ihr Risiko ist klar begrenzt.
+## 23. Und wenn es schlecht läuft? Ihr Risiko ist klar begrenzt.
 - Garantien kurz erklären, Voraussetzungen offen nennen.
 - „Ihr Bestand gehört Ihnen, auch wenn Sie aufhören.“
 
-## 22. Ihr Start in 3 Schritten
+## 24. Ihr Start in 3 Schritten
 - Heute Angebot, diese Woche Einrichtung, in etwa 2 Wochen die ersten Leads.
 - Abschlussfrage: „Spricht etwas dagegen, dass wir mit der Katzenversicherung starten?“
 - Bei Einwand: eingrenzen („Ist das der einzige Punkt?“), dann gezielt beantworten.
