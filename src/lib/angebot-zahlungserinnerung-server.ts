@@ -30,6 +30,8 @@ import {
   zahlungVorlage,
 } from "@/lib/angebot-zahlungserinnerung";
 import { anredeName } from "@/lib/ansprache";
+import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server";
+import { entscheidungsCallMailText } from "@/lib/vertrieb/entscheidungs-call";
 
 export type SetResult = { ok: true } | { ok: false; error: string };
 
@@ -213,7 +215,11 @@ async function sendeErinnerung(o: OfferRow, stufe: number, now: Date): Promise<{
     return res;
   }
   if (o.email) {
-    const text = erinnerungsMail({ number: o.number, startIso: tagIso(o.startDate), stufe, du: o.mailDu });
+    // Entscheidungs-Call schon gebucht (auch erst nach dem Angebot): Termin nennen, geprüft bei jedem Versand.
+    // Ohne Buchung wie bisher kein Buchungslink (das Angebot ist schon angenommen).
+    const call = await entscheidungsCallStand(o.salesContactId, now).catch(() => null);
+    const callText = call?.art === "gebucht" ? entscheidungsCallMailText(call, o.mailDu) : null;
+    const text = erinnerungsMail({ number: o.number, startIso: tagIso(o.startDate), stufe, du: o.mailDu, entscheidungsCall: callText });
     const sent = await sendCustomerMail({
       to: o.email,
       subject: text.subject,

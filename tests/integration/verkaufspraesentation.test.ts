@@ -144,7 +144,7 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
   it("Angebotsmail mit Link zur Präsentation (ohne Gedankenstriche)", async () => {
     const offer = await prisma.offer.findFirstOrThrow({ where: { salesContactId: contactId }, orderBy: { createdAt: "desc" } });
     sent.length = 0;
-    expect(await sendOfferEmailAction(offer.id, { praesentationLink: true, audience: "makler" })).toEqual({ ok: true });
+    expect(await sendOfferEmailAction(offer.id, { praesentationLink: true, audience: "makler" })).toMatchObject({ ok: true });
     const l = await aktiverVerkaufsLink(contactId);
     expect(l).toMatchObject({ audience: "makler" });
     expect(sent[0].text).toContain(`/praesentation/${l!.token}`);

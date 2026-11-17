@@ -171,14 +171,23 @@ export const fmtTag = (iso: string) => iso.split("-").reverse().join(".");
 
 // ─── Texte (ohne Gedankenstriche, Sie oder Du) ──────────────────────────
 
-export function erinnerungsMail(o: { number: string; startIso: string | null; stufe: number; du: boolean }): { subject: string; paragraphs: string[]; button: string } {
+export function erinnerungsMail(o: {
+  number: string;
+  startIso: string | null;
+  stufe: number;
+  du: boolean;
+  /** Schon gebuchter Entscheidungs-Call (lib/vertrieb/entscheidungs-call.ts), eigener Absatz vor „Fragen?“ */
+  entscheidungsCall?: string | null;
+}): { subject: string; paragraphs: string[]; button: string } {
   const start = o.startIso ? fmtTag(o.startIso) : null;
+  const call = o.entscheidungsCall ? [o.entscheidungsCall] : [];
   if (o.du) {
     return {
       subject: o.stufe > 1 ? `Erinnerung: Zahlung für dein Angebot ${o.number}` : `Zahlung für dein Angebot ${o.number} einrichten`,
       paragraphs: [
         `du hast unser Angebot ${o.number} angenommen, vielen Dank. Es fehlt nur noch die Einrichtung der Zahlung.`,
         `${start ? `Dein Start ist am ${start}. ` : ""}Den Zugang zur Einrichtung bekommst du, sobald die Zahlung eingerichtet ist. Über den Knopf kommst du direkt zur sicheren Zahlungsseite.`,
+        ...call,
         "Fragen? Antworte einfach auf diese E-Mail.",
       ],
       button: "Zahlung einrichten",
@@ -189,6 +198,7 @@ export function erinnerungsMail(o: { number: string; startIso: string | null; st
     paragraphs: [
       `Sie haben unser Angebot ${o.number} angenommen, vielen Dank. Es fehlt nur noch die Einrichtung der Zahlung.`,
       `${start ? `Ihr Start ist am ${start}. ` : ""}Den Zugang zur Einrichtung erhalten Sie, sobald die Zahlung eingerichtet ist. Über den Knopf kommen Sie direkt zur sicheren Zahlungsseite.`,
+      ...call,
       "Fragen? Antworten Sie einfach auf diese E-Mail.",
     ],
     button: "Zahlung einrichten",

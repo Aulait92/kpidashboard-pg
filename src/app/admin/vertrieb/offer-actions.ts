@@ -1,6 +1,7 @@
 "use server";
 
-import { decisionBookingLink } from "@/lib/vertrieb/buchung";
+import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server";
+import { entscheidungsCallHinweis } from "@/lib/vertrieb/entscheidungs-call";
 import { revalidatePath } from "next/cache";
 import { getCurrentSession } from "@/lib/auth";
 import { getAppUrl, sendOfferEmail } from "@/lib/email";
@@ -23,7 +24,7 @@ async function requireAdmin() {
 }
 
 export type OfferActionResult =
-  | { ok: true; offerId?: string }
+  | { ok: true; offerId?: string; /** Angebotsmail: welche Variante zum Entscheidungs-Call rausging */ hinweis?: string }
   | { ok: false; error: string };
 
 export async function createOfferAction(
@@ -109,11 +110,12 @@ export async function sendOfferEmailAction(
     if (!link) return { ok: false, error: "Kontakt nicht gefunden." };
     praesentationUrl = `${getAppUrl()}/praesentation/${link.token}`;
   }
-  // Entscheidungs-Call: persönlicher Buchungslink (signiert, hängt direkt am Kontakt), solange online buchbar
-  const terminUrl = offer.salesContactId ? await decisionBookingLink(offer.salesContactId) : null;
+  // Entscheidungs-Call (Ole, 17.11.2026), geprüft beim Versand: schon gebucht → Termin mit Link zum Verschieben,
+  // sonst persönlicher Buchungslink (signiert, hängt direkt am Kontakt), solange online buchbar
+  const entscheidungsCall = offer.salesContactId ? await entscheidungsCallStand(offer.salesContactId) : null;
   const disc = offerSetupDiscount(offer);
   const res = await sendOfferEmail({
-    terminUrl,
+    entscheidungsCall,
     discount: disc
       ? { label: offer.setupDiscountLabel || "Empfehlungsrabatt", discount: disc.discount, list: disc.list, fee: Number(offer.setupFee), anyTerm: offer.customerChoosesTerm }
       : null,
@@ -162,7 +164,7 @@ export async function sendOfferEmailAction(
   revalidatePath(offerAdminHref(offer));
   revalidatePath("/admin/kunden", "layout");
   revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote)
-  return { ok: true };
+  return { ok: true, ...(entscheidungsCall ? { hinweis: entscheidungsCallHinweis(entscheidungsCall) } : {}) };
 }
 
 /**
