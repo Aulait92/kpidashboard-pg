@@ -174,3 +174,6 @@ Stand 16.11.2026:
   Anthropic (US), alle „IT solutions and services“.
 - Offen: App Review abschicken (sobald Meta die Testaufrufe verbucht, bis 24 h), nach Freigabe App unter
   **Publish** auf Live stellen (sonst bricht Embedded Signup ab), Partner Solution muss „Active“ zeigen.
+- 17.11.2026: Ungenutzte Testnummer +1 618 202 4132 (360dialog-Channel JGeqqrCH, Client „Ole Agentur“/test2,
+  49 €/Monat) gekündigt, um bis zur Tech-Provider-Freigabe einen Platz freizumachen. Verbunden bleiben
+  +1 501 430 4325 (Testkonto „Ole Agentur“) und +49 15679 811535 (Support).
