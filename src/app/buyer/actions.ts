@@ -96,7 +96,11 @@ export async function cancelLeadAction(
     const res = await requestStorno(lead.id, stornogrundRecordId.slice(PPL_REASON_PREFIX.length), bemerkung, { id: session.userId, email: session.email, role: session.role });
     if (!res.ok) return { error: res.error, leadId };
     revalidatePath("/buyer", "layout");
-    return { ok: true, leadId, ...(res.state === "review" ? { message: "Storno ist eingereicht und wird geprüft." } : {}) };
+    return { ok: true, leadId, ...(res.state === "review"
+        ? { message: "Storno ist eingereicht und wird geprüft." }
+        : res.anteil && res.anteil < 1
+          ? { message: `Storno ist erfasst. Als Kulanz schreiben wir Ihnen ${Math.round(res.anteil * 100)} % des Leadpreises gut.` }
+          : {}) };
   }
 
   // Storno nur, wenn für den Bezug „Erlaubte Stornogründe" vertraglich
