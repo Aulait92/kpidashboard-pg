@@ -24,7 +24,9 @@ import {
   fillNames,
   formsFor,
   hasDuVariant,
+  neuePlatzhalter,
   paramLabelsFor,
+  PLATZHALTER_AB,
   renderTemplate,
   templateTextFor,
   type NoticePurpose,
@@ -49,6 +51,9 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "booking_confirmation",
   "reminder",
   "reminder_soon",
+  // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): 15 Minuten vorher, „wartet im Videoraum“
+  "reminder_start",
+  "appt_waiting",
   "reschedule",
   "followup",
   "followup_nudge",
@@ -57,11 +62,11 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "followup_last",
 ];
 /**
- * Show-up-Paket (Ole, 17.11.2026): neue UTILITY-Vorlagen, nur VORBEREITET. Sie stehen NICHT in CORE_PURPOSES und werden
- * deshalb nicht bei Meta eingereicht, bis Ole die Texte freigibt (docs/vorlagen-showup.md). Freigeben: Zweck in
- * CORE_PURPOSES aufnehmen. Bis dahin gehen sie nur als Freitext im offenen 24-h-Fenster (lib/showup.ts).
+ * Neue Zwecke, die nur VORBEREITET sind: Sie stehen NICHT in CORE_PURPOSES und werden deshalb nicht bei Meta eingereicht,
+ * bis Ole die Texte freigibt. Freigeben: Zweck in CORE_PURPOSES aufnehmen. Bis dahin gehen sie nur als Freitext im
+ * offenen 24-h-Fenster. Zurzeit leer (Show-up-Paket am 17.11.2026 freigegeben).
  */
-export const VORBEREITETE_PURPOSES: NoticePurpose[] = ["reminder_start", "appt_waiting"];
+export const VORBEREITETE_PURPOSES: NoticePurpose[] = [];
 /**
  * Angebot nach dem Termin (Paket P3, Ole 17.11.2026): „Angebot senden“ (UTILITY) und das Nachfassen zum selbst gesendeten
  * Angebot (MARKETING), nur VORBEREITET wie oben (docs/vorlagen-angebot.md). Bis zur Freigabe: „Angebot senden“ nur als
@@ -156,6 +161,12 @@ const EXAMPLES: Record<string, string> = {
   Art: "Telefon",
   "Link/Hinweis": "Wir rufen dich unter deiner Nummer an.",
   "Vermittler (Nominativ)": "Herr Schmidt",
+  "Vermittler (Dativ)": "Herrn Schmidt",
+  "Wann (z. B. morgen um 10 Uhr)": "morgen um 10 Uhr",
+  "Nutzen (ein Satz, ggf. mit Verträgen)":
+    "In einem kurzen Videotermin zeigt Ihnen Herr Schmidt, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten. Legen Sie gern Ihre bestehenden Verträge bereit.",
+  "Zugang (Videolink bzw. Anruf)": "https://meet.google.com/abc-defg-hij",
+  "Terminart (Videotermin bzw. Telefontermin)": "Videotermin",
   Videolink: "https://meet.google.com/abc-defg-hij",
   "Thema (z. B. Hausrat, Haftpflicht)": "Hausrat",
   "Thema (z. B. Hausrat)": "Hausrat",
@@ -170,6 +181,15 @@ const EXAMPLES: Record<string, string> = {
   "Thema (z. B. Haftpflicht und Hausrat)": "Haftpflicht und Hausrat",
   Angebotslink: "https://app.performancegrowth.de/ihr-angebot/abc123",
   Tier: "Ihre Katze",
+};
+
+/** Beispielwerte der Du-Fassung, wo sie sich von der Sie-Fassung unterscheiden. */
+const EXAMPLES_DU: Record<string, string> = {
+  "Link/Hinweis": "Wir rufen dich unter deiner Nummer an.",
+  "Vermittler (Nominativ)": "Thomas",
+  "Vermittler (Dativ)": "Thomas",
+  "Nutzen (ein Satz, ggf. mit Verträgen)":
+    "In einem kurzen Videotermin zeigt dir Thomas, was Haftpflicht und Hausrat für deine Familie kosten und worauf du achten solltest. Leg gern deine bestehenden Verträge bereit.",
 };
 
 /** Beispiele fürs Erstanschreiben ab v6 (Thema, Vermittler im Dativ, erste Frage ohne „?“) je Zweck und Ansprache. */
@@ -189,13 +209,15 @@ const PRODUKT_BEISPIEL: Partial<Record<NoticePurpose, string>> = {
   outreach_privatschutz: "Privatschutz",
 };
 
-export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du", names?: TemplateNames | null): string[] {
+export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | Ansprache = "du", names?: TemplateNames | null, labels?: string[]): string[] {
   const f = formOf(purpose, form);
   // Vermittler (v6): in der Vorschau des Kunden sein eigener Name (Sie: Vor- und Nachname, Du: Kurzname)
   const vermittler = names ? (f === "du" ? names.kurz || names.advisor : names.advisor) : f === "du" ? "Thomas" : "Herrn Schmidt";
-  return paramLabelsFor(purpose, f).map((label) =>
+  return (labels ?? paramLabelsFor(purpose, f)).map((label) =>
     label === "Link/Hinweis" && f !== "du"
       ? "Wir rufen Sie unter Ihrer Nummer an."
+      : f === "du" && EXAMPLES_DU[label]
+        ? EXAMPLES_DU[label]
       : label === "Tier" && f === "du"
         ? "deine Katze"
       : label === "Produkt"
@@ -210,9 +232,15 @@ export function exampleValuesFor(purpose: NoticePurpose, form: TemplateForm | An
   );
 }
 
-/** Beispielwerte nach dem Namen (REST_PARAMS) – für Vorschauen mit eigener Anrede. */
-export function exampleRestFor(purpose: NoticePurpose, an: Ansprache): string[] {
-  return formOf(purpose, an) === "du" ? exampleValuesFor(purpose, "du").slice(1) : exampleValuesFor(purpose, "sie_ohne_name");
+/**
+ * Beispielwerte nach dem Namen (REST_PARAMS) – für Vorschauen mit eigener Anrede. Mit `version` einer älteren
+ * freigegebenen Vorlage, deren Platzhalter anders belegt sind (PLATZHALTER_AB), deren Beispielwerte.
+ */
+export function exampleRestFor(purpose: NoticePurpose, an: Ansprache, version?: number): string[] {
+  const f = formOf(purpose, an) === "du" ? "du" : "sie_ohne_name";
+  const alt = version !== undefined && !neuePlatzhalter(purpose, version) ? PLATZHALTER_AB[purpose]?.frueher : undefined;
+  if (alt) return exampleValuesFor(purpose, f, null, alt);
+  return f === "du" ? exampleValuesFor(purpose, "du").slice(1) : exampleValuesFor(purpose, "sie_ohne_name");
 }
 
 /**

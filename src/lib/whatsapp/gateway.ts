@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { sendButtons, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import type { StatusError } from "@/lib/whatsapp/zustellfehler";
+import { waOhneMarker } from "@/lib/wa-format";
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24-Stunden-Service-Fenster
 
@@ -298,12 +299,12 @@ async function persistInbound(
     }
     await prisma.conversation.update({
       where: { id: conversation.id },
-      data: { needsAttention: true, attentionReason: (body ? `Support: ${body}` : "Support-Nachricht").slice(0, 200), attentionAt: now },
+      data: { needsAttention: true, attentionReason: (body ? `Support: ${waOhneMarker(body)}` : "Support-Nachricht").slice(0, 200), attentionAt: now },
     });
     const { sendToAdmins } = await import("@/lib/push");
     await sendToAdmins({
       title: `🛟 Support-WhatsApp: ${contactName ?? `+${from}`}`,
-      body: (body ?? "Neue Nachricht").slice(0, 140),
+      body: (waOhneMarker(body) ?? "Neue Nachricht").slice(0, 140),
       url: `/admin/whatsapp?c=${conversation.id}`,
       tag: `support-wa:${conversation.id}`,
     }).catch((e) => console.error("[whatsapp support push]", e));

@@ -1,8 +1,10 @@
 // Storno beim Pay-per-Lead: innerhalb des Storno-Fensters, nur mit erlaubtem
 // Grund. Ersatzlos – der Käufer bekommt eine Gutschrift (nächste Rechnung).
-// Automatisch genehmigt, außer Grund „Sonstiges“ oder Stornoquote > 20 %
-// (letzte 30 Tage) → Prüfung durch Admin. Am Bezug abschaltbar
-// (`stornoAutoApprove`): dann wird jede Reklamation im Fenster anerkannt.
+// Ole, 17.11.2026: „klare Stornos einfach annehmen, bei Grenzfällen 50:50“.
+// Klar = erlaubter Grund bei Stornoquote ≤ 20 % (letzte 30 Tage) → volle Gutschrift.
+// Grenzfall = „Sonstiges“ oder Quote > 20 % → automatisch halbe Gutschrift (Umsatz zur
+// Hälfte bleibt), keine Prüfung mehr. Am Bezug (`stornoAutoApprove`): jede Reklamation
+// im Fenster voll anerkannt.
 
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
@@ -12,7 +14,10 @@ const DAY = 86_400_000;
 export const REVIEW_QUOTA = 0.2;
 export const PPL_REASON_PREFIX = "ppl:";
 
-export type StornoOutcome = { ok: true; state: "approved" | "review" } | { ok: false; error: string };
+/** Anteil der Gutschrift bei Grenzfällen (Ole, 17.11.2026: 50:50) */
+export const GRENZFALL_ANTEIL = 0.5;
+
+export type StornoOutcome = { ok: true; state: "approved" | "review"; anteil?: number } | { ok: false; error: string };
 
 export function stornoWindowOpen(deliveredAt: Date | null, days: number | null, now = new Date()): boolean {
   if (!deliveredAt || !days) return false;
@@ -66,44 +71,53 @@ export async function requestStorno(
     prisma.lead.count({ where: { subscriptionId: sub.id, deliveredAt: { gte: since }, stornoState: { in: ["approved", "review", "requested"] } } }),
   ]);
   const quota = delivered ? (stornos + 1) / delivered : 1;
-  // Ohne Prüfung, wenn am Bezug „immer automatisch anerkennen“ eingestellt ist
-  const review = !sub.stornoAutoApprove && (other || quota > REVIEW_QUOTA);
+  // Grenzfall: „Sonstiges“ oder hohe Quote → 50:50; am Bezug „immer automatisch anerkennen“ → voll
+  const grenzfall = !sub.stornoAutoApprove && (other || quota > REVIEW_QUOTA);
+  const anteil = grenzfall ? GRENZFALL_ANTEIL : 1;
 
   await prisma.lead.update({
     where: { id: lead.id },
-    data: { stornoState: review ? "review" : "approved", stornoReason: reason, stornoNote: note.trim() || null, stornoRequestedAt: now },
+    data: { stornoState: "approved", stornoReason: reason, stornoNote: note.trim() || null, stornoRequestedAt: now },
   });
-  if (!review) await approve(lead.id, now);
-  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, review, quota: Math.round(quota * 100), prevStatus: lead.status } });
-  if (review) {
+  await approve(lead.id, now, anteil);
+  await audit("lead.storno", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason, grenzfall, anteil, quota: Math.round(quota * 100), prevStatus: lead.status } });
+  if (grenzfall) {
     await sendToAdmins({
-      title: `🔎 Storno prüfen: ${sub.label ?? lead.source ?? "Pay-per-Lead"}`,
+      title: `Storno 50:50: ${sub.label ?? lead.source ?? "Pay-per-Lead"}`,
       body: `${reason}${other ? `: ${note.trim().slice(0, 80)}` : ""} · Quote ${Math.round(quota * 100)} %`,
-      url: "/admin/ppl?ansicht=storno",
+      url: "/admin/ppl?ansicht=geliefert",
       tag: `ppl-storno:${lead.id}`,
     }).catch(() => {});
   }
-  return { ok: true, state: review ? "review" : "approved" };
+  return { ok: true, state: "approved", anteil };
 }
 
-async function approve(leadId: string, now: Date) {
+/**
+ * Storno anerkennen. anteil 1: volle Gutschrift, Umsatz storniert. anteil < 1 (Grenzfall 50:50): Gutschrift über den
+ * Anteil, der Umsatz bleibt mit dem Rest bestehen (undoStorno rechnet ihn zurück).
+ */
+async function approve(leadId: string, now: Date, anteil = 1) {
   const rev = await prisma.revenue.findFirst({ where: { leadId }, select: { id: true, amount: true } });
+  const betrag = Number(rev?.amount ?? 0);
+  const gutschrift = anteil >= 1 ? betrag : Math.round(betrag * anteil * 100) / 100;
   await prisma.$transaction([
     prisma.lead.update({
       where: { id: leadId },
-      data: { stornoState: "approved", stornoDecidedAt: now, status: "Storno", creditAmount: rev?.amount ?? 0 },
+      data: { stornoState: "approved", stornoDecidedAt: now, status: "Storno", creditAmount: gutschrift },
     }),
-    ...(rev ? [prisma.revenue.update({ where: { id: rev.id }, data: { cancelled: true } })] : []),
+    ...(rev
+      ? [prisma.revenue.update({ where: { id: rev.id }, data: anteil >= 1 ? { cancelled: true } : { amount: Math.round((betrag - gutschrift) * 100) / 100 } })]
+      : []),
   ]);
 }
 
-/** Admin entscheidet über einen Storno in Prüfung. */
-export async function decideStorno(leadId: string, accept: boolean, now = new Date()) {
+/** Admin entscheidet über einen Storno in Prüfung (Altfälle vor der 50:50-Regel). "half" = Grenzfall 50:50. */
+export async function decideStorno(leadId: string, accept: boolean | "half", now = new Date()) {
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { stornoState: true, customerId: true } });
   if (lead?.stornoState !== "review") return false;
-  if (accept) await approve(leadId, now);
+  if (accept) await approve(leadId, now, accept === "half" ? GRENZFALL_ANTEIL : 1);
   else await prisma.lead.update({ where: { id: leadId }, data: { stornoState: "rejected", stornoDecidedAt: now } });
-  await audit(accept ? "storno.approve" : "storno.reject", { entity: "Lead", entityId: leadId, customerId: lead.customerId });
+  await audit(accept === "half" ? "storno.half" : accept ? "storno.approve" : "storno.reject", { entity: "Lead", entityId: leadId, customerId: lead.customerId });
   return true;
 }
 
@@ -131,12 +145,25 @@ export async function adminRecordStorno(
   if (!grund) return { ok: false, error: "Bitte einen Stornogrund angeben." };
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { id: true, customerId: true, status: true, deliveredAt: true, stornoState: true, airtableId: true, subscription: { select: { stornoDays: true } } },
+    select: { id: true, customerId: true, status: true, deliveredAt: true, stornoState: true, airtableId: true, creditAmount: true, creditedAt: true, subscription: { select: { stornoDays: true } } },
   });
   if (!lead || (!lead.subscription && !(opts.allowAirtableLead && lead.airtableId))) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
   const outsideWindow = !stornoWindowOpen(lead.deliveredAt, lead.subscription?.stornoDays ?? null, now);
-  if (lead.stornoState === "approved") return { ok: true, already: true, outsideWindow };
-  const rev = await prisma.revenue.findFirst({ where: { leadId: lead.id }, select: { id: true, amount: true } });
+  const rev = await prisma.revenue.findFirst({ where: { leadId: lead.id }, select: { id: true, amount: true, cancelled: true } });
+  if (lead.stornoState === "approved") {
+    // Grenzfall 50:50 nachträglich voll anerkennen (Gutschrift noch nicht verrechnet)
+    const teil = Number(lead.creditAmount ?? 0);
+    if (!rev || rev.cancelled || teil <= 0 || lead.creditedAt) return { ok: true, already: true, outsideWindow };
+    const voll = Math.round((Number(rev.amount) + teil) * 100) / 100;
+    const done = await prisma.$transaction(async (tx) => {
+      const r = await tx.lead.updateMany({ where: { id: lead.id, stornoState: "approved", creditedAt: null, creditAmount: lead.creditAmount }, data: { creditAmount: voll, stornoReason: grund, stornoDecidedAt: now } });
+      if (r.count) await tx.revenue.update({ where: { id: rev.id }, data: { amount: voll, cancelled: true } });
+      return r.count > 0;
+    });
+    if (!done) return { ok: true, already: true, outsideWindow };
+    await audit("storno.admin", { entity: "Lead", entityId: lead.id, customerId: lead.customerId, actor, details: { reason: grund, note: note.trim() || null, outsideWindow, vonTeilAufVoll: true, prevStatus: "Storno" } });
+    return { ok: true, already: false, outsideWindow };
+  }
   // Nur wenn noch nicht anerkannt (zweiter Klick / paralleler Aufruf ändert nichts)
   const claimed = await prisma.$transaction(async (tx) => {
     const r = await tx.lead.updateMany({
@@ -173,7 +200,7 @@ export async function undoStorno(
   leadId: string,
   actor: { id?: string | null; email?: string | null; role?: string | null },
 ): Promise<{ ok: true; already: boolean } | { ok: false; error: string }> {
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, stornoState: true, creditedAt: true, subscriptionId: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, customerId: true, stornoState: true, creditedAt: true, subscriptionId: true, creditAmount: true } });
   if (!lead?.subscriptionId) return { ok: false, error: "Kein Pay-per-Lead aus der App." };
   if (lead.stornoState !== "approved") return { ok: true, already: true };
   if (lead.creditedAt) return { ok: false, error: "Die Gutschrift ist schon mit einer Bestellung verrechnet." };
@@ -189,7 +216,14 @@ export async function undoStorno(
       where: { id: lead.id, stornoState: "approved", creditedAt: null },
       data: { stornoState: null, stornoReason: null, stornoNote: null, stornoRequestedAt: null, stornoDecidedAt: null, creditAmount: null, status },
     });
-    if (r.count) await tx.revenue.updateMany({ where: { leadId: lead.id, cancelled: true }, data: { cancelled: false } });
+    if (r.count) {
+      const restored = await tx.revenue.updateMany({ where: { leadId: lead.id, cancelled: true }, data: { cancelled: false } });
+      // 50:50: Umsatz war nicht storniert, sondern um die Gutschrift gekürzt → zurückrechnen
+      if (!restored.count && Number(lead.creditAmount ?? 0) > 0) {
+        const rev = await tx.revenue.findFirst({ where: { leadId: lead.id }, select: { id: true } });
+        if (rev) await tx.revenue.update({ where: { id: rev.id }, data: { amount: { increment: Number(lead.creditAmount) } } });
+      }
+    }
     return r.count > 0;
   });
   if (!done) return { ok: true, already: true };

@@ -48,6 +48,7 @@ import { anrufZiel } from "@/lib/anruf-ziel";
 import { BestehendeVertraege } from "@/components/bestehende-vertraege";
 import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
+import { waOhneMarker } from "@/lib/wa-format";
 import { LeadSequenceCard } from "@/components/lead-sequence-card";
 import { angebotStandText } from "@/lib/angebot-senden";
 import {
@@ -515,7 +516,7 @@ export async function LeadDetailBody({
         >
           <MessageCircle className="h-4 w-4 shrink-0" />
           <span className="min-w-0 flex-1">
-            <b>Wartet auf Sie:</b> {conv.attentionReason ?? "Bitte beim Kontakt melden."}
+            <b>Wartet auf Sie:</b> {waOhneMarker(conv.attentionReason) ?? "Bitte beim Kontakt melden."}
           </span>
           <span className="font-semibold">Antworten</span>
         </a>

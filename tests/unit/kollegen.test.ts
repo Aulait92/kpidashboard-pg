@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   CODE_RE,
+  DEFAULT_SETTINGS,
   benefitSentence,
+  canOpenReferralPage,
+  referralLinkState,
+  referralTileText,
   defaultShareText,
   shareDisclosureSentence,
   isSelfReferral,
@@ -131,5 +135,40 @@ describe("Teilen-Text", () => {
     const du = defaultShareText("Max", "https://x.test/empfehlen/a", fixed, "du");
     expect(du).toContain("für deine Agentur");
     expect(du).not.toContain("Ihre");
+  });
+});
+
+describe("Kachel und Seite „Kollegen empfehlen“", () => {
+  it("gleiche Bedingung für Kachel und Seite: Inhaber ja (auch intern und Vorschau), Berater nein", () => {
+    expect(canOpenReferralPage({ teamRole: "owner" })).toBe(true);
+    expect(canOpenReferralPage({ teamRole: "advisor" })).toBe(false);
+  });
+
+  it("Untertitel nennt die eingestellte Prämie, ohne Gedankenstriche", () => {
+    const tile = (s: Parameters<typeof referralTileText>[0]) => referralTileText(s).replace(/\u00a0/g, " ");
+    expect(tile(DEFAULT_SETTINGS)).toBe("300 € Gutschrift für jeden Kollegen, der Kunde wird");
+    expect(tile({ ...DEFAULT_SETTINGS, rewardFixed: 150 })).toBe("150 € Gutschrift für jeden Kollegen, der Kunde wird");
+    expect(tile({ ...DEFAULT_SETTINGS, rewardKind: "month", rewardFixed: null })).toBe("1 Monat Betreuung gratis für jeden Kollegen, der Kunde wird");
+    expect(tile({ ...DEFAULT_SETTINGS, rewardKind: "bestand", rewardMonths: 3 })).toBe("3 Monate Bestandskunden-Modul gratis für jeden Kollegen, der Kunde wird");
+    expect(tile({ ...DEFAULT_SETTINGS, enabled: false })).not.toMatch(/Gutschrift/);
+    for (const t of [tile(DEFAULT_SETTINGS), tile({ ...DEFAULT_SETTINGS, enabled: false })]) {
+      expect(t).not.toMatch(/[–—]/);
+      expect(t).not.toBe("Kollegen empfehlen");
+    }
+  });
+
+  it("Link: Kunde bekommt ihn, Vorschau legt keinen an, interne Testkunden bekommen keinen", () => {
+    expect(referralLinkState({ preview: false, internal: false, hasCode: false })).toEqual({ create: true, show: true, hinweis: null });
+    expect(referralLinkState({ preview: false, internal: false, hasCode: true })).toEqual({ create: false, show: true, hinweis: null });
+    expect(referralLinkState({ preview: true, internal: false, hasCode: true })).toEqual({ create: false, show: true, hinweis: null });
+    const vorschau = referralLinkState({ preview: true, internal: false, hasCode: false });
+    expect(vorschau.create).toBe(false);
+    expect(vorschau.show).toBe(false);
+    expect(vorschau.hinweis).toBeTruthy();
+    for (const preview of [true, false]) {
+      const intern = referralLinkState({ preview, internal: true, hasCode: true });
+      expect(intern).toMatchObject({ create: false, show: false });
+      expect(intern.hinweis).toBeTruthy();
+    }
   });
 });

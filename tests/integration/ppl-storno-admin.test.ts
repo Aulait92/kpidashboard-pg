@@ -67,15 +67,20 @@ describe("Pay-per-Lead: Storno eintragen (Admin) und zurücknehmen", () => {
     expect(await prisma.auditLog.count({ where: { entityId: leadIds[0], action: "storno.admin" } })).toBe(1);
   });
 
-  it("nimmt freien Grund an und erkennt einen Storno in Prüfung an", async () => {
+  it("nimmt freien Grund an und erkennt einen Grenzfall (50:50) nachträglich voll an", async () => {
     expect((await requestStorno(leadIds[1], "Sonstiges", "Kennt die Anfrage nicht", { role: "BUYER" })).ok).toBe(true);
-    // Quote > 20 % oder „Sonstiges“ → Prüfung
-    expect((await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[1] } })).stornoState).toBe("review");
+    // „Sonstiges“ → Grenzfall, halbe Gutschrift
+    const vorher = await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[1] } });
+    expect(vorher.stornoState).toBe("approved");
+    const halb = Number(vorher.creditAmount);
     const r = await adminRecordStorno(leadIds[1], "Hat nie angefragt", "", admin);
     expect(r).toEqual({ ok: true, already: false, outsideWindow: false });
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: leadIds[1] } });
     expect(l.stornoState).toBe("approved");
     expect(l.stornoReason).toBe("Hat nie angefragt");
+    expect(Number(l.creditAmount)).toBe(halb * 2);
+    expect((await prisma.revenue.findFirstOrThrow({ where: { leadId: leadIds[1] } })).cancelled).toBe(true);
+    expect((await adminRecordStorno(leadIds[1], "Hat nie angefragt", "", admin)).ok && (await adminRecordStorno(leadIds[1], "x", "", admin))).toMatchObject({ already: true });
   });
 
   it("lehnt fehlenden Grund und Leads ohne Bezug ab", async () => {
