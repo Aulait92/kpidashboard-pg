@@ -1,0 +1,64 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "rechtsschutz",
+  "produkt": "Sorglos-Rechtsschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Telefonische Rechtsberatung",
+    "SB 300 € oder 400 €",
+    "Privat, Beruf, Verkehr, Wohnen"
+  ],
+  "tarife": [
+    {
+      "name": "Sorglos-Rechtsschutz",
+      "kurz": "Sorglos",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja, selbst bewohnt",
+        "privat": "ja",
+        "privatPlus": "optional",
+        "sb": "300 € oder 400 €",
+        "wartezeit": "3 Monate",
+        "mediation": "ja, telefonisch",
+        "telefon": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.concordia.de/produkte/recht-haftpflicht/rechtsschutz/sorglos-rechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Sorglos-Rechtsschutz mit SorglosPlusPrivat",
+      "kurz": "SorglosPlus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "ja, selbst bewohnt",
+        "privat": "ja",
+        "privatPlus": "ja",
+        "sb": "300 € oder 400 €",
+        "wartezeit": "3 Monate",
+        "mediation": "ja, telefonisch",
+        "telefon": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.concordia.de/produkte/recht-haftpflicht/rechtsschutz/sorglos-rechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/recht-haftpflicht/rechtsschutz/sorglos-rechtsschutz/"
+  ],
+  "offen": [
+    "Concordia bietet den Sorglos-Rechtsschutz (Privat, Beruf, Verkehr, Wohnen) und den Zusatzbaustein SorglosPlusPrivat (u. a. privater Bauherren-Rechtsschutz, Kapitalanlagen, erweitertes Familien- und Erbrecht); als zwei Stufen geführt.",
+    "Versicherungssumme und Strafkaution auf der Produktseite nicht genannt.",
+    "Selbstbeteiligung 300 € oder 400 €, halbiert bei Anwalt aus dem APRAXA-Netzwerk; entfällt u. a. bei Beratung, Mediation, Auslandsfällen. Wartezeit 3 Monate (z. B. Arbeit, Vertrag, Wohnen), 6 Monate für Vorsorgeverfügungen; SorglosPlusPrivat-Leistungen bis 3 Jahre.",
+    "Vermieter-Rechtsschutz auf der Seite nicht genannt. Eigene Variante für Rentner und Pensionäre (Arbeits-Rechtsschutz begrenzt). Keine Empfehlung markiert (zwei Stufen)."
+  ]
+}

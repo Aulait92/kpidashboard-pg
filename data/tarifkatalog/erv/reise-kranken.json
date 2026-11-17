@@ -1,0 +1,56 @@
+{
+  "gesellschaft": "ERV",
+  "sparte": "reise-kranken",
+  "produkt": "Auslandskrankenversicherung (ERGO Reiseversicherung)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Versicherungssumme unbegrenzt",
+    "Bergung bis 15.000 €",
+    "24-Stunden-Notruf"
+  ],
+  "tarife": [
+    {
+      "name": "Auslandskrankenversicherung Einmalschutz",
+      "kurz": "Einmalschutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 365 Tage",
+        "ruecktransport": "ja, med. sinnvoll",
+        "usa": "Tarif Welt wählbar",
+        "selbstbeteiligung": "0 € oder 100 € je Fall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Jahres-Auslandskrankenversicherung",
+      "kurz": "Jahresschutz",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "dauer": "bis 45 Tage je Reise",
+        "ruecktransport": "ja, med. sinnvoll",
+        "usa": "ja, weltweit",
+        "selbstbeteiligung": "0 € oder 100 € je Fall"
+      },
+      "bausteine": {},
+      "quelle": "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/auslandskrankenversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/auslandskrankenversicherung",
+    "https://doc.ergo-reiseversicherung.de/de/produktinformationen/produktinformationsblaetter/202504/de/40.08.745_2503_PIB_KV.pdf",
+    "https://doc.ergo-reiseversicherung.de/de/produktinformationen/produktinformationsblaetter/202504/de/40.08.480_2503_PIB_JV_KV-2025.pdf"
+  ],
+  "offen": [
+    "erv.de leitet auf ergo-reiseversicherung.de um (ERGO Reiseversicherung AG, Marke ERV). Diese Auslandskrankenversicherung ist ein eigenes Produkt und nicht die DKV-Auslandskrankenversicherung aus dem ERGO-Ordner.",
+    "Einmalschutz gilt je nach Tarif in Europa oder weltweit; USA und Kanada nicht ausdrücklich genannt. Jahresschutz laut Produktinformationsblatt weltweit, beliebig viele Reisen bis je 45 Tage.",
+    "Tarife mit Selbstbeteiligung: 100 € je Versicherungsfall. Zahnbehandlung, bekannte Erkrankungen und Schwangerschaft auf Seite und Produktinformationsblatt nicht genannt (nur Ausschluss geplanter Behandlungen).",
+    "Einzel-, Paar- und Familientarif (Kinder bis 25 Jahre). Keine Empfehlung markiert (zwei Stufen)."
+  ]
+}

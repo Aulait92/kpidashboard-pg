@@ -1,0 +1,68 @@
+{
+  "gesellschaft": "Würzburger",
+  "sparte": "reiseruecktritt",
+  "produkt": "TravelSecure Reiserücktrittsversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Auch Jobverlust, Jobwechsel",
+    "Umbuchungskosten erstattet",
+    "Weltweit gültig"
+  ],
+  "tarife": [
+    {
+      "name": "Reiserücktrittsversicherung Grundschutz",
+      "kurz": "Grundschutz",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 15.000 €/Fam. 20.000",
+        "sb": "mit oder ohne SB",
+        "abbruch": "nein",
+        "jahr": "nein",
+        "pandemie": "ja, schwere Erkrankung",
+        "familie": "Familientarif",
+        "gruende": "inkl. Jobverlust"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "nein"
+      },
+      "quelle": "https://www.travelsecure.de/reiseversicherungen/reiseruecktrittsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Reiserücktrittsversicherung Topschutz inkl. Urlaubsgarantie",
+      "kurz": "Topschutz",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "summe": "bis 15.000 €/Fam. 20.000",
+        "sb": "mit oder ohne SB",
+        "abbruch": "ja, mit Urlaubsgarantie",
+        "jahr": "nein",
+        "pandemie": "ja, schwere Erkrankung",
+        "familie": "Familientarif",
+        "gruende": "inkl. Jobverlust"
+      },
+      "bausteine": {
+        "sb0": "optional",
+        "abbruch": "inklusive"
+      },
+      "quelle": "https://www.travelsecure.de/reiseversicherungen/reiseruecktrittsversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.travelsecure.de/reiseversicherungen/reiseruecktrittsversicherung.html",
+    "https://www.travelsecure.de/bedingungen/PI_Reiseruecktritt.pdf",
+    "https://www.travelsecure.de/reiseversicherungen/reiseruecktrittsversicherung/reiseruecktritt-ein-jahr.html"
+  ],
+  "offen": [
+    "TravelSecure ist die Reiseversicherungsmarke der Würzburger Versicherungs-AG. TravelSecure markiert Topschutz als „Unsere Empfehlung“.",
+    "Versicherungssumme höchstens 15.000 € für Einzelpersonen, 20.000 € für Familien. Selbstbeteiligung wählbar, Höhe nicht genannt. Abschluss spätestens 30 Tage vor Reiseantritt (bei Last Minute innerhalb kurzer Frist nach Buchung).",
+    "Urlaubsgarantie: voller Reisepreis bei Abbruch in der ersten Hälfte, höchstens in den ersten 8 Reisetagen. Corona als unerwartet schwere Erkrankung versichert; Quarantäne nur mit Zusatz „Reiseschutzbrief Corona“.",
+    "Jahresschutz gibt es als Jahrespolice (Basispaket mit Rücktritt und Abbruch, Komfortpaket zusätzlich Auslandskranken und Gepäck); nicht als Stufe geführt."
+  ]
+}

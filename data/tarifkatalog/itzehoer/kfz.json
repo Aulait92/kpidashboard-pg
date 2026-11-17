@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "Itzehoer",
+  "sparte": "kfz",
+  "produkt": "Pkw-Rundumschutz",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 Mio. € Deckungssumme",
+    "Mallorca-Police inklusive",
+    "Tiere aller Art, freie Werkstatt"
+  ],
+  "tarife": [
+    {
+      "name": "Pkw-Rundumschutz COMFORT DRIVE",
+      "kurz": "COMFORT DRIVE",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Diebst./Alk.",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "24 Monate",
+        "marder": "Folgeschäden 25.000 €",
+        "rabattschutz": "optional",
+        "gap": "optional",
+        "werkstatt": "nein, Bonus wählbar",
+        "elektro": "Allgefahren 25.000 €",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/fahrzeuge/pkw-rundumschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pkw-Rundumschutz TOP DRIVE",
+      "kurz": "TOP DRIVE",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "ja, außer Diebst./Alk.",
+        "tiere": "ja, Tiere aller Art",
+        "neuwert": "36 Monate",
+        "marder": "ja, Folgeschäden unbegr.",
+        "rabattschutz": "ja, ab 23 Jahren",
+        "gap": "ja",
+        "werkstatt": "nein, Bonus wählbar",
+        "elektro": "Allgefahren unbegrenzt",
+        "mallorca": "ja"
+      },
+      "bausteine": {
+        "schutzbrief": "inklusive",
+        "rabattschutz": "inklusive"
+      },
+      "quelle": "https://www.itzehoer.de/produkte/fahrzeuge/pkw-rundumschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.itzehoer.de/produkte/fahrzeuge/pkw-rundumschutz/",
+    "https://www.itzehoer.de/dokumente/produkte/pkw/rundumschutz/a-04-000-folder-itzehoer-loesungen-kfz-schutz-09-26_web.pdf",
+    "https://www.itzehoer.de/dokumente/produkte/pkw/rundumschutz/informationsblatt-fuer-versicherungsprodukte-fuer-die-kfz-versicherung-ipid-09-24.pdf"
+  ],
+  "offen": [
+    "Werte aus der Leistungstabelle COMFORT DRIVE / TOP DRIVE der Produktseite (Symbole aus dem Seitenquelltext gelesen). Folder 09/2026 und Bedingungen nicht ausgewertet.",
+    "Grobe Fahrlässigkeit: Verzicht in beiden Tarifen, ausgenommen grob fahrlässig ermöglichter Diebstahl und Alkohol/Rauschmittel. Personenschäden max. 15 Mio. € je Person.",
+    "Neupreisentschädigung für Ersteigentümer 24 bzw. 36 Monate; TOP DRIVE unbegrenzt, solange der Pkw seit Erwerb als Neuwagen ununterbrochen im TOP DRIVE versichert ist. Kaufpreiserstattung 24 bzw. 36 Monate.",
+    "Tierbiss außen in beiden Tarifen, im Innenraum nur TOP DRIVE; Folgeschäden COMFORT bis 25.000 €. Rabattschutz unter 23 Jahren in beiden Tarifen optional.",
+    "Freie Werkstattwahl in beiden Tarifen, Werkstattbonus mit Beitragsersparnis optional. Schutzbrief und Auslandsschadenschutz in COMFORT optional, in TOP inklusive.",
+    "Itzehoer markiert keinen Tarif (zwei Stufen): keine Empfehlung gesetzt."
+  ]
+}

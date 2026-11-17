@@ -1,0 +1,39 @@
+{
+  "gesellschaft": "Concordia",
+  "sparte": "risikoleben",
+  "produkt": "Risiko-Lebensversicherung Risiko futur",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Voller Schutz ab 1. Beitrag",
+    "Nichtraucher-Tarif",
+    "Hilfe bei Hospiz-Platz"
+  ],
+  "tarife": [
+    {
+      "name": "Risiko futur",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja, 100 %",
+        "verlaengerung": "ja"
+      },
+      "bausteine": {
+        "verbunden": "optional"
+      },
+      "quelle": "https://www.concordia.de/produkte/zukunft-vorsorge/risiko-lebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.concordia.de/produkte/zukunft-vorsorge/risiko-lebensversicherung/"
+  ],
+  "offen": [
+    "Concordia bietet einen Tarif (Risiko futur); Normal-, Nichtraucher- und „fit“-Konditionen sind Beitragsstufen, keine Leistungsstufen.",
+    "Vorgezogene Leistung: 100 % der Summe bei Lebenserwartung unter 12 Monaten, wenn der Vertrag noch mindestens 15 Monate läuft und die Summe mindestens 25.000 € beträgt.",
+    "Erhöhung (z. B. Geburt, Hauskauf) und Verlängerung ohne erneute Prüfung genannt, Anlässe und Grenzen nicht beziffert. Verbundene Leben mit Anschluss-Option möglich.",
+    "Umtauschrecht, weltweiter Schutz, Endalter und fallende Summe auf der Seite nicht genannt."
+  ]
+}
