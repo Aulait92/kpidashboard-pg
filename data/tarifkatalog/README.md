@@ -437,3 +437,40 @@ Rente, Basisrente, Pflege, Reise); Allianz und AXA Kinderinvalidität (Baustein 
 medizinischen Kriterien); Swiss Life (Werte aus Bedingungen, Produktseiten gesperrt); Debeka PKV (Stufen selbst
 gebildet, Beihilfetarife fehlen); Hannoversche „110 % Vorabauszahlung“ nur bis 30.11.2026.
 Folien-Test misst jetzt jede Sparte jeder Gesellschaft.
+
+### Welle 2: alle wichtigen Gesellschaften (17.11.2026)
+
+Ole: „Alle wichtigen Gesellschaften brauchen wir.“ 23 neue Gesellschaften (Monuta nicht: kein Versicherer mehr in
+Deutschland) und Leben, Gesundheit und Kfz für Generali, Zurich, DEVK, LVM, Provinzial und VHV. Stand: 510 Dateien.
+Zahl = Stufen, „·“ = kein Produkt bzw. nicht beauftragt. Alles `ungeprueft: true`.
+
+| Sparte | Conti | Württ. | NÜRN | Stuttg. | VB | Bay. | LV1871 | Basler | Helv. | UKV | SDK | INTER | uniV. | MV | IDEAL | Gen. | Dialog | Zurich | DA | DEVK | LVM | Prov. | VHV | WGV | Itz. | Conc. | ERV | Würzb. |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| bu | 2 | 1 | 3 | 2 | 1 | 1 | 1 | 1 | 1 | · | · | 1 | 2 | · | · | 2 | 1 | 1 | · | 1 | 1 | 2 | · | · | · | 2 | · | · |
+| dienstunfaehigkeit | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| grundfaehigkeit | · | · | 1 | 1 | 1 | 2 | · | · | · | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | · | · | · | · |
+| risikoleben | 2 | 2 | 3 | 1 | 1 | 2 | 2 | 2 | 2 | · | · | 1 | 1 | · | 2 | 3 | 3 | 1 | · | 2 | 1 | 3 | · | · | · | 1 | · | · |
+| kinderinvaliditaet | · | · | 1 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| sterbegeld | 1 | 1 | 1 | 1 | · | 1 | · | · | · | · | · | · | · | 1 | 3 | 1 | · | · | · | 1 | · | 1 | · | · | · | · | · | · |
+| pkv | 3 | 3 | · | · | · | · | · | · | · | 2 | 3 | 3 | 4 | 3 | · | 3 | · | · | · | · | 3 | · | · | · | · | · | · | · |
+| krankentagegeld | 1 | · | · | · | · | · | · | · | · | 2 | 2 | 2 | 3 | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · |
+| zahnzusatz | 4 | 3 | · | · | · | 3 | · | · | · | 3 | 4 | 3 | 3 | 3 | · | 3 | · | · | 3 | 3 | 4 | · | · | · | · | · | · | · |
+| krankenhauszusatz | 2 | 1 | · | · | · | · | · | · | · | 2 | 3 | 3 | 3 | 2 | · | 1 | · | · | 1 | 1 | 2 | · | · | · | · | · | · | · |
+| ambulant | 3 | 2 | · | · | · | · | · | · | · | 2 | 4 | 3 | 3 | 2 | · | 1 | · | · | · | · | 2 | · | · | · | · | · | · | · |
+| pflegezusatz | 3 | 3 | · | · | · | 3 | · | · | · | 2 | 3 | 1 | 2 | 3 | 3 | 2 | · | · | · | 2 | 1 | · | · | · | · | · | · | · |
+| reise-kranken | 1 | 2 | · | · | · | · | · | · | · | 2 | 3 | · | · | · | · | · | · | · | · | 1 | · | · | · | · | · | · | 2 | 2 |
+| rente | 4 | 1 | 3 | 4 | 4 | 3 | 2 | 1 | 3 | · | · | 2 | 3 | 1 | 2 | 1 | · | 1 | · | 3 | 1 | 3 | · | · | · | · | · | · |
+| basisrente | 3 | 1 | 1 | 3 | 4 | 2 | 1 | · | 1 | · | · | · | · | · | · | 1 | · | 1 | · | · | 2 | 1 | · | · | · | · | · | · |
+| kfz | · | 2 | 3 | · | · | · | · | 2 | · | · | · | · | · | · | · | 1 | · | 2 | 3 | 3 | 1 | 2 | 2 | 2 | 2 | 3 | · | · |
+| reiseruecktritt | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 2 |
+| haftpflicht | 3 | 3 | · | · | · | 4 | · | 3 | 3 | · | · | · | · | · | · | 1 | · | 2 | · | 3 | 2 | 3 | 2 | 3 | 2 | 1 | · | · |
+| hausrat | 3 | 3 | · | · | · | 4 | · | 2 | 2 | · | · | · | · | · | · | 2 | · | 2 | · | 3 | 2 | 3 | 2 | 3 | 2 | 1 | · | · |
+| wohngebaeude | 3 | 3 | · | · | · | · | · | 2 | 2 | · | · | · | · | · | · | 1 | · | 2 | · | 3 | 2 | 3 | 2 | 3 | 2 | 1 | · | · |
+| unfall | 3 | 3 | 3 | · | · | 3 | · | 2 | 2 | · | · | · | · | · | 2 | 1 | · | 2 | · | 3 | 1 | 1 | 2 | 3 | 3 | 1 | · | · |
+| rechtsschutz | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1 | · | 2 | · | 2 | 2 | 2 | 2 | 2 | · | 2 | · | · |
+| tierhalter-hund | · | 1 | · | · | · | 2 | · | · | · | · | · | · | · | · | · | 1 | · | 2 | · | 2 | 2 | 1 | 1 | · | · | · | · | · |
+
+Zum Gegenprüfen besonders: Basler und Helvetia (seit 05.05.2026 verkauft helvetia.de die früheren Basler-Produkte,
+Risikoträger Baloise; gleiche Werte in beiden Ordnern), Zurich (Produktseiten gesperrt, Werte aus Bedingungen, Kfz
+von 2016, Premium fehlt), Generali (dünne Produktseiten), ERV-Reiserücktritt gleich ERGO (keine eigene Datei),
+selbst gebildete Stufen (LVM PKV, SDK PKV, uniVersa PKV). Helvetia ist mit curl abrufbar (früherer Hinweis „gesperrt“ überholt).
