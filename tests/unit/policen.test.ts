@@ -231,6 +231,13 @@ describe("Ablauf im Assistenten", () => {
     expect(hatVertraege({ vorhanden: "Haftpflicht bei HUK, Hausrat Allianz" })).toBe(true);
     expect(hatVertraege({ vorhanden: "keine" })).toBe(false);
     expect(hatVertraege({ vorhanden: "Keine Verträge" })).toBe(false);
+    // Ole, 17.11.2026: „beides neu“ ist keine Liste vorhandener Verträge
+    expect(hatVertraege({ vorhanden: "beides neu" })).toBe(false);
+    expect(hatVertraege({ vorhanden: "Haftpflicht und Hausrat: beides neu" })).toBe(false);
+    expect(hatVertraege({ vorhanden: "wäre alles neu" })).toBe(false);
+    expect(hatVertraege({ vorhanden: "neu" })).toBe(false);
+    expect(hatVertraege({ vorhanden: "noch nirgends versichert" })).toBe(false);
+    expect(hatVertraege({ vorhanden: "Haftpflicht bei HUK, Hausrat wäre neu" })).toBe(true);
     expect(hatVertraege({ komplettcheck: "ja" })).toBe(true);
     expect(hatVertraege(null)).toBe(false);
     const q = { vorhanden: "Haftpflicht HUK" };
