@@ -44,6 +44,7 @@ export async function bookPublicAction(
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
   const consent = formData.get("consent") === "on";
+  const erinnerung = formData.get("erinnerung") === "on";
 
   if (!start || Number.isNaN(new Date(start).getTime())) fail("slot");
   if (!name) fail("name");
@@ -139,6 +140,12 @@ export async function bookPublicAction(
         sentBy: "lead",
       },
     });
+    // Opt-in für Erinnerungen zur Terminvorbereitung (Policen, Rechtsprüfung A8): nur wenn angehakt, als Nachweis
+    if (erinnerung) {
+      await import("@/lib/policen/server")
+        .then((m) => m.erinnerungOptIn({ customerId, leadId, phone: phone! }))
+        .catch((e) => console.error("[booking page erinnerung]", e instanceof Error ? e.name : "Fehler"));
+    }
     // WhatsApp-Bestätigung (Freitext im 24h-Fenster, sonst freigegebene
     // Vorlage). Fehler dürfen die Buchung nicht scheitern lassen — die
     // Google-Einladung per E-Mail ist ohnehin raus.

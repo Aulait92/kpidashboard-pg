@@ -25,7 +25,7 @@ export function MailEintrag({ mail }: { mail: KontaktMailEintrag }) {
       <div className="flex flex-wrap items-center gap-1.5">
         {mail.automatic ? <Badge tone="info">automatisch</Badge> : null}
         <span className="text-xs font-medium text-[color:var(--muted)]">{mail.artLabel}</span>
-        <Badge tone={TONE[mail.status]}>{mail.statusLabel}</Badge>
+        {mail.provider === "mailprogramm" ? <Badge tone="neutral">eigenes Mailprogramm</Badge> : <Badge tone={TONE[mail.status]}>{mail.statusLabel}</Badge>}
       </div>
       <p className="mt-0.5 break-words text-[15px] font-medium">{mail.subject}</p>
       <p className="break-all text-xs text-[color:var(--muted)]">an {mail.to}</p>

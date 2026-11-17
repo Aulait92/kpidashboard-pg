@@ -24,8 +24,8 @@ export function MailFeaturesToggle({ on, readOnly }: { on: boolean; readOnly: bo
           <span className="block font-semibold">E-Mail-Funktionen nutzen</span>
           <span className="block text-xs text-[color:var(--muted)]">
             {on
-              ? "Ausschalten, wenn Ihre Gesellschaft nicht erlaubt, das dienstliche Postfach mit anderen Programmen zu verbinden. Dann blendet die App alle E-Mail-Knöpfe aus."
-              : "Ausgeschaltet: Die App blendet alle E-Mail-Knöpfe aus. Einschalten, sobald Sie Ihr Postfach verbinden dürfen."}
+              ? "Ausschalten, wenn Ihre Gesellschaft keine E-Mails aus anderen Programmen erlaubt. Dann übernehmen Sie Texte mit einem Tipp ins eigene Mailprogramm, die App sendet sie nicht selbst."
+              : "Ausgeschaltet: Sie übernehmen Texte mit einem Tipp ins eigene Mailprogramm, die App sendet sie nicht selbst. Einschalten, sobald Ihre Gesellschaft es erlaubt."}
           </span>
         </span>
       </label>

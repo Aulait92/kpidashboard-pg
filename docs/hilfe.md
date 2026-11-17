@@ -23,6 +23,7 @@ Seiten aus der Liste „Seiten“ unten.
 | /buyer/bestand/import | Kundenliste hochladen | Excel/CSV importieren |
 <!-- /bestand-modul -->
 | /buyer/bestellen | Bestellen | Leads für eine Woche bestellen (bei Pay-per-Lead) |
+| /buyer/einstellungen/assistent | Assistent | E-Mails in Ihrem Namen (Absender, Kopie, automatisch / ein Tipp / aus je Mail) und der Weg zu den WhatsApp-Vorlagen |
 | /buyer/vorlagen | WhatsApp-Vorlagen | Welche Nachrichten der Assistent schickt und ob Meta sie freigegeben hat (nur lesen) |
 | /buyer/einstellungen/meta | Rückmeldung an Meta | Ergebnisse der Meta-Leads an Meta zurückmelden (an/aus nur Inhaber), Status, Anteile je Stufe, Empfehlung fürs Optimierungsziel |
 
@@ -300,7 +301,7 @@ Seiten aus der Liste „Seiten“ unten.
 - Bestandskunden, deren Kampagnen-Nachricht mit „nicht per WhatsApp erreichbar“ zurückkommt, bekommen künftige
   Kampagnen nur noch per E-Mail, soweit E-Mail für den Anlass erlaubt ist (Einwilligung bzw. § 7 Abs. 3 UWG).
 <!-- /bestand-modul -->
-- **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → WhatsApp-Vorlagen**,
+- **Ansprache (Sie oder Du)**: Standard ist „Sie“. Inhaber stellen das unter **Einstellungen → Assistent → WhatsApp-Vorlagen**,
   **Einstellungen → E-Mail-Postfach** oder im Einrichtungs-Fragebogen um. Es gilt für den Assistenten,
   WhatsApp-Vorlagen, Termin-Nachrichten, Termin-E-Mails, die Buchungsseite und die E-Mail-Vorlagen.
 - **Anrede**: Bei „Sie“ beginnen Nachrichten mit „Guten Tag Frau Schneider,“ bzw. „Guten Tag Herr Schneider,“, wenn die
@@ -350,7 +351,7 @@ Seiten aus der Liste „Seiten“ unten.
 - WhatsApp erlaubt die erste Nachricht an einen Lead (und jede Nachricht nach mehr als 24 Stunden
   Funkstille) nur mit einem Text, den Meta vorher geprüft hat. Diese Vorlagen reichen wir für Ihre
   Nummer automatisch bei Meta ein, sobald WhatsApp verbunden ist. Sie müssen nichts tun.
-- Ansehen: Profilmenü → **WhatsApp-Vorlagen**. Jede Vorlage steht als WhatsApp-Blase mit Beispielwerten
+- Ansehen: **Einstellungen → Assistent → WhatsApp-Vorlagen**. Jede Vorlage steht als WhatsApp-Blase mit Beispielwerten
   (z. B. „Frau Schneider“ bzw. „Julia“) da; beim Senden setzt die App die echte Anrede, den Namen und den Termin ein.
 - Status: **In Prüfung bei Meta** (meist Minuten bis wenige Stunden), **Freigegeben** oder
   **Abgelehnt**: dann kümmern wir uns und reichen einen angepassten Text neu ein.
@@ -509,8 +510,9 @@ Seiten aus der Liste „Seiten“ unten.
   Business-App-Weg nehmen. Zeigt 360dialog „Choose a plan“ oder „Pending Activation“: nichts kaufen, performancegrowth schaltet frei.
 - **E-Mail-Postfach verbinden:** Google, Microsoft oder anderer Anbieter (SMTP), wie unter **Einstellungen → E-Mail-Postfach**.
   Manche Gesellschaften (z. B. für Ausschließlichkeitsvertreter) erlauben nicht, das dienstliche Postfach mit anderen Programmen zu
-  verbinden. Dann **„Meine Gesellschaft erlaubt das nicht“** tippen: Die App blendet E-Mail-Knopf und E-Mail-Fenster im Kontakt,
-  E-Mail-Vorschläge beim nächsten Schritt und den E-Mail-Kanal bei Bestandskampagnen (nur WhatsApp) aus, der Schritt gilt als erledigt.
+  verbinden. Dann **„Meine Gesellschaft erlaubt das nicht“** tippen: Die App sendet E-Mail-Vorlagen nicht selbst; im Kontakt öffnet
+  **E-Mail** das Fenster nur mit **Im eigenen Mailprogramm öffnen** und **Text kopieren**. E-Mail-Vorschläge beim nächsten Schritt und
+  der E-Mail-Kanal bei Bestandskampagnen (nur WhatsApp) entfallen, der Schritt gilt als erledigt.
   Wieder einschalten unter **Einstellungen → E-Mail-Postfach → „E-Mail-Funktionen nutzen“**. **„Später“** lässt den Schritt offen.
 - **Überspringen mit Grund:** Beim Kalender und bei WhatsApp gibt es **„Meine Gesellschaft erlaubt das nicht“** (WhatsApp auch
   „Ohne WhatsApp arbeiten“). Der Schritt gilt dann als erledigt. Termine tragen Sie im Kontakt unter **Termin → von Hand eintragen**
@@ -1416,6 +1418,15 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
 
 ## E-Mails aus der App (eigenes Postfach)
 
+- **E-Mails in Ihrem Namen (seit 17.11.2026):** unter **Einstellungen → Assistent**. Ein kurzer Schritt erklärt, welche
+  Service-Mails die App in Ihrem Namen schickt, zeigt eine echte Terminbestätigung als Beispiel (Absender „Ihr Name |
+  Agentur“, darunter klein die technische Adresse, unten Ihre Signatur) und fragt fehlende Angaben für die Signatur ab.
+  **Ja, Mails in meinem Namen senden** übernimmt die Voreinstellungen und schaltet die Kopie jeder Mail an Ihre Adresse
+  an. **Selbst entscheiden je Mail** zeigt die Liste aller E-Mail-Vorlagen mit **Automatisch**, **Ein Tipp** oder **Aus**.
+  Angebot, Gesprächszusammenfassung und Kündigung gehen nie automatisch. Automatische Mails, die noch nicht laufen,
+  stehen dort mit „automatisch bald verfügbar“. Danach ändern Sie dort jederzeit Stufe, Kopie (andere Adresse möglich) und Signatur.
+  Ist Ihr Postfach verbunden, gehen die Mails von Ihrer Adresse und liegen in „Gesendet“, dann ohne Kopie.
+
 - **Alle E-Mails im Verlauf (seit 15.11.2026):** Jede E-Mail an einen Lead oder Bestandskunden steht im Verlauf des
   Kontakts (**Lead öffnen → Notizen & Verlauf**), auch die automatischen: Terminbestätigung, Terminverschiebung,
   Terminabsage, Terminerinnerung, „Kein WhatsApp“, Kampagnen-Mails und Einwilligungs-Mails im Bestand. Automatische
@@ -1456,8 +1467,18 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
     nächster Schritt: „Ich rufe Sie am Donnerstag kurz an, passt das?“.
   - **Nachfassen Angebot**: eine konkrete Frage: „Ist für Sie eher der Beitrag oder die Leistung entscheidend?“.
   - Unveränderte Standardvorlagen bekommen die neue Fassung beim nächsten Öffnen automatisch, selbst geänderte bleiben.
-- Beim Kontakt: Kachel **E-Mail**. Vorlage wählen, anpassen, Dokumente (z. B. das Angebot) anhängen, senden.
-  Die E-Mail geht von der eigenen Adresse raus und steht im Verlauf.
+- Beim Kontakt: Kachel **E-Mail**. Vorlage wählen, anpassen, Dokumente (z. B. das Angebot) anhängen und einen von drei
+  Wegen wählen (seit 17.11.2026):
+  - **Über die App senden**: aus Ihrem verbundenen Postfach, sonst über unsere Versandadresse mit „Ihr Name | Agentur“
+    als Absender, Ihrer Signatur aus den Anbieterangaben und Antworten direkt an Sie. Auf Wunsch geht eine Kopie an Sie
+    (Einstellungen → Assistent).
+  - **Im Mailprogramm öffnen**: öffnet Ihr eigenes Mailprogramm mit Empfänger, Betreff und Text, ohne Signatur (Ihr
+    Programm setzt seine eigene). Sehr lange Texte kommen in die Zwischenablage, dort einfügen. Anhänge fügen Sie selbst
+    hinzu: auf dem Handy **PDF teilen**, am Rechner **PDF herunterladen**.
+  - **Text kopieren**: z. B. für das System Ihrer Gesellschaft.
+  Kommen Sie danach in die App zurück, fragt sie **„Haben Sie die E-Mail gesendet?“**. **Ja** trägt die Mail im Verlauf
+  ein (Kennzeichen „eigenes Mailprogramm“) und legt dieselbe Wiedervorlage an wie beim Senden über die App, **Nein**
+  ändert nichts. Hat sich ein Kontakt von E-Mails abgemeldet, sendet die App keine Nachfass-Vorlagen mehr an ihn.
 - **Erinnern, falls kein Termin gebucht wird**: Steht der Terminlink in der Mail, legt die App nach dem Senden eine
   Wiedervorlage „Kein Termin gebucht: nachfassen“ an (morgen, in 2 Werktagen oder in 1 Woche). Bucht der Kontakt
   vorher, verschwindet sie. Gibt es schon eine Wiedervorlage oder läuft eine Nachfass-Abfolge, kommt keine zweite dazu.
