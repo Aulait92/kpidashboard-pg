@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Infektionen und Impfschäden",
+    "Schlaganfall und Herzinfarkt",
+    "Innovationsklausel"
+  ],
+  "tarife": [
+    {
+      "name": "Unfall Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "10 %, max. 10.000 €",
+        "kosmetik": "bis 30.000 €",
+        "bergung": "bis 30.000 €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfall Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "sofort": "10 %, max. 20.000 €",
+        "kosmetik": "bis 1 Mio. €",
+        "bergung": "bis 1 Mio. €",
+        "zecken": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/einkommensschutz/unfallversicherung/"
+  ],
+  "offen": [
+    "HDI markiert Premium mit „Wir empfehlen“. Werte aus der Leistungstabelle der Produktseite.",
+    "Invaliditätssumme, Progression und Leistung ab Grad nicht auf der Produktseite; Tagegelder und Unfallrente frei festlegbar.",
+    "Premium zusätzlich: Krebserkrankungen, Eigenbewegungen, Verdienstausfall, behinderungsbedingte Mehraufwendungen bis 25.000 €. Zecken über die Infektionsklausel. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+  ]
+}

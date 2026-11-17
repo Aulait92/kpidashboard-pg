@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung PremiumRisk",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Konstante oder fallende Summe",
+    "Nichtraucher-Tarife",
+    "BU-Zusatz BioRisk möglich"
+  ],
+  "tarife": [
+    {
+      "name": "WWK PremiumRisk",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja"
+      },
+      "bausteine": {
+        "fallend": "optional"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/risikolebensversicherung/"
+  ],
+  "offen": [
+    "Ein Tarif. Vorgezogene Leistung, Verlängerung, Umtausch, weltweiter Schutz nicht auf der Produktseite. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+  ]
+}

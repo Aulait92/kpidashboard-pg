@@ -1,0 +1,52 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld (DKV)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Steuerfrei",
+    "Auch Sonn- und Feiertage",
+    "Alle 3 Jahre anpassbar"
+  ],
+  "tarife": [
+    {
+      "name": "Tarif KTAG (Arbeitnehmer)",
+      "kurz": "KTAG",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "43. oder 365. Tag",
+        "hoehe": "bis 520 € (freiwillig)",
+        "dauer": "unbegrenzt",
+        "selbststaendige": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Tarif KTN2 (Selbstständige)",
+      "kurz": "KTN2",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "4. oder 183. Tag",
+        "hoehe": "bis 300 € bzw. 520 €",
+        "dauer": "unbegrenzt",
+        "selbststaendige": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/krankentagegeld/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/krankenversicherung/krankentagegeld/"
+  ],
+  "offen": [
+    "Zwei Zielgruppentarife, keine Leistungsstufen. KTAG für gesetzlich versicherte Arbeitnehmer (Pflichtversicherte bis 35 €, freiwillig Versicherte bis 520 €), KTN2 für Selbstständige (bis 300 €, Freiberufler 520 €, Existenzgründer 140 bzw. 160 €).",
+    "Risikoträger laut Seite nicht genannt (DKV-Kooperation bei anderen Gesundheitstarifen). Wartezeit, Ende bei BU und Ausland nicht genannt."
+  ]
+}

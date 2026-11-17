@@ -1,0 +1,85 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "pflegezusatz",
+  "produkt": "HDI Pflegerente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Weltweit ohne Einschränkung",
+    "Keine Wartezeit",
+    "Abschluss 18 bis 75 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "HDI Pflegerente BASIS",
+      "kurz": "BASIS",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "wählbar 250 bis 4.000 €",
+        "einmal": "optional",
+        "wartezeit": "keine",
+        "dynamik": "optional",
+        "ambulant-gleich": "ja",
+        "ab-pg": "PG 4"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://vertriebsservice.hdi-gerling.de/media/easynet/7010800811.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HDI Pflegerente KLASSIK",
+      "kurz": "KLASSIK",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "pg5": "wählbar 250 bis 4.000 €",
+        "einmal": "optional",
+        "wartezeit": "keine",
+        "dynamik": "optional",
+        "ambulant-gleich": "ja",
+        "ab-pg": "PG 3"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://vertriebsservice.hdi-gerling.de/media/easynet/7010800811.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HDI Pflegerente EXKLUSIV",
+      "kurz": "EXKLUSIV",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "pg5": "wählbar 250 bis 4.000 €",
+        "einmal": "optional",
+        "wartezeit": "keine",
+        "dynamik": "optional",
+        "ambulant-gleich": "ja",
+        "ab-pg": "PG 2"
+      },
+      "bausteine": {
+        "einmal": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://vertriebsservice.hdi-gerling.de/media/easynet/7010800811.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/krankenversicherung/pflegerente/",
+    "https://vertriebsservice.hdi-gerling.de/media/easynet/7010800811.pdf"
+  ],
+  "offen": [
+    "Risikoträger IDEAL Lebensversicherung a.G. (Produktbeschreibung 7010800811, Stand 01/2024). Laut Produktbeschreibung gegen Einmalbeitrag; die Produktseite spricht von flexibler Beitragszahlung, bitte prüfen.",
+    "Monatsrente frei wählbar 250 bis 4.000 €, gleiche Höhe ambulant und stationär (Seite: frei verwendbar). Sofortleistung 1 bis 12 Monatsrenten optional.",
+    "Beitragsbefreiung im Pflegefall und Demenz nicht ausgewertet. Keine Markierung; KLASSIK als mittlere Stufe."
+  ]
+}

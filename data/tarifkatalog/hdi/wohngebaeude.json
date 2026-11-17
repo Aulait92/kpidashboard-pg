@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Schadenersatz zum Neuwert",
+    "Überspannung versichert",
+    "Pakete frei kombinierbar"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "optional",
+        "kosten": "ja",
+        "ueberspannung": "ja",
+        "neuwert": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/eigentum-und-miete/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "optional",
+        "kosten": "ja",
+        "ueberspannung": "ja",
+        "neuwert": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "ableitung": "optional",
+        "erneuerbar": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/eigentum-und-miete/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/eigentum-und-miete/wohngebaeudeversicherung/"
+  ],
+  "offen": [
+    "Die Produktseite nennt kaum Unterschiede zwischen Komfort und Premium: Einbruchschäden am Gebäude Komfort bis 10.000 €, Premium ohne Grenze; Feuer-Rohbau 12 bzw. 24 Monate; Bestleistungsgarantie nur zu Premium.",
+    "Grobe Fahrlässigkeit nicht genannt. Pakete Glas, Ableitungsrohre, Elementar, Photovoltaik (inklusive Einspeisevergütung). Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+  ]
+}

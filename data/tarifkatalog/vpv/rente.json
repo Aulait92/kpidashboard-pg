@@ -1,0 +1,100 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Zuzahlungen und Entnahmen",
+    "Kapitalauszahlung wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "VPV Flex Garant Invest",
+      "kurz": "Flex Garant",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Kapital geschützt",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "ja",
+        "hinterbliebene": "ja",
+        "kapital": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/private-klassische-rentenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VPV Zukunftsplan Komfort",
+      "kurz": "ZP Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "75 % der Beiträge",
+        "anlage": "Fonds, Garantiefonds",
+        "flexibel": "ja",
+        "hinterbliebene": "100 % der Beiträge",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/zukunftsplan/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VPV Zukunftsplan Plus",
+      "kurz": "ZP Plus",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "steigt auf 75 %",
+        "anlage": "Fonds, Garantiefonds",
+        "flexibel": "ja",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/zukunftsplan/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VPV Go Invest",
+      "kurz": "Go Invest",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "Fonds und ETFs",
+        "flexibel": "ja",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/go-invest/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/vorsorge-vermoegen/private-klassische-rentenversicherung/",
+    "https://www.vpv.de/produkte/vorsorge-vermoegen/zukunftsplan/",
+    "https://www.vpv.de/produkte/vorsorge-vermoegen/go-invest/",
+    "https://www.vpv.de/media/content/produkte/dokumente/vorsorge-und-vermoegen/private-rentenversicherung/flex-garant-rente-prospekt-7663-1025.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/vorsorge-und-vermoegen/zukunftsplan/zukunftsplan-komfort-produktflyer.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/vorsorge-und-vermoegen/go-invest/go-invest-prospekt-7202.pdf"
+  ],
+  "offen": [
+    "Die Stufen sind Anlagekonzepte (klassisch, mit 75 % Garantie, mit steigendem Sicherungsniveau, reine Fonds), keine Leistungsstufen; Empfehlung nur als mittlere Stufe gesetzt.",
+    "Garantierter Rentenfaktor bei keinem Produkt beziffert. Flex Garant Invest: „geschütztes Kapital mit Zins-Zuschlag“, Höhe nicht genannt.",
+    "Zukunftsplan Plus: Sicherungsniveau steigt jährlich linear von 0 % auf 75 % des Guthabens. Go Invest: keine Garantie genannt.",
+    "Hinterbliebenenschutz bei Zukunftsplan Plus und Go Invest nicht ausdrücklich genannt. Effektivkosten nicht veröffentlicht.",
+    "Flex Garant Rente (Sofortrente gegen Einmalbeitrag) nicht aufgenommen; Riester-Nachfolger Altersvorsorgedepot und Frühstart-Rente erst ab 2027."
+  ]
+}

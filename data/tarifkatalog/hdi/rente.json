@@ -1,0 +1,41 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "rente",
+  "produkt": "CleverInvest Privatrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Rund 150 Fonds und ETFs",
+    "Rebalancing auf Wunsch"
+  ],
+  "tarife": [
+    {
+      "name": "HDI CleverInvest Privatrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "ja",
+        "anlage": "Fonds und ETFs",
+        "flexibel": "ja",
+        "hinterbliebene": "ja",
+        "kapital": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/altersvorsorge/private-altersvorsorge/cleverinvest-privatrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/altersvorsorge/private-altersvorsorge/cleverinvest-privatrente/",
+    "https://www.hdi.de/versicherungen/altersvorsorge/private-rentenversicherung-laufender-beitrag/"
+  ],
+  "offen": [
+    "Ein Tarif (fondsgebundene Rentenversicherung). Beitragsgarantie nicht genannt. Effektivkosten laut Seite „sehr niedrig“, nicht beziffert.",
+    "BU-Zusatz: CleverInvest Gold sichert die Beiträge bei Berufsunfähigkeit ohne Gesundheitsprüfung, Wartezeit 3 Jahre.",
+    "Kapitalwahlrecht aus Entnahmeplan und Kapitalauszahlung abgeleitet. Sofortrente gegen Einmalbeitrag nicht aufgenommen."
+  ]
+}

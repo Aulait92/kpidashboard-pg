@@ -1,0 +1,78 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Füllungen und Inlays 100 %",
+    "KFO für Kinder bis 2.000 €",
+    "Bleaching bis 250 €"
+  ],
+  "tarife": [
+    {
+      "name": "Zahnzusatz mit 20 % Eigenanteil",
+      "kurz": "80 %",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "80 %",
+        "implantate": "80 %",
+        "behandlung": "100 %",
+        "prophylaxe": "1x jährl. o. unbegr.",
+        "wartezeit": "keine",
+        "kfo": "Kinder bis 2.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/zahnzusatz-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz mit 10 % Eigenanteil",
+      "kurz": "90 %",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "behandlung": "100 %",
+        "prophylaxe": "1x jährl. o. unbegr.",
+        "wartezeit": "keine",
+        "kfo": "Kinder bis 2.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/zahnzusatz-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Zahnzusatz ohne Eigenanteil",
+      "kurz": "100 %",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "behandlung": "100 %",
+        "prophylaxe": "1x jährl. o. unbegr.",
+        "wartezeit": "keine",
+        "kfo": "Kinder bis 2.000 €",
+        "inlays": "100 %"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/zahnzusatz-krankenversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/krankenversicherung/zahnzusatz-krankenversicherung/"
+  ],
+  "offen": [
+    "Stufen selbst gebildet: HDI bietet einen Leistungsumfang mit wählbarem Eigenanteil von 20 %, 10 % oder 0 % beim Zahnersatz; Tarifnamen nicht genannt.",
+    "Erstattung jeweils inklusive Vorleistung der gesetzlichen Krankenversicherung. Zahnreinigung wahlweise einmal jährlich oder unbegrenzt.",
+    "Risikoträger nicht genannt (bei ambulanter und Pflegeversicherung nennt HDI die DKV als Kooperationspartner). Begrenzungen in den ersten Jahren nicht genannt."
+  ]
+}

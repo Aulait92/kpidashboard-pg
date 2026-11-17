@@ -1,0 +1,63 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Pferdehaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Turniere und Training",
+    "Stall, Reithalle, Zäune",
+    "Fremdreiter mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Pferdehaftpflicht Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "wählbar, z. B. 250 €",
+        "miete": "ja",
+        "reitbeteiligung": "nur Fremdreiter",
+        "flurschaden": "ja",
+        "fohlen": "bis Hauptfälligkeit",
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "ausland": "bis 3 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Pferdehaftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "sb": "wählbar, z. B. 250 €",
+        "miete": "ja",
+        "reitbeteiligung": "ja",
+        "flurschaden": "ja",
+        "fohlen": "12 Monate",
+        "forderungsausfall": "ja, ohne Mindestschaden",
+        "ausland": "bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/pferdehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/recht-haftpflicht/pferdehaftpflichtversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/tierhalterhaftpflicht/pferdehaftpflicht-flyer-7483-1024.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/tierhalterhaftpflicht/vpv-tierhalterhaftpflichtversicherung-bedingungen.pdf"
+  ],
+  "offen": [
+    "Selbstbeteiligung: nur das Preisbeispiel der Produktseite nennt 250 €.",
+    "Reitbeteiligungen nur im Exklusiv-Tarif und namentlich im Versicherungsschein (Bedingungen 6.6.9); Fremdreiter (gelegentlich, unentgeltlich) in beiden Tarifen (6.6.8).",
+    "Flurschäden laut Bedingungen 6.6.2; Höhe nicht ausgewertet."
+  ]
+}

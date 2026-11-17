@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Haus- und Wohnungsschutzbrief",
+    "Überspannung durch Blitz",
+    "Mietausfall bis 2 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäudeversicherung",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "optional",
+        "kosten": "ja",
+        "fugen": "bis 1.500 €",
+        "ueberspannung": "ja",
+        "mietausfall": "2 Jahre",
+        "vandalismus": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/wohngebaeude/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäudeversicherung plus",
+      "kurz": "plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, ohne Grenze",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "ja, Erweiterung optional",
+        "kosten": "ja",
+        "fugen": "bis 7.500 €",
+        "ueberspannung": "ja",
+        "mietausfall": "2 Jahre",
+        "vandalismus": "bis 25.000 €",
+        "tiere": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/wohngebaeude/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/wohngebaeude/"
+  ],
+  "offen": [
+    "Werte aus der Produktübersicht auf der Produktseite; leere Tabellenfelder als „versichert“ gelesen, bitte gegenprüfen.",
+    "Photovoltaik, Solarthermie und Wärmepumpen: in der Basis nicht versicherte Sachen, in plus mitversichert; Baustein Photovoltaiktechnik plus mit Ertragsausfall zusätzlich wählbar.",
+    "Ableitungsrohre außerhalb des Gebäudes nur über das Rohrleitungspaket Ableitungsrohre.",
+    "Gleitender Neuwert nicht ausdrücklich ausgewertet. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+  ]
+}

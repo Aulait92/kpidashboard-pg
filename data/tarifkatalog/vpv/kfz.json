@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (HUK-COBURG)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Vermittelt für HUK-COBURG",
+    "Sturm schon ab Windstärke 7",
+    "Kasko SELECT wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Autoversicherung Classic",
+      "kurz": "Classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "meist Verzicht",
+        "tiere": "ja",
+        "neuwert": "24 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "gap": "ja",
+        "mallorca": "ja",
+        "werkstatt": "wählbar (SELECT)",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/kfz/huk-kfz-broschuere-ma1vpv-0825.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Autoversicherung Classic mit Kasko PLUS",
+      "kurz": "Kasko PLUS",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "grob": "meist Verzicht",
+        "tiere": "ja",
+        "neuwert": "36 Monate",
+        "marder": "ja, mit Folgeschäden",
+        "gap": "ja",
+        "mallorca": "ja",
+        "werkstatt": "wählbar (SELECT)",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/kfz/huk-kfz-broschuere-ma1vpv-0825.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/wohnen-kfz/kfz-versicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/kfz/huk-kfz-broschuere-ma1vpv-0825.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/kfz/huk-kfz-bedingungen-akb-knb6125p-0126.pdf"
+  ],
+  "offen": [
+    "Die VPV vermittelt die Autoversicherung Classic der HUK-COBURG; Werte aus der HUK-Broschüre, die die VPV verlinkt (Stand 08.2025). Gleiche Tarife wie in huk-coburg/kfz.json.",
+    "Grobe Fahrlässigkeit: Verzicht „in den meisten Fällen“ in Teil- und Vollkasko; Ausnahmen nicht in der Broschüre.",
+    "Tiere: Zusammenstoß mit Tieren in der Teilkasko; Einschränkung auf Tierarten nicht genannt.",
+    "Kasko PLUS: Neupreis bzw. Kaufwert 36 Monate, selbst verschuldete Eigenschäden bis 100.000 €, Sportgeräte bis 5.000 €. Akku-Schutz für E-Autos in der Broschüre, Höhe nicht eindeutig zuordenbar."
+  ]
+}

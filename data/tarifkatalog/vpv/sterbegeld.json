@@ -1,0 +1,58 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne Gesundheitsfragen",
+    "Abschluss bis Alter 80",
+    "Steuerfreie Auszahlung"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "höchstens 3 Jahre",
+        "unfall": "nein",
+        "ohne-gp": "ja",
+        "vorsorge": "Funeria wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Sterbegeldversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "verkürzt ab Alter 40",
+        "unfall": "ja, ab 1. Tag",
+        "ohne-gp": "ja",
+        "vorsorge": "Funeria wählbar"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/vorsorge-vermoegen/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/vorsorge-vermoegen/sterbegeldversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/vorsorge-und-vermoegen/sterbegeld/sterbegeld-broschuere-7494-0125.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/vorsorge-und-vermoegen/sterbegeld/kapital-lv-bedingungen-5312-0125.pdf"
+  ],
+  "offen": [
+    "Wartezeit höchstens 3 Jahre (Broschüre); in der Wartezeit Beitragsrückzahlung. Premium verkürzt die Wartezeit bei Eintrittsalter ab 40, Dauer nicht genannt.",
+    "Beitragszahlungsdauer wählbar, Ende nicht veröffentlicht.",
+    "Premium zusätzlich: vorzeitige Entnahmen, vorgezogene Leistung bei schwerer Erkrankung. Basis: doppelte Leistung bei Unfalltod nicht genannt („nein“ abgeleitet).",
+    "Focus Money 28/2026: Premium „hervorragend“. Keine Markierung als Empfehlung."
+  ]
+}

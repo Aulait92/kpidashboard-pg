@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "grundfaehigkeit",
+  "produkt": "VPV Vital",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Rente ab 50 % Invalidität",
+    "Pause bei Arbeitslosigkeit",
+    "Vital Service-Management"
+  ],
+  "tarife": [
+    {
+      "name": "VPV Vital",
+      "kurz": "Vital",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "psyche": "nein"
+      },
+      "bausteine": {
+        "ernst": "optional",
+        "pflege": "inklusive"
+      },
+      "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/vital/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "VPV Vital mit Premium",
+      "kurz": "Vital Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "pflege": "ja",
+        "nachversicherung": "ja",
+        "psyche": "befristet, 12 Monate"
+      },
+      "bausteine": {
+        "ernst": "inklusive",
+        "pflege": "inklusive"
+      },
+      "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/vital/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/gesundheit-existenz/vital/",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/vital/vital-prospekt-5741-0825.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/vital/vpv-vital-vital-junior-bedingungen.pdf"
+  ],
+  "offen": [
+    "VPV Vital kombiniert Unfallrente, Rente bei Verlust von Grundfähigkeiten (z. B. Sehen, Hören, Sprechen) und Pflegerente; Premium ist ein Zusatzbaustein (Organschäden, Krebs bis 5 Jahre, schwere Depression und Schizophrenie je bis 12 Monate, 10.000 € Einmalzahlung).",
+    "Anzahl der versicherten Grundfähigkeiten und Prognosezeitraum nicht auf der Produktseite; Bedingungen nicht ausgewertet.",
+    "Psyche ohne Premium nicht genannt („nein“ aus der Tarifbeschreibung abgeleitet, bitte prüfen).",
+    "Weitere Bausteine: Lifetime (lebenslange Rente), Help & Care. Kinder: VPV Vital Junior. Keine Markierung der Gesellschaft."
+  ]
+}

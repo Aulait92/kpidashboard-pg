@@ -1,0 +1,66 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "ambulant",
+  "produkt": "Ambulante Zusatzversicherung (DKV)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Schutz bei Auslandsreisen",
+    "Kooperationspartner DKV"
+  ],
+  "tarife": [
+    {
+      "name": "KombiMed Sehhilfen (KSHR)",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "sehhilfen": "80 %, bis 200 €",
+        "ausland": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hilfsmittel (KHMR)",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "sehhilfen": "90 %, bis 300 €",
+        "hoergeraete": "80 %, bis 600 €",
+        "ausland": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "KombiMed Balance (KAB)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "sehhilfen": "100 %, bis 300 €",
+        "hoergeraete": "100 %, bis 600 €",
+        "vorsorge": "100 %, bis 600 €",
+        "heilpraktiker": "80 %, bis 600 €",
+        "lasik": "100 %, bis 1.200 €",
+        "ausland": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/ambulante-zusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/krankenversicherung/ambulante-zusatzversicherung/"
+  ],
+  "offen": [
+    "Tarife der DKV, vermittelt über HDI; Stufen laut HDI Basis-, Komfort- und Premiumabsicherung.",
+    "Komfort zusätzlich: Hilfsmittel 80 % bis 300 €. Arzneimittel und Wartezeiten nicht genannt; Heilpraktiker nur im Premium genannt (Alternativmedizin)."
+  ]
+}

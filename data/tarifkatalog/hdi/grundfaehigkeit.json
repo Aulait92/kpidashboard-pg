@@ -1,0 +1,35 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "grundfaehigkeit",
+  "produkt": "EGO Grundfähigkeitsschutz",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Schon für Kinder ab 3 Jahren",
+    "Bausteine frei kombinierbar",
+    "BU-Option bis Alter 25"
+  ],
+  "tarife": [
+    {
+      "name": "EGO Grundfähigkeitsschutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/grundfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/einkommensschutz/grundfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "Modulares Bausteinkonzept: Basisschutz plus Bausteine Schwere Erkrankungen (Kapitalleistung), Mobilität, für Kinder Autofahren.",
+    "Anzahl der Grundfähigkeiten, Prognosezeitraum, Psyche und Pflege nicht auf der Produktseite. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+  ]
+}

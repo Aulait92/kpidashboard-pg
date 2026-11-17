@@ -1,0 +1,33 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "tierhalter-hund",
+  "produkt": "Private Tierhalterhaftpflicht Hunde",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Hundesport und Hundeschule",
+    "Kein Leinen- oder Maulkorbzwang"
+  ],
+  "tarife": [
+    {
+      "name": "Private Tierhalterhaftpflicht Hunde",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "miete": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/tierhalterhaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/tierhalterhaftpflicht/"
+  ],
+  "offen": [
+    "Ein Tarif. Selbstbeteiligung, fremde Hüter, Welpen nicht auf der Produktseite; Produktübersicht dort nur verlinkt. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Die Seite nennt an anderer Stelle „bis zu 15 Mio. EUR“; Höchstsumme 50 Mio. € laut Variantenbeschreibung, bitte prüfen."
+  ]
+}

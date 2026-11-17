@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung Komfort",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "100 % Rente ab 50 % BU",
+    "Wählbare Karenzzeit",
+    "Option lebenslange Rente"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung Komfort",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "nachversicherung": "ja",
+        "weltweit": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeit/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeit/"
+  ],
+  "offen": [
+    "Ein Tarif (BU Komfort, auch als Zusatzversicherung WWK BioRisk zu Renten- oder Risikoleben). Prognosezeitraum, AU-Klausel, rückwirkende Leistung, Teilzeit, Stundung nicht auf der Produktseite. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Verweisung: nur auf den zuletzt ausgeübten Beruf bei noch vorhandener Arbeitsfähigkeit (Verzicht auf abstrakte Verweisung).",
+    "Erwerbsunfähigkeitsversicherung (WWK BioRisk EU) hat keine Sparte im Schema und ist nicht aufgenommen."
+  ]
+}

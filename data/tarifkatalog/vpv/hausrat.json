@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ersatz zum Neuwert",
+    "Nässeschäden durch Fugen",
+    "Reisegepäck mitversichert"
+  ],
+  "tarife": [
+    {
+      "name": "Hausratversicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "wert": "30 % der VS",
+        "fahrrad": "1 % der VS",
+        "elementar": "optional",
+        "bargeld": "bis 1.500 €",
+        "auto": "bis 2 % der VS",
+        "ueberspannung": "ja",
+        "hotel": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/wohnen-kfz/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausratversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "wert": "40 % der VS",
+        "fahrrad": "2 % der VS",
+        "elementar": "optional",
+        "auto": "bis 4 % der VS",
+        "ueberspannung": "ja",
+        "hotel": "ja"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/wohnen-kfz/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/wohnen-kfz/hausratversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/hausrat/hausrat-prospekt-6742-0425.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/hausrat/vpv-hausratversicherung-bedingungen.pdf"
+  ],
+  "offen": [
+    "Einfacher Diebstahl: in den Bedingungen nur als Abgrenzung zum Raub genannt (A1 4.4.1), nicht als Leistung; offen.",
+    "Grobe Fahrlässigkeit Exklusiv laut Produktseite ohne Betragsgrenze („bis zur Versicherungssumme“ nur bei Wohngebäude ausdrücklich); bitte prüfen.",
+    "Wertsachen 30 % bzw. 40 % der Versicherungssumme (Bedingungen A1 19.3.1); Bargeld Exklusiv nicht ausgewertet.",
+    "Weitere Naturgefahren nur „soweit zusätzlich vereinbart“ (A1 1.4.2); dazu gibt es die eigene Erweiterte Naturgefahrenversicherung.",
+    "Online-Betrug (Phishing beim Online-Banking) steht in A1 13.2, Tarifzuordnung nicht geprüft. Fahrrad-Schutzbrief im Kompakt gegen Aufpreis, im Exklusiv inklusive. Keine Markierung."
+  ]
+}

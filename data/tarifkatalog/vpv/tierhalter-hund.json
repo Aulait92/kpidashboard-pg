@@ -1,0 +1,61 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "tierhalter-hund",
+  "produkt": "Hundehaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Hundeschule und Hundesport",
+    "Mietsachschäden Ferienwohnung",
+    "Rabatt ab dem zweiten Hund"
+  ],
+  "tarife": [
+    {
+      "name": "Hundehaftpflicht Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "sb": "wählbar, z. B. 250 €",
+        "miete": "ja, Inventar 15.000 €",
+        "fremdhueter": "ja",
+        "welpen": "bis Hauptfälligkeit",
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "ausland": "bis 3 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/hundehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hundehaftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "15 Mio. €",
+        "sb": "wählbar, z. B. 250 €",
+        "miete": "ja, Inventar 30.000 €",
+        "fremdhueter": "ja",
+        "welpen": "12 Monate",
+        "forderungsausfall": "ja, ohne Mindestschaden",
+        "ausland": "bis 5 Jahre"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/hundehaftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/recht-haftpflicht/hundehaftpflichtversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/tierhalterhaftpflicht/hundehaftpflicht-flyer-7482-1024.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/tierhalterhaftpflicht/vpv-tierhalterhaftpflichtversicherung-bedingungen.pdf"
+  ],
+  "offen": [
+    "Selbstbeteiligung: nur das Preisbeispiel der Produktseite nennt 250 €; weitere Stufen und Tarif ohne SB nicht belegt.",
+    "Fremde Hüter: nicht gewerbsmäßige Tierhüter laut Bedingungen (AHB Tierhalterhaftpflicht 2024) mitversichert.",
+    "Exklusiv zusätzlich: Tierarztkostenausfall bis 3.000 €, wenn der Halter des beißenden Hundes nicht zu ermitteln ist."
+  ]
+}

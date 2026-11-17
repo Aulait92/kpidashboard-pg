@@ -1,0 +1,33 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Wählbare Karenzzeit",
+    "Option lebenslange Rente",
+    "Wechsel in BU für Schüler"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitsversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/grundfaehigkeit/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/grundfaehigkeit/"
+  ],
+  "offen": [
+    "Ein Tarif; Zusatz Grundfähigkeitspaket Plus für körperlich Tätige (Gleichgewichtssinn, Gliedmaßen, Lähmung; befristete Leistung bei schwerem Unfall). Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Anzahl der Grundfähigkeiten, Prognosezeitraum, Psyche und Pflege nicht auf der Produktseite."
+  ]
+}

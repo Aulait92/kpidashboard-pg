@@ -1,0 +1,88 @@
+{
+  "gesellschaft": "Condor",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung SBU pro",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Teilzeitklausel",
+    "Verzicht auf Umorganisation",
+    "DU-Klausel inklusive"
+  ],
+  "tarife": [
+    {
+      "name": "SBU classic pro",
+      "kurz": "classic pro",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "au": "nein",
+        "nachversicherung": "ja, bis Alter 50",
+        "rueckwirkend": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "ja",
+        "pflege": "nein"
+      },
+      "bausteine": {
+        "au": "nein",
+        "pflege": "nein"
+      },
+      "quelle": "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SBU comfort pro",
+      "kurz": "comfort pro",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "au": "optional",
+        "nachversicherung": "ja, auch anlasslos",
+        "rueckwirkend": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "ja",
+        "pflege": "nein"
+      },
+      "bausteine": {
+        "au": "optional",
+        "pflege": "nein"
+      },
+      "quelle": "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SBU premium pro",
+      "kurz": "premium pro",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "au": "optional",
+        "nachversicherung": "ja, auch anlasslos",
+        "rueckwirkend": "ja",
+        "teilzeit": "ja",
+        "umorganisation": "ja",
+        "pflege": "Pflegerente in BU-Höhe"
+      },
+      "bausteine": {
+        "au": "optional",
+        "pflege": "inklusive"
+      },
+      "quelle": "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.condor-versicherungen.de/angebot/einkommensabsicherung",
+    "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere",
+    "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/broschuere-einsteiger-sbu"
+  ],
+  "offen": [
+    "Condor bietet Privatkunden nur noch die BU SBU pro an (Risikoträger R+V Lebensversicherung AG, AVB 9TN07 bis 9TN09, Stand 01.10.2026). Werte aus der Kundenbroschüre 10/2026, die condor-versicherungen.de verlinkt; Symbole der Tabelle nur als Lücken lesbar, bitte gegenprüfen.",
+    "Verzicht auf abstrakte Verweisung, Prognosezeitraum und weltweiter Schutz stehen nicht in der Broschüre; AVB nicht ausgewertet.",
+    "AU-Klausel: ab 6 Monaten Krankschreibung, nur comfort pro und premium pro gegen Aufpreis. Sofortleistung bei Krebs, Herzinfarkt, Schlaganfall bis 15 Monate ab comfort pro.",
+    "Anlasslose Nachversicherung ab comfort pro (erste 5 Jahre und zu Beginn des 11. Jahres, bis Alter 40); mit Anlass in allen Varianten bis Alter 50.",
+    "premium pro zusätzlich: Sofortkapital in Höhe einer Jahresrente, Reha-Hilfe 6.000 € (comfort pro 2.000 €). Einsteiger-BU (Tarif C81 comfort pro) mit bis zu 50 % geringeren Startbeiträgen nicht als eigene Stufe. Keine Markierung der Gesellschaft."
+  ]
+}

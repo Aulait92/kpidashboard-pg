@@ -1,0 +1,57 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Summe bis 50 Mio. €",
+    "Gefälligkeitsschäden",
+    "Erneuerbare-Energie-Anlagen"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "gefaelligkeit": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht plus",
+      "kurz": "plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "forderungsausfall": "ja (Opferschutz)",
+        "schluessel": "ja, mit Folgeschäden",
+        "miete": "ja",
+        "gefaelligkeit": "ja"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/privathaftpflicht/"
+  ],
+  "offen": [
+    "Werte nur aus den Kurzbeschreibungen der beiden Varianten auf der Produktseite; die Produktübersicht ist dort nur verlinkt. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Deliktunfähige Kinder, geliehene Sachen, Neuwert, Mallorca, Drohnen und Selbstbeteiligung nicht belegt.",
+    "Forderungsausfall, Schlüsselverlust und Mietsachschäden nennt die Seite nur bei „plus“; ob die Basis sie ausschließt, ist nicht belegt.",
+    "Zusatzbaustein Amtshaftpflicht für den öffentlichen Dienst. Keine Markierung der Gesellschaft."
+  ]
+}

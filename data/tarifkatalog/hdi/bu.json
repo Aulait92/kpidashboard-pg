@@ -1,0 +1,89 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung EGO",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Keine Meldefrist",
+    "Kein Berufswechsel melden"
+  ],
+  "tarife": [
+    {
+      "name": "EGO Young",
+      "kurz": "EGO Young",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "dynamik": "optional",
+        "au": "nein"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-young/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "EGO Top",
+      "kurz": "EGO Top",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "nein",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "teilzeit": "ja",
+        "pflege": "ab 1 Pflegepunkt",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "nein",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-top/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "EGO Top mit Leistungen wegen Krankschreibung",
+      "kurz": "EGO Top AU",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "bis 36 Monate",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "teilzeit": "ja",
+        "pflege": "ab 1 Pflegepunkt",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "au": "inklusive",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-top/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-top/",
+    "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/ego-young/",
+    "https://www.hdi.de/versicherungen/einkommensschutz/berufsunfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "EGO Young ist eine Todesfallversicherung mit BU-Zusatz für Berufseinsteiger (höchstens 15 Jahre Laufzeit, Umtausch in EGO Top ohne Gesundheitsprüfung bis 5 Jahre vor Ablauf); Prognose, Teilzeit, Pflege dort nicht genannt.",
+    "Weltweit bei EGO Top nicht ausdrücklich genannt. Stundung: „flexible Möglichkeiten“ bei Zahlungsschwierigkeiten, Dauer nicht genannt.",
+    "EGO Top: Erste-Hilfe-Leistung 15 Monate bei bestimmten Krebserkrankungen, Blindheit, Taubheit, Querschnitt; UpgradeJoker bis Alter 35; KarrierePlus bis 6.000 € Monatsrente.",
+    "Keine Markierung; EGO Top als mittlere Stufe. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+  ]
+}

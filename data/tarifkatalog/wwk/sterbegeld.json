@@ -1,0 +1,32 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "sterbegeld",
+  "produkt": "Bestattungsvorsorge",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Keine Gesundheitsfragen",
+    "Hilfe rund um die Uhr"
+  ],
+  "tarife": [
+    {
+      "name": "WWK Bestattungsvorsorge",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "ohne-gp": "ja",
+        "vorsorge": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/bestattungsvorsorge/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/bestattungsvorsorge/"
+  ],
+  "offen": [
+    "Ein Tarif. Versicherungssumme, Wartezeit, Unfall-Zusatz und Beitragsende nicht auf der Produktseite; Flugblatt „Absicherung für Senioren“ nicht abrufbar."
+  ]
+}

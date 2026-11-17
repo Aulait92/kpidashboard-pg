@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "unfall",
+  "produkt": "Unfallversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Weltweit, rund um die Uhr",
+    "Helm-Bonus bei Fahrradunfall",
+    "Unfälle durch Eigenbewegung"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Smart",
+      "kurz": "Smart",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "feste Summe",
+        "todesfall": "ja",
+        "bergung": "ja"
+      },
+      "bausteine": {
+        "rente": "nein",
+        "tagegeld": "nein"
+      },
+      "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Flexi",
+      "kurz": "Flexi",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "wählbar",
+        "progression": "350 % oder 600 %",
+        "unfallrente": "optional",
+        "khtg": "optional",
+        "todesfall": "ja",
+        "kosmetik": "optional",
+        "sofort": "optional",
+        "bergung": "ja",
+        "zecken": "optional",
+        "gliedertaxe": "optional"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/gesundheit-existenz/unfallversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/unfall/unfallversicherung-prospekt.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/unfall/vpv-unfallversicherung-bedingungen.pdf"
+  ],
+  "offen": [
+    "Smart: Grundabsicherung mit fester Invaliditäts- und Todesfallsumme und Reha-Leistungen (Höhe nicht veröffentlicht). Flexi: Baukasten, Bausteine nach Wahl.",
+    "Progression 350 % und 600 %, verbesserte Gliedertaxe und Zecken-Baustein stehen als zusätzlich wählbare Leistungen in den Bedingungen (Stand 06.2026); Zuordnung zu Flexi angenommen.",
+    "Leistung ab Invaliditätsgrad bei der Unfallrente nicht veröffentlicht (VPV Vital: Rente ab 50 %).",
+    "Bausteine Unfallrente und Krankenhaustagegeld bei Smart laut Tarifbeschreibung nicht enthalten; bitte prüfen."
+  ]
+}

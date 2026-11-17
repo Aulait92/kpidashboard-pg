@@ -1,0 +1,34 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Sofortrabatt oder Bonus",
+    "BU-Zusatz möglich",
+    "Dynamik ohne Gesundheitsprüfung"
+  ],
+  "tarife": [
+    {
+      "name": "HDI Risikolebensversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "umtausch": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hdi.de/versicherungen/einkommensschutz/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/einkommensschutz/risikolebensversicherung/",
+    "https://vertriebsservice.hdi-gerling.de/media/easynet/7010210202.pdf"
+  ],
+  "offen": [
+    "Ein Tarif. Umtauschrecht in eine andere Versicherung mit Todesfallleistung ohne Gesundheitsprüfung.",
+    "Nachversicherung nur als Dynamik ohne Gesundheitsprüfung genannt; vorgezogene Leistung, Verlängerung, weltweit nicht belegt. Flyer 7010800110 Stand 08/2022."
+  ]
+}

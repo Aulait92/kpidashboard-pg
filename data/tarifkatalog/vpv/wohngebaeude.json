@@ -1,0 +1,72 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Nässeschäden durch Fugen",
+    "Überspannung durch Blitz",
+    "Garage und Carport versichert"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäudeversicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 5.000 €",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "eigene PV-Police",
+        "kosten": "ja",
+        "fugen": "ja",
+        "ueberspannung": "ja",
+        "mietausfall": "bis 12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/wohnen-kfz/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäudeversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis Versicherungssumme",
+        "elementar": "optional",
+        "ableitung": "ja",
+        "pv": "eigene PV-Police",
+        "kosten": "ja",
+        "fugen": "ja",
+        "ueberspannung": "ja",
+        "vandalismus": "bis 5.000 €",
+        "mietausfall": "bis 36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/wohnen-kfz/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/wohnen-kfz/wohngebaeudeversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/wohngebaeude/wohngebaeude-prospekt-7533-0425.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/wohngebaeude/vpv-wohngebaeudeversicherung-bedingungen.pdf"
+  ],
+  "offen": [
+    "Weitere Naturgefahren (Elementar) laut Bedingungen A1 1.3.2 nur zusätzlich vereinbar; die Produktseite nennt sie beim Kompakt-Tarif als versichert, bitte prüfen.",
+    "Ableitungsrohre auf und außerhalb des Grundstücks nur im Exklusiv-Tarif (A1 4.4.3).",
+    "Photovoltaikanlagen sind in der Wohngebäudeversicherung nicht versichert (A1 7.7.1); dafür gibt es die eigene VPV Photovoltaikversicherung.",
+    "Kosten nach einem Schaden: Aufräum-, Abbruch- und Schutzkosten bis zur vereinbarten Grenze, Höhe nicht beziffert; provisorische Maßnahmen im Exklusiv bis 25.000 €.",
+    "Vandalismus und Graffiti nur Exklusiv und nur Ein- und Zweifamilienhäuser. Keine Markierung."
+  ]
+}

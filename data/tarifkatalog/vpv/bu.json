@@ -1,0 +1,75 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Infektionsklausel",
+    "Wiedereingliederungshilfe"
+  ],
+  "tarife": [
+    {
+      "name": "Selbstständige Berufsunfähigkeitsversicherung",
+      "kurz": "SBU",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "stundung": "bis 24 Monate",
+        "dynamik": "optional",
+        "infektion": "ja",
+        "pflege": "BU bei Pflegefall"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "BU Fonds Plus",
+      "kurz": "BU Fonds Plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/gesundheit-existenz/berufsunfaehigkeitsversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/berufsunfaehigkeit/bu-schutz-prospekt.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/berufsunfaehigkeit/selbststaendige-bu-bedingungen-5316-0125.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/berufsunfaehigkeit/bu-fonds-plus-bedingungen-7002-0125.pdf"
+  ],
+  "offen": [
+    "Zwei Varianten mit gleichem Leistungskern: SBU (Überschüsse mindern den Beitrag) und BU Fonds Plus (Überschüsse in Fonds, Rückzahlung bei Gesundheit). Keine Markierung der Gesellschaft.",
+    "Prognose, weltweit, Teilzeit, Stundung (bis 24 Monate, zinslos, nach 12 Monaten Beitragszahlung) aus den SBU-Bedingungen 5316; bei BU Fonds Plus nur Prospekt und Produktseite, Bedingungen 7002 nicht ausgewertet.",
+    "AU-Klausel als Baustein: Rente nach 6 Monaten Krankschreibung, bis 24 Monate. Weitere Bausteine: Sofortleistung (eine Jahresrente), garantierte Rentensteigerung.",
+    "Umorganisation: Bedingungen nennen Verzicht in bestimmten Fällen und eine Umorganisationshilfe; nicht als Wert gesetzt."
+  ]
+}

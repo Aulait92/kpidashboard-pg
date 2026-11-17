@@ -1,0 +1,84 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Gefälligkeitsschäden",
+    "Mietsachschäden versichert",
+    "EU unbegrenzt, sonst 5 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "nein",
+        "schluessel": "bis 5.000 €",
+        "drohne": "unter 250 g",
+        "gefaelligkeit": "ja",
+        "miete": "ja",
+        "sb": "0, 150 oder 300 €"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "forderungsausfall": "ja",
+        "drohne": "unter 2 kg",
+        "gefaelligkeit": "ja",
+        "miete": "ja",
+        "sb": "0, 150 oder 300 €"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ohne Grenze, auch Dienst",
+        "drohne": "unter 5 kg",
+        "gefaelligkeit": "ja",
+        "miete": "ja",
+        "sb": "0, 150 oder 300 €"
+      },
+      "bausteine": {
+        "dienst": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/haftpflichtversicherung/private-haftpflichtversicherung/"
+  ],
+  "offen": [
+    "Werte aus dem Text der Produktseite (Fragen und Antworten). Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Schlüsselverlust bei Komfort nicht beziffert. Deliktunfähige Kinder: in Mehrpersonenhaushalten mit Kindern „absicherbar“, Höhe und Stufe nicht genannt.",
+    "Geliehene Sachen, Neuwert, Mallorca nicht genannt. Selbstbeteiligung: 150 € oder 300 € möglich, „0“ als Wahl ohne SB angenommen.",
+    "Bestleistungsgarantie nur zu Premium wählbar; Zusatzbaustein Amts- und Diensthaftpflicht. Keine Markierung der Gesellschaft."
+  ]
+}

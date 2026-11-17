@@ -1,0 +1,38 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Laufzeit und Summe wählbar",
+    "Nichtraucher-Tarife",
+    "BU-Zusatz möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Premium",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja",
+        "vorgezogen": "ja",
+        "verlaengerung": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/gesundheit-existenz/risikolebensversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/risikoleben/prospekt-risikolebensversicherung-7032-0224.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/gesundheit-und-existenz/risikoleben/risiko-lv-bedingungen-5585-0125.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Risikolebensversicherung Premium). Umtauschrecht und weltweiter Schutz nicht auf der Produktseite genannt; Bedingungen 5585 nicht ausgewertet.",
+    "Zusätzliche Leistung bei bestimmten Lebenssituationen (z. B. Geburt eines Kindes, Immobilienkauf); Höhe nicht genannt.",
+    "Fallende Summe und verbundene Leben nicht genannt."
+  ]
+}

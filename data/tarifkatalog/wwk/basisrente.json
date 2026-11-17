@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "basisrente",
+  "produkt": "WWK BasisRente",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Beiträge steuerlich absetzbar",
+    "Zuzahlungen möglich",
+    "Lebenslange Rente"
+  ],
+  "tarife": [
+    {
+      "name": "WWK BasisRente invest 2.0",
+      "kurz": "invest 2.0",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "rund 100 Fonds, ETFs",
+        "flexibel": "ja, Zuzahlungen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/gefoerderte-altersvorsorge/basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "WWK BasisRente invest protect",
+      "kurz": "invest protect",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "50 bis 100 % wählbar",
+        "anlage": "Fonds, ETFs",
+        "flexibel": "ja, Zuzahlungen"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/gefoerderte-altersvorsorge/basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/gefoerderte-altersvorsorge/basisrente/"
+  ],
+  "offen": [
+    "Zwei Varianten ohne Markierung: invest 2.0 ohne Garantie (Option Rentenphase Invest), invest protect mit wählbarer Bruttobeitragsgarantie 50 bis 100 % (IntelliProtect 2.0).",
+    "Rentenfaktor, Hinterbliebenenschutz, Beitragspause, BU-Zusatz und Kosten nicht auf der Produktseite. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+  ]
+}

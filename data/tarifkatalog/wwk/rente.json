@@ -1,0 +1,70 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "BU-Zusatz möglich",
+    "Lebensphasenmodell"
+  ],
+  "tarife": [
+    {
+      "name": "WWK Rente classic",
+      "kurz": "classic",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "Rente garantiert",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "ja"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-konventionell/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "WWK Premium FondsRente protect",
+      "kurz": "protect",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "50 bis 100 % wählbar",
+        "anlage": "Fonds, ETFs",
+        "flexibel": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-fondsgebunden-mit-garantie/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "WWK Premium FondsRente 2.0",
+      "kurz": "FondsRente 2.0",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "rund 100 Fonds, ETFs",
+        "flexibel": "ja",
+        "hinterbliebene": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-fondsgebunden/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-konventionell/",
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-fondsgebunden-mit-garantie/",
+    "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-fondsgebunden/"
+  ],
+  "offen": [
+    "Die Stufen sind Anlagekonzepte (klassisch, mit wählbarer Beitragsgarantie über IntelliProtect 2.0, rein fondsgebunden), keine Leistungsstufen.",
+    "WWK nennt die Premium FondsRente protect „das Flaggschiff“; Empfehlung trotzdem nur als mittlere Stufe gesetzt.",
+    "Garantierter Rentenfaktor, Kapitalwahlrecht und Kosten nicht auf den Produktseiten; Hinterbliebenenschutz nur bei der Premium FondsRente genannt. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+  ]
+}

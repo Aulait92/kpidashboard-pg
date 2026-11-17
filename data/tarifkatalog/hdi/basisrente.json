@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "basisrente",
+  "produkt": "CleverInvest Basisrente",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Ab 25 € im Monat",
+    "Rund 150 Fonds und ETFs",
+    "Bis 24 Umschichtungen im Jahr"
+  ],
+  "tarife": [
+    {
+      "name": "HDI CleverInvest Basisrente",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "rentenfaktor": "ja",
+        "anlage": "Fonds und ETFs",
+        "flexibel": "ja, ab 200 €",
+        "hinterbliebene": "ja",
+        "beitragspause": "ja"
+      },
+      "bausteine": {
+        "bu": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/altersvorsorge/rueruprente-basisrente/cleverinvest-basisrente/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/altersvorsorge/rueruprente-basisrente/cleverinvest-basisrente/"
+  ],
+  "offen": [
+    "Ein Tarif. Beitragsgarantie nicht genannt. Hinterbliebenenschutz: Rente aus dem Fondsguthaben bei Tod vor Rentenbeginn.",
+    "Dynamik als Inflationsschutz beschrieben, ob inklusive oder wählbar nicht eindeutig. Kosten nicht beziffert."
+  ]
+}

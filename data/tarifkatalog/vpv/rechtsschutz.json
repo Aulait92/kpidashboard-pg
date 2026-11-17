@@ -1,0 +1,77 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "rechtsschutz",
+  "produkt": "Rechtsschutzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Telefonische Erstberatung",
+    "Verkehr ohne Wartezeit",
+    "Bausteine frei kombinierbar"
+  ],
+  "tarife": [
+    {
+      "name": "Rechtsschutz ohne LeistungPlus",
+      "kurz": "Standard",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "5 Mio. €",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "optional",
+        "vsWelt": "350.000 €",
+        "telefon": "ja",
+        "opfer": "ja",
+        "straf": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rechtsschutz mit LeistungPlus",
+      "kurz": "LeistungPlus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "privat": "optional",
+        "vsWelt": "500.000 €",
+        "privatPlus": "Beratung bis 1.000 €",
+        "telefon": "ja",
+        "opfer": "ja",
+        "straf": "ja"
+      },
+      "bausteine": {
+        "beruf": "optional",
+        "verkehr": "optional",
+        "wohnen": "optional",
+        "vermieter": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/rechtsschutzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/recht-haftpflicht/rechtsschutzversicherung/",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/rechtsschutz/vpv-rechtsschutzversicherung-prospekt.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/rechtsschutz/vpv-rechtsschutzversicherung-bedingungen.pdf"
+  ],
+  "offen": [
+    "VPV verkauft Rechtsschutz als Bausteinsystem (Privat, Beruf, Verkehr, Wohnen selbst genutzt, Wohnen vermietet) plus Baustein LeistungPlus; die beiden Stufen sind ohne bzw. mit LeistungPlus.",
+    "Strafkaution, Selbstbeteiligung und Wartezeiten (außer Verkehr ohne Wartezeit) nicht auf der Produktseite; Bedingungen ARB 2026 nicht ausgewertet.",
+    "Weltweit: ohne LeistungPlus bis 350.000 € bei Auslandsaufenthalt bis 3 Jahre, mit LeistungPlus bis 500.000 € bis 5 Jahre.",
+    "LeistungPlus zusätzlich: Arbeitgeberinsolvenz bis 1.500 €, 500 € für Testament und Vorsorgevollmacht."
+  ]
+}

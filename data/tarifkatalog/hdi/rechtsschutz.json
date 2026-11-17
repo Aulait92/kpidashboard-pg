@@ -1,0 +1,45 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "rechtsschutz",
+  "produkt": "Top-Rechtsschutz (ROLAND)",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Telefonische Erstberatung",
+    "Anwalt kommt nach Hause",
+    "Bonus-Beratung bis 1.000 €"
+  ],
+  "tarife": [
+    {
+      "name": "Top-Rechtsschutz",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "unbegrenzt",
+        "beruf": "ja",
+        "verkehr": "ja",
+        "wohnen": "optional",
+        "privat": "ja",
+        "vsWelt": "1 Mio. €",
+        "mediation": "unbegrenzt",
+        "telefon": "ja",
+        "straf": "ja"
+      },
+      "bausteine": {
+        "wohnen": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/rechtsschutz/privat-rechtsschutz/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/rechtsschutz/privat-rechtsschutz/",
+    "https://www.hdi.de/versicherungen/rechtsschutz/"
+  ],
+  "offen": [
+    "Risikoträger ROLAND Rechtsschutz. Top-Rechtsschutz besteht immer aus Privat, Beruf und Verkehr; Immobilien-Rechtsschutz optional.",
+    "Weltweit außerhalb Europas bei Aufenthalt bis 1 Jahr bis 1 Mio. €. Keine Selbstbeteiligung bei Fällen bis 250 € (Beratung); Höhe der SB sonst nicht genannt.",
+    "Strafkaution und Wartezeiten nicht auf der Produktseite."
+  ]
+}

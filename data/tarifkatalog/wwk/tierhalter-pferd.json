@@ -1,0 +1,33 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "tierhalter-pferd",
+  "produkt": "Private Tierhalterhaftpflicht Reit- und Zugtiere",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Pferdesport und Unterricht",
+    "Reiten ohne Sattel"
+  ],
+  "tarife": [
+    {
+      "name": "Private Tierhalterhaftpflicht Reit- und Zugtiere",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": true,
+      "werte": {
+        "vs": "bis 50 Mio. €",
+        "miete": "Stall und Koppel"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/tierhalterhaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/tierhalterhaftpflicht/"
+  ],
+  "offen": [
+    "Ein Tarif. Selbstbeteiligung, Reitbeteiligung, Flurschäden, Fohlen nicht auf der Produktseite. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Die Seite nennt an anderer Stelle „bis zu 15 Mio. EUR“; Höchstsumme 50 Mio. € laut Variantenbeschreibung, bitte prüfen."
+  ]
+}

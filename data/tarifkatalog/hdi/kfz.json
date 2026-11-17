@@ -1,0 +1,62 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Wallbox und Ladekabel inkl.",
+    "Kurzschluss inkl. Folgeschäden",
+    "Schlingerdeckung"
+  ],
+  "tarife": [
+    {
+      "name": "HDI Motor Komfort",
+      "kurz": "Motor Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "neuwert": "12 Monate",
+        "marder": "bis 10.000 €",
+        "elektro": "bis 20.000 €",
+        "werkstatt": "optional",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/mobilitaet/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "HDI Motor Premium",
+      "kurz": "Motor Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. €",
+        "neuwert": "48 Monate",
+        "marder": "bis 10.000 €",
+        "elektro": "bis 40.000 €",
+        "werkstatt": "optional",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/mobilitaet/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/mobilitaet/kfz-versicherung/"
+  ],
+  "offen": [
+    "Neupreis: Komfort bis 12 Monate, Premium bis 48 Monate (auch Kaufpreisentschädigung für Gebrauchte).",
+    "Grobe Fahrlässigkeit: Verzicht nur im Abschnitt Geschäftskunden genannt; für Privatkunden nicht belegt. Wildschäden: Premium erstattet Wertminderung bei Unfall mit Tieren; Tierarten nicht genannt.",
+    "Tierbiss und Kurzschluss inkl. Folgeschäden: Komfort bis 10.000 €, E- und Hybridfahrzeuge 20.000 € (Premium bis 40.000 €); Premium-Wert für Verbrenner nicht genannt.",
+    "GAP, Mallorca und Schutzbrief nicht auf der Produktseite. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+  ]
+}

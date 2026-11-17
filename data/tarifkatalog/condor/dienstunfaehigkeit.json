@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Condor",
+  "sparte": "dienstunfaehigkeit",
+  "produkt": "Berufsunfähigkeitsversicherung SBU pro mit DU-Klausel",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "DU-Klausel ohne Aufpreis",
+    "Teilzeitklausel",
+    "Wiedereingliederungshilfe"
+  ],
+  "tarife": [
+    {
+      "name": "SBU classic pro",
+      "kurz": "classic pro",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja, bis Alter 50"
+      },
+      "bausteine": {
+        "au": "nein"
+      },
+      "quelle": "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SBU comfort pro",
+      "kurz": "comfort pro",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "echte-du": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja, auch anlasslos"
+      },
+      "bausteine": {
+        "au": "optional"
+      },
+      "quelle": "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "SBU premium pro",
+      "kurz": "premium pro",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "echte-du": "ja",
+        "bu": "ja",
+        "nachversicherung": "ja, auch anlasslos"
+      },
+      "bausteine": {
+        "au": "optional"
+      },
+      "quelle": "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.condor-versicherungen.de/angebot/einkommensabsicherung",
+    "https://online.ruv.de/ruvdownloads/makler/vertriebsdownloads/bu-kundenbroschuere"
+  ],
+  "offen": [
+    "Kein eigenes DU-Produkt: Die DU-Klausel (inklusive spezieller DU) ist laut Kundenbroschüre automatisch in allen drei Varianten der SBU pro enthalten. Versetzt oder entlässt der Dienstherr aus gesundheitlichen Gründen, erkennt Condor das an.",
+    "Beamte auf Probe und Widerruf, Teildienstunfähigkeit und Verweisung im Beamtenbereich nicht in der Broschüre; AVB 9TN07 bis 9TN09 nicht ausgewertet.",
+    "Gleiche Grundlage wie condor/bu.json."
+  ]
+}

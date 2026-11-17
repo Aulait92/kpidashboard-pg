@@ -1,0 +1,74 @@
+{
+  "gesellschaft": "VPV",
+  "sparte": "haftpflicht",
+  "produkt": "Privathaftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gefälligkeitsschäden versichert",
+    "Be- und Entladeschäden 5.000 €",
+    "Reparatur statt Neukauf"
+  ],
+  "tarife": [
+    {
+      "name": "Privathaftpflicht Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ab 2.500 € Schaden",
+        "schluessel": "bis 20.000 €",
+        "delikt": "bis 20.000 €",
+        "geliehen": "bis 1.500 €",
+        "gefaelligkeit": "bis 15.000 €",
+        "neuwert": "nein",
+        "miete": "ja",
+        "mallorca": "ja",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "cyber": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privathaftpflicht Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja, ohne Mindestschaden",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 30.000 €",
+        "geliehen": "bis 25.000 €",
+        "gefaelligkeit": "bis 30.000 €",
+        "neuwert": "bis 3.000 €",
+        "drohne": "bis 4 kg",
+        "miete": "ja",
+        "mallorca": "ja",
+        "ehrenamt": "ja"
+      },
+      "bausteine": {
+        "cyber": "optional"
+      },
+      "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/privathaftpflicht/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.vpv.de/produkte/recht-haftpflicht/privathaftpflicht/",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/privathaftpflicht/privathaftpflicht-prospekt-6606-1024.pdf",
+    "https://www.vpv.de/media/content/produkte/dokumente/recht-und-haftpflicht/privathaftpflicht/vpv-privathaftpflichtversicherung-bedingungen.pdf"
+  ],
+  "offen": [
+    "Schlüssel, deliktunfähige Personen, geliehene Sachen und Neuwert aus den Bedingungen (Ziffern 6.8, 6.9, 6.11), Rest von der Produktseite und dem Prospekt 10.2024.",
+    "Mietsachschäden an Wohnräumen bis zur Versicherungssumme (Ziffer 6.7); Mallorca-Deckung Ziffer 6.26, Höhe nicht ausgewertet.",
+    "Neuwert: nur Exklusiv, bis 24 Monate (Elektronik 12 Monate), höchstens 3.000 €. Drohnen bis 4 kg nur Exklusiv laut Produktseite; Kompakt nicht genannt.",
+    "Selbstbeteiligung: Preisbeispiel der Produktseite mit 250 €; ob auch ohne SB wählbar, nicht belegt.",
+    "Baustein Internet-Gefahren-Schutz (Online-Betrug bis 5.000 €) als Cyber eingeordnet. Keine Markierung der Gesellschaft."
+  ]
+}

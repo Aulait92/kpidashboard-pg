@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "HDI",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Unterversicherungsverzicht",
+    "700 € je m² Wohnfläche",
+    "Außenversicherung weltweit"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Komfort",
+      "kurz": "Komfort",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "700 € je m²",
+        "auto": "bis 1.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/eigentum-und-miete/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "wert": "40 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "vs": "700 € je m²",
+        "bargeld": "bis 5.000 €",
+        "garten": "bis 8.000 €",
+        "auto": "bis 5.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "smarthome": "inklusive"
+      },
+      "quelle": "https://www.hdi.de/versicherungen/eigentum-und-miete/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hdi.de/versicherungen/eigentum-und-miete/hausratversicherung/"
+  ],
+  "offen": [
+    "Grobe Fahrlässigkeit und einfacher Diebstahl nicht auf der Produktseite. Wertsachen bei Komfort nicht beziffert (Premium 40 %, Erhöhung in 5-%-Schritten wählbar). Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Diebstahl aus verschlossenen Kfz und Wohnwagen weltweit; Diebstahl am Arbeitsplatz 500 € bzw. 3.000 €.",
+    "Smart-Home-Komponenten über Premium versicherbar (Text nennt „1.0500 Euro“, Folgeschäden 1.500 €). Pakete Fahrrad, Fahrrad Plus, Glas, Elementar."
+  ]
+}

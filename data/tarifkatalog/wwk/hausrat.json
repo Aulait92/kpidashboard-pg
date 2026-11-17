@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "WWK",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Haus- und Wohnungsschutzbrief",
+    "Überspannung durch Blitz",
+    "GDV-Leistungsgarantie"
+  ],
+  "tarife": [
+    {
+      "name": "Hausratversicherung",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 10.000 €",
+        "wert": "20 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "nein",
+        "bargeld": "bis 1.500 €",
+        "garten": "bis 5.000 €",
+        "auto": "EU, bis 1.000 €",
+        "ueberspannung": "ja",
+        "hotel": "150 €/Tag, 100 Tage",
+        "aussen": "6 Monate, 20.000 €"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/hausrat/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausratversicherung plus",
+      "kurz": "plus",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja, ohne Grenze",
+        "wert": "50 % der VS",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "bis 5.000 €",
+        "bargeld": "bis 3.000 €",
+        "garten": "ja",
+        "auto": "weltweit, 10.000 €",
+        "ueberspannung": "ja",
+        "hotel": "300 €/Tag, 365 Tage",
+        "aussen": "12 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "notfall": "inklusive"
+      },
+      "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/hausrat/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/hausrat/"
+  ],
+  "offen": [
+    "Werte aus der Produktübersicht auf der Produktseite (VHB 2009); leere Tabellenfelder als „versichert“ gelesen, bitte gegenprüfen.",
+    "Einfacher Diebstahl in der Wohnung nicht genannt; plus versichert Trickdiebstahl bis 2.000 €.",
+    "Elementar als Zusatzbaustein (Wartezeit 1 Woche, Selbstbeteiligung 500 € bzw. je nach Gefährdungsklasse bis 5.000 €). Fahrraddiebstahl als Baustein Fahrraddiebstahl bzw. Fahrraddiebstahl plus.",
+    "Bargeld außerhalb des Wertschutzschranks laut Tabelle „bis maximal 1.5000 EUR“ (Tippfehler), als 1.500 € gelesen. Garten: plus ohne Betrag (leeres Feld).",
+    "Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+  ]
+}
