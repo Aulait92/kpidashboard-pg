@@ -20,6 +20,18 @@ const KINDS: { key: Kind; label: string }[] = [
 const LABEL: Record<Kind, string> = { angebot: "Angebot", police: "Police", sonstiges: "Dokument" };
 
 export type LeadFileView = { id: string; kind: Kind; fileName: string; size: number; createdAt: string };
+/** Unterlage, die der Kunde per WhatsApp geschickt hat (lib/policen/server.ts UnterlageView). */
+export type UnterlageView = {
+  id: string;
+  fileName: string;
+  size: number;
+  createdAt: string;
+  sparte: string | null;
+  gesundheit: boolean;
+  consentAt: string | null;
+  auszug: string | null;
+  ansehen: boolean;
+};
 
 /** Wie lib/lead-files.ts (Prüfung am Inhalt bleibt auf dem Server). */
 export const LEAD_FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.docx,.xlsx,application/pdf,image/png,image/jpeg,image/webp";
@@ -29,11 +41,14 @@ const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europ
 export function LeadFiles({
   leadId,
   files,
+  unterlagen = [],
   defaultKind = "angebot",
   readOnly = false,
 }: {
   leadId: string;
   files: LeadFileView[];
+  /** Vom Kunden per WhatsApp geschickt (Policen vor dem Termin, Ole 17.11.2026) */
+  unterlagen?: UnterlageView[];
   defaultKind?: Kind;
   readOnly?: boolean;
 }) {
@@ -66,10 +81,10 @@ export function LeadFiles({
     }
   }
 
-  async function remove(f: LeadFileView) {
+  async function remove(f: { id: string; fileName: string }, art: "dateien" | "unterlagen" = "dateien") {
     if (!window.confirm(`„${f.fileName}“ löschen?`)) return;
     setBusy(f.id);
-    const res = await fetch(`/api/buyer/leads/${leadId}/dateien/${f.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/buyer/leads/${leadId}/${art}/${f.id}`, { method: "DELETE" });
     setBusy(null);
     if (!res.ok) return toast.show({ message: "Löschen hat nicht geklappt.", tone: "error" });
     router.refresh();
@@ -114,8 +129,59 @@ export function LeadFiles({
           </div>
         ) : null}
       </div>
+      {unterlagen.length ? (
+        <div data-unterlagen-vom-kunden>
+          <h3 className="px-5 pt-3 text-[13px] font-semibold text-[color:var(--muted)]">Unterlagen vom Kunden</h3>
+          <ul className="divide-y divide-[color:var(--border)]">
+            {unterlagen.map((u) => {
+              const kopf = (
+                <>
+                  <span className="block truncate text-[15px] font-medium">{u.fileName}</span>
+                  <span className="text-xs text-[color:var(--muted)]">
+                    {u.sparte ?? "Unterlage"} · per WhatsApp · {formatBytes(u.size)} · {day(u.createdAt)}
+                  </span>
+                </>
+              );
+              return (
+                <li key={u.id} className="flex items-start gap-3 px-5 py-3" data-unterlage>
+                  <FileText className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--brand)]" />
+                  <div className="min-w-0 flex-1">
+                    {u.ansehen ? (
+                      <a href={`/api/buyer/leads/${leadId}/unterlagen/${u.id}`} target="_blank" rel="noreferrer" className="block hover:text-[color:var(--brand)]">
+                        {kopf}
+                      </a>
+                    ) : (
+                      kopf
+                    )}
+                    {u.auszug ? <p className="mt-1 text-sm">{u.auszug}</p> : null}
+                    {u.gesundheit ? (
+                      <span className="mt-1.5 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200" data-gesundheit>
+                        Gesundheitsangaben möglich{u.consentAt ? `, mit Einwilligung vom ${day(u.consentAt)}` : ""}
+                      </span>
+                    ) : null}
+                  </div>
+                  {!readOnly ? (
+                    <button
+                      type="button"
+                      onClick={() => void remove(u, "unterlagen")}
+                      disabled={busy === u.id}
+                      aria-label={`${u.fileName} löschen`}
+                      className="rounded-full p-1.5 text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken,#f1f5f9)] hover:text-rose-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+          {files.length ? <h3 className="border-t border-[color:var(--border)] px-5 pt-3 text-[13px] font-semibold text-[color:var(--muted)]">Von Ihnen hochgeladen</h3> : null}
+        </div>
+      ) : null}
       {files.length === 0 ? (
-        <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch keine Dokumente. Laden Sie hier z. B. das Angebot hoch, das Sie geschickt haben.</p>
+        unterlagen.length ? null : (
+          <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Noch keine Dokumente. Laden Sie hier z. B. das Angebot hoch, das Sie geschickt haben.</p>
+        )
       ) : (
         <ul className="divide-y divide-[color:var(--border)]">
           {files.map((f) => (

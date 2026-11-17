@@ -200,7 +200,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     ]);
     const abschluss = gesendet().at(-1)!;
     expect(abschluss.body).toBe(
-      "Danke, das schaut sich Herr Kannapinn im Termin mit an.\n\nBitte legen Sie zum Termin bereit:\n• Ihre bisherigen Policen, gern auch von Ihren anderen Verträgen\n• Ihre IBAN, falls Sie direkt abschließen möchten\n\n" +
+      "Danke, das schaut sich Herr Kannapinn im Termin mit an.\n\nBitte legen Sie zum Termin bereit:\n• Ihre übrigen Policen, falls Sie sie nicht geschickt haben\n• Ihre IBAN, falls Sie direkt abschließen möchten\n\n" +
         "Die Einladung mit Kalendereintrag habe ich Ihnen an julia@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*",
     );
     expect(abschluss.buttons).toEqual([
@@ -244,7 +244,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(l?.status).not.toBe("Kein Interesse");
     const appt = await prisma.appointment.findFirst({ where: { leadId: lead.id, status: "booked" } });
     expect(appt?.komplettcheck).toBe(false);
-    expect(gesendet()[0].body).toMatch(/^Alles klar, damit ist alles Wichtige für Herrn Kannapinn notiert\.\n\nBitte legen Sie zum Termin bereit:\n• Ihre bisherigen Policen, falls vorhanden\n/);
+    expect(gesendet()[0].body).toMatch(/^Alles klar, damit ist alles Wichtige für Herrn Kannapinn notiert\.\n\nBitte legen Sie zum Termin bereit:\n• Ihre (bisherigen Policen, falls vorhanden|übrigen Policen, falls Sie sie nicht geschickt haben)\n/);
     void conv;
   });
 

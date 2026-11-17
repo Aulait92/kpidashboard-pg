@@ -53,6 +53,7 @@ import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { GESUNDHEITS_REGEL, istTierLead, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
 import { logTestLead } from "@/lib/testlead";
+import { ohneBisherigePolicen } from "@/lib/policen/regeln";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
 const HISTORY_LIMIT = 20;
@@ -1185,6 +1186,10 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       merkerErste = null;
       zug.vorschlag = null;
     }
+    // Policen vor dem Termin (Ole, 17.11.2026, lib/policen/assistent.ts): nach der Vertragsfrage einmal einladen, als
+    // eigene Nachricht vor der Antwort (die mit der nächsten Frage endet); nicht im Zug der Buchung
+    const policen = gebucht ? null : await import("@/lib/policen/assistent").then((m) => m.einladungJetzt({ conversationId: conversation.id, an: ansprache, person })).catch(() => null);
+    if (policen) await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen, sentBy: "bot" });
     const sent = await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,

@@ -74,3 +74,26 @@ export function decryptNullable(v: string | null | undefined): string | null {
 export function isEncrypted(v: string | null | undefined): boolean {
   return typeof v === "string" && v.startsWith(`${PREFIX}:`);
 }
+
+// Dateien (Ole, 17.11.2026, lib/policen): Binärinhalt mit demselben Schlüssel, Format
+//   [1 Byte Version = 1][12 Byte IV][16 Byte Auth-Tag][Ciphertext]
+const BYTES_VERSION = 1;
+
+/** Verschlüsselt Binärdaten (z. B. eine Police) für eine Bytes-Spalte. */
+export function encryptBytes(data: Uint8Array): Uint8Array<ArrayBuffer> {
+  const iv = randomBytes(IV_BYTES);
+  const cipher = createCipheriv(ALGO, getKey(), iv);
+  const ct = Buffer.concat([cipher.update(data), cipher.final()]);
+  return new Uint8Array(Buffer.concat([Buffer.from([BYTES_VERSION]), iv, cipher.getAuthTag(), ct]));
+}
+
+/** Entschlüsselt mit encryptBytes erzeugte Daten (wirft bei falschem Schlüssel oder veränderten Daten). */
+export function decryptBytes(payload: Uint8Array): Buffer {
+  const buf = Buffer.from(payload);
+  if (buf.length < 1 + IV_BYTES + 16 || buf[0] !== BYTES_VERSION) throw new Error("Ungültiges Format der verschlüsselten Datei.");
+  const iv = buf.subarray(1, 1 + IV_BYTES);
+  const tag = buf.subarray(1 + IV_BYTES, 1 + IV_BYTES + 16);
+  const decipher = createDecipheriv(ALGO, getKey(), iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(buf.subarray(1 + IV_BYTES + 16)), decipher.final()]);
+}

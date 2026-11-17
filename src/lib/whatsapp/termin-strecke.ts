@@ -151,6 +151,17 @@ export function komplettcheckNachricht(k: Pick<StreckenKontext, "an" | "person" 
   return { text: [prefix, komplettcheckFrage(k.an, k.person, k.familie)].filter(Boolean).join(" "), buttons: KOMPLETTCHECK_KNOEPFE };
 }
 
+/**
+ * Policen vorab (lib/policen): Wurde der Lead eingeladen, Policen zu schicken, heißt der Punkt „übrige Policen, falls
+ * nicht geschickt“; hat er schon welche geschickt und es gibt keine weiteren Verträge, entfällt er.
+ */
+async function mitPolicenHinweis(k: StreckenKontext, liste: string[]): Promise<string[]> {
+  const eingeladen = (await prisma.message.count({ where: { conversationId: k.conversationId, direction: "outbound", body: { contains: "Fotos oder PDFs" } } })) > 0;
+  if (!eingeladen) return liste;
+  const ersatz = a(k.an, "deine übrigen Policen, falls du sie nicht geschickt hast", "Ihre übrigen Policen, falls Sie sie nicht geschickt haben");
+  return liste.map((x) => (/bisherigen? Policen/i.test(x) ? ersatz : x));
+}
+
 /** Abschluss mit Bereitlegen-Liste und Kalenderfrage senden (einmal je Termin). */
 export async function sendeAbschluss(k: StreckenKontext, art: "komplett_nein" | "vertraege" | "ohne_antwort" | "direkt"): Promise<boolean> {
   if (!k.termin) return false;
@@ -161,7 +172,7 @@ export async function sendeAbschluss(k: StreckenKontext, art: "komplett_nein" | 
   const text = abschlussText({
     an: k.an,
     person: k.person,
-    bereitlegen: bereitlegenListe(k.source, sparten, k.an, { quelle, komplettcheck: k.termin.komplettcheck === true }),
+    bereitlegen: await mitPolicenHinweis(k, bereitlegenListe(k.source, sparten, k.an, { quelle, komplettcheck: k.termin.komplettcheck === true })),
     email: k.email,
     nachFragen: true,
     einleitung: art === "direkt" ? null : abschlussEinleitung(k.an, k.person, art),
@@ -243,6 +254,13 @@ export async function vertraegeAntwort(conversationId: string, text: string, now
   const wert: Vorvertraege = { at: now.toISOString(), liste, ...(keine ? { keine: true } : {}) };
   if (k.leadId) await prisma.lead.update({ where: { id: k.leadId }, data: { vorvertraege: wert as unknown as Prisma.InputJsonValue } });
   await merke(conversationId, STRECKE.vorvertraege, { appointmentId: k.termin.id, anzahl: liste.length, keine });
+  // Policen vorab (Ole, 17.11.2026, lib/policen): Einladung als eigene Nachricht vor dem Abschluss
+  const policen = keine
+    ? null
+    : await import("@/lib/policen/assistent")
+        .then((m) => m.einladungNachVertraegen({ conversationId, an: k.an, person: k.person, vertraegeText: text, anzahl: liste.length }))
+        .catch(() => null);
+  if (policen) await sende(k, policen);
   await sendeAbschluss(k, "vertraege");
   return true;
 }
