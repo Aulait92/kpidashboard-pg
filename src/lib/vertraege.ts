@@ -26,6 +26,8 @@ import {
 } from "@/lib/provision";
 import { attributeContract, leadOrigin, LEAD_ORIGIN_SELECT, type CampaignSend, type LeadOrigin } from "@/lib/lead-herkunft";
 import { formatEUR } from "@/lib/format";
+import { chancen, type SchutzEintrag, type SchutzStatus } from "@/lib/schutz-ueberblick";
+import { cleanTarifauswahl } from "@/lib/tarifauswahl";
 import { BESTAND_FROM_LEAD_NOTE, CROSS_SELL_TODO, POLICE_TODO } from "@/lib/vertraege-shared";
 
 export const CONTRACT_STATUSES = ["aktiv", "storniert"] as const;
@@ -737,13 +739,26 @@ export async function syncPendingBestand(limit = 100): Promise<number> {
 
 // ─── Erinnerung „Weiteres Produkt anbieten?“ ─────────────────────────────
 
+const LUECKE_TEXT: Record<SchutzStatus, string> = { luecke: "Lücke", pruefen: "prüfen", woanders: "woanders versichert", "bei-uns": "bei uns" };
+
+/** Erkannte Lücken aus der letzten Terminvorbereitung (Tarifauswahl.schutz), ohne Sparten, die schon im Angebot waren. */
+function lueckenAusTermin(tarifauswahl: unknown): SchutzEintrag[] {
+  const a = cleanTarifauswahl(tarifauswahl);
+  return a?.schutz?.length ? chancen(a.schutz, a.sparten.filter((s) => !s.zusatz).map((s) => s.key)) : [];
+}
+
 export { CROSS_SELL_TODO };
 export const CROSS_SELL_AFTER_DAYS = 21;
 /** Nur Abschlüsse der letzten Woche nach Ablauf der 3 Wochen (kein Schwall alter Aufgaben beim Start). */
 export const CROSS_SELL_WINDOW_DAYS = 7;
 
-/** Text der Aufgabe mit naheliegenden Sparten, z. B. „Weiteres Produkt anbieten? Naheliegend: Privatschutz/Haftpflicht, Unfall“. */
-export function crossSellNote(sparten: string[]): string {
+/**
+ * Text der Aufgabe mit naheliegenden Sparten, z. B. „Weiteres Produkt anbieten? Naheliegend: Privatschutz/Haftpflicht, Unfall“.
+ * Mit erkannten Lücken aus der Terminvorbereitung (Cross-Selling Teil A6, „Chance im Termin“) stehen diese drin:
+ * „Weiteres Produkt anbieten? Aus dem Termin: Rechtsschutz (Lücke), Unfall (prüfen)“.
+ */
+export function crossSellNote(sparten: string[], luecken: Pick<SchutzEintrag, "label" | "status">[] = []): string {
+  if (luecken.length) return `${CROSS_SELL_TODO} Aus dem Termin: ${luecken.map((l) => `${l.label} (${LUECKE_TEXT[l.status]})`).join(", ")}`;
   const have = new Set(sparten);
   const first = sparten[0] ?? "sonstiges";
   const ideas = sparteInfo(first).related.filter((s) => !have.has(s)).map((s) => sparteInfo(s).label);
@@ -768,17 +783,24 @@ export async function runCrossSellReminders(now = new Date()): Promise<number> {
       customer: { crossSellReminder: true, archived: false },
       contracts: { none: { primaryLeadId: null, status: "aktiv" } },
     },
-    select: { id: true, customerId: true, source: true, contracts: { select: { sparte: true } } },
+    select: {
+      id: true,
+      customerId: true,
+      source: true,
+      contracts: { select: { sparte: true } },
+      appointments: { orderBy: { startsAt: "desc" }, take: 1, select: { tarifauswahl: true } },
+    },
     take: 500,
   });
   let n = 0;
   for (const l of leads) {
     const sparten = l.contracts.map((c) => c.sparte);
+    const luecken = lueckenAusTermin(l.appointments[0]?.tarifauswahl);
     if (!sparten.length) sparten.push(sparteForSource(l.source) ?? "sonstiges");
     // Bedingte Aktualisierung: nie doppelt (paralleler Lauf, inzwischen gesetzte Wiedervorlage)
     const r = await prisma.lead.updateMany({
       where: { id: l.id, crossSellRemindedAt: null, followUpAt: null, status: CLOSED_STATUS },
-      data: { crossSellRemindedAt: now, followUpAt: now, followUpNote: crossSellNote(sparten) },
+      data: { crossSellRemindedAt: now, followUpAt: now, followUpNote: crossSellNote(sparten, luecken) },
     });
     n += r.count;
   }

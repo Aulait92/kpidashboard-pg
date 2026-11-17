@@ -6,6 +6,8 @@ import { canEditProvision } from "@/lib/provision-server";
 import { loadLogoStand, loadMarkthinweis } from "@/lib/branding-logo-server";
 import { LogoForm } from "./logo-form";
 import { MarkthinweisForm } from "./markthinweis-form";
+import { VorsorgeForm } from "./vorsorge-form";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Präsentation | performancegrowth" };
@@ -15,7 +17,11 @@ export const metadata = { title: "Präsentation | performancegrowth" };
 export default async function BrandingPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
-  const [s, mh] = await Promise.all([loadLogoStand(ctx.customerId), loadMarkthinweis(ctx.customerId)]);
+  const [s, mh, kunde] = await Promise.all([
+    loadLogoStand(ctx.customerId),
+    loadMarkthinweis(ctx.customerId),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vorsorgeThemenAus: true } }),
+  ]);
   const canEdit = canEditProvision(ctx);
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
@@ -34,6 +40,12 @@ export default async function BrandingPage() {
           <MarkthinweisForm text={mh.text} standard={mh.standard} canEdit={canEdit && !ctx.preview} />
         </Card>
       ) : null}
+      {/* Cross-Selling Teil C2: selten geändert, daher hier statt in der Terminvorbereitung */}
+      <Card className="mt-4">
+        <CardHeader title="Vorsorge-Themen im Termin" />
+        <p className="px-5 pt-1 text-sm text-[color:var(--muted)]">Höchstens ein Thema je Termin, nur als Gesprächsöffner. Was Sie nicht anbieten, schalten Sie ab.</p>
+        <VorsorgeForm aus={kunde?.vorsorgeThemenAus ?? []} canEdit={canEdit && !ctx.preview} />
+      </Card>
     </main>
   );
 }

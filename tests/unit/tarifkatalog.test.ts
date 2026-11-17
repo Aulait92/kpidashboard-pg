@@ -35,7 +35,7 @@ import {
   zuAngebote,
   type Tarifauswahl,
 } from "@/lib/tarifauswahl";
-import { demoAngebote } from "@/lib/demo-beratung";
+import { demoTarife } from "@/lib/demo-beratung";
 import { folien, markeFuer } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -366,7 +366,7 @@ describe("Auswahl → Angebote (Präsentation)", () => {
 
 describe("Kompatibilität: ältere Angebote (offersJson)", () => {
   it("liest ausgelesene Angebote verlustfrei als Auswahl, Präsentation bleibt gleich", () => {
-    const alt = demoAngebote();
+    const alt = demoTarife();
     const a = ausAltenAngeboten(alt, k);
     expect(a.sparten.map((s) => s.label)).toEqual(["Privathaftpflicht", "Hausrat", "Rechtsschutz"]);
     const rs = a.sparten[2];

@@ -5,8 +5,10 @@
 //
 // Reine Funktionen (auch im Browser für Live-Vorschau und Summen). Speichern: lib/tarifauswahl-server.ts.
 
-import { cleanAngebote, kuerzen, summeEmpfohlen, beitragEffektiv, type AngebotItem, type AngeboteDaten, type Baustein } from "@/lib/angebote-daten";
+import { beitragAus, cleanAngebote, kuerzen, beitragEffektiv, type AngebotItem, type AngeboteDaten, type Baustein, type BeitragsUebersicht } from "@/lib/angebote-daten";
 import { spaltenNamen } from "@/lib/praesentation";
+import type { KombiRegel } from "@/lib/kombi-rabatt";
+import { cleanSchutz, schutzZeilen, type SchutzEintrag } from "@/lib/schutz-ueberblick";
 import {
   AUSWAHL_GRENZEN,
   gesellschaftAusText,
@@ -16,6 +18,7 @@ import {
   standardMerkmale,
   vorauswahl,
   type BausteinStatus,
+  type BuendelRegel,
   type Katalog,
   type KatalogTarif,
   type SchemaEintrag,
@@ -72,9 +75,19 @@ export type SparteWahl = {
   bausteine: string[];
   empfohlen: string | null;
   tarife: TarifWahl[];
+  /**
+   * Cross-Selling (Ole, 16.11.2026, Teil A3): Sparte erst bei Bedarf zeigen. In der Präsentation steht sie auf „Ihr
+   * Schutz im Überblick“ mit „Mit anschauen“ und kommt erst dann in Vergleich und Beitrag.
+   */
+  zusatz?: boolean;
 };
 
-export type Tarifauswahl = { v: 1; sparten: SparteWahl[] };
+export type Tarifauswahl = {
+  v: 1;
+  sparten: SparteWahl[];
+  /** „Ihr Schutz im Überblick“ (Ampel je Sparte, lib/schutz-ueberblick.ts); fehlt bei älteren Auswahlen */
+  schutz?: SchutzEintrag[];
+};
 
 export type MeineAuswahl = Record<string, { merkmale: string[]; bausteine: string[] }>;
 
@@ -180,9 +193,10 @@ export function cleanTarifauswahl(raw: unknown): Tarifauswahl | null {
       bausteine: [...new Set(strs(r.bausteine, 10, 80).filter((k) => bk.has(k)))].slice(0, AUSWAHL_GRENZEN.bausteine),
       empfohlen: empfohlen && tarife.some((t) => t.id === empfohlen) ? empfohlen : null,
       tarife,
+      ...(r.zusatz === true ? { zusatz: true } : {}),
     });
   }
-  return { v: 1, sparten };
+  return { v: 1, sparten, ...(Array.isArray(o.schutz) ? { schutz: cleanSchutz(o.schutz) } : {}) };
 }
 
 // ─── Katalog → Auswahl ───────────────────────────────────────────────────────────────────────
@@ -331,6 +345,8 @@ export function empfehlungVon(sp: SparteWahl): TarifWahl | null {
 }
 
 function itemFuer(sp: SparteWahl, t: TarifWahl, empfohlen: boolean, merk: string[]): AngebotItem {
+  // Kombi-Rabatt: nur Katalogtarife (bekannte Gesellschaft und Linie); eigene und ausgelesene Tarife zählen nicht
+  const kombi = t.herkunft === "katalog" && t.gesellschaftKey ? { gruppe: t.gesellschaftKey, sparte: sp.key, linie: t.linie ?? t.kurz, ...(t.laufzeitJahre ? { laufzeitJahre: t.laufzeitJahre } : {}) } : null;
   const wert = (k: string) => {
     const w = t.werte[k];
     return w == null ? (t.herkunft === "angebot" ? "nein" : WERT_UNBEKANNT) : w;
@@ -355,21 +371,48 @@ function itemFuer(sp: SparteWahl, t: TarifWahl, empfohlen: boolean, merk: string
     gewaehlt: empfohlen,
     merkmale: merk.map((k) => ({ name: label(sp, k), wert: wert(k) })),
     bausteine: bausteineFuer(sp, t),
+    ...(kombi ? { kombi } : {}),
+    ...(sp.zusatz ? { zusatz: true, gewaehlt: false } : {}),
   };
 }
 
-/** Angebote für Präsentation, Kundenlink und PDF (gleiches Format wie ausgelesene Angebote). */
-export function zuAngebote(a: Tarifauswahl): AngeboteDaten {
+/** Bündelregeln des Katalogs (je Gesellschaft) als Regeln für die Präsentation, nur für Gesellschaften der Auswahl. */
+export function kombiRegelnFuer(a: Tarifauswahl, buendel: Record<string, BuendelRegel> | null | undefined, namen: Record<string, string> = {}): KombiRegel[] {
+  const ges = new Set(a.sparten.flatMap((sp) => sp.tarife.map((t) => (t.herkunft === "katalog" ? t.gesellschaftKey : null)).filter((g): g is string => !!g)));
+  return Object.entries(buendel ?? {})
+    .filter(([g, r]) => ges.has(g) && r.staffel.length)
+    .map(([g, r]) => ({
+      gruppe: g,
+      name: r.name ? `${namen[g] ?? ""} ${r.name}`.trim() : null,
+      linien: r.linien,
+      mindestLaufzeitJahre: r.mindestLaufzeitJahre,
+      sparten: r.sparten,
+      staffel: r.staffel,
+      ...(r.einmal?.length ? { einmal: r.einmal } : {}),
+    }));
+}
+
+/**
+ * Angebote für Präsentation, Kundenlink und PDF (gleiches Format wie ausgelesene Angebote). Mit Bündelregeln des
+ * Katalogs rechnet die Präsentation den Kombi-Rabatt; mit dem Überblick entsteht die Folie „Ihr Schutz im Überblick“.
+ */
+export function zuAngebote(a: Tarifauswahl, buendel?: Record<string, BuendelRegel> | null): AngeboteDaten {
   const items: AngebotItem[] = [];
+  const namen: Record<string, string> = {};
   for (const sp of a.sparten) {
     const g = grenzenFuer(sp);
     const v = gezeigteTarife(sp);
     const e = empfehlungVon(sp);
     const merk = sp.merkmale.slice(0, g.merkmale);
-    for (const t of v) items.push(itemFuer(sp, t, t === e, merk));
+    for (const t of v) {
+      items.push(itemFuer(sp, t, t === e, merk));
+      if (t.gesellschaftKey) namen[t.gesellschaftKey] = t.gesellschaft;
+    }
   }
+  const kombi = kombiRegelnFuer(a, buendel, namen);
+  const schutz = a.schutz?.length ? schutzZeilen(a.schutz, a.sparten.map((s) => s.key)) : [];
   // gleiche Prüfung wie beim Speichern ausgelesener Angebote (Längen, Anzahl)
-  return cleanAngebote({ items, quelle: [] });
+  return cleanAngebote({ items, quelle: [], kombi, schutz });
 }
 
 /** Monatsbeitrag eines Tarifs mit den gewählten Bausteinen; null ohne Beitrag. */
@@ -378,20 +421,15 @@ export function tarifMonat(sp: SparteWahl, t: TarifWahl): number | null {
   return b == null ? null : beitragEffektiv({ beitragMonat: b, bausteine: bausteineFuer(sp, t) });
 }
 
-/**
- * Beitrag der Empfehlungen im Monat: Einzelsumme, Rabatt, Endbeitrag. Der Bündelrabatt je Gesellschaft
- * (BuendelRegel) kommt später hier dazu (Ole, 15.11.2026); bis dahin ist rabatt immer null.
- */
-export type BeitragsUebersicht = { einzelSumme: number | null; rabatt: { prozent: number; euro: number } | null; endbeitrag: number | null };
+/** Beitrag der Empfehlungen im Monat: Einzelsumme, Kombi-Rabatt, Endbeitrag (lib/angebote-daten.ts beitragAus). */
+export type { BeitragsUebersicht };
 
-export function beitragsUebersicht(a: Tarifauswahl): BeitragsUebersicht {
-  const einzelSumme = summeEmpfohlen(zuAngebote(a));
-  const rabatt = null;
-  return { einzelSumme, rabatt, endbeitrag: einzelSumme };
+export function beitragsUebersicht(a: Tarifauswahl, buendel?: Record<string, BuendelRegel> | null): BeitragsUebersicht {
+  return beitragAus(zuAngebote(a, buendel));
 }
 
-/** Summe der Empfehlungen aller Sparten im Monat (null, solange kein Beitrag eingetragen ist). */
-export const summeEmpfehlung = (a: Tarifauswahl): number | null => beitragsUebersicht(a).endbeitrag;
+/** Summe der Empfehlungen aller Sparten im Monat nach Kombi-Rabatt (null, solange kein Beitrag eingetragen ist). */
+export const summeEmpfehlung = (a: Tarifauswahl, buendel?: Record<string, BuendelRegel> | null): number | null => beitragsUebersicht(a, buendel).endbeitrag;
 
 // ─── Ältere Angebote (offersJson) lesen ─────────────────────────────────────────────────────
 

@@ -156,6 +156,28 @@ describe("Verträge je Lead", () => {
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: a.id } })).followUpNote).toBeNull();
   });
 
+  it("Erinnerung nennt die erkannten Lücken aus der Terminvorbereitung (Cross-Selling A6)", async () => {
+    const c = await makeCustomer();
+    ids.push(c.id);
+    const now = new Date();
+    const closedAt = new Date(now.getTime() - 22 * DAY);
+    const l = await prisma.lead.create({ data: { customerId: c.id, source: "Privatschutz", status: "Abschluss", closedAt } });
+    await syncPrimaryContract(l.id);
+    const tarifauswahl = {
+      v: 1,
+      sparten: [{ key: "haftpflicht", label: "Privathaftpflicht", schema: { merkmale: [], bausteine: [] }, merkmale: [], bausteine: [], empfohlen: null, tarife: [] }],
+      schutz: [
+        { key: "haftpflicht", label: "Privathaftpflicht", status: "woanders" },
+        { key: "unfall", label: "Unfall", status: "luecke" },
+        { key: "hausrat", label: "Hausrat", status: "bei-uns" },
+        { key: "rechtsschutz", label: "Rechtsschutz", status: "pruefen" },
+      ],
+    };
+    await prisma.appointment.create({ data: { customerId: c.id, leadId: l.id, mode: "video", startsAt: new Date(closedAt.getTime() - DAY), status: "completed", tarifauswahl } });
+    await runCrossSellReminders(now);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: l.id } })).followUpNote).toBe("Weiteres Produkt anbieten? Aus dem Termin: Unfall (Lücke), Rechtsschutz (prüfen)");
+  });
+
   it("Quoten nur aus bezahlten Leads; Empfehlungen zählen in den Gewinn; Kollegen-Gutschrift mindert die Agenturkosten", async () => {
     const c = await makeCustomer();
     ids.push(c.id);

@@ -209,6 +209,26 @@ Seiten aus der Liste „Seiten“ unten.
   markiert, Beitrag und Leistungen richten sich nach der Wahl.
   Auf der Empfehlungsfolie (Leistungen und was nicht versichert ist, je Sparte) wechseln Sie die Stufe ebenfalls; der Stern zeigt Ihre Empfehlung. Auf der Beitragsfolie nimmt ein Klick auf ein Produkt es
   heraus, ein zweiter Klick holt es mit Ihrer Empfehlung zurück.
+- **Kombi-Rabatt (z. B. Allianz PrivatSchutz):** Wählen Sie zwei oder mehr passende Sparten einer Gesellschaft mit
+  Kombi-Rabatt, rechnet die Terminvorbereitung den Rabatt unter der Vorschau mit (**Empfehlung gesamt**: Endbeitrag,
+  „statt … Kombi-Rabatt 5 %“). Tragen Sie die Beiträge ohne Kombi-Rabatt ein, den Rabatt rechnen wir. Darunter steht
+  die nächste Stufe („Noch 1 Vertrag bis 10 %“, ein Klick nimmt die passende Sparte dazu) und ein Hinweis, wenn eine
+  gewählte Stufe nicht zählt (bei der Allianz nur Komfort und Premium, Laufzeit 3 Jahre). Die Beitragsfolie zeigt
+  Einzelsumme, Rabatt in Prozent und Euro, Endbeitrag und die Staffel; die Bedingung und der Satz „Die Versicherungen
+  sind auch einzeln abschließbar“ stehen klein darunter. Nimmt Ihr Kunde im Termin eine Sparte heraus oder wählt eine
+  andere Stufe, rechnet die Folie sofort neu.
+- **Chance im Termin und Ihr Schutz im Überblick:** Über den Angeboten stehen höchstens zwei erkannte Lücken aus
+  Formular, Chat und Ihren Verträgen, je mit einem Satz als Gesprächsöffner (z. B. Hund ohne Hundehaftpflicht, mit
+  Hinweis, wenn sie im Bundesland Pflicht ist). **Ins Angebot** nimmt die Sparte „bei Bedarf“ dazu: Sie steht in der
+  Präsentation erst auf der Folie **Ihr Schutz im Überblick** (Ampel: bei uns, woanders versichert, prüfen, Lücke) und
+  kommt mit **Mit anschauen** in Vergleich und Beitrag; ab dem zweiten passenden Vertrag erscheint sofort der
+  Kombi-Rabatt. **Gleich zeigen** nimmt sie direkt ins Angebot. Unter **Schutz im Überblick** stellen Sie je Sparte ein,
+  was Ihr Kunde schon hat und wo (Versicherer, Ablauf, ungefährer Beitrag); bei „woanders versichert“ zeigt die Folie
+  den Bündelvorteil und den Wechsel-Service.
+- **Vorsorge-Thema:** Unter „Chance im Termin“ steht höchstens ein großes Thema (PKV-Check, Berufsunfähigkeit,
+  Risikoleben und Altersvorsorge, Pflegevorsorge) mit einem Satz als Gesprächsöffner, abgeleitet nur aus Beruf,
+  Lebenslage und Alter, nie aus Gesundheitsangaben. Dafür vereinbaren Sie einen eigenen Termin; gespeichert wird
+  nichts. Themen, die Sie nicht anbieten, schalten Sie unter **Einstellungen → Präsentation** ab.
 - **Link für Ihren Kunden:** Unter der Präsentation erstellt **Link erstellen** einen persönlichen Link mit dem Stand aus
   dem Termin, ohne Schalter zum Umstellen, 14 Tage gültig. Kopieren, per WhatsApp oder E-Mail schicken, bei
   Bedarf **Link beenden**.

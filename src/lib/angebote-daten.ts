@@ -2,6 +2,9 @@
 // umschalten). Ohne KI und ohne Server-Importe, damit auch die Demo im Browser damit rechnen kann (/demo/beratung).
 // Auslesen per KI: src/lib/angebote.ts.
 
+import { cleanKombiRegeln, cleanKombiZuordnung, kombiRabatt, rabattAuf, type KombiErgebnis, type KombiRegel, type KombiZuordnung } from "@/lib/kombi-rabatt";
+import { cleanSchutzZeilen, type SchutzZeile } from "@/lib/schutz-ueberblick";
+
 const MAX_ITEMS = 20; // z. B. 4 Sparten mit je 4 Stufen (Allianz Basis, Smart, Komfort, Premium)
 
 /**
@@ -25,9 +28,20 @@ export type AngebotItem = {
   merkmale: { name: string; wert: string }[];
   /** Beitrag pro Monat = beitragMonat (ohne Bausteine) + aktive Bausteine */
   bausteine: Baustein[];
+  /** Kombi-Rabatt (lib/kombi-rabatt.ts): Gesellschaft, Sparte, Linie des Tarifs */
+  kombi?: KombiZuordnung | null;
+  /** Cross-Selling (Ole, 16.11.2026): Sparte erst auf „Ihr Schutz im Überblick“ per „Mit anschauen“ dazunehmen */
+  zusatz?: boolean;
 };
 
-export type AngeboteDaten = { items: AngebotItem[]; quelle: string[] };
+export type AngeboteDaten = {
+  items: AngebotItem[];
+  quelle: string[];
+  /** Kombi-Rabatt je Gesellschaft (Schnappschuss aus dem Tarifkatalog) */
+  kombi?: KombiRegel[];
+  /** Folie „Ihr Schutz im Überblick“ (Ampel je Sparte); ohne: keine Folie */
+  schutz?: SchutzZeile[];
+};
 
 /**
  * Text auf höchstens max Zeichen bringen, ohne mitten im Wort oder in einer Klammer zu kappen (UX-Analyse 15.11.2026:
@@ -117,11 +131,15 @@ export function cleanAngebote(raw: unknown): AngeboteDaten {
         gewaehlt: typeof r.gewaehlt === "boolean" ? r.gewaehlt : r.empfohlen === true,
         merkmale: cleanMerkmale(r.merkmale),
         bausteine: cleanBausteine(r.bausteine),
+        ...(cleanKombiZuordnung(r.kombi) ? { kombi: cleanKombiZuordnung(r.kombi) } : {}),
+        ...(r.zusatz === true ? { zusatz: true } : {}),
       },
     ];
   });
   const quelle = Array.isArray(o.quelle) ? o.quelle.map((q) => str(q, 120)).filter((q): q is string => !!q).slice(0, 10) : [];
-  return { items, quelle };
+  const kombi = cleanKombiRegeln(o.kombi);
+  const schutz = cleanSchutzZeilen(o.schutz);
+  return { items, quelle, ...(kombi.length ? { kombi } : {}), ...(schutz.length ? { schutz } : {}) };
 }
 
 /** Gewählte Angebote: je Sparte die im Termin gewählte Stufe, sonst die Empfehlung. */
@@ -133,6 +151,25 @@ export function gewaehlte(d: AngeboteDaten): AngebotItem[] {
 export function summeEmpfohlen(d: AngeboteDaten): number | null {
   const rec = gewaehlte(d).filter((i) => i.beitragMonat != null);
   return rec.length ? Math.round(rec.reduce((s, i) => s + (beitragEffektiv(i) ?? 0), 0) * 100) / 100 : null;
+}
+
+/**
+ * Beitrag der gewählten Angebote im Monat: Einzelsumme, Kombi-Rabatt (Bündelregel der Gesellschaft,
+ * lib/kombi-rabatt.ts), Endbeitrag. kombi = volles Ergebnis für Hinweise („Noch 1 Vertrag bis 10 %“, „Smart zählt nicht“).
+ */
+export type BeitragsUebersicht = {
+  einzelSumme: number | null;
+  rabatt: { prozent: number; euro: number } | null;
+  endbeitrag: number | null;
+  kombi: KombiErgebnis | null;
+};
+
+export function beitragAus(d: AngeboteDaten): BeitragsUebersicht {
+  const einzelSumme = summeEmpfohlen(d);
+  const kombi = kombiRabatt(d.items, d.kombi);
+  if (einzelSumme == null || !kombi?.prozent || !kombi.euro) return { einzelSumme, rabatt: null, endbeitrag: einzelSumme, kombi };
+  const { euro } = rabattAuf(kombi.basis, kombi.prozent);
+  return { einzelSumme, rabatt: { prozent: kombi.prozent, euro }, endbeitrag: Math.round((einzelSumme - euro) * 100) / 100, kombi };
 }
 
 /** Stufe im Termin wählen: diese an, die anderen derselben Sparte ab. Herausnehmen geht über sparteSchalten. null, wenn es sie nicht gibt. */

@@ -60,10 +60,16 @@ export function FolienDeck({
     const [item, b] = (el.dataset.baustein ?? "").split(":").map(Number);
     const aktiv = !el.classList.contains("an");
     el.classList.toggle("an", aktiv);
+    const aktuelleId = folien[i]?.id;
     startT(async () => {
       const r = await onKlick({ tarif: t != null ? Number(t) : null, sparte: el.dataset.sparte != null, item, baustein: b, aktiv });
-      if (r.ok) setFolien(r.folien);
-      else {
+      if (r.ok) {
+        setFolien(r.folien);
+        // Kommt eine Folie dazu oder fällt weg (z. B. „Mit anschauen“ nimmt eine Sparte in den Vergleich), bleibt das
+        // Deck auf derselben Folie statt auf derselben Nummer
+        const j = r.folien.findIndex((x) => x.id === aktuelleId);
+        setI((x) => (j >= 0 ? j : Math.min(x, r.folien.length - 1)));
+      } else {
         el.classList.toggle("an", !aktiv);
         toast.show({ message: r.error, tone: "error" });
       }

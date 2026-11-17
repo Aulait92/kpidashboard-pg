@@ -4,6 +4,8 @@
 // Reine Funktionen: Die Demo rechnet im Browser (Stufe wählen, Bausteine an/aus), ein Neuladen setzt alles zurück.
 
 import { bausteinSchalten, sparteSchalten, tarifWaehlen, type AngeboteDaten, type AngebotItem } from "@/lib/angebote-daten";
+import type { KombiRegel } from "@/lib/kombi-rabatt";
+import type { SchutzZeile } from "@/lib/schutz-ueberblick";
 import { folien, praesentationCss, type Folie, type Marke } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
@@ -22,7 +24,7 @@ export function demoTermin(now = new Date()): VorbereitungDaten {
     angaben: {
       lebenssituation: "Single, zieht gerade in eine größere Mietwohnung",
       versichern: "nur Dominik",
-      interesse: "Haftpflicht, Hausrat und Rechtsschutz, alles aus einer Hand",
+      interesse: "Haftpflicht, gern alles aus einer Hand",
       wohnflaeche: "68 m², ständig bewohnt",
       vorhanden: "alte Haftpflicht von 2012, sonst nichts",
     },
@@ -68,8 +70,8 @@ const rechtsschutz = (tarif: string, beitrag: number, x: { summe: string; bereic
     merkmale: [m("Versicherungssumme", x.summe), m("Berufs-Rechtsschutz", x.beruf), m("Wohnen", x.wohnen), m("Strafkaution (als Darlehen)", x.kaution)],
   });
 
-/** Angebote wie aus dem Tarifrechner: Haftpflicht in 3 Stufen, Hausrat in 2, Rechtsschutz in 4. */
-export function demoAngebote(): AngeboteDaten {
+/** Tarife wie aus dem Tarifrechner: Haftpflicht in 3 Stufen, Hausrat in 2, Rechtsschutz in 4 (alle gewählt). */
+export function demoTarife(): AngeboteDaten {
   const haftpflicht = (tarif: string, beitrag: number, summe: string, extra: [string, string, string], empfohlen = false) =>
     item({
       sparte: "Privathaftpflicht",
@@ -121,6 +123,66 @@ export function demoAngebote(): AngeboteDaten {
     ],
     quelle: ["Beispieldaten"],
   };
+}
+
+/**
+ * Kombi-Rabatt der Demo: neutral (keine echte Gesellschaft), Staffel wie im Tarifkatalog der Allianz (5, 10, 15, 20 %),
+ * nur Linie Komfort und Premium, Laufzeit 3 Jahre.
+ */
+export const DEMO_KOMBI: KombiRegel = {
+  gruppe: "demo",
+  name: null,
+  linien: ["Komfort", "Premium"],
+  mindestLaufzeitJahre: 3,
+  sparten: ["haftpflicht", "hausrat", "rechtsschutz", "unfall"],
+  staffel: [
+    { anzahl: 2, prozent: 5 },
+    { anzahl: 3, prozent: 10 },
+    { anzahl: 4, prozent: 15 },
+    { anzahl: 5, prozent: 20, abAnzahl: true },
+  ],
+};
+
+/** Ampel im Überblick (Ole, 16.11.2026): Haftpflicht gewählt (ersetzt die alte von 2012), Hausrat und Rechtsschutz prüfen, Unfall Lücke. */
+const DEMO_SCHUTZ: SchutzZeile[] = [
+  { key: "haftpflicht", label: "Privathaftpflicht", status: "woanders", info: "Vertrag von 2012", versicherer: null },
+  { key: "hausrat", label: "Hausrat", status: "pruefen", info: null, versicherer: null },
+  { key: "rechtsschutz", label: "Rechtsschutz", status: "pruefen", info: null, versicherer: null },
+  { key: "unfall", label: "Unfall", status: "luecke", info: null, versicherer: null },
+];
+
+const SPARTE_KEY: Record<string, string> = { Privathaftpflicht: "haftpflicht", Hausrat: "hausrat", Rechtsschutz: "rechtsschutz", Unfall: "unfall" };
+
+const unfall = (tarif: string, beitrag: number, x: { grundsumme: string; progression: string; rente: string }, empfohlen = false) =>
+  item({
+    sparte: "Unfall",
+    tarif: `Unfall ${tarif}`,
+    beitragMonat: beitrag,
+    selbstbeteiligung: null,
+    empfohlen,
+    gewaehlt: empfohlen,
+    leistungen: ["Weltweit, rund um die Uhr", "Auch in der Freizeit", "Bergungskosten"],
+    merkmale: [m("Grundsumme", x.grundsumme), m("Progression", x.progression), m("Unfallrente", x.rente), m("Bergungskosten", ja)],
+  });
+
+/**
+ * Live-Demo Cross-Selling (Ole, 16.11.2026): Dominik Schmid hat Haftpflicht angefragt (Komfort gewählt). Hausrat,
+ * Rechtsschutz und Unfall stehen auf „Ihr Schutz im Überblick“ und kommen per „Mit anschauen“ in den Vergleich; ab dem
+ * zweiten Vertrag rechnet die Beitragsfolie den Kombi-Rabatt.
+ */
+export function demoAngebote(): AngeboteDaten {
+  const t = demoTarife();
+  const items = [
+    ...t.items,
+    unfall("Smart", 9.9, { grundsumme: "100.000 €", progression: "225 %", rente: nein }),
+    unfall("Komfort", 13.4, { grundsumme: "200.000 €", progression: "350 %", rente: "1.000 €" }, true),
+  ].map((i) => {
+    const sparte = SPARTE_KEY[i.sparte];
+    const linie = (i.tarif ?? "").split(" ").pop() ?? null;
+    const zusatz = sparte !== "haftpflicht";
+    return { ...i, kombi: { gruppe: "demo", sparte, linie }, ...(zusatz ? { zusatz: true, gewaehlt: false } : {}) };
+  });
+  return { items, quelle: t.quelle, kombi: [DEMO_KOMBI], schutz: DEMO_SCHUTZ };
 }
 
 export const demoCss = () => praesentationCss(DEMO_MARKE);

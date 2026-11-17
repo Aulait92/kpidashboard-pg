@@ -13,7 +13,7 @@ import {
   vertriebFuer,
 } from "@/lib/tarifauswahl-server";
 import { angeboteSpeichern, loadPraesentation, loadVorbereitung } from "@/lib/termin-vorbereitung-server";
-import { demoAngebote } from "@/lib/demo-beratung";
+import { demoTarife } from "@/lib/demo-beratung";
 import { listUpdatesForCustomer } from "@/lib/neuigkeiten";
 import { NEUIGKEIT_TERMINVORBEREITUNG, TERMINVORBEREITUNG_NEU_FUER_ALLE } from "@/lib/terminvorbereitung-neu";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
@@ -86,7 +86,7 @@ describe("Neue Terminvorbereitung (Datenbank)", () => {
   });
 
   it("älterer Termin mit ausgelesenen Angeboten: wird gelesen, nicht überschrieben; Präsentation unverändert", async () => {
-    const alt = demoAngebote();
+    const alt = demoTarife();
     const appt = await termin({ offersJson: alt, offersConfirmedAt: new Date() });
     const vorher = (await loadPraesentation(appt.id, ctx))!.folien.map((f) => f.html);
     const tv = (await ladeTarifvorbereitung(appt.id, ctx, (await loadVorbereitung(appt.id, ctx))!, k))!;
@@ -102,7 +102,7 @@ describe("Neue Terminvorbereitung (Datenbank)", () => {
     const appt = await termin();
     const tv = (await ladeTarifvorbereitung(appt.id, ctx, (await loadVorbereitung(appt.id, ctx))!, k))!;
     await tarifauswahlSpeichern(appt.id, ctx, tv.auswahl);
-    await angeboteSpeichern(appt.id, ctx, demoAngebote(), true);
+    await angeboteSpeichern(appt.id, ctx, demoTarife(), true);
     const row = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id }, select: { tarifauswahl: true } });
     expect(row.tarifauswahl).toBeNull();
   });

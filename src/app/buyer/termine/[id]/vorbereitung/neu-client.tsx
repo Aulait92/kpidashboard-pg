@@ -25,7 +25,6 @@ import {
   gezeigteTarife,
   grenzenFuer,
   sparteNeu,
-  summeEmpfehlung,
   tarifAusEigenem,
   tarifAusKatalog,
   tarifEinfuegen,
@@ -41,6 +40,8 @@ import type { EigenerTarifZeile } from "@/lib/tarifauswahl-server";
 import { angabenText, pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib/preise/pilot";
 import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, preiseAuslesenAction, tarifauswahlSpeichernAction } from "./neu-actions";
+import { BeitragGesamt, ChanceImTermin } from "./schutz-client";
+import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const geld = (n: number | null) => (n == null ? "" : n.toFixed(2).replace(".", ","));
@@ -62,6 +63,10 @@ export type AngeboteProps = {
   meine: MeineAuswahl;
   /** Beiträge rechnen (Pilot): freigeschaltete „<gesellschaft>/<sparte>“ und die Rechner-Angaben je Sparte */
   rechnen: { aktiv: string[]; angaben: Record<string, RechnerAngabe[]> };
+  /** Schutz-Überblick eben vorgeschlagen: gleich mitspeichern, damit die Präsentation ihn zeigt */
+  schutzNeu?: boolean;
+  /** Vorsorge-Thema (Teil C2), nur Hinweis */
+  vorsorge?: VorsorgeThema | null;
 };
 
 export function VorbereitungNeu(p: {
@@ -132,7 +137,7 @@ export function VorbereitungNeu(p: {
   useEffect(() => {
     if (erst.current) return;
     erst.current = true;
-    if (p.angebote.quelle === "neu" && !p.readOnly) planen(ref.current);
+    if ((p.angebote.quelle === "neu" || (p.angebote.schutzNeu && p.angebote.quelle !== "angebote")) && !p.readOnly) planen(ref.current);
   });
   useEffect(() => {
     const weg = () => void speichern();
@@ -382,7 +387,31 @@ function Angebote(p: {
   const sparteDazu = (key: string) => {
     const neu = sparteNeu(katalog, key, vertrieb, p.daten.meine);
     if (!neu) return;
-    p.aendern((a) => void a.sparten.push(neu));
+    p.aendern((a) => {
+      a.sparten.push(neu);
+      // auch im Überblick (Folie „Ihr Schutz im Überblick“), falls es ihn gibt
+      if (a.schutz && SCHUTZ_SPARTEN[key] && !a.schutz.some((x) => x.key === key)) a.schutz.push({ key, label: SCHUTZ_SPARTEN[key], status: "pruefen" });
+    });
+    setAktiv(key);
+  };
+  /**
+   * Sparte aus „Chance im Termin“ bzw. dem Kombi-Hinweis in die Angebote: Chancen erst „bei Bedarf“ (Präsentation:
+   * „Mit anschauen“ auf „Ihr Schutz im Überblick“), der Kombi-Hinweis gleich ins Paket. Ist sie schon da: hinspringen.
+   */
+  const anbieten = (key: string, direkt = false) => {
+    const da = p.auswahl.sparten.find((s) => s.key === key);
+    if (da) {
+      if (direkt && da.zusatz) p.aendern((a) => void delete a.sparten.find((s) => s.key === key)!.zusatz);
+      setAktiv(key);
+      return;
+    }
+    const neu = sparteNeu(katalog, key, vertrieb, p.daten.meine);
+    if (!neu) return;
+    if (!direkt) neu.zusatz = true;
+    p.aendern((a) => {
+      a.sparten.push(neu);
+      if (a.schutz && !a.schutz.some((x) => x.key === key)) a.schutz.push({ key, label: SCHUTZ_SPARTEN[key] ?? neu.label, status: "pruefen" });
+    });
     setAktiv(key);
   };
   const sparteWeg = () => {
@@ -504,7 +533,11 @@ function Angebote(p: {
             >
               <button type="button" role="tab" aria-selected={an} onClick={() => setAktiv(s.key)} className={cn("inline-flex h-full items-center gap-1.5 pl-3.5", an && !ro ? "pr-1" : "pr-3.5")}>
                 {s.label}
-                <small className={cn("text-xs font-medium", an ? "opacity-80" : m == null ? "text-amber-700" : "text-[color:var(--muted)]")}>{m != null ? eur(m) : "Beitrag fehlt"}</small>
+                {s.zusatz ? (
+                  <small className={cn("text-xs font-medium", an ? "opacity-80" : "text-[color:var(--muted)]")}>bei Bedarf</small>
+                ) : (
+                  <small className={cn("text-xs font-medium", an ? "opacity-80" : m == null ? "text-amber-700" : "text-[color:var(--muted)]")}>{m != null ? eur(m) : "Beitrag fehlt"}</small>
+                )}
               </button>
               {/* Ole, 16.11.2026: „ich kann kein Produkt wieder entfernen“ (stand nur unter „Tarife ändern“) */}
               {an && !ro ? (
@@ -539,9 +572,22 @@ function Angebote(p: {
         ) : null}
       </div>
 
+      <ChanceImTermin auswahl={p.auswahl} ro={ro} aendern={p.aendern} anbieten={(key) => anbieten(key)} vorsorge={p.daten.vorsorge ?? null} />
+
       {sp ? (
         <div className="grid gap-5 px-4 pb-5 pt-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_400px]">
           <div className="min-w-0">
+            {sp.zusatz ? (
+              // Cross-Selling: erst bei Bedarf, in der Präsentation über „Mit anschauen“
+              <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-[13px]" data-zusatz-hinweis>
+                <span className="min-w-0 flex-1 text-[color:var(--muted)]">Bei Bedarf: in der Präsentation erst über „Mit anschauen“.</span>
+                {!ro ? (
+                  <button type="button" onClick={() => anSparte((s) => void delete s.zusatz)} className="-my-2 py-2 font-semibold text-[color:var(--brand)] hover:underline" data-zusatz-aus>
+                    Gleich zeigen
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             {rechner ? (
               // Mit Rechner: beide Wege zum Beitrag in einer Zeile statt Knopf über der Ablagefläche
               <div className="grid gap-2 sm:flex sm:flex-wrap" data-beitraege-zeile>
@@ -652,7 +698,9 @@ function Angebote(p: {
             ) : null}
           </div>
 
-          <Vorschau auswahl={p.auswahl} sparte={sp} daten={p.vorschau} />
+          <Vorschau auswahl={p.auswahl} sparte={sp} daten={p.vorschau} katalog={katalog}>
+            <BeitragGesamt auswahl={p.auswahl} katalog={katalog} ro={ro} anbieten={(key) => anbieten(key, true)} aendern={p.aendern} />
+          </Vorschau>
         </div>
       ) : (
         <p className="px-5 py-6 text-sm text-[color:var(--muted)]">Noch keine Versicherung. Wählen Sie oben „+ Versicherung“, z. B. Hausrat.</p>
@@ -1275,14 +1323,27 @@ function EigenerTarif({ sp, vorschlag, fertig }: { sp: SparteWahl; vorschlag: st
 
 // ─── Live-Vorschau der echten Vergleichsfolie ───────────────────────────────────────────────
 
-function Vorschau({ auswahl, sparte, daten }: { auswahl: Tarifauswahl; sparte: SparteWahl; daten: Parameters<typeof VorbereitungNeu>[0]["vorschau"] }) {
+function Vorschau({
+  auswahl,
+  sparte,
+  daten,
+  katalog,
+  children,
+}: {
+  auswahl: Tarifauswahl;
+  sparte: SparteWahl;
+  daten: Parameters<typeof VorbereitungNeu>[0]["vorschau"];
+  katalog: Katalog;
+  children: ReactNode;
+}) {
   const termin = useMemo<VorbereitungDaten>(() => ({ ...daten.termin, termin: { ...daten.termin.termin, startsAt: new Date(daten.termin.termin.startsAt) } }), [daten.termin]);
   const { html, nr, von } = useMemo(() => {
-    const fs = folien(termin, zuAngebote(auswahl), daten.marke, daten.ansprache);
-    let i = fs.findIndex((f) => f.id.startsWith("vergleich-") && f.titel === `Auswahl ${sparte.label}`);
+    const fs = folien(termin, zuAngebote(auswahl, katalog.buendel), daten.marke, daten.ansprache);
+    // Sparte „bei Bedarf“: steht erst auf „Ihr Schutz im Überblick“
+    let i = sparte.zusatz ? fs.findIndex((f) => f.id === "ueberblick") : fs.findIndex((f) => f.id.startsWith("vergleich-") && f.titel === `Auswahl ${sparte.label}`);
     if (i < 0) i = fs.findIndex((f) => f.id === "empfehlung");
     return { html: fs[i]?.html ?? "", nr: i + 1, von: fs.length };
-  }, [auswahl, sparte.label, termin, daten.marke, daten.ansprache]);
+  }, [auswahl, sparte.label, sparte.zusatz, termin, daten.marke, daten.ansprache, katalog.buendel]);
   const box = useRef<HTMLDivElement>(null);
   const deck = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
@@ -1296,7 +1357,6 @@ function Vorschau({ auswahl, sparte, daten }: { auswahl: Tarifauswahl; sparte: S
   useLayoutEffect(() => {
     if (deck.current) folienEinpassen(deck.current);
   }, [html, scale]);
-  const summe = summeEmpfehlung(auswahl);
   return (
     <div className="self-start lg:sticky lg:top-6" data-folien-vorschau>
       <div className="mb-2 flex items-center gap-2 text-[13px] font-semibold">
@@ -1309,17 +1369,7 @@ function Vorschau({ auswahl, sparte, daten }: { auswahl: Tarifauswahl; sparte: S
       <div ref={box} className="relative w-full overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-md)]" style={{ aspectRatio: "16 / 9" }}>
         <div ref={deck} className="deck pointer-events-none absolute left-0 top-0 origin-top-left" style={{ width: 1280, height: 720, transform: `scale(${scale})` }} dangerouslySetInnerHTML={{ __html: html }} aria-hidden />
       </div>
-      <div className="mt-3 flex items-baseline gap-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-[13px]">
-        <span className="text-[color:var(--muted)]">Empfehlung gesamt</span>
-        {summe != null ? (
-          <>
-            <b className="text-lg tabular-nums">{eur(summe)}</b>
-            <span className="text-[color:var(--muted)]">im Monat</span>
-          </>
-        ) : (
-          <span className="font-semibold text-amber-700">Beitrag fehlt</span>
-        )}
-      </div>
+      {children}
     </div>
   );
 }
