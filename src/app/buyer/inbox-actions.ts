@@ -18,6 +18,7 @@ import { syncPrimaryContract } from "@/lib/vertraege";
 import { startSequence, stopSequences } from "@/lib/lead-sequences";
 import { registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
 import { fmtAttemptAt } from "@/lib/call-plan";
+import { anrufErledigt } from "@/lib/telefonat-server";
 
 type LeadPrev = {
   status: string | null;
@@ -113,6 +114,8 @@ export async function callbackOutcomeResult(
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const prev = snapshot(lead);
+  // Ergebnis eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+  await anrufErledigt(lead.id);
   const now = new Date();
 
   if (outcome === "not_reached") {
@@ -191,6 +194,8 @@ export async function appointmentOutcomeResult(
   const lead = await prisma.lead.findUnique({ where: { id: appt.leadId }, select: leadSelect });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const prev = snapshot(lead);
+  // Ergebnis eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+  await anrufErledigt(lead.id);
   const value = outcome === "closed" && closeValue != null && Number.isFinite(closeValue) ? closeValue : null;
 
   await prisma.appointment.update({
@@ -352,6 +357,8 @@ export async function followUpNotReachedResult(leadId: string): Promise<InboxRes
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const prev = snapshot(lead);
+  // Ergebnis eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+  await anrufErledigt(lead.id);
   const now = new Date();
   await registerCallAttempt(lead.id, { customerId, now });
   const cur = await prisma.lead.findUnique({ where: { id: lead.id }, select: { followUpAt: true } });
@@ -375,6 +382,8 @@ export async function setFollowUpResult(
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const prev = snapshot(lead);
+  // Ergebnis eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+  await anrufErledigt(lead.id);
   let at: Date;
   if ("days" in when) {
     at = workdaysFromNow(Math.max(1, Math.min(60, Math.round(when.days))));
@@ -405,6 +414,8 @@ export async function clearFollowUpResult(leadId: string): Promise<InboxResult> 
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: leadSelect });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   const prev = snapshot(lead);
+  // Ergebnis eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+  await anrufErledigt(lead.id);
   // „Police fertig machen“ erledigt → Police abgehakt
   const police = lead.followUpNote === POLICY_TODO && !lead.policyDoneAt;
   await prisma.lead.update({ where: { id: lead.id }, data: { followUpAt: null, followUpNote: null, ...(police ? { policyDoneAt: new Date() } : {}) } });

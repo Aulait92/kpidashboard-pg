@@ -13,6 +13,7 @@ import {
   rateText,
   SECTION_TITLES,
   signedEur,
+  verlustZeile,
   type ReportModel,
 } from "@/lib/monatsbericht/bericht";
 import { formatEUR, formatNumber } from "@/lib/format";
@@ -125,6 +126,20 @@ export function MonatsberichtAnsicht({ model: m, intro, links = true }: { model:
         <section data-abschnitt="bestandskampagnen">
           <H>{SECTION_TITLES.bestandskampagnen}</H>
           <Cells cells={bestandskampagnenCells(m.bestandskampagnen)} />
+        </section>
+      ) : null}
+
+      {m.verluste?.gruende.length ? (
+        <section data-abschnitt="verluste">
+          <H>{SECTION_TITLES.verluste}</H>
+          <ul className="list-disc space-y-1 pl-5">
+            {m.verluste.gruende.map((g) => (
+              <li key={g.key}>
+                <b>{verlustZeile(g, m.verluste!.total)}</b>
+                {g.tipp ? <span className="block text-[color:var(--muted)]">{g.tipp}</span> : null}
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

@@ -61,6 +61,11 @@ async function setupCustomer(o: { extras?: boolean; leadCost?: number } = {}) {
     await prisma.lead.create({ data: { customerId: c.id, name: "Empfohlen", source: "Empfehlung", status: "Abschluss", reached: true, closeValue: 600, closedAt: oct(22), createdAt: oct(12) } });
     await prisma.lead.create({ data: { customerId: c.id, name: "Bestand", source: "Bestandskunde", status: "Abschluss", reached: true, closeValue: 600, closedAt: oct(23), createdAt: oct(14) } });
     await prisma.lead.create({ data: { customerId: c.id, name: "Bestand offen", source: "Bestandskunde", status: "In Beratung", createdAt: oct(15) } });
+    // Verlustgründe (lib/verlustgruende.ts): im Oktober verloren, angelegt im August (zählt nicht im Trichter)
+    const verloren = [...Array(3).fill("passt_nicht"), ...Array(2).fill("schon_versichert"), "kein_interesse"];
+    await prisma.lead.createMany({
+      data: verloren.map((r, i) => ({ customerId: c.id, name: `V${i}`, source: "Allianz Privatschutz", status: "Kein Interesse", lostReason: r, lostAt: oct(10 + i), reached: true, createdAt: new Date(Date.UTC(2026, 7, 5 + i, 10)) })),
+    });
   }
   if (o.leadCost) await prisma.revenue.create({ data: { customerId: c.id, amount: o.leadCost, occurredAt: oct(10) } });
   return c.id;
@@ -200,6 +205,11 @@ describe("Monatsbericht neu", () => {
     expect(m.paragraphs).toEqual([DEFAULT_INTRO]);
     for (const t of Object.values(SECTION_TITLES)) expect(m.html).toContain(t.replace("&", "&amp;"));
     expect(m.html).toContain("Zwei neue Motive für die Katzenkampagne");
+    // Die zwei häufigsten Verlustgründe mit Tipp
+    expect(m.html).toContain("Zu teuer oder passt nicht: 3 von 6 verlorenen Leads (50 %)");
+    expect(m.html).toContain("Schon versichert: 2 von 6 verlorenen Leads (33 %)");
+    expect(m.html).toContain("Tipp: Zeigen Sie im Termin mehrere Tarifstufen");
+    expect(m.html).not.toContain("Kein Interesse: 1 von 6");
     expect(m.html).not.toContain("Gespräch vereinbaren"); // kein Gesprächs-Knopf (Ole, 14.11.2026)
     expect(m.html).toContain("/buyer/zahlen?range=custom&amp;from=2026-10-01&amp;to=2026-10-31");
     expect(m.textBlocks!.join("\n")).toContain("Alle Zahlen ansehen: ");

@@ -8,6 +8,8 @@
 // Alle Zahlen mit denselben Funktionen wie /buyer/zahlen (computeKpis, customer-spend, lib/ertrag,
 // lib/lead-herkunft, lib/zahlen-tipps); Aufbau und E-Mail-HTML in lib/monatsbericht/bericht.
 
+import { haeufigsteVerluste } from "@/lib/verlustgruende-server";
+import { tippFuer } from "@/lib/verlustgruende";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
@@ -347,6 +349,18 @@ export async function collectReportData(customerId: string, month: string, setti
 
   // Tipps aus derselben Logik wie die Karte auf /buyer/zahlen; Kollegen-Tipp nur mit Schalter (Standard aus)
   const signals = await loadTipSignals(customerId, data, now).catch(() => null);
+  // Die zwei häufigsten Verlustgründe im Monat mit Tipp (lib/verlustgruende.ts), ab 3 verlorenen Leads
+  const verl = await haeufigsteVerluste(customerId, range).catch(() => null);
+  const verluste =
+    verl && verl.total >= 3 && verl.gruende.length
+      ? {
+          total: verl.total,
+          gruende: verl.gruende.map((g) => {
+            const t = tippFuer(g.key);
+            return { key: g.key, label: g.label, count: g.count, share: g.share, tipp: t ? `Tipp: ${t.text}` : null };
+          }),
+        }
+      : null;
   const tips = (signals ? pickTips(signals, dismissed, now) : [])
     .filter((t) => KOLLEGEN_TIPP_AKTIV || t.key !== "kollegen")
     .slice(0, 2)
@@ -363,6 +377,7 @@ export async function collectReportData(customerId: string, month: string, setti
     empfehlungen: Object.values(empf).some((n) => n > 0) ? empf : null,
     bestandskampagnen: Object.values(bk).some((n) => n > 0) ? bk : null,
     tips,
+    verluste,
     links: { zahlen: zahlenLink(month) },
     rawMeasures,
   };

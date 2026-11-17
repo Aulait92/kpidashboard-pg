@@ -128,7 +128,7 @@ export function TodayInbox({
   });
   const markCall = (c: CallItem) => {
     lastCall.current = c;
-    markCallReturn(c.key);
+    markCallReturn(c.key, c.leadId);
   };
   /** Desktop (neue Oberfläche): Zeile öffnet die Details rechts statt eines Auswahlfensters. */
   const openDetailOnDesktop = (leadId: string | null | undefined) => {
@@ -189,6 +189,8 @@ export function TodayInbox({
 
   const appointments = data.appointments.filter((a) => !hidden.has(`a:${a.id}`));
   const outcomes = data.outcomes.filter((o) => !hidden.has(`o:${o.id}`));
+  // Angerufen, Ergebnis fehlt (lib/telefonat.ts): steht bei „Wie lief es?“, Assistent pausiert bis dahin
+  const openCalls = (data.openCalls ?? []).filter((c) => !hidden.has(`k:${c.leadId}`));
   const chats = data.chats.filter((c) => !hidden.has(`c:${c.conversationId}`));
   // Rückrufe und Wiedervorlagen sind für den Nutzer dasselbe: anrufen. „Kein WhatsApp“ (urgent) ganz oben.
   const toCallback = (c: InboxData["callbacks"][number]): CallItem => ({
@@ -258,7 +260,7 @@ export function TodayInbox({
   }, [callMode]);
   const noStep = data.noNextStep.leads.filter((l) => !hidden.has(`n:${l.leadId}`));
   const noStepTotal = Math.max(noStep.length, data.noNextStep.total - (data.noNextStep.leads.length - noStep.length));
-  const nothing = appointments.length + outcomes.length + chats.length + calls.length + noStep.length === 0;
+  const nothing = appointments.length + outcomes.length + openCalls.length + chats.length + calls.length + noStep.length === 0;
   const noStepHref = leadHref.startsWith("/buyer?") ? "/buyer/kontakte?ansicht=ohne-schritt" : "/buyer/leads?ansicht=ohne-schritt";
 
   const laterSheet = (c: CallItem) =>
@@ -440,11 +442,34 @@ export function TodayInbox({
         </Card>
       ) : null}
 
-      {outcomes.length > 0 ? (
+      {outcomes.length + openCalls.length > 0 ? (
         <Card>
           <div id="ergebnis" className="scroll-mt-20" />
-          <CardHeader icon={Trophy} title="Wie lief es?" count={outcomes.length} />
+          <CardHeader icon={Trophy} title="Wie lief es?" count={outcomes.length + openCalls.length} />
           <ul className="divide-y divide-[color:var(--border)]">
+            {openCalls.map((c) => {
+              const open = () => setOutcome({ key: `k:${c.leadId}`, leadId: c.leadId, name: c.name, source: c.source, kind: "lead" });
+              return (
+                <TapRow key={`k:${c.leadId}`} className={sel(c.leadId)} onTap={open}>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{c.name}</div>
+                    <p className="truncate text-xs text-[color:var(--muted)]" data-anruf-ergebnis-fehlt>
+                      Angerufen um {time(c.at)} Uhr · Ergebnis fehlt
+                    </p>
+                  </div>
+                  <Button
+                    icon={Phone}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      open();
+                    }}
+                  >
+                    Ergebnis
+                  </Button>
+                  {more}
+                </TapRow>
+              );
+            })}
             {outcomes.map((o) => {
               const key = `o:${o.id}`;
               const open = () =>

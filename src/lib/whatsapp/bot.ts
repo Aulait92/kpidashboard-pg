@@ -483,7 +483,11 @@ async function recentMailsFor(c: { id: string; leadId: string | null }) {
   return letzteAutomatischeMails({ leadId: c.leadId, existingCustomerId });
 }
 
-export async function runBotTurn(conversationId: string, opts: { hint?: string | null } = {}): Promise<void> {
+/**
+ * `anstoss`: Kontext-Nachricht der App (kein Text des Leads), nach der der Assistent von sich aus schreibt, z. B. nach
+ * einem Telefonat die offenen Punkte abfragen (lib/telefonat-server.ts runOffeneFragen).
+ */
+export async function runBotTurn(conversationId: string, opts: { hint?: string | null; anstoss?: string | null } = {}): Promise<void> {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
     select: {
@@ -505,6 +509,12 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   // Schalter. Nie private Chats aus der WhatsApp-Business-App (Coexistence), nie das Support-Postfach.
   const { assistentDarfAntworten } = await import("@/lib/whatsapp/nur-leads");
   if (!(await assistentDarfAntworten(conversation))) return;
+  // Vermittler telefoniert gerade mit dem Lead (bzw. hat noch kein Ergebnis eingetragen): Assistent pausiert
+  // (lib/telefonat.ts). Die Nachricht des Leads markiert der Gateway für den Vermittler.
+  if (!opts.anstoss && conversation.leadId) {
+    const { anrufPausiert } = await import("@/lib/telefonat-server");
+    if (await anrufPausiert(conversation.leadId)) return;
+  }
 
   const agent = await prisma.agentConfig.findUnique({
     where: { customerId: conversation.customerId },
@@ -637,6 +647,12 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     },
   });
   const messages = toApiMessages(history, { tier: istTierLead(lead?.source) });
+  if (opts.anstoss) {
+    // Anstoß der App als letzte „user“-Nachricht (an eine offene Nachricht des Leads angehängt)
+    const last = messages[messages.length - 1];
+    if (last?.role === "user" && typeof last.content === "string") last.content = `${last.content}\n\n${opts.anstoss}`;
+    else messages.push({ role: "user", content: opts.anstoss });
+  }
   if (messages.length === 0) return;
 
   const client = new Anthropic();

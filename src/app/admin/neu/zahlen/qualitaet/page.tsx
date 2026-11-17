@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { HilfeAnfragenKarte, KiHilfeKarte, NutzungJeKunde } from "@/components/admin/nutzung-bausteine";
 import { StornoQuoteUebersicht } from "@/components/admin/storno-quote";
 import { WhatsAppZustellung } from "@/components/admin/whatsapp-zustellung";
+import { VerlustgruendeCard } from "@/components/admin/verlustgruende-card";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { Aufklapp } from "@/components/admin-neu/zahlen/aufklapp";
 import { ModuleCandidatesCard } from "@/app/admin/nutzung/module-card";
@@ -36,6 +37,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
         <div data-funktion="whatsapp-zustellung--leads-ohne-whatsapp-je-kunde-30-tage-gesamt whatsapp-zustellung--zustellfehler-der-letzten-14-tage-je-kunde-und">
           <WhatsAppZustellung />
         </div>
+        <VerlustgruendeCard />
 
         <section aria-label="Nutzung der App" className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--border)] pt-5">

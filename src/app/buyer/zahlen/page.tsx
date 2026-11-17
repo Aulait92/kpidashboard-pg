@@ -42,11 +42,15 @@ import { BestandGrowthSection } from "@/components/bestand-growth-chart";
 import { NextStepKpi } from "@/components/next-step-kpi";
 import { nochOhneLeads, ZahlenNochLeer } from "@/components/zahlen-noch-leer";
 import { KeinWhatsAppKpi } from "@/components/kein-whatsapp-kpi";
+import { VerlustKarte } from "@/components/verlust-karte";
 
 type SearchParams = Promise<{
   range?: string;
   from?: string;
   to?: string;
+  /** Filter der Karte „Warum Leads verloren gehen“: Produkt und Berater */
+  vgp?: string;
+  vgb?: string;
 }>;
 
 export const dynamic = "force-dynamic";
@@ -131,6 +135,7 @@ export default async function BuyerPage({
           <BuyerDashboardBody
             customerId={session.customerId}
             range={range}
+            params={sp}
           />
           <TeamStats customerId={session.customerId} range={range} mitBestand={await loadGewinnMitBestand(session)} />
           <div className="mt-6">
@@ -162,9 +167,11 @@ function delta(
 async function BuyerDashboardBody({
   customerId,
   range,
+  params,
 }: {
   customerId: string;
   range: { from: Date; to: Date };
+  params: Record<string, string | undefined>;
 }) {
   const prev = previousRange(range);
   const now = new Date();
@@ -276,6 +283,8 @@ async function BuyerDashboardBody({
       <NextStepKpi customerId={customerId} />
 
       <KeinWhatsAppKpi customerId={customerId} range={range} />
+
+      <VerlustKarte customerId={customerId} range={range} params={params} />
 
       <section>
         <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kosten &amp; Ertrag</h2>

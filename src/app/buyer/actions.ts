@@ -1,5 +1,6 @@
 "use server";
 
+import { anrufErledigt } from "@/lib/telefonat-server";
 import { disqualifyLabel, isDisqualifyReason } from "@/lib/lead-quality";
 import { isLostStatus, lostReasonOf } from "@/lib/lead-lost";
 import { abschlussText, logLeadHistory } from "@/lib/lead-history";
@@ -206,6 +207,8 @@ export async function setLeadStatusAction(
     select: { id: true, airtableId: true, firstContactAt: true, contactAttempts: true, status: true, source: true },
   });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  // Ergebnis eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+  await anrufErledigt(lead.id);
 
   // Verlässt der Lead „Neuer Lead" zum ersten Mal, hat ein Kontaktversuch
   // stattgefunden → „Erster Kontaktversuch" automatisch setzen (sonst bleiben

@@ -310,6 +310,8 @@ async function persistInbound(
     conversation.botActive = true;
   }
   let botErlaubt = conversation.botActive && (pipeline || (await nurLeads.assistentDarfAntworten(conversation)));
+  // Vermittler telefoniert gerade mit dem Lead (lib/telefonat.ts): Assistent schweigt, die Nachricht wartet auf den Vermittler
+  if (botErlaubt && conversation.leadId && (await import("@/lib/telefonat-server").then((m) => m.anrufPausiert(conversation.leadId)))) botErlaubt = false;
 
   // „STOPP“ beendet alle Nachrichten an diese Nummer (lib/whatsapp/stopp.ts). Schreibt der Kontakt nach einem
   // Stopp wieder selbst, ist die Sperre aufgehoben; der Assistent bleibt aus, der Vermittler antwortet.

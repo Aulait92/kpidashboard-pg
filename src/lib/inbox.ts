@@ -12,6 +12,7 @@ import { appointmentScope, conversationScope, isAdvisor, leadScope, type TeamCtx
 import { listWithoutNextStep, type NoStepLead } from "@/lib/lead-next-step-server";
 import { APPOINTMENT_RESULT_AFTER_MS } from "@/lib/lead-next-step";
 import { isErneutNote } from "@/lib/lead-erneut";
+import { CALL_PAUSE_MAX_MS } from "@/lib/telefonat";
 
 const TZ = "Europe/Berlin";
 const DAY = 24 * 60 * 60 * 1000;
@@ -39,6 +40,8 @@ export type InboxAppointment = {
   summary: string | null;
 };
 export type InboxOutcome = { id: string; startsAt: string; mode: string; leadId: string; name: string; source: string | null };
+/** Angerufen, Ergebnis fehlt (lib/telefonat.ts): Assistent pausiert, bis das Ergebnis eingetragen ist. */
+export type InboxOpenCall = { leadId: string; name: string; source: string | null; at: string };
 export type InboxChat = { conversationId: string; name: string; reason: string | null; at: string | null };
 export type InboxCallback = {
   leadId: string;
@@ -78,6 +81,7 @@ export type InboxData = {
   upcoming: InboxUpcoming[];
   appointments: InboxAppointment[];
   outcomes: InboxOutcome[];
+  openCalls?: InboxOpenCall[];
   chats: InboxChat[];
   callbacks: InboxCallback[];
   bookingSlug: string | null;
@@ -181,6 +185,13 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
     }),
   ]);
   const followUpIds = new Set(followUps.map((f) => f.id));
+  // Angerufen, aber noch kein Ergebnis (älter als 2 Minuten, höchstens 12 Stunden)
+  const openCalls = await prisma.lead.findMany({
+    where: { ...leadScope(ctx), callStartedAt: { lt: new Date(now.getTime() - 2 * 60 * 1000), gt: new Date(now.getTime() - CALL_PAUSE_MAX_MS) } },
+    orderBy: { callStartedAt: "desc" },
+    take: 20,
+    select: { id: true, name: true, source: true, callStartedAt: true },
+  });
   // „X Leads ohne nächsten Schritt“: Termine ohne Ergebnis, die schon unter „Wie lief's?“ stehen, nicht doppelt
   const noStep = await listWithoutNextStep(leadScope(ctx), { now, take: 30 });
   const outcomeLeadIds = new Set(past.filter((a) => !POST_STATUSES.includes(a.lead?.status ?? "")).map((a) => a.leadId));
@@ -257,6 +268,7 @@ export async function loadInbox(ctx: TeamCtx): Promise<InboxData> {
         name: a.lead?.name ?? "Lead",
         source: a.lead?.source ?? null,
       })),
+    openCalls: openCalls.map((l) => ({ leadId: l.id, name: l.name ?? "Lead", source: l.source, at: l.callStartedAt!.toISOString() })),
     chats: chats.map((c) => ({
       conversationId: c.id,
       name: c.contactName ?? `+${c.contactPhone}`,

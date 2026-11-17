@@ -171,6 +171,18 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-next-step-reminder");
     return null;
   });
+  // Telefonate (lib/telefonat-server.ts): Push „Was ist bei … rausgekommen?“ 15 Min. nach „Anrufen“ ohne Ergebnis;
+  // nach dem Telefonat fragt der Assistent die offenen Punkte ab (mit Termin, im 24h-Fenster)
+  const telefonate = {
+    erinnerungen: await import("@/lib/telefonat-server").then((m) => m.runAnrufErinnerungen(now)).catch((e: unknown) => {
+      reportError(e, "cron-anruf-erinnerung");
+      return null;
+    }),
+    offeneFragen: await import("@/lib/telefonat-server").then((m) => m.runOffeneFragen(now)).catch((e: unknown) => {
+      reportError(e, "cron-offene-fragen");
+      return null;
+    }),
+  };
   // Cross-Selling: „Weiteres Produkt anbieten?“ 3 Wochen nach dem Abschluss, Abschlüsse in den Bestand,
   // vorher die Kontrolle „Police da?“ nach 2 Wochen
   const vertraege = {
@@ -308,7 +320,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

@@ -2,6 +2,7 @@
 
 // Termin für einen Lead im Buchungsfenster der App (lib/lead-buchung.ts). Berater nur bei eigenen Leads.
 
+import { anrufErledigt } from "@/lib/telefonat-server";
 import { revalidatePath } from "next/cache";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
@@ -20,6 +21,8 @@ export async function bookForLeadAction(leadId: string, start: string, mode: str
   const ctx = await getBuyerContext();
   const r = await bookForLead({ customerId, leadId, start, mode: mode === "video" ? "video" : "phone", userId: ctx?.userId ?? null });
   if (r.ok) {
+    // Termin eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+    await anrufErledigt(leadId);
     await recordUsage("action", "appointment.book_by_advisor");
     revalidatePath(`/buyer/leads/${leadId}`);
     revalidatePath("/buyer");

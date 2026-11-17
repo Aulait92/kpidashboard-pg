@@ -341,7 +341,7 @@ export function LeadHeaderActions(p: Props) {
             icon={Phone}
             label="Anrufen"
             href={p.phone ? `tel:+${p.phone}` : undefined}
-            onClick={p.phone && p.askAfterCall ? () => markCall(p.leadId) : undefined}
+            onClick={p.phone && p.askAfterCall ? () => markCall(p.leadId, p.leadId) : undefined}
             primary
             title={p.phone ? formatPhone(p.phone) : undefined}
             explain={{ title: "Keine Telefonnummer hinterlegt", text: "Tragen Sie die Nummer bei den Angaben ein, dann können Sie direkt anrufen.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}

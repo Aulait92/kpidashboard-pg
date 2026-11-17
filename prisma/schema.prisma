@@ -695,6 +695,18 @@ model Lead {
   callAttempts         Int               @default(0)
   lastCallAttemptAt    DateTime?
   callPlanStartedAt    DateTime?
+  // Telefonate sauber erfassen (lib/telefonat.ts, Ole 15.11.2026): „Anrufen“ in der App getippt, Ergebnis noch offen.
+  // Solange gesetzt (höchstens 12 Stunden), pausiert der WhatsApp-Assistent für diesen Lead (keine Fragen, kein Nachfassen).
+  callStartedAt        DateTime?
+  // Erinnerung „Was ist bei … rausgekommen?“ (Push) für diesen Anruf schon gesendet
+  callReminderAt       DateTime?
+  // Bedarf aus dem Telefonat (gleiche Punkte wie Conversation.qualificationData) und wie vollständig er besprochen
+  // wurde: komplett | teilweise | nein. Liegt zusätzlich in der Konversation, damit Assistent und Vorbereitung ihn kennen.
+  needData             Json?
+  needState            String?
+  needAt               DateTime?
+  // Assistent fragt die offenen Punkte nach dem Telefonat per WhatsApp ab (ab diesem Zeitpunkt, einmal; Cron)
+  openQuestionsAt      DateTime?
   stornoNote           String?
   stornoRequestedAt    DateTime?
   stornoDecidedAt      DateTime?
@@ -771,6 +783,8 @@ model Lead {
   @@index([stornoState])
   @@index([phoneDigits])
   @@index([phoneDigitsRev])
+  @@index([callStartedAt])
+  @@index([openQuestionsAt])
 }
 
 model Revenue {
