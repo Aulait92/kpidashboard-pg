@@ -520,3 +520,12 @@ Folien-Test misst jetzt jede Sparte jeder Gesellschaft.
 Zum Gegenprüfen besonders: Partnerprodukte stehen bei mehreren Gesellschaften (ÖRAG-Rechtsschutz bei VKB, SV, S-Direkt;
 URV-Reiserücktritt bei VKB, SV, S-Direkt; Uelzener-Tier bei S-Direkt mit älteren Unterlagen), Symboltabellen als Bild
 gelesen (InterRisk, NV, VGH, Itzehoer), WWK und HDI nur Produktseiten (PDFs nicht abrufbar).
+
+### Lücken gefüllt (17.11.2026)
+
+Für 48 Gesellschaften aus den Wellen 0 bis 2 jede fehlende Sparte geprüft: eigenes Privatkundenprodukt → Datei, sonst
+nur im Bericht. Stand: 1031 Dateien, 82 Gesellschaften. Neu u. a. Tierkranken bei HUK, LVM, Concordia, Münchener
+Verein, DA Direkt; Sach bei CosmosDirekt, Europa, Dialog, INTER, uniVersa, Alte Leipziger, NÜRNBERGER; Gesundheit bei
+NÜRNBERGER, Concordia, WGV. Partnerprodukte mit eigener Tarifseite der Gesellschaft sind aufgenommen (z. B. Uelzener-Tier
+bei Debeka und DEVK, UKV-Gesundheit bei Provinzial, Barmenia-Tarife bei der Bayerischen); Werte stehen dann doppelt.
+Keine Datei, wo nur vermittelt wird (z. B. VHV Leben über Hannoversche, CosmosDirekt Rechtsschutz über ADVOCARD).
