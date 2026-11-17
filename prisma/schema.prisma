@@ -697,6 +697,9 @@ model Lead {
   // am Fälligkeitstag auf „Heute".
   followUpAt           DateTime?
   followUpNote         String?
+  // Rückruf mit Uhrzeit als Kalender-Eintrag beim Berater (lib/calendar/rueckruf.ts)
+  rueckrufEventId      String?
+  rueckrufEventKey     String?
   // Notizen des Beraters (bei Airtable-Leads zusätzlich dort gespiegelt)
   notes                String?
   // rec-ID des Kunden-Produkt-Bezug-Records, an dem dieser Lead in Airtable
@@ -944,6 +947,10 @@ model User {
   id                  String              @id @default(cuid())
   // Einführungsvideo auf „Heute“ angesehen oder weggeklickt (Ole, 13.11.2026)
   introVideoSeenAt    DateTime?
+  // Nutzungsanalyse (Sentry Session Replay, maskiert) nur mit Einwilligung: ja | nein, Zeitpunkt, Textversion
+  analyseEinwilligung        String?
+  analyseEinwilligungAt      DateTime?
+  analyseEinwilligungVersion String?
   email               String              @unique
   passwordHash        String
   role                UserRole

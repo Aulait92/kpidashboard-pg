@@ -97,7 +97,7 @@ type CallItem = {
 type SheetState =
   | { kind: "actions"; title: string; message?: string; actions: SheetAction[] }
   | { kind: "win"; name: string; source: string | null; save: (value: number | null, sparte: string | null) => void }
-  | { kind: "date"; title: string; save: (date: string) => void }
+  | { kind: "date"; title: string; save: (date: string, time?: string) => void }
   | { kind: "reschedule"; appointmentId: string }
   | { kind: "lost"; key: string; leadId: string; name: string; appointmentId?: string | null }
   | { kind: "step"; key: string; leadId: string; name: string; source: string | null; appointmentId: string | null }
@@ -295,7 +295,7 @@ export function TodayInbox({
                 setSheet({
                   kind: "date",
                   title: `${c.name} später anrufen`,
-                  save: (date) => run(c.key, `${c.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(c.leadId, { date })),
+                  save: (date, time) => run(c.key, time ? `${c.name}: Rückruf ${fmtDay(date)} ${time} Uhr` : `${c.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(c.leadId, { date, time })),
                 }),
               0,
             ),
@@ -786,11 +786,11 @@ export function TodayInbox({
         open={sheet?.kind === "date"}
         title={sheet?.kind === "date" ? sheet.title : ""}
         onClose={() => setSheet(null)}
-        onPick={(date) => {
+        onPick={(date, time) => {
           if (sheet?.kind !== "date") return;
           const save = sheet.save;
           setSheet(null);
-          save(date);
+          save(date, time);
         }}
       />
       <RescheduleDialog

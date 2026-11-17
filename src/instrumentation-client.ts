@@ -1,11 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
-import { isReplayBlockedPath, redactDeep, scrubBreadcrumb, scrubSentryEvent } from "@/lib/sentry-redact";
+import { isReplayAllowedPath, redactDeep, scrubBreadcrumb, scrubSentryEvent } from "@/lib/sentry-redact";
 
-// Session Replay nie auf Endkundenseiten und Seiten mit geheimem Link (src/lib/sentry-redact.ts):
-// dort wird die Integration gar nicht erst gestartet.
-const startPath = typeof window !== "undefined" ? window.location.pathname : "/";
-const replayAllowed = !isReplayBlockedPath(startPath);
-
+// Session Replay nur mit Einwilligung (Rechtsprüfung docs/rechtstexte/sitzungsaufnahme-2026-11-17.md, § 25 TDDDG):
+// Die Replay-Integration wird hier NICHT geladen, sondern erst nach „Ja“ in components/nutzungsanalyse.tsx
+// (Sentry.addIntegration), und nur im Vermittlerbereich /buyer (Positivliste, lib/sentry-redact isReplayAllowedPath).
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -13,21 +11,10 @@ Sentry.init({
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
   // Keine personenbezogenen Standarddaten (Nutzer samt IP, Cookies, Header, Query), Rechtsprüfung Nachtrag 16.11.2026
   dataCollection: { userInfo: false, cookies: false, httpHeaders: false, httpBodies: [], urlQueryParams: false },
-  // Session Replay nur bei Fehlern aufzeichnen. Datenschutz: alle Texte und
-  // Eingaben maskiert, Bilder/Medien blockiert (keine Lead-Daten im Replay).
+  // Replay (erst nach Einwilligung geladen): Sitzungen startet components/nutzungsanalyse.tsx selbst (Anteil),
+  // bei Fehlern wird die Aufnahme nach Einwilligung behalten.
   replaysSessionSampleRate: 0,
-  replaysOnErrorSampleRate: replayAllowed ? 1.0 : 0,
-  integrations: replayAllowed
-    ? [
-        Sentry.replayIntegration({
-          maskAllText: true,
-          maskAllInputs: true,
-          blockAllMedia: true,
-          // Navigation/Netzwerk im Replay: geheime Pfadsegmente und Query entfernen.
-          beforeAddRecordingEvent: (event) => redactDeep(event),
-        }),
-      ]
-    : [],
+  replaysOnErrorSampleRate: 1.0,
   // Geheime Link-Tokens im Pfad, Query und Nutzer entfernen (Fehler, Transaktionen, Breadcrumbs).
   beforeSend: (event) => scrubSentryEvent(event),
   beforeSendTransaction: (event) => scrubSentryEvent(event),
@@ -38,7 +25,7 @@ Sentry.init({
 Sentry.addEventProcessor((event) => redactDeep(event));
 
 export function onRouterTransitionStart(href: string, navigationType: "push" | "replace" | "traverse") {
-  // Wechsel aus der App auf eine Endkundenseite (z. B. Vorschau-Link): Replay sofort beenden.
-  if (isReplayBlockedPath(href)) void Sentry.getReplay()?.stop();
+  // Raus aus dem Vermittlerbereich (Admin, Endkundenseite, Vorschau-Link): Replay sofort beenden.
+  if (!isReplayAllowedPath(href)) void Sentry.getReplay()?.stop();
   Sentry.captureRouterTransitionStart(href, navigationType);
 }

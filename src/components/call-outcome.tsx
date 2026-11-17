@@ -269,7 +269,7 @@ export function CallOutcomeSheet({
         open
         title={`${t.name} später anrufen`}
         onClose={close}
-        onPick={(date) => needThen(() => onPick(`${t.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(t.leadId, { date })))}
+        onPick={(date, time) => needThen(() => onPick(time ? `${t.name}: Rückruf ${fmtDay(date)} ${time} Uhr` : `${t.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(t.leadId, { date, time })))}
       />
     );
   }
