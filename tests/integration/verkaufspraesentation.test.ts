@@ -87,7 +87,7 @@ describe("Vertriebspräsentation: Link und Aufrufe", () => {
     const a = await verkaufsLinkErstellen(contactId, "makler", null, T0);
     expect(a!.bis.getTime()).toBe(tage(14).getTime());
     expect(await ladeVerkaufsLink(a!.token, tage(13))).toMatchObject({ audience: "makler", contact: { id: contactId } });
-    expect((await ladeVerkaufsLink(a!.token, tage(13)))!.folien).toHaveLength(25); // Angebot mit Abschlussbonus (vorheriger Test)
+    expect((await ladeVerkaufsLink(a!.token, tage(13)))!.folien).toHaveLength(26); // Angebot mit Abschlussbonus (vorheriger Test)
     expect(await ladeVerkaufsLink(a!.token, tage(15))).toBeNull();
     const b = await verkaufsLinkErstellen(contactId, "vertreter", null, tage(5));
     expect(b!.token).toBe(a!.token);

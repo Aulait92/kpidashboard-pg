@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import {
+  applyHvkLinks,
   centsOf,
   hvkCronDue,
   hvkLeadFilter,
@@ -130,15 +131,65 @@ describe("HvK-Abrechnung: Reklamation zuordnen (Lieferdatum + PLZ)", () => {
   const r = { date: "2026-07-19", plz: "84032" };
   it("genau ein Kandidat: eindeutig", () => {
     const m = matchReklamation(r, [lead("a", "2026-07-19", "84032", "Landshut"), lead("b", "2026-07-18", "84032", "Landshut"), lead("c", "2026-07-19", "84034", "Landshut")]);
-    expect(m).toEqual({ outcome: "eindeutig", lead: expect.objectContaining({ id: "a" }) });
+    expect(m).toEqual({ outcome: "eindeutig", lead: expect.objectContaining({ id: "a" }), via: "datum_plz" });
   });
-  it("kein Kandidat: nicht raten", () => {
-    expect(matchReklamation(r, [lead("b", "2026-07-18", "84032", "Landshut")])).toEqual({ outcome: "keiner", candidates: [] });
+  it("kein Kandidat (auch nicht ±1 Tag): nicht raten", () => {
+    expect(matchReklamation(r, [lead("b", "2026-07-17", "84032", "Landshut"), lead("c", "2026-07-19", "84034", "Landshut")])).toEqual({ outcome: "keiner", candidates: [] });
   });
   it("mehrere Kandidaten: nicht raten, alle zeigen", () => {
     const m = matchReklamation(r, [lead("a", "2026-07-19", "84032", "Landshut"), lead("d", "2026-07-19", "84032", "Ergolding")]);
     expect(m.outcome).toBe("mehrere");
     expect(m.outcome !== "eindeutig" && m.candidates.map((c) => c.id)).toEqual(["a", "d"]);
+  });
+});
+
+describe("HvK-Abrechnung: Reklamation zuordnen (ID, Ort, ±1 Tag)", () => {
+  const r = { hvkLeadId: "4596925", date: "2026-07-19", plz: "84032", ort: "Landshut" };
+  const via = (m: ReturnType<typeof matchReklamation>) => (m.outcome === "eindeutig" ? [m.lead.id, m.via] : [m.outcome, m.candidates.map((c) => c.id)]);
+
+  it("(a) gespeicherte HvK-Lead-ID geht vor, auch bei anderem Datum und anderer PLZ", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("z", "2026-07-20", "84034", "Ergolding", { hvkLeadId: "4596925" })];
+    expect(via(matchReklamation(r, leads))).toEqual(["z", "id"]);
+  });
+  it("(a) Lead einer erledigten Reklamation mit derselben ID", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("b", "2026-07-19", "84032", "Landshut")];
+    expect(via(matchReklamation(r, leads, new Map([["b", "4596925"]])))).toEqual(["b", "id"]);
+  });
+  it("(b) Lieferdatum + PLZ eindeutig; Leads mit anderer HvK-ID zählen nicht", () => {
+    expect(via(matchReklamation(r, [lead("a", "2026-07-19", "84032", "Landshut")]))).toEqual(["a", "datum_plz"]);
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("o", "2026-07-19", "84032", "Landshut", { hvkLeadId: "111" })];
+    expect(via(matchReklamation(r, leads))).toEqual(["a", "datum_plz"]);
+  });
+  it("(c) mehrere: über den Ort eingrenzen", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("d", "2026-07-19", "84032", "Ergolding")];
+    expect(via(matchReklamation(r, leads))).toEqual(["a", "ort"]);
+  });
+  it("(c) mehrere mit gleichem Ort: anderen Reklamationen zugeordnete ausschließen", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("t", "2026-07-19", "84032", "Landshut")];
+    expect(via(matchReklamation(r, leads, new Map([["t", "999"]])))).toEqual(["a", "ort"]);
+  });
+  it("(c) schon stornierter Lead bleibt Kandidat: nie einen zweiten Lead stornieren, lieber offen", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("s", "2026-07-19", "84032", "Landshut", { stornoState: "approved" })];
+    expect(via(matchReklamation(r, leads))).toEqual(["mehrere", ["a", "s"]]);
+  });
+  it("(c) bleibt es mehrdeutig, offen lassen (alle Kandidaten zeigen)", () => {
+    const leads = [lead("a", "2026-07-19", "84032", "Landshut"), lead("b", "2026-07-19", "84032", "Landshut"), lead("d", "2026-07-19", "84032", "Ergolding")];
+    expect(via(matchReklamation(r, leads))).toEqual(["mehrere", ["a", "b", "d"]]);
+    // Ohne Ort in der Reklamation kein Eingrenzen
+    expect(via(matchReklamation({ ...r, ort: "" }, [leads[0], leads[2]]))).toEqual(["mehrere", ["a", "d"]]);
+    expect(via(matchReklamation({ ...r, ort: "" }, [leads[2], lead("o", "2026-07-19", "84032", null)]))).toEqual(["mehrere", ["d", "o"]]);
+    // Lead ohne Ort lässt sich über den Ort nicht ausschließen
+    expect(via(matchReklamation(r, [leads[0], lead("o", "2026-07-19", "84032", null)]))).toEqual(["mehrere", ["a", "o"]]);
+  });
+  it("(d) keiner am Tag: ±1 Tag mit gleicher PLZ, nur wenn eindeutig", () => {
+    expect(via(matchReklamation(r, [lead("n", "2026-07-20", "84032", "Landshut"), lead("x", "2026-07-21", "84032", "Landshut")]))).toEqual(["n", "tag_versatz"]);
+    expect(via(matchReklamation(r, [lead("v", "2026-07-18", "84032", "Landshut")]))).toEqual(["v", "tag_versatz"]);
+    expect(via(matchReklamation(r, [lead("v", "2026-07-18", "84032", "Landshut"), lead("n", "2026-07-20", "84032", "Landshut")]))).toEqual(["mehrere", ["v", "n"]]);
+    expect(via(matchReklamation(r, [lead("x", "2026-07-21", "84032", "Landshut"), lead("p", "2026-07-20", "84033", "Landshut")]))).toEqual(["keiner", []]);
+  });
+  it("(d) andere HvK-ID oder einer anderen Reklamation zugeordnet zählt am Nachbartag nicht", () => {
+    const leads = [lead("v", "2026-07-18", "84032", "Landshut", { hvkLeadId: "5" }), lead("n", "2026-07-20", "84032", "Landshut"), lead("w", "2026-07-20", "84032", "Landshut")];
+    expect(via(matchReklamation(r, leads, new Map([["w", "6"]])))).toEqual(["n", "tag_versatz"]);
   });
 });
 
@@ -155,9 +206,9 @@ describe("HvK-Abrechnung: Wochenabgleich gekauft ↔ geliefert", () => {
       ],
     );
     expect(res.matched).toEqual([
-      { hvkLeadId: "1", leadId: "x" },
-      { hvkLeadId: "2", leadId: "y" },
-      { hvkLeadId: "4", leadId: "u" },
+      { hvkLeadId: "1", leadId: "x", sure: true },
+      { hvkLeadId: "2", leadId: "y", sure: true },
+      { hvkLeadId: "4", leadId: "u", sure: true },
     ]);
     expect(res.unbilled.map((d) => d.id)).toEqual(["z"]);
     expect(res.foreign.map((f) => f.hvkLeadId)).toEqual(["3"]);
@@ -165,21 +216,73 @@ describe("HvK-Abrechnung: Wochenabgleich gekauft ↔ geliefert", () => {
   it("gleiche PLZ zweimal: zuerst der passende Ort", () => {
     const res = reconcileWeek([b("1", "84032", "Ergolding"), b("2", "84032", "Landshut")], [lead("l", "2026-07-20", "84032", "Landshut"), lead("e", "2026-07-21", "84032", "Ergolding")]);
     expect(res.matched).toEqual([
-      { hvkLeadId: "1", leadId: "e" },
-      { hvkLeadId: "2", leadId: "l" },
+      { hvkLeadId: "1", leadId: "e", sure: true },
+      { hvkLeadId: "2", leadId: "l", sure: true },
     ]);
+  });
+  it("mehrdeutig (zwei Zeilen, zwei gleiche Leads): zugeordnet, aber nicht sicher", () => {
+    const res = reconcileWeek([b("1", "84032", "Landshut"), b("2", "84032", "Landshut"), b("3", "80331", "München")], [lead("l", "2026-07-20", "84032", "Landshut"), lead("k", "2026-07-21", "84032", "Landshut"), lead("m", "2026-07-21", "80331", "München")]);
+    expect(res.matched).toEqual([
+      { hvkLeadId: "1", leadId: "l", sure: false },
+      { hvkLeadId: "2", leadId: "k", sure: false },
+      { hvkLeadId: "3", leadId: "m", sure: true },
+    ]);
+  });
+  it("ein Lead, zwei passende Zeilen: nicht sicher", () => {
+    const res = reconcileWeek([b("1", "84032", "Landshut"), b("2", "84032", "Landshut")], [lead("l", "2026-07-20", "84032", "Landshut")]);
+    expect(res.matched).toEqual([{ hvkLeadId: "1", leadId: "l", sure: false }]);
+    expect(res.foreign.map((f) => f.hvkLeadId)).toEqual(["2"]);
+  });
+  it("gespeicherte HvK-Lead-ID geht vor; Leads mit anderer ID kommen nicht in Frage", () => {
+    const res = reconcileWeek(
+      [b("1", "84032", "Landshut"), b("2", "84032", "Landshut")],
+      [lead("l", "2026-07-20", "84032", "Landshut", { hvkLeadId: "2" }), lead("k", "2026-07-21", "84032", "Landshut", { hvkLeadId: "9" })],
+    );
+    expect(res.matched).toEqual([{ hvkLeadId: "2", leadId: "l", sure: true }]);
+    expect(res.foreign.map((f) => f.hvkLeadId)).toEqual(["1"]);
+    expect(res.unbilled.map((u) => u.id)).toEqual(["k"]);
+  });
+  it("applyHvkLinks überschreibt nie: weder Lead mit ID noch eine schon vergebene ID", () => {
+    const leads = [lead("a", "2026-07-20", null, null), lead("b", "2026-07-20", null, null, { hvkLeadId: "7" })];
+    const added = applyHvkLinks(leads, [
+      { hvkLeadId: "1", leadId: "a" },
+      { hvkLeadId: "2", leadId: "a" },
+      { hvkLeadId: "3", leadId: "b" },
+      { hvkLeadId: "7", leadId: "x" },
+    ]);
+    expect(added).toEqual([{ hvkLeadId: "1", leadId: "a" }]);
+    expect(leads.map((l) => l.hvkLeadId)).toEqual(["1", "7"]);
   });
 });
 
 // Speicher im Arbeitsspeicher: zählt Schreibzugriffe
-function memoryStore(leads: HvkDeliveredLead[]) {
+/** Lead.hvkLeadId im Speicher setzen wie saveHvkLeadIds (nie überschreiben, ID eindeutig) */
+function saveLinks(leads: HvkDeliveredLead[], links: { hvkLeadId: string; leadId: string }[]): number {
+  let n = 0;
+  for (const k of links) {
+    const l = leads.find((x) => x.id === k.leadId);
+    if (!l || l.hvkLeadId || leads.some((x) => x.hvkLeadId === k.hvkLeadId)) continue;
+    l.hvkLeadId = k.hvkLeadId;
+    n++;
+  }
+  return n;
+}
+
+function memoryStore(source: HvkDeliveredLead[], taken: [string, string][] = []) {
+  const leads = source.map((l) => ({ ...l }));
   const invoices = new Map<string, { id: string; result: HvkProcessResult }>();
   const stornos: { leadId: string; reason: string; note: string }[] = [];
   const saved: HvkReklamationResult[][] = [];
+  const links: { hvkLeadId: string; leadId: string }[][] = [];
   let creates = 0;
   const store: HvkStore = {
     findInvoice: async (no) => (invoices.has(no) ? { id: invoices.get(no)!.id } : null),
-    deliveredLeads: async (from, to) => leads.filter((l) => l.date >= from && l.date <= to),
+    deliveredLeads: async (from, to) => leads.filter((l) => l.date >= from && l.date <= to).map((l) => ({ ...l })),
+    takenLeads: async () => new Map(taken),
+    saveHvkLeadIds: async (ls) => {
+      links.push(ls);
+      return saveLinks(leads, ls);
+    },
     createInvoice: async (input, result) => {
       creates++;
       if (invoices.has(input.parsed.invoiceNo)) return "exists";
@@ -196,7 +299,7 @@ function memoryStore(leads: HvkDeliveredLead[]) {
       saved.push(rows);
     },
   };
-  return { store, invoices, stornos, saved, creates: () => creates };
+  return { store, invoices, stornos, saved, links, leads, creates: () => creates };
 }
 
 const input = (text = FIXTURE): HvkInvoiceInput => ({ parsed: parseHvkInvoiceText(text)!, pdf: new Uint8Array([37, 80, 68, 70, 45]), pdfName: "Gutschrift.pdf", mailMessageId: "m1", receivedAt: null, source: "mail" });
@@ -281,6 +384,48 @@ describe("HvK-Abrechnung: Ablauf je Rechnung", () => {
     expect(m.stornos).toHaveLength(0);
   });
 
+  it("speichert sichere Zuordnungen HvK-Lead-ID → Lead (Woche und Reklamation), Vorschau nicht", async () => {
+    const preview = memoryStore(WEEK);
+    await processHvkInvoice(input(), preview.store, { dryRun: true });
+    expect(preview.links).toEqual([]);
+    expect(preview.leads.every((l) => !l.hvkLeadId)).toBe(true);
+    const m = memoryStore(WEEK);
+    const r = await processHvkInvoice(input(), m.store);
+    expect(r.reklamationen[0]).toMatchObject({ leadId: "rek", via: "datum_plz" });
+    expect(Object.fromEntries(m.leads.filter((l) => l.hvkLeadId).map((l) => [l.id, l.hvkLeadId]))).toEqual({
+      rek: "4596925",
+      l1: "4595123",
+      l2: "4597001",
+      l3: "4597002",
+      l4: "4597003",
+      l5: "4597004",
+      l6: "4597005",
+      l7: "4597006",
+    });
+  });
+
+  it("Reklamation über die gespeicherte ID, auch wenn Datum und PLZ nicht passen", async () => {
+    const m = memoryStore([...WEEK.filter((l) => l.id !== "rek"), lead("rekId", "2026-07-18", "84000", "Landshut", { hvkLeadId: "4596925" }), lead("x", "2026-07-19", "84032", "Landshut")]);
+    const r = await processHvkInvoice(input(), m.store);
+    expect(r.reklamationen[0]).toMatchObject({ outcome: "eindeutig", leadId: "rekId", via: "id", storno: "eingetragen" });
+    expect(m.stornos.map((s) => s.leadId)).toEqual(["rekId"]);
+  });
+
+  it("Lieferung um Mitternacht: Reklamation über ±1 Tag", async () => {
+    const m = memoryStore(WEEK.map((l) => (l.id === "rek" ? { ...l, date: "2026-07-20" } : l)));
+    const r = await processHvkInvoice(input(), m.store);
+    expect(r.reklamationen[0]).toMatchObject({ outcome: "eindeutig", leadId: "rek", via: "tag_versatz", storno: "eingetragen" });
+  });
+
+  it("Lead schon einer anderen Reklamation zugeordnet: keine Doppelzuordnung, offen", async () => {
+    const m = memoryStore(WEEK, [["rek", "4500000"]]);
+    const r = await processHvkInvoice(input(), m.store);
+    expect(r.reklamationen[0]).toMatchObject({ outcome: "mehrere", leadId: null, candidateIds: ["rek"], storno: null });
+    expect(r.stornoReview).toBe(1);
+    expect(m.stornos).toHaveLength(0);
+    expect(m.leads.find((l) => l.id === "rek")!.hvkLeadId).toBeUndefined();
+  });
+
   it("schon stornierter Lead wird als „schon storniert“ gemeldet", async () => {
     const m = memoryStore(WEEK.map((l) => (l.id === "rek" ? { ...l, stornoState: "approved" } : l)));
     const r = await processHvkInvoice(input(), m.store, { dryRun: true });
@@ -342,12 +487,18 @@ describe("HvK-Abrechnung: welche Leads zählen (hvkLeadFilter)", () => {
 });
 
 // Speicher für den Neuabgleich: zählt Schreibzugriffe, liefert Daten wie aus jsonb (Kopie)
-function reabgleichStore(leads: HvkDeliveredLead[], invoices: HvkReabgleichInvoice[]) {
+function reabgleichStore(source: HvkDeliveredLead[], invoices: HvkReabgleichInvoice[]) {
+  const leads = source.map((l) => ({ ...l }));
   const stornos: { leadId: string; reason: string; note: string }[] = [];
-  const writes = { invoices: 0, reklamationen: 0 };
+  const writes = { invoices: 0, reklamationen: 0, links: 0 };
   const store: HvkReabgleichStore = {
     invoices: async () => JSON.parse(JSON.stringify(invoices)) as HvkReabgleichInvoice[],
-    deliveredLeads: async (from, to) => leads.filter((l) => l.date >= from && l.date <= to),
+    deliveredLeads: async (from, to) => leads.filter((l) => l.date >= from && l.date <= to).map((l) => ({ ...l })),
+    saveHvkLeadIds: async (ls) => {
+      const n = saveLinks(leads, ls);
+      writes.links += n;
+      return n;
+    },
     recordStorno: async (leadId, reason, note) => {
       const already = stornos.some((s) => s.leadId === leadId);
       stornos.push({ leadId, reason, note });
@@ -362,10 +513,10 @@ function reabgleichStore(leads: HvkDeliveredLead[], invoices: HvkReabgleichInvoi
       const r = invoices.flatMap((i) => i.reklamationen).find((x) => x.id === id)!;
       if (r.status !== "offen") return;
       writes.reklamationen++;
-      Object.assign(r, { status: data.status, leadId: data.leadId, candidateIds: data.candidateIds });
+      Object.assign(r, { status: data.status, leadId: data.leadId, candidateIds: data.candidateIds, via: data.via });
     },
   };
-  return { store, stornos, writes, invoices };
+  return { store, stornos, writes, invoices, leads };
 }
 
 /** Rechnung wie vor dem Fix übernommen: nichts gefunden, Reklamation offen */
@@ -393,7 +544,7 @@ describe("HvK-Abrechnung: Neuabgleich übernommener Rechnungen", () => {
     expect(s.weeks[0]).toMatchObject({ invoiceNo: "369-G-000034", delivered: 8, deliveredBefore: 0, billed: 7, diff: 1, unbilled: 1, foreign: 0, stornoNew: 1, stornoBefore: 0, open: 0, changed: true });
     expect(s.totals).toMatchObject({ invoices: 1, changed: 1, stornoNew: 1, open: 0 });
     expect(m.stornos).toHaveLength(0);
-    expect(m.writes).toEqual({ invoices: 0, reklamationen: 0 });
+    expect(m.writes).toEqual({ invoices: 0, reklamationen: 0, links: 0 });
   });
 
   it("offene Reklamation wird eindeutig: Storno wie beim Import, status auto; zweiter Lauf ändert nichts", async () => {
@@ -412,7 +563,8 @@ describe("HvK-Abrechnung: Neuabgleich übernommener Rechnungen", () => {
     expect(again.weeks[0]).toMatchObject({ delivered: 8, stornoNew: 0, stornoBefore: 1, open: 0, changed: false });
     expect(again.totals.changed).toBe(0);
     expect(m.stornos).toHaveLength(1);
-    expect(m.writes).toEqual({ invoices: 1, reklamationen: 1 });
+    // 7 sichere Treffer der Woche + die Reklamation
+    expect(m.writes).toEqual({ invoices: 1, reklamationen: 1, links: 8 });
   });
 
   it("ein Lead deckt nur eine Reklamation: zweite Reklamation mit demselben Lead bleibt offen", async () => {
@@ -432,6 +584,29 @@ describe("HvK-Abrechnung: Neuabgleich übernommener Rechnungen", () => {
     expect(m.writes).toEqual(writes);
   });
 
+  it("alte offene Reklamation wird über die ID aus einer anderen Woche aufgelöst; Vorschau speichert nichts", async () => {
+    // Rechnung der Woche: gekauft 4597002 München ↔ l3. Spätere Rechnung reklamiert 4597002 mit abweichendem Datum
+    const later: HvkReabgleichInvoice = {
+      ...(await brokenInvoice()),
+      id: "inv2",
+      invoiceNo: "369-G-000041",
+      periodStart: "2026-07-27",
+      periodEnd: "2026-08-02",
+      lines: [],
+      reklamationen: [{ id: "rk7", hvkLeadId: "4597002", date: "2026-07-24", plz: "80331", ort: "München", status: "offen", leadId: null, candidateIds: [] }],
+    };
+    const m = reabgleichStore(WEEK, [await brokenInvoice(), later]);
+    const preview = await reabgleichHvkInvoices(m.store, { dryRun: true });
+    expect(preview.weeks[1]).toMatchObject({ stornoNew: 1, open: 0 });
+    expect(preview.totals.linked).toBe(8);
+    expect(m.leads.some((l) => l.hvkLeadId)).toBe(false);
+    const s = await reabgleichHvkInvoices(m.store);
+    expect(s.totals).toMatchObject({ stornoNew: 2, open: 0, linked: 8 });
+    expect(m.invoices[1].reklamationen[0]).toMatchObject({ status: "auto", leadId: "l3", via: "id" });
+    const again = await reabgleichHvkInvoices(m.store);
+    expect(again.totals).toMatchObject({ changed: 0, linked: 0, stornoNew: 0 });
+  });
+
   it("mehrere Kandidaten bleiben offen (Kandidaten aktualisiert); erledigt und verworfen bleiben unberührt", async () => {
     const reks: HvkReabgleichReklamation[] = [
       { id: "rk2", hvkLeadId: "1", date: "2026-07-26", plz: "50667", ort: "Köln", status: "verworfen", leadId: null, candidateIds: [] },
@@ -449,6 +624,6 @@ describe("HvK-Abrechnung: Neuabgleich übernommener Rechnungen", () => {
     expect(m.writes.reklamationen).toBe(1);
     const again = await reabgleichHvkInvoices(m.store);
     expect(again.totals.changed).toBe(0);
-    expect(m.writes).toEqual({ invoices: 1, reklamationen: 1 });
+    expect(m.writes).toEqual({ invoices: 1, reklamationen: 1, links: 7 });
   });
 });

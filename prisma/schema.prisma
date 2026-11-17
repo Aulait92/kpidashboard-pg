@@ -745,6 +745,8 @@ model Lead {
   deliveredAt          DateTime?
   // Storno beim Pay-per-Lead: requested → approved | rejected | review (Prüfung durch Admin)
   stornoState          String?
+  /// Lead-ID bei Heinrich von Kleist (HvK-Abrechnung, lib/ppl/hvk-abrechnung.ts): nur sicher zugeordnete, nie überschrieben
+  hvkLeadId            String?           @unique
   stornoReason         String?
   // Grund bei „Disqualifiziert“ (lib/lead-quality.ts), z. B. falsche_nummer
   disqualifyReason     String?
@@ -4479,6 +4481,8 @@ model HvkReklamation {
   status       String
   leadId       String?
   candidateIds String[]   @default([])
+  // Weg der automatischen Zuordnung: id | datum_plz | ort | tag_versatz (null = von Hand oder offen)
+  via          String?
   decidedAt    DateTime?
   createdAt    DateTime   @default(now())
 
