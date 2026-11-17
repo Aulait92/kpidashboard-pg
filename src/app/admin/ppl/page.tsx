@@ -14,6 +14,7 @@ import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 import { airtableSyncOff } from "@/lib/airtable-switch";
 import { searchDeliveredLeads } from "@/lib/ppl/admin-leads";
 import { StornoEintragen, StornoZuruecknehmen } from "./storno-eintragen";
+import { ErneutZustellen } from "./erneut-zustellen";
 import { SlackTest } from "./slack-test";
 import { slackWebhookUrl } from "@/lib/ppl/slack";
 import { HvkAbrechnungen, HvkReklamationenReview } from "./hvk-abrechnungen";
@@ -329,6 +330,7 @@ async function Delivered({ subs, q, bezug }: { subs: Subs; q: string; bezug: str
                 ) : (
                   <StornoEintragen leadId={l.id} reasons={l.subscription?.stornoReasons ?? []} outsideWindow={l.outsideWindow} />
                 )}
+                <ErneutZustellen leadId={l.id} />
               </li>
             );
           })}

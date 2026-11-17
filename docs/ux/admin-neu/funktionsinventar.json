@@ -5038,5 +5038,17 @@
   "bereich": "leads",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
+ },
+ {
+  "heute": "/admin/ppl (Geliefert)",
+  "funktion": "Gelieferten Lead nochmal zustellen (gleicher Weg wie der Bezug, ohne neue Berechnung)",
+  "quelle": "app/admin/ppl/erneut-zustellen.tsx:ErneutZustellen",
+  "neu": "Leads & Kampagnen › Alle Leads › Pay-per-Lead geliefert",
+  "status": "ergänzt (17.11.2026, Pivacom-Zeichensatz)",
+  "demo_view": "leads-alle",
+  "id": "erneut-zustellen-erneutzustellen--gelieferten-lead-nochmal-zustellen",
+  "bereich": "leads",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/alle/page.tsx"
  }
 ]
