@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendToBuyersOfCustomer, sendToUser } from "@/lib/push";
 import { conversationScope, type TeamCtx } from "@/lib/team";
+import { waOhneMarker } from "@/lib/wa-format";
 
 /** opts.push = false: nur markieren, kein Push (z. B. Kontakt aus der WhatsApp-Business-App). */
 export async function flagAttention(conversationId: string, reason: string, opts: { push?: boolean } = {}): Promise<void> {
@@ -14,6 +15,8 @@ export async function flagAttention(conversationId: string, reason: string, opts
     select: { id: true, customerId: true, contactName: true, contactPhone: true, needsAttention: true, assignedUserId: true, lead: { select: { assignedUserId: true } } },
   });
   if (!conv) return;
+  // Grund enthält oft Chattext (Zitat): ohne WhatsApp-Marker für Hinweis und Push (lib/wa-format.ts)
+  reason = waOhneMarker(reason);
   await prisma.conversation.update({
     where: { id: conv.id },
     data: { needsAttention: true, attentionReason: reason.slice(0, 200), attentionAt: new Date() },

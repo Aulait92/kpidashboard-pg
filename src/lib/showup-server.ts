@@ -3,7 +3,7 @@
 //                            Antwort bis Terminende die Rückfrage „Ist Frau Becker noch gekommen?“. Ohne jede Reaktion
 //                            des Vermittlers geht nichts an den Lead, die Statusfrage steht nach dem Termin auf „Heute“.
 //   setzeAnwesenheit         „Ja, da“ → erschienen; „Fehlt noch“ → WhatsApp „… wartet schon im Videoraum auf Sie: <Link>“
-//                            (im Fenster Freitext, sonst Vorlage appt_waiting, nur vorbereitet) und Anruf-Knopf.
+//                            (im Fenster Freitext, sonst Vorlage appt_waiting v5, falls freigegeben) und Anruf-Knopf.
 //                            „Nicht gekommen“ läuft über das Termin-Ergebnis (inbox-actions → No-Show-Rettung).
 // Pushes gehen an den zuständigen Berater (Team), sonst an alle Logins des Kunden.
 
