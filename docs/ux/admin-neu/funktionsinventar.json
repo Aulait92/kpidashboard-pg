@@ -188,8 +188,8 @@
   "demo_view": "marketing",
   "id": "cron--push-an-admins-linkedin-bank-neu-verbinden",
   "bereich": "marketing",
-  "status_neu": "offen",
-  "ort_neu": ""
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/marketing/page.tsx"
  },
  {
   "heute": "/admin/heute",
@@ -5026,5 +5026,17 @@
   "bereich": "leads",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/leads/ppl/bezug/[id]/page.tsx"
+ },
+ {
+  "heute": "/admin/ppl (Geparkt)",
+  "funktion": "Lead aus Airtable nachholen (Lead-Nr., läuft durch den normalen Eingang)",
+  "quelle": "app/admin/ppl/nachholen.tsx:AirtableNachholen",
+  "neu": "Leads & Kampagnen › Pay-per-Lead › Eingang",
+  "status": "ergänzt (17.11.2026, nach dem Inventar auf claude/whatsapp-crm)",
+  "demo_view": "leads-ppl",
+  "id": "nachholen-airtablenachholen--lead-aus-airtable-nachholen-lead-nr-laeuft-durch",
+  "bereich": "leads",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/ppl/page.tsx"
  }
 ]

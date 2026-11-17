@@ -1,6 +1,6 @@
 # Neuer Admin (/admin/neu): Konventionen für die Bereiche
 
-Grundlage: `demo.html` (Entwurf, Struktur, Look) und `funktionsinventar.json` (419 Funktionen: 409 aus dem Entwurf, 10 später auf claude/whatsapp-crm ergänzt; verbindliche
+Grundlage: `demo.html` (Entwurf, Struktur, Look) und `funktionsinventar.json` (420 Funktionen: 409 aus dem Entwurf, 11 später auf claude/whatsapp-crm ergänzt; verbindliche
 Abnahmeliste: keine Funktion darf verloren gehen). Regeln aus `AGENTS.md` gelten (UX-Regel, keine Gedankenstriche
 in Texten an Kunden). Der alte Admin bleibt vollständig erreichbar, bis Ole abnimmt.
 
@@ -18,6 +18,7 @@ in Texten an Kunden). Der alte Admin bleibt vollständig erreichbar, bis Ole abn
 | Schalter „Neue Oberfläche“ | Profilmenü; Cookie `pg_admin_neu` (`src/lib/admin-neu/schalter.ts`) |
 | Rückweg nach dem Speichern (gemeinsame Actions) | `adminZiel` in `src/components/admin-neu/ui/rueckweg.ts` (Referer /admin/neu → neue Seite) |
 | Rücksprung nach Kalender, LinkedIn, Bank, 360dialog | `src/lib/admin-neu/ruecksprung.ts` (Cookie `pg_neu_back`, nur wenn der Start aus /admin/neu kam) |
+| Push an Admins (alle Ziele unter /admin) | `src/lib/admin-neu/push-ziel.ts`: `sendToAdmins` hängt `?von=push` an, die Middleware leitet mit Schalter auf die fertige neue Seite, sonst auf die alte Adresse |
 
 Andere Bereiche nicht anfassen. Was mehrere Bereiche brauchen, gehört nach `components/admin-neu/ui/` (kurz im
 Commit begründen).

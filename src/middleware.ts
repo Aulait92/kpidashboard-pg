@@ -2,6 +2,7 @@ import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOGIN_CARD_COOKIE, LOGIN_CARD_HEADER, nextCardCounter, parseCardCounter } from "@/lib/login-karten";
 import { ADMIN_NEU_COOKIE, istAn, neuStartFuer } from "@/lib/admin-neu/schalter";
+import { pushWeiche } from "@/lib/admin-neu/push-ziel";
 import { PUBLIC_NOT_FOUND_HTML, PUBLIC_ROBOTS_TXT, decidePublicHost, requestHost } from "@/lib/public-booking-host";
 import { APP_DEMO_HEADER, signiereDemoMarke } from "@/lib/app-demo/marke";
 import { DEMO_LIMIT, buyerZuDemo, demoActionAntwort, demoWeiche, istDemoPfad, vonDemoSeite } from "@/lib/app-demo/weiche";
@@ -341,6 +342,18 @@ export async function middleware(req: NextRequest) {
       const headers = new Headers(req.headers);
       headers.set("x-app-area", "admin-neu");
       return NextResponse.next({ request: { headers } });
+    }
+    // Push an alle Admins (?von=push, lib/admin-neu/push-ziel.ts): neue Seite bei eingeschaltetem Schalter, sonst die alte
+    const pushZiel =
+      req.method === "GET" || req.method === "HEAD"
+        ? pushWeiche({ pathname, search: req.nextUrl.search, neueOberflaeche: istAn(req.cookies.get(ADMIN_NEU_COOKIE)?.value) })
+        : null;
+    if (pushZiel) {
+      const url = req.nextUrl.clone();
+      const [p, q] = pushZiel.split("?");
+      url.pathname = p;
+      url.search = q ? `?${q}` : "";
+      return NextResponse.redirect(url);
     }
     if ((req.method === "GET" || req.method === "HEAD") && neuStartFuer(pathname) && istAn(req.cookies.get(ADMIN_NEU_COOKIE)?.value)) {
       const url = req.nextUrl.clone();
