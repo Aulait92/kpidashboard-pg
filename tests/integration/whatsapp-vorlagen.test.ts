@@ -106,12 +106,12 @@ afterAll(() => {
 });
 
 describe("WhatsApp-Vorlagen automatisch einreichen", () => {
-  it("nach dem Selbst-Verbinden: 16 Zwecke in je 3 Fassungen (plus A/B) eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
+  it("nach dem Selbst-Verbinden: 18 Zwecke in je 3 Fassungen (plus A/B) eingereicht, lokal „in Prüfung“, Beratername eingesetzt", async () => {
     const res = await completeSelfConnect({ customerId, userId: null, clientId: "cl1", channels: ["chV1"] });
     expect(res.status).toBe("connected");
     expect(created.map((c) => c.name).sort()).toEqual(plannedNames(false).sort());
-    // 16 Zwecke × 3 Fassungen (inkl. Show-up: 15 Min., Wartet) + A/B followup_last (3); Erstanschreiben ab v7 nur mit PDF-Kopf (keine _ohnepdf mehr)
-    expect(created).toHaveLength(51);
+    // 18 Zwecke × 3 Fassungen (inkl. Show-up: 15 Min., Wartet; Angebot senden und Nachfassen selbst gesendet) + A/B followup_last (3); Erstanschreiben ab v7 nur mit PDF-Kopf (keine _ohnepdf mehr)
+    expect(created).toHaveLength(57);
     const outreach = created.find((c) => c.name === "pg_outreach_v8")!;
     expect(outreach.category).toBe("MARKETING");
     // Erstanschreiben v8: Vermittler als Platzhalter (beim Senden „Herrn Brand“ bzw. der Vorname), KI in der Fußzeile
@@ -144,7 +144,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     });
 
     const local = await prisma.messageTemplate.findMany({ where: { customerId } });
-    expect(local).toHaveLength(51);
+    expect(local).toHaveLength(57);
     // Kopf und Knöpfe gespeichert (beim Senden: PDF-Link bzw. Knopf-Payloads)
     expect(local.find((t) => t.name === "pg_outreach_tkv_v8")).toMatchObject({ headerFormat: "DOCUMENT", buttons: [] });
     expect(local.find((t) => t.name === "pg_outreach_zahn_v8_sie")).toMatchObject({ headerFormat: "DOCUMENT", buttons: [] });
@@ -182,12 +182,12 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("zweiter Lauf reicht nichts doppelt ein; Freigabe → approved, Ablehnung → Aufgabe + Push", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(51);
+    expect(created).toHaveLength(57);
 
     remote.find((t) => t.name === "pg_outreach_v8")!.status = "APPROVED";
     Object.assign(remote.find((t) => t.name === "pg_reminder_v5")!, { status: "REJECTED", rejected_reason: "INVALID_FORMAT" });
     const s = await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(51);
+    expect(created).toHaveLength(57);
     expect(s.approved).toEqual(["pg_outreach_v8"]);
     expect(s.rejected).toEqual(["pg_reminder_v5"]);
 
@@ -394,7 +394,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
   it("Live-Test 17.11.2026: Liste seitenweise; bei Meta vorhandene Vorlagen nie erneut einreichen, Status übernehmen", async () => {
     await connect();
     await submitTemplatesForCustomer(customerId);
-    expect(created).toHaveLength(51);
+    expect(created).toHaveLength(57);
     // Server liefert je Abruf höchstens 20: früher fehlten die neuesten Vorlagen, sie wurden bei jedem Lauf neu eingereicht
     listCap = 20;
     remote.find((t) => t.name === "pg_outreach_privatschutz_v8_sie")!.status = "APPROVED";
@@ -427,7 +427,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await connect();
     const [a, b] = await Promise.all([submitTemplatesForCustomer(customerId), submitTemplatesForCustomer(customerId)]);
     expect(a).toBe(b);
-    expect(posts).toHaveLength(51);
+    expect(posts).toHaveLength(57);
     expect(new Set(posts).size).toBe(51);
   });
 

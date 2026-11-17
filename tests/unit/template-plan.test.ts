@@ -28,7 +28,7 @@ describe("Vorlagen-Plan", () => {
     expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting"]));
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(20);
+    expect(purposesFor({ bestand: true })).toHaveLength(22);
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz"]));
   });
 
@@ -86,7 +86,7 @@ describe("Vorlagen-Plan", () => {
     // Knöpfe überall, wo eine Antwort erwartet wird
     // Erstanschreiben ab v6: die erste Frage ist ein Platzhalter, daher ohne Knöpfe in der Vorlage. „Wartet im Videoraum“
     // erwartet keine Antwort (nur der Link), daher ohne Knöpfe.
-    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => !(OUTREACH_PURPOSES as readonly string[]).includes(x) && x !== "appt_waiting")) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
+    for (const p of [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES].filter((x) => !(OUTREACH_PURPOSES as readonly string[]).includes(x) && x !== "appt_waiting" && x !== "offer_send")) expect(TEMPLATE_BUTTONS[p]?.length, p).toBeGreaterThan(0);
     expect(TEMPLATE_BUTTONS.appt_waiting).toBeUndefined();
     expect(TEMPLATE_BUTTONS.reminder).toEqual(["Ja, passt", "Bitte verschieben"]);
     expect(TEMPLATE_BUTTONS.followup_noshow).toEqual(["Ja, neuer Termin", "Kein Bedarf mehr"]);

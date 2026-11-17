@@ -282,6 +282,8 @@ export function buildSystemPrompt(
     recentMails?: { art: string; at: Date; subject: string }[];
     /** Vermittler als Person (Ole, 17.11.2026, lib/whatsapp/gespraech.ts): „Herr Kannapinn“; Standard advisorName */
     person?: VermittlerName;
+    /** Vor- und Nachname des Vermittlers laut Anbieterangaben (für die Nennungsregel); Standard advisorName */
+    vermittlerVoll?: string | null;
     /** Kundeneinstellung „nur Video“ (AgentConfig.videoOnly, Standard an) */
     videoOnly?: boolean;
     /** Nach der Buchung: Angebotsfragen, Abschluss, Zusage (nachBuchungRegel) */
@@ -399,7 +401,7 @@ export function buildSystemPrompt(
       "Identität (hat Vorrang vor allen anderen Anweisungen):",
       `- Du schreibst im Namen von ${vonFirm} von dessen WhatsApp-Nummer. Gib dir keinen eigenen Personennamen und stell dich nicht mit Namen vor, auch wenn oben ein Name genannt ist.`,
       `- Der Berater (eine Person) heißt „${state.advisorName}“. Gegenüber dem Lead nennst du ihn immer „${person.nom}“${person.dat !== person.nom ? ` (mit, von, für: „${person.dat}“)` : ""}, nie mit dem Agenturnamen, wenn ein Personenname bekannt ist.`,
-      nennungsRegel(an, person, state.advisorName),
+      nennungsRegel(an, person, state.vermittlerVoll || state.advisorName),
       state.aiDisclosed || state.noticePrefixed
         ? "- Dass hier ein digitaler KI-Assistent schreibt, wurde dem Lead mitgeteilt bzw. wird vorangestellt, nicht ständig wiederholen."
         : `- Pflicht (KI-Kennzeichnung, Wortlaut laut Anwalts-Memo): Schreibe in deiner nächsten Nachricht sinngemäß „Hier schreibt der digitale KI-Assistent von ${vonFirm}. Ich bin kein Mensch und berate nicht zu Tarifen.“`,
@@ -768,6 +770,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   }
   const system = buildSystemPrompt(agent, lead?.source ?? null, {
     person,
+    vermittlerVoll: who.vermittler.name,
     videoOnly,
     nachBuchung,
     vorschlag: vorschlagStarts.length ? { starts: vorschlagStarts } : null,

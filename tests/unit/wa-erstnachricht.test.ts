@@ -1,7 +1,7 @@
 // Ole, 17.11.2026 (Testchat): A) Erstnachricht kürzer (v8), B) genau eine Zwischenfrage vor dem Terminvorschlag,
 // C) Vermittler-Nennung „Herr/Frau Nachname“ beim Siezen.
 import { describe, expect, it } from "vitest";
-import { erstanschreibenText, erstanschreibenV8, erstanschreibenV8Params, frageplan } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenText, erstanschreibenV8Params, frageplan } from "@/lib/whatsapp/erstanschreiben";
 import { buildTemplateRequest, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateBodyFor, templateNamesOf } from "@/lib/whatsapp/template-plan";
 import {
   ERSTINFO_FOOTER_V8,

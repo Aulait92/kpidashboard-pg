@@ -24,8 +24,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.allianz.de/vorsorge/ruerup-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -36,6 +35,7 @@
     "Beitragsgarantie hängt vom gewählten Vorsorgekonzept ab; welche Konzepte für die BasisRente wählbar sind, nennt die Produktseite nicht vollständig (InvestFlex als Beispiel).",
     "Garantierter Rentenfaktor und Effektivkosten nicht veröffentlicht.",
     "Beiträge stunden bei Arbeitslosigkeit, Kurzarbeit oder Elternzeit; Herabsetzen möglich.",
-    "BasisRente StartUp (reduzierte Anfangsbeiträge) und BasisSofortRente nicht als Stufen aufgenommen."
+    "BasisRente StartUp (reduzierte Anfangsbeiträge) und BasisSofortRente nicht als Stufen aufgenommen.",
+    "Geprüft am 17.11.2026 an der Produktvergleichstabelle der Rürup-Rente auf allianz.de."
   ]
 }
