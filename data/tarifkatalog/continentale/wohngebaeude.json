@@ -1,0 +1,108 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung ImmoGuard",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Gleitender Neuwert Plus",
+    "Überspannung durch Blitz",
+    "Grobe Fahrlässigkeit versichert"
+  ],
+  "tarife": [
+    {
+      "name": "ImmoGuard XL",
+      "kurz": "XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "optional",
+        "kosten": "Hotel 100 €/Tag",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "bis 2.000 €",
+        "tiere": "nein",
+        "allgefahren": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/Vertragsinformation+ImmoGuard+%E2%80%93+die+Wohngeb%C3%A4udeversicherung.pdf/54f0cc66-4d17-7cfa-3184-1fa59200cffc?version=12.1&t=1767002120381&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ImmoGuard XXL",
+      "kurz": "XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 5.000 €",
+        "pv": "optional",
+        "kosten": "Hotel 150 €/Tag",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "bis 10.000 €",
+        "vandalismus": "bis 8.000 €",
+        "tiere": "bis 5.000 €",
+        "allgefahren": "nein",
+        "mietausfall": "36 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/Vertragsinformation+ImmoGuard+%E2%80%93+die+Wohngeb%C3%A4udeversicherung.pdf/54f0cc66-4d17-7cfa-3184-1fa59200cffc?version=12.1&t=1767002120381&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ImmoGuard TOP-Schutz",
+      "kurz": "TOP-Schutz",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "bis 10.000 €",
+        "pv": "optional",
+        "kosten": "Hotel 200 €/Tag",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "ja",
+        "tiere": "bis 10.000 €",
+        "allgefahren": "ja",
+        "mietausfall": "60 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "erneuerbar": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/Vertragsinformation+ImmoGuard+%E2%80%93+die+Wohngeb%C3%A4udeversicherung.pdf/54f0cc66-4d17-7cfa-3184-1fa59200cffc?version=12.1&t=1767002120381&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/wohngebaeudeversicherung",
+    "https://www.continentale.de/documents/39054/16670358/Vertragsinformation+ImmoGuard+%E2%80%93+die+Wohngeb%C3%A4udeversicherung.pdf/54f0cc66-4d17-7cfa-3184-1fa59200cffc?version=12.1&t=1767002120381&download=true"
+  ],
+  "offen": [
+    "Werte aus der „Gegenüberstellung des Deckungsumfangs ImmoGuard TOP/XXL/XL“ der Vertragsinformation (Stand 10.2025, Seite 5 bis 8); TOP-Schutz ist auf der Produktseite als „Unser Tipp!“ markiert.",
+    "Elementargefahren sind wie die Grundgefahren einzeln wählbar, daher „optional“.",
+    "Photovoltaik ist in allen Tarifen mitversichert, sofern im Antrag angegeben; die erweiterte Deckung für PV, Solar, Wärmepumpe und Haustechnik bietet der Baustein EnergiePlus, daher „optional“.",
+    "Ableitungsrohre außerhalb des Gebäudes: XXL 5.000 €, TOP 10.000 €, jeweils gegen Zuschlag erhöhbar. Schäden durch Tiere = Tierbisse und Pickschäden durch Vögel.",
+    "Weitere Bausteine: ZukunftPlus (Mehrkosten Wiederaufbau), VermieterPlus, Schutzbrief. Glasbruch nur als eigene Glasversicherung; Selbstbeteiligung nicht ausgewertet."
+  ]
+}

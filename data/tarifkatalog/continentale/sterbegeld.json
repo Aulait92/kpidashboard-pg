@@ -1,0 +1,40 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung SterbeGeld Classic",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Eintrittsalter 40 bis 75 Jahre",
+    "Lebenslanger Schutz",
+    "Abtretung an Bestatter möglich"
+  ],
+  "tarife": [
+    {
+      "name": "SterbeGeld Classic (Tarif SGC)",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "bis 20.000 €",
+        "wartezeit": "36 Monate",
+        "unfall": "nein, volle Summe",
+        "ohne-gp": "ja",
+        "beitragsende": "höchstens Alter 85",
+        "vorsorge": "Abtretung möglich"
+      },
+      "bausteine": {},
+      "quelle": "https://www.continentale.de/sterbegeldversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/sterbegeldversicherung",
+    "https://www.continentale.de/documents/39054/21881878/continentale-lv-sterbegeld-classic-allgemeine-vertragsinformationen.pdf/45a5920d-2d60-c886-6a87-be7bbc045f15?version=3.0&t=1784197483301&download=true"
+  ],
+  "offen": [
+    "Ein Tarif (SGC). Wartezeit: Stirbt die versicherte Person vor Ablauf von 36 beitragspflichtigen Monaten, werden nur die gezahlten Beiträge erstattet; voller Schutz ab dem 4. Versicherungsjahr (Vertragsinformationen Abschnitt B 1.1).",
+    "Unfall: bei Unfalltod sofort die volle Versicherungssumme ab dem 1. Tag, aber keine doppelte Leistung; daher „nein, volle Summe“.",
+    "Beitragszahlung laufend bis höchstens Alter 85; Bestattungsvorsorge-Service als Leistung nicht genannt, nur die zweckgebundene Abtretung an ein Bestattungsinstitut. Dynamik nicht belegt."
+  ]
+}

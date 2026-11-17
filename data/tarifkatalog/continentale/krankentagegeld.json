@@ -1,0 +1,43 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "krankentagegeld",
+  "produkt": "Krankentagegeld Tarif V-U",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Ohne zeitliche Begrenzung",
+    "Auch Sonn- und Feiertage",
+    "Nachversicherung bei Einkommen"
+  ],
+  "tarife": [
+    {
+      "name": "Krankentagegeld Tarif V-U",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "ab-tag": "ab 4. bis 547. Tag",
+        "hoehe": "bis Nettoeinkommen",
+        "wartezeit": "3 Monate",
+        "dauer": "unbegrenzt",
+        "bu-ende": "ja (MB/KT 2009)",
+        "selbststaendige": "ja",
+        "ausland": "Europa (ab 43. Tag)"
+      },
+      "bausteine": {},
+      "quelle": "https://www.continentale.de/krankentagegeld",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/krankentagegeld",
+    "https://www.continentale.de/documents/39054/16670191/continentale-kv-avb-zusatzversicherte-versicherungsbedingungen-2106.pdf/33481af8-ae36-c93f-1793-e8a73ddad364?version=6.4&t=1776843588444&download=true"
+  ],
+  "offen": [
+    "Ein Tarif für Arbeitnehmer, Selbstständige und Freiberufler (16 bis 67 Jahre); Leistungsbeginn wählbar ab dem 4., 8., 15., 22., 29., 43., 64., 92., 183., 274., 365. oder 547. Tag (Tarifstufen V4-U bis V547-U). Für Ärzte gibt es den Tarif VA-U.",
+    "Höhe: Krankentagegeld zusammen mit anderen Kranken- und Tagegeldern höchstens bis zum Nettoeinkommen (Höchstgrenze nach Tarifbedingungen); genauer Höchstbetrag nicht auf der Produktseite.",
+    "Wartezeit: allgemeine Wartezeit 3 Monate, besondere 8 Monate nach MB/KT 2009, mit ärztlichem Zeugnis erlassbar; Anrechnung einer GKV-Vorversicherung möglich.",
+    "Ende bei Berufsunfähigkeit nach § 15 MB/KT 2009 (Standardregel), nicht gesondert verbessert belegt. Europäisches Ausland bei Leistungsbeginn ab dem 43. Tag; außerhalb Europas nur bei akuter Erkrankung im Krankenhaus.",
+    "Betriebskosten-Absicherung für bestimmte Freiberufler und kleine Handwerksbetriebe als Tipp genannt; Dynamik nicht belegt."
+  ]
+}

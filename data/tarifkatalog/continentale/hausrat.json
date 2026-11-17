@@ -1,0 +1,120 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung CasaSecura",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Neuwertentschädigung",
+    "Überspannung durch Blitz",
+    "Außenversicherung weltweit"
+  ],
+  "tarife": [
+    {
+      "name": "CasaSecura XL",
+      "kurz": "XL",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "20 %",
+        "diebstahl": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 1.000 €",
+        "garten": "nein",
+        "auto": "nein",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 € pro Tag",
+        "aussen": "3 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/CasaSecura+%E2%80%93+Vertragsinformation.pdf/6ea1aba0-a92d-a520-9762-b9a3dc76793c?version=9.1&t=1767005912107&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "CasaSecura XXL",
+      "kurz": "XXL",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 %",
+        "diebstahl": "bis 1.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 2.000 €",
+        "auto": "bis 1.000 €",
+        "allgefahren": "nein",
+        "ueberspannung": "ja",
+        "hotel": "150 € pro Tag",
+        "aussen": "1 Jahr"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/CasaSecura+%E2%80%93+Vertragsinformation.pdf/6ea1aba0-a92d-a520-9762-b9a3dc76793c?version=9.1&t=1767005912107&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "CasaSecura TOP",
+      "kurz": "TOP",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 %",
+        "diebstahl": "bis 1.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "bis 2.000 €",
+        "garten": "bis 5.000 €",
+        "auto": "bis 5.000 €",
+        "allgefahren": "ja",
+        "ueberspannung": "ja",
+        "hotel": "200 € pro Tag",
+        "aussen": "1 Jahr"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "internet": "optional",
+        "notfall": "optional",
+        "reise": "optional",
+        "smarthome": "optional"
+      },
+      "quelle": "https://www.continentale.de/documents/39054/16670358/CasaSecura+%E2%80%93+Vertragsinformation.pdf/6ea1aba0-a92d-a520-9762-b9a3dc76793c?version=9.1&t=1767005912107&download=true",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/hausratversicherung",
+    "https://www.continentale.de/documents/39054/16670358/CasaSecura+%E2%80%93+Vertragsinformation.pdf/6ea1aba0-a92d-a520-9762-b9a3dc76793c?version=9.1&t=1767005912107&download=true"
+  ],
+  "offen": [
+    "Werte aus der „Gegenüberstellung des Deckungsumfangs CasaSecura 2022 XL/XXL/TOP“ in der Vertragsinformation (Seite 4 bis 6); TOP ist auf der Produktseite als „Unsere Empfehlung“ markiert.",
+    "Elementarschutz: Produktseite schreibt „gehört bei uns immer dazu“, die Bedingungen (A 1.4.2) nennen ihn „soweit zusätzlich vereinbart“ und mit Wartezeit von 4 Wochen; daher „optional“, bitte prüfen.",
+    "Einfacher Diebstahl: „bis 1.000 €“ gilt für Hausrat außerhalb des Grundstücks (z. B. Kinderwagen); Diebstahl aus dem Auto: XXL innerhalb Europas, TOP weltweit. Allgefahren = unbenannte Gefahren im TOP.",
+    "Fahrraddiebstahl (Neuwert bis 10.000 € je Rad), Fahrradkasko, Online-Schutz, Elektro & Smart Home, Außer Haus und Haus- und Wohnungsschutzbrief sind Zusatzbausteine; Fahrradschutzbrief nur im TOP enthalten.",
+    "Empfohlene Versicherungssumme je m², Selbstbeteiligung und Glasbruch (eigene Glasversicherung) nicht ausgewertet."
+  ]
+}

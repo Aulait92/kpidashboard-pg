@@ -1,0 +1,93 @@
+{
+  "gesellschaft": "Continentale",
+  "sparte": "rente",
+  "produkt": "Private Rentenversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Kapital, Rente oder beides",
+    "Zuzahlungen möglich"
+  ],
+  "tarife": [
+    {
+      "name": "Rente Classic Pro (Tarif RCP)",
+      "kurz": "Classic Pro",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "100 % der Beiträge",
+        "rentenfaktor": "Mindestrente garantiert",
+        "anlage": "Sicherungsvermögen",
+        "flexibel": "ja",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.continentale.de/continentale-rente-classic-pro",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rente Invest Garant (Tarif RIG)",
+      "kurz": "Invest Garant",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "ja, zum Garantie-Termin",
+        "rentenfaktor": "ja",
+        "anlage": "Fonds und Garantie",
+        "flexibel": "Entnahme bis 4x im Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.continentale.de/private-altersvorsorge",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Rente Invest (Tarif RI)",
+      "kurz": "Rente Invest",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "garantie": "nein",
+        "rentenfaktor": "ja",
+        "anlage": "bis 10 Fonds",
+        "flexibel": "Entnahme bis 12x im Jahr",
+        "hinterbliebene": "optional"
+      },
+      "bausteine": {
+        "bu": "optional"
+      },
+      "quelle": "https://www.continentale.de/private-altersvorsorge",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "EasyRente Invest (Tarif ERI)",
+      "kurz": "EasyRente",
+      "stufe": 4,
+      "empfohlen": false,
+      "werte": {
+        "garantie": "nein",
+        "rentenfaktor": "ja",
+        "anlage": "bis 20 Fonds",
+        "flexibel": "Entnahme bis 4x im Jahr"
+      },
+      "bausteine": {},
+      "quelle": "https://www.continentale.de/private-altersvorsorge",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.continentale.de/private-altersvorsorge",
+    "https://www.continentale.de/continentale-rente-classic-pro"
+  ],
+  "offen": [
+    "Stufen sind vier Produkte mit unterschiedlicher Anlage (klassisch, Fonds mit Garantie, Fonds ohne Garantie, investmentorientiert), keine Leistungsstufen; Rente Invest als dritte von vier Stufen gesetzt, Continentale markiert kein Produkt.",
+    "Werte aus den Produktseiten; Allgemeine Vertragsinformationen (RCP, RI, RIG, ERI) nicht ausgewertet. Höhe der Garantie bei Rente Invest Garant (Prozent der Beiträge) und Höhe des garantierten Rentenfaktors nicht genannt.",
+    "Fondswechsel bei den Fondsprodukten bis 6x im Jahr gebührenfrei; nach Rentenbeginn Kapitalentnahmen (RI bis 12x, RIG und ERI bis 2x). Classic Pro mit Günstiger-Prüfung zum Rentenbeginn.",
+    "Hinterbliebenenschutz und BU-Absicherung laut Produktseite bei Classic Pro und Rente Invest einschließbar; bei RIG und ERI nicht genannt. Effektivkosten, Beitragspause und Dynamik nicht ausgewertet."
+  ]
+}
