@@ -1,0 +1,65 @@
+{
+  "gesellschaft": "HUK-COBURG",
+  "sparte": "krankenhauszusatz",
+  "produkt": "Stationäre Zusatzversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Freie Krankenhauswahl",
+    "Chefarzt bzw. Wunscharzt",
+    "Ambulante OPs statt Klinik"
+  ],
+  "tarife": [
+    {
+      "name": "Stationäre Zusatzversicherung",
+      "kurz": "Zweibettzimmer",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Zweibettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "nein",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "ja",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {
+        "einbett": "optional"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/stationaere-zusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Stationäre Zusatzversicherung mit optionalen Leistungen",
+      "kurz": "Einbettzimmer",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "zimmer": "Einbettzimmer",
+        "chefarzt": "ja",
+        "krankenhauswahl": "ja",
+        "ueber-hoechstsatz": "ja, unbegrenzt",
+        "wartezeit": "3 Monate",
+        "ersatztagegeld": "ja",
+        "ambulant-op": "ja"
+      },
+      "bausteine": {
+        "einbett": "inklusive"
+      },
+      "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/stationaere-zusatzversicherung.html",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/stationaere-zusatzversicherung.html"
+  ],
+  "offen": [
+    "Zwei Varianten: Grundtarif (Zweibettzimmer, Arztkosten bis GOÄ-Höchstsatz) und mit optionalen Leistungen (Einbettzimmer, auch über Höchstsatz nach Vereinbarung). Tarifname laut Bedingungen SZplus; Bezeichnung der Varianten von der Produktseite.",
+    "Wartezeit 3 Monate, 8 Monate für Entbindung und Psychotherapie; entfällt bei Unfall.",
+    "Ersatz-Krankenhaustagegeld bei Verzicht: 30 € (Chefarzt), 20 € (Zweibettzimmer), 40 € (Ein- und Zweibettzimmer); Produktseite nennt auch „bis zu 70 €“ je nach Tarif, bitte prüfen.",
+    "Optionsrecht alle 5 Jahre (optionale Leistungen ohne neue Risikoprüfung) nur im Grundtarif. Rooming-In 20 € je Tag. Start Police (21 bis 50 Jahre) mit gestaffeltem Beitrag.",
+    "Keine Empfehlung markiert (zwei Varianten)."
+  ]
+}
