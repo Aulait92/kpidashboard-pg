@@ -19,11 +19,14 @@ export function TestLeadButton({
   testCustomer,
   products,
   defaultPhone,
+  leadAddress = "sie",
 }: {
   customerId: string;
   testCustomer: boolean;
   products: string[];
   defaultPhone: string | null;
+  /** Ansprache der Leads laut Kunde; bei Testkunden hier umstellbar. */
+  leadAddress?: "sie" | "du";
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -31,6 +34,8 @@ export function TestLeadButton({
   const [name, setName] = useState("Test Lead");
   const [product, setProduct] = useState(products[0] ?? "");
   const [phone, setPhone] = useState(defaultPhone ?? "");
+  const [herkunft, setHerkunft] = useState<"meta" | "eingehend">("meta");
+  const [ansprache, setAnsprache] = useState<"sie" | "du">(leadAddress);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -58,7 +63,7 @@ export function TestLeadButton({
   const send = (confirmed: boolean) => {
     setError(null);
     start(async () => {
-      const r = await sendTestLeadAction({ customerId, name, product, phone, confirmed });
+      const r = await sendTestLeadAction({ customerId, name, product, phone, confirmed, herkunft, ansprache });
       if (!r.ok) {
         if (r.needsConfirm) setStep("confirm");
         else {
@@ -107,6 +112,28 @@ export function TestLeadButton({
                 ))}
               </select>
             </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium">Wer schreibt zuerst?</span>
+                <select value={herkunft} onChange={(e) => setHerkunft(e.target.value === "eingehend" ? "eingehend" : "meta")} className={field}>
+                  <option value="meta">Assistent (Meta-Lead)</option>
+                  <option value="eingehend">Ich (eingehend)</option>
+                </select>
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium">Ansprache</span>
+                <select
+                  value={ansprache}
+                  onChange={(e) => setAnsprache(e.target.value === "du" ? "du" : "sie")}
+                  disabled={!testCustomer}
+                  title={testCustomer ? "Gilt für alle Leads dieses Testkunden" : "Einstellung des Kunden"}
+                  className={`${field} disabled:bg-[color:var(--surface-sunken)] disabled:text-[color:var(--muted)]`}
+                >
+                  <option value="sie">Sie</option>
+                  <option value="du">Du</option>
+                </select>
+              </label>
+            </div>
             <label className="block text-sm">
               <span className="mb-1 block font-medium">Deine Handynummer</span>
               <input
