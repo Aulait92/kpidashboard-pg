@@ -622,7 +622,8 @@ function Angebote(p: {
 
       <ChanceImTermin auswahl={p.auswahl} ro={ro} aendern={p.aendern} anbieten={(key) => anbieten(key)} vorsorge={p.daten.vorsorge ?? null} />
 
-      <div className="mx-4 mt-4 border-t border-[color:var(--border)] sm:mx-5" />
+      {/* Schritte klar getrennt (Ole, 17.11.2026): mehr Luft um die Trennlinie */}
+      <div className="mx-4 mt-7 border-t border-[color:var(--border)] sm:mx-5" />
       <Schritt
         nr={2}
         titel={sp ? `Beiträge eintragen: ${sp.label}` : "Beiträge eintragen"}
@@ -819,7 +820,7 @@ function BeitraegeRechnen({
 /** Schritt-Kopf (Ole, 17.11.2026: „idiotensicherer in Schritte unterteilen“): Nummer bzw. Haken, Titel, ein Satz. */
 function Schritt({ nr, titel, hinweis, fertig, rechts }: { nr: number; titel: string; hinweis?: ReactNode; fertig: boolean; rechts?: ReactNode }) {
   return (
-    <div className="flex items-start gap-3 px-4 pt-4 sm:px-5" data-schritt={nr} data-schritt-fertig={fertig ? "ja" : "nein"}>
+    <div className={cn("flex items-start gap-3 px-4 sm:px-5", nr === 1 ? "pt-4" : "pt-7")} data-schritt={nr} data-schritt-fertig={fertig ? "ja" : "nein"}>
       <span
         className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", fertig ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
         aria-hidden
