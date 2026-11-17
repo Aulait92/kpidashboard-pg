@@ -310,7 +310,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const l1 = await lead("Thomas Müller", "4917600000021");
     await sendOutreach({ customerId, leadId: l1.id, phone: l1.phone!, name: l1.name, an: "sie", source: l1.source });
     expect(tplOf("4917600000021").name).toBe("pg_outreach_tkv_v4_sie");
-    expect(params("4917600000021")).toEqual(["Herr Müller", "Katzenversicherung"]);
+    expect(params("4917600000021")).toEqual(["Thomas Müller", "Katzenversicherung"]);
 
     // v5 freigegeben (hier ohne PDF-Kopf, Erstinformation unvollständig): „Hallo Herr Weber“ und „Ihre Katze“
     const body = templateBodyFor("outreach_tkv", templateNamesOf("Allianz Anid Brand", undefined, "Anid Brand"), "sie");
@@ -318,9 +318,9 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const l2 = await lead("Max Weber", "4917600000022");
     await sendOutreach({ customerId, leadId: l2.id, phone: l2.phone!, name: l2.name, an: "sie", source: l2.source });
     expect(tplOf("4917600000022").name).toBe("pg_outreach_tkv_v5_sie");
-    expect(params("4917600000022")).toEqual(["Herr Weber", "Katzenversicherung", "Ihre Katze"]);
+    expect(params("4917600000022")).toEqual(["Max Weber", "Katzenversicherung", "Ihre Katze"]);
     const m2 = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: "4917600000022" } } });
-    expect(m2.body).toBe("Hallo Herr Weber, danke für Ihre Anfrage zur Katzenversicherung!\nIch bin der digitale KI-Assistent von Anid und kläre kurz zwei, drei Fragen, damit Anid Ihnen ein passendes Angebot machen kann.\n\n*Wie alt ist Ihre Katze?*");
+    expect(m2.body).toBe("Hallo Max Weber, danke für Ihre Anfrage zur Katzenversicherung!\nIch bin der digitale KI-Assistent von Anid und kläre kurz zwei, drei Fragen, damit Anid Ihnen ein passendes Angebot machen kann.\n\n*Wie alt ist Ihre Katze?*");
     expect(m2.purpose).toBe("outreach_tkv");
 
     // Lead hat schon geschrieben (Fenster offen): Freitext „danke für Ihre Nachricht“, danach die Erstinformation
@@ -332,7 +332,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(r3.mode).toBe("text");
     const out = sent.slice(before) as Array<{ type: string; text?: { body: string } }>;
     expect(out[0]).toMatchObject({ type: "text" });
-    expect(out[0].text?.body).toBe("Hallo Frau Schneider, danke für Ihre Nachricht zur Katzenversicherung! 🐱\nIch bin der digitale KI-Assistent von Anid und kläre kurz zwei, drei Fragen, damit Anid Ihnen ein passendes Angebot machen kann.\n\n*Wie alt ist Ihre Katze?*");
+    expect(out[0].text?.body).toBe("Hallo Julia Schneider, danke für Ihre Nachricht zur Katzenversicherung! 🐱\nIch bin der digitale KI-Assistent von Anid und kläre kurz zwei, drei Fragen, damit Anid Ihnen ein passendes Angebot machen kann.\n\n*Wie alt ist Ihre Katze?*");
     // Erstinformation unvollständig: Rückfall auf den Link als Nachricht 2
     expect(out[1]?.text?.body).toMatch(/^Erstinformation zu .+: https:\/\/app\.example\.de\/erstinformation\//);
   });

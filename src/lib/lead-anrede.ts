@@ -1,7 +1,7 @@
 // Anrede und Beratername für Texte an einen Lead bzw. Kunden (Ole, 14.11.2026).
 //   Anrede:  Name + Herr/Frau aus Lead.formData (Feld Anrede/Geschlecht), sonst aus dem
-//            Bestandskunden mit derselben Nummer (ExistingCustomer.salutation), sonst aus einem
-//            eindeutigen Vornamen (lib/vorname-anrede.ts, Ole 16.11.2026).
+//            Bestandskunden mit derselben Nummer (ExistingCustomer.salutation). Nie aus dem Vornamen geraten
+//            (Ole, 17.11.2026).
 //   Berater: Person, z. B. „Susanne Meier schaut sich das an“. Anzeigename des zuständigen
 //            Beraters (Lead.assignedUser) hat Vorrang, sonst der Kundenname ohne „Agentur“ usw.
 //   Firma:   Kundenname, z. B. „Ihre Buchung bei Agentur Susanne Meier“.
@@ -12,7 +12,7 @@ import { firmDisplayName, personFromCustomerName, advisorPerson, kurzNameFuerLea
 
 export { firmDisplayName, personFromCustomerName, advisorPerson };
 import { formWithOverrides } from "@/lib/lead-stammdaten";
-import { anredeRohAusForm, kontaktParts, namePartsFromForm, type AnredeKontakt } from "@/lib/ansprache";
+import { anredeRohAusForm, kontaktParts, namePartsFromForm, salutationOf, type AnredeKontakt, type Salutation } from "@/lib/ansprache";
 import { erstinfoName, type ErstinfoWeb } from "@/lib/erstinformation-shared";
 
 /** Anrede-Angaben aus einem Lead (Name, formData). */
@@ -47,6 +47,11 @@ export type LeadAnsprechpartner = {
   firm: string;
   /** Vorname des Vermittlers laut Profil, sonst Agenturname: „digitaler KI-Assistent von Ole“ (Erstanschreiben). */
   kurz: string;
+  /**
+   * Vermittler als Person für den Assistenten (Ole, 17.11.2026, lib/whatsapp/gespraech.ts vermittlerName): Name des
+   * zuständigen Beraters bzw. laut Anbieterangaben, Anrede (Herr/Frau) nur aus den Anbieterangaben.
+   */
+  vermittler: { name: string | null; anrede: Salutation | null };
 };
 
 /**
@@ -67,7 +72,7 @@ export async function ansprechpartner(opts: {
       : null,
     prisma.customer.findUnique({ where: { id: opts.customerId }, select: { name: true, onboarding: { select: { websiteInfo: true } } } }).catch(() => null),
     // Anbieterangaben (Erstinformation): Vor- und Nachname des Vermittlers
-    prisma.erstinformation.findUnique({ where: { customerId: opts.customerId }, select: { name: true } }).catch(() => null),
+    prisma.erstinformation.findUnique({ where: { customerId: opts.customerId }, select: { name: true, anrede: true } }).catch(() => null),
   ]);
   const kontakt = kontaktFromLead(lead, opts.name);
   const phone = opts.phone ?? lead?.phone ?? null;
@@ -85,8 +90,13 @@ export async function ansprechpartner(opts: {
       kontakt.fullName = kontakt.fullName ?? e.fullName;
     }
   }
+  const profilName = erstinfoName(profil?.name, (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer?.name) || null;
+  const zustaendig = lead?.assignedUser?.displayName?.replace(/\s+/g, " ").trim() || null;
+  // Anrede gilt nur für die Person der Anbieterangaben (anderer Berater im Team: Vor- und Nachname)
+  const vermittler = zustaendig && zustaendig !== profilName ? { name: zustaendig, anrede: null } : { name: profilName, anrede: salutationOf(profil?.anrede) };
   return {
     kontakt,
+    vermittler,
     advisor: advisorPerson(customer?.name, lead?.assignedUser?.displayName),
     firm: firmDisplayName(customer?.name),
     kurz: kurzNameFuerLeads({

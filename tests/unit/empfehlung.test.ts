@@ -215,7 +215,7 @@ describe("Empfehlungen – Angebot, Anlässe, Trichter, Dankeschön (14.11.2026)
     expect(statusUpdateLine("gemeldet", "Tom")).toBe("Tom hat sich über Ihren Link bei mir gemeldet.");
     expect(statusUpdateLine("termin", null)).toMatch(/Termin vereinbart/);
     const t = statusUpdateText("termin", { vorname: "Julia", referred: "Tom", vertreter: "Max Muster", anrede: { firstName: "Julia", lastName: "Schneider" } });
-    expect(t.startsWith("Guten Tag Frau Schneider, kurze Rückmeldung")).toBe(true);
+    expect(t.startsWith("Guten Tag Julia Schneider, kurze Rückmeldung")).toBe(true);
     expect(t).toContain("Max Muster");
     const tpl = templateBodyFor("referral_update", "Max Muster");
     expect(tpl).toContain("{{2}}");

@@ -172,7 +172,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
         id={d.id}
         leadId={d.leadId}
         readOnly={ctx.preview}
-        kopf={{ name: d.lead.name, zeit: chipZeit(d.termin.startsAt), modus, produkt: d.lead.produkt, vorbereitet: !!d.vorbereitetAm }}
+        kopf={{ name: d.lead.name, zeit: chipZeit(d.termin.startsAt), modus, produkt: d.lead.produkt, vorbereitet: !!d.vorbereitetAm, zugesagt: !!d.zugesagtAm }}
         willKarte={willKarte}
         mehr={mehr}
         klaeren={{ punkte: klaeren.slice(0, KLAEREN_MAX), erledigt: tv.klaerenErledigt }}

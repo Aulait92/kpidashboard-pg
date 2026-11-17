@@ -10,6 +10,7 @@ import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
 import { bookingPageUrl } from "@/lib/public-url";
 import { prisma } from "@/lib/prisma";
 import { disconnectOwnCalendarAction } from "./actions";
+import { VideoOnlySwitch } from "@/components/video-only-switch";
 import { BlockTimes, LeadTimesForm, RemindButton, SourcePicker } from "@/components/calendar-sources";
 import { userCalendarKey } from "@/lib/calendar/tokens";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
@@ -43,7 +44,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
     ctx.userId
       ? prisma.advisorCalendar.findUnique({ where: { userId: ctx.userId }, select: { status: true, provider: true, accountEmail: true } })
       : null,
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true, agentConfig: { select: { videoOnly: true } } } }),
     owner ? loadTeamCalendars(ctx.customerId) : null,
   ]);
   const ownConnected = own?.status === "connected";
@@ -211,6 +212,7 @@ export default async function OwnCalendarPage({ searchParams }: { searchParams: 
           <Card className="mt-5">
             <CardHeader title="Wann dürfen Leads Termine buchen?" icon={Clock} />
             <div className="p-5">
+              {owner && customer?.agentConfig ? <VideoOnlySwitch initial={customer.agentConfig.videoOnly} readOnly={ro} /> : null}
               <p className="mb-4 text-sm text-[color:var(--muted)]">Unser Assistent schlägt nur diese Zeiten vor, und nur wenn Sie dann frei sind.</p>
               <LeadTimesForm initial={setup.leadTimes} action={saveLeadTimesAction} readOnly={ro} source={setup.source} />
             </div>

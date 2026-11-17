@@ -35,6 +35,7 @@ export async function loadVorbereitung(appointmentId: string, ctx: TeamCtx): Pro
       meetUrl: true,
       calendarKey: true,
       preparedAt: true,
+      confirmedAt: true,
       customer: { select: { name: true } },
       lead: { select: { name: true, phone: true, email: true, source: true, formData: true, contactOverrides: true, assignedUserId: true } },
     },
@@ -64,6 +65,7 @@ export async function loadVorbereitung(appointmentId: string, ctx: TeamCtx): Pro
     formular: formAnswers(appt.lead?.formData),
     angaben: conv?.qualificationData ?? null,
     vorbereitetAm: appt.preparedAt,
+    zugesagtAm: appt.confirmedAt ?? null,
   };
 }
 

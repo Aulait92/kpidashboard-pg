@@ -139,7 +139,7 @@ export function buildIcs(ev: CustomerEvent): string {
     "BEGIN:VALARM",
     "TRIGGER:-PT30M",
     "ACTION:DISPLAY",
-    "DESCRIPTION:Erinnerung an deinen Termin",
+    "DESCRIPTION:Erinnerung an den Termin",
     "END:VALARM",
     "END:VEVENT",
     "END:VCALENDAR",

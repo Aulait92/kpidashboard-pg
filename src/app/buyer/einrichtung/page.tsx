@@ -339,7 +339,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Angaben ändern</summary>
                 <div className="mt-3">
                   <ErstinfoForm
-                    initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, fileName: erstinfo.fileName, daten: erstinfo.daten }}
+                    initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, fileName: erstinfo.fileName, daten: erstinfo.daten, anrede: erstinfo.anrede }}
                     impressum={erstinfo.impressum}
                     confirmed
                     readOnly={readOnly}
@@ -348,7 +348,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </details>
             ) : (
               <ErstinfoForm
-                initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, fileName: erstinfo.fileName, daten: erstinfo.daten }}
+                initial={{ status: erstinfo.status, registerNummer: erstinfo.registerNummer, fileName: erstinfo.fileName, daten: erstinfo.daten, anrede: erstinfo.anrede }}
                 impressum={erstinfo.impressum}
                 confirmed={!!erstinfo.bestaetigtAt}
                 readOnly={readOnly}

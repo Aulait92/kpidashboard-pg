@@ -540,6 +540,73 @@ export function rankTemplates<T extends Candidate>(
   return { tpl, current, variant: current ? variantOfName(tpl.name) : "a", params: (rest) => templateParams(tpl.body, an, kontakt, rest, tpl.name) ?? [...rest] };
 }
 
+/** PDF der Erstinformation fürs Erstanschreiben: vollständig, nur als Entwurf (Angaben unvollständig) oder gar nicht. */
+export type OutreachPdf = "vollstaendig" | "entwurf" | "keins";
+
+export type OutreachPick<T> = NonNullable<ReturnType<typeof rankTemplates<T & Candidate>>> & {
+  purpose: NoticePurpose;
+  /** Textversion der gewählten Vorlage (0 = von Hand angelegt) */
+  version: number;
+  /** Welches PDF in den Kopf gehört (null = Vorlage ohne Kopf) */
+  dokument: "vollstaendig" | "entwurf" | null;
+};
+
+/**
+ * Erstanschreiben über Produkt und allgemeine Fassung hinweg (Ole, 17.11.2026, rein, testbar). Die neueste freigegebene
+ * Textversion gewinnt, bei gleicher Version die des Produkts (purposes[0]) vor der allgemeinen; innerhalb davon wie
+ * rankTemplates (Anrede-Fassung). Vorlagen mit PDF im Kopf brauchen das PDF der Erstinformation:
+ *   - vollständig vorhanden → normal
+ *   - fehlt es, gewinnt eine gleich neue Fassung ohne Kopf (die Erstinformation folgt, sobald das Fenster offen ist,
+ *     lib/whatsapp/erstinfo-pdf.ts)
+ *   - gibt es die neueste Fassung nur mit Kopf, geht sie mit dem PDF in seinem aktuellen Stand raus („entwurf“, derselbe
+ *     Inhalt wie die Seite hinter dem Link der alten Fassung). Nie zurück auf eine ältere Fassung (v3 „Ich bin kein
+ *     Mensch …“), solange eine neuere freigegeben ist. Ohne jedes PDF: { wartenAufPdf } (erneuter Versuch).
+ * null = keine passende freigegebene Vorlage.
+ */
+export function rankOutreach<T extends Candidate & { purpose: string }>(
+  list: T[],
+  purposes: NoticePurpose[],
+  ansprache: Ansprache,
+  kontakt: AnredeKontakt | null | undefined,
+  opts: { variant?: TemplateVariant; pdf: OutreachPdf },
+): OutreachPick<T> | { wartenAufPdf: true } | null {
+  const ver = (t: T) => templateVersionOfName(t.name);
+  const mine = list.filter((t) => (purposes as string[]).includes(t.purpose));
+  // Neueste zuerst, von Hand angelegte (Version 0) zuletzt
+  const versions = [...new Set(mine.map(ver))].sort((x, y) => (x === 0 ? 1 : y === 0 ? -1 : y - x));
+  const best = (documentHeader: boolean) => {
+    for (const v of versions) {
+      for (const p of purposes) {
+        const r = rankTemplates(
+          mine.filter((t) => t.purpose === p && ver(t) === v),
+          p,
+          ansprache,
+          kontakt,
+          { variant: p === purposes[0] ? opts.variant : "a", documentHeader },
+        );
+        if (r) return { ...r, purpose: p, version: v };
+      }
+    }
+    return null;
+  };
+  const rank = (v: number) => (v === 0 ? -1 : v);
+  const ohneKopf = best(opts.pdf === "vollstaendig");
+  const mitKopf = opts.pdf === "vollstaendig" ? ohneKopf : best(true);
+  if (!mitKopf) return null;
+  if (ohneKopf && rank(ohneKopf.version) >= rank(mitKopf.version)) {
+    return { ...ohneKopf, dokument: ohneKopf.tpl.headerFormat === "DOCUMENT" ? "vollstaendig" : null };
+  }
+  if (opts.pdf === "entwurf") return { ...mitKopf, dokument: mitKopf.tpl.headerFormat === "DOCUMENT" ? "entwurf" : null };
+  return { wartenAufPdf: true };
+}
+
+/** Die Erstinformation fehlt ganz (PDF nicht erzeugbar): Erstanschreiben wartet und wird erneut versucht. */
+export class ErstinfoPdfFehltError extends Error {
+  constructor() {
+    super("Erstinformation als PDF nicht verfügbar: Erstanschreiben wartet.");
+  }
+}
+
 /**
  * Schnellantwort-Knopf für Direktwerbung (Kampagnen an Bestandskunden): Hinweis auf das
  * Widerspruchsrecht (Art. 21 Abs. 4 DSGVO). Ein Klick kommt als Antwort mit diesem Text
@@ -717,7 +784,7 @@ export async function sendWhatsAppNotice(opts: {
    * Parameter je nach gewählter Vorlage (Version, Ansprache der Fassung, aktuell oder älter); hat Vorrang vor
    * params/legacyParams. Erstanschreiben: v5 mit „Ihre Katze“ bzw. „deine Katze“, v4 mit Produkt, v3 mit Link.
    */
-  paramsFor?: (t: { version: number; ansprache: Ansprache; current: boolean }) => string[];
+  paramsFor?: (t: { version: number; ansprache: Ansprache; current: boolean; purpose: NoticePurpose }) => string[];
   /** Freitext für das offene 24h-Fenster (und Fallback-Inhalt der Inbox). */
   text: string;
   leadId?: string | null;
@@ -726,6 +793,11 @@ export async function sendWhatsAppNotice(opts: {
   anrede?: AnredeKontakt | null;
   /** PDF für Vorlagen mit Dokument im Kopf (Erstinformation). Ohne: solche Vorlagen werden übersprungen. */
   document?: { link: string; filename: string } | null;
+  /**
+   * Erstanschreiben (rankOutreach): weitere Zwecke, die mit dem Zweck zusammen nach Version gewählt werden (allgemeine
+   * Fassung „outreach“ nach dem Produkt), und das PDF der Erstinformation im aktuellen Stand, falls sie unvollständig ist.
+   */
+  outreach?: { fallbackPurposes: NoticePurpose[]; documentEntwurf?: { link: string; filename: string } | null };
   /** Payloads der Schnellantwort-Knöpfe (z. B. „slot:2026-11-17T09:00:00.000Z“), nur für die aktuelle Fassung. */
   buttonPayloads?: string[];
   /** Knöpfe im offenen Fenster (Standard: TEMPLATE_BUTTONS des Zwecks, wenn sie interaktiv passen); [] = keine. */
@@ -737,7 +809,19 @@ export async function sendWhatsAppNotice(opts: {
    * Nachricht, nur an Kontakte aus der Pipeline (lib/whatsapp/nur-leads.ts, sonst WhatsAppKeinLeadError).
    */
   manuell?: boolean;
-}): Promise<{ mode: "text" | "template"; conversationId: string; messageId?: string | null; variant: TemplateVariant | null; documentHeader: boolean }> {
+}): Promise<{
+  mode: "text" | "template";
+  conversationId: string;
+  messageId?: string | null;
+  variant: TemplateVariant | null;
+  documentHeader: boolean;
+  /** Zweck der gesendeten Vorlage (beim Erstanschreiben ggf. die allgemeine Fassung) */
+  purpose: NoticePurpose;
+  /** Textversion der gesendeten Vorlage (null = Freitext) */
+  version: number | null;
+  /** PDF im Kopf: vollständig oder Entwurf (Erstinformation unvollständig) */
+  pdf: "vollstaendig" | "entwurf" | null;
+}> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
   });
@@ -782,6 +866,9 @@ export async function sendWhatsAppNotice(opts: {
   let pricingCategory: string | null = null;
   let variant: TemplateVariant | null = null;
   let documentHeader = false;
+  let purpose: NoticePurpose = opts.purpose;
+  let version: number | null = null;
+  let pdf: "vollstaendig" | "entwurf" | null = null;
 
   if (windowOpen) {
     mode = "text";
@@ -798,22 +885,41 @@ export async function sendWhatsAppNotice(opts: {
     const kontakt: AnredeKontakt = opts.anrede ?? { fullName: opts.contactName ?? null };
     // A/B-Fassung: fest je Lead bzw. Nummer, nach Entscheidung der Gewinner (lib/whatsapp/ab-test.ts)
     const wanted = opts.variant ?? (await (await import("@/lib/whatsapp/ab-test")).abVariantFor(opts.purpose, leadId ?? opts.to));
-    const pick = await pickTemplate(opts.customerId, opts.purpose, kontakt, { variant: wanted, documentHeader: !!opts.document });
+    let pick: (NonNullable<Awaited<ReturnType<typeof pickTemplate>>> & { purpose?: NoticePurpose; dokument?: "vollstaendig" | "entwurf" | null }) | null;
+    if (opts.outreach) {
+      // Erstanschreiben: neueste freigegebene Fassung über Produkt und allgemeine Fassung (rankOutreach)
+      const purposes = [opts.purpose, ...opts.outreach.fallbackPurposes.filter((p) => p !== opts.purpose)];
+      const [customer, approved] = await Promise.all([
+        prisma.customer.findUnique({ where: { id: opts.customerId }, select: { leadAddress: true } }),
+        prisma.messageTemplate.findMany({ where: { customerId: opts.customerId, purpose: { in: purposes }, status: "approved" }, orderBy: { updatedAt: "desc" } }),
+      ]);
+      const pdfStand: OutreachPdf = opts.document ? "vollstaendig" : opts.outreach.documentEntwurf ? "entwurf" : "keins";
+      const r = rankOutreach(approved, purposes, asAnsprache(customer?.leadAddress), kontakt, { variant: wanted, pdf: pdfStand });
+      if (r && "wartenAufPdf" in r) throw new ErstinfoPdfFehltError();
+      pick = r;
+    } else {
+      pick = await pickTemplate(opts.customerId, opts.purpose, kontakt, { variant: wanted, documentHeader: !!opts.document });
+    }
     if (!pick) throw new NoTemplateError(opts.purpose);
     const { tpl } = pick;
+    purpose = pick.purpose ?? opts.purpose;
+    version = templateVersionOfName(tpl.name);
     // Ältere Fassung mit anderer Belegung: deren Parameter. Nur so viele Werte, wie die Vorlage Platzhalter hat.
     const base = opts.paramsFor
-      ? opts.paramsFor({ version: templateVersionOfName(tpl.name), ansprache: templateAnspracheOf(tpl), current: pick.current })
+      ? opts.paramsFor({ version, ansprache: templateAnspracheOf(tpl), current: pick.current, purpose })
       : !pick.current && opts.legacyParams
         ? opts.legacyParams
         : opts.params;
     const params = pick.params(base.slice(1)).slice(0, placeholderCount(tpl.body));
     const buttons = Array.isArray(tpl.buttons) ? (tpl.buttons as unknown[]).length : 0;
-    const doc = tpl.headerFormat === "DOCUMENT" ? (opts.document ?? null) : null;
+    const docSource = pick.dokument === "entwurf" ? (opts.outreach?.documentEntwurf ?? null) : (opts.document ?? null);
+    const doc = tpl.headerFormat === "DOCUMENT" ? docSource : null;
     mode = "template";
     pricingCategory = tpl.category.toLowerCase();
     variant = pick.variant;
     documentHeader = !!doc;
+    pdf = doc ? (pick.dokument === "entwurf" ? "entwurf" : "vollstaendig") : null;
+    if (pdf === "entwurf") console.warn("[whatsapp] Erstanschreiben mit unvollständiger Erstinformation im Kopf", opts.customerId);
     body = `${doc ? `${ERSTINFO_HEADER_MARK}\n` : ""}${renderTemplate(tpl.body, params)}`;
     const components = templateComponents({ params, document: doc, buttonPayloads: pick.current ? opts.buttonPayloads : null, buttonCount: buttons });
     messageId = (await sendTemplate(apiKey, opts.to, tpl.name, tpl.language, components)).messageId;
@@ -852,7 +958,7 @@ export async function sendWhatsAppNotice(opts: {
       waMessageId: messageId,
       status: "sent",
       sentBy: "system",
-      purpose: opts.purpose,
+      purpose,
       // A/B-Messung nur über Vorlagen (Freitext ist der Text des Aufrufers, keine Fassung)
       variant,
       // Vorlagen kosten (vorläufig); der Status-Webhook liefert Metas endgültige Angabe.
@@ -861,5 +967,5 @@ export async function sendWhatsAppNotice(opts: {
   });
 
   // messageId: für den Zustellstatus am Kampagnen-Empfänger (delivered/read aus dem Webhook)
-  return { mode, conversationId: conversation.id, messageId, variant, documentHeader };
+  return { mode, conversationId: conversation.id, messageId, variant, documentHeader, purpose, version, pdf };
 }

@@ -17,7 +17,7 @@ import { CALL_PAUSE_MAX_MS } from "@/lib/telefonat";
 import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
+import { ErstinfoPdfFehltError, firstNameOf, NoTemplateError, sendWhatsAppNotice, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { erstanschreibenText, outreachProdukt, tierWort, type Herkunft } from "@/lib/whatsapp/erstanschreiben";
 import { abVariantFor } from "@/lib/whatsapp/ab-test";
 import { restartSilentSequence } from "@/lib/lead-sequences";
@@ -50,11 +50,15 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   const produkt = outreachProdukt(opts.source);
   const purpose: NoticePurpose = produkt?.purpose ?? "outreach";
   const rest = produkt ? [produkt.produkt] : [];
+  // PDF der Erstinformation: vollständig in den Kopf der Vorlage; unvollständig nur als Entwurf, wenn die neueste
+  // freigegebene Fassung den Kopf verlangt (templates.ts rankOutreach, Ole 17.11.2026: nie zurück auf v3)
   let document: { link: string; filename: string } | null = null;
+  let documentEntwurf: { link: string; filename: string } | null = null;
   try {
-    const { erstinfoPdfFuerWhatsApp } = await import("@/lib/erstinformation");
-    const pdf = await erstinfoPdfFuerWhatsApp(opts.customerId);
-    if (pdf) document = { link: pdf.link, filename: pdf.filename };
+    const { erstinfoPdfStand } = await import("@/lib/erstinformation");
+    const pdf = await erstinfoPdfStand(opts.customerId);
+    if (pdf?.vollstaendig) document = { link: pdf.link, filename: pdf.filename };
+    else if (pdf) documentEntwurf = { link: pdf.link, filename: pdf.filename };
   } catch (err) {
     console.error("[outreach] Erstinformation als PDF", err instanceof Error ? err.message : err);
   }
@@ -71,7 +75,9 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   ).normal;
   const kurz = who.kurz || who.firm;
   const first = firstNameOf(opts.name);
-  const paramsFor = (p: { version: number; ansprache: Ansprache }): string[] => {
+  // Parameter je gewählter Vorlage: Produkt (v5 mit Tier, v4) bzw. allgemeine Fassung (nur Name), v3 mit Link
+  const paramsFor = (p: { version: number; ansprache: Ansprache; purpose?: NoticePurpose }): string[] => {
+    if ((p.purpose ?? purpose) === "outreach") return p.version >= 4 ? [first] : [first, url];
     if (p.version >= 5) return [first, ...rest, ...(produkt?.purpose === "outreach_tkv" ? [tierWort(produkt.tier, p.ansprache)] : [])];
     if (p.version === 4) return [first, ...rest];
     return [first, url];
@@ -84,43 +90,34 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     paramsFor,
     legacyParams: [first, url],
     document,
+    documentEntwurf,
     herkunft,
     text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: opts.source, herkunft, formular }),
-    /** Allgemeine Fassung (ohne Produkt), falls die Vorlage des Produkts noch fehlt */
-    textAllgemein: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, source: null, herkunft }),
   };
 }
 
 /**
- * Erstanschreiben senden: Vorlage des Produkts; ist sie (noch) nicht freigegeben, die allgemeine Fassung
- * (aktuell oder die bisherige v3 mit Link). Nach Freitext folgt das PDF der Erstinformation sofort.
+ * Erstanschreiben senden (Ole, 17.11.2026): die neueste freigegebene Fassung, beim Produkt vor der allgemeinen
+ * (templates.ts rankOutreach). Nie zurück auf eine ältere Fassung (v3 „Ich bin kein Mensch …“), solange eine neuere
+ * freigegeben ist. Nach Freitext bzw. einer Vorlage ohne PDF folgt die Erstinformation, sobald das Fenster offen ist.
  */
 export async function sendOutreach(opts: { customerId: string; leadId: string; phone: string; name: string | null; an: Ansprache; source: string | null }) {
   const m = await outreachMessage(opts);
-  const send = (purpose: NoticePurpose, paramsFor: typeof m.paramsFor, text: string, variant = m.variant) =>
-    sendWhatsAppNotice({
-      customerId: opts.customerId,
-      to: opts.phone,
-      purpose,
-      params: paramsFor({ version: 5, ansprache: opts.an }),
-      paramsFor,
-      legacyParams: m.legacyParams,
-      text,
-      leadId: opts.leadId,
-      contactName: opts.name,
-      anrede: m.who.kontakt,
-      document: m.document,
-      variant,
-    });
-  let notice;
-  try {
-    notice = await send(m.purpose, m.paramsFor, m.text);
-  } catch (err) {
-    if (!(err instanceof NoTemplateError) || m.purpose === "outreach") throw err;
-    const first = firstNameOf(opts.name);
-    const url = m.legacyParams[1];
-    notice = await send("outreach", (p) => (p.version >= 4 ? [first] : [first, url]), m.textAllgemein, "a");
-  }
+  const notice = await sendWhatsAppNotice({
+    customerId: opts.customerId,
+    to: opts.phone,
+    purpose: m.purpose,
+    params: m.paramsFor({ version: 5, ansprache: opts.an }),
+    paramsFor: m.paramsFor,
+    legacyParams: m.legacyParams,
+    text: m.text,
+    leadId: opts.leadId,
+    contactName: opts.name,
+    anrede: m.who.kontakt,
+    document: m.document,
+    outreach: { fallbackPurposes: m.purpose === "outreach" ? [] : ["outreach"], documentEntwurf: m.documentEntwurf },
+    variant: m.variant,
+  });
   // Fenster offen (Freitext): Erstinformation gleich als PDF hinterher (Nachricht 2, § 16 VersVermV; Rückfall Link).
   // Nach einer Vorlage mit PDF im Kopf ist sie schon da; nach einer Vorlage ohne Kopf folgt das PDF mit der ersten
   // Antwort (lib/whatsapp/erstinfo-pdf.ts).
@@ -277,7 +274,7 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
 
       try {
         const notice = await sendOutreach({ customerId: agent.customerId, leadId: lead.id, phone, name: lead.name, an, source });
-        logTestLead(lead, "outreach sent", { mode: notice.mode, waMessageId: notice.messageId ?? "none", conversation: notice.conversationId, variant: notice.variant, pdfHeader: notice.documentHeader });
+        logTestLead(lead, "outreach sent", { mode: notice.mode, waMessageId: notice.messageId ?? "none", conversation: notice.conversationId, variant: notice.variant, pdfHeader: notice.documentHeader, purpose: notice.purpose, version: notice.version, pdf: notice.pdf });
         // Kam der Status „kein WhatsApp“ schon während des Sendens (Webhook), bleibt „no_whatsapp“ stehen
         await prisma.lead.updateMany({
           where: { id: lead.id, waUnavailableAt: null },
@@ -290,8 +287,11 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         result.sent++;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logTestLead(lead, "outreach failed", { reason: err instanceof NoTemplateError ? "no_template" : msg.replace(/\d{6,}/g, "#").slice(0, 120) });
-        if (err instanceof NoTemplateError) {
+        logTestLead(lead, "outreach failed", { reason: err instanceof NoTemplateError ? "no_template" : err instanceof ErstinfoPdfFehltError ? "no_pdf" : msg.replace(/\d{6,}/g, "#").slice(0, 120) });
+        if (err instanceof ErstinfoPdfFehltError) {
+          // PDF der Erstinformation nicht erzeugbar: erneut versuchen (kein Rückfall auf eine ältere Fassung)
+          await prisma.lead.update({ where: { id: lead.id }, data: { outreachStatus: "no_pdf" } });
+        } else if (err instanceof NoTemplateError) {
           // Kein outreachAt → wird erneut versucht, sobald die Vorlage da ist.
           await prisma.lead.update({
             where: { id: lead.id },

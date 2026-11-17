@@ -29,8 +29,9 @@ export type OutreachProdukt = {
   /** Frage 2 als reine Frage (Sie bzw. Du), z. B. als erste Frage, wenn Frage 1 schon im Formular steht. */
   frage2Sie: string;
   frage2Du: string;
-  /** Feld in record_qualification für die Antwort auf Frage 1. */
+  /** Feld in record_qualification für die Antwort auf Frage 1 bzw. 2. */
   feld1: string;
+  feld2: string;
   /** Emoji hinter dem Dank (nur Freitext; die Vorlage bleibt je Zweck gleich). */
   emoji?: string;
   /** Tier der Tierkrankenversicherung (für „Wie alt ist Ihre Katze?“). */
@@ -77,6 +78,7 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
       frage2Sie: "Soll vor allem eine Operation abgesichert sein, oder auch die normale Tierarztbehandlung?",
       frage2Du: "Soll vor allem eine Operation abgesichert sein, oder auch die normale Tierarztbehandlung?",
       feld1: "tier",
+      feld2: "tarifwunsch",
       emoji: TIER_EMOJI[tier],
       tier,
     };
@@ -97,6 +99,7 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
       frage2Sie: "Sind Sie gesetzlich krankenversichert?",
       frage2Du: "Bist du gesetzlich krankenversichert?",
       feld1: "tarifwunsch",
+      feld2: "vorhanden",
     };
   }
   if (PKV.test(s) && !/kinderwunsch/i.test(s)) {
@@ -111,6 +114,7 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
       frage2Sie: "Sind Sie aktuell gesetzlich oder schon privat krankenversichert?",
       frage2Du: "Bist du aktuell gesetzlich oder schon privat krankenversichert?",
       feld1: "beruf",
+      feld2: "vorhanden",
     };
   }
   if (PRIVATSCHUTZ.test(s) && !/tier|hund|katze|pferd/i.test(s)) {
@@ -125,6 +129,7 @@ export function outreachProdukt(source: string | null | undefined): OutreachProd
       frage2Sie: "Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?",
       frage2Du: "Wer soll versichert werden: nur du, mit Partner oder die ganze Familie?",
       feld1: "interesse",
+      feld2: "versichern",
       emoji: "🏠",
     };
   }
@@ -137,8 +142,11 @@ export type FormAntwort = { label: string; value: string };
 const BEKANNT: Partial<Record<NoticePurpose, { frage1?: RegExp; frage2?: RegExp }>> = {
   outreach_tkv: { frage1: /geburtsjahr|^alter\b|alter \(tier\)|alter des tieres/i },
   outreach_pkv: { frage1: /^situation\b|berufliche situation|^beruf\b/i, frage2: /gesetzlich oder privat|wie lange in pkv|aktuelle versicherung/i },
-  outreach_privatschutz: { frage1: /versicherungsinteresse/i, frage2: /lebenssituation/i },
+  outreach_privatschutz: { frage1: /versicherungsinteresse/i, frage2: /lebenssituation|familienstand|zu versichernde/i },
 };
+
+/** Formularfelder, die schon sagen, ob es bestehende Verträge gibt (Privatschutz: Frage „schon versichert?“). */
+const BEKANNT_VORHANDEN = /vorversicherung|bereits versichert|schon versichert|bestehende versicherung|aktuelle versicherung|vorhandene versicherung/i;
 
 /**
  * Antworten auf Frage 1 und 2 aus dem Leadformular (Ole, 17.11.2026: nichts erneut fragen, was bekannt ist), z. B.
@@ -153,7 +161,7 @@ export function bekannteAntworten(p: OutreachProdukt | null, formular: FormAntwo
   return { frage1: find(re?.frage1), frage2: find(re?.frage2) };
 }
 
-/** Frage nach dem Termin, wenn das Formular Frage 1 und 2 schon beantwortet (Video zuerst, Ole 16.11.2026). */
+/** Frage nach dem Termin, wenn das Formular alle Fragen vor dem Termin schon beantwortet (nur Video, Ole 17.11.2026). */
 export function terminFrage(an: Ansprache, name: string): string {
   return a(an, `Passt dir ein kurzer Videotermin mit ${name} in den nächsten Tagen?`, `Passt Ihnen ein kurzer Videotermin mit ${name} in den nächsten Tagen?`);
 }
@@ -167,11 +175,108 @@ export const OUTREACH_ALLGEMEIN = {
 /** Frage 1 der bei Meta noch freigegebenen v4 (Tierkrankenversicherung), bis v5 freigegeben ist. */
 export const TKV_V4 = { frage1: "Für welches Tier suchen Sie den Schutz?", knoepfe: ["Hund", "Katze"] } as const;
 
+/** Höchstens so viele Fragen vor dem Terminvorschlag, die Frage im Erstanschreiben mitgezählt (Ole, 17.11.2026). */
+export const MAX_FRAGEN_VOR_TERMIN = 2;
+
+/** Eine Frage vor dem Termin, verknüpft mit dem Formularfeld, das sie beantwortet. */
+export type PlanFrage = {
+  key: "frage1" | "frage2" | "vorhanden";
+  /** Feld in record_qualification */
+  feld: string;
+  sie: string;
+  du: string;
+  /** Hinweis für den Assistenten (z. B. Art. 9 DSGVO beim Zahn) */
+  hinweis?: string;
+  /** Antwort aus dem Formular („Versicherungsinteresse: Haftpflicht, Hausrat“), null = offen */
+  bekannt: string | null;
+};
+
+/** Frage im Erstanschreiben, die nicht im Plan steht: ältere TKV-Frage bzw. Frage nach dem Videotermin. */
+type SonstigeFrage = { key: "tier_v4" | "termin"; sie: string; du: string; feld: string; bekannt: null };
+
+export type Frageplan = {
+  produkt: OutreachProdukt | null;
+  /** Alle Fragen des Produkts vor dem Termin, mit bekannter Antwort aus dem Formular */
+  fragen: PlanFrage[];
+  /** Die Frage, die unser Erstanschreiben gestellt hat (auch wenn das Formular sie schon beantwortet), sonst null */
+  gestellt: PlanFrage | SonstigeFrage | null;
+  /** Noch zu stellen, in dieser Reihenfolge (höchstens MAX_FRAGEN_VOR_TERMIN, die gestellte mitgezählt) */
+  offen: PlanFrage[];
+};
+
+/** Sparten aus „Haftpflicht, Hausrat“ als Wörter für die Frage nach bestehenden Verträgen. */
+function spartenWoerter(interesse: string | null): string[] {
+  const t = interesse ?? "";
+  const out: string[] = [];
+  if (/haftpflicht/i.test(t.replace(/tierhalter-?\s*haftpflicht/gi, ""))) out.push("Haftpflicht");
+  if (/hausrat/i.test(t)) out.push("Hausrat");
+  if (/rechtsschutz/i.test(t)) out.push("Rechtsschutz");
+  if (/wohngeb(ä|a)ude/i.test(t)) out.push("Wohngebäude");
+  if (/unfall/i.test(t)) out.push("Unfall");
+  return out;
+}
+
+/** „Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?“ (Ole, 17.11.2026). */
+export function vorhandenFrage(interesse: string | null): { sie: string; du: string } {
+  const w = spartenWoerter(interesse);
+  if (w.length >= 2) {
+    const liste = `${w.slice(0, -1).join(", ")} und ${w.at(-1)}`;
+    const t = `Sind ${liste} schon irgendwo versichert, oder wäre ${w.length === 2 ? "beides" : "alles"} neu?`;
+    return { sie: t, du: t };
+  }
+  if (w.length === 1) return { sie: `Sind Sie bei ${w[0]} schon irgendwo versichert, oder wäre es neu?`, du: `Bist du bei ${w[0]} schon irgendwo versichert, oder wäre es neu?` };
+  return { sie: "Sind Sie dafür schon irgendwo versichert, oder wäre es neu?", du: "Bist du dafür schon irgendwo versichert, oder wäre es neu?" };
+}
+
+const TERMIN_RE = /Videotermin mit .+ in den nächsten Tagen\?/;
+
 /**
- * Prompt-Block für den Assistenten: Die erste Frage stand schon im Erstanschreiben, eine Antwort per Knopf (oder
- * frei) ist die Antwort auf Frage 1. Danach Frage 2, dann Termine.
- *   opts.gesendet: Text des tatsächlich gesendeten Erstanschreibens (ältere Vorlage v4 hatte bei Tieren eine andere Frage)
- *   opts.jetzt: Der Lead hat zuerst geschrieben, Frage 1 wurde noch nicht gestellt: jetzt am Ende stellen (fett)
+ * Frageplan vor dem Termin (Ole, 17.11.2026, rein): Jede Frage ist mit dem Formularfeld verknüpft, das sie beantwortet;
+ * Bekanntes (auch Mehrfachauswahl wie „Haftpflicht, Hausrat“) gilt als beantwortet und wird übersprungen. Höchstens
+ * MAX_FRAGEN_VOR_TERMIN Fragen samt der im Erstanschreiben, danach sofort der Terminvorschlag.
+ */
+export function frageplan(source: string | null | undefined, formular: FormAntwort[] | null | undefined, opts: { gesendet?: string | null } = {}): Frageplan {
+  const p = outreachProdukt(source);
+  const gesendet = opts.gesendet ?? "";
+  const termin: SonstigeFrage | null = TERMIN_RE.test(gesendet) ? { key: "termin", sie: "", du: "", feld: "wunsch", bekannt: null } : null;
+  if (!p) return { produkt: null, fragen: [], gestellt: termin, offen: [] };
+  const bekannt = bekannteAntworten(p, formular);
+  const find = (re: RegExp) => {
+    const hit = (formular ?? []).find((x) => re.test(x.label.trim()) && x.value?.trim());
+    return hit ? `${hit.label}: ${hit.value.trim()}` : null;
+  };
+  const fragen: PlanFrage[] = [
+    { key: "frage1", feld: p.feld1, sie: p.frage1, du: p.frage1Du, bekannt: bekannt.frage1 },
+    { key: "frage2", feld: p.feld2, sie: p.frage2Sie, du: p.frage2Du, hinweis: p.frage2, bekannt: bekannt.frage2 },
+  ];
+  if (p.purpose === "outreach_privatschutz") {
+    const v = vorhandenFrage((formular ?? []).find((x) => /versicherungsinteresse/i.test(x.label))?.value ?? null);
+    fragen.push({ key: "vorhanden", feld: "vorhanden", sie: v.sie, du: v.du, bekannt: find(BEKANNT_VORHANDEN) });
+  }
+  const istIn = (f: { sie: string; du: string }) => !!gesendet && (gesendet.includes(f.sie) || gesendet.includes(f.du));
+  const gestellt: PlanFrage | SonstigeFrage | null =
+    p.purpose === "outreach_tkv" && gesendet.includes(TKV_V4.frage1)
+      ? { key: "tier_v4", sie: TKV_V4.frage1, du: TKV_V4.frage1, feld: "tier", bekannt: null }
+      : (fragen.find(istIn) ?? termin);
+  const rest = Math.max(0, MAX_FRAGEN_VOR_TERMIN - (gestellt ? 1 : 0));
+  const offen = gestellt?.key === "termin" ? [] : fragen.filter((f) => !f.bekannt && f !== gestellt).slice(0, rest);
+  return { produkt: p, fragen, gestellt, offen };
+}
+
+/** Prompt-Regel: Formularangaben gelten als beantwortet, kurz bestätigen statt abfragen (Ole, 17.11.2026). */
+export function formularRegel(an: Ansprache): string {
+  return [
+    "Angaben aus dem Leadformular gelten als beantwortet, auch Mehrfachauswahl (z. B. „Haftpflicht, Hausrat“ heißt: beides).",
+    `- Greif sie höchstens einmal kurz und natürlich auf (z. B. ${a(an, "„Haftpflicht und Hausrat für deine Familie, alles klar.“", "„Haftpflicht und Hausrat für Ihre Familie, alles klar.“")}) und frag sie nicht erneut ab, auch nicht umformuliert.`,
+    "- Keine Rückfragen zum Schwerpunkt oder zur Bestätigung von Bekanntem, z. B. nie „Worum geht es Ihnen dabei vor allem?“, „Was ist Ihnen davon am wichtigsten?“ oder „Habe ich richtig verstanden, dass …?“.",
+  ].join("\n");
+}
+
+/**
+ * Prompt-Block für den Assistenten vor dem Termin (Frageplan): was das Erstanschreiben gefragt hat, was das Formular
+ * schon beantwortet und welche Fragen (höchstens eine bis zwei) noch offen sind; danach sofort der Terminvorschlag.
+ *   opts.gesendet: Text des tatsächlich gesendeten Erstanschreibens
+ *   opts.jetzt: Der Lead hat zuerst geschrieben, es wurde noch nichts gefragt: die erste offene Frage jetzt stellen (fett)
  */
 export function ersteFrageRegel(
   source: string | null | undefined,
@@ -179,22 +284,18 @@ export function ersteFrageRegel(
   opts: { gesendet?: string | null; jetzt?: boolean; an?: Ansprache; formular?: FormAntwort[] | null } = {},
 ): string {
   const an = opts.an ?? "sie";
-  const p = outreachProdukt(source);
+  const plan = frageplan(source, opts.formular, { gesendet: opts.jetzt ? null : opts.gesendet });
+  const p = plan.produkt;
+  const termine = "setze qualifiziert=true und mach sofort den Terminvorschlag (siehe „Terminvorschlag“).";
   if (!p) {
     if (opts.jetzt) return "";
+    if (plan.gestellt?.key === "termin") return `Erste Frage (stand schon in unserer ersten WhatsApp): „${terminFrage(an, advisorName)}“.\n- Sagt der Lead ja oder nennt er einen Tag: ${termine}`;
     return [
       `Erste Frage (stand schon in unserer ersten WhatsApp): „Wann erreicht ${advisorName} Sie am besten für ein kurzes Telefonat?“ mit den Knöpfen ${OUTREACH_ALLGEMEIN.knoepfe.map((k) => `„${k}“`).join(", ")}.`,
-      "- Antwortet der Lead „Heute“ oder „Morgen“ (Knopf oder frei): halte das als Wunsch fest (angaben.wunsch), hole mit get_available_slots freie Zeiten und biete zwei Zeiten an diesem Tag an (gibt es keine, die nächsten). Frag vor der Buchung, ob Telefon oder Video.",
-      "- „Lieber schriftlich“: kein Problem, mach im Chat weiter: frag in einem Satz, worum es genau geht, und biete erst danach einen Termin an.",
+      "- Antwortet der Lead „Heute“ oder „Morgen“ (Knopf oder frei): halte das als Wunsch fest (angaben.wunsch) und mach den Terminvorschlag mit zwei freien Zeiten an diesem Tag (gibt es keine, die nächsten).",
+      "- „Lieber schriftlich“: kein Problem, mach im Chat weiter: frag in einem Satz, worum es genau geht, dann der Terminvorschlag.",
     ].join("\n");
   }
-  const bekannt = bekannteAntworten(p, opts.formular);
-  const termine = "setze qualifiziert=true und biete direkt zwei konkrete Termine an (get_available_slots). Weitere Angaben fürs Angebot fragst du erst nach der Buchung ab.";
-  const v4Tier = p.purpose === "outreach_tkv" && !!opts.gesendet && opts.gesendet.includes("Für welches Tier");
-  const frage1 = v4Tier ? TKV_V4.frage1 : a(an, p.frage1Du, p.frage1);
-  const frage2 = a(an, p.frage2Du, p.frage2Sie);
-  const knoepfe: readonly string[] = v4Tier ? TKV_V4.knoepfe : p.knoepfe;
-  const mitKnoepfen = knoepfe.length ? ` mit den Knöpfen ${knoepfe.map((k) => `„${k}“`).join(", ")}` : "";
   const zahn =
     p.purpose === "outreach_zahn"
       ? [
@@ -202,46 +303,34 @@ export function ersteFrageRegel(
           "- Frag nie, ob der Lead selbst Zahnersatz, eine Behandlung oder eine Zahnreinigung braucht, und nie nach Befunden oder Beschwerden. Erzählt er von sich aus etwas zu seinen Zähnen, halte es nicht fest und sag: „Das klären wir am besten im Gespräch.“",
         ]
       : [];
-  const ausFormular = [bekannt.frage1, bekannt.frage2].filter(Boolean).join("; ");
-  const formHinweis = ausFormular ? [`- Aus dem Leadformular schon bekannt (nicht erneut fragen, höchstens kurz aufgreifen): ${ausFormular}.`] : [];
-  // Welche Frage stand im Erstanschreiben? Der Freitext fragt, was das Formular noch offenlässt (erstanschreibenText).
-  const gesendet = opts.gesendet ?? "";
-  const stand2 = !!gesendet && !gesendet.includes(frage1) && gesendet.includes(frage2);
-  const standTermin = !!gesendet && gesendet.includes("Videotermin") && !gesendet.includes(frage1) && !gesendet.includes(frage2);
-  if (!opts.jetzt && (stand2 || standTermin)) {
-    return [
-      `Erste Frage (stand schon in unserer ersten WhatsApp): „${stand2 ? frage2 : terminFrage(an, advisorName)}“.`,
-      ...formHinweis,
-      ...zahn,
-      stand2
-        ? `- Die nächste Nachricht des Leads ist die Antwort darauf: mit record_qualification festhalten, kurz bestätigen und dann ${termine}`
-        : `- Die nächste Nachricht des Leads ist die Antwort darauf. Sagt er ja oder nennt er eine Zeit: ${termine} Möchte er lieber telefonieren, ist das genauso gut.`,
-    ].join("\n");
+  const text = (f: { sie: string; du: string }) => a(an, f.du, f.sie);
+  const bekannt = plan.fragen.filter((f) => f.bekannt);
+  const lines: string[] = ["Fragen vor dem Termin (Frageplan, hat Vorrang vor anderen Fragelisten):"];
+  const g = opts.jetzt ? null : plan.gestellt;
+  if (g) {
+    const knoepfe: readonly string[] = g.key === "tier_v4" ? TKV_V4.knoepfe : g.key === "frage1" ? p.knoepfe : [];
+    const frage = g.key === "termin" ? terminFrage(an, advisorName) : text(g);
+    lines.push(
+      `- Unsere erste WhatsApp hat gefragt: „${frage}“${knoepfe.length ? ` (Knöpfe ${knoepfe.map((k) => `„${k}“`).join(", ")})` : ""}. Die nächste Nachricht des Leads (per Knopf oder frei) ist die Antwort darauf: mit record_qualification festhalten (angaben.${g.feld}), kurz bestätigen, nicht erneut fragen.`,
+    );
+    if (g.bekannt) lines.push(`- Diese Frage stand fest in der Vorlage, das Formular beantwortet sie aber schon (${g.bekannt}): sie gilt als beantwortet. Was der Lead darauf antwortet (Knopf, „ja“ oder Text), nimm es auf und verfolge die Frage nicht weiter, keine Rückfrage dazu.`);
+  } else if (!opts.jetzt && opts.gesendet) {
+    lines.push("- Unsere erste WhatsApp war eine ältere Fassung ohne diese Fragen. Antwortet der Lead nur „Ja“ o. Ä., ist das die Zustimmung: weiter mit dem Plan unten.");
   }
+  if (bekannt.length) lines.push(`- Aus dem Leadformular schon beantwortet (nicht fragen): ${bekannt.map((f) => f.bekannt).join("; ")}.`);
   if (opts.jetzt) {
-    // Der Lead hat zuerst geschrieben: die erste noch offene Frage stellen, sonst direkt Termine
-    const offen = !bekannt.frage1 ? frage1 : !bekannt.frage2 ? frage2 : null;
-    if (!offen) return [...formHinweis, ...zahn, `- Frage 1 und 2 beantwortet das Formular schon. Beantworte kurz, was der Lead geschrieben hat, dann ${termine}`].join("\n");
-    return [
-      `Erste Frage: „${offen}“. Der Lead hat zuerst geschrieben, die Frage wurde noch nicht gestellt. Beantworte kurz, was er geschrieben hat (falls nötig), und schließe deine Antwort mit genau dieser Frage als eigener letzter Zeile, fett mit Sternchen: *${offen}*`,
-      ...formHinweis,
-      `- Die nächste Nachricht des Leads ist dann die Antwort darauf: mit record_qualification festhalten${offen === frage1 ? ` (angaben.${p.feld1})` : ""} und kurz bestätigen.`,
-      ...zahn,
-      offen === frage1 && !bekannt.frage2 ? `- Dann Frage 2: ${p.frage2}` : "",
-      `- Danach ${termine}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    if (!plan.offen.length) return [...lines, ...zahn, `- Keine Frage offen. Beantworte kurz, was der Lead geschrieben hat, dann ${termine}`].join("\n");
+    const erste = text(plan.offen[0]);
+    lines.push(`- Der Lead hat zuerst geschrieben. Beantworte kurz, was er geschrieben hat (falls nötig), und schließe deine Antwort mit genau dieser Frage als eigener letzter Zeile, fett mit Sternchen: *${erste}*`);
+    lines.push(`- Die nächste Nachricht des Leads ist die Antwort darauf: mit record_qualification festhalten (angaben.${plan.offen[0].feld}) und kurz bestätigen.`);
+    if (plan.offen[1]) lines.push(`- Dann genau noch diese Frage: „${text(plan.offen[1])}“ (angaben.${plan.offen[1].feld}${plan.offen[1].hinweis ? `; ${plan.offen[1].hinweis}` : ""}).`);
+  } else if (plan.offen.length) {
+    lines.push(`- Danach noch ${plan.offen.length === 1 ? "genau diese Frage" : "genau diese Fragen, je eine pro Nachricht"}: ${plan.offen.map((f) => `„${text(f)}“ (angaben.${f.feld}${f.hinweis ? `; ${f.hinweis}` : ""})`).join(", dann ")}. Sonst nichts fragen.`);
+  } else {
+    lines.push("- Weitere Fragen vor dem Termin gibt es nicht.");
   }
-  return [
-    `Erste Frage (stand schon in unserer ersten WhatsApp): „${frage1}“${mitKnoepfen}.`,
-    `- Die nächste Nachricht des Leads (${knoepfe.length ? `per Knopf oder frei, z. B. „${knoepfe[0]}“` : "frei, z. B. „3 Jahre“"}) ist die Antwort auf diese Frage 1: nicht erneut fragen, sondern mit record_qualification festhalten (angaben.${p.feld1}) und kurz bestätigen.`,
-    ...formHinweis,
-    ...zahn,
-    bekannt.frage2
-      ? `- Frage 2 („${frage2}“) beantwortet das Formular schon (${bekannt.frage2}): nicht fragen. Nach der Antwort auf Frage 1 ${termine}`
-      : `- Dann Frage 2: ${p.frage2}\n- Nach Frage 2 ${termine}`,
-  ].join("\n");
+  lines.push(`- Danach ${termine}`);
+  return [...lines, ...zahn].join("\n");
 }
 
 /**
@@ -251,7 +340,7 @@ export function ersteFrageRegel(
 export function enthaeltErsteFrage(text: string | null | undefined, source: string | null | undefined): boolean {
   const p = outreachProdukt(source);
   if (!p || !text) return false;
-  return [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) || /Videotermin mit .+ in den nächsten Tagen\?/.test(text);
+  return [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) || /schon irgendwo versichert, oder wäre/.test(text) || /Videotermin mit .+ in den nächsten Tagen\?/.test(text);
 }
 
 /** Woher kommt der Kontakt? „anfrage“ = Leadformular (Meta, Funnel), „nachricht“ = hat uns zuerst per WhatsApp geschrieben. */
@@ -305,10 +394,8 @@ export function erstanschreibenKopf(o: ErstanschreibenOpts): string {
 export function ersteFrage(source: string | null | undefined, an: Ansprache, name: string, formular?: FormAntwort[] | null): string {
   const p = outreachProdukt(source);
   if (p) {
-    const bekannt = bekannteAntworten(p, formular);
-    if (!bekannt.frage1) return a(an, p.frage1Du, p.frage1);
-    if (!bekannt.frage2) return a(an, p.frage2Du, p.frage2Sie);
-    return terminFrage(an, name);
+    const offen = frageplan(source, formular).offen[0];
+    return offen ? a(an, offen.du, offen.sie) : terminFrage(an, name);
   }
   return a(an, `Wann erreicht ${name} dich am besten für ein kurzes Telefonat?`, `Wann erreicht ${name} Sie am besten für ein kurzes Telefonat?`);
 }

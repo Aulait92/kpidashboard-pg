@@ -8,7 +8,9 @@
 //
 // Reine Funktionen (auch im Browser). Schalter laden und speichern: lib/preise/pilot-server.ts.
 
-import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
+import { angabenFuerSparte, plzAus } from "@/lib/preise/rechner-angaben";
+
+export { plzAus };
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 
 /** Offizielle Rechner je Gesellschaft und Sparte (Schlüssel wie im Tarifkatalog). */
@@ -50,91 +52,14 @@ export function rechnerUrl(aktiv: readonly string[], gesellschaft: string | null
 
 export type RechnerAngabe = { label: string; wert: string | null };
 
-const formWert = (d: VorbereitungDaten, re: RegExp) => d.formular.find((f) => re.test(f.label))?.value?.replace(/\s+/g, " ").trim() || null;
-
-/** Nur die Postleitzahl (Datensparsamkeit: die Straße braucht nur der Wohngebäude-Rechner). */
-export function plzAus(...texte: (string | null | undefined)[]): string | null {
-  for (const t of texte) {
-    const m = t?.match(/\b\d{5}\b/);
-    if (m) return m[0];
-  }
-  return null;
-}
-
 /**
- * Die Angaben, die der offizielle Rechner der Sparte fragt, aus Lead, Formular und Angaben des Assistenten.
- * Bewusst nicht dabei: Namen, Telefonnummer, E-Mail und Gesundheitsangaben zu Menschen. Fehlt eine Angabe, ist der
- * Wert null (die Oberfläche zeigt „im Termin klären“).
+ * Die Angaben, die der offizielle Rechner der Sparte fragt, aus Lead, Formular und Angaben des Assistenten. Quelle je
+ * Sparte: lib/preise/rechner-angaben.ts (dieselbe wie für die Folgefragen des Assistenten). Bewusst nicht dabei: Namen,
+ * Telefonnummer, E-Mail und Gesundheitsangaben zu Menschen. Fehlt eine Angabe, ist der Wert null (die Oberfläche zeigt
+ * „im Termin klären“).
  */
 export function rechnerAngaben(d: VorbereitungDaten, sparte: string): RechnerAngabe[] {
-  const a = Object.fromEntries(qualificationPoints(d.angaben).map((p) => [p.key, p.value])) as Partial<Record<QualificationKey, string>>;
-  const q = (k: QualificationKey): string | null => a[k]?.replace(/\s+/g, " ").trim() || null;
-  const adresse = d.lead.adresse ?? formWert(d, /adresse|anschrift/i);
-  const plz = plzAus(formWert(d, /postleitzahl|\bplz\b/i), adresse);
-  const geburt = q("geburt");
-  const leben = formWert(d, /lebenssituation|familienstand/i) ?? q("lebenssituation");
-  const tierTeile = (art: string) => {
-    const geburtTier = [formWert(d, /geburtsmonat/i), formWert(d, /geburtsjahr/i)].filter(Boolean).join(" ") || formWert(d, /geburtsdatum.*tier|alter.*tier/i);
-    return [
-      { label: "Tierart", wert: formWert(d, /tierart/i) ?? art },
-      { label: "Rasse", wert: formWert(d, /rasse/i) },
-      { label: "Geburtsmonat und -jahr des Tieres", wert: geburtTier },
-      { label: "Geschlecht des Tieres", wert: formWert(d, /geschlecht/i) },
-    ];
-  };
-
-  switch (sparte) {
-    case "katze-kranken":
-    case "katze-op":
-      return [{ label: "Postleitzahl", wert: plz }, ...tierTeile("Katze"), { label: "Haltung (Wohnung oder Freigänger)", wert: formWert(d, /haltung/i) }];
-    case "hund-kranken":
-    case "hund-op":
-      return [{ label: "Postleitzahl", wert: plz }, ...tierTeile("Hund")];
-    case "haftpflicht":
-      return [
-        { label: "Geburtsdatum", wert: geburt },
-        { label: "Familienstand (Single, Paar, Familie)", wert: leben },
-        { label: "Postleitzahl", wert: plz },
-        { label: "Öffentlicher Dienst", wert: q("beruf") },
-      ];
-    case "hausrat":
-      return [
-        { label: "Postleitzahl", wert: plz },
-        { label: "Wohnfläche", wert: q("wohnflaeche") },
-        { label: "Geburtsdatum", wert: geburt },
-      ];
-    case "rechtsschutz":
-      return [
-        { label: "Geburtsdatum", wert: geburt },
-        { label: "Familienstand (Single, Paar, Familie)", wert: leben },
-        { label: "Lebensbereiche", wert: q("bereiche") },
-        { label: "Beruf", wert: q("beruf") },
-      ];
-    case "wohngebaeude":
-      return [
-        { label: "Adresse des Gebäudes", wert: adresse ?? plz },
-        { label: "Gebäude (Fläche, Baujahr, Einheiten, Bauweise)", wert: q("gebaeude") },
-      ];
-    case "unfall":
-      return [
-        { label: "Wer versichert werden soll", wert: q("versichern") },
-        { label: "Geburtsdatum", wert: geburt },
-        { label: "Beruf", wert: q("beruf") },
-      ];
-    case "tierhalter-hund":
-      return [
-        { label: "Postleitzahl", wert: plz },
-        { label: "Hunderasse", wert: formWert(d, /rasse/i) },
-        { label: "Hunde (Anzahl, je Hund)", wert: formWert(d, /anzahl tiere/i) ?? q("tier") },
-      ];
-    case "tierhalter-pferd":
-      return [
-        { label: "Postleitzahl", wert: plz },
-        { label: "Pferde (Anzahl, Rasse, Nutzung)", wert: formWert(d, /anzahl tiere/i) ?? q("tier") },
-      ];
-    default:
-      return [];
-  }
+  return angabenFuerSparte({ formular: d.formular, angaben: d.angaben, adresse: d.lead.adresse }, sparte).map(({ label, wert }) => ({ label, wert }));
 }
 
 /**

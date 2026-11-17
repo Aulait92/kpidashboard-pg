@@ -35,24 +35,23 @@ describe("Privatschutz: Angaben fürs Angebot", () => {
     expect(c.fragen + c.unterlagen.join("")).not.toMatch(/[–—]/);
   });
 
-  it("steht im Prompt, ersetzt die 2-3-Antworten-Regel, nach Buchung weiter abfragen", () => {
+  // Ole, 17.11.2026: Die lange Checkliste steht nicht mehr im Prompt. Vor dem Termin gilt der Frageplan
+  // (erstanschreiben.ts), nach der Buchung nur die Rechner-Angaben (lib/preise/rechner-angaben.ts, nachBuchungRegel).
+  it("nicht mehr im Prompt: vor dem Termin Terminvorschlag, nach der Buchung die Angebotsfragen der App", () => {
     const p = buildSystemPrompt(agent, "Privatschutz", base);
-    expect(p).toContain("Pflichtangaben für das Angebot");
-    // Erst Termin, dann Fragen: vor der Buchung nur „Vor dem Termin“, Angaben danach
-    expect(p).toContain("Vor dem Termin (Privatschutz)");
-    expect(p).toContain("Diese Angaben fragst du NACH der Buchung ab");
-    expect(p).toContain("stelle direkt in der Buchungsbestätigung die erste offene Frage");
+    expect(p).not.toContain("Pflichtangaben für das Angebot");
+    expect(p).not.toContain("Hund oder Pferd im Haushalt");
+    expect(p).toContain("Terminvorschlag (sobald die Fragen vor dem Termin geklärt sind");
+    expect(p).toContain("Möchte der Lead schon vorher von sich aus einen Termin, mach ihn sofort");
     expect(p).not.toContain("meist nach 2-3 Antworten");
-    const booked = buildSystemPrompt(agent, "Privatschutz", { ...base, upcoming: { startsAt: new Date("2026-11-20T10:00:00Z"), mode: "phone", meetUrl: null } });
-    // nach der Buchung: fehlende Angaben weiter abfragen, keine zweite Buchung, Unterlagen-Regel nicht erneut
-    expect(booked).toContain("Pflichtangaben für das Angebot");
-    expect(booked).toContain("frag sie jetzt weiter ab");
-    expect(booked).not.toContain("Vor dem Termin (Privatschutz)");
-    expect(booked).toContain("Unterlagen: Sind die Angaben nach der Buchung geklärt");
-    expect(p).toContain("buche ihn sofort");
-    expect(p).toContain("Damit Susanne Meier das Angebot vorbereiten kann");
-    const zahn = buildSystemPrompt(agent, "Zahnzusatz", base);
-    expect(zahn).toContain("meist nach 2-3 Antworten");
+    const booked = buildSystemPrompt(agent, "Privatschutz", {
+      ...base,
+      upcoming: { startsAt: new Date("2026-11-20T10:00:00Z"), mode: "phone", meetUrl: null },
+      nachBuchung: "Nach der Buchung (der Termin steht):\n- Angebotsfragen …",
+    });
+    expect(booked).toContain("Nach der Buchung (der Termin steht)");
+    expect(booked).not.toContain("Terminvorschlag (sobald");
+    expect(booked).not.toContain("Pflichtangaben für das Angebot");
   });
 
   it("neue Angaben werden gespeichert", () => {
@@ -86,9 +85,9 @@ describe("Wiedervorlage vom Assistenten", () => {
 describe("Termin schon gebucht (Buchungsseite/Leadformular)", () => {
   it("bestätigt den Termin und fragt die Angaben weiter ab", () => {
     const p = buildSystemPrompt(agent, "Privatschutz", { ...base, upcoming: { startsAt: new Date("2026-11-20T10:00:00Z"), mode: "phone", meetUrl: null } });
-    expect(p).toContain("selbst über die Buchungsseite bzw. das Leadformular gebucht");
+    expect(p).toContain("selbst über die Buchungsseite gebucht");
     expect(p).toContain("bestätige ihn in deiner nächsten Nachricht kurz mit Datum und Uhrzeit");
-    expect(p).toContain("Pflichtangaben für das Angebot");
+    expect(p).not.toContain("Pflichtangaben für das Angebot");
   });
 });
 
@@ -100,8 +99,9 @@ describe("TKV: Gesundheit per Chat, Geburtsdatum des Halters", () => {
     expect(c.fragen + c.unterlagen.join("")).not.toMatch(/[–—]/);
     expect(produktCheckliste("Hundefutter")).toBeNull();
     expect(produktCheckliste("Tierkrankenversicherung Hund")?.key).toBe("tier");
+    // Im Prompt nicht mehr (Ole, 17.11.2026: Folgefragen nur nach der Rechner-Tabelle, nie Gesundheit im Chat)
     const p = buildSystemPrompt(agent, "TKV-Katze", base);
-    expect(p).toContain("Pflichtangaben für das Angebot (Tierkrankenversicherung)");
+    expect(p).not.toContain("Pflichtangaben für das Angebot (Tierkrankenversicherung)");
     expect(p).not.toContain("meist nach 2-3 Antworten");
   });
 

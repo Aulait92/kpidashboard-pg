@@ -112,10 +112,10 @@ describe("Kein WhatsApp", () => {
     expect(p!.body).toContain("+49 152");
     expect(pushes.some((x) => x.to === "admins")).toBe(false);
 
-    // E-Mail über das Postfach des Inhabers, Sie-Form, Anrede aus eindeutigem Vornamen (Ole, 16.11.2026), ohne Gedankenstriche
+    // E-Mail über das Postfach des Inhabers, Sie-Form, ohne Anrede im Formular mit vollem Namen (Ole, 17.11.2026), ohne Gedankenstriche
     expect(mails).toHaveLength(1);
-    expect(mails[0]).toMatchObject({ userId: ownerId, to: lead.email, subject: "Frau Winter, kurz zu Ihrer Zahnzusatzversicherung" });
-    expect(mails[0].text.startsWith("Guten Tag Frau Winter,")).toBe(true);
+    expect(mails[0]).toMatchObject({ userId: ownerId, to: lead.email, subject: "Kurz zu Ihrer Zahnzusatzversicherung" });
+    expect(mails[0].text.startsWith("Guten Tag,")).toBe(true);
     expect(mails[0].text).toMatch(/Antworten Sie gern|Termin wählen/);
     expect(mails[0].text).not.toMatch(/[–—]/);
     // Verlauf: protokolliert im Versandweg (lib/mail/kontakt-mail.ts, Test kontakt-mail-verlauf.test.ts)
