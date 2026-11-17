@@ -655,7 +655,11 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                 </AnrufLink>
                 {/* Handy: Schreiben übernimmt automatisch; dort nur „Assistent an“ zum Zurückgeben */}
                 {active.lead ? (
-                  <form action={toggleBotBuyerAction} className={active.botActive ? "hidden shrink-0 sm:block" : "shrink-0"}>
+                  <form
+                    action={toggleBotBuyerAction}
+                    className={active.botActive ? "hidden shrink-0 sm:block" : "shrink-0"}
+                    title={active.botActive ? "Selbst schreiben, der Assistent pausiert in diesem Chat" : "Der Assistent antwortet wieder für Sie"}
+                  >
                     <input type="hidden" name="conversationId" value={active.id} />
                     <SubmitButton pendingLabel="…" className={buttonClass("secondary", "md", "px-3 sm:px-4")}>
                       {active.botActive ? (

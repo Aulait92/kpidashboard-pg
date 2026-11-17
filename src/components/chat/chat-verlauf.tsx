@@ -148,7 +148,8 @@ export function ChatVerlauf<M extends VerlaufNachricht>({
       {eintraege.map((e) => {
         if (e.art === "tag") {
           return (
-            <div key={e.key} className="sticky top-0 z-10 flex justify-center py-2" data-day-separator>
+            // Nicht klebend: der Trenner lag beim Scrollen über dem Text der Blasen (UX-Prüfung 17.11.2026)
+            <div key={e.key} className="flex justify-center pb-1 pt-3" data-day-separator>
               <span className="rounded-full border border-[color:var(--border)] bg-white/95 px-3 py-0.5 text-xs font-semibold text-[color:var(--muted)] shadow-[var(--shadow-sm)]">
                 {e.label}
               </span>
