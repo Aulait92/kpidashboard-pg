@@ -954,7 +954,7 @@ export async function syncAirtable(): Promise<SyncResult> {
   // Bestehende Kunden einmal laden (statt je Kunde ein Upsert): unveränderte
   // Kunden brauchen keinen Schreibzugriff (Sentry: N+1 im Abgleich).
   const existingCustomers = new Map(
-    (await prisma.customer.findMany({ select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true } })).map((c) => [c.name, c]),
+    (await prisma.customer.findMany({ select: { id: true, name: true, region: true, retainerMonthly: true, retainerStart: true, metaAdAccountId: true, onboarding: { select: { offerId: true } } } })).map((c) => [c.name, c]),
   );
   for (const [name, c] of existingCustomers) if (!customerCache.has(name)) customerCache.set(name, c.id);
   for (const [buyerId, info] of buyerMap.entries()) {
@@ -962,12 +962,15 @@ export async function syncAirtable(): Promise<SyncResult> {
     if (!key) continue;
     if (bezugFetched && !buyersWithBezug.has(buyerId)) continue;
     syncedCustomerNames.add(key);
+    const prev = existingCustomers.get(key);
+    // Betreuungsgebühr aus einem angenommenen Angebot (Onboarding in der App) gehört der App: Airtable überschreibt
+    // Betrag und Start nicht mehr (Fall Anid 17.11.2026: Start 23.11. im Admin gesetzt, Abgleich setzte 01.12. zurück).
+    const appVerwaltet = !!prev?.onboarding?.offerId;
     const retainer = {
-      retainerMonthly: info.retainerMonthly && info.retainerMonthly > 0 ? info.retainerMonthly : null,
-      retainerStart: info.retainerStart,
+      retainerMonthly: appVerwaltet ? (prev!.retainerMonthly == null ? null : Number(prev!.retainerMonthly)) : info.retainerMonthly && info.retainerMonthly > 0 ? info.retainerMonthly : null,
+      retainerStart: appVerwaltet ? prev!.retainerStart : info.retainerStart,
       metaAdAccountId: info.metaAdAccountId,
     };
-    const prev = existingCustomers.get(key);
     const unchanged =
       prev &&
       (prev.region ?? null) === (info.region ?? null) &&
