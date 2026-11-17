@@ -1,0 +1,80 @@
+{
+  "gesellschaft": "Dialog",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäude (Dialog Privatschutz 2021)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Gleitender Neuwert",
+    "Ladestationen versichert",
+    "Wasser aus Klimaanlagen"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "bis 20.000 €",
+        "elementar": "optional",
+        "ableitung": "nein",
+        "pv": "nein",
+        "kosten": "bis 50.000 €",
+        "neuwert": "ja",
+        "ueberspannung": "bis 5.000 €",
+        "fugen": "nein",
+        "vandalismus": "nein",
+        "tiere": "nein",
+        "mietausfall": "12 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "ableitung": "nein",
+        "technik": "nein",
+        "notfall": "nein"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/5186/f898d1c62affbb873f4770fa5e16162c/Leistungs%C3%BCbersicht%20Wohngeb%C3%A4ude.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "bis 35.000 €",
+        "kosten": "ja",
+        "neuwert": "ja",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "ja",
+        "tiere": "Tierbiss 3.000 €",
+        "mietausfall": "24 Monate"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "ableitung": "optional",
+        "technik": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.dialog-versicherung.de/resource/blob/5186/f898d1c62affbb873f4770fa5e16162c/Leistungs%C3%BCbersicht%20Wohngeb%C3%A4ude.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.dialog-versicherung.de/produkte/privatkunden-komposit/wohngebaeude",
+    "https://www.dialog-versicherung.de/resource/blob/5186/f898d1c62affbb873f4770fa5e16162c/Leistungs%C3%BCbersicht%20Wohngeb%C3%A4ude.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Klassik und Premium (Dialog Privatschutz 2021, VGB 2008); keine Stufe hervorgehoben. Ältere Tarife Basis und KomfortPlus (2019) nicht erfasst.",
+    "Werte aus der Leistungsübersicht (Stand 01/2025): „versichert“ heißt im Rahmen der Versicherungssumme (teils bis 2,5 Mio. € je Fall).",
+    "Photovoltaik: Paket erneuerbare Energien im Premium bis 35.000 €. Ableitungsrohre außerhalb des Gebäudes im Premium zuwählbar (5.000 oder 10.000 €).",
+    "Vandalismus: Gebäudebeschädigungen durch unbefugte Dritte und Diebstahl versicherter Sachen nur Premium.",
+    "Wohngebäudeschutzbrief, haustechnische Gefahren und Bestleistungsgarantie nur im Premium zuwählbar. Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+  ]
+}

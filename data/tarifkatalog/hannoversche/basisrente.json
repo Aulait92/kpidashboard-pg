@@ -1,0 +1,54 @@
+{
+  "gesellschaft": "Hannoversche",
+  "sparte": "basisrente",
+  "produkt": "Rürup-Rente (Basisrente)",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslange Rente",
+    "Rentenbeginn 62 bis 80",
+    "Pfändungsgeschützt"
+  ],
+  "tarife": [
+    {
+      "name": "Basisrente / Klassik",
+      "kurz": "Klassik",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "klassisch",
+        "flexibel": "Zuzahlung ab 200 €",
+        "hinterbliebene": "optional",
+        "beitragspause": "bis 2 Jahre"
+      },
+      "quelle": "https://www.hannoversche.de/altersvorsorge/ruerup-rente",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Basisrente / Sofort",
+      "kurz": "Sofort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "anlage": "klassisch",
+        "flexibel": "Einmalbeitrag",
+        "hinterbliebene": "Garantiezeit optional"
+      },
+      "quelle": "https://www.hannoversche.de/dam/rue-re/werbedruckstuecke/broschuere-ruerup-rente.pdf",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hannoversche.de/altersvorsorge/ruerup-rente",
+    "https://www.hannoversche.de/dam/rue-re/werbedruckstuecke/broschuere-ruerup-rente.pdf",
+    "https://www.hannoversche.de/dam/produktuebergreifend/bedingungen/aktuelle-bedingungen-lebensversicherung.pdf"
+  ],
+  "offen": [
+    "Zwei Varianten: Klassik (laufende Beiträge oder Einmalbeitrag) und Sofort (sofort beginnende Rente gegen Einmalbeitrag ab 62 Jahren); keine Leistungsstufen, keine Variante hervorgehoben.",
+    "Beitragsgarantie und garantierter Rentenfaktor nicht beziffert; die Seite nennt „hohe garantierte Leistungen“ und eine garantierte lebenslange Rente.",
+    "Hinterbliebenenschutz: Beitragsrückgewähr (nur Klassik, vor Rentenbeginn) oder Rentengarantiezeit bis längstens Alter 90 (beide Varianten).",
+    "Flexibler Rentenbeginn zwischen 62 und 80 Jahren; Beiträge bis zu zwei Jahre aussetzbar; dynamische Beitragszahlung möglich.",
+    "Effektivkosten auf der Seite nicht genannt. Fondsgebundene Basisrente auf hannoversche.de nicht gefunden."
+  ]
+}

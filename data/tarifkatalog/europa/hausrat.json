@@ -1,0 +1,111 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "hausrat",
+  "produkt": "Hausratversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Grobe Fahrlässigkeit",
+    "Überspannung durch Blitz",
+    "Vandalismus nach Einbruch"
+  ],
+  "tarife": [
+    {
+      "name": "Hausrat Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "20 %",
+        "diebstahl": "nein",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "1.000 €",
+        "auto": "nein",
+        "ueberspannung": "ja",
+        "hotel": "100 €/Tag",
+        "aussen": "bis 3 Monate"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Komfort-Schutz",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 %",
+        "diebstahl": "bis 2.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "1.500 €",
+        "auto": "europaweit 1.000 €",
+        "ueberspannung": "ja",
+        "hotel": "150 €/Tag",
+        "aussen": "bis 1 Jahr"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Hausrat Premium-Schutz",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "wert": "30 %",
+        "diebstahl": "bis 5.000 €",
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "online": "optional",
+        "bargeld": "2.000 €",
+        "auto": "weltweit 5.000 €",
+        "ueberspannung": "ja",
+        "hotel": "200 €/Tag",
+        "aussen": "bis 1 Jahr"
+      },
+      "bausteine": {
+        "fahrrad": "optional",
+        "elementar": "optional",
+        "glas": "optional",
+        "internet": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.europa.de/versicherungen/hausratversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/hausratversicherung/",
+    "https://www.europa.de/fileadmin/pdf/produkte/hausrat/antragsdokumente/europa_hausrat_ipid.pdf"
+  ],
+  "offen": [
+    "Drei Tarife Basis, Komfort, Premium; keine Stufe von der EUROPA hervorgehoben (Premium mit Franke und Bornberg FFF bewertet), Komfort als mittlere Stufe.",
+    "Wertsachen in % der Versicherungssumme; Schmuck, Briefmarken, Münzen 20.000, 25.000 bzw. 30.000 €.",
+    "Einfacher Diebstahl auf dem Grundstück: Komfort bis 2.000 €, Premium bis 5.000 €; außerhalb des Versicherungsorts je bis 1.000 €.",
+    "Diebstahl aus dem Auto: Einbruchdiebstahl aus Kfz, Wohnmobil oder Anhänger.",
+    "Fahrraddiebstahl (individueller Wert), Elementar, Glas, Onlineschutz und Haus- und Wohnungsschutzbrief als Bausteine; Fahrradschutzbrief nur Premium."
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "gesellschaft": "Hannoversche",
+  "sparte": "grundfaehigkeit",
+  "produkt": "Grundfähigkeitsversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Leistung ab 1 Grundfähigkeit",
+    "Weltweiter Schutz",
+    "Startalter ab 6 Jahren"
+  ],
+  "tarife": [
+    {
+      "name": "Grundfähigkeitsversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "anzahl": "18",
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ja (als Grundfähigk.)",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Grundfähigkeitsversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "anzahl": "24",
+        "prognose": "6 Monate",
+        "psyche": "optional",
+        "pflege": "ja (als Grundfähigk.)",
+        "nachversicherung": "ja",
+        "weltweit": "ja",
+        "dynamik": "optional"
+      },
+      "bausteine": {
+        "ernst": "optional"
+      },
+      "quelle": "https://www.hannoversche.de/grundfaehigkeitsversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hannoversche.de/grundfaehigkeitsversicherung",
+    "https://www.hannoversche.de/dam/gfv/werbedruckstuecke/produktuebersicht-grundfaehigkeitsversicherung.pdf",
+    "https://www.hannoversche.de/dam/gfv/bedingungen/bedingungen-grundfaehigkeitsversicherung-aktuell.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Basis (18 Grundfähigkeiten) und Premium (24, zusätzlich u. a. Heben und Tragen, Knien und Bücken, Bildschirmtätigkeit); Hannoversche markiert Premium als „Unsere Empfehlung“.",
+    "Pflegebedürftigkeit (eigenständige Versorgung) und Demenz sind als Grundfähigkeiten versichert; eine eigene Pflegerente ist nicht genannt.",
+    "Bausteine frei kombinierbar: Psyche, Schwere Erkrankungen, Arbeitsunfähigkeits-Leistung (bis 24 Monate), Bauhandwerk.",
+    "Nachversicherung alle 5 Jahre oder zu Ereignissen ohne Risikoprüfung; Beitrags- und Leistungsdynamik wählbar; Wechseloption in die BU bei Abschluss vor 26.",
+    "Rückwirkende Leistung ab Verlust der Grundfähigkeit; Umstellung Basis auf Premium in den ersten 12 Monaten möglich."
+  ]
+}

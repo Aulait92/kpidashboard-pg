@@ -1,0 +1,69 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Forderungsausfall",
+    "Gefälligkeitsschäden",
+    "Ausland weltweit bis 3 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Basis-Schutz",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "nein",
+        "delikt": "bis 10.000 €",
+        "geliehen": "nein",
+        "miete": "1 Mio. €",
+        "gefaelligkeit": "ja",
+        "mallorca": "nein",
+        "drohne": "nein",
+        "nebenberuf": "nein"
+      },
+      "quelle": "https://www.cosmosdirekt.de/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Comfort-Schutz",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja",
+        "delikt": "bis 50.000 €",
+        "geliehen": "bis 20.000 €",
+        "miete": "50 Mio. €",
+        "gefaelligkeit": "ja",
+        "mallorca": "ja",
+        "drohne": "bis 250 g",
+        "nebenberuf": "bis 50.000 €"
+      },
+      "bausteine": {
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.cosmosdirekt.de/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/private-haftpflichtversicherung/",
+    "https://www.cosmosdirekt.de/resource/blob/600388/6ca8d3a8303337c78d233d81310c9ad3/BF_AH_1025.pdf"
+  ],
+  "offen": [
+    "Zwei Tarife Basis und Comfort, jeweils als Single-, Paar- oder Familientarif; keine Stufe von CosmosDirekt hervorgehoben (Stiftung Warentest 6/2026 bewertet Comfort Familie mit 0,9).",
+    "Geliehene Sachen im Comfort mit 250 € Selbstbeteiligung je Schaden; Schlüsselverlust privat und beruflich nur Comfort, Höhe nicht beziffert.",
+    "Selbstbeteiligung wählbar (Preisbeispiel 250 €), Höhen auf der Seite nicht vollständig genannt.",
+    "Ehrenamt bzw. Freiwilligenarbeit in beiden Tarifen versichert; Heizöltank (selbst bewohntes Haus) nur Comfort.",
+    "Hunde und Pferde nicht in der Privathaftpflicht, sondern in der eigenen Tierhalter-Haftpflicht."
+  ]
+}
