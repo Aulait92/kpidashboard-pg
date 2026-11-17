@@ -4,7 +4,7 @@
 // danach bietet er Termine an. Rein, ohne Datenbank.
 //
 // Neu aufgebaut (Ole, 16.11.2026, conversion-optimiert): genau EINE Begrüßung, Dank mit Produkt, ein Satz Nutzen mit
-// der KI-Kennzeichnung („digitaler KI-Assistent“, KI-VO Art. 50), dann die erste Frage fett als letzte Zeile.
+// der KI-Kennzeichnung („digitaler KI-Assistent“, KI-VO Art. 50), dann die erste Frage als letzte Zeile (ab v7 nicht fett).
 // Kein „Mensch“-Angebot und kein „berate nicht zu Tarifen“ in der ersten Nachricht: beides regelt der Assistent im
 // Gespräch (bot.ts). Name: Vorname des Vermittlers laut Profil, sonst der Agenturname, höchstens zweimal.
 // Die Erstinformation folgt direkt danach als PDF-Dokument (lib/whatsapp/erstinfo-pdf.ts).
@@ -13,6 +13,9 @@
 // nichts gefragt wird, was das Formular schon beantwortet; beantwortet es alles, die Frage nach dem Videotermin. Der
 // Vermittler steht als Person im Dativ („von Herrn Kannapinn“). Das „?“ und das Fett-Sternchen stehen fest hinter dem
 // Platzhalter (Meta: kein Platzhalter am Ende), die Frage geht ohne „?“ in den Platzhalter (frageOhneFragezeichen).
+//
+// v7 (Ole, 17.11.2026): gleicher Text, die erste Frage aber NICHT mehr fett (ohne Sternchen), in Vorlage und Freitext.
+// v6 bleibt bei Meta freigegeben und wird gesendet, bis v7 freigegeben ist (templates.ts rankOutreach).
 
 import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
@@ -26,6 +29,12 @@ import type { NoticePurpose } from "@/lib/whatsapp/templates";
 export const ERSTANSCHREIBEN_V6 = {
   sie: "danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*",
   du: "danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*",
+} as const;
+
+/** Erstanschreiben v7 (Ole, 17.11.2026): wie v6, die erste Frage ohne Sternchen (nicht fett). Aktueller Text. */
+export const ERSTANSCHREIBEN_V7 = {
+  sie: "danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?",
+  du: "danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?",
 } as const;
 
 /** Frage für den Platzhalter {{4}} (v6): ohne abschließendes „?“ (steht fest in der Vorlage). */
@@ -356,7 +365,7 @@ export function ersteFrageRegel(
   if (opts.jetzt) {
     if (!plan.offen.length) return [...lines, ...zahn, `- Keine Frage offen. Beantworte kurz, was der Lead geschrieben hat, dann ${termine}`].join("\n");
     const erste = text(plan.offen[0]);
-    lines.push(`- Der Lead hat zuerst geschrieben. Beantworte kurz, was er geschrieben hat (falls nötig), und schließe deine Antwort mit genau dieser Frage als eigener letzter Zeile, fett mit Sternchen: *${erste}*`);
+    lines.push(`- Der Lead hat zuerst geschrieben. Beantworte kurz, was er geschrieben hat (falls nötig), und schließe deine Antwort mit genau dieser Frage als eigener letzter Zeile (ohne Sternchen, nicht fett): ${erste}`);
     lines.push(`- Die nächste Nachricht des Leads ist die Antwort darauf: mit record_qualification festhalten (angaben.${plan.offen[0].feld}) und kurz bestätigen.`);
     if (plan.offen[1]) lines.push(`- Dann genau noch diese Frage: „${text(plan.offen[1])}“ (angaben.${plan.offen[1].feld}${plan.offen[1].hinweis ? `; ${plan.offen[1].hinweis}` : ""}).`);
   } else if (plan.offen.length) {
@@ -457,14 +466,15 @@ export function ersteFrageKnoepfe(source: string | null | undefined, formular?: 
  * Nachricht 1 des Erstanschreibens (Freitext im offenen Fenster), z. B.
  *   Hallo Herr Müller, danke für Ihre Anfrage zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von Herrn Kannapinn.
  *
- *   *Wie alt ist Ihre Katze?*
- * (Aufbau wie ERSTANSCHREIBEN_V6.)
+ *   Wie alt ist Ihre Katze?
+ * (Aufbau wie ERSTANSCHREIBEN_V7.)
  * Nachricht 2 ist das PDF der Erstinformation (lib/whatsapp/erstinfo-pdf.ts).
  */
 export function erstanschreibenText(o: ErstanschreibenOpts): string {
   const person = o.vermittler ? { nom: o.vermittlerNom || o.vermittler, dat: o.vermittler } : null;
   const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person));
-  return `${erstanschreibenKopf(o, { themaImmer: true })}\n\n*${frage}?*`;
+  // v7 (Ole, 17.11.2026): die erste Frage nicht fett
+  return `${erstanschreibenKopf(o, { themaImmer: true })}\n\n${frage}?`;
 }
 
 /** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */

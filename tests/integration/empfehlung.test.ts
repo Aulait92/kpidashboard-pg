@@ -629,6 +629,9 @@ describe("Empfehlungen & Bewertungen", () => {
     expect(thanks.map((n) => n.to)).toEqual([rec.phone]);
     expect(thanks[0].text).not.toContain("Hanna");
 
+    // Provision zählt im Zeitraum des Lead-Eingangs (bis „jetzt“). Lead-Eingang auf die feste Testzeit legen,
+    // sonst liegt er (echte Uhrzeit) nach NOW und der Test hängt vom Datum ab.
+    await prisma.lead.update({ where: { id: lead.id }, data: { createdAt: NOW } });
     const s = await loadEmpfehlungStats(id, 90, new Date(NOW.getTime() + 1000));
     expect(s.referralLeads).toBe(1);
     expect(s.referralClosings).toBe(1);

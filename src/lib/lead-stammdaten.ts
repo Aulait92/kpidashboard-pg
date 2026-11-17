@@ -8,6 +8,7 @@ import { logLeadHistory } from "@/lib/lead-history";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { namePartsFromForm, salutationFromForm, salutationOf, type Salutation } from "@/lib/ansprache";
 import { anredeBewusstOffen } from "@/lib/vorname-anrede";
+import { bereinigeWeitereEmails, parseWeitereEmails } from "@/lib/lead-emails";
 
 export type Stammdaten = {
   salutation: Salutation | null;
@@ -16,6 +17,8 @@ export type Stammdaten = {
   /** normalisiert ohne „+“, z. B. 4915112345678 */
   phone: string | null;
   email: string | null;
+  /** Weitere E-Mail-Adressen, mit „, “ verbunden (Lead.weitereEmails, lib/lead-emails.ts) */
+  weitereEmails: string;
   street: string;
   zip: string;
   city: string;
@@ -33,6 +36,7 @@ const LABEL: Record<keyof Stammdaten, string> = {
   lastName: "Nachname",
   phone: "Telefon",
   email: "E-Mail",
+  weitereEmails: "Weitere E-Mail",
   street: "Straße",
   zip: "Postleitzahl",
   city: "Ort",
@@ -77,7 +81,7 @@ function formAntwort(formData: unknown, re: RegExp): string {
 
 /** Aktuelle Stammdaten eines Leads (Korrekturen vor Formular vor Airtable-Feldern) */
 export function currentStammdaten(
-  lead: { name: string | null; phone: string | null; email: string | null; formData: unknown; contactOverrides: unknown },
+  lead: { name: string | null; phone: string | null; email: string | null; weitereEmails?: string[] | null; formData: unknown; contactOverrides: unknown },
   fields?: Record<string, unknown> | null,
 ): Stammdaten {
   const o = asOverrides(lead.contactOverrides);
@@ -93,6 +97,7 @@ export function currentStammdaten(
     lastName: o.lastName ?? parts.lastName ?? (f("Nachname") || words.slice(1).join(" ")),
     phone: lead.phone,
     email: lead.email,
+    weitereEmails: bereinigeWeitereEmails(lead.weitereEmails ?? [], lead.email).join(", "),
     // Adresse auch aus dem Leadformular (Leads ohne Airtable: Perspective, Meta), Ole 17.11.2026
     street: o.street ?? (f("Straße") || f("Strasse") || f("Straße und Hausnummer") || formAntwort(lead.formData, /^(stra(ß|ss)e( und hausnummer)?|street( address)?|street_address)$/i)),
     zip: o.zip ?? (f("Postleitzahl") || formAntwort(lead.formData, /^(postleitzahl|plz|zip( code)?|post[ _]?code|postal[ _]code)$/i)),
@@ -100,7 +105,7 @@ export function currentStammdaten(
   };
 }
 
-export type StammdatenInput = Record<keyof Stammdaten, string>;
+export type StammdatenInput = Record<Exclude<keyof Stammdaten, "weitereEmails">, string> & { weitereEmails?: string };
 
 /** Eingaben prüfen und normalisieren */
 export function parseStammdaten(input: Partial<StammdatenInput>): { ok: true; data: Stammdaten } | { ok: false; error: string } {
@@ -112,6 +117,8 @@ export function parseStammdaten(input: Partial<StammdatenInput>): { ok: true; da
   if (phoneRaw && !phone) return { ok: false, error: "Die Telefonnummer sieht nicht gültig aus. Beispiel: +49 171 1234567 oder 0171 1234567." };
   const email = str(input.email).toLowerCase() || null;
   if (email && !EMAIL_RE.test(email)) return { ok: false, error: "Die E-Mail-Adresse sieht nicht gültig aus." };
+  const weitere = parseWeitereEmails(str(input.weitereEmails), email);
+  if (!weitere.ok) return weitere;
   const zip = str(input.zip).slice(0, 10);
   if (zip && !/^[0-9A-Za-z -]{3,10}$/.test(zip)) return { ok: false, error: "Die Postleitzahl sieht nicht gültig aus." };
   return {
@@ -122,6 +129,7 @@ export function parseStammdaten(input: Partial<StammdatenInput>): { ok: true; da
       lastName,
       phone,
       email,
+      weitereEmails: weitere.list.join(", "),
       street: str(input.street).slice(0, 120),
       zip,
       city: str(input.city).slice(0, 80),
@@ -159,12 +167,13 @@ export async function saveLeadStammdaten(opts: {
   if (!parsed.ok) return parsed;
   const lead = await prisma.lead.findFirst({
     where: { id: opts.leadId, customerId: opts.customerId, erasedAt: null },
-    select: { id: true, name: true, phone: true, email: true, formData: true, contactOverrides: true, airtableId: true },
+    select: { id: true, name: true, phone: true, email: true, weitereEmails: true, formData: true, contactOverrides: true, airtableId: true },
   });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
   // Vorher: was bisher sichtbar war (Korrektur, Formular, bei Airtable-Leads die angezeigten Felder)
   const before = currentStammdaten(lead, opts.fields ?? null);
-  const after = parsed.data;
+  // Ohne Feld „Weitere E-Mail“ in der Eingabe bleiben die weiteren Adressen, wie sie sind
+  const after = opts.input.weitereEmails === undefined ? { ...parsed.data, weitereEmails: before.weitereEmails } : parsed.data;
   const changed = diffText(before, after);
   if (changed.length === 0) return { ok: true, changed: [], hinweise: [] };
 
@@ -180,7 +189,7 @@ export async function saveLeadStammdaten(opts: {
   const name = [after.firstName, after.lastName].filter(Boolean).join(" ");
   await prisma.lead.update({
     where: { id: lead.id },
-    data: { name, phone: after.phone, email: after.email, contactOverrides: overrides, contactEditedAt: new Date() },
+    data: { name, phone: after.phone, email: after.email, weitereEmails: bereinigeWeitereEmails(after.weitereEmails.split(", "), after.email), contactOverrides: overrides, contactEditedAt: new Date() },
   });
 
   const hinweise: string[] = [];

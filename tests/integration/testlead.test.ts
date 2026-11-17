@@ -80,7 +80,7 @@ describe("Testlead", () => {
     await prisma.onboarding.create({ data: { customerId } });
     await prisma.agentConfig.create({ data: { customerId, active: true, outreachEnabled: true, outreachDelayMin: 0, followUpSequencesEnabled: false, systemPrompt: "Test" } });
     await prisma.whatsAppAccount.create({ data: { customerId, status: "connected", phoneNumberId: pnid, apiKeyEnc: encryptSecret("k") } });
-    await prisma.messageTemplate.create({ data: { customerId, name: `pg_outreach_${uid()}`, language: "de", purpose: "outreach", category: "marketing", status: "approved", body: "Guten Tag {{1}}, hier ist der Assistent. Wie können wir helfen?" } });
+    await prisma.messageTemplate.create({ data: { customerId, name: `pg_outreach_${uid()}`, language: "de", purpose: "outreach", category: "marketing", status: "approved", headerFormat: "DOCUMENT", body: "Guten Tag {{1}}, hier ist der Assistent. Wie können wir helfen?" } });
     logSpy = vi.spyOn(console, "log").mockImplementation((...a: unknown[]) => void logs.push(a.map(String).join(" ")));
   });
   afterAll(async () => {

@@ -58,18 +58,23 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   const produkt = outreachProdukt(opts.source);
   const purpose: NoticePurpose = produkt?.purpose ?? "outreach";
   const rest = produkt ? [produkt.produkt] : [];
-  // PDF der Erstinformation: vollständig in den Kopf der Vorlage; unvollständig nur als Entwurf, wenn die neueste
-  // freigegebene Fassung den Kopf verlangt (templates.ts rankOutreach, Ole 17.11.2026: nie zurück auf v3)
+  // PDF der Erstinformation (Ole, 17.11.2026: Erstanschreiben NIE ohne Erstinformation): vollständig in den Kopf der
+  // Vorlage, sonst im aktuellen Stand (templates.ts rankOutreach); gar keins → nicht senden (ErstinfoPdfFehltError)
   let document: { link: string; filename: string } | null = null;
   let documentEntwurf: { link: string; filename: string } | null = null;
+  let pdfGrund = "";
   try {
     const { erstinfoPdfStand } = await import("@/lib/erstinformation");
     const pdf = await erstinfoPdfStand(opts.customerId);
     if (pdf?.vollstaendig) document = { link: pdf.link, filename: pdf.filename };
     else if (pdf) documentEntwurf = { link: pdf.link, filename: pdf.filename };
+    pdfGrund = !pdf ? "nicht_erzeugbar" : pdf.vollstaendig ? "" : `unvollstaendig fehlt=${pdf.fehlt.join(",")}`;
   } catch (err) {
+    pdfGrund = `fehler ${(err instanceof Error ? err.message : String(err)).replace(/\d{6,}/g, "#").slice(0, 120)}`;
     console.error("[outreach] Erstinformation als PDF", err instanceof Error ? err.message : err);
   }
+  // Diagnose (ohne Personendaten): welcher Stand der Erstinformation ins Erstanschreiben geht und warum
+  console.info(`[outreach] Erstinformation customer=${opts.customerId} pdf=${document ? "vollstaendig" : documentEntwurf ? "entwurf" : "keins"}${pdfGrund ? ` grund=${pdfGrund}` : ""}`);
   // Hat der Kontakt uns schon geschrieben (offenes Fenster)? Dann „danke für Ihre Nachricht“, sonst „Anfrage“
   const herkunft: Herkunft = (await prisma.message
     .count({ where: { direction: "inbound", conversation: { customerId: opts.customerId, contactPhone: opts.phone } } })
@@ -107,6 +112,7 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     textButtons: ersteFrageKnoepfe(opts.source, formular),
     document,
     documentEntwurf,
+    pdfGrund,
     herkunft,
     text: erstanschreibenText({ an: opts.an, kontakt: who.kontakt, name: kurz, vermittler: person(opts.an).dat, vermittlerNom: person(opts.an).nom, source: opts.source, herkunft, formular }),
   };
@@ -119,6 +125,8 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
  */
 export async function sendOutreach(opts: { customerId: string; leadId: string; phone: string; name: string | null; an: Ansprache; source: string | null }) {
   const m = await outreachMessage(opts);
+  // Ohne jedes PDF der Erstinformation kein Erstanschreiben, auch nicht im offenen Fenster (Ole, 17.11.2026)
+  if (!m.document && !m.documentEntwurf) throw new ErstinfoPdfFehltError();
   const notice = await sendWhatsAppNotice({
     customerId: opts.customerId,
     to: opts.phone,
@@ -135,9 +143,8 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     outreach: { fallbackPurposes: m.purpose === "outreach" ? [] : ["outreach"], documentEntwurf: m.documentEntwurf },
     variant: m.variant,
   });
-  // Fenster offen (Freitext): Erstinformation gleich als PDF hinterher (Nachricht 2, § 16 VersVermV; Rückfall Link).
-  // Nach einer Vorlage mit PDF im Kopf ist sie schon da; nach einer Vorlage ohne Kopf folgt das PDF mit der ersten
-  // Antwort (lib/whatsapp/erstinfo-pdf.ts).
+  // Fenster offen (Freitext): Erstinformation unmittelbar als PDF hinterher (Nachricht 2, § 16 VersVermV; unvollständig
+  // im aktuellen Stand, Rückfall Link). Als Vorlage geht das Erstanschreiben nur mit dem PDF im Kopf (rankOutreach).
   if (notice.mode === "text") {
     await sendErstinfo({ conversationId: notice.conversationId, an: opts.an, advisorName: m.who.advisor || m.who.firm });
   }
@@ -306,8 +313,11 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
         const msg = err instanceof Error ? err.message : String(err);
         logTestLead(lead, "outreach failed", { reason: err instanceof NoTemplateError ? "no_template" : err instanceof ErstinfoPdfFehltError ? "no_pdf" : msg.replace(/\d{6,}/g, "#").slice(0, 120) });
         if (err instanceof ErstinfoPdfFehltError) {
-          // PDF der Erstinformation nicht erzeugbar: erneut versuchen (kein Rückfall auf eine ältere Fassung)
+          // PDF der Erstinformation nicht erzeugbar: nicht senden, erneut versuchen, Vermittler und Admin einmal je Lead
+          // Bescheid geben („Erstinformation vervollständigen“)
+          const vorher = await prisma.lead.findUnique({ where: { id: lead.id }, select: { outreachStatus: true } }).catch(() => null);
           await prisma.lead.update({ where: { id: lead.id }, data: { outreachStatus: "no_pdf" } });
+          if (vorher?.outreachStatus !== "no_pdf") await meldeErstinfoFehlt(agent.customerId).catch((e) => console.error("[outreach] Hinweis Erstinformation", e));
         } else if (err instanceof NoTemplateError) {
           // Kein outreachAt → wird erneut versucht, sobald die Vorlage da ist.
           await prisma.lead.update({
@@ -326,6 +336,28 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
     }
   }
   return result;
+}
+
+/**
+ * Erstanschreiben wartet, weil die Erstinformation nicht als PDF erzeugbar ist: Push an den Vermittler und die Admins
+ * mit der nächsten Handlung (Erstinformation vervollständigen). Ohne Personendaten des Leads.
+ */
+export async function meldeErstinfoFehlt(customerId: string): Promise<void> {
+  const { sendToAdmins, sendToBuyersOfCustomer } = await import("@/lib/push");
+  const customer = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true } });
+  const tag = `erstinfo-fehlt:${customerId}`;
+  await sendToBuyersOfCustomer(customerId, {
+    title: "Erstinformation vervollständigen",
+    body: "Ein neuer Lead wartet: Die erste WhatsApp geht erst mit Ihrer Erstinformation raus.",
+    url: "/buyer/einrichtung?schritt=erstinfo#erstinfo",
+    tag,
+  }).catch(() => {});
+  await sendToAdmins({
+    title: `Erstinformation fehlt: ${customer?.name ?? customerId}`,
+    body: "Erstanschreiben wartet, weil kein PDF der Erstinformation erzeugbar ist.",
+    url: `/admin/kunden/${customerId}`,
+    tag,
+  }).catch(() => {});
 }
 
 /** Grund auf der Anrufliste, wenn kein WhatsApp-Erstanschreiben läuft: neuer Lead, sofort anrufen. */

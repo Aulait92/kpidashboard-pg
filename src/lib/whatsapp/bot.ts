@@ -45,6 +45,7 @@ import {
   terminVorschlagText,
   vermittlerName,
   zeitKurz,
+  zusageDank,
   type Knopf,
   type VermittlerName,
 } from "@/lib/whatsapp/gespraech";
@@ -304,7 +305,7 @@ export function buildSystemPrompt(
         ? `  Begrüßung: „${zeile}“. Sprich den Lead mit Vornamen an (${name}), auch im weiteren Verlauf.`
         : "  Begrüßung: „Hallo,“. Der Vorname ist nicht bekannt, frage nicht danach."
       : name
-        ? `  Begrüßung: „${zeile}“. Sprichst du den Lead im weiteren Verlauf mit Namen an, dann nur als „${name}“, nie mit dem Vornamen allein und nie mit „Hallo“ plus Vorname.${salutation ? "" : " Herr oder Frau ist nicht bekannt: leite es nie aus dem Vornamen ab."}`
+        ? `  Begrüßung: „${zeile}“. Im laufenden Chat sprich den Lead NICHT mit Namen an (z. B. „Vielen Dank!“, nie „Vielen Dank, ${name}!“), schon gar nicht mit vollem Namen, nie mit dem Vornamen allein und nie mit „Hallo“ plus Vorname.${salutation ? "" : " Herr oder Frau ist nicht bekannt: leite es nie aus dem Vornamen ab."}`
         : "  Begrüßung: „Guten Tag,“. Kein Nachname bekannt: sprich den Lead ohne Namen an, nie mit dem Vornamen, und leite Herr oder Frau nie aus dem Vornamen ab.",
   ].join("\n");
   const nowText = formatNowDE(state.now ?? new Date());
@@ -633,8 +634,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const kurz = who.kurz || firm;
   // KI-Kennzeichnung (lib/whatsapp/ki-hinweis.ts): in der ersten Nachricht als Kopf des Erstanschreibens (Ole,
   // 16.11.2026: eine Begrüßung, Dank, „digitaler KI-Assistent von …“ mit Nutzen; lib/whatsapp/erstanschreiben.ts),
-  // nach über 30 Tagen Pause erneut kurz. Die Erstinformation folgt als PDF direkt nach der Antwort (sendErstinfo;
-  // nur wenn das nicht klappt, als Link).
+  // nach über 30 Tagen Pause erneut kurz. Die Erstinformation folgt als PDF direkt nach dieser ersten Antwort
+  // (sendErstinfo; nur wenn das nicht klappt, als Link). Ging unser erstes Schreiben schon früher raus (Erstanschreiben)
+  // und fehlt das PDF noch, kommt es VOR der Antwort des Assistenten, nie danach (Live-Test Ole, 17.11.2026).
   const now = new Date();
   const outbound = await prisma.message.findMany({
     where: { conversationId, direction: "outbound" },
@@ -645,6 +647,8 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   const previousAt = history.length >= 2 ? history[history.length - 2].createdAt : null;
   const notice = kiHinweisNoetig({ outbound: outbound.map((m) => m.body), previousAt, now });
   const aiDisclosed = notice !== "erst";
+  // Erstinformation fehlt noch, obwohl unsere erste Nachricht schon draußen ist: jetzt zuerst (idempotent)
+  const erstinfoNachholen = () => (notice !== "erst" ? sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName }) : Promise.resolve(null));
   const prefix = [
     notice === "erst"
       ? erstanschreibenKopf({
@@ -668,13 +672,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     await prisma.conversation.update({ where: { id: conversation.id }, data: { botActive: false } });
     await flagAttention(conversation.id, `Möchte persönlich sprechen: „${(latest.body ?? "").slice(0, 80)}“`);
     const reply = humanHandoverReply(ansprache, names, who.kontakt, { greet: notice === "erst" });
+    await erstinfoNachholen();
     await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: reply, sentBy: "bot" });
     await sendErstinfo({ conversationId: conversation.id, an: ansprache, advisorName });
     return;
   }
 
   // Erstanschreiben mit erster Frage (Zweck gespeichert): Antwort per Knopf = Antwort auf Frage 1. Hat der Lead zuerst
-  // geschrieben, stellt der Assistent Frage 1 jetzt (fett am Ende), damit die erste Nachricht gleich aufgebaut ist.
+  // geschrieben, stellt der Assistent Frage 1 jetzt (am Ende, ab v7 nicht fett), damit die erste Nachricht gleich aufgebaut ist.
   // Gesundheitsangaben aus dem Formular gehen nicht an die KI (lib/gesundheitsdaten.ts)
   const form = splitHealthAnswers(parseFormAnswers(lead?.formData));
   // Frage 1 und 2: was das Formular schon beantwortet, wird nicht gefragt (Ole, 17.11.2026)
@@ -1001,11 +1006,12 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
         }
       } else if (tu.name === "termin_zugesagt") {
         // Zusage (Kalenderfrage mit ja beantwortet): Badge „zugesagt“ am Termin und in der Terminvorbereitung
-        const appt = upcoming ?? (await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } }));
+        const appt = upcoming ?? (await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true, startsAt: true } }));
         if (appt) {
           await prisma.appointment.update({ where: { id: appt.id }, data: { confirmedAt: new Date() } });
           await persistInternal(conversation.id, "appointment_confirmed", { appointmentId: appt.id, via: "kalenderfrage" });
-          content = "Als zugesagt vermerkt. Bedank dich kurz, ohne weitere Frage.";
+          // Ohne Namen des Leads (Ole, 17.11.2026: nicht „Vielen Dank, Ole Kannapinn Testlead!“)
+          content = `Als zugesagt vermerkt. Antworte genau mit diesem Text, ohne Namen des Leads und ohne weitere Frage: „${zusageDank(ansprache, person, appt.startsAt)}“`;
         } else {
           content = "Kein offener Termin gefunden.";
         }
@@ -1015,7 +1021,12 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
           content = "Ungültige E-Mail-Adresse. Frag kurz nach der richtigen.";
         } else {
           await prisma.conversation.update({ where: { id: conversation.id }, data: { contactEmail: neu } });
-          if (conversation.leadId) await prisma.lead.update({ where: { id: conversation.leadId }, data: { email: neu } }).catch(() => null);
+          // Bisherige Adresse nicht verwerfen, sondern als weitere E-Mail behalten (Ole, 17.11.2026, lib/lead-emails.ts)
+          if (conversation.leadId) {
+            const bisher = await prisma.lead.findUnique({ where: { id: conversation.leadId }, select: { email: true, weitereEmails: true } }).catch(() => null);
+            const { mitNeuerEmail } = await import("@/lib/lead-emails");
+            await prisma.lead.update({ where: { id: conversation.leadId }, data: mitNeuerEmail({ alt: bisher?.email, weitere: bisher?.weitereEmails, neu }) }).catch(() => null);
+          }
           const appt = await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } });
           const { sendLeadEmail } = await import("@/lib/calendar/lead-email");
           const r = appt ? await sendLeadEmail(appt.id, "booked").catch(() => ({ sent: false })) : { sent: false };
@@ -1186,6 +1197,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       merkerErste = null;
       zug.vorschlag = null;
     }
+    await erstinfoNachholen();
     // Policen vor dem Termin (Ole, 17.11.2026, lib/policen/assistent.ts): nach der Vertragsfrage einmal einladen, als
     // eigene Nachricht vor der Antwort (die mit der nächsten Frage endet); nicht im Zug der Buchung
     const policen = gebucht ? null : await import("@/lib/policen/assistent").then((m) => m.einladungJetzt({ conversationId: conversation.id, an: ansprache, person })).catch(() => null);

@@ -21,7 +21,7 @@
 //
 // Erstanschreiben v5 (Ole, 16.11.2026, conversion-optimiert, lib/whatsapp/erstanschreiben.ts): eine Begrüßung
 // „Hallo {{1}},“ (Sie: {{1}} = „Herr Müller“, Du: Vorname; ohne Nachnamen „Hallo,“), Dank mit Produkt, ein Satz mit
-// „digitaler KI-Assistent von [Kurzname]“ und Nutzen, die erste Frage fett als letzte Zeile. Kein „Mensch“-Angebot,
+// „digitaler KI-Assistent von [Kurzname]“ und Nutzen, die erste Frage als letzte Zeile (ab v7 nicht fett). Kein „Mensch“-Angebot,
 // kein „berate nicht zu Tarifen“ (regelt der Assistent im Gespräch). PDF der Erstinformation weiter im Kopf.
 
 import { decryptSecret } from "@/lib/encryption";
@@ -30,7 +30,7 @@ import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, typ
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { ERSTANSCHREIBEN_V6 } from "@/lib/whatsapp/erstanschreiben";
+import { ERSTANSCHREIBEN_V7 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -106,13 +106,13 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   review_request: "v3",
   referral_thanks: "v3",
   referral_update: "v3",
-  // Erstanschreiben v6 (Ole, 17.11.2026, ERSTANSCHREIBEN_V6): wird eingereicht (je Fassung mit PDF-Kopf und ohne);
-  // bis zur Freigabe sendet die App die neueste freigegebene (v5, rankOutreach)
-  outreach: "v6",
-  outreach_tkv: "v6",
-  outreach_zahn: "v6",
-  outreach_pkv: "v6",
-  outreach_privatschutz: "v6",
+  // Erstanschreiben v7 (Ole, 17.11.2026, ERSTANSCHREIBEN_V7: erste Frage nicht fett): wird eingereicht, nur mit PDF-Kopf;
+  // bis zur Freigabe sendet die App die neueste freigegebene mit PDF-Kopf (v6, rankOutreach)
+  outreach: "v7",
+  outreach_tkv: "v7",
+  outreach_zahn: "v7",
+  outreach_pkv: "v7",
+  outreach_privatschutz: "v7",
 };
 
 /**
@@ -171,14 +171,14 @@ export const NAME_PARAM: Record<"du" | "sie", string> = { du: "Vorname", sie: "A
  * (z. B. „ von der Allianz“ oder „, Ihr Versicherungsmakler“, rolleText). Ohne „du“: nur gesiezt.
  */
 export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> = {
-  // Erste Nachricht an neue Leads (v6, Ole 17.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): Dank mit
-  // Thema, KI-Assistent des Vermittlers, erste offene Frage fett als letzte Zeile (Platzhalter, ERSTANSCHREIBEN_V6).
-  // Die Erstinformation (§ 15/16 VersVermV) steht als PDF im Kopf (TEMPLATE_HEADER), je Fassung auch ohne Kopf.
-  outreach: { ...ERSTANSCHREIBEN_V6 },
-  outreach_tkv: { ...ERSTANSCHREIBEN_V6 },
-  outreach_zahn: { ...ERSTANSCHREIBEN_V6 },
-  outreach_pkv: { ...ERSTANSCHREIBEN_V6 },
-  outreach_privatschutz: { ...ERSTANSCHREIBEN_V6 },
+  // Erste Nachricht an neue Leads (v7, Ole 17.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): Dank mit
+  // Thema, KI-Assistent des Vermittlers, erste offene Frage als letzte Zeile, nicht fett (Platzhalter, ERSTANSCHREIBEN_V7).
+  // Die Erstinformation (§ 15/16 VersVermV) steht immer als PDF im Kopf (TEMPLATE_HEADER).
+  outreach: { ...ERSTANSCHREIBEN_V7 },
+  outreach_tkv: { ...ERSTANSCHREIBEN_V7 },
+  outreach_zahn: { ...ERSTANSCHREIBEN_V7 },
+  outreach_pkv: { ...ERSTANSCHREIBEN_V7 },
+  outreach_privatschutz: { ...ERSTANSCHREIBEN_V7 },
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -528,21 +528,20 @@ export type OutreachPick<T> = NonNullable<ReturnType<typeof rankTemplates<T & Ca
   purpose: NoticePurpose;
   /** Textversion der gewählten Vorlage (0 = von Hand angelegt) */
   version: number;
-  /** Welches PDF in den Kopf gehört (null = Vorlage ohne Kopf) */
-  dokument: "vollstaendig" | "entwurf" | null;
+  /** Welches PDF in den Kopf gehört (immer eines: das Erstanschreiben geht nie ohne Erstinformation raus) */
+  dokument: "vollstaendig" | "entwurf";
 };
 
 /**
- * Erstanschreiben über Produkt und allgemeine Fassung hinweg (Ole, 17.11.2026, rein, testbar). Die neueste freigegebene
- * Textversion gewinnt, bei gleicher Version die des Produkts (purposes[0]) vor der allgemeinen; innerhalb davon wie
- * rankTemplates (Anrede-Fassung). Vorlagen mit PDF im Kopf brauchen das PDF der Erstinformation:
- *   - vollständig vorhanden → normal
- *   - fehlt es, gewinnt eine gleich neue Fassung ohne Kopf (die Erstinformation folgt, sobald das Fenster offen ist,
- *     lib/whatsapp/erstinfo-pdf.ts)
- *   - gibt es die neueste Fassung nur mit Kopf, geht sie mit dem PDF in seinem aktuellen Stand raus („entwurf“, derselbe
- *     Inhalt wie die Seite hinter dem Link der alten Fassung). Nie zurück auf eine ältere Fassung (v3 „Ich bin kein
- *     Mensch …“), solange eine neuere freigegeben ist. Ohne jedes PDF: { wartenAufPdf } (erneuter Versuch).
- * null = keine passende freigegebene Vorlage.
+ * Erstanschreiben als Vorlage über Produkt und allgemeine Fassung hinweg (Ole, 17.11.2026, rein, testbar).
+ * Regel (Live-Test 17.11.2026): Das Erstanschreiben geht NIE ohne Erstinformation raus. Als Vorlage (Fenster zu) kommen
+ * deshalb nur Vorlagen mit PDF-Kopf in Frage; die „_ohnepdf“-Fassungen nie (im offenen Fenster geht Freitext mit dem PDF
+ * als Nachricht 2, outreach.ts). Das PDF: vollständig, sonst im aktuellen Stand („entwurf“); gibt es gar keins →
+ * { wartenAufPdf } (nicht senden, Vermittler und Admin bekommen einen Hinweis).
+ * Ansprache: Sie-Kunden bekommen nie eine Du-Fassung (Live-Test 17.11.2026: Du-Text an einen Sie-Kunden, weil nur die
+ * Du-Fassung lokal freigegeben war). Die neueste freigegebene Textversion gewinnt, bei gleicher Version die des Produkts
+ * (purposes[0]) vor der allgemeinen; innerhalb davon wie rankTemplates (Anrede-Fassung).
+ * null = keine passende freigegebene Vorlage (Erstanschreiben wartet, NoTemplateError).
  */
 export function rankOutreach<T extends Candidate & { purpose: string }>(
   list: T[],
@@ -552,33 +551,32 @@ export function rankOutreach<T extends Candidate & { purpose: string }>(
   opts: { variant?: TemplateVariant; pdf: OutreachPdf },
 ): OutreachPick<T> | { wartenAufPdf: true } | null {
   const ver = (t: T) => templateVersionOfName(t.name);
-  const mine = list.filter((t) => (purposes as string[]).includes(t.purpose));
+  const passt = (t: T) =>
+    (purposes as string[]).includes(t.purpose) &&
+    t.headerFormat === "DOCUMENT" &&
+    !(ansprache === "sie" && hasDuVariant(t.purpose as NoticePurpose) && templateAnspracheOf(t) === "du");
+  const mine = list.filter(passt);
   // Neueste zuerst, von Hand angelegte (Version 0) zuletzt
   const versions = [...new Set(mine.map(ver))].sort((x, y) => (x === 0 ? 1 : y === 0 ? -1 : y - x));
-  const best = (documentHeader: boolean) => {
-    for (const v of versions) {
-      for (const p of purposes) {
-        const r = rankTemplates(
-          mine.filter((t) => t.purpose === p && ver(t) === v),
-          p,
-          ansprache,
-          kontakt,
-          { variant: p === purposes[0] ? opts.variant : "a", documentHeader },
-        );
-        if (r) return { ...r, purpose: p, version: v };
+  let pick: (NonNullable<ReturnType<typeof rankTemplates<T>>> & { purpose: NoticePurpose; version: number }) | null = null;
+  outer: for (const v of versions) {
+    for (const p of purposes) {
+      const r = rankTemplates(
+        mine.filter((t) => t.purpose === p && ver(t) === v),
+        p,
+        ansprache,
+        kontakt,
+        { variant: p === purposes[0] ? opts.variant : "a" },
+      );
+      if (r) {
+        pick = { ...r, purpose: p, version: v };
+        break outer;
       }
     }
-    return null;
-  };
-  const rank = (v: number) => (v === 0 ? -1 : v);
-  const ohneKopf = best(opts.pdf === "vollstaendig");
-  const mitKopf = opts.pdf === "vollstaendig" ? ohneKopf : best(true);
-  if (!mitKopf) return null;
-  if (ohneKopf && rank(ohneKopf.version) >= rank(mitKopf.version)) {
-    return { ...ohneKopf, dokument: ohneKopf.tpl.headerFormat === "DOCUMENT" ? "vollstaendig" : null };
   }
-  if (opts.pdf === "entwurf") return { ...mitKopf, dokument: mitKopf.tpl.headerFormat === "DOCUMENT" ? "entwurf" : null };
-  return { wartenAufPdf: true };
+  if (!pick) return null;
+  if (opts.pdf === "keins") return { wartenAufPdf: true };
+  return { ...pick, dokument: opts.pdf };
 }
 
 /** Die Erstinformation fehlt ganz (PDF nicht erzeugbar): Erstanschreiben wartet und wird erneut versucht. */
@@ -892,6 +890,8 @@ export async function sendWhatsAppNotice(opts: {
     const buttons = Array.isArray(tpl.buttons) ? (tpl.buttons as unknown[]).length : 0;
     const docSource = pick.dokument === "entwurf" ? (opts.outreach?.documentEntwurf ?? null) : (opts.document ?? null);
     const doc = tpl.headerFormat === "DOCUMENT" ? docSource : null;
+    // Erstanschreiben nie ohne Erstinformation (Ole, 17.11.2026): ohne PDF im Kopf nicht senden
+    if (opts.outreach && !doc) throw new ErstinfoPdfFehltError();
     mode = "template";
     pricingCategory = tpl.category.toLowerCase();
     variant = pick.variant;

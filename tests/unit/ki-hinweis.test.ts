@@ -146,10 +146,10 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
     for (const an of ["du", "sie"] as const) expect(kiHinweisErneut(an, names)).toContain("Ich bin kein Mensch und berate nicht zu Tarifen.");
   });
 
-  it("Erstanschreiben v6 (Ole, 17.11.2026): KI-Kennzeichnung mit dem Vermittler, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
+  it("Erstanschreiben v7 (Ole, 17.11.2026): KI-Kennzeichnung mit dem Vermittler, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
     for (const p of OUTREACH_PURPOSES) {
-      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v6_sie`);
-      expect(buildTemplateRequest(p, names, undefined, "sie").name, p).toBe(`pg_${p}_v6_sie`);
+      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v7_sie`);
+      expect(buildTemplateRequest(p, names, undefined, "sie").name, p).toBe(`pg_${p}_v7_sie`);
       expect(NAECHSTE_FASSUNG[p], p).toBeUndefined();
       for (const t of [TEMPLATE_BODY[p].du!, TEMPLATE_BODY[p].sie]) {
         expect(t, p).toContain("digitale KI-Assistent von {{3}}");

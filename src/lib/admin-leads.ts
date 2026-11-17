@@ -3,6 +3,7 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { weitereEmailsSuche } from "@/lib/lead-emails";
 
 export type LeadFilter = {
   q?: string;
@@ -61,6 +62,7 @@ export function leadWhere(f: LeadFilter): Prisma.LeadWhereInput {
           OR: [
             { name: { contains: q, mode: "insensitive" as const } },
             { email: { contains: q, mode: "insensitive" as const } },
+            ...weitereEmailsSuche(q),
             ...(digits.length >= 4 ? [{ phone: { contains: digits.replace(/^0/, "") } }] : []),
           ],
         }
