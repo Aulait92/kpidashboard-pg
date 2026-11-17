@@ -24,6 +24,7 @@ import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/anspra
 import { anspracheOf } from "@/lib/whatsapp/reminders";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { isCallPlanNote } from "@/lib/call-plan";
+import { anrufPausiert } from "@/lib/telefonat-server";
 
 export type SequenceKind = "not_reached" | "offer" | "no_show" | "silent" | "recall";
 
@@ -429,6 +430,11 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     }
     // WhatsApp nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
     if (step.action === "whatsapp" && !windowOpen) {
+      res.waiting++;
+      continue;
+    }
+    // Vermittler telefoniert gerade bzw. hat noch kein Ergebnis eingetragen (lib/telefonat.ts): kein Nachfassen, Schritt wartet
+    if (step.action === "whatsapp" && (await anrufPausiert(seq.leadId, now))) {
       res.waiting++;
       continue;
     }

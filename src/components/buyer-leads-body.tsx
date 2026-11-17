@@ -15,6 +15,9 @@ import { countWithoutNextStep, loadNextStepFlags, stateFor } from "@/lib/lead-ne
 import { getCallbackLeads } from "@/lib/whatsapp/outreach";
 import { nowMs } from "@/lib/now";
 import { keinWhatsAppIds } from "@/lib/kein-whatsapp-kennzeichen-server";
+import { X } from "lucide-react";
+import { VERLUST_LABEL, verlustKey, type VerlustKey } from "@/lib/verlustgruende";
+import { verlorenImZeitraum } from "@/lib/verlustgruende-server";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -46,13 +49,17 @@ export async function BuyerLeadsBody({
   // „Ohne nächsten Schritt“ zeigt alle offenen Leads ohne Schritt, unabhängig vom Zeitraum
   // (gleiche Regel wie Zähler in der Navigation und „Heute“, lib/lead-next-step.ts).
   const noStepView = view === "ohne-schritt" && !q;
-  const leadRows = await prisma.lead.findMany({
+  // Aus „Warum Leads verloren gehen“ (Zahlen): verlorene Leads mit diesem Grund, verloren im Zeitraum (lib/verlustgruende.ts)
+  const verlust = !noStepView && !q && params.verlust && params.verlust in VERLUST_LABEL ? (params.verlust as VerlustKey) : null;
+  const leadRowsAll = await prisma.lead.findMany({
     where: {
       ...leadScope(team),
       ...(noStepView ? withoutNextStepWhere(now) : {}),
       // Bei einer Suche über alle Zeiträume (Rückrufer sind oft älter).
       ...(noStepView
         ? {}
+        : verlust
+        ? { ...verlorenImZeitraum(range.from, range.to), ...(params.produkt ? { source: params.produkt } : {}) }
         : q
         ? {
             OR: [
@@ -80,9 +87,13 @@ export async function BuyerLeadsBody({
       erasedAt: true,
       stornoState: true,
       isTest: true,
+      lostReason: true,
+      disqualifyReason: true,
+      callAttempts: true,
       revenues: { select: { amount: true }, take: 1 },
     },
   });
+  const leadRows = verlust ? leadRowsAll.filter((l) => verlustKey(l) === verlust) : leadRowsAll;
 
   // Storno-Optionen vorab live aus Airtable laden (Bezug → erlaubte
   // Stornogründe), damit das Storno-Modal beim Klick ohne Latenz das
@@ -172,6 +183,16 @@ export async function BuyerLeadsBody({
 
   return (
     <div className="space-y-4">
+      {verlust ? (
+        <p className="flex flex-wrap items-center gap-2 text-sm" data-verlust-filter>
+          <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 font-medium text-[color:var(--brand-dark)]">
+            Verloren: {VERLUST_LABEL[verlust]}
+            <Link href={basePath} aria-label="Filter entfernen" className="-mr-1 inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/60">
+              <X className="h-3.5 w-3.5" />
+            </Link>
+          </span>
+        </p>
+      ) : null}
       <FilterChips
         searchPlaceholder="Name, Telefon oder E-Mail"
         fields={[{ kind: "select", key: "phase", label: "Phase", options: phases.map((p) => ({ value: p.key, label: p.label })) }]}

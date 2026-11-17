@@ -13,6 +13,7 @@
 //   3. Rückrufliste: offene Leads ohne Termin, bei denen das Anschreiben nicht
 //      möglich war oder 24 h danach noch kein Termin steht.
 
+import { CALL_PAUSE_MAX_MS } from "@/lib/telefonat";
 import { recordLeadProgress } from "@/lib/lead-progress";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -189,6 +190,8 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
               lte: new Date(now - agent.outreachDelayMin * 60 * 1000),
             },
             OR: OUTREACH_STATUSES.map((s) => ({ status: s })),
+            // Vermittler telefoniert gerade bzw. Ergebnis fehlt noch (lib/telefonat.ts): Erstanschreiben wartet
+            AND: [{ OR: [{ callStartedAt: null }, { callStartedAt: { lt: new Date(now - CALL_PAUSE_MAX_MS) } }] }],
           },
       select: { id: true, name: true, phone: true, waConsent: true, source: true, waUnavailableAt: true, isTest: true },
       take: 50,

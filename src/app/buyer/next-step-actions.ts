@@ -4,6 +4,7 @@
 // und „Warum verloren?“ – genutzt im Kontakt, in der Pipeline, auf „Heute“, in der Anrufliste und in der
 // Kontakte-Liste. Schreibrecht wie überall: eigener Kunde bzw. Admin-Vorschau nur für Demo-Leads.
 
+import { anrufErledigt } from "@/lib/telefonat-server";
 import { revalidatePath } from "next/cache";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
 import { getBuyerContext } from "@/lib/buyer-context";
@@ -178,6 +179,7 @@ export async function markLeadLostResult(
   const reason = lostReason(input.reason)!;
   const lead = await loadLead(leadId, customerId);
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  await anrufErledigt(lead.id);
   const note = (input.note ?? "").trim().slice(0, 500);
   const appt = input.appointmentId
     ? await prisma.appointment.findFirst({ where: { id: input.appointmentId, leadId: lead.id, customerId }, select: { id: true, status: true } })
@@ -311,6 +313,7 @@ export async function laterTodayResult(leadId: string): Promise<InboxResult> {
   if (!customerId) return { ok: false, error: PREVIEW };
   const lead = await loadLead(leadId, customerId);
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
+  await anrufErledigt(lead.id);
   const now = new Date();
   let at = new Date(now.getTime() + 3 * 60 * 60 * 1000);
   const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(at));

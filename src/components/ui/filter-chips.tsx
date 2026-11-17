@@ -27,10 +27,12 @@ type Props = {
   searchPlaceholder?: string;
   /** Parameter, die bei jeder Änderung wegfallen (z. B. Seite) */
   resetKeys?: string[];
+  /** Ohne Suchfeld (nur Chips), z. B. Filter einer Karte */
+  noSearch?: boolean;
   children?: React.ReactNode;
 };
 
-export function FilterChips({ fields, searchKey = "q", searchPlaceholder = "Suchen", resetKeys = ["seite"], children }: Props) {
+export function FilterChips({ fields, searchKey = "q", searchPlaceholder = "Suchen", resetKeys = ["seite"], noSearch = false, children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -67,7 +69,7 @@ export function FilterChips({ fields, searchKey = "q", searchPlaceholder = "Such
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 transition-opacity", pending && "opacity-60")}>
-      <label className="relative flex h-10 min-w-[220px] flex-1 items-center sm:h-9 sm:max-w-xs">
+      <label className={cn("relative flex h-10 min-w-[220px] flex-1 items-center sm:h-9 sm:max-w-xs", noSearch && "hidden")}>
         <Search className="pointer-events-none absolute left-3 h-4 w-4 text-[color:var(--muted)]" />
         <input
           value={q}

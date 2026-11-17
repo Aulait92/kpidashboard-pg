@@ -19,6 +19,8 @@ import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
 import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { LostSheet } from "@/components/next-step";
+import { BedarfSheet } from "@/components/bedarf-sheet";
+import { callStartedAction } from "@/app/buyer/telefonat-actions";
 
 /** Rückkehr erst nach mind. 3 s zählt (kein Fehlalarm), höchstens 10 Min. */
 const MIN_MS = 3_000;
@@ -63,8 +65,10 @@ export function useCallReturn(onReturn: (key: string) => void) {
     };
   }, []);
 
-  return useCallback((key: string) => {
+  // Mit leadId: Assistent pausiert für diesen Lead, bis ein Ergebnis eingetragen ist (lib/telefonat.ts)
+  return useCallback((key: string, leadId?: string | null) => {
     pending.current = { key, at: Date.now(), hidden: false };
+    if (leadId) void callStartedAction(leadId).catch(() => undefined);
   }, []);
 }
 
@@ -102,10 +106,13 @@ export function CallOutcomeSheet({
   onClose: () => void;
   onPick: (message: string, action: () => Promise<InboxResult>) => void;
 }) {
-  const [step, setStep] = useState<"pick" | "win" | "later" | "date" | "lost">("pick");
+  const [step, setStep] = useState<"pick" | "win" | "later" | "date" | "lost" | "need">("pick");
+  // Erreicht (Termin, Angebot, später): erst „Was haben Sie besprochen?“, danach das gewählte Ergebnis (Ole, 15.11.2026)
+  const [after, setAfter] = useState<{ termin: boolean; run: () => void } | null>(null);
   const provisionRates = useProvisionRates();
   const close = () => {
     setStep("pick");
+    setAfter(null);
     onClose();
   };
   if (!target) return null;
@@ -113,6 +120,10 @@ export function CallOutcomeSheet({
   const pick = (message: string, action: () => Promise<InboxResult>) => {
     close();
     onPick(message, action);
+  };
+  const needThen = (run: () => void, termin = false) => {
+    setAfter({ termin, run });
+    setStep("need");
   };
 
   const actions: SheetAction[] = [];
@@ -123,9 +134,14 @@ export function CallOutcomeSheet({
       pick(`${t.name}: morgen wieder in der Liste`, () => (t.kind === "followup" ? followUpNotReachedResult(t.leadId) : callbackOutcomeResult(t.leadId, "not_reached"))),
   });
   // Auch ohne verbundenen Kalender: das Buchungsfenster bietet dann „von Hand eintragen“ (UX Runde 4)
-  actions.push({ label: "Termin vereinbart", icon: CalendarPlus, onSelect: () => openLeadBooking(t.leadId, t.name) });
+  actions.push({ label: "Termin vereinbart", icon: CalendarPlus, keepOpen: true, onSelect: () => needThen(() => openLeadBooking(t.leadId, t.name), true) });
   actions.push(
-    { label: "Angebot gesendet", icon: Send, onSelect: () => pick(`${t.name}: Angebot gesendet`, () => callbackOutcomeResult(t.leadId, "offer")) },
+    {
+      label: "Angebot gesendet",
+      icon: Send,
+      keepOpen: true,
+      onSelect: () => needThen(() => onPick(`${t.name}: Angebot gesendet`, () => callbackOutcomeResult(t.leadId, "offer"))),
+    },
     // keepOpen: Folgeschritt statt Schließen.
     asksCloseValue(t.source, provisionRates)
       ? { label: "Abschluss", icon: Trophy, keepOpen: true, onSelect: () => setStep("win") }
@@ -138,9 +154,30 @@ export function CallOutcomeSheet({
     ...(t.kind === "followup" && t.erledigtOk
       ? [{ label: "Erledigt, kein weiterer Anruf nötig", icon: Check, onSelect: () => pick(`${t.name}: Wiedervorlage erledigt`, () => clearFollowUpResult(t.leadId)) }]
       : []),
-    // Verloren mit Grund; nie erreicht und unter 6 Versuchen: Warnung (Ole, 14.11.2026)
-    { label: "Verloren", icon: ThumbsDown, tone: "danger", keepOpen: true, onSelect: () => setStep("lost") },
+    // Verloren mit Grund; nie erreicht und unter 6 Versuchen: Warnung (Ole, 14.11.2026). Nach einem Anruf meist
+    // „Kein Interesse“, die Gründe (auch falsche Nummer, nicht erreichbar) stehen im nächsten Schritt.
+    { label: "Kein Interesse", icon: ThumbsDown, tone: "danger", keepOpen: true, onSelect: () => setStep("lost") },
   );
+
+  if (step === "need" && after) {
+    const run = after.run;
+    return (
+      <BedarfSheet
+        leadId={t.leadId}
+        name={t.name}
+        termin={after.termin}
+        // Weggewischt: Ergebnis trotzdem eintragen (Termin buchen, Angebot, Wiedervorlage), nur ohne Bedarf
+        onClose={() => {
+          close();
+          run();
+        }}
+        onDone={() => {
+          close();
+          run();
+        }}
+      />
+    );
+  }
 
   if (step === "lost") {
     return (
@@ -165,7 +202,8 @@ export function CallOutcomeSheet({
         actions={[
           ...LATER.map((o) => ({
             label: o.label,
-            onSelect: () => pick(`${t.name}: ${o.label === "Morgen" ? "morgen" : o.label.toLowerCase()} wieder`, () => setFollowUpResult(t.leadId, { days: o.days })),
+            keepOpen: true,
+            onSelect: () => needThen(() => onPick(`${t.name}: ${o.label === "Morgen" ? "morgen" : o.label.toLowerCase()} wieder`, () => setFollowUpResult(t.leadId, { days: o.days }))),
           })),
           { label: "Anderer Tag …", keepOpen: true, onSelect: () => setStep("date") },
         ]}
@@ -178,7 +216,7 @@ export function CallOutcomeSheet({
         open
         title={`${t.name} später anrufen`}
         onClose={close}
-        onPick={(date) => pick(`${t.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(t.leadId, { date }))}
+        onPick={(date) => needThen(() => onPick(`${t.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(t.leadId, { date })))}
       />
     );
   }

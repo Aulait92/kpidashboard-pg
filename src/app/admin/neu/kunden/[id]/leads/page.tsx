@@ -2,6 +2,7 @@ import { Sparkles } from "lucide-react";
 import { ButtonLink, Card } from "@/components/ui";
 import { KundenakteSeite } from "@/components/admin-neu/kunden/akte";
 import { LeadQualitaetCard } from "@/components/admin/lead-qualitaet-card";
+import { VerlustgruendeCard } from "@/components/admin/verlustgruende-card";
 import KundenLeads from "@/app/admin/kunden/[id]/leads/page";
 import { prisma } from "@/lib/prisma";
 
@@ -33,6 +34,7 @@ export default async function KundeKampagneLeads({ params }: { params: Promise<{
           <div data-funktion="lead-qualitaet-card--lead-qualitaet-disqualifizierte-leads-nach-grund">
             <LeadQualitaetCard customerId={id} />
           </div>
+          <VerlustgruendeCard customerId={id} />
         </div>
         <div
           data-funktion="meta-account-actions-setmetaadaccountaction--meta-werbekonto-id-setzen capi-actions-setcapidatasetaction--capi-rueckmeldung-status-und-dataset-setzen actions-togglesourceaction--leadformulare-des-kunden-an-aus page--letzte-leads-mit-abschluss-storno testlead-actions-sendtestleadaction--testlead-schicken-echter-ablauf-zaehlt-nirgends"

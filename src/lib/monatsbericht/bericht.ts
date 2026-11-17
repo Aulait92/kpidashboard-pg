@@ -43,6 +43,8 @@ export type ReportBestand = {
 export type ReportEmpfehlungen = { asked: number; empfehlungen: number; abschluesse: number; provision: number };
 export type ReportBestandskampagnen = { leads: number; abschluesse: number; provision: number };
 export type ReportTip = { key: string; title: string; text: string; href: string; cta: string };
+/** Die zwei häufigsten Verlustgründe im Monat mit Tipp (lib/verlustgruende.ts), Anteil an allen verlorenen Leads. */
+export type ReportVerluste = { total: number; gruende: { key: string; label: string; count: number; share: number; tipp: string | null }[] };
 
 /** Rohe Maßnahme (intern, Grundlage für die KI-Zusammenfassung). */
 export type RawMeasure = { source: "optimierung" | "manuell" | "meta" | "mediabuyer" | "kampagne" | "budget" | "capi"; at: string; text: string };
@@ -61,6 +63,8 @@ export type ReportModel = {
   /** Kundentaugliche Sätze „Was wir für Sie getan haben“ (von der KI zusammengefasst und geprüft) */
   measures: string[];
   tips: ReportTip[];
+  /** Neu ab 11/2026, in älteren Berichten nicht vorhanden. */
+  verluste?: ReportVerluste | null;
   // gespraech: nur noch in älteren gespeicherten Berichten, wird nicht mehr angezeigt (Ole, 14.11.2026)
   links: { zahlen: string; gespraech?: string | null };
 };
@@ -100,6 +104,7 @@ export const SECTION_TITLES = {
   bestand: "Ihr Bestand wächst",
   empfehlungen: "Empfehlungen",
   bestandskampagnen: "Bestandskampagnen",
+  verluste: "Warum Leads verloren gingen",
   measures: "Was wir für Sie getan haben",
   tips: "Unsere Tipps für den nächsten Monat",
 } as const;
@@ -254,6 +259,17 @@ function buttonsHtml(links: ReportModel["links"]): string {
 
 const absolute = (href: string, appUrl: string) => (/^https?:\/\//.test(href) ? href : `${appUrl}${href.startsWith("/") ? "" : "/"}${href}`);
 
+/** Zeile je Verlustgrund: „Nicht erreicht: 8 von 20 verlorenen Leads (40 %)“. */
+export const verlustZeile = (g: ReportVerluste["gruende"][number], total: number) =>
+  `${g.label}: ${formatNumber(g.count)} von ${formatNumber(total)} verlorenen Leads (${Math.round(g.share * 100)} %)`;
+
+function verlusteHtml(v: ReportVerluste): string {
+  const items = v.gruende
+    .map((g) => `<li style="margin:0 0 8px"><strong>${esc(verlustZeile(g, v.total))}</strong>${g.tipp ? `<br><span style="color:${C.muted}">${esc(g.tipp)}</span>` : ""}</li>`)
+    .join("");
+  return `${h2(SECTION_TITLES.verluste)}<ul style="margin:0;padding-left:20px;font-size:15px;line-height:1.6;color:${C.text}">${items}</ul>`;
+}
+
 /** Alle Abschnitte nach dem KI-Einstieg als E-Mail-HTML (Abschnitte ohne Daten entfallen). */
 export function reportSectionsHtml(m: ReportModel, appUrl: string): string {
   const parts: string[] = [];
@@ -262,6 +278,7 @@ export function reportSectionsHtml(m: ReportModel, appUrl: string): string {
   if (m.bestand) parts.push(bestandHtml(m.bestand));
   if (m.empfehlungen) parts.push(h2(SECTION_TITLES.empfehlungen) + cellsTable(empfehlungCells(m.empfehlungen)));
   if (m.bestandskampagnen) parts.push(h2(SECTION_TITLES.bestandskampagnen) + cellsTable(bestandskampagnenCells(m.bestandskampagnen)));
+  if (m.verluste?.gruende.length) parts.push(verlusteHtml(m.verluste));
   if (m.measures.length) parts.push(h2(SECTION_TITLES.measures) + listHtml(m.measures));
   if (m.tips.length) parts.push(tipsHtml(m.tips, appUrl));
   parts.push(buttonsHtml(m.links));
@@ -305,6 +322,10 @@ export function reportSectionBlocks(m: ReportModel, appUrl: string): { title: st
   if (m.bestandskampagnen) {
     head(SECTION_TITLES.bestandskampagnen);
     out.push(bestandskampagnenCells(m.bestandskampagnen).map((c) => `${c.label}: ${c.value}`).join(", "));
+  }
+  if (m.verluste?.gruende.length) {
+    head(SECTION_TITLES.verluste);
+    for (const g of m.verluste.gruende) out.push(`• ${verlustZeile(g, m.verluste.total)}${g.tipp ? `. ${g.tipp}` : ""}`);
   }
   if (m.measures.length) {
     head(SECTION_TITLES.measures);
@@ -361,6 +382,13 @@ export function reportNumbers(m: ReportModel): Set<string> {
   }
   for (const n of Object.values(m.empfehlungen ?? {})) add(n);
   for (const n of Object.values(m.bestandskampagnen ?? {})) add(n);
+  if (m.verluste) {
+    add(m.verluste.total);
+    for (const g of m.verluste.gruende) {
+      add(g.count);
+      add(g.share * 100);
+    }
+  }
   const [y, mo] = m.month.split("-").map(Number);
   add(y);
   add(mo);

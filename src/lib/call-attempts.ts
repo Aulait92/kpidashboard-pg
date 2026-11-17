@@ -7,6 +7,7 @@
 // - Dazwischen: Nicht-erreicht-Abfolge (WhatsApp), falls beim Kunden eingeschaltet.
 // - Alles steht im Verlauf.
 
+import { anrufErledigt } from "@/lib/telefonat-server";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
 import { CALL_ATTEMPT_LOCK_MS, CALL_ATTEMPTS_TARGET, callPlanNote, fmtAttemptAt, isReplaceableCallTask, nextCallAttemptAt } from "@/lib/call-plan";
 import { logLeadHistory } from "@/lib/lead-history";
@@ -68,6 +69,8 @@ export async function registerCallAttempt(leadId: string, opts: { customerId: st
     select: { id: true, airtableId: true, status: true, contactAttempts: true, callAttempts: true, firstContactAt: true, lastCallAttemptAt: true, callPlanStartedAt: true },
   });
   if (!lead) return null;
+  // Ergebnis „nicht erreicht“ eingetragen: Pause des Assistenten nach „Anrufen“ endet (lib/telefonat.ts)
+  await anrufErledigt(lead.id);
   const lockedSince = new Date(now.getTime() - CALL_ATTEMPT_LOCK_MS);
   const s = (lead.status ?? "").trim().toLowerCase();
   const nextStatus = s === "" || s === "neuer lead" ? "Nicht erreicht" : null;
