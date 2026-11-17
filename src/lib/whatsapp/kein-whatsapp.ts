@@ -15,7 +15,7 @@
 //      § 7 Abs. 2 Nr. 2 UWG (keine Einwilligung nötig, wie die Terminbestätigung). Trotzdem nicht, wenn die Adresse
 //      bzw. Nummer auf der Sperrliste steht (Abmeldung), die E-Mail-Funktionen beim Kunden aus sind, schon ein Termin
 //      gebucht ist oder der Lead nicht mehr offen ist. Versand über das verbundene Postfach des Beraters bzw. Inhabers,
-//      sonst über unseren neutralen Absender für Lead-E-Mails (BOOKING_EMAIL_FROM, wie die Terminbestätigung).
+//      sonst über unseren neutralen Absender für Lead-E-Mails (Lead-Mail-Baustein, lib/mail/lead-versand.ts).
 //   5. Andere Fehler (Zahlung, Vorlage, Limits …) sind kein „kein WhatsApp“: Admin-Alarm (Push und Aufgabe),
 //      höchstens einmal je Kunde, Code und Tag (WhatsAppErrorAlert).
 //   6. (Ole, 15.11.2026) Scheitert die Erstnachricht an einen Lead, der nie selbst geschrieben hat, aus einem anderen
@@ -218,9 +218,8 @@ export async function sendKeinWhatsAppMail(leadId: string, opts: { now?: Date } 
       name: true,
       source: true,
       erasedAt: true,
-      assignedUserId: true,
       waUnavailableMailAt: true,
-      customer: { select: { leadAddress: true, mailFeaturesOff: true, dormantSince: true, agentConfig: { select: { advisorEmail: true } } } },
+      customer: { select: { leadAddress: true, mailFeaturesOff: true, dormantSince: true } },
     },
   });
   const to = lead?.email?.trim();
@@ -254,21 +253,16 @@ export async function sendKeinWhatsAppMail(leadId: string, opts: { now?: Date } 
 }
 
 async function deliverMail(
-  lead: {
-    id: string;
-    customerId: string;
-    phone: string | null;
-    name: string | null;
-    source: string | null;
-    assignedUserId: string | null;
-    customer: { leadAddress: string | null; agentConfig: { advisorEmail: string | null } | null };
-  },
+  lead: { id: string; customerId: string; phone: string | null; name: string | null; source: string | null; customer: { leadAddress: string | null } },
   to: string,
 ): Promise<MailResult> {
-  const [{ ansprechpartner }, { bookingPageUrl }] = await Promise.all([import("@/lib/lead-anrede"), import("@/lib/public-url")]);
+  const [{ ansprechpartner }, { bookingPageUrl }, { leadVersandKontext, sendeLeadMail }] = await Promise.all([
+    import("@/lib/lead-anrede"),
+    import("@/lib/public-url"),
+    import("@/lib/mail/lead-versand"),
+  ]);
   const who = await ansprechpartner({ customerId: lead.customerId, leadId: lead.id, phone: lead.phone, name: lead.name });
   const an = asAnsprache(lead.customer.leadAddress);
-  const advisor = who.advisor || who.firm;
   // Persönlicher Terminlink (nur mit verbundenem Kalender)
   const cal = await prisma.calendarConnection.findUnique({ where: { customerId: lead.customerId }, select: { status: true } });
   let link: string | null = null;
@@ -277,41 +271,16 @@ async function deliverMail(
     link = bookingPageUrl(await getOrCreateBookingSlug(lead.customerId), { lead: lead.id });
   }
 
-  // 1. Postfach des zuständigen Beraters, sonst eines Inhabers (Mail liegt dann in seinem Gesendet-Ordner)
-  const owners = await prisma.user.findMany({ where: { customerId: lead.customerId, role: "BUYER", teamRole: "owner" }, orderBy: { createdAt: "asc" }, select: { id: true } });
-  const order = [lead.assignedUserId, ...owners.map((o) => o.id)].filter((x): x is string => !!x);
-  const conns = order.length
-    ? await prisma.mailConnection.findMany({ where: { userId: { in: order }, customerId: lead.customerId, status: "ok" }, select: { userId: true, fromName: true, user: { select: { displayName: true, mailSignature: true } } } })
-    : [];
-  const conn = order.map((id) => conns.find((c) => c.userId === id)).find(Boolean);
-  // Versand protokolliert im Verlauf des Leads (automatisch, Art „Kein WhatsApp“, lib/mail/kontakt-mail.ts)
-  const protokoll = { customerId: lead.customerId, leadId: lead.id, art: "kein_whatsapp" as const };
-  if (conn) {
-    const sender = conn.fromName?.trim() || conn.user.displayName?.trim() || advisor;
-    const m = keinWhatsAppMail({ an, kontakt: who.kontakt, source: lead.source, advisor: sender, link, signatur: conn.user.mailSignature });
-    const { sendViaPostfach } = await import("@/lib/mail/postfach");
-    const res = await sendViaPostfach(conn.userId, { to, subject: m.subject, text: m.text }, protokoll);
-    if (res.ok) return { sent: true, via: "postfach" };
-    console.error("[kein-whatsapp mail] Postfach", res.raw ?? res.error);
-  }
-
-  // 2. Neutraler Absender für Lead-E-Mails (wie die Terminbestätigung, lib/calendar/lead-email.ts)
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromAddress = process.env.BOOKING_EMAIL_FROM?.trim();
-  if (!apiKey || !fromAddress) return { sent: false, reason: "not_configured" };
-  const m = keinWhatsAppMail({ an, kontakt: who.kontakt, source: lead.source, advisor, link });
-  const replyTo =
-    lead.customer.agentConfig?.advisorEmail ||
-    (await prisma.user.findFirst({ where: { customerId: lead.customerId, role: "BUYER" }, orderBy: { createdAt: "asc" }, select: { email: true } }))?.email ||
-    undefined;
-  const { sendeKontaktMailResend } = await import("@/lib/mail/kontakt-mail");
-  const res = await sendeKontaktMailResend(
-    apiKey,
-    { from: `"${advisor.replace(/["<>]/g, "")}" <${fromAddress}>`, to, ...(replyTo ? { replyTo } : {}), subject: m.subject, text: m.text },
-    protokoll,
-  );
-  if (!res.ok && !res.blocked) return { sent: false, reason: res.error };
-  return { sent: true, via: "resend" };
+  // Lead-Mail-Baustein (lib/mail/lead-versand.ts): Postfach des zuständigen Beraters bzw. eines Inhabers (Mail liegt
+  // dann in seinem Gesendet-Ordner), sonst Resend mit „Name | Agentur“ und Antwort an den Berater.
+  // Versand protokolliert im Verlauf des Leads (automatisch, Art „Kein WhatsApp“, lib/mail/kontakt-mail.ts).
+  const k = await leadVersandKontext(lead.customerId, { leadId: lead.id, who });
+  const res = await sendeLeadMail(k, {
+    to,
+    inhalt: (sig) => keinWhatsAppMail({ an, kontakt: who.kontakt, source: lead.source, advisor: k.daten.name, link, signatur: sig.text }),
+    protokoll: { customerId: lead.customerId, leadId: lead.id, art: "kein_whatsapp" },
+  });
+  return res.sent ? { sent: true, via: res.via } : { sent: false, reason: res.reason };
 }
 
 /**

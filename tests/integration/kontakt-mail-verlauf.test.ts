@@ -119,6 +119,8 @@ describe("E-Mails im Kontaktverlauf", () => {
     const c = await makeCustomer({ name: `Agentur Meier ${uid()}`, leadAddress: "sie" });
     customers.push(c.id);
     const owner = await makeBuyer(c.id, "owner");
+    // Vermittler laut Anbieterangaben (Name in Termin-Mails, lib/mail/lead-versand.ts)
+    await prisma.erstinformation.create({ data: { customerId: c.id, token: `tok${uid()}${uid()}`, name: "Susanne Meier" } });
     const phone = `49151${Math.floor(10_000_000 + Math.random() * 89_999_999)}`;
     const lead = await prisma.lead.create({ data: { customerId: c.id, name: "Nina Winter", phone, email: `nina${uid()}@example.org`, status: "Neuer Lead" } });
     const conv = await prisma.conversation.create({

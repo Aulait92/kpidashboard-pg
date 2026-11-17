@@ -305,17 +305,17 @@ export async function submitConsentForm(existingCustomerId: string, input: Conse
     const r = await sendTransactionalMail(page.customerId, {
       to: address,
       subject: `Bitte bestätigen: E-Mails von ${page.advisor}`,
-      text: [
-        page.anrede,
-        "",
-        `bitte bestätigen Sie mit einem Klick, dass ${page.advisor} Sie per E-Mail über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren darf:`,
-        doiConfirmUrl(token),
-        "",
-        "Wenn Sie das nicht angefragt haben, ignorieren Sie diese E-Mail einfach. Dann passiert nichts.",
-        "",
-        "Viele Grüße",
-        page.advisor,
-      ].join("\n"),
+      text: (signatur) =>
+        [
+          page.anrede,
+          "",
+          `bitte bestätigen Sie mit einem Klick, dass ${page.advisor} Sie per E-Mail über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren darf:`,
+          doiConfirmUrl(token),
+          "",
+          "Wenn Sie das nicht angefragt haben, ignorieren Sie diese E-Mail einfach. Dann passiert nichts.",
+          "",
+          signatur,
+        ].join("\n"),
     }, page.id, "Bestätigungslink");
     doiSent = r.ok;
   }
@@ -344,23 +344,25 @@ export async function confirmDoi(token: string, meta: { ip: string | null; userA
 }
 
 /**
- * Bestätigungs- und Einwilligungsmails: über das verbundene Postfach des Inhabers (Absender klar erkennbar),
- * sonst über unseren Versand im Namen des Vermittlers.
+ * Bestätigungs- und Einwilligungsmails über den Lead-Mail-Baustein (lib/mail/lead-versand.ts): verbundenes Postfach
+ * eines Inhabers (Absender klar erkennbar), sonst unsere Versanddomain mit „Name | Agentur“, Antwort an den
+ * Vermittler und Signatur aus den Anbieterangaben. `text` bekommt die Signatur des jeweiligen Wegs.
  */
-async function sendTransactionalMail(customerId: string, m: { to: string; subject: string; text: string }, existingCustomerId: string, label: string): Promise<{ ok: boolean }> {
+async function sendTransactionalMail(
+  customerId: string,
+  m: { to: string; subject: string; text: (signatur: string) => string },
+  existingCustomerId: string,
+  label: string,
+): Promise<{ ok: boolean }> {
+  const { leadVersandKontext, sendeLeadMail } = await import("@/lib/mail/lead-versand");
+  const k = await leadVersandKontext(customerId);
   // Steht im Verlauf des Bestandskunden (automatisch, Art „Einwilligung“, lib/mail/kontakt-mail.ts)
-  const protokoll = { customerId, existingCustomerId, art: "einwilligung" as const, label };
-  const conn = await prisma.mailConnection.findFirst({ where: { customerId, status: "ok", user: { teamRole: "owner" } }, select: { userId: true } });
-  if (conn) {
-    const { sendViaPostfach } = await import("@/lib/mail/postfach");
-    const r = await sendViaPostfach(conn.userId, m, protokoll);
-    if (r.ok) return { ok: true };
-  }
-  const { sendPlainMail } = await import("@/lib/email");
-  const r = await sendPlainMail(m);
-  const { protokolliereMail } = await import("@/lib/mail/kontakt-mail");
-  await protokolliereMail(protokoll, { ...m, provider: "resend", ...(r.ok ? { status: "versendet" as const, messageId: r.id ?? null } : { status: "nicht_versendet" as const, reason: r.error }) });
-  return { ok: r.ok };
+  const r = await sendeLeadMail(k, {
+    to: m.to,
+    inhalt: (sig) => ({ subject: m.subject, text: m.text(sig.text) }),
+    protokoll: { customerId, existingCustomerId, art: "einwilligung", label },
+  });
+  return { ok: r.sent };
 }
 
 export type ConsentRequestResult = { ok: true; url: string; text: string; mailed: boolean } | { ok: false; error: string };
@@ -376,8 +378,7 @@ export async function requestConsent(existingCustomerId: string, customerId: str
     select: { id: true, firstName: true, lastName: true, salutation: true, ...SUBJECT_SELECT },
   });
   if (!ec) return { ok: false, error: "Kunde nicht gefunden." };
-  const [settings, sup, c] = await Promise.all([loadConsentSettings(customerId), loadSuppression(customerId), prisma.customer.findUnique({ where: { id: customerId }, select: { name: true } })]);
-  const advisor = advisorPerson(c?.name ?? "", null);
+  const [settings, sup] = await Promise.all([loadConsentSettings(customerId), loadSuppression(customerId)]);
   const url = consentUrl(ec.id);
   const anrede = anredeZeile("sie", kontaktFromExisting(ec));
   const text = `${anrede} darf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen: ${url}`;
@@ -391,7 +392,8 @@ export async function requestConsent(existingCustomerId: string, customerId: str
   const r = await sendTransactionalMail(customerId, {
     to: ec.email!,
     subject: "Darf ich Sie auf dem Laufenden halten?",
-    text: `${anrede}\n\ndarf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen:\n${url}\n\nViele Grüße\n${advisor}`,
+    text: (signatur) =>
+      `${anrede}\n\ndarf ich Sie künftig per E-Mail bzw. WhatsApp über passende Angebote und Neuigkeiten zu Ihren Verträgen informieren? Hier können Sie das mit einem Klick festlegen und jederzeit widerrufen:\n${url}\n\n${signatur}`,
   }, ec.id, "Anfrage");
   if (!r.ok) return { ok: false, error: "Die E-Mail konnte nicht gesendet werden. Bitte das Postfach prüfen." };
   await logConsent({ customerId, existingCustomerId: ec.id, channel: "email", action: "angefragt", source: "vermittler", text: "Einwilligungs-Abfrage per E-Mail gesendet", address: ec.email, actorUserId: opts.actorUserId, at: now });
