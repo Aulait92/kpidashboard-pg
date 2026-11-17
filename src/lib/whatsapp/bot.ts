@@ -77,7 +77,7 @@ const TOOLS: Anthropic.Tool[] = [
   {
     name: "book_appointment",
     description:
-      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND ausdrücklich gesagt hat, ob er Telefon oder Video möchte: sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link (Google Meet bzw. Microsoft Teams) erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
+      "Bucht einen konkreten Termin im Kundenkalender. Nur aufrufen, wenn der Lead die Uhrzeit gewählt UND gesagt hat, ob er Telefon oder Video möchte (wählt er eine Zeit aus einem Angebot „per Video“, ist das Video): sonst vorher fragen, niemals raten. Nutze exakt einen 'start'-Wert (ISO-8601), den du zuvor von get_available_slots erhalten oder mit dem Lead eindeutig vereinbart hast. Bei Video wird automatisch ein Video-Link (Google Meet bzw. Microsoft Teams) erstellt. Bestätige dem Lead danach Datum/Uhrzeit (und bei Video den Link).",
     input_schema: {
       type: "object",
       properties: {
@@ -348,6 +348,8 @@ export function buildSystemPrompt(
       "- Erst nach geklärter Qualifizierung terminieren: hole mit get_available_slots echte freie Zeiten, biete dem Lead 2-3 davon in natürlicher Sprache an und buche die gewählte Zeit mit book_appointment.",
       "- Erfinde niemals Termine oder Uhrzeiten: nutze ausschließlich die von get_available_slots gelieferten Zeiten. Nur wenn der Kalender nicht verbunden ist, nutze propose_appointment als Fallback.",
       "- Schlage vor der Buchung einen Videocall vor (der Berater kann dabei die Angebote am Bildschirm zeigen) und frag, ob das passt oder ob der Lead lieber telefoniert. Wähle den Modus nie selbst, aber empfiehl Video zuerst (Ole, 16.11.2026: immer vorrangig Video).",
+      // Zügig zum Termin (Ole, 17.11.2026): Zeit und Art in einer Frage statt in zwei Nachrichten
+      "- Biete die Zeiten gleich als Videotermin an, Zeit und Art in EINER Frage (z. B. „Passt Ihnen Donnerstag um 10 Uhr oder Freitag um 16:30 Uhr per Video? Telefon geht natürlich auch.“). Wählt der Lead darauf nur eine Zeit, hat er dem Videotermin zugestimmt: frag nicht noch einmal nach der Art. Schreibt er Telefon, buche Telefon.",
       "- Nachdem der Lead eine Uhrzeit gewählt hat und seine E-Mail noch NICHT bekannt ist, frage (als eigene Frage) nach seiner E-Mail-Adresse, damit er die Terminbestätigung mit Kalendereintrag per E-Mail bekommt. Möchte er keine angeben, buche ohne.",
       "- Bei Video-Terminen bekommt der Lead automatisch einen Video-Link (Google Meet bzw. Teams); gib ihn nach der Buchung weiter.",
       "- Bestätige jede Buchung dem Lead mit Datum und Uhrzeit.",
