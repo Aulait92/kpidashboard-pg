@@ -126,6 +126,41 @@ const GESELLSCHAFT_NAMEN: Record<string, string> = {
   wgv: "WGV",
   wuerttembergische: "Württembergische",
   wuerzburger: "Würzburger",
+  // Welle 3 (Ole, 17.11.2026: „möglichst alle Gesellschaften und Tarife“)
+  "adam-riese": "Adam Riese",
+  getsafe: "Getsafe",
+  friday: "FRIDAY",
+  verti: "Verti",
+  neodigital: "Neodigital",
+  janitos: "Janitos",
+  ammerlaender: "Ammerländer",
+  vkb: "Versicherungskammer Bayern",
+  sv: "SV SparkassenVersicherung",
+  vgh: "VGH",
+  "s-direkt": "Sparkassen DirektVersicherung",
+  "neue-leben": "neue leben",
+  hdi: "HDI",
+  wwk: "WWK",
+  vpv: "VPV",
+  condor: "Condor",
+  auxilia: "AUXILIA",
+  oerag: "ÖRAG",
+  deurag: "DEURAG",
+  "heidelberger-leben": "Heidelberger Leben",
+  "standard-life": "Standard Life",
+  interrisk: "InterRisk",
+  rhion: "Rhion",
+  nv: "NV-Versicherungen",
+  mecklenburgische: "Mecklenburgische",
+  ostangler: "Ostangler",
+  domcura: "Domcura",
+  gvv: "GVV",
+  ottonova: "ottonova",
+  envivas: "envivas",
+  petprotect: "Petprotect",
+  figo: "Figo",
+  petolo: "Petolo",
+  santevet: "SantéVet",
 };
 /** Reihenfolge in Listen (Ole, 16.11.2026): die Vertreter-Gesellschaften zuerst, dann alle übrigen alphabetisch nach Anzeigename. */
 const REIHENFOLGE = [
@@ -187,6 +222,10 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/hallesche/i.test(t)) return "hallesche";
   if (/hannoversche/i.test(t)) return "hannoversche";
   if (/swiss\s*life/i.test(t)) return "swiss-life";
+  // Welle 3: vor INTER bzw. ARAG prüfen (InterRisk, ÖRAG, DEURAG)
+  if (/interrisk/i.test(t)) return "interrisk";
+  if (/örag|\boerag\b/i.test(t)) return "oerag";
+  if (/\bdeurag\b/i.test(t)) return "deurag";
   // Welle 2: Allerweltswörter (Inter, Ideal, Dialog, Stuttgarter) nur als Marke bzw. mit „Versicherung“
   if (/\bbasler\b/i.test(t)) return "basler";
   if (/\bconcordia\b/i.test(t)) return "concordia";
@@ -204,12 +243,44 @@ export function gesellschaftAusText(text: string | null | undefined): string | n
   if (/n[üu]rnberger/i.test(t)) return "nuernberger";
   if (/\bsdk\b|s[üu]ddeutsche\s*kranken/i.test(t)) return "sdk";
   if (/die\s*stuttgarter|stuttgarter[\s-]*(lebens)?versicherung/i.test(t)) return "stuttgarter";
-  if (/\bukv\b|union\s*kranken|versicherungskammer/i.test(t)) return "ukv";
+  if (/\bukv\b|union\s*kranken/i.test(t)) return "ukv";
   if (/\buniversa\b/i.test(t)) return "universa";
   if (/volkswohl\s*-?\s*bund/i.test(t)) return "volkswohl-bund";
   if (/\bwgv\b/i.test(t)) return "wgv";
   if (/w[üu]rttembergische/i.test(t)) return "wuerttembergische";
   if (/w[üu]rzburger/i.test(t)) return "wuerzburger";
+  // Welle 3
+  if (/adam\s*riese/i.test(t)) return "adam-riese";
+  if (/\bgetsafe\b/i.test(t)) return "getsafe";
+  if (/\bFRIDAY\b/.test(t) || /friday[\s-]*versicherung/i.test(t)) return "friday";
+  if (/\bverti\b/i.test(t)) return "verti";
+  if (/neodigital/i.test(t)) return "neodigital";
+  if (/\bjanitos\b/i.test(t)) return "janitos";
+  if (/ammerl[äa]e?nder/i.test(t)) return "ammerlaender";
+  if (/\bvkb\b|versicherungskammer/i.test(t)) return "vkb";
+  if (/sparkassen[\s-]*direkt|\bs[\s-]direkt\b/i.test(t)) return "s-direkt";
+  if (/sparkassen[\s-]*versicherung|\bSV\s+Sparkassen/i.test(t)) return "sv";
+  if (/\bvgh\b/i.test(t)) return "vgh";
+  if (/neue\s*leben/i.test(t)) return "neue-leben";
+  if (/\bhdi\b/i.test(t)) return "hdi";
+  if (/\bwwk\b/i.test(t)) return "wwk";
+  if (/\bvpv\b/i.test(t)) return "vpv";
+  if (/condor[\s-]*(lebens)?versicherung/i.test(t)) return "condor";
+  if (/\bauxilia\b/i.test(t)) return "auxilia";
+  if (/heidelberger\s*leben/i.test(t)) return "heidelberger-leben";
+  if (/standard\s*life/i.test(t)) return "standard-life";
+  if (/\brhion\b/i.test(t)) return "rhion";
+  if (/\bnv[\s-]*versicherung/i.test(t)) return "nv";
+  if (/mecklenburgische/i.test(t)) return "mecklenburgische";
+  if (/ostangler/i.test(t)) return "ostangler";
+  if (/\bdomcura\b/i.test(t)) return "domcura";
+  if (/\bgvv\b/i.test(t)) return "gvv";
+  if (/\bottonova\b/i.test(t)) return "ottonova";
+  if (/\benvivas\b/i.test(t)) return "envivas";
+  if (/petprotect/i.test(t)) return "petprotect";
+  if (/\bfigo\b/i.test(t)) return "figo";
+  if (/\bpetolo\b/i.test(t)) return "petolo";
+  if (/sant[ée]vet/i.test(t)) return "santevet";
   return null;
 }
 

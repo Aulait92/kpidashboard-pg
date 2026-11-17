@@ -93,6 +93,17 @@ describe("Katalog laden", () => {
     expect(gesellschaftAusText("Württembergische Versicherung AG")).toBe("wuerttembergische");
     expect(gesellschaftAusText("Stuttgarter Straße 5")).toBeNull();
     expect(gesellschaftAusText("Die Stuttgarter")).toBe("stuttgarter");
+    // Welle 3
+    expect(gesellschaftAusText("InterRisk Versicherungs-AG")).toBe("interrisk");
+    expect(gesellschaftAusText("ÖRAG Rechtsschutz")).toBe("oerag");
+    expect(gesellschaftAusText("ARAG Rechtsschutz")).toBe("arag");
+    expect(gesellschaftAusText("DEURAG")).toBe("deurag");
+    expect(gesellschaftAusText("Versicherungskammer Bayern")).toBe("vkb");
+    expect(gesellschaftAusText("UKV Union Krankenversicherung")).toBe("ukv");
+    expect(gesellschaftAusText("Sparkassen DirektVersicherung")).toBe("s-direkt");
+    expect(gesellschaftAusText("SV SparkassenVersicherung")).toBe("sv");
+    expect(gesellschaftAusText("Black Friday Angebot")).toBeNull();
+    expect(gesellschaftAusText("Condor Lebensversicherung")).toBe("condor");
   });
 
   it("Reihenfolge: Vertreter-Gesellschaften zuerst, dann alphabetisch nach Anzeigename (Ole, 16.11.2026)", () => {
@@ -100,53 +111,87 @@ describe("Katalog laden", () => {
       "Allianz",
       "AXA",
       "SIGNAL IDUNA",
+      "Adam Riese",
       "ADVOCARD",
       "AGILA",
       "Alte Leipziger",
+      "Ammerländer",
       "ARAG",
+      "AUXILIA",
       "BarmeniaGothaer",
       "Basler",
       "Canada Life",
       "Concordia",
+      "Condor",
       "Continentale",
       "CosmosDirekt",
       "DA Direkt",
       "Debeka",
+      "DEURAG",
       "DEVK",
       "DFV",
       "Dialog",
       "die Bayerische",
       "Die Haftpflichtkasse",
+      "Domcura",
+      "envivas",
       "ERGO",
       "ERV",
       "Europa",
+      "Figo",
+      "FRIDAY",
       "Generali",
+      "Getsafe",
+      "GVV",
       "Hallesche",
       "Hannoversche",
       "HanseMerkur",
+      "HDI",
+      "Heidelberger Leben",
       "Helvetia",
       "HUK-COBURG",
       "IDEAL",
       "INTER",
+      "InterRisk",
       "Itzehoer",
+      "Janitos",
       "LV 1871",
       "LVM",
+      "Mecklenburgische",
       "Münchener Verein",
+      "Neodigital",
+      "neue leben",
       "NÜRNBERGER",
+      "NV-Versicherungen",
+      "ÖRAG",
+      "Ostangler",
+      "ottonova",
+      "Petolo",
+      "Petprotect",
       "Provinzial",
       "R+V",
+      "Rhion",
       "ROLAND",
+      "SantéVet",
       "SDK",
+      "Sparkassen DirektVersicherung",
+      "Standard Life",
       "Stuttgarter",
+      "SV SparkassenVersicherung",
       "Swiss Life",
       "Uelzener",
       "UKV",
       "uniVersa",
+      "Versicherungskammer Bayern",
+      "Verti",
+      "VGH",
       "VHV",
       "Volkswohl Bund",
+      "VPV",
       "WGV",
       "Württembergische",
       "Würzburger",
+      "WWK",
       "Zurich",
     ]);
     expect(sortiereGesellschaften(["zurich", "ruv", "advocard", "axa", "barmenia-gothaer", "allianz", "vhv"])).toEqual([
