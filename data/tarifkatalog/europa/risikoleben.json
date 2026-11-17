@@ -1,0 +1,60 @@
+{
+  "gesellschaft": "Europa",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Krebs Plus zubuchbar",
+    "Sofortleistung bei Tod 5 %",
+    "Schutz bei Unfalltod ab Antrag"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Basis (E-RL)",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, frei in 3 Jahren",
+        "vorgezogen": "ja",
+        "verlaengerung": "nein",
+        "weltweit": "ja",
+        "kinder": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.europa.de/versicherungen/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Premium (E-RLP)",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, frei in 5 Jahren",
+        "vorgezogen": "ja",
+        "verlaengerung": "bis 15 Jahre",
+        "weltweit": "ja",
+        "kinder": "+50 %, bis 300.000 €"
+      },
+      "bausteine": {},
+      "quelle": "https://www.europa.de/versicherungen/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.europa.de/versicherungen/risikolebensversicherung/",
+    "https://www.europa.de/fileadmin/pdf/produkte/risikoleben/antragsdokumente/europa_risikoleben_vertragsinformation.pdf"
+  ],
+  "offen": [
+    "Zwei Stufen ohne Markierung der EUROPA: keine Empfehlung gesetzt.",
+    "Nachversicherung ohne Gesundheitsprüfung um bis zu 60.000 €: ereignisunabhängig in den ersten 3 (Basis) bzw. 5 Jahren (Premium), dazu bei Heirat, Geburt, Immobilienerwerb, beruflichen Veränderungen.",
+    "Kinder-Bonus (nur Premium): Todesfall-Leistung bis 6 Monate nach Geburt oder Adoption +50 % (höchstens 300.000 €) sowie +5 % je Kind bis 6 Jahre (höchstens 5.000 €).",
+    "Verlängerung (nur Premium) um bis zu 15 Jahre, höchstens bis zum 75. Lebensjahr, bis 3 Jahre vor Ablauf.",
+    "Premium zusätzlich: Partnerschutz 10 % (höchstens 15.000 €), Zusatzleistung bei Tod im Ausland, Pflege-Bonus. Krebs Plus (10 %, höchstens 30.000 €, bei Krebs, Herzinfarkt, Schlaganfall) in beiden Tarifen zubuchbar.",
+    "Weltweiter Schutz aus der Vertragsinformation (Stand 01.02.2026). Umtauschrecht nicht genannt.",
+    "Linear und annuitätisch fallende Summe sowie E-VRL easy (Immobilienfinanzierung) als eigene Varianten; nicht als Baustein erfasst."
+  ]
+}

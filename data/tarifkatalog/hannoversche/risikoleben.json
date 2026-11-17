@@ -1,0 +1,81 @@
+{
+  "gesellschaft": "Hannoversche",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Sofortschutz ab Antragseingang",
+    "Monatlich kündbar",
+    "Dynamik 2 bis 5 % wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, bis 50.000 €",
+        "vorgezogen": "110 % der Summe",
+        "verlaengerung": "nein",
+        "kinder": "über Erhöhungsgarantie",
+        "laufzeit": "bis Alter 75"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hannoversche.de/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Plus",
+      "kurz": "Plus",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ja, erweitert",
+        "vorgezogen": "110 % der Summe",
+        "verlaengerung": "ja, bis 15 Jahre",
+        "kinder": "+20 % für 12 Monate",
+        "laufzeit": "bis Alter 75"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hannoversche.de/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Exklusiv",
+      "kurz": "Exklusiv",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ja, erweitert",
+        "vorgezogen": "110 % der Summe",
+        "verlaengerung": "ja, bis 15 Jahre",
+        "kinder": "+20 % für 12 Monate",
+        "laufzeit": "bis Alter 75"
+      },
+      "bausteine": {},
+      "quelle": "https://www.hannoversche.de/risikolebensversicherung",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.hannoversche.de/risikolebensversicherung",
+    "https://www.hannoversche.de/dam/risiko/werbedruckstuecke/broschuere-risikolebensversicherung.pdf",
+    "https://www.hannoversche.de/dam/risiko/bedingungen/bedingungen-risikolebensversicherung-aktuell.pdf"
+  ],
+  "offen": [
+    "Hannoversche markiert keinen Tarif; Plus als mittlere Stufe gesetzt.",
+    "Nachversicherung: Basis hat die Erhöhungsgarantie (20 %, höchstens 50.000 € je Anlass und einmalig in den ersten 3 Jahren); Plus und Exklusiv zusätzlich die Nachversicherungsgarantie (weitere Anlässe, einmalig in den ersten 5 Jahren). Zusammen höchstens 150.000 € bzw. 100 % der Anfangssumme.",
+    "Kinder: Basis nur über die Erhöhungsgarantie bei Geburt oder Adoption; Plus und Exklusiv zusätzlich Kinder-Bonus (beitragsfrei +20 %, höchstens 100.000 €, 12 Monate) und Extra-Kindergeld 2.400 € je Kind unter 7 Jahren.",
+    "Verlängerungsoption laut Produktseite nur Plus und Exklusiv; „bis 15 Jahre“ aus den Bedingungen BEDR25 (09.2025).",
+    "Exklusiv zusätzlich: Sofortleistung 10 % der Summe bei Krebs sowie bei Herzinfarkt oder Schlaganfall (je einmal). Mit den Standardmerkmalen nicht abbildbar, Plus und Exklusiv sehen deshalb gleich aus.",
+    "Plus und Exklusiv zusätzlich: Bau- und Hochzeits-Bonus, Extra-Pflegeleistung 10 %, Sofortauszahlung bei Sterbeurkunde, Extrahilfe bei Tod im Ausland 5 %.",
+    "Weltweiter Schutz und Umtauschrecht stehen nicht auf der Produktseite und nicht in der Broschüre.",
+    "Fallende Summe sowie Partner- und Über-Kreuz-Varianten gibt es als eigene Tarife (Rechner bzw. eigene Seiten); nicht als Baustein erfasst. Beitragsübernahme bei BU ist als Zusatzbaustein wählbar.",
+    "Laufzeit 5 bis 45 Jahre, höchstens bis zum 75. Lebensjahr. Höchstsumme ohne Zusatzprüfung bewusst nicht erfasst (Gesundheitsprüfung).",
+    "Aktion bis 30.11.2026 laut Seite: 110 % Vorabauszahlung bei schwerer Krankheit; nach Aktionsende prüfen."
+  ]
+}

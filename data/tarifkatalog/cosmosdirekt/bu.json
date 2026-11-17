@@ -1,0 +1,76 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "100 % Rente ab 50 % BU",
+    "Künftige Verbesserungen inkl.",
+    "Anpassung Regelaltersgrenze"
+  ],
+  "tarife": [
+    {
+      "name": "Berufsunfähigkeitsversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "verzichtet",
+        "au": "optional",
+        "nachversicherung": "anlassbezogen",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja, 24 Monate",
+        "pflege": "ja",
+        "dynamik": "optional",
+        "infektion": "ja",
+        "prognose": "36 Monate",
+        "stundung": "12 Monate, anlassbez."
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Berufsunfähigkeitsversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "verzichtet",
+        "au": "optional",
+        "nachversicherung": "anlassbezogen",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja, 24 Monate",
+        "pflege": "ja",
+        "dynamik": "optional",
+        "infektion": "ja",
+        "prognose": "6 Monate",
+        "stundung": "bis 24 Monate"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.cosmosdirekt.de/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/berufsunfaehigkeitsversicherung/"
+  ],
+  "offen": [
+    "Zwei Stufen ohne Markierung von CosmosDirekt: keine Empfehlung gesetzt.",
+    "Prognose Basis: 36 Monate; nach 6 Monaten ununterbrochener BU gilt dies ebenfalls als BU, Rente dann ab dem 7. Monat. Premium: 6 Monate mit rückwirkender Anerkennung ab dem ersten Tag.",
+    "Arbeitsunfähigkeits-Schutz und Inflations-Schutz (Rente steigt im Leistungsfall um 2 % jährlich) als zusätzliche Bausteine wählbar; AU-Leistung zusammen höchstens 24 Monate.",
+    "Premium zusätzlich: je 3 Monatsrenten Einmalzahlung bei BU und bei schwerer Krankheit; Leistungs-Option Assistance (Wiedereingliederungshilfe und Umorganisationshilfe je 6 Monatsrenten, Unterstützungsleistung). Ein Verzicht auf Umorganisation ist nicht genannt.",
+    "Teilzeit: bei Wechsel in Teilzeit gilt 24 Monate die Vollzeittätigkeit. Pflege: bei Hilfebedarf in mindestens zwei Aktivitäten des täglichen Lebens.",
+    "Starter-Tarif bis 30 Jahre (geringere Beiträge in den ersten 5 Jahren) ist eine Beitragsvariante, keine Stufe."
+  ]
+}

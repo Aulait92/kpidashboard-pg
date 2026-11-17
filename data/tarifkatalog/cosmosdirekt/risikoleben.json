@@ -1,0 +1,79 @@
+{
+  "gesellschaft": "CosmosDirekt",
+  "sparte": "risikoleben",
+  "produkt": "Risikolebensversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Monatlich kündbar",
+    "Soforthilfe bei Sterbeurkunde",
+    "Vorläufig versichert ab Antrag"
+  ],
+  "tarife": [
+    {
+      "name": "Risikolebensversicherung Basis",
+      "kurz": "Basis",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "anlassbezogen, 20 %",
+        "vorgezogen": "ja",
+        "verlaengerung": "nein",
+        "weltweit": "ja",
+        "kinder": "nein",
+        "laufzeit": "bis Alter 75"
+      },
+      "bausteine": {},
+      "quelle": "https://www.cosmosdirekt.de/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Comfort",
+      "kurz": "Comfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "nachversicherung": "ohne Anlass, 5 Jahre",
+        "vorgezogen": "ja",
+        "verlaengerung": "bis 15 Jahre",
+        "weltweit": "ja",
+        "kinder": "+20 % für 6 Monate",
+        "laufzeit": "bis Alter 75"
+      },
+      "bausteine": {},
+      "quelle": "https://www.cosmosdirekt.de/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Risikolebensversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "nachversicherung": "ohne Anlass, 5 Jahre",
+        "vorgezogen": "ja, plus 10 %",
+        "verlaengerung": "bis 15 Jahre",
+        "weltweit": "ja",
+        "kinder": "+20 % für 6 Monate",
+        "laufzeit": "bis Alter 75"
+      },
+      "bausteine": {},
+      "quelle": "https://www.cosmosdirekt.de/risikolebensversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.cosmosdirekt.de/risikolebensversicherung/"
+  ],
+  "offen": [
+    "CosmosDirekt markiert keinen Tarif; Comfort als mittlere Stufe gesetzt.",
+    "Nachversicherung: Basis bei Anlässen (Heirat, Geburt, Immobilienkauf) innerhalb 12 Monaten, je Anlass höchstens 20 %; Comfort und Premium einmalig ohne Anlass in den ersten 5 Jahren bis 100 % (5.000 bis 50.000 €), Gesamtsumme höchstens 500.000 €.",
+    "Kinder: Comfort und Premium mit Kinder-, Bau- und Hochzeits-Bonus (+20 %, höchstens 50.000 €, 6 Monate beitragsfrei). Premium zusätzlich Kinder-Zusatz-Schutz bei Erkrankung eines Kindes (10 %, höchstens 25.000 €).",
+    "Vorgezogene Leistung bei Lebenserwartung unter 12 Monaten; Premium zahlt 10 % der Summe extra.",
+    "Comfort und Premium: Pflege-Zusatzleistung 10 % (höchstens 10.000 €) und Zusatzleistung bei Tod im Ausland 5 % (höchstens 10.000 €). Premium: je 10 % bei Krebs sowie bei Herzinfarkt oder Schlaganfall (höchstens 100.000 €).",
+    "Verlängerung um bis zu 15 Jahre, höchstens Verdopplung der Laufzeit und bis zum 75. Geburtstag. Laufzeit 5 bis 45 Jahre.",
+    "Umtauschrecht nicht genannt. Fallende Summe (Restschuldabsicherung) als eigene Variante; nicht als Baustein erfasst. Stundung: Basis anlassbezogen, Comfort und Premium bis 12 Monate."
+  ]
+}
