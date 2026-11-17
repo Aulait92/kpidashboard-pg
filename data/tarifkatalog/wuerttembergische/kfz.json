@@ -1,0 +1,73 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "kfz",
+  "produkt": "Kfz-Versicherung (Pkw)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Mallorca-Police",
+    "Kfz-Umweltschadenversicherung",
+    "Grobe Fahrlässigkeit in Kasko"
+  ],
+  "tarife": [
+    {
+      "name": "Kfz-Versicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "12 Monate",
+        "marder": "bis 5.000 €",
+        "gap": "nein",
+        "elektro": "nein",
+        "mallorca": "ja",
+        "rabattschutz": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/mobilitaet/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Kfz-Versicherung Premium",
+      "kurz": "Premium",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "deckung": "100 Mio. € pauschal",
+        "grob": "ja",
+        "tiere": "ja",
+        "neuwert": "24 Monate",
+        "marder": "unbegrenzt, Folgeschäden",
+        "gap": "ja",
+        "elektro": "ja, Allgefahren",
+        "mallorca": "ja",
+        "rabattschutz": "optional",
+        "werkstatt": "optional"
+      },
+      "bausteine": {
+        "schutzbrief": "optional",
+        "rabattschutz": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/mobilitaet/kfz-versicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/mobilitaet/kfz-versicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/kraftfahrt/Allgemeine-Bedingungen-Kfz-Versicherung-Pkw.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich der Produktseite (Abruf 17.11.2026); Württembergische markiert Premium mit „Tipp“.",
+    "Grobe Fahrlässigkeit in Teil- und Vollkasko, gilt nicht bei Diebstahl, Alkohol oder Drogen. Personenschäden höchstens 15 Mio. € je Person.",
+    "Neu- bzw. Kaufpreisentschädigung nach Totalschaden; Premium auch bei Leasing mit Reinvestitionsklausel, mit Kasko+ bis 48 Monate.",
+    "Werkstattbindung: Schadenservice+ im Premiumschutz zuwählbar (mit Nachlass auf den Kaskobeitrag); für Kompakt nicht ausdrücklich genannt.",
+    "Rabattschutz, Schutzbrief und Fahrerschutz als Zusatzbausteine genannt, Zuordnung je Stufe nicht ausdrücklich. Premium zusätzlich Ausland-Schaden-Schutz, Brems-, Betriebs- und Bruchschäden."
+  ]
+}

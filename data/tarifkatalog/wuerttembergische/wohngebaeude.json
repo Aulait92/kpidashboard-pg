@@ -1,0 +1,113 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "wohngebaeude",
+  "produkt": "Wohngebäudeversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Überspannung durch Blitz",
+    "Nebengebäude bis 40 m²",
+    "Balkonkraftwerk, Wallbox"
+  ],
+  "tarife": [
+    {
+      "name": "Wohngebäude Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "gf": "nein",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "WP ja, PV optional",
+        "kosten": "Hotel 150 €/T., 6 Mon.",
+        "ueberspannung": "ja",
+        "fugen": "nein",
+        "vandalismus": "Einbruch bis 5.000 €",
+        "tiere": "nein",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "WP ja, PV optional",
+        "kosten": "Hotel 250 €/T., 12 Mon.",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "Einbruch bis 10.000 €",
+        "tiere": "bis 2.500 €",
+        "allgefahren": "nein"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Wohngebäude Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "gf": "ja",
+        "elementar": "optional",
+        "ableitung": "optional",
+        "pv": "WP ja, PV optional",
+        "kosten": "Hotel 250 €/T., 24 Mon.",
+        "ueberspannung": "ja",
+        "fugen": "ja",
+        "vandalismus": "ja",
+        "tiere": "bis 5.000 €",
+        "allgefahren": "optional (PremiumPlus)"
+      },
+      "bausteine": {
+        "elementar": "optional",
+        "glas": "optional",
+        "technik": "optional",
+        "erneuerbar": "optional",
+        "ableitung": "optional",
+        "notfall": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/wohnen/wohngebaeudeversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/wohnen/wohngebaeudeversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/wohngebaeudeversicherung/1181_Besondere-Bedingungen_Wohngebaeude_Kompakt.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/wohngebaeudeversicherung/1182_Besondere_Bedingungen_Wohngebudeversicherung_KomfortSchutz.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/wohngebaeudeversicherung/1183_Besondere_Bedingungen_Wohngebaeudeversicherung_PremiumSchutz.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich der Produktseite und Besondere Bedingungen Kompakt, Komfort, Premium (Stand 01.03.2025). Keine Stufe markiert, Komfort als mittlere Stufe.",
+    "Ableitungsrohre außerhalb des Gebäudes laut Bedingungen aller drei Stufen nur „sofern ausdrücklich vereinbart“, daher optional; Entschädigungsgrenzen nicht ausgewertet.",
+    "Photovoltaik nur versichert, wenn im Versicherungsschein benannt (Baustein PhotovoltaikPlus); Wärmepumpen sind mitversichert, Diebstahl ab Komfort (10.000 € bzw. 50.000 €).",
+    "Kosten nach Schaden: Hotelkosten laut Bedingungen (Kompakt 150 €/Tag bis 6 Monate, Komfort 250 €/Tag bis 12 Monate, Premium 250 €/Tag bis 2 Jahre). Aufräumkosten nicht beziffert.",
+    "Gleitender Neuwert, Mietausfall und Selbstbeteiligung je Stufe nicht ausgewertet. Bausteine: Elementar, PremiumPlus, HaustechnikPlus, PhotovoltaikPlus, Wohngebäude Schutzbrief, Glas."
+  ]
+}

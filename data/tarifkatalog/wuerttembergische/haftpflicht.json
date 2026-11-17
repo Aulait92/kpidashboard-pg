@@ -1,0 +1,91 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "haftpflicht",
+  "produkt": "Privat-Haftpflichtversicherung",
+  "empfehlung": "mittlere Stufe",
+  "inAllenTarifen": [
+    "Mietsachschäden an Wohnräumen",
+    "Gefälligkeitsschäden",
+    "Neue Lebenslagen 12 Monate"
+  ],
+  "tarife": [
+    {
+      "name": "Privat-Haftpflicht Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "vs": "10 Mio. €",
+        "forderungsausfall": "ja, ab 2.500 €",
+        "schluessel": "bis 50.000 €",
+        "delikt": "bis 50.000 €",
+        "geliehen": "nein",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "drohne": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerttembergische.de/existenz/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": true,
+      "werte": {
+        "vs": "20 Mio. €",
+        "forderungsausfall": "ja, ab 2.000 €",
+        "schluessel": "bis 500.000 €",
+        "delikt": "bis 500.000 €",
+        "geliehen": "ja",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "nein",
+        "drohne": "nein"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerttembergische.de/existenz/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Privat-Haftpflicht Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": false,
+      "werte": {
+        "vs": "50 Mio. €",
+        "forderungsausfall": "ja",
+        "schluessel": "ja, mit Folgeschäden",
+        "delikt": "ja",
+        "geliehen": "bis zur VS",
+        "miete": "ja",
+        "gefaelligkeit": "ja",
+        "neuwert": "bis 10.000 €",
+        "drohne": "ja"
+      },
+      "bausteine": {
+        "oeltank": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/existenz/private-haftpflichtversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/existenz/private-haftpflichtversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/haftpflicht/privat_haftpflichtversicherung/3046_AVB_PHV_Kompakt.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/haftpflicht/privat_haftpflichtversicherung/3047_AVB_PHV_Komfort.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/haftpflicht/privat_haftpflichtversicherung/3048_AVB_PHV_Premium.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich „Unsere Produktlinien im Vergleich“ auf der Produktseite (Abruf 17.11.2026). Keine Stufe als Empfehlung markiert, Komfort als mittlere Stufe.",
+    "Geliehene Sachen laut Produktseite „In Komfort und Premium“; Höhe in Komfort nicht genannt, Premium bis zur Versicherungssumme. Ausfalldeckung Kompakt und Komfort mit Mindestschadenhöhe.",
+    "Neuwert in Premium nur für Sachen bis 2 Jahre alt. Baustein PremiumPlus (nur zu Premium): 100 Mio. €, Neuwert eigener Sachen, gemietete E-Scooter; nicht im Schema.",
+    "Heizöltanks laut Tarifvergleich nur in Premium enthalten (als Baustein Öltank geführt).",
+    "Selbstbeteiligung wählbar (Beitragsbeispiel mit 250 € SB), Beträge je Stufe nicht veröffentlicht. Mallorca, Rabattretter, Ehrenamt, Nebenberuf nicht im Tarifvergleich."
+  ]
+}

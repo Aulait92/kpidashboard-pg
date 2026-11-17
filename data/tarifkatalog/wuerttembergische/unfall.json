@@ -1,0 +1,98 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "unfall",
+  "produkt": "Private Unfallversicherung",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Weltweit, rund um die Uhr",
+    "Reha-Management",
+    "Sofortleistung Schwerverletzte"
+  ],
+  "tarife": [
+    {
+      "name": "Unfallversicherung Kompakt",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "wählbar",
+        "abGrad": "ab messbarem Grad",
+        "khtg": "optional",
+        "unfallrente": "optional, ab 50 %",
+        "kosmetik": "75.000 €",
+        "bergung": "75.000 €",
+        "gliedertaxe": "nein",
+        "sofort": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Komfort",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "wählbar",
+        "abGrad": "ab messbarem Grad",
+        "khtg": "optional",
+        "unfallrente": "optional, 2x ab 70 %",
+        "kosmetik": "100.000 €",
+        "bergung": "100.000 €",
+        "gliedertaxe": "ja",
+        "sofort": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "Unfallversicherung Premium",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "grundsumme": "frei wählbar",
+        "progression": "wählbar",
+        "abGrad": "ab messbarem Grad",
+        "khtg": "optional",
+        "unfallrente": "optional, 2x ab 70 %",
+        "kosmetik": "250.000 €",
+        "bergung": "250.000 €",
+        "gliedertaxe": "ja",
+        "sofort": "ja"
+      },
+      "bausteine": {
+        "rente": "optional",
+        "tagegeld": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/unfallversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/gesundheit/unfallversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/unfallversicherung/4042_AUB_Kompakt.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/unfallversicherung/4043_AUB_Komfort.pdf",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/unfallversicherung/4044_AUB_Premium.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich und Leistungskarten der Produktseite (Abruf 17.11.2026); Württembergische markiert Premium mit „Tipp“.",
+    "Invaliditätssumme und Progression werden individuell gewählt (keine festen Werte je Stufe). Invaliditätsleistung ab jedem messbaren Invaliditätsgrad.",
+    "Unfallrente in allen Stufen wählbar, ab 50 % Invalidität; Komfort und Premium mit Verdoppelung ab 70 % Invalidität.",
+    "Krankenhaustagegeld in allen Stufen wählbar (Höhe frei); Unfalltagegeld, Hilfeleistungen und Familien-Management ab Komfort. Kosmetische OP inklusive Tattoos.",
+    "Todesfallleistung, Zeckenstich und Sofortleistung in Euro nicht beziffert. Baustein PremiumPlus (nur Premium): Mitwirkungsverzicht, Impfschäden, Helmbonus."
+  ]
+}

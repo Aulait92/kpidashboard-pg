@@ -1,0 +1,92 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "zahnzusatz",
+  "produkt": "Zahnzusatzversicherung (ZahnSchutz)",
+  "empfehlung": "Gesellschaft",
+  "inAllenTarifen": [
+    "Ohne Wartezeit",
+    "Auch über GOZ-Höchstsätze",
+    "Weltweiter Schutz"
+  ],
+  "tarife": [
+    {
+      "name": "ZahnSchutz Kompakt (ZZ75 + ZZB)",
+      "kurz": "Kompakt",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "behandlung": "100 %",
+        "wartezeit": "keine",
+        "inlays": "100 % Füllungen",
+        "zahnersatz": "75 %",
+        "implantate": "75 %",
+        "prophylaxe": "80 € jährlich",
+        "staffel": "4 Jahre, bis 3.200 €",
+        "kfo": "Kinder bis 1.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnSchutz Komfort (ZZ90 + ZZB)",
+      "kurz": "Komfort",
+      "stufe": 2,
+      "empfohlen": false,
+      "werte": {
+        "behandlung": "100 %",
+        "wartezeit": "keine",
+        "inlays": "100 % Füllungen",
+        "zahnersatz": "90 %",
+        "implantate": "90 %",
+        "prophylaxe": "80 € jährlich",
+        "staffel": "4 Jahre, bis 6.000 €",
+        "kfo": "Kinder bis 1.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    },
+    {
+      "name": "ZahnSchutz Premium (ZZ100 + ZZBPlus)",
+      "kurz": "Premium",
+      "stufe": 3,
+      "empfohlen": true,
+      "werte": {
+        "behandlung": "100 %",
+        "wartezeit": "keine",
+        "inlays": "100 % Füllungen",
+        "zahnersatz": "100 %",
+        "implantate": "100 %",
+        "prophylaxe": "150 € jährlich",
+        "staffel": "4 Jahre, bis 6.000 €",
+        "kfo": "Kinder bis 3.000 €"
+      },
+      "bausteine": {
+        "prophylaxe": "inklusive",
+        "kfo": "inklusive"
+      },
+      "quelle": "https://www.wuerttembergische.de/gesundheit/zahnzusatzversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/gesundheit/zahnzusatzversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/krankenversicherung/40254-Bedingungen_Zahnzusatz_3-2022.pdf"
+  ],
+  "offen": [
+    "Quelle: Tarifvergleich und Zahnstaffel der Produktseite (Abruf 17.11.2026); Württembergische markiert ZahnSchutz Premium mit „Tipp“.",
+    "Erstattung inklusive Vorleistung der GKV; Zahnersatz plus 5 % bei kooperierendem Dentallabor. Implantate laut Seite Teil des Zahnersatzes.",
+    "Zahnstaffel: Zahnersatz in den ersten vier Kalenderjahren begrenzt (Kompakt 800 € je Jahr bis 3.200 €, Komfort und Premium 1.500 € je Jahr bis 6.000 €).",
+    "Kieferorthopädie für Kinder (KIG I bis V) 100 % bis zur genannten Höhe; unfallbedingt für Erwachsene bis 2.000 €. Premium zusätzlich Schienentherapie 500 € und Hypnose oder Narkose 200 € im Jahr."
+  ]
+}

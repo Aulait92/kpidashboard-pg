@@ -1,0 +1,49 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "bu",
+  "produkt": "Berufsunfähigkeitsversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Volle Rente ab 50 % BU",
+    "Weltweiter Schutz",
+    "Cash-Back-Option wählbar"
+  ],
+  "tarife": [
+    {
+      "name": "SBU Privat",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "verweisung": "ja",
+        "prognose": "6 Monate",
+        "au": "optional, ab 6 Mon.",
+        "nachversicherung": "ja",
+        "rueckwirkend": "ja",
+        "weltweit": "ja",
+        "teilzeit": "ja, 12 Monate",
+        "pflege": "ja",
+        "stundung": "bis 12 Monate",
+        "dynamik": "optional",
+        "infektion": "ja"
+      },
+      "bausteine": {
+        "au": "optional",
+        "dynamik": "optional"
+      },
+      "quelle": "https://www.wuerttembergische.de/existenz/berufsunfaehigkeitsversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/existenz/berufsunfaehigkeitsversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/altersvorsorge_und_bu/SBU_Privat.pdf"
+  ],
+  "offen": [
+    "Ein Tarif (Bedingungen SBU Privat, gültig ab 01.01.2025); Einsteiger-BU bis 30 Jahre mit vergünstigtem Startbeitrag als Variante.",
+    "Bausteine laut Produktseite: Arbeitsunfähigkeit (Rente ab 6 Monaten Krankschreibung), Alltagsfähigkeiten, Unfall-Baustein (doppelte Rente), garantierte Rentensteigerung, Dynamik.",
+    "Rückwirkende Leistung laut Bedingungen, außer bei vereinbartem Ausschluss rückwirkender Anerkennung oder Karenzzeit.",
+    "Umorganisation bei Selbstständigen wird geprüft (Verzicht bei überwiegend kaufmännischer Tätigkeit), daher nicht als Merkmal gesetzt."
+  ]
+}

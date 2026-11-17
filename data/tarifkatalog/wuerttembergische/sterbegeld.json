@@ -1,0 +1,36 @@
+{
+  "gesellschaft": "Württembergische",
+  "sparte": "sterbegeld",
+  "produkt": "Sterbegeldversicherung",
+  "empfehlung": "keine",
+  "inAllenTarifen": [
+    "Lebenslang und weltweit",
+    "Überführung aus dem Ausland",
+    "Abschluss bis 80 Jahre"
+  ],
+  "tarife": [
+    {
+      "name": "Sterbegeldversicherung",
+      "kurz": "Tarif",
+      "stufe": 1,
+      "empfohlen": false,
+      "werte": {
+        "summe": "3.500 bis 20.000 €",
+        "wartezeit": "3 Jahre",
+        "ohne-gp": "ja"
+      },
+      "bausteine": {},
+      "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/sterbegeldversicherung/",
+      "stand": "2026-11-17",
+      "ungeprueft": true
+    }
+  ],
+  "quellen": [
+    "https://www.wuerttembergische.de/vermoegen-vorsorge/sterbegeldversicherung/",
+    "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/altersvorsorge_und_bu/Sterbegeldversicherung.pdf"
+  ],
+  "offen": [
+    "Bei Unfalltod entfällt die Wartezeit; eine doppelte Leistung bei Unfall ist nicht genannt.",
+    "Tod während der Wartezeit: Rückzahlung der eingezahlten Beiträge. Laufende Beiträge oder Einmalbeitrag; Ende der Beitragszahlung nicht genannt."
+  ]
+}
