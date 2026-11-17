@@ -57,7 +57,7 @@ describe("Erstanschreiben je Produkt", () => {
     const alt = ersteFrageRegel("TKV Katze", "Susanne Meier", { gesendet: "Guten Tag Frau X, … Für welches Tier suchen Sie den Schutz?" });
     expect(alt).toContain("„Für welches Tier suchen Sie den Schutz?“ (Knöpfe „Hund“, „Katze“)");
     // Lead hat zuerst geschrieben: Frage 1 jetzt stellen, fett am Ende
-    expect(ersteFrageRegel("TKV Katze", "Susanne", { jetzt: true, an: "du" })).toContain("*Wie alt ist deine Katze?*");
+    expect(ersteFrageRegel("TKV Katze", "Susanne", { jetzt: true, an: "du" })).toContain("(ohne Sternchen, nicht fett): Wie alt ist deine Katze?");
     expect(ersteFrageRegel(null, "Susanne", { jetzt: true })).toBe("");
     expect(r).toContain("Danach noch genau diese Frage: „Soll vor allem eine Operation abgesichert sein");
     expect(ersteFrageRegel(null, "Susanne Meier")).toContain("„Lieber schriftlich“");
@@ -97,7 +97,7 @@ describe("Dokument-Kopf (Erstinformation als PDF) und Antrag", () => {
     expect((zahn.components as { type: string }[]).map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
     const ohneKopf = buildTemplateRequest("outreach_zahn", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf, kopf: false });
     expect((ohneKopf.components as { type: string }[]).map((c) => c.type)).toEqual(["BODY"]);
-    expect(ohneKopf.name).toBe("pg_outreach_zahn_v6_ohnepdf_sie");
+    expect(ohneKopf.name).toBe("pg_outreach_zahn_v7_ohnepdf_sie");
     expect(requestShape(plain).headerFormat).toBeNull();
     // Andere Zwecke bekommen nie einen Kopf
     const rem = buildTemplateRequest("reminder", "Anid Brand", TEMPLATE_VERSION, "sie", { documentExample: pdf });
@@ -141,12 +141,12 @@ describe("Versionen und A/B-Fassungen bei der Auswahl", () => {
   const lA = { name: "pg_followup_last_v4_sie", body: "Guten Tag {{1}}, A ok?", headerFormat: null };
   const lB = { name: "pg_followup_last_v4_b_sie", body: "Guten Tag {{1}}, B ok?", headerFormat: null };
 
-  it("Erstanschreiben v6, übrige v4, unveränderte Zwecke behalten v3", () => {
+  it("Erstanschreiben v7, übrige v4, unveränderte Zwecke behalten v3", () => {
     expect(TEMPLATE_VERSION).toBe("v4");
     expect(templateVersionFor("review_request")).toBe("v3");
-    expect(templateVersionFor("outreach_tkv")).toBe("v6");
-    expect(isCurrentTemplateName("pg_outreach_v6_sie", "outreach")).toBe(true);
-    expect(isCurrentTemplateName("pg_outreach_v6_ohnepdf_sie", "outreach")).toBe(true);
+    expect(templateVersionFor("outreach_tkv")).toBe("v7");
+    expect(isCurrentTemplateName("pg_outreach_v7_sie", "outreach")).toBe(true);
+    expect(isCurrentTemplateName("pg_outreach_v6_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v5_sie", "outreach")).toBe(false);
     expect(isCurrentTemplateName("pg_outreach_v4_sie", "outreach")).toBe(false);
     // „outreach_tkv“ ist ein eigener Zweck, nicht die aktuelle Fassung von „outreach“

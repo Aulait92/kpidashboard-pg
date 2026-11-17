@@ -30,6 +30,7 @@ import { inSendWindow, TERMIN_NACHFASS_STUNDEN } from "@/lib/lead-sequences";
 import { inStreckenFenster } from "@/lib/whatsapp/termin-strecke";
 import {
   ERSTANSCHREIBEN_V6,
+  ERSTANSCHREIBEN_V7,
   erstanschreibenText,
   erstanschreibenV6Params,
   ersteFrage,
@@ -286,13 +287,16 @@ const LAGEN: Record<string, (p: string | null) => { label: string; value: string
   vollstaendig: (p) => testLeadAnswers(p ?? "Sterbegeld"),
 };
 
-describe("Erstanschreiben v6: Text und Parameter", () => {
-  it("Text zentral als Konstante, Frage fett mit festem „?“ hinter dem Platzhalter", () => {
+describe("Erstanschreiben v7: Text und Parameter", () => {
+  it("Text zentral als Konstante, erste Frage NICHT fett (v7), festes „?“ hinter dem Platzhalter", () => {
+    // v6 bleibt unverändert (bei Meta freigegeben, wird bis zur Freigabe von v7 gesendet)
     expect(ERSTANSCHREIBEN_V6.sie).toBe("danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*");
-    expect(ERSTANSCHREIBEN_V6.du).toBe("danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*");
-    expect(templateTextFor("outreach_privatschutz", "sie")).toBe(`Hallo {{1}}, ${ERSTANSCHREIBEN_V6.sie}`);
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Thema {{1}}! Ich bin der digitale KI-Assistent von {{2}}.\n\n*{{3}}?*");
-    expect(templateTextFor("outreach", "du")).toBe(`Hallo {{1}}, ${ERSTANSCHREIBEN_V6.du}`);
+    expect(ERSTANSCHREIBEN_V7.sie).toBe("danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?");
+    expect(ERSTANSCHREIBEN_V7.du).toBe("danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?");
+    expect(templateTextFor("outreach_privatschutz", "sie")).toBe(`Hallo {{1}}, ${ERSTANSCHREIBEN_V7.sie}`);
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Thema {{1}}! Ich bin der digitale KI-Assistent von {{2}}.\n\n{{3}}?");
+    expect(templateTextFor("outreach", "du")).toBe(`Hallo {{1}}, ${ERSTANSCHREIBEN_V7.du}`);
+    for (const p of OUTREACH_PURPOSES) for (const f of ["du", "sie", "sie_ohne_name"] as const) expect(templateTextFor(p, f)).not.toContain("*");
   });
 
   it("Beispiel Privatschutz, Sie, Lead ohne Anrede, Formular mit Interesse", () => {
@@ -304,7 +308,7 @@ describe("Erstanschreiben v6: Text und Parameter", () => {
       source: "Privatschutz",
       formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }],
     });
-    expect(t).toBe("Hallo Julia Schneider, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\n*Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?*");
+    expect(t).toBe("Hallo Julia Schneider, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\nWer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?");
   });
 
   it("Parameter je Lage: Formular leer, teilweise, vollständig (Privatschutz, Sie)", () => {
@@ -337,7 +341,8 @@ describe("Erstanschreiben v6: Text und Parameter", () => {
             const tpl = renderTemplate(fillNames(templateTextFor(purpose, mitName ? an : "sie_ohne_name"), "X"), mitName ? [name, ...params] : params);
             expect(tpl).not.toContain("??");
             expect(tpl).not.toMatch(/[–—]/);
-            expect(tpl.endsWith(`*${frage}*`)).toBe(true);
+            expect(tpl.endsWith(`\n\n${frage}`)).toBe(true);
+            expect(tpl).not.toContain("*");
             const frei = erstanschreibenText({ an, kontakt, name: "Ole", vermittler: person.dat, vermittlerNom: person.nom, source, formular: f });
             expect(frei, `${source} ${an}`).toBe(tpl);
             if (an === "du") expect(tpl).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
@@ -361,25 +366,24 @@ describe("Erstanschreiben v6: Text und Parameter", () => {
   });
 });
 
-describe("Erstanschreiben v6: Einreichung und Rückfall auf v5", () => {
+describe("Erstanschreiben v7: Einreichung, Auswahl und Erstinformation (Live-Test 17.11.2026)", () => {
   const names = { firm: "Agentur Ole Kannapinn", advisor: "Ole Kannapinn", kurz: "Ole" };
 
-  it("je Fassung mit PDF-Kopf und ohne Kopf, Meta-Regeln erfüllt, Kategorie wie v5 (Marketing)", () => {
+  it("v7 je Fassung nur mit PDF-Kopf (keine _ohnepdf mehr), Meta-Regeln erfüllt, Kategorie Marketing", () => {
     const geplant = plannedTemplates([...OUTREACH_PURPOSES]);
-    expect(geplant).toHaveLength(OUTREACH_PURPOSES.length * 3 * 2);
+    expect(geplant).toHaveLength(OUTREACH_PURPOSES.length * 3);
     for (const { purpose, form, variant, kopf } of geplant) {
+      expect(kopf).toBe(true);
       const req = buildTemplateRequest(purpose, names, undefined, form, { variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf });
       expect(req.name).toBe(templateNameFor(purpose, undefined, form, variant, kopf));
-      expect(req.name).toMatch(kopf ? /_v6(_sie(_ohne_name)?)?$/ : /_v6_ohnepdf(_sie(_ohne_name)?)?$/);
+      expect(req.name).toMatch(/_v7(_sie(_ohne_name)?)?$/);
       expect(req.category).toBe("MARKETING");
       const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
-      expect(comps.some((c) => c.type === "HEADER")).toBe(kopf);
-      expect(comps.some((c) => c.type === "FOOTER")).toBe(kopf);
-      expect(comps.some((c) => c.type === "BUTTONS")).toBe(false);
+      expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
       const body = comps.find((c) => c.type === "BODY")!;
       expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? []), `${req.name}: ${body.text}`).toEqual([]);
       expect(body.text).toContain("KI-Assistent");
-      // Beispielwerte: Frage ohne „?“
+      expect(body.text).not.toContain("*");
       expect(body.example!.body_text[0].at(-1)!.endsWith("?")).toBe(false);
     }
   });
@@ -387,26 +391,71 @@ describe("Erstanschreiben v6: Einreichung und Rückfall auf v5", () => {
   const tpl = (name: string, purpose: NoticePurpose, header: boolean, body: string) => ({ name, purpose, body, headerFormat: header ? "DOCUMENT" : null });
   const V5 = "Hallo {{1}}, danke für Ihre Anfrage zum Thema {{2}}!\nIch bin der digitale KI-Assistent von Ole …\n\n*Worum geht es Ihnen vor allem?*";
   const V5_OHNE = "Hallo, danke für Ihre Anfrage zum Thema {{1}}! …";
+  const V6 = { du: `Hallo {{1}}, ${ERSTANSCHREIBEN_V6.du}`, sie: `Hallo {{1}}, ${ERSTANSCHREIBEN_V6.sie}`, ohne: "Hallo, danke für Ihre Anfrage zum Thema {{1}}! Ich bin der digitale KI-Assistent von {{2}}.\n\n*{{3}}?*" };
   const P: NoticePurpose[] = ["outreach_privatschutz", "outreach"];
   const freigegebenV5 = [tpl("pg_outreach_privatschutz_v5_sie", "outreach_privatschutz", true, V5), tpl("pg_outreach_privatschutz_v5_sie_ohne_name", "outreach_privatschutz", true, V5_OHNE)];
   const v6 = [
-    tpl("pg_outreach_privatschutz_v6_sie", "outreach_privatschutz", true, templateTextFor("outreach_privatschutz", "sie")),
-    tpl("pg_outreach_privatschutz_v6_ohnepdf_sie", "outreach_privatschutz", false, templateTextFor("outreach_privatschutz", "sie")),
-    tpl("pg_outreach_privatschutz_v6_sie_ohne_name", "outreach_privatschutz", true, templateTextFor("outreach_privatschutz", "sie_ohne_name")),
+    tpl("pg_outreach_privatschutz_v6_sie", "outreach_privatschutz", true, V6.sie),
+    tpl("pg_outreach_privatschutz_v6_ohnepdf_sie", "outreach_privatschutz", false, V6.sie),
+    tpl("pg_outreach_privatschutz_v6_sie_ohne_name", "outreach_privatschutz", true, V6.ohne),
   ];
   const pick = (list: ReturnType<typeof tpl>[], an: Ansprache, kontakt: { fullName: string; salutation?: "Herr" | "Frau" }, pdf: "vollstaendig" | "entwurf" | "keins") => {
     const r = rankOutreach(list, P, an, kontakt, { pdf });
     return r && "tpl" in r ? [r.tpl.name, r.dokument] : r;
   };
 
-  it("solange v6 nicht freigegeben ist, geht v5 raus; danach v6 (mit PDF bzw. ohne Kopf, wenn das PDF fehlt)", () => {
+  it("solange v6 nicht freigegeben ist, geht v5 raus; danach v6 mit PDF; v7 sobald freigegeben", () => {
     expect(pick(freigegebenV5, "sie", { fullName: "Julia Schneider", salutation: "Frau" }, "vollstaendig")).toEqual(["pg_outreach_privatschutz_v5_sie", "vollstaendig"]);
     const beide = [...freigegebenV5, ...v6];
     expect(pick(beide, "sie", { fullName: "Julia Schneider", salutation: "Frau" }, "vollstaendig")).toEqual(["pg_outreach_privatschutz_v6_sie", "vollstaendig"]);
-    expect(pick(beide, "sie", { fullName: "Julia Schneider", salutation: "Frau" }, "keins")).toEqual(["pg_outreach_privatschutz_v6_ohnepdf_sie", null]);
     expect(pick(beide, "sie", { fullName: "Julia" }, "vollstaendig")).toEqual(["pg_outreach_privatschutz_v6_sie_ohne_name", "vollstaendig"]);
+    const mitV7 = [...beide, tpl("pg_outreach_privatschutz_v7_sie", "outreach_privatschutz", true, templateTextFor("outreach_privatschutz", "sie"))];
+    expect(pick(mitV7, "sie", { fullName: "Julia Schneider", salutation: "Frau" }, "vollstaendig")).toEqual(["pg_outreach_privatschutz_v7_sie", "vollstaendig"]);
     const r = rankOutreach(beide, P, "sie", { fullName: "Julia Schneider", salutation: "Frau" }, { pdf: "vollstaendig" });
     if (!r || !("tpl" in r)) throw new Error("keine Vorlage");
     expect(r.params(["Privatschutz", "Herrn Kannapinn", "Worum geht es Ihnen vor allem"])).toEqual(["Frau Schneider", "Privatschutz", "Herrn Kannapinn", "Worum geht es Ihnen vor allem"]);
   });
+
+  it("nie ohne Erstinformation: _ohnepdf wird nie gewählt; unvollständig → PDF im aktuellen Stand; gar kein PDF → warten", () => {
+    const beide = [...freigegebenV5, ...v6];
+    const kontakt = { fullName: "Julia Schneider", salutation: "Frau" as const };
+    // _ohnepdf zuerst in der Liste (neuer aktualisiert): trotzdem die Fassung mit PDF-Kopf
+    const ohneZuerst = [v6[1], v6[0], v6[2], ...freigegebenV5];
+    expect(pick(ohneZuerst, "sie", kontakt, "vollstaendig")).toEqual(["pg_outreach_privatschutz_v6_sie", "vollstaendig"]);
+    expect(pick(beide, "sie", kontakt, "entwurf")).toEqual(["pg_outreach_privatschutz_v6_sie", "entwurf"]);
+    expect(pick(beide, "sie", kontakt, "keins")).toEqual({ wartenAufPdf: true });
+    // nur _ohnepdf freigegeben: keine passende Vorlage (wartet), nie ohne PDF
+    expect(pick([v6[1]], "sie", kontakt, "vollstaendig")).toBeNull();
+  });
+
+  it("Live-Test Ole Agentur (Sie, Privatschutz, Lead „Ole …“ ohne Anrede): nur allgemeine v6 freigegeben, Du lokal schon, Sie noch nicht", () => {
+    // Lage am 17.11. 14:27: lokal freigegeben nur die Du-Fassungen pg_outreach_v6 (mit Kopf) und _ohnepdf, neuer zuerst
+    const lokal = [
+      tpl("pg_outreach_v6_ohnepdf", "outreach", false, V6.du),
+      tpl("pg_outreach_v6", "outreach", true, V6.du),
+    ];
+    const kontakt = { fullName: "Ole Kannapinn Testlead" };
+    // Früher: Du-Fassung ohne PDF. Jetzt: keine Du-Fassung an Sie-Kunden, also warten (NoTemplateError), bis Sie freigegeben ist
+    expect(pick(lokal, "sie", kontakt, "vollstaendig")).toBeNull();
+    // Sobald die Sie-Fassungen lokal freigegeben sind (Abgleich liest jetzt alle Seiten): Sie mit PDF-Kopf
+    const spaeter = [
+      ...lokal,
+      tpl("pg_outreach_v6_ohnepdf_sie", "outreach", false, V6.sie),
+      tpl("pg_outreach_v6_ohnepdf_sie_ohne_name", "outreach", false, V6.ohne),
+      tpl("pg_outreach_v6_sie", "outreach", true, V6.sie),
+      tpl("pg_outreach_v6_sie_ohne_name", "outreach", true, V6.ohne),
+    ];
+    const r = rankOutreach(spaeter, P, "sie", kontakt, { pdf: "vollstaendig" });
+    if (!r || !("tpl" in r)) throw new Error("keine Vorlage");
+    expect([r.tpl.name, r.dokument, r.purpose]).toEqual(["pg_outreach_v6_sie", "vollstaendig", "outreach"]);
+    const params = r.params(["Privatschutz", "Herrn Kannapinn", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"]);
+    const text = renderTemplate(r.tpl.body, params);
+    expect(text).toBe("Hallo Ole Kannapinn Testlead, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?*");
+    expect(text).not.toMatch(/\b(deine?|dich|dir)\b/);
+    // Du-Kunde bekommt weiter die Du-Fassung
+    const du = rankOutreach(spaeter, P, "du", { fullName: "Ole Kannapinn Testlead" }, { pdf: "vollstaendig" });
+    if (!du || !("tpl" in du)) throw new Error("keine Vorlage");
+    expect(du.tpl.name).toBe("pg_outreach_v6");
+  });
 });
+

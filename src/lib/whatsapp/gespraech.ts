@@ -244,6 +244,14 @@ export function kalenderFrage(an: Ansprache): string {
   return a(an, "*Hast du dir den Termin schon im Kalender eingetragen?*", "*Haben Sie sich den Termin schon im Kalender eingetragen?*");
 }
 
+/**
+ * Dank nach der Zusage auf die Kalenderfrage (Ole, 17.11.2026): ohne Namen des Leads, Vermittler nach Regel (Dativ),
+ * z. B. „Vielen Dank! Ihr Termin mit Herrn Kannapinn am Mittwoch, 18.11. um 10 Uhr ist vermerkt. Bis dahin!“
+ */
+export function zusageDank(an: Ansprache, person: { dat: string }, start: Date): string {
+  return a(an, `Danke dir! Dein Termin mit ${person.dat} am ${zeitLang(start)} ist vermerkt. Bis dahin!`, `Vielen Dank! Ihr Termin mit ${person.dat} am ${zeitLang(start)} ist vermerkt. Bis dahin!`);
+}
+
 /** Erkennt die Kalenderfrage in einer Nachricht von uns. */
 export const KALENDER_FRAGE_RE = /den Termin schon im Kalender eingetragen\?/;
 

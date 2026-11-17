@@ -51,7 +51,7 @@ describe("Bekannte Antworten aus dem Formular", () => {
     // ohne Formular wie bisher
     expect(ersteFrage("TKV-Katze", "sie", "Ole")).toBe("Wie alt ist Ihre Katze?");
     const t = erstanschreibenText({ an: "du", name: "Ole", source: "Privatschutz", formular: testLeadAnswers("Privatschutz") });
-    expect(t.split("\n").at(-1)).toBe("*Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?*");
+    expect(t.split("\n").at(-1)).toBe("Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?");
     expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
   });
 
@@ -66,7 +66,7 @@ describe("Bekannte Antworten aus dem Formular", () => {
     const frei = erstanschreibenText({ an: "sie", name: "Ole", source: "TKV-Katze", formular: testLeadAnswers("TKV-Katze") });
     expect(ersteFrageRegel("TKV-Katze", "Ole", { gesendet: frei, an: "sie", formular: testLeadAnswers("TKV-Katze") })).toMatch(/Operation[\s\S]*mach sofort den Terminvorschlag/);
     // Lead schreibt zuerst: erste offene Frage, fett am Ende
-    expect(ersteFrageRegel("TKV-Katze", "Ole", { jetzt: true, an: "du", formular: testLeadAnswers("TKV-Katze") })).toMatch(/\*Soll vor allem eine Operation/);
+    expect(ersteFrageRegel("TKV-Katze", "Ole", { jetzt: true, an: "du", formular: testLeadAnswers("TKV-Katze") })).toMatch(/\(ohne Sternchen, nicht fett\): Soll vor allem eine Operation/);
   });
 
   it("E-Mail aus dem Formular steht als bekannt im Prompt", () => {

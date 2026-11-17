@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 type Block = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: unknown };
-const st: { ai: number; queue: Block[][] } = { ai: 0, queue: [] };
+const st: { ai: number; queue: Block[][]; reqs: unknown[] } = { ai: 0, queue: [], reqs: [] };
 const waSend = vi.fn();
 vi.mock("@/lib/whatsapp/dialog360", async (orig) => {
   const real = await orig<typeof import("@/lib/whatsapp/dialog360")>();
@@ -25,8 +25,9 @@ vi.mock("@/lib/push", () => {
 vi.mock("@anthropic-ai/sdk", () => ({
   default: class {
     messages = {
-      create: async () => {
+      create: async (req: unknown) => {
         st.ai++;
+        st.reqs.push(req);
         return { content: st.queue.shift() ?? [{ type: "text", text: "Alles klar." }], stop_reason: "end_turn" };
       },
     };
@@ -217,6 +218,32 @@ describe("Termin-Strecke mit Knöpfen", () => {
     waSend.mockClear();
     await knopf(phone, "komplettcheck:ja", "Ja, gern");
     expect(waSend).not.toHaveBeenCalled();
+  });
+
+  it("neue E-Mail im Chat: bisherige bleibt als weitere E-Mail; Zusage auf die Kalenderfrage ohne Namen des Leads; Löschung leert alles", async () => {
+    const { lead, phone } = await leadMitChat();
+    st.queue.push([{ type: "tool_use", id: "e1", name: "update_email", input: { email: "Julia.Neu@Example.com" } }], [{ type: "text", text: "Danke, ist übernommen." }]);
+    await text(phone, "Bitte an julia.neu@example.com");
+    const l = await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { email: true, weitereEmails: true } });
+    expect(l).toEqual({ email: "julia.neu@example.com", weitereEmails: ["julia@example.com"] });
+    // Noch einmal zurück: keine Dubletten
+    st.queue.push([{ type: "tool_use", id: "e2", name: "update_email", input: { email: "JULIA@example.com" } }], [{ type: "text", text: "Gern." }]);
+    await text(phone, "Doch lieber die alte Adresse julia@example.com");
+    expect(await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { email: true, weitereEmails: true } })).toEqual({ email: "julia@example.com", weitereEmails: ["julia.neu@example.com"] });
+
+    // Kalenderfrage mit Text bestätigt: der Assistent bekommt den Dank ohne Namen des Leads vorgegeben
+    const appt = await prisma.appointment.create({ data: { customerId, leadId: lead.id, startsAt: new Date("2026-12-02T09:00:00.000Z"), mode: "video", status: "booked", conversationId: (await prisma.conversation.findFirstOrThrow({ where: { leadId: lead.id } })).id } });
+    st.queue.push([{ type: "tool_use", id: "z1", name: "termin_zugesagt", input: {} }], [{ type: "text", text: "Vielen Dank! Ihr Termin mit Herrn Kannapinn am Mittwoch, 02.12. um 10 Uhr ist vermerkt. Bis dahin!" }]);
+    await text(phone, "Ja, hab ich eingetragen");
+    expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).confirmedAt).not.toBeNull();
+    // Tool-Ergebnis an die KI: fester Dank ohne Namen des Leads, Vermittler nach Regel
+    const toolResult = JSON.stringify(st.reqs.at(-1));
+    expect(toolResult).toContain("Vielen Dank! Ihr Termin mit Herrn Kannapinn am Mittwoch, 02.12. um 10 Uhr ist vermerkt. Bis dahin!");
+    expect(toolResult).toContain("ohne Namen des Leads");
+
+    const { eraseLead } = await import("@/lib/erasure");
+    await eraseLead(lead.id);
+    expect(await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { email: true, weitereEmails: true } })).toEqual({ email: null, weitereEmails: [] });
   });
 
   it("Ja/Nein-Angabe als Knöpfe, Payload gibt dem Assistenten die Frage; „Nein, danke“ beim Komplettcheck führt direkt zum Abschluss", async () => {

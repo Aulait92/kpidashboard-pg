@@ -268,13 +268,16 @@ export async function loadErstinfoByToken(token: string) {
   });
   if (!e) return null;
   const daten = erstinfoDaten(e, (e.customer.onboarding?.websiteInfo ?? null) as ErstinfoWeb, e.customer);
+  const fehlt = erstinfoFehlt(daten, { upload: !!e.fileName, bestaetigt: !!e.bestaetigtAt });
   return {
     customerId: e.customerId,
     fileName: e.fileName,
     updatedAt: e.updatedAt,
     an: asAnsprache(e.customer.leadAddress),
     daten,
-    vollstaendig: erstinfoFehlt(daten, { upload: !!e.fileName, bestaetigt: !!e.bestaetigtAt }).length === 0,
+    vollstaendig: fehlt.length === 0,
+    /** Fehlende Pflichtangaben (Bezeichnungen, keine Werte; z. B. für Diagnose-Logzeilen) */
+    fehlt,
   };
 }
 
@@ -320,7 +323,7 @@ export function erstinfoPdfCache() {
  */
 export async function erstinfoDokument(
   where: { token: string } | { customerId: string },
-): Promise<{ bytes: Uint8Array; fileName: string; dateiname: string; hash: string; token: string; vollstaendig: boolean } | null> {
+): Promise<{ bytes: Uint8Array; fileName: string; dateiname: string; hash: string; token: string; vollstaendig: boolean; fehlt: string[] } | null> {
   const token = "token" in where ? where.token : (await getOrCreateErstinfo(where.customerId)).token;
   const info = await loadErstinfoByToken(token);
   if (!info) return null;
@@ -329,7 +332,7 @@ export async function erstinfoDokument(
     const f = await prisma.erstinformation.findUnique({ where: { token }, select: { data: true, fileName: true, size: true } });
     if (f?.data) {
       const hash = erstinfoPdfHash({ daten: info.daten, an: info.an, updatedAt: info.updatedAt, upload: { fileName: f.fileName, size: f.size } });
-      return { bytes: new Uint8Array(f.data), fileName: f.fileName ?? "Erstinformation.pdf", dateiname, hash, token, vollstaendig: info.vollstaendig };
+      return { bytes: new Uint8Array(f.data), fileName: f.fileName ?? "Erstinformation.pdf", dateiname, hash, token, vollstaendig: info.vollstaendig, fehlt: info.fehlt };
     }
   }
   const hash = erstinfoPdfHash({ daten: info.daten, an: info.an, updatedAt: info.updatedAt });
@@ -342,7 +345,7 @@ export async function erstinfoDokument(
     if (PDF_CACHE.size >= PDF_CACHE_MAX) PDF_CACHE.delete(PDF_CACHE.keys().next().value!);
     PDF_CACHE.set(token, { hash, bytes });
   }
-  return { bytes, fileName: dateiname, dateiname, hash, token, vollstaendig: info.vollstaendig };
+  return { bytes, fileName: dateiname, dateiname, hash, token, vollstaendig: info.vollstaendig, fehlt: info.fehlt };
 }
 
 /**
@@ -361,11 +364,12 @@ export async function erstinfoPdfFuerWhatsApp(customerId: string): Promise<{ lin
  * PDF der Erstinformation im aktuellen Stand, auch wenn die Angaben noch unvollständig sind (vollstaendig = false).
  * Nur fürs Erstanschreiben, wenn die neueste freigegebene Vorlage das PDF im Kopf verlangt (templates.ts rankOutreach):
  * derselbe Inhalt wie die öffentliche Seite hinter dem Link der älteren Fassung. null = nicht erzeugbar.
+ * fehlt: Bezeichnungen der fehlenden Pflichtangaben (ohne Werte, für Diagnose und Hinweis an den Vermittler).
  */
-export async function erstinfoPdfStand(customerId: string): Promise<{ link: string; filename: string; hash: string; vollstaendig: boolean } | null> {
+export async function erstinfoPdfStand(customerId: string): Promise<{ link: string; filename: string; hash: string; vollstaendig: boolean; fehlt: string[] } | null> {
   const doc = await erstinfoDokument({ customerId });
   if (!doc) return null;
-  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash, vollstaendig: doc.vollstaendig };
+  return { link: `${await erstinfoPdfUrlFor(customerId)}?v=${doc.hash}`, filename: doc.dateiname, hash: doc.hash, vollstaendig: doc.vollstaendig, fehlt: doc.fehlt };
 }
 
 /** Ist die Erstinformation dieses Kunden vollständig (darf als PDF an Leads gehen)? */

@@ -53,6 +53,13 @@ describe("Schnellsuche Kundenbereich", () => {
     );
   });
 
+  it("weitere E-Mail-Adresse (z. B. die bisherige nach einer Änderung im Chat) findet den Kontakt", async () => {
+    await prisma.lead.update({ where: { id: ids.leadA }, data: { weitereEmails: ["erika.alt@example.org"] } });
+    expect(await keys(owner, "Erika.Alt@example.org")).toContain(`kontakt:${ids.leadA}`);
+    // Rechte gelten weiter: der andere Berater findet sie nicht
+    expect(await keys(advisorB, "erika.alt@example.org")).toEqual([]);
+  });
+
   it("Berater findet nur eigene Kontakte und Chats, keinen Bestand", async () => {
     expect(await keys(advisorA, "suchtest")).toEqual([`kontakt:${ids.leadA}`, `chat:${ids.chatA}`].sort());
     expect(await keys(advisorB, "suchtest")).toEqual([`kontakt:${ids.leadB}`, `chat:${ids.chatB}`].sort());

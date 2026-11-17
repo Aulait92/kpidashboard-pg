@@ -167,9 +167,19 @@ function str(v: unknown): string | null {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
-/** Alle Vorlagen des WhatsApp-Kontos (WABA) hinter diesem API-Key. */
-export async function listTemplates(apiKey: string): Promise<RemoteTemplate[]> {
-  const res = await fetch(`${BASE_URL}/v1/configs/templates?limit=1000`, {
+function remoteOf(t: Record<string, unknown>): RemoteTemplate {
+  return {
+    name: str(t.name) ?? "",
+    language: str(t.language) ?? "",
+    status: (str(t.status) ?? "").toUpperCase(),
+    category: str(t.category),
+    rejectedReason: str(t.rejected_reason),
+    ...(shapeOfComponents(t.components) ?? {}),
+  };
+}
+
+async function templatePage(apiKey: string, query: string): Promise<{ list: Record<string, unknown>[] }> {
+  const res = await fetch(`${BASE_URL}/v1/configs/templates?${query}`, {
     headers: { "D360-API-KEY": apiKey },
   });
   const text = await res.text();
@@ -180,17 +190,49 @@ export async function listTemplates(apiKey: string): Promise<RemoteTemplate[]> {
   } catch {
     throw new Error("360dialog: Vorlagenliste ist kein JSON");
   }
-  return (json?.waba_templates ?? [])
-    .map((t) => t as Record<string, unknown>)
-    .map((t) => ({
-      name: str(t.name) ?? "",
-      language: str(t.language) ?? "",
-      status: (str(t.status) ?? "").toUpperCase(),
-      category: str(t.category),
-      rejectedReason: str(t.rejected_reason),
-      ...(shapeOfComponents(t.components) ?? {}),
-    }))
-    .filter((t) => t.name);
+  return { list: (json?.waba_templates ?? []).map((t) => t as Record<string, unknown>) };
+}
+
+/** Seitengröße beim Abruf der Vorlagenliste (klein genug, dass eine Obergrenze des Servers nicht unbemerkt kürzt). */
+export const TEMPLATE_PAGE_SIZE = 100;
+
+/**
+ * Alle Vorlagen des WhatsApp-Kontos (WABA) hinter diesem API-Key, seitenweise (limit/offset). Live-Test 17.11.2026: Mit
+ * nur einem Abruf fehlten die neuesten Vorlagen (alle pg_outreach_privatschutz_v6*), der Abgleich hielt sie für fehlend,
+ * reichte sie bei jedem Lauf neu ein („name … is already in use“) und übernahm ihren Status nie.
+ */
+export async function listTemplates(apiKey: string): Promise<RemoteTemplate[]> {
+  const out: RemoteTemplate[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  // Weiter, bis eine Seite leer ist oder nichts Neues bringt (Server ignoriert offset). Der offset wächst um die
+  // tatsächlich gelieferten Zeilen, falls der Server weniger als „limit“ je Abruf liefert. „total“ wird nicht vertraut.
+  for (let page = 0; page < 100; page++) {
+    const { list } = await templatePage(apiKey, `limit=${TEMPLATE_PAGE_SIZE}&offset=${offset}`);
+    let neu = 0;
+    for (const t of list.map(remoteOf).filter((x) => x.name)) {
+      const key = `${t.name}|${t.language}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(t);
+      neu++;
+    }
+    if (!list.length || neu === 0) break;
+    offset += list.length;
+  }
+  return out;
+}
+
+/** Eine Vorlage gezielt nach Namen suchen (Filter laut 360dialog-Doku; geprüft wird trotzdem der Name). */
+export async function findTemplateByName(apiKey: string, name: string): Promise<RemoteTemplate[]> {
+  const filters = encodeURIComponent(JSON.stringify({ "business_templates.name": name }));
+  const { list } = await templatePage(apiKey, `filters=${filters}&limit=${TEMPLATE_PAGE_SIZE}`);
+  return list.map(remoteOf).filter((t) => t.name === name);
+}
+
+/** Meldet 360dialog bzw. Meta, dass es eine Vorlage mit diesem Namen schon gibt? */
+export function isNameInUseError(err: unknown): boolean {
+  return /already in use|already exists/i.test(err instanceof Error ? err.message : String(err));
 }
 
 /** Vorlage bei Meta einreichen. Antwort enthält den Anfangsstatus (meist „submitted“/PENDING). */

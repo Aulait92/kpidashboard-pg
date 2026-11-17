@@ -65,8 +65,6 @@ async function inbound(from: string, body: string) {
   });
 }
 const lastText = () => sent.filter((s) => s.type === "text").at(-1)?.text?.body ?? "";
-/** Vorletzte Textnachricht (die letzte ist der Link zur Erstinformation, wenn das PDF nicht möglich ist). */
-const prevText = () => sent.filter((s) => s.type === "text").at(-2)?.text?.body ?? "";
 const conv = (phone: string) => prisma.conversation.findFirstOrThrow({ where: { customerId, contactPhone: phone }, include: { messages: { orderBy: { createdAt: "asc" } } } });
 
 beforeAll(() => requireTestDb());
@@ -96,18 +94,19 @@ afterAll(() => {
 });
 
 describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, Beratungssperre", () => {
-  it("erste Antwort an einen neuen Kontakt: eine Begrüßung, KI-Assistent mit Nutzen, kein „Mensch“; Erstinformation danach (ohne fertiges PDF als Link), danach nicht wieder", async () => {
+  it("erste Antwort an einen neuen Kontakt: eine Begrüßung, KI-Assistent mit Nutzen, kein „Mensch“; Erstinformation danach (unvollständig: PDF im aktuellen Stand), danach nicht wieder", async () => {
     const phone = "4917611110000";
     await leadFor(phone);
     h.script.push({ content: [{ type: "text", text: "Für wen soll die Zahnzusatzversicherung sein?" }] });
     await inbound(phone, "Hallo, ich interessiere mich für eine Zahnzusatz");
-    const first = prevText();
+    const first = lastText();
     // Erstanschreiben ab v6 (Ole, 17.11.2026): Lead hat zuerst geschrieben → „danke für Ihre Nachricht“, Vermittler als Person
     expect(first).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht! Ich bin der digitale KI-Assistent von [^.\n]+\.\n\nFür wen soll die Zahnzusatzversicherung sein\?$/);
     expect(first).not.toMatch(/Mensch|berate nicht/);
-    // Erstinformation unvollständig (kein PDF möglich): Rückfall auf den Link als eigene Nachricht
+    // Erstinformation unvollständig: PDF im aktuellen Stand direkt nach der Antwort (Ole, 17.11.2026), kein Link-Rückfall
     const e = await prisma.erstinformation.findUniqueOrThrow({ where: { customerId } });
-    expect(lastText()).toBe(`Erstinformation zu Susanne Meier als Versicherungsvermittler: https://app.example.de/erstinformation/${e.token}`);
+    expect(sent.at(-1)).toMatchObject({ type: "document", to: phone });
+    expect((sent.at(-1) as { document?: { link: string } }).document?.link).toContain(`/erstinformation/${e.token}/pdf`);
     // System-Prompt: Hinweis wird vorangestellt, Regeln gegen Beratung und Vermenschlichung
     expect(h.calls[0].system).toContain("Begrüße deshalb nicht und stell dich nicht vor");
     expect(h.calls[0].system).toContain("Gib dich nie als Mensch aus");
@@ -133,10 +132,10 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     await leadFor(phone);
     await inbound(phone, "Bist du ein Bot?");
     expect(h.calls).toHaveLength(0); // ohne KI beantwortet
-    const reply = prevText();
+    const reply = lastText();
     expect(reply).toMatch(/^Guten Tag Julia Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier\. Ich bin kein Mensch und berate nicht zu Tarifen\./);
     expect(reply).toContain("meldet sich persönlich bei Ihnen");
-    expect(lastText()).toContain("/erstinformation/");
+    expect(sent.at(-1)).toMatchObject({ type: "document", to: phone });
     const c = await conv(phone);
     expect(c.botActive).toBe(false);
     expect(c.needsAttention).toBe(true);
@@ -213,22 +212,15 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
   });
 });
 
-describe("Erstanschreiben (Vorlage v3 mit Link) und Rückfall auf ältere Vorlage", () => {
-  it("v3-Vorlage bekommt Name und Link, ältere Vorlage nur den Namen", async () => {
+describe("Erstanschreiben nur mit Erstinformation (Live-Test 17.11.2026)", () => {
+  it("Vorlage ohne PDF-Kopf geht nie raus (wartet); mit PDF-Kopf: Name, Link und die Erstinformation als PDF im Kopf", async () => {
     await prisma.messageTemplate.create({
       data: { customerId, name: "pg_outreach_v2_sie", language: "de", purpose: "outreach", category: "marketing", status: "approved", auto: true, body: "Guten Tag {{1}}, vielen Dank für Ihre Anfrage! Hier ist der digitale Assistent von X. Haben Sie kurz Zeit?" },
     });
     const l1 = await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone: "4917622220001", status: "Neuer Lead" } });
     await runOutreach(customerId);
-    const t1 = sent.find((s) => s.to === "4917622220001")!;
-    expect(t1.template?.name).toBe("pg_outreach_v2_sie");
-    expect(t1.template?.components?.[0].parameters.map((p) => p.text)).toEqual(["Julia Schneider"]); // Anrede nie aus dem Vornamen (Ole, 17.11.2026)
-    expect((await prisma.lead.findUniqueOrThrow({ where: { id: l1.id } })).outreachStatus).toBe("sent");
-
-    // Bis zur Freigabe: der Assistent holt KI-Kennzeichnung (erste Antwort) und Erstinformation (danach) nach
-    await inbound("4917622220001", "Ja, gern");
-    expect(prevText()).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht! Ich bin der digitale KI-Assistent von [^.\n]+\./);
-    expect(lastText()).toContain("/erstinformation/");
+    expect(sent.some((s) => s.to === "4917622220001")).toBe(false);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: l1.id } })).outreachStatus).toBe("no_template");
 
     await prisma.messageTemplate.create({
       data: {
@@ -239,20 +231,96 @@ describe("Erstanschreiben (Vorlage v3 mit Link) und Rückfall auf ältere Vorlag
         category: "marketing",
         status: "approved",
         auto: true,
+        headerFormat: "DOCUMENT",
         body: "Guten Tag {{1}}, vielen Dank für Ihre Anfrage! Hier schreibt der digitale KI-Assistent von X. Ich bin kein Mensch und berate nicht zu Tarifen. Erstinformation zu Y als Versicherungsvermittler: {{2}} Haben Sie kurz Zeit für zwei Fragen?",
       },
     });
     await prisma.lead.create({ data: { customerId, name: "Max Weber", phone: "4917622220002", status: "Neuer Lead" } });
     await runOutreach(customerId);
-    const t2 = sent.find((s) => s.to === "4917622220002")!;
+    const t2 = sent.find((s) => s.to === "4917622220002")! as (typeof sent)[number] & { template?: { components?: { type: string; parameters: { type: string; text?: string; document?: { link: string } }[] }[] } };
     expect(t2.template?.name).toBe("pg_outreach_v3_sie");
-    const params = t2.template?.components?.[0].parameters.map((p) => p.text) ?? [];
+    const comps = t2.template?.components ?? [];
+    // Erstinformation unvollständig: das PDF im aktuellen Stand im Kopf (nie ohne Erstinformation)
+    expect(comps[0].type).toBe("header");
+    expect(comps[0].parameters[0].document?.link).toMatch(/\/erstinformation\/[\w-]+\/pdf\?v=/);
+    const params = comps[1].parameters.map((p) => p.text) ?? [];
     expect(params[0]).toBe("Max Weber");
     expect(params[1]).toMatch(/^https:\/\/app\.example\.de\/erstinformation\/[\w-]+$/);
-    // Antwort darauf: Hinweis und Link sind schon da → kein Vorspann
+    // Der wartende Lead geht jetzt ebenfalls mit PDF raus
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: l1.id } })).outreachStatus).toBe("sent");
+    // Antwort darauf: Hinweis und Erstinformation sind schon da → kein Vorspann, kein weiteres PDF
     h.script.push({ content: [{ type: "text", text: "Prima. Für wen soll die Versicherung sein?" }] });
+    const vorher = sent.length;
     await inbound("4917622220002", "Ja");
     expect(lastText()).toBe("Prima. Für wen soll die Versicherung sein?");
+    expect(sent.slice(vorher).some((s) => s.type === "document")).toBe(false);
+  });
+});
+
+describe("Live-Test 17.11.2026: Ole Agentur (Sie), Testlead Privatschutz", () => {
+  const V6 = {
+    du: "Hallo {{1}}, danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*",
+    sie: "Hallo {{1}}, danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*",
+    ohne: "Hallo, danke für Ihre Anfrage zum Thema {{1}}! Ich bin der digitale KI-Assistent von {{2}}.\n\n*{{3}}?*",
+  };
+  const tpl = (name: string, body: string, header: boolean, status = "approved") =>
+    prisma.messageTemplate.create({ data: { customerId, name, language: "de", purpose: "outreach", category: "marketing", status, auto: true, body, headerFormat: header ? "DOCUMENT" : null } });
+  type Comp = { type: string; parameters: { type: string; text?: string; document?: { link: string } }[] };
+  const tplOf = (to: string) => (sent.find((x) => x.to === to) as unknown as { template: { name: string; components: Comp[] } }).template;
+
+  it("Sie-Kunde: nie die Du-Fassung, nie ohne PDF; sobald Sie freigegeben ist, Sie mit der Erstinformation im Kopf", async () => {
+    // Lage um 14:27: lokal nur die Du-Fassungen freigegeben (mit Kopf und _ohnepdf), Sie-Fassungen noch „in Prüfung“
+    await tpl("pg_outreach_v6", V6.du, true);
+    await tpl("pg_outreach_v6_ohnepdf", V6.du, false);
+    await tpl("pg_outreach_v6_sie", V6.sie, true, "pending");
+    await tpl("pg_outreach_v6_sie_ohne_name", V6.ohne, true, "pending");
+    const phone = "4917655550001";
+    const lead = await prisma.lead.create({ data: { customerId, name: "Ole Kannapinn Testlead", phone, status: "Neuer Lead", source: "Privatschutz" } });
+    await runOutreach(customerId);
+    expect(sent.some((s) => s.to === phone)).toBe(false);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).outreachStatus).toBe("no_template");
+
+    // Sie-Fassungen freigegeben (Abgleich mit 360dialog): jetzt Sie, mit PDF im Kopf, erste Frage ohne Sternchen im Wert
+    await prisma.messageTemplate.updateMany({ where: { customerId, name: { in: ["pg_outreach_v6_sie", "pg_outreach_v6_sie_ohne_name"] } }, data: { status: "approved" } });
+    await runOutreach(customerId);
+    const t = tplOf(phone);
+    expect(t.name).toBe("pg_outreach_v6_sie");
+    expect(t.components[0]).toMatchObject({ type: "header" });
+    expect(t.components[0].parameters[0].document?.link).toMatch(/\/erstinformation\/[\w-]+\/pdf\?v=[0-9a-f]{16}$/);
+    const params = t.components[1].parameters.map((p) => p.text);
+    expect(params[0]).toBe("Ole Kannapinn Testlead");
+    expect(params[1]).toBe("Privatschutz");
+    expect(params.join(" ")).not.toMatch(/\b(deine?|dich|dir|du)\b/);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).outreachStatus).toBe("sent");
+    const out = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: phone }, direction: "outbound" } });
+    expect(out.body).toMatch(/^\[Erstinformation als PDF\]\nHallo Ole Kannapinn Testlead, danke für Ihre Anfrage zum Thema Privatschutz!/);
+
+    // Antwort des Leads: Erstinformation ist schon da, kein weiteres PDF
+    const vorher = sent.length;
+    await inbound(phone, "Hausrat");
+    expect(sent.slice(vorher).some((s) => s.type === "document")).toBe(false);
+  });
+
+  it("Erstinformation fehlt nach einem früheren Erstanschreiben: das PDF kommt VOR der Antwort des Assistenten, nie danach", async () => {
+    const phone = "4917655550002";
+    const lead = await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone, status: "Neuer Lead", source: "Privatschutz", outreachAt: new Date(), outreachStatus: "sent" } });
+    const c = await prisma.conversation.create({ data: { customerId, contactPhone: phone, leadId: lead.id, botActive: true } });
+    // Erstanschreiben ohne PDF (wie live am 17.11. um 14:27, Fassung _ohnepdf)
+    await prisma.message.create({
+      data: { conversationId: c.id, direction: "outbound", kind: "template", sentBy: "system", purpose: "outreach", body: "Hallo Julia Schneider, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Meier.\n\nSind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?" },
+    });
+    h.script.push({ content: [{ type: "text", text: "Danke! Wer soll versichert werden?" }] });
+    const vorher = sent.length;
+    await inbound(phone, "Beides neu");
+    const neu = sent.slice(vorher).filter((s) => s.to === phone);
+    const doc = neu.findIndex((s) => s.type === "document");
+    const antwort = neu.findIndex((s) => s.type === "text" || s.type === "interactive");
+    expect(doc).toBeGreaterThanOrEqual(0);
+    expect(antwort).toBeGreaterThan(doc);
+    // Danach nicht noch einmal
+    const vorher2 = sent.length;
+    await inbound(phone, "Nur ich");
+    expect(sent.slice(vorher2).some((s) => s.type === "document")).toBe(false);
   });
 });
 
@@ -307,7 +375,7 @@ describe("Einwilligung im Meta-Leadformular", () => {
   it("Häkchen gesetzt → Nachweis am Lead und WhatsApp; fehlt → kein WhatsApp, Rückruf per Telefon/E-Mail; ohne Hinweis → wie bisher mit Warnung", async () => {
     const formId = `form-ki-${uid()}`;
     await prisma.messageTemplate.create({
-      data: { customerId, name: "pg_outreach_v3_sie", language: "de", purpose: "outreach", category: "marketing", status: "approved", auto: true, body: "Guten Tag {{1}}, Hinweis. Erstinformation: {{2}} Haben Sie kurz Zeit?" },
+      data: { customerId, name: "pg_outreach_v3_sie", language: "de", purpose: "outreach", category: "marketing", status: "approved", auto: true, headerFormat: "DOCUMENT", body: "Guten Tag {{1}}, Hinweis. Erstinformation: {{2}} Haben Sie kurz Zeit?" },
     });
     await prisma.leadSource.create({ data: { formId, customerId, productKey: "Zahnzusatz", consentVersion: "2026-11-15", consentText: "Ich willige ein, dass …" } });
 
@@ -369,7 +437,7 @@ describe("Schon über die Buchungsseite gebucht (z. B. Meta-Leadformular)", () =
       return lead;
     };
     await prisma.messageTemplate.create({
-      data: { customerId, name: "pg_outreach_v3_sie", language: "de", purpose: "outreach", category: "marketing", status: "approved", auto: true, body: "Guten Tag {{1}}, vielen Dank für Ihre Anfrage! Erstinformation: {{2}} Haben Sie kurz Zeit für zwei Fragen?" },
+      data: { customerId, name: "pg_outreach_v3_sie", language: "de", purpose: "outreach", category: "marketing", status: "approved", auto: true, headerFormat: "DOCUMENT", body: "Guten Tag {{1}}, vielen Dank für Ihre Anfrage! Erstinformation: {{2}} Haben Sie kurz Zeit für zwei Fragen?" },
     });
     const ps = await mk("4917622220011", "Privatschutz");
     const tkv = await mk("4917622220012", "Zahnzusatz");

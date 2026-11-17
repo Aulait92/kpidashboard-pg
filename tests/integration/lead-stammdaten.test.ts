@@ -27,7 +27,7 @@ describe("Lead-Stammdaten bearbeiten", () => {
   });
 
   it("Verlaufstext nennt alt und neu, ohne Gedankenstriche", () => {
-    const base = { salutation: null, firstName: "Anna", lastName: "Beispiel", phone: "4915100000001", email: null, street: "", zip: "", city: "" };
+    const base = { salutation: null, firstName: "Anna", lastName: "Beispiel", phone: "4915100000001", email: null, weitereEmails: "", street: "", zip: "", city: "" };
     const t = diffText(base, { ...base, phone: "4917612345678", salutation: "Frau" });
     expect(t).toEqual(["Anrede geändert von leer auf Frau", "Telefon geändert von +4915100000001 auf +4917612345678"]);
     expect(t.join(" ")).not.toMatch(/[–—]/);
@@ -85,6 +85,20 @@ describe("Lead-Stammdaten bearbeiten", () => {
     expect(again).toEqual({ ok: true, changed: [], hinweise: [] });
     expect(await prisma.leadHistory.count({ where: { leadId: lead.id, kind: "stammdaten" } })).toBe(1);
     await prisma.lead.delete({ where: { id: other.id } });
+  });
+
+  it("weitere E-Mail bearbeiten: speichern, ohne Feld unverändert lassen, Haupt-E-Mail nie doppelt", async () => {
+    const lead = await prisma.lead.create({ data: { customerId, name: "Eva Weiter", email: "eva@example.com", weitereEmails: ["eva.alt@example.com"] } });
+    const base = { firstName: "Eva", lastName: "Weiter", email: "eva@example.com" };
+    // Ohne Feld (z. B. älteres Formular): weitere Adressen bleiben
+    expect(await saveLeadStammdaten({ leadId: lead.id, customerId, userId: null, input: { ...base, city: "Köln" } })).toMatchObject({ ok: true });
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).weitereEmails).toEqual(["eva.alt@example.com"]);
+    // Bearbeitet: zweite Adresse dazu, Verlauf nennt die Änderung
+    const r = await saveLeadStammdaten({ leadId: lead.id, customerId, userId: null, input: { ...base, city: "Köln", weitereEmails: "eva.alt@example.com, EVA2@example.com" } });
+    expect(r).toMatchObject({ ok: true, changed: ["Weitere E-Mail geändert von eva.alt@example.com auf eva.alt@example.com, eva2@example.com"] });
+    // Haupt-E-Mail auf eine der weiteren: dort nicht doppelt
+    await saveLeadStammdaten({ leadId: lead.id, customerId, userId: null, input: { ...base, email: "eva2@example.com", city: "Köln", weitereEmails: "eva.alt@example.com, eva2@example.com" } });
+    expect(await prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, select: { email: true, weitereEmails: true } })).toEqual({ email: "eva2@example.com", weitereEmails: ["eva.alt@example.com"] });
   });
 
   it("fremder Kunde kann nicht bearbeiten", async () => {

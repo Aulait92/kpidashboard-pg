@@ -160,6 +160,7 @@ export async function LeadDetailBody({
       createdAt: true,
       phone: true,
       email: true,
+      weitereEmails: true,
       formData: true,
       contactOverrides: true,
       contactEditedAt: true,
@@ -212,6 +213,8 @@ export async function LeadDetailBody({
 
   // Korrigierte Stammdaten (lib/lead-stammdaten.ts) über die Formular- bzw. Airtable-Felder legen
   if (fields) fields = applyStammdatenToFields(fields, lead);
+  // Weitere E-Mail-Adressen (z. B. bisherige, als der Lead im Chat eine neue nannte) unter der Haupt-E-Mail
+  if (fields && lead.weitereEmails.length) fields["Weitere E-Mail"] = lead.weitereEmails.join(", ");
   // Gesundheitsangaben nur vertraulich in eigener Karte (lib/gesundheitsdaten.ts), nicht unter „Weitere Angaben“
   const health: { label: string; value: string }[] = Array.isArray(lead.formData)
     ? splitHealthAnswers(
@@ -237,6 +240,7 @@ export async function LeadDetailBody({
     lastName: stamm.lastName,
     phone: stamm.phone ? formatPhone(stamm.phone) : "",
     email: stamm.email ?? "",
+    weitereEmails: stamm.weitereEmails,
     street: stamm.street,
     zip: stamm.zip,
     city: stamm.city,

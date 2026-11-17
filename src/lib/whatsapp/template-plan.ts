@@ -10,9 +10,9 @@
 //   pg_<zweck>_v3_sie             Sie     „Guten Tag {{1}}, …“ ({{1}} = Frau Schneider / Julia Schneider)
 //   pg_<zweck>_v3_sie_ohne_name   Sie     „Guten Tag, …“ (für Kontakte ohne Nachnamen)
 // A/B-Fassung b (TEMPLATE_BODY_B) mit „_b“ hinter der Version: pg_<zweck>_v4_b, pg_<zweck>_v4_b_sie …
-// Erstanschreiben mit PDF der Erstinformation im Kopf (TEMPLATE_HEADER) und Fußzeile (ERSTINFO_FOOTER). Ab v6 je Fassung
-// zusätzlich eine Fassung ohne Kopf („_ohnepdf“, Rückfall, wenn die Erstinformation als PDF fehlt; rankOutreach):
-//   pg_outreach_tkv_v6_sie (mit PDF), pg_outreach_tkv_v6_ohnepdf_sie (ohne PDF) …
+// Erstanschreiben mit PDF der Erstinformation im Kopf (TEMPLATE_HEADER) und Fußzeile (ERSTINFO_FOOTER). Nur v6 wurde je
+// Fassung zusätzlich ohne Kopf eingereicht („_ohnepdf“); seit dem Live-Test 17.11.2026 geht das Erstanschreiben nie ohne
+// Erstinformation raus, die _ohnepdf-Fassungen werden nicht mehr gesendet und ab v7 nicht mehr eingereicht.
 
 import {
   ERSTINFO_FOOTER,
@@ -72,13 +72,16 @@ export function formOf(purpose: NoticePurpose, form: TemplateForm | Ansprache): 
   return form === "du" && hasDuVariant(purpose) ? "du" : "sie";
 }
 
-/** Ab dieser Textversion wird das Erstanschreiben je Fassung auch ohne PDF-Kopf eingereicht (Ole, 17.11.2026). */
-export const OHNE_KOPF_AB_VERSION = 6;
+/** Nur diese Textversion des Erstanschreibens wurde je Fassung auch ohne PDF-Kopf eingereicht (Ole, 17.11.2026). */
+export const OHNE_KOPF_VERSIONEN: readonly number[] = [6];
 
-/** Kopf-Fassungen eines Zwecks: mit PDF (true) und ab v6 bei Zwecken mit Kopf zusätzlich ohne (false). */
-export function kopfFassungen(purpose: NoticePurpose): boolean[] {
-  const v = Number(/^v(\d+)$/.exec(templateVersionFor(purpose))?.[1] ?? 0);
-  return TEMPLATE_HEADER[purpose] && v >= OHNE_KOPF_AB_VERSION ? [true, false] : [true];
+/**
+ * Kopf-Fassungen eines Zwecks: mit PDF (true), bei v6 zusätzlich ohne (false). Ab v7 nur mit PDF: Das Erstanschreiben
+ * geht nie ohne Erstinformation raus (Live-Test 17.11.2026), eine Fassung ohne Kopf würde nie gesendet.
+ */
+export function kopfFassungen(purpose: NoticePurpose, version = templateVersionFor(purpose)): boolean[] {
+  const v = Number(/^v(\d+)$/.exec(version)?.[1] ?? 0);
+  return TEMPLATE_HEADER[purpose] && OHNE_KOPF_VERSIONEN.includes(v) ? [true, false] : [true];
 }
 
 /** Alle einzureichenden Vorlagen eines Kunden: je Zweck jede Fassung (Ansprache), jede A/B-Fassung und Kopf-Fassung. */

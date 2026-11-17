@@ -9,6 +9,7 @@ import { statusLabel } from "@/lib/products";
 import { conversationScope, leadScope, type TeamCtx } from "@/lib/team";
 import { phoneDigitsWhere, phoneQuery } from "@/lib/telefonsuche";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
+import { weitereEmailsSuche } from "@/lib/lead-emails";
 
 export type BuyerSearchHit = {
   kind: "kontakt" | "bestand" | "chat";
@@ -65,7 +66,7 @@ export async function searchBuyer(ctx: TeamCtx, rawQ: string, opts: { newUi: boo
 
   const [leads, existing, chats] = await Promise.all([
     prisma.lead.findMany({
-      where: { ...leadScope(ctx), erasedAt: null, OR: [{ name: text }, { email: text }, ...phoneOr] },
+      where: { ...leadScope(ctx), erasedAt: null, OR: [{ name: text }, { email: text }, ...weitereEmailsSuche(q), ...phoneOr] },
       take: 8,
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, phone: true, email: true, status: true },
