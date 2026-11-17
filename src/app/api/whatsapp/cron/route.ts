@@ -103,6 +103,8 @@ async function handle(req: Request): Promise<Response> {
     now.getUTCHours() === 3 && now.getUTCMinutes() < 5
       ? {
           usage: await pruneUsage().catch(() => null),
+          // Nutzungsmessung im Admin (AdminUsageEvent): 180 Tage
+          adminNutzung: await import("@/lib/admin-nutzung-server").then((m) => m.pruneAdminNutzung(now)).catch(() => null),
           audit: await pruneAudit(now).catch(() => null),
           // „Kollegen empfehlen“: Angaben von Empfohlenen ohne Abschluss nach 12 Monaten entfernen
           referrals: await import("@/lib/kollegen").then((m) => m.pruneReferrals(now)).catch(() => null),

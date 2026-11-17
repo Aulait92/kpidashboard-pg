@@ -23,8 +23,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ergo.de/de/Produkte/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Body Protect Komfort",
@@ -40,8 +39,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ergo.de/de/Produkte/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "ERGO Body Protect Premium",
@@ -57,8 +55,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.ergo.de/de/Produkte/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -72,6 +69,7 @@
     "Psyche Plus (Rente bei psychischer Erkrankung, wenn weniger als 3 Stunden täglich erwerbsfähig), Pflege Plus (lebenslange Pflegerente zusätzlich in gleicher Höhe) und Sport Plus in allen Varianten zuwählbar.",
     "Prognosezeitraum und Nachversicherung nicht genannt. Laut Produktseite lassen sich Beiträge und Leistungen erhöhen, reduzieren oder pausieren; der Kinder-Flyer (9.2023) nennt Erhöhungen ohne Gesundheitsfragen mit 10 und 18 Jahren und den Wechsel in die BU.",
     "Erste 12 Monatsrenten auf Wunsch als Einmalbetrag. Versicherbar: Erwachsene bis 62 Jahre, Kinder ab 6 Jahren. Risikoträger ERGO Vorsorge Lebensversicherung AG.",
-    "ERGO hebt keine Variante als Empfehlung hervor (nur Testurteil für Premium); Komfort als mittlere Stufe."
+    "ERGO hebt keine Variante als Empfehlung hervor (nur Testurteil für Premium); Komfort als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produkttabelle auf ergo.de."
   ]
 }

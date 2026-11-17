@@ -27,8 +27,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/Krankenvollversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV BestMed Komfort (Tarif BMK)",
@@ -48,8 +47,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/Krankenvollversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV PremiumMed (Tarif PMN)",
@@ -69,8 +67,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/Krankenvollversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -82,6 +79,7 @@
     "Stationär: in BestMed Eco sind Chefarzt und Zweibettzimmer hinzuwählbar, in Eco und Komfort das Einbettzimmer. Selbstbehalt: Eco 680 € im Jahr nur ambulant (Kinder 330 €); Komfort und PremiumMed in allen Bereichen wählbar, auf Wunsch 0 €.",
     "Beitragsrückerstattung je nach Selbstbehalt; PremiumMed bis 3.600 € (1.500 € garantiert plus bis 2.100 € erfolgsabhängig). Zahnersatz mit Zahnstaffel in Eco und Komfort; Implantate Eco bis 4, Komfort bis 6 je Kiefer.",
     "Hilfsmittel 100 % bei Bezug über die DKV (sonst 80 bzw. 90 %), ob offener Katalog, nicht belegt. Psychotherapie steht nicht im Leistungsvergleich. Krankentagegeld und Pflegezusatz als Bausteine nicht auf der Seite genannt.",
-    "Die Produktseite nennt die erste Stufe „BestMed Basis“, der Leistungsvergleich „BestMed Eco (Tarif BME)“. ERGO kennzeichnet keine Empfehlung; BestMed Komfort als mittlere Stufe (Beispielbeitrag der Seite bezieht sich auf Komfort)."
+    "Die Produktseite nennt die erste Stufe „BestMed Basis“, der Leistungsvergleich „BestMed Eco (Tarif BME)“. ERGO kennzeichnet keine Empfehlung; BestMed Komfort als mittlere Stufe (Beispielbeitrag der Seite bezieht sich auf Komfort).",
+    "Geprüft am 17.11.2026 an der Produkttabelle und Produktseite (SB 680 € Eco) auf ergo.de."
   ]
 }

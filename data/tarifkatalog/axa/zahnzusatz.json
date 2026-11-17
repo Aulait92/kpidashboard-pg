@@ -26,8 +26,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn Komfort",
@@ -47,8 +46,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn Premium",
@@ -68,8 +66,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
     "Zahnstaffel bis 6.000 € nur für Komfort und Premium genannt; Staffel von Klassik und die Jahresgrenzen der Staffel nicht veröffentlicht. Die Tabelle nennt bei allen drei Tarifen „1. Jahr 500 €, 1. bis 2. Jahr 1.000 €“ (Zuordnung unklar).",
     "Kieferorthopädie nur für Kinder (Behandlungsbeginn vor 18), max. 5.000 € über die Vertragslaufzeit, unabhängig von KIG.",
     "Gebührenordnung: Klassik und Komfort bis 5-facher Satz, Premium auch darüber.",
-    "Zahn easy (ohne Gesundheitsprüfung, 0 bis 40 Jahre, 100 % bis 1.000 € im Jahr, 3 Monate Wartezeit) als vierte Variante nicht aufgenommen. AXA kennzeichnet keine Empfehlung; Komfort als mittlere Stufe."
+    "Zahn easy (ohne Gesundheitsprüfung, 0 bis 40 Jahre, 100 % bis 1.000 € im Jahr, 3 Monate Wartezeit) als vierte Variante nicht aufgenommen. AXA kennzeichnet keine Empfehlung; Komfort als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produktseite auf axa.de."
   ]
 }

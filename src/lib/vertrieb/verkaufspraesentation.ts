@@ -1,4 +1,4 @@
-// Vertriebspräsentation als Web-Präsentation (Ole, 15.11.2026): Oles aktuelle Folien (Vertreter 23, Makler 24) zum
+// Vertriebspräsentation als Web-Präsentation (Ole, 15.11.2026): Oles aktuelle Folien (Vertreter 24, Makler 25) zum
 // Präsentieren im Admin (Vertrieb → Kontakt → „Präsentation“) und zum Nachklicken für den Interessenten
 // (/praesentation/<token>). Die Folien sind Bilder aus den PPTX (scripts/vertrieb-folien.mjs), außer:
 // Folie 13 (Video des Assistenten), Folie 17 „Beraten mit echten Preisen“ (rechts die Live-Demo aus /demo/beratung),
@@ -42,6 +42,8 @@ const GEMEINSAM: Omit<VerkaufsFolieDef, "nr" | "bild">[] = [
   { titel: "Beraten mit echten Preisen", art: "demo" },
   // Folie 18 (Ole, 17.11.2026): Komplettcheck und Cross-Selling im Termin; alle Folien danach eine Nummer weiter
   { titel: "Viele wollen den Komplettcheck", art: "bild" },
+  // Folie 19 (Ole, 17.11.2026, Fassung eca12945): Policen vorab per WhatsApp, Vergleichsblatt in der Terminvorbereitung
+  { titel: "Policen vorab", art: "bild" },
   { titel: "Sie wissen jederzeit, ob es sich rechnet", art: "bild" },
 ];
 
@@ -66,7 +68,7 @@ const ENDE: Record<VerkaufsAudience, Omit<VerkaufsFolieDef, "nr" | "bild">[]> = 
 export const BONUS_FOLIE_TITEL = "Ihr Abschlussbonus";
 
 /**
- * Folienliste je Zielgruppe (Vertreter 23, Makler 24 Folien aus den PPTX, Bildnummern wie dort), dazu vor
+ * Folienliste je Zielgruppe (Vertreter 24, Makler 25 Folien aus den PPTX, Bildnummern wie dort), dazu vor
  * „Ihr Start in 3 Schritten“ die Folie zum Abschlussbonus (mitBonus, Standard an).
  */
 export function folienListe(audience: VerkaufsAudience, mitBonus = true): VerkaufsFolieDef[] {

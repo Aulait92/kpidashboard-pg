@@ -28,8 +28,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/reiseversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "AXA Reiseversicherung Premium",
@@ -50,8 +49,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/reiseversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -62,6 +60,7 @@
     "Summe: einzelne Reise bis 25.000 €, Jahrespolice bis 10.000 € Einzelperson bzw. 15.000 € Familie. Einzelpolice für eine Reise bis 180 Tage, Jahrespolice für Reisen bis 56 Tage (insgesamt 180 Reisetage).",
     "Selbstbehalt laut FAQ wählbar (20 % des Schadens, mindestens 25 € je Person); Formulierung auf der Seite unvollständig, bitte prüfen.",
     "Pandemie: Corona-Erkrankung als Rücktrittsgrund genannt; Jobverlust als „Verlust des Arbeitsplatzes“. Familie: als Einzelperson, Paar oder Familie versicherbar.",
-    "Keine Markierung durch AXA. Auslandskrankenversicherung als Baustein zubuchbar."
+    "Keine Markierung durch AXA. Auslandskrankenversicherung als Baustein zubuchbar.",
+    "Geprüft am 17.11.2026 an der Produktseite auf axa.de."
   ]
 }

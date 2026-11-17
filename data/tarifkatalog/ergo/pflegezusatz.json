@@ -25,8 +25,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/pflege/pflegezusatz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV Pflege-Zuschuss (Tarif PZU)",
@@ -44,8 +43,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/pflege/pflegezusatz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV KombiMed Förder-Pflege (Tarif KFP)",
@@ -63,8 +61,7 @@
         "dynamik": "nein"
       },
       "quelle": "https://www.ergo.de/fragments/produkttabelle/pflege/pflegezusatz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Die drei Tarife sind Varianten (Tagegeld, Zuschuss zur gesetzlichen Pflegeleistung, staatlich geförderte Förder-Pflege mit 60 € Zulage im Jahr), keine Leistungsstufen. DKV markiert das Pflegetagegeld als „Bestseller“.",
     "Einmalleistung nur über das Pflege Schutz Paket (PSP, mit allen Tarifen kombinierbar oder einzeln): 1.000 € einmalig ab Pflegegrad 2, Pflegeheimplatz bzw. Pflegedienst innerhalb 24 Stunden, Beratung, ohne Gesundheitsprüfung.",
     "Leistung ab Pflegegrad, Leistung je Pflegegrad, Beitragsbefreiung im Pflegefall und Demenz nicht auf der Seite genannt. Pflege-Zuschuss erhöht die Leistung der gesetzlichen Pflegeversicherung (GPV) um 50 oder 100 %.",
-    "Dynamik: Tagegeld alle 3 Jahre ohne Gesundheitsprüfung (Widerspruch möglich), Zuschuss steigt mit der gesetzlichen Leistung; Tagegeld zusätzlich anlassbezogen erhöhbar (Heirat, Geburt, Scheidung). Förder-Pflege: keine Wartezeit nur bei Unfall (Dauer nicht genannt), keine Gesundheitsfragen, höhere Leistung nach 15 Jahren."
+    "Dynamik: Tagegeld alle 3 Jahre ohne Gesundheitsprüfung (Widerspruch möglich), Zuschuss steigt mit der gesetzlichen Leistung; Tagegeld zusätzlich anlassbezogen erhöhbar (Heirat, Geburt, Scheidung). Förder-Pflege: keine Wartezeit nur bei Unfall (Dauer nicht genannt), keine Gesundheitsfragen, höhere Leistung nach 15 Jahren.",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseite auf ergo.de."
   ]
 }

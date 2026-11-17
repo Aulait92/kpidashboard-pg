@@ -28,8 +28,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.ergo.de/de/Produkte/Reiseversicherung/Reiseruecktrittsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Jahres-Reiserücktrittsversicherung Sparfuchs (24 Monate Mindestlaufzeit)",
@@ -50,8 +49,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.ergo.de/de/Produkte/Reiseversicherung/Reiseruecktrittsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Jahres-Reiserücktrittsversicherung",
@@ -72,8 +70,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.ergo.de/de/Produkte/Reiseversicherung/Reiseruecktrittsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -85,6 +82,7 @@
     "Produkt der ERGO Reiseversicherung AG. Die Stufen sind Vertragsarten (eine Reise, Jahresvertrag mit 24 Monaten Mindestlaufzeit „Sparfuchs“, Jahresvertrag), keine Leistungsstufen; Leistungen laut Seite gleich. ERGO zeigt Sparfuchs in der Mitte mit eigener Markierung; als mittlere Stufe gesetzt.",
     "Versicherungssumme nach vollem Reisepreis. Selbstbeteiligung wählbar: mit SB 20 % des erstattungsfähigen Schadens, mindestens 25 € je Person (Storno und Abbruch).",
     "Covid-19 als unerwartete schwere Erkrankung oder Tod mitversichert. Gründe u. a. betriebsbedingte Kündigung, Arbeitsplatzwechsel, Schaden am Eigentum, Ausfall des Fahrzeugs; nicht versichert z. B. Trennung, Streik, Krieg. Für Einzelpersonen, Paare und Familien; im Jahresvertrag gilt die volle Summe für alle Familienmitglieder.",
-    "Für eine Reise gibt es zusätzlich die günstigere Variante „Sichere Fahrt“ (Auto, Bus, Bahn in Europa); nicht als Stufe geführt."
+    "Für eine Reise gibt es zusätzlich die günstigere Variante „Sichere Fahrt“ (Auto, Bus, Bahn in Europa); nicht als Stufe geführt.",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseite auf ergo.de."
   ]
 }

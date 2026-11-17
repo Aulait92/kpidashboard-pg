@@ -24,8 +24,7 @@
         "inlays": "50 %"
       },
       "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn70 (Tarif EZ70plus)",
@@ -42,8 +41,7 @@
         "inlays": "70 %"
       },
       "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn100 (Tarife EZ70plus und EZ-Comfort)",
@@ -60,8 +58,7 @@
         "inlays": "100 %"
       },
       "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Prozentsatz vom Rechnungsbetrag; zusammen mit der gesetzlichen Kasse höchstens 100 % der Rechnung. Nur GOZ/GOÄ-konforme Rechnungen.",
     "Zahn100 = EZ70plus plus EZ-Comfort: Wurzelbehandlung 100 % bis 5.000 € im Jahr, Funktionsanalyse bis 1.000 €, Narkose bei Implantaten bis 500 € im Jahr. Zahn50 und Zahn70 ohne Wurzelbehandlung.",
     "Kieferorthopädie steht nicht in der Leistungstabelle. Varianten ohne Alterungsrückstellung (EZ50-Easy, EZ70-Easy, EZ-Comf-Easy) nicht aufgenommen.",
-    "Debeka nennt Zahn70 „Top-Schutz zum Bestpreis“, Zahn50 „Top-Einstiegstarif“, Zahn100 „Premium-Schutz“; keine ausdrückliche Empfehlung, Zahn70 als mittlere Stufe gesetzt."
+    "Debeka nennt Zahn70 „Top-Schutz zum Bestpreis“, Zahn50 „Top-Einstiegstarif“, Zahn100 „Premium-Schutz“; keine ausdrückliche Empfehlung, Zahn70 als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an Tarifbedingungen und Produktseite auf debeka.de."
   ]
 }
