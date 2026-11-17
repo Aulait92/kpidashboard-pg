@@ -131,6 +131,9 @@ async function resolveTax(stripe: Stripe) {
 
 const cents = (eur: number) => Math.round(eur * 100);
 
+/** Stripe-Mindestbetrag je Zahlung in EUR (darunter lehnt Stripe ab; 0 € ist eine Bestellung ohne Zahlungsart). */
+export const STRIPE_MIN_EUR = 0.5;
+
 async function ensureCustomer(stripe: Stripe, offer: OfferRow): Promise<string> {
   if (offer.stripeCustomerId) return offer.stripeCustomerId;
   const customer = await stripe.customers.create(
@@ -186,7 +189,12 @@ const CHECKOUT_REUSE_MIN_MS = 15 * 60 * 1000;
  * dieselbe Zahlart hat (pg_checkout in den Metadaten). Sonst schließen (expire), bevor eine
  * neue entsteht. „paid“: die alte Seite ist schon bezahlt (Webhook noch nicht da).
  */
-async function reuseOrExpireCheckout(stripe: Stripe, sessionId: string, fingerprint: string): Promise<{ url: string } | "paid" | null> {
+async function reuseOrExpireCheckout(
+  stripe: Stripe,
+  sessionId: string,
+  fingerprint: string,
+  oldFailed = false,
+): Promise<{ url: string } | "paid" | null> {
   let old: Stripe.Checkout.Session;
   try {
     old = await stripe.checkout.sessions.retrieve(sessionId);
@@ -195,7 +203,8 @@ async function reuseOrExpireCheckout(stripe: Stripe, sessionId: string, fingerpr
     if ((err as { code?: string })?.code === "resource_missing") return null;
     throw err;
   }
-  if (old.status === "complete") return "paid";
+  // Abgeschlossene Seite, deren Lastschrift geplatzt ist (paymentStatus „failed“): neue Seite erlauben
+  if (old.status === "complete") return oldFailed ? null : "paid";
   if (old.status !== "open") return null;
   const fresh = (old.expires_at ?? 0) * 1000 - Date.now() > CHECKOUT_REUSE_MIN_MS;
   if (fresh && old.url && old.metadata?.pg_checkout === fingerprint) return { url: old.url };
@@ -244,14 +253,19 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
     const bonus = setupFee > 0 ? abschlussBonusJetzt(offer) : null;
     const nachlass = round2Billing((discount?.discount ?? 0) + (bonus?.betrag ?? 0));
     const listPreis = discount ? discount.list : setupFee;
+    // Kleines Setup (z. B. 1 €) mit Abschlussbonus: Bleibt nach Rabatt und Bonus weniger als der Stripe-Mindestbetrag,
+    // wäre die Bezahlseite gratis (Checkout fragt dann keine Zahlungsart ab, die Monatsgebühr ließe sich nicht
+    // einziehen) bzw. unter 0,50 € (Stripe lehnt ab). Dann nur die Zahlungsart hinterlegen (Modus „setup“).
+    const zuZahlen = round2Billing(setupFee - (bonus?.betrag ?? 0));
+    const mitZahlung = setupFee > 0 && zuZahlen >= STRIPE_MIN_EUR;
     // Positionen und Zahlart dieser Bezahlseite: gleich → offene Seite wiederverwenden
     const fingerprint = crypto
       .createHash("sha256")
-      .update(JSON.stringify([setupFee > 0 ? "payment" : "setup", offer.package, cents(setupFee), discount ? [cents(discount.list), cents(discount.discount)] : null, bonus ? [cents(bonus.betrag), bonus.bis.getTime()] : null, zahlart ?? null, customerId, tax.automatic ? "auto" : tax.rateId]))
+      .update(JSON.stringify([mitZahlung ? "payment" : "setup", offer.package, cents(setupFee), discount ? [cents(discount.list), cents(discount.discount)] : null, bonus ? [cents(bonus.betrag), bonus.bis.getTime()] : null, zahlart ?? null, customerId, tax.automatic ? "auto" : tax.rateId]))
       .digest("hex")
       .slice(0, 24);
     if (offer.stripeCheckoutSessionId) {
-      const reuse = await reuseOrExpireCheckout(stripe, offer.stripeCheckoutSessionId, fingerprint);
+      const reuse = await reuseOrExpireCheckout(stripe, offer.stripeCheckoutSessionId, fingerprint, offer.paymentStatus === "failed");
       if (reuse === "paid") return { error: "Die Zahlung ist bereits eingerichtet." };
       if (reuse) {
         if (offer.paymentStatus !== "pending") await prisma.offer.update({ where: { id: offer.id }, data: { paymentStatus: "pending" } });
@@ -261,7 +275,7 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
     // Stripe erlaubt einen Gutschein je Bezahlseite: Empfehlungsrabatt und Abschlussbonus zusammen
     const couponName = discount && bonus ? "Empfehlungsrabatt und Abschlussbonus" : bonus ? "Abschlussbonus" : "Empfehlungsrabatt";
     const coupon =
-      nachlass > 0.005
+      mitZahlung && nachlass > 0.005
         ? await stripe.coupons.create(
             {
               amount_off: cents(nachlass),
@@ -285,11 +299,11 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
       customer: customerId,
       customer_update: { address: "auto" as const, name: "auto" as const },
       billing_address_collection: "required" as const,
-      tax_id_collection: { enabled: true },
       locale: "de" as const,
       client_reference_id: offer.id,
       integration_identifier: "pg-angebot-qkzvmtrb",
-      metadata: { ...meta, pg_checkout: fingerprint, ...(bonus ? { pg_bonus: String(cents(bonus.betrag)) } : {}) },
+      // Ohne Zahlung (Bonus deckt das Setup bis auf einen Rest unter dem Mindestbetrag): das ganze Setup gilt als Bonus
+      metadata: { ...meta, pg_checkout: fingerprint, ...(bonus ? { pg_bonus: String(cents(mitZahlung ? bonus.betrag : setupFee)) } : {}) },
       ...(ablauf ? { expires_at: ablauf } : {}),
       success_url: `${base}/angebot/${offer.token}?zahlung=ok`,
       cancel_url: `${base}/angebot/${offer.token}?zahlung=abgebrochen`,
@@ -297,10 +311,12 @@ export async function createCheckoutForOffer(offerId: string, zahlart?: Zahlart 
 
     const session = await createCheckoutSession(
       stripe,
-      setupFee > 0
+      mitZahlung
         ? {
             ...common,
             mode: "payment",
+            // USt-IdNr. nur bei Zahlung (Stripe sammelt sie im Modus „setup“ nicht)
+            tax_id_collection: { enabled: true },
             ...(tax.automatic ? { automatic_tax: { enabled: true } } : {}),
             line_items: [
               {
@@ -449,7 +465,8 @@ export async function createScheduleForOffer(offerId: string, session: Stripe.Ch
       },
       phases,
     },
-    { idempotencyKey: `offer-schedule-${offer.id}` },
+    // Je Bezahlseite: nach geplatzter Lastschrift und neuer Zahlung entsteht ein neuer Zeitplan
+    { idempotencyKey: `offer-schedule-${offer.id}-${session.id}` },
   );
   await prisma.offer.update({
     where: { id: offer.id },
@@ -470,6 +487,8 @@ export async function cancelScheduleForOffer(offerId: string): Promise<void> {
   if (schedule.status === "not_started" || schedule.status === "active") {
     await stripe.subscriptionSchedules.cancel(offer.stripeScheduleId);
   }
+  // Zeitplan ist weg: Verweise lösen, damit eine neue Zahlung (neue Bezahlseite) wieder einen Zeitplan anlegt
+  await prisma.offer.update({ where: { id: offerId }, data: { stripeScheduleId: null, stripeSubscriptionId: null } });
 }
 
 // ─── Kundenbereich „Konto & Rechnungen“ ────────────────────────────────

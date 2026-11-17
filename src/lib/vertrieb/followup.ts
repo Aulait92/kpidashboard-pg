@@ -324,12 +324,25 @@ export function paragraphize(text: string): string {
   return out.join("\n\n");
 }
 
+/**
+ * Buchungslink sicherstellen (Sentry KPIDASHBOARD-PG-D: KI ließ ihn zweimal weg, dann fiel alles auf die Vorlage
+ * zurück). Abgewandelter Link (ohne https://, mit Schrägstrich am Ende) → exakter Link; fehlt er, eigene Zeile am Ende.
+ */
+export function mitBuchungslink(text: string, url: string | null): string {
+  if (!text || !url || text.includes(url)) return text;
+  const bare = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const esc = bare.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const variant = new RegExp(`(?:https?:\\/\\/)?(?:www\\.)?${esc}\\/?`, "i");
+  if (variant.test(text)) return text.replace(variant, url);
+  return `${text.trimEnd()}\n\n${url}`;
+}
+
 function validateTexts(c: Ctx) {
   return (x: unknown): Valid<{ body1: string; body2: string }> => {
     const o = x as { mail1?: unknown; mail2?: unknown };
     const errors: string[] = [];
-    const m1 = typeof o?.mail1 === "string" ? o.mail1.trim() : "";
-    const m2 = typeof o?.mail2 === "string" ? o.mail2.trim() : "";
+    const m1 = mitBuchungslink(typeof o?.mail1 === "string" ? o.mail1.trim() : "", c.bookingUrl);
+    const m2 = mitBuchungslink(typeof o?.mail2 === "string" ? o.mail2.trim() : "", c.bookingUrl);
     if (!m1 || !m2) errors.push("mail1 und mail2 müssen Text enthalten.");
     for (const [n, t, max] of [["mail1", m1, 1100], ["mail2", m2, 500]] as const) {
       if (t.length > max) errors.push(`${n} ist zu lang (höchstens ${max} Zeichen).`);

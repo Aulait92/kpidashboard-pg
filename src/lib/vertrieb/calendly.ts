@@ -12,16 +12,39 @@ import type { SalesStage as Stage } from "@/generated/prisma/enums";
 
 const API = "https://api.calendly.com";
 
+/** Calendly drosselt (429): kein Fehler im Code, der stündliche Abgleich holt es beim nächsten Lauf nach. */
+export class CalendlyRateLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CalendlyRateLimitError";
+  }
+}
+
+/** Wartezeit nach 429 (Sentry KPIDASHBOARD-PG-E): Retry-After bzw. X-RateLimit-Reset (Sekunden), höchstens 30 s. */
+export function calendlyRetryMs(headers: Headers): number {
+  const sec = Number(headers.get("retry-after") ?? headers.get("x-ratelimit-reset") ?? NaN);
+  return Math.min(30, Number.isFinite(sec) && sec >= 0 ? sec : 10) * 1000;
+}
+
+const RATE_LIMIT_RETRIES = 2;
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const token = process.env.CALENDLY_TOKEN;
   if (!token) throw new Error("CALENDLY_TOKEN ist nicht gesetzt.");
-  const res = await fetch(path.startsWith("http") ? path : API + path, {
-    ...init,
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...init?.headers },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`Calendly ${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`);
-  return res.json() as Promise<T>;
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(path.startsWith("http") ? path : API + path, {
+      ...init,
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...init?.headers },
+      cache: "no-store",
+    });
+    if (res.status === 429) {
+      if (attempt >= RATE_LIMIT_RETRIES) throw new CalendlyRateLimitError(`Calendly 429 nach ${attempt + 1} Versuchen`);
+      await new Promise((r) => setTimeout(r, calendlyRetryMs(res.headers)));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Calendly ${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`);
+    return res.json() as Promise<T>;
+  }
 }
 
 type Location = { type?: string; location?: string | null; join_url?: string | null; additional_info?: string | null } | null;
@@ -248,12 +271,16 @@ export async function connectCalendly(callbackUrl: string) {
   return `Verbunden mit Calendly (${u.name}, ${u.email}). Neue Buchungen und Absagen kommen ab jetzt automatisch.`;
 }
 
-/** Holt Termine der letzten 30 Tage und alle zukünftigen und gleicht sie ab. */
-export async function syncCalendly() {
+/**
+ * Holt Termine ab `sinceDays` Tagen zurück (Standard 30, Knopf im Admin) und alle zukünftigen und gleicht sie ab.
+ * Der stündliche Cron nimmt nur wenige Tage: je Termin ist eine Anfrage nötig, 30 Tage stündlich (dazu die
+ * Sandbox mit demselben Token) liefen ins Calendly-Limit (429, Sentry KPIDASHBOARD-PG-E).
+ */
+export async function syncCalendly(opts: { sinceDays?: number } = {}) {
   const u = await me();
   const matcher = await Matcher.load();
   const stats = { events: 0, invitees: 0, new: 0, canceled: 0 };
-  const since = new Date(Date.now() - 30 * 86400000).toISOString();
+  const since = new Date(Date.now() - (opts.sinceDays ?? 30) * 86400000).toISOString();
   for (const status of ["active", "canceled"] as const) {
     let next: string | null = `/scheduled_events?${new URLSearchParams({ user: u.uri, min_start_time: since, status, count: "100", sort: "start_time:asc" })}`;
     while (next) {

@@ -1,6 +1,6 @@
 // Später-Follow-ups: kurze Absätze (höchstens etwa 3 Zeilen), Link in eigener Zeile (Ole, 14.11.2026)
 import { describe, expect, it } from "vitest";
-import { paragraphize } from "@/lib/vertrieb/followup";
+import { mitBuchungslink, paragraphize } from "@/lib/vertrieb/followup";
 
 describe("paragraphize", () => {
   it("trennt Anrede, teilt lange Absätze an Satzgrenzen, Link in eigene Zeile", () => {
@@ -17,5 +17,23 @@ describe("paragraphize", () => {
   it("lässt kurze, schon gegliederte Texte unverändert", () => {
     const t = "Guten Tag,\n\nkurz nachgehakt: Passt es Ihnen diese Woche?";
     expect(paragraphize(t)).toBe(t);
+  });
+});
+
+// KI ließ den Buchungslink weg (Sentry KPIDASHBOARD-PG-D): ergänzen statt auf die Vorlage zurückzufallen
+describe("mitBuchungslink", () => {
+  const url = "https://calendly.com/ole-kannapinn/meta-leads-call-ole-kannapinn";
+  it("vorhandener Link bleibt unverändert", () => {
+    const t = `Guten Tag,\n\nHier geht es zur Terminauswahl:\n${url}`;
+    expect(mitBuchungslink(t, url)).toBe(t);
+  });
+  it("Link ohne https:// oder mit Schrägstrich am Ende wird zum exakten Link", () => {
+    expect(mitBuchungslink("Termin: calendly.com/ole-kannapinn/meta-leads-call-ole-kannapinn/ gern.", url)).toBe(`Termin: ${url} gern.`);
+    expect(mitBuchungslink("Termin: www.calendly.com/ole-kannapinn/meta-leads-call-ole-kannapinn", url)).toBe(`Termin: ${url}`);
+  });
+  it("fehlender Link kommt in eine eigene Zeile am Ende; ohne Buchungslink nichts", () => {
+    expect(mitBuchungslink("Guten Tag,\n\nPasst ein kurzes Gespräch?", url)).toBe(`Guten Tag,\n\nPasst ein kurzes Gespräch?\n\n${url}`);
+    expect(mitBuchungslink("Passt es?", null)).toBe("Passt es?");
+    expect(mitBuchungslink("", url)).toBe("");
   });
 });
