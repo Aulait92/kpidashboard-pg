@@ -56,6 +56,13 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "followup_noshow",
   "followup_last",
 ];
+/**
+ * Show-up-Paket (Ole, 17.11.2026): neue UTILITY-Vorlagen, nur VORBEREITET. Sie stehen NICHT in CORE_PURPOSES und werden
+ * deshalb nicht bei Meta eingereicht, bis Ole die Texte freigibt (docs/vorlagen-showup.md). Freigeben: Zweck in
+ * CORE_PURPOSES aufnehmen. Bis dahin gehen sie nur als Freitext im offenen 24-h-Fenster (lib/showup.ts).
+ */
+export const VORBEREITETE_PURPOSES: NoticePurpose[] = ["reminder_start", "appt_waiting"];
+
 /** Nur mit gebuchtem Bestandskunden-Modul. */
 export const CAMPAIGN_PURPOSES: NoticePurpose[] = ["campaign_cross_sell", "campaign_review", "campaign_birthday", "campaign_renewal"];
 
@@ -108,7 +115,7 @@ export function templateNameFor(purpose: NoticePurpose, version = TEMPLATE_VERSI
  * alles andere ist Ansprache (MARKETING). Meta prüft und stuft ggf. selbst um.
  */
 export function categoryFor(purpose: NoticePurpose): "UTILITY" | "MARKETING" {
-  return purpose === "booking_confirmation" || purpose === "reminder" || purpose === "reminder_soon" || purpose === "reschedule" ? "UTILITY" : "MARKETING";
+  return ["booking_confirmation", "reminder", "reminder_soon", "reminder_start", "appt_waiting", "reschedule"].includes(purpose) ? "UTILITY" : "MARKETING";
 }
 
 /** Firmenname, der im Text für „[Firma]“ steht (wie im Admin: ohne vorangestelltes „Allianz“). */
@@ -142,6 +149,8 @@ const EXAMPLES: Record<string, string> = {
   Uhrzeit: "10:00 Uhr",
   Art: "Telefon",
   "Link/Hinweis": "Wir rufen dich unter deiner Nummer an.",
+  "Vermittler (Nominativ)": "Herr Schmidt",
+  Videolink: "https://meet.google.com/abc-defg-hij",
   "Thema (z. B. Hausrat, Haftpflicht)": "Hausrat",
   "Thema (z. B. Hausrat)": "Hausrat",
   "Vertrag (z. B. KFZ)": "KFZ",
@@ -284,6 +293,8 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   booking_confirmation: { title: "Terminbestätigung", when: "Sobald ein Lead einen Termin gebucht hat." },
   reminder: { title: "Terminerinnerung", when: "Etwa 24 Stunden vor dem Termin." },
   reminder_soon: { title: "Kurz vor dem Termin", when: "Etwa eine Stunde vor dem Termin: passt alles?" },
+  reminder_start: { title: "Gleich geht es los", when: "15 Minuten vor einem Videotermin, mit dem Link zum Videoraum." },
+  appt_waiting: { title: "Sie warten im Videoraum", when: "Wenn Sie zum Terminbeginn „Fehlt noch“ antippen." },
   reschedule: { title: "Termin verschoben", when: "Wenn Ihr Team einen Termin verlegen muss, z. B. wegen Abwesenheit." },
   followup: { title: "Nachfassen mit zwei Terminvorschlägen", when: "Wenn ein Lead länger nicht geantwortet hat, mit zwei freien Zeiten aus Ihrem Kalender." },
   followup_nudge: { title: "Kurze Nachfrage", when: "Wenn ein Lead noch nicht geantwortet hat (ohne verbundenen Kalender statt der Terminvorschläge)." },

@@ -2,7 +2,8 @@
 // (templates.ts → TEMPLATE_BUTTONS); ein Klick kommt im Webhook als type „button“ (Vorlage) bzw. „interactive“
 // (freie Nachricht im 24-h-Fenster) mit Text und Payload an. Verarbeitung in gateway.ts nach STOPP und Kampagnen:
 //   „Ja, passt“                 → Termin bestätigt (Appointment.confirmedAt), kurze Antwort, Assistent schweigt
-//   „Bitte verschieben“ …       → Assistent mit Hinweis: freie Zeiten holen, verschieben (reschedule_appointment)
+//   „Bitte verschieben“ …       → Assistent mit Hinweis: freie Zeiten holen, verschieben (reschedule_appointment);
+//                                 keine weiteren Erinnerungen zur alten Zeit (Appointment.rescheduleRequestedAt)
 //   „Kein Bedarf mehr“, „Nein, danke“ → Lead sauber verloren (Kein Interesse, Grund „kein Bedarf“), Abfolgen stopp, Dank
 //   „Ja, neuer Termin“, „Andere Zeit“ → Assistent mit Hinweis: zwei freie Zeiten anbieten
 //   „Erste/Zweite Zeit passt“ (Payload slot:<ISO>) → Assistent mit genauer Startzeit, bucht bzw. verschiebt
@@ -144,7 +145,8 @@ export async function handleButtonReply(
       select: { id: true, startsAt: true },
     });
     if (!appt) return { handled: false };
-    await prisma.appointment.update({ where: { id: appt.id }, data: { confirmedAt: now } });
+    // „Ja, passt“ nach „Bitte verschieben“: es bleibt bei der Zeit, Erinnerungen laufen wieder
+    await prisma.appointment.update({ where: { id: appt.id }, data: { confirmedAt: now, rescheduleRequestedAt: null } });
     await prisma.message.create({ data: { conversationId, direction: "internal", kind: "appointment_confirmed", body: JSON.stringify({ appointmentId: appt.id }), sentBy: "system" } });
     await reply(conversationId, a(an, `Super, danke! Dann bis ${wann(appt.startsAt)}.`, `Vielen Dank für die Bestätigung! Dann bis ${wann(appt.startsAt)}.`));
     return { handled: true };
@@ -168,6 +170,14 @@ export async function handleButtonReply(
   if (k.aktion === "kalender") {
     const { kalenderAntwort } = await import("@/lib/whatsapp/termin-strecke");
     return { handled: await kalenderAntwort(conversationId, k.art, now) };
+  }
+  // „Bitte verschieben“ (Show-up-Paket, Ole 17.11.2026): keine weiteren Erinnerungen zur alten Zeit; das Verschieben
+  // selbst übernimmt der Assistent wie bisher (reschedule_appointment legt einen neuen Termin an)
+  if (k.aktion === "verschieben") {
+    await prisma.appointment.updateMany({
+      where: { status: "booked", startsAt: { gt: now }, rescheduleRequestedAt: null, OR: [{ conversationId }, ...(conv.leadId ? [{ leadId: conv.leadId }] : [])] },
+      data: { rescheduleRequestedAt: now },
+    });
   }
   // Zeit-Knopf: bot.ts bucht genau diese Zeit selbst (Payload), der Hinweis ist der Rückfall
   return { handled: false, hint: knopfHinweis(k, now), zeit: k.aktion === "zeit" ? k.start : null };
