@@ -1145,6 +1145,8 @@ model CalendarConnection {
   // Öffentlicher, nicht erratbarer Slug für die Buchungsseite /book/<slug>
   // (z. B. als Custom-Scheduling-Link im Meta-Leadformular).
   bookingSlug     String?   @unique
+  // Frühere Kurznamen der Buchungsseite: leiten auf bookingSlug weiter (lib/calendar/buchungslink.ts)
+  bookingSlugAlt  String[]  @default([])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
