@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import {
   googleCreateEvent,
   googleDeleteEvent,
+  googleUpdateEventEnd,
   googleGetResponses,
   googleGetBusy,
   googleHasRequiredScopes,
@@ -18,6 +19,7 @@ import { berlinAt, calendarBlocksBusy, DEFAULT_DURATION_MIN, durationForKey, loa
 import {
   microsoftCreateEvent,
   microsoftDeleteEvent,
+  microsoftUpdateEventEnd,
   microsoftGetResponses,
   microsoftGetBusy,
 } from "@/lib/calendar/microsoft";
@@ -72,11 +74,13 @@ export async function adapterFor(customerId: string) {
           getBusy: (min: Date, max: Date) => microsoftGetBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => microsoftCreateEvent(customerId, ev),
           deleteEvent: (id: string) => microsoftDeleteEvent(customerId, id),
+          updateEventEnd: (id: string, end: Date) => microsoftUpdateEventEnd(customerId, id, end),
         }
       : {
           getBusy: (min: Date, max: Date) => googleGetBusy(customerId, min, max),
           createEvent: (ev: NewEvent) => googleCreateEvent(customerId, ev),
           deleteEvent: (id: string) => googleDeleteEvent(customerId, id),
+          updateEventEnd: (id: string, end: Date) => googleUpdateEventEnd(customerId, id, end),
         };
 
   return {
@@ -96,6 +100,8 @@ export async function adapterFor(customerId: string) {
     // Einladung an die Berater-Adresse (z. B. Allianz-Mail) setzt bookAppointment.
     createEvent: (ev: NewEvent): Promise<CreatedEvent> => native.createEvent(ev),
     deleteEvent: (id: string): Promise<void> => native.deleteEvent(id),
+    // Termin verlängern (Komplettcheck, lib/komplettcheck-dauer.ts); Kalender schickt die Aktualisierung
+    updateEventEnd: (id: string, end: Date): Promise<void> => native.updateEventEnd(id, end),
   };
 }
 

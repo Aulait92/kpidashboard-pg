@@ -40,6 +40,8 @@ const STOP_WORDS = /^\s*(stopp?|stop|abmelden|keine (weiteren )?nachrichten|nich
 /** hi = Anrede-Zeile nach Regel („Hallo Julia,“ bzw. „Guten Tag Frau Schneider,“ / „Guten Tag,“). */
 // Kein Buchungslink in Nachrichten an Leads (Ole, 15.11.2026: „nur per Chat“): Termine bucht der Assistent im Gespräch.
 type Ctx = { firstName: string; hi: string; kontakt: AnredeKontakt; topic: string; an: Ansprache };
+/** Angaben für die Texte einer Abfolge (auch für die Vorschau im Nachrichtenplan, lib/nachrichtenplan.ts). */
+export type SequenceCtx = Ctx;
 const HOUR = 60 * 60 * 1000;
 /** Mindestabstand zwischen zwei Schritten (z. B. wenn morgens zwei über Nacht fällige Schritte anstehen). */
 const MIN_GAP_MS = 2 * HOUR;
@@ -56,6 +58,8 @@ type Step =
       onlyInWindow?: boolean;
       /** Zweck „followup“ mit zwei Terminvorschlägen: eigener Freitext (sonst der Text der Vorlage). */
       slotText?: (c: Ctx, zeiten: [string, string]) => string;
+      /** Auch bei anderem Zweck zwei freie Zeiten anbieten (Freitext mit slotText und Zeit-Knöpfen; Vorlage ohne Zeiten). */
+      slots?: boolean;
     }
   | { day: number; action: "call"; note: string };
 
@@ -101,6 +105,9 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
       { day: 7, action: "call", note: "Angebot nachfassen: anrufen" },
     ],
   },
+  // No-Show-Rettung (Ole, 17.11.2026): am gleichen Tag zwei neue Zeiten, am nächsten Tag einmal nachfassen, dann Ende.
+  // Ohne Kalender bzw. außerhalb des 24-h-Fensters: die Vorlage „Nachfassen nach verpasstem Termin“ bzw. die kurze
+  // Nachfrage; ohne freigegebene Vorlage eine Anruf-Aufgabe (wie bisher).
   no_show: {
     label: "Nicht erschienen",
     steps: [
@@ -108,12 +115,32 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
         day: 0,
         action: "whatsapp",
         purpose: "followup_noshow",
+        slots: true,
         params: (c) => [c.firstName],
-        text: (c) =>
-          `${c.hi} kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden?`,
+        text: (c) => `${c.hi} kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden?`,
+        slotText: (c, [z1, z2]) =>
+          a(
+            c.an,
+            `${c.hi} kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden? Passt dir ${z1} oder ${z2}?`,
+            `${c.hi} kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden? Passt Ihnen ${z1} oder ${z2}?`,
+          ),
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
       },
-      { day: 2, action: "call", note: "Neuen Termin vereinbaren" },
+      {
+        day: 1,
+        action: "whatsapp",
+        purpose: "followup",
+        params: (c) => [c.firstName],
+        text: (c) =>
+          a(
+            c.an,
+            `${c.hi} kurze Nachfrage: Sollen wir einen neuen Termin finden? Antworte einfach hier, dann schlage ich dir Zeiten vor.`,
+            `${c.hi} kurze Nachfrage: Sollen wir einen neuen Termin finden? Antworten Sie einfach hier, dann schlage ich Ihnen Zeiten vor.`,
+          ),
+        slotText: (c, [z1, z2]) =>
+          a(c.an, `${c.hi} kurze Nachfrage zum neuen Termin: Passt dir ${z1} oder ${z2}?`, `${c.hi} kurze Nachfrage zum neuen Termin: Passt Ihnen ${z1} oder ${z2}?`),
+        fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
+      },
     ],
   },
   // Chat ruht (Ole, 15.11.2026: „schon nach wenigen Stunden … recht aggressiv, der Interessent hat ja
@@ -339,7 +366,7 @@ export async function onLeadStatus(leadId: string, status: string | null | undef
 }
 
 /** Thema für „Angebot zu …“ – wie beim manuellen Nachfassen (lib/whatsapp/followup.ts). */
-function topicOf(formData: Prisma.JsonValue | null, source: string | null, an: Ansprache = "sie"): string {
+export function topicOf(formData: Prisma.JsonValue | null, source: string | null, an: Ansprache = "sie"): string {
   if (Array.isArray(formData)) {
     const hit = (formData as { label?: unknown; value?: unknown }[]).find((a) => a?.label === "Versicherungsinteresse" && typeof a.value === "string" && a.value.trim());
     if (hit) return String(hit.value).trim().slice(0, 60);
@@ -572,6 +599,15 @@ async function sendStep(
     } else {
       purpose = "followup_nudge";
       buttons = { textButtons: [] };
+    }
+  } else if (step.slots && step.slotText) {
+    // No-Show-Rettung: zwei neue Zeiten mit Zeit-Knöpfen im Freitext; als Vorlage ohne Zeiten (Payloads passen dort nicht)
+    const zeiten = await zweiTerminvorschlaege(seq.customerId, seq.leadId);
+    if (zeiten) {
+      const { terminKnoepfe, zeitKurz } = await import("@/lib/whatsapp/gespraech");
+      text = step.slotText(ctx, [zeitKurz(new Date(zeiten.starts[0]), now), zeitKurz(new Date(zeiten.starts[1]), now)]);
+      const knoepfe = terminKnoepfe(zeiten.starts, now);
+      buttons = { textButtons: knoepfe.map((b) => b.title), buttonPayloads: knoepfe.map((b) => b.id) };
     }
   }
   try {

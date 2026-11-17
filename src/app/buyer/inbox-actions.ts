@@ -41,7 +41,7 @@ export type UndoSnapshot =
       kind: "lead";
       leadId: string;
       prev: LeadPrev;
-      appointment?: { id: string; status: string };
+      appointment?: { id: string; status: string; attendance?: string | null };
     }
   | {
       kind: "chat";
@@ -184,7 +184,7 @@ export async function appointmentOutcomeResult(
   const nextStatus = OUTCOME_STATUS[outcome];
   const appt = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    select: { id: true, leadId: true, customerId: true, status: true },
+    select: { id: true, leadId: true, customerId: true, status: true, attendance: true },
   });
   if (!appt?.leadId || !nextStatus) return { ok: false, error: "Termin nicht gefunden." };
   const customerId = await writableCustomerId(appt.leadId);
@@ -200,7 +200,15 @@ export async function appointmentOutcomeResult(
 
   await prisma.appointment.update({
     where: { id: appt.id },
-    data: { status: outcome === "no_show" ? "no_show" : "completed" },
+    // Anwesenheit für die Erscheinensquote (Show-up-Paket, lib/erscheinensquote.ts): nicht erschienen bzw. mit Ergebnis erschienen
+    data: {
+      status: outcome === "no_show" ? "no_show" : "completed",
+      ...(outcome === "no_show"
+        ? { attendance: "nicht_erschienen", attendanceAt: new Date() }
+        : appt.attendance !== "erschienen"
+          ? { attendance: "erschienen", attendanceAt: new Date() }
+          : {}),
+    },
   });
   if (lead.airtableId) {
     await updateLeadEditableFields({
@@ -236,7 +244,7 @@ export async function appointmentOutcomeResult(
   refresh();
   return {
     ok: true,
-    undo: { kind: "lead", leadId: lead.id, prev, appointment: { id: appt.id, status: appt.status } },
+    undo: { kind: "lead", leadId: lead.id, prev, appointment: { id: appt.id, status: appt.status, attendance: appt.attendance } },
   };
 }
 
@@ -303,7 +311,7 @@ export async function undoInboxAction(undo: UndoSnapshot): Promise<InboxResult> 
   if (undo.appointment) {
     await prisma.appointment.updateMany({
       where: { id: undo.appointment.id, customerId },
-      data: { status: undo.appointment.status },
+      data: { status: undo.appointment.status, ...(undo.appointment.attendance !== undefined ? { attendance: undo.appointment.attendance } : {}) },
     });
   }
   if (lead.airtableId) {

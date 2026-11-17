@@ -1,13 +1,18 @@
-// Termin-Nachrichten per WhatsApp: Erinnerung ~24 h vorher und Bestätigung
-// direkt nach einer Buchung über die Buchungsseite. Beide laufen über
-// sendWhatsAppNotice (Freitext im 24h-Fenster, sonst freigegebene Vorlage).
+// Termin-Nachrichten per WhatsApp: Bestätigung direkt nach einer Buchung, Verschiebung und die drei Erinnerungen des
+// Show-up-Pakets (Ole, 17.11.2026; Regeln und Texte in lib/showup.ts): Vortag (ca. 24 h vorher, mit Vortags-Mail),
+// 1 Stunde vorher, 15 Minuten vorher (nur Video mit Link). Alle laufen über sendWhatsAppNotice (Freitext im
+// 24h-Fenster, sonst freigegebene Vorlage; fehlt die neue Fassung, gilt die bisherige Vorlage).
 
 import { sendLeadEmail } from "@/lib/calendar/lead-email";
 import { prisma } from "@/lib/prisma";
-import { firstNameOf, NoTemplateError, sendWhatsAppNotice } from "@/lib/whatsapp/templates";
+import { firstNameOf, NoTemplateError, sendWhatsAppNotice, VORBEREITETE_FASSUNG } from "@/lib/whatsapp/templates";
 import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
+import { advisorDisplayName } from "@/lib/advisor-name";
+import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { WhatsAppKeinLeadError } from "@/lib/whatsapp/nur-leads";
+import { terminNutzenSatz, vermittlerName, zeitKurz } from "@/lib/whatsapp/gespraech";
+import { ERINNERUNG, erinnerungFaellig, gleichText, stundeText, terminArtWort, uhrKurz, vortagParams, vortagText } from "@/lib/showup";
 
 /** Ansprache des Kunden (Sie/Du) für Texte an Leads. */
 export async function anspracheOf(customerId: string): Promise<Ansprache> {
@@ -16,7 +21,6 @@ export async function anspracheOf(customerId: string): Promise<Ansprache> {
   return asAnsprache(c?.leadAddress);
 }
 
-const LEAD_MS = 24 * 60 * 60 * 1000;
 const TZ = "Europe/Berlin";
 
 export function formatWhenDE(d: Date): string {
@@ -137,14 +141,77 @@ export async function sendRescheduleNotice(opts: {
   }
 }
 
-export type ReminderResult ={ candidates: number; sent: number; errors: string[] };
+export type ReminderResult = { candidates: number; sent: number; errors: string[] };
 
 /** „Gleich ist es so weit“: etwa so lange vor dem Termin (Ole, 15.11.2026: kurz vorher nachfragen, ob alles passt). */
-export const SOON_MS = 60 * 60 * 1000;
+export const SOON_MS = ERINNERUNG.stundeVorMs;
+
+type TerminZeile = {
+  id: string;
+  customerId: string;
+  conversationId: string | null;
+  leadId: string | null;
+  mode: string;
+  startsAt: Date;
+  createdAt: Date;
+  meetUrl: string | null;
+  komplettcheck: boolean | null;
+  reminderSentAt: Date | null;
+  rescheduleRequestedAt: Date | null;
+  status: string;
+};
+
+const terminSelect = {
+  id: true,
+  customerId: true,
+  conversationId: true,
+  leadId: true,
+  mode: true,
+  startsAt: true,
+  createdAt: true,
+  meetUrl: true,
+  komplettcheck: true,
+  reminderSentAt: true,
+  rescheduleRequestedAt: true,
+  status: true,
+} as const;
+
+function formAnswers(raw: unknown): { label: string; value: string }[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((x) => (x && typeof x === "object" && typeof x.label === "string" && typeof x.value === "string" ? [{ label: x.label, value: x.value }] : []));
+}
+
+/** Alles für die Texte einer Erinnerung: Nummer, Ansprache, Anrede, Vermittler („Herr Kannapinn“), Angaben. */
+async function erinnerungsKontext(appt: TerminZeile) {
+  if (!appt.conversationId) return null;
+  const conv = await prisma.conversation.findUnique({
+    where: { id: appt.conversationId },
+    select: { contactPhone: true, contactName: true, optedOutAt: true, qualificationData: true },
+  });
+  if (!conv?.contactPhone) return null;
+  const [an, lead, customer] = await Promise.all([
+    anspracheOf(appt.customerId),
+    appt.leadId ? prisma.lead.findUnique({ where: { id: appt.leadId }, select: { source: true, formData: true, name: true } }).catch(() => null) : null,
+    prisma.customer.findUnique({ where: { id: appt.customerId }, select: { name: true } }).catch(() => null),
+  ]);
+  const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: lead?.name ?? conv.contactName });
+  // Vermittler wie im Assistenten (Ole, 17.11.2026): „Herr Kannapinn“, Du „Ole“; Team: der zuständige Berater
+  const fallback = who.advisor || advisorDisplayName(customer?.name) || a(an, "dein Berater", "Ihr Berater");
+  const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback });
+  const formular = splitHealthAnswers(formAnswers(lead?.formData)).normal;
+  return { conv, an, who, person, source: lead?.source ?? null, formular, angaben: conv.qualificationData, hi: anredeZeile(an, who.kontakt), optedOut: !!conv.optedOutAt };
+}
+
+/** Version der gewählten Vorlage ab der vorbereiteten neuen Fassung (VORBEREITETE_FASSUNG)? */
+const neueFassung = (purpose: "reminder" | "reminder_soon", version: number) =>
+  version >= Number((VORBEREITETE_FASSUNG[purpose]?.version ?? "v99").slice(1)) && version > 0;
 
 /**
- * Kurz vor dem Termin fragen, ob alles passt (lieber verschieben als nicht erscheinen). Nur WhatsApp, einmal je Termin.
- * Nicht, wenn erst kurz vorher gebucht (unter 3 Std.) oder die Erinnerung gerade erst rausging (2-Std.-Fall).
+ * 1 Stunde vorher (Ole, 17.11.2026): „In einer Stunde ist Ihr Videotermin mit Herrn Kannapinn. Passt bei Ihnen alles?
+ * Falls etwas dazwischengekommen ist, finden wir gern eine neue Zeit.“ mit „Ja, passt“ / „Bitte verschieben“, ohne Link.
+ * Nicht, wenn weniger als 2 h vorher gebucht, nach „Bitte verschieben“ oder die Erinnerung gerade erst rausging.
+ * Vorlage (Fenster zu): bis zur Freigabe der vorbereiteten Fassung die bisherige „Kurz vor dem Termin“ mit ihren
+ * Platzhaltern, sonst die Erinnerungs-Vorlage (bisherige Regel).
  */
 export async function runSoonReminders(now = new Date()): Promise<ReminderResult> {
   const due = await prisma.appointment.findMany({
@@ -155,41 +222,43 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
       conversationId: { not: null },
       startsAt: { gt: new Date(now.getTime() + 10 * 60 * 1000), lte: new Date(now.getTime() + SOON_MS) },
     },
-    select: { id: true, customerId: true, conversationId: true, leadId: true, mode: true, startsAt: true, createdAt: true, meetUrl: true, manageToken: true, reminderSentAt: true },
+    select: terminSelect,
     orderBy: { startsAt: "asc" },
     take: 200,
   });
   const result: ReminderResult = { candidates: due.length, sent: 0, errors: [] };
   for (const appt of due) {
-    const tooFresh = appt.startsAt.getTime() - appt.createdAt.getTime() < 3 * 60 * 60 * 1000;
     const justReminded = !!appt.reminderSentAt && now.getTime() - appt.reminderSentAt.getTime() < 90 * 60 * 1000;
-    if (tooFresh || justReminded) {
+    if (erinnerungFaellig("stunde", appt, now) !== "senden" || justReminded) {
       await prisma.appointment.update({ where: { id: appt.id }, data: { soonReminderSentAt: now } });
       continue;
     }
-    const conv = await prisma.conversation.findUnique({ where: { id: appt.conversationId! }, select: { contactPhone: true, contactName: true, optedOutAt: true } });
-    if (!conv?.contactPhone || conv.optedOutAt) continue;
-    const an = await anspracheOf(appt.customerId);
-    const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: conv.contactName });
+    const k = await erinnerungsKontext(appt);
+    if (!k || k.optedOut) continue;
     const uhr = `${new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: TZ }).format(appt.startsAt)} Uhr`;
-    const params = [firstNameOf(conv.contactName), uhr, modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, an)];
-    const text =
-      `${anredeZeile(an, who.kontakt)} gleich ist es so weit: ${terminWort(appt.mode, an)} mit ${who.advisor} ist um ${uhr}.` +
-      (appt.mode === "video" && appt.meetUrl ? ` Hier der Link: ${appt.meetUrl}` : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
-      ` ${a(an, "Passt bei dir alles?", "Passt bei Ihnen alles?")}`;
-    // Knöpfe „Ja, passt“/„Bitte verschieben“ (v4); ältere Erinnerungs-Vorlage mit Satz im Parameter
-    const remParams = [params[0], formatWhenDE(appt.startsAt), params[2], params[3]];
+    // Bisherige Vorlage v4: Uhrzeit, Art, Link bzw. Hinweis
+    const alt = [firstNameOf(k.conv.contactName), uhr, modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an)];
+    const text = stundeText({ an: k.an, hi: k.hi, mode: appt.mode, person: k.person });
+    const remParams = [alt[0], formatWhenDE(appt.startsAt), alt[2], alt[3]];
     const send = (purpose: "reminder_soon" | "reminder") =>
       sendWhatsAppNotice({
         customerId: appt.customerId,
-        to: conv.contactPhone,
+        to: k.conv.contactPhone,
         purpose,
-        params: purpose === "reminder" ? remParams : params,
-        ...(purpose === "reminder" ? { legacyParams: [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(an)}`] } : {}),
+        params: purpose === "reminder" ? remParams : alt,
+        ...(purpose === "reminder" ? { legacyParams: [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(k.an)}`] } : {}),
+        paramsFor: ({ version, current }) =>
+          purpose === "reminder_soon" && neueFassung("reminder_soon", version)
+            ? [alt[0], terminArtWort(appt.mode), k.person.dat]
+            : purpose === "reminder" && !current
+              ? [...remParams.slice(0, 3), `${remParams[3]} ${chatHint(k.an)}`]
+              : purpose === "reminder"
+                ? remParams
+                : alt,
         text,
         leadId: appt.leadId,
-        contactName: conv.contactName,
-        anrede: who.kontakt,
+        contactName: k.conv.contactName,
+        anrede: k.who.kontakt,
       });
     try {
       // Solange „Kurz vor dem Termin“ bei Meta nicht freigegeben ist: die normale Erinnerungs-Vorlage
@@ -210,86 +279,99 @@ export async function runSoonReminders(now = new Date()): Promise<ReminderResult
   return result;
 }
 
-/** Kurzfristig gebuchte Termine: Erinnerung erst so kurz vorher. */
-const SHORT_LEAD_MS = 2 * 60 * 60 * 1000;
-
 /**
- * Wann ist die Erinnerung fällig? Die Bestätigung kam ja gerade erst —
- * direkt danach noch eine Erinnerung wirkt wie Spam.
- * - Mehr als 26 h im Voraus gebucht → 24 h vorher.
- * - Mehr als 3 h im Voraus gebucht  → 2 h vorher.
- * - Noch kurzfristiger              → keine Erinnerung.
+ * 15 Minuten vorher, nur Videotermine mit Link (Ole, 17.11.2026): „Gleich geht es los: Herr Kannapinn ist um 10 Uhr für
+ * Sie im Videoraum. Der Link funktioniert direkt im Handy-Browser, ohne App: <Link>. Bis gleich!“ mit „Bitte
+ * verschieben“. Im 24-h-Fenster Freitext, sonst die Vorlage „reminder_start“ (nur vorbereitet; ohne freigegebene
+ * Vorlage entfällt sie, wie bisher gab es keine 15-Min.-Erinnerung).
  */
-function reminderDue(appt: { startsAt: Date; createdAt: Date }, now: Date): boolean {
-  const leadTime = appt.startsAt.getTime() - appt.createdAt.getTime();
-  const untilStart = appt.startsAt.getTime() - now.getTime();
-  if (leadTime > LEAD_MS + 2 * 60 * 60 * 1000) return untilStart <= LEAD_MS;
-  if (leadTime > 3 * 60 * 60 * 1000) return untilStart <= SHORT_LEAD_MS;
-  return false;
-}
-
-/** Erinnerung für gebuchte Termine, die in den nächsten 24 h starten. */
-export async function runReminders(): Promise<ReminderResult> {
-  const now = new Date();
+export async function runStartReminders(now = new Date()): Promise<ReminderResult> {
   const due = await prisma.appointment.findMany({
     where: {
       status: "booked",
-      reminderSentAt: null,
-      startsAt: { gt: now, lte: new Date(now.getTime() + LEAD_MS) },
+      mode: "video",
+      meetUrl: { not: null },
+      startReminderSentAt: null,
       customer: { dormantSince: null },
+      conversationId: { not: null },
+      startsAt: { gt: now, lte: new Date(now.getTime() + ERINNERUNG.gleichVorMs) },
     },
-    select: {
-      id: true,
-      customerId: true,
-      conversationId: true,
-      leadId: true,
-      mode: true,
-      startsAt: true,
-      createdAt: true,
-      meetUrl: true,
-      manageToken: true,
-    },
+    select: terminSelect,
     orderBy: { startsAt: "asc" },
     take: 200,
-  }).then((rows) => rows.filter((a) => reminderDue(a, now)));
+  });
+  const result: ReminderResult = { candidates: due.length, sent: 0, errors: [] };
+  for (const appt of due) {
+    // Beansprucht (nie doppelt, auch bei parallelen Läufen)
+    const claimed = await prisma.appointment.updateMany({ where: { id: appt.id, startReminderSentAt: null }, data: { startReminderSentAt: now } });
+    if (!claimed.count || erinnerungFaellig("gleich", appt, now) !== "senden" || !appt.meetUrl) continue;
+    const k = await erinnerungsKontext(appt);
+    if (!k || k.optedOut) continue;
+    try {
+      await sendWhatsAppNotice({
+        customerId: appt.customerId,
+        to: k.conv.contactPhone,
+        purpose: "reminder_start",
+        params: [firstNameOf(k.conv.contactName), k.person.nom, uhrKurz(appt.startsAt), appt.meetUrl],
+        text: gleichText({ an: k.an, hi: k.hi, person: k.person, startsAt: appt.startsAt, meetUrl: appt.meetUrl }),
+        leadId: appt.leadId,
+        contactName: k.conv.contactName,
+        anrede: k.who.kontakt,
+      });
+      result.sent++;
+    } catch (err) {
+      if (!(err instanceof WhatsAppKeinLeadError) && !(err instanceof NoTemplateError)) result.errors.push(`${appt.id} (15 Min.): ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return result;
+}
+
+/**
+ * Vortags-Erinnerung (ca. 24 h vorher, nur bei mindestens 26 h Vorlauf; Ole, 17.11.2026): Nutzensatz aus den Angaben,
+ * bei Komplettcheck der Satz zu den Verträgen, Zugang, „Passt es weiterhin?“ mit „Ja, passt“ / „Bitte verschieben“.
+ * Dazu die Vortags-Mail (lib/calendar/lead-email.ts). Kürzer gebucht: keine Vortags-Erinnerung, dafür die 1-h-Erinnerung.
+ */
+export async function runReminders(now = new Date()): Promise<ReminderResult> {
+  const due = await prisma.appointment
+    .findMany({
+      where: {
+        status: "booked",
+        reminderSentAt: null,
+        startsAt: { gt: now, lte: new Date(now.getTime() + ERINNERUNG.vortagVorMs) },
+        customer: { dormantSince: null },
+      },
+      select: terminSelect,
+      orderBy: { startsAt: "asc" },
+      take: 200,
+    })
+    .then((rows) => rows.filter((a) => erinnerungFaellig("vortag", a, now) === "senden"));
 
   const result: ReminderResult = { candidates: due.length, sent: 0, errors: [] };
   for (const appt of due) {
-    if (!appt.conversationId) continue;
-    const conv = await prisma.conversation.findUnique({
-      where: { id: appt.conversationId },
-      select: { contactPhone: true, contactName: true },
-    });
-    if (!conv?.contactPhone) continue;
-
-    const an = await anspracheOf(appt.customerId);
-    const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId, phone: conv.contactPhone, name: conv.contactName });
-    // v4: „Passt der Termin für Sie?“ mit Knöpfen „Ja, passt“/„Bitte verschieben“ (Bestätigung: lib/whatsapp/knopf.ts)
-    const params = [firstNameOf(conv.contactName), formatWhenDE(appt.startsAt), modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, an)];
-    const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(an)}`];
-    // „Guten Tag Frau Schneider, kurze Erinnerung an Ihren Videocall mit Susanne Meier am …“
-    const text =
-      `${anredeZeile(an, who.kontakt)} kurze Erinnerung an ${terminWort(appt.mode, an, true)} mit ${who.advisor} am ${params[1]}.` +
-      (appt.mode === "video" && appt.meetUrl
-        ? ` Hier der Link: ${appt.meetUrl}`
-        : ` ${a(an, `${who.advisor} ruft dich an.`, `${who.advisor} ruft Sie an.`)}`) +
-      `\n\n${a(an, "Passt der Termin für dich?", "Passt der Termin für Sie?")}`;
+    const k = await erinnerungsKontext(appt);
+    if (!k) continue;
+    const nutzen = terminNutzenSatz({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, person: k.person, video: appt.mode === "video" });
+    const eingabe = { an: k.an, hi: k.hi, wann: zeitKurz(appt.startsAt, now), nutzen, komplettcheck: appt.komplettcheck === true, mode: appt.mode, meetUrl: appt.meetUrl, person: k.person };
+    // Bisherige Vorlage v4: Datum/Uhrzeit, Art, Link bzw. Hinweis (ältere mit Satz im Parameter)
+    const params = [firstNameOf(k.conv.contactName), formatWhenDE(appt.startsAt), modeLabel(appt.mode), linkOrHint(appt.mode, appt.meetUrl, k.an)];
+    const legacyParams = [...params.slice(0, 3), `${params[3]} ${chatHint(k.an)}`];
     // WhatsApp + E-Mail; als erledigt gilt die Erinnerung, sobald EIN Kanal
-    // zugestellt hat (sonst nächster Cron-Lauf erneut — ohne Doppel-Mails).
+    // zugestellt hat (sonst nächster Cron-Lauf erneut, ohne Doppel-Mails).
     let delivered = false;
     // Kein Lead zugeordnet (Allowlist, lib/whatsapp/nur-leads.ts): keine WhatsApp; als erledigt markieren, sonst Dauerschleife
     let keinLead = false;
     try {
       await sendWhatsAppNotice({
         customerId: appt.customerId,
-        to: conv.contactPhone,
+        to: k.conv.contactPhone,
         purpose: "reminder",
         params,
         legacyParams,
-        text,
+        paramsFor: ({ version, current }) => (neueFassung("reminder", version) ? [params[0], ...vortagParams(eingabe)] : current ? params : legacyParams),
+        text: vortagText(eingabe),
         leadId: appt.leadId,
-        contactName: conv.contactName,
-        anrede: who.kontakt,
+        contactName: k.conv.contactName,
+        anrede: k.who.kontakt,
       });
       delivered = true;
     } catch (err) {

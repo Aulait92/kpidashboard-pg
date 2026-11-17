@@ -755,6 +755,8 @@ model Lead {
   callAttempts         Int               @default(0)
   lastCallAttemptAt    DateTime?
   callPlanStartedAt    DateTime?
+  // Anrufplan automatisch gestartet: 30 Min. nach dem Erstanschreiben ohne Antwort (Ole, 17.11.2026, lib/anruf-ausloeser.ts)
+  autoCallAt           DateTime?
   // Telefonate sauber erfassen (lib/telefonat.ts, Ole 15.11.2026): „Anrufen“ in der App getippt, Ergebnis noch offen.
   // Solange gesetzt (höchstens 3 Stunden), pausiert der WhatsApp-Assistent für diesen Lead (keine Fragen, kein Nachfassen).
   callStartedAt        DateTime?
@@ -1346,6 +1348,19 @@ model Appointment {
   status             String    @default("booked") // booked | cancelled | completed | no_show
   reminderSentAt     DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
   soonReminderSentAt DateTime? // „Gleich ist es so weit, passt alles?“ etwa 1 Std. vorher (Ole, 15.11.2026)
+  // Show-up-Paket (Ole, 17.11.2026, lib/showup.ts): 15 Min. vorher mit Link (nur Video)
+  startReminderSentAt   DateTime?
+  // Lead hat „Bitte verschieben“ gewählt: keine weiteren Erinnerungen zu dieser Zeit
+  rescheduleRequestedAt DateTime?
+  // Anwesenheit (erschienen | fehlt | nicht_erschienen), gesetzt vom Vermittler (Push-Blatt, Heute, Termin)
+  attendance            String?
+  attendanceAt          DateTime?
+  // Push „Ist … da?“ zum Terminbeginn bzw. „Ist … noch gekommen?“ nach dem Termin (je einmal)
+  startPushAt           DateTime?
+  afterPushAt           DateTime?
+  // Komplettcheck = Ja: auf 45 Min. verlängert („verlaengert“) bzw. Hinweis an den Vermittler („hinweis“)
+  verlaengerung         String?
+  verlaengerungAt       DateTime?
   // Lead hat per Knopf „Ja, passt“ bestätigt (Erinnerung am Vortag bzw. kurz vorher)
   confirmedAt        DateTime?
   // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,

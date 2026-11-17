@@ -273,6 +273,17 @@ export async function microsoftCreateEvent(
   return { eventId: json.id, videoUrl: json.onlineMeeting?.joinUrl ?? null };
 }
 
+/** Ende eines Termins ändern (Komplettcheck: 45 Min.); Outlook schickt den Teilnehmern die Aktualisierung. */
+export async function microsoftUpdateEventEnd(customerId: string, eventId: string, end: Date): Promise<void> {
+  const token = await accessToken(customerId);
+  const res = await fetch(`${GRAPH}/me/events/${encodeURIComponent(eventId)}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ end: { dateTime: end.toISOString().replace("Z", ""), timeZone: "UTC" } }),
+  });
+  if (!res.ok) throw new Error(`Outlook-Termin konnte nicht geändert werden (${res.status}).`);
+}
+
 /**
  * Termin löschen. Beim Organisator-Termin schickt Outlook den Teilnehmern
  * automatisch eine Absage. 404 = schon weg.
