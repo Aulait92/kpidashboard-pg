@@ -206,6 +206,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-next-step-reminder");
     return null;
   });
+  // Abschluss erkennen (P4): am Vorabend „Hat Frau Becker abgeschlossen?“ an den zuständigen Berater (18 bis 21 Uhr)
+  const abschlussFrage = await import("@/lib/abschluss-server").then((m) => m.runVorabendAbschluss(now)).catch((e: unknown) => {
+    reportError(e, "cron-abschluss-vorabend");
+    return null;
+  });
   // Telefonate (lib/telefonat-server.ts): Push „Was ist bei … rausgekommen?“ 15 Min. nach „Anrufen“ ohne Ergebnis;
   // nach dem Telefonat fragt der Assistent die offenen Punkte ab (mit Termin, im 24h-Fenster)
   const telefonate = {
@@ -228,6 +233,11 @@ async function handle(req: Request): Promise<Response> {
     }),
     crossSell: await import("@/lib/vertraege").then((m) => m.runCrossSellReminders(now)).catch((e: unknown) => {
       reportError(e, "cron-cross-sell");
+      return null;
+    }),
+    // Wartende Aufgaben nach dem Abschluss rücken nach, sobald die Wiedervorlage frei ist (P7, lib/lead-aufgaben.ts)
+    aufgaben: await import("@/lib/lead-aufgaben").then((m) => m.aktiviereAufgaben(now)).catch((e: unknown) => {
+      reportError(e, "cron-lead-aufgaben");
       return null;
     }),
     bestand: await import("@/lib/vertraege").then((m) => m.syncPendingBestand(100)).catch((e: unknown) => {
@@ -373,7 +383,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, angebotVorab, anrufAusloeser, strecke, abTests, naechsterSchritt, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, angebotVorab, anrufAusloeser, strecke, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

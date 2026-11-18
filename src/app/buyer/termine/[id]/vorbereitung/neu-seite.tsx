@@ -24,6 +24,7 @@ import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { listUnterlagen } from "@/lib/policen/server";
 import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
+import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 import { angebotStandText } from "@/lib/angebot-senden";
 
 const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
@@ -85,7 +86,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
         {will.quelle ? <p className="mt-2 text-xs text-[color:var(--muted)]">{will.quelle}</p> : null}
         {/* Komplettcheck (Ole, 17.11.2026): was der Kunde schon hat, neutral „noch nicht genannt“ */}
         <BestehendeVertraege v={vorvertraegeAus(d.vorvertraege)} lebenssituation={lebenssituationAus(d.formular, d.angaben)} className="mt-3 border-t border-[color:var(--border)] pt-3" />
-        {d.leadId && vomKunden.length ? (
+        {d.leadId ? (
           <div className="mt-3 border-t border-[color:var(--border)] pt-3">
             <UnterlagenVomKunden leadId={d.leadId} unterlagen={vomKunden} />
           </div>
@@ -185,6 +186,8 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           Zum Kontakt
         </ZurueckLink>
       ) : null}
+      {/* Freischaltung Kranken/BU/Leben (lib/policen/freischaltung.ts), nur Inhaber, bis zugestimmt oder 3-mal „Später“ */}
+      <PolicenFreischaltungKarte ctx={ctx} ort="karte" className="mb-4" />
       <VorbereitungNeu
         id={d.id}
         leadId={d.leadId}

@@ -1,63 +1,249 @@
-// Policen vor dem Termin per WhatsApp (Ole, 17.11.2026): reine Regeln, Texte und Verschlüsselung (lib/policen).
+// Policen per WhatsApp (Ole, 18.11.2026, nach der Rechtsprüfung docs/recht/policen-whatsapp-gesundheitsdaten.md):
+// Bitte und Einwilligung (Text, Grenzen von WhatsApp), Antworten, Widerruf ohne KI, Löschfrist 90 Tage, Freigabe
+// Kranken/BU/Leben je Vermittler, Ablage (EU-Endpunkt, Schlüssel je Mandant, signierte Links) und „keine KI“.
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  auszugZeile,
-  cleanAuszug,
+  abschlussSchritt,
   dateiname,
   einladungFaellig,
-  einladungText,
-  einwilligungText,
-  entscheide,
-  formatText,
-  gesundheitAusText,
+  gesundheitFreigegeben,
   gesundheitInVertraegen,
   hatVertraege,
-  istAblehnung,
   istWiderruf,
-  istZustimmung,
   loeschDatum,
   mimeErlaubt,
+  minderjaehrig,
   ohneBisherigePolicen,
-  policenGesundheitAn,
   sparteAusText,
   typAusInhalt,
-  vertraegeAusUnterlagen,
-  widerrufText,
-  zuGrossText,
-  nichtGeladenText,
+  AVV_POLICEN_VERSION,
+  ERINNERUNG_OPTIN_TEXT,
   EINLADUNG_RE,
-  EINWILLIGUNG_RE,
-  KNOPF_JA,
-  KNOPF_NEIN,
-  abschlussSchritt,
-  einladungMitEinwilligung,
-  policenKiEu,
-  typAusMime,
-  vorabEinordnung,
-  widerrufVerdacht,
-  EINWILLIGUNG_VERSION,
-  minderjaehrig,
 } from "@/lib/policen/regeln";
+import {
+  einwilligungsAntwort,
+  einwilligungTextVersion,
+  EINWILLIGUNG_RE,
+  istPolicenEinwilligungsKnopf,
+  lieberNichtText,
+  NACHFRAGE_RE,
+  nachEinwilligungText,
+  policenBitte,
+  policenNachfrage,
+  policenNachrichten,
+} from "@/lib/policen/bitte";
+import { ablageKonfig, entschluessele, euEndpunkt, pruefeLink, signiereLink, verschluessele } from "@/lib/policen/ablage";
+import { avvPolicenAbsaetze, speicherAngabe } from "@/lib/policen/avv-text";
 import { datenschutzPolicenAbschnitte } from "@/lib/policen/datenschutz-text";
 import { angabenOhneGesundheit, ohneGesundheitsangaben } from "@/lib/gesundheitsdaten";
 import { bereitlegenListe } from "@/lib/whatsapp/gespraech";
 import { downloadUrl } from "@/lib/policen/media";
 import { decryptBytes, encryptBytes } from "@/lib/encryption";
 
-const herr = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" };
-const ole = { nom: "Ole", dat: "Ole" };
-const vHerr = { person: herr, firma: "Kannapinn Versicherungen", link: "https://termine.example.de/datenschutz/policen?k=abcDEF123" };
-const vOle = { ...vHerr, person: ole };
+const herr = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn", anrede: "Herr" as const, name: "Ole Kannapinn" };
+const frau = { nom: "Frau Becker", dat: "Frau Becker", anrede: "Frau" as const, name: "Anna Becker" };
+const ole = { nom: "Ole", dat: "Ole", name: "Ole Kannapinn" };
+const LINK = "https://app.performancegrowth.de/datenschutz/policen?k=abcDEFghij0123456789xyzXYZ";
 const PDF = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34, 0x0a, 0x25, 0x25, 0x45]);
 const JPG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
+const GEDANKENSTRICH = /[–—]/;
 
-describe("Schalter POLICEN_GESUNDHEIT_AN", () => {
-  it("ist standardmäßig aus", () => {
-    expect(policenGesundheitAn({})).toBe(false);
-    expect(policenGesundheitAn({ POLICEN_GESUNDHEIT_AN: "" })).toBe(false);
-    expect(policenGesundheitAn({ POLICEN_GESUNDHEIT_AN: "0" })).toBe(false);
-    expect(policenGesundheitAn({ POLICEN_GESUNDHEIT_AN: "true" })).toBe(true);
-    expect(policenGesundheitAn({ POLICEN_GESUNDHEIT_AN: "1" })).toBe(true);
+describe("Bitte um Policen (Oles Text)", () => {
+  it("Sie, Schalter Kranken/BU/Leben an: Wortlaut wie vorgegeben, ohne Fußzeile und ohne Knöpfe", () => {
+    const b = policenBitte({ an: "sie", vermittler: herr, gesundheitAn: true });
+    expect(b.text).toBe(
+      "Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat, Kfz, Kranken-, BU- oder Lebensversicherung. Dann sieht er vorher, wo Sie doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.",
+    );
+    expect(b.knoepfe).toEqual([]);
+    expect(b.fusszeile).toBeNull();
+    expect(EINLADUNG_RE.test(b.text)).toBe(true);
+  });
+
+  it("Schalter aus: nur Haftpflicht, Hausrat oder Kfz, grammatisch sauber; Frau: „sieht sie“", () => {
+    const b = policenBitte({ an: "sie", vermittler: frau, gesundheitAn: false });
+    expect(b.text).toContain("egal ob Haftpflicht, Hausrat oder Kfz. Dann sieht sie vorher");
+    expect(b.text).not.toMatch(/Kranken|BU|Leben/);
+    expect(b.einwilligung.text).not.toMatch(/Gesundheitsangaben/);
+  });
+
+  it("Du: Vorname, Pronomen unbekannt ohne er/sie; Rückfall „Ihrem Berater“ wird Nominativ", () => {
+    const du = policenBitte({ an: "du", vermittler: ole, gesundheitAn: false });
+    expect(du.text).toBe(
+      "Damit Ole deinen Termin gut vorbereiten kann: Schick bitte vorab Fotos oder PDFs deiner aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann ist vorher klar, wo du doppelt zahlst oder Lücken hast, und der Termin geht deutlich schneller.",
+    );
+    expect(du.text).not.toMatch(/\b(Sie|Ihr|Ihren)\b/);
+    expect(policenBitte({ an: "sie", vermittler: { nom: "Ihrem Berater", dat: "Ihrem Berater" } }).text).toMatch(/^Damit Ihr Berater Ihren Termin/);
+  });
+});
+
+describe("Einwilligung (Rechtsprüfung A1, Oles Freigabe)", () => {
+  it("eigene interaktive Nachricht: Wortlaut mit Vor- und Nachname, Firma, Link, Gesundheitsteil nur bei Freigabe", () => {
+    const b = policenBitte({ an: "sie", vermittler: herr, gesundheitAn: true, firma: "Kannapinn Versicherungen", datenschutzUrl: LINK });
+    expect(b.einwilligung.text).toBe(
+      `Kurz zum Datenschutz: Ich bin einverstanden, dass Ole Kannapinn (Kannapinn Versicherungen) meine hier gesendeten Policen zur Vorbereitung des Termins speichert und die Vertragsdaten automatisch auslesen lässt (KI-Dienst in der EU), auch wenn sie Gesundheitsangaben enthalten, z. B. bei Kranken-, BU- oder Lebensversicherung. Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich) und der Dienstleister performancegrowth. Widerruf jederzeit mit „Widerruf“. Infos: ${LINK}`,
+    );
+    expect(b.einwilligung.fusszeile).toBe("Ihr Termin findet auch ohne Unterlagen statt.");
+    expect(b.einwilligung.knoepfe.map((k) => k.title)).toEqual(["Einverstanden", "Lieber nicht"]);
+    expect(policenNachrichten(b)).toHaveLength(2);
+    expect(EINWILLIGUNG_RE.test(b.einwilligung.text)).toBe(true);
+    const sach = policenBitte({ an: "sie", vermittler: herr, gesundheitAn: false, firma: "Ole Kannapinn", datenschutzUrl: LINK });
+    expect(sach.einwilligung.text).toContain("dass Ole Kannapinn meine hier gesendeten Policen");
+    expect(sach.einwilligung.text).toContain("(KI-Dienst in der EU). Beteiligt");
+    expect(einwilligungTextVersion(true)).not.toBe(einwilligungTextVersion(false));
+  });
+
+  it("hält die WhatsApp-Grenzen ein (Text 1.024, Fußzeile 60, Knöpfe 20), auch als Nachfrage und mit langen Namen", () => {
+    const lang = { nom: "Herr Mustermann-Schulze", dat: "Herrn Mustermann-Schulze", anrede: "Herr" as const, name: "Maximilian Alexander Mustermann-Schulze" };
+    for (const an of ["sie", "du"] as const) {
+      const o = { an, vermittler: lang, gesundheitAn: true, firma: "Mustermann-Schulze Versicherungsmakler GmbH & Co. KG", datenschutzUrl: LINK };
+      const b = policenBitte(o);
+      for (const n of [b.einwilligung, policenNachfrage(o)]) {
+        expect(n.text.length).toBeLessThanOrEqual(1024);
+        expect((n.fusszeile ?? "").length).toBeLessThanOrEqual(60);
+        expect(n.knoepfe.length).toBeLessThanOrEqual(3);
+        for (const k of n.knoepfe) expect(k.title.length).toBeLessThanOrEqual(20);
+      }
+      expect(b.text.length).toBeLessThanOrEqual(1024);
+    }
+    expect(NACHFRAGE_RE.test(policenNachfrage({ an: "sie", vermittler: herr }).text)).toBe(true);
+    expect(EINWILLIGUNG_RE.test(policenNachfrage({ an: "du", vermittler: ole }).text)).toBe(true);
+  });
+
+  it("Texte ohne Gedankenstriche, Du ohne Sie", () => {
+    for (const an of ["sie", "du"] as const) {
+      const b = policenBitte({ an, vermittler: herr, gesundheitAn: true, firma: "X", datenschutzUrl: LINK });
+      for (const t of [b.text, b.einwilligung.text, b.einwilligung.fusszeile ?? "", policenNachfrage({ an, vermittler: herr }).text, nachEinwilligungText(an), lieberNichtText(an)]) {
+        expect(t).not.toMatch(GEDANKENSTRICH);
+      }
+    }
+    expect(lieberNichtText("sie")).toBe("Kein Problem, Ihr Termin findet trotzdem statt. Bringen Sie Ihre Unterlagen dann einfach zum Termin mit.");
+    expect(lieberNichtText("du")).not.toMatch(/\b(Sie|Ihr|Ihre)\b/);
+    expect(policenBitte({ an: "du", vermittler: ole }).einwilligung.fusszeile).toBe("Dein Termin findet auch ohne Unterlagen statt.");
+  });
+
+  it("erkennt die Knöpfe (Payload und Titel), aber keinen freien Text", () => {
+    expect(einwilligungsAntwort("policen:ja")).toBe("ja");
+    expect(einwilligungsAntwort("Einverstanden")).toBe("ja");
+    expect(einwilligungsAntwort("policen:nein")).toBe("nein");
+    expect(einwilligungsAntwort("Lieber nicht")).toBe("nein");
+    expect(einwilligungsAntwort("ja klar")).toBeNull();
+    expect(istPolicenEinwilligungsKnopf("einverstanden")).toBe(true);
+    expect(istPolicenEinwilligungsKnopf("Lieber nicht")).toBe(false);
+  });
+});
+
+describe("Widerruf nur nach Regeln (keine KI)", () => {
+  it("erkennt „Widerruf“, „löschen“ und Varianten", () => {
+    for (const t of ["Widerruf", "widerrufen", "Löschen", "bitte löschen", "Bitte alles löschen", "löscht das bitte", "Unterlagen löschen", "Ich ziehe meine Einwilligung zurück", "bitte nicht mehr speichern, meine Unterlagen", "nicht mehr einverstanden"]) {
+      expect(istWiderruf(t), t).toBe(true);
+    }
+  });
+  it("nicht: Termin löschen, Vertrag widerrufen, Alltägliches", () => {
+    for (const t of ["Termin löschen", "kann ich meinen alten Vertrag widerrufen?", "Ich habe nicht mehr Zeit", "ja", "Passt 10 Uhr?"]) {
+      expect(istWiderruf(t), t).toBe(false);
+    }
+  });
+});
+
+describe("Löschfrist 90 Tage nach dem Termin", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  it("letzter Termin bzw. Eingang plus 90 Tage; behalten nie", () => {
+    const eingang = new Date("2026-11-18T10:00:00Z");
+    const termin = new Date("2026-11-25T10:00:00Z");
+    expect(loeschDatum({ termine: [termin], eingang })?.toISOString()).toBe(new Date(termin.getTime() + 90 * DAY).toISOString());
+    expect(loeschDatum({ termine: [], eingang })?.toISOString()).toBe(new Date(eingang.getTime() + 90 * DAY).toISOString());
+    expect(loeschDatum({ termine: [termin], eingang, behalten: true })).toBeNull();
+  });
+  it("Abschluss: 14 Tage vorher erinnern, Löschung verschiebt sich nicht", () => {
+    const datum = new Date("2027-03-01T00:00:00Z");
+    expect(abschlussSchritt({ datum, erinnertAt: null, now: new Date("2027-01-01T00:00:00Z") }).aktion).toBe("warten");
+    expect(abschlussSchritt({ datum, erinnertAt: null, now: new Date("2027-02-20T00:00:00Z") })).toEqual({ aktion: "erinnern", deleteAfter: datum });
+    expect(abschlussSchritt({ datum, erinnertAt: new Date("2027-02-20T00:00:00Z"), now: new Date("2027-03-01T00:00:01Z") }).aktion).toBe("loeschen");
+  });
+});
+
+describe("Freigabe Kranken/BU/Leben je Vermittler (A5)", () => {
+  const url = "https://beispiel.de/datenschutz";
+  it("nur mit AVV-Zustimmung in der aktuellen Version und Datenschutz-URL; intern/Test sofort; Notschalter", () => {
+    expect(gesundheitFreigegeben(null, {})).toBe(false);
+    expect(gesundheitFreigegeben({}, {})).toBe(false);
+    expect(gesundheitFreigegeben({ policenAvvZugestimmtAt: new Date(), policenAvvVersion: AVV_POLICEN_VERSION }, {})).toBe(false);
+    expect(gesundheitFreigegeben({ policenAvvZugestimmtAt: new Date(), policenAvvVersion: "alt", policenDatenschutzUrl: url }, {})).toBe(false);
+    expect(gesundheitFreigegeben({ policenAvvZugestimmtAt: new Date(), policenAvvVersion: AVV_POLICEN_VERSION, policenDatenschutzUrl: "http://x.de" }, {})).toBe(false);
+    expect(gesundheitFreigegeben({ policenAvvZugestimmtAt: new Date(), policenAvvVersion: AVV_POLICEN_VERSION, policenDatenschutzUrl: url }, {})).toBe(true);
+    expect(gesundheitFreigegeben({ policenIntern: true }, {})).toBe(true);
+    expect(gesundheitFreigegeben({ isTest: true }, {})).toBe(true);
+    expect(gesundheitFreigegeben({ isTest: true }, { POLICEN_GESUNDHEIT_AUS: "1" })).toBe(false);
+  });
+  it("AVV-Ergänzung (b) mit gefüllten Platzhaltern, ohne Gedankenstriche", () => {
+    const t = avvPolicenAbsaetze({ vermittler: "Ole Kannapinn, Kannapinn Versicherungen", speicher: speicherAngabe("https://abc123.eu.r2.cloudflarestorage.com") });
+    const alles = t.map((x) => `${x.titel} ${x.text}`).join("\n");
+    expect(alles).toContain("zwischen Ole Kannapinn, Kannapinn Versicherungen (Verantwortlicher)");
+    expect(alles).toContain("EU-Jurisdiktion");
+    expect(alles).not.toMatch(/\{|\}/);
+    expect(alles).not.toMatch(GEDANKENSTRICH);
+  });
+});
+
+describe("Ablage (A6)", () => {
+  const key = Buffer.alloc(32, 9).toString("base64");
+  const env = { POLICEN_S3_BUCKET: "pg-policen-eu", POLICEN_S3_ACCESS_KEY_ID: "a", POLICEN_S3_SECRET_ACCESS_KEY: "b", POLICEN_SCHLUESSEL: key };
+  it("nur EU-Endpunkte (R2 mit EU-Jurisdiktion, S3 eu-*), sonst aus", () => {
+    expect(euEndpunkt("https://abc123.eu.r2.cloudflarestorage.com")).toEqual({ ok: true, region: "auto" });
+    expect(euEndpunkt("https://s3.eu-central-1.amazonaws.com")).toEqual({ ok: true, region: "eu-central-1" });
+    expect(euEndpunkt("https://abc123.r2.cloudflarestorage.com").ok).toBe(false);
+    expect(euEndpunkt("https://s3.us-east-1.amazonaws.com").ok).toBe(false);
+    expect(euEndpunkt("http://abc.eu.r2.cloudflarestorage.com").ok).toBe(false);
+    expect(ablageKonfig({ ...env, POLICEN_S3_ENDPOINT: "https://abc123.r2.cloudflarestorage.com" })).toBeNull();
+    expect(ablageKonfig({ ...env, POLICEN_S3_ENDPOINT: "https://abc123.eu.r2.cloudflarestorage.com" })?.bucket).toBe("pg-policen-eu");
+    expect(ablageKonfig({ ...env, POLICEN_S3_ENDPOINT: "https://abc123.eu.r2.cloudflarestorage.com", POLICEN_SCHLUESSEL: "kurz" })).toBeNull();
+    expect(ablageKonfig({})).toBeNull();
+  });
+  it("verschlüsselt je Mandant: anderer Kunde oder anderer Objektname scheitert", () => {
+    const master = Buffer.alloc(32, 5);
+    const enc = verschluessele(master, "kunde-a", "policen/a/l/1", PDF);
+    expect(enc.includes(Buffer.from(PDF))).toBe(false);
+    expect(new Uint8Array(entschluessele(master, "kunde-a", "policen/a/l/1", enc))).toEqual(PDF);
+    expect(() => entschluessele(master, "kunde-b", "policen/a/l/1", enc)).toThrow();
+    expect(() => entschluessele(master, "kunde-a", "policen/a/l/2", enc)).toThrow();
+  });
+  it("signierte Links: 2 Minuten, nicht veränderbar", () => {
+    process.env.AUTH_SECRET ||= "localtestsecret_localtestsecret_0123456789";
+    const now = Date.now();
+    const t = signiereLink({ leadId: "l", docId: "d", userId: "u", download: true }, now);
+    expect(pruefeLink(t, now)).toMatchObject({ leadId: "l", docId: "d", userId: "u", download: true });
+    expect(pruefeLink(t, now + 121_000)).toBeNull();
+    const [body, sig] = t.split(".");
+    const anders = Buffer.from(JSON.stringify({ leadId: "l", docId: "x", userId: "u", download: true, exp: Math.floor(now / 1000) + 120 })).toString("base64url");
+    expect(pruefeLink(`${anders}.${sig}`, now)).toBeNull();
+    expect(pruefeLink(`${body}.x`, now)).toBeNull();
+  });
+});
+
+describe("Keine KI für Policen (Codeprüfung)", () => {
+  it("lib/policen importiert keinen KI-Client und ruft keine KI auf", () => {
+    const dir = join(process.cwd(), "src/lib/policen");
+    const verboten = /@anthropic-ai|openai|ki-eu|bedrock|replicate|runAgent|lib\/ai\b|messages\.create|generativeai/i;
+    for (const f of readdirSync(dir)) {
+      const code = readFileSync(join(dir, f), "utf8").split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
+      expect(code, f).not.toMatch(verboten);
+    }
+  });
+});
+
+describe("Datenschutzhinweise und Opt-in", () => {
+  it("Langfassung: 90 Tage, Widerruf, Meta, KI nur mit Einwilligung, keine Gedankenstriche", () => {
+    for (const an of ["sie", "du"] as const) {
+      const t = datenschutzPolicenAbschnitte(an, { name: "Ole Kannapinn", firma: "Kannapinn Versicherungen", anschrift: "Berlin", telefon: "", email: "" }).map((x) => x.text).join("\n");
+      expect(t).toContain("90 Tage");
+      expect(t).toMatch(/Widerruf/);
+      expect(t).toMatch(/Meta/);
+      expect(t).not.toMatch(GEDANKENSTRICH);
+    }
+    expect(ERINNERUNG_OPTIN_TEXT).toContain("STOP");
+    expect(ERINNERUNG_OPTIN_TEXT).not.toMatch(GEDANKENSTRICH);
   });
 });
 
@@ -73,16 +259,6 @@ describe("Sparte und Gesundheitsbezug", () => {
     expect(sparteAusText("IMG_2034.jpg")).toBeNull();
   });
 
-  it("KI vorn, Text kann Gesundheit nur ergänzen; ohne KI und ohne Sparte vorsichtig", () => {
-    expect(entscheide({ ki: { sparte: "haftpflicht", gesundheit: false, police: true }, text: "scan.pdf" })).toEqual({ sparte: "haftpflicht", gesundheit: false });
-    expect(entscheide({ ki: { sparte: "kranken", gesundheit: true, police: true }, text: "scan.pdf" }).gesundheit).toBe(true);
-    // KI meint Sach, der Begleittext sagt BU: Gesundheitsbezug
-    expect(entscheide({ ki: { sparte: "sonstig", gesundheit: false, police: true }, text: "scan.pdf Meine BU" }).gesundheit).toBe(true);
-    expect(entscheide({ ki: null, text: "Hausrat.pdf" })).toEqual({ sparte: "hausrat", gesundheit: false });
-    expect(entscheide({ ki: null, text: "IMG_1.jpg" })).toEqual({ sparte: null, gesundheit: true });
-    // Tierkranken ist kein Gesundheitsbezug einer Person
-    expect(entscheide({ ki: null, text: "Tier-OP Katze.pdf" }).gesundheit).toBe(false);
-  });
 
   it("Vertragsliste mit Gesundheitssparte", () => {
     expect(gesundheitInVertraegen({ vorhanden: "Haftpflicht HUK, BU Allianz" })).toBe(true);
@@ -125,82 +301,6 @@ describe("Dateien", () => {
   });
 });
 
-describe("Texte an den Lead", () => {
-  const alle = (an: "sie" | "du") => [
-    einladungText(an, an === "du" ? ole : herr, { gesundheitAn: true }),
-    einladungText(an, an === "du" ? ole : herr, { gesundheitAn: false, gesundheitInListe: true }),
-    einladungText(an, an === "du" ? ole : herr, { gesundheitAn: false }),
-    einwilligungText(an, an === "du" ? vOle : vHerr),
-    einwilligungText(an, an === "du" ? vOle : vHerr, { nachDatei: true }),
-    ...datenschutzPolicenAbschnitte(an, { name: "Ole Kannapinn", firma: "Kannapinn Versicherungen", anschrift: "Lorenzstraße 58, 12209 Berlin", telefon: "030 123", email: "ole@example.de" }).flatMap((b) => [b.ueberschrift, b.text]),
-    gesundheitAusText(an, an === "du" ? ole : herr),
-    formatText(an),
-    zuGrossText(an),
-    nichtGeladenText(an),
-    widerrufText(an),
-  ];
-
-  it("Einladung wie gewünscht (Sie), Schalter aus nur Sachversicherungen", () => {
-    expect(einladungText("sie", herr, { gesundheitAn: true })).toBe(
-      "Wenn Sie mögen, schicken Sie gern Fotos oder PDFs Ihrer Policen hier in den Chat, dann kann sich Herr Kannapinn vorher einlesen. Sonst schauen wir sie im Termin gemeinsam an.",
-    );
-    const aus = einladungText("sie", herr, { gesundheitAn: false, gesundheitInListe: true });
-    expect(aus).toContain("Sachversicherungen wie Haftpflicht, Hausrat oder Kfz");
-    expect(aus).toContain("Kranken-, BU- oder Lebensversicherung schauen wir uns im Termin gemeinsam an");
-    expect(EINLADUNG_RE.test(aus)).toBe(true);
-    expect(EINLADUNG_RE.test(einladungText("du", ole, { gesundheitAn: true }))).toBe(true);
-  });
-
-  it("Einwilligung im Wortlaut (Rechtsprüfung Abschnitt b), mit Vermittler, Firma und Link, höchstens 1.024 Zeichen", () => {
-    expect(einwilligungText("sie", vHerr)).toBe(
-      [
-        "Vor dem Termin können Sie uns Fotos oder PDFs Ihrer bisherigen Versicherungen hier schicken. Unterlagen zur Kranken-, Berufsunfähigkeits-, Lebens-, Pflege- oder Unfallversicherung können Angaben zu Ihrer Gesundheit enthalten.",
-        "Sind Sie einverstanden, dass Herr Kannapinn (Kannapinn Versicherungen) Ihre Unterlagen einschließlich dieser Gesundheitsangaben speichert und zur Vorbereitung Ihres Termins nutzt? Eine KI ordnet jede Unterlage einer Versicherungsart zu, Gesundheitsangaben werden nicht ausgewertet. Dafür setzen wir Dienstleister ein, auch in den USA. Sehen kann die Unterlagen nur Ihr Berater.",
-        "Zustimmen können Sie ab 18 Jahren. Unterlagen von mitversicherten Personen schicken Sie bitte nur mit deren Einverständnis (bei Kindern als Elternteil). Ohne Vertragsabschluss löschen wir alles 30 Tage nach dem Termin. Sie können jederzeit widerrufen, zum Beispiel mit der Nachricht „Widerruf“.",
-        "Mehr dazu: https://termine.example.de/datenschutz/policen?k=abcDEF123",
-      ].join("\n\n"),
-    );
-    const du = einwilligungText("du", vOle);
-    expect(du).toContain("Bist du einverstanden, dass Ole (Kannapinn Versicherungen) deine Unterlagen einschließlich dieser Gesundheitsangaben speichert");
-    expect(du).toContain("Du kannst jederzeit widerrufen");
-    expect(du).toContain("Zustimmen kannst du ab 18 Jahren.");
-    expect(EINWILLIGUNG_RE.test(du)).toBe(true);
-    expect(einwilligungText("sie", vHerr, { nachDatei: true })).toMatch(/^Danke für Ihre Unterlage\. Unterlagen zur Kranken-/);
-    // Firma gleich Name: keine Klammer; ohne Link keine Zeile „Mehr dazu“
-    const ohne = einwilligungText("sie", { person: { nom: "Ole Kannapinn", dat: "Ole Kannapinn" }, firma: "Ole Kannapinn", link: null });
-    expect(ohne).toContain("dass Ole Kannapinn Ihre Unterlagen");
-    expect(ohne).not.toContain("Mehr dazu");
-    for (const an of ["sie", "du"] as const) for (const nachDatei of [false, true]) {
-      expect(einwilligungText(an, an === "du" ? vOle : vHerr, { nachDatei }).length).toBeLessThanOrEqual(1024);
-      expect(EINLADUNG_RE.test(einwilligungText(an, an === "du" ? vOle : vHerr))).toBe(true);
-    }
-    const inv = einladungMitEinwilligung("sie", vHerr);
-    expect(inv.buttons.map((b) => b.title)).toEqual([KNOPF_JA, KNOPF_NEIN]);
-    expect(EINWILLIGUNG_VERSION).toBe("2026-11-17.3");
-    // WhatsApp-Knöpfe: höchstens 20 Zeichen
-    expect(KNOPF_JA.length).toBeLessThanOrEqual(20);
-    expect(KNOPF_NEIN.length).toBeLessThanOrEqual(20);
-  });
-
-  it("Langfassung: EU-Verarbeitung der KI nur, wenn der EU-Endpunkt eingerichtet ist; Altersgrenze; Datei vor der Einwilligung nicht gespeichert", () => {
-    const v = { name: "Ole Kannapinn", firma: "Kannapinn Versicherungen", anschrift: "Lorenzstraße 58, 12209 Berlin", telefon: "030 123", email: "ole@example.de" };
-    const text = (kiEu: boolean) => datenschutzPolicenAbschnitte("sie", v, { kiEu }).map((b) => `${b.ueberschrift}: ${b.text}`).join("\n");
-    expect(text(true)).toContain("Anthropic für die KI-Zuordnung (Claude, verarbeitet in einem Rechenzentrum in der EU)");
-    expect(text(true)).toContain("Die KI-Zuordnung der Unterlagen findet in der EU statt.");
-    expect(text(false)).not.toContain("in der EU statt");
-    expect(text(false)).toContain("Anthropic für die KI-Zuordnung. Versicherer");
-    expect(text(false)).toContain("Alter: Die Einwilligung können Sie ab 18 Jahren geben.");
-    expect(text(false)).toContain("Eine Datei, die Gesundheitsangaben enthalten kann und vor Ihrer Einwilligung kommt, wird nicht gespeichert");
-    for (const an of ["sie", "du"] as const) for (const kiEu of [false, true])
-      for (const b of datenschutzPolicenAbschnitte(an, v, { kiEu })) expect(`${b.ueberschrift} ${b.text}`).not.toMatch(/[–—]|Garantie/);
-  });
-
-  it("keine Gedankenstriche, Du-Fassung ohne Sie, Sie-Fassung ohne du", () => {
-    for (const t of [...alle("sie"), ...alle("du")]) expect(t).not.toMatch(/[–—]/);
-    for (const t of alle("du")) expect(t).not.toMatch(/\b(Sie|Ihnen|Ihre?n?)\b/);
-    for (const t of alle("sie")) expect(t).not.toMatch(/\b(du|dir|dein\w*)\b/i);
-  });
-});
 
 describe("Minderjährige (Abschnitt e, Punkt 11)", () => {
   const jetzt = new Date("2026-11-17T12:00:00Z");
@@ -221,44 +321,6 @@ describe("Minderjährige (Abschnitt e, Punkt 11)", () => {
   });
 });
 
-describe("Antworten des Leads", () => {
-  it("Widerruf: „Widerruf“ und „Unterlagen löschen“, nicht „Termin löschen“", () => {
-    expect(istWiderruf("Widerruf")).toBe(true);
-    expect(istWiderruf("Ich widerrufe meine Einwilligung")).toBe(true);
-    expect(istWiderruf("Bitte meine Unterlagen löschen")).toBe(true);
-    expect(istWiderruf("Bitte löschen Sie die Police wieder")).toBe(true);
-    expect(istWiderruf("Bitte den Termin löschen")).toBe(false);
-    expect(istWiderruf("Ich möchte meinen alten Vertrag widerrufen")).toBe(false);
-    expect(istWiderruf("Widerruf der Einwilligung")).toBe(true);
-    expect(istWiderruf("Ja gern")).toBe(false);
-  });
-  it("Widerruf sinngemäß nach Regeln, sonst Verdacht für die KI", () => {
-    for (const t of [
-      "Ich nehme meine Einwilligung zurück",
-      "Ich ziehe mein Einverständnis zurück",
-      "Ich bin doch nicht einverstanden",
-      "Bitte die Unterlagen nicht mehr speichern",
-      "Bitte entfernen Sie meine Daten",
-      "Können Sie die Fotos wieder löschen?",
-    ])
-      expect(istWiderruf(t), t).toBe(true);
-    for (const t of ["Ich will das doch nicht", "Bitte nehmt meine Sachen wieder raus, Datenschutz und so", "Lieber nicht, hab es mir anders überlegt"]) {
-      expect(istWiderruf(t), t).toBe(false);
-      expect(widerrufVerdacht(t), t).toBe(true);
-    }
-    expect(istWiderruf("Ich bin nicht einverstanden mit dem Termin")).toBe(false);
-    expect(widerrufVerdacht("Passt morgen um 10?")).toBe(false);
-    expect(widerrufVerdacht("Danke, bis Donnerstag")).toBe(false);
-  });
-  it("getippte Zustimmung und Ablehnung", () => {
-    expect(istZustimmung("Ja")).toBe(true);
-    expect(istZustimmung("ja, einverstanden!")).toBe(true);
-    expect(istZustimmung("Ja, aber erst morgen")).toBe(false);
-    expect(istAblehnung("Lieber im Termin")).toBe(true);
-    expect(istAblehnung("Nein")).toBe(true);
-    expect(istAblehnung("nein danke")).toBe(true);
-  });
-});
 
 describe("Ablauf im Assistenten", () => {
   it("lädt nach der Vertragsfrage einmal ein", () => {
@@ -276,7 +338,7 @@ describe("Ablauf im Assistenten", () => {
     expect(hatVertraege(null)).toBe(false);
     const q = { vorhanden: "Haftpflicht HUK" };
     expect(einladungFaellig({ qualificationData: q, outbound: ["Danke!"] })).toBe(true);
-    expect(einladungFaellig({ qualificationData: q, outbound: [einladungText("sie", herr, { gesundheitAn: false })] })).toBe(false);
+    expect(einladungFaellig({ qualificationData: q, outbound: [policenBitte({ an: "sie", vermittler: herr }).text] })).toBe(false);
   });
 
   it("Bereitlegen-Liste ohne bisherige Policen, wenn welche geschickt wurden", () => {
@@ -290,75 +352,6 @@ describe("Ablauf im Assistenten", () => {
   });
 });
 
-describe("Auslesen (nur Sachversicherungen)", () => {
-  it("bereinigt die KI-Ausgabe", () => {
-    const x = cleanAuszug({ gesellschaft: " HUK-Coburg ", sparte: "haftpflicht", beitrag: "89,50", zahlweise: "jaehrlich", versicherungssumme: "10 Mio. €", selbstbeteiligung: "150 €", ablauf: "01.03.2027", hauptfaelligkeit: null });
-    expect(x).toEqual({ gesellschaft: "HUK-Coburg", sparte: "haftpflicht", beitrag: 89.5, zahlweise: "jährlich", versicherungssumme: "10 Mio. €", selbstbeteiligung: "150 €", ablauf: "01.03.2027", hauptfaelligkeit: null });
-    expect(auszugZeile(x)?.replace(/\u00a0/g, " ")).toBe("HUK-Coburg · 89,50 € jährlich · Summe 10 Mio. € · SB 150 € · Ablauf 01.03.2027");
-    // Gesundheitssparten werden nie übernommen
-    expect(cleanAuszug({ gesellschaft: "DKV", sparte: "kranken", beitrag: 400 })).toBeNull();
-    expect(cleanAuszug({})).toBeNull();
-  });
-  it("eigene Vertragsliste, ohne Gesundheitsbezug", () => {
-    const v = vertraegeAusUnterlagen([
-      { id: "a", extracted: { gesellschaft: "HUK", sparte: "hausrat", beitrag: 60 }, gesundheitsbezug: false },
-      { id: "b", extracted: { gesellschaft: "DKV" }, gesundheitsbezug: true },
-      { id: "c", extracted: null, gesundheitsbezug: false },
-    ]);
-    expect(v).toHaveLength(1);
-    expect(v[0]).toMatchObject({ quelle: "unterlage", unterlageId: "a", sparte: "hausrat", gesellschaft: "HUK", beitrag: 60 });
-  });
-});
-
-describe("Löschfrist", () => {
-  const T = (s: string) => new Date(s);
-  it("30 Tage nach dem letzten Termin, ohne Termin nach dem Eingang; Abschluss 90 Tage; behalten nie", () => {
-    expect(loeschDatum({ termine: [T("2026-11-20T10:00:00Z"), T("2026-11-25T10:00:00Z")], eingang: T("2026-11-17T10:00:00Z"), abschluss: false })).toEqual(T("2026-12-25T10:00:00Z"));
-    expect(loeschDatum({ termine: [], eingang: T("2026-11-17T10:00:00Z"), abschluss: false })).toEqual(T("2026-12-17T10:00:00Z"));
-    expect(loeschDatum({ termine: [T("2026-11-20T10:00:00Z")], eingang: T("2026-11-17T10:00:00Z"), abschluss: true, abschlussAm: T("2026-11-21T10:00:00Z") })).toEqual(T("2027-02-19T10:00:00Z"));
-    // Abschluss vor dem Eingang bzw. unbekannt: ab Eingang
-    expect(loeschDatum({ termine: [], eingang: T("2026-11-17T10:00:00Z"), abschluss: true, abschlussAm: T("2026-01-01T10:00:00Z") })).toEqual(T("2027-02-15T10:00:00Z"));
-    expect(loeschDatum({ termine: [], eingang: T("2026-11-17T10:00:00Z"), abschluss: true })).toEqual(T("2027-02-15T10:00:00Z"));
-    expect(loeschDatum({ termine: [], eingang: T("2026-11-17T10:00:00Z"), abschluss: true, behalten: true })).toBeNull();
-    expect(loeschDatum({ termine: [], eingang: T("2026-11-17T10:00:00Z"), abschluss: false, behalten: true })).toBeNull();
-  });
-  it("nach Abschluss erst erinnern (14 Tage vorher), dann löschen; späte Erinnerung verschiebt die Löschung", () => {
-    const datum = T("2027-02-19T10:00:00Z");
-    expect(abschlussSchritt({ datum, erinnertAt: null, now: T("2027-01-01T10:00:00Z") })).toEqual({ aktion: "warten", deleteAfter: datum });
-    expect(abschlussSchritt({ datum, erinnertAt: null, now: T("2027-02-05T10:00:00Z") })).toEqual({ aktion: "erinnern", deleteAfter: datum });
-    expect(abschlussSchritt({ datum, erinnertAt: T("2027-02-05T10:00:00Z"), now: T("2027-02-10T10:00:00Z") }).aktion).toBe("warten");
-    expect(abschlussSchritt({ datum, erinnertAt: T("2027-02-05T10:00:00Z"), now: T("2027-02-19T10:00:00Z") }).aktion).toBe("loeschen");
-    // Frist schon vorbei, noch nicht erinnert: erst erinnern, Löschung 14 Tage später
-    const spaet = abschlussSchritt({ datum, erinnertAt: null, now: T("2027-03-01T10:00:00Z") });
-    expect(spaet).toEqual({ aktion: "erinnern", deleteAfter: T("2027-03-15T10:00:00Z") });
-  });
-});
-
-describe("Schalter an: Einordnung ohne Inhalt und KI-Region", () => {
-  it("vorab nur nach Dateiname, Begleittext und Angaben des Leads; unbekannt gilt als möglich", () => {
-    expect(vorabEinordnung({ text: "HUK Haftpflicht.pdf" })).toEqual({ sparte: "haftpflicht", gesundheitMoeglich: false });
-    expect(vorabEinordnung({ text: "BU Police.pdf" })).toEqual({ sparte: "bu", gesundheitMoeglich: true });
-    expect(vorabEinordnung({ text: "IMG_1234.jpg " })).toEqual({ sparte: null, gesundheitMoeglich: true });
-    expect(vorabEinordnung({ text: "IMG_1234.jpg", leadAngaben: ["Haftpflicht HUK, Hausrat Allianz"] })).toEqual({ sparte: null, gesundheitMoeglich: false });
-    expect(vorabEinordnung({ text: "IMG_1234.jpg", leadAngaben: ["Hausrat Allianz"] })).toEqual({ sparte: "hausrat", gesundheitMoeglich: false });
-    expect(vorabEinordnung({ text: "IMG_1234.jpg", leadAngaben: ["Haftpflicht HUK, BU Allianz"] }).gesundheitMoeglich).toBe(true);
-    expect(vorabEinordnung({ text: "scan.pdf", leadAngaben: ["Privatschutz", "PKV"] }).gesundheitMoeglich).toBe(true);
-    expect(typAusMime("image/jpeg")).toBe("image/jpeg");
-    expect(typAusMime("application/pdf")).toBe("application/pdf");
-  });
-  it("KI für mögliche Gesundheitsunterlagen nur mit EU-Endpunkt", () => {
-    expect(policenKiEu({})).toBeNull();
-    expect(policenKiEu({ POLICEN_KI_REGION: "eu" })).toBeNull();
-    expect(policenKiEu({ POLICEN_KI_REGION: "eu", POLICEN_KI_EU_URL: "http://unsicher.example", POLICEN_KI_EU_KEY: "k" })).toBeNull();
-    expect(policenKiEu({ POLICEN_KI_REGION: "us", POLICEN_KI_EU_URL: "https://eu.example", POLICEN_KI_EU_KEY: "k" })).toBeNull();
-    expect(policenKiEu({ POLICEN_KI_REGION: "EU", POLICEN_KI_EU_URL: "https://eu.example/", POLICEN_KI_EU_KEY: "k", POLICEN_KI_EU_MODEL: "claude-opus-5-5" })).toEqual({
-      art: "anthropic",
-      baseURL: "https://eu.example",
-      apiKey: "k",
-      model: "claude-opus-5-5",
-    });
-  });
-});
 
 describe("Gesundheitsangaben nicht in Felder und Notizen", () => {
   it("entfernt Sätze und Stichworte mit Gesundheitsangaben, Tierangaben bleiben", () => {

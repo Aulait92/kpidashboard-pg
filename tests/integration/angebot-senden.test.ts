@@ -118,7 +118,7 @@ describe("Angebot senden und nachfassen (P3)", () => {
     expect(pushFuer(push, lead.id)).toHaveLength(0);
     await runAngebotVorabCheck(new Date("2026-11-18T17:30:00Z"), push);
     await runAngebotVorabCheck(new Date("2026-11-18T17:45:00Z"), push);
-    expect(pushFuer(push, lead.id)).toEqual([expect.objectContaining({ title: "Frau Becker: Morgen fasst die App zum Angebot nach", url: `/buyer/leads/${lead.id}#nachfassen` })]);
+    expect(pushFuer(push, lead.id)).toEqual([expect.objectContaining({ title: "Hat Frau Becker abgeschlossen?", url: `/buyer/abschluss?l=${lead.id}` })]);
 
     await runSequences(new Date(T0.getTime() + 2 * DAY));
     expect(waFuer(lead.id)).toHaveLength(1);

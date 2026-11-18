@@ -24,8 +24,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/ruerup-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "BasisVorsorge-Fonds",
@@ -41,8 +40,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/ruerup-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "Beitragsgarantie der GarantieRente Invest wählbar 50 bis 90 %; beim BasisVorsorge-Fonds keine Garantie genannt.",
     "Garantierter Rentenfaktor, Effektivkosten und Beitragspause nicht genannt (Muster-Produktinformationsblätter auf der Seite).",
     "Ergänzungszahlungen ab 500 €. Hinterbliebene: Ehe- oder eingetragene Lebenspartner und Kinder bis 25 Jahre.",
-    "Zusatzleistung Beitragsbefreiung bei Berufsunfähigkeit."
+    "Zusatzleistung Beitragsbefreiung bei Berufsunfähigkeit.",
+    "Geprüft am 17.11.2026 an der Produktseite auf barmeniagothaer.de."
   ]
 }

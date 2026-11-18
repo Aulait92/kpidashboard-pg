@@ -31,9 +31,11 @@ export default async function UnsubscribePage({ params, searchParams }: { params
         <CheckCircle2 className="h-6 w-6" />
       </div>
       <h1 className="mt-4 text-2xl font-bold tracking-tight" data-unsubscribed>
-        Sie sind abgemeldet
+        {t.du ? "Du bist abgemeldet" : "Sie sind abgemeldet"}
       </h1>
-      <p className="mt-2 text-[15px] text-[color:var(--muted)]">Sie erhalten ab sofort keine E-Mails mehr zu Angeboten von {t.advisor}. Das gilt dauerhaft.</p>
+      <p className="mt-2 text-[15px] text-[color:var(--muted)]">
+        {t.du ? "Du erhältst" : "Sie erhalten"} ab sofort keine E-Mails mehr {t.leadId ? "von" : "zu Angeboten von"} {t.advisor}. Das gilt dauerhaft.
+      </p>
       {sp.alle || t.whatsappBlocked ? (
         <p className="mt-4 rounded-[var(--radius-sm)] bg-emerald-50 px-3 py-2 text-sm text-emerald-900" data-unsubscribed-all>
           Auch per WhatsApp schreiben wir Ihnen keine Angebote mehr.
@@ -45,7 +47,7 @@ export default async function UnsubscribePage({ params, searchParams }: { params
           </button>
         </form>
       ) : null}
-      <p className="mt-5 text-xs text-[color:var(--muted)]">Versehentlich abgemeldet? Antworten Sie einfach auf die E-Mail.</p>
+      <p className="mt-5 text-xs text-[color:var(--muted)]">{t.du ? "Versehentlich abgemeldet? Antworte einfach auf die E-Mail." : "Versehentlich abgemeldet? Antworten Sie einfach auf die E-Mail."}</p>
     </Shell>
   );
 }

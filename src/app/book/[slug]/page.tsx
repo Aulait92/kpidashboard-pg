@@ -12,6 +12,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { bookingDurationMin, suggestSlots, type Slot } from "@/lib/calendar";
 import { bookPublicAction } from "./actions";
 import { nowMs } from "@/lib/now";
+import { ERINNERUNG_OPTIN_TEXT } from "@/lib/policen/regeln";
 
 // Öffentliche Buchungsseite je Kunde — z. B. als „Custom"-Scheduling-Link im
 // Meta-Leadformular. Zeigt echte freie Zeiten aus dem Google-Kalender.
@@ -347,6 +348,11 @@ export default async function BookingPage({ params, searchParams }: Props) {
                 </a>
                 .
               </span>
+            </label>
+            {/* Opt-in für Erinnerungen zur Terminvorbereitung (lib/policen, Rechtsprüfung A8), nicht vorausgewählt */}
+            <label className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
+              <input type="checkbox" name="erinnerung" className="mt-0.5" data-erinnerung-optin />
+              <span>{ERINNERUNG_OPTIN_TEXT}</span>
             </label>
           </section>
 

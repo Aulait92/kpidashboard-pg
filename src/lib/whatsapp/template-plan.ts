@@ -64,9 +64,12 @@ export const CORE_PURPOSES: NoticePurpose[] = [
 /**
  * Neue Zwecke, die nur VORBEREITET sind: Sie stehen NICHT in CORE_PURPOSES und werden deshalb nicht bei Meta eingereicht,
  * bis Ole die Texte freigibt. Freigeben: Zweck in CORE_PURPOSES aufnehmen. Bis dahin gehen sie nur als Freitext im
- * offenen 24-h-Fenster. Zurzeit leer (Show-up-Paket am 17.11.2026 freigegeben).
+ * offenen 24-h-Fenster.
  */
-export const VORBEREITETE_PURPOSES: NoticePurpose[] = [];
+export const VORBEREITETE_PURPOSES: NoticePurpose[] = [
+  // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss. Text zur Freigabe in docs/vorlagen-abschluss.md.
+  "glueckwunsch",
+];
 /**
  * Angebot nach dem Termin (Paket P3, Ole 17.11.2026): „Angebot senden“ (UTILITY) und das Nachfassen zum selbst gesendeten
  * Angebot (MARKETING), nur VORBEREITET wie oben (docs/vorlagen-angebot.md). Bis zur Freigabe: „Angebot senden“ nur als
@@ -168,6 +171,7 @@ const EXAMPLES: Record<string, string> = {
   "Link/Hinweis": "Wir rufen dich unter deiner Nummer an.",
   "Vermittler (Nominativ)": "Herr Schmidt",
   "Vermittler (Dativ)": "Herrn Schmidt",
+  "Vermittler (Akkusativ)": "Herrn Schmidt",
   "Wann (z. B. morgen um 10 Uhr)": "morgen um 10 Uhr",
   "Nutzen (ein Satz, ggf. mit Verträgen)":
     "In einem kurzen Videotermin zeigt Ihnen Herr Schmidt, was Haftpflicht und Hausrat für Ihre Familie kosten und worauf Sie achten sollten. Legen Sie gern Ihre bestehenden Verträge bereit.",
@@ -194,6 +198,7 @@ const EXAMPLES_DU: Record<string, string> = {
   "Link/Hinweis": "Wir rufen dich unter deiner Nummer an.",
   "Vermittler (Nominativ)": "Thomas",
   "Vermittler (Dativ)": "Thomas",
+  "Vermittler (Akkusativ)": "Thomas",
   "Nutzen (ein Satz, ggf. mit Verträgen)":
     "In einem kurzen Videotermin zeigt dir Thomas, was Haftpflicht und Hausrat für deine Familie kosten und worauf du achten solltest. Leg gern deine bestehenden Verträge bereit.",
 };
@@ -345,6 +350,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   offer_send: { title: "Ihr Angebot nach dem Termin", when: "Wenn Sie das Angebot über die App senden und der Chat länger als 24 Stunden ruht." },
   offer_bedenkzeit: { title: "Nachfassen nach der Bedenkzeit", when: "Am Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte." },
   followup_noshow: { title: "Nachfassen nach verpasstem Termin", when: "Wenn ein Lead nicht zum Termin erschienen ist." },
+  glueckwunsch: { title: "Glückwunsch zum Abschluss", when: "Wenn Sie beim Eintragen eines Abschlusses „Glückwunsch per WhatsApp senden“ anhaken." },
   followup_last: { title: "Letzte Nachricht", when: "Zum Abschluss einer Nachfass-Abfolge." },
   campaign_cross_sell: { title: "Bestandskunden: Lücke schließen", when: "Kampagne an Bestandskunden mit fehlender Sparte." },
   campaign_review: { title: "Bestandskunden: Jahresgespräch", when: "Kampagne für den jährlichen Vertrags-Check." },

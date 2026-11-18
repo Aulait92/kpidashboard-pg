@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/ruerup-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SI Pur Invest Basis-Rente",
@@ -46,8 +45,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/private-altersvorsorge/si-pur-invest-basis-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -60,6 +58,7 @@
     "Rentenfaktor: Tarifvergleich nennt für beide „Anhebung garantierter Rentenfaktor auf 95 %“; bei Pur Invest 95 % ab Abschluss garantiert.",
     "BU-Absicherung als Beitragsbefreiung, bei Pur Invest wahlweise „Vorsorge-Retter“ mit 3 Jahren Wartezeit.",
     "Effektivkosten nicht beziffert (Muster-Produktinformationsblätter verlinkt). Dynamik als Baustein nicht genannt.",
-    "Keine Renditeangaben aufgenommen."
+    "Keine Renditeangaben aufgenommen.",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseiten auf signal-iduna.de."
   ]
 }

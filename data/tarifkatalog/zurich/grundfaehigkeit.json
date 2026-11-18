@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35320_absicherung-grundfaehigkeiten_verbraucherinformationen_2026_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -35,6 +34,7 @@
     "Die Produktseiten auf zurich.de waren für automatische Abrufe gesperrt; Werte aus den Verbraucherinformationen (Bedingungen, PDF). Stand 01/2026.",
     "Versichert sind 21 Grundfähigkeiten (u. a. Sehen, Hören, Sprechen, Gehen, Autofahren, Gleichgewicht, geistige Leistungsfähigkeit) sowie Pflegebedürftigkeit und gerichtlich angeordnete Betreuung.",
     "Leistung bei psychischen Erkrankungen nicht ausdrücklich geregelt (nur über geistige Leistungsfähigkeit und Betreuung); bitte prüfen.",
-    "Wechseloption in eine selbständige BU ohne erneute Gesundheitsprüfung unter Voraussetzungen."
+    "Wechseloption in eine selbständige BU ohne erneute Gesundheitsprüfung unter Voraussetzungen.",
+    "Geprüft am 17.11.2026 an den Verbraucherinformationen (Bedingungen 01/2026, PDF) auf zurich.de."
   ]
 }

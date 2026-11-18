@@ -26,8 +26,7 @@
         "sehhilfen": "150 € je Sehhilfe"
       },
       "quelle": "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-prima.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Barmenia einsA prima+",
@@ -46,8 +45,7 @@
         "sehhilfen": "300 € je Sehhilfe"
       },
       "quelle": "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-prima-2.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Barmenia einsA expert",
@@ -66,8 +64,7 @@
         "sehhilfen": "600 € alle 2 Jahre"
       },
       "quelle": "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-expert.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Barmenia einsA expert+",
@@ -86,8 +83,7 @@
         "sehhilfen": "600 € alle 2 Jahre"
       },
       "quelle": "https://cdn.barmeniagothaer.de/barmeniagothaer/media/gesundheit_pflege/gesundheit/private_krankenvollversicherung/avb-expert-2.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -103,6 +99,7 @@
     "Selbstbehalt je Kalenderjahr über die Leistungsstufe: Stufe 1 330 €, Stufe 2 660 €, Stufe 3 1.320 € (Bedingungen nennen dies als Beispiel). Beitragsrückerstattung erfolgsabhängig laut Bedingungen, Höhe nicht genannt.",
     "prima und prima+: Primärarzttarife, bei direktem Facharztbesuch 75 bzw. 80 %. expert und expert+ sind Kompakttarife ohne Primärarztregel. Hilfsmittel 75/80/85/100 %.",
     "Sehhilfen: Rechnungsbetrag je Sehhilfe, neue Sehhilfe nach 2 Jahren (bei expert so belegt). Krankentagegeld und Pflegezusatz nicht in den Unterlagen genannt.",
-    "BarmeniaGothaer markiert keine Stufe; bei 4 Stufen die dritte (einsA expert)."
+    "BarmeniaGothaer markiert keine Stufe; bei 4 Stufen die dritte (einsA expert).",
+    "Geprüft am 17.11.2026 an Produkttabelle, Produktseite bzw. Bedingungen auf barmeniagothaer.de."
   ]
 }

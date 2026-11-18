@@ -1,5 +1,16 @@
 # Muster-Datenschutz-Folgenabschätzung (Art. 35 DSGVO): WhatsApp-Assistent mit Unterlagen vom Kunden
 
+> **Änderung 18.11.2026 (Ole, nach `docs/recht/policen-whatsapp-gesundheitsdaten.md`):** Die Verarbeitung ist
+> geändert, maßgeblich ist `docs/datenschutz-policen.md`. Kurz: Einwilligung per Knopf („Einverstanden“ / „Lieber
+> nicht“) als eigene Nachricht mit Nennung von Vermittler, Meta und performancegrowth; **keine KI** für Unterlagen in
+> diesem Stand (keine Zuordnung, kein Auslesen; die Einwilligung erlaubt ein späteres Auslesen in der EU); ohne
+> Einwilligung wird nichts abgerufen; Ablage in einem privaten EU-Bucket mit Schlüssel je Mandant; Abruf nur über
+> signierte Links mit Protokoll; **Löschung 90 Tage nach dem Termin**; Nachweise nur anhängend. Kranken/BU/Leben je
+> Vermittler erst nach Zustimmung zur AVV-Ergänzung. Für die DSFA gelten zusätzlich die Risiken R1 bis R10 und
+> Maßnahmen aus Text (e) der Rechtsprüfung; Abschnitte unten, die KI-Zuordnung, EU-Endpunkt oder 30 Tage beschreiben,
+> sind überholt.
+
+
 Stand: 17.11.2026 · Fassung 2 (Vorlage zur Übernahme) · erstellt von Ole Kannapinn UG (haftungsbeschränkt) als
 Auftragsverarbeiter zur Unterstützung seiner Kunden (Art. 28 Abs. 3 lit. f DSGVO). **Keine Rechtsberatung.**
 Grundlage: `docs/recht-gesundheitsunterlagen.md` (Rechtsprüfung, Abschnitte a und e), `docs/datenschutz-policen.md`

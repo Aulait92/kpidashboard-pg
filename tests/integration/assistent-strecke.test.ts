@@ -125,6 +125,14 @@ describe("Termin-Strecke mit Knöpfen", () => {
   }
 
   beforeAll(async () => {
+    // Policen-Funktion an (privater EU-Bucket eingerichtet, lib/policen/ablage.ts): Bitte nach der Vertragsfrage
+    Object.assign(process.env, {
+      POLICEN_S3_ENDPOINT: "https://test123.eu.r2.cloudflarestorage.com",
+      POLICEN_S3_BUCKET: "pg-policen-eu",
+      POLICEN_S3_ACCESS_KEY_ID: "id",
+      POLICEN_S3_SECRET_ACCESS_KEY: "secret",
+      POLICEN_SCHLUESSEL: Buffer.alloc(32, 11).toString("base64"),
+    });
     requireTestDb();
     process.env.ENCRYPTION_KEY ||= Buffer.alloc(32, 7).toString("base64");
     process.env.ANTHROPIC_API_KEY ||= "test";

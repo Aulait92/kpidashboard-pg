@@ -57,7 +57,8 @@ export const ANNOUNCEMENT_KEY = "empfehlung-launch";
 export const UNHAPPY_TASK = "Kunde unzufrieden, bitte heute anrufen";
 export const isUnhappyTask = (note: string | null | undefined) => !!note && note.startsWith(UNHAPPY_TASK);
 
-export const DEFAULT_DELAYS = { review: 7, referral: 21 } as const;
+// Bewertungsbitte 14 Tage nach dem Abschluss (P7, Ole 17.11.2026; vorher 7), Empfehlung nach 21 Tagen
+export const DEFAULT_DELAYS = { review: 14, referral: 21 } as const;
 export const DELAY_LIMITS = { min: 1, max: 120 } as const;
 
 // ─── Texte ─────────────────────────────────────────────────────────────────
