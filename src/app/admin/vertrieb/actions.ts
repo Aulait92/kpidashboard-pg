@@ -461,6 +461,16 @@ export async function updateLinkedIn(fd: FormData) {
   refresh(contactId);
 }
 
+/** „WhatsApp erlaubt“ in der Kontaktakte (Ole, 18.11.2026): von Hand setzen bzw. entfernen, gilt statt der Automatik. */
+export async function setWhatsappErlaubtAction(contactId: string, erlaubt: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAuth();
+  if (!contactId) return { ok: false, error: "Kontakt fehlt." };
+  const { setzeWhatsappErlaubt } = await import("@/lib/vertrieb/bonus-erinnerung-server");
+  await setzeWhatsappErlaubt(contactId, erlaubt);
+  refresh(contactId);
+  return { ok: true };
+}
+
 // ─── Verlauf bearbeiten ─────────────────────────────────────────────────
 export async function updateActivity(fd: FormData) {
   await requireAuth();

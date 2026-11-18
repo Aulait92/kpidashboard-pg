@@ -1726,6 +1726,14 @@ model Offer {
   declineReason           SalesLossReason?
   declineNote             String?
   declinedPrevStatus      String?
+  // Erinnerung vor Ablauf des Abschlussbonus (Ole, 18.11.2026, lib/vertrieb/bonus-erinnerung.ts), nur verschickte
+  // Angebote: je Schritt der Zeitpunkt (höchstens einmal). Mail am Tag vor Ablauf, Mail und Push am letzten Tag (9 Uhr),
+  // WhatsApp am letzten Tag (13 Uhr, nur mit „WhatsApp erlaubt“); bonusWhatsAppStatus = Ergebnis (sent, no_template …)
+  bonusMailVorabAt        DateTime?
+  bonusMailLetzterAt      DateTime?
+  bonusPushAt             DateTime?
+  bonusWhatsAppAt         DateTime?
+  bonusWhatsAppStatus     String?
   createdById             String?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
@@ -1871,6 +1879,10 @@ model SalesContact {
   customerSince      DateTime?
   customerSource     String? // Akquise-Kanal: COLD_CALL, COLD_MAIL, LINKEDIN, META_ADS, EMPFEHLUNG, INBOUND, NETZWERK, SONSTIGES
   customerSourceNote String? // z.B. "Kampagne Allianz Okt" oder "Empfehlung von Hr. Müller"
+  /// „WhatsApp erlaubt“ (Ole, 18.11.2026, lib/vertrieb/bonus-erinnerung-server.ts): null = automatisch (Terminbestätigung
+  /// bzw. -erinnerung per WhatsApp bekommen oder selbst per WhatsApp geschrieben), true/false = von Hand in der Kontaktakte
+  whatsappErlaubt    Boolean?
+  whatsappErlaubtAt  DateTime?
   // Kundenkonto in der Plattform (ab Onboarding)
   customerId         String?             @unique
   customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)

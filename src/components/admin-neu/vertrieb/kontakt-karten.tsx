@@ -3,6 +3,7 @@ import { Badge, Card, CardHeader, buttonClass } from "@/components/ui";
 import { CloseDetailsForm } from "@/components/ui/close-details-on-submit";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
 import { ContactEmails, ContactPhones } from "@/components/vertrieb/contact-merge";
+import { WhatsappErlaubt } from "@/components/vertrieb/whatsapp-erlaubt";
 import { AdminRescheduleButton, AdminTerminButton, type TerminTypeOption } from "@/components/termin/admin-termin";
 import { adminBookTerminAction, adminRescheduleTerminAction } from "@/app/admin/vertrieb/buchungsseite/actions";
 import {
@@ -340,6 +341,7 @@ export function Stammdaten({ c, a }: { c: Kontakt; a: Akte }) {
         <dt className={DT}>Telefon</dt>
         <dd className="min-w-0">
           <ContactPhones contactId={c.id} phone={c.phone} extras={a.extraPhones} />
+          {c.phone ? <WhatsappErlaubt contactId={c.id} erlaubt={a.whatsappErlaubt.erlaubt} quelle={a.whatsappErlaubt.quelle} /> : null}
         </dd>
         <dt className={DT}>Adresse</dt>
         <dd className="min-w-0" data-funktion="actions-updatecontactaddress--adresse-und-telefon-bearbeiten">
