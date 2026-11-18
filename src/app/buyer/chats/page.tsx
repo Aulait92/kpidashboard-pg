@@ -32,9 +32,9 @@ import { pastOpenAppointmentWhere } from "@/lib/lead-next-step";
 import { qualificationPoints } from "@/lib/whatsapp/qualification";
 import { terminArtKurz } from "@/lib/termin-art";
 import { kalenderblatt, listenZeit, phasenPunkt, sparten, terminKurz, uhrzeit } from "@/lib/chat-ansicht";
-import { chatNaechsterSchritt, type ChatSchritt } from "@/lib/chat-naechster-schritt";
+import { chatKopfTermin, chatNaechsterSchritt, KOPF_STATT_LEISTE, type ChatSchritt } from "@/lib/chat-naechster-schritt";
 import { ChatAvatar, ChatVerlauf, NichtZugestellt, StatusPunkt } from "@/components/chat/chat-verlauf";
-import { SprungKnopf, TerminBuchenKnopf } from "@/components/chat/chat-knoepfe";
+import { ChatDetailsKnopf, MerkFormular, SchreibHinweis, SprungKnopf, TerminBuchenKnopf } from "@/components/chat/chat-knoepfe";
 import { cn } from "@/lib/utils";
 import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
 
@@ -43,6 +43,8 @@ import { waFormatKnoten, waOhneMarker } from "@/lib/wa-format";
 // Gestaltung (Ole, 17.11.2026, Entwurf docs/ux/chat-neu): Liste links, Chat in der Mitte mit drei klar
 // unterscheidbaren Absendern, rechts „Nächster Schritt“, Termin, Anfrage, Angaben fürs Angebot, Kontakt.
 // Handy: Liste und Chat als zwei Ansichten, der nächste Schritt steht oben im Chat, der Rest unter „Details“.
+// Handy (Ole, 18.11.2026): mehr Platz für den Chat. Details per Tipp auf den Namen (Blatt), Termin in der zweiten
+// Kopfzeile, „Vorbereiten“ als kleiner Knopf neben „Anrufen“ (24 Stunden vorher), Schreib-Hinweis nur anfangs.
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Chats | performancegrowth" };
 
@@ -194,7 +196,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
           },
           messages: {
             orderBy: { createdAt: "asc" },
-            select: { id: true, direction: true, kind: true, body: true, sentBy: true, status: true, createdAt: true },
+            select: { id: true, direction: true, kind: true, body: true, sentBy: true, sentByUserId: true, status: true, createdAt: true },
           },
         },
       })
@@ -231,6 +233,10 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
       : null;
 
   const name = active ? (active.contactName ?? formatPhone(active.contactPhone)) : "";
+  // Handy-Kopfzeile: „Termin heute 11:00“ und „Vorbereiten“ (24 Stunden vorher bzw. während des Termins)
+  const kopfTermin = chatKopfTermin(appointments[0] ?? null, now);
+  // Hinweis „Wenn Sie schreiben, pausiert …“: am Handy weg, sobald der Vermittler hier schon selbst geschrieben hat
+  const selbstGeschrieben = !!active?.messages.some((m) => m.sentBy === "agent" && (!ctx.userId || m.sentByUserId === ctx.userId));
   const schritt: ChatSchritt | null = active
     ? chatNaechsterSchritt({
         leadId: active.lead?.id ?? null,
@@ -333,8 +339,10 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
     </form>
   ) : null;
 
-  // Rechte Spalte ohne „Nächster Schritt“ (der steht am Handy immer sichtbar oben im Chat)
-  const details = active ? (
+  // Rechte Spalte ohne „Nächster Schritt“ (der steht am Handy immer sichtbar oben im Chat).
+  // handy: Blatt hinter dem Namen, dort zusätzlich „Vorbereiten“ am Termin (die Termin-Leiste gibt es am Handy nicht mehr).
+  const detailsInhalt = (handy: boolean) =>
+    active ? (
     <>
       <Karte titel="Termin">
         {appointments.length === 0 ? (
@@ -367,6 +375,11 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                           <a href={a.meetUrl} target="_blank" rel="noreferrer" className="min-h-10 content-center hover:underline sm:min-h-0">
                             Video-Link
                           </a>
+                        ) : null}
+                        {handy ? (
+                          <Link href={`/buyer/termine/${a.id}/vorbereitung?von=kontakt`} className="min-h-10 content-center hover:underline sm:min-h-0" data-chat-details-vorbereiten>
+                            Vorbereiten
+                          </Link>
                         ) : null}
                         {kuenftig ? (
                           <RescheduleButton appointmentId={a.id} className="min-h-10 hover:underline sm:min-h-0">
@@ -467,6 +480,32 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
         </div>
       </Karte>
     </>
+    ) : null;
+  const details = detailsInhalt(false);
+  // Handy: Leiste „Nächster Schritt“ nur, wenn der Schritt nicht schon in der Kopfzeile steht
+  const leisteHandy = !!schritt && schritt.art !== "keiner" && !KOPF_STATT_LEISTE.has(schritt.art);
+
+  // Handy: zweite Kopfzeile „● Assistent aktiv · Termin heute 11:00“ (Ole, 18.11.2026). Stehen rechts zwei Knöpfe
+  // („Vorbereiten“ bzw. „Assistent an“ und „Anrufen“), rückt sie unter die ganze Kopfzeile, damit der Termin lesbar bleibt.
+  const statusUnten = !!active && !!kopfTermin && (!!kopfTermin.vorbereiten || (!!active.lead && !active.botActive));
+  const statusHandy = active ? (
+    <div
+      className={cn(
+        "mt-0.5 flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs md:hidden",
+        !active.lead && !active.botActive ? "font-medium text-sky-800" : active.botActive ? "text-emerald-700" : "text-[color:var(--muted)]",
+      )}
+      data-chat-status-handy
+    >
+      <span
+        className={cn(
+          "h-[7px] w-[7px] shrink-0 rounded-full",
+          !active.lead && !active.botActive ? "bg-sky-500" : active.botActive ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" : "bg-[color:var(--brand)]",
+        )}
+      />
+      {/* Wird es eng, kürzt der Status, der Termin bleibt ganz lesbar */}
+      <span className="min-w-0 truncate">{!active.lead && !active.botActive ? "Neuer Kontakt" : active.botActive ? "Assistent aktiv" : "Assistent pausiert"}</span>
+      {kopfTermin ? <span className="shrink-0 text-[color:var(--muted)]">· {kopfTermin.text}</span> : null}
+    </div>
   ) : null;
 
   return (
@@ -612,37 +651,51 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
             </div>
           ) : (
             <>
-              <header className="flex items-center gap-2 border-b border-[color:var(--border)] bg-white px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
+              <header className="flex flex-wrap items-center gap-x-1.5 border-b border-[color:var(--border)] bg-white px-3 py-2.5 sm:gap-x-3 sm:px-5 sm:py-3 md:flex-nowrap">
                 <Link href={`/buyer/chats${listQs ? `?${listQs}` : ""}`} aria-label="Zurück" className="-ml-1 rounded-full p-1.5 text-[color:var(--brand)] md:hidden">
                   <ArrowLeft className="h-5 w-5" />
                 </Link>
                 <div className="min-w-0 flex-1">
+                  {/* Handy: Name öffnet die Details (Termin, Angaben, Kontakt) als Blatt */}
+                  <div className="flex min-w-0 md:hidden">
+                    <ChatDetailsKnopf name={name} titel={name}>
+                      {erledigt}
+                      {detailsInhalt(true)}
+                    </ChatDetailsKnopf>
+                  </div>
                   {/* UX Runde 4: Name öffnet den Kontakt */}
                   {active.lead ? (
-                    <Link href={`/buyer/leads/${active.lead.id}`} className="flex min-w-0 items-center gap-0.5 text-[17px] font-semibold hover:underline" data-chat-kontakt>
+                    <Link href={`/buyer/leads/${active.lead.id}`} className="hidden min-w-0 items-center gap-0.5 text-[17px] font-semibold hover:underline md:flex" data-chat-kontakt>
                       <span className="truncate">{name}</span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
                     </Link>
                   ) : (
-                    <div className="truncate text-[17px] font-semibold">{name}</div>
+                    <div className="hidden truncate text-[17px] font-semibold md:block">{name}</div>
                   )}
+                  {statusUnten ? null : statusHandy}
                   {!active.lead && !active.botActive ? (
-                    <div className="mt-0.5 flex min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] font-medium text-sky-800">
+                    <div className="mt-0.5 hidden min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] font-medium text-sky-800 md:flex">
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
                       Neuer Kontakt
                     </div>
                   ) : active.botActive ? (
-                    <div className="mt-0.5 flex min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] text-emerald-700" data-chat-status="assistent">
+                    <div className="mt-0.5 hidden min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] text-emerald-700 md:flex" data-chat-status="assistent">
                       <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]" />
                       <span className="truncate">Assistent antwortet für Sie</span>
                     </div>
                   ) : (
-                    <div className="mt-0.5 flex min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] text-[color:var(--muted)]" data-chat-status="selbst">
+                    <div className="mt-0.5 hidden min-w-0 items-center whitespace-nowrap gap-1.5 text-[13px] text-[color:var(--muted)] md:flex" data-chat-status="selbst">
                       <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[color:var(--brand)]" />
                       Sie schreiben
                     </div>
                   )}
                 </div>
+                {/* Handy: Termin in den nächsten 24 Stunden → kleiner Knopf statt eigener Leiste */}
+                {kopfTermin?.vorbereiten ? (
+                  <Link href={kopfTermin.vorbereiten} className={buttonClass("primary", "sm", "shrink-0 px-2.5 text-[12px] md:hidden")} data-chat-vorbereiten>
+                    Vorbereiten
+                  </Link>
+                ) : null}
                 <AnrufLink
                   lead={anrufLead}
                   href={`tel:+${active.contactPhone}`}
@@ -667,18 +720,26 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                         "Übernehmen"
                       ) : (
                         <>
-                          <Bot className="h-4 w-4" /> Assistent an
+                          <Bot className="h-4 w-4" />
+                          {/* Handy mit „Vorbereiten“: nur das Symbol, damit der Name Platz behält */}
+                          <span className={kopfTermin?.vorbereiten ? "sr-only md:not-sr-only" : ""}>Assistent an</span>
                         </>
                       )}
                     </SubmitButton>
                   </form>
                 ) : null}
+                {/* Neben zwei Knöpfen wäre die zweite Zeile zu eng: dann über die ganze Breite, unter dem Namen */}
+                {statusUnten ? <div className="-mt-1.5 basis-full pl-[38px] md:hidden">{statusHandy}</div> : null}
               </header>
 
-              {/* Handy und schmale Fenster: nächster Schritt immer sichtbar, Details zum Aufklappen */}
-              <div className="border-b border-[color:var(--border)] bg-white xl:hidden" data-chat-details-mobil>
+              {/* Schmale Fenster: nächster Schritt immer sichtbar, Details zum Aufklappen. Handy: Details hinter dem Namen,
+                  Termin-Schritt als „Vorbereiten“ in der Kopfzeile (Ole, 18.11.2026). */}
+              <div className={cn("border-b border-[color:var(--border)] bg-white xl:hidden", leisteHandy ? "" : "max-md:hidden")} data-chat-details-mobil>
                 {schritt && schritt.art !== "keiner" ? (
-                  <div className={cn("flex items-center gap-3 bg-gradient-to-b to-white px-4 py-2.5", schritt.dringend ? "from-rose-50" : "from-[#f5f8ff]")} data-chat-schritt>
+                  <div
+                    className={cn("flex items-center gap-3 bg-gradient-to-b to-white px-4 py-2.5", schritt.dringend ? "from-rose-50" : "from-[#f5f8ff]", leisteHandy ? "" : "max-md:hidden")}
+                    data-chat-schritt
+                  >
                     <div className="min-w-0 flex-1">
                       <div className={cn("truncate text-sm font-semibold", schritt.dringend ? "text-rose-800" : "")}>{schritt.titel}</div>
                       {schritt.text ? <div className={cn("text-xs text-[color:var(--muted)]", schritt.dringend ? "line-clamp-2" : "truncate")}>{schritt.text}</div> : null}
@@ -686,7 +747,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                     {schrittKnopf(schritt, true)}
                   </div>
                 ) : null}
-                <details className="group/d">
+                <details className="group/d max-md:hidden">
                   <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 border-t border-[color:var(--border)] px-4 text-xs font-semibold text-[color:var(--brand)] [&::-webkit-details-marker]:hidden">
                     <span className="min-w-0 flex-1 truncate">
                       Details
@@ -721,7 +782,7 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                   Der Kontakt hat „STOPP“ geschrieben. Er bekommt keine WhatsApp-Nachrichten mehr, auch nicht vom Assistenten. Schreibt er selbst wieder, können Sie antworten.
                 </p>
               ) : windowOpen ? (
-                <form action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-3 py-2.5 sm:px-5 sm:py-3">
+                <MerkFormular action={sendReplyBuyerAction} className="border-t border-[color:var(--border)] bg-white px-3 py-2.5 sm:px-5 sm:py-3">
                   <input type="hidden" name="conversationId" value={active.id} />
                   <div className="flex items-end gap-2 rounded-[14px] border border-[color:var(--border-strong)] bg-white py-1.5 pl-4 pr-1.5 focus-within:border-[color:var(--brand)]">
                     <textarea
@@ -740,8 +801,12 @@ export default async function BuyerChatsPage({ searchParams }: { searchParams: S
                       <SendHorizontal className="h-4 w-4" />
                     </SubmitButton>
                   </div>
-                  {active.botActive ? <p className="mt-1.5 px-1 text-xs text-[color:var(--muted)]">Wenn Sie schreiben, pausiert der Assistent in diesem Chat.</p> : null}
-                </form>
+                  {active.botActive ? (
+                    <SchreibHinweis chatId={active.id} schonGeschrieben={selbstGeschrieben}>
+                      Wenn Sie schreiben, pausiert der Assistent in diesem Chat.
+                    </SchreibHinweis>
+                  ) : null}
+                </MerkFormular>
               ) : (
                 <div id="nachfassen" className="border-t border-[color:var(--border)] bg-white px-4 py-3 sm:px-5">
                   <p className="text-xs text-[color:var(--muted)]">Freies Schreiben geht erst wieder, wenn der Lead antwortet. Jetzt: anrufen oder nachfassen.</p>
