@@ -2,7 +2,22 @@
 // Pflicht aus der PLZ, Folie „Ihr Schutz im Überblick“ aus der Tarifauswahl.
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { alterAus, chancen, cleanSchutz, cleanVorsorgeAus, hundePflichtLand, schutzVorschlag, schutzZeilen, vorsorgeThema, woandersInfo, type SchutzEintrag } from "@/lib/schutz-ueberblick";
+import {
+  alterAus,
+  ampelVorschau,
+  chancen,
+  cleanSchutz,
+  cleanVorsorgeAus,
+  hundePflichtLand,
+  SCHUTZ_ANTWORT,
+  SCHUTZ_REIHENFOLGE,
+  SCHUTZ_STATUS,
+  schutzVorschlag,
+  schutzZeilen,
+  vorsorgeThema,
+  woandersInfo,
+  type SchutzEintrag,
+} from "@/lib/schutz-ueberblick";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
 import { cleanTarifauswahl, sparteNeu, startAuswahl, zuAngebote } from "@/lib/tarifauswahl";
 import { folien, markeFuer } from "@/lib/praesentation";
@@ -187,5 +202,51 @@ describe("Überblick in Tarifauswahl, Angeboten und Folie", () => {
     expect(cleanSchutz([{ key: "X Y", label: "a", status: "pruefen" }, { key: "unfall", label: "Unfall", status: "kaputt" }, { key: "unfall", label: "Unfall", status: "luecke", ablauf: "2027-13" }])).toEqual([
       { key: "unfall", label: "Unfall", status: "luecke" },
     ]);
+  });
+});
+
+describe("Schutz im Überblick verständlicher (Ole, 18.11.2026)", () => {
+  it("Antworten im Fenster: Ja, bei mir / Ja, woanders / Weiß nicht / Nein; Präsentation behält die Ampel-Begriffe", () => {
+    expect(SCHUTZ_REIHENFOLGE.map((s) => SCHUTZ_ANTWORT[s].label)).toEqual(["Ja, bei mir", "Ja, woanders", "Weiß nicht", "Nein"]);
+    expect(SCHUTZ_REIHENFOLGE.map((s) => SCHUTZ_STATUS[s].label)).toEqual(["Bei uns versichert", "Woanders versichert", "Prüfen", "Lücke"]);
+    // Farbpunkt folgt der Antwort: grün ja, grau weiß nicht, rot nein
+    expect(SCHUTZ_ANTWORT["bei-uns"].farbe).toBe(SCHUTZ_ANTWORT.woanders.farbe);
+    expect(new Set([SCHUTZ_ANTWORT.woanders.farbe, SCHUTZ_ANTWORT.pruefen.farbe, SCHUTZ_ANTWORT.luecke.farbe]).size).toBe(3);
+  });
+
+  it("Vorbelegung mit Quelle: Chat (Angaben, Komplettcheck) bzw. Formular; Unbekanntes ohne Quelle", () => {
+    const d = {
+      ...termin({ angaben: { vorhanden: "Haftpflicht bei der HUK, keinen Rechtsschutz" }, formular: [{ label: "Bestehende Versicherungen", value: "Hausrat bei der Allianz" }] }),
+      komplettcheck: true,
+      vorvertraege: { at: "2026-11-17T10:00:00Z", liste: [{ sparte: "Kfz", gesellschaft: "DEVK" }] },
+    };
+    const s = schutzVorschlag(d, { angebot: [] });
+    const by = (k: string) => s.find((x) => x.key === k);
+    expect(by("haftpflicht")).toMatchObject({ status: "woanders", quelle: "chat" });
+    expect(by("rechtsschutz")).toMatchObject({ status: "luecke", quelle: "chat" });
+    expect(by("kfz")).toMatchObject({ status: "woanders", versicherer: "DEVK", quelle: "chat" });
+    expect(by("hausrat")).toMatchObject({ status: "woanders", quelle: "formular" });
+    expect(by("unfall")?.status).toBe("pruefen");
+    expect(by("unfall")?.quelle).toBeUndefined();
+    // bleibt beim Speichern erhalten, Unsinn fällt weg
+    expect(cleanSchutz([{ key: "kfz", label: "Kfz", status: "woanders", quelle: "chat" }, { key: "unfall", label: "Unfall", status: "pruefen", quelle: "ki" }])).toEqual([
+      { key: "kfz", label: "Kfz", status: "woanders", quelle: "chat" },
+      { key: "unfall", label: "Unfall", status: "pruefen" },
+    ]);
+  });
+
+  it("Live-Vorschau der Ampel wie auf der Folie: fest im Angebot „Im Angebot“, bei Bedarf mit Ampel-Begriff", () => {
+    const schutz: SchutzEintrag[] = [
+      { key: "haftpflicht", label: "Privathaftpflicht", status: "woanders" },
+      { key: "rechtsschutz", label: "Rechtsschutz", status: "luecke" },
+      { key: "unfall", label: "Unfall", status: "pruefen" },
+    ];
+    const v = ampelVorschau(schutz, [{ key: "haftpflicht" }, { key: "unfall", zusatz: true }]);
+    expect(v.map((z) => [z.key, z.text])).toEqual([
+      ["haftpflicht", "Im Angebot"],
+      ["unfall", "Prüfen"],
+      ["rechtsschutz", "Lücke"],
+    ]);
+    expect(v[0].farbe).toBe(SCHUTZ_STATUS["bei-uns"].farbe);
   });
 });

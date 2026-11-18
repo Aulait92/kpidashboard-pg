@@ -9,7 +9,7 @@ import { ZurueckLink } from "@/components/zurueck-link";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
 import { formatPhone } from "@/lib/format";
-import { asAnsprache } from "@/lib/ansprache";
+import { anredeName, asAnsprache, namePartsFromForm, salutationFromForm } from "@/lib/ansprache";
 import type { BuyerContext } from "@/lib/buyer-context";
 import { abschnitte, spartenVon, unterlagenFuer, type VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { loadPraesentation } from "@/lib/termin-vorbereitung-server";
@@ -209,6 +209,8 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           schutzNeu: tv.schutzNeu,
           // Teil C2: höchstens ein Vorsorge-Thema, nur als Hinweis (nichts gespeichert)
           vorsorge: vorsorgeThema(d, kunde?.vorsorgeThemenAus ?? [], asAnsprache(kunde?.leadAddress)),
+          // „Hat Frau Becker das schon?“ (Vermittler-Oberfläche: Herr/Frau Nachname, sonst Vor- und Nachname)
+          kunde: anredeName("sie", { fullName: d.lead.name, salutation: salutationFromForm(d.formular), ...namePartsFromForm(d.formular) }) ?? d.lead.name,
         }}
         angebot={{
           stand: angebotStand
