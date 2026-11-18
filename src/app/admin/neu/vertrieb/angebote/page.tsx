@@ -8,6 +8,7 @@ import { offerAdminHref } from "@/lib/offer-links";
 import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/angebote-uebersicht";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { cn } from "@/lib/utils";
+import { AngebotMehr } from "@/components/vertrieb/angebot-ablehnen";
 
 export const metadata = { title: "Angebote | performancegrowth Admin" };
 
@@ -22,12 +23,17 @@ const BASIS = "/admin/neu/vertrieb/angebote";
 export default async function AngebotePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
   const sp = await searchParams;
-  const { filter, shown, count, kennzahlen } = await ladeAngebote(sp.f);
+  const { filter, shown, count, kennzahlen, ablehnGruende } = await ladeAngebote(sp.f);
   const { sent, angenommen, offen, geoeffnet } = kennzahlen;
   const ziel = (o: (typeof shown)[number]) => (o.salesContactId ? `${kontaktPfad(o.salesContactId)}#angebot` : offerAdminHref(o));
   const stand = (o: (typeof shown)[number]) => (
     <>
       <Badge tone={ANGEBOT_ZUSTAND[o.z].tone}>{o.z === "angenommen" ? `Angenommen ${datum(o.acceptedAt)}` : ANGEBOT_ZUSTAND[o.z].label}</Badge>
+      {o.grund ? (
+        <div className="mt-1 text-xs text-[color:var(--muted)]" data-ablehngrund>
+          {o.grund}
+        </div>
+      ) : null}
       {o.zahlungOffen ? (
         <div className="mt-1 text-xs text-amber-700" data-zahlung-offen>
           Zahlung offen
@@ -35,6 +41,10 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
         </div>
       ) : null}
     </>
+  );
+  // „Mehr“ je Zeile: Als abgelehnt markieren bzw. Wieder öffnen (Ole, 18.11.2026)
+  const mehr = (o: (typeof shown)[number]) => (
+    <AngebotMehr variant="icon" offer={{ id: o.id, number: o.number, kannAblehnen: o.kannAblehnen, kannWiederOeffnen: o.kannWiederOeffnen, kontakt: !!o.salesContactId }} />
   );
 
   return (
@@ -53,6 +63,17 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
           </Card>
         ))}
       </div>
+
+      {ablehnGruende.length ? (
+        <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm" data-ablehngruende>
+          <span className="font-medium">Abgelehnt:</span>
+          {ablehnGruende.map((g) => (
+            <span key={g.grund}>
+              {g.label} <span className="tabular-nums text-[color:var(--muted)]">× {g.anzahl}</span>
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       <div className="mb-4 flex flex-wrap gap-1.5" data-angebote-filter data-funktion="page-filter--filter-alle-verschickten-offen-angenommen page-filter-zahlung--filter-zahlung-offen">
         {ANGEBOT_FILTER.map((f) => (
@@ -81,8 +102,8 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
               {/* Handy: Liste */}
               <ul className="divide-y divide-[color:var(--border)] md:hidden">
                 {shown.map((o) => (
-                  <li key={o.id}>
-                    <Link href={ziel(o)} className="flex items-center gap-2 px-4 py-3">
+                  <li key={o.id} className="flex items-center pr-2">
+                    <Link href={ziel(o)} className="flex min-w-0 flex-1 items-center gap-2 py-3 pl-4">
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{o.company || o.contactName}</span>
                         <span className="block text-xs text-[color:var(--muted)]">
@@ -93,6 +114,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                       </span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
                     </Link>
+                    <span className="w-10 shrink-0">{mehr(o)}</span>
                   </li>
                 ))}
               </ul>
@@ -109,6 +131,9 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                       <th className="px-4 py-2 font-medium">Geöffnet</th>
                       <th className="px-4 py-2 font-medium">Gültig bis</th>
                       <th className="px-4 py-2 font-medium">Stand</th>
+                      <th className="w-10 px-2 py-2">
+                        <span className="sr-only">Mehr</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[color:var(--border)]">
@@ -130,6 +155,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                         <td className="px-4 py-2.5 tabular-nums">{datum(o.viewedAt)}</td>
                         <td className={cn("px-4 py-2.5 tabular-nums", o.z === "abgelaufen" && "text-amber-700")}>{datum(o.validUntil)}</td>
                         <td className="px-4 py-2.5">{stand(o)}</td>
+                        <td className="px-2 py-2.5 text-right">{mehr(o)}</td>
                       </tr>
                     ))}
                   </tbody>

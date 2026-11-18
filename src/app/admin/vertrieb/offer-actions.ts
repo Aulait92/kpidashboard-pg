@@ -245,6 +245,45 @@ export async function setPaymentReminderAction(
   return { ok: true };
 }
 
+/**
+ * Angebot als abgelehnt markieren (Ole, 18.11.2026): Grund, optionale Notiz, Kontakt auch verloren (Standard ja) und
+ * „Später erneut ansprechen am …“. Logik: lib/vertrieb/angebot-ablehnen-server.ts.
+ */
+export async function declineOfferAction(
+  offerId: string,
+  input: { grund?: string | null; notiz?: string | null; kontaktVerloren?: boolean; spaeterAm?: string | null },
+): Promise<OfferActionResult> {
+  await requireAdmin();
+  const { angebotAblehnen } = await import("@/lib/vertrieb/angebot-ablehnen-server");
+  const res = await angebotAblehnen(offerId, input);
+  if (!res.ok) return res;
+  await revalidateOffer(offerId);
+  const hinweis = [res.verloren ? "Kontakt als verloren markiert" : null, res.spaeterAm ? "Aufgabe „Wieder melden“ angelegt" : null].filter(Boolean).join(", ");
+  return { ok: true, ...(hinweis ? { hinweis } : {}) };
+}
+
+/** „Wieder öffnen“: vorheriger Status, solange das Angebot noch gültig wäre. */
+export async function reopenOfferAction(offerId: string): Promise<OfferActionResult> {
+  await requireAdmin();
+  const { angebotWiederOeffnen } = await import("@/lib/vertrieb/angebot-ablehnen-server");
+  const res = await angebotWiederOeffnen(offerId);
+  if (!res.ok) return res;
+  await revalidateOffer(offerId);
+  return { ok: true };
+}
+
+async function revalidateOffer(offerId: string) {
+  const offer = await prisma.offer.findUnique({ where: { id: offerId }, select: { dealId: true, salesContactId: true, token: true } });
+  if (offer) {
+    revalidatePath(offerAdminHref(offer));
+    revalidatePath(`/angebot/${offer.token}`);
+  }
+  revalidatePath("/admin/vertrieb", "layout");
+  revalidatePath("/admin/kunden", "layout");
+  revalidatePath("/admin/heute", "layout");
+  revalidatePath("/admin/neu", "layout"); // neuer Admin (Kontaktakte, Angebote, Termine)
+}
+
 /** Überweisung am Angebot erlauben bzw. Zahlungsziel ändern (nur auf Anfrage des Kunden, Ole 17.11.2026). */
 export async function setBankTransferAction(offerId: string, input: { allow: boolean; days?: string | number | null }): Promise<OfferActionResult> {
   const session = await requireAdmin();

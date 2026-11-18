@@ -572,7 +572,7 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
     prisma.salesEmail.findMany({ where: { direction: "IN", sentAt: { gte: s90 } }, distinct: ["contactId"], select: { contactId: true } }),
     prisma.salesMeeting.findMany({ where: { startAt: { gte: s90 } }, distinct: ["contactId"], select: { contactId: true } }),
     prisma.offer.findMany({ where: { sentAt: { gte: s90 }, status: { not: "superseded" } }, select: { status: true } }),
-    prisma.offer.count({ where: { acceptedAt: { gte: s90 } } }),
+    prisma.offer.count({ where: { acceptedAt: { gte: s90 }, status: { not: "declined" } } }),
     prisma.offer.findMany({ where: { status: "sent", validUntil: { gte: now } }, select: { monthlyFee: true } }),
     prisma.offer.findMany({
       where: { acceptedAt: { gte: new Date(now.getTime() - 180 * DAY) }, salesContactId: { not: null } },

@@ -17,6 +17,7 @@ import { LI_LABEL, LI_STATUSES } from "@/lib/vertrieb/linkedin";
 import { ConfirmButton } from "@/components/vertrieb/confirm-button";
 import { DealOffersCard } from "@/components/deal-offers-card";
 import { toOfferRow } from "@/lib/offer-links";
+import { offenesAngebot } from "@/lib/vertrieb/angebot-ablehnen";
 import { onboardingChecklist } from "@/lib/onboarding";
 import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboarding-card";
 import type { ImpressumInfo } from "@/lib/impressum";
@@ -38,6 +39,9 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
   // Daten der Kontaktakte: lib/vertrieb/kontaktakte.ts (gemeinsam mit dem neuen Admin)
   const c = await ladeKontakt(id);
   if (!c) notFound();
+  // „Offenes Angebot auch als abgelehnt markieren?“ beim Verloren-Markieren
+  const offen = offenesAngebot(c.offers);
+  const angebotOffen = offen ? { id: offen.id, number: offen.number } : null;
   // Kunden haben eine eigene Akte mit allen Reitern.
   if (c.customerId && !embedded) redirect(`/admin/kunden/${c.customerId}`);
   const {
@@ -68,7 +72,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
             </p>
           )}
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
-            <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} />
+            <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} offenesAngebot={angebotOffen} />
             {activeFollowup ? (
               <a href="#follow-up">
                 <FollowupBadge f={activeFollowup} />
@@ -145,7 +149,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
         <div className="space-y-5">
           <section className="card p-4">
             <h2 className="mb-3 font-medium">Aktivität erfassen</h2>
-            <ActivityForm contactId={c.id} hasOpenTasks={open.length > 0} />
+            <ActivityForm contactId={c.id} hasOpenTasks={open.length > 0} offenesAngebot={angebotOffen} />
           </section>
 
           {c.emails.length === 0 ? (
@@ -286,6 +290,7 @@ export default async function ContactPage({ params, searchParams }: { params: Pr
               newOfferHref={`/admin/vertrieb/kontakte/${c.id}/angebot`}
               appUrl={appUrl}
               offers={c.offers.map(toOfferRow)}
+                kontakt
               mail={{ audience: audienceForContact(c), pdf: { vertreter: pdfs.has("vertreter"), makler: pdfs.has("makler") }, link: true, entscheidung: entscheidungsHinweis }}
             />
           </div>

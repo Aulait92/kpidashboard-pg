@@ -9,6 +9,7 @@ import { deleteContact, setStage } from "@/app/admin/vertrieb/actions";
 import { Button } from "@/components/ui";
 import { ActionSheet, Sheet, type SheetAction } from "@/components/ui/sheet";
 import { LOSS_REASONS, STAGES } from "@/lib/vertrieb/crm";
+import { JaNein } from "@/components/vertrieb/angebot-ablehnen";
 import type { SalesStage as Stage } from "@/generated/prisma/enums";
 
 const fd = (o: Record<string, string>) => {
@@ -17,13 +18,25 @@ const fd = (o: Record<string, string>) => {
   return f;
 };
 
-/** Stufe als antippbarer Chip; „Verloren“ fragt nach dem Grund. */
-export function StagePicker({ contactId, stage, competitor }: { contactId: string; stage: Stage; competitor: string | null }) {
+/** Stufe als antippbarer Chip; „Verloren“ fragt nach dem Grund (und mit offenem Angebot, ob es abgelehnt ist). */
+export function StagePicker({
+  contactId,
+  stage,
+  competitor,
+  offenesAngebot = null,
+}: {
+  contactId: string;
+  stage: Stage;
+  competitor: string | null;
+  /** Entwurf oder verschickt, nicht angenommen: „Offenes Angebot auch als abgelehnt markieren?“ (Standard ja) */
+  offenesAngebot?: { id: string; number: string } | null;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState<"pick" | "lost" | null>(null);
   const [reason, setReason] = useState("");
   const [comp, setComp] = useState(competitor ?? "");
+  const [ablehnen, setAblehnen] = useState(true);
   const current = STAGES.find((s) => s.id === stage);
   const save = (o: Record<string, string>) =>
     start(async () => {
@@ -61,7 +74,7 @@ export function StagePicker({ contactId, stage, competitor }: { contactId: strin
           onSubmit={(e) => {
             e.preventDefault();
             setOpen(null);
-            save({ stage: "VERLOREN", lossReason: reason || "SONSTIGES", competitor: comp });
+            save({ stage: "VERLOREN", lossReason: reason || "SONSTIGES", competitor: comp, ...(offenesAngebot && ablehnen ? { declineOfferId: offenesAngebot.id } : {}) });
           }}
         >
           <div className="grid grid-cols-1 gap-2">
@@ -73,6 +86,11 @@ export function StagePicker({ contactId, stage, competitor }: { contactId: strin
             ))}
           </div>
           <input value={comp} onChange={(e) => setComp(e.target.value)} placeholder="Wettbewerber (optional)" className="input" />
+          {offenesAngebot ? (
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5">
+              <JaNein name="angebot-ablehnen" label={`Offenes Angebot ${offenesAngebot.number} auch als abgelehnt markieren?`} value={ablehnen} onChange={setAblehnen} />
+            </div>
+          ) : null}
           <Button type="submit" variant="primary" size="md" className="w-full">
             Als verloren speichern
           </Button>

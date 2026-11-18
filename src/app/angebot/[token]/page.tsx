@@ -75,12 +75,14 @@ export default async function OfferPage({
   if (zaehltAlsGeoeffnet({ sessionRole: session?.role ?? null, userAgent: ua })) await markOfferViewed(offer.id);
 
   const expired = offer.validUntil.getTime() < nowMs();
+  // Als abgelehnt markiert (Ole, 18.11.2026): Hinweis statt Annahme, kein Bonus, kein Entscheidungs-Call
+  const abgelehnt = offer.status === "declined";
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;
   // Abschlussbonus (Ole, 16.11.2026): nur echte Angebote mit Online-Zahlung, solange die Frist läuft
-  const bonus = !offer.isTest && billingEnabled() ? abschlussBonusJetzt(offer, new Date(nowMs())) : null;
+  const bonus = !offer.isTest && !abgelehnt && billingEnabled() ? abschlussBonusJetzt(offer, new Date(nowMs())) : null;
   // Entscheidungs-Call (Ole, 17.11.2026), geprüft beim Aufruf: schon gebucht → Termin mit Link zum Verschieben,
   // sonst Buchungslink. Nach der Annahme nur noch ein gebuchter Termin, kein Buchungslink mehr.
-  const call = offer.salesContactId && offer.status !== "superseded" && !offer.ohneEntscheidungsCall ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
+  const call = offer.salesContactId && offer.status !== "superseded" && !abgelehnt && !offer.ohneEntscheidungsCall ? await entscheidungsCallStand(offer.salesContactId, new Date(nowMs())).catch(() => null) : null;
   const callText = call && (offer.status !== "accepted" || call.art === "gebucht") ? entscheidungsCallText(call) : null;
 
   return (
@@ -94,7 +96,9 @@ export default async function OfferPage({
             <Download className="h-4 w-4" /> Als PDF herunterladen
           </a>
         </div>
-        {offer.status === "accepted" && offer.isTest ? (
+        {abgelehnt ? (
+          <NichtMehrGueltig mail={process.env.OFFER_REPLY_TO?.trim() || null} />
+        ) : offer.status === "accepted" && offer.isTest ? (
           <div className="mx-auto mb-6 flex max-w-[880px] items-start gap-3 rounded-[20px] border border-emerald-200 bg-emerald-50 px-6 py-5 text-emerald-900 sm:px-10" data-testangebot-angenommen>
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
@@ -117,7 +121,7 @@ export default async function OfferPage({
         ) : null}
         <OfferDocument offer={doc} collapseAgb />
         {callText ? <EntscheidungsCallBox text={callText} /> : null}
-        {offer.status === "accepted" ? null : (
+        {offer.status === "accepted" || abgelehnt ? null : (
           <div id="annehmen" className="mx-auto mt-6 max-w-[880px] scroll-mt-4 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-8 sm:px-12">
             <section>
               <h2 className="text-lg font-bold">Angebot annehmen</h2>
@@ -175,6 +179,23 @@ export default async function OfferPage({
         ) : null}
       </div>
     </main>
+  );
+}
+
+/** Abgelehntes Angebot: kurzer Hinweis in Sie-Form statt der Annahme, mit Antwortweg, wenn hinterlegt. */
+function NichtMehrGueltig({ mail }: { mail: string | null }) {
+  return (
+    <div className="mx-auto mb-6 flex max-w-[880px] items-start gap-3 rounded-[20px] border border-[#e5e7eb] bg-white px-6 py-5 sm:px-10" data-angebot-nicht-mehr-gueltig>
+      <Clock className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--muted)]" />
+      <div>
+        <p className="font-semibold">Dieses Angebot ist nicht mehr gültig, melden Sie sich gern bei mir.</p>
+        {mail ? (
+          <a href={`mailto:${mail}`} className="mt-3 inline-flex h-10 items-center rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-4 text-sm font-semibold hover:bg-[color:var(--surface-sunken)]">
+            E-Mail schreiben
+          </a>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

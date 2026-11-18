@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { naechsteErinnerung, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
+import { ablehnGrundLabel, ablehnGruende, kannAblehnen, kannWiederOeffnen } from "@/lib/vertrieb/angebot-ablehnen";
 
 // Übersicht aller Angebote (Ole, 13.11.2026): je Angebotsnummer die aktuelle Version mit Stand und Filtern.
 // Gemeinsam für /admin/vertrieb/angebote und /admin/neu/vertrieb/angebote.
@@ -15,8 +16,9 @@ export const ANGEBOT_ZUSTAND: Record<AngebotZustand, { label: string; tone: "suc
 };
 
 export function angebotZustand(o: { status: string; acceptedAt: Date | null; viewedAt: Date | null; validUntil: Date; sentAt: Date | null }, now: Date): AngebotZustand {
-  if (o.status === "accepted" || o.acceptedAt) return "angenommen";
+  // Abgelehnt zuerst: auch ein angenommenes, nie bezahltes Angebot kann abgelehnt werden (lib/vertrieb/angebot-ablehnen.ts)
   if (o.status === "declined") return "abgelehnt";
+  if (o.status === "accepted" || o.acceptedAt) return "angenommen";
   if (o.status === "draft" && !o.sentAt) return "entwurf";
   if (o.validUntil < now) return "abgelaufen";
   return o.viewedAt ? "geoeffnet" : "offen";
@@ -47,12 +49,22 @@ export async function ladeAngebote(filterKey: string | undefined) {
       salesContactId: true, dealId: true,
       isTest: true, paymentStatus: true, stripeSubscriptionId: true, stripeScheduleId: true, startDate: true,
       paymentReminderAt: true, paymentReminderCount: true, paymentReminderLastAt: true,
+      zahlweise: true, declinedAt: true, declineReason: true,
     },
   });
   const rows = offers.map((o) => {
     const z = angebotZustand(o, now);
     const zahlungOffen = z === "angenommen" && o.status === "accepted" && !o.isTest && !zahlungEingerichtet(o);
-    return { ...o, z, zahlungOffen, naechste: zahlungOffen ? (naechsteErinnerung(o, now)?.tag ?? null) : null };
+    return {
+      ...o,
+      z,
+      zahlungOffen,
+      naechste: zahlungOffen ? (naechsteErinnerung(o, now)?.tag ?? null) : null,
+      // „Mehr“ je Zeile (Ole, 18.11.2026): Als abgelehnt markieren bzw. Wieder öffnen
+      kannAblehnen: kannAblehnen(o),
+      kannWiederOeffnen: kannWiederOeffnen(o, now),
+      grund: o.status === "declined" ? ablehnGrundLabel(o.declineReason) : null,
+    };
   });
   const sent = rows.filter((r) => r.z !== "entwurf");
   return {
@@ -66,5 +78,7 @@ export async function ladeAngebote(filterKey: string | undefined) {
       offen: sent.filter((r) => r.z === "offen" || r.z === "geoeffnet"),
       geoeffnet: sent.filter((r) => r.viewedAt),
     },
+    /** Auswertung „Abgelehnt: Grund × Anzahl“ über alle aktuellen Angebote */
+    ablehnGruende: ablehnGruende(rows),
   };
 }

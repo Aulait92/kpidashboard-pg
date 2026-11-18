@@ -3,11 +3,12 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send } from "lucide-react";
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setBankTransferAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
 import { abrechnungsplan, abrechnungstagKurz } from "@/lib/abrechnungstag";
+import { AngebotMehr } from "@/components/vertrieb/angebot-ablehnen";
 
 export type DealOfferRow = {
   id: string;
@@ -60,6 +61,13 @@ export type DealOfferRow = {
   abschlussBonusAbgelaufen: boolean;
   /** Später zahlen und rechtzeitig angenommen: Bonus gilt bei jeder späteren Zahlung */
   abschlussBonusGesichert: boolean;
+  /** Als abgelehnt markiert (lib/vertrieb/angebot-ablehnen.ts): Zeitpunkt, Grund (Text), Notiz */
+  declinedAt?: string | null;
+  declineReason?: string | null;
+  declineNote?: string | null;
+  /** „Mehr“: Als abgelehnt markieren bzw. Wieder öffnen (solange gültig) */
+  kannAblehnen?: boolean;
+  kannWiederOeffnen?: boolean;
 };
 
 const PAYMENT: Record<string, { label: string; tone: "neutral" | "info" | "success" | "warning" | "danger" }> = {
@@ -106,6 +114,7 @@ export function DealOffersCard({
   appUrl,
   mail = { audience: "vertreter", pdf: { vertreter: false, makler: false } },
   knopf = true,
+  kontakt = false,
 }: {
   newOfferHref: string;
   offers: DealOfferRow[];
@@ -113,6 +122,8 @@ export function DealOffersCard({
   mail?: OfferMailOptions;
   /** false: kein „Angebot erstellen“ in der Karte (neuer Admin: steht schon als Hauptaktion im Kopf der Akte) */
   knopf?: boolean;
+  /** Angebote eines Vertriebskontakts: Ablehnen fragt „Kontakt auch als verloren markieren?“ */
+  kontakt?: boolean;
 }) {
   const [mitRechner, setMitRechner] = useState(false);
   const [mitPraesentation, setMitPraesentation] = useState(false);
@@ -176,7 +187,13 @@ export function DealOffersCard({
               <li>Erstellt {fmt(current.createdAt)}</li>
               {current.sentAt ? <li>Verschickt {fmt(current.sentAt)}</li> : null}
               {current.viewedAt ? <li>Vom Interessenten geöffnet {fmt(current.viewedAt)}</li> : null}
-              {current.acceptedAt ? <li className="font-medium text-emerald-700">Angenommen {fmt(current.acceptedAt)} von {current.acceptedName}</li> : null}
+              {current.acceptedAt ? <li className={current.status === "declined" ? "" : "font-medium text-emerald-700"}>Angenommen {fmt(current.acceptedAt)} von {current.acceptedName}</li> : null}
+              {current.status === "declined" ? (
+                <li className="font-medium text-rose-700" data-angebot-abgelehnt>
+                  Abgelehnt{current.declinedAt ? ` ${fmt(current.declinedAt)}` : ""}: {current.declineReason ?? "Sonstiges"}
+                  {current.declineNote ? <span className="block font-normal text-[color:var(--muted)]">{current.declineNote}</span> : null}
+                </li>
+              ) : null}
               {current.billingDay != null ? (
                 <li data-angebot-abrechnungstag>
                   Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart }))}
@@ -197,7 +214,7 @@ export function DealOffersCard({
                 </li>
               ) : null}
             </ul>
-            {current.abschlussBonus ? <AbschlussBonusFrist offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
+            {current.abschlussBonus && current.status !== "declined" ? <AbschlussBonusFrist offer={current} onDone={(m) => { flash(m); router.refresh(); }} /> : null}
             {current.status === "accepted" && !current.isTest && !current.paymentSetUp ? (
               <PaymentReminder offer={current} onDone={(m) => { flash(m); router.refresh(); }} />
             ) : null}
@@ -236,20 +253,19 @@ export function DealOffersCard({
                   ) : null}
                 </>
               ) : null}
-              {current.status !== "accepted" && !current.acceptedAt && (!current.paymentStatus || current.paymentStatus === "none") ? (
-                <Button
-                  icon={Trash2}
-                  variant="ghost"
-                  disabled={pending}
-                  className="text-rose-600 hover:bg-rose-50"
-                  onClick={() => {
-                    if (!confirm(`Angebot ${current.number} wirklich löschen? Der Link funktioniert danach nicht mehr.`)) return;
-                    run(current.id, () => deleteOfferAction(current.id), "Angebot gelöscht");
-                  }}
-                >
-                  Löschen
-                </Button>
-              ) : null}
+              {/* Seltenes unter „Mehr“: Als abgelehnt markieren, Wieder öffnen, Löschen */}
+              <AngebotMehr
+                offer={{ id: current.id, number: current.number, kannAblehnen: !!current.kannAblehnen, kannWiederOeffnen: !!current.kannWiederOeffnen, kontakt: kontakt }}
+                onDone={flash}
+                loeschen={
+                  current.status !== "accepted" && !current.acceptedAt && (!current.paymentStatus || current.paymentStatus === "none")
+                    ? () => {
+                        if (!confirm(`Angebot ${current.number} wirklich löschen? Der Link funktioniert danach nicht mehr.`)) return;
+                        run(current.id, () => deleteOfferAction(current.id), "Angebot gelöscht");
+                      }
+                    : undefined
+                }
+              />
             </div>
             {current.status === "draft" || current.status === "sent" ? (
               <div className="space-y-2 rounded-[var(--radius-md)] bg-[color:var(--surface-sunken)] px-3 py-2.5 text-sm" data-mail-extras>

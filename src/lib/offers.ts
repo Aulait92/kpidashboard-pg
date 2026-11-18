@@ -335,6 +335,7 @@ export async function acceptOffer(
   if (!offer) return { ok: false, error: "Angebot nicht gefunden." };
   if (offer.status === "accepted") return { ok: true };
   if (offer.status === "superseded") return { ok: false, error: "Dieses Angebot wurde durch eine neuere Version ersetzt." };
+  if (offer.status === "declined") return { ok: false, error: "Dieses Angebot ist nicht mehr gültig, melden Sie sich gern bei mir." };
   if (offer.validUntil.getTime() < Date.now()) return { ok: false, error: "Dieses Angebot ist abgelaufen. Bitte fordern Sie ein neues an." };
   if (!offer.termsUrl || !offer.dpaUrl) return { ok: false, error: "Die Online-Annahme ist für dieses Angebot noch nicht freigeschaltet." };
   if (!opts.termsAccepted) return { ok: false, error: "Bitte bestätigen Sie AGB und Auftragsverarbeitungsvertrag." };

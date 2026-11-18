@@ -4,6 +4,7 @@ import { offerAdminHref } from "@/lib/offer-links";
 import { Badge } from "@/components/ui";
 import { fmtTag, tagIso } from "@/lib/angebot-zahlungserinnerung";
 import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/angebote-uebersicht";
+import { ablehnGruendeText } from "@/lib/vertrieb/angebot-ablehnen";
 
 export const metadata = { title: "Angebote | Vertrieb" };
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ const FILTER = ANGEBOT_FILTER;
 export default async function AngebotePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireAuth();
   const sp = await searchParams;
-  const { filter, shown, count, kennzahlen } = await ladeAngebote(sp.f);
+  const { filter, shown, count, kennzahlen, ablehnGruende } = await ladeAngebote(sp.f);
   const { sent, angenommen, offen, geoeffnet } = kennzahlen;
 
   return (
@@ -44,6 +45,12 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
           </div>
         ))}
       </div>
+
+      {ablehnGruende.length ? (
+        <p className="text-sm" data-ablehngruende>
+          <span className="font-medium">Abgelehnt:</span> {ablehnGruendeText(ablehnGruende)}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap gap-1.5" data-angebote-filter>
         {FILTER.map((f) => (
@@ -98,6 +105,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                   <td className={`px-4 py-2.5 tabular-nums ${o.z === "abgelaufen" ? "text-amber-700" : ""}`}>{date(o.validUntil)}</td>
                   <td className="px-4 py-2.5">
                     <Badge tone={ZUSTAND[o.z].tone}>{o.z === "angenommen" ? `Angenommen ${date(o.acceptedAt)}` : ZUSTAND[o.z].label}</Badge>
+                    {o.grund ? <div className="mt-1 text-xs text-[color:var(--muted)]">{o.grund}</div> : null}
                     {o.zahlungOffen ? (
                       <div className="mt-1 text-xs text-amber-700" data-zahlung-offen>
                         Zahlung offen
