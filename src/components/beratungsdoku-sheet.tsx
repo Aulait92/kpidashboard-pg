@@ -25,6 +25,8 @@ const zeilen = (t: string) => Math.min(16, Math.max(3, t.split("\n").reduce((n, 
 const feld =
   "w-full rounded-[var(--radius-sm)] border bg-white px-3 py-2 text-[15px] leading-relaxed focus:border-[color:var(--brand)] focus:outline-none";
 const HINWEISE_PLATZHALTER = "Optional, z. B. offene Punkte oder worauf Ihr Kunde bewusst verzichtet";
+/** Leer bis zum Termin-Ergebnis (lib/beratungsdoku.ts entscheidungVorschlag) */
+const ENTSCHEIDUNG_PLATZHALTER = "Was hat Ihr Kunde entschieden? Z. B. Abschluss, Bedenkzeit oder kein Interesse";
 
 type Props = { ziel: BeratungsdokuZiel | null; onClose: () => void; onDone: (message: string) => void; onError: (message: string) => void };
 
@@ -235,7 +237,7 @@ function Bearbeiten({
                 onChange={(e) => onChange({ ...inhalt, [k]: e.target.value })}
                 onFocus={() => markieren(k)}
                 rows={zeilen(inhalt[k])}
-                placeholder={k === "hinweise" ? HINWEISE_PLATZHALTER : undefined}
+                placeholder={k === "hinweise" ? HINWEISE_PLATZHALTER : k === "entscheidung" ? ENTSCHEIDUNG_PLATZHALTER : undefined}
                 className={cn(feld, luecke ? "border-amber-400 bg-amber-50/40" : "border-[color:var(--border)]")}
                 data-bd-feld={k}
               />

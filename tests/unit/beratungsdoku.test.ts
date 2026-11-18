@@ -28,7 +28,7 @@ const strich = /[–—]/;
 
 describe("Beratungsdokumentation: Entwurf", () => {
   it("füllt alle Abschnitte aus dem Termin vor, ohne Gesundheitsangaben, Begründung als Stelle zum Ergänzen", () => {
-    const e = beratungsdokuEntwurf(quellen);
+    const e = beratungsdokuEntwurf({ ...quellen, ergebnis: true });
     expect(e.wuensche).toContain("• Lebenssituation: Familie");
     expect(e.wuensche).toContain("• Fahrrad soll mit rein");
     expect(e.wuensche).not.toContain("Asthma");
@@ -53,7 +53,12 @@ describe("Beratungsdokumentation: Entwurf", () => {
   it("Entscheidung aus dem Status, in beiden Ansprachen", () => {
     expect(entscheidungVorschlag("du", "Abschluss")).toBe("Du hast dich für die Empfehlung entschieden.");
     expect(entscheidungVorschlag("sie", "kein Interesse")).toBe("Sie haben sich gegen einen Abschluss entschieden.");
-    expect(entscheidungVorschlag("du", null)).toBe("Du möchtest das Angebot in Ruhe prüfen.");
+    expect(entscheidungVorschlag("du", null, true)).toBe("Du möchtest das Angebot in Ruhe prüfen.");
+    // ohne Ergebnis leer (Usability-Check 18.11.2026), Abschluss bzw. Absage stehen trotzdem fest
+    expect(entscheidungVorschlag("sie", "Angebot gesendet")).toBe("");
+    expect(beratungsdokuEntwurf(quellen).entscheidung).toBe("");
+    expect(bdFehlt(beratungsdokuEntwurf(quellen))).toBe("Bitte „Entscheidung des Kunden“ ausfüllen.");
+    expect(entscheidungVorschlag("sie", "Abschluss")).toBe("Sie haben sich für die Empfehlung entschieden.");
   });
 
   it("Prüfung: Pflichtabschnitte, Hinweise optional, keine offene Stelle", () => {
