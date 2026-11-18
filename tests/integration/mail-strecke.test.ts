@@ -71,6 +71,7 @@ vi.mock("@/lib/calendar", async (orig) => {
 });
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { encryptSecret } from "@/lib/encryption";
 import { handleInboundPayload } from "@/lib/whatsapp/gateway";
 import { markLeadNoWhatsApp } from "@/lib/whatsapp/kein-whatsapp";
@@ -91,7 +92,7 @@ describe("Mail-Strecke und Betroffenenrechte", () => {
   const pnid = `pnid-ms-${uid()}`;
 
   const lead = (extra: Record<string, unknown> = {}) =>
-    prisma.lead.create({ data: { customerId, name: "Nina Winter", email: `nina${++n}@example.org`, source: "Zahnzusatzversicherung", status: "Neuer Lead", createdAt: new Date(Date.now() - 2 * 60_000), ...extra } });
+    prisma.lead.create({ data: { customerId, name: "Nina Winter", email: `nina${++n}@example.org`, source: "Zahnzusatzversicherung", status: "Neuer Lead", formData: [{ label: "Produkt", value: "Zahn" }], createdAt: new Date(Date.now() - 2 * 60_000), ...extra } });
   const strecke = (leadId: string) => prisma.leadMailStrecke.findUniqueOrThrow({ where: { leadId } });
   const inbound = (from: string, body: string) =>
     handleInboundPayload({ entry: [{ changes: [{ value: { metadata: { phone_number_id: pnid }, contacts: [{ profile: { name: "Nina" } }], messages: [{ from, id: `wamid.in-${uid()}`, type: "text", text: { body } }] } }] }] });
@@ -138,6 +139,11 @@ describe("Mail-Strecke und Betroffenenrechte", () => {
     expect(s.erstmailAt!.getTime() - l.createdAt.getTime()).toBeLessThan(5 * 60_000);
     await runMailStrecke(new Date());
     expect(mails.filter((x) => x.to === l.email)).toHaveLength(1);
+    // Von Hand angelegt (keine eigene Anfrage): keine Strecke
+    const hand = await lead({ formData: undefined });
+    await prisma.lead.update({ where: { id: hand.id }, data: { formData: Prisma.DbNull } });
+    await runMailStrecke(new Date());
+    expect(await prisma.leadMailStrecke.count({ where: { leadId: hand.id } })).toBe(0);
   });
 
   it("131026: Erstmail der Strecke statt der alten Einmal-Mail; 131050 startet nichts", async () => {

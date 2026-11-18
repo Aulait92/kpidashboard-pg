@@ -172,3 +172,14 @@ describe("Takt über 10 Tage", () => {
     expect(faelligerSchritt({ start: nacht, stufe: 0, now: berlin("2026-11-19T09:30:00") })?.art).toBe("zeiten");
   });
 });
+
+describe("Antwortseite auf der Buchungsadresse", () => {
+  it("/t/<token> ist eine Seite für Endkunden (auch POST), kein Kurzlink", async () => {
+    const { decidePublicHost, END_CUSTOMER_PREFIXES, RESERVED_SEGMENTS } = await import("@/lib/public-booking-host");
+    expect(END_CUSTOMER_PREFIXES).toContain("/t");
+    expect(RESERVED_SEGMENTS.has("t")).toBe(true);
+    const host = "termin.example.org";
+    expect(decidePublicHost({ host, pathname: "/t/abc.def", bookingUrl: `https://${host}` }).kind).toBe("serve");
+    expect(decidePublicHost({ host, pathname: "/t/abc.def", method: "POST", bookingUrl: `https://${host}` }).kind).toBe("serve");
+  });
+});

@@ -92,12 +92,18 @@ export async function starteMailStrecke(leadId: string, ausloeser: Ausloeser, op
         phone: true,
         status: true,
         erasedAt: true,
+        airtableId: true,
+        externalId: true,
+        formData: true,
         customer: { select: { dormantSince: true, dataDeletedAt: true, mailFeaturesOff: true, agentConfig: { select: { active: true, outreachEnabled: true } } } },
       },
     });
     if (!lead || lead.erasedAt) return { ergebnis: "nicht_moeglich", grund: "nicht_gefunden" };
     if (!EMAIL_RE.test(lead.email?.trim() ?? "")) return { ergebnis: "nicht_moeglich", grund: "keine_adresse" };
     if (!istOffen(lead.status)) return { ergebnis: "nicht_moeglich", grund: "status" };
+    // Rechtsgrundlage wie beim WhatsApp-Erstkontakt (lib/lead-manual.ts startLeadChat): nur eigene Anfrage des Leads
+    // (Formular, Meta, Empfehlung); von Hand angelegte Kontakte nicht. Bei „kein WhatsApp“ lief das Erstanschreiben schon.
+    if (ausloeser !== "kein_whatsapp" && !(lead.airtableId || lead.externalId || lead.formData)) return { ergebnis: "nicht_moeglich", grund: "keine_anfrage" };
     const c = lead.customer;
     if (c.dormantSince || c.dataDeletedAt) return { ergebnis: "nicht_moeglich", grund: "ruhend" };
     if (c.mailFeaturesOff) return { ergebnis: "nicht_moeglich", grund: "mail_aus" };
