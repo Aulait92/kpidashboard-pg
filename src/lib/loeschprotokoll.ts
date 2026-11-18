@@ -7,17 +7,18 @@
 //   - ohne Bucket: scripts/loeschprotokoll.mjs überträgt die Einträge aus der alten in die neue Datenbank
 //     (docs/notfall-wiederherstellung.md, Schritt „Löschprotokoll“).
 // Erneut angewendet wird nur, was laut Datenbank (wieder) da ist: Lead nicht gelöscht, Kunde ohne dataDeletedAt,
-// Policen-Eintrag vorhanden, Vertriebskontakt vorhanden. Im normalen Betrieb passiert also nichts.
+// Policen-Eintrag vorhanden, ausgelesene Policen-Werte („ohne KI“, A9) vorhanden, Vertriebskontakt vorhanden. Im
+// normalen Betrieb passiert also nichts.
 // Zeitliche Löschfristen (Cron) brauchen das Protokoll nicht: Sie greifen nach einer Wiederherstellung von selbst.
 
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 
-export type LoeschArt = "lead" | "kunde" | "policen_dokument" | "vertriebskontakt";
+export type LoeschArt = "lead" | "kunde" | "policen_dokument" | "policen_auszug" | "vertriebskontakt";
 export type LoeschEintrag = { art: LoeschArt; entityId: string; customerId?: string | null; ref?: string | null; grund?: string | null };
 type Zeile = LoeschEintrag & { id: string; createdAt: Date };
 
-const ARTEN: LoeschArt[] = ["lead", "kunde", "policen_dokument", "vertriebskontakt"];
+const ARTEN: LoeschArt[] = ["lead", "kunde", "policen_dokument", "policen_auszug", "vertriebskontakt"];
 /** 13 Monate: länger als jede Datenbank-Sicherung (docs/datenschutz.md, Löschkonzept). */
 export const PROTOKOLL_TAGE = 400;
 const DAY = 24 * 60 * 60 * 1000;
@@ -112,11 +113,13 @@ export async function wendeLoeschprotokollAn(opts: { nurPruefen?: boolean } = {}
   const leads = await stueckweise(nach("lead"), (ids) => prisma.lead.findMany({ where: { id: { in: ids }, erasedAt: null }, select: { id: true } }));
   const kunden = await stueckweise(nach("kunde"), (ids) => prisma.customer.findMany({ where: { id: { in: ids }, dataDeletedAt: null }, select: { id: true } }));
   const dokumente = await stueckweise(nach("policen_dokument"), (ids) => prisma.leadDocument.findMany({ where: { id: { in: ids } }, select: { id: true, storageKey: true } }));
+  const auszuege = await stueckweise(nach("policen_auszug"), (ids) => prisma.policenAuszug.findMany({ where: { id: { in: ids } }, select: { id: true } }));
   const kontakte = await stueckweise(nach("vertriebskontakt"), (ids) => prisma.salesContact.findMany({ where: { id: { in: ids } }, select: { id: true } }));
   out.offen = [
     ...kunden.map((x) => ({ art: "kunde" as const, entityId: x.id })),
     ...leads.map((x) => ({ art: "lead" as const, entityId: x.id })),
     ...dokumente.map((x) => ({ art: "policen_dokument" as const, entityId: x.id })),
+    ...auszuege.map((x) => ({ art: "policen_auszug" as const, entityId: x.id })),
     ...kontakte.map((x) => ({ art: "vertriebskontakt" as const, entityId: x.id })),
   ];
   if (opts.nurPruefen || !out.offen.length) return out;
@@ -148,11 +151,14 @@ export async function wendeLoeschprotokollAn(opts: { nurPruefen?: boolean } = {}
       await prisma.leadDocument.deleteMany({ where: { id: { in: docs.map((d) => d.id) } } });
     });
   }
+  // Ausgelesene Werte nach „ohne KI“ (A9); mit einer gelöschten Unterlage sind sie ohnehin weg (Cascade)
+  const auszugIds = (await prisma.policenAuszug.findMany({ where: { id: { in: auszuege.map((x) => x.id) } }, select: { id: true } })).map((x) => x.id);
+  if (auszugIds.length) await versuche(() => prisma.policenAuszug.deleteMany({ where: { id: { in: auszugIds } } }));
   if (kontakte.length) await versuche(() => prisma.salesContact.deleteMany({ where: { id: { in: kontakte.map((k) => k.id) } } }));
   await audit("loeschprotokoll.angewendet", {
     entity: "System",
     entityId: "loeschprotokoll",
-    details: { kunden: kunden.length, leads: leads.length, dokumente: docs.length, kontakte: kontakte.length, uebernommen: out.uebernommen, fehler: out.fehler },
+    details: { kunden: kunden.length, leads: leads.length, dokumente: docs.length, auszuege: auszugIds.length, kontakte: kontakte.length, uebernommen: out.uebernommen, fehler: out.fehler },
     actor: SYSTEM,
   });
   console.info(`[loeschprotokoll] erneut angewendet: kunden=${kunden.length} leads=${leads.length} dokumente=${docs.length} kontakte=${kontakte.length} fehler=${out.fehler}`);

@@ -153,7 +153,7 @@ describe("Policen auslesen", () => {
     const doc = await prisma.leadDocument.create({
       data: { customerId, leadId: lead.id, status: "gespeichert", mimeType: o.mime ?? "application/pdf", fileName: "Julia Schneider Police.pdf", size: o.data.length, storageKey, dateiSchluessel, sparte: o.sparte ?? null },
     });
-    if (o.nachweis !== null) await nachweis(lead.id, phone, o.nachweis ?? { ki: true, version: "2026-11-18.g1" });
+    if (o.nachweis !== null) await nachweis(lead.id, phone, o.nachweis ?? { ki: true, version: "2026-11-18.g2" });
     return { lead, doc, phone };
   }
   async function nachweis(leadId: string, phone: string, n: { ki: boolean | null; version: string; art?: string }) {
@@ -214,10 +214,19 @@ describe("Policen auslesen", () => {
     const ohneEinwilligung = await leadMitUnterlage({ data, sparte: "hausrat", nachweis: null });
     const ohneKi = await leadMitUnterlage({ data, sparte: "hausrat", nachweis: { ki: false, version: "a-2026-11-18" } });
     const alt = await leadMitUnterlage({ data, sparte: "hausrat", nachweis: { ki: true, version: "2026-11-17.3" } });
+    // Auflage A9: Fassung ohne den Satz zu „ohne KI“ deckt das Auslesen nicht
+    const ohneA9 = await leadMitUnterlage({ data, sparte: "hausrat", nachweis: { ki: true, version: "2026-11-18.g1" } });
     const widerrufen = await leadMitUnterlage({ data, sparte: "hausrat" });
     await nachweis(widerrufen.lead.id, widerrufen.phone, { ki: null, version: "a-2026-11-18", art: "widerruf" });
-    for (const x of [ohneEinwilligung, ohneKi, alt, widerrufen]) {
+    for (const x of [ohneEinwilligung, alt, ohneA9, widerrufen]) {
       expect(await liesUnterlageAus(x.doc.id)).toEqual({ status: "gesperrt:einwilligung" });
+      expect(await nachEingang(x.lead.id)).toBe(0);
+    }
+    // Einwilligung nur zum Speichern („ohne KI“) bzw. Stichwort nach einer Einwilligung mit KI
+    const stichwort = await leadMitUnterlage({ data, sparte: "hausrat" });
+    await nachweis(stichwort.lead.id, stichwort.phone, { ki: false, version: "2026-11-18.g2", art: "ohne_ki" });
+    for (const x of [ohneKi, stichwort]) {
+      expect(await liesUnterlageAus(x.doc.id)).toEqual({ status: "gesperrt:ohne_ki" });
       expect(await nachEingang(x.lead.id)).toBe(0);
     }
     expect(oa.calls).toHaveLength(0);
@@ -272,8 +281,8 @@ describe("Policen auslesen", () => {
     expect(oa.calls).toHaveLength(0);
 
     await setzeZdrNachweis({ am: new Date("2026-11-18T00:00:00Z"), referenz: "OpenAI ZDR Test", userId: null });
-    // Einwilligung nur in der Fassung ohne Gesundheitsangaben („.s1“): PKV trotzdem nicht
-    const nurSach = await leadMitUnterlage({ data, sparte: null, nachweis: { ki: true, version: "2026-11-18.s1" } });
+    // Einwilligung nur in der Fassung ohne Gesundheitsangaben („.s2“): PKV trotzdem nicht
+    const nurSach = await leadMitUnterlage({ data, sparte: null, nachweis: { ki: true, version: "2026-11-18.s2" } });
     expect(await liesUnterlageAus(nurSach.doc.id)).toEqual({ status: "gesperrt" });
     expect(oa.calls).toHaveLength(0);
     expect(await liesUnterlageAus(a.doc.id)).toEqual({ status: "ausgelesen" });

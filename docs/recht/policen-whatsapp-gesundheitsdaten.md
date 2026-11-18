@@ -1,6 +1,6 @@
 # Policen per WhatsApp mit Gesundheitsangaben: rechtliche Vorprüfung
 
-Stand: 17.11.2026 (Nachtlauf). Rechtliche Vorprüfung, keine Rechtsberatung. Ole entscheidet, die Anwältin bestätigt danach.
+Stand: 17.11.2026 (Nachtlauf), ergänzt am 18.11.2026 (Nachrecherche Legal Data Hunter, siehe Abschnitt „Stand Nachrecherche 18.11.“). Rechtliche Vorprüfung, keine Rechtsberatung. Ole entscheidet, die Anwältin bestätigt danach.
 
 Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog, Meta als Unterauftragnehmer) bittet Leads mit gebuchtem Videotermin, Fotos oder PDFs aktueller Policen in den Chat zu schicken, auch Kranken, BU und Leben. performancegrowth (Ole Kannapinn UG) ist Auftragsverarbeiter des jeweiligen Vermittlers.
 
@@ -10,11 +10,45 @@ Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog,
 
 ## Kurzfazit
 
-**Ampel: GELB, live mit Auflagen.** Für Haftpflicht, Hausrat und Kfz kann der Ablauf nach den Textkorrekturen sofort starten. Für Kranken, BU und Leben nur, wenn vor dem Start die Auflagen A1 bis A8 (unten) erfüllt sind; die wichtigsten sind ein korrigierter Einwilligungstext (der jetzige Fußzeilentext nennt den falschen Empfänger und verschweigt Meta), ein technisches Tor „keine Ablage ohne Einwilligung“, die unterschriebene AVV-Ergänzung je Vermittler und die § 203-Verpflichtungen.
+**Ampel: GELB, live mit Auflagen.** Für Haftpflicht, Hausrat und Kfz kann der Ablauf nach den Textkorrekturen sofort starten. Für Kranken, BU und Leben nur, wenn vor dem Start die Auflagen A1 bis A9 (unten) erfüllt sind; die wichtigsten sind ein korrigierter Einwilligungstext (der jetzige Fußzeilentext nennt den falschen Empfänger und verschweigt Meta), ein technisches Tor „keine Ablage ohne Einwilligung“, die unterschriebene AVV-Ergänzung je Vermittler und die § 203-Verpflichtungen.
 
 **KI-Auslesen (Zusatzfrage 9): GELB.** Für Haftpflicht, Hausrat und Kfz mit dem neuen Einwilligungstext und der AVV-Ergänzung möglich. Für Kranken, BU und Leben erst, wenn die Null-Speicherung beim KI-Anbieter schriftlich bestätigt ist (Azure: genehmigtes „modified abuse monitoring“; OpenAI: EU-Projekt mit Zero Data Retention), sonst diese Sparten vom KI-Auslesen ausnehmen. Details im Abschnitt „KI-Auslesen“.
 
+**Bündelung Speichern plus KI (Entscheidung Ole, Stand 18.11.): GELB mit Auflage A9.** Ein Knopf für beides ist vertretbar, aber das angreifbarste Element des Ablaufs. Ampel insgesamt unverändert; neu ist Auflage A9 (eine Ablehnung nur des KI-Teils muss ohne dritten Knopf möglich sein, per Stichwort „ohne KI“). Begründung im Abschnitt „Stand Nachrecherche 18.11.“.
+
 **Restrisiko: mittel.** Rechtsgrundlage kann nur die ausdrückliche Einwilligung nach Art. 9 Abs. 2 lit. a DSGVO sein; sie ist per WhatsApp-Knopf machbar, aber angreifbar, wenn der Text unvollständig oder irreführend ist. Der größte nicht wegzuverhandelnde Punkt ist der Transportweg: Meta entschlüsselt Cloud-API-Nachrichten auf eigenen Servern, speichert Medien bis zu 30 Tage und kann sie in die USA übermitteln (gestützt auf das Data Privacy Framework); deutsche Aufsichtsbehörden halten WhatsApp für Gesundheitsdaten nur für bedingt geeignet. Dieses Restrisiko sinkt deutlich, wenn für Kranken, BU und Leben ein EU-gehosteter Upload-Link statt des Chats angeboten wird (Empfehlung E1). Bußgeld- und Abmahnrisiko liegt in erster Linie beim Vermittler als Verantwortlichem, Haftung und Reputationsrisiko aber auch bei performancegrowth (Art. 82, 83 DSGVO; § 203 Abs. 4 StGB).
+
+---
+
+## Stand Nachrecherche 18.11.
+
+**Ablauf.** Legal Data Hunter lieferte heute 12 Abfragen, dann griff das Tageslimit erneut. Meldung des Tools: Tageslimit erreicht (limit_type „day“, Plan „free“), Upgrade unter https://legaldatahunter.com/pricing, resets_at 2026-11-18T22:24:00+00:00. Alles Folgende mit [LDH] stammt aus diesen Abfragen; was dort nicht steht, ist weiter [Web] oder ohne Fundstelle.
+
+**Was sich geändert hat (Kurzliste).**
+1. Ampel insgesamt: unverändert GELB. KI-Auslesen: unverändert GELB.
+2. Neu: Auflage **A9** (Ablehnung nur des KI-Teils per Stichwort „ohne KI“, ohne dritten Knopf). Text (a), K1 und Text (c) an Oles Zwei-Knopf-Entscheidung angepasst.
+3. Restrisiko der Bündelung: von „leicht erhöht“ auf **mittel** (ohne A9) bzw. **gering bis mittel** (mit A9) präzisiert.
+4. Anwaltsfrage 11 geschärft, neue Anwaltsfrage 12 (anhängiges EuGH-Verfahren C-317/25).
+5. Neue [LDH]-Fundstellen: Art. 4, Art. 7 DSGVO (Wortlaut), EuGH C-252/21, C-61/19, C-673/17, §§ 6, 60, 61, 68 VVG, Art. 50 KI-VO (Wortlaut). [Web] bleiben: § 203 StGB, BGH VIII ZR 53/09, BGH VI ZR 225/17, EuGH-Urteil C-21/23, alle Behörden- und Anbieterdokumente.
+
+**Neue Fundstellen [LDH].**
+- **Art. 7 DSGVO, Wortlaut** ([EUR-Lex 32016R0679, Art. 7](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679) [LDH]): Abs. 1 Nachweispflicht des Verantwortlichen; Abs. 2 Einwilligungsersuchen klar unterscheidbar, verständlich, in klarer und einfacher Sprache; Abs. 3 Widerruf jederzeit, Hinweis darauf vor Abgabe, Widerruf so einfach wie Erteilung; Abs. 4 bei der Beurteilung der Freiwilligkeit ist „in größtmöglichem Umfang“ zu berücksichtigen, ob die Erfüllung eines Vertrags von einer nicht erforderlichen Einwilligung abhängig gemacht wird. Bestätigt A3 (Protokoll), A4 (Widerruf per Stichwort im selben Kanal) und die Platzierung der Erklärung im Haupttext.
+- **Art. 4 DSGVO, Wortlaut** ([EUR-Lex 32016R0679, Art. 4](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679) [LDH]): Nr. 2 nennt als Verarbeitung ausdrücklich Erheben, Speichern, Auslesen, Abfragen und Offenlegung durch Übermittlung. Das KI-Auslesen ist damit ein eigener Verarbeitungsvorgang mit eigener Übermittlung an einen weiteren Empfänger, nicht bloß ein Teil des Speicherns. Nr. 11 und Nr. 15 waren im gekürzten Tooltext nicht enthalten; Wortlaut beim Anwaltstermin aus derselben Quelle prüfen.
+- **ErwG 32, 42, 43**: Die Verordnung wurde per Tool aufgelöst ([EUR-Lex 32016R0679](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679) [LDH]), der Wortlaut der Erwägungsgründe kam wegen Kürzung und Limit nicht mit. Die Wiedergabe unten folgt dem bekannten Inhalt, nicht einem Toolzitat.
+- **EuGH, Urteil vom 4.7.2023, C-252/21, Meta Platforms u. a. gegen Bundeskartellamt (Große Kammer)** ([EUR-Lex CELEX:62021CJ0252](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62021CJ0252) [LDH]). Leitsätze laut Tool: Art. 6 Abs. 1, Art. 9 Abs. 1 und 2, Art. 4 Nr. 11 (Begriff der Einwilligung). Nach meinem Kenntnisstand verlangt der Gerichtshof dort, dass Nutzer in einzelne, für den Vertrag nicht erforderliche Verarbeitungen gesondert einwilligen können, und stützt das auf ErwG 43. Die genaue Randnummer konnte ich wegen des Limits nicht im Volltext abrufen; bitte von der Anwältin verifizieren lassen.
+- **EuGH, Urteil vom 11.11.2020, C-61/19, Orange România** ([EUR-Lex CELEX:62019CJ0061](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62019CJ0061) [LDH]; Schlussanträge Szpunar [CELEX:62019CC0061](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62019CC0061) [LDH]). Leitsätze laut Tool: freiwillige, für den bestimmten Fall, informierte Willensbekundung; Einwilligung per Ankreuzkästchen; Beweislast beim Verantwortlichen. Stützt: Nachweis (A3) und Informiertheit; die Darstellung muss den Betroffenen nicht in die Irre führen.
+- **EuGH, Urteil vom 1.10.2019, C-673/17, Planet49 (Große Kammer)** ([EUR-Lex CELEX:62017CJ0673](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62017CJ0673) [LDH]). Leitsatz laut Tool: Einwilligung durch voreingestelltes Ankreuzkästchen. Maßstab: aktive Handlung nötig. Ein aktiv gedrückter Antwortknopf unter einem vollständigen Erklärungstext erfüllt das; keine Vorauswahl, keine Einwilligung durch bloßes Weiterschreiben oder Senden einer Datei.
+- **Anhängig: EuGH C-317/25, Groupe Canal+ gegen CNIL**, Schlussanträge Spielmann vom 17.9.2026 ([EUR-Lex CELEX:62025CC0317](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62025CC0317) [LDH], vorläufige Fassung). Erschien als Treffer zur Suche nach gesonderter Einwilligung; Inhalt nicht abgerufen. Beobachten, ob das Urteil die Granularität neu fasst.
+- **VVG**: [§ 61 VVG](https://www.gesetze-im-internet.de/vvg_2008/__61.html), [§ 60 VVG](https://www.gesetze-im-internet.de/vvg_2008/__60.html), [§ 6 VVG](https://www.gesetze-im-internet.de/vvg_2008/__6.html), [§ 68 VVG](https://www.gesetze-im-internet.de/vvg_2008/__68.html) [LDH]. Bestätigt die Einordnung in Prüffrage 6: § 61 betrifft die Beratungs- und Dokumentationspflichten des Vermittlers, § 6 die des Versicherers. § 62 VVG wurde nicht getroffen (ohne Fundstelle).
+- **Art. 50 VO (EU) 2024/1689, Wortlaut** ([EUR-Lex 32024R1689, Art. 50](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689) [LDH]): Abs. 1 verpflichtet Anbieter von KI-Systemen, die direkt mit natürlichen Personen interagieren, diese zu informieren, dass sie mit einem KI-System interagieren, es sei denn, das ist offensichtlich. Abs. 2 (Kennzeichnung synthetischer Inhalte) gilt nicht, soweit das System die Eingabedaten nicht wesentlich verändert. Bestätigt: Hinweis „KI-Assistent“ im Chat nötig; für das reine Auslesen von Vertragsfeldern keine Kennzeichnungspflicht nach Abs. 2. Geltungsbeginn stand nicht im Tooltext, bleibt [Web].
+
+**Nicht über das Tool bestätigt.** § 203 StGB (resolve_reference ohne Treffer, Suche lieferte nur einen Gesetzentwurf von 1994), BGH VIII ZR 53/09, BGH VI ZR 225/17, Messenger- oder WhatsApp-Rechtsprechung zu Gesundheitsdaten, BGH oder OLG zu Gesundheitsdaten bei Versicherungen, Art. 9, 28, 35, 44 ff. DSGVO im Wortlaut (Art. 9 aus dem Lauf vom 17.11. bleibt [LDH]). Diese Abfragen waren geplant, kamen aber nach dem Limit nicht mehr zustande.
+
+**Prüfung der Bündelung (ein Knopf für Speichern und KI-Auslesen).**
+- *Für die Bündelung:* Beide Vorgänge dienen demselben Zweck (Terminvorbereitung). ErwG 32 verlangt eine Einwilligung für alle Zwecke, wenn die Verarbeitung mehreren Zwecken dient, nicht zwingend je Vorgang eine eigene. Das Gesamtangebot ist freiwillig, der Termin hängt nicht daran; das Kopplungsverbot nach Art. 7 Abs. 4 ([LDH]) betrifft die Abhängigkeit eines Vertrags oder einer Leistung, und die liegt nicht vor. Wer „Lieber nicht“ wählt, verliert nichts außer der Vorbereitung.
+- *Gegen die Bündelung:* ErwG 43 S. 2 vermutet fehlende Freiwilligkeit, wenn zu verschiedenen Verarbeitungsvorgängen keine gesonderte Einwilligung möglich ist, obwohl das im Einzelfall angebracht ist. Das KI-Auslesen ist nach Art. 4 Nr. 2 ([LDH]) ein eigener Vorgang mit einem zusätzlichen Empfänger (KI-Anbieter mit US-Konzernmutter), betrifft Art. 9-Daten und ist für das Speichern und Ansehen durch den Vermittler nicht erforderlich. Gerade weil Ole erwartet, dass „fast alle“ ohne KI wählen würden, lässt sich argumentieren, dass eine getrennte Wahl hier „angebracht“ ist und die Bündelung den Willen der Betroffenen überspielt. Nach meinem Kenntnisstand hat der EuGH in C-252/21 ([LDH], Randnummer nicht verifiziert) für nicht erforderliche Zusatzverarbeitungen eine gesonderte Einwilligungsmöglichkeit verlangt. Die Folge eines Verstoßes wäre nicht nur die Unwirksamkeit für das KI-Auslesen, sondern womöglich auch für das Speichern, weil es nur eine Erklärung gibt.
+- *Ergebnis:* Haltbar, aber nicht sicher. Die Vermutung nach ErwG 43 lässt sich mit geringem Aufwand ausräumen, ohne den dritten Knopf einzuführen, den Ole nicht will: **Auflage A9**. Im Haupttext steht ein Satz „Ohne KI? Dann antworten Sie ‚ohne KI‘.“; die Software erkennt das Stichwort vor und nach dem Klick auf „Einverstanden“ und setzt `ki=false`. Damit gibt es eine gesonderte Wahl, die Standardoption bleibt aber „Einverstanden“ mit KI. Ohne A9 trägt Ole ein mittleres Risiko; die Abmilderung über A9 senkt es auf gering bis mittel. Für Kranken, BU und Leben bleibt das KI-Auslesen ohnehin an K2 (Nachweis Null-Speicherung) gebunden.
+- *Nicht zulässig wäre*: den Knopf nur „Einverstanden“ zu nennen und die Erklärung in die Fußzeile oder hinter den Link zu verlagern (Art. 7 Abs. 2, [LDH]); eine Einwilligung aus dem bloßen Senden einer Datei abzuleiten (C-673/17, [LDH]).
 
 ---
 
@@ -32,11 +66,11 @@ Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog,
   1. Die Erklärung muss im Nachrichtentext stehen, nicht nur in der kleinen grauen Fußzeile. Der Knopf allein („Einverstanden, ich schicke sie“) sagt nicht, worin eingewilligt wird.
   2. Sie muss die besondere Kategorie ausdrücklich benennen („auch Gesundheitsangaben“).
   3. Informiertheit nach Art. 4 Nr. 11, Art. 7 Abs. 3 S. 3 und ErwG 42: mindestens Identität des Verantwortlichen (der Vermittler, nicht performancegrowth), Zweck (Vorbereitung und Durchführung der Beratung), Hinweis auf jederzeitigen Widerruf vor Abgabe der Einwilligung, Empfänger bzw. Transportweg (WhatsApp/Meta mit möglichem US-Zugriff, Dienstleister). Alles Weitere per Link (Art. 13).
-  4. Freiwilligkeit (Art. 7 Abs. 4, ErwG 43): Der Termin darf nicht davon abhängen. Eine echte Alternative („Lieber nicht“, „Ja, aber ohne KI“ oder der sichere Upload-Link) stärkt die Freiwilligkeit.
+  4. Freiwilligkeit (Art. 7 Abs. 4, ErwG 43): Der Termin darf nicht davon abhängen. Eine echte Alternative („Lieber nicht“, Stichwort „ohne KI“ nach A9 oder der sichere Upload-Link) stärkt die Freiwilligkeit.
   5. Nachweis (Art. 7 Abs. 1): Zeitstempel, Wortlaut, Lead-ID ist richtig. Zusätzlich speichern: WhatsApp-Message-ID der Einwilligungsnachricht, Telefonnummer, Version des Textes, Name des Vermittlers, Link-Version der Datenschutzhinweise.
 - **Fehler im geplanten Text:** „Sie erhält nur Herr Kannapinn.“ ist sachlich falsch, sofern Herr Kannapinn nicht selbst der beratende Vermittler ist: Verantwortlicher und Empfänger ist der jeweilige Vermittler, und Meta, 360dialog sowie performancegrowth (Hosting) verarbeiten die Daten ebenfalls. Eine falsche oder beschönigende Empfängerangabe kann die Einwilligung insgesamt unwirksam machen (fehlende Informiertheit). Außerdem überschreitet der Fußzeilentext nach meinem Kenntnisstand die WhatsApp-Grenze für Fußzeilen (60 Zeichen) und der Knopftext die Grenze für Antwortknöpfe (20 Zeichen); bitte in der Meta-Doku gegenprüfen (ohne Fundstelle).
 
-**Umsetzen.** Einwilligungstext (a) unten verwenden (deckt seit der Zusatzfrage auch das KI-Auslesen ab), Vermittlername dynamisch einsetzen, Erklärung in den Haupttext, Knopf „Ich willige ein“. Datenminimierung (Art. 5 Abs. 1 lit. c): Im Anschreiben anbieten, bei Kranken, BU und Leben nur die Seite mit Tarif, Beitrag und Leistungen zu schicken und Gesundheitsangaben zu schwärzen, wenn der Lead sie nicht besprechen will.
+**Umsetzen.** Einwilligungstext (a) unten verwenden (deckt seit der Zusatzfrage auch das KI-Auslesen ab), Vermittlername dynamisch einsetzen, Erklärung in den Haupttext, Knopf „Einverstanden“ (Entscheidung Ole). Datenminimierung (Art. 5 Abs. 1 lit. c): Im Anschreiben anbieten, bei Kranken, BU und Leben nur die Seite mit Tarif, Beitrag und Leistungen zu schicken und Gesundheitsangaben zu schwärzen, wenn der Lead sie nicht besprechen will.
 
 ---
 
@@ -97,8 +131,8 @@ Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog,
 ## Prüffrage 6: Versicherungsvermittlungsrecht (VVG, GewO, VersVermV, § 213 VVG)
 
 **Ergebnis.**
-- **§ 61 VVG** (Befragung nach Wünschen und Bedürfnissen, Beratung, Dokumentation) und beim Makler § 60 VVG (Marktauswahl): Die Anforderung bestehender Policen dient der Bedarfsermittlung und ist sachlich gerechtfertigt; eine Pflicht, Policen gerade per WhatsApp einzusammeln, besteht nicht. Die Beratungsdokumentation (§§ 61, 62 VVG) bleibt Sache des Vermittlers und darf nicht von der 90-Tage-Löschung der Policen-Kopien abhängen. Normtexte nicht per Tool abgerufen.
-- **§ 6 VVG** betrifft Beratungspflichten des Versicherers; für die Plattform nicht unmittelbar relevant.
+- **§ 61 VVG** (Befragung nach Wünschen und Bedürfnissen, Beratung, Dokumentation) und beim Makler § 60 VVG (Marktauswahl): Die Anforderung bestehender Policen dient der Bedarfsermittlung und ist sachlich gerechtfertigt; eine Pflicht, Policen gerade per WhatsApp einzusammeln, besteht nicht. Die Beratungsdokumentation (§§ 61, 62 VVG) bleibt Sache des Vermittlers und darf nicht von der 90-Tage-Löschung der Policen-Kopien abhängen. Normtexte: [§ 61 VVG](https://www.gesetze-im-internet.de/vvg_2008/__61.html), [§ 60 VVG](https://www.gesetze-im-internet.de/vvg_2008/__60.html) [LDH, 18.11.]; § 62 VVG ohne Tooltreffer.
+- **§ 6 VVG** ([gesetze-im-internet.de](https://www.gesetze-im-internet.de/vvg_2008/__6.html) [LDH, 18.11.]) betrifft Beratungspflichten des Versicherers; für die Plattform nicht unmittelbar relevant.
 - **§ 34d GewO, VersVermV:** performancegrowth vermittelt nicht und berät nicht zu Produkten; das bleibt so, solange der Assistent keine Produktempfehlungen gibt und keine abschlussabhängige Vergütung erhält. Die Erstinformation nach VersVermV (Status, Registernummer, Beschwerdestellen) muss der Vermittler beim ersten Geschäftskontakt geben; der Datenschutzhinweis-Link kann mit einem Link auf die Erstinformation kombiniert werden. Normtexte nicht per Tool abgerufen.
 - **§ 213 VVG** regelt die Erhebung von Gesundheitsdaten durch den **Versicherer** bei Dritten (Ärzte, Krankenhäuser, andere Versicherer) ([§ 213 VVG, gesetze-im-internet.de](https://www.gesetze-im-internet.de/vvg_2008/__213.html) [Web]). Er greift hier nicht, weil der Vermittler beim Betroffenen selbst erhebt. Er wird relevant, sobald Unterlagen an einen Versicherer weitergegeben werden: Das darf die Software nicht automatisch tun; Weitergabe an Versicherer nur durch den Vermittler mit eigener Rechtsgrundlage (Antrag, GDV-Mustererklärung zur Schweigepflichtentbindung). Der GDV-Code of Conduct sieht für Gesundheitsdaten Mustererklärungen vor ([Hinweis R+V auf den Code of Conduct](https://www.ruv.de/datenschutz/codeofconduct) [Web]).
 
@@ -124,7 +158,7 @@ Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog,
 
 **Ampel: GELB.** Sach (Haftpflicht, Hausrat, Kfz): grün, sobald Einwilligungstext (a), AVV § 1a/§ 4 und Datenschutzhinweis (c) aktiv sind. Kranken, BU, Leben: gelb, also erst nach schriftlichem Nachweis der Null-Speicherung beim KI-Anbieter und mit Spartenschalter K2; bis dahin diese Sparten nicht auslesen. Morgen live gehen heißt daher: KI-Auslesen höchstens für Sach.
 
-**Art. 9 Abs. 2 lit. a: Muss die Einwilligung das automatische Auslesen nennen?** Ja. Auch wenn das Ausgabeschema keine Gesundheitsfelder hat, verarbeitet der KI-Dienst das ganze Dokument mitsamt Gesundheitsangaben (Erheben, Auslesen und Abfragen sind Verarbeitung nach Art. 4 Nr. 2). Der Zweck (Terminvorbereitung) bleibt zwar gleich, aber es kommt ein neuer Empfänger hinzu, und die bisher geplante Zusage „keine KI“ würde sonst falsch. Einwilligung muss informiert sein (Art. 4 Nr. 11, ErwG 42) und für Art. 9 ausdrücklich ([Art. 9 DSGVO](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679) [LDH]; [EDSA-Leitlinien 05/2020](https://edpb.europa.eu/our-work-tools/our-documents/guidelines/guidelines-052020-consent-under-regulation-2016679_en) [Web]). Darum nennt Text (a) das KI-Auslesen und den KI-Dienst ausdrücklich und bietet mit „Ja, aber ohne KI“ eine Ablehnung nur des KI-Teils (Granularität, ErwG 32 und 43). Einwilligungen nach dem alten Text decken kein KI-Auslesen.
+**Art. 9 Abs. 2 lit. a: Muss die Einwilligung das automatische Auslesen nennen?** Ja. Auch wenn das Ausgabeschema keine Gesundheitsfelder hat, verarbeitet der KI-Dienst das ganze Dokument mitsamt Gesundheitsangaben (Erheben, Auslesen und Abfragen sind Verarbeitung nach Art. 4 Nr. 2, [EUR-Lex](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679) [LDH, 18.11.]). Der Zweck (Terminvorbereitung) bleibt zwar gleich, aber es kommt ein neuer Empfänger hinzu, und die bisher geplante Zusage „keine KI“ würde sonst falsch. Einwilligung muss informiert sein (Art. 4 Nr. 11, ErwG 42) und für Art. 9 ausdrücklich ([Art. 9 DSGVO](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679) [LDH]; [EDSA-Leitlinien 05/2020](https://edpb.europa.eu/our-work-tools/our-documents/guidelines/guidelines-052020-consent-under-regulation-2016679_en) [Web]). Darum nennt Text (a) das KI-Auslesen und den KI-Dienst ausdrücklich und ermöglicht eine Ablehnung nur des KI-Teils (Granularität, ErwG 32 und 43); nach Oles Zwei-Knopf-Entscheidung per Stichwort „ohne KI“ (A9), siehe „Stand Nachrecherche 18.11.“. Einwilligungen nach dem alten Text decken kein KI-Auslesen.
 
 **Art. 22 DSGVO:** Greift nicht. Das Auslesen bereitet die Beratung vor; es gibt keine Entscheidung mit rechtlicher Wirkung oder ähnlich erheblicher Beeinträchtigung, und der Vermittler prüft die Werte (K6). Wichtig bleibt die Richtigkeit (Art. 5 Abs. 1 lit. d): Die DSK weist in ihrer Orientierungshilfe darauf hin, dass unzutreffende KI-Ausgaben zu unzulässigen Verarbeitungen führen können ([DSK, OH KI und Datenschutz, Mai 2024, Kopie BayLfD](https://www.datenschutz-bayern.de/dsbk-ent/DSK_OH_KI_und_Datenschutz.pdf) [Web], Inhalt laut Suchergebnis).
 
@@ -134,7 +168,7 @@ Gegenstand: Der WhatsApp-Assistent (WhatsApp Business Cloud API über 360dialog,
 - In beiden Fällen ist die Konzernmutter ein US-Unternehmen; ein Zugriff nach US-Recht ist nicht ausgeschlossen. DPF-Zertifizierung von Microsoft und OpenAI vor Vertragsschluss auf der offiziellen DPF-Liste prüfen (nicht per Tool bestätigt).
 - **§ 203 StGB:** Auch der KI-Anbieter ist weitere mitwirkende Person (§ 203 Abs. 3 S. 2, Abs. 4 S. 2 Nr. 2, [§ 203 StGB](https://www.gesetze-im-internet.de/stgb/__203.html) [Web]). Verschwiegenheitsverpflichtung in Textform anfragen; zusätzlich deckt die Einwilligung (a) die Weitergabe ab.
 
-**KI-Verordnung:** Für den Assistenten selbst gilt Art. 50 Abs. 1 (Hinweis, dass man mit einer KI kommuniziert, wenn das nicht offensichtlich ist); laut Fachquellen gelten die Transparenzpflichten seit dem 2.8.2026, ohne allgemeine Übergangsfrist für Chatbots ([CMS, Transparenzpflichten der KI-VO](https://cms.law/de/deu/legal-updates/deepfakes-chatbots-co.-die-neuen-transparenzpflichten-der-ki-vo), [IHK Schleswig-Holstein](https://www.ihk.de/sh/ki-kennzeichnung) [Web]; Stand eines „Digital-Omnibus“ nicht verifiziert). Das Auslesen selbst interagiert nicht mit dem Lead und erzeugt keine veröffentlichten Inhalte; eine eigene Kennzeichnungspflicht nach Art. 50 sehe ich dafür nicht, die Transparenz läuft über DSGVO-Information und die Kennzeichnung im CRM (K6). Kein Hochrisikosystem, solange keine Risikobewertung oder Preisbildung für Lebens- oder Krankenversicherung erfolgt (K8). Pflicht zur KI-Kompetenz (Art. 4 KI-VO) für performancegrowth und die Vermittler mitdenken (ohne Fundstelle). Prüfpunkt im Rechercheplan: Nr. 8 der Queue.
+**KI-Verordnung:** Für den Assistenten selbst gilt Art. 50 Abs. 1 (Hinweis, dass man mit einer KI kommuniziert, wenn das nicht offensichtlich ist; Wortlaut [EUR-Lex 32024R1689](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689) [LDH, 18.11.]); laut Fachquellen gelten die Transparenzpflichten seit dem 2.8.2026, ohne allgemeine Übergangsfrist für Chatbots ([CMS, Transparenzpflichten der KI-VO](https://cms.law/de/deu/legal-updates/deepfakes-chatbots-co.-die-neuen-transparenzpflichten-der-ki-vo), [IHK Schleswig-Holstein](https://www.ihk.de/sh/ki-kennzeichnung) [Web]; Stand eines „Digital-Omnibus“ nicht verifiziert). Das Auslesen selbst interagiert nicht mit dem Lead und erzeugt keine veröffentlichten Inhalte; eine eigene Kennzeichnungspflicht nach Art. 50 sehe ich dafür nicht, die Transparenz läuft über DSGVO-Information und die Kennzeichnung im CRM (K6). Kein Hochrisikosystem, solange keine Risikobewertung oder Preisbildung für Lebens- oder Krankenversicherung erfolgt (K8). Pflicht zur KI-Kompetenz (Art. 4 KI-VO) für performancegrowth und die Vermittler mitdenken (ohne Fundstelle). Prüfpunkt im Rechercheplan: Nr. 8 der Queue.
 
 **Art. 5 Abs. 1 lit. c (Datenminimierung):** Das Schema ohne Gesundheitsfelder ist richtig, reicht aber allein nicht, weil das Eingabedokument die Angaben enthält. Zusätzlich: nur benötigte Seiten senden (z. B. Versicherungsschein, Beitragsseite), Freitext ausschließen, Ausgabefilter (K4), keine Speicherung von Prompts und Rohantworten (K5), ZDR beim Anbieter, KI-Ablehnung möglich. Eine noch stärkere Variante wäre eine Schwärzung vor dem Senden (eigene EU-OCR ohne Drittanbieter plus Regelfilter); das ist aufwendig und für den Start nicht zwingend.
 
@@ -150,10 +184,13 @@ Interaktive Nachricht, Haupttext (Platzhalter in geschweiften Klammern dynamisch
 
 > Ich willige ein, dass {Vorname Nachname des Vermittlers} ({Firma}) meine hier gesendeten Policen zur Vorbereitung unseres Termins speichert und die Vertragsdaten automatisch per KI auslesen lässt, auch wenn sie Gesundheitsangaben enthalten (etwa Kranken-, BU- oder Lebensversicherung). Beteiligt sind WhatsApp (Meta, Zugriff auch aus den USA möglich), der Dienstleister performancegrowth und ein KI-Dienst mit Verarbeitung in der EU; Widerruf jederzeit mit „Widerruf“, Infos: {Link Datenschutzhinweise}
 
-Knöpfe (WhatsApp erlaubt höchstens 3 Antwortknöpfe mit je höchstens 20 Zeichen):
-- „Ich willige ein“ (Speichern und KI-Auslesen)
-- „Ja, aber ohne KI“ (nur Speichern; Einwilligungsprotokoll mit Kennzeichen `ki=false`, Auslesen unterbleibt)
+Ergänzung im Haupttext nach Entscheidung Ole und Auflage A9 (Stand 18.11.), als letzter Satz vor dem Link: „Ohne KI? Dann antworten Sie ‚ohne KI‘.“
+
+Knöpfe nach Entscheidung Ole (WhatsApp erlaubt höchstens 3 Antwortknöpfe mit je höchstens 20 Zeichen):
+- „Einverstanden“ (Speichern und KI-Auslesen; wird zusätzlich „ohne KI“ geschrieben, vorher oder danach: nur Speichern, Protokoll mit `ki=false`)
 - „Lieber nicht“
+
+Frühere Fassung mit drittem Knopf „Ja, aber ohne KI“: rechtlich die sicherste Variante, von Ole verworfen; A9 ist der Ersatz.
 
 Den sicheren Upload-Link (E1) in der Folgenachricht oder bei „Lieber nicht“ anbieten, da die Knopfzahl begrenzt ist.
 
@@ -161,7 +198,7 @@ Solange KI-Auslesen für Kranken, BU und Leben noch nicht freigegeben ist (siehe
 
 Fußzeile (optional, höchstens 60 Zeichen): „Ihr Termin findet auch ohne Unterlagen statt.“
 
-Folgenachricht nach Klick auf „Ich willige ein“: „Danke! Schicken Sie die Policen gern als Foto oder PDF. Seiten mit Gesundheitsangaben können Sie schwärzen, wenn Sie sie nicht besprechen möchten.“
+Folgenachricht nach Klick auf „Einverstanden“: „Danke! Schicken Sie die Policen gern als Foto oder PDF. Seiten mit Gesundheitsangaben können Sie schwärzen, wenn Sie sie nicht besprechen möchten.“
 
 ### (b) AVV-Ergänzung
 
@@ -193,7 +230,7 @@ Folgenachricht nach Klick auf „Ich willige ein“: „Danke! Schicken Sie die 
 >
 > Verantwortlich: {Vermittler, Anschrift, E-Mail, Telefon}{, Datenschutzbeauftragter: …, falls vorhanden}.
 >
-> Zur Vorbereitung Ihres Beratungstermins bitten wir Sie, Kopien Ihrer bestehenden Versicherungsverträge zu schicken. Diese können Gesundheitsangaben enthalten, etwa Risikozuschläge oder Leistungsausschlüsse in Kranken-, Berufsunfähigkeits- oder Lebensversicherungen. Wir verarbeiten die Unterlagen nur mit Ihrer ausdrücklichen Einwilligung (Art. 6 Abs. 1 lit. a und Art. 9 Abs. 2 lit. a DSGVO), und nur, um Ihren bestehenden Versicherungsschutz zu verstehen und Sie im Termin zu beraten. Wenn Sie zustimmen, lassen wir die wichtigsten Vertragsdaten (z. B. Versicherer, Tarif, Beitrag, Laufzeit, Kündigungsfrist, Versicherungssummen, Selbstbeteiligung) automatisch durch einen KI-Dienst auslesen, damit wir Ihre Verträge vergleichen können. Gesundheitsangaben werden dabei nicht erfasst oder gespeichert. Der KI-Dienst {Anbieter} verarbeitet die Unterlagen als unser Auftragsverarbeiter ausschließlich in der EU, speichert sie nicht und nutzt sie nicht zum Training. Die ausgelesenen Daten prüfen wir selbst; eine automatisierte Entscheidung über Sie findet nicht statt. Sie können das Auslesen ablehnen („Ja, aber ohne KI“) und die Unterlagen trotzdem schicken. An Versicherer geben wir die Unterlagen nicht ohne Ihre gesonderte Zustimmung weiter.
+> Zur Vorbereitung Ihres Beratungstermins bitten wir Sie, Kopien Ihrer bestehenden Versicherungsverträge zu schicken. Diese können Gesundheitsangaben enthalten, etwa Risikozuschläge oder Leistungsausschlüsse in Kranken-, Berufsunfähigkeits- oder Lebensversicherungen. Wir verarbeiten die Unterlagen nur mit Ihrer ausdrücklichen Einwilligung (Art. 6 Abs. 1 lit. a und Art. 9 Abs. 2 lit. a DSGVO), und nur, um Ihren bestehenden Versicherungsschutz zu verstehen und Sie im Termin zu beraten. Wenn Sie zustimmen, lassen wir die wichtigsten Vertragsdaten (z. B. Versicherer, Tarif, Beitrag, Laufzeit, Kündigungsfrist, Versicherungssummen, Selbstbeteiligung) automatisch durch einen KI-Dienst auslesen, damit wir Ihre Verträge vergleichen können. Gesundheitsangaben werden dabei nicht erfasst oder gespeichert. Der KI-Dienst {Anbieter} verarbeitet die Unterlagen als unser Auftragsverarbeiter ausschließlich in der EU, speichert sie nicht und nutzt sie nicht zum Training. Die ausgelesenen Daten prüfen wir selbst; eine automatisierte Entscheidung über Sie findet nicht statt. Sie können das Auslesen ablehnen (Nachricht „ohne KI“ im Chat) und die Unterlagen trotzdem schicken. An Versicherer geben wir die Unterlagen nicht ohne Ihre gesonderte Zustimmung weiter.
 >
 > Empfänger: Die Unterlagen werden technisch von der Ole Kannapinn UG (haftungsbeschränkt), performancegrowth, {Anschrift}, als unserem Auftragsverarbeiter gespeichert, verschlüsselt in der EU. Die Übertragung erfolgt über WhatsApp: Dabei sind die 360dialog GmbH, Berlin, und WhatsApp Ireland Ltd. als Auftragsverarbeiter beteiligt. WhatsApp kann die Inhalte bis zu 30 Tage zwischenspeichern und Daten an Meta Platforms, Inc. und WhatsApp LLC in den USA übermitteln; Grundlage ist der Angemessenheitsbeschluss zum EU-US Data Privacy Framework (Art. 45 DSGVO), unter dem diese Unternehmen zertifiziert sind. Verbindungsdaten wie Telefonnummer und Zeitpunkte verarbeitet WhatsApp teilweise in eigener Verantwortung; dazu gelten die Datenschutzhinweise von WhatsApp. Wenn Sie WhatsApp nicht nutzen möchten, können Sie die Unterlagen über einen sicheren Upload-Link schicken oder in den Termin mitbringen.
 >
@@ -250,6 +287,7 @@ Hinweis: Strafrahmen bitte von der Anwältin am aktuellen Normtext gegenprüfen 
 - **A6 Speicher:** Eigener privater Bucket nur für Policen, Region bzw. Rechtsraum EU fest konfiguriert, serverseitige Verschlüsselung mit mandantenbezogenem Schlüssel, Abruf nur über kurzlebige signierte URLs nach Login. Achtung: `src/lib/r2.ts` in diesem Repo nutzt Cloudflare R2 mit `region: "auto"` und öffentlicher URL für Werbebilder; diesen Client nicht für Policen wiederverwenden. Falls R2: EU-Jurisdiktion des Buckets einstellen und Cloudflare als Unterauftragnehmer (US-Konzern) aufnehmen.
 - **A7 Logging und Benachrichtigungen:** Keine Dateiinhalte, Dateinamen mit Gesundheitsbezug, Medien-URLs oder Webhook-Payloads in Anwendungslogs, Fehlertracking (Sentry) oder Analytics; Push- und E-Mail-Benachrichtigungen an den Vermittler nur neutral („Neue Unterlagen von {Lead}“).
 - **A8 Erinnerungen:** Höchstens 2, nur bei protokolliertem WhatsApp-Opt-in aus der Terminbuchung, nur bis zum Termin, Stopp bei Absage, „Lieber nicht“, „STOP“ oder Widerruf; jede Erinnerung mit Abmeldehinweis; kein werblicher Inhalt.
+- **A9 KI-Ablehnung ohne dritten Knopf (neu 18.11., Folge der Bündelung):** Satz „Ohne KI? Dann antworten Sie ‚ohne KI‘.“ im Haupttext von (a). Stichwort (auch „keine KI“, „ohne ki“) vor und nach dem Klick erkennen, `ki=false` im Protokoll (A3) setzen, Bestätigung an den Lead („Alles klar, wir lesen nichts automatisch aus.“), bereits erzeugte Feldwerte löschen. Gilt für alle Sparten.
 
 ### Weitere Pflichtpunkte (zeitnah, spätestens vor breitem Rollout)
 
@@ -260,30 +298,9 @@ Hinweis: Strafrahmen bitte von der Anwältin am aktuellen Normtext gegenprüfen 
 - **Keine Weitergabe:** Keine Funktion zum Weiterleiten an Versicherer oder Dritte aus der Ablage; Export nur als Download durch den Vermittler.
 - **Ausschluss aus Statistik/Benchmark** und aus jeder KI-Verarbeitung außer dem freigegebenen Auslesen technisch erzwingen (eigene Tabelle/Bucket ohne Anbindung an Auswertungen).
 
-### Umgesetzt (Stand 18.11.2026, „Weitere Pflichtpunkte“)
-
-- **Zugriffskontrolle, 2FA:** Policen vom Kunden öffnen bzw. herunterladen nur Logins mit Zwei-Faktor-Login (TOTP, wie
-  bei den Admins), sonst Einrichtungs-Karte mit QR-Code und Notfall-Codes; Freischaltung Kranken/BU/Leben nur mit
-  Zwei-Faktor-Login des Inhabers; Admin-Vorschau ohne Inhalte und Dateinamen. Kein Supportzugriff auf Inhalte über die
-  Oberfläche (Break-Glass mit automatischer Benachrichtigung ist **noch nicht** gebaut). `docs/datenschutz-policen.md`
-  Abschnitt 3a.
-- **Zugriffsprotokoll:** jeder Abruf (`policen.abruf`, Öffnen bzw. Herunterladen, Login, Zeitpunkt), Löschen und
-  Behalten im Änderungsprotokoll, 12 Monate (`pruneAudit`). Für den Vermittler unter Einstellungen → Änderungsprotokoll.
-- **Löschautomatik und Backups:** täglicher Job (90 Tage nach Termin), Datenbank-Sicherungen höchstens 30 Tage
-  (Löschkonzept `docs/datenschutz.md`), Löschprotokoll mit automatischer erneuter Anwendung nach jeder
-  Wiederherstellung, Crypto-Shredding je Datei (eigener Datenschlüssel, mit dem Eintrag vernichtet). Löschnachweis:
-  Löschprotokoll (IDs und Zeitpunkt) und Änderungsprotokoll.
-- **Malware-Prüfung:** ClamAV (Signaturprüfung, kein Auslesen) vor der Ablage bzw. Bereitstellung: Policen per WhatsApp,
-  Uploads, E-Mail-Anhänge. Befund: verworfen, Lead neutral informiert, Vermittler-Hinweis, Protokoll. Ohne erreichbare
-  Prüfung nicht bereitgestellt (Schalter `VIRENPRUEFUNG_PFLICHT` für Ablehnen). `docs/virenpruefung.md`.
-- **AVV-Hinweis § 6:** Der Platzhalter „{x} Tage“ ist mit **30 Tagen** festgelegt (Löschkonzept). Die in der App
-  angezeigte Fassung (`src/lib/policen/avv-text.ts`, Version `AVV_POLICEN_VERSION`) sagt noch „Sicherungszyklus des
-  Hosting-Anbieters“; mit der nächsten Fassung (Anwältin) „von 30 Tagen“ eintragen und die Version erhöhen (erneute
-  Zustimmung). § 5 „Zwei-Faktor-Anmeldung“ und „Schadsoftwareprüfung“ sind damit technisch erfüllt.
-
 ### Für das KI-Auslesen (Zusatzfrage 9)
 
-- **K1 Einwilligungsflag:** Auslesen nur bei Knopf „Ich willige ein“ mit KI-Textversion; bei „Ja, aber ohne KI“ oder alten Einwilligungen nie.
+- **K1 Einwilligungsflag:** Auslesen nur bei Knopf „Einverstanden“ mit KI-Textversion und ohne Stichwort „ohne KI“ (A9); bei `ki=false` oder alten Einwilligungen nie.
 - **K2 Spartenschalter:** Konfiguration „KI-Auslesen erlaubt für Sparten“; Kranken, BU, Leben standardmäßig aus, bis ZDR-Nachweis hinterlegt ist. Sparte vor dem Auslesen bestimmen (z. B. durch Angabe des Leads oder Vermittlers); im Zweifel nicht auslesen.
 - **K3 Anbieterkonfiguration:** Nur EU-Endpunkt (Azure Data Zone EU bzw. OpenAI-Projekt mit Region Europa), ZDR aktiv, Training aus; Schlüssel und Endpunkt so festlegen, dass kein Fallback auf globale oder US-Endpunkte möglich ist. Den in diesem Repo vorhandenen Replicate-Client (`replicate` in `package.json`) nicht für Policen verwenden.
 - **K4 Ausgabeschema:** Strikte JSON-Schema-Ausgabe nur mit den Vertragsfeldern, Zahlen und Datumsfelder typisiert, kein Freitext, kein „Bemerkungen“-Feld; serverseitige Prüfung, die Werte mit Gesundheitsbegriffen (Diagnose, Ausschluss, Zuschlag, Vorerkrankung usw.) verwirft.
@@ -312,16 +329,18 @@ Hinweis: Strafrahmen bitte von der Anwältin am aktuellen Normtext gegenprüfen 
 8. **DPF-Ausfall:** Welche Fallback-Klausel (SCC, Aussetzung) ist im AVV sinnvoll, falls der Angemessenheitsbeschluss vom EuGH aufgehoben wird?
 9. **Meta-Richtlinien:** Erlauben die WhatsApp Business Messaging Policy und Commerce Policy, aktiv Unterlagen mit Gesundheitsangaben anzufordern? (Nicht recherchiert, ohne Fundstelle.)
 10. **KI-Anbieter und § 203:** Genügt der Standard-DPA von Microsoft bzw. OpenAI als Verschwiegenheitsverpflichtung nach § 203 Abs. 4 S. 2 Nr. 2 StGB, oder braucht es eine Zusatzvereinbarung bzw. stützt man sich allein auf die Einwilligung?
-11. **Einwilligung für KI:** Reicht die gebündelte Einwilligung (Speichern und KI-Auslesen in einem Knopf, Ablehnung des KI-Teils per zweitem Knopf), oder verlangt die Granularität (ErwG 32, 43) zwei getrennte Erklärungen?
+11. **Bündelung Speichern und KI (geschärft 18.11.):** Ole hat sich für zwei Knöpfe („Einverstanden“, „Lieber nicht“) entschieden, KI-Ablehnung nur per Stichwort „ohne KI“ (A9). Genügt das, um die Vermutung fehlender Freiwilligkeit nach ErwG 43 S. 2 auszuräumen, oder ist eine gesonderte Erklärung „angebracht“, weil das KI-Auslesen ein eigener Vorgang mit eigenem Empfänger ist (Art. 4 Nr. 2)? Welche Randnummern von EuGH C-252/21 ([CELEX:62021CJ0252](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62021CJ0252) [LDH]) zur gesonderten Einwilligung sind einschlägig? Und: Fällt bei Unwirksamkeit wegen Bündelung auch die Einwilligung ins Speichern, oder ist sie teilbar?
+12. **Anhängiges Verfahren (neu 18.11.):** EuGH C-317/25 Groupe Canal+ gegen CNIL, Schlussanträge vom 17.9.2026 ([CELEX:62025CC0317](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62025CC0317) [LDH]): Berührt es die Anforderungen an gesonderte Einwilligungen? (Inhalt nicht abgerufen.)
 
 ---
 
 ## Offen gebliebene Recherche (Legal Data Hunter Tageslimit)
 
-Bei Reset (18.11.2026, 13:50 UTC) nachholen und in `docs/recht/legal-data-hunter-queue.md` (Nr. 6, 10) eintragen:
-- Normtexte per resolve_reference: § 203 StGB, § 213 VVG, §§ 60 bis 62 VVG, § 34d GewO, § 15 VersVermV (heute nicht aufgelöst bzw. Limit).
-- Rechtsprechung: BGH VIII ZR 53/09 über die Tool-Quelle; Urteil EuGH C-21/23 auf EUR-Lex; BGH/OLG zu § 7 UWG bei Terminerinnerungen und Servicenachrichten; EuGH zum Begriff „ausdrücklich“ (z. B. Planet49 C-673/17 als Einwilligungsmaßstab).
-- Behördenpraxis: DSK-Muss-Liste (bundesweite Fassung), DSK-Papiere zu Messengern, EDSA-Leitlinien 05/2020 Volltext zur ausdrücklichen Einwilligung.
+Stand 18.11.: Limit nach 12 Abfragen erneut erreicht, resets_at 2026-11-18T22:24:00+00:00 (Meldung des Tools: limit_type „day“, Plan „free“, Upgrade unter https://legaldatahunter.com/pricing). Erledigt am 18.11.: Art. 4, Art. 7 DSGVO, Art. 50 KI-VO, §§ 6, 60, 61, 68 VVG, EuGH C-673/17 (Planet49), C-61/19, C-252/21. Weiter offen, beim nächsten Reset nachholen und in `docs/recht/legal-data-hunter-queue.md` (Nr. 6, 10) eintragen:
+- Normtexte: § 203 StGB (resolve_reference ohne Treffer; mit Suche in Quelle DE/BGBl erneut versuchen), § 62 VVG, § 213 VVG, § 34d GewO, § 15 VersVermV, Wortlaut Art. 4 Nr. 11 und 15, Art. 9, 28, 35, 44 ff. DSGVO und ErwG 32, 42, 43 (Volltext per get_document, Quelle EU/EUR-Lex, source_id 32016R0679).
+- Volltext EuGH C-252/21 (Quelle EU/CURIA, source_id 62021CJ0252): Randnummern zur gesonderten Einwilligung und zu Art. 9.
+- Rechtsprechung: BGH VIII ZR 53/09 und BGH VI ZR 225/17 über die Tool-Quelle; Urteil EuGH C-21/23; BGH/OLG zu § 7 UWG bei Terminerinnerungen; Rechtsprechung zu Messenger/WhatsApp und Gesundheitsdaten; BGH/OLG zu Gesundheitsdaten bei Versicherungsvermittlern; BVerwG zu Einwilligung und Berufsgeheimnis.
+- Behördenpraxis: DSK-Muss-Liste (bundesweite Fassung), DSK-Papiere zu Messengern, EDSA-Leitlinien 05/2020 Volltext zur ausdrücklichen Einwilligung und Granularität.
 
 ## Quellen
 
@@ -330,6 +349,13 @@ Bei Reset (18.11.2026, 13:50 UTC) nachholen und in `docs/recht/legal-data-hunter
 - [§ 7 UWG](https://www.gesetze-im-internet.de/uwg_2004/__7.html)
 - [EuGH C-184/20, Urteil 1.8.2022](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62020CJ0184) (Lauf 16.11.)
 - [EuGH C-21/23, Schlussanträge](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62023CC0021) (Lauf 16.11.)
+- [Verordnung (EU) 2016/679, Art. 4 und Art. 7, Wortlaut](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R0679) (18.11.)
+- [EuGH C-252/21, Meta Platforms u. a. gegen Bundeskartellamt, Urteil 4.7.2023](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62021CJ0252) (18.11.)
+- [EuGH C-61/19, Orange România, Urteil 11.11.2020](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62019CJ0061) und [Schlussanträge](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62019CC0061) (18.11.)
+- [EuGH C-673/17, Planet49, Urteil 1.10.2019](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62017CJ0673) (18.11.)
+- [EuGH C-317/25, Groupe Canal+, Schlussanträge 17.9.2026](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62025CC0317) (18.11., anhängig)
+- [§ 6 VVG](https://www.gesetze-im-internet.de/vvg_2008/__6.html), [§ 60 VVG](https://www.gesetze-im-internet.de/vvg_2008/__60.html), [§ 61 VVG](https://www.gesetze-im-internet.de/vvg_2008/__61.html), [§ 68 VVG](https://www.gesetze-im-internet.de/vvg_2008/__68.html) (18.11.)
+- [Verordnung (EU) 2024/1689, Art. 50, Wortlaut](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689) (18.11.)
 
 [Web] WebSearch:
 - [EuGH C-21/23 Lindenapotheke, curia](https://curia.europa.eu/jcms/jcms/p1_4584865/de)
@@ -362,3 +388,9 @@ Bei Reset (18.11.2026, 13:50 UTC) nachholen und in `docs/recht/legal-data-hunter
 - [OpenAI-Forum: Berechtigung EU-Datenresidenz](https://community.openai.com/t/how-can-an-api-customer-become-eligible-for-eu-data-residency/1381888)
 - [CMS: Transparenzpflichten der KI-VO](https://cms.law/de/deu/legal-updates/deepfakes-chatbots-co.-die-neuen-transparenzpflichten-der-ki-vo)
 - [IHK Schleswig-Holstein: KI-Kennzeichnung](https://www.ihk.de/sh/ki-kennzeichnung)
+
+## Entscheidung Ole (17.11., Nacht)
+
+- Einwilligung nur mit zwei Knöpfen „Einverstanden“ und „Lieber nicht“. Speichern und KI-Auslesen werden gebündelt eingewilligt, ohne getrennte Option „ohne KI“. Begründung Ole: sonst wählen fast alle die Option ohne KI. Rechtliche Einordnung: Das Angebot bleibt insgesamt freiwillig (der Termin findet auch ohne Unterlagen statt), daher kein Kopplungsproblem nach Art. 7 Abs. 4 DSGVO. Offen ist, ob ErwG 43 hier eine getrennte Einwilligung verlangt (Anwaltsfrage 11). Restrisiko leicht erhöht, von Ole bewusst getragen.
+  - Nachtrag 18.11.: Nach der Nachrecherche (Art. 4 Nr. 2, Art. 7 DSGVO, EuGH C-252/21, alle [LDH]) ist die Bündelung vertretbar, aber das Restrisiko eher mittel als leicht erhöht. Empfehlung ohne dritten Knopf: Auflage A9 (Stichwort „ohne KI“), senkt es auf gering bis mittel. Entscheidung über A9 liegt bei Ole.
+- Livegang aller Sparten. Gesundheitssparten je Vermittler erst nach Zustimmung zur AVV-Ergänzung (A5). KI-Auslesen für Kranken, BU und Leben erst mit Nachweis der Null-Speicherung (K2).

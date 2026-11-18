@@ -3,8 +3,8 @@
 //
 // Vorgaben der Rechtsprüfung (docs/recht/policen-whatsapp-gesundheitsdaten.md, K1 bis K8) und Freigabe Ole 18.11.2026:
 //   K1  Auslesen nur mit Einwilligung „Einverstanden“ (ki = true) in einer KI-Textversion (textVersionKi, ab
-//       2026-11-18); PolicenNachweis aus Policen per WhatsApp. Alte Einwilligungen und „ohne KI“ nie. PKV/BU/Leben nur,
-//       wenn die Fassung Gesundheitsangaben nennt („.gN“).
+//       2026-11-18.s2/.g2, also mit dem Satz zu „ohne KI“ nach Auflage A9); PolicenNachweis aus Policen per WhatsApp.
+//       Alte Einwilligungen und „ohne KI“ nie. PKV/BU/Leben nur, wenn die Fassung Gesundheitsangaben nennt („.gN“).
 //   K2  Sach (Haftpflicht, Hausrat, Kfz, Wohngebäude, Rechtsschutz): an, sobald der Schlüssel gesetzt ist.
 //       Kranken (PKV), BU und Leben: erst, wenn der Nachweis „keine Speicherung“ im Admin hinterlegt ist
 //       (PolicenAuslesenEinstellung.zdrNachweisAm), dann automatisch.
@@ -30,11 +30,14 @@ const aus = (v: string | undefined) => /^(0|false|nein|aus|off)$/i.test((v ?? ""
 
 /**
  * Textversionen der Einwilligung, die das KI-Auslesen abdecken (lib/policen/bitte.ts EINWILLIGUNG_TEXT_VERSION):
- *   „JJJJ-MM-TT.gN“ (mit Gesundheitsangaben) bzw. „JJJJ-MM-TT.sN“ (nur Sach) ab AUSLESEN_AB_DATUM, dazu Text (a) der
- *   Rechtsprüfung „a-JJJJ-MM-TT“ ab 2026-11-17 (nennt Gesundheitsangaben). Neuere Versionen im selben Format gelten auch.
+ *   „JJJJ-MM-TT.gN“ (mit Gesundheitsangaben) bzw. „JJJJ-MM-TT.sN“ (nur Sach) ab AUSLESEN_AB_DATUM, an diesem Tag erst ab
+ *   Nummer AUSLESEN_AB_NUMMER (2 = mit dem Satz zu „ohne KI“, Auflage A9; .g1/.s1 boten die Ablehnung nur des Auslesens
+ *   nicht an), dazu Text (a) der Rechtsprüfung „a-JJJJ-MM-TT“ ab 2026-11-17 (nennt Gesundheitsangaben und „ohne KI“).
+ *   Neuere Versionen im selben Format gelten auch.
  */
 export const AUSLESEN_AB_DATUM = "2026-11-18";
-export const AUSLESEN_MIN_TEXTVERSION = `${AUSLESEN_AB_DATUM}.s1`;
+export const AUSLESEN_AB_NUMMER = 2;
+export const AUSLESEN_MIN_TEXTVERSION = `${AUSLESEN_AB_DATUM}.s${AUSLESEN_AB_NUMMER}`;
 
 /** Deckt diese Textversion das KI-Auslesen ab, und auch Unterlagen mit Gesundheitsangaben? null = gar nicht. */
 export function textVersionKi(v: string | null | undefined): { gesundheit: boolean } | null {
@@ -43,6 +46,7 @@ export function textVersionKi(v: string | null | undefined): { gesundheit: boole
   if (a) return a[1] >= "2026-11-17" ? { gesundheit: true } : null;
   const m = /^(\d{4}-\d{2}-\d{2})\.([gs])(\d+)$/.exec(x);
   if (!m || m[1] < AUSLESEN_AB_DATUM) return null;
+  if (m[1] === AUSLESEN_AB_DATUM && Number(m[3]) < AUSLESEN_AB_NUMMER) return null;
   return { gesundheit: m[2] === "g" };
 }
 export const textVersionDecktKi = (v: string | null | undefined) => textVersionKi(v) !== null;

@@ -4182,9 +4182,10 @@ model PolicenNachweis {
   leadId             String?
   // WhatsApp-Nummer des Leads
   phone              String
-  // einwilligung | abgelehnt | widerruf | erinnerung_optin | erinnerung_stopp
+  // einwilligung | abgelehnt | widerruf | erinnerung_optin | erinnerung_stopp | ohne_ki (Stichwort „ohne KI“, A9)
   art                String
-  // KI-Auslesen erlaubt („Ich willige ein“ = true, „Ja, aber ohne KI“ = false); null bei anderen Arten
+  // KI-Auslesen erlaubt („Einverstanden“ = true; mit Stichwort „ohne KI“ vorher oder danach = false, A9); null bei
+  // anderen Arten
   ki                 Boolean?
   // Wortlaut, wie gesendet (Einwilligungsnachricht mit Fußzeile und Knopftext bzw. Häkchentext der Buchung)
   wortlaut           String?

@@ -323,6 +323,7 @@ const GRUND: Record<string, string> = {
 };
 const SPERRE: Record<string, string> = {
   einwilligung: "Ohne Zustimmung des Kunden zum Auslesen. Bitte im Original nachsehen.",
+  ohne_ki: "Nicht ausgelesen auf Wunsch des Kunden.",
   aus: "Automatisches Auslesen ist gerade nicht verfügbar.",
   pause: "Automatisches Auslesen ist gerade nicht verfügbar.",
   kunde: "Automatisches Auslesen ist für Ihr Konto noch nicht freigeschaltet.",

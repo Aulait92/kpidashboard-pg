@@ -179,9 +179,13 @@ describe("Schalter und Konfiguration", () => {
     expect(freigegebeneSparten({ zdr: true }, {})).toEqual(["haftpflicht", "hausrat", "kfz", "wohngebaeude", "rechtsschutz", "pkv", "bu", "leben"]);
     expect(freigegebeneSparten({ zdr: false }, { POLICEN_AUSLESEN_SPARTEN: "hausrat,pkv" })).toEqual(["hausrat"]);
   });
-  it("Einwilligung: nur KI-Textversionen (Policen per WhatsApp ab 2026-11-18, Text (a) ab a-2026-11-17)", () => {
-    expect(textVersionKi("2026-11-18.g1")).toEqual({ gesundheit: true });
-    expect(textVersionKi("2026-11-18.s1")).toEqual({ gesundheit: false });
+  it("Einwilligung: nur KI-Textversionen (Policen per WhatsApp ab 2026-11-18.s2/.g2 mit „ohne KI“, Text (a) ab a-2026-11-17)", () => {
+    expect(textVersionKi("2026-11-18.g2")).toEqual({ gesundheit: true });
+    expect(textVersionKi("2026-11-18.s2")).toEqual({ gesundheit: false });
+    // Auflage A9: .g1/.s1 boten die Ablehnung nur des Auslesens nicht an
+    expect(textVersionKi("2026-11-18.g1")).toBeNull();
+    expect(textVersionKi("2026-11-18.s1")).toBeNull();
+    expect(textVersionKi("2026-12-01.g1")).toEqual({ gesundheit: true });
     expect(textVersionKi("2026-12-01.g2")).toEqual({ gesundheit: true });
     expect(textVersionKi("a-2026-11-17")).toEqual({ gesundheit: true });
     expect(textVersionDecktKi("a-2026-11-18")).toBe(true);

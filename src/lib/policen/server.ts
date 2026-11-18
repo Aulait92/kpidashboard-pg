@@ -12,6 +12,9 @@
 // Tor (A2): Ohne Einwilligung wird nichts von Meta/360dialog abgerufen; nur die Media-ID bleibt höchstens 24 Stunden,
 // die Nachfrage kommt einmal je Lead. Nachweis (A3): PolicenNachweis, nur anhängen. Widerruf (A4): sofort alles löschen.
 // Logs (A7): keine Inhalte, Dateinamen, Medien-Adressen; Push neutral „Neue Unterlagen von {Lead}“.
+// „ohne KI“ (A9): Stichwort vor oder nach „Einverstanden“ (auch als Begleittext einer Datei, nur Regeln, bitte.ts
+// istOhneKi): Nachweis „ohne_ki“, Einwilligung mit ki = false, feste Bestätigung, ausgelesene Werte gelöscht
+// (kiAbwaehlen), künftig nichts ausgelesen (lib/policen/ohne-ki.ts). Der Assistent antwortet darauf nicht.
 //
 // Sicherheit vor dem breiten Start (Ole, 18.11.2026): Virenprüfung jeder Datei vor der Ablage (lib/sicherheit/
 // virenpruefung.ts; Befund: verwerfen, Lead neutral informieren, Vermittler-Hinweis, Änderungsprotokoll; ungeprüft:
@@ -75,16 +78,20 @@ import {
 } from "@/lib/policen/regeln";
 import {
   einwilligungsAntwort,
-  einwilligungTextVersion,
+  einwilligungTextVersionAus,
   EINWILLIGUNG_RE,
+  istOhneKi,
   lieberNichtText,
   NACHFRAGE_RE,
   nachEinwilligungText,
+  ohneKiBestaetigung,
+  ohneStichwort,
   policenEinwilligung,
   policenNachfrage,
   type BitteVermittler,
   type Nachricht,
 } from "@/lib/policen/bitte";
+import { kiAbgelehnt, NACHWEIS_OHNE_KI } from "@/lib/policen/ohne-ki";
 
 export type EingehendesMedium = { type: string; id?: string | null; mime_type?: string | null; filename?: string | null; caption?: string | null };
 
@@ -176,7 +183,7 @@ async function ausgehend(leadId: string, filter?: string) {
 
 // ─── Nachweis (A3, nur anhängen) ────────────────────────────────────────────
 
-type NachweisArt = "einwilligung" | "abgelehnt" | "widerruf" | "erinnerung_optin" | "erinnerung_stopp";
+type NachweisArt = "einwilligung" | "abgelehnt" | "widerruf" | "erinnerung_optin" | "erinnerung_stopp" | typeof NACHWEIS_OHNE_KI;
 
 async function nachweis(o: {
   customerId: string;
@@ -301,7 +308,8 @@ async function loescheDokumente(where: { leadId?: string; customerId?: string; i
   return del.count;
 }
 
-type Ergebnis = { handled: boolean; gespeichert?: string; verworfen?: string; wartet?: boolean };
+/** weiter = false: erledigt, aber keine Antwort auf die Policen-Bitte (Termin-Strecke geht nicht weiter). */
+type Ergebnis = { handled: boolean; gespeichert?: string; verworfen?: string; wartet?: boolean; weiter?: boolean };
 
 /**
  * Eingehendes Bild oder Dokument im Lead-Chat. handled = true: beantwortet, der Assistent muss nichts mehr tun.
@@ -362,6 +370,12 @@ export async function handleInboundMedia(o: {
     await mediaWeg(chat.customerId, [mediaId], apiKey);
     await antworte(gesundheitAusText(an, person));
     return fertig("gesundheit_aus");
+  }
+
+  // „ohne KI“ als Begleittext (A9): festhalten und bestätigen, die Datei läuft danach normal weiter
+  if (istOhneKi(o.medium.caption) && !istWiderruf(o.medium.caption)) {
+    await kiAbwaehlen(chat, sp, { text: o.medium.caption ?? null, waMessageId: null, now });
+    await send(chat, ohneKiBestaetigung(an)).catch((e) => logFehler("ohne ki", e));
   }
 
   const consent = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
@@ -531,18 +545,35 @@ type Antwort = { kind: string; text: string | null; payload: string | null; waMe
  * Antwort des Leads, die Policen betrifft: Knopf „Einverstanden“ bzw. „Lieber nicht“, getipptes Ja/Nein direkt nach
  * der Einwilligungsnachricht, Widerruf (nur Regeln, keine KI). handled = true: erledigt, der Assistent antwortet nicht.
  */
-export async function handlePolicenAntwort(conversationId: string, m: Antwort, now = new Date()): Promise<{ handled: boolean }> {
+export async function handlePolicenAntwort(conversationId: string, m: Antwort, now = new Date()): Promise<Ergebnis> {
   const chat = await chatOf(conversationId);
   if (!chat) return { handled: false };
 
   const knopf = m.kind === "button" || m.kind === "interactive";
+  // Stichwort „ohne KI“ (A9, nur Regeln); ein Widerruf geht vor
+  const ohneKi = m.kind === "text" && istOhneKi(m.text) && !istWiderruf(m.text);
   let antwort = einwilligungsAntwort(m.payload) ?? (knopf && !m.payload ? einwilligungsAntwort(m.text) : null);
   if (!antwort && m.kind === "text") {
     // Getippt: nur direkt nach der Einwilligungsnachricht (bzw. der Nachfrage)
     const last = await prisma.message.findFirst({ where: { conversationId: chat.id, direction: "outbound" }, orderBy: { createdAt: "desc" }, select: { body: true } });
     if (EINWILLIGUNG_RE.test(last?.body ?? "")) {
-      antwort = einwilligungsAntwort(m.text) ?? (istZustimmung(m.text) ? "ja" : /^(nein|nein,? danke|lieber nicht)[.!]?$/i.test((m.text ?? "").trim()) ? "nein" : null);
+      if (ohneKi) {
+        // „Ja, aber ohne KI“: Zustimmung nur zum Speichern; „Nein, ohne KI“ bleibt nur das Stichwort
+        const rest = ohneStichwort(m.text);
+        antwort = einwilligungsAntwort(rest) === "ja" || istZustimmung(rest) ? "ja" : null;
+      } else {
+        antwort = einwilligungsAntwort(m.text) ?? (istZustimmung(m.text) ? "ja" : /^(nein|nein,? danke|lieber nicht)[.!]?$/i.test((m.text ?? "").trim()) ? "nein" : null);
+      }
     }
+  }
+  if (ohneKi && (await policenImGespraech(chat))) {
+    const sp = await sprecher(chat);
+    await kiAbwaehlen(chat, sp, { text: m.text, waMessageId: m.waMessageId ?? null, now });
+    await send(chat, ohneKiBestaetigung(sp.an));
+    if (antwort !== "ja") return { handled: true, weiter: false };
+    // Einwilligung (nur Speichern) eine Millisekunde nach dem Stichwort: eindeutige Reihenfolge im Nachweis
+    await beantworteEinwilligung(chat, { waMessageId: m.waMessageId ?? null, frageWaMessageId: m.frageWaMessageId ?? null, antwort: (m.text ?? "").trim(), now: new Date(now.getTime() + 1) });
+    return { handled: true };
   }
   if (antwort === "ja") return beantworteEinwilligung(chat, { waMessageId: m.waMessageId ?? null, frageWaMessageId: m.frageWaMessageId ?? null, antwort: (m.text ?? "").trim() || "Einverstanden", now });
   if (antwort === "nein") {
@@ -565,6 +596,91 @@ export async function handlePolicenAntwort(conversationId: string, m: Antwort, n
   return { handled: false };
 }
 
+/**
+ * Betrifft dieser Chat die Policen? Einwilligung gefragt, ein Nachweis oder Unterlagen vorhanden. Sonst ist „ohne KI“
+ * eine ganz normale Nachricht für den Assistenten bzw. den Vermittler.
+ */
+async function policenImGespraech(chat: Chat): Promise<boolean> {
+  const [nachweise, docs] = await Promise.all([
+    prisma.policenNachweis.count({ where: { leadId: chat.leadId, art: { in: ["einwilligung", "abgelehnt", "widerruf", NACHWEIS_OHNE_KI] } } }),
+    prisma.leadDocument.count({ where: { leadId: chat.leadId } }),
+  ]);
+  if (nachweise || docs) return true;
+  return (await ausgehend(chat.leadId, "meine hier gesendeten Policen")).some((r) => EINWILLIGUNG_RE.test(r.body ?? ""));
+}
+
+/**
+ * Stichwort „ohne KI“ (Auflage A9): Nachweis „ohne_ki“ (einmal, gilt dauerhaft für diesen Lead), eine bestehende
+ * Einwilligung mit KI als Einwilligung nur zum Speichern fortschreiben (ki = false, gleicher Wortlaut mit Vermerk),
+ * ausgelesene Werte löschen (Auszüge samt Korrekturen, bisheriger Vertrag aus der Police auf der Folie). Die
+ * gespeicherten Unterlagen bleiben. Bestätigung an den Lead macht der Aufrufer.
+ */
+async function kiAbwaehlen(chat: Chat, sp: Sprecher, o: { text: string | null; waMessageId: string | null; now: Date }): Promise<void> {
+  const schon = await kiAbgelehnt(chat.leadId);
+  const vermittlerName = sp.vermittler.name ?? sp.person.nom;
+  if (!(await prisma.policenNachweis.count({ where: { leadId: chat.leadId, art: NACHWEIS_OHNE_KI } }))) {
+    const z = await zugestimmt(chat, sp, null);
+    const nachricht = (o.text ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
+    await nachweis({
+      customerId: chat.customerId,
+      leadId: chat.leadId,
+      phone: chat.contactPhone,
+      art: NACHWEIS_OHNE_KI,
+      quelle: "whatsapp",
+      ki: false,
+      wortlaut: `Stichwort „ohne KI“ per WhatsApp: „${nachricht}“\n\nZur Einwilligung: ${z.wortlaut}`,
+      textVersion: einwilligungTextVersionAus(z.wortlaut),
+      datenschutzUrl: sp.datenschutzUrl,
+      waMessageId: o.waMessageId,
+      frageWaMessageId: z.frageWaMessageId,
+      vermittlerName,
+      at: o.now,
+    });
+  }
+  const consent = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
+  if (consent && consent.ki !== false) {
+    const alt = await prisma.policenNachweis.findUnique({ where: { id: consent.id }, select: { wortlaut: true, textVersion: true, datenschutzUrl: true, frageWaMessageId: true } });
+    await nachweis({
+      customerId: chat.customerId,
+      leadId: chat.leadId,
+      phone: chat.contactPhone,
+      art: "einwilligung",
+      quelle: "whatsapp",
+      ki: false,
+      wortlaut: `${alt?.wortlaut ?? ""}\n\nEinschränkung per WhatsApp: „ohne KI“ (nur speichern, nicht automatisch auslesen)`.trim(),
+      textVersion: alt?.textVersion ?? null,
+      datenschutzUrl: alt?.datenschutzUrl ?? sp.datenschutzUrl,
+      waMessageId: o.waMessageId,
+      frageWaMessageId: alt?.frageWaMessageId ?? null,
+      vermittlerName,
+      // nach dem Stichwort (eindeutige Reihenfolge im Nachweis)
+      at: new Date(o.now.getTime() + 1),
+    });
+  }
+  const geloescht = await loescheKiWerte(chat.customerId, chat.leadId);
+  if (!schon || geloescht) {
+    await audit("policen.ohne_ki", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { geloescht, nachKlick: !!consent }, actor: { role: "lead" } });
+    await logLeadHistory(chat.leadId, "dokument", "Kontakt möchte kein automatisches Auslesen der Unterlagen („ohne KI“)", { customerId: chat.customerId, userId: null });
+  }
+}
+
+/**
+ * Automatisch ausgelesene Werte des Leads löschen (A9): alle Auszüge (auch geprüfte bzw. korrigierte) mit Eintrag im
+ * Löschprotokoll, dazu der daraus übernommene bisherige Vertrag in Tarifauswahl und Folie. Die Unterlagen bleiben,
+ * ein vom Vermittler ausdrücklich in den Bestand übernommener Vertrag auch.
+ */
+async function loescheKiWerte(customerId: string, leadId: string): Promise<number> {
+  const rows = await prisma.policenAuszug.findMany({ where: { leadId }, select: { id: true, customerId: true } });
+  if (rows.length) {
+    await prisma.policenAuszug.deleteMany({ where: { id: { in: rows.map((r) => r.id) } } });
+    await protokolliereLoeschung(rows.map((r) => ({ art: "policen_auszug" as const, entityId: r.id, customerId: r.customerId, grund: "ohne_ki" })));
+  }
+  await import("@/lib/bisheriger-vertrag-server")
+    .then((m) => m.policeWerteEntfernen(leadId, customerId))
+    .catch((e) => logFehler("bisheriger vertrag", e));
+  return rows.length;
+}
+
 /** Wortlaut, dem der Lead zugestimmt hat: die zuletzt gesendete Einwilligungsnachricht, so wie sie rausging. */
 async function zugestimmt(chat: Chat, sp: Sprecher, frageWaMessageId: string | null): Promise<{ wortlaut: string; frageWaMessageId: string | null }> {
   const rows = await ausgehend(chat.leadId, "meine hier gesendeten Policen");
@@ -574,7 +690,7 @@ async function zugestimmt(chat: Chat, sp: Sprecher, frageWaMessageId: string | n
   return { wortlaut: `${e.text}\n\n${e.fusszeile ?? ""}`.trim(), frageWaMessageId };
 }
 
-async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | null; frageWaMessageId: string | null; antwort: string; now: Date }): Promise<{ handled: boolean }> {
+async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | null; frageWaMessageId: string | null; antwort: string; now: Date }): Promise<Ergebnis> {
   const sp = await sprecher(chat);
   const { an, person } = sp;
 
@@ -586,26 +702,28 @@ async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | nul
 
   // Nachweis (A3; ein zweiter Tipp ändert nichts): Wortlaut wie gesendet mit Fußzeile und Knopftext, Textversion,
   // Zeitpunkt, Nummer, Lead, WhatsApp-IDs von Antwort und Frage, Vermittler, Datenschutzhinweis mit Version, ki = true
+  // (false nach „ohne KI“, A9)
   let consent = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
   if (!consent) {
     const z = await zugestimmt(chat, sp, o.frageWaMessageId);
-    const gesundheitImText = /Gesundheitsangaben enthalten/.test(z.wortlaut);
+    // „ohne KI“ vorher bzw. dabei geschrieben (A9): Einwilligung nur zum Speichern
+    const ki = !(await kiAbgelehnt(chat.leadId));
     const n = await nachweis({
       customerId: chat.customerId,
       leadId: chat.leadId,
       phone: chat.contactPhone,
       art: "einwilligung",
       quelle: "whatsapp",
-      ki: true,
-      wortlaut: `${z.wortlaut}\n\nAntwort (Knopf): „${o.antwort.slice(0, 40)}“`,
-      textVersion: einwilligungTextVersion(gesundheitImText),
+      ki,
+      wortlaut: `${z.wortlaut}\n\nAntwort (Knopf): „${o.antwort.slice(0, 40)}“${ki ? "" : "\n\nPer WhatsApp: „ohne KI“ (nur speichern, nicht automatisch auslesen)"}`,
+      textVersion: einwilligungTextVersionAus(z.wortlaut),
       datenschutzUrl: sp.datenschutzUrl,
       waMessageId: o.waMessageId,
       frageWaMessageId: z.frageWaMessageId,
       vermittlerName: sp.vermittler.name ?? sp.person.nom,
       at: o.now,
     });
-    consent = { id: n.id, art: "einwilligung", createdAt: n.createdAt, ki: true };
+    consent = { id: n.id, art: "einwilligung", createdAt: n.createdAt, ki };
     await audit("policen.einwilligung", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { nachweisId: n.id }, actor: { role: "lead" } });
     await logLeadHistory(chat.leadId, "dokument", "Einwilligung zu Policen per WhatsApp erteilt", { customerId: chat.customerId, userId: null });
   }

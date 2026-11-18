@@ -435,7 +435,8 @@ async function persistInbound(
         .catch(() => console.error("[policen-auslesen] nach eingang fehlgeschlagen"));
       if (r.handled) {
         // Termin-Strecke (P2): Antwort auf die Einwilligung zur Policen-Bitte → jetzt der Schluss (Adresse bestätigen)
-        if (!media && botErlaubt) await import("@/lib/whatsapp/termin-strecke").then((x) => x.nachPolicenAntwort(conversation.id, now)).catch(() => false);
+        // Nur das Stichwort „ohne KI“ (A9, weiter = false): keine Antwort auf die Bitte, die Strecke wartet
+        if (!media && botErlaubt && r.weiter !== false) await import("@/lib/whatsapp/termin-strecke").then((x) => x.nachPolicenAntwort(conversation.id, now)).catch(() => false);
         return;
       }
       if (media && botErlaubt) botErlaubt = false;
