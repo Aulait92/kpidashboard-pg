@@ -94,7 +94,8 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
   const eurRound = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   // Vorschau wie beim Versand: Bestandskunden werden gesiezt, „Guten Tag Frau Muster,“ (Anrede aus dem Bestand)
   const linkExample = publicUrlOr("/empfehlung/…");
-  const rest = [occasion === "empfehlung" ? linkExample : (topic ?? "")];
+  // Ablauf/Wechsel: Thema kommt je Empfänger aus dem ablaufenden Vertrag, in der Vorschau ein Beispiel
+  const rest = [occasion === "empfehlung" ? linkExample : (topic ?? (occasion === "renewal" ? (TOPIC_LABEL.KFZ ?? "Kfz-Versicherung") : ""))];
   const pick = rankTemplates(templates, purpose, "sie", { firstName: "Erika", lastName: "Muster", salutation: "Frau" });
   const preview = pick
     ? renderTemplate(pick.tpl.body, pick.params(rest))
@@ -275,7 +276,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
               Höchstens pro Tag
               <input name="dailyLimit" type="number" min={10} max={1000} defaultValue={150} className="mt-1 h-10 w-32 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-sm text-[color:var(--foreground)]" />
               <span className="mt-1 block font-normal">
-                WhatsApp Mo bis Sa 9 bis 19 Uhr. E-Mails werktags 8 bis 18 Uhr in zufälligen Abständen, mit Tageslimit Ihres Postfachs. Langsam starten schützt Nummer und
+                {occasion === "birthday" ? "Jeder Glückwunsch geht am Geburtstag selbst raus. " : ""}WhatsApp Mo bis Sa 9 bis 19 Uhr. E-Mails werktags 8 bis 18 Uhr in zufälligen Abständen, mit Tageslimit Ihres Postfachs. Langsam starten schützt Nummer und
                 Postfach.
               </span>
             </label>
@@ -315,7 +316,7 @@ export default async function CampaignSetup({ searchParams }: { searchParams: Pr
               <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-4 py-3">
                 <p className="text-xs text-[color:var(--muted)]">Vorschau mit Standardtext:</p>
                 <p className="mt-1 font-semibold">{mailPreview.subject}</p>
-                <pre className="mt-2 whitespace-pre-wrap font-sans text-[13px] leading-relaxed">{mailPreview.text}</pre>
+                <pre className="mt-2 whitespace-pre-wrap break-words font-sans [overflow-wrap:anywhere] text-[13px] leading-relaxed">{mailPreview.text}</pre>
               </div>
               <p className="text-xs text-[color:var(--muted)]">
                 {counts.emailUwg > 0 ? (
