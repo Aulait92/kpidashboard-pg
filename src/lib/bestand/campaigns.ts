@@ -23,9 +23,22 @@ import { afterSend, bounceCheck, innerGap, isBounceError, mailSlots, providerDai
 import { buildCampaignMail, campaignMailFooter, defaultCampaignMail, fillCampaignMail, imprintFromWebsiteInfo, ohneGedankenstriche } from "@/lib/bestand/kampagnen-mail";
 import { classifyReply, isAutoReplyText } from "@/lib/vertrieb/sentiment";
 import { isExclusiveAgent, mayOffer, offeredLines } from "@/lib/bestand/befugnis";
+import { crossSellOffenWhere } from "@/lib/cross-sell-offen";
 
 export type Occasion = "cross_sell" | "review" | "birthday" | "renewal" | "empfehlung";
-export type Segment = { has?: string[]; lacks?: string[]; birthdayDays?: number; renewalDays?: number };
+export type Segment = {
+  has?: string[];
+  lacks?: string[];
+  birthdayDays?: number;
+  renewalDays?: number;
+  /**
+   * Weiteres Produkt anbieten (Ole, 18.11.2026, lib/cross-sell-verkauf.ts): nur Bestandskunden aus Kontakten mit
+   * Abschluss ohne weiteres Produkt (gleiche Regel wie der Filter der Kontakte-Liste, lib/cross-sell-offen.ts).
+   */
+  ohneWeiteresProdukt?: boolean;
+  /** Intern beim Planen aufgelöst (Leads zu ohneWeiteresProdukt), nie aus der Adresse übernommen. */
+  leadIds?: string[];
+};
 
 export const OCCASIONS: Record<Occasion, { label: string; hint: string; purpose: string }> = {
   cross_sell: { label: "Lücke schließen", hint: "Kunden mit Sparte A, aber ohne Sparte B", purpose: "campaign_cross_sell" },
@@ -91,6 +104,7 @@ const CANDIDATE_SELECT = {
   nextRenewal: true,
   lastCampaignAt: true,
   premiumTotal: true,
+  leadId: true,
   referralLink: { select: { lastSentAt: true } },
   ...SUBJECT_SELECT,
 } as const;
@@ -106,12 +120,13 @@ async function loadCandidates(customerId: string, now: Date): Promise<Candidate[
 
 /** Gehört der Kunde zum Segment des Anlasses? (rein) */
 export function inSegment(
-  c: { lines: string[]; birthday: Date | null; nextRenewal: Date | null; referralLink?: { lastSentAt: Date | null } | null },
+  c: { lines: string[]; birthday: Date | null; nextRenewal: Date | null; leadId?: string | null; referralLink?: { lastSentAt: Date | null } | null },
   occasion: Occasion,
   seg: Segment,
   now: Date,
 ): boolean {
   if (occasion === "cross_sell") {
+    if (seg.ohneWeiteresProdukt && !(c.leadId && seg.leadIds?.includes(c.leadId))) return false;
     if (seg.has?.length && !seg.has.every((l) => c.lines.includes(l))) return false;
     if (seg.lacks?.length && seg.lacks.some((l) => c.lines.includes(l))) return false;
     return true;
@@ -189,9 +204,18 @@ export async function planAudience(
   opts: { mode?: ChannelMode; now?: Date; waAvailable?: boolean } = {},
 ): Promise<AudiencePlan> {
   const now = opts.now ?? new Date();
-  const [cands, settings, sup] = await Promise.all([loadCandidates(customerId, now), loadConsentSettings(customerId), loadSuppression(customerId)]);
+  const [cands, settings, sup, segment] = await Promise.all([loadCandidates(customerId, now), loadConsentSettings(customerId), loadSuppression(customerId), resolveSegment(customerId, seg, now)]);
   const mode = effectiveMode(opts.mode ?? "whatsapp_first", opts.waAvailable ?? true);
-  return planFromCandidates(cands, occasion, seg, mode, settings, sup, now);
+  return planFromCandidates(cands, occasion, segment, mode, settings, sup, now);
+}
+
+/** „Ohne weiteres Produkt“: Leads wie im Filter der Kontakte-Liste laden (nur dieser Kunde). leadIds nie von außen. */
+async function resolveSegment(customerId: string, seg: Segment, now: Date): Promise<Segment> {
+  const { leadIds: _ignoriert, ...rest } = seg;
+  void _ignoriert;
+  if (!rest.ohneWeiteresProdukt) return rest;
+  const leads = await prisma.lead.findMany({ where: { customerId, ...crossSellOffenWhere(now) }, select: { id: true }, take: 5000 });
+  return { ...rest, leadIds: leads.map((l) => l.id) };
 }
 
 /** IDs der rechtlich erreichbaren Bestandskunden im Segment (ohne Gesperrte, ohne kürzlich Angeschriebene). */
@@ -205,6 +229,20 @@ const NEXT_BEST: [string, string][] = [
   ["Wohngebäude", "Hausrat"], ["Haftpflicht", "Rechtsschutz"], ["KFZ", "Rechtsschutz"], ["Haftpflicht", "Unfall"],
   ["Vorsorge", "BU"], ["Kranken", "Pflege"],
 ];
+
+/** Name der Kampagne „Weiteres Produkt anbieten“ (Segment ohneWeiteresProdukt). */
+export const WEITERES_PRODUKT_NAME = "Weiteres Produkt anbieten";
+
+/**
+ * Thema je Kunde, wenn die Kampagne keins vorgibt: erste naheliegende Ergänzung zu seinen Sparten, die er noch nicht
+ * hat (Ausschließlichkeitsvertreter: nur angebotene Sparten), sonst „Absicherung“. Rein.
+ */
+export function naheliegendesThema(lines: string[], offered: Set<string> | null): string {
+  for (const [has, lacks] of NEXT_BEST) {
+    if (lines.includes(has) && !lines.includes(lacks) && mayOffer(offered, lacks)) return TOPIC_LABEL[lacks] ?? lacks;
+  }
+  return "Absicherung";
+}
 
 /** Sparte → Wort für die Nachricht („beim Thema Berufsunfähigkeit“). */
 export const TOPIC_LABEL: Record<string, string> = {
@@ -327,13 +365,17 @@ export async function createCampaign(opts: {
   if (viaMail && !avail.mailbox) throw new Error("Für E-Mails bitte zuerst Ihr Postfach verbinden (Einstellungen → E-Mail-Postfach).");
   const name =
     opts.name ??
-    (opts.occasion === "cross_sell" ? `${opts.segment.has?.join(", ")} ohne ${opts.segment.lacks?.join(", ")}` : OCCASIONS[opts.occasion].label);
+    (opts.occasion === "cross_sell"
+      ? opts.segment.ohneWeiteresProdukt
+        ? WEITERES_PRODUKT_NAME
+        : `${opts.segment.has?.join(", ")} ohne ${opts.segment.lacks?.join(", ")}`
+      : OCCASIONS[opts.occasion].label);
   return prisma.customerCampaign.create({
     data: {
       customerId: opts.customerId,
       name,
       occasion: opts.occasion,
-      segment: opts.segment as Prisma.InputJsonValue,
+      segment: { ...opts.segment, leadIds: undefined } as Prisma.InputJsonValue,
       topic: opts.topic,
       dailyLimit: Math.max(10, Math.min(1000, Math.round(opts.dailyLimit))),
       status: "running",
@@ -709,7 +751,9 @@ async function sendMailPart(
  * alle). So geht es nur um den eigenen Vertrag des Kunden, wie es § 7 Abs. 3 UWG für E-Mails ohne Einwilligung
  * verlangt (derselbe Bedarf). Sonst das Thema der Kampagne.
  */
-async function recipientTopic(c: { occasion: string; topic: string | null }, ec: { id: string; nextRenewal: Date | null }): Promise<string | null> {
+async function recipientTopic(c: { occasion: string; topic: string | null; customerId?: string }, ec: { id: string; nextRenewal: Date | null; lines?: string[] }): Promise<string | null> {
+  // Lücke schließen ohne Thema (z. B. „Weiteres Produkt anbieten“): naheliegende Ergänzung zum Vertrag des Kunden
+  if (c.occasion === "cross_sell" && !c.topic?.trim()) return naheliegendesThema(ec.lines ?? [], c.customerId ? await offeredFor(c.customerId) : null);
   if (c.occasion !== "renewal" || !ec.nextRenewal) return c.topic;
   const due = await prisma.existingContract.findFirst({ where: { existingCustomerId: ec.id, renewalDate: ec.nextRenewal }, select: { line: true }, orderBy: { id: "asc" } });
   return renewalTopic(due?.line ?? null, c.topic);

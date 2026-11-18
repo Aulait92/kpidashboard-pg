@@ -59,6 +59,8 @@ import { ANGEBOT_AUFGABE, ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
 import { MorgenAutomatisch } from "@/components/morgen-automatisch";
 import { DatenschutzKarte } from "@/components/datenschutz-karte";
 import type { AutomatischeNachrichten } from "@/lib/nachrichtenplan-server";
+import { CrossSellZusatzKnopf } from "@/components/bestand/cross-sell-angebot";
+import { istCrossSellAufgabe, type CrossSellVerkauf } from "@/lib/cross-sell-verkauf";
 
 // Startseite „Heute": vier Listen, die man leer arbeitet. Jede Zeile hat eine
 // sichtbare Aktion (Anrufen/Antworten); alles Weitere per Antippen im
@@ -113,7 +115,10 @@ export function TodayInbox({
   zuVorbereiten = [],
   anrufen = null,
   automatisch = null,
+  weiteresProdukt = null,
 }: {
+  /** Wiedervorlage „Weiteres Produkt anbieten?“: Zusatz-Knopf zum Bestandskunden-Modul (nur verfügbar und nicht gebucht) */
+  weiteresProdukt?: CrossSellVerkauf | null;
   /** „Morgen: 3 automatische Nachrichten“ (Paket P6) */
   automatisch?: AutomatischeNachrichten | null;
   /** Deep-Link aus dem Push „… hat noch nicht geantwortet. Jetzt anrufen?“ (/buyer?anrufen=<leadId>): Anruf-Blatt öffnen */
@@ -631,6 +636,7 @@ export function TodayInbox({
                     {c.overdue ? <span className="font-medium text-rose-600">Überfällig · </span> : null}
                     {c.reason}
                   </p>
+                  {weiteresProdukt && c.kind === "followup" && istCrossSellAufgabe(c.reason) ? <CrossSellZusatzKnopf verkauf={weiteresProdukt} /> : null}
                 </div>
                 {c.phone ? (
                   <span
