@@ -29,7 +29,8 @@ async function loadRows(where: { customerId?: string; excludeCustomerIds?: strin
   // LeadContract hat keine Relation „customer“ (nur customerId): Testkunden per ID ausschließen (Fixes KPIDASHBOARD-PG-A).
   const customerFilter = where.customerId ? { customerId: where.customerId } : where.excludeCustomerIds?.length ? { customerId: { notIn: where.excludeCustomerIds } } : {};
   const rows = await prisma.leadContract.findMany({
-    where: { ...customerFilter, lead: { status: CLOSED_STATUS } },
+    // Bestandsübertragungen (Maklervollmacht) erst nach Bestätigung; abgelehnte sind storniert ohne Grund (zählen nicht)
+    where: { ...customerFilter, lead: { status: CLOSED_STATUS }, OR: [{ herkunft: null }, { uebertragungBestaetigtAt: { not: null } }] },
     select: { customerId: true, sparte: true, productName: true, signedAt: true, status: true, cancelledAt: true, cancelReason: true },
   });
   return rows

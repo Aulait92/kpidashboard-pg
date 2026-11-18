@@ -122,7 +122,8 @@ export async function ladeGarantieInput(customerId: string, offerId: string, now
   const end = offer.subscriptionStatus === "canceled" ? offer.updatedAt : null;
   const paidClosed = new Set(leads.filter((l) => l.status === CLOSED_STATUS).map((l) => l.id));
   const contractsOfPaid = paidClosed.size
-    ? (await loadCustomerContracts(customerId, { leadWhere: { id: { in: [...paidClosed] } } }).catch(() => []))
+    ? // Bestandsübertragungen (Maklervollmacht) sind kein Ergebnis der Leads
+      (await loadCustomerContracts(customerId, { leadWhere: { id: { in: [...paidClosed] } } }).catch(() => [])).filter((c) => !c.uebertragung)
     : [];
   return {
     now,

@@ -227,9 +227,10 @@ async function BuyerDashboardBody({
   const a = cur.agency;
   const paket = !!spend;
 
-  // Neue Kunden = erste Verträge im Zeitraum (wie der Trichter nach Eingang des Leads), alle Herkünfte
+  // Neue Kunden = erste Verträge im Zeitraum (wie der Trichter nach Eingang des Leads), alle Herkünfte; Makler auch
+  // Kunden, die nur über eine bestätigte Bestandsübertragung gekommen sind (Maklervollmacht)
   const inRange = (d: Date) => d >= range.from && d <= range.to;
-  const neueKunden = new Set(data.contracts.filter((c) => c.primary && inRange(c.periodAt)).map((c) => c.leadId)).size;
+  const neueKunden = new Set(data.contracts.filter((c) => (c.primary || c.uebertragung) && inRange(c.periodAt)).map((c) => c.leadId)).size;
   // Wert pro Kunde aus allen bisherigen Abschlüssen, falls im Zeitraum noch keiner da ist (für „X bis Y Abschlüsse“)
   const alle = summarizeProvision(data.contracts, data.rates, { from: new Date(0), to: now }, { now, storno: data.storno });
   const kundenBisher = new Set(data.contracts.filter((c) => c.primary).map((c) => c.leadId)).size;
@@ -327,7 +328,7 @@ async function BuyerDashboardBody({
           wert={formatNumber(neueKunden)}
           unter={
             prov.contracts > 0
-              ? `mit ${formatNumber(prov.contracts)} ${prov.contracts === 1 ? "Vertrag" : "Verträgen"}${prov.crossSell.contracts > 0 ? `, davon ${formatNumber(prov.crossSell.contracts)} Cross-Selling` : ""}`
+              ? `mit ${formatNumber(prov.contracts)} ${prov.contracts === 1 ? "Vertrag" : "Verträgen"}${prov.crossSell.contracts > 0 ? `, davon ${formatNumber(prov.crossSell.contracts)} Cross-Selling` : ""}${prov.uebertragung.contracts > 0 ? `, ${formatNumber(prov.uebertragung.contracts)} übertragen` : ""}`
               : "noch kein Abschluss im Zeitraum"
           }
         />
@@ -403,6 +404,12 @@ async function BuyerDashboardBody({
                   <dt className="text-[color:var(--muted)]">{provLabel}</dt>
                   <dd className="shrink-0 whitespace-nowrap">{euroMitVorzeichen(prov.firstYear)}</dd>
                 </div>
+                {prov.uebertragung.contracts > 0 ? (
+                  <div className="flex justify-between gap-3 pl-3 text-sm" data-davon-uebertragung>
+                    <dt className="text-[color:var(--muted)]">davon Bestandsübertragungen</dt>
+                    <dd className="shrink-0 whitespace-nowrap">{euro(prov.uebertragung.amount)}</dd>
+                  </div>
+                ) : null}
                 {mitBestand ? (
                   <div className="flex justify-between gap-3" data-kuenftiger-bestand>
                     <dt className="text-[color:var(--muted)]">{bestandWort} (5 Jahre)</dt>

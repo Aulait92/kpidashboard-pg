@@ -47,3 +47,34 @@ export async function vollmachtWiderrufenAction(id: string, leadId: string): Pro
   revalidatePath("/buyer");
   return { ok: true, message: "Widerruf eingetragen" };
 }
+
+/**
+ * Bestandsübertragung (lib/maklervollmacht/uebertragung.ts): „Bestätigt“ bzw. „Abgelehnt“ je Versicherer (Karte
+ * Maklervollmacht, Wiedervorlage) oder je Vertrag (Vertragsliste). Monatsbeitrag optional, nur wenn er fehlt.
+ */
+export async function uebertragungAction(
+  leadId: string,
+  ziel: { versicherer: string } | { contractId: string },
+  ergebnis: "bestaetigt" | "abgelehnt",
+  monatsbeitrag?: string | null,
+): Promise<VollmachtActionResult> {
+  const { writableCustomerId } = await import("@/lib/buyer-write");
+  const customerId = await writableCustomerId(String(leadId));
+  if (!customerId) return { ok: false, error: "In der Vorschau nicht möglich." };
+  const c = await getBuyerContext();
+  const z = "contractId" in ziel ? { contractId: String(ziel.contractId) } : { versicherer: String(ziel.versicherer) };
+  const raw = String(monatsbeitrag ?? "").trim();
+  const n = raw ? Number(raw.replace(/[€\s]/g, "").replace(/\./g, "").replace(",", ".")) : null;
+  if (n != null && (!Number.isFinite(n) || n < 0 || n > 100_000)) return { ok: false, error: "Bitte einen gültigen Monatsbeitrag eintragen." };
+  const m = await import("@/lib/maklervollmacht/uebertragung");
+  const r =
+    ergebnis === "bestaetigt"
+      ? await m.uebertragungBestaetigen(customerId, String(leadId), z, { monatsbeitrag: n, userId: c?.userId ?? null })
+      : await m.uebertragungAblehnen(customerId, String(leadId), z, { userId: c?.userId ?? null });
+  if (!r.ok) return r;
+  await recordUsage("action", `maklervollmacht.uebertragung_${ergebnis}`);
+  revalidatePath(`/buyer/leads/${leadId}`);
+  revalidatePath("/buyer");
+  revalidatePath("/buyer/zahlen");
+  return { ok: true, message: ergebnis === "bestaetigt" ? "Übertragung bestätigt, zählt jetzt in Ihren Zahlen" : "Übertragung als abgelehnt vermerkt" };
+}

@@ -664,6 +664,11 @@ export type ContractLike = {
   productName?: string | null;
   rateAbschluss?: unknown;
   rateBestand?: unknown;
+  /**
+   * Bestandsübertragung aus der Maklervollmacht (Ole, 18.11.2026): nur Bestandsprovision auf den Jahresbeitrag, ab dem
+   * 1. Jahr, keine Abschlussprovision (der Vertrag wurde nicht vom Makler abgeschlossen).
+   */
+  uebertragung?: boolean | null;
 };
 
 /** Anzeigename eines Vertrags: eigenes Produkt (z. B. „Rechtsschutz Gewerbe“) statt „Sonstiges“. */
@@ -720,8 +725,19 @@ export function resolveTermYears(c: Pick<ContractLike, "termYears" | "endAge" | 
   return spec.defaultYears;
 }
 
-/** Geschätzte Provision eines Vertrags mit dem Satz seiner Sparte. */
+/**
+ * Geschätzte Provision eines Vertrags mit dem Satz seiner Sparte. Bestandsübertragung: nur der Bestand (pro Jahr ab
+ * sofort), Abschluss 0; Sparten ohne Bestandssatz (fester Betrag, Honorar) bringen bei einer Übertragung nichts.
+ */
 export function contractProvision(c: ContractLike, rates?: ProvisionOverrides): ContractProvision {
+  const p = neuabschlussProvision(c, rates);
+  if (!c.uebertragung) return p;
+  const fest = p.basis === "fest" || p.basis === "honorar";
+  const trail = fest ? 0 : p.trailPerYear;
+  return { ...p, abschluss: 0, honorar: false, trailPerYear: trail, trailFromYear2: false, firstYear: trail, haftungMonate: null };
+}
+
+function neuabschlussProvision(c: ContractLike, rates?: ProvisionOverrides): ContractProvision {
   const sparte = asSparte(c.sparte);
   const rateKey = sparteInfo(sparte).rateKey;
   const base: RateSpec = rates?.[rateKey] ?? PROVISION_PRODUCTS.find((p) => p.key === rateKey)!.standard;

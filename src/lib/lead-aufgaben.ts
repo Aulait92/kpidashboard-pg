@@ -32,7 +32,8 @@ const REGELN: Record<string, NochNoetig> = {
   police: async (leadId) =>
     (await prisma.leadContract.count({ where: { primaryLeadId: leadId, OR: [{ fileId: { not: null } }, { status: "storniert" }] } })) ? "Police schon da" : null,
   // Weiterer Vertrag schon eingetragen
-  cross_sell: async (leadId) => ((await prisma.leadContract.count({ where: { leadId, primaryLeadId: null, status: "aktiv" } })) ? "Weiterer Vertrag eingetragen" : null),
+  // (Bestandsübertragungen aus der Maklervollmacht zählen nicht als weiterer Abschluss)
+  cross_sell: async (leadId) => ((await prisma.leadContract.count({ where: { leadId, primaryLeadId: null, status: "aktiv", herkunft: null } })) ? "Weiterer Vertrag eingetragen" : null),
   // Paket M6: Kündigung schon gesendet (App oder eigenes Mailprogramm)
   kuendigung: async (leadId) => ((await prisma.contactMail.count({ where: { leadId, kind: "kuendigung", status: { not: "nicht_versendet" } } })) ? "Kündigung schon gesendet" : null),
 };

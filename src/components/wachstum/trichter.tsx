@@ -75,6 +75,11 @@ export function Trichter({
             <Pfeil rate={k.closingFromTerminRate} />
             <Stufe n={k.closedLeads} label={k.closedLeads === 1 ? "Kunde" : "Kunden"} kunden />
           </div>
+          {k.closedViaUebertragung ? (
+            <p className="mt-3 text-[15px] text-[color:var(--muted)]" data-trichter-uebertragung>
+              davon {zahl.format(k.closedViaUebertragung)} über Bestandsübertragung
+            </p>
+          ) : null}
           {verloren && verloren.anzahl > 0 ? (
             <p className="mt-4 text-[15px] text-[color:var(--muted)]" data-trichter-verloren>
               Verloren: {zahl.format(verloren.anzahl)} {verloren.anzahl === 1 ? "Lead" : "Leads"}

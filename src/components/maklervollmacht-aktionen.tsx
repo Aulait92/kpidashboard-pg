@@ -5,8 +5,16 @@ import { Copy, Download, ExternalLink, Mail } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { vollmachtAnfordernAction, vollmachtPerMailAction, vollmachtWiderrufenAction } from "@/app/buyer/vollmacht-actions";
+import { UebertragungKnoepfe } from "@/components/uebertragung-knoepfe";
 
-type V = { id: string; status: string; link: string; abgelaufen: boolean; gesendet: boolean; unterschrieben: string; vertraege: number; versicherer: string[] };
+type Uebertragung = { versicherer: string; stand: "laeuft" | "bestaetigt" | "abgelehnt"; beitragFragen: boolean; knoepfe: boolean };
+type V = { id: string; status: string; link: string; abgelaufen: boolean; gesendet: boolean; unterschrieben: string; vertraege: number; versicherer: string[]; uebertragung?: Uebertragung[] };
+
+const STAND: Record<Uebertragung["stand"], { text: string; cls: string }> = {
+  laeuft: { text: "Übertragung läuft", cls: "text-amber-800" },
+  bestaetigt: { text: "Übertragung bestätigt", cls: "text-emerald-700" },
+  abgelehnt: { text: "Übertragung abgelehnt", cls: "text-[color:var(--muted)]" },
+};
 
 export function MaklervollmachtAktionen({ leadId, v, readOnly, hatEmail }: { leadId: string; v: V | null; readOnly: boolean; hatEmail: boolean }) {
   const toast = useToast();
@@ -32,14 +40,27 @@ export function MaklervollmachtAktionen({ leadId, v, readOnly, hatEmail }: { lea
           <b>Unterschrieben am {v.unterschrieben}</b> · {v.vertraege} {v.vertraege === 1 ? "Vertrag" : "Verträge"}, Übertragung beantragen
         </p>
         <ul className="divide-y divide-[color:var(--border)] rounded-[var(--radius-md)] border border-[color:var(--border)]">
-          {v.versicherer.map((name) => (
-            <li key={name} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-              <span className="min-w-0 truncate">{name}</span>
-              <a href={`/buyer/vollmacht/${v.id}/pdf?v=${encodeURIComponent(name)}`} target="_blank" rel="noopener" className={buttonClass("secondary", "sm")} data-vv-schreiben>
-                <Download className="h-4 w-4" /> Schreiben
-              </a>
-            </li>
-          ))}
+          {v.versicherer.map((name) => {
+            const u = v.uebertragung?.find((x) => x.versicherer.toLowerCase() === name.toLowerCase());
+            return (
+              <li key={name} className="space-y-2 px-3 py-2 text-sm" data-vv-versicherer={name}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block truncate">{name}</span>
+                    {u ? (
+                      <span className={`block text-xs ${STAND[u.stand].cls}`} data-uebertragung-stand={u.stand}>
+                        {STAND[u.stand].text}
+                      </span>
+                    ) : null}
+                  </span>
+                  <a href={`/buyer/vollmacht/${v.id}/pdf?v=${encodeURIComponent(name)}`} target="_blank" rel="noopener" className={buttonClass("secondary", "sm")} data-vv-schreiben>
+                    <Download className="h-4 w-4" /> Schreiben
+                  </a>
+                </div>
+                {u?.stand === "laeuft" && u.knoepfe && !readOnly ? <UebertragungKnoepfe leadId={leadId} ziel={{ versicherer: name }} beitragFragen={u.beitragFragen} /> : null}
+              </li>
+            );
+          })}
         </ul>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <a href={`/buyer/vollmacht/${v.id}/pdf`} target="_blank" rel="noopener" className="font-medium text-[color:var(--brand)] hover:underline">
