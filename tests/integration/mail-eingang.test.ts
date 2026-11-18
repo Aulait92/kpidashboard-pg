@@ -55,6 +55,7 @@ import { ladeSperrDaten } from "@/lib/mail/sperren";
 import { mailsById } from "@/lib/mail/kontakt-mail";
 import { eraseLead } from "@/lib/erasure";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { EICAR, starteClamd, type ClamdAttrappe } from "../fixtures/clamd";
 
 const uid = () => Math.random().toString(36).slice(2, 8);
 const NOW = new Date("2026-11-18T10:00:00Z");
@@ -78,7 +79,8 @@ function attrappe(mails: Record<string, Partial<EmpfangeneMail>>, anhaenge: Reco
       return (anhaenge[emailId] ?? []).find((a) => a.id === id) ?? null;
     },
     async datei(url: string) {
-      return Buffer.from(`inhalt:${url}`);
+      // „…/virus“ liefert den EICAR-Teststring (Virenprüfung)
+      return url.endsWith("/virus") ? Buffer.concat([Buffer.from("%PDF-1.4 "), EICAR]) : Buffer.from(`inhalt:${url}`);
     },
   };
   return api;
@@ -93,10 +95,15 @@ const ereignis = (emailId: string, to: string, from = "x@example.org"): EmailRec
 describe("Antwortadresse mit Eingang", () => {
   const customers: string[] = [];
   const ENV = { ...process.env };
-  beforeAll(() => requireTestDb());
+  let clamd: ClamdAttrappe;
+  beforeAll(async () => {
+    requireTestDb();
+    clamd = await starteClamd();
+  });
   afterAll(async () => {
     for (const id of customers) await cleanupCustomer(id);
     process.env = { ...ENV };
+    await clamd.stop();
   });
   beforeEach(() => {
     st.resend = [];
@@ -110,6 +117,10 @@ describe("Antwortadresse mit Eingang", () => {
     delete process.env.MAIL_NUR_AN;
     process.env.AUTH_SECRET = "localtestsecret_localtestsecret_0123456789";
     process.env.MAIL_ANTWORT_EINGANG = "1";
+    // Virenprüfung: Attrappe von clamd (tests/fixtures/clamd.ts)
+    process.env.CLAMAV_HOST = "127.0.0.1";
+    process.env.CLAMAV_PORT = String(clamd.port);
+    delete process.env.VIRENPRUEFUNG_PFLICHT;
   });
 
   async function setup(o: { berater?: boolean } = {}) {
@@ -224,6 +235,43 @@ describe("Antwortadresse mit Eingang", () => {
     expect((await verarbeiteMailEingang(ereignis(id, adresse, email), { now: NOW, api })).ergebnis).toBe("doppelt");
     expect(st.resend).toHaveLength(1);
     expect(await prisma.contactMail.count({ where: { leadId: lead.id, richtung: "eingang" } })).toBe(1);
+  });
+
+  it("Virenprüfung der Anhänge: EICAR nicht weitergeleitet und nie zum Download, ohne ClamAV nur nach der Prüfung", async () => {
+    const { lead, email, adresse } = await setup();
+    await prisma.lead.update({ where: { id: lead.id }, data: { antwortCode: leadCode(lead.id) } });
+    const anhaenge = (id: string) => ({
+      [id]: [
+        { id: "a1", filename: "police.pdf", size: 1000, contentType: "application/pdf", inline: false, downloadUrl: `https://inbound-cdn.resend.com/${id}/a1` },
+        { id: "a2", filename: "rechnung.pdf", size: 900, contentType: "application/pdf", inline: false, downloadUrl: `https://inbound-cdn.resend.com/${id}/virus` },
+      ],
+    });
+    const id = `em_${uid()}`;
+    const api = attrappe({ [id]: { from: email, to: [adresse], subject: "AW: Unterlagen", text: "Anbei." } }, anhaenge(id));
+    expect((await verarbeiteMailEingang(ereignis(id, adresse, email), { now: NOW, api })).ergebnis).toBe("antwort");
+    const w = st.resend[0];
+    expect(w.attachments?.map((a) => a.filename)).toEqual(["police.pdf"]);
+    expect(w.text).toContain("Bei der Virenprüfung abgelehnt und nicht weitergeleitet: rechnung.pdf.");
+    const e = await prisma.mailEingang.findFirst({ where: { resendEmailId: id } });
+    expect((e!.anhaenge as { id: string; viren: string; weitergeleitet: boolean }[]).map((a) => [a.id, a.viren, a.weitergeleitet])).toEqual([
+      ["a1", "sauber", true],
+      ["a2", "befund", false],
+    ]);
+    const cm = await prisma.contactMail.findFirst({ where: { leadId: lead.id, richtung: "eingang" } });
+    expect((await mailsById([cm!.id])).get(cm!.id)!.anhaenge.map((a) => [a.name, !!a.link])).toEqual([
+      ["police.pdf", true],
+      ["rechnung.pdf", false],
+    ]);
+    expect(await prisma.auditLog.count({ where: { action: "viren.befund", entityId: e!.id } })).toBe(1);
+
+    // Ohne ClamAV (Standard): nichts angehängt, Hinweis; Download erst nach der Prüfung
+    delete process.env.CLAMAV_HOST;
+    st.resend = [];
+    const id2 = `em_${uid()}`;
+    const api2 = attrappe({ [id2]: { from: email, to: [adresse], subject: "AW: Noch eine", text: "Anbei." } }, anhaenge(id2));
+    await verarbeiteMailEingang(ereignis(id2, adresse, email), { now: NOW, api: api2 });
+    expect(st.resend[0].attachments).toBeUndefined();
+    expect(st.resend[0].text).toContain("Noch nicht auf Viren geprüft und deshalb nicht angehängt: police.pdf, rechnung.pdf.");
   });
 
   it("automatische Antwort: nur Hinweis im Verlauf, keine Weiterleitung, kein Push, zählt nicht als Antwort", async () => {

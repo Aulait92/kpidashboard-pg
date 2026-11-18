@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { loescheAb } from "@/lib/policen/ablage";
+import { protokolliereLoeschung } from "@/lib/loeschprotokoll";
 
 export const ERASED_NAME = "Gelöscht (Datenschutz)";
 
@@ -22,8 +23,11 @@ export type EraseResult = { conversations: number; messages: number; appointment
  */
 export const aufbewahrtFilter = (now: Date) => ({ kind: "beratungsdoku", aufbewahrenBis: { gt: now } });
 
-/** Einen Lead anonymisieren. Gibt null zurück, wenn es ihn nicht gibt. */
-export async function eraseLead(leadId: string, actor?: AuditActor): Promise<EraseResult | null> {
+/**
+ * Einen Lead anonymisieren. Gibt null zurück, wenn es ihn nicht gibt. Steht danach im Löschprotokoll
+ * (lib/loeschprotokoll.ts), damit die Löschung nach einer Wiederherstellung der Datenbank erneut greift.
+ */
+export async function eraseLead(leadId: string, actor?: AuditActor, opts: { ausLoeschprotokoll?: boolean } = {}): Promise<EraseResult | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: { id: true, customerId: true, phone: true, externalId: true, airtableId: true, erasedAt: true },
@@ -35,9 +39,10 @@ export async function eraseLead(leadId: string, actor?: AuditActor): Promise<Era
     entityId: lead.id,
     customerId: lead.customerId,
     // Bewusst ohne Name/Telefon: das Protokoll soll die Daten nicht weiter vorhalten.
-    details: { ...result, airtable: !!lead.airtableId },
+    details: { ...result, airtable: !!lead.airtableId, ...(opts.ausLoeschprotokoll ? { loeschprotokoll: true } : {}) },
     actor,
   });
+  if (!opts.ausLoeschprotokoll) await protokolliereLoeschung([{ art: "lead", entityId: lead.id, customerId: lead.customerId, grund: "art17" }]);
   return result;
 }
 

@@ -25,8 +25,7 @@
         "ausland": "inklusive"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankenzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Top fit 50",
@@ -44,8 +43,7 @@
         "ausland": "inklusive"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankenzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Top fit 90",
@@ -63,8 +61,7 @@
         "ausland": "inklusive"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankenzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -73,6 +70,7 @@
   "offen": [
     "Risikoträger: Provinzial Krankenversicherung Hannover AG (VGH Versicherungen). Abruf 17.11.2026.",
     "Die ambulanten Leistungen sind in allen drei Tarifen gleich; die Stufen unterscheiden sich nur im Zahnteil (Top fit 30 und 50 mit Zahnersatz 30 bzw. 50, Top fit 90 mit Zahnbehandlung 90, laut Tarifvergleich). Keine Empfehlung.",
-    "Zuzahlungen und Vorsorge: Kostenbeteiligung, Betrag nicht genannt. Hörgeräte, Wartezeit und Augenlasern nicht genannt."
+    "Zuzahlungen und Vorsorge: Kostenbeteiligung, Betrag nicht genannt. Hörgeräte, Wartezeit und Augenlasern nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

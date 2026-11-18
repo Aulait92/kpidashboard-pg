@@ -27,8 +27,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6R378FMKu8hlN5YqIERzfF/06601ede6122a8d5da21a107cd726c68/katenzversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
   "offen": [
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Leistungsübersicht KAOPKV_IB_0423.",
-    "Ein Tarif. Vorsorge: Impfungen, Wurmkuren, Ektoparasitenmittel, Zahnstein bis 100 € im Jahr ohne Wartezeit. Kastration: Zuschuss Kater 20 €, Katze 35 €."
+    "Ein Tarif. Vorsorge: Impfungen, Wurmkuren, Ektoparasitenmittel, Zahnstein bis 100 € im Jahr ohne Wartezeit. Kastration: Zuschuss Kater 20 €, Katze 35 €.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

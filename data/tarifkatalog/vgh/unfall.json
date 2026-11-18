@@ -27,8 +27,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/unfallversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallschutz Komfort",
@@ -51,8 +50,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/unfallversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallschutz Premium",
@@ -75,8 +73,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/unfallversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -88,6 +85,7 @@
     "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
     "Keine Empfehlung markiert; Komfort als mittlere Stufe.",
     "Werte aus Tarifvergleich und Leistungsübersicht. Unfallrente ab 50 % Invalidität (Premium mit Mehrleistung ab 90 %). Krankenhaustagegeld mit Verdopplung ab dem 4. Tag. Mitwirkung von Vorerkrankungen: Basis ab 25 %, Komfort ab 60 %, Premium keine Anrechnung.",
-    "Grundsumme individuell, nicht beziffert. Zusatzpaket SofortPlus (u. a. 5.000 € bei Schwerverletzung) wählbar. Zecken nicht ausdrücklich genannt."
+    "Grundsumme individuell, nicht beziffert. Zusatzpaket SofortPlus (u. a. 5.000 € bei Schwerverletzung) wählbar. Zecken nicht ausdrücklich genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -220,6 +220,20 @@ export const zuGrossText = (an: Ansprache) =>
   a(an, "Die Datei ist leider zu groß (höchstens 10 MB). Schick gern ein Foto der ersten Seite.", "Die Datei ist leider zu groß (höchstens 10 MB). Schicken Sie gern ein Foto der ersten Seite.");
 export const nichtGeladenText = (an: Ansprache) =>
   a(an, "Leider konnte ich die Datei nicht laden. Schick sie gern noch einmal.", "Leider konnte ich die Datei nicht laden. Schicken Sie sie gern noch einmal.");
+/** Virenprüfung mit Befund (lib/sicherheit/virenpruefung.ts): neutral, ohne „Virus“, Datei ist verworfen. */
+export const virenText = (an: Ansprache) =>
+  a(
+    an,
+    "Diese Datei konnte ich leider nicht annehmen. Schick die Police gern als Foto oder als PDF direkt aus deinen Unterlagen.",
+    "Diese Datei konnte ich leider nicht annehmen. Schicken Sie die Police gern als Foto oder als PDF direkt aus Ihren Unterlagen.",
+  );
+/** Prüfung gerade nicht möglich und VIRENPRUEFUNG_PFLICHT an: Datei nicht angenommen. */
+export const spaeterText = (an: Ansprache) =>
+  a(
+    an,
+    "Ich kann die Datei gerade nicht annehmen. Schick sie gern später noch einmal oder bring sie zum Termin mit.",
+    "Ich kann die Datei gerade nicht annehmen. Schicken Sie sie gern später noch einmal oder bringen Sie sie zum Termin mit.",
+  );
 export const widerrufText = (an: Ansprache) => a(an, "Erledigt, deine Unterlagen sind gelöscht.", "Erledigt, Ihre Unterlagen sind gelöscht.");
 
 /**

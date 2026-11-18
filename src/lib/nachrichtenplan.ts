@@ -6,6 +6,9 @@
 //                             (Angebot Tag 5 mit [Rückruf wünschen]) bzw. Anruf, beim Angebot Tag 3 mit Push an Sie
 //   Anrufplan                 nächster Versuch „Anrufversuch X von 6“ und die weiteren voraussichtlichen Versuche
 //                             (lib/call-plan.ts); vor dem Start der Auslöser 30 Min. nach dem Erstanschreiben
+//   Vorschläge (M7)           Aufgaben nach dem Abschluss (LeadTask, lib/lead-aufgaben.ts): „Willkommens-Mail, sobald die
+//                             Police da ist“, „Kündigung vorbereiten“, „Unterlagen nachfassen“, „Weiteres Produkt
+//                             anbieten“; nur Anzeige, nichts geht von selbst raus (zählt nicht als automatische Nachricht)
 //   Bedenkzeit, Rückruf (P5)  Pause: Schritte erst ab dem Tag der Bedenkzeit (neustartAt) bzw. nach dem Rückruf-Fenster;
 //                             die Rückruf-Aufgabe „Rückruf gewünscht: heute 14 bis 17 Uhr“ selbst
 // Rein (ohne Datenbank, testbar); Laden: lib/nachrichtenplan-server.ts. Oberfläche (Paket P6): „Nächste Nachrichten“ am
@@ -27,7 +30,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
 
 export type PlanKanal = "whatsapp" | "email" | "push" | "anruf";
-export type PlanQuelle = "erinnerung" | "terminbeginn" | "abfolge" | "anrufplan";
+export type PlanQuelle = "erinnerung" | "terminbeginn" | "abfolge" | "anrufplan" | "vorschlag";
 
 /** Was der Vermittler mit einem Eintrag tun kann (Paket P6). */
 export type PlanAktion = "jetzt" | "verschieben" | "ueberspringen" | "rueckgaengig";
@@ -123,6 +126,10 @@ export type PlanEingabe = {
   anrufAusloeserAt?: Date | null;
   /** „Alle pausieren“ am Kontakt (Lead.nachrichtenPausiertAt) */
   pausiertAt?: Date | null;
+  /** Offene Aufgaben nach dem Abschluss (LeadTask „wartet“ bzw. „aktiv“), Paket M7 */
+  vorschlaege?: { kind: string; note: string; dueAt: Date }[];
+  /** Mail-Vorlagen mit Stufe „aus“ (Einstellungen → Assistent): kein Mail-Vorschlag */
+  mailAus?: readonly string[];
 };
 
 const iso = (d: Date) => d.toISOString();
@@ -326,6 +333,24 @@ function rueckrufEintraege(p: PlanEingabe): PlanEintrag[] {
   return [{ key: "rueckruf", at: iso(fruehestens(ap.followUpAt, p.now)), kanal: "anruf", quelle: "anrufplan", titel: ap.followUpNote!, vorschau: `Aufgabe auf „Heute“: ${p.label} anrufen` }];
 }
 
+/** Text je Aufgabe (M7): Mail-Vorschläge mit Vorlage, sonst die Aufgabe selbst. */
+function vorschlagText(kind: string, note: string, mailAus: readonly string[]): { titel: string; kanal: PlanKanal; vorschau: string } {
+  if (kind === "police" && !mailAus.includes("willkommen")) {
+    return { titel: "Vorschlag: Willkommens-Mail, sobald die Police da ist", kanal: "email", vorschau: `Aufgabe auf „Heute“: ${note} Dann mit einem Tipp die Willkommens-Mail senden.` };
+  }
+  if (kind === "kuendigung" && !mailAus.includes("kuendigung")) {
+    return { titel: "Vorschlag: Kündigung vorbereiten", kanal: "email", vorschau: `Aufgabe auf „Heute“: ${note}. Die Musterkündigung ist vorausgefüllt.` };
+  }
+  if (kind === "unterlagen_fehlen") return { titel: "Vorschlag: Unterlagen nachfassen", kanal: "anruf", vorschau: `Aufgabe auf „Heute“: ${note}` };
+  if (kind === "cross_sell") return { titel: "Vorschlag: Weiteres Produkt anbieten", kanal: "anruf", vorschau: `Aufgabe auf „Heute“: ${note}` };
+  return { titel: `Vorschlag: ${note}`, kanal: "anruf", vorschau: `Aufgabe auf „Heute“: ${note}` };
+}
+
+/** Vorschläge aus den Aufgaben nach dem Abschluss (nur Anzeige, ohne Aktionen). */
+function vorschlagEintraege(p: PlanEingabe): PlanEintrag[] {
+  return (p.vorschlaege ?? []).map((v) => ({ key: `vorschlag:${v.kind}`, at: iso(fruehestens(v.dueAt, p.now)), quelle: "vorschlag" as const, ...vorschlagText(v.kind, v.note, p.mailAus ?? []) }));
+}
+
 /** Alle geplanten automatischen Nachrichten und Aufgaben eines Leads, nach Zeit sortiert. */
 export function planeNachrichten(p: PlanEingabe): PlanEintrag[] {
   const termine = p.termine.filter((t) => t.status === "booked");
@@ -337,11 +362,12 @@ export function planeNachrichten(p: PlanEingabe): PlanEintrag[] {
     // Der Anrufplan steht unabhängig davon auf „Heute“
     ...anrufplanEintraege(p),
     ...rueckrufEintraege(p),
+    ...vorschlagEintraege(p),
   ].sort((x, y) => x.at.localeCompare(y.at));
 }
 
 /** Geht an den Lead (WhatsApp, E-Mail), nicht an den Vermittler (Push, Anruf-Aufgabe). */
-export const anLead = (e: Pick<PlanEintrag, "kanal">) => e.kanal === "whatsapp" || e.kanal === "email";
+export const anLead = (e: Pick<PlanEintrag, "kanal"> & { quelle?: PlanQuelle }) => (e.kanal === "whatsapp" || e.kanal === "email") && e.quelle !== "vorschlag";
 
 /**
  * Automatische Nachrichten an den Lead in [von, bis) (Zeile „Morgen … automatische Nachrichten“ auf „Heute“, P6):

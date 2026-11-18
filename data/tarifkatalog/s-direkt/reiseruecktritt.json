@@ -23,8 +23,7 @@
         "abbruch": "optional"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/reiseversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Travel-Paket",
@@ -39,8 +38,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/reiseversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Jahresrücktritt plus",
@@ -56,8 +54,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/reiseversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -68,6 +65,7 @@
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Produkt der URV Union Reiseversicherung AG. Drei Tarife laut Produktseite; Travel-Paket zusätzlich Auslandskrankenschutz und Krankenrücktransport für eine Reise. Keine Empfehlung; Travel-Paket als mittlere Stufe.",
     "Familientarif für bis zu zwei Erwachsene und Kinder unter 21. Versicherungssumme, Pandemie und Selbstbehalt-Höhe nicht genannt.",
-    "Eine eigenständige Auslandsreise-Krankenversicherung gibt es nicht; sie ist nur im Travel-Paket enthalten."
+    "Eine eigenständige Auslandsreise-Krankenversicherung gibt es nicht; sie ist nur im Travel-Paket enthalten.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

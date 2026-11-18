@@ -90,6 +90,16 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-onboarding");
     return { error: e instanceof Error ? e.message : String(e) };
   });
+  // Virenprüfung nachholen (lib/sicherheit/virenpruefung.ts): ungeprüfte Policen und Uploads, sobald ClamAV erreichbar
+  // ist (höchstens 20 je Art und Lauf; ohne CLAMAV_HOST nichts)
+  if (process.env.CLAMAV_HOST) {
+    after(() =>
+      Promise.all([
+        import("@/lib/policen/server").then((m) => m.pruefeUngepruefteNach()),
+        import("@/lib/lead-files").then((m) => m.pruefeUngepruefteLeadFilesNach()),
+      ]).catch((e: unknown) => reportError(e, "cron-viren-nachpruefen")),
+    );
+  }
   // Einmal täglich (03:00–03:05 UTC): Löschfristen (siehe docs/datenschutz.md), Logins, Garantien.
   const now = new Date();
   // Bestandskunden-Modul: zum Periodenende gekündigte Module abschalten (Kunde hat selbst gekündigt)
@@ -127,6 +137,13 @@ async function handle(req: Request): Promise<Response> {
             reportError(e, "cron-policen-auslesen");
             return null;
           }),
+          // Löschprotokoll: Löschungen nach einer Wiederherstellung erneut anwenden, Einträge nach 13 Monaten löschen
+          loeschprotokoll: await import("@/lib/loeschprotokoll")
+            .then(async (m) => ({ ...(await m.wendeLoeschprotokollAn()), offen: undefined, alt: await m.pruneLoeschprotokoll(now) }))
+            .catch((e: unknown) => {
+              reportError(e, "cron-loeschprotokoll");
+              return null;
+            }),
           // Vertragsende: Konto ruht, Erinnerungen 30/7 Tage vor der Löschung, endgültige Löschung (lib/ruhend.ts)
           retention: await import("@/lib/ruhend").then((m) => m.runRetentionCron(now)).catch((e: unknown) => {
             reportError(e, "cron-retention");

@@ -32,8 +32,7 @@
         "sb0": "nein"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/270/documents/Leistungs%C3%BCbersicht_gesamt_Privathaftpflicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Kompakt",
@@ -59,8 +58,7 @@
         "sb0": "nein"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/270/documents/Leistungs%C3%BCbersicht_gesamt_Privathaftpflicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Komplett",
@@ -85,8 +83,7 @@
         "sb0": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/270/documents/Leistungs%C3%BCbersicht_gesamt_Privathaftpflicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -98,6 +95,7 @@
     "VOLKSWOHL BUND verkauft die Sachversicherungen über die Tochter PROKUNDO; Versicherer ist die VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungshighlights PK PIB PHV 02.2023; Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
     "Zeilenzuordnung bitte prüfen: deliktunfähige Personen Klassik 3.000 €, Kompakt 17.500 € (nur Kinder); geliehene Sachen nur Komplett. Fremde private Schlüssel Klassik mit 150 € SB; berufliche Schlüssel erst ab Kompakt (35.000 €).",
     "Mietsachschäden an Wohnräumen nicht als eigene Zeile genannt. Plus-Baustein (nur Komplett): Neuwert bis 12 Monate ab Kauf, Opferschutz, Verzicht auf alle Selbstbeteiligungen. Baustein Berufshaftpflicht Lehrer/Erzieher in allen Stufen.",
-    "Keine Empfehlung markiert, Kompakt als mittlere Stufe."
+    "Keine Empfehlung markiert, Kompakt als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

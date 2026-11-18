@@ -50,7 +50,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
     prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { leadAddress: true, vorsorgeThemenAus: true } }),
     ladePreisPilot(),
     // Policen vom Kunden per WhatsApp (lib/policen)
-    d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview }) : [],
+    d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview, userId: ctx.userId }) : [],
     // Angebot nach dem Termin (Paket P3): abgelegt bzw. gesendet
     prisma.appointment.findUnique({ where: { id: d.id }, select: { startsAt: true, angebotAbgelegtAt: true, angebotGesendetAt: true, angebotVersand: true, angebotKanaele: true } }),
   ]);
@@ -89,7 +89,7 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
         <BestehendeVertraege v={vorvertraegeAus(d.vorvertraege)} lebenssituation={lebenssituationAus(d.formular, d.angaben)} className="mt-3 border-t border-[color:var(--border)] pt-3" />
         {d.leadId ? (
           <div className="mt-3 border-t border-[color:var(--border)] pt-3">
-            <UnterlagenVomKunden leadId={d.leadId} unterlagen={vomKunden} />
+            <UnterlagenVomKunden leadId={d.leadId} unterlagen={vomKunden} zurueck={`/buyer/termine/${d.id}/vorbereitung`} />
             {/* Policen auslesen: Vergleichsblatt (eigene Seite, components/policen-vergleich-kurz.tsx) */}
             <div className="mt-2.5">
               <PolicenVergleichKurz terminId={d.id} leadId={d.leadId} customerId={ctx.customerId} preview={ctx.preview} />

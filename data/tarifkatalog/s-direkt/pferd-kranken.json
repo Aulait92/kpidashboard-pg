@@ -27,8 +27,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1eXtOQXwn1rkzAPXFl0nHx/ab3fecddb8dc6c80778e7274db50043b/pferdeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
   "offen": [
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Leistungsübersicht PFOPKV_IB_1019 (Stand 10/2019, bitte Aktualität prüfen).",
-    "Ein Tarif; enthält alle Operationen und Leistungen der Pferde-OP premium plus sowie ambulante und stationäre Behandlungen. Selbstbeteiligung nicht genannt."
+    "Ein Tarif; enthält alle Operationen und Leistungen der Pferde-OP premium plus sowie ambulante und stationäre Behandlungen. Selbstbeteiligung nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

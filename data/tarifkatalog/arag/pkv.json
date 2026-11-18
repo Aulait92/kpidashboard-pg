@@ -29,8 +29,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.arag.de/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG MedExtra",
@@ -52,8 +51,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.arag.de/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG MedBest",
@@ -75,8 +73,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.arag.de/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -89,6 +86,7 @@
     "Komfort: Arznei-, Heil-, Verband- und Hilfsmittel 80 % bis 2.500 € im Jahr, darüber 100 %; ob offener oder geschlossener Hilfsmittelkatalog, ist nicht genannt.",
     "Gebührensätze: Komfort und MedExtra ambulant und Zahn bis Höchstsatz, stationär darüber; MedBest durchgehend über Höchstsatz. Zahnstaffel in den ersten Jahren (1.000 € bis 3.000 € bzw. 5 Jahre im Komfort).",
     "Augenlaser: MedExtra 2.000 €, MedBest 4.000 € alle 5 Jahre. Beitragsbefreiung bei Elterngeld ab MedExtra. Krankentagegeld über Tarif KTV. Ausland und Pflegezusatz nicht im Tarifvergleich.",
-    "Für Beamte eigene Beihilfetarife (Seite „Krankenversicherung für Beamte“), nicht aufgenommen."
+    "Für Beamte eigene Beihilfetarife (Seite „Krankenversicherung für Beamte“), nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }

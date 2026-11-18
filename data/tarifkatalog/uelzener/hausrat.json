@@ -32,8 +32,7 @@
         "glas": "optional"
       },
       "quelle": "https://uelzener.de/mensch/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat-Versicherung premium",
@@ -59,8 +58,7 @@
         "glas": "optional"
       },
       "quelle": "https://uelzener.de/mensch/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat-Versicherung premium plus",
@@ -86,8 +84,7 @@
         "glas": "optional"
       },
       "quelle": "https://uelzener.de/mensch/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -103,6 +100,7 @@
     "Einfacher Diebstahl aus der Wohnung nicht genannt; einfacher Diebstahl nur für Krankenfahrstühle und Kinderwagen (125/250/500 €) sowie Trickdiebstahl (125/250/500 €).",
     "Elementarschäden laut Informationsblatt nur für Abschlüsse bis 31.12.2020 (bis 20 % der VS); für neue Verträge nicht angeboten.",
     "Hotelkosten basis: in den Besonderen Bedingungen nicht erweitert, Dauer nach VHB nicht ausgewertet. Garten = Diebstahl von Wäsche, Gartenmöbeln, Sportgeräten. Auto = Diebstahl aus verschlossenem Kfz in Deutschland.",
-    "Zusatzpakete gegen Aufpreis: Fahrraddiebstahl (500 bis 3.000 €), Glasschäden, Pferdehalter (Sattel- und Zaumzeug). Selbstbeteiligung nicht veröffentlicht."
+    "Zusatzpakete gegen Aufpreis: Fahrraddiebstahl (500 bis 3.000 €), Glasschäden, Pferdehalter (Sattel- und Zaumzeug). Selbstbeteiligung nicht veröffentlicht.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -58,6 +58,7 @@ import { eraseLead } from "@/lib/erasure";
 import { GET as unterlageGET } from "@/app/api/buyer/leads/[id]/unterlagen/[docId]/route";
 import { GET as dateiGET } from "@/app/api/buyer/policen/datei/route";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
+import { starteClamd, type ClamdAttrappe } from "../fixtures/clamd";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 let seq = 0;
@@ -83,6 +84,7 @@ const ABLAGE_ENV = {
 };
 
 describe("Policen per WhatsApp", () => {
+  let clamd: ClamdAttrappe;
   let customerId = "";
   let ownerId = "";
   let advisorId = "";
@@ -126,6 +128,10 @@ describe("Policen per WhatsApp", () => {
     customerId = c.id;
     ownerId = (await makeBuyer(customerId, "owner")).id;
     advisorId = (await makeBuyer(customerId, "advisor")).id;
+    // Zwei-Faktor-Login (Pflicht zum Öffnen und Freischalten, AVV § 5); ohne siehe policen-sicherheit.test.ts
+    await prisma.user.updateMany({ where: { id: { in: [ownerId, advisorId] } }, data: { totpEnabledAt: new Date(), totpSecretEnc: encryptSecret("JBSWY3DPEHPK3PXP") } });
+    // Virenprüfung: Attrappe von clamd (tests/fixtures/clamd.ts)
+    clamd = await starteClamd();
     await prisma.erstinformation.create({ data: { customerId, token: `t-${uid()}`, name: "Ole Kannapinn", anrede: "Herr", firma: "Kannapinn Versicherungen" } });
     await prisma.agentConfig.create({ data: { customerId, active: true, outreachEnabled: false, systemPrompt: "Test" } });
     await prisma.whatsAppAccount.create({ data: { customerId, status: "connected", phoneNumberId: pnid, apiKeyEnc: encryptSecret("k") } });
@@ -133,10 +139,13 @@ describe("Policen per WhatsApp", () => {
   afterAll(async () => {
     setzeSpeicherFuerTests(null);
     for (const k of Object.keys(ABLAGE_ENV)) delete process.env[k];
+    delete process.env.CLAMAV_HOST;
+    delete process.env.CLAMAV_PORT;
+    await clamd.stop();
     await cleanupCustomer(customerId);
   });
   beforeEach(async () => {
-    Object.assign(process.env, ABLAGE_ENV);
+    Object.assign(process.env, ABLAGE_ENV, { CLAMAV_HOST: "127.0.0.1", CLAMAV_PORT: String(clamd.port) });
     delete process.env.POLICEN_WHATSAPP_AUS;
     delete process.env.POLICEN_GESUNDHEIT_AUS;
     setzeSpeicherFuerTests(memory);

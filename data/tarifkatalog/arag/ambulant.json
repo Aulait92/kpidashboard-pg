@@ -26,8 +26,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.arag.de/krankenzusatzversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Ambulant Komfort",
@@ -45,8 +44,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.arag.de/krankenzusatzversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Ambulant Premium",
@@ -65,8 +63,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.arag.de/krankenzusatzversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
     "Heilpraktiker inklusive verordneter Medikamente; Premium auch Arzt für Naturheilverfahren (Hufeland), Rechnungsbetrag bis 2.500 € in 2 Jahren. Komfort ohne genannte Obergrenze.",
     "Augenlaser: Die Seite Ambulante Zusatzversicherung nennt nur Premium (36 Monate Wartezeit), die Seite Heilpraktiker-Zusatzversicherung Komfort und Premium; Komfort offen.",
     "Vorsorgeuntersuchungen über die eigene Vorsorge-Zusatzversicherung (bis 1.000 €, Impfungen bis 200 € in 2 Jahren, ohne Gesundheitsprüfung), nicht als Stufe. Hörgeräte und Wartezeit nicht genannt.",
-    "Option auf ARAG Vollversicherung ohne Gesundheitsprüfung: Komfort bis 40, Premium bis 50 Jahre."
+    "Option auf ARAG Vollversicherung ohne Gesundheitsprüfung: Komfort bis 40, Premium bis 50 Jahre.",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }

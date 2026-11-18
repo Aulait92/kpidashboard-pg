@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/existenzsicherung/berufsunfaehigkeit/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -31,6 +30,7 @@
   "offen": [
     "Ein Tarif (BU Komfort, auch als Zusatzversicherung WWK BioRisk zu Renten- oder Risikoleben). Prognosezeitraum, AU-Klausel, rückwirkende Leistung, Teilzeit, Stundung nicht auf der Produktseite. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
     "Verweisung: nur auf den zuletzt ausgeübten Beruf bei noch vorhandener Arbeitsfähigkeit (Verzicht auf abstrakte Verweisung).",
-    "Erwerbsunfähigkeitsversicherung (WWK BioRisk EU) hat keine Sparte im Schema und ist nicht aufgenommen."
+    "Erwerbsunfähigkeitsversicherung (WWK BioRisk EU) hat keine Sparte im Schema und ist nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

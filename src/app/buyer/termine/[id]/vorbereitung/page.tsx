@@ -44,7 +44,7 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
     loadAngebote(id, ctx),
     angeboteAuslesenErlaubt(ctx.customerId, d.lead.produkt),
     isNewUi(ctx.customerId),
-    d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview }) : [],
+    d.leadId ? listUnterlagen(d.leadId, { preview: ctx.preview, userId: ctx.userId }) : [],
   ]);
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
@@ -101,7 +101,7 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
         <Card className="mb-5">
           <CardHeader title={dokumenteTitel(unterlagenVomKunden.length)} icon={FileText} />
           <div className="px-5 py-3.5 text-sm">
-            <UnterlagenVomKunden leadId={d.leadId} unterlagen={unterlagenVomKunden} titel={false} />
+            <UnterlagenVomKunden leadId={d.leadId} unterlagen={unterlagenVomKunden} titel={false} zurueck={`/buyer/termine/${id}/vorbereitung`} />
             <div className="mt-2.5">
               <PolicenVergleichKurz terminId={d.id} leadId={d.leadId} customerId={ctx.customerId} preview={ctx.preview} />
             </div>

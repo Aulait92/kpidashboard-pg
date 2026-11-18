@@ -4,12 +4,15 @@
 // Die Datenschutzhinweise für seine Kunden sind die Seite /datenschutz/policen?k=<Token> mit seinen Anbieterangaben;
 // ihre Adresse wird beim Zustimmen hinterlegt (policenDatenschutzUrl), sofern keine eigene eingetragen ist.
 // Karte oben in der Terminvorbereitung und auf Heute, bis zugestimmt oder 3-mal „Später“, danach nur in den Einstellungen.
+// Zustimmen nur mit eingerichtetem Zwei-Faktor-Login des Inhabers (AVV-Ergänzung § 5, Ole 18.11.2026); sonst führt die
+// Karte zuerst zur Einrichtung.
 
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { firmDisplayName } from "@/lib/advisor-name";
 import { AVV_POLICEN_VERSION, gesundheitFreigegeben, gesundheitNotAus, GESUNDHEIT_FREIGABE_SELECT } from "@/lib/policen/regeln";
 import { avvPolicenAbsaetze, speicherAngabe } from "@/lib/policen/avv-text";
+import { zweiFaktorAktiv } from "@/lib/totp-account";
 
 export const SPAETER_MAX = 3;
 
@@ -20,6 +23,8 @@ export type Freischaltung = {
   freigeschaltet: boolean;
   intern: boolean;
   zugestimmtAt: string | null;
+  /** Zwei-Faktor-Login des Inhabers eingerichtet (Voraussetzung zum Zustimmen) */
+  zweiFaktor: boolean;
   datenschutzUrl: string | null;
   avv: { titel: string; text: string }[];
 };
@@ -51,14 +56,19 @@ export async function ladeFreischaltung(ctx: Ctx): Promise<Freischaltung | null>
     freigeschaltet,
     intern,
     zugestimmtAt: zugestimmt ? c.policenAvvZugestimmtAt!.toISOString() : null,
+    zweiFaktor: await zweiFaktorAktiv(ctx.userId),
     datenschutzUrl,
     avv: await avvFuer(ctx.customerId, c.name),
   };
 }
 
-/** „Zustimmen und einschalten“: Nachweis anhängen, Kunde freischalten, Datenschutzhinweis hinterlegen. */
+/**
+ * „Zustimmen und einschalten“: Nachweis anhängen, Kunde freischalten, Datenschutzhinweis hinterlegen. Nur mit
+ * Zwei-Faktor-Login des Inhabers (AVV § 5).
+ */
 export async function stimmeAvvZu(ctx: Ctx, now = new Date()): Promise<boolean> {
   if (!inhaber(ctx)) return false;
+  if (!(await zweiFaktorAktiv(ctx.userId))) return false;
   const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { name: true, policenDatenschutzUrl: true } });
   if (!c) return false;
   const url = c.policenDatenschutzUrl ?? (await import("@/lib/policen/verantwortlicher").then((m) => m.policenDatenschutzUrl(ctx.customerId)));

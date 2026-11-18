@@ -30,8 +30,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/kfz/huk-kfz-broschuere-ma1vpv-0825.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Classic mit Kasko PLUS",
@@ -54,8 +53,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.vpv.de/media/content/produkte/dokumente/wohnen-und-kfz/kfz/huk-kfz-broschuere-ma1vpv-0825.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +65,7 @@
     "Die VPV vermittelt die Autoversicherung Classic der HUK-COBURG; Werte aus der HUK-Broschüre, die die VPV verlinkt (Stand 08.2025). Gleiche Tarife wie in huk-coburg/kfz.json.",
     "Grobe Fahrlässigkeit: Verzicht „in den meisten Fällen“ in Teil- und Vollkasko; Ausnahmen nicht in der Broschüre.",
     "Tiere: Zusammenstoß mit Tieren in der Teilkasko; Einschränkung auf Tierarten nicht genannt.",
-    "Kasko PLUS: Neupreis bzw. Kaufwert 36 Monate, selbst verschuldete Eigenschäden bis 100.000 €, Sportgeräte bis 5.000 €. Akku-Schutz für E-Autos in der Broschüre, Höhe nicht eindeutig zuordenbar."
+    "Kasko PLUS: Neupreis bzw. Kaufwert 36 Monate, selbst verschuldete Eigenschäden bis 100.000 €, Sportgeräte bis 5.000 €. Akku-Schutz für E-Autos in der Broschüre, Höhe nicht eindeutig zuordenbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

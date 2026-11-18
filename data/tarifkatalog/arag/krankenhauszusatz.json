@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG 1-Bett S (MK1S)",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG 2-Bett L (MK2L)",
@@ -63,8 +61,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG 1-Bett L (MK1L)",
@@ -82,8 +79,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -94,6 +90,7 @@
     "Keine Markierung durch ARAG; bei vier Stufen die dritte gesetzt. S-Tarife ohne, L-Tarife mit Alterungsrückstellungen; die Leistungen sind sonst gleich.",
     "Ersatz-Krankenhaustagegeld: 50 € bei Verzicht auf Chefarzt, 30 € (Zweibett) bzw. 50 € (Einbett) bei Verzicht auf die Unterbringung; Kinder halbe Sätze.",
     "Verzicht auf allgemeine Wartezeiten; 8 Monate Wartezeit bei besonderen Leistungen laut Seite (z. B. Entbindung, Psychotherapie).",
-    "Zweibett-Tarife mit Option auf Umstellung in einen Einbettzimmer-Tarif. Krankenhaustagegeld als eigenes Produkt, nicht aufgenommen."
+    "Zweibett-Tarife mit Option auf Umstellung in einen Einbettzimmer-Tarif. Krankenhaustagegeld als eigenes Produkt, nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }

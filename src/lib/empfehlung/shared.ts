@@ -47,6 +47,9 @@ export const HINTS = {
 export type HintKey = (typeof HINTS)[keyof typeof HINTS];
 export const HINT_KEYS: readonly string[] = Object.values(HINTS);
 
+/** Bewertungs-Wächter auf der Modulseite: steht im Reiter „Teilen & Google“ (Push, Heute-Karte). */
+export const WAECHTER_HREF = "/buyer/empfehlungen?tab=teilen#bewertungen";
+
 /** Ab so vielen Abschlüssen in 60 Tagen lohnt sich das Modul (Heute-Hinweis, Admin-Kandidaten). */
 export const CANDIDATE_MIN_CLOSINGS = 3;
 export const CANDIDATE_WINDOW_DAYS = 60;

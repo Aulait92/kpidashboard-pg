@@ -29,8 +29,7 @@
         "sb0": "nein"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/332/documents/Tarifhighlights_Tierhalterhaftpflicht_Pferd.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tierhalterhaftpflicht Pferd Komplett",
@@ -52,8 +51,7 @@
         "sb0": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/332/documents/Tarifhighlights_Tierhalterhaftpflicht_Pferd.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -64,6 +62,7 @@
   "offen": [
     "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungshighlights PK PIB THV Pferd 02.2023; Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
     "Mietsachschäden an Stall, Box, Reithalle, Weide und Koppel bis 100.000 €, an Räumen in Gebäuden mitversichert, jeweils mit 150 € SB; eine allgemeine SB ist nicht genannt. Geliehene Reitutensilien, Kutschen und Anhänger über 10.000 € nur Komplett.",
-    "Jungtiere 12 Monate beitragsfrei. Plus-Baustein nur Komplett: Neuwert bis 12 Monate ab Kauf, Verzicht auf alle SB. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+    "Jungtiere 12 Monate beitragsfrei. Plus-Baustein nur Komplett: Neuwert bis 12 Monate ab Kauf, Verzicht auf alle SB. Zwei Stufen ohne Markierung, daher keine Empfehlung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

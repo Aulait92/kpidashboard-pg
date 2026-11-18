@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F03_Zahnzusatz%2F02_Produktunterlagen_fuer_Ihre_Kunden&files=7_2_019_BR_smile_ZahnBasis.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "smile! ZahnKomfort",
@@ -41,8 +40,7 @@
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F03_Zahnzusatz%2F02_Produktunterlagen_fuer_Ihre_Kunden&files=Zahnzusatz_Smile_7.2.008.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "smile! ZahnPremium",
@@ -55,13 +53,12 @@
         "prophylaxe": "100 %, unbegrenzt",
         "wartezeit": "keine",
         "staffel": "6.000 € in 4 Jahren",
-        "kfo": "90 %, bis 4.000 €",
+        "kfo": "bis 4.000 € (KIG 1–2)",
         "inlays": "100 %"
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F03_Zahnzusatz%2F02_Produktunterlagen_fuer_Ihre_Kunden&files=Zahnzusatz_Smile_7.2.008.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -72,7 +69,8 @@
   "offen": [
     "Quellen: Broschüre smile! ZahnKomfort/ZahnPremium 7.2.008 (Stand 9/2021) und smile! ZahnBasis 7.2.019 (Stand 4/2024, Stuttgarter Lebensversicherung a. G.); neuere Fassung der Komfort/Premium-Broschüre bitte prüfen.",
     "Prozentwerte jeweils unter Einbeziehung der Vorleistung der gesetzlichen Krankenversicherung. ZahnBasis verdoppelt den Festzuschuss der Krankenkasse für Zahnersatz (auch auf Implantaten); Zahnbehandlung und Prophylaxe sind dort nicht genannt.",
-    "Kieferorthopädie bis 22 Jahre: ZahnKomfort KIG 1 bis 5 90 %, bis 2.000 €; ZahnPremium KIG 1 bis 2 bis 4.000 €, KIG 3 bis 5 bis 2.000 € (Spaltenzuordnung bitte prüfen).",
-    "Leistungsbegrenzung in den ersten 4 Kalenderjahren (Komfort 1.250 € je Jahr, Premium 1.500 €), Verzicht ab dem 3. Jahr bei Vorversicherung. Keine Empfehlung markiert, ZahnKomfort als mittlere Stufe."
+    "Leistungsbegrenzung in den ersten 4 Kalenderjahren (Komfort 1.250 € je Jahr, Premium 1.500 €), Verzicht ab dem 3. Jahr bei Vorversicherung. Keine Empfehlung markiert, ZahnKomfort als mittlere Stufe.",
+    "Kieferorthopädie bis 22 Jahre (Broschüre 7.2.008, Seite 6, am Bild geprüft): ZahnKomfort KIG 1 bis 5 90 %, bis 2.000 €; ZahnPremium KIG 1 bis 2 90 %, bis 4.000 €, KIG 3 bis 5 90 %, bis 2.000 €.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

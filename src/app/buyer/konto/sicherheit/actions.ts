@@ -17,7 +17,8 @@ export async function startBuyerTotpAction(): Promise<void> {
   const me = await self();
   if (!me) return;
   await startTotpSetup(me.userId);
-  revalidatePath(PATH);
+  // Auch die Einrichtungs-Karte (…/zwei-faktor) neu laden
+  revalidatePath(PATH, "layout");
 }
 
 export async function confirmBuyerTotpAction(_prev: TotpState, fd: FormData): Promise<TotpState> {

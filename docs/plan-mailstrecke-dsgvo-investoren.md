@@ -79,6 +79,22 @@ AVV/AGB-Ergänzungen (Bestandsdaten, Mail-Kampagnen über Postfach, Kündigung Z
 Versicherer“ und Ausschließlichkeitsvertreter-Bestätigung vom Anwalt; Löschen einzelner Bestandskunden (D11); Preise bestätigen
 (149 €, Kontingente, Pakete); Webseite; Erklärvideos (3–4 h); Echttest auf Staging inkl. Meta-Marketing-Vorlagen je Konto.
 
+## Nachtrag Ole (18.11. nachts)
+
+**A) SMS über seven.io zusätzlich zur Mail (nur Leads ohne WhatsApp)** (+ ca. 8 h): SMS kurz mit Link auf die Antwortseite,
+Absender = Vermittler-Name (≤ 11 Zeichen, sonst SMS_ABSENDER), STOP. Takt über 10 Tage: Tag 1 Mail + SMS, Tag 2 vormittags Mail
+mit 2 Zeiten, Tag 4 nachmittags SMS, Tag 6 abends Mail mit Nutzensatz, Tag 10 letzte Mail „Soll ich Ihre Anfrage schließen?“.
+Max. 2 SMS, nichts 20–8 Uhr, Stopp bei jeder Reaktion. **seven.io steht noch NICHT in SUBPROCESSORS/AVV/datenschutz.md** →
+Schalter MAIL_STRECKE_SMS aus, bis ergänzt.
+
+**B) Beratungsdokumentation als Angebot (Schalter je Vermittler, Standard aus)** (ca. 8 h, weil M5 die Grundlage schon hat:
+Editor, PDF, Ablage „Beratungsdokumentation“, Aufbewahrung): eigener Knopf nach dem Termin „Beratungsdokumentation erstellen“
+(unabhängig vom Angebot), Abschnitte Wünsche und Bedürfnisse, Beratung, Empfehlung mit Begründung, Entscheidung des Kunden,
+Hinweise (z. B. Verzicht); Vorbelegung aus Terminvorbereitung, Vergleichsblatt, Angaben, Notizen; Versand in Textform mit
+Bestätigung per Klick (Zeitstempel); Hinweis „Inhalte verantwortet der Vermittler, keine Beratung durch die App“; Schalter in
+Onboarding und Einstellungen; Nutzung messen (Vermittler eingeschaltet, Dokumente je Termin) unter Betreuen › Nutzung.
+Digitale Unterschrift erst bei Nutzung.
+
 ## Stand 18.11.2026 (Phase 1 gebaut, Branch claude/mailstrecke)
 
 - Mail-Strecke E0 bis E4 und Takt (Nachtrag Ole: E-Mail und SMS über 10 Tage statt „max. 2 Nachfass-Mails“):

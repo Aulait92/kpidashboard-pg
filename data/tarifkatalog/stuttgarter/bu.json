@@ -32,8 +32,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.stuttgarter.de/einkommensabsicherung/berufsunfaehigkeit",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Die Stuttgarter BU PLUS premium (Tarif 91A)",
@@ -58,8 +57,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.stuttgarter.de/einkommensabsicherung/berufsunfaehigkeit",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,6 +73,7 @@
     "Rückwirkend: Rentenzahlung rückwirkend ab Eintritt der Berufsunfähigkeit (Broschüre); ob ohne Meldefrist, in den Bedingungen nicht geprüft.",
     "Umorganisation: Verzicht bei Betrieben unter 10 Vollzeitmitarbeitern oder Akademikern mit mindestens 90 % Innendienst; Umorganisationshilfe 6 Monatsrenten, höchstens 12.000 €.",
     "Zusätzlich: Leistung bei bestimmten schweren Krankheiten bis 15 Monate, volle Erwerbsminderung ab Alter 55, Überbrückungshilfe bis 6 Monatsrenten, garantierte Rentensteigerung bis 3 % wählbar.",
-    "Stundung möglich (schriftliche Vereinbarung, Stundungszinsen); Dauer nicht beziffert. Eine Pflegerente als Baustein ist nicht genannt."
+    "Stundung möglich (schriftliche Vereinbarung, Stundungszinsen); Dauer nicht beziffert. Eine Pflegerente als Baustein ist nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

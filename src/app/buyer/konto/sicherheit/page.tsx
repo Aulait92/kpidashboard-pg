@@ -40,7 +40,7 @@ export default async function BuyerSecurityPage() {
           <CardHeader title="Zwei-Faktor-Login (empfohlen)" icon={ShieldCheck} />
           <div className="space-y-4 p-5 text-[15px]">
             <p className="text-sm text-[color:var(--muted)]">
-              Schützt Ihre Leads und Kundendaten, auch wenn Ihr Passwort in falsche Hände gerät. Funktioniert im Browser und in der App.
+              Schützt Ihre Kundendaten, auch wenn Ihr Passwort in falsche Hände gerät, und ist Pflicht zum Öffnen von Policen vom Kunden.
             </p>
             {userId ? (
               <TotpPanel

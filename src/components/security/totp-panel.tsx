@@ -3,7 +3,7 @@ import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
 import { otpauthUrl } from "@/lib/totp";
 import type { TotpState } from "@/lib/totp-account";
-import { ConfirmTotpForm, DisableTotpForm } from "./totp-forms";
+import { ConfirmTotpForm, DisableTotpForm, TotpRahmen } from "./totp-forms";
 
 type FormAction = (prev: TotpState, fd: FormData) => Promise<TotpState>;
 
@@ -11,20 +11,35 @@ const fmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 
 /** Zwei-Faktor-Login einrichten/ausschalten – für Admins und Kunden-Logins. */
-export async function TotpPanel({
+export async function TotpPanel(props: Parameters<typeof TotpPanelInhalt>[0]) {
+  // Rahmen hält die Notfall-Codes über das Neuladen nach dem Bestätigen hinweg (totp-forms.tsx)
+  return (
+    <TotpRahmen confirmAction={props.confirmAction} doneHref={props.doneHref} doneLabel={props.doneLabel}>
+      <TotpPanelInhalt {...props} />
+    </TotpRahmen>
+  );
+}
+
+async function TotpPanelInhalt({
   userId,
   startAction,
   confirmAction,
   disableAction,
   doneHref,
+  doneLabel,
   readOnly = false,
+  aktivZusatz,
 }: {
   userId: string;
   startAction: () => Promise<void>;
   confirmAction: FormAction;
   disableAction: FormAction;
   doneHref: string;
+  /** Beschriftung nach dem Sichern der Notfall-Codes (Standard „Gesichert, fertig“) */
+  doneLabel?: string;
   readOnly?: boolean;
+  /** Statt „Ausschalten“, wenn aktiv (z. B. „Weiter“ auf der Einrichtungs-Karte) */
+  aktivZusatz?: React.ReactNode;
 }) {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
@@ -51,22 +66,46 @@ export async function TotpPanel({
         <p className="font-medium text-emerald-700">
           Aktiv seit {fmt(user.totpEnabledAt)} · {user.totpBackupCodes.length} Notfall-Codes übrig
         </p>
-        {readOnly ? null : <DisableTotpForm disableAction={disableAction} />}
+        {aktivZusatz ?? (readOnly ? null : <DisableTotpForm disableAction={disableAction} />)}
       </>
     );
   }
   if (qr && secret) {
+    const appLink = otpauthUrl(secret, user.email);
+    const qrBild = (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={qr} alt="QR-Code für die Authenticator-App" width={220} height={220} className="rounded-[var(--radius-md)] border border-[color:var(--border)]" />
+    );
+    const schluessel = (
+      <p className="text-sm text-[color:var(--muted)]">
+        Schlüssel von Hand: <span className="select-all break-all font-mono text-[color:var(--foreground)]">{secret}</span>
+      </p>
+    );
     return (
       <>
-        <p>1. QR-Code mit der Authenticator-App scannen (z. B. Google Authenticator, Microsoft Authenticator, 1Password).</p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={qr} alt="QR-Code für die Authenticator-App" width={220} height={220} className="rounded-[var(--radius-md)] border border-[color:var(--border)]" />
-        <p className="text-xs text-[color:var(--muted)]">
-          Kein Scan möglich (z. B. in der App auf demselben Handy)? Schlüssel von Hand eingeben:{" "}
-          <span className="select-all break-all font-mono">{secret}</span>
-        </p>
+        <p>1. Authenticator-App verbinden (z. B. Google Authenticator, Microsoft Authenticator, 1Password).</p>
+        {/* Handy zuerst: Auf dem Handy öffnet der Link die App direkt (kein QR-Code auf demselben Bildschirm) */}
+        <div className="space-y-2 sm:hidden">
+          <a href={appLink} className="inline-flex h-12 w-full items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-sm font-semibold text-white" data-totp-app-link>
+            In der Authenticator-App öffnen
+          </a>
+          <details className="text-sm text-[color:var(--muted)]">
+            <summary className="min-h-10 cursor-pointer py-2">Anderes Gerät: QR-Code anzeigen</summary>
+            <div className="space-y-2 pb-1">
+              {qrBild}
+              {schluessel}
+            </div>
+          </details>
+        </div>
+        <div className="hidden space-y-2 sm:block">
+          {qrBild}
+          <details className="text-sm text-[color:var(--muted)]">
+            <summary className="min-h-10 cursor-pointer py-2">Kein Scan möglich?</summary>
+            {schluessel}
+          </details>
+        </div>
         <p>2. Den 6-stelligen Code aus der App eingeben:</p>
-        <ConfirmTotpForm confirmAction={confirmAction} doneHref={doneHref} />
+        <ConfirmTotpForm confirmAction={confirmAction} doneHref={doneHref} doneLabel={doneLabel} />
       </>
     );
   }

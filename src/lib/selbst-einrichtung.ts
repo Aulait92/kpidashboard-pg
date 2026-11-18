@@ -42,6 +42,8 @@ export const SETUP_STEPS = [
   { key: "mailbox", label: "E-Mail-Postfach" },
   { key: "provision", label: "Provisionen" },
   { key: "erstinfo", label: "Erstinformation" },
+  { key: "assistent", label: "So arbeitet Ihr Assistent" },
+  { key: "serviceMails", label: "Service-Mails in Ihrem Namen" },
   { key: "metaAccess", label: "Meta freigeben" },
   { key: "whatsapp", label: "WhatsApp verbinden" },
   { key: "bestandImport", label: "Kundenliste hochladen" },
@@ -491,7 +493,7 @@ export function setupSteps(
   const item = (k: string) => items.find((i) => i.key === k);
   const steps: SetupStep[] = [];
   for (const s of SETUP_STEPS) {
-    if (!software && (s.key === "calendar" || s.key === "mailbox" || s.key === "whatsapp" || s.key === "consent" || s.key === "erstinfo")) continue;
+    if (!software && (s.key === "calendar" || s.key === "mailbox" || s.key === "whatsapp" || s.key === "consent" || s.key === "erstinfo" || s.key === "assistent" || s.key === "serviceMails")) continue;
     const href = `/buyer/einrichtung?schritt=${s.key}#${s.key}`;
     if (s.key === "app") steps.push({ key: s.key, label: s.label, done: extra.appDone, owner: "kunde", href });
     else if (s.key === "provision") steps.push({ key: s.key, label: s.label, done: extra.provisionDone, owner: "kunde", href: "/buyer/provisionen" });
@@ -560,6 +562,8 @@ const STEP_HINT: Record<string, string> = {
   whatsapp: "WhatsApp-Nummer verbinden",
   consent: "Einwilligung im Leadformular bestätigen",
   erstinfo: "Erstinformation prüfen und bestätigen (Pflichtangaben oder eigenes PDF)",
+  assistent: "Ansehen, wie Ihr Assistent arbeitet und wann Sie gefragt sind (2 Minuten)",
+  serviceMails: "Service-Mails in Ihrem Namen bestätigen",
 };
 
 /** Erinnerung (Mail + Push) an den Kunden senden. `force` = sofort, unabhängig von Tag 1/3/7 (Admin-Knopf). */

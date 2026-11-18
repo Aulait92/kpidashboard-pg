@@ -1,11 +1,12 @@
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
 import { logLeadHistory } from "@/lib/lead-history";
-import { FILE_KIND_LABEL, isFileKind } from "@/lib/lead-files";
+import { FILE_KIND_LABEL, isFileKind, pruefeLeadFileNach, wartetAufPruefung } from "@/lib/lead-files";
 import { prisma } from "@/lib/prisma";
 import { leadScope } from "@/lib/team";
 
 // Dokument zum Lead ansehen (PDF/Bilder im Browser, sonst Download) oder löschen.
+// Hochgeladene Police mit ausstehender Virenprüfung: erst prüfen (lib/lead-files.ts pruefeLeadFileNach), sonst Hinweis.
 export const dynamic = "force-dynamic";
 
 async function find(leadId: string, fileId: string) {
@@ -20,6 +21,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id, fileId } = await params;
   const file = await find(id, fileId);
   if (!file) return new Response("Nicht gefunden.", { status: 404 });
+  if (wartetAufPruefung(file)) {
+    const r = await pruefeLeadFileNach(file);
+    if (r !== "sauber") {
+      const text = r === "befund" ? "Diese Datei wurde bei der Virenprüfung abgelehnt und gelöscht." : "Diese Datei wird noch auf Viren geprüft. Bitte versuchen Sie es in ein paar Minuten noch einmal.";
+      return new Response(text, { status: r === "befund" ? 410 : 409, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store" } });
+    }
+  }
   const inline = file.contentType === "application/pdf" || file.contentType.startsWith("image/");
   return new Response(new Uint8Array(file.data), {
     headers: {
