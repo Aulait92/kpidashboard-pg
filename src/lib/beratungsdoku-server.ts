@@ -452,6 +452,18 @@ export async function bdBestaetigen(token: string, now = new Date()): Promise<Bd
     console.error("[beratungsdoku] bestätigt, PDF", err instanceof Error ? err.message : err);
     await logLeadHistory(r.leadId, "dokument", `Erhalt der Beratungsdokumentation bestätigt am ${zeit}`, { customerId: r.customerId, userId: null });
   }
+  // Push an den zuständigen Vermittler (Ole, 18.11.2026); Fehler stoppen die Bestätigung nicht
+  try {
+    const lead = await prisma.lead.findUnique({ where: { id: r.leadId }, select: { name: true } });
+    await (await import("@/lib/team")).notifyLeadPush(r.leadId, {
+      title: `Beratungsdokumentation bestätigt: ${lead?.name?.trim() || "Kunde"}`,
+      body: "Der Erhalt ist bestätigt, das PDF liegt am Kontakt.",
+      url: `/buyer/leads/${r.leadId}`,
+      tag: `beratungsdoku:${r.id}`,
+    });
+  } catch (err) {
+    console.error("[beratungsdoku] Push", err instanceof Error ? err.name : "fehler");
+  }
   return { ok: true, schon: false };
 }
 
