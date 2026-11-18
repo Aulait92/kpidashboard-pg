@@ -147,7 +147,8 @@ export default async function KontaktaktePage({ params, searchParams }: { params
           <div className="min-w-0 space-y-5">
             <NaechsterSchritt c={c} a={a} termin={termin ?? null} />
 
-            <Card>
+            {/* Sprungmarken #aktivitaet und #aufgaben: „Ergebnis eintragen“ bzw. „Schritt planen“ aus Verkaufen → Termine */}
+            <Card id="aktivitaet">
               <CardHeader title="Aktivität erfassen" />
               <div className="px-5 py-4" data-funktion="actions-logactivity--aktivitaet-erfassen-anruf-e-mail-notiz-ergebnis">
                 <ActivityForm contactId={c.id} hasOpenTasks={a.open.length > 0} />
@@ -204,7 +205,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
               ) : null}
             </div>
 
-            <Card>
+            <Card id="aufgaben">
               <CardHeader title="Aufgaben" count={a.open.length} />
               <div data-funktion="page-aufgaben--offene-aufgaben-des-kontakts-und-neue-aufgabe">
                 {a.open.length ? (

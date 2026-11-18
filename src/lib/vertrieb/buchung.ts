@@ -25,6 +25,8 @@ import { findOrCreateContact, type Invitee } from "@/lib/vertrieb/calendly";
 import { Matcher } from "@/lib/vertrieb/linkedin";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { captureFromBooking } from "@/lib/vertrieb/kontaktdaten-server";
+import { anredeZeile } from "@/lib/ansprache";
+import { PROVIDER } from "@/lib/legal-texts";
 import type { SalesBookingType } from "@/generated/prisma/client";
 
 /** Interner Mandant, an dem der Vertriebskalender hängt (Migration 20261118705300). */
@@ -368,16 +370,9 @@ async function reserveAndCreate(opts: {
       start,
       end,
       summary: `${t.title}: ${opts.input.name} (${opts.input.company})`,
-      description: [
-        `${t.title} ${opts.admin ? "vom Team eingetragen" : "über die Buchungsseite"}`,
-        answersOf(opts.input),
-        `E-Mail: ${opts.input.email}`,
-        `Kontakt im CRM: ${salesAppUrl(`/admin/vertrieb/kontakte/${opts.contactId}`)}`,
-        `Verschieben oder absagen: ${manageLink(manageToken)}`,
-        t.mode === "video" && t.videoUrl ? `Videocall: ${t.videoUrl}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
+      // Die Beschreibung sehen die Gäste (Ole, 18.11.2026): nur Begrüßung, Link bzw. Telefon und Verschieben/Absagen.
+      // Interna (CRM-Link, Antworten, „vom Team eingetragen“) stehen im CRM, Push und Terminübersicht.
+      description: gastBeschreibung({ name: opts.input.name, mode: t.mode, videoUrl: t.videoUrl, phone, manageUrl: manageLink(manageToken) }),
       attendeeEmails: [opts.input.email],
       video: t.mode === "video",
       location: t.mode === "phone" && phone ? `Telefon: ${phone}` : null,
@@ -389,6 +384,24 @@ async function reserveAndCreate(opts: {
     await prisma.salesMeeting.delete({ where: { id: meetingId } }).catch(() => {});
     throw err;
   }
+}
+
+/** Beschreibung der Kalendereinladung für den Gast: ohne interne Angaben, ohne Gedankenstriche. */
+export function gastBeschreibung(o: { name: string; mode: string; videoUrl: string | null; phone: string | null; manageUrl: string }): string {
+  return [
+    anredeZeile("sie", { fullName: o.name }),
+    "",
+    "ich freue mich auf unser Gespräch.",
+    o.mode === "video" && o.videoUrl ? `Videocall: ${o.videoUrl}` : null,
+    o.mode === "phone" ? (o.phone ? `Ich rufe Sie zur vereinbarten Zeit unter ${o.phone} an.` : "Ich rufe Sie zur vereinbarten Zeit an.") : null,
+    "",
+    `Verschieben oder absagen: ${o.manageUrl}`,
+    "",
+    "Viele Grüße",
+    `${PROVIDER.manager}, ${PROVIDER.brand}`,
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
 }
 
 /** Termin-Aufgabe, Verlauf, Stufe „Termin“ (wie recordBooking in calendly.ts). */
