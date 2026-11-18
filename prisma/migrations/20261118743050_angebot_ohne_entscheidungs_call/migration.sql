@@ -1,0 +1,1 @@
+ALTER TABLE "Offer" ADD COLUMN IF NOT EXISTS "ohneEntscheidungsCall" BOOLEAN NOT NULL DEFAULT false;

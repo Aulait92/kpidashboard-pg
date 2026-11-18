@@ -112,6 +112,7 @@ export function DealOffersCard({
   const [mitLink, setMitLink] = useState(false);
   const [audience, setAudience] = useState<Audience>(mail.audience);
   const [du, setDu] = useState(false);
+  const [ohneCall, setOhneCall] = useState(false);
   const pdfDa = mail.pdf[audience];
   const [msg, setMsg] = useState<string | null>(null);
   const flash = (m: string) => {
@@ -200,7 +201,7 @@ export function DealOffersCard({
                     onClick={() =>
                       run(
                         current.id,
-                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, praesentationLink: !!mail.link && mitLink, audience, du }),
+                        () => sendOfferEmailAction(current.id, { rechner: mitRechner, praesentation: mitPraesentation && pdfDa, praesentationLink: !!mail.link && mitLink, audience, du, ohneEntscheidungsCall: !!mail.entscheidung && ohneCall }),
                         `Angebot an ${current.email} gesendet`,
                       )
                     }
@@ -248,9 +249,13 @@ export function DealOffersCard({
                   </div>
                 </div>
                 {mail.entscheidung ? (
-                  <p className="text-xs text-[color:var(--muted)]" data-entscheidungs-call>
-                    {mail.entscheidung}
-                  </p>
+                  <div className="space-y-1" data-entscheidungs-call>
+                    {!ohneCall ? <p className="text-xs text-[color:var(--muted)]">{mail.entscheidung}</p> : null}
+                    <label className="flex items-center gap-2" data-ohne-entscheidungs-call>
+                      <input type="checkbox" className="h-4 w-4" checked={ohneCall} onChange={(e) => setOhneCall(e.target.checked)} />
+                      Ohne Bitte um den Entscheidungs-Call
+                    </label>
+                  </div>
                 ) : null}
                 <div className="text-xs font-medium text-[color:var(--muted)]">Mit der E-Mail mitschicken</div>
                 <label className="flex items-center gap-2">

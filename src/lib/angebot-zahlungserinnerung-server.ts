@@ -219,7 +219,7 @@ async function sendeErinnerung(o: OfferRow, stufe: number, now: Date): Promise<{
   if (o.email) {
     // Entscheidungs-Call schon gebucht (auch erst nach dem Angebot): Termin nennen, geprüft bei jedem Versand.
     // Ohne Buchung wie bisher kein Buchungslink (das Angebot ist schon angenommen).
-    const call = await entscheidungsCallStand(o.salesContactId, now).catch(() => null);
+    const call = o.ohneEntscheidungsCall ? null : await entscheidungsCallStand(o.salesContactId, now).catch(() => null);
     const callText = call?.art === "gebucht" ? entscheidungsCallMailText(call, o.mailDu) : null;
     const text = erinnerungsMail({ number: o.number, startIso: tagIso(o.startDate), stufe, du: o.mailDu, entscheidungsCall: callText });
     const sent = await sendCustomerMail({
