@@ -1,5 +1,5 @@
-// Seit 17.11.2026 (Ole: „nie aus dem Vornamen raten“) nur noch anredeBewusstOffen in Gebrauch; anredeAusVorname
-// setzt keine Anrede mehr für Texte an Leads. Ursprünglich: Anrede aus dem Vornamen (Ole, 16.11.2026): „Wenn offensichtlich ist, ob Mann oder Frau, trage die Anrede
+// Wieder in Gebrauch seit 18.11.2026 (Ole: „Anrede aus dem Vornamen raten, solange wir uns sicher sind“; vom 17.
+// bis 18.11. abgeschaltet). Anrede aus dem Vornamen (Ole, 16.11.2026): „Wenn offensichtlich ist, ob Mann oder Frau, trage die Anrede
 // automatisch ein.“ Nur eindeutige Vornamen; alles, was in einer verbreiteten Sprache auch das andere
 // Geschlecht sein kann (Andrea, Kim, Kai, Luca, Toni, Sascha, Alex, Robin, Nicola, Deniz, Jean …), steht in
 // keiner Liste und bleibt ohne Anrede („Guten Tag Vorname Nachname“). Doppelnamen nur, wenn alle Teile

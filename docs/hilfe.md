@@ -310,8 +310,9 @@ Seiten aus der Liste „Seiten“ unten.
   **Einstellungen → E-Mail-Postfach** oder im Einrichtungs-Fragebogen um. Es gilt für den Assistenten,
   WhatsApp-Vorlagen, Termin-Nachrichten, Termin-E-Mails, die Buchungsseite und die E-Mail-Vorlagen.
 - **Anrede**: Bei „Sie“ beginnen Nachrichten mit „Guten Tag Frau Schneider,“ bzw. „Guten Tag Herr Schneider,“, wenn die
-  Anrede bekannt ist (Feld Anrede oder Geschlecht im Leadformular, Anrede beim Bestandskunden). Sonst mit vollem Namen
-  („Guten Tag Julia Schneider,“), ohne Nachnamen mit „Guten Tag,“. Die Anrede wird nie aus dem Vornamen geraten.
+  Anrede bekannt ist (Feld Anrede oder Geschlecht im Leadformular, Anrede beim Bestandskunden) oder der Vorname eindeutig
+  ist (Julia, Peter). Bei Vornamen, die beides sein können (Andrea, Kim, Sascha), mit vollem Namen („Guten Tag Andrea
+  Schneider,“), ohne Nachnamen mit „Guten Tag,“. Die Anrede können Sie im Kontakt jederzeit ändern.
   Bei „Du“: „Hallo Julia,“. Das gilt auch für den Assistenten im weiteren Chat.
 - **Namen in Nachrichten**: „Ihre Buchung bei …“ und „digitaler Assistent von …“ nennen Ihren Firmennamen; „Ihr
   Videocall mit …“ nennt die Person, bei Teams den zuständigen Berater (Anzeigename unter **Team**).

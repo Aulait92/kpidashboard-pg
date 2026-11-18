@@ -39,7 +39,8 @@ import { advisorPerson, firmDisplayName, personFromCustomerName } from "@/lib/ad
 
 // Vier Kontakte: mit/ohne Anrede × mit/ohne Nachnamen
 const FRAU = { firstName: "Julia", lastName: "Schneider", salutation: "Frau" };
-const OHNE_ANREDE = { fullName: "Julia Schneider" };
+// Ohne Anrede: zweideutiger Vorname (Andrea), eindeutige Vornamen ergeben Herr/Frau (Ole, 18.11.2026)
+const OHNE_ANREDE = { fullName: "Andrea Schneider" };
 const NUR_VORNAME_FRAU = { fullName: "Julia", salutation: "weiblich" };
 const NUR_VORNAME = { fullName: "Julia" };
 
@@ -47,7 +48,7 @@ describe("Anrede-Zeile (Ole, 14.11.2026)", () => {
   it("Sie: Frau/Herr mit Nachnamen, sonst voller Name, ohne Nachnamen „Guten Tag,“", () => {
     expect(anredeZeile("sie", FRAU)).toBe("Guten Tag Frau Schneider,");
     expect(anredeZeile("sie", { fullName: "Peter Schneider", salutation: "Herr" })).toBe("Guten Tag Herr Schneider,");
-    expect(anredeZeile("sie", OHNE_ANREDE)).toBe("Guten Tag Julia Schneider,");
+    expect(anredeZeile("sie", OHNE_ANREDE)).toBe("Guten Tag Andrea Schneider,");
     expect(anredeZeile("sie", NUR_VORNAME_FRAU)).toBe("Guten Tag,");
     expect(anredeZeile("sie", NUR_VORNAME)).toBe("Guten Tag,");
     expect(anredeZeile("sie", null)).toBe("Guten Tag,");
@@ -55,15 +56,17 @@ describe("Anrede-Zeile (Ole, 14.11.2026)", () => {
 
   it("Du: „Hallo Vorname,“, mit und ohne Anrede bzw. Nachnamen", () => {
     expect(anredeZeile("du", FRAU)).toBe("Hallo Julia,");
-    expect(anredeZeile("du", OHNE_ANREDE)).toBe("Hallo Julia,");
+    expect(anredeZeile("du", OHNE_ANREDE)).toBe("Hallo Andrea,");
     expect(anredeZeile("du", NUR_VORNAME_FRAU)).toBe("Hallo Julia,");
     expect(anredeZeile("du", NUR_VORNAME)).toBe("Hallo Julia,");
     expect(anredeZeile("du", {})).toBe("Hallo,");
   });
 
-  it("Anrede wird nicht aus dem Vornamen geraten", () => {
-    expect(anredeName("sie", { fullName: "Maria Schneider" })).toBe("Maria Schneider");
-    expect(anredeName("sie", { fullName: "Peter Meier" })).toBe("Peter Meier");
+  it("Anrede aus eindeutigem Vornamen (Ole, 18.11.2026), zweideutige bleiben beim vollen Namen", () => {
+    expect(anredeName("sie", { fullName: "Maria Schneider" })).toBe("Frau Schneider");
+    expect(anredeName("sie", { fullName: "Peter Meier" })).toBe("Herr Meier");
+    expect(anredeName("sie", { fullName: "Kim Meier" })).toBe("Kim Meier");
+    expect(anredeName("sie", { fullName: "Peter Meier", salutation: "keine" })).toBe("Peter Meier");
   });
 
   it("Herr/Frau robust aus Formularwerten; divers und Unbekanntes → unbekannt", () => {
@@ -85,8 +88,9 @@ describe("Anrede-Zeile (Ole, 14.11.2026)", () => {
     expect(anredeZeile("sie", { fullName: "Frau Schneider" })).toBe("Guten Tag Frau Schneider,");
     expect(anredeZeile("sie", { fullName: "Herr Peter Schneider" })).toBe("Guten Tag Herr Schneider,");
     expect(anredeZeile("du", { fullName: "Frau Schneider" })).toBe("Hallo,");
-    expect(anredeZeile("sie", { firstName: "Julia", lastName: "Schneider" })).toBe("Guten Tag Julia Schneider,");
-    expect(begruessung("sie", "Anna Beispiel")).toBe("Guten Tag Anna Beispiel");
+    expect(anredeZeile("sie", { firstName: "Julia", lastName: "Schneider" })).toBe("Guten Tag Frau Schneider,");
+    expect(begruessung("sie", "Anna Beispiel")).toBe("Guten Tag Frau Beispiel");
+    expect(begruessung("sie", "Kim Beispiel")).toBe("Guten Tag Kim Beispiel");
     expect(begruessung("sie", "Anna")).toBe("Guten Tag");
     expect(begruessung("du", "Anna Beispiel")).toBe("Hallo Anna");
     expect(asAnsprache(undefined)).toBe("sie");
@@ -223,7 +227,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     expect(r.text.startsWith("Guten Tag Frau Schneider, Ihr Termin bei X ist bestätigt")).toBe(true);
   });
   it("Sie-Kunde ohne Anrede → voller Name", () => {
-    expect(send([v2sie, v2ohne], "sie", OHNE_ANREDE)!.text.startsWith("Guten Tag Julia Schneider,")).toBe(true);
+    expect(send([v2sie, v2ohne], "sie", OHNE_ANREDE)!.text.startsWith("Guten Tag Andrea Schneider,")).toBe(true);
   });
   it("Sie-Kunde ohne Nachnamen (mit und ohne Anrede) → Fassung ohne Namen, Platzhalter rücken auf", () => {
     for (const k of [NUR_VORNAME, NUR_VORNAME_FRAU]) {
@@ -244,7 +248,8 @@ describe("Vorlage wählen und Parameter setzen", () => {
     for (const k of [FRAU, OHNE_ANREDE, NUR_VORNAME_FRAU, NUR_VORNAME]) {
       const r = send([v1du, v1sie, v2du, v2sie, v2ohne], "du", k)!;
       expect(r.name).toBe("pg_booking_confirmation_v2");
-      expect(r.text.startsWith("Hallo Julia, dein Termin bei X ist bestätigt")).toBe(true);
+      const vorname = k === OHNE_ANREDE ? "Andrea" : "Julia";
+      expect(r.text.startsWith(`Hallo ${vorname}, dein Termin bei X ist bestätigt`)).toBe(true);
     }
   });
   it("Namensplatzhalter am Text erkannt, auch bei von Hand angelegten Vorlagen", () => {
@@ -262,7 +267,7 @@ describe("Vorlage wählen und Parameter setzen", () => {
     );
     expect(noticeText("outreach", "sie", names, NUR_VORNAME, ["Susanne Meier", "Wann passt es Ihnen"]).startsWith("Hallo, danke für Ihre Anfrage! Hier schreibt")).toBe(true);
     expect(noticeText("outreach", "du", names, FRAU, ["Susanne", "Wann passt es dir"]).startsWith("Hallo Julia, danke für deine Anfrage! Hier schreibt der digitale Assistent von Susanne.")).toBe(true);
-    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Julia Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
+    expect(noticeText("followup_offer", "sie", names, OHNE_ANREDE, ["Hausrat"])).toContain("Guten Tag Andrea Schneider, hier ist der digitale KI-Assistent von Agentur Susanne Meier. Konnten Sie sich das Angebot zu Hausrat");
   });
 });
 
@@ -292,8 +297,8 @@ describe("KI-Assistent: Anrede im Prompt", () => {
     expect(p).toContain("Gegenüber dem Lead nennst du ihn immer „Susanne Meier“");
   });
   it("Sie ohne Anrede: voller Name, Herr/Frau nicht raten", () => {
-    const p = buildSystemPrompt(agent, "Privatschutz", base(OHNE_ANREDE, "sie"));
-    expect(p).toContain("Begrüßung: „Guten Tag Julia Schneider,“");
+    const p = buildSystemPrompt(agent, "Privatschutz", base(OHNE_ANREDE, "sie", "Andrea Schneider"));
+    expect(p).toContain("Begrüßung: „Guten Tag Andrea Schneider,“");
     expect(p).toContain("leite es nie aus dem Vornamen ab");
   });
   it("Sie ohne Nachnamen: „Guten Tag,“ ohne Namen", () => {
@@ -319,7 +324,8 @@ describe("KI-Assistent: Anrede im Prompt", () => {
 describe("Weitere Texte an Leads und Kunden", () => {
   it("Bestandskampagnen: Sie mit Anrede aus dem Bestand", () => {
     expect(campaignText("review", { firstName: "Erika", lastName: "Muster", salutation: "Frau" }, null)).toMatch(/^Guten Tag Frau Muster, es ist Zeit/);
-    expect(campaignText("birthday", { firstName: "Erika", lastName: "Muster" }, null)).toMatch(/^Guten Tag Erika Muster, herzlichen Glückwunsch/);
+    expect(campaignText("birthday", { firstName: "Erika", lastName: "Muster" }, null)).toMatch(/^Guten Tag Frau Muster, herzlichen Glückwunsch/);
+    expect(campaignText("birthday", { firstName: "Kim", lastName: "Muster" }, null)).toMatch(/^Guten Tag Kim Muster, herzlichen Glückwunsch/);
     expect(campaignText("cross_sell", "Erika", "Hausrat")).toMatch(/^Guten Tag, viele meiner Kunden haben beim Thema Hausrat eine Lücke/);
   });
 
@@ -338,8 +344,9 @@ describe("Weitere Texte an Leads und Kunden", () => {
   it("E-Mail-Vorlagen: {anrede} je Ansprache und Anrede", () => {
     const sie = werteFuer({ name: "Julia Schneider", source: null, salutation: "Frau" }, "Susanne Meier", { ansprache: "sie" });
     expect(fuelle("{anrede},\n\nText", sie)).toBe("Guten Tag Frau Schneider,\n\nText");
-    // E-Mails ohne bekannte Anrede neutral (Ole, 15.11.2026), nicht „Guten Tag Julia Schneider“
-    expect(werteFuer({ name: "Julia Schneider", source: null }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag");
+    // E-Mails ohne bekannte Anrede neutral (Ole, 15.11.2026), nicht „Guten Tag Andrea Schneider“; eindeutiger Vorname zählt als bekannt
+    expect(werteFuer({ name: "Andrea Schneider", source: null }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag");
+    expect(werteFuer({ name: "Julia Schneider", source: null }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag Frau Schneider");
     expect(werteFuer({ name: "Julia", source: null, salutation: "Frau" }, "S", { ansprache: "sie" }).anrede).toBe("Guten Tag");
     expect(werteFuer({ name: "Julia Schneider", source: null, salutation: "Frau" }, "S", { ansprache: "du" }).anrede).toBe("Hallo Julia");
     expect(werteFuer({ name: "Julia Schneider", source: null }, "S").nachname).toBe("Schneider");
@@ -352,7 +359,8 @@ describe("Weitere Texte an Leads und Kunden", () => {
     expect(sie.subject).toContain("Ihr Termin mit Susanne Meier");
     expect(content("reminder", ev, NUR_VORNAME, "sie").lines[0]).toBe("Guten Tag,");
     expect(content("booked", ev, FRAU, "du").lines[0]).toBe("Hallo Julia,");
-    expect(content("booked", ev, "Julia Schneider", "sie").lines[0]).toBe("Guten Tag Julia Schneider,");
+    expect(content("booked", ev, "Julia Schneider", "sie").lines[0]).toBe("Guten Tag Frau Schneider,");
+    expect(content("booked", ev, "Andrea Schneider", "sie").lines[0]).toBe("Guten Tag Andrea Schneider,");
   });
 
   it("Kalendereintrag für den Lead: Anrede und Ansprache", () => {
@@ -365,7 +373,8 @@ describe("Weitere Texte an Leads und Kunden", () => {
   it("Vertriebs-Follow-ups: dieselbe Regel", () => {
     expect(greetingFor({ salutation: "frau", firstName: "Anna", lastName: "Meier" })).toBe("Guten Tag Frau Meier,");
     expect(greetingFor({ salutation: "w", firstName: "Anna", lastName: "Meier" })).toBe("Guten Tag Frau Meier,");
-    expect(greetingFor({ salutation: null, firstName: "Anna", lastName: "Meier" })).toBe("Guten Tag Anna Meier,");
+    expect(greetingFor({ salutation: null, firstName: "Anna", lastName: "Meier" })).toBe("Guten Tag Frau Meier,");
+    expect(greetingFor({ salutation: null, firstName: "Sascha", lastName: "Meier" })).toBe("Guten Tag Sascha Meier,");
     expect(greetingFor({ salutation: "Herr", firstName: "Anna", lastName: null })).toBe("Guten Tag,");
   });
 });

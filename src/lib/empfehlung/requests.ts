@@ -218,7 +218,7 @@ export async function sendReferralLinkNow(
   const link = await referralLinkOf({ customerId, ...target });
   const url = referralLinkFor(link.token);
   // Mit Anlass (Schaden geregelt, gespart, Jahresgespräch) passt der Einstieg zum Moment
-  // Anrede „Guten Tag Frau Schneider“ (Formular bzw. Bestandskunde), nie aus dem Vornamen geraten
+  // Anrede „Guten Tag Frau Schneider“ (Formular, Bestandskunde oder eindeutiger Vorname)
   const anrede = kontakt ?? (await anredeOf(customerId, leadId, phone, name));
   const text = renderText(occasion ? OCCASIONS[occasion].text : settings.texts.referral, { vorname: firstName(name), link: url, vertreter, anrede });
   if (!phone) return { ok: false, error: "Keine Handynummer hinterlegt. Text zum Teilen:", link: url, text };
