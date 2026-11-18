@@ -16,6 +16,7 @@ import { aktiverVerkaufsLink, verkaufsAufrufe } from "@/lib/vertrieb/verkaufspra
 import { DECISION_BOOKING_TYPE, DEFAULT_BOOKING_TYPE, decisionBookingLink } from "@/lib/vertrieb/buchung";
 import { entscheidungsCallStand } from "@/lib/vertrieb/entscheidungs-call-server";
 import { entscheidungsCallHinweis } from "@/lib/vertrieb/entscheidungs-call";
+import { whatsappErlaubtStand } from "@/lib/vertrieb/bonus-erinnerung-server";
 
 // Kontaktakte eines Vertriebskontakts: alle Daten an einer Stelle, gemeinsam für
 // /admin/vertrieb/kontakte/[id] (alt) und /admin/neu/vertrieb/kontakte/[id] (neu).
@@ -103,6 +104,8 @@ export async function ladeKontaktakte(c: Kontakt) {
     emailSources, extraPhones, extrasSummary, open, done, activeFollowup, threadMail, followupMail, suggested,
     onboarding, obOffer, acceptedOffer, freeCustomers, linkable, duplicates, decisionLink, entscheidungsHinweis, bookingTypes, defaultTermin,
     referral, referralBenefit, referralDiscount, pdfs, appUrl, praesLink, praesAufrufe, praesFassung,
+    // „WhatsApp erlaubt“ an der Telefonnummer (Abschlussbonus-Erinnerung, lib/vertrieb/bonus-erinnerung-server.ts)
+    whatsappErlaubt: await whatsappErlaubtStand(c.id),
   };
 }
 
