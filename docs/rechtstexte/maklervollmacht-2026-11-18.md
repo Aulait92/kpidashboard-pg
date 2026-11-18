@@ -4,9 +4,12 @@
 einsatzfertige Texte mit kurzer Begründung. Gilt nur für Versicherungsmakler (§ 34d Abs. 1 Satz 2 Nr. 1 GewO), **nicht**
 für gebundene Vertreter (Allianz-Vertreter dürfen keine Maklervollmacht verwenden, Statusklarheit § 15 VersVermV).
 
-> **Quellenhinweis:** Die Legal-Data-Hunter-Recherche war heute wegen des Tageslimits (Free-Plan) nicht verfügbar.
-> Normen sind aus dem Gesetzestext bekannt und belastbar; **Aktenzeichen und Fundstellen der Rechtsprechung vor einer
-> Veröffentlichung einmal gegenprüfen** (markiert mit „prüfen“).
+> **Zitate am 18.11.2026 nicht geprüft:** Zweiter Versuch mit Legal Data Hunter am 18.11.2026 (Anwalts-Agent), das
+> Tool meldete erneut das Tageslimit (Free-Plan, Rücksetzung 18.11.2026, 23:24 Uhr). Nichts korrigiert. Die Angaben
+> (BGH IVa ZR 190/83, BGHZ 94, 356; BGH VIII ZR 313/79, NJW 1981, 1210; EuGH C-673/17 Planet49, 01.10.2019; EuGH
+> C-184/20 OT, 01.08.2022; EuGH C-21/23 Lindenapotheke, 04.10.2024) decken sich mit unserem Kenntnisstand, sind aber
+> nicht gegen die Datenbank bestätigt; „prüfen“ bleibt darum stehen. Vor einer Veröffentlichung einmal nachholen.
+> Normen sind aus dem Gesetzestext bekannt und belastbar.
 
 **Ergebnis in fünf Sätzen**
 
@@ -157,7 +160,8 @@ nach § 15 VersVermV wird separat vorher angezeigt und ihr Empfang per Häkchen 
 
 - **Makler = Verantwortlicher** (Art. 4 Nr. 7 DSGVO) für alle Daten aus diesem Ablauf.
 - **performancegrowth = Auftragsverarbeiter** (Art. 28 DSGVO) nach dem bestehenden AVV
-  (`docs/rechtstexte/avv-kurzfassung-entwurf-2026-11-17.md`). **Ergänzen:** Datenkategorien „Vertragsdaten, Policenbilder,
+  (`src/lib/legal-texts.ts`, Kurzfassung `docs/rechtstexte/avv-kurzfassung-entwurf-2026-11-17.md`). **Ergänzt am
+  18.11.2026 (Stand „18.11.2026“):** Datenkategorien „Vertragsdaten, Policenbilder,
   Unterschrift und Unterschriftsprotokoll, Gesundheitsdaten (Art. 9 DSGVO), soweit vom Kunden freigegeben“; TOMs
   für Art.-9-Daten (Verschlüsselung der Dateien im Ruhezustand, Zugriff nur für den Makler und seine berechtigten
   Mitarbeiter, Zugriffsprotokoll).
@@ -450,7 +454,8 @@ Maklerauftrag“.)
    Widerrufsbelehrung und Fernabsatzinformationen nötig (1.2). Nicht kombinieren.
 7. **Identität:** Ohne Bestätigungscode beweist das Protokoll nur, dass jemand mit dem Link unterschrieben hat.
    Bestätigungscode per SMS/E-Mail einbauen (1.5).
-8. **AVV-Ergänzung** um Art.-9-Daten vor Livegang; Policen-Fotos verschlüsselt und nicht in Logs, Fehlermeldungen oder
+8. **AVV-Ergänzung** um Art.-9-Daten: erledigt am 18.11.2026 (Stand „18.11.2026“); offen: Abrufe der Vollmacht-PDFs
+   noch nicht im Zugriffsprotokoll, Löschfristen nach 3.4 noch nicht automatisiert; Policen-Fotos verschlüsselt und nicht in Logs, Fehlermeldungen oder
    Sitzungsaufnahmen.
-9. **Rechtsprechungszitate** aus dieser Datei vor Veröffentlichung gegenprüfen (Tool-Limit, siehe oben).
+9. **Rechtsprechungszitate** aus dieser Datei vor Veröffentlichung gegenprüfen (am 18.11.2026 erneut Tool-Limit, siehe oben).
 10. **Gebundene Vertreter:** Funktion technisch nur für Nutzer mit Status Makler freischalten.

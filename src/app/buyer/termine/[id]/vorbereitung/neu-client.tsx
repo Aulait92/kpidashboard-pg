@@ -592,6 +592,7 @@ function Angebote(p: {
   const gesellschaftsListe = [...new Map([...p.daten.gesellschaften, ...STANDARD_GESELLSCHAFTEN.map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()];
 
   return (
+    <>
     <Card id="angebote" className="mt-5" menus>
       <div className="flex items-center gap-3 border-b border-[color:var(--border)] px-4 py-3.5 sm:px-5">
         <h2 className="text-[15px] font-semibold tracking-tight">Angebot erstellen</h2>
@@ -706,8 +707,9 @@ function Angebote(p: {
         speichern={{ status: p.status, erneut: p.erneut }}
       />
 
-      {/* Schritte klar getrennt (Ole, 17.11.2026): mehr Luft um die Trennlinie */}
-      <div className="mx-4 mt-7 border-t border-[color:var(--border)] sm:mx-5" />
+      {/* Schritt 2 in eigener Karte (Ole, 18.11.2026: „Lücke zwischen 1 und 2“), wie Schritt 3 und 4 */}
+    </Card>
+    <Card className="mt-3" menus>
       <Schritt
         nr={2}
         titel={sp ? `Beiträge eintragen: ${sp.label}` : "Beiträge eintragen"}
@@ -817,6 +819,7 @@ function Angebote(p: {
         <p className="px-5 py-6 text-sm text-[color:var(--muted)]">Noch keine Versicherung. Wählen Sie oben „+ Versicherung“, z. B. Hausrat.</p>
       )}
     </Card>
+    </>
   );
 }
 
@@ -906,7 +909,7 @@ function BeitraegeRechnen({
 /** Schritt-Kopf (Ole, 17.11.2026: „idiotensicherer in Schritte unterteilen“): Nummer bzw. Haken, Titel, ein Satz. */
 function Schritt({ nr, titel, hinweis, fertig, rechts }: { nr: number; titel: string; hinweis?: ReactNode; fertig: boolean; rechts?: ReactNode }) {
   return (
-    <div className={cn("flex items-start gap-3 px-4 sm:px-5", nr === 1 ? "pt-4" : "pt-7")} data-schritt={nr} data-schritt-fertig={fertig ? "ja" : "nein"}>
+    <div className={cn("flex items-start gap-3 px-4 sm:px-5", nr <= 2 ? "pt-4" : "pt-7")} data-schritt={nr} data-schritt-fertig={fertig ? "ja" : "nein"}>
       <span
         className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white", fertig ? "bg-emerald-600" : "bg-[color:var(--foreground)]")}
         aria-hidden

@@ -1,9 +1,16 @@
 # Entwurf: Auftragsverarbeitungsvertrag gekürzt (17.11.2026)
 
 **Status: Entwurf zum Vergleichen, nicht in Kraft.** Gültig bleibt der AVV in `src/lib/legal-texts.ts`
-(Stand „16.11.2026“). Gleiche Regeln wie bei der AGB-Kürzung: Ole entscheidet, der Anwalt sieht drüber, keine
+(Stand „18.11.2026“). Gleiche Regeln wie bei der AGB-Kürzung: Ole entscheidet, der Anwalt sieht drüber, keine
 Rechtsberatung. Nach Freigabe übernehme ich den Text in die App (neuer Stand, alte Fassung als Datei ablegen,
 6-Wochen-Mitteilung an Kunden mit Vertrag nach AGB § 17).
+
+**Nachtrag 18.11.2026 (Ole, Anwalts-Agent):** Der geltende AVV ist um Unterlagen vom Kunden (Policen per WhatsApp)
+und die Maklervollmacht digital ergänzt (Stand „18.11.2026“). Diese Ergänzungen gehören bei einer Übernahme der
+Kurzfassung unverändert dazu (sie sind unten in § 2, § 9 und Anlage 1 eingearbeitet): zwei Absätze „Unterlagen vom
+Kunden“ und „Maklervollmacht“, Datenarten (Vertragsdaten, Policenbilder, Unterschrift und Unterschriftsprotokoll,
+Gesundheitsdaten nach Art. 9 DSGVO, soweit vom Kunden freigegeben), Betroffene (Mitversicherte), Absatz „Gesundheitsdaten
+in Versicherungsunterlagen“, Löschfristen für Unterlagen und sechs neue TOMs.
 
 **Ziel:** gleicher Schutz, weniger Text. Der AVV ist schon deutlich kürzer als die AGB (ca. 1.450 Wörter ohne
 Anlagen); der Großteil steckt in „Art, Zweck und Umfang“. Gekürzt wird nur, was
@@ -80,18 +87,38 @@ Angebote und Antragsunterlagen mit Gesundheitsangaben werden nicht ausgelesen. D
 Präsentation, die sie dem Interessenten auf Wunsch über einen zufälligen, 14 Tage gültigen und jederzeit
 beendbaren Link bereitstellt.
 
+**Unterlagen vom Kunden** (soweit vom Auftraggeber genutzt). Der Auftragnehmer bittet Interessenten und Kunden im Namen
+des Auftraggebers per WhatsApp um Kopien bestehender Versicherungsunterlagen, empfängt sie nach Einwilligung der
+betroffenen Person, speichert sie verschlüsselt und stellt sie nur dem Auftraggeber bereit; keine Weitergabe an
+Versicherer oder Dritte. Für Unterlagen mit Gesundheitsangaben gilt zusätzlich die Anlage „Versicherungsunterlagen über
+WhatsApp“.
+
+**Maklervollmacht** (nur für Versicherungsmakler). Die Software erstellt auf Veranlassung des Auftraggebers
+Maklervollmacht, Maklerauftrag und, soweit erforderlich, eine Einwilligung zu Gesundheitsdaten mit
+Schweigepflichtentbindung, lässt sie über einen persönlichen Link elektronisch unterschreiben, protokolliert die
+Unterschrift und sendet dem Kunden auf Wunsch eine Kopie. Übertragungsschreiben an Versicherer übermittelt der
+Auftraggeber selbst.
+
 **Datenarten:** Kontaktdaten (Name, Telefonnummer, E-Mail-Adresse, Anschrift); Angaben aus dem Lead-Formular und
 der Nachweis der Einwilligung (Zeitpunkt, Formular-ID, Textversion und Wortlaut); Kommunikationsinhalte (Chats und
 E-Mails); Termindaten, Notizen und Status; Sperrliste der Personen, die der Kontaktaufnahme widersprochen haben; die
 Erstinformation des Auftraggebers (über einen zufälligen Link abrufbar); hochgeladene Versicherungsangebote (mit
-Name, Anschrift und Geburtsdatum des Interessenten) und daraus erstellte Präsentationen; Nutzungsdaten der Nutzer
+Name, Anschrift und Geburtsdatum des Interessenten) und daraus erstellte Präsentationen; Vertragsdaten bestehender
+Verträge, Policenbilder und weitere Versicherungsunterlagen; Unterschrift und Unterschriftsprotokoll; Nachweise von
+Einwilligung und Widerruf; Gesundheitsdaten (Art. 9 DSGVO), soweit vom Kunden freigegeben; Nutzungsdaten der Nutzer
 des Auftraggebers.
 
-**Betroffene:** Interessenten und Kunden des Auftraggebers sowie dessen Nutzer.
+**Betroffene:** Interessenten und Kunden des Auftraggebers, in deren Unterlagen genannte Personen (z. B. Mitversicherte)
+sowie dessen Nutzer.
 
 **Gesundheitsangaben** (Art. 9 DSGVO) aus Lead-Formularen werden gespeichert und nur dem Auftraggeber angezeigt,
 nicht an den KI-Anbieter übermittelt und nicht in WhatsApp-Nachrichten verwendet. Der Auftraggeber stellt die
 ausdrückliche Einwilligung sicher (Art. 9 Abs. 2 lit. a DSGVO) und fragt keine weiteren besonderen Kategorien ab.
+
+**Gesundheitsdaten in Versicherungsunterlagen** und in der Einwilligung zur Maklervollmacht nur mit protokollierter
+ausdrücklicher Einwilligung der betroffenen Person und nach Freischaltung durch den Auftraggeber; ohne Einwilligung keine
+Speicherung, nach Widerruf sofortige Löschung (Nachweis bleibt); nicht an den KI-Anbieter, nicht in Nachrichten, nicht in
+Anwendungsprotokollen, Fehlerberichten oder Sitzungsaufnahmen.
 
 ### § 3 Weisungen
 
@@ -159,10 +186,14 @@ und Reaktivierung, mit der dieser Vertrag für den neuen Hauptvertrag fortgilt.
 Danach löscht der Auftragnehmer die personenbezogenen Daten endgültig, erinnert 30 und 7 Tage vorher per E-Mail und
 bestätigt die Löschung in Textform. Ausgenommen sind pseudonymisierte Sperrlisteneinträge (Hashwerte) zur
 dauerhaften Beachtung von Werbewidersprüchen und Daten mit gesetzlicher Aufbewahrungspflicht, insbesondere
-Abrechnungsdaten. Datensicherungen werden mit der regulären Rotation gelöscht.
+Abrechnungsdaten. Datensicherungen werden mit der regulären Rotation gelöscht. Unterlagen aus WhatsApp: 90 Tage nach dem
+(geplanten) Termin bzw. Eingang, außer der Auftraggeber behält sie nach einem Abschluss als Beratungsdokumentation;
+nach Widerruf sofort. Maklervollmacht, Auftrag, Einwilligung und Protokoll: bis der Auftraggeber sie oder den Kontakt
+löscht, längstens bis zur Löschung nach diesem Paragrafen.
 
 ### § 10 Haftung und Schlussbestimmungen
 
 *(unverändert)* Für die Haftung gilt Art. 82 DSGVO. Im Übrigen gelten die Bestimmungen des Hauptvertrags.
 
-*Anlage 1 (technische und organisatorische Maßnahmen) und Anlage 2 (Unterauftragsverarbeiter): unverändert.*
+*Anlage 1 (technische und organisatorische Maßnahmen): wie geltende Fassung vom 18.11.2026 (mit den sechs neuen
+Maßnahmen zu Unterlagen vom Kunden). Anlage 2 (Unterauftragsverarbeiter): unverändert.*
