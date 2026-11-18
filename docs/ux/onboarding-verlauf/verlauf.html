@@ -254,6 +254,7 @@ footer{color:var(--faint);font-size:13px;text-align:center}
   .cp-h{padding:12px 14px}
   .chat-foot{padding:12px 14px}
 }
+.dotn.br.auto{color:var(--brand);border-color:var(--brand)}.st.br.auto{border-color:var(--brand-line);background:color-mix(in srgb,var(--brand-soft) 45%,var(--surface))}.tag.auto{color:var(--brand-ink);background:var(--brand-soft);border-color:var(--brand-line)}
 </style>
 </head>
 <body>
@@ -345,6 +346,16 @@ footer{color:var(--faint);font-size:13px;text-align:center}
      <div class="cell"><span class="lbl">Lead</span><div>Füllt das Formular in Ihrer Anzeige aus. Bekommt eine WhatsApp mit Ihrer Erstinformation als PDF und einer kurzen Frage.</div></div>
      <div class="cell c2"><span class="lbl">Assistent</span><div>Legt den Lead an, schreibt ihn in Ihrem Namen an und schickt die gesetzliche Erstinformation mit.</div></div>
      <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun</div></div>
+    </div>
+   </article>
+
+   <div class="rail"><span class="dotn br auto" title="Abzweig"><svg class="ic"><use href="#i-branch"/></svg></span></div>
+   <article class="st br auto">
+    <div class="st-h"><span class="tag auto"><svg class="ic"><use href="#i-bot"/></svg>Abzweig, läuft automatisch</span><h3>Kein WhatsApp: weiter per E-Mail</h3></div>
+    <div class="cells">
+     <div class="cell"><span class="lbl">Lead</span><div>Hat kein WhatsApp. Bekommt binnen 5 Minuten dieselbe Nachricht per E-Mail, mit Erstinformation, Antwortknöpfen und 2 Terminzeiten zum Anklicken.</div></div>
+     <div class="cell c2"><span class="lbl">Assistent</span><div>Erkennt, dass die WhatsApp nicht ankommt, und führt dieselbe Strecke per E-Mail weiter, in Ihrem Namen mit Antwort an Ihr Postfach.<small>Höchstens 2 Nachfass-Mails. Der Anrufplan läuft parallel.</small></div></div>
+     <div class="cell c3 none"><span class="lbl">Sie</span><div>Nichts zu tun<small>Schreiben Sie selbst aus Ihrem Postfach, pausiert der Assistent.</small></div></div>
     </div>
    </article>
 
