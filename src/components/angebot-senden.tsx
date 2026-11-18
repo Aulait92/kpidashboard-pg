@@ -12,7 +12,9 @@
 // nur ablegen. Senden und Ablegen erst nach dem Ansehen der aktuellen Fassung.
 
 import { useEffect, useState, useTransition } from "react";
-import { CheckCircle2, ClipboardList, Clock, FileText, Loader2, Send, TriangleAlert, UserCheck } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { CheckCircle2, ChevronRight, ClipboardList, Clock, FileText, Loader2, Send, TriangleAlert, User, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui";
 import { MailWege } from "@/components/mail-wege";
 import { ZusammenfassungEditor, useZfPdf, zfBereit, zfHinweis, zfStart, type ZfZustand } from "@/components/zusammenfassung-editor";
@@ -52,6 +54,7 @@ export function AngebotSendenSheet(p: SheetProps) {
 
 function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetProps & { ziel: AngebotZiel }) {
   const [info, setInfo] = useState<AngebotInfo | null>(null);
+  const pfad = usePathname();
   const [fehler, setFehler] = useState<string | null>(null);
   const [schritt, setSchritt] = useState<"wahl" | "app" | "selbst" | "zusammenfassung">("wahl");
   const [datei, setDatei] = useState<string | null>(null);
@@ -213,6 +216,19 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
               />
             ) : null}
           </ul>
+          {/* Ole, 18.11.2026: vor dem Senden noch einmal in den Kontakt schauen (nicht, wenn man schon dort ist) */}
+          {info && !pfad?.startsWith(`/buyer/leads/${info.leadId}`) ? (
+            <Link
+              href={`/buyer/leads/${info.leadId}`}
+              onClick={onClose}
+              className="flex min-h-12 items-center gap-3 border-t border-[color:var(--border)] px-5 py-3 text-sm text-[color:var(--muted)] transition hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]"
+              data-angebot-kontakt
+            >
+              <User className="h-[18px] w-[18px] shrink-0" />
+              <span className="flex-1">Kontakt öffnen</span>
+              <ChevronRight className="h-4 w-4 shrink-0" />
+            </Link>
+          ) : null}
         </div>
       ) : schritt === "selbst" ? (
         <div className="space-y-4 px-5 py-5" data-angebot-selbst-fertig>
