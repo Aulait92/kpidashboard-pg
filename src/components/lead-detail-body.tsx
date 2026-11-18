@@ -537,12 +537,14 @@ export async function LeadDetailBody({
             komplettcheck: !!karte.komplettcheck,
             erschienen: karte.attendance === "erschienen",
             begonnen: karte.startsAt.getTime() <= nowMs(),
+            vorbereitet: !!karte.preparedAt,
           }}
           a={terminKartenAktionen(karte, {
             now: new Date(nowMs()),
             telefon: !!lead.phone,
             angebotOffen: angebotOffen(lead.status),
             beratungsdoku: bdStand?.get(karte.id) ?? null,
+            vorbereitet: !!karte.preparedAt,
             ...(karte === kartenTermin ? {} : { ergebnisFehlt: false }),
           })}
           leadId={lead.id}
@@ -914,7 +916,7 @@ function statusTone(status: string): "emerald" | "amber" | "rose" | "blue" | "zi
 }
 
 
-const TERMIN_SELECT = { id: true, startsAt: true, endsAt: true, mode: true, meetUrl: true, confirmedAt: true, komplettcheck: true, attendance: true } as const;
+const TERMIN_SELECT = { id: true, startsAt: true, endsAt: true, mode: true, meetUrl: true, confirmedAt: true, komplettcheck: true, attendance: true, preparedAt: true } as const;
 
 /** Termine ab 2 Stunden vor jetzt (laufende Termine bleiben sichtbar). */
 function twoHoursAgo(): Date {
