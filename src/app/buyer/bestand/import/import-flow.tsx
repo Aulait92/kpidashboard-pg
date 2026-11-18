@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { startTransition, useActionState, useMemo, useState } from "react";
 import { AlertTriangle, FileSpreadsheet, ShieldCheck, Users } from "lucide-react";
 import { Button, Card, CardHeader } from "@/components/ui";
 import { FileDrop } from "@/components/ui/file-drop";
@@ -69,7 +69,16 @@ export function ImportFlow({ agentConfirm = null }: { agentConfirm?: { text: str
       </Card>
 
       {analysis.headers ? (
-        <form action={(fd) => runImport(withFile(fd))}>
+        <form
+          // Kein automatisches Zurücksetzen nach dem Absenden (React setzt Formulare mit action={…} zurück): Sonst stünden
+          // nach einer Fehlermeldung alle Zuordnungen optisch auf „Nicht zuordnen“ und der nächste Versuch schickte leere Felder.
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = withFile(new FormData(e.currentTarget));
+            startTransition(() => runImport(fd));
+          }}
+          data-import-form
+        >
           <Card>
             <CardHeader title={`2. Spalten zuordnen (${de(analysis.total ?? 0)} Zeilen)`} />
             <div className="space-y-6 px-5 pb-5">

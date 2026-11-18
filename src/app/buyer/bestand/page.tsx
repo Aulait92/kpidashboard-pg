@@ -429,7 +429,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
           <Card>
             <CardHeader title="Kunden" icon={Users} count={total} />
             <form className="flex flex-wrap gap-2 px-5 pb-3">
-              <input name="q" defaultValue={q} placeholder="Name, Telefon, E-Mail oder Kundennummer" className="h-10 min-w-0 flex-1 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm outline-none focus:border-[color:var(--brand)]" />
+              <input name="q" defaultValue={q} placeholder="Name, Telefon, E-Mail oder Kundennummer" aria-label="Kunden suchen" className="h-10 min-w-[14rem] flex-1 rounded-full border border-[color:var(--border)] bg-white px-4 text-sm outline-none focus:border-[color:var(--brand)]" />
               {premiumSum > 0 ? (
                 <select name="sort" defaultValue={byValue ? "beitrag" : ""} aria-label="Sortierung" className="h-10 rounded-full border border-[color:var(--border)] bg-white px-3 text-sm">
                   <option value="">Nach Name</option>
@@ -503,7 +503,23 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
                 );
               })}
             </ul>
-            {total > list.length ? <p className="px-5 py-3 text-xs text-[color:var(--muted)]">Erste {list.length} von {total.toLocaleString("de-DE")}, Suche nutzen.</p> : null}
+            {q && !list.length ? (
+              <p className="px-5 pb-4 text-sm text-[color:var(--muted)]" data-bestand-no-hits>
+                Keine Kunden zu „{q}“.{" "}
+                <Link href="/buyer/bestand" className="font-medium text-[color:var(--brand)] hover:underline">
+                  Suche zurücksetzen
+                </Link>
+              </p>
+            ) : q ? (
+              <p className="px-5 py-3 text-xs text-[color:var(--muted)]" data-bestand-hits>
+                {list.length === 50 ? "Erste 50 Treffer" : `${list.length.toLocaleString("de-DE")} Treffer`} zu „{q}“.{" "}
+                <Link href="/buyer/bestand" className="underline">
+                  Alle anzeigen
+                </Link>
+              </p>
+            ) : total > list.length ? (
+              <p className="px-5 py-3 text-xs text-[color:var(--muted)]">Erste {list.length} von {total.toLocaleString("de-DE")}, Suche nutzen.</p>
+            ) : null}
           </Card>
           <Card>
             <div className="px-5 py-4" data-bestand-settings>
@@ -517,7 +533,7 @@ export default async function BestandPage({ searchParams }: { searchParams: Prom
             </div>
           </Card>
           <div className="flex flex-wrap items-center gap-3 text-xs text-[color:var(--muted)]">
-            <p className="min-w-0 flex-1">
+            <p className="min-w-[16rem] flex-1">
               <Link href="/buyer/bestand/import" className="underline">
                 Liste erneut hochladen
               </Link>{" "}
