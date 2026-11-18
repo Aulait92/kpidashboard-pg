@@ -25,8 +25,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/krankenhaus",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -37,6 +36,7 @@
     "Ein Tarif (ST-G1) laut Produktseite. Variante nur für unfallbedingte Krankenhausaufenthalte möglich (ohne Einbettzimmer und Hebammenleistungen); nicht als Stufe geführt.",
     "Ein- oder Zweibettzimmer und privatärztliche Behandlung (Wahlarzt, Chefarzt) je 100 %; vor- und nachstationär 3 bzw. 7 Tage; Hebammenleistungen 100 %.",
     "Erstattung über den Höchstsatz der GOÄ und Wartezeit stehen nicht auf der Produktseite (nur in den Bedingungen, Kundeninformation 90039, 07/2024, nicht ausgewertet).",
-    "Krankenhaustagegeld (Tarif KHS) als eigener Tarif zusätzlich wählbar: bis 60 € je Tag für Erwachsene, bis 35 € für Kinder; ambulante OP nicht genannt."
+    "Krankenhaustagegeld (Tarif KHS) als eigener Tarif zusätzlich wählbar: bis 60 € je Tag für Erwachsene, bis 35 € für Kinder; ambulante OP nicht genannt.",
+    "Geprüft am 18.11.2026 an der Produktseite."
   ]
 }

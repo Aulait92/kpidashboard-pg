@@ -19,14 +19,14 @@
         "implantate": "30 %",
         "behandlung": "optional",
         "wartezeit": "8 Monate",
-        "staffel": "nein"
+        "staffel": "nein",
+        "prophylaxe": "nein"
       },
       "bausteine": {
         "kfo": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/zahnschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnersatz Komfort (ET-G Z2)",
@@ -45,8 +45,7 @@
         "kfo": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/zahnschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnersatz Premium (ET-G Z5)",
@@ -65,8 +64,7 @@
         "kfo": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/zahnschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,9 +73,10 @@
   ],
   "offen": [
     "Stufen Aktiv, Komfort, Premium (Zahnersatz-Tarife ET-G Z, Z2, Z5) laut Tariftabelle der Produktseite. DEVK markiert keine Stufe; Komfort als mittlere Stufe. Tarif ET-G Plus (80 %, mit Naturheilverfahren) nicht als Stufe geführt.",
-    "Zahnreinigung: Die Tabelle nennt 50 € und 80 € pro Jahr für zwei der drei Stufen; Zuordnung zu Komfort und Premium angenommen, für Aktiv nicht belegt. Bitte am Bildschirm gegenprüfen.",
     "Zahnbehandlung nur zusätzlich zu einem Zahnersatz-Tarif wählbar (D-G 2, mit IT-G bzw. KL-G): Füllungen, Wurzel- und Parodontosebehandlung, Narkose in den ersten zwei Jahren je 250 €, im dritten 500 €, danach unbegrenzt; Inlays bis 600 € bzw. ab dem dritten Jahr 1.200 €; zusätzlich 80 € Zahnreinigung.",
     "Kieferorthopädie (und Laser-OP der Augen) nur im Zahnbehandlungs-Tarif Premium (KL-G), Grenzen 300 € je Jahr, ab dem vierten Jahr 1.000 €.",
-    "Wartezeit 8 Monate für Zahnersatz, entfällt bei Unfall; Zahnreinigung ohne Wartezeit. Bereits fehlende Zähne und angeratene Behandlungen nicht versichert."
+    "Wartezeit 8 Monate für Zahnersatz, entfällt bei Unfall; Zahnreinigung ohne Wartezeit. Bereits fehlende Zähne und angeratene Behandlungen nicht versichert.",
+    "Zahnreinigung laut Tariftabelle: Aktiv nicht versichert (Kreuz), Komfort 50 €, Premium 80 € pro Jahr; ebenso Prothesenreinigung.",
+    "Geprüft am 18.11.2026 an der Tariftabelle der Produktseite (Rohdaten) und der Produktinformation 08506-201."
   ]
 }
