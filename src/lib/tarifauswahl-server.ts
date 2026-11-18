@@ -26,6 +26,8 @@ import { rechnerUrl } from "@/lib/preise/pilot";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import { schutzVorschlag } from "@/lib/schutz-ueberblick";
 import { asAnsprache } from "@/lib/ansprache";
+import { bisherAbgleichen, bisherVorschlag } from "@/lib/bisheriger-vertrag";
+import { bisherPruefen, bisherQuellen, gesundheitFrei } from "@/lib/bisheriger-vertrag-server";
 
 /**
  * Vertreter oder Makler (Customer.vermittlerTyp; Mehrfachvertreter wie Vertreter) und Gesellschaft(en):
@@ -121,6 +123,10 @@ export type TarifVorbereitung = {
   klaerenErledigt: string[];
   /** Schutz-Überblick eben vorgeschlagen (noch nicht gespeichert): die Seite speichert ihn gleich mit */
   schutzNeu: boolean;
+  /** Bisheriger Vertrag aus Police bzw. Chat neu übernommen bzw. aktualisiert: die Seite speichert gleich mit */
+  bisherNeu: boolean;
+  /** Gesundheitssparten freigeschaltet (bisheriger Vertrag dort erst danach) */
+  gesundheitFrei: boolean;
 };
 
 /** Alles für den Angebote-Teil der Seite; null, wenn der Termin nicht sichtbar ist. */
@@ -151,10 +157,14 @@ export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx,
     auswahl = { ...auswahl, schutz: schutzVorschlag(d, { angebot: auswahl.sparten.map((s) => s.key), vertraege: vertraege.map((v) => ({ sparte: v.sparte, seit: v.signedAt })) }, asAnsprache(kunde?.leadAddress)) };
     schutzNeu = true;
   }
+  // Bisheriger Vertrag (Paket P3b): aus Police bzw. Chat vorschlagen, von Hand Eingetragenes bleibt
+  const [quellen, frei] = await Promise.all([bisherQuellen(appt.leadId, ctx.customerId), gesundheitFrei(ctx.customerId)]);
+  const ab = bisherAbgleichen(auswahl.sparten, (sp) => bisherVorschlag(sp, quellen, k), frei);
+  if (ab.geaendert) auswahl = { ...auswahl, sparten: ab.sparten };
   // Vertreter sehen nur die Tarife ihrer Gesellschaft(en)
   const tarife = vertrieb.rolle === "vertreter" ? k.tarife.filter((t) => vertrieb.gesellschaften.includes(t.gesellschaft)) : k.tarife;
   const gesellschaften = sortiereGesellschaften(k.tarife.map((t) => t.gesellschaft)).map((key) => ({ key, name: k.tarife.find((t) => t.gesellschaft === key)?.gesellschaftName ?? gesellschaftName(key) }));
-  return { auswahl, quelle, katalog: { sparten: k.sparten, tarife, buendel: k.buendel }, vertrieb, gesellschaftFehlt, gesellschaften, eigene, meine, klaerenErledigt: appt.klaerenErledigt, schutzNeu };
+  return { auswahl, quelle, katalog: { sparten: k.sparten, tarife, buendel: k.buendel }, vertrieb, gesellschaftFehlt, gesellschaften, eigene, meine, klaerenErledigt: appt.klaerenErledigt, schutzNeu, bisherNeu: ab.geaendert, gesundheitFrei: frei };
 }
 
 /**
@@ -162,8 +172,10 @@ export async function ladeTarifvorbereitung(appointmentId: string, ctx: TeamCtx,
  * Bestätigen-Knopf mehr, die Werte kommen aus dem Katalog) und „Meine Merkmale“ für den nächsten Termin.
  */
 export async function tarifauswahlSpeichern(appointmentId: string, ctx: TeamCtx, raw: unknown): Promise<{ ok: true; auswahl: Tarifauswahl } | { ok: false; error: string }> {
-  const a = cleanTarifauswahl(raw);
-  if (!a) return { ok: false, error: "Ungültige Daten." };
+  const roh = cleanTarifauswahl(raw);
+  if (!roh) return { ok: false, error: "Ungültige Daten." };
+  // Gesundheitssparten: bisheriger Vertrag erst nach Freischaltung (auch von Hand nicht)
+  const a = await bisherPruefen(roh, ctx.customerId);
   // Kombi-Rabatt: Bündelregeln aus dem Katalog als Schnappschuss mit den Angeboten (Präsentation rechnet damit)
   const ang = zuAngebote(a, ladeTarifkatalog().buendel);
   const n = await prisma.appointment.updateMany({

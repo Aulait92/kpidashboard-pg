@@ -707,7 +707,7 @@ export async function extrahiereVertraege(text: string): Promise<{ liste: Vorver
       model: MODEL,
       max_tokens: 600,
       system:
-        "Du liest die Antwort eines Interessenten auf die Frage, welche Versicherungen er schon hat. Trage jede genannte Versicherung mit Sparte ein, die Gesellschaft und für wen nur, wenn genannt. Sei tolerant bei Abkürzungen und Tippfehlern (z. B. „PHV“ = Haftpflicht, „BU“ = Berufsunfähigkeit, „Auto“ = Kfz). Nichts erfinden. Keine Gesundheitsangaben, Beträge oder Tarifdetails.",
+        "Du liest die Antwort eines Interessenten auf die Frage, welche Versicherungen er schon hat. Trage jede genannte Versicherung mit Sparte ein, die Gesellschaft, den Tarifnamen und für wen nur, wenn genannt. Sei tolerant bei Abkürzungen und Tippfehlern (z. B. „PHV“ = Haftpflicht, „BU“ = Berufsunfähigkeit, „Auto“ = Kfz). Nichts erfinden. Keine Gesundheitsangaben, Beträge oder sonstigen Tarifdetails.",
       output_config: jsonAusgabe(VORVERTRAEGE_SCHEMA),
       messages: [{ role: "user", content: sauber.slice(0, 2000) }],
     });

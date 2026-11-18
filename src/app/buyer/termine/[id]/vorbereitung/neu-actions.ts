@@ -6,6 +6,8 @@
 import { getBuyerContext } from "@/lib/buyer-context";
 import { neueTerminvorbereitung } from "@/lib/terminvorbereitung-neu";
 import { ladeTarifkatalog } from "@/lib/tarifkatalog-laden";
+import { gesellschaftAusText, tarifeFuer } from "@/lib/tarifkatalog";
+import { katalogWerte } from "@/lib/bisheriger-vertrag";
 import { cleanTarifauswahl, sparteNeu, type Tarifauswahl } from "@/lib/tarifauswahl";
 import {
   eigenenTarifAnlegen,
@@ -69,4 +71,19 @@ export async function preiseAuslesenAction(appointmentId: string, auswahl: unkno
   const k = await kontext();
   if ("error" in k) return { ok: false, error: k.error! };
   return preiseAuslesen(appointmentId, k.ctx, auswahl);
+}
+
+export type BisherTarif = { id: string; name: string; kurz: string; gesellschaft: string; werte: Record<string, string> };
+
+/**
+ * Bisheriger Vertrag (Paket P3b): Tarife einer Gesellschaft in dieser Sparte aus dem ganzen Katalog (auch fremde
+ * Gesellschaften, der bisherige Vertrag ist meist woanders). Nur lesen.
+ */
+export async function bisherTarifeAction(sparte: string, gesellschaft: string): Promise<{ ok: true; tarife: BisherTarif[] } | Fehler> {
+  const ctx = await getBuyerContext();
+  if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
+  if (!neueTerminvorbereitung(ctx)) return { ok: false, error: "Nicht verfügbar." };
+  const g = gesellschaftAusText(String(gesellschaft ?? "").slice(0, 80)) ?? String(gesellschaft ?? "").trim().toLowerCase();
+  const tarife = tarifeFuer(ladeTarifkatalog(), String(sparte ?? "").slice(0, 80), [g]).slice(0, 30);
+  return { ok: true, tarife: tarife.map((t) => ({ id: t.id, name: t.name, kurz: t.kurz, gesellschaft: t.gesellschaftName, werte: katalogWerte(t) })) };
 }
