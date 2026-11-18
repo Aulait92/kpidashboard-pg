@@ -11,6 +11,8 @@
 //   davor kommt dazu. So endet der Vertrag immer mit einem bezahlten Abrechnungsmonat.
 // - Leads, Assistent und Kampagne starten weiter am Starttag; Monatsziele und Berichte bleiben beim Kalendermonat.
 
+import { eur } from "@/lib/offer-pricing";
+
 export const ABRECHNUNGSTAG_MIN = 1;
 export const ABRECHNUNGSTAG_MAX = 28;
 
@@ -102,7 +104,8 @@ const kurz = (s: string) => {
   const [, m, d] = parts(s);
   return `${pad(d)}.${pad(m)}.`;
 };
-const euro = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+// Beträge wie im ganzen Angebot: ganze Euro ohne „,00“
+const euro = eur;
 
 /**
  * Sätze für die Kundenseite (Sie-Form, ohne Gedankenstriche). Leer, wenn der Abrechnungstag dem Start entspricht.

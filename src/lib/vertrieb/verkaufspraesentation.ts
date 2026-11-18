@@ -7,7 +7,7 @@
 //
 // Texte gehen an Interessenten: keine Gedankenstriche (Bis-Striche in Zahlenbereichen sind ok), Minus als „−“.
 
-import { ABSCHLUSSBONUS_STANDARD, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
+import { ABSCHLUSSBONUS_STANDARD, betreuungsSatz, eurText, monthlyBudgetOf, normalizeTerm, offerAddOns, PACKAGE_LABEL, PRICE_LIST, setupForChoice, VORAUSZAHLUNG, type OfferTerm } from "@/lib/offer-pricing";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 
 export type VerkaufsAudience = "vertreter" | "makler";
@@ -142,20 +142,23 @@ export type PaketDaten = {
   setupMarke: string;
   setupHinweis: string | null;
   monatlich: { label: string; detail?: string; betrag: string; summe?: boolean }[];
-  /** Monatlich netto für die Rechnung (Betreuung + Software inkl. Zusätze); Liste: 1.000 € (Werbebudget bis 3.000 €). */
+  /** Monatlich netto für die Rechnung (Betreuung + Software inkl. Zusätze); Liste: 990 € (Werbebudget bis 3.000 €, PRICE_LIST.tiers). */
   monatlichNetto: number;
   jaehrlich: string | null;
   startpreis: string | null;
   /** Setup für die Rechnung (netto) und wie es zustande kommt */
   setupRechnung: { betrag: number; satz: string };
   produkte: { name: string; tagesbudget: number }[];
+  /** Satz zur Preisstufe bzw. zum vereinbarten Preis (nur mit Angebot, wie auf der Angebotsseite). */
+  betreuungsSatz: string | null;
   team: string;
   pause: string;
   /** Abschlussbonus: Setup vorher/nachher (netto); bis = Frist, null = „heute“ (Listenpreise, noch kein Angebot). */
   bonus: { betrag: number; setupVorher: number; setupNachher: number; bis: Date | null; spaeter?: boolean } | null;
 };
 
-const eur0 = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: n % 1 ? 2 : 0, minimumFractionDigits: n % 1 ? 2 : 0 }).format(n)} €`;
+// Beträge wie im ganzen Angebot (ganze Euro ohne „,00“, sonst mit Cent)
+const eur0 = eurText;
 
 function produkteVon(raw: unknown): { name: string; tagesbudget: number }[] {
   return (Array.isArray(raw) ? raw : []).flatMap((p) => {
@@ -191,6 +194,7 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
       startpreis: null,
       setupRechnung: audience === "makler" ? { betrag: PRICE_LIST.setup12m, satz: TERM_SATZ["12m"] } : { betrag: PRICE_LIST.setupNoTerm, satz: TERM_SATZ.none },
       produkte: [],
+      betreuungsSatz: null,
       team,
       pause: `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.`,
       bonus: (() => {
@@ -259,6 +263,12 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     startpreis: intro,
     setupRechnung: { betrag: angebot.setupFee, satz: TERM_SATZ[term] },
     produkte,
+    betreuungsSatz: betreuungsSatz({
+      package: angebot.package,
+      monthlyBudget: monthlyBudgetOf(produkte.map((x) => ({ name: x.name, dailyBudget: x.tagesbudget }))),
+      productCount: produkte.length,
+      monthlyFee: angebot.monthlyFee,
+    }),
     team: software ? `Ihr Angebot: ${seats} Berater, davon ${inkl} inklusive. Jeder weitere ${eur0(add.hasSeats ? add.seatMonthly : PRICE_LIST.seatMonthly)} netto im Monat.` : team,
     pause: software ? `Anzeigen stoppen automatisch. Sie zahlen dann nur ${PRICE_LIST.softwareFee} € netto für die Software.` : "Anzeigen stoppen automatisch, die Betreuung pausiert mit.",
     bonus: angebot.abschlussBonus
@@ -342,7 +352,7 @@ export type VerkaufsFolie = { id: string; titel: string; html: string };
 
 const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const zahl = (n: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 0 }).format(n);
-const euro = (n: number) => `${zahl(n)} €`;
+const euro = eurText;
 const monate = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(n)} ${n === 1 ? "Monat" : "Monaten"}`;
 const MINUS = "−";
 
@@ -416,7 +426,7 @@ const angebotChip = (p: PaketDaten) =>
 export function paketFolie(p: PaketDaten, audience: VerkaufsAudience, nr: number, gesamt: number): string {
   const budget =
     p.quelle === "angebot" && p.produkte.some((x) => x.tagesbudget > 0)
-      ? `zahlen Sie direkt an Meta. Laut Angebot: ${p.produkte.map((x) => `${euro(x.tagesbudget)} pro Tag`).join(" und ")}.`
+      ? `zahlen Sie direkt an Meta. Laut Angebot: ${p.produkte.map((x) => `${euro(x.tagesbudget)} pro Tag`).join(" und ")}.${p.betreuungsSatz ? ` ${p.betreuungsSatz}` : ""}`
       : audience === "makler"
         ? "zahlen Sie direkt an Meta. Empfehlung für Makler: ab 40 € pro Tag."
         : "zahlen Sie direkt an Meta. Empfehlung: 20–50 € pro Tag und Produkt.";

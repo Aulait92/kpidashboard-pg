@@ -9,6 +9,7 @@ import {
   abschlussBonusJetzt,
   addDaysIso,
   berlinTodayIso,
+  eurText,
   normalizeTerm,
   offerAddOns,
   prepayFreeMonthsFor,
@@ -239,7 +240,7 @@ function payLaterProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByTo
   return bounds ? { ...bounds, current: tagIso(offer.paymentReminderAt) } : null;
 }
 
-const eurBonus = (n: number) => `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(n)} €`;
+const eurBonus = eurText;
 const TAG_FMT = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long" });
 
 /** „heute bis 23:59 Uhr“, „morgen bis 23:59 Uhr“ oder „bis Dienstag, 17. November, 23:59 Uhr“. */

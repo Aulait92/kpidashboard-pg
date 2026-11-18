@@ -89,7 +89,7 @@ function zukunftErster(): string {
 }
 const contacts: string[] = [];
 
-/** 30 € am Tag → 1.000 € Paket, 5 aktive Verkäufer → 2 × 49 €: monatlich gesamt 1.098 €, jährlich 10.980 €. */
+/** 30 € am Tag → 990 € Paket (Listenpreis seit 18.11.2026), 5 aktive Verkäufer → 2 × 49 €: monatlich gesamt 1.088 €, jährlich 10.880 €. */
 async function angebot(extra: Partial<Parameters<typeof createOffer>[1]> = {}) {
   const tag = uid();
   const contact = await prisma.salesContact.create({ data: { name: `Jahreswahl ${tag}`, email: `jw-${tag}@example.test` } });
@@ -157,7 +157,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const a = await prisma.offer.findUniqueOrThrow({ where: { id: o.id } });
     expect(a).toMatchObject({ status: "accepted", annualChoice: true, annualPrepay: false, annualFreeMonths: null, term: "12m" });
     const mail = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!;
-    expect(mail.list!.join(" ")).toMatch(/Monatlich: 1\.098\s€ netto ab/);
+    expect(mail.list!.join(" ")).toMatch(/Monatlich: 1\.088\s€ netto ab/);
     expect(mail.list!.join(" ")).not.toMatch(/Jährlich/);
 
     await prisma.offer.update({ where: { id: o.id }, data: { stripeCustomerId: "cus_jw_m" } });
@@ -167,7 +167,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     expect(items.every((i) => i.price_data.recurring?.interval === "month")).toBe(true);
     expect(items.map((i) => [i.price_data.unit_amount, i.quantity])).toEqual([
       [34900, 1],
-      [65100, 1],
+      [64100, 1],
       [4900, 2],
     ]);
     expect(p.metadata.pg_interval).toBeUndefined();
@@ -179,7 +179,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const a = await prisma.offer.findUniqueOrThrow({ where: { id: o.id } });
     expect(a).toMatchObject({ annualPrepay: true, annualFreeMonths: 2, annualChoice: true });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
-    expect(text).toMatch(/Jährlich im Voraus: 10\.980\s€ netto ab/);
+    expect(text).toMatch(/Jährlich im Voraus: 10\.880\s€ netto ab/);
     expect(text).toMatch(/verlängert sich um jeweils 12 Monate/);
     expect(hatGedankenstrich(text)).toBe(false);
 
@@ -190,10 +190,10 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     expect(items.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
     expect(items.map((i) => [i.price_data.unit_amount, i.quantity])).toEqual([
       [349000, 1],
-      [651000, 1],
+      [641000, 1],
       [49000, 2],
     ]);
-    expect(summe(items)).toBe(1098000);
+    expect(summe(items)).toBe(1088000);
     expect(p.metadata.pg_interval).toBe("year");
     expect(p.start_date).toBe(Math.floor(a.startDate!.getTime() / 1000));
   });
@@ -227,12 +227,12 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const start = jahr.startDate!.toISOString().slice(0, 10);
     const planJ = abrechnungsplan({ startIso: start, billingDay: 15, annual: true })!;
     const anteilJ = pj.phases[0].add_invoice_items!.reduce((s, a) => s + a.price_data.unit_amount, 0);
-    expect(anteilJ).toBe(anteilCent(1098000, planJ));
+    expect(anteilJ).toBe(anteilCent(1088000, planJ));
     // 14 Tage von einem Jahr (365 bzw. 366 Tage): Anteil des Jahresbetrags (= Monatspreis mit Jahresrabatt)
     const first = `${start.slice(0, 8)}15`;
     const vorJahr = `${Number(first.slice(0, 4)) - 1}${first.slice(4)}`;
     const jahrTage = (Date.parse(first) - Date.parse(vorJahr)) / 86_400_000;
-    expect(anteilJ).toBe(Math.round((1098000 * 14) / jahrTage));
+    expect(anteilJ).toBe(Math.round((1088000 * 14) / jahrTage));
 
     const monat = await angebot({ billingDay: 15, customerChoice: false });
     await accept(monat.token, { annual: false });
@@ -240,7 +240,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     await createScheduleForOffer(monat.id, checkout(monat.id));
     const pm = zeitplan();
     const planM = abrechnungsplan({ startIso: start, billingDay: 15 })!;
-    expect(pm.phases[0].add_invoice_items!.reduce((s, a) => s + a.price_data.unit_amount, 0)).toBe(anteilCent(109800, planM));
+    expect(pm.phases[0].add_invoice_items!.reduce((s, a) => s + a.price_data.unit_amount, 0)).toBe(anteilCent(108800, planM));
     expect(pm.phases[0].items.every((i) => i.price_data.recurring?.interval === "month")).toBe(true);
   });
 
@@ -275,7 +275,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const p = zeitplan();
     expect(p.default_settings).toMatchObject({ collection_method: "send_invoice", invoice_settings: { days_until_due: 10 } });
     expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
-    expect(summe(p.phases[0].items)).toBe(1098000);
+    expect(summe(p.phases[0].items)).toBe(1088000);
     const ob = await prisma.onboarding.findFirstOrThrow({ where: { offerId: o.id }, select: { customerId: true } });
     const c = await prisma.customer.findUniqueOrThrow({ where: { id: ob.customerId! } });
     expect(c.billingInterval).toBe("year");

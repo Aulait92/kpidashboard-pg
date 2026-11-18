@@ -91,7 +91,7 @@ function zukunftErster(): string {
 const contacts: string[] = [];
 const customers: string[] = [];
 
-/** 30 € am Tag → 1.000 € Paket, 5 aktive Verkäufer → 2 × 49 €: monatlich 1.098 €, 6 Monate im Voraus 5.490 €. */
+/** 30 € am Tag → 990 € Paket (Listenpreis seit 18.11.2026), 5 aktive Verkäufer → 2 × 49 €: monatlich 1.088 €, 6 Monate im Voraus 5.440 €. */
 async function angebot(extra: Partial<Parameters<typeof createOffer>[1]> = {}) {
   const tag = uid();
   const contact = await prisma.salesContact.create({ data: { name: `Laufzeit6 ${tag}`, email: `l6-${tag}@example.test` } });
@@ -160,7 +160,7 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(a).toMatchObject({ status: "accepted", term: "6m", annualPrepay: true, annualFreeMonths: 1 });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
     expect(text).toMatch(/Einrichtung: 1\.490\s€ netto/);
-    expect(text).toMatch(/6 Monate im Voraus: 5\.490\s€ netto ab/);
+    expect(text).toMatch(/6 Monate im Voraus: 5\.440\s€ netto ab/);
     expect(text).toMatch(/verlängert sich um jeweils 6 Monate, wenn Sie nicht bis/);
     expect(hatGedankenstrich(text)).toBe(false);
 
@@ -171,10 +171,10 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(items.every((i) => i.price_data.recurring?.interval === "month" && i.price_data.recurring?.interval_count === 6)).toBe(true);
     expect(items.map((i) => [i.price_data.unit_amount, i.quantity])).toEqual([
       [174500, 1],
-      [325500, 1],
+      [320500, 1],
       [24500, 2],
     ]);
-    expect(summe(items)).toBe(549000);
+    expect(summe(items)).toBe(544000);
     expect(p.metadata.pg_interval).toBe("halfyear");
     expect(p.start_date).toBe(Math.floor(a.startDate!.getTime() / 1000));
   });
@@ -183,13 +183,13 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     const o = await angebot();
     expect(await accept(o.token, { annual: false })).toEqual({ ok: true });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
-    expect(text).toMatch(/Monatlich: 1\.098\s€ netto ab/);
+    expect(text).toMatch(/Monatlich: 1\.088\s€ netto ab/);
     expect(text).toMatch(/Mindestlaufzeit 6 Monate bis/);
     await prisma.offer.update({ where: { id: o.id }, data: { stripeCustomerId: "cus_6m_m" } });
     await createScheduleForOffer(o.id, checkout(o.id));
     const items = zeitplan().phases[0].items;
     expect(items.every((i) => i.price_data.recurring?.interval === "month" && i.price_data.recurring?.interval_count === undefined)).toBe(true);
-    expect(summe(items)).toBe(109800);
+    expect(summe(items)).toBe(108800);
     expect(zeitplan().metadata.pg_interval).toBeUndefined();
   });
 
@@ -200,7 +200,7 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     await createScheduleForOffer(o.id, checkout(o.id));
     const p = zeitplan();
     expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval === "year" && i.price_data.recurring?.interval_count === undefined)).toBe(true);
-    expect(summe(p.phases[0].items)).toBe(1098000);
+    expect(summe(p.phases[0].items)).toBe(1088000);
     expect(p.metadata.pg_interval).toBe("year");
   });
 
@@ -237,12 +237,12 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     const pa = zeitplan();
     const plan = abrechnungsplan({ startIso: start, billingDay: 15, annual: true, prepayMonths: 6 })!;
     const anteil = pa.phases[0].add_invoice_items!.reduce((s, x) => s + x.price_data.unit_amount, 0);
-    expect(anteil).toBe(anteilCent(549000, plan));
+    expect(anteil).toBe(anteilCent(544000, plan));
     // 14 Tage von den 6 Monaten vor dem ersten Abrechnungstag
     const first = `${start.slice(0, 8)}15`;
     const [y, m] = first.split("-").map(Number);
     const vorher = new Date(Date.UTC(y, m - 1 - 6, 15)).toISOString().slice(0, 10);
-    expect(anteil).toBe(Math.round((549000 * 14) / ((Date.parse(first) - Date.parse(vorher)) / 86_400_000)));
+    expect(anteil).toBe(Math.round((544000 * 14) / ((Date.parse(first) - Date.parse(vorher)) / 86_400_000)));
   });
 
   it("Überweisung: Abo Monat × 6 per Rechnung, Kundenkonto halbjährlich", async () => {
@@ -253,7 +253,7 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     const p = zeitplan();
     expect(p.default_settings).toMatchObject({ collection_method: "send_invoice", invoice_settings: { days_until_due: 10 } });
     expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval_count === 6)).toBe(true);
-    expect(summe(p.phases[0].items)).toBe(549000);
+    expect(summe(p.phases[0].items)).toBe(544000);
     const ob = await prisma.onboarding.findFirstOrThrow({ where: { offerId: o.id }, select: { customerId: true } });
     const c = await prisma.customer.findUniqueOrThrow({ where: { id: ob.customerId! } });
     expect(c.billingInterval).toBe("halfyear");

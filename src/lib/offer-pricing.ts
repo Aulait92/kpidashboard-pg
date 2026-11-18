@@ -18,11 +18,14 @@ export const PRICE_LIST = {
   /** Paket „Nur Betreuung“ (ohne Software): fester Monatspreis, Pause 0 €. */
   serviceOnlyMonthly: 700,
   vatRate: 0.19,
-  /** Monatliche Betreuung + Software nach Gesamt-Werbebudget pro Monat. */
+  /**
+   * Monatliche Betreuung + Software nach Gesamt-Werbebudget pro Monat. Seit 18.11.2026 (Ole) 990/1.390/1.790 €,
+   * vorher 1.000/1.400/1.800 € ({@link LISTENPREISE_ALT}).
+   */
   tiers: [
-    { maxBudget: 3000, monthly: 1000, label: "bis 3.000 €" },
-    { maxBudget: 6000, monthly: 1400, label: "3.000–6.000 €" },
-    { maxBudget: 10000, monthly: 1800, label: "6.000–10.000 €" },
+    { maxBudget: 3000, monthly: 990, label: "bis 3.000 €" },
+    { maxBudget: 6000, monthly: 1390, label: "3.000–6.000 €" },
+    { maxBudget: 10000, monthly: 1790, label: "6.000–10.000 €" },
   ],
   /** Ab hier gibt es kein Listenpreis mehr → individuell. */
   individualFrom: 10000,
@@ -62,6 +65,25 @@ export const PRICE_LIST = {
   /** WhatsApp-Gebühren von Meta sind im Preis enthalten (keine Weiterberechnung). */
   whatsappIncluded: true,
 } as const;
+
+export type PreisStufe = { maxBudget: number; monthly: number; label: string };
+
+/**
+ * Listenpreise Betreuung + Software bis 18.11.2026 (1.000/1.400/1.800 €). Gelten weiter für angenommene Angebote und
+ * laufende Kunden (die behalten ihren Preis); offene Angebote zum alten Listenpreis wurden per Migration
+ * 20261118999500_listenpreise_990 auf den neuen Listenpreis gesetzt.
+ */
+export const LISTENPREISE_ALT: readonly PreisStufe[] = [
+  { maxBudget: 3000, monthly: 1000, label: "bis 3.000 €" },
+  { maxBudget: 6000, monthly: 1400, label: "3.000–6.000 €" },
+  { maxBudget: 10000, monthly: 1800, label: "6.000–10.000 €" },
+];
+
+/** Listenpreis Betreuung + Software für Budget und Produktanzahl nach einer Staffel (Stufe + weitere Produkte); null = individuell. */
+export function listenMonatspreis(monthlyBudget: number, productCount: number, tiers: readonly PreisStufe[] = PRICE_LIST.tiers): number | null {
+  const t = tiers.find((x) => monthlyBudget <= x.maxBudget);
+  return t ? t.monthly + Math.max(0, productCount - 1) * PRICE_LIST.extraProductMonthly : null;
+}
 
 export type OfferTerm = "none" | "3m" | "6m" | "12m";
 
@@ -390,8 +412,20 @@ export function jahreswahlBetraege(monthlyTotal: number, freeMonths: number | nu
 export const withVat = (net: number) => round2(net * (1 + PRICE_LIST.vatRate));
 export const vatOf = (net: number) => round2(net * PRICE_LIST.vatRate);
 
-export const eur = (n: number) =>
-  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+/** Nachkommastellen für Beträge im Angebot: ganze Euro ohne „,00“, sonst mit Cent (Ole, 18.11.2026). */
+export const centStellen = (n: number): 0 | 2 => (Math.round(Math.abs(n) * 100) % 100 === 0 ? 0 : 2);
+
+/** Betrag für Angebot, PDF, Annahme und Präsentation: „990 €“, „1.234,50 €“. */
+export const eur = (n: number) => {
+  const d = centStellen(n);
+  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+};
+
+/** Wie {@link eur}, mit normalem Leerzeichen vor „€“ (Folien und Fließtext in HTML). */
+export const eurText = (n: number) => {
+  const d = centStellen(n);
+  return `${new Intl.NumberFormat("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d }).format(n)} €`;
+};
 
 export const TERM_LABEL: Record<OfferTerm, string> = {
   none: "Ohne Vertragslaufzeit (monatlich kündbar)",
@@ -577,6 +611,37 @@ export function resolveOfferChoice(
   };
 }
 
+// ─── Preisumstellung 18.11.2026: 1.000/1.400/1.800 € → 990/1.390/1.790 € ─────────────────────────────────────
+// Offene Angebote (Entwurf/verschickt, nicht angenommen) zum alten Listenpreis bekommen den neuen Listenpreis
+// (Migration 20261118999500_listenpreise_990, gleiche Regel in SQL). Sonderkonditionen (Monatspreis abweichend von
+// der alten Staffel), angenommene Angebote, Testangebote, „Nur Betreuung“ und individuelle Preise bleiben, wie sie sind.
+
+export type ListenpreisUmstellungInput = {
+  status: string;
+  acceptedAt: Date | null;
+  isTest: boolean;
+  package: string;
+  products: unknown;
+  monthlyFee: unknown;
+  seats: number | null;
+};
+
+/** Alter und neuer Monatspreis, wenn das Angebot offen ist und noch den alten Listenpreis hat; sonst null. */
+export function listenpreisUmstellung(o: ListenpreisUmstellungInput): { alt: number; neu: number } | null {
+  if (!(o.status === "draft" || o.status === "sent") || o.acceptedAt || o.isTest || o.package === "service") return null;
+  if (o.seats != null && o.seats >= PRICE_LIST.seatIndividualFrom) return null;
+  const products = (Array.isArray(o.products) ? o.products : []).flatMap((p) => {
+    const r = (p ?? {}) as { name?: unknown; dailyBudget?: unknown };
+    return typeof r.name === "string" && r.name.trim() ? [{ name: r.name, dailyBudget: typeof r.dailyBudget === "number" ? r.dailyBudget : 0 }] : [];
+  });
+  if (!products.length) return null;
+  const budget = monthlyBudgetOf(products);
+  const alt = listenMonatspreis(budget, products.length, LISTENPREISE_ALT);
+  const neu = listenMonatspreis(budget, products.length);
+  if (alt == null || neu == null || alt === neu || Math.abs(Number(o.monthlyFee) - alt) > 0.005) return null;
+  return { alt, neu };
+}
+
 /** Zusatzpakete Bestandskunden-Modul als Satz: „+500 Nachrichten für 99 €, +2.000 für 349 € (netto, einmalig, gültig 3 Monate)“. */
 export function bestandPacksText(): string {
   const parts = PRICE_LIST.bestandPacks.map((p, i) => `+${p.messages.toLocaleString("de-DE")}${i === 0 ? " Nachrichten" : ""} für ${eur(p.price)}`);
@@ -588,11 +653,48 @@ export function bestandPacksText(): string {
  * „Preisstaffel laut Angebot“. Damit die Stufe bei dauerhaft höherem Budget vorher erkennbar ist (§ 307 Abs. 1
  * Satz 2, § 305c Abs. 1 BGB), steht die ganze Staffel im Angebot, nicht nur die aktuelle Stufe. Ohne Gedankenstriche.
  */
-export function tierStaffelText(): string {
+const stufenBereich = (from: number, maxBudget: number) => {
+  const de = (n: number) => n.toLocaleString("de-DE");
+  return from === 0 ? `bis ${de(maxBudget)} €` : `über ${de(from)} bis ${de(maxBudget)} €`;
+};
+
+/** Preisstufe zum Werbebudget im Wortlaut der Staffel: „bis 3.000 €“, „über 3.000 bis 6.000 €“; null = individuell. */
+export function preisstufeBereich(monthlyBudget: number, tiers: readonly PreisStufe[] = PRICE_LIST.tiers): string | null {
+  const i = tiers.findIndex((t) => monthlyBudget <= t.maxBudget);
+  return i < 0 ? null : stufenBereich(i === 0 ? 0 : tiers[i - 1].maxBudget, tiers[i].maxBudget);
+}
+
+/**
+ * Staffel, nach der ein vereinbarter Monatspreis der Listenpreis ist: aktuelle Staffel, alte Staffel (bis 18.11.2026,
+ * angenommene Altangebote) oder null (Sonderkondition bzw. individuell).
+ */
+export function staffelDesPreises(monthlyBudget: number, productCount: number, monthlyFee: number): readonly PreisStufe[] | null {
+  for (const tiers of [PRICE_LIST.tiers, LISTENPREISE_ALT]) {
+    const list = listenMonatspreis(monthlyBudget, productCount, tiers);
+    if (list != null && Math.abs(list - monthlyFee) < 0.01) return tiers;
+  }
+  return null;
+}
+
+/**
+ * Satz unter dem Werbebudget (Angebotsseite, PDF, Präsentation): welche Preisstufe für Betreuung und Software gilt,
+ * bzw. der vereinbarte Preis bei Sonderkondition. null für „Nur Betreuung“ (Preis hängt nicht vom Budget ab).
+ */
+export function betreuungsSatz(o: { package?: string | null; monthlyBudget: number; productCount: number; monthlyFee: number }): string | null {
+  if (o.package === "service") return null;
+  const tiers = staffelDesPreises(o.monthlyBudget, o.productCount, o.monthlyFee);
+  const bereich = tiers ? preisstufeBereich(o.monthlyBudget, tiers) : null;
+  if (!bereich) return `Für Betreuung und Software gilt Ihr vereinbarter Preis: ${eur(o.monthlyFee)} netto im Monat.`;
+  const extra = Math.max(0, o.productCount - 1);
+  const weitere = extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für ${extra === 1 ? "ein weiteres Produkt" : "weitere Produkte"}` : "";
+  return `Damit gilt für Betreuung und Software die Preisstufe ${bereich} Werbebudget im Monat: ${eur(o.monthlyFee)} netto im Monat${weitere}.`;
+}
+
+export function tierStaffelText(tiers: readonly PreisStufe[] = PRICE_LIST.tiers): string {
   const de = (n: number) => n.toLocaleString("de-DE");
   let from = 0;
-  const parts = PRICE_LIST.tiers.map((t) => {
-    const range = from === 0 ? `bis ${de(t.maxBudget)} €` : `über ${de(from)} bis ${de(t.maxBudget)} €`;
+  const parts = tiers.map((t) => {
+    const range = stufenBereich(from, t.maxBudget);
     from = t.maxBudget;
     return `${range}: ${eur(t.monthly)}`;
   });

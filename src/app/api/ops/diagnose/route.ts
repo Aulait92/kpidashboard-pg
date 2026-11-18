@@ -714,6 +714,7 @@ const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
 //   q=investoren[&sicht=gesamt]           Investoren-Kennzahlen (Geld › Auswertung): Datenlücken, Kennzahlen, KI-Kosten, Gegenprobe mit der Übersicht (lib/ops/investoren.ts)
 //   q=tarif-vorschlaege                    Tarifkatalog lernt von Vermittlern: Vorschläge je Status und Quelle, offene, empfohlene, übernommene, nur Anzahlen (lib/ops/tarif-vorschlaege.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
+//   q=preise-offen                         Neue Listenpreise 990/1.390/1.790 €: umgestellte und noch alte offene Angebote (Nummer, Name, alt, neu; lib/ops/preise-offen.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   pakete: async () => (await import("@/lib/ops/pakete")).paketeDiagnose(),
   investoren: async (p) => (await import("@/lib/ops/investoren")).investorenDiagnose(p),
@@ -723,6 +724,7 @@ const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),
   "tarif-vorschlaege": async () => (await import("@/lib/ops/tarif-vorschlaege")).tarifVorschlaegeDiagnose(),
+  "preise-offen": async () => (await import("@/lib/ops/preise-offen")).preiseOffenDiagnose(),
 };
 
 export async function GET(req: Request): Promise<Response> {

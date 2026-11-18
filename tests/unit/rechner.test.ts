@@ -40,8 +40,8 @@ describe("Break-even-Rechner", () => {
     expect(r.beitragsvolumen).toBeCloseTo(8592, 0);
     expect(r.provision).toBeGreaterThan(4900);
     expect(r.provision).toBeLessThan(5100);
-    // Kosten wie Präsentation: (800 + 1.000) × 1,19 = 2.142 €
-    expect(r.kosten).toBeCloseTo(2142, 0);
+    // Kosten wie Präsentation: (800 + 990) × 1,19 = 2.130,10 € (bis 18.11.2026 mit 1.000 €: 2.142 €)
+    expect(r.kosten).toBeCloseTo(2130.1, 1);
   });
 
   it("Standard TKV (6 € mit Puffer, 30 €/Tag): Leads, Verträge, Break-even", () => {
@@ -50,8 +50,8 @@ describe("Break-even-Rechner", () => {
     expect(r.leads).toBeCloseTo(150, 6); // 30 €/Tag × 30 Tage ÷ 6 €
     expect(r.vertraege).toBeCloseTo(150 * 0.12, 6);
     expect(r.provisionJeVertrag).toBeCloseTo(350 * 0.55, 6);
-    // Kosten (900 + 1.000) × 1,19 = 2.261 → ⌈2.261 / 192,5⌉ = 12 Verträge
-    expect(r.kosten).toBeCloseTo(2261, 2);
+    // Kosten (900 + 990) × 1,19 = 2.249,10 → ⌈2.249,10 / 192,5⌉ = 12 Verträge
+    expect(r.kosten).toBeCloseTo(2249.1, 2);
     expect(r.breakEvenVertraege).toBe(12);
     expect(r.breakEvenAnteilLeads).toBeCloseTo(12 / 150, 6);
     expect(r.ueberschuss).toBeCloseTo(r.provision - r.kosten, 6);
@@ -88,14 +88,14 @@ describe("Break-even-Rechner", () => {
     expect(provisionPerVertrag("percent", i, 36)).toBeCloseTo(350 * 0.7, 6);
     // Break-even berücksichtigt die Staffel (n × Satz(n) ≥ Kosten)
     const r = berechne(tkv, i, 6);
-    expect(r.breakEvenVertraege).toBe(11); // 11 × 210 = 2.310 ≥ 2.275,28
+    expect(r.breakEvenVertraege).toBe(11); // 11 × 210 = 2.310 ≥ 2.263,38
   });
 
   it("Jahreszahlung: Betreuung und Berater × 10/12, nur mit 12 Monaten", () => {
     const monatlich = berechne(tkv, base({ berater: 5 }), 6);
     const jaehrlich = berechne(tkv, base({ berater: 5, jaehrlich: true }), 6);
     expect(monatlich.berater).toBe(98); // 2 × 49
-    expect(jaehrlich.betreuung).toBeCloseTo(1000 * 10 / 12, 6);
+    expect(jaehrlich.betreuung).toBeCloseTo(990 * 10 / 12, 6);
     expect(jaehrlich.berater).toBeCloseTo(98 * 10 / 12, 6);
     // Parameter: jv ohne 12 Monate wird ignoriert
     const ohneLaufzeit = inputFromParams(DEFAULT_CONFIG, { lz: "0", jv: "1" });
@@ -116,7 +116,7 @@ describe("Break-even-Rechner", () => {
   it("3 Monate Laufzeit: Setup 1.990 €, keine Jahreszahlung, URL lz=3 hin und zurück", () => {
     const r3 = berechne(tkv, base({ laufzeit: "3m" }), 6);
     expect(r3.setup).toBeCloseTo(1990 * 1.19, 6);
-    expect(r3.betreuung).toBe(1000);
+    expect(r3.betreuung).toBe(990);
     const i = inputFromParams(DEFAULT_CONFIG, { lz: "3", jv: "1" });
     expect(i.laufzeit).toBe("3m");
     expect(i.jaehrlich).toBe(false);
@@ -207,7 +207,7 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     const r = berechne(tkv, i, 6);
     expect(r.vertraege).toBeCloseTo(18.24, 6); // Referenz rechnet mit 18,2
     expect(r.setup).toBeCloseTo(1178.1, 1);
-    expect(r.kosten).toBeCloseTo(2275.28, 2);
+    expect(r.kosten).toBeCloseTo(2263.38, 2); // (912 + 990) × 1,19 (bis 18.11.2026 mit 1.000 €: 2.275,28)
     const b = berechneBestand(tkv, i, r)!;
     // Referenzwerte mit 1 % Toleranz
     expect(rel(b.vertraegeNachKampagne, 208)).toBeLessThan(0.01);
@@ -342,7 +342,7 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     expect(inputFromParams(DEFAULT_CONFIG, {}).budget).toBe(30);
   });
 
-  it("Kosten je Vertrag: Präsentations-Annahmen (4 €/Lead, 12 % Verträge, 1.000 € Betreuung, USt.)", () => {
+  it("Kosten je Vertrag: Präsentations-Annahmen (4 €/Lead, 12 % Verträge, 990 € Betreuung, USt.)", () => {
     const i = base({ customerRate: 0.09, xs: false }, tkv, "makler"); // 9 % × 4/3 = 12 % Verträge je Lead; ohne Cross-Selling
     const v = budgetVergleich(tkv, i, 4, [27, 40, 60, 98, 100, 101]);
     const kjv = Object.fromEntries(v.map((z) => [z.budget, z.kostenJeVertrag!]));
@@ -351,9 +351,9 @@ describe("Bestandssicht (Makler TKV, Storno)", () => {
     expect(kjv[60]).toBeCloseTo(62, -0.5); // ≈ 62 €
     // 98 €/Tag = 2.940 € Werbebudget, erste Betreuungsstufe ≈ 53 €
     expect(kjv[98]).toBeCloseTo(53, -0.5);
-    // 100 €/Tag = genau 3.000 € → noch erste Stufe; 101 €/Tag = 3.030 € → Betreuung 1.400 €, ≈ 58 €
-    expect(v.find((z) => z.budget === 100)!.betreuung).toBe(1000);
-    expect(v.find((z) => z.budget === 101)!.betreuung).toBe(1400);
+    // 100 €/Tag = genau 3.000 € → noch erste Stufe; 101 €/Tag = 3.030 € → Betreuung 1.390 €, ≈ 58 €
+    expect(v.find((z) => z.budget === 100)!.betreuung).toBe(990);
+    expect(v.find((z) => z.budget === 101)!.betreuung).toBe(1390);
     expect(kjv[101]).toBeGreaterThan(57);
     expect(kjv[101]).toBeLessThan(59);
     // mehr Budget = mehr Bestand
@@ -434,13 +434,13 @@ describe("Cross-Selling im Makler-Modus (Allianz-Erfahrungswert, Ole 11.11.)", (
     expect(defaultInput(pkv, "makler").xs).toBe(true); // seit 13.11. grundsätzlich an
   });
 
-  it("Kontrollwerte Folie: gedeckt Monat 7, alles zurück Monat 12, ≈ 8,3 ×", () => {
+  it("Kontrollwerte Folie: gedeckt Monat 6, alles zurück Monat 12, ≈ 8,3 × (990 € Betreuung; mit 1.000 € war es Monat 7)", () => {
     const i = folie();
     const r = r30(i);
     expect(r.vertraege).toBeCloseTo(36, 6);
     const b = berechneBestand(tkv, i, r)!;
     expect(b.crossSell).toBe(true);
-    expect(b.laufendGedecktMonat).toBe(7);
+    expect(b.laufendGedecktMonat).toBe(6);
     expect(b.breakEvenMonat).toBe(12);
     expect(rel(b.vertraegeNachKampagne, 412)).toBeLessThan(0.01);
     expect(rel(b.zusatzNachKampagne, 412)).toBeLessThan(0.01);
