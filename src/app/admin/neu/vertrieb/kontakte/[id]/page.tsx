@@ -17,6 +17,7 @@ import { neuerPfad } from "@/lib/admin-neu/umzug";
 import type { ImpressumInfo } from "@/lib/impressum";
 import { eur } from "@/lib/offer-pricing";
 import { toOfferRow } from "@/lib/offer-links";
+import { offenesAngebot } from "@/lib/vertrieb/angebot-ablehnen";
 import { onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
@@ -47,6 +48,9 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const { termin } = await searchParams;
   const c = await ladeKontakt(id);
   if (!c) notFound();
+  // „Offenes Angebot auch als abgelehnt markieren?“ beim Verloren-Markieren
+  const offen = offenesAngebot(c.offers);
+  const angebotOffen = offen ? { id: offen.id, number: offen.number } : null;
   // Kunden haben eine eigene Akte (Kunden → Kundenakte)
   if (c.customerId) redirect(neuerPfad(`/admin/kunden/${c.customerId}`, { nurFertige: false }) ?? `/admin/kunden/${c.customerId}`);
   const a = await ladeKontaktakte(c);
@@ -73,7 +77,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-[color:var(--muted)]">
             <span data-funktion="actions-setstage--stufe-aendern-auswahl contact-controls-stagepicker--verloren-mit-grund-und-wettbewerber">
-              <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} />
+              <StagePicker contactId={c.id} stage={c.stage} competitor={c.competitor} offenesAngebot={angebotOffen} />
             </span>
             {a.activeFollowup ? (
               <a href="#follow-up">
@@ -151,7 +155,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
             <Card id="aktivitaet">
               <CardHeader title="Aktivität erfassen" />
               <div className="px-5 py-4" data-funktion="actions-logactivity--aktivitaet-erfassen-anruf-e-mail-notiz-ergebnis">
-                <ActivityForm contactId={c.id} hasOpenTasks={a.open.length > 0} />
+                <ActivityForm contactId={c.id} hasOpenTasks={a.open.length > 0} offenesAngebot={angebotOffen} />
               </div>
             </Card>
 
@@ -188,6 +192,7 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 newOfferHref={`${pfad}/angebot`}
                 appUrl={a.appUrl}
                 offers={c.offers.map(toOfferRow)}
+                kontakt
                 mail={{ audience: audienceForContact(c), pdf: { vertreter: a.pdfs.has("vertreter"), makler: a.pdfs.has("makler") }, link: true, entscheidung: a.entscheidungsHinweis }}
                 knopf={false}
               />

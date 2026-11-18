@@ -1714,6 +1714,12 @@ model Offer {
   // Setup-Rechnung (Überweisung) und virtuelle IBAN zur Anzeige auf der Angebotsseite
   stripeSetupInvoiceId    String?
   ueberweisungIban        String?
+  // Als abgelehnt markiert (Ole, 18.11.2026, lib/vertrieb/angebot-ablehnen.ts): Zeitpunkt, Grund (Verlustgründe des
+  // Vertriebs), optionale Notiz und der Status davor (für „Wieder öffnen“, solange validUntil in der Zukunft liegt)
+  declinedAt              DateTime?
+  declineReason           SalesLossReason?
+  declineNote             String?
+  declinedPrevStatus      String?
   createdById             String?
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt

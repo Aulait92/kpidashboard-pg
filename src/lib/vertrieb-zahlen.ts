@@ -11,6 +11,7 @@
 import { prisma } from "@/lib/prisma";
 import { produktRange } from "@/lib/produkte";
 import type { ProduktRange } from "@/lib/produkte-shared";
+import { ablehnGrundLabel, ablehnGruende, ablehnGruendeText } from "@/lib/vertrieb/angebot-ablehnen";
 
 export type VertriebRow = { id: string; name: string; href: string | null; date: string; detail: string | null; status: string | null; muted?: boolean };
 export type VertriebStep = { key: "contacted" | "replied" | "meetings" | "offers" | "won"; name: string; v: number; rows: VertriebRow[]; more: number; note?: string };
@@ -34,8 +35,9 @@ const OFFER_STATUS: Record<string, string> = { sent: "offen", accepted: "angenom
 const contactHref = (id: string) => `/admin/vertrieb/kontakte/${id}`;
 const eur = (v: unknown) => `${Number(v ?? 0).toLocaleString("de-DE", { maximumFractionDigits: 0 })} €`;
 
-function offerStatus(o: { status: string; validUntil: Date }, now: Date): string {
+function offerStatus(o: { status: string; validUntil: Date; declineReason: string | null }, now: Date): string {
   if (o.status === "sent" && o.validUntil < now) return "abgelaufen";
+  if (o.status === "declined") return `abgelehnt: ${ablehnGrundLabel(o.declineReason)}`;
   return OFFER_STATUS[o.status] ?? o.status;
 }
 
@@ -67,10 +69,11 @@ export async function loadVertriebZahlen(rangeKey?: string, now = new Date()): P
     prisma.offer.findMany({
       where: { sentAt: inRange, status: { not: "superseded" } },
       orderBy: { sentAt: "desc" },
-      select: { id: true, number: true, status: true, sentAt: true, acceptedAt: true, validUntil: true, monthlyFee: true, company: true, contactName: true, salesContactId: true },
+      select: { id: true, number: true, status: true, sentAt: true, acceptedAt: true, validUntil: true, monthlyFee: true, company: true, contactName: true, salesContactId: true, declineReason: true },
     }),
     prisma.offer.findMany({
-      where: { acceptedAt: inRange },
+      // angenommen und später als abgelehnt markiert (nie bezahlt) zählt nicht als gewonnen
+      where: { acceptedAt: inRange, status: { not: "declined" } },
       orderBy: { acceptedAt: "desc" },
       select: { id: true, number: true, acceptedAt: true, monthlyFee: true, setupFee: true, setupListFee: true, setupDiscount: true, company: true, contactName: true, salesContactId: true },
     }),
@@ -139,6 +142,8 @@ export async function loadVertriebZahlen(rangeKey?: string, now = new Date()): P
 
   const cap = (rows: VertriebRow[]) => ({ rows: rows.slice(0, LIST_LIMIT), more: Math.max(0, rows.length - LIST_LIMIT) });
   const acceptedOfSent = offers.filter((o) => o.status === "accepted").length;
+  // Ablehnungsgründe der Angebote im Zeitraum (Ole, 18.11.2026)
+  const ablehnt = ablehnGruende(offers);
 
   return {
     range: key,
@@ -148,7 +153,7 @@ export async function loadVertriebZahlen(rangeKey?: string, now = new Date()): P
       { key: "contacted", name: "Angeschrieben/angerufen", v: contactedRows.length, ...cap(contactedRows) },
       { key: "replied", name: "Geantwortet", v: replied.size, ...cap([...replied.values()]), note: "ohne Abwesenheitsnotizen" },
       { key: "meetings", name: "Termin", v: meetingsHeld, ...cap(meetingRows), note: cancelled ? `ohne ${cancelled} abgesagte (in der Liste ausgegraut)` : undefined },
-      { key: "offers", name: "Angebot", v: offers.length, ...cap(offerRows) },
+      { key: "offers", name: "Angebot", v: offers.length, ...cap(offerRows), note: ablehnt.length ? `abgelehnt: ${ablehnGruendeText(ablehnt)}` : undefined },
       { key: "won", name: "Gewonnen", v: won.length, ...cap(wonRows) },
     ],
     winRate: offers.length ? acceptedOfSent / offers.length : null,

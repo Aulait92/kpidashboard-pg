@@ -10,6 +10,7 @@ import type { DealOfferRow } from "@/components/deal-offers-card";
 import { ueberweisungAktiv } from "@/lib/mahnwesen";
 import { erinnerungsGrenzen, naechsteErinnerung, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
 import { abschlussBonusFrist, abschlussBonusGesichert, abschlussBonusJetzt, berlinTodayIso } from "@/lib/offer-pricing";
+import { ablehnGrundLabel, kannAblehnen, kannWiederOeffnen } from "@/lib/vertrieb/angebot-ablehnen";
 
 type OfferRef = { dealId: string | null; salesContactId: string | null };
 
@@ -104,6 +105,11 @@ export function toOfferRow(o: Offer): DealOfferRow {
     abschlussBonusGewaehrt: o.abschlussBonusGewaehrt == null ? null : Number(o.abschlussBonusGewaehrt),
     abschlussBonusAbgelaufen: o.abschlussBonus != null && !abschlussBonusJetzt(o),
     abschlussBonusGesichert: abschlussBonusGesichert(o),
+    declinedAt: o.declinedAt?.toISOString() ?? null,
+    declineReason: o.status === "declined" ? ablehnGrundLabel(o.declineReason) : null,
+    declineNote: o.declineNote,
+    kannAblehnen: kannAblehnen(o),
+    kannWiederOeffnen: kannWiederOeffnen(o, new Date()),
   };
 }
 
