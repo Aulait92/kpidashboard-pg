@@ -1,10 +1,9 @@
 import { Clock, Video, Phone } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { listActiveProducts } from "@/lib/product-catalog";
 import type { Slot } from "@/lib/calendar";
 import { TerminShell } from "@/components/termin/termin-shell";
 import { TerminForm, type TerminDay } from "@/components/termin/termin-form";
-import { availableSlots, bookingReady, loadBookingType, TERMIN_CONSENT_TEXT, verifyContactToken } from "@/lib/vertrieb/buchung";
+import { availableSlots, bookingReady, loadBookingType, TERMIN_CONSENT_TEXT, VERTRIEB_INTERESSEN, verifyContactToken } from "@/lib/vertrieb/buchung";
 import { nowMs } from "@/lib/now";
 import { bookTerminAction } from "./actions";
 
@@ -70,7 +69,8 @@ export async function BookingPage({ slug, sp }: { slug: string | null; sp: { ein
     console.error("[termin] slots", err);
   }
   const days = slotsToDays(slots);
-  const interests = [...(await listActiveProducts()).map((p) => p.label), "Mehrere Sparten", "Noch offen"];
+  // Nur die Lead-Arten, die wir liefern (wie auf der Webseite), Ole 18.11.2026
+  const interests = [...VERTRIEB_INTERESSEN];
 
   return (
     <TerminShell embed={embed}>

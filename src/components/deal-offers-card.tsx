@@ -7,6 +7,7 @@ import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send, Trash2 } from
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setBankTransferAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
+import { abrechnungsplan, abrechnungstagKurz } from "@/lib/abrechnungstag";
 
 export type DealOfferRow = {
   id: string;
@@ -30,6 +31,9 @@ export type DealOfferRow = {
   startDate: string | null;
   /** Ursprünglicher Start, falls nach dem Start gezahlt wurde (YYYY-MM-DD) */
   startShiftedFrom: string | null;
+  /** Abrechnungstag (null = wie Start) und kostenloser Start bis dahin (lib/abrechnungstag.ts) */
+  billingDay?: number | null;
+  billingFreeStart?: boolean;
   /** „Ich zahle später“ auf der Angebotsseite erlaubt */
   allowPayLater: boolean;
   /** Überweisung nur auf Anfrage (lib/ueberweisung.ts): erlaubt, Zahlungsziel, gewählte Zahlweise, Funktion freigeschaltet */
@@ -170,6 +174,11 @@ export function DealOffersCard({
               {current.sentAt ? <li>Verschickt {fmt(current.sentAt)}</li> : null}
               {current.viewedAt ? <li>Vom Interessenten geöffnet {fmt(current.viewedAt)}</li> : null}
               {current.acceptedAt ? <li className="font-medium text-emerald-700">Angenommen {fmt(current.acceptedAt)} von {current.acceptedName}</li> : null}
+              {current.billingDay != null ? (
+                <li data-angebot-abrechnungstag>
+                  Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart }))}
+                </li>
+              ) : null}
               {current.startShiftedFrom && current.startDate ? (
                 <li className="font-medium text-amber-700" data-start-verschoben>
                   Start verschoben: {fmtTag(current.startShiftedFrom)} → {fmtTag(current.startDate)} (erst nach dem Start gezahlt, Kunde per Mail informiert)

@@ -8,6 +8,7 @@
 // AGB „Laufzeit und Kündigung“ nennt dieselben Regeln mit Beispiel.
 
 import { eur, type OfferTerm } from "@/lib/offer-pricing";
+import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (y: number, m: number, d: number) => {
@@ -131,7 +132,17 @@ export type ContractSummaryInput = {
   /** Jährlich im Voraus (nur mit 12 Monaten) */
   annual: boolean;
   freeMonths: number;
+  /** Abrechnungstag (lib/abrechnungstag.ts): null/fehlt = wie Start; freeStart = Zeit davor kostenlos */
+  billingDay?: number | null;
+  freeStart?: boolean;
 };
+
+/**
+ * Erster Abrechnungstag: ab hier zählen Startpreis-Monate, Mindestlaufzeit und Abrechnungsmonate
+ * (= Start, wenn kein eigener Abrechnungstag vereinbart ist).
+ */
+export const billingStartIso = (i: Pick<ContractSummaryInput, "startIso" | "billingDay">): string | null =>
+  abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay })?.firstIso ?? i.startIso;
 
 /** Startpreis mit Übergang in die reguläre Vergütung? Dann ist ein eigenes Häkchen Pflicht. */
 export const hasPriceStep = (i: Pick<ContractSummaryInput, "intro" | "monthlyTotal">) =>
@@ -146,21 +157,24 @@ export function priceStepDates(startIso: string | null, months: number): { intro
 
 /** Wortlaut des Pflicht-Häkchens beim Startpreis. */
 export function priceStepAckText(i: ContractSummaryInput): string {
-  const d = i.intro ? priceStepDates(i.startIso, i.intro.months) : null;
+  const d = i.intro ? priceStepDates(billingStartIso(i), i.intro.months) : null;
   return `Mir ist bewusst: Nach dem Startpreis gilt ${d ? `ab dem ${fmtIso(d.regularFromIso)}` : `ab Monat ${(i.intro?.months ?? 0) + 1}`} automatisch die reguläre Vergütung von ${eur(i.monthlyTotal)} netto im Monat.`;
 }
 
 /** Zeilen „Das vereinbaren Sie“ (netto zzgl. USt.), Sie-Form, ohne Gedankenstriche. */
 export function contractSummaryLines(i: ContractSummaryInput): string[] {
   const lines: string[] = [];
-  const start = i.startIso ? fmtIso(i.startIso) : null;
-  if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
   const annual = i.annual && i.term === "12m";
+  // Eigener Abrechnungstag: Beträge und Fristen zählen ab dem ersten Abrechnungstag (lib/abrechnungstag.ts)
+  const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, annual });
+  const billIso = plan?.firstIso ?? i.startIso;
+  const start = billIso ? fmtIso(billIso) : null;
+  if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
   if (annual) {
     const total = Math.round(i.monthlyTotal * (12 - i.freeMonths) * 100) / 100;
     lines.push(`Jährlich im Voraus: ${eur(total)} netto${start ? ` ab ${start}` : " ab Start"}.`);
   } else if (hasPriceStep(i)) {
-    const d = priceStepDates(i.startIso, i.intro!.months);
+    const d = priceStepDates(billIso, i.intro!.months);
     lines.push(
       d
         ? `Startpreis: ${eur(i.intro!.monthly)} netto im Monat vom ${start} bis ${fmtIso(d.introEndIso)} (${i.intro!.months} ${i.intro!.months === 1 ? "Monat" : "Monate"}).`
@@ -170,9 +184,13 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   } else {
     lines.push(`Monatlich: ${eur(i.monthlyTotal)} netto${start ? ` ab ${start}` : " ab Start"}, im Voraus.`);
   }
+  if (plan?.differs) {
+    const firstNet = annual ? Math.round(i.monthlyTotal * (12 - i.freeMonths) * 100) / 100 : hasPriceStep(i) ? i.intro!.monthly : i.monthlyTotal;
+    lines.push(abrechnungstagSaetze(plan, { firstNet, annual }).join(" "));
+  }
   if (annual) {
-    const end = i.startIso ? periodEndIso(i.startIso, 12) : null;
-    const deadline = i.startIso ? periodEndIso(i.startIso, 11) : null;
+    const end = billIso ? periodEndIso(billIso, 12) : null;
+    const deadline = billIso ? periodEndIso(billIso, 11) : null;
     lines.push(
       end && deadline
         ? `Laufzeit bis ${fmtIso(end)}. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis ${fmtIso(deadline)} kündigen.`
@@ -182,7 +200,7 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     lines.push("Ohne Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats.");
   } else {
     const months = i.term === "12m" ? 12 : 3;
-    const end = i.startIso ? periodEndIso(i.startIso, months) : null;
+    const end = billIso ? periodEndIso(billIso, months) : null;
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }
   lines.push("Kündigen können Sie jederzeit im Kundenbereich unter Konto & Rechnungen oder in Textform. Alle Preise zzgl. 19 % USt.");

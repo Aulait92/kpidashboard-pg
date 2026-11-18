@@ -30,6 +30,7 @@ import { audit } from "@/lib/audit";
 import { referralSetupDiscount } from "@/lib/kollegen";
 import { checkBusiness, type BusinessInput } from "@/lib/unternehmer";
 import { contractSummaryLines, hasPriceStep, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
+import { parseAbrechnungstag } from "@/lib/abrechnungstag";
 
 
 export type OfferFormInput = {
@@ -48,6 +49,10 @@ export type OfferFormInput = {
   introMonths?: number | null;
   specialTerms?: string | null;
   startDate?: string | null; // YYYY-MM-DD
+  /** Abrechnungstag 1 bis 28 (lib/abrechnungstag.ts); leer = wie Start. */
+  billingDay?: number | null;
+  /** Zeit vom Start bis zum ersten Abrechnungstag kostenlos („kostenloser Start“, Standard aus = anteilig). */
+  billingFreeStart?: boolean;
   validDays?: number;
   /** Aktive Verkäufer gesamt (bekommen Leads); 3 inklusive, Mitglieder ohne Leads kostenlos. */
   seats?: number | null;
@@ -145,6 +150,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
     throw new Error("Bitte ein Startdatum angeben – ab dann läuft die Monatsgebühr.");
   }
   const term = normalizeTerm(input.term);
+  const abrechnungstag = parseAbrechnungstag(input.billingDay);
+  if (!abrechnungstag.ok) throw new Error(abrechnungstag.error);
   // Empfehlungsrabatt: automatisch für gültig empfohlene Kontakte, vom Admin übersteuerbar
   let discount: { amount: number; label: string; referralId: string } | null = null;
   const wanted = input.setupDiscount;
@@ -250,6 +257,9 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             specialTerms: test ? "Testangebot: kostenlos, ohne Zahlung. Dient nur zum Ausprobieren und wird danach gelöscht." : input.specialTerms?.trim() || null,
             isTest: test,
             startDate: input.startDate ? new Date(`${input.startDate}T12:00:00Z`) : null,
+            billingDay: abrechnungstag.day,
+            // „Gratis“ nur mit eigenem Abrechnungstag (sonst gibt es keine Zeit davor)
+            billingFreeStart: abrechnungstag.day != null && input.billingFreeStart === true,
             customerChoosesTerm: choosesTerm,
             customerChoosesStart: choosesStart,
             allowPayLater: input.allowPayLater === true && !test,
@@ -445,7 +455,9 @@ type OfferRecord = NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>;
 
 /** Eingaben für {@link contractSummaryLines} aus einem Angebot (Wahl des Kunden geht vor). */
 export function offerSummaryInput(
-  offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> & Parameters<typeof offerAddOnsOf>[0],
+  offer: Pick<OfferRecord, "term" | "startDate" | "setupFee" | "introMonthlyFee" | "introMonths" | "annualPrepay" | "annualFreeMonths"> &
+    Partial<Pick<OfferRecord, "billingDay" | "billingFreeStart">> &
+    Parameters<typeof offerAddOnsOf>[0],
   chosen: Partial<{ term: OfferTerm; startIso: string | null; setup: number; annual: boolean; freeMonths: number | null }> = {},
 ): ContractSummaryInput {
   const add = offerAddOns(offerAddOnsOf(offer));
@@ -459,6 +471,8 @@ export function offerSummaryInput(
     intro,
     annual: chosen.annual ?? offer.annualPrepay,
     freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
+    billingDay: offer.billingDay ?? null,
+    freeStart: !!offer.billingFreeStart,
   };
 }
 

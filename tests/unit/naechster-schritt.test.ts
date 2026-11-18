@@ -129,9 +129,9 @@ describe("Anrufplan bei „nicht erreicht“", () => {
 describe("Erinnerung und Tipp", () => {
   it("Text der Erinnerung ohne Gedankenstriche", () => {
     const t = reminderText(5, 2);
-    expect(t.title).toBe("5 Leads brauchen einen nächsten Schritt");
+    expect(t.title).toBe("Wichtig: 5 Leads brauchen einen nächsten Schritt");
     expect(t.body).toBe("3 Leads haben keinen nächsten Schritt, bei 2 Terminen fehlt das Ergebnis. Legen Sie fest, wie es weitergeht: Wiedervorlage, Termin, Abschluss oder Verloren.");
-    expect(reminderText(1, 0).title).toBe("1 Lead braucht einen nächsten Schritt");
+    expect(reminderText(1, 0).title).toBe("Wichtig: 1 Lead braucht einen nächsten Schritt");
     expect(`${t.title} ${t.body}`).not.toMatch(/[–—]/);
   });
   it("Tipp „Jedem Lead einen nächsten Schritt geben“ unter 90 %", () => {

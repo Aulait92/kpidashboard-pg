@@ -21,6 +21,7 @@ import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
 import { selfConnectEnabled } from "@/lib/whatsapp/dialog360-partner";
 import { validLoginEmail } from "@/lib/login-email";
+import { ersterAbrechnungstag } from "@/lib/abrechnungstag";
 
 const DAY = 24 * 60 * 60 * 1000;
 const INVITE_TTL_MS = 7 * DAY;
@@ -732,7 +733,12 @@ function billingTermsOf(offer: {
   allowBankTransfer?: boolean;
   bankTransferDays?: number;
   zahlweise?: string | null;
+  startDate?: Date | null;
+  billingDay?: number | null;
 }) {
+  // Abrechnungstag (lib/abrechnungstag.ts): Tag und erster Abrechnungstag an den Kunden (Laufzeit und Kündigung zählen ab dann)
+  const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
+  const firstBillingIso = startIso ? ersterAbrechnungstag(startIso, offer.billingDay) : null;
   const seatsBilled = offer.seats != null && offer.seatsIncluded != null && Number(offer.seatMonthly ?? 0) > 0
     ? Math.max(0, offer.seats - offer.seatsIncluded)
     : 0;
@@ -749,5 +755,6 @@ function billingTermsOf(offer: {
     // Überweisung nur auf Anfrage (lib/ueberweisung.ts): Freigabe und Zahlungsziel gehen an den Kunden über
     ...(offer.allowBankTransfer ? { allowBankTransfer: true, bankTransferDays: offer.bankTransferDays ?? 14 } : {}),
     ...(offer.zahlweise === "ueberweisung" ? { zahltPerUeberweisung: true } : {}),
+    ...(offer.startDate ? { billingDay: offer.billingDay ?? null, billingStart: firstBillingIso ? new Date(`${firstBillingIso}T12:00:00Z`) : null } : {}),
   };
 }
