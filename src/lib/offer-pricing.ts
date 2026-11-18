@@ -6,6 +6,8 @@ export const PRICE_LIST = {
   setupNoTerm: 2490,
   /** Mindestlaufzeit 3 Monate (Ole, 11.11.2026). */
   setup3m: 1990,
+  /** Mindestlaufzeit 6 Monate (Ole, 18.11.2026). */
+  setup6m: 1490,
   setup12m: 990,
   /** Jedes weitere Produkt: keine Einrichtung mehr, nur der Monatsbetrag (Ole, 15.11.2026; vorher 990 €). */
   extraProductSetup: 0,
@@ -34,6 +36,8 @@ export const PRICE_LIST = {
   seatIndividualFrom: 10,
   /** Jährlich im Voraus: so viele Monate geschenkt (nur mit 12 Monaten Laufzeit). */
   annualFreeMonths: 2,
+  /** 6 Monate im Voraus: so viele Monate geschenkt (nur mit 6 Monaten Laufzeit, Ole 18.11.2026). */
+  halfYearFreeMonths: 1,
   /** Bestandskunden-Modul je Monat (netto), inkl. WhatsApp-Gebühren bis zum Kontingent. */
   bestandModuleMonthly: 149,
   /** Kampagnen-Nachrichten im Bestandskunden-Modul je Kalendermonat inklusive. */
@@ -59,17 +63,79 @@ export const PRICE_LIST = {
   whatsappIncluded: true,
 } as const;
 
-export type OfferTerm = "none" | "3m" | "12m";
+export type OfferTerm = "none" | "3m" | "6m" | "12m";
 
 /** Mindestlaufzeit in Monaten je Laufzeit-Option (0 = monatlich kündbar). */
-export const TERM_MONTHS: Record<OfferTerm, number> = { none: 0, "3m": 3, "12m": 12 };
+export const TERM_MONTHS: Record<OfferTerm, number> = { none: 0, "3m": 3, "6m": 6, "12m": 12 };
 
 /** Unbekannte/alte Werte → „none“. */
-export const normalizeTerm = (t: unknown): OfferTerm => (t === "12m" || t === "3m" ? t : "none");
+export const normalizeTerm = (t: unknown): OfferTerm => (t === "12m" || t === "6m" || t === "3m" ? t : "none");
 
 /** Listen-Setup je Laufzeit (ohne weitere Produkte). */
 export const setupForTerm = (t: OfferTerm): number =>
-  t === "12m" ? PRICE_LIST.setup12m : t === "3m" ? PRICE_LIST.setup3m : PRICE_LIST.setupNoTerm;
+  t === "12m" ? PRICE_LIST.setup12m : t === "6m" ? PRICE_LIST.setup6m : t === "3m" ? PRICE_LIST.setup3m : PRICE_LIST.setupNoTerm;
+
+// ─── Vorauszahlung (Ole, 18.11.2026): eine Logik für 6 und 12 Monate ─────────
+// Mit 6 Monaten Laufzeit: 6 Monate im Voraus, 1 Monat geschenkt (5 Monatsbeträge). Mit 12 Monaten: jährlich im
+// Voraus, 2 Monate geschenkt (10 Monatsbeträge). Gespeichert wird beides wie bisher in Offer.annualPrepay/annualFreeMonths
+// (Name historisch); der Zeitraum folgt aus der Laufzeit. Am Kunden: billingInterval "halfyear" bzw. "year".
+
+export type PrepayTerm = "6m" | "12m";
+export const VORAUSZAHLUNG: Record<PrepayTerm, { months: number; freeMonths: number }> = {
+  "6m": { months: 6, freeMonths: PRICE_LIST.halfYearFreeMonths },
+  "12m": { months: 12, freeMonths: PRICE_LIST.annualFreeMonths },
+};
+/** Vorauszahlung gibt es nur mit 6 oder 12 Monaten Laufzeit. */
+export const prepayPossible = (t: unknown): t is PrepayTerm => t === "6m" || t === "12m";
+/** Monate je Vorauszahlungszeitraum (Altdaten ohne 6 Monate: 12). */
+export const prepayMonthsFor = (t: unknown): number => (t === "6m" ? 6 : 12);
+/** Geschenkte Monate je Zeitraum nach Laufzeit (Altdaten: 2). */
+export const prepayFreeMonthsFor = (t: unknown): number => (t === "6m" ? VORAUSZAHLUNG["6m"].freeMonths : VORAUSZAHLUNG["12m"].freeMonths);
+
+/**
+ * Beträge einer Vorauszahlung: Betrag = (Monate − Freimonate) × Monatspreis inkl. Zusätze, Ersparnis = Freimonate ×
+ * Monatspreis. `freeMonths` = gespeicherter Wert des Angebots (null = Standard der Laufzeit).
+ */
+export function vorauszahlungBetraege(
+  monthlyTotal: number,
+  term: unknown,
+  freeMonths: number | null = null,
+): { total: number; savings: number; freeMonths: number; months: number; paidMonths: number } {
+  const months = prepayMonthsFor(term);
+  const free = freeMonths ?? prepayFreeMonthsFor(term);
+  const total = round2(monthlyTotal * (months - free));
+  return { total, savings: round2(monthlyTotal * months - total), freeMonths: free, months, paidMonths: months - free };
+}
+
+/** Zahlrhythmus am Kunden (Customer.billingInterval). */
+export type Zahlrhythmus = "month" | "halfyear" | "year";
+export const normalizeRhythmus = (v: unknown): Zahlrhythmus => (v === "year" || v === "halfyear" ? v : "month");
+/** Im Voraus bezahlt (6 oder 12 Monate): keine Gutschrift für Pausen, Nachlässe von Hand usw. */
+export const isPrepaid = (interval: unknown): boolean => interval === "year" || interval === "halfyear";
+export const RHYTHMUS_MONATE: Record<Zahlrhythmus, number> = { month: 1, halfyear: 6, year: 12 };
+export const RHYTHMUS_LABEL: Record<Zahlrhythmus, string> = { month: "Monatlich", halfyear: "6 Monate im Voraus", year: "Jährlich im Voraus" };
+/** Rhythmus aus Laufzeit und Vorauszahlung (6 Monate → halbjährlich, sonst jährlich). */
+export const rhythmusFuer = (term: unknown, prepay: boolean): Zahlrhythmus => (!prepay ? "month" : term === "6m" ? "halfyear" : "year");
+/** Monatsbeträge je Abbuchung: monatlich 1, halbjährlich 6 − Freimonate, jährlich 12 − Freimonate. */
+export function rhythmusFaktor(r: unknown, freeMonths?: number | null): number {
+  const n = normalizeRhythmus(r);
+  if (n === "month") return 1;
+  const term = n === "halfyear" ? "6m" : "12m";
+  return prepayMonthsFor(term) - (freeMonths ?? prepayFreeMonthsFor(term));
+}
+/** Anteil je Monat (z. B. MRR): jährlich 10/12, halbjährlich 5/6, monatlich 1. */
+export const rhythmusMonatsAnteil = (r: unknown, freeMonths?: number | null): number => rhythmusFaktor(r, freeMonths) / RHYTHMUS_MONATE[normalizeRhythmus(r)];
+/** Stripe-Intervall je Rhythmus: halbjährlich = Monat × 6. */
+export function stripeRecurring(r: unknown): { interval: "month" | "year"; interval_count?: number } {
+  const n = normalizeRhythmus(r);
+  return n === "year" ? { interval: "year" } : n === "halfyear" ? { interval: "month", interval_count: 6 } : { interval: "month" };
+}
+/** Rhythmus eines Stripe-Preises (recurring). */
+export function rhythmusAusStripe(rec: { interval?: string | null; interval_count?: number | null } | null | undefined): Zahlrhythmus {
+  if (rec?.interval === "year") return "year";
+  if (rec?.interval === "month" && rec.interval_count === 6) return "halfyear";
+  return "month";
+}
 /** Vertreter oder Makler: bestimmt die Garantien (Break-even bzw. Vertrags-Garantie). */
 /** Mehrfachvertreter rechnet wie Vertreter (Preise, Break-even-Garantie), Status geht in die Erstinformation. */
 export type OfferVermittler = "vertreter" | "mehrfachvertreter" | "makler";
@@ -87,7 +153,7 @@ export type OfferInput = {
   monthlyOverride?: number | null;
   /** Aktive Verkäufer gesamt (bekommen Leads); Standard = inklusive Anzahl. */
   seats?: number | null;
-  /** Jährlich im Voraus zahlen (nur mit 12 Monaten Laufzeit). */
+  /** Vorauszahlung (nur mit 6 oder 12 Monaten Laufzeit; Name historisch). */
   annual?: boolean;
   /** Bestandskunden-Modul dazubuchen (nur Betreuung + Software). */
   bestandModule?: boolean;
@@ -129,10 +195,13 @@ export type OfferPrice = {
   /** Monatlich gesamt (Paket + weitere Verkäufer + Module); null = individuell offen. */
   monthlyTotal: number | null;
   annual: boolean;
-  /** Jahresbetrag bei jährlicher Vorauszahlung; null ohne Jahreszahlung. */
+  /** Betrag je Vorauszahlungszeitraum (6 bzw. 12 Monate); null ohne Vorauszahlung. */
   annualTotal: number | null;
   /** Ersparnis durch die Freimonate. */
   annualSavings: number;
+  /** Monate je Vorauszahlungszeitraum (6 oder 12) und geschenkte Monate; 0 ohne Vorauszahlung. */
+  prepayMonths: number;
+  prepayFreeMonths: number;
 };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -172,8 +241,9 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
   const monthlyFee =
     input.monthlyOverride != null && input.monthlyOverride >= 0 ? input.monthlyOverride : listBase;
   const monthlyTotal = monthlyFee == null ? null : round2(monthlyFee + seatsFee + bestandFee + empfehlungFee);
-  const annual = !!input.annual && input.term === "12m";
-  const annualTotal = annual && monthlyTotal != null ? round2(monthlyTotal * (12 - PRICE_LIST.annualFreeMonths)) : null;
+  // Vorauszahlung: 6 Monate (1 geschenkt) bzw. 12 Monate (2 geschenkt), gleiche Rechnung
+  const annual = !!input.annual && prepayPossible(input.term);
+  const prepay = annual && monthlyTotal != null ? vorauszahlungBetraege(monthlyTotal, input.term) : null;
 
   return {
     monthlyBudget,
@@ -202,8 +272,10 @@ export function computeOfferPrice(input: OfferInput): OfferPrice {
     empfehlungActive,
     monthlyTotal,
     annual,
-    annualTotal,
-    annualSavings: annualTotal != null && monthlyTotal != null ? round2(monthlyTotal * 12 - annualTotal) : 0,
+    annualTotal: prepay?.total ?? null,
+    annualSavings: prepay?.savings ?? 0,
+    prepayMonths: annual ? prepayMonthsFor(input.term) : 0,
+    prepayFreeMonths: annual ? prepayFreeMonthsFor(input.term) : 0,
   };
 }
 
@@ -243,6 +315,8 @@ export type OfferAddOnsInput = {
   empfehlungMonthly?: number | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
+  /** Laufzeit des Angebots: bestimmt den Vorauszahlungszeitraum (6m → 6 Monate, sonst 12). */
+  term?: string | null;
 };
 
 export type OfferAddOns = {
@@ -261,8 +335,11 @@ export type OfferAddOns = {
   monthlyTotal: number;
   annual: boolean;
   freeMonths: number;
+  /** Betrag je Vorauszahlungszeitraum; null ohne Vorauszahlung. */
   annualTotal: number | null;
   annualSavings: number;
+  /** Monate je Vorauszahlungszeitraum (6 oder 12; ohne Vorauszahlung der Zeitraum der Laufzeit). */
+  prepayMonths: number;
 };
 
 export function offerAddOns(o: OfferAddOnsInput): OfferAddOns {
@@ -275,8 +352,9 @@ export function offerAddOns(o: OfferAddOnsInput): OfferAddOns {
   const bestandFee = o.bestandMonthly ?? 0;
   const empfehlungFee = o.empfehlungMonthly ?? 0;
   const monthlyTotal = round2(o.monthlyFee + seatsFee + bestandFee + empfehlungFee);
-  const freeMonths = o.annualPrepay ? (o.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : 0;
-  const annualTotal = o.annualPrepay ? round2(monthlyTotal * (12 - freeMonths)) : null;
+  const prepay = o.annualPrepay ? vorauszahlungBetraege(monthlyTotal, o.term, o.annualFreeMonths) : null;
+  const freeMonths = prepay?.freeMonths ?? 0;
+  const annualTotal = prepay?.total ?? null;
   return {
     hasSeats,
     seats,
@@ -292,7 +370,8 @@ export function offerAddOns(o: OfferAddOnsInput): OfferAddOns {
     annual: o.annualPrepay,
     freeMonths,
     annualTotal,
-    annualSavings: annualTotal != null ? round2(monthlyTotal * 12 - annualTotal) : 0,
+    annualSavings: prepay?.savings ?? 0,
+    prepayMonths: prepayMonthsFor(o.term),
   };
 }
 
@@ -304,9 +383,8 @@ export const annualMultiplier = (freeMonths: number = PRICE_LIST.annualFreeMonth
  * Ersparnis = Freimonate × Monatspreis. Gleiche Rechnung wie {@link offerAddOns} bei vereinbarter Jahreszahlung.
  */
 export function jahreswahlBetraege(monthlyTotal: number, freeMonths: number | null = PRICE_LIST.annualFreeMonths): { annualTotal: number; savings: number; freeMonths: number } {
-  const free = freeMonths ?? PRICE_LIST.annualFreeMonths;
-  const annualTotal = round2(monthlyTotal * annualMultiplier(free));
-  return { annualTotal, savings: round2(monthlyTotal * 12 - annualTotal), freeMonths: free };
+  const v = vorauszahlungBetraege(monthlyTotal, "12m", freeMonths);
+  return { annualTotal: v.total, savings: v.savings, freeMonths: v.freeMonths };
 }
 
 export const withVat = (net: number) => round2(net * (1 + PRICE_LIST.vatRate));
@@ -318,8 +396,12 @@ export const eur = (n: number) =>
 export const TERM_LABEL: Record<OfferTerm, string> = {
   none: "Ohne Vertragslaufzeit (monatlich kündbar)",
   "3m": "3 Monate Laufzeit",
+  "6m": "6 Monate Laufzeit",
   "12m": "12 Monate Laufzeit",
 };
+
+/** Kurzformen: „12 Monate“, „ohne Laufzeit“ usw. */
+export const TERM_SHORT: Record<OfferTerm, string> = { "12m": "12 Monate", "6m": "6 Monate", "3m": "3 Monate", none: "ohne Laufzeit" };
 
 export const PACKAGE_LABEL: Record<OfferPackage, string> = {
   software: "Betreuung + Software",
@@ -383,7 +465,15 @@ export function setupForChoice(term: OfferTerm, productCount: number, discount: 
   return applySetupDiscount(list, null, discount).fee;
 }
 
-export const TERM_OPTIONS: readonly OfferTerm[] = ["12m", "3m", "none"];
+export const TERM_OPTIONS: readonly OfferTerm[] = ["12m", "6m", "3m", "none"];
+
+/**
+ * 6 Monate gibt es zur Wahl erst für Angebote ab diesem Zeitpunkt (Einführung 18.11.2026, 14 Uhr Berlin; Livegang am Abend).
+ * Ältere offene Angebote mit Laufzeitwahl bleiben wie verschickt (12 Monate, 3 Monate, ohne Laufzeit).
+ */
+export const TERM_6M_AB = new Date("2026-11-18T13:00:00Z");
+export const termOptionsFor = (createdAt: Date | null | undefined): readonly OfferTerm[] =>
+  !createdAt || createdAt.getTime() >= TERM_6M_AB.getTime() ? TERM_OPTIONS : TERM_OPTIONS.filter((t) => t !== "6m");
 
 /** Gespeicherter Stand eines Angebots, soweit für die Kundenwahl nötig. */
 export type OfferChoiceSnapshot = {
@@ -394,9 +484,11 @@ export type OfferChoiceSnapshot = {
   startIso: string | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
-  /** Jahreszahlung angeboten: Kunde wählt monatlich oder jährlich (nur mit 12 Monaten); annualPrepay = Vorauswahl. */
+  /** Vorauszahlung angeboten: Kunde wählt monatlich oder im Voraus (nur mit 6 oder 12 Monaten); annualPrepay = Vorauswahl. */
   annualChoice?: boolean;
   choosesTerm: boolean;
+  /** Wählbare Laufzeiten (Standard alle; Altangebote ohne 6 Monate, {@link termOptionsFor}). */
+  termOptions?: readonly OfferTerm[];
   choosesStart: boolean;
   /** Vereinbarter Empfehlungsrabatt (netto) und Listenpreis vor Rabatt; fehlt = keiner. */
   setupDiscount?: number | null;
@@ -433,7 +525,7 @@ export function resolveOfferChoice(
   const wantedTerm = input.term?.trim() || null;
   if (snap.choosesTerm) {
     if (wantedTerm != null) {
-      if (!(TERM_OPTIONS as readonly string[]).includes(wantedTerm)) return { ok: false, error: "Bitte eine gültige Laufzeit wählen." };
+      if (!((snap.termOptions ?? TERM_OPTIONS) as readonly string[]).includes(wantedTerm)) return { ok: false, error: "Bitte eine gültige Laufzeit wählen." };
       term = wantedTerm as OfferTerm;
     }
     // Empfehlungsrabatt gilt für jede Laufzeit
@@ -460,11 +552,12 @@ export function resolveOfferChoice(
     return { ok: false, error: "Das Startdatum ist in diesem Angebot fest vereinbart." };
   }
 
-  // Zahlweise: mit „Jahreszahlung anbieten“ wählt der Kunde (ohne Angabe gilt die Vorauswahl), sonst wie vereinbart.
-  // Jahreszahlung gibt es nur mit 12 Monaten Laufzeit.
+  // Zahlweise: mit „Vorauszahlung anbieten“ wählt der Kunde (ohne Angabe gilt die Vorauswahl), sonst wie vereinbart.
+  // Vorauszahlung gibt es mit 6 Monaten (6 Monate im Voraus) und 12 Monaten (jährlich). Alte Angebote mit fest
+  // vereinbarter Jahreszahlung bleiben dabei: nur mit 12 Monaten.
   let annualPrepay = snap.annualPrepay && term === "12m";
   if (snap.annualChoice) {
-    annualPrepay = term === "12m" && (input.annual ?? snap.annualPrepay) === true;
+    annualPrepay = prepayPossible(term) && (input.annual ?? snap.annualPrepay) === true;
   } else if (input.annual != null && input.annual !== annualPrepay) {
     return { ok: false, error: "Die Zahlweise ist in diesem Angebot fest vereinbart." };
   }
@@ -475,7 +568,8 @@ export function resolveOfferChoice(
     setupListFee,
     startIso,
     annualPrepay,
-    annualFreeMonths: annualPrepay ? (snap.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : null,
+    // Geschenkte Monate je Laufzeit: gespeicherter Wert gilt für die Laufzeit des Angebots, sonst Standard der Wahl
+    annualFreeMonths: annualPrepay ? (term === fixedTerm && snap.annualFreeMonths != null ? snap.annualFreeMonths : prepayFreeMonthsFor(term)) : null,
   };
 }
 

@@ -30,6 +30,7 @@ export function ModuleBookButton({
   readOnly,
   annual = false,
   freeMonths = 2,
+  prepayMonths,
 }: {
   monthlyNet: number;
   includedMessages: number;
@@ -40,8 +41,10 @@ export function ModuleBookButton({
   /** Jährliche Vorauszahlung: Modul läuft bis zum Ende des bezahlten Jahres. */
   annual?: boolean;
   freeMonths?: number;
+  /** Vorauszahlung: Monate je Zahlungszeitraum (6 oder 12) */
+  prepayMonths?: number;
 }) {
-  const terms = bestandTerms({ annual, monthlyNet, freeMonths });
+  const terms = bestandTerms({ annual, monthlyNet, freeMonths, prepayMonths });
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<BookState, FormData>(bookBestandModuleAction, {});
 
@@ -53,7 +56,7 @@ export function ModuleBookButton({
             {state.error ?? reason} Fragen Sie das Modul hier an, wir melden uns.
           </p>
         ) : null}
-        <ModuleRequestButton requestedAt={requestedAt} readOnly={readOnly} monthlyNet={monthlyNet} annual={annual} freeMonths={freeMonths} />
+        <ModuleRequestButton requestedAt={requestedAt} readOnly={readOnly} monthlyNet={monthlyNet} annual={annual} freeMonths={freeMonths} prepayMonths={prepayMonths} />
       </div>
     );
   }
@@ -109,8 +112,8 @@ export function ModuleBookButton({
 }
 
 /** Modul kündigen (zum Ende des Abrechnungszeitraums) bzw. Kündigung zurücknehmen. */
-export function ModuleCancelButton({ cancelAt, readOnly, annual = false }: { cancelAt: string | null; readOnly: boolean; annual?: boolean }) {
-  const terms = bestandTerms({ annual, monthlyNet: 0, freeMonths: 0 });
+export function ModuleCancelButton({ cancelAt, readOnly, annual = false, prepayMonths }: { cancelAt: string | null; readOnly: boolean; annual?: boolean; prepayMonths?: number }) {
+  const terms = bestandTerms({ annual, monthlyNet: 0, freeMonths: 0, prepayMonths });
   const [open, setOpen] = useState(false);
   const [cancelState, cancelAction, cancelling] = useActionState<BookState, FormData>(cancelBestandModuleAction, {});
   const [bookState, bookAction, booking] = useActionState<BookState, FormData>(bookBestandModuleAction, {});

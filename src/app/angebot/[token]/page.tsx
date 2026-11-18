@@ -11,10 +11,10 @@ import {
   berlinTodayIso,
   normalizeTerm,
   offerAddOns,
-  PRICE_LIST,
+  prepayFreeMonthsFor,
   setupForChoice,
   startDateBounds,
-  TERM_OPTIONS,
+  termOptionsFor,
   type OfferTerm,
 } from "@/lib/offer-pricing";
 import { AcceptForm, type OfferChoiceProps } from "./accept-form";
@@ -178,7 +178,7 @@ export default async function OfferPage({
   );
 }
 
-const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "3m": "3 Monate", none: "Ohne Laufzeit" };
+const TERM_CHOICE_LABEL: Record<OfferTerm, string> = { "12m": "12 Monate", "6m": "6 Monate", "3m": "3 Monate", none: "Ohne Laufzeit" };
 
 /** Vorberechnete Wahl für die Angebotsseite (null = feste Konditionen wie bisher). */
 function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToken>>>): OfferChoiceProps | null {
@@ -193,7 +193,8 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     choosesTerm: offer.customerChoosesTerm,
     choosesStart: offer.customerChoosesStart,
     initialTerm: fixedTerm,
-    options: (offer.customerChoosesTerm ? TERM_OPTIONS : [fixedTerm]).map((t) => ({
+    // 6 Monate zur Wahl erst für Angebote ab dem Livegang (lib/offer-pricing.ts termOptionsFor)
+    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt) : [fixedTerm]).map((t) => ({
       term: t,
       label: TERM_CHOICE_LABEL[t],
       setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount) : Number(offer.setupFee),
@@ -201,10 +202,12 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     })),
     monthlyTotal: add.monthlyTotal,
     annualOffered: offer.annualPrepay || offer.annualChoice,
-    // „Jahreszahlung anbieten“: Kunde wählt monatlich oder jährlich (Vorauswahl monatlich, Ole 18.11.2026)
+    // „Vorauszahlung anbieten“: Kunde wählt monatlich oder im Voraus (6 bzw. 12 Monate; Vorauswahl monatlich, Ole 18.11.2026)
     choosesAnnual: offer.annualChoice,
     initialAnnual: offer.annualPrepay,
-    freeMonths: offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
+    // Geschenkte Monate für die Laufzeit des Angebots (andere Laufzeiten: Standard, prepayFreeMonthsFor)
+    freeMonths: offer.annualFreeMonths ?? prepayFreeMonthsFor(fixedTerm),
+    legacyAnnual: offer.annualPrepay && !offer.annualChoice,
     start: startDateBounds(berlinTodayIso(new Date(nowMs())), offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null),
   };
 }

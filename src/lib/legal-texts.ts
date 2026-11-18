@@ -42,10 +42,12 @@
 // wie die Break-even-Garantie. Gilt nur für neue Verträge: Angebote vor dem Stichtag (VERTRAGS_GARANTIE_120_AB in
 // lib/rechner.ts) behalten 90 Tage. Die Seiten /rechtliches/* und das Angebot zeigen immer die aktuelle Fassung (eine
 // URL, keine Archivfassungen), darum steht die alte Frist für ältere Angebote als Übergangssatz im Text selbst.
+// 18.11.2026 (neuer Stand, Ole): Laufzeit 6 Monate und Vorauszahlung für 6 Monate (1 Monat geschenkt): „Laufzeit und
+// Kündigung“, „Vorauszahlung“, Zusatzmodule und Pause gelten für beide Vorauszahlungen (jährlich bzw. 6 Monate).
 // PRÜFUNG DURCH OLE / ANWALT AUSSTEHEND: die mit „Prüfen:“ markierten Stellen
 // (Kommentare) vor dem Livegang juristisch abnehmen lassen.
 
-export const LEGAL_VERSION = "16.11.2026";
+export const LEGAL_VERSION = "18.11.2026";
 
 export const PROVIDER = {
   name: "Ole Kannapinn UG (haftungsbeschränkt)",
@@ -106,7 +108,7 @@ export const AGB: LegalSection[] = [
       // Prüfen: aktive Verkäufer statt Logins (Ole, 14.11.2026)
       { sub: "Zugänge", text: "Enthalten ist die im Angebot genannte Zahl aktiver Verkäufer. Aktiv ist ein Zugang, der Leads zugeteilt bekommt; Zugänge ohne Leads sind kostenlos. Jeder weitere aktive Verkäufer kostet den im Angebot genannten Preis je Monat, tagesgenau anteilig." },
       // Prüfen: Zusatzmodule, Kündigung bei jährlicher Vorauszahlung zum Ende des bezahlten Jahres (12.11.2026)
-      { sub: "Zusatzmodule", text: "Zusatzmodule gelten nur, wenn sie im Angebot vereinbart oder im Kundenbereich bzw. in Textform gebucht sind. Sie werden tagesgenau anteilig berechnet und sind zum Ende des laufenden Abrechnungszeitraums kündbar, bei jährlicher Vorauszahlung zum Ende des bezahlten Abrechnungsjahres; eine anteilige Erstattung erfolgt nicht." },
+      { sub: "Zusatzmodule", text: "Zusatzmodule gelten nur, wenn sie im Angebot vereinbart oder im Kundenbereich bzw. in Textform gebucht sind. Sie werden tagesgenau anteilig berechnet und sind zum Ende des laufenden Abrechnungszeitraums kündbar, bei Vorauszahlung (jährlich bzw. für 6 Monate) zum Ende des bezahlten Zeitraums; eine anteilige Erstattung erfolgt nicht." },
     ],
   },
   {
@@ -124,14 +126,15 @@ export const AGB: LegalSection[] = [
     items: [
       "Die Setupgebühr wird mit Vertragsschluss fällig, die monatliche Vergütung ab dem Startdatum monatlich im Voraus. Alle Preise sind netto zuzüglich Umsatzsteuer.",
       "Die monatliche Vergütung richtet sich nach dem vereinbarten Werbebudget und der im Angebot vollständig genannten Preisstaffel. Ändert der Kunde das Budget dauerhaft, gilt die neue Stufe ab dem folgenden Abrechnungsmonat; der Kundenbereich zeigt die neue Vergütung vor der Änderung an.",
-      { sub: "Jährliche Vorauszahlung", text: "Ist sie vereinbart, ist die Vergütung für 12 Monate zum Start fällig (Nachlass laut Angebot). Im Zahlungsjahr hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },
+      // Prüfen: Vorauszahlung für 6 Monate (Laufzeit 6 Monate, 18.11.2026)
+      { sub: "Vorauszahlung", text: "Ist sie vereinbart, ist die Vergütung für 12 Monate (jährlich, mit 12 Monaten Laufzeit) bzw. für 6 Monate (mit 6 Monaten Laufzeit) zum Start und danach zu Beginn jedes Zahlungszeitraums fällig (Nachlass laut Angebot). Im Zahlungszeitraum hinzukommende Verkäufer oder Module werden anteilig berechnet. Eine Erstattung bei vorzeitiger Beendigung erfolgt nicht, außer bei Kündigung des Kunden aus wichtigem Grund." },
       "Die Meta-Gebühren für WhatsApp-Nachrichten an Leads sind in der Vergütung enthalten. Rechnungen sind innerhalb von 7 Tagen zu zahlen. Bei mehr als 30 Tagen Zahlungsverzug darf der Anbieter die Kampagnen nach Ankündigung pausieren, bis die Zahlung eingeht.",
     ],
   },
   {
     title: "Pause und Urlaub",
     items: [
-      "Der Kunde kann die Kampagnen jederzeit pausieren. Während der Pause fällt statt der monatlichen Vergütung nur die im Angebot genannte Software-Gebühr an, tagesgenau anteilig; ohne Software fällt nichts an. Bei jährlicher Vorauszahlung gibt es dafür keine Gutschrift. Eine Pause verlängert eine Mindestlaufzeit nicht.",
+      "Der Kunde kann die Kampagnen jederzeit pausieren. Während der Pause fällt statt der monatlichen Vergütung nur die im Angebot genannte Software-Gebühr an, tagesgenau anteilig; ohne Software fällt nichts an. Bei Vorauszahlung gibt es dafür keine Gutschrift. Eine Pause verlängert eine Mindestlaufzeit nicht.",
     ],
   },
   {
@@ -155,8 +158,9 @@ export const AGB: LegalSection[] = [
     // Prüfen: eindeutiger Kündigungstermin und Kündigung im Kundenbereich (Anwalts-Memo, Ole 15.11.2026)
     title: "Laufzeit und Kündigung",
     items: [
-      "Ohne Vertragslaufzeit ist der Vertrag von beiden Seiten zum Ende jedes Abrechnungsmonats kündbar. Mit 3 bzw. 12 Monaten Laufzeit gilt diese Mindestlaufzeit ab Start; danach läuft er unbefristet und ist zum Ende jedes Abrechnungsmonats kündbar.",
-      "Bei jährlicher Vorauszahlung läuft der Vertrag 12 Monate ab Start und verlängert sich um jeweils 12 Monate, wenn er nicht spätestens einen Monat vor Ende des Zahlungsjahres gekündigt wird. Der Kunde kann vorher auf monatliche Zahlung umstellen; dann gilt die Regel für 12 Monate Laufzeit.",
+      "Ohne Vertragslaufzeit ist der Vertrag von beiden Seiten zum Ende jedes Abrechnungsmonats kündbar. Mit 3, 6 bzw. 12 Monaten Laufzeit gilt diese Mindestlaufzeit ab Start; danach läuft er unbefristet und ist zum Ende jedes Abrechnungsmonats kündbar.",
+      // Prüfen: Verlängerung bei Vorauszahlung für 6 Monate wie bei jährlicher Vorauszahlung (18.11.2026)
+      "Bei Vorauszahlung läuft der Vertrag einen Zahlungszeitraum (12 Monate bei jährlicher Vorauszahlung, 6 Monate bei Vorauszahlung für 6 Monate) ab Start und verlängert sich um jeweils einen weiteren Zahlungszeitraum, wenn er nicht spätestens einen Monat vor dessen Ende gekündigt wird. Der Kunde kann vorher auf monatliche Zahlung umstellen; dann gilt die Regel für seine Laufzeit.",
       { sub: "Fristen", text: "Start ist das im Angebot genannte oder bei der Annahme gewählte Datum. Ein Abrechnungsmonat läuft vom Starttag bis zum Tag vor demselben Kalendertag des Folgemonats (fehlt der Tag, bis zum Monatsletzten); Beispiel: Start am 15.03., Abrechnungsmonate 15.03. bis 14.04. usw., 3 Monate Mindestlaufzeit bis 14.06. Eine Kündigung während der Mindestlaufzeit wirkt zu deren Ende, danach zum Ende des Abrechnungsmonats, in dem sie zugeht." },
       "Die Kündigung erfolgt in Textform oder im Kundenbereich unter „Konto & Rechnungen“ („Vertrag hier kündigen“), wo der Kunde den Endtermin vorher sieht. Der Anbieter bestätigt Eingang und Vertragsende per E-Mail. Das Recht zur außerordentlichen Kündigung bleibt unberührt. Die Setupgebühr wird nicht erstattet.",
     ],

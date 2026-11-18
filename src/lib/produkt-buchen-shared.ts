@@ -3,7 +3,7 @@
 // Preise kommen aus PRICE_LIST (Einrichtung je weiterem Produkt, Monatspreis je weiterem
 // Produkt, Betreuungsstufen), die Stufenlogik aus „Budget ändern“ (budget-shared.ts).
 
-import { PRICE_LIST } from "@/lib/offer-pricing";
+import { isPrepaid, PRICE_LIST } from "@/lib/offer-pricing";
 import { monthlyOf, previewChange, tierSentence, type BudgetContext, type BudgetLine, type BudgetPreview } from "@/lib/budget-shared";
 
 export type CatalogItem = {
@@ -164,7 +164,7 @@ export function previewBooking(current: BudgetLine[], add: BudgetLine, ctx: Budg
     ctx.plan === "service"
       ? "service_plan"
       : base.pricing === "individual"
-        ? ctx.billingInterval === "year"
+        ? isPrepaid(ctx.billingInterval)
           ? "annual"
           : ctx.feeMonthly == null
             ? "no_offer_price"

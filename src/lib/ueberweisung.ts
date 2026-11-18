@@ -104,7 +104,7 @@ export async function richteUeberweisungEin(offerId: string, now = new Date()): 
   await logOfferActivity(
     offer,
     `Zahlung per Überweisung gewählt (${offer.number})`,
-    `${invoice ? `Setup-Rechnung verschickt, zahlbar in ${days} Tagen` : "Kein Setup zu zahlen"} · ${offer.annualPrepay ? "Jahresbeitrag" : "Monatsgebühr"} per Rechnung${shiftedTo ? ` · Start verschoben auf ${shiftedTo.split("-").reverse().join(".")}` : ""}`,
+    `${invoice ? `Setup-Rechnung verschickt, zahlbar in ${days} Tagen` : "Kein Setup zu zahlen"} · ${offer.annualPrepay ? (offer.term === "6m" ? "Beitrag für 6 Monate" : "Jahresbeitrag") : "Monatsgebühr"} per Rechnung${shiftedTo ? ` · Start verschoben auf ${shiftedTo.split("-").reverse().join(".")}` : ""}`,
   );
   await sendToAdmins({
     title: `🏦 Überweisung gewählt: ${offer.company ?? offer.contactName}`,

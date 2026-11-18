@@ -7,7 +7,7 @@
 // Monatsletzten. Abrechnungsmonate zählen immer vom Starttag (kein Verschieben durch kurze Monate).
 // AGB „Laufzeit und Kündigung“ nennt dieselben Regeln mit Beispiel.
 
-import { eur, type OfferTerm } from "@/lib/offer-pricing";
+import { eur, prepayMonthsFor, prepayPossible, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -63,16 +63,20 @@ export type CancelDate = {
   deadlineIso: string | null;
   /** Jahreszahlung: Frist für das laufende Jahr verpasst, Ende erst nach dem folgenden Jahr */
   missedDeadline: boolean;
+  /** Vorauszahlung: Monate je Zahlungszeitraum (6 oder 12); fehlt = 12 */
+  prepayMonths?: number;
 };
 
 /**
  * Nächstmöglicher Kündigungstermin, wenn die Kündigung heute eingeht (AGB „Laufzeit und Kündigung“).
  * - ohne Laufzeit: Ende des laufenden Abrechnungsmonats
- * - 3/12 Monate: Ende der Mindestlaufzeit, danach Ende des laufenden Abrechnungsmonats
- * - jährliche Vorauszahlung: Ende des Zahlungsjahres, Kündigung mindestens 1 Monat vorher, sonst ein Jahr später
+ * - 3/6/12 Monate: Ende der Mindestlaufzeit, danach Ende des laufenden Abrechnungsmonats
+ * - Vorauszahlung (jährlich bzw. 6 Monate): Ende des Zahlungszeitraums, Kündigung mindestens 1 Monat vorher, sonst
+ *   einen Zeitraum später (Verlängerung um jeweils 12 bzw. 6 Monate)
  * Ohne bekannten Start (Altverträge): Ende des laufenden Kalendermonats.
+ * prepayMonths: Monate je Zahlungszeitraum (Standard aus der Laufzeit: 6m → 6, sonst 12).
  */
-export function cancelDate(o: { startIso: string | null; term: OfferTerm; annual: boolean; todayIso: string }): CancelDate {
+export function cancelDate(o: { startIso: string | null; term: OfferTerm; annual: boolean; todayIso: string; prepayMonths?: number }): CancelDate {
   const today = o.todayIso;
   if (!o.startIso) {
     const [y, m] = parts(today);
@@ -80,17 +84,18 @@ export function cancelDate(o: { startIso: string | null; term: OfferTerm; annual
   }
   const start = o.startIso;
   if (o.annual) {
+    const pm = o.prepayMonths ?? prepayMonthsFor(o.term);
     let first: string | null = null;
-    for (let year = 1; year < 100; year++) {
-      const end = periodEndIso(start, 12 * year);
+    for (let k = 1; k < 200; k++) {
+      const end = periodEndIso(start, pm * k);
       first ??= end;
-      const deadline = periodEndIso(start, 12 * year - 1);
+      const deadline = periodEndIso(start, pm * k - 1);
       if (today <= deadline) {
-        return { effectiveIso: end, reason: "zahlungsjahr", minTermEndIso: first, deadlineIso: deadline, missedDeadline: year > 1 && today <= periodEndIso(start, 12 * (year - 1)) };
+        return { effectiveIso: end, reason: "zahlungsjahr", minTermEndIso: first, deadlineIso: deadline, missedDeadline: k > 1 && today <= periodEndIso(start, pm * (k - 1)), prepayMonths: pm };
       }
     }
   }
-  const minMonths = o.term === "12m" || o.annual ? 12 : o.term === "3m" ? 3 : 0;
+  const minMonths = o.annual ? 12 : (TERM_MONTHS[o.term] ?? 0);
   const minEnd = minMonths ? periodEndIso(start, minMonths) : null;
   if (minEnd && today <= minEnd) return { effectiveIso: minEnd, reason: "mindestlaufzeit", minTermEndIso: minEnd, deadlineIso: null, missedDeadline: false };
   for (let k = 1; k < 1200; k++) {
@@ -107,6 +112,12 @@ export function cancelDateText(c: CancelDate, startIso: string | null): string {
     case "mindestlaufzeit":
       return `Ihr Vertrag endet am ${end}, zum Ende der Mindestlaufzeit${startIso ? ` (Start ${fmtIso(startIso)})` : ""}.`;
     case "zahlungsjahr":
+      // 6 Monate im Voraus: „Zahlungszeitraum“ statt „Zahlungsjahr“
+      if (c.prepayMonths === 6) {
+        return c.missedDeadline
+          ? `Ihr Vertrag endet am ${end}. Für den laufenden Zahlungszeitraum von 6 Monaten ist die Kündigungsfrist von einem Monat schon abgelaufen, deshalb endet er mit dem folgenden Zahlungszeitraum.`
+          : `Ihr Vertrag endet am ${end}, zum Ende des Zahlungszeitraums von 6 Monaten (Kündigung bis ${fmtIso(c.deadlineIso!)} möglich).`;
+      }
       return c.missedDeadline
         ? `Ihr Vertrag endet am ${end}. Für das laufende Zahlungsjahr ist die Kündigungsfrist von einem Monat schon abgelaufen, deshalb endet er mit dem folgenden Zahlungsjahr.`
         : `Ihr Vertrag endet am ${end}, zum Ende des Zahlungsjahres (Kündigung bis ${fmtIso(c.deadlineIso!)} möglich).`;
@@ -129,7 +140,7 @@ export type ContractSummaryInput = {
   monthlyTotal: number;
   /** Startpreis: Monate und Monatsbetrag gesamt inkl. Zusätze (netto); null = kein Startpreis */
   intro: { months: number; monthly: number } | null;
-  /** Jährlich im Voraus (nur mit 12 Monaten) */
+  /** Im Voraus (nur mit 6 oder 12 Monaten: 6 Monate bzw. jährlich) */
   annual: boolean;
   freeMonths: number;
   /** Abrechnungstag (lib/abrechnungstag.ts): null/fehlt = wie Start; freeStart = Zeit davor kostenlos */
@@ -164,15 +175,17 @@ export function priceStepAckText(i: ContractSummaryInput): string {
 /** Zeilen „Das vereinbaren Sie“ (netto zzgl. USt.), Sie-Form, ohne Gedankenstriche. */
 export function contractSummaryLines(i: ContractSummaryInput): string[] {
   const lines: string[] = [];
-  const annual = i.annual && i.term === "12m";
+  const annual = i.annual && prepayPossible(i.term);
+  // Vorauszahlung: 6 Monate (6m) bzw. 12 Monate (12m) je Zeitraum
+  const pm = prepayMonthsFor(i.term);
+  const prepayTotal = Math.round(i.monthlyTotal * (pm - i.freeMonths) * 100) / 100;
   // Eigener Abrechnungstag: Beträge und Fristen zählen ab dem ersten Abrechnungstag (lib/abrechnungstag.ts)
-  const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, annual });
+  const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, annual, prepayMonths: pm });
   const billIso = plan?.firstIso ?? i.startIso;
   const start = billIso ? fmtIso(billIso) : null;
   if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
   if (annual) {
-    const total = Math.round(i.monthlyTotal * (12 - i.freeMonths) * 100) / 100;
-    lines.push(`Jährlich im Voraus: ${eur(total)} netto${start ? ` ab ${start}` : " ab Start"}.`);
+    lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto${start ? ` ab ${start}` : " ab Start"}.`);
   } else if (hasPriceStep(i)) {
     const d = priceStepDates(billIso, i.intro!.months);
     lines.push(
@@ -185,21 +198,22 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     lines.push(`Monatlich: ${eur(i.monthlyTotal)} netto${start ? ` ab ${start}` : " ab Start"}, im Voraus.`);
   }
   if (plan?.differs) {
-    const firstNet = annual ? Math.round(i.monthlyTotal * (12 - i.freeMonths) * 100) / 100 : hasPriceStep(i) ? i.intro!.monthly : i.monthlyTotal;
-    lines.push(abrechnungstagSaetze(plan, { firstNet, annual }).join(" "));
+    const firstNet = annual ? prepayTotal : hasPriceStep(i) ? i.intro!.monthly : i.monthlyTotal;
+    lines.push(abrechnungstagSaetze(plan, { firstNet, annual, prepayMonths: pm }).join(" "));
   }
   if (annual) {
-    const end = billIso ? periodEndIso(billIso, 12) : null;
-    const deadline = billIso ? periodEndIso(billIso, 11) : null;
+    // Verlängerung um jeweils einen Zahlungszeitraum (6 bzw. 12 Monate), Kündigung einen Monat vor Ende
+    const end = billIso ? periodEndIso(billIso, pm) : null;
+    const deadline = billIso ? periodEndIso(billIso, pm - 1) : null;
     lines.push(
       end && deadline
-        ? `Laufzeit bis ${fmtIso(end)}. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis ${fmtIso(deadline)} kündigen.`
-        : "Laufzeit 12 Monate ab Start. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht einen Monat vor Ende kündigen.",
+        ? `Laufzeit bis ${fmtIso(end)}. Sie verlängert sich um jeweils ${pm} Monate, wenn Sie nicht bis ${fmtIso(deadline)} kündigen.`
+        : `Laufzeit ${pm} Monate ab Start. Sie verlängert sich um jeweils ${pm} Monate, wenn Sie nicht einen Monat vor Ende kündigen.`,
     );
   } else if (i.term === "none") {
     lines.push("Ohne Mindestlaufzeit, kündbar zum Ende des jeweiligen Abrechnungsmonats.");
   } else {
-    const months = i.term === "12m" ? 12 : 3;
+    const months = TERM_MONTHS[i.term];
     const end = billIso ? periodEndIso(billIso, months) : null;
     lines.push(`Mindestlaufzeit ${months} Monate${end ? ` bis ${fmtIso(end)}` : " ab Start"}, danach kündbar zum Ende des jeweiligen Abrechnungsmonats.`);
   }

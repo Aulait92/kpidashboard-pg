@@ -12,7 +12,7 @@ import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import { getAppUrl, sendCustomerMail } from "@/lib/email";
 import { customerGreeting } from "@/lib/offer-links";
-import { berlinTodayIso, normalizeTerm, type OfferTerm } from "@/lib/offer-pricing";
+import { berlinTodayIso, isPrepaid, normalizeRhythmus, normalizeTerm, RHYTHMUS_MONATE, type OfferTerm } from "@/lib/offer-pricing";
 import { berlinEndOfDay, cancelDate, cancelDateText, fmtIso, type CancelDate } from "@/lib/vertrag-laufzeit";
 import { billingEnabled, endSubscriptionsAt } from "@/lib/billing";
 import { normalizeRetention, retentionText, type RetentionChoice } from "@/lib/ruhend-shared";
@@ -73,9 +73,10 @@ export async function contractCancelInfo(customerId: string, now = new Date()): 
   // Eigener Abrechnungstag (lib/abrechnungstag.ts): Mindestlaufzeit und Abrechnungsmonate zählen ab dem ersten Abrechnungstag
   const billingIso = c.billingDay != null && c.billingStart ? berlinIso(c.billingStart) : startIso;
   const term = normalizeTerm(offer?.term);
-  const annual = c.billingInterval === "year";
+  // Vorauszahlung (jährlich oder 6 Monate): Ende des Zahlungszeitraums, Verlängerung um jeweils diesen Zeitraum
+  const annual = isPrepaid(c.billingInterval);
   const todayIso = berlinIso(now);
-  const regular = cancelDate({ startIso: billingIso, term, annual, todayIso });
+  const regular = cancelDate({ startIso: billingIso, term, annual, todayIso, prepayMonths: RHYTHMUS_MONATE[normalizeRhythmus(c.billingInterval)] });
   // Halteangebot: nach angenommenem Nachlass frühestens zum Ende der vereinbarten Mindestlaufzeit
   const commitIso = c.retentionCommitUntil ? berlinIso(new Date(c.retentionCommitUntil.getTime() - 1)) : null;
   const next: CancelDate = commitIso && commitIso > regular.effectiveIso ? { ...regular, effectiveIso: commitIso, reason: "halteangebot" } : regular;

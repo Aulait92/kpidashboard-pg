@@ -18,7 +18,19 @@ import { prisma } from "@/lib/prisma";
 import { getAppUrl } from "@/lib/email";
 import { reportError } from "@/lib/monitoring";
 import { offerProducts } from "@/components/offer-document";
-import { abschlussBonusJetzt, annualMultiplier, berlinTodayIso, offerSetupDiscount, PRICE_LIST } from "@/lib/offer-pricing";
+import {
+  abschlussBonusJetzt,
+  berlinTodayIso,
+  isPrepaid,
+  offerSetupDiscount,
+  PRICE_LIST,
+  RHYTHMUS_MONATE,
+  rhythmusAusStripe,
+  rhythmusFaktor,
+  rhythmusFuer,
+  stripeRecurring,
+  type Zahlrhythmus,
+} from "@/lib/offer-pricing";
 import { abrechnungsplan, anteilVerteilen } from "@/lib/abrechnungstag";
 
 const round2Billing = (n: number) => Math.round(n * 100) / 100;
@@ -420,13 +432,14 @@ export async function createScheduleForOffer(
   const monthly = Number(offer.monthlyFee);
   const softwareFee = Math.min(Number(offer.softwareFee), monthly);
   const taxRates = tax.automatic ? undefined : [tax.rateId!];
-  // Jährlich im Voraus: alle Positionen mit Intervall Jahr, Betrag × (12 − Freimonate)
+  // Vorauszahlung (lib/offer-pricing.ts VORAUSZAHLUNG): jährlich = Intervall Jahr, Betrag × (12 − Freimonate);
+  // 6 Monate (Laufzeit 6m) = Intervall Monat × 6, Betrag × (6 − Freimonate). Sonst monatlich.
   const annual = offer.annualPrepay;
-  const factor = annual ? annualMultiplier(offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths) : 1;
-  const interval = annual ? ("year" as const) : ("month" as const);
+  const rhythmus = rhythmusFuer(offer.term, annual);
+  const factor = rhythmusFaktor(rhythmus, offer.annualFreeMonths);
   const item = (product: string, amount: number, quantity = 1): Stripe.SubscriptionScheduleCreateParams.Phase.Item => ({
     quantity,
-    price_data: { currency: "eur", product, unit_amount: cents(amount * factor), recurring: { interval }, tax_behavior: "exclusive" },
+    price_data: { currency: "eur", product, unit_amount: cents(amount * factor), recurring: stripeRecurring(rhythmus), tax_behavior: "exclusive" },
     ...(taxRates ? { tax_rates: taxRates } : {}),
   });
   const extraSeats = offer.seats != null && offer.seatsIncluded != null ? Math.max(0, offer.seats - offer.seatsIncluded) : 0;
@@ -464,6 +477,7 @@ export async function createScheduleForOffer(
     billingDay: offer.billingDay,
     freeStart: offer.billingFreeStart,
     annual,
+    prepayMonths: RHYTHMUS_MONATE[rhythmus],
   });
   const noon = (iso: string) => Math.floor(new Date(`${iso}T12:00:00Z`).getTime() / 1000);
   if (plan?.differs && !plan.free) {
@@ -495,10 +509,10 @@ export async function createScheduleForOffer(
       start_date: startAt > Date.now() / 1000 + 60 ? startAt : "now",
       end_behavior: "release",
       billing_mode: { type: "flexible" },
-      // pg_interval: Zahlweise laut Angebot (bei „Jahreszahlung anbieten“ die Wahl des Kunden)
+      // pg_interval: Zahlweise laut Angebot (bei „Vorauszahlung anbieten“ die Wahl des Kunden): year bzw. halfyear
       metadata: {
         ...meta,
-        ...(annual ? { pg_interval: "year" } : {}),
+        ...(rhythmus !== "month" ? { pg_interval: rhythmus } : {}),
         ...(plan?.differs ? { pg_billing_day: String(plan.day), pg_first_billing: plan.firstIso, pg_free_start: plan.free ? "1" : "0" } : {}),
       },
       default_settings: {
@@ -773,9 +787,9 @@ export async function pauseBilling(stripeCustomerId: string): Promise<BillingPau
   if (!stripe) return { method: "none", reason: "Stripe nicht eingerichtet" };
   const sub = await activeSubscription(stripe, stripeCustomerId);
   if (!sub) return { method: "none", reason: "Kein laufendes Abo (startet ggf. erst noch)" };
-  // Jährliche Vorauszahlung: Pause ohne Gutschrift (AGB), Abo bleibt unverändert.
-  if (sub.items.data.some((i) => i.price.recurring?.interval === "year")) {
-    return { method: "none", reason: "Jährliche Vorauszahlung: Pause ohne Gutschrift" };
+  // Vorauszahlung (jährlich oder 6 Monate): Pause ohne Gutschrift (AGB), Abo bleibt unverändert.
+  if (isPrepaid(intervalOf(sub))) {
+    return { method: "none", reason: "Vorauszahlung: Pause ohne Gutschrift" };
   }
   await detachSchedule(stripe, sub);
   const service = await productId(stripe, "service");
@@ -824,8 +838,8 @@ export async function pauseBillingFully(stripeCustomerId: string): Promise<Billi
   if (!stripe) return { method: "none", reason: "Stripe nicht eingerichtet" };
   const sub = await activeSubscription(stripe, stripeCustomerId);
   if (!sub) return { method: "none", reason: "Kein laufendes Abo (startet ggf. erst noch)" };
-  if (sub.items.data.some((i) => i.price.recurring?.interval === "year")) {
-    return { method: "none", reason: "Jährliche Vorauszahlung: Pause ohne Gutschrift" };
+  if (isPrepaid(intervalOf(sub))) {
+    return { method: "none", reason: "Vorauszahlung: Pause ohne Gutschrift" };
   }
   await stripe.subscriptions.update(sub.id, { pause_collection: { behavior: "void" } });
   return { method: "pause_collection", subscriptionId: sub.id };
@@ -849,7 +863,7 @@ export async function applyRetentionCoupon(
   const ed = await editableSubscription(stripe, stripeCustomerId);
   if ("note" in ed) return { ok: false, note: ed.note };
   const sub = ed.sub;
-  if (intervalOf(sub) === "year") return { ok: false, note: "Jährliche Vorauszahlung: Nachlass bitte von Hand verrechnen." };
+  if (isPrepaid(intervalOf(sub))) return { ok: false, note: "Vorauszahlung: Nachlass bitte von Hand verrechnen." };
   const service = opts.serviceOnly ? await productId(stripe, "service") : null;
   if (service && !sub.items.data.some((i) => productOf(i) === service && (i.quantity ?? 1) > 0)) {
     return { ok: false, note: "Keine Betreuungs-Position im Abo." };
@@ -1125,8 +1139,11 @@ export async function chargeNow(opts: {
 export type AddOnResult = { ok: true; changed: boolean; note?: string; scheduledFrom?: Date } | { ok: false; error: string };
 
 const productOf = (i: Stripe.SubscriptionItem) => (typeof i.price.product === "string" ? i.price.product : i.price.product.id);
-const intervalOf = (sub: Stripe.Subscription): "month" | "year" =>
-  sub.items.data.some((i) => i.price.recurring?.interval === "year") ? "year" : "month";
+/** Zahlrhythmus des Abos: jährlich (Intervall Jahr), halbjährlich (Monat × 6) oder monatlich. */
+const intervalOf = (sub: Stripe.Subscription): Zahlrhythmus => {
+  const r = sub.items.data.map((i) => rhythmusAusStripe(i.price.recurring));
+  return r.includes("year") ? "year" : r.includes("halfyear") ? "halfyear" : "month";
+};
 
 /** Laufendes Abo für Änderungen vorbereiten (Zeitplan lösen); null = noch nicht möglich. */
 async function editableSubscription(stripe: Stripe, stripeCustomerId: string): Promise<{ sub: Stripe.Subscription } | { note: string }> {
@@ -1190,8 +1207,8 @@ async function setScheduleItem(
     const p = priceObj(i);
     return p ? (typeof p.product === "string" ? p.product : p.product.id) : null;
   };
-  const interval = priceObj(schedule.phases[0]?.items[0] as Stripe.SubscriptionSchedule.Phase.Item)?.recurring?.interval === "year" ? "year" : "month";
-  const factor = interval === "year" ? annualMultiplier() : 1;
+  const interval = rhythmusAusStripe(priceObj(schedule.phases[0]?.items[0] as Stripe.SubscriptionSchedule.Phase.Item)?.recurring);
+  const factor = rhythmusFaktor(interval);
   const phases: Stripe.SubscriptionScheduleUpdateParams.Phase[] = schedule.phases.map((ph) => {
     const items: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = ph.items
       .filter((i) => productOfItem(i) !== product)
@@ -1203,7 +1220,7 @@ async function setScheduleItem(
     if (quantity > 0) {
       items.push({
         quantity,
-        price_data: { currency: "eur", product, unit_amount: cents(monthlyUnit * factor), recurring: { interval }, tax_behavior: "exclusive" },
+        price_data: { currency: "eur", product, unit_amount: cents(monthlyUnit * factor), recurring: stripeRecurring(interval), tax_behavior: "exclusive" },
         ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
       });
     }
@@ -1230,7 +1247,7 @@ async function setItemQuantity(
   const [product, tax] = await Promise.all([productId(stripe, key), resolveTax(stripe)]);
   const item = sub.items.data.find((i) => productOf(i) === product);
   const interval = intervalOf(sub);
-  const factor = interval === "year" ? annualMultiplier() : 1;
+  const factor = rhythmusFaktor(interval);
   if (item) {
     const unit = cents(monthlyUnit * factor);
     if (quantity === 0 && key !== "seat") {
@@ -1240,7 +1257,7 @@ async function setItemQuantity(
       await stripe.subscriptionItems.update(item.id, {
         quantity,
         proration_behavior: "create_prorations",
-        price_data: { currency: "eur", product, unit_amount: unit, recurring: { interval }, tax_behavior: "exclusive" },
+        price_data: { currency: "eur", product, unit_amount: unit, recurring: stripeRecurring(interval), tax_behavior: "exclusive" },
       });
     } else if ((item.quantity ?? 0) !== quantity) {
       await stripe.subscriptionItems.update(item.id, { quantity, proration_behavior: "create_prorations" });
@@ -1252,7 +1269,7 @@ async function setItemQuantity(
     subscription: sub.id,
     quantity,
     proration_behavior: proration,
-    price_data: { currency: "eur", product, unit_amount: cents(monthlyUnit * factor), recurring: { interval }, tax_behavior: "exclusive" },
+    price_data: { currency: "eur", product, unit_amount: cents(monthlyUnit * factor), recurring: stripeRecurring(interval), tax_behavior: "exclusive" },
     ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
   });
 }
@@ -1610,8 +1627,8 @@ export async function expireBestandCancellations(now = new Date()): Promise<numb
   return due.length;
 }
 
-/** Zahlweise umstellen (monatlich ↔ jährlich im Voraus). Alle Positionen werden neu bepreist. */
-export async function changeBillingInterval(customerId: string, interval: "month" | "year"): Promise<AddOnResult> {
+/** Zahlweise umstellen (monatlich ↔ jährlich bzw. 6 Monate im Voraus). Alle Positionen werden neu bepreist. */
+export async function changeBillingInterval(customerId: string, interval: Zahlrhythmus): Promise<AddOnResult> {
   try {
     const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { stripeCustomerId: true, billingInterval: true } });
     if (!c) return { ok: false, error: "Kunde nicht gefunden." };
@@ -1623,8 +1640,8 @@ export async function changeBillingInterval(customerId: string, interval: "month
       if ("note" in ed) return { ok: false, error: ed.note };
       const sub = ed.sub;
       const tax = await resolveTax(stripe);
-      const from = intervalOf(sub) === "year" ? annualMultiplier() : 1;
-      const to = interval === "year" ? annualMultiplier() : 1;
+      const from = rhythmusFaktor(intervalOf(sub));
+      const to = rhythmusFaktor(interval);
       await stripe.subscriptions.update(sub.id, {
         proration_behavior: "create_prorations",
         billing_cycle_anchor: { type: "now" },
@@ -1636,7 +1653,7 @@ export async function changeBillingInterval(customerId: string, interval: "month
               currency: "eur",
               product: productOf(i),
               unit_amount: Math.round(((i.price.unit_amount ?? 0) / from) * to),
-              recurring: { interval },
+              recurring: stripeRecurring(interval),
               tax_behavior: "exclusive" as const,
             },
             ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
@@ -1677,7 +1694,7 @@ export async function changeMonthlyFee(
     const sub = ed.sub;
     const [software, service, tax] = await Promise.all([productId(stripe, "software"), productId(stripe, "service"), resolveTax(stripe)]);
     const interval = intervalOf(sub);
-    const factor = interval === "year" ? annualMultiplier() : 1;
+    const factor = rhythmusFaktor(interval);
     const swItem = sub.items.data.find((i) => productOf(i) === software);
     const svItem = sub.items.data.find((i) => productOf(i) === service);
     const swMonthly = swItem ? (swItem.price.unit_amount ?? 0) / 100 / factor : 0;
@@ -1690,7 +1707,7 @@ export async function changeMonthlyFee(
     } else if (svItem) {
       await stripe.subscriptionItems.update(
         svItem.id,
-        { proration_behavior: "none", price_data: { currency: "eur", product: service, unit_amount: unit, recurring: { interval }, tax_behavior: "exclusive" } },
+        { proration_behavior: "none", price_data: { currency: "eur", product: service, unit_amount: unit, recurring: stripeRecurring(interval), tax_behavior: "exclusive" } },
         key,
       );
     } else if (unit > 0) {
@@ -1699,7 +1716,7 @@ export async function changeMonthlyFee(
           subscription: sub.id,
           quantity: 1,
           proration_behavior: "none",
-          price_data: { currency: "eur", product: service, unit_amount: unit, recurring: { interval }, tax_behavior: "exclusive" },
+          price_data: { currency: "eur", product: service, unit_amount: unit, recurring: stripeRecurring(interval), tax_behavior: "exclusive" },
           ...(tax.automatic ? {} : { tax_rates: [tax.rateId!] }),
         },
         key,

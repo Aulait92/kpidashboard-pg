@@ -16,13 +16,15 @@ import {
   normalizeTerm,
   offerAddOns,
   PRICE_LIST,
+  prepayFreeMonthsFor,
+  prepayPossible,
   resolveOfferChoice,
+  TERM_SHORT,
+  termOptionsFor,
   type OfferPackage,
   type OfferProduct,
   type OfferTerm,
 } from "@/lib/offer-pricing";
-
-const TERM_SHORT: Record<OfferTerm, string> = { "12m": "12 Monate", "3m": "3 Monate", none: "ohne Laufzeit" };
 import { customerGreeting, logOfferActivity, offerAdminHref, setContactCustomerStage, type OfferTarget } from "@/lib/offer-links";
 import { billingEnabled } from "@/lib/billing";
 import { startOnboarding } from "@/lib/onboarding";
@@ -196,8 +198,8 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
         : "Ab 10.000 € Werbebudget gibt es keinen Listenpreis, bitte die Monatsgebühr individuell eintragen.",
     );
   }
-  if (input.annual && term !== "12m") throw new Error("Jährliche Vorauszahlung geht nur mit 12 Monaten Laufzeit.");
-  if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und jährliche Vorauszahlung lassen sich nicht kombinieren.");
+  if (input.annual && !prepayPossible(term)) throw new Error("Vorauszahlung geht nur mit 6 oder 12 Monaten Laufzeit.");
+  if (input.annual && input.introMonthlyFee != null) throw new Error("Startpreis und Vorauszahlung lassen sich nicht kombinieren.");
 
   const choosesStart = input.customerChoice !== false;
   // Mit Sonderpreis passt ein anderes Setup nicht zur Vereinbarung → Laufzeit fest.
@@ -253,10 +255,10 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             // Modul gebucht: Monatspreis; null = nicht gebucht
             bestandMonthly: price.bestandActive ? price.bestandFee : null,
             empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
-            // Jahreszahlung angeboten: Kunde wählt bei der Annahme, monatlich vorausgewählt
+            // Vorauszahlung angeboten (6 oder 12 Monate): Kunde wählt bei der Annahme, monatlich vorausgewählt
             annualPrepay: false,
             annualChoice: price.annual,
-            annualFreeMonths: price.annual ? PRICE_LIST.annualFreeMonths : null,
+            annualFreeMonths: price.annual ? prepayFreeMonthsFor(term) : null,
             introMonthlyFee: input.introMonthlyFee ?? null,
             introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
             specialTerms: test ? "Testangebot: kostenlos, ohne Zahlung. Dient nur zum Ausprobieren und wird danach gelöscht." : input.specialTerms?.trim() || null,
@@ -355,6 +357,8 @@ export async function acceptOffer(
       annualChoice: offer.annualChoice,
       choosesTerm: offer.customerChoosesTerm,
       choosesStart: offer.customerChoosesStart,
+      // 6 Monate zur Wahl erst für Angebote ab dem Livegang (ältere bleiben wie verschickt)
+      termOptions: termOptionsFor(offer.createdAt),
       setupDiscount: offer.setupDiscount == null ? null : Number(offer.setupDiscount),
       setupListFee: offer.setupListFee == null ? null : Number(offer.setupListFee),
     },
@@ -394,7 +398,7 @@ export async function acceptOffer(
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
   // Ab hier mit den angenommenen Werten weiterarbeiten.
   const accepted = { ...offer, term: choice.term, startDate, annualPrepay: choice.annualPrepay, annualFreeMonths: choice.annualFreeMonths };
-  const chosenText = `${TERM_SHORT[choice.term]}${offer.annualChoice && choice.term === "12m" ? (choice.annualPrepay ? ", jährlich im Voraus" : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
+  const chosenText = `${TERM_SHORT[choice.term]}${offer.annualChoice && prepayPossible(choice.term) ? (choice.annualPrepay ? (choice.term === "6m" ? ", 6 Monate im Voraus" : ", jährlich im Voraus") : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
   await audit("offer.accept", {
     entity: "Offer",
     entityId: offer.id,
@@ -479,7 +483,7 @@ export function offerSummaryInput(
     monthlyTotal: add.monthlyTotal,
     intro,
     annual: chosen.annual ?? offer.annualPrepay,
-    freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? PRICE_LIST.annualFreeMonths,
+    freeMonths: chosen.freeMonths ?? offer.annualFreeMonths ?? prepayFreeMonthsFor(chosen.term ?? offer.term),
     billingDay: offer.billingDay ?? null,
     freeStart: !!offer.billingFreeStart,
   };
@@ -522,6 +526,8 @@ export function offerAddOnsOf(o: {
   empfehlungMonthly?: unknown;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
+  /** Laufzeit: bestimmt den Vorauszahlungszeitraum (6 oder 12 Monate). */
+  term?: string | null;
 }) {
   return {
     monthlyFee: Number(o.monthlyFee),
@@ -532,5 +538,6 @@ export function offerAddOnsOf(o: {
     empfehlungMonthly: o.empfehlungMonthly == null ? null : Number(o.empfehlungMonthly),
     annualPrepay: o.annualPrepay,
     annualFreeMonths: o.annualFreeMonths,
+    term: o.term ?? null,
   };
 }

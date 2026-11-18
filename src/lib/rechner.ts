@@ -28,7 +28,7 @@
 // wenn sie HÖHER liegen – der Erfahrungswert enthält bewusst einen Puffer
 // (TKV: real zuletzt ca. 2 €, gerechnet mit 6 €; Ole, 11.11.).
 
-import { computeOfferPrice, PRICE_LIST, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
+import { computeOfferPrice, prepayPossible, PRICE_LIST, rhythmusFuer, rhythmusMonatsAnteil, TERM_MONTHS, type OfferTerm } from "@/lib/offer-pricing";
 import { standardRate, type ProductKey, type VermittlerTyp } from "@/lib/provision";
 
 export const DAYS_PER_MONTH = PRICE_LIST.daysPerMonth;
@@ -517,7 +517,7 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     if (ab != null && w != null) staffel.push({ ab: Math.round(ab), wert: p.kind === "monthly" ? w : w / 100 });
   }
   const lz = one(q, "lz");
-  const laufzeit: OfferTerm = lz === "0" ? "none" : lz === "3" ? "3m" : "12m";
+  const laufzeit: OfferTerm = lz === "0" ? "none" : lz === "3" ? "3m" : lz === "6" ? "6m" : "12m";
   const km = Number(one(q, "km"));
   const hz = Number(one(q, "hz"));
   return {
@@ -533,7 +533,7 @@ export function inputFromParams(config: RechnerConfig, q: Params): RechnerInput 
     contractsPerCustomer: n("vk", 1, 10, d.contractsPerCustomer),
     terminRate: n("tq", 0, 100, d.terminRate, 100),
     laufzeit,
-    jaehrlich: laufzeit === "12m" && one(q, "jv") === "1",
+    jaehrlich: prepayPossible(laufzeit) && one(q, "jv") === "1",
     berater: Math.round(n("ber", 1, 99, d.berater)),
     ust: one(q, "ust") !== "0",
     storno: n("st", STORNO_MIN * 100, STORNO_MAX * 100, d.storno, 100),
@@ -573,7 +573,8 @@ export function inputToParams(config: RechnerConfig, i: RechnerInput): URLSearch
   if (diff(i.terminRate, d.terminRate)) q.set("tq", String(pct(i.terminRate)));
   if (i.laufzeit === "none") q.set("lz", "0");
   if (i.laufzeit === "3m") q.set("lz", "3");
-  if (i.jaehrlich && i.laufzeit === "12m") q.set("jv", "1");
+  if (i.laufzeit === "6m") q.set("lz", "6");
+  if (i.jaehrlich && prepayPossible(i.laufzeit)) q.set("jv", "1");
   if (i.berater !== 1) q.set("ber", String(i.berater));
   if (!i.ust) q.set("ust", "0");
   if (diff(i.storno, d.storno)) q.set("st", String(pct(i.storno)));
@@ -704,7 +705,8 @@ export function berechne(p: RechnerProduct, i: RechnerInput, cpl: number): Rechn
   const price = computeOfferPrice({ package: "software", term: i.laufzeit, products: [{ name: p.name, dailyBudget: i.budget }] });
   const individuell = price.listMonthly == null;
   const monthlyBase = price.listMonthly ?? PRICE_LIST.tiers[PRICE_LIST.tiers.length - 1].monthly;
-  const annual = i.jaehrlich && i.laufzeit === "12m" ? ANNUAL_PAID_MONTHS / 12 : 1;
+  // Vorauszahlung: jährlich 10/12, 6 Monate im Voraus 5/6 je Monat
+  const annual = rhythmusMonatsAnteil(rhythmusFuer(i.laufzeit, i.jaehrlich && prepayPossible(i.laufzeit)));
   const betreuung = monthlyBase * annual;
   const berater = Math.max(0, i.berater - SEATS_INCLUDED) * SEAT_MONTHLY * annual;
   const kosten = (werbebudget + betreuung + berater) * vat;

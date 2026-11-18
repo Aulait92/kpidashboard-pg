@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { currentPause, todayBerlin } from "@/lib/pause";
 import { budgetState } from "@/lib/budget";
 import { productOverview } from "@/lib/produkt-buchen";
+import { isPrepaid } from "@/lib/offer-pricing";
 import { PauseCard } from "./pause-card";
 import { BudgetCard } from "./budget-card";
 import { ProductsCard } from "./produkte-card";
@@ -28,8 +29,8 @@ export async function WerbungKarten({ customerId, readOnly }: { customerId: stri
   const startYmd = customer.retainerStart ? new Intl.DateTimeFormat("sv-SE", { timeZone: TZ }).format(customer.retainerStart) : today;
   const softwareFee = offer ? Number(offer.softwareFee) : customer.plan === "service" ? 0 : 349;
   const pauseText =
-    customer.billingInterval === "year"
-      ? "Bei jährlicher Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es dafür nicht."
+    isPrepaid(customer.billingInterval)
+      ? "Bei Vorauszahlung pausieren nur die Anzeigen, eine Gutschrift gibt es dafür nicht."
       : softwareFee > 0
         ? `In der Pause zahlen Sie nur ${eur(softwareFee)} netto im Monat.`
         : "In der Pause zahlen Sie nichts.";

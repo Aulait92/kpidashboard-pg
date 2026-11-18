@@ -37,6 +37,8 @@ export type DealOfferRow = {
   /** Jahreszahlung angeboten (Kunde wählt) bzw. jährlich im Voraus (nach der Annahme: Wahl des Kunden) */
   annualChoice?: boolean;
   annualPrepay?: boolean;
+  /** Laufzeit ("none" | "3m" | "6m" | "12m"): Vorauszahlung mit 6 Monaten = 6 Monate im Voraus */
+  term?: string;
   /** „Ich zahle später“ auf der Angebotsseite erlaubt */
   allowPayLater: boolean;
   /** Überweisung nur auf Anfrage (lib/ueberweisung.ts): erlaubt, Zahlungsziel, gewählte Zahlweise, Funktion freigeschaltet */
@@ -185,9 +187,9 @@ export function DealOffersCard({
               {current.annualChoice || current.annualPrepay ? (
                 <li data-angebot-zahlweise>
                   {current.status === "accepted"
-                    ? `Zahlweise: ${current.annualPrepay ? "jährlich im Voraus" : "monatlich"}${current.annualChoice ? " (vom Kunden gewählt)" : ""}`
+                    ? `Zahlweise: ${current.annualPrepay ? (current.term === "6m" ? "6 Monate im Voraus" : "jährlich im Voraus") : "monatlich"}${current.annualChoice ? " (vom Kunden gewählt)" : ""}`
                     : current.annualChoice
-                      ? "Jahreszahlung angeboten, Kunde wählt bei der Annahme (monatlich vorausgewählt)"
+                      ? "Vorauszahlung angeboten, Kunde wählt bei der Annahme (monatlich vorausgewählt)"
                       : "Zahlweise: jährlich im Voraus"}
                 </li>
               ) : null}

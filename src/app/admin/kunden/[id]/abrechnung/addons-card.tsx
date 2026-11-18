@@ -1,6 +1,6 @@
 import { Card, CardHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
-import { annualMultiplier, PRICE_LIST } from "@/lib/offer-pricing";
+import { normalizeRhythmus, PRICE_LIST, RHYTHMUS_LABEL, rhythmusFaktor } from "@/lib/offer-pricing";
 import { bestandQuota } from "@/lib/bestand/quota";
 import { billingIntervalAction, bestandModuleAction, bestandSichtbarAction, empfehlungModuleAction, saveQuotaAction, saveSeatsAction, syncSeatsAction } from "./addon-actions";
 import { moduleState } from "@/lib/empfehlung/shared";
@@ -52,11 +52,17 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
   const empfehlungFee = c.empfehlungMonthly != null ? Number(c.empfehlungMonthly) : 0;
   const empfState = moduleState(c);
   const total = base != null ? base + c.seatsBilled * (seatPrice ?? 0) + bestandFee + empfehlungFee : null;
-  const annual = c.billingInterval === "year";
-  // Zahlweise vom Kunden im Angebot gewählt (Jahreszahlung angeboten, Ole 18.11.2026)
+  // Vorauszahlung: jährlich oder 6 Monate im Voraus (Laufzeit 6 Monate, Ole 18.11.2026)
+  const rhythmus = normalizeRhythmus(c.billingInterval);
+  const annual = rhythmus !== "month";
+  // Zahlweise vom Kunden im Angebot gewählt (Vorauszahlung angeboten, Ole 18.11.2026)
   const angebot = c.onboarding?.offerId
-    ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, annualChoice: true, annualPrepay: true } })
+    ? await prisma.offer.findFirst({ where: { id: c.onboarding.offerId, status: "accepted" }, select: { number: true, annualChoice: true, annualPrepay: true, term: true } })
     : null;
+  // Umstellen auf Vorauszahlung: mit 6 Monaten Laufzeit 6 Monate im Voraus (1 geschenkt), sonst jährlich (2 geschenkt)
+  const halb = angebot?.term === "6m";
+  const vorausZiel = halb ? "halfyear" : "year";
+  const gewaehlt = angebot?.annualPrepay ? (angebot.term === "6m" ? "6 Monate im Voraus" : "jährlich im Voraus") : "monatlich";
   const hidden = <input type="hidden" name="customerId" value={customerId} />;
 
   return (
@@ -207,19 +213,25 @@ export async function AddOnsCard({ customerId, message, failed }: { customerId: 
         <section className="space-y-2 border-t border-[color:var(--border)] pt-4">
           <h3 className="font-semibold">Zahlweise</h3>
           <p className="text-[color:var(--muted)]" data-admin-interval>
-            {annual ? "Jährlich im Voraus" : "Monatlich"}
-            {total != null ? ` · ${eur(total)}/Monat gesamt${annual ? ` · ${eur(total * annualMultiplier())} im Jahr` : ""}` : ""}
+            {RHYTHMUS_LABEL[rhythmus]}
+            {total != null ? ` · ${eur(total)}/Monat gesamt${annual ? ` · ${eur(total * rhythmusFaktor(rhythmus))} ${rhythmus === "halfyear" ? "je 6 Monate" : "im Jahr"}` : ""}` : ""}
           </p>
           {angebot?.annualChoice ? (
             <p className="text-xs text-[color:var(--muted)]" data-admin-zahlweise-gewaehlt>
-              Im Angebot {angebot.number} vom Kunden gewählt: {angebot.annualPrepay ? "jährlich im Voraus" : "monatlich"}
+              Im Angebot {angebot.number} vom Kunden gewählt: {gewaehlt}
               {annual !== angebot.annualPrepay ? ", seitdem umgestellt" : ""}.
             </p>
           ) : null}
           <form action={billingIntervalAction} className="flex flex-wrap items-center gap-2">
             {hidden}
-            <input type="hidden" name="interval" value={annual ? "month" : "year"} />
-            <button className={secondary}>{annual ? "Auf monatlich umstellen" : `Auf jährlich umstellen (${PRICE_LIST.annualFreeMonths} Monate geschenkt)`}</button>
+            <input type="hidden" name="interval" value={annual ? "month" : vorausZiel} />
+            <button className={secondary}>
+              {annual
+                ? "Auf monatlich umstellen"
+                : halb
+                  ? `Auf 6 Monate im Voraus umstellen (${PRICE_LIST.halfYearFreeMonths} Monat geschenkt)`
+                  : `Auf jährlich umstellen (${PRICE_LIST.annualFreeMonths} Monate geschenkt)`}
+            </button>
             <span className="text-xs text-[color:var(--muted)]">Stripe stellt sofort um und verrechnet anteilig.</span>
           </form>
         </section>

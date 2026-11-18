@@ -229,7 +229,11 @@ model Customer {
   // Zurzeit im Stripe-Abo berechnete weitere Logins (Menge der Platz-Position)
   seatsBilled                    Int                       @default(0)
   // "month" | "year" (jährlich im Voraus, Jahresbetrag = (12 − Freimonate) × Monatspreis)
+  // | "halfyear" (6 Monate im Voraus bei 6 Monaten Laufzeit, Betrag = (6 − Freimonate) × Monatspreis; Ole 18.11.2026)
   billingInterval                String                    @default("month")
+  // Vorauszahlung (halbjährlich/jährlich): Erinnerung 30 Tage vor Ende verschickt für den Zeitraum, der an diesem
+  // Tag endet (lib/vorauszahlung-erinnerung.ts, gegen Doppelversand)
+  prepayReminderFor              DateTime?
   // Abrechnungstag aus dem Angebot (lib/abrechnungstag.ts): Tag im Monat (null = wie Start) und erster
   // Abrechnungstag. Laufzeit und Abrechnungsmonate zählen ab billingStart, Leads und Kampagne ab dem Start.
   billingDay                     Int?
@@ -1602,7 +1606,7 @@ model Offer {
   // Vertreter oder Makler: Makler bekommen die Vertrags-Garantie statt Break-even
   // und das Bestandskunden-Modul inklusive (seit 11.11.2026); geht bei Annahme an den Kunden
   vermittlerTyp           String        @default("vertreter")
-  term                    String // "none" | "12m"
+  term                    String // "none" | "3m" | "6m" | "12m"
   products                Json // [{ name, dailyBudget }]
   setupFee                Decimal       @db.Decimal(10, 2)
   monthlyFee              Decimal       @db.Decimal(10, 2)
@@ -1646,11 +1650,13 @@ model Offer {
   bestandMonthly          Decimal?      @db.Decimal(10, 2)
   // Modul „Empfehlungen & Bewertungen“: Monatspreis netto; null = nicht gebucht
   empfehlungMonthly       Decimal?      @db.Decimal(10, 2)
-  // Jährlich im Voraus: Jahresbetrag = (12 − annualFreeMonths) × Monatspreis inkl. Zusätze
+  // Vorauszahlung (Name historisch „annual“): mit 12 Monaten jährlich, Betrag = (12 − annualFreeMonths) × Monatspreis;
+  // mit 6 Monaten (seit 18.11.2026) 6 Monate im Voraus, Betrag = (6 − annualFreeMonths) × Monatspreis. Der Zeitraum
+  // folgt aus term (lib/offer-pricing.ts VORAUSZAHLUNG), annualFreeMonths = geschenkte Monate je Zeitraum.
   annualPrepay            Boolean       @default(false)
   annualFreeMonths        Int?
-  // Jahreszahlung angeboten (Ole, 18.11.2026): Kunde wählt bei der Annahme monatlich oder jährlich im Voraus
-  // (nur mit 12 Monaten). Vor der Annahme ist annualPrepay die Vorauswahl (neu: monatlich), danach die Wahl.
+  // Vorauszahlung angeboten (Ole, 18.11.2026): Kunde wählt bei der Annahme monatlich oder im Voraus
+  // (nur mit 6 oder 12 Monaten). Vor der Annahme ist annualPrepay die Vorauswahl (neu: monatlich), danach die Wahl.
   annualChoice            Boolean       @default(false)
   // Empfehlungsrabatt auf die Einrichtung (Kollegen empfehlen, seit 14.11.2026):
   // setupListFee = Listenpreis der Einrichtung vor Rabatt (für die gewählte Laufzeit),

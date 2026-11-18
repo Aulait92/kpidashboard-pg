@@ -12,8 +12,8 @@ import { richteUeberweisungEin, ueberweisungMoeglich } from "@/lib/ueberweisung"
 
 export type AcceptState = { ok?: boolean; error?: string; checkoutUrl?: string };
 
-/** Formularwert „rhythmus“: jahr → jährlich im Voraus, monat → monatlich, sonst keine Angabe. */
-const parseRhythmus = (v: FormDataEntryValue | null): boolean | null => (v === "jahr" ? true : v === "monat" ? false : null);
+/** Formularwert „rhythmus“: jahr bzw. voraus → im Voraus (jährlich bzw. 6 Monate), monat → monatlich, sonst keine Angabe. */
+const parseRhythmus = (v: FormDataEntryValue | null): boolean | null => (v === "jahr" || v === "voraus" ? true : v === "monat" ? false : null);
 
 export async function acceptOfferAction(token: string, _prev: AcceptState, formData: FormData): Promise<AcceptState> {
   const h = await headers();
