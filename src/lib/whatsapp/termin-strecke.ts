@@ -1,5 +1,7 @@
 // Ablauf der Termin-Strecke nach der Buchung (Ole, 17.11.2026; Reihenfolge P2), Texte in lib/whatsapp/gespraech.ts:
 //   Buchungsnachricht kurz (Zeit fest im Kalender des Vermittlers, Link; die Einladung an den Lead ist ausstehend)
+//     → nur Tierkranken (TKV, Ole 18.11.2026): feste Tierfragen, eine pro Nachricht, nur was fehlt (Gesundheit zuerst,
+//       lib/whatsapp/tier-fragen.ts; Antworten ohne Assistent, tierAntwort), danach der Komplettcheck
 //     → Komplettcheck [Ja, gern] [Nein, danke] (Kennzeichen am Termin); bei Ja 45 Min.: frei → verlängert, belegt →
 //       zwei andere Zeiten mit 45 Min. [Zeit 1] [Zeit 2] [Zeit behalten] (lib/komplettcheck-dauer.ts)
 //     → fehlende Angaben fürs Angebot (Rechner-Tabelle), eine Frage pro Nachricht (Assistent, bot.ts)
@@ -10,7 +12,7 @@
 // Die Einladung an den Lead geht genau einmal, sobald Adresse und Komplettcheck feststehen (lib/calendar/einladung.ts),
 // ohne Antwort spätestens nach 15 Min. (kurzfristig 5 Min., spätestens 60 Min. vor Beginn).
 // Antwortet der Lead nicht, wird nicht nachgehakt, aber nach einer Stunde der nächste Schritt geschickt
-// (runStreckeAbschliessen, WhatsApp-Cron; nur im 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr): Komplettcheck → erste
+// (runStreckeAbschliessen, WhatsApp-Cron; nur im 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr): Tierfrage → Komplettcheck, Komplettcheck → erste
 // Angebotsfrage, Zeitangebot → Zeit behalten, Vertragsfrage → Policen-Bitte (die Verträge entfallen, die Bitte nicht),
 // Policen-Bitte → Schluss. Solange Angebotsfragen offen sind, nie der Schluss.
 // Policen-Erinnerungen (höchstens 2): 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin,
@@ -55,6 +57,8 @@ import {
   type Knopf,
   type VermittlerName,
 } from "@/lib/whatsapp/gespraech";
+import { istTierStrecke, offeneTierFragen, tierAntwortAuswerten, tierFrage, type TierFrageKey } from "@/lib/whatsapp/tier-fragen";
+import { mergeQualificationData } from "@/lib/whatsapp/qualification";
 import { normalisiereVertraege, sagtKeine, VORVERTRAEGE_SCHEMA, vertraegeAusText, type Vorvertraege, type Vorvertrag } from "@/lib/whatsapp/vorvertraege";
 
 /** Merker (interne Nachrichten) der Strecke. */
@@ -83,6 +87,10 @@ export const STRECKE = {
   /** Nach „Einladung ist unterwegs“: Frage „Konnten Sie den Termin eintragen?“ bzw. die Antwort darauf (body.ja) */
   eingetragenFrage: "eingetragen_frage",
   eingetragen: "eingetragen_antwort",
+  /** Tierfrage gestellt (TKV, body.key: lib/whatsapp/tier-fragen.ts TierFrageKey) */
+  tierFrage: "tier_frage",
+  /** Tierfrage beantwortet (body.keys: beantwortete Fragen) */
+  tierAntwort: "tier_antwort",
 } as const;
 
 const HOUR = 60 * 60 * 1000;
@@ -133,6 +141,8 @@ async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null
   if (!lead || lead.erasedAt) return null;
   const vv = lead.vorvertraege as { keine?: unknown; liste?: unknown } | null;
   if (vv && vv.keine === true && !(Array.isArray(vv.liste) && vv.liste.length)) return null;
+  // Tierkranken ohne Komplettcheck: die Bitte nennt Haftpflicht, Hausrat und Kfz, passt also nicht (Ole, 18.11.2026)
+  if (istTierStrecke(k.source) && k.termin?.komplettcheck !== true) return null;
   const { policenBitteFuerChat } = await import("@/lib/policen/server");
   const b = await policenBitteFuerChat(k.conversationId);
   if (!b) return null;
@@ -235,6 +245,9 @@ export type StreckenStand = {
   policenErinnerungen: number;
   abschlussAt: Date | null;
   abschlussMitEmail: boolean;
+  /** Letzte Tierfrage (TKV) und beantwortete Tierfragen */
+  tierFrageLetzte: { at: Date; key: string } | null;
+  tierBeantwortet: string[];
 };
 
 const STAND_KINDS: string[] = [
@@ -251,6 +264,8 @@ const STAND_KINDS: string[] = [
   STRECKE.policenAntwort,
   STRECKE.policenErinnerung,
   STRECKE.abschluss,
+  STRECKE.tierFrage,
+  STRECKE.tierAntwort,
 ];
 
 const daten = (body: string | null): Record<string, unknown> => {
@@ -294,7 +309,23 @@ export async function streckenStand(conversationId: string, appointmentId: strin
     policenErinnerungen: rows.filter((r) => r.kind === STRECKE.policenErinnerung && daten(r.body).gesendet !== false).length,
     abschlussAt: abschluss?.createdAt ?? null,
     abschlussMitEmail: daten(abschluss?.body ?? null).mitEmail === true,
+    tierFrageLetzte: (() => {
+      const t = letzte(STRECKE.tierFrage);
+      const key = t ? daten(t.body).key : null;
+      return t && typeof key === "string" ? { at: t.createdAt, key } : null;
+    })(),
+    tierBeantwortet: rows
+      .filter((r) => r.kind === STRECKE.tierAntwort)
+      .flatMap((r) => {
+        const k = daten(r.body).keys;
+        return Array.isArray(k) ? k.filter((x): x is string => typeof x === "string") : [];
+      }),
   };
+}
+
+/** Wartet die Strecke auf die Antwort auf eine Tierfrage (TKV, vor dem Komplettcheck)? */
+export function tierFrageOffen(s: StreckenStand): boolean {
+  return !!s.tierFrageLetzte && !s.tierBeantwortet.includes(s.tierFrageLetzte.key) && !s.komplettFrageAt && !s.abschlussAt;
 }
 
 /** Komplettcheck erledigt: beantwortet oder (Rückfall) übersprungen, weil die Angebotsfragen schon laufen. */
@@ -362,6 +393,8 @@ export async function sendeKomplettcheck(k: StreckenKontext, prefix?: string | n
 
 /** Angebotsfragen, die noch offen sind (Rechner-Tabelle, aus Formular und Angaben des Assistenten). */
 export function offeneAngebotsfragen(k: Pick<StreckenKontext, "source" | "formular" | "angaben">): Folgefrage[] {
+  // Tierkranken: feste Tierfragen vor dem Komplettcheck (lib/whatsapp/tier-fragen.ts) statt der Rechner-Tabelle
+  if (istTierStrecke(k.source)) return [];
   const quelle = { formular: k.formular, angaben: k.angaben };
   return folgefragen(spartenDesLeads(k.source, quelle), quelle);
 }
@@ -378,6 +411,62 @@ export async function sendeAngebotsfrage(k: StreckenKontext, prefix?: string | n
   const frage = folgefrageText(offen[0], k.an, k.person.nom, !stand.angebotsfragenAt);
   if (!stand.angebotsfragenAt) await merke(k.conversationId, STRECKE.angebotsfragen, { appointmentId: k.termin.id });
   await sende(k, [prefix, frage].filter(Boolean).join(" "), knoepfeFuerText(frage, offen));
+  return true;
+}
+
+// ─── Tierfragen (TKV) nach der Buchung, vor dem Komplettcheck ─────────────────────────────────────────────────────────
+
+/** Nächste offene Tierfrage (Text und Knöpfe), null = keine offen bzw. kein TKV-Lead. */
+export function naechsteTierFrage(k: Pick<StreckenKontext, "source" | "formular" | "angaben" | "an" | "person">, beantwortet: readonly string[] = []) {
+  const quelle = { source: k.source, formular: k.formular, angaben: k.angaben };
+  const key = offeneTierFragen(quelle, new Set(beantwortet))[0];
+  return key ? tierFrage(key, quelle, k.an, k.person.nom) : null;
+}
+
+/**
+ * Erste Nachricht der Strecke nach der Buchungsnachricht (der Aufrufer sendet sie und setzt den Merker mit daten):
+ * bei Tierkranken die erste offene Tierfrage, sonst der Komplettcheck. Steht schon eine Tierfrage offen, dieselbe noch
+ * einmal (nach einer Rückfrage des Leads, die der Assistent beantwortet hat).
+ */
+export async function ersteNachBuchung(
+  k: StreckenKontext,
+): Promise<{ text: string; buttons: Knopf[] | null; merker: string; daten?: Record<string, unknown> }> {
+  if (k.termin && istTierStrecke(k.source)) {
+    const s = await streckenStand(k.conversationId, k.termin.id);
+    const f = naechsteTierFrage(k, s.tierBeantwortet);
+    if (f && !s.komplettFrageAt && !s.abschlussAt) return { text: f.text, buttons: f.buttons, merker: STRECKE.tierFrage, daten: { key: f.key } };
+  }
+  const m = komplettcheckNachricht(k);
+  return { text: m.text, buttons: m.buttons, merker: STRECKE.komplettFrage };
+}
+
+/**
+ * Antwort auf die offene Tierfrage (Knopf tier:<key>:<wert> bzw. Text): Angabe speichern (Conversation.qualificationData,
+ * erscheint in der Terminvorbereitung), dann die nächste offene Tierfrage bzw. der Komplettcheck. false = keine Antwort
+ * auf die Frage (Rückfrage des Leads: der Assistent antwortet, die Frage kommt danach noch einmal).
+ */
+export async function tierAntwort(conversationId: string, text: string, knopf: { key: string; wert: string } | null = null, now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (!tierFrageOffen(stand)) return !!knopf; // doppelter bzw. alter Klick: nichts tun
+  const key = (knopf?.key ?? stand.tierFrageLetzte!.key) as TierFrageKey;
+  if (stand.tierBeantwortet.includes(key)) return true;
+  const quelle = { source: k.source, formular: k.formular, angaben: k.angaben };
+  const r = tierAntwortAuswerten(key, text, knopf?.wert ?? null, quelle);
+  if (!r) return false;
+  const neu = mergeQualificationData(k.angaben, r.angaben);
+  await prisma.conversation.update({ where: { id: conversationId }, data: { qualificationData: (neu ?? undefined) as Prisma.InputJsonValue | undefined } });
+  k.angaben = neu;
+  await merke(conversationId, STRECKE.tierAntwort, { appointmentId: k.termin.id, keys: r.beantwortet });
+  const f = naechsteTierFrage(k, [...stand.tierBeantwortet, ...r.beantwortet]);
+  if (f) {
+    await merke(conversationId, STRECKE.tierFrage, { appointmentId: k.termin.id, key: f.key });
+    await sende(k, /^Danke!/.test(f.text) ? f.text : `Danke! ${f.text}`, f.buttons);
+  } else {
+    await sendeKomplettcheck(k);
+  }
+  await einladungPruefen(k, now);
   return true;
 }
 
@@ -798,6 +887,7 @@ export async function kalenderAntwort(conversationId: string, art: "ja" | "gleic
 /**
  * Strecke weiterführen, wenn der Lead nicht antwortet (Ole, 17.11.2026: nicht nachhaken; Reihenfolge P2): Nach über einer
  * Stunde ohne Antwort folgt der nächste Schritt.
+ *   Tierfrage (TKV) → Komplettcheck (die übrigen Tierfragen klärt der Vermittler im Termin)
  *   Komplettcheck → erste offene Angebotsfrage, sind keine offen, der nächste Schritt
  *   Zeitangebot (Komplettcheck, belegt) → Zeit behalten, weiter
  *   Vertragsfrage → Policen-Bitte (die Verträge entfallen, die Bitte nicht)
@@ -810,7 +900,7 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
   const offen = await prisma.message.findMany({
     where: {
       direction: "internal",
-      kind: { in: [STRECKE.komplettFrage, STRECKE.langAngebot, STRECKE.vertragsfrage, STRECKE.policenBitte] },
+      kind: { in: [STRECKE.tierFrage, STRECKE.komplettFrage, STRECKE.langAngebot, STRECKE.vertragsfrage, STRECKE.policenBitte] },
       createdAt: { lte: new Date(now.getTime() - HOUR), gte: new Date(now.getTime() - 48 * HOUR) },
     },
     orderBy: { createdAt: "asc" },
@@ -829,7 +919,9 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
       const stand = await streckenStand(m.conversationId, appointmentId);
       if (stand.abschlussAt) continue;
       // offen ist der jüngste Schritt
-      const schritt: { art: "policen" | "vertraege" | "lang" | "komplett"; seit: Date } | null = policenBitteOffen(stand)
+      const schritt: { art: "policen" | "vertraege" | "lang" | "komplett" | "tier"; seit: Date } | null = tierFrageOffen(stand)
+        ? { art: "tier", seit: stand.tierFrageLetzte!.at }
+        : policenBitteOffen(stand)
         ? { art: "policen", seit: stand.policenBitteAt! }
         : stand.vertragsfrageAt && !stand.vorvertraegeErfasst
           ? { art: "vertraege", seit: stand.vertragsfrageAt }
@@ -844,7 +936,10 @@ export async function runStreckeAbschliessen(now = new Date()): Promise<{ gesend
       const k = await streckenKontext(m.conversationId, now);
       if (!k?.termin || k.termin.id !== appointmentId) continue;
       let ok = false;
-      if (schritt.art === "lang") {
+      if (schritt.art === "tier") {
+        // Tierfrage ohne Antwort: der Rest bleibt offen (klärt der Vermittler im Termin), weiter mit dem Komplettcheck
+        ok = await sendeKomplettcheck(k, "Noch eine kurze Frage:");
+      } else if (schritt.art === "lang") {
         await langeZeitAntwort(m.conversationId, "behalten", now);
         ok = true;
       } else if (schritt.art === "komplett") {
