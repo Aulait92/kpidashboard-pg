@@ -25,6 +25,7 @@ import {
   erstanschreibenZweck,
   erstanschreibenV8Params,
   erstanschreibenV9Params,
+  frageplan,
   outreachProdukt,
   tierWort,
   type Herkunft,
@@ -233,7 +234,7 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
             // Vermittler telefoniert gerade bzw. Ergebnis fehlt noch (lib/telefonat.ts): Erstanschreiben wartet
             AND: [{ OR: [{ callStartedAt: null }, { callStartedAt: { lt: new Date(now - CALL_PAUSE_MAX_MS) } }] }],
           },
-      select: { id: true, name: true, phone: true, waConsent: true, source: true, waUnavailableAt: true, isTest: true },
+      select: { id: true, name: true, phone: true, waConsent: true, source: true, waUnavailableAt: true, isTest: true, formData: true },
       take: 50,
     });
 
@@ -274,7 +275,10 @@ export async function runOutreach(onlyCustomerId?: string, only?: { leadIds: str
       // (lib/whatsapp/produkt-fragen) meldet sich der Assistent trotzdem, bestätigt den Termin im Gespräch und
       // fragt die Angaben ab (Ole, 15.11.2026). Sonst wie bisher kein Erstanschreiben.
       const booked = await hasAppointment(lead.id, conv?.id);
-      if (booked && !produktCheckliste(source)) {
+      // Gebucht und das Formular beantwortet schon alles: die erste Frage wäre die nach einem Termin, also kein
+      // Erstanschreiben (Ole, 18.11.2026: „darf der Assistent natürlich keinen weiteren buchen“)
+      const nichtsOffen = booked && frageplan(source, splitHealthAnswers(asFormAnswers(lead.formData)).normal).offen.length === 0;
+      if (booked && (!produktCheckliste(source) || nichtsOffen)) {
         logTestLead(lead, "outreach skipped", { reason: "booked" });
         await prisma.lead.update({
           where: { id: lead.id },
