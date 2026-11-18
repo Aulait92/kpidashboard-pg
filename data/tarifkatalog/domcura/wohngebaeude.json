@@ -33,8 +33,7 @@
         "hausHaftpflicht": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Komfort-Schutz",
@@ -60,8 +59,7 @@
         "hausHaftpflicht": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Top-Schutz",
@@ -87,8 +85,7 @@
         "hausHaftpflicht": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Exklusiv-Schutz",
@@ -114,8 +111,7 @@
         "hausHaftpflicht": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/einfamilienhaus/leistungsuebersicht_efh.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -127,6 +123,7 @@
     "Ableitungsrohre nur, wenn das Gebäude höchstens 30 Jahre alt ist oder eine Dichtigkeitsprüfung vorliegt; sonst Komfort 1.000 €, Top und Exklusiv 20.000 €.",
     "Photovoltaik ist in allen Stufen mitversichert; „optional“ bezieht sich auf die Allgefahren-Deckung für erneuerbare Energien.",
     "Elementar mit SB 10 %, mind. 500 €, max. 5.000 €; Starkregen zusätzlich wählbar.",
-    "Domcura markiert keinen Tarif; Top als mittlere Stufe (bei 4 Stufen die dritte)."
+    "Domcura markiert keinen Tarif; Top als mittlere Stufe (bei 4 Stufen die dritte).",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

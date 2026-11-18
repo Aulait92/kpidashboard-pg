@@ -25,8 +25,7 @@
         "inlays": "75 %"
       },
       "quelle": "https://www.diebayerische.de/versicherungen/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ZAHN Komfort",
@@ -44,8 +43,7 @@
         "inlays": "80 bis 90 %"
       },
       "quelle": "https://www.diebayerische.de/versicherungen/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ZAHN Prestige",
@@ -63,8 +61,7 @@
         "inlays": "100 %"
       },
       "quelle": "https://www.diebayerische.de/versicherungen/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -77,6 +74,7 @@
     "Zahnersatz Komfort: 80 bis 90 %, bei Regelversorgung 100 % (Produktseite). Erstattung jeweils inklusive Kassenleistung.",
     "Begrenzung erste Jahre: Smart 500/1.000/1.500/2.000 €, Komfort 1.250/2.500/3.750/5.000 €, Prestige 1.500/3.000/4.500/6.000 € in den ersten 1 bis 4 Kalenderjahren; ab dem 5. Jahr unbegrenzt, bei Unfall ohne Begrenzung.",
     "Wartezeit Smart und Komfort 6 Monate (Zahnreinigung ohne Wartezeit); Prestige ohne Wartezeiten. Kieferorthopädie 1.500 € inkl. bzw. 2.000 € ohne Kassenleistung über die Laufzeit, auch für Erwachsene.",
-    "Prestige als „Testsieger“ beworben, Komfort als „Top Preis-Leistung“; keine ausdrückliche Empfehlung, Komfort als mittlere Stufe gesetzt. Beitrag hängt von der Postleitzahl ab. Zusatzbaustein ZAHN Sofort für begonnene Behandlungen nicht als Stufe geführt."
+    "Prestige als „Testsieger“ beworben, Komfort als „Top Preis-Leistung“; keine ausdrückliche Empfehlung, Komfort als mittlere Stufe gesetzt. Beitrag hängt von der Postleitzahl ab. Zusatzbaustein ZAHN Sofort für begonnene Behandlungen nicht als Stufe geführt.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

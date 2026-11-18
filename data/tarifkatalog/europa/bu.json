@@ -32,8 +32,7 @@
         "au": "nein"
       },
       "quelle": "https://www.europa.de/versicherungen/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Berufsunfähigkeitsversicherung Premium-Schutz",
@@ -58,8 +57,7 @@
         "au": "inklusive"
       },
       "quelle": "https://www.europa.de/versicherungen/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -71,6 +69,7 @@
     "AU-Leistung: bei 6 Monaten Krankschreibung (oder 3 Monaten mit fachärztlicher Prognose), zusammen höchstens 24 Monate (Vertragsbedingungen, Stand 01.08.2026).",
     "Umorganisation: Verzicht nur für bestimmte Selbstständige (z. B. Akademiker oder Meister mit weniger als 10 Mitarbeitenden und mindestens 90 % Bürotätigkeit); Arbeitnehmer werden nicht auf Umorganisation geprüft.",
     "Teilzeit, Pflege (6 Monate Hilfebedarf, Punktetabelle) und Infektionsklausel (Tätigkeitsverbot) aus den Vertragsbedingungen, je Stufe nicht getrennt ausgewiesen.",
-    "Dynamik: Beitragsdynamik gegen Inflation in beiden Stufen. Leistungen bei schweren Erkrankungen (Krebs, Herzinfarkt, Schlaganfall u. a.) in beiden Stufen."
+    "Dynamik: Beitragsdynamik gegen Inflation in beiden Stufen. Leistungen bei schweren Erkrankungen (Krebs, Herzinfarkt, Schlaganfall u. a.) in beiden Stufen.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

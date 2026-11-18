@@ -24,8 +24,7 @@
         "ambulant-op": "ja"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:dc83bbc4-6b9b-4ee3-b8d3-4a46610db4ce/275008_highlightblatt_krankenhauszusatzversicherung_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankenhauszusatzversicherung Komfort",
@@ -42,8 +41,7 @@
         "ambulant-op": "ja"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:dc83bbc4-6b9b-4ee3-b8d3-4a46610db4ce/275008_highlightblatt_krankenhauszusatzversicherung_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankenhauszusatzversicherung Prestige",
@@ -60,8 +58,7 @@
         "ambulant-op": "ja"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:dc83bbc4-6b9b-4ee3-b8d3-4a46610db4ce/275008_highlightblatt_krankenhauszusatzversicherung_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -72,6 +69,7 @@
     "Quelle: Highlightblatt B 275008 (08.2025) der BA die Bayerische Allgemeine und die Produktseite (Abruf 17.11.2026). Keine Stufe markiert; Komfort als mittlere Stufe.",
     "Smart leistet nur bei schwerer Krankheit laut Tarifbestimmungen (z. B. Herzinfarkt, bösartiger Tumor, chronische Niereninsuffizienz) und Unfall; Komfort und Prestige bei jedem medizinisch notwendigen Aufenthalt.",
     "Erstattung privatärztlicher Leistungen ohne Begrenzung auf die GOÄ. Ersatz-Krankenhaustagegeld je Leistungsverzicht (Unterbringung bzw. Privatarzt).",
-    "Komfort und Prestige zusätzlich: Hebamme, stationäre Psychotherapie, Kurtagegeld 16 €/Tag, Familienzimmer bei Entbindung. ÄrzteKompass (Zweitmeinung) nur Prestige. Krankenhaustagegeld als Baustein nicht genannt."
+    "Komfort und Prestige zusätzlich: Hebamme, stationäre Psychotherapie, Kurtagegeld 16 €/Tag, Familienzimmer bei Entbindung. ÄrzteKompass (Zweitmeinung) nur Prestige. Krankenhaustagegeld als Baustein nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

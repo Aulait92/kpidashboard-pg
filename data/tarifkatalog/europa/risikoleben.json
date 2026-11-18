@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.europa.de/versicherungen/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risikolebensversicherung Premium (E-RLP)",
@@ -40,8 +39,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.europa.de/versicherungen/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -55,6 +53,7 @@
     "Verlängerung (nur Premium) um bis zu 15 Jahre, höchstens bis zum 75. Lebensjahr, bis 3 Jahre vor Ablauf.",
     "Premium zusätzlich: Partnerschutz 10 % (höchstens 15.000 €), Zusatzleistung bei Tod im Ausland, Pflege-Bonus. Krebs Plus (10 %, höchstens 30.000 €, bei Krebs, Herzinfarkt, Schlaganfall) in beiden Tarifen zubuchbar.",
     "Weltweiter Schutz aus der Vertragsinformation (Stand 01.02.2026). Umtauschrecht nicht genannt.",
-    "Linear und annuitätisch fallende Summe sowie E-VRL easy (Immobilienfinanzierung) als eigene Varianten; nicht als Baustein erfasst."
+    "Linear und annuitätisch fallende Summe sowie E-VRL easy (Immobilienfinanzierung) als eigene Varianten; nicht als Baustein erfasst.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }
