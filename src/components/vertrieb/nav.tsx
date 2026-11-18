@@ -14,6 +14,8 @@ export const LINKS: { href: string; label: string; exact?: boolean }[] = [
   { href: `${BASE}/pipeline`, label: "Akquise-Pipeline" },
   { href: `${BASE}/follow-ups`, label: "Follow-ups" },
   { href: `${BASE}/angebote`, label: "Angebote" },
+  // Termin-Übersicht (Ole, 18.11.2026) gibt es nur im neuen Admin: die Seite leitet nach Verkaufen → Termine weiter
+  { href: `${BASE}/termine`, label: "Termine" },
   { href: "/admin/marketing", label: "Marketing" },
 ];
 
