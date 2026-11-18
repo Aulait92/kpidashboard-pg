@@ -34,8 +34,7 @@
         "wechsel": "inklusive"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/tierversicherung/hundekrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -46,6 +45,7 @@
     "Ein Tarif im Vollschutz; die Seite nennt den Vollschutz als Empfehlung.",
     "Werte für HundGesund Premium aus der Produktseite; daneben gibt es Kompakt (bis 3.000 € im Jahr), in den Bedingungen auch Premium Plus. Kompakt nicht als Stufe aufgenommen, da keine weiteren Werte.",
     "Selbstbeteiligung 0, 250, 500 oder 1.000 € im Jahr (abhängig vom Eintrittsalter); nach 3 schadenfreien Jahren einmal halbe Selbstbeteiligung. Wechseloption: zum 3. Geburtstag Upgrade ohne Gesundheitsprüfung.",
-    "Wartezeit 30 Tage, bei Unfall keine, für bestimmte Erkrankungen und medizinisch notwendige Kastration 12 Monate. Vorsorge-Baustein bis 200 € im Jahr ohne Selbstbeteiligung; Plus-Baustein mit Rücktransport aus dem Ausland."
+    "Wartezeit 30 Tage, bei Unfall keine, für bestimmte Erkrankungen und medizinisch notwendige Kastration 12 Monate. Vorsorge-Baustein bis 200 € im Jahr ohne Selbstbeteiligung; Plus-Baustein mit Rücktransport aus dem Ausland.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

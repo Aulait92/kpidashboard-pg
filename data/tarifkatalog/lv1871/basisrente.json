@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.lv1871.de/basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
   "offen": [
     "Beitragserhalt 0 bis 100 % laut Seite „Basisrente für Beamte“; garantierter Rentenfaktor „auf hohem Niveau“ ohne Zahl.",
     "BU-Schutz als BUZ-Beitragsschutz (Beitrag bis 4 % der Beitragsbemessungsgrenze) oder BU-Zusatzrente. Dynamik nicht beschrieben.",
-    "Hinterbliebenenschutz als Zusatzvereinbarung (Rente aus dem Vertragsguthaben an Ehe- oder Lebenspartner und Kinder). Effektivkosten nicht ausgewertet. Keine Renditeangaben."
+    "Hinterbliebenenschutz als Zusatzvereinbarung (Rente aus dem Vertragsguthaben an Ehe- oder Lebenspartner und Kinder). Effektivkosten nicht ausgewertet. Keine Renditeangaben.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

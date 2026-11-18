@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/pferd/3-0/Produktvergleich_NV_Pferd_3.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV PferdePremium Plus 3.0",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/pferd/3-0/Produktvergleich_NV_Pferd_3.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
   "offen": [
     "Werte aus dem Produktvergleich NV Pferd 3.0 (Symboltabelle). Deckungssumme je Stufe nicht genannt. Selbstbeteiligung nicht genannt (nur Verzicht auf Anrechnung einer Mithaftung bis 500 € bzw. 1.000 €). Zwei Stufen ohne Empfehlung.",
     "Miete: Mietsachschäden an Stallungen, Reithallen und Weiden; Wohnräume in PferdePremium bis 5 Mio. €. Geliehen: fremdes gemietetes oder geliehenes Reitzubehör; gemietete Fuhrwerke PferdePremium bis 20.000 €.",
-    "Fremdreiter in beiden Stufen. Nur PferdePremium Plus: Schäden am eigenen Pferd durch Ripper oder Wölfe bis 3.000 €, gemietete Kfz bis 5.000 €, Rettungs- und Bergungskosten."
+    "Fremdreiter in beiden Stufen. Nur PferdePremium Plus: Schäden am eigenen Pferd durch Ripper oder Wölfe bis 3.000 €, gemietete Kfz bis 5.000 €, Rettungs- und Bergungskosten.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

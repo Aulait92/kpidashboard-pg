@@ -28,8 +28,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/privat/gesundheit-freizeit/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Komforttarif",
@@ -50,8 +49,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/privat/gesundheit-freizeit/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Spitzentarif",
@@ -72,8 +70,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/privat/gesundheit-freizeit/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
   "offen": [
     "Werte aus dem Tarifvergleich der Produktseite (Symbole Einsteiger-, Komfort- und Spitzentarif); Tarifbezeichnungen und Erstattungssätze nicht genannt. Ambulante Erstattung, Zahnersatz-Prozentsatz und Selbstbehalt nicht genannt. Keine Empfehlung der Gesellschaft; Komfort als mittlere Stufe gesetzt.",
     "Stationär: Einsteiger ohne Chefarzt und Zweibettzimmer; Komfort mit Chefarzt und Zweibettzimmer (bzw. Ersatztagegeld), Spitzentarif zusätzlich Einbettzimmer. Beitragsrückerstattung bis zu drei Monatsbeiträge in allen Tarifen.",
-    "Krankentagegeld und Pflegetagegeld als eigene Tarife ergänzbar."
+    "Krankentagegeld und Pflegetagegeld als eigene Tarife ergänzbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

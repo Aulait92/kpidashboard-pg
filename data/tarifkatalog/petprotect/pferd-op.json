@@ -19,7 +19,6 @@
         "jhl": "unbegrenzt",
         "nachbehandlung": "10 Tage",
         "vorsorge": "nein",
-        "chips": "bis 1.500 € je OP",
         "kolik": "5 Tage",
         "kastration": "nur med. Indikation",
         "physio": "in der Nachsorge",
@@ -27,8 +26,7 @@
         "ausland": "12 Monate"
       },
       "quelle": "https://www.petprotect.de/pferde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pferde-OP-Versicherung Premium",
@@ -40,7 +38,6 @@
         "jhl": "unbegrenzt",
         "nachbehandlung": "14 Tage",
         "vorsorge": "nein",
-        "chips": "ja",
         "kolik": "5 Tage",
         "kastration": "nur med. Indikation",
         "physio": "Nachsorge + 5 Sitzungen",
@@ -48,8 +45,7 @@
         "ausland": "12 Monate"
       },
       "quelle": "https://www.petprotect.de/pferde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -60,11 +56,12 @@
     "Zwei Tarife ohne Markierung einer Empfehlung.",
     "Risikoträger ist die Barmenia Allgemeine Versicherungs-AG (BarmeniaGothaer), PETPROTECT vermittelt; Bedingungen Stand 01.01.2024.",
     "Erstattungssatz und Selbstbeteiligung laut Bedingungen nach Versicherungsschein; auf der Seite nicht genannt.",
-    "Gelenkchip-OPs (OC, OCD, Chips, Birkelandfrakturen) mit besonderer Wartezeit 12 Monate; bei Top bis 1.500 € je OP.",
     "Wartezeit Krankheit 3 Monate, Kolik-OP 5 Tage, Unfall ohne; Kastration aus medizinischem Grund 6 Monate.",
     "Unterbringung 30 € je Tag laut Vergleichstabelle (nur ein Wert für beide Tarife angegeben).",
     "Premium: bis zu 5 Physiotherapie-Sitzungen nach Ablauf der Nachsorgefrist; Kündigungsverzicht, wenn das Pferd bei Beginn höchstens 7 Jahre alt war.",
     "Ausgeschlossen u. a. Hufabszesse und Hufgeschwüre, Kryptorchismus, Goldakupunktur.",
-    "Kein Krankenvollschutz für Pferde."
+    "Kein Krankenvollschutz für Pferde.",
+    "Gelenkchip-OPs (OC, OCD, Chips, Birkelandfrakturen) laut Bedingungen versichert, besondere Wartezeit 12 Monate. Die Höhe je Tarif steht in der Vergleichstabelle der Seite nur im nachgeladenen Teil und war am 18.11.2026 nicht abrufbar; der frühere Wert „bis 1.500 € je OP“ (Top) ist deshalb entfernt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

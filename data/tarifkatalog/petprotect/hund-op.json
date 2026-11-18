@@ -25,8 +25,7 @@
         "ausland": "12 Monate"
       },
       "quelle": "https://www.petprotect.de/hundekrankenversicherung/hunde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hunde-OP-Versicherung Exklusiv",
@@ -45,8 +44,7 @@
         "ausland": "12 Monate"
       },
       "quelle": "https://www.petprotect.de/hundekrankenversicherung/hunde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hunde-OP-Versicherung Exklusiv+",
@@ -65,8 +63,7 @@
         "ausland": "unbegrenzt"
       },
       "quelle": "https://www.petprotect.de/hundekrankenversicherung/hunde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -83,6 +80,7 @@
     "Selbstbeteiligung laut Bedingungen nach Versicherungsschein; Höhe auf der Seite nicht genannt.",
     "Prothesen bis 500 € (Exklusiv+ unbegrenzt) nach 12 Monaten Wartezeit.",
     "Exklusiv+: einmaliger Zuschuss zur Kastration auch ohne medizinische Indikation bis 150 €.",
-    "Physiotherapie nach OP im Nachsorgezeitraum (Heilmittel), keine gesonderte Angabe."
+    "Physiotherapie nach OP im Nachsorgezeitraum (Heilmittel), keine gesonderte Angabe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -24,8 +24,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.lv1871.de/klassische-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "MeinPlan (Fondsrente)",
@@ -40,8 +39,7 @@
         "beitragspause": "ja"
       },
       "quelle": "https://www.lv1871.de/fondsgebundene-rentenversicherung/meinplan/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -55,6 +53,7 @@
     "Die Stufen sind Anlagekonzepte, keine Leistungsstufen. LV 1871 nennt MeinPlan „unsere beliebteste chancenreiche Fondsrente“, daher als Empfehlung der Gesellschaft gesetzt.",
     "Klassik: Rechnungszins derzeit 1,00 %; Hinterbliebene vor Rentenbeginn Beitragsrückgewähr oder Hinterbliebenenrente, danach Rentengarantiezeit. Zuzahlungen und Beitragspause bei Klassik nicht beschrieben.",
     "MeinPlan: Beitragsgarantie 0 bis 90 % wählbar und anpassbar, Lock-in-Funktion, Cash-to-Go-Entnahmen, fondsgebundener Rentenbezug. Hinterbliebenenschutz und BU-Zusatz bei MeinPlan auf der Seite nicht beschrieben.",
-    "Garantierter Rentenfaktor und Effektivkosten nicht ausgewertet (Basisinformationsblätter). Optionen zu Rentenbeginn: eXtra-Rente bei schwerer Krankheit, Pflege-Option (doppelte Rente). Keine Renditeangaben."
+    "Garantierter Rentenfaktor und Effektivkosten nicht ausgewertet (Basisinformationsblätter). Optionen zu Rentenbeginn: eXtra-Rente bei schwerer Krankheit, Pflege-Option (doppelte Rente). Keine Renditeangaben.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

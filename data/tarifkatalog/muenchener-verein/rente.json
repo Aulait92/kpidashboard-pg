@@ -26,8 +26,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/vorsorge-vermoegen/geldanlage-absicherung/fondsgebundene-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -40,6 +39,7 @@
     "Garantierter Rentenfaktor und Kapitalwahlrecht: in Seite und Prospekt nicht ausdrücklich genannt.",
     "CashOption: regelmäßige Entnahmen schon vor Rentenbeginn; Zuzahlungen ab 200 €; Rentenbeginn bis 5 Jahre früher oder bis Alter 85.",
     "BU-Zusatz: Beitragsbefreiung bei Berufsunfähigkeit, auch ohne Gesundheitsprüfung; RentenSchutzbrief übernimmt bis 3.000 € Beitrag im Jahr. Dynamik bis 10 %.",
-    "HandwerkerRente als Variante nicht erfasst. Keine Renditeangaben übernommen."
+    "HandwerkerRente als Variante nicht erfasst. Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

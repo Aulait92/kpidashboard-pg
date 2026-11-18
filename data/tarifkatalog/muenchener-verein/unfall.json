@@ -28,8 +28,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Exklusiv",
@@ -50,8 +49,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Exklusiv+",
@@ -72,8 +70,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/existenz/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -83,6 +80,7 @@
   "offen": [
     "Werte aus den Beispielen der Produktseite (Basis 25.000 €, Exklusiv und Exklusiv+ 100.000 € Grundsumme mit 500 % Progression und 3 % Dynamik); Grundsumme individuell.",
     "Beispiele: Krankenhaustagegeld mit Genesungsgeld 20 €/Tag, Todesfall 20.000 € (Exklusiv) bzw. 50.000 € (Exklusiv+), Unfallrente 500 € monatlich nur Exklusiv+. Leistung ab Invaliditätsgrad, Zecken und Gliedertaxe nicht als Text genannt.",
-    "Heilverfahrensbegleitung bis 20.000 €, Kindervorsorge 50.000 €. Basis und Exklusiv gehören laut Seite zum Tarif UnfallSchutz Komfort. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+    "Heilverfahrensbegleitung bis 20.000 €, Kindervorsorge 50.000 €. Basis und Exklusiv gehören laut Seite zum Tarif UnfallSchutz Komfort. Keine Empfehlung markiert; Exklusiv als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }
