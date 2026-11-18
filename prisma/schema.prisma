@@ -293,6 +293,16 @@ model Customer {
   newUi                          Boolean                   @default(false)
   // Ansprache von Leads und Kunden in allen Texten (E-Mail, WhatsApp-Assistent, Vorlagen, Termin-Nachrichten): "sie" | "du" (Ole, 14.11.2026)
   leadAddress                    String                    @default("sie")
+  // Policen per WhatsApp, Kranken/BU/Leben je Vermittler (Rechtsprüfung A5, Ole 18.11.2026): an, wenn der Vermittler
+  // der AVV-Ergänzung (b) zugestimmt hat (Karte unter Einstellungen) UND seine Datenschutzhinweis-URL hinterlegt ist
+  // (lib/policen/regeln.ts gesundheitFreigegeben). Intern/Test (Oles eigenes Konto, Testkunden): sofort an.
+  policenIntern               Boolean   @default(false)
+  policenAvvZugestimmtAt      DateTime?
+  policenAvvVersion           String?
+  policenAvvUserId            String?
+  // „Später“ auf der Freischaltkarte (Heute, Terminvorbereitung); ab 3 nur noch unter Einstellungen
+  policenAvvSpaeter           Int       @default(0)
+  policenDatenschutzUrl       String?
   // Branding für Präsentationen (Ole, 15.11.2026): Logo von der Agentur-/Makler-Webseite oder hochgeladen,
   // vom Kunden bestätigt („darf ich verwenden“)
   brandLogo                      Bytes?
@@ -301,6 +311,10 @@ model Customer {
   brandLogoConfirmedAt           DateTime?
   // Stand der Standard-E-Mail-Vorlagen (lib/mail/vorlagen.ts VORLAGEN_STAND): neue Standards beim nächsten Laden ergänzen
   mailVorlagenStand              Int                       @default(0)
+  // E-Mails in der Customer Journey (Ole, 17.11.2026, docs/plan-mail-vorlagen.md, lib/mail/ablauf.ts): Stufe je Vorlage
+  // (auto | tipp | aus), BCC-Kopie (an, Adresse; null = eigene) und wann „Ja, Mails in meinem Namen senden“ bestätigt
+  // wurde. null = Voreinstellungen laut Plan, BCC aus.
+  mailAblauf                     Json?
   existingCustomers              ExistingCustomer[]
   whatsAppErrorAlerts            WhatsAppErrorAlert[]
   manualRevenues                 ManualRevenue[]
@@ -806,6 +820,8 @@ model Lead {
   documents           LeadDocument[]
   // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
   mails               ContactMail[]
+  // Automatische Vorlagen-Mails: Idempotenz je Vorlage und Anlass, höchstens eine je Tag (lib/mail/vorlagen-mail.ts)
+  mailVersand         LeadMailVersand[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
   contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
@@ -3843,6 +3859,32 @@ model ContactMail {
   @@index([providerMessageId])
 }
 
+// Vorlagen-Mails an Leads (Ole, 17.11.2026, Paket M0, lib/mail/vorlagen-mail.ts): Reservierung vor dem Versand.
+// Je Lead, Vorlage und Anlass höchstens eine Mail (unique); tagesSchluessel („<leadId>:<YYYY-MM-DD>“, Berlin) nur bei
+// automatischen Mails ohne Pflicht, damit je Lead und Tag höchstens eine rausgeht. Scheitert der Versand, wird die
+// Zeile gelöscht (später neuer Versuch möglich). Keine personenbezogenen Inhalte; gelöscht mit dem Lead.
+model LeadMailVersand {
+  id              String   @id @default(cuid())
+  customerId      String
+  leadId          String
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  // VorlageKey (lib/mail/vorlagen.ts)
+  vorlage         String
+  // Anlass, z. B. Termin-ID oder „anruf-2“
+  anlass          String
+  automatisch     Boolean  @default(true)
+  // Berliner Kalendertag YYYY-MM-DD
+  tag             String
+  tagesSchluessel String?  @unique
+  // reserviert | gesendet
+  status          String   @default("reserviert")
+  contactMailId   String?
+  createdAt       DateTime @default(now())
+
+  @@unique([leadId, vorlage, anlass])
+  @@index([leadId, tag])
+}
+
 // Dokumente am Lead (Ole, 13.11.2026): z. B. das Angebot, das der Vermittler geschickt hat,
 // oder die Police. Gespeichert in der Datenbank, gelöscht mit dem Lead (Art. 17).
 model LeadFile {
@@ -3884,14 +3926,17 @@ model LeadDocument {
   mimeType         String
   fileName         String
   size             Int
-  // verschlüsselt (lib/encryption.ts encryptBytes); null solange status = wartet
+  // Alte Ablage (bis 18.11.2026): verschlüsselt in der Datenbank (lib/encryption.ts encryptBytes). Neu: null.
   data             Bytes?
+  // Neue Ablage (Rechtsprüfung A6): Schlüssel im privaten Policen-Bucket (lib/policen/ablage.ts), Inhalt mit dem
+  // Schlüssel des Mandanten verschlüsselt. null solange status = wartet bzw. bei alten Unterlagen.
+  storageKey       String?
   // police | sonstig
   kind             String    @default("police")
   // Sparte laut Klassifikation, z. B. haftpflicht, hausrat, kfz, kranken, bu (lib/policen/regeln.ts SPARTEN)
   sparte           String?
   gesundheitsbezug Boolean   @default(false)
-  // Einwilligung (BestandConsentLog.id) und Zeitpunkt, nur bei Gesundheitsbezug
+  // Einwilligung (seit 18.11.2026 PolicenNachweis.id, vorher BestandConsentLog.id) und Zeitpunkt
   consentId        String?
   consentAt        DateTime?
   // Ausgelesene Vertragsdaten (nur Sachversicherungen): Gesellschaft, Sparte, Beitrag, Zahlweise, Summe, SB, Ablauf
@@ -3910,6 +3955,40 @@ model LeadDocument {
   @@index([leadId])
   @@index([customerId])
   @@index([status, createdAt])
+}
+
+// Nachweise zu Policen per WhatsApp (Rechtsprüfung A3, Ole 18.11.2026): Einwilligung (mit bzw. ohne KI), Ablehnung,
+// Widerruf, Opt-in für Erinnerungen aus der Buchung. Nur anhängen: Ein Datenbank-Trigger verbietet UPDATE und DELETE
+// (DELETE nur bei Art. 17 bzw. Vertragsende mit SET LOCAL app.policen_nachweis_loeschen = 'ja', lib/erasure.ts).
+// Bleibt nach dem Löschen der Policen als Nachweis, ohne Inhalte. Keine Fremdschlüssel (Lead-Löschung kaskadiert nicht).
+model PolicenNachweis {
+  id                 String   @id @default(cuid())
+  customerId         String
+  leadId             String?
+  // WhatsApp-Nummer des Leads
+  phone              String
+  // einwilligung | abgelehnt | widerruf | erinnerung_optin | erinnerung_stopp
+  art                String
+  // KI-Auslesen erlaubt („Ich willige ein“ = true, „Ja, aber ohne KI“ = false); null bei anderen Arten
+  ki                 Boolean?
+  // Wortlaut, wie gesendet (Einwilligungsnachricht mit Fußzeile und Knopftext bzw. Häkchentext der Buchung)
+  wortlaut           String?
+  textVersion        String?
+  // Version und Adresse der Datenschutzhinweise, auf die der Text verweist
+  datenschutzVersion String?
+  datenschutzUrl     String?
+  // WhatsApp-ID der Knopfantwort und der beantworteten Nachricht (context.id)
+  waMessageId        String?
+  frageWaMessageId   String?
+  // Zuständiger Vermittler (Lead.assignedUserId) und Name im Text
+  vermittlerUserId   String?
+  vermittlerName     String?
+  // whatsapp | buchung | vermittler | system
+  quelle             String
+  createdAt          DateTime @default(now())
+
+  @@index([customerId, phone, createdAt])
+  @@index([leadId, createdAt])
 }
 
 // Verträge je Lead (Cross-Selling, Ole 14.11.2026): Sparte, Beitrag, Datum, optional Versicherer,

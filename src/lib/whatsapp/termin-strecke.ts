@@ -262,7 +262,12 @@ export async function vertraegeAntwort(conversationId: string, text: string, now
     : await import("@/lib/policen/assistent")
         .then((m) => m.einladungNachVertraegen({ conversationId, an: k.an, person: k.person, vertraegeText: text, anzahl: liste.length }))
         .catch(() => null);
-  if (policen) await sende(k, policen.text, policen.buttons);
+  if (policen) {
+    await sende(k, policen.text, policen.buttons);
+    // Einwilligung als eigene Nachricht mit Knöpfen (lib/policen/bitte.ts, Rechtsprüfung A1)
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+    await sendWhatsAppMessage({ customerId: k.customerId, to: k.phone, body: policen.folge.text, sentBy: "bot", buttons: policen.folge.buttons, footer: policen.folge.footer });
+  }
   await sendeAbschluss(k, "vertraege");
   return true;
 }

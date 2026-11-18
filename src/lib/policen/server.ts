@@ -1,74 +1,85 @@
-// Policen vor dem Termin per WhatsApp (Ole, 17.11.2026): Eingang, Einwilligung, Widerruf, Ansicht, Löschung.
-// Regeln und Texte: lib/policen/regeln.ts. Aufgerufen aus lib/whatsapp/gateway.ts (eingehende Bilder/PDFs und Antworten).
+// Policen vor dem Termin per WhatsApp (Ole, 17.11.2026, neu gefasst 18.11.2026 nach der Rechtsprüfung
+// docs/recht/policen-whatsapp-gesundheitsdaten.md): Eingang, Einwilligung, Widerruf, Ansicht, Löschung, Erinnerungen.
+// Texte: lib/policen/bitte.ts und lib/policen/regeln.ts. Ablage: lib/policen/ablage.ts (privater EU-Bucket).
+// Aufgerufen aus lib/whatsapp/gateway.ts (eingehende Bilder/PDFs und Antworten).
 //
-// Schalter POLICEN_GESUNDHEIT_AN aus: wie bisher (KI ordnet zu, Unterlagen mit Gesundheitsbezug werden verworfen).
-// Schalter an (docs/recht-gesundheitsunterlagen.md Abschnitt b): Einwilligung möglichst vorher (Einladung mit Knöpfen,
-// lib/policen/assistent.ts). Ohne Einwilligung wird eine Datei mit möglichem Gesundheitsbezug weder geladen noch an die
-// KI gegeben; nur die Media-ID bleibt bis zu 24 Stunden, die Frage kommt einmal erneut. Nach der Einwilligung ordnet die
-// KI solche Unterlagen nur über einen EU-Endpunkt zu, sonst gar nicht.
+// KEINE KI (Ole, 18.11.2026): Dieses Modul importiert keinen KI-Client und gibt Dateien, Dateinamen und Begleittexte
+// an niemanden außer dem verschlüsselten Speicher und dem zuständigen Vermittler. Keine OCR, keine Zuordnung, kein
+// Auslesen, kein Widerruf per KI, für alle Sparten. Der Assistent läuft bei eingehenden Medien nicht (gateway.ts:
+// handled bzw. botErlaubt = false). Abgesichert durch tests/unit/policen.test.ts („keine KI“) und
+// tests/integration/policen-whatsapp.test.ts (KI-Client wird beim Dokumenteingang nie aufgerufen).
+//
+// Tor (A2): Ohne Einwilligung wird nichts von Meta/360dialog abgerufen; nur die Media-ID bleibt höchstens 24 Stunden,
+// die Nachfrage kommt einmal je Lead. Nachweis (A3): PolicenNachweis, nur anhängen. Widerruf (A4): sofort alles löschen.
+// Logs (A7): keine Inhalte, Dateinamen, Medien-Adressen; Push neutral „Neue Unterlagen von {Lead}“.
 
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
-import { decryptBytes, decryptSecret, encryptBytes } from "@/lib/encryption";
+import { decryptBytes, decryptSecret } from "@/lib/encryption";
 import { logLeadHistory } from "@/lib/lead-history";
-import { asAnsprache, type Ansprache } from "@/lib/ansprache";
+import { asAnsprache, type Ansprache, type Salutation } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
-import { advisorDisplayName } from "@/lib/advisor-name";
+import { advisorDisplayName, firmDisplayName } from "@/lib/advisor-name";
 import { vermittlerName } from "@/lib/whatsapp/gespraech";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
-import { logConsent } from "@/lib/bestand/einwilligung-server";
-import { ladeMedia } from "@/lib/policen/media";
-import { klassifiziere, liesAus, widerrufKi } from "@/lib/policen/ki";
-import { verantwortlicherFuer } from "@/lib/policen/verantwortlicher";
+import { ladeMedia, loescheMedia } from "@/lib/policen/media";
+import { ablageBereit, holeAb, legeAb, listeAb, loescheAb } from "@/lib/policen/ablage";
 import {
   abschlussSchritt,
-  ablehnungText,
+  angekommenKurzText,
   angekommenText,
   ANGEKOMMEN_RE,
-  auszugZeile,
+  ausText,
   BEHALTEN_VERMERK,
-  cleanAuszug,
+  CHAT_HINWEIS,
   dateiname,
-  einwilligungDankeText,
-  einwilligungText,
-  EINWILLIGUNG_KNOEPFE,
-  EINWILLIGUNG_RE,
-  EINWILLIGUNG_VERSION,
-  entscheide,
+  DATENSCHUTZ_VERSION,
   formatText,
   gesundheitAusText,
+  gesundheitFreigegeben,
+  GESUNDHEIT_FREIGABE_SELECT,
   istAbschluss,
-  istAblehnung,
+  istGesundheitsbezug,
   istWiderruf,
   istZustimmung,
   loeschDatum,
-  MAX_EINWILLIGUNGSFRAGEN,
   mimeErlaubt,
   minderjaehrig,
+  minderjaehrigText,
   nichtGeladenText,
-  PAYLOAD_JA,
-  PAYLOAD_NEIN,
-  policenGesundheitAn,
-  policenKiEu,
+  policenNotAus,
   POLICEN_MAX_BYTES,
   POLICEN_MAX_JE_LEAD,
+  sparteAusText,
   sparteLabel,
   typAusInhalt,
   typAusMime,
-  vorabEinordnung,
   WARTEN_STUNDEN,
+  ERINNERUNG_OPTIN_TEXT,
+  ERINNERUNG_OPTIN_VERSION,
   widerrufText,
-  widerrufVerdacht,
   zuGrossText,
+  gesundheitInText,
   type Person,
   type PolicenTyp,
-  type Sparte,
 } from "@/lib/policen/regeln";
-
-/** Quelle im Einwilligungsprotokoll (BestandConsentLog.source). */
-export const CONSENT_SOURCE = "policen_gesundheit";
+import {
+  einwilligungsAntwort,
+  einwilligungTextVersion,
+  EINWILLIGUNG_RE,
+  lieberNichtText,
+  NACHFRAGE_RE,
+  nachEinwilligungText,
+  policenEinwilligung,
+  policenNachfrage,
+  type BitteVermittler,
+  type Nachricht,
+} from "@/lib/policen/bitte";
 
 export type EingehendesMedium = { type: string; id?: string | null; mime_type?: string | null; filename?: string | null; caption?: string | null };
+
+/** Policen-Funktion an? Ablage eingerichtet (privater EU-Bucket, Schlüssel) und kein Notschalter. */
+export const policenAn = () => ablageBereit() && !policenNotAus();
 
 type Chat = { id: string; customerId: string; leadId: string; contactPhone: string; contactName: string | null; minderjaehrig: boolean };
 
@@ -81,19 +92,44 @@ async function chatOf(conversationId: string): Promise<Chat | null> {
   return { id: c.id, customerId: c.customerId, leadId: c.leadId, contactPhone: c.contactPhone, contactName: c.contactName, minderjaehrig: minderjaehrig(c.lead?.formData) };
 }
 
-/**
- * Gesundheitsunterlagen für diesen Chat erlaubt? Schalter POLICEN_GESUNDHEIT_AN und kein minderjähriger Lead laut
- * Formular (docs/recht-gesundheitsunterlagen.md Abschnitt e, Punkt 11): sonst wie Schalter aus (verwerfen, Hinweis).
- */
-const gesundheitErlaubt = (chat: Chat) => policenGesundheitAn() && !chat.minderjaehrig;
+type Sprecher = { an: Ansprache; person: Person; vermittler: BitteVermittler; firma: string | null; datenschutzUrl: string | null; gesundheitAn: boolean };
 
-/** Ansprache und Vermittler als Person (wie im Assistenten, lib/whatsapp/bot.ts). */
-async function sprecher(chat: Chat): Promise<{ an: Ansprache; person: Person }> {
-  const customer = await prisma.customer.findUnique({ where: { id: chat.customerId }, select: { name: true, leadAddress: true } });
+/** Ansprache, Vermittler, Firma, Datenschutzhinweis und Freigabe Kranken/BU/Leben (wie im Assistenten). */
+async function sprecher(chat: Chat): Promise<Sprecher> {
+  const [customer, erst] = await Promise.all([
+    prisma.customer.findUnique({ where: { id: chat.customerId }, select: { name: true, leadAddress: true, ...GESUNDHEIT_FREIGABE_SELECT } }),
+    prisma.erstinformation.findUnique({ where: { customerId: chat.customerId }, select: { firma: true } }).catch(() => null),
+  ]);
   const an = asAnsprache(customer?.leadAddress);
   const who = await ansprechpartner({ customerId: chat.customerId, leadId: chat.leadId, phone: chat.contactPhone, name: chat.contactName });
   const advisor = who.advisor || advisorDisplayName(customer?.name) || (an === "du" ? "deinem Berater" : "Ihrem Berater");
-  return { an, person: vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisor }) };
+  const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisor });
+  const eigeneUrl = (customer?.policenDatenschutzUrl ?? "").trim();
+  const datenschutzUrl = /^https:\/\//i.test(eigeneUrl)
+    ? eigeneUrl
+    : await import("@/lib/policen/verantwortlicher").then((m) => m.policenDatenschutzUrl(chat.customerId)).catch(() => null);
+  return {
+    an,
+    person,
+    vermittler: { ...person, anrede: (who.vermittler.anrede as Salutation | null | undefined) ?? null, name: who.vermittler.name ?? null },
+    firma: erst?.firma?.trim() || firmDisplayName(customer?.name) || null,
+    datenschutzUrl,
+    gesundheitAn: gesundheitFreigegeben(customer),
+  };
+}
+
+/**
+ * Bitte um Policen und Einwilligung für diesen Chat (Vermittler, Firma, Datenschutzhinweis, Freigabe Kranken/BU/Leben
+ * wie beim Eingang). null = Funktion aus, kein Lead oder minderjährig laut Formular. Für den Assistenten (P2) und
+ * lib/policen/assistent.ts.
+ */
+export async function policenBitteFuerChat(conversationId: string): Promise<import("@/lib/policen/bitte").PolicenBitte | null> {
+  if (!policenAn()) return null;
+  const chat = await chatOf(conversationId);
+  if (!chat || chat.minderjaehrig) return null;
+  const sp = await sprecher(chat);
+  const { policenBitte } = await import("@/lib/policen/bitte");
+  return policenBitte(sp);
 }
 
 async function apiKeyOf(customerId: string): Promise<string | null> {
@@ -101,61 +137,126 @@ async function apiKeyOf(customerId: string): Promise<string | null> {
   return acc?.status === "connected" && acc.apiKeyEnc ? decryptSecret(acc.apiKeyEnc) : null;
 }
 
-const send = (chat: Chat, body: string) => sendWhatsAppMessage({ customerId: chat.customerId, to: chat.contactPhone, body, sentBy: "bot" });
+const send = (chat: Chat, n: Nachricht | string) =>
+  typeof n === "string"
+    ? sendWhatsAppMessage({ customerId: chat.customerId, to: chat.contactPhone, body: n, sentBy: "bot" })
+    : sendWhatsAppMessage({ customerId: chat.customerId, to: chat.contactPhone, body: n.text, sentBy: "bot", buttons: n.knoepfe.length ? n.knoepfe : null, footer: n.fusszeile });
 
-/** Dieselbe kurze Antwort höchstens einmal je zwei Minuten (mehrere Fotos auf einmal). */
-async function einmalig(chat: Chat, now: Date, re: RegExp, text: string) {
-  const recent = await prisma.message.findMany({
-    where: { conversationId: chat.id, direction: "outbound", createdAt: { gte: new Date(now.getTime() - 2 * 60 * 1000) } },
-    select: { body: true },
-  });
-  if (recent.some((m) => re.test(m.body ?? ""))) return;
-  await send(chat, text);
-}
-const bestaetige = (chat: Chat, now: Date) => einmalig(chat, now, ANGEKOMMEN_RE, angekommenText());
+/** Fehler ohne Inhalte protokollieren (A7). */
+const logFehler = (wo: string, e: unknown) => console.error(`[policen ${wo}]`, e instanceof Error ? e.name : "Fehler");
 
-/** Einwilligungsfrage mit zwei Knöpfen (interaktive Nachricht im 24-Stunden-Fenster). */
-async function frageEinwilligung(chat: Chat, text: string) {
-  await sendWhatsAppMessage({ customerId: chat.customerId, to: chat.contactPhone, body: text, sentBy: "bot", buttons: EINWILLIGUNG_KNOEPFE }).catch((e) =>
-    console.error("[policen einwilligung]", e instanceof Error ? e.message : e),
-  );
+/** Datei bei 360dialog/Meta löschen, sobald sie nicht mehr gebraucht wird (bestmöglich). */
+async function mediaWeg(customerId: string, mediaIds: (string | null | undefined)[], apiKey?: string | null) {
+  const ids = mediaIds.filter((x): x is string => !!x);
+  if (!ids.length) return;
+  const key = apiKey ?? (await apiKeyOf(customerId).catch(() => null));
+  if (!key) return;
+  await Promise.all(ids.map((id) => loescheMedia(key, id).catch(() => false)));
 }
 
-/** Bisher gesendete Einwilligungsfragen in diesem Chat (Einladung mit Einwilligung zählt mit). */
-async function einwilligungsFragen(conversationId: string): Promise<{ anzahl: number; letzte: string | null }> {
-  const rows = await prisma.message.findMany({
-    where: { conversationId, direction: "outbound", body: { contains: "Gesundheitsangaben" } },
+/** Ausgehende Nachrichten an diesen Lead (alle Chats des Leads), neueste zuerst. */
+async function ausgehend(leadId: string, filter?: string) {
+  return prisma.message.findMany({
+    where: { conversation: { leadId }, direction: "outbound", ...(filter ? { body: { contains: filter } } : {}) },
     orderBy: { createdAt: "desc" },
-    select: { body: true },
+    select: { body: true, waMessageId: true },
+    take: 200,
   });
-  const fragen = rows.filter((m) => EINWILLIGUNG_RE.test(m.body ?? ""));
-  return { anzahl: fragen.length, letzte: fragen[0]?.body ?? null };
 }
 
-/** Aktive Einwilligung dieses Kontakts (letzter Eintrag im Protokoll ist „erteilt“). */
+// ─── Nachweis (A3, nur anhängen) ────────────────────────────────────────────
+
+type NachweisArt = "einwilligung" | "abgelehnt" | "widerruf" | "erinnerung_optin" | "erinnerung_stopp";
+
+async function nachweis(o: {
+  customerId: string;
+  leadId: string | null;
+  phone: string;
+  art: NachweisArt;
+  quelle: "whatsapp" | "buchung" | "vermittler" | "system";
+  ki?: boolean | null;
+  wortlaut?: string | null;
+  textVersion?: string | null;
+  datenschutzUrl?: string | null;
+  waMessageId?: string | null;
+  frageWaMessageId?: string | null;
+  vermittlerName?: string | null;
+  vermittlerUserId?: string | null;
+  at?: Date;
+}) {
+  const vermittlerUserId =
+    o.vermittlerUserId !== undefined ? o.vermittlerUserId : o.leadId ? ((await prisma.lead.findUnique({ where: { id: o.leadId }, select: { assignedUserId: true } }))?.assignedUserId ?? null) : null;
+  return prisma.policenNachweis.create({
+    data: {
+      customerId: o.customerId,
+      leadId: o.leadId,
+      phone: o.phone,
+      art: o.art,
+      quelle: o.quelle,
+      ki: o.ki ?? null,
+      wortlaut: o.wortlaut ?? null,
+      textVersion: o.textVersion ?? null,
+      datenschutzVersion: o.datenschutzUrl ? DATENSCHUTZ_VERSION : null,
+      datenschutzUrl: o.datenschutzUrl ?? null,
+      waMessageId: o.waMessageId ?? null,
+      frageWaMessageId: o.frageWaMessageId ?? null,
+      vermittlerUserId,
+      vermittlerName: o.vermittlerName ?? null,
+      ...(o.at ? { createdAt: o.at } : {}),
+    },
+    select: { id: true, createdAt: true },
+  });
+}
+
+/** Aktive Einwilligung dieses Kontakts: letzter Eintrag (Einwilligung, Ablehnung, Widerruf) ist eine Einwilligung. */
 export async function aktiveEinwilligung(customerId: string, phone: string) {
-  const last = await prisma.bestandConsentLog.findFirst({
-    where: { customerId, channel: "whatsapp", source: CONSENT_SOURCE, address: phone },
+  const last = await prisma.policenNachweis.findFirst({
+    where: { customerId, phone, art: { in: ["einwilligung", "abgelehnt", "widerruf"] } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, action: true, createdAt: true },
+    select: { id: true, art: true, createdAt: true, ki: true },
   });
-  return last?.action === "erteilt" ? last : null;
+  return last?.art === "einwilligung" ? last : null;
 }
 
-/** Angaben des Leads für die Einordnung ohne Inhalt: Vertragsliste (Chat, Komplettcheck) und Produkt. */
-async function leadAngaben(chat: Chat): Promise<string[]> {
-  const c = await prisma.conversation.findUnique({
-    where: { id: chat.id },
-    select: { qualificationData: true, lead: { select: { source: true, vorvertraege: true } } },
-  });
-  const q = (c?.qualificationData ?? {}) as Record<string, unknown>;
-  const vv = (c?.lead?.vorvertraege ?? null) as { liste?: { sparte?: unknown }[] } | null;
-  return [
-    q.vorhanden,
-    q.komplettcheck,
-    c?.lead?.source,
-    ...(Array.isArray(vv?.liste) ? vv.liste.map((x) => x?.sparte) : []),
-  ].filter((x): x is string => typeof x === "string" && !!x.trim());
+/**
+ * Hat der Lead schon Policen geschickt (gespeichert)? Für die Erinnerung der Termin-Strecke (Stopp beim ersten
+ * Dokument) und die Bereitlegen-Liste.
+ */
+export async function hatPolicenDokumente(leadId: string | null | undefined): Promise<boolean> {
+  return !!leadId && (await prisma.leadDocument.count({ where: { leadId, status: "gespeichert" } })) > 0;
+}
+
+/**
+ * Darf die Termin-Strecke (P2) an die Policen erinnern (Rechtsprüfung A8, § 7 UWG)? Nur wenn: Funktion an,
+ * protokolliertes WhatsApp-Opt-in aus der Buchung (erinnerungOptIn) ohne späteren Stopp, kein „Lieber nicht“, kein
+ * Widerruf, kein „STOPP“, noch kein Dokument, und ein gebuchter Termin in der Zukunft (nicht abgesagt). Jede Erinnerung
+ * nennt den Abmeldehinweis „STOP“ (P2).
+ */
+export async function policenErinnerungStatus(leadId: string, now = new Date()): Promise<{ darf: boolean; grund: string }> {
+  if (!policenAn()) return { darf: false, grund: "funktion_aus" };
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { customerId: true, phone: true, erasedAt: true } });
+  if (!lead || lead.erasedAt) return { darf: false, grund: "kein_lead" };
+  const arten = await prisma.policenNachweis.findMany({ where: { leadId }, orderBy: { createdAt: "asc" }, select: { art: true } });
+  const letzteOptIn = arten.map((x) => x.art).lastIndexOf("erinnerung_optin");
+  if (letzteOptIn < 0) return { darf: false, grund: "kein_optin" };
+  if (arten.slice(letzteOptIn).some((x) => x.art === "erinnerung_stopp")) return { darf: false, grund: "stopp" };
+  if (arten.some((x) => x.art === "abgelehnt")) return { darf: false, grund: "lieber_nicht" };
+  if (arten.some((x) => x.art === "widerruf")) return { darf: false, grund: "widerruf" };
+  if (await hatPolicenDokumente(leadId)) return { darf: false, grund: "dokument_da" };
+  const conv = await prisma.conversation.findFirst({ where: { leadId }, orderBy: { lastMessageAt: "desc" }, select: { optedOutAt: true } });
+  if (conv?.optedOutAt) return { darf: false, grund: "stopp" };
+  const termin = await prisma.appointment.findFirst({ where: { leadId, status: "booked", startsAt: { gt: now } }, select: { id: true } });
+  if (!termin) return { darf: false, grund: "kein_termin" };
+  return { darf: true, grund: "ok" };
+}
+export async function darfPolicenErinnern(leadId: string, now = new Date()): Promise<boolean> {
+  return (await policenErinnerungStatus(leadId, now)).darf;
+}
+
+
+/** Opt-in aus der Buchung protokollieren (nicht vorausgewählt, nur wenn angehakt). */
+export async function erinnerungOptIn(o: { customerId: string; leadId: string | null; phone: string; at?: Date }) {
+  return nachweis({ ...o, art: "erinnerung_optin", quelle: "buchung", wortlaut: ERINNERUNG_OPTIN_TEXT, textVersion: ERINNERUNG_OPTIN_VERSION });
 }
 
 async function setzeBody(messageId: string | null, body: string) {
@@ -163,18 +264,34 @@ async function setzeBody(messageId: string | null, body: string) {
 }
 
 async function loeschfristFuer(leadId: string, eingang: Date): Promise<Date | null> {
-  const lead = await prisma.lead.findUnique({
-    where: { id: leadId },
-    select: { status: true, closedAt: true, appointments: { where: { status: { not: "cancelled" } }, select: { startsAt: true } } },
-  });
-  return loeschDatum({ termine: lead?.appointments.map((x) => x.startsAt) ?? [], eingang, abschluss: istAbschluss(lead?.status), abschlussAm: lead?.closedAt });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { appointments: { where: { status: { not: "cancelled" } }, select: { startsAt: true } } } });
+  return loeschDatum({ termine: lead?.appointments.map((x) => x.startsAt) ?? [], eingang });
 }
 
-type Ergebnis = { handled: boolean; gespeichert?: string; verworfen?: string };
+/** Eingangsbestätigung höchstens einmal je Lead (Ole, 18.11.2026). */
+async function bestaetigeEinmal(chat: Chat, an: Ansprache, kurzSonst = false) {
+  const schon = (await ausgehend(chat.leadId, "ist angekommen")).some((m) => ANGEKOMMEN_RE.test(m.body ?? ""));
+  if (!schon) await send(chat, angekommenText(an));
+  else if (kurzSonst) await send(chat, angekommenKurzText());
+}
+
+/** Dokumente samt Dateien im Bucket und Medien bei Meta löschen. */
+async function loescheDokumente(where: { leadId?: string; customerId?: string; id?: { in: string[] }; status?: string }): Promise<number> {
+  const docs = await prisma.leadDocument.findMany({ where, select: { id: true, customerId: true, storageKey: true, waMediaId: true } });
+  if (!docs.length) return 0;
+  await loescheAb(docs.map((d) => d.storageKey)).catch((e) => logFehler("ablage löschen", e));
+  const del = await prisma.leadDocument.deleteMany({ where: { id: { in: docs.map((d) => d.id) } } });
+  for (const cid of new Set(docs.map((d) => d.customerId))) {
+    await mediaWeg(cid, docs.filter((d) => d.customerId === cid).map((d) => d.waMediaId)).catch(() => null);
+  }
+  return del.count;
+}
+
+type Ergebnis = { handled: boolean; gespeichert?: string; verworfen?: string; wartet?: boolean };
 
 /**
  * Eingehendes Bild oder Dokument im Lead-Chat. handled = true: beantwortet, der Assistent muss nichts mehr tun.
- * Ohne Lead (private Chats, Support) passiert nichts: nichts wird geladen.
+ * Ohne Lead (private Chats, Support) passiert nichts: nichts wird geladen. Keine KI.
  */
 export async function handleInboundMedia(o: {
   conversationId: string;
@@ -187,134 +304,100 @@ export async function handleInboundMedia(o: {
   const chat = await chatOf(o.conversationId);
   if (!chat || !o.medium.id) return { handled: false };
   const mediaId = o.medium.id;
-  const { an, person } = await sprecher(chat);
+  const sp = await sprecher(chat);
+  const { an, person } = sp;
   const antworte = async (text: string) => {
-    if (o.botErlaubt) await send(chat, text).catch((e) => console.error("[policen antwort]", e));
+    if (o.botErlaubt) await send(chat, text).catch((e) => logFehler("antwort", e));
   };
-  const caption = (o.medium.caption ?? "").trim().slice(0, 300);
   const fertig = (verworfen?: string): Ergebnis => ({ handled: o.botErlaubt, ...(verworfen ? { verworfen } : {}) });
+  const apiKey = await apiKeyOf(chat.customerId);
 
+  // Funktion aus (Ablage nicht eingerichtet bzw. Notschalter): nichts abrufen, freundlich auf den Termin verweisen
+  if (!policenAn()) {
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (Funktion aus)");
+    await mediaWeg(chat.customerId, [mediaId], apiKey);
+    await antworte(ausText(an));
+    return fertig("funktion_aus");
+  }
   if (!mimeErlaubt(o.medium.mime_type)) {
-    await setzeBody(o.messageId, "Dokument empfangen, nicht gespeichert (Format nicht lesbar)");
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (Format nicht lesbar)");
     await antworte(formatText(an));
     return fertig("format");
   }
   if ((await prisma.leadDocument.count({ where: { leadId: chat.leadId } })) >= POLICEN_MAX_JE_LEAD) {
-    await setzeBody(o.messageId, "Dokument empfangen, nicht gespeichert (zu viele Unterlagen)");
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (zu viele Unterlagen)");
     return { handled: false, verworfen: "limit" };
   }
-  const apiKey = await apiKeyOf(chat.customerId);
   if (!apiKey) return { handled: false };
 
-  /** Datei laden und Typ am Inhalt prüfen; bei Fehlern antworten. */
-  const lade = async (): Promise<{ data: Buffer; typ: PolicenTyp } | Ergebnis> => {
-    const dl = await ladeMedia(apiKey, mediaId, POLICEN_MAX_BYTES);
-    if (!dl.ok) {
-      await setzeBody(o.messageId, dl.grund === "zu_gross" ? "Dokument empfangen, nicht gespeichert (über 10 MB)" : "Dokument empfangen, konnte nicht geladen werden");
-      await antworte(dl.grund === "zu_gross" ? zuGrossText(an) : nichtGeladenText(an));
-      if (dl.grund === "fehler") console.error("[policen laden]", dl.detail);
-      return fertig(dl.grund);
-    }
-    const typ = typAusInhalt(dl.data);
-    if (!typ) {
-      await setzeBody(o.messageId, "Dokument empfangen, nicht gespeichert (Format nicht lesbar)");
-      await antworte(formatText(an));
-      return fertig("format");
-    }
-    return { data: dl.data, typ };
-  };
-
-  const gesundheitAn = gesundheitErlaubt(chat);
-  if (gesundheitAn) {
-    // Vor dem Laden, ohne KI: nur Dateiname, Begleittext und Angaben des Leads
-    const vorab = vorabEinordnung({ text: `${o.medium.filename ?? ""} ${caption}`, leadAngaben: await leadAngaben(chat) });
-    if (vorab.gesundheitMoeglich) {
-      const consent = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
-      if (!consent) {
-        return warteAufEinwilligung(chat, {
-          messageId: o.messageId,
-          mediaId,
-          typ: typAusMime(o.medium.mime_type),
-          fileName: dateiname(o.medium.filename, typAusMime(o.medium.mime_type), now),
-          size: 0,
-          sparte: vorab.sparte,
-          botErlaubt: o.botErlaubt,
-          an,
-          person,
-          now,
-        });
-      }
-      const geladen = await lade();
-      if (!("data" in geladen)) return geladen;
-      const fileName = dateiname(o.medium.filename, geladen.typ, now);
-      const id = await speichereNachEinwilligung(chat, { ...geladen, fileName, caption, messageId: o.messageId, vorSparte: vorab.sparte, consent: { id: consent.id, at: consent.createdAt }, now });
-      if (o.botErlaubt) await bestaetige(chat, now);
-      return { handled: o.botErlaubt, gespeichert: id };
-    }
+  // Minderjährig laut Formular: keine Einwilligung, nichts abrufen
+  if (chat.minderjaehrig) {
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (minderjährig laut Formular)");
+    await audit("policen.verworfen", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { grund: "minderjaehrig" }, actor: { role: "system" } });
+    await mediaWeg(chat.customerId, [mediaId], apiKey);
+    await antworte(minderjaehrigText(an, person));
+    return fertig("minderjaehrig");
   }
 
-  const geladen = await lade();
-  if (!("data" in geladen)) return geladen;
-  const { data, typ } = geladen;
-  const fileName = dateiname(o.medium.filename, typ, now);
-  // Nur Zuordnung (Sparte, Gesundheitsbezug), keine Inhalte. Schalter an: nur Dateien, die laut Name, Begleittext und
-  // Angaben des Leads Sachversicherungen sind; auch sie gehen über den EU-Endpunkt, wenn er eingerichtet ist (eine
-  // Datei kann trotzdem Gesundheitsangaben enthalten, Abschnitt e Punkt 8).
-  const eu = gesundheitAn ? policenKiEu() : null;
-  const ki = await klassifiziere(data, typ, { endpunkt: eu });
-  const e = entscheide({ ki, text: `${fileName} ${caption}` });
-
-  if (e.gesundheit) {
-    // Schalter aus (bis der Anwalt geprüft hat): Datei verwerfen, freundlicher Hinweis
-    if (!gesundheitAn) {
-      await setzeBody(o.messageId, "Dokument empfangen, nicht gespeichert (Gesundheitsangaben möglich)");
-      await audit("policen.verworfen", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { grund: "gesundheit_aus", sparte: e.sparte }, actor: { role: "system" } });
-      await antworte(gesundheitAusText(an, person));
-      return fertig("gesundheit_aus");
-    }
-    const consent = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
-    if (consent) {
-      const id = await speichere(chat, { messageId: o.messageId, typ, fileName, data, sparte: e.sparte, gesundheit: true, consent: { id: consent.id, at: consent.createdAt }, now });
-      await setzeBody(o.messageId, "Dokument empfangen (Gesundheitsangaben möglich)");
-      if (o.botErlaubt) await bestaetige(chat, now);
-      return { handled: o.botErlaubt, gespeichert: id };
-    }
-    // Inhalt verwerfen, nur die Media-ID merken und fragen
-    return warteAufEinwilligung(chat, { messageId: o.messageId, mediaId, typ, fileName, size: data.length, sparte: e.sparte, botErlaubt: o.botErlaubt, an, person, now });
+  // Kranken/BU/Leben für diesen Vermittler nicht freigegeben (A5): laut Dateiname bzw. Begleittext (Regeln, keine KI)
+  const text = `${o.medium.filename ?? ""} ${o.medium.caption ?? ""}`;
+  const sparte = sparteAusText(text);
+  if (!sp.gesundheitAn && (istGesundheitsbezug(sparte) || gesundheitInText(text))) {
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (Kranken, BU, Leben nicht freigegeben)");
+    await audit("policen.verworfen", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { grund: "gesundheit_nicht_freigegeben" }, actor: { role: "system" } });
+    await mediaWeg(chat.customerId, [mediaId], apiKey);
+    await antworte(gesundheitAusText(an, person));
+    return fertig("gesundheit_aus");
   }
 
-  const id = await speichere(chat, { messageId: o.messageId, typ, fileName, data, sparte: e.sparte, gesundheit: false, consent: null, now });
-  await setzeBody(o.messageId, `Dokument empfangen: ${fileName}${caption ? `\n${caption}` : ""}`);
-  if (o.botErlaubt) await bestaetige(chat, now);
-  // Vertragsdaten auslesen (nur Sachversicherungen; Fehler stören den Chat nicht)
-  if (ki?.police !== false && e.sparte !== "sonstig") await auslesen(id, data, typ, e.sparte, eu);
+  const consent = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
+  if (!consent) {
+    return warteAufEinwilligung(chat, sp, { messageId: o.messageId, mediaId, typ: typAusMime(o.medium.mime_type), fileName: dateiname(o.medium.filename, typAusMime(o.medium.mime_type), now), sparte, botErlaubt: o.botErlaubt, apiKey });
+  }
+
+  const dl = await ladeMedia(apiKey, mediaId, POLICEN_MAX_BYTES);
+  if (!dl.ok) {
+    await setzeBody(o.messageId, dl.grund === "zu_gross" ? "Dokument nicht gespeichert (über 10 MB)" : "Dokument konnte nicht geladen werden");
+    await antworte(dl.grund === "zu_gross" ? zuGrossText(an) : nichtGeladenText(an));
+    if (dl.grund === "fehler") console.error("[policen laden] fehler");
+    return fertig(dl.grund);
+  }
+  const typ = typAusInhalt(dl.data);
+  if (!typ) {
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (Format nicht lesbar)");
+    await mediaWeg(chat.customerId, [mediaId], apiKey);
+    await antworte(formatText(an));
+    return fertig("format");
+  }
+  const id = await speichere(chat, { messageId: o.messageId, typ, fileName: dateiname(o.medium.filename, typ, now), data: dl.data, sparte, consent: { id: consent.id, at: consent.createdAt }, now }).catch((e) => {
+    logFehler("ablage", e);
+    return null;
+  });
+  if (!id) {
+    await setzeBody(o.messageId, "Dokument konnte nicht gespeichert werden");
+    await antworte(nichtGeladenText(an));
+    return fertig("ablage");
+  }
+  await mediaWeg(chat.customerId, [mediaId], apiKey);
+  if (o.botErlaubt) await bestaetigeEinmal(chat, an).catch((e) => logFehler("bestätigung", e));
+  // Weitere Dokumente nach der Bestätigung: still angenommen, der Assistent antwortet nicht
   return { handled: o.botErlaubt, gespeichert: id };
 }
 
-async function auslesen(id: string, data: Buffer, typ: PolicenTyp, sparte: string | null, endpunkt: ReturnType<typeof policenKiEu>) {
-  const x = await liesAus(data, typ, { endpunkt });
-  if (x) await prisma.leadDocument.update({ where: { id }, data: { extracted: x, extractedAt: new Date(), ...(x.sparte && !sparte ? { sparte: x.sparte } : {}) } }).catch(() => null);
-}
-
 /**
- * Keine Einwilligung: nichts laden bzw. Inhalt verwerfen, nur die WhatsApp-Media-ID merken (höchstens 24 Stunden) und
- * fragen. Höchstens zweimal je Chat (Einladung bzw. erste Frage und einmal erneut), danach verwerfen mit Hinweis.
- * Assistent aus (Vermittler hat übernommen): keine Rückfrage, verwerfen.
+ * Keine Einwilligung (A2): nichts abrufen, nur die WhatsApp-Media-ID merken (höchstens 24 Stunden) und einmal je Lead
+ * mit dem Einwilligungstext nachfragen. Assistent aus (Vermittler hat übernommen): keine Rückfrage, verwerfen.
  */
 async function warteAufEinwilligung(
   chat: Chat,
-  x: { messageId: string | null; mediaId: string; typ: PolicenTyp; fileName: string; size: number; sparte: string | null; botErlaubt: boolean; an: Ansprache; person: Person; now: Date },
+  sp: Sprecher,
+  x: { messageId: string | null; mediaId: string; typ: PolicenTyp; fileName: string; sparte: string | null; botErlaubt: boolean; apiKey: string },
 ): Promise<Ergebnis> {
   if (!x.botErlaubt) {
-    await setzeBody(x.messageId, "Dokument empfangen, nicht gespeichert (Gesundheitsangaben möglich, keine Einwilligung)");
-    return { handled: false, verworfen: "keine_einwilligung" };
-  }
-  const offen = await prisma.leadDocument.count({ where: { leadId: chat.leadId, status: "wartet" } });
-  if (!offen && (await einwilligungsFragen(chat.id)).anzahl >= MAX_EINWILLIGUNGSFRAGEN) {
-    await setzeBody(x.messageId, "Dokument empfangen, nicht gespeichert (Gesundheitsangaben möglich, keine Einwilligung)");
+    await setzeBody(x.messageId, "Dokument nicht gespeichert (keine Einwilligung)");
     await audit("policen.verworfen", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { grund: "keine_einwilligung" }, actor: { role: "system" } });
-    await einmalig(chat, x.now, /speichere ich hier nicht/, gesundheitAusText(x.an, x.person));
-    return { handled: true, verworfen: "keine_einwilligung" };
+    await mediaWeg(chat.customerId, [x.mediaId], x.apiKey);
+    return { handled: false, verworfen: "keine_einwilligung" };
   }
   await prisma.leadDocument.create({
     data: {
@@ -326,38 +409,23 @@ async function warteAufEinwilligung(
       waMediaId: x.mediaId,
       mimeType: x.typ,
       fileName: x.fileName,
-      size: x.size,
+      size: 0,
       sparte: x.sparte,
       gesundheitsbezug: true,
     },
   });
-  await setzeBody(x.messageId, "Dokument empfangen (wartet auf Einwilligung)");
-  if (!offen) await frageEinwilligung(chat, einwilligungText(x.an, await verantwortlicherFuer(chat.customerId, x.person), { nachDatei: true }));
-  return { handled: true };
-}
-
-/**
- * Mit Einwilligung, Datei mit möglichem Gesundheitsbezug: KI-Zuordnung nur über den EU-Endpunkt; ohne ihn Sparte laut
- * Dateiname, Begleittext bzw. Angaben des Leads und „Gesundheitsangaben möglich“. Nur Sachversicherungen werden
- * ausgelesen (dann über denselben EU-Endpunkt).
- */
-async function speichereNachEinwilligung(
-  chat: Chat,
-  x: { data: Buffer; typ: PolicenTyp; fileName: string; caption: string; messageId: string | null; vorSparte: string | null; consent: { id: string; at: Date }; now: Date },
-): Promise<string> {
-  const eu = policenKiEu();
-  const ki = eu ? await klassifiziere(x.data, x.typ, { endpunkt: eu }) : null;
-  const e = ki ? entscheide({ ki, text: `${x.fileName} ${x.caption}` }) : { sparte: x.vorSparte as Sparte | null, gesundheit: true };
-  const id = await speichere(chat, { messageId: x.messageId, typ: x.typ, fileName: x.fileName, data: x.data, sparte: e.sparte, gesundheit: e.gesundheit, consent: x.consent, now: x.now });
-  await setzeBody(x.messageId, e.gesundheit ? "Dokument empfangen (Gesundheitsangaben möglich)" : `Dokument empfangen: ${x.fileName}`);
-  if (!e.gesundheit && ki?.police !== false && e.sparte !== "sonstig") await auslesen(id, x.data, x.typ, e.sparte, eu);
-  return id;
+  await setzeBody(x.messageId, `${CHAT_HINWEIS} (wartet auf Einwilligung)`);
+  const gefragt = (await ausgehend(chat.leadId, "Bevor ich")).some((m) => NACHFRAGE_RE.test(m.body ?? ""));
+  if (!gefragt) await send(chat, policenNachfrage(sp)).catch((e) => logFehler("nachfrage", e));
+  return { handled: true, wartet: true };
 }
 
 async function speichere(
   chat: Chat,
-  x: { messageId: string | null; typ: PolicenTyp; fileName: string; data: Buffer; sparte: string | null; gesundheit: boolean; consent: { id: string; at: Date } | null; now: Date },
+  x: { messageId: string | null; typ: PolicenTyp; fileName: string; data: Buffer; sparte: string | null; consent: { id: string; at: Date }; now: Date },
 ): Promise<string> {
+  // Erst in den Bucket (verschlüsselt mit dem Schlüssel des Mandanten), dann der Eintrag
+  const storageKey = await legeAb(chat.customerId, chat.leadId, x.data);
   const doc = await prisma.leadDocument.create({
     select: { id: true },
     data: {
@@ -369,150 +437,174 @@ async function speichere(
       mimeType: x.typ,
       fileName: x.fileName,
       size: x.data.length,
-      data: encryptBytes(x.data),
-      kind: x.sparte === "sonstig" ? "sonstig" : "police",
+      storageKey,
+      kind: "police",
       sparte: x.sparte,
-      gesundheitsbezug: x.gesundheit,
-      consentId: x.consent?.id ?? null,
-      consentAt: x.consent?.at ?? null,
+      // Jede Police kann Gesundheitsangaben enthalten (keine KI-Prüfung): immer so behandeln
+      gesundheitsbezug: true,
+      consentId: x.consent.id,
+      consentAt: x.consent.at,
       deleteAfter: await loeschfristFuer(chat.leadId, x.now),
     },
   });
-  // Verlauf ohne Dateinamen bei Gesundheitsbezug
-  await logLeadHistory(chat.leadId, "dokument", x.gesundheit ? "Unterlage per WhatsApp erhalten (Gesundheitsangaben möglich, mit Einwilligung)" : `Unterlage per WhatsApp erhalten: ${x.fileName}`, { customerId: chat.customerId, userId: null });
+  await setzeBody(x.messageId, CHAT_HINWEIS);
+  // Verlauf und Push ohne Dateinamen (A7)
+  await logLeadHistory(chat.leadId, "dokument", "Dokument per WhatsApp erhalten (mit Einwilligung)", { customerId: chat.customerId, userId: null });
+  const lead = await prisma.lead.findUnique({ where: { id: chat.leadId }, select: { name: true } });
+  const { notifyLeadPush } = await import("@/lib/team");
+  await notifyLeadPush(chat.leadId, {
+    title: `Neue Unterlagen von ${lead?.name?.trim() || "Ihrem Kontakt"}`,
+    body: "In der Terminvorbereitung ansehen.",
+    tag: `policen-neu:${chat.leadId}`,
+    url: `/buyer/leads/${chat.leadId}#dokumente`,
+  }).catch(() => null);
   return doc.id;
 }
 
+type Antwort = { kind: string; text: string | null; payload: string | null; waMessageId?: string | null; frageWaMessageId?: string | null };
+
 /**
- * Antwort des Leads, die Unterlagen betrifft: Knopf zur Einwilligung (auch auf die Einladung, ohne Datei), getipptes
- * Ja/Nein direkt auf die Frage, Widerruf (Regeln, sinngemäß per KI). handled = true: erledigt, der Assistent antwortet nicht.
+ * Antwort des Leads, die Policen betrifft: Knopf „Einverstanden“ bzw. „Lieber nicht“, getipptes Ja/Nein direkt nach
+ * der Einwilligungsnachricht, Widerruf (nur Regeln, keine KI). handled = true: erledigt, der Assistent antwortet nicht.
  */
-export async function handlePolicenAntwort(
-  conversationId: string,
-  m: { kind: string; text: string | null; payload: string | null; waMessageId?: string | null },
-  now = new Date(),
-): Promise<{ handled: boolean }> {
+export async function handlePolicenAntwort(conversationId: string, m: Antwort, now = new Date()): Promise<{ handled: boolean }> {
   const chat = await chatOf(conversationId);
   if (!chat) return { handled: false };
 
-  const payload = m.payload ?? "";
-  let ja = payload === PAYLOAD_JA;
-  let nein = payload === PAYLOAD_NEIN;
-  if (!ja && !nein && m.kind === "text") {
-    // Getippt: nur direkt nach der Einwilligungsfrage
+  const knopf = m.kind === "button" || m.kind === "interactive";
+  let antwort = einwilligungsAntwort(m.payload) ?? (knopf && !m.payload ? einwilligungsAntwort(m.text) : null);
+  if (!antwort && m.kind === "text") {
+    // Getippt: nur direkt nach der Einwilligungsnachricht (bzw. der Nachfrage)
     const last = await prisma.message.findFirst({ where: { conversationId: chat.id, direction: "outbound" }, orderBy: { createdAt: "desc" }, select: { body: true } });
     if (EINWILLIGUNG_RE.test(last?.body ?? "")) {
-      ja = istZustimmung(m.text);
-      nein = istAblehnung(m.text);
+      antwort = einwilligungsAntwort(m.text) ?? (istZustimmung(m.text) ? "ja" : /^(nein|nein,? danke|lieber nicht)[.!]?$/i.test((m.text ?? "").trim()) ? "nein" : null);
     }
   }
-  if (ja || nein) return beantworteEinwilligung(chat, { ja, waMessageId: m.waMessageId ?? null, now });
+  if (antwort === "ja") return beantworteEinwilligung(chat, { waMessageId: m.waMessageId ?? null, frageWaMessageId: m.frageWaMessageId ?? null, antwort: (m.text ?? "").trim() || "Einverstanden", now });
+  if (antwort === "nein") {
+    await loescheDokumente({ leadId: chat.leadId, status: "wartet" });
+    await nachweis({ customerId: chat.customerId, leadId: chat.leadId, phone: chat.contactPhone, art: "abgelehnt", quelle: "whatsapp", waMessageId: m.waMessageId ?? null, frageWaMessageId: m.frageWaMessageId ?? null, at: now });
+    await audit("policen.lieber_nicht", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, actor: { role: "lead" } });
+    await send(chat, lieberNichtText((await sprecher(chat)).an));
+    return { handled: true };
+  }
 
   if (m.kind === "text" && m.text?.trim()) {
     const [docs, consent] = await Promise.all([prisma.leadDocument.count({ where: { leadId: chat.leadId } }), aktiveEinwilligung(chat.customerId, chat.contactPhone)]);
     if (!docs && !consent) return { handled: false };
-    // Eindeutig nach Regeln, sonst sinngemäß per KI (ohne KI gilt die Regel)
-    const widerruf = istWiderruf(m.text) || (widerrufVerdacht(m.text) && (await widerrufKi(m.text)) === true);
-    if (!widerruf) return { handled: false };
-    await widerrufe({ customerId: chat.customerId, leadId: chat.leadId, phone: chat.contactPhone, via: "whatsapp", userId: null });
+    // Nur Regeln (regeln.ts istWiderruf), keine KI
+    if (!istWiderruf(m.text)) return { handled: false };
+    await widerrufe({ customerId: chat.customerId, leadId: chat.leadId, phone: chat.contactPhone, via: "whatsapp", userId: null, waMessageId: m.waMessageId ?? null });
     await send(chat, widerrufText((await sprecher(chat)).an));
     return { handled: true };
   }
   return { handled: false };
 }
 
-async function beantworteEinwilligung(chat: Chat, o: { ja: boolean; waMessageId: string | null; now: Date }): Promise<{ handled: boolean }> {
+/** Wortlaut, dem der Lead zugestimmt hat: die zuletzt gesendete Einwilligungsnachricht, so wie sie rausging. */
+async function zugestimmt(chat: Chat, sp: Sprecher, frageWaMessageId: string | null): Promise<{ wortlaut: string; frageWaMessageId: string | null }> {
+  const rows = await ausgehend(chat.leadId, "meine hier gesendeten Policen");
+  const frage = (frageWaMessageId && rows.find((r) => r.waMessageId === frageWaMessageId)) || rows.find((r) => EINWILLIGUNG_RE.test(r.body ?? ""));
+  if (frage?.body) return { wortlaut: frage.body, frageWaMessageId: frageWaMessageId ?? frage.waMessageId ?? null };
+  const e = policenEinwilligung(sp);
+  return { wortlaut: `${e.text}\n\n${e.fusszeile ?? ""}`.trim(), frageWaMessageId };
+}
+
+async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | null; frageWaMessageId: string | null; antwort: string; now: Date }): Promise<{ handled: boolean }> {
+  const sp = await sprecher(chat);
+  const { an, person } = sp;
+
+  if (chat.minderjaehrig) {
+    await loescheDokumente({ leadId: chat.leadId, status: "wartet" });
+    await send(chat, minderjaehrigText(an, person));
+    return { handled: true };
+  }
+
+  // Nachweis (A3; ein zweiter Tipp ändert nichts): Wortlaut wie gesendet mit Fußzeile und Knopftext, Textversion,
+  // Zeitpunkt, Nummer, Lead, WhatsApp-IDs von Antwort und Frage, Vermittler, Datenschutzhinweis mit Version, ki = true
+  let consent = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
+  if (!consent) {
+    const z = await zugestimmt(chat, sp, o.frageWaMessageId);
+    const gesundheitImText = /Gesundheitsangaben enthalten/.test(z.wortlaut);
+    const n = await nachweis({
+      customerId: chat.customerId,
+      leadId: chat.leadId,
+      phone: chat.contactPhone,
+      art: "einwilligung",
+      quelle: "whatsapp",
+      ki: true,
+      wortlaut: `${z.wortlaut}\n\nAntwort (Knopf): „${o.antwort.slice(0, 40)}“`,
+      textVersion: einwilligungTextVersion(gesundheitImText),
+      datenschutzUrl: sp.datenschutzUrl,
+      waMessageId: o.waMessageId,
+      frageWaMessageId: z.frageWaMessageId,
+      vermittlerName: sp.vermittler.name ?? sp.person.nom,
+      at: o.now,
+    });
+    consent = { id: n.id, art: "einwilligung", createdAt: n.createdAt, ki: true };
+    await audit("policen.einwilligung", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { nachweisId: n.id }, actor: { role: "lead" } });
+    await logLeadHistory(chat.leadId, "dokument", "Einwilligung zu Policen per WhatsApp erteilt", { customerId: chat.customerId, userId: null });
+  }
   const pending = await prisma.leadDocument.findMany({ where: { leadId: chat.leadId, status: "wartet" }, orderBy: { createdAt: "asc" } });
-  const gesundheitAn = gesundheitErlaubt(chat);
-  const { an, person } = await sprecher(chat);
-
-  if (!o.ja || !gesundheitAn) {
-    await prisma.leadDocument.deleteMany({ where: { leadId: chat.leadId, status: "wartet" } });
-    if (!o.ja) await audit("policen.einwilligung_abgelehnt", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { unterlagen: pending.length }, actor: { role: "lead" } });
-    await send(chat, o.ja ? gesundheitAusText(an, person) : ablehnungText());
-    return { handled: true };
-  }
-
-  // Einwilligung protokollieren: Wortlaut der beantworteten Frage mit Version, Zeitpunkt, Nummer, Lead, ID der Antwort
-  const frage = (await einwilligungsFragen(chat.id)).letzte ?? einwilligungText(an, await verantwortlicherFuer(chat.customerId, person));
-  const consent = await logConsent({
-    customerId: chat.customerId,
-    existingCustomerId: null,
-    channel: "whatsapp",
-    action: "erteilt",
-    source: CONSENT_SOURCE,
-    text: frage,
-    version: EINWILLIGUNG_VERSION,
-    leadId: chat.leadId,
-    waMessageId: o.waMessageId,
-    address: chat.contactPhone,
-    confirmedAt: o.now,
-    at: o.now,
-  });
-  await audit("policen.einwilligung", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { consentId: consent.id, version: EINWILLIGUNG_VERSION, unterlagen: pending.length }, actor: { role: "lead" } });
-  await logLeadHistory(chat.leadId, "dokument", "Einwilligung zu Unterlagen per WhatsApp erteilt (Gesundheitsangaben möglich)", { customerId: chat.customerId, userId: null });
   if (!pending.length) {
-    await send(chat, einwilligungDankeText(an));
+    await send(chat, nachEinwilligungText(an));
     return { handled: true };
   }
 
-  // Jetzt erst laden und speichern
+  // Jetzt erst abrufen und ablegen (A2)
   const apiKey = await apiKeyOf(chat.customerId);
   let ok = 0;
   for (const p of pending) {
     const dl = apiKey && p.waMediaId ? await ladeMedia(apiKey, p.waMediaId, POLICEN_MAX_BYTES) : null;
     const typ = dl?.ok ? typAusInhalt(dl.data) : null;
     await prisma.leadDocument.delete({ where: { id: p.id } }).catch(() => null);
-    if (!dl?.ok || !typ) continue;
-    await speichereNachEinwilligung(chat, {
-      data: dl.data,
-      typ,
-      fileName: p.fileName,
-      caption: "",
-      messageId: p.messageId,
-      vorSparte: p.sparte,
-      consent: { id: consent.id, at: o.now },
-      now: o.now,
+    await mediaWeg(chat.customerId, [p.waMediaId], apiKey);
+    if (!dl?.ok || !typ) {
+      await setzeBody(p.messageId, "Dokument konnte nicht geladen werden");
+      continue;
+    }
+    const id = await speichere(chat, { messageId: p.messageId, typ, fileName: p.fileName, data: dl.data, sparte: p.sparte, consent: { id: consent.id, at: consent.createdAt }, now: o.now }).catch((e) => {
+      logFehler("ablage", e);
+      return null;
     });
-    ok++;
+    if (id) ok++;
   }
-  await send(chat, ok ? angekommenText() : nichtGeladenText(an));
+  if (ok) await bestaetigeEinmal(chat, an, true);
+  else await send(chat, nichtGeladenText(an));
   return { handled: true };
 }
 
-/** Widerruf: alle Unterlagen des Leads sofort löschen (Dateien, Auszüge, Media-IDs), Widerruf protokollieren. */
-async function widerrufe(o: { customerId: string; leadId: string; phone: string | null; via: "whatsapp" | "vermittler"; userId: string | null }): Promise<number> {
-  const del = await prisma.leadDocument.deleteMany({ where: { leadId: o.leadId } });
-  if (o.phone && (await aktiveEinwilligung(o.customerId, o.phone))) {
-    await logConsent({
+/** Widerruf (A4): alle Unterlagen des Leads sofort löschen (Bucket, Media-IDs), Nachweis, Vermittler informieren. */
+async function widerrufe(o: { customerId: string; leadId: string; phone: string | null; via: "whatsapp" | "vermittler"; userId: string | null; waMessageId?: string | null }): Promise<number> {
+  const geloescht = await loescheDokumente({ leadId: o.leadId });
+  if (o.phone) {
+    await nachweis({
       customerId: o.customerId,
-      existingCustomerId: null,
-      channel: "whatsapp",
-      action: "widerrufen",
-      source: CONSENT_SOURCE,
-      address: o.phone,
       leadId: o.leadId,
-      actorUserId: o.userId,
-      text: o.via === "whatsapp" ? "Widerruf per WhatsApp" : "Widerruf über den Vermittler",
+      phone: o.phone,
+      art: "widerruf",
+      quelle: o.via === "whatsapp" ? "whatsapp" : "vermittler",
+      waMessageId: o.waMessageId ?? null,
+      wortlaut: o.via === "whatsapp" ? "Widerruf per WhatsApp" : "Widerruf über den Vermittler",
     });
   }
-  await audit("policen.widerruf", { entity: "Lead", entityId: o.leadId, customerId: o.customerId, details: { geloescht: del.count, via: o.via }, actor: o.via === "whatsapp" ? { role: "lead" } : { id: o.userId, role: "BUYER" } });
+  await audit("policen.widerruf", { entity: "Lead", entityId: o.leadId, customerId: o.customerId, details: { geloescht, via: o.via }, actor: o.via === "whatsapp" ? { role: "lead" } : { id: o.userId, role: "BUYER" } });
   await logLeadHistory(
     o.leadId,
     "dokument",
-    o.via === "whatsapp" ? `Einwilligung per WhatsApp widerrufen, Unterlagen gelöscht (${del.count})` : `Einwilligung widerrufen, Unterlagen gelöscht (${del.count})`,
+    o.via === "whatsapp" ? `Einwilligung per WhatsApp widerrufen, Dokumente gelöscht (${geloescht})` : `Einwilligung widerrufen, Dokumente gelöscht (${geloescht})`,
     { customerId: o.customerId, userId: o.userId },
   );
   if (o.via === "whatsapp") {
     const { notifyLeadPush } = await import("@/lib/team");
     await notifyLeadPush(o.leadId, {
       title: "Unterlagen gelöscht (Widerruf)",
-      body: "Ein Kunde hat seine Einwilligung zu den per WhatsApp geschickten Unterlagen widerrufen. Die Unterlagen sind gelöscht.",
+      body: "Ein Kontakt hat seine Einwilligung widerrufen. Die Unterlagen sind gelöscht.",
       tag: `policen-widerruf:${o.leadId}`,
       url: `/buyer/leads/${o.leadId}#dokumente`,
     }).catch(() => null);
   }
-  return del.count;
+  return geloescht;
 }
 
 /** Vermittler im Kontakt: „Einwilligung widerrufen / Unterlagen löschen“ (Widerruf, der ihn anders erreicht hat). */
@@ -531,11 +623,10 @@ export type UnterlageView = {
   fileName: string;
   size: number;
   createdAt: string;
+  /** Sparte laut Dateiname bzw. Begleittext (keine KI), sonst null */
   sparte: string | null;
-  gesundheit: boolean;
   consentAt: string | null;
-  auszug: string | null;
-  /** Inhalt ansehen erlaubt (Admin-Vorschau: nie bei Gesundheitsbezug) */
+  /** Öffnen/Herunterladen erlaubt (nie in der Admin-Vorschau) */
   ansehen: boolean;
   /** Geplante automatische Löschung (null: behalten bzw. keine Frist) */
   loeschtAm: string | null;
@@ -546,72 +637,81 @@ export type UnterlageView = {
   behaltenMoeglich: boolean;
 };
 
-/** Gespeicherte Unterlagen am Lead (ohne Inhalt). preview = Admin in „Als Kunde ansehen“. */
+/**
+ * Gespeicherte Dokumente am Lead (ohne Inhalt). Aufrufer prüfen vorher, dass der Login den Lead sehen darf
+ * (leadScope: Inhaber bzw. zuständiger Berater). preview = Admin in „Als Kunde ansehen“: weder Dateiname noch Inhalt.
+ */
 export async function listUnterlagen(leadId: string, opts: { preview: boolean }): Promise<UnterlageView[]> {
   const [rows, lead] = await Promise.all([
     prisma.leadDocument.findMany({
       where: { leadId, status: "gespeichert" },
       orderBy: { createdAt: "desc" },
-      select: { id: true, fileName: true, size: true, createdAt: true, sparte: true, gesundheitsbezug: true, consentAt: true, extracted: true, deleteAfter: true, behaltenAt: true, behaltenVermerk: true },
+      select: { id: true, fileName: true, size: true, createdAt: true, sparte: true, consentAt: true, deleteAfter: true, behaltenAt: true, behaltenVermerk: true },
     }),
     prisma.lead.findUnique({ where: { id: leadId }, select: { status: true } }),
   ]);
   const abschluss = istAbschluss(lead?.status);
-  return rows.map((r) => {
-    const verdeckt = opts.preview && r.gesundheitsbezug;
-    return {
-      id: r.id,
-      fileName: verdeckt ? "Unterlage (Inhalt nur für den Vermittler)" : r.fileName,
-      size: r.size,
-      createdAt: r.createdAt.toISOString(),
-      sparte: r.sparte ? sparteLabel(r.sparte) : null,
-      gesundheit: r.gesundheitsbezug,
-      consentAt: r.consentAt?.toISOString() ?? null,
-      auszug: r.gesundheitsbezug ? null : auszugZeile(cleanAuszug(r.extracted)),
-      ansehen: !verdeckt,
-      loeschtAm: r.behaltenAt ? null : (r.deleteAfter?.toISOString() ?? null),
-      behaltenAt: r.behaltenAt?.toISOString() ?? null,
-      behaltenVermerk: r.behaltenVermerk,
-      behaltenMoeglich: abschluss || !!r.behaltenAt,
-    };
-  });
+  return rows.map((r) => ({
+    id: r.id,
+    fileName: opts.preview ? CHAT_HINWEIS : r.fileName,
+    size: r.size,
+    createdAt: r.createdAt.toISOString(),
+    sparte: r.sparte ? sparteLabel(r.sparte) : null,
+    consentAt: r.consentAt?.toISOString() ?? null,
+    ansehen: !opts.preview,
+    loeschtAm: r.behaltenAt ? null : (r.deleteAfter?.toISOString() ?? null),
+    behaltenAt: r.behaltenAt?.toISOString() ?? null,
+    behaltenVermerk: r.behaltenVermerk,
+    behaltenMoeglich: abschluss || !!r.behaltenAt,
+  }));
 }
 
-/** Datei zum Ansehen (entschlüsselt). null = nicht gefunden oder nicht erlaubt. */
+/**
+ * Datei zum Öffnen bzw. Herunterladen (entschlüsselt). null = nicht gefunden oder nicht erlaubt (Admin-Vorschau, kein
+ * Login). Jeder Abruf steht im Änderungsprotokoll (policen.abruf). Aufrufer prüfen leadScope.
+ */
 export async function ladeUnterlage(
   leadId: string,
   docId: string,
-  ctx: { customerId: string; preview: boolean; userId: string | null },
+  ctx: { customerId: string; preview: boolean; userId: string | null; email?: string | null; download?: boolean },
 ): Promise<{ fileName: string; mimeType: string; data: Buffer } | null> {
-  const doc = await prisma.leadDocument.findFirst({ where: { id: docId, leadId, customerId: ctx.customerId, status: "gespeichert" } });
-  if (!doc?.data) return null;
-  // Gesundheitsbezug: nur der Vermittler selbst (kein Admin, keine Vorschau)
-  if (doc.gesundheitsbezug && (ctx.preview || !ctx.userId)) return null;
-  if (doc.gesundheitsbezug) {
-    await audit("policen.ansehen", { entity: "LeadDocument", entityId: doc.id, customerId: ctx.customerId, details: { leadId }, actor: { id: ctx.userId, role: "BUYER" } });
-  }
-  return { fileName: doc.fileName, mimeType: doc.mimeType, data: decryptBytes(doc.data) };
+  if (ctx.preview || !ctx.userId) return null;
+  const doc = await prisma.leadDocument.findFirst({
+    where: { id: docId, leadId, customerId: ctx.customerId, status: "gespeichert" },
+    select: { id: true, fileName: true, mimeType: true, storageKey: true, data: true },
+  });
+  if (!doc) return null;
+  const data = doc.storageKey ? await holeAb(ctx.customerId, doc.storageKey) : doc.data ? decryptBytes(doc.data) : null;
+  if (!data) return null;
+  await audit("policen.abruf", {
+    entity: "LeadDocument",
+    entityId: doc.id,
+    customerId: ctx.customerId,
+    details: { leadId, art: ctx.download ? "herunterladen" : "oeffnen" },
+    actor: { id: ctx.userId, email: ctx.email ?? null, role: "BUYER" },
+  });
+  return { fileName: doc.fileName, mimeType: doc.mimeType, data };
 }
 
 /** Eine Unterlage löschen (Vermittler im Kontakt). */
 export async function loescheUnterlage(leadId: string, docId: string, customerId: string, userId: string | null): Promise<boolean> {
-  const doc = await prisma.leadDocument.findFirst({ where: { id: docId, leadId, customerId }, select: { id: true, fileName: true, gesundheitsbezug: true } });
-  if (!doc) return false;
-  await prisma.leadDocument.delete({ where: { id: doc.id } });
-  await logLeadHistory(leadId, "dokument", doc.gesundheitsbezug ? "Unterlage gelöscht (Gesundheitsangaben möglich)" : `Unterlage gelöscht: ${doc.fileName}`, { customerId, userId });
+  const n = await loescheDokumente({ customerId, leadId, id: { in: [docId] } });
+  if (!n) return false;
+  await logLeadHistory(leadId, "dokument", "Dokument vom Kunden gelöscht", { customerId, userId });
+  await audit("policen.geloescht", { entity: "LeadDocument", entityId: docId, customerId, details: { leadId }, actor: { id: userId, role: "BUYER" } });
   return true;
 }
 
 /**
- * „Beratungsdokumentation behalten“ setzen bzw. aufheben (Vermittler im Kontakt). Gesetzt: keine automatische Löschung,
- * mit Zeitpunkt, Login und Vermerk. Aufgehoben: Löschfrist wie üblich (nach Abschluss mit Erinnerung).
+ * „Beratungsdokumentation behalten“ setzen bzw. aufheben (Vermittler im Kontakt, nur bei Abschluss). Gesetzt: keine
+ * automatische Löschung, mit Zeitpunkt, Login und Vermerk. Aufgehoben: wieder 90 Tage nach dem Termin.
  */
 export async function behalteUnterlage(
   leadId: string,
   docId: string,
   ctx: { customerId: string; userId: string | null; behalten: boolean; vermerk?: string | null; now?: Date },
 ): Promise<boolean> {
-  const doc = await prisma.leadDocument.findFirst({ where: { id: docId, leadId, customerId: ctx.customerId, status: "gespeichert" }, select: { id: true, createdAt: true, fileName: true, gesundheitsbezug: true } });
+  const doc = await prisma.leadDocument.findFirst({ where: { id: docId, leadId, customerId: ctx.customerId, status: "gespeichert" }, select: { id: true, createdAt: true } });
   if (!doc) return false;
   const now = ctx.now ?? new Date();
   const vermerk = (ctx.vermerk ?? "").replace(/\s+/g, " ").trim().slice(0, 200) || BEHALTEN_VERMERK;
@@ -621,8 +721,10 @@ export async function behalteUnterlage(
       ? { behaltenAt: now, behaltenVonId: ctx.userId, behaltenVermerk: vermerk, deleteAfter: null }
       : { behaltenAt: null, behaltenVonId: null, behaltenVermerk: null, erinnertAt: null, deleteAfter: await loeschfristFuer(leadId, doc.createdAt) },
   });
-  const was = doc.gesundheitsbezug ? "Unterlage (Gesundheitsangaben möglich)" : `Unterlage ${doc.fileName}`;
-  await logLeadHistory(leadId, "dokument", ctx.behalten ? `${was} wird behalten: ${vermerk}` : `${was} wird nicht mehr behalten, automatische Löschung wieder an`, { customerId: ctx.customerId, userId: ctx.userId });
+  await logLeadHistory(leadId, "dokument", ctx.behalten ? `Dokument vom Kunden wird behalten: ${vermerk}` : "Dokument vom Kunden wird nicht mehr behalten, automatische Löschung wieder an", {
+    customerId: ctx.customerId,
+    userId: ctx.userId,
+  });
   await audit("policen.behalten", { entity: "LeadDocument", entityId: doc.id, customerId: ctx.customerId, details: { leadId, behalten: ctx.behalten, vermerk: ctx.behalten ? vermerk : null }, actor: { id: ctx.userId, role: "BUYER" } });
   return true;
 }
@@ -632,12 +734,18 @@ export async function behalteUnterlage(
 const tag = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 
 /**
- * Ausstehende Einwilligungen nach 24 Stunden verwerfen. Gespeicherte Unterlagen ohne Abschluss 30 Tage nach dem letzten
- * Termin (ohne Termin: nach dem Eingang) löschen. Mit Abschluss 90 Tage nach dem Abschluss, 14 Tage vorher Erinnerung
- * an den Vermittler („In die Kundenakte übernehmen“). „Beratungsdokumentation behalten“: keine automatische Löschung.
+ * Täglich (api/whatsapp/cron): Media-IDs ohne Einwilligung nach 24 Stunden verwerfen. Gespeicherte Dokumente 90 Tage
+ * nach dem letzten Termin (ohne Termin nach dem Eingang) löschen; bei Abschluss 14 Tage vorher Erinnerung an den
+ * Vermittler. „Beratungsdokumentation behalten“: keine automatische Löschung. Verwaiste Dateien im Bucket (ohne
+ * Eintrag, älter als ein Tag, z. B. nach Löschung eines Leads) werden mit gelöscht.
  */
 export async function prunePolicen(now = new Date()) {
-  const wartet = await prisma.leadDocument.deleteMany({ where: { status: "wartet", createdAt: { lt: new Date(now.getTime() - WARTEN_STUNDEN * 60 * 60 * 1000) } } });
+  const abgelaufen = await prisma.leadDocument.findMany({
+    where: { status: "wartet", createdAt: { lt: new Date(now.getTime() - WARTEN_STUNDEN * 60 * 60 * 1000) } },
+    select: { id: true },
+  });
+  const wartet = abgelaufen.length ? await loescheDokumente({ id: { in: abgelaufen.map((x) => x.id) } }) : 0;
+
   const docs = await prisma.leadDocument.findMany({
     where: { status: "gespeichert" },
     select: {
@@ -647,7 +755,7 @@ export async function prunePolicen(now = new Date()) {
       deleteAfter: true,
       erinnertAt: true,
       behaltenAt: true,
-      lead: { select: { status: true, closedAt: true, name: true, appointments: { where: { status: { not: "cancelled" } }, select: { startsAt: true } } } },
+      lead: { select: { status: true, name: true, appointments: { where: { status: { not: "cancelled" } }, select: { startsAt: true } } } },
     },
   });
   const loeschen: string[] = [];
@@ -663,10 +771,9 @@ export async function prunePolicen(now = new Date()) {
       if (d.deleteAfter) await setze(d.id, { deleteAfter: null });
       continue;
     }
-    const abschluss = istAbschluss(d.lead.status);
-    const datum = loeschDatum({ termine: d.lead.appointments.map((x) => x.startsAt), eingang: d.createdAt, abschluss, abschlussAm: d.lead.closedAt });
+    const datum = loeschDatum({ termine: d.lead.appointments.map((x) => x.startsAt), eingang: d.createdAt });
     if (!datum) continue;
-    if (abschluss) {
+    if (istAbschluss(d.lead.status)) {
       const s = abschlussSchritt({ datum, erinnertAt: d.erinnertAt, now });
       if (s.aktion === "loeschen") loeschen.push(d.id);
       else if (s.aktion === "erinnern") {
@@ -679,19 +786,34 @@ export async function prunePolicen(now = new Date()) {
     if (datum.getTime() <= now.getTime()) loeschen.push(d.id);
     else if (!gleich(datum)) await setze(d.id, { deleteAfter: datum });
   }
-  const geloescht = loeschen.length ? (await prisma.leadDocument.deleteMany({ where: { id: { in: loeschen } } })).count : 0;
+  const geloescht = loeschen.length ? await loescheDokumente({ id: { in: loeschen } }) : 0;
   if (erinnern.size) {
     const { notifyLeadPush } = await import("@/lib/team");
     for (const [leadId, e] of erinnern) {
-      const text = `Unterlagen vom Kunden werden am ${tag(e.am)} gelöscht. Bitte in die Kundenakte übernehmen oder als Beratungsdokumentation behalten.`;
+      const text = `Dokumente vom Kunden werden am ${tag(e.am)} gelöscht. Bitte in die Kundenakte übernehmen oder als Beratungsdokumentation behalten.`;
       await logLeadHistory(leadId, "dokument", text, { userId: null });
       await notifyLeadPush(leadId, {
-        title: `Unterlagen in die Kundenakte übernehmen: ${e.name ?? "Kontakt"}`,
+        title: `Dokumente in die Kundenakte übernehmen: ${e.name ?? "Kontakt"}`,
         body: text,
         tag: `policen-erinnerung:${leadId}`,
         url: `/buyer/leads/${leadId}#dokumente`,
       }).catch(() => null);
     }
   }
-  return { wartet: wartet.count, geloescht, aktualisiert, erinnert: erinnern.size };
+  // Verwaiste Dateien im Bucket
+  let verwaist = 0;
+  try {
+    const objekte = await listeAb();
+    if (objekte.length) {
+      const bekannt = new Set(
+        (await prisma.leadDocument.findMany({ where: { storageKey: { in: objekte.map((x) => x.key) } }, select: { storageKey: true } })).map((x) => x.storageKey),
+      );
+      const weg = objekte.filter((x) => !bekannt.has(x.key) && x.at.getTime() < now.getTime() - 24 * 60 * 60 * 1000).map((x) => x.key);
+      await loescheAb(weg);
+      verwaist = weg.length;
+    }
+  } catch (e) {
+    logFehler("verwaist", e);
+  }
+  return { wartet, geloescht, aktualisiert, erinnert: erinnern.size, verwaist };
 }

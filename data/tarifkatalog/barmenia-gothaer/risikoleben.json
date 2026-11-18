@@ -23,8 +23,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung Plus",
@@ -40,8 +39,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung Premium",
@@ -57,8 +55,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.barmeniagothaer.de/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -69,6 +66,7 @@
     "Nachversicherung: anlassbezogen (Heirat, Geburt, Immobilie u. a.) und nach 5 Vertragsjahren ohne Anlass. Vorgezogene Leistung bei einer Lebenserwartung unter 12 Monaten.",
     "Premium zusätzlich: Sofortschutz ab Antrag (Basis und Plus nur nach Unfall), kostenfreie Erhöhung der Summe in den ersten 3 Monaten nach besonderen Ereignissen.",
     "Partner-Police: zwei Personen in einem Vertrag (als „verbundene Leben“ erfasst); Kombination mit BU-Zusatz möglich. Fallende Summe nicht genannt.",
-    "BarmeniaGothaer markiert keine Stufe; Plus als mittlere Stufe."
+    "BarmeniaGothaer markiert keine Stufe; Plus als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produkttabelle auf barmeniagothaer.de."
   ]
 }

@@ -26,6 +26,19 @@ export const MAIL_ARTEN = {
   angebot: "Angebot",
   angebot_nachfassen: "Angebot nachfassen",
   manuell: "E-Mail",
+  // Vorlagen-Mails (Paket M0, lib/mail/vorlagen-mail.ts): Art = Schlüssel der Vorlage, automatisch oder von Hand
+  nicht_erreicht: "Nicht erreicht",
+  // „angebot“ steht oben (Paket P3, gleiche Bezeichnung)
+  nachfassen_angebot: "Nachfassen Angebot",
+  nach_abschluss: "Nach dem Abschluss",
+  termin_vorbereitung: "Termin: Vorbereitung",
+  nicht_erschienen: "Nicht erschienen",
+  beratungsdoku: "Gesprächszusammenfassung",
+  unterlagen_fehlen: "Unterlagen fehlen noch",
+  willkommen: "Willkommen",
+  kuendigung: "Kündigung alte Versicherung",
+  wie_besprochen: "Wie besprochen",
+  tuer_offen: "Kein Interesse: Tür offen",
 } as const;
 export type MailArt = keyof typeof MAIL_ARTEN;
 
@@ -48,7 +61,12 @@ export type MailProtokoll = {
   label?: string | null;
   /** Login, der die Mail selbst geschrieben hat (manuell); bei automatischen Mails null */
   userId?: string | null;
+  /** Automatisch versendet; ohne Angabe: alles außer „manuell“ */
+  automatisch?: boolean;
 };
+
+/** Versandweg im Verlauf: Postfach, unsere Versanddomain oder „im eigenen Mailprogramm gesendet“ (laut Vermittler). */
+export type MailWeg = "resend" | "postfach" | "mailprogramm";
 
 export type MailVersand = {
   to: string;
@@ -56,7 +74,7 @@ export type MailVersand = {
   text: string;
   status: Extract<MailStatus, "versendet" | "nicht_zustellbar" | "nicht_versendet">;
   reason?: string | null;
-  provider?: "resend" | "postfach" | null;
+  provider?: MailWeg | null;
   messageId?: string | null;
 };
 
@@ -67,10 +85,11 @@ export function mailArtLabel(art: string, label?: string | null): string {
 }
 
 /** Kurzzeile für den Lead-Verlauf (ohne Text; der steht in ContactMail). */
-export function mailVerlaufText(m: { art: string; label?: string | null; automatic: boolean; to: string; subject: string; status: string }): string {
+export function mailVerlaufText(m: { art: string; label?: string | null; automatic: boolean; to: string; subject: string; status: string; provider?: string | null }): string {
   const head = m.status === "nicht_versendet" ? "E-Mail nicht versendet" : "E-Mail";
-  const art = m.automatic ? ` (automatisch, ${mailArtLabel(m.art, m.label)})` : "";
-  return `${head}${art} an ${m.to}: ${m.subject}`;
+  const vorlage = m.art !== "manuell" ? mailArtLabel(m.art, m.label) : "";
+  const zusatz = [m.automatic ? "automatisch" : "", vorlage, m.provider === "mailprogramm" ? "im eigenen Mailprogramm gesendet" : ""].filter(Boolean).join(", ");
+  return `${head}${zusatz ? ` (${zusatz})` : ""} an ${m.to}: ${m.subject}`;
 }
 
 /**
@@ -85,7 +104,7 @@ export async function protokolliereMail(p: MailProtokoll, v: MailVersand, now = 
       leadId = (await prisma.existingCustomer.findUnique({ where: { id: p.existingCustomerId }, select: { leadId: true } }))?.leadId ?? null;
     }
     if (!leadId && !p.existingCustomerId) return null;
-    const automatic = p.art !== "manuell";
+    const automatic = p.automatisch ?? p.art !== "manuell";
     const reason = v.reason?.trim().slice(0, 300) || null;
     if (v.status === "nicht_versendet") {
       const prev = await prisma.contactMail.findFirst({
@@ -130,7 +149,7 @@ export async function protokolliereMail(p: MailProtokoll, v: MailVersand, now = 
           leadId,
           customerId: p.customerId,
           kind: "email",
-          text: mailVerlaufText({ art: p.art, label: p.label, automatic, to: v.to, subject: v.subject, status: v.status }).slice(0, 4000),
+          text: mailVerlaufText({ art: p.art, label: p.label, automatic, to: v.to, subject: v.subject, status: v.status, provider: v.provider }).slice(0, 4000),
           userId: p.userId ?? null,
           mailId: mail.id,
           createdAt: now,
@@ -213,9 +232,11 @@ export type KontaktMailEintrag = {
   statusLabel: string;
   reason: string | null;
   at: string;
+  /** Versandweg; „mailprogramm“ = laut Vermittler im eigenen Mailprogramm gesendet */
+  provider: string | null;
 };
 
-const toEintrag = (m: { id: string; kind: string; label: string | null; automatic: boolean; recipient: string; subject: string; body: string; status: string; reason: string | null; createdAt: Date }): KontaktMailEintrag => ({
+const toEintrag = (m: { id: string; kind: string; label: string | null; automatic: boolean; recipient: string; subject: string; body: string; status: string; reason: string | null; createdAt: Date; provider?: string | null }): KontaktMailEintrag => ({
   id: m.id,
   art: m.kind,
   artLabel: mailArtLabel(m.kind, m.label),
@@ -227,6 +248,7 @@ const toEintrag = (m: { id: string; kind: string; label: string | null; automati
   statusLabel: (MAIL_STATUS as Record<string, string>)[m.status] ?? m.status,
   reason: m.reason,
   at: m.createdAt.toISOString(),
+  provider: m.provider ?? null,
 });
 
 /** Mails zu Verlaufseinträgen (für loadLeadHistory). */

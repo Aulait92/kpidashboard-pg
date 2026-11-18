@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://vertriebsservice.hdi-gerling.de/media/easynet/7010800811.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "HDI Pflegerente KLASSIK",
@@ -48,8 +47,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://vertriebsservice.hdi-gerling.de/media/easynet/7010800811.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "HDI Pflegerente EXKLUSIV",
@@ -69,8 +67,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://vertriebsservice.hdi-gerling.de/media/easynet/7010800811.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
   "offen": [
     "Risikoträger IDEAL Lebensversicherung a.G. (Produktbeschreibung 7010800811, Stand 01/2024). Laut Produktbeschreibung gegen Einmalbeitrag; die Produktseite spricht von flexibler Beitragszahlung, bitte prüfen.",
     "Monatsrente frei wählbar 250 bis 4.000 €, gleiche Höhe ambulant und stationär (Seite: frei verwendbar). Sofortleistung 1 bis 12 Monatsrenten optional.",
-    "Beitragsbefreiung im Pflegefall und Demenz nicht ausgewertet. Keine Markierung; KLASSIK als mittlere Stufe."
+    "Beitragsbefreiung im Pflegefall und Demenz nicht ausgewertet. Keine Markierung; KLASSIK als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produktbeschreibung HDI Pflegerente (7010800811, 01/2024)."
   ]
 }
