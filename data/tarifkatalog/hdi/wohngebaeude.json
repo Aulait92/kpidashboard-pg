@@ -19,7 +19,8 @@
         "ableitung": "optional",
         "pv": "optional",
         "ueberspannung": "ja",
-        "neuwert": "ja"
+        "neuwert": "ja",
+        "kosten": "Aufräumen, Abbruch"
       },
       "bausteine": {
         "elementar": "optional",
@@ -40,7 +41,8 @@
         "ableitung": "optional",
         "pv": "optional",
         "ueberspannung": "ja",
-        "neuwert": "ja"
+        "neuwert": "ja",
+        "kosten": "Aufräumen, Abbruch"
       },
       "bausteine": {
         "elementar": "optional",
@@ -58,6 +60,6 @@
   "offen": [
     "Die Produktseite nennt kaum Unterschiede zwischen Komfort und Premium: Einbruchschäden am Gebäude Komfort bis 10.000 €, Premium ohne Grenze; Feuer-Rohbau 12 bzw. 24 Monate; Bestleistungsgarantie nur zu Premium.",
     "Grobe Fahrlässigkeit nicht genannt. Pakete Glas, Ableitungsrohre, Elementar, Photovoltaik (inklusive Einspeisevergütung). Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
-    "Geprüft am 17.11.2026 am Text der Produktseite auf hdi.de. Entfernt: „Kosten nach einem Schaden: ja“ (Aufräumen, Hotel, Mietausfall auf der Seite nicht genannt)."
+    "Geprüft am 17.11.2026 an der Produktseite auf hdi.de (Kosten nach einem Schaden: Aufräumungs- und Abbruchkosten genannt; Hotel und Mietausfall nicht genannt)."
   ]
 }

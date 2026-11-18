@@ -21,8 +21,7 @@
         "selbststaendige": "nein"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/krankentagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankentagegeld für Selbstständige und privat Versicherte",
@@ -40,8 +39,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/krankentagegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -52,6 +50,7 @@
   "offen": [
     "Zielgruppen statt Leistungsstufen: KTZR für gesetzlich Versicherte mit Krankengeldanspruch (Tagegeld plus Krankengeld höchstens Nettoeinkommen); Tarife für Selbstständige (gesetzlich versichert z. B. KTVS) und privat Versicherte. Keine Empfehlung markiert. Werte von der Produktseite (Abruf 17.11.2026).",
     "Privat versicherte Selbstständige: Beginn ab dem 29., 43. oder 92. Tag wählbar, Spezialtarif ab dem 6. Tag bei stationärem Aufenthalt; Tagegeld bis 80 % der Einkünfte. Wartezeit 3 Monate (Mutterschutz 8 Monate).",
-    "Dynamik: privat Versicherte alle 3 Jahre bis 6 % ohne Gesundheitsprüfung bzw. Anpassung bei höherem Einkommen. Ausland nicht genannt."
+    "Dynamik: privat Versicherte alle 3 Jahre bis 6 % ohne Gesundheitsprüfung bzw. Anpassung bei höherem Einkommen. Ausland nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite auf wuerttembergische.de."
   ]
 }
