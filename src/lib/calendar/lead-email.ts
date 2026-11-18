@@ -8,10 +8,11 @@
 
 import { a, anredeZeile, asAnsprache, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { ansprechpartner } from "@/lib/lead-anrede";
+import { leseMailAblauf } from "@/lib/mail/ablauf";
 import type { MailArt } from "@/lib/mail/kontakt-mail";
 import type { LeadSignatur } from "@/lib/mail/lead-absender";
 import { leadVersandKontext, sendeLeadMail, type LeadMailAnhang } from "@/lib/mail/lead-versand";
-import { vermittlerName, type VermittlerName } from "@/lib/whatsapp/gespraech";
+import { bereitlegenPunkte, komplettcheckMailSatz, vermittlerName, type VermittlerName } from "@/lib/whatsapp/gespraech";
 import {
   buildIcs,
   customerEventById,
@@ -96,7 +97,27 @@ export type LeadEmailOpts = {
   erstinfoUrl?: string | null;
   /** Erstinformation liegt als PDF bei (nur Bestätigung) */
   erstinfoPdf?: boolean;
+  /**
+   * Vorbereitung (Vorlage „Termin: Vorbereitung“ auf „Automatisch“, M3): Bereitlegen-Liste (bereitlegenListe) und
+   * Komplettcheck-Satz, nur in Bestätigung bzw. Einladung und Vortags-Mail. null = ohne Vorbereitungsteil.
+   */
+  vorbereitung?: Vorbereitung | null;
 };
+
+/** Vorbereitungsteil der Termin-Mails: Liste aus bereitlegenListe, Komplettcheck nur bei „Ja“. */
+export type Vorbereitung = { bereitlegen: string[]; komplettcheck: boolean; familie: boolean };
+
+/** Block „Vorbereitung“ (ohne Dauer in Minuten, Ole 17.11.2026): Komplettcheck-Satz, Einleitung und Punkte. */
+export function vorbereitungBlock(v: Vorbereitung | null | undefined, an: Ansprache, person: { nom: string }): { saetze: string[]; punkte: string[] } | null {
+  if (!v) return null;
+  const punkte = bereitlegenPunkte(v.bereitlegen);
+  const saetze = [
+    ...(v.komplettcheck ? [komplettcheckMailSatz(an, person, v.familie)] : []),
+    ...(punkte.length ? [a(an, "Leg dir zum Termin bitte bereit:", "Legen Sie sich zum Termin bitte bereit:")] : []),
+  ];
+  if (!saetze.length) return null;
+  return { saetze, punkte };
+}
 
 export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeKontakt | string, an: Ansprache = "sie", opts: LeadEmailOpts = {}) {
   const w = when(ev.start);
@@ -111,69 +132,79 @@ export function content(kind: LeadEmailKind, ev: CustomerEvent, kontakt: AnredeK
         : [a(an, "Den Link zum Videocall bekommst du rechtzeitig vor dem Termin.", "Den Link zum Videocall bekommen Sie rechtzeitig vor dem Termin.")]
       : [a(an, `${person.nom} ruft dich zur vereinbarten Zeit an.`, `${person.nom} ruft Sie zur vereinbarten Zeit an.`)];
   const dein = a(an, "Dein", "Ihr");
-  switch (kind) {
-    case "booked": {
-      const url = opts.erstinfoUrl?.trim();
-      const erstinfo = opts.erstinfoPdf
-        ? [erstinfoMailZeile(an, person.dat), ...(url ? [a(an, `Die Erstinformation findest du auch online: ${url}`, `Die Erstinformation finden Sie auch online: ${url}`)] : [])]
-        : url
-          ? [
-              a(
-                an,
-                `Die Erstinformation zu ${person.dat} als Versicherungsvermittler findest du hier: ${url}`,
-                `Die Erstinformation zu ${person.dat} als Versicherungsvermittler finden Sie hier: ${url}`,
-              ),
-            ]
-          : [];
-      return {
-        subject: `${dein} Termin mit ${person.dat}: ${w}`,
-        lines: [hi, `vielen Dank! ${a(an, "Deine", "Ihre")} ${art} mit ${person.dat} ist gebucht: ${w}.`, ...how, ...erstinfo],
-        calendar: true,
-      };
+  const vb = vorbereitungBlock(opts.vorbereitung, an, person);
+  const r = inhalt();
+  // Reihenfolge in der Mail: lines, Vorbereitung, nach (z. B. Erstinformation), dann Kalender-Knöpfe
+  return { ...r, vorbereitung: r.vorbereitung ?? null, nach: r.nach ?? [] };
+
+  function inhalt(): { subject: string; lines: string[]; calendar: boolean; vorbereitung?: ReturnType<typeof vorbereitungBlock>; nach?: string[] } {
+    switch (kind) {
+      case "booked": {
+        const url = opts.erstinfoUrl?.trim();
+        const erstinfo = opts.erstinfoPdf
+          ? [erstinfoMailZeile(an, person.dat), ...(url ? [a(an, `Die Erstinformation findest du auch online: ${url}`, `Die Erstinformation finden Sie auch online: ${url}`)] : [])]
+          : url
+            ? [
+                a(
+                  an,
+                  `Die Erstinformation zu ${person.dat} als Versicherungsvermittler findest du hier: ${url}`,
+                  `Die Erstinformation zu ${person.dat} als Versicherungsvermittler finden Sie hier: ${url}`,
+                ),
+              ]
+            : [];
+        return {
+          subject: `${dein} Termin mit ${person.dat}: ${w}`,
+          lines: [hi, `vielen Dank! ${a(an, "Deine", "Ihre")} ${art} mit ${person.dat} ist gebucht: ${w}.`, ...how],
+          calendar: true,
+          vorbereitung: vb,
+          nach: erstinfo,
+        };
+      }
+      case "rescheduled":
+        return {
+          subject: `Neuer Termin mit ${person.dat}: ${w}`,
+          lines: [hi, `${a(an, "dein", "Ihr")} Termin mit ${person.dat} wurde verschoben. Neue Zeit: ${w}.`, ...how],
+          calendar: true,
+        };
+      case "reminder":
+        return {
+          subject: erinnerungsBetreff({ start: ev.start, now: opts.now ?? new Date(), mode: ev.mode, an, person }),
+          lines: [hi, `kurze Erinnerung an ${a(an, "deine", "Ihre")} ${art} mit ${person.dat}: ${w}.`, ...how],
+          calendar: true,
+          vorbereitung: vb,
+        };
+      case "updated": {
+        // Ohne Dauer (Ole, 17.11.2026 spät): die längere Zeit steht nur in der Kalenderdatei
+        return {
+          subject: `${dein} Termin mit ${person.dat}: aktualisierter Kalendereintrag`,
+          lines: [
+            hi,
+            a(
+              an,
+              `damit ${person.nom} im Termin auch deine übrigen Verträge mit dir durchsehen kann, haben wir den Kalendereintrag aktualisiert. Die Uhrzeit bleibt: ${w}.`,
+              `damit ${person.nom} im Termin auch Ihre übrigen Verträge mit Ihnen durchsehen kann, haben wir den Kalendereintrag aktualisiert. Die Uhrzeit bleibt: ${w}.`,
+            ),
+            a(an, "Den aktualisierten Kalendereintrag findest du unten.", "Den aktualisierten Kalendereintrag finden Sie unten."),
+            ...how,
+          ],
+          calendar: true,
+        };
+      }
+      case "cancelled":
+        return {
+          subject: `Abgesagt: ${dein} Termin mit ${person.dat} am ${w}`,
+          lines: [
+            hi,
+            `${a(an, "dein", "Ihr")} Termin am ${w} wurde abgesagt.`,
+            a(
+              an,
+              "Wenn du einen neuen Termin möchtest, antworte einfach auf diese E-Mail oder melde dich per WhatsApp.",
+              "Wenn Sie einen neuen Termin möchten, antworten Sie einfach auf diese E-Mail oder melden Sie sich per WhatsApp.",
+            ),
+          ],
+          calendar: false,
+        };
     }
-    case "rescheduled":
-      return {
-        subject: `Neuer Termin mit ${person.dat}: ${w}`,
-        lines: [hi, `${a(an, "dein", "Ihr")} Termin mit ${person.dat} wurde verschoben. Neue Zeit: ${w}.`, ...how],
-        calendar: true,
-      };
-    case "reminder":
-      return {
-        subject: erinnerungsBetreff({ start: ev.start, now: opts.now ?? new Date(), mode: ev.mode, an, person }),
-        lines: [hi, `kurze Erinnerung an ${a(an, "deine", "Ihre")} ${art} mit ${person.dat}: ${w}.`, ...how],
-        calendar: true,
-      };
-    case "updated": {
-      // Ohne Dauer (Ole, 17.11.2026 spät): die längere Zeit steht nur in der Kalenderdatei
-      return {
-        subject: `${dein} Termin mit ${person.dat}: aktualisierter Kalendereintrag`,
-        lines: [
-          hi,
-          a(
-            an,
-            `damit ${person.nom} im Termin auch deine übrigen Verträge mit dir durchsehen kann, haben wir den Kalendereintrag aktualisiert. Die Uhrzeit bleibt: ${w}.`,
-            `damit ${person.nom} im Termin auch Ihre übrigen Verträge mit Ihnen durchsehen kann, haben wir den Kalendereintrag aktualisiert. Die Uhrzeit bleibt: ${w}.`,
-          ),
-          a(an, "Den aktualisierten Kalendereintrag findest du unten.", "Den aktualisierten Kalendereintrag finden Sie unten."),
-          ...how,
-        ],
-        calendar: true,
-      };
-    }
-    case "cancelled":
-      return {
-        subject: `Abgesagt: ${dein} Termin mit ${person.dat} am ${w}`,
-        lines: [
-          hi,
-          `${a(an, "dein", "Ihr")} Termin am ${w} wurde abgesagt.`,
-          a(
-            an,
-            "Wenn du einen neuen Termin möchtest, antworte einfach auf diese E-Mail oder melde dich per WhatsApp.",
-            "Wenn Sie einen neuen Termin möchten, antworten Sie einfach auf diese E-Mail oder melden Sie sich per WhatsApp.",
-          ),
-        ],
-        calendar: false,
-      };
   }
 }
 
@@ -188,6 +219,14 @@ export function leadEmailBody(c: ReturnType<typeof content>, ev: CustomerEvent, 
 <div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0b1220;font-size:15px;line-height:1.5">
   ${c.lines.map((l) => `<p style="margin:0 0 14px">${absatzHtml(l)}</p>`).join("")}
   ${
+    c.vorbereitung
+      ? `${c.vorbereitung.saetze.map((l) => `<p style="margin:0 0 8px">${absatzHtml(l)}</p>`).join("")}${
+          c.vorbereitung.punkte.length ? `<ul style="margin:0 0 14px;padding-left:20px;list-style-type:disc">${c.vorbereitung.punkte.map((p) => `<li style="margin:0 0 4px">${esc(p)}</li>`).join("")}</ul>` : ""
+        }`
+      : ""
+  }
+  ${c.nach.map((l) => `<p style="margin:0 0 14px">${absatzHtml(l)}</p>`).join("")}
+  ${
     c.calendar
       ? `<p style="margin:18px 0 6px;font-size:13px;color:#6b7a96">Zum Kalender hinzufügen</p>
   ${btn(icsUrl, "iPhone / Outlook", true)}${btn(googleCalendarUrl(ev), "Google Kalender")}
@@ -199,6 +238,8 @@ export function leadEmailBody(c: ReturnType<typeof content>, ev: CustomerEvent, 
 </div>`;
   const text = [
     ...c.lines,
+    ...(c.vorbereitung ? [...c.vorbereitung.saetze, ...c.vorbereitung.punkte.map((p) => `• ${p}`)] : []),
+    ...c.nach,
     ...(c.calendar ? ["", `Zum Kalender hinzufügen: ${icsUrl}`, `Verschieben oder absagen: ${ev.manageUrl}`] : []),
     "",
     sig.text,
@@ -232,7 +273,7 @@ async function sendLeadEmailInner(
       customerId: true,
       conversationId: true,
       leadId: true,
-      customer: { select: { leadAddress: true } },
+      customer: { select: { leadAddress: true, mailAblauf: true } },
     },
   });
   if (!appt?.conversationId) return { sent: false, reason: "no_conversation" };
@@ -254,7 +295,8 @@ async function sendLeadEmailInner(
   // Lead selbst, ist das oft der erste Kontakt). Nur vollständige Erstinformationen (lib/erstinformation.ts).
   // Dazu immer der Link zur Erstinformation (Ole, 17.11.2026).
   const erstinfo = kind === "booked" ? await erstinfoAnhang(appt.customerId) : null;
-  const c = content(kind, ev, who.kontakt, an, { person, now, erstinfoUrl: kind === "booked" ? k.daten.erstinfoUrl : null, erstinfoPdf: !!erstinfo });
+  const vorbereitung = await vorbereitungFuer(kind, appt, appointmentId, now);
+  const c = content(kind, ev, who.kontakt, an, { person, now, erstinfoUrl: kind === "booked" ? k.daten.erstinfoUrl : null, erstinfoPdf: !!erstinfo, vorbereitung });
 
   const attachments: LeadMailAnhang[] = [
     ...(c.calendar ? [{ fileName: "termin.ics", data: Buffer.from(buildIcs(ev), "utf8"), contentType: "text/calendar; charset=utf-8" }] : []),
@@ -277,6 +319,29 @@ async function sendLeadEmailInner(
     await prisma.appointment.update({ where: { id: appointmentId }, data: { einladungAn: to } }).catch(() => null);
   }
   return { sent: true, to };
+}
+
+/**
+ * Vorbereitungsteil (M3, Ole 18.11.2026): nur in Bestätigung bzw. Einladung und Vortags-Mail, nur wenn die Vorlage
+ * „Termin: Vorbereitung“ auf „Automatisch“ steht (Customer.mailAblauf). „Aus“ bzw. „Ein Tipp“ lassen nur diesen Teil weg,
+ * die Bestätigung und die Erinnerung selbst bleiben. Fehler hier verhindern den Versand nie.
+ */
+async function vorbereitungFuer(
+  kind: LeadEmailKind,
+  appt: { conversationId: string | null; customer: { mailAblauf: unknown } | null },
+  appointmentId: string,
+  now: Date,
+): Promise<Vorbereitung | null> {
+  if (kind !== "booked" && kind !== "reminder") return null;
+  if (!appt.conversationId || leseMailAblauf(appt.customer?.mailAblauf).stufen.termin_vorbereitung !== "auto") return null;
+  try {
+    const { bereitlegenFuerTermin } = await import("@/lib/whatsapp/termin-strecke");
+    const v = await bereitlegenFuerTermin(appt.conversationId, appointmentId, now);
+    return v ? { bereitlegen: v.liste, komplettcheck: v.komplettcheck, familie: v.familie } : null;
+  } catch (err) {
+    console.error("[lead email] Vorbereitung", err instanceof Error ? err.message.slice(0, 160) : err);
+    return null;
+  }
 }
 
 /** Satz zum Anhang mit der Erstinformation (beide Fassungen, ohne Gedankenstriche). */

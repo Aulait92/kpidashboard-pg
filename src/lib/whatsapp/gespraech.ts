@@ -15,7 +15,7 @@
 import { a, type Ansprache, type Salutation } from "@/lib/ansprache";
 import { vornameAus } from "@/lib/advisor-name";
 import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
-import { angabenFuerSparte, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
+import { angabenFuerSparte, spartenDesLeads, type AngabenQuelle, type Folgefrage, type RechnerSparte } from "@/lib/preise/rechner-angaben";
 import { qualificationPoints, type QualificationKey } from "@/lib/whatsapp/qualification";
 
 /** Der Vermittler gegenüber Leads: nom „Herr Kannapinn“, dat „Herrn Kannapinn“ (mit, von), Du „Ole“. */
@@ -244,6 +244,38 @@ export function bereitlegenListe(
     ...(familie ? [geburtsdaten] : []),
     ...(sparten.some((s) => s.startsWith("tierhalter")) ? ["die Chipnummer jedes Tieres"] : []),
   ]);
+}
+
+/**
+ * Bereitlegen-Liste für einen Lead aus Produkt, Formular und Chat-Angaben (eine Quelle für WhatsApp-Schluss,
+ * Termin-Mails und die Vorlage „Termin: Vorbereitung“, Ole 18.11.2026, M3). Rein.
+ */
+export function bereitlegenFuerLead(o: { source: string | null | undefined; formular: Form; angaben?: unknown; an: Ansprache; komplettcheck?: boolean }): string[] {
+  const quelle: AngabenQuelle = { formular: o.formular, angaben: o.angaben ?? null };
+  return bereitlegenListe(o.source, spartenDesLeads(o.source, quelle), o.an, { quelle, komplettcheck: o.komplettcheck === true });
+}
+
+/** Formularantworten (Lead.formData) als Liste aus Beschriftung und Wert; Ungültiges fällt weg. */
+export function formularAus(raw: unknown): Form {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((x) => (x && typeof x === "object" && typeof x.label === "string" && typeof x.value === "string" ? [{ label: x.label as string, value: x.value as string }] : []));
+}
+
+/** Punkte der Bereitlegen-Liste als Aufzählung (erster Buchstabe groß, z. B. für Mails). */
+export function bereitlegenPunkte(liste: readonly string[]): string[] {
+  return liste.map((x) => x.charAt(0).toUpperCase() + x.slice(1));
+}
+
+/**
+ * Komplettcheck-Satz für Termin-Mails (nur bei Komplettcheck „Ja“), ohne Dauer in Minuten (Ole, 17.11.2026):
+ * „Wie gewünscht schaut Herr Kannapinn im Termin auch, ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht
+ * etwas sparen können.“
+ */
+export function komplettcheckMailSatz(an: Ansprache, person: { nom: string }, familie: boolean): string {
+  const wer = familie
+    ? a(an, "ob du und deine Familie insgesamt gut abgesichert seid und wo ihr vielleicht etwas sparen könnt", "ob Sie und Ihre Familie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können")
+    : a(an, "ob du insgesamt gut abgesichert bist und wo du vielleicht etwas sparen kannst", "ob Sie insgesamt gut abgesichert sind und wo Sie vielleicht etwas sparen können");
+  return `Wie gewünscht schaut ${person.nom} im Termin auch, ${wer}.`;
 }
 
 /** Frühere Kalenderfrage (bis 17.11.2026; Knöpfe in alten Nachrichten werden weiter verarbeitet, kalenderAntwort). */

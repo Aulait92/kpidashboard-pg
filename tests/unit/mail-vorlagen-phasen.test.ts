@@ -6,7 +6,6 @@ import {
   fuelle,
   fuelleMitSignatur,
   musterKuendigung,
-  produktArt,
   tagText,
   terminArtText,
   terminDatumText,
@@ -23,6 +22,7 @@ import { STANDARD_VORLAGEN_STAND2 } from "@/lib/mail/vorlagen-alt";
 import { nachfassenFuer, passendeVorlagen, sortiereVorlagen } from "@/lib/mail/phasen";
 import { beratungsPdfInhalt, pdfDateiname, wuenscheVorschlag } from "@/lib/mail/beratung";
 import { pdfSicher, textPdf, umbrechen } from "@/lib/mail/text-pdf";
+import { bereitlegenFuerLead } from "@/lib/whatsapp/gespraech";
 
 const NEU = ["termin_vorbereitung", "nicht_erschienen", "beratungsdoku", "unterlagen_fehlen", "willkommen", "kuendigung", "wie_besprochen", "tuer_offen"];
 
@@ -33,7 +33,7 @@ function vollWerte(an: "sie" | "du"): Werte {
     termin_datum: "Dienstag, 17. November um 14:00 Uhr",
     termin_art: "per Videocall",
     videolink: "https://meet.example/abc",
-    termin_unterlagen: terminUnterlagen("TKV Katze", an),
+    termin_unterlagen: terminUnterlagen(bereitlegenFuerLead({ source: "TKV Katze", formular: [], an })),
     fehlende_unterlagen: fehlendeUnterlagen(["IBAN für den Beitragseinzug"]),
     melde_datum: "Montag, 7. Dezember",
     versicherer: "Beispiel Versicherung AG",
@@ -98,7 +98,7 @@ describe("Zusatz-Platzhalter", () => {
     const mit = fuelle(tpl("termin_vorbereitung").body, w);
     expect(mit).toContain("am Dienstag, 17. November um 14:00 Uhr per Videocall.");
     expect(mit).toContain("Den Link zum Videocall finden Sie hier: https://meet.example/abc");
-    expect(mit).toContain("• Tierpass bzw. Chipnummer\n• Tierarztrechnungen der letzten Zeit, falls vorhanden\n• Ihre IBAN, falls Sie direkt abschließen möchten");
+    expect(mit).toContain("• Die Chipnummer Ihres Tieres\n• Ihre IBAN, falls Sie direkt abschließen möchten");
     const ohne = fuelle(tpl("termin_vorbereitung").body, { ...w, termin_art: terminArtText("phone"), videolink: "" });
     expect(ohne).toContain("um 14:00 Uhr am Telefon.\n\nDamit wir");
     expect(ohne).not.toContain("Videocall");
@@ -130,15 +130,15 @@ describe("Zusatz-Platzhalter", () => {
     expect(terminArtText("video")).toBe("per Videocall");
   });
 
-  it("Unterlagen zum Termin je Produkt und Ansprache", () => {
-    expect(produktArt("TKV-Katze")).toBe("tier");
-    expect(produktArt("Hundefutter")).toBe("sonst");
-    expect(produktArt("Hausrat")).toBe("sach");
-    expect(produktArt("Privatschutz")).toBe("sach");
-    expect(terminUnterlagen("Hausrat", "du")).toBe(
-      "• deine bisherige Police mit Ablaufdatum, falls vorhanden\n• Geburtsdaten aller Personen, die mitversichert werden sollen\n• deine IBAN, falls du direkt abschließen möchtest",
+  it("Unterlagen zum Termin: dieselbe Liste wie in WhatsApp und Termin-Mails (bereitlegenListe, M3)", () => {
+    const familie = [{ label: "Lebenssituation", value: "Familie mit Kindern" }];
+    expect(terminUnterlagen(bereitlegenFuerLead({ source: "Hausrat", formular: familie, an: "du" }))).toBe(
+      "• Die Wohnfläche deiner Wohnung\n• Die Geburtsdaten aller Personen, die mitversichert werden sollen\n• Deine IBAN, falls du direkt abschließen möchtest",
     );
-    expect(terminUnterlagen("Zahnzusatz", "sie")).toBe("• Ihre IBAN, falls Sie direkt abschließen möchten");
+    expect(terminUnterlagen(bereitlegenFuerLead({ source: "Zahnzusatz", formular: [], an: "sie" }))).toBe("• Ihre IBAN, falls Sie direkt abschließen möchten");
+    expect(terminUnterlagen(bereitlegenFuerLead({ source: "TKV Katze", formular: [], an: "sie", komplettcheck: true }))).toBe(
+      "• Ihre bestehenden Verträge und Policen\n• Die Chipnummer Ihres Tieres\n• Ihre IBAN, falls Sie direkt abschließen möchten",
+    );
   });
 
   it("Dialog erkennt Zusatz-Platzhalter auch in eigenen Vorlagen", () => {

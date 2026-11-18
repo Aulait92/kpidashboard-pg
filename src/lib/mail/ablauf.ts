@@ -68,8 +68,11 @@ export const VORLAGE_WANN: Record<VorlageKey, string> = {
   tuer_offen: "Bei Verlustgrund „kein Interesse“",
 };
 
-/** Auslöser, die schon laufen. Die übrigen automatischen Mails kommen mit den Paketen M3 und M4 („demnächst“). */
-export const AUSLOESER_AKTIV: ReadonlySet<VorlageKey> = new Set<VorlageKey>([]);
+/** Auslöser, die schon laufen. Die übrigen automatischen Mails kommen mit Paket M4 („demnächst“). */
+export const AUSLOESER_AKTIV: ReadonlySet<VorlageKey> = new Set<VorlageKey>([
+  // M3 (18.11.2026): Vorbereitungsteil in Terminbestätigung und Vortags-Mail (lib/calendar/lead-email.ts)
+  "termin_vorbereitung",
+]);
 
 export type MailBcc = { an: boolean; /** null = eigene Adresse des Logins */ adresse: string | null };
 

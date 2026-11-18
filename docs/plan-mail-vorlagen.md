@@ -112,6 +112,18 @@ Stand: im Code fertig, **Schalter `MAIL_ANTWORT_EINGANG` aus** (Standard) bis zu
   E-Mails“ auf „Versand und Empfang von E-Mails“ erweitern (ggf. `LEGAL_VERSION`), Datenschutzhinweis für Leads um den Empfang
   von Antworten ergänzen.
 
+## M3 umgesetzt (18.11.2026): Termin-Mails mit Vorbereitung
+
+- **Eine Quelle:** Bestätigung bzw. Einladung (`booked`) und Vortags-Mail (`reminder`) in `lib/calendar/lead-email.ts` bekommen die
+  Bereitlegen-Liste aus `bereitlegenListe` (über `bereitlegenFuerTermin` in `termin-strecke.ts`, dieselbe Liste wie der
+  WhatsApp-Schluss inkl. „übrige Policen“ nach der Policen-Bitte). `{termin_unterlagen}` (`platzhalter.ts terminUnterlagen`)
+  formatiert dieselbe Liste (`bereitlegenFuerLead`), die frühere Liste je Produktart entfällt.
+- **Komplettcheck-Satz** nur bei „Ja“, ohne Dauer: „Wie gewünscht schaut Herr Kannapinn im Termin auch, ob Sie insgesamt gut
+  abgesichert sind und wo Sie vielleicht etwas sparen können.“ Browser-Hinweis bleibt kurz in der Mail, nie in der
+  WhatsApp-Bestätigung. Test: keine Zahl plus Minuten in Termin-Mails, WhatsApp-Texten der Strecke und Standardvorlagen.
+- **Stufe:** nur bei „Termin: Vorbereitung“ = Automatisch. „Aus“ (bzw. „Ein Tipp“) lässt nur den Vorbereitungsteil weg,
+  Bestätigung und Erinnerung bleiben. Vorschau in Einstellungen → Assistent zeigt den Teil mit.
+
 ## M9 Erklärschritt (Sie-Form, freigegeben)
 
 - Überschrift: „Ihre Kunden bekommen jede wichtige Mail. Sie schreiben keine davon.“
