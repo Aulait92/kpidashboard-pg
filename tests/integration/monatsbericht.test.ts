@@ -29,7 +29,7 @@ const addMeasure = (customerId: string) =>
   addManualMeasure({ customerId, topic: "anzeigen", title: "Zwei neue Motive für die Katzenkampagne", executedAt: new Date("2026-10-15T10:00:00Z") }, { email: "ole@test.local" }, NOW);
 
 async function setupCustomer(leads: number, termine: number, activeDays = 25) {
-  const c = await makeCustomer({ plan: "software" });
+  const c = await makeCustomer({ plan: "software", retainerMonthly: 990 });
   await makeBuyer(c.id, "owner");
   await prisma.customerAdSpend.createMany({
     data: Array.from({ length: activeDays }, (_, i) => ({ customerId: c.id, accountId: "act_test", date: new Date(Date.UTC(2026, 9, i + 2, 12)), amount: 24 })),

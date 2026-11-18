@@ -40,7 +40,7 @@ const POOL = `Testpool Bericht ${Math.random().toString(36).slice(2, 8)}`;
  * Werbeausgaben an 25 Tagen, 10 Leads im September; optional Empfehlung/Bestandskampagne und Lead-Kosten.
  */
 async function setupCustomer(o: { extras?: boolean; leadCost?: number } = {}) {
-  const c = await makeCustomer({ plan: "software" });
+  const c = await makeCustomer({ plan: "software", onboarding: { create: {} } });
   await makeBuyer(c.id, "owner");
   await prisma.customerAdSpend.createMany({ data: Array.from({ length: 25 }, (_, i) => ({ customerId: c.id, accountId: "act_test", date: oct(i + 2, 12), amount: 24 })) });
   await prisma.lead.createMany({

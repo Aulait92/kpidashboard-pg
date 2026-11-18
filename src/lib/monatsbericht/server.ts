@@ -8,6 +8,7 @@
 // Alle Zahlen mit denselben Funktionen wie /buyer/zahlen (computeKpis, customer-spend, lib/ertrag,
 // lib/lead-herkunft, lib/zahlen-tipps); Aufbau und E-Mail-HTML in lib/monatsbericht/bericht.
 
+import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import { haeufigsteVerluste } from "@/lib/verlustgruende-server";
 import { tippFuer } from "@/lib/verlustgruende";
 import type { Prisma } from "@/generated/prisma/client";
@@ -605,6 +606,8 @@ export async function runMonthlyReports(now = new Date(), opts: RunOptions = {})
       isTest: false,
       monthlyReportsOff: false,
       plan: { in: ["software", "service"] },
+      // Nicht an reine Pay-per-Lead-Kunden (Ole, 18.11.2026)
+      NOT: NUR_PPL_WHERE,
       monthlyReports: { none: { month } },
       ...(opts.customerIds ? { id: { in: opts.customerIds } } : {}),
     },

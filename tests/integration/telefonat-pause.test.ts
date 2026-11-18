@@ -94,7 +94,7 @@ describe("Telefonat: Assistent pausiert beim Anruf", () => {
     requireTestDb();
     process.env.ENCRYPTION_KEY ||= Buffer.alloc(32, 7).toString("base64");
     process.env.ANTHROPIC_API_KEY ||= "test";
-    const c = await makeCustomer({ name: `Agentur Meier ${uid()}`, leadAddress: "sie" });
+    const c = await makeCustomer({ name: `Agentur Meier ${uid()}`, leadAddress: "sie", retainerMonthly: 990 });
     customerId = c.id;
     userId = (await makeBuyer(customerId, "owner")).id;
     await prisma.agentConfig.create({ data: { customerId, active: true, outreachEnabled: false, followUpSequencesEnabled: true, systemPrompt: "Test" } });
@@ -165,6 +165,17 @@ describe("Telefonat: Assistent pausiert beim Anruf", () => {
     p.mockClear();
     await runAnrufErinnerungen(now, { push: p });
     expect(p).not.toHaveBeenCalledWith(userId, customerId, expect.anything());
+  });
+
+  it("reine Pay-per-Lead-Kunden bekommen den Telefonat-Push nicht (Ole, 18.11.2026)", async () => {
+    const ppl = await makeCustomer({ name: `PPL ${uid()}` });
+    const lead = await prisma.lead.create({ data: { customerId: ppl.id, name: "Julia Schneider", phone: newPhone(), status: "Neuer Lead" } });
+    const now = new Date();
+    await prisma.lead.update({ where: { id: lead.id }, data: { callStartedAt: new Date(now.getTime() - 16 * 60_000) } });
+    const p = vi.fn(async () => undefined);
+    await runAnrufErinnerungen(now, { push: p });
+    expect(p).not.toHaveBeenCalledWith(expect.anything(), ppl.id, expect.anything());
+    await cleanupCustomer(ppl.id);
   });
 
   it("Bedarf aus dem Telefonat: am Lead und im Chat, Pause endet, offene Punkte fragt der Assistent danach mit Bezug aufs Telefonat ab", async () => {
