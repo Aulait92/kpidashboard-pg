@@ -143,7 +143,7 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
                 <StepIcon status={st?.status ?? "offen"} />
                 <span>
                   <b>{s.label}</b> {st?.status === "laeuft" ? s.doing + " …" : st?.status === "fertig" ? "fertig" : st?.status === "fehler" ? "Fehler" : st?.status === "uebersprungen" ? "übersprungen" : ""}
-                  {st?.note ? <span className="text-[color:var(--muted)]"> – {st.note}</span> : null}
+                  {st?.note ? <span className="text-[color:var(--muted)]">: {st.note}</span> : null}
                   {st?.error ? <span className="block text-rose-700">{st.error}</span> : null}
                 </span>
               </li>
@@ -154,7 +154,7 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
 
         {run.status === "built" ? (
           <div className="rounded-[var(--radius-md)] border border-emerald-300 bg-emerald-50 p-3 text-emerald-950">
-            <p className="font-semibold">Kampagne ist pausiert angelegt – bitte prüfen und veröffentlichen.</p>
+            <p className="font-semibold">Kampagne ist pausiert angelegt. Bitte prüfen und veröffentlichen.</p>
             <div className="mt-2 flex flex-wrap gap-3">
               {run.links.adsManager ? (
                 <a href={run.links.adsManager} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-[color:var(--brand)] hover:underline">
@@ -200,7 +200,7 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
           <section>
             <h3 className="mb-1 font-semibold">Plan</h3>
             <p>
-              {run.plan.campaignName} · {run.plan.dailyBudgetEur} €/Tag · {run.plan.adSets.map((a) => `${a.name}: ${a.ageMin}–${a.ageMax} J., ${a.radiusKm} km${a.advantageAudience ? ", Advantage+" : ""}`).join(" | ")}
+              {run.plan.campaignName} · {run.plan.dailyBudgetEur} €/Tag · {run.plan.adSets.map((a) => `${a.name}: ${a.ageMin} bis ${a.ageMax} J., ${a.radiusKm} km${a.advantageAudience ? ", Advantage+" : ""}`).join(" | ")}
             </p>
             <p className="text-[color:var(--muted)]">{run.plan.zielgruppe}</p>
           </section>
@@ -258,7 +258,7 @@ function RunPanel({ run, steps, onChange }: { run: RunView; steps: StepInfo[]; o
             </ol>
             <p className="mt-1 text-[color:var(--muted)]">Einwilligung: {run.form.consentText}</p>
             <p className="text-[color:var(--muted)]">
-              Danke-Seite: {run.form.thankYouTitle} – {run.form.thankYouBody}
+              Danke-Seite: {run.form.thankYouTitle}. {run.form.thankYouBody}
             </p>
           </section>
         ) : null}

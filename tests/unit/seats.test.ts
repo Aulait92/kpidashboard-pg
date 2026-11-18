@@ -84,10 +84,10 @@ describe("Plätze: aktive Verkäufer", () => {
 
 describe("Leadpreis als Spanne", () => {
   it("Anzeige wie in Oles PDFs, gerechnet mit dem oberen Wert", () => {
-    expect(cplSpanne(25, 20)).toBe("20–25 €");
+    expect(cplSpanne(25, 20)).toBe("20 bis 25 €");
     expect(cplSpanne(6, null)).toBe("6 €");
-    expect(cplSpanne(12.5, 10)).toBe("10–12,50 €");
-    expect(erfahrungswertText(25, 20, 30)).toBe("Erfahrungswert: ca. 20–25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads im Monat");
+    expect(cplSpanne(12.5, 10)).toBe("10 bis 12,50 €");
+    expect(erfahrungswertText(25, 20, 30)).toBe("Erfahrungswert: ca. 20 bis 25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads im Monat");
     expect(erfahrungswertText(6, null, 30)).toBe("Erfahrungswert: ca. 6 € pro Lead · bei 30 €/Tag ca. 150 Leads im Monat");
   });
 

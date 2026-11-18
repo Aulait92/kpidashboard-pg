@@ -241,7 +241,7 @@ export default async function WhatsAppSettingsPage({
                     </span>
                   ) : c.whatsAppAccount?.dialog360ChannelId ? (
                     <span className={`text-sm ${c.whatsAppAccount.status === "error" ? "text-red-700" : "text-amber-700"}`}>
-                      {c.whatsAppAccount.status === "error" ? "Selbst verbinden fehlgeschlagen – Key von Hand eintragen" : "Kunde verbindet selbst · wird eingerichtet"}
+                      {c.whatsAppAccount.status === "error" ? "Selbst verbinden fehlgeschlagen, Key von Hand eintragen" : "Kunde verbindet selbst · wird eingerichtet"}
                     </span>
                   ) : (
                     <span className="text-sm text-[color:var(--muted)]">nicht verbunden</span>

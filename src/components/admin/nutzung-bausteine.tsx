@@ -75,7 +75,7 @@ export function KiHilfeKarte({ help }: { help: HelpQuestion[] }) {
           }
         />
         {help.length === 0 ? (
-          <EmptyState icon={Sparkles} title="Noch keine Fragen" text="Hier steht, was Vertreter die KI-Hilfe fragen – und was sie nicht verstehen." />
+          <EmptyState icon={Sparkles} title="Noch keine Fragen" text="Hier steht, was Vertreter die KI-Hilfe fragen und was sie nicht verstehen." />
         ) : (
           <ul className="divide-y divide-[color:var(--border)]">
             {help.map((h) => (
@@ -150,7 +150,7 @@ function CustomerCard({ c }: { c: CustomerUsage }) {
           {stalledTotal > 0 ? (
             <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-700">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Kunde arbeitet Aufgaben nicht ab – nachfragen oder Ablauf vereinfachen.
+              Kunde arbeitet Aufgaben nicht ab: nachfragen oder Ablauf vereinfachen.
             </p>
           ) : null}
         </section>

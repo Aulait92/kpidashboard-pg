@@ -615,12 +615,12 @@ export function resolveCpl(p: RechnerProduct, data: CplData): CplInfo {
 
 const zahlDe = (n: number) => n.toLocaleString("de-DE", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
 
-/** Leadpreis als Text: Spanne „20–25 €“ bzw. Einzelwert „6 €“. Gerechnet wird immer mit dem oberen Wert. */
+/** Leadpreis als Text: Spanne „20 bis 25 €“ bzw. Einzelwert „6 €“. Gerechnet wird immer mit dem oberen Wert. */
 export function cplSpanne(cpl: number, from?: number | null): string {
-  return from != null && from > 0 && from < cpl ? `${zahlDe(from)}–${zahlDe(cpl)} €` : `${zahlDe(cpl)} €`;
+  return from != null && from > 0 && from < cpl ? `${zahlDe(from)} bis ${zahlDe(cpl)} €` : `${zahlDe(cpl)} €`;
 }
 
-/** „Erfahrungswert: ca. 20–25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads im Monat“ */
+/** „Erfahrungswert: ca. 20 bis 25 € pro Lead · bei 30 €/Tag ca. 36 bis 45 Leads im Monat“ */
 export function erfahrungswertText(cpl: number, from: number | null | undefined, dailyBudget: number): string {
   const month = dailyBudget * DAYS_PER_MONTH;
   const leadsHigh = Math.round(month / cpl);

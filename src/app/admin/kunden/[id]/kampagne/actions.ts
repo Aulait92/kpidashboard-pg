@@ -94,5 +94,5 @@ export async function regenerateImageAction(runId: string, index: number): Promi
 export async function cleanupRunAction(runId: string): Promise<RunActionState> {
   await admin();
   const r = await cleanupCampaignRun(runId);
-  return r.ok ? { ok: true, message: r.done?.length ? r.done.join(", ") : "Nichts angelegt – Lauf beendet." } : { error: r.error };
+  return r.ok ? { ok: true, message: r.done?.length ? r.done.join(", ") : "Nichts angelegt, Lauf beendet." } : { error: r.error };
 }
