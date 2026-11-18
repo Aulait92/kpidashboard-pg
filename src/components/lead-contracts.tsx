@@ -15,6 +15,7 @@ import { LEAD_FILE_ACCEPT, LEAD_FILE_MAX_BYTES } from "@/components/lead-files";
 import { useToast } from "@/components/ui/toast";
 import { useEigeneProdukte, useProvisionRates } from "@/components/provision-context";
 import { META_LERNT } from "@/lib/zahlen-tipps";
+import { bekannteGesellschaften, gesellschaftName } from "@/lib/tarifkatalog";
 import { abschlussWert, anteil, EigenesProduktFelder, produktEingabe, sonstigesStandard, type ProduktEingabe } from "@/components/eigenes-produkt-felder";
 import { abschlussAnzeige, artAusSparte, artInfo } from "@/lib/eigene-produkte";
 import { addContractAction, cancelContractAction, setContractStatusAction, updateContractAction } from "@/app/buyer/vertrag-actions";
@@ -172,7 +173,10 @@ export function LeadContracts({ leadId, contracts, readOnly = false }: { leadId:
   );
 }
 
-const inputCls = "mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base";
+/** Gesellschaften für die Auswahl (Vertreter-Gesellschaften zuerst, dann alphabetisch). */
+const VERSICHERER = bekannteGesellschaften().map(gesellschaftName);
+// min-w-0 + appearance-none: iOS zeichnet Datumsfelder sonst breiter als das Blatt (Ole, 18.11.2026)
+const inputCls = "mt-1 block h-11 w-full min-w-0 appearance-none rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base";
 
 function CancelSheet({ contract, onClose }: { contract: LeadContractView; onClose: () => void }) {
   const router = useRouter();
@@ -431,7 +435,13 @@ function ContractSheet({ leadId, id, initial, onClose }: { leadId: string; id: s
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="text-sm text-[color:var(--muted)]">Versicherer (optional)</span>
-            <input value={d.insurer} onChange={(e) => setD({ ...d, insurer: e.target.value })} className={inputCls} />
+            {/* Auswahl aus der Liste der Gesellschaften, eigene Eingabe nur, wenn sie nicht dabei ist (Ole, 18.11.2026) */}
+            <input list="vertrag-versicherer" placeholder="Auswählen" value={d.insurer} onChange={(e) => setD({ ...d, insurer: e.target.value })} className={inputCls} data-contract-versicherer />
+            <datalist id="vertrag-versicherer">
+              {VERSICHERER.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
           </label>
           <label className="block">
             <span className="text-sm text-[color:var(--muted)]">Vertragsnummer (optional)</span>
