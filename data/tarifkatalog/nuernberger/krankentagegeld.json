@@ -22,8 +22,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -31,6 +30,7 @@
   ],
   "offen": [
     "Werte von der Produktseite auf nuernberger.de (Abruf 17.11.2026); keine Tariftabelle. Leistung nach Ablauf der gewählten Karenzzeit für jeden Tag der Arbeitsunfähigkeit, Tagessatz ab 15 €.",
-    "Anpassung an steigendes Einkommen ohne erneute Gesundheitsprüfung und Wartezeit (als Baustein Dynamik „optional“). Wartezeit, Ende bei Berufsunfähigkeit und Tarif für Selbstständige nicht genannt; eigener Tarif für vollversicherte Arbeitnehmer (PDF)."
+    "Anpassung an steigendes Einkommen ohne erneute Gesundheitsprüfung und Wartezeit (als Baustein Dynamik „optional“). Wartezeit, Ende bei Berufsunfähigkeit und Tarif für Selbstständige nicht genannt; eigener Tarif für vollversicherte Arbeitnehmer (PDF).",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

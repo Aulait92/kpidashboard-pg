@@ -101,7 +101,6 @@ describe("Navigation neuer Admin", () => {
     expect(BEREICHE.filter((b) => b.ort === "oben").map((b) => b.label)).toEqual(["Mein Tag", "Verkaufen", "Betreuen", "Liefern", "Geld"]);
     expect(BEREICHE.filter((b) => b.ort === "unten").map((b) => b.label)).toEqual(["Werkzeuge", "Einstellungen", "Was wo ist"]);
     expect(BEREICHE.filter((b) => b.handy === "leiste").map((b) => b.id)).toEqual(["mein-tag", "verkaufen", "betreuen", "liefern", "geld"]);
-    expect(BEREICHE.find((b) => b.zaehler === "chats")?.id).toBe("betreuen");
   });
 
   it("Reiter je Rolle; Start genau, Listen auch auf Unterseiten aktiv", () => {

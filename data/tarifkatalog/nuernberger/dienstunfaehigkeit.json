@@ -26,8 +26,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.nuernberger.de/beruf-vorsorge/beamte-oeffentlicher-dienst/dienstunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -40,6 +39,7 @@
     "Echte DU-Klausel für Beamte und Richter: Die Entscheidung des Dienstherrn über Ruhestand oder Entlassung wegen allgemeiner Dienstunfähigkeit ist bindend. Beamte auf Widerruf und auf Probe sind bei Entlassung versichert.",
     "Nachversicherung: ereignisabhängig vor dem 50. Geburtstag, ereignisunabhängig in den ersten 5 Jahren vor dem 40. Geburtstag.",
     "Ein AU-Baustein (AU-Rente) wird für die DU auf der Produktseite nicht genannt, nur der AU-Beitragsschutz.",
-    "Verzicht auf abstrakte Verweisung in der DU-Variante nicht gesondert geprüft."
+    "Verzicht auf abstrakte Verweisung in der DU-Variante nicht gesondert geprüft.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

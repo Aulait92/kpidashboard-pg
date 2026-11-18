@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { AdminNeuShell } from "@/components/admin-neu/rahmen/shell";
-import { loadAdminNavCounts } from "@/lib/admin-heute";
+import { ladeNavZaehler } from "@/lib/admin-neu/rollen-server";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
 // Neuer Admin (/admin/neu/…), parallel zur alten Oberfläche (Schalter „Neue Oberfläche“ im Profilmenü).
@@ -12,7 +12,8 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 export default async function AdminNeuLayout({ children }: { children: React.ReactNode }) {
   await connection();
   const session = await requireAuth();
-  const zaehler = await loadAdminNavCounts(session.userId);
+  // Eine Quelle mit Mein Tag (lib/admin-neu/rollen-server.ts): Zahl an „Mein Tag“ = Punkte auf der Seite
+  const zaehler = await ladeNavZaehler(session.userId);
   return (
     <AdminNeuShell email={session.email} zaehler={zaehler}>
       {children}
