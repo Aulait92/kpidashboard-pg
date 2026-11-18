@@ -16,7 +16,6 @@
       "werte": {
         "gf": "bis 10.000 €",
         "wert": "20 % der VS",
-        "diebstahl": "nein",
         "fahrrad": "optional, bis 500 €",
         "elementar": "optional",
         "vs": "650 €/m² empfohlen",
@@ -32,8 +31,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.vkb.de/v/haus-wohnen/hausratversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Optimal",
@@ -42,7 +40,6 @@
       "werte": {
         "gf": "ja, unbegrenzt",
         "wert": "30 % der VS",
-        "diebstahl": "nein",
         "fahrrad": "optional",
         "elementar": "optional",
         "vs": "650 €/m² empfohlen",
@@ -58,8 +55,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.vkb.de/v/haus-wohnen/hausratversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +66,7 @@
     "Zwei Stufen ohne Empfehlung; Optimal ist nur als „Tarif mit den meisten Leistungen“ beschrieben.",
     "Einfacher Diebstahl in der Wohnung nicht genannt (nur Einbruch; Optimal: Trickdiebstahl von Wertsachen bis 1.500 €). Wertsachen laut Tarifvergleich innerhalb eines Sicherheitsbehältnisses 20 bzw. 30 %, laut FAQ höchstens 40 % der VS.",
     "Fahrrad, Diebstahl aus Fahrzeugen bis 5.000 €, Elementar, Überspannung und Glas sind in beiden Stufen zuwählbare Bausteine. Online-Betrug: Optimal nur Missbrauch von Karten und Telefonen bis 200 €.",
-    "Selbstbeteiligung nur im Rechenbeispiel (150 €)."
+    "Selbstbeteiligung nur im Rechenbeispiel (150 €).",
+    "Geprüft am 18.11.2026 am Tarifvergleich und Text der Produktseite."
   ]
 }

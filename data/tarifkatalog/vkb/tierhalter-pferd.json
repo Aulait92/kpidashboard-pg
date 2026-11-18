@@ -20,12 +20,12 @@
         "geliehen": "nein",
         "neuwert": "bis 3.000 €",
         "ausland": "Europa unbegr., Welt 1 J",
-        "sb": "wählbar, z. B. 150 €"
+        "sb": "wählbar, z. B. 150 €",
+        "nebenberuf": "bis 10.000 € Umsatz/Jahr"
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/haftpflicht/hundehaftpflicht.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tierhalter-Haftpflicht Optimal",
@@ -38,12 +38,12 @@
         "geliehen": "ja",
         "neuwert": "bis 3.000 €",
         "ausland": "Europa unbegr., Welt 1 J",
-        "sb": "wählbar, z. B. 150 €"
+        "sb": "wählbar, z. B. 150 €",
+        "nebenberuf": "bis 10.000 € Umsatz/Jahr"
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/haftpflicht/hundehaftpflicht.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -54,6 +54,8 @@
     "Ein Produkt für Hunde und Pferde, Stufen Kompakt und Optimal. Keine Empfehlung markiert.",
     "Optimal zusätzlich: Mietsachschäden an Gebäuden, Grundstücken und Garagen, durch tierische Ausscheidungen und an Einrichtung in Reiseunterkünften sowie geliehene, gemietete Sachen.",
     "Fohlen bis 24 Monate beitragsfrei. Reitbeteiligung und Flurschäden sind auf der Produktseite nicht genannt.",
-    "Selbstbeteiligung nur im Rechenbeispiel (150 €). 50 % Nachlass ab dem zweiten Tier."
+    "Selbstbeteiligung nur im Rechenbeispiel (150 €). 50 % Nachlass ab dem zweiten Tier.",
+    "Gewerblicher Einsatz bis 10.000 € Jahresumsatz und Schadenersatzausfall stehen in der Leistungsliste der Produktseite ohne Stufenangabe; Schadenersatzausfall deshalb nicht als Wert gesetzt.",
+    "Geprüft am 18.11.2026 an Tarifvergleich und Leistungsliste der Produktseite."
   ]
 }

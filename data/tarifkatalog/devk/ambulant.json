@@ -25,8 +25,7 @@
         "sehhilfen": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/naturheilverfahren",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ET-GZ5 Plus mit Brille Komfort",
@@ -44,8 +43,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/brillen",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ET-GZ5 Plus mit Brille Premium",
@@ -63,8 +61,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/zusatzversicherungen/brillen",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -77,6 +74,7 @@
     "Naturheilkunde: 80 % nach Gebührenverzeichnis für Heilpraktiker, im 1. und 2. Jahr je 260 €, danach 780 € im Jahr; Kinder die Hälfte.",
     "Sehhilfen mit Brillentarif: Gesamtbetrag zusammen mit ET-GZ5 Plus; Premium zusätzlich Sonnenbrillen bis 150 € alle 24 Monate.",
     "Hilfsmittel (u. a. Hörgeräte) 100 % nach Vorleistung der GKV, im 1. und 2. Jahr je 600 €, danach 1.200 €.",
-    "Arzneimittel und Wartezeit nicht genannt; Vorsorge über eigenen Tarif VT-G (z. B. Gesundheits-Check bis 270 €)."
+    "Arzneimittel und Wartezeit nicht genannt; Vorsorge über eigenen Tarif VT-G (z. B. Gesundheits-Check bis 270 €).",
+    "Geprüft am 18.11.2026 an den Produktseiten Naturheilverfahren und Brillenversicherung."
   ]
 }

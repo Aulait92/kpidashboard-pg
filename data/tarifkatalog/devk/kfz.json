@@ -30,8 +30,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.devk.de/produkte/kfz-versicherung/pkw/vollkasko",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Versicherung Komfort-Schutz",
@@ -55,8 +54,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.devk.de/produkte/kfz-versicherung/pkw/vollkasko",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Versicherung Premium-Schutz",
@@ -80,8 +78,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.devk.de/produkte/kfz-versicherung/pkw/vollkasko",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -99,6 +96,7 @@
     "Schutzbrief Auto Plus: Basis und Komfort optional, Premium inklusive (Tarifübersicht 10/2025, Symbole am gerenderten Bild abgelesen).",
     "GAP-Deckung: im Komfort-Schutz zusätzlich zur Vollkasko wählbar, in Premium bei Vollkasko inklusive.",
     "Rabattschutz: für Haftpflicht und Vollkasko ab SF 4 wählbar; ob in allen drei Stufen, nicht ausdrücklich genannt.",
-    "Akku (Allgefahrendeckung in der Vollkasko) für Basis nicht genannt. Premium zusätzlich Parkschadenschutz bis 250 €, Reifenversicherung, Auslandsreise-Kranken."
+    "Akku (Allgefahrendeckung in der Vollkasko) für Basis nicht genannt. Premium zusätzlich Parkschadenschutz bis 250 €, Reifenversicherung, Auslandsreise-Kranken.",
+    "Geprüft am 18.11.2026 an der Tarifübersicht 10/2025 (Produktinformation 08504) und den Produktseiten."
   ]
 }

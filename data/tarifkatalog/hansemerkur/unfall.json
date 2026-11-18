@@ -25,8 +25,7 @@
         "gliedertaxe": "2 Gliedertaxen wählbar"
       },
       "quelle": "https://www.hansemerkur.de/unfallversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -36,6 +35,7 @@
     "Quelle: Leistungsübersicht der Produktseite hansemerkur.de (Best Gold); ein Tarif mit wählbarer Summe, Progression und Gliedertaxe.",
     "Höhe der Progressionsmodelle und Leistung ab welchem Invaliditätsgrad nicht beziffert („schon bei geringfügiger Beeinträchtigung“).",
     "Krankenhaustagegeld nicht genannt; Todesfallleistung und Unfall-Tagegeld als Optionen.",
-    "Hilfe- und Pflegeleistungen bis 10.000 €, behinderungsbedingte Mehraufwendungen bis 50.000 €."
+    "Hilfe- und Pflegeleistungen bis 10.000 €, behinderungsbedingte Mehraufwendungen bis 50.000 €.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

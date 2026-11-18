@@ -28,8 +28,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/141/deklarationsvergleichunfallpp141pdf/deklarationsvergleich-unfall-pp141.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung classic",
@@ -50,8 +49,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/141/deklarationsvergleichunfallpp141pdf/deklarationsvergleich-unfall-pp141.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung comfort",
@@ -73,8 +71,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/141/deklarationsvergleichunfallpp141pdf/deklarationsvergleich-unfall-pp141.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -85,6 +82,7 @@
     "Quelle: Deklarationsvergleich PP 141 (Seiten Stand 10.2024, Fußzeile 07.2026) der Alte Leipziger Versicherung AG und Produktseite; comfort ist dort als „Unser Top-Angebot“ markiert.",
     "Grundsumme frei wählbar, keine Spanne genannt. Progressionen 225 %, 350 %, 500 %+, 800 % oder 1.000 % laut Produktseite; Leistung ab welchem Invaliditätsgrad nicht genannt.",
     "Unfallrente, Krankenhaustagegeld, Genesungsgeld und Tagegeld sind optionale Leistungsarten; Höhe frei vereinbar. Krankenhaustagegeld höchstens 2, 3 bzw. 5 Jahre.",
-    "Gliedertaxe exclusiv nur für comfort wählbar. Pakete Hilfe & Pflege, Rehamanagement, Zuhause Tier & Co., Sport Freizeit & Co. gegen Aufpreis."
+    "Gliedertaxe exclusiv nur für comfort wählbar. Pakete Hilfe & Pflege, Rehamanagement, Zuhause Tier & Co., Sport Freizeit & Co. gegen Aufpreis.",
+    "Geprüft am 18.11.2026 an Produktseite, Deklarationsvergleich bzw. Bedingungen der Alte Leipziger."
   ]
 }
