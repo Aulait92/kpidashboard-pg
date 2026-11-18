@@ -105,9 +105,9 @@ describe("Meta-Vorlagen: Fassungen, Namen, Regeln", () => {
     expect(formsFor("outreach")).toEqual(["du", "sie", "sie_ohne_name"]);
     expect(formsFor("campaign_review")).toEqual(["sie", "sie_ohne_name"]);
     const names = plannedTemplates(purposesFor({ bestand: false })).map((t) => templateNameFor(t.purpose, "v2", t.form, t.variant, t.kopf));
-    // 20 Zwecke je 3 Fassungen (inkl. Show-up: 15 Min., Wartet; Angebot senden, Nachfassen selbst gesendet, Glückwunsch, Bedenkzeit), dazu A/B-Fassung
-    // b für followup_last; Erstanschreiben ab v7 nur mit PDF-Kopf
-    expect(names).toHaveLength(63);
+    // 21 Zwecke je 3 Fassungen (inkl. Show-up: 15 Min., Wartet; Angebot senden, Nachfassen selbst gesendet, Glückwunsch, Bedenkzeit,
+    // Erstanschreiben Hausrat), dazu A/B-Fassung b für followup_last; Erstanschreiben ab v7 nur mit PDF-Kopf
+    expect(names).toHaveLength(66);
     expect(names.some((n) => n.includes("ohnepdf"))).toBe(false);
     expect(names).toContain("pg_followup_last_v2_b_sie");
     expect(names).toContain("pg_outreach_v2");

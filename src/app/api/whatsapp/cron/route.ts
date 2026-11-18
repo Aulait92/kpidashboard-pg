@@ -196,6 +196,11 @@ async function handle(req: Request): Promise<Response> {
     reportError(e, "cron-empfehlungen");
     return null;
   });
+  // „Später melden“ am Kontakt: Tag erreicht → automatische Nachrichten laufen wieder (lib/nachrichtenplan-aktionen.ts)
+  const spaeterFortgesetzt = await import("@/lib/nachrichtenplan-aktionen").then((m) => m.pausenBeenden(now)).catch((e: unknown) => {
+    reportError(e, "cron-spaeter-melden");
+    return null;
+  });
   // Nachfass-Abfolgen (WhatsApp Mo–Sa 9–19 Uhr, Anruf-Aufgaben jederzeit)
   const sequences = await runSequences(now).catch((e: unknown) => {
     reportError(e, "cron-sequences");
@@ -422,7 +427,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, spaeterFortgesetzt, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

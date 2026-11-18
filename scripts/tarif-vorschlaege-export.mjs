@@ -9,7 +9,8 @@
 //
 // Je Wert: werte[merkmal] setzen und einen Vermerk in „offen“ ergänzen („von N Vermittlern bestätigt“). ungeprueft
 // bleibt (gilt je Tarif; für VHV, LVM, Haftpflichtkasse und Provinzial verlangt der Datentest es). Neue Tarifnamen
-// werden nur aufgelistet: Werte, Stufe und Quelle eines neuen Tarifs gehören in eine Recherche.
+// werden nicht geschrieben, sondern als Entwurf ausgegeben (Ole, 18.11.2026): Name und die Werte, die Vermittler dazu
+// eingetragen haben (werteEntwurf, je Merkmal der häufigste), ungeprüft. Stufe und Quelle gehören in eine Recherche.
 // Anderer Ordner: TARIFKATALOG_DIR.
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -34,6 +35,20 @@ const ohneStriche = (t) => t.replace(/(\d)\s*[–—]\s*(\d)/g, "$1\u0000$2").re
 
 /** Tarif in der Datei zur Katalog-ID (wie lib/tarifkatalog.ts parseTarifDatei: Kurzname, sonst Name). */
 const tarifZurId = (datei, id) => datei.tarife.find((t) => `${id.split("/").slice(0, 2).join("/")}/${slug(t.kurz ?? "") || slug(t.name ?? "")}` === id);
+
+/**
+ * Entwurf eines neuen Tarifs aus dem Export (nur Ausgabe, wird nie in die Katalogdatei geschrieben): Name, Werte der
+ * Vermittler (ohne Gedankenstriche, höchstens MAX_WERT Zeichen), ungeprüft, Vermerk in „offen“. null ohne Werte.
+ */
+export function entwurf(n) {
+  const werte = {};
+  for (const [merkmal, w] of Object.entries(n.werteEntwurf ?? {})) {
+    const wert = ohneStriche(String(w?.wert ?? ""));
+    if (wert && wert.length <= MAX_WERT) werte[merkmal] = wert;
+  }
+  if (!Object.keys(werte).length) return null;
+  return { name: n.name, werte, ungeprueft: true, entwurf: true, offen: [`Werte von ${n.vermittler} ${n.vermittler === 1 ? "Vermittler" : "Vermittlern"} eingetragen, bitte prüfen (Stufe, Quelle).`] };
+}
 
 /** Änderungen berechnen (ohne zu schreiben): je Datei der neue Inhalt und eine Liste für die Ausgabe. */
 export function anwenden(exportDaten, ordner) {
@@ -64,8 +79,16 @@ export function anwenden(exportDaten, ordner) {
     dateien.set(pfad, j);
     meldungen.push(`${w.datei} ${t.kurz} ${w.merkmal}: ${alt ?? "(leer)"} → ${wert}`);
   }
-  for (const n of exportDaten.neueTarife ?? []) meldungen.push(`neuer Tarifname (bitte recherchieren): ${n.datei} „${n.name}“ (${n.vermittler} Vermittler)`);
-  return { dateien, meldungen };
+  const entwuerfe = [];
+  for (const n of exportDaten.neueTarife ?? []) {
+    meldungen.push(`neuer Tarifname (bitte recherchieren): ${n.datei} „${n.name}“ (${n.vermittler} Vermittler)`);
+    const e = entwurf(n);
+    if (e) {
+      entwuerfe.push({ datei: n.datei, tarif: e });
+      meldungen.push(`  Entwurf: ${JSON.stringify(e)}`);
+    }
+  }
+  return { dateien, meldungen, entwuerfe };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

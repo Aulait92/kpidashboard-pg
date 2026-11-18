@@ -8,7 +8,7 @@
 // Antwortseite /t/<token>; gespeichert wird dort erst mit einem Klick im Browser (Link-Scanner rufen Links nur ab).
 
 import { a, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
-import { frageplan, outreachProdukt, V8_THEMA, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenZweck, frageplan, outreachProdukt, v8Thema, type ErstanschreibenZweck, type FormAntwort } from "@/lib/whatsapp/erstanschreiben";
 import { erstanschreibenThema } from "@/lib/whatsapp/erstanschreiben";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import type { LeadSignatur } from "@/lib/mail/lead-absender";
@@ -60,10 +60,10 @@ export function oeffnungsfrage(source: string | null | undefined, formular: Form
   return { key: "wunsch", feld: "wunsch", text: a(an, "Wie möchtest du am liebsten sprechen?", "Wie möchten Sie am liebsten sprechen?"), knoepfe: ["Per Video", "Per Telefon"] };
 }
 
-/** „ zur Zahnzusatzversicherung“ bzw. „ zum Thema …“ bzw. leer (wie v8). */
-export function anfrageThema(source: string | null | undefined): string {
+/** „ zur Zahnzusatzversicherung“ bzw. „ zum Thema …“ bzw. leer (wie v8); nur Hausrat: „ zu Ihrer Hausratversicherung“. */
+export function anfrageThema(source: string | null | undefined, an: Ansprache = "sie", formular?: FormAntwort[] | null): string {
   const p = outreachProdukt(source);
-  if (p) return V8_THEMA[p.purpose as keyof typeof V8_THEMA] ?? "";
+  if (p) return v8Thema(erstanschreibenZweck(source, formular) as ErstanschreibenZweck, an);
   const s = (source ?? "").trim();
   return s ? ` zum Thema ${erstanschreibenThema(source)}` : "";
 }
@@ -81,6 +81,8 @@ export type ErstmailInput = {
   betreffName: string | null;
   person: VermittlerName;
   source: string | null;
+  /** Angaben aus dem Leadformular (nur Hausrat angefragt: „zu Ihrer Hausratversicherung“) */
+  formular?: FormAntwort[] | null;
   ausloeser: Ausloeser;
   frage: Oeffnungsfrage | null;
   /** Links der Antwort-Knöpfe (gleiche Reihenfolge wie frage.knoepfe) */
@@ -129,7 +131,7 @@ export function schliessenSatz(an: Ansprache): string {
  */
 export function erstmailInhalt(o: ErstmailInput): { subject: string; text: string; html: string } {
   const an = o.an;
-  const thema = anfrageThema(o.source);
+  const thema = anfrageThema(o.source, an, o.formular);
   const art = o.art ?? "erst";
   const ki = a(an, `Hier schreibt der digitale KI-Assistent von ${o.person.dat}.`, `Hier schreibt der digitale KI-Assistent von ${o.person.dat}.`);
   const einleitung =
@@ -258,7 +260,7 @@ export function smsAbsenderFuer(name: string | null | undefined): string | null 
 export function smsText(o: { an: Ansprache; anredeName: string | null; person: VermittlerName; source: string | null; link: string; abmelden: string; art: "erst" | "erinnerung" }): string {
   const an = o.an;
   const hallo = o.anredeName ? `${a(an, "Hallo", "Hallo")} ${o.anredeName}, ` : `${a(an, "Hallo", "Guten Tag")}, `;
-  const thema = anfrageThema(o.source);
+  const thema = anfrageThema(o.source, an);
   const kern =
     o.art === "erst"
       ? `${hallo}${a(an, "danke für deine Anfrage", "danke für Ihre Anfrage")}${thema}. Hier ist der KI-Assistent von ${o.person.dat}. ${a(an, "Termin wählen", "Termin wählen")}: ${o.link}`

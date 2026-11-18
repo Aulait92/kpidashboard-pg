@@ -1,14 +1,15 @@
 "use client";
 
-// „Nächste Nachrichten“ am Kontakt (Paket P6, Ole 17.11.2026). Eine Hauptaktion oben („Alle pausieren“ bzw.
-// „Fortsetzen“), je Eintrag Zeit, Kanal, Titel und eine Zeile Vorschau; Antippen zeigt den ganzen Text. Seltenes
+// „Nächste Nachrichten“ am Kontakt (Paket P6, Ole 17.11.2026). Eine Hauptaktion oben („Später melden“ bzw.
+// „Fortsetzen“; „Später melden“ fasst seit 18.11.2026 die Pause aus P6 und die Bedenkzeit aus P5 in einem Blatt zusammen,
+// components/spaeter-melden.tsx), je Eintrag Zeit, Kanal, Titel und eine Zeile Vorschau; Antippen zeigt den ganzen Text. Seltenes
 // („Jetzt senden“, „Verschieben“, „Überspringen“) liegt im Menü je Zeile. Übersprungene Einträge bleiben durchgestrichen
 // stehen und lassen sich mit einem Tipp zurückholen. Handy zuerst: alles einspaltig, Tippziele mindestens 40 px.
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, CalendarClock, ChevronDown, Mail, MessageCircle, MoreHorizontal, Pause, Phone, Play, Send, SkipForward, Undo2, type LucideIcon } from "lucide-react";
+import { Bell, CalendarClock, ChevronDown, Mail, MessageCircle, MoreHorizontal, Phone, Play, Send, SkipForward, Undo2, type LucideIcon } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { ActionMenu } from "@/components/ui/menu";
 import { Sheet } from "@/components/ui/sheet";
@@ -17,7 +18,7 @@ import { NachrichtVorschau } from "@/components/nachricht-vorschau";
 import type { PlanEintrag, PlanKanal } from "@/lib/nachrichtenplan";
 import { nachrichtenAktion, type NachrichtenAktion } from "@/app/buyer/nachrichtenplan-actions";
 import { stopLeadSequenceAction } from "@/app/buyer/sequence-actions";
-import { LeadSequencePause, type PauseOption } from "@/components/lead-sequence-pause";
+import { SpaeterMelden, type SpaeterProps } from "@/components/spaeter-melden";
 import { cn } from "@/lib/utils";
 
 export type VerlaufZeile = { at: string | null; text: string; leise?: boolean };
@@ -86,10 +87,16 @@ export function NaechsteNachrichten({
   verlauf,
   readOnly,
   jetzt: jetztIso,
-  bedenkzeit = null,
+  spaeter = null,
+  bedenkzeitBis = null,
+  pausiertBis = null,
 }: {
-  /** Nachfassen zum Angebot läuft (Paket P5): „Bedenkzeit eintragen“ im Menü; bis = laufende Bedenkzeit */
-  bedenkzeit?: { optionen: PauseOption[]; min: string; max: string; bis: string | null } | null;
+  /** Blatt „Später melden“ (Tage, Angebot, E-Mail-Haken); null = nicht anbieten */
+  spaeter?: SpaeterProps | null;
+  /** Laufende Bedenkzeit zum Angebot („Di, 2.12.“) */
+  bedenkzeitBis?: string | null;
+  /** „Später melden“ mit Tag: Pause endet von selbst („Di, 2.12.“) */
+  pausiertBis?: string | null;
   leadId: string;
   eintraege: PlanEintrag[];
   pausiertAt: string | null;
@@ -107,7 +114,7 @@ export function NaechsteNachrichten({
   const [offen, setOffen] = useState<string | null>(null);
   const [verschieben, setVerschieben] = useState<PlanEintrag | null>(null);
   const [senden, setSenden] = useState<PlanEintrag | null>(null);
-  const [bedenkzeitOffen, setBedenkzeitOffen] = useState(false);
+  const [spaeterOffen, setSpaeterOffen] = useState(false);
   const jetzt = useMemo(() => new Date(jetztIso), [jetztIso]);
   const eintraege = alleEintraege.filter((e) => !begleitend(e));
   const pausiert = !!pausiertAt;
@@ -144,9 +151,11 @@ export function NaechsteNachrichten({
 
   const naechste = anLead.find((e) => !e.pausiert);
   const unterzeile = pausiert
-    ? `Pausiert seit ${kurz(pausiertAt!, jetzt)} Uhr. Bis Sie fortsetzen, geht nichts automatisch raus.`
-    : bedenkzeit?.bis
-      ? `Bedenkzeit bis ${bedenkzeit.bis}, danach fasst die App wieder nach.`
+    ? pausiertBis
+      ? `Pausiert bis ${pausiertBis}, danach geht es von selbst weiter.`
+      : `Pausiert seit ${kurz(pausiertAt!, jetzt)} Uhr. Bis Sie fortsetzen, geht nichts automatisch raus.`
+    : bedenkzeitBis
+      ? `Bedenkzeit bis ${bedenkzeitBis}, danach fasst die App wieder nach.`
       : naechste
       ? `Nächste an den Kontakt: ${kurz(naechste.at, jetzt)} Uhr, ${KANAL[naechste.kanal].name}`
       : eintraege.length
@@ -176,27 +185,25 @@ export function NaechsteNachrichten({
                 <Button
                   variant="secondary"
                   size="md"
-                  icon={Pause}
-                  disabled={pending || !anLead.length}
-                  onClick={() => los({ aktion: "pausieren" }, { rueckgaengig: { aktion: "fortsetzen" } })}
-                  data-nachrichten-pausieren
+                  icon={CalendarClock}
+                  disabled={pending || !spaeter || (!anLead.length && !laeuft)}
+                  onClick={() => setSpaeterOffen(true)}
+                  data-spaeter-melden
                 >
-                  Alle pausieren
+                  Später melden
                 </Button>
               )}
-              {laeuft ? (
+              {laeuft || (pausiert && spaeter) ? (
                 <ActionMenu
                   label="Mehr"
                   labelClassName="sr-only"
                   icon={MoreHorizontal}
                   items={[
-                    ...(bedenkzeit
-                      ? [{ label: bedenkzeit.bis ? "Bedenkzeit ändern" : "Bedenkzeit eintragen", hint: "Nachfassen zum Angebot bis zu einem Tag anhalten", onSelect: () => setBedenkzeitOffen(true) }]
-                      : []),
-                    {
+                    ...(pausiert && spaeter ? [{ label: "Anderen Tag wählen", hint: "Pause bis zu einem Tag, danach geht es von selbst weiter", onSelect: () => setSpaeterOffen(true) }] : []),
+                    ...(laeuft ? [{
                       label: "Nachfassen beenden",
                       hint: "Die laufende Abfolge endet ganz, Erinnerungen bleiben.",
-                      tone: "danger",
+                      tone: "danger" as const,
                       onSelect: () =>
                         start(async () => {
                           const res = await stopLeadSequenceAction(leadId);
@@ -204,7 +211,7 @@ export function NaechsteNachrichten({
                           toast.show({ message: "Nachfassen beendet", tone: "success" });
                           router.refresh();
                         }),
-                    },
+                    }] : []),
                   ]}
                 />
               ) : null}
@@ -277,9 +284,7 @@ export function NaechsteNachrichten({
         </div>
       </div>
 
-      {bedenkzeit && !readOnly ? (
-        <LeadSequencePause leadId={leadId} optionen={bedenkzeit.optionen} min={bedenkzeit.min} max={bedenkzeit.max} aendern={!!bedenkzeit.bis} offen={bedenkzeitOffen} onOffen={setBedenkzeitOffen} />
-      ) : null}
+      {spaeter && !readOnly ? <SpaeterMelden leadId={leadId} offen={spaeterOffen} onOffen={setSpaeterOffen} spaeter={spaeter} /> : null}
       <VerschiebenSheet
         e={verschieben}
         pending={pending}

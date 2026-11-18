@@ -32,6 +32,8 @@ export type VorschlagNeu = {
   alterWert: string | null;
   neuerWert: string;
   ungeprueft: boolean;
+  /** Neuer Tarifname: Merkmalwerte, die der Vermittler dazu eingetragen hat (Entwurf für den Export) */
+  werte?: Record<string, string> | null;
 };
 
 export const dateiVon = (gesellschaft: string, sparte: string) => `${gesellschaft}/${sparte}.json`;
@@ -91,11 +93,18 @@ export function vorschlaegeAusEigenemTarif(k: Katalog, e: { sparte: string; gese
   const g = gesellschaftAusText(e.gesellschaft);
   if (!g || !tarifeDerDatei(k, g, e.sparte).length) return [];
   const kt = katalogTarifFinden(k, e.sparte, e.gesellschaft, e.name);
+  const erlaubt = new Set(sparteVon(k, e.sparte)?.merkmale.map((m) => m.key) ?? []);
   if (!kt) {
     const v = tarifnameVorschlag(k, e.sparte, g, e.name);
-    return v ? [v] : [];
+    if (!v) return [];
+    // Werte zum neuen Tarif (Ole, 18.11.2026): gehen als Entwurf mit in den Export, nur Merkmale der Sparte
+    const werte: Record<string, string> = {};
+    for (const [key, roh] of Object.entries(e.werte ?? {})) {
+      const w = sauber(roh, 40);
+      if (w && erlaubt.has(key) && !wirktPersoenlich(w)) werte[key] = w;
+    }
+    return [Object.keys(werte).length ? { ...v, werte } : v];
   }
-  const erlaubt = new Set(sparteVon(k, e.sparte)?.merkmale.map((m) => m.key) ?? []);
   const out: VorschlagNeu[] = [];
   for (const [key, roh] of Object.entries(e.werte ?? {})) {
     const w = sauber(roh, 40);
@@ -322,4 +331,41 @@ export function auswahlAuffrischen<T extends { sparten: { tarife: { id: string; 
     }),
   }));
   return { auswahl: geaendert ? { ...a, sparten } : a, geaendert };
+}
+
+// ─── Entwurf für neue Tarifnamen und Hinweis auf „Heute“ ──────────────────────────────────────
+
+export type EntwurfWert = { wert: string; vermittler: number };
+
+/**
+ * Werte eines neuen Tarifnamens als Entwurf (Ole, 18.11.2026): je Merkmal der Wert, den die meisten verschiedenen
+ * Vermittler eingetragen haben (bei Gleichstand der zuerst gefundene, Liste neueste zuerst). Nur Einträge mit diesem
+ * Namen (wertNorm). Rein.
+ */
+export function entwurfWerte(zeilen: { customerId: string; neuerWert: string; werte: unknown }[], name: string): Record<string, EntwurfWert> {
+  const je = new Map<string, Map<string, { wert: string; kunden: Set<string> }>>();
+  for (const z of zeilen) {
+    if (wertNorm(z.neuerWert) !== wertNorm(name) || !z.werte || typeof z.werte !== "object" || Array.isArray(z.werte)) continue;
+    for (const [merkmal, roh] of Object.entries(z.werte as Record<string, unknown>)) {
+      if (typeof roh !== "string" || !roh.trim()) continue;
+      const m = je.get(merkmal) ?? new Map<string, { wert: string; kunden: Set<string> }>();
+      const n = wertNorm(roh);
+      const e = m.get(n) ?? { wert: roh.trim(), kunden: new Set<string>() };
+      e.kunden.add(z.customerId);
+      m.set(n, e);
+      je.set(merkmal, m);
+    }
+  }
+  const out: Record<string, EntwurfWert> = {};
+  for (const [merkmal, m] of je) {
+    let best: { wert: string; kunden: Set<string> } | null = null;
+    for (const e of m.values()) if (!best || e.kunden.size > best.kunden.size) best = e;
+    if (best) out[merkmal] = { wert: best.wert, vermittler: best.kunden.size };
+  }
+  return out;
+}
+
+/** Offene Gruppen mit mindestens einem „Empfohlen“-Wert (Hinweis auf „Heute“). */
+export function anzahlEmpfehlungen(gruppen: Pick<VorschlagGruppe, "werte">[]): number {
+  return gruppen.filter((g) => g.werte.some((w) => w.empfohlen)).length;
 }

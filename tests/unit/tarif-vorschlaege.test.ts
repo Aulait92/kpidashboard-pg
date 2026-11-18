@@ -12,7 +12,9 @@ import { folien, markeFuer } from "@/lib/praesentation";
 import type { VorbereitungDaten } from "@/lib/termin-vorbereitung";
 import {
   TARIF_MERKMAL,
+  anzahlEmpfehlungen,
   auswahlAuffrischen,
+  entwurfWerte,
   gruppieren,
   katalogUeberlagern,
   vorschlaegeAusBisher,
@@ -80,11 +82,13 @@ describe("Erfassen: eigener Tarif zu einem Katalogtarif", () => {
     expect(v.map((x) => [x.tarifId, x.merkmal, x.neuerWert, x.ungeprueft])).toEqual([["allianz/hausrat/komfort", "garten", "bis 20.000 €", false]]);
   });
 
-  it("Name fehlt im Katalog der Gesellschaft: Tarifname als Vorschlag; fremde Gesellschaft bzw. Sparte ohne Datei: nichts", () => {
-    const v = vorschlaegeAusEigenemTarif(k, { sparte: "hausrat", gesellschaft: "LVM", name: "MeinKompakt", werte: { bargeld: "bis 500 €" } });
+  it("Name fehlt im Katalog der Gesellschaft: Tarifname als Vorschlag mit den Werten als Entwurf; fremde Gesellschaft bzw. Sparte ohne Datei: nichts", () => {
+    const v = vorschlaegeAusEigenemTarif(k, { sparte: "hausrat", gesellschaft: "LVM", name: "MeinKompakt", werte: { bargeld: "bis 500 €", gibtsnicht: "x", diebstahl: "a@b.de" } });
     expect(v).toEqual([
-      { gesellschaft: "lvm", sparte: "hausrat", datei: "lvm/hausrat.json", tarifId: "lvm/hausrat/*", merkmal: TARIF_MERKMAL, alterWert: null, neuerWert: "MeinKompakt", ungeprueft: true },
+      { gesellschaft: "lvm", sparte: "hausrat", datei: "lvm/hausrat.json", tarifId: "lvm/hausrat/*", merkmal: TARIF_MERKMAL, alterWert: null, neuerWert: "MeinKompakt", ungeprueft: true, werte: { bargeld: "bis 500 €" } },
     ]);
+    // ohne Werte: nur der Name
+    expect(vorschlaegeAusEigenemTarif(k, { sparte: "hausrat", gesellschaft: "LVM", name: "MeinKompakt" })[0].werte).toBeUndefined();
     expect(vorschlaegeAusEigenemTarif(k, { sparte: "hausrat", gesellschaft: "Kleine Regionale VVaG", name: "Top", werte: { bargeld: "x" } })).toEqual([]);
     expect(vorschlaegeAusEigenemTarif(k, { sparte: "gibts-nicht", gesellschaft: "LVM", name: "Top" })).toEqual([]);
   });
@@ -209,16 +213,33 @@ describe("Export-Skript", () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "tarif-export-"));
     fs.mkdirSync(path.join(tmp, "lvm"));
     fs.copyFileSync(path.join(ORDNER, "lvm", "hausrat.json"), path.join(tmp, "lvm", "hausrat.json"));
-    const { dateien, meldungen } = anwenden(
+    const { dateien, meldungen, entwuerfe } = anwenden(
       {
         werte: [
           { datei: "lvm/hausrat.json", tarifId: lvm.id, merkmal: "bargeld", wert: "bis 5.000 € – erhöhbar", vermittler: 3, uebernommenAm: "2026-11-18T10:00:00Z" },
           { datei: "lvm/hausrat.json", tarifId: "lvm/hausrat/gibtsnicht", merkmal: "bargeld", wert: "x", vermittler: 1, uebernommenAm: "2026-11-18T10:00:00Z" },
         ],
-        neueTarife: [{ datei: "lvm/hausrat.json", gesellschaft: "lvm", sparte: "hausrat", name: "MeinKompakt", vermittler: 2, uebernommenAm: "2026-11-18T10:00:00Z" }],
+        neueTarife: [
+          {
+            datei: "lvm/hausrat.json",
+            gesellschaft: "lvm",
+            sparte: "hausrat",
+            name: "MeinKompakt",
+            vermittler: 2,
+            uebernommenAm: "2026-11-18T10:00:00Z",
+            werteEntwurf: { bargeld: { wert: "bis 500 € – Zusatz", vermittler: 2 }, garten: { wert: "x".repeat(30), vermittler: 1 } },
+          },
+        ],
       },
       tmp,
     );
+    // Neuer Tarif: nur als Entwurf ausgegeben, nie in die Datei geschrieben
+    expect(entwuerfe).toEqual([
+      {
+        datei: "lvm/hausrat.json",
+        tarif: { name: "MeinKompakt", werte: { bargeld: "bis 500 €, Zusatz" }, ungeprueft: true, entwurf: true, offen: ["Werte von 2 Vermittlern eingetragen, bitte prüfen (Stufe, Quelle)."] },
+      },
+    ]);
     const j = dateien.get(path.join(tmp, "lvm", "hausrat.json"));
     const t = j.tarife.find((x: { kurz: string }) => x.kurz === "MeinPremium");
     expect(t.werte.bargeld).toBe("bis 5.000 €, erhöhbar");
@@ -226,8 +247,32 @@ describe("Export-Skript", () => {
     expect(j.offen.at(-1)).toContain("von 3 Vermittlern eingetragen");
     expect(meldungen.some((m: string) => m.startsWith("Tarif nicht gefunden"))).toBe(true);
     expect(meldungen.some((m: string) => m.includes("MeinKompakt"))).toBe(true);
+    expect(dateien.get(path.join(tmp, "lvm", "hausrat.json")).tarife.some((x: { name: string }) => x.name === "MeinKompakt")).toBe(false);
     // Probelauf schreibt nichts
     expect(JSON.parse(fs.readFileSync(path.join(tmp, "lvm", "hausrat.json"), "utf8")).tarife[1].werte.bargeld).toBe("bis 3.000 €");
     fs.rmSync(tmp, { recursive: true, force: true });
+  });
+});
+
+describe("Neue Tarifnamen: Werte als Entwurf, Hinweis auf Heute", () => {
+  it("je Merkmal der Wert mit den meisten verschiedenen Vermittlern, nur Einträge mit diesem Namen", () => {
+    const e = entwurfWerte(
+      [
+        { customerId: "a", neuerWert: "MeinKompakt", werte: { bargeld: "bis 500 €", garten: "ja" } },
+        { customerId: "b", neuerWert: "meinkompakt", werte: { bargeld: "bis 500 Euro" } },
+        { customerId: "b", neuerWert: "MeinKompakt", werte: { bargeld: "bis 500 €" } },
+        { customerId: "c", neuerWert: "MeinKompakt", werte: { bargeld: "bis 1.000 €", garten: "" } },
+        { customerId: "d", neuerWert: "Anderer", werte: { bargeld: "bis 9.000 €" } },
+        { customerId: "e", neuerWert: "MeinKompakt", werte: null },
+      ],
+      "MeinKompakt",
+    );
+    expect(e).toEqual({ bargeld: { wert: "bis 500 €", vermittler: 2 }, garten: { wert: "ja", vermittler: 1 } });
+  });
+
+  it("zählt offene Gruppen mit Empfehlung", () => {
+    const w = (empfohlen: boolean) => ({ wert: "x", vermittler: 3, art: "neu" as const, empfohlen, zuLang: false, zuletzt: new Date() });
+    expect(anzahlEmpfehlungen([{ werte: [w(false), w(true)] }, { werte: [w(false)] }, { werte: [w(true)] }])).toBe(2);
+    expect(anzahlEmpfehlungen([])).toBe(0);
   });
 });

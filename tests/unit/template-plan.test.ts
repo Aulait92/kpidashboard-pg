@@ -24,12 +24,12 @@ const ALL = [...CORE_PURPOSES, ...CAMPAIGN_PURPOSES];
 describe("Vorlagen-Plan", () => {
   it("Kampagnen-Vorlagen nur mit Bestandskunden-Modul", () => {
     // inkl. Show-up-Paket (freigegeben 17.11.2026): 15 Minuten vorher, „wartet im Videoraum“; Angebot (P3, 17.11.2026)
-    expect(purposesFor({ bestand: false })).toHaveLength(20);
+    expect(purposesFor({ bestand: false })).toHaveLength(21);
     expect(purposesFor({ bestand: false })).toContain("reschedule");
     expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["reminder_start", "appt_waiting"]));
     expect(purposesFor({ bestand: false })).not.toContain("campaign_review");
-    expect(purposesFor({ bestand: true })).toHaveLength(24);
-    expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz"]));
+    expect(purposesFor({ bestand: true })).toHaveLength(25);
+    expect(purposesFor({ bestand: false })).toEqual(expect.arrayContaining(["outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"]));
   });
 
   it("Name: pg_<zweck>_v4[_b][_sie|_sie_ohne_name], nur Kleinbuchstaben/Ziffern/Unterstrich", () => {
@@ -37,7 +37,8 @@ describe("Vorlagen-Plan", () => {
     expect(templateNameFor("outreach")).toBe("pg_outreach_v8");
     expect(templateNameFor("outreach_tkv", undefined, "sie")).toBe("pg_outreach_tkv_v8_sie");
     expect(templateNameFor("outreach_tkv", "v6", "sie_ohne_name", "a", false)).toBe("pg_outreach_tkv_v6_ohnepdf_sie_ohne_name");
-    expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v4_b_sie");
+    // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben: Vermittler-Nennung)
+    expect(templateNameFor("followup_last", undefined, "sie", "b")).toBe("pg_followup_last_v5_b_sie");
     // Unveränderte Texte behalten ihre Version (keine erneute Einreichung)
     expect(templateNameFor("referral_thanks", undefined, "sie")).toBe("pg_referral_thanks_v3_sie");
     expect(templateNameFor("outreach", "v3", "sie")).toBe("pg_outreach_v3_sie");
@@ -112,7 +113,7 @@ describe("Vorlagen-Plan", () => {
     for (const p of ["campaign_cross_sell", "campaign_review", "campaign_renewal"] as const) expect(SUGGESTED_TEMPLATE_TEXT[p]).toContain("hier ist [Berater][Rolle].");
     for (const t of Object.values(SUGGESTED_TEMPLATE_TEXT)) expect(t).not.toContain("Versicherungsberater");
     expect(SUGGESTED_TEMPLATE_TEXT.followup_noshow).toBe(
-      "Hallo {{1}}, kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
+      "Hallo {{1}}, kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
     );
     expect(SUGGESTED_TEMPLATE_TEXT.followup_noshow).not.toMatch(/schade/i);
     expect(SUGGESTED_TEMPLATE_TEXT.followup_last).toContain("Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.");

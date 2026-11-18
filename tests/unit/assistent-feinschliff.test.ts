@@ -34,10 +34,10 @@ import {
   erstanschreibenText,
   erstanschreibenV6Params,
   erstanschreibenV8Params,
+  erstanschreibenZweck,
   ersteFrage,
   ersteFrageKnoepfe,
   frageOhneFragezeichen,
-  outreachProdukt,
 } from "@/lib/whatsapp/erstanschreiben";
 import { fillNames, OUTREACH_PURPOSES, rankOutreach, renderTemplate, TEMPLATE_BUTTONS, templateTextFor, type NoticePurpose } from "@/lib/whatsapp/templates";
 import { buildTemplateRequest, metaTemplateProblems, plannedTemplates, templateNameFor } from "@/lib/whatsapp/template-plan";
@@ -334,11 +334,12 @@ describe("Erstanschreiben v8 (vorher v7): Text und Parameter", () => {
   for (const source of PRODUKTE) {
     for (const [lage, formular] of Object.entries(LAGEN)) {
       it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“; Freitext gleich der vorbereiteten v8`, () => {
-        const purpose: NoticePurpose = outreachProdukt(source)?.purpose ?? "outreach";
         for (const an of ["sie", "du"] as const) {
           for (const kontakt of [{ fullName: "Julia Schneider", salutation: "Frau" as const }, { fullName: "Julia" }]) {
             const person = an === "du" ? PERSON_DU : PERSON;
             const f = formular(source);
+            // Vorlage je Produkt, nur Hausrat angefragt: outreach_hausrat (Ole, 18.11.2026)
+            const purpose: NoticePurpose = erstanschreibenZweck(source, f);
             const frage = ersteFrage(source, an, "Ole", f, person);
             expect(frage.endsWith("?"), frage).toBe(true);
             const params = erstanschreibenV8Params({ source, an, formular: f, person, kurz: "Ole" });

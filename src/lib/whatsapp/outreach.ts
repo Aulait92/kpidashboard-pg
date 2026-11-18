@@ -22,6 +22,7 @@ import {
   ersteFrageKnoepfe,
   erstanschreibenText,
   erstanschreibenV6Params,
+  erstanschreibenZweck,
   erstanschreibenV8Params,
   outreachProdukt,
   tierWort,
@@ -57,7 +58,6 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   const who = await ansprechpartner({ customerId: opts.customerId, leadId: opts.leadId, phone: opts.phone, name: opts.name });
   const url = await erstinfoUrlFor(opts.customerId);
   const produkt = outreachProdukt(opts.source);
-  const purpose: NoticePurpose = produkt?.purpose ?? "outreach";
   const rest = produkt ? [produkt.produkt] : [];
   // PDF der Erstinformation (Ole, 17.11.2026: Erstanschreiben NIE ohne Erstinformation): vollständig in den Kopf der
   // Vorlage, sonst im aktuellen Stand (templates.ts rankOutreach); gar keins → nicht senden (ErstinfoPdfFehltError)
@@ -82,11 +82,13 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     .catch(() => 0))
     ? "nachricht"
     : "anfrage";
-  const variant = await abVariantFor(purpose, opts.leadId);
   // Angaben aus dem Leadformular: der Freitext fragt nicht, was schon bekannt ist (Gesundheitsangaben nie)
   const formular = splitHealthAnswers(
     asFormAnswers((await prisma.lead.findUnique({ where: { id: opts.leadId }, select: { formData: true } }).catch(() => null))?.formData),
   ).normal;
+  // Vorlage je Produkt; nur Hausrat angefragt: eigene Fassung „zu Ihrer Hausratversicherung“ (Ole, 18.11.2026)
+  const purpose: NoticePurpose = erstanschreibenZweck(opts.source, formular);
+  const variant = await abVariantFor(purpose, opts.leadId);
   const kurz = who.kurz || who.firm;
   const first = firstNameOf(opts.name);
   // v6 (Ole, 17.11.2026): Vermittler als Person im Dativ („von Herrn Kannapinn“, Du Vorname), Rückfall Agentur
@@ -142,7 +144,8 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     contactName: opts.name,
     anrede: m.who.kontakt,
     document: m.document,
-    outreach: { fallbackPurposes: m.purpose === "outreach" ? [] : ["outreach"], documentEntwurf: m.documentEntwurf },
+    // Reine Hausrat-Leads: bis outreach_hausrat freigegeben ist, die allgemeine bzw. die Privatschutz-Fassung
+    outreach: { fallbackPurposes: m.purpose === "outreach" ? [] : m.purpose === "outreach_hausrat" ? ["outreach", "outreach_privatschutz"] : ["outreach"], documentEntwurf: m.documentEntwurf },
     variant: m.variant,
   });
   // Fenster offen (Freitext): Erstinformation unmittelbar als PDF hinterher (Nachricht 2, § 16 VersVermV; unvollständig

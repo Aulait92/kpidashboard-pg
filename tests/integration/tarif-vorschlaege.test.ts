@@ -8,7 +8,8 @@ import { loadVorbereitung } from "@/lib/termin-vorbereitung-server";
 import { sparteNeu, zuAngebote, type Tarifauswahl } from "@/lib/tarifauswahl";
 import { bisherHand } from "@/lib/bisheriger-vertrag";
 import { folien, markeFuer } from "@/lib/praesentation";
-import { ladeTarifkatalogAktuell, ladeVorschlaege, tarifExport, vorschlagAblehnen, vorschlagUebernehmen, vorschlagZuruecknehmen } from "@/lib/tarif-vorschlaege-server";
+import { ladeTarifkatalogAktuell, ladeVorschlaege, tarifEmpfehlungen, tarifExport, vorschlagAblehnen, vorschlagUebernehmen, vorschlagZuruecknehmen } from "@/lib/tarif-vorschlaege-server";
+import { tarifEmpfehlungItem } from "@/lib/admin-heute";
 import { tarifVorschlaegeDiagnose } from "@/lib/ops/tarif-vorschlaege";
 import { TARIF_MERKMAL } from "@/lib/tarif-vorschlaege";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
@@ -56,7 +57,7 @@ describe("Tarif-Vorschläge der Vermittler (Datenbank)", () => {
     ]);
     // keine Lead-, Termin- oder Personendaten: nur diese Spalten
     expect(Object.keys(rows[0]).sort()).toEqual(
-      ["alterWert", "createdAt", "customerId", "datei", "entschiedenAm", "gesellschaft", "id", "merkmal", "neuerWert", "quelle", "sparte", "status", "tarifId", "ungeprueft", "userId"].sort(),
+      ["alterWert", "createdAt", "customerId", "datei", "entschiedenAm", "gesellschaft", "id", "merkmal", "neuerWert", "quelle", "sparte", "status", "tarifId", "ungeprueft", "userId", "werte"].sort(),
     );
     expect(JSON.stringify(rows)).not.toMatch(/Verena|Martin/);
   });
@@ -98,6 +99,10 @@ describe("Tarif-Vorschläge der Vermittler (Datenbank)", () => {
     expect(v.anzahl.offen).toBe(v.gruppen.length);
     const d = await tarifVorschlaegeDiagnose();
     expect(d).toMatchObject({ offenEmpfohlen: 1, uebernommeneWerte: 0 });
+    // Hinweis auf „Heute“ im Admin, sobald es eine Empfehlung gibt
+    expect(await tarifEmpfehlungen()).toBe(1);
+    expect(tarifEmpfehlungItem(1)).toMatchObject({ title: "Tarifkatalog: 1 Empfehlung von Vermittlern", action: { href: "/admin/neu/einstellungen/tarife" }, approval: true });
+    expect(tarifEmpfehlungItem(0)).toBeNull();
     expect(JSON.stringify(d)).not.toContain("5.000");
   });
 
@@ -151,6 +156,22 @@ describe("Tarif-Vorschläge der Vermittler (Datenbank)", () => {
     expect((await vorschlagZuruecknehmen({ tarifId: LVM, merkmal: "bargeld", wert: "bis 5.000 €" })).ok).toBe(true);
     expect((await ladeTarifkatalogAktuell()).tarife.find((x) => x.id === LVM)!.werte.bargeld).toBe("bis 3.000 €");
     expect(await prisma.tarifVorschlag.count({ where: { tarifId: LVM, merkmal: "bargeld", status: "offen" } })).toBe(3);
+  });
+
+  it("neuer Tarifname mit Werten: Werte gehen als Entwurf in den Export, der letzte Stand je Vermittler gilt", async () => {
+    const a = kunden[0];
+    await eigener(a, { bargeld: "bis 800 €" }, "MeinKompakt");
+    await eigener(a, { bargeld: "bis 1.000 €", garten: "ja" }, "MeinKompakt");
+    await eigener(agenturB, { bargeld: "bis 1000 €" }, "MeinKompakt");
+    const rows = await prisma.tarifVorschlag.findMany({ where: { merkmal: TARIF_MERKMAL, neuerWert: "MeinKompakt" }, select: { customerId: true, werte: true } });
+    expect(rows.length).toBe(2);
+    expect(rows.find((r) => r.customerId === a.customerId)?.werte).toEqual({ bargeld: "bis 1.000 €", garten: "ja" });
+    expect((await vorschlagUebernehmen({ tarifId: "lvm/hausrat/*", merkmal: TARIF_MERKMAL, wert: "MeinKompakt" })).ok).toBe(true);
+    const n = (await tarifExport()).neueTarife.find((x) => x.name === "MeinKompakt")!;
+    expect(n.werteEntwurf).toEqual({ bargeld: { wert: expect.stringMatching(/^bis 1\.?000 €$/), vermittler: 2 }, garten: { wert: "ja", vermittler: 1 } });
+    // Katalog selbst bleibt unverändert (nur Export)
+    expect((await ladeTarifkatalogAktuell()).tarife.some((t) => t.name === "MeinKompakt")).toBe(false);
+    expect((await vorschlagZuruecknehmen({ tarifId: "lvm/hausrat/*", merkmal: TARIF_MERKMAL, wert: "MeinKompakt" })).ok).toBe(true);
   });
 
   it("neuer Tarifname: Übernehmen merkt nur für den Export vor, zu lange Werte werden abgelehnt", async () => {

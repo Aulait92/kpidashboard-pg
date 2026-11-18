@@ -3,20 +3,25 @@
 // Reine Funktionen: lib/tarif-vorschlaege.ts.
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
 import type { TeamCtx } from "@/lib/team";
 import { ladeTarifkatalog, tarifkatalogOrdner } from "@/lib/tarifkatalog-laden";
 import { sparteVon, type Katalog } from "@/lib/tarifkatalog";
 import {
+  EMPFOHLEN_AB,
   FOLIE_MAX_WERT,
   TARIF_MERKMAL,
+  anzahlEmpfehlungen,
+  entwurfWerte,
   gruppieren,
   katalogUeberlagern,
   wertNorm,
   type VorschlagGruppe,
   type VorschlagNeu,
   type VorschlagQuelle,
+  type EntwurfWert,
   type VorschlagStatus,
 } from "@/lib/tarif-vorschlaege";
 
@@ -30,10 +35,19 @@ export async function vorschlaegeErfassen(ctx: Pick<TeamCtx, "customerId" | "use
     // Testkonten (Demo, eigene Tests) zählen nicht als Vermittler
     const c = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { isTest: true } });
     if (!c || c.isTest) return 0;
+    const daten = liste.slice(0, 40);
     const r = await prisma.tarifVorschlag.createMany({
-      data: liste.slice(0, 40).map((v) => ({ ...v, customerId: ctx.customerId, userId: ctx.userId ?? null, quelle })),
+      data: daten.map(({ werte, ...v }) => ({ ...v, ...(werte ? { werte } : {}), customerId: ctx.customerId, userId: ctx.userId ?? null, quelle })),
       skipDuplicates: true,
     });
+    // Werte zum neuen Tarifnamen: der letzte Stand des Vermittlers gilt (Autosave legt den Eintrag nur einmal an)
+    for (const v of daten) {
+      if (!v.werte) continue;
+      await prisma.tarifVorschlag.updateMany({
+        where: { customerId: ctx.customerId, tarifId: v.tarifId, merkmal: v.merkmal, neuerWert: v.neuerWert, status: "offen" },
+        data: { werte: v.werte },
+      });
+    }
     return r.count;
   } catch (e) {
     reportError(e, "tarif-vorschlaege.erfassen");
@@ -154,20 +168,64 @@ export type TarifExport = {
   erzeugt: string;
   hinweis: string;
   werte: { datei: string; tarifId: string; merkmal: string; wert: string; vermittler: number; uebernommenAm: string }[];
-  neueTarife: { datei: string; gesellschaft: string; sparte: string; name: string; vermittler: number; uebernommenAm: string }[];
+  /**
+   * Neue Tarifnamen. werteEntwurf: Merkmalwerte, die Vermittler dazu eingetragen haben (je Merkmal der häufigste Wert),
+   * nur als Entwurf für die Recherche, ungeprüft (Ole, 18.11.2026).
+   */
+  neueTarife: {
+    datei: string;
+    gesellschaft: string;
+    sparte: string;
+    name: string;
+    vermittler: number;
+    uebernommenAm: string;
+    werteEntwurf: Record<string, EntwurfWert>;
+  }[];
 };
 
 /** Export der übernommenen Werte für scripts/tarif-vorschlaege-export.mjs (schreibt sie in die Katalogdateien). */
 export async function tarifExport(): Promise<TarifExport> {
   const rows = await prisma.tarifKatalogWert.findMany({ orderBy: [{ datei: "asc" }, { tarifId: "asc" }, { merkmal: "asc" }] });
+  const neu = rows.filter((r) => r.merkmal.startsWith(TARIF_MERKMAL));
+  const mitWerten = neu.length
+    ? await prisma.tarifVorschlag.findMany({
+        where: { merkmal: TARIF_MERKMAL, tarifId: { in: [...new Set(neu.map((r) => r.tarifId))] }, status: "uebernommen", NOT: { werte: { equals: Prisma.DbNull } } },
+        orderBy: { createdAt: "desc" },
+        select: { tarifId: true, customerId: true, neuerWert: true, werte: true },
+      })
+    : [];
   return {
     erzeugt: new Date().toISOString(),
     hinweis: "node scripts/tarif-vorschlaege-export.mjs <diese Datei> [--schreiben]",
     werte: rows
       .filter((r) => !r.merkmal.startsWith(TARIF_MERKMAL))
       .map((r) => ({ datei: r.datei, tarifId: r.tarifId, merkmal: r.merkmal, wert: r.wert, vermittler: r.vermittler, uebernommenAm: r.uebernommenAm.toISOString() })),
-    neueTarife: rows
-      .filter((r) => r.merkmal.startsWith(TARIF_MERKMAL))
-      .map((r) => ({ datei: r.datei, gesellschaft: r.gesellschaft, sparte: r.sparte, name: r.wert, vermittler: r.vermittler, uebernommenAm: r.uebernommenAm.toISOString() })),
+    neueTarife: neu.map((r) => ({
+      datei: r.datei,
+      gesellschaft: r.gesellschaft,
+      sparte: r.sparte,
+      name: r.wert,
+      vermittler: r.vermittler,
+      uebernommenAm: r.uebernommenAm.toISOString(),
+      werteEntwurf: entwurfWerte(
+        mitWerten.filter((v) => v.tarifId === r.tarifId),
+        r.wert,
+      ),
+    })),
   };
+}
+
+/**
+ * Hinweis auf „Heute“ im Admin (Ole, 18.11.2026): Zahl der offenen Vorschläge (Tarif und Merkmal) mit „Empfohlen“
+ * (ab EMPFOHLEN_AB verschiedenen Vermittlern, wie die Liste unter Einstellungen › Tarifkatalog). Ohne genug Einträge
+ * wird der Katalog nicht geladen. Fehler: 0 (der Hinweis fehlt dann nur).
+ */
+export async function tarifEmpfehlungen(): Promise<number> {
+  try {
+    if ((await prisma.tarifVorschlag.count({ where: { status: "offen" } })) < EMPFOHLEN_AB) return 0;
+    return anzahlEmpfehlungen((await ladeVorschlaege("offen")).gruppen);
+  } catch (e) {
+    reportError(e, "tarif-vorschlaege.empfehlungen");
+    return 0;
+  }
 }

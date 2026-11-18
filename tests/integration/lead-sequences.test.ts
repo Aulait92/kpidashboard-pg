@@ -246,7 +246,8 @@ describe("Nachfass-Abfolgen", () => {
       // ältere freigegebene „followup“-Fassung hat nur den Namen
       legacyParams: ["Lisa"],
     });
-    expect(call.text).toBe("Guten Tag Lisa Koch, ich habe gerade versucht, Sie anzurufen. Passt Ihnen für ein kurzes Gespräch Di., 17.11. um 14:00 Uhr oder Mi., 18.11. um 10:00 Uhr?");
+    // Anrede aus eindeutigem Vornamen (Ole, 18.11.2026): „Frau Koch“
+    expect(call.text).toBe("Guten Tag Frau Koch, ich habe gerade versucht, Sie anzurufen. Passt Ihnen für ein kurzes Gespräch Di., 17.11. um 14:00 Uhr oder Mi., 18.11. um 10:00 Uhr?");
   });
 
   it("„Chat ruht“ startet nicht, wenn eine andere Abfolge läuft oder ein Termin ansteht", async () => {

@@ -677,6 +677,10 @@ export async function loadAdminHeute(now = new Date(), userId?: string) {
   const taxItem = rechnungItem(await loadTaxNumber());
   if (taxItem) items.push(taxItem);
 
+  // ── Tarifkatalog: Empfehlungen aus Einträgen der Vermittler (Ole, 18.11.2026) ──
+  const tarifItem = tarifEmpfehlungItem(await import("@/lib/tarif-vorschlaege-server").then((m) => m.tarifEmpfehlungen()).catch(() => 0));
+  if (tarifItem) items.push(tarifItem);
+
   const dismissed = userId ? await activeDismissals(userId, now) : [];
   return { items: rankItems(withoutDismissed(items, dismissed)), auto: await loadAuto(now) };
 }
@@ -693,6 +697,25 @@ export function rechnungItem(taxNumber: string | null): HeuteItem | null {
     detail: "Auf Stripe-Rechnungen fehlt die USt-IdNr. bzw. Steuernummer. Einmal eintragen, dann steht sie auf jeder Rechnung.",
     action: { label: "Eintragen", href: "/admin/einstellungen/rechnungsangaben" },
     later: TOMORROW,
+  };
+}
+
+/**
+ * Punkt „Tarifkatalog: Empfehlungen prüfen“, sobald Vorschläge von Vermittlern als „Empfohlen“ gelten (ab 3 verschiedenen
+ * Vermittlern mit demselben Wert, lib/tarif-vorschlaege.ts). Schlüssel mit der Zahl: neue Empfehlungen zeigen ihn wieder.
+ */
+export function tarifEmpfehlungItem(anzahl: number): HeuteItem | null {
+  if (anzahl <= 0) return null;
+  return {
+    key: `tarif:empfohlen-${anzahl}`,
+    area: "System",
+    tone: "info",
+    icon: "star",
+    title: anzahl === 1 ? "Tarifkatalog: 1 Empfehlung von Vermittlern" : `Tarifkatalog: ${anzahl} Empfehlungen von Vermittlern`,
+    detail: "Mehrere Vermittler haben denselben Wert eingetragen · übernehmen oder ablehnen",
+    action: { label: "Prüfen", href: "/admin/neu/einstellungen/tarife" },
+    later: TOMORROW,
+    approval: true,
   };
 }
 

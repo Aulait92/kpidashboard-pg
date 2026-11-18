@@ -39,6 +39,7 @@ export type NoticePurpose =
   | "outreach_zahn"
   | "outreach_pkv"
   | "outreach_privatschutz"
+  | "outreach_hausrat"
   | "booking_confirmation"
   | "reminder"
   | "reminder_soon"
@@ -69,6 +70,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   outreach_zahn: "Erstanschreiben Zahnzusatz",
   outreach_pkv: "Erstanschreiben private Krankenversicherung",
   outreach_privatschutz: "Erstanschreiben Privatschutz",
+  outreach_hausrat: "Erstanschreiben Hausrat (nur Hausrat angefragt)",
   booking_confirmation: "Buchungsbestätigung",
   reminder: "Termin-Erinnerung",
   reminder_soon: "Termin gleich: passt alles?",
@@ -95,7 +97,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
 };
 
 /** Erstanschreiben je Produkt (lib/whatsapp/erstanschreiben.ts wählt anhand des Leadformulars). */
-export const OUTREACH_PURPOSES = ["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz"] as const satisfies readonly NoticePurpose[];
+export const OUTREACH_PURPOSES = ["outreach", "outreach_tkv", "outreach_zahn", "outreach_pkv", "outreach_privatschutz", "outreach_hausrat"] as const satisfies readonly NoticePurpose[];
 export const isOutreachPurpose = (p: string): boolean => (OUTREACH_PURPOSES as readonly string[]).includes(p);
 
 /**
@@ -127,6 +129,9 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   outreach_zahn: "v8",
   outreach_pkv: "v8",
   outreach_privatschutz: "v8",
+  // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
+  // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
+  outreach_hausrat: "v8",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
   reminder: "v5",
@@ -140,6 +145,11 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   followup_offer_selbst: "v5",
   // Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, BEDENKZEIT_PURPOSES)
   offer_bedenkzeit: "v5",
+  // Nachfassen v5 (Ole, 18.11.2026, zur Einreichung freigegeben): Vermittler als Person („mit Herrn Kannapinn“), vorher
+  // in NAECHSTE_FASSUNG vorgemerkt. Platzhalter unverändert, bis zur Freigabe bei Meta bleibt v4 im Einsatz.
+  followup: "v5",
+  followup_noshow: "v5",
+  followup_last: "v5",
 };
 
 /**
@@ -171,6 +181,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   outreach_zahn: ["Vermittler", "Erste Frage"],
   outreach_pkv: ["Vermittler", "Erste Frage"],
   outreach_privatschutz: ["Vermittler", "Erste Frage"],
+  outreach_hausrat: ["Vermittler", "Erste Frage"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   // Ab v5 (Show-up-Paket); ältere freigegebene Fassungen: PLATZHALTER_AB
   reminder: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
@@ -215,6 +226,7 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   outreach_zahn: erstanschreibenV8("outreach_zahn"),
   outreach_pkv: erstanschreibenV8("outreach_pkv"),
   outreach_privatschutz: erstanschreibenV8("outreach_privatschutz"),
+  outreach_hausrat: erstanschreibenV8("outreach_hausrat"),
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -245,9 +257,12 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "Ihr Termin bei [Firma] musste leider verschoben werden. Die neue Zeit ist {{2}} ({{3}}). {{4}} Passt Ihnen die neue Zeit?",
   },
   // Zwei konkrete freie Zeiten aus dem Kalender (lib/whatsapp/termin-vorschlaege.ts); ohne Kalender followup_nudge
+  // Nachfass-Vorlagen v5 (Ole, freigegeben zur Einreichung 18.11.2026): Vermittler als Person nach der Nennungsregel
+  // (lib/vermittler-nennung.ts, gesiezt „mit Herrn Kannapinn“, Du Vorname) statt des vollen Namens. Bis Meta freigibt,
+  // sendet die App als Vorlage die freigegebene v4 (rankTemplates), im offenen Fenster schon diesen Text.
   followup: {
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [Berater] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [Berater] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
   },
   followup_nudge: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Sollen wir mit deiner Anfrage weitermachen? Es dauert nur ein paar Minuten.",
@@ -275,8 +290,8 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   followup_noshow: {
-    du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
-    sie: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
+    du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
+    sie: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
   },
   followup_last: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
@@ -326,8 +341,8 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
  */
 export const TEMPLATE_BODY_B: Partial<Record<NoticePurpose, { du?: string; sie: string }>> = {
   followup_last: {
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte dich nicht weiter stören: Soll [Berater] sich noch um deine Anfrage kümmern?",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte Sie nicht weiter stören: Soll [Berater] sich noch um Ihre Anfrage kümmern?",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte dich nicht weiter stören: Soll [BeraterNom] sich noch um deine Anfrage kümmern?",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte Sie nicht weiter stören: Soll [BeraterNom] sich noch um Ihre Anfrage kümmern?",
   },
   campaign_cross_sell: {
     sie: "hier ist [Berater][Rolle]. Beim Thema {{2}} sehe ich oft Lücken, die erst im Schadenfall auffallen. Darf ich in 10 Minuten kurz mit Ihnen prüfen, ob bei Ihnen alles passt?",
@@ -393,27 +408,7 @@ export function neuePlatzhalter(purpose: NoticePurpose, version: number): boolea
 }
 
 export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, NaechsteFassung>> = {
-  // Vermittler-Nennung (Ole, 17.11.2026, lib/vermittler-nennung.ts): gesiezt „mit Herrn Kannapinn“ statt „mit Ole
-  // Kannapinn“. Im offenen Fenster sofort, als Vorlage erst nach Oles Freigabe zum Einreichen (Text gebeugt fest je Kunde)
-  followup: {
-    version: "v5",
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
-  },
-  followup_noshow: {
-    version: "v5",
-    du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
-    sie: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
-  },
-  followup_last: {
-    version: "v5",
-    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
-    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
-    b: {
-      du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte dich nicht weiter stören: Soll [BeraterNom] sich noch um deine Anfrage kümmern?",
-      sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte Sie nicht weiter stören: Soll [BeraterNom] sich noch um Ihre Anfrage kümmern?",
-    },
-  },
+  // followup, followup_noshow, followup_last v5 (Vermittler-Nennung) sind seit 18.11.2026 aktiv (TEMPLATE_BODY, PURPOSE_VERSION)
   campaign_cross_sell: {
     version: "v5",
     sie: "hier ist [Berater][Rolle]. Beim Thema {{2}} gibt es oft Lücken, die erst im Schadenfall auffallen. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?",

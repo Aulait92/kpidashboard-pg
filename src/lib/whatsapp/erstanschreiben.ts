@@ -47,7 +47,8 @@ export const ERSTANSCHREIBEN_V7 = {
 
 /**
  * Thema je Erstanschreiben ab v8, fest im Vorlagentext (Ole, 17.11.2026): „danke für Ihre Anfrage zum Privatschutz!“.
- * Allgemeine Fassung ohne Thema („danke für Ihre Anfrage!“).
+ * Allgemeine Fassung ohne Thema („danke für Ihre Anfrage!“). Reine Hausrat-Leads (Ole, 18.11.2026): „zu Ihrer
+ * Hausratversicherung“ bzw. „zu deiner Hausratversicherung“ (eigener Zweck outreach_hausrat, ERSTANSCHREIBEN_HAUSRAT).
  */
 export const V8_THEMA: Record<"outreach" | "outreach_tkv" | "outreach_zahn" | "outreach_pkv" | "outreach_privatschutz", string> = {
   outreach: "",
@@ -57,15 +58,25 @@ export const V8_THEMA: Record<"outreach" | "outreach_tkv" | "outreach_zahn" | "o
   outreach_privatschutz: " zum Privatschutz",
 };
 
+/** Zwecke des Erstanschreibens ab v8 (je Produkt und für reine Hausrat-Leads). */
+export type ErstanschreibenZweck = keyof typeof V8_THEMA | "outreach_hausrat";
+
+/** Thema für reine Hausrat-Leads (Ole, 18.11.2026), je Ansprache. */
+export const HAUSRAT_THEMA = { sie: " zu Ihrer Hausratversicherung", du: " zu deiner Hausratversicherung" } as const;
+
+/** Thema des Erstanschreibens ab v8 je Zweck und Ansprache („ zum Privatschutz“, „ zu Ihrer Hausratversicherung“). */
+export function v8Thema(purpose: ErstanschreibenZweck, an: Ansprache): string {
+  return purpose === "outreach_hausrat" ? HAUSRAT_THEMA[an] : V8_THEMA[purpose];
+}
+
 /**
  * Erstanschreiben v8 (Ole, 17.11.2026), Text nach „Hallo {{1}}, “ (ohne Namen „Hallo, “, die Platzhalter rücken auf):
  * {{2}} Vermittler im Dativ, {{3}} erste offene Frage ohne „?“ (fett). Neuer Text = neue Version (PURPOSE_VERSION).
  */
-export function erstanschreibenV8(purpose: keyof typeof V8_THEMA): { sie: string; du: string } {
-  const thema = V8_THEMA[purpose];
+export function erstanschreibenV8(purpose: ErstanschreibenZweck): { sie: string; du: string } {
   return {
-    sie: `danke für Ihre Anfrage${thema}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
-    du: `danke für deine Anfrage${thema}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
+    sie: `danke für Ihre Anfrage${v8Thema(purpose, "sie")}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
+    du: `danke für deine Anfrage${v8Thema(purpose, "du")}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
   };
 }
 
@@ -292,6 +303,28 @@ function spartenWoerter(interesse: string | null): string[] {
   return out;
 }
 
+/**
+ * Hat der Lead nur Hausrat angefragt (Ole, 18.11.2026)? Privatschutz-Produkt, und das Versicherungsinteresse im Formular
+ * (sonst das Produkt selbst, außer „Privatschutz“) nennt genau eine Sparte: Hausrat. Rein.
+ */
+export function nurHausrat(source: string | null | undefined, formular?: FormAntwort[] | null): boolean {
+  if (outreachProdukt(source)?.purpose !== "outreach_privatschutz") return false;
+  const ausForm = (formular ?? []).find((x) => /versicherungsinteresse/i.test(x.label) && x.value?.trim())?.value ?? null;
+  const interesse = ausForm ?? (/privatschutz/i.test(source ?? "") ? null : (source ?? null));
+  const w = spartenWoerter(interesse);
+  return w.length === 1 && w[0] === "Hausrat";
+}
+
+/**
+ * Zweck der Vorlage fürs Erstanschreiben: je Produkt, bei reinen Hausrat-Leads outreach_hausrat, ohne Produkt die
+ * allgemeine Fassung. Frageplan, Zwischenfrage und Gespräch bleiben beim Produkt (outreachProdukt).
+ */
+export function erstanschreibenZweck(source: string | null | undefined, formular?: FormAntwort[] | null): NoticePurpose {
+  const p = outreachProdukt(source);
+  if (!p) return "outreach";
+  return nurHausrat(source, formular) ? "outreach_hausrat" : p.purpose;
+}
+
 /** „Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?“ (Ole, 17.11.2026, v8 ohne „irgendwo“). */
 export function vorhandenFrage(interesse: string | null): { sie: string; du: string } {
   const w = spartenWoerter(interesse);
@@ -486,9 +519,10 @@ export function erstanschreibenKopf(o: ErstanschreibenOpts): string {
   // v8 (Ole, 17.11.2026): „danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn
   // Kannapinn.“ Das Thema wie in der Vorlage fest je Produkt; ohne Produkt mit dem Produktnamen, sonst ohne Thema. Im
   // Freitext mit „KI“ im Satz, weil die Fußzeile der Vorlage („KI-Assistent“) fehlt.
+  // Reine Hausrat-Leads: „zu Ihrer Hausratversicherung“ (Ole, 18.11.2026, wie die Vorlage outreach_hausrat)
   const p = outreachProdukt(o.source);
   const s = (o.source ?? "").trim();
-  const thema = p ? V8_THEMA[p.purpose as keyof typeof V8_THEMA] : s ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
+  const thema = p ? v8Thema(erstanschreibenZweck(o.source, o.formular) as ErstanschreibenZweck, an) : s ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
   return `${erstGruss(an, o.kontakt)} danke für ${was}${thema}! Hier schreibt der digitale KI-Assistent von ${von}.`;
 }
 

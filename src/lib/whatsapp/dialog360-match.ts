@@ -123,3 +123,99 @@ export async function resetUnfinishedConnection(customerId: string, actor: { id?
   await audit("whatsapp.reset", { entity: "Customer", entityId: customerId, customerId, details: { status: acc.status, clientId: acc.dialog360ClientId, channelId: acc.dialog360ChannelId }, actor });
   return { status: "reset" };
 }
+
+// ─── Verbindung reparieren (Admin v2 A5, Ole 18.11.2026) ─────────────────────────────────────
+
+export type RepairSchritt = { ok: boolean; text: string };
+export type RepairResult = { ok: boolean; schritte: RepairSchritt[] };
+
+type RepairDeps = {
+  check: typeof checkConnection;
+  webhook: (accountId: string) => Promise<boolean>;
+  neuerKey: (customerId: string, channelId: string, clientId: string | null) => Promise<SelfConnectResult>;
+  vorlagen: (customerId: string) => Promise<{ ok: boolean; submitted: string[]; rejected: string[]; error?: string }>;
+  partner: () => boolean;
+};
+
+/** Ein Satz zum Ergebnis von „Nummer suchen und verbinden“ (checkConnection). */
+export function checkText(r: CheckResult): RepairSchritt {
+  if (r.status === "connected") return { ok: true, text: `Nummer verbunden${r.phone ? `: +${r.phone.replace(/^\+/, "")}` : ""}.` };
+  if (r.status === "pending")
+    return { ok: true, text: r.activation ? "Nummer gefunden, sie wartet auf Freischaltung bei 360dialog. Der Cron holt den Key danach." : "Nummer gefunden und zugeordnet, sie wird noch eingerichtet. Der Cron holt den Key." };
+  if (r.status === "not_found") return { ok: false, text: "Keine passende Nummer bei 360dialog gefunden (Kunden-ID bzw. Login-E-Mail). Unten von Hand zuordnen." };
+  if (r.status === "ambiguous") return { ok: false, text: `${r.count} passende Nummern gefunden. Bitte unten von Hand zuordnen.` };
+  return { ok: false, text: `Prüfen fehlgeschlagen: ${r.reason}` };
+}
+
+/**
+ * „Verbindung reparieren“ (Admin v2 A5): ein Knopf in der Kundenakte › WhatsApp, der der Reihe nach alles neu prüft und,
+ * wo möglich, selbst behebt, über dieselben Wege wie das Verbinden:
+ *   1. Ohne gespeicherten Key: Nummer über die Partner-API suchen und verbinden (wie bisher „Verbindung prüfen“).
+ *   2. Mit Key: Webhook neu setzen (kommen keine Nachrichten an, liegt es meist daran). Klappt das nicht und die Nummer ist
+ *      bekannt, einen neuen Key über die Partner-API holen und damit verbinden.
+ *   3. Verbunden: Vorlagen abgleichen, fehlende neu einreichen.
+ * Jeder Schritt ist abgesichert, das Ergebnis nennt je Schritt einen Satz. Protokoll: whatsapp.repair.
+ */
+export async function repairConnection(customerId: string, actor: { id?: string; role: string }, deps: Partial<RepairDeps> = {}): Promise<RepairResult> {
+  const d: RepairDeps = {
+    check: deps.check ?? checkConnection,
+    webhook: deps.webhook ?? (async (id) => (await import("@/lib/whatsapp/connect")).retryAccountWebhook(id)),
+    neuerKey: deps.neuerKey ?? finishChannel,
+    vorlagen: deps.vorlagen ?? (async (id) => (await import("@/lib/whatsapp/template-submit")).submitTemplatesForCustomer(id)),
+    partner: deps.partner ?? (() => partnerConfig() !== null),
+  };
+  const schritte: RepairSchritt[] = [];
+  const fehler = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(0, 160);
+  const konto = () =>
+    prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { id: true, status: true, apiKeyEnc: true, dialog360ChannelId: true, dialog360ClientId: true } });
+  let acc = await konto();
+
+  if (!acc?.apiKeyEnc) {
+    if (!d.partner()) schritte.push({ ok: false, text: "Keine Nummer verbunden und kein 360dialog-Partner-Zugang eingerichtet. Key von Hand eintragen." });
+    else {
+      try {
+        schritte.push(checkText(await d.check(customerId, actor)));
+      } catch (e) {
+        schritte.push({ ok: false, text: `Prüfen fehlgeschlagen: ${fehler(e)}` });
+      }
+    }
+  } else {
+    let webhookOk = false;
+    try {
+      webhookOk = await d.webhook(acc.id);
+    } catch (e) {
+      schritte.push({ ok: false, text: `Webhook: ${fehler(e)}` });
+    }
+    if (webhookOk) schritte.push({ ok: true, text: "Webhook neu gesetzt: Eingehende Nachrichten kommen wieder an." });
+    else if (acc.dialog360ChannelId && d.partner()) {
+      try {
+        const r = await d.neuerKey(customerId, acc.dialog360ChannelId, acc.dialog360ClientId);
+        schritte.push(
+          r.status === "connected"
+            ? { ok: true, text: "Webhook ging nicht, darum neuen Key bei 360dialog geholt und verbunden." }
+            : r.status === "pending"
+              ? { ok: false, text: "Die Nummer wird bei Meta noch freigeschaltet. Der Cron versucht es weiter." }
+              : { ok: false, text: `Neuer Key fehlgeschlagen: ${r.reason ?? "unbekannter Fehler"}` },
+        );
+      } catch (e) {
+        schritte.push({ ok: false, text: `Neuer Key fehlgeschlagen: ${fehler(e)}` });
+      }
+    } else schritte.push({ ok: false, text: "Webhook ließ sich nicht setzen. Key prüfen und von Hand neu eintragen." });
+  }
+  acc = await konto();
+
+  const verbunden = acc?.status === "connected" && !!acc.apiKeyEnc;
+  if (verbunden) {
+    try {
+      const v = await d.vorlagen(customerId);
+      if (!v.ok) schritte.push({ ok: false, text: `Vorlagen: ${v.error ?? "Abgleich fehlgeschlagen"}` });
+      else if (v.submitted.length) schritte.push({ ok: true, text: `Vorlagen abgeglichen: ${v.submitted.length} neu eingereicht.` });
+      else schritte.push({ ok: true, text: `Vorlagen abgeglichen: Es fehlt keine${v.rejected.length ? `, ${v.rejected.length} abgelehnt (unten ansehen)` : ""}.` });
+    } catch (e) {
+      schritte.push({ ok: false, text: `Vorlagen: ${fehler(e)}` });
+    }
+  }
+  const ok = verbunden && schritte.every((s) => s.ok);
+  await audit("whatsapp.repair", { entity: "Customer", entityId: customerId, customerId, details: { ok, verbunden, schritte: schritte.map((s) => `${s.ok ? "ok" : "fehler"}: ${s.text}`.slice(0, 200)) }, actor }).catch(() => {});
+  return { ok, schritte };
+}

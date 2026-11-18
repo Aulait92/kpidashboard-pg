@@ -786,6 +786,8 @@ model Lead {
   // „Alle pausieren“ unter „Nächste Nachrichten“ am Kontakt (Paket P6, lib/nachrichtenplan-aktionen.ts): solange gesetzt,
   // warten Nachfass-Abfolgen und Termin-Erinnerungen an den Lead; „Fortsetzen“ rückt die Abfolgen um die Pause nach
   nachrichtenPausiertAt DateTime?
+  // „Später melden“ (Ole, 18.11.2026): Pause bis zu diesem Tag, danach setzt der WhatsApp-Cron fort (NULL = bis „Fortsetzen“)
+  nachrichtenPausiertBis DateTime?
   // Rückruf wünschen (Link in der Nachfass-Mail zum Angebot, Minimalseite /rueckruf/<token>, Ausbau in P5)
   rueckrufToken        String?           @unique
   rueckrufGewuenschtAt DateTime?
@@ -904,6 +906,7 @@ model Lead {
   @@index([adCampaignId])
   @@index([adSetId])
   @@index([adId])
+  @@index([nachrichtenPausiertBis])
 }
 
 model Revenue {
@@ -4703,6 +4706,8 @@ model TarifVorschlag {
   neuerWert     String
   /// Katalogtarif war beim Erfassen ungeprüft (Ungeprüfte zuerst in der Admin-Liste)
   ungeprueft    Boolean   @default(false)
+  /// Neuer Tarifname: Merkmalwerte, die der Vermittler dazu eingetragen hat (Entwurf für den Katalog-Export)
+  werte         Json?
   /// vorbereitung | bisheriger-vertrag
   quelle        String
   /// offen | uebernommen | abgelehnt
