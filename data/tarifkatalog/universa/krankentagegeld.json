@@ -27,8 +27,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "uni-KT 92",
@@ -48,8 +47,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "uni-KT 183",
@@ -69,8 +67,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Wartezeit: allgemeine Wartezeit 3 Monate, entfällt bei Unfall.",
     "bu-ende: Vertrag endet bei Berufsunfähigkeit, Leistung höchstens noch 3 Monate danach (Bedingungen § 15).",
     "Ausland: Europa auch ambulant, außerhalb Europas nur bei stationärer Behandlung.",
-    "Dynamik: alle zwei Jahre Anpassung an die Einkommensentwicklung ohne Gesundheitsprüfung (als inklusive erfasst)."
+    "Dynamik: alle zwei Jahre Anpassung an die Einkommensentwicklung ohne Gesundheitsprüfung (als inklusive erfasst).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

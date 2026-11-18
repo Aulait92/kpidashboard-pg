@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/tierversicherung/pferdehaftpflicht",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -36,6 +35,7 @@
   "offen": [
     "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
     "Ein Tarif mit wählbarer Versicherungssumme. Flurschäden sind auf der Produktseite als Leistung genannt, ohne Betrag.",
-    "Selbstbeteiligung nicht genannt. Mietsachschäden an Boxen, Reithallen, Zäunen, Pferdeanhängern und Reitutensilien."
+    "Selbstbeteiligung nicht genannt. Mietsachschäden an Boxen, Reithallen, Zäunen, Pferdeanhängern und Reitutensilien.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

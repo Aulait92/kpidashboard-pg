@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/altersvorsorge/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente Balance",
@@ -36,8 +35,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/altersvorsorge/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente Chance",
@@ -50,8 +48,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/altersvorsorge/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -60,6 +57,7 @@
   "offen": [
     "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
     "Drei Anlagemodelle; Sicherheit und Balance garantieren bei Abschluss eine lebenslange Mindestrente, Chance legt Sparbeiträge und Überschüsse im VGH Altersvorsorge Fonds an. Keine Empfehlung; Balance als mittlere Stufe.",
-    "Todesfall: Vertragsguthaben wird als Hinterbliebenen- bzw. Waisenrente gezahlt (vor Rentenbeginn und bis 85). Flexibilität und Beitragsgarantie nicht beziffert."
+    "Todesfall: Vertragsguthaben wird als Hinterbliebenen- bzw. Waisenrente gezahlt (vor Rentenbeginn und bis 85). Flexibilität und Beitragsgarantie nicht beziffert.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

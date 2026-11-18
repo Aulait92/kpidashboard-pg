@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/altersvorsorge/rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "VGH PrivatRente Balance",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/altersvorsorge/rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "VGH InvestRente",
@@ -51,8 +49,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vgh.de/de/altersvorsorge/fondsgebundene-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,6 +59,7 @@
   "offen": [
     "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
     "Stufen sind Anlagemodelle: PrivatRente Sicherheit (Sparbeiträge im Sicherungsvermögen, Überschüsse im VGH Altersvorsorge Fonds), Balance (teils Fonds), InvestRente (bis zu 5 Fonds oder ETFs, Anlaufmanagement). Keine Empfehlung; Balance als mittlere Stufe.",
-    "Beide PrivatRente-Varianten garantieren bei Abschluss eine lebenslange Mindestrente. Zuzahlungen bis zum dreifachen Jahresbeitrag. Hinterbliebenenschutz und Kosten nicht beziffert. Keine Renditeangaben übernommen."
+    "Beide PrivatRente-Varianten garantieren bei Abschluss eine lebenslange Mindestrente. Zuzahlungen bis zum dreifachen Jahresbeitrag. Hinterbliebenenschutz und Kosten nicht beziffert. Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

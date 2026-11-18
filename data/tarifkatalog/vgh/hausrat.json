@@ -32,8 +32,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.vgh.de/de/bauen-wohnen/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Komfortpaket",
@@ -58,8 +57,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.vgh.de/de/bauen-wohnen/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Premiumpaket",
@@ -85,8 +83,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.vgh.de/de/bauen-wohnen/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -98,6 +95,8 @@
     "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
     "Keine Empfehlung markiert; Komfort als mittlere Stufe.",
     "Wertsachen, Bargeld und Hotelkosten aus der Leistungsübersicht (VHB 2024). Die Häkchen der Leistungsübersicht sind nicht lesbar; einfacher Diebstahl und Online-Betrug deshalb nicht belegt. Premium: Diebstahl am Arbeitsplatz bis 5.000 €, Notdienst- und Handwerkerleistungen bis 1.000 € je Fall.",
-    "Elementar: Starkregen und Rückstau in allen Paketen; der Baustein „Weitere Naturgefahren“ ist laut Seite inzwischen integriert, zugleich als Zusatzbaustein beschrieben. Bitte prüfen. Bausteine Fahrraddiebstahl, Glas, Wertsachen. Selbstbeteiligung nicht genannt."
+    "Elementar: Starkregen und Rückstau in allen Paketen; der Baustein „Weitere Naturgefahren“ ist laut Seite inzwischen integriert, zugleich als Zusatzbaustein beschrieben. Bitte prüfen. Bausteine Fahrraddiebstahl, Glas, Wertsachen. Selbstbeteiligung nicht genannt.",
+    "Nachtrag 18.11.2026: Die Häkchen der VGH-Leistungsübersichten sind im PDF-Zeichensatz lesbar (Zeichen F00C); Stichproben bestätigen die übernommenen Werte.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

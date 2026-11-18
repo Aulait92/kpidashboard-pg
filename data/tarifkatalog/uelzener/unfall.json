@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://uelzener.de/mensch/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfall-Renten-Versicherung 24 Stunden Erwachsene",
@@ -40,8 +39,7 @@
       },
       "bausteine": {},
       "quelle": "https://uelzener.de/mensch/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
     "Grundsumme nicht genannt; Beispiel Invalidität: 210.000 € bei Vollinvalidität mit 350 % Progression. Rentenvariante: Rente frei wählbar bis 2.000 € monatlich (Beispiel 1.000 €) oder wahlweise Kapital.",
     "Leistung ab 1 % Invalidität laut Produktseite für die lebenslange Invaliditätszahlung (Rente); für die Kapitalvariante nicht ausdrücklich genannt.",
     "Kinder: Invalidität z. B. 140.000 € bei Vollinvalidität, 10 € Krankenhaustagegeld, 5.000 € Bergungskosten; Rente z. B. 500 € monatlich. Reiter-Unfallversicherung nur im Pferdehalter-Schutz zur Pferdehaftpflicht, nicht aufgenommen.",
-    "Bedingungen AUB 2008 der Uelzener; Krankenhaustagegeld ab dem 1. Tag, Leistungsdauer unbegrenzt."
+    "Bedingungen AUB 2008 der Uelzener; Krankenhaustagegeld ab dem 1. Tag, Leistungsdauer unbegrenzt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

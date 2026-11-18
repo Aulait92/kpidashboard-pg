@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ukv.de/v/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ZahnPRIVAT 90",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ukv.de/v/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ZahnPRIVAT 100",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ukv.de/v/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -79,6 +76,7 @@
     "Werte aus den Tarifbedingungen ZahnPRIVAT (Stand 01.08.2024) und der Produktseite. Prozentsätze beziehen sich auf den Rechnungsbetrag einschließlich der GKV-Vorleistung; Regelversorgung in ZahnPRIVAT 90 und 75 zu 100 % abzüglich GKV.",
     "Begrenzung erste Jahre: Zahnbehandlung, Zahnersatz, schmerzstillende Maßnahmen und Kieferorthopädie zusammen im 1., in den ersten 2 und 3 Kalenderjahren; entfällt bei Unfall nach Versicherungsbeginn.",
     "Kieferorthopädie: Beginn vor dem 19. Lebensjahr nur in ZahnPRIVAT 90 und 100 (bis 5.000 € Tariflaufzeit); ab 19 bei Unfall oder Krankheit mit GKV-Leistung in allen Tarifen bis 5.000 €. Bleaching nur in 90 und 100 (bis 180 bzw. 200 € in zwei Jahren).",
-    "UKV markiert keinen Tarif als Empfehlung (ZahnPRIVAT 100 mit Testurteilen hervorgehoben); ZahnPRIVAT 90 als mittlere Stufe. Bausteine nicht vorhanden (Leistungen sind enthalten)."
+    "UKV markiert keinen Tarif als Empfehlung (ZahnPRIVAT 100 mit Testurteilen hervorgehoben); ZahnPRIVAT 90 als mittlere Stufe. Bausteine nicht vorhanden (Leistungen sind enthalten).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }
