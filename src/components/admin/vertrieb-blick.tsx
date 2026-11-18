@@ -79,7 +79,13 @@ export async function VertriebBlick({ highlight }: { highlight?: boolean }) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-[color:var(--muted)]">Keine anstehenden Termine. Buchungen über Calendly erscheinen hier automatisch.</p>
+            <p className="text-sm text-[color:var(--muted)]">
+              Keine anstehenden Termine. Buchungen über{" "}
+              <Link href="/admin/neu/einstellungen/buchungsseiten" className="font-medium text-[color:var(--brand)] hover:underline">
+                Ihre Buchungsseite
+              </Link>{" "}
+              erscheinen hier automatisch.
+            </p>
           )}
         </div>
         {leads.length ? (
