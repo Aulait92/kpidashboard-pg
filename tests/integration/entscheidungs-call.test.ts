@@ -124,6 +124,17 @@ describe("Entscheidungs-Call: gebuchter Termin statt Buchungslink", () => {
     expect(m.html).toContain(">Termin verschieben</a>");
   });
 
+  it("ohne Bitte um den Entscheidungs-Call: weder Termin noch Buchungslink, gemerkt am Angebot", async () => {
+    const c = await kontakt();
+    const offer = await angebot(c.id, c.email!);
+    const res = await sendOfferEmailAction(offer.id, { ohneEntscheidungsCall: true });
+    expect(res).toEqual({ ok: true });
+    const m = st.offerMails[0];
+    expect(m.text).not.toContain("Entscheidungs-Call");
+    expect(m.text).not.toContain("/termin/entscheidung?k=");
+    expect((await prisma.offer.findUniqueOrThrow({ where: { id: offer.id } })).ohneEntscheidungsCall).toBe(true);
+  });
+
   it("zählt: Calendly (Titel), vom Team eingetragen; zählt nicht: abgesagt, vorbei, Meta-Leads-Call", async () => {
     const now = new Date("2030-06-01T08:00:00Z");
     const calendly = await kontakt();
