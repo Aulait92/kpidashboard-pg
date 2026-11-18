@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/336908",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PflegePRIVAT Premium Plus",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/336919",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -59,6 +57,7 @@
   "offen": [
     "Tagegeld in vereinbarter Höhe; Anteile: Premium ambulant und stationär PG1 10 %, PG2 30 %, PG3 60 %, PG4 90 %, PG5 100 %. Premium Plus ambulant PG4 und PG5 100 %, stationär ab PG2 100 %.",
     "Einmalzahlung beim erstmaligen Eintritt in Pflegegrad 2 bis 5. Dynamik alle 3 Jahre nach Verbraucherpreisindex (bis 80 Jahre); Premium Plus zusätzlich zweimal 10 % Erhöhung ohne Gesundheitsprüfung (bis 65).",
-    "Demenz nicht eigens geregelt (Leistung nach Pflegegrad). Staatlich geförderte Pflegezusatzversicherung (Förderpflege) als eigenes Produkt nicht aufgenommen. Keine Empfehlung markiert."
+    "Demenz nicht eigens geregelt (Leistung nach Pflegegrad). Staatlich geförderte Pflegezusatzversicherung (Förderpflege) als eigenes Produkt nicht aufgenommen. Keine Empfehlung markiert.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

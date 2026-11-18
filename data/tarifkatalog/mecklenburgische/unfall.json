@@ -32,8 +32,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/unfallversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -44,6 +43,7 @@
   "offen": [
     "Ein Tarif mit frei wählbaren Leistungsarten und Summen (Kundeninformation VF1120.0238a.04.23). Progression: ab 26 % Invalidität steigend, bei 50 % volle Summe, bei 100 % 600 %; optional Höchstleistung schon ab 70 %. Wahlweise Leistung erst ab 20 % Invalidität (Beitragsersparnis).",
     "Unfall-Rente lebenslang ab 50 %, verbessert ab 40 % (halbe Rente); steigt ab Rentenbezug 30 Jahre lang um 2 % jährlich. Sofortleistung bei bestimmten Schwerverletzungen 5.000 € plus Helmbonus 2.500 €.",
-    "Bausteine: Übergangsleistung, Krankenhaustagegeld, Tagegeld, Todesfall, Sofortleistung bei Knochenbruch oder Krebs, Hilfs- und Pflegeleistungen. Gliedertaxe nicht genannt."
+    "Bausteine: Übergangsleistung, Krankenhaustagegeld, Tagegeld, Todesfall, Sofortleistung bei Knochenbruch oder Krebs, Hilfs- und Pflegeleistungen. Gliedertaxe nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

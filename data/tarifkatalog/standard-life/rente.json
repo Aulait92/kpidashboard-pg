@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.standardlife.de/produkte/freelax-sofortrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ParkAllee",
@@ -39,8 +38,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.standardlife.de/produkte/parkallee/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Maxxellence Invest (Privatrente)",
@@ -58,8 +56,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.standardlife.de/produkte/maxxellence-invest/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -79,6 +76,7 @@
     "Sofortrente: garantierter Rentenzins für den aktuellen Rentenbeginn veröffentlicht, für spätere Beginne freibleibend (hier nicht übernommen). Kapitalschutz bis Alter 90 oder Rentengarantiezeit wählbar; einmalige Kapitalentnahme in der Rentenphase. Anlage nicht genannt.",
     "Maxxellence Invest: BU-Schutz nur als Zusatz (Beitragsbefreiung, BU-Rente), Low Start (bis 70 % geringerer Beitrag bis 4 Jahre), Rentendynamik optional. Hinterbliebenenschutz der Privatrente nicht beschrieben.",
     "Kosten (Effektivkosten) nicht auf den Produktseiten; Verweis auf die vertragsindividuellen Verbraucherinformationen.",
-    "WeitBlick (fondsgebundene Lebensversicherung mit Auszahlplan, Einmalbeitrag ab 15.000 €) ist keine Rentenversicherung und nicht aufgenommen."
+    "WeitBlick (fondsgebundene Lebensversicherung mit Auszahlplan, Einmalbeitrag ab 15.000 €) ist keine Rentenversicherung und nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

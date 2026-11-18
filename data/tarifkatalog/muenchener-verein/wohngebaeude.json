@@ -30,8 +30,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/wohnen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäudeversicherung Premium",
@@ -54,8 +53,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/wohnen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -65,6 +63,7 @@
   "offen": [
     "Werte aus dem Tarifvergleich (Stand 01.2020, Spalten Komfort und Premium VGB 2014); Produktseite nennt dieselben Stufen.",
     "Kosten: Aufräum-, Abbruch-, Schutz- und Bewegungskosten. Premium zusätzlich Hotelkosten bis 100 €/Tag für 200 Tage. Ableitungsrohre auf und außerhalb des Grundstücks je 1 % der VS.",
-    "Selbstbeteiligung wählbar, Höhe nicht genannt. Tierbiss nur an elektrischen Leitungen. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+    "Selbstbeteiligung wählbar, Höhe nicht genannt. Tierbiss nur an elektrischen Leitungen. Zwei Stufen ohne Markierung, daher keine Empfehlung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

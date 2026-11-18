@@ -22,8 +22,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/privathaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht plus",
@@ -41,8 +40,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haftpflicht/privathaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -52,6 +50,7 @@
     "Werte nur aus den Kurzbeschreibungen der beiden Varianten auf der Produktseite; die Produktübersicht ist dort nur verlinkt. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
     "Deliktunfähige Kinder, geliehene Sachen, Neuwert, Mallorca, Drohnen und Selbstbeteiligung nicht belegt.",
     "Forderungsausfall, Schlüsselverlust und Mietsachschäden nennt die Seite nur bei „plus“; ob die Basis sie ausschließt, ist nicht belegt.",
-    "Zusatzbaustein Amtshaftpflicht für den öffentlichen Dienst. Keine Markierung der Gesellschaft."
+    "Zusatzbaustein Amtshaftpflicht für den öffentlichen Dienst. Keine Markierung der Gesellschaft.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/klassik-modern/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basisrente FONDS MODERN (mit Garantie)",
@@ -45,8 +44,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-modern/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basisrente FONDS FITTERY (gemanagte Portfolios)",
@@ -64,8 +62,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-fittery/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basisrente FONDS PUR",
@@ -83,8 +80,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.volkswohl-bund.de/versicherungen/rente/fonds-pur/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -99,6 +95,7 @@
     "Stufen sind die vier Produkte (KLASSIK MODERN, FONDS MODERN, FONDS FITTERY, FONDS PUR), keine Leistungsstufen; keine Markierung, FONDS FITTERY als dritte von vier Stufen gesetzt.",
     "Garantie- und Rentenfaktor-Werte von den Produktseiten der Privatrente übernommen (gleiche Produkte); für die Basisrente selbst nicht gesondert bestätigt.",
     "Hinterbliebene: Auszahlung an den Ehepartner im Todesfall möglich. BU-Absicherung laut Basisrente-Seite kombinierbar. Basisrente PLUS mit Pflegeschutz.",
-    "Beitragspause befristet oder dauerhaft vereinbar; Zuzahlungen jederzeit. Dynamik und Effektivkosten nicht genannt."
+    "Beitragspause befristet oder dauerhaft vereinbar; Zuzahlungen jederzeit. Dynamik und Effektivkosten nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -24,8 +24,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/reiseversicherungen/reiseruecktritt-einmal.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Jahres-Reiserücktrittsversicherung",
@@ -40,8 +39,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/reiseversicherungen/reiseruecktritt-jahres.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -51,6 +49,7 @@
   "offen": [
     "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
     "Produktgeber ist die URV Union Reiseversicherung AG (wie bei der Versicherungskammer Bayern). Einmalpolice mit oder ohne Selbstbehalt (20 %, mindestens 25 €) und mit oder ohne Reiseabbruch; Jahrespolice laut Seite mit Reiseabbruchschutz.",
-    "Versicherungssumme, Pandemie und Familie nicht beziffert. Auslandsreisekranken siehe Ordner ukv."
+    "Versicherungssumme, Pandemie und Familie nicht beziffert. Auslandsreisekranken siehe Ordner ukv.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

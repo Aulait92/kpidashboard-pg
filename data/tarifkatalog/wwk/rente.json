@@ -23,8 +23,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-konventionell/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "WWK Premium FondsRente protect",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-fondsgebunden-mit-garantie/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "WWK Premium FondsRente 2.0",
@@ -53,8 +51,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/altersvorsorge/rente-fondsgebunden/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -65,6 +62,7 @@
   "offen": [
     "Die Stufen sind Anlagekonzepte (klassisch, mit wählbarer Beitragsgarantie über IntelliProtect 2.0, rein fondsgebunden), keine Leistungsstufen.",
     "WWK nennt die Premium FondsRente protect „das Flaggschiff“; Empfehlung trotzdem nur als mittlere Stufe gesetzt.",
-    "Garantierter Rentenfaktor, Kapitalwahlrecht und Kosten nicht auf den Produktseiten; Hinterbliebenenschutz nur bei der Premium FondsRente genannt. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+    "Garantierter Rentenfaktor, Kapitalwahlrecht und Kosten nicht auf den Produktseiten; Hinterbliebenenschutz nur bei der Premium FondsRente genannt. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -27,8 +27,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatzversicherung-ambulant_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "proME Ambulantplus",
@@ -49,8 +48,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatzversicherung-ambulant_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Ambulant Kompakt",
@@ -70,8 +68,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatz-kompakt_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Ambulant Kompaktplus",
@@ -91,8 +88,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatz-kompakt_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -103,6 +99,7 @@
   "offen": [
     "Stufen sind zwei Baukastentarife (proME Ambulant, Ambulantplus) und zwei Kompakttarife (Ambulant Kompakt, Kompaktplus) mit unterschiedlichem Zuschnitt, keine reine Leistungsleiter. Keine Empfehlung der Gesellschaft; bei 4 Stufen die dritte gesetzt.",
     "Heilpraktiker in den proME-Tarifen nur mit Zusatztarif proME Natur (80 %, bis 1.000 € im Jahr). Kompakttarife enthalten zusätzlich Zahnersatz 70 % bzw. 90 % mit Zahnstaffel (1. Jahr 700 bzw. 900 €). Vorsorge einschließlich Schutzimpfungen.",
-    "Wartezeit allgemein nicht genannt; Hörgeräte und Augenlaser (nur Ambulantplus) 3 Jahre Wartezeit. Auslandsreise-Krankenversicherung als eigener Tarif."
+    "Wartezeit allgemein nicht genannt; Hörgeräte und Augenlaser (nur Ambulantplus) 3 Jahre Wartezeit. Auslandsreise-Krankenversicherung als eigener Tarif.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

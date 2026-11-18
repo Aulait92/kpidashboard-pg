@@ -24,8 +24,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/uni-med-a/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "uni-med|A-Premium",
@@ -42,8 +41,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/uni-med-a/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "uni-med|A-Exklusiv",
@@ -60,8 +58,7 @@
         "sehhilfen": "inklusive"
       },
       "quelle": "https://www.universa.de/produkte/private-zusatzversicherung/ambulante-zusatzversicherung/uni-med-a/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -73,6 +70,7 @@
     "Arznei- und Verbandmittel sowie Hörgeräte: in uni-med|A nicht enthalten bzw. nicht genannt (Zuzahlungen und Arzneimittel deckt der Tarif uni-EZ).",
     "Wartezeit nicht genannt. Augenlaser (refraktive Chirurgie) erst nach dem 2. Versicherungsjahr zur Hälfte, nach dem 4. voll.",
     "Heilpraktiker inklusive Osteopathie und Hufeland-Verfahren; Vorsorge inklusive Schutzimpfungen und IGeL.",
-    "Weiterer Tarif uni-EZ 1 und 2 sowie uni-GZ (ambulant und Zahn) nicht als Stufe erfasst. Keine Stufe hervorgehoben, Empfehlung mittlere Stufe."
+    "Weiterer Tarif uni-EZ 1 und 2 sowie uni-GZ (ambulant und Zahn) nicht als Stufe erfasst. Keine Stufe hervorgehoben, Empfehlung mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

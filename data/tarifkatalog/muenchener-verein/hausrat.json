@@ -27,8 +27,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/wohnen/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
   "offen": [
     "Ein Tarif ohne Stufen. Unterversicherungsverzicht bei 650 €/m² Wohnfläche. Grobe Fahrlässigkeit laut Prospekt (01.2020) inklusive, auf der Produktseite nicht genannt.",
     "Fahrrad: Produktseite nennt 24-Stunden-Schutz gegen Diebstahl als optionale Erweiterung, der Prospekt (01.2020) als inklusive (ohne Nachtzeitklausel); bitte prüfen.",
-    "Einfacher Diebstahl, Online-Betrug, Hotelkosten und Selbstbeteiligung nicht genannt. Datenrettung bis 250 €, Transport und Lagerung bis 100 Tage."
+    "Einfacher Diebstahl, Online-Betrug, Hotelkosten und Selbstbeteiligung nicht genannt. Datenrettung bis 250 €, Transport und Lagerung bis 100 Tage.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

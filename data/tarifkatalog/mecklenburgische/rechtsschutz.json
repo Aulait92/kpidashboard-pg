@@ -30,8 +30,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/rechtsschutzversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rechtsschutz Komfortdeckung",
@@ -55,8 +54,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/recht-haftung/rechtsschutzversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +65,7 @@
   "offen": [
     "Werte aus dem Leistungsvergleich Standard- und Komfortdeckung der Kundeninformation (VF1120.0216.10.25). Privat- und Verkehrs-Rechtsschutz bilden den Grundschutz; Arbeits-Rechtsschutz in beiden Deckungen versichert; einzelne Bereiche auch separat versicherbar. Zwei Stufen ohne Empfehlung.",
     "Summe innerhalb Europas; weltweit im Verkehrsbereich bis 100.000 €. Komfort zusätzlich: Steuer-, Verwaltungs- und Sozialgerichts-Rechtsschutz ab Widerspruch, Bausachen, Kapitalanlagen bis 20.000 €, medizinische Gutachten bis 2.500 €, Testament bis 500 €.",
-    "Wartezeit nicht genannt (bei Versichererwechsel in der Regel ohne Wartezeit). Baustein SB 250 select: Selbstbeteiligung entfällt bei einem empfohlenen Anwalt."
+    "Wartezeit nicht genannt (bei Versichererwechsel in der Regel ohne Wartezeit). Baustein SB 250 select: Selbstbeteiligung entfällt bei einem empfohlenen Anwalt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

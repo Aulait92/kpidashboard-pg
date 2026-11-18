@@ -26,8 +26,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankenversicherung für Beihilfeberechtigte",
@@ -43,8 +42,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
     "Risikoträger: Provinzial Krankenversicherung Hannover AG (VGH Versicherungen). Abruf 17.11.2026.",
     "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
     "Tarifvergleich nach Zielgruppen: Angestellte, Selbstständige (gleiche Leistungen) und Beihilfeberechtigte. Keine Leistungsstufen, keine Empfehlung.",
-    "Selbstbehalt wählbar 300, 500, 1.000 oder 1.300 € (nicht für Beihilfe). Zahnersatz 80 % für Angestellte und Selbstständige; für Beihilfe nicht beziffert. Beitragsrückerstattung, Hilfsmittelkatalog und Primärarztprinzip nicht genannt."
+    "Selbstbehalt wählbar 300, 500, 1.000 oder 1.300 € (nicht für Beihilfe). Zahnersatz 80 % für Angestellte und Selbstständige; für Beihilfe nicht beziffert. Beitragsrückerstattung, Hilfsmittelkatalog und Primärarztprinzip nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

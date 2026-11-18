@@ -28,8 +28,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.vgh.de/de/tierversicherung/hundehaftpflicht",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -40,6 +39,8 @@
     "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
     "Ein Tarif mit wählbarer Versicherungssumme. Selbstbeteiligung wahlweise 0 oder 250 € (bei behördlich als gefährlich eingestuften Hunden 250 €), laut Leistungsübersicht.",
     "Fremde Hüter: In der Leistungsübersicht ist „Tierhüter (z. B. Familienmitglieder und Nachbarn)“ aufgeführt; das Zeichen ist nicht lesbar. Bitte prüfen.",
-    "Kaution im Ausland 150.000 €. Einsatz als Therapie-, Assistenz-, Rettungs- oder Suchhund mitversichert."
+    "Kaution im Ausland 150.000 €. Einsatz als Therapie-, Assistenz-, Rettungs- oder Suchhund mitversichert.",
+    "Nachtrag 18.11.2026: Die Häkchen der VGH-Leistungsübersichten sind im PDF-Zeichensatz lesbar (Zeichen F00C); Stichproben bestätigen die übernommenen Werte.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

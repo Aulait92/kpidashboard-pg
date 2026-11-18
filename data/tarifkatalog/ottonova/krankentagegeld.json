@@ -24,8 +24,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://assets.ottonova.de/root/TB_KTA.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ottonova Krankentagegeld für Selbstständige (KTS)",
@@ -42,8 +41,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://assets.ottonova.de/root/TB_KTS.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -56,6 +54,7 @@
     "Höchstes Tagegeld laut Tarifleistungen der Produktseite (315 € bzw. 331 €); die Tarifbedingungen nennen 300 € plus 5 % alle 36 Monate. Selbstständige: Höchstgrenze nach Beruf bzw. Mitarbeiterzahl (100 € bis 300 €).",
     "KTS: Leistung nach 42 Karenztagen (Tarifstufe KTS 42); weitere Karenzzeiten für Selbstständige nicht belegt.",
     "Dynamik: ottonova erhöht das Tagegeld alle 36 Monate um 5 % ohne neue Gesundheitsprüfung. Erhöhung bei Gehaltserhöhung (Angestellte) möglich.",
-    "Leistungsdauer, Ende bei Berufsunfähigkeit und Leistung im Ausland stehen in den AVB (AVB/KTA, AVB/KTS), nicht ausgewertet."
+    "Leistungsdauer, Ende bei Berufsunfähigkeit und Leistung im Ausland stehen in den AVB (AVB/KTA, AVB/KTS), nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

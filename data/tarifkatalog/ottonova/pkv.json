@@ -31,8 +31,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ottonova Business Class Pro",
@@ -56,8 +55,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ottonova First Class",
@@ -81,8 +79,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ottonova First Class Pro+",
@@ -106,8 +103,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.ottonova.de/v/private-krankenversicherung/tarifleistungen",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -123,6 +119,7 @@
     "Premium Economy: Primärarztprinzip (100 % mit Überweisung oder über den Concierge, sonst 80 %); Augenarzt, Zahnarzt, Frauenarzt, Kinderarzt direkt. Beitragsrückerstattung nur in den Pro-Tarifen (max. ein Durchschnitts-Monatsbeitrag).",
     "First Class: Einbettzimmer, wahlweise First Class Zweibett. Zahnersatz inkl. Inlays und Implantate; Zahnstaffel 500 € bis 4.000 € in den ersten 4 Jahren (First Class Pro+ 1.000 € bis 4.000 € in 3 Jahren).",
     "Hilfsmittel: 100 % bis 500 €, darüber 100 % nach Zusage, sonst 75 %. Krankentagegeld (Tarife KTA, KTS) nur zusammen mit der Vollversicherung, max. 315 € (Angestellte) bzw. 331 € (Selbstständige) je Tag.",
-    "Pflegezusatz als Baustein nicht belegt (Pflegepflichtversicherung ist enthalten). Für Beamte gibt es eigene Beihilfetarife, nicht aufgenommen."
+    "Pflegezusatz als Baustein nicht belegt (Pflegepflichtversicherung ist enthalten). Für Beamte gibt es eigene Beihilfetarife, nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

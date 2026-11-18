@@ -31,8 +31,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Produktvergleich_NV_Privat_6.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV Privatmax. 6.0",
@@ -56,8 +55,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Produktvergleich_NV_Privat_6.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV PrivatPremium 6.0",
@@ -81,8 +79,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/privat/6-0/Produktvergleich_NV_Privat_6.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
   "offen": [
     "Werte aus dem Produktvergleich NV Privat 6.0 (Symboltabelle). Deckungssumme je Stufe nicht genannt; die Produktseite nennt bis zu 50 Mio. €, Beispielbeiträge mit 5 Mio. €. NV markiert keine Empfehlung; Privatmax. als mittlere Stufe gesetzt.",
     "Geliehene, gemietete Sachen: PDF nennt für PrivatPremium bis 50.000 €, die Vergleichstabelle der Produktseite bis zur Versicherungssumme. Forderungsausfall PrivatSpar erst ab 2.500 € Schaden. Schlüssel: privat und beruflich.",
-    "Selbstbeteiligung 150 € je Schaden freiwillig wählbar (günstigerer Beitrag). Privatmax. auch als Variante bessergrün mit Mehrleistungsklausel."
+    "Selbstbeteiligung 150 € je Schaden freiwillig wählbar (günstigerer Beitrag). Privatmax. auch als Variante bessergrün mit Mehrleistungsklausel.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

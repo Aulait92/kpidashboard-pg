@@ -27,8 +27,7 @@
         "sb0": "nein"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/331/documents/Tarifhighlights_Tierhalterhaftpflicht_Hund.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tierhalterhaftpflicht Hund Komplett",
@@ -48,8 +47,7 @@
         "sb0": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/331/documents/Tarifhighlights_Tierhalterhaftpflicht_Hund.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -60,6 +58,7 @@
   "offen": [
     "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungshighlights PK PIB THV Hund 02.2023; Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
     "Selbstbeteiligung 150 € je Schaden nur bei Mietsachschäden (Räume, Anhänger, Ferienunterkunft); eine allgemeine SB ist nicht genannt. Komplett höchstens 15 Mio. € je Person.",
-    "Plus-Baustein nur Komplett: Neuwert bis 12 Monate ab Kauf (bis 3.500 €), Verzicht auf alle SB, verbesserter Forderungsausfall. Zwei Stufen ohne Markierung, daher keine Empfehlung."
+    "Plus-Baustein nur Komplett: Neuwert bis 12 Monate ab Kauf (bis 3.500 €), Verzicht auf alle SB, verbesserter Forderungsausfall. Zwei Stufen ohne Markierung, daher keine Empfehlung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -29,8 +29,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.vgh.de/vgh/resources/pdf/produkt/rechtsschutz/VGH_LU_Rechtsschutz_VGH_Privat.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat, Beruf, Verkehr mit RechtsschutzPlus",
@@ -52,8 +51,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.vgh.de/vgh/resources/pdf/produkt/rechtsschutz/VGH_LU_Rechtsschutz_VGH_Privat.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Mit RechtsschutzPlus, StrafrechtPlus, Immobilien",
@@ -76,8 +74,7 @@
         "wohnen": "inklusive"
       },
       "quelle": "https://www.vgh.de/vgh/resources/pdf/produkt/rechtsschutz/VGH_LU_Rechtsschutz_VGH_Privat.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -88,6 +85,7 @@
     "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
     "Stufen laut Leistungsübersicht (Stand 01.10.2024): Grundtarif Privat, Beruf und Verkehr; dazu RechtsschutzPlus; dazu StrafrechtPlus und Immobilien und Grundstücke. Keine Empfehlung; Plus als mittlere Stufe.",
     "Versicherungssumme im StrafrechtPlus Privat höchstens 2 Mio. €. Weltdeckung 1 Jahr (Grundtarif) bzw. 3 Jahre. RechtsschutzPlus u. a. Betreuungsverfahren und selbstständige Nebentätigkeit.",
-    "Höhe der Selbstbeteiligung nicht genannt; Meldebonus 150 € bei Online-Meldung vor Anwaltsbeauftragung. Wartezeit 3 Monate u. a. für Wohnungs- und Grundstücks-Rechtsschutz."
+    "Höhe der Selbstbeteiligung nicht genannt; Meldebonus 150 € bei Online-Meldung vor Anwaltsbeauftragung. Wartezeit 3 Monate u. a. für Wohnungs- und Grundstücks-Rechtsschutz.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

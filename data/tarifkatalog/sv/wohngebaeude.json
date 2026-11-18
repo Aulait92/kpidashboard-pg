@@ -32,8 +32,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:0d1133e4-7c48-447f-9fe0-c98457d479fb/leistungs%C3%BCbersicht-wohngeb%C3%A4ude.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Komfort",
@@ -58,8 +57,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:0d1133e4-7c48-447f-9fe0-c98457d479fb/leistungs%C3%BCbersicht-wohngeb%C3%A4ude.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Top",
@@ -85,8 +83,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:0d1133e4-7c48-447f-9fe0-c98457d479fb/leistungs%C3%BCbersicht-wohngeb%C3%A4ude.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -99,6 +96,7 @@
     "Leistungsübersicht mit Zeichen ● versichert, ○ individuell wählbar, - nicht versichert; ○ ist als „optional“ erfasst.",
     "SV markiert Top als „Empfehlung“.",
     "Photovoltaik, Solarthermie und Wärmepumpen sind gegen die Hauptgefahren versichert (PV bis 150.000 €); die erweiterte Deckung gibt es über den Baustein Erneuerbare Energien. Ableitungsrohre in Top mit Top-Schutz Plus unbegrenzt. Allgefahren als Baustein Top-Schutz Plus nur zu Top.",
-    "Hotelkosten: Komfort bis 100 Tage, max. 10.000 €; Top bis zur Wiederbewohnbarkeit, max. 20.000 €. Gleitender Neuwert und Selbstbeteiligung nicht genannt."
+    "Hotelkosten: Komfort bis 100 Tage, max. 10.000 €; Top bis zur Wiederbewohnbarkeit, max. 20.000 €. Gleitender Neuwert und Selbstbeteiligung nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

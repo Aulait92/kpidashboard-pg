@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahn 70 (Tarif ZP7)",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahn 90 (Tarif ZP9)",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahn 100 (Tarif ZP1)",
@@ -86,8 +83,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -99,6 +95,7 @@
     "SDK markiert Zahn 100 als „Am häufigsten gewählt“.",
     "Zahnstaffel: Höchsterstattung im 1. Kalenderjahr bzw. in den ersten 2, 3 und 4 Jahren zusammen (Zahn 50: 500/1.000/1.500/2.000 €; Zahn 70: 700/1.400/2.100/2.800 €; Zahn 90: 900/1.800/2.700/3.600 €; Zahn 100: 1.000/2.000/3.000/4.000 €).",
     "Kieferorthopädie für Kinder bis 18 Jahre in allen KIG-Stufen (Höchstbetrag je Tarif), bei Unfall auch Erwachsene. Implantate laut Tarifübersicht als Zahnersatz zum jeweiligen Prozentsatz; Regelversorgung 100 %.",
-    "Prophylaxe-Baustein entfällt, da professionelle Zahnreinigung in allen Tarifen enthalten ist. Ansprechhilfe ohne Datum, Zusatzversicherungs-Broschüre 01/2026."
+    "Prophylaxe-Baustein entfällt, da professionelle Zahnreinigung in allen Tarifen enthalten ist. Ansprechhilfe ohne Datum, Zusatzversicherungs-Broschüre 01/2026.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

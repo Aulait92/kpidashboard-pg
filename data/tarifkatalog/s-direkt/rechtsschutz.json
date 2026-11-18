@@ -28,8 +28,7 @@
         "wohnen": "inklusive"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/rechtsschutzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Rundum-Schutz PLUS",
@@ -50,8 +49,7 @@
         "wohnen": "inklusive"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/rechtsschutzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -61,6 +59,7 @@
   "offen": [
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Risikoträger ist die ÖRAG Rechtsschutzversicherungs-AG. Bausteine Privat, Haus und Wohnung, Verkehr, Beruf einzeln kombinierbar; Rundum-Schutz enthält alle vier mit Preisvorteil, Rundum-Schutz PLUS zusätzlich je Jahr einen nicht versicherten privaten Fall (z. B. Vertragsprüfung). Keine Empfehlung.",
-    "Versicherungssumme, Strafkaution, Selbstbeteiligung und Wartezeit nicht beziffert (Selbstbeteiligung wählbar; Wartezeit entfällt bei lückenlosem Wechsel). Beitragsgarantie für 3 Jahre wählbar."
+    "Versicherungssumme, Strafkaution, Selbstbeteiligung und Wartezeit nicht beziffert (Selbstbeteiligung wählbar; Wartezeit entfällt bei lückenlosem Wechsel). Beitragsgarantie für 3 Jahre wählbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

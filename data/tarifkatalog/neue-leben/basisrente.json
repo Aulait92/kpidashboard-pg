@@ -20,8 +20,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.neueleben.de/Aktivplan-Basis.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -29,6 +28,7 @@
   ],
   "offen": [
     "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
-    "Ein Tarif mit jederzeit veränderbarem Mix aus konventioneller und fondsgebundener Anlage. Beitragsgarantie, Rentenfaktor und Hinterbliebenenschutz nicht beziffert."
+    "Ein Tarif mit jederzeit veränderbarem Mix aus konventioneller und fondsgebundener Anlage. Beitragsgarantie, Rentenfaktor und Hinterbliebenenschutz nicht beziffert.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

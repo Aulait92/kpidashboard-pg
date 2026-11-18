@@ -1500,6 +1500,20 @@ einen Computer mit erlaubten Pop-up-Fenstern, etwa 10 Minuten.
     Die Wünsche sind aus Formular und Assistent vorbefüllt, Notizen lassen sich mit einem Klick übernehmen; Rat und
     Gründe schreiben Sie selbst. Die App gibt keinen Rat, bitte prüfen Sie den Inhalt vor dem Senden. Auf Wunsch geht
     sie als PDF mit und liegt danach im Kontakt unter **Dokumente**.
+  - **Mit dem Angebot (seit 18.11.2026):** Im Blatt **Angebot senden → Über die App senden** der Haken
+    **Gesprächszusammenfassung mitsenden**. Der Entwurf kommt ohne KI aus der Terminvorbereitung (gewählte Tarife mit
+    Beitrag und Leistungen aus dem Katalog, Schutz im Überblick, offene Klärpunkte, Notizen, bestehende Verträge,
+    Angaben aus Formular und Chat, ohne Gesundheitsangaben). Die Gründe für Ihren Rat tragen Sie statt „[bitte
+    ergänzen]“ ein. **Ansehen** zeigt die Zusammenfassung so, wie sie im PDF steht; gesendet wird erst danach (nach
+    jeder Änderung erneut ansehen). Das PDF geht mit der Angebots-Mail und liegt als **Beratungsdokumentation** unter
+    Dokumente. Nach **Habe ich selbst gesendet** schlägt das Blatt die Zusammenfassung vor: per App senden, im eigenen
+    Mailprogramm (PDF teilen bzw. herunterladen, danach „Gesendet?“) oder nur ablegen. **Mit KI formulieren** erscheint
+    nur, wenn die KI mit Verarbeitung in der EU eingerichtet ist, und nie bei Kranken, Zahn, BU, Leben oder Pflege;
+    das Ergebnis ist als „Entwurf der KI, bitte prüfen“ markiert und darf keine eigenen Beträge, Versicherer oder
+    Empfehlungen ergänzen. Steht die Vorlage in den Einstellungen auf **Aus**, gibt es Haken und Vorschlag nicht.
+  - **Aufbewahrung:** Wird ein Kontakt auf Wunsch gelöscht, bleibt nur die Beratungsdokumentation als Nachweis
+    (10 Jahre ab Erstellung, danach automatisch gelöscht); am gelöschten Kontakt steht sie mit Datum zum Öffnen.
+    Bei Vertragsende werden auch diese PDFs mit allen Daten gelöscht (vorher Export).
   - **Unterlagen fehlen noch**: fehlende Angaben per Häkchen auswählen (plus freies Feld); der Kontakt kann einfach
     auf die E-Mail antworten. Auf Wunsch Wiedervorlage „Unterlagen nachfassen“ nach 3 Werktagen.
   - **Willkommen: Police ist da**: Erreichbarkeit und wie man einen Schaden meldet. Nach „Police erledigt“ schlägt die

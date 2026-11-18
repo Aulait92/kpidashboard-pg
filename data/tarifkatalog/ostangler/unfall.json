@@ -28,8 +28,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Unfallversicherung/03%20%C3%9Cbersichten%20Formulare/Leistungsuebersicht_Alles%20auf%20einen%20Blick.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Compact",
@@ -49,8 +48,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Unfallversicherung/03%20%C3%9Cbersichten%20Formulare/Leistungsuebersicht_Alles%20auf%20einen%20Blick.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Exclusiv Fair Play",
@@ -70,8 +68,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ostangler.de/fileadmin/user_upload/oa_docs/Unfallversicherung/03%20%C3%9Cbersichten%20Formulare/Leistungsuebersicht_Alles%20auf%20einen%20Blick.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -83,6 +80,7 @@
     "Grundsumme, Progression und Unfallrente nicht in der Übersicht genannt (Summe im Rechner wählbar).",
     "Leistung ab Invaliditätsgrad bei Compact und Fair Play nicht ausdrücklich genannt.",
     "Krankenhaustagegeld, Todesfall, Übergangsleistung und Genesungsgeld laut Produktseite vereinbar.",
-    "Ostangler markiert keinen Tarif; Compact als mittlere Stufe. Unfall Existenz (Schadenersatz bis 10 Mio. €) nicht aufgenommen."
+    "Ostangler markiert keinen Tarif; Compact als mittlere Stufe. Unfall Existenz (Schadenersatz bis 10 Mio. €) nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

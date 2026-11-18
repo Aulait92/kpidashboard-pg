@@ -27,8 +27,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F01_Unfallversicherung%2F02_Produktunterlagen_fuer_Ihre_Kunden&files=7_2_020_BR_Unfallvorsorge.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallvorsorge aktiv Premium",
@@ -48,8 +47,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F01_Unfallversicherung%2F02_Produktunterlagen_fuer_Ihre_Kunden&files=7_2_020_BR_Unfallvorsorge.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,6 +60,7 @@
     "Quelle: Broschüre Unfallvorsorge aktiv 7.2.020 (Stand 6/2026) der Stuttgarter Versicherung AG mit den Produktlinien Komfort und Premium; Premium zusätzlich Sofortleistung bis 10.000 €, Kostenübernahme Reha bis 30.000 € und umfassende Garantien.",
     "Grundsumme frei wählbar; Grundleistungen Invalidität, Unfall-Rente (ab 50 % Invalidität) und Todesfall einzeln wählbar. Leistung ab welchem Invaliditätsgrad nicht genannt.",
     "Daneben gibt es die Stuttgarter Unfallversicherung als einen Tarif ohne Produktlinien (Broschüre 7.2.003, Stand 9/2026): Progression 225 bis 1000 %, normale oder verbesserte Gliedertaxe, Bergung bis 100.000 €, Unfall-Rente ab 50 % (ab 90 % doppelt). Nicht als Stufe aufgenommen.",
-    "Zwei Produktlinien ohne Markierung, daher keine Empfehlung."
+    "Zwei Produktlinien ohne Markierung, daher keine Empfehlung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

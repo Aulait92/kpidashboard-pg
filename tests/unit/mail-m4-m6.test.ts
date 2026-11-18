@@ -20,7 +20,7 @@ const H = 60 * 60 * 1000;
 
 describe("Auslöser und Stufen", () => {
   it("M4-Auslöser laufen (Einstellungen zeigen „automatisch“ ohne „bald verfügbar“)", () => {
-    expect([...AUSLOESER_AKTIV].sort()).toEqual(["nachfassen_angebot", "nicht_erreicht", "nicht_erschienen", "wie_besprochen"]);
+    expect([...AUSLOESER_AKTIV].sort()).toEqual(["nachfassen_angebot", "nicht_erreicht", "nicht_erschienen", "termin_vorbereitung", "wie_besprochen"]);
     for (const k of AUSLOESER_AKTIV) expect(STANDARD_STUFEN[k]).toBe("auto");
   });
 

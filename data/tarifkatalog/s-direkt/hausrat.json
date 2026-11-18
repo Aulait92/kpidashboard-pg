@@ -25,8 +25,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "HausratPlusProtect",
@@ -44,8 +43,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "HausratPremium",
@@ -64,8 +62,7 @@
         "glas": "optional"
       },
       "quelle": "https://www.sparkassen-direkt.de/produkte/hausratversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Stufen laut Produktseite (HausratBasis, HausratPlusProtect, HausratPremium). Keine Empfehlung markiert; PlusProtect als mittlere Stufe.",
     "Auto: einfacher Diebstahl aus verschlossenen Fahrzeugen. Premium zusätzlich Bargeld, Wertsachen und Schmuck (ohne Beträge) sowie Sengschäden.",
-    "Wertsachen-Grenzen, einfacher Diebstahl in der Wohnung und Elementar (Starkregen im Rechenbeispiel genannt, Überschwemmung laut Text versichert) nicht beziffert. Die Allgemeinen Bedingungen wurden nicht ausgewertet."
+    "Wertsachen-Grenzen, einfacher Diebstahl in der Wohnung und Elementar (Starkregen im Rechenbeispiel genannt, Überschwemmung laut Text versichert) nicht beziffert. Die Allgemeinen Bedingungen wurden nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

@@ -1037,7 +1037,16 @@ export async function setReviewOptOut(customerId: string, leadId: string, off: b
 
 export async function markResolved(customerId: string, requestId: string, now = new Date()): Promise<boolean> {
   const r = await prisma.reviewRequest.updateMany({ where: { id: requestId, customerId, sentiment: "negative", resolvedAt: null }, data: { resolvedAt: now } });
-  return r.count > 0;
+  if (r.count === 0) return false;
+  // Geklärt heißt auch: die Aufgabe „Kunde unzufrieden“ in „Heute“ ist erledigt (sonst bleibt sie stehen)
+  const req = await prisma.reviewRequest.findUnique({ where: { id: requestId }, select: { leadId: true } });
+  if (req) {
+    await prisma.lead.updateMany({
+      where: { id: req.leadId, customerId, followUpNote: { startsWith: UNHAPPY_TASK } },
+      data: { followUpAt: null, followUpNote: null },
+    });
+  }
+  return true;
 }
 
 // ─── Öffentliche Seiten ─────────────────────────────────────────────────────

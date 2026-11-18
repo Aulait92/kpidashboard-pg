@@ -33,8 +33,7 @@
         "zahn": "optional"
       },
       "quelle": "https://www.petprotect.de/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Katzenkrankenversicherung Exklusiv",
@@ -60,8 +59,7 @@
         "zahn": "optional"
       },
       "quelle": "https://www.petprotect.de/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Katzenkrankenversicherung Exklusiv+",
@@ -87,8 +85,7 @@
         "zahn": "optional"
       },
       "quelle": "https://www.petprotect.de/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -105,6 +102,7 @@
     "Prothesen bis 500 € (Exklusiv+ unbegrenzt) nach 12 Monaten Wartezeit.",
     "Besondere Wartezeit 12 Monate u. a. für HD, ED, Patellaluxation und Kastration aus medizinischem Grund; Unfall ohne Wartezeit.",
     "Exklusiv+: Bestattungskostenzuschuss 300 € ab dem 4. Jahr, Goldakupunktur nach 12 Monaten, Reiserücktritt bis 1.500 €.",
-    "Ausgeschlossen: Brachycephales Syndrom, Kryptorchismus, Herstellung des Rassestandards."
+    "Ausgeschlossen: Brachycephales Syndrom, Kryptorchismus, Herstellung des Rassestandards.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

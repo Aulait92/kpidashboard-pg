@@ -20,8 +20,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/gefoerderte-altersvorsorge/basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "WWK BasisRente invest protect",
@@ -35,8 +34,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wwk.de/versicherungen/vorsorge-vermoegen/gefoerderte-altersvorsorge/basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -44,6 +42,7 @@
   ],
   "offen": [
     "Zwei Varianten ohne Markierung: invest 2.0 ohne Garantie (Option Rentenphase Invest), invest protect mit wählbarer Bruttobeitragsgarantie 50 bis 100 % (IntelliProtect 2.0).",
-    "Rentenfaktor, Hinterbliebenenschutz, Beitragspause, BU-Zusatz und Kosten nicht auf der Produktseite. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+    "Rentenfaktor, Hinterbliebenenschutz, Beitragspause, BU-Zusatz und Kosten nicht auf der Produktseite. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

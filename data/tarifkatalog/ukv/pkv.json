@@ -27,8 +27,7 @@
         "ktg": "optional"
       },
       "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/341439",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "GesundheitVARIO mit AmbulantPlus, KlinikPlus, ZahnPlus",
@@ -48,8 +47,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.ukv.de/v/krankenversicherung/private-krankenversicherung/angestellte.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +65,7 @@
     "Selbstbehalt ambulant je Kalenderjahr: VARIO 400 = 20 % bis 400 €, VARIO 800 = 800 €, VARIO 1600 = 1.600 € (Kinder halb). Vorsorge, Impfungen und Arzneimittel bei schweren Erkrankungen ohne Selbstbehalt.",
     "AmbulantPlus: über GOÄ-Höchstsatz, 200 € Vorsorge/Jahr, 500 € zusätzlich für Sehhilfen in 2 Jahren, Restkosten Augenlaser und Hörgeräte. KlinikPlus: Wahlarzt, Ein-/Zweibettzimmer, Ersatz-Tagegeld. ZahnPlus: Zahnersatz 90 %, über GOZ-Höchstsatz.",
     "Hilfsmittel als Aufzählung mit „z. B.“ (offener Katalog nicht ausdrücklich bestätigt); Hörgeräte im Grundtarif bis 2.000 € je Ohr. Beitragsrückerstattung erfolgsabhängig, Höhe nicht veröffentlicht. Psychotherapie, Primärarzt und Ausland nicht ausgewertet.",
-    "Krankentagegeld (Arbeitnehmer bzw. Selbstständige), Krankenhaustagegeld, Kurtagegeld und Beitragsentlastung BEA65 als Zusatzschutz wählbar."
+    "Krankentagegeld (Arbeitnehmer bzw. Selbstständige), Krankenhaustagegeld, Kurtagegeld und Beitragsentlastung BEA65 als Zusatzschutz wählbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

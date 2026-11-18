@@ -24,8 +24,7 @@
         "tagegeld": "nein"
       },
       "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Flexi",
@@ -49,8 +48,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,6 +60,7 @@
     "Smart: Grundabsicherung mit fester Invaliditäts- und Todesfallsumme und Reha-Leistungen (Höhe nicht veröffentlicht). Flexi: Baukasten, Bausteine nach Wahl.",
     "Progression 350 % und 600 %, verbesserte Gliedertaxe und Zecken-Baustein stehen als zusätzlich wählbare Leistungen in den Bedingungen (Stand 06.2026); Zuordnung zu Flexi angenommen.",
     "Leistung ab Invaliditätsgrad bei der Unfallrente nicht veröffentlicht (VPV Vital: Rente ab 50 %).",
-    "Bausteine Unfallrente und Krankenhaustagegeld bei Smart laut Tarifbeschreibung nicht enthalten; bitte prüfen."
+    "Bausteine Unfallrente und Krankenhaustagegeld bei Smart laut Tarifbeschreibung nicht enthalten; bitte prüfen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

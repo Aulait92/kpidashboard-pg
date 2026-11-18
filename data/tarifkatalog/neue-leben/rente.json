@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.neueleben.de/Aktivplan.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PlanX",
@@ -37,8 +36,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.neueleben.de/PlanX.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Sofortrente",
@@ -51,8 +49,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.neueleben.de/Sofortrente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -63,6 +60,7 @@
   "offen": [
     "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
     "Stufen sind Produkte: Aktivplan (Hybrid aus konventioneller und Fondsanlage, endfälliger Beitragserhalt für den konventionellen Teil, Versorger-Zusatzversicherung wählbar), PlanX (konventionell mit Indexbeteiligung, jährliche Sicherung der Erträge), Sofortrente (gegen Einmalbeitrag). Keine Empfehlung; PlanX als mittlere Stufe.",
-    "Garantierter Rentenfaktor und Kosten nicht genannt. Keine Renditeangaben übernommen."
+    "Garantierter Rentenfaktor und Kosten nicht genannt. Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

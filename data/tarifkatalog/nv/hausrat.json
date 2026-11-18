@@ -32,8 +32,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hausrat/7-0/Produktvergleich_NV_Hausrat_7.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV Hausratmax. 7.0",
@@ -58,8 +57,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hausrat/7-0/Produktvergleich_NV_Hausrat_7.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV HausratPremium 7.0",
@@ -84,8 +82,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/hausrat/7-0/Produktvergleich_NV_Hausrat_7.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -96,6 +93,7 @@
   "offen": [
     "Werte aus dem Produktvergleich NV Hausrat 7.0 (Symboltabelle). Einfacher Diebstahl aus der Wohnung nicht als eigener Punkt genannt; einfacher Diebstahl auf dem Grundstück (Wäsche, Gartenmöbel) 250 / 1.000 / 3.000 €. NV markiert keine Empfehlung; Hausratmax. als mittlere Stufe gesetzt.",
     "Grobe Fahrlässigkeit bei Herbeiführung; bei Obliegenheiten HausratSpar nicht versichert. Fahrrad: HausratSpar nur wenn vereinbart (bis 5.000 €), Hausratmax. 5.000 € beitragsfrei (bis 10.000 € wählbar), HausratPremium 10.000 € beitragsfrei (bis zur Summe wählbar).",
-    "Elementarschäden über die eigene NV Elementarschadenversicherung; Rückstau 2 % (max.) bzw. 5 % (Premium) der Summe. Diebstahl aus Kfz: HausratSpar nur Benelux, Frankreich, Schweiz, Österreich, Skandinavien. Hotelkosten: Spar 1 ‰, max. 2 ‰ der Summe. Phishing = Online."
+    "Elementarschäden über die eigene NV Elementarschadenversicherung; Rückstau 2 % (max.) bzw. 5 % (Premium) der Summe. Diebstahl aus Kfz: HausratSpar nur Benelux, Frankreich, Schweiz, Österreich, Skandinavien. Hotelkosten: Spar 1 ‰, max. 2 ‰ der Summe. Phishing = Online.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

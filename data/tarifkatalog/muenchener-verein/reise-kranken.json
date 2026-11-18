@@ -26,8 +26,7 @@
         "familie": "nein"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/auslandsreise-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Auslandsreise-Krankenversicherung Tarif 502 Familie",
@@ -46,8 +45,7 @@
         "familie": "inklusive"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/auslandsreise-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
   "offen": [
     "Zwei Tarife mit gleichen Leistungen (Single und Familie). Familie: Ehe- oder Lebenspartner und Kinder bis 25 im Haushalt, mit Rooming-in und Kinderbetreuung.",
     "Zahn: schmerzstillende Behandlung, provisorischer Zahnersatz und notwendige Reparaturen, je 100 %. Schwangerschaft: Seite nennt nur Frühgeburten bis Ende der 36. Woche.",
-    "Bekannte Erkrankungen: bei Reiseantritt geplante Behandlungen ausgeschlossen, sonst keine allgemeine Regel genannt. Langzeitreise nicht angeboten. Zwei Tarife ohne Markierung, daher keine Empfehlung."
+    "Bekannte Erkrankungen: bei Reiseantritt geplante Behandlungen ausgeschlossen, sonst keine allgemeine Regel genannt. Langzeitreise nicht angeboten. Zwei Tarife ohne Markierung, daher keine Empfehlung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

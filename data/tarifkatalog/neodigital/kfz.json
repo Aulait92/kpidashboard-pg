@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://neodigital.de/app/uploads/2025/06/Kfzversicherung_Leistungsuebersicht_Neodigital.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NEO L",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://neodigital.de/app/uploads/2025/06/Kfzversicherung_Leistungsuebersicht_Neodigital.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -68,6 +66,7 @@
     "Quelle: Leistungsübersicht Kfz 2027 (Symbole als Bild gelesen) und Tarifvergleich der Produktseite; Risikoträger Neodigital Autoversicherung AG. Keine Markierung.",
     "Nur NEO L: Kaufwertentschädigung für Gebrauchte 36 Monate, Eigenschadenversicherung 100.000 € je Jahr (500 € Selbstbeteiligung), Brems-, Betriebs- und Bruchschäden, Sportgeräte am Fahrzeug.",
     "Akku-Schutz: Antriebs-Akku in der Vollkasko (Allgefahren), Ladeausrüstung in der Kasko. GAP-Deckung laut Produktseite in der Vollkasko für finanzierte und geleaste Fahrzeuge enthalten.",
-    "Zusätzlich wählbar: Schutzbrief, Fahrerschutz (15 Mio. €), Auslands-Schadenschutz, Rabattschutz."
+    "Zusätzlich wählbar: Schutzbrief, Fahrerschutz (15 Mio. €), Auslands-Schadenschutz, Rabattschutz.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

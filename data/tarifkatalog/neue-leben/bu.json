@@ -26,8 +26,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.neueleben.de/Einkommensschutz.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Berufsunfähigkeitsversicherung EGO",
@@ -46,8 +45,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.neueleben.de/Einkommensschutz.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -57,6 +55,7 @@
     "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
     "Produkt der HDI-Gruppe („EGO“). Zwei Varianten: EGO Young für Ausbildung, Studium und Berufseinstieg (niedriger Anfangsbeitrag bis 10 Jahre) und die reguläre BU. Keine Leistungsstufen, keine Empfehlung.",
     "Leistung bei Berufsunfähigkeit wegen Pflegebedürftigkeit oder Demenz laut Seite; eine eigene Pflegerente ist nicht genannt. Inflationsschutz (Dynamik) wählbar.",
-    "AU-Klausel, Teilzeit, Umorganisation, Stundung und Infektionsklausel stehen nicht auf der Seite. Keine eigene Dienstunfähigkeitsversicherung gefunden."
+    "AU-Klausel, Teilzeit, Umorganisation, Stundung und Infektionsklausel stehen nicht auf der Seite. Keine eigene Dienstunfähigkeitsversicherung gefunden.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

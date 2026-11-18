@@ -30,8 +30,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/204/documents/Tarifhighlights_PKW.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Versicherung COMFORT",
@@ -55,8 +54,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/204/documents/Tarifhighlights_PKW.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Versicherung BEST",
@@ -79,8 +77,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/204/documents/Tarifhighlights_PKW.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -92,6 +89,7 @@
   "offen": [
     "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungshighlights Pkw PK PIB K PKW 10.2025; COMFORT laut Produktseite der Tarif, „für den sich die meisten Kunden entscheiden“.",
     "Haftpflicht 100 Mio. €, je Person höchstens 15 Mio. €. Neuwert bei Totalschaden oder Diebstahl; Kaufpreisentschädigung ebenfalls 12, 18 bzw. 24 Monate.",
-    "Akku-Werte gelten für Folgeschäden durch Kurzschluss bzw. Tierbiss am Akku; eine eigene Allgefahren-Deckung für den Akku ist nicht genannt. Eigenschäden ab COMFORT, Ausland-Schadenschutz nur BEST."
+    "Akku-Werte gelten für Folgeschäden durch Kurzschluss bzw. Tierbiss am Akku; eine eigene Allgefahren-Deckung für den Akku ist nicht genannt. Eigenschäden ab COMFORT, Ausland-Schadenschutz nur BEST.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

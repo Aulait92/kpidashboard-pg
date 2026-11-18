@@ -34,17 +34,36 @@ export {
 export async function parseFile(buf: Buffer, fileName: string): Promise<{ headers: string[]; rows: Row[] }> {
   if (/\.xlsx?$/i.test(fileName)) {
     const { default: readXlsx } = await import("read-excel-file/node");
-    const sheet = (await readXlsx(buf)) as unknown[][];
+    let sheet: unknown[][];
+    try {
+      sheet = (await readXlsx(buf)) as unknown[][];
+    } catch {
+      // Keine echte Excel-Datei oder ein Aufbau, den der Leser nicht kennt: verständlicher Hinweis statt Technikmeldung
+      throw new Error("Die Excel-Datei konnte nicht gelesen werden. Bitte in Excel öffnen und als .xlsx oder als CSV (Trennzeichen-getrennt) neu speichern.");
+    }
     const headerIdx = sheet.findIndex((r) => r.filter((c) => c != null && String(c).trim()).length >= 2);
     if (headerIdx < 0) return { headers: [], rows: [] };
     const headers = sheet[headerIdx].map((h, i) => String(h ?? "").trim() || `Spalte ${i + 1}`);
     const rows = sheet.slice(headerIdx + 1).map((r) => Object.fromEntries(headers.map((h, i) => [h, cell(r[i])])));
     return { headers, rows: rows.filter((r) => Object.values(r).some(Boolean)) };
   }
-  const text = buf.toString("utf8").replace(/^﻿/, "");
+  const text = decodeText(buf).replace(/^﻿/, "");
   const parsed = Papa.parse<Row>(text, { header: true, skipEmptyLines: true, delimitersToGuess: [";", ",", "\t"] });
   const headers = (parsed.meta.fields ?? []).map((h) => h.trim());
   return { headers, rows: parsed.data.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k.trim(), String(v ?? "").trim()]))) };
+}
+
+/**
+ * CSV-Text dekodieren: UTF-8, sonst Windows-1252. Exporte aus Bestandssystemen und „CSV (Trennzeichen-getrennt)“ aus
+ * Excel unter Windows sind oft Windows-1252; als UTF-8 gelesen würden Umlaute zu „�“ (M�ller) und Beträge mit „€“
+ * unlesbar (Jahresbeitrag fehlt).
+ */
+export function decodeText(buf: Uint8Array): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buf);
+  } catch {
+    return new TextDecoder("windows-1252").decode(buf);
+  }
 }
 
 function cell(v: unknown): string {

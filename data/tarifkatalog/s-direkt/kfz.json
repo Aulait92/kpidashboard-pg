@@ -28,8 +28,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1ilIyfP2nQuN9zJjlv65Zv/ef92341f0a4f633f8af8357af5dd87d1/Autoversicherung_Leistungsvergleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AutoPlusProtect",
@@ -50,8 +49,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1ilIyfP2nQuN9zJjlv65Zv/ef92341f0a4f633f8af8357af5dd87d1/Autoversicherung_Leistungsvergleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AutoPremium",
@@ -72,8 +70,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1ilIyfP2nQuN9zJjlv65Zv/ef92341f0a4f633f8af8357af5dd87d1/Autoversicherung_Leistungsvergleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Quelle: Leistungsvergleich Autoversicherung (Stand 01.10.2025). Keine Empfehlung markiert; PlusProtect als mittlere Stufe.",
     "Grobe Fahrlässigkeit mit Ausnahmen Diebstahl, Alkohol und Drogen. Neupreis und Kaufpreis 24 bzw. 36 Monate; Basis bis Wiederbeschaffungswert. Premium zusätzlich Eigenschäden auf dem eigenen Grundstück, AuslandSchadenschutz, Überspannung bis 20.000 €.",
-    "Rückstufung im Schadenfall: Basis marktüblich, sonst verbessert; einen Rabattschutz-Baustein nennt der Vergleich nicht. GAP als eigenes Produkt GAPcare. Werkstattservice und AutoSchutzbrief optional."
+    "Rückstufung im Schadenfall: Basis marktüblich, sonst verbessert; einen Rabattschutz-Baustein nennt der Vergleich nicht. GAP als eigenes Produkt GAPcare. Werkstattservice und AutoSchutzbrief optional.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

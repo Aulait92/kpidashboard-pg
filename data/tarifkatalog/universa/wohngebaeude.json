@@ -32,8 +32,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "FLEXXhouse allround",
@@ -58,8 +57,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "FLEXXhouse best",
@@ -84,8 +82,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.universa.de/produkte/sach-und-haftpflichtversicherung/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -95,6 +92,7 @@
   "offen": [
     "Zwei Modelle: Wohnflächenmodell (pauschal bis 2,5 Mio. €) und Versicherungssummenmodell. Werte aus der Tabelle der Produktseite.",
     "Grobe Fahrlässigkeit bei Herbeiführung; bei Obliegenheitsverletzungen nur best. Ableitungsrohre auf und außerhalb des Grundstücks, sofern der Eigentümer die Gefahr trägt.",
-    "Photovoltaik (bis 150.000 €, 50 kW), Wärmepumpen, Solar und Wallboxen mitversichert; Baustein für erweiterte Deckung mit Ertragsausfall. Kosten: Aufräum-, Abbruch-, Bewegungs- und Schutzkosten bis zur VS. Ascore zeichnet best aus; allround als mittlere Stufe."
+    "Photovoltaik (bis 150.000 €, 50 kW), Wärmepumpen, Solar und Wallboxen mitversichert; Baustein für erweiterte Deckung mit Ertragsausfall. Kosten: Aufräum-, Abbruch-, Bewegungs- und Schutzkosten bis zur VS. Ascore zeichnet best aus; allround als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

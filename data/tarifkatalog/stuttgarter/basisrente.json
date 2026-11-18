@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.stuttgarter.de/rente-vorsorge/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente performance+ (Tarif 79)",
@@ -40,8 +39,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.stuttgarter.de/rente-vorsorge/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente alpha+ (Tarif 59)",
@@ -57,8 +55,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.stuttgarter.de/rente-vorsorge/basisrente",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +67,7 @@
     "Stufen sind die Anlagekonzepte index-safe, performance+ und alpha+, keine Leistungsstufen; keine Markierung, performance+ als mittlere Stufe gesetzt.",
     "Hinterbliebene: Ehegattenrente für Ehe- bzw. eingetragene Lebenspartner wählbar.",
     "Flexibel laut Produktseite: Beitragspause und Zuzahlung außer der Reihe möglich, Rentenbeginn individuell.",
-    "Garantierter Rentenfaktor, BU-Zusatz, Dynamik und Effektivkosten nicht auf der Produktseite."
+    "Garantierter Rentenfaktor, BU-Zusatz, Dynamik und Effektivkosten nicht auf der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

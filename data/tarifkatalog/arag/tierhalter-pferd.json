@@ -26,8 +26,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.arag.de/tierversicherung/pferdehaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Pferdehaftpflicht Komfort",
@@ -46,8 +45,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.arag.de/tierversicherung/pferdehaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Pferdehaftpflicht Premium",
@@ -66,8 +64,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.arag.de/tierversicherung/pferdehaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -78,6 +75,7 @@
     "Empfehlung: ARAG markiert Premium als Bestseller.",
     "Deckungssumme Sach- und Vermögensschäden 10, 20, 30 Mio. €; Personenschäden 10, 15, 20 Mio. €.",
     "Mietsachschäden an Stall, Halle, Box, Weide, Zaun in allen Stufen. Geliehene Pferdeanhänger: 10.000 €, 50.000 €, Premium ohne Grenze; Reitutensilien 2.000, 5.000, 10.000 €.",
-    "Premium: Eigenschäden und Rettung des Pferdes je bis 10.000 €. Forderungsausfall nur in der Begriffserklärung der Seite genannt, nicht je Stufe."
+    "Premium: Eigenschäden und Rettung des Pferdes je bis 10.000 €. Forderungsausfall nur in der Begriffserklärung der Seite genannt, nicht je Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }

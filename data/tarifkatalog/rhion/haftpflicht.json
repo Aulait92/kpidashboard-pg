@@ -33,8 +33,7 @@
         "dienst": "nein"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2701_2026_10_Vergleich_Pauschaldekla_PHV2026_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Plus",
@@ -60,8 +59,7 @@
         "dienst": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2701_2026_10_Vergleich_Pauschaldekla_PHV2026_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Premium",
@@ -87,8 +85,7 @@
         "dienst": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/4-1_Haftpflicht/4_Vergleich_Leistungsuebersichten/HP2701_2026_10_Vergleich_Pauschaldekla_PHV2026_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -99,6 +96,7 @@
   "offen": [
     "Werte aus dem Vergleich der Pauschaldeklarationen PHV 2026 (HP 2701, 10/2026). Standard: Vermögensschäden nur bis 50.000 €. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
     "Plus: Schlüssel privat voll, beruflich bis 50.000 €; deliktunfähige Personen, geliehene Sachen mit 150 € Selbstbeteiligung. Premium ohne Selbstbeteiligung. Rabattretter = Rabattausgleich bei SFR-Rückstufung.",
-    "Forderungsausfall in Plus und Premium, auch bei Vorsatz bis 2.500 €. Drohne: nur Premium (unbemannte Luftfahrtsysteme bis 5 kg). Zuwählbar in Plus und Premium: Diensthaftpflicht, Opferhilfe, Rechtsschutz zum Forderungsausfall; Best-Leistungsgarantie nur Premium."
+    "Forderungsausfall in Plus und Premium, auch bei Vorsatz bis 2.500 €. Drohne: nur Premium (unbemannte Luftfahrtsysteme bis 5 kg). Zuwählbar in Plus und Premium: Diensthaftpflicht, Opferhilfe, Rechtsschutz zum Forderungsausfall; Best-Leistungsgarantie nur Premium.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

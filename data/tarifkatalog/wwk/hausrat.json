@@ -34,8 +34,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/hausrat/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausratversicherung plus",
@@ -62,8 +61,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/hausrat/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -74,6 +72,7 @@
     "Einfacher Diebstahl in der Wohnung nicht genannt; plus versichert Trickdiebstahl bis 2.000 €.",
     "Elementar als Zusatzbaustein (Wartezeit 1 Woche, Selbstbeteiligung 500 € bzw. je nach Gefährdungsklasse bis 5.000 €). Fahrraddiebstahl als Baustein Fahrraddiebstahl bzw. Fahrraddiebstahl plus.",
     "Bargeld außerhalb des Wertschutzschranks laut Tabelle „bis maximal 1.5000 EUR“ (Tippfehler), als 1.500 € gelesen. Garten: plus ohne Betrag (leeres Feld).",
-    "Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+    "Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }
