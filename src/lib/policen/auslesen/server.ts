@@ -71,21 +71,14 @@ export async function pausiert(): Promise<boolean> {
 }
 
 /**
- * Einwilligung mit KI für diesen Lead (Nachweis aus Policen per WhatsApp, Tabelle PolicenNachweis). Maßgeblich ist der
- * letzte Eintrag zu Einwilligung, Ablehnung oder Widerruf. Fehlt die Tabelle (Policen per WhatsApp noch nicht
- * eingespielt): keine Einwilligung.
+ * Einwilligung mit KI für diesen Lead (Nachweis aus Policen per WhatsApp, PolicenNachweis). Maßgeblich ist der letzte
+ * Eintrag zu Einwilligung, Ablehnung oder Widerruf.
  */
 export async function kiEinwilligung(leadId: string): Promise<{ gesundheit: boolean } | null> {
-  try {
-    const rows = await prisma.$queryRaw<{ art: string; ki: boolean | null; textVersion: string | null }[]>`
-      SELECT "art", "ki", "textVersion" FROM "PolicenNachweis"
-      WHERE "leadId" = ${leadId} AND "art" IN ('einwilligung', 'abgelehnt', 'widerruf')
-      ORDER BY "createdAt" DESC LIMIT 1`;
-    const r = rows[0];
-    return r && r.art === "einwilligung" && r.ki === true ? textVersionKi(r.textVersion) : null;
-  } catch {
-    return null;
-  }
+  const r = await prisma.policenNachweis
+    .findFirst({ where: { leadId, art: { in: ["einwilligung", "abgelehnt", "widerruf"] } }, orderBy: { createdAt: "desc" }, select: { art: true, ki: true, textVersion: true } })
+    .catch(() => null);
+  return r && r.art === "einwilligung" && r.ki === true ? textVersionKi(r.textVersion) : null;
 }
 
 export type Sperre = "aus" | "kunde" | "pause" | "einwilligung";
@@ -160,11 +153,14 @@ async function meldeSchluesselUngueltig(now: Date) {
 
 export type AuslesenErgebnis = { status: string } | null;
 
-/** Inhalt der Unterlage (entschlüsselt, nur im Speicher). */
-function inhalt(doc: { data: Uint8Array | null }): Buffer | null {
-  if (!doc.data) return null;
+/** Inhalt der Unterlage (entschlüsselt, nur im Speicher): privater Policen-Bucket bzw. alte Ablage in der Datenbank. */
+async function inhalt(doc: { customerId: string; storageKey: string | null; data: Uint8Array | null }): Promise<Buffer | null> {
   try {
-    return decryptBytes(Buffer.from(doc.data));
+    if (doc.storageKey) {
+      const { holeAb } = await import("@/lib/policen/ablage");
+      return await holeAb(doc.customerId, doc.storageKey);
+    }
+    return doc.data ? decryptBytes(Buffer.from(doc.data)) : null;
   } catch {
     return null;
   }
@@ -178,7 +174,7 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
   const now = o.now ?? new Date();
   const doc = await prisma.leadDocument.findUnique({
     where: { id: documentId },
-    select: { id: true, customerId: true, leadId: true, status: true, data: true, mimeType: true, sparte: true, auszug: true, lead: { select: { erasedAt: true } } },
+    select: { id: true, customerId: true, leadId: true, status: true, data: true, storageKey: true, mimeType: true, sparte: true, auszug: true, lead: { select: { erasedAt: true } } },
   });
   if (!doc || doc.status !== "gespeichert" || doc.lead.erasedAt) return null;
   const sperre = await sperreFuer(doc.customerId, doc.leadId);
@@ -201,7 +197,7 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
   const setze = (data: Parameters<typeof prisma.policenAuszug.update>[0]["data"]) => prisma.policenAuszug.update({ where: { id: zeile.id }, data });
 
   const typ = TYPEN.find((t) => t === doc.mimeType) ?? null;
-  const daten = typ ? inhalt(doc) : null;
+  const daten = typ ? await inhalt(doc) : null;
   if (!typ || !daten) {
     await setze({ status: "fehler", versuche: MAX_VERSUCHE });
     log("nicht-lesbar");

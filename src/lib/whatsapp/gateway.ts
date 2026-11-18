@@ -24,6 +24,8 @@ type InboundMessage = {
   button?: { text?: string; payload?: string };
   // Antwort auf interaktive Knöpfe/Listen (freie Nachrichten im 24-h-Fenster)
   interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { id?: string; title?: string } };
+  // Antwort auf eine unserer Nachrichten (z. B. Knopf der Policen-Einwilligung): ID der beantworteten Nachricht
+  context?: { id?: string };
   // Fotos und PDFs (z. B. Policen vor dem Termin, lib/policen)
   image?: { id?: string; mime_type?: string; caption?: string };
   document?: { id?: string; mime_type?: string; filename?: string; caption?: string };
@@ -415,7 +417,7 @@ async function persistInbound(
       const media = type === "image" ? m.image : type === "document" ? m.document : null;
       const r = media
         ? await policen.handleInboundMedia({ conversationId: conversation.id, messageId: inboundMsg.id, medium: { type, ...media }, botErlaubt, now })
-        : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m), waMessageId: m.id ?? null }, now);
+        : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m), waMessageId: m.id ?? null, frageWaMessageId: m.context?.id ?? null }, now);
       // Policen auslesen (lib/policen/auslesen, eigener KI-Zugang nur für Dokumente): nach Eingang bzw. Einwilligung im
       // Hintergrund; ohne Schlüssel, Einwilligung mit KI oder freigegebene Sparte passiert nichts
       void import("@/lib/policen/auslesen/server")
@@ -424,7 +426,8 @@ async function persistInbound(
       if (r.handled) return;
       if (media && botErlaubt) botErlaubt = false;
     } catch (e) {
-      console.error("[whatsapp policen]", e);
+      // Keine Inhalte, Dateinamen oder Medien-Adressen ins Protokoll (Rechtsprüfung A7)
+      console.error("[whatsapp policen]", e instanceof Error ? e.name : "Fehler");
     }
   }
 
@@ -564,6 +567,8 @@ export async function sendWhatsAppMessage(opts: {
    * Passen sie nicht, geht die Nachricht als reiner Text.
    */
   buttons?: { id: string; title: string }[] | null;
+  /** Fußzeile der interaktiven Nachricht (nur mit Knöpfen, höchstens 60 Zeichen; Policen-Einwilligung) */
+  footer?: string | null;
 }): Promise<SendResult> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
@@ -580,7 +585,8 @@ export async function sendWhatsAppMessage(opts: {
   // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)
   opts = { ...opts, body: ohneGedankenstriche(opts.body) };
   const knoepfe = opts.buttons?.length && opts.buttons.length <= 3 && opts.buttons.every((b) => b.title.length <= 20) ? opts.buttons : null;
-  const result = knoepfe ? await sendButtons(apiKey, opts.to, opts.body, knoepfe) : await sendText(apiKey, opts.to, opts.body);
+  const footer = knoepfe && opts.footer ? ohneGedankenstriche(opts.footer) : null;
+  const result = knoepfe ? await sendButtons(apiKey, opts.to, opts.body, knoepfe, footer) : await sendText(apiKey, opts.to, opts.body);
 
   const now = new Date();
   const conversation = await prisma.conversation.upsert({
@@ -605,7 +611,7 @@ export async function sendWhatsAppMessage(opts: {
       conversationId: conversation.id,
       direction: "outbound",
       kind: "text",
-      body: opts.body,
+      body: footer ? `${opts.body}\n\n${footer}` : opts.body,
       waMessageId: result.messageId,
       status: "sent",
       sentBy: opts.sentBy ?? "system",

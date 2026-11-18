@@ -4,7 +4,7 @@
   "produkt": "Tierhalter-Haftpflicht Pferd",
   "empfehlung": "keine",
   "inAllenTarifen": [
-    "Weltweiter Schutz",
+    "Innovationsgarantie",
     "Ab 2. Pferd halber Beitrag",
     "Reiten ohne Sattel versichert"
   ],
@@ -20,13 +20,11 @@
         "reitbeteiligung": "ja",
         "flurschaden": "ja",
         "fohlen": "6 Monate",
-        "geliehen": "bis 2.500 €",
-        "ausland": "weltweit"
+        "geliehen": "bis 2.500 €"
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/tierhalter-haftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tierhalter-Haftpflicht Premium",
@@ -38,13 +36,11 @@
         "miete": "Stall bis 10.000 €",
         "reitbeteiligung": "ja",
         "flurschaden": "ja",
-        "forderungsausfall": "ja (Europa)",
-        "ausland": "weltweit"
+        "forderungsausfall": "ja (Europa)"
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/tierhalter-haftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -52,6 +48,7 @@
   ],
   "offen": [
     "Fremd- und Gastreiter sowie Reitbeteiligung stehen bei den versicherten Personen; Zuordnung zu beiden Linien angenommen.",
-    "Schäden an Stallungen, Reithallen, Paddocks laut Premium-Liste bis 10.000 €; Basis nennt allgemein Mietsachschäden. Selbstbeteiligung allgemein nicht genannt. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+    "Schäden an Stallungen, Reithallen, Paddocks laut Premium-Liste bis 10.000 €; Basis nennt allgemein Mietsachschäden. Selbstbeteiligung allgemein nicht genannt. Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Geprüft am 17.11.2026 am Text der Produktseite auf hdi.de. Entfernt: „weltweit“ (Auslandsschutz auf der Seite nicht genannt). Widerspruch auf der Seite: Jungtiere laut Vorteilsliste bis zu einem Jahr, laut Leistungsliste Basis 6 Monate beitragsfrei mitversichert; Wert 6 Monate (Basis) belassen."
   ]
 }

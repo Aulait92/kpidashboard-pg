@@ -1,24 +1,21 @@
 // Langfassung zur Einwilligung „Unterlagen per WhatsApp“ (Ole, 17.11.2026, docs/recht-gesundheitsunterlagen.md
 // Abschnitt b „Hinweise zum Text“): Verantwortlicher, Zweck, Datenarten, Rechtsgrundlagen, Empfänger, Drittland,
-// Speicherdauer, Widerruf, Betroffenenrechte, Beschwerderecht. Öffentliche Seite /datenschutz/policen?k=<Token>,
-// verlinkt nur im Einwilligungstext (also nur mit Schalter POLICEN_GESUNDHEIT_AN). Reine Texte, ohne Gedankenstriche,
-// in beiden Ansprachen. Stand und Version wie der Einwilligungstext (regeln.ts EINWILLIGUNG_VERSION).
+// Speicherdauer, Widerruf, Betroffenenrechte, Beschwerderecht. Öffentliche Seite /datenschutz/policen?k=<Token>.
+// Reine Texte, ohne Gedankenstriche, in beiden Ansprachen. Stand und Version wie der Einwilligungstext
+// (regeln.ts DATENSCHUTZ_VERSION). Fassung 18.11.2026 nach Text (c) der Rechtsprüfung
+// (docs/recht/policen-whatsapp-gesundheitsdaten.md): Einwilligung per Knopf, KI-Auslesen nur mit Einwilligung und erst,
+// wenn der KI-Dienst eingerichtet ist, Meta als Transportweg, Löschung 90 Tage nach dem Termin.
 
 import { a, type Ansprache } from "@/lib/ansprache";
-import { LOESCHFRIST_ABSCHLUSS_TAGE, LOESCHFRIST_TAGE } from "@/lib/policen/regeln";
+import { LOESCHFRIST_TAGE } from "@/lib/policen/regeln";
 
 export type Vermittler = { name: string; firma: string; anschrift: string; telefon: string; email: string };
 
-/**
- * kiEu: Die KI-Zuordnung der Unterlagen läuft über den EU-Endpunkt (regeln.ts policenKiEu); dann steht das bei den
- * Empfängern (docs/recht-gesundheitsunterlagen.md Abschnitt e, Punkt 8). Meta bleibt Drittland.
- */
-export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler, o: { kiEu?: boolean } = {}): { ueberschrift: string; text: string }[] {
+export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler): { ueberschrift: string; text: string }[] {
   const wer = [v.firma && v.firma !== v.name ? `${v.name}, ${v.firma}` : v.name, v.anschrift, v.telefon ? `Telefon ${v.telefon}` : "", v.email ? `E-Mail ${v.email}` : ""]
     .filter((x) => x && x.trim())
     .join("\n");
   const du = an === "du";
-  const ki = o.kiEu ? " (Claude, verarbeitet in einem Rechenzentrum in der EU)" : "";
   return [
     {
       ueberschrift: "Verantwortlich",
@@ -52,28 +49,28 @@ export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler, o: { 
       ueberschrift: "Was mit den Unterlagen passiert",
       text: a(
         an,
-        "Die Unterlagen werden verschlüsselt gespeichert und sind nur für deinen Berater sichtbar. Eine KI ordnet jede Unterlage einer Versicherungsart zu; Gesundheitsangaben werden nicht ausgewertet, zusammengefasst oder bewertet. Nur bei Sachversicherungen (zum Beispiel Haftpflicht, Hausrat, Kfz) liest sie Versicherer, Beitrag, Zahlweise, Summe, Selbstbeteiligung und Ablauf aus. Die KI trifft keine Entscheidungen über dich.",
-        "Die Unterlagen werden verschlüsselt gespeichert und sind nur für Ihren Berater sichtbar. Eine KI ordnet jede Unterlage einer Versicherungsart zu; Gesundheitsangaben werden nicht ausgewertet, zusammengefasst oder bewertet. Nur bei Sachversicherungen (zum Beispiel Haftpflicht, Hausrat, Kfz) liest sie Versicherer, Beitrag, Zahlweise, Summe, Selbstbeteiligung und Ablauf aus. Die KI trifft keine Entscheidungen über Sie.",
+        "Die Unterlagen werden verschlüsselt in der EU gespeichert und sind nur für deinen Berater sichtbar; jeder Abruf wird protokolliert. Mit deiner Einwilligung dürfen die wichtigsten Vertragsdaten (zum Beispiel Versicherer, Tarif, Beitrag, Laufzeit, Kündigungsfrist, Versicherungssummen, Selbstbeteiligung) automatisch durch einen KI-Dienst mit Verarbeitung in der EU ausgelesen werden, der die Unterlagen nicht speichert und nicht zum Training nutzt. Gesundheitsangaben werden dabei nicht erfasst oder gespeichert. Solange dieser Dienst nicht eingerichtet ist, wertet keine KI deine Unterlagen aus. Dein Berater prüft ausgelesene Daten selbst; eine automatisierte Entscheidung über dich findet nicht statt. An Versicherer gehen die Unterlagen nicht ohne deine gesonderte Zustimmung.",
+        "Die Unterlagen werden verschlüsselt in der EU gespeichert und sind nur für Ihren Berater sichtbar; jeder Abruf wird protokolliert. Mit Ihrer Einwilligung dürfen die wichtigsten Vertragsdaten (zum Beispiel Versicherer, Tarif, Beitrag, Laufzeit, Kündigungsfrist, Versicherungssummen, Selbstbeteiligung) automatisch durch einen KI-Dienst mit Verarbeitung in der EU ausgelesen werden, der die Unterlagen nicht speichert und nicht zum Training nutzt. Gesundheitsangaben werden dabei nicht erfasst oder gespeichert. Solange dieser Dienst nicht eingerichtet ist, wertet keine KI Ihre Unterlagen aus. Ihr Berater prüft ausgelesene Daten selbst; eine automatisierte Entscheidung über Sie findet nicht statt. An Versicherer gehen die Unterlagen nicht ohne Ihre gesonderte Zustimmung.",
       ),
     },
     {
       ueberschrift: "Empfänger",
       text: a(
         an,
-        `Dein Berater setzt Dienstleister ein, die nur nach seiner Weisung arbeiten (Auftragsverarbeiter) und zur Verschwiegenheit verpflichtet sind: den Anbieter der Software (Ole Kannapinn UG, Berlin), 360dialog (Berlin) und Meta Platforms Ireland für WhatsApp, Railway für das Hosting (Rechenzentrum in der EU) und Anthropic für die KI-Zuordnung${ki}. Versicherer oder andere Dritte bekommen deine Unterlagen nicht.`,
-        `Ihr Berater setzt Dienstleister ein, die nur nach seiner Weisung arbeiten (Auftragsverarbeiter) und zur Verschwiegenheit verpflichtet sind: den Anbieter der Software (Ole Kannapinn UG, Berlin), 360dialog (Berlin) und Meta Platforms Ireland für WhatsApp, Railway für das Hosting (Rechenzentrum in der EU) und Anthropic für die KI-Zuordnung${ki}. Versicherer oder andere Dritte bekommen Ihre Unterlagen nicht.`,
+        "Die Unterlagen werden technisch von der Ole Kannapinn UG (haftungsbeschränkt), performancegrowth, als Auftragsverarbeiter deines Beraters gespeichert, verschlüsselt in der EU. Die Übertragung erfolgt über WhatsApp: Dabei sind die 360dialog GmbH, Berlin, und WhatsApp Ireland Ltd. als Auftragsverarbeiter beteiligt. WhatsApp kann die Inhalte bis zu 30 Tage zwischenspeichern; Verbindungsdaten wie Telefonnummer und Zeitpunkte verarbeitet WhatsApp teilweise in eigener Verantwortung. Wenn du WhatsApp dafür nicht nutzen möchtest, bring die Unterlagen einfach zum Termin mit.",
+        "Die Unterlagen werden technisch von der Ole Kannapinn UG (haftungsbeschränkt), performancegrowth, als Auftragsverarbeiter Ihres Beraters gespeichert, verschlüsselt in der EU. Die Übertragung erfolgt über WhatsApp: Dabei sind die 360dialog GmbH, Berlin, und WhatsApp Ireland Ltd. als Auftragsverarbeiter beteiligt. WhatsApp kann die Inhalte bis zu 30 Tage zwischenspeichern; Verbindungsdaten wie Telefonnummer und Zeitpunkte verarbeitet WhatsApp teilweise in eigener Verantwortung. Wenn Sie WhatsApp dafür nicht nutzen möchten, bringen Sie die Unterlagen einfach zum Termin mit.",
       ),
     },
     {
       ueberschrift: "Übermittlung in die USA",
-      text: `Meta, Railway und Anthropic sind Unternehmen mit Sitz bzw. Muttergesellschaft in den USA. Grundlage ist der Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Durchführungsbeschluss (EU) 2023/1795), hilfsweise Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).${o.kiEu ? " Die KI-Zuordnung der Unterlagen findet in der EU statt." : ""} Anthropic nutzt die Daten nicht zum Training.`,
+      text: "WhatsApp kann Daten an Meta Platforms, Inc. und WhatsApp LLC in den USA übermitteln; Grundlage ist der Angemessenheitsbeschluss der EU-Kommission zum EU-US Data Privacy Framework (Art. 45 DSGVO), unter dem diese Unternehmen zertifiziert sind. Für Railway (Hosting, Rechenzentrum in der EU) gilt dasselbe für etwaige Zugriffe der US-Muttergesellschaft, hilfsweise Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).",
     },
     {
       ueberschrift: "Speicherdauer",
       text: a(
         an,
-        `Ohne Vertragsabschluss werden die Unterlagen ${LOESCHFRIST_TAGE} Tage nach dem letzten Termin gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang). Nach einem Abschluss werden sie ${LOESCHFRIST_ABSCHLUSS_TAGE} Tage danach gelöscht, außer dein Berater bewahrt sie als Dokumentation seiner Beratung auf. Eine Datei, die Gesundheitsangaben enthalten kann und vor deiner Einwilligung kommt, wird nicht gespeichert; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Nachrichten nach eigenen Regeln bis zu 30 Tage.`,
-        `Ohne Vertragsabschluss werden die Unterlagen ${LOESCHFRIST_TAGE} Tage nach dem letzten Termin gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang). Nach einem Abschluss werden sie ${LOESCHFRIST_ABSCHLUSS_TAGE} Tage danach gelöscht, außer Ihr Berater bewahrt sie als Dokumentation seiner Beratung auf. Eine Datei, die Gesundheitsangaben enthalten kann und vor Ihrer Einwilligung kommt, wird nicht gespeichert; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Nachrichten nach eigenen Regeln bis zu 30 Tage.`,
+        `Die Unterlagen werden ${LOESCHFRIST_TAGE} Tage nach deinem Termin automatisch gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang), außer dein Berater bewahrt sie nach einem Vertragsabschluss als Dokumentation seiner Beratung auf. Schickst du eine Unterlage, bevor du eingewilligt hast, wird sie nicht gespeichert; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Dateien nach eigenen Regeln bis zu 30 Tage; nach dem Abruf beantragen wir die Löschung dort, soweit die Schnittstelle das zulässt.`,
+        `Die Unterlagen werden ${LOESCHFRIST_TAGE} Tage nach Ihrem Termin automatisch gelöscht (ohne Termin ${LOESCHFRIST_TAGE} Tage nach dem Eingang), außer Ihr Berater bewahrt sie nach einem Vertragsabschluss als Dokumentation seiner Beratung auf. Schicken Sie eine Unterlage, bevor Sie eingewilligt haben, wird sie nicht gespeichert; der Verweis darauf wird nach spätestens 24 Stunden gelöscht. WhatsApp (Meta) speichert Dateien nach eigenen Regeln bis zu 30 Tage; nach dem Abruf beantragen wir die Löschung dort, soweit die Schnittstelle das zulässt.`,
       ),
     },
     {

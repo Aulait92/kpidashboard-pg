@@ -1,3 +1,4 @@
+import { publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
 import Link from "next/link";
 import clsx from "clsx";
 import { prisma } from "@/lib/prisma";
@@ -117,7 +118,8 @@ export default async function FollowupsPage() {
           </label>
           <label className="block text-sm">
             <span className="label">Buchungslink (leer = ohne)</span>
-            <input name="bookingUrl" type="url" defaultValue={settings.bookingUrl ?? ""} placeholder="https://calendly.com/…" className="input" />
+            <input name="bookingUrl" type="url" defaultValue={settings.bookingUrl ?? ""} placeholder={publicSalesBookingUrl()} className="input" />
+            <span className="mt-1 block text-xs text-[color:var(--muted)]">Mit {publicSalesBookingUrl()} bekommt jeder Kontakt seinen persönlichen Link.</span>
           </label>
           <label className="block text-sm sm:col-span-2">
             <span className="label">Signatur unter jeder Follow-up-Mail (Name, Funktion, Firma, Telefon, Website). Leer = „Viele Grüße“ und der Name des Postfachs</span>

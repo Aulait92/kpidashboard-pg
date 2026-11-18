@@ -147,10 +147,6 @@ describe("Policen auslesen", () => {
     requireTestDb();
     process.env.ENCRYPTION_KEY ||= Buffer.alloc(32, 7).toString("base64");
     process.env.ANTHROPIC_API_KEY ||= "test";
-    // Nachweistabelle aus „Policen per WhatsApp“ (eigene Migration dort); hier nur, falls noch nicht eingespielt
-    await prisma.$executeRawUnsafe(
-      `CREATE TABLE IF NOT EXISTS "PolicenNachweis" ("id" TEXT PRIMARY KEY, "customerId" TEXT NOT NULL, "leadId" TEXT, "phone" TEXT NOT NULL, "art" TEXT NOT NULL, "ki" BOOLEAN, "wortlaut" TEXT, "textVersion" TEXT, "datenschutzVersion" TEXT, "datenschutzUrl" TEXT, "waMessageId" TEXT, "frageWaMessageId" TEXT, "vermittlerUserId" TEXT, "vermittlerName" TEXT, "quelle" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP)`,
-    );
     const c = await makeCustomer({ name: `Agentur Kannapinn ${uid()}`, leadAddress: "sie" });
     customerId = c.id;
     ownerId = (await makeBuyer(customerId, "owner")).id;

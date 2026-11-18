@@ -19,8 +19,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Hilfsmittel (KHMR)",
@@ -34,8 +33,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "KombiMed Balance (KAB)",
@@ -52,8 +50,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -61,6 +58,7 @@
   ],
   "offen": [
     "Tarife der DKV, vermittelt über HDI; Stufen laut HDI Basis-, Komfort- und Premiumabsicherung.",
-    "Komfort zusätzlich: Hilfsmittel 80 % bis 300 €. Arzneimittel und Wartezeiten nicht genannt; Heilpraktiker nur im Premium genannt (Alternativmedizin)."
+    "Komfort zusätzlich: Hilfsmittel 80 % bis 300 €. Arzneimittel und Wartezeiten nicht genannt; Heilpraktiker nur im Premium genannt (Alternativmedizin).",
+    "Geprüft am 17.11.2026 an der Produktseite auf hdi.de."
   ]
 }

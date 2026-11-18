@@ -10,8 +10,8 @@ import { publicBaseOrNull } from "@/lib/public-url";
 const secret = () => process.env.AUTH_SECRET ?? "dev-secret";
 const sig = (v: string) => crypto.createHmac("sha256", secret()).update(`bestand-link:${v}`).digest("base64url").slice(0, 22);
 
-/** r = Kampagnen-Empfänger (Abmeldung zählt für die Kampagne), e = Bestandskunde. */
-export type LinkKind = "r" | "e";
+/** r = Kampagnen-Empfänger (Abmeldung zählt für die Kampagne), e = Bestandskunde, l = Lead (Vorlagen-Mails, Paket M0). */
+export type LinkKind = "r" | "e" | "l";
 
 export function signLink(kind: LinkKind, id: string): string {
   return `${kind}${id}.${sig(`${kind}${id}`)}`;
@@ -19,7 +19,7 @@ export function signLink(kind: LinkKind, id: string): string {
 
 /** Token prüfen; null bei falscher Signatur. */
 export function verifyLink(token: string): { kind: LinkKind; id: string } | null {
-  const m = /^([re])([A-Za-z0-9_-]{1,64})\.([A-Za-z0-9_-]{22})$/.exec(token);
+  const m = /^([rel])([A-Za-z0-9_-]{1,64})\.([A-Za-z0-9_-]{22})$/.exec(token);
   if (!m) return null;
   const expected = Buffer.from(sig(`${m[1]}${m[2]}`));
   const given = Buffer.from(m[3]);
@@ -35,6 +35,8 @@ function base(): string {
 export const unsubscribeUrl = (recipientId: string) => `${base()}/abmelden/${signLink("r", recipientId)}`;
 /** Für den Header List-Unsubscribe (POST mit List-Unsubscribe=One-Click, RFC 8058). */
 export const unsubscribePostUrl = (recipientId: string) => `${base()}/api/abmelden/${signLink("r", recipientId)}`;
+/** Abmeldelink in werblichen Vorlagen-Mails an Leads (lib/mail/vorlagen-mail.ts): trägt die Adresse in die Sperrliste ein. */
+export const leadAbmeldeUrl = (leadId: string) => `${base()}/abmelden/${signLink("l", leadId)}`;
 export const consentUrl = (existingCustomerId: string) => `${base()}/einwilligung/${signLink("e", existingCustomerId)}`;
 
 /** Zufälliges Bestätigungstoken (Double-Opt-in) und sein Hash. */

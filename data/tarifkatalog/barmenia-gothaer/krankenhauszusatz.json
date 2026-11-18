@@ -24,8 +24,7 @@
         "ambulant-op": "ja"
       },
       "quelle": "https://www.barmeniagothaer.de/krankenhaus-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Mehr Komfort 1-Bett",
@@ -42,8 +41,7 @@
         "ambulant-op": "ja"
       },
       "quelle": "https://www.barmeniagothaer.de/krankenhaus-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "Ersatztagegeld jeweils bei Verzicht auf das Zimmer oder auf die privatärztliche Behandlung.",
     "1-Bett zusätzlich: gesetzliche Zuzahlungen im Krankenhaus, Reha-Tagegeld 100 €/Tag (bis 21 Tage), Rücktransport aus dem Ausland. Beide: Rooming-in bis 16 Jahre, ambulante Entbindungspauschale 1.000 €, Zweitmeinung.",
     "Je Stufe Variante mit Kapitaldeckung (K) für stabilere Beiträge im Alter; ohne Kapitaldeckung spätestens mit 60 umgestellt. Nur Unfallschutz ohne Gesundheitsfragen möglich.",
-    "Zwei Stufen ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+    "Zwei Stufen ohne Markierung der Gesellschaft: keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an der Produkttabelle auf barmeniagothaer.de."
   ]
 }

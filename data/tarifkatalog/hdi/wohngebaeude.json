@@ -18,9 +18,9 @@
         "elementar": "optional",
         "ableitung": "optional",
         "pv": "optional",
-        "kosten": "ja",
         "ueberspannung": "ja",
-        "neuwert": "ja"
+        "neuwert": "ja",
+        "kosten": "Aufräumen, Abbruch"
       },
       "bausteine": {
         "elementar": "optional",
@@ -29,8 +29,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/eigentum-und-miete/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Wohngebäude Premium",
@@ -41,9 +40,9 @@
         "elementar": "optional",
         "ableitung": "optional",
         "pv": "optional",
-        "kosten": "ja",
         "ueberspannung": "ja",
-        "neuwert": "ja"
+        "neuwert": "ja",
+        "kosten": "Aufräumen, Abbruch"
       },
       "bausteine": {
         "elementar": "optional",
@@ -52,8 +51,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/eigentum-und-miete/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -61,6 +59,7 @@
   ],
   "offen": [
     "Die Produktseite nennt kaum Unterschiede zwischen Komfort und Premium: Einbruchschäden am Gebäude Komfort bis 10.000 €, Premium ohne Grenze; Feuer-Rohbau 12 bzw. 24 Monate; Bestleistungsgarantie nur zu Premium.",
-    "Grobe Fahrlässigkeit nicht genannt. Pakete Glas, Ableitungsrohre, Elementar, Photovoltaik (inklusive Einspeisevergütung). Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite."
+    "Grobe Fahrlässigkeit nicht genannt. Pakete Glas, Ableitungsrohre, Elementar, Photovoltaik (inklusive Einspeisevergütung). Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
+    "Geprüft am 17.11.2026 an der Produktseite auf hdi.de (Kosten nach einem Schaden: Aufräumungs- und Abbruchkosten genannt; Hotel und Mietausfall nicht genannt)."
   ]
 }

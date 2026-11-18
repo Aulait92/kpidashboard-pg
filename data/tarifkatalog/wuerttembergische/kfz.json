@@ -30,8 +30,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/mobilitaet/kfz-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Kfz-Versicherung Premium",
@@ -55,8 +54,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/mobilitaet/kfz-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -68,6 +66,7 @@
     "Grobe Fahrlässigkeit in Teil- und Vollkasko, gilt nicht bei Diebstahl, Alkohol oder Drogen. Personenschäden höchstens 15 Mio. € je Person.",
     "Neu- bzw. Kaufpreisentschädigung nach Totalschaden; Premium auch bei Leasing mit Reinvestitionsklausel, mit Kasko+ bis 48 Monate.",
     "Werkstattbindung: Schadenservice+ im Premiumschutz zuwählbar (mit Nachlass auf den Kaskobeitrag); für Kompakt nicht ausdrücklich genannt.",
-    "Rabattschutz, Schutzbrief und Fahrerschutz als Zusatzbausteine genannt, Zuordnung je Stufe nicht ausdrücklich. Premium zusätzlich Ausland-Schaden-Schutz, Brems-, Betriebs- und Bruchschäden."
+    "Rabattschutz, Schutzbrief und Fahrerschutz als Zusatzbausteine genannt, Zuordnung je Stufe nicht ausdrücklich. Premium zusätzlich Ausland-Schaden-Schutz, Brems-, Betriebs- und Bruchschäden.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf wuerttembergische.de."
   ]
 }

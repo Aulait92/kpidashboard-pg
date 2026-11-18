@@ -3,13 +3,13 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { prisma } from "@/lib/prisma";
-import { assignHvkReklamation, importHvkPdf, listHvkInvoices, openHvkReklamationen } from "@/lib/ppl/hvk-abrechnung-server";
+import { assignHvkReklamation, importHvkPdf, listHvkInvoices, openHvkReklamationen, saveHvkLeadIds } from "@/lib/ppl/hvk-abrechnung-server";
 import { cleanupCustomer, makeCustomer, requireTestDb } from "./db";
 
 const tag = Math.random().toString(36).slice(2, 8);
 // Rechnungsnummern sind Ziffern-Buchstabe-Ziffern
 const num = String(Math.floor(Math.random() * 1e6)).padStart(6, "0");
-const nos = [`369-G-9${num}`, `369-G-8${num}`, `369-G-7${num}`];
+const nos = [`369-G-9${num}`, `369-G-8${num}`, `369-G-7${num}`, `369-G-5${num}`, `369-G-4${num}`, `369-G-3${num}`];
 const FIXTURE = readFileSync(path.join(__dirname, "..", "fixtures", "hvk-abrechnung", "369-G-000034.txt"), "utf8");
 const admin = { id: null, email: "admin@test.local", role: "ADMIN" };
 
@@ -95,7 +95,11 @@ describe("HvK-Abrechnung mit Datenbank", () => {
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: ids.fremd } })).stornoState).toBeNull();
     const inv = await prisma.hvkInvoice.findUniqueOrThrow({ where: { invoiceNo }, include: { reklamationen: true } });
     expect(inv.pdf.length).toBe(pdf.length);
-    expect(inv.reklamationen).toMatchObject([{ status: "auto", leadId: ids.rek, hvkLeadId: "4596925" }]);
+    expect(inv.reklamationen).toMatchObject([{ status: "auto", leadId: ids.rek, hvkLeadId: "4596925", via: "datum_plz" }]);
+    // Zuordnung HvK-Lead-ID → Lead gespeichert: Reklamation und sicherer Treffer der Woche, nicht der nicht abgerechnete
+    const hvkIds = async () =>
+      Object.fromEntries((await prisma.lead.findMany({ where: { customerId }, select: { id: true, hvkLeadId: true } })).map((l) => [l.id, l.hvkLeadId]));
+    expect(await hvkIds()).toMatchObject({ [ids.rek]: "4596925", [ids.mg]: "4595123", [ids.koeln]: null });
     const row = (await listHvkInvoices()).find((x) => x.invoiceNo === invoiceNo)!;
     expect(row).toMatchObject({ delivered: 2, billed: 7, stornoAuto: 1, stornoOpen: 0, netCents: -27000, periodStart: "2026-07-20", periodEnd: "2026-07-26" });
   });
@@ -117,7 +121,8 @@ describe("HvK-Abrechnung mit Datenbank", () => {
     expect(await prisma.hvkInvoice.count({ where: { invoiceNo: no } })).toBe(0);
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: ids.mg } })).stornoState).toBeNull();
     const r = await importHvkPdf(pdf, { pdfName: null, source: "backfill" }, { actor: admin });
-    expect(r.ok && r.result.reklamationen[0]).toMatchObject({ outcome: "eindeutig", leadId: ids.mg, storno: "eingetragen" });
+    // HvK-Lead-ID aus der ersten Abrechnung gespeichert: Zuordnung direkt über die ID
+    expect(r.ok && r.result.reklamationen[0]).toMatchObject({ outcome: "eindeutig", leadId: ids.mg, storno: "eingetragen", via: "id" });
     const l = await prisma.lead.findUniqueOrThrow({ where: { id: ids.mg } });
     expect(l.stornoState).toBe("approved");
     expect(Number(l.creditAmount)).toBe(45);
@@ -140,5 +145,51 @@ describe("HvK-Abrechnung mit Datenbank", () => {
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: l2.id } })).stornoReason).toBe(`Reklamation HvK-Abrechnung ${no}`);
     expect((await prisma.hvkReklamation.findUniqueOrThrow({ where: { id: open[0].id } })).status).toBe("erledigt");
     expect(await assignHvkReklamation(open[0].id, l2.id, admin)).toEqual({ ok: false, error: "Schon entschieden." });
+    // Von Hand zugeordnet: HvK-Lead-ID gemerkt
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: l2.id } })).hvkLeadId).toBe("4609999");
+  });
+
+  it("speichert nie über eine bestehende Zuordnung", async () => {
+    expect(await saveHvkLeadIds([{ hvkLeadId: "4596925", leadId: ids.koeln }])).toBe(0);
+    expect(await saveHvkLeadIds([{ hvkLeadId: "4999999", leadId: ids.rek }])).toBe(0);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: ids.koeln } })).hvkLeadId).toBeNull();
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: ids.rek } })).hvkLeadId).toBe("4596925");
+  });
+
+  it("keine Doppelzuordnung: dieselbe Reklamation in einer weiteren Abrechnung bleibt offen", async () => {
+    const no = nos[3];
+    const r = await importHvkPdf(await pdfOf(FIXTURE.replace("369-G-000034", no)), { pdfName: null, source: "upload" }, { actor: admin });
+    expect(r.ok && r.result.reklamationen[0]).toMatchObject({ outcome: "mehrere", leadId: null, candidateIds: [ids.rek], storno: null });
+    expect(await prisma.auditLog.count({ where: { entityId: ids.rek, action: "storno.admin" } })).toBe(1);
+    const open = (await openHvkReklamationen()).filter((o) => o.invoice.invoiceNo === no);
+    expect(open.map((o) => o.candidates.map((c) => c.id))).toEqual([[ids.rek]]);
+  });
+
+  it("Lieferung um Mitternacht: Reklamation über ±1 Tag; zwei Leads gleicher PLZ: über den Ort", async () => {
+    // 28.07. 00:10 Berlin = 27.07. 22:10 UTC; HvK nennt den 27.07.
+    const mid = await prisma.lead.create({
+      data: { customerId, source: process.env.HVK_PRODUCT, name: `Lead mitternacht ${tag}`, airtableId: `recmid${tag}`, createdAt: new Date("2026-07-27T22:10:00Z"), formData: [{ label: "PLZ", value: "10115" }, { label: "Ort", value: "Berlin" }] },
+    });
+    const a = await prisma.lead.create({
+      data: { customerId, source: process.env.HVK_PRODUCT, name: `Lead ort-a ${tag}`, airtableId: `recorta${tag}`, createdAt: at("2026-07-29"), formData: [{ label: "PLZ", value: "84032" }, { label: "Ort", value: "Ergolding" }] },
+    });
+    const b = await prisma.lead.create({
+      data: { customerId, source: process.env.HVK_PRODUCT, name: `Lead ort-b ${tag}`, airtableId: `recortb${tag}`, createdAt: at("2026-07-29"), formData: [{ label: "PLZ", value: "84032" }, { label: "Ort", value: "Landshut" }] },
+    });
+    const r1 = await importHvkPdf(
+      await pdfOf(FIXTURE.replace("369-G-000034", nos[4]).replace("Lead ID: 4596925, KVV-Opt, 2026-07-19, 84032 Landshut", "Lead ID: 4611111, KVV-Opt, 2026-07-27, 10115 Berlin")),
+      { pdfName: null, source: "upload" },
+      { actor: admin },
+    );
+    expect(r1.ok && r1.result.reklamationen[0]).toMatchObject({ outcome: "eindeutig", leadId: mid.id, via: "tag_versatz", storno: "eingetragen" });
+    const r2 = await importHvkPdf(
+      await pdfOf(FIXTURE.replace("369-G-000034", nos[5]).replace("Lead ID: 4596925, KVV-Opt, 2026-07-19, 84032 Landshut", "Lead ID: 4612222, KVV-Opt, 2026-07-29, 84032 Landshut")),
+      { pdfName: null, source: "upload" },
+      { actor: admin },
+    );
+    expect(r2.ok && r2.result.reklamationen[0]).toMatchObject({ outcome: "eindeutig", leadId: b.id, via: "ort", storno: "eingetragen" });
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: a.id } })).stornoState).toBeNull();
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: b.id } })).hvkLeadId).toBe("4612222");
+    expect((await prisma.hvkReklamation.findFirstOrThrow({ where: { hvkLeadId: "4612222", invoice: { invoiceNo: nos[5] } } })).via).toBe("ort");
   });
 });

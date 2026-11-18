@@ -12,8 +12,9 @@ import { PreparedButton } from "./prepared-button";
 import { NeueVorbereitung } from "./neu-seite";
 import { neueTerminvorbereitung } from "@/lib/terminvorbereitung-neu";
 import { listUnterlagen } from "@/lib/policen/server";
-import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
+import { dokumenteTitel, UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
 import { PolicenVergleichKurz } from "@/components/policen-vergleich-kurz";
+import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Terminvorbereitung | performancegrowth" };
@@ -56,6 +57,8 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
           Zum Kontakt
         </ZurueckLink>
       ) : null}
+      {/* Freischaltung Kranken/BU/Leben (lib/policen/freischaltung.ts), nur Inhaber, bis zugestimmt oder 3-mal „Später“ */}
+      <PolicenFreischaltungKarte ctx={ctx} ort="karte" className="mb-4" />
       <PageHeader title={`Termin vorbereiten: ${d.lead.name}`} subtitle={`${d.lead.produkt} · ${when(d.termin.startsAt)} Uhr · ${d.termin.mode === "video" ? "Videocall" : "Telefonat"}`} />
       {/* Ziel der Seite ist die Präsentation (UX, Ole 15.11.2026): Hauptknopf; „Vorbereitet“ als Haken daneben */}
       <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -94,9 +97,9 @@ export default async function TerminVorbereitungPage({ params, searchParams }: {
         </Card>
       ) : null}
 
-      {d.leadId && unterlagenVomKunden.length ? (
+      {d.leadId ? (
         <Card className="mb-5">
-          <CardHeader title="Unterlagen vom Kunden" icon={FileText} />
+          <CardHeader title={dokumenteTitel(unterlagenVomKunden.length)} icon={FileText} />
           <div className="px-5 py-3.5 text-sm">
             <UnterlagenVomKunden leadId={d.leadId} unterlagen={unterlagenVomKunden} titel={false} />
             <div className="mt-2.5">

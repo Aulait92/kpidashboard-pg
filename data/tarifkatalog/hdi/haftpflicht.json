@@ -27,8 +27,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/private-haftpflichtversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Privathaftpflicht Komfort",
@@ -47,8 +46,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/private-haftpflichtversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Privathaftpflicht Premium",
@@ -68,8 +66,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.hdi.de/versicherungen/haftpflichtversicherung/private-haftpflichtversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -79,6 +76,7 @@
     "Werte aus dem Text der Produktseite (Fragen und Antworten). Die Downloads der Produktseite (Produktprofil, Bedingungen) waren im Seitenquelltext nicht als Adresse auffindbar; Werte nur aus dem Text der Produktseite.",
     "Schlüsselverlust bei Komfort nicht beziffert. Deliktunfähige Kinder: in Mehrpersonenhaushalten mit Kindern „absicherbar“, Höhe und Stufe nicht genannt.",
     "Geliehene Sachen, Neuwert, Mallorca nicht genannt. Selbstbeteiligung: 150 € oder 300 € möglich, „0“ als Wahl ohne SB angenommen.",
-    "Bestleistungsgarantie nur zu Premium wählbar; Zusatzbaustein Amts- und Diensthaftpflicht. Keine Markierung der Gesellschaft."
+    "Bestleistungsgarantie nur zu Premium wählbar; Zusatzbaustein Amts- und Diensthaftpflicht. Keine Markierung der Gesellschaft.",
+    "Geprüft am 17.11.2026 am Text der Produktseite auf hdi.de."
   ]
 }
