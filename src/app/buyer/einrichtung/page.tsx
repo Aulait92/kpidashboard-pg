@@ -45,6 +45,11 @@ import {
   saveLeadTimesAction,
 } from "@/app/buyer/kalender/source-actions";
 
+import { GesellschaftenWahl, LogoZeile, TestleadSelbst } from "./selbst";
+import { loadLogoStand } from "@/lib/branding-logo-server";
+import { vertriebFuer } from "@/lib/tarifauswahl-server";
+import { bekannteGesellschaften, gesellschaftName } from "@/lib/tarifkatalog";
+
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einrichtung | performancegrowth" };
 
@@ -119,6 +124,16 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   // P8 „So arbeitet Ihr Assistent“ und M9 „Service-Mails in Ihrem Namen“ (beide nur mit Software)
   const soArbeitet = software ? await ladeSoArbeitet(ctx.customerId, produkt) : null;
   const mails = software && !done("serviceMails") ? await serviceMailsDaten(ctx.customerId, ctx.userId, ctx.email) : null;
+  // Einrichtung ohne Ole (18.11.2026): Logo, Gesellschaften, Testlead selbst
+  const [logo, vertrieb, waVerbunden, eiTel] = software
+    ? await Promise.all([
+        loadLogoStand(ctx.customerId).catch(() => null),
+        vertriebFuer(ctx.customerId).catch(() => null),
+        prisma.whatsAppAccount.findUnique({ where: { customerId: ctx.customerId }, select: { status: true } }).then((w) => w?.status === "connected"),
+        prisma.erstinformation.findUnique({ where: { customerId: ctx.customerId }, select: { telefon: true } }).then((e) => e?.telefon ?? ""),
+      ])
+    : [null, null, false, ""];
+  const alleGesellschaften = bekannteGesellschaften().map((key) => ({ key, name: gesellschaftName(key) }));
   const metaInit = {
     adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
     page: ob.customer.metaPageId ?? "",
@@ -315,6 +330,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             </Link>
             {!provision.confirmed ? <SkipButton kind="provision" readOnly={readOnly} label="Passt so" primary /> : null}
           </div>
+          {software && vertrieb ? <GesellschaftenWahl alle={alleGesellschaften} gewaehlt={vertrieb.vertrieb.gesellschaften} readOnly={readOnly} makler={makler} /> : null}
         </Step>
 
         {software && erstinfo ? (
@@ -369,6 +385,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 </a>
               </p>
             ) : null}
+            {logo ? <LogoZeile dataUri={logo.dataUri} bestaetigt={logo.bestaetigt} readOnly={readOnly} /> : null}
           </Step>
         ) : null}
 
@@ -563,7 +580,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Step>
         ) : null}
 
-        <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start" && !!ob.liveAt}>
+        <Step n={nextNo()} title="Start" icon={Rocket} done={!!ob.liveAt} open={current === "start"}>
+          {software && waVerbunden && !ob.liveAt ? (
+            <div className="mb-4">
+              <TestleadSelbst phone={eiTel} readOnly={readOnly} schonGetestet={!!ob.testLeadAt} />
+            </div>
+          ) : null}
           <p className="text-sm text-[color:var(--muted)]">
             {ob.startDate ? `Am ${dateFmt(ob.startDate)} ` : "Zum Start "}
             gehen die Anzeigen live.{" "}
