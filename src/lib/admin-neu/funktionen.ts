@@ -50,10 +50,10 @@ export const normSuche = (s: string) =>
     .replace(/ü/g, "u")
     .replace(/ß/g, "ss");
 
-/** Index für ⌘K: jede Funktion mit Oberfläche (ohne „bleibt“: reine Schnittstellen), Ort und Ziel-Link. */
+/** Index für ⌘K: jede Funktion mit Oberfläche (ohne „bleibt“: reine Schnittstellen, ohne „entfernt“), Ort und Ziel-Link. */
 export function suchIndex(inventar: InventarEintrag[]): SuchFunktion[] {
   return inventar
-    .filter((e) => e.status_neu !== "bleibt")
+    .filter((e) => e.status_neu !== "bleibt" && e.status_neu !== "entfernt")
     .map((e) => {
       const o = ort(e.demo_view, e.bereich);
       const text = ortText(e.neu, e.demo_view, e.bereich);

@@ -10,7 +10,7 @@ const index = suchIndex(inventar);
 
 describe("Suche über alle Funktionen", () => {
   it("jede Funktion mit Oberfläche ist im Index und zeigt auf eine Seite des neuen Admins ohne Platzhalter", () => {
-    expect(index.length).toBe(inventar.filter((e) => e.status_neu !== "bleibt").length);
+    expect(index.length).toBe(inventar.filter((e) => e.status_neu === "vorhanden").length);
     const pfade = new Set(SEITEN.filter((s) => !s.pfad.includes("[")).map((s) => s.pfad));
     expect(index.filter((f) => !pfade.has(f.href)).map((f) => `${f.id} → ${f.href}`)).toEqual([]);
     expect(new Set(index.map((f) => f.id)).size).toBe(index.length);

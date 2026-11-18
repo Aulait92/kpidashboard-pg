@@ -1,6 +1,6 @@
 import { publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
 import Link from "next/link";
-import { approveFollowupAction, planExistingAction, saveFollowupSettingsAction } from "@/app/admin/vertrieb/followup-actions";
+import { approveFollowupAction, saveFollowupSettingsAction } from "@/app/admin/vertrieb/followup-actions";
 import { EinstellungSeite, LISTE, ziel } from "@/components/admin-neu/einstellungen/rahmen";
 import { Badge, Button, Card, CardHeader } from "@/components/ui";
 import { followupLine, type FollowupRow } from "@/components/vertrieb/followup-card";
@@ -170,10 +170,6 @@ export default async function Page() {
             <div className="sm:col-span-2">
               <Button size="md">Speichern</Button>
             </div>
-          </form>
-          <form action={planExistingAction} className="flex flex-wrap items-center gap-2 border-t border-[color:var(--border)] pt-4 text-sm text-[color:var(--muted)]" data-funktion="followup-actions-planexistingaction--bestand-jetzt-pruefen-bestehende-spaeter">
-            <span className="min-w-0 flex-1">{settings.backfillAt ? `Bestand zuletzt eingeplant am ${fmtDateTime(settings.backfillAt)}.` : "Bestand wird beim nächsten Lauf eingeplant."}</span>
-            <Button>Bestand jetzt prüfen</Button>
           </form>
         </div>
       </details>
