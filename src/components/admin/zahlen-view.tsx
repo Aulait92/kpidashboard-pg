@@ -282,6 +282,12 @@ export function ZahlenView({
     { lbl: "Aktive Kunden", val: String(h.active), delta: `${h.active - h.activePrev >= 0 ? "+" : ""}${h.active - h.activePrev}`, up: h.active >= h.activePrev, drill: "active" as DrillKind, note: `${longMonth(data.lastComplete)} · ${h.churnedTotal} ${h.churnedTotal === 1 ? "Kündigung" : "Kündigungen"} seit Start`, def: "Kunden mit wiederkehrendem Umsatz im letzten abgeschlossenen Monat (ein Kunde zählt einmal, auch mit mehreren Strömen)." },
   ];
 
+  // Im neuen Admin (eingebettet) höchstens 5 Kennzahlen (Admin v2, Seitenmuster A2): die Laufrate ist MRR × 12 und
+  // steht dort beim MRR, die Aufschlüsselung bleibt unter „Woraus besteht das?“.
+  const kacheln = eingebettet
+    ? tiles.filter((t) => !("drill" in t && t.drill === "arr")).map((t) => ("drill" in t && t.drill === "mrr" ? { ...t, note: `${t.note} · Laufrate ${kEur(h.arr)} im Jahr` } : t))
+    : tiles;
+
   return (
     <div style={PALETTE} className="zahlen-root">
       <Tooltip />
@@ -335,8 +341,8 @@ export function ZahlenView({
         </p>
       ) : null}
 
-      <section className="mb-4 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3 xl:grid-cols-6" aria-label="Kennzahlen" data-funktion={funktionen.kacheln}>
-        {tiles.map((t) => (
+      <section className={cn("mb-4 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-3", eingebettet ? "xl:grid-cols-5" : "xl:grid-cols-6")} aria-label="Kennzahlen" data-funktion={funktionen.kacheln}>
+        {kacheln.map((t) => (
           <div key={t.lbl} className="min-w-0 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-3.5 shadow-[var(--shadow-sm)]">
             <div className="flex items-center gap-1.5 text-[12.5px] text-[color:var(--muted)]">
               {t.lbl}

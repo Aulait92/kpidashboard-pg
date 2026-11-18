@@ -2,14 +2,15 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { ChevronRight } from "lucide-react";
 import { HeuteAllesErledigt, HochrechnungKarte, LaeuftVonAllein, NeueBuchungenHinweis } from "@/components/admin/heute-bausteine";
-import { HeuteList } from "@/components/admin/heute-list";
 import { VertriebBlick } from "@/components/admin/vertrieb-blick";
 import { BEREICH_SYMBOL } from "@/components/admin-neu/rahmen/symbole";
+import { PunkteGekuerzt } from "@/components/admin-neu/ui/punkte-gekuerzt";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { berlinHour, greeting, summary } from "@/lib/admin-heute";
 import { ladeHeuteSeite } from "@/lib/admin-heute-laden";
 import { BEREICHE } from "@/lib/admin-neu/navigation";
 import { punkteJeRolle } from "@/lib/admin-neu/rollen";
+import { heuteGemerkt } from "@/lib/admin-neu/rollen-server";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const metadata = { title: "Mein Tag | performancegrowth Admin" };
@@ -54,7 +55,7 @@ const VERTRIEB = [
 export default async function HeutePage() {
   await connection();
   const session = await requireAuth();
-  const { items, auto, forecast, neueBuchungen } = await ladeHeuteSeite(session.userId);
+  const { items, auto, forecast, neueBuchungen } = await ladeHeuteSeite(session.userId, new Date(), heuteGemerkt);
   const gruppen = punkteJeRolle(items);
 
   return (
@@ -85,7 +86,7 @@ export default async function HeutePage() {
                           <ChevronRight className="h-4 w-4" />
                         </Link>
                       </div>
-                      <HeuteList items={punkte} ohneBereich />
+                      <PunkteGekuerzt punkte={punkte} />
                     </div>
                   );
                 })

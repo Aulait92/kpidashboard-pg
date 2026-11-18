@@ -59,8 +59,6 @@ export type NeuBereich = {
   ort: "oben" | "unten";
   /** Handy: direkt in der Leiste unten oder unter „Mehr“ */
   handy: "leiste" | "mehr";
-  /** Zähler an der Leiste (aus loadAdminNavCounts) */
-  zaehler?: "heute" | "chats";
   seiten: NeuSeite[];
 };
 
@@ -74,7 +72,6 @@ export const BEREICHE: NeuBereich[] = [
     pfad: n(),
     ort: "oben",
     handy: "leiste",
-    zaehler: "heute",
     seiten: [
       { view: "heute", pfad: n(), titel: "Mein Tag", alt: ["/admin/heute"], suchwoerter: "Heute Start Braucht Sie Freigaben", fertig: true },
       { view: "vertrieb-aufgaben", pfad: n("/vertrieb/aufgaben"), titel: "Aufgaben", alt: ["/admin/heute/aufgaben"], suchwoerter: "Wiedervorlage Nachfassen", fertig: true },
@@ -123,7 +120,6 @@ export const BEREICHE: NeuBereich[] = [
     pfad: n("/kunden"),
     ort: "oben",
     handy: "leiste",
-    zaehler: "chats",
     seiten: [
       { view: "kunden", pfad: n("/kunden"), titel: "Kunden", alt: ["/admin/kunden", "/admin/kunden/pipeline", "/admin/vertrieb/kunden"], reiter: { gruppe: "betreuen", label: "Kunden" }, suchwoerter: "Kundenliste Onboarding", fertig: true },
       { view: "leads-chats", pfad: n("/leads/chats"), titel: "Chats", alt: ["/admin/whatsapp"], reiter: { gruppe: "betreuen", label: "Chats" }, suchwoerter: "WhatsApp Support-Nummer Assistent", fertig: true },

@@ -7,6 +7,8 @@ import { ChevronRight, MoreHorizontal, TrendingUp } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { BEREICHE, NEU, bereichFuer, type NeuBereich } from "@/lib/admin-neu/navigation";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
+import type { NavZaehler } from "@/lib/admin-neu/rollen-server";
+import type { Rolle } from "@/lib/admin-neu/rollen";
 import { cn } from "@/lib/utils";
 import { AdminNutzungMessung } from "@/components/admin/nutzung-messung";
 import { BEREICH_SYMBOL } from "./symbole";
@@ -20,7 +22,7 @@ import { Suche } from "./suche";
 // Handy: Kopfzeile mit Suche, „+ Neu“, Profil; unten Mein Tag, die vier Rollen und „Mehr“ (Werkzeuge, Einstellungen, Was wo ist).
 // Bereiche und Seiten: src/lib/admin-neu/navigation.ts. data-admin-shell → Abstände aus globals.css (wie die alte Shell).
 
-export type NavZaehler = { heute: number; chats: number };
+export type { NavZaehler } from "@/lib/admin-neu/rollen-server";
 
 /** Zähler: „Mein Tag“ in Markenfarbe (offene Punkte), Rollen dezent (wie in der Demo). */
 function Zahl({ n, dezent }: { n: number; dezent?: boolean }) {
@@ -36,7 +38,14 @@ function Zahl({ n, dezent }: { n: number; dezent?: boolean }) {
   );
 }
 
-const zaehlerVon = (b: NeuBereich, z: NavZaehler) => (b.zaehler ? z[b.zaehler] : 0);
+/** Zähler aus einer Quelle (lib/admin-neu/rollen-server.ts): Mein Tag = alle Punkte, Rollen = ihre Punkte. */
+const zaehlerVon = (b: NeuBereich, z: NavZaehler) => (b.id === "mein-tag" ? z.heute : (z.rollen[b.id as Rolle] ?? 0));
+
+/** Inventar-ids der Zähler (Nutzungsmessung): Mein Tag (früher Heute) und Betreuen (früher Chats). */
+const ZAEHLER_FUNKTION: Partial<Record<string, string>> = {
+  "mein-tag": "admin-shell-count--zaehler-badge-an-heute-offene-punkte",
+  betreuen: "admin-shell-count--zaehler-badge-an-chats-offene-whatsapp",
+};
 
 /**
  * Links auf alte Admin-Seiten führen innerhalb der neuen Oberfläche auf die neue Seite, sobald sie fertig ist
@@ -100,7 +109,7 @@ function SeitenleistenLink({ b, aktiv, zaehler }: { b: NeuBereich; aktiv: boolea
         {b.hinweis ? <span className={cn("block truncate text-xs font-normal", aktiv ? "text-[color:var(--brand-dark)]/75" : "text-[color:var(--muted)]/80")}>{b.hinweis}</span> : null}
       </span>
       {zaehler ? (
-        <span data-funktion={b.zaehler === "heute" ? "admin-shell-count--zaehler-badge-an-heute-offene-punkte" : "admin-shell-count--zaehler-badge-an-chats-offene-whatsapp"}>
+        <span data-funktion={ZAEHLER_FUNKTION[b.id]}>
           <Zahl n={zaehler} dezent={b.id !== "mein-tag"} />
         </span>
       ) : null}
@@ -139,7 +148,7 @@ export function AdminNeuShell({ email, zaehler, children }: { email: string; zae
         </nav>
         <nav className="mt-auto space-y-0.5 pt-3" aria-label="Werkzeuge und Einstellungen">
           {unten.map((b) => (
-            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={0} />
+            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={zaehlerVon(b, zaehler)} />
           ))}
           <div className="pt-2">
             <ProfilMenue email={email} variant="sidebar" />
@@ -174,7 +183,8 @@ export function AdminNeuShell({ email, zaehler, children }: { email: string; zae
           {leiste.map((b) => {
             const aktiv = aktuell?.id === b.id;
             const Icon = BEREICH_SYMBOL[b.id];
-            const z = zaehlerVon(b, zaehler);
+            // Handy wie in der Demo: nur „Mein Tag“ mit Zähler
+            const z = b.id === "mein-tag" ? zaehler.heute : 0;
             return (
               <li key={b.id} className="min-w-0 flex-1">
                 <Link
