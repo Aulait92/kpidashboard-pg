@@ -12,7 +12,7 @@ Im Anhang finden Sie ein Paket mit unserer internen Vorprüfung, einer Übersich
 
 Am dringendsten ist Teil A: Seit dem 18.11.2026 bittet unser Assistent Interessenten, ihre Policen per WhatsApp zu schicken, auch aus Kranken-, BU- und Lebensversicherung. Die Vertragsdaten liest ein KI-Dienst in der EU aus. Die Funktion ist bereits live. Besonders wichtig sind uns:
 
-1. Genügt ein WhatsApp-Knopf „Einverstanden“ als ausdrückliche Einwilligung nach Art. 9 DSGVO und als Befugnis nach § 203 StGB (A1)?
+1. Genügt der Knopf „Zustimmen & senden“ in einem WhatsApp-Formular (mit dem Satz „Mit ‚Zustimmen & senden‘ sind Sie mit den Punkten oben einverstanden.“ direkt darüber) als ausdrückliche Einwilligung nach Art. 9 DSGVO und als Befugnis nach § 203 StGB (A1)? Und reicht ein nicht vorbelegter Haken „Lieber ohne KI: nur speichern“ im selben Formular als Wahlmöglichkeit ohne KI (A9)? Text und Bild: Anhang 6.
 2. Dürfen wir Speichern und KI-Auslesen in einer Einwilligung bündeln (A11)?
 3. Reicht die Einwilligung als Befugnis für die Weitergabe an Meta und 360dialog, die keine Verpflichtung nach § 203 StGB abgeben (A3)?
 
