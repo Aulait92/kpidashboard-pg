@@ -43,10 +43,13 @@ export async function saveQuestionnaireAction(_prev: SetupState, fd: FormData): 
   const data: Record<string, unknown> = { ...prev, special };
 
   if (software) {
-    const formats = ["telefon", "video", "vorOrt"].filter((k) => fd.get(`format_${k}`) === "on");
-    if (formats.length === 0) return { error: "Bitte mindestens eine Terminart wählen." };
+    // Terminarten (Ole, 18.11.2026): Video immer; Telefon bzw. vor Ort nur als Ausnahme auf ausdrücklichen Wunsch des
+    // Kunden. Gilt sofort für den Assistenten (AgentConfig), keine Pflichtauswahl. Alte Antwort „formats“ fällt weg.
+    const formate = { telefon: fd.get("format_telefon") === "on", vorOrt: fd.get("format_vorOrt") === "on" };
     const ansprache = asAnsprache(String(fd.get("ansprache") ?? "sie"));
-    Object.assign(data, { formats, ansprache });
+    delete data.formats;
+    Object.assign(data, { ansprache });
+    await (await import("@/lib/termin-formate-server")).saveTerminFormate(ob.customerId, formate);
     // Ansprache gilt sofort für alle Texte an Leads (Ole, 14.11.2026)
     const before = await prisma.customer.findUnique({ where: { id: ob.customerId }, select: { leadAddress: true } });
     if (asAnsprache(before?.leadAddress) !== ansprache) {

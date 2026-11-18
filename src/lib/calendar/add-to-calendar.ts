@@ -27,8 +27,10 @@ export type CustomerEvent = {
   /** Verwaltungs-Token (für ICS-Link). */
   token: string;
   advisorName: string;
-  mode: "phone" | "video";
+  mode: "phone" | "video" | "onsite";
   videoUrl: string | null;
+  /** Adresse bei Terminen vor Ort */
+  ort?: string | null;
 };
 
 /** Kundenansicht eines Termins über den geheimen Verwaltungs-Token. */
@@ -55,6 +57,7 @@ async function loadCustomerEvent(
       endsAt: true,
       mode: true,
       meetUrl: true,
+      ort: true,
       conversationId: true,
       customerId: true,
       leadId: true,
@@ -73,7 +76,7 @@ async function loadCustomerEvent(
     : null;
   // Person (Ole, 14.11.2026): Anzeigename des zuständigen Beraters, sonst „Agentur Susanne Meier“ → „Susanne Meier“
   const advisor = advisorPerson(appt.customer.name, appt.lead?.assignedUser?.displayName) || appt.customer.name;
-  const mode = appt.mode === "video" ? "video" : "phone";
+  const mode = appt.mode === "video" ? "video" : appt.mode === "onsite" ? "onsite" : "phone";
   const manageUrl = manageUrlFor(token);
   const an = asAnsprache(appt.customer.leadAddress);
   const hi = anredeZeile(an, kontaktFromLead(appt.lead, conv?.contactName ?? null));
@@ -95,6 +98,7 @@ async function loadCustomerEvent(
       mode,
       phone: conv?.contactPhone ?? null,
       videoUrl: appt.meetUrl,
+      ort: appt.ort,
       manageUrl,
       advisorName: advisor,
       person,
@@ -102,12 +106,15 @@ async function loadCustomerEvent(
     location:
       mode === "video"
         ? (appt.meetUrl ?? "Videocall")
-        : `Telefon: ${person.nom} ruft ${an === "du" ? "dich" : "Sie"} an`,
+        : mode === "onsite"
+          ? (appt.ort ?? "Vor Ort in der Agentur")
+          : `Telefon: ${person.nom} ruft ${an === "du" ? "dich" : "Sie"} an`,
     manageUrl,
     token,
     advisorName: advisor,
     mode,
     videoUrl: appt.meetUrl,
+    ort: appt.ort,
   };
 }
 

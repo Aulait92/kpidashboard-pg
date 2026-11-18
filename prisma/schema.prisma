@@ -1257,6 +1257,10 @@ model AgentConfig {
   // Terminart (Ole, 17.11.2026): Der Assistent bietet nur Videotermine an, Telefon nur, wenn der Lead Video ablehnt.
   // Standard an; der Vermittler schaltet es unter Mein Kalender aus.
   videoOnly                Boolean   @default(true)
+  // Terminarten (Ole, 18.11.2026): Termine immer per Video. Nur wenn der Lead ausdrücklich etwas anderes wünscht, darf
+  // der Assistent Telefon bzw. einen Termin vor Ort in der Agentur anbieten, und nur wenn hier freigegeben (Standard aus).
+  allowPhone               Boolean   @default(false)
+  allowOnsite              Boolean   @default(false)
   // Fester Video-Link für alle Video-Termine (z. B. persönlicher Webex-Raum).
   // Leer = Google Meet bzw. Microsoft Teams wird pro Termin erzeugt.
   videoRoomUrl             String?
@@ -1416,7 +1420,9 @@ model Appointment {
   customerId            String
   leadId                String?
   conversationId        String?
-  mode                  String // phone | video
+  mode                  String // phone | video | onsite
+  // Ort bei Terminen vor Ort (Agentur-Adresse zum Zeitpunkt der Buchung, Ole 18.11.2026)
+  ort                   String?
   startsAt              DateTime
   endsAt                DateTime?
   calendarEventId       String?

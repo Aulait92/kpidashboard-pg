@@ -38,6 +38,7 @@ import { WhatsAppGuide } from "@/components/whatsapp-guide";
 import { WaCheckButton, WaPendingRefresh, WaResetButton } from "./wa-check";
 import { WaInvited } from "./wa-invited";
 import { LeadTimesForm, SourcePicker } from "@/components/calendar-sources";
+import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { loadCalendarSetup } from "@/lib/calendar/setup-view";
 import {
   connectAllianzAction,
@@ -221,6 +222,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
             software={software}
             // Ansprache immer aus der echten Einstellung (Ole, 18.11.2026: Fragebogen zeigte „Sie“, gespeichert war „du“)
             initial={{ ...((ob.questionnaire ?? {}) as Record<string, unknown>), ansprache: kundeBasis?.leadAddress === "du" ? "du" : "sie" } as unknown as Record<string, never>}
+            formate={await loadTerminFormate(ctx.customerId)}
             readOnly={readOnly}
           />
         </Step>
