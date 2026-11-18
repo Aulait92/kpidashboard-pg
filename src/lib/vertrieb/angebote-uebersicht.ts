@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { abschlussBonusFrist, abschlussBonusGesichert, abschlussBonusJetzt, type AbschlussBonusQuelle } from "@/lib/offer-pricing";
 import { naechsteErinnerung, zahlungEingerichtet } from "@/lib/angebot-zahlungserinnerung";
 import { ablehnGrundLabel, ablehnGruende, kannAblehnen, kannWiederOeffnen } from "@/lib/vertrieb/angebot-ablehnen";
 
@@ -50,6 +51,7 @@ export async function ladeAngebote(filterKey: string | undefined) {
       isTest: true, paymentStatus: true, stripeSubscriptionId: true, stripeScheduleId: true, startDate: true,
       paymentReminderAt: true, paymentReminderCount: true, paymentReminderLastAt: true,
       zahlweise: true, declinedAt: true, declineReason: true,
+      abschlussBonus: true, abschlussBonusBis: true, abschlussBonusGewaehrt: true, allowPayLater: true,
     },
   });
   const rows = offers.map((o) => {
@@ -64,6 +66,8 @@ export async function ladeAngebote(filterKey: string | undefined) {
       kannAblehnen: kannAblehnen(o),
       kannWiederOeffnen: kannWiederOeffnen(o, now),
       grund: o.status === "declined" ? ablehnGrundLabel(o.declineReason) : null,
+      // Abschlussbonus (Ole, 18.11.2026: „bis wann der Entscheidungsbonus gilt“)
+      bonus: bonusStand(o, now),
     };
   });
   const sent = rows.filter((r) => r.z !== "entwurf");
@@ -81,4 +85,31 @@ export async function ladeAngebote(filterKey: string | undefined) {
     /** Auswertung „Abgelehnt: Grund × Anzahl“ über alle aktuellen Angebote */
     ablehnGruende: ablehnGruende(rows),
   };
+}
+
+export type BonusStand = { betrag: number; bis: Date; stand: "laeuft" | "abgelaufen" | "genutzt" };
+
+/** Abschlussbonus je Angebot für die Übersicht: Betrag, Frist und ob er noch gilt, genutzt wurde oder abgelaufen ist. */
+export function bonusStand(
+  o: AbschlussBonusQuelle & { abschlussBonusGewaehrt?: unknown },
+  now: Date,
+): BonusStand | null {
+  const bis = abschlussBonusFrist(o);
+  if (!bis) return null;
+  const betrag = Math.min(Number(o.abschlussBonus), Number(o.setupFee));
+  if (!(betrag > 0)) return null;
+  if (Number(o.abschlussBonusGewaehrt ?? 0) > 0 || abschlussBonusGesichert(o)) return { betrag, bis, stand: "genutzt" };
+  if (o.acceptedAt) return { betrag, bis, stand: "abgelaufen" };
+  return { betrag, bis, stand: abschlussBonusJetzt(o, now) ? "laeuft" : "abgelaufen" };
+}
+
+const BONUS_ZEIT = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const BONUS_EUR = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+
+/** Kurzzeile unter „Gültig bis“, z. B. „Bonus 500 € bis 19.11., 23:59“. */
+export function bonusZeile(b: BonusStand): string {
+  const betrag = BONUS_EUR.format(b.betrag).replace(/\u00a0/g, " ");
+  if (b.stand === "genutzt") return `Bonus ${betrag} genutzt`;
+  const bis = BONUS_ZEIT.format(b.bis);
+  return b.stand === "laeuft" ? `Bonus ${betrag} bis ${bis}` : `Bonus abgelaufen (${bis})`;
 }

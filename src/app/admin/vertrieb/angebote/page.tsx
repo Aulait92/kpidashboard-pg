@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { offerAdminHref } from "@/lib/offer-links";
 import { Badge } from "@/components/ui";
 import { fmtTag, tagIso } from "@/lib/angebot-zahlungserinnerung";
+import { BonusHinweis } from "@/components/vertrieb/bonus-hinweis";
 import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/angebote-uebersicht";
 import { ablehnGruendeText } from "@/lib/vertrieb/angebot-ablehnen";
 
@@ -102,7 +103,10 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                   <td className="px-4 py-2.5 text-right tabular-nums">{eur(Number(o.setupFee))}</td>
                   <td className="px-4 py-2.5 tabular-nums">{date(o.sentAt)}</td>
                   <td className="px-4 py-2.5 tabular-nums">{date(o.viewedAt)}</td>
-                  <td className={`px-4 py-2.5 tabular-nums ${o.z === "abgelaufen" ? "text-amber-700" : ""}`}>{date(o.validUntil)}</td>
+                  <td className={`px-4 py-2.5 tabular-nums ${o.z === "abgelaufen" ? "text-amber-700" : ""}`}>
+                    {date(o.validUntil)}
+                    {o.bonus ? <BonusHinweis b={o.bonus} /> : null}
+                  </td>
                   <td className="px-4 py-2.5">
                     <Badge tone={ZUSTAND[o.z].tone}>{o.z === "angenommen" ? `Angenommen ${date(o.acceptedAt)}` : ZUSTAND[o.z].label}</Badge>
                     {o.grund ? <div className="mt-1 text-xs text-[color:var(--muted)]">{o.grund}</div> : null}

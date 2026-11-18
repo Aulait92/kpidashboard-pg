@@ -5,6 +5,7 @@ import { Seite } from "@/components/admin-neu/ui/seite";
 import { kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { fmtTag, tagIso } from "@/lib/angebot-zahlungserinnerung";
 import { offerAdminHref } from "@/lib/offer-links";
+import { BonusHinweis } from "@/components/vertrieb/bonus-hinweis";
 import { ANGEBOT_FILTER, ANGEBOT_ZUSTAND, ladeAngebote } from "@/lib/vertrieb/angebote-uebersicht";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { cn } from "@/lib/utils";
@@ -110,6 +111,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                           {o.number}
                           {o.version > 1 ? ` V${o.version}` : ""} · {eur(Number(o.monthlyFee))}/Monat · gültig bis {datum(o.validUntil)}
                         </span>
+                        {o.bonus && o.bonus.stand === "laeuft" ? <BonusHinweis b={o.bonus} /> : null}
                         <span className="mt-1 block">{stand(o)}</span>
                       </span>
                       <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
@@ -153,7 +155,10 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
                         <td className="px-4 py-2.5 text-right tabular-nums">{eur(Number(o.setupFee))}</td>
                         <td className="px-4 py-2.5 tabular-nums">{datum(o.sentAt)}</td>
                         <td className="px-4 py-2.5 tabular-nums">{datum(o.viewedAt)}</td>
-                        <td className={cn("px-4 py-2.5 tabular-nums", o.z === "abgelaufen" && "text-amber-700")}>{datum(o.validUntil)}</td>
+                        <td className={cn("px-4 py-2.5 tabular-nums", o.z === "abgelaufen" && "text-amber-700")}>
+                          {datum(o.validUntil)}
+                          {o.bonus ? <BonusHinweis b={o.bonus} /> : null}
+                        </td>
                         <td className="px-4 py-2.5">{stand(o)}</td>
                         <td className="px-2 py-2.5 text-right">{mehr(o)}</td>
                       </tr>
