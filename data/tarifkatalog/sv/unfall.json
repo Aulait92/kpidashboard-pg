@@ -30,8 +30,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:06bbcc94-b8de-4d4c-a692-843c373dd6fe/leistungsuebersicht-unfall.pdf?view",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Active",
@@ -55,8 +54,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/unfallversicherung-active.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Best Ager",
@@ -79,8 +77,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:06bbcc94-b8de-4d4c-a692-843c373dd6fe/leistungsuebersicht-unfall.pdf?view",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -94,6 +91,7 @@
     "Leistungsübersicht mit Zeichen ● versichert, ○ individuell wählbar, - nicht versichert; ○ ist als „optional“ erfasst.",
     "Die drei Stufen sind Zielgruppen, keine Leistungsstufen: Kids (0 bis 17), Active (18 bis 64), Best Ager (65 bis 80). Keine Empfehlung; Active als mittlere Stufe.",
     "Invaliditätssumme (Grundsumme) individuell, nicht beziffert. Progression 225, 400 oder 600 %. Leistung ab 1 % Invalidität laut Produktseite Active; für Kids und Best Ager nicht genannt.",
-    "Sofortleistung bei Schwerverletzungen 15.000 € (Kids und Best Ager wählbar). Best Ager: Sofortleistung Oberschenkelhalsbruch 3.000 €. Krankenhaustagegeld erweitert wählbar."
+    "Sofortleistung bei Schwerverletzungen 15.000 € (Kids und Best Ager wählbar). Best Ager: Sofortleistung Oberschenkelhalsbruch 3.000 €. Krankenhaustagegeld erweitert wählbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

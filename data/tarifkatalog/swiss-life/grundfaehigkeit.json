@@ -28,8 +28,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.swisslife.de/content/dam/de/documents/06/15711.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Swiss Life Vitalschutz Premium",
@@ -50,8 +49,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.swisslife.de/content/dam/de/documents/06/15711.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -63,6 +61,7 @@
     "Anzahl selbst gezählt: Komfort 21 Grundfähigkeiten plus Pflegebedürftigkeit, Demenz und Infektion (24); Premium zusätzlich 11 (u. a. Intellekt, Bildschirmtätigkeit, Fahrrad fahren, ÖPNV), zusammen 35.",
     "Wählbare Optionen: AU-Option (bis 36 Monate Rente), Psyche-Option, Berufe-Option, BU-Wechseloption; Zusatzversicherungen Schwere-Krankheiten-Option und care-Option (Pflegerente).",
     "Das in älteren Unterlagen genannte Vital Protect bzw. Vitalschutz Power, Spirit, Complete und Flex sind ältere Tarifgenerationen und nicht aufgenommen.",
-    "Swiss Life markiert keine Variante."
+    "Swiss Life markiert keine Variante.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

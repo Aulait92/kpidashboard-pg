@@ -28,8 +28,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wuerzburger.com/produkte/unfallversicherung/best4you",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "best4you Plus",
@@ -51,8 +50,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wuerzburger.com/produkte/unfallversicherung/best4you",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "best4you Exklusiv",
@@ -75,8 +73,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wuerzburger.com/produkte/unfallversicherung/best4you",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -89,6 +86,7 @@
     "Grundsumme, Progressionsstaffel, Unfallrente und Krankenhaustagegeld werden individuell vereinbart; konkrete Werte und Invaliditätsgrad für die Rente nicht veröffentlicht. Keine Empfehlung markiert, Plus als mittlere Stufe.",
     "Sofortleistung Basis: nach AUB 2011 nur, wenn vereinbart, höchstens 6.000 €; nicht als Wert übernommen. Infektionen durch Zeckenstich (u. a. Borreliose) nur in Exklusiv ausdrücklich eingeschlossen.",
     "Mitwirkung von Krankheiten: Kürzung erst ab 40 % (Plus) bzw. 75 % (Exklusiv). Grobe Fahrlässigkeit in Plus und Exklusiv mitversichert.",
-    "Weitere Unfallprodukte: bestAgeCare (Generation 50+) und SB-Unfall (Heilbehandlungskosten), nicht als Stufe geführt."
+    "Weitere Unfallprodukte: bestAgeCare (Generation 50+) und SB-Unfall (Heilbehandlungskosten), nicht als Stufe geführt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Auslandsreise-Krankenversicherung Familie",
@@ -42,8 +41,7 @@
         "familie": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Auslandsreise-Krankenversicherung ab 61 Jahre",
@@ -59,8 +57,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -72,6 +69,7 @@
     "Drei Zielgruppen mit gleichen Leistungen (Tarif AR), keine Leistungsstufen. SDK markiert die Familien-Police als „Am häufigsten gewählt“. Familie: Versicherungsnehmer, Partner (beide bis 60) und Kinder bis 18.",
     "Reisen über 56 Tage gegen Zusatzbeitrag je Verlängerungstag (bis 730 Tage, ab 61 bis 365 Tage), Broschüre 1.537/10.26.",
     "Selbstbeteiligung und Geltung in USA und Kanada in den gelesenen Unterlagen nicht ausdrücklich genannt (Produktseite: weltweiter Rücktransport). Chronische Erkrankungen: Verschlechterung einer bestehenden Erkrankung gilt als Versicherungsfall (AVB/AR, Stand 08.10.2026).",
-    "Unfall-Leistungen (Tarif ARU) trägt die Stuttgarter Versicherung AG; Krankenhaustagegeld 50 € statt Kostenerstattung bis 30 Tage wählbar."
+    "Unfall-Leistungen (Tarif ARU) trägt die Stuttgarter Versicherung AG; Krankenhaustagegeld 50 € statt Kostenerstattung bis 30 Tage wählbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

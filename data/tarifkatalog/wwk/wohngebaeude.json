@@ -34,8 +34,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/wohngebaeude/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäudeversicherung plus",
@@ -63,8 +62,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/haus-wohnen/wohngebaeude/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -74,6 +72,7 @@
     "Werte aus der Produktübersicht auf der Produktseite; leere Tabellenfelder als „versichert“ gelesen, bitte gegenprüfen.",
     "Photovoltaik, Solarthermie und Wärmepumpen: in der Basis nicht versicherte Sachen, in plus mitversichert; Baustein Photovoltaiktechnik plus mit Ertragsausfall zusätzlich wählbar.",
     "Ableitungsrohre außerhalb des Gebäudes nur über das Rohrleitungspaket Ableitungsrohre.",
-    "Gleitender Neuwert nicht ausdrücklich ausgewertet. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+    "Gleitender Neuwert nicht ausdrücklich ausgewertet. Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

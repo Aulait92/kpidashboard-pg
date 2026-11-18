@@ -29,8 +29,7 @@
         "reise": "optional"
       },
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Komfort",
@@ -55,8 +54,7 @@
         "reise": "optional"
       },
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Premium",
@@ -80,8 +78,7 @@
         "reise": "optional"
       },
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -91,7 +88,8 @@
   "offen": [
     "Quelle: Broschüre Stuttgarter Privat-Paket 7.2.009 (Stand 9/2025) der Stuttgarter Versicherung AG. Grobe Fahrlässigkeit laut Broschüre in Komfort und Premium; Höhe nicht genannt.",
     "Wertsachen je Paket nicht genannt (insgesamt bis 3.500 € Bargeld, bis 40.000 € Schmuck je nach Paket). Einfacher Diebstahl nicht genannt. Hotelkosten je nach Paket bis 365 Tage.",
-    "Spaltenzuordnung bitte prüfen: Zeilen mit zwei Werten (Diebstahl vom Grundstück 3.000/5.000 €, aus dem Kfz 2.000/3.000 €) wurden Komfort und Premium zugeordnet.",
-    "Zusatzversicherungen: Elementar, Glas, ServicePLUS (Notfall), Fahrraddiebstahl ohne Nachtzeitklausel, Reisegepäck; Allgefahren „Premium Plus“ nur zu Premium. Keine Empfehlung markiert, Komfort als mittlere Stufe."
+    "Zusatzversicherungen: Elementar, Glas, ServicePLUS (Notfall), Fahrraddiebstahl ohne Nachtzeitklausel, Reisegepäck; Allgefahren „Premium Plus“ nur zu Premium. Keine Empfehlung markiert, Komfort als mittlere Stufe.",
+    "Spaltenzuordnung am Seitenlayout der Broschüre Privat-Paket 7.2.009 geprüft: Diebstahl vom Grundstück 3.000/5.000 € und aus dem Kfz 2.000/3.000 € stehen in den Spalten Komfort und Premium; Basis ohne Eintrag, daher kein Wert.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

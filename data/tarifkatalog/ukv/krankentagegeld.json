@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/331917",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankentagegeld KT (Selbstständige, Freiberufler, Arbeitnehmer)",
@@ -45,8 +44,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/331682",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,6 +60,7 @@
     "Zwei Produkte für verschiedene Zielgruppen, keine Leistungsstufen: S-KG für GKV-versicherte Arbeitnehmer (Monatsbetrag laut Tarifname, z. B. S-KG 300), KT für Selbstständige und Freiberufler (KT 8 bis KT 365) sowie Arbeitnehmer (KT 43 bis KT 365).",
     "Leistungsdauer: Produktseite nennt keine Begrenzung bis Genesung oder Berufsunfähigkeit. Vertrag endet mit Eintritt der Berufsunfähigkeit (über 50 %), bei laufender Arbeitsunfähigkeit spätestens 3 Monate danach (AVB).",
     "Wartezeit 3 Monate (entfällt bei Unfall), besondere Wartezeiten 8 Monate (AVB). Im europäischen Ausland nur bei stationärer Behandlung in öffentlichem Krankenhaus.",
-    "KT: Dynamisierung entsprechend der Einkommensentwicklung ohne erneute Risikoprüfung als Möglichkeit genannt; bei S-KG nur Erhöhung bei höherem Nettoeinkommen. Höchstes Tagegeld als Betrag nicht veröffentlicht."
+    "KT: Dynamisierung entsprechend der Einkommensentwicklung ohne erneute Risikoprüfung als Möglichkeit genannt; bei S-KG nur Erhöhung bei höherem Nettoeinkommen. Höchstes Tagegeld als Betrag nicht veröffentlicht.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

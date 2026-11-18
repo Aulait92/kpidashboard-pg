@@ -22,8 +22,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/private-rentenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IndexGarant",
@@ -39,8 +38,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/indexgarant.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "VermögensPolice Invest",
@@ -56,8 +54,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/fondsgebundene-rentenversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -68,6 +65,7 @@
   "offen": [
     "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
     "Stufen sind Anlagekonzepte: klassische private Rentenversicherung, IndexGarant (Beiträge zum Rentenbeginn garantiert, jährlich Wahl zwischen Index und klassischer Verzinsung), VermögensPolice Invest (fondsgebunden, Ablaufmanagement). Keine Empfehlung; IndexGarant als mittlere Stufe.",
-    "Berufsunfähigkeits-Zusatzversicherung (BUZ) zur klassischen Rente wählbar; bei IndexGarant nicht ausdrücklich genannt. Rentenfaktor bei klassisch und IndexGarant nicht genannt. Keine Renditeangaben übernommen."
+    "Berufsunfähigkeits-Zusatzversicherung (BUZ) zur klassischen Rente wählbar; bei IndexGarant nicht ausdrücklich genannt. Rentenfaktor bei klassisch und IndexGarant nicht genannt. Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

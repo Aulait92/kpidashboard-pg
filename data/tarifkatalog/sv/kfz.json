@@ -26,8 +26,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/kfz-versicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Haftpflicht inkl. Teilkasko",
@@ -47,8 +46,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/kfz-versicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Haftpflicht inkl. Vollkasko",
@@ -69,8 +67,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/kfz-versicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -82,6 +79,7 @@
     "Quelle: Tarifvergleich der Produktseite, Leistungsübersicht Kfz ab Tarif 05/2024 (PDF; Häkchen nicht lesbar, nur Beträge übernommen).",
     "SV markiert Haftpflicht inkl. Vollkasko als „Empfehlung“.",
     "Baustein Topschutz (zur Vollkasko): Neupreis bzw. Kaufpreis 48 Monate, Tierbiss-Folgeschäden 20.000 €, Eigenschäden. Verzicht auf den Einwand grober Fahrlässigkeit steht in der Leistungsübersicht, die Zuordnung zu Kasko oder Topschutz ist nicht lesbar.",
-    "Weitere Bausteine: Fahrerschutz, Auslandsschadenschutz, SV Copilot, GAP (mit Vollkasko), Werkstatt-Bonus. Personenschäden 15 Mio. € je Person."
+    "Weitere Bausteine: Fahrerschutz, Auslandsschadenschutz, SV Copilot, GAP (mit Vollkasko), Werkstatt-Bonus. Personenschäden 15 Mio. € je Person.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

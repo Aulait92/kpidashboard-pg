@@ -20,8 +20,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.volkswohl-bund.de/pflege-und-tod/pflege/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PflegeVorsorge Komfort",
@@ -35,8 +34,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.volkswohl-bund.de/pflege-und-tod/pflege/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PflegeVorsorge Exklusiv",
@@ -49,8 +47,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.volkswohl-bund.de/pflege-und-tod/pflege/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -59,6 +56,7 @@
   "offen": [
     "Pflegerentenversicherung der VOLKSWOHL BUND Lebensversicherung a.G.; Leistung richtet sich nach Pflegepunkten (Hilfebedarf bei 6 Tätigkeiten des täglichen Lebens, ADL), nicht nach Pflegegrad. Bedingungen-PDF war beim Abruf leer, Werte nur von der Produktseite.",
     "Rentenhöhe: Basis 100 % bei 6 Punkten; Komfort 50 % bei 4/5, 100 % bei 6 Punkten; Exklusiv 50 % bei 3, 75 % bei 4/5, 100 % bei 6 Punkten. Leistung bei Pflegegrad 5, Einmalleistung und Beitragsbefreiung im Pflegefall nicht genannt.",
-    "Vierte Variante „Flexibel“ (auch mit Demenzleistung) ohne Angaben auf der Seite, daher nicht aufgenommen. Nachversicherung ohne Gesundheitsprüfung und Beitragspausen möglich. Keine Empfehlung markiert, Komfort als mittlere Stufe."
+    "Vierte Variante „Flexibel“ (auch mit Demenzleistung) ohne Angaben auf der Seite, daher nicht aufgenommen. Nachversicherung ohne Gesundheitsprüfung und Beitragspausen möglich. Keine Empfehlung markiert, Komfort als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

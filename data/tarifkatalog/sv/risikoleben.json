@@ -22,8 +22,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/risikolebensversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -32,6 +31,7 @@
   "offen": [
     "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
     "Ein Tarif mit konstanter oder fallender Summe (für Finanzierungen) und als verbundene Leben (Paare, Geschäftspartner, zwei Darlehensnehmer).",
-    "Nachversicherung, vorgezogene Leistung, Verlängerungsoption, Umtauschrecht, weltweiter Schutz und Höchstsumme stehen nicht auf der Produktseite."
+    "Nachversicherung, vorgezogene Leistung, Verlängerungsoption, Umtauschrecht, weltweiter Schutz und Höchstsumme stehen nicht auf der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

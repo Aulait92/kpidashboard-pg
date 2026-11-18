@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/342208",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "KlinikPRIVAT Premium",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://mein-premiumservice.vkb.de/service2/rest/api/material-service/public/v1/material/342205",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -59,6 +57,7 @@
     "KlinikPRIVAT Unfall leistet nur nach Unfällen (erweiterter Unfallbegriff) und wird laut Produktseite ohne Gesundheitsprüfung angeboten. UKV empfiehlt auf der Produktseite ausdrücklich KlinikPRIVAT Premium für vollen Schutz.",
     "KlinikPRIVAT Option (bis 49 Jahre) ergänzt KlinikPRIVAT Unfall um ein Wechselrecht in Premium ohne neue Gesundheitsprüfung (alle 5 Jahre, Heirat, Geburt u. a.); nicht als eigene Stufe geführt.",
     "Über GOÄ-Höchstsatz: Erstattung nur mit gültiger Honorarvereinbarung (Tarifbedingungen). Ersatz-Tagegeld 20 € (Verzicht Einbett) bzw. 50 € (Verzicht Ein- und Zweibett oder Wahlarzt).",
-    "Premium zusätzlich: Reha-Tagegeld 50 € bis 28 Tage, Fahrtkosten bis 250 €/Jahr, Entbindung. Krankenhaustagegeld ist ein eigenes Produkt (Seite Krankenhaustagegeld), daher kein Baustein belegt."
+    "Premium zusätzlich: Reha-Tagegeld 50 € bis 28 Tage, Fahrtkosten bis 250 €/Jahr, Entbindung. Krankenhaustagegeld ist ein eigenes Produkt (Seite Krankenhaustagegeld), daher kein Baustein belegt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

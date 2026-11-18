@@ -27,8 +27,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "OP-Versicherung premium",
@@ -48,8 +47,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "OP-Versicherung premium plus",
@@ -68,8 +66,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -81,6 +78,7 @@
     "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Die Stufen basis, premium, premium plus weichen vom Uelzener-Ordner (dort ein Tarif, Unterlagen 2024 bis 2025) ab; die S-Direkt-Unterlage ist älter, bitte Aktualität prüfen.",
     "Leistungsübersicht HUOPKV_IB_1121. Keine Empfehlung; premium als mittlere Stufe.",
     "premium plus nur bis zum 6. Geburtstag abschließbar; besondere Operationen (z. B. HD, Herz) dort bis 3.000 € im Jahr. Wartezeit für besondere Operationen und Kastration 1 Jahr. Reha- und Zahnzusatz-Baustein (je bis 1.000 € im Jahr) nur zu premium plus.",
-    "Erstattung laut Produktseite bis zu 100 %, unabhängig vom GOT-Satz."
+    "Erstattung laut Produktseite bis zu 100 %, unabhängig vom GOT-Satz.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

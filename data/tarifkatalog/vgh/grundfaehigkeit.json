@@ -23,8 +23,7 @@
         "ernst": "nein"
       },
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "GrundfähigkeitsSchutz ab 15 Jahre Komfort",
@@ -40,8 +39,7 @@
         "ernst": "nein"
       },
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "GrundfähigkeitsSchutz ab 15 Jahre Premium",
@@ -57,8 +55,7 @@
         "ernst": "inklusive"
       },
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -69,6 +66,7 @@
     "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
     "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
     "Drei Varianten: Kinder (ab Geburt bis 14, zusätzlich Schwerbehinderung), ab 15 Komfort, ab 15 Premium (Psyche: schwere Depressionen und Schizophrenie; schwere Krankheiten als Kapitalzahlung). Keine Empfehlung; Komfort als mittlere Stufe.",
-    "Anzahl der versicherten Grundfähigkeiten, Nachversicherung und weltweiter Schutz nicht im Tarifvergleich. Leistung bei Krankschreibung ab 6 Jahren bis 36 Monate."
+    "Anzahl der versicherten Grundfähigkeiten, Nachversicherung und weltweiter Schutz nicht im Tarifvergleich. Leistung bei Krankschreibung ab 6 Jahren bis 36 Monate.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

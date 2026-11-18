@@ -26,8 +26,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.universa.de/produkte/altersvorsorge/klassische-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "topinvest RENTE garant",
@@ -45,8 +44,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.universa.de/produkte/altersvorsorge/fondsgebundene-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "topinvest RENTE",
@@ -64,8 +62,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.universa.de/produkte/altersvorsorge/fondsgebundene-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
     "topinvest RENTE auch als nachhaltige topgreeninvest RENTE (Art. 8 Offenlegungsverordnung).",
     "Aktiv RENTE: garantierte monatliche Rente bzw. Kapitalzahlung ab Vertragsbeginn; Zuzahlungen bis 30.000 € im Jahr; auch als sofort beginnende Rente gegen Einmalbeitrag.",
     "Fondsrenten: garantierter Rentenfaktor; Todesfallschutz vor Rentenbeginn wählbar (Beitragsrückgewähr, Deckungskapital oder bis 50.000 € Todesfallleistung), bei garant nur Deckungskapital.",
-    "Kapitalwahlrecht bei den Fondsrenten auf der Seite nicht ausdrücklich genannt. BU-Zusatz nicht genannt. Keine Renditeangaben übernommen."
+    "Kapitalwahlrecht bei den Fondsrenten auf der Seite nicht ausdrücklich genannt. BU-Zusatz nicht genannt. Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

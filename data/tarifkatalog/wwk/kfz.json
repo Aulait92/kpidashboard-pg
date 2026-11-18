@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/auto-motorrad-co/pkws/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kaskoversicherung Kfz plus",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.wwk.de/versicherungen/auto-wohnen-haftpflicht/auto-motorrad-co/pkws/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +65,7 @@
     "Werte aus der Produktübersicht auf der Produktseite (AKB 2025); leere Tabellenfelder als „versichert“ gelesen, bitte gegenprüfen.",
     "Verzicht auf den Einwand grober Fahrlässigkeit laut Tabelle nur in plus.",
     "ElektroPlus (E- und Hybridfahrzeuge): Akku bis 20.000 €, Allgefahren für den Akku; GAP-Deckung nur bei Vollkasko. Kaufpreisentschädigung für Gebrauchte in plus 12 Monate.",
-    "Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+    "Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

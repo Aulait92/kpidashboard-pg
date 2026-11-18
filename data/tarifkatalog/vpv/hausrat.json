@@ -29,8 +29,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/wohnen-kfz/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausratversicherung Exklusiv",
@@ -51,8 +50,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/wohnen-kfz/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -65,6 +63,7 @@
     "Grobe Fahrlässigkeit Exklusiv laut Produktseite ohne Betragsgrenze („bis zur Versicherungssumme“ nur bei Wohngebäude ausdrücklich); bitte prüfen.",
     "Wertsachen 30 % bzw. 40 % der Versicherungssumme (Bedingungen A1 19.3.1); Bargeld Exklusiv nicht ausgewertet.",
     "Weitere Naturgefahren nur „soweit zusätzlich vereinbart“ (A1 1.4.2); dazu gibt es die eigene Erweiterte Naturgefahrenversicherung.",
-    "Online-Betrug (Phishing beim Online-Banking) steht in A1 13.2, Tarifzuordnung nicht geprüft. Fahrrad-Schutzbrief im Kompakt gegen Aufpreis, im Exklusiv inklusive. Keine Markierung."
+    "Online-Betrug (Phishing beim Online-Banking) steht in A1 13.2, Tarifzuordnung nicht geprüft. Fahrrad-Schutzbrief im Kompakt gegen Aufpreis, im Exklusiv inklusive. Keine Markierung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

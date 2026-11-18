@@ -34,8 +34,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.volkswohl-bund.de/einkommenssicherung/berufsunfaehigkeit/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -49,6 +48,7 @@
     "Umorganisation: Prüfung nur bei Selbstständigen mit Gewerbe, mindestens 5 Mitarbeitern und unter 90 % kaufmännischer Tätigkeit; bei Freiberuflern Verzicht.",
     "Pflege: BU auch bei Hilfebedarf für 2 oder mehr Verrichtungen des täglichen Lebens; zusätzliche Pflegerente nur mit BU PLUS.",
     "Stundung: zinslose Stundung während der Leistungsprüfung; Dauer nicht beziffert.",
-    "Nachversicherung ohne Gesundheitsprüfung bei zahlreichen Ereignissen; genaue Altersgrenzen hier nicht ausgewertet."
+    "Nachversicherung ohne Gesundheitsprüfung bei zahlreichen Ereignissen; genaue Altersgrenzen hier nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

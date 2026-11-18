@@ -33,8 +33,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.wuerzburger.com/images/pdf/LUE_HomeSecure2019.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "HomeSecure Komfort",
@@ -60,8 +59,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.wuerzburger.com/images/pdf/LUE_HomeSecure2019.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "HomeSecure Exklusiv",
@@ -87,8 +85,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.wuerzburger.com/images/pdf/LUE_HomeSecure2019.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -101,6 +98,7 @@
     "Einfacher Diebstahl aus der Wohnung nicht genannt (nur Wäsche/Gartenmöbel auf dem Grundstück, Kinderwagen, Krankenhaus). Online-Betrug nicht genannt.",
     "Grobe Fahrlässigkeit: Verzicht auf den Einwand in Komfort und Exklusiv; in Basis laut Übersicht nicht enthalten. Elementar überall gegen Aufpreis (SB 10 %, mind. 500 €, max. 5.000 €).",
     "Fahrrad: Basis und Komfort nur als Einschluss gegen Aufpreis, Exklusiv 1 % der VS inklusive; Fahrraddiebstahl ohne Nachtzeitklausel in allen Stufen wählbar. Allgefahren = unbenannte Gefahren bis 5.000 € (SB 500 €), nur Exklusiv wählbar.",
-    "Hotelkosten: Basis 1 ‰, Komfort und Exklusiv 2 ‰ der VS pro Tag. Auto = einfacher Diebstahl aus Kfz, Schiffskabinen und Schlafwagen."
+    "Hotelkosten: Basis 1 ‰, Komfort und Exklusiv 2 ‰ der VS pro Tag. Auto = einfacher Diebstahl aus Kfz, Schiffskabinen und Schlafwagen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

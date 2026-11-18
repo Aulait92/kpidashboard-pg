@@ -30,8 +30,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/unfall/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung OPTIMAL",
@@ -54,8 +53,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/unfall/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung PLUS",
@@ -78,8 +76,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/unfall/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -90,6 +87,7 @@
     "Werte aus der Leistungsübersicht der Produktseite. WGV markiert OPTIMAL als „Unsere Empfehlung“ (Preis-Leistungs-Sieger).",
     "Invaliditätssumme individuell (Preisbeispiel 30.000 € ohne Progression); Progression wählbar, Staffeln nicht genannt. Leistung ab Invaliditätsgrad nicht genannt.",
     "Unfallrente optional, lebenslang ab 50 % Invaliditätsgrad. Krankenhaustagegeld mit Genesungsgeld optional, Leistungszeitraum BASIS und OPTIMAL 2 Jahre, PLUS 3 Jahre.",
-    "Mitwirkung von Vorerkrankungen erst ab 25 % (BASIS), 50 % (OPTIMAL), 75 % (PLUS). Reha-Beihilfe OPTIMAL 1.500 €, PLUS 5.000 €."
+    "Mitwirkung von Vorerkrankungen erst ab 25 % (BASIS), 50 % (OPTIMAL), 75 % (PLUS). Reha-Beihilfe OPTIMAL 1.500 €, PLUS 5.000 €.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

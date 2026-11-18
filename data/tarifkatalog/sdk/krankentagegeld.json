@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/downloads/Broschueren/Broschuere-Zusatzversicherungen-1.013c.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankentagegeld für Selbstständige",
@@ -35,8 +34,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankentagegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -47,6 +45,7 @@
   "offen": [
     "Zwei Zielgruppen statt Leistungsstufen. Arbeitnehmer: Tarif TG6/TA laut Broschüre Zusatzversicherungen (01/2026), ab dem 43. Tag ohne zeitliche Begrenzung; Produktseite nennt 10 bis 30 € am Tag, auf Anfrage höher.",
     "Selbstständige: Produktseite nennt flexible Karenzzeiten ab der 2., 4., 6., 13., 26. oder 52. Woche; Tarifname, Höchstbetrag und Leistungsdauer nicht veröffentlicht. Höhe höchstens bis zum Nettoeinkommen (PKV-Broschüre Selbstständige).",
-    "Widerspruch: Ein Vorteilstext der Produktseite nennt Absicherung „bis zu sechs Monate“, die Broschüre „ohne zeitliche Begrenzung“; bitte prüfen. Wartezeit, Ende bei Berufsunfähigkeit und Ausland nicht veröffentlicht."
+    "Widerspruch: Ein Vorteilstext der Produktseite nennt Absicherung „bis zu sechs Monate“, die Broschüre „ohne zeitliche Begrenzung“; bitte prüfen. Wartezeit, Ende bei Berufsunfähigkeit und Ausland nicht veröffentlicht.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

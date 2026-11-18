@@ -27,8 +27,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/516/documents/Leistungs%C3%BCbersicht_AusGleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AusGleich SMART",
@@ -49,8 +48,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/516/documents/Leistungs%C3%BCbersicht_AusGleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AusGleich BEST",
@@ -70,8 +68,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://rechner.prokundo.de/druckstuecke/api/products/516/documents/Leistungs%C3%BCbersicht_AusGleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Verkauf über die Tochter PROKUNDO, Versicherer VOLKSWOHL BUND Sachversicherung AG. Quelle: Leistungsübersicht PK AusGleich 07.2025 und Verbraucherinformation; Haken im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
     "Grundsumme frei wählbar (Beispiele mit 100.000 €). Progressionen laut Bedingungen 225 %, 350 %, 20/350 %, 500 % und 20/500 %; Leistung ab welchem Invaliditätsgrad nicht genannt.",
     "Unfallrente, Krankenhaustagegeld und Genesungsgeld „sofern vereinbart“; Unfallrente ab 50 % Invalidität. Krankenhaustagegeld bis 3 bzw. 5 Jahre.",
-    "„Leistungsturbo“ (Verdopplung der Gliedertaxe bis 100 %) laut Produktseite; ob er in jeder Stufe gilt, ist nicht genannt. Keine Empfehlung markiert, SMART als mittlere Stufe."
+    "„Leistungsturbo“ (Verdopplung der Gliedertaxe bis 100 %) laut Produktseite; ob er in jeder Stufe gilt, ist nicht genannt. Keine Empfehlung markiert, SMART als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

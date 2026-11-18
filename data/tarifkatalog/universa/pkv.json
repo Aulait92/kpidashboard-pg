@@ -30,8 +30,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.universa.de/produkte/private-krankenversicherung/intro-privat/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ECONOMY uni-VE 1300/2000",
@@ -54,8 +53,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.universa.de/produkte/private-krankenversicherung/economy/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "CLASSIC uni-A, uni-ST 1/100, uni-ZA",
@@ -78,8 +76,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.universa.de/produkte/private-krankenversicherung/classic/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "uni-Top|Privat 300/1000",
@@ -102,8 +99,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.universa.de/produkte/private-krankenversicherung/top-privat/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -123,6 +119,7 @@
     "ECONOMY: Werte für die G- und H-Stufen 1.300 und 2.000 €; Stufe uni-VE 900 K mit Primärarztprinzip und teils 80 % Erstattung.",
     "CLASSIC ist ein Bausteintarif: Werte für uni-A, uni-ST 1/100 (Ein- oder Zweibettzimmer) und uni-ZA (Zahnersatz 60 % in ZA 90, sonst 80 %). Selbstbehalt nur ambulant; uni-A 80: 20 %, max. 500 €.",
     "Top|Privat: Beitragsrückerstattung aktuell 2,5 Monatsbeiträge (erfolgsabhängig), in Stufe 300 zusätzlich garantiert 600 € (Kinder 300 €).",
-    "Zahnleistungen in allen Linien in den ersten Jahren begrenzt (Zahnstaffel)."
+    "Zahnleistungen in allen Linien in den ersten Jahren begrenzt (Zahnstaffel).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

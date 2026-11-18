@@ -30,8 +30,7 @@
         "cyber": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/privathaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Exklusiv",
@@ -55,8 +54,7 @@
         "cyber": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/recht-haftpflicht/privathaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -69,6 +67,7 @@
     "Mietsachschäden an Wohnräumen bis zur Versicherungssumme (Ziffer 6.7); Mallorca-Deckung Ziffer 6.26, Höhe nicht ausgewertet.",
     "Neuwert: nur Exklusiv, bis 24 Monate (Elektronik 12 Monate), höchstens 3.000 €. Drohnen bis 4 kg nur Exklusiv laut Produktseite; Kompakt nicht genannt.",
     "Selbstbeteiligung: Preisbeispiel der Produktseite mit 250 €; ob auch ohne SB wählbar, nicht belegt.",
-    "Baustein Internet-Gefahren-Schutz (Online-Betrug bis 5.000 €) als Cyber eingeordnet. Keine Markierung der Gesellschaft."
+    "Baustein Internet-Gefahren-Schutz (Online-Betrug bis 5.000 €) als Cyber eingeordnet. Keine Markierung der Gesellschaft.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

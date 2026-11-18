@@ -28,8 +28,7 @@
         "ktg": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-angestellte",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "GesundheitsFAIR Komfort-Schutz (AM12, S1, Z8)",
@@ -50,8 +49,7 @@
         "ktg": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-angestellte",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "GesundheitsFAIR Premium-Schutz (AM12, S1, Z9)",
@@ -72,8 +70,7 @@
         "ktg": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/private-krankenversicherung/pkv-fuer-angestellte",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -86,6 +83,7 @@
     "Die drei Stufen sind die Beispiel-Kombinationen der Produktseite für Angestellte (frei kombinierbare Bausteine). SDK markiert den Premium-Schutz als „Am häufigsten gewählt“ (laut Seitenquelltext, bitte am Bildschirm gegenprüfen).",
     "Selbstbeteiligung ambulant wählbar von 0 bis 30 % (AM10 bis AM33, Deckel 240 bis 2.400 €). Ambulant AM1x über, AM3x bis zu den GOÄ-Höchstsätzen; Sehhilfen AM1x 1.000 €, AM3x 250 € in drei Jahren (Broschüre 1.645/01.26).",
     "Krankentagegeld in den Beispielen enthalten (140, 150 bzw. 200 € ab der 7. Woche). Beitragsrückerstattung derzeit 2 Monatsbeiträge aus Ambulant- und Zahntarifen, erfolgsabhängig.",
-    "Stationär S3: Mehrbettzimmer, diensthabender Arzt; S1: Einbettzimmer, Chefarzt, Privatklinik, über GOÄ-Höchstsätze. Hilfsmittel: lebenserhaltende Hilfsmittel ohne SB, Katalog nicht ausgewertet. Primärarzt und Ausland nicht ausgewertet."
+    "Stationär S3: Mehrbettzimmer, diensthabender Arzt; S1: Einbettzimmer, Chefarzt, Privatklinik, über GOÄ-Höchstsätze. Hilfsmittel: lebenserhaltende Hilfsmittel ohne SB, Katalog nicht ausgewertet. Primärarzt und Ausland nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

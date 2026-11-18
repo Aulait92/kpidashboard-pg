@@ -30,8 +30,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wwk.de/versicherungen/freizeit-gesundheit/unfallschutz/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung plus",
@@ -54,8 +53,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.wwk.de/versicherungen/freizeit-gesundheit/unfallschutz/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -64,6 +62,7 @@
   "offen": [
     "Progression nur aus dem Preisbeispiel (225 %); wählbare Stufen nicht genannt. Invaliditätssumme frei wählbar.",
     "Unfallrente und Krankenhaustagegeld sind Leistungsarten nach Wahl; bei plus progressive Rente ab 50 % Invalidität, Rentengarantie im Todesfall 5 bzw. 10 Jahre.",
-    "Zusatzbausteine Unfallschutzbrief und XtraPaket (nur zu plus). Werte aus der Produktübersicht auf der Produktseite (AUB 2020). Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite."
+    "Zusatzbausteine Unfallschutzbrief und XtraPaket (nur zu plus). Werte aus der Produktübersicht auf der Produktseite (AUB 2020). Die verlinkten Flugblätter und Bedingungen (vertrieb.wwk.de) waren beim Abruf nicht erreichbar; Werte nur von der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }
