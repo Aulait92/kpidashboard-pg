@@ -21,6 +21,8 @@ import { ErstinfoHeuteHint } from "@/components/erstinformation-hint";
 import { listVorbereitungen } from "@/lib/termin-vorbereitung-server";
 import { ladeAutomatischeNachrichten, morgenBerlin } from "@/lib/nachrichtenplan-server";
 import { leadScope } from "@/lib/team";
+import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
+import { istCrossSellAufgabe } from "@/lib/cross-sell-verkauf";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
@@ -69,6 +71,11 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     // „Morgen: 3 automatische Nachrichten“ (Paket P6)
     ladeAutomatischeNachrichten(leadScope(ctx), morgen.von, morgen.bis).catch(() => null),
   ]);
+  // Wiedervorlage „Weiteres Produkt anbieten?“ fällig: kleiner Zusatz-Knopf zum Bestandskunden-Modul (lib/cross-sell-verkauf.ts),
+  // nur mit Modul für alle und solange es nicht gebucht ist
+  const weiteresProdukt = data.followUps.some((f) => istCrossSellAufgabe(f.note))
+    ? await ladeCrossSellVerkauf(ctx, { nurNichtGebucht: true }).catch(() => null)
+    : null;
   // Termine, die noch vorzubereiten sind (Angebot rechnen): Link direkt in der Terminzeile statt eigener Karte
   const zuVorbereiten = vorb.map((v) => v.id);
   // Push „Jetzt anrufen?“ (lib/anruf-ausloeser.ts): Anruf-Blatt für diesen Kontakt öffnen
@@ -121,7 +128,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
           <section className={selected ? "hidden xl:block" : undefined}>
             <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
             {erstinfoHint}
-            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} />
+            <TodayInbox data={data} newUi leadHref="/buyer?lead={id}" selectedLeadId={rechts} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
             {hinweise}
           </section>
           {breit ? null : (
@@ -163,7 +170,7 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader title={`${greet}${first ? `, ${first}` : ""}`} subtitle={today} />
       {erstinfoHint}
-      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} />
+      <TodayInbox data={data} zuVorbereiten={zuVorbereiten} anrufen={anrufen} automatisch={automatisch} weiteresProdukt={weiteresProdukt} />
       {hinweise}
     </main>
   );

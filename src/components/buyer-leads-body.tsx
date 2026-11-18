@@ -20,6 +20,8 @@ import { VERLUST_LABEL, verlustKey, type VerlustKey } from "@/lib/verlustgruende
 import { verlorenImZeitraum } from "@/lib/verlustgruende-server";
 import { weitereEmailsSuche } from "@/lib/lead-emails";
 import { CROSS_SELL_FILTER, CROSS_SELL_LABEL, crossSellOffenWhere } from "@/lib/cross-sell-offen";
+import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
+import { CrossSellLeiste } from "@/components/bestand/cross-sell-angebot";
 
 export async function BuyerLeadsBody({
   customerId,
@@ -139,6 +141,8 @@ export async function BuyerLeadsBody({
   }
   const noStepTotal = await countWithoutNextStep(leadScope(team), now);
   const crossSellTotal = crossSell ? await prisma.lead.count({ where: { ...leadScope(team), ...crossSellOffenWhere(now) } }) : 0;
+  // „Allen ein Produkt anbieten“ (lib/cross-sell-verkauf.ts): nur mit Bestandskunden-Modul für alle, sonst wie bisher
+  const crossSellVerkauf = crossSell && crossSellTotal > 0 ? await ladeCrossSellVerkauf(team, { now, anzahl: crossSellTotal }) : null;
   const pastByLead = new Map<string, string>();
   for (const a of pastAppts) if (a.leadId && !pastByLead.has(a.leadId)) pastByLead.set(a.leadId, a.id);
 
@@ -201,7 +205,9 @@ export async function BuyerLeadsBody({
           </span>
         </p>
       ) : null}
-      {crossSell ? (
+      {crossSellVerkauf ? (
+        <CrossSellLeiste verkauf={crossSellVerkauf} filterWeg={basePath} />
+      ) : crossSell ? (
         <p className="flex flex-wrap items-center gap-2 text-sm" data-cross-sell-filter>
           <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-3 font-medium text-[color:var(--brand-dark)]">
             {CROSS_SELL_LABEL}: <span className="tabular-nums">{crossSellTotal}</span>

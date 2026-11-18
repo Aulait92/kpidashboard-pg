@@ -147,8 +147,10 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     const lt = await loadLeadTimes(keys[0] ?? lead.customerId).catch(() => DEFAULT_LEAD_TIMES);
     anrufAusloeserAt = anrufStartZeitpunkt(new Date(lead.outreachAt.getTime() + ANTWORT_WARTEZEIT_MS), lt);
   }
+  const { arbeitstageFuer } = await import("@/lib/call-attempts");
   return planeNachrichten({
     now,
+    arbeitstage: await arbeitstageFuer(lead.customerId),
     an,
     hi: anredeZeile(an, who.kontakt),
     person,

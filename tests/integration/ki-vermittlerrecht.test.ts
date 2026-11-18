@@ -101,7 +101,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     await inbound(phone, "Hallo, ich interessiere mich für eine Zahnzusatz");
     const first = lastText();
     // Erstanschreiben ab v6 (Ole, 17.11.2026): Lead hat zuerst geschrieben → „danke für Ihre Nachricht“, Vermittler als Person
-    expect(first).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht! Hier schreibt der digitale KI-Assistent von [^.\n]+\.\n\nFür wen soll die Zahnzusatzversicherung sein\?$/);
+    expect(first).toMatch(/^Hallo Frau Schneider, danke für Ihre Nachricht! Hier schreibt der digitale KI-Assistent von [^.\n]+\.\n\nFür wen soll die Zahnzusatzversicherung sein\?$/);
     expect(first).not.toMatch(/Mensch|berate nicht/);
     // Erstinformation unvollständig: PDF im aktuellen Stand direkt nach der Antwort (Ole, 17.11.2026), kein Link-Rückfall
     const e = await prisma.erstinformation.findUniqueOrThrow({ where: { customerId } });
@@ -133,7 +133,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     await inbound(phone, "Bist du ein Bot?");
     expect(h.calls).toHaveLength(0); // ohne KI beantwortet
     const reply = lastText();
-    expect(reply).toMatch(/^Guten Tag Julia Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier\. Ich bin kein Mensch und berate nicht zu Tarifen\./);
+    expect(reply).toMatch(/^Guten Tag Frau Schneider, hier schreibt der digitale KI-Assistent von Agentur Susanne Meier\. Ich bin kein Mensch und berate nicht zu Tarifen\./);
     expect(reply).toContain("meldet sich persönlich bei Ihnen");
     expect(sent.at(-1)).toMatchObject({ type: "document", to: phone });
     const c = await conv(phone);
@@ -244,7 +244,7 @@ describe("Erstanschreiben nur mit Erstinformation (Live-Test 17.11.2026)", () =>
     expect(comps[0].type).toBe("header");
     expect(comps[0].parameters[0].document?.link).toMatch(/\/erstinformation\/[\w-]+\/pdf\?v=/);
     const params = comps[1].parameters.map((p) => p.text) ?? [];
-    expect(params[0]).toBe("Max Weber");
+    expect(params[0]).toBe("Herr Weber");
     expect(params[1]).toMatch(/^https:\/\/app\.example\.de\/erstinformation\/[\w-]+$/);
     // Der wartende Lead geht jetzt ebenfalls mit PDF raus
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: l1.id } })).outreachStatus).toBe("sent");
@@ -288,12 +288,12 @@ describe("Live-Test 17.11.2026: Ole Agentur (Sie), Testlead Privatschutz", () =>
     expect(t.components[0]).toMatchObject({ type: "header" });
     expect(t.components[0].parameters[0].document?.link).toMatch(/\/erstinformation\/[\w-]+\/pdf\?v=[0-9a-f]{16}$/);
     const params = t.components[1].parameters.map((p) => p.text);
-    expect(params[0]).toBe("Ole Kannapinn Testlead");
+    expect(params[0]).toBe("Herr Testlead");
     expect(params[1]).toBe("Privatschutz");
     expect(params.join(" ")).not.toMatch(/\b(deine?|dich|dir|du)\b/);
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).outreachStatus).toBe("sent");
     const out = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: phone }, direction: "outbound" } });
-    expect(out.body).toMatch(/^\[Erstinformation als PDF\]\nHallo Ole Kannapinn Testlead, danke für Ihre Anfrage zum Thema Privatschutz!/);
+    expect(out.body).toMatch(/^\[Erstinformation als PDF\]\nHallo Herr Testlead, danke für Ihre Anfrage zum Thema Privatschutz!/);
 
     // Antwort des Leads: Erstinformation ist schon da, kein weiteres PDF
     const vorher = sent.length;
