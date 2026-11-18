@@ -10,7 +10,7 @@ const PROVIDER: Record<string, string> = { google: "Google-Kalender", microsoft:
 
 export type CalendarSetupView = {
   status: {
-    native: { connected: boolean; label: string | null };
+    native: { connected: boolean; label: string | null; account?: string | null };
     hasIcs: boolean;
     allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
   };
@@ -27,15 +27,15 @@ export async function loadCalendarSetup(customerId: string, calendarKey: string)
   const [sources, native, leadTimes, blocks] = await Promise.all([
     loadSources(customerId),
     userId
-      ? prisma.advisorCalendar.findUnique({ where: { userId }, select: { status: true, provider: true } })
-      : prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true } }),
+      ? prisma.advisorCalendar.findUnique({ where: { userId }, select: { status: true, provider: true, accountEmail: true } })
+      : prisma.calendarConnection.findUnique({ where: { customerId }, select: { status: true, provider: true, accountEmail: true } }),
     loadLeadTimes(calendarKey),
     upcomingBlocks(calendarKey),
   ]);
   const a = sources.allianz;
   return {
     status: {
-      native: { connected: native?.status === "connected", label: native ? (PROVIDER[native.provider] ?? "Kalender") : null },
+      native: { connected: native?.status === "connected", label: native ? (PROVIDER[native.provider] ?? "Kalender") : null, account: native?.accountEmail ?? null },
       hasIcs: sources.hasIcs,
       allianz: a ? { orgName: a.orgName, templateName: a.templateName, durationMin: a.durationMin, lastError: a.lastError } : null,
     },

@@ -1225,6 +1225,9 @@ model CalendarConnection {
   // Weitere Google-Kalender, die nur für „belegt“ zählen (freigegebene Kalender, z. B. alter Kalender nach Kontowechsel;
   // Ole, 18.11.2026). Kalender-ID bzw. Adresse wie in Google, abgefragt per freeBusy mit.
   busyCalendarIds String[]  @default([])
+  // Davon zuletzt nicht abrufbar (z. B. Tippfehler → notFound); werden übersprungen, Hinweis in den Einstellungen
+  // (Ole, 18.11.2026). Leer = alle lesbar.
+  busyCalendarErrors String[] @default([])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
