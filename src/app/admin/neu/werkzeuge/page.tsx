@@ -46,6 +46,7 @@ const INFO: Record<string, { text: string; icon: LucideIcon }> = {
   "e-status": { text: "Störung melden, Support-Kontakt", icon: LifeBuoy },
   "e-anbindungen": { text: "Instantly, Meta, LinkedIn, Agenturliste", icon: PlugZap },
   "e-vorlagen": { text: "Support-Nummer, A/B-Tests der Vorlagen", icon: MessageCircle },
+  "w-gebuehren": { text: "WhatsApp-Kosten je Kunde, Monat und Vormonat", icon: Receipt },
   "e-login": { text: "Infokarten neben dem Kunden-Login", icon: LogIn },
   "e-einrichtung": { text: "Business-ID, Erklärvideos, Hilfetermin", icon: Rocket },
   "e-protokoll": { text: "Wer hat wann was geändert", icon: History },
