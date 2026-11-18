@@ -85,7 +85,7 @@ export function kacheln(d: InvestorenDaten): Kachel[] {
         { label: "Erwartete Laufzeit", wert: k.kuendigung ? `${monate(k.clv.laufzeit)}${k.clv.laufzeitGedeckelt ? " (gedeckelt)" : ""}` : "–" },
         { label: "Kündigungsquote je Monat", wert: k.kuendigung ? pct(k.kuendigung.quote, 1) : "–" },
       ],
-      text: `${def("Kundenwert (CLV)")} Geteilt durch den CAC mit Gründerzeit (${d.gruender.stunden} Std./Woche × ${eur(d.gruender.satz)}).`,
+      text: `${def("Kundenwert (CLV)")} Geteilt durch den CAC ohne Gründerzeit, wie die Amortisation.`,
     },
   ];
 }

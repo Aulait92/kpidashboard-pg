@@ -97,7 +97,8 @@ describe("investorKennzahlen", () => {
     expect(k.clv.laufzeit).toBeCloseTo(14);
     expect(k.clv.laufzeitGedeckelt).toBe(false);
     expect(k.clv.wert).toBe(7700);
-    expect(k.clv.zuCac).toBeCloseTo(7700 / 1650);
+    // einheitlich ohne Gründerzeit wie die Amortisation (Ole, 18.11.2026)
+    expect(k.clv.zuCac).toBeCloseTo(7700 / 150);
   });
 
   it("Marge mit KI-Anteil, MRR-Bewegung und Kohorten unter 5 Kunden ausgeblendet", () => {

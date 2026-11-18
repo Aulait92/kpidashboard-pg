@@ -25,6 +25,8 @@ export type EinTippMail = {
   an: string;
   /** Erster Satz der Mail für die Beschriftung des Hakens */
   vorschau: string;
+  /** Ganze Mail für „Vorschau“ (Ole, 18.11.2026) */
+  voll: { subject: string; text: string };
 };
 
 /** Erster Satz nach der Anrede (für die Zeile unter dem Haken). */
@@ -61,6 +63,7 @@ export async function einTippMailStand(leadId: string, key: VorlageKey, o: { anl
     gesendet,
     an: vb.to,
     vorschau: ersterSatz(inhalt.text),
+    voll: { subject: inhalt.subject, text: inhalt.text },
   };
 }
 

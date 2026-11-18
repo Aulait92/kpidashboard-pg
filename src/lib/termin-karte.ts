@@ -1,5 +1,5 @@
 // Terminkarte im Kontakt (Ole, 17.11.2026): ein Hauptknopf je nach Zeit, höchstens zwei Zweitknöpfe, der Rest unter „Mehr“.
-//   vorher   (bis 10 Minuten vor Beginn)      Vorbereiten
+//   vorher   (bis 10 Minuten vor Beginn)      Vorbereiten; schon vorbereitet: kein blauer Hauptknopf (ruhig), Präsentation zuerst
 //   jetzt    (ab 10 Minuten vorher bis Ende)  Videocall starten, beim Telefontermin Anrufen
 //   nachher  (ab Ende)                         Ergebnis eintragen; erschienen (Show-up-Paket) und Angebot offen: Angebot senden
 // Beratungsdokumentation (Paket B, Ole 18.11.2026, nur mit Schalter): nach dem Termin „Dokumentation“ als erster Zweitknopf,
@@ -51,6 +51,8 @@ export type TerminKartenAktionen = {
   mehr: TerminAktion[];
   /** Nächster Wechsel der Phase (für eine sanfte Aktualisierung), null nach dem Termin */
   naechsterWechsel: Date | null;
+  /** true: nichts Dringendes, Hauptknopf nicht hervorheben (z. B. schon vorbereitet, Ole 18.11.2026) */
+  ruhig: boolean;
 };
 
 export function terminKartenAktionen(
@@ -63,6 +65,8 @@ export function terminKartenAktionen(
     beratungsdoku?: "offen" | "erledigt" | null;
     /** false: Ergebnis steht schon (Karte nur noch für die Dokumentation) */
     ergebnisFehlt?: boolean;
+    /** Termin als vorbereitet markiert (Appointment.preparedAt) */
+    vorbereitet?: boolean;
   },
 ): TerminKartenAktionen {
   const phase = terminPhase(t, f.now);
@@ -70,7 +74,12 @@ export function terminKartenAktionen(
   const vorBeginn = f.now.getTime() < t.startsAt.getTime();
   let haupt: TerminAktion;
   let reihe: TerminAktion[];
-  if (phase === "vorher") {
+  let ruhig = false;
+  if (phase === "vorher" && f.vorbereitet) {
+    haupt = "praesentation";
+    ruhig = true;
+    reihe = ["vorbereiten", "verschieben", ...(video ? (["videocall"] as const) : [])];
+  } else if (phase === "vorher") {
     haupt = "vorbereiten";
     reihe = ["praesentation", "verschieben", ...(video ? (["videocall"] as const) : [])];
   } else if (phase === "jetzt") {
@@ -93,5 +102,6 @@ export function terminKartenAktionen(
     zweit: rest.slice(0, 2),
     mehr: rest.slice(2),
     naechsterWechsel: phase === "vorher" ? new Date(t.startsAt.getTime() - TERMIN_VORLAUF_MS) : phase === "jetzt" ? terminEnde(t) : null,
+    ruhig,
   };
 }

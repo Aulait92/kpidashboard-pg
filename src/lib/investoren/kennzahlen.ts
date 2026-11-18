@@ -9,7 +9,7 @@
 //   Kunde höchstens der damalige Betrag.
 // - Kundenwert (CLV) = Rohertrag je Kunde und Monat × erwartete Laufzeit (1 ÷ monatliche Kündigungsquote, höchstens 24).
 // - CAC = Kosten der Kundengewinnung ÷ neue Kunden der letzten 3 abgeschlossenen Monate; Amortisation = CAC ÷ Rohertrag
-//   je Kunde und Monat. Kundenwert : CAC mit Gründerzeit (wie Übersicht).
+//   je Kunde und Monat. Kundenwert : CAC einheitlich ohne Gründerzeit (Ole, 18.11.2026; Gründerzeit nur als Zusatzzeile).
 // - Kohorten erst ab MIN_KOHORTE Kunden je Startmonat (kleinere sind Zufall, nicht Aussage).
 // Nie Zahlen erfinden: fehlt die Grundlage, ist der Wert null und `fehlt` sagt, ab wann es ihn gibt.
 
@@ -224,7 +224,7 @@ export function investorKennzahlen(i: InvestorInput): InvestorKennzahlen {
       amortisation: cac != null && rohertrag && rohertrag > 0 ? cac / rohertrag : null,
       amortisationMitGruender: cacG != null && rohertrag && rohertrag > 0 ? cacG / rohertrag : null,
     },
-    clv: { wert: clv == null ? null : r2(clv), laufzeit, laufzeitGedeckelt: laufzeitRoh > MAX_LAUFZEIT, zuCac: clv != null && cacG ? clv / cacG : null },
+    clv: { wert: clv == null ? null : r2(clv), laufzeit, laufzeitGedeckelt: laufzeitRoh > MAX_LAUFZEIT, zuCac: clv != null && cac ? clv / cac : null },
     marge: { monate: margen, letzter: ml?.marge ?? null, kiAnteil: ml && ml.umsatz > 0 ? ml.ki / ml.umsatz : null },
     bewegung: mrrMovement(rows, complete).slice(-6),
     kohorten: kohortenAb(cohorts(rows, complete)),
@@ -261,6 +261,6 @@ export function gegenprobe(k: InvestorKennzahlen, z: UebersichtWerte): Abgleich[
     zeile("Amortisation mit Gründerzeit", k.cac.amortisationMitGruender, z.unit.paybackFounder),
     // Übersicht nimmt ohne gemessene Kündigung 24 Monate an, die Auswertung zeigt dann keinen Kundenwert
     zeile("Kundenwert (CLV)", k.clv.wert, k.kuendigung ? z.unit.ltv : null, k.kuendigung ? undefined : "ohne Kündigungsquote kein Kundenwert (Übersicht nimmt 24 Monate an)"),
-    zeile("Kundenwert : CAC", k.clv.zuCac, k.kuendigung ? z.unit.ltvCac : null),
+    zeile("Kundenwert : CAC", k.clv.zuCac, k.kuendigung && z.unit.ltv != null && z.unit.cac ? z.unit.ltv / z.unit.cac : null),
   ];
 }

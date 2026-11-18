@@ -31,6 +31,13 @@ describe("terminKartenAktionen", () => {
     expect(a).toMatchObject({ phase: "vorher", haupt: "vorbereiten", zweit: ["praesentation", "verschieben"], mehr: ["videocall"] });
     expect(a.naechsterWechsel?.toISOString()).toBe(at(-10 * MIN).toISOString());
   });
+  it("vorher, schon vorbereitet: ruhig, kein blauer Hauptknopf; Präsentation zuerst, Vorbereitung daneben (Ole, 18.11.2026)", () => {
+    const a = terminKartenAktionen(video, { ...f(at(-24 * 60 * MIN)), vorbereitet: true });
+    expect(a).toMatchObject({ phase: "vorher", haupt: "praesentation", ruhig: true, zweit: ["vorbereiten", "verschieben"], mehr: ["videocall"] });
+    expect(terminKartenAktionen(video, f(at(-60 * MIN))).ruhig).toBe(false);
+    // ab 10 Minuten vorher zählt wieder der Termin selbst
+    expect(terminKartenAktionen(video, { ...f(at(-5 * MIN)), vorbereitet: true })).toMatchObject({ haupt: "videocall", ruhig: false });
+  });
   it("10 Minuten vorher: Videocall starten, Verschieben nur noch unter Mehr", () => {
     const a = terminKartenAktionen(video, f(at(-10 * MIN)));
     expect(a).toMatchObject({ phase: "jetzt", haupt: "videocall", zweit: ["praesentation", "vorbereiten"] });
