@@ -11,7 +11,7 @@ import { writableCustomerId } from "@/lib/buyer-write";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { leadScope } from "@/lib/team";
 import { recordUsage } from "@/lib/usage";
-import { aendereAbschluss, ladeAbschlussStand, pausiereNachfassen, sendeGlueckwunsch, setzeAbschlussBeitrag, type AbschlussStand } from "@/lib/abschluss-server";
+import { DANKE_ANLASS, aendereAbschluss, ladeAbschlussStand, pausiereNachfassen, sendeGlueckwunsch, setzeAbschlussBeitrag, type AbschlussStand } from "@/lib/abschluss-server";
 import { appointmentOutcomeResult, callbackOutcomeResult, type UndoSnapshot } from "@/app/buyer/inbox-actions";
 
 type Ok<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -30,7 +30,7 @@ export async function abschlussStandAction(leadId: string): Promise<AbschlussSta
   if (!ctx) return null;
   const visible = await prisma.lead.count({ where: { AND: [leadScope(ctx), { id: leadId }] } });
   if (!visible) return null;
-  return ladeAbschlussStand(leadId, ctx.customerId);
+  return ladeAbschlussStand(leadId, ctx.customerId, new Date(), { userId: ctx.userId ?? null });
 }
 
 /** „Ja, abgeschlossen“ im Blatt: Termin ohne Ergebnis → Ergebnis am Termin, sonst wie „Abschluss“ auf Heute. */
@@ -76,6 +76,18 @@ export async function glueckwunschAction(leadId: string): Promise<Ok<{ gesendet:
   const ctx = await getBuyerContext();
   const r = await sendeGlueckwunsch(leadId, customerId, { userId: ctx?.userId ?? null });
   await recordUsage("action", "abschluss.glueckwunsch");
+  refresh(leadId);
+  return r;
+}
+
+/** Haken „Danke-Mail senden“ (Paket M6, Vorlage „Nach dem Abschluss“, je Kontakt einmal). */
+export async function dankeMailAction(leadId: string): Promise<Ok> {
+  const customerId = await writableCustomerId(leadId);
+  if (!customerId) return { ok: false, error: VORSCHAU };
+  const ctx = await getBuyerContext();
+  const { sendeEinTippMail } = await import("@/lib/mail/ein-tipp");
+  const r = await sendeEinTippMail(leadId, "nach_abschluss", { anlass: DANKE_ANLASS, userId: ctx?.userId ?? null });
+  await recordUsage("action", "abschluss.danke_mail");
   refresh(leadId);
   return r;
 }

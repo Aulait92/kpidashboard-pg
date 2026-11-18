@@ -25,6 +25,7 @@ import { mailRahmen } from "@/lib/mail/rahmen";
 import { leadAbmeldeUrl } from "@/lib/bestand/links";
 import { protokolliereMail, type MailArt } from "@/lib/mail/kontakt-mail";
 import type { VorlageKey } from "@/lib/mail/vorlagen";
+import { KUENDIGUNG_TODO } from "@/lib/vertraege-shared";
 
 export type PostfachResult = { ok?: boolean; error?: string; info?: string };
 
@@ -132,13 +133,17 @@ function vorlageKeyOf(v: string | null | undefined): VorlageKey | null {
 
 /** Nachfass-Aufgabe je Vorlage nach dem Senden (App oder eigenes Mailprogramm), ohne Doppelungen. */
 async function folgenNachMail(
-  input: { vorlageKey?: string | null; erinnern?: boolean; erinnernTage?: number; mitLink?: boolean; meldeTag?: string | null; remindDays?: number | null },
+  input: { vorlageKey?: string | null; erinnern?: boolean; erinnernTage?: number; mitLink?: boolean; meldeTag?: string | null; remindDays?: number | null; fehlende?: string | null },
   o: { leadId: string; customerId: string; userId: string },
 ): Promise<string | null> {
   const plan =
     input.remindDays != null && input.erinnern === undefined
       ? nachfassenFuer(input.vorlageKey, { erinnern: input.remindDays > 0, tage: input.remindDays, mitLink: true })
-      : nachfassenFuer(input.vorlageKey, { erinnern: !!input.erinnern, tage: input.erinnernTage ?? 2, mitLink: !!input.mitLink, meldeTag: input.meldeTag });
+      : nachfassenFuer(input.vorlageKey, { erinnern: !!input.erinnern, tage: input.erinnernTage ?? 2, mitLink: !!input.mitLink, meldeTag: input.meldeTag, fehlende: input.fehlende });
+  // Kündigung gesendet (Paket M6): die Aufgabe „Alten Vertrag kündigen“ ist erledigt
+  if (input.vorlageKey === "kuendigung") {
+    await prisma.lead.updateMany({ where: { id: o.leadId, followUpNote: { startsWith: KUENDIGUNG_TODO } }, data: { followUpAt: null, followUpNote: null } }).catch(() => null);
+  }
   return fuehreNachfassenAus(o.leadId, plan, { customerId: o.customerId, userId: o.userId }).catch(() => null);
 }
 
@@ -162,6 +167,8 @@ export async function sendLeadMailAction(input: {
   mitLink?: boolean;
   /** „Wie besprochen“: vereinbarter Tag (YYYY-MM-DD) für die Wiedervorlage */
   meldeTag?: string | null;
+  /** „Unterlagen fehlen“: die angekreuzte Liste für die Erinnerung nach 3 Tagen */
+  fehlende?: string | null;
   /** PDF erzeugen und anhängen */
   pdf?: MailPdf | null;
   /** Alt: Erinnern, falls kein Termin gebucht wird (Werktage) */
@@ -235,6 +242,7 @@ export async function mailSelbstGesendetAction(input: {
   erinnernTage?: number;
   mitLink?: boolean;
   meldeTag?: string | null;
+  fehlende?: string | null;
 }): Promise<{ ok: true; history: LeadHistoryEntry[]; reminder?: string | null } | { ok: false; error: string }> {
   try {
     const ctx = await ctxWrite();

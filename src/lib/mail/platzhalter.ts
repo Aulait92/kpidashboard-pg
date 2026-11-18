@@ -34,6 +34,8 @@ export const ZUSATZ_PLATZHALTER = [
   "{termin_unterlagen}",
   "{fehlende_unterlagen}",
   "{melde_datum}",
+  // „Wie besprochen“ Stand 4 (18.11.2026): „heute“ beim Neustart nach der Bedenkzeit, sonst „am Donnerstag, 26. November“
+  "{melde_wann}",
   "{versicherer}",
   "{vertragsnummer}",
   "{kuendigungstermin}",

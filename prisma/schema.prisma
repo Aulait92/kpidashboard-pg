@@ -2874,6 +2874,7 @@ model LeadSequence {
   leadId     String
   customerId String
   // not_reached | offer | offer_selbst | offer_bedenkzeit | offer_selbst_bedenkzeit | no_show | silent | recall
+  // | nicht_erreicht_mail | unterlagen (Begleit-Abfolgen, Pakete M4/M6)
   kind       String
   // Index des nächsten Schritts
   step       Int       @default(0)
@@ -2887,6 +2888,8 @@ model LeadSequence {
   vorabCheckStep Int?
   // Bedenkzeit zum Angebot (Paket P5): Die Abfolge startet an diesem Tag neu, die Schritt-Tage zählen ab hier statt ab startedAt
   neustartAt DateTime?
+  // Angaben für die Schritte (Paket M6): z. B. { fehlende: "• IBAN …" } für die Erinnerung „Unterlagen fehlen“
+  daten      Json?
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 

@@ -132,7 +132,8 @@ describe("Angebot senden und nachfassen (P3)", () => {
     await runAngebotVorabCheck(new Date("2026-11-22T17:30:00Z"), push);
     expect(pushFuer(push, lead.id)).toHaveLength(2);
     await runSequences(new Date("2026-11-23T08:00:00Z")); // Mo 9 Uhr
-    const meine = mails.filter((m) => m.art === "angebot_nachfassen" && m.leadId === lead.id);
+    // Seit Paket M4 über die zentrale Funktion: Art = Schlüssel der Vorlage
+    const meine = mails.filter((m) => m.art === "nachfassen_angebot" && m.leadId === lead.id);
     expect(meine).toHaveLength(1);
     expect(meine[0].text).toMatch(/Rückruf wünschen: \S+\/rueckruf\//);
     expect(meine[0].text).toMatch(/Angebot ansehen: \S+\/ihr-angebot\//);

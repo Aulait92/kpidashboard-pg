@@ -129,6 +129,30 @@ export function vorvertraegeAus(raw: unknown): Vorvertraege | null {
   return { at: typeof o.at === "string" ? o.at : "", liste: normalisiereVertraege(o.liste), ...(o.keine === true ? { keine: true } : {}) };
 }
 
+/** Produktnamen der App, die sparteAus nicht kennt (Abschluss-Sparten aus lib/provision.ts). */
+const ABSCHLUSS_ALIAS: [RegExp, VertragSparte[]][] = [
+  [/privatschutz/i, ["Haftpflicht", "Hausrat"]],
+  [/\btkv\b|katze|hund|pferd/i, ["Tierkranken"]],
+  [/\bbu\b/i, ["Berufsunfähigkeit"]],
+];
+
+/**
+ * Bestehende Verträge, die der neue Abschluss ersetzt (Paket M6, Aufgabe „Alten Vertrag kündigen“): gleiche Sparte wie
+ * eines der Produkte des Abschlusses (Produkt des Leads, Sparte des Vertrags, gewählte Angebote). Rein.
+ */
+export function zuErsetzendeVertraege(v: Vorvertraege | null | undefined, produkte: (string | null | undefined)[]): Vorvertrag[] {
+  if (!v?.liste.length) return [];
+  const sparten = new Set<VertragSparte>();
+  for (const p of produkte) {
+    const t = (p ?? "").trim();
+    if (!t) continue;
+    const s = sparteAus(t);
+    if (s && s !== "Sonstige") sparten.add(s);
+    for (const [re, liste] of ABSCHLUSS_ALIAS) if (re.test(t)) liste.forEach((x) => sparten.add(x));
+  }
+  return v.liste.filter((x) => sparten.has(x.sparte));
+}
+
 /** Eine Zeile je Vertrag: „Haftpflicht (HUK, für die Familie)“. */
 export function vertragZeile(v: Vorvertrag): string {
   const zusatz = [v.gesellschaft, v.fuer ? `für ${v.fuer.replace(/^für\s+/i, "")}` : null].filter(Boolean).join(", ");

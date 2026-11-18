@@ -42,6 +42,12 @@ Stand 17.11.2026. Auftrag Ole, Teil des Soll-Verlaufs (`docs/plan-lead-verlauf.m
 
 Reihenfolge: M0, M1, M9 (Einstellungen), M3, M2, M4, M5, M6, M7; M8 je Paket.
 
+Stand 18.11.2026: M4 und M6 umgesetzt. Mail-Schritte der Abfolgen über `lib/mail/abfolgen-mail.ts` (zentral über
+`sendeVorlagenMail`), Begleit-Abfolgen `nicht_erreicht_mail` und `unterlagen` (laufen neben den anderen), Haken mit einem
+Tipp über `lib/mail/ein-tipp.ts` (Danke-Mail im Abschluss-Blatt, „Tür offen“ bei „Kein Interesse“), Aufgaben „Alten
+Vertrag kündigen“ und „Unterlagen nachfassen“ über `planeAufgabe` (LeadTask). Texte Stand 4: „Nach dem Abschluss“
+zeitneutral, „Wie besprochen“ mit `{melde_wann}` („heute“ beim Neustart nach der Bedenkzeit, „am …“ aus dem Dialog).
+
 ## M9 Erklärschritt (Sie-Form, freigegeben)
 
 - Überschrift: „Ihre Kunden bekommen jede wichtige Mail. Sie schreiben keine davon.“

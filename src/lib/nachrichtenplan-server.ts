@@ -1,7 +1,8 @@
 // Nachrichtenplan je Lead laden (Daten für lib/nachrichtenplan.ts planeNachrichten). Noch ohne Oberfläche (P6).
 
 import { prisma } from "@/lib/prisma";
-import { a, anredeZeile, asAnsprache } from "@/lib/ansprache";
+import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
+import type { VorlageKey } from "@/lib/mail/vorlagen";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
@@ -68,7 +69,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
         conversationId: true,
       },
     }),
-    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true, step: true, startedAt: true, nextAt: true, stoppedAt: true, vorabCheckStep: true, neustartAt: true } }),
+    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true, step: true, startedAt: true, nextAt: true, stoppedAt: true, vorabCheckStep: true, neustartAt: true, daten: true } }),
     prisma.conversation.findFirst({
       where: { customerId: lead.customerId, OR: [{ leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
       orderBy: { lastMessageAt: "desc" },
@@ -130,9 +131,22 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     },
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,
-    // E-Mail-Schritte (Angebot Tag 5): Text aus der Vorlage des Vermittlers
-    mailVorlagen: abfolgen.some((s) => s.kind === "offer" || s.kind === "offer_bedenkzeit")
-      ? { nachfassen_angebot: await import("@/lib/angebot-senden-server").then((m) => m.mailVorlage(lead.customerId, "nachfassen_angebot", an)) }
-      : undefined,
+    // E-Mail-Schritte (Angebot Tag 5, Pakete M4/M6): Text aus der Vorlage des Vermittlers
+    mailVorlagen: await mailVorlagenFuer(lead.customerId, abfolgen, an),
   });
+}
+
+/** Vorlagen der Mail-Schritte laufender Abfolgen (Kunden-Vorlage, sonst Standard). */
+async function mailVorlagenFuer(customerId: string, abfolgen: { kind: string; stoppedAt: Date | null }[], an: Ansprache) {
+  const { SEQUENCES } = await import("@/lib/lead-sequences");
+  const keys = new Set<VorlageKey>();
+  for (const a of abfolgen) {
+    if (a.stoppedAt) continue;
+    for (const st of SEQUENCES[a.kind as keyof typeof SEQUENCES]?.steps ?? []) if (st.action === "email") keys.add(st.vorlage);
+  }
+  if (!keys.size) return undefined;
+  const { mailVorlage } = await import("@/lib/angebot-senden-server");
+  const out: Partial<Record<VorlageKey, Awaited<ReturnType<typeof mailVorlage>>>> = {};
+  for (const k of keys) out[k] = await mailVorlage(customerId, k, an);
+  return out;
 }

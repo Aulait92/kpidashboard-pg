@@ -4,7 +4,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { asAnsprache, type Ansprache } from "@/lib/ansprache";
-import { STANDARD_VORLAGEN_STAND2 } from "@/lib/mail/vorlagen-alt";
+import { STANDARD_VORLAGEN_STAND2, STANDARD_VORLAGEN_STAND3 } from "@/lib/mail/vorlagen-alt";
 
 export { PLATZHALTER, ZUSATZ_PLATZHALTER, fuelle, fuelleMitSignatur, werteFuer, type Werte } from "@/lib/mail/platzhalter";
 
@@ -29,8 +29,10 @@ export type VorlageKey =
  * eigene Vorlagen bleiben). 1 = die ersten vier (13.11.2026), 2 = acht neue (14.11.2026),
  * 3 = alle Texte verkaufsstärker (15.11.2026): unverändert gespeicherte Standardvorlagen werden beim nächsten Laden
  * auf die neue Fassung gehoben (neueFassungen), selbst geänderte bleiben.
+ * 4 = Pakete M4/M6 (18.11.2026): „Nach dem Abschluss“ zeitneutral (kein „in Kürze“), „Wie besprochen“ passt auch für den
+ * Tag selbst ({melde_wann}: „heute“ beim Neustart nach der Bedenkzeit, „am Donnerstag, 26. November“ aus dem Dialog).
  */
-export const VORLAGEN_STAND = 3;
+export const VORLAGEN_STAND = 4;
 export const STAND_JE_VORLAGE: Record<VorlageKey, number> = {
   nicht_erreicht: 1,
   angebot: 1,
@@ -80,7 +82,7 @@ export const STANDARD_VORLAGEN_JE: Record<Ansprache, Std[]> = {
       key: "nach_abschluss",
       name: "Nach dem Abschluss",
       subject: "{betreff_name}vielen Dank für Ihr Vertrauen",
-      body: "{anrede},\n\nvielen Dank für Ihr Vertrauen. Ihre Unterlagen erhalten Sie in Kürze. Wenn Sie Fragen haben, antworten Sie einfach auf diese E-Mail.\n\n{signatur}",
+      body: "{anrede},\n\nvielen Dank für Ihr Vertrauen. Ich kümmere mich um alles Weitere und melde mich, sobald es Neuigkeiten gibt. Wenn Sie Fragen haben, antworten Sie einfach auf diese E-Mail.\n\n{signatur}",
     },
     {
       key: "termin_vorbereitung",
@@ -121,8 +123,8 @@ export const STANDARD_VORLAGEN_JE: Record<Ansprache, Std[]> = {
     {
       key: "wie_besprochen",
       name: "Wie besprochen: später melden",
-      subject: "{betreff_name}wie besprochen melde ich mich später",
-      body: "{anrede},\n\nvielen Dank für das Gespräch. Wie besprochen melde ich mich am {melde_datum} wieder bei Ihnen. Haben Sie vorher Fragen, antworten Sie einfach auf diese E-Mail.\n\n{signatur}",
+      subject: "{betreff_name}ich melde mich wie besprochen",
+      body: "{anrede},\n\nwie besprochen melde ich mich {melde_wann} bei Ihnen zu {ihr_produkt}. Haben Sie Fragen? Eine kurze Antwort auf diese E-Mail genügt.\n\n{signatur}",
     },
     {
       key: "tuer_offen",
@@ -154,7 +156,7 @@ export const STANDARD_VORLAGEN_JE: Record<Ansprache, Std[]> = {
       key: "nach_abschluss",
       name: "Nach dem Abschluss",
       subject: "{betreff_name}vielen Dank für dein Vertrauen",
-      body: "{anrede},\n\nvielen Dank für dein Vertrauen. Deine Unterlagen bekommst du in Kürze. Wenn du Fragen hast, antworte einfach auf diese E-Mail.\n\n{signatur}",
+      body: "{anrede},\n\nvielen Dank für dein Vertrauen. Ich kümmere mich um alles Weitere und melde mich, sobald es Neuigkeiten gibt. Wenn du Fragen hast, antworte einfach auf diese E-Mail.\n\n{signatur}",
     },
     {
       key: "termin_vorbereitung",
@@ -195,8 +197,8 @@ export const STANDARD_VORLAGEN_JE: Record<Ansprache, Std[]> = {
     {
       key: "wie_besprochen",
       name: "Wie besprochen: später melden",
-      subject: "{betreff_name}wie besprochen melde ich mich später",
-      body: "{anrede},\n\nvielen Dank für das Gespräch. Wie besprochen melde ich mich am {melde_datum} wieder bei dir. Hast du vorher Fragen, antworte einfach auf diese E-Mail.\n\n{signatur}",
+      subject: "{betreff_name}ich melde mich wie besprochen",
+      body: "{anrede},\n\nwie besprochen melde ich mich {melde_wann} bei dir zu {ihr_produkt}. Hast du Fragen? Eine kurze Antwort auf diese E-Mail genügt.\n\n{signatur}",
     },
     {
       key: "tuer_offen",
@@ -227,18 +229,20 @@ export function fehlendeStandards(an: Ansprache, stand: number, vorhanden: { nam
 }
 
 /**
- * Stand 3: gespeicherte Standardvorlagen, die noch genau dem alten Text (Stand 2, Sie oder Du) entsprechen, bekommen
- * die neue Fassung in derselben Ansprache (rein). Selbst geänderte Vorlagen bleiben unberührt.
+ * Stand 3 und 4: gespeicherte Standardvorlagen, die noch genau einem alten Text (Stand 2 oder 3, Sie oder Du)
+ * entsprechen, bekommen die neue Fassung in derselben Ansprache (rein). Selbst geänderte Vorlagen bleiben unberührt.
  */
 export function neueFassungen(vorhanden: { id: string; subject: string; body: string; standardKey: string | null }[]): { id: string; subject: string; body: string }[] {
   const out: { id: string; subject: string; body: string }[] = [];
   for (const v of vorhanden) {
-    for (const an of ["sie", "du"] as const) {
-      const alt = STANDARD_VORLAGEN_STAND2[an].find((x) => x.key === v.standardKey);
+    treffer: for (const an of ["sie", "du"] as const) {
       const neu = STANDARD_VORLAGEN_JE[an].find((x) => x.key === v.standardKey);
-      if (alt && neu && alt.subject === v.subject && alt.body === v.body && (alt.subject !== neu.subject || alt.body !== neu.body)) {
-        out.push({ id: v.id, subject: neu.subject, body: neu.body });
-        break;
+      for (const altListe of [STANDARD_VORLAGEN_STAND2, STANDARD_VORLAGEN_STAND3]) {
+        const alt = altListe[an].find((x) => x.key === v.standardKey);
+        if (alt && neu && alt.subject === v.subject && alt.body === v.body && (alt.subject !== neu.subject || alt.body !== neu.body)) {
+          out.push({ id: v.id, subject: neu.subject, body: neu.body });
+          break treffer;
+        }
       }
     }
   }
@@ -260,8 +264,8 @@ export async function loadVorlagen(customerId: string): Promise<Vorlage[]> {
     await prisma.mailTemplate.createMany({ data: neu.map((v) => ({ customerId, name: v.name, subject: v.subject, body: v.body, standardKey: v.key })) });
     rows = await ladeAlle(customerId);
   }
-  // Stand 3: unveränderte Standardvorlagen auf die neue Fassung heben (nur wenn sie noch exakt dem alten Text entsprechen)
-  if (c.mailVorlagenStand < 3) {
+  // Stand 3 und 4: unveränderte Standardvorlagen auf die neue Fassung heben (nur wenn sie noch exakt einem alten Text entsprechen)
+  if (c.mailVorlagenStand < VORLAGEN_STAND) {
     const updates = neueFassungen(rows);
     for (const u of updates) {
       await prisma.mailTemplate.updateMany({ where: { id: u.id, customerId }, data: { subject: u.subject, body: u.body } });

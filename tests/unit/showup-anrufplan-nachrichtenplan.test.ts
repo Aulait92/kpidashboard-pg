@@ -98,10 +98,16 @@ describe("Nachrichtenplan je Lead", () => {
         anrufplan: { followUpAt: new Date(now.getTime() + 2 * H), followUpNote: "Anrufversuch 2 von 6", callAttempts: 1, callPlanStartedAt: now, lastCallAttemptAt: now },
       }),
     );
-    const wa = plan.filter((e) => e.quelle === "abfolge");
+    const schritte = plan.filter((e) => e.quelle === "abfolge");
+    const wa = schritte.filter((e) => e.kanal === "whatsapp");
     expect(wa).toHaveLength(2);
     expect(wa[0].vorschau).toBe("Guten Tag Frau Becker, kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden?");
     expect(wa[1].at).toBe(new Date(now.getTime() + DAY).toISOString());
+    // Paket M4: am selben Tag, 2 Std. nach der WhatsApp, die Mail „Nicht erschienen“
+    const mail = schritte.filter((e) => e.kanal === "email");
+    expect(mail).toHaveLength(1);
+    expect(mail[0].at).toBe(new Date(now.getTime() + 2 * H).toISOString());
+    expect(mail[0].vorschau).toContain("Betreff: Frau Becker, neuer Termin für unser Gespräch?");
     const anrufe = plan.filter((e) => e.quelle === "anrufplan");
     expect(anrufe.map((e) => e.titel)).toEqual(["Anrufversuch 2 von 6", "Anrufversuch 3 von 6", "Anrufversuch 4 von 6", "Anrufversuch 5 von 6", "Anrufversuch 6 von 6"]);
     expect(anrufe[0].voraussichtlich).toBe(false);
