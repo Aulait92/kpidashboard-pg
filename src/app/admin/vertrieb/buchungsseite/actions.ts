@@ -1,5 +1,6 @@
 "use server";
 
+import { parseWeitereKalender } from "@/lib/calendar/belegt-weitere";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
@@ -57,6 +58,18 @@ export async function saveSalesTimesAction(_prev: SourceResult, fd: FormData): P
   const res = await updateLeadTimes(VERTRIEB_CUSTOMER_ID, VERTRIEB_CUSTOMER_ID, fd);
   if (res.ok) revalidatePath(PATH);
   return res;
+}
+
+/** Weitere Kalender, die nur für „belegt“ zählen (z. B. der alte Google-Kalender nach einem Kontowechsel). */
+export async function saveBusyCalendarsAction(_prev: { ok?: boolean; error?: string }, fd: FormData): Promise<{ ok?: boolean; error?: string }> {
+  await requireAuth();
+  const parsed = parseWeitereKalender(String(fd.get("ids") ?? ""));
+  if (!parsed.ok) return { error: parsed.error };
+  await prisma.calendarConnection.updateMany({ where: { customerId: VERTRIEB_CUSTOMER_ID }, data: { busyCalendarIds: parsed.ids } });
+  await audit("calendar.busy_calendars", { customerId: VERTRIEB_CUSTOMER_ID, entity: "CalendarConnection", details: { anzahl: parsed.ids.length } });
+  revalidatePath(PATH);
+  revalidatePath("/admin/neu", "layout");
+  return { ok: true };
 }
 
 /** Kalender trennen (z. B. um auf Outlook zu wechseln). */

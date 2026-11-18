@@ -1215,6 +1215,9 @@ model CalendarConnection {
   bookingSlug     String?   @unique
   // Frühere Kurznamen der Buchungsseite: leiten auf bookingSlug weiter (lib/calendar/buchungslink.ts)
   bookingSlugAlt  String[]  @default([])
+  // Weitere Google-Kalender, die nur für „belegt“ zählen (freigegebene Kalender, z. B. alter Kalender nach Kontowechsel;
+  // Ole, 18.11.2026). Kalender-ID bzw. Adresse wie in Google, abgefragt per freeBusy mit.
+  busyCalendarIds String[]  @default([])
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
