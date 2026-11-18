@@ -19,7 +19,8 @@ describe("eigeneBuchungsArt (Calendly ablösen)", () => {
 describe("Buchungsseite: Sparten wie auf der Webseite (Ole, 18.11.2026)", () => {
   it("nur die Lead-Arten, die wir liefern", async () => {
     const { VERTRIEB_INTERESSEN } = await import("@/lib/vertrieb/buchung");
-    expect(VERTRIEB_INTERESSEN).toHaveLength(13);
+    expect(VERTRIEB_INTERESSEN).toHaveLength(12);
+    expect(VERTRIEB_INTERESSEN).not.toContain("Finanzoptimierung");
     expect(VERTRIEB_INTERESSEN).toContain("Azubi-Leads mit Förderberechtigung");
     expect(VERTRIEB_INTERESSEN).not.toContain("Hundefutter");
   });

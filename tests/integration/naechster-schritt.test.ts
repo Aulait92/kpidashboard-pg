@@ -229,8 +229,8 @@ describe("Nächster Schritt", () => {
     expect(first.sent).toBeGreaterThanOrEqual(1);
     const mine = push.mock.calls.filter((c) => c[0] === st.userId);
     expect(mine).toHaveLength(1);
-    expect(mine[0][1]).toMatchObject({ title: "2 Leads brauchen einen nächsten Schritt" });
-    expect(mail.mock.calls.some((c) => (c[0] as { subject: string }).subject === "2 Leads brauchen einen nächsten Schritt")).toBe(true);
+    expect(mine[0][1]).toMatchObject({ title: "Wichtig: 2 Leads brauchen einen nächsten Schritt" });
+    expect(mail.mock.calls.some((c) => (c[0] as { subject: string }).subject === "Wichtig: 2 Leads brauchen einen nächsten Schritt")).toBe(true);
     // gleicher Tag: nichts mehr
     await runNextStepReminders(new Date(at8.getTime() + 5 * 60 * 1000));
     expect(push.mock.calls.filter((c) => c[0] === st.userId)).toHaveLength(1);
@@ -253,9 +253,9 @@ describe("Nächster Schritt", () => {
     await runNextStepReminders(at8);
     const adv = push.mock.calls.filter((c) => c[0] === advisor.id);
     expect(adv).toHaveLength(1);
-    expect(adv[0][1]).toMatchObject({ title: "1 Lead braucht einen nächsten Schritt" });
+    expect(adv[0][1]).toMatchObject({ title: "Wichtig: 1 Lead braucht einen nächsten Schritt" });
     const owner = push.mock.calls.filter((c) => c[0] === st.userId);
-    expect(owner[0][1]).toMatchObject({ title: "1 Lead braucht einen nächsten Schritt" });
+    expect(owner[0][1]).toMatchObject({ title: "Wichtig: 1 Lead braucht einen nächsten Schritt" });
   });
 
   it("Wiedervorlage nicht erreicht: Versuch gezählt, Wiedervorlage rückt vor, Notiz bleibt (Ole, 16.11.2026)", async () => {

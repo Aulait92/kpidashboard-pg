@@ -32,7 +32,7 @@ export function reminderText(missing: number, resultMissing: number): { title: s
   if (resultMissing > 0) parts.push(`bei ${resultMissing} ${resultMissing === 1 ? "Termin fehlt" : "Terminen fehlt"} das Ergebnis`);
   const sentence = parts.join(", ");
   return {
-    title: missing === 1 ? "1 Lead braucht einen nächsten Schritt" : `${missing} Leads brauchen einen nächsten Schritt`,
+    title: missing === 1 ? "Wichtig: 1 Lead braucht einen nächsten Schritt" : `Wichtig: ${missing} Leads brauchen einen nächsten Schritt`,
     body: `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}. Legen Sie fest, wie es weitergeht: Wiedervorlage, Termin, Abschluss oder Verloren.`,
   };
 }

@@ -157,7 +157,6 @@ export type Rolle = (typeof ROLLEN)[number]["key"];
 export const VERTRIEB_INTERESSEN = [
   "PKV-Optimierung",
   "Sterbegeld",
-  "Finanzoptimierung",
   "Kindersparplan",
   "Azubi-Leads mit Förderberechtigung",
   "Privathaftpflicht",
