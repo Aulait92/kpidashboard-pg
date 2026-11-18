@@ -12,7 +12,8 @@ import { buttonClass, Card } from "@/components/ui";
 import { ActionMenu } from "@/components/ui/menu";
 import { NextStepButton } from "@/components/next-step";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
-import { oeffneLeadMail } from "@/components/lead-mail";
+import { AngebotSendenSheet } from "@/components/angebot-senden";
+import { useToast } from "@/components/ui/toast";
 import { terminArtLabel } from "@/lib/termin-art";
 import type { TerminAktion, TerminKartenAktionen } from "@/lib/termin-karte";
 import { cn } from "@/lib/utils";
@@ -56,7 +57,6 @@ export function TerminKarte({
   name,
   source,
   phone,
-  mailReady,
 }: {
   t: TerminKartenDaten;
   a: TerminKartenAktionen;
@@ -64,11 +64,13 @@ export function TerminKarte({
   name: string;
   source: string | null;
   phone: string | null;
-  /** Postfach verbunden: „Angebot senden“ öffnet die E-Mail mit der Angebotsvorlage */
-  mailReady: boolean;
+  /** Nicht mehr genutzt: „Angebot senden“ öffnet überall das Blatt aus P3 (Ole, 18.11.2026) */
+  mailReady?: boolean;
 }) {
   const router = useRouter();
   const [verschieben, setVerschieben] = useState(false);
+  const [angebotOffen, setAngebotOffen] = useState(false);
+  const toast = useToast();
   const wechsel = a.naechsterWechsel ? new Date(a.naechsterWechsel).getTime() : null;
 
   // Sanft zur nächsten Phase umschalten (nur wenn bald, Timer höchstens 6 Stunden)
@@ -86,10 +88,9 @@ export function TerminKarte({
     praesentation: `/buyer/termine/${t.id}/praesentation`,
     ...(t.meetUrl ? { videocall: t.meetUrl } : {}),
     ...(phone ? { anrufen: `tel:+${phone}` } : {}),
-    // Ohne verbundenes Postfach: zu den Angeboten in der Terminvorbereitung
-    ...(!mailReady ? { angebot: `${vorbereitung}#angebote` } : {}),
   };
-  const angebotMail = () => oeffneLeadMail("angebot");
+  // Ein Blatt für alle Stellen (P3): über die App senden oder „Habe ich selbst gesendet“
+  const angebotMail = () => setAngebotOffen(true);
 
   function knopf(x: TerminAktion, haupt: boolean) {
     const variant = haupt ? "primary" : "secondary";
@@ -116,7 +117,7 @@ export function TerminKarte({
         </button>
       );
     }
-    if (x === "angebot" && mailReady) {
+    if (x === "angebot") {
       return (
         <button key={x} type="button" onClick={angebotMail} className={buttonClass(variant, size, cls)} data-termin-aktion={x}>
           <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {LABEL[x]}
@@ -192,7 +193,7 @@ export function TerminKarte({
                     icon: ICON[x],
                     onSelect: () => {
                       if (x === "verschieben") return setVerschieben(true);
-                      if (x === "angebot" && mailReady) return angebotMail();
+                      if (x === "angebot") return angebotMail();
                       const h = href[x];
                       if (!h) return;
                       if (x === "videocall") window.open(h, "_blank", "noreferrer");
@@ -206,6 +207,16 @@ export function TerminKarte({
         </div>
       </div>
       <RescheduleDialog appointmentId={t.id} open={verschieben} onClose={() => setVerschieben(false)} onChanged={() => router.refresh()} />
+      <AngebotSendenSheet
+        ziel={angebotOffen ? { appointmentId: t.id, name } : null}
+        onClose={() => setAngebotOffen(false)}
+        onError={(message) => toast.show({ message, tone: "error" })}
+        onDone={(message) => {
+          setAngebotOffen(false);
+          toast.show({ message });
+          router.refresh();
+        }}
+      />
     </Card>
   );
 }

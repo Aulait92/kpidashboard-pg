@@ -149,9 +149,9 @@ describe("Policen auslesen", () => {
   async function leadMitUnterlage(o: { data: Buffer; sparte?: string | null; mime?: string; nachweis?: { ki: boolean | null; version: string; art?: string } | null; leadExtra?: Record<string, unknown> }) {
     const phone = newPhone();
     const lead = await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone, source: "Privatschutz", status: "Termin", reached: true, assignedUserId: ownerId, ...o.leadExtra } });
-    const storageKey = await legeAb(customerId, lead.id, o.data);
+    const { storageKey, dateiSchluessel } = await legeAb(customerId, lead.id, o.data);
     const doc = await prisma.leadDocument.create({
-      data: { customerId, leadId: lead.id, status: "gespeichert", mimeType: o.mime ?? "application/pdf", fileName: "Julia Schneider Police.pdf", size: o.data.length, storageKey, sparte: o.sparte ?? null },
+      data: { customerId, leadId: lead.id, status: "gespeichert", mimeType: o.mime ?? "application/pdf", fileName: "Julia Schneider Police.pdf", size: o.data.length, storageKey, dateiSchluessel, sparte: o.sparte ?? null },
     });
     if (o.nachweis !== null) await nachweis(lead.id, phone, o.nachweis ?? { ki: true, version: "2026-11-18.g1" });
     return { lead, doc, phone };

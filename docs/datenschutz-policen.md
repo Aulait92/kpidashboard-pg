@@ -1,6 +1,6 @@
 # Policen vor dem Termin per WhatsApp: Datenschutz
 
-Stand: 18.11.2026 (Ole, nach der Rechtsprüfung `docs/recht/policen-whatsapp-gesundheitsdaten.md`, Ampel GELB).
+Stand: 18.11.2026, ergänzt um Abschnitt 3a Sicherheit (Ole, nach der Rechtsprüfung `docs/recht/policen-whatsapp-gesundheitsdaten.md`, Ampel GELB).
 Ersetzt die Fassung vom 17.11.2026 (KI-Zuordnung, Auslesen, 30 Tage). Die ältere Bewertung in
 `docs/recht-gesundheitsunterlagen.md` und `docs/dsfa-policen-gesundheit.md` gilt nur noch, soweit sie hier nicht
 geändert ist (siehe dort den Hinweis oben).
@@ -83,6 +83,28 @@ aus. Codestellen siehe Abschnitt 7.
 
 Bei R2: Cloudflare als Unterauftragsverarbeiter (US-Konzern) in `SUBPROCESSORS` aufnehmen (Mitteilung mit Widerspruchsfrist).
 
+## 3a. Sicherheit vor dem breiten Start (18.11.2026)
+
+- **Zwei-Faktor-Login (AVV § 5):** Öffnen und Herunterladen von Policen vom Kunden nur für Logins mit Zwei-Faktor-Login
+  (`lib/totp-account.ts zweiFaktorAktiv`, geprüft in `listUnterlagen`, `ladeUnterlage` und beiden Routen). Ohne: Hinweis
+  „Zum Öffnen Zwei-Faktor-Login einrichten“ an den Unterlagen (Kontakt, Terminvorbereitung), Einrichtungs-Karte
+  `/buyer/konto/sicherheit/zwei-faktor?zurueck=…` mit QR-Code und 8 Notfall-Codes (einmal angezeigt, kopierbar), danach
+  zurück. Die Freischaltung Kranken/BU/Leben (`stimmeAvvZu`) setzt den Zwei-Faktor-Login des Inhabers voraus; die Karte
+  führt sonst zuerst zur Einrichtung. Für alle anderen freiwillig unter Einstellungen → Anmeldung & Sicherheit. Die
+  Anmeldung fragt den Code auf jedem neuen Gerät (auch bei Google/Microsoft), „Gerät merken“ wie bisher. Admin-Vorschau:
+  ausgenommen (sieht ohnehin weder Inhalt noch Dateinamen).
+- **Virenprüfung:** jede Datei vor der Ablage mit ClamAV (`lib/sicherheit/virenpruefung.ts`, `docs/virenpruefung.md`).
+  Befund: nicht gespeichert, Lead neutral informiert, Vermittler-Push, `viren.befund`. Ohne Prüfung (Standard):
+  gespeichert als `ungeprueft`, erst nach erfolgreicher Prüfung angeboten; mit `VIRENPRUEFUNG_PFLICHT=1` abgelehnt.
+- **Crypto-Shredding:** Seit 18.11.2026 hat jede Datei einen eigenen zufälligen Datenschlüssel (Format 2,
+  `ablage.ts verschluesseleMitDateiSchluessel`), verpackt mit dem Schlüssel des Mandanten in `LeadDocument.dateiSchluessel`.
+  Mit dem Eintrag ist der Schlüssel vernichtet; eine Kopie der Datei (Versionierung oder Sicherung beim Speicheranbieter)
+  ist dann nicht mehr lesbar. Ältere Dateien (Format 1) bleiben lesbar und laufen mit ihrer Frist aus.
+- **Löschprotokoll:** jede Löschung (Widerruf, Frist, Vermittler, Virus, Art. 17, Vertragsende) steht in
+  `Loeschprotokoll` (nur IDs und Objektname, keine Inhalte) und als Kopie im Bucket (`loeschprotokoll/<id>.json`). Nach
+  einer Wiederherstellung der Datenbank wird sie automatisch erneut angewendet (`lib/loeschprotokoll.ts`, beim Start
+  der App und täglich), siehe `docs/notfall-wiederherstellung.md`.
+
 ## 4. Nachweis (A3)
 
 Tabelle `PolicenNachweis`, **nur anhängen** (Datenbank-Trigger verbietet UPDATE und DELETE; DELETE nur bei Art. 17 bzw.
@@ -101,6 +123,9 @@ zuständiger Vermittler (User-ID, Name), Datenschutzhinweis (Adresse, Version), 
 - Media-IDs ohne Einwilligung: 24 Stunden. Widerruf: sofort. Art. 17 bzw. Vertragsende: mit dem Lead bzw. Kunden
   (`eraseLead`, `eraseCustomerData`), Dateien im Bucket zuerst. Verwaiste Dateien im Bucket (älter als ein Tag, ohne
   Eintrag) löscht der Cron mit.
+- Sicherungen: Der Bucket selbst wird nicht gesichert (keine Versionierung einschalten). Datenbank-Sicherungen bei
+  Railway höchstens 30 Tage (Löschkonzept in `docs/datenschutz.md`); sie enthalten Einträge und verpackte
+  Datenschlüssel, nicht die Dateien. Nach einer Wiederherstellung wendet das Löschprotokoll alle Löschungen erneut an.
 - Meta/360dialog: nach dem Abruf `DELETE /{media_id}` (`lib/policen/media.ts loescheMedia`, bestmöglich). Ob Meta
   eingehende Medien darauf sofort löscht, ist nicht dokumentiert; sonst gilt Metas Frist (bis 30 Tage). Offen: „No
   Storage“ bzw. „Local Storage EU“ bei 360dialog anfragen (E2).
@@ -111,7 +136,9 @@ zuständiger Vermittler (User-ID, Name), Datenschutzhinweis (Adresse, Version), 
 |---|---|
 | Einwilligungstor | kein Abruf ohne Einwilligung (`server.ts handleInboundMedia`, `warteAufEinwilligung`) |
 | Verschlüsselung | AES-256-GCM, Schlüssel je Mandant, privater EU-Bucket (`ablage.ts`) |
-| Zugriff | `leadScope`, signierte Links 2 Minuten, Admin-Vorschau ohne Inhalte und Dateinamen |
+| Zugriff | `leadScope`, signierte Links 2 Minuten, Admin-Vorschau ohne Inhalte und Dateinamen; Öffnen nur mit Zwei-Faktor-Login (Abschnitt 3a) |
+| Schadsoftware | ClamAV vor der Ablage, ungeprüft nicht angeboten (Abschnitt 3a, `docs/virenpruefung.md`) |
+| Sicherungen | Crypto-Shredding je Datei, Löschprotokoll nach Wiederherstellung, Datenbank-Sicherungen höchstens 30 Tage (`docs/datenschutz.md`, Löschkonzept) |
 | Protokoll | `policen.abruf`, `policen.einwilligung`, `policen.lieber_nicht`, `policen.widerruf`, `policen.verworfen`, `policen.geloescht`, `policen.avv_zustimmung` (ohne Inhalte); Nachweise in `PolicenNachweis` |
 | Logs (A7) | keine Inhalte, Dateinamen, Medien-Adressen in Logs; Fehler nur mit Fehlertyp; Push neutral |
 | Löschfristen | Abschnitt 5 |
@@ -143,8 +170,9 @@ bzw. Vertragsende“.
    Dateinamen kann trotzdem gespeichert werden (Restrisiko, Anwältin).
 3. AVV-Ergänzung (b): Platzhalter gefüllt (Speicher aus der Konfiguration, KI-Dienst „vor dem ersten Einsatz angezeigt“,
    Sicherungszyklus „des Hosting-Anbieters“ ohne Zahl). Prüfen lassen.
-4. 2FA für Vermittler mit Zugriff auf Policen (AVV § 5) ist nicht erzwungen; Malware-Prüfung eingehender Dateien fehlt
-   (nur Typprüfung am Inhalt). Beides vor breitem Rollout.
+4. ~~2FA für Vermittler mit Zugriff auf Policen (AVV § 5) ist nicht erzwungen; Malware-Prüfung eingehender Dateien
+   fehlt.~~ Umgesetzt am 18.11.2026 (Abschnitt 3a). Offen nur: ClamAV-Dienst in Railway anlegen (`docs/virenpruefung.md`),
+   bis dahin werden neue Policen nicht angeboten.
 5. Erinnerungs-Opt-in gibt es nur auf `/book`; Buchungen per WhatsApp-Knopf haben keins (keine Erinnerung).
 6. Löschung bei Meta: Wirkung von `DELETE /{media_id}` für eingehende Medien nicht zugesichert; No Storage anfragen.
 7. Art. 17 löscht auch die Nachweise (wie bisher beim Einwilligungsprotokoll); ob sie nach Art. 17 Abs. 3 lit. e

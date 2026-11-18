@@ -276,11 +276,17 @@ async function sendLeadEmailInner(
       customer: { select: { leadAddress: true, mailAblauf: true } },
     },
   });
-  if (!appt?.conversationId) return { sent: false, reason: "no_conversation" };
-  const conv = await prisma.conversation.findUnique({
-    where: { id: appt.conversationId },
-    select: { contactEmail: true, contactName: true, contactPhone: true, leadId: true },
-  });
+  if (!appt) return { sent: false, reason: "not_found" };
+  // Ohne Chat (Mail-Strecke, Lead ohne WhatsApp, lib/mail-strecke): Adresse und Name vom Lead
+  if (!appt.conversationId && !appt.leadId) return { sent: false, reason: "no_conversation" };
+  const conv = appt.conversationId
+    ? await prisma.conversation.findUnique({
+        where: { id: appt.conversationId },
+        select: { contactEmail: true, contactName: true, contactPhone: true, leadId: true },
+      })
+    : await prisma.lead
+        .findUnique({ where: { id: appt.leadId! }, select: { email: true, name: true, phone: true, id: true } })
+        .then((l) => (l ? { contactEmail: l.email, contactName: l.name, contactPhone: l.phone ?? "", leadId: l.id } : null));
   const to = conv?.contactEmail?.trim();
   if (!to) return { sent: false, reason: "no_email" };
   const ev = await customerEventById(appointmentId);
@@ -328,12 +334,19 @@ async function sendLeadEmailInner(
  */
 async function vorbereitungFuer(
   kind: LeadEmailKind,
-  appt: { conversationId: string | null; customer: { mailAblauf: unknown } | null },
+  appt: { conversationId: string | null; leadId?: string | null; customer: { mailAblauf: unknown } | null },
   appointmentId: string,
   now: Date,
 ): Promise<Vorbereitung | null> {
   if (kind !== "booked" && kind !== "reminder") return null;
-  if (!appt.conversationId || leseMailAblauf(appt.customer?.mailAblauf).stufen.termin_vorbereitung !== "auto") return null;
+  if (leseMailAblauf(appt.customer?.mailAblauf).stufen.termin_vorbereitung !== "auto") return null;
+  if (!appt.conversationId) {
+    // Termin über die Mail-Strecke (ohne Chat): Bereitlegen aus Formular und Angaben der Seite
+    if (!appt.leadId) return null;
+    return import("@/lib/mail-strecke/server")
+      .then((m) => m.vorbereitungOhneChat(appt.leadId!, appointmentId))
+      .catch(() => null);
+  }
   try {
     const { bereitlegenFuerTermin } = await import("@/lib/whatsapp/termin-strecke");
     const v = await bereitlegenFuerTermin(appt.conversationId, appointmentId, now);

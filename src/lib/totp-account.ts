@@ -10,6 +10,23 @@ import { generateBackupCodes, generateTotpSecret, hashBackupCode, verifyTotp } f
 
 export type TotpState = { error?: string; backupCodes?: string[]; done?: boolean };
 
+/**
+ * Hat dieser Login den Zwei-Faktor-Login eingerichtet? Pflicht für das Öffnen von Policen vom Kunden und die Freischaltung
+ * Kranken/BU/Leben (AVV-Ergänzung § 5, Ole 18.11.2026). Die Anmeldung fragt den Code bei jedem neuen Gerät ab
+ * (lib/auth.ts), beim Einrichten werden alle anderen Sitzungen beendet.
+ */
+export async function zweiFaktorAktiv(userId: string | null | undefined): Promise<boolean> {
+  if (!userId) return false;
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { totpEnabledAt: true, totpSecretEnc: true } });
+  return !!(u?.totpEnabledAt && u.totpSecretEnc);
+}
+
+/** Nur eigene Seiten als Rücksprung nach dem Einrichten (z. B. /buyer/leads/…#dokumente), sonst die Sicherheitsseite. */
+export function sichererRuecksprung(ziel: string | null | undefined, standard = "/buyer/konto/sicherheit"): string {
+  const z = (ziel ?? "").trim();
+  return /^\/buyer(\/[A-Za-z0-9_\-/]*)?(\?[A-Za-z0-9_=&%.-]*)?(#[A-Za-z0-9_-]*)?$/.test(z) && !z.startsWith("//") ? z : standard;
+}
+
 /** Schritt 1: neuen Schlüssel erzeugen (noch nicht aktiv). */
 export async function startTotpSetup(userId: string): Promise<void> {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { totpEnabledAt: true } });

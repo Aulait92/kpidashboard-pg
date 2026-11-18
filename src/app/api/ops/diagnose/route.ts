@@ -6,7 +6,7 @@ import { normalizeLoginEmail } from "@/lib/login-email";
 // damit Claude Zustände prüfen kann, ohne Datenbank-Zugang. Kein freies SQL, keine Geheimnisse,
 // Lead-Daten nur so weit nötig (Name statt Telefon/E-Mail).
 // Absicherung: eigener Lese-Schlüssel OPS_READ_TOKEN (≥ 32 Zeichen) als Bearer-Token.
-//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]
+//   GET /api/ops/diagnose?q=variablen|uebersicht|stripe|followups|vorlagen|demo|kunden|whatsapp|d360|gedankenstriche|login&email=…|meta&page=…|capi|ppl|hvk[&neu=1]|instantly[&email=…|&name=…|&nachholen=1]|instantly-auswertung|vertrieb-termine[&seit=YYYY-MM-DD][&link=1]|sicherheit
 export const dynamic = "force-dynamic";
 
 function authorized(req: Request): boolean {
@@ -621,15 +621,33 @@ async function vertriebTermine(params: URLSearchParams) {
   return diagnoseVertriebTermine({ seit: berlinMidnight(/^\d{4}-\d{2}-\d{2}$/.test(seit) ? seit : "2026-11-11"), link: params.get("link") === "1" });
 }
 
-const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p) };
+// Sicherheit der Policen (18.11.2026): ClamAV erreichbar, ungeprüfte Dateien, Löschprotokoll offen (nur Anzahlen)
+async function sicherheitStatus() {
+  const { virenKonfig, virenpruefungErreichbar, virenPflicht } = await import("@/lib/sicherheit/virenpruefung");
+  const { wendeLoeschprotokollAn } = await import("@/lib/loeschprotokoll");
+  const k = virenKonfig();
+  const lp = await wendeLoeschprotokollAn({ nurPruefen: true });
+  return {
+    virenpruefung: { eingerichtet: !!k, host: k?.host ?? null, port: k?.port ?? null, erreichbar: await virenpruefungErreichbar(k), pflicht: virenPflicht() },
+    ungeprueft: {
+      policen: await prisma.leadDocument.count({ where: { virenStatus: "ungeprueft" } }),
+      uploads: await prisma.leadFile.count({ where: { virenStatus: "ungeprueft" } }),
+    },
+    loeschprotokoll: { eintraege: await prisma.loeschprotokoll.count(), offen: lp.offen.length },
+  };
+}
+
+const QUERIES: Record<string, (params: URLSearchParams) => Promise<unknown>> = { zustellfehler, variablen, uebersicht, stripe, followups, vorlagen, demo, kunden, whatsapp, d360, d360webhook, angebote, gedankenstriche, login, meta, capi, ppl, hvk, instantly, "instantly-auswertung": instantlyAuswertung, "vertrieb-termine": vertriebTermine, kette: async (p) => (await import("@/lib/ops/kette")).kette(p), "ki-eu": async () => (await import("@/lib/ki-eu")).kiEuStatus(), "policen-auslesen": async () => (await import("@/lib/policen/auslesen/server")).auslesenStatus(), "kunde-abrechnung": async (p) => (await import("@/lib/ops/kunde-abrechnung")).kundeAbrechnung(p), sicherheit: sicherheitStatus };
 
 // Weitere Abfragen in eigenen Modulen (nur lesend)
 //   q=anzeige-abdeckung[&rueckfuellung=1]  Anzeige am Lead und Kosten je Anzeige je Kunde ab Startdatum (lib/ops/anzeige-abdeckung.ts)
 //   q=vermittler-anrede[&alle=1]  Kunden ohne Anrede in den Anbieterangaben, nur ID und Name (lib/ops/vermittler-anrede.ts)
 //   q=admin-nutzung[&tage=30]              Nutzung des Admins: Änderungsprotokoll je Aktion, Klicks je Funktion und Seite, nur Zahlen (lib/ops/admin-nutzung.ts)
+//   q=mail-strecke[&tage=7]                Mail-Strecke ohne WhatsApp: Schalter, Schritte, Auslöser, Gründe, Termine, SMS, Kandidaten (lib/ops/mail-strecke.ts)
 //   q=mail-eingang[&tage=7]                Antwortadresse mit Eingang: Schalter, Einrichtung, Zählung, letzte Eingänge, Fehler, ohne Inhalte (lib/ops/mail-eingang.ts)
 const WEITERE: Record<string, (params: URLSearchParams) => Promise<unknown>> = {
   "mail-eingang": async (p) => (await import("@/lib/ops/mail-eingang")).mailEingangDiagnose(p),
+  "mail-strecke": async (p) => (await import("@/lib/ops/mail-strecke")).mailStreckeDiagnose(p),
   "anzeige-abdeckung": async (p) => (await import("@/lib/ops/anzeige-abdeckung")).anzeigeAbdeckung(p),
   "vermittler-anrede": async (p) => (await import("@/lib/ops/vermittler-anrede")).vermittlerAnrede(p),
   "admin-nutzung": async (p) => (await import("@/lib/ops/admin-nutzung")).adminNutzung(p),

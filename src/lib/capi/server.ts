@@ -248,7 +248,11 @@ export async function sendDue(now = new Date(), opts: { max?: number } = {}): Pr
     }
     // Testleads (lib/testlead.ts) nie an Meta senden
     await skip(list.filter((e) => e.lead.isTest).map((e) => e.id), "Testlead");
-    const real = list.filter((e) => !e.lead.isTest);
+    const alle = list.filter((e) => !e.lead.isTest);
+    // Widerspruch gegen Werbung (Betroffenenrechte D8, lib/dsgvo/server.ts): nie an Meta
+    const widerspruch = await import("@/lib/dsgvo/server").then((m) => m.leadsMitWiderspruch(alle.map((e) => e.leadId))).catch(() => new Set<string>());
+    await skip(alle.filter((e) => widerspruch.has(e.leadId)).map((e) => e.id), "Widerspruch gegen Werbung");
+    const real = alle.filter((e) => !widerspruch.has(e.leadId));
     await skip(real.filter((e) => e.lead.erasedAt || !isMetaLeadId(e.lead.externalId)).map((e) => e.id), "Lead gelöscht");
     await skip(real.filter((e) => !e.lead.erasedAt && isMetaLeadId(e.lead.externalId) && isTooOld(e.eventTime, now)).map((e) => e.id), TOO_OLD);
     const ready = real.filter((e) => !e.lead.erasedAt && isMetaLeadId(e.lead.externalId) && !isTooOld(e.eventTime, now) && isCapiStage(e.stage));

@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { loescheAb } from "@/lib/policen/ablage";
+import { protokolliereLoeschung } from "@/lib/loeschprotokoll";
 
 export const ERASED_NAME = "Gelöscht (Datenschutz)";
 
@@ -22,8 +23,11 @@ export type EraseResult = { conversations: number; messages: number; appointment
  */
 export const aufbewahrtFilter = (now: Date) => ({ kind: "beratungsdoku", aufbewahrenBis: { gt: now } });
 
-/** Einen Lead anonymisieren. Gibt null zurück, wenn es ihn nicht gibt. */
-export async function eraseLead(leadId: string, actor?: AuditActor): Promise<EraseResult | null> {
+/**
+ * Einen Lead anonymisieren. Gibt null zurück, wenn es ihn nicht gibt. Steht danach im Löschprotokoll
+ * (lib/loeschprotokoll.ts), damit die Löschung nach einer Wiederherstellung der Datenbank erneut greift.
+ */
+export async function eraseLead(leadId: string, actor?: AuditActor, opts: { ausLoeschprotokoll?: boolean } = {}): Promise<EraseResult | null> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     select: { id: true, customerId: true, phone: true, externalId: true, airtableId: true, erasedAt: true },
@@ -35,9 +39,10 @@ export async function eraseLead(leadId: string, actor?: AuditActor): Promise<Era
     entityId: lead.id,
     customerId: lead.customerId,
     // Bewusst ohne Name/Telefon: das Protokoll soll die Daten nicht weiter vorhalten.
-    details: { ...result, airtable: !!lead.airtableId },
+    details: { ...result, airtable: !!lead.airtableId, ...(opts.ausLoeschprotokoll ? { loeschprotokoll: true } : {}) },
     actor,
   });
+  if (!opts.ausLoeschprotokoll) await protokolliereLoeschung([{ art: "lead", entityId: lead.id, customerId: lead.customerId, grund: "art17" }]);
   return result;
 }
 
@@ -85,6 +90,7 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor, 
     prisma.googleBusinessConnection.deleteMany({ where: { customerId } }),
     // Eingänge an die Antwortadresse ohne Kontakt (Paket M2)
     prisma.mailEingang.deleteMany({ where: { customerId } }),
+    prisma.leadMailStrecke.deleteMany({ where: { customerId } }),
   ]);
   // Bestand: Kampagnen (mit Empfängern), Bestandskunden (mit Verträgen), Importe, Einwilligungsprotokoll, Postfach
   const [, existing, , consentLogs] = await prisma.$transaction([
@@ -141,6 +147,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[], opts: { aufbewah
     prisma.contactMail.deleteMany({ where: { leadId: { in: ids } } }),
     // Reservierungen der Vorlagen-Mails (lib/mail/vorlagen-mail.ts)
     prisma.leadMailVersand.deleteMany({ where: { leadId: { in: ids } } }),
+    // Mail-Strecke (Antworten der Seite, lib/mail-strecke)
+    prisma.leadMailStrecke.deleteMany({ where: { leadId: { in: ids } } }),
     // Dokumente am Lead; die Beratungsdokumentation bleibt bei der Löschung eines Leads als Nachweis (aufbewahrtFilter)
     prisma.leadFile.deleteMany({ where: { leadId: { in: ids }, ...(opts.aufbewahrung ? { NOT: aufbewahrtFilter(now) } : {}) } }),
     // Unterlagen per WhatsApp (Policen, lib/policen) und deren Einwilligungen

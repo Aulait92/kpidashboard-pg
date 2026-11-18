@@ -34,6 +34,7 @@ const PUBLIC_PREFIXES = [
   "/abmelden", // Abmeldelink in Kampagnen-Mails (signierter Token, ein Klick ohne Login)
   "/api/abmelden", // List-Unsubscribe One-Click (POST, signierter Token)
   "/einwilligung", // Einwilligungs-Abfrage für Bestandskunden mit Double-Opt-in (signierter Token)
+  "/vollmacht", // Maklervollmacht digital für Kunden des Maklers (geheimer Link je Vollmacht, 14 Tage)
   "/email-bestaetigen", // Bestätigung einer neuen Login-E-Mail (Token aus der Mail, lib/email-aendern.ts)
   "/erstinformation", // Erstinformation des Vermittlers (§ 15 VersVermV), Link in der ersten WhatsApp-Nachricht (Token)
   "/datenschutz", // Datenschutzhinweis zu Unterlagen per WhatsApp (Langfassung der Einwilligung, Token der Erstinformation)
@@ -43,6 +44,8 @@ const PUBLIC_PREFIXES = [
   "/beratung", // Beratungspräsentation zum Nachlesen für den Kunden des Vermittlers (geheimer Link, 14 Tage)
   "/ihr-angebot", // Angebots-PDF nach dem Termin (geheimer Link je Termin, lib/angebot-senden-server.ts)
   "/rueckruf", // „Rückruf wünschen“ aus der Nachfass-Mail zum Angebot (geheimer Link je Lead)
+  "/t", // Antwortseite der Mail-Strecke für Leads ohne WhatsApp (signierter Token, lib/mail-strecke)
+  "/api/mail-strecke", // Minuten-Cron der Mail-Strecke (per WHATSAPP_WEBHOOK_SECRET gesichert)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
   "/api/ops", // Betriebs-API (Buyer-Accounts anlegen), per ADMIN_API_TOKEN (Bearer) gesichert
@@ -215,11 +218,13 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/empfehlung/") ||
     pathname.startsWith("/abmelden/") ||
     pathname.startsWith("/einwilligung/") ||
+    pathname.startsWith("/vollmacht/") ||
     pathname.startsWith("/erstinformation/") ||
     pathname.startsWith("/datenschutz/") ||
     pathname.startsWith("/beratung/") ||
     pathname.startsWith("/ihr-angebot/") ||
     pathname.startsWith("/rueckruf/") ||
+    pathname.startsWith("/t/") ||
     pathname === "/demo" ||
     pathname.startsWith("/demo/")
   ) {

@@ -5,6 +5,7 @@ import { NextStepButton, NextStepPrompt } from "@/components/next-step";
 import { NEXT_STEP_LABEL, pastOpenAppointmentWhere } from "@/lib/lead-next-step";
 import { nextStepStateOf } from "@/lib/lead-next-step-server";
 import { EmpfehlungLeadCard } from "@/components/empfehlung/server";
+import { MaklervollmachtCard } from "@/components/maklervollmacht-card";
 import { Card, CardHeader } from "@/components/ui";
 import { TerminKarte } from "@/components/termin-karte";
 import { EinwilligungEtikett } from "@/components/einwilligung-kontakt";
@@ -384,7 +385,7 @@ export async function LeadDetailBody({
     team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true, mailSignature: true } }) : null,
     mailFeaturesOffFor(customerId),
     // Unterlagen vom Kunden per WhatsApp (lib/policen); Admin-Vorschau ohne Inhalte mit Gesundheitsbezug
-    listUnterlagen(lead.id, { preview: !team.userId }),
+    listUnterlagen(lead.id, { preview: !team.userId, userId: team.userId }),
     // Kennzeichen „Angebot abgelegt am“ / „gesendet am“ an der Datei (Paket P3, lib/angebot-senden.ts)
     prisma.appointment.findMany({
       where: { leadId: lead.id, angebotDateiId: { not: null } },
@@ -617,6 +618,8 @@ export async function LeadDetailBody({
           <span className="font-semibold">Antworten</span>
         </a>
       ) : null}
+
+      <MaklervollmachtCard leadId={lead.id} customerId={team.customerId} readOnly={!team.userId} />
 
       <EmpfehlungLeadCard leadId={lead.id} team={team} readOnly={!team.userId} />
 

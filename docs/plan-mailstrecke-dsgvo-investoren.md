@@ -94,3 +94,19 @@ Hinweise (z. B. Verzicht); Vorbelegung aus Terminvorbereitung, Vergleichsblatt, 
 Bestätigung per Klick (Zeitstempel); Hinweis „Inhalte verantwortet der Vermittler, keine Beratung durch die App“; Schalter in
 Onboarding und Einstellungen; Nutzung messen (Vermittler eingeschaltet, Dokumente je Termin) unter Betreuen › Nutzung.
 Digitale Unterschrift erst bei Nutzung.
+
+## Stand 18.11.2026 (Phase 1 gebaut, Branch claude/mailstrecke)
+
+- Mail-Strecke E0 bis E4 und Takt (Nachtrag Ole: E-Mail und SMS über 10 Tage statt „max. 2 Nachfass-Mails“):
+  `lib/mail-strecke` (Auslöser, Erstmail, Takt, Seite), `app/t/[token]`, `app/api/mail-strecke/cron` (cron-job.org jede
+  Minute, Header wie der WhatsApp-Cron; Rückfall im WhatsApp-Cron alle 5 Min.), Diagnose `q=mail-strecke`.
+  Tag 1 Erstmail sofort (Antwort auf die eigene Anfrage, auch abends) und SMS (nicht 20 bis 8 Uhr), Tag 2 ab 9 Uhr Mail
+  mit neuen Zeiten, Tag 4 ab 14 Uhr SMS, Tag 6 ab 18 Uhr Mail mit Nutzen, Tag 10 „Soll ich Ihre Anfrage schließen?“.
+  Stopp bei Seite im Browser geöffnet, Antwort, Buchung, Mail-Antwort, WhatsApp-Antwort, Anruf erreicht, Abmeldung.
+- Schalter: `MAIL_STRECKE=aus` schaltet alles ab (dann wieder die alte Einmal-Mail bei 131026); `MAIL_STRECKE_SMS=an`
+  erst nach Ergänzung von seven.io in SUBPROCESSORS/AVV (Standard aus). Nur Kunden mit Assistent und Erstanschreiben an,
+  nur Leads mit eigener Anfrage (Formular, Meta, Empfehlung), wie beim WhatsApp-Erstkontakt.
+- Abmeldung per SMS: kein Eingang von seven.io angebunden, darum Abmeldelink (`/t/<token>?ab=1`, Knopf, POST).
+- Betroffenenrechte D0, D1, D3, D8: `lib/dsgvo` (Erkennung, Anfrage, Bestätigung, Widerspruch), Karte auf Heute.
+- Offen aus Phase 1/2: E5, E6, E8 bis E11, D2, D4 bis D7, D9, D11, D13; Anwaltsprüfung der Texte (Erstmail, SMS,
+  Bestätigung).

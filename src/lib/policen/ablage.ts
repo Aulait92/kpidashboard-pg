@@ -11,6 +11,14 @@
 // Verschlüsselung: AES-256-GCM je Datei, Schlüssel je Mandant per HKDF-SHA256 aus POLICEN_SCHLUESSEL und der
 // Kunden-ID, Objektname als zusätzliche Authentifizierung (eine Datei lässt sich keinem anderen Mandanten unterschieben).
 // Zusätzlich verschlüsselt der Anbieter ruhende Daten selbst. Objektnamen ohne Dateinamen: policen/<Kunde>/<Lead>/<Zufall>.
+//
+// Crypto-Shredding (Ole, 18.11.2026, Löschung inklusive Sicherungen): Seit Format 2 hat jede Datei einen eigenen
+// zufälligen Datenschlüssel. Er liegt nur verpackt (AES-256-GCM mit dem Schlüssel des Mandanten, Objektname als
+// zusätzliche Authentifizierung) in der Datenbank (LeadDocument.dateiSchluessel). Wird der Eintrag gelöscht, ist der
+// Schlüssel vernichtet: Eine Kopie der Datei (Versionierung, Sicherung beim Speicheranbieter) ist ohne ihn nicht mehr
+// lesbar. Datenbank-Sicherungen enthalten den verpackten Schlüssel höchstens bis zum Ende ihrer Aufbewahrung
+// (docs/datenschutz.md, Löschkonzept); nach einer Wiederherstellung löscht das Löschprotokoll (lib/loeschprotokoll.ts)
+// den Eintrag erneut. Format 1 (bis 18.11.2026, direkt mit dem Mandantenschlüssel) bleibt lesbar.
 
 import { createCipheriv, createDecipheriv, createHmac, hkdfSync, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 
@@ -50,6 +58,8 @@ export function ablageKonfig(env: Record<string, string | undefined> = process.e
 // ─── Verschlüsselung je Mandant ─────────────────────────────────────────────
 
 const VERSION = 1;
+/** Format 2: Datei mit eigenem Datenschlüssel (Crypto-Shredding). */
+const VERSION_DATEI = 2;
 
 function mandantenSchluessel(master: Buffer, customerId: string): Buffer {
   return Buffer.from(hkdfSync("sha256", master, Buffer.from("policen-ablage-v1"), Buffer.from(`kunde:${customerId}`), 32));
@@ -63,13 +73,48 @@ export function verschluessele(master: Buffer, customerId: string, key: string, 
   return Buffer.concat([Buffer.from([VERSION]), iv, c.getAuthTag(), ct]);
 }
 
-export function entschluessele(master: Buffer, customerId: string, key: string, payload: Uint8Array): Buffer {
-  const b = Buffer.from(payload);
-  if (b.length < 29 || b[0] !== VERSION) throw new Error("Ungültiges Format der Ablage.");
-  const d = createDecipheriv("aes-256-gcm", mandantenSchluessel(master, customerId), b.subarray(1, 13));
-  d.setAAD(Buffer.from(key));
+function gcm(schluessel: Buffer, aad: string, data: Uint8Array, version: number): Buffer {
+  const iv = randomBytes(12);
+  const c = createCipheriv("aes-256-gcm", schluessel, iv);
+  c.setAAD(Buffer.from(aad));
+  const ct = Buffer.concat([c.update(data), c.final()]);
+  return Buffer.concat([Buffer.from([version]), iv, c.getAuthTag(), ct]);
+}
+
+function gcmAuf(schluessel: Buffer, aad: string, b: Buffer): Buffer {
+  const d = createDecipheriv("aes-256-gcm", schluessel, b.subarray(1, 13));
+  d.setAAD(Buffer.from(aad));
   d.setAuthTag(b.subarray(13, 29));
   return Buffer.concat([d.update(b.subarray(29)), d.final()]);
+}
+
+/** Datenschlüssel einer Datei mit dem Mandantenschlüssel verpacken (Base64, für LeadDocument.dateiSchluessel). */
+export function verpackeDateiSchluessel(master: Buffer, customerId: string, key: string, dek: Buffer): string {
+  return gcm(mandantenSchluessel(master, customerId), `datei-schluessel:${key}`, dek, VERSION).toString("base64");
+}
+
+export function entpackeDateiSchluessel(master: Buffer, customerId: string, key: string, verpackt: string): Buffer {
+  const b = Buffer.from(verpackt, "base64");
+  if (b.length < 29 + 32 || b[0] !== VERSION) throw new Error("Ungültiger Dateischlüssel.");
+  return gcmAuf(mandantenSchluessel(master, customerId), `datei-schluessel:${key}`, b);
+}
+
+/** Format 2: Datei mit neuem Datenschlüssel verschlüsseln; gibt Inhalt und verpackten Schlüssel zurück. */
+export function verschluesseleMitDateiSchluessel(master: Buffer, customerId: string, key: string, data: Uint8Array): { inhalt: Buffer; dateiSchluessel: string } {
+  const dek = randomBytes(32);
+  return { inhalt: gcm(dek, key, data, VERSION_DATEI), dateiSchluessel: verpackeDateiSchluessel(master, customerId, key, dek) };
+}
+
+/** Entschlüsseln; Format 2 braucht den verpackten Dateischlüssel (fehlt er, ist die Datei nicht mehr lesbar). */
+export function entschluessele(master: Buffer, customerId: string, key: string, payload: Uint8Array, dateiSchluessel?: string | null): Buffer {
+  const b = Buffer.from(payload);
+  if (b.length < 29) throw new Error("Ungültiges Format der Ablage.");
+  if (b[0] === VERSION_DATEI) {
+    if (!dateiSchluessel) throw new Error("Dateischlüssel fehlt (gelöscht).");
+    return gcmAuf(entpackeDateiSchluessel(master, customerId, key, dateiSchluessel), key, b);
+  }
+  if (b[0] !== VERSION) throw new Error("Ungültiges Format der Ablage.");
+  return gcmAuf(mandantenSchluessel(master, customerId), key, b);
 }
 
 // ─── Speicher (S3-kompatibel; in Tests austauschbar) ────────────────────────
@@ -141,19 +186,25 @@ export const ablageBereit = () => ablageKonfig() !== null;
 export const PRAEFIX = "policen/";
 const sauber = (x: string) => x.replace(/[^A-Za-z0-9_-]/g, "");
 
-/** Datei verschlüsselt ablegen; gibt den Objektnamen zurück (ohne Dateinamen). */
-export async function legeAb(customerId: string, leadId: string, data: Uint8Array): Promise<string> {
+export type Abgelegt = { storageKey: string; dateiSchluessel: string };
+
+/**
+ * Datei verschlüsselt ablegen (Format 2, eigener Datenschlüssel). Gibt den Objektnamen (ohne Dateinamen) und den
+ * verpackten Datenschlüssel zurück; beides gehört in denselben Eintrag (LeadDocument.storageKey, .dateiSchluessel).
+ */
+export async function legeAb(customerId: string, leadId: string, data: Uint8Array): Promise<Abgelegt> {
   const k = konfigOderFehler();
   const key = `${PRAEFIX}${sauber(customerId)}/${sauber(leadId)}/${randomUUID()}`;
-  await (await speicher(k)).put(key, verschluessele(k.schluessel, customerId, key, data));
-  return key;
+  const { inhalt, dateiSchluessel } = verschluesseleMitDateiSchluessel(k.schluessel, customerId, key, data);
+  await (await speicher(k)).put(key, inhalt);
+  return { storageKey: key, dateiSchluessel };
 }
 
-/** Datei laden und entschlüsseln; null = nicht da. */
-export async function holeAb(customerId: string, key: string): Promise<Buffer | null> {
+/** Datei laden und entschlüsseln; null = nicht da. dateiSchluessel: LeadDocument.dateiSchluessel (Format 2). */
+export async function holeAb(customerId: string, key: string, dateiSchluessel?: string | null): Promise<Buffer | null> {
   const k = konfigOderFehler();
   const roh = await (await speicher(k)).get(key);
-  return roh ? entschluessele(k.schluessel, customerId, key, roh) : null;
+  return roh ? entschluessele(k.schluessel, customerId, key, roh, dateiSchluessel) : null;
 }
 
 /** Dateien löschen (fehlende Konfiguration: nichts zu tun). */
@@ -168,6 +219,37 @@ export async function loescheAb(keys: (string | null | undefined)[]): Promise<vo
 export async function listeAb(): Promise<{ key: string; at: Date }[]> {
   const k = ablageKonfig();
   return k ? (await speicher(k)).list(PRAEFIX) : [];
+}
+
+// ─── Kopie des Löschprotokolls außerhalb der Datenbank (lib/loeschprotokoll.ts) ──────────────────────────────
+// Nur IDs und technische Verweise, keine Inhalte. Liegt im selben privaten EU-Bucket unter eigenem Präfix, damit eine
+// Wiederherstellung der Datenbank die Löschungen danach nicht verliert. Der Abgleich verwaister Dateien sieht es nicht.
+
+export const PROTOKOLL_PRAEFIX = "loeschprotokoll/";
+
+export async function legeProtokollAb(id: string, json: string): Promise<boolean> {
+  const k = ablageKonfig();
+  if (!k) return false;
+  await (await speicher(k)).put(`${PROTOKOLL_PRAEFIX}${sauber(id)}.json`, Buffer.from(json, "utf8"));
+  return true;
+}
+
+export async function listeProtokoll(): Promise<{ key: string; at: Date }[]> {
+  const k = ablageKonfig();
+  return k ? (await speicher(k)).list(PROTOKOLL_PRAEFIX) : [];
+}
+
+export async function holeProtokoll(key: string): Promise<string | null> {
+  const k = ablageKonfig();
+  if (!k || !key.startsWith(PROTOKOLL_PRAEFIX)) return null;
+  const b = await (await speicher(k)).get(key);
+  return b ? b.toString("utf8") : null;
+}
+
+export async function loescheProtokoll(keys: string[]): Promise<void> {
+  const k = ablageKonfig();
+  const list = keys.filter((x) => x.startsWith(PROTOKOLL_PRAEFIX));
+  if (k && list.length) await (await speicher(k)).del(list);
 }
 
 // ─── Kurzlebige signierte Links (nach dem Login) ────────────────────────────

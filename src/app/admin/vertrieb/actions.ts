@@ -271,6 +271,8 @@ export async function deleteContact(fd: FormData) {
   if (id) {
     const gone = await prisma.salesContact.delete({ where: { id } });
     await audit("contact.delete", { entity: "SalesContact", entityId: id, details: { name: gone.name } });
+    // Löschprotokoll: greift nach einer Wiederherstellung der Datenbank erneut (lib/loeschprotokoll.ts)
+    await import("@/lib/loeschprotokoll").then((m) => m.protokolliereLoeschung([{ art: "vertriebskontakt", entityId: id, grund: "admin" }]));
   }
   revalidatePath("/admin/vertrieb", "layout");
   revalidatePath("/admin/neu", "layout");
@@ -280,7 +282,10 @@ export async function deleteContact(fd: FormData) {
 export async function deleteContacts(fd: FormData) {
   await requireAuth();
   const ids = fd.getAll("ids").filter((v): v is string => typeof v === "string" && !!v);
-  if (ids.length) await prisma.salesContact.deleteMany({ where: { id: { in: ids } } });
+  if (ids.length) {
+    await prisma.salesContact.deleteMany({ where: { id: { in: ids } } });
+    await import("@/lib/loeschprotokoll").then((m) => m.protokolliereLoeschung(ids.map((id) => ({ art: "vertriebskontakt" as const, entityId: id, grund: "admin" }))));
+  }
   revalidatePath("/admin/vertrieb", "layout");
   revalidatePath("/admin/neu", "layout");
 }

@@ -16,6 +16,10 @@
 //               Eigene Absender und unsere Weiterleitungen (X-PG-Eingang) werden ignoriert (Schleifenschutz).
 //               Ausführbare Dateien, Archive und Makro-Dokumente werden nie weitergeleitet und nicht zum Download
 //               angeboten. Anhänge werden nie per KI ausgewertet (Gesundheitsangaben möglich).
+//   Viren       Jeder Anhang wird vor der Weiterleitung mit ClamAV geprüft (lib/sicherheit/virenpruefung.ts). Befund:
+//               nicht weitergeleitet, nie zum Download angeboten, Hinweis in der Weiterleitung, Änderungsprotokoll
+//               (keine Antwort an den Absender: Schadmails haben oft gefälschte Absender). Prüfung nicht möglich:
+//               nicht weitergeleitet, Hinweis „wird noch geprüft“; der Download in der App prüft beim Abruf erneut.
 //   Schalter    MAIL_ANTWORT_EINGANG aus: Eingänge mit gültigem Leadcode (Adresse wurde vergeben) werden trotzdem
 //               verarbeitet, damit keine Antwort verloren geht; alles andere wird ignoriert.
 //   Idempotenz  MailEingang je Resend-ID mit Fortschritt (Verlauf, Weiterleitung, Push); Wiederholungen des Webhooks
@@ -27,6 +31,7 @@ import { leadMailAdresse } from "@/lib/mail/lead-absender";
 import { vermittlerAdresse } from "@/lib/mail/lead-versand";
 import { mailVerlaufText, type MailArt } from "@/lib/mail/kontakt-mail";
 import type { AuthErgebnis, EingangApi, EmpfangenerAnhang } from "@/lib/mail/eingang-api";
+import { entscheide, meldeUngeprueft, pruefeAufViren } from "@/lib/sicherheit/virenpruefung";
 
 /** Summe der weitergeleiteten Anhänge: Resend nimmt höchstens 40 MB je Mail nach Base64 (gut 29 MB Dateien). */
 export const ANHANG_LIMIT = 28 * 1024 * 1024;
@@ -403,6 +408,12 @@ export async function verarbeiteMailEingang(event: EmailReceivedEvent, o: { now?
       return { ergebnis: "hinweis", grund: auto ? "auto_antwort" : "absender_unbestaetigt", eingangId: id };
     }
 
+    // Betroffenenrechte (Ole, 18.11.2026, lib/dsgvo): Anfrage ohne KI erkennen, Eingang bestätigen, Widerspruch sofort
+    // umsetzen. Die Mail geht wie jede Antwort an den Vermittler weiter. Je Eingang höchstens einmal (quelleId).
+    await import("@/lib/dsgvo/server")
+      .then((m) => m.pruefeDsgvoEingang({ customerId: lead.customerId, leadId: lead.id, kanal: "email", text: ohneZitat(text), betreff: betreffKern(mail.subject), quelleId: id, absender: from, now }))
+      .catch(() => console.error("[mail-eingang] Datenschutz-Prüfung fehlgeschlagen"));
+
     if (!zeile.weitergeleitetAt) {
       const link = await appLink(lead.id);
       const hinweise: string[] = [];
@@ -450,15 +461,39 @@ async function weiterleiten(
     console.error("[mail-eingang] kein Ziel für die Weiterleitung");
     return;
   }
-  const w = weiterleitungInhalt({ leadName: o.leadName, leadAdresse: o.from, subject: o.subject, text: o.text, htmlOriginal: o.html, appLink: o.link ?? null, hinweise: o.hinweise, zugeordnet: o.zugeordnet });
   // Download-Adressen gelten 1 h: frisch aus der Liste (bei einer Wiederholung neu geladen)
   const frisch = o.anhaenge.length ? await o.api.anhaenge((await prisma.mailEingang.findUnique({ where: { id: o.eingangId }, select: { resendEmailId: true } }))!.resendEmailId) : [];
   const attachments: { filename: string; content: Buffer; contentType: string }[] = [];
+  const viren: Record<string, "sauber" | "befund" | "ungeprueft"> = {};
+  const befund: string[] = [];
+  const ungeprueft: string[] = [];
   for (const a of o.anhaenge) {
     const f = frisch.find((x) => x.id === a.id);
     if (!f?.downloadUrl) throw new Error("anhang_ohne_adresse");
-    attachments.push({ filename: (a.filename ?? "anhang").replace(/[\\/\r\n"]/g, "_").slice(0, 160), content: await o.api.datei(f.downloadUrl, ANHANG_LIMIT), contentType: a.contentType });
+    const name = (a.filename ?? "anhang").replace(/[\\/\r\n"]/g, "_").slice(0, 160);
+    const content = await o.api.datei(f.downloadUrl, ANHANG_LIMIT);
+    // Virenprüfung vor der Weiterleitung (nur Signatur, kein Auslesen)
+    const e = await pruefeAufViren(content);
+    const d = entscheide(e);
+    if (d === "annehmen") {
+      viren[a.id] = "sauber";
+      attachments.push({ filename: name, content, contentType: a.contentType });
+    } else if (d === "verwerfen") {
+      viren[a.id] = "befund";
+      befund.push(name);
+      const { audit } = await import("@/lib/audit");
+      await audit("viren.befund", { entity: "MailEingang", entityId: o.eingangId, customerId: o.customerId, details: { quelle: "mail", signatur: e.status === "befund" ? e.signatur : null }, actor: { role: "system" } });
+    } else {
+      viren[a.id] = "ungeprueft";
+      ungeprueft.push(name);
+      await meldeUngeprueft("mail", e.status === "ungeprueft" ? e.grund : "fehler");
+    }
   }
+  const hinweise = [...o.hinweise];
+  if (befund.length) hinweise.push(`Bei der Virenprüfung abgelehnt und nicht weitergeleitet: ${befund.join(", ").slice(0, 300)}.`);
+  if (ungeprueft.length) hinweise.push(`Noch nicht auf Viren geprüft und deshalb nicht angehängt: ${ungeprueft.join(", ").slice(0, 300)}. Sie finden die Datei beim Kontakt in der App, sobald die Prüfung möglich ist.`);
+  if (o.anhaenge.length) await merkeVirenStatus(o.eingangId, viren);
+  const w = weiterleitungInhalt({ leadName: o.leadName, leadAdresse: o.from, subject: o.subject, text: o.text, htmlOriginal: o.html, appLink: o.link ?? null, hinweise, zugeordnet: o.zugeordnet });
   const { mailClient, wasBlocked } = await import("@/lib/mail-guard");
   const res = await mailClient(apiKey).emails.send({
     from: `"${w.fromName}" <${absender}>`,
@@ -472,6 +507,16 @@ async function weiterleiten(
   });
   if (wasBlocked(res)) return;
   if (res.error) throw new Error(`weiterleitung:${res.error.name ?? "fehler"}`);
+}
+
+/** Ergebnis der Virenprüfung in der Anhangliste vermerken (viren: sauber | befund | ungeprueft). */
+async function merkeVirenStatus(eingangId: string, viren: Record<string, string>): Promise<void> {
+  const z = await prisma.mailEingang.findUnique({ where: { id: eingangId }, select: { anhaenge: true } });
+  if (!Array.isArray(z?.anhaenge)) return;
+  const liste = (z.anhaenge as Record<string, unknown>[]).map((a) =>
+    typeof a?.id === "string" && viren[a.id] ? { ...a, viren: viren[a.id], weitergeleitet: viren[a.id] === "sauber" ? a.weitergeleitet : false } : a,
+  );
+  await prisma.mailEingang.update({ where: { id: eingangId }, data: { anhaenge: liste as object[] } });
 }
 
 async function pushAnVermittler(lead: { id: string; customerId: string; name: string | null }, now: Date): Promise<void> {

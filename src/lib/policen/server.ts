@@ -12,6 +12,11 @@
 // Tor (A2): Ohne Einwilligung wird nichts von Meta/360dialog abgerufen; nur die Media-ID bleibt höchstens 24 Stunden,
 // die Nachfrage kommt einmal je Lead. Nachweis (A3): PolicenNachweis, nur anhängen. Widerruf (A4): sofort alles löschen.
 // Logs (A7): keine Inhalte, Dateinamen, Medien-Adressen; Push neutral „Neue Unterlagen von {Lead}“.
+//
+// Sicherheit vor dem breiten Start (Ole, 18.11.2026): Virenprüfung jeder Datei vor der Ablage (lib/sicherheit/
+// virenpruefung.ts; Befund: verwerfen, Lead neutral informieren, Vermittler-Hinweis, Änderungsprotokoll; ungeprüft:
+// ablegen, aber erst nach der Prüfung anbieten), Öffnen nur mit Zwei-Faktor-Login (AVV § 5), jede Löschung im
+// Löschprotokoll (lib/loeschprotokoll.ts), eigener Datenschlüssel je Datei (Crypto-Shredding, ablage.ts Format 2).
 
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
@@ -24,6 +29,9 @@ import { vermittlerName } from "@/lib/whatsapp/gespraech";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/gateway";
 import { ladeMedia, loescheMedia } from "@/lib/policen/media";
 import { ablageBereit, holeAb, legeAb, listeAb, loescheAb } from "@/lib/policen/ablage";
+import { entscheide, meldeUngeprueft, pruefeAufViren, virenKonfig } from "@/lib/sicherheit/virenpruefung";
+import { protokolliereLoeschung } from "@/lib/loeschprotokoll";
+import { zweiFaktorAktiv } from "@/lib/totp-account";
 import {
   abschlussSchritt,
   angekommenKurzText,
@@ -52,7 +60,9 @@ import {
   POLICEN_MAX_JE_LEAD,
   sparteAusText,
   sparteLabel,
+  spaeterText,
   typAusInhalt,
+  virenText,
   typAusMime,
   WARTEN_STUNDEN,
   ERINNERUNG_OPTIN_TEXT,
@@ -275,12 +285,16 @@ async function bestaetigeEinmal(chat: Chat, an: Ansprache, kurzSonst = false) {
   else if (kurzSonst) await send(chat, angekommenKurzText());
 }
 
-/** Dokumente samt Dateien im Bucket und Medien bei Meta löschen. */
-async function loescheDokumente(where: { leadId?: string; customerId?: string; id?: { in: string[] }; status?: string }): Promise<number> {
-  const docs = await prisma.leadDocument.findMany({ where, select: { id: true, customerId: true, storageKey: true, waMediaId: true } });
+/**
+ * Dokumente samt Dateien im Bucket und Medien bei Meta löschen. Mit dem Eintrag ist auch der Datenschlüssel vernichtet
+ * (Crypto-Shredding); jede Löschung steht im Löschprotokoll (greift nach einer Wiederherstellung erneut).
+ */
+async function loescheDokumente(where: { leadId?: string; customerId?: string; id?: { in: string[] }; status?: string }, grund: string): Promise<number> {
+  const docs = await prisma.leadDocument.findMany({ where, select: { id: true, customerId: true, leadId: true, storageKey: true, waMediaId: true } });
   if (!docs.length) return 0;
   await loescheAb(docs.map((d) => d.storageKey)).catch((e) => logFehler("ablage löschen", e));
   const del = await prisma.leadDocument.deleteMany({ where: { id: { in: docs.map((d) => d.id) } } });
+  await protokolliereLoeschung(docs.map((d) => ({ art: "policen_dokument" as const, entityId: d.id, customerId: d.customerId, ref: d.storageKey, grund })));
   for (const cid of new Set(docs.map((d) => d.customerId))) {
     await mediaWeg(cid, docs.filter((d) => d.customerId === cid).map((d) => d.waMediaId)).catch(() => null);
   }
@@ -369,7 +383,17 @@ export async function handleInboundMedia(o: {
     await antworte(formatText(an));
     return fertig("format");
   }
-  const id = await speichere(chat, { messageId: o.messageId, typ, fileName: dateiname(o.medium.filename, typ, now), data: dl.data, sparte, consent: { id: consent.id, at: consent.createdAt }, now }).catch((e) => {
+  // Virenprüfung vor der Ablage (lib/sicherheit/virenpruefung.ts)
+  const viren = await virenpruefung(chat, { data: dl.data, messageId: o.messageId, mediaId, apiKey });
+  if (viren === "verworfen") {
+    await antworte(virenText(an));
+    return fertig("virus");
+  }
+  if (viren === "abgelehnt") {
+    await antworte(spaeterText(an));
+    return fertig("virenpruefung");
+  }
+  const id = await speichere(chat, { messageId: o.messageId, typ, fileName: dateiname(o.medium.filename, typ, now), data: dl.data, sparte, consent: { id: consent.id, at: consent.createdAt }, virenStatus: viren, now }).catch((e) => {
     logFehler("ablage", e);
     return null;
   });
@@ -420,12 +444,50 @@ async function warteAufEinwilligung(
   return { handled: true, wartet: true };
 }
 
+/**
+ * Virenprüfung einer eingegangenen Datei (vor der Ablage). sauber/ungeprueft: ablegen (ungeprüft wird erst nach der
+ * Prüfung angeboten, Hinweis an die Admins). verworfen: Befund, nichts gespeichert, Medium bei Meta gelöscht, Vermittler
+ * informiert, Änderungsprotokoll (Antwort an den Lead macht der Aufrufer). abgelehnt: Pflicht an, Prüfung nicht möglich.
+ */
+async function virenpruefung(chat: Chat, x: { data: Buffer; messageId: string | null; mediaId: string | null; apiKey: string | null }): Promise<"sauber" | "ungeprueft" | "verworfen" | "abgelehnt"> {
+  const e = await pruefeAufViren(x.data);
+  const d = entscheide(e);
+  if (d === "annehmen") return "sauber";
+  if (d === "ungeprueft") {
+    await meldeUngeprueft("policen", e.status === "ungeprueft" ? e.grund : "fehler");
+    return "ungeprueft";
+  }
+  await mediaWeg(chat.customerId, [x.mediaId], x.apiKey);
+  if (d === "ablehnen") {
+    await setzeBody(x.messageId, "Dokument nicht gespeichert (Prüfung nicht möglich)");
+    await audit("policen.verworfen", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { grund: "virenpruefung_fehlt" }, actor: { role: "system" } });
+    return "abgelehnt";
+  }
+  await setzeBody(x.messageId, "Dokument nicht gespeichert (Sicherheitsprüfung)");
+  await befundMelden(chat.customerId, chat.leadId, e.status === "befund" ? e.signatur : "unbekannt", "whatsapp");
+  return "verworfen";
+}
+
+/** Befund: Änderungsprotokoll, Verlauf und neutraler Hinweis an den Vermittler (ohne Dateinamen). */
+async function befundMelden(customerId: string, leadId: string, signatur: string, quelle: "whatsapp" | "nachpruefung") {
+  await audit("viren.befund", { entity: "Lead", entityId: leadId, customerId, details: { quelle: `policen_${quelle}`, signatur }, actor: { role: "system" } });
+  await logLeadHistory(leadId, "dokument", "Datei vom Kunden bei der Virenprüfung abgelehnt und gelöscht", { customerId, userId: null });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { name: true } });
+  const { notifyLeadPush } = await import("@/lib/team");
+  await notifyLeadPush(leadId, {
+    title: `Datei von ${lead?.name?.trim() || "Ihrem Kontakt"} nicht angenommen`,
+    body: "Die Sicherheitsprüfung hat eine Datei abgelehnt. Ihr Kontakt wurde gebeten, sie neu zu schicken.",
+    tag: `policen-virus:${leadId}`,
+    url: `/buyer/leads/${leadId}#dokumente`,
+  }).catch(() => null);
+}
+
 async function speichere(
   chat: Chat,
-  x: { messageId: string | null; typ: PolicenTyp; fileName: string; data: Buffer; sparte: string | null; consent: { id: string; at: Date }; now: Date },
+  x: { messageId: string | null; typ: PolicenTyp; fileName: string; data: Buffer; sparte: string | null; consent: { id: string; at: Date }; virenStatus: "sauber" | "ungeprueft"; now: Date },
 ): Promise<string> {
-  // Erst in den Bucket (verschlüsselt mit dem Schlüssel des Mandanten), dann der Eintrag
-  const storageKey = await legeAb(chat.customerId, chat.leadId, x.data);
+  // Erst in den Bucket (eigener Datenschlüssel, verpackt mit dem Schlüssel des Mandanten), dann der Eintrag
+  const { storageKey, dateiSchluessel } = await legeAb(chat.customerId, chat.leadId, x.data);
   const doc = await prisma.leadDocument.create({
     select: { id: true },
     data: {
@@ -438,6 +500,8 @@ async function speichere(
       fileName: x.fileName,
       size: x.data.length,
       storageKey,
+      dateiSchluessel,
+      virenStatus: x.virenStatus,
       kind: "police",
       sparte: x.sparte,
       // Jede Police kann Gesundheitsangaben enthalten (keine KI-Prüfung): immer so behandeln
@@ -482,7 +546,7 @@ export async function handlePolicenAntwort(conversationId: string, m: Antwort, n
   }
   if (antwort === "ja") return beantworteEinwilligung(chat, { waMessageId: m.waMessageId ?? null, frageWaMessageId: m.frageWaMessageId ?? null, antwort: (m.text ?? "").trim() || "Einverstanden", now });
   if (antwort === "nein") {
-    await loescheDokumente({ leadId: chat.leadId, status: "wartet" });
+    await loescheDokumente({ leadId: chat.leadId, status: "wartet" }, "lieber_nicht");
     await nachweis({ customerId: chat.customerId, leadId: chat.leadId, phone: chat.contactPhone, art: "abgelehnt", quelle: "whatsapp", waMessageId: m.waMessageId ?? null, frageWaMessageId: m.frageWaMessageId ?? null, at: now });
     await audit("policen.lieber_nicht", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, actor: { role: "lead" } });
     await send(chat, lieberNichtText((await sprecher(chat)).an));
@@ -515,7 +579,7 @@ async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | nul
   const { an, person } = sp;
 
   if (chat.minderjaehrig) {
-    await loescheDokumente({ leadId: chat.leadId, status: "wartet" });
+    await loescheDokumente({ leadId: chat.leadId, status: "wartet" }, "minderjaehrig");
     await send(chat, minderjaehrigText(an, person));
     return { handled: true };
   }
@@ -554,6 +618,8 @@ async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | nul
   // Jetzt erst abrufen und ablegen (A2)
   const apiKey = await apiKeyOf(chat.customerId);
   let ok = 0;
+  let virus = 0;
+  let spaeter = 0;
   for (const p of pending) {
     const dl = apiKey && p.waMediaId ? await ladeMedia(apiKey, p.waMediaId, POLICEN_MAX_BYTES) : null;
     const typ = dl?.ok ? typAusInhalt(dl.data) : null;
@@ -563,20 +629,31 @@ async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | nul
       await setzeBody(p.messageId, "Dokument konnte nicht geladen werden");
       continue;
     }
-    const id = await speichere(chat, { messageId: p.messageId, typ, fileName: p.fileName, data: dl.data, sparte: p.sparte, consent: { id: consent.id, at: consent.createdAt }, now: o.now }).catch((e) => {
+    const viren = await virenpruefung(chat, { data: dl.data, messageId: p.messageId, mediaId: null, apiKey });
+    if (viren === "verworfen") {
+      virus++;
+      continue;
+    }
+    if (viren === "abgelehnt") {
+      spaeter++;
+      continue;
+    }
+    const id = await speichere(chat, { messageId: p.messageId, typ, fileName: p.fileName, data: dl.data, sparte: p.sparte, consent: { id: consent.id, at: consent.createdAt }, virenStatus: viren, now: o.now }).catch((e) => {
       logFehler("ablage", e);
       return null;
     });
     if (id) ok++;
   }
   if (ok) await bestaetigeEinmal(chat, an, true);
-  else await send(chat, nichtGeladenText(an));
+  if (virus) await send(chat, virenText(an));
+  else if (spaeter) await send(chat, spaeterText(an));
+  else if (!ok) await send(chat, nichtGeladenText(an));
   return { handled: true };
 }
 
 /** Widerruf (A4): alle Unterlagen des Leads sofort löschen (Bucket, Media-IDs), Nachweis, Vermittler informieren. */
 async function widerrufe(o: { customerId: string; leadId: string; phone: string | null; via: "whatsapp" | "vermittler"; userId: string | null; waMessageId?: string | null }): Promise<number> {
-  const geloescht = await loescheDokumente({ leadId: o.leadId });
+  const geloescht = await loescheDokumente({ leadId: o.leadId }, "widerruf");
   if (o.phone) {
     await nachweis({
       customerId: o.customerId,
@@ -626,8 +703,10 @@ export type UnterlageView = {
   /** Sparte laut Dateiname bzw. Begleittext (keine KI), sonst null */
   sparte: string | null;
   consentAt: string | null;
-  /** Öffnen/Herunterladen erlaubt (nie in der Admin-Vorschau) */
+  /** Öffnen/Herunterladen erlaubt (nie in der Admin-Vorschau, nur mit Zwei-Faktor-Login, nur geprüfte Dateien) */
   ansehen: boolean;
+  /** Warum nicht: Zwei-Faktor-Login fehlt bzw. Virenprüfung steht aus (null: erlaubt oder Admin-Vorschau) */
+  gesperrt: "zwei_faktor" | "pruefung" | null;
   /** Geplante automatische Löschung (null: behalten bzw. keine Frist) */
   loeschtAm: string | null;
   /** „Beratungsdokumentation behalten“: Zeitpunkt und Vermerk */
@@ -640,49 +719,62 @@ export type UnterlageView = {
 /**
  * Gespeicherte Dokumente am Lead (ohne Inhalt). Aufrufer prüfen vorher, dass der Login den Lead sehen darf
  * (leadScope: Inhaber bzw. zuständiger Berater). preview = Admin in „Als Kunde ansehen“: weder Dateiname noch Inhalt.
+ * userId: Login, der öffnen will (Zwei-Faktor-Pflicht, AVV § 5); ohne userId kein Öffnen.
  */
-export async function listUnterlagen(leadId: string, opts: { preview: boolean }): Promise<UnterlageView[]> {
-  const [rows, lead] = await Promise.all([
+export async function listUnterlagen(leadId: string, opts: { preview: boolean; userId?: string | null }): Promise<UnterlageView[]> {
+  const [rows, lead, zweiFaktor] = await Promise.all([
     prisma.leadDocument.findMany({
       where: { leadId, status: "gespeichert" },
       orderBy: { createdAt: "desc" },
-      select: { id: true, fileName: true, size: true, createdAt: true, sparte: true, consentAt: true, deleteAfter: true, behaltenAt: true, behaltenVermerk: true },
+      select: { id: true, fileName: true, size: true, createdAt: true, sparte: true, consentAt: true, deleteAfter: true, behaltenAt: true, behaltenVermerk: true, virenStatus: true },
     }),
     prisma.lead.findUnique({ where: { id: leadId }, select: { status: true } }),
+    !opts.preview && opts.userId ? zweiFaktorAktiv(opts.userId) : Promise.resolve(false),
   ]);
   const abschluss = istAbschluss(lead?.status);
-  return rows.map((r) => ({
+  return rows.map((r) => {
+    const gesperrt = opts.preview ? null : !zweiFaktor ? ("zwei_faktor" as const) : r.virenStatus === "ungeprueft" ? ("pruefung" as const) : null;
+    return {
     id: r.id,
     fileName: opts.preview ? CHAT_HINWEIS : r.fileName,
     size: r.size,
     createdAt: r.createdAt.toISOString(),
     sparte: r.sparte ? sparteLabel(r.sparte) : null,
     consentAt: r.consentAt?.toISOString() ?? null,
-    ansehen: !opts.preview,
+    // Ungeprüfte Dateien: Öffnen versucht die Prüfung nachzuholen (ladeUnterlage), Link bleibt deshalb da
+    ansehen: !opts.preview && zweiFaktor,
+    gesperrt,
     loeschtAm: r.behaltenAt ? null : (r.deleteAfter?.toISOString() ?? null),
     behaltenAt: r.behaltenAt?.toISOString() ?? null,
     behaltenVermerk: r.behaltenVermerk,
     behaltenMoeglich: abschluss || !!r.behaltenAt,
-  }));
+    };
+  });
 }
 
 /**
  * Datei zum Öffnen bzw. Herunterladen (entschlüsselt). null = nicht gefunden oder nicht erlaubt (Admin-Vorschau, kein
- * Login). Jeder Abruf steht im Änderungsprotokoll (policen.abruf). Aufrufer prüfen leadScope.
+ * Login). { gesperrt }: Zwei-Faktor-Login fehlt (AVV § 5) bzw. Virenprüfung noch nicht möglich; „befund“: beim
+ * Nachprüfen gefunden und gelöscht. Jeder Abruf steht im Änderungsprotokoll (policen.abruf). Aufrufer prüfen leadScope.
  */
 export async function ladeUnterlage(
   leadId: string,
   docId: string,
   ctx: { customerId: string; preview: boolean; userId: string | null; email?: string | null; download?: boolean },
-): Promise<{ fileName: string; mimeType: string; data: Buffer } | null> {
+): Promise<{ fileName: string; mimeType: string; data: Buffer } | { gesperrt: "zwei_faktor" | "pruefung" | "befund" } | null> {
   if (ctx.preview || !ctx.userId) return null;
   const doc = await prisma.leadDocument.findFirst({
     where: { id: docId, leadId, customerId: ctx.customerId, status: "gespeichert" },
-    select: { id: true, fileName: true, mimeType: true, storageKey: true, data: true },
+    select: { id: true, fileName: true, mimeType: true, storageKey: true, dateiSchluessel: true, data: true, virenStatus: true },
   });
   if (!doc) return null;
-  const data = doc.storageKey ? await holeAb(ctx.customerId, doc.storageKey) : doc.data ? decryptBytes(doc.data) : null;
+  if (!(await zweiFaktorAktiv(ctx.userId))) return { gesperrt: "zwei_faktor" };
+  const data = doc.storageKey ? await holeAb(ctx.customerId, doc.storageKey, doc.dateiSchluessel) : doc.data ? decryptBytes(doc.data) : null;
   if (!data) return null;
+  if (doc.virenStatus === "ungeprueft") {
+    const nach = await pruefeNach({ id: doc.id, customerId: ctx.customerId, leadId }, data);
+    if (nach !== "sauber") return { gesperrt: nach === "befund" ? "befund" : "pruefung" };
+  }
   await audit("policen.abruf", {
     entity: "LeadDocument",
     entityId: doc.id,
@@ -695,7 +787,7 @@ export async function ladeUnterlage(
 
 /** Eine Unterlage löschen (Vermittler im Kontakt). */
 export async function loescheUnterlage(leadId: string, docId: string, customerId: string, userId: string | null): Promise<boolean> {
-  const n = await loescheDokumente({ customerId, leadId, id: { in: [docId] } });
+  const n = await loescheDokumente({ customerId, leadId, id: { in: [docId] } }, "vermittler");
   if (!n) return false;
   await logLeadHistory(leadId, "dokument", "Dokument vom Kunden gelöscht", { customerId, userId });
   await audit("policen.geloescht", { entity: "LeadDocument", entityId: docId, customerId, details: { leadId }, actor: { id: userId, role: "BUYER" } });
@@ -729,6 +821,54 @@ export async function behalteUnterlage(
   return true;
 }
 
+// ─── Virenprüfung nachholen (beim Öffnen und im Cron) ───────────────────────
+
+/** Ungeprüfte Unterlage prüfen: sauber → anbieten; Befund → löschen, Lead neutral informieren, Vermittler-Hinweis. */
+async function pruefeNach(doc: { id: string; customerId: string; leadId: string }, data: Buffer): Promise<"sauber" | "befund" | "ungeprueft"> {
+  const e = await pruefeAufViren(data);
+  if (e.status === "ungeprueft") return "ungeprueft";
+  if (e.status === "sauber") {
+    await prisma.leadDocument.update({ where: { id: doc.id }, data: { virenStatus: "sauber" } }).catch(() => null);
+    return "sauber";
+  }
+  await loescheDokumente({ id: { in: [doc.id] } }, "virus");
+  await befundMelden(doc.customerId, doc.leadId, e.signatur, "nachpruefung");
+  // Lead neutral informieren (bestmöglich; außerhalb des 24-Stunden-Fensters schickt WhatsApp nichts)
+  const conv = await prisma.conversation.findFirst({ where: { leadId: doc.leadId, customerId: doc.customerId }, orderBy: { lastMessageAt: "desc" }, select: { id: true } });
+  const chat = conv ? await chatOf(conv.id) : null;
+  if (chat) await send(chat, virenText((await sprecher(chat)).an)).catch((err) => logFehler("virus antwort", err));
+  return "befund";
+}
+
+/**
+ * Ungeprüfte Unterlagen nachprüfen, sobald die Virenprüfung erreichbar ist (WhatsApp-Cron, höchstens `max` je Lauf).
+ * Ohne Konfiguration: nichts.
+ */
+export async function pruefeUngepruefteNach(max = 20): Promise<{ geprueft: number; befund: number }> {
+  if (!virenKonfig()) return { geprueft: 0, befund: 0 };
+  const docs = await prisma.leadDocument.findMany({
+    where: { status: "gespeichert", virenStatus: "ungeprueft" },
+    orderBy: { createdAt: "asc" },
+    take: max,
+    select: { id: true, customerId: true, leadId: true, storageKey: true, dateiSchluessel: true, data: true },
+  });
+  let geprueft = 0;
+  let befund = 0;
+  for (const d of docs) {
+    try {
+      const data = d.storageKey ? await holeAb(d.customerId, d.storageKey, d.dateiSchluessel) : d.data ? decryptBytes(d.data) : null;
+      if (!data) continue;
+      const r = await pruefeNach(d, data);
+      if (r === "ungeprueft") break; // Dienst gerade nicht erreichbar: nächster Lauf
+      geprueft++;
+      if (r === "befund") befund++;
+    } catch (e) {
+      logFehler("nachprüfen", e);
+    }
+  }
+  return { geprueft, befund };
+}
+
 // ─── Löschfristen (täglicher Cron) ──────────────────────────────────────────
 
 const tag = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
@@ -744,7 +884,7 @@ export async function prunePolicen(now = new Date()) {
     where: { status: "wartet", createdAt: { lt: new Date(now.getTime() - WARTEN_STUNDEN * 60 * 60 * 1000) } },
     select: { id: true },
   });
-  const wartet = abgelaufen.length ? await loescheDokumente({ id: { in: abgelaufen.map((x) => x.id) } }) : 0;
+  const wartet = abgelaufen.length ? await loescheDokumente({ id: { in: abgelaufen.map((x) => x.id) } }, "ohne_einwilligung") : 0;
 
   const docs = await prisma.leadDocument.findMany({
     where: { status: "gespeichert" },
@@ -786,7 +926,7 @@ export async function prunePolicen(now = new Date()) {
     if (datum.getTime() <= now.getTime()) loeschen.push(d.id);
     else if (!gleich(datum)) await setze(d.id, { deleteAfter: datum });
   }
-  const geloescht = loeschen.length ? await loescheDokumente({ id: { in: loeschen } }) : 0;
+  const geloescht = loeschen.length ? await loescheDokumente({ id: { in: loeschen } }, "frist") : 0;
   if (erinnern.size) {
     const { notifyLeadPush } = await import("@/lib/team");
     for (const [leadId, e] of erinnern) {

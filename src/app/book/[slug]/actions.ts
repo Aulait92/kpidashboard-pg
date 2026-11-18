@@ -48,6 +48,14 @@ export async function bookPublicAction(
 
   if (!start || Number.isNaN(new Date(start).getTime())) fail("slot");
   if (!name) fail("name");
+  // Lead-Kontext aus der Mail-Strecke (Link „Andere Zeit“, lib/mail-strecke): Lead bekannt, Telefon freiwillig
+  const streckeToken = String(formData.get("t") ?? "");
+  if (streckeToken) {
+    const { pruefeStreckenToken } = await import("@/lib/mail-strecke/token");
+    const streckeId = pruefeStreckenToken(streckeToken);
+    if (!streckeId) fail("invalid");
+    await bookViaStrecke(slug, customerId, streckeId!, streckeToken, { start, mode, name, phone, email: emailRaw, consent });
+  }
   if (!phone) fail("phone");
   if (!EMAIL_RE.test(emailRaw)) fail("email");
   if (!consent) fail("consent");
@@ -169,4 +177,59 @@ export async function bookPublicAction(
   // Für Leads ohne Sitzung schreibt recordUsage nichts.
   await recordUsage("action", "appointment.book_by_advisor");
   redirect(`/book/${slug}?ok=1&a=${appointmentId!}`);
+}
+
+/**
+ * Buchung mit Lead-Kontext aus der Mail-Strecke (Ole, 18.11.2026, E3): Lead steht fest (kein Abgleich über die Nummer),
+ * Telefon ist freiwillig. Danach weiter auf der Antwortseite (Komplettcheck, Angaben, Bereitlegen).
+ */
+async function bookViaStrecke(
+  slug: string,
+  customerId: string,
+  streckeId: string,
+  token: string,
+  f: { start: string; mode: "phone" | "video"; name: string; phone: string | null; email: string; consent: boolean },
+): Promise<never> {
+  const fail = (code: string): never => redirect(`/book/${slug}?t=${encodeURIComponent(token)}&err=${code}`);
+  if (!EMAIL_RE.test(f.email)) fail("email");
+  if (!f.consent) fail("consent");
+  if (f.mode === "phone" && !f.phone) fail("phone");
+  const s = await prisma.leadMailStrecke.findUnique({ where: { id: streckeId }, select: { id: true, leadId: true, customerId: true, appointmentId: true } });
+  if (!s || s.customerId !== customerId) fail("invalid");
+  const lead = await prisma.lead.findUnique({ where: { id: s!.leadId }, select: { id: true, phone: true, email: true, source: true, erasedAt: true } });
+  if (!lead || lead.erasedAt) fail("invalid");
+  const existing = await prisma.appointment.findFirst({ where: { leadId: lead!.id, status: "booked", startsAt: { gt: new Date() } }, select: { id: true } });
+  if (existing) redirect(`/t/${token}`);
+  // Doppelklick: nur ein Lauf zur Zeit (wie auf der Antwortseite)
+  const claim = await prisma.leadMailStrecke.updateMany({ where: { id: s!.id, appointmentId: null, OR: [{ buchungAt: null }, { buchungAt: { lt: new Date(Date.now() - 120_000) } }] }, data: { buchungAt: new Date() } });
+  if (!claim.count) redirect(`/t/${token}`);
+  const phone = lead!.phone ?? f.phone;
+  if (!lead!.phone && f.phone) await prisma.lead.update({ where: { id: lead!.id }, data: { phone: f.phone } });
+  if (lead!.email?.toLowerCase() !== f.email) {
+    const { mitNeuerEmail } = await import("@/lib/lead-emails");
+    const l = await prisma.lead.findUnique({ where: { id: lead!.id }, select: { email: true, weitereEmails: true } });
+    await prisma.lead.update({ where: { id: lead!.id }, data: mitNeuerEmail({ alt: l?.email, weitere: l?.weitereEmails, neu: f.email }) });
+  }
+  const conv = phone ? await prisma.conversation.findUnique({ where: { customerId_contactPhone: { customerId, contactPhone: phone } }, select: { id: true } }) : null;
+  try {
+    const res = await bookAppointment({
+      customerId,
+      leadId: lead!.id,
+      conversationId: conv?.id ?? null,
+      start: f.start,
+      mode: f.mode,
+      summary: eventSummary(f.mode, f.name, lead!.source),
+      description: buildEventDescription({ name: f.name, phone: phone ?? "", email: f.email, product: lead!.source, mode: f.mode, summary: null, conversationId: conv?.id ?? null, bookedVia: "mail_strecke" }),
+      leadName: f.name,
+      leadPhone: phone,
+      bookedVia: "mail_strecke",
+    });
+    await prisma.leadMailStrecke.update({ where: { id: s!.id }, data: { appointmentId: res.appointmentId, gebuchtAt: new Date(), buchungAt: null, schritt: "gebucht", reaktionAt: new Date(), antwortAt: new Date() } });
+  } catch (err) {
+    await prisma.leadMailStrecke.update({ where: { id: s!.id }, data: { buchungAt: null } }).catch(() => null);
+    if (err instanceof SlotBusyError) fail("taken");
+    console.error("[booking page strecke]", err instanceof Error ? err.message.slice(0, 120) : err);
+    fail("error");
+  }
+  redirect(`/t/${token}`);
 }

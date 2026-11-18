@@ -158,11 +158,11 @@ async function meldeSchluesselUngueltig(now: Date) {
 export type AuslesenErgebnis = { status: string } | null;
 
 /** Inhalt der Unterlage (entschlüsselt, nur im Speicher): privater Policen-Bucket bzw. alte Ablage in der Datenbank. */
-async function inhalt(doc: { customerId: string; storageKey: string | null; data: Uint8Array | null }): Promise<Buffer | null> {
+async function inhalt(doc: { customerId: string; storageKey: string | null; dateiSchluessel?: string | null; data: Uint8Array | null }): Promise<Buffer | null> {
   try {
     if (doc.storageKey) {
       const { holeAb } = await import("@/lib/policen/ablage");
-      return await holeAb(doc.customerId, doc.storageKey);
+      return await holeAb(doc.customerId, doc.storageKey, doc.dateiSchluessel);
     }
     return doc.data ? decryptBytes(Buffer.from(doc.data)) : null;
   } catch {
@@ -178,7 +178,7 @@ export async function liesUnterlageAus(documentId: string, o: { sparte?: Auslese
   const now = o.now ?? new Date();
   const doc = await prisma.leadDocument.findUnique({
     where: { id: documentId },
-    select: { id: true, customerId: true, leadId: true, status: true, data: true, storageKey: true, mimeType: true, sparte: true, auszug: true, lead: { select: { erasedAt: true } } },
+    select: { id: true, customerId: true, leadId: true, status: true, data: true, storageKey: true, dateiSchluessel: true, mimeType: true, sparte: true, auszug: true, lead: { select: { erasedAt: true } } },
   });
   if (!doc || doc.status !== "gespeichert" || doc.lead.erasedAt) return null;
   const sperre = await sperreFuer(doc.customerId, doc.leadId);
