@@ -5,6 +5,7 @@ import { consentTextFor, loadReferralSettings, referrerByCode } from "@/lib/koll
 import { benefitSentence } from "@/lib/kollegen-shared";
 import { loadRechnerConfig } from "@/lib/rechner-server";
 import { nowMs } from "@/lib/now";
+import { garantienFuerEmpfehlung } from "@/lib/empfehlen-garantien";
 import { ReferralForm } from "./referral-form";
 
 export const metadata = {
@@ -51,7 +52,9 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
   }
 
   const config = await loadRechnerConfig();
-  const guarantees = [config.guarantees.leads, config.guarantees.breakEven, config.guarantees.productSwap].filter((g) => g.enabled);
+  // Garantien passend zum Produkt und Status des Empfehlers (Usability-Check 18.11.2026)
+  const garantien = garantienFuerEmpfehlung(config.guarantees, { person: ref.person, makler: !!ref.makler, produkte: ref.produkte ?? [] });
+  const guarantees = garantien.karten;
   // Satz aus der Einstellung, mit Namen des Empfehlers (steht ohnehin in der Überschrift)
   const benefit = benefitSentence(settings, ref.person);
   const bookingUrl = /^https:\/\//i.test(config.contactUrl) ? config.contactUrl : null;
@@ -99,7 +102,7 @@ export default async function EmpfehlenPage({ params }: { params: Promise<{ code
             <div className="mt-6 space-y-3">
               <h2 className="text-lg font-semibold tracking-tight">Unsere Garantien</h2>
               <p className="text-sm text-[color:var(--muted)]" data-garantie-produkt>
-                Gelten für die Katzenversicherung (TKV-Katze). Für weitere Produkte nur, wenn sie im Angebot ausdrücklich genannt sind.
+                {garantien.satz}
               </p>
               {guarantees.map((g) => (
                 <div key={g.title} className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white p-4">
