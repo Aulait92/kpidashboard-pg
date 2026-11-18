@@ -64,10 +64,16 @@ Aktive Verkäufer (bekommen Leads): 3 inklusive, jeder weitere 49 €, Mitgliede
 
 **Prüfung gegen die Präsentation:** 800 € Werbung bei 4 € = 200 Leads → 18 Kunden →
 24 Verträge → 24 × 358 € = 8.592 € Beitrag → × 58 % ≈ 4.983 € Provision (Folie: 5.000 €);
-Kosten (800 + 1.000) × 1,19 = 2.142 € wie auf der Folie. Abgesichert im Unit-Test.
+Kosten (800 + 990) × 1,19 = 2.130,10 € (Folie mit dem Listenpreis bis 18.11.2026: (800 + 1.000) × 1,19 = 2.142 €).
+Abgesichert im Unit-Test.
 
 Mit den Standardwerten (30 €/Tag, 6 €/Lead): 152 Leads, 18,2 Verträge, 3.511 € Provision,
-2.275 € Kosten → ≈ 1.236 € Überschuss/Monat, Break-even ab 12 Verträgen.
+2.263 € Kosten (mit 990 € Betreuung) → ≈ 1.248 € Überschuss/Monat, Break-even ab 12 Verträgen.
+
+Hinweis Preise (18.11.2026): Listenpreise Betreuung + Software seit 18.11.2026 990/1.390/1.790 € (vorher
+1.000/1.400/1.800 €). Die Unit-Tests rechnen mit dem aktuellen `PRICE_LIST`. Weitere Kontrollwerte in dieser
+Datei, die nicht ausdrücklich mit 990 € gekennzeichnet sind, stammen noch aus der Rechnung mit 1.000 € (die
+Kosten liegen jetzt um 11,90 € brutto im Monat niedriger).
 
 ## Makler: Bestandssicht (Ole, 11.11.: „bei Katze für Makler bleiben, 10 % Storno“)
 
@@ -127,7 +133,7 @@ mit Cross-Selling, wenn eingeschaltet). Tabelle unten: ohne Cross-Selling.
 | 100 | 58 € ² | 87 € ² | 54.773 € |
 
 ² 100 €/Tag sind 3.040 € im Monat und liegen damit über 3.000 € – die Betreuung springt auf
-1.400 € (zweite Stufe). Die Präsentation (≈ 53 € bei 100 €/Tag) rechnet noch mit 1.000 €;
+1.390 € (zweite Stufe). Die Präsentation (≈ 53 € bei 100 €/Tag) rechnet noch mit der ersten Stufe;
 die erste Stufe reicht bis 98 €/Tag.
 
 Mit 40 €/Tag (Makler-Standard, 6 €/Lead, 12 Monate, +5 Jahre): 278 Verträge im Bestand,
@@ -155,17 +161,17 @@ Verzögerung, dann kommen Zusatzverträge auch noch nach Kampagnenende).
   gilt der Standard (TKV an, andere aus); `null` = aus. Vertreter-Modus unverändert.
 
 Kontrollwerte (wie Makler-Folie: 30 Tage, 40 €/Tag, 4 €/Lead, 12 %, 358 € Katze, 300 € Zusatz,
-22,5 %, 10 % Storno, 1.000 € Betreuung, Setup 990 €, USt., 12 Monate, +5 Jahre) – im Unit-Test:
+22,5 %, 10 % Storno, 990 € Betreuung, Setup 990 €, USt., 12 Monate, +5 Jahre) – im Unit-Test:
 
 | | mit Cross-Selling | ohne |
 |---|---|---|
-| laufend gedeckt ab | Monat 7 | Monat 12 |
+| laufend gedeckt ab | Monat 6 (mit 1.000 €: Monat 7) | Monat 12 |
 | alles zurück | Monat 12 | Monat 18 |
 | Bestand nach 12 Monaten | 412 + 412 | 412 |
 | Courtage pro Jahr danach | 60.970 € | 33.172 € |
 | Courtage gesamt | 269.495 € (Katze 146.625 + Zusatz 122.870) | 146.625 € |
-| Kosten | 32.594 € | 32.594 € |
-| Faktor | 8,27 | 4,5 |
+| Kosten | 32.451 € | 32.451 € |
+| Faktor | 8,30 | 4,5 |
 | Kosten je Vertrag | 36,4 € | 72,7 € |
 
 Budget-Vergleich mit Cross-Selling (30 Tage): 40 €/Tag 36 € / 60.970 €, 60 €/Tag 31 € / 91.456 €,

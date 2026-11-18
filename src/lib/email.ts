@@ -1,6 +1,7 @@
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { MAIL_BLOCKED_TEXT, mailClient, wasBlocked } from "@/lib/mail-guard";
 import { PROVIDER } from "@/lib/legal-texts";
+import { eur } from "@/lib/offer-pricing";
 import { entscheidungsCallMailText, entscheidungsCallText, type EntscheidungsCall } from "@/lib/vertrieb/entscheidungs-call";
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -215,7 +216,8 @@ export function offerMailTexts(du: boolean) {
       };
 }
 
-const eurMail = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+// Beträge wie im Angebot (ganze Euro ohne „,00“)
+const eurMail = eur;
 
 /** Empfehlungsrabatt in der Angebotsmail: Text- und HTML-Zeile (Listenpreis durchgestrichen). */
 export function offerDiscountLine(d: { label: string; discount: number; list: number; fee: number; anyTerm: boolean }): { text: string; html: string } {

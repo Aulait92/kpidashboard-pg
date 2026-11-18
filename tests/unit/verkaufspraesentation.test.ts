@@ -92,8 +92,10 @@ describe("Preise: Liste vs. Angebot", () => {
     expect(p.quelle).toBe("liste");
     expect(p.setup.map((s) => s.betrag)).toEqual([2490, 1990, 990]);
     expect(p.setup.find((s) => s.markiert)?.label).toBe("Mit 12 Monaten");
-    expect(p.monatlich.map((z) => z.betrag)).toEqual(["1.000 € netto", "1.400 € netto", "1.800 € netto", "individuelles Angebot"]);
-    expect(p.monatlichNetto).toBe(1000);
+    // Neue Listenpreise seit 18.11.2026 (vorher 1.000/1.400/1.800 €)
+    expect(p.monatlich.map((z) => z.betrag)).toEqual(["990 € netto", "1.390 € netto", "1.790 € netto", "individuelles Angebot"]);
+    expect(p.monatlich[0].detail).toBe("≈ 33 € pro Tag");
+    expect(p.monatlichNetto).toBe(990);
     expect(p.setupRechnung).toEqual({ betrag: 2490, satz: "ohne Vertragslaufzeit" });
     expect(paketDaten(null, "makler").setupRechnung.betrag).toBe(990);
   });
@@ -117,12 +119,12 @@ describe("Preise: Liste vs. Angebot", () => {
 });
 
 describe("Rechnungen", () => {
-  it("Vertreter mit Listenpreisen = Oles Folie (2.858 € Überschuss, Setup nach 1,5 Monaten, ≈ 31.000 € im ersten Jahr)", () => {
+  it("Vertreter mit 1.000 € (Listenpreis bis 18.11.2026) = Oles Folie (2.858 € Überschuss, Setup nach 1,5 Monaten, ≈ 31.000 € im ersten Jahr)", () => {
     const r = vertreterRechnung(1000, 2490);
     expect(r).toMatchObject({ werbe: 952, betreuung: 1190, ueberschuss: 2858, setupBrutto: 2963, setupMonate: 1.5, jahrRund: 31000 });
   });
 
-  it("Makler mit Listenpreisen = Oles Folie (32.600 € Kosten, 269.500 € Courtage, Monat 7, 12 Monate; ohne Cross-Selling 12/18; 20 %: 7)", () => {
+  it("Makler mit 1.000 € (Listenpreis bis 18.11.2026) = Oles Folie (32.600 € Kosten, 269.500 € Courtage, Monat 7, 12 Monate; ohne Cross-Selling 12/18; 20 %: 7)", () => {
     const r = maklerRechnung(1000, 990);
     expect(r).toMatchObject({ neuProMonat: 36, kostenGesamt: 32600, courtageKatze: 146600, courtageZusatz: 122900, zusammen: 269500, faktor: 8 });
     expect(r).toMatchObject({ selbstAb: 7, zurueckNach: 12, selbstAbOhne: 12, zurueckNachOhne: 18 });

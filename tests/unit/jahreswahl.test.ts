@@ -181,17 +181,17 @@ describe("Jahreswahl: Angebotsdokument (Seite und PDF)", () => {
     const html = renderToStaticMarkup(createElement(OfferDocument, { offer: doc() }));
     const t = text(html);
     expect(html).toContain("data-offer-zahlweise-wahl");
-    expect(t).toMatch(/Wählen Sie bei der Annahme: monatlich 1\.098,00 € netto im Monat oder jährlich im Voraus 10\.980,00 € netto im Jahr/);
-    expect(t).toMatch(/Bei Jahreszahlung 2 Monate geschenkt, Sie sparen 2\.196,00 €\./);
+    expect(t).toMatch(/Wählen Sie bei der Annahme: monatlich 1\.098 € netto im Monat oder jährlich im Voraus 10\.980 € netto im Jahr/);
+    expect(t).toMatch(/Bei Jahreszahlung 2 Monate geschenkt, Sie sparen 2\.196 €\./);
     expect(t).toMatch(/oder jährlich im Voraus 10\.980 €, 2 Monate geschenkt/);
-    expect(t).toMatch(/Bei Jahreszahlung ist es der Jahresbetrag von 10\.980,00 € netto\./);
+    expect(t).toMatch(/Bei Jahreszahlung ist es der Jahresbetrag von 10\.980 € netto\./);
     const zeile = t.slice(t.indexOf("Wählen Sie bei der Annahme"), t.indexOf("keine Gutschrift.") + 17);
     expect(hatGedankenstrich(zeile)).toBe(false);
   });
 
   it("nach der Annahme: jährlich bzw. monatlich mit Hinweis „bei der Annahme gewählt“", () => {
     const jahr = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ status: "accepted", annualPrepay: true }) })));
-    expect(jahr).toMatch(/Jährlich im Voraus: 10\.980,00 € netto pro Jahr/);
+    expect(jahr).toMatch(/Jährlich im Voraus: 10\.980 € netto pro Jahr/);
     expect(jahr).toContain("Bei der Annahme gewählt.");
     expect(jahr).not.toContain("Wählen Sie bei der Annahme");
     const monat = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ status: "accepted", annualFreeMonths: null }) })));

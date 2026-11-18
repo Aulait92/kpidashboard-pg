@@ -83,7 +83,7 @@ describe("Angebot: Kunde wählt Laufzeit und Startdatum", () => {
     expect(saved.term).toBe("3m");
     expect(Number(saved.setupFee)).toBe(1990);
     expect(saved.startDate?.toISOString().slice(0, 10)).toBe(start);
-    expect(Number(saved.monthlyFee)).toBe(1000);
+    expect(Number(saved.monthlyFee)).toBe(990);
 
     const audit = await prisma.auditLog.findFirst({ where: { entityId: offer.id, action: "offer.accept" } });
     expect(audit?.details).toMatchObject({ term: "3m", startDate: start, setupFee: 1990 });

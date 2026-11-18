@@ -855,11 +855,12 @@ Seiten aus der Liste „Seiten“ unten.
   das Werbebudget pro Monat (Tagesbudget × 30), die erwarteten Leads pro Monat (mit dem eigenen Leadpreis der
   letzten 30 Tage, sonst mit einem üblichen Leadpreis) und die Betreuungsstufe. Unter 20 € pro Tag erscheint der
   Hinweis „Lead-Garantie gilt ab 20 €/Tag“.
-  - Betreuungsstufen (Betreuung + Software, netto im Monat): bis 3.000 € Werbebudget 1.000 €, 3.000 – 6.000 €
-    1.400 €, 6.000 – 10.000 € 1.800 €; jedes weitere Produkt 350 €. Wechselt die Stufe (nach oben oder unten),
-    steht das deutlich da, z. B. „Mit 3.300 € Werbebudget pro Monat gilt die nächste Betreuungsstufe
-    (3.000 – 6.000 €): 1.400 € statt 1.000 € netto im Monat, ab dem nächsten Abrechnungsmonat.“ Dann ist das
-    Häkchen „Ich habe den neuen Monatspreis zur Kenntnis genommen“ Pflicht.
+  - Betreuungsstufen (Betreuung + Software, netto im Monat, seit 18.11.2026): bis 3.000 € Werbebudget 990 €,
+    3.000 – 6.000 € 1.390 €, 6.000 – 10.000 € 1.790 €; jedes weitere Produkt 350 €. Wer vorher zum damaligen
+    Listenpreis (1.000 €, 1.400 €, 1.800 €) abgeschlossen hat, behält seinen Preis und die Staffel aus seinem Angebot.
+    Wechselt die Stufe (nach oben oder unten), steht das deutlich da, z. B. „Mit 3.300 € Werbebudget pro Monat gilt
+    die nächste Betreuungsstufe (3.000 – 6.000 €): 1.390 € statt 990 € netto im Monat, ab dem nächsten
+    Abrechnungsmonat.“ Dann ist das Häkchen „Ich habe den neuen Monatspreis zur Kenntnis genommen“ Pflicht.
   - Ab wann: sofort oder ab einem Datum (bis 4 Monate im Voraus). Erhöhen und senken gilt immer sofort bzw. zum
     Datum, ohne Freigabe. Die neue Stufe gilt ab dem folgenden Abrechnungsmonat. Die Anzeigen bei Meta stellen
     wir in der Regel innerhalb eines Werktags um. Bestätigung kommt per E-Mail.

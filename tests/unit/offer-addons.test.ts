@@ -19,14 +19,14 @@ describe("Preise 11.11.: Logins, Jahreszahlung, Bestandskunden-Modul", () => {
 
   it("Standard: 3 Logins inklusive, kein Aufpreis", () => {
     const r = computeOfferPrice({ package: "software", term: "12m", products: [p(50)] });
-    expect(r).toMatchObject({ seats: 3, seatsIncluded: 3, extraSeats: 0, seatsFee: 0, monthlyTotal: 1000, annual: false, annualTotal: null });
+    expect(r).toMatchObject({ seats: 3, seatsIncluded: 3, extraSeats: 0, seatsFee: 0, monthlyTotal: 990, annual: false, annualTotal: null });
   });
 
   it("5 Logins: 2 weitere × 49 €", () => {
     const r = computeOfferPrice({ package: "software", term: "12m", products: [p(50)], seats: 5 });
     expect(r.extraSeats).toBe(2);
     expect(r.seatsFee).toBe(98);
-    expect(r.monthlyTotal).toBe(1098);
+    expect(r.monthlyTotal).toBe(1088);
   });
 
   it("ab 10 Logins individuell: kein Listenpreis, keine automatische Platz-Abrechnung", () => {
@@ -44,13 +44,13 @@ describe("Preise 11.11.: Logins, Jahreszahlung, Bestandskunden-Modul", () => {
   it("Bestandskunden-Modul +149 €", () => {
     const r = computeOfferPrice({ package: "software", term: "none", products: [p(50)], bestandModule: true });
     expect(r.bestandFee).toBe(149);
-    expect(r.monthlyTotal).toBe(1149);
+    expect(r.monthlyTotal).toBe(1139);
   });
 
   it("Bestandskunden-Modul kostet für Vertreter und Makler 149 € und ist nur dabei, wenn gebucht", () => {
     const v = computeOfferPrice({ package: "software", term: "12m", products: [p(30, "Katze")], bestandModule: true });
-    expect(v).toMatchObject({ bestandActive: true, bestandFee: 149, monthlyTotal: 1149 });
-    expect(computeOfferPrice({ package: "software", term: "12m", products: [p(30)] })).toMatchObject({ bestandActive: false, bestandFee: 0, monthlyTotal: 1000 });
+    expect(v).toMatchObject({ bestandActive: true, bestandFee: 149, monthlyTotal: 1139 });
+    expect(computeOfferPrice({ package: "software", term: "12m", products: [p(30)] })).toMatchObject({ bestandActive: false, bestandFee: 0, monthlyTotal: 990 });
     // Nur Betreuung: kein Modul
     expect(computeOfferPrice({ package: "service", term: "12m", products: [p(30)], bestandModule: true })).toMatchObject({ bestandActive: false, bestandFee: 0 });
     // Snapshot im Angebot: 0 € = vereinbart ohne Aufpreis (Sonderkondition)
@@ -66,10 +66,10 @@ describe("Preise 11.11.: Logins, Jahreszahlung, Bestandskunden-Modul", () => {
 
   it("Jährlich im Voraus: 10 × Monatspreis inkl. Zusätze, 2 Monate geschenkt", () => {
     const r = computeOfferPrice({ package: "software", term: "12m", products: [p(50)], seats: 5, bestandModule: true, annual: true });
-    expect(r.monthlyTotal).toBe(1000 + 98 + 149);
+    expect(r.monthlyTotal).toBe(990 + 98 + 149);
     expect(r.annual).toBe(true);
-    expect(r.annualTotal).toBe(1247 * 10);
-    expect(r.annualSavings).toBe(1247 * 2);
+    expect(r.annualTotal).toBe(1237 * 10);
+    expect(r.annualSavings).toBe(1237 * 2);
     expect(annualMultiplier()).toBe(10);
   });
 

@@ -2,9 +2,11 @@ import { CheckCircle2 } from "lucide-react";
 import { LegalSections } from "@/components/legal-sections";
 import { AGB, PROVIDER } from "@/lib/legal-texts";
 import {
+  betreuungsSatz,
   computeOfferPrice,
   eur,
   normalizeTerm,
+  staffelDesPreises,
   TERM_MONTHS,
   termOptionsFor,
   vorauszahlungBetraege,
@@ -128,8 +130,6 @@ const date = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 const dateTime = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: TZ, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d);
-const eur2 = (n: number) =>
-  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 2 }).format(n);
 
 /** Klarer Überblick: monatliche Gesamtkosten inkl. Werbebudget, netto und brutto. */
 function MonthlyOverview({
@@ -171,24 +171,24 @@ function MonthlyOverview({
             {serviceOnly ? "Betreuung" : "Betreuung + Software"}{" "}
             <span className="text-[#6B7280]">(an performancegrowth{annual ? `, ${halbjahr ? "6 Monate" : "jährlich"} im Voraus, je Monat umgerechnet` : ""})</span>
           </span>
-          {cell("netto", eur2(feeNet))}
-          {cell("brutto", eur2(withVat(feeNet)))}
+          {cell("netto", eur(feeNet))}
+          {cell("brutto", eur(withVat(feeNet)))}
         </div>
         <div className={`${row} border-t border-[#2563EB]/10`}>
           <span className="col-span-2 sm:col-span-1">
             Werbebudget <span className="text-[#6B7280]">(zahlen Sie direkt an Meta)</span>
           </span>
-          {cell("netto", `≈ ${eur2(adNet)}`)}
-          {cell("brutto", `≈ ${eur2(withVat(adNet))}*`)}
+          {cell("netto", `≈ ${eur(adNet)}`)}
+          {cell("brutto", `≈ ${eur(withVat(adNet))}*`)}
         </div>
         <div className={`${row} border-t-2 border-[#2563EB]/30 font-semibold text-[#111827]`}>
           <span className="col-span-2 sm:col-span-1">Gesamt pro Monat</span>
-          {cell("netto", `≈ ${eur2(totalNet)}`, true)}
-          {cell("brutto", `≈ ${eur2(withVat(feeNet) + withVat(adNet))}`, true)}
+          {cell("netto", `≈ ${eur(totalNet)}`, true)}
+          {cell("brutto", `≈ ${eur(withVat(feeNet) + withVat(adNet))}`, true)}
         </div>
       </div>
       <p className="border-t border-[#2563EB]/20 px-5 py-3 text-xs leading-relaxed text-[#6B7280]">
-        {intro ? `In den ersten ${intro.months} Monaten gilt der Startpreis von ${eur2(intro.fee)} netto (${eur2(withVat(intro.fee))} brutto) statt der oben genannten Vergütung. ` : ""}
+        {intro ? `In den ersten ${intro.months} Monaten gilt der Startpreis von ${eur(intro.fee)} netto (${eur(withVat(intro.fee))} brutto) statt der oben genannten Vergütung. ` : ""}
         Brutto = inkl. 19 % USt. * Versicherungsvermittler sind in der Regel nicht zum Vorsteuerabzug berechtigt. Auf das Werbebudget fällt dann zusätzlich 19 % USt. an
         (von Meta berechnet bzw. als Reverse-Charge). Mit Vorsteuerabzug gilt der Nettobetrag. Das Werbebudget richtet sich nach Ihrem gewählten
         Tagesbudget × 30 Tage und lässt sich jederzeit anpassen.
@@ -222,7 +222,10 @@ export function OfferDocument({
   const discLabel = offer.setupDiscountLabel || "Empfehlungsrabatt";
   const setupIsList = disc != null || Math.abs(list.setupFee - offer.setupFee) < 0.01;
   const choiceDiscount = offer.setupDiscount ?? null;
-  const monthlyIsList = list.monthlyFee != null && Math.abs(list.monthlyFee - offer.monthlyFee) < 0.01;
+  // Angenommene Angebote zum alten Listenpreis (bis 18.11.2026) behalten ihre Staffel (Preisstaffel laut Angebot)
+  const staffel = serviceOnly ? null : staffelDesPreises(list.monthlyBudget, list.extraProducts + 1, offer.monthlyFee);
+  const monthlyIsList = serviceOnly ? list.monthlyFee != null && Math.abs(list.monthlyFee - offer.monthlyFee) < 0.01 : staffel != null;
+  const budgetSatz = betreuungsSatz({ package: offer.package, monthlyBudget: list.monthlyBudget, productCount: list.extraProducts + 1, monthlyFee: offer.monthlyFee });
   const add = offerAddOns(offer);
   // Vor der Annahme: Laufzeit/Start wählt der Kunde unten selbst (Werte hier = Vorschlag).
   const open = offer.status === "draft" || offer.status === "sent";
@@ -428,9 +431,7 @@ export function OfferDocument({
               </ul>
             )}{" "}
             Das Werbebudget zahlen Sie direkt an Meta, es ist nicht Teil unserer Rechnung.
-            {!serviceOnly && !list.individual && offer.monthlyFee != null ? (
-              <Note>Ihre Betreuung richtet sich nach diesem Werbebudget: {eur2(offer.monthlyFee)} netto im Monat.</Note>
-            ) : null}
+            {budgetSatz ? <Note>{budgetSatz}</Note> : null}
           </Tr>
           {offer.startDate ? (
             <Tr k="Start">
@@ -448,11 +449,11 @@ export function OfferDocument({
             {disc ? (
               <>
                 <s className="mr-2 text-[#6B7280]" data-offer-setup-list>
-                  {eur2(disc.list)}
+                  {eur(disc.list)}
                 </s>{" "}
               </>
             ) : null}
-            <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto zzgl. 19 % USt.
+            <b className="text-[#111827]">{eur(offer.setupFee)}</b> netto zzgl. 19 % USt.
             <Note>
               {setupIsList
                 ? `${TERM_MONTHS[term] > 0 ? `Mit ${TERM_MONTHS[term]} Monaten Laufzeit` : "Ohne Vertragslaufzeit"}${extra ? (PRICE_LIST.extraProductSetup > 0 ? `, inklusive ${extra} weiteres Produkt${extra > 1 ? "e" : ""}` : `, weitere Produkte ohne Einrichtungsgebühr`) : ""}`
@@ -462,31 +463,31 @@ export function OfferDocument({
           {disc ? (
             <Tr k={discLabel}>
               <b className="text-[#047857]" data-offer-setup-discount>
-                − {eur2(disc.discount)}
+                − {eur(disc.discount)}
               </b>{" "}
               netto auf die Einrichtung
-              <Note>Listenpreis {eur2(disc.list)}, Sie zahlen {eur2(offer.setupFee)} netto.</Note>
+              <Note>Listenpreis {eur(disc.list)}, Sie zahlen {eur(offer.setupFee)} netto.</Note>
             </Tr>
           ) : null}
           {hasIntro ? (
             <Tr k={`Startpreis Monat 1–${offer.introMonths}`}>
-              <b className="text-[#111827]">{eur2(offer.introMonthlyFee!)}</b> netto pro Monat zzgl. 19 % USt.
+              <b className="text-[#111827]">{eur(offer.introMonthlyFee!)}</b> netto pro Monat zzgl. 19 % USt.
             </Tr>
           ) : null}
           <Tr k={hasIntro ? `Ab Monat ${offer.introMonths! + 1}` : "Monatliche Vergütung"}>
-            <b className="text-[#111827]">{eur2(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. ({serviceOnly ? "Betreuung" : "Betreuung + Software"})
+            <b className="text-[#111827]">{eur(offer.monthlyFee)}</b> netto pro Monat zzgl. 19 % USt. ({serviceOnly ? "Betreuung" : "Betreuung + Software"})
             <Note>
               {monthlyIsList
                 ? `${serviceOnly ? "Paket Nur Betreuung" : `Preisstufe Werbebudget ${list.tierLabel}`}${extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
                 : "Sonderkondition"}
             </Note>
-            {monthlyIsList && !serviceOnly ? <Note>{tierStaffelText()}</Note> : null}
+            {staffel ? <Note>{tierStaffelText(staffel)}</Note> : null}
           </Tr>
           {add.extraSeats > 0 ? (
             <Tr k={`Weitere Verkäufer (${add.extraSeats})`}>
               {add.seatMonthly > 0 ? (
                 <>
-                  <b className="text-[#111827]">{eur2(add.seatsFee)}</b> netto pro Monat ({add.extraSeats} × {eur(add.seatMonthly)})
+                  <b className="text-[#111827]">{eur(add.seatsFee)}</b> netto pro Monat ({add.extraSeats} × {eur(add.seatMonthly)})
                   <Note>Jeder weitere aktive Verkäufer {eur(add.seatMonthly)} netto pro Monat, tagesgenau ab dem Tag, an dem er Leads bekommt, bis zum Abschalten.</Note>
                 </>
               ) : (
@@ -502,7 +503,7 @@ export function OfferDocument({
                 </>
               ) : (
                 <>
-                  <b className="text-[#111827]">{eur2(add.bestandFee)}</b> netto pro Monat
+                  <b className="text-[#111827]">{eur(add.bestandFee)}</b> netto pro Monat
                 </>
               )}
               <Note>
@@ -518,7 +519,7 @@ export function OfferDocument({
                 </>
               ) : (
                 <>
-                  <b className="text-[#111827]">{eur2(add.empfehlungFee)}</b> netto pro Monat
+                  <b className="text-[#111827]">{eur(add.empfehlungFee)}</b> netto pro Monat
                 </>
               )}
               <Note>Nach jedem Abschluss automatisch um eine Google-Bewertung und später um eine Empfehlung bitten, mit Empfehlungsseite und Auswertung.</Note>
@@ -526,25 +527,25 @@ export function OfferDocument({
           ) : null}
           {hasExtras ? (
             <Tr k="Monatlich gesamt">
-              <b className="text-[#111827]">{eur2(add.monthlyTotal)}</b> netto pro Monat zzgl. 19 % USt.
+              <b className="text-[#111827]">{eur(add.monthlyTotal)}</b> netto pro Monat zzgl. 19 % USt.
             </Tr>
           ) : null}
           {add.annualTotal != null ? (
             <Tr k="Zahlweise">
-              {halb ? "6 Monate im Voraus" : "Jährlich im Voraus"}: <b className="text-[#111827]">{eur2(add.annualTotal)}</b> netto {halb ? "je 6 Monate" : "pro Jahr"} zzgl. 19 % USt.
+              {halb ? "6 Monate im Voraus" : "Jährlich im Voraus"}: <b className="text-[#111827]">{eur(add.annualTotal)}</b> netto {halb ? "je 6 Monate" : "pro Jahr"} zzgl. 19 % USt.
               <Note>
-                {geschenkt(add.freeMonths)} ({pm - add.freeMonths} statt {pm} Monatsbeträge), Ersparnis {eur2(add.annualSavings)}.
+                {geschenkt(add.freeMonths)} ({pm - add.freeMonths} statt {pm} Monatsbeträge), Ersparnis {eur(add.annualSavings)}.
                 {offer.annualChoice ? " Bei der Annahme gewählt." : ""}
               </Note>
             </Tr>
           ) : annualOpen ? (
             <Tr k="Zahlweise">
               <span data-offer-zahlweise-wahl>
-                Wählen Sie bei der Annahme: monatlich <b className="text-[#111827]">{eur2(add.monthlyTotal)}</b> netto im Monat oder {vorausName}{" "}
-                <b className="text-[#111827]">{eur2(v.total)}</b> netto {halb ? "für 6 Monate" : "im Jahr"}, jeweils zzgl. 19 % USt.
+                Wählen Sie bei der Annahme: monatlich <b className="text-[#111827]">{eur(add.monthlyTotal)}</b> netto im Monat oder {vorausName}{" "}
+                <b className="text-[#111827]">{eur(v.total)}</b> netto {halb ? "für 6 Monate" : "im Jahr"}, jeweils zzgl. 19 % USt.
               </span>
               <Note>
-                Bei {vorausWort} {geschenkt(v.freeMonths)}, Sie sparen {eur2(v.savings)}.
+                Bei {vorausWort} {geschenkt(v.freeMonths)}, Sie sparen {eur(v.savings)}.
                 {termOpen
                   ? halb
                     ? " Vorauszahlung für 6 Monate gibt es mit 6 Monaten Laufzeit, jährlich im Voraus mit 12 Monaten Laufzeit (2 Monate geschenkt)."
@@ -594,14 +595,14 @@ export function OfferDocument({
             </Tr>
           )}
           <Tr k="Bei Annahme fällig">
-            <b className="text-[#111827]">{eur2(offer.setupFee)}</b> netto (Setup) zzgl. 19 % USt. {eur2(vatOf(offer.setupFee))}
+            <b className="text-[#111827]">{eur(offer.setupFee)}</b> netto (Setup) zzgl. 19 % USt. {eur(vatOf(offer.setupFee))}
             {" = "}
-            <b className="text-[#111827]">{eur2(withVat(offer.setupFee))} brutto</b>
+            <b className="text-[#111827]">{eur(withVat(offer.setupFee))} brutto</b>
             <Note>
-              {add.annualTotal != null ? (halb ? "Betrag für 6 Monate" : "Jahresbetrag") : "Erste Monatsgebühr"} ({eur2(firstCharge)} netto, {eur2(withVat(firstCharge))} brutto)
+              {add.annualTotal != null ? (halb ? "Betrag für 6 Monate" : "Jahresbetrag") : "Erste Monatsgebühr"} ({eur(firstCharge)} netto, {eur(withVat(firstCharge))} brutto)
               {plan && billingDiffers ? ` am ${plan.firstIso.split("-").reverse().join(".")}` : offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}
               {billingDiffers && !plan!.free ? " zuzüglich des anteiligen Betrags für die Zeit davor" : ""}.
-              {annualOpen ? (halb ? ` Bei Vorauszahlung ist es der Betrag von ${eur2(v.total)} netto für 6 Monate.` : ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur2(v.total)} netto.`) : ""}
+              {annualOpen ? (halb ? ` Bei Vorauszahlung ist es der Betrag von ${eur(v.total)} netto für 6 Monate.` : ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur(v.total)} netto.`) : ""}
               {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
             </Note>
           </Tr>

@@ -39,7 +39,7 @@ import { bookingTerms } from "@/lib/empfehlung/shared";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 import { paketDaten } from "@/lib/vertrieb/verkaufspraesentation";
 
-const katze = [{ name: "TKV-Katze", dailyBudget: 30 }]; // 900 € Budget → 1.000 € im Monat
+const katze = [{ name: "TKV-Katze", dailyBudget: 30 }]; // 900 € Budget → 990 € im Monat (bis 18.11.2026: 1.000 €)
 
 describe("Preise und Setup 6 Monate", () => {
   it("Setup 1.490 € netto, Mindestlaufzeit 6 Monate, Laufzeit wird erkannt", () => {
@@ -49,7 +49,7 @@ describe("Preise und Setup 6 Monate", () => {
     expect(normalizeTerm("6m")).toBe("6m");
     expect(TERM_OPTIONS).toEqual(["12m", "6m", "3m", "none"]);
     const p = computeOfferPrice({ term: "6m", products: katze });
-    expect(p).toMatchObject({ listSetup: 1490, setupFee: 1490, monthlyTotal: 1000, annual: false, annualTotal: null, prepayMonths: 0 });
+    expect(p).toMatchObject({ listSetup: 1490, setupFee: 1490, monthlyTotal: 990, annual: false, annualTotal: null, prepayMonths: 0 });
     // weitere Produkte: keine Einrichtung, Empfehlungsrabatt gilt auch für 6 Monate
     expect(setupForChoice("6m", 2)).toBe(1490);
     expect(setupForChoice("6m", 1, 300)).toBe(1190);
@@ -63,15 +63,17 @@ describe("Preise und Setup 6 Monate", () => {
 describe("Vorauszahlung: eine Logik für 6 und 12 Monate", () => {
   it("6 Monate: 5 Monatsbeträge für 6 Monate, 1 Monat geschenkt, Ersparnis 1 × Monatspreis", () => {
     expect(vorauszahlungBetraege(1098, "6m")).toEqual({ total: 5490, savings: 1098, freeMonths: 1, months: 6, paidMonths: 5 });
+    // Neue Listenpreise (18.11.2026): 990 € + 2 × 49 € = 1.088 € → 5 × 1.088 € = 5.440 €, 1.088 € geschenkt
     const p = computeOfferPrice({ term: "6m", products: katze, seats: 5, annual: true });
-    expect(p).toMatchObject({ monthlyTotal: 1098, annual: true, annualTotal: 5490, annualSavings: 1098, prepayMonths: 6, prepayFreeMonths: 1 });
+    expect(p).toMatchObject({ monthlyTotal: 1088, annual: true, annualTotal: 5440, annualSavings: 1088, prepayMonths: 6, prepayFreeMonths: 1 });
   });
 
   it("12 Monate: 10 Monatsbeträge, 2 Monate geschenkt, Ersparnis 2 × Monatspreis (wie bisher)", () => {
     expect(vorauszahlungBetraege(1098, "12m")).toEqual({ total: 10980, savings: 2196, freeMonths: 2, months: 12, paidMonths: 10 });
     expect(jahreswahlBetraege(1098)).toEqual({ annualTotal: 10980, savings: 2196, freeMonths: 2 });
+    // Neue Listenpreise: 10 × 1.088 € = 10.880 €, 2 × 1.088 € = 2.176 € geschenkt
     const p = computeOfferPrice({ term: "12m", products: katze, seats: 5, annual: true });
-    expect(p).toMatchObject({ annualTotal: 10980, annualSavings: 2196, prepayMonths: 12, prepayFreeMonths: 2 });
+    expect(p).toMatchObject({ monthlyTotal: 1088, annualTotal: 10880, annualSavings: 2176, prepayMonths: 12, prepayFreeMonths: 2 });
   });
 
   it("nur mit 6 oder 12 Monaten", () => {
@@ -357,8 +359,8 @@ describe("Angebotsdokument mit 6 Monaten", () => {
     const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc() })));
     expect(t).toMatch(/Laufzeit 6 Monate/);
     expect(t).toMatch(/Mit 6 Monaten Laufzeit/);
-    expect(t).toMatch(/Wählen Sie bei der Annahme: monatlich 1\.098,00 € netto im Monat oder 6 Monate im Voraus 5\.490,00 € netto für 6 Monate/);
-    expect(t).toMatch(/Bei Vorauszahlung 1 Monat geschenkt, Sie sparen 1\.098,00 €\./);
+    expect(t).toMatch(/Wählen Sie bei der Annahme: monatlich 1\.098 € netto im Monat oder 6 Monate im Voraus 5\.490 € netto für 6 Monate/);
+    expect(t).toMatch(/Bei Vorauszahlung 1 Monat geschenkt, Sie sparen 1\.098 €\./);
     expect(t).toMatch(/verlängert sich dann nach 6 Monaten um jeweils weitere 6 Monate/);
     expect(t).toMatch(/6 Monate ab Start, danach monatlich kündbar/);
     expect(t).toMatch(/Laufzeit wählen Sie unten bei der Annahme: 12 Monate \(Setup 990 €\), 6 Monate \(1\.490 €\), 3 Monate \(1\.990 €\) oder ohne Laufzeit \(2\.490 €\)/);
@@ -368,10 +370,10 @@ describe("Angebotsdokument mit 6 Monaten", () => {
 
   it("nach der Annahme mit Vorauszahlung: Betrag je 6 Monate, Verlängerung um 6 Monate", () => {
     const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ status: "accepted", annualPrepay: true }) })));
-    expect(t).toMatch(/6 Monate im Voraus: 5\.490,00 € netto je 6 Monate/);
-    expect(t).toMatch(/1 Monat geschenkt \(5 statt 6 Monatsbeträge\), Ersparnis 1\.098,00 €/);
+    expect(t).toMatch(/6 Monate im Voraus: 5\.490 € netto je 6 Monate/);
+    expect(t).toMatch(/1 Monat geschenkt \(5 statt 6 Monatsbeträge\), Ersparnis 1\.098 €/);
     expect(t).toMatch(/6 Monate ab Start, 6 Monate im Voraus bezahlt\. Danach verlängert sich der Vertrag um jeweils weitere 6 Monate/);
-    expect(t).toMatch(/Betrag für 6 Monate \(5\.490,00 € netto/);
+    expect(t).toMatch(/Betrag für 6 Monate \(5\.490 € netto/);
   });
 
   it("Altangebot (vor der Einführung) mit Laufzeitwahl: Liste ohne 6 Monate", () => {

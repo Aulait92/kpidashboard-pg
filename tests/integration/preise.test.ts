@@ -135,7 +135,7 @@ describe("Preise: Annahme → Abo-Positionen und Kundenkonto", () => {
     offers.push(offer.id);
     expect(offer.term).toBe("3m");
     expect(Number(offer.setupFee)).toBe(1990);
-    expect(Number(offer.monthlyFee)).toBe(1000);
+    expect(Number(offer.monthlyFee)).toBe(990);
     await expect(createOffer({ salesContactId: contact.id }, { ...base, annual: true }, null)).rejects.toThrow(/12 Monaten/);
     // Monatsabo wie bei 12 Monaten
     const accepted = await makeOffer({ term: "3m", setupFee: 1990, seats: 3, bestandMonthly: null, annualPrepay: false, annualFreeMonths: null });
