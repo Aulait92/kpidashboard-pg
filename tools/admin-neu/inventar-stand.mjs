@@ -63,7 +63,7 @@ const WERKZEUGE = new Set(["werkzeuge", "e-status", "e-anbindungen", "e-vorlagen
 export function bereichFuer(view) {
   if (view === "landkarte") return "was-wo-ist";
   if (["heute", "mehr", "vertrieb-aufgaben"].includes(view)) return "mein-tag";
-  if (WERKZEUGE.has(view)) return "werkzeuge";
+  if (WERKZEUGE.has(view) || view.startsWith("w-")) return "werkzeuge";
   if (view.startsWith("e-") || view === "einstellungen") return "einstellungen";
   if (view.startsWith("vertrieb") || view.startsWith("kontakt") || view === "angebot-neu" || view === "praesentation" || view.startsWith("marketing")) return "verkaufen";
   if (view === "leads-chats" || view === "leads-chat" || view === "leads-ki" || view === "zahlen-qualitaet" || view.startsWith("kunde")) return "betreuen";
