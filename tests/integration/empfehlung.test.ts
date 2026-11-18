@@ -101,6 +101,7 @@ import {
   claimPersonalLink,
   handleReferralInbound,
   sendAfterAppointmentReferrals,
+  markResolved,
 } from "@/lib/empfehlung/requests";
 import { DAY_MS, UNHAPPY_TASK, isFollowUpTask, isRewardTask, refCodeOf } from "@/lib/empfehlung/shared";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
@@ -372,6 +373,28 @@ describe("Empfehlungen & Bewertungen", () => {
     const day21 = new Date(NOW.getTime() + 14 * DAY_MS);
     await sendDueReferrals(day21);
     expect(state.notices.filter((n) => n.customerId === id && n.purpose === "referral_request")).toHaveLength(0);
+  });
+
+  it("„Als geklärt markieren“ erledigt auch die Aufgabe „unzufrieden“ in „Heute“ (andere Wiedervorlagen bleiben)", async () => {
+    const id = await activeModule();
+    const sad = await closedLead(id, `4915${uid()}43`, "Frida Klärung");
+    await scheduleReviewRequests(NOW);
+    await sendDueReviews(NOW);
+    const conv = await prisma.conversation.create({ data: { customerId: id, contactPhone: sad.phone!, leadId: sad.id } });
+    await handleReviewReply(conv.id, sad.phone!, "Leider bin ich enttäuscht.", new Date(NOW.getTime() + 3600_000));
+    const rr = await prisma.reviewRequest.findUniqueOrThrow({ where: { leadId: sad.id } });
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: sad.id } })).followUpNote?.startsWith(UNHAPPY_TASK)).toBe(true);
+    // Fremder Kunde kann nichts klären
+    expect(await markResolved("cust_fremd", rr.id)).toBe(false);
+    expect(await markResolved(id, rr.id, new Date(NOW.getTime() + DAY_MS))).toBe(true);
+    const lead = await prisma.lead.findUniqueOrThrow({ where: { id: sad.id } });
+    expect(lead.followUpNote).toBeNull();
+    expect(lead.followUpAt).toBeNull();
+    expect((await prisma.reviewRequest.findUniqueOrThrow({ where: { id: rr.id } })).resolvedAt).not.toBeNull();
+    // Zweites Mal: nichts mehr zu tun; eine neue, andere Wiedervorlage bleibt unberührt
+    await prisma.lead.update({ where: { id: sad.id }, data: { followUpAt: NOW, followUpNote: "Angebot nachfassen" } });
+    expect(await markResolved(id, rr.id)).toBe(false);
+    expect((await prisma.lead.findUniqueOrThrow({ where: { id: sad.id } })).followUpNote).toBe("Angebot nachfassen");
   });
 
   it("„Bei Lob direkt um Empfehlung bitten“ aus: einfacher Dank, Bitte um Empfehlung an Tag 21", async () => {

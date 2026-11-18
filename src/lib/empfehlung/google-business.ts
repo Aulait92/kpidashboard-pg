@@ -16,7 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { decryptNullable, encryptNullable } from "@/lib/encryption";
 import { reportError } from "@/lib/monitoring";
 import { advisorDisplayName } from "@/lib/whatsapp/template-plan";
-import { DAY_MS } from "@/lib/empfehlung/shared";
+import { DAY_MS, WAECHTER_HREF } from "@/lib/empfehlung/shared";
 
 export const GBP_SCOPE = "https://www.googleapis.com/auth/business.manage";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -284,7 +284,7 @@ export async function notifyNewReviews(customerId: string, now = new Date()): Pr
     await sendToBuyersOfCustomer(customerId, {
       title: bad ? `⚠️ ${r.stars} ${r.stars === 1 ? "Stern" : "Sterne"} auf Google, bitte antworten` : `⭐ Neue Google-Bewertung: ${r.stars} Sterne`,
       body: `${r.reviewerName ?? "Jemand"}: ${quote}`,
-      url: "/buyer/empfehlungen#bewertungen",
+      url: WAECHTER_HREF,
       tag: `gbp-review:${r.id}`,
     }).catch(() => {});
     if (bad && r.leadId) {
