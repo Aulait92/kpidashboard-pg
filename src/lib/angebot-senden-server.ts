@@ -7,7 +7,8 @@
 //   angebotSelbst          Weg „selbst“: Kennzeichen, Nachfassen „offer_selbst“ (nur WhatsApp und Anruf)
 //   angebotAblegen         PDF zum Termin vermerken („Angebot abgelegt am“), z. B. nach „Habe ich selbst gesendet“
 //   sendeNachfassMail      Schritt „email“ der Abfolge (Tag 5) mit [Rückruf wünschen]
-//   rueckrufWunsch         Minimalseite /rueckruf/<token>: Aufgabe und Push an den Vermittler, Nachfassen endet
+//   rueckrufWunsch         Seite /rueckruf/<token> (P5): Zeitfenster und Notiz, Aufgabe mit Fenster und Push an den
+//                          Vermittler, Nachfassen pausiert, Bestätigung per WhatsApp im offenen Fenster
 //   runAngebotVorabCheck   Vorab-Check-Push am Vorabend jedes automatischen Nachfassens (WhatsApp, E-Mail), je Schritt einmal
 // Team: Pushes an den zuständigen Berater, Mails über sein Postfach bzw. mit seinem Namen (lead-versand.ts).
 
@@ -24,7 +25,6 @@ import { beitragAus, beitragEffektiv, cleanAngebote, gewaehlte } from "@/lib/ang
 import {
   ANGEBOT_LINK_TAGE,
   ANGEBOT_WIEDERVORLAGE,
-  RUECKRUF_NOTIZ,
   angebotAnrufPush,
   angebotAnrufTag,
   angebotMail,
@@ -38,12 +38,13 @@ import {
   angebotWhatsAppText,
   kombiSatz,
   naechsterVersand,
-  rueckrufPush,
   vorabCheckFaellig,
   vorabCheckPush,
   type AngebotWeg,
 } from "@/lib/angebot-senden";
-import { SEQUENCES, startAngebotNachfassen, stopSequences, topicOf, type SequenceCtx, type SequenceKind, type SequenceLogEntry } from "@/lib/lead-sequences";
+import { ANGEBOT_KINDS, SEQUENCES, pauseAngebotsAbfolge, startAngebotNachfassen, topicOf, type SequenceCtx, type SequenceKind, type SequenceLogEntry } from "@/lib/lead-sequences";
+import { bereinigeNotiz, rueckrufBestaetigung, rueckrufFensterPush, rueckrufNotiz, rueckrufPauseBis, rueckrufTage, tagTitel, waehleFenster, type RueckrufFenster } from "@/lib/rueckruf";
+import type { LeadTimes } from "@/lib/calendar/lead-times";
 import type { Werte } from "@/lib/mail/platzhalter";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -246,7 +247,7 @@ async function nachDemVersand(
 
 /** Die klassische Wiedervorlage „Angebot nachfassen“ entfällt, sobald die Abfolge nachfasst. */
 export async function angebotWiedervorlageWeg(leadId: string): Promise<void> {
-  const running = await prisma.leadSequence.count({ where: { leadId, stoppedAt: null, kind: { in: ["offer", "offer_selbst"] } } });
+  const running = await prisma.leadSequence.count({ where: { leadId, stoppedAt: null, kind: { in: ANGEBOT_KINDS } } });
   if (!running) return;
   await prisma.lead.updateMany({ where: { id: leadId, followUpNote: ANGEBOT_WIEDERVORLAGE }, data: { followUpAt: null, followUpNote: null } });
 }
@@ -445,37 +446,84 @@ export async function sendeNachfassMail(
   return res.sent ? { ...base, result: "sent" } : { ...base, result: res.reason === "not_configured" ? "skipped" : "failed", detail: res.reason === "not_configured" ? "Versand nicht eingerichtet" : res.reason.slice(0, 160) };
 }
 
-/** Lead für die Rückruf-Seite (Name des Vermittlers, Ansprache). null bei unbekanntem Token. */
+/** Geschäftszeiten des zuständigen Kalenders (Lead-Zeiten, wie der Anruf-Auslöser), sonst der Standard. */
+async function geschaeftszeiten(customerId: string, leadId: string): Promise<LeadTimes> {
+  const { bookingKeys } = await import("@/lib/calendar");
+  const { loadLeadTimes, DEFAULT_LEAD_TIMES } = await import("@/lib/calendar/lead-times");
+  const keys = await bookingKeys(customerId, leadId).catch(() => [customerId]);
+  return loadLeadTimes(keys[0] ?? customerId).catch(() => DEFAULT_LEAD_TIMES);
+}
+
+/** Lead für die Rückruf-Seite (Name des Vermittlers, Ansprache, Geschäftszeiten). null bei unbekanntem Token. */
 export async function ladeRueckruf(token: string) {
   if (!TOKEN_RE.test(token)) return null;
-  const lead = await prisma.lead.findUnique({ where: { rueckrufToken: token }, select: { id: true, customerId: true, name: true, phone: true, erasedAt: true, rueckrufGewuenschtAt: true, customer: { select: { leadAddress: true, name: true } } } });
+  const lead = await prisma.lead.findUnique({ where: { rueckrufToken: token }, select: { id: true, customerId: true, name: true, phone: true, erasedAt: true, rueckrufGewuenschtAt: true, followUpNote: true, followUpAt: true, customer: { select: { leadAddress: true, name: true } } } });
   if (!lead || lead.erasedAt) return null;
   const an = asAnsprache(lead.customer.leadAddress);
   const who = await ansprechpartner({ customerId: lead.customerId, leadId: lead.id, phone: lead.phone, name: lead.name });
   const { vermittlerName } = await import("@/lib/whatsapp/gespraech");
   const person = vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm });
-  return { leadId: lead.id, customerId: lead.customerId, an, person, gewuenschtAt: lead.rueckrufGewuenschtAt };
+  const lt = await geschaeftszeiten(lead.customerId, lead.id);
+  // Für den Kopf der Seite wie auf der Buchungsseite: der volle Name des Vermittlers bzw. die Agentur
+  const vermittler = who.vermittler.name || who.advisor || who.firm;
+  return { leadId: lead.id, customerId: lead.customerId, an, person, vermittler, kontakt: who.kontakt, phone: lead.phone, gewuenschtAt: lead.rueckrufGewuenschtAt, notiz: lead.followUpNote, faelligAt: lead.followUpAt, lt };
 }
 
+/** Wählbare Zeitfenster der Rückruf-Seite (heute und der nächste Tag mit Geschäftszeit). */
+export async function rueckrufAuswahl(token: string, now = new Date()) {
+  const r = await ladeRueckruf(token);
+  if (!r) return null;
+  return { ...r, tage: rueckrufTage(now, r.lt) };
+}
+
+export type RueckrufErgebnis = { ok: true; schon: boolean; fenster: RueckrufFenster | null; whatsapp: boolean } | { ok: false; fehler: "fenster" };
+
 /**
- * „Rückruf wünschen“ (Minimalseite, Ausbau mit Zeitfenstern in P5): Aufgabe für heute auf „Heute“, Push an den
- * zuständigen Berater, Verlauf, Nachfassen zum Angebot endet (der Vermittler ruft an). Innerhalb einer Stunde nur
- * einmal (doppeltes Tippen, Vorschau von Mailprogrammen löst nichts aus: nur per Knopf, POST).
+ * „Rückruf wünschen“ (Seite /rueckruf/<token>, P5): Aufgabe mit Zeitfenster auf „Heute“ (fällig zum Beginn des Fensters,
+ * dazu ein Eintrag im Kalender des Beraters, falls verbunden), Push an den zuständigen Berater, Nachfassen zum Angebot
+ * pausiert bis zwei Tage nach dem Fenster, Bestätigung an den Lead per WhatsApp im offenen 24-h-Fenster. Ohne wählbare
+ * Fenster (keine Geschäftszeiten) „so bald wie möglich“. Derselbe Wunsch innerhalb einer Stunde zählt nur einmal (doppeltes
+ * Tippen); ein anderes Fenster ersetzt den früheren Wunsch.
  */
-export async function rueckrufWunsch(token: string, deps: { now?: Date; push?: PushFn } = {}): Promise<"ok" | "schon" | null> {
+export async function rueckrufWunsch(
+  token: string,
+  input: { fenster?: string | null; notiz?: unknown } = {},
+  deps: { now?: Date; push?: PushFn } = {},
+): Promise<RueckrufErgebnis | null> {
   const now = deps.now ?? new Date();
   const r = await ladeRueckruf(token);
   if (!r) return null;
-  if (r.gewuenschtAt && now.getTime() - r.gewuenschtAt.getTime() < 60 * 60 * 1000) return "schon";
-  await prisma.lead.update({ where: { id: r.leadId }, data: { rueckrufGewuenschtAt: now, followUpAt: now, followUpNote: RUECKRUF_NOTIZ, callbackSnoozedUntil: null } });
-  await logLeadHistory(r.leadId, "wiedervorlage", "Rückruf gewünscht (Link in der E-Mail zum Angebot)", { customerId: r.customerId, userId: null });
-  await stopSequences(r.leadId, "Lead wünscht Rückruf", { now });
+  const angebot = rueckrufTage(now, r.lt).length > 0;
+  const fenster = angebot ? waehleFenster(input.fenster, now, r.lt) : null;
+  if (angebot && !fenster) return { ok: false, fehler: "fenster" };
+  const notiz = bereinigeNotiz(input.notiz);
+  const note = rueckrufNotiz(fenster, notiz);
+  const faellig = fenster ? fenster.von : now;
+  const gleich = r.notiz === note && (!fenster || r.faelligAt?.getTime() === faellig.getTime());
+  if (r.gewuenschtAt && now.getTime() - r.gewuenschtAt.getTime() < 60 * 60 * 1000 && gleich) return { ok: true, schon: true, fenster, whatsapp: false };
+  await prisma.lead.update({ where: { id: r.leadId }, data: { rueckrufGewuenschtAt: now, followUpAt: faellig, followUpNote: note, callbackSnoozedUntil: null } });
+  const pauseBis = rueckrufPauseBis(fenster, now);
+  const pausiert = await pauseAngebotsAbfolge(r.leadId, pauseBis, "Rückruf gewünscht", now);
+  const wann = fenster ? `${tagTitel(fenster.tag, now)} ${fenster.zeit}` : "so bald wie möglich";
+  await logLeadHistory(r.leadId, "wiedervorlage", `Rückruf gewünscht: ${wann}${notiz ? ` („${notiz.slice(0, 80)}“)` : ""}${pausiert ? ", Nachfassen zum Angebot pausiert" : ""}`, { customerId: r.customerId, userId: null });
+  // Kalender des Beraters (wie „Später anrufen“ mit Uhrzeit), nur mit Fenster
+  if (fenster) await import("@/lib/calendar/rueckruf").then((m) => m.rueckrufInKalender(r.leadId, fenster.von, { appUrl: process.env.APP_URL ?? null })).catch(() => null);
   const z = await zustaendigUndName(r.leadId);
-  if (z) await (deps.push ?? standardPush)(z.lead.assignedUserId, z.lead.customerId, rueckrufPush({ leadId: r.leadId, name: z.name })).catch((e) => console.error("[rueckruf push]", e));
-  return "ok";
+  if (z) await (deps.push ?? standardPush)(z.lead.assignedUserId, z.lead.customerId, rueckrufFensterPush({ leadId: r.leadId, name: z.name, fenster, notiz, now })).catch((e) => console.error("[rueckruf push]", e));
+  // Bestätigung per WhatsApp nur im offenen Fenster (Freitext, ohne Vorlage); sonst zeigt sie nur die Seite
+  let whatsapp = false;
+  const conv = await chatVon(r.customerId, r.leadId, r.phone);
+  if (conv && r.phone && !conv.optedOutAt && conv.windowExpiresAt && conv.windowExpiresAt.getTime() > now.getTime()) {
+    const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+    const body = rueckrufBestaetigung({ an: r.an, hi: anredeZeile(r.an, r.kontakt), person: r.person, fenster, now });
+    whatsapp = await sendWhatsAppMessage({ customerId: r.customerId, to: r.phone, body, sentBy: "system" })
+      .then(() => true)
+      .catch((e) => (console.error("[rueckruf bestaetigung]", e), false));
+  }
+  return { ok: true, schon: false, fenster, whatsapp };
 }
 
-const ANGEBOT_ABFOLGEN: SequenceKind[] = ["offer", "offer_selbst"];
+const ANGEBOT_ABFOLGEN: SequenceKind[] = ANGEBOT_KINDS;
 
 /**
  * Vorab-Check (Ole, 17.11.2026, Ergänzung C): Am Vorabend jedes automatischen Nachfassens zum Angebot (WhatsApp, E-Mail;

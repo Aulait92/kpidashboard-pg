@@ -27,8 +27,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.hansemerkur.de/private-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Vario Care Invest",
@@ -47,8 +46,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.hansemerkur.de/private-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -59,6 +57,7 @@
     "Vario Care: garantierte Leistung zum Ablauf (Klassikanlage). Beitragsgarantie bei Vario Care Invest nicht genannt.",
     "Rentenfaktor mit Günstigerprüfung zum Ablauf und Verzicht auf Treuhänderklausel; Höhe nicht genannt.",
     "Invest: kostenloser Fondswechsel, keine Ausgabeaufschläge, Ablaufmanagement. Effektivkosten nicht genannt.",
-    "Zusatzversicherungen: Berufsunfähigkeit, Erwerbsunfähigkeit, Hinterbliebenenrente."
+    "Zusatzversicherungen: Berufsunfähigkeit, Erwerbsunfähigkeit, Hinterbliebenenrente.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

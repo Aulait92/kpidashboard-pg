@@ -17,6 +17,7 @@ import { NachrichtVorschau } from "@/components/nachricht-vorschau";
 import type { PlanEintrag, PlanKanal } from "@/lib/nachrichtenplan";
 import { nachrichtenAktion, type NachrichtenAktion } from "@/app/buyer/nachrichtenplan-actions";
 import { stopLeadSequenceAction } from "@/app/buyer/sequence-actions";
+import { LeadSequencePause, type PauseOption } from "@/components/lead-sequence-pause";
 import { cn } from "@/lib/utils";
 
 export type VerlaufZeile = { at: string | null; text: string; leise?: boolean };
@@ -84,7 +85,10 @@ export function NaechsteNachrichten({
   verlauf,
   readOnly,
   jetzt: jetztIso,
+  bedenkzeit = null,
 }: {
+  /** Nachfassen zum Angebot läuft (Paket P5): „Bedenkzeit eintragen“ im Menü; bis = laufende Bedenkzeit */
+  bedenkzeit?: { optionen: PauseOption[]; min: string; max: string; bis: string | null } | null;
   leadId: string;
   eintraege: PlanEintrag[];
   pausiertAt: string | null;
@@ -102,6 +106,7 @@ export function NaechsteNachrichten({
   const [offen, setOffen] = useState<string | null>(null);
   const [verschieben, setVerschieben] = useState<PlanEintrag | null>(null);
   const [senden, setSenden] = useState<PlanEintrag | null>(null);
+  const [bedenkzeitOffen, setBedenkzeitOffen] = useState(false);
   const jetzt = useMemo(() => new Date(jetztIso), [jetztIso]);
   const eintraege = alleEintraege.filter((e) => !begleitend(e));
   const pausiert = !!pausiertAt;
@@ -138,7 +143,9 @@ export function NaechsteNachrichten({
   const naechste = anLead.find((e) => !e.pausiert);
   const unterzeile = pausiert
     ? `Pausiert seit ${kurz(pausiertAt!, jetzt)} Uhr. Bis Sie fortsetzen, geht nichts automatisch raus.`
-    : naechste
+    : bedenkzeit?.bis
+      ? `Bedenkzeit bis ${bedenkzeit.bis}, danach fasst die App wieder nach.`
+      : naechste
       ? `Nächste an den Kontakt: ${kurz(naechste.at, jetzt)} Uhr, ${KANAL[naechste.kanal].name}`
       : eintraege.length
         ? "Nur Aufgaben und Hinweise für Sie geplant"
@@ -181,6 +188,9 @@ export function NaechsteNachrichten({
                   labelClassName="sr-only"
                   icon={MoreHorizontal}
                   items={[
+                    ...(bedenkzeit
+                      ? [{ label: bedenkzeit.bis ? "Bedenkzeit ändern" : "Bedenkzeit eintragen", hint: "Nachfassen zum Angebot bis zu einem Tag anhalten", onSelect: () => setBedenkzeitOffen(true) }]
+                      : []),
                     {
                       label: "Nachfassen beenden",
                       hint: "Die laufende Abfolge endet ganz, Erinnerungen bleiben.",
@@ -265,6 +275,9 @@ export function NaechsteNachrichten({
         </div>
       </div>
 
+      {bedenkzeit && !readOnly ? (
+        <LeadSequencePause leadId={leadId} optionen={bedenkzeit.optionen} min={bedenkzeit.min} max={bedenkzeit.max} aendern={!!bedenkzeit.bis} offen={bedenkzeitOffen} onOffen={setBedenkzeitOffen} />
+      ) : null}
       <VerschiebenSheet
         e={verschieben}
         pending={pending}

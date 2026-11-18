@@ -2878,7 +2878,7 @@ model LeadSequence {
   id         String    @id @default(cuid())
   leadId     String
   customerId String
-  // not_reached | offer | offer_selbst | no_show | silent | recall
+  // not_reached | offer | offer_selbst | offer_bedenkzeit | offer_selbst_bedenkzeit | no_show | silent | recall
   kind       String
   // Index des nächsten Schritts
   step       Int       @default(0)

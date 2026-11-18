@@ -9,7 +9,7 @@ import { ansprechpartner } from "@/lib/lead-anrede";
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { firstNameOf } from "@/lib/whatsapp/templates";
 import { terminNutzenSatz, vermittlerName, zeitKurz } from "@/lib/whatsapp/gespraech";
-import { topicOf } from "@/lib/lead-sequences";
+import { istAngebotsAbfolge, topicOf } from "@/lib/lead-sequences";
 import { leadLabel } from "@/lib/showup";
 import { ANTWORT_WARTEZEIT_MS, anrufStartZeitpunkt } from "@/lib/anruf-ausloeser";
 import { planeNachrichten, zaehleAutomatische, type PlanEintrag, type PlanEingabe } from "@/lib/nachrichtenplan";
@@ -166,7 +166,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
       kontakt: who.kontakt,
       // Angebot (P3): Thema aus der Auswahl im Termin, wie beim Senden (lib/lead-sequences.ts sendStep)
       topic:
-        (abfolgen.some((s) => s.kind === "offer" || s.kind === "offer_selbst") ? await import("@/lib/angebot-senden-server").then((m) => m.angebotThemaFuerLead(leadId)) : null) ??
+        (abfolgen.some((s) => istAngebotsAbfolge(s.kind)) ? await import("@/lib/angebot-senden-server").then((m) => m.angebotThemaFuerLead(leadId)) : null) ??
         topicOf(lead.formData, lead.source, an),
       an,
       person,
@@ -175,7 +175,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     anrufAusloeserAt,
     pausiertAt: lead.nachrichtenPausiertAt,
     // E-Mail-Schritte (Angebot Tag 5): Text aus der Vorlage des Vermittlers
-    mailVorlagen: abfolgen.some((s) => s.kind === "offer")
+    mailVorlagen: abfolgen.some((s) => s.kind === "offer" || s.kind === "offer_bedenkzeit")
       ? { nachfassen_angebot: await import("@/lib/angebot-senden-server").then((m) => m.mailVorlage(lead.customerId, "nachfassen_angebot", an)) }
       : undefined,
   });

@@ -53,6 +53,10 @@ describe("Diagnose: Kette je Lead", () => {
         externalId: `1${now}00`,
         source: "Hausrat",
         adChannel: "Meta",
+        adPlatform: "fb",
+        adCampaignId: "c-kampagne",
+        adSetId: "c-gruppe",
+        adId: "c-anzeige",
         consentData: { formId: "123456789", at: created.toISOString() },
         createdAt: created,
         firstContactAt: new Date(created.getTime() + 30 * 60_000),
@@ -70,6 +74,8 @@ describe("Diagnose: Kette je Lead", () => {
     await prisma.leadContract.create({ data: { leadId: l1.id, customerId: c.id, sparte: "unfall", signedAt: new Date(created.getTime() + 4 * D), status: "storniert", cancelledAt: new Date(now - D), cancelReason: "kunde" } });
     // 2) Neuer Lead ohne alles
     const l2 = await prisma.lead.create({ data: { ...base, source: "Hausrat", createdAt: new Date(now - 2 * D), status: "Neuer Lead" } });
+    // Airtable-Eingang beim Vermittler-Kunden ohne Bezug: bleibt Vermittler (Einstufung korrigiert 18.11.2026)
+    await prisma.pplIntake.create({ data: { airtableId: `rec_kette_${now}`, receivedAt: new Date(now - 2 * D), productKey: "Hausrat", outcome: "geliefert", leadId: l2.id } });
     // 3) Testlead beim echten Kunden: zählt nicht
     const l3 = await prisma.lead.create({ data: { ...base, isTest: true, status: "Abschluss", closedAt: new Date() } });
     // 4) Pay-per-Lead per E-Mail geliefert, Storno genehmigt
@@ -83,6 +89,7 @@ describe("Diagnose: Kette je Lead", () => {
   });
 
   afterAll(async () => {
+    await prisma.pplIntake.deleteMany({ where: { leadId: { in: leadIds } } });
     for (const id of customers) await cleanupCustomer(id);
     process.env.OPS_READ_TOKEN = before;
   });
@@ -116,7 +123,10 @@ describe("Diagnose: Kette je Lead", () => {
     expect(g.stufen.abschluss.felder.vertragsnummer.n).toBe(1);
     expect(g.stufen.storno.erreicht).toBe(1);
     expect(k.zeitraeume.d30.alle.leads).toBe(2);
-    expect(j.data.fehlendeFelder.anzeige).toContain("kampagneId");
+    expect(g.stufen.anzeige.felder.kampagne).toEqual({ n: 1, pct: 50 });
+    expect(g.stufen.anzeige.felder.anzeige).toEqual({ n: 1, pct: 50 });
+    expect(j.data.fehlendeFelder.anzeige).toBeUndefined();
+    expect(k.zeitraeume.gesamt.ppl.leads).toBe(0);
   });
 
   it("Gesamtsicht: Pay-per-Lead getrennt, Testkunde fehlt, keine Personendaten", async () => {

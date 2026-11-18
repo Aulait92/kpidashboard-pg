@@ -23,8 +23,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.vkb.de/v/unfall/kiz.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -33,6 +32,7 @@
   "offen": [
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
     "Ein Tarif, Rentenhöhe frei wählbar, Dynamik zuwählbar. Beitragsfreie Weiterführung bei Tod des Versicherungsnehmers.",
-    "Kapitalleistung, Weiterversicherung als Erwachsener und psychische Erkrankungen sind auf der Produktseite nicht genannt."
+    "Kapitalleistung, Weiterversicherung als Erwachsener und psychische Erkrankungen sind auf der Produktseite nicht genannt.",
+    "Geprüft am 18.11.2026 an der Produktseite (Tarifübersicht und FAQ)."
   ]
 }

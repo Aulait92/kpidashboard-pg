@@ -33,8 +33,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.vkb.de/v/rechtsschutz/privat-rechtsschutz.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -45,6 +44,7 @@
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
     "Risikoträger ist die ÖRAG Rechtsschutzversicherungs-AG. Ein Tarif aus den Lebensbereichen Privat, Verkehr, Haus und Wohnung sowie Beruf frei kombinierbar, alle vier auch als Komplett-Paket.",
     "Die Seite nennt ein Rating für den Rundum-Schutz PLUS, beschreibt aber keine Stufen Rundum-Schutz und Rundum-Schutz PLUS; deshalb nur ein Tarif.",
-    "Selbstbeteiligung wählbar 300, 400, 500 oder 1.000 €; SB-Bonus 150 € bei Kanzlei-Empfehlung. Strafkaution nicht genannt."
+    "Selbstbeteiligung wählbar 300, 400, 500 oder 1.000 €; SB-Bonus 150 € bei Kanzlei-Empfehlung. Strafkaution nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und ÖRAG-Leistungsübersicht."
   ]
 }

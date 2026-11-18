@@ -114,6 +114,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "agent.sequences": "Automatisch nachfassen an/aus",
   "lead.sequence_stop": "Automatisches Nachfassen gestoppt",
   "lead.nachrichten": "Nächste Nachrichten geändert (pausiert, verschoben, übersprungen, sofort gesendet)",
+  "lead.bedenkzeit": "Bedenkzeit zum Angebot eingetragen (Nachfassen pausiert)",
   "leadsource.assign": "Leadformular zugeordnet",
   "leadsource.toggle": "Leadformular pausiert/aktiviert",
   "preview.start": "Kundenansicht geöffnet (Admin)",

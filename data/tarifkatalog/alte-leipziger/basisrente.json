@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/basisrente-ruerup",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Fondsgebundene Basisrente",
@@ -46,8 +45,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/privatkunden/private-vorsorge/basisrente-ruerup",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -60,6 +58,7 @@
     "Zwei Produkte, die sich in der Anlage unterscheiden (Mix aus klassischer Anlage und rund 170 Fonds bzw. reine Fondsanlage mit wählbarer Beitragsgarantie 1 bis 90 %); keine Markierung der Alte Leipziger.",
     "Garantien: Flexibel garantiert Guthaben und Rente für den klassischen Topf, Rentenfaktor 95 % für das Fondsguthaben; Fonds mit und ohne Garantie jeweils garantierter Rentenfaktor 95 %.",
     "Hinterbliebene: Bei Tod vor Rentenbeginn Rente aus dem Guthaben an leistungsberechtigte Hinterbliebene, nach Rentenbeginn über eine Rentengarantiezeit; Einzelheiten je Produkt nicht ausgewertet.",
-    "„flexibel“: Beiträge erhöhen oder kürzen und Zuzahlungen laut Produktseite. Effektivkosten nicht ausgewertet (Produktinformationsblätter). Norwegen-Konzept auch als Basisrente möglich, nicht aufgenommen."
+    "„flexibel“: Beiträge erhöhen oder kürzen und Zuzahlungen laut Produktseite. Effektivkosten nicht ausgewertet (Produktinformationsblätter). Norwegen-Konzept auch als Basisrente möglich, nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite, Deklarationsvergleich bzw. Bedingungen der Alte Leipziger."
   ]
 }

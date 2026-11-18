@@ -33,8 +33,7 @@
         "pflege": "nein"
       },
       "quelle": "https://www.nuernberger.de/medien/4allportal/gn331072_p.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Selbstständige BU mit Arbeitsunfähigkeitsschutz (Komfort-Schutz)",
@@ -60,8 +59,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.nuernberger.de/medien/4allportal/gn331073_p.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Selbstständige BU (Premium-Schutz)",
@@ -87,8 +85,7 @@
         "pflege": "inklusive"
       },
       "quelle": "https://www.nuernberger.de/medien/4allportal/gn331075_p.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -106,6 +103,7 @@
     "Umorganisation: Verzicht nur für Selbstständige, Gesellschafter und Freiberufler unter bestimmten Voraussetzungen (Kundeninformation); Beteiligung an Umorganisationskosten 6 Monatsrenten, höchstens 15.000 €.",
     "Pflege: volle BU-Rente ab 1 Pflegepunkt (ADL) oder Pflegegrad 2; zusätzliche lebenslange Pflegerente nur im Premium-Schutz.",
     "Teilzeitklausel nur in der Kundeninformation der BU-Zusatzversicherung genannt, für die SBU nicht belegt.",
-    "Einsteiger-BU (günstiger Anfangsbeitrag bis Eintrittsalter 30) und Schüler-BU als Varianten nicht als eigene Stufen aufgenommen; Dread-Disease-Zusatz und Krankentagegeld kombinierbar."
+    "Einsteiger-BU (günstiger Anfangsbeitrag bis Eintrittsalter 30) und Schüler-BU als Varianten nicht als eigene Stufen aufgenommen; Dread-Disease-Zusatz und Krankentagegeld kombinierbar.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

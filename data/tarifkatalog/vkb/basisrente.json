@@ -20,8 +20,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/gefoerderte-rente/ruerup-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente FlexInvest",
@@ -34,8 +33,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/gefoerderte-rente/ruerup-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente VisionInvest",
@@ -47,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/gefoerderte-rente/ruerup-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -57,6 +54,7 @@
   "offen": [
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
     "Stufen sind Anlagekonzepte: WachstumGarant (Beitragsgarantie 90 oder 100 %, monatliche Wertzuwächse zu 10 % gesichert), FlexInvest (Einzelfonds oder ROK, Teilertragssicherung), VisionInvest (nachhaltige Fonds). Keine Empfehlung; FlexInvest als mittlere Stufe.",
-    "Garantierter Rentenfaktor, Hinterbliebenenschutz und Beitragsflexibilität je Variante nicht beziffert."
+    "Garantierter Rentenfaktor, Hinterbliebenenschutz und Beitragsflexibilität je Variante nicht beziffert.",
+    "Geprüft am 18.11.2026 an der Produktseite."
   ]
 }

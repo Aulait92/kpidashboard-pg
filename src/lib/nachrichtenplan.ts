@@ -6,6 +6,8 @@
 //                             (Angebot Tag 5 mit [Rückruf wünschen]) bzw. Anruf, beim Angebot Tag 3 mit Push an Sie
 //   Anrufplan                 nächster Versuch „Anrufversuch X von 6“ und die weiteren voraussichtlichen Versuche
 //                             (lib/call-plan.ts); vor dem Start der Auslöser 30 Min. nach dem Erstanschreiben
+//   Bedenkzeit, Rückruf (P5)  Pause: Schritte erst ab dem Tag der Bedenkzeit (neustartAt) bzw. nach dem Rückruf-Fenster;
+//                             die Rückruf-Aufgabe „Rückruf gewünscht: heute 14 bis 17 Uhr“ selbst
 // Rein (ohne Datenbank, testbar); Laden: lib/nachrichtenplan-server.ts. Oberfläche (Paket P6): „Nächste Nachrichten“ am
 // Kontakt (components/naechste-nachrichten.tsx) mit Aktionen je Eintrag (aktionen, key; lib/nachrichtenplan-aktionen.ts),
 // die Zeile „Morgen … automatische Nachrichten“ auf „Heute“ (zaehleAutomatische) und die Ablaufübersicht (lib/ablauf.ts).
@@ -14,7 +16,8 @@
 import type { Ansprache } from "@/lib/ansprache";
 import type { VermittlerName } from "@/lib/whatsapp/gespraech";
 import { CALL_ATTEMPTS_TARGET, callPlanNote, isCallPlanNote, nextCallAttemptAt } from "@/lib/call-plan";
-import { SEQUENCES, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
+import { SEQUENCES, istAngebotsAbfolge, istBedenkzeitAbfolge, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
+import { istRueckrufNotiz } from "@/lib/rueckruf";
 import { erinnerungsPlan, gleichText, startPush, stundeText, vortagText } from "@/lib/showup";
 import { anrufPush } from "@/lib/anruf-ausloeser";
 import { angebotAnrufPush, mailWerte, naechsterVersand, vorabCheckPush, vorabCheckZeit, vorlagenMail, type MailVorlageText } from "@/lib/angebot-senden";
@@ -193,10 +196,11 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     const base = a.neustartAt ?? a.startedAt;
     const roh = i === a.step ? fruehestens(a.nextAt, p.now) : new Date(Math.max(base.getTime() + step.day * DAY, prev.getTime() + 2 * HOUR));
     // Angebot (P3): WhatsApp und E-Mail gehen erst im Versandfenster (Mo bis Sa 9 bis 19 Uhr) raus
-    const angebot = a.kind === "offer" || a.kind === "offer_selbst";
+    const angebot = istAngebotsAbfolge(a.kind);
     const at = angebot && step.action !== "call" ? naechsterVersand(roh) : roh;
     prev = at;
-    const nr = `(Schritt ${i + 1} von ${def.steps.length})`;
+    // Erster Schritt nach der Bedenkzeit: antwortet der Lead vorher, wird es eine Aufgabe für Sie
+    const nr = `(Schritt ${i + 1} von ${def.steps.length})${istBedenkzeitAbfolge(a.kind) && i === 0 ? ", nach der Bedenkzeit" : ""}`;
     // Nächste Nachrichten (P6): übersprungen, pausiert, Aktionen (der nächste Schritt: jetzt, verschieben, überspringen)
     const weg = (a.uebersprungen ?? []).includes(i);
     const p6 = {
@@ -294,6 +298,13 @@ function anrufplanEintraege(p: PlanEingabe): PlanEintrag[] {
   return [];
 }
 
+/** Aufgabe aus „Rückruf wünschen“ (P5): „Rückruf gewünscht: heute 14 bis 17 Uhr“ zum Beginn des Fensters. */
+function rueckrufEintraege(p: PlanEingabe): PlanEintrag[] {
+  const ap = p.anrufplan;
+  if (!ap.followUpAt || !istRueckrufNotiz(ap.followUpNote)) return [];
+  return [{ key: "rueckruf", at: iso(fruehestens(ap.followUpAt, p.now)), kanal: "anruf", quelle: "anrufplan", titel: ap.followUpNote!, vorschau: `Aufgabe auf „Heute“: ${p.label} anrufen` }];
+}
+
 /** Alle geplanten automatischen Nachrichten und Aufgaben eines Leads, nach Zeit sortiert. */
 export function planeNachrichten(p: PlanEingabe): PlanEintrag[] {
   const termine = p.termine.filter((t) => t.status === "booked");
@@ -304,6 +315,7 @@ export function planeNachrichten(p: PlanEingabe): PlanEintrag[] {
     ...(kommend ? [] : p.abfolgen.flatMap((a) => abfolgeEintraege(p, a))),
     // Der Anrufplan steht unabhängig davon auf „Heute“
     ...anrufplanEintraege(p),
+    ...rueckrufEintraege(p),
   ].sort((x, y) => x.at.localeCompare(y.at));
 }
 

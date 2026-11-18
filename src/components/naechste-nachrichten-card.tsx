@@ -3,7 +3,9 @@
 // Nur sichtbar, wenn etwas geplant ist oder es einen Verlauf gibt. Sprungmarke #nachfassen (Push „Vorab-Check“, „Heute“).
 
 import { loadNachrichtenPlan } from "@/lib/nachrichtenplan-server";
-import { loadLeadSequences } from "@/lib/lead-sequences";
+import { istAngebotsAbfolge, istBedenkzeitAbfolge, loadLeadSequences } from "@/lib/lead-sequences";
+import { addDaysYmd, berlinYmd } from "@/lib/absence";
+import { BEDENKZEIT_MAX_TAGE, BEDENKZEIT_OPTIONEN, bedenkzeitDatum, tagKurz } from "@/lib/bedenkzeit";
 import { prisma } from "@/lib/prisma";
 import { NaechsteNachrichten, type VerlaufZeile } from "./naechste-nachrichten";
 
@@ -22,6 +24,19 @@ export async function NaechsteNachrichtenCard({ leadId, readOnly }: { leadId: st
     { at: s.startedAt, text: `Abfolge „${s.label}“ gestartet`, leise: true },
   ]);
   if (!plan.length && !verlauf.length && !lead?.nachrichtenPausiertAt) return null;
+  // Bedenkzeit zum Angebot (Paket P5): im Menü „Mehr“, solange nachgefasst wird
+  const aktiv = abfolgen.find((s) => s.active);
+  const now = new Date();
+  const heute = berlinYmd(now);
+  const bedenkzeit =
+    aktiv && istAngebotsAbfolge(aktiv.kind)
+      ? {
+          optionen: BEDENKZEIT_OPTIONEN.map((o) => ({ wahl: o.wahl, label: o.label, tag: tagKurz(bedenkzeitDatum(o.wahl, now)) })),
+          min: addDaysYmd(heute, 1),
+          max: addDaysYmd(heute, BEDENKZEIT_MAX_TAGE),
+          bis: istBedenkzeitAbfolge(aktiv.kind) && aktiv.step === 0 && aktiv.next ? tagKurz(new Date(aktiv.next.at)) : null,
+        }
+      : null;
   return (
     <NaechsteNachrichten
       leadId={leadId}
@@ -30,7 +45,8 @@ export async function NaechsteNachrichtenCard({ leadId, readOnly }: { leadId: st
       laeuft={abfolgen.some((s) => s.active)}
       verlauf={verlauf}
       readOnly={!!readOnly}
-      jetzt={new Date().toISOString()}
+      jetzt={now.toISOString()}
+      bedenkzeit={bedenkzeit}
     />
   );
 }

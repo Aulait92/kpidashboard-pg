@@ -28,8 +28,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.continentale.de/pkv",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "SELECT + SP2",
@@ -50,8 +49,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.continentale.de/pkv",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PREMIUM + SP1",
@@ -72,8 +70,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.continentale.de/pkv",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -86,6 +83,7 @@
     "Continentale markiert PREMIUM mit „Ausgezeichnet“ (Bewertung, keine Empfehlung); SELECT als mittlere Stufe gesetzt.",
     "Selbstbeteiligung: COMFORT 20 € je Leistung, 50 € bei Hilfsmitteln (Jahreshöchstbetrag nicht genannt); SELECT 30 € je Leistung, 60 € bei Hilfsmitteln, höchstens 300, 600 oder 1.000 € je Tarifstufe; PREMIUM 20 € je Leistung, höchstens 500 € (Kinder 250 €). Generika und Sehhilfen ohne SB.",
     "Beitragsrückerstattung: COMFORT und PREMIUM bis 6 Monatsbeiträge, davon 2 garantiert; SELECT 500 € garantiert plus erfolgsabhängig bis 3 Monatsbeiträge (vorbehaltlich Beschluss).",
-    "Zahnbehandlung in allen Stufen 100 %. Heilpraktiker, Hilfsmittelkatalog, Psychotherapie und Primärarztprinzip nicht auf der Produktseite genannt. Krankentagegeld (Tarif V-U) und Pflegetagegeld als eigene Tarife ergänzbar, daher „optional“."
+    "Zahnbehandlung in allen Stufen 100 %. Heilpraktiker, Hilfsmittelkatalog, Psychotherapie und Primärarztprinzip nicht auf der Produktseite genannt. Krankentagegeld (Tarif V-U) und Pflegetagegeld als eigene Tarife ergänzbar, daher „optional“.",
+    "Geprüft am 18.11.2026 an Produktseite und Vertragsinformationen bzw. Bedingungen der Continentale."
   ]
 }
