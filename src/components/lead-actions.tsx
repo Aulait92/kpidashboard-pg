@@ -1,7 +1,8 @@
 "use client";
 
 import { berlinTodayIso } from "@/lib/offer-pricing";
-import { LEAD_MAIL_EVENT } from "@/components/lead-mail";
+import { LEAD_MAIL_EVENT, oeffneLeadMail } from "@/components/lead-mail";
+import { KUENDIGUNG_TODO, POLICE_TODO, versichererAusKuendigung } from "@/lib/vertraege-shared";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -78,7 +79,22 @@ type Props = {
   nameZusatz?: React.ReactNode;
   /** Terminkarte darunter hat den Hauptknopf: „Anrufen“ ruhig statt blau (eine Hauptaktion je Seite) */
   anrufenNeutral?: boolean;
+  /** Vorlagen mit Stufe „aus“ (Einstellungen → Assistent): kein Mail-Vorschlag in der Aufgabe */
+  mailAus?: string[];
 };
+
+/**
+ * Mail-Vorschlag in der Aufgabe (Paket M6): „Police da?“ → Willkommens-Mail (Police-PDF aus den Dokumenten hängt der
+ * Dialog an), „Alten Vertrag kündigen“ → Kündigung mit vorausgefülltem Versicherer und Musterkündigung als PDF.
+ */
+function aufgabeMail(note: string | null, mailAus: string[] = []): { label: string; vorlage: string; felder?: { versicherer?: string } } | null {
+  if (!note) return null;
+  if (note.startsWith(POLICE_TODO) && !mailAus.includes("willkommen")) return { label: "Willkommens-Mail", vorlage: "willkommen" };
+  if (note.startsWith(KUENDIGUNG_TODO) && !mailAus.includes("kuendigung")) {
+    return { label: "Kündigung vorbereiten", vorlage: "kuendigung", felder: { versicherer: versichererAusKuendigung(note) ?? undefined } };
+  }
+  return null;
+}
 
 /** Öffnet „Angaben bearbeiten“ im Kontakt (components/lead-stammdaten-edit.tsx). */
 export const STAMMDATEN_OPEN_EVENT = "pg:stammdaten-open";
@@ -194,6 +210,7 @@ export function LeadHeaderActions(p: Props) {
   const tileCount = 5 + (p.hasUpcomingAppointment ? 0 : 1);
 
   const dueOverdue = !!p.followUpAt && berlinTodayIso(new Date(p.followUpAt)) < berlinTodayIso();
+  const aufgabeVorschlag = aufgabeMail(p.followUpNote, p.mailAus);
   const dueLabel = p.followUpAt
     ? new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "numeric", month: "numeric" }).format(new Date(p.followUpAt))
     : null;
@@ -376,7 +393,7 @@ export function LeadHeaderActions(p: Props) {
         ) : null}
 
         {dueLabel ? (
-          <div className="mt-4 flex items-center gap-3 rounded-[var(--radius-md)] border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-900">
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius-md)] border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-900" data-followup-bar>
             <BellRing className="h-4 w-4 shrink-0" />
             <button type="button" onClick={() => setOpen("followup")} className="-my-2 line-clamp-2 min-w-0 flex-1 py-2 text-left">
               <b>Wiedervorlage {dueLabel}</b>
@@ -390,6 +407,19 @@ export function LeadHeaderActions(p: Props) {
             <Button variant="ghost" icon={Check} onClick={() => followUp(() => clearFollowUpResult(p.leadId), "Wiedervorlage erledigt")} aria-label="Wiedervorlage erledigt" className="h-10 min-w-10 shrink-0 px-2.5 sm:h-8 sm:min-w-0 sm:px-3">
               <span className="hidden sm:inline">Erledigt</span>
             </Button>
+            {aufgabeVorschlag ? (
+              <div className="w-full pl-7">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={Mail}
+                  onClick={() => oeffneLeadMail(aufgabeVorschlag.vorlage, aufgabeVorschlag.felder)}
+                  data-aufgabe-mail={aufgabeVorschlag.vorlage}
+                >
+                  {aufgabeVorschlag.label}
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </header>

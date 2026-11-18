@@ -6,6 +6,9 @@
 //   ohne Beitrag                            drei typische Beiträge als Chips + „Anderer Betrag“, [Fertig] behält den typischen
 //   Glückwunsch (Ergänzung D)               Haken „Glückwunsch per WhatsApp senden“, vorausgewählt nur bis 3 Tage nach dem
 //                                           Termin; außerhalb des 24-h-Fensters ausgegraut mit Hinweis
+//   Danke-Mail (Paket M6)                   Haken „Danke-Mail senden“ (Vorlage „Nach dem Abschluss“, zeitneutral), Stufe
+//                                           „automatisch“ = vorausgewählt; ohne Versand über die App „Selbst senden“ mit
+//                                           Mailprogramm bzw. Kopieren und „Gesendet?“ (components/mail-wege.tsx)
 // Wer: Vermittler direkt nach dem Gespräch, oft am Handy. Aufgabe: Abschluss festhalten, ohne zu tippen. Eine Hauptaktion.
 
 import { useEffect, useState, useTransition } from "react";
@@ -15,7 +18,9 @@ import { Button, Skeleton } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { AbschlussSheet } from "@/components/abschluss-sheet";
-import { abschlussAendernAction, abschlussBeitragAction, abschlussStandAction, glueckwunschAction } from "@/app/buyer/abschluss-actions";
+import { abschlussAendernAction, abschlussBeitragAction, abschlussStandAction, dankeMailAction, glueckwunschAction } from "@/app/buyer/abschluss-actions";
+import { mailSelbstGesendetAction } from "@/app/buyer/postfach/actions";
+import { MailWege } from "@/components/mail-wege";
 import type { AbschlussStand } from "@/lib/abschluss-server";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +51,8 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
   const [pending, start] = useTransition();
   const [gewaehlt, setGewaehlt] = useState<number | null>(null);
   const [glueck, setGlueck] = useState<boolean | null>(null);
+  const [danke, setDanke] = useState<boolean | null>(null);
+  const [dankeSelbst, setDankeSelbst] = useState(false);
   const [aendern, setAendern] = useState(false);
   // Modus nach dem ersten Laden fest (Chips bleiben stehen, auch wenn ein Chip den Beitrag schon gespeichert hat)
   const [modus, setModus] = useState<"bestaetigen" | "chips" | null>(null);
@@ -86,6 +93,11 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
   const g = stand.glueckwunsch;
   const glueckAn = glueck ?? g.vorausgewaehlt;
   const zeigeGlueck = g.moeglich && !g.gesendet;
+  const d = stand.dankeMail && !stand.dankeMail.gesendet ? stand.dankeMail : null;
+  const dankeAn = !!d?.app && (danke ?? d.vorausgewaehlt);
+  const glueckAktiv = zeigeGlueck && g.offen && glueckAn;
+  // Was der Knopf auslöst, steht drauf
+  const mitSenden = glueckAktiv && dankeAn ? " und beides senden" : glueckAktiv ? " und Glückwunsch senden" : dankeAn ? " und Danke-Mail senden" : "";
 
   const chip = (wert: number) =>
     start(async () => {
@@ -102,9 +114,13 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
   const fertig = (stimmt: boolean) =>
     start(async () => {
       if (stimmt) await abschlussBeitragAction(leadId, null);
-      if (zeigeGlueck && g.offen && glueckAn) {
+      if (glueckAktiv) {
         const r = await glueckwunschAction(leadId);
         toast.show(r.ok ? { message: r.gesendet ? `Glückwunsch an ${stand.label} gesendet` : "Abschluss gespeichert" } : { message: r.error, tone: "error" });
+      }
+      if (dankeAn) {
+        const r = await dankeMailAction(leadId);
+        toast.show(r.ok ? { message: `Danke-Mail an ${stand.label} gesendet` } : { message: r.error, tone: "error" });
       }
       router.refresh();
       onDone();
@@ -176,10 +192,45 @@ export function AbschlussNachherInhalt({ leadId, onDone }: { leadId: string; onD
         </div>
       ) : null}
 
+      {d?.app ? (
+        <label className="flex items-start gap-2.5">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[color:var(--brand)]"
+            checked={dankeAn}
+            disabled={pending}
+            onChange={(e) => setDanke(e.target.checked)}
+            data-danke-mail
+          />
+          <span className="min-w-0 text-sm">
+            <span className="font-medium">Danke-Mail senden</span>
+            <span className="mt-0.5 block break-words text-xs text-[color:var(--muted)]">{d.vorschau ? `„${d.vorschau}“ an ${d.an}` : `An ${d.an}`}</span>
+          </span>
+        </label>
+      ) : d?.extern ? (
+        <div className="space-y-2" data-danke-extern>
+          {dankeSelbst ? (
+            <MailWege
+              appVersand={false}
+              senden={() => undefined}
+              mail={{ to: d.extern.to, subject: d.extern.subject, text: d.extern.text }}
+              onGesendet={async () => {
+                const r = await mailSelbstGesendetAction({ leadId, to: d.extern!.to, subject: d.extern!.subject, text: d.extern!.text, vorlageKey: "nach_abschluss" });
+                toast.show(r.ok ? { message: "Danke-Mail im Verlauf eingetragen" } : { message: r.error, tone: "error" });
+                if (r.ok) setDankeSelbst(false);
+              }}
+            />
+          ) : (
+            <button type="button" onClick={() => setDankeSelbst(true)} className="text-sm font-medium text-[color:var(--brand)] hover:underline" data-danke-selbst>
+              Danke-Mail selbst senden
+            </button>
+          )}
+        </div>
+      ) : null}
+
       <div className="grid gap-2 sm:flex">
         <Button variant="primary" size="md" icon={Check} disabled={pending} onClick={() => fertig(!istChips)} className="sm:flex-1">
-          {/* Was der Knopf auslöst, steht drauf: mit Haken geht die WhatsApp gleich mit raus */}
-          {`${istChips ? "Fertig" : "Stimmt"}${zeigeGlueck && g.offen && glueckAn ? " und Glückwunsch senden" : ""}`}
+          {`${istChips ? "Fertig" : "Stimmt"}${mitSenden}`}
         </Button>
         {istChips ? null : (
           <Button size="md" icon={Pencil} disabled={pending} onClick={() => setAendern(true)}>

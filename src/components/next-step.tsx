@@ -60,6 +60,9 @@ import { Button } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { useToast } from "@/components/ui/toast";
+import { MailWege } from "@/components/mail-wege";
+import { mailSelbstGesendetAction } from "@/app/buyer/postfach/actions";
+import { fmtAttemptAt } from "@/lib/call-plan";
 import { CALL_ATTEMPTS_TARGET, LOST_REASONS, lostWarningText, needsLostWarning, type LostReasonKey } from "@/lib/lead-lost";
 import { cn } from "@/lib/utils";
 
@@ -189,12 +192,15 @@ export function LostSheet({
   const [note, setNote] = useState("");
   const [busy, startBusy] = useTransition();
   const [offer, setOffer] = useState<{ res: InboxResult; attempt: Attempt } | null>(null);
+  // Paket M6: Haken „Tür offen“-Mail bei „Kein Interesse“ (Stufe „automatisch“ = vorausgewählt)
+  const [tuer, setTuer] = useState<boolean | null>(null);
+  const tuerAn = !!info?.tuerOffen && (tuer ?? info.tuerOffen.vorausgewaehlt);
   const attempts = info?.callAttempts ?? 0;
   const guard = { reached: (info?.reached ?? false) || !!appointmentId, callAttempts: attempts };
 
   const submit = (key: LostReasonKey, text: string, override = false) =>
     startBusy(async () => {
-      const res = await markLeadLostResult(leadId, { reason: key, note: text, override, appointmentId });
+      const res = await markLeadLostResult(leadId, { reason: key, note: text, override, appointmentId, tuerOffen: key === "kein_interesse" && tuerAn });
       if (!res.ok && "warn" in res) {
         setReason(key);
         setStep("warn");
@@ -202,7 +208,9 @@ export function LostSheet({
       }
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       const r = LOST_REASONS.find((x) => x.key === key);
-      onDone(res, `${name}: verloren (${r?.label ?? "Grund"})`, r?.status);
+      if (res.ok && "mail" in res && res.mail && !res.mail.ok) toast.show({ message: res.mail.error ?? "E-Mail nicht gesendet", tone: "error" });
+      const mailText = res.ok && "mail" in res && res.mail?.ok ? ", E-Mail gesendet" : "";
+      onDone(res, `${name}: verloren (${r?.label ?? "Grund"})${mailText}`, r?.status);
       onClose();
     });
 
@@ -392,6 +400,15 @@ export function LostSheet({
                       </span>
                     </span>
                   </button>
+                  {r.key === "kein_interesse" && info.tuerOffen ? (
+                    <label className="-mt-1 flex items-start gap-2.5 pb-3 pl-[52px] pr-5 text-sm" data-tuer-offen>
+                      <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--brand)]" checked={tuerAn} disabled={busy} onChange={(e) => setTuer(e.target.checked)} />
+                      <span className="min-w-0">
+                        <span className="font-medium">Freundliche Abschluss-Mail senden</span>
+                        <span className="block break-words text-xs text-[color:var(--muted)]">{info.tuerOffen.vorschau ? `„${info.tuerOffen.vorschau}“` : `An ${info.tuerOffen.an}`}</span>
+                      </span>
+                    </label>
+                  ) : null}
                 </li>
               );
             })}
@@ -433,18 +450,19 @@ export function NotReachedSheet({ leadId, name, attempt, onClose }: { leadId: st
           : "";
 
   if (mail) {
+    // Ein Tipp bzw. von Hand (Paket M1): über die App, im eigenen Mailprogramm oder Text kopieren, danach „Gesendet?“
     return (
       <Sheet open onClose={onClose} title="E-Mail „Nicht erreicht“" message={info?.email ?? name}>
         <div className="space-y-3 p-5">
           <input value={mail.subject} onChange={(e) => setMail({ ...mail, subject: e.target.value })} aria-label="Betreff" className="h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-base outline-none focus:border-[color:var(--brand)]" />
           <textarea value={mail.body} onChange={(e) => setMail({ ...mail, body: e.target.value })} rows={9} aria-label="Text" className="w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-base outline-none focus:border-[color:var(--brand)]" />
-          <Button
-            variant="primary"
-            size="md"
-            icon={Send}
-            className="w-full"
-            disabled={busy || !mail.subject.trim() || !mail.body.trim()}
-            onClick={() =>
+          <MailWege
+            appVersand={!!info?.mailReady}
+            pending={busy}
+            disabled={!mail.subject.trim() || !mail.body.trim()}
+            sendenLabel="Senden"
+            mail={{ to: info?.email ?? "", subject: mail.subject, text: mail.body }}
+            senden={() =>
               startBusy(async () => {
                 const r = await sendNotReachedMailResult(leadId, mail.subject, mail.body);
                 if (!r.ok) return toast.show({ message: r.error, tone: "error" });
@@ -452,16 +470,32 @@ export function NotReachedSheet({ leadId, name, attempt, onClose }: { leadId: st
                 onClose();
               })
             }
-          >
-            Senden
-          </Button>
+            onGesendet={async () => {
+              const r = await mailSelbstGesendetAction({ leadId, to: info?.email ?? "", subject: mail.subject, text: mail.body, vorlageKey: "nicht_erreicht" });
+              if (!r.ok) return toast.show({ message: r.error, tone: "error" });
+              toast.show({ message: "Im Verlauf eingetragen" });
+              onClose();
+            }}
+          />
         </div>
       </Sheet>
     );
   }
 
   const waHref = info?.phone && texts ? (info.conversationId ? `/buyer/chats?c=${info.conversationId}` : `https://wa.me/${info.phone}?text=${encodeURIComponent(texts.whatsapp)}`) : null;
-  const mailto = info?.email && texts && !info.mailReady ? `mailto:${info.email}?subject=${encodeURIComponent(texts.subject)}&body=${encodeURIComponent(texts.body)}` : null;
+  // Paket M4: Geht die E-Mail „Nicht erreicht“ automatisch, steht das hier, statt sie zusätzlich von Hand anzubieten
+  const mailAuto = attempt.mail ?? null;
+  const mailVonHand = !mailAuto && !!info?.email;
+  const waVonHand = !!waHref && !attempt.auto;
+  const mailHinweis = !mailAuto
+    ? null
+    : mailAuto.status === "geplant"
+      ? mailAuto.sofort
+        ? "E-Mail „Nicht erreicht“ geht automatisch raus."
+        : `E-Mail „Nicht erreicht“ geht ${fmtAttemptAt(new Date(mailAuto.at), new Date())} automatisch raus.`
+      : mailAuto.status === "gesendet"
+        ? "E-Mail „Nicht erreicht“ ist schon raus."
+        : "Nach dem 2. Versuch geht automatisch eine E-Mail raus.";
   return (
     <Sheet open onClose={onClose} title={title} message={message}>
       <div className="space-y-2 p-5" data-not-reached-offer>
@@ -469,11 +503,26 @@ export function NotReachedSheet({ leadId, name, attempt, onClose }: { leadId: st
           <Loading />
         ) : (
           <>
-            <p className="text-sm font-medium">Nachricht „Nicht erreicht“ schicken?</p>
-            {attempt.auto ? <p className="text-sm text-[color:var(--muted)]">Ihr Assistent schickt automatisch eine WhatsApp.</p> : null}
-            {waHref && !attempt.auto ? (
+            {waVonHand || mailVonHand ? <p className="text-sm font-medium">Nachricht „Nicht erreicht“ schicken?</p> : null}
+            {attempt.auto || mailHinweis ? (
+              <ul className="space-y-1.5 text-sm text-[color:var(--muted)]" data-not-reached-auto>
+                {attempt.auto ? (
+                  <li className="flex items-start gap-2">
+                    <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    Ihr Assistent schickt automatisch eine WhatsApp.
+                  </li>
+                ) : null}
+                {mailHinweis ? (
+                  <li className="flex items-start gap-2" data-mail-automatisch>
+                    <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+                    {mailHinweis}
+                  </li>
+                ) : null}
+              </ul>
+            ) : null}
+            {waVonHand ? (
               <a
-                href={waHref}
+                href={waHref ?? undefined}
                 target={info.conversationId ? undefined : "_blank"}
                 rel="noreferrer"
                 onClick={() => {
@@ -486,14 +535,10 @@ export function NotReachedSheet({ leadId, name, attempt, onClose }: { leadId: st
                 <MessageCircle className="h-4 w-4" /> Per WhatsApp
               </a>
             ) : null}
-            {info.mailReady ? (
-              <Button size="md" icon={Mail} className="w-full" onClick={() => setMail({ subject: texts.subject, body: texts.body })}>
+            {mailVonHand ? (
+              <Button size="md" icon={Mail} className="w-full" onClick={() => setMail({ subject: texts.subject, body: texts.body })} data-not-reached-mail>
                 Per E-Mail
               </Button>
-            ) : mailto ? (
-              <a href={mailto} className="flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border)] text-sm font-semibold">
-                <Mail className="h-4 w-4" /> Per E-Mail
-              </a>
             ) : null}
             <Button variant="ghost" size="md" className="w-full" onClick={onClose}>
               Fertig
@@ -660,7 +705,7 @@ export function NextStepSheet({
           ) : null}
           {waHref ? (
             <a
-              href={waHref}
+              href={waHref ?? undefined}
               target={info?.conversationId ? undefined : "_blank"}
               rel="noreferrer"
               onClick={() => {

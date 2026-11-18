@@ -31,8 +31,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hannoversche.de/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Berufsunfähigkeitsversicherung Premium-Plus",
@@ -56,8 +55,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hannoversche.de/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Berufsunfähigkeitsversicherung Premium-Exklusiv",
@@ -81,8 +79,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hannoversche.de/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -98,6 +95,7 @@
     "Verzicht auf Umorganisation nicht genannt; es gibt eine Umorganisationshilfe für Selbstständige (bis 20 Monatsrenten, höchstens 30.000 €).",
     "Infektionsklausel auf Produktseite und in der Produktübersicht nicht genannt.",
     "Pflege: Rente bei voraussichtlich 6 Monaten Pflegebedürftigkeit. Stundung zinslos insgesamt bis 36 Monate. Dynamik: Beitragsdynamik 1 bis 5 %, Leistungsdynamik 1 bis 3 %, in allen drei Tarifen.",
-    "Starter-Tarif bis 35 Jahre (geringere Beiträge in den ersten 5 Jahren) ist eine Beitragsvariante, keine Stufe."
+    "Starter-Tarif bis 35 Jahre (geringere Beiträge in den ersten 5 Jahren) ist eine Beitragsvariante, keine Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

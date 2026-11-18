@@ -110,8 +110,16 @@ export async function fuehreNachfassenAus(leadId: string, n: Nachfassen | null, 
       return planTerminErinnerung(leadId, n.tage, opts);
     case "nicht_erschienen":
       return planNachfassAufgabe(leadId, { workdays: n.tage, note: NICHT_ERSCHIENEN_NOTE, skipIfBooked: true, hinweis: "falls kein neuer Termin gebucht wird" }, opts);
-    case "unterlagen":
+    case "unterlagen": {
+      // Paket M6: automatische Erinnerung per E-Mail nach 3 Tagen ohne Antwort oder Upload (lib/mail/abfolgen-mail.ts);
+      // geht sie nicht automatisch (Stufe aus, E-Mail-Funktionen aus, keine Adresse), wie bisher eine Aufgabe
+      if (n.fehlende) {
+        const { starteUnterlagenErinnerung } = await import("@/lib/mail/abfolgen-mail");
+        const at = await starteUnterlagenErinnerung(leadId, n.fehlende, { userId: opts.userId, now: opts.now }).catch(() => null);
+        if (at) return `Erinnerung per E-Mail am ${fmtTag(at)}, falls nichts kommt.`;
+      }
       return planNachfassAufgabe(leadId, { workdays: n.tage, note: UNTERLAGEN_NOTE, skipIfBooked: false, hinweis: "falls die Unterlagen fehlen" }, opts);
+    }
     case "melden":
       return planWiedervorlageAm(leadId, n.tag, opts);
     case "beenden":

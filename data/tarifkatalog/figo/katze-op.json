@@ -31,8 +31,7 @@
         "sb0": "optional"
       },
       "quelle": "https://figopet.de/op-kostenschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -48,6 +47,7 @@
     "Klinikaufenthalt, Folgebehandlung und Medikamente bis 10 Tage nach der OP.",
     "Nicht versichert laut Produktinformationsblatt (Stand 30.07.2025): Reha, Gelenkprothesen, Implantate, Zahnbehandlungen sowie chirurgische Eingriffe bei Hüft- und Ellenbogenerkrankungen.",
     "Wartezeit 30 Tage, bei Unfall 2 Tage (Leistungsübersicht).",
-    "Videosprechstunde (FirstVet) ist im OP-Kostenschutz nicht enthalten."
+    "Videosprechstunde (FirstVet) ist im OP-Kostenschutz nicht enthalten.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

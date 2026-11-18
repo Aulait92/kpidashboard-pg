@@ -29,8 +29,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.itzehoer.de/produkte/unfall-schutz/erwachsenen-unfallschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfall KOMFORT",
@@ -53,8 +52,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.itzehoer.de/produkte/unfall-schutz/erwachsenen-unfallschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfall TOP",
@@ -78,8 +76,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.itzehoer.de/produkte/unfall-schutz/erwachsenen-unfallschutz/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -91,6 +88,7 @@
     "Werte aus der Leistungstabelle PUR / KOMFORT / TOP der Produktseite. Itzehoer markiert keine Stufe; KOMFORT als mittlere Stufe gesetzt.",
     "Invaliditätssumme, Progression (225 %, 400 % oder 600 %), Unfallrente, Todesfall und Krankenhaustagegeld werden je Vertrag vereinbart (Bausteine), nicht je Stufe. Leistung ab Invaliditätsgrad für die Kapitalleistung nicht genannt.",
     "Unfallrente ab 50 % Invalidität, ab 90 % doppelt; halbe Rente ab 35 % und 1,5-fache ab 75 % vereinbar. Krankenhaustagegeld längstens 3 Jahre, Tag 1 bis 100 doppelt.",
-    "Bergung bis 30.000 € nur bei PUR genannt; KOMFORT und TOP schließen PUR ein. Zecken: Infektionen nach Tierbissen/-stichen (z. B. Borreliose) nur TOP genannt; für PUR und KOMFORT nicht belegt."
+    "Bergung bis 30.000 € nur bei PUR genannt; KOMFORT und TOP schließen PUR ein. Zecken: Infektionen nach Tierbissen/-stichen (z. B. Borreliose) nur TOP genannt; für PUR und KOMFORT nicht belegt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

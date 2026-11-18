@@ -32,8 +32,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NK.select L",
@@ -58,8 +57,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NK.select XL",
@@ -84,8 +82,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.hallesche.de/privatkunden/private-krankenversicherung/angestellte-und-selbststaendige",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -100,6 +97,7 @@
     "Selbstbehalt je Tarif 600, 1.200 oder 3.000 € im Jahr (Kinder die Hälfte) oder Bonus-Variante mit garantiertem Gesundheitsbonus von 100 € im Monat. Beitragsrückerstattung bei Leistungsfreiheit genannt, Höhe nicht beziffert.",
     "Hilfsmittel: S und XL ohne Begrenzung auf einen Hilfsmittelkatalog (Broschüren); bei L nicht bestätigt. Arznei- und Heilmittel S 80 % bis 4.000 €, L 80 % bis 2.000 € Rechnungsbetrag, darüber 100 %; XL 100 %.",
     "Ausland: weltweiter Schutz laut Broschüren; Rücktransport bei S über Tarif URZ.",
-    "Wechseloption NK.select FLEX (Wechsel zwischen S, L, XL ohne neue Gesundheitsprüfung) nicht im Schema. Ältere Tarife PRIMO, KS und NK nicht aufgenommen."
+    "Wechseloption NK.select FLEX (Wechsel zwischen S, L, XL ohne neue Gesundheitsprüfung) nicht im Schema. Ältere Tarife PRIMO, KS und NK nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

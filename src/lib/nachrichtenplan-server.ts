@@ -3,7 +3,8 @@
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { a, anredeZeile, asAnsprache } from "@/lib/ansprache";
+import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
+import type { VorlageKey } from "@/lib/mail/vorlagen";
 import { advisorDisplayName } from "@/lib/advisor-name";
 import { ansprechpartner } from "@/lib/lead-anrede";
 import { splitHealthAnswers } from "@/lib/gesundheitsdaten";
@@ -24,6 +25,7 @@ const ABFOLGE_SELECT = {
   vorabCheckStep: true,
   neustartAt: true,
   uebersprungen: true,
+  daten: true,
 } as const;
 
 const TERMIN_SELECT = {
@@ -174,10 +176,8 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,
     pausiertAt: lead.nachrichtenPausiertAt,
-    // E-Mail-Schritte (Angebot Tag 5): Text aus der Vorlage des Vermittlers
-    mailVorlagen: abfolgen.some((s) => s.kind === "offer" || s.kind === "offer_bedenkzeit")
-      ? { nachfassen_angebot: await import("@/lib/angebot-senden-server").then((m) => m.mailVorlage(lead.customerId, "nachfassen_angebot", an)) }
-      : undefined,
+    // E-Mail-Schritte (Angebot Tag 5, Pakete M4/M6): Text aus der Vorlage des Vermittlers
+    mailVorlagen: await mailVorlagenFuer(lead.customerId, abfolgen, an),
   });
 }
 
@@ -273,3 +273,18 @@ const TERMIN_PLATZHALTER = {
   rescheduleRequestedAt: null,
   attendance: null,
 };
+
+/** Vorlagen der Mail-Schritte laufender Abfolgen (Kunden-Vorlage, sonst Standard). */
+async function mailVorlagenFuer(customerId: string, abfolgen: { kind: string; stoppedAt: Date | null }[], an: Ansprache) {
+  const { SEQUENCES } = await import("@/lib/lead-sequences");
+  const keys = new Set<VorlageKey>();
+  for (const a of abfolgen) {
+    if (a.stoppedAt) continue;
+    for (const st of SEQUENCES[a.kind as keyof typeof SEQUENCES]?.steps ?? []) if (st.action === "email") keys.add(st.vorlage);
+  }
+  if (!keys.size) return undefined;
+  const { mailVorlage } = await import("@/lib/angebot-senden-server");
+  const out: Partial<Record<VorlageKey, Awaited<ReturnType<typeof mailVorlage>>>> = {};
+  for (const k of keys) out[k] = await mailVorlage(customerId, k, an);
+  return out;
+}

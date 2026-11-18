@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 import { updateLeadEditableFields } from "@/lib/airtable-write";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
-import { planNextCallAttempt, registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
+import { ladeNichtErreichtHinweis, planNextCallAttempt, registerCallAttempt, type CallAttemptResult } from "@/lib/call-attempts";
 import { fmtAttemptAt } from "@/lib/call-plan";
 import { formWithOverrides } from "@/lib/lead-stammdaten";
 import { a, anredeRohAusForm, anredeZeile, asAnsprache, namePartsFromForm, type Ansprache } from "@/lib/ansprache";
@@ -120,7 +120,12 @@ export type LeadStepInfo = {
   /** „Nach 6 Versuchen nicht erreichbar“ wählbar */
   canUnreachable: boolean;
   needsStep: boolean;
+  /** Paket M6: Haken „Tür offen“-Mail beim Verlustgrund „Kein Interesse“ (einmalig, nicht nach Abmeldung bzw. STOPP) */
+  tuerOffen: { an: string; vorausgewaehlt: boolean; vorschau: string } | null;
 };
+
+/** Anlass der Mail „Kein Interesse: Tür offen“: je Kontakt einmal. */
+const TUER_OFFEN_ANLASS = "einmalig";
 
 export async function leadStepInfoAction(leadId: string): Promise<{ ok: true; info: LeadStepInfo } | { ok: false; error: string }> {
   const ctx = await getBuyerContext();
@@ -130,13 +135,16 @@ export async function leadStepInfoAction(leadId: string): Promise<{ ok: true; in
     select: { id: true, name: true, source: true, phone: true, email: true, reached: true, callAttempts: true, customerId: true },
   });
   if (!lead) return { ok: false, error: "Lead nicht gefunden." };
-  const [an, postfach, link, conv, state, mailOff] = await Promise.all([
+  const [an, postfach, link, conv, state, mailOff, tuer] = await Promise.all([
     anspracheFor(lead.customerId),
     postfachOf(ctx.userId),
     terminlinkFor(lead.customerId, lead.id),
     prisma.conversation.findFirst({ where: { leadId: lead.id }, orderBy: { lastMessageAt: "desc" }, select: { id: true } }),
     nextStepStateOf(lead.id),
     mailFeaturesOffFor(lead.customerId),
+    import("@/lib/mail/ein-tipp")
+      .then((m) => m.einTippMailStand(lead.id, "tuer_offen", { anlass: TUER_OFFEN_ANLASS, userId: ctx.userId ?? null }))
+      .catch(() => null),
   ]);
   return {
     ok: true,
@@ -156,6 +164,7 @@ export async function leadStepInfoAction(leadId: string): Promise<{ ok: true; in
       conversationId: conv?.id ?? null,
       canUnreachable: canChooseUnreachable(lead),
       needsStep: state === "missing" || state === "result_missing",
+      tuerOffen: tuer?.app && !tuer.gesendet ? { an: tuer.an, vorausgewaehlt: tuer.vorausgewaehlt, vorschau: tuer.vorschau } : null,
     },
   };
 }
@@ -171,8 +180,8 @@ export type LostResult = InboxResult | { ok: false; error: string; warn: { attem
  */
 export async function markLeadLostResult(
   leadId: string,
-  input: { reason: string; note?: string | null; override?: boolean; appointmentId?: string | null },
-): Promise<LostResult> {
+  input: { reason: string; note?: string | null; override?: boolean; appointmentId?: string | null; tuerOffen?: boolean },
+): Promise<LostResult & { mail?: { ok: boolean; error?: string } }> {
   const customerId = await writableCustomerId(leadId);
   if (!customerId) return { ok: false, error: PREVIEW };
   if (!isLostReason(input.reason)) return { ok: false, error: "Bitte einen Grund wählen." };
@@ -224,8 +233,16 @@ export async function markLeadLostResult(
     { customerId },
   );
   await recordUsage("action", `lost.${reason.key}${warn ? ".override" : ""}`);
+  // Paket M6: Haken „Tür offen“ beim Verlustgrund „Kein Interesse“ (von Hand, einmalig, nicht nach Abmeldung bzw. STOPP)
+  let mail: { ok: boolean; error?: string } | undefined;
+  if (input.tuerOffen && reason.key === "kein_interesse") {
+    const ctx = await getBuyerContext();
+    const { sendeEinTippMail } = await import("@/lib/mail/ein-tipp");
+    mail = await sendeEinTippMail(lead.id, "tuer_offen", { anlass: TUER_OFFEN_ANLASS, userId: ctx?.userId ?? null });
+    if (mail.ok) await recordUsage("action", "lost.tuer_offen");
+  }
   refresh(lead.id);
-  return { ok: true, undo };
+  return { ok: true, undo, ...(mail ? { mail } : {}) };
 }
 
 // ─── Nicht erreicht und Weiter versuchen ───────────────────────────────────
@@ -267,7 +284,15 @@ export async function keepTryingResult(leadId: string): Promise<AttemptResult> {
   return {
     ok: true,
     undo,
-    attempt: { counted: false, attempts: lead.callAttempts, nextAt: nextAt?.toISOString() ?? null, keptFollowUp: plan.kept, auto: false, nextLabel: nextAt ? fmtAttemptAt(nextAt, now) : null },
+    attempt: {
+      counted: false,
+      attempts: lead.callAttempts,
+      nextAt: nextAt?.toISOString() ?? null,
+      keptFollowUp: plan.kept,
+      auto: false,
+      nextLabel: nextAt ? fmtAttemptAt(nextAt, now) : null,
+      mail: await ladeNichtErreichtHinweis(lead.id, lead.callAttempts),
+    },
   };
 }
 

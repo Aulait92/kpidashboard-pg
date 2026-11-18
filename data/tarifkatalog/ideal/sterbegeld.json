@@ -26,8 +26,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld-Tarife_im_Vergleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IDEAL SterbeGeldpur+",
@@ -46,8 +45,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld-Tarife_im_Vergleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IDEAL SterbeGeld",
@@ -66,8 +64,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/ISG/IDEAL_SterbeGeld-Tarife_im_Vergleich.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Dynamik: Summe steigt automatisch alle 3 Jahre um 500 € ohne neue Wartezeit (beim Original nicht bei Einmalbeitrag).",
     "Bestattungsvorsorge-Service (vorsorge): eigenes Produkt IDEAL BestattungsVorsorge (verbindliche Regelung der Bestattung), nicht als Merkmal der drei Tarife erfasst.",
     "Rückholung bei Tod im Ausland und digitaler Nachlassmanager nur in pur+ und Original, nicht in pur.",
-    "Abschluss für Eintrittsalter 40 bis 85 Jahre."
+    "Abschluss für Eintrittsalter 40 bis 85 Jahre.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

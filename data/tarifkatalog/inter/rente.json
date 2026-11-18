@@ -20,8 +20,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/vorsorge-vermoegen/fondsgebundene-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "INTER MeinLeben GarantIndex (Einmalbeitrag)",
@@ -35,8 +34,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/vorsorge-vermoegen/fondsgebundene-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -45,6 +43,7 @@
   "offen": [
     "Privatrente: Anteil Fonds bzw. klassisches Sicherungsvermögen frei wählbar (Sicherungsniveau), Strategieassistent, Anlauf- und Ablaufmanagement; Fondskosten ab 0,15 % im Jahr (keine Effektivkosten veröffentlicht). Zuzahlungen und Entnahmen jederzeit möglich.",
     "GarantIndex: Einmalbeitrag im klassischen Sicherungsvermögen, Überschüsse in einen ETF; Beitragsrückgewähr im Todesfall. Ob eine Beitragsgarantie zum Rentenbeginn besteht und wie hoch der Rentenfaktor ist, steht nicht auf der Produktseite.",
-    "Hinterbliebenenschutz der Privatrente, Beitragspause und BU-Zusatz nicht belegt. Keine Renditeangaben übernommen."
+    "Hinterbliebenenschutz der Privatrente, Beitragspause und BU-Zusatz nicht belegt. Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

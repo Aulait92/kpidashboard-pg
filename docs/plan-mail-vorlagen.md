@@ -112,6 +112,12 @@ Stand: im Code fertig, **Schalter `MAIL_ANTWORT_EINGANG` aus** (Standard) bis zu
   E-Mails“ auf „Versand und Empfang von E-Mails“ erweitern (ggf. `LEGAL_VERSION`), Datenschutzhinweis für Leads um den Empfang
   von Antworten ergänzen.
 
+Stand 18.11.2026: M4 und M6 umgesetzt. Mail-Schritte der Abfolgen über `lib/mail/abfolgen-mail.ts` (zentral über
+`sendeVorlagenMail`), Begleit-Abfolgen `nicht_erreicht_mail` und `unterlagen` (laufen neben den anderen), Haken mit einem
+Tipp über `lib/mail/ein-tipp.ts` (Danke-Mail im Abschluss-Blatt, „Tür offen“ bei „Kein Interesse“), Aufgaben „Alten
+Vertrag kündigen“ und „Unterlagen nachfassen“ über `planeAufgabe` (LeadTask). Texte Stand 4: „Nach dem Abschluss“
+zeitneutral, „Wie besprochen“ mit `{melde_wann}` („heute“ beim Neustart nach der Bedenkzeit, „am …“ aus dem Dialog).
+
 ## M3 umgesetzt (18.11.2026): Termin-Mails mit Vorbereitung
 
 - **Eine Quelle:** Bestätigung bzw. Einladung (`booked`) und Vortags-Mail (`reminder`) in `lib/calendar/lead-email.ts` bekommen die

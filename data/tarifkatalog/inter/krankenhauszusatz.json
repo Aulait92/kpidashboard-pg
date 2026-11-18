@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "INTER QualiMed Z Stationär Exklusiv",
@@ -39,8 +38,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "INTER QualiMed Z Stationär Premium",
@@ -56,8 +54,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -66,6 +63,7 @@
   "offen": [
     "Basis leistet nur nach Unfall und wird laut Produktseite ohne Gesundheitsfragen angeboten. Begleitperson bei Kindern bis 12 Jahre (bis 14 Tage) in Exklusiv und Premium; Fahrt- und Transportkosten bis 300 € nur Premium.",
     "Freie Krankenhauswahl für Exklusiv und Premium aus dem Fließtext und der Tabellenzeile (Symbole); bitte am Bildschirm prüfen. Erstattung über GOÄ-Höchstsatz und Ersatz-Krankenhaustagegeld nicht veröffentlicht.",
-    "Krankenhaustagegeld ist ein eigenes Produkt (Seite Krankenhaustagegeldversicherung). Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+    "Krankenhaustagegeld ist ein eigenes Produkt (Seite Krankenhaustagegeldversicherung). Keine Empfehlung markiert; Exklusiv als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

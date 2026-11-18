@@ -40,9 +40,12 @@ import { cn } from "@/lib/utils";
 
 export const LEAD_MAIL_EVENT = "pg-lead-mail-open";
 
-/** Dialog öffnen, optional gleich mit einer Standardvorlage (z. B. „willkommen“ nach „Police erledigt“). */
-export function oeffneLeadMail(vorlage?: string) {
-  window.dispatchEvent(new CustomEvent(LEAD_MAIL_EVENT, { detail: vorlage ? { vorlage } : undefined }));
+/**
+ * Dialog öffnen, optional gleich mit einer Standardvorlage (z. B. „willkommen“ aus der Aufgabe „Police da?“) und
+ * vorausgefüllten Feldern (z. B. Versicherer für die Kündigung, Paket M6).
+ */
+export function oeffneLeadMail(vorlage?: string, felder?: { versicherer?: string }) {
+  window.dispatchEvent(new CustomEvent(LEAD_MAIL_EVENT, { detail: vorlage ? { vorlage, felder } : undefined }));
 }
 
 type Vorlage = { id: string; name: string; subject: string; body: string; standardKey?: string | null };
@@ -160,7 +163,7 @@ export function LeadMailComposer({
   const zusatz = useMemo(() => (vorlage ? zusatzIn(vorlage.subject, vorlage.body) : new Set<string>()), [vorlage]);
   const hatTermin = zusatz.has("termin_datum") || zusatz.has("termin_art") || zusatz.has("videolink");
   const hatUnterlagen = zusatz.has("fehlende_unterlagen");
-  const hatMelde = zusatz.has("melde_datum");
+  const hatMelde = zusatz.has("melde_datum") || zusatz.has("melde_wann");
   const hatKuendigung = zusatz.has("musterkuendigung") || zusatz.has("versicherer") || zusatz.has("vertragsnummer") || zusatz.has("kuendigungstermin");
   const hatBeratung = zusatz.has("wuensche") || zusatz.has("rat");
   const hatVorteile = zusatz.has("vorteil_1") || zusatz.has("vorteil_2") || zusatz.has("vorteil_3");
@@ -178,6 +181,7 @@ export function LeadMailComposer({
       termin_unterlagen: terminUnterlagen(bereitlegen),
       fehlende_unterlagen: fehlendeUnterlagen([...f.unterlagen, f.unterlagenExtra]),
       melde_datum: f.meldeTag ? tagText(f.meldeTag) : "",
+      melde_wann: f.meldeTag ? `am ${tagText(f.meldeTag)}` : "",
       versicherer: f.versicherer,
       vertragsnummer: f.vertragsnummer,
       kuendigungstermin: kTermin,
@@ -198,11 +202,12 @@ export function LeadMailComposer({
     setVeraltet(false);
   };
 
-  const pick = (v: Vorlage) => {
+  const pick = (v: Vorlage, vorgabe?: { versicherer?: string }) => {
     // Feste Werte beim Wählen: nächster Termin, Datum „in einer Woche“ für „Wie besprochen“
     const t = termin ? new Date(termin.startsAt) : null;
     const f: Felder = {
       ...felder,
+      ...(vorgabe?.versicherer && !felder.versicherer ? { versicherer: vorgabe.versicherer } : {}),
       terminTag: felder.terminTag || (t ? berlinTag(t) : ""),
       terminZeit: felder.terminZeit || (t ? berlinZeit(t) : ""),
       terminArt: felder.terminTag ? felder.terminArt : termin?.mode === "video" ? "video" : "phone",
@@ -213,7 +218,8 @@ export function LeadMailComposer({
     setVorlage(v);
     fill(v, f);
     const z = zusatzIn(v.subject, v.body);
-    setPdf(z.has("wuensche") || z.has("rat"));
+    // Kündigung aus der Aufgabe „Alten Vertrag kündigen“ (Paket M6): Musterkündigung gleich als PDF
+    setPdf(z.has("wuensche") || z.has("rat") || (!!vorgabe && z.has("musterkuendigung")));
     setRemind(true);
     // Angebot-Vorlage: vorhandenes Angebot gleich anhängen; Willkommen: die Police
     const kind = /angebot/i.test(v.name) ? "angebot" : v.standardKey === "willkommen" ? "police" : null;
@@ -232,9 +238,10 @@ export function LeadMailComposer({
   // Geöffnet, ggf. mit Wunschvorlage (z. B. Willkommen nach „Police erledigt“)
   const onOpen = useEffectEvent((e: Event) => {
     setOpen(true);
-    const wunsch = (e as CustomEvent<{ vorlage?: string } | undefined>).detail?.vorlage;
+    const detail = (e as CustomEvent<{ vorlage?: string; felder?: { versicherer?: string } } | undefined>).detail;
+    const wunsch = detail?.vorlage;
     const v = wunsch ? vorlagen.find((x) => x.standardKey === wunsch) : null;
-    if (v) pick(v);
+    if (v) pick(v, detail?.felder ?? {});
   });
   useEffect(() => {
     const handler = (e: Event) => onOpen(e);
@@ -268,6 +275,7 @@ export function LeadMailComposer({
         erinnernTage: remindDays,
         mitLink,
         meldeTag: hatMelde ? felder.meldeTag : null,
+        fehlende: hatUnterlagen ? fehlendeUnterlagen([...felder.unterlagen, felder.unterlagenExtra]) : null,
         pdf: mailPdf,
       });
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
@@ -301,6 +309,7 @@ export function LeadMailComposer({
       erinnernTage: remindDays,
       mitLink,
       meldeTag: hatMelde ? felder.meldeTag : null,
+      fehlende: hatUnterlagen ? fehlendeUnterlagen([...felder.unterlagen, felder.unterlagenExtra]) : null,
     });
     if (!res.ok) return toast.show({ message: res.error, tone: "error" });
     toast.show({ message: res.reminder ? `Im Verlauf eingetragen. ${res.reminder}` : "Im Verlauf eingetragen" });
@@ -565,7 +574,7 @@ export function LeadMailComposer({
             <label className="flex items-center gap-2">
               <input type="checkbox" className="h-4 w-4" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
               {nachfassen.art === "unterlagen"
-                ? "In 3 Werktagen nachfassen, falls die Unterlagen fehlen"
+                ? "Nach 3 Tagen automatisch erinnern, falls nichts kommt"
                 : nachfassen.art === "nicht_erschienen"
                   ? "Erinnern, falls kein neuer Termin gebucht wird"
                   : "Erinnern, falls kein Termin gebucht wird"}

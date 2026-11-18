@@ -32,8 +32,7 @@
         "reise": "nein"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/hausrat-downloads/broschueren-und-leistungsueberblick/HH_pdf-09.26.19.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat XXL",
@@ -58,8 +57,7 @@
         "reise": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/hausrat-downloads/broschueren-und-leistungsueberblick/HH_pdf-09.26.19.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +68,7 @@
   "offen": [
     "Werte aus dem Leistungsprofil Hausrat (HH 09.26, Symboltabelle XL / XXL). Einfacher Diebstahl aus der Wohnung nicht genannt; einfacher Diebstahl auf dem Grundstück (Garten, Wäsche) in XL begrenzt, in XXL bis 10.000 €.",
     "Fahrrad XL bis 1.000 €, auf 2.500 € oder 5.000 € erhöhbar. Bargeld XXL bis 3.500 € (7.500 € bei Abhebung bis 1 Woche zuvor). Phishing bis 3.000 € nur XXL.",
-    "Weitere Naturgefahren (Überschwemmung, Rückstau) wählbar; unbenannte Gefahren nur XXL mit Naturgefahren. Zusatzbausteine BikeMobil und OnTour nur XXL. Selbstbehalt wählbar gegen Nachlass. Zwei Stufen ohne Empfehlung."
+    "Weitere Naturgefahren (Überschwemmung, Rückstau) wählbar; unbenannte Gefahren nur XXL mit Naturgefahren. Zusatzbausteine BikeMobil und OnTour nur XXL. Selbstbehalt wählbar gegen Nachlass. Zwei Stufen ohne Empfehlung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Produktbeschreibung_IDEAL_PflegeRente.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IDEAL PflegeRente KLASSIK",
@@ -48,8 +47,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Produktbeschreibung_IDEAL_PflegeRente.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IDEAL PflegeRente EXKLUSIV",
@@ -69,8 +67,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.ideal-versicherung.de/idam2.0/Dokumente/Produkte/IPR/Produktbeschreibung_IDEAL_PflegeRente.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Einmalleistung: optionale Sofortleistung von 1 bis 12 Monatsrenten der Pflegegrade 4 und 5.",
     "Ambulant wie stationär: in den Unterlagen nicht ausdrücklich genannt.",
     "Dynamik optional: alle drei Jahre 10 % oder jährlich 1 bis 5 % der Anfangsrente; Rentendynamik im Leistungsbezug wählbar.",
-    "Weitere Produkte: IDEAL PflegeTagegeld (Krankenversicherung, ab Pflegegrad 1) und IDEAL PflegeRente kompakt (online, bis 750 € Rente) nicht als Stufe erfasst."
+    "Weitere Produkte: IDEAL PflegeTagegeld (Krankenversicherung, ab Pflegegrad 1) und IDEAL PflegeRente kompakt (online, bis 750 € Rente) nicht als Stufe erfasst.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

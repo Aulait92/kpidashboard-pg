@@ -29,8 +29,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/unfallversicherung/leistungsvergleich_unfallversicherung_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Balance",
@@ -52,8 +51,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/unfallversicherung/leistungsvergleich_unfallversicherung_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Best Selection",
@@ -75,8 +73,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/unfallversicherung/leistungsvergleich_unfallversicherung_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -87,6 +84,7 @@
     "Quelle: Leistungsübersicht Unfallversicherung (Stand 01.04.2026) und Tarifdetails der Produktseite. Keine Markierung; Balance als mittlere Stufe.",
     "Invaliditätssumme nicht als fester Wert genannt (Invaliditätsleistung oder Unfallrente muss vereinbart sein). Leistung ab welchem Invaliditätsgrad nicht ausdrücklich genannt.",
     "Progression optional 225, 350, 500, 600 oder 1.000 %; Gliedertaxen je Linie wählbar (u. a. Med für Human- und Zahnmediziner). Krankenhaustagegeld = Dauer bei vollstationärem Aufenthalt, sofern vereinbart.",
-    "Sofortleistung in Prozent der zu erwartenden Invaliditätsleistung. Basic ohne Eigenbewegung und ohne Herzinfarkt/Schlaganfall als Ursache; Best Selection ohne Kürzung bei Mitwirkung (außer festgelegten Krankheiten)."
+    "Sofortleistung in Prozent der zu erwartenden Invaliditätsleistung. Basic ohne Eigenbewegung und ohne Herzinfarkt/Schlaganfall als Ursache; Best Selection ohne Kürzung bei Mitwirkung (außer festgelegten Krankheiten).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

@@ -54,7 +54,7 @@ describe("Standardvorlagen (Sie und Du)", () => {
     expect(STANDARD_VORLAGEN_JE.du.map((v) => [v.key, v.name])).toEqual(STANDARD_VORLAGEN_JE.sie.map((v) => [v.key, v.name]));
     expect(STANDARD_VORLAGEN_JE.sie.filter((v) => STAND_JE_VORLAGE[v.key] === 2).map((v) => v.key)).toEqual(NEU);
     // Stand 3 hebt nur Texte, keine neuen Vorlagen
-    expect(VORLAGEN_STAND).toBe(3);
+    expect(VORLAGEN_STAND).toBe(4);
     // Nicht als freie Vorlage (Werbung, nur über Bestandskampagnen)
     const namen = STANDARD_VORLAGEN_JE.sie.map((v) => v.name.toLowerCase()).join(" ");
     expect(namen).not.toMatch(/jahresgespräch|vertragscheck|empfehlung|geburtstag/);
@@ -184,7 +184,9 @@ describe("Sortierung nach Phase", () => {
 describe("Nachfass-Aufgabe je Vorlage", () => {
   it("passt zur Vorlage", () => {
     expect(nachfassenFuer("nicht_erschienen", { erinnern: true, tage: 2, mitLink: false })).toEqual({ art: "nicht_erschienen", tage: 2 });
-    expect(nachfassenFuer("unterlagen_fehlen", { erinnern: true, tage: 1, mitLink: false })).toEqual({ art: "unterlagen", tage: 3 });
+    expect(nachfassenFuer("unterlagen_fehlen", { erinnern: true, tage: 1, mitLink: false })).toEqual({ art: "unterlagen", tage: 3, fehlende: null });
+    // Paket M6: mit der Liste erinnert die App nach 3 Tagen automatisch per E-Mail
+    expect(nachfassenFuer("unterlagen_fehlen", { erinnern: true, tage: 1, mitLink: false, fehlende: "• IBAN" })).toEqual({ art: "unterlagen", tage: 3, fehlende: "• IBAN" });
     expect(nachfassenFuer("unterlagen_fehlen", { erinnern: false, tage: 1, mitLink: false })).toBeNull();
     expect(nachfassenFuer("wie_besprochen", { erinnern: false, tage: 2, mitLink: false, meldeTag: "2026-12-07" })).toEqual({ art: "melden", tag: "2026-12-07" });
     expect(nachfassenFuer("wie_besprochen", { erinnern: true, tage: 2, mitLink: true })).toBeNull();

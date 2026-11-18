@@ -123,6 +123,9 @@ describe("Show-up: Terminbeginn und No-Show-Rettung", () => {
     expect(first.text).toBe("Guten Tag Frau Becker, kein Problem, so etwas passiert. Sollen wir einen neuen Termin finden? Passt Ihnen morgen um 10 Uhr oder Donnerstag, 19.11. um 16 Uhr?");
     expect(first.textButtons).toEqual(["Morgen 10 Uhr", "Do 19.11. 16 Uhr", "Andere Zeit"]);
     expect(first.buttonPayloads[0]).toBe(`slot:${starts[0]}`);
+    // Paket M4: 2 Std. nach der WhatsApp der Mail-Schritt „Nicht erschienen“ (keine weitere WhatsApp)
+    await runSequences(new Date(T0.getTime() + 2 * 60 * 60 * 1000));
+    expect(send).toHaveBeenCalledTimes(1);
     await runSequences(new Date(T0.getTime() + DAY));
     expect(send).toHaveBeenCalledTimes(2);
     expect((send.mock.calls[1][0] as { purpose: string; text: string }).text).toContain("kurze Nachfrage zum neuen Termin");
