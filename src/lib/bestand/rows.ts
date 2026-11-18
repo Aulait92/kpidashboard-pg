@@ -77,7 +77,11 @@ export const FIELD_GROUPS: { title: string; hint: string; fields: { key: FieldKe
   },
 ];
 
-const norm = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+// ß → ss, sonst würde „Straße“ zu „strae“ und nie erkannt
+const norm = (s: string) => s.toLowerCase().replace(/ß/g, "ss").normalize("NFKD").replace(/[^a-z0-9]/g, "");
+
+/** Synonyme, die nur als ganze Spaltenüberschrift zählen („Kunde“ ja, „Kunde seit“ oder „Kundenbetreuer“ nicht). */
+const EXACT_ONLY = new Set(["kunde"]);
 
 const SYNONYMS: Record<FieldKey, string[]> = {
   externalNo: ["kundennummer", "kundennr", "kdnr", "vnnr", "versicherungsnehmernr", "partnernummer", "partnernr", "kundenid"],
@@ -106,7 +110,7 @@ const SYNONYMS: Record<FieldKey, string[]> = {
 };
 
 // Spalten, die nie übernommen werden (Gesundheitsangaben u. Ä.)
-const BLOCKED = /gesund|diagnos|vorerkrank|krankheit|behandl|medikament|bmi|gewicht|grosse|risikozuschlag|leistungsfall/i;
+const BLOCKED = /gesund|diagnos|vorerkrank|krankheit|behandl|medikament|bmi|gewicht|gr(ö|oe|o)(ß|ss)e|risikozuschlag|leistungsfall/i;
 
 export function isBlockedColumn(header: string): boolean {
   return BLOCKED.test(header);
@@ -128,7 +132,7 @@ export function detectMapping(headers: string[]): Mapping {
         !used.has(h) &&
         !isBlockedColumn(h) &&
         !(key === "annualPremium" && /monat|zahlweise/i.test(h)) && // Monatsbeitrag ist kein Jahresbeitrag
-        SYNONYMS[key].some((syn) => norm(h) === syn || (syn.length > 4 && norm(h).includes(syn))),
+        SYNONYMS[key].some((syn) => norm(h) === syn || (syn.length > 4 && !EXACT_ONLY.has(syn) && norm(h).includes(syn))),
     );
     if (hit) {
       m[key] = hit;
@@ -146,12 +150,25 @@ export function detectMapping(headers: string[]): Mapping {
   return m;
 }
 
+/**
+ * Telefonnummer aus dem Import. Excel speichert Nummern oft als Zahl und verliert die führende 0
+ * (0170 1234567 → 1701234567); normalizePhone hielte das für eine Nummer mit Ländervorwahl 1 (USA).
+ * Deutsche Mobilnummern ohne 0 (15x, 16x, 17x mit 10 bis 11 Ziffern) bekommen deshalb die 49 vorangestellt.
+ */
+export function importPhone(raw: string | undefined): string | null {
+  const t = (raw ?? "").trim();
+  const digits = t.replace(/\D/g, "");
+  if (!/^(\+|00|0)/.test(t) && /^1[5-7]\d{8,9}$/.test(digits)) return `49${digits}`;
+  return normalizePhone(t) || null;
+}
+
 export function parseDate(raw: string | undefined): Date | null {
   const s = (raw ?? "").trim();
   if (!s) return null;
   let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
   if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
-  m = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/.exec(s);
+  // Auch mit Uhrzeit dahinter („12.03.1975 00:00:00“, so exportieren manche Bestandssysteme Datumsfelder)
+  m = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?$/.exec(s);
   if (m) {
     const y = m[3].length === 2 ? 1900 + +m[3] + (+m[3] < 30 ? 100 : 0) : +m[3];
     return new Date(Date.UTC(y, +m[2] - 1, +m[1]));
@@ -209,8 +226,13 @@ export function normalizeSalutation(raw: string | undefined): "Herr" | "Frau" | 
   return null;
 }
 
+// Reihenfolge zählt (erste passende Regel): Tierhalter-, Hunde- oder Pferdehaftpflicht ist keine Privathaftpflicht,
+// Reisekranken keine Krankenversicherung, sonst fehlten Chancen wie „Haftpflicht fehlt“ und es käme der Hinweis
+// zu Personenversicherungen.
 const LINE_RULES: [RegExp, string][] = [
   [/kfz|kraftfahrt|auto|pkw|motorrad|wohnmobil|kraftrad/, "KFZ"],
+  [/\btier|haustier|hund|pferd|katze/, "Tier"],
+  [/reise/, "Reise"],
   [/hausrat/, "Hausrat"],
   [/haftpflicht|phv/, "Haftpflicht"],
   [/geb(ä|a)ude|wohngeb/, "Wohngebäude"],
@@ -220,12 +242,10 @@ const LINE_RULES: [RegExp, string][] = [
   [/pflege/, "Pflege"],
   [/kranken|\bpkv\b|zahn|station(ä|a)r|ambulant/, "Kranken"],
   [/risikoleben|leben|rente|riester|r(ü|u)rup|altersvorsorge|pension|fonds/, "Vorsorge"],
-  [/tier|hund|pferd|katze/, "Tier"],
-  [/reise/, "Reise"],
 ];
 
 /** Alle Sparten, die der Import erkennt (plus „Sonstiges“). */
-export const LINE_NAMES: readonly string[] = [...new Set(LINE_RULES.map(([, l]) => l))];
+export const LINE_NAMES: readonly string[] = ["KFZ", "Hausrat", "Haftpflicht", "Wohngebäude", "Unfall", "Rechtsschutz", "BU", "Pflege", "Kranken", "Vorsorge", "Tier", "Reise"];
 
 export function normalizeLine(raw: string): string | null {
   const s = raw.toLowerCase();
@@ -315,7 +335,7 @@ export function groupRows(rows: Row[], m: Mapping): GroupResult {
       first = parts.slice(0, -1).join(" ") || null;
       last = parts.at(-1) || null;
     }
-    const phone = normalizePhone(get(r, "phone")) || null;
+    const phone = importPhone(get(r, "phone"));
     const email = get(r, "email").toLowerCase() || null;
     const ext = get(r, "externalNo") || null;
     const birthday = parseDate(get(r, "birthday"));
