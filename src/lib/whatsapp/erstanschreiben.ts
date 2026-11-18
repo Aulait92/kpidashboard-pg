@@ -80,6 +80,21 @@ export function erstanschreibenV8(purpose: ErstanschreibenZweck): { sie: string;
   };
 }
 
+/**
+ * Erstanschreiben v9 (Ole, 18.11.2026: „Die Version einreichen“): noch kürzer, damit WhatsApp die Frage nicht hinter
+ * „Mehr lesen“ versteckt. Ohne den Satz „Hier schreibt der digitale Assistent …“ und ohne Leerzeile; die
+ * KI-Kennzeichnung steht in der Fußzeile (templates.ts ERSTINFO_FOOTER_V9). Gleiche Platzhalter wie v8:
+ * {{2}} Vermittler im Dativ, {{3}} erste offene Frage ohne „?“ (fett).
+ *   „Hallo Herr Pan, danke für Ihre Anfrage zum Privatschutz an Herrn Kannapinn! *Sind Haftpflicht und Hausrat schon
+ *   versichert, oder wäre beides neu?*“
+ */
+export function erstanschreibenV9(purpose: ErstanschreibenZweck): { sie: string; du: string } {
+  return {
+    sie: `danke für Ihre Anfrage${v8Thema(purpose, "sie")} an {{2}}! *{{3}}?*`,
+    du: `danke für deine Anfrage${v8Thema(purpose, "du")} an {{2}}! *{{3}}?*`,
+  };
+}
+
 /** Frage für den Platzhalter {{4}} (v6): ohne abschließendes „?“ (steht fest in der Vorlage). */
 export function frageOhneFragezeichen(frage: string): string {
   return frage.trim().replace(/[?？]+\s*$/, "").trim();
@@ -568,12 +583,26 @@ export function ersteFrageKnoepfe(source: string | null | undefined, formular?: 
  * (Aufbau wie v8, erstanschreibenV8.)
  * Nachricht 2 ist das PDF der Erstinformation (lib/whatsapp/erstinfo-pdf.ts).
  */
-export function erstanschreibenText(o: ErstanschreibenOpts): string {
+export function erstanschreibenText(o: ErstanschreibenOpts, opts: { ohneFuss?: boolean } = {}): string {
   const person = o.vermittler ? { nom: o.vermittlerNom || o.vermittler, dat: o.vermittler } : null;
   const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person));
-  // v8 (Ole, 17.11.2026): die erste Frage wieder fett
-  return `${erstanschreibenKopf(o)}\n\n*${frage}?*`;
+  // Lead hat zuerst geschrieben bzw. kein Lead: wie bisher mit Kopf und Frage darunter (v8)
+  if (o.ohneLead || o.herkunft === "nachricht") return `${erstanschreibenKopf(o)}\n\n*${frage}?*`;
+  // v9 (Ole, 18.11.2026): wie die Vorlage, eine Zeile; die KI-Kennzeichnung der Fußzeile steht im Freitext kursiv darunter
+  const an = o.an;
+  const von = o.vermittler || o.name;
+  const p = outreachProdukt(o.source);
+  const s = (o.source ?? "").trim();
+  const thema = p ? v8Thema(erstanschreibenZweck(o.source, o.formular) as ErstanschreibenZweck, an) : s ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
+  const text = `${erstGruss(an, o.kontakt)} danke für ${a(an, "deine Anfrage", "Ihre Anfrage")}${thema} an ${von}! *${frage}?*`;
+  return opts.ohneFuss ? text : `${text}\n\n_${ERSTANSCHREIBEN_FREITEXT_FUSS}_`;
 }
+
+/** Fußzeile der Vorlage ab Erstanschreiben v9 (Ole, 18.11.2026): KI-Kennzeichnung und PDF-Hinweis, höchstens 60 Zeichen. */
+export const ERSTINFO_FOOTER_V9 = "KI-Assistent · Erstinformation im PDF oben";
+
+/** KI-Kennzeichnung unter dem Erstanschreiben im Freitext (ohne Vorlagen-Fußzeile; das PDF folgt als eigene Nachricht). */
+export const ERSTANSCHREIBEN_FREITEXT_FUSS = "KI-Assistent · Erstinformation folgt als PDF";
 
 /** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */
 export const ZAHN_KNOEPFE_V4 = ["Zahnersatz", "Prophylaxe", "Beides"] as const;

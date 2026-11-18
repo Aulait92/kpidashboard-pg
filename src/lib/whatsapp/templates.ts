@@ -31,7 +31,7 @@ import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { erstanschreibenV8 } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenV9, ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -124,14 +124,16 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // Erstanschreiben v8 (Ole, 17.11.2026, freigegeben zum Einreichen: kurz, Thema fest je Produkt, Frage fett, Fußzeile
   // ERSTINFO_FOOTER_V8): wird eingereicht, nur mit PDF-Kopf; bis zur Freigabe bei Meta sendet die App die neueste
   // freigegebene mit PDF-Kopf (v7 bzw. v6, rankOutreach) mit deren Platzhaltern (PLATZHALTER_AB)
-  outreach: "v8",
-  outreach_tkv: "v8",
-  outreach_zahn: "v8",
-  outreach_pkv: "v8",
-  outreach_privatschutz: "v8",
+  // Erstanschreiben v9 (Ole, 18.11.2026): kurz, ohne „Hier schreibt der digitale Assistent“, KI-Hinweis in der
+  // Fußzeile (ERSTINFO_FOOTER_V9); bis zur Freigabe bei Meta sendet die App v8 (gleiche Platzhalter)
+  outreach: "v9",
+  outreach_tkv: "v9",
+  outreach_zahn: "v9",
+  outreach_pkv: "v9",
+  outreach_privatschutz: "v9",
   // Reine Hausrat-Leads (Ole, 18.11.2026, zur Einreichung freigegeben): „zu Ihrer Hausratversicherung“ statt „zum
   // Privatschutz“; bis zur Freigabe bei Meta die allgemeine bzw. die Privatschutz-Fassung (outreach.ts fallbackPurposes)
-  outreach_hausrat: "v8",
+  outreach_hausrat: "v9",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
   reminder: "v5",
@@ -221,12 +223,12 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   // mit festem Thema je Produkt, „Hier schreibt der digitale Assistent von {{2}}“, erste offene Frage fett als letzte
   // Zeile. Die Erstinformation (§ 15/16 VersVermV) steht immer als PDF im Kopf (TEMPLATE_HEADER), die KI-Kennzeichnung
   // in der Fußzeile (ERSTINFO_FOOTER_V8).
-  outreach: erstanschreibenV8("outreach"),
-  outreach_tkv: erstanschreibenV8("outreach_tkv"),
-  outreach_zahn: erstanschreibenV8("outreach_zahn"),
-  outreach_pkv: erstanschreibenV8("outreach_pkv"),
-  outreach_privatschutz: erstanschreibenV8("outreach_privatschutz"),
-  outreach_hausrat: erstanschreibenV8("outreach_hausrat"),
+  outreach: erstanschreibenV9("outreach"),
+  outreach_tkv: erstanschreibenV9("outreach_tkv"),
+  outreach_zahn: erstanschreibenV9("outreach_zahn"),
+  outreach_pkv: erstanschreibenV9("outreach_pkv"),
+  outreach_privatschutz: erstanschreibenV9("outreach_privatschutz"),
+  outreach_hausrat: erstanschreibenV9("outreach_hausrat"),
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -799,10 +801,13 @@ export const ERSTINFO_FOOTER = "Oben: unsere Erstinformation, wie gesetzlich vor
 /** Fußzeile ab Erstanschreiben v8 (Ole, 17.11.2026): KI-Kennzeichnung und Hinweis auf das PDF, höchstens 60 Zeichen. */
 export const ERSTINFO_FOOTER_V8 = "KI-Assistent · Oben: Erstinformation (gesetzlich)";
 
+/** Fußzeile ab Erstanschreiben v9 (Ole, 18.11.2026): KI-Kennzeichnung und Hinweis auf das PDF, höchstens 60 Zeichen. */
+export { ERSTINFO_FOOTER_V9 } from "@/lib/whatsapp/erstanschreiben";
+
 /** Fußzeile einer Vorlage mit PDF-Kopf je Textversion („v8“ bzw. 8). */
 export function erstinfoFooterFor(version: string | number): string {
   const v = typeof version === "number" ? version : Number(/^v(\d+)$/.exec(version)?.[1] ?? 0);
-  return v >= 8 ? ERSTINFO_FOOTER_V8 : ERSTINFO_FOOTER;
+  return v >= 9 ? ERSTINFO_FOOTER_V9 : v >= 8 ? ERSTINFO_FOOTER_V8 : ERSTINFO_FOOTER;
 }
 
 /** Markierung im gespeicherten Text, wenn das PDF der Erstinformation im Kopf der Vorlage mitging (ki-hinweis.ts). */
