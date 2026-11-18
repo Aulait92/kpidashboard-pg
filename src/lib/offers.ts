@@ -358,7 +358,7 @@ export async function acceptOffer(
       choosesTerm: offer.customerChoosesTerm,
       choosesStart: offer.customerChoosesStart,
       // 6 Monate zur Wahl erst für Angebote ab dem Livegang (ältere bleiben wie verschickt)
-      termOptions: termOptionsFor(offer.createdAt),
+      termOptions: termOptionsFor(offer.createdAt, offer.term),
       setupDiscount: offer.setupDiscount == null ? null : Number(offer.setupDiscount),
       setupListFee: offer.setupListFee == null ? null : Number(offer.setupListFee),
     },

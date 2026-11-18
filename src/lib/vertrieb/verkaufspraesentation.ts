@@ -125,10 +125,12 @@ export function aktuellesAngebot<T extends { status: string; isTest?: boolean; c
 const TERM_KURZ: Record<OfferTerm, string> = { none: "Ohne Laufzeit", "3m": "Mit 3 Monaten", "6m": "Mit 6 Monaten", "12m": "Mit 12 Monaten" };
 const TERM_SATZ: Record<OfferTerm, string> = { none: "ohne Vertragslaufzeit", "3m": "bei 3 Monaten Laufzeit", "6m": "bei 6 Monaten Laufzeit", "12m": "bei 12 Monaten Laufzeit" };
 /** Laufzeiten auf der Folie „Setup“ (Listenpreise bzw. Kunde wählt). */
-const TERM_FOLIE: OfferTerm[] = ["none", "3m", "6m", "12m"];
+// 6 Monate nur auf Nachfrage (Ole, 18.11.2026): nicht in den Listenpreisen, nur wenn das Angebot auf 6 Monate steht
+const TERM_FOLIE: OfferTerm[] = ["none", "3m", "12m"];
+const termFolie = (term: OfferTerm): OfferTerm[] => (term === "6m" ? ["none", "3m", "6m", "12m"] : TERM_FOLIE);
 const geschenkt = (n: number) => `${n} ${n === 1 ? "Monat" : "Monate"} geschenkt`;
 /** Vorauszahlung als Satz (Listenpreise): beide Varianten. */
-const VORAUS_LISTE = `Jährlich im Voraus: ${geschenkt(VORAUSZAHLUNG["12m"].freeMonths)} · 6 Monate im Voraus: ${geschenkt(VORAUSZAHLUNG["6m"].freeMonths)}`;
+const VORAUS_LISTE = `Jährlich im Voraus: ${geschenkt(VORAUSZAHLUNG["12m"].freeMonths)}`;
 
 export type PaketDaten = {
   quelle: "angebot" | "liste";
@@ -216,7 +218,7 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
   });
   const rabatt = angebot.setupDiscount != null && angebot.setupDiscount > 0 ? angebot.setupDiscount : null;
   const setup = angebot.customerChoosesTerm
-    ? TERM_FOLIE.map((t) => ({ label: TERM_KURZ[t], betrag: setupForChoice(t, Math.max(1, produkte.length), rabatt), markiert: t === term }))
+    ? termFolie(term).map((t) => ({ label: TERM_KURZ[t], betrag: setupForChoice(t, Math.max(1, produkte.length), rabatt), markiert: t === term }))
     : [{ label: TERM_KURZ[term], betrag: angebot.setupFee, markiert: true }];
   const monatlich: PaketDaten["monatlich"] = [
     {

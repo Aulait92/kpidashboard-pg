@@ -194,7 +194,7 @@ function choiceProps(offer: NonNullable<Awaited<ReturnType<typeof getOfferByToke
     choosesStart: offer.customerChoosesStart,
     initialTerm: fixedTerm,
     // 6 Monate zur Wahl erst für Angebote ab dem Livegang (lib/offer-pricing.ts termOptionsFor)
-    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt) : [fixedTerm]).map((t) => ({
+    options: (offer.customerChoosesTerm ? termOptionsFor(offer.createdAt, offer.term) : [fixedTerm]).map((t) => ({
       term: t,
       label: TERM_CHOICE_LABEL[t],
       setup: offer.customerChoosesTerm ? setupForChoice(t, count, discount) : Number(offer.setupFee),
