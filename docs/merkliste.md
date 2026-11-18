@@ -2,6 +2,10 @@
 
 Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole daran erinnern.
 
+- 18.11.2026: **Erledigt (Ole):** Microsoft-Herausgeberverifizierung (MPN-ID 7196909, Ole Kannapinn UG verifiziert),
+  Calendly abgelöst (eigene Buchungsseite /termin), Support-WhatsApp +49 15679 811535 über 360dialog live,
+  YouTube-Kanal eingerichtet. Offen: Apple-Fall 30000012681661 (seit 11.11. ohne Antwort, nachfassen).
+
 - 15.11.2026: **Bestandskunden-Modul vorerst für Kunden aus** (Ole testet es ausführlich). Schalter
   `BESTAND_MODULE_AVAILABLE` in src/lib/bestand/sichtbar.ts; je Kunde sichtbar über Admin → Kunde → Abrechnung
   („Für diesen Kunden einblenden“, Feld bestandSichtbar). Kunden mit aktivem Modul behalten es. Wieder an: true setzen,
@@ -16,16 +20,6 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   src/lib/empfehlung/shared.ts. Wieder an, wenn die kritischen Teile fertig sind (u. a. Bewertungs-Wächter:
   Google-Freigabe, docs/google-bewertungs-waechter.md). Präsentationsfolie „Empfehlungen & Bewertungen (59 €)“ prüfen.
 
-- 18.11.2026 (Nacht): **Calendly ablösen: technisch bereit.** Die eigene Buchungsseite (performancegrowth.de/termin,
-  lib/vertrieb/buchung.ts) kann alles, was Calendly für uns gemacht hat: freie Zeiten aus Oles Kalender, Handynummer
-  Pflicht, Kalendereinladung mit Meet-Link, Bestätigung per E-Mail und WhatsApp, Erinnerung 24 h und 1 h vorher,
-  Verschieben/Absagen per Link, Zuordnung zum Vertriebskontakt. Die Webseite nutzt schon die eigene Seite.
-  Später-Follow-ups: steht unter Admin → Später-Follow-ups → Buchungslink `https://performancegrowth.de/termin`, bekommt
-  jeder Kontakt seinen persönlichen Link (Buchung hängt direkt am Kontakt). Ole muss noch: 1. diesen Buchungslink
-  eintragen, 2. Calendly-Links in Instantly-Kampagnen und Mail-Signaturen ersetzen, 3. Calendly kündigen, wenn keine
-  offenen Calendly-Termine mehr kommen (der Calendly-Abgleich bleibt bis dahin aktiv).
-- 15.11.2026: **Calendly später durch unser eigenes Buchungssystem ablösen** (Vertrieb). Bis dahin: Handynummer ist im
-  Calendly-Formular Pflicht (für die WhatsApp-Terminbestätigung, lib/vertrieb/termin-whatsapp.ts).
 
 - 15.11.2026: **Google-Prüfung bestanden** (Projekt performancegrowth-sheets): `calendar.events` und `gmail.send` sind
   freigegeben, `calendar.freebusy` ist laut Console nicht sensibel. `GOOGLE_MAIL_VERIFIED=1` ist in der Produktion gesetzt
@@ -43,28 +37,6 @@ Dinge, die Ole später angehen will. Neue Sitzungen bitte hier nachsehen und Ole
   „Conversion Leads“ und der vorgeschlagenen Stufe anlegen bzw. umstellen. Offen: automatische Umstellung im
   Autopilot (bewusst nicht gebaut, nur Vorschlag), Anwalt (docs/datenschutz.md, Offene Punkte), Datenschutzerklärung.
 
-- 14.11.2026: **Calendly ablösen.** Die Später-Follow-ups im Vertrieb schicken vorerst Oles Calendly-Link
-  (Vertrieb → Follow-ups → Einstellungen → Buchungslink). Später durch unser eigenes Buchungstool ersetzen
-  (eigene Buchungsseite für Oles Vertriebstermine wie /book für Kunden, inkl. Kalender-Sync), dann auch den
-  Calendly-Abgleich (src/lib/vertrieb/calendly.ts) ablösen.
-- 14.11.2026: **Microsoft-Herausgeberverifizierung abschließen.** Partner-ID ist in Entra eingetragen (Ole, 14.11.),
-  Microsoft prüft noch. Prüfen: Entra → App-Registrierung „performancegrowth“ (Client-ID 6c3f54ab…) → Branding
-  und Eigenschaften → Herausgeberüberprüfung zeigt „Verifiziert“. Herausgeberdomäne performancegrowth.de ist schon gesetzt, Kontotypen stimmen, Datenschutz 11b und
-  .well-known-Datei sind live. Danach Freigabe-Link (/microsoft-freigabe) mit einem fremden Microsoft-365-Konto testen.
-  Redirect-URIs …/microsoft-freigabe (app und staging) in Entra prüfen.
-- 14.11.2026: **Support-WhatsApp +49 15679 811535 umziehen (Superchat → 360dialog).** Support-Postfach ist live
-  (Admin → WhatsApp → Einstellungen → „Nummer über 360dialog verbinden“, interner Kunde cust_pg_support, ohne
-  Assistent, Push an Admins). Migration hängt an der zweistufigen Verifizierung (Reiter fehlt bei Ole, Superchat
-  hält die Rechte). Ole hat Superchat und 360dialog-Support angeschrieben. Danach: Umzug neu starten (PIN-Frage
-  „Yes“), Testnachricht prüfen, SUPPORT_WHATSAPP_NUMBER=+4915679811535 in Produktion setzen, Superchat aus den
-  Partnern entfernen, Anzeigename „performancegrowth“ über 360dialog eskalieren. Nicht „Re-onboard (Deletion)“ wählen.
-  15.11.2026 vorbereitet: Support-Chats sind als Kunde / Interessent / Unbekannt markiert (über die Telefonnummer
-  des Vertriebskontakts, Filter in Admin → WhatsApp, „Zuordnen“ von Hand). Neue Calendly-Buchungen bekommen von der
-  Support-Nummer eine WhatsApp-Bestätigung (Vorlage pg_vertrieb_termin_v1, Sie-Form, nur Bestätigung, Erinnerung
-  macht Calendly). Die Vorlage reicht der Cron von selbst ein, sobald die Nummer verbunden ist; bis zur Freigabe
-  steht am Termin „Vorlage noch nicht freigegeben“. Nummer kommt aus Calendly (SMS-Erinnerungsnummer oder Frage
-  „Telefon/Handy/WhatsApp“), sonst vom Kontakt. Im Calendly-Formular eine Pflichtfrage nach der Handynummer mit
-  Hinweis „Bestätigung per WhatsApp“ ergänzen.
 
 - 16.11. abends (nach 20 Uhr): Erklärvideos gegen die Änderungen vom 15./16.11. prüfen und bei Bedarf neu aufnehmen
   (Neuigkeiten-Karte weg, Leitfaden und Diktieren weg, Bestandskunden-Modul aus, neue Terminvorbereitung, Kein-WhatsApp-Kennzeichen).

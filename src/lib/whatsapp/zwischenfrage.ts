@@ -41,12 +41,35 @@ const PRIVATSCHUTZ_VERSICHERN: ZwischenDef = {
   knoepfe: ["Nur ich", "Zu zweit", "Familie mit Kindern"],
 };
 
+// Ersatzfragen (Ole, 18.11.2026: „es fehlt immer noch die eine zwischenfrage“): steht die Familie schon im Formular,
+// kommt die nächste Rechner-Angabe dran (Hausrat: Wohnfläche, Haftpflicht: öffentlicher Dienst), damit vor dem
+// Terminvorschlag immer genau eine Zwischenfrage kommt.
+const PRIVATSCHUTZ_WOHNFLAECHE: ZwischenDef = {
+  key: "wohnflaeche",
+  feld: "wohnflaeche",
+  bekannt: /wohnfl(ä|a)che|quadratmeter|m²/i,
+  bekanntAngaben: ["wohnflaeche"],
+  sie: "Wie groß ist Ihre Wohnung ungefähr?",
+  du: "Wie groß ist deine Wohnung ungefähr?",
+  knoepfe: ["Bis 60 m²", "60 bis 100 m²", "Über 100 m²"],
+};
+
+const PRIVATSCHUTZ_OEFFENTLICH: ZwischenDef = {
+  key: "oeffentlicherDienst",
+  feld: "beruf",
+  bekannt: /öffentlich|beruf|beamt/i,
+  bekanntAngaben: ["beruf"],
+  sie: "Arbeiten Sie im öffentlichen Dienst?",
+  du: "Arbeitest du im öffentlichen Dienst?",
+  knoepfe: ["Ja", "Nein"],
+};
+
 /**
  * Zwischenfragen je Produkt in der Reihenfolge der Angaben fürs Angebot. Nur Privatschutz ist aktiv; die anderen sind
  * Vorschläge (docs/vorschlag-zwischenfrage.md) und greifen erst, wenn ihr Zweck in ZWISCHENFRAGE_AKTIV steht.
  */
 export const ZWISCHENFRAGEN: Partial<Record<NoticePurpose, ZwischenDef[]>> = {
-  outreach_privatschutz: [PRIVATSCHUTZ_VERSICHERN],
+  outreach_privatschutz: [PRIVATSCHUTZ_VERSICHERN, PRIVATSCHUTZ_WOHNFLAECHE, PRIVATSCHUTZ_OEFFENTLICH],
   // Vorschlag: Angaben des Tier-Rechners (Haltung, Geschlecht), Alter und Tierart stehen meist im Formular
   outreach_tkv: [
     { key: "haltung", feld: "tier", tier: "katze", bekannt: /haltung/i, sie: "Ist Ihre Katze eine Wohnungskatze oder ein Freigänger?", du: "Ist deine Katze eine Wohnungskatze oder ein Freigänger?", knoepfe: ["Wohnungskatze", "Freigänger", "Beides"] },

@@ -167,10 +167,15 @@ describe("B) genau eine Zwischenfrage vor dem Terminvorschlag", () => {
     expect(schlichteAntwort("Nein, beides neu")).toBe(true);
   });
 
-  it("Bekanntes aus dem Formular wird nie gefragt", () => {
-    expect(offeneZwischenfrage("Privatschutz", [...PS_FORM, { label: "Lebenssituation", value: "Familie mit Kindern" }], null)).toBeNull();
-    expect(offeneZwischenfrage("Privatschutz", PS_FORM, { versichern: "Paar" })).toBeNull();
-    expect(zwischenSchritt({ source: "Privatschutz", formular: [...PS_FORM, { label: "Familienstand", value: "verheiratet" }], verlauf: [ERST, ein("beides neu")] })).toBeNull();
+  it("Bekanntes aus dem Formular wird nie gefragt, dann kommt die nächste Frage (Ole, 18.11.2026)", () => {
+    expect(offeneZwischenfrage("Privatschutz", [...PS_FORM, { label: "Lebenssituation", value: "Familie mit Kindern" }], null)?.key).toBe("wohnflaeche");
+    expect(offeneZwischenfrage("Privatschutz", PS_FORM, { versichern: "Paar" })?.key).toBe("wohnflaeche");
+    expect(offeneZwischenfrage("Privatschutz", PS_FORM, { versichern: "Paar", wohnflaeche: "80 m²" })?.key).toBe("oeffentlicherDienst");
+    expect(offeneZwischenfrage("Privatschutz", PS_FORM, { versichern: "Paar", wohnflaeche: "80 m²", beruf: "Angestellt" })).toBeNull();
+    const s = zwischenSchritt({ source: "Privatschutz", formular: [...PS_FORM, { label: "Familienstand", value: "verheiratet" }], verlauf: [ERST, ein("beides neu")] });
+    expect(s).toMatchObject({ art: "fragen", def: { key: "wohnflaeche" } });
+    const frage = { direction: "outbound", body: zwischenfrageText(s && s.art === "fragen" ? s.def : def, "sie", HERR), kind: "interactive", sentBy: "bot" } as VerlaufNachricht;
+    expect(zwischenSchritt({ source: "Privatschutz", formular: [...PS_FORM, { label: "Familienstand", value: "verheiratet" }], verlauf: [ERST, ein("beides neu"), frage, ein("60 bis 100 m²")] })).toMatchObject({ art: "antwort", wert: "60 bis 100 m²", frei: false });
   });
 
   it("nur Privatschutz aktiv, andere Produkte nur vorbereitet", () => {
