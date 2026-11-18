@@ -14,6 +14,7 @@ import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
 import { ABLAUF_VORLAGEN, AUSLOESER_AKTIV, MAIL_STUFEN, NUR_TIPP, STUFE_LABEL, VORLAGE_WANN, type MailStufe } from "@/lib/mail/ablauf";
 import type { ServiceMailVorschau, SignaturAngaben } from "@/lib/mail/service-mails";
+import type { Antwortweg, ServiceMailsDaten } from "@/lib/mail/service-mails-daten";
 import type { VorlageKey } from "@/lib/mail/vorlagen";
 import { cn } from "@/lib/utils";
 import { serviceMailsBestaetigenAction, serviceMailVorschauAction, setMailKopieAction, setMailStufeAction, signaturAngabenAction } from "./actions";
@@ -29,16 +30,10 @@ const FELDER: { key: keyof SignaturAngaben; label: string; placeholder: string }
   { key: "anschrift", label: "Anschrift", placeholder: "Straße, PLZ Ort" },
 ];
 
-export function ServiceMails(p: {
-  mailOff: boolean;
-  bestaetigt: boolean;
+export function ServiceMails(p: ServiceMailsDaten & {
   canEdit: boolean;
-  vorschau: ServiceMailVorschau;
-  angaben: SignaturAngaben;
-  fehlend: (keyof SignaturAngaben)[];
-  stufen: Record<VorlageKey, MailStufe>;
-  namen: Record<VorlageKey, string>;
-  kopie: { an: boolean; adresse: string | null; eigene: string | null };
+  /** Einrichtung (P8): nach „Ja“ zum nächsten Schritt statt neu laden */
+  weiterHref?: string;
 }) {
   if (p.mailOff) {
     return (
@@ -65,14 +60,18 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
   const [angaben, setAngaben] = useState<SignaturAngaben>(p.angaben);
   const [stufen, setStufen] = useState(p.stufen);
   const [liste, setListe] = useState(false);
+  const [anrede, setAnrede] = useState("");
   const vorschau = useLiveVorschau(p.vorschau, angaben, p.fehlend.length > 0);
+  const anredeOffen = p.anredeFehlt && p.canEdit && !anrede;
 
   const ja = () =>
     start(async () => {
-      const res = await serviceMailsBestaetigenAction({ stufen, angaben: p.fehlend.length ? angaben : undefined });
+      const res = await serviceMailsBestaetigenAction({ stufen, angaben: p.fehlend.length ? angaben : undefined, anrede: p.anredeFehlt ? anrede : undefined });
       if (!res.ok) return toast.show({ message: res.error, tone: "error" });
       toast.show({ message: "Gespeichert: Ihre Service-Mails tragen ab jetzt Ihren Namen." });
-      router.refresh();
+      // Einrichtung: neu laden, damit der nächste Schritt aufgeklappt ist
+      if (p.weiterHref) window.location.assign(p.weiterHref);
+      else router.refresh();
     });
 
   return (
@@ -94,10 +93,21 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
         </Punkt>
       </ul>
 
-      {p.fehlend.length && p.canEdit ? (
+      {(p.fehlend.length || p.anredeFehlt) && p.canEdit ? (
         <div className="mt-5" data-service-mails-angaben>
           <p className="mb-2 text-sm font-medium">Für Ihre Signatur fehlt noch:</p>
-          <Angaben felder={FELDER.filter((f) => p.fehlend.includes(f.key))} angaben={angaben} onChange={setAngaben} />
+          {p.anredeFehlt ? (
+            <label className="mb-3 block" data-signatur-feld="anrede">
+              <span className="mb-1 block text-xs font-medium text-[color:var(--muted)]">Anrede (Ihre Kunden lesen z. B. „Herr Kannapinn“)</span>
+              <select value={anrede} onChange={(e) => setAnrede(e.target.value)} className={`${input} sm:w-48`} required>
+                <option value="">Bitte wählen</option>
+                <option value="Herr">Herr</option>
+                <option value="Frau">Frau</option>
+                <option value="keine">Keine Anrede</option>
+              </select>
+            </label>
+          ) : null}
+          {p.fehlend.length ? <Angaben felder={FELDER.filter((f) => p.fehlend.includes(f.key))} angaben={angaben} onChange={setAngaben} /> : null}
         </div>
       ) : null}
 
@@ -111,7 +121,7 @@ function Erklaerschritt(p: Parameters<typeof ServiceMails>[0]) {
         </div>
       ) : null}
 
-      <Button variant="primary" size="md" className="mt-5 w-full" onClick={ja} disabled={pending || !p.canEdit} data-service-mails-ja>
+      <Button variant="primary" size="md" className="mt-5 w-full" onClick={ja} disabled={pending || !p.canEdit || anredeOffen} data-service-mails-ja>
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         Ja, Mails in meinem Namen senden
       </Button>
@@ -178,6 +188,7 @@ function Eingerichtet(p: Parameters<typeof ServiceMails>[0]) {
           </p>
           {p.vorschau.adresse ? <p className="text-xs text-[color:var(--muted)]">{p.vorschau.adresse}</p> : null}
         </div>
+        <AntwortwegZeile w={p.antwortweg} />
         {p.vorschau.postfach ? (
           <p className="px-5 py-4 text-sm text-[color:var(--muted)]">Ihr Postfach ist verbunden: Jede Mail liegt auch in Ihrem Ordner „Gesendet“.</p>
         ) : (
@@ -236,6 +247,28 @@ function Eingerichtet(p: Parameters<typeof ServiceMails>[0]) {
           ) : null}
         </div>
       </details>
+    </div>
+  );
+}
+
+/** Antwortweg (M7): wohin Antworten der Kunden gehen. */
+function AntwortwegZeile({ w }: { w: Antwortweg }) {
+  return (
+    <div className="px-5 py-4" data-service-mails-antwortweg={w.art}>
+      <p className="text-xs font-medium text-[color:var(--muted)]">Antworten Ihrer Kunden</p>
+      {w.art === "postfach" ? (
+        <p className="text-sm">Antworten gehen direkt in Ihr Postfach.</p>
+      ) : w.art === "eingang" ? (
+        <>
+          <p className="text-sm">Landen im Verlauf des Kontakts und als Weiterleitung bei Ihnen.</p>
+          <p className="break-all text-xs text-[color:var(--muted)]">Antwortadresse je Kontakt: {w.muster}</p>
+        </>
+      ) : (
+        <>
+          <p className="text-sm">Antworten gehen an Ihre Adresse.</p>
+          {w.adresse ? <p className="break-all text-xs text-[color:var(--muted)]">{w.adresse}</p> : null}
+        </>
+      )}
     </div>
   );
 }

@@ -30,8 +30,7 @@
         "tagegeld": "nein"
       },
       "quelle": "https://www.arag.de/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Unfall Basis",
@@ -53,8 +52,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.arag.de/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Unfall Komfort",
@@ -76,8 +74,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.arag.de/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Unfall Premium",
@@ -99,8 +96,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.arag.de/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -113,6 +109,7 @@
     "Invaliditätssumme je Stufe in drei Höhen wählbar (Wert). Basis light mit Integralfranchise: Leistung ab 20 % Invalidität; Leistung ab Grad in den übrigen Stufen nicht genannt.",
     "Progression Plus: maximale Invaliditätsleistung bereits ab 75 % Invalidität (unter 67 Jahren).",
     "Unfallrente (ab 50 % Invalidität) und Krankenhaustagegeld (mit optionalem Arbeitsunfähigkeitstagegeld) sind Zusatzleistungen „falls vereinbart“, in Basis light nicht wählbar.",
-    "Premium zusätzlich: Synkope, posttraumatische Belastungsstörung (5 %), beschädigte Sachen bis 3.000 €; Reha-Manager ab Komfort."
+    "Premium zusätzlich: Synkope, posttraumatische Belastungsstörung (5 %), beschädigte Sachen bis 3.000 €; Reha-Manager ab Komfort.",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }

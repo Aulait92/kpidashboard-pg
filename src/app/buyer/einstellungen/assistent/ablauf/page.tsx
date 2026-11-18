@@ -10,14 +10,17 @@ import { advisorDisplayName } from "@/lib/advisor-name";
 import { vermittlerName } from "@/lib/whatsapp/gespraech";
 import { standardAblauf, type AblaufKanal, type AblaufPhase, type AblaufSchritt } from "@/lib/ablauf";
 import { cn } from "@/lib/utils";
+import { SoArbeitet } from "@/components/so-arbeitet";
+import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Ablauf | performancegrowth" };
 
 // Einstellungen → Assistent → Ablauf (Paket P6, Ole 17.11.2026): die Standard-Abfolge als Zeitleiste, mit Beispieltexten
 // in Ihrer Ansprache und mit Ihrem Namen (lib/ablauf.ts, dieselben Daten wie „Nächste Nachrichten“ am Kontakt).
-// Aufbau in Abschnitten (<section id=…>): „zeitleiste“ jetzt; „E-Mails“ (M7, Stufe je Vorlage) und „So arbeitet Ihr
-// Assistent“ (P8, Onboarding-Zeitleiste) kommen als weitere Abschnitte darunter dazu.
+// Aufbau in Abschnitten (<section id=…>): oben „so-arbeitet“ (P8: drei Spuren Kunde, Assistent, Sie und Beispielchat,
+// components/so-arbeitet.tsx, dieselben Daten wie im Onboarding), darunter „zeitleiste“ (alle Nachrichten im Detail).
+// Die E-Mails (M7: Stufe je Vorlage, Kopie, Antwortweg) stehen unter Einstellungen → Assistent → „E-Mails in Ihrem Namen“.
 
 const KANAL: Record<AblaufKanal, { icon: LucideIcon; farbe: string; name: string }> = {
   whatsapp: { icon: MessageCircle, farbe: "bg-emerald-50 text-emerald-700 ring-emerald-200", name: "WhatsApp" },
@@ -39,7 +42,7 @@ function beispielMontag(now: Date): Date {
   return new Date(utc.getTime() + (10 - h) * 60 * 60 * 1000);
 }
 
-export default async function AblaufPage() {
+export default async function AblaufPage({ searchParams }: { searchParams: Promise<{ produkt?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const [customer, agent] = await Promise.all([
@@ -52,16 +55,25 @@ export default async function AblaufPage() {
   const montag = beispielMontag(new Date());
   const phasen = standardAblauf({ an, person, beispielTermin: montag, anrufStart: montag });
   const nachfassenAus = agent ? !agent.followUpSequencesEnabled : false;
+  // P8: Überblick mit drei Spuren und Beispielchat (dieselben Daten wie im Onboarding)
+  const soArbeitet = await ladeSoArbeitet(ctx.customerId, (await searchParams).produkt);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
-      <PageHeader back="/buyer/einstellungen/assistent" title="Ablauf" subtitle="Was Ihr Assistent wann schickt. Tippen Sie auf einen Schritt für den Text." />
+      <PageHeader back="/buyer/einstellungen/assistent" title="Ablauf" subtitle="Wie Ihr Assistent arbeitet und was er wann schickt." />
+      <section id="so-arbeitet" className="mb-8" data-ablauf-so-arbeitet>
+        <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">So arbeitet Ihr Assistent</h2>
+        <div className="rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white p-4 shadow-[var(--shadow-sm)] sm:p-5">
+          <SoArbeitet d={soArbeitet} chat="zu" produktHref={(p) => `/buyer/einstellungen/assistent/ablauf?produkt=${encodeURIComponent(p)}#so-arbeitet`} />
+        </div>
+      </section>
+      <h2 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Alle Nachrichten im Detail</h2>
+      <p className="mb-3 px-1 text-sm text-[color:var(--muted)]">Tippen Sie auf einen Schritt für den Text.</p>
       <section id="zeitleiste" className="space-y-5" data-ablauf-zeitleiste>
         {phasen.map((p, i) => (
           <Phase key={p.key} p={p} nr={i + 1} aus={nachfassenAus && !!p.nachfassen} />
         ))}
       </section>
-      {/* Weitere Abschnitte (M7 „E-Mails“, P8 „So arbeitet Ihr Assistent“) hier als eigene <section> */}
       <p className="mt-6 px-1 text-sm text-[color:var(--muted)]">
         Am Kontakt sehen Sie unter <b className="font-semibold text-[color:var(--foreground)]">Nächste Nachrichten</b>, was als Nächstes geplant ist, und können es pausieren, verschieben oder überspringen.
       </p>

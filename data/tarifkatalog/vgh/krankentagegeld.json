@@ -22,8 +22,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankentagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankentagegeld KTG-S (Selbstständige)",
@@ -39,8 +38,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankentagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankentagegeld SKG (gesetzlich Versicherte)",
@@ -55,8 +53,7 @@
         "dynamik": "nein"
       },
       "quelle": "https://www.vgh.de/de/gesundheit-versicherung/krankentagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -66,6 +63,7 @@
     "Risikoträger: Provinzial Krankenversicherung Hannover AG (VGH Versicherungen). Abruf 17.11.2026.",
     "In den Tarifvergleichen steht ein Strich für „nicht enthalten“; so erfasst.",
     "Drei Tarife für Zielgruppen: KTG-G, KTG-S nur für Selbstständige (auch bei Teil-Arbeitsunfähigkeit), SKG nur für gesetzlich versicherte Arbeitnehmer. Keine Empfehlung.",
-    "Dynamik ab 30 €/Tag. Ende bei Berufsunfähigkeit laut FAQ (auch bei Bezug einer privaten BU-Rente). Wartezeit und Leistungsdauer nicht beziffert."
+    "Dynamik ab 30 €/Tag. Ende bei Berufsunfähigkeit laut FAQ (auch bei Bezug einer privaten BU-Rente). Wartezeit und Leistungsdauer nicht beziffert.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

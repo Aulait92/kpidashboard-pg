@@ -38,12 +38,14 @@ import {
   naechsterVersand,
   vorabCheckFaellig,
   vorabCheckPush,
+  zusammenfassungSatz,
   type AngebotWeg,
 } from "@/lib/angebot-senden";
 import { ANGEBOT_KINDS, SEQUENCES, pauseAngebotsAbfolge, startAngebotNachfassen, topicOf, type SequenceCtx, type SequenceKind, type SequenceLogEntry } from "@/lib/lead-sequences";
 import { bereinigeNotiz, rueckrufBestaetigung, rueckrufFensterPush, rueckrufNotiz, rueckrufPauseBis, rueckrufTage, tagTitel, waehleFenster, type RueckrufFenster } from "@/lib/rueckruf";
 import type { LeadTimes } from "@/lib/calendar/lead-times";
 import type { Werte } from "@/lib/mail/platzhalter";
+import { ladeZusammenfassung, zusammenfassungAblegen, zusammenfassungPdfDaten, type ZusammenfassungInfo, type ZusammenfassungText } from "@/lib/zusammenfassung-server";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -62,7 +64,7 @@ export const angebotUrl = (token: string) => publicUrlOr(`/ihr-angebot/${token}`
 /** Link „Rückruf wünschen“. */
 export const rueckrufUrl = (token: string) => publicUrlOr(`/rueckruf/${token}`);
 
-type AuswahlZeile = { sparte: string; gesellschaft: string | null; tarif: string | null; beitrag: number | null };
+type AuswahlZeile = { sparte: string; gesellschaft: string | null; tarif: string | null; beitrag: number | null; leistungen: string[] };
 
 /** Thema aus der Auswahl im Termin (gewählte Sparten), null ohne Angebote; dazu die Zeilen für {vorteil_1} bis 3. */
 function themaAus(offersJson: unknown): { thema: string | null; rabatt: { prozent: number } | null; zeilen: AuswahlZeile[] } {
@@ -70,7 +72,8 @@ function themaAus(offersJson: unknown): { thema: string | null; rabatt: { prozen
   const d = cleanAngebote(offersJson);
   const items = gewaehlte(d).filter((i) => !i.zusatz);
   const thema = items.length ? angebotThema(items.map((i) => i.sparte), "") : null;
-  const zeilen = items.map((i) => ({ sparte: i.sparte, gesellschaft: i.gesellschaft, tarif: i.tarif, beitrag: beitragEffektiv(i) }));
+  // Leistungen aus den Katalog-Merkmalen des Tarifs (lib/tarifauswahl.ts itemFuer) für {vorteil_1} bis 3 (Paket M5)
+  const zeilen = items.map((i) => ({ sparte: i.sparte, gesellschaft: i.gesellschaft, tarif: i.tarif, beitrag: beitragEffektiv(i), leistungen: i.leistungen }));
   return { thema: thema || null, rabatt: beitragAus(d).rabatt, zeilen };
 }
 
@@ -155,6 +158,10 @@ export type AngebotInfo = {
   ergebnisGesetzt: boolean;
   /** Vorschau der WhatsApp (Link als Platzhalter) */
   vorschau: string;
+  /** Vorschau der E-Mail aus der Vorlage „Angebot“ (Kunden-Vorlage, sonst Standard), ohne Knöpfe und Signatur */
+  mail: { subject: string; text: string };
+  /** Gesprächszusammenfassung (Paket M5); null bei Stufe „aus“ */
+  zusammenfassung: ZusammenfassungInfo | null;
 };
 
 /** Daten fürs Blatt „Angebot senden“. null, wenn der Termin fehlt bzw. nicht sichtbar ist. */
@@ -170,7 +177,7 @@ export async function ladeAngebotInfo(appointmentId: string, ctx: TeamCtx, now =
     ansprechpartner({ customerId: lead.customerId, leadId: lead.id, phone: lead.phone, name: lead.name }),
   ]);
   const an = asAnsprache(lead.customer.leadAddress);
-  const { thema: themaTermin, rabatt } = themaAus(t.offersJson);
+  const { thema: themaTermin, rabatt, zeilen } = themaAus(t.offersJson);
   const thema = themaTermin ?? topicOf(lead.formData, lead.source, an);
   const fensterOffen = !!conv?.windowExpiresAt && conv.windowExpiresAt.getTime() > now.getTime();
   const grund = !lead.phone
@@ -185,6 +192,19 @@ export async function ladeAngebotInfo(appointmentId: string, ctx: TeamCtx, now =
             ? "Nicht per WhatsApp erreichbar"
             : null;
   const kombi = kombiSatz(rabatt, thema);
+  // Mailtext wie beim Versand (Vorlage „Angebot“, Vorteile aus der Auswahl), Signatur kommt beim Senden dazu
+  const [mailText, zusammenfassung, meinname] = await Promise.all([
+    mailVorlage(lead.customerId, "angebot", an),
+    ladeZusammenfassung(t.id, ctx, now),
+    import("@/lib/mail/lead-versand").then((m) => m.leadVersandKontext(lead.customerId, { leadId: lead.id, who, schreiber: ctx.userId ?? null, nurLesen: true })).then((k) => k.daten.name),
+  ]);
+  const anrufTag = SEQUENCES.offer.steps.find((x) => x.action === "call")?.day ?? 3;
+  const mailVorschau = angebotMail({
+    vorlage: mailText,
+    werte: mailWerte({ an, kontakt: who.kontakt, thema, meinname, now, extra: { ...angebotVorteile(zeilen, kombi), anruf_tag: angebotAnrufTag(now, anrufTag) } }),
+    link: "",
+    signatur: { text: "", html: "" },
+  });
   const aktiv = !!t.shareToken && !!t.shareExpiresAt && t.shareExpiresAt.getTime() > now.getTime();
   return {
     appointmentId: t.id,
@@ -205,10 +225,14 @@ export async function ladeAngebotInfo(appointmentId: string, ctx: TeamCtx, now =
     },
     ergebnisGesetzt: t.status !== "booked" && (lead.status ?? "").toLowerCase() === "angebot gesendet",
     vorschau: angebotWhatsAppText({ an, kontakt: who.kontakt, thema, link: a(an, "[Link zu deinem Angebot]", "[Link zu Ihrem Angebot]"), kombi }),
+    mail: { subject: mailVorschau.subject, text: mailVorschau.text },
+    zusammenfassung,
   };
 }
 
-export type SendeErgebnis = { ok: true; kanaele: ("whatsapp" | "email")[]; hinweise: string[]; nachfassen: boolean } | { ok: false; error: string };
+export type SendeErgebnis =
+  | { ok: true; kanaele: ("whatsapp" | "email")[]; hinweise: string[]; nachfassen: boolean; /** Paket M5 */ zusammenfassung?: "gesendet" | "abgelegt" | null }
+  | { ok: false; error: string };
 
 type SendeDeps = { now?: Date; userId?: string | null };
 
@@ -254,13 +278,21 @@ export async function angebotWiedervorlageWeg(leadId: string): Promise<void> {
  * Weg „app“: Angebot per WhatsApp UND E-Mail senden. Gilt als gesendet, wenn mindestens ein Kanal geklappt hat; die
  * Gründe für einen fehlenden Kanal kommen als Hinweis zurück. dateiId: Angebots-PDF des Leads (Pflicht).
  */
-export async function angebotSenden(appointmentId: string, ctx: TeamCtx, input: { dateiId: string; kundenlink: boolean }, deps: SendeDeps = {}): Promise<SendeErgebnis> {
+export async function angebotSenden(
+  appointmentId: string,
+  ctx: TeamCtx,
+  input: { dateiId: string; kundenlink: boolean; /** Gesprächszusammenfassung als PDF mitsenden (Paket M5) */ zusammenfassung?: ZusammenfassungText | null },
+  deps: SendeDeps = {},
+): Promise<SendeErgebnis> {
   const now = deps.now ?? new Date();
   const t = await terminMitLead(appointmentId, ctx);
   const lead = t?.lead;
   if (!t || !lead || lead.erasedAt) return { ok: false, error: "Termin nicht gefunden." };
   const datei = await prisma.leadFile.findFirst({ where: { id: input.dateiId, leadId: lead.id }, select: { id: true, fileName: true, contentType: true, data: true, createdAt: true } });
   if (!datei) return { ok: false, error: "Bitte zuerst das Angebot als PDF hochladen." };
+  // Gesprächszusammenfassung: vor jedem Versand prüfen (keine offene Stelle) und das PDF erzeugen
+  const zf = input.zusammenfassung ? await zusammenfassungPdfDaten(appointmentId, ctx, input.zusammenfassung, now) : null;
+  if (zf && !zf.ok) return { ok: false, error: zf.error };
 
   const an = asAnsprache(lead.customer.leadAddress);
   const who = await ansprechpartner({ customerId: lead.customerId, leadId: lead.id, phone: lead.phone, name: lead.name });
@@ -321,10 +353,12 @@ export async function angebotSenden(appointmentId: string, ctx: TeamCtx, input: 
     // {anruf_tag}: der Tag der Anruf-Aufgabe im Nachfassen (Tag 3), damit Mail und Aufgabe zusammenpassen
     const anrufTag = SEQUENCES.offer.steps.find((x) => x.action === "call")?.day ?? 3;
     const werte = mailWerte({ an, kontakt: who.kontakt, thema, meinname: k.daten.name, now, extra: { ...angebotVorteile(zeilen, kombi), anruf_tag: angebotAnrufTag(now, anrufTag) } });
+    const anhaenge = datei.data.length <= 10 * 1024 * 1024 ? [{ fileName: datei.fileName, contentType: datei.contentType, data: Buffer.from(datei.data) }] : [];
+    if (zf?.ok) anhaenge.push({ fileName: zf.pdf.fileName, contentType: "application/pdf", data: Buffer.from(zf.pdf.data) });
     const res = await sendeLeadMail(k, {
       to,
-      inhalt: (sig) => angebotMail({ vorlage, werte, link, kundenlink, signatur: sig }),
-      attachments: datei.data.length <= 10 * 1024 * 1024 ? [{ fileName: datei.fileName, contentType: datei.contentType, data: Buffer.from(datei.data) }] : undefined,
+      inhalt: (sig) => angebotMail({ vorlage, werte, link, kundenlink, signatur: sig, zusatz: zf?.ok ? zusammenfassungSatz(an) : null }),
+      attachments: anhaenge.length ? anhaenge : undefined,
       protokoll: { customerId: lead.customerId, leadId: lead.id, art: "angebot", userId: deps.userId ?? ctx.userId },
     });
     if (res.sent) kanaele.push("email");
@@ -333,7 +367,23 @@ export async function angebotSenden(appointmentId: string, ctx: TeamCtx, input: 
 
   if (!kanaele.length) return { ok: false, error: `Das Angebot ist nicht rausgegangen. ${hinweise.join(". ")}.` };
   const nachfassen = await nachDemVersand(t, lead, { weg: "app", kanaele, datei, token, now, userId: deps.userId ?? ctx.userId });
-  return { ok: true, kanaele, hinweise, nachfassen };
+  // Gesprächszusammenfassung als Beratungsdokumentation ablegen (gesendet nur, wenn die E-Mail rausging)
+  let zfStand: "gesendet" | "abgelegt" | null = null;
+  if (zf?.ok && input.zusammenfassung) {
+    const perMail = kanaele.includes("email");
+    const r = await zusammenfassungAblegen(appointmentId, ctx, input.zusammenfassung, {
+      now,
+      userId: deps.userId ?? ctx.userId,
+      fertig: zf,
+      verlauf: perMail ? "Gesprächszusammenfassung mit dem Angebot per E-Mail gesendet und abgelegt" : "Gesprächszusammenfassung abgelegt (nicht gesendet, keine E-Mail)",
+    });
+    if (!r.ok) hinweise.push(`Zusammenfassung: ${r.error}`);
+    else {
+      zfStand = perMail ? "gesendet" : "abgelegt";
+      if (!perMail) hinweise.push("Zusammenfassung abgelegt, aber nicht gesendet (keine E-Mail)");
+    }
+  }
+  return { ok: true, kanaele, hinweise, nachfassen, zusammenfassung: zfStand };
 }
 
 /** Weg „selbst“: ein Tipp, Upload optional (dateiId). Nachfassen nur per WhatsApp und Anruf. */

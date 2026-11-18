@@ -28,8 +28,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.verti.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Klassik",
@@ -50,8 +49,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.verti.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Premium",
@@ -72,8 +70,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.verti.de/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Quelle: Leistungstabellen der Produktseite (Haftpflicht, Teilkasko, Vollkasko; Symbole aus dem Seitenquelltext gelesen). Keine Markierung; Klassik als mittlere Stufe (Wettbewerbsvergleich der Seite rechnet mit Klassik Kasko Clever).",
     "Marder = Folgeschäden nach Tierbiss; Neuwert = Neupreisentschädigung, Kaufpreisentschädigung für Gebrauchte erst ab Klassik (18 bzw. 36 Monate).",
     "Zusatzleistungen laut Seite: Schutzbrief, GAP-Schutz, Kasko Clever (Werkstattbindung, 15 % Nachlass), Fahrerschutz gratis. Rabattschutz und Akku-Schutz für E-Autos auf der Seite nicht genannt.",
-    "Nur Premium: Eigenschadendeckung, Schlossänderung nach Schlüsseldiebstahl, Leihwagen nach Unfall (Vollkasko)."
+    "Nur Premium: Eigenschadendeckung, Schlossänderung nach Schlüsseldiebstahl, Leihwagen nach Unfall (Vollkasko).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -35,8 +35,7 @@
         "ableitung": "nein"
       },
       "quelle": "https://www.wgv.de/recht-eigentum/haus/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude OPTIMAL",
@@ -64,8 +63,7 @@
         "ableitung": "nein"
       },
       "quelle": "https://www.wgv.de/recht-eigentum/haus/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude PLUS",
@@ -93,8 +91,7 @@
         "ableitung": "inklusive"
       },
       "quelle": "https://www.wgv.de/recht-eigentum/haus/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -106,6 +103,7 @@
     "Weitere Elementargefahren stehen in der Tabelle in allen Tarifen, laut Preisbeispiel aber als Gefahr gewählt; daher „wählbar“. PLUS zusätzlich Oberflächenwasser über Balkon/Garage nach Starkregen.",
     "Photovoltaik ist im Grundschutz mitversichert (sofern vereinbart); erweiterter Schutz (Elektronik, Ertragsausfall, bis 30 kWp) gegen Mehrbeitrag in allen Tarifen, daher „optional“.",
     "Ableitungsrohre nur auf dem Grundstück und nur PLUS (bis 20.000 €); Zuleitungsrohre außerhalb des Grundstücks ab OPTIMAL. Hotelkosten BASIS 100 €/Tag (50 Tage), OPTIMAL 150 €/Tag (70 Tage), PLUS 200 €/Tag (365 Tage).",
-    "Vandalismus: „Böswillige Beschädigung (auch Graffiti)“ ab OPTIMAL. Tiere: Wildtierschäden (Marder, Waschbär, Specht) nur PLUS. Selbstbeteiligung wählbar (Preisbeispiel 250 €)."
+    "Vandalismus: „Böswillige Beschädigung (auch Graffiti)“ ab OPTIMAL. Tiere: Wildtierschäden (Marder, Waschbär, Specht) nur PLUS. Selbstbeteiligung wählbar (Preisbeispiel 250 €).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

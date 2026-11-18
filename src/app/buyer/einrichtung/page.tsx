@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Smartphone, Star, Upload, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -10,7 +10,11 @@ import { buttonClass, Card } from "@/components/ui";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { customerSetupProgress, loadOnboarding, onboardingChecklist } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
-import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits } from "./forms";
+import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, SkipButton, StepExits, WeiterButton } from "./forms";
+import { SoArbeitet } from "@/components/so-arbeitet";
+import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
+import { ServiceMails } from "@/app/buyer/einstellungen/assistent/service-mails";
+import { serviceMailsDaten } from "@/lib/mail/service-mails-daten";
 import { impressumUrlAus } from "@/lib/impressum-fehlt";
 import { ErstinfoForm } from "./erstinfo-form";
 import { loadErstinfo } from "@/lib/erstinformation";
@@ -47,13 +51,13 @@ export const metadata = { title: "Einrichtung | performancegrowth" };
 const dateFmt = (d: Date) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(d);
 
-export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string; wa?: string; schritt?: string; weg?: string }> }) {
+export default async function SetupPage({ searchParams }: { searchParams: Promise<{ gcal?: string; wa?: string; schritt?: string; weg?: string; produkt?: string }> }) {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   if (ctx.teamRole === "advisor") redirect("/buyer");
   const ob = await loadOnboarding({ customerId: ctx.customerId });
   if (!ob) redirect("/buyer");
-  const { gcal, wa, schritt, weg } = await searchParams;
+  const { gcal, wa, schritt, weg, produkt } = await searchParams;
   const offer = ob.offerId
     ? await prisma.offer.findUnique({ where: { id: ob.offerId }, select: { paymentStatus: true, paidAt: true, isTest: true } })
     : null;
@@ -87,7 +91,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     "app",
     ...(software ? ["calendar", "mailbox"] : []),
     "provision",
-    ...(software ? ["erstinfo"] : []),
+    ...(software ? ["erstinfo", "assistent", "serviceMails"] : []),
     "metaAccess",
     ...(waEnabled ? ["whatsapp"] : []),
     ...["bestandImport", "reviewLink", "team"].filter(has),
@@ -112,6 +116,9 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const erstinfo = software ? await loadErstinfo(ctx.customerId) : null;
   // Impressum-Adresse: Pflichtangabe auf den Seiten für Endkunden, geprüft, aber nicht blockierend (Rechtsvorprüfung 16.11.2026)
   const impressumFehlt = !impressumUrlAus(ob.websiteInfo);
+  // P8 „So arbeitet Ihr Assistent“ und M9 „Service-Mails in Ihrem Namen“ (beide nur mit Software)
+  const soArbeitet = software ? await ladeSoArbeitet(ctx.customerId, produkt) : null;
+  const mails = software && !done("serviceMails") ? await serviceMailsDaten(ctx.customerId, ctx.userId, ctx.email) : null;
   const metaInit = {
     adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
     page: ob.customer.metaPageId ?? "",
@@ -362,6 +369,28 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 </a>
               </p>
             ) : null}
+          </Step>
+        ) : null}
+
+        {soArbeitet ? (
+          <Step n={nextNo()} title="So arbeitet Ihr Assistent" icon={Route} done={done("assistent")} open={isOpen("assistent")} id="assistent">
+            <SoArbeitet d={soArbeitet} produktHref={(p) => `/buyer/einrichtung?schritt=assistent&produkt=${encodeURIComponent(p)}#assistent`} />
+            {!done("assistent") ? <WeiterButton kind="gesehen:assistent" next={laterHref("assistent")} readOnly={readOnly} /> : null}
+          </Step>
+        ) : null}
+
+        {software ? (
+          <Step n={nextNo()} title="Service-Mails in Ihrem Namen" icon={Mail} done={done("serviceMails")} open={isOpen("serviceMails")} id="serviceMails">
+            {mails ? (
+              <ServiceMails {...mails} canEdit={!readOnly} weiterHref={laterHref("serviceMails")} />
+            ) : (
+              <p className="text-sm text-[color:var(--muted)]" data-service-mails-fertig>
+                {ob.customer.mailFeaturesOff ? "E-Mail-Funktionen sind aus: Sie kopieren die Texte im Kontakt oder öffnen sie im eigenen Mailprogramm." : "Eingerichtet: Terminbestätigung und Erinnerungen gehen in Ihrem Namen raus."}{" "}
+                <Link href="/buyer/einstellungen/assistent#mails" className="font-medium text-[color:var(--brand)] underline">
+                  Ändern unter Einstellungen → Assistent
+                </Link>
+              </p>
+            )}
           </Step>
         ) : null}
 

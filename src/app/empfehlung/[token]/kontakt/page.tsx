@@ -1,7 +1,8 @@
 import { AdvisorHeader } from "@/components/empfehlung/advisor-header";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { REFERRAL_DRAFT_COOKIE, decodeReferralDraft } from "@/lib/empfehlung/entwurf";
 import { CheckCircle2, ClipboardCheck, MessageCircle, UserRound } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { PhoneField } from "@/components/phone-field";
@@ -65,6 +66,8 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
     const h = await headers();
     await countReferralVisit(page, { ip: await requestIp(), userAgent: h.get("user-agent") }).catch(() => {});
   }
+  // Nach einem Fehler: Eingaben wieder einsetzen (Cookie aus der Aktion, nur nach ?err=…)
+  const draft = sp.err ? decodeReferralDraft((await cookies()).get(REFERRAL_DRAFT_COOKIE)?.value) : null;
   const action = submitReferralAction.bind(null, token);
   const offer = page.offer;
   const renderedAt = nowMs();
@@ -106,13 +109,13 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
         </div>
       ) : null}
       <form action={action} className={page.whatsappUrl ? "mt-3 space-y-3" : "mt-5 space-y-3"}>
-        <Field name="name" label="Vor- und Nachname" autoComplete="name" required />
-        <PhoneField name="phone" label="Handynummer (für Anruf oder WhatsApp)" />
-        <Field name="email" label="E-Mail-Adresse (optional)" type="email" autoComplete="email" />
+        <Field name="name" label="Vor- und Nachname" autoComplete="name" required defaultValue={draft?.name} />
+        <PhoneField name="phone" label="Handynummer (für Anruf oder WhatsApp)" defaultInternational={draft?.phone || undefined} />
+        <Field name="email" label="E-Mail-Adresse (optional)" type="email" autoComplete="email" defaultValue={draft?.email} />
         {page.topics.length ? (
           <label className="block text-sm font-medium">
             Worum geht es? (optional)
-            <select name="topic" className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base">
+            <select name="topic" defaultValue={draft?.topic ?? ""} className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-white px-3 text-base">
               <option value="">Bitte wählen</option>
               {page.topics.map((t) => (
                 <option key={t} value={t}>
@@ -125,7 +128,7 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
         ) : null}
         <label className="block text-sm font-medium">
           Nachricht (optional)
-          <textarea name="message" rows={3} maxLength={500} className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-base" />
+          <textarea name="message" rows={3} maxLength={500} defaultValue={draft?.message} className="mt-1 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 py-2 text-base" />
         </label>
         <input
           type="text"
@@ -140,7 +143,7 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
         />
         <input type="hidden" name="rendered_at" value={String(renderedAt)} />
         <label className="flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
-          <input type="checkbox" name="consent" required className="mt-0.5" />
+          <input type="checkbox" name="consent" required defaultChecked={draft?.consent} className="mt-0.5" />
           <span>
             Ich bin einverstanden, dass {page.vertreter} mich zu meinem Anliegen per Telefon, WhatsApp oder E-Mail kontaktiert und meine Angaben dafür
             verarbeitet. Die Einwilligung kann ich jederzeit widerrufen. Hinweise in der{" "}
@@ -152,7 +155,7 @@ export default async function ReferralContactPage({ params, searchParams }: { pa
         </label>
         {page.statusUpdates ? (
           <label className="flex items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
-            <input type="checkbox" name="statusConsent" className="mt-0.5" />
+            <input type="checkbox" name="statusConsent" defaultChecked={draft?.statusConsent} className="mt-0.5" />
             <span>{statusConsentText(page.recommender, page.vertreter)}</span>
           </label>
         ) : null}
@@ -176,11 +179,11 @@ function Shell({ children, advisor, label, customerId }: { children: React.React
   );
 }
 
-function Field({ name, label, type = "text", autoComplete, required }: { name: string; label: string; type?: string; autoComplete?: string; required?: boolean }) {
+function Field({ name, label, type = "text", autoComplete, required, defaultValue }: { name: string; label: string; type?: string; autoComplete?: string; required?: boolean; defaultValue?: string }) {
   return (
     <label className="block text-sm font-medium">
       {label}
-      <input name={name} type={type} autoComplete={autoComplete} required={required} className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-base" />
+      <input name={name} type={type} autoComplete={autoComplete} required={required} defaultValue={defaultValue} className="mt-1 h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3 text-base" />
     </label>
   );
 }

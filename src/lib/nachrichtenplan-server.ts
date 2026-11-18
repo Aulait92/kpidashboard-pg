@@ -85,11 +85,11 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
       followUpAt: true,
       followUpNote: true,
       nachrichtenPausiertAt: true,
-      customer: { select: { name: true, leadAddress: true } },
+      customer: { select: { name: true, leadAddress: true, mailAblauf: true } },
     },
   });
   if (!lead || lead.erasedAt) return [];
-  const [termine, abfolgen, conv] = await Promise.all([
+  const [termine, abfolgen, conv, aufgaben] = await Promise.all([
     prisma.appointment.findMany({
       where: { leadId, status: "booked", startsAt: { gt: new Date(now.getTime() - 60 * 60 * 1000) } },
       orderBy: { startsAt: "asc" },
@@ -119,6 +119,8 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
       orderBy: { lastMessageAt: "desc" },
       select: { id: true, contactEmail: true, optedOutAt: true, qualificationData: true, _count: { select: { messages: { where: { direction: "inbound" } } } } },
     }),
+    // Vorschläge (M7): offene Aufgaben nach dem Abschluss
+    prisma.leadTask.findMany({ where: { leadId, status: { in: ["wartet", "aktiv"] } }, orderBy: { dueAt: "asc" }, take: 5, select: { kind: true, note: true, dueAt: true, status: true } }),
   ]);
   const an = asAnsprache(lead.customer.leadAddress);
   const who = await ansprechpartner({ customerId: lead.customerId, leadId, phone: lead.phone, name: lead.name });
@@ -176,6 +178,12 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,
     pausiertAt: lead.nachrichtenPausiertAt,
+    // Aktive Aufgabe = die Wiedervorlage auf „Heute“; erledigt, sobald sie dort abgehakt ist
+    vorschlaege: aufgaben.filter((t) => t.status === "wartet" || (!!lead.followUpAt && lead.followUpNote === t.note)),
+    mailAus: await import("@/lib/mail/ablauf").then((m) => {
+      const st = m.leseMailAblauf(lead.customer.mailAblauf).stufen;
+      return Object.entries(st).flatMap(([k, s]) => (s === "aus" ? [k] : []));
+    }),
     // E-Mail-Schritte (Angebot Tag 5, Pakete M4/M6): Text aus der Vorlage des Vermittlers
     mailVorlagen: await mailVorlagenFuer(lead.customerId, abfolgen, an),
   });

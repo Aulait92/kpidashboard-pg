@@ -25,6 +25,7 @@ export const MAIL_ARTEN = {
   bestandskampagne: "Bestandskampagne",
   kein_whatsapp: "Kein WhatsApp",
   nummer_erfragen: "Richtige Nummer erfragen",
+  maklervollmacht: "Maklervollmacht",
   bewertungsbitte: "Bewertungsbitte",
   einwilligung: "Einwilligung",
   angebot: "Angebot",

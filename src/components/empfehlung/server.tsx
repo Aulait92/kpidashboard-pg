@@ -10,7 +10,7 @@ import type { TeamCtx } from "@/lib/team";
 import { moduleInfo, recentClosings } from "@/lib/empfehlung/module";
 import { loadEmpfehlungStats, type EmpfehlungStats } from "@/lib/empfehlung/requests";
 import { BAD_REVIEW_TASK } from "@/lib/empfehlung/google-business";
-import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, EMPFEHLUNG_MODULE_AVAILABLE, FEEDBACK_CONSENT_TEXT, HINTS, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
+import { ANNOUNCEMENT_KEY, CANDIDATE_MIN_CLOSINGS, DAY_MS, EMPFEHLUNG_MODULE_AVAILABLE, FEEDBACK_CONSENT_TEXT, HINTS, WAECHTER_HREF, fmtDate, isUnhappyTask } from "@/lib/empfehlung/shared";
 import { FeedbackConsentToggle, ModuleHint, OptOutToggle, ReferralLinkButton } from "@/components/empfehlung/client";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -126,7 +126,7 @@ export async function EmpfehlungHeuteHint({ ctx }: { ctx: { customerId: string; 
     if (!bad) return null;
     return (
       <Link
-        href="/buyer/empfehlungen#bewertungen"
+        href={WAECHTER_HREF}
         className="mb-5 flex items-center gap-3 rounded-[var(--radius-md)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
         data-gbp-heute
       >

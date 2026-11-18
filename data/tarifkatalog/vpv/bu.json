@@ -32,8 +32,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BU Fonds Plus",
@@ -56,8 +55,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.vpv.de/produkte/gesundheit-existenz/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +68,7 @@
     "Zwei Varianten mit gleichem Leistungskern: SBU (Überschüsse mindern den Beitrag) und BU Fonds Plus (Überschüsse in Fonds, Rückzahlung bei Gesundheit). Keine Markierung der Gesellschaft.",
     "Prognose, weltweit, Teilzeit, Stundung (bis 24 Monate, zinslos, nach 12 Monaten Beitragszahlung) aus den SBU-Bedingungen 5316; bei BU Fonds Plus nur Prospekt und Produktseite, Bedingungen 7002 nicht ausgewertet.",
     "AU-Klausel als Baustein: Rente nach 6 Monaten Krankschreibung, bis 24 Monate. Weitere Bausteine: Sofortleistung (eine Jahresrente), garantierte Rentensteigerung.",
-    "Umorganisation: Bedingungen nennen Verzicht in bestimmten Fällen und eine Umorganisationshilfe; nicht als Wert gesetzt."
+    "Umorganisation: Bedingungen nennen Verzicht in bestimmten Fällen und eine Umorganisationshilfe; nicht als Wert gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

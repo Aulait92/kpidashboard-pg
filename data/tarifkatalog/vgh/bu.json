@@ -31,8 +31,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BerufsunfähigkeitsSchutz Premium",
@@ -57,8 +56,7 @@
         "pflege": "inklusive"
       },
       "quelle": "https://www.vgh.de/de/unfall-vorsorge/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -69,6 +67,8 @@
     "VGH Versicherungen (Niedersachsen, vgh.de). Werte aus dem Tarifvergleich der Produktseite, Abruf 17.11.2026.",
     "Stufen Komfort und Premium; Premium zusätzlich lebenslange Pflegerente ab Pflegegrad 3. Variante „Junge Erwachsene Komfort“ mit gleichen Leistungen wie Komfort (Dynamik über Umtauschrecht). Keine Empfehlung.",
     "Leistungsübersicht mit Häkchen, die nicht lesbar sind; übernommen sind Zeilen, die als Leistung beschrieben sind. Verzicht auf Umorganisation bei Kleinbetrieben unter 5 Mitarbeitern. Nachversicherung in den ersten 5 Jahren ohne Anlass (bis 35) und bei Ereignissen (bis 50). Bitte prüfen.",
-    "Dienstunfähigkeit ist im BU-Schutz enthalten; eine eigene DU-Versicherung gibt es nicht."
+    "Dienstunfähigkeit ist im BU-Schutz enthalten; eine eigene DU-Versicherung gibt es nicht.",
+    "Nachtrag 18.11.2026: Die Häkchen der VGH-Leistungsübersichten sind im PDF-Zeichensatz lesbar (Zeichen F00C); Stichproben bestätigen die übernommenen Werte.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

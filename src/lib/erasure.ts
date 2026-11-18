@@ -12,7 +12,16 @@ import { protokolliereLoeschung } from "@/lib/loeschprotokoll";
 
 export const ERASED_NAME = "Gelöscht (Datenschutz)";
 
-export type EraseResult = { conversations: number; messages: number; appointments: number; consents: number };
+export type EraseResult = { conversations: number; messages: number; appointments: number; consents: number; aufbewahrt?: number };
+
+/**
+ * Gesetzliche Aufbewahrung beim Löschen eines Leads (Paket M5, Ole 18.11.2026): Nur die Beratungsdokumentation, die
+ * die App erzeugt hat (LeadFile.kind „beratungsdoku“, PDF mit Datum), bleibt bis LeadFile.aufbewahrenBis als Nachweis
+ * (VVG §§ 61, 62; Begründung und Frist in lib/lead-files.ts BERATUNGSDOKU_AUFBEWAHRUNG_JAHRE). Der Lead selbst ist
+ * danach anonym; der Vermittler sieht am gelöschten Kontakt nur noch dieses PDF. Bei Vertragsende (eraseCustomerData)
+ * gilt die Ausnahme nicht: Der Vermittler bekommt vorher den Export, wir löschen alles.
+ */
+export const aufbewahrtFilter = (now: Date) => ({ kind: "beratungsdoku", aufbewahrenBis: { gt: now } });
 
 /**
  * Einen Lead anonymisieren. Gibt null zurück, wenn es ihn nicht gibt. Steht danach im Löschprotokoll
@@ -24,7 +33,7 @@ export async function eraseLead(leadId: string, actor?: AuditActor, opts: { ausL
     select: { id: true, customerId: true, phone: true, externalId: true, airtableId: true, erasedAt: true },
   });
   if (!lead) return null;
-  const result = await eraseLeads(lead.customerId, [lead]);
+  const result = await eraseLeads(lead.customerId, [lead], { aufbewahrung: true });
   await audit("lead.erase", {
     entity: "Lead",
     entityId: lead.id,
@@ -105,9 +114,10 @@ export async function eraseCustomerData(customerId: string, actor?: AuditActor, 
 
 type LeadRef = { id: string; customerId: string; phone: string | null; externalId: string | null };
 
-async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseResult> {
+async function eraseLeads(customerId: string, leads: LeadRef[], opts: { aufbewahrung?: boolean; now?: Date } = {}): Promise<EraseResult> {
   const res: EraseResult = { conversations: 0, messages: 0, appointments: 0, consents: 0 };
   if (leads.length === 0) return res;
+  const now = opts.now ?? new Date();
   const ids = leads.map((l) => l.id);
   const phones = leads.map((l) => l.phone).filter((p): p is string => !!p);
   const externalIds = leads.map((l) => l.externalId).filter((p): p is string => !!p);
@@ -136,7 +146,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
     prisma.contactMail.deleteMany({ where: { leadId: { in: ids } } }),
     // Reservierungen der Vorlagen-Mails (lib/mail/vorlagen-mail.ts)
     prisma.leadMailVersand.deleteMany({ where: { leadId: { in: ids } } }),
-    prisma.leadFile.deleteMany({ where: { leadId: { in: ids } } }),
+    // Dokumente am Lead; die Beratungsdokumentation bleibt bei der Löschung eines Leads als Nachweis (aufbewahrtFilter)
+    prisma.leadFile.deleteMany({ where: { leadId: { in: ids }, ...(opts.aufbewahrung ? { NOT: aufbewahrtFilter(now) } : {}) } }),
     // Unterlagen per WhatsApp (Policen, lib/policen) und deren Einwilligungen
     prisma.leadDocument.deleteMany({ where: { leadId: { in: ids } } }),
     prisma.bestandConsentLog.deleteMany({ where: { customerId, source: "policen_gesundheit", OR: [{ address: { in: phones } }, { leadId: { in: ids } }] } }),
@@ -178,6 +189,7 @@ async function eraseLeads(customerId: string, leads: LeadRef[]): Promise<EraseRe
   res.appointments = appointments.count;
   res.conversations = conversations.count;
   res.consents = consents.count;
+  if (opts.aufbewahrung) res.aufbewahrt = await prisma.leadFile.count({ where: { leadId: { in: ids }, ...aufbewahrtFilter(now) } });
   return res;
 }
 
@@ -188,7 +200,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * (Rohdaten aus Meta) nach 30 Tagen, wenn erledigt, sonst nach 90 Tagen;
  * Passwort-Links 7 Tage nach Ablauf; Abwesenheiten („Ich bin abwesend“, z. B. „krank“)
  * 1 Jahr nach ihrem Ende (bzw. vorzeitigen Ende); Nachfragen nach dem Abschluss
- * (Antworttext, Klicks) 2 Jahre nach dem Anlegen.
+ * (Antworttext, Klicks) 2 Jahre nach dem Anlegen; aufbewahrte Beratungsdokumentation gelöschter Leads nach Ablauf
+ * von LeadFile.aufbewahrenBis.
  */
 export async function pruneTransient(now = new Date()) {
   const absenceCutoff = new Date(now.getTime() - 365 * DAY_MS);
@@ -208,6 +221,8 @@ export async function pruneTransient(now = new Date()) {
     prisma.referralVisit.deleteMany({ where: { createdAt: { lt: new Date(now.getTime() - 365 * DAY_MS) } } }),
     // Eingänge an die Antwortadresse ohne Kontakt (nur Ablauf, kein Inhalt): 90 Tage (Paket M2)
     prisma.mailEingang.deleteMany({ where: { leadId: null, createdAt: { lt: new Date(now.getTime() - 90 * DAY_MS) } } }),
+    // Aufbewahrte Beratungsdokumentation gelöschter Leads nach Ablauf der Frist (Paket M5, lib/lead-files.ts)
+    prisma.leadFile.deleteMany({ where: { kind: "beratungsdoku", aufbewahrenBis: { lte: now }, lead: { erasedAt: { not: null } } } }),
   ]);
   return { unassigned: unassigned.count, resetTokens: resetTokens.count, absences: absences.count, reviewRequests: reviewRequests.count };
 }

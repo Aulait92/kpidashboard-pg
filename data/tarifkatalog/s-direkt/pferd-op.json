@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1eXtOQXwn1rkzAPXFl0nHx/ab3fecddb8dc6c80778e7274db50043b/pferdeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pferde-OP premium",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1eXtOQXwn1rkzAPXFl0nHx/ab3fecddb8dc6c80778e7274db50043b/pferdeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pferde-OP premium plus",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1eXtOQXwn1rkzAPXFl0nHx/ab3fecddb8dc6c80778e7274db50043b/pferdeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -78,6 +75,7 @@
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Leistungsübersicht PFOPKV_IB_1019 (Stand 10/2019, bitte Aktualität prüfen).",
     "Erstattung laut Produktseite 100 % bei Abschluss bis zum 12. Geburtstag, danach 80 % (Aufstockung auf 100 % möglich). Gelenkoperationen (Chip, OCD) nur premium plus, Wartezeit 12 Monate, je Eingriffstag höchstens 1.500 €. Bildgebende Verfahren 500 €, 1.000 € bzw. unbegrenzt.",
-    "Keine Empfehlung; premium als mittlere Stufe. Selbstbeteiligung nicht genannt."
+    "Keine Empfehlung; premium als mittlere Stufe. Selbstbeteiligung nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

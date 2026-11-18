@@ -18,12 +18,15 @@
         "forderungsausfall": "5 Mio. €, ab 1.000 €",
         "schluessel": "bis 2.500 €, nur privat",
         "delikt": "bis 2.500 €, nur Kinder",
-        "miete": "bis 500.000 €"
+        "miete": "bis 500.000 €",
+        "gefaelligkeit": "nein",
+        "neuwert": "nein",
+        "nebenberuf": "nein",
+        "mallorca": "nein"
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-Haftpflicht Komfort",
@@ -37,13 +40,13 @@
         "delikt": "bis 5.000 €, nur Kinder",
         "miete": "bis 20 Mio. €",
         "gefaelligkeit": "bis 10.000 €",
-        "neuwert": "ja (bis 12 Monate alt)",
-        "nebenberuf": "bis 17.500 € Umsatz"
+        "neuwert": "bis 1.500 €",
+        "nebenberuf": "bis 17.500 € Umsatz",
+        "mallorca": "ja"
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-Haftpflicht Premium",
@@ -56,13 +59,13 @@
         "delikt": "bis 50 Mio. €",
         "miete": "bis 50 Mio. €",
         "gefaelligkeit": "bis 50 Mio. €",
-        "neuwert": "ja (bis 12 Monate alt)",
-        "nebenberuf": "bis 22.000 € Umsatz"
+        "neuwert": "bis 3.000 €",
+        "nebenberuf": "bis 22.000 € Umsatz",
+        "mallorca": "ja"
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F04_Haftpflicht_Hausrat_HHG_ServicePlus%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7_2_009_BR_Privat_Paket.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -72,8 +75,8 @@
   ],
   "offen": [
     "Quelle: Broschüre Stuttgarter Privat-Paket 7.2.009 (Stand 9/2025) der Stuttgarter Versicherung AG, Tabelle „Versichert ist bzw. sind (Auszug)“. Komfort und Premium höchstens 15 Mio. € je geschädigter Person.",
-    "Spaltenzuordnung bitte prüfen: Bei Zeilen mit nur zwei Werten (Gefälligkeit 10.000 €/50 Mio. €, Neuwert, Nebenberuf 17.500 €/22.000 €, Kaution 50.000 €/100.000 €) wurden Komfort und Premium angenommen; Basis daher offen.",
     "Schlüssel ab Komfort privat und dienstlich; deliktunfähige Erwachsene nur Premium. Geliehene Sachen, Rabattretter und Drohnen stehen nicht in der Paket-Tabelle (ältere Broschüre 7.1.004: geliehene Sachen bis 20.000 €, SFR-Ausgleich bis 5 Jahre).",
-    "Mallorca-Deckung genannt, Zuordnung zu den Paketen nicht lesbar. Allgemeiner Selbstbehalt 150 € wählbar; Beitragsbefreiung bei Arbeitslosigkeit optional. Keine Empfehlung markiert, Komfort als mittlere Stufe."
+    "Am 18.11.2026 an der Tabelle der Broschüre Privat-Paket 7.2.009 (Seite 11, am Bild) geprüft: Gefälligkeit, Neuwert, Nebentätigkeit und Mallorca im Basis nicht versichert; Neuwert Komfort 1.500 €, Premium 3.000 € (Sachen bis 12 Monate alt); Mallorca ab Komfort. Allgemeiner Selbstbehalt 150 € wählbar; keine Empfehlung markiert, Komfort als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

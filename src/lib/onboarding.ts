@@ -7,6 +7,7 @@
 // per Knopf am Vertriebskontakt (z. B. für Bestandskunden).
 
 import { erstinfoVollstaendig, type ErstinfoWeb } from "@/lib/erstinformation-shared";
+import { leseMailAblauf } from "@/lib/mail/ablauf";
 import crypto from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -462,6 +463,23 @@ export function onboardingChecklist(ob: OnboardingFull, offer: { paymentStatus: 
         done: erstinfoVollstaendig(ob.customer.erstinformation, (ob.websiteInfo ?? null) as ErstinfoWeb, ob.customer),
         at: ob.customer.erstinformation?.bestaetigtAt ?? null,
       },
+      // P8/M9 (Ole, 17.11.2026): „So arbeitet Ihr Assistent“ (mit „Weiter“ gesehen) und „Service-Mails in Ihrem Namen“
+      // (bestätigt bzw. E-Mail-Funktionen aus). Nach dem Livegang gelten beide als erledigt (dauerhaft unter
+      // Einstellungen → Assistent erreichbar), damit bestehende Kunden keine neuen offenen Schritte bekommen.
+      {
+        key: "assistent",
+        label: "So arbeitet Ihr Assistent angesehen",
+        owner: "kunde",
+        done: !!skip("assistent") || !!ob.liveAt,
+        at: null,
+      },
+      {
+        key: "serviceMails",
+        label: "Service-Mails in Ihrem Namen bestätigt",
+        owner: "kunde",
+        done: ob.customer.mailFeaturesOff || !!leseMailAblauf(ob.customer.mailAblauf).bestaetigtAt || !!ob.liveAt,
+        at: null,
+      },
       {
         key: "templates",
         // Ohne freigegebene Vorlage darf WhatsApp neue Leads nicht anschreiben.
@@ -510,7 +528,7 @@ export function checklistProgress(items: ChecklistItem[]) {
 }
 
 /** Schritte, die der Kunde in der Einrichtung selbst erledigt (Reihenfolge wie auf der Einrichtungsseite). */
-export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
+export const CUSTOMER_SETUP_KEYS = ["questionnaire", "app", "calendar", "mailbox", "provision", "erstinfo", "assistent", "serviceMails", "metaAccess", "whatsapp", "bestandImport", "reviewLink", "team"] as const;
 
 /** Übersprungene Schritte (Onboarding.stepSkips): Grund und Zeitpunkt je Schritt. */
 export type StepSkip = { at: string; reason: string };

@@ -92,50 +92,50 @@ model DealActivity {
 }
 
 model Customer {
-  id                  String    @id @default(cuid())
-  name                String    @unique
-  createdAt           DateTime  @default(now())
+  id                   String    @id @default(cuid())
+  name                 String    @unique
+  createdAt            DateTime  @default(now())
   // Testkunde (Ole, 15.11.2026): aus einem Testangebot ohne Zahlung; zählt nicht in Admin-Zahlen,
   // Buchungen, Stornoquote, Monatsbericht und Platz-Abrechnung, im Admin mit Abzeichen „Test“, löschbar.
-  isTest              Boolean   @default(false)
+  isTest               Boolean   @default(false)
   // E-Mail-Funktionen aus (Ole, 15.11.2026): „Meine Gesellschaft erlaubt das nicht“ in der Einrichtung.
   // Blendet E-Mail-Knopf, E-Mail-Fenster, Vorlagen-Hinweise und den E-Mail-Kanal bei Bestandskampagnen aus;
   // wieder einschaltbar unter Einstellungen → E-Mail-Postfach.
-  mailFeaturesOff     Boolean   @default(false)
+  mailFeaturesOff      Boolean   @default(false)
   // Stripe-Kunde für Abrechnung (Rechnungen, Zahlungsart, Abo)
-  stripeCustomerId    String?   @unique
+  stripeCustomerId     String?   @unique
   // Paket: "software" = Betreuung + Software, "service" = nur Betreuung
   // (Leads per E-Mail, Kundenbereich nur mit Leads und Zahlen)
-  plan                String    @default("software")
+  plan                 String    @default("software")
   // Status nach § 34d GewO: "vertreter" (Ausschließlichkeit), "mehrfachvertreter" oder "makler"; bestimmt die
   // Standard-Provisionssätze (Mehrfachvertreter rechnen wie Vertreter) und die Erstinformation (lib/erstinformation.ts)
-  vermittlerTyp       String    @default("vertreter")
+  vermittlerTyp        String    @default("vertreter")
   // Eigene Provisionssätze je Produkt (Kundenbereich → Konto → Meine Provisionen),
   // geprüft über lib/provision.parseCustomRates; null = Standard
-  provisionRates      Json?
+  provisionRates       Json?
   // Eigene Produkte (Sparte „Sonstiges“) mit Standardsätzen: [{ name, rateAbschluss, rateBestand }] (lib/eigene-produkte.ts)
-  customProducts      Json?
+  customProducts       Json?
   // Eigene Stornoquote pro Jahr für alle Prognosen (Anteil 0–0,5; null = Standard 10 %, lib/provision.STORNO_PRO_JAHR).
   // Je Produkt optional in provisionRates (storno).
-  stornoQuote         Decimal?  @db.Decimal(5, 4)
+  stornoQuote          Decimal?  @db.Decimal(5, 4)
   // Kunde hat seine Provisionen geprüft (auch ohne Abweichung vom Standard) – Einrichtungsschritt erledigt
-  provisionCheckedAt  DateTime?
+  provisionCheckedAt   DateTime?
   // Kein aktueller Bezug mehr (aus Airtable) → in Listen ausgeblendet, Historie bleibt
-  archived            Boolean   @default(false)
+  archived             Boolean   @default(false)
   // Jeder neue Lead zusätzlich per E-Mail an den Kunden (Kundenbereich → Konto)
-  leadEmail           Boolean   @default(true)
+  leadEmail            Boolean   @default(true)
   // Zahlungsverzug: seit wann eine Rechnung offen/fehlgeschlagen ist, Warnung verschickt
-  paymentOverdueSince DateTime?
-  paymentWarnedAt     DateTime?
+  paymentOverdueSince  DateTime?
+  paymentWarnedAt      DateTime?
   // Überweisung (Ole, 17.11.2026, lib/ueberweisung.ts): erlaubt (aus dem Angebot übernommen, in der Kundenakte
   // änderbar), Zahlungsziel in Tagen und ob der Kunde tatsächlich per Rechnung/Überweisung zahlt
-  allowBankTransfer   Boolean   @default(false)
-  bankTransferDays    Int       @default(14)
-  zahltPerUeberweisung Boolean  @default(false)
+  allowBankTransfer    Boolean   @default(false)
+  bankTransferDays     Int       @default(14)
+  zahltPerUeberweisung Boolean   @default(false)
   // Mahnwesen (lib/mahnwesen.ts): Stopp je Kunde (z. B. Absprache), mit Grund und Zeitpunkt
-  mahnStopp           Boolean   @default(false)
-  mahnStoppGrund      String?
-  mahnStoppAt         DateTime?
+  mahnStopp            Boolean   @default(false)
+  mahnStoppGrund       String?
+  mahnStoppAt          DateTime?
 
   // ─── Media-Buyer-Daten (aus Airtable-Buyer-Tabelle) ─────────────────
   // Lead-Ziele, Preise und Startdaten je Produkt liegen seit dem Product-/
@@ -369,6 +369,7 @@ model Customer {
   maklerMarkthinweis             String?
   eigeneTarife                   EigenerTarif[]
   beraterMerkmale                BeraterMerkmale[]
+  maklervollmachten              Maklervollmacht[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -673,7 +674,7 @@ model Lead {
   email                String?
   /// Weitere E-Mail-Adressen (Ole, 17.11.2026): nennt der Lead im Chat eine neue Adresse (update_email), bleibt die
   /// bisherige hier erhalten. Kleingeschrieben, ohne Dubletten, ohne die Haupt-E-Mail (lib/lead-emails.ts)
-  weitereEmails        String[] @default([])
+  weitereEmails        String[]          @default([])
   // Snapshot der produktspezifischen Formularangaben (Label/Wert-Liste aus
   // lib/lead-fields) — Kontext für den WhatsApp-Bot.
   formData             Json?
@@ -848,16 +849,16 @@ model Lead {
   bestandKunde        ExistingCustomer? @relation("BestandAusLead")
 
   // Modul „Empfehlungen & Bewertungen“: Anfrage nach dem Abschluss (je Lead eine)
-  reviewRequest         ReviewRequest? @relation("ReviewRequestLead")
+  reviewRequest         ReviewRequest?    @relation("ReviewRequestLead")
   // Persönlicher Empfehlungslink dieses Kontakts (als Empfehlender)
-  ownReferralLink       ReferralLink?  @relation("ReferralLinkLead")
+  ownReferralLink       ReferralLink?     @relation("ReferralLinkLead")
   // Lead kam über den Empfehlungslink eines Kunden
   referralLinkId        String?
-  referralLink          ReferralLink?  @relation("ReferredLeads", fields: [referralLinkId], references: [id], onDelete: SetNull)
+  referralLink          ReferralLink?     @relation("ReferredLeads", fields: [referralLinkId], references: [id], onDelete: SetNull)
   // Dank an den Empfehlenden verschickt (einmal, sobald dieser Lead abgeschlossen ist)
   referralThankedAt     DateTime?
   // Empfohlene Person erlaubt, dass der Empfehlende eine Rückmeldung bekommt (Empfehlungsseite)
-  referralStatusConsent Boolean        @default(false)
+  referralStatusConsent Boolean           @default(false)
   // Letzte Rückmeldung an den Empfehlenden: gemeldet | termin
   referralNotifiedStage String?
   // Dankeschön an den Empfehlenden für diese Empfehlung: offen | erledigt | entfaellt | jahresgrenze (15 € je
@@ -878,6 +879,7 @@ model Lead {
   googleReviews         GoogleReview[]
   // Rückmeldung an Meta (lib/capi): Stufen dieses Leads im Postausgang
   capiEvents            CapiEvent[]
+  maklervollmachten     Maklervollmacht[]
 
   @@index([customerId, createdAt])
   @@index([assignedUserId])
@@ -978,54 +980,54 @@ enum UserRole {
 // Auth-Accounts. Admins sehen das ganze Dashboard, Buyer nur die eigene
 // Customer-Sicht (customerId verknüpft, NULL für Admins).
 model User {
-  id                  String              @id @default(cuid())
+  id                         String              @id @default(cuid())
   // Einführungsvideo auf „Heute“ angesehen oder weggeklickt (Ole, 13.11.2026)
-  introVideoSeenAt    DateTime?
+  introVideoSeenAt           DateTime?
   // Nutzungsanalyse (Sentry Session Replay, maskiert) nur mit Einwilligung: ja | nein, Zeitpunkt, Textversion
   analyseEinwilligung        String?
   analyseEinwilligungAt      DateTime?
   analyseEinwilligungVersion String?
-  email               String              @unique
-  passwordHash        String
-  role                UserRole
-  customerId          String?
-  createdAt           DateTime            @default(now())
-  lastLoginAt         DateTime?
+  email                      String              @unique
+  passwordHash               String
+  role                       UserRole
+  customerId                 String?
+  createdAt                  DateTime            @default(now())
+  lastLoginAt                DateTime?
   // Zwei-Faktor-Login (TOTP), vor allem für Admins: Schlüssel verschlüsselt,
   // aktiv ab totpEnabledAt; Notfall-Codes nur als SHA-256-Hash.
-  totpSecretEnc       String?
-  totpEnabledAt       DateTime?
-  totpBackupCodes     String[]            @default([])
+  totpSecretEnc              String?
+  totpEnabledAt              DateTime?
+  totpBackupCodes            String[]            @default([])
   // Sitzungsversion: +1 beendet alle Sitzungen (Passwort-/2FA-Änderung,
   // „Überall abmelden“, Kundenwechsel). Steht als „sv“ im Sitzungs-Cookie.
-  sessionVersion      Int                 @default(0)
+  sessionVersion             Int                 @default(0)
   // Neuigkeiten (Kundenbereich): zuletzt gelesen – Einträge danach zählen als ungelesen
-  updatesSeenAt       DateTime?
+  updatesSeenAt              DateTime?
   // Admin → Zahlen → Buchungen zuletzt geöffnet (Hinweis „neue Buchungen“ auf Heute)
-  buchungenSeenAt     DateTime?
+  buchungenSeenAt            DateTime?
   // Team (Großkunden): owner = Inhaber (sieht alles), advisor = Berater (nur eigene Leads)
-  teamRole            String              @default("owner")
-  displayName         String?
+  teamRole                   String              @default("owner")
+  displayName                String?
   // Bekommt bei der Verteilung neue Leads
-  receivesLeads       Boolean             @default(true)
-  lastLeadAssignedAt  DateTime?
+  receivesLeads              Boolean             @default(true)
+  lastLeadAssignedAt         DateTime?
   // Zuletzt einen Lead zugewiesen bekommen (Verteilung, Zuteilen, Terminbuchung).
   // Platz-Abrechnung (lib/seats.ts): wer heute Leads bekam, zählt heute als aktiver Verkäufer.
-  leadReceivedAt      DateTime?
+  leadReceivedAt             DateTime?
   // Früher: neue Admin-Oberfläche an/aus. Nicht mehr genutzt (alle Admins fest auf der neuen, 18.11.)
-  adminNewUi          Boolean             @default(true)
+  adminNewUi                 Boolean             @default(true)
   // /buyer/zahlen, Karte Gewinn: „Inkl. Bestand“ statt „Nur jetzt“ (Wahl je Login)
-  gewinnMitBestand    Boolean             @default(true)
-  adminDismissals     AdminDismissal[]
-  assignedLeads       Lead[]              @relation("LeadAssignee")
-  advisorCalendar     AdvisorCalendar?
-  mailConnection      MailConnection?
+  gewinnMitBestand           Boolean             @default(true)
+  adminDismissals            AdminDismissal[]
+  assignedLeads              Lead[]              @relation("LeadAssignee")
+  advisorCalendar            AdvisorCalendar?
+  mailConnection             MailConnection?
   // E-Mail-Signatur (Ole, 14.11.2026): kommt automatisch unter E-Mails an Leads
-  mailSignature       String?
+  mailSignature              String?
   // Tägliche Erinnerung um 8 Uhr: Leads ohne nächsten Schritt (lib/next-step-reminder.ts); Tag des letzten Laufs (Berlin)
-  nextStepReminder    Boolean             @default(true)
-  nextStepReminderDay String?
-  linkedInConnection  LinkedInConnection?
+  nextStepReminder           Boolean             @default(true)
+  nextStepReminderDay        String?
+  linkedInConnection         LinkedInConnection?
 
   customer       Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
   resetTokens    PasswordResetToken[]
@@ -1326,12 +1328,12 @@ model Conversation {
 
 // Einzelne Nachricht in einer Konversation (ein- oder ausgehend).
 model Message {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   conversationId  String
   direction       String // inbound | outbound
-  kind            String   @default("text") // text | template | image | audio | document
+  kind            String    @default("text") // text | template | image | audio | document
   body            String?
-  waMessageId     String?  @unique // WhatsApp-Message-ID (Idempotenz)
+  waMessageId     String?   @unique // WhatsApp-Message-ID (Idempotenz)
   status          String? // sent | delivered | read | failed (nur outbound)
   sentBy          String? // bot | agent | system (null = inbound)
   sentByUserId    String?
@@ -1351,7 +1353,7 @@ model Message {
   // SMS-Ersatz (lib/sms/ersatz.ts): WhatsApp-Terminnachricht im Vertrieb nicht zugestellt, derselbe Text per SMS
   smsAt           DateTime?
   smsStatus       String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -1381,18 +1383,18 @@ model WhatsAppErrorAlert {
 
 // Gebuchter Termin aus dem Bot-Flow (Telefon oder Videocall).
 model Appointment {
-  id                 String    @id @default(cuid())
-  customerId         String
-  leadId             String?
-  conversationId     String?
-  mode               String // phone | video
-  startsAt           DateTime
-  endsAt             DateTime?
-  calendarEventId    String?
-  meetUrl            String?
-  status             String    @default("booked") // booked | cancelled | completed | no_show
-  reminderSentAt     DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
-  soonReminderSentAt DateTime? // „Gleich ist es so weit, passt alles?“ etwa 1 Std. vorher (Ole, 15.11.2026)
+  id                    String    @id @default(cuid())
+  customerId            String
+  leadId                String?
+  conversationId        String?
+  mode                  String // phone | video
+  startsAt              DateTime
+  endsAt                DateTime?
+  calendarEventId       String?
+  meetUrl               String?
+  status                String    @default("booked") // booked | cancelled | completed | no_show
+  reminderSentAt        DateTime? // gesetzt, sobald die WhatsApp-Erinnerung raus ist
+  soonReminderSentAt    DateTime? // „Gleich ist es so weit, passt alles?“ etwa 1 Std. vorher (Ole, 15.11.2026)
   // Show-up-Paket (Ole, 17.11.2026, lib/showup.ts): 15 Min. vorher mit Link (nur Video)
   startReminderSentAt   DateTime?
   // Lead hat „Bitte verschieben“ gewählt: keine weiteren Erinnerungen zu dieser Zeit
@@ -1420,16 +1422,16 @@ model Appointment {
   einladungAusstehend  DateTime?
   // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,
   // ob er insgesamt gut abgesichert ist; false = nein; null = nicht gefragt bzw. offen
-  komplettcheck      Boolean?
+  komplettcheck         Boolean?
   // Terminvorbereitung (Angebot gerechnet) vom Berater abgehakt (Ole, 15.11.2026)
-  preparedAt         DateTime?
-  preparedById       String?
+  preparedAt            DateTime?
+  preparedById          String?
   // Angebote zum Termin (ausgelesen bzw. eingetragen, vom Berater bestätigt), für die Präsentation (Ole, 15.11.2026)
-  offersJson         Json?
-  offersConfirmedAt  DateTime?
+  offersJson            Json?
+  offersConfirmedAt     DateTime?
   // Neue Terminvorbereitung (Ole, 15.11.2026): Tarifauswahl je Sparte aus dem Tarifkatalog (lib/tarifauswahl.ts);
   // daraus entsteht offersJson. null = noch nicht bearbeitet (dann gelten ältere Angebote in offersJson).
-  tarifauswahl       Json?
+  tarifauswahl          Json?
   // „Noch klären im Termin“: abgehakte Punkte (Text)
   klaerenErledigt    String[]  @default([])
   shareToken         String?   @unique // Kundenlink zur Präsentation (nur Stand, ohne Sprechzettel), /beratung/<token>
@@ -1444,19 +1446,19 @@ model Appointment {
   angebotDateiId     String?
   angebotToken       String?   @unique
   // Empfehlungen: nach diesem Termin geprüft, ob der Empfehlungslink rausgeht (einmal je Termin)
-  referralAskedAt    DateTime?
+  referralAskedAt       DateTime?
   // Getrennte Einladung für den Berater (interne Infos), gleicher Termin.
   // calendarEventId = Einladung des Leads (kundenfreundlich, ohne Interna).
-  advisorEventId     String?
+  advisorEventId        String?
   // In welchem Kalender der Termin liegt: Kunden-ID oder „user:<id>“ (Berater)
-  calendarKey        String?
+  calendarKey           String?
   // Geheimer Link für den Lead: /book/manage/<token> (absagen/verschieben).
-  manageToken        String?   @unique
-  cancelledAt        DateTime?
+  manageToken           String?   @unique
+  cancelledAt           DateTime?
   // lead | advisor | team (Admin/Kunde im CRM) | system
-  cancelledBy        String?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  cancelledBy           String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
@@ -3184,29 +3186,29 @@ model CostRule {
 // Einzelne Buchung (Konto oder Kreditkarte). amount: Ausgaben negativ (EUR, brutto).
 // status: neu | zugeordnet | ignoriert. Zugeordnete Ausgaben fließen netto in die Zahlen-Seite.
 model BankTransaction {
-  id           String          @id @default(cuid())
-  connectionId String?
-  connection   BankConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  id                  String              @id @default(cuid())
+  connectionId        String?
+  connection          BankConnection?     @relation(fields: [connectionId], references: [id], onDelete: SetNull)
   // Konto-Schlüssel: Enable-Banking-Konto-UID oder „csv:commerzbank“ / „csv:amex“
-  accountKey   String
-  externalId   String
-  source       String // enablebanking | csv
-  bookingDate  DateTime        @db.Date
-  amount       Decimal         @db.Decimal(12, 2)
-  currency     String          @default("EUR")
-  counterparty String?
-  purpose      String?
-  status       String          @default("neu")
-  costPurpose  String?
-  vatIncluded  Boolean         @default(false)
-  ruleId       String?
-  rule         CostRule?       @relation(fields: [ruleId], references: [id], onDelete: SetNull)
-  note         String?
-  assignedAt   DateTime?
+  accountKey          String
+  externalId          String
+  source              String // enablebanking | csv
+  bookingDate         DateTime            @db.Date
+  amount              Decimal             @db.Decimal(12, 2)
+  currency            String              @default("EUR")
+  counterparty        String?
+  purpose             String?
+  status              String              @default("neu")
+  costPurpose         String?
+  vatIncluded         Boolean             @default(false)
+  ruleId              String?
+  rule                CostRule?           @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  note                String?
+  assignedAt          DateTime?
   // Bankabgleich Mahnwesen: Eingang einem offenen Mahnfall zugeordnet (eindeutig) bzw. Vorschläge
-  mahnfallId   String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  mahnfallId          String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
   zahlungsVorschlaege ZahlungsVorschlag[]
 
   @@unique([accountKey, externalId])
@@ -3952,7 +3954,7 @@ model LeadFile {
   leadId       String
   lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   customerId   String
-  // angebot | police | sonstiges
+  // angebot | police | sonstiges | beratungsdoku (Gesprächszusammenfassung als PDF, Paket M5)
   kind         String
   fileName     String
   contentType  String
@@ -3963,10 +3965,14 @@ model LeadFile {
   // Policen (kind = police) werden ungeprüft nicht angeboten, bis die Prüfung gelaufen ist.
   virenStatus  String?
   createdAt    DateTime @default(now())
+  // Nur Beratungsdokumentation: bleibt beim Löschen des Leads bis zu diesem Zeitpunkt als Nachweis (VVG §§ 61, 62;
+  // lib/lead-files.ts BERATUNGSDOKU_AUFBEWAHRUNG_JAHRE), danach löscht der Cron sie
+  aufbewahrenBis DateTime?
 
   contracts LeadContract[]
 
   @@index([leadId])
+  @@index([aufbewahrenBis])
 }
 
 // Unterlagen, die ein Lead per WhatsApp schickt (Ole, 17.11.2026, lib/policen): Fotos oder PDFs seiner Policen,
@@ -4764,25 +4770,25 @@ model AdminMailbox {
 // Fälligkeitstag (Mail + WhatsApp), 3 1. Mahnung (+7, PDF), 4 2. Mahnung (+14), 5 Aufgabe „Kunde anrufen“ (+21).
 // status: offen | bezahlt | geschlossen (storniert, uneinbringlich, nicht mehr offen in Stripe)
 model Mahnfall {
-  id               String    @id @default(cuid())
-  stripeInvoiceId  String    @unique
+  id               String              @id @default(cuid())
+  stripeInvoiceId  String              @unique
   stripeCustomerId String
   customerId       String?
-  customer         Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customer         Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
   offerId          String?
   invoiceNumber    String?
   // Rechnungsempfänger aus Stripe (Rückfall: Logins des Kunden)
   email            String?
   // offener Betrag in Cent
   amountDue        Int
-  currency         String    @default("eur")
+  currency         String              @default("eur")
   // ueberweisung | lastschrift | karte | sonstige
   art              String
   // Fälligkeitstag (12:00 UTC des Berliner Tages); bei fehlgeschlagener Zahlung der Tag des Fehlschlags
   dueDate          DateTime
-  status           String    @default("offen")
+  status           String              @default("offen")
   // erreichte Stufe 0..5 (siehe oben), je Stufe höchstens einmal
-  stufe            Int       @default(0)
+  stufe            Int                 @default(0)
   letzteMailAt     DateTime?
   erinnertAt       DateTime?
   faelligAt        DateTime?
@@ -4796,8 +4802,8 @@ model Mahnfall {
   hostedUrl        String?
   pdfUrl           String?
   lastError        String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
   vorschlaege      ZahlungsVorschlag[]
 
   @@index([status])
@@ -4830,6 +4836,42 @@ model MahnwesenSettings {
   verzugspauschale Boolean  @default(false)
   leadsPause       Boolean  @default(false)
   updatedAt        DateTime @updatedAt
+}
+
+/// Maklervollmacht digital mit Übernahme bestehender Verträge (Ole, 18.11.2026; nur Makler). Rechtstexte:
+/// docs/rechtstexte/maklervollmacht-2026-11-18.md, Logik lib/maklervollmacht/*. Bestehende Verträge stehen hier (Json),
+/// nicht als LeadContract (Provisionen bleiben unberührt).
+model Maklervollmacht {
+  id           String    @id @default(cuid())
+  customerId   String
+  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  leadId       String
+  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  token        String    @unique
+  // offen | unterschrieben | widerrufen
+  status       String    @default("offen")
+  // sie | du (Ansprache auf der Seite und in der Mail)
+  ansprache    String    @default("sie")
+  // Angaben des Kunden {vorname, nachname, strasse, plz, ort, geburtsdatum, email}
+  daten        Json?
+  // Bestehende Verträge [{versicherer, sparte, vertragsnummer}]
+  vertraege    Json?
+  // Einwilligung/Schweigepflichtentbindung für Gesundheitsdaten erteilt (nur bei Kranken/Leben/BU)
+  gesundheit   Boolean   @default(false)
+  textVersion  String?
+  // Unterschrift (PNG) und fertiges PDF, verschlüsselt (lib/encryption encryptBytes)
+  signatur     Bytes?
+  pdf          Bytes?
+  signedAt     DateTime?
+  signedIp     String?
+  signedUa     String?
+  sentAt       DateTime?
+  widerrufenAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([leadId])
+  @@index([customerId])
 }
 
 // Löschprotokoll (Ole, 18.11.2026, lib/loeschprotokoll.ts): gelöschte IDs und technische Verweise, keine Inhalte.

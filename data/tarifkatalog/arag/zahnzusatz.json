@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Dent90",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Dent90+",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Dent100",
@@ -86,8 +83,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -100,6 +96,7 @@
     "Zahnreinigung: Dent70 70 € einmal im Jahr; Dent90 und Dent90+ bis 100 € je Reinigung, max. 160 €; Dent100 bis 120 €, max. 200 € (Erwachsene ab 18).",
     "Zahnstaffel (5 Jahre): Dent70 500 € bis 2.500 €; Dent90 und Dent90+ 1.000 € bis 5.000 €; Dent100 1.500 € bis 7.500 €.",
     "Kieferorthopädie Kinder: KIG 1 bis 2 70 %, 80 %, 90 %, 90 %; bei KIG 3 bis 5 Mehrkosten mit Höchstbetrag (Wert). Erwachsene: Dent90 und Dent90+ nur bei Unfall, Dent100 90 %.",
-    "Dent90+ zusätzlich Angstpatienten 250 € im Jahr, Dent100 350 € und Bleaching 300 € in 2 Jahren."
+    "Dent90+ zusätzlich Angstpatienten 250 € im Jahr, Dent100 350 € und Bleaching 300 € in 2 Jahren.",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }

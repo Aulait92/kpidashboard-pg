@@ -28,8 +28,7 @@
         "ausland": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Ambulant 70 (Tarif AP7)",
@@ -50,8 +49,7 @@
         "ausland": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Ambulant 90 (Tarif AP9)",
@@ -72,8 +70,7 @@
         "ausland": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Ambulant 100 (Tarif AP1)",
@@ -94,8 +91,7 @@
         "ausland": "inklusive"
       },
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/ambulante-zusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -107,6 +103,7 @@
     "SDK markiert Ambulant 90 als „Am beliebtesten“.",
     "Alle Höchstbeträge gelten alle 2 Kalenderjahre (Broschüre 1.781/07.23). Hilfsmittel nach GKV-Vorleistung und gesetzliche Zuzahlungen zu Arznei-, Verband-, Heil- und Hilfsmitteln teilen sich einen Höchstbetrag; Hörgeräte als Beispiel für Hilfsmittel genannt, kein eigener Betrag.",
     "Augenlaser: Betrag ab dem 5. Kalenderjahr je Auge; im 1. bis 4. Kalenderjahr 250/350/450/500 €. Heilpraktiker und Arzt für Naturheilverfahren einschließlich Hufelandverzeichnis.",
-    "Praxis-Zusatzversicherung (Privatpatient beim Arzt bzw. Zahnarzt, 80 %) ist ein eigenes Produkt und hier nicht aufgenommen."
+    "Praxis-Zusatzversicherung (Privatpatient beim Arzt bzw. Zahnarzt, 80 %) ist ein eigenes Produkt und hier nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

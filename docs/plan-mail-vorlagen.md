@@ -112,6 +112,38 @@ Stand: im Code fertig, **Schalter `MAIL_ANTWORT_EINGANG` aus** (Standard) bis zu
   E-Mails“ auf „Versand und Empfang von E-Mails“ erweitern (ggf. `LEGAL_VERSION`), Datenschutzhinweis für Leads um den Empfang
   von Antworten ergänzen.
 
+## M5 umgesetzt (18.11.2026): Angebot + Gesprächszusammenfassung
+
+- **Angebots-Mail:** Text aus der Vorlage `angebot` (Kunden-Vorlage, sonst Standard), im Blatt unter „Texte ansehen“
+  (WhatsApp und E-Mail). `{vorteil_1..3}` ohne KI aus der Tarifauswahl: eine Versicherung = Tarif mit Beitrag, dann
+  ihre Leistungen aus den Katalog-Merkmalen (`AngebotItem.leistungen`); mehrere = je Versicherung ein Punkt mit der
+  ersten Leistung; Kombi-Rabatt zuerst, nur wenn berechnet (`angebotVorteile`). `{anruf_tag}` wie P3.
+- **Haken „Gesprächszusammenfassung mitsenden“** (Stufe der Vorlage `beratungsdoku`; „aus“ = kein Haken), nur mit
+  E-Mail-Adresse. Editor (`components/zusammenfassung-editor.tsx`) mit Entwurf ohne KI (`zusammenfassungEntwurf` in
+  `lib/mail/beratung.ts`): Formular/Chat (`wuenscheVorschlag`), Vorverträge, Schutz-Überblick (ohne Sparten im
+  Angebot), Notizen ab 3 Tage vor dem Termin, offene Klärpunkte (`klaerenPunkte` ohne abgehakte); Rat aus der
+  Tarifauswahl, Gründe als `[bitte ergänzen]`. Gesundheitsangaben einer Person fallen überall weg.
+- **Prüfen vor dem Senden:** „Ansehen“ zeigt den PDF-Inhalt (`beratungsPdfInhalt`) plus „PDF öffnen“; „Jetzt senden“,
+  „Per App senden“, Mailprogramm und „Nur ablegen“ sind erst danach aktiv, jede Änderung verlangt erneutes Ansehen.
+  Server prüft zusätzlich: keine offene Stelle (`zusammenfassungFehlt`).
+- **KI (optional):** `lib/mail/beratung-ki.ts`. Knopf nur mit EU-Zugang (`bedrockEu`) und ohne Gesundheitssparte
+  (Produkt bzw. gewählte Sparten; ohne Auswahl nur sicher gesundheitsfreie Produkte). Keine Einwilligung deckt KI mit
+  Gesundheitsangaben ab, daher im Zweifel aus. Eingabe = Entwurf/Editor-Text, zeilenweise ohne Gesundheitsangaben, keine
+  Dokumente. Antwort wird verworfen bei neuen Beträgen/Prozenten, neuen Versicherern, neuen Vergleichen/Empfehlungen
+  (`beratungsTreffer`) oder gefüllten `[bitte ergänzen]`. Kennzeichen „Entwurf der KI, bitte prüfen“, im Verlauf
+  „Entwurf mit KI formuliert, geprüft“.
+- **Ablage:** neue Dokumentart `beratungsdoku` („Beratungsdokumentation“, PDF mit Datum), nicht per Upload.
+  `LeadFile.aufbewahrenBis` = Erstellung + `BERATUNGSDOKU_AUFBEWAHRUNG_JAHRE` (10). `eraseLead` lässt nur diese PDFs
+  stehen (`aufbewahrtFilter`), `pruneTransient` löscht sie nach Ablauf; `eraseCustomerData` (Vertragsende) löscht alles.
+  Der Dialog „E-Mail schreiben“ legt sein Beratungs-PDF jetzt ebenfalls als `beratungsdoku` ab.
+- **Weg „Habe ich selbst gesendet“:** Vorschlag „Ablegen oder per App senden“: Vorlage `beratungsdoku` über die App
+  (`sendeVorlagenMail`, PDF im Anhang), Mailprogramm/Kopieren (M1, PDF teilen bzw. herunterladen als Blob, „Gesendet?
+  Ja“ protokolliert und legt ab) oder nur ablegen.
+- **Offen (Ole/Anwältin):** Frist 10 Jahre ab Erstellung bestätigen (oder ab Vertragsende; Höchstfrist § 199 Abs. 3
+  Nr. 2 BGB 30 Jahre); Rechtsgrundlage Art. 17 Abs. 3 lit. e DSGVO und Hinweis im Datenschutzhinweis für Leads;
+  AVV: Aufbewahrung über die Löschung hinaus als Weisung des Vermittlers; Bedrock EU vor dem Einschalten in
+  `SUBPROCESSORS` aufnehmen.
+
 Stand 18.11.2026: M4 und M6 umgesetzt. Mail-Schritte der Abfolgen über `lib/mail/abfolgen-mail.ts` (zentral über
 `sendeVorlagenMail`), Begleit-Abfolgen `nicht_erreicht_mail` und `unterlagen` (laufen neben den anderen), Haken mit einem
 Tipp über `lib/mail/ein-tipp.ts` (Danke-Mail im Abschluss-Blatt, „Tür offen“ bei „Kein Interesse“), Aufgaben „Alten

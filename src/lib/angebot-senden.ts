@@ -118,11 +118,14 @@ export function leereListeWeg(text: string): string {
  * E-Mail aus einer Vermittler-Vorlage (lib/mail/vorlagen.ts, Platzhalter lib/mail/platzhalter.ts). Im Code bleibt nur der
  * Rahmen: Knöpfe (nur für Links, die nicht schon im Text stehen), Signatur an der Stelle von {signatur} bzw. darunter.
  */
-export function vorlagenMail(o: { vorlage: MailVorlageText; werte: Werte; knoepfe: MailKnopf[]; signatur: { text: string; html: string } }): MailInhalt {
+export function vorlagenMail(o: { vorlage: MailVorlageText; werte: Werte; knoepfe: MailKnopf[]; signatur: { text: string; html: string }; zusatz?: string | null }): MailInhalt {
   const subject = fuelle(o.vorlage.subject, { ...o.werte, signatur: "" }).replace(/\s+/g, " ").trim();
   const voll = fuelle(o.vorlage.body, { ...o.werte, signatur: SIG });
   const [vorSig, nachSig = ""] = voll.includes(SIG) ? voll.split(SIG) : [voll, ""];
-  const inhalt = leereListeWeg(vorSig).trim();
+  // Zusatzabsatz (z. B. Hinweis auf die mitgesendete Zusammenfassung) vor dem letzten Absatz (dem nächsten Schritt)
+  const absaetze = leereListeWeg(vorSig).trim().split(/\n{2,}/).filter(Boolean);
+  if (o.zusatz?.trim()) absaetze.splice(Math.max(1, absaetze.length - 1), 0, o.zusatz.trim());
+  const inhalt = absaetze.join("\n\n");
   const knoepfe = o.knoepfe.filter((k) => k.href && !inhalt.includes(k.href));
   const text = [inhalt, knoepfe.map((k) => `${k.label}: ${k.href}`).join("\n"), o.signatur.text.trim(), nachSig.trim()].filter(Boolean).join("\n\n");
   const html = rahmen(
@@ -147,29 +150,50 @@ export function mailWerte(o: { an: Ansprache; kontakt: AnredeKontakt | null; the
 }
 
 /**
- * {vorteil_1} bis {vorteil_3} der Vorlage „Angebot“ aus der Auswahl im Termin: je Versicherung Tarif und Beitrag, der
- * Kombi-Rabatt nur, wenn die App ihn berechnet (dann als erster Punkt). Ohne Auswahl leer (die Aufzählung entfällt).
+ * {vorteil_1} bis {vorteil_3} der Vorlage „Angebot“ aus der Auswahl im Termin, ohne KI (Paket M5, Ole 18.11.2026):
+ * je Versicherung Tarif und Beitrag, dazu die Leistungen aus den Katalog-Merkmalen des Tarifs (AngebotItem.leistungen,
+ * lib/tarifauswahl.ts itemFuer: nur Merkmale, die der Tarif hat). Eine Versicherung: Tarif als erster Punkt, danach
+ * ihre wichtigsten Leistungen. Mehrere: je Versicherung ein Punkt mit der ersten Leistung. Der Kombi-Rabatt nur, wenn
+ * die App ihn berechnet (dann als erster Punkt). Ohne Auswahl leer (die Aufzählung entfällt).
  */
-export function angebotVorteile(items: { sparte: string; gesellschaft: string | null; tarif: string | null; beitrag: number | null }[], kombi: string | null): Partial<Werte> {
+export function angebotVorteile(
+  items: { sparte: string; gesellschaft: string | null; tarif: string | null; beitrag: number | null; leistungen?: string[] }[],
+  kombi: string | null,
+): Partial<Werte> {
   const eur = (n: number) => `${n.toFixed(2).replace(".", ",")} €`;
+  const kopf = (i: (typeof items)[number]) => {
+    const tarif = [i.gesellschaft, i.tarif].filter(Boolean).join(" ");
+    return `${i.sparte}${tarif ? `: ${tarif}` : ""}${i.beitrag != null ? `, ${eur(i.beitrag)} im Monat` : ""}`;
+  };
+  const leistungen = (i: (typeof items)[number]) => (i.leistungen ?? []).map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+  // „Versicherungssumme: 50 Mio. €“ bleibt, ein Merkmal ohne Wert („Schlüsselverlust“) heißt „… inklusive“
+  const punkt = (l: string) => (l.includes(":") ? l : `${l} inklusive`);
+  const imSatz = (l: string) => (l.includes(":") ? l.replace(/:\s*/, " ") : `mit ${l}`);
   const zeilen = [
     ...(kombi ? [kombi.replace(/\.$/, "")] : []),
-    ...items.map((i) => {
-      const tarif = [i.gesellschaft, i.tarif].filter(Boolean).join(" ");
-      return `${i.sparte}${tarif ? `: ${tarif}` : ""}${i.beitrag != null ? `, ${eur(i.beitrag)} im Monat` : ""}`;
-    }),
+    ...(items.length === 1
+      ? [kopf(items[0]), ...leistungen(items[0]).map(punkt)]
+      : items.map((i) => {
+          const l = leistungen(i)[0];
+          return `${kopf(i)}${l ? `, ${imSatz(l)}` : ""}`;
+        })),
   ].slice(0, 3);
   return { vorteil_1: zeilen[0] ?? "", vorteil_2: zeilen[1] ?? "", vorteil_3: zeilen[2] ?? "" };
 }
+
+/** Zusatzsatz der Angebots-Mail, wenn die Gesprächszusammenfassung als PDF mitgeht (Paket M5). */
+export const zusammenfassungSatz = (an: Ansprache) =>
+  a(an, "Im Anhang findest du außerdem die Zusammenfassung unseres Gesprächs.", "Im Anhang finden Sie außerdem die Zusammenfassung unseres Gesprächs.");
 
 /**
  * E-Mail mit dem Angebot (Weg „app“): Text aus der Vorlage „Angebot“ (Kunden-Vorlage, sonst Standard), Rahmen mit
  * [Angebot ansehen] und optional [Beratung ansehen]; das PDF liegt im Anhang (lib/angebot-senden-server.ts).
  */
-export function angebotMail(o: { vorlage: MailVorlageText; werte: Werte; link: string; kundenlink?: string | null; signatur: { text: string; html: string } }): MailInhalt {
+export function angebotMail(o: { vorlage: MailVorlageText; werte: Werte; link: string; kundenlink?: string | null; signatur: { text: string; html: string }; zusatz?: string | null }): MailInhalt {
   return vorlagenMail({
     vorlage: o.vorlage,
     werte: o.werte,
+    zusatz: o.zusatz,
     knoepfe: [{ label: "Angebot ansehen", href: o.link }, ...(o.kundenlink ? [{ label: "Beratung ansehen", href: o.kundenlink, primary: false }] : [])],
     signatur: o.signatur,
   });

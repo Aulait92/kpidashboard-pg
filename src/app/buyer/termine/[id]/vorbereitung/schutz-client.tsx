@@ -142,11 +142,12 @@ export type SpeicherStand = "ruhe" | "speichert" | "gespeichert" | "fehler";
 /** Lila für das Vorsorge-Thema (wie bisher bg-violet-500). */
 const VORSORGE_FARBE = "#8b5cf6";
 
-/** Ausgewählte Antwort: Ja grün, Nein rot, „Weiß nicht“ dezent grau (erkennbar gewählt, aber keine Entscheidung). */
+/** Ausgewählte Antwort in den Ampel-Farben der Präsentation (ein Farbsystem): bei mir grün, woanders blau, Nein rot;
+ *  „Weiß nicht“ nur mit orangem Umriss (erkennbar gewählt, aber keine Entscheidung). */
 function antwortKlasse(st: SchutzStatus, an: boolean): string {
   if (!an) return "border-[color:var(--border)] bg-white text-[color:var(--muted)]";
-  if (st === "pruefen") return "border-slate-300 bg-slate-100 text-slate-600";
-  return cn("border-transparent text-white", st === "luecke" ? "bg-red-600" : "bg-emerald-600");
+  if (st === "pruefen") return "border-amber-400 bg-amber-50 text-amber-800";
+  return cn("border-transparent text-white", st === "luecke" ? "bg-red-600" : st === "woanders" ? "bg-blue-600" : "bg-emerald-600");
 }
 
 function SchutzFenster({

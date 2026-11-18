@@ -12,13 +12,14 @@ import { formatBytes, MB } from "@/lib/file-upload";
 import { cn } from "@/lib/utils";
 import { ZweiFaktorHinweis } from "@/components/security/zwei-faktor-hinweis";
 
-type Kind = "angebot" | "police" | "sonstiges";
-const KINDS: { key: Kind; label: string }[] = [
+type Kind = "angebot" | "police" | "sonstiges" | "beratungsdoku";
+// Hochladen: ohne Beratungsdokumentation (entsteht nur in der App, Paket M5)
+const KINDS: { key: Exclude<Kind, "beratungsdoku">; label: string }[] = [
   { key: "angebot", label: "Angebot" },
   { key: "police", label: "Police" },
   { key: "sonstiges", label: "Sonstiges" },
 ];
-const LABEL: Record<Kind, string> = { angebot: "Angebot", police: "Police", sonstiges: "Dokument" };
+const LABEL: Record<Kind, string> = { angebot: "Angebot", police: "Police", sonstiges: "Dokument", beratungsdoku: "Beratungsdokumentation" };
 
 export type LeadFileView = {
   id: string;
@@ -64,12 +65,12 @@ export function LeadFiles({
   files: LeadFileView[];
   /** Vom Kunden per WhatsApp geschickt (Policen vor dem Termin, Ole 17.11.2026) */
   unterlagen?: UnterlageView[];
-  defaultKind?: Kind;
+  defaultKind?: Exclude<Kind, "beratungsdoku">;
   readOnly?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
-  const [kind, setKind] = useState<Kind>(defaultKind);
+  const [kind, setKind] = useState<Exclude<Kind, "beratungsdoku">>(defaultKind);
   const [busy, setBusy] = useState<string | null>(null);
 
   // Mehrere Dateien auf einmal (z. B. vier Screenshots aus dem Tarifrechner), nacheinander hochgeladen

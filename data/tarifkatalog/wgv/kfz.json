@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.wgv.de/auto-mobilitaet/fahrzeuge/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung OPTIMAL",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.wgv.de/auto-mobilitaet/fahrzeuge/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +68,7 @@
     "Marderbiss: Merkmal „Schäden durch Tierbiss (inkl. Folgeschäden)“ nur OPTIMAL. Kaufwertentschädigung Gebrauchtwagen 24 Monate nur OPTIMAL.",
     "Akku: Allgefahrenschutz für den Akku nur OPTIMAL in der Vollkasko; Ladezubehör (Wallbox, Kabel) in beiden Tarifen in der Teilkasko.",
     "Rabattschutz ab SF 4 für Haftpflicht und Vollkasko wählbar; ob in beiden Tarifen, nicht ausdrücklich genannt. OPTIMAL zusätzlich Eigenschäden, SmartRepair bis 300 €, Schlinger-Deckung.",
-    "WGV markiert keinen Tarif (zwei Stufen): keine Empfehlung gesetzt."
+    "WGV markiert keinen Tarif (zwei Stufen): keine Empfehlung gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

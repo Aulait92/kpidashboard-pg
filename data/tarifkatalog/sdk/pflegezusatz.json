@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.sdk.de/versicherungen/altersvorsorge/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pflege-Tarif Comfort",
@@ -48,8 +47,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.sdk.de/versicherungen/altersvorsorge/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pflege-Tarif Top",
@@ -69,8 +67,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.sdk.de/versicherungen/altersvorsorge/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
   "offen": [
     "Die drei Tarife sind Beispiele aus dem Ergänzungstarif PG; Monatsgelder je Pflegegrad sind individuell wählbar. Beispielwerte stationär PG 2 bis 5 = PG 5 (700/1.000/1.500 €), ambulant PG 2 und 3 50 %, PG 4 75 %, PG 1 und 5 wie stationär.",
     "Beitragsbefreiung ab Pflegegrad 2 (Broschüre 1.609/01.26). Einmalzahlung bei erstmaliger Pflegebedürftigkeit und lebenslange Dynamik optional wählbar.",
-    "Wartezeit: Broschüre nennt keine Wartezeiten beim Fördertarif PZ (Pflege-Bahr); für den Ergänzungstarif PG nicht ausdrücklich belegt. Demenz nicht eigens geregelt. Keine Empfehlung markiert; Comfort als mittlere Stufe."
+    "Wartezeit: Broschüre nennt keine Wartezeiten beim Fördertarif PZ (Pflege-Bahr); für den Ergänzungstarif PG nicht ausdrücklich belegt. Demenz nicht eigens geregelt. Keine Empfehlung markiert; Comfort als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

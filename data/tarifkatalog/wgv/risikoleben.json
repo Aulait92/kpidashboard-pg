@@ -24,8 +24,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/vorsorge/risiko-lebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risiko-Lebensversicherung OPTIMAL",
@@ -42,8 +41,7 @@
         "verbunden": "nein"
       },
       "quelle": "https://www.wgv.de/gesundheit-vorsorge/vorsorge/risiko-lebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -55,6 +53,7 @@
     "Umtauschrecht und weltweiter Schutz: auf der Produktseite nicht genannt.",
     "Nachversicherung: BASIS bei Immobilienkauf, Heirat, Geburt, Adoption (max. 50 %, 20.000 € je Ereignis, 60.000 € gesamt); OPTIMAL zusätzlich Studium, Einkommen, Selbstständigkeit und ohne Anlass bis 40 (max. 100 %, 50.000 € je Ereignis, 150.000 € gesamt).",
     "OPTIMAL: Kinderbonus 2.500 € je Kind unter 7 Jahren, Wechsel in Tarif für langjährige Nichtraucher. Verbundene Leben nur im BASIS-Tarif.",
-    "Unfall-Zusatzversicherung (doppelte Summe bei Unfalltod) optional; fallende Versicherungssumme laut Bedingungen möglich."
+    "Unfall-Zusatzversicherung (doppelte Summe bei Unfalltod) optional; fallende Versicherungssumme laut Bedingungen möglich.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

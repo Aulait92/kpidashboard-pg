@@ -35,8 +35,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:8f003417-6e11-4958-9b8e-68882589a367/leistungs%C3%BCbersicht-hausrat.pdf?view",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Komfort",
@@ -64,8 +63,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:8f003417-6e11-4958-9b8e-68882589a367/leistungs%C3%BCbersicht-hausrat.pdf?view",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Top",
@@ -93,8 +91,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/dam/jcr:8f003417-6e11-4958-9b8e-68882589a367/leistungs%C3%BCbersicht-hausrat.pdf?view",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -107,6 +104,7 @@
     "Leistungsübersicht mit Zeichen ● versichert, ○ individuell wählbar, - nicht versichert; ○ ist als „optional“ erfasst.",
     "SV markiert Top als „Empfehlung“.",
     "Wertsachen zusätzlich je m²: 140, 210 bzw. 280 €. Einfacher Diebstahl und Taschendiebstahl nur in Top (bis 2.000 €, sofern unmittelbarer Zugriff bestand). Garten: einfacher Diebstahl vom Versicherungsgrundstück. Auto: Einbruchdiebstahl aus Kfz und Wohnmobilen ohne Bargeld und Wertsachen.",
-    "Hotel in Top bis zur Wiederbewohnbarkeit. Fahrrad in Basis individuell wählbar, sonst erhöhbar. Notfall-Service als Schutzbrief SorglosWohnen. Selbstbeteiligung nicht genannt."
+    "Hotel in Top bis zur Wiederbewohnbarkeit. Fahrrad in Basis individuell wählbar, sonst erhöhbar. Notfall-Service als Schutzbrief SorglosWohnen. Selbstbeteiligung nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }
