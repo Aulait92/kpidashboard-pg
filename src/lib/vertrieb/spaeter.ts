@@ -13,6 +13,8 @@ const HARD_NO = [
   /sehen sie (bitte )?(davon )?ab/, /\b(nie|niemals|grundsätzlich nicht|generell nicht|auf keinen fall)\b/,
   /auch (in zukunft|später|künftig|zukünftig|dann) (nicht|kein)/, /(haben|habe) (uns|mich) (dagegen|anders) entschieden/,
   /\b(ruhestand|rente gehe|in rente|geschäftsaufgabe|agentur (wird )?(aufgegeben|geschlossen))\b/,
+  // Ole, 18.11.2026 (Timo Janiel: „lösch mich bitte aus deinem Verteiler“)
+  /\blösch\w*/, /\bverteiler\b/, /austragen/, /\bentfernen sie\b/, /(e-?mail|adresse|daten) (bitte )?(entfernen|löschen)/,
 ];
 
 // Ausdrücklich „später“ ohne konkreten Zeitpunkt
@@ -56,7 +58,12 @@ const LATER_HINT =
 const DECLINE = [
   /kein(en)? interesse/, /nicht interessiert/, /kein(en)? bedarf/, /nein,? danke/, /brauchen? (keine|nichts)/, /sind (bereits|schon) (gut )?versorgt/,
   /not interested/, /lieber nicht/, /verzichte/, /kein(en)? mehrwert/, /nicht relevant/,
+  /nicht (be)?nötig/, /(benötige|brauche)n? (\S+ ){0,3}?nicht\b/, /kein(en)? (bedarf|interesse|nutzen|use)\b/,
 ];
+// Hebt eine Absage nur auf, wenn ausdrücklich von später die Rede ist (eine Jahreszahl allein reicht nicht:
+// „kein Interesse, 2027/2028 höre ich auf“)
+const LATER_WORDS =
+  /später|zukunft|zukünftig|künftig|noch nicht|zu früh|\berst\b|vielleicht|eventuell|\bevtl\b|gerne?\b|(wieder|noch ?mal|nochmals|noch einmal|erneut) (melden|kontaktieren|anschreiben|zukommen|in kontakt|ansprechen|anrufen|schreiben)|melden sie sich/;
 
 const MONTHS: [RegExp, number, string][] = [
   [/januar/, 1, "Januar"], [/februar/, 2, "Februar"], [/m(ä|ae)rz/, 3, "März"], [/april/, 4, "April"], [/\bmai\b/, 5, "Mai"],
@@ -155,14 +162,36 @@ function candidates(t: string, ref: Ymd): Cand[] {
 }
 
 /** Text normalisieren (klein, Umlaute vereinheitlicht, Leerraum). */
+// Zitierter Verlauf, auch ohne Zeilenumbruch (Mails kommen oft als eine Zeile an)
+const ZITAT =
+  /(^|\s)(am\s.{3,120}?\sschrieb\b|on\s.{3,120}?\swrote\b|-{3,}\s*(original|ursprüngliche)|von:\s.{0,200}?\b(gesendet|datum|sent|an):|from:\s.{0,200}?\bsent:|gesendet von meinem|>\s)/i;
+// Grußformel bzw. Signatur: danach folgen Name, Adresse, Bilder, Rechtstexte
+const GRUSS =
+  /(^|\s)(mfg\b|vg\b|lg\b|(mit )?((freundlich|herzlich|best|lieb|viel|sonnig|schön)\w* )?(grüß|grüss)e?n?\b|gruß\b|gruss\b|\[cid:)/i;
+
+/**
+ * Nur die eigenen Zeilen der Antwort (Ole, 18.11.2026): ohne zitierte Cold-Mail und ohne Signatur. Sonst machen
+ * „melden Sie sich gerne“ aus unserer Mail oder Monatsnamen aus der Signatur eine Absage zum Später-Interesse.
+ */
+export function eigenerText(text: string | null | undefined): string {
+  let t = (text ?? "").trim();
+  const z = t.search(ZITAT);
+  if (z > 0) t = t.slice(0, z);
+  const g = t.search(GRUSS);
+  // Grußformel ganz vorne („Liebe Grüße zurück, …“) nicht abschneiden
+  if (g > 8) t = t.slice(0, g);
+  return t.trim();
+}
+
 function norm(text: string | null | undefined): string {
-  return (text ?? "").toLowerCase().replace(/ae(?=r?z)/g, "ä").replace(/\s+/g, " ").trim();
+  return eigenerText(text).toLowerCase().replace(/ae(?=r?z)/g, "ä").replace(/\s+/g, " ").trim();
 }
 
 /** Antwort mit Später-Interesse (statt Absage)? */
 export function isLaterInterest(text: string | null | undefined, at: Date = new Date()): boolean {
   const t = norm(text);
   if (!t || HARD_NO.some((r) => r.test(t))) return false;
+  if (isClearDecline(text)) return false;
   if (LATER_PHRASE.some((r) => r.test(t))) return true;
   const ref = parseKey(dayKey(at));
   // Kurzfristiges („nächste Woche“, „morgen“) ist kein Später-Interesse, sondern eine normale Antwort.
@@ -190,7 +219,7 @@ export function isClearDecline(text: string | null | undefined): boolean {
   const t = norm(text);
   if (!t) return false;
   if (HARD_NO.some((r) => r.test(t))) return true;
-  return DECLINE.some((r) => r.test(t)) && !LATER_HINT.test(t);
+  return DECLINE.some((r) => r.test(t)) && !(LATER_HINT.test(t) && LATER_WORDS.test(t.replace(/kein\w* (interesse|bedarf)/g, "")));
 }
 
 /** Text mit möglichem Später-Bezug (Zeitangabe, „aktuell nicht“, „melden Sie sich“): nur dann lohnt die KI-Prüfung. */
