@@ -3,6 +3,7 @@
 // Begriffe wie in der Pipeline (lib/vertrieb/crm.ts) und bei den Angeboten (lib/vertrieb/angebote-uebersicht.ts).
 
 import { LOSS_LABEL, OUTCOME_BY_ID } from "@/lib/vertrieb/crm";
+import { ANGEBOT_ZUSTAND, angebotZustand } from "@/lib/vertrieb/angebote-uebersicht";
 import type { SalesLossReason as LossReason, SalesStage as Stage } from "@/generated/prisma/enums";
 
 export type StandKey = "neu" | "nicht_erreicht" | "erreicht" | "termin" | "erschienen" | "nicht_erschienen" | "angebot" | "gewonnen" | "verloren";
@@ -37,7 +38,8 @@ export type MetaLeadDaten = {
   /** Verlauf seit dem Eingang (Typ und Ergebnis-Text wie in SalesActivity) */
   activities: { type: string; outcome: string | null; occurredAt: Date }[];
   meetings: { startAt: Date; status: string }[];
-  offers: { status: string; sentAt: Date | null; acceptedAt: Date | null }[];
+  /** viewedAt/validUntil: Zustand wie unter Verkaufen → Angebote (angebotZustand) */
+  offers: { status: string; sentAt: Date | null; acceptedAt: Date | null; viewedAt?: Date | null; validUntil?: Date | null }[];
 };
 
 const LABEL = (id: string) => OUTCOME_BY_ID[id]?.label ?? "";
@@ -85,7 +87,12 @@ export function metaLeadStand(d: MetaLeadDaten, now = new Date()): MetaLeadStand
   if (d.stage === "VERLOREN" || d.stage === "UNGUELTIG") {
     return mk("verloren", d.stage === "UNGUELTIG" ? "Ungültig" : d.lossReason ? LOSS_LABEL[d.lossReason] : null);
   }
-  if (angebot) return mk("angebot");
+  if (angebot) {
+    // Neuestes verschicktes Angebot: Zustand wie unter Verkaufen → Angebote (Geöffnet, Abgelaufen, Abgelehnt …)
+    const o = [...verschickt].sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0))[0];
+    const z = o?.validUntil ? angebotZustand({ status: o.status, acceptedAt: o.acceptedAt, viewedAt: o.viewedAt ?? null, validUntil: o.validUntil, sentAt: o.sentAt }, now) : null;
+    return mk("angebot", z ? ANGEBOT_ZUSTAND[z].label : null);
+  }
   if (erschienen) return mk("erschienen");
   // Neuester Termin entscheidet: kommt er noch, ist er gebucht; ein späteres „nicht erschienen“ zählt erst danach
   const naechster = termine.filter((m) => m.startAt >= now).sort((a, b) => a.startAt.getTime() - b.startAt.getTime())[0];

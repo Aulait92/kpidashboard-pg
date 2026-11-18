@@ -37,7 +37,7 @@ export async function ladeMetaLeads(sp: { zeitraum?: string; stand?: string }, n
           id: true, name: true, firstName: true, lastName: true, city: true, zip: true, phone: true, stage: true, lossReason: true,
           activities: { select: { type: true, outcome: true, occurredAt: true }, orderBy: { occurredAt: "asc" } },
           meetings: { select: { startAt: true, status: true } },
-          offers: { where: { status: { not: "superseded" } }, select: { status: true, sentAt: true, acceptedAt: true } },
+          offers: { where: { status: { not: "superseded" } }, select: { status: true, sentAt: true, acceptedAt: true, viewedAt: true, validUntil: true } },
           tasks: { where: { doneAt: null }, select: { title: true, dueAt: true }, orderBy: { dueAt: "asc" }, take: 3 },
         },
       })

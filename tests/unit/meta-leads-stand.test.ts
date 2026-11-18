@@ -51,6 +51,8 @@ describe("Meta-Leads: Stand", () => {
 
   it("Angebot verschickt, gewonnen bei angenommenem Angebot oder Stufe", () => {
     expect(metaLeadStand(basis({ offers: [{ status: "sent", sentAt: tag(4), acceptedAt: null }] }), now).key).toBe("angebot");
+    const geoeffnet = metaLeadStand(basis({ offers: [{ status: "sent", sentAt: tag(4), acceptedAt: null, viewedAt: tag(5), validUntil: tag(20) }] }), now);
+    expect(geoeffnet).toMatchObject({ key: "angebot", detail: "Geöffnet", tiefe: 4 });
     expect(metaLeadStand(basis({ offers: [{ status: "draft", sentAt: null, acceptedAt: null }] }), now).key).toBe("neu");
     const g = metaLeadStand(basis({ offers: [{ status: "accepted", sentAt: tag(4), acceptedAt: tag(5) }] }), now);
     expect(g.key).toBe("gewonnen");
