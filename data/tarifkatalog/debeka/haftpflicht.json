@@ -32,8 +32,7 @@
         "oeltank": "nein"
       },
       "quelle": "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/privathaftpflichtversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Privathaftpflicht ComfortPlus",
@@ -58,8 +57,7 @@
         "oeltank": "inklusive"
       },
       "quelle": "https://www.debeka.de/privatkunden/haftungsrecht/haftpflichtversicherung/privathaftpflichtversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -70,6 +68,7 @@
     "Deliktunfähige Kinder: 50.000 € ohne Prüfung der Aufsichtspflicht.",
     "Öltank: Gewässerschäden durch Heizöltank bis 10.000 Liter nur in ComfortPlus (15 Mio. €).",
     "Neuwert statt Zeitwert und Selbstbeteiligung auf der Seite nicht genannt.",
-    "Debeka markiert keine Stufe."
+    "Debeka markiert keine Stufe.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf debeka.de."
   ]
 }

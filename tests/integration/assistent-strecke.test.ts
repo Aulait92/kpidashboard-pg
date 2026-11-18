@@ -41,6 +41,29 @@ vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => "al
 const cal = { base: Date.now(), busy: new Set<string>(), langBelegt: false, verlegt: [] as [string, string][] };
 // Mails an den Lead (lib/calendar/lead-email.ts): Art, Adresse (Chat) und Ende des Termins beim Versand
 const mails: { id: string; kind: string; ende: string; an?: string | null }[] = [];
+// Policen-Modul (lib/policen/server.ts): Bitte nur mit Schalter, Erinnern nur mit Opt-in; Antwort auf die Einwilligung
+const policenModul = { an: true, optIn: new Set<string>() };
+vi.mock("@/lib/policen/server", async (orig) => {
+  const real = await orig<typeof import("@/lib/policen/server")>();
+  return {
+    ...real,
+    policenBitteFuerChat: async () => {
+      if (!policenModul.an) return null;
+      const { policenBitte } = await import("@/lib/policen/bitte");
+      return policenBitte({ an: "sie", vermittler: { nom: "Herr Kannapinn", dat: "Herrn Kannapinn", anrede: "Herr" } });
+    },
+    darfPolicenErinnern: async (leadId: string) => policenModul.an && policenModul.optIn.has(leadId),
+    handlePolicenAntwort: async (conversationId: string, o: { payload?: string | null }) => {
+      if (o.payload !== "policen:ja" && o.payload !== "policen:nein") return { handled: false };
+      const { prisma } = await import("@/lib/prisma");
+      const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+      const c = await prisma.conversation.findUniqueOrThrow({ where: { id: conversationId }, select: { customerId: true, contactPhone: true } });
+      const { lieberNichtText, nachEinwilligungText } = await import("@/lib/policen/bitte");
+      await sendWhatsAppMessage({ customerId: c.customerId, to: c.contactPhone, body: o.payload === "policen:ja" ? nachEinwilligungText("sie") : lieberNichtText("sie"), sentBy: "bot" });
+      return { handled: true };
+    },
+  };
+});
 vi.mock("@/lib/calendar/lead-email", async (orig) => {
   const real = await orig<typeof import("@/lib/calendar/lead-email")>();
   const { prisma } = await import("@/lib/prisma");
@@ -159,6 +182,14 @@ describe("Termin-Strecke mit Knöpfen", () => {
   }
 
   beforeAll(async () => {
+    // Policen-Funktion an (privater EU-Bucket eingerichtet, lib/policen/ablage.ts): Bitte nach der Vertragsfrage
+    Object.assign(process.env, {
+      POLICEN_S3_ENDPOINT: "https://test123.eu.r2.cloudflarestorage.com",
+      POLICEN_S3_BUCKET: "pg-policen-eu",
+      POLICEN_S3_ACCESS_KEY_ID: "id",
+      POLICEN_S3_SECRET_ACCESS_KEY: "secret",
+      POLICEN_SCHLUESSEL: Buffer.alloc(32, 11).toString("base64"),
+    });
     requireTestDb();
     process.env.ENCRYPTION_KEY ||= Buffer.alloc(32, 7).toString("base64");
     process.env.ANTHROPIC_API_KEY ||= "test";
@@ -177,7 +208,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     cal.busy.clear();
     cal.langBelegt = false;
     mails.length = 0;
-    process.env.POLICEN_BITTE_AN = "1";
+    policenModul.an = true;
     waSend.mockReset();
     waSend.mockImplementation(async () => ({ messageId: `wamid.out-${uid()}`, raw: {} }));
   });
@@ -255,17 +286,18 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
     expect(gesendet().at(-1)!.body).toMatch(/^Danke! Welche Versicherungen haben Sie und Ihre Familie heute schon\?/);
 
-    // Verträge → Policen-Bitte mit Knöpfen (Text aus lib/policen/bitte.ts)
+    // Verträge → Policen-Bitte (Text aus dem Policen-Modul), danach die Einwilligung als eigene Nachricht mit Knöpfen
     await text(phone, "Haftpflicht bei der HUK, eine BU und Kfz");
-    const bitte = gesendet().at(-1)!;
+    const [bitte, einwilligung] = gesendet().slice(-2);
     expect(bitte.body).toMatch(/^Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
-    expect(bitte.buttons?.map((b) => b.title)).toEqual(["Schicke ich gleich", "Nicht zur Hand"]);
+    expect(einwilligung.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
 
-    // „Nicht zur Hand“ → Schluss mit Bereitlegen in einer Zeile und Frage nach der Adresse
-    await knopf(phone, bitte.buttons![1].id, bitte.buttons![1].title);
-    const schluss = gesendet().at(-1)!;
+    // „Lieber nicht“ → Antwort des Policen-Moduls, dann der Schluss mit Bereitlegen in einer Zeile und der Adresse
+    await knopf(phone, "policen:nein", "Lieber nicht");
+    const [lieber, schluss] = gesendet().slice(-2);
+    expect(lieber.body).toMatch(/^Kein Problem, Ihr Termin findet trotzdem statt/);
     expect(schluss.body).toBe(
-      "Kein Problem, ich erinnere Sie rechtzeitig vor dem Termin daran. Legen Sie zum Termin gern bereit: Ihre übrigen Policen, die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.\n\n" +
+      "Damit ist alles Wichtige für Herrn Kannapinn notiert. Legen Sie zum Termin gern bereit: Ihre übrigen Policen, die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.\n\n" +
         "Zum Schluss: Die Einladung mit Kalendereintrag geht an julia@example.com. Stimmt die Adresse?",
     );
     expect(schluss.buttons).toEqual([
@@ -284,7 +316,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(t3.einladungAn).toBe("julia@example.com");
     // Reihenfolge und genau eine Policen-Bitte
     const an = gesendet().filter((s) => s.to === phone).map(art).filter((x) => x !== "sonst");
-    expect(an).toEqual(["buchung", "komplettcheck", "angebotsfrage", "vertragsfrage", "policen", "schluss", "ende"]);
+    expect(an).toEqual(["buchung", "komplettcheck", "angebotsfrage", "vertragsfrage", "policen", "schluss", "ende"]); // Einwilligung und Antwort des Policen-Moduls als „sonst“
     expect(policenBitten(gesendet())).toBe(1);
     // Doppelter Klick: nichts doppelt
     waSend.mockClear();
@@ -300,10 +332,11 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(gesendet().at(-1)!.body).toBe("Alles klar. Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Sind Sie im öffentlichen Dienst tätig?");
     st.queue.push([{ type: "tool_use", id: "q1", name: "record_qualification", input: { zusammenfassung: "x", angaben: { beruf: "nicht im öffentlichen Dienst" } } }], [{ type: "text", text: "Danke, notiert." }]);
     await knopf(phone, "folge:oeffentlicherDienst:nein", "Nein");
-    const bitte = gesendet().at(-1)!;
+    const bitte = gesendet().at(-2)!;
     expect(bitte.body).toBe(
-      "Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab ein Foto Ihrer aktuellen Haftpflicht- und Hausrat-Policen hier in den Chat, falls vorhanden. Dann sieht er vorher, ob Sie irgendwo doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.",
+      "Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann sieht er vorher, wo Sie doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.",
     );
+    expect(gesendet().at(-1)!.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
     // Antwort als Text statt Knopf: der Assistent antwortet, dann der Schluss
     st.queue.push([{ type: "text", text: "Gern, ganz in Ruhe." }]);
     await text(phone, "Mache ich später");
@@ -363,7 +396,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
   });
 
   it("E-Mail unbekannt und Policen-Bitte aus (Schalter): sofort gebucht, Schluss fragt freiwillig nach der Adresse", async () => {
-    process.env.POLICEN_BITTE_AN = "0";
+    policenModul.an = false;
     const { lead, conv, phone } = await gebuchtPerKnopf({ email: null, qualificationData: { versichern: "Familie", vorhanden: "neu", geburt: "14.05.1985", wohnflaeche: "95", beruf: "Angestellt" } });
     expect(st.ai).toBe(0);
     const [buchung, komplett] = gesendet();
@@ -536,11 +569,12 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect(an(t.phone).some((s) => /Zum Schluss:/.test(s.body))).toBe(false);
     });
 
-    it("Pfad keine Antwort komplett: Policen-Bitte (Sparte) genau einmal, dann nach 1 Std. der Schluss", async () => {
+    it("Pfad keine Antwort komplett: Policen-Bitte genau einmal (mit Einwilligung), dann nach 1 Std. der Schluss", async () => {
       const t = await terminMitMerker(STRECKE.komplettFrage, { qualificationData: ALLES });
       await t.alt();
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
-      expect(an(t.phone).at(-1)!.body).toMatch(/^Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab ein Foto Ihrer aktuellen Haftpflicht- und Hausrat-Policen/);
+      expect(an(t.phone).at(-2)!.body).toMatch(/^Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
+      expect(an(t.phone).at(-1)!.buttons?.map((b) => b.id)).toEqual(["policen:ja", "policen:nein"]);
       await prisma.message.updateMany({ where: { conversationId: t.conv.id, kind: STRECKE.policenBitte }, data: { createdAt: new Date(now.getTime() - 2 * HOUR) } });
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
       const schluss = an(t.phone).at(-1)!;
@@ -553,7 +587,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       const t = await terminMitMerker(STRECKE.vertragsfrage, { komplettcheck: true, qualificationData: ALLES });
       await t.alt();
       expect((await runStreckeAbschliessen(now)).gesendet).toBe(1);
-      expect(an(t.phone).at(-1)!.body).toMatch(/^Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
+      expect(an(t.phone).at(-2)!.body).toMatch(/^Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen/);
       expect(policenBitten(an(t.phone))).toBe(1);
     });
 
@@ -574,7 +608,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
         data: { customerId, leadId: lead.id, conversationId: conv.id, startsAt: new Date(now.getTime() + o.startIn), mode: "video", status: "booked", komplettcheck: o.komplettcheck ?? true, createdAt: new Date(now.getTime() - o.gebuchtVor) },
       });
       await prisma.message.create({ data: { conversationId: conv.id, direction: "internal", kind: STRECKE.policenBitte, body: JSON.stringify({ appointmentId: appt.id, police: null }), sentBy: "bot", createdAt: new Date(now.getTime() - o.gebuchtVor) } });
-      if (o.optIn !== false) await prisma.consentOptIn.create({ data: { customerId, contactPhone: phone, grantedAt: now, source: "funnel" } });
+      if (o.optIn !== false) policenModul.optIn.add(lead.id);
       return { conv, lead, phone, appt, now };
     }
     // Werktag 12 Uhr deutscher Zeit (Erinnerungen nur Mo bis Sa 8 bis 20 Uhr)
@@ -635,7 +669,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
       expect(await policenVortagSatzFuer(ohne.appt, "sie")).toBeNull();
       const aus = await gebeten({ startIn: 3 * 24 * HOUR, gebuchtVor: 25 * HOUR });
       expect(await policenVortagSatzFuer(aus.appt, "sie")).not.toBeNull();
-      process.env.POLICEN_BITTE_AN = "0";
+      policenModul.an = false;
       expect(await policenVortagSatzFuer(aus.appt, "sie")).toBeNull();
     });
   });

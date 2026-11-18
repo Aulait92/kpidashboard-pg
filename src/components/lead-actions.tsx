@@ -2,7 +2,6 @@
 
 import { berlinTodayIso } from "@/lib/offer-pricing";
 import { LEAD_MAIL_EVENT } from "@/components/lead-mail";
-import { useProvisionRates } from "@/components/provision-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
@@ -35,7 +34,7 @@ import { PHASE_DOT, findPhaseIn, statusToneClass, type LeadStatus, type Pipeline
 import { formatPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CallOutcomeSheet, useCallReturn, useLeadResult } from "@/components/call-outcome";
-import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { abschlussEinTipp } from "@/components/abschluss-nachher";
 import { emitLeadAction, LostSheet, useStepDone } from "@/components/next-step";
 
 // Kopf des Lead-Details: Status antippen → Phase wählen; darunter eine Reihe
@@ -96,20 +95,18 @@ export function LeadHeaderActions(p: Props) {
   const router = useRouter();
   const toast = useToast();
   const [, start] = useTransition();
-  const [open, setOpen] = useState<"phase" | "more" | "followup" | "win" | "storno" | "erase" | "lost" | "termin" | "chat" | null>(null);
+  const [open, setOpen] = useState<"phase" | "more" | "followup" | "storno" | "erase" | "lost" | "termin" | "chat" | null>(null);
   const { done: stepDone } = useStepDone();
   const [erasing, setErasing] = useState(false);
   const [note, setNote] = useState(p.followUpNote ?? "");
   const [date, setDate] = useState("");
   const phase = findPhaseIn(p.phases, p.status);
   const [afterCall, setAfterCall] = useState(false);
-  const provisionRates = useProvisionRates();
   const markCall = useCallReturn(() => setAfterCall(true));
 
-  // Fester Provisionsbetrag (Regelart „fixed“): Abschluss ohne Eingabe direkt speichern.
+  // Abschluss mit einem Tipp (P4): sofort speichern, Beitrag und Glückwunsch danach im Blatt (abschluss-nachher)
   function askWin() {
-    if (asksCloseValue(p.source, provisionRates)) setTimeout(() => setOpen("win"), 0);
-    else setStatus("Abschluss" as LeadStatus, "Abschluss", null);
+    abschlussEinTipp(p.leadId, p.name ?? "Kontakt", (v, sp) => setStatus("Abschluss" as LeadStatus, "Abschluss", v, undefined, sp));
   }
 
   function setStatus(status: LeadStatus, label: string, closeValue?: number | null, disqualifyReason?: string, sparte?: string | null) {
@@ -152,7 +149,7 @@ export function LeadHeaderActions(p: Props) {
   // Die Kacheln E-Mail und Wiedervorlage stehen auf jeder Breite (Handy: Raster mit 3 Spalten).
   const moreActions: SheetAction[] = [
     ...(p.hasUpcomingAppointment ? [{ label: "Weiteren Termin eintragen", icon: CalendarPlus, onSelect: () => setTimeout(() => setOpen("termin"), 0) }] : []),
-    ...(!p.mailReady && !p.mailOff && p.email ? [{ label: "E-Mail aus der App: Postfach verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
+    ...(!p.mailReady && !p.mailOff && p.email ? [{ label: "E-Mails aus Ihrem Postfach: verbinden", icon: Mail, href: "/buyer/postfach" }] : []),
     ...(!p.storniert && p.stornoOptions.length > 0
       ? [{ label: "Stornieren", icon: Ban, tone: "danger" as const, onSelect: () => setTimeout(() => setOpen("storno"), 0) }]
       : []),
@@ -194,7 +191,7 @@ export function LeadHeaderActions(p: Props) {
   const showBar = !p.storniert && !won && !lost && stepPhases.length > 1;
 
   // Anrufen, Chat, Wiedervorlage, Mehr immer; E-Mail und Termin je nach Lage (siehe Kacheln unten)
-  const tileCount = 4 + (p.mailOff ? 0 : 1) + (p.hasUpcomingAppointment ? 0 : 1);
+  const tileCount = 5 + (p.hasUpcomingAppointment ? 0 : 1);
 
   const dueOverdue = !!p.followUpAt && berlinTodayIso(new Date(p.followUpAt)) < berlinTodayIso();
   const dueLabel = p.followUpAt
@@ -343,16 +340,14 @@ export function LeadHeaderActions(p: Props) {
             href={p.conversationId ? `/buyer/chats?c=${p.conversationId}` : undefined}
             onClick={p.conversationId ? undefined : () => setOpen("chat")}
           />
-          {/* E-Mail direkt sichtbar (Ole, 14.11.2026: war unter „Mehr“ versteckt). Mit Postfach aus der App, sonst Mailprogramm. */}
-          {p.mailOff ? null : (
+          {/* E-Mail direkt sichtbar (Ole, 14.11.2026: war unter „Mehr“ versteckt). Öffnet immer den Dialog (17.11.2026):
+              über die App, im eigenen Mailprogramm oder Text kopieren; bei „E-Mail-Funktionen aus“ nur die beiden letzten. */}
           <ActionTile
             icon={Mail}
             label="E-Mail"
-            href={!p.mailReady && p.email ? `mailto:${p.email}` : undefined}
-            onClick={p.mailReady && p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
+            onClick={p.email ? () => window.dispatchEvent(new Event(LEAD_MAIL_EVENT)) : undefined}
             explain={{ title: "Keine E-Mail-Adresse hinterlegt", text: "Tragen Sie die Adresse bei den Angaben ein, dann können Sie direkt schreiben.", actions: [{ label: "Angaben ändern", onClick: openStammdaten }] }}
           />
-          )}
           {/* Steht schon ein Termin an, zeigt die Terminkarte ihn (Verschieben, Vorbereiten); kein zweiter Knopf (16.11.2026) */}
           {p.hasUpcomingAppointment ? null : <ActionTile icon={CalendarPlus} label="Termin" onClick={() => setOpen("termin")} />}
           {/* Wiedervorlage direkt neben Anrufen/Chat/Termin (Ole, 13.11.2026: war zu versteckt). Steht schon eine an,
@@ -421,16 +416,6 @@ export function LeadHeaderActions(p: Props) {
         />
       ) : null}
 
-      <AbschlussSheet
-        open={open === "win"}
-        title="Abschluss"
-        source={p.source}
-        onClose={() => setOpen(null)}
-        onSave={(v, sp) => {
-          setOpen(null);
-          setStatus("Abschluss" as LeadStatus, "Abschluss", v, undefined, sp);
-        }}
-      />
 
       {open === "termin" ? (
         <TerminSheet leadId={p.leadId} bookingSlug={p.bookingSlug} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); router.refresh(); emitLeadAction(p.leadId); }} />

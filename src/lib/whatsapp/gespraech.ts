@@ -54,7 +54,7 @@ const SPARTE_WORT: [RegExp, string][] = [
 ];
 
 /** Sparten im Interesse als Wörter: [„Haftpflicht“, „Hausrat“] (ohne Tierhalterhaftpflicht). */
-export function spartenWorte(interesse: string | null): string[] {
+function spartenWorte(interesse: string | null): string[] {
   const t = (interesse ?? "").replace(/tierhalter-?\s*haftpflicht/gi, "");
   return SPARTE_WORT.filter(([re]) => re.test(t)).map(([, x]) => x);
 }

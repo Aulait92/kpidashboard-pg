@@ -32,8 +32,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/hausratversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Hausrat Comfort Plus",
@@ -43,7 +42,7 @@
       "werte": {
         "gf": "ja",
         "wert": "40 % der VS",
-        "diebstahl": "Taschendieb bis 1.000 €",
+        "diebstahl": "Trickdieb bis 5.000 €",
         "fahrrad": "optional",
         "elementar": "optional",
         "bargeld": "bis 3.000 €",
@@ -58,8 +57,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/zuhausefahrenreisen/hauswohnen/hausratversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -71,6 +69,7 @@
     "Wertsachen in Comfort Plus erhöhbar; Schmuck bis 20.000 € bzw. 40.000 €.",
     "Hotelkosten je Tag inkl. Nebenkosten. Online-Betrug (Phishing) nicht genannt; Kartenmissbrauch nur Comfort Plus bis 5.000 €.",
     "Fahrraddiebstahl mit 24-Stunden-Schutz, weitere Naturgefahren und NotfallPlus gegen Beitrag in beiden Paketen.",
-    "Debeka markiert keine Stufe."
+    "Debeka markiert keine Stufe.",
+    "Geprüft am 17.11.2026 an der Leistungstabelle der Produktseite auf debeka.de. Korrigiert: Comfort Plus „einfacher Diebstahl in der Wohnung“ jetzt Trickdiebstahl in der Wohnung bis 5.000 € (vorher Taschendiebstahl bis 1.000 €, der außerhalb der Wohnung gilt)."
   ]
 }

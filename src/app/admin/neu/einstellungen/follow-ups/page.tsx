@@ -1,3 +1,4 @@
+import { publicSalesBookingUrl } from "@/lib/vertrieb/buchung";
 import Link from "next/link";
 import { approveFollowupAction, planExistingAction, saveFollowupSettingsAction } from "@/app/admin/vertrieb/followup-actions";
 import { EinstellungSeite, LISTE, ziel } from "@/components/admin-neu/einstellungen/rahmen";
@@ -155,7 +156,8 @@ export default async function Page() {
             </label>
             <label className="block text-sm">
               <span className="label">Buchungslink (leer = ohne)</span>
-              <input name="bookingUrl" type="url" defaultValue={settings.bookingUrl ?? ""} placeholder="https://…" className="input h-10" />
+              <input name="bookingUrl" type="url" defaultValue={settings.bookingUrl ?? ""} placeholder={publicSalesBookingUrl()} className="input h-10" />
+              <span className="mt-1 block text-xs text-[color:var(--muted)]">Mit {publicSalesBookingUrl()} bekommt jeder Kontakt seinen persönlichen Link.</span>
             </label>
             <label className="block text-sm sm:col-span-2">
               <span className="label">Signatur (leer = „Viele Grüße“ und der Name des Postfachs)</span>

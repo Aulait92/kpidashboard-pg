@@ -24,6 +24,7 @@ export const HILFE_PAGES: Record<string, string> = {
   "/buyer/bestand": "Bestand",
   "/buyer/bestand/import": "Kundenliste hochladen",
   "/buyer/bestellen": "Bestellen",
+  "/buyer/einstellungen/assistent": "Assistent",
   "/buyer/vorlagen": "WhatsApp-Vorlagen",
 };
 

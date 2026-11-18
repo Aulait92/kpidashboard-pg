@@ -26,8 +26,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/altersvorsorge/privatrente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
     "Garantierter Rentenfaktor und Effektivkosten nicht auf der Produktseite; Basisinformationsblätter nicht ausgewertet.",
     "Zuzahlungen bis 25.000 € im Jahr, Entnahmen jederzeit (mindestens 1.000 € Restguthaben), Mindestbeitrag 25 €.",
     "Tod in der Ansparphase: Vertragsguthaben; Risikolebens-Zusatzversicherung wählbar; nach Rentenbeginn Rentengarantiezeit vereinbar.",
-    "BU: Kombination mit BU oder DU, die die Beiträge im Leistungsfall weiterzahlt (über Berater). Dynamik nicht genannt."
+    "BU: Kombination mit BU oder DU, die die Beiträge im Leistungsfall weiterzahlt (über Berater). Dynamik nicht genannt.",
+    "Geprüft am 17.11.2026 an Produktseite und Bedingungen auf huk.de."
   ]
 }

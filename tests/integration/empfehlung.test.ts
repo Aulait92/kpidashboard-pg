@@ -149,8 +149,8 @@ describe("Empfehlungen & Bewertungen", () => {
     await makeBuyer(c.id, "owner");
     return c.id;
   }
-  // Standard: Einwilligung in Nachfrage und Bitten liegt vor (im Kontakt bestätigt); eigener Test für „fehlt“
-  async function closedLead(customerId: string, phone: string, name: string, daysAgo = 8, consent = true) {
+  // Standard: Einwilligung in Nachfrage und Bitten liegt vor (im Kontakt bestätigt); eigener Test für „fehlt“. 15 Tage: Bewertungsbitte nach 14 Tagen (P7)
+  async function closedLead(customerId: string, phone: string, name: string, daysAgo = 15, consent = true) {
     return prisma.lead.create({
       data: {
         customerId,
@@ -283,7 +283,7 @@ describe("Empfehlungen & Bewertungen", () => {
 
   it("Ohne Einwilligung keine Nachfrage und keine Bitte um Empfehlung; nach Bestätigung sofort; einmal je Person; STOPP wirkt dauerhaft", async () => {
     const id = await activeModule();
-    const ohne = await closedLead(id, `4915${uid()}23`, "Olaf Ohne", 8, false);
+    const ohne = await closedLead(id, `4915${uid()}23`, "Olaf Ohne", 15, false);
     await scheduleReviewRequests(NOW);
     await sendDueReviews(NOW);
     expect(state.notices.filter((n) => n.customerId === id)).toHaveLength(0);
@@ -296,7 +296,7 @@ describe("Empfehlungen & Bewertungen", () => {
     expect(state.notices.filter((n) => n.customerId === id)).toHaveLength(0);
 
     // Zweiter Kontakt: Vermittler bestätigt die Einwilligung → Nachfrage geht raus, Wortlaut gespeichert
-    const mit = await closedLead(id, `4915${uid()}24`, "Mia Mit", 8, false);
+    const mit = await closedLead(id, `4915${uid()}24`, "Mia Mit", 15, false);
     await scheduleReviewRequests(NOW);
     await sendDueReviews(NOW);
     expect((await setFeedbackConsent(id, mit.id, true, NOW)).ok).toBe(true);

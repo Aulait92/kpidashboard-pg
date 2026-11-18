@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/gesundheitsvorsorge",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Gesundheit & Vorsorge Smart",
@@ -40,8 +39,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/gesundheitsvorsorge",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Gesundheit & Vorsorge Best",
@@ -57,8 +55,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo.de/fragments/produkttabelle/kranken/gesundheitsvorsorge",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -71,6 +68,7 @@
     "Heilpraktiker und Arzneimittel sind in Gesundheit & Vorsorge nicht genannt. Dafür bietet die DKV einzelne Tarife: KombiMed Balance KAB (Naturheilverfahren und Heilpraktiker 80 % bis 600 € im Jahr, Vorsorge und Impfungen bis 600 €), KombiMed Arzneimittel KAZM (80 % bis 1.000 € im Jahr), Hilfsmittel und Sehhilfen KHMR (Sehhilfen 90 % bis 300 €, Hörgerät 80 % bis 600 €).",
     "Sehhilfen: Smart und Best teilen sich das Budget mit weiteren Hilfsmitteln wie Hörgeräten, Rollatoren und Rollstühlen. In den ersten beiden Versicherungsjahren gelten etwa halbe Höchstbeträge (z. B. Basic Vorsorge je 150 €, Sehhilfen 150 €).",
     "Vorsorge Best: Leistungsvergleich der Seite nennt bis 600 € innerhalb von zwei Versicherungsjahren, das Leistungsblatt (PDF) bis 600 € pro Jahr; bitte prüfen. Auslandsreisekranken nicht enthalten.",
-    "ERGO kennzeichnet keine Empfehlung; Smart als mittlere Stufe."
+    "ERGO kennzeichnet keine Empfehlung; Smart als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produkttabelle auf ergo.de."
   ]
 }

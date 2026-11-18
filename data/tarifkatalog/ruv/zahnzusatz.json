@@ -28,8 +28,7 @@
         "kfo": "nein"
       },
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn comfort (Z2U)",
@@ -51,8 +50,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahn premium (Z1U)",
@@ -74,8 +72,7 @@
         "kfo": "inklusive"
       },
       "quelle": "https://www.ruv.de/krankenzusatzversicherung/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -86,6 +83,7 @@
     "Zahnstaffel nur für comfort und premium genannt: 1.000, 2.000, 3.000, 4.000 € in den ersten vier Kalenderjahren (außer Unfälle), ab dem 5. Jahr ohne Grenze. Für classic keine Staffel genannt.",
     "Zahnbehandlung, Prophylaxe (100 %, 1x jährlich) und Kunststofffüllungen nur über den Zusatztarif ZahnVorsorge (ZV), mit jedem Tarif kombinierbar.",
     "Kieferorthopädie bei Behandlungsbeginn bis 18: comfort 70 % bis 1.000 € (KIG 1 bis 2) bzw. 500 € (KIG 3 bis 5), premium 90 % bis 2.000 € bzw. 1.000 €.",
-    "R+V empfiehlt nur, jeden Tarif mit ZahnVorsorge zu ergänzen; comfort als mittlere Stufe gesetzt."
+    "R+V empfiehlt nur, jeden Tarif mit ZahnVorsorge zu ergänzen; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite auf ruv.de."
   ]
 }

@@ -27,8 +27,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wuerttembergische.de/existenz/private-haftpflichtversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Privat-Haftpflicht Komfort",
@@ -48,8 +47,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wuerttembergische.de/existenz/private-haftpflichtversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Privat-Haftpflicht Premium",
@@ -71,8 +69,7 @@
         "oeltank": "inklusive"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/private-haftpflichtversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -86,6 +83,7 @@
     "Geliehene Sachen laut Produktseite „In Komfort und Premium“; Höhe in Komfort nicht genannt, Premium bis zur Versicherungssumme. Ausfalldeckung Kompakt und Komfort mit Mindestschadenhöhe.",
     "Neuwert in Premium nur für Sachen bis 2 Jahre alt. Baustein PremiumPlus (nur zu Premium): 100 Mio. €, Neuwert eigener Sachen, gemietete E-Scooter; nicht im Schema.",
     "Heizöltanks laut Tarifvergleich nur in Premium enthalten (als Baustein Öltank geführt).",
-    "Selbstbeteiligung wählbar (Beitragsbeispiel mit 250 € SB), Beträge je Stufe nicht veröffentlicht. Mallorca, Rabattretter, Ehrenamt, Nebenberuf nicht im Tarifvergleich."
+    "Selbstbeteiligung wählbar (Beitragsbeispiel mit 250 € SB), Beträge je Stufe nicht veröffentlicht. Mallorca, Rabattretter, Ehrenamt, Nebenberuf nicht im Tarifvergleich.",
+    "Geprüft am 17.11.2026 am Tarifvergleich der Produktseite auf wuerttembergische.de."
   ]
 }

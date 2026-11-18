@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "KlinikSTART",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "KlinikPLUS",
@@ -63,8 +61,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "KlinikTOP1",
@@ -84,8 +81,7 @@
         "einbett": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -96,6 +92,7 @@
     "Wichtigster Unterschied ist der Leistungsauslöser: UNFALL nur nach Unfall, START zusätzlich schwere Erkrankungen (z. B. Herzinfarkt, Schlaganfall, Krebs), PLUS ab 60 unabhängig vom Anlass, TOP immer.",
     "Zimmer und freie Krankenhauswahl gelten nur im jeweils versicherten Fall. KlinikTOP1pur hat eine Selbstbeteiligung für das Einbettzimmer (abdeckbar mit EKH 45).",
     "Ersatz-Krankenhaustagegeld TOP: 25 € bei Verzicht auf Chefarzt und freie Wahl, 15 € bei Verzicht auf Ein- oder Zweibettzimmer.",
-    "Krankenhaustagegeld ist ein eigenes Produkt, kein Baustein; nicht aufgenommen."
+    "Krankenhaustagegeld ist ein eigenes Produkt, kein Baustein; nicht aufgenommen.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf signal-iduna.de."
   ]
 }

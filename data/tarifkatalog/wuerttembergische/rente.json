@@ -15,7 +15,7 @@
       "stufe": 1,
       "empfohlen": false,
       "werte": {
-        "garantie": "wählbar, 0 bis 100 %",
+        "garantie": "Beitragsgarantie wählbar",
         "rentenfaktor": "ja",
         "anlage": "Fonds, ETFs, Sicherung",
         "flexibel": "Entnahme 20.000 €/Jahr",
@@ -27,8 +27,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/private-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -39,7 +38,8 @@
   "offen": [
     "Fondsgebundene Rentenversicherung (Bedingungen gültig ab 01.06.2026). Laut Produktseite fünf Tariflinien (u. a. Flex), deren Namen und Unterschiede auf der Seite nicht aufgeführt sind; daher als ein Tarif geführt.",
     "Anlage: Sicherungsguthaben, Wertsicherungsfonds (monatlicher Werterhalt 80 %) und über 50 freie Fonds und ETFs; Garantieplan und Fix-Plus optional.",
-    "Beitragsgarantie als Prozentsatz der Beiträge wählbar und änderbar; garantierter Rentenfaktor laut Bedingungen. Einmalbeitrag ab 7.000 €.",
-    "Keine Renditeaussage übernommen. Effektivkosten nicht ausgewertet (siehe Basisinformationsblätter)."
+    "Keine Renditeaussage übernommen. Effektivkosten nicht ausgewertet (siehe Basisinformationsblätter).",
+    "Beitragsgarantie als Prozentsatz der Beiträge wählbar, laut AVB höchstens 90 %; alternativ klassische Garantie, garantierter Rentenfaktor laut Bedingungen. Einmalbeitrag ab 7.000 €.",
+    "Geprüft am 17.11.2026 an Produktseite und AVB PrivatRente Genius Vorsorge."
   ]
 }

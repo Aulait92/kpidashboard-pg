@@ -19,8 +19,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung/selbststaendige-arbeitnehmer",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankenvollversicherung Komfortschutz",
@@ -33,8 +32,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung/selbststaendige-arbeitnehmer",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Krankenvollversicherung Top-Schutz",
@@ -47,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.generali.de/privatkunden/gesundheit-freizeit/krankenvollversicherung/selbststaendige-arbeitnehmer",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -59,6 +56,7 @@
     "Produktseite nennt je Stufe nur Unterbringung, Chefarzt und Zahnersatz; Tarifnamen, ambulante Erstattung, Selbstbehalt und Beitragsrückerstattung fehlen.",
     "Grundschutz: Unterbringung im Krankenhaus nicht genannt.",
     "Eigene Tarife für Beamte, Studenten und Auszubildende sowie Ärzte nicht aufgenommen. Krankentagegeld und Pflegepflicht als Ergänzung angeboten.",
-    "Generali markiert keine Stufe; Komfortschutz als mittlere Stufe."
+    "Generali markiert keine Stufe; Komfortschutz als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Produktseite auf generali.de."
   ]
 }

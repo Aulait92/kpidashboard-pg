@@ -78,7 +78,10 @@ export function sendButtons(
   to: string,
   body: string,
   buttons: { id: string; title: string }[],
+  /** Fußzeile (grau, höchstens 60 Zeichen; länger: weggelassen) */
+  footer?: string | null,
 ): Promise<SendResult> {
+  const fuss = footer && footer.length <= 60 ? { footer: { text: footer } } : {};
   return postMessage(apiKey, {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -87,6 +90,7 @@ export function sendButtons(
     interactive: {
       type: "button",
       body: { text: body.slice(0, 1024) },
+      ...fuss,
       action: { buttons: buttons.slice(0, 3).map((b) => ({ type: "reply", reply: { id: b.id.slice(0, 256), title: b.title.slice(0, 20) } })) },
     },
   });

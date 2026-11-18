@@ -31,8 +31,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/tiere/tierversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -42,6 +41,7 @@
     "Debeka bietet die Tierversicherung gemeinsam mit der Uelzener an (Kooperationspartner, Risikoträger Uelzener); Tarifangaben von debeka.de.",
     "Ein Tarif mit wählbarer Erstattungshöhe (1.000 €, 5.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
     "Baustein Gesundheit PLUS: 500 € im Jahr u. a. für Impfungen, Zahnreinigung, Physiotherapie, 25 % Selbstbeteiligung je Rechnung.",
-    "Zahnbehandlung als eigene Zahnversicherung (Tarif 3) auf debeka.de; ob sie in der Krankenversicherung enthalten ist, nennt die Seite nicht."
+    "Zahnbehandlung als eigene Zahnversicherung (Tarif 3) auf debeka.de; ob sie in der Krankenversicherung enthalten ist, nennt die Seite nicht.",
+    "Geprüft am 17.11.2026 an der Produktseite Tierversicherung auf debeka.de."
   ]
 }

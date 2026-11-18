@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/31220_fondsgebundene-versicherung-private-vorsorge_verbraucherinformationen_2026_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
     "Garantie: Bei Abschluss Wahl zwischen reiner Fondsanlage und einer garantierten Leistung im Erlebensfall (als Prozentsatz der Beiträge); Wechsel in die reine Fondsanlage später möglich.",
     "Rentenfaktor garantiert; zum Rentenbeginn gilt der höhere von garantiertem und aktuellem Rentenfaktor.",
     "Hinterbliebene: Mindesttodesfallsumme wählbar, Hinterbliebenenrenten-Zusatzversicherung zum Rentenbeginn möglich.",
-    "Konventionelle private Rentenversicherung und Sofortrente nicht aufgenommen. Kosten und Beitragspause nicht ausgewertet."
+    "Konventionelle private Rentenversicherung und Sofortrente nicht aufgenommen. Kosten und Beitragspause nicht ausgewertet.",
+    "Geprüft am 17.11.2026 an den Verbraucherinformationen (Bedingungen 01/2026, PDF) auf zurich.de."
   ]
 }

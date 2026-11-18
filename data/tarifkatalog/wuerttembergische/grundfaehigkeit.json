@@ -17,11 +17,12 @@
       "werte": {
         "anzahl": "7",
         "prognose": "6 Monate",
-        "dynamik": "optional, 1 bis 5 %"
+        "dynamik": "optional, 1 bis 5 %",
+        "nachversicherung": "ja",
+        "weltweit": "ja"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -29,8 +30,7 @@
     "https://www.wuerttembergische.de/media/media/ref/pk/bedingungen_avb_1/altersvorsorge_und_bu/Grundfaehigkeitsversicherung.pdf"
   ],
   "offen": [
-    "Werte von der Produktseite (Abruf 17.11.2026); die Bedingungen (PDF) ließen sich nicht automatisch laden.",
     "Sieben Grundfähigkeiten: Sehen, Hören, Sprechen, Gehen, Treppensteigen, Stehen, Gebrauch der Hände. Rente ab dem Verlust einer Fähigkeit für mindestens 6 Monate, mindestens 600 € im Jahr.",
-    "Psyche, Leistung bei Pflegebedürftigkeit und Nachversicherung auf der Seite nicht genannt; bitte in den Bedingungen prüfen."
+    "Geprüft am 17.11.2026 an Produktseite und Bedingungen (PDF) auf wuerttembergische.de. Ergänzt aus den Bedingungen: Nachversicherungsoption (auch ohne Anlass) und weltweiter Schutz. Psyche und Pflegebedürftigkeit sind in den Bedingungen nicht als eigene Leistungsauslöser genannt."
   ]
 }

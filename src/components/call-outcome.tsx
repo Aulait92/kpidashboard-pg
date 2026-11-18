@@ -5,7 +5,6 @@ import { openLeadBooking } from "@/components/lead-booking";
 // „Anrufen“ tippt und danach zurückkommt, bekommt automatisch die Ergebnis-
 // Auswahl. Nutzt ausschließlich die bestehenden Aktionen (inbox-actions).
 
-import { useProvisionRates } from "@/components/provision-context";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { CalendarPlus, Check, Clock, PhoneMissed, Send, ThumbsDown, Trophy } from "lucide-react";
 import {
@@ -16,7 +15,7 @@ import {
   type InboxResult,
 } from "@/app/buyer/inbox-actions";
 import { ActionSheet, type SheetAction } from "@/components/ui/sheet";
-import { AbschlussSheet, asksCloseValue } from "@/components/abschluss-sheet";
+import { abschlussEinTipp } from "@/components/abschluss-nachher";
 import { fmtDay, LaterDateSheet } from "@/components/later-date-sheet";
 import { emitLeadAction, emitNotReachedOffer, LostSheet, useStepDone } from "@/components/next-step";
 import { BedarfSheet } from "@/components/bedarf-sheet";
@@ -159,10 +158,9 @@ export function CallOutcomeSheet({
   onClose: () => void;
   onPick: (message: string, action: () => Promise<InboxResult>) => void;
 }) {
-  const [step, setStep] = useState<"pick" | "win" | "later" | "date" | "lost" | "need">("pick");
+  const [step, setStep] = useState<"pick" | "later" | "date" | "lost" | "need">("pick");
   // Erreicht (Termin, Angebot, später): erst „Was haben Sie besprochen?“, danach das gewählte Ergebnis (Ole, 15.11.2026)
   const [after, setAfter] = useState<{ termin: boolean; run: () => void } | null>(null);
-  const provisionRates = useProvisionRates();
   const close = () => {
     setStep("pick");
     setAfter(null);
@@ -196,9 +194,8 @@ export function CallOutcomeSheet({
       onSelect: () => needThen(() => onPick(`${t.name}: Angebot gesendet`, () => callbackOutcomeResult(t.leadId, "offer"))),
     },
     // keepOpen: Folgeschritt statt Schließen.
-    asksCloseValue(t.source, provisionRates)
-      ? { label: "Abschluss", icon: Trophy, keepOpen: true, onSelect: () => setStep("win") }
-      : { label: "Abschluss", icon: Trophy, onSelect: () => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", null)) },
+    // Abschluss mit einem Tipp (P4): sofort speichern, Beitrag und Glückwunsch danach im Blatt (abschluss-nachher)
+    { label: "Abschluss", icon: Trophy, onSelect: () => abschlussEinTipp(t.leadId, t.name, (v, sp) => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", v, sp))) },
     { label: "Später nochmal", icon: Clock, keepOpen: true, onSelect: () => setStep("later") },
     // Wiedervorlage ohne neuen Schritt abhaken (Ole, 16.11.2026: „Was heißt gesprochen, erledigt?“). Klarer benannt,
     // nicht mehr als erste, blaue Wahl: bei „Angebot nachfassen“ sind Abschluss bzw. Später nochmal die Regel.
@@ -270,17 +267,6 @@ export function CallOutcomeSheet({
         title={`${t.name} später anrufen`}
         onClose={close}
         onPick={(date, time) => needThen(() => onPick(time ? `${t.name}: Rückruf ${fmtDay(date)} ${time} Uhr` : `${t.name}: am ${fmtDay(date)} wieder`, () => setFollowUpResult(t.leadId, { date, time })))}
-      />
-    );
-  }
-  if (step === "win") {
-    return (
-      <AbschlussSheet
-        open
-        title={`Abschluss mit ${t.name}`}
-        source={t.source}
-        onClose={close}
-        onSave={(v, sp) => pick(`${t.name}: Abschluss`, () => callbackOutcomeResult(t.leadId, "won", v, sp))}
       />
     );
   }

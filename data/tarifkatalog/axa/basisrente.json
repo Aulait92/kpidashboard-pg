@@ -24,8 +24,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.axa.de/pk/altersvorsorge/p/basisrenten",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Fonds-BasisRente",
@@ -42,8 +41,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.axa.de/pk/altersvorsorge/p/basisrenten",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -55,6 +53,7 @@
     "Fonds-BasisRente: keine Beitragsgarantie genannt; Gewinnsicherung über die Garantie-Option (bis 50 % des Fondsguthabens ins Sicherungsvermögen).",
     "Garantierter Rentenfaktor, Beitragspause und Kosten (Effektivkosten) auf der Produktseite nicht genannt.",
     "Zuzahlungen in der Ansparphase laut Merkblatt (Stand 11.22) für die BasisRente allgemein, nicht je Tarif.",
-    "Zwei Varianten ohne Markierung der Gesellschaft; keine Empfehlung gesetzt."
+    "Zwei Varianten ohne Markierung der Gesellschaft; keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an den Produktseiten auf axa.de."
   ]
 }

@@ -63,18 +63,20 @@ Einladung kommt später mit 45 Min.)._
 
 **Frau Becker:** Kfz bei der Allianz, Unfall bei der HUK und eine Riester-Rente.
 
-**App (Policen-Bitte, Text aus dem Policen-Modul):**
+**App (Policen-Bitte, Text aus dem Policen-Modul `src/lib/policen/bitte.ts`):**
 
-> Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, z. B. Haftpflicht, Hausrat oder Kfz. Dann sieht er vorher, ob Sie irgendwo doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.
-> Unterlagen zu Kranken-, BU- oder Lebensversicherung bitte nicht schicken, die schauen Sie sich im Termin gemeinsam an.
->
-> _Knöpfe: [Schicke ich gleich] [Nicht zur Hand]_
+> Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab Fotos oder PDFs Ihrer aktuellen Policen hier in den Chat, egal ob Haftpflicht, Hausrat oder Kfz. Dann sieht er vorher, wo Sie doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.
 
-**Frau Becker:** [Nicht zur Hand]
+**App (Einwilligung als eigene Nachricht, Policen-Modul):** „Kurz zum Datenschutz: Ich bin einverstanden, dass …“
+_Fußzeile „Ihr Termin findet auch ohne Unterlagen statt.“, Knöpfe: [Einverstanden] [Lieber nicht]_
+
+**Frau Becker:** [Lieber nicht]
+
+**App (Policen-Modul):** Kein Problem, Ihr Termin findet trotzdem statt. Bringen Sie Ihre Unterlagen dann einfach zum Termin mit.
 
 **App (Schluss):**
 
-> Kein Problem, ich erinnere Sie rechtzeitig vor dem Termin daran. Legen Sie zum Termin gern bereit: Ihre übrigen Policen, die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.
+> Damit ist alles Wichtige für Herrn Kannapinn notiert. Legen Sie zum Termin gern bereit: Ihre übrigen Policen, die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.
 >
 > Zum Schluss: Die Einladung mit Kalendereintrag geht an anna.becker@example.com. Stimmt die Adresse?
 >
@@ -108,11 +110,7 @@ Herr Kannapinn plant etwas mehr Zeit ein.“ (Hinweis an den Vermittler).
 
 _Weitere Angebotsfragen wie in Pfad A, keine Vertragsfrage. Nach der letzten Antwort:_
 
-**App (Policen-Bitte nur für die angefragte Sparte, Vorschlag):**
-
-> Danke! Damit Herr Kannapinn Ihren Termin gut vorbereiten kann: Schicken Sie bitte vorab ein Foto Ihrer aktuellen Haftpflicht- und Hausrat-Policen hier in den Chat, falls vorhanden. Dann sieht er vorher, ob Sie irgendwo doppelt zahlen oder Lücken haben, und der Termin geht deutlich schneller.
->
-> _Knöpfe: [Schicke ich gleich] [Nicht zur Hand]_
+**App (Policen-Bitte wie in Pfad A, danach die Einwilligung mit [Einverstanden] [Lieber nicht]).**
 
 **Frau Becker:** Mache ich später.
 
@@ -149,7 +147,7 @@ _Nach einer Stunde (Mo bis Sa 8 bis 20 Uhr, nur im 24-h-Fenster) geht es ohne Ko
 > Damit Herr Kannapinn Ihnen gleich passende Beiträge zeigen kann: Wie lautet Ihr Geburtsdatum?
 
 _Antwortet Frau Becker nicht, bleibt die Frage stehen: kein Schluss, solange Angebotsfragen offen sind. Sind alle
-Angaben bekannt, folgt nach einer Stunde die Policen-Bitte wie in Pfad B (ohne „Danke!“), ohne Reaktion nach einer
+Angaben bekannt, folgt nach einer Stunde die Policen-Bitte mit Einwilligung (ohne „Danke!“), ohne Reaktion nach einer
 weiteren Stunde der Schluss:_
 
 > Damit ist alles Wichtige für Herrn Kannapinn notiert. Legen Sie zum Termin gern bereit: die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.
@@ -167,14 +165,17 @@ Der Termin ist trotzdem sofort gebucht. Der Schluss fragt freiwillig:
 
 ## Policen-Bitte und Erinnerungen
 
-- Jeder Lead bekommt die Bitte genau einmal: bei Ja alle Policen, bei Nein oder ohne Antwort nur die angefragte Sparte.
-  Keine Bitte, wenn der Lead „keine Versicherungen“ sagt oder der Schalter aus ist.
+- Jeder Lead bekommt die Bitte genau einmal (Text und Einwilligung aus dem Policen-Modul, in allen Pfaden gleich; der
+  Vorschlag einer engen Sparten-Fassung für Nein/keine Antwort ist damit hinfällig). Keine Bitte, wenn der Lead
+  „keine Versicherungen“ sagt oder das Policen-Modul aus ist (Notschalter `POLICEN_WHATSAPP_AUS`, Ablage nicht
+  eingerichtet, Minderjährige). Antwortet der Lead auf die Einwilligung, folgt sofort der Schluss, sonst nach 1 Std.
 - Erinnerung 24 Std. nach der Buchung (nur wenn bis zum Termin mehr als 2 Tage liegen):
   > Kurze Erinnerung: Haben Sie Ihre Policen für Haftpflicht, Hausrat oder Kfz schon zur Hand? Einfach abfotografieren und hier schicken, dann kann Herr Kannapinn alles vorbereiten.
   >
   > Keine Nachrichten mehr? Antworten Sie einfach STOP.
 - Am Vortag im Nutzensatz der Erinnerung: „Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.“
-- Höchstens 2 Erinnerungen; Schluss beim ersten Dokument, bei „habe keine“, „Lieber nicht“, Widerruf oder Absage.
+- Höchstens 2 Erinnerungen, nur mit `darfPolicenErinnern` (Policen-Modul: Opt-in aus der Buchung, kein „Lieber
+  nicht“, kein Widerruf, kein STOPP, kein Dokument, Termin steht); Schluss auch bei „habe keine“.
 
 ## Vorbereitete Meta-Vorlagen (nicht eingereicht)
 

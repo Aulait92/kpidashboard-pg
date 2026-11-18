@@ -26,8 +26,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahnzusatz Pro90",
@@ -46,8 +45,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Zahnzusatz Pro100",
@@ -66,8 +64,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.huk.de/gesundheit-vorsorge-vermoegen/krankenversicherung/krankenzusatzversicherung/zahnzusatzversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -78,6 +75,7 @@
     "Zahnersatz und Implantate jeweils zusammen mit der Leistung der GKV. Pro: Verdoppelung des GKV-Festzuschusses.",
     "Begrenzung Pro90 und Pro100 für Zahnersatz und Inlays: 1.000 € im 1. Jahr, kumuliert bis 5.000 € in 5 Jahren; Pro ohne Begrenzung.",
     "Kieferorthopädie: Pro bis 18 Jahre oder bei Unfall 90 % (max. 1.500 €); Pro90 und Pro100 nur nach Unfall (max. 1.500 € bzw. 3.000 €).",
-    "HUK markiert keinen Tarif; Pro90 als mittlere Stufe."
+    "HUK markiert keinen Tarif; Pro90 als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf huk.de (Höchstgrenzen Zahnersatz: 1.000 € im ersten, 5.000 € in den ersten fünf Jahren)."
   ]
 }

@@ -1,39 +1,46 @@
-// Unterlagen vom Kunden (Policen per WhatsApp, Ole 17.11.2026) in der Terminvorbereitung: kurz, mit ausgelesenen
-// Vertragsdaten bei Sachversicherungen und Kennzeichen bei möglichen Gesundheitsangaben. Gleiche Darstellung wie im
-// Kontakt (components/lead-files.tsx).
+// Dokumente vom Kunden (Policen per WhatsApp, Ole 18.11.2026) in der Terminvorbereitung: „3 Dokumente erhalten“ bzw.
+// „Noch keine Dokumente“, je Dokument Öffnen und Herunterladen (kurzlebiger signierter Link, jeder Abruf protokolliert).
+// Keine ausgelesenen Werte (keine KI). Gleiche Daten wie im Kontakt (components/lead-files.tsx).
 
-import { FileText } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import type { UnterlageView } from "@/lib/policen/server";
 
-const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
+const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" }).format(new Date(iso));
+
+export const dokumenteTitel = (n: number) => (n === 0 ? "Noch keine Dokumente vom Kunden" : n === 1 ? "1 Dokument erhalten" : `${n} Dokumente erhalten`);
 
 export function UnterlagenVomKunden({ leadId, unterlagen, titel = true }: { leadId: string; unterlagen: UnterlageView[]; titel?: boolean }) {
-  if (!unterlagen.length) return null;
   return (
-    <div data-unterlagen-vorbereitung>
-      {titel ? <h3 className="mb-1 text-[13px] font-semibold text-[color:var(--muted)]">Unterlagen vom Kunden</h3> : null}
-      <ul className="space-y-2">
-        {unterlagen.map((u) => (
-          <li key={u.id} className="flex gap-2.5">
-            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand)]" />
-            <div className="min-w-0">
-              {u.ansehen ? (
-                <a href={`/api/buyer/leads/${leadId}/unterlagen/${u.id}`} target="_blank" rel="noreferrer" className="font-medium text-[color:var(--brand)] hover:underline">
-                  {u.sparte ?? u.fileName}
-                </a>
-              ) : (
-                <span className="font-medium">{u.sparte ?? u.fileName}</span>
-              )}
-              {u.auszug ? <span className="block text-[color:var(--muted)]">{u.auszug}</span> : null}
-              {u.gesundheit ? (
-                <span className="mt-1 inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
-                  Gesundheitsangaben möglich{u.consentAt ? `, mit Einwilligung vom ${day(u.consentAt)}` : ""}
-                </span>
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div data-unterlagen-vorbereitung data-anzahl={unterlagen.length}>
+      {titel ? <h3 className="mb-1 text-[13px] font-semibold text-[color:var(--muted)]">{dokumenteTitel(unterlagen.length)}</h3> : null}
+      {unterlagen.length ? (
+        <ul className="divide-y divide-[color:var(--border)]">
+          {unterlagen.map((u) => {
+            const href = `/api/buyer/leads/${leadId}/unterlagen/${u.id}`;
+            const name = u.sparte ? `${u.sparte} · ${u.fileName}` : u.fileName;
+            return (
+              <li key={u.id} className="flex min-h-11 items-center gap-2.5 py-1.5">
+                <FileText className="h-4 w-4 shrink-0 text-[color:var(--brand)]" />
+                {u.ansehen ? (
+                  <a href={href} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-medium text-[color:var(--brand)] hover:underline">
+                    {name}
+                  </a>
+                ) : (
+                  <span className="min-w-0 flex-1 truncate font-medium">{name}</span>
+                )}
+                <span className="shrink-0 text-xs text-[color:var(--muted)]">{day(u.createdAt)}</span>
+                {u.ansehen ? (
+                  <a href={`${href}?download=1`} aria-label={`${u.fileName} herunterladen`} className="-mr-1.5 shrink-0 rounded-full p-2 text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken,#f1f5f9)] hover:text-[color:var(--brand)]">
+                    <Download className="h-4 w-4" />
+                  </a>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="text-[color:var(--muted)]">Ihr Assistent bittet vor dem Termin darum. Sonst bringt Ihr Kunde sie zum Termin mit.</p>
+      )}
     </div>
   );
 }

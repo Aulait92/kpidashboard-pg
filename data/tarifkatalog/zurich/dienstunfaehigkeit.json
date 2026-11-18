@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/35020_selbststaendige-berufs-und-erwerbsunfaehigkeit_verbraucherinformationen_2026_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
     "Kein eigenständiger DU-Tarif: Leistung bei allgemeiner Dienstunfähigkeit ist eine Vereinbarung in der Berufsunfähigkeitsversicherung von Zurich Deutscher Herold (Bedingungen 01/2026, § 2 Abs. 13). Produktseite für automatische Abrufe gesperrt.",
     "Leistung, wenn der Beamte ausschließlich aus gesundheitlichen Gründen in den Ruhestand versetzt oder entlassen wird; gilt entsprechend für Kirchenbeamte, Soldaten und Richter. Konkrete Verweisung bleibt möglich, abstrakte Verweisung ausgeschlossen (wie BU).",
     "Nachträglicher Einschluss bei erstmaliger Verbeamtung ohne Ausschluss oder Zuschlag möglich; versicherbare DU-Leistung höchstens 1.600 € im Monat.",
-    "Teildienstunfähigkeit (begrenzte Dienstfähigkeit) in den Bedingungen nicht gefunden."
+    "Teildienstunfähigkeit (begrenzte Dienstfähigkeit) in den Bedingungen nicht gefunden.",
+    "Geprüft am 17.11.2026 an den Verbraucherinformationen (Bedingungen 01/2026, PDF) auf zurich.de."
   ]
 }

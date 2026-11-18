@@ -47,7 +47,6 @@ import {
   vertragsFrage,
   zeitKurz,
   zeitLang,
-  spartenWorte,
   zusageDank,
   type Knopf,
   type VermittlerName,
@@ -88,13 +87,6 @@ const LANG_MIN = 45;
 /** Höchstens so viele Policen-Erinnerungen (24 Std. nach Buchung und Vortag). */
 export const MAX_POLICEN_ERINNERUNGEN = 2;
 
-/** „Hausrat-Police“, „Haftpflicht- und Hausrat-Policen“; sonst „Police zur <Produkt>“; null = alle Policen. */
-export function policeWort(woerter: string[], produkt?: string | null): string | null {
-  if (woerter.length === 1) return `${woerter[0]}-Police`;
-  if (woerter.length > 1) return `${woerter.slice(0, -1).map((w) => `${w}-`).join(", ")} und ${woerter.at(-1)}-Policen`;
-  return produkt ? `Police zur ${produkt}` : null;
-}
-
 /** Sagt der Lead, er habe keine Policen bzw. Versicherungen („habe keine“, „keine“, „nichts“)? */
 export function sagtKeinePolicen(text: string | null | undefined): boolean {
   const t = (text ?? "").toLowerCase().trim();
@@ -121,15 +113,12 @@ export function policenVortagSatz(an: Ansprache): string {
   return a(an, "Falls noch nicht geschehen: Schick gern noch kurz deine Policen hier in den Chat.", "Falls noch nicht geschehen: Schicken Sie gern noch kurz Ihre Policen hier in den Chat.");
 }
 
-/** Knöpfe der Policen-Bitte als Payload policenbitte:<Titel> (der Titel sagt, was gemeint ist). */
-function policenKnoepfe(titel: string[]): Knopf[] {
-  return titel.slice(0, 3).map((t) => ({ id: `policenbitte:${t}`, title: t.slice(0, 20) }));
-}
-
 /**
- * Policen-Bitte der Strecke (Ole, 17.11.2026 spät): jeder Lead genau einmal, für alle Produkte. Komplettcheck „Ja“: alle
- * Policen; sonst nur die angefragte Sparte (Vorschlag). null = schon gebeten, Lead sagt „keine Versicherungen“ bzw.
- * gelöschter Lead.
+ * Policen-Bitte der Strecke (Ole, 17.11.2026 spät; Text und Einwilligung aus dem Policen-Modul, lib/policen/bitte.ts
+ * über policenBitteFuerChat): jeder Lead genau einmal. Erst die Bitte (Text), dann die Einwilligung als eigene
+ * interaktive Nachricht („Einverstanden“ / „Lieber nicht“, Rechtsprüfung A1), die das Policen-Modul beantwortet.
+ * null = schon gebeten, Funktion aus (Notschalter, Ablage nicht eingerichtet), Minderjährige, Lead sagt „keine
+ * Versicherungen“ bzw. gelöschter Lead.
  */
 async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null): Promise<Schritt | null> {
   if (!k.leadId) return null;
@@ -137,15 +126,16 @@ async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null
   if (!lead || lead.erasedAt) return null;
   const vv = lead.vorvertraege as { keine?: unknown; liste?: unknown } | null;
   if (vv && vv.keine === true && !(Array.isArray(vv.liste) && vv.liste.length)) return null;
-  const { outreachProdukt, vermittlerSubjekt } = await import("@/lib/whatsapp/erstanschreiben");
-  const p = outreachProdukt(k.source);
-  const voll = k.termin?.komplettcheck === true;
-  const interesse = k.formular.find((x) => /versicherungsinteresse|^interesse\b|sparte/i.test(x.label))?.value ?? null;
-  const police = voll ? null : !p || p.purpose === "outreach_privatschutz" ? policeWort(spartenWorte(interesse ?? k.source)) : policeWort([], p.thema);
-  const { policenBitte } = await import("@/lib/policen/bitte");
-  const b = policenBitte({ an: k.an, vermittler: k.person, er: vermittlerSubjekt(k.person.nom), voll, police, source: k.source });
-  const text = [[einleitung, b.text].filter(Boolean).join(" "), b.fusszeile ?? ""].filter(Boolean).join("\n\n");
-  return { text, buttons: policenKnoepfe(b.knoepfe), merker: STRECKE.policenBitte, daten: { police } };
+  const { policenBitteFuerChat } = await import("@/lib/policen/server");
+  const b = await policenBitteFuerChat(k.conversationId);
+  if (!b) return null;
+  return {
+    text: [einleitung, b.text].filter(Boolean).join(" "),
+    buttons: b.knoepfe.length ? b.knoepfe : null,
+    merker: STRECKE.policenBitte,
+    daten: { police: null },
+    folge: { text: b.einwilligung.text, buttons: b.einwilligung.knoepfe, footer: b.einwilligung.fusszeile },
+  };
 }
 
 /** Mo bis Sa 8 bis 20 Uhr (deutsche Zeit): Nachrichten der App ohne Anstoß des Leads. */
@@ -385,7 +375,15 @@ export async function sendeAngebotsfrage(k: StreckenKontext, prefix?: string | n
 }
 
 /** Nachricht der Strecke mit Merker (der Merker steht vor dem Senden, damit nichts doppelt geht). */
-export type Schritt = { text: string; buttons: Knopf[] | null; merker: string; daten?: Record<string, unknown>; nachMerker?: string | null };
+export type Schritt = {
+  text: string;
+  buttons: Knopf[] | null;
+  merker: string;
+  daten?: Record<string, unknown>;
+  nachMerker?: string | null;
+  /** Eigene Nachricht direkt danach (Einwilligung zur Policen-Bitte, interaktiv mit Fußzeile) */
+  folge?: { text: string; buttons: Knopf[]; footer: string | null } | null;
+};
 
 /**
  * Nächster Schritt nach den Angebotsfragen (ohne Senden): bei Komplettcheck „Ja“ die Vertragsfrage, dann die
@@ -402,7 +400,7 @@ export async function naechsterSchritt(
   if (stand.abschlussAt) return null;
   if (k.termin.komplettcheck === true && !stand.vertragsfrageAt) return { text: vertragsFrage(k.an, k.familie, o.einleitung ?? "Danke!"), buttons: null, merker: STRECKE.vertragsfrage };
   if (stand.vertragsfrageAt && !stand.vorvertraegeErfasst && !o.vertraegeUeberspringen) return null;
-  if (!stand.policenBitteAt && (await import("@/lib/policen/bitte")).policenBitteAktiv()) {
+  if (!stand.policenBitteAt) {
     const bitte = await policenBitteSchritt(k, o.einleitung ?? null).catch(() => null);
     if (bitte) return bitte;
   }
@@ -416,6 +414,13 @@ export async function sendeSchritt(k: StreckenKontext, s: Schritt): Promise<void
   if (!k.termin) return;
   await merkeSchritt(k.conversationId, k.termin.id, s);
   await sende(k, s.text, s.buttons);
+  if (s.folge) await sendeFolge(k, s.folge);
+}
+
+/** Folgenachricht eines Schritts (Einwilligung mit Knöpfen und Fußzeile). */
+export async function sendeFolge(k: Pick<StreckenKontext, "customerId" | "phone">, f: NonNullable<Schritt["folge"]>): Promise<void> {
+  const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+  await sendWhatsAppMessage({ customerId: k.customerId, to: k.phone, body: f.text, sentBy: "bot", buttons: f.buttons.length ? f.buttons : null, footer: f.footer });
 }
 
 /** Merker eines Schritts (auch für bot.ts, wenn die Antwort des Assistenten ersetzt wird). */
@@ -560,6 +565,22 @@ export async function policenBitteAntwort(conversationId: string, art: "gleich" 
   const s = await naechsterSchritt(k, { schlussEinleitung: einleitung, vertraegeUeberspringen: true, policenUeberspringen: true });
   if (s) await sendeSchritt(k, s);
   else await sende(k, einleitung);
+  return true;
+}
+
+/**
+ * Das Policen-Modul hat eine Antwort auf die Einwilligung („Einverstanden“ / „Lieber nicht“) bzw. einen Widerruf
+ * beantwortet (gateway.ts): ist die Policen-Bitte der Strecke offen, folgt jetzt der Schluss.
+ */
+export async function nachPolicenAntwort(conversationId: string, now = new Date()): Promise<boolean> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k?.termin) return false;
+  const stand = await streckenStand(conversationId, k.termin.id);
+  if (!policenBitteOffen(stand)) return false;
+  await merke(conversationId, STRECKE.policenAntwort, { appointmentId: k.termin.id, art: "einwilligung" });
+  const s = await naechsterSchritt(k, { schlussEinleitung: abschlussEinleitung(k.an, k.person, "ohne_antwort"), vertraegeUeberspringen: true, policenUeberspringen: true });
+  if (!s) return false;
+  await sendeSchritt(k, s);
   return true;
 }
 
@@ -788,18 +809,19 @@ async function sendeNaechsten(k: StreckenKontext, o: Parameters<typeof naechster
   return true;
 }
 
-/** „Lieber nicht“ (Einwilligungsnachricht des Policen-Moduls) bzw. Widerruf: keine Policen-Erinnerungen mehr. */
+/** „Lieber nicht“ bzw. Widerruf als Text (zusätzlich zu den Nachweisen des Policen-Moduls): keine Erinnerungen mehr. */
 const POLICEN_STOPP_RE = /^\s*lieber nicht\b|widerruf|lösch|loesch|keine (policen|unterlagen) (mehr|schicken)/i;
 
 /**
- * Sind Policen-Erinnerungen erlaubt und sinnvoll? Schalter an, Rechtsprüfung A8 (darfPolicenErinnern: protokolliertes
- * WhatsApp-Opt-in), gebeten, noch kein Dokument, nicht „habe keine“, „Lieber nicht“ oder Widerruf, höchstens 2.
+ * Sind Policen-Erinnerungen erlaubt und sinnvoll? Rechtsprüfung A8 (darfPolicenErinnern im Policen-Modul: Funktion an,
+ * protokolliertes Opt-in aus der Buchung, kein „Lieber nicht“, kein Widerruf, kein STOPP, noch kein Dokument, Termin
+ * steht), gebeten, nicht „habe keine“, höchstens 2.
  */
 async function policenErinnernErlaubt(conversationId: string, leadId: string | null, stand: StreckenStand): Promise<boolean> {
-  if (!stand.policenBitteAt || stand.policenKeine || stand.policenErinnerungen >= MAX_POLICEN_ERINNERUNGEN) return false;
-  const bitte = await import("@/lib/policen/bitte");
-  if (!bitte.policenBitteAktiv() || !(await bitte.darfPolicenErinnern(leadId))) return false;
-  if (leadId && (await prisma.leadDocument.count({ where: { leadId } })) > 0) return false;
+  if (!leadId || !stand.policenBitteAt || stand.policenKeine || stand.policenErinnerungen >= MAX_POLICEN_ERINNERUNGEN) return false;
+  const { darfPolicenErinnern } = await import("@/lib/policen/server");
+  if (!(await darfPolicenErinnern(leadId))) return false;
+  if ((await prisma.leadDocument.count({ where: { leadId } })) > 0) return false;
   // Lead sagt nach der Bitte, er habe keine bzw. möchte nicht
   const nachher = await prisma.message.findMany({ where: { conversationId, direction: "inbound", createdAt: { gt: stand.policenBitteAt } }, select: { body: true }, take: 30 });
   return !nachher.some((x) => sagtKeinePolicen(x.body ?? "") || POLICEN_STOPP_RE.test(x.body ?? ""));

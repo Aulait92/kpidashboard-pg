@@ -32,8 +32,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/existenz/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -44,6 +43,7 @@
     "Ein Tarif (Bedingungen SBU Privat, gültig ab 01.01.2025); Einsteiger-BU bis 30 Jahre mit vergünstigtem Startbeitrag als Variante.",
     "Bausteine laut Produktseite: Arbeitsunfähigkeit (Rente ab 6 Monaten Krankschreibung), Alltagsfähigkeiten, Unfall-Baustein (doppelte Rente), garantierte Rentensteigerung, Dynamik.",
     "Rückwirkende Leistung laut Bedingungen, außer bei vereinbartem Ausschluss rückwirkender Anerkennung oder Karenzzeit.",
-    "Umorganisation bei Selbstständigen wird geprüft (Verzicht bei überwiegend kaufmännischer Tätigkeit), daher nicht als Merkmal gesetzt."
+    "Umorganisation bei Selbstständigen wird geprüft (Verzicht bei überwiegend kaufmännischer Tätigkeit), daher nicht als Merkmal gesetzt.",
+    "Geprüft am 17.11.2026 an Produktseite und Bedingungen (PDF) auf wuerttembergische.de."
   ]
 }

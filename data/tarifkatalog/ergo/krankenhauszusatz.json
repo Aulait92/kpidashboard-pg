@@ -27,8 +27,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ergo.de/content/dam/ergo/pdf/kranken/krankenhauszusatzversicherung-dkv.pdf.coredownload.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV KombiMed Krankenhaus Unfall Komfortschutz (Tarif KSU)",
@@ -48,8 +47,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ergo.de/content/dam/ergo/pdf/kranken/krankenhauszusatzversicherung-dkv.pdf.coredownload.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "DKV KombiMed Krankenhaus Premiumschutz (Tarif KGZ1/2 oder KS1/2)",
@@ -69,8 +67,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.ergo.de/content/dam/ergo/pdf/kranken/krankenhauszusatzversicherung-dkv.pdf.coredownload.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -83,6 +80,7 @@
     "Produkt der DKV Deutsche Krankenversicherung AG, vertrieben über ergo.de. Broschüre ohne aktuelles Datum (Beitragsstände 2017 bis 2021), bitte gegen die AVB prüfen.",
     "Basis (UZ): keine ärztlichen Leistungen, Krankenhauswahl unter den Vertragshäusern der Kasse, UZ1 Ein- oder Zweibett, UZ2 nur Zweibett; ohne Gesundheitsfragen. Komfort (KSU) leistet nur nach Unfällen, ohne Gesundheitsprüfung, mit Übernahme der gesetzlichen Zuzahlung.",
     "Premium: KGZ mit Alterungsrückstellung, KS ohne (läuft bis zum Jahr des 44. Geburtstags, dann Umstellung auf KGZ); Tarif 1 Ein- oder Zweibett, Tarif 2 nur Zweibett; Zugang zu Top-Experten (Best Care) hinzubuchbar. Allgemeine Wartezeit 3 Monate, laut DKV-Urkunde entfällt sie bei Beginn zwischen 01.03.2023 und 01.02.2028; besondere Wartezeiten 8 Monate.",
-    "Krankenhaustagegeld (KKHT) in allen Stufen hinzubuchbar. Daneben bietet ERGO eine eigene Krankenhauszusatzversicherung (SZS/SZL: Chefarzt, Ein- oder Zweibett, Ersatztagegeld bis 100 €, keine Wartezeit) an, die nicht als Stufe geführt ist. ERGO markiert keine Empfehlung; Komfort als mittlere Stufe, obwohl sie nur bei Unfall leistet."
+    "Krankenhaustagegeld (KKHT) in allen Stufen hinzubuchbar. Daneben bietet ERGO eine eigene Krankenhauszusatzversicherung (SZS/SZL: Chefarzt, Ein- oder Zweibett, Ersatztagegeld bis 100 €, keine Wartezeit) an, die nicht als Stufe geführt ist. ERGO markiert keine Empfehlung; Komfort als mittlere Stufe, obwohl sie nur bei Unfall leistet.",
+    "Geprüft am 17.11.2026 an Produkttabelle und DKV-Broschüre auf ergo.de sowie der Urkunde Wartezeitverzicht (Beginn 01.03.2023 bis 01.02.2028)."
   ]
 }

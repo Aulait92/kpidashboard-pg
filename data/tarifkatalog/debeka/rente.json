@@ -28,8 +28,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/zukunftalter/privatrente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Privatrente Chance Balance",
@@ -50,8 +49,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/zukunftalter/privatrente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Privatrente Chance Invest",
@@ -72,8 +70,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/zukunftalter/privatrente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -87,6 +84,7 @@
     "Beitragsgarantie: Produktseite sagt nur, dass Chance Invest auf eine Beitragsgarantie verzichtet; Höhe der Garantie bei Garant und Balance nicht belegt. Garantierter Rentenfaktor für das Fondsguthaben laut Bedingungen.",
     "Hinterbliebene: CA2I mit garantierter Todesfall-Leistung, CA6I mit Todesfall-Leistung vor Rentenbeginn und Rentengarantiezeit.",
     "Dynamik 5 % oder 10 % im Jahr, Ablaufmanagement, BU-Zusatzversicherung wählbar. Effektivkosten je Variante in den Basisinformationsblättern (nicht ausgewertet). Keine Renditeaussage.",
-    "Debeka markiert kein Paket; Chance Balance als mittlere Stufe gesetzt."
+    "Debeka markiert kein Paket; Chance Balance als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an Produktseite, Bedingungen bzw. Basisinformationsblatt auf debeka.de."
   ]
 }

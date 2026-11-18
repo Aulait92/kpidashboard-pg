@@ -23,8 +23,7 @@
         "dynamik": "10 % alle 3 Jahre"
       },
       "quelle": "https://www.barmeniagothaer.de/pflegemonatsgeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Mehr Pflege Ambulant",
@@ -40,8 +39,7 @@
         "dynamik": "10 % alle 3 Jahre"
       },
       "quelle": "https://www.barmeniagothaer.de/pflegemonatsgeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -52,6 +50,7 @@
     "Auszahlung: Pflegegrad 1 20 %, PG 2 Stationär 100 % bzw. Ambulant 50 %, PG 3 100 % bzw. 80 %, PG 4 100 %, PG 5 150 %. Ob „Stationär“ auch bei häuslicher Pflege zahlt, ist auf der Produktseite nicht eindeutig; Merkmal „ambulant wie stationär“ deshalb offen.",
     "Einmalzahlung im Ambulant-Tarif: das 5fache des für Pflegegrad 5 vereinbarten Monatsgelds bei erstmals Pflegegrad 4 oder 5. Bei Unfall 150 % ab PG 4.",
     "Dynamik zwischen 21 und 70 Jahren alle 3 Jahre plus 10 %, auch im Pflegefall; Nachversicherung bis 3x um bis 25 % (21 bis 60 Jahre). Weltweiter Schutz. Demenz nicht gesondert genannt.",
-    "Zwei Tarife ohne Markierung der Gesellschaft: keine Empfehlung gesetzt."
+    "Zwei Tarife ohne Markierung der Gesellschaft: keine Empfehlung gesetzt.",
+    "Geprüft am 17.11.2026 an Produkttabelle, Produktseite bzw. Bedingungen auf barmeniagothaer.de."
   ]
 }

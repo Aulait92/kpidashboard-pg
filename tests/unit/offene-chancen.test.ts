@@ -113,12 +113,12 @@ describe("bewerteChancen", () => {
     expect(c.bisZu).toBe(3 * p);
     expect(c.realistisch).toBe(c.liste.reduce((s, x) => s + x.erwartet, 0));
     expect(c.schaetzung).toBe(true);
-    expect(chancenAufteilung(c)).toBe("1 Angebot, 1 Termin, 1 Bedenkzeit");
+    expect(chancenAufteilung(c)).toBe("1 Angebot, 1 offener Termin, 1 Bedenkzeit");
   });
   it("Termin ohne Ergebnis: nächster Schritt Ergebnis eintragen", () => {
     const c = bewerteChancen([lead({ termine: [{ startsAt: new Date("2026-11-17T09:00:00Z"), status: "booked" }] })], std, undefined, now);
     expect(c.liste[0].naechsterSchritt).toBe("Ergebnis vom Termin am 17.11. eintragen");
-    expect(chancenAufteilung(c)).toBe("1 Termin");
+    expect(chancenAufteilung(c)).toBe("1 offener Termin");
   });
   it("ohne Chancen: leer", () => {
     const c = bewerteChancen([], std, undefined, now);

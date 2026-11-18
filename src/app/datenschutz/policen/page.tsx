@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { loadErstinfoByToken } from "@/lib/erstinformation";
 import { datenschutzPolicenAbschnitte } from "@/lib/policen/datenschutz-text";
-import { EINWILLIGUNG_VERSION, policenKiEu } from "@/lib/policen/regeln";
+import { DATENSCHUTZ_VERSION } from "@/lib/policen/regeln";
 import { LeadLegalFooter } from "@/components/lead-legal-footer";
 
 // Langfassung zur Einwilligung „Unterlagen per WhatsApp“ (Ole, 17.11.2026, lib/policen): öffentliche Seite des
-// Vermittlers, Link im Einwilligungstext des Assistenten (nur mit Schalter POLICEN_GESUNDHEIT_AN). k = Token der
-// Erstinformation (zufällig, ändert sich nicht). Texte: lib/policen/datenschutz-text.ts.
+// Vermittlers (lib/policen/verantwortlicher.ts policenDatenschutzUrl). k = Token der Erstinformation (zufällig, ändert
+// sich nicht). Texte: lib/policen/datenschutz-text.ts.
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Datenschutz: Unterlagen per WhatsApp", robots: { index: false, follow: false } };
 
@@ -17,7 +17,7 @@ export default async function DatenschutzPolicenPage({ searchParams }: Props) {
   const token = Array.isArray(k) ? k[0] : k;
   const e = token ? await loadErstinfoByToken(token) : null;
   if (!e) notFound();
-  const abschnitte = datenschutzPolicenAbschnitte(e.an, { name: e.daten.name, firma: e.daten.firma, anschrift: e.daten.anschrift, telefon: e.daten.telefon, email: e.daten.email }, { kiEu: policenKiEu() !== null });
+  const abschnitte = datenschutzPolicenAbschnitte(e.an, { name: e.daten.name, firma: e.daten.firma, anschrift: e.daten.anschrift, telefon: e.daten.telefon, email: e.daten.email });
 
   return (
     <>
@@ -33,7 +33,7 @@ export default async function DatenschutzPolicenPage({ searchParams }: Props) {
               </div>
             ))}
           </dl>
-          <p className="mt-5 text-xs text-[color:var(--muted)]">Fassung {EINWILLIGUNG_VERSION}</p>
+          <p className="mt-5 text-xs text-[color:var(--muted)]">Fassung {DATENSCHUTZ_VERSION}</p>
         </div>
       </main>
       <LeadLegalFooter customerId={e.customerId} />
