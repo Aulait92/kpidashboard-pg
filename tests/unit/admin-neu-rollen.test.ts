@@ -18,6 +18,7 @@ describe("Punkte je Rolle", () => {
     expect(rolleVonPunkt(p("bank:open", "System"))).toBe("geld");
     expect(rolleVonPunkt(p("rechnung:steuernummer", "System"))).toBe("geld");
     expect(rolleVonPunkt(p("hb:meta", "System"))).toBe("werkzeuge");
+    expect(rolleVonPunkt(p("leadpreis:konto1", "Leads"))).toBe("liefern");
   });
 
   it("gruppiert in fester Reihenfolge, behält die Reihenfolge innerhalb, lässt leere Rollen weg", () => {

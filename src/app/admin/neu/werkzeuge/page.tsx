@@ -44,7 +44,7 @@ const GRUPPEN: { titel: string; icon: LucideIcon }[] = [
 /** Kurzbeschreibung und Symbol der eigenen Seiten (Ansicht aus navigation.ts). */
 const INFO: Record<string, { text: string; icon: LucideIcon }> = {
   "e-status": { text: "Störung melden, Support-Kontakt", icon: LifeBuoy },
-  "e-anbindungen": { text: "Instantly, Calendly, Meta, LinkedIn, CSV", icon: PlugZap },
+  "e-anbindungen": { text: "Instantly, Meta, LinkedIn, Agenturliste", icon: PlugZap },
   "e-vorlagen": { text: "Support-Nummer, A/B-Tests der Vorlagen", icon: MessageCircle },
   "e-login": { text: "Infokarten neben dem Kunden-Login", icon: LogIn },
   "e-einrichtung": { text: "Business-ID, Erklärvideos, Hilfetermin", icon: Rocket },

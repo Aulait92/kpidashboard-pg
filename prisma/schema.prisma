@@ -804,6 +804,9 @@ model Lead {
   // Ablauf (Push, Erstanschreiben, Assistent, Termin), zählt aber nirgends (Zahlen, Kosten pro Lead, Monatsbericht,
   // Garantien, Kontingente, Umsatz, Meta-Rückmeldung). Abzeichen „Test“, löschbar.
   isTest               Boolean           @default(false)
+  // Antwortadresse ohne Postfach (Paket M2, lib/mail/antwort-adresse.ts): <kurzname>.<antwortCode>@antwort.dein-beratungstermin.de.
+  // 8 Zeichen base32 aus HMAC(AUTH_SECRET, Lead-ID), beim ersten Versand gesetzt, bei der Löschung geleert.
+  antwortCode          String?           @unique
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]
@@ -822,6 +825,8 @@ model Lead {
   mails               ContactMail[]
   // Automatische Vorlagen-Mails: Idempotenz je Vorlage und Anlass, höchstens eine je Tag (lib/mail/vorlagen-mail.ts)
   mailVersand         LeadMailVersand[]
+  // Eingegangene Antworten per E-Mail (Paket M2, lib/mail/eingang.ts): nur Ablauf, Inhalt steht in ContactMail
+  mailEingaenge       MailEingang[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
   contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
@@ -3855,10 +3860,43 @@ model ContactMail {
   userId             String?
   createdAt          DateTime          @default(now())
   history            LeadHistory?
+  // ausgang | eingang (Paket M2: Antwort des Leads an die Antwortadresse; recipient = Absender, status „empfangen“)
+  richtung           String            @default("ausgang")
+  eingang            MailEingang?
 
   @@index([leadId, createdAt])
   @@index([existingCustomerId, createdAt])
   @@index([providerMessageId])
+}
+
+// Eingang an die Antwortadresse (Ole, 18.11.2026, Paket M2, lib/mail/eingang.ts): ein Eintrag je Resend-Ereignis
+// „email.received“ (Idempotenz, Fortschritt, Diagnose). Keine Inhalte, keine Absenderadresse: Betreff und Text stehen nur
+// in ContactMail (mit dem Lead gelöscht). anhaenge: Name, Größe, Typ, Resend-ID, weitergeleitet ja/nein (Download über
+// die App holt eine frische Adresse bei Resend). Ohne Lead nach 90 Tagen gelöscht (pruneTransient).
+model MailEingang {
+  id               String       @id @default(cuid())
+  resendEmailId    String       @unique
+  customerId       String?
+  leadId           String?
+  lead             Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contactMailId    String?      @unique
+  contactMail      ContactMail? @relation(fields: [contactMailId], references: [id], onDelete: SetNull)
+  // code | absender | kunde | keine
+  zuordnung        String       @default("keine")
+  // in_arbeit | antwort | hinweis | ignoriert | fehler
+  ergebnis         String       @default("in_arbeit")
+  // Kurzer Grund ohne Inhalte (z. B. „auto_antwort“, „schleife“, „absender_unbestaetigt“, „schalter_aus“)
+  grund            String?
+  anhaenge         Json?
+  weitergeleitetAt DateTime?
+  pushAt           DateTime?
+  versuche         Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([leadId])
+  @@index([createdAt])
 }
 
 // Vorlagen-Mails an Leads (Ole, 17.11.2026, Paket M0, lib/mail/vorlagen-mail.ts): Reservierung vor dem Versand.
