@@ -17,7 +17,7 @@
         "vs": "30 Mio. €",
         "forderungsausfall": "nein",
         "schluessel": "nein",
-        "delikt": "optional",
+        "delikt": "nein",
         "geliehen": "ja",
         "miete": "ja",
         "gefaelligkeit": "ja",
@@ -26,12 +26,9 @@
         "drohne": "optional, unter 5 kg",
         "sb": "wählbar, z. B. 150 €"
       },
-      "bausteine": {
-        "delikt": "optional"
-      },
+      "bausteine": {},
       "quelle": "https://www.vkb.de/v/haftpflicht/privathaftpflichtversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht Optimal",
@@ -55,8 +52,7 @@
         "delikt": "inklusive"
       },
       "quelle": "https://www.vkb.de/v/haftpflicht/privathaftpflichtversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +63,7 @@
     "Zwei Stufen Kompakt (laut Seite ideal für junge Leute) und Optimal (ideal für Familien, „Tarif mit den meisten Leistungen“); keine Empfehlung markiert.",
     "Optimal enthält laut Tarifvergleich den Baustein ZusatzSchutz (Markt- und Besitzstandsgarantie, Neuwert, Mallorca, Rabattrückstufung bei geliehenen Kfz), Schlüsselverlust, Schadenersatzausfall und deliktunfähige Kinder. Ob deliktunfähige Kinder in Kompakt zuwählbar sind, steht nur im FAQ als Zusatzbaustein; Höchstbeträge nicht genannt.",
     "Drohnen bis 5 kg als Zusatzbaustein; Spielzeugdrohnen für Innenräume mitversichert. Öltank im selbst bewohnten Ein- oder Zweifamilienhaus bis 10.000 Liter mitversichert. Ehrenamt und Nebentätigkeit nicht belegt.",
-    "Selbstbeteiligung: Rechenbeispiel mit 150 €, laut FAQ wählbar."
+    "Selbstbeteiligung: Rechenbeispiel mit 150 €, laut FAQ wählbar.",
+    "Geprüft am 18.11.2026 am Tarifvergleich und Text der Produktseite."
   ]
 }

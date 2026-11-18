@@ -32,8 +32,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -43,6 +42,7 @@
     "DEVK bietet die Tierkrankenversicherungen über den Kooperationspartner Uelzener an (Risikoträger Uelzener); Tarifangaben aus der Leistungstabelle auf devk.de.",
     "Ein Tarif mit wählbarer Erstattungshöhe (15.000 €, 25.000 € oder 50.000 € je Jahr) und Selbstbeteiligung.",
     "Vorsorgepauschale 500 € im Jahr, z. B. für Impfungen. Reha-Baustein bis 3.000 € im Jahr mit 20 % Selbstbeteiligung je Rechnung.",
-    "Gelenk-Chips in der Tabelle nicht genannt."
+    "Gelenk-Chips in der Tabelle nicht genannt.",
+    "Geprüft am 18.11.2026 an der Leistungstabelle auf devk.de (Rohdaten mit Symbolen)."
   ]
 }

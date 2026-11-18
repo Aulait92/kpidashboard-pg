@@ -6,7 +6,7 @@
   "inAllenTarifen": [
     "Rente schon bei einer Fähigkeit",
     "Abschluss ab 5 Jahren",
-    "Unabhängig vom Beruf"
+    "Rentensteigerung wählbar"
   ],
   "tarife": [
     {
@@ -17,12 +17,12 @@
       "werte": {
         "anzahl": "19 plus Bausteine",
         "prognose": "6 Mon., Psyche 12",
-        "psyche": "optional (Baustein)"
+        "psyche": "optional (Baustein)",
+        "pflege": "ja (Basisfähigkeit)"
       },
       "bausteine": {},
       "quelle": "https://www.vkb.de/v/einkommenssicherung/grundfaehigkeit.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -31,6 +31,7 @@
   "offen": [
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
     "Ein Tarif aus Bausteinen: 19 Basisfähigkeiten immer versichert, dazu Mobilitätsbaustein (Auto, Fahrrad, öffentliche Verkehrsmittel), berufsspezifische Bausteine sowie Psyche und Psyche Plus (volle Erwerbsminderung durch psychische Erkrankung).",
-    "Pflegebedürftigkeit ist in der Liste der Fähigkeiten erwähnt, die Zuordnung zu einem Baustein ist nicht eindeutig. Nachversicherung, weltweiter Schutz und Dynamik nicht belegt; Rente kann im Leistungsfall um einen vereinbarten Prozentsatz steigen."
+    "Pflegebedürftigkeit steht in der Liste der Basisfähigkeiten. Nachversicherung, weltweiter Schutz und Dynamik nicht belegt; Rente kann im Leistungsfall um einen vereinbarten Prozentsatz steigen. „Unabhängig vom Beruf“ steht so nicht auf der Seite (es gibt berufsspezifische Bausteine) und wurde ersetzt.",
+    "Geprüft am 18.11.2026 an der Produktseite."
   ]
 }

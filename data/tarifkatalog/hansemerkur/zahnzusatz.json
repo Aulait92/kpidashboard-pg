@@ -24,8 +24,7 @@
         "inlays": "90 %"
       },
       "quelle": "https://www.hansemerkur.de/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatz Komfort (Tarif EZK)",
@@ -42,8 +41,7 @@
         "inlays": "90 %"
       },
       "quelle": "https://www.hansemerkur.de/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatz Luxus (Tarif EZL)",
@@ -60,8 +58,7 @@
         "inlays": "100 %"
       },
       "quelle": "https://www.hansemerkur.de/zahnzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -74,6 +71,7 @@
     "Exklusiv ohne Zahnbehandlung (Füllungen, Wurzel, Parodontose) und ohne Zahnreinigung; Wartezeit Zahnersatz 6 Monate, bei Unfall keine.",
     "Zahnreinigung Komfort und Luxus: bis 130 € im Kalenderjahr, höchstens 65 € je Rechnung.",
     "Nicht aufgenommen: Zahnvorsorge Top (EZP2) und Top Plus (EZP3, mit Bleaching und Schmerzausschaltung), reine Vorsorgetarife ohne Zahnersatz. Kieferorthopädie nur im Kindertarif (Dental, AZB), nicht im Tarifvergleich.",
-    "Empfehlung: HanseMerkur markiert Komfort als „Bestseller“."
+    "Empfehlung: HanseMerkur markiert Komfort als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

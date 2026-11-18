@@ -19,8 +19,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.devk.de/produkte/pflegezusatzversicherung/pflegetagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Pflegetagegeld in allen Pflegegraden PT/PA",
@@ -33,8 +32,7 @@
         "wartezeit": "keine"
       },
       "quelle": "https://www.devk.de/produkte/pflegezusatzversicherung/pflegetagegeld",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -47,6 +45,7 @@
     "PT/PA häuslich: Pflegegrad 1 15 %, 2 25 %, 3 50 %, 4 75 %, 5 100 %; vollstationär immer 100 %. Assistance mit Malteser Hilfsdienst (Pflegeplatz in 24 Stunden). Schutz in EU und Schweiz.",
     "Ob PT3 bei häuslicher und stationärer Pflege gleich leistet, nicht genannt.",
     "Einmalleistung, Beitragsbefreiung im Pflegefall, Demenz und Dynamik stehen nicht auf der Produktseite.",
-    "Förderpflege (staatlich gefördert, 60 € Zulage im Jahr, ohne Gesundheitsprüfung) als eigenes Produkt nicht als Stufe geführt; Leistungen hängen vom Eintrittsalter ab."
+    "Förderpflege (staatlich gefördert, 60 € Zulage im Jahr, ohne Gesundheitsprüfung) als eigenes Produkt nicht als Stufe geführt; Leistungen hängen vom Eintrittsalter ab.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Produktinformation der DEVK."
   ]
 }

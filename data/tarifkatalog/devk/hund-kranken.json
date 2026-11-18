@@ -32,8 +32,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -43,6 +42,7 @@
     "DEVK bietet die Tierkrankenversicherungen über den Kooperationspartner Uelzener an (Risikoträger Uelzener); Tarifangaben aus der Leistungstabelle auf devk.de.",
     "Ein Tarif mit wählbarer Erstattungshöhe (3.000 €, 6.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
     "Vorbehandlung unbegrenzt; Trächtigkeitsuntersuchungen bis 200 € im Jahr.",
-    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung."
+    "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung.",
+    "Geprüft am 18.11.2026 an der Leistungstabelle auf devk.de (Rohdaten mit Symbolen)."
   ]
 }

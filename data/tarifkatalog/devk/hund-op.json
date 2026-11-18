@@ -31,8 +31,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/tiere/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -43,6 +42,7 @@
     "Ein Tarif mit wählbarer Erstattungshöhe (3.000 €, 6.000 € oder unbegrenzt je Jahr) und Selbstbeteiligung.",
     "Kastration: medizinisch begründete Kastration nach 6 Monaten Wartezeit; besondere OPs 1 Jahr.",
     "Vorsorge-Baustein bis 500 € im Jahr mit 25 % Selbstbeteiligung je Rechnung; Sterbegeld-Baustein bis 1.500 €.",
-    "Mehrhunde-OP-Versicherung und Züchtertarif mit abweichenden Leistungen nicht aufgenommen."
+    "Mehrhunde-OP-Versicherung und Züchtertarif mit abweichenden Leistungen nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an der Leistungstabelle auf devk.de (Rohdaten mit Symbolen)."
   ]
 }

@@ -29,8 +29,7 @@
         "verkehr": "optional"
       },
       "quelle": "https://www.hansemerkur.de/rechtsschutzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-, Berufs- und Verkehrs-Rechtsschutz",
@@ -52,8 +51,7 @@
         "verkehr": "inklusive"
       },
       "quelle": "https://www.hansemerkur.de/rechtsschutzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -63,6 +61,7 @@
     "HanseMerkur bietet den Rechtsschutz in Kooperation mit der Itzehoer an; Leistungstabelle auf hansemerkur.de.",
     "Für Nichtselbstständige. Verkehrs-Rechtsschutz auch einzeln; Wohnungs- und Grundstücks-Rechtsschutz nicht genannt.",
     "Strafkaution und Wartezeit nicht genannt; Selbstbeteiligungsvariante wählbar, Höhe nicht genannt.",
-    "HanseMerkur markiert Privat-, Berufs- und Verkehrs-Rechtsschutz als „Bestseller“."
+    "HanseMerkur markiert Privat-, Berufs- und Verkehrs-Rechtsschutz als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

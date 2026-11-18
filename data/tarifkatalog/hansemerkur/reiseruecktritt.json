@@ -27,8 +27,7 @@
         "abbruch": "optional"
       },
       "quelle": "https://www.hansemerkur.de/reiseruecktrittsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Reiserücktritt + Reiseabbruch für 1 Reise",
@@ -48,8 +47,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.hansemerkur.de/reiseruecktrittsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Jahresversicherung Reiserücktritt + Reiseabbruch",
@@ -68,8 +66,7 @@
         "abbruch": "inklusive"
       },
       "quelle": "https://www.hansemerkur.de/reiseruecktrittsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -81,6 +78,7 @@
     "Pandemie: Erkrankung an COVID-19 als unerwartete schwere Erkrankung versichert; Quarantäne und Beförderungsverweigerung nur mit Zusatz „Pandemie-Schutz Plus“ (bei Einzelreisen optional).",
     "Reiseabbruch: ganzer Reisepreis in der ersten Urlaubshälfte, höchstens in den ersten 8 Reisetagen, danach anteilig.",
     "Familientarif: höchstens 2 Erwachsene mit Kindern (unter 21 bzw. bei Jahresvertrag unter 25 Jahren). Abschluss spätestens 30 Tage vor Reisebeginn, bei kürzerer Frist bis zum 3. Werktag nach Buchung.",
-    "Empfehlung: HanseMerkur markiert Reiserücktritt + Reiseabbruch für 1 Reise als „Bestseller“."
+    "Empfehlung: HanseMerkur markiert Reiserücktritt + Reiseabbruch für 1 Reise als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

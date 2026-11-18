@@ -16,8 +16,11 @@ Ausgabe je Zeitraum (`d30`, `d90`, `gesamt`, nach `Lead.createdAt`) und je Kunde
 `felder` (`n`, `pct` bezogen auf `erreicht`) und `zahlen` (Mediane, Termin-Ergebnisse, Lieferwege). Storno und
 Cross-Selling rechnen auf Vertragsebene (`basisVertraege`). `fehlendeFelder` listet je Stufe, was es gar nicht gibt.
 Je Kunde nur Kunden-ID, Name, Paket, archiviert, Kundenart. Ausgeschlossen: `Lead.isTest`, `Customer.isTest`,
-`plan = internal`, das Bewertungs-Demo. Kundenart je Lead: Pay-per-Lead, wenn `subscriptionId` gesetzt ist oder der
-Lead mit `PoolLead`/`PplIntake` verknüpft ist, sonst Vermittler-Kunde.
+`plan = internal`, das Bewertungs-Demo. Kundenart je Lead (korrigiert 18.11.2026, `kundenartFuer`): Pay-per-Lead, wenn
+`subscriptionId` gesetzt ist, der Lead mit `PoolLead` verknüpft ist oder aus dem Airtable-Eingang (`PplIntake`) kommt
+**und** der Kunde dieses Produkt als Bezug (`LeadSubscription.productKey`) kauft; sonst Vermittler-Kunde. Vorher zählte
+jede `PplIntake`-Verknüpfung als Pay-per-Lead, der Eingang enthält aber alle Airtable-Leads (Stand 17.11.: 0 Vermittler-Leads).
+Anzeigenfelder (`adPlatform`, `adFormId`, `adCampaignId`, `adSetId`, `adId`) zählen seit 18.11. unter `stufen.anzeige`.
 
 ## 1. Stufen und Felder heute
 

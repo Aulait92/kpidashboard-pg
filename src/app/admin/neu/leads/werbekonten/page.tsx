@@ -26,7 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
   const { ansicht } = await searchParams;
   const pools = ansicht === "pools";
   return (
-    <Seite titel="Leads & Kampagnen" reiter="leads" breit>
+    <Seite titel="Liefern" reiter="liefern" breit>
       <Ansichten
         aktiv={pools ? "pools" : ""}
         items={[

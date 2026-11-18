@@ -1,18 +1,24 @@
+import Link from "next/link";
 import { connection } from "next/server";
-import { HeuteAllesErledigt, HeuteFilterChips, HochrechnungKarte, LaeuftVonAllein, NeueBuchungenHinweis } from "@/components/admin/heute-bausteine";
+import { ChevronRight } from "lucide-react";
+import { HeuteAllesErledigt, HochrechnungKarte, LaeuftVonAllein, NeueBuchungenHinweis } from "@/components/admin/heute-bausteine";
 import { HeuteList } from "@/components/admin/heute-list";
 import { VertriebBlick } from "@/components/admin/vertrieb-blick";
+import { BEREICH_SYMBOL } from "@/components/admin-neu/rahmen/symbole";
 import { Seite } from "@/components/admin-neu/ui/seite";
-import { HEUTE_FILTERS, berlinHour, greeting, summary } from "@/lib/admin-heute";
+import { berlinHour, greeting, summary } from "@/lib/admin-heute";
 import { ladeHeuteSeite } from "@/lib/admin-heute-laden";
+import { BEREICHE } from "@/lib/admin-neu/navigation";
+import { punkteJeRolle } from "@/lib/admin-neu/rollen";
 import { requireAuth } from "@/lib/vertrieb/auth";
 
-export const metadata = { title: "Heute | performancegrowth Admin" };
+export const metadata = { title: "Mein Tag | performancegrowth Admin" };
 
-// Heute im neuen Admin: alle Aufgaben und Freigaben aus allen Bereichen mit Schnellknöpfen, daneben Vertrieb
-// (Termine, Anfragen, Pipeline), neue Buchungen, Hochrechnung und „Läuft von allein“.
+// Mein Tag (früher Heute) im neuen Admin: alle Aufgaben und Freigaben mit Schnellknöpfen, seit Admin v2 (Paket A2) in
+// Karten je Rolle (Verkaufen, Betreuen, Liefern, Geld, Werkzeuge) statt Filter-Chips; daneben Vertrieb (Termine,
+// Anfragen, Pipeline), neue Buchungen, Hochrechnung und „Läuft von allein“.
 // Dieselben Bausteine, Daten und Server Actions wie /admin/heute (components/admin/heute-*, app/admin/heute/actions.ts).
-// Die Aufgabenliste (früher Reiter „Aufgaben“) liegt unter Vertrieb → Aufgaben.
+// Die Aufgabenliste (früher Reiter „Aufgaben“) liegt unter Mein Tag → Aufgaben (/admin/neu/vertrieb/aufgaben).
 const LISTE = [
   "heute-list--liste-braucht-sie-aus-allen-bereichen-mit",
   // Schnellknöpfe in den Zeilen (components/admin/heute-list.tsx)
@@ -45,13 +51,11 @@ const VERTRIEB = [
   "vertrieb-blick--vertrieb-auf-einen-blick-kontakte-je-stufe",
 ].join(" ");
 
-export default async function HeutePage({ searchParams }: { searchParams: Promise<{ bereich?: string }> }) {
+export default async function HeutePage() {
   await connection();
   const session = await requireAuth();
-  const { bereich = "" } = await searchParams;
   const { items, auto, forecast, neueBuchungen } = await ladeHeuteSeite(session.userId);
-  const filter = HEUTE_FILTERS.find((f) => f.key === bereich) ?? HEUTE_FILTERS[0];
-  const shown = items.filter(filter.match);
+  const gruppen = punkteJeRolle(items);
 
   return (
     <Seite titel={greeting(berlinHour(new Date()))}>
@@ -61,15 +65,40 @@ export default async function HeutePage({ searchParams }: { searchParams: Promis
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
         <section aria-label="Braucht Sie" className="min-w-0">
-          <div data-funktion="admin-heute-heute-filters--filter-alle-vertrieb-kunden-chats-freigaben">
-            <HeuteFilterChips items={items} aktiv={filter.key} basis="/admin/neu" />
+          {/* Karten je Rolle ersetzen den Filter Alle/Vertrieb/Kunden/Chats/Freigaben (Zuordnung F018, F019) */}
+          <div className="space-y-6" data-funktion="admin-heute-heute-filters--filter-alle-vertrieb-kunden-chats-freigaben">
+            <div className="space-y-6" data-funktion={LISTE}>
+              {gruppen.length ? (
+                gruppen.map(({ rolle, punkte }) => {
+                  const b = BEREICHE.find((x) => x.id === rolle)!;
+                  const Icon = BEREICH_SYMBOL[rolle];
+                  return (
+                    <div key={rolle} data-rolle={rolle}>
+                      <div className="mb-2 flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--brand-soft)] text-[color:var(--brand)]">
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <h2 className="text-base font-semibold">{b.label}</h2>
+                        <span className="rounded-full bg-[color:var(--brand-soft)] px-2 text-xs font-semibold leading-5 text-[color:var(--brand-dark)]">{punkte.length}</span>
+                        <Link href={b.pfad} aria-label={`${b.label} öffnen`} className="ml-auto inline-flex min-h-10 items-center gap-0.5 text-sm font-medium text-[color:var(--brand)] hover:underline">
+                          Öffnen
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                      <HeuteList items={punkte} ohneBereich />
+                    </div>
+                  );
+                })
+              ) : (
+                <HeuteAllesErledigt gefiltert={false} />
+              )}
+            </div>
           </div>
-          <div data-funktion={LISTE}>{shown.length ? <HeuteList items={shown} /> : <HeuteAllesErledigt gefiltert={items.length > 0} />}</div>
         </section>
 
         <div className="flex min-w-0 flex-col gap-6">
           <div data-funktion={VERTRIEB}>
-            <VertriebBlick highlight={bereich === "vertrieb"} />
+            <VertriebBlick highlight={false} />
           </div>
           <div className="contents" data-funktion="admin-buchungen-neu-countneuebuchungen--hinweis-neue-buchungen-seit-letztem-besuch">
             <NeueBuchungenHinweis anzahl={neueBuchungen} />

@@ -25,8 +25,7 @@
         "elektro": "Akku, Ladekabel"
       },
       "quelle": "https://www.hansemerkur.de/kfz-versicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Drive Easy",
@@ -44,8 +43,7 @@
         "elektro": "Akku, Kabel, Wallbox"
       },
       "quelle": "https://www.hansemerkur.de/kfz-versicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Drive Best",
@@ -63,8 +61,7 @@
         "elektro": "Akku, Wallbox, Ladegerät"
       },
       "quelle": "https://www.hansemerkur.de/kfz-versicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
     "Tierbiss und Kurzschluss inkl. Folgeschäden: Smart 5.000 €, Easy 20.000 €, Best ohne Betragsgrenze angegeben.",
     "Kaufpreisentschädigung 6, 24 bzw. 36 Monate. Eigenschadendeckung 50.000 € bzw. 100.000 €.",
     "Rabattschutz und Werkstattbindung nicht genannt.",
-    "HanseMerkur markiert keine Stufe."
+    "HanseMerkur markiert keine Stufe.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

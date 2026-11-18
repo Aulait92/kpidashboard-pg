@@ -14,7 +14,7 @@ export default async function Page() {
   await requireAuth();
   const { slots, demo } = await ladeUnterlagen();
   return (
-    <Seite titel="Marketing" reiter="marketing">
+    <Seite titel="Verkaufen" reiter="marketing">
       <UnterlagenGrid
         slots={slots}
         demo={demo}
