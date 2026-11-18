@@ -405,7 +405,7 @@ export async function seedDemoData(customerId: string): Promise<{ leads: number 
         botActive: !(scenario === "offer" || scenario === "closed"),
         qualified: hasAppt,
         qualificationSummary: replied && scenario !== "no_interest"
-          ? `${situation}, Interesse an ${interest}; ${contractNote}. Rückfrage: „${sitA}".` +
+          ? `${situation}, Interesse an ${interest}; ${contractNote}. ${sitQ} „${sitA}“.` +
             (hasAppt ? ` Bevorzugt ${mode === "phone" ? "Telefon" : "Videocall"}.` : "")
           : null,
         qualificationData:

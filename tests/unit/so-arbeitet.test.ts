@@ -35,12 +35,12 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
     const e = eingabe("sie");
     const z = beispielVerlauf(e);
     const texte = vomAssistenten(z);
-    // Erstanschreiben v8 (ohne die Lebenssituation, damit die Zwischenfrage kommt)
+    // Erstanschreiben v9 (ohne die Lebenssituation, damit die Zwischenfrage kommt); KI-Kennzeichnung als Fußzeile der Vorlage
     expect(texte[0]).toBe(
-      erstanschreibenText({ an: "sie", kontakt: BEISPIEL_KONTAKT, name: e.person.nom, vermittler: e.person.dat, vermittlerNom: e.person.nom, source: "Privatschutz", formular: PRIVATSCHUTZ.slice(1) }),
+      erstanschreibenText({ an: "sie", kontakt: BEISPIEL_KONTAKT, name: e.person.nom, vermittler: e.person.dat, vermittlerNom: e.person.nom, source: "Privatschutz", formular: PRIVATSCHUTZ.slice(1) }, { ohneFuss: true }),
     );
     expect(texte[0]).toContain("Hallo Frau Becker");
-    expect(texte[0]).toContain("von Herrn Kannapinn");
+    expect(texte[0]).toBe("Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
     expect(texte[1]).toBe("Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?");
     expect(texte[2]).toMatch(/^Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten/);
     expect(texte[3]).toBe(buchungsText({ an: "sie", start: new Date("2026-11-20T15:00:00.000Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: e.person }));
@@ -78,7 +78,8 @@ describe("Beispielverlauf (WhatsApp-Optik)", () => {
   it("Anderes Produkt: Erstanschreiben und Terminvorschlag passen zum Produkt, keine Zwischenfrage", () => {
     const z = beispielVerlauf(eingabe("sie", { produkt: "Katzenversicherung", formular: [{ label: "Tierart", value: "Katze" }, { label: "Tiername", value: "Minka" }, { label: "Geburtsjahr (Tier)", value: "2022" }] }));
     const texte = vomAssistenten(z);
-    expect(texte[0]).toContain("Tierkrankenversicherung");
+    // v9: Tierkrankenversicherung emotional mit dem Tiernamen
+    expect(texte[0]).toMatch(/^Hallo Frau Becker, schön, dass Sie Minka gut absichern möchten 🐾 \*.+\?\*$/);
     expect(texte.join("\n")).not.toContain("Wer soll mitversichert sein?");
     expect(texte[1]).toContain("Minka");
   });

@@ -16,8 +16,9 @@ import {
 } from "@/lib/whatsapp/ki-hinweis";
 import { beratungsTreffer, sichereAntwort } from "@/lib/whatsapp/beratungs-sperre";
 import { buildSystemPrompt } from "@/lib/whatsapp/bot";
-import { ERSTINFO_FOOTER_V8, erstinfoFooterFor, NAECHSTE_FASSUNG, noticeText, OUTREACH_PURPOSES, TEMPLATE_BODY, TEMPLATE_BODY_B, TEMPLATE_HEADER, templateVersionFor } from "@/lib/whatsapp/templates";
+import { ERSTINFO_FOOTER_V8, ERSTINFO_FOOTER_V9, erstinfoFooterFor, NAECHSTE_FASSUNG, noticeText, OUTREACH_PURPOSES, TEMPLATE_BODY, TEMPLATE_BODY_B, TEMPLATE_HEADER, templateVersionFor } from "@/lib/whatsapp/templates";
 import { buildTemplateRequest, templateNameFor } from "@/lib/whatsapp/template-plan";
+import { erstanschreibenText } from "@/lib/whatsapp/erstanschreiben";
 import { isStopMessage } from "@/lib/whatsapp/stopp";
 
 const names = { firm: "Agentur Susanne Meier", advisor: "Susanne Meier" };
@@ -43,9 +44,9 @@ describe("KI-Hinweis", () => {
 
   it("steht fest in jedem Erstanschreiben (Vorlage und Freitext, beide A/B-Fassungen); Erstinformation als PDF im Kopf", () => {
     for (const p of OUTREACH_PURPOSES) {
-      // Ab v8 (Ole, 17.11.2026) steht die KI-Kennzeichnung in der festen Fußzeile unter dem Text (Meta: Footer)
+      // Ab v8 (Ole, 17.11.2026) steht die KI-Kennzeichnung in der festen Fußzeile unter dem Text (Meta: Footer), v9 eigene
       const fuss = erstinfoFooterFor(templateVersionFor(p));
-      expect(fuss).toBe(ERSTINFO_FOOTER_V8);
+      expect(fuss).toBe(ERSTINFO_FOOTER_V9);
       for (const b of [TEMPLATE_BODY[p], TEMPLATE_BODY_B[p]]) {
         if (!b) continue;
         expect(hasKiHinweis(`${b.sie}\n${fuss}`), p).toBe(true);
@@ -53,8 +54,10 @@ describe("KI-Hinweis", () => {
       }
       expect(TEMPLATE_HEADER[p], p).toBe("DOCUMENT");
     }
-    const t = noticeText("outreach_zahn", "sie", names, FRAU, ["Herrn Meier", "Welcher Tarifbaustein ist Ihnen am wichtigsten"]);
-    expect(hasKiHinweis(`${t}\n\n${ERSTINFO_FOOTER_V8}`)).toBe(true);
+    const t = noticeText("outreach_zahn", "sie", names, FRAU, ["Welcher Tarifbaustein ist Ihnen am wichtigsten"]);
+    expect(hasKiHinweis(`${t}\n\n${ERSTINFO_FOOTER_V9}`)).toBe(true);
+    // Freitext: KI-Kennzeichnung als kursive Zeile unter dem Text
+    expect(hasKiHinweis(erstanschreibenText({ an: "sie", kontakt: FRAU, name: "Susanne", source: "Zahnzusatz" }))).toBe(true);
     // PDF im Kopf zählt als geschickt (kein zweites PDF nach der ersten Antwort), alter Link-Text nicht
     expect(hasErstinfoPdf([{ direction: "outbound", kind: "template", body: `${ERSTINFO_KOPF}\nGuten Tag …` }])).toBe(true);
     expect(hasErstinfoPdf([{ direction: "outbound", kind: "template", body: "Erstinformation zu X als Versicherungsvermittler: https://x.de/erstinformation/abc" }])).toBe(false);
@@ -149,29 +152,34 @@ describe("KI-Hinweis nach Anwalts-Memo (Rechtsvorprüfung 16.11.2026)", () => {
     for (const an of ["du", "sie"] as const) expect(kiHinweisErneut(an, names)).toContain("Ich bin kein Mensch und berate nicht zu Tarifen.");
   });
 
-  it("Erstanschreiben v8 (Ole, 17.11.2026): Assistent des Vermittlers, KI-Kennzeichnung in der Fußzeile, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
+  it("Erstanschreiben v9 (Ole, 18.11.2026): kurz, KI-Kennzeichnung in der Fußzeile, kein „Mensch“, kein Tarif-Hinweis; wird eingereicht", () => {
     for (const p of OUTREACH_PURPOSES) {
-      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v8_sie`);
+      expect(templateNameFor(p, undefined, "sie"), p).toBe(`pg_${p}_v9_sie`);
       const req = buildTemplateRequest(p, names, undefined, "sie", { documentExample: "https://x.de/e.pdf" });
-      expect(req.name, p).toBe(`pg_${p}_v8_sie`);
-      expect((req.components as { type: string; text?: string }[]).find((c) => c.type === "FOOTER")?.text, p).toBe(ERSTINFO_FOOTER_V8);
+      expect(req.name, p).toBe(`pg_${p}_v9_sie`);
+      expect((req.components as { type: string; text?: string }[]).find((c) => c.type === "FOOTER")?.text, p).toBe(ERSTINFO_FOOTER_V9);
       expect(NAECHSTE_FASSUNG[p], p).toBeUndefined();
       for (const t of [TEMPLATE_BODY[p].du!, TEMPLATE_BODY[p].sie]) {
-        expect(t, p).toContain("Hier schreibt der digitale Assistent von {{2}}");
+        expect(t, p).not.toContain("Hier schreibt");
+        expect(t, p).toMatch(/ \*\{\{\d\}\}\?\*$/);
         expect(t, p).not.toMatch(/Mensch|berate nicht|[–—]/);
-        expect(hasKiHinweis(`${t}\n${ERSTINFO_FOOTER_V8}`), p).toBe(true);
+        expect(hasKiHinweis(`${t}\n${ERSTINFO_FOOTER_V9}`), p).toBe(true);
       }
     }
+    // gespeicherter Text einer gesendeten v9-Vorlage trägt die Fußzeile: der KI-Hinweis gilt als gegeben
+    expect(kiHinweisNoetig({ outbound: [`${ERSTINFO_KOPF}\nHallo, danke für Ihre Anfrage! *Frage?*\n\n${ERSTINFO_FOOTER_V9}`], previousAt: null, now: new Date() })).toBeNull();
     // gespeicherter Text einer gesendeten v8-Vorlage trägt die Fußzeile: der KI-Hinweis gilt als gegeben
+    // ebenso die v8 (Rückfall bis zur Freigabe der v9)
     expect(kiHinweisNoetig({ outbound: [`${ERSTINFO_KOPF}\nHallo, danke … Assistent von Herrn Meier.\n\n*Frage?*\n\n${ERSTINFO_FOOTER_V8}`], previousAt: null, now: new Date() })).toBeNull();
   });
 
   it("Freitext im offenen Fenster: gleicher Aufbau wie die Vorlage, ohne „Mensch“", () => {
     for (const p of OUTREACH_PURPOSES) {
       for (const an of ["sie", "du"] as const) {
-        const t = noticeText(p, an, { ...names, kurz: "Susanne" }, FRAU, ["Susanne", "Welcher Tarifbaustein ist Ihnen am wichtigsten"]);
-        expect(t, `${p} ${an}`).toContain("digitale Assistent von Susanne");
-        expect(t, `${p} ${an}`).not.toMatch(/Mensch|berate nicht/);
+        const t = noticeText(p, an, { ...names, kurz: "Susanne" }, FRAU, p === "outreach_tkv" ? ["Minka", "Wie alt ist Minka"] : ["Welcher Tarifbaustein ist Ihnen am wichtigsten"]);
+        expect(t, `${p} ${an}`).toMatch(/^Hallo [^,]+, (danke für|schön, dass)/);
+        expect(t, `${p} ${an}`).toMatch(/ \*[^*]+\?\*$/);
+        expect(t, `${p} ${an}`).not.toMatch(/\{\{|Mensch|berate nicht|\?\?/);
       }
     }
   });
