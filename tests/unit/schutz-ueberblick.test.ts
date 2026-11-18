@@ -209,9 +209,8 @@ describe("Schutz im Überblick verständlicher (Ole, 18.11.2026)", () => {
   it("Antworten im Fenster: Ja, bei mir / Ja, woanders / Weiß nicht / Nein; Präsentation behält die Ampel-Begriffe", () => {
     expect(SCHUTZ_REIHENFOLGE.map((s) => SCHUTZ_ANTWORT[s].label)).toEqual(["Ja, bei mir", "Ja, woanders", "Weiß nicht", "Nein"]);
     expect(SCHUTZ_REIHENFOLGE.map((s) => SCHUTZ_STATUS[s].label)).toEqual(["Bei uns versichert", "Woanders versichert", "Prüfen", "Lücke"]);
-    // Farbpunkt folgt der Antwort: grün ja, grau weiß nicht, rot nein
-    expect(SCHUTZ_ANTWORT["bei-uns"].farbe).toBe(SCHUTZ_ANTWORT.woanders.farbe);
-    expect(new Set([SCHUTZ_ANTWORT.woanders.farbe, SCHUTZ_ANTWORT.pruefen.farbe, SCHUTZ_ANTWORT.luecke.farbe]).size).toBe(3);
+    // Ein Farbsystem: Farbpunkte der Antworten = Ampel-Farben der Präsentation
+    for (const s of SCHUTZ_REIHENFOLGE) expect(SCHUTZ_ANTWORT[s].farbe).toBe(SCHUTZ_STATUS[s].farbe);
   });
 
   it("Vorbelegung mit Quelle: Chat (Angaben, Komplettcheck) bzw. Formular; Unbekanntes ohne Quelle", () => {

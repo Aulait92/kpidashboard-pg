@@ -31,13 +31,15 @@ export const SCHUTZ_REIHENFOLGE: SchutzStatus[] = ["bei-uns", "woanders", "pruef
 
 /**
  * Antworten im Fenster „Schutz im Überblick“ der Terminvorbereitung (Ole, 18.11.2026): Frage „Hat Frau Becker das
- * schon?“, Farbpunkt folgt der Antwort (grün ja, grau weiß nicht, rot nein). Die Präsentation für den Kunden behält die
- * Ampel-Begriffe aus SCHUTZ_STATUS.
+ * schon?“. Ein Farbsystem (Entscheidung 18.11.2026): Die Farbpunkte nutzen dieselben Farben wie die Ampel der
+ * Präsentation (grün bei mir, blau woanders, orange weiß nicht, rot nein), damit Vorschau und Antworten zusammenpassen.
+ * „Weiß nicht“ bleibt im Knopf dezent (nur Umriss), damit es nicht wie eine Entscheidung aussieht. Die Präsentation für
+ * den Kunden behält die Ampel-Begriffe aus SCHUTZ_STATUS.
  */
 export const SCHUTZ_ANTWORT: Record<SchutzStatus, { label: string; farbe: string }> = {
   "bei-uns": { label: "Ja, bei mir", farbe: "#16a34a" },
-  woanders: { label: "Ja, woanders", farbe: "#16a34a" },
-  pruefen: { label: "Weiß nicht", farbe: "#94a3b8" },
+  woanders: { label: "Ja, woanders", farbe: "#2563eb" },
+  pruefen: { label: "Weiß nicht", farbe: "#d97706" },
   luecke: { label: "Nein", farbe: "#dc2626" },
 };
 
