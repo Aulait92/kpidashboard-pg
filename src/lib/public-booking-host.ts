@@ -50,7 +50,7 @@ const SUPPORT_PREFIXES = ["/api/abmelden", "/_next", "/icon", "/apple-icon", "/f
  */
 export const RESERVED_SEGMENTS: ReadonlySet<string> = new Set([
   // Buchungsadresse
-  "book", "empfehlung", "einwilligung", "abmelden", "erstinformation", "beratung", "datenschutz", "demo", "api", "_next", "icon", "apple-icon", "monitoring",
+  "book", "empfehlung", "einwilligung", "vollmacht", "abmelden", "erstinformation", "beratung", "datenschutz", "demo", "api", "_next", "icon", "apple-icon", "monitoring",
   // App (nur auf der App-Adresse)
   "admin", "angebot", "buyer", "email-bestaetigen", "empfehlen", "feedback", "forgot-password", "login", "logout", "login-karten",
   "microsoft-freigabe", "rechner", "rechtliches", "reset-password", "sicherheit", "status", "videos", "fonts", "sw", "manifest",
