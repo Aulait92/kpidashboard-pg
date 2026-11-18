@@ -24,7 +24,6 @@ import {
   isPrepaid,
   offerSetupDiscount,
   PRICE_LIST,
-  RHYTHMUS_MONATE,
   rhythmusAusStripe,
   rhythmusFaktor,
   rhythmusFuer,
@@ -470,14 +469,15 @@ export async function createScheduleForOffer(
   // (Stripe-Abrechnungszyklus ab dann jeweils an diesem Tag). Die Zeit davor ist entweder kostenlos (dann gibt es
   // vorher schlicht kein Abo: keine Testphase, keine 0-€-Rechnung) oder kommt anteilig als eigene Positionen mit
   // Zeitraum auf die erste Rechnung. Liegt der Start schon zurück, zählt ab heute (nichts rückwirkend).
+  // Vorauszahlung (Ole, 18.11.2026): Abrechnungstag gilt nicht, das Abo beginnt am Start mit dem vollen Betrag
+  // (kein anteiliger Betrag, kein kostenloser Start); abrechnungsplan liefert dann differs = false.
   const todayIso = berlinTodayIso();
   const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
   const plan = abrechnungsplan({
     startIso: startIso && startIso < todayIso ? todayIso : startIso,
     billingDay: offer.billingDay,
     freeStart: offer.billingFreeStart,
-    annual,
-    prepayMonths: RHYTHMUS_MONATE[rhythmus],
+    annual: rhythmus !== "month",
   });
   const noon = (iso: string) => Math.floor(new Date(`${iso}T12:00:00Z`).getTime() / 1000);
   if (plan?.differs && !plan.free) {

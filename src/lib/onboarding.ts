@@ -739,9 +739,11 @@ function billingTermsOf(offer: {
   startDate?: Date | null;
   billingDay?: number | null;
 }) {
-  // Abrechnungstag (lib/abrechnungstag.ts): Tag und erster Abrechnungstag an den Kunden (Laufzeit und Kündigung zählen ab dann)
+  // Abrechnungstag (lib/abrechnungstag.ts): Tag und erster Abrechnungstag an den Kunden (Laufzeit und Kündigung zählen ab dann).
+  // Vorauszahlung: Abrechnungstag gilt nicht (voller Betrag zum Start, Zeitraum ab Start), daher keiner gespeichert.
+  const billingDay = offer.annualPrepay ? null : (offer.billingDay ?? null);
   const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
-  const firstBillingIso = startIso ? ersterAbrechnungstag(startIso, offer.billingDay) : null;
+  const firstBillingIso = startIso ? ersterAbrechnungstag(startIso, billingDay) : null;
   const seatsBilled = offer.seats != null && offer.seatsIncluded != null && Number(offer.seatMonthly ?? 0) > 0
     ? Math.max(0, offer.seats - offer.seatsIncluded)
     : 0;
@@ -758,6 +760,6 @@ function billingTermsOf(offer: {
     // Überweisung nur auf Anfrage (lib/ueberweisung.ts): Freigabe und Zahlungsziel gehen an den Kunden über
     ...(offer.allowBankTransfer ? { allowBankTransfer: true, bankTransferDays: offer.bankTransferDays ?? 14 } : {}),
     ...(offer.zahlweise === "ueberweisung" ? { zahltPerUeberweisung: true } : {}),
-    ...(offer.startDate ? { billingDay: offer.billingDay ?? null, billingStart: firstBillingIso ? new Date(`${firstBillingIso}T12:00:00Z`) : null } : {}),
+    ...(offer.startDate ? { billingDay, billingStart: firstBillingIso ? new Date(`${firstBillingIso}T12:00:00Z`) : null } : {}),
   };
 }

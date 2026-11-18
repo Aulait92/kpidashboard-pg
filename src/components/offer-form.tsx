@@ -25,7 +25,7 @@ import {
 import { EMPFEHLUNG_MODULE_AVAILABLE } from "@/lib/empfehlung/shared";
 import { BESTAND_MODULE_AVAILABLE } from "@/lib/bestand/sichtbar";
 import { EMAIL_RE } from "@/lib/whatsapp/phone";
-import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag } from "@/lib/abrechnungstag";
+import { abrechnungsplan, ABRECHNUNGSTAG_MAX, ersterAbrechnungstag, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 
 const PRODUCT_SUGGESTIONS = [
   "TKV-Katze",
@@ -345,7 +345,7 @@ export function OfferForm({
                 <Field l="Start * (ab dann läuft die Monatsgebühr)">
                   <input className={input} type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 </Field>
-                <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} />
+                <AbrechnungstagFeld startDate={startDate} day={billingDay} setDay={setBillingDay} free={billingFree} setFree={setBillingFree} voraus={annual && annualPossible} />
               </div>
               <Field l="Angebot gültig (Tage)">
                 <input className={input} inputMode="numeric" value={validDays} onChange={(e) => setValidDays(e.target.value)} />
@@ -595,12 +595,15 @@ function AbrechnungstagFeld({
   setDay,
   free,
   setFree,
+  voraus,
 }: {
   startDate: string;
   day: string;
   setDay: (v: string) => void;
   free: boolean;
   setFree: (v: boolean) => void;
+  /** Vorauszahlung angeboten: gilt nur, wenn der Kunde monatlich wählt (lib/abrechnungstag.ts) */
+  voraus: boolean;
 }) {
   const startDay = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? Number(startDate.slice(8, 10)) : null;
   const plan = abrechnungsplan({ startIso: startDay ? startDate : null, billingDay: day ? Number(day) : null, freeStart: free });
@@ -632,6 +635,7 @@ function AbrechnungstagFeld({
             : startDay && startDay > ABRECHNUNGSTAG_MAX
               ? "Wie bisher: in kürzeren Monaten am Monatsletzten."
               : "Wie bisher: Abbuchung am Starttag."}
+          {differs && voraus ? ` ${VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG}` : ""}
         </p>
       </div>
     </details>

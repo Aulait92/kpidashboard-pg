@@ -179,7 +179,7 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     const a = await prisma.offer.findUniqueOrThrow({ where: { id: o.id } });
     expect(a).toMatchObject({ annualPrepay: true, annualFreeMonths: 2, annualChoice: true });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
-    expect(text).toMatch(/Jährlich im Voraus: 10\.880\s€ netto ab/);
+    expect(text).toMatch(/Jährlich im Voraus: 10\.880\s€ netto, jedes Jahr am \d\d\.\d\d\. fällig, das erste Mal zum Start am/);
     expect(text).toMatch(/verlängert sich um jeweils 12 Monate/);
     expect(hatGedankenstrich(text)).toBe(false);
 
@@ -205,43 +205,61 @@ describe("Jahreszahlung zur Wahl: Angebot → Annahme → Stripe", () => {
     expect(a).toMatchObject({ term: "3m", annualPrepay: false, annualFreeMonths: null });
   });
 
-  it("Jährlich mit Abrechnungstag und kostenlosem Start: Jahresabo beginnt am ersten Abrechnungstag, keine anteilige Rechnung", async () => {
-    const o = await angebot({ billingDay: 15, billingFreeStart: true, customerChoice: false });
-    expect(await accept(o.token, { annual: true })).toEqual({ ok: true });
-    await prisma.offer.update({ where: { id: o.id }, data: { stripeCustomerId: "cus_jw_g" } });
-    await createScheduleForOffer(o.id, checkout(o.id));
-    const p = zeitplan();
-    const start = o.startDate!.toISOString().slice(0, 10);
-    expect(p.start_date).toBe(noon(`${start.slice(0, 8)}15`));
-    expect(p.metadata).toMatchObject({ pg_interval: "year", pg_billing_day: "15", pg_free_start: "1" });
-    expect(p.phases.every((ph) => !ph.add_invoice_items)).toBe(true);
-    expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
+  it("Jährlich mit Abrechnungstag (Ole, 18.11.2026): voller Jahresbeitrag zum Start, kein Anteil, kein kostenloser Start", async () => {
+    for (const billingFreeStart of [false, true]) {
+      const o = await angebot({ billingDay: 15, billingFreeStart, customerChoice: false });
+      st.mails.length = 0;
+      expect(await accept(o.token, { annual: true })).toEqual({ ok: true });
+      // Auftragsbestätigung: voller Betrag zum Start, nichts anteilig oder kostenlos
+      const start = o.startDate!.toISOString().slice(0, 10);
+      const startDe = start.split("-").reverse().join(".");
+      const mail = st.mails.find((m) => /Auftragsbestätigung/.test(m.subject))!.list!.join(" ").replace(/\u00a0/g, " ");
+      expect(mail).toContain(`Jährlich im Voraus: 10.880 € netto, jedes Jahr am ${startDe.slice(0, 6)} fällig, das erste Mal zum Start am ${startDe}.`);
+      expect(mail).not.toMatch(/anteilig|kostenlos|jeweils am 15\./);
+      expect(hatGedankenstrich(mail)).toBe(false);
+
+      await prisma.offer.update({ where: { id: o.id }, data: { stripeCustomerId: `cus_jw_${billingFreeStart ? "g" : "a"}` } });
+      await createScheduleForOffer(o.id, checkout(o.id));
+      const p = zeitplan();
+      // Abo beginnt am Start (nicht am 15.), voller Jahresbetrag auf der ersten Rechnung
+      expect(p.start_date).toBe(Math.floor(o.startDate!.getTime() / 1000));
+      expect(p.metadata).toMatchObject({ pg_interval: "year" });
+      expect(p.metadata).not.toHaveProperty("pg_billing_day");
+      expect(p.metadata).not.toHaveProperty("pg_free_start");
+      expect(p.phases.every((ph) => !ph.add_invoice_items)).toBe(true);
+      expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval === "year")).toBe(true);
+      expect(summe(p.phases[0].items)).toBe(1088000);
+    }
   });
 
-  it("Abrechnungstag ohne Haken: anteilig, beim Jahresabo als Anteil des Jahresbetrags (Tage / Jahr), beim Monatsabo des Monatsbetrags", async () => {
-    const jahr = await angebot({ billingDay: 15, customerChoice: false });
-    await accept(jahr.token, { annual: true });
-    await prisma.offer.update({ where: { id: jahr.id }, data: { stripeCustomerId: "cus_jw_aj" } });
-    await createScheduleForOffer(jahr.id, checkout(jahr.id));
-    const pj = zeitplan();
-    const start = jahr.startDate!.toISOString().slice(0, 10);
-    const planJ = abrechnungsplan({ startIso: start, billingDay: 15, annual: true })!;
-    const anteilJ = pj.phases[0].add_invoice_items!.reduce((s, a) => s + a.price_data.unit_amount, 0);
-    expect(anteilJ).toBe(anteilCent(1088000, planJ));
-    // 14 Tage von einem Jahr (365 bzw. 366 Tage): Anteil des Jahresbetrags (= Monatspreis mit Jahresrabatt)
-    const first = `${start.slice(0, 8)}15`;
-    const vorJahr = `${Number(first.slice(0, 4)) - 1}${first.slice(4)}`;
-    const jahrTage = (Date.parse(first) - Date.parse(vorJahr)) / 86_400_000;
-    expect(anteilJ).toBe(Math.round((1088000 * 14) / jahrTage));
-
+  it("Abrechnungstag beim Monatsabo unverändert: anteilig vom Monatsbetrag ab dem ersten Abrechnungstag", async () => {
     const monat = await angebot({ billingDay: 15, customerChoice: false });
     await accept(monat.token, { annual: false });
     await prisma.offer.update({ where: { id: monat.id }, data: { stripeCustomerId: "cus_jw_am" } });
     await createScheduleForOffer(monat.id, checkout(monat.id));
     const pm = zeitplan();
+    const start = monat.startDate!.toISOString().slice(0, 10);
+    expect(pm.start_date).toBe(noon(`${start.slice(0, 8)}15`));
+    expect(pm.metadata).toMatchObject({ pg_billing_day: "15", pg_free_start: "0" });
     const planM = abrechnungsplan({ startIso: start, billingDay: 15 })!;
     expect(pm.phases[0].add_invoice_items!.reduce((s, a) => s + a.price_data.unit_amount, 0)).toBe(anteilCent(108800, planM));
     expect(pm.phases[0].items.every((i) => i.price_data.recurring?.interval === "month")).toBe(true);
+  });
+
+  it("Überweisung, jährlich mit Abrechnungstag: Kundenkonto ohne Abrechnungstag, Zeitraum ab Start", async () => {
+    process.env.UEBERWEISUNG = "on";
+    const o = await angebot({ billingDay: 15, allowBankTransfer: true, bankTransferDays: 10, customerChoice: false });
+    expect(await accept(o.token, { annual: true })).toEqual({ ok: true });
+    expect(await richteUeberweisungEin(o.id)).toEqual({ ok: true });
+    const ob = await prisma.onboarding.findFirstOrThrow({ where: { offerId: o.id }, select: { customerId: true } });
+    const c = await prisma.customer.findUniqueOrThrow({ where: { id: ob.customerId! } });
+    const start = o.startDate!.toISOString().slice(0, 10);
+    expect(c.billingInterval).toBe("year");
+    expect(c.billingDay).toBeNull();
+    expect(c.billingStart?.toISOString().slice(0, 10)).toBe(start);
+    expect(c.retainerStart?.toISOString().slice(0, 10)).toBe(start);
+    expect(zeitplan().phases.every((ph) => !ph.add_invoice_items)).toBe(true);
+    delete process.env.UEBERWEISUNG;
   });
 
   it("Abschlussbonus gilt für beide Wahlen gleich: Setup und Gutschein auf der Bezahlseite identisch", async () => {

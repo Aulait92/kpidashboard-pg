@@ -25,6 +25,7 @@ import {
 import { GUARANTEES_FROM, isGuaranteeProduct } from "@/lib/garantien";
 import { VERTRAGS_GARANTIE_MIN_VERTRAEGE, breakEvenTageFuer, vertragTageFuer } from "@/lib/rechner";
 import { abrechnungsplan, abrechnungstagSaetze } from "@/lib/abrechnungstag";
+import { vorauszahlungFaellig } from "@/lib/vertrag-laufzeit";
 
 // Angebot / Auftragsbestätigung im Performancegrowth-Design (dunkles Deckblatt,
 // nummerierte Abschnitte, AGB als Bestandteil). Genutzt auf der öffentlichen
@@ -246,13 +247,14 @@ export function OfferDocument({
   // Erster Monatsbetrag inkl. Zusätze (Startpreis gilt nur für das Paket)
   const firstMonth = round2((hasIntro ? offer.introMonthlyFee! : offer.monthlyFee) + add.seatsFee + add.bestandFee + add.empfehlungFee);
   const firstCharge = add.annualTotal ?? firstMonth;
-  // Eigener Abrechnungstag: erste Abbuchung am ersten Abrechnungstag, Zeit davor kostenlos oder anteilig
+  // Eigener Abrechnungstag: erste Abbuchung am ersten Abrechnungstag, Zeit davor kostenlos oder anteilig.
+  // Vorauszahlung: Abrechnungstag gilt nicht, voller Betrag zum Start (Ole, 18.11.2026)
+  const startIso = offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null;
   const plan = abrechnungsplan({
-    startIso: offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
+    startIso,
     billingDay: offer.billingDay,
     freeStart: offer.billingFreeStart,
     annual: add.annualTotal != null,
-    prepayMonths: pm,
   });
   const billingDiffers = !!plan?.differs;
   const productNames = products.map((p) => p.name).join(" & ");
@@ -436,8 +438,15 @@ export function OfferDocument({
           {offer.startDate ? (
             <Tr k="Start">
               {billingDiffers
-                ? abrechnungstagSaetze(plan, { firstNet: firstCharge, annual: add.annualTotal != null, prepayMonths: pm }).join(" ")
-                : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
+                ? abrechnungstagSaetze(plan, { firstNet: firstCharge }).join(" ")
+                : add.annualTotal != null
+                  ? `${date(offer.startDate)}. Ab diesem Tag läuft die Vergütung: ${eur(add.annualTotal)} netto ${vorausName}, ${vorauszahlungFaellig(startIso, pm)}.`
+                  : `${date(offer.startDate)}. Ab diesem Tag läuft die monatliche Vergütung.`}
+              {annualOpen && billingDiffers ? (
+                <Note>
+                  Bei {vorausWort} ist der volle {halb ? "Betrag für 6 Monate" : "Jahresbetrag"} schon zum Start am {date(offer.startDate)} fällig.
+                </Note>
+              ) : null}
               {startOpen ? <Note>Vorschlag, das Startdatum wählen Sie unten bei der Annahme.</Note> : null}
             </Tr>
           ) : null}
@@ -602,7 +611,9 @@ export function OfferDocument({
               {add.annualTotal != null ? (halb ? "Betrag für 6 Monate" : "Jahresbetrag") : "Erste Monatsgebühr"} ({eur(firstCharge)} netto, {eur(withVat(firstCharge))} brutto)
               {plan && billingDiffers ? ` am ${plan.firstIso.split("-").reverse().join(".")}` : offer.startDate ? ` am ${date(offer.startDate)}` : " zum Start"}
               {billingDiffers && !plan!.free ? " zuzüglich des anteiligen Betrags für die Zeit davor" : ""}.
-              {annualOpen ? (halb ? ` Bei Vorauszahlung ist es der Betrag von ${eur(v.total)} netto für 6 Monate.` : ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur(v.total)} netto.`) : ""}
+              {annualOpen
+                ? `${halb ? ` Bei Vorauszahlung ist es der Betrag von ${eur(v.total)} netto für 6 Monate` : ` Bei Jahreszahlung ist es der Jahresbetrag von ${eur(v.total)} netto`}${billingDiffers ? `, fällig zum Start am ${date(offer.startDate!)}` : ""}.`
+                : ""}
               {termOpen || startOpen ? " Setup und Start richten sich nach Ihrer Wahl bei der Annahme." : ""}
             </Note>
           </Tr>

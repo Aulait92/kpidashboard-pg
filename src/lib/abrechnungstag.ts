@@ -10,6 +10,9 @@
 // - Mindestlaufzeit, Startpreis-Monate und Abrechnungsmonate zählen ab dem ersten Abrechnungstag, die Zeit
 //   davor kommt dazu. So endet der Vertrag immer mit einem bezahlten Abrechnungsmonat.
 // - Leads, Assistent und Kampagne starten weiter am Starttag; Monatsziele und Berichte bleiben beim Kalendermonat.
+// - Vorauszahlung (jährlich bzw. 6 Monate im Voraus, Ole 18.11.2026: „Schon den vollen Betrag abrechnen“): Der
+//   Abrechnungstag gilt nicht. Der Zahlungszeitraum beginnt am Start, der volle Betrag ist zum Start fällig,
+//   nichts anteilig und kein kostenloser Start. Der Abrechnungstag gilt nur, wenn monatlich gezahlt wird.
 
 import { eur } from "@/lib/offer-pricing";
 
@@ -49,38 +52,41 @@ export function ersterAbrechnungstag(startIso: string, billingDay: number | null
 
 export type Abrechnungsplan = {
   startIso: string;
-  /** Erster Abrechnungstag (= Start, wenn kein eigener Abrechnungstag) */
+  /** Erster Abrechnungstag (= Start, wenn kein eigener Abrechnungstag oder bei Vorauszahlung) */
   firstIso: string;
   /** Tag im Monat, an dem abgebucht wird */
   day: number;
-  /** Abrechnungstag weicht vom Start ab (sonst alles wie bisher) */
+  /** Abrechnungstag weicht vom Start ab (sonst alles wie bisher; bei Vorauszahlung nie) */
   differs: boolean;
   /** Zeit bis zum ersten Abrechnungstag kostenlos */
   free: boolean;
   /** Letzter Tag vor dem ersten Abrechnungstag (nur wenn differs) */
   stubEndIso: string | null;
-  /** Anteil des ersten Abrechnungszeitraums, der auf die Zeit davor entfällt (0 ohne Abweichung oder gratis) */
+  /** Anteil des ersten Abrechnungsmonats, der auf die Zeit davor entfällt (0 ohne Abweichung oder gratis) */
   ratio: number;
+  /** Vorauszahlung: voller Betrag zum Start, ein eigener Abrechnungstag gilt nicht */
+  vorauszahlung: boolean;
 };
 
 /**
- * Plan aus Start, Abrechnungstag und „kostenloser Start“. annual: Vorauszahlung (anteilig über den Zeitraum von
- * prepayMonths Monaten, Standard 12 = Jahreszahlung; 6 = 6 Monate im Voraus). null ohne Start.
+ * Plan aus Start, Abrechnungstag und „kostenloser Start“. annual: Vorauszahlung (jährlich oder 6 Monate im Voraus):
+ * dann gilt der Abrechnungstag nicht, der Zeitraum beginnt am Start (Ole, 18.11.2026). null ohne Start.
  */
-export function abrechnungsplan(o: { startIso: string | null; billingDay?: number | null; freeStart?: boolean; annual?: boolean; prepayMonths?: number }): Abrechnungsplan | null {
+export function abrechnungsplan(o: { startIso: string | null; billingDay?: number | null; freeStart?: boolean; annual?: boolean }): Abrechnungsplan | null {
   if (!o.startIso) return null;
-  const firstIso = ersterAbrechnungstag(o.startIso, o.billingDay);
+  const vorauszahlung = !!o.annual;
+  const firstIso = ersterAbrechnungstag(o.startIso, vorauszahlung ? null : o.billingDay);
   const differs = firstIso !== o.startIso;
   const free = differs && !!o.freeStart;
   let ratio = 0;
   if (differs && !free) {
-    // Zeitraum, den die erste volle Abbuchung abdecken würde, rückwärts vom ersten Abrechnungstag
+    // Monat, den die erste volle Abbuchung abdecken würde, rückwärts vom ersten Abrechnungstag
     const [y, m, d] = parts(firstIso);
-    const prevIso = isoOf(y, m - (o.annual ? (o.prepayMonths ?? 12) : 1), d);
+    const prevIso = isoOf(y, m - 1, d);
     ratio = daysBetween(o.startIso, firstIso) / daysBetween(prevIso, firstIso);
   }
   const [fy, fm, day] = parts(firstIso);
-  return { startIso: o.startIso, firstIso, day, differs, free, stubEndIso: differs ? isoOf(fy, fm, day - 1) : null, ratio };
+  return { startIso: o.startIso, firstIso, day, differs, free, stubEndIso: differs ? isoOf(fy, fm, day - 1) : null, ratio, vorauszahlung };
 }
 
 /** Anteiliger Betrag in Cent für die Zeit bis zum ersten Abrechnungstag. */
@@ -108,15 +114,13 @@ const kurz = (s: string) => {
 const euro = eur;
 
 /**
- * Sätze für die Kundenseite (Sie-Form, ohne Gedankenstriche). Leer, wenn der Abrechnungstag dem Start entspricht.
- * firstNet: Betrag der ersten vollen Abbuchung netto (Monatsbeitrag, Startpreis bzw. Jahresbeitrag).
+ * Sätze für die Kundenseite (Sie-Form, ohne Gedankenstriche). Leer, wenn der Abrechnungstag dem Start entspricht
+ * oder vorausgezahlt wird (dann gilt der Abrechnungstag nicht, siehe {@link abrechnungsplan}).
+ * firstNet: Betrag der ersten vollen Abbuchung netto (Monatsbeitrag bzw. Startpreis).
  */
-export function abrechnungstagSaetze(plan: Abrechnungsplan | null, o: { firstNet: number; annual?: boolean; prepayMonths?: number }): string[] {
-  if (!plan?.differs) return [];
-  const halb = o.annual && o.prepayMonths === 6;
-  const beitrag = halb ? "Beitrag für 6 Monate" : o.annual ? "Jahresbeitrag" : "Monatsbeitrag";
-  const rhythmus = halb ? `danach alle 6 Monate am ${plan.day}.` : o.annual ? `danach jedes Jahr am ${kurz(plan.firstIso)}` : `jeweils am ${plan.day}.`;
-  const saetze = [`Start am ${lang(plan.startIso)}. Ihr ${beitrag} wird ab dem ${lang(plan.firstIso)} ${rhythmus} abgebucht.`];
+export function abrechnungstagSaetze(plan: Abrechnungsplan | null, o: { firstNet: number }): string[] {
+  if (!plan?.differs || plan.vorauszahlung) return [];
+  const saetze = [`Start am ${lang(plan.startIso)}. Ihr Monatsbeitrag wird ab dem ${lang(plan.firstIso)} jeweils am ${plan.day}. abgebucht.`];
   if (plan.free) saetze.push(`Die Zeit vom ${kurz(plan.startIso)} bis ${kurz(plan.stubEndIso!)} ist für Sie kostenlos.`);
   else {
     const anteil = anteilCent(Math.round(o.firstNet * 100), plan) / 100;
@@ -128,6 +132,10 @@ export function abrechnungstagSaetze(plan: Abrechnungsplan | null, o: { firstNet
 /** Kurzform für den Admin (Formular, Kundenakte). */
 export function abrechnungstagKurz(plan: Abrechnungsplan | null): string {
   if (!plan) return "wie Start";
+  if (plan.vorauszahlung) return `zum Start am ${lang(plan.startIso)}, voller Betrag (Vorauszahlung, Abrechnungstag gilt nicht)`;
   if (!plan.differs) return `am ${plan.day}. (wie Start)`;
   return `am ${plan.day}., erste Abbuchung ${lang(plan.firstIso)}, ${plan.free ? `kostenloser Start bis ${kurz(plan.stubEndIso!)}` : `${kurz(plan.startIso)} bis ${kurz(plan.stubEndIso!)} anteilig`}`;
 }
+
+/** Hinweis für den Admin, wenn Vorauszahlung angeboten wird und ein eigener Abrechnungstag gesetzt ist. */
+export const VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG = "Wählt der Kunde Vorauszahlung, gilt der Abrechnungstag nicht: voller Betrag zum Start.";

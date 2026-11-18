@@ -32,7 +32,7 @@ import {
   type OfferChoiceSnapshot,
 } from "@/lib/offer-pricing";
 import { abrechnungsplan, abrechnungstagSaetze, anteilCent } from "@/lib/abrechnungstag";
-import { cancelDate, cancelDateText, contractSummaryLines, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
+import { cancelDate, cancelDateText, contractSummaryLines, vorauszahlungFaellig, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 import { erinnerungAbsaetze, erinnerungFaellig, laufenderZeitraum, VORAUSZAHLUNG_ERINNERUNG_TAGE } from "@/lib/vorauszahlung-erinnerung";
 import { bestandTerms } from "@/lib/bestand/terms";
 import { bookingTerms } from "@/lib/empfehlung/shared";
@@ -154,17 +154,20 @@ describe("Kundenwahl auf der Angebotsseite", () => {
 });
 
 describe("Abrechnungstag mit 6 Monaten im Voraus", () => {
-  it("anteilig über 6 Monate (Tage bis zum ersten Abrechnungstag / Tage der 6 Monate davor)", () => {
-    const plan = abrechnungsplan({ startIso: "2027-01-01", billingDay: 15, annual: true, prepayMonths: 6 })!;
-    expect(plan).toMatchObject({ firstIso: "2027-01-15", differs: true, stubEndIso: "2027-01-14" });
-    // 15.07.2026 bis 15.01.2027 = 184 Tage, davon 14 Tage vor dem ersten Abrechnungstag
-    expect(plan.ratio).toBeCloseTo(14 / 184);
-    expect(anteilCent(549000, plan)).toBe(Math.round((549000 * 14) / 184));
-    const jahr = abrechnungsplan({ startIso: "2027-01-01", billingDay: 15, annual: true })!;
-    expect(jahr.ratio).toBeCloseTo(14 / 365);
-    const s = abrechnungstagSaetze(plan, { firstNet: 5490, annual: true, prepayMonths: 6 }).join(" ");
-    expect(s).toMatch(/Ihr Beitrag für 6 Monate wird ab dem 15\.01\.2027 danach alle 6 Monate am 15\. abgebucht/);
-    expect(hatGedankenstrich(s)).toBe(false);
+  it("gilt nicht: voller Betrag für 6 Monate zum Start, nichts anteilig (Ole, 18.11.2026)", () => {
+    const plan = abrechnungsplan({ startIso: "2027-01-01", billingDay: 15, annual: true })!;
+    expect(plan).toMatchObject({ firstIso: "2027-01-01", differs: false, stubEndIso: null, ratio: 0, vorauszahlung: true });
+    expect(anteilCent(549000, plan)).toBe(0);
+    expect(abrechnungstagSaetze(plan, { firstNet: 5490 })).toEqual([]);
+    const t = contractSummaryLines({ term: "6m", startIso: "2027-01-01", setup: 1490, monthlyTotal: 1098, intro: null, annual: true, freeMonths: 1, billingDay: 15 }).join(" ").replace(/\u00a0/g, " ");
+    expect(t).toContain("6 Monate im Voraus: 5.490 € netto, alle 6 Monate fällig, das erste Mal zum Start am 01.01.2027, dann am 01.07.2027.");
+    expect(t).toContain("Laufzeit bis 30.06.2027.");
+    expect(t).not.toMatch(/anteilig|kostenlos|15\.01\./);
+    expect(hatGedankenstrich(t)).toBe(false);
+  });
+  it("nächste Abbuchung in kürzeren Monaten am Monatsletzten", () => {
+    expect(vorauszahlungFaellig("2026-08-31", 6)).toBe("alle 6 Monate fällig, das erste Mal zum Start am 31.08.2026, dann am 28.02.2027");
+    expect(vorauszahlungFaellig(null, 6)).toBe("fällig zum Start, danach alle 6 Monate");
   });
 });
 
@@ -203,13 +206,13 @@ describe("Konditionen am Annahme-Knopf", () => {
   });
   it("6 Monate im Voraus: Betrag, Verlängerung um 6 Monate, Kündigungsfrist", () => {
     const t = contractSummaryLines({ ...base, annual: true }).join(" ");
-    expect(t).toMatch(/6 Monate im Voraus: 5\.490\s€ netto ab 15\.01\.2027/);
+    expect(t).toMatch(/6 Monate im Voraus: 5\.490\s€ netto, alle 6 Monate fällig, das erste Mal zum Start am 15\.01\.2027, dann am 15\.07\.2027\./);
     expect(t).toMatch(/Laufzeit bis 14\.07\.2027\. Sie verlängert sich um jeweils 6 Monate, wenn Sie nicht bis 14\.06\.2027 kündigen\./);
     expect(hatGedankenstrich(t)).toBe(false);
   });
   it("12 Monate im Voraus wie bisher", () => {
     const t = contractSummaryLines({ ...base, term: "12m", annual: true, freeMonths: 2 }).join(" ");
-    expect(t).toMatch(/Jährlich im Voraus: 10\.980\s€ netto ab 15\.01\.2027/);
+    expect(t).toMatch(/Jährlich im Voraus: 10\.980\s€ netto, jedes Jahr am 15\.01\. fällig, das erste Mal zum Start am 15\.01\.2027\./);
     expect(t).toMatch(/verlängert sich um jeweils 12 Monate, wenn Sie nicht bis 14\.12\.2027 kündigen/);
   });
 });
@@ -303,7 +306,7 @@ describe("Angebotsseite: Zahlweise bei 6 Monaten", () => {
 
   it("6 Monate im Voraus gewählt: Betrag, Verlängerung, Lastschrift alle 6 Monate", () => {
     const t = text(form(choice({ initialAnnual: true }), { payment: true }));
-    expect(t).toContain("6 Monate im Voraus: 5.490 € netto ab 01.01.2027.");
+    expect(t).toContain("6 Monate im Voraus: 5.490 € netto, alle 6 Monate fällig, das erste Mal zum Start am 01.01.2027, dann am 01.07.2027.");
     expect(t).toContain("Laufzeit bis 30.06.2027. Sie verlängert sich um jeweils 6 Monate, wenn Sie nicht bis 31.05.2027 kündigen.");
     expect(t).toMatch(/6 Monate im Voraus ab 01\.01\.2027: 5\.490 € netto/);
     expect(t).toContain("der Betrag wird alle 6 Monate automatisch eingezogen.");

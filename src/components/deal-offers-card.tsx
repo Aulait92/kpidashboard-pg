@@ -7,7 +7,7 @@ import { Copy, ExternalLink, FileDown, FileText, Mail, Plus, Send } from "lucide
 import { Badge, Button, ButtonLink, Card, CardHeader } from "@/components/ui";
 import { deleteOfferAction, markOfferSentAction, sendOfferEmailAction, setAbschlussBonusAction, setBankTransferAction, setPaymentReminderAction } from "@/app/admin/vertrieb/offer-actions";
 import { ABSTAENDE_MIT_DATUM, ABSTAENDE_OHNE_DATUM, fmtTag } from "@/lib/angebot-zahlungserinnerung";
-import { abrechnungsplan, abrechnungstagKurz } from "@/lib/abrechnungstag";
+import { abrechnungsplan, abrechnungstagKurz, VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG } from "@/lib/abrechnungstag";
 import { AngebotMehr } from "@/components/vertrieb/angebot-ablehnen";
 
 export type DealOfferRow = {
@@ -198,7 +198,8 @@ export function DealOffersCard({
               ) : null}
               {current.billingDay != null ? (
                 <li data-angebot-abrechnungstag>
-                  Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart }))}
+                  Abrechnung {abrechnungstagKurz(abrechnungsplan({ startIso: current.startDate, billingDay: current.billingDay, freeStart: current.billingFreeStart, annual: !!current.annualPrepay }))}
+                  {current.annualChoice && current.status !== "accepted" ? <span className="block text-[color:var(--muted)]">{VORAUSZAHLUNG_OHNE_ABRECHNUNGSTAG}</span> : null}
                 </li>
               ) : null}
               {current.annualChoice || current.annualPrepay ? (

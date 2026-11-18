@@ -55,21 +55,20 @@ describe("Jahreswahl: Beträge und Prüfung der Wahl", () => {
     expect(resolveOfferChoice(monatlich, { annual: true }, TODAY)).toEqual({ ok: false, error: "Die Zahlweise ist in diesem Angebot fest vereinbart." });
   });
 
-  it("Zusammenfassung mit Abrechnungstag: Jahresabo am ersten Abrechnungstag, gratis bzw. anteilig vom Jahresbetrag", () => {
+  it("Zusammenfassung mit Abrechnungstag: Jahresbeitrag voll zum Start, Abrechnungstag nur bei monatlicher Zahlung", () => {
     const base: ContractSummaryInput = { term: "12m", startIso: "2027-01-01", setup: 990, monthlyTotal: 1098, intro: null, annual: true, freeMonths: 2, billingDay: 15 };
     const gratis = contractSummaryLines({ ...base, freeStart: true }).map(nb);
-    expect(gratis).toContain("Jährlich im Voraus: 10.980 € netto ab 15.01.2027.");
-    expect(gratis.join(" ")).toMatch(/Ihr Jahresbeitrag wird ab dem 15\.01\.2027 danach jedes Jahr am 15\.01\. abgebucht\./);
-    expect(gratis.join(" ")).toMatch(/Die Zeit vom 01\.01\. bis 14\.01\. ist für Sie kostenlos\./);
-    expect(gratis).toContain("Laufzeit bis 14.01.2028. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis 14.12.2027 kündigen.");
-    const anteilig = contractSummaryLines(base).map(nb).join(" ");
-    // 14 von 365 Tagen des Jahresbetrags: 10.980 € × 14 / 365 = 421,15 €
-    expect(anteilig).toMatch(/berechnen wir anteilig 421,15 € netto/);
+    const anteilig = contractSummaryLines(base).map(nb);
+    for (const l of [gratis, anteilig]) {
+      expect(l).toContain("Jährlich im Voraus: 10.980 € netto, jedes Jahr am 01.01. fällig, das erste Mal zum Start am 01.01.2027.");
+      expect(l).toContain("Laufzeit bis 31.12.2027. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis 30.11.2027 kündigen.");
+      expect(l.join(" ")).not.toMatch(/anteilig|kostenlos|15\.01\./);
+    }
     const monatlich = contractSummaryLines({ ...base, annual: false }).map(nb).join(" ");
     // 14 von 31 Tagen des Monatsbetrags: 1.098 € × 14 / 31 = 495,87 €
     expect(monatlich).toMatch(/Monatlich: 1\.098 € netto ab 15\.01\.2027/);
     expect(monatlich).toMatch(/berechnen wir anteilig 495,87 € netto/);
-    for (const l of [...gratis, anteilig, monatlich]) expect(hatGedankenstrich(l)).toBe(false);
+    for (const l of [...gratis, ...anteilig, monatlich]) expect(hatGedankenstrich(l)).toBe(false);
   });
 });
 
@@ -114,7 +113,7 @@ describe("Jahreswahl: Texte der Angebotsseite", () => {
 
   it("Jährlich gewählt: Zusammenfassung mit Jahresbetrag und Verlängerung, Lastschrift jährlich", () => {
     const t = text(form(choice({ initialAnnual: true }), { payment: true, ueberweisungTage: 14 }));
-    expect(t).toContain("Jährlich im Voraus: 10.980 € netto ab 01.01.2027.");
+    expect(t).toContain("Jährlich im Voraus: 10.980 € netto, jedes Jahr am 01.01. fällig, das erste Mal zum Start am 01.01.2027.");
     expect(t).toContain("Laufzeit bis 31.12.2027. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis 30.11.2027 kündigen.");
     expect(t).toMatch(/Jährlich im Voraus ab 01\.01\.2027: 10\.980 € netto/);
     expect(t).toContain("der Betrag wird jährlich automatisch eingezogen.");
@@ -197,6 +196,23 @@ describe("Jahreswahl: Angebotsdokument (Seite und PDF)", () => {
     const monat = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ status: "accepted", annualFreeMonths: null }) })));
     expect(monat).toContain("Monatlich im Voraus, bei der Annahme gewählt.");
     expect(monat).not.toMatch(/Jährlich im Voraus/);
+  });
+
+  it("Abrechnungstag am 1., Start 18.11. (Ole, 18.11.2026): jährlich voller Jahresbetrag zum Start, monatlich anteilig", () => {
+    const mitTag = { startDate: new Date("2026-11-18T12:00:00Z"), billingDay: 1, billingFreeStart: false };
+    const jahr = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ ...mitTag, status: "accepted", annualPrepay: true }) })));
+    expect(jahr).toContain("18.11.2026. Ab diesem Tag läuft die Vergütung: 10.980 € netto jährlich im Voraus, jedes Jahr am 18.11. fällig, das erste Mal zum Start am 18.11.2026.");
+    expect(jahr).toMatch(/Jahresbetrag \(10\.980 € netto, [\d.,]+ € brutto\) am 18\.11\.2026\./);
+    expect(jahr).toContain("12 Monate ab Start, jährlich im Voraus bezahlt.");
+    // Angebotsteil bis zu den Kosten im Überblick (AGB und Verkäufer-Zeile sprechen allgemein von „anteilig“ bzw. „kostenlos“)
+    const konditionen = jahr.slice(jahr.indexOf("Start 18.11.2026"), jahr.indexOf("Ihre monatlichen Kosten"));
+    expect(konditionen).not.toMatch(/anteilig|kostenlos|01\.12\.2026|ersten Abrechnungstag/);
+    expect(hatGedankenstrich(jahr.slice(jahr.indexOf("18.11.2026. Ab diesem Tag"), jahr.indexOf("18.11.2026. Ab diesem Tag") + 160))).toBe(false);
+    // Vor der Annahme (Kunde wählt): monatlich ab dem 1. mit Anteil, bei Jahreszahlung voller Betrag zum Start
+    const offen = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc(mitTag) })));
+    expect(offen).toContain("Ihr Monatsbeitrag wird ab dem 01.12.2026 jeweils am 1. abgebucht.");
+    expect(offen).toContain("Bei Jahreszahlung ist der volle Jahresbetrag schon zum Start am 18.11.2026 fällig.");
+    expect(offen).toContain("Bei Jahreszahlung ist es der Jahresbetrag von 10.980 € netto, fällig zum Start am 18.11.2026.");
   });
 
   it("ohne Haken: keine Zahlweise-Zeile", () => {

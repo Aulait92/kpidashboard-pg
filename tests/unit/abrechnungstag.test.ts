@@ -5,6 +5,8 @@ import { abrechnungsplan, abrechnungstagKurz, abrechnungstagSaetze, anteilCent, 
 import { contractSummaryLines, priceStepAckText, type ContractSummaryInput } from "@/lib/vertrag-laufzeit";
 
 const STRICHE = /[–—]/;
+// geschütztes Leerzeichen vor „€“ als normales Leerzeichen vergleichen
+const nb = (s: string) => s.replace(/\u00a0/g, " ");
 
 describe("ersterAbrechnungstag", () => {
   it("nimmt den nächsten Tag mit diesem Tag im Monat am oder nach dem Start", () => {
@@ -38,9 +40,23 @@ describe("abrechnungsplan", () => {
     expect(p.ratio).toBeCloseTo(14 / 31, 10);
     expect(anteilCent(99000, p)).toBe(Math.round((99000 * 14) / 31));
   });
-  it("Jahreszahlung: Anteil über das Jahr", () => {
-    const p = abrechnungsplan({ startIso: "2027-01-01", billingDay: 15, annual: true })!;
-    expect(p.ratio).toBeCloseTo(14 / 365, 10);
+  it("Vorauszahlung (Ole, 18.11.2026): Abrechnungstag gilt nicht, voller Betrag zum Start", () => {
+    for (const freeStart of [false, true]) {
+      const p = abrechnungsplan({ startIso: "2026-11-18", billingDay: 1, freeStart, annual: true })!;
+      expect(p).toMatchObject({ startIso: "2026-11-18", firstIso: "2026-11-18", day: 18, differs: false, free: false, stubEndIso: null, ratio: 0, vorauszahlung: true });
+      expect(anteilCent(990000, p)).toBe(0);
+      expect(anteilVerteilen([300000, 690000], p)).toEqual([0, 0]);
+      expect(abrechnungstagSaetze(p, { firstNet: 9900 })).toEqual([]);
+    }
+    expect(abrechnungstagKurz(abrechnungsplan({ startIso: "2026-11-18", billingDay: 1, annual: true }))).toBe(
+      "zum Start am 18.11.2026, voller Betrag (Vorauszahlung, Abrechnungstag gilt nicht)",
+    );
+  });
+  it("monatlich unverändert: Start 18.11., Abrechnung am 1., anteilig 13 von 30 Tagen", () => {
+    const p = abrechnungsplan({ startIso: "2026-11-18", billingDay: 1, annual: false })!;
+    expect(p).toMatchObject({ firstIso: "2026-12-01", differs: true, free: false, stubEndIso: "2026-11-30", vorauszahlung: false });
+    expect(p.ratio).toBeCloseTo(13 / 30, 10);
+    expect(abrechnungsplan({ startIso: "2026-11-18", billingDay: 1, freeStart: true })).toMatchObject({ firstIso: "2026-12-01", free: true, ratio: 0 });
   });
   it("Abrechnungstag gleich Starttag: keine Abweichung (Verhalten wie bisher)", () => {
     const p = abrechnungsplan({ startIso: "2027-01-15", billingDay: 15, freeStart: true })!;
@@ -93,6 +109,27 @@ describe("Auftragsbestätigung und Annahme-Zusammenfassung", () => {
     expect(lines.some((l) => l.startsWith("Mindestlaufzeit 12 Monate bis 14.01.2028"))).toBe(true);
     expect(lines.join(" ")).not.toMatch(STRICHE);
     expect(lines.join(" ")).not.toMatch(/testphase/i);
+  });
+  it("Vorauszahlung mit Abrechnungstag: voller Jahresbeitrag zum Start, nichts anteilig, kein kostenloser Start", () => {
+    const i: ContractSummaryInput = { term: "12m", startIso: "2026-11-18", setup: 990, monthlyTotal: 990, intro: null, annual: true, freeMonths: 2, billingDay: 1 };
+    for (const freeStart of [false, true]) {
+      const lines = contractSummaryLines({ ...i, freeStart }).map(nb);
+      expect(lines).toContain("Jährlich im Voraus: 9.900 € netto, jedes Jahr am 18.11. fällig, das erste Mal zum Start am 18.11.2026.");
+      expect(lines).toContain("Laufzeit bis 17.11.2027. Sie verlängert sich um jeweils 12 Monate, wenn Sie nicht bis 17.10.2027 kündigen.");
+      const t = lines.join(" ");
+      expect(t).not.toMatch(/anteilig|kostenlos|01\.12\./);
+      expect(t).not.toMatch(STRICHE);
+      // wie ohne Abrechnungstag
+      expect(lines).toEqual(contractSummaryLines({ ...i, billingDay: null }).map(nb));
+    }
+    const halb = contractSummaryLines({ ...i, term: "6m", freeMonths: 1 }).map(nb);
+    expect(halb).toContain("6 Monate im Voraus: 4.950 € netto, alle 6 Monate fällig, das erste Mal zum Start am 18.11.2026, dann am 18.05.2027.");
+    expect(halb).toContain("Laufzeit bis 17.05.2027. Sie verlängert sich um jeweils 6 Monate, wenn Sie nicht bis 17.04.2027 kündigen.");
+    expect(halb.join(" ")).not.toMatch(/anteilig|kostenlos/);
+    // Monatlich zahlt weiter ab dem Abrechnungstag, Zeit davor anteilig
+    const monatlich = contractSummaryLines({ ...i, annual: false }).map(nb).join(" ");
+    expect(monatlich).toContain("Monatlich: 990 € netto ab 01.12.2026, im Voraus.");
+    expect(monatlich).toMatch(/Für die Zeit vom 18\.11\. bis 30\.11\. berechnen wir anteilig 429 € netto/);
   });
   it("Startpreis zählt ab dem ersten Abrechnungstag", () => {
     const i: ContractSummaryInput = { ...base, intro: { months: 3, monthly: 490 }, billingDay: 15 };

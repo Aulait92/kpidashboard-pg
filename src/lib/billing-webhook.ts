@@ -291,12 +291,19 @@ export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
   }
 }
 
-/** Verlaufszeile „Monatsgebühr ab …“: erster Abrechnungstag (lib/abrechnungstag.ts), bei verschobenem Start mit Hinweis. */
-function monatsgebuehrAb(offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean }, shiftedTo: string | null): string {
+/**
+ * Verlaufszeile „Monatsgebühr ab …“: erster Abrechnungstag (lib/abrechnungstag.ts), bei verschobenem Start mit Hinweis.
+ * Vorauszahlung: „Jahresbeitrag ab …“ bzw. „Beitrag für 6 Monate ab …“ am Start (Abrechnungstag gilt nicht).
+ */
+function monatsgebuehrAb(
+  offer: { startDate: Date | null; billingDay: number | null; billingFreeStart: boolean; annualPrepay: boolean; term: string },
+  shiftedTo: string | null,
+): string {
   const startIso = shiftedTo ?? (offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null);
-  const plan = abrechnungsplan({ startIso, billingDay: offer.billingDay, freeStart: offer.billingFreeStart });
+  const plan = abrechnungsplan({ startIso, billingDay: offer.billingDay, freeStart: offer.billingFreeStart, annual: offer.annualPrepay });
   if (!plan) return "";
   const ab = plan.firstIso.split("-").reverse().join(".");
   const zusatz = plan.differs ? `, jeweils am ${plan.day}.${plan.free ? ", kostenloser Start" : ", Zeit davor anteilig"}` : "";
-  return ` · Monatsgebühr ab ${ab}${zusatz}${shiftedTo ? " (Start verschoben)" : ""}`;
+  const was = offer.annualPrepay ? (offer.term === "6m" ? "Beitrag für 6 Monate" : "Jahresbeitrag") : "Monatsgebühr";
+  return ` · ${was} ab ${ab}${zusatz}${shiftedTo ? " (Start verschoben)" : ""}`;
 }

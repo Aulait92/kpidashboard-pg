@@ -152,8 +152,24 @@ export type ContractSummaryInput = {
  * Erster Abrechnungstag: ab hier zählen Startpreis-Monate, Mindestlaufzeit und Abrechnungsmonate
  * (= Start, wenn kein eigener Abrechnungstag vereinbart ist).
  */
-export const billingStartIso = (i: Pick<ContractSummaryInput, "startIso" | "billingDay">): string | null =>
-  abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay })?.firstIso ?? i.startIso;
+export const billingStartIso = (i: Pick<ContractSummaryInput, "startIso" | "billingDay"> & Partial<Pick<ContractSummaryInput, "annual" | "term">>): string | null =>
+  abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, annual: !!i.annual && !!i.term && prepayPossible(i.term) })?.firstIso ?? i.startIso;
+
+/**
+ * Fälligkeit der Vorauszahlung (Ole, 18.11.2026: voller Betrag zum Start, ein eigener Abrechnungstag gilt dafür
+ * nicht): „jedes Jahr am 18.11. fällig, das erste Mal zum Start am 18.11.2026“ bzw. bei 6 Monaten
+ * „alle 6 Monate fällig, das erste Mal zum Start am 18.11.2026, dann am 18.05.2027“. Ohne Punkt am Ende.
+ */
+export function vorauszahlungFaellig(startIso: string | null, months: number): string {
+  if (!startIso) return months === 6 ? "fällig zum Start, danach alle 6 Monate" : "fällig zum Start, danach jedes Jahr";
+  if (months !== 6) return `jedes Jahr am ${fmtIso(startIso).slice(0, 6)} fällig, das erste Mal zum Start am ${fmtIso(startIso)}`;
+  // Nächste Abbuchung wie bei Stripe: gleicher Tag 6 Monate später, in kürzeren Monaten der Monatsletzte
+  const [y, m, d] = parts(startIso);
+  const total = m - 1 + months;
+  const ty = y + Math.floor(total / 12);
+  const tm = (total % 12) + 1;
+  return `alle 6 Monate fällig, das erste Mal zum Start am ${fmtIso(startIso)}, dann am ${fmtIso(iso(ty, tm, Math.min(d, daysInMonth(ty, tm))))}`;
+}
 
 /** Startpreis mit Übergang in die reguläre Vergütung? Dann ist ein eigenes Häkchen Pflicht. */
 export const hasPriceStep = (i: Pick<ContractSummaryInput, "intro" | "monthlyTotal">) =>
@@ -179,13 +195,14 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
   // Vorauszahlung: 6 Monate (6m) bzw. 12 Monate (12m) je Zeitraum
   const pm = prepayMonthsFor(i.term);
   const prepayTotal = Math.round(i.monthlyTotal * (pm - i.freeMonths) * 100) / 100;
-  // Eigener Abrechnungstag: Beträge und Fristen zählen ab dem ersten Abrechnungstag (lib/abrechnungstag.ts)
-  const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, annual, prepayMonths: pm });
+  // Eigener Abrechnungstag: Beträge und Fristen zählen ab dem ersten Abrechnungstag (lib/abrechnungstag.ts);
+  // bei Vorauszahlung gilt er nicht (voller Betrag zum Start, Zeitraum ab Start)
+  const plan = abrechnungsplan({ startIso: i.startIso, billingDay: i.billingDay, freeStart: i.freeStart, annual });
   const billIso = plan?.firstIso ?? i.startIso;
   const start = billIso ? fmtIso(billIso) : null;
   if (i.setup > 0) lines.push(`Einrichtung: ${eur(i.setup)} netto, fällig mit der Annahme.`);
   if (annual) {
-    lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto${start ? ` ab ${start}` : " ab Start"}.`);
+    lines.push(`${pm === 6 ? "6 Monate im Voraus" : "Jährlich im Voraus"}: ${eur(prepayTotal)} netto, ${vorauszahlungFaellig(billIso, pm)}.`);
   } else if (hasPriceStep(i)) {
     const d = priceStepDates(billIso, i.intro!.months);
     lines.push(
@@ -198,8 +215,8 @@ export function contractSummaryLines(i: ContractSummaryInput): string[] {
     lines.push(`Monatlich: ${eur(i.monthlyTotal)} netto${start ? ` ab ${start}` : " ab Start"}, im Voraus.`);
   }
   if (plan?.differs) {
-    const firstNet = annual ? prepayTotal : hasPriceStep(i) ? i.intro!.monthly : i.monthlyTotal;
-    lines.push(abrechnungstagSaetze(plan, { firstNet, annual, prepayMonths: pm }).join(" "));
+    const firstNet = hasPriceStep(i) ? i.intro!.monthly : i.monthlyTotal;
+    lines.push(abrechnungstagSaetze(plan, { firstNet }).join(" "));
   }
   if (annual) {
     // Verlängerung um jeweils einen Zahlungszeitraum (6 bzw. 12 Monate), Kündigung einen Monat vor Ende

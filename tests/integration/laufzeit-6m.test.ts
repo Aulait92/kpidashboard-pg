@@ -66,7 +66,6 @@ import { prisma } from "@/lib/prisma";
 import { acceptOffer, createOffer } from "@/lib/offers";
 import { createScheduleForOffer } from "@/lib/billing";
 import { richteUeberweisungEin } from "@/lib/ueberweisung";
-import { abrechnungsplan, anteilCent } from "@/lib/abrechnungstag";
 import { addDaysIso, berlinTodayIso, TERM_6M_AB } from "@/lib/offer-pricing";
 import { contractCancelInfo } from "@/lib/vertrag-kuendigung";
 import { remindPrepayEnd } from "@/lib/vorauszahlung-erinnerung";
@@ -83,7 +82,6 @@ type Params = {
 };
 
 const uid = () => Math.random().toString(36).slice(2, 8);
-const noon = (iso: string) => Math.floor(new Date(`${iso}T12:00:00Z`).getTime() / 1000);
 function zukunftErster(): string {
   const [y, m] = addDaysIso(berlinTodayIso(), 40).split("-").map(Number);
   return `${y}-${String(m).padStart(2, "0")}-01`;
@@ -160,7 +158,7 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(a).toMatchObject({ status: "accepted", term: "6m", annualPrepay: true, annualFreeMonths: 1 });
     const text = st.mails.find((m) => m.subject.startsWith("Ihre Auftragsbestätigung"))!.list!.join(" ");
     expect(text).toMatch(/Einrichtung: 1\.490\s€ netto/);
-    expect(text).toMatch(/6 Monate im Voraus: 5\.440\s€ netto ab/);
+    expect(text).toMatch(/6 Monate im Voraus: 5\.440\s€ netto, alle 6 Monate fällig, das erste Mal zum Start am/);
     expect(text).toMatch(/verlängert sich um jeweils 6 Monate, wenn Sie nicht bis/);
     expect(hatGedankenstrich(text)).toBe(false);
 
@@ -219,30 +217,20 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(Number(a.setupFee)).toBe(1490);
   });
 
-  it("Abrechnungstag: gratis bis zum ersten Abrechnungstag bzw. anteilig vom Betrag für 6 Monate", async () => {
-    const gratis = await angebot({ billingDay: 15, billingFreeStart: true, customerChoice: false });
-    expect(await accept(gratis.token, { annual: true })).toEqual({ ok: true });
-    await prisma.offer.update({ where: { id: gratis.id }, data: { stripeCustomerId: "cus_6m_g" } });
-    await createScheduleForOffer(gratis.id, checkout(gratis.id));
-    const pg = zeitplan();
-    const start = gratis.startDate!.toISOString().slice(0, 10);
-    expect(pg.start_date).toBe(noon(`${start.slice(0, 8)}15`));
-    expect(pg.metadata).toMatchObject({ pg_interval: "halfyear", pg_billing_day: "15", pg_free_start: "1" });
-    expect(pg.phases.every((ph) => !ph.add_invoice_items)).toBe(true);
-
-    const anteilig = await angebot({ billingDay: 15, customerChoice: false });
-    expect(await accept(anteilig.token, { annual: true })).toEqual({ ok: true });
-    await prisma.offer.update({ where: { id: anteilig.id }, data: { stripeCustomerId: "cus_6m_a" } });
-    await createScheduleForOffer(anteilig.id, checkout(anteilig.id));
-    const pa = zeitplan();
-    const plan = abrechnungsplan({ startIso: start, billingDay: 15, annual: true, prepayMonths: 6 })!;
-    const anteil = pa.phases[0].add_invoice_items!.reduce((s, x) => s + x.price_data.unit_amount, 0);
-    expect(anteil).toBe(anteilCent(544000, plan));
-    // 14 Tage von den 6 Monaten vor dem ersten Abrechnungstag
-    const first = `${start.slice(0, 8)}15`;
-    const [y, m] = first.split("-").map(Number);
-    const vorher = new Date(Date.UTC(y, m - 1 - 6, 15)).toISOString().slice(0, 10);
-    expect(anteil).toBe(Math.round((544000 * 14) / ((Date.parse(first) - Date.parse(vorher)) / 86_400_000)));
+  it("Abrechnungstag gilt bei 6 Monaten im Voraus nicht: voller Betrag zum Start, kein Anteil, kein kostenloser Start", async () => {
+    for (const billingFreeStart of [false, true]) {
+      const o = await angebot({ billingDay: 15, billingFreeStart, customerChoice: false });
+      expect(await accept(o.token, { annual: true })).toEqual({ ok: true });
+      await prisma.offer.update({ where: { id: o.id }, data: { stripeCustomerId: `cus_6m_${billingFreeStart ? "g" : "a"}` } });
+      await createScheduleForOffer(o.id, checkout(o.id));
+      const p = zeitplan();
+      expect(p.start_date).toBe(Math.floor(o.startDate!.getTime() / 1000));
+      expect(p.metadata).toMatchObject({ pg_interval: "halfyear" });
+      expect(p.metadata).not.toHaveProperty("pg_billing_day");
+      expect(p.phases.every((ph) => !ph.add_invoice_items)).toBe(true);
+      expect(p.phases[0].items.every((i) => i.price_data.recurring?.interval_count === 6)).toBe(true);
+      expect(summe(p.phases[0].items)).toBe(544000);
+    }
   });
 
   it("Überweisung: Abo Monat × 6 per Rechnung, Kundenkonto halbjährlich", async () => {
