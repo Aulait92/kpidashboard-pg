@@ -6,6 +6,7 @@ import { useRef, useState, useTransition } from "react";
 import { Globe, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useToast } from "@/components/ui/toast";
+import { istAllianzVertreterSeite } from "@/lib/vertreter-seite";
 import { logoBestaetigenAction, logoEntfernenAction, logoHochladenAction, logoHolenAction } from "./actions";
 
 export function LogoForm({ website: initialWebsite, dataUri, bestaetigt, canEdit }: { website: string; dataUri: string | null; bestaetigt: boolean; canEdit: boolean }) {
@@ -14,6 +15,8 @@ export function LogoForm({ website: initialWebsite, dataUri, bestaetigt, canEdit
   const [erlaubt, setErlaubt] = useState(false);
   const [pending, start] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
+  // Ole, 18.11.2026: Allianz-Vertreter-Seiten lassen sich vom Server nicht abrufen, dort gleich hochladen.
+  const allianz = istAllianzVertreterSeite(website);
   const run = (fn: () => Promise<{ ok: true } | { ok: false; error: string }>, ok: string) =>
     start(async () => {
       const r = await fn();
@@ -36,12 +39,16 @@ export function LogoForm({ website: initialWebsite, dataUri, bestaetigt, canEdit
             disabled={!canEdit || pending}
             onChange={(e) => setWebsite(e.target.value)}
           />
-          <Button variant="primary" icon={Globe} disabled={!canEdit || pending || !website.trim()} onClick={() => run(() => logoHolenAction(website), "Logo geholt, bitte prüfen")}>
-            Logo von der Webseite holen
-          </Button>
+          {allianz ? null : (
+            <Button variant="primary" icon={Globe} disabled={!canEdit || pending || !website.trim()} onClick={() => run(() => logoHolenAction(website), "Logo geholt, bitte prüfen")}>
+              Logo von der Webseite holen
+            </Button>
+          )}
         </div>
-        <p className="mt-1.5 text-xs text-[color:var(--muted)]">
-          Wir nehmen das Logo, das auf Ihrer Webseite zu sehen ist. Bei einer Agentur ist das meist das Logo Ihrer Gesellschaft.
+        <p className="mt-1.5 text-xs text-[color:var(--muted)]" data-logo-hinweis>
+          {allianz
+            ? "Die Allianz lässt den automatischen Abruf Ihrer Vertreter-Seite nicht zu. Bitte laden Sie Ihr Logo selbst hoch."
+            : "Wir nehmen das Logo, das auf Ihrer Webseite zu sehen ist. Bei einer Agentur ist das meist das Logo Ihres Versicherers."}
         </p>
       </div>
 
@@ -60,7 +67,7 @@ export function LogoForm({ website: initialWebsite, dataUri, bestaetigt, canEdit
             e.target.value = "";
           }}
         />
-        <Button icon={Upload} disabled={!canEdit || pending} onClick={() => fileRef.current?.click()}>
+        <Button variant={allianz ? "primary" : undefined} icon={Upload} disabled={!canEdit || pending} onClick={() => fileRef.current?.click()}>
           Logo selbst hochladen
         </Button>
         <span className="text-xs text-[color:var(--muted)]">PNG, JPG oder SVG, höchstens 1 MB</span>

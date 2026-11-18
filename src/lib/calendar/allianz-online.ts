@@ -24,6 +24,7 @@ import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import { addDaysYmd, berlinMidnight, berlinYmd } from "@/lib/absence";
 import { leadTimeWindows, loadLeadTimes } from "@/lib/calendar/lead-times";
 import type { Busy } from "@/lib/calendar/tokens";
+import { BROWSER_UA, fetchPage } from "@/lib/web-fetch";
 
 const BOOKING_APP = "https://booking.allianz-abv.eps.bookingtime.com/";
 const AUTH_URL = "https://auth.bookingtime.com/oauth/token";
@@ -58,11 +59,18 @@ export type AllianzCalendar = {
 };
 
 export class AllianzCalendarError extends Error {
-  constructor(message: string) {
+  /** "blocked": Allianz lässt den Abruf der Vertreter-Seite vom Server nicht zu (Oberfläche bietet Vertreternummer bzw. ICS an). */
+  readonly code: "blocked" | "other";
+  constructor(message: string, code: "blocked" | "other" = "other") {
     super(message);
     this.name = "AllianzCalendarError";
+    this.code = code;
   }
 }
+
+export const ALLIANZ_BLOCKED_MESSAGE =
+  "Die Allianz lässt den automatischen Abruf gerade nicht zu. Geben Sie stattdessen Ihre Vertreternummer ein oder nutzen Sie den Kalender-Link (ICS).";
+const NOT_FOUND_MESSAGE = "Vertreter-Seite nicht gefunden. Bitte den Link prüfen oder Ihre Vertreternummer eingeben.";
 
 // ─── Eingabe ────────────────────────────────────────────────────────────
 
@@ -86,10 +94,13 @@ export function parseVertretungInput(raw: string): { vtnr: string } | { pageUrl:
   return { pageUrl: `https://${PAGE_HOST}/${name.toLowerCase()}/` };
 }
 
-/** VTNR (agencyKey) aus dem HTML einer Vertreter-Seite. */
+/**
+ * VTNR (agencyKey) aus dem HTML einer Vertreter-Seite: erst die Agenturdaten
+ * (data-agencydata), sonst der Button „Termin vereinbaren" (…bookingtime.com/?vtnr=…).
+ */
 export function vtnrFromPageHtml(html: string): string | null {
-  const text = html.replace(/&#34;|&quot;/g, '"');
-  const m = text.match(/"agencyKey"\s*:\s*"(\d{6,12})"/);
+  const text = html.replace(/&#34;|&quot;/g, '"').replace(/&amp;/g, "&");
+  const m = text.match(/"agencyKey"\s*:\s*"(\d{6,12})"/) ?? text.match(/bookingtime\.com\/?[^"'\s>]*[?&]vtnr=(\d{6,12})\b/);
   return m?.[1] ?? null;
 }
 
@@ -196,7 +207,10 @@ async function http(url: string, init: RequestInit = {}): Promise<Response> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
   try {
-    return await limited(() => fetch(url, { ...init, signal: ctrl.signal, cache: "no-store" }));
+    const headers = new Headers(init.headers);
+    if (!headers.has("user-agent")) headers.set("user-agent", BROWSER_UA);
+    if (!headers.has("accept-language")) headers.set("accept-language", "de-DE,de;q=0.9");
+    return await limited(() => fetch(url, { ...init, headers, signal: ctrl.signal, cache: "no-store" }));
   } catch (err) {
     throw new AllianzCalendarError(`Allianz-Online-Kalender nicht erreichbar (${err instanceof Error ? err.name : "Netzwerk"}).`);
   } finally {
@@ -287,16 +301,21 @@ type RawTemplate = {
 
 /** VTNR einer Vertreter-Seite lesen (nur vertretung.allianz.de). */
 async function vtnrFromPage(pageUrl: string): Promise<string> {
-  const res = await http(pageUrl, { headers: { accept: "text/html" } });
+  const res = await fetchPage(pageUrl, { log: "allianz-seite" });
+  if (!res.ok) {
+    if (res.reason === "blocked") throw new AllianzCalendarError(ALLIANZ_BLOCKED_MESSAGE, "blocked");
+    if (res.reason === "network") throw new AllianzCalendarError("Die Vertreter-Seite ist gerade nicht erreichbar. Bitte später noch einmal versuchen oder Ihre Vertreternummer eingeben.");
+    throw new AllianzCalendarError(NOT_FOUND_MESSAGE);
+  }
   const finalHost = (() => {
     try {
-      return new URL(res.url || pageUrl).hostname.toLowerCase();
+      return new URL(res.finalUrl).hostname.toLowerCase();
     } catch {
       return "";
     }
   })();
-  if (!res.ok || finalHost !== PAGE_HOST) throw new AllianzCalendarError("Vertreter-Seite nicht gefunden. Bitte den Link prüfen.");
-  const vtnr = vtnrFromPageHtml(await res.text());
+  if (finalHost !== PAGE_HOST) throw new AllianzCalendarError(NOT_FOUND_MESSAGE);
+  const vtnr = vtnrFromPageHtml(res.body);
   if (!vtnr) throw new AllianzCalendarError("Auf der Vertreter-Seite ist keine Online-Terminbuchung zu finden.");
   return vtnr;
 }

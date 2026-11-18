@@ -8,7 +8,7 @@ import { jsonAusAntwort, jsonAusgabe } from "@/lib/ki-json";
 import { reportError } from "@/lib/monitoring";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5-5";
-const UA = "Mozilla/5.0 (compatible; performancegrowth-onboarding/1.0)";
+import { fetchPage } from "@/lib/web-fetch";
 
 export type ImpressumInfo = {
   sourceUrl: string | null;
@@ -58,22 +58,28 @@ export async function resolvesPrivate(hostname: string): Promise<boolean> {
 
 const MAX_BYTES = 1_500_000;
 
-export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string | null> {
+/** HTML einer öffentlichen Seite (gemeinsamer Abruf mit Browser-Kopfzeilen, lib/web-fetch.ts). */
+export async function fetchHtmlDetail(url: string, timeoutMs = 10000): Promise<{ html: string } | { error: "blocked" | "notFound" | "failed" }> {
   try {
     const u = normalizeUrl(url);
-    if (!u || (await resolvesPrivate(u.hostname))) return null;
-    const res = await fetch(u.toString(), { headers: { "user-agent": UA, accept: "text/html" }, redirect: "follow", signal: AbortSignal.timeout(timeoutMs) });
-    if (!res.ok || !(res.headers.get("content-type") ?? "").includes("html")) return null;
+    if (!u || (await resolvesPrivate(u.hostname))) return { error: "failed" };
+    const res = await fetchPage(u.toString(), { timeoutMs, maxBytes: MAX_BYTES, log: "webseite" });
+    if (!res.ok) return { error: res.reason === "blocked" ? "blocked" : res.reason === "notFound" ? "notFound" : "failed" };
+    if (!res.contentType.includes("html")) return { error: "failed" };
     // Nach Weiterleitungen nochmals prüfen, dass das Ziel öffentlich ist.
-    if (res.url && res.url !== u.toString()) {
-      const final = normalizeUrl(res.url);
-      if (!final || (await resolvesPrivate(final.hostname))) return null;
+    if (res.finalUrl !== u.toString()) {
+      const final = normalizeUrl(res.finalUrl);
+      if (!final || (await resolvesPrivate(final.hostname))) return { error: "failed" };
     }
-    if (Number(res.headers.get("content-length") ?? 0) > MAX_BYTES) return null;
-    return (await res.text()).slice(0, 600_000);
+    return { html: res.body.slice(0, 600_000) };
   } catch {
-    return null;
+    return { error: "failed" };
   }
+}
+
+export async function fetchHtml(url: string, timeoutMs = 10000): Promise<string | null> {
+  const r = await fetchHtmlDetail(url, timeoutMs);
+  return "html" in r ? r.html : null;
 }
 
 function links(html: string, base: string): { href: string; text: string }[] {

@@ -474,7 +474,7 @@ export type SourceStatus = {
   allianz: { orgName: string; templateName: string; durationMin: number; lastError: string | null } | null;
 };
 
-export function AllianzForm({ action, readOnly, hidden }: { action: FormAction; readOnly: boolean; hidden?: Record<string, string> }) {
+export function AllianzForm({ action, readOnly, hidden, onUseIcs }: { action: FormAction; readOnly: boolean; hidden?: Record<string, string>; onUseIcs?: () => void }) {
   const [state, formAction, pending] = useActionState<SourceResult, FormData>(action, {});
   return (
     <form action={formAction} className="space-y-3">
@@ -493,6 +493,11 @@ export function AllianzForm({ action, readOnly, hidden }: { action: FormAction; 
         </Submit>
         <Result state={state} />
       </div>
+      {state.next === "ics" && onUseIcs ? (
+        <button type="button" onClick={onUseIcs} className={buttonClass("secondary", "sm")} data-allianz-ics>
+          Kalender-Link (ICS) nutzen
+        </button>
+      ) : null}
     </form>
   );
 }
@@ -668,7 +673,7 @@ export function SourcePicker({
                 </form>
               </div>
             ) : (
-              <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} />
+              <AllianzForm action={allianzAction} readOnly={readOnly} hidden={hidden} onUseIcs={() => setWay("ics")} />
             )
           ) : null}
         </div>

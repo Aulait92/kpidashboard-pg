@@ -17,7 +17,8 @@ import {
 } from "@/lib/calendar/allianz-online";
 import { blockRange, leadTimesError, leadTimesFromSchedule, parseSchedule, normalizeDuration, normalizeLeadTimes, normalizeTime, saveLeadTimes, type LeadTimes } from "@/lib/calendar/lead-times";
 
-export type SourceResult = { ok?: boolean; error?: string; info?: string };
+/** `next: "ics"`: Allianz-Seite gesperrt, die Oberfläche bietet den Kalender-Link (ICS) als nächsten Schritt an. */
+export type SourceResult = { ok?: boolean; error?: string; info?: string; next?: "ics" };
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -88,7 +89,8 @@ export async function connectAllianz(customerId: string, input: string, consent:
     cal = await resolveAllianzCalendar(input);
     check = await probe(cal);
   } catch (err) {
-    return { error: err instanceof AllianzCalendarError ? err.message : "Das hat nicht geklappt. Bitte später noch einmal versuchen." };
+    if (err instanceof AllianzCalendarError) return err.code === "blocked" ? { error: err.message, next: "ics" } : { error: err.message };
+    return { error: "Das hat nicht geklappt. Bitte später noch einmal versuchen." };
   }
   await prisma.agentConfig.upsert({
     where: { customerId },
