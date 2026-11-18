@@ -86,6 +86,16 @@ function Blatt({ ziel, onClose, onDone, onError }: Props & { ziel: Beratungsdoku
   }, [id]);
 
   const fehlt = inhalt ? bdFehlt(inhalt) : null;
+  // Erste Stelle, an der noch etwas fehlt (leerer Pflichtabschnitt oder „[bitte ergänzen]“)
+  const offenBei = inhalt && fehlt ? (BD_ABSCHNITTE.find((k) => (BD_PFLICHT.includes(k) && !inhalt[k].trim()) || hatLuecke(inhalt[k])) ?? null) : null;
+  const zuStelle = (k: BdAbschnitt) => {
+    const el = document.querySelector<HTMLTextAreaElement>(`[data-bd-feld="${k}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center" });
+    el.focus();
+    const i = el.value.indexOf(GRUENDE_ERGAENZEN);
+    if (i >= 0) el.setSelectionRange(i, i + GRUENDE_ERGAENZEN.length);
+  };
   const ausfuehren = (was: "senden" | "ablegen") =>
     start(async () => {
       if (!inhalt) return;
@@ -129,14 +139,16 @@ function Blatt({ ziel, onClose, onDone, onError }: Props & { ziel: Beratungsdoku
         </>
       ) : (
         <>
-          <Button variant="primary" icon={Eye} className="h-11 w-full text-[15px]" disabled={!!fehlt} onClick={() => setAnsicht(true)} data-bd-ansehen>
-            Ansehen
-          </Button>
-          {fehlt ? (
-            <p className="text-center text-xs text-amber-800" data-bd-fehlt>
-              {fehlt}
-            </p>
-          ) : null}
+          {/* Fehlt noch etwas, führt der Hauptknopf direkt zur Stelle (markiert, Tippen ersetzt sie) statt gesperrt zu sein */}
+          {offenBei ? (
+            <Button variant="primary" icon={PencilLine} className="h-11 w-full text-[15px]" onClick={() => zuStelle(offenBei)} data-bd-zur-stelle={offenBei}>
+              {BD_TITEL[offenBei]} ergänzen
+            </Button>
+          ) : (
+            <Button variant="primary" icon={Eye} className="h-11 w-full text-[15px]" onClick={() => setAnsicht(true)} data-bd-ansehen>
+              Ansehen
+            </Button>
+          )}
         </>
       )}
     </div>
@@ -181,8 +193,11 @@ function Bearbeiten({ inhalt, onChange }: { inhalt: BdInhalt; onChange: (i: BdIn
   // Antippen einer Stelle zum Ergänzen markiert sie, Tippen ersetzt sie
   const markieren = (k: BdAbschnitt) => {
     const el = refs.current[k];
-    const i = el?.value.indexOf(GRUENDE_ERGAENZEN) ?? -1;
-    if (el && i >= 0) window.setTimeout(() => el.setSelectionRange(i, i + GRUENDE_ERGAENZEN.length), 0);
+    // Nach dem Klick (der den Cursor setzt) markieren; Stelle erst dann suchen, falls schon getippt wurde
+    window.setTimeout(() => {
+      const i = el?.value.indexOf(GRUENDE_ERGAENZEN) ?? -1;
+      if (el && i >= 0 && document.activeElement === el && el.selectionStart === el.selectionEnd) el.setSelectionRange(i, i + GRUENDE_ERGAENZEN.length);
+    }, 0);
   };
   return (
     <div className="space-y-4 px-5 py-4" data-bd-editor>

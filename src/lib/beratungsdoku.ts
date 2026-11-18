@@ -74,7 +74,7 @@ export function entscheidungVorschlag(an: Ansprache, status: string | null | und
  * Entwurf aus dem Termin. Wünsche: wie die Gesprächszusammenfassung (Formular, Angaben, bestehende Verträge, Schutz heute,
  * Notizen; ohne Gesundheitsangaben). Beratung: abgehakte Klärpunkte, Verträge aus dem Vergleichsblatt, verglichene Tarife.
  * Empfehlung: gewählte Tarife und die Begründung als Stelle zum Ergänzen. Entscheidung: Vorschlag aus dem Status.
- * Hinweise: noch offene Klärpunkte.
+ * Hinweise: leer (optional, z. B. Verzicht), schreibt der Vermittler selbst.
  */
 export function beratungsdokuEntwurf(q: BdQuellen): BdInhalt {
   const an = q.an;
@@ -104,15 +104,14 @@ export function beratungsdokuEntwurf(q: BdQuellen): BdInhalt {
   const rat = basis.rat.replace(/Gründe: \[bitte ergänzen\]$/, `Begründung: ${GRUENDE_ERGAENZEN}`);
   const empfehlung = (q.auswahl ?? []).length ? rat : `Empfohlen: ${GRUENDE_ERGAENZEN}\n${rat}`;
 
-  const offen = punkte.filter((p) => !erledigt.has(p.toLowerCase())).slice(0, 5);
-  const hinweise = offen.length ? ["Noch zu klären:", ...offen.map((p) => `• ${zeile(p)}`)].join("\n") : "";
 
   return {
     wuensche: basis.wuensche,
     beratung: b.join("\n").trim(),
     empfehlung: empfehlung.trim(),
     entscheidung: entscheidungVorschlag(an, q.status),
-    hinweise,
+    // Bewusst leer: nicht abgehakte Punkte der Terminvorbereitung sind meist Standardfragen, keine Hinweise an den Kunden
+    hinweise: "",
   };
 }
 

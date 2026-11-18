@@ -43,11 +43,6 @@ export default async function DokumentationSeite({ params, searchParams }: { par
     <Shell advisor={s.berater} customerId={s.customerId}>
       <h1 className="text-2xl font-bold tracking-tight">{T.titel}</h1>
       <p className="mt-1 text-sm text-[color:var(--muted)]">{p.kopf.slice(1).join(" · ")}</p>
-      {s.zustand === "bestaetigt" && s.bestaetigtAt ? (
-        <p className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200" data-bd-seite="bestaetigt">
-          <CheckCircle2 className="h-4 w-4 shrink-0" /> {T.danke}: {bdTag(s.bestaetigtAt)} um {bdUhr(s.bestaetigtAt)} Uhr.
-        </p>
-      ) : null}
       {sp.f === "busy" ? (
         <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200" role="alert">
           {T.busy}
@@ -69,6 +64,11 @@ export default async function DokumentationSeite({ params, searchParams }: { par
             {T.knopf}
           </SubmitButton>
         </form>
+      ) : null}
+      {s.zustand === "bestaetigt" && s.bestaetigtAt ? (
+        <p className="mt-6 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200" data-bd-seite="bestaetigt">
+          <CheckCircle2 className="h-4 w-4 shrink-0" /> {T.danke}: {bdTag(s.bestaetigtAt)} um {bdUhr(s.bestaetigtAt)} Uhr.
+        </p>
       ) : null}
       <div className="mt-4 flex flex-col gap-1 text-sm">
         <a href={`/dokumentation/${encodeURIComponent(token)}/pdf`} target="_blank" rel="noopener" className="inline-flex min-h-10 items-center gap-1.5 font-medium text-[color:var(--brand)]">

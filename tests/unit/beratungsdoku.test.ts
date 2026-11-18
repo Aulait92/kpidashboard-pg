@@ -38,7 +38,8 @@ describe("Beratungsdokumentation: Entwurf", () => {
     expect(e.empfehlung).toContain("• Privathaftpflicht: Allianz Komfort, 6,12 € im Monat");
     expect(e.empfehlung).toContain(`Begründung: ${GRUENDE_ERGAENZEN}`);
     expect(e.entscheidung).toBe("Sie möchten das Angebot in Ruhe prüfen.");
-    expect(e.hinweise).toBe("Noch zu klären:\n• Bestehende Verträge\n• Beginn");
+    expect(e.hinweise).toBe("");
+    expect(JSON.stringify(e)).not.toContain("Beginn");
     expect(bdFehlt(e)).toContain(GRUENDE_ERGAENZEN);
   });
 
