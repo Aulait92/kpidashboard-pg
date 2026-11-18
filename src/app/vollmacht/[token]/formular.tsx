@@ -3,6 +3,7 @@
 // Formular der Maklervollmacht (Handy zuerst): 1 Daten prüfen, 2 Verträge, 3 Unterschreiben. Eingaben bleiben bei Fehlern
 // erhalten (Zustand im Browser). Unterschrift auf einer Zeichenfläche (Finger oder Maus), als PNG an den Server.
 
+import { datumBeimTippen, datumGueltig } from "@/lib/datum-eingabe";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { buttonClass } from "@/components/ui";
@@ -92,7 +93,10 @@ export function VollmachtFormular({
           </div>
           <Feld name="plz" label="PLZ" value={d.plz} onChange={(v) => setD({ ...d, plz: v.replace(/\D/g, "").slice(0, 5) })} auto="postal-code" mode="numeric" />
           <Feld name="ort" label="Ort" value={d.ort} onChange={(v) => setD({ ...d, ort: v })} auto="address-level2" />
-          <Feld name="geburtsdatum" label="Geburtsdatum" value={d.geburtsdatum} onChange={(v) => setD({ ...d, geburtsdatum: v })} placeholder="TT.MM.JJJJ" auto="bday" mode="numeric" />
+          <Feld name="geburtsdatum" label="Geburtsdatum" value={d.geburtsdatum} onChange={(v) => setD({ ...d, geburtsdatum: datumBeimTippen(v) })} placeholder="TT.MM.JJJJ" auto="bday" mode="numeric" />
+          {d.geburtsdatum.length >= 10 && !datumGueltig(d.geburtsdatum, { min: 1900, max: new Date().getFullYear() }) ? (
+            <p className="text-sm text-red-700" role="alert">Bitte ein gültiges Datum eingeben, z. B. 22.11.1990.</p>
+          ) : null}
           <Feld name="email" label="E-Mail für die Kopie" value={d.email} onChange={(v) => setD({ ...d, email: v })} auto="email" type="email" />
         </div>
       </section>
