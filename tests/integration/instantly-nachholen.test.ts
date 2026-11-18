@@ -152,7 +152,9 @@ describe("Instantly: Antworten nachholen", () => {
       expect(j.data.adresse.inInstantly.some((e) => e.imCrm)).toBe(true);
       expect(j.data.suche.map((x) => x.name)).toContain("Generalagentur der SIGNAL IDUNA Detmold");
       expect(j.data.nachholenVorschau.fehlend).toBe(0);
-      expect(raw).not.toContain("späteren");
+      // Mailinhalte nicht im Adress-Befund; die Namenssuche zeigt seit 18.11.2026 bewusst die ersten 120 Zeichen (Ole, Fall Tetenborg)
+      expect(JSON.stringify(j.data.adresse)).not.toContain("späteren");
+      expect(JSON.stringify(j.data.suche)).toContain("zu einem späteren Zeitpunkt");
       expect(raw).not.toContain('"test"');
     } finally {
       process.env.OPS_READ_TOKEN = before;

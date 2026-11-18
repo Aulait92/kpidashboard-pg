@@ -204,13 +204,17 @@ describe("6 Monate: Angebot → Annahme → Stripe", () => {
     expect(p.metadata.pg_interval).toBe("year");
   });
 
-  it("Laufzeitwahl: Kunde wählt 6 Monate aus einem 12-Monats-Angebot, Vorauszahlung mit 1 Monat geschenkt", async () => {
+  it("Laufzeitwahl: 6 Monate nur auf Nachfrage, aus einem 12-Monats-Angebot nicht wählbar (Ole, 18.11.2026)", async () => {
     const o = await angebot({ term: "12m" });
     expect(o.customerChoosesTerm).toBe(true);
     // Angebot nach der Einführung von 6 Monaten (unabhängig von der Uhrzeit des Testlaufs)
     await prisma.offer.update({ where: { id: o.id }, data: { createdAt: new Date(TERM_6M_AB.getTime() + 60_000) } });
-    expect(await accept(o.token, { term: "6m", annual: true })).toEqual({ ok: true });
-    const a = await prisma.offer.findUniqueOrThrow({ where: { id: o.id } });
+    expect(await accept(o.token, { term: "6m", annual: true })).toMatchObject({ ok: false });
+    // Steht das Angebot auf 6 Monate, ist sie wählbar
+    const sechs = await angebot({ term: "6m" });
+    await prisma.offer.update({ where: { id: sechs.id }, data: { createdAt: new Date(TERM_6M_AB.getTime() + 60_000) } });
+    expect(await accept(sechs.token, { term: "6m", annual: true })).toEqual({ ok: true });
+    const a = await prisma.offer.findUniqueOrThrow({ where: { id: sechs.id } });
     expect(a).toMatchObject({ term: "6m", annualPrepay: true, annualFreeMonths: 1 });
     expect(Number(a.setupFee)).toBe(1490);
   });
