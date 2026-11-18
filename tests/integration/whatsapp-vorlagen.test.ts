@@ -335,7 +335,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const l1 = await lead("Thomas Müller", "4917600000021");
     await sendOutreach({ customerId, leadId: l1.id, phone: l1.phone!, name: l1.name, an: "sie", source: l1.source });
     expect(tplOf("4917600000021").name).toBe("pg_outreach_tkv_v4_sie");
-    expect(params("4917600000021")).toEqual(["Thomas Müller", "Katzenversicherung"]);
+    expect(params("4917600000021")).toEqual(["Herr Müller", "Katzenversicherung"]);
 
     // v5 freigegeben (mit PDF-Kopf): Produkt und „Ihre Katze“
     const v5Body = "Hallo {{1}}, danke für Ihre Anfrage zur {{2}}!\nIch bin der digitale KI-Assistent von Anid und kläre kurz zwei, drei Fragen, damit Anid Ihnen ein passendes Angebot machen kann.\n\n*Wie alt ist {{3}}?*";
