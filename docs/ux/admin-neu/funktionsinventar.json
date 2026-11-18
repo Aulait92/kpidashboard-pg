@@ -5170,5 +5170,101 @@
   "bereich": "geld",
   "status_neu": "vorhanden",
   "ort_neu": "src/app/admin/neu/zahlen/offene-posten/page.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Fünf Kennzahlen für Investoren: MRR, Umsatzbindung, Bruttomarge, Amortisation, Kundenwert : CAC",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--fuenf-kennzahlen-mrr-bindung-marge-amortisation",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Kunden- und Umsatzbindung nach 3, 6 und 12 Monaten (NRR, GRR)",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--bindung-3-6-12-monate-nrr-grr",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "MRR-Bewegung der letzten 6 Monate (neu, Ausbau, Reaktivierung, weniger, gekündigt)",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--mrr-bewegung-letzte-6-monate",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Kohorten nach Startmonat, erst ab 5 Kunden je Startmonat",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--kohorten-ab-5-kunden",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Bruttomarge je Monat mit direkten Kosten und KI-Kosten",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--bruttomarge-je-monat-mit-ki-kosten",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Abo und Pay-per-Lead im Vergleich (MRR, Kunden, Marge, Anteil)",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--abo-und-pay-per-lead-im-vergleich",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "„So rechnen wir“: Definitionen je Kennzahl und Datenlücken mit Weg zur Behebung",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--so-rechnen-wir-und-datenlage",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Export der Investoren-Kennzahlen als PDF und CSV",
+  "quelle": "app/admin/neu/zahlen/auswertung/page.tsx",
+  "neu": "Zahlen › Auswertung",
+  "status": "neu",
+  "demo_view": "zahlen-auswertung",
+  "id": "auswertung--export-pdf-und-csv",
+  "bereich": "geld",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
  }
 ]

@@ -3,13 +3,16 @@
 // oder Verwendungszweck vorkommt. Eigene Regeln (aus „immer so“) gehen den
 // Standardregeln vor; längere Muster gehen kürzeren vor.
 
-export const COST_ACTIONS = ["ppl", "software", "akquise", "betrieb", "ignore"] as const;
+// „ki“ (KI-Dienste wie Anthropic, OpenAI) ist ein Teil der direkten Software-Kosten: zählt in Marge und BWA wie
+// „software“, wird aber für die Investoren-Kennzahlen (Geld › Auswertung) eigens ausgewiesen.
+export const COST_ACTIONS = ["ppl", "software", "ki", "akquise", "betrieb", "ignore"] as const;
 export type CostAction = (typeof COST_ACTIONS)[number];
 export type CostPurposeKey = Exclude<CostAction, "ignore">;
 
 export const ACTION_LABEL: Record<CostAction, string> = {
   ppl: "Direkt: Pay-per-Lead",
   software: "Direkt: Software",
+  ki: "Direkt: KI-Dienste",
   akquise: "Kundengewinnung",
   betrieb: "Sonstiger Betrieb",
   ignore: "Ignorieren (keine Kosten)",
@@ -39,10 +42,10 @@ export const DEFAULT_RULES: Rule[] = [
   { pattern: "privat", action: "ignore", label: "Privat" },
   { pattern: "gehalt", action: "ignore", label: "Gehalt (separat)" },
   // Software / Tools
-  { pattern: "anthropic", action: "software" },
-  { pattern: "claude.ai", action: "software" },
-  { pattern: "openai", action: "software" },
-  { pattern: "chatgpt", action: "software" },
+  { pattern: "anthropic", action: "ki" },
+  { pattern: "claude.ai", action: "ki" },
+  { pattern: "openai", action: "ki" },
+  { pattern: "chatgpt", action: "ki" },
   { pattern: "railway", action: "software" },
   { pattern: "vercel", action: "software" },
   { pattern: "google workspace", action: "software" },
@@ -65,7 +68,24 @@ export const DEFAULT_RULES: Rule[] = [
   { pattern: "apollo", action: "akquise" },
 ];
 
-const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/\s+/g, " ");
+/**
+ * KI-Anbieter: Buchungen mit Zweck „software“, deren Gegenpartei oder Verwendungszweck eines dieser Muster enthält,
+ * zählen ebenfalls als KI-Kosten (ältere Zuordnungen von vor der Kategorie „ki“, Regeln wurden schon als „software“
+ * gespeichert). Bewusst eng: nur Anbieter, die ausschließlich KI verkaufen.
+ */
+export const KI_MUSTER = ["anthropic", "claude.ai", "openai", "chatgpt", "mistral ai", "replicate", "elevenlabs", "perplexity"] as const;
+
+/** Ist eine zugeordnete Ausgabe KI-Kosten? Zweck „ki“, oder „software“ mit einem KI-Anbieter in Gegenpartei/Zweck. */
+export function istKiKosten(tx: { costPurpose?: string | null; counterparty?: string | null; purpose?: string | null }): boolean {
+  if (tx.costPurpose === "ki") return true;
+  if (tx.costPurpose !== "software") return false;
+  const hay = `${norm(tx.counterparty)} | ${norm(tx.purpose)}`;
+  return KI_MUSTER.some((m) => hay.includes(m));
+}
+
+function norm(s: string | null | undefined) {
+  return (s ?? "").toLowerCase().replace(/\s+/g, " ");
+}
 
 /** Passende Regel: eigene vor Standard, längeres Muster vor kürzerem. */
 export function matchRule(tx: { counterparty?: string | null; purpose?: string | null }, ownRules: Rule[], defaults: Rule[] = DEFAULT_RULES): Rule | null {

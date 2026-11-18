@@ -44,7 +44,7 @@ describe("Bank & Karten", () => {
     expect(a).toMatchObject({ total: 5, created: 5, assigned: 1, ignored: 2, open: 2 });
     const b = await importTransactions(acc, rows, { source: "csv" });
     expect(b).toMatchObject({ created: 0, existing: 5 });
-    expect(await prisma.costRule.findUnique({ where: { pattern: "anthropic" } })).toMatchObject({ action: "software" });
+    expect(await prisma.costRule.findUnique({ where: { pattern: "anthropic" } })).toMatchObject({ action: "ki" });
   });
 
   it("Zuordnen mit „immer so“ legt Regel an und ordnet offene gleiche Buchungen mit zu", async () => {
@@ -56,11 +56,13 @@ describe("Bank & Karten", () => {
 
   it("Zugeordnete Ausgaben fließen netto je Zweck in die Zahlen-Seite", async () => {
     const bank = (await monthlyBankCosts(new Date("2031-05-01"))).get(M)!;
-    expect(bank.software).toBe(119); // Anthropic ohne deutsche USt (Standardregel)
+    expect(bank.software).toBe(119); // Anthropic ohne deutsche USt (Standardregel „ki“ zählt in Software mit)
+    expect(bank.ki).toBe(119); // davon KI-Dienste (Investoren-Kennzahlen)
     expect(bank.betrieb).toBe(30); // 11,90 + 23,80 brutto → 10 + 20 netto
     expect(bank.akquise).toBe(0); // Meta ignoriert (kommt per API)
     const { costs } = await loadCosts([M], await loadKpiSettings(), new Date("2031-06-15T12:00:00Z"));
     expect(costs[0].bank).toBe(149);
+    expect(costs[0].ki).toBe(119);
     expect(costs[0].software).toBeGreaterThanOrEqual(119);
     expect(costs[0].betrieb).toBeGreaterThanOrEqual(30);
   });
