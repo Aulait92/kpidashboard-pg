@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Jahres-Auslandskrankenversicherung",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ergo-reiseversicherung.de/de/reiseversicherungen/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -51,6 +49,7 @@
     "erv.de leitet auf ergo-reiseversicherung.de um (ERGO Reiseversicherung AG, Marke ERV). Diese Auslandskrankenversicherung ist ein eigenes Produkt und nicht die DKV-Auslandskrankenversicherung aus dem ERGO-Ordner.",
     "Einmalschutz gilt je nach Tarif in Europa oder weltweit; USA und Kanada nicht ausdrücklich genannt. Jahresschutz laut Produktinformationsblatt weltweit, beliebig viele Reisen bis je 45 Tage.",
     "Tarife mit Selbstbeteiligung: 100 € je Versicherungsfall. Zahnbehandlung, bekannte Erkrankungen und Schwangerschaft auf Seite und Produktinformationsblatt nicht genannt (nur Ausschluss geplanter Behandlungen).",
-    "Einzel-, Paar- und Familientarif (Kinder bis 25 Jahre). Keine Empfehlung markiert (zwei Stufen)."
+    "Einzel-, Paar- und Familientarif (Kinder bis 25 Jahre). Keine Empfehlung markiert (zwei Stufen).",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

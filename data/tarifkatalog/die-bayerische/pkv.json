@@ -26,8 +26,7 @@
         "sehhilfen": "150 € je Sehhilfe"
       },
       "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Barmenia einsA prima+",
@@ -46,8 +45,7 @@
         "sehhilfen": "300 € je Sehhilfe"
       },
       "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Barmenia einsA expert",
@@ -66,8 +64,7 @@
         "sehhilfen": "600 € alle 2 Jahre"
       },
       "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Barmenia einsA expert+",
@@ -86,8 +83,7 @@
         "sehhilfen": "600 € alle 2 Jahre"
       },
       "quelle": "https://www.diebayerische.de/versicherungen/krankenvollversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -102,6 +98,7 @@
     "Keine Tarifvergleichstabelle auf barmeniagothaer.de; Werte aus der Kurzübersicht der Tarifbedingungen (Stand 01.01.2025 bzw. 01.01.2026). Laut Produktseite aktuelle Barmenia-Tarife: einsA prima, prima+, expert, expert+.",
     "Selbstbehalt je Kalenderjahr über die Leistungsstufe: Stufe 1 330 €, Stufe 2 660 €, Stufe 3 1.320 € (Bedingungen nennen dies als Beispiel). Beitragsrückerstattung erfolgsabhängig laut Bedingungen, Höhe nicht genannt.",
     "prima und prima+: Primärarzttarife, bei direktem Facharztbesuch 75 bzw. 80 %. expert und expert+ sind Kompakttarife ohne Primärarztregel. Hilfsmittel 75/80/85/100 %.",
-    "Sehhilfen: Rechnungsbetrag je Sehhilfe, neue Sehhilfe nach 2 Jahren (bei expert so belegt). Krankentagegeld und Pflegezusatz nicht in den Unterlagen genannt."
+    "Sehhilfen: Rechnungsbetrag je Sehhilfe, neue Sehhilfe nach 2 Jahren (bei expert so belegt). Krankentagegeld und Pflegezusatz nicht in den Unterlagen genannt.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

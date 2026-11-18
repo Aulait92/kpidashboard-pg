@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/kfz-versicherung/auto/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Komfort",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/kfz-versicherung/auto/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +68,7 @@
     "Marderbiss: Schäden durch Tierbisse einschließlich Folgeschäden nur im Komfort.",
     "Akku: Allgefahrendeckung für den Akku von E- und Hybrid-Pkw in der Vollkasko nur Komfort; Wallbox im Komfort beitragsfrei.",
     "Werkstatt: Kaskoschäden in EUROPA-Partnerwerkstätten günstiger (Werkstattbindung wählbar).",
-    "Rabattschutz, Schutzbrief, GAP-Deckung, Auslandsschadenschutz und Fahrerschutz als Ergänzungen."
+    "Rabattschutz, Schutzbrief, GAP-Deckung, Auslandsschadenschutz und Fahrerschutz als Ergänzungen.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

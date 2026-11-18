@@ -25,8 +25,7 @@
         "inlays": "ja"
       },
       "quelle": "https://www.europa.de/versicherungen/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnzusatz Premium (E-ZP + E-ZB)",
@@ -44,8 +43,7 @@
         "inlays": "ja"
       },
       "quelle": "https://www.europa.de/versicherungen/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
     "Komfort: Eigenanteil zu 80 oder 90 % wählbar; Implantate laut Leistungsliste im Zahnersatz enthalten.",
     "Leistungsbegrenzung in den ersten Kalenderjahren vorhanden (für Wechsler entfällt die Begrenzung im 3. und 4. Jahr); Höhen nicht auf der Seite.",
     "Optionsrecht: alle fünf Jahre Wechsel in Premium ohne neue Gesundheitsprüfung, letztmalig mit 50 Jahren.",
-    "Bleaching und angstlindernde Maßnahmen je bis 250 € im Jahr."
+    "Bleaching und angstlindernde Maßnahmen je bis 250 € im Jahr.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

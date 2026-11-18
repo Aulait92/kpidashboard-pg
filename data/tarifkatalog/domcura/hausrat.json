@@ -34,8 +34,7 @@
         "fahrrad": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/hausrat/leistungsuebersicht_hr.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Komfort-Schutz",
@@ -62,8 +61,7 @@
         "fahrrad": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/hausrat/leistungsuebersicht_hr.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Top-Schutz",
@@ -90,8 +88,7 @@
         "fahrrad": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/hausrat/leistungsuebersicht_hr.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -103,6 +100,7 @@
     "Einfacher Diebstahl in der Wohnung nicht genannt; Trickdiebstahl in der Wohnung nur Top (3.000 €).",
     "Grobe Fahrlässigkeit gilt für die Herbeiführung; bei Obliegenheitsverletzungen nur Top bis 10.000 €.",
     "Wertsachen als Eurobetrag (Höchstentschädigung 500.000 €), nicht als Anteil der Versicherungssumme.",
-    "Domcura markiert keinen Tarif; Komfort als mittlere Stufe."
+    "Domcura markiert keinen Tarif; Komfort als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

@@ -31,8 +31,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Haftpflicht Komfort",
@@ -56,8 +55,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Haftpflicht Prestige",
@@ -81,8 +79,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Haftpflicht Prestige Plus",
@@ -106,8 +103,7 @@
         "dienst": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:7a08f89d-c5d5-4759-a1c2-c881c1b26148/B%20299340%20PHV2025_Highlightblatt_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -116,9 +112,9 @@
     "https://www.diebayerische.de/dam/jcr:f16f3933-ce83-41b1-96df-0fb379faa09a/299300_avb_bbr_privathaftpflichtversicherung_2025_bf.pdf"
   ],
   "offen": [
-    "Werte aus dem Highlightblatt B 299340 (08.26); die Tabelle ist mehrspaltig gesetzt, Zuordnung der Zellen bei Schlüsselverlust, Mietsachschäden und Forderungsausfall bitte am Dokument gegenprüfen (Forderungsausfall Smart: Mindestschaden 2.000 € vermutlich nur in dieser Spalte).",
-    "Schlüssel: Smart bis 50.000 € (privat, ehrenamtlich, laut Produktseite auch beruflich); Prestige Plus vermutlich inklusive Folgeschäden. Mietsachschäden: Prestige und Prestige Plus auch an Heizungs-, Kessel- und Warmwasseranlagen.",
     "Prestige Plus steht nur im Highlightblatt, nicht im Online-Rechner (Smart, Komfort, Prestige). Selbstbehalt bis 500 € je Schaden wählbar.",
-    "Keine Markierung; bei vier Stufen die dritte (Prestige) als mittlere Stufe gesetzt. Stiftung-Warentest-Garantie erst ab Prestige."
+    "Keine Markierung; bei vier Stufen die dritte (Prestige) als mittlere Stufe gesetzt. Stiftung-Warentest-Garantie erst ab Prestige.",
+    "Werte aus dem Highlightblatt B 299340 (08.26), am Bild aller drei Seiten geprüft: Forderungsausfall Smart mit Mindestschaden 2.000 €, ab Komfort ohne; Schlüssel Smart bis 50.000 €, ab Komfort ohne Betrag, Prestige Plus inklusive Folgeschäden; Mietsachschäden Smart mit 250 € SB, Prestige und Prestige Plus auch an Heizungs-, Kessel- und Warmwasseranlagen.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

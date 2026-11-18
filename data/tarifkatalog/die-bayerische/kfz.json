@@ -27,8 +27,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.diebayerische.de/kfz-versicherung/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Komfort",
@@ -48,8 +47,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.diebayerische.de/kfz-versicherung/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Prestige",
@@ -69,8 +67,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.diebayerische.de/kfz-versicherung/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -81,6 +78,7 @@
     "Quelle: Tarifvergleich der Produktseite und AKB B 250147 (10.26) der BA die Bayerische Allgemeine (Abruf 17.11.2026). Keine Stufe ausdrücklich empfohlen; Komfort als mittlere Stufe.",
     "Deckungssumme der Kfz-Haftpflicht steht im Versicherungsschein, auf Seite und in den AKB nicht beziffert.",
     "Grobe Fahrlässigkeit: Verzicht in der Kasko außer bei Entwendung und Alkohol oder Drogen (AKB A.2.9.1). Neupreisentschädigung „sofern abgeschlossen“ bei Totalschaden innerhalb 18 (Komfort) bzw. 36 Monaten (Prestige).",
-    "Tierbiss-Folgeschäden auf Antrag gegen Zuschlag (Komfort 3.000 €, Prestige 20.000 €); Kurzschluss-Folgeschäden in Komfort und Prestige inklusive. Sonderzubehör 2.500/7.500/20.000 €. GAP-Deckung und Best-Leistungs-Garantie optional."
+    "Tierbiss-Folgeschäden auf Antrag gegen Zuschlag (Komfort 3.000 €, Prestige 20.000 €); Kurzschluss-Folgeschäden in Komfort und Prestige inklusive. Sonderzubehör 2.500/7.500/20.000 €. GAP-Deckung und Best-Leistungs-Garantie optional.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

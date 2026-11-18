@@ -824,6 +824,7 @@ model Lead {
   files               LeadFile[]
   // Unterlagen vom Lead per WhatsApp (Policen vor dem Termin, lib/policen)
   documents           LeadDocument[]
+  policenAuszuege     PolicenAuszug[]
   // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
   mails               ContactMail[]
   // Automatische Vorlagen-Mails: Idempotenz je Vorlage und Anlass, höchstens eine je Tag (lib/mail/vorlagen-mail.ts)
@@ -4010,10 +4011,72 @@ model LeadDocument {
   behaltenVonId    String?
   behaltenVermerk  String?
   createdAt        DateTime  @default(now())
+  auszug           PolicenAuszug?
 
   @@index([leadId])
   @@index([customerId])
   @@index([status, createdAt])
+}
+
+// Policen auslesen (Ole, 18.11.2026, lib/policen/auslesen): Vertragsfelder einer Unterlage vom Kunden für das
+// Vergleichsblatt in der Terminvorbereitung. Nur feste Vertragsfelder (Whitelist, keine Gesundheitsangaben, kein
+// Freitext), Versicherungsnummer nur maskiert. Kein Prompt, keine Rohantwort. Wird mit der Unterlage gelöscht
+// (Cascade: Löschfrist, Widerruf, Art. 17); bleibt nur, was der Vermittler ausdrücklich in den Bestand übernimmt
+// (ExistingContract). Eigene Tabelle ohne Anbindung an Statistik oder Benchmarks.
+model PolicenAuszug {
+  id                 String       @id @default(cuid())
+  customerId         String
+  leadId             String
+  lead               Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  documentId         String       @unique
+  document           LeadDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  // laeuft | ausgelesen | sparte_offen | sparte_abweichend | gesperrt | limit | fehler | leer
+  status             String
+  // Sparte für das Auslesen (lib/policen/auslesen/felder.ts AUSLESEN_SPARTEN) und woher sie vorab stammt:
+  // unterlage (Dateiname/Begleittext) | text (Textebene Seite 1, lokal) | vermittler
+  sparte             String?
+  sparteQuelle       String?
+  // { feld: { w: Wert, s: ok | pruefen | korrigiert } }, nur Felder der Whitelist
+  felder             Json?
+  anbieter           String?
+  modell             String?
+  ausgelesenAt       DateTime?
+  versuche           Int          @default(0)
+  // Vermittler hat die Werte geprüft bzw. korrigiert
+  geprueftAt         DateTime?
+  geprueftVonId      String?
+  // „In Bestand übernehmen“: ExistingContract.id (bleibt nach der Löschung dieser Zeile bestehen)
+  uebernommenAt      DateTime?
+  uebernommenVonId   String?
+  existingContractId String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([leadId])
+  @@index([customerId])
+}
+
+// Bremse für das Auslesen (Ole, 18.11.2026): Aufrufe beim KI-Anbieter je Kalendertag (Europe/Berlin), unabhängig von
+// späteren Löschungen; gemeldetAt = Admin-Hinweis „Tageslimit erreicht“ schon verschickt.
+model PolicenAuslesenTag {
+  tag        String    @id
+  anzahl     Int       @default(0)
+  gemeldetAt DateTime?
+}
+
+// Einstellungen zum Auslesen (eine Zeile, id „global“, Admin → Anbindungen): Nachweis „keine Speicherung“ beim
+// KI-Anbieter (schaltet Kranken/BU/Leben frei, Rechtsprüfung K2), Pause nach 401 (Fingerabdruck des Schlüssels,
+// ein neuer Schlüssel hebt sie auf) und wann Admins zuletzt benachrichtigt wurden.
+model PolicenAuslesenEinstellung {
+  id                    String    @id @default("global")
+  zdrNachweisAm         DateTime?
+  zdrReferenz           String?
+  zdrVonId              String?
+  schluesselUngueltigAt DateTime?
+  schluesselFinger      String?
+  ungueltigGemeldetAt   DateTime?
+  ablaufGemeldetAt      DateTime?
+  updatedAt             DateTime  @updatedAt
 }
 
 // Nachweise zu Policen per WhatsApp (Rechtsprüfung A3, Ole 18.11.2026): Einwilligung (mit bzw. ohne KI), Ablehnung,

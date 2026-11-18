@@ -31,8 +31,7 @@
         "sb0": "nein"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/hunde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "OP-Schutz Premium",
@@ -56,8 +55,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/hunde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "OP-Schutz Premium Plus",
@@ -81,8 +79,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/hunde-op-versicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -97,6 +94,7 @@
     "Prothesen 500 € (Premium), unbegrenzt (Premium Plus); Goldakupunktur nur Premium Plus.",
     "Tiere ab 2 Monate bis einschließlich 9 Jahre versicherbar.",
     "Die Unfall-OP-Versicherung leistet nur für Operationen nach Unfällen (gleicher Beitrag für alle Hunde).",
-    "Ausland Premium Plus laut Produktseite ohne zeitliche Begrenzung."
+    "Ausland Premium Plus laut Produktseite ohne zeitliche Begrenzung.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

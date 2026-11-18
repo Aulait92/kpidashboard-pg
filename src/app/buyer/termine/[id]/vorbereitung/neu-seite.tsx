@@ -24,6 +24,7 @@ import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { listUnterlagen } from "@/lib/policen/server";
 import { UnterlagenVomKunden } from "@/components/unterlagen-vom-kunden";
+import { PolicenVergleichKurz } from "@/components/policen-vergleich-kurz";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
 import { angebotStandText } from "@/lib/angebot-senden";
 
@@ -89,6 +90,10 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
         {d.leadId ? (
           <div className="mt-3 border-t border-[color:var(--border)] pt-3">
             <UnterlagenVomKunden leadId={d.leadId} unterlagen={vomKunden} />
+            {/* Policen auslesen: Vergleichsblatt (eigene Seite, components/policen-vergleich-kurz.tsx) */}
+            <div className="mt-2.5">
+              <PolicenVergleichKurz terminId={d.id} leadId={d.leadId} customerId={ctx.customerId} preview={ctx.preview} />
+            </div>
           </div>
         ) : null}
       </div>

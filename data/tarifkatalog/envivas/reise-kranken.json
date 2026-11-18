@@ -26,8 +26,7 @@
         "lang": "nein"
       },
       "quelle": "https://www.envivas.de/tarife/reisekrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "TravelXF (Familie)",
@@ -46,8 +45,7 @@
         "lang": "nein"
       },
       "quelle": "https://www.envivas.de/tarife/reisekrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "TravelXLOU (Langzeit ohne USA und Kanada)",
@@ -65,8 +63,7 @@
         "lang": "inklusive"
       },
       "quelle": "https://www.envivas.de/tarife/langzeit-auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "TravelXLMU (Langzeit mit USA und Kanada)",
@@ -84,8 +81,7 @@
         "lang": "inklusive"
       },
       "quelle": "https://www.envivas.de/tarife/langzeit-auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -99,6 +95,7 @@
     "Selbstbeteiligung: Die Tarifinformationen nennen 100 % Erstattung der versicherten Kosten; eine Selbstbeteiligung ist nicht genannt.",
     "TravelXN/XF: Jahresvertrag, je Reise die ersten 60 Tage. TravelXL: tagesgenau für Reisen über 60 Tage bis 1 Jahr, Überführung bis 30.000 €.",
     "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparaturen; provisorischer Zahnersatz bei TravelXL nur nach Unfall. Bergung bis 2.500 €.",
-    "Bekannte Erkrankungen: keine Leistung für Behandlungen, deren Notwendigkeit vor Reiseantritt absehbar war. Schwangerschaft: Komplikationen und Frühgeburt versichert."
+    "Bekannte Erkrankungen: keine Leistung für Behandlungen, deren Notwendigkeit vor Reiseantritt absehbar war. Schwangerschaft: Komplikationen und Frühgeburt versichert.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }
