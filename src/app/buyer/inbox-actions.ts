@@ -10,7 +10,7 @@ import { updateLeadEditableFields } from "@/lib/airtable-write";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { conversationScope } from "@/lib/team";
 import { writableCustomerId } from "@/lib/buyer-write";
-import { syncFollowUpWithStatus, workdaysFromNow } from "@/lib/lead-followup";
+import { syncFollowUpWithStatus, wiedervorlageVorTerminErledigen, workdaysFromNow } from "@/lib/lead-followup";
 import { prisma } from "@/lib/prisma";
 import { recordUsage } from "@/lib/usage";
 import { abschlussText, fmtDayShort, logLeadHistory, POLICY_TODO } from "@/lib/lead-history";
@@ -193,7 +193,7 @@ export async function appointmentOutcomeResult(
   const nextStatus = OUTCOME_STATUS[outcome];
   const appt = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    select: { id: true, leadId: true, customerId: true, status: true, attendance: true },
+    select: { id: true, leadId: true, customerId: true, status: true, attendance: true, startsAt: true },
   });
   if (!appt?.leadId || !nextStatus) return { ok: false, error: "Termin nicht gefunden." };
   const customerId = await writableCustomerId(appt.leadId);
@@ -236,6 +236,8 @@ export async function appointmentOutcomeResult(
       ...(outcome === "no_show" ? { callbackSnoozedUntil: null } : {}),
     },
   });
+  // Wiedervorlage bis zum Terminbeginn ist durch den Termin erledigt (nicht bei „nicht erschienen“), Rückgängig stellt sie wieder her
+  if (outcome !== "no_show") await wiedervorlageVorTerminErledigen(lead.id, appt.startsAt);
   await syncFollowUpWithStatus(lead.id, nextStatus);
   if (outcome === "closed") await syncPrimaryContract(lead.id, { sparte, reopen: true }).catch((e) => console.error("[vertraege]", e));
   await logLeadHistory(

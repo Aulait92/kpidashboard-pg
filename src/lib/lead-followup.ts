@@ -4,11 +4,32 @@
 
 import { prisma } from "@/lib/prisma";
 import { onLeadStatus } from "@/lib/lead-sequences";
+import { NACH_ABSCHLUSS_TODOS } from "@/lib/vertraege-shared";
 
 /** Wiedervorlage nach dem Abschluss (gleicher Text wie lib/lead-history POLICY_TODO). */
 export const POLICY_TODO = "Police fertig machen";
 
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
+
+/** Aufgaben nach dem Abschluss: unabhängig von Terminen, bleiben immer stehen. */
+const istNachAbschlussAufgabe = (note: string | null | undefined) => !!note && (note === POLICY_TODO || NACH_ABSCHLUSS_TODOS.some((t) => note.startsWith(t)));
+
+/**
+ * Termin vor Wiedervorlage (Usability-Check 18.11.2026, „Heute“ zeigt niemanden doppelt): Solange ein Termin läuft bzw.
+ * auf sein Ergebnis wartet, steht der Kontakt auf „Heute“ nur mit dem Termin (lib/inbox.ts). Wird das Ergebnis
+ * eingetragen, ist eine Wiedervorlage, die bis zum Terminbeginn fällig war, durch den Termin erledigt; der nächste
+ * Schritt kommt aus dem Ergebnis. Spätere Wiedervorlagen und Aufgaben nach dem Abschluss bleiben. Ist der Termin
+ * abgesagt, bleibt die Wiedervorlage ohnehin stehen und erscheint wieder.
+ */
+export async function wiedervorlageVorTerminErledigen(leadId: string, terminBeginn: Date): Promise<boolean> {
+  const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { followUpAt: true, followUpNote: true } });
+  if (!l?.followUpAt || l.followUpAt.getTime() > terminBeginn.getTime() || istNachAbschlussAufgabe(l.followUpNote)) return false;
+  const r = await prisma.lead.updateMany({ where: { id: leadId, followUpAt: l.followUpAt }, data: { followUpAt: null, followUpNote: null } });
+  return r.count > 0;
+}
+
+/** Steht der Kontakt wegen eines Termins schon auf „Heute“? Dann keine zweite Zeile für die Wiedervorlage. */
+export const wiedervorlageHinterTermin = (note: string | null | undefined) => !istNachAbschlussAufgabe(note);
 
 /** Datum in N Werktagen, 9:00 Uhr (Berlin ≈ 8:00 UTC). */
 export function workdaysFromNow(n: number): Date {

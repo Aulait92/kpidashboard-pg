@@ -298,7 +298,7 @@ describe("Wiedervorlage: Erledigt nur mit weiterem Schritt", () => {
   });
   afterAll(() => cleanupCustomer(customerId));
 
-  it("offen ohne Termin: nein; mit geplantem Termin oder nach Abschluss: ja", async () => {
+  it("offen ohne Termin: nein; nach Abschluss: ja; mit geplantem Termin nicht zusätzlich gelistet", async () => {
     const { loadInbox } = await import("@/lib/inbox");
     const { POLICY_TODO } = await import("@/lib/lead-followup");
     const due = new Date(Date.now() - HOUR);
@@ -309,7 +309,8 @@ describe("Wiedervorlage: Erledigt nur mit weiterem Schritt", () => {
     const data = await loadInbox({ customerId, userId: null, teamRole: "owner" });
     const ok = (id: string) => data.followUps.find((f) => f.leadId === id)?.erledigtOk;
     expect(ok(offen.id)).toBe(false);
-    expect(ok(mitTermin.id)).toBe(true);
+    // Termin geht vor (Usability-Check 18.11.2026): die Wiedervorlage steht nicht zusätzlich auf „Heute“
+    expect(data.followUps.some((f) => f.leadId === mitTermin.id)).toBe(false);
     expect(ok(police.id)).toBe(true);
   });
 });
