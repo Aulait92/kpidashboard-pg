@@ -48,7 +48,7 @@ describe("Produkt buchen: Vorschau", () => {
 describe("Produkt buchen: Katalog", () => {
   it("Standard: Ole-Liste buchbar, nur die Katze bewährt", () => {
     expect(DEFAULT_CATALOG.filter((c) => c.enabled).map((c) => c.key)).toEqual(["tkv-katze", "tkv-hund", "tkv-pferd", "privatschutz", "sterbegeld", "kindersparplan"]);
-    expect(DEFAULT_CATALOG.filter((c) => c.proven).map((c) => c.key)).toEqual(["tkv-katze"]);
+    expect(DEFAULT_CATALOG.filter((c) => c.proven).map((c) => c.key)).toEqual(["tkv-katze", "tkv-hund", "tkv-pferd", "privatschutz"]);
     expect(DEFAULT_CATALOG.find((c) => c.key === "tkv-katze")?.proven).toBe(true);
   });
 
