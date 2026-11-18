@@ -37,6 +37,7 @@ export default async function VorlagenPage() {
       plan: true,
       existingCustomersEnabled: true,
       empfehlungEnabled: true,
+      vermittlerTyp: true,
       leadAddress: true,
       whatsAppAccount: { select: { status: true } },
       erstinformation: { select: { name: true, anrede: true } },
@@ -48,7 +49,7 @@ export default async function VorlagenPage() {
   const connected = customer.whatsAppAccount?.status === "connected";
   // Vorname im Erstanschreiben wie beim Einreichen (Anbieterangaben, sonst Vorschlag)
   const names = templateNamesOf(customer.name, undefined, erstinfoName(customer.erstinformation?.name, (customer.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer.name), customer.erstinformation?.anrede);
-  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
+  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled, makler: customer.vermittlerTyp === "makler" });
 
   // Gespeicherte Ansprache (Sie/Du) bestimmt Fassung und Vorschau; Beispielkontakt: Julia Schneider, Anrede „Frau“
   const an = asAnsprache(customer.leadAddress);

@@ -158,6 +158,20 @@ export function kopieMail(an: Ansprache, kunde: Pick<VvDaten, "vorname" | "nachn
   );
 }
 
+/**
+ * WhatsApp mit dem Link (Ole, 18.11.2026), Freitext im offenen 24-h-Fenster. Außerhalb: Vorlage „maklervollmacht“ bzw.
+ * „maklervollmacht_erinnerung“ (lib/whatsapp/templates.ts, gleicher Inhalt). vermittler = Nennung im Nominativ
+ * (lib/vermittler-nennung.ts: Sie „Herr Berger“, Du der Vorname).
+ */
+export function vollmachtWhatsAppText(an: Ansprache, vermittler: string, link: string, erinnerung = false): string {
+  const satz = a(
+    an,
+    `amit ${vermittler} deine bestehenden Verträge übernehmen und für dich betreuen kann, unterschreibe hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: ${link}`,
+    `amit ${vermittler} Ihre bestehenden Verträge übernehmen und für Sie betreuen kann, unterschreiben Sie hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: ${link}`,
+  );
+  return `${erinnerung ? "Kurze Erinnerung: " : ""}D${satz}`;
+}
+
 /** Mail mit dem Link an den Kunden (vom Makler ausgelöst) */
 export function linkMail(an: Ansprache, anrede: string, m: VvMakler, link: string): { subject: string; text: string } {
   return pick(

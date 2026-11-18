@@ -9,6 +9,8 @@ import { ServiceMails } from "./service-mails";
 import { TerminFormateEinstellung } from "@/components/termin-formate";
 import { loadTerminFormate } from "@/lib/termin-formate-server";
 import { terminFormateSpeichernAction } from "./actions";
+import { VollmachtVersandWahl } from "@/components/vollmacht-versand-wahl";
+import { asVollmachtVersand } from "@/lib/maklervollmacht/regeln";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Assistent | performancegrowth" };
@@ -21,7 +23,7 @@ export default async function AssistentPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
   const [c, mails, formate] = await Promise.all([
-    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true } }),
+    prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true, vermittlerTyp: true, vollmachtVersand: true } }),
     serviceMailsDaten(ctx.customerId, ctx.userId, ctx.email),
     loadTerminFormate(ctx.customerId),
   ]);
@@ -52,6 +54,12 @@ export default async function AssistentPage() {
           <section id="termine">
             <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Termine</h2>
             <TerminFormateEinstellung initial={formate} canEdit={canEdit} save={terminFormateSpeichernAction} />
+          </section>
+        ) : null}
+        {c?.vermittlerTyp === "makler" ? (
+          <section id="maklervollmacht" data-assistent-vollmacht>
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Maklervollmacht: Wer schickt sie?</h2>
+            <VollmachtVersandWahl wert={asVollmachtVersand(c.vollmachtVersand)} darf={canEdit} />
           </section>
         ) : null}
         <section id="mails">

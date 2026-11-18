@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { geburtsdatum, gesundheitNoetig, leseUebertragung, pruefeEingabe, signaturAusDataUrl, uebertragungsStand, versichererListe, fuelle } from "@/lib/maklervollmacht/regeln";
+import {
+  erinnerungGeplantAm,
+  geburtsdatum,
+  gesundheitNoetig,
+  leseUebertragung,
+  pruefeEingabe,
+  signaturAusDataUrl,
+  uebertragungsStand,
+  versichererListe,
+  fuelle,
+  VERSAND_ANTWORTEN,
+  VERSAND_FRAGE,
+} from "@/lib/maklervollmacht/regeln";
+import { categoryFor, purposesFor, templateBodyFor } from "@/lib/whatsapp/template-plan";
 import {
   beauftragtSatz,
   einwilligungGesundheit,
@@ -11,6 +24,7 @@ import {
   protokoll,
   uebertragungsschreiben,
   vollmacht,
+  vollmachtWhatsAppText,
   GESUNDHEIT_HAEKCHEN,
   ZUSTIMMUNG_TEXT,
 } from "@/lib/maklervollmacht/texte";
@@ -177,5 +191,48 @@ describe("Maklervollmacht: Texte und PDF", () => {
     const p2 = await vollmachtPdf({ titel: "Maklervollmacht", abschnitte: alle.slice(0, 3), signaturPng: sig, dokumentId: "vv_test" });
     expect(Buffer.from(p1.slice(0, 5)).toString()).toBe("%PDF-");
     expect(sha256(p1)).toBe(sha256(p2));
+  });
+});
+
+describe("Maklervollmacht per WhatsApp: Texte, Vorlagen, Entscheidung", () => {
+  const link = "https://dein-beratungstermin.de/vollmacht/abc";
+  const names = { firm: "Berger Makler", advisor: "Max Berger", vermittler: { name: "Max Berger", anrede: "Herr" as const } };
+  it("Freitext Sie, Du und Erinnerung wie freigegeben, Vorlagen ohne Gedankenstriche und ohne Platzhalter am Ende", () => {
+    expect(vollmachtWhatsAppText("sie", "Herr Berger", link)).toBe(
+      `Damit Herr Berger Ihre bestehenden Verträge übernehmen und für Sie betreuen kann, unterschreiben Sie hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: ${link}`,
+    );
+    expect(vollmachtWhatsAppText("du", "Max", link)).toBe(
+      `Damit Max deine bestehenden Verträge übernehmen und für dich betreuen kann, unterschreibe hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: ${link}`,
+    );
+    expect(vollmachtWhatsAppText("sie", "Herr Berger", link, true)).toMatch(/^Kurze Erinnerung: Damit Herr Berger Ihre/);
+    const texte = [
+      ...(["maklervollmacht", "maklervollmacht_erinnerung"] as const).flatMap((p) => (["du", "sie", "sie_ohne_name"] as const).map((f) => templateBodyFor(p, names, f))),
+      vollmachtWhatsAppText("du", "Max", link, true),
+      VERSAND_FRAGE,
+      ...VERSAND_ANTWORTEN.flatMap((x) => [x.titel, x.text]),
+    ];
+    for (const t of texte) {
+      expect(t, t).not.toMatch(/[–—]/);
+      expect(t, t).not.toMatch(/garantie/i);
+      expect(t, t).not.toMatch(/\{\{\d+\}\}\s*$/);
+    }
+    expect(templateBodyFor("maklervollmacht", names, "sie")).toBe(
+      "Guten Tag {{1}}, damit Herr Berger Ihre bestehenden Verträge übernehmen und für Sie betreuen kann, unterschreiben Sie hier bitte kurz digital die Maklervollmacht. Das dauert etwa 2 Minuten: {{2}} Vielen Dank!",
+    );
+    expect(templateBodyFor("maklervollmacht", names, "du")).toContain("Hallo {{1}}, damit Max deine bestehenden Verträge");
+  });
+  it("Vorlagen nur für Makler eingereicht, als Service (UTILITY)", () => {
+    expect(purposesFor({ bestand: false })).not.toContain("maklervollmacht");
+    expect(purposesFor({ bestand: false, makler: true })).toEqual(expect.arrayContaining(["maklervollmacht", "maklervollmacht_erinnerung"]));
+    expect(categoryFor("maklervollmacht")).toBe("UTILITY");
+    expect(categoryFor("maklervollmacht_erinnerung")).toBe("UTILITY");
+  });
+  it("Erinnerung geplant 2 Tage nach dem Senden, nur solange offen und noch keine; „Die App“ empfohlen", () => {
+    const waSentAt = new Date("2026-11-18T10:00:00Z");
+    expect(erinnerungGeplantAm({ status: "offen", waSentAt, erinnerungAt: null })?.toISOString()).toBe("2026-11-20T10:00:00.000Z");
+    expect(erinnerungGeplantAm({ status: "unterschrieben", waSentAt, erinnerungAt: null })).toBeNull();
+    expect(erinnerungGeplantAm({ status: "offen", waSentAt, erinnerungAt: new Date() })).toBeNull();
+    expect(erinnerungGeplantAm({ status: "offen", waSentAt: null, erinnerungAt: null })).toBeNull();
+    expect(VERSAND_ANTWORTEN.filter((x) => x.empfohlen).map((x) => x.wert)).toEqual(["app"]);
   });
 });

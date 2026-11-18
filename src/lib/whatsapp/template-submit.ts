@@ -178,7 +178,7 @@ async function submitTemplatesOnce(customerId: string, now: Date): Promise<Submi
     prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { id: true, status: true, apiKeyEnc: true } }),
     prisma.customer.findUnique({
       where: { id: customerId },
-      select: { id: true, name: true, existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true, language: true } } },
+      select: { id: true, name: true, existingCustomersEnabled: true, empfehlungEnabled: true, vermittlerTyp: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true, language: true } } },
     }),
   ]);
   if (!customer) return { ...summary, ok: false, error: "Kunde nicht gefunden" };
@@ -199,7 +199,7 @@ async function submitTemplatesOnce(customerId: string, now: Date): Promise<Submi
     return { ...summary, ok: false, error: msg };
   }
 
-  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
+  const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled, makler: customer.vermittlerTyp === "makler" });
   // Je Zweck alle Fassungen (Du, Sie, Sie ohne Namen; A/B) – unabhängig von der gewählten Ansprache, damit ein
   // Wechsel sofort greift. Bis eine neue Fassung freigegeben ist, sendet die App die bisherige freigegebene.
   const planned = plannedTemplates(purposes);
@@ -323,7 +323,7 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
     select: {
       customerId: true,
       templatesCheckedAt: true,
-      customer: { select: { existingCustomersEnabled: true, empfehlungEnabled: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
+      customer: { select: { existingCustomersEnabled: true, empfehlungEnabled: true, vermittlerTyp: true, messageTemplates: { select: { name: true, purpose: true, status: true, auto: true } } } },
     },
     orderBy: { templatesCheckedAt: { sort: "asc", nulls: "first" } },
     take: opts.limit ?? 10,
@@ -333,7 +333,7 @@ export async function syncTemplates(now = new Date(), opts: { force?: boolean; l
   let rejected = 0;
   for (const acc of accounts) {
     const tpls = acc.customer.messageTemplates;
-    const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled, empfehlung: acc.customer.empfehlungEnabled });
+    const purposes = purposesFor({ bestand: acc.customer.existingCustomersEnabled, empfehlung: acc.customer.empfehlungEnabled, makler: acc.customer.vermittlerTyp === "makler" });
     // Erledigt, wenn je Zweck jede Fassung freigegeben ist (oder der Admin eine eigene angelegt hat)
     const settled = plannedTemplates(purposes).every(({ purpose: p, form, variant, kopf }) => {
       const wanted = templateNameFor(p, TEMPLATE_VERSION, form, variant, kopf);

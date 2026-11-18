@@ -71,7 +71,9 @@ export async function vollmachtAnlegen(leadId: string, customerId: string, opts:
   if (!(await istMakler(customerId))) return { ok: false as const, error: "Die Maklervollmacht gibt es nur für Makler." };
   const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: { id: true, customer: { select: { leadAddress: true } } } });
   if (!lead) return { ok: false as const, error: "Kontakt nicht gefunden." };
-  const offen = await prisma.maklervollmacht.findFirst({ where: { leadId, status: { in: ["offen", "unterschrieben"] } }, orderBy: { createdAt: "desc" } });
+  const offen = await prisma.maklervollmacht.findFirst({ where: { leadId, status: { in: ["offen", "unterschrieben", "eigene"] } }, orderBy: { createdAt: "desc" } });
+  // Eigene Vollmacht liegt vor (Haken in der Karte): die App schickt diesem Kunden nichts
+  if (offen?.status === "eigene") return { ok: false as const, error: "Für diesen Kunden liegt eine eigene Vollmacht vor." };
   if (offen && (offen.status === "unterschrieben" || offen.createdAt.getTime() > Date.now() - VV_LINK_TAGE * DAY)) return { ok: true as const, vollmacht: offen };
   const v = await prisma.maklervollmacht.create({
     data: { customerId, leadId, token: randomBytes(24).toString("base64url"), ansprache: asAnsprache(lead.customer.leadAddress) },
@@ -121,7 +123,8 @@ export type VvSeite =
 export async function ladeSeite(token: string, now = new Date()): Promise<VvSeite> {
   if (!/^[A-Za-z0-9_-]{20,64}$/.test(token)) return { zustand: "ungueltig" };
   const v = await prisma.maklervollmacht.findUnique({ where: { token } });
-  if (!v || v.status === "widerrufen") return { zustand: "ungueltig" };
+  // widerrufen bzw. „eigene Vollmacht liegt vor“: Link gesperrt
+  if (!v || (v.status !== "offen" && v.status !== "unterschrieben")) return { zustand: "ungueltig" };
   const makler = await maklerDaten(v.customerId);
   const an = asAnsprache(v.ansprache);
   if (v.status === "unterschrieben") return { zustand: "fertig", makler, an, customerId: v.customerId };
@@ -269,7 +272,21 @@ export async function vollmachtFuerLead(leadId: string, customerId: string) {
   const v = await prisma.maklervollmacht.findFirst({
     where: { leadId, customerId, status: { not: "widerrufen" } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, token: true, status: true, vertraege: true, gesundheit: true, signedAt: true, sentAt: true, createdAt: true, kopieStatus: true, uebertragung: true },
+    select: {
+      id: true,
+      token: true,
+      status: true,
+      vertraege: true,
+      gesundheit: true,
+      signedAt: true,
+      sentAt: true,
+      createdAt: true,
+      kopieStatus: true,
+      uebertragung: true,
+      waSentAt: true,
+      erinnerungAt: true,
+      erinnerungStatus: true,
+    },
   });
   if (!v) return null;
   const vertraege = (Array.isArray(v.vertraege) ? v.vertraege : []) as VvVertrag[];
@@ -363,6 +380,45 @@ export async function linkPerMail(id: string, customerId: string, userId: string
   await prisma.maklervollmacht.update({ where: { id: v.id }, data: { sentAt: new Date() } });
   await logLeadHistory(v.leadId, "email", "Link zur Maklervollmacht per E-Mail gesendet", { customerId, userId });
   return { ok: true };
+}
+
+/**
+ * Haken „Eigene Vollmacht liegt bereits vor“ (Ole, 18.11.2026): für diesen Kontakt schickt die App nichts (kein Link,
+ * keine WhatsApp, keine Erinnerung). Rückgängig: wieder offen mit frischem Link (14 Tage). Nicht nach der Unterschrift.
+ */
+export async function eigeneVollmacht(leadId: string, customerId: string, an: boolean, userId: string | null): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!(await istMakler(customerId))) return { ok: false, error: "Die Maklervollmacht gibt es nur für Makler." };
+  const lead = await prisma.lead.findFirst({ where: { id: leadId, customerId }, select: { id: true, customer: { select: { leadAddress: true } } } });
+  if (!lead) return { ok: false, error: "Kontakt nicht gefunden." };
+  const v = await prisma.maklervollmacht.findFirst({ where: { leadId, customerId, status: { not: "widerrufen" } }, orderBy: { createdAt: "desc" }, select: { id: true, status: true } });
+  if (v?.status === "unterschrieben") return { ok: false, error: "Die Vollmacht ist schon unterschrieben." };
+  if (an) {
+    if (v?.status === "eigene") return { ok: true };
+    if (v) await prisma.maklervollmacht.update({ where: { id: v.id }, data: { status: "eigene" } });
+    else await prisma.maklervollmacht.create({ data: { customerId, leadId, token: randomBytes(24).toString("base64url"), ansprache: asAnsprache(lead.customer.leadAddress), status: "eigene" } });
+    await logLeadHistory(leadId, "dokument", "Eigene Maklervollmacht liegt vor (die App schickt keine)", { customerId, userId });
+    return { ok: true };
+  }
+  if (v?.status !== "eigene") return { ok: true };
+  await prisma.maklervollmacht.update({ where: { id: v.id }, data: { status: "offen", createdAt: new Date(), waSentAt: null, erinnerungAt: null, erinnerungStatus: null } });
+  await logLeadHistory(leadId, "dokument", "Eigene Maklervollmacht zurückgenommen", { customerId, userId });
+  return { ok: true };
+}
+
+/** Customer.vollmachtVersand lesen (nur Makler, sonst null und nicht gefragt). */
+export async function vollmachtVersandStand(customerId: string): Promise<{ makler: boolean; versand: "app" | "eigene" | null }> {
+  const c = await prisma.customer.findUnique({ where: { id: customerId }, select: { vermittlerTyp: true, vollmachtVersand: true } });
+  const { asVollmachtVersand } = await import("@/lib/maklervollmacht/regeln");
+  return { makler: c?.vermittlerTyp === "makler", versand: asVollmachtVersand(c?.vollmachtVersand) };
+}
+
+/** „Wer schickt sie?“ speichern (nur Inhaber, nicht in der Vorschau, nur Makler). */
+export async function setzeVollmachtVersand(ctx: { customerId: string; teamRole?: string | null; preview?: boolean }, wert: string): Promise<boolean> {
+  const { asVollmachtVersand } = await import("@/lib/maklervollmacht/regeln");
+  const w = asVollmachtVersand(wert);
+  if (!w || ctx.preview || ctx.teamRole === "advisor" || !(await istMakler(ctx.customerId))) return false;
+  await prisma.customer.update({ where: { id: ctx.customerId }, data: { vollmachtVersand: w } });
+  return true;
 }
 
 /** Kunde hat widerrufen (Makler trägt es ein): Link gesperrt, Dokumente bleiben als Nachweis. */

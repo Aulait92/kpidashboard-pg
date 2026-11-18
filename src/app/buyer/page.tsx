@@ -24,6 +24,7 @@ import { leadScope } from "@/lib/team";
 import { ladeCrossSellVerkauf } from "@/lib/cross-sell-verkauf-server";
 import { istCrossSellAufgabe } from "@/lib/cross-sell-verkauf";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
+import { VollmachtVersandHinweis } from "@/components/vollmacht-versand-hinweis";
 
 // Startseite des Kundenbereichs für alle Kunden: „Heute" – eine
 // Aufgabenliste (Termine, Ergebnisse, Chats, Rückrufe), die man leer
@@ -86,6 +87,8 @@ export default async function BuyerHomePage({ searchParams }: { searchParams: Se
     <div className="mt-6 space-y-4">
       {/* Freischaltung Kranken/BU/Leben (lib/policen/freischaltung.ts), nur Inhaber, bis zugestimmt oder 3-mal „Später“ */}
       <PolicenFreischaltungKarte ctx={ctx} ort="karte" />
+      {/* Makler: „Maklervollmacht: Wer schickt sie?“ bis entschieden (Customer.vollmachtVersand) */}
+      <VollmachtVersandHinweis ctx={ctx} />
       {nudge ? <ReferralNudgeCard nudgeKey={nudge.key} title={nudge.title} text={nudge.text} /> : null}
       <FreePeriodNotices customerId={ctx.customerId} readOnly={ctx.preview} />
       <EmpfehlungHeuteHint ctx={ctx} />

@@ -110,6 +110,9 @@ model Customer {
   // Status nach § 34d GewO: "vertreter" (Ausschließlichkeit), "mehrfachvertreter" oder "makler"; bestimmt die
   // Standard-Provisionssätze (Mehrfachvertreter rechnen wie Vertreter) und die Erstinformation (lib/erstinformation.ts)
   vermittlerTyp        String    @default("vertreter")
+  // Maklervollmacht (Ole, 18.11.2026, nur Makler): wer schickt sie den Kunden? app | eigene; null = noch nicht entschieden
+  // (Frage in der Einrichtung und als Hinweis auf „Heute“, änderbar unter Einstellungen → Assistent)
+  vollmachtVersand     String?
   // Eigene Provisionssätze je Produkt (Kundenbereich → Konto → Meine Provisionen),
   // geprüft über lib/provision.parseCustomRates; null = Standard
   provisionRates       Json?
@@ -5103,7 +5106,7 @@ model Maklervollmacht {
   leadId       String
   lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   token        String    @unique
-  // offen | unterschrieben | widerrufen
+  // offen | unterschrieben | widerrufen | eigene (Makler hat schon eine eigene Vollmacht, die App schickt nichts)
   status       String    @default("offen")
   // sie | du (Ansprache auf der Seite und in der Mail)
   ansprache    String    @default("sie")
@@ -5127,10 +5130,16 @@ model Maklervollmacht {
   kopieAt      DateTime?
   // Schreiben an die Versicherer gesendet (vom Makler abgehakt): {versichererKey: ISO-Zeitpunkt}
   uebertragung Json?
+  // Per WhatsApp gesendet (Teil 2, 18.11.2026) und genau eine Erinnerung nach 2 Tagen ohne Unterschrift:
+  // erinnerungStatus gesendet | gestoppt (Abmeldung, kein Weg), erinnerungAt Zeitpunkt
+  waSentAt         DateTime?
+  erinnerungAt     DateTime?
+  erinnerungStatus String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([leadId])
+  @@index([status, waSentAt])
   @@index([customerId])
 }
 

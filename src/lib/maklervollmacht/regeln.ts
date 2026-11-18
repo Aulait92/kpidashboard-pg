@@ -205,3 +205,28 @@ export function pruefeEingabe(get: (k: string) => string | null, now = new Date(
 export function fuelle(text: string, werte: Record<string, string | null | undefined>): string {
   return text.replace(/\{([A-Za-z_]+)\}/g, (m, k: string) => (werte[k] != null && werte[k] !== "" ? String(werte[k]) : m));
 }
+
+// ─── Versand per WhatsApp und Entscheidung „Wer schickt sie?“ (Ole, 18.11.2026) ─────────────────────────────
+
+/** Customer.vollmachtVersand: „app“ = die App schickt sie (empfohlen), „eigene“ = eigene Vollmacht (z. B. vom Pool). */
+export type VollmachtVersand = "app" | "eigene";
+export const asVollmachtVersand = (v: unknown): VollmachtVersand | null => (v === "app" || v === "eigene" ? v : null);
+
+export const VERSAND_FRAGE = "Maklervollmacht: Wer schickt sie Ihren Kunden?";
+export const VERSAND_ANTWORTEN: { wert: VollmachtVersand; titel: string; text: string; empfohlen: boolean }[] = [
+  {
+    wert: "app",
+    titel: "Die App, automatisch nach dem Termin",
+    text: "Ihr Kunde unterschreibt digital am Handy, Sie bekommen die fertigen Schreiben an die Versicherer. Bitte schicken Sie dann keine eigene Vollmacht mehr.",
+    empfohlen: true,
+  },
+  { wert: "eigene", titel: "Ich nutze meine eigene Vollmacht", text: "Zum Beispiel die von Ihrem Pool. Die App schickt nichts von selbst, die Karte im Kontakt bleibt für Einzelfälle.", empfohlen: false },
+];
+
+/** Genau eine Erinnerung, 2 Tage nach dem Senden per WhatsApp, solange nicht unterschrieben. */
+export const ERINNERUNG_NACH_TAGE = 2;
+
+export function erinnerungGeplantAm(v: { status: string; waSentAt: Date | null; erinnerungAt: Date | null }): Date | null {
+  if (v.status !== "offen" || !v.waSentAt || v.erinnerungAt) return null;
+  return new Date(v.waSentAt.getTime() + ERINNERUNG_NACH_TAGE * 86_400_000);
+}
