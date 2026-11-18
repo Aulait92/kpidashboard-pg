@@ -32,8 +32,7 @@
         "vorsorge": "inklusive"
       },
       "quelle": "https://www.arag.de/tierversicherung/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Katzenkrankenversicherung Komfort",
@@ -58,8 +57,7 @@
         "vorsorge": "inklusive"
       },
       "quelle": "https://www.arag.de/tierversicherung/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Katzenkrankenversicherung Premium",
@@ -84,8 +82,7 @@
         "vorsorge": "inklusive"
       },
       "quelle": "https://www.arag.de/tierversicherung/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -96,6 +93,7 @@
     "Keine Markierung durch ARAG; Komfort als mittlere Stufe.",
     "Erstattungssatz in Prozent nicht genannt („unter bestimmten Voraussetzungen vollständige Erstattung“). Die FAQ nennt Tarife mit 2-, 3- oder 4-fachem GOT-Satz, der Tarifvergleich in allen Stufen 4-fach; bitte gegenprüfen.",
     "Physiotherapie im Tarifvergleich nur nach Operation. Komfort und Premium: MRT/CT 500 bzw. 700 €, ED/HD 2.000 bzw. 3.000 €, alternative Heilmethoden, Rückwärtsdeckung. Premium: besondere Erkrankungen bis 5.000 €, Reiserücktritt bis 500 €.",
-    "Zahnprophylaxe über VorsorgePlus; Zahn-Schutz (Extraktion, Wurzelbehandlung, Füllungen) als Zusatzbaustein. Wartezeit 1 Monat (Ausnahmen bei besonderen Erkrankungen)."
+    "Zahnprophylaxe über VorsorgePlus; Zahn-Schutz (Extraktion, Wurzelbehandlung, Füllungen) als Zusatzbaustein. Wartezeit 1 Monat (Ausnahmen bei besonderen Erkrankungen).",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }

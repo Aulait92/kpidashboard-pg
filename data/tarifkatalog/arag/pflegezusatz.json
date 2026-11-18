@@ -19,8 +19,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Pflegetagegeld (Tarif 69)",
@@ -34,8 +33,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ARAG Pflegekostenversicherung (Tarif 68)",
@@ -49,8 +47,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.arag.de/pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,6 +59,7 @@
     "Pflegetagegeld: Absicherung der vollstationären Pflege im Heim mit festem Tagessatz (5 bis 100 € in 1-€-Schritten), frei verfügbar; laut Seite Erstattung bei stationärer Pflege und Pflegegrad 2 ohne Wartezeit. Leistung je Pflegegrad nicht beziffert.",
     "Pflegekosten: Erstattung realer Pflegekosten als Aufstockung der gesetzlichen Leistungen um 20 bis 200 %, jede Pflegeart, ohne Wartezeit.",
     "FörderPflege: Pflegemonatsgeld für jede Pflegeart, ohne Gesundheitsprüfung, Wartezeit 5 Jahre; Leistungshöhe je Pflegegrad nicht auf der Seite.",
-    "Leistung ab Pflegegrad, Einmalleistung, Beitragsbefreiung, Dynamik nicht belegt."
+    "Leistung ab Pflegegrad, Einmalleistung, Beitragsbefreiung, Dynamik nicht belegt.",
+    "Geprüft am 18.11.2026 an Produktseite (Tabellen mit Symbolen) und Bedingungen der ARAG."
   ]
 }
