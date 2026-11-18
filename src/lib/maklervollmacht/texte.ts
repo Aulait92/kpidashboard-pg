@@ -37,9 +37,8 @@ export function vollmacht(c: VvKontext): VvAbschnitt {
   return {
     titel: "Maklervollmacht",
     absaetze: [
-      `Ich, ${kundeName(c.kunde)}, geboren am ${c.kunde.geburtsdatum}, wohnhaft ${kundeAnschrift(c.kunde)}, bevollmächtige`,
-      `${maklerZeile(m)}, Versicherungsmakler mit Erlaubnis nach § 34d Abs. 1 GewO${m.registernummer ? `, Registernummer ${m.registernummer}` : ""},`,
-      "mich gegenüber Versicherern in allen Angelegenheiten meiner Versicherungsverträge zu vertreten. Das gilt für die unten aufgeführten Verträge und für Verträge, die ich künftig über den Makler abschließe.",
+      // Ein Satz in einem Absatz (im PDF sonst drei abgerissene Zeilen)
+      `Ich, ${kundeName(c.kunde)}, geboren am ${c.kunde.geburtsdatum}, wohnhaft ${kundeAnschrift(c.kunde)}, bevollmächtige ${maklerZeile(m)}, Versicherungsmakler mit Erlaubnis nach § 34d Abs. 1 GewO${m.registernummer ? `, Registernummer ${m.registernummer}` : ""}, mich gegenüber Versicherern in allen Angelegenheiten meiner Versicherungsverträge zu vertreten. Das gilt für die unten aufgeführten Verträge und für Verträge, die ich künftig über den Makler abschließe.`,
       "Die Vollmacht umfasst insbesondere:",
       "1. Auskünfte zu meinen Verträgen einzuholen und Kopien von Vertragsunterlagen anzufordern. Insoweit entbinde ich die Versicherer von ihrer Schweigepflicht. Für Gesundheitsdaten gilt nur meine gesonderte Einwilligung.",
       "2. Erklärungen für mich abzugeben, insbesondere Anträge zu stellen, Verträge zu ändern, abzuschließen und zu kündigen, sowie Schäden und Leistungsfälle zu melden.",
@@ -78,8 +77,8 @@ export function maklerauftrag(c: VvKontext): VvAbschnitt {
   };
 }
 
-/** c) Einwilligung Gesundheitsdaten und Schweigepflichtentbindung (nur Verträge der betroffenen Sparten) */
-export function einwilligungGesundheit(c: VvKontext, an: Ansprache): VvAbschnitt {
+/** c) Einwilligung Gesundheitsdaten und Schweigepflichtentbindung (nur Verträge der betroffenen Sparten; Ich-Form, in Sie- und Du-Fassung gleich) */
+export function einwilligungGesundheit(c: VvKontext): VvAbschnitt {
   const m = c.makler;
   const betroffen = c.vertraege.filter((v) => gesundheitNoetig([v]));
   return {
@@ -91,11 +90,18 @@ export function einwilligungGesundheit(c: VvKontext, an: Ansprache): VvAbschnitt
       "2. Ich entbinde die genannten Versicherer und ihre Mitarbeiter von ihrer Schweigepflicht, soweit sie dem Makler zu diesen Zwecken Gesundheitsdaten und andere geschützte Angaben zu meinen Verträgen übermitteln. Ich willige in diese Übermittlung ein.",
       "3. Der Makler gibt meine Gesundheitsdaten nur an Versicherer weiter, wenn das für einen Antrag oder einen Leistungsfall nötig ist und ich vorher zugestimmt habe.",
       "4. Meine Gesundheitsdaten werden bei einem Dienstleister des Maklers gespeichert, der sie nur nach dessen Weisung verarbeitet.",
-      `Diese Einwilligung ist freiwillig. Ohne sie bleibt die Maklervollmacht wirksam; der Makler erhält dann aber keine Gesundheitsdaten zu diesen Verträgen und kann ${a(an, "dich", "Sie")} dazu nur eingeschränkt beraten. Ich kann die Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen${m.email ? `, per E-Mail an ${m.email}` : ""}${m.anschrift ? ` oder per Brief an ${m.anschrift}` : ""}.`,
+      `Diese Einwilligung ist freiwillig. Ohne sie bleibt die Maklervollmacht wirksam; der Makler erhält dann aber keine Gesundheitsdaten zu diesen Verträgen und kann mich dazu nur eingeschränkt beraten. Ich kann die Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen${m.email ? `, per E-Mail an ${m.email}` : ""}${m.anschrift ? ` oder per Brief an ${m.anschrift}` : ""}.`,
       unterschriftZeile(c),
     ],
     unterschrift: true,
   };
+}
+
+/** „Ihre Kundin Frau Wolf … ihrer“, „Ihr Kunde Herr Wolf … seiner“, ohne Anrede neutral „Ihr Versicherungsnehmer Katrin Wolf … der“. */
+export function beauftragtSatz(k: Pick<VvDaten, "vorname" | "nachname" | "anrede">): string {
+  if (k.anrede === "Frau") return `Ihre Kundin Frau ${k.nachname} hat uns mit der Betreuung ihrer Versicherungsverträge beauftragt und uns bevollmächtigt.`;
+  if (k.anrede === "Herr") return `Ihr Kunde Herr ${k.nachname} hat uns mit der Betreuung seiner Versicherungsverträge beauftragt und uns bevollmächtigt.`;
+  return `Ihr Versicherungsnehmer ${kundeName(k)} hat uns mit der Betreuung der Versicherungsverträge beauftragt und uns bevollmächtigt.`;
 }
 
 /** d) Übertragungsschreiben des Maklers an einen Versicherer (Betreuungswechsel, Bitte um Bestandsübertragung) */
@@ -111,7 +117,7 @@ export function uebertragungsschreiben(c: VvKontext, versicherer: string, vertra
       "Verträge:",
       ...vertraege.map((v) => `• ${sparteLabel(v.sparte)}${v.vertragsnummer ? `, Nr. ${v.vertragsnummer}` : ", Vertragsnummer bitte aus Ihrem Bestand"}`),
       "Sehr geehrte Damen und Herren,",
-      `Ihr Kunde ${kundeName(c.kunde)} hat uns mit der Betreuung seiner Versicherungsverträge beauftragt und uns bevollmächtigt. Eine Kopie der Maklervollmacht liegt bei.`,
+      `${beauftragtSatz(c.kunde)} Eine Kopie der Maklervollmacht liegt bei.`,
       "Wir bitten Sie,",
       "1. die oben genannten Verträge in unsere Betreuung zu übernehmen und Schriftverkehr künftig über uns zu führen,",
       "2. die Verträge unserer Vermittlung zuzuordnen und die Courtage ab der nächsten Fälligkeit an uns zu zahlen,",
@@ -126,12 +132,12 @@ export function uebertragungsschreiben(c: VvKontext, versicherer: string, vertra
   };
 }
 
-/** e) Hinweis über der Unterschrift und Text des Pflicht-Häkchens */
-export const hinweisUnterschrift = (an: Ansprache, maklerName: string) =>
+/** e) Hinweis über der Unterschrift (Kopie per E-Mail nur, wenn eine Adresse angegeben ist) und Text des Pflicht-Häkchens */
+export const hinweisUnterschrift = (an: Ansprache, maklerName: string, mitKopie: boolean) =>
   a(
     an,
-    `Mit deiner Unterschrift beauftragst du ${maklerName} mit der Betreuung der aufgeführten Verträge und erteilst dafür eine Vollmacht. Du kannst beides jederzeit beenden; eine Kopie aller Dokumente bekommst du sofort per E-Mail.`,
-    `Mit Ihrer Unterschrift beauftragen Sie ${maklerName} mit der Betreuung der aufgeführten Verträge und erteilen dafür eine Vollmacht. Sie können beides jederzeit beenden; eine Kopie aller Dokumente erhalten Sie sofort per E-Mail.`,
+    `Mit deiner Unterschrift beauftragst du ${maklerName} mit der Betreuung der aufgeführten Verträge und erteilst dafür eine Vollmacht. Du kannst beides jederzeit beenden.${mitKopie ? " Eine Kopie aller Dokumente bekommst du sofort per E-Mail." : ""}`,
+    `Mit Ihrer Unterschrift beauftragen Sie ${maklerName} mit der Betreuung der aufgeführten Verträge und erteilen dafür eine Vollmacht. Sie können beides jederzeit beenden.${mitKopie ? " Eine Kopie aller Dokumente erhalten Sie sofort per E-Mail." : ""}`,
   );
 export const ZUSTIMMUNG_TEXT = "Ich habe die Maklervollmacht, den Maklerauftrag und die Erstinformation gelesen und bin einverstanden.";
 export const GESUNDHEIT_HAEKCHEN = "Ich willige in die Verarbeitung meiner Gesundheitsdaten ein und entbinde die Versicherer insoweit von der Schweigepflicht (freiwillig).";
@@ -167,8 +173,30 @@ export function linkMail(an: Ansprache, anrede: string, m: VvMakler, link: strin
   );
 }
 
+/**
+ * Kopie an den Kunden fürs Protokoll: „anhang“ = diese Datei ist der Anhang der Mail (Fassung für den Kunden),
+ * „gesendet“/„fehlgeschlagen“ = Ergebnis des Versands (gespeicherte Fassung für den Makler), „keine_adresse“.
+ */
+export type VvKopie = { status: "keine_adresse" } | { status: "anhang" | "fehlgeschlagen"; email: string } | { status: "gesendet"; email: string; datum: string; uhrzeit: string };
+
+export function kopieZeile(k: VvKopie): string {
+  switch (k.status) {
+    case "keine_adresse":
+      return "Kopie per E-Mail: keine, der Kunde hat keine E-Mail-Adresse angegeben.";
+    case "anhang":
+      return `Kopie per E-Mail: an ${k.email}, mit diesem Dokument im Anhang.`;
+    case "gesendet":
+      return `Kopie per E-Mail: am ${k.datum} um ${k.uhrzeit} Uhr an ${k.email} gesendet.`;
+    case "fehlgeschlagen":
+      return `Kopie per E-Mail: Versand an ${k.email} fehlgeschlagen.`;
+  }
+}
+
 /** Unterschriftsprotokoll (letzte Seite des Gesamt-PDFs, ohne vollständige IP) */
-export function protokoll(c: VvKontext, p: { an: Ansprache; gesundheit: boolean; ipKurz: string | null; geraet: string | null; weg: string; hashes: { name: string; sha256: string }[] }): VvAbschnitt {
+export function protokoll(
+  c: VvKontext,
+  p: { an: Ansprache; gesundheit: boolean; ipKurz: string | null; geraet: string | null; weg: string; hashes: { name: string; sha256: string }[]; kopie: VvKopie },
+): VvAbschnitt {
   return {
     titel: "Unterschriftsprotokoll",
     absaetze: [
@@ -181,7 +209,8 @@ export function protokoll(c: VvKontext, p: { an: Ansprache; gesundheit: boolean;
       `Gerät: ${p.geraet ?? "unbekannt"}${p.ipKurz ? `, IP gekürzt ${p.ipKurz}` : ""}`,
       "Prüfsummen (SHA-256) der Dokumente ohne dieses Protokoll:",
       ...p.hashes.map((h) => `• ${h.name}: ${h.sha256}`),
-      "Unterschriftsart: einfache elektronische Signatur (Art. 3 Nr. 10 eIDAS-VO), Textform (§ 126b BGB). Eine Kopie ging sofort per E-Mail an den Kunden, sofern eine Adresse angegeben war.",
+      kopieZeile(p.kopie),
+      "Unterschriftsart: einfache elektronische Signatur (Art. 3 Nr. 10 eIDAS-VO), Textform (§ 126b BGB).",
     ],
     unterschrift: false,
   };

@@ -24,7 +24,17 @@ const SPARTE = new Map(VV_SPARTEN.map((s) => [s.key, s]));
 export const sparteLabel = (key: string) => SPARTE.get(key)?.label ?? key;
 
 export type VvVertrag = { versicherer: string; sparte: string; vertragsnummer: string | null };
-export type VvDaten = { vorname: string; nachname: string; strasse: string; plz: string; ort: string; geburtsdatum: string; email: string | null };
+export type VvDaten = {
+  vorname: string;
+  nachname: string;
+  strasse: string;
+  plz: string;
+  ort: string;
+  geburtsdatum: string;
+  email: string | null;
+  /** Anrede aus dem Kontakt (nicht im Formular abgefragt), nur für das Schreiben an den Versicherer. Fehlt sie: neutral. */
+  anrede?: "Herr" | "Frau" | null;
+};
 
 /** Gesundheits-Einwilligung und Schweigepflichtentbindung nur, wenn mindestens ein Vertrag aus einer solchen Sparte dabei ist. */
 export const gesundheitNoetig = (vertraege: Pick<VvVertrag, "sparte">[]) => vertraege.some((v) => SPARTE.get(v.sparte)?.gesundheit);
@@ -33,12 +43,51 @@ export const gesundheitNoetig = (vertraege: Pick<VvVertrag, "sparte">[]) => vert
 export function versichererListe(vertraege: VvVertrag[]): { versicherer: string; vertraege: VvVertrag[] }[] {
   const out = new Map<string, { versicherer: string; vertraege: VvVertrag[] }>();
   for (const v of vertraege) {
-    const key = v.versicherer.trim().toLowerCase();
+    const key = versichererKey(v.versicherer);
     const e = out.get(key) ?? { versicherer: v.versicherer.trim(), vertraege: [] };
     e.vertraege.push(v);
     out.set(key, e);
   }
   return [...out.values()];
+}
+
+/** Schlüssel eines Versicherers (Gruppierung, Status je Versicherer): klein, ohne Leerzeichen am Rand. */
+export const versichererKey = (name: string) => name.trim().toLowerCase();
+
+/** Status der Übertragung je Versicherer (Maklervollmacht.uebertragung: {versichererKey: ISO-Zeitpunkt „gesendet“}). */
+export type VvUebertragung = Record<string, string>;
+
+export function leseUebertragung(raw: unknown): VvUebertragung {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const out: VvUebertragung = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) if (typeof v === "string" && v) out[k] = v;
+  return out;
+}
+
+export type VvStand = {
+  versicherer: { name: string; vertraege: number; gesendetAm: string | null }[];
+  vertraegeGesamt: number;
+  vertraegeOffen: number;
+  offen: number;
+  /** Zeile für die Karte, z. B. „3 Verträge, noch nicht übertragen“ */
+  zeile: string;
+};
+
+const vertraegeText = (n: number) => `${n} ${n === 1 ? "Vertrag" : "Verträge"}`;
+
+/** Stand der Übertragung für die Karte im Kontakt: je Versicherer offen oder gesendet, Zähler der offenen Verträge. */
+export function uebertragungsStand(vertraege: VvVertrag[], uebertragung: VvUebertragung): VvStand {
+  const gruppen = versichererListe(vertraege).map((g) => ({ name: g.versicherer, vertraege: g.vertraege.length, gesendetAm: uebertragung[versichererKey(g.versicherer)] ?? null }));
+  const vertraegeGesamt = gruppen.reduce((s, g) => s + g.vertraege, 0);
+  const vertraegeOffen = gruppen.filter((g) => !g.gesendetAm).reduce((s, g) => s + g.vertraege, 0);
+  const offen = gruppen.filter((g) => !g.gesendetAm).length;
+  const zeile =
+    vertraegeOffen === 0
+      ? `${vertraegeText(vertraegeGesamt)}, alle Schreiben gesendet`
+      : vertraegeOffen === vertraegeGesamt
+        ? `${vertraegeText(vertraegeGesamt)}, noch nicht übertragen`
+        : `${vertraegeText(vertraegeOffen)} von ${vertraegeGesamt} noch nicht übertragen`;
+  return { versicherer: gruppen, vertraegeGesamt, vertraegeOffen, offen, zeile };
 }
 
 const clean = (v: unknown, max: number) =>

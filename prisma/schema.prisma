@@ -5122,6 +5122,11 @@ model Maklervollmacht {
   signedUa     String?
   sentAt       DateTime?
   widerrufenAt DateTime?
+  // Kopie an den Kunden nach der Unterschrift: gesendet | fehlgeschlagen | keine_adresse (Karte und Protokoll)
+  kopieStatus  String?
+  kopieAt      DateTime?
+  // Schreiben an die Versicherer gesendet (vom Makler abgehakt): {versichererKey: ISO-Zeitpunkt}
+  uebertragung Json?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

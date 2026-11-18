@@ -32,8 +32,8 @@ export async function MaklervollmachtCard({ leadId, customerId, readOnly }: { le
                   abgelaufen: v.abgelaufen,
                   gesendet: !!v.sentAt,
                   unterschrieben: fmt(v.signedAt),
-                  vertraege: v.vertraege.length,
-                  versicherer: v.versicherer,
+                  kopie: v.kopieStatus,
+                  stand: v.stand,
                 }
               : null
           }
