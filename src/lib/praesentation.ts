@@ -358,8 +358,10 @@ function vergleichTabelle(
   const b = bisher?.spalte;
   const bTd = (inhalt: string) => (b ? `<td class="bisher">${inhalt}</td>` : "");
   const bZelle = (n: string) => {
-    const w = b?.merkmale.find((m) => klein(m.name) === klein(n))?.wert ?? WERT_PRUEFEN;
-    // Unbekanntes neutral, nie „nicht enthalten“; ein „nein“ aus dem Tarifkatalog bleibt ein „nein“
+    const roh = b?.merkmale.find((m) => klein(m.name) === klein(n))?.wert ?? WERT_PRUEFEN;
+    // Unbekanntes neutral, nie „nicht enthalten“. Auch ein „nein“ (Tarifkatalog von heute, Police unklar) zeigt
+    // „laut Police prüfen“: ältere Vertragsgenerationen können abweichen (Ole, 18.11.2026)
+    const w = istNein(roh) ? WERT_PRUEFEN : roh;
     return w === WERT_PRUEFEN ? `<span class="pruef">${e(WERT_PRUEFEN)}</span>` : zelle(w);
   };
   // Kopf schmal: Gesellschaft und Tarif getrennt, Summe und Selbstbeteiligung stehen unter der Tabelle
