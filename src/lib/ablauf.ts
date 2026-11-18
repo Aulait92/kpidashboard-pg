@@ -5,11 +5,12 @@
 // Die Texte sind Beispiele mit „Frau Becker“ (Du: Julia), in der eingestellten Ansprache und mit dem Namen des Vermittlers.
 // Rein (ohne Datenbank); später nutzen M7 („E-Mails“: Stufe je Vorlage) und P8 (Onboarding-Zeitleiste) dieselben Phasen.
 
-import { a, anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
+import { anredeZeile, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
 import { CALL_ATTEMPTS_TARGET, callPlanNote, nextCallAttemptAt } from "@/lib/call-plan";
 import { SEQUENCES, type SequenceCtx, type SequenceKind } from "@/lib/lead-sequences";
 import { ERINNERUNG, gleichText, leadLabel, startPush, stundeText, uhrKurz, vortagText } from "@/lib/showup";
-import { erstanschreibenText, frageplan } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenText } from "@/lib/whatsapp/erstanschreiben";
+import { offeneZwischenfrage, zwischenfrageText, zwischenKnoepfe } from "@/lib/whatsapp/zwischenfrage";
 import { buchungsText, terminNutzenSatz, terminVorschlagText, type VermittlerName } from "@/lib/whatsapp/gespraech";
 import { mailWerte, vorlagenMail } from "@/lib/angebot-senden";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
@@ -113,8 +114,8 @@ export function standardAblauf(o: AblaufEingabe): AblaufPhase[] {
   const label = leadLabel(kontakt, "Frau Becker");
   const topic = "Haftpflicht und Hausrat";
   const ctx: SequenceCtx = { firstName: "Julia", hi, kontakt, topic, an, person };
-  const plan = frageplan(BEISPIEL_SOURCE, []);
-  const zwischen = plan.offen[1] ?? plan.fragen[1];
+  // Genau eine Zwischenfrage mit Knöpfen, die die App selbst stellt (lib/whatsapp/zwischenfrage.ts, Ole 17.11.2026)
+  const zwischen = offeneZwischenfrage(BEISPIEL_SOURCE, BEISPIEL_FORMULAR, null);
   const zeiten: [string, string] = ["morgen um 10 Uhr", "Donnerstag um 16 Uhr"];
   const t = o.beispielTermin;
 
@@ -142,7 +143,7 @@ export function standardAblauf(o: AblaufEingabe): AblaufPhase[] {
           hinweis: "danach die Erstinformation als PDF",
         },
         ...(zwischen
-          ? [{ key: "zwischenfrage", wann: "nach der Antwort", kanal: "whatsapp" as const, titel: "Zwischenfrage", vorschau: a(an, zwischen.du, zwischen.sie) }]
+          ? [{ key: "zwischenfrage", wann: "nach der Antwort", kanal: "whatsapp" as const, titel: "Zwischenfrage", vorschau: `${zwischenfrageText(zwischen, an, person)} [${zwischenKnoepfe(zwischen).map((k) => k.title).join("] [")}]` }]
           : []),
         {
           key: "terminvorschlag",
