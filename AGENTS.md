@@ -87,6 +87,12 @@ Vor jedem Screenshot an Ole und vor jedem Livegang fragen: „Warum ist das noch
 Aufgabe, erster Blick, Hauptaktion, Begriffe, Standardwerte, Farben, Dichte, Handy) und zuerst lösen. Erst dann vorlegen, mit Score
 und kurzer Liste der behobenen Punkte.
 
+Rechtliches mit Conversion-Blick (Ole, 18.11.2026): Jede rechtlich bedingte Änderung, die Leads, Kunden oder Vermittler sehen
+(Einwilligungen, Pflichtangaben, Hinweise, Formulare, Abläufe), wird vor dem Bauen erst von einem eigenen Hilfsagenten als
+Conversion-Texter/UX optimiert: kurz, Nutzen zuerst, Knöpfe als Handlung, Rechtliches an die Stelle der Handlung oder hinter einen
+Klick, wo zulässig. Danach prüfen, dass alle Pflichtangaben erhalten sind. Aufträge von Ole mit rechtlichem Hintergrund kommen
+meist schon optimiert; bei eigenen Funden (z. B. aus Tests) gilt die Regel selbst.
+
 ## Erklärvideos aktuell halten (Ole, 15.11.2026)
 
 Ändert ein Commit eine Oberfläche, Navigation, Knopfbeschriftung oder einen Ablauf, der in einem Erklärvideo vorkommt
