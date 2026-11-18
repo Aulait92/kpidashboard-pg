@@ -62,8 +62,8 @@ describe("Vorlagen-Plan", () => {
     const body = templateBodyFor("followup_noshow", "Anid Brand");
     expect(body).toContain("Anid Brand");
     expect(body).not.toContain("[Berater]");
-    // Erstanschreiben ab v6: Vermittler als Platzhalter (Dativ, „von Herrn Kannapinn“), ab v8 {{2}} (v9: „Anfrage an {{2}}!“)
-    expect(templateBodyFor("outreach", "Anid Brand")).toContain("Anfrage an {{2}}!");
+    // Erstanschreiben v6 bis v8: Vermittler als Platzhalter; v9 ohne Vermittler, {{2}} ist die erste Frage
+    expect(templateBodyFor("outreach", "Anid Brand")).toBe("Hallo {{1}}, danke für deine Anfrage! *{{2}}?*");
   });
 
   it("Antrag: Beispielwerte je Platzhalter, Knöpfe wo eine Antwort erwartet wird, Abmeldeknopf bei Werbung", () => {
@@ -134,7 +134,10 @@ describe("Vorlagen-Plan", () => {
     const text = previewBodyFor("outreach", "Anid Brand");
     expect(text).not.toMatch(/\{\{\d+\}\}/);
     expect(text).toContain("Julia");
-    expect(text).toContain("Anid Brand");
+    // Erstanschreiben v9 nennt den Vermittler nicht mehr; Beraternamen z. B. im Nachfassen nach verpasstem Termin
+    const noshow = previewBodyFor("followup_noshow", "Anid Brand");
+    expect(noshow).not.toMatch(/\{\{\d+\}\}/);
+    expect(noshow).toContain("Anid Brand");
     for (const p of ALL) expect(CUSTOMER_TITLES[p].title.length).toBeGreaterThan(3);
   });
 

@@ -1,8 +1,8 @@
 // Ole, 17.11.2026 (Testchat): A) Erstnachricht kürzer (v8, seit 18.11.2026 v9), B) genau eine Zwischenfrage vor dem Terminvorschlag,
 // C) Vermittler-Nennung „Herr/Frau Nachname“ beim Siezen.
 import { describe, expect, it } from "vitest";
-import { erstanschreibenText, erstanschreibenV8Params, frageplan } from "@/lib/whatsapp/erstanschreiben";
-import { buildTemplateRequest, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateBodyFor, templateNamesOf } from "@/lib/whatsapp/template-plan";
+import { erstanschreibenText, erstanschreibenV8Params, erstanschreibenV9Params, frageplan, tierFuerErstanschreiben } from "@/lib/whatsapp/erstanschreiben";
+import { buildTemplateRequest, exampleRestFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateBodyFor, templateNamesOf } from "@/lib/whatsapp/template-plan";
 import {
   ERSTINFO_FOOTER_V8,
   ERSTINFO_FOOTER_V9,
@@ -43,11 +43,37 @@ const PS_FORM = [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat
 describe("A) Erstnachricht v9", () => {
   it("Privatschutz genau wie von Ole vorgegeben (Sie, mit Anrede)", () => {
     const tpl = templateTextFor("outreach_privatschutz", "sie");
-    expect(tpl).toBe("Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz an {{2}}! *{{3}}?*");
-    const [verm, frage] = erstanschreibenV8Params({ source: "Privatschutz", an: "sie", formular: PS_FORM, person: HERR, kurz: "Ole" });
-    expect(renderTemplate(tpl, ["Frau Mustermann", verm, frage])).toBe(
-      "Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz an Herrn Kannapinn! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*",
+    expect(tpl).toBe("Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz! *{{2}}?*");
+    const params = erstanschreibenV9Params({ source: "Privatschutz", an: "sie", formular: PS_FORM, person: HERR, kurz: "Ole" });
+    expect(params).toEqual(["Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu"]);
+    expect(renderTemplate(tpl, ["Herr Pan", ...params])).toBe(
+      "Hallo Herr Pan, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*",
     );
+  });
+
+  it("Tierkrankenversicherung emotional mit dem Tiernamen (Ole, 18.11.2026)", () => {
+    expect(templateTextFor("outreach_tkv", "sie")).toBe("Hallo {{1}}, schön, dass Sie {{2}} gut absichern möchten 🐾 *{{3}}?*");
+    expect(templateTextFor("outreach_tkv", "du")).toBe("Hallo {{1}}, schön, dass du {{2}} gut absichern möchtest 🐾 *{{3}}?*");
+    expect(templateTextFor("outreach_tkv", "sie_ohne_name")).toBe("Hallo, schön, dass Sie {{1}} gut absichern möchten 🐾 *{{2}}?*");
+    const minka = [{ label: "Tiername", value: "Minka" }];
+    const params = erstanschreibenV9Params({ source: "TKV-Katze", an: "sie", formular: minka, person: HERR, kurz: "Ole" });
+    expect(params).toEqual(["Minka", "Wie alt ist Ihre Katze"]);
+    expect(renderTemplate(templateTextFor("outreach_tkv", "sie"), ["Herr Pan", ...params])).toBe("Hallo Herr Pan, schön, dass Sie Minka gut absichern möchten 🐾 *Wie alt ist Ihre Katze?*");
+    // mehrere Namen, ohne Namen der Akkusativ je Tier
+    expect(tierFuerErstanschreiben("TKV-Katze", "sie", [{ label: "Name des Tieres", value: "Minka, Felix" }])).toBe("Minka und Felix");
+    expect(tierFuerErstanschreiben("TKV-Katze", "sie", [{ label: "Tiername", value: "Minka und Felix" }])).toBe("Minka und Felix");
+    expect(tierFuerErstanschreiben("TKV-Katze", "sie", [{ label: "Tiername", value: "Minka/Felix" }])).toBe("Minka und Felix");
+    expect(tierFuerErstanschreiben("TKV-Katze", "du", [{ label: "Tiername", value: "Minka, Felix, Tom" }])).toBe("Minka, Felix und Tom");
+    expect(tierFuerErstanschreiben("TKV-Katze", "sie", [])).toBe("Ihre Katze");
+    expect(tierFuerErstanschreiben("TKV-Katze", "du", null)).toBe("deine Katze");
+    expect(tierFuerErstanschreiben("Hundekrankenversicherung", "sie", [])).toBe("Ihren Hund");
+    expect(tierFuerErstanschreiben("Hundekrankenversicherung", "du", [])).toBe("deinen Hund");
+    expect(tierFuerErstanschreiben("Pferdeversicherung", "sie", [])).toBe("Ihr Pferd");
+    expect(tierFuerErstanschreiben("Tierkrankenversicherung", "sie", [{ label: "Tiername", value: " " }])).toBe("Ihr Tier");
+    expect(tierFuerErstanschreiben("Tierkrankenversicherung", "du", [])).toBe("dein Tier");
+    // Freitext gleich der Vorlage plus KI-Zeile
+    const frei = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Hundekrankenversicherung", formular: [] });
+    expect(frei).toBe("Hallo Erika, schön, dass du deinen Hund gut absichern möchtest 🐾 *Wie alt ist dein Hund?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
   });
 
   it("Anrede: Frau/Herr Nachname, unsicher Vor- und Nachname, ohne Nachnamen eigene Fassung", () => {
@@ -55,7 +81,7 @@ describe("A) Erstnachricht v9", () => {
     expect(anredeName("sie", { fullName: "Max Mustermann", salutation: "m" })).toBe("Herr Mustermann");
     expect(anredeName("sie", { fullName: "Kim Mustermann", salutation: "divers" })).toBe("Kim Mustermann");
     expect(anredeName("sie", { fullName: "Kim Mustermann" })).toBe("Kim Mustermann");
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz an {{1}}! *{{2}}?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! *{{1}}?*");
   });
 
   it("alle Produkte: gleicher kurzer Aufbau, bestehende Öffnungsfrage, kurz genug für WhatsApp Desktop", () => {
@@ -66,7 +92,7 @@ describe("A) Erstnachricht v9", () => {
       ["PKV", "Wie sind Sie aktuell beruflich aufgestellt"],
     ];
     for (const [source, frage] of faelle) {
-      const [, f] = erstanschreibenV8Params({ source, an: "sie", formular: source === "Privatschutz" ? PS_FORM : [], person: HERR, kurz: "Ole" });
+      const f = erstanschreibenV9Params({ source, an: "sie", formular: source === "Privatschutz" ? PS_FORM : [], person: HERR, kurz: "Ole" }).at(-1);
       expect(f).toBe(frage);
     }
     for (const p of OUTREACH_PURPOSES) {
@@ -96,9 +122,14 @@ describe("A) Erstnachricht v9", () => {
     expect(erstinfoFooterFor(9)).toBe(ERSTINFO_FOOTER_V9);
   });
 
-  it("v7 bzw. v8 bleiben Rückfall, bis v9 freigegeben ist (v8 und v9 mit gleichen Platzhaltern)", () => {
+  it("v7 bzw. v8 bleiben Rückfall mit alter Platzhalter-Belegung, bis v9 freigegeben ist", () => {
     expect(neuePlatzhalter("outreach_privatschutz", 7)).toBe(false);
-    expect(neuePlatzhalter("outreach_privatschutz", 8)).toBe(true);
+    expect(neuePlatzhalter("outreach_privatschutz", 8)).toBe(false);
+    // Vorschau der noch gesendeten Fassungen mit deren Platzhaltern
+    expect(exampleRestFor("outreach_privatschutz", "sie", 8)).toEqual(["Herrn Schmidt", "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu"]);
+    expect(exampleRestFor("outreach_privatschutz", "sie", 7)).toEqual(["Privatschutz", "Herrn Schmidt", "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu"]);
+    expect(exampleRestFor("outreach_privatschutz", "sie", 9)).toEqual(["Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu"]);
+    expect(exampleRestFor("outreach_tkv", "du", 9)).toEqual(["Minka", "Wie alt ist deine Katze"]);
     const t = (name: string) => ({ name, body: "Hallo {{1}}, x", purpose: "outreach_privatschutz", headerFormat: "DOCUMENT" });
     const nurV7 = rankOutreach([t("pg_outreach_privatschutz_v7_sie")], ["outreach_privatschutz", "outreach"], "sie", { fullName: "Max Muster", salutation: "Herr" }, { pdf: "vollstaendig" });
     expect(nurV7 && "version" in nurV7 ? nurV7.version : null).toBe(7);
@@ -116,10 +147,10 @@ describe("A) Erstnachricht v9", () => {
 
   it("Freitext im offenen Fenster: gleicher Aufbau, Frage fett, KI-Kennzeichnung als Zeile darunter (keine Fußzeile)", () => {
     const t = erstanschreibenText({ an: "sie", kontakt: { fullName: "Erika Mustermann", salutation: "Frau" }, name: "Ole", vermittler: HERR.dat, vermittlerNom: HERR.nom, source: "Privatschutz", formular: PS_FORM });
-    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz an Herrn Kannapinn! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
+    expect(t).toBe("Hallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*\n\n_KI-Assistent · Erstinformation folgt als PDF_");
     expect(t).not.toMatch(/[–—]/);
     const du = erstanschreibenText({ an: "du", kontakt: { fullName: "Erika Mustermann" }, name: "Ole", vermittler: DU.dat, source: "Privatschutz", formular: PS_FORM });
-    expect(du).toContain("danke für deine Anfrage zum Privatschutz an Ole! *");
+    expect(du).toContain("danke für deine Anfrage zum Privatschutz! *");
     expect(du).toMatch(/\n\n_KI-Assistent/);
   });
 
@@ -131,9 +162,12 @@ describe("A) Erstnachricht v9", () => {
     expect(erstanschreibenV8Params({ source: "Privatschutz", an: "sie", formular: alles, person: HERR, kurz: "Ole" })[1]).toBe("Passt Ihnen ein kurzer Videotermin mit Herrn Kannapinn in den nächsten Tagen");
   });
 
-  it("Beispielvorschau des Kunden nennt den Vermittler nach der Regel", () => {
-    expect(exampleValuesFor("outreach_privatschutz", "sie", templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"))).toContain("Herrn Kannapinn");
-    expect(exampleValuesFor("outreach_privatschutz", "sie", templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", null))).toContain("Ole Kannapinn");
+  it("Beispielvorschau des Kunden nennt den Vermittler nach der Regel (Rückfall v8 mit Vermittler-Platzhalter)", () => {
+    const v8 = ["Vermittler", "Erste Frage"];
+    expect(exampleValuesFor("outreach_privatschutz", "sie", templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"), v8)).toContain("Herrn Kannapinn");
+    expect(exampleValuesFor("outreach_privatschutz", "sie", templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", null), v8)).toContain("Ole Kannapinn");
+    // v9 nennt keinen Vermittler
+    expect(exampleValuesFor("outreach_privatschutz", "sie", templateNamesOf("Agentur Ole Kannapinn", undefined, "Ole Kannapinn", "Herr"))).not.toContain("Herrn Kannapinn");
   });
 });
 
@@ -142,7 +176,7 @@ const ERST: VerlaufNachricht = {
   kind: "template",
   purpose: "outreach_privatschutz",
   sentBy: "system",
-  body: "[Erstinformation als PDF]\nHallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz an Herrn Kannapinn! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*",
+  body: "[Erstinformation als PDF]\nHallo Frau Mustermann, danke für Ihre Anfrage zum Privatschutz! *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*",
 };
 const ein = (body: string): VerlaufNachricht => ({ direction: "inbound", body, kind: "text" });
 const def = ZWISCHENFRAGEN.outreach_privatschutz![0];

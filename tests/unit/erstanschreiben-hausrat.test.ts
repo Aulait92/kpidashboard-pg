@@ -25,12 +25,12 @@ describe("Erstanschreiben: nur Hausrat angefragt", () => {
 
   it("Freitext Sie und Du; Frageplan bleibt beim Privatschutz", () => {
     expect(erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", vermittler: "Herrn Kannapinn", source: "Privatschutz", herkunft: "anfrage", formular: NUR_HAUSRAT })).toBe(
-      "Hallo Herr Müller, danke für Ihre Anfrage zu Ihrer Hausratversicherung an Herrn Kannapinn! *Sind Sie bei Hausrat schon versichert, oder wäre es neu?*\n\n_KI-Assistent · Erstinformation folgt als PDF_",
+      "Hallo Herr Müller, danke für Ihre Anfrage zu Ihrer Hausratversicherung! *Sind Sie bei Hausrat schon versichert, oder wäre es neu?*\n\n_KI-Assistent · Erstinformation folgt als PDF_",
     );
     expect(erstanschreibenText({ an: "du", kontakt: { fullName: "Thomas" }, name: "Ole", source: "Privatschutz", herkunft: "anfrage", formular: NUR_HAUSRAT })).toContain(
-      "danke für deine Anfrage zu deiner Hausratversicherung an Ole!",
+      "danke für deine Anfrage zu deiner Hausratversicherung!",
     );
-    expect(erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", source: "Privatschutz", herkunft: "anfrage", formular: BEIDES })).toContain("zum Privatschutz an Ole!");
+    expect(erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", source: "Privatschutz", herkunft: "anfrage", formular: BEIDES })).toContain("zum Privatschutz!");
     expect(frageplan("Privatschutz", NUR_HAUSRAT).produkt?.purpose).toBe("outreach_privatschutz");
   });
 
@@ -38,8 +38,8 @@ describe("Erstanschreiben: nur Hausrat angefragt", () => {
     expect(CORE_PURPOSES).toContain("outreach_hausrat");
     expect(isOutreachPurpose("outreach_hausrat")).toBe(true);
     expect(templateVersionFor("outreach_hausrat")).toBe("v9");
-    expect(templateTextFor("outreach_hausrat", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zu Ihrer Hausratversicherung an {{2}}! *{{3}}?*");
-    expect(templateTextFor("outreach_hausrat", "du")).toBe("Hallo {{1}}, danke für deine Anfrage zu deiner Hausratversicherung an {{2}}! *{{3}}?*");
+    expect(templateTextFor("outreach_hausrat", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zu Ihrer Hausratversicherung! *{{2}}?*");
+    expect(templateTextFor("outreach_hausrat", "du")).toBe("Hallo {{1}}, danke für deine Anfrage zu deiner Hausratversicherung! *{{2}}?*");
     const geplant = plannedTemplates(["outreach_hausrat"]);
     expect(geplant.map((g) => g.form)).toEqual(["du", "sie", "sie_ohne_name"]);
     for (const g of geplant) {
