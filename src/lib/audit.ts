@@ -174,6 +174,9 @@ export const AUDIT_LABEL: Record<string, string> = {
   "customer.markthinweis": "Makler: Hinweis auf die Marktauswahl in der Präsentation geändert",
   "angebote.gesundheit_verworfen": "Angebot mit Gesundheitssparte ausgelesen und verworfen (nichts gespeichert)",
   "anzeige.rueckfuellung": "Anzeige am Lead nachgetragen (Rückfüllung, nur leere Felder)",
+  "viren.befund": "Virenprüfung: Datei abgelehnt und verworfen",
+  "viren.ungeprueft_hinweis": "Virenprüfung nicht möglich: Dateien ungeprüft angenommen (Hinweis an die Admins)",
+  "loeschprotokoll.angewendet": "Löschprotokoll nach einer Wiederherstellung erneut angewendet",
 };
 
 export async function audit(

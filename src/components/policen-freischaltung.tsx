@@ -5,11 +5,13 @@
 // in den Einstellungen immer (dort mit Status).
 
 import { useState, useTransition } from "react";
+import { usePathname } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { buttonClass } from "@/components/ui";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import type { Freischaltung } from "@/lib/policen/freischaltung";
+import { zweiFaktorHref } from "@/components/security/zwei-faktor-hinweis";
 import { policenAvvSpaeterAction, policenAvvZustimmenAction } from "@/app/buyer/einstellungen/policen/actions";
 
 const day = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(iso));
@@ -19,8 +21,11 @@ export function PolicenFreischaltung({ f, ort }: { f: Freischaltung; ort: "karte
   const [lesen, setLesen] = useState(false);
   const [weg, setWeg] = useState(false);
   const [pending, start] = useTransition();
+  const pfad = usePathname() || "/buyer";
   if (weg) return null;
   const an = f.freigeschaltet;
+  // Ohne Zwei-Faktor-Login (AVV § 5) führt die Hauptaktion zuerst zur Einrichtung und danach hierher zurück
+  const einrichten = f.zweiFaktor ? null : zweiFaktorHref(pfad);
 
   const zustimmen = () =>
     start(async () => {
@@ -70,16 +75,24 @@ export function PolicenFreischaltung({ f, ort }: { f: Freischaltung; ort: "karte
           {!an ? (
             <>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-                <button type="button" onClick={zustimmen} disabled={pending} className={buttonClass("primary", "md", "w-full sm:w-auto")} data-avv-zustimmen>
-                  {pending ? "Wird gespeichert …" : "Zustimmen und einschalten"}
-                </button>
+                {einrichten ? (
+                  <a href={einrichten} className={buttonClass("primary", "md", "w-full sm:w-auto")} data-avv-zwei-faktor>
+                    Zuerst Zwei-Faktor-Login einrichten
+                  </a>
+                ) : (
+                  <button type="button" onClick={zustimmen} disabled={pending} className={buttonClass("primary", "md", "w-full sm:w-auto")} data-avv-zustimmen>
+                    {pending ? "Wird gespeichert …" : "Zustimmen und einschalten"}
+                  </button>
+                )}
                 {ort === "karte" ? (
                   <button type="button" onClick={spaeter} disabled={pending} className="min-h-10 text-sm font-medium text-[color:var(--muted)] hover:underline" data-avv-spaeter>
                     Später
                   </button>
                 ) : null}
               </div>
-              <p className="mt-2 text-xs text-[color:var(--muted)]">Haftpflicht, Hausrat und Kfz laufen ohne diesen Schritt.</p>
+              <p className="mt-2 text-xs text-[color:var(--muted)]">
+                {einrichten ? "Danach stimmen Sie hier zu. " : ""}Haftpflicht, Hausrat und Kfz laufen ohne diesen Schritt.
+              </p>
             </>
           ) : null}
         </div>
@@ -92,9 +105,15 @@ export function PolicenFreischaltung({ f, ort }: { f: Freischaltung; ort: "karte
             </p>
           ))}
           {!an ? (
-            <button type="button" onClick={zustimmen} disabled={pending} className={buttonClass("primary", "md", "w-full")}>
-              Zustimmen und einschalten
-            </button>
+            einrichten ? (
+              <a href={einrichten} className={buttonClass("primary", "md", "w-full")}>
+                Zuerst Zwei-Faktor-Login einrichten
+              </a>
+            ) : (
+              <button type="button" onClick={zustimmen} disabled={pending} className={buttonClass("primary", "md", "w-full")}>
+                Zustimmen und einschalten
+              </button>
+            )
           ) : null}
         </div>
       </Sheet>

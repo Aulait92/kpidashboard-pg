@@ -366,7 +366,7 @@ export async function LeadDetailBody({
     team.userId ? prisma.user.findUnique({ where: { id: team.userId }, select: { displayName: true, mailSignature: true } }) : null,
     mailFeaturesOffFor(customerId),
     // Unterlagen vom Kunden per WhatsApp (lib/policen); Admin-Vorschau ohne Inhalte mit Gesundheitsbezug
-    listUnterlagen(lead.id, { preview: !team.userId }),
+    listUnterlagen(lead.id, { preview: !team.userId, userId: team.userId }),
     // Kennzeichen „Angebot abgelegt am“ / „gesendet am“ an der Datei (Paket P3, lib/angebot-senden.ts)
     prisma.appointment.findMany({
       where: { leadId: lead.id, angebotDateiId: { not: null } },

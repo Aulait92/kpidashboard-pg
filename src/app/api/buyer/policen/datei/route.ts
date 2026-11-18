@@ -17,6 +17,18 @@ export async function GET(req: Request): Promise<Response> {
   if (!lead) return new Response("Nicht gefunden.", { status: 404 });
   const doc = await ladeUnterlage(lead.id, d.docId, { customerId: ctx.customerId, preview: ctx.preview, userId: ctx.userId, email: ctx.email, download: d.download });
   if (!doc) return new Response("Nicht gefunden.", { status: 404 });
+  // Zwei-Faktor-Login fehlt (AVV § 5) bzw. Virenprüfung steht aus oder hat angeschlagen
+  if ("gesperrt" in doc) {
+    if (doc.gesperrt === "zwei_faktor") {
+      const zurueck = encodeURIComponent(`/buyer/leads/${lead.id}#dokumente`);
+      return new Response(null, { status: 303, headers: { Location: `/buyer/konto/sicherheit/zwei-faktor?zurueck=${zurueck}`, "Cache-Control": "private, no-store" } });
+    }
+    const text =
+      doc.gesperrt === "befund"
+        ? "Diese Datei wurde bei der Virenprüfung abgelehnt und gelöscht. Ihr Kontakt wurde gebeten, sie neu zu schicken."
+        : "Diese Datei wird noch auf Viren geprüft. Bitte versuchen Sie es in ein paar Minuten noch einmal.";
+    return new Response(text, { status: doc.gesperrt === "befund" ? 410 : 409, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store" } });
+  }
   return new Response(new Uint8Array(doc.data), {
     headers: {
       "Content-Type": doc.mimeType,

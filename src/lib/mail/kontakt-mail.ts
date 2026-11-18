@@ -276,12 +276,13 @@ type MailZeile = {
 /** Anhänge eines Eingangs für die Anzeige (rein): Download über die App, gesperrte ohne Link. */
 export function eingangAnhaenge(leadId: string | null | undefined, eingang: { id: string; anhaenge: unknown } | null | undefined): KontaktMailEintrag["anhaenge"] {
   if (!eingang || !Array.isArray(eingang.anhaenge)) return [];
-  return (eingang.anhaenge as { id?: unknown; name?: unknown; groesse?: unknown; erlaubt?: unknown }[])
+  return (eingang.anhaenge as { id?: unknown; name?: unknown; groesse?: unknown; erlaubt?: unknown; viren?: unknown }[])
     .filter((a) => a && typeof a.id === "string")
     .map((a) => ({
       name: typeof a.name === "string" && a.name.trim() ? a.name : "Anhang",
       groesse: typeof a.groesse === "number" ? a.groesse : 0,
-      link: a.erlaubt === true && leadId ? `/api/buyer/leads/${leadId}/mail-anhang/${eingang.id}/${a.id as string}` : null,
+      // Virenprüfung mit Befund (lib/mail/eingang.ts): nie zum Download
+      link: a.erlaubt === true && a.viren !== "befund" && leadId ? `/api/buyer/leads/${leadId}/mail-anhang/${eingang.id}/${a.id as string}` : null,
     }));
 }
 

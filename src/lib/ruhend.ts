@@ -441,7 +441,11 @@ export type FinalEraseResult = Awaited<ReturnType<typeof eraseCustomerData>> & {
  * Meta und Freitexte der Kündigungsabsichten. Pay-per-Lead-Rohdaten der gelieferten Leads werden anonymisiert.
  * Bleiben: Kunde mit Name und Abrechnungsfeldern, Angebote, Umsätze, Lebenszyklus, anonyme Lead-Zeilen, Sperrliste.
  */
-export async function finalDeleteCustomer(customerId: string, opts: { actor?: AuditActor; reason?: string | null; now?: Date } = {}): Promise<FinalEraseResult> {
+export async function finalDeleteCustomer(
+  customerId: string,
+  // ausLoeschprotokoll: erneute Anwendung nach einer Wiederherstellung (lib/loeschprotokoll.ts), ohne Mail und ohne neuen Eintrag
+  opts: { actor?: AuditActor; reason?: string | null; now?: Date; ausLoeschprotokoll?: boolean } = {},
+): Promise<FinalEraseResult> {
   const now = opts.now ?? new Date();
   const actor = opts.actor ?? SYSTEM;
   const c = await prisma.customer.findUnique({
@@ -451,7 +455,7 @@ export async function finalDeleteCustomer(customerId: string, opts: { actor?: Au
   if (!c) throw new Error("Kunde nicht gefunden.");
   const contactId = c.salesContact?.id ?? c.onboarding?.salesContactId ?? null;
   // Vor dem Löschen: Empfänger der Bestätigung und Anrede
-  const owners = c.dataDeletedAt ? [] : await ownerEmails(customerId);
+  const owners = c.dataDeletedAt || opts.ausLoeschprotokoll ? [] : await ownerEmails(customerId);
   const greeting = owners.length ? await greetingFor(customerId, contactId).catch(() => "Guten Tag,") : "";
 
   const erased = await eraseCustomerData(customerId, actor, { reason: opts.reason ?? null });
@@ -479,6 +483,10 @@ export async function finalDeleteCustomer(customerId: string, opts: { actor?: Au
   const mrr = await customerMrr(customerId);
   await recordLifecycle(customerId, "deleted", { at: now, mrr, reason: opts.reason ?? null, details: { ...erased, logins, settings } });
   await audit("customer.final_erase", { entity: "Customer", entityId: customerId, customerId, details: { ...erased, logins, settings, reason: opts.reason ?? null }, actor });
+  if (!opts.ausLoeschprotokoll) {
+    const { protokolliereLoeschung } = await import("@/lib/loeschprotokoll");
+    await protokolliereLoeschung([{ art: "kunde", entityId: customerId, customerId, grund: "vertragsende" }], now);
+  }
 
   if (owners.length && !c.isTest) {
     const res = await sendCustomerMail({

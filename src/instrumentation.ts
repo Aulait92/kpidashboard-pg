@@ -7,6 +7,15 @@ export async function register() {
   // Pflichtvariablen der Produktion prüfen, fehlende als Admin-Alarm (lib/env-check.ts). Nicht blockierend.
   if (process.env.NEXT_RUNTIME === "nodejs") {
     void import("@/lib/env-check").then((m) => m.variablenBeimStart()).catch(() => {});
+    // Löschprotokoll (lib/loeschprotokoll.ts): nach einer Wiederherstellung der Datenbank startet die App neu und wendet
+    // alle protokollierten Löschungen erneut an (im normalen Betrieb ist nichts offen). Verzögert, nicht in der Demo.
+    if (!process.env.APP_DEMO_DATABASE_URL && process.env.DATABASE_URL) {
+      setTimeout(() => {
+        void import("@/lib/loeschprotokoll")
+          .then((m) => m.wendeLoeschprotokollAn())
+          .catch((e: unknown) => console.error("[loeschprotokoll] Start-Abgleich fehlgeschlagen:", e instanceof Error ? e.name : "fehler"));
+      }, 30_000).unref?.();
+    }
     // Öffentliche App-Demo: Beispieldaten in der eigenen Demo-Datenbank anlegen, falls älter als 20 Stunden
     // (nur mit APP_DEMO_DATABASE_URL, sonst nichts). Verzögert, damit der Start nicht wartet.
     if (process.env.APP_DEMO_DATABASE_URL) {

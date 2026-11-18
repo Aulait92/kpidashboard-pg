@@ -3959,6 +3959,9 @@ model LeadFile {
   size         Int
   data         Bytes
   uploadedById String?
+  // Virenprüfung beim Hochladen (lib/sicherheit/virenpruefung.ts): sauber | ungeprueft; null = vor dem 18.11.2026.
+  // Policen (kind = police) werden ungeprüft nicht angeboten, bis die Prüfung gelaufen ist.
+  virenStatus  String?
   createdAt    DateTime @default(now())
 
   contracts LeadContract[]
@@ -3991,6 +3994,12 @@ model LeadDocument {
   // Neue Ablage (Rechtsprüfung A6): Schlüssel im privaten Policen-Bucket (lib/policen/ablage.ts), Inhalt mit dem
   // Schlüssel des Mandanten verschlüsselt. null solange status = wartet bzw. bei alten Unterlagen.
   storageKey       String?
+  // Crypto-Shredding (Ole, 18.11.2026, lib/policen/ablage.ts Format 2): eigener Datenschlüssel der Datei, verpackt mit
+  // dem Schlüssel des Mandanten (Base64). Mit dem Eintrag gelöscht = Datei nicht mehr lesbar. null bei Format 1.
+  dateiSchluessel  String?
+  // Virenprüfung (lib/sicherheit/virenpruefung.ts): sauber | ungeprueft (nicht angeboten, bis geprüft).
+  // null = vor dem 18.11.2026 eingegangen. Dateien mit Befund werden nie gespeichert.
+  virenStatus      String?
   // police | sonstig
   kind             String    @default("police")
   // Sparte laut Klassifikation, z. B. haftpflicht, hausrat, kfz, kranken, bu (lib/policen/regeln.ts SPARTEN)
@@ -4821,4 +4830,25 @@ model MahnwesenSettings {
   verzugspauschale Boolean  @default(false)
   leadsPause       Boolean  @default(false)
   updatedAt        DateTime @updatedAt
+}
+
+// Löschprotokoll (Ole, 18.11.2026, lib/loeschprotokoll.ts): gelöschte IDs und technische Verweise, keine Inhalte.
+// Datenbank-Sicherungen (Railway) lassen sich nicht einzeln bereinigen; nach einer Wiederherstellung wendet der Cron
+// bzw. scripts/loeschprotokoll.mjs jede hier stehende Löschung erneut an. Kopie im privaten Policen-Bucket
+// (loeschprotokoll/<id>.json), damit Löschungen nach dem Sicherungszeitpunkt nicht verloren gehen. Aufbewahrung
+// 13 Monate (länger als jede Sicherung).
+model Loeschprotokoll {
+  id         String   @id @default(cuid())
+  // lead | kunde | policen_dokument | vertriebskontakt
+  art        String
+  entityId   String
+  customerId String?
+  // Technischer Verweis ohne Inhalt, z. B. Objektname im Policen-Bucket
+  ref        String?
+  // Kurzer Grund ohne Inhalte, z. B. art17, widerruf, frist, vertragsende
+  grund      String?
+  createdAt  DateTime @default(now())
+
+  @@unique([art, entityId])
+  @@index([createdAt])
 }

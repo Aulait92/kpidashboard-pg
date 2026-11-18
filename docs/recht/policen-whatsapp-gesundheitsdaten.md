@@ -260,6 +260,27 @@ Hinweis: Strafrahmen bitte von der Anwältin am aktuellen Normtext gegenprüfen 
 - **Keine Weitergabe:** Keine Funktion zum Weiterleiten an Versicherer oder Dritte aus der Ablage; Export nur als Download durch den Vermittler.
 - **Ausschluss aus Statistik/Benchmark** und aus jeder KI-Verarbeitung außer dem freigegebenen Auslesen technisch erzwingen (eigene Tabelle/Bucket ohne Anbindung an Auswertungen).
 
+### Umgesetzt (Stand 18.11.2026, „Weitere Pflichtpunkte“)
+
+- **Zugriffskontrolle, 2FA:** Policen vom Kunden öffnen bzw. herunterladen nur Logins mit Zwei-Faktor-Login (TOTP, wie
+  bei den Admins), sonst Einrichtungs-Karte mit QR-Code und Notfall-Codes; Freischaltung Kranken/BU/Leben nur mit
+  Zwei-Faktor-Login des Inhabers; Admin-Vorschau ohne Inhalte und Dateinamen. Kein Supportzugriff auf Inhalte über die
+  Oberfläche (Break-Glass mit automatischer Benachrichtigung ist **noch nicht** gebaut). `docs/datenschutz-policen.md`
+  Abschnitt 3a.
+- **Zugriffsprotokoll:** jeder Abruf (`policen.abruf`, Öffnen bzw. Herunterladen, Login, Zeitpunkt), Löschen und
+  Behalten im Änderungsprotokoll, 12 Monate (`pruneAudit`). Für den Vermittler unter Einstellungen → Änderungsprotokoll.
+- **Löschautomatik und Backups:** täglicher Job (90 Tage nach Termin), Datenbank-Sicherungen höchstens 30 Tage
+  (Löschkonzept `docs/datenschutz.md`), Löschprotokoll mit automatischer erneuter Anwendung nach jeder
+  Wiederherstellung, Crypto-Shredding je Datei (eigener Datenschlüssel, mit dem Eintrag vernichtet). Löschnachweis:
+  Löschprotokoll (IDs und Zeitpunkt) und Änderungsprotokoll.
+- **Malware-Prüfung:** ClamAV (Signaturprüfung, kein Auslesen) vor der Ablage bzw. Bereitstellung: Policen per WhatsApp,
+  Uploads, E-Mail-Anhänge. Befund: verworfen, Lead neutral informiert, Vermittler-Hinweis, Protokoll. Ohne erreichbare
+  Prüfung nicht bereitgestellt (Schalter `VIRENPRUEFUNG_PFLICHT` für Ablehnen). `docs/virenpruefung.md`.
+- **AVV-Hinweis § 6:** Der Platzhalter „{x} Tage“ ist mit **30 Tagen** festgelegt (Löschkonzept). Die in der App
+  angezeigte Fassung (`src/lib/policen/avv-text.ts`, Version `AVV_POLICEN_VERSION`) sagt noch „Sicherungszyklus des
+  Hosting-Anbieters“; mit der nächsten Fassung (Anwältin) „von 30 Tagen“ eintragen und die Version erhöhen (erneute
+  Zustimmung). § 5 „Zwei-Faktor-Anmeldung“ und „Schadsoftwareprüfung“ sind damit technisch erfüllt.
+
 ### Für das KI-Auslesen (Zusatzfrage 9)
 
 - **K1 Einwilligungsflag:** Auslesen nur bei Knopf „Ich willige ein“ mit KI-Textversion; bei „Ja, aber ohne KI“ oder alten Einwilligungen nie.

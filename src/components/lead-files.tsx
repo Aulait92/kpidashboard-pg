@@ -10,6 +10,7 @@ import { FileDrop } from "@/components/ui/file-drop";
 import { useToast } from "@/components/ui/toast";
 import { formatBytes, MB } from "@/lib/file-upload";
 import { cn } from "@/lib/utils";
+import { ZweiFaktorHinweis } from "@/components/security/zwei-faktor-hinweis";
 
 type Kind = "angebot" | "police" | "sonstiges";
 const KINDS: { key: Kind; label: string }[] = [
@@ -27,6 +28,8 @@ export type LeadFileView = {
   createdAt: string;
   /** Angebot nach dem Termin (Paket P3): „Angebot gesendet am 17.11. per WhatsApp und E-Mail“ bzw. „abgelegt am“ */
   stand?: string | null;
+  /** Hochgeladene Police, deren Virenprüfung noch aussteht (lib/lead-files.ts) */
+  wirdGeprueft?: boolean;
 };
 /** Unterlage, die der Kunde per WhatsApp geschickt hat (lib/policen/server.ts UnterlageView). */
 export type UnterlageView = {
@@ -37,6 +40,8 @@ export type UnterlageView = {
   sparte: string | null;
   consentAt: string | null;
   ansehen: boolean;
+  /** Zwei-Faktor-Login fehlt (AVV § 5) bzw. Virenprüfung steht aus */
+  gesperrt: "zwei_faktor" | "pruefung" | null;
   loeschtAm: string | null;
   behaltenAt: string | null;
   behaltenVermerk: string | null;
@@ -180,6 +185,7 @@ export function LeadFiles({
               </button>
             ) : null}
           </div>
+          {!readOnly && unterlagen.some((u) => u.gesperrt === "zwei_faktor") ? <ZweiFaktorHinweis zurueck={`/buyer/leads/${leadId}#dokumente`} className="mx-5 mt-3" /> : null}
           <ul className="divide-y divide-[color:var(--border)]">
             {unterlagen.map((u) => {
               const kopf = (
@@ -187,6 +193,7 @@ export function LeadFiles({
                   <span className="block truncate text-[15px] font-medium">{u.fileName}</span>
                   <span className="text-xs text-[color:var(--muted)]">
                     {u.sparte ?? "Unterlage"} · per WhatsApp · {formatBytes(u.size)} · {day(u.createdAt)}
+                    {u.gesperrt === "pruefung" ? " · wird auf Viren geprüft" : ""}
                   </span>
                 </>
               );
@@ -263,6 +270,7 @@ export function LeadFiles({
                 <span className="block truncate text-[15px] font-medium">{f.fileName}</span>
                 <span className="text-xs text-[color:var(--muted)]">
                   {LABEL[f.kind]} · {formatBytes(f.size)} · {day(f.createdAt)}
+                  {f.wirdGeprueft ? " · wird auf Viren geprüft" : ""}
                 </span>
                 {f.stand ? (
                   <span className="mt-1 block text-xs font-medium text-emerald-700" data-angebot-stand>

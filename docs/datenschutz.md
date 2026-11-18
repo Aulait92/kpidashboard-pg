@@ -189,7 +189,8 @@ Eingang), Media-IDs ohne Einwilligung 24 Stunden, Widerruf sofort, mit dem Lead 
 | Leads, Chats, Termine während der Laufzeit | nach Weisung des Kunden | keine automatische Frist (Kunde entscheidet; Vermittler haben eigene Dokumentationspflichten) |
 | Vertriebskontakte ohne Vertrag | **Vorschlag**: 2 Jahre nach letzter Aktivität | noch von Hand (Kontakt → Löschen). Bei Widerspruch sofort |
 | Angebote, Verträge, Rechnungen | 10 Jahre | nicht löschen; Stripe bewahrt Rechnungen auf |
-| Datensicherungen | Rotation | PITR ca. 4 Wochen; tägliche/wöchentliche Sicherungen laut Railway → Postgres → Backups (**Aufbewahrung dort ablesen und hier eintragen**). Gelöschte Daten verschwinden mit der Rotation |
+| Datensicherungen (Datenbank) | **höchstens 30 Tage** (Festlegung 18.11.2026) | Railway Postgres: PITR-Archiv ca. 4 Wochen, tägliche Sicherungen 6 Tage, wöchentliche 27 Tage (Railway-Doku); **monatliche Sicherungen (89 Tage) nicht einschalten**, manuelle Sicherungen (z. B. vor einem Livegang) nach spätestens 30 Tagen löschen. Einzelne Sätze lassen sich in Sicherungen nicht löschen: Jede Löschung aus Datenschutzgründen (Art. 17, Vertragsende, Widerruf und Fristen der Policen, Vertriebskontakte) steht im **Löschprotokoll** (`Loeschprotokoll`, nur IDs, keine Inhalte, 13 Monate, Kopie im privaten Policen-Bucket) und wird nach einer Wiederherstellung automatisch erneut angewendet (`lib/loeschprotokoll.ts`: beim Start der App und täglich 03:00 UTC; `docs/notfall-wiederherstellung.md`). Zeitliche Fristen greifen nach einer Wiederherstellung ohnehin von selbst. Policen-Dateien liegen nicht in der Datenbank (Bucket ohne Sicherung) und haben je Datei einen eigenen Schlüssel (Crypto-Shredding) |
+| Löschprotokoll (`Loeschprotokoll`) | 13 Monate | automatisch täglich (`pruneLoeschprotokoll`), Datenbank und Kopie im Bucket |
 
 **Ruhephase und endgültige Löschung (Ole, 15.11.2026, `src/lib/ruhend.ts`):**
 - Gelöscht bzw. anonymisiert (`finalDeleteCustomer`): alles aus `eraseCustomerData` (Leads anonymisiert, Chats,
@@ -244,7 +245,9 @@ Mail-Postfach aufbewahren (Nachweis).
 | TLS | Railway-Domains nur HTTPS; Datenbank intern |
 | Passwörter gehasht | `src/lib/auth.ts` (`hashPassword`, bcrypt) |
 | Zwei-Faktor für Admins | `src/lib/totp.ts`, Einstellungen → Sicherheit; Hinweis-Banner, solange nicht aktiv |
-| Zwei-Faktor für Kunden-Logins (optional) | Kundenbereich → Profilmenü → „Anmeldung & Sicherheit“ (`/buyer/konto/sicherheit`); Inhaber sieht im Team, wer 2FA nutzt (seit 12.11.2026) |
+| Zwei-Faktor für Kunden-Logins | Kundenbereich → Einstellungen → „Anmeldung & Sicherheit“ (`/buyer/konto/sicherheit`); Inhaber sieht im Team, wer 2FA nutzt (seit 12.11.2026). **Pflicht** (seit 18.11.2026) zum Öffnen von Policen vom Kunden und für die Freischaltung Kranken/BU/Leben (AVV-Ergänzung § 5), Einrichtungs-Karte `/buyer/konto/sicherheit/zwei-faktor`; sonst freiwillig |
+| Schadsoftwareprüfung | ClamAV als eigener Railway-Dienst nur im privaten Netz (`lib/sicherheit/virenpruefung.ts`, `docs/virenpruefung.md`): Policen per WhatsApp, Uploads am Kontakt, E-Mail-Anhänge (M2). Befund: verworfen, Änderungsprotokoll `viren.befund`; ungeprüft: nicht angeboten bis zur Prüfung |
+| Crypto-Shredding | Policen-Dateien: eigener Datenschlüssel je Datei, verpackt mit dem Mandantenschlüssel in der Datenbank; Löschen des Eintrags vernichtet den Schlüssel (`lib/policen/ablage.ts`, Format 2) |
 | Begrenzung von Anmeldeversuchen | 10 Fehlversuche je E-Mail in 15 Minuten, 2FA-Code max. 5 Versuche; zusätzlich je IP (`src/lib/rate-limit.ts`) |
 | Sitzungen beenden | Sitzungsversion je Login (`User.sessionVersion`): Passwortänderung, 2FA-Änderung, Kundenwechsel und „Überall abmelden“ beenden alle anderen Sitzungen; gelöschte Logins sind sofort abgemeldet |
 | Drosselung (Rate-Limiting) | `src/lib/rate-limit.ts`: Login, Passwort vergessen, KI-Hilfe, öffentliche Buchung, Angebots-Annahme, CSP-Berichte; Webhooks nur grobe Obergrenze. Im Arbeitsspeicher je Instanz |
@@ -254,7 +257,7 @@ Mail-Postfach aufbewahren (Nachweis).
 | Mandantentrennung, Rollen | `leadScope`/`conversationScope`/`appointmentScope` in `src/lib/team.ts`, `writableCustomerId` |
 | Verschlüsselte Zugangsdaten | `ENCRYPTION_KEY` (AES-256-GCM) für Kalender-Tokens, 2FA-Geheimnisse, ICS-Links |
 | Änderungsprotokoll | `src/lib/audit.ts`, Einstellungen → Änderungsprotokoll |
-| Sicherungen, Wiederherstellung | PITR seit 09.11.2026; Test 10.11.2026 erfolgreich (`docs/notfall-wiederherstellung.md`) |
+| Sicherungen, Wiederherstellung | PITR seit 09.11.2026; Test 10.11.2026 erfolgreich (`docs/notfall-wiederherstellung.md`); Aufbewahrung höchstens 30 Tage; Löschprotokoll wird nach jeder Wiederherstellung erneut angewendet (Test `tests/integration/policen-sicherheit.test.ts`) |
 | Geprüfte Änderungen | GitHub Actions „Prüfung“ (Typen, Lint, Tests, Migration); versionierte Migrationen |
 | Überwachung | `/api/status`, cron-job.org Überwachung, Sentry ohne Personendaten (`src/lib/monitoring.ts`, `src/instrumentation-client.ts`) |
 | Löschfunktionen | `src/lib/erasure.ts` |
@@ -325,7 +328,8 @@ Interaktion mit Betroffenen“. Falls ja, DSFA je Kunde als Verantwortlicher (Vo
       ablegen (DPA oder eigene Erklärung). Anwalt: reichen die Standard-DPAs (Anthropic, Meta, 360dialog, Sentry, Railway)?
       Einschätzung 16.11.2026 (Abschnitt 10.1): voraussichtlich ja, wenn sie eine Vertraulichkeitspflicht enthalten;
       zusätzlich je Dienst den Hinweis aus der Vorlage (Abschnitt „Unterauftragsverarbeiter“) in Textform schicken.
-- [ ] Aufbewahrung der Railway-Sicherungen ablesen und im Löschkonzept eintragen
+- [x] Aufbewahrung der Railway-Sicherungen festgelegt: höchstens 30 Tage (Löschkonzept, 18.11.2026). **Ole:** in Railway →
+      Postgres → Backups prüfen, dass keine monatliche Sicherung eingeschaltet ist, und alte manuelle Sicherungen löschen
 - [ ] Sentry: Aufbewahrung prüfen, Datenregion EU bestätigen
 - [ ] Anwalt: Rolle bei Pay-per-Lead; Kalt-E-Mails an Vermittler; DSFA-Muss-Liste; AGB/AVV-Fassung 10.11.2026
 - [ ] Anwalt: Rückmeldung an Meta (Conversions API für CRM, 15.11.2026): Rolle von Meta, Rechtsgrundlage, Standard „an“,
