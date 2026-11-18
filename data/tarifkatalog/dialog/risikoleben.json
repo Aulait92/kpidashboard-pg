@@ -26,8 +26,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/3702/5fb1229318c6dc2c4d33167d6009ef2a/Highlightblatt%20Risikoleben.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "RISK-vario",
@@ -46,8 +45,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/3702/5fb1229318c6dc2c4d33167d6009ef2a/Highlightblatt%20Risikoleben.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "RISK-vario Premium",
@@ -66,8 +64,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/3702/5fb1229318c6dc2c4d33167d6009ef2a/Highlightblatt%20Risikoleben.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -83,6 +80,7 @@
     "RISK-vario und Premium zusätzlich: Anschlussversicherung bei verbundenen Leben, Erhöhung um 10 % (max. 30.000 €) im Jahr nach Erwerb einer Wohnimmobilie.",
     "Nur Premium: Mehrfachleistung bei verbundenen Leben, Kinderbonus 20 % (max. 50.000 €), Kindermitversicherung bis 18 Jahre (5.000 €), Soforthilfe bis 15.000 €, Pflege-Zusatzleistung bis 25.000 €, Zusatzleistung bei Tod im Ausland.",
     "Umtauschrecht in eine Kapitalversicherung nicht genannt. Zusatzversicherungen Dread Disease und Unfalltod wählbar.",
-    "Dialog markiert keine Stufe; RISK-vario als mittlere Stufe."
+    "Dialog markiert keine Stufe; RISK-vario als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }

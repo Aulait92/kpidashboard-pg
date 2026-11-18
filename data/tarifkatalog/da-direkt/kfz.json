@@ -28,8 +28,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.da-direkt.de/autoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Komfort",
@@ -51,8 +50,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.da-direkt.de/autoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Autoversicherung Komfort Plus",
@@ -74,8 +72,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.da-direkt.de/autoversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -87,6 +84,8 @@
     "Basis: Zusammenstoß nur mit Haarwild, 500 € zusätzliche Selbstbeteiligung. Grobe Fahrlässigkeit: Verzicht laut Tabelle in allen Tarifen, Einschränkung bei Entwendung.",
     "Werkstattbindung ist Standard und gegen Aufpreis abwählbar; Komfort Plus mit freier Werkstattwahl inkl. Ersatzwagen.",
     "Neuwert 24 Monate in der Kasko, gegen Aufpreis auf 36 Monate verlängerbar; Kaufpreisentschädigung für Gebrauchtwagen 24 Monate (erweiterbar). Fahrerschutz nur in Komfort Plus.",
-    "Rabattschutz und Schutzbrief zuwählbar. Elektroauto: Allgefahrendeckung für den Akku laut Produktseite, Tarifzuordnung nicht ausgewiesen."
+    "Rabattschutz und Schutzbrief zuwählbar. Elektroauto: Allgefahrendeckung für den Akku laut Produktseite, Tarifzuordnung nicht ausgewiesen.",
+    "Der verlinkte Bedingungs-PDF (Kraftfahrt-Versicherungsbedingungen) liefert am 18.11.2026 Fehler 404; Werte an der Produktseite geprüft.",
+    "Geprüft am 18.11.2026 an Tariftabellen der Produktseiten und den verlinkten Übersichten von DA Direkt."
   ]
 }

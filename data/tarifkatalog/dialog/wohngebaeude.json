@@ -34,8 +34,7 @@
         "notfall": "nein"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/5186/f898d1c62affbb873f4770fa5e16162c/Leistungs%C3%BCbersicht%20Wohngeb%C3%A4ude.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Premium",
@@ -62,8 +61,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/5186/f898d1c62affbb873f4770fa5e16162c/Leistungs%C3%BCbersicht%20Wohngeb%C3%A4ude.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,6 +73,7 @@
     "Werte aus der Leistungsübersicht (Stand 01/2025): „versichert“ heißt im Rahmen der Versicherungssumme (teils bis 2,5 Mio. € je Fall).",
     "Photovoltaik: Paket erneuerbare Energien im Premium bis 35.000 €. Ableitungsrohre außerhalb des Gebäudes im Premium zuwählbar (5.000 oder 10.000 €).",
     "Vandalismus: Gebäudebeschädigungen durch unbefugte Dritte und Diebstahl versicherter Sachen nur Premium.",
-    "Wohngebäudeschutzbrief, haustechnische Gefahren und Bestleistungsgarantie nur im Premium zuwählbar. Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+    "Wohngebäudeschutzbrief, haustechnische Gefahren und Bestleistungsgarantie nur im Premium zuwählbar. Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }
