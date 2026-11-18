@@ -9,6 +9,7 @@ import { beitragAus, cleanAngebote, kuerzen, beitragEffektiv, type AngebotItem, 
 import { spaltenNamen } from "@/lib/praesentation";
 import type { KombiRegel } from "@/lib/kombi-rabatt";
 import { cleanSchutz, schutzZeilen, type SchutzEintrag } from "@/lib/schutz-ueberblick";
+import { bisherSichtbar, bisherSpalte, cleanBisher, type BisherSpalte, type BisherVertrag } from "@/lib/bisheriger-vertrag";
 import {
   AUSWAHL_GRENZEN,
   gesellschaftAusText,
@@ -80,6 +81,8 @@ export type SparteWahl = {
    * Schutz im Überblick“ mit „Mit anschauen“ und kommt erst dann in Vergleich und Beitrag.
    */
   zusatz?: boolean;
+  /** Bisheriger Vertrag des Kunden (Spalte „Ihr bisheriger Vertrag“, lib/bisheriger-vertrag.ts) */
+  bisher?: BisherVertrag;
 };
 
 export type Tarifauswahl = {
@@ -194,6 +197,7 @@ export function cleanTarifauswahl(raw: unknown): Tarifauswahl | null {
       empfohlen: empfohlen && tarife.some((t) => t.id === empfohlen) ? empfohlen : null,
       tarife,
       ...(r.zusatz === true ? { zusatz: true } : {}),
+      ...(cleanBisher(r.bisher) ? { bisher: cleanBisher(r.bisher)! } : {}),
     });
   }
   return { v: 1, sparten, ...(Array.isArray(o.schutz) ? { schutz: cleanSchutz(o.schutz) } : {}) };
@@ -296,18 +300,21 @@ const sparteLabelFuerFolie = (sp: SparteWahl) => sp.label;
 
 /**
  * Grenzen je Sparte (gemessen an der Vergleichsfolie): 3 Tarife, bei Stufen einer Gesellschaft bis 4; mit 4 Spalten
- * oder einem langen (zweizeiligen) Tarifnamen eine Merkmalzeile weniger; 2 Bausteine.
+ * oder einem langen (zweizeiligen) Tarifnamen eine Merkmalzeile weniger; 2 Bausteine. Mit der Spalte „Ihr bisheriger
+ * Vertrag“ höchstens 3 Tarife und eine Merkmalzeile weniger (Platz für Beitragsunterschied und Kündigung).
  */
 export function grenzenFuer(sp: SparteWahl): { tarife: number; merkmale: number; bausteine: number } {
   // 4 Spalten nur mit kurzen Werten (gemessen mit dem echten Katalog: Hausrat mit Werten bis 24 Zeichen ragt sonst
   // über die Fußzeile, mit 3 Spalten passt jede Sparte)
   const langeWerte = sp.tarife.some((t) => sp.merkmale.some((k) => (t.werte[k] ?? "").length > WERT_KURZ_BEI_VIER));
-  const eineGesellschaft = new Set(sp.tarife.map(gesKey)).size <= 1 && !langeWerte;
+  const bisher = bisherSichtbar(sp.bisher);
+  const eineGesellschaft = new Set(sp.tarife.map(gesKey)).size <= 1 && !langeWerte && !bisher;
   const gezeigt = sp.tarife.filter((t) => t.zeigen);
-  const lang = spaltenFuer(sp, gezeigt.slice(0, 4)).some((n) => n.length > AUSWAHL_GRENZEN.kurzname);
+  const max = eineGesellschaft ? AUSWAHL_GRENZEN.stufen : AUSWAHL_GRENZEN.tarife;
+  const lang = spaltenFuer(sp, gezeigt.slice(0, bisher ? AUSWAHL_GRENZEN.tarife : 4)).some((n) => n.length > AUSWAHL_GRENZEN.kurzname);
   return {
-    tarife: eineGesellschaft ? AUSWAHL_GRENZEN.stufen : AUSWAHL_GRENZEN.tarife,
-    merkmale: AUSWAHL_GRENZEN.merkmale - (gezeigt.length >= 4 ? 1 : 0) - (lang ? 1 : 0),
+    tarife: max,
+    merkmale: AUSWAHL_GRENZEN.merkmale - (gezeigt.length >= 4 && !bisher ? 1 : 0) - (lang ? 1 : 0) - (bisher ? 1 : 0),
     bausteine: AUSWAHL_GRENZEN.bausteine,
   };
 }
@@ -399,6 +406,7 @@ export function kombiRegelnFuer(a: Tarifauswahl, buendel: Record<string, Buendel
 export function zuAngebote(a: Tarifauswahl, buendel?: Record<string, BuendelRegel> | null): AngeboteDaten {
   const items: AngebotItem[] = [];
   const namen: Record<string, string> = {};
+  const bisher: BisherSpalte[] = [];
   for (const sp of a.sparten) {
     const g = grenzenFuer(sp);
     const v = gezeigteTarife(sp);
@@ -408,11 +416,12 @@ export function zuAngebote(a: Tarifauswahl, buendel?: Record<string, BuendelRege
       items.push(itemFuer(sp, t, t === e, merk));
       if (t.gesellschaftKey) namen[t.gesellschaftKey] = t.gesellschaft;
     }
+    if (v.length && bisherSichtbar(sp.bisher)) bisher.push(bisherSpalte(sp, sp.bisher, merk.map((k) => ({ key: k, name: label(sp, k) }))));
   }
   const kombi = kombiRegelnFuer(a, buendel, namen);
   const schutz = a.schutz?.length ? schutzZeilen(a.schutz, a.sparten.map((s) => s.key)) : [];
   // gleiche Prüfung wie beim Speichern ausgelesener Angebote (Längen, Anzahl)
-  return cleanAngebote({ items, quelle: [], kombi, schutz });
+  return cleanAngebote({ items, quelle: [], kombi, schutz, bisher });
 }
 
 /** Monatsbeitrag eines Tarifs mit den gewählten Bausteinen; null ohne Beitrag. */

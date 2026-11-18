@@ -41,6 +41,7 @@ import { angabenText, pruefEtikett, rechnerUrl, type RechnerAngabe } from "@/lib
 import { setPreparedAction } from "./actions";
 import { eigenerTarifAction, gesellschaftAction, klaerenAction, tarifauswahlSpeichernAction } from "./neu-actions";
 import { BeitragGesamt, ChanceImTermin } from "./schutz-client";
+import { BisherKarte } from "./bisher-client";
 import { SCHUTZ_SPARTEN, type VorsorgeThema } from "@/lib/schutz-ueberblick";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
 import { ANGEBOT_HINWEIS } from "@/lib/angebot-senden";
@@ -67,6 +68,10 @@ export type AngeboteProps = {
   rechnen: { aktiv: string[]; angaben: Record<string, RechnerAngabe[]> };
   /** Schutz-Überblick eben vorgeschlagen: gleich mitspeichern, damit die Präsentation ihn zeigt */
   schutzNeu?: boolean;
+  /** Bisheriger Vertrag aus Police bzw. Chat eben übernommen: gleich mitspeichern (Paket P3b) */
+  bisherNeu?: boolean;
+  /** Gesundheitssparten freigeschaltet (bisheriger Vertrag dort erst danach) */
+  gesundheitFrei?: boolean;
   /** Vorsorge-Thema (Teil C2), nur Hinweis */
   vorsorge?: VorsorgeThema | null;
   /** Kunde im Satz („Frau Becker“ bzw. „Julia Becker“) für „Hat … das schon?“ im Schutz-Überblick */
@@ -173,7 +178,7 @@ export function VorbereitungNeu(p: {
       planen(entwurf);
       return;
     }
-    if ((p.angebote.quelle === "neu" || (p.angebote.schutzNeu && p.angebote.quelle !== "angebote")) && !p.readOnly) planen(ref.current);
+    if ((p.angebote.quelle === "neu" || ((p.angebote.schutzNeu || p.angebote.bisherNeu) && p.angebote.quelle !== "angebote")) && !p.readOnly) planen(ref.current);
     // nur beim ersten Anzeigen (erst-Ref)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -750,6 +755,8 @@ function Angebote(p: {
                   Noch kein Tarif gewählt. Öffnen Sie unten „Tarife ändern“ oder legen Sie einen eigenen Tarif an.
                 </p>
               )}
+              {/* Bisheriger Vertrag des Kunden: Spalte „Ihr bisheriger Vertrag“ auf der Vergleichsfolie (Paket P3b) */}
+              <BisherKarte key={sp.key} sp={sp} ro={ro} gesundheitFrei={p.daten.gesundheitFrei ?? false} gesellschaften={p.daten.gesellschaften} anSparte={anSparte} />
             </div>
 
             {/* Anpassen (zugeklappt): Merkmale, Bausteine, Tarife und was auf der Folie steht */}
