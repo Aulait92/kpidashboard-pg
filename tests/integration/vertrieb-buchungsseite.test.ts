@@ -255,6 +255,16 @@ describe("Vertrieb: eigene Buchungsseite", () => {
     expect(calls.mails[0].subject).toContain("Ihr Termin mit performancegrowth");
   });
 
+  it("Später-Follow-ups: eigene Buchungsseite wird je Kontakt zum persönlichen Link, Calendly bleibt unverändert", async () => {
+    const { vertriebsLinkFuerKontakt, verifyContactToken } = await import("@/lib/vertrieb/buchung");
+    const c = await prisma.salesContact.create({ data: { name: "Link Test", email: `link.test@${DOMAIN}`, stage: "NEU" } });
+    const link = await vertriebsLinkFuerKontakt("https://performancegrowth.de/termin", c.id);
+    expect(link).toMatch(/\/termin\?k=/);
+    expect(verifyContactToken(new URL(link!).searchParams.get("k"))).toBe(c.id);
+    expect(await vertriebsLinkFuerKontakt("https://calendly.com/ole/15min", c.id)).toBe("https://calendly.com/ole/15min");
+    expect(await vertriebsLinkFuerKontakt(null, c.id)).toBeNull();
+  });
+
   it("Danke-Seite vermerkt Video und Demo je einmal im Verlauf, nur mit gültigem Buchungs-Token", async () => {
     const res = await bookSalesMeeting({ type, start: at("17:00", 2), input: input("danke") });
     if (!res.ok) throw new Error("Buchung fehlgeschlagen");

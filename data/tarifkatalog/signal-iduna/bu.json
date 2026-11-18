@@ -30,8 +30,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SI WorkLife EXKLUSIV-PLUS",
@@ -55,8 +54,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -69,6 +67,7 @@
     "Verzicht auf Umorganisation nicht belegt: genannt ist nur eine Umorganisationshilfe für Selbstständige (EXKLUSIV-PLUS, bis 6 Monatsrenten, max. 12.000 €).",
     "Zinslose Beitragsstundung bis 2 Jahre laut Broschüre nur bei EXKLUSIV-PLUS; die Produktseite nennt Stundung bis 24 Monate allgemein.",
     "Pflegerente als eigener Baustein nicht genannt (Leistung bei Pflege ist in der BU-Rente enthalten).",
-    "Ausbaugarantie: anlassbezogen, in den ersten 5 Jahren auch ohne Anlass; Grenzen in den Besonderen Bedingungen (2320005)."
+    "Ausbaugarantie: anlassbezogen, in den ersten 5 Jahren auch ohne Anlass; Grenzen in den Besonderen Bedingungen (2320005).",
+    "Geprüft am 17.11.2026 an Tariftabelle und Produktseite sowie Broschüre (Aug26) auf signal-iduna.de."
   ]
 }

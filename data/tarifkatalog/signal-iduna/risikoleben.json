@@ -22,8 +22,7 @@
         "fallend": "inklusive"
       },
       "quelle": "https://www.signal-iduna.de/produkte/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SI RisikofreiLeben",
@@ -39,8 +38,7 @@
         "fallend": "nein"
       },
       "quelle": "https://www.signal-iduna.de/produkte/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SI RisikofreiLeben-PLUS",
@@ -57,8 +55,7 @@
         "fallend": "nein"
       },
       "quelle": "https://www.signal-iduna.de/produkte/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -70,6 +67,7 @@
     "Immo ist die Variante mit fallender Versicherungssumme für Kredite (Wechseloption in konstante Summe); Standard und PLUS haben eine konstante Summe.",
     "PLUS zusätzlich: Hochzeits-, Bau- und Kinderbonus (Summe 6 Monate plus 25 %, max. 25.000 €). Kinderbonus ist keine Kinder-Nachversicherung im engeren Sinn.",
     "Weltweiter Schutz, Umtauschrecht in eine Kapitalversicherung und höchstes Endalter auf Produktseite und Broschüre (Okt24) nicht genannt.",
-    "Verbundene Leben: nur im Ratgebertext erklärt, nicht als Tarif belegt."
+    "Verbundene Leben: nur im Ratgebertext erklärt, nicht als Tarif belegt.",
+    "Geprüft am 17.11.2026 an Tariftabelle bzw. Broschüre auf signal-iduna.de."
   ]
 }

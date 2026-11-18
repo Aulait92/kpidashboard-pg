@@ -24,8 +24,7 @@
         "unfall": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/vorsorgensparen/risikovorsorge/sterbegeldversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -35,6 +34,7 @@
   "offen": [
     "Ein Tarif (L1, Bedingungen ABL 01/2025). Versicherungssumme frei vereinbar; Höchst- und Mindestsumme nicht veröffentlicht (nach Herabsetzung mindestens 4.000 €).",
     "Keine ärztliche Untersuchung, aber schriftliche Angaben zur Gesundheit; daher nicht „ohne Gesundheitsfragen“.",
-    "Bestattungsvorsorge-Service nicht genannt. Unfall-Zusatzversicherung verdoppelt die Summe bei Unfalltod."
+    "Bestattungsvorsorge-Service nicht genannt. Unfall-Zusatzversicherung verdoppelt die Summe bei Unfalltod.",
+    "Geprüft am 17.11.2026 an der Produktseite auf debeka.de."
   ]
 }

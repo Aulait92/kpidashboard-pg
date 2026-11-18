@@ -120,6 +120,7 @@ describe("Show-up-Vorlagen: freigegeben und eingereicht (17.11.2026)", () => {
   const bodyOf = (req: ReturnType<typeof buildTemplateRequest>) => (req.components as { type: string; text?: string }[]).find((c) => c.type === "BODY")!.text!;
 
   it("15 Min. und „wartet im Videoraum“ stehen in CORE_PURPOSES und werden je Fassung eingereicht (UTILITY, v5)", () => {
+    // Show-up freigegeben; Glückwunsch zum Abschluss (P4) seit 17.11.2026 ebenfalls zur Einreichung freigegeben
     expect(VORBEREITETE_PURPOSES).toEqual([]);
     for (const p of ["reminder_start", "appt_waiting"] as const) {
       expect(CORE_PURPOSES).toContain(p);

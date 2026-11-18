@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.signal-iduna.de/content/dam/si-documents/2/27/27360xx.pdf.coredownload.inline.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SI WorkLife EXKLUSIV-PLUS",
@@ -45,8 +44,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.signal-iduna.de/content/dam/si-documents/2/27/27360xx.pdf.coredownload.inline.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
     "Teildienstunfähigkeit (ab 20 % Arbeitszeitreduzierung) nur für EXKLUSIV-PLUS genannt; für EXKLUSIV nicht genannt.",
     "EXKLUSIV-PLUS zusätzlich: 50 % höhere DU-Rente in den ersten 8 Jahren für Beamte auf Probe oder Widerruf, Verzicht auf konkrete Verweisung, garantierte Rentensteigerung im Leistungsfall wählbar.",
     "Nachversicherung als Ausbaugarantie (mit Anlass, in den ersten 5 Jahren auch ohne Anlass). Dynamik: Beitragsdynamik 1 bis 5 % jährlich. AU-Klausel nicht genannt.",
-    "BU mitversichert: Produkt ist eine Berufsunfähigkeitsversicherung mit eingeschlossener Dienstunfähigkeitsabsicherung."
+    "BU mitversichert: Produkt ist eine Berufsunfähigkeitsversicherung mit eingeschlossener Dienstunfähigkeitsabsicherung.",
+    "Geprüft am 17.11.2026 an Tariftabelle bzw. Broschüre auf signal-iduna.de."
   ]
 }

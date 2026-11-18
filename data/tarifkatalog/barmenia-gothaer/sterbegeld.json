@@ -17,12 +17,11 @@
       "werte": {
         "wartezeit": "2 Jahre",
         "unfall": "sofort volle Summe",
-        "ohne-gp": "bis 15.000 €",
+        "ohne-gp": "unter 15.000 €",
         "beitragsende": "höchstens bis 85"
       },
       "quelle": "https://www.barmeniagothaer.de/sterbegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -32,6 +31,7 @@
     "Quelle: Produktseite barmeniagothaer.de.",
     "Höchste Versicherungssumme nicht genannt; ohne Gesundheitsfragen bis 15.000 €.",
     "Wartezeit 2 Jahre, in dieser Zeit Rückzahlung der Beiträge; bei Unfalltod sofort volle Summe (keine Verdopplung genannt).",
-    "Beitragszahlung mindestens 5 Jahre, längstens bis 85; bei Erreichen des Ablaufalters Ablaufleistung."
+    "Beitragszahlung mindestens 5 Jahre, längstens bis 85; bei Erreichen des Ablaufalters Ablaufleistung.",
+    "Geprüft am 17.11.2026 an der Produktseite auf barmeniagothaer.de (ohne Gesundheitsfragen bei einer Summe unter 15.000 €)."
   ]
 }

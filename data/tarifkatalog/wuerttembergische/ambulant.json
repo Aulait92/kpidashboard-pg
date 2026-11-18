@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wuerttembergische.de/gesundheit/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Ambulant Privatpatient PremiumPlus (AKU)",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.wuerttembergische.de/gesundheit/ambulante-zusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -50,6 +48,7 @@
   "offen": [
     "Premium (AGU) leistet als Privatpatient nur bei bestimmten schweren Erkrankungen (z. B. Krebs, Herzinfarkt, Schlaganfall, Pflegegrad 2); PremiumPlus (AKU) bei allen ambulanten Arztbesuchen. Württembergische empfiehlt PremiumPlus für alle, die stets Privatpatient sein möchten.",
     "Arznei-, Verband-, Heil- und Hilfsmittel 100 % (Hilfsmittel ohne Sehhilfen); Hörgeräte nicht ausdrücklich genannt. Psychotherapie: Premium 100 % bis 30 Sitzungen Krisenintervention, sonst 80 % der Restkosten.",
-    "Heilpraktiker nur über den eigenen Tarif NaturMedPlus, Sehhilfen über Zahn & Brille; beide nicht ausgewertet. Auslandsreise und Wartezeit nicht genannt."
+    "Heilpraktiker nur über den eigenen Tarif NaturMedPlus, Sehhilfen über Zahn & Brille; beide nicht ausgewertet. Auslandsreise und Wartezeit nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite auf wuerttembergische.de."
   ]
 }

@@ -23,6 +23,8 @@ import {
   parseHvkInvoiceText,
   processHvkInvoice,
   type HvkDeliveredLead,
+  type HvkLeadLink,
+  type HvkMatchVia,
   type HvkInvoiceInput,
   type HvkLine,
   type HvkProcessResult,
@@ -61,7 +63,7 @@ export async function loadHvkLeads(fromDate: string, toDate: string): Promise<Hv
     where: {
       AND: [base, { OR: [{ deliveredAt: { gte, lt } }, { deliveredAt: null, createdAt: { gte, lt } }] }],
     },
-    select: { id: true, name: true, deliveredAt: true, createdAt: true, stornoState: true, formData: true, contactOverrides: true },
+    select: { id: true, name: true, deliveredAt: true, createdAt: true, stornoState: true, formData: true, contactOverrides: true, hvkLeadId: true },
     orderBy: [{ deliveredAt: "asc" }, { createdAt: "asc" }],
   });
   const pool = new Map(
@@ -72,6 +74,7 @@ export async function loadHvkLeads(fromDate: string, toDate: string): Promise<Hv
       id: r.id,
       name: r.name,
       stornoState: r.stornoState,
+      hvkLeadId: r.hvkLeadId,
       date: berlinDate(r.deliveredAt ?? r.createdAt),
       ...leadPlzOrt({ contactOverrides: r.contactOverrides, formData: r.formData, poolPlz: pool.get(r.id) ?? null }),
     }))
@@ -79,6 +82,34 @@ export async function loadHvkLeads(fromDate: string, toDate: string): Promise<Hv
 }
 
 const json = (v: unknown) => JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
+
+/**
+ * Lead.hvkLeadId setzen (17.11.2026): nur wo der Lead noch keine ID hat und kein anderer Lead diese ID trägt. Nie
+ * überschreiben; idempotent. Gibt die Zahl neu gespeicherter Zuordnungen zurück.
+ */
+export async function saveHvkLeadIds(links: HvkLeadLink[]): Promise<number> {
+  let n = 0;
+  const seen = new Set<string>();
+  for (const k of links) {
+    if (!k.hvkLeadId || seen.has(k.hvkLeadId)) continue;
+    seen.add(k.hvkLeadId);
+    if (await prisma.lead.findUnique({ where: { hvkLeadId: k.hvkLeadId }, select: { id: true } })) continue;
+    try {
+      const r = await prisma.lead.updateMany({ where: { id: k.leadId, hvkLeadId: null }, data: { hvkLeadId: k.hvkLeadId } });
+      n += r.count;
+    } catch (err) {
+      // Eindeutigkeit: ein anderer Lead trägt die ID schon, nichts ändern
+      if ((err as { code?: string }).code !== "P2002") throw err;
+    }
+  }
+  return n;
+}
+
+/** Leads, die schon einer HvK-Reklamation zugeordnet sind (auto/erledigt): Lead-ID → HvK-Lead-ID */
+async function takenHvkLeads(): Promise<Map<string, string>> {
+  const rows = await prisma.hvkReklamation.findMany({ where: { status: { in: ["auto", "erledigt"] }, leadId: { not: null } }, select: { leadId: true, hvkLeadId: true }, orderBy: { createdAt: "asc" } });
+  return new Map(rows.map((r) => [r.leadId!, r.hvkLeadId]));
+}
 
 export function prismaHvkStore(actor: Actor = SYSTEM): HvkStore {
   return {
@@ -133,6 +164,7 @@ export function prismaHvkStore(actor: Actor = SYSTEM): HvkStore {
             status: auto ? "auto" : "offen",
             leadId: r.leadId,
             candidateIds: r.candidateIds,
+            via: auto ? (r.via ?? null) : null,
             decidedAt: auto ? new Date() : null,
           },
           update: {},
@@ -142,6 +174,8 @@ export function prismaHvkStore(actor: Actor = SYSTEM): HvkStore {
       const r = await prisma.hvkInvoice.findUnique({ where: { id: invoiceId }, select: { result: true } });
       await prisma.hvkInvoice.update({ where: { id: invoiceId }, data: { result: json({ ...((r?.result ?? {}) as object), invoiceId, status: "neu", reklamationen: rows }) } });
     },
+    takenLeads: takenHvkLeads,
+    saveHvkLeadIds,
   };
 }
 
@@ -269,6 +303,8 @@ export async function assignHvkReklamation(reklamationId: string, leadId: string
   const s = await adminRecordStorno(lead.id, hvkStornoReason(r.invoice.invoiceNo), note, actor, new Date(), { allowAirtableLead: true });
   if (!s.ok) return s;
   await prisma.hvkReklamation.update({ where: { id: r.id }, data: { status: "erledigt", leadId: lead.id, decidedAt: new Date() } });
+  // Zuordnung merken, damit spätere Reklamationen derselben HvK-ID direkt passen
+  await saveHvkLeadIds([{ hvkLeadId: r.hvkLeadId, leadId: lead.id }]);
   return { ok: true, message: s.already ? "War schon storniert, zugeordnet." : "Storno eingetragen." };
 }
 
@@ -321,6 +357,7 @@ export function prismaHvkReabgleichStore(actor: Actor = SYSTEM): HvkReabgleichSt
       // Nur offene: ein Admin könnte gleichzeitig entschieden haben
       await prisma.hvkReklamation.updateMany({ where: { id, status: "offen" }, data });
     },
+    saveHvkLeadIds,
   };
 }
 
@@ -331,7 +368,7 @@ export function prismaHvkReabgleichStore(actor: Actor = SYSTEM): HvkReabgleichSt
 export async function reabgleichHvk(opts: { dryRun: boolean; actor?: Actor }): Promise<HvkReabgleichSummary> {
   const actor = opts.actor ?? SYSTEM;
   const summary = await reabgleichHvkInvoices(prismaHvkReabgleichStore(actor), { dryRun: opts.dryRun });
-  if (!opts.dryRun && summary.totals.changed) {
+  if (!opts.dryRun && (summary.totals.changed || summary.totals.linked)) {
     await audit("ppl.hvk_neuabgleich", {
       entity: "HvkInvoice",
       actor,
@@ -360,7 +397,7 @@ export async function listHvkInvoices(take = 30) {
       deliveredCount: true,
       result: true,
       pdfName: true,
-      reklamationen: { select: { status: true } },
+      reklamationen: { orderBy: { createdAt: "asc" }, select: { hvkLeadId: true, plz: true, ort: true, status: true, via: true, leadId: true } },
     },
   });
   return rows.map((r) => {
@@ -375,6 +412,7 @@ export async function listHvkInvoices(take = 30) {
       delivered: r.deliveredCount,
       stornoAuto: r.reklamationen.filter((x) => x.status === "auto" || x.status === "erledigt").length,
       stornoOpen: r.reklamationen.filter((x) => x.status === "offen").length,
+      reklamationen: r.reklamationen.map((k) => ({ hvkLeadId: k.hvkLeadId, plz: k.plz, ort: k.ort, status: k.status, via: (k.via as HvkMatchVia | null) ?? null, leadId: k.leadId })),
       unbilled: res.unbilled ?? [],
       foreign: res.foreign ?? [],
       warnings: res.warnings ?? [],

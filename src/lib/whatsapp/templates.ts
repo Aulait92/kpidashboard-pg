@@ -52,6 +52,7 @@ export type NoticePurpose =
   | "offer_send"
   | "followup_noshow"
   | "followup_last"
+  | "glueckwunsch"
   | "campaign_cross_sell"
   | "campaign_review"
   | "campaign_birthday"
@@ -80,6 +81,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   offer_send: "Angebot senden (nach dem Termin)",
   followup_noshow: "Nachfassen nach verpasstem Termin",
   followup_last: "Nachfassen: letzte Nachricht (Abfolge)",
+  glueckwunsch: "Glückwunsch zum Abschluss",
   campaign_cross_sell: "Bestandskunden: Lücke schließen",
   campaign_review: "Bestandskunden: Jahresgespräch",
   campaign_birthday: "Bestandskunden: Geburtstag",
@@ -129,6 +131,8 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   reminder_soon: "v5",
   reminder_start: "v5",
   appt_waiting: "v5",
+  // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss (glueckwunsch, Einreichung siehe template-plan.ts)
+  glueckwunsch: "v5",
   // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES)
   offer_send: "v5",
   followup_offer_selbst: "v5",
@@ -177,6 +181,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   offer_send: ["Thema (z. B. Haftpflicht und Hausrat)", "Angebotslink"],
   followup_noshow: [],
   followup_last: [],
+  glueckwunsch: ["Vermittler (Akkusativ)"],
   campaign_cross_sell: ["Thema (z. B. Hausrat)"],
   campaign_review: [],
   campaign_birthday: [],
@@ -265,6 +270,12 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
   followup_last: {
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+  },
+  // Glückwunsch zum Abschluss (P4, Ole 17.11.2026, Ergänzung D), zur Einreichung freigegeben (CORE_PURPOSES).
+  // Freitext im offenen Fenster: lib/abschluss.ts glueckwunschText („Schön, dass Sie sich …, Frau Becker! …“).
+  glueckwunsch: {
+    du: "schön, dass du dich für deinen neuen Schutz entschieden hast! Bei Fragen erreichst du {{2}} jederzeit hier.",
+    sie: "schön, dass Sie sich für Ihren neuen Schutz entschieden haben! Bei Fragen erreichen Sie {{2}} jederzeit hier.",
   },
   // Cross-Selling mit Grund und konkretem, kleinem nächsten Schritt (Ole, 15.11.2026). Freigegeben bei Meta als v4,
   // NICHT ändern: Der Text muss zur Freigabe passen. Neue Fassung ist vorgemerkt in NAECHSTE_FASSUNG (v5).

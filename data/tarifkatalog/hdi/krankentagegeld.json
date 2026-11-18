@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif KTN2 (Selbstständige)",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.hdi.de/versicherungen/krankenversicherung/krankentagegeld/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -47,6 +45,7 @@
   ],
   "offen": [
     "Zwei Zielgruppentarife, keine Leistungsstufen. KTAG für gesetzlich versicherte Arbeitnehmer (Pflichtversicherte bis 35 €, freiwillig Versicherte bis 520 €), KTN2 für Selbstständige (bis 300 €, Freiberufler 520 €, Existenzgründer 140 bzw. 160 €).",
-    "Risikoträger laut Seite nicht genannt (DKV-Kooperation bei anderen Gesundheitstarifen). Wartezeit, Ende bei BU und Ausland nicht genannt."
+    "Risikoträger laut Seite nicht genannt (DKV-Kooperation bei anderen Gesundheitstarifen). Wartezeit, Ende bei BU und Ausland nicht genannt.",
+    "Geprüft am 17.11.2026 an der Produktseite auf hdi.de."
   ]
 }

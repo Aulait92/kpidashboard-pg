@@ -307,7 +307,7 @@ async function BuyerDashboardBody({
 
   const r = rechnung.ausEinemEuro;
   const wert = rechnung.wertProKunde;
-  const chancenUnter = { aufteilung: chancenAufteilung(chancen), realistisch: `realistisch ≈ ${euro(chancen.realistisch)} Provision` };
+  const chancenUnter = { aufteilung: chancenAufteilung(chancen), realistisch: `≈ ${euro(chancen.realistisch)} ${chancen.schaetzung ? "geschätzt" : "realistisch"}` };
 
   return (
     <div className="space-y-5 sm:space-y-6">

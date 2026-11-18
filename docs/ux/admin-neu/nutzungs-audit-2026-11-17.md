@@ -54,7 +54,13 @@ kunde-abrechnung, anzeige-abdeckung`.
   ungeeignet und hätte Admin-E-Mails gebraucht, darum nicht verwendet.
 - Die übrigen Abfragen liefern Betriebszustände (Kunden, Vorlagen, Follow-ups, Termine), keine Nutzungszahlen.
 
-## Was man ergänzen müsste (Vorschlag, nicht gebaut)
+## Was man ergänzen müsste (Vorschlag; gebaut am 18.11.2026)
+
+**Stand 18.11.2026:** Beides ist gebaut. Diagnose `q=admin-nutzung[&tage=30]` (höchstens 120) in
+`src/lib/ops/admin-nutzung.ts`; Messung im Admin über `AdminUsageEvent` (`src/lib/admin-nutzung.ts`,
+`src/components/admin/nutzung-messung.tsx` in beiden Rahmen, Route `/api/admin/nutzung`). Gezählt werden Seitenaufrufe
+unter `/admin` (und `/`) sowie Klicks auf bedienbare Elemente in einem `[data-funktion]`; Elemente mit mehreren IDs
+zählen als `inGruppe` je ID. Ab jetzt 2 bis 4 Wochen sammeln, dann die Tabelle unten füllen.
 
 **1. Lesende Diagnose-Abfrage `q=admin-nutzung[&tage=60]`** in eigenem Modul `src/lib/ops/admin-nutzung.ts`,
 eingetragen in `WEITERE` der Diagnose-Route. Ausgabe nur Zahlen, keine Namen, E-Mails oder IDs von Personen:

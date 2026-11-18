@@ -29,8 +29,7 @@
         "ktg": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Private Krankenversicherung M Gut versichert",
@@ -52,8 +51,7 @@
         "ktg": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Private Krankenversicherung L Premiumschutz",
@@ -75,8 +73,7 @@
         "ktg": "inklusive"
       },
       "quelle": "https://www.axa.de/pk/gesundheit/p/private-krankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -87,6 +84,7 @@
     "Facharzt ohne Überweisung: S 75 %, M 80 %, L 100 % (Hausarzt zuerst, sonst gekürzte Erstattung). Selbstbehalt für Erwachsene im Jahr.",
     "Beitragsrückerstattung erfolgsabhängig ab dem ersten leistungsfreien Jahr; L zusätzlich Pauschalerstattung 900 € im Jahr.",
     "Hilfsmittel: S und M 100 % bei Bezug über AXA (sonst 75 bzw. 80 %), L 100 %; ob offener oder geschlossener Katalog, nicht belegt.",
-    "Krankentagegeld für Angestellte 140 € ab dem 42. Tag in allen Paketen; Pflegezusatz nicht im Paket (PVN ist die Pflegepflichtversicherung). Ausland nicht im Tarifvergleich. AXA kennzeichnet keine Empfehlung; M als mittlere Stufe."
+    "Krankentagegeld für Angestellte 140 € ab dem 42. Tag in allen Paketen; Pflegezusatz nicht im Paket (PVN ist die Pflegepflichtversicherung). Ausland nicht im Tarifvergleich. AXA kennzeichnet keine Empfehlung; M als mittlere Stufe.",
+    "Geprüft am 17.11.2026 an der Tariftabelle auf axa.de."
   ]
 }

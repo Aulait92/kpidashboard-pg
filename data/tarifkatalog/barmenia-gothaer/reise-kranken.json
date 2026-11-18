@@ -21,8 +21,7 @@
         "dauer": "3 bis 365 Tage, einmal"
       },
       "quelle": "https://www.barmeniagothaer.de/krankenversicherung-ausland/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Travel+",
@@ -36,8 +35,7 @@
         "dauer": "8 Wochen je Reise"
       },
       "quelle": "https://www.barmeniagothaer.de/krankenversicherung-ausland/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -47,6 +45,7 @@
     "Quelle: Produkttabelle der Produktseite barmeniagothaer.de. Travel Day für eine Reise, Travel+ als Jahresvertrag für beliebig viele Reisen.",
     "Rooming-in: Travel Day Kinder bis 14, Travel+ bis 18 Jahre; Travel+ zusätzlich Telemedizin und Notfallbetreuung von Kindern im Familientarif.",
     "Krankenhaustagegeld 15 € im Zusammenhang mit telemedizinischen Leistungen.",
-    "Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft auf der Seite nicht genannt."
+    "Selbstbeteiligung, bekannte Erkrankungen und Schwangerschaft auf der Seite nicht genannt.",
+    "Geprüft am 17.11.2026 an Produkttabelle und Produktseite auf barmeniagothaer.de."
   ]
 }

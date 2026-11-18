@@ -25,8 +25,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "SI WorkLife KOMFORT-PLUS",
@@ -44,8 +43,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.signal-iduna.de/produkte/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -56,6 +54,7 @@
     "Anzahl laut Tariftabelle und FAQ 16 bzw. 25 Grundfähigkeiten (Fließtext nennt „acht weitere“, die Tabelle neun).",
     "Psychische Erkrankungen und weltweiter Schutz auf der Produktseite nicht genannt; Bedingungen (2319704, 2319804 Jan25) bitte prüfen.",
     "Schwere Krankheiten: Worst-Case Kapitalhilfe (12 Monatsrenten einmalig) als Zusatz. Infektionsklausel nur KOMFORT-PLUS.",
-    "Pflegerente als eigener Baustein nicht genannt (Leistung bei Pflege ist in der Rente enthalten)."
+    "Pflegerente als eigener Baustein nicht genannt (Leistung bei Pflege ist in der Rente enthalten).",
+    "Geprüft am 17.11.2026 an Tariftabelle bzw. Broschüre auf signal-iduna.de."
   ]
 }

@@ -28,8 +28,7 @@
         "rente": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/uv/unfallversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Unfall Comfort Plus",
@@ -50,8 +49,7 @@
         "rente": "optional"
       },
       "quelle": "https://www.debeka.de/privatkunden/gesundheitarbeitskraft/uv/unfallversicherung.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -63,6 +61,7 @@
     "Progression und Höchstleistung bei Invalidität nicht genannt.",
     "Krankenhaustagegeld und Genesungsgeld laut Seite für stationäre Behandlungen, Höhe vereinbar; ambulante OP 3 Tage.",
     "Comfort Plus zusätzlich: Einmalzahlung bei Knochenbruch bis 2.000 €, Koma-Tagegeld bis 50.000 €, Bewusstseinsstörungen u. a. durch Herzinfarkt und Schlaganfall.",
-    "Debeka markiert keine Stufe."
+    "Debeka markiert keine Stufe.",
+    "Geprüft am 17.11.2026 an der Produktseite auf debeka.de."
   ]
 }

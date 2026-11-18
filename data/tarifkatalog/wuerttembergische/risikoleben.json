@@ -26,8 +26,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Risikolebensversicherung Premium",
@@ -46,8 +45,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.wuerttembergische.de/vermoegen-vorsorge/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
     "Quelle: Leistungsübersicht Kompakt und Premium der Produktseite sowie Bedingungen Risiko Kompakt/Premium. Keine Stufe markiert.",
     "Verlängerungsoption und Umtausch in eine Rentenversicherung laut Bedingungen nur in Premium (Verlängerung höchstens 15 Jahre, Umtausch in den ersten 10 Jahren).",
     "Premium erhöht die Leistung bis zu 6 Monate bei Geburt eines Kindes und bei Immobilienkauf oder Darlehen; vorläufiger Schutz ab Antrag nur Premium.",
-    "Weltweiter Schutz und höchstes Endalter nicht genannt. Fallender Todesfallschutz laut Bedingungen möglich."
+    "Weltweiter Schutz und höchstes Endalter nicht genannt. Fallender Todesfallschutz laut Bedingungen möglich.",
+    "Geprüft am 17.11.2026 an Produktseite und Bedingungen (PDF) auf wuerttembergische.de."
   ]
 }

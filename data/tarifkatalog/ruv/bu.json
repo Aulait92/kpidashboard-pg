@@ -6,7 +6,7 @@
   "inAllenTarifen": [
     "Volle Rente ab 50 % BU",
     "Hilfe beim Wiedereinstieg",
-    "Steuerfreie Ablaufleistung"
+    "Infektionsklausel (med. Berufe)"
   ],
   "tarife": [
     {
@@ -31,8 +31,7 @@
         "pflege": "nein"
       },
       "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Berufsunfähigkeitsversicherung comfort",
@@ -56,8 +55,7 @@
         "pflege": "nein"
       },
       "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Berufsunfähigkeitsversicherung premium",
@@ -81,8 +79,7 @@
         "pflege": "inklusive"
       },
       "quelle": "https://www.ruv.de/berufsunfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -95,6 +92,7 @@
     "AU-Klausel: in comfort und premium wählbar (nach 6 Monaten Krankschreibung, höchstens 36 Monate), nicht in classic.",
     "Sofortleistung bei Krebs, Herzinfarkt, Schlaganfall (bis 15 Monatsrenten) nur comfort und premium; Sofortkapital (12 Monatsrenten) nur premium.",
     "Infektionsklausel steht im Überblick als versichert, je Stufe aber nicht in der Tabelle; Teilzeitklausel und Verzicht auf Umorganisation nicht genannt.",
-    "R+V hebt comfort in der Tabelle farblich hervor, ohne Beschriftung; comfort als mittlere Stufe gesetzt."
+    "R+V hebt comfort in der Tabelle farblich hervor, ohne Beschriftung; comfort als mittlere Stufe gesetzt.",
+    "Geprüft am 17.11.2026 an der Tariftabelle der Produktseite (Symbole aus dem Seitenquelltext) und den Bedingungen PLG0426 auf ruv.de. Korrigiert: „Steuerfreie Ablaufleistung“ ist laut Tabelle in allen Tarifen nur optional und wurde in „In allen Tarifen“ durch die Infektionsklausel für medizinische Berufe ersetzt."
   ]
 }

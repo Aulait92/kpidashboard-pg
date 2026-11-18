@@ -42,27 +42,29 @@ const angebot = (x: Partial<AngebotFuerFolien> = {}): AngebotFuerFolien => ({
 const text = (html: string) => html.replace(/<style[\s\S]*?<\/style>/g, "").replace(/<[^>]+>/g, " ");
 
 describe("Folienliste", () => {
-  it("Vertreter 23, Makler 24 (Folie 18 Komplettcheck; Makler mit Tarifvergleich nach Folie 20)", () => {
+  it("Vertreter 24, Makler 25 (Folie 18 Komplettcheck, 19 Policen vorab; Makler mit Tarifvergleich nach Folie 21)", () => {
     const v = folienListe("vertreter", false);
     const m = folienListe("makler", false);
-    expect(v).toHaveLength(23);
-    expect(m).toHaveLength(24);
+    expect(v).toHaveLength(24);
+    expect(m).toHaveLength(25);
     expect(v[12]).toMatchObject({ nr: 13, art: "video" });
     expect(v[16]).toMatchObject({ nr: 17, art: "demo", titel: "Beraten mit echten Preisen" });
     for (const l of [v, m]) expect(l[17]).toMatchObject({ nr: 18, bild: 18, art: "bild", titel: "Viele wollen den Komplettcheck" });
-    expect(v.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([20]);
-    expect(v.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([21]);
-    expect(m.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([20]);
-    expect(m[20]).toMatchObject({ nr: 21, art: "bild", titel: "Mit Tarifvergleich: alles zurück nach 7 Monaten" });
-    expect(m.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([22]);
+    for (const l of [v, m]) expect(l[18]).toMatchObject({ nr: 19, bild: 19, art: "bild", titel: "Policen vorab" });
+    for (const l of [v, m]) expect(l[19]).toMatchObject({ nr: 20, bild: 20, titel: "Sie wissen jederzeit, ob es sich rechnet" });
+    expect(v.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([21]);
+    expect(v.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([22]);
+    expect(m.filter((f) => f.art === "rechnung").map((f) => f.nr)).toEqual([21]);
+    expect(m[21]).toMatchObject({ nr: 22, art: "bild", titel: "Mit Tarifvergleich: alles zurück nach 7 Monaten" });
+    expect(m.filter((f) => f.art === "paket").map((f) => f.nr)).toEqual([23]);
   });
 
   it("mit Abschlussbonus: vorletzte Folie, Bildnummern bleiben wie in der PPTX", () => {
     const v = folienListe("vertreter");
-    expect(v).toHaveLength(24);
-    expect(v[22]).toMatchObject({ nr: 23, art: "bonus", bild: 0 });
-    expect(v[23]).toMatchObject({ nr: 24, bild: 23, titel: "Ihr Start in 3 Schritten" });
-    expect(folienListe("makler").at(-1)).toMatchObject({ nr: 25, bild: 24 });
+    expect(v).toHaveLength(25);
+    expect(v[23]).toMatchObject({ nr: 24, art: "bonus", bild: 0 });
+    expect(v[24]).toMatchObject({ nr: 25, bild: 24, titel: "Ihr Start in 3 Schritten" });
+    expect(folienListe("makler").at(-1)).toMatchObject({ nr: 26, bild: 25 });
   });
 
   it("jedes Folienbild liegt in public/ (scripts/vertrieb-folien.mjs)", () => {
@@ -134,11 +136,11 @@ describe("Rechnungen", () => {
     expect(rechnung).toContain("1.049 € + USt.");
     expect(rechnung).toContain("1.248 €"); // 1.049 € × 1,19
     expect(rechnung).toContain("+ 2.800 €");
-    expect(fs[20].html).toContain("1.049 € netto");
+    expect(fs[21].html).toContain("1.049 € netto");
     expect(fs[16].html).toContain('src="/demo/beratung?eingebettet=1"');
     const m = verkaufsFolien("makler", paketDaten(angebot({ vermittlerTyp: "makler", monthlyFee: 1400, seats: 3 }), "makler"));
-    expect(m[19].html).toContain("12 × 1.400 €");
-    expect(m[21].html).toContain("1.400 € netto");
+    expect(m[20].html).toContain("12 × 1.400 €");
+    expect(m[22].html).toContain("1.400 € netto");
   });
 
   it("Texte an Interessenten ohne Gedankenstriche, Firmenname maskiert", () => {

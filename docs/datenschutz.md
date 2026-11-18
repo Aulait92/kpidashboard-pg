@@ -34,6 +34,7 @@ Unterauftragsverarbeiter (Anlage 2) in `src/lib/legal-texts.ts`, öffentlich unt
 | Logins und Sicherheit | Zugang, Missbrauch verhindern | Nutzer: E-Mail, Passwort-Hash, 2FA-Geheimnis (verschlüsselt), Anmeldungen, Fehlversuche | Art. 6 Abs. 1 b, f; Art. 32 | Railway | Konto: bis Löschung; Fehlversuche 30 Tage |
 | Änderungsprotokoll | Nachweis, Sicherheit | Nutzer: Person, Zeitpunkt, Aktion (keine Lead-Inhalte) | Art. 6 Abs. 1 c, f | Railway | 1 Jahr (automatisch) |
 | Nutzungsmessung | Bedienung verbessern | Nutzer pseudonym: Seitenaufrufe, Aktionen, Fehler | Art. 6 Abs. 1 f | Railway | 180 Tage (automatisch) |
+| Nutzungsmessung im Admin (seit 18.11.2026) | Admin-Bereich aufräumen: welche Funktionen und Seiten werden genutzt | nur Mitarbeiter (Admins): Login-ID, Zeitpunkt, Seite (Pfad ohne Parameter, IDs als „:id“), Funktions-ID bei Klick, alte/neue Oberfläche; keine Inhalte, keine Lead- oder Kundendaten (`AdminUsageEvent`). Auswertung nur als Zahlen je Funktion/Seite ohne Personenbezug (Diagnose `q=admin-nutzung`), keine Leistungs- oder Verhaltenskontrolle einzelner Mitarbeiter | Art. 6 Abs. 1 f | Railway | 180 Tage (automatisch), mit dem Login |
 | Fehlerüberwachung | Betrieb | technische Fehler; Texte im Replay maskiert, keine Nutzerkennung, keine URL-Parameter | Art. 6 Abs. 1 f | Sentry (EU) | laut Sentry-Einstellung (90 Tage Standard, **Prüfen**) |
 | Werbeanzeigen-Steuerung | Kampagnen der Kunden | nur Kennzahlen (Kosten, Klicks), keine Personen | – | Meta, Google, Outbrain, TikTok | – |
 | Werbemittel erstellen | Bilder, Videos, Untertitel | keine personenbezogenen Daten | – | OpenAI, Google (Gemini/Veo), Unsplash, Pexels, Telegram | – |
@@ -83,7 +84,8 @@ Für jeden Kunden mit AVV (Annahme des Angebots, `Offer.dpaUrl` speichert die ge
 |---|---|---|---|
 | Railway | Hosting, Datenbank (EU, Amsterdam) | | |
 | Anthropic | KI-Assistent, Impressum auslesen, Angebote auslesen (nur ohne Gesundheitsangaben) | | |
-| AWS (Amazon Web Services EMEA SARL) | KI in der EU (Bedrock, eu-central-1 Frankfurt) für Unterlagen per WhatsApp; erst nach AVV-Mitteilung und mit `POLICEN_KI_REGION=eu` (Entwurf `docs/datenschutz-policen.md` Abschnitt 4.6) | | |
+| AWS (Amazon Web Services EMEA SARL) | KI in der EU (Bedrock, eu-central-1 Frankfurt); für Policen per WhatsApp seit 18.11.2026 nicht genutzt (keine KI für Unterlagen, `docs/datenschutz-policen.md`) | | |
+| Policen-Speicher (Cloudflare R2 mit EU-Jurisdiktion bzw. Amazon S3 eu-Region, laut `POLICEN_S3_ENDPOINT`) | Ablage der Policen per WhatsApp, verschlüsselt je Mandant (`lib/policen/ablage.ts`); vor Einsatz in `SUBPROCESSORS` aufnehmen | | |
 | Google (Places API) | Öffentliche Unternehmensdaten von Vertriebskontakten abrufen (nur Suchtext: Agentur/Name und Ort; Antwort: öffentlicher Google-Eintrag) | | |
 | 360dialog | WhatsApp Business API; seit 14.11. auch Partner-API für das Selbst-Verbinden der Kundennummer (Konto-/Channel-ID, Telefonnummer, Anzeigename; API-Key verschlüsselt gespeichert) | | |
 | Meta | WhatsApp, Lead-Formulare, Rückmeldung der Lead-Stufen (Conversions API, seit 15.11.2026) | | |
@@ -150,9 +152,15 @@ gilt nur für neue Dienste, eine Streichung ist unkritisch, wird aber trotzdem m
 
 ## 4. Löschkonzept
 
+Policen per WhatsApp (`LeadDocument`, Dateien im privaten Bucket): 90 Tage nach dem letzten Termin (ohne Termin nach dem
+Eingang), Media-IDs ohne Einwilligung 24 Stunden, Widerruf sofort, mit dem Lead bzw. Vertragsende; Nachweise
+(`PolicenNachweis`, nur anhängen) bis Art. 17 bzw. Vertragsende (`docs/datenschutz-policen.md` Abschnitt 4 und 5).
+
+
 | Daten | Frist | Wie |
 |---|---|---|
 | Nutzungsmessung (`UsageEvent`) | 180 Tage | automatisch, Cron 03:00 UTC (`pruneUsage`) |
+| Nutzungsmessung im Admin (`AdminUsageEvent`, nur Mitarbeiter) | 180 Tage | automatisch, Cron 03:00 UTC (`pruneAdminNutzung`); mit dem Login (Kaskade) |
 | Postausgang Rückmeldung an Meta (`CapiEvent`: Lead-Bezug, Stufe, Zeitpunkt, Wert) | 13 Monate | automatisch im Lauf alle 15 Minuten (`runCapi`) |
 | Änderungsprotokoll (`AuditLog`) | 1 Jahr | automatisch (`pruneAudit`) |
 | Messpunkte der Statusseite (`StatusSample`, ohne Personenbezug) | 90 Tage | automatisch je Cron-Lauf (`recordStatusSample`) |

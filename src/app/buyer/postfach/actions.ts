@@ -18,6 +18,13 @@ import { datumKurz, musterKuendigung } from "@/lib/mail/platzhalter";
 import { beratungsPdfInhalt, pdfDateiname } from "@/lib/mail/beratung";
 import { textPdf } from "@/lib/mail/text-pdf";
 import { saveLeadFile } from "@/lib/lead-files";
+import { leadVersandKontext, resendBereit, sendeLeadMail } from "@/lib/mail/lead-versand";
+import { ladeSperrDaten, sperrGrund, SPERR_TEXT } from "@/lib/mail/sperren";
+import { ABLAUF_VORLAGEN, WERBLICH } from "@/lib/mail/ablauf";
+import { mailRahmen } from "@/lib/mail/rahmen";
+import { leadAbmeldeUrl } from "@/lib/bestand/links";
+import { protokolliereMail, type MailArt } from "@/lib/mail/kontakt-mail";
+import type { VorlageKey } from "@/lib/mail/vorlagen";
 
 export type PostfachResult = { ok?: boolean; error?: string; info?: string };
 
@@ -118,7 +125,28 @@ export type MailPdf =
   | { art: "beratung"; wuensche: string; rat: string }
   | { art: "kuendigung"; versicherer: string; vertragsnummer: string; kuendigungstermin: string };
 
-/** E-Mail an einen Lead über das eigene Postfach; steht danach im Verlauf. */
+/** Gewählte Standardvorlage als Art im Verlauf (sonst „manuell“). */
+function vorlageKeyOf(v: string | null | undefined): VorlageKey | null {
+  return v && (ABLAUF_VORLAGEN as readonly string[]).includes(v) ? (v as VorlageKey) : null;
+}
+
+/** Nachfass-Aufgabe je Vorlage nach dem Senden (App oder eigenes Mailprogramm), ohne Doppelungen. */
+async function folgenNachMail(
+  input: { vorlageKey?: string | null; erinnern?: boolean; erinnernTage?: number; mitLink?: boolean; meldeTag?: string | null; remindDays?: number | null },
+  o: { leadId: string; customerId: string; userId: string },
+): Promise<string | null> {
+  const plan =
+    input.remindDays != null && input.erinnern === undefined
+      ? nachfassenFuer(input.vorlageKey, { erinnern: input.remindDays > 0, tage: input.remindDays, mitLink: true })
+      : nachfassenFuer(input.vorlageKey, { erinnern: !!input.erinnern, tage: input.erinnernTage ?? 2, mitLink: !!input.mitLink, meldeTag: input.meldeTag });
+  return fuehreNachfassenAus(o.leadId, plan, { customerId: o.customerId, userId: o.userId }).catch(() => null);
+}
+
+/**
+ * E-Mail an einen Lead aus dem Dialog „E-Mail schreiben“ (Paket M0): über den Lead-Mail-Baustein, also aus dem eigenen
+ * Postfach, sonst von unserer Versanddomain mit „Name | Agentur“, Antwort an Sie, Signatur und BCC-Kopie. Zentrale
+ * Sperren (lib/mail/sperren.ts) gelten; steht danach im Verlauf, mit der Vorlage als Art.
+ */
 export async function sendLeadMailAction(input: {
   leadId: string;
   to: string;
@@ -150,6 +178,11 @@ export async function sendLeadMailAction(input: {
     const subject = input.subject.trim().slice(0, 200);
     const text = input.text.trim().slice(0, 20000);
     if (!subject || !text) return { ok: false, error: "Betreff und Text ausfüllen." };
+    const key = vorlageKeyOf(input.vorlageKey);
+    const grund = sperrGrund(await ladeSperrDaten(lead.id, { to }), { vorlage: key, automatisch: false });
+    if (grund) return { ok: false, error: SPERR_TEXT[grund] };
+    const k = await leadVersandKontext(customerId, { leadId: lead.id, schreiber: ctx.userId });
+    if (!k.postfach && !resendBereit()) return { ok: false, error: "Der Versand über die App ist gerade nicht eingerichtet. Öffnen Sie die E-Mail im eigenen Mailprogramm." };
     const files = input.fileIds.length
       ? await prisma.leadFile.findMany({
           where: { id: { in: input.fileIds.slice(0, 10) }, leadId: lead.id },
@@ -160,9 +193,17 @@ export async function sendLeadMailAction(input: {
     const attachments = files.map((f) => ({ fileName: f.fileName, contentType: f.contentType, data: Buffer.from(f.data) }));
     if (pdf) attachments.push({ fileName: pdf.fileName, contentType: "application/pdf", data: Buffer.from(pdf.data) });
     if (attachments.reduce((s, f) => s + f.data.length, 0) > 20 * 1024 * 1024) return { ok: false, error: "Anhänge zusammen höchstens 20 MB." };
+    // Die Signatur steht schon im Text (Dialog); Abmeldelink nur bei werblichen Vorlagen
+    const abmeldeUrl = key && WERBLICH.has(key) ? leadAbmeldeUrl(lead.id) : null;
+    const rahmen = mailRahmen({ text, signatur: null, abmeldeUrl });
     // Steht im Verlauf (auch ein Fehlversuch), protokolliert im Versandweg (lib/mail/kontakt-mail.ts)
-    const res = await sendViaPostfach(ctx.userId, { to, subject, text, attachments }, { customerId, leadId: lead.id, art: "manuell", userId: ctx.userId });
-    if (!res.ok) return { ok: false, error: res.error };
+    const res = await sendeLeadMail(k, {
+      to,
+      inhalt: () => ({ subject, text: rahmen.text, html: rahmen.html }),
+      attachments,
+      protokoll: { customerId, leadId: lead.id, art: (key ?? "manuell") as MailArt, automatisch: false, userId: ctx.userId },
+    });
+    if (!res.sent) return { ok: false, error: res.reason === "not_configured" ? "Der Versand über die App ist gerade nicht eingerichtet." : `Senden hat nicht geklappt: ${res.reason}` };
     await recordUsage("action", "lead.email");
     const notes: string[] = [];
     // PDF im Kontakt unter Dokumente ablegen
@@ -171,14 +212,47 @@ export async function sendLeadMailAction(input: {
       notes.push(saved?.ok ? "PDF unter Dokumente abgelegt." : "PDF gesendet, aber nicht unter Dokumente abgelegt.");
     }
     // Nachfass-Aufgabe je Vorlage, ohne Doppelungen (lib/mail/termin-erinnerung.ts)
-    const plan =
-      input.remindDays != null && input.erinnern === undefined
-        ? nachfassenFuer(input.vorlageKey, { erinnern: input.remindDays > 0, tage: input.remindDays, mitLink: true })
-        : nachfassenFuer(input.vorlageKey, { erinnern: !!input.erinnern, tage: input.erinnernTage ?? 2, mitLink: !!input.mitLink, meldeTag: input.meldeTag });
-    const reminder = await fuehreNachfassenAus(lead.id, plan, { customerId, userId: ctx.userId }).catch(() => null);
+    const reminder = await folgenNachMail(input, { leadId: lead.id, customerId, userId: ctx.userId });
     if (reminder) notes.push(reminder);
     revalidatePath(`/buyer/leads/${lead.id}`);
     return { ok: true, history: await loadLeadHistory(lead.id, ctx.userId), reminder: notes.join(" ") || null };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+}
+
+/**
+ * „Gesendet?“ → Ja (Paket M1): Die Mail ging aus dem eigenen Mailprogramm raus. Eintrag im Verlauf mit Versandweg
+ * „eigenes Mailprogramm“ und dieselben Folgen wie beim Senden über die App (Nachfassen starten bzw. beenden).
+ */
+export async function mailSelbstGesendetAction(input: {
+  leadId: string;
+  to: string;
+  subject: string;
+  text: string;
+  vorlageKey?: string | null;
+  erinnern?: boolean;
+  erinnernTage?: number;
+  mitLink?: boolean;
+  meldeTag?: string | null;
+}): Promise<{ ok: true; history: LeadHistoryEntry[]; reminder?: string | null } | { ok: false; error: string }> {
+  try {
+    const ctx = await ctxWrite();
+    const customerId = await writableCustomerId(input.leadId);
+    if (!customerId) return { ok: false, error: "In der Vorschau nur mit Demo-Leads möglich." };
+    const lead = await prisma.lead.findFirst({ where: { id: input.leadId, ...leadScope(ctx) }, select: { id: true, erasedAt: true, email: true } });
+    if (!lead || lead.erasedAt) return { ok: false, error: "Lead nicht gefunden." };
+    const to = (input.to.trim() || lead.email || "").slice(0, 320);
+    const subject = input.subject.trim().slice(0, 200) || "E-Mail";
+    const key = vorlageKeyOf(input.vorlageKey);
+    await protokolliereMail(
+      { customerId, leadId: lead.id, art: (key ?? "manuell") as MailArt, automatisch: false, userId: ctx.userId },
+      { to: to || "unbekannt", subject, text: input.text.trim().slice(0, 20000), status: "versendet", provider: "mailprogramm" },
+    );
+    await recordUsage("action", "lead.email");
+    const reminder = await folgenNachMail(input, { leadId: lead.id, customerId, userId: ctx.userId });
+    revalidatePath(`/buyer/leads/${lead.id}`);
+    return { ok: true, history: await loadLeadHistory(lead.id, ctx.userId), reminder };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };
   }

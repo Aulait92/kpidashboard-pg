@@ -26,8 +26,7 @@
         "familie": "nein"
       },
       "quelle": "https://www.wuerttembergische.de/freizeit/auslandsreisekrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     },
     {
       "name": "Tarif RKF (Familie)",
@@ -46,8 +45,7 @@
         "familie": "inklusive"
       },
       "quelle": "https://www.wuerttembergische.de/freizeit/auslandsreisekrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -57,6 +55,7 @@
   "offen": [
     "Ein Leistungsumfang als Einzel- (RK) und Familientarif (RKF), Jahresvertrag mit automatischer Verlängerung, bis 70 Jahre.",
     "Familientarif zusätzlich Begleitperson im Krankenhaus für Kinder bis 18 Jahre und Kinderbetreuung.",
-    "Selbstbeteiligung auf der Produktseite und in den Bedingungen nicht genannt. Bekannte Erkrankungen nur bei unerwarteter Verschlechterung; Schwangerschaftsbeschwerden und Frühgeburten versichert, Entbindung nicht."
+    "Selbstbeteiligung auf der Produktseite und in den Bedingungen nicht genannt. Bekannte Erkrankungen nur bei unerwarteter Verschlechterung; Schwangerschaftsbeschwerden und Frühgeburten versichert, Entbindung nicht.",
+    "Geprüft am 17.11.2026 an Produktseite bzw. Bedingungen auf wuerttembergische.de."
   ]
 }

@@ -24,8 +24,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.zurich.de/-/media-assets/project/zurich-headless/germany/br/documents/verbraucherinformationen/11220_fondgebundene-basisversorgung_verbraucherinformationen_2026_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-17"
     }
   ],
   "quellen": [
@@ -36,6 +35,7 @@
     "Die Produktseiten auf zurich.de waren für automatische Abrufe gesperrt; Werte aus den Verbraucherinformationen (Bedingungen, PDF). Stand 01/2026.",
     "Garantierte Erlebensfallsumme wählbar; Rentenfaktor garantiert (höherer von garantiertem und aktuellem Faktor).",
     "Hinterbliebenenschutz in der Rentenzahlungszeit wählbar (Rente an Ehegatten bzw. kindergeldberechtigte Kinder).",
-    "Kosten und Beitragspause nicht ausgewertet."
+    "Kosten und Beitragspause nicht ausgewertet.",
+    "Geprüft am 17.11.2026 an den Verbraucherinformationen (Bedingungen 01/2026, PDF) auf zurich.de."
   ]
 }

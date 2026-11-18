@@ -9,6 +9,11 @@
 //      Anbieterangaben (Name, Agentur, Anschrift, Telefon, Erstinformation). Ohne Adresse oder Schlüssel wird bewusst
 //      nicht gesendet (keine fremde Domain im Absender).
 // Beide Wege protokollieren im Kontaktverlauf (lib/mail/kontakt-mail.ts). Keine Gedankenstriche (ohneGedankenstriche).
+//
+// BCC-Kopie (Paket M1, Ole 17.11.2026): Nur auf dem Resend-Weg und nur, wenn unter Einstellungen → Assistent an
+// (Customer.mailAblauf, lib/mail/ablauf.ts), geht eine Kopie an die gewählte Adresse (Standard: die eigene). Die Kopie
+// ist eine eigene Mail ohne Eintrag im Verlauf: Ein Zustellfehler der Kopie markiert nie die Mail an den Lead.
+// Mit Postfach liegt die Mail ohnehin in „Gesendet“, dort keine Kopie.
 
 import { prisma } from "@/lib/prisma";
 import { ohneGedankenstriche } from "@/lib/gedankenstriche";
@@ -18,6 +23,7 @@ import { ansprechpartner, type LeadAnsprechpartner } from "@/lib/lead-anrede";
 import type { Salutation } from "@/lib/ansprache";
 import type { MailProtokoll } from "@/lib/mail/kontakt-mail";
 import { leadFromKopf, leadMailAdresse, leadSignatur, postfachSignatur, type LeadAbsenderDaten, type LeadSignatur } from "@/lib/mail/lead-absender";
+import { bccEmpfaenger, leseMailAblauf } from "@/lib/mail/ablauf";
 
 export type LeadVersandKontext = {
   customerId: string;
@@ -30,15 +36,32 @@ export type LeadVersandKontext = {
   postfach: { userId: string; signatur: string | null } | null;
   /** Antwort an (nur Resend) */
   replyTo: string | undefined;
+  /** BCC-Kopie an (nur Resend; null = aus) */
+  kopieAn: string | null;
 };
+
+/** Versand über unsere Versanddomain eingerichtet (Schlüssel und Absenderadresse)? */
+export function resendBereit(env: Record<string, string | undefined> = process.env): boolean {
+  return !!env.RESEND_API_KEY && !!leadMailAdresse(env);
+}
 
 /**
  * Absender für Mails an einen Lead (bzw. ohne Lead an einen Endkunden des Kunden) ermitteln. `who` aus
  * ansprechpartner(), wenn schon geladen.
  */
-export async function leadVersandKontext(customerId: string, opts: { leadId?: string | null; who?: LeadAnsprechpartner } = {}): Promise<LeadVersandKontext> {
+export async function leadVersandKontext(
+  customerId: string,
+  opts: {
+    leadId?: string | null;
+    who?: LeadAnsprechpartner;
+    /** Login, der die Mail selbst schreibt (Dialog): sein Postfach zuerst, Antworten an ihn */
+    schreiber?: string | null;
+    /** Nur lesen (Vorschau, Anzeige): keine Erstinformation anlegen, ohne Datensatz kein Link */
+    nurLesen?: boolean;
+  } = {},
+): Promise<LeadVersandKontext> {
   const leadId = opts.leadId ?? null;
-  const [who, lead, customer, record, owners] = await Promise.all([
+  const [who, lead, customer, record, owners, schreiber] = await Promise.all([
     opts.who ?? ansprechpartner({ customerId, leadId }),
     leadId
       ? prisma.lead
@@ -46,11 +69,14 @@ export async function leadVersandKontext(customerId: string, opts: { leadId?: st
           .catch(() => null)
       : null,
     prisma.customer
-      .findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true, onboarding: { select: { websiteInfo: true } }, agentConfig: { select: { advisorEmail: true } } } })
+      .findUnique({ where: { id: customerId }, select: { name: true, vermittlerTyp: true, mailAblauf: true, onboarding: { select: { websiteInfo: true } }, agentConfig: { select: { advisorEmail: true } } } })
       .catch(() => null),
     prisma.erstinformation.findUnique({ where: { customerId }, select: { name: true, firma: true, anschrift: true, telefon: true } })
       .catch(() => null),
     prisma.user.findMany({ where: { customerId, role: "BUYER", teamRole: "owner" }, orderBy: { createdAt: "asc" }, select: { id: true, email: true } }).catch(() => []),
+    opts.schreiber
+      ? prisma.user.findFirst({ where: { id: opts.schreiber, customerId }, select: { id: true, email: true, teamRole: true } }).catch(() => null)
+      : null,
   ]);
   const web = (customer?.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined;
   const d = erstinfoDaten(record, web, { name: customer?.name, vermittlerTyp: customer?.vermittlerTyp });
@@ -61,15 +87,21 @@ export async function leadVersandKontext(customerId: string, opts: { leadId?: st
 
   let erstinfoUrl: string | null = null;
   try {
-    const { erstinfoUrlFor } = await import("@/lib/erstinformation");
-    erstinfoUrl = await erstinfoUrlFor(customerId);
+    if (opts.nurLesen) {
+      const e = await prisma.erstinformation.findUnique({ where: { customerId }, select: { token: true } });
+      if (e?.token) erstinfoUrl = (await import("@/lib/public-url")).publicUrlOr(`/erstinformation/${e.token}`);
+    } else {
+      const { erstinfoUrlFor } = await import("@/lib/erstinformation");
+      erstinfoUrl = await erstinfoUrlFor(customerId);
+    }
   } catch (err) {
     console.error("[lead-versand] Erstinformation", err instanceof Error ? err.message : err);
   }
 
   // Team: der zuständige Berater (nur sein Postfach, Antworten an ihn); ohne Zuteilung die Inhaber
   const assigned = lead?.assignedUserId && lead.assignedUser?.customerId === customerId ? lead.assignedUserId : null;
-  const kandidaten = assigned ? [assigned] : owners.map((o) => o.id);
+  // Selbst geschrieben (Dialog): nur das eigene Postfach, sonst unsere Versanddomain mit Antwort an den Schreiber
+  const kandidaten = schreiber ? [schreiber.id] : assigned ? [assigned] : owners.map((o) => o.id);
   const conns = kandidaten.length
     ? await prisma.mailConnection
         .findMany({ where: { userId: { in: kandidaten }, customerId, status: "ok" }, select: { userId: true, user: { select: { mailSignature: true } } } })
@@ -77,6 +109,7 @@ export async function leadVersandKontext(customerId: string, opts: { leadId?: st
     : [];
   const conn = kandidaten.map((id) => conns.find((c) => c.userId === id)).find(Boolean) ?? null;
   const replyTo =
+    (schreiber && schreiber.teamRole !== "owner" ? schreiber.email : null) ||
     (assigned && lead?.assignedUser?.teamRole !== "owner" ? lead?.assignedUser?.email : null) ||
     customer?.agentConfig?.advisorEmail ||
     (assigned ? lead?.assignedUser?.email : null) ||
@@ -90,6 +123,8 @@ export async function leadVersandKontext(customerId: string, opts: { leadId?: st
     vermittler: who.vermittler,
     postfach: conn ? { userId: conn.userId, signatur: conn.user.mailSignature ?? null } : null,
     replyTo: replyTo?.trim() || undefined,
+    // Kopie an die gewählte Adresse, sonst an die eigene (Schreiber, sonst Antwortadresse)
+    kopieAn: bccEmpfaenger(leseMailAblauf(customer?.mailAblauf), schreiber?.email ?? replyTo ?? null),
   };
 }
 
@@ -103,7 +138,7 @@ export type LeadMailErgebnis = { sent: true; via: "postfach" | "resend" } | { se
  */
 export async function sendeLeadMail(
   k: LeadVersandKontext,
-  o: { to: string; inhalt: (signatur: LeadSignatur) => LeadMailInhalt; attachments?: LeadMailAnhang[]; protokoll: MailProtokoll },
+  o: { to: string; inhalt: (signatur: LeadSignatur) => LeadMailInhalt; attachments?: LeadMailAnhang[]; protokoll: MailProtokoll; /** keine BCC-Kopie */ ohneKopie?: boolean },
 ): Promise<LeadMailErgebnis> {
   const standard = leadSignatur(k.daten);
   if (k.postfach) {
@@ -123,20 +158,42 @@ export async function sendeLeadMail(
   if (!apiKey || !adresse) return { sent: false, reason: "not_configured" };
   const m = o.inhalt(standard);
   const { sendeKontaktMailResend } = await import("@/lib/mail/kontakt-mail");
+  const from = leadFromKopf(k.daten.name, k.daten.agentur, adresse);
+  const attachments = o.attachments?.length ? { attachments: o.attachments.map((a) => ({ filename: a.fileName, content: a.data, contentType: a.contentType })) } : {};
+  const subject = ohneGedankenstriche(m.subject);
+  const text = ohneGedankenstriche(m.text);
+  const html = m.html ? ohneGedankenstriche(m.html) : null;
   const res = await sendeKontaktMailResend(
     apiKey,
-    {
-      from: leadFromKopf(k.daten.name, k.daten.agentur, adresse),
-      to: o.to,
-      ...(k.replyTo ? { replyTo: k.replyTo } : {}),
-      subject: ohneGedankenstriche(m.subject),
-      text: ohneGedankenstriche(m.text),
-      ...(m.html ? { html: ohneGedankenstriche(m.html) } : {}),
-      ...(o.attachments?.length ? { attachments: o.attachments.map((a) => ({ filename: a.fileName, content: a.data, contentType: a.contentType })) } : {}),
-    },
+    { from, to: o.to, ...(k.replyTo ? { replyTo: k.replyTo } : {}), subject, text, ...(html ? { html } : {}), ...attachments },
     o.protokoll,
   );
   // Testumgebung (MAIL_NUR_AN): gilt wie bisher als erledigt, im Verlauf steht „nicht versendet“
   if (!res.ok && !res.blocked) return { sent: false, reason: res.error };
+  if (res.ok && k.kopieAn && !o.ohneKopie) await sendeKopie(apiKey, { from, an: k.kopieAn, lead: o.to, subject, text, html, attachments });
   return { sent: true, via: "resend" };
+}
+
+/** Kopie für den Vermittler (eigene Mail, nicht im Verlauf, Fehler nur im Log). Antworten auf die Kopie gehen an den Lead. */
+export function kopieInhalt(o: { lead: string; subject: string; text: string; html: string | null }): { subject: string; text: string; html: string | null } {
+  const zeile = `Kopie Ihrer E-Mail an ${o.lead}`;
+  return {
+    subject: `Kopie: ${o.subject}`,
+    text: `${zeile}\n\n${o.text}`,
+    html: o.html ? `<p style="margin:0 0 12px;font-size:12px;color:#6b7a96">${zeile.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>${o.html}` : null,
+  };
+}
+
+async function sendeKopie(
+  apiKey: string,
+  o: { from: string; an: string; lead: string; subject: string; text: string; html: string | null; attachments: { attachments?: { filename: string; content: Buffer; contentType: string }[] } },
+): Promise<void> {
+  try {
+    const { mailClient } = await import("@/lib/mail-guard");
+    const c = kopieInhalt(o);
+    const sent = await mailClient(apiKey).emails.send({ from: o.from, to: o.an, replyTo: o.lead, subject: c.subject, text: c.text, ...(c.html ? { html: c.html } : {}), ...o.attachments });
+    if (sent?.error) console.error("[lead-versand] Kopie", sent.error.message ?? "send_failed");
+  } catch (err) {
+    console.error("[lead-versand] Kopie", err instanceof Error ? err.message : err);
+  }
 }
