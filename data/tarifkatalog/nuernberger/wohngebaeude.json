@@ -29,8 +29,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Komfort",
@@ -52,8 +51,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Premium",
@@ -75,8 +73,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/haus-wohnen/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -85,6 +82,7 @@
   "offen": [
     "Werte aus der Leistungsbeschreibung der Produktseite auf nuernberger.de (Abruf 17.11.2026, nur Aufzählung ohne Beträge). Keine Stufe markiert; Komfort als mittlere Stufe.",
     "Ableitungsrohre auf und außerhalb des Grundstücks ab Komfort; Vandalismus ab Komfort; Tierbiss an elektrischen Anlagen und Dämmung sowie unbenannte Gefahren nur Premium. Grobe Fahrlässigkeit schon in Kompakt genannt (Grenze nicht beziffert).",
-    "Kosten nach Schaden (Aufräumung, Abbruch) ohne Beträge; Zusatzbausteine Weitere Naturgefahren (Elementar), Gebäudetechnik und Photovoltaik. Selbstbeteiligung wählbar."
+    "Kosten nach Schaden (Aufräumung, Abbruch) ohne Beträge; Zusatzbausteine Weitere Naturgefahren (Elementar), Gebäudetechnik und Photovoltaik. Selbstbeteiligung wählbar.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

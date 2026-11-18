@@ -113,6 +113,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   "whatsapp.d360_invite": "360dialog-Konto unter unserem Partner angelegt und eingeladen",
   "agent.sequences": "Automatisch nachfassen an/aus",
   "lead.sequence_stop": "Automatisches Nachfassen gestoppt",
+  "lead.bedenkzeit": "Bedenkzeit zum Angebot eingetragen (Nachfassen pausiert)",
   "leadsource.assign": "Leadformular zugeordnet",
   "leadsource.toggle": "Leadformular pausiert/aktiviert",
   "preview.start": "Kundenansicht geöffnet (Admin)",

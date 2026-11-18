@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/kfz-versicherung/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NÜRNBERGER Autoversicherung Komfort",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/kfz-versicherung/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NÜRNBERGER Autoversicherung Premium (Komfort mit Komfort Plus)",
@@ -81,8 +79,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.nuernberger.de/mobilitaet-eigentum/kfz-versicherung/autoversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -95,6 +92,7 @@
     "Neuwert: Kaufpreisersatz für Neuwagen 12, 24 bzw. 36 Monate nach Erstzulassung; Gebrauchtwagen Wiederbeschaffungswert plus 15 % für 12, 24 bzw. 36 Monate.",
     "Marder: Tierbiss mit Folgeschäden 5.000, 10.000 bzw. 15.000 €; bei Elektro- und Hybridfahrzeugen ohne Obergrenze.",
     "Auslandsschadenschutz nur Komfort und Premium; Fahrerschutz nur Komfort und Premium; Sonderausstattung bis 5.000, 10.000 bzw. 15.000 €.",
-    "Rabattschutz (1 Schaden frei), GAP-Versicherung, Werkstatt Plus und Schutzbrief laut Tarifvergleich in allen Tarifen optional. Die Marke GARANTA ist auf nuernberger.de nicht gesondert dargestellt."
+    "Rabattschutz (1 Schaden frei), GAP-Versicherung, Werkstatt Plus und Schutzbrief laut Tarifvergleich in allen Tarifen optional. Die Marke GARANTA ist auf nuernberger.de nicht gesondert dargestellt.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

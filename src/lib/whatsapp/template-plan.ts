@@ -76,6 +76,12 @@ export const VORBEREITETE_PURPOSES: NoticePurpose[] = [
  * Freitext im offenen 24-h-Fenster (sonst nur die E-Mail), das Nachfassen mit der freigegebenen Vorlage followup_offer.
  */
 export const VORBEREITET_ANGEBOT: NoticePurpose[] = ["offer_send", "followup_offer_selbst"];
+/**
+ * Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026): erste WhatsApp, wenn das Nachfassen nach der Bedenkzeit neu startet
+ * (MARKETING), nur VORBEREITET wie oben (docs/vorlagen-angebot.md). Bis zur Freigabe: im offenen Fenster als Freitext,
+ * sonst die freigegebene Vorlage followup_offer (nie followup mit Terminvorschlägen), sonst eine Anruf-Aufgabe.
+ */
+export const VORBEREITET_BEDENKZEIT: NoticePurpose[] = ["offer_bedenkzeit"];
 
 /** Nur mit gebuchtem Bestandskunden-Modul. */
 export const CAMPAIGN_PURPOSES: NoticePurpose[] = ["campaign_cross_sell", "campaign_review", "campaign_birthday", "campaign_renewal"];
@@ -342,6 +348,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   followup_offer: { title: "Nachfassen nach einem Angebot", when: "Zwei Tage, nachdem Sie das Angebot über die App gesendet haben." },
   followup_offer_selbst: { title: "Nachfassen nach einem selbst gesendeten Angebot", when: "Zwei Tage, nachdem Sie „Habe ich selbst gesendet“ angetippt haben." },
   offer_send: { title: "Ihr Angebot nach dem Termin", when: "Wenn Sie das Angebot über die App senden und der Chat länger als 24 Stunden ruht." },
+  offer_bedenkzeit: { title: "Nachfassen nach der Bedenkzeit", when: "Am Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte." },
   followup_noshow: { title: "Nachfassen nach verpasstem Termin", when: "Wenn ein Lead nicht zum Termin erschienen ist." },
   glueckwunsch: { title: "Glückwunsch zum Abschluss", when: "Wenn Sie beim Eintragen eines Abschlusses „Glückwunsch per WhatsApp senden“ anhaken." },
   followup_last: { title: "Letzte Nachricht", when: "Zum Abschluss einer Nachfass-Abfolge." },

@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nuernberger.de/beruf-vorsorge/lebensversicherung/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risikolebensversicherung Plus",
@@ -36,8 +35,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nuernberger.de/beruf-vorsorge/lebensversicherung/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risikolebensversicherung Exklusiv",
@@ -51,8 +49,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.nuernberger.de/beruf-vorsorge/lebensversicherung/risikolebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -65,6 +62,7 @@
     "Plus und Exklusiv zusätzlich: Kinderbonus 2.400 € je Kind unter 7, Pflegebonus 10 %, Sofortauszahlung 10 % (höchstens 10.000 €) bei Sterbeurkunde ab dem 4. Jahr, Auslandsbonus 5 %, Wechsel in Nichtrauchertarif.",
     "Exklusiv zusätzlich: Sofortzahlung 10 % der Summe bei Krebs sowie bei Herzinfarkt oder Schlaganfall (je einmal). Mit den Standardmerkmalen nicht abbildbar, Plus und Exklusiv sehen deshalb gleich aus.",
     "Verlängerungsoption, Umtauschrecht und weltweiter Schutz stehen nicht auf der Produktseite.",
-    "Konstante, linear fallende und annuitätisch fallende Summe wählbar; ob als Baustein mit Aufpreis, ist nicht belegt (daher nicht als Baustein erfasst)."
+    "Konstante, linear fallende und annuitätisch fallende Summe wählbar; ob als Baustein mit Aufpreis, ist nicht belegt (daher nicht als Baustein erfasst).",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }
