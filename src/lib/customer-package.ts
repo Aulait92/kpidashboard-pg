@@ -3,6 +3,7 @@
 // und ohne Betreuungsgebühr ist ein Kunde ein reiner Pay-per-Lead-Käufer.
 
 import type { Prisma } from "@/generated/prisma/client";
+import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
 
 export type PackageInput = { plan: string; retainerMonthly?: unknown; onboarding?: { id: string } | null };
 
@@ -32,4 +33,16 @@ export const NUR_PPL_WHERE: Prisma.CustomerWhereInput = {
 
 export function istNurPayPerLead(c: PackageInput): boolean {
   return packageLabel(c) === "Pay-per-Lead";
+}
+
+/** Software-Paket mit CRM (Betreuung + Software): nur dann sagt die Quote „Nächster Schritt“ etwas aus. */
+export const mitCrm = (c: PackageInput) => packageLabel(c) === "Betreuung + Software";
+
+/**
+ * Warnung „Nächster Schritt x %“ in der Kundenliste des Admins: ab 5 offenen Leads unter der Schwelle, nur für Kunden mit
+ * Software (Ole, 18.11.2026: bei reinen Pay-per-Lead-Kunden ohne CRM irreführend; ebenso „Nur Betreuung“).
+ */
+export function naechsterSchrittWarnung(c: PackageInput, st: { rate: number | null; open: number } | null | undefined): string | null {
+  if (!mitCrm(c) || !st || st.rate == null || st.open < 5 || st.rate >= NEXT_STEP_WARN_BELOW) return null;
+  return `Nächster Schritt ${Math.round(st.rate * 100)} %`;
 }

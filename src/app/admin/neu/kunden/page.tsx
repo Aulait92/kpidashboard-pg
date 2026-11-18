@@ -6,14 +6,13 @@ import { Seite } from "@/components/admin-neu/ui/seite";
 import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
 import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
 import { Chips } from "@/components/admin-neu/kunden/chips";
-import { packageLabel, testKennung } from "@/lib/customer-package";
+import { naechsterSchrittWarnung, packageLabel, testKennung } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { nowMs } from "@/lib/now";
 import { onboardingProgressFor } from "@/lib/onboarding";
 import { CUSTOMER_COLOR, CUSTOMER_LABEL } from "@/lib/vertrieb/crm";
 import { ensureSource } from "@/lib/vertrieb/source";
 import { nextStepRatesByCustomer, type NextStepRate } from "@/lib/lead-next-step-server";
-import { NEXT_STEP_WARN_BELOW } from "@/lib/lead-next-step";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import type { Prisma } from "@/generated/prisma/client";
 import type { SalesCustomerStage as Stufe } from "@/generated/prisma/enums";
@@ -139,7 +138,7 @@ export default async function KundenListe({ searchParams }: { searchParams: Prom
         .filter(Boolean)
         .join(" · "),
       hinweis: pause?.endsAt ? `Pause bis ${tag(pause.endsAt)}` : c.cancelEffectiveAt ? `Vertrag endet ${tag(c.cancelEffectiveAt)}` : ob && !ob.live && ob.waitingYou ? `${ob.waitingYou} Schritt${ob.waitingYou === 1 ? "" : "e"} bei Ihnen` : null,
-      warnung: st?.rate != null && st.open >= 5 && st.rate < NEXT_STEP_WARN_BELOW ? `Nächster Schritt ${Math.round(st.rate * 100)} %` : null,
+      warnung: naechsterSchrittWarnung(c, st),
       fortschritt: ob && !ob.live ? ob.percent : null,
       passt: (k) =>
         nurIntern
