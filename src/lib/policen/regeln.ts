@@ -24,7 +24,7 @@ export const WARTEN_STUNDEN = 24;
 /** Erinnerung an den Vermittler („In die Kundenakte übernehmen“) so viele Tage vor der Löschung, nur bei Abschluss. */
 export const ERINNERUNG_TAGE = 14;
 /** Version des Datenschutzhinweises /datenschutz/policen (steht im Nachweis; bei jeder inhaltlichen Änderung hochzählen). */
-export const DATENSCHUTZ_VERSION = "2026-11-18.2";
+export const DATENSCHUTZ_VERSION = "2026-11-19.1";
 /** Vermerk, wenn der Vermittler eine Unterlage behält. */
 export const BEHALTEN_VERMERK = "Beratungsdokumentation (§ 61 VVG)";
 

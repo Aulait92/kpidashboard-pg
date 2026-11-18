@@ -92,6 +92,7 @@ import {
   type Nachricht,
 } from "@/lib/policen/bitte";
 import { kiAbgelehnt, NACHWEIS_OHNE_KI } from "@/lib/policen/ohne-ki";
+import { bestaetigung, istNeinDanke, KNOPF_ZUSTIMMEN, FORMULAR, neinDankeAntwort, PAYLOAD_NEIN_DANKE, PAYLOAD_SPAETER, tagText, uhrzeitText } from "@/lib/policen/flow/texte";
 
 export type EingehendesMedium = { type: string; id?: string | null; mime_type?: string | null; filename?: string | null; caption?: string | null };
 
@@ -149,6 +150,13 @@ export async function policenBitteFuerChat(conversationId: string): Promise<impo
   return policenBitte(sp);
 }
 
+/** Chat und Sprecher für die Policen-Strecke v2 (lib/policen/flow/server.ts). null = kein Lead-Chat. */
+export async function policenSprecherFuerChat(conversationId: string): Promise<{ chat: Chat; sp: Sprecher } | null> {
+  const chat = await chatOf(conversationId);
+  if (!chat) return null;
+  return { chat, sp: await sprecher(chat) };
+}
+
 async function apiKeyOf(customerId: string): Promise<string | null> {
   const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } });
   return acc?.status === "connected" && acc.apiKeyEnc ? decryptSecret(acc.apiKeyEnc) : null;
@@ -199,6 +207,8 @@ async function nachweis(o: {
   frageWaMessageId?: string | null;
   vermittlerName?: string | null;
   vermittlerUserId?: string | null;
+  /** SHA-256 des Wortlauts (Policen-Strecke v2, Formular) */
+  textHash?: string | null;
   at?: Date;
 }) {
   const vermittlerUserId =
@@ -219,6 +229,7 @@ async function nachweis(o: {
       frageWaMessageId: o.frageWaMessageId ?? null,
       vermittlerUserId,
       vermittlerName: o.vermittlerName ?? null,
+      textHash: o.textHash ?? null,
       ...(o.at ? { createdAt: o.at } : {}),
     },
     select: { id: true, createdAt: true },
@@ -308,8 +319,11 @@ async function loescheDokumente(where: { leadId?: string; customerId?: string; i
   return del.count;
 }
 
-/** weiter = false: erledigt, aber keine Antwort auf die Policen-Bitte (Termin-Strecke geht nicht weiter). */
-type Ergebnis = { handled: boolean; gespeichert?: string; verworfen?: string; wartet?: boolean; weiter?: boolean };
+/**
+ * weiter = false: erledigt, aber keine Antwort auf die Policen-Bitte (Termin-Strecke geht nicht weiter). art: Art der
+ * Antwort für den Merker der Strecke (v2: „flow“, „spaeter“).
+ */
+type Ergebnis = { handled: boolean; gespeichert?: string; verworfen?: string; wartet?: boolean; weiter?: boolean; art?: string };
 
 /**
  * Eingehendes Bild oder Dokument im Lead-Chat. handled = true: beantwortet, der Assistent muss nichts mehr tun.
@@ -549,6 +563,16 @@ export async function handlePolicenAntwort(conversationId: string, m: Antwort, n
   const chat = await chatOf(conversationId);
   if (!chat) return { handled: false };
 
+  // Policen-Strecke v2 (lib/policen/flow): „Später“ bzw. „Nein, danke“ (Knopf; getippt nur direkt nach einer Erinnerung
+  // bzw. der Antwort auf „Später“). Diese Knöpfe gibt es nur in der v2-Strecke.
+  if (m.payload === PAYLOAD_SPAETER) {
+    const { handleSpaeter } = await import("@/lib/policen/flow/server");
+    return handleSpaeter(conversationId, now);
+  }
+  if (m.payload === PAYLOAD_NEIN_DANKE || (m.kind === "text" && istNeinDanke(m.text) && (await nachFlowErinnerung(chat)))) {
+    return neinDanke(chat, { waMessageId: m.waMessageId ?? null, now });
+  }
+
   const knopf = m.kind === "button" || m.kind === "interactive";
   // Stichwort „ohne KI“ (A9, nur Regeln); ein Widerruf geht vor
   const ohneKi = m.kind === "text" && istOhneKi(m.text) && !istWiderruf(m.text);
@@ -767,6 +791,170 @@ async function beantworteEinwilligung(chat: Chat, o: { waMessageId: string | nul
   else if (spaeter) await send(chat, spaeterText(an));
   else if (!ok) await send(chat, nichtGeladenText(an));
   return { handled: true };
+}
+
+// ─── Policen-Strecke v2: Formular (WhatsApp Flow), „Nein, danke“ ────────────
+
+/** Unsere letzte Nachricht war eine Erinnerung bzw. die Antwort auf „Später“ (dann ist ein getipptes „Nein“ gemeint). */
+const NACH_ERINNERUNG_RE = /Kein Interesse\? (Tipp|Tippen Sie) „Nein, danke“|^Alles klar, kein Problem\. (Dein|Ihr) Termin findet so oder so statt\. Ich erinnere/;
+async function nachFlowErinnerung(chat: Chat): Promise<boolean> {
+  const last = await prisma.message.findFirst({ where: { conversationId: chat.id, direction: "outbound" }, orderBy: { createdAt: "desc" }, select: { body: true } });
+  return NACH_ERINNERUNG_RE.test(last?.body ?? "");
+}
+
+/**
+ * „Nein, danke“ (A8): keine Erinnerungen mehr (Nachweis „erinnerung_stopp“, wie STOPP nur für die Erinnerungen),
+ * kurze Antwort mit Termin. Keine Ablehnung der Einwilligung, nichts wird gelöscht.
+ */
+async function neinDanke(chat: Chat, o: { waMessageId: string | null; now: Date }): Promise<Ergebnis> {
+  await nachweis({ customerId: chat.customerId, leadId: chat.leadId, phone: chat.contactPhone, art: "erinnerung_stopp", quelle: "whatsapp", wortlaut: "„Nein, danke“ per WhatsApp", waMessageId: o.waMessageId, at: o.now });
+  await audit("policen.nein_danke", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, actor: { role: "lead" } });
+  const termin = await prisma.appointment.findFirst({ where: { leadId: chat.leadId, status: "booked", startsAt: { gt: o.now } }, orderBy: { startsAt: "asc" }, select: { startsAt: true } });
+  await send(chat, neinDankeAntwort(termin ? { tag: tagText(termin.startsAt, o.now), uhrzeit: uhrzeitText(termin.startsAt) } : {}));
+  return { handled: true, weiter: false };
+}
+
+/**
+ * Formular „Policen senden“ abgeschickt (Webhook nfm_reply, Policen-Strecke v2). Der Klick auf „Zustimmen & senden“
+ * ist die Einwilligung (A1); vorher ist nichts an uns gegangen (kein data_exchange, A2). Ablauf:
+ *   1. Token gegen den Merker der gesendeten Nachricht (nur Chats dieses Leads), sonst nichts speichern.
+ *   2. Nachweis (A3, nur anhängen): Wortlaut des Formulars wie gesendet mit Häkchen-Stand, Textversion (.g/.s),
+ *      SHA-256 des Wortlauts, Zeit, ki (Häkchen „Lieber ohne KI: nur speichern“ gesetzt → false), WhatsApp-IDs,
+ *      Vermittler, Datenschutzhinweis. ki = false: bereits ausgelesene Werte löschen (wie „ohne KI“, A9).
+ *   3. Dateien laden (Media-ID über 360dialog mit sha256-Prüfung bzw. verschlüsselt von der CDN, flow/krypto.ts),
+ *      Format prüfen, Virenprüfung (ClamAV), verschlüsselt ablegen wie Policen-Fotos, Medium bei Meta löschen.
+ *   4. Bestätigung mit Anzahl und Knopf „Weitere senden“ (öffnet das Formular erneut), Fußzeile Widerruf.
+ * Ausgelesen wird danach im Hintergrund (gateway.ts → auslesen nachEingang; nur mit ki = true und freigegebener
+ * Sparte, K1/K2). Keine KI in diesem Modul.
+ */
+export async function handleFlowAntwort(o: {
+  conversationId: string;
+  messageId: string | null;
+  responseJson: unknown;
+  waMessageId: string | null;
+  frageWaMessageId: string | null;
+  botErlaubt: boolean;
+  now?: Date;
+}): Promise<Ergebnis> {
+  const now = o.now ?? new Date();
+  const chat = await chatOf(o.conversationId);
+  if (!chat) return { handled: false };
+  const flow = await import("@/lib/policen/flow/server");
+  const antwort = flow.leseFlowAntwort(o.responseJson);
+  const merker = antwort ? await flow.flowMerker(chat.leadId, antwort.token) : null;
+  const antworte = async (text: string) => {
+    if (o.botErlaubt) await send(chat, text).catch((e) => logFehler("antwort", e));
+  };
+  if (!antwort || !merker) {
+    await setzeBody(o.messageId, "Formular ohne gültige Zuordnung (nichts gespeichert)");
+    await audit("policen.verworfen", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { grund: "formular_unbekannt" }, actor: { role: "system" } });
+    return { handled: true, weiter: false };
+  }
+  const sp = await sprecher(chat);
+  const { an, person } = sp;
+  const apiKey = await apiKeyOf(chat.customerId);
+  const ids = antwort.dateien.map((d) => d.id);
+  if (!policenAn()) {
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (Funktion aus)");
+    await mediaWeg(chat.customerId, ids, apiKey);
+    await antworte(ausText(an));
+    return { handled: true, weiter: false };
+  }
+  if (chat.minderjaehrig) {
+    await setzeBody(o.messageId, "Dokument nicht gespeichert (minderjährig laut Formular)");
+    await mediaWeg(chat.customerId, ids, apiKey);
+    await antworte(minderjaehrigText(an, person));
+    return { handled: true, weiter: false };
+  }
+
+  // Einwilligung protokollieren (A3)
+  const ki = !antwort.ohneKi;
+  const vorher = await aktiveEinwilligung(chat.customerId, chat.contactPhone);
+  const n = await nachweis({
+    customerId: chat.customerId,
+    leadId: chat.leadId,
+    phone: chat.contactPhone,
+    art: "einwilligung",
+    quelle: "whatsapp",
+    ki,
+    wortlaut: `${merker.wortlaut}\n\nAntwort: Knopf „${KNOPF_ZUSTIMMEN}“ im Formular, Häkchen „${FORMULAR.ohneKi}“: ${ki ? "nicht gesetzt" : "gesetzt"}`,
+    textVersion: merker.textVersion,
+    textHash: merker.hash,
+    datenschutzUrl: merker.datenschutzUrl || sp.datenschutzUrl,
+    waMessageId: o.waMessageId,
+    frageWaMessageId: merker.waMessageId ?? o.frageWaMessageId,
+    vermittlerName: sp.vermittler.name ?? person.nom,
+    at: now,
+  });
+  await audit("policen.einwilligung", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { nachweisId: n.id, quelle: "formular", ki }, actor: { role: "lead" } });
+  await logLeadHistory(chat.leadId, "dokument", ki ? "Einwilligung zu Policen per WhatsApp-Formular erteilt" : "Einwilligung zu Policen per WhatsApp-Formular erteilt (ohne KI: nur speichern)", { customerId: chat.customerId, userId: null });
+  if (!ki) {
+    const geloescht = await loescheKiWerte(chat.customerId, chat.leadId);
+    if (vorher?.ki !== false || geloescht) await audit("policen.ohne_ki", { entity: "Lead", entityId: chat.leadId, customerId: chat.customerId, details: { geloescht, quelle: "formular" }, actor: { role: "lead" } });
+  }
+
+  // Dateien laden, prüfen, ablegen
+  let ok = 0;
+  let virus = 0;
+  let spaeter = 0;
+  let format = 0;
+  let gross = 0;
+  let gesundheit = 0;
+  let fehler = 0;
+  for (const d of antwort.dateien) {
+    if ((await prisma.leadDocument.count({ where: { leadId: chat.leadId } })) >= POLICEN_MAX_JE_LEAD) {
+      await mediaWeg(chat.customerId, [d.id], apiKey);
+      continue;
+    }
+    const sparte = sparteAusText(d.name);
+    if (!sp.gesundheitAn && (istGesundheitsbezug(sparte) || gesundheitInText(d.name))) {
+      gesundheit++;
+      await mediaWeg(chat.customerId, [d.id], apiKey);
+      continue;
+    }
+    const dl = apiKey ? await flow.ladeFlowDatei(apiKey, d, POLICEN_MAX_BYTES) : ({ ok: false, grund: "fehler" } as const);
+    if (!dl.ok) {
+      if (dl.grund === "zu_gross") gross++;
+      else fehler++;
+      await mediaWeg(chat.customerId, [d.id], apiKey);
+      continue;
+    }
+    const typ = typAusInhalt(dl.data);
+    if (!typ) {
+      format++;
+      await mediaWeg(chat.customerId, [d.id], apiKey);
+      continue;
+    }
+    const viren = await virenpruefung(chat, { data: dl.data, messageId: null, mediaId: d.id, apiKey });
+    if (viren === "verworfen") {
+      virus++;
+      continue;
+    }
+    if (viren === "abgelehnt") {
+      spaeter++;
+      continue;
+    }
+    const id = await speichere(chat, { messageId: null, typ, fileName: dateiname(d.name, typ, now), data: dl.data, sparte, consent: { id: n.id, at: n.createdAt }, virenStatus: viren, now }).catch((e) => {
+      logFehler("ablage", e);
+      return null;
+    });
+    if (id) ok++;
+    await mediaWeg(chat.customerId, [d.id], apiKey);
+  }
+  await setzeBody(o.messageId, `Formular „Policen senden“: ${ok === 1 ? "1 Dokument" : `${ok} Dokumente`} für den Vermittler`);
+  if (fehler) console.error("[policen formular] dateien nicht geladen", fehler);
+
+  if (o.botErlaubt) {
+    const c = await flow.flowChat(chat.id, now).catch(() => null);
+    if (ok && c) await flow.sendeBestaetigung(chat.id, bestaetigung(c.text, ok, ki), now).catch((e) => logFehler("bestätigung", e));
+    if (virus) await antworte(virenText(an));
+    else if (spaeter) await antworte(spaeterText(an));
+    else if (gesundheit) await antworte(gesundheitAusText(an, person));
+    else if (format) await antworte(formatText(an));
+    else if (gross) await antworte(zuGrossText(an));
+    else if (!ok) await antworte(nichtGeladenText(an));
+  }
+  return { handled: true, art: "flow" };
 }
 
 /** Widerruf (A4): alle Unterlagen des Leads sofort löschen (Bucket, Media-IDs), Nachweis, Vermittler informieren. */

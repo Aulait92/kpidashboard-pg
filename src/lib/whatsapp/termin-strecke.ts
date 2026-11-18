@@ -142,6 +142,11 @@ async function policenBitteSchritt(k: StreckenKontext, einleitung: string | null
   const vv = lead.vorvertraege as { keine?: unknown; liste?: unknown } | null;
   if (vv && vv.keine === true && !(Array.isArray(vv.liste) && vv.liste.length)) return null;
   // Tierkranken ohne Komplettcheck: die Bitte nennt Haftpflicht, Hausrat und Kfz, passt also nicht (Ole, 18.11.2026)
+  // Policen-Strecke v2 (POLICEN_FLOW, lib/policen/flow): Chat-Nachricht mit Formular statt Bitte und Einwilligung; die
+  // Nachricht nennt keine Sparten, darum auch für Tierkranken (Formular ohne Gesundheitssatz). Gesendet wird in
+  // sendeSchritt bzw. bot.ts (flow = true); text ist nur die Einleitung für den Rückfall.
+  const flow = await import("@/lib/policen/flow/server").then((m) => m.policenFlowMoeglich(k.conversationId)).catch(() => false);
+  if (flow) return { text: einleitung ?? "Danke!", buttons: null, merker: STRECKE.policenBitte, daten: { police: null, flow: true }, flow: true };
   if (istTierStrecke(k.source) && k.termin?.komplettcheck !== true) return null;
   const { policenBitteFuerChat } = await import("@/lib/policen/server");
   const b = await policenBitteFuerChat(k.conversationId);
@@ -243,6 +248,8 @@ export type StreckenStand = {
   policenAntwortAt: Date | null;
   policenKeine: boolean;
   policenErinnerungen: number;
+  /** Bitte als Formular gesendet (Policen-Strecke v2): Erinnerungen über lib/policen/flow/server.ts */
+  policenFlow: boolean;
   abschlussAt: Date | null;
   abschlussMitEmail: boolean;
   /** Letzte Tierfrage (TKV) und beantwortete Tierfragen */
@@ -307,6 +314,7 @@ export async function streckenStand(conversationId: string, appointmentId: strin
     policenAntwortAt: at(STRECKE.policenAntwort),
     policenKeine: rows.some((r) => r.kind === STRECKE.policenAntwort && daten(r.body).art === "keine"),
     policenErinnerungen: rows.filter((r) => r.kind === STRECKE.policenErinnerung && daten(r.body).gesendet !== false).length,
+    policenFlow: daten(bitte?.body ?? null).flow === true,
     abschlussAt: abschluss?.createdAt ?? null,
     abschlussMitEmail: daten(abschluss?.body ?? null).mitEmail === true,
     tierFrageLetzte: (() => {
@@ -479,6 +487,8 @@ export type Schritt = {
   nachMerker?: string | null;
   /** Eigene Nachricht direkt danach (Einwilligung zur Policen-Bitte, interaktiv mit Fußzeile) */
   folge?: { text: string; buttons: Knopf[]; footer: string | null } | null;
+  /** Policen-Strecke v2: statt text die Chat-Nachricht mit Formular senden (lib/policen/flow/server.ts) */
+  flow?: boolean;
 };
 
 /**
@@ -509,6 +519,10 @@ export async function naechsterSchritt(
 export async function sendeSchritt(k: StreckenKontext, s: Schritt): Promise<void> {
   if (!k.termin) return;
   await merkeSchritt(k.conversationId, k.termin.id, s);
+  if (s.flow) {
+    await import("@/lib/policen/flow/server").then((m) => m.sendeFlowNachricht(k.conversationId, "bitte"));
+    return;
+  }
   await sende(k, s.text, s.buttons);
   if (s.folge) await sendeFolge(k, s.folge);
 }
@@ -684,12 +698,12 @@ export async function policenBitteAntwort(conversationId: string, art: "gleich" 
  * Das Policen-Modul hat eine Antwort auf die Einwilligung („Einverstanden“ / „Lieber nicht“) bzw. einen Widerruf
  * beantwortet (gateway.ts): ist die Policen-Bitte der Strecke offen, folgt jetzt der Schluss.
  */
-export async function nachPolicenAntwort(conversationId: string, now = new Date()): Promise<boolean> {
+export async function nachPolicenAntwort(conversationId: string, now = new Date(), art = "einwilligung"): Promise<boolean> {
   const k = await streckenKontext(conversationId, now);
   if (!k?.termin) return false;
   const stand = await streckenStand(conversationId, k.termin.id);
   if (!policenBitteOffen(stand)) return false;
-  await merke(conversationId, STRECKE.policenAntwort, { appointmentId: k.termin.id, art: "einwilligung" });
+  await merke(conversationId, STRECKE.policenAntwort, { appointmentId: k.termin.id, art });
   const s = await naechsterSchritt(k, { schlussEinleitung: abschlussEinleitung(k.an, k.person, "ohne_antwort"), vertraegeUeberspringen: true, policenUeberspringen: true });
   if (!s) return false;
   await sendeSchritt(k, s);
@@ -971,7 +985,7 @@ const POLICEN_STOPP_RE = /^\s*lieber nicht\b|widerruf|lösch|loesch|keine (polic
  * protokolliertes Opt-in aus der Buchung, kein „Lieber nicht“, kein Widerruf, kein STOPP, noch kein Dokument, Termin
  * steht), gebeten, nicht „habe keine“, höchstens 2.
  */
-async function policenErinnernErlaubt(conversationId: string, leadId: string | null, stand: StreckenStand): Promise<boolean> {
+export async function policenErinnernErlaubt(conversationId: string, leadId: string | null, stand: StreckenStand): Promise<boolean> {
   if (!leadId || !stand.policenBitteAt || stand.policenKeine || stand.policenErinnerungen >= MAX_POLICEN_ERINNERUNGEN) return false;
   const { darfPolicenErinnern } = await import("@/lib/policen/server");
   if (!(await darfPolicenErinnern(leadId))) return false;
@@ -989,6 +1003,13 @@ async function policenErinnernErlaubt(conversationId: string, leadId: string | n
  */
 export async function runPolicenErinnerung(now = new Date()): Promise<{ gesendet: number }> {
   if (!inStreckenFenster(now)) return { gesendet: 0 };
+  // Policen-Strecke v2 (nur mit POLICEN_FLOW): eigene Erinnerungen 1 und 2 mit Formular-Knopf
+  const flow = await import("@/lib/policen/flow/server")
+    .then((m) => m.runPolicenFlowErinnerungen(now))
+    .catch((err) => {
+      console.error("[policen flow erinnerung]", err instanceof Error ? err.message.slice(0, 160) : err);
+      return { gesendet: 0 };
+    });
   const bitten = await prisma.message.findMany({
     where: { direction: "internal", kind: STRECKE.policenBitte, createdAt: { gte: new Date(now.getTime() - 7 * 24 * HOUR) } },
     select: { conversationId: true, body: true },
@@ -997,6 +1018,7 @@ export async function runPolicenErinnerung(now = new Date()): Promise<{ gesendet
   let gesendet = 0;
   for (const b of bitten) {
     try {
+      if (daten(b.body).flow === true) continue; // v2: siehe oben
       const appointmentId = String(daten(b.body).appointmentId ?? "");
       const t = appointmentId ? await prisma.appointment.findUnique({ where: { id: appointmentId }, select: { status: true, startsAt: true, createdAt: true, leadId: true } }) : null;
       if (!t || t.status !== "booked" || t.startsAt.getTime() <= now.getTime()) continue;
@@ -1017,7 +1039,7 @@ export async function runPolicenErinnerung(now = new Date()): Promise<{ gesendet
       console.error("[policen erinnerung]", err instanceof Error ? err.message.slice(0, 160) : err);
     }
   }
-  return { gesendet };
+  return { gesendet: gesendet + flow.gesendet };
 }
 
 /**
@@ -1027,6 +1049,8 @@ export async function runPolicenErinnerung(now = new Date()): Promise<{ gesendet
 export async function policenVortagSatzFuer(appt: { id: string; conversationId: string | null; leadId: string | null }, an: Ansprache, o: { merken: boolean } = { merken: false }): Promise<string | null> {
   if (!appt.conversationId) return null;
   const stand = await streckenStand(appt.conversationId, appt.id);
+  // v2: Erinnerung 2 ist eine eigene Nachricht am Vortag um 18 Uhr (lib/policen/flow/server.ts)
+  if (stand.policenFlow) return null;
   if (!(await policenErinnernErlaubt(appt.conversationId, appt.leadId, stand))) return null;
   if (o.merken) await merke(appt.conversationId, STRECKE.policenErinnerung, { appointmentId: appt.id, art: "vortag" });
   return policenVortagSatz(an);

@@ -1,0 +1,620 @@
+// Policen-Strecke v2 mit WhatsApp Flow (Ole, 18.11.2026 freigegeben, hinter Schalter, NICHT live):
+//   Schalter   POLICEN_FLOW=1 (Railway) und je Kunde nur, wenn der Flow bei dessen WABA veröffentlicht ist
+//              (PolicenFlow.status = veroeffentlicht). Optional POLICEN_FLOW_KUNDEN = Kunden-IDs (Pilot), leer = alle.
+//              Ohne Schalter: nichts wird angelegt, gesendet oder anders beantwortet (heutige Strecke unverändert).
+//   Anlegen    syncPolicenFlows im WhatsApp-Cron (wie die Vorlagen, lib/whatsapp/template-submit.ts): Flow anlegen und
+//              veröffentlichen (360dialog Flows API), dann die Vorlagen mit Flow-Knopf einreichen und ihren Status
+//              nachziehen. Nie für Pay-per-Lead-Kunden, ruhende Kunden oder die Support-Nummer.
+//   Senden     Chat-Nachricht, Bestätigung „Weitere senden“, Erinnerungen 1 und 2 (sendeFlowNachricht): freigegebene
+//              Vorlage der Kategorie UTILITY (zeigt [Policen senden] und den Antwort-Knopf in EINER Nachricht und ist im
+//              offenen 24-Stunden-Fenster kostenlos); sonst im Fenster die interaktive Flow-Nachricht (nur ein Knopf
+//              möglich, siehe unten); außerhalb des Fensters ohne freigegebene Vorlage nichts.
+//   Antwort    lib/policen/server.ts handleFlowAntwort (Einwilligung mit Textversion, Hash, Zeit, ki; Dateien laden,
+//              prüfen, Virenprüfung, Ablage), „Später“ und „Nein, danke“ (handleSpaeter hier, Nein in server.ts).
+//
+// Warum nicht beides in einer interaktiven Nachricht: Meta erlaubt in einer interaktiven Flow-Nachricht genau einen
+// Knopf (action name „flow“), keine zusätzlichen Antwort-Knöpfe. Nur Vorlagen mischen einen FLOW-Knopf mit Quick
+// Replies (Gruppenregel: erst der Flow-Knopf, dann die Quick Replies). Darum: Vorlage zuerst, auch im Fenster. Ist sie
+// (noch) nicht freigegeben, geht im Fenster die Flow-Nachricht ohne „Später“: wer nichts tut, wird behandelt wie
+// „Später“ (Schluss der Strecke nach 1 Std., höchstens 2 Erinnerungen mit Opt-in); eine zweite Nachricht nur für den
+// Knopf wäre mehr Lärm im Chat (UX-Regel) als Nutzen. Die Erinnerungen nennen „Nein, danke“ ohnehin in der Fußzeile,
+// getippt wird es erkannt (texte.ts istNeinDanke).
+//
+// Kategorie der Vorlagen: UTILITY. Begründung: ausgelöst durch die Buchung des Leads, bezieht sich auf genau diesen
+// Termin und bittet um Unterlagen für dessen Vorbereitung; keine Angebote, Preise oder Rabatte. Risiko: Meta kann die
+// Bitte wegen „ob Sie Geld sparen können“ als MARKETING einstufen (seit 2025 stuft Meta selbst um). Dann gilt hier: im
+// Fenster die (kostenlose) Flow-Nachricht statt der Vorlage, außerhalb die Vorlage (Marketing-Preis). Die Kategorie laut
+// Meta steht in PolicenFlow.vorlagen.
+
+import { randomBytes } from "node:crypto";
+import { prisma } from "@/lib/prisma";
+import { decryptSecret } from "@/lib/encryption";
+import { reportError } from "@/lib/monitoring";
+import { NUR_PPL_WHERE } from "@/lib/customer-package";
+import { SUPPORT_CUSTOMER_ID } from "@/lib/whatsapp/support-inbox";
+import { createTemplate, isNameInUseError, listTemplates } from "@/lib/whatsapp/dialog360";
+import { mapRemoteStatus, TEMPLATE_LANGUAGE } from "@/lib/whatsapp/template-plan";
+import type { Ansprache } from "@/lib/ansprache";
+import { gesundheitInText } from "@/lib/policen/regeln";
+import { createFlow, getFlow, listFlows, publishFlow, uploadFlowJson } from "@/lib/policen/flow/dialog360-flows";
+import { flowJsonHash, flowJsonText, MAX_DATEIEN_JE_SENDEN, pruefeFlowJson, policenFlowJson, SCREEN_FOTOS } from "@/lib/policen/flow/flow-json";
+import { entschluesseleFlowMedium, FlowMediaFehler, pruefeSha256, type EncryptionMetadata } from "@/lib/policen/flow/krypto";
+import {
+  bestaetigung,
+  chatNachricht,
+  erinnerung1,
+  erinnerung2,
+  flowTextVersion,
+  formularDaten,
+  formularWortlaut,
+  KNOPF_POLICEN_SENDEN,
+  KNOPF_WEITERE_SENDEN,
+  NEIN_DANKE_KNOEPFE,
+  PAYLOAD_NEIN_DANKE,
+  PAYLOAD_SPAETER,
+  pronomenAus,
+  spaeterAntwort,
+  tagText,
+  textHash,
+  uhrzeitText,
+  vorlagenParameter,
+  vorlagenText,
+  type FlowTextKontext,
+  type Nachricht,
+  type VorlagenArt,
+} from "@/lib/policen/flow/texte";
+
+type Env = Record<string, string | undefined>;
+const HOUR = 60 * 60 * 1000;
+
+// ─── Schalter ───────────────────────────────────────────────────────────────
+
+/** POLICEN_FLOW=1 (bzw. true/an/on). */
+export const flowSchalterAn = (env: Env = process.env) => /^(1|true|ja|an|on)$/i.test((env.POLICEN_FLOW ?? "").trim());
+/** POLICEN_FLOW_KUNDEN leer = alle, sonst nur diese Kunden-IDs. */
+export function flowKundeErlaubt(customerId: string, env: Env = process.env): boolean {
+  const roh = (env.POLICEN_FLOW_KUNDEN ?? "").trim();
+  return !roh || roh.split(/[\s,;]+/).includes(customerId);
+}
+
+export type VorlagenStand = Record<string, { status: string; category: string | null; grund: string | null }>;
+export type AktiverFlow = { flowId: string; jsonHash: string; vorlagen: VorlagenStand };
+
+/** Flow für diesen Kunden nutzbar? Schalter an, Kunde erlaubt, kein Pay-per-Lead, Flow veröffentlicht. */
+export async function aktiverFlow(customerId: string, env: Env = process.env): Promise<AktiverFlow | null> {
+  if (!flowSchalterAn(env) || !flowKundeErlaubt(customerId, env)) return null;
+  const [rec, ppl] = await Promise.all([
+    prisma.policenFlow.findUnique({ where: { customerId } }),
+    prisma.customer.count({ where: { id: customerId, ...NUR_PPL_WHERE } }),
+  ]);
+  if (ppl || !rec?.flowId || rec.status !== "veroeffentlicht" || !rec.jsonHash) return null;
+  return { flowId: rec.flowId, jsonHash: rec.jsonHash, vorlagen: (rec.vorlagen as VorlagenStand | null) ?? {} };
+}
+
+// ─── Kontext (Texte für diesen Chat) ────────────────────────────────────────
+
+/** Sparten des Leads, für die das Auslesen gilt (lib/policen/auslesen/felder.ts AUSLESEN_SPARTEN). */
+function auslesenSpartenDesLeads(source: string | null, formular: { label: string; value: string }[], rechner: string[]): string[] {
+  const s = `${source ?? ""} ${formular.map((x) => x.value).join(" ")}`.toLowerCase();
+  const out = new Set(rechner.filter((x) => ["haftpflicht", "hausrat", "rechtsschutz", "wohngebaeude"].includes(x)));
+  if (/privatschutz/.test(s) && !/tier/.test(source ?? "")) ["haftpflicht", "hausrat"].forEach((x) => out.add(x));
+  if (/\bkfz\b|autoversicherung|kraftfahrt/.test(s)) out.add("kfz");
+  if (/\bpkv\b|krankenversicherung|krankenzusatz/.test(s)) out.add("pkv");
+  if (/berufsunf|\bbu\b/.test(s)) out.add("bu");
+  if (/lebensversicherung|risikoleben|\bleben\b/.test(s)) out.add("leben");
+  return [...out];
+}
+
+/**
+ * KI-Satz „damit Ihr Vergleich zum Termin schon fertig ist“ (texte-v2.md, Regel 8): nur wenn das Auslesen läuft
+ * (Schlüssel, kein Notschalter, keine Pause), für diesen Kunden freigeschaltet ist und für mindestens eine Sparte des
+ * Leads gilt (Sach sofort, Kranken/BU/Leben nur mit Nachweis „keine Speicherung“, K2). Die Terminvorbereitung zeigt
+ * das Vergleichsblatt vor dem Termin (components/policen-vergleich-kurz.tsx, /buyer/termine/[id]/vorbereitung/vertraege),
+ * ausgelesen wird direkt nach dem Eingang (gateway.ts → auslesen/server.ts nachEingang).
+ */
+export async function kiSatzAktiv(o: { customerId: string; source: string | null; formular: { label: string; value: string }[]; angaben: unknown }, env: Env = process.env): Promise<boolean> {
+  const konfig = await import("@/lib/policen/auslesen/konfig");
+  if (!konfig.auslesenAn(env) || !konfig.kundeFreigeschaltet(o.customerId, env)) return false;
+  const srv = await import("@/lib/policen/auslesen/server");
+  if (await srv.pausiert().catch(() => true)) return false;
+  const frei = konfig.freigegebeneSparten({ zdr: await srv.zdrHinterlegt().catch(() => false) }, env) as string[];
+  const { spartenDesLeads } = await import("@/lib/preise/rechner-angaben");
+  const rechner = (() => {
+    try {
+      return spartenDesLeads(o.source, { formular: o.formular, angaben: o.angaben }) as string[];
+    } catch {
+      return [];
+    }
+  })();
+  return auslesenSpartenDesLeads(o.source, o.formular, rechner).some((s) => frei.includes(s));
+}
+
+export type FlowChat = {
+  conversationId: string;
+  customerId: string;
+  leadId: string;
+  phone: string;
+  an: Ansprache;
+  fensterOffen: boolean;
+  botActive: boolean;
+  datenschutzUrl: string | null;
+  minderjaehrig: boolean;
+  gesundheitAn: boolean;
+  source: string | null;
+  termin: { id: string; startsAt: Date; mode: string | null } | null;
+  text: FlowTextKontext;
+};
+
+function formAnswers(raw: unknown): { label: string; value: string }[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((x) => (x && typeof x === "object" && typeof x.label === "string" && typeof x.value === "string" ? [{ label: x.label, value: x.value }] : []));
+}
+
+/** Alles für die Texte dieses Chats (Vermittler, Firma, Termin, KI-Satz, Gesundheitssatz). null = kein Lead-Chat. */
+export async function flowChat(conversationId: string, now = new Date()): Promise<FlowChat | null> {
+  const { policenSprecherFuerChat } = await import("@/lib/policen/server");
+  const s = await policenSprecherFuerChat(conversationId);
+  if (!s) return null;
+  const conv = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { windowExpiresAt: true, botActive: true, qualificationData: true, lead: { select: { source: true, formData: true } } },
+  });
+  const termin = await prisma.appointment.findFirst({
+    where: { leadId: s.chat.leadId, status: "booked", startsAt: { gt: now } },
+    orderBy: { startsAt: "asc" },
+    select: { id: true, startsAt: true, mode: true },
+  });
+  const source = conv?.lead?.source ?? null;
+  const formular = formAnswers(conv?.lead?.formData);
+  const { istTierStrecke } = await import("@/lib/whatsapp/tier-fragen");
+  const tier = istTierStrecke(source);
+  const kiFertig = await kiSatzAktiv({ customerId: s.chat.customerId, source, formular, angaben: conv?.qualificationData ?? null }).catch(() => false);
+  return {
+    conversationId,
+    customerId: s.chat.customerId,
+    leadId: s.chat.leadId,
+    phone: s.chat.contactPhone,
+    an: s.sp.an,
+    fensterOffen: !!conv?.windowExpiresAt && conv.windowExpiresAt.getTime() > now.getTime(),
+    botActive: !!conv?.botActive,
+    datenschutzUrl: s.sp.datenschutzUrl,
+    minderjaehrig: s.chat.minderjaehrig,
+    gesundheitAn: s.sp.gesundheitAn,
+    source,
+    termin,
+    text: {
+      an: s.sp.an,
+      name: s.sp.person.nom,
+      pronomen: pronomenAus(s.sp.vermittler.anrede ?? null, s.sp.person.nom),
+      firma: s.sp.firma,
+      tag: termin ? tagText(termin.startsAt, now) : null,
+      uhrzeit: termin ? uhrzeitText(termin.startsAt) : null,
+      video: termin ? termin.mode === "video" : undefined,
+      kiFertig,
+      // Tierkranken: ohne Gesundheitssatz (Tierdaten sind keine Gesundheitsdaten nach Art. 9 DSGVO)
+      gesundheit: s.sp.gesundheitAn && !tier,
+    },
+  };
+}
+
+/**
+ * Darf die Strecke für diesen Chat die Bitte als Flow schicken? Flow aktiv, Policen-Funktion an, Lead volljährig,
+ * Datenschutzhinweis vorhanden (Link im Formular). Reines Gesundheitsprodukt ohne Freigabe Kranken/BU/Leben: nein
+ * (dann wie bisher, lib/policen/assistent.ts).
+ */
+export async function policenFlowMoeglich(conversationId: string, now = new Date()): Promise<boolean> {
+  if (!flowSchalterAn()) return false;
+  const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { customerId: true } });
+  if (!conv || !(await aktiverFlow(conv.customerId))) return false;
+  const { policenAn } = await import("@/lib/policen/server");
+  if (!policenAn()) return false;
+  const c = await flowChat(conversationId, now);
+  if (!c || c.minderjaehrig || !c.datenschutzUrl) return false;
+  if (!c.gesundheitAn && gesundheitInText(c.source)) return false;
+  return true;
+}
+
+// ─── Senden ─────────────────────────────────────────────────────────────────
+
+export const MERKER_FLOW = "policen_flow";
+export type FlowArt = VorlagenArt | "weitere";
+/** Merker je gesendeter Flow-Nachricht (interne Nachricht): Token, Wortlaut, Hash, Textversion für den Nachweis. */
+export type FlowMerker = {
+  token: string;
+  art: FlowArt;
+  wortlaut: string;
+  hash: string;
+  textVersion: string;
+  datenschutzUrl: string;
+  waMessageId: string | null;
+  kiFertig: boolean;
+  gesundheit: boolean;
+  appointmentId: string | null;
+};
+
+const neuesToken = () => `pf1_${randomBytes(18).toString("base64url")}`;
+
+/** Name einer Vorlage (Meta: Kleinbuchstaben, Ziffern, Unterstrich), an den Flow gebunden (Hash). */
+export const vorlagenName = (art: VorlagenArt, an: Ansprache, jsonHash: string) => `pg_policen_${art.replace("erinnerung", "erinn")}_${jsonHash.slice(0, 6)}_${an}`;
+
+function nachrichtFuer(art: FlowArt, c: FlowChat, extra?: Nachricht): Nachricht {
+  if (art === "bitte") return chatNachricht(c.text);
+  if (art === "erinnerung1") return erinnerung1(c.text);
+  if (art === "erinnerung2") return erinnerung2(c.text);
+  return extra ?? bestaetigung(c.text, 1, true);
+}
+const PAYLOAD_KNOPF2: Record<VorlagenArt, string> = { bitte: PAYLOAD_SPAETER, erinnerung1: PAYLOAD_NEIN_DANKE, erinnerung2: PAYLOAD_NEIN_DANKE };
+
+/**
+ * Flow-Nachricht senden (Vorlage bzw. interaktiv, siehe oben) und den Merker setzen. vorweg: Text davor (z. B.
+ * KI-Hinweis des Assistenten). null = nicht gesendet (Flow nicht aktiv, Fenster zu ohne freigegebene Vorlage, kein
+ * Datenschutzhinweis).
+ */
+export async function sendeFlowNachricht(conversationId: string, art: FlowArt, o: { now?: Date; nachricht?: Nachricht; vorweg?: string | null } = {}): Promise<{ messageId: string | null; weg: "vorlage" | "flow" } | null> {
+  const now = o.now ?? new Date();
+  const c = await flowChat(conversationId, now);
+  if (!c || !c.datenschutzUrl) return null;
+  const flow = await aktiverFlow(c.customerId);
+  if (!flow) return null;
+  const n = nachrichtFuer(art, c, o.nachricht);
+  const daten = formularDaten(c.text, c.datenschutzUrl);
+  const wortlaut = formularWortlaut(daten);
+  const token = neuesToken();
+  const vName = art === "weitere" ? null : vorlagenName(art, c.an, flow.jsonHash);
+  const v = vName ? flow.vorlagen[vName] : undefined;
+  const vorlageOk = !!v && v.status === "approved" && (!c.fensterOffen || (v.category ?? "").toLowerCase() === "utility");
+  if (!vorlageOk && !c.fensterOffen) return null;
+  const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+  if (o.vorweg?.trim() && c.fensterOffen) await sendWhatsAppMessage({ customerId: c.customerId, to: c.phone, body: o.vorweg, sentBy: "bot" });
+  const datenText = daten as unknown as Record<string, string>;
+  const res =
+    vorlageOk && art !== "weitere"
+      ? await sendWhatsAppMessage({
+          customerId: c.customerId,
+          to: c.phone,
+          body: n.text,
+          footer: n.fusszeile,
+          sentBy: "bot",
+          vorlage: {
+            name: vName!,
+            language: TEMPLATE_LANGUAGE,
+            components: [
+              { type: "body", parameters: vorlagenParameter(art, c.text).map((text) => ({ type: "text", text })) },
+              { type: "button", sub_type: "flow", index: "0", parameters: [{ type: "action", action: { flow_token: token, flow_action_data: datenText } }] },
+              { type: "button", sub_type: "quick_reply", index: "1", parameters: [{ type: "payload", payload: PAYLOAD_KNOPF2[art] }] },
+            ],
+          },
+        })
+      : await sendWhatsAppMessage({
+          customerId: c.customerId,
+          to: c.phone,
+          body: n.text,
+          footer: n.fusszeile,
+          sentBy: "bot",
+          flow: { flowId: flow.flowId, token, cta: art === "weitere" ? KNOPF_WEITERE_SENDEN : KNOPF_POLICEN_SENDEN, screen: SCREEN_FOTOS, data: datenText },
+        });
+  const merker: FlowMerker = {
+    token,
+    art,
+    wortlaut,
+    hash: textHash(wortlaut),
+    textVersion: flowTextVersion(c.text.gesundheit),
+    datenschutzUrl: c.datenschutzUrl,
+    waMessageId: res.messageId,
+    kiFertig: c.text.kiFertig,
+    gesundheit: c.text.gesundheit,
+    appointmentId: c.termin?.id ?? null,
+  };
+  await prisma.message.create({ data: { conversationId, direction: "internal", kind: MERKER_FLOW, body: JSON.stringify(merker), sentBy: "bot" } });
+  return { messageId: res.messageId, weg: vorlageOk && art !== "weitere" ? "vorlage" : "flow" };
+}
+
+/** Bestätigung nach dem Absenden mit Knopf „Weitere senden“; ohne aktiven Flow als Text mit Fußzeile. */
+export async function sendeBestaetigung(conversationId: string, n: Nachricht, now = new Date()): Promise<void> {
+  const r = await sendeFlowNachricht(conversationId, "weitere", { now, nachricht: n }).catch((e) => {
+    console.error("[policen flow bestätigung]", e instanceof Error ? e.name : "Fehler");
+    return null;
+  });
+  if (r) return;
+  const c = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { customerId: true, contactPhone: true } });
+  if (!c) return;
+  const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+  await sendWhatsAppMessage({ customerId: c.customerId, to: c.contactPhone, body: n.fusszeile ? `${n.text}\n\n${n.fusszeile}` : n.text, sentBy: "bot" });
+}
+
+/** Merker zu einem Token (nur in den Chats dieses Leads). */
+export async function flowMerker(leadId: string, token: string): Promise<FlowMerker | null> {
+  if (!/^pf1_[A-Za-z0-9_-]{10,60}$/.test(token)) return null;
+  const rows = await prisma.message.findMany({
+    where: { conversation: { leadId }, direction: "internal", kind: MERKER_FLOW, body: { contains: token } },
+    select: { body: true },
+    take: 3,
+  });
+  for (const r of rows) {
+    try {
+      const m = JSON.parse(r.body ?? "{}") as FlowMerker;
+      if (m.token === token) return m;
+    } catch {
+      /* kaputter Merker */
+    }
+  }
+  return null;
+}
+
+// ─── Antwort des Formulars lesen und Dateien laden ──────────────────────────
+
+export type FlowDatei = { id: string | null; name: string | null; mime: string | null; sha256: string | null; cdnUrl: string | null; encryption: EncryptionMetadata | null };
+export type FlowAntwort = { token: string; ohneKi: boolean; dateien: FlowDatei[] };
+
+const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+
+/** response_json aus nfm_reply (JSON-Text oder Objekt). null = unlesbar bzw. ohne Token. */
+export function leseFlowAntwort(raw: unknown): FlowAntwort | null {
+  let j: Record<string, unknown> | null = null;
+  if (typeof raw === "string") {
+    try {
+      j = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  } else if (raw && typeof raw === "object") j = raw as Record<string, unknown>;
+  const token = str(j?.flow_token);
+  if (!j || !token) return null;
+  const liste = (v: unknown) => (Array.isArray(v) ? (v as Record<string, unknown>[]) : []);
+  const dateien = [...liste(j.fotos), ...liste(j.pdfs)].slice(0, MAX_DATEIEN_JE_SENDEN).map((d) => {
+    const em = d.encryption_metadata as Record<string, unknown> | undefined;
+    const encryption =
+      em && ["encrypted_hash", "iv", "encryption_key", "hmac_key", "plaintext_hash"].every((k) => typeof em[k] === "string") ? (em as unknown as EncryptionMetadata) : null;
+    return { id: str(d.id) ?? str(d.media_id), name: str(d.file_name), mime: str(d.mime_type), sha256: str(d.sha256), cdnUrl: str(d.cdn_url), encryption };
+  });
+  const ohne = j.ohne_ki;
+  return { token, ohneKi: ohne === true || ohne === "true", dateien };
+}
+
+export type FlowLadeErgebnis = { ok: true; data: Buffer } | { ok: false; grund: "zu_gross" | "fehler"; detail?: string };
+
+/**
+ * Datei aus dem Formular laden: mit encryption_metadata von der CDN-Adresse und entschlüsseln (krypto.ts), sonst über
+ * die Media-ID wie normale Bilder (lib/policen/media.ts, 360dialog) und den sha256 der Antwort prüfen.
+ */
+export async function ladeFlowDatei(apiKey: string, f: FlowDatei, maxBytes: number): Promise<FlowLadeErgebnis> {
+  if (f.cdnUrl && f.encryption) {
+    try {
+      if (!/^https:\/\//i.test(f.cdnUrl)) return { ok: false, grund: "fehler", detail: "url" };
+      const res = await fetch(f.cdnUrl);
+      if (!res.ok) return { ok: false, grund: "fehler", detail: `cdn ${res.status}` };
+      const enc = Buffer.from(await res.arrayBuffer());
+      if (enc.length > maxBytes + 64) return { ok: false, grund: "zu_gross" };
+      const data = entschluesseleFlowMedium(enc, f.encryption);
+      return data.length > maxBytes ? { ok: false, grund: "zu_gross" } : { ok: true, data };
+    } catch (e) {
+      return { ok: false, grund: "fehler", detail: e instanceof FlowMediaFehler ? e.grund : "laden" };
+    }
+  }
+  if (!f.id) return { ok: false, grund: "fehler", detail: "ohne id" };
+  const { ladeMedia } = await import("@/lib/policen/media");
+  const r = await ladeMedia(apiKey, f.id, maxBytes);
+  if (!r.ok) return r;
+  // Hash aus der Antwort (Base64 von SHA-256 der Datei); fehlt er, bleibt nur TLS als Schutz
+  if (f.sha256 && !pruefeSha256(r.data, f.sha256)) return { ok: false, grund: "fehler", detail: "hash" };
+  return { ok: true, data: r.data };
+}
+
+// ─── „Später“ ───────────────────────────────────────────────────────────────
+
+/**
+ * „Später“ (Quick Reply der Vorlage): weder Einwilligung noch Ablehnung (kein Nachweis). Antwort mit Knopf
+ * „Nein, danke“, wenn erinnert werden darf (Opt-in aus der Buchung, A8), sonst ohne Satz und Knopf. Danach geht die
+ * Strecke weiter (gateway.ts nachPolicenAntwort mit art „spaeter“).
+ */
+export async function handleSpaeter(conversationId: string, now = new Date()): Promise<{ handled: boolean; art?: string }> {
+  const c = await flowChat(conversationId, now);
+  if (!c) return { handled: false };
+  const { darfPolicenErinnern } = await import("@/lib/policen/server");
+  const erinnern = await darfPolicenErinnern(c.leadId, now).catch(() => false);
+  const { sendWhatsAppMessage } = await import("@/lib/whatsapp/gateway");
+  await sendWhatsAppMessage({ customerId: c.customerId, to: c.phone, body: spaeterAntwort(c.an, erinnern), sentBy: "bot", buttons: erinnern ? NEIN_DANKE_KNOEPFE : null });
+  const { audit } = await import("@/lib/audit");
+  await audit("policen.spaeter", { entity: "Lead", entityId: c.leadId, customerId: c.customerId, details: { erinnern }, actor: { role: "lead" } });
+  return { handled: true, art: "spaeter" };
+}
+
+// ─── Erinnerungen (höchstens 2, nur mit Opt-in aus der Buchung) ─────────────
+
+const berlinTag = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
+const berlinStunde = (d: Date) => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(d));
+
+/**
+ * Welche Erinnerung ist jetzt fällig? Rein. Erinnerung 1: 24 Std. nach der Bitte, nur wenn der Termin dann noch
+ * mindestens 2 Tage entfernt ist. Erinnerung 2: am Vortag ab 18 Uhr Berlin. Jede höchstens einmal, zusammen höchstens 2.
+ */
+export function faelligeErinnerung(o: { bitteAt: Date; terminAt: Date; gesendet: ("tag" | "vortag")[]; now: Date }): "erinnerung1" | "erinnerung2" | null {
+  if (o.gesendet.length >= 2 || o.terminAt.getTime() <= o.now.getTime()) return null;
+  const vortag = berlinTag(new Date(o.terminAt.getTime() - 24 * HOUR)) === berlinTag(o.now) && berlinStunde(o.now) >= 18;
+  if (vortag) return o.gesendet.includes("vortag") ? null : "erinnerung2";
+  if (o.gesendet.includes("tag")) return null;
+  const e1At = o.bitteAt.getTime() + 24 * HOUR;
+  if (o.now.getTime() < e1At || o.terminAt.getTime() - e1At < 2 * 24 * HOUR) return null;
+  // Spätestens bis zum Vortag (danach gilt nur noch Erinnerung 2)
+  if (berlinTag(o.now) >= berlinTag(new Date(o.terminAt.getTime() - 24 * HOUR))) return null;
+  return "erinnerung1";
+}
+
+/** Im WhatsApp-Cron (über termin-strecke.ts runPolicenErinnerung, Mo bis Sa 8 bis 20 Uhr): Erinnerungen der v2-Strecke. */
+export async function runPolicenFlowErinnerungen(now = new Date()): Promise<{ gesendet: number }> {
+  if (!flowSchalterAn()) return { gesendet: 0 };
+  const strecke = await import("@/lib/whatsapp/termin-strecke");
+  const bitten = await prisma.message.findMany({
+    where: { direction: "internal", kind: strecke.STRECKE.policenBitte, createdAt: { gte: new Date(now.getTime() - 30 * 24 * HOUR) }, body: { contains: '"flow":true' } },
+    select: { conversationId: true, body: true },
+    take: 300,
+  });
+  let gesendet = 0;
+  for (const b of bitten) {
+    try {
+      const appointmentId = String((JSON.parse(b.body ?? "{}") as { appointmentId?: string }).appointmentId ?? "");
+      const t = appointmentId ? await prisma.appointment.findUnique({ where: { id: appointmentId }, select: { status: true, startsAt: true, leadId: true } }) : null;
+      if (!t || t.status !== "booked" || t.startsAt.getTime() <= now.getTime()) continue;
+      const stand = await strecke.streckenStand(b.conversationId, appointmentId);
+      if (!stand.policenBitteAt) continue;
+      const arten = await prisma.message.findMany({ where: { conversationId: b.conversationId, direction: "internal", kind: strecke.STRECKE.policenErinnerung, body: { contains: appointmentId } }, select: { body: true } });
+      const schon = arten.map((x) => (JSON.parse(x.body ?? "{}") as { art?: string }).art).filter((x): x is "tag" | "vortag" => x === "tag" || x === "vortag");
+      const welche = faelligeErinnerung({ bitteAt: stand.policenBitteAt, terminAt: t.startsAt, gesendet: schon, now });
+      if (!welche) continue;
+      if (!(await strecke.policenErinnernErlaubt(b.conversationId, t.leadId, stand))) continue;
+      const conv = await prisma.conversation.findUnique({ where: { id: b.conversationId }, select: { botActive: true, optedOutAt: true } });
+      if (!conv?.botActive || conv.optedOutAt) continue;
+      const r = await sendeFlowNachricht(b.conversationId, welche, { now });
+      if (!r) continue;
+      await strecke.merke(b.conversationId, strecke.STRECKE.policenErinnerung, { appointmentId, art: welche === "erinnerung1" ? "tag" : "vortag", flow: true });
+      gesendet++;
+    } catch (err) {
+      console.error("[policen flow erinnerung]", err instanceof Error ? err.message.slice(0, 160) : err);
+    }
+  }
+  return { gesendet };
+}
+
+// ─── Flow und Vorlagen bei 360dialog anlegen (WhatsApp-Cron) ────────────────
+
+const CHECK_OFFEN_MS = 30 * 60 * 1000;
+const CHECK_RUHIG_MS = 6 * HOUR;
+const VORLAGEN_ARTEN: VorlagenArt[] = ["bitte", "erinnerung1", "erinnerung2"];
+const FORMEN: Ansprache[] = ["sie", "du"];
+
+/** Vorlage mit Flow-Knopf und Quick Reply (Meta: erst die Nicht-Quick-Reply-Gruppe, dann die Quick Replies). */
+export function vorlagenAntrag(art: VorlagenArt, an: Ansprache, o: { flowId: string; jsonHash: string }) {
+  const t = vorlagenText(art, an);
+  return {
+    name: vorlagenName(art, an, o.jsonHash),
+    category: "UTILITY" as const,
+    language: TEMPLATE_LANGUAGE,
+    components: [
+      { type: "BODY", text: t.text, example: { body_text: [t.beispiele] } },
+      ...(t.fusszeile ? [{ type: "FOOTER", text: t.fusszeile }] : []),
+      {
+        type: "BUTTONS",
+        buttons: [
+          { type: "FLOW", text: KNOPF_POLICEN_SENDEN, flow_id: o.flowId, flow_action: "navigate", navigate_screen: SCREEN_FOTOS },
+          { type: "QUICK_REPLY", text: t.knopf2 },
+        ],
+      },
+    ],
+  };
+}
+
+export type FlowSyncErgebnis = { customerId: string; status: string; vorlagen: VorlagenStand; fehler?: string };
+
+/** Flow anlegen bzw. veröffentlichen und die Vorlagen einreichen bzw. ihren Status holen (ein Kunde). */
+export async function syncPolicenFlowFuerKunde(customerId: string, now = new Date()): Promise<FlowSyncErgebnis> {
+  const acc = await prisma.whatsAppAccount.findUnique({ where: { customerId }, select: { status: true, apiKeyEnc: true } });
+  if (acc?.status !== "connected" || !acc.apiKeyEnc) return { customerId, status: "nicht_verbunden", vorlagen: {} };
+  const apiKey = decryptSecret(acc.apiKeyEnc);
+  const json = policenFlowJson();
+  const eigene = pruefeFlowJson(json);
+  if (eigene.length) throw new Error(`Flow JSON ungültig: ${eigene.join("; ")}`);
+  const hash = flowJsonHash(json);
+  const name = `policen_senden_${hash.slice(0, 8)}`;
+  let rec = await prisma.policenFlow.upsert({ where: { customerId }, create: { customerId }, update: {} });
+  const setze = (data: Parameters<typeof prisma.policenFlow.update>[0]["data"]) => prisma.policenFlow.update({ where: { customerId }, data });
+
+  if (rec.jsonHash !== hash || !rec.flowId || rec.status !== "veroeffentlicht") {
+    try {
+      let flowId = rec.jsonHash === hash ? rec.flowId : null;
+      if (!flowId) flowId = (await listFlows(apiKey).catch(() => [])).find((f) => f.name === name)?.id ?? null;
+      if (!flowId) {
+        const neu = await createFlow(apiKey, { name, flowJson: flowJsonText(json), publish: true });
+        flowId = neu.id;
+        if (neu.validationErrors.length) throw new Error(`validation_errors: ${JSON.stringify(neu.validationErrors).slice(0, 300)}`);
+      }
+      let remote = await getFlow(apiKey, flowId);
+      if (remote.status === "DRAFT") {
+        const fehler = await uploadFlowJson(apiKey, flowId, flowJsonText(json));
+        if (fehler.length) throw new Error(`validation_errors: ${JSON.stringify(fehler).slice(0, 300)}`);
+        await publishFlow(apiKey, flowId);
+        remote = await getFlow(apiKey, flowId);
+      }
+      const ok = remote.status === "PUBLISHED";
+      rec = await setze({
+        flowId,
+        name,
+        jsonHash: hash,
+        status: ok ? "veroeffentlicht" : "entwurf",
+        fehler: ok ? null : `Status bei Meta: ${remote.status || "unbekannt"}`,
+        publishedAt: ok ? now : null,
+        // Neuer Flow: neue Vorlagen (der Name enthält den Hash)
+        ...(rec.jsonHash !== hash ? { vorlagen: {} } : {}),
+        checkedAt: now,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message.slice(0, 400) : "Fehler";
+      await setze({ status: "fehler", fehler: msg, checkedAt: now });
+      reportError(e, "policen-flow-anlegen", { customer: customerId });
+      return { customerId, status: "fehler", vorlagen: {}, fehler: msg };
+    }
+  }
+  if (rec.status !== "veroeffentlicht" || !rec.flowId) return { customerId, status: rec.status, vorlagen: {} };
+
+  // Vorlagen einreichen bzw. Status holen
+  const stand: VorlagenStand = { ...((rec.vorlagen as VorlagenStand | null) ?? {}) };
+  let remote: Awaited<ReturnType<typeof listTemplates>> = [];
+  try {
+    remote = await listTemplates(apiKey);
+  } catch (e) {
+    reportError(e, "policen-flow-vorlagen-liste", { customer: customerId });
+  }
+  for (const art of VORLAGEN_ARTEN) {
+    for (const an of FORMEN) {
+      const req = vorlagenAntrag(art, an, { flowId: rec.flowId, jsonHash: hash });
+      const hit = remote.find((t) => t.name === req.name);
+      if (hit) {
+        stand[req.name] = { status: mapRemoteStatus(hit.status), category: hit.category?.toLowerCase() ?? null, grund: hit.rejectedReason };
+        continue;
+      }
+      if (stand[req.name]) continue; // eingereicht, noch nicht in der Liste: nicht doppelt einreichen
+      try {
+        const t = await createTemplate(apiKey, req);
+        stand[req.name] = { status: mapRemoteStatus(t.status), category: t.category?.toLowerCase() ?? "utility", grund: t.rejectedReason };
+      } catch (e) {
+        if (isNameInUseError(e)) stand[req.name] = { status: "pending", category: null, grund: null };
+        else {
+          stand[req.name] = { status: "fehler", category: null, grund: e instanceof Error ? e.message.slice(0, 200) : "Fehler" };
+          reportError(e, "policen-flow-vorlage", { customer: customerId, name: req.name });
+        }
+      }
+    }
+  }
+  await setze({ vorlagen: stand, checkedAt: now });
+  return { customerId, status: "veroeffentlicht", vorlagen: stand };
+}
+
+/**
+ * Im WhatsApp-Cron: nur mit POLICEN_FLOW=1. Verbundene Konten (ohne Support-Nummer, ruhende und Pay-per-Lead-Kunden,
+ * nur POLICEN_FLOW_KUNDEN, falls gesetzt), höchstens `limit` je Lauf; offene Prüfungen alle 30 Min., sonst alle 6 Std.
+ */
+export async function syncPolicenFlows(now = new Date(), opts: { limit?: number } = {}): Promise<{ geprueft: number; fehler: number }> {
+  if (!flowSchalterAn()) return { geprueft: 0, fehler: 0 };
+  const accounts = await prisma.whatsAppAccount.findMany({
+    where: { customerId: { not: SUPPORT_CUSTOMER_ID }, status: "connected", apiKeyEnc: { not: null }, customer: { dormantSince: null, NOT: NUR_PPL_WHERE } },
+    select: { customerId: true },
+    take: 500,
+  });
+  const recs = new Map((await prisma.policenFlow.findMany({ where: { customerId: { in: accounts.map((a) => a.customerId) } } })).map((r) => [r.customerId, r]));
+  let geprueft = 0;
+  let fehler = 0;
+  for (const { customerId } of accounts) {
+    if (geprueft >= (opts.limit ?? 5)) break;
+    if (!flowKundeErlaubt(customerId)) continue;
+    const r = recs.get(customerId);
+    const fertig = r?.status === "veroeffentlicht" && r.jsonHash === flowJsonHash() && Object.values((r.vorlagen as VorlagenStand | null) ?? {}).length === 6 && Object.values(r.vorlagen as VorlagenStand).every((v) => v.status === "approved" || v.status === "rejected");
+    const abstand = fertig ? CHECK_RUHIG_MS : CHECK_OFFEN_MS;
+    if (r?.checkedAt && now.getTime() - r.checkedAt.getTime() < abstand) continue;
+    geprueft++;
+    const e = await syncPolicenFlowFuerKunde(customerId, now).catch((err) => {
+      reportError(err, "policen-flow-sync", { customer: customerId });
+      return null;
+    });
+    if (!e || e.status === "fehler") fehler++;
+  }
+  return { geprueft, fehler };
+}

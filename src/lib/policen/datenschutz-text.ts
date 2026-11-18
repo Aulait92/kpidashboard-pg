@@ -5,7 +5,8 @@
 // (regeln.ts DATENSCHUTZ_VERSION). Fassung 18.11.2026 nach Text (c) der Rechtsprüfung
 // (docs/recht/policen-whatsapp-gesundheitsdaten.md): Einwilligung per Knopf, KI-Auslesen nur mit Einwilligung und erst,
 // wenn der KI-Dienst eingerichtet ist, Meta als Transportweg, Löschung 90 Tage nach dem Termin. Fassung .2 (A9): Ablehnung
-// nur des Auslesens per „ohne KI“ im Chat.
+// nur des Auslesens per „ohne KI“ im Chat. Fassung 2026-11-19.1: Abschnitt „Formular in WhatsApp“ (Policen-Strecke v2,
+// „Zustimmen & senden“, Häkchen „Lieber ohne KI: nur speichern“).
 
 import { a, type Ansprache } from "@/lib/ansprache";
 import { LOESCHFRIST_TAGE } from "@/lib/policen/regeln";
@@ -52,6 +53,15 @@ export function datenschutzPolicenAbschnitte(an: Ansprache, v: Vermittler): { ue
         an,
         "Die Unterlagen werden verschlüsselt in der EU gespeichert und sind nur für deinen Berater sichtbar; jeder Abruf wird protokolliert. Mit deiner Einwilligung dürfen die wichtigsten Vertragsdaten (zum Beispiel Versicherer, Tarif, Beitrag, Laufzeit, Kündigungsfrist, Versicherungssummen, Selbstbeteiligung) automatisch durch einen KI-Dienst mit Verarbeitung in der EU ausgelesen werden, der die Unterlagen nicht speichert und nicht zum Training nutzt. Gesundheitsangaben werden dabei nicht erfasst oder gespeichert. Möchtest du das nicht, antworte im Chat einfach „ohne KI“, auch nach deiner Zustimmung: Dann werden deine Unterlagen nur gespeichert und bereits ausgelesene Daten gelöscht. Solange dieser Dienst nicht eingerichtet ist, wertet keine KI deine Unterlagen aus. Dein Berater prüft ausgelesene Daten selbst; eine automatisierte Entscheidung über dich findet nicht statt. An Versicherer gehen die Unterlagen nicht ohne deine gesonderte Zustimmung.",
         "Die Unterlagen werden verschlüsselt in der EU gespeichert und sind nur für Ihren Berater sichtbar; jeder Abruf wird protokolliert. Mit Ihrer Einwilligung dürfen die wichtigsten Vertragsdaten (zum Beispiel Versicherer, Tarif, Beitrag, Laufzeit, Kündigungsfrist, Versicherungssummen, Selbstbeteiligung) automatisch durch einen KI-Dienst mit Verarbeitung in der EU ausgelesen werden, der die Unterlagen nicht speichert und nicht zum Training nutzt. Gesundheitsangaben werden dabei nicht erfasst oder gespeichert. Möchten Sie das nicht, antworten Sie im Chat einfach „ohne KI“, auch nach Ihrer Zustimmung: Dann werden Ihre Unterlagen nur gespeichert und bereits ausgelesene Daten gelöscht. Solange dieser Dienst nicht eingerichtet ist, wertet keine KI Ihre Unterlagen aus. Ihr Berater prüft ausgelesene Daten selbst; eine automatisierte Entscheidung über Sie findet nicht statt. An Versicherer gehen die Unterlagen nicht ohne Ihre gesonderte Zustimmung.",
+      ),
+    },
+    {
+      // Fassung 2026-11-19.1: Policen-Strecke v2 (Formular in WhatsApp, lib/policen/flow)
+      ueberschrift: "Formular in WhatsApp",
+      text: a(
+        an,
+        "Statt Dateien in den Chat zu schicken, kannst du das Formular „Policen senden“ direkt in WhatsApp nutzen. Dort wählst du Fotos oder PDFs aus und siehst die wichtigsten Punkte dieser Hinweise. Erst mit dem Knopf „Zustimmen & senden“ willigst du ein und die Dateien werden übertragen; vorher geht nichts an deinen Berater. Setzt du das Häkchen „Lieber ohne KI: nur speichern“, werden deine Unterlagen nur gespeichert und nicht automatisch ausgelesen. Deine Einwilligung wird mit Wortlaut, Fassung, Zeitpunkt und deiner Wahl zum Auslesen protokolliert. Jedes weitere Absenden über das Formular ist eine neue Einwilligung mit deiner dann gewählten Einstellung. Das Formular stellt WhatsApp (Meta) bereit; ausgewählte Dateien speichert WhatsApp nach eigenen Angaben bis zu 20 Tage zwischen.",
+        "Statt Dateien in den Chat zu schicken, können Sie das Formular „Policen senden“ direkt in WhatsApp nutzen. Dort wählen Sie Fotos oder PDFs aus und sehen die wichtigsten Punkte dieser Hinweise. Erst mit dem Knopf „Zustimmen & senden“ willigen Sie ein und die Dateien werden übertragen; vorher geht nichts an Ihren Berater. Setzen Sie das Häkchen „Lieber ohne KI: nur speichern“, werden Ihre Unterlagen nur gespeichert und nicht automatisch ausgelesen. Ihre Einwilligung wird mit Wortlaut, Fassung, Zeitpunkt und Ihrer Wahl zum Auslesen protokolliert. Jedes weitere Absenden über das Formular ist eine neue Einwilligung mit Ihrer dann gewählten Einstellung. Das Formular stellt WhatsApp (Meta) bereit; ausgewählte Dateien speichert WhatsApp nach eigenen Angaben bis zu 20 Tage zwischen.",
       ),
     },
     {
