@@ -12,7 +12,7 @@ import {
   verlaufAufbauen,
   type VerlaufNachricht,
 } from "@/lib/chat-ansicht";
-import { chatNaechsterSchritt, type ChatSchrittFakten } from "@/lib/chat-naechster-schritt";
+import { chatKopfTermin, chatNaechsterSchritt, KOPF_STATT_LEISTE, type ChatSchrittFakten } from "@/lib/chat-naechster-schritt";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
 
 // Di., 17.11.2026, 20:00 Uhr in Berlin
@@ -177,5 +177,33 @@ describe("Nächster Schritt im Chat", () => {
     expect(chatNaechsterSchritt({ ...basis, status: "Disqualifiziert" }).knopf).toBeNull();
     expect(chatNaechsterSchritt({ ...basis, stepState: "missing", botActive: false }).art).toBe("festlegen");
     expect(chatNaechsterSchritt(basis)).toMatchObject({ art: "termin_buchen", knopf: "Termin selbst buchen" });
+  });
+});
+
+describe("Handy-Kopfzeile: Termin und „Vorbereiten“ (Ole, 18.11.2026)", () => {
+  const t = (inStunden: number, dauerMin: number | null = null) => {
+    const startsAt = new Date(NOW + inStunden * H);
+    return { id: "t1", startsAt, endsAt: dauerMin == null ? null : new Date(startsAt.getTime() + dauerMin * 60_000) };
+  };
+  it("ohne Termin nichts", () => {
+    expect(chatKopfTermin(null, NOW)).toBeNull();
+  });
+  it("heute, morgen, später: Text klein, Wochentag ausgeschrieben", () => {
+    expect(chatKopfTermin(t(2), NOW)?.text).toBe("Termin heute 22:00");
+    expect(chatKopfTermin(t(15), NOW)?.text).toBe("Termin morgen 11:00");
+    expect(chatKopfTermin(t(63), NOW)?.text).toBe("Termin Fr., 20.11. 11:00");
+  });
+  it("„Vorbereiten“ nur in den nächsten 24 Stunden oder während des Termins", () => {
+    expect(chatKopfTermin(t(15), NOW)?.vorbereiten).toBe("/buyer/termine/t1/vorbereitung?von=kontakt");
+    expect(chatKopfTermin(t(24), NOW)?.vorbereiten).not.toBeNull();
+    expect(chatKopfTermin(t(25), NOW)?.vorbereiten).toBeNull();
+    expect(chatKopfTermin(t(-0.5), NOW)?.vorbereiten).not.toBeNull();
+    expect(chatKopfTermin(t(-2, 60), NOW)).toBeNull();
+  });
+  it("Termin-Leiste entfällt am Handy, andere Schritte bleiben", () => {
+    expect(KOPF_STATT_LEISTE.has("termin_vorbereiten")).toBe(true);
+    expect(KOPF_STATT_LEISTE.has("praesentation")).toBe(true);
+    expect(KOPF_STATT_LEISTE.has("antworten")).toBe(false);
+    expect(KOPF_STATT_LEISTE.has("videocall")).toBe(false);
   });
 });

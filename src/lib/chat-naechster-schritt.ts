@@ -94,3 +94,21 @@ export function chatNaechsterSchritt(f: ChatSchrittFakten): ChatSchritt {
   }
   return { art: "termin_buchen", titel: "Termin vereinbaren", text: "Buchen Sie einen Termin mit dem Kontakt.", knopf: "Termin buchen" };
 }
+
+/** Schritte, die am Handy keine eigene Leiste mehr bekommen: „Vorbereiten“ steht dort in der Kopfzeile (Ole, 18.11.2026). */
+export const KOPF_STATT_LEISTE: ReadonlySet<ChatSchrittArt> = new Set(["termin_vorbereiten", "praesentation"]);
+
+/**
+ * Handy-Kopfzeile des Chats (Ole, 18.11.2026): Termin-Teil der zweiten Zeile („Termin heute 11:00“, „Termin morgen 10:00“,
+ * „Termin Do., 20.11. 10:00“) und der kleine Knopf „Vorbereiten“, nur wenn der Termin in den nächsten 24 Stunden liegt
+ * oder gerade läuft.
+ */
+export function chatKopfTermin(t: { id: string; startsAt: Date; endsAt: Date | null } | null, now: number): { text: string; vorbereiten: string | null } | null {
+  if (!t) return null;
+  const start = t.startsAt.getTime();
+  const ende = t.endsAt?.getTime() ?? start + 60 * MIN;
+  if (ende <= now) return null;
+  const wann = terminKurz(t.startsAt, now).replace(/^(Heute|Morgen) /, (m) => m.toLowerCase());
+  const bald = start - now <= 24 * 60 * MIN;
+  return { text: `Termin ${wann}`, vorbereiten: bald ? `/buyer/termine/${t.id}/vorbereitung?von=kontakt` : null };
+}
