@@ -51,6 +51,7 @@ import {
   type VermittlerName,
 } from "@/lib/whatsapp/gespraech";
 import { folgefragen, spartenDesLeads } from "@/lib/preise/rechner-angaben";
+import { istTierStrecke } from "@/lib/whatsapp/tier-fragen";
 import { isOutreachPurpose } from "@/lib/whatsapp/templates";
 import { angabenOhneGesundheit, GESUNDHEITS_REGEL, istTierLead, ohneGesundheitsangaben, redactHealthText, splitHealthAnswers } from "@/lib/gesundheitsdaten";
 import { letzteAutomatischeMails } from "@/lib/mail/kontakt-mail";
@@ -726,7 +727,9 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   // der Buchung aus der Rechner-Tabelle (lib/preise/rechner-angaben.ts), Abschluss mit Kalenderfrage
   const videoOnly = agent.videoOnly !== false;
   const angabenQuelle = (angaben: unknown) => ({ formular: form.normal, angaben });
-  const offeneFolgefragen = (angaben: unknown) => folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
+  // Tierkranken: statt der Rechner-Tabelle feste Tierfragen vor dem Komplettcheck (lib/whatsapp/tier-fragen.ts)
+  const offeneFolgefragen = (angaben: unknown) =>
+    istTierStrecke(lead?.source) ? [] : folgefragen(spartenDesLeads(lead?.source ?? null, angabenQuelle(angaben)), angabenQuelle(angaben));
   const strecke = await import("@/lib/whatsapp/termin-strecke");
   const stand = upcoming ? await strecke.streckenStand(conversation.id, upcoming.id) : null;
   const folgeVorher = upcoming ? offeneFolgefragen(conversation.qualificationData) : [];
@@ -735,6 +738,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     await strecke.vertraegeAntwort(conversation.id, latest.body ?? "");
     logTestLead(lead, "vorvertraege erfasst");
     return;
+  }
+  // Antwort auf eine Tierfrage (TKV, vor dem Komplettcheck): speichern, nächste Frage bzw. Komplettcheck (ohne
+  // Assistent). Eine Rückfrage des Leads beantwortet der Assistent, danach kommt die Frage noch einmal.
+  if (upcoming && stand && strecke.tierFrageOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.tierFrageLetzte!.at && !opts.anstoss && !opts.knopfZeit) {
+    if (await strecke.tierAntwort(conversation.id, latest.body ?? "")) {
+      logTestLead(lead, "tierfrage beantwortet", { key: stand.tierFrageLetzte!.key });
+      return;
+    }
   }
   // Schluss der Strecke (P2, Ole 17.11.2026): Antwort auf die Frage nach der Adresse (übernehmen, einladen, kurze
   // Antwort) bzw. „ja“ auf „Stimmt die Adresse?“ (ohne Assistent); sonst antwortet der Assistent
@@ -1267,7 +1278,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
 
   // Gebucht: kurze Buchungsnachricht (Termin fett, Link), danach als eigene Nachricht der Komplettcheck (Reihenfolge P2,
   // Ole 17.11.2026; die Adresse für die Einladung kommt erst am Schluss)
-  let zweite: { text: string; buttons: Knopf[] | null; merker?: string } | null = null;
+  let zweite: { text: string; buttons: Knopf[] | null; merker?: string; daten?: Record<string, unknown> } | null = null;
   let knoepfe: Knopf[] | null = null;
   /** Nachricht der Strecke statt eigener Worte des Assistenten (Merker nach dem Senden) */
   let schritt: import("@/lib/whatsapp/termin-strecke").Schritt | null = null;
@@ -1275,8 +1286,13 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
   if (gebucht) {
     const fresh = await prisma.conversation.findUnique({ where: { id: conversation.id }, select: { qualificationData: true } });
     finalText = buchungsText({ an: ansprache, start: gebucht.start, mode: gebucht.mode, meetUrl: gebucht.meetUrl, person });
-    const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData) });
-    zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+    // Tierkranken: zuerst die Tierfragen (Gesundheit), sonst der Komplettcheck
+    const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
+    if (sk?.termin) zweite = await strecke.ersteNachBuchung(sk);
+    else {
+      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, fresh?.qualificationData) });
+      zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+    }
   } else if (zug.vorschlag) {
     finalText = zug.vorschlag.text;
     knoepfe = terminKnoepfe(zug.vorschlag.starts);
@@ -1297,9 +1313,14 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     knoepfe = knoepfeFuerText(finalText, folgeVorher);
     const abschlussDa = !!stand?.abschlussAt || outbound.some((m) => KALENDER_FRAGE_RE.test(m.body ?? "") || EMAIL_BESTAETIGEN_RE.test(m.body ?? ""));
     if (upcoming && stand && !stand.komplettFrageAt && !abschlussDa && !knoepfe) {
-      // Termin, Strecke noch nicht begonnen (z. B. über die Buchungsseite gebucht): danach der Komplettcheck
-      const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData) });
-      zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+      // Termin, Strecke noch nicht begonnen (z. B. über die Buchungsseite gebucht): danach der Komplettcheck bzw. bei
+      // Tierkranken die (offene) Tierfrage
+      const sk = await strecke.streckenKontext(conversation.id).catch(() => null);
+      if (sk?.termin?.id === upcoming.id) zweite = await strecke.ersteNachBuchung(sk);
+      else {
+        const k = strecke.komplettcheckNachricht({ an: ansprache, person, familie: istFamilie(form.normal, conversation.qualificationData) });
+        zweite = { text: k.text, buttons: k.buttons, merker: strecke.STRECKE.komplettFrage };
+      }
     } else if (upcoming && stand && strecke.policenBitteOffen(stand) && latest?.direction === "inbound" && latest.createdAt > stand.policenBitteAt! && !knoepfe) {
       // Lead hat auf die Policen-Bitte geschrieben (statt Knopf): nach der Antwort des Assistenten der Schluss
       const k = await strecke.streckenKontext(conversation.id);
@@ -1353,7 +1374,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: zweite.text, sentBy: "bot", buttons: zweite.buttons });
       if (zweite.merker) {
         const appt = await prisma.appointment.findFirst({ where: { conversationId: conversation.id, status: "booked", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, select: { id: true } });
-        if (appt) await persistInternal(conversation.id, zweite.merker, { appointmentId: appt.id });
+        if (appt) await persistInternal(conversation.id, zweite.merker, { appointmentId: appt.id, ...(zweite.daten ?? {}) });
       }
       logTestLead(lead, "strecke sent", { merker: zweite.merker ?? null });
     }
