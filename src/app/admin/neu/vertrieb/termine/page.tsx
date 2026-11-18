@@ -56,7 +56,7 @@ function kennzahlen(k: TerminKennzahlen): Kennzahl[] {
       hinweis: k.erschienen.basis ? `${k.erschienen.erschienen} von ${k.erschienen.basis} Terminen` : "noch kein Ergebnis",
     },
     { label: "Mit Angebot (30 Tage)", wert: String(k.angebot.anzahl), hinweis: `von ${k.angebot.gehalten} Gesprächen` },
-    { label: "Gewonnen (30 Tage)", wert: String(k.gewonnen.anzahl), hinweis: `von ${k.gewonnen.kontakte} Kontakten`, ton: k.gewonnen.anzahl ? "gut" : undefined, href: href("30", "gewonnen") },
+    { label: "Abschlüsse (30 Tage)", wert: String(k.gewonnen.anzahl), hinweis: `von ${k.gewonnen.kontakte} Kontakten`, ton: k.gewonnen.anzahl ? "gut" : undefined, href: href("30", "gewonnen") },
   ];
 }
 

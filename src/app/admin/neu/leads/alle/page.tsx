@@ -1,3 +1,4 @@
+import { statusLabel } from "@/lib/products";
 import Link from "next/link";
 import { Download, Inbox, Phone } from "lucide-react";
 import { Badge, ButtonLink, Card, EmptyState } from "@/components/ui";
@@ -130,7 +131,7 @@ async function Alle({ sp }: { sp: Suche }) {
                             <TestLeadBadge />
                           </span>
                         ) : null}
-                        {storno ? <Badge tone="danger">Storno</Badge> : l.closedAt ? <Badge tone="success">Abschluss</Badge> : <Badge>{l.status ?? "Neu"}</Badge>}
+                        {storno ? <Badge tone="danger">Storno</Badge> : l.closedAt ? <Badge tone="success">Abschluss</Badge> : <Badge>{statusLabel(l.status) ?? "Neu"}</Badge>}
                       </div>
                       <div className="mt-0.5 truncate text-xs text-[color:var(--muted)]">
                         {dt(l.createdAt)} · {l.customer.name}

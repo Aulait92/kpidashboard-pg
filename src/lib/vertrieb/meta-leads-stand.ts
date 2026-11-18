@@ -16,7 +16,7 @@ export const STAND: Record<StandKey, { label: string; tone: "neutral" | "brand" 
   erschienen: { label: "Erschienen", tone: "info" },
   nicht_erschienen: { label: "Nicht erschienen", tone: "warning" },
   angebot: { label: "Angebot", tone: "info" },
-  gewonnen: { label: "Gewonnen", tone: "success" },
+  gewonnen: { label: "Abschluss", tone: "success" },
   verloren: { label: "Verloren", tone: "danger" },
 };
 
@@ -129,7 +129,7 @@ const berlinTag = (d: Date) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Eur
 export const META_CHIPS: { key: string; label: string; match: (s: StandKey) => boolean }[] = [
   { key: "nicht-erreicht", label: "Nicht erreicht", match: (s) => s === "nicht_erreicht" },
   { key: "termin", label: "Termin gebucht", match: (s) => s === "termin" },
-  { key: "gewonnen", label: "Gewonnen", match: (s) => s === "gewonnen" },
+  { key: "gewonnen", label: "Abschluss", match: (s) => s === "gewonnen" },
   { key: "verloren", label: "Verloren", match: (s) => s === "verloren" },
 ];
 

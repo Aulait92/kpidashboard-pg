@@ -776,7 +776,7 @@ export async function loadZahlen(now = new Date(), sicht: Sicht = "gesamt"): Pro
         { name: "Geantwortet", v: replied.length },
         { name: "Termin", v: meetings.length },
         { name: "Angebot", v: offersSent.length },
-        { name: "Gewonnen", v: offersAccepted },
+        { name: "Abschluss", v: offersAccepted },
       ],
       openOffers: openOffers.length,
       openMrr: r2(openMrr),

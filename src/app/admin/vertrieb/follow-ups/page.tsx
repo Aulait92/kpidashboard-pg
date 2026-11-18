@@ -48,7 +48,7 @@ export default async function FollowupsPage() {
           <summary className="inline-flex min-h-10 cursor-pointer items-center font-medium text-sky-700">So läuft es</summary>
           <p className="mt-1">
             Mail 1 geht als Antwort im selben Instantly-Thread raus (gleiches Postfach), nach 5 Werktagen ohne Antwort Mail 2, danach die Aufgabe „Wieder melden“.
-            Versand werktags 8 bis 17 Uhr. Jede Antwort, Abmeldung oder die Stufen Termin, Gewonnen, Verloren, Ungültig stoppen sofort.
+            Versand werktags 8 bis 17 Uhr. Jede Antwort, Abmeldung oder die Stufen Termin, Abschluss, Verloren, Ungültig stoppen sofort.
           </p>
         </details>
       </div>

@@ -231,7 +231,7 @@ describe("Später-Follow-up", () => {
     await prisma.salesContact.update({ where: { id: d.id }, data: { stage: "GEWONNEN" } });
     calls = [];
     const r = await sendFollowupStep(fd!.id, { now: MONDAY });
-    expect(r.stopped).toBe("Stufe „Gewonnen“");
+    expect(r.stopped).toBe("Stufe „Abschluss“");
     expect(replyPosts()).toHaveLength(0);
   });
 

@@ -154,7 +154,7 @@ export async function loadVertriebZahlen(rangeKey?: string, now = new Date()): P
       { key: "replied", name: "Geantwortet", v: replied.size, ...cap([...replied.values()]), note: "ohne Abwesenheitsnotizen" },
       { key: "meetings", name: "Termin", v: meetingsHeld, ...cap(meetingRows), note: cancelled ? `ohne ${cancelled} abgesagte (in der Liste ausgegraut)` : undefined },
       { key: "offers", name: "Angebot", v: offers.length, ...cap(offerRows), note: ablehnt.length ? `abgelehnt: ${ablehnGruendeText(ablehnt)}` : undefined },
-      { key: "won", name: "Gewonnen", v: won.length, ...cap(wonRows) },
+      { key: "won", name: "Abschluss", v: won.length, ...cap(wonRows) },
     ],
     winRate: offers.length ? acceptedOfSent / offers.length : null,
     offersSentInRange: offers.length,
