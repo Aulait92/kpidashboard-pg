@@ -2206,23 +2206,40 @@ model SalesBookingType {
 
 // Eingehende Leads (Meta Lead Ads über Zapier/Make, Landingpage-Formulare …)
 model SalesInboundLead {
-  id        String        @id @default(cuid())
-  contactId String?
-  contact   SalesContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  source    String // META_ADS, INBOUND, …
-  name      String?
-  email     String?
-  phone     String?
-  campaign  String?
-  ad        String?
-  form      String?
-  answers   String?
-  created   Boolean       @default(false) // neuer Kontakt angelegt?
-  payload   Json
-  createdAt DateTime      @default(now())
+  id         String        @id @default(cuid())
+  contactId  String?
+  contact    SalesContact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  source     String // META_ADS, INBOUND, …
+  name       String?
+  email      String?
+  phone      String?
+  campaign   String?
+  ad         String?
+  form       String?
+  answers    String?
+  created    Boolean       @default(false) // neuer Kontakt angelegt?
+  payload    Json
+  /// Meta-Lead-ID (leadgen_id): Dublettenschutz, wenn derselbe Lead direkt (Meta-Webhook) und über den Zap kommt
+  externalId String?       @unique
+  createdAt  DateTime      @default(now())
 
   @@index([createdAt])
   @@index([contactId])
+  @@index([source, createdAt])
+}
+
+/// Meta-Leadformular, das dem Vertrieb gehört (Oles eigene Vermittler-Leads, Ole 18.11.2026): Leads dieses
+/// Formulars gehen über /api/meta/leadgen direkt in den Vertrieb (lib/vertrieb/inbound.ts) statt zu einem Kunden.
+/// Zuordnung im Admin unter Liefern → Lead-Eingang („Vertrieb (eigene Vermittler-Leads)“).
+model VertriebLeadForm {
+  id         String    @id @default(cuid())
+  formId     String    @unique
+  pageId     String?
+  formName   String?
+  active     Boolean   @default(true)
+  lastLeadAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 // ─── Onboarding (ab Vertragsannahme) ───────────────────────────────────

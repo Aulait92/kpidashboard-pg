@@ -25,6 +25,7 @@ export async function POST(req: Request) {
   }
   const items = Array.isArray(body) ? body : [body];
   const results = [];
-  for (const item of items) results.push(await handleInboundLead(item, source));
+  // Meta-Leads: Push (und Telegram) an Ole; derselbe Lead auch direkt über /api/meta/leadgen zählt nur einmal
+  for (const item of items) results.push(await handleInboundLead(item, source, { notify: source === "META_ADS" }));
   return Response.json({ results });
 }

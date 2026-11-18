@@ -5302,5 +5302,65 @@
   "bereich": "geld",
   "status_neu": "vorhanden",
   "ort_neu": "src/components/admin-neu/zahlen/auswertung.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Formular dem Vertrieb zuordnen (eigene Vermittler-Leads statt Kunde)",
+  "quelle": "app/admin/neu/leads/page.tsx",
+  "neu": "Lead-Eingang › Formular zuordnen › Ziel",
+  "status": "neu",
+  "demo_view": "leads",
+  "id": "lead-eingang--formular-dem-vertrieb-zuordnen",
+  "bereich": "liefern",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Vertriebsformulare in den Zuordnungen (pausieren, zuletzt)",
+  "quelle": "app/admin/neu/leads/page.tsx",
+  "neu": "Lead-Eingang › Zuordnungen",
+  "status": "neu",
+  "demo_view": "leads",
+  "id": "lead-eingang--vertriebsformulare-in-den-zuordnungen",
+  "bereich": "liefern",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/leads/page.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Ansicht Meta-Leads (Quelle: Meta-Formular) neben Alle Kontakte",
+  "quelle": "app/admin/neu/vertrieb/kontakte/page.tsx",
+  "neu": "Verkaufen › Kontakte › Meta-Leads",
+  "status": "neu",
+  "demo_view": "vertrieb-kontakte",
+  "id": "meta-leads--ansicht-quelle-meta-formular",
+  "bereich": "verkaufen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/page.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Trichter der Meta-Leads mit Zeitraum (30, 90 Tage, alle) und Stand-Filtern",
+  "quelle": "app/admin/neu/vertrieb/kontakte/page.tsx",
+  "neu": "Verkaufen › Kontakte › Meta-Leads",
+  "status": "neu",
+  "demo_view": "vertrieb-kontakte",
+  "id": "meta-leads--trichter-und-zeitraum",
+  "bereich": "verkaufen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/meta-leads.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Meta-Leads mit Eingang, Stand und nächstem Schritt (rot, wenn keiner oder überfällig)",
+  "quelle": "app/admin/neu/vertrieb/kontakte/page.tsx",
+  "neu": "Verkaufen › Kontakte › Meta-Leads",
+  "status": "neu",
+  "demo_view": "vertrieb-kontakte",
+  "id": "meta-leads--liste-mit-stand-und-naechstem-schritt",
+  "bereich": "verkaufen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/vertrieb/meta-leads.tsx"
  }
 ]
