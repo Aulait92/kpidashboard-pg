@@ -1196,8 +1196,8 @@
   "demo_view": "kontakt",
   "id": "followup-actions-redraftfollowupaction--spaeter-follow-up-neu-schreiben-ohne-oberflaeche",
   "bereich": "verkaufen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/vertrieb/kontakte/[id]/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/kontakte/[id]",
@@ -1472,8 +1472,8 @@
   "demo_view": "e-followups",
   "id": "followup-actions-planexistingaction--bestand-jetzt-pruefen-bestehende-spaeter",
   "bereich": "einstellungen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/follow-ups/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/buchungsseite",
@@ -1568,8 +1568,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen",
   "bereich": "werkzeuge",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1580,8 +1580,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-importinstantlyaction--instantly-csv-importieren",
   "bereich": "werkzeuge",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1592,8 +1592,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-connectcalendlyaction--calendly-verbinden-und-termine-abgleichen",
   "bereich": "werkzeuge",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1616,8 +1616,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-importcoldcrmaction--daten-aus-altem-cold-crm-uebernehmen",
   "bereich": "werkzeuge",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1628,8 +1628,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-replacecoldcrmaction--vertrieb-neu-importieren-ersetzt-alles",
   "bereich": "werkzeuge",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1640,8 +1640,8 @@
   "demo_view": "e-anbindungen",
   "id": "actions-importwaalaxyaction--waalaxy-import-ohne-oberflaeche",
   "bereich": "werkzeuge",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/anbindungen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/vertrieb/import (Anbindungen)",
@@ -1688,8 +1688,8 @@
   "demo_view": "kunden",
   "id": "page-redirect--weiterleitung-auf-kunden-pipeline-keine-eigene",
   "bereich": "betreuen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden",
@@ -1724,8 +1724,8 @@
   "demo_view": "kunden",
   "id": "kunden-tabs--unterreiter-uebersicht-pipeline-leads-pay-per",
   "bereich": "betreuen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/kunden/pipeline",
@@ -2384,8 +2384,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-settemplateapprovedaction--vorlage-von-hand-als-freigegeben-markieren",
   "bereich": "betreuen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (je Kunde, auch im Kunden-Reiter)",
@@ -2396,8 +2396,8 @@
   "demo_view": "kunde-whatsapp",
   "id": "actions-saveoutreachsettingsaction--erstanschreiben-einstellungen-alt-ohne",
   "bereich": "betreuen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/kunden/[id]/whatsapp/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/whatsapp/settings (global)",
@@ -4076,8 +4076,8 @@
   "demo_view": "zahlen",
   "id": "zahlen-tabs--link-leads-werbung-dashboard",
   "bereich": "geld",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/zahlen/buchungen",
@@ -4688,8 +4688,8 @@
   "demo_view": "e-rechnung",
   "id": "actions-customerfootersaction--fusszeile-bei-bestehenden-kunden-setzen",
   "bereich": "einstellungen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/rechnungsangaben/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/rechnungsangaben",
@@ -4700,8 +4700,8 @@
   "demo_view": "e-rechnung",
   "id": "actions-countinvoicesaction--finalisierte-rechnungen-zaehlen",
   "bereich": "einstellungen",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/einstellungen/rechnungsangaben/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/kosten",
@@ -4784,8 +4784,8 @@
   "demo_view": "zahlen-kosten",
   "id": "actions-uploadcsvaction--csv-hochladen-commerzbank-amex-automatisch",
   "bereich": "geld",
-  "status_neu": "vorhanden",
-  "ort_neu": "src/app/admin/neu/zahlen/kosten/page.tsx"
+  "status_neu": "entfernt",
+  "ort_neu": ""
  },
  {
   "heute": "/admin/einstellungen/bank",

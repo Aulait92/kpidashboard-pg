@@ -21,6 +21,30 @@ export const OFFEN: Record<string, readonly string[]> = {
   einstellungen: OFFEN_EINSTELLUNGEN,
 };
 
+/**
+ * Im neuen Admin entfernt (Admin v2, Paket A4, „sofort“-Liste aus docs/ux/admin-v2-plan.md, Ole 17.11.2026). Die alten
+ * Seiten und Server Actions bleiben, solange der alte Admin sie nutzt; im neuen Admin steht die id nirgends mehr
+ * (Test: tests/unit/admin-neu-inventar.test.ts). Nummern wie in docs/ux/admin-v2/zuordnung.md.
+ */
+export const ENTFERNT: string[] = [
+  "followup-actions-redraftfollowupaction--spaeter-follow-up-neu-schreiben-ohne-oberflaeche", // F100
+  "actions-importcoldcrmaction--daten-aus-altem-cold-crm-uebernehmen", // F135
+  "page-redirect--weiterleitung-auf-kunden-pipeline-keine-eigene", // F141
+  "kunden-tabs--unterreiter-uebersicht-pipeline-leads-pay-per", // F144
+  "actions-saveoutreachsettingsaction--erstanschreiben-einstellungen-alt-ohne", // F200
+  "zahlen-tabs--link-leads-werbung-dashboard", // F340
+  "actions-connectcalendlyaction--calendly-verbinden-und-termine-abgleichen", // F133, nur noch eigene Buchungsseite
+  "actions-importwaalaxyaction--waalaxy-import-ohne-oberflaeche", // F137
+  "actions-uploadcsvaction--csv-hochladen-commerzbank-amex-automatisch", // F399, Bankverbindung reicht
+  "followup-actions-planexistingaction--bestand-jetzt-pruefen-bestehende-spaeter", // F123
+  "actions-replacecoldcrmaction--vertrieb-neu-importieren-ersetzt-alles", // F136
+  "actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen", // F131
+  "actions-importinstantlyaction--instantly-csv-importieren", // F132
+  "actions-settemplateapprovedaction--vorlage-von-hand-als-freigegeben-markieren", // F199 (im neuen Admin per CSS ausgeblendet)
+  "actions-customerfootersaction--fusszeile-bei-bestehenden-kunden-setzen", // F391
+  "actions-countinvoicesaction--finalisierte-rechnungen-zaehlen", // F392
+];
+
 /** Funktionen ohne Oberfläche, vom Neudesign nicht betroffen (bleiben, wie sie sind). */
 export const BLEIBT: string[] = [
   "route-get--diagnose-openai-erreichbarkeit-nur-technik-keine",

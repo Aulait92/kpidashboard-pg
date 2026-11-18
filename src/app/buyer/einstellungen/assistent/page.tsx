@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, MessageSquareText } from "lucide-react";
+import { ChevronRight, MessageSquareText, Route } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { getBuyerContext } from "@/lib/buyer-context";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +15,8 @@ export const metadata = { title: "Assistent | performancegrowth" };
 
 // Einstellungen → Assistent (Ole, 17.11.2026, Paket M9): was in Ihrem Namen an Ihre Kunden rausgeht. Oben die E-Mails
 // (Erklärschritt „Service-Mails in Ihrem Namen“, danach Stufe je Mail und Kopie), darunter die WhatsApp-Vorlagen.
-// Später kommt hier der Ablauf dazu (P6/P8, Einstellungen → Assistent → Ablauf).
+// Ganz oben der Ablauf (Paket P6, Einstellungen → Assistent → Ablauf: Zeitleiste der Standard-Abfolge; P8 ergänzt dort
+// das Onboarding).
 export default async function AssistentPage() {
   const ctx = await getBuyerContext();
   if (!ctx) redirect("/login");
@@ -34,6 +35,23 @@ export default async function AssistentPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:px-6">
       <PageHeader back="/buyer/einstellungen" title="Assistent" />
       <div className="space-y-6" data-assistent-einstellungen>
+        <section>
+          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Ablauf</h2>
+          <Link
+            href="/buyer/einstellungen/assistent/ablauf"
+            className="flex min-h-[64px] items-center gap-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white px-5 py-3 shadow-[var(--shadow-sm)] transition hover:bg-[color:var(--surface-sunken)]"
+            data-assistent-ablauf
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-sky-600 text-white">
+              <Route className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">Was Ihr Assistent wann schickt</span>
+              <span className="line-clamp-2 block text-sm text-[color:var(--muted)]">Vom ersten Kontakt bis zum Nachfassen, mit Beispieltexten</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--border-strong)]" />
+          </Link>
+        </section>
         <section id="mails">
           <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">E-Mails in Ihrem Namen</h2>
           <ServiceMails

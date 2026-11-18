@@ -33,6 +33,7 @@ import {
   ERSTANSCHREIBEN_V7,
   erstanschreibenText,
   erstanschreibenV6Params,
+  erstanschreibenV8Params,
   ersteFrage,
   ersteFrageKnoepfe,
   frageOhneFragezeichen,
@@ -160,33 +161,38 @@ describe("Bereitlegen: höchstens 3 Punkte, nichts doppelt", () => {
           expect(l.length, produkt).toBeLessThanOrEqual(MAX_BEREITLEGEN);
           expect(new Set(l).size).toBe(l.length);
           for (const x of l) expect(x).not.toMatch(/[–—]/);
-          if (komplettcheck) expect(l[0]).toMatch(/bisherigen Policen/);
+          // P2: „bestehende Verträge und Policen“ nur bei Komplettcheck, dann oben; IBAN zuletzt
+          if (komplettcheck) expect(l[0]).toMatch(/bestehenden Verträge und Policen/);
+          else expect(l.join(" ")).not.toMatch(/bestehenden Verträge|bisherigen Policen/);
         }
       });
     }
   }
 
-  it("Privatschutz: Policen, Wohnfläche nur, falls nicht schon erfragt, IBAN; nie mehr als 3 bei vielen Sparten", () => {
+  it("Privatschutz: Wohnfläche nur, falls nicht schon erfragt, Geburtsdaten bei Familie, IBAN; Verträge nur mit Komplettcheck; nie mehr als 3", () => {
     const sparten: RechnerSparte[] = ["haftpflicht", "hausrat"];
+    const GEB = "die Geburtsdaten aller Personen, die mitversichert werden sollen";
+    const IBAN = "Ihre IBAN, falls Sie direkt abschließen möchten";
     const offen = bereitlegenListe("Privatschutz", sparten, "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: {} } });
-    expect(offen).toEqual(["Ihre bisherigen Policen, falls vorhanden", "die Wohnfläche Ihrer Wohnung", "Ihre IBAN, falls Sie direkt abschließen möchten"]);
+    expect(offen).toEqual(["die Wohnfläche Ihrer Wohnung", GEB, IBAN]);
     const erfragt = bereitlegenListe("Privatschutz", sparten, "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: { wohnflaeche: "90 m²" } } });
-    expect(erfragt).toEqual(["Ihre bisherigen Policen, falls vorhanden", "Ihre IBAN, falls Sie direkt abschließen möchten"]);
+    expect(erfragt).toEqual([GEB, IBAN]);
+    // Geburtsdaten bei Familie für alle Sparten (nicht nur Unfall), ohne Familie nicht
+    expect(bereitlegenListe("Privatschutz", ["haftpflicht"], "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: {} } })).toEqual([GEB, IBAN]);
+    expect(bereitlegenListe("Privatschutz", ["haftpflicht"], "sie", { quelle: { formular: [{ label: "Lebenssituation", value: "Single" }], angaben: {} } })).toEqual([IBAN]);
+    expect(bereitlegenListe("Privatschutz", ["haftpflicht"], "sie", { quelle: { formular: testLeadAnswers("Privatschutz"), angaben: {} }, komplettcheck: true })).toEqual(["Ihre bestehenden Verträge und Policen", GEB, IBAN]);
     const viele = bereitlegenListe("Privatschutz", ["haftpflicht", "hausrat", "unfall", "wohngebaeude", "tierhalter-hund"], "sie", { quelle: { formular: [{ label: "Lebenssituation", value: "Familie mit Kindern" }], angaben: {} } });
     expect(viele).toHaveLength(3);
   });
 });
 
 describe("Buchung, Komplettcheck und Abschluss", () => {
-  it("Buchungsnachricht verbindlich, ohne Frage, ohne erfundene Knappheit", () => {
+  it("Buchungsnachricht kurz, ohne Frage, ohne erfundene Knappheit (Sie und Du)", () => {
     const t = buchungsText({ an: "sie", start: new Date("2026-11-18T09:00:00Z"), mode: "video", meetUrl: "https://meet.google.com/abc-defg-hij", person: PERSON });
-    expect(t).toBe(
-      "Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*.\nHier ist Ihr Link: https://meet.google.com/abc-defg-hij\n\n" +
-        "Herr Kannapinn hält sich diese Zeit nur für Sie frei und bereitet Ihre Beiträge vorab vor. Bitte seien Sie pünktlich dabei, der Link funktioniert direkt im Handy-Browser. Falls doch etwas dazwischenkommt, schreiben Sie mir einfach hier, dann finden wir eine neue Zeit.",
-    );
-    expect(t).not.toMatch(/\?|nur noch|knapp|letzte/);
+    expect(t).toBe("Ihr Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*. Herr Kannapinn hält sich die Zeit nur für Sie frei und bereitet Ihre Beiträge vor.\nIhr Link: https://meet.google.com/abc-defg-hij");
+    expect(t).not.toMatch(/\?|nur noch|knapp|letzte|[–—]/);
     const du = buchungsText({ an: "du", start: new Date("2026-11-18T09:00:00Z"), mode: "video", meetUrl: "https://meet.google.com/x", person: PERSON_DU });
-    expect(du).toContain("Ole hält sich diese Zeit nur für dich frei und bereitet deine Beiträge vorab vor. Bitte sei pünktlich dabei");
+    expect(du).toBe("Dein Videotermin ist gebucht: *Mittwoch, 18.11. um 10 Uhr*. Ole hält sich die Zeit nur für dich frei und bereitet deine Beiträge vor.\nDein Link: https://meet.google.com/x");
   });
 
   it("Komplettcheck: Sie, Familie, Du", () => {
@@ -216,7 +222,7 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
     }
   });
 
-  it("Abschluss nach den Verträgen: Policen oben, Kalenderfrage zuletzt", () => {
+  it("Schluss nach den Verträgen: Bereitlegen in einer Zeile (Verträge zuerst), Adresse zuletzt", () => {
     const ab = abschlussText({
       an: "sie",
       person: PERSON,
@@ -226,10 +232,11 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
       einleitung: abschlussEinleitung("sie", PERSON, "vertraege"),
     });
     expect(ab).toBe(
-      "Danke, das schaut sich Herr Kannapinn im Termin mit an.\n\nBitte legen Sie zum Termin bereit:\n• Ihre bisherigen Policen, gern auch von Ihren anderen Verträgen\n• Ihre IBAN, falls Sie direkt abschließen möchten\n\n" +
-        "Die Einladung mit Kalendereintrag habe ich Ihnen an julia@example.com geschickt. *Haben Sie sich den Termin schon im Kalender eingetragen?*",
+      "Danke, das schaut sich Herr Kannapinn im Termin mit an. Legen Sie zum Termin gern bereit: Ihre bestehenden Verträge, die Geburtsdaten der Mitversicherten und Ihre IBAN für einen direkten Abschluss.\n\n" +
+        "Zum Schluss: Die Einladung mit Kalendereintrag geht an julia@example.com. Stimmt die Adresse?",
     );
     expect((ab.match(/\?/g) ?? []).length).toBe(1);
+    expect(knoepfeFuerText(ab)?.map((k) => k.id)).toEqual(["email:ja", "email:andere"]);
   });
 });
 
@@ -287,16 +294,15 @@ const LAGEN: Record<string, (p: string | null) => { label: string; value: string
   vollstaendig: (p) => testLeadAnswers(p ?? "Sterbegeld"),
 };
 
-describe("Erstanschreiben v7: Text und Parameter", () => {
-  it("Text zentral als Konstante, erste Frage NICHT fett (v7), festes „?“ hinter dem Platzhalter", () => {
-    // v6 bleibt unverändert (bei Meta freigegeben, wird bis zur Freigabe von v7 gesendet)
+describe("Erstanschreiben v8 (vorher v7): Text und Parameter", () => {
+  it("v6/v7 bleiben als Konstanten (Rückfall bis zur Freigabe), v8 kurz mit festem Thema und fetter Frage", () => {
+    // v6 und v7 bleiben unverändert (bei Meta freigegeben, werden bis zur Freigabe von v8 gesendet)
     expect(ERSTANSCHREIBEN_V6.sie).toBe("danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n*{{4}}?*");
     expect(ERSTANSCHREIBEN_V7.sie).toBe("danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?");
     expect(ERSTANSCHREIBEN_V7.du).toBe("danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?");
-    expect(templateTextFor("outreach_privatschutz", "sie")).toBe(`Hallo {{1}}, ${ERSTANSCHREIBEN_V7.sie}`);
-    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Thema {{1}}! Ich bin der digitale KI-Assistent von {{2}}.\n\n{{3}}?");
-    expect(templateTextFor("outreach", "du")).toBe(`Hallo {{1}}, ${ERSTANSCHREIBEN_V7.du}`);
-    for (const p of OUTREACH_PURPOSES) for (const f of ["du", "sie", "sie_ohne_name"] as const) expect(templateTextFor(p, f)).not.toContain("*");
+    expect(templateTextFor("outreach_privatschutz", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*");
+    expect(templateTextFor("outreach_privatschutz", "sie_ohne_name")).toBe("Hallo, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von {{1}}.\n\n*{{2}}?*");
+    expect(templateTextFor("outreach", "du")).toBe("Hallo {{1}}, danke für deine Anfrage! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*");
   });
 
   it("Beispiel Privatschutz, Sie, Lead ohne Anrede, Formular mit Interesse", () => {
@@ -308,14 +314,15 @@ describe("Erstanschreiben v7: Text und Parameter", () => {
       source: "Privatschutz",
       formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }],
     });
-    expect(t).toBe("Hallo Julia Schneider, danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.\n\nWer soll versichert werden: nur Sie, mit Partner oder die ganze Familie?");
+    expect(t).toBe("Hallo Julia Schneider, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*");
   });
 
   it("Parameter je Lage: Formular leer, teilweise, vollständig (Privatschutz, Sie)", () => {
     const p = (formular: { label: string; value: string }[]) => erstanschreibenV6Params({ source: "Privatschutz", an: "sie", formular, person: PERSON, kurz: "Ole" });
-    expect(p([])).toEqual(["Privatschutz", "Herrn Kannapinn", "Worum geht es Ihnen vor allem"]);
-    expect(p([{ label: "Versicherungsinteresse", value: "Haftpflicht, Hausrat" }])).toEqual(["Privatschutz", "Herrn Kannapinn", "Wer soll versichert werden: nur Sie, mit Partner oder die ganze Familie"]);
-    expect(p(testLeadAnswers("Privatschutz"))).toEqual(["Privatschutz", "Herrn Kannapinn", "Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu"]);
+    // v8 (Ole, 17.11.2026): Privatschutz fragt zuerst nach bestehenden Verträgen (Privatschutz = Haftpflicht und Hausrat)
+    expect(p([])).toEqual(["Privatschutz", "Herrn Kannapinn", "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu"]);
+    expect(p([{ label: "Versicherungsinteresse", value: "Hausrat" }])).toEqual(["Privatschutz", "Herrn Kannapinn", "Sind Sie bei Hausrat schon versichert, oder wäre es neu"]);
+    expect(p(testLeadAnswers("Privatschutz"))).toEqual(["Privatschutz", "Herrn Kannapinn", "Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu"]);
     // alles beantwortet: Terminfrage (Video) mit dem Vermittler im Dativ
     const alles = [...testLeadAnswers("Privatschutz"), { label: "Bereits versichert", value: "nein" }];
     expect(p(alles)[2]).toBe("Passt Ihnen ein kurzer Videotermin mit Herrn Kannapinn in den nächsten Tagen");
@@ -326,7 +333,7 @@ describe("Erstanschreiben v7: Text und Parameter", () => {
 
   for (const source of PRODUKTE) {
     for (const [lage, formular] of Object.entries(LAGEN)) {
-      it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“ gleich dem Freitext`, () => {
+      it(`${source ?? "ohne Produkt"}, Formular ${lage}: jede erste Frage endet auf „?“, Vorlage ohne „??“; Freitext gleich der vorbereiteten v8`, () => {
         const purpose: NoticePurpose = outreachProdukt(source)?.purpose ?? "outreach";
         for (const an of ["sie", "du"] as const) {
           for (const kontakt of [{ fullName: "Julia Schneider", salutation: "Frau" as const }, { fullName: "Julia" }]) {
@@ -334,17 +341,19 @@ describe("Erstanschreiben v7: Text und Parameter", () => {
             const f = formular(source);
             const frage = ersteFrage(source, an, "Ole", f, person);
             expect(frage.endsWith("?"), frage).toBe(true);
-            const params = erstanschreibenV6Params({ source, an, formular: f, person, kurz: "Ole" });
-            expect(params[2].endsWith("?")).toBe(false);
+            const params = erstanschreibenV8Params({ source, an, formular: f, person, kurz: "Ole" });
+            expect(params[1].endsWith("?")).toBe(false);
+            expect(erstanschreibenV6Params({ source, an, formular: f, person, kurz: "Ole" })[2]).toBe(params[1]);
             const mitName = an === "du" || kontakt.salutation;
             const name = an === "du" ? "Julia" : "Frau Schneider";
             const tpl = renderTemplate(fillNames(templateTextFor(purpose, mitName ? an : "sie_ohne_name"), "X"), mitName ? [name, ...params] : params);
             expect(tpl).not.toContain("??");
             expect(tpl).not.toMatch(/[–—]/);
-            expect(tpl.endsWith(`\n\n${frage}`)).toBe(true);
-            expect(tpl).not.toContain("*");
+            expect(tpl.endsWith(`\n\n*${frage}*`)).toBe(true);
             const frei = erstanschreibenText({ an, kontakt, name: "Ole", vermittler: person.dat, vermittlerNom: person.nom, source, formular: f });
-            expect(frei, `${source} ${an}`).toBe(tpl);
+            // Freitext wie die Vorlage, nur mit „KI“ im Satz (die Fußzeile fehlt) und ohne Produkt mit dem Produktnamen
+            const ohneThema = frei.replace(/ zum Thema [^!]+!/, "!");
+            expect(purpose === "outreach" ? ohneThema : frei, `${source} ${an}`).toBe(tpl.replace("digitale Assistent", "digitale KI-Assistent"));
             if (an === "du") expect(tpl).not.toMatch(/\b(Sie|Ihnen|Ihre?)\b/);
           }
         }
@@ -359,31 +368,32 @@ describe("Erstanschreiben v7: Text und Parameter", () => {
   });
 
   it("Knöpfe im Freitext nur zur passenden Frage; v6-Vorlage ohne Knöpfe", () => {
-    expect(ersteFrageKnoepfe("Privatschutz", [])).toEqual(["Haftpflicht", "Hausrat", "Mehreres"]);
-    expect(ersteFrageKnoepfe("Privatschutz", [{ label: "Versicherungsinteresse", value: "Hausrat" }])).toEqual([]);
+    // v8: Privatschutz öffnet mit der Frage nach bestehenden Verträgen (ohne Knöpfe)
+    expect(ersteFrageKnoepfe("Privatschutz", [])).toEqual([]);
+    expect(ersteFrageKnoepfe("PKV Wechsel", [])).toEqual(["Angestellt", "Selbstständig", "Beamter"]);
     expect(ersteFrageKnoepfe(null, [])).toEqual(["Heute", "Morgen", "Lieber schriftlich"]);
     for (const p of OUTREACH_PURPOSES) expect(TEMPLATE_BUTTONS[p]).toBeUndefined();
   });
 });
 
-describe("Erstanschreiben v7: Einreichung, Auswahl und Erstinformation (Live-Test 17.11.2026)", () => {
+describe("Erstanschreiben v8: Einreichung, Auswahl und Erstinformation (Live-Test 17.11.2026)", () => {
   const names = { firm: "Agentur Ole Kannapinn", advisor: "Ole Kannapinn", kurz: "Ole" };
 
-  it("v7 je Fassung nur mit PDF-Kopf (keine _ohnepdf mehr), Meta-Regeln erfüllt, Kategorie Marketing", () => {
+  it("v8 je Fassung nur mit PDF-Kopf (keine _ohnepdf mehr), Meta-Regeln erfüllt, Kategorie Marketing", () => {
     const geplant = plannedTemplates([...OUTREACH_PURPOSES]);
     expect(geplant).toHaveLength(OUTREACH_PURPOSES.length * 3);
     for (const { purpose, form, variant, kopf } of geplant) {
       expect(kopf).toBe(true);
       const req = buildTemplateRequest(purpose, names, undefined, form, { variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf });
       expect(req.name).toBe(templateNameFor(purpose, undefined, form, variant, kopf));
-      expect(req.name).toMatch(/_v7(_sie(_ohne_name)?)?$/);
+      expect(req.name).toMatch(/_v8(_sie(_ohne_name)?)?$/);
       expect(req.category).toBe("MARKETING");
       const comps = req.components as { type: string; text?: string; example?: { body_text: string[][] } }[];
       expect(comps.map((c) => c.type)).toEqual(["HEADER", "BODY", "FOOTER"]);
       const body = comps.find((c) => c.type === "BODY")!;
       expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? []), `${req.name}: ${body.text}`).toEqual([]);
-      expect(body.text).toContain("KI-Assistent");
-      expect(body.text).not.toContain("*");
+      expect(body.text).toContain("digitale Assistent");
+      expect(comps.find((c) => c.type === "FOOTER")!.text).toContain("KI-Assistent");
       expect(body.example!.body_text[0].at(-1)!.endsWith("?")).toBe(false);
     }
   });

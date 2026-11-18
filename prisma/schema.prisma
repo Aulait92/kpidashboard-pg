@@ -776,6 +776,9 @@ model Lead {
   callPlanStartedAt    DateTime?
   // Anrufplan automatisch gestartet: 30 Min. nach dem Erstanschreiben ohne Antwort (Ole, 17.11.2026, lib/anruf-ausloeser.ts)
   autoCallAt           DateTime?
+  // „Alle pausieren“ unter „Nächste Nachrichten“ am Kontakt (Paket P6, lib/nachrichtenplan-aktionen.ts): solange gesetzt,
+  // warten Nachfass-Abfolgen und Termin-Erinnerungen an den Lead; „Fortsetzen“ rückt die Abfolgen um die Pause nach
+  nachrichtenPausiertAt DateTime?
   // Rückruf wünschen (Link in der Nachfass-Mail zum Angebot, Minimalseite /rueckruf/<token>, Ausbau in P5)
   rueckrufToken        String?           @unique
   rueckrufGewuenschtAt DateTime?
@@ -804,6 +807,9 @@ model Lead {
   // Ablauf (Push, Erstanschreiben, Assistent, Termin), zählt aber nirgends (Zahlen, Kosten pro Lead, Monatsbericht,
   // Garantien, Kontingente, Umsatz, Meta-Rückmeldung). Abzeichen „Test“, löschbar.
   isTest               Boolean           @default(false)
+  // Antwortadresse ohne Postfach (Paket M2, lib/mail/antwort-adresse.ts): <kurzname>.<antwortCode>@antwort.dein-beratungstermin.de.
+  // 8 Zeichen base32 aus HMAC(AUTH_SECRET, Lead-ID), beim ersten Versand gesetzt, bei der Löschung geleert.
+  antwortCode          String?           @unique
 
   customer Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   revenues Revenue[]
@@ -823,6 +829,8 @@ model Lead {
   mails               ContactMail[]
   // Automatische Vorlagen-Mails: Idempotenz je Vorlage und Anlass, höchstens eine je Tag (lib/mail/vorlagen-mail.ts)
   mailVersand         LeadMailVersand[]
+  // Eingegangene Antworten per E-Mail (Paket M2, lib/mail/eingang.ts): nur Ablauf, Inhalt steht in ContactMail
+  mailEingaenge       MailEingang[]
   // Verträge (Abschlüsse) dieses Leads: der erste aus closedAt/closeValue, dazu Cross-Selling (lib/vertraege.ts)
   contracts           LeadContract[]
   // Erinnerung „Weiteres Produkt anbieten?“ angelegt (einmal je Lead)
@@ -1395,11 +1403,21 @@ model Appointment {
   // Push „Ist … da?“ zum Terminbeginn bzw. „Ist … noch gekommen?“ nach dem Termin (je einmal)
   startPushAt           DateTime?
   afterPushAt           DateTime?
+  // Vom Vermittler übersprungene Erinnerungen (Paket P6): vortag | vortag_mail | stunde | gleich
+  erinnerungenUebersprungen String[] @default([])
   // Komplettcheck = Ja: auf 45 Min. verlängert („verlaengert“) bzw. Hinweis an den Vermittler („hinweis“)
   verlaengerung         String?
   verlaengerungAt       DateTime?
   // Lead hat per Knopf „Ja, passt“ bestätigt (Erinnerung am Vortag bzw. kurz vorher)
   confirmedAt        DateTime?
+  // Einladung mit Kalendereintrag an den Lead (Ole, 17.11.2026, lib/calendar/einladung.ts): genau einmal, gesendet am
+  // und an welche Adresse; Änderungen danach als Aktualisierung (gleiche UID, einladungSeq + 1). Bei Buchung im
+  // WhatsApp-Assistenten ausstehend (einladungAusstehend = Buchungszeit), bis Adresse und Komplettcheck feststehen bzw.
+  // der Lead nicht mehr antwortet (15 Min., kurzfristig 5 Min., spätestens 60 Min. vor Beginn)
+  einladungAt          DateTime?
+  einladungAn          String?
+  einladungSeq         Int       @default(0)
+  einladungAusstehend  DateTime?
   // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,
   // ob er insgesamt gut abgesichert ist; false = nein; null = nicht gefragt bzw. offen
   komplettcheck      Boolean?
@@ -1444,6 +1462,7 @@ model Appointment {
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
 
   @@index([customerId, startsAt])
+  @@index([einladungAusstehend])
 }
 
 // WhatsApp-Vorlage je Kunde (für Erstansprache / außerhalb des 24h-Fensters).
@@ -2888,6 +2907,8 @@ model LeadSequence {
   vorabCheckStep Int?
   // Bedenkzeit zum Angebot (Paket P5): Die Abfolge startet an diesem Tag neu, die Schritt-Tage zählen ab hier statt ab startedAt
   neustartAt DateTime?
+  // Vom Vermittler übersprungene Schritte (Paket P6, „Nächste Nachrichten“): werden ohne Versand weitergeschaltet
+  uebersprungen Int[] @default([])
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
@@ -3856,10 +3877,43 @@ model ContactMail {
   userId             String?
   createdAt          DateTime          @default(now())
   history            LeadHistory?
+  // ausgang | eingang (Paket M2: Antwort des Leads an die Antwortadresse; recipient = Absender, status „empfangen“)
+  richtung           String            @default("ausgang")
+  eingang            MailEingang?
 
   @@index([leadId, createdAt])
   @@index([existingCustomerId, createdAt])
   @@index([providerMessageId])
+}
+
+// Eingang an die Antwortadresse (Ole, 18.11.2026, Paket M2, lib/mail/eingang.ts): ein Eintrag je Resend-Ereignis
+// „email.received“ (Idempotenz, Fortschritt, Diagnose). Keine Inhalte, keine Absenderadresse: Betreff und Text stehen nur
+// in ContactMail (mit dem Lead gelöscht). anhaenge: Name, Größe, Typ, Resend-ID, weitergeleitet ja/nein (Download über
+// die App holt eine frische Adresse bei Resend). Ohne Lead nach 90 Tagen gelöscht (pruneTransient).
+model MailEingang {
+  id               String       @id @default(cuid())
+  resendEmailId    String       @unique
+  customerId       String?
+  leadId           String?
+  lead             Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contactMailId    String?      @unique
+  contactMail      ContactMail? @relation(fields: [contactMailId], references: [id], onDelete: SetNull)
+  // code | absender | kunde | keine
+  zuordnung        String       @default("keine")
+  // in_arbeit | antwort | hinweis | ignoriert | fehler
+  ergebnis         String       @default("in_arbeit")
+  // Kurzer Grund ohne Inhalte (z. B. „auto_antwort“, „schleife“, „absender_unbestaetigt“, „schalter_aus“)
+  grund            String?
+  anhaenge         Json?
+  weitergeleitetAt DateTime?
+  pushAt           DateTime?
+  versuche         Int          @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([leadId])
+  @@index([createdAt])
 }
 
 // Vorlagen-Mails an Leads (Ole, 17.11.2026, Paket M0, lib/mail/vorlagen-mail.ts): Reservierung vor dem Versand.
@@ -4430,8 +4484,8 @@ model Erstinformation {
   // Pflichtangaben nach § 15 Abs. 1 VersVermV (Ole, 15.11.2026). null = Vorschlag aus Impressum/Angebot
   // (lib/erstinformation-shared.ts erstinfoDaten), gespeichert wird beim Bestätigen in der Einrichtung.
   name           String?
-  // Anrede des Vermittlers (Herr | Frau), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
-  // null = nicht angegeben, dann Vor- und Nachname. Kein Pflichtfeld der Erstinformation.
+  // Anrede des Vermittlers (Herr | Frau | keine), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
+  // Pflicht in der Einrichtung; „keine“ (bewusst ohne) bzw. null (nicht angegeben): Vor- und Nachname.
   anrede         String?
   firma          String?
   anschrift      String?

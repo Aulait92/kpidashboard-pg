@@ -24,8 +24,7 @@
         "ambulant-op": "ja, 100 %"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-KlinikSchutz Komfort",
@@ -42,8 +41,7 @@
         "ambulant-op": "ja, 100 %"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-KlinikSchutz Premium",
@@ -60,8 +58,7 @@
         "ambulant-op": "ja, 100 %"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "DFV-KlinikSchutz Exklusiv",
@@ -78,8 +75,7 @@
         "ambulant-op": "ja, 100 %"
       },
       "quelle": "https://www.deutsche-familienversicherung.de/gesundheit-vorsorge/krankenzusatzversicherung/krankenhauszusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -90,6 +86,7 @@
     "Premium hat laut Tarifvergleich das Zweibettzimmer, Basis, Komfort und Exklusiv das Einbettzimmer.",
     "Ersatztagegeld bei Verzicht: Unterkunft 40 €, privatärztliche Leistungen 60 €, beides 100 € am Tag. Reha-Tagegeld 100 €/Tag bis 21 Tage. Ambulante Behandlung statt Klinikaufenthalt 100 %.",
     "Erstattung über dem GOÄ-Höchstsatz nicht im Tarifvergleich genannt. Exklusiv zusätzlich Facharzttermin in 5 Werktagen (sonst bis 5.000 € Ausgleich), Kinderbetreuung bis 2.000 €.",
-    "Empfehlung: DFV markiert Premium als „Unsere Empfehlung“."
+    "Empfehlung: DFV markiert Premium als „Unsere Empfehlung“.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }

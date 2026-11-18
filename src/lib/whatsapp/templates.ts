@@ -26,11 +26,12 @@
 
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
-import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt } from "@/lib/ansprache";
+import { anredeName, anredeZeile, asAnsprache, kontaktParts, type Ansprache, type AnredeKontakt, type Salutation } from "@/lib/ansprache";
+import { vermittlerName, type VermittlerName } from "@/lib/vermittler-nennung";
 import { sendButtons, sendTemplate, sendText } from "@/lib/whatsapp/dialog360";
 import { WhatsAppNoConsentError, WhatsAppOptOutError, WhatsAppUnavailableError } from "@/lib/whatsapp/stopp";
 import { ERSTINFO_KOPF } from "@/lib/whatsapp/ki-hinweis";
-import { ERSTANSCHREIBEN_V7 } from "@/lib/whatsapp/erstanschreiben";
+import { erstanschreibenV8 } from "@/lib/whatsapp/erstanschreiben";
 
 export type NoticePurpose =
   | "outreach"
@@ -118,26 +119,26 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   review_request: "v3",
   referral_thanks: "v3",
   referral_update: "v3",
-  // Erstanschreiben v7 (Ole, 17.11.2026, ERSTANSCHREIBEN_V7: erste Frage nicht fett): wird eingereicht, nur mit PDF-Kopf;
-  // bis zur Freigabe sendet die App die neueste freigegebene mit PDF-Kopf (v6, rankOutreach)
-  outreach: "v7",
-  outreach_tkv: "v7",
-  outreach_zahn: "v7",
-  outreach_pkv: "v7",
-  outreach_privatschutz: "v7",
+  // Erstanschreiben v8 (Ole, 17.11.2026, freigegeben zum Einreichen: kurz, Thema fest je Produkt, Frage fett, Fußzeile
+  // ERSTINFO_FOOTER_V8): wird eingereicht, nur mit PDF-Kopf; bis zur Freigabe bei Meta sendet die App die neueste
+  // freigegebene mit PDF-Kopf (v7 bzw. v6, rankOutreach) mit deren Platzhaltern (PLATZHALTER_AB)
+  outreach: "v8",
+  outreach_tkv: "v8",
+  outreach_zahn: "v8",
+  outreach_pkv: "v8",
+  outreach_privatschutz: "v8",
   // Show-up-Paket (Ole, freigegeben 17.11.2026, docs/vorlagen-showup.md): Vortag und 1 Stunde mit neuen Platzhaltern
   // (bis zur Freigabe bei Meta die bisherige v4, PLATZHALTER_AB), 15 Minuten und „wartet im Videoraum“ neu
   reminder: "v5",
   reminder_soon: "v5",
   reminder_start: "v5",
   appt_waiting: "v5",
-  // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss, nur VORBEREITET (VORBEREITETE_PURPOSES in
-  // template-plan.ts), nicht eingereicht. Bis zur Freigabe geht er nur im offenen 24-h-Fenster als Freitext.
+  // P4 (Ole, 17.11.2026, Ergänzung D): Glückwunsch zum Abschluss (glueckwunsch, Einreichung siehe template-plan.ts)
   glueckwunsch: "v5",
-  // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): nur vorbereitet (VORBEREITET_ANGEBOT in template-plan.ts)
+  // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES)
   offer_send: "v5",
   followup_offer_selbst: "v5",
-  // Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026): nur vorbereitet (VORBEREITET_BEDENKZEIT in template-plan.ts)
+  // Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, BEDENKZEIT_PURPOSES)
   offer_bedenkzeit: "v5",
 };
 
@@ -162,13 +163,14 @@ export type TemplateVariant = "a" | "b";
 
 /** Weitere Parameter je Zweck (nach dem Namen; Reihenfolge wie im Text). */
 export const REST_PARAMS: Record<NoticePurpose, string[]> = {
-  // Erstanschreiben ab v6 (alle Fassungen gleich aufgebaut): Thema, Vermittler im Dativ, erste Frage ohne „?“.
-  // Ältere freigegebene Fassungen: v5 Produkt (TKV mit Tier), v4 Produkt, v3 Link (outreach.ts paramsFor)
-  outreach: ["Thema", "Vermittler", "Erste Frage"],
-  outreach_tkv: ["Thema", "Vermittler", "Erste Frage"],
-  outreach_zahn: ["Thema", "Vermittler", "Erste Frage"],
-  outreach_pkv: ["Thema", "Vermittler", "Erste Frage"],
-  outreach_privatschutz: ["Thema", "Vermittler", "Erste Frage"],
+  // Erstanschreiben ab v8: Vermittler im Dativ, erste Frage ohne „?“ (Thema fest im Text). Ältere freigegebene
+  // Fassungen: v6/v7 Thema, Vermittler, Frage (PLATZHALTER_AB), v5 Produkt (TKV mit Tier), v4 Produkt, v3 Link
+  // (outreach.ts paramsFor)
+  outreach: ["Vermittler", "Erste Frage"],
+  outreach_tkv: ["Vermittler", "Erste Frage"],
+  outreach_zahn: ["Vermittler", "Erste Frage"],
+  outreach_pkv: ["Vermittler", "Erste Frage"],
+  outreach_privatschutz: ["Vermittler", "Erste Frage"],
   booking_confirmation: ["Datum/Uhrzeit", "Art", "Link/Hinweis"],
   // Ab v5 (Show-up-Paket); ältere freigegebene Fassungen: PLATZHALTER_AB
   reminder: ["Wann (z. B. morgen um 10 Uhr)", "Nutzen (ein Satz, ggf. mit Verträgen)", "Zugang (Videolink bzw. Anruf)"],
@@ -204,14 +206,15 @@ export const NAME_PARAM: Record<"du" | "sie", string> = { du: "Vorname", sie: "A
  * (z. B. „ von der Allianz“ oder „, Ihr Versicherungsmakler“, rolleText). Ohne „du“: nur gesiezt.
  */
 export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> = {
-  // Erste Nachricht an neue Leads (v7, Ole 17.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): Dank mit
-  // Thema, KI-Assistent des Vermittlers, erste offene Frage als letzte Zeile, nicht fett (Platzhalter, ERSTANSCHREIBEN_V7).
-  // Die Erstinformation (§ 15/16 VersVermV) steht immer als PDF im Kopf (TEMPLATE_HEADER).
-  outreach: { ...ERSTANSCHREIBEN_V7 },
-  outreach_tkv: { ...ERSTANSCHREIBEN_V7 },
-  outreach_zahn: { ...ERSTANSCHREIBEN_V7 },
-  outreach_pkv: { ...ERSTANSCHREIBEN_V7 },
-  outreach_privatschutz: { ...ERSTANSCHREIBEN_V7 },
+  // Erste Nachricht an neue Leads (v8, Ole 17.11.2026; Freitext: erstanschreiben.ts erstanschreibenText): kurz, Dank
+  // mit festem Thema je Produkt, „Hier schreibt der digitale Assistent von {{2}}“, erste offene Frage fett als letzte
+  // Zeile. Die Erstinformation (§ 15/16 VersVermV) steht immer als PDF im Kopf (TEMPLATE_HEADER), die KI-Kennzeichnung
+  // in der Fußzeile (ERSTINFO_FOOTER_V8).
+  outreach: erstanschreibenV8("outreach"),
+  outreach_tkv: erstanschreibenV8("outreach_tkv"),
+  outreach_zahn: erstanschreibenV8("outreach_zahn"),
+  outreach_pkv: erstanschreibenV8("outreach_pkv"),
+  outreach_privatschutz: erstanschreibenV8("outreach_privatschutz"),
   // Service (UTILITY): Bestätigung mit Vorbereitungshinweis und Knopf zum Verschieben
   booking_confirmation: {
     du: "dein Termin bei [Firma] ist bestätigt: {{2}} ({{3}}). {{4}} Zur Vorbereitung: Leg dir gern deine bisherigen Unterlagen zum Thema bereit, falls vorhanden.",
@@ -254,7 +257,7 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot zu {{2}} schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
     sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot zu {{2}} schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
-  // Angebot nach dem Termin (Paket P3, Ole 17.11.2026), nur vorbereitet, nicht eingereicht (VORBEREITET_ANGEBOT,
+  // Angebot nach dem Termin (Paket P3, Ole 17.11.2026), zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES,
   // docs/vorlagen-angebot.md). Freitext im offenen Fenster: lib/angebot-senden.ts bzw. lib/lead-sequences.ts.
   // Der Link steht nicht am Ende (Meta-Regel).
   offer_send: {
@@ -262,14 +265,14 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot für {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.",
   },
   followup_offer_selbst: {
-    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
-    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot, das {{2}} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Konnten Sie sich das Angebot, das {{2}} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
-  // Nach der Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026), nur vorbereitet (VORBEREITET_BEDENKZEIT,
+  // Nach der Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026), zur Einreichung freigegeben (BEDENKZEIT_PURPOSES,
   // docs/vorlagen-angebot.md). Bewusst ohne Terminvorschläge; Freitext: lib/bedenkzeit.ts bedenkzeitNeustartText.
   offer_bedenkzeit: {
-    du: "hier ist der digitale KI-Assistent von [Firma]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
-    sie: "hier ist der digitale KI-Assistent von [Firma]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   followup_noshow: {
     du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
@@ -279,7 +282,7 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
     sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
   },
-  // Glückwunsch zum Abschluss (P4, Ole 17.11.2026, Ergänzung D), nur vorbereitet, nicht eingereicht (VORBEREITETE_PURPOSES).
+  // Glückwunsch zum Abschluss (P4, Ole 17.11.2026, Ergänzung D), zur Einreichung freigegeben (CORE_PURPOSES).
   // Freitext im offenen Fenster: lib/abschluss.ts glueckwunschText („Schön, dass Sie sich …, Frau Becker! …“).
   glueckwunsch: {
     du: "schön, dass du dich für deinen neuen Schutz entschieden hast! Bei Fragen erreichst du {{2}} jederzeit hier.",
@@ -355,10 +358,14 @@ export type NaechsteFassung = {
  * Vorbereitete neue Fassung mit ANDEREN Platzhaltern: wird NICHT eingereicht und als Vorlage nicht gesendet, bis Ole die
  * Texte freigibt. Im offenen 24-h-Fenster kann der Absender schon den neuen Text als Freitext senden. Aktivieren: Text
  * nach TEMPLATE_BODY, REST_PARAMS des Zwecks auf `params`, PURPOSE_VERSION auf `version`, Eintrag hier löschen und die
- * bisherige Belegung in PLATZHALTER_AB eintragen. Zurzeit leer (Show-up-Paket am 17.11.2026 freigegeben).
+ * bisherige Belegung in PLATZHALTER_AB eintragen.
  */
 export type VorbereiteteFassung = { version: string; du: string; sie: string; params: string[]; beispiele: { du: string[]; sie: string[] } };
 
+/**
+ * Zurzeit leer: Die in P2 vorbereitete längere v8 des Erstanschreibens („zu Haftpflicht und Hausrat 🏠 … und kläre kurz
+ * ein paar Angaben“) ist durch Oles kurze v8 aus dem Testchat (17.11.2026, erstanschreibenV8, eingereicht) ersetzt.
+ */
 export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFassung>> = {};
 
 /**
@@ -366,10 +373,17 @@ export const VORBEREITETE_FASSUNG: Partial<Record<NoticePurpose, VorbereiteteFas
  * freigegebene Fassungen (bis zur Freigabe der neuen bei Meta weiter im Einsatz, rankTemplates) haben die Belegung
  * `frueher`. Die Absender belegen die Platzhalter je Version der gewählten Vorlage (paramsFor, lib/whatsapp/reminders.ts).
  *   reminder, reminder_soon v5 (Show-up-Paket, Ole 17.11.2026)
+ *   Erstanschreiben v8 (Ole, 17.11.2026): ohne Thema-Platzhalter (v6/v7: Thema, Vermittler, Erste Frage)
  */
+const ERSTANSCHREIBEN_V6_PARAMS = ["Thema", "Vermittler", "Erste Frage"];
 export const PLATZHALTER_AB: Partial<Record<NoticePurpose, { version: number; frueher: string[] }>> = {
   reminder: { version: 5, frueher: ["Datum/Uhrzeit", "Art", "Link/Hinweis"] },
   reminder_soon: { version: 5, frueher: ["Uhrzeit", "Art", "Link/Hinweis"] },
+  outreach: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
+  outreach_tkv: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
+  outreach_zahn: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
+  outreach_pkv: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
+  outreach_privatschutz: { version: 8, frueher: ERSTANSCHREIBEN_V6_PARAMS },
 };
 
 /** Hat die Vorlage dieser Textversion schon die aktuelle Platzhalter-Belegung (REST_PARAMS)? Von Hand angelegte (0): nein. */
@@ -379,6 +393,27 @@ export function neuePlatzhalter(purpose: NoticePurpose, version: number): boolea
 }
 
 export const NAECHSTE_FASSUNG: Partial<Record<NoticePurpose, NaechsteFassung>> = {
+  // Vermittler-Nennung (Ole, 17.11.2026, lib/vermittler-nennung.ts): gesiezt „mit Herrn Kannapinn“ statt „mit Ole
+  // Kannapinn“. Im offenen Fenster sofort, als Vorlage erst nach Oles Freigabe zum Einreichen (Text gebeugt fest je Kunde)
+  followup: {
+    version: "v5",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Für ein kurzes Gespräch mit [BeraterDat] hätte ich zwei Zeiten frei: {{2}} oder {{3}}. Passt eine davon?",
+  },
+  followup_noshow: {
+    version: "v5",
+    du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
+    sie: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [BeraterDat] finden?",
+  },
+  followup_last: {
+    version: "v5",
+    du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für dich noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+    sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich melde mich ein letztes Mal: Ist das Thema für Sie noch aktuell? Wenn nicht, ist das völlig in Ordnung, dann melden wir uns nicht weiter.",
+    b: {
+      du: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte dich nicht weiter stören: Soll [BeraterNom] sich noch um deine Anfrage kümmern?",
+      sie: "hier ist nochmal der digitale KI-Assistent von [Firma]. Ich möchte Sie nicht weiter stören: Soll [BeraterNom] sich noch um Ihre Anfrage kümmern?",
+    },
+  },
   campaign_cross_sell: {
     version: "v5",
     sie: "hier ist [Berater][Rolle]. Beim Thema {{2}} gibt es oft Lücken, die erst im Schadenfall auffallen. Soll ich in 10 Minuten kurz prüfen, ob das bei Ihnen auch so ist?",
@@ -483,13 +518,35 @@ export function isSieTemplateName(name: string): boolean {
 /**
  * [Firma], [Berater], [Rolle] und [Kurzname] einsetzen. Ein einzelner Name gilt für alle.
  * kurz = Vorname des Vermittlers laut Profil, sonst Agentur (Erstanschreiben v5, advisor-name.ts kurzNameFuerLeads).
+ * [BeraterNom]/[BeraterDat] = Vermittler als Person nach der Nennungsregel (Ole, 17.11.2026, lib/vermittler-nennung.ts):
+ * Sie „Herr Kannapinn“/„Herrn Kannapinn“, Du der Vorname. Aus `person` bzw. `vermittler` (lead-anrede.ts), sonst advisor.
+ * [Berater] allein bleibt der volle Name (Selbstvorstellung „hier ist …“, Grußformel).
  */
-export type TemplateNames = { firm: string; advisor: string; role?: string; kurz?: string };
+export type TemplateNames = {
+  firm: string;
+  advisor: string;
+  role?: string;
+  kurz?: string;
+  person?: { sie: VermittlerName; du: VermittlerName };
+  vermittler?: { name: string | null; anrede: Salutation | null };
+};
+
+/** Vermittler als Person für Ansprache an (aus person bzw. vermittler, sonst der Beratername). */
+export function personAus(names: TemplateNames, an: Ansprache): VermittlerName {
+  if (names.person) return names.person[an];
+  if (names.vermittler) return vermittlerName(an, { name: names.vermittler.name, anrede: names.vermittler.anrede, fallback: an === "du" ? names.kurz || names.advisor : names.advisor });
+  return { nom: names.advisor, dat: names.advisor };
+}
 /** Ohne bekannten Status: neutral und immer zutreffend. */
 export const ROLLE_STANDARD = ", Ihr Versicherungsvermittler";
-export function fillNames(text: string, names: TemplateNames | string): string {
+export function fillNames(text: string, names: TemplateNames | string, an: Ansprache = "sie"): string {
   const n = typeof names === "string" ? { firm: names, advisor: names } : names;
+  const person = text.includes("[BeraterNom]") || text.includes("[BeraterDat]") ? personAus(n, an) : null;
   return text
+    .split("[BeraterNom]")
+    .join(person?.nom ?? "")
+    .split("[BeraterDat]")
+    .join(person?.dat ?? "")
     .split("[Firma]")
     .join(n.firm)
     .split("[Berater]")
@@ -741,8 +798,17 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
  */
 export const TEMPLATE_HEADER: Partial<Record<NoticePurpose, "DOCUMENT">> = Object.fromEntries(OUTREACH_PURPOSES.map((p) => [p, "DOCUMENT"]));
 
-/** Fußzeile unter Vorlagen mit PDF im Kopf (Meta: höchstens 60 Zeichen, ohne Platzhalter). */
+/** Fußzeile unter Vorlagen mit PDF im Kopf (Meta: höchstens 60 Zeichen, ohne Platzhalter), bis v7. */
 export const ERSTINFO_FOOTER = "Oben: unsere Erstinformation, wie gesetzlich vorgesehen";
+
+/** Fußzeile ab Erstanschreiben v8 (Ole, 17.11.2026): KI-Kennzeichnung und Hinweis auf das PDF, höchstens 60 Zeichen. */
+export const ERSTINFO_FOOTER_V8 = "KI-Assistent · Oben: Erstinformation (gesetzlich)";
+
+/** Fußzeile einer Vorlage mit PDF-Kopf je Textversion („v8“ bzw. 8). */
+export function erstinfoFooterFor(version: string | number): string {
+  const v = typeof version === "number" ? version : Number(/^v(\d+)$/.exec(version)?.[1] ?? 0);
+  return v >= 8 ? ERSTINFO_FOOTER_V8 : ERSTINFO_FOOTER;
+}
 
 /** Markierung im gespeicherten Text, wenn das PDF der Erstinformation im Kopf der Vorlage mitging (ki-hinweis.ts). */
 export const ERSTINFO_HEADER_MARK = ERSTINFO_KOPF;
@@ -800,7 +866,7 @@ export function noticeText(
 ): string {
   const eff = effectiveAnsprache(purpose, an);
   const b = freitextBodyOf(purpose, variant);
-  const body = fillNames(eff === "du" && b.du ? b.du : b.sie, names);
+  const body = fillNames(eff === "du" && b.du ? b.du : b.sie, names, eff);
   // Erstanschreiben: „Hallo Herr Müller,“ bzw. „Hallo,“ (wie die Vorlage ab v5)
   const name = isOutreachPurpose(purpose) ? anredeName(eff, kontakt) : null;
   const zeile = isOutreachPurpose(purpose) ? (name ? `Hallo ${name},` : "Hallo,") : anredeZeile(eff, kontakt);
@@ -995,7 +1061,9 @@ export async function sendWhatsAppNotice(opts: {
     documentHeader = !!doc;
     pdf = doc ? (pick.dokument === "entwurf" ? "entwurf" : "vollstaendig") : null;
     if (pdf === "entwurf") console.warn("[whatsapp] Erstanschreiben mit unvollständiger Erstinformation im Kopf", opts.customerId);
-    body = `${doc ? `${ERSTINFO_HEADER_MARK}\n` : ""}${renderTemplate(tpl.body, params)}`;
+    // Ab v8 steht die KI-Kennzeichnung in der Fußzeile: mitspeichern, damit Verlauf und kiHinweisNoetig sie sehen
+    const fuss = doc && version >= 8 ? `\n\n${erstinfoFooterFor(version)}` : "";
+    body = `${doc ? `${ERSTINFO_HEADER_MARK}\n` : ""}${renderTemplate(tpl.body, params)}${fuss}`;
     const components = templateComponents({ params, document: doc, buttonPayloads: pick.current ? opts.buttonPayloads : null, buttonCount: buttons });
     messageId = (await sendTemplate(apiKey, opts.to, tpl.name, tpl.language, components)).messageId;
   }

@@ -26,8 +26,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.canadalife.de/generation-basic-plus/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Flexibler Kapitalplan basic",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.canadalife.de/media/muster-produktinformationsblatt-flexibler-kapitalplan-basic-20-jahre.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -57,6 +55,7 @@
     "Stufen sind zwei Produkte: GENERATION basic plus mit laufendem Beitrag (ab 50 € monatlich), Flexibler Kapitalplan basic gegen Einmalbeitrag (ab 10.000 €, auch sofort beginnend). Canada Life markiert keines.",
     "GENERATION basic plus: Beitragserhaltungszusage 90 % nur für die in den UWP-Fonds investierten Beitragsanteile (Muster-Produktinformationsblatt); garantierter Rentenfaktor laut Bedingungen (Stand Mai 2024, bitte Aktualität prüfen).",
     "Flexibler Kapitalplan basic: fondsgebunden ohne gesonderte Garantieabsicherung; ob der Rentenfaktor garantiert ist, nennt das Muster-Produktinformationsblatt nicht.",
-    "Effektivkosten nur in Musterrechnungen, je nach Fondswahl unterschiedlich; nicht aufgenommen."
+    "Effektivkosten nur in Musterrechnungen, je nach Fondswahl unterschiedlich; nicht aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseiten, Kundenflyern bzw. Bedingungen von Canada Life."
   ]
 }

@@ -33,8 +33,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/4180/cd953dcbe82018ca658905d19606529c/Leistungs%C3%BCbersicht%20Hausrat.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat PremiumPlus",
@@ -60,8 +59,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/4180/cd953dcbe82018ca658905d19606529c/Leistungs%C3%BCbersicht%20Hausrat.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -73,6 +71,7 @@
     "Einfacher Diebstahl nicht allgemein versichert; genannt sind Diebstahl aus Kfz (ohne technische Geräte, europaweit), von Gartenmöbeln, Wäsche, Kinderwagen; PremiumPlus zusätzlich Diebstahl am Arbeitsplatz.",
     "Fahrraddiebstahl zuwählbar bis 10.000 €. Elementargefahren und Haus- und Wohnungsschutzbrief eingeschlossen, aber abwählbar.",
     "PremiumPlus: unbenannte Gefahren (abwählbar), Bestleistungsgarantie, Umzugskosten, Wasser- und Gasverlust nach Rohrbruch.",
-    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }

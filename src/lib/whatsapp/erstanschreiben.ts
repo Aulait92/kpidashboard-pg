@@ -6,7 +6,7 @@
 // Neu aufgebaut (Ole, 16.11.2026, conversion-optimiert): genau EINE Begrüßung, Dank mit Produkt, ein Satz Nutzen mit
 // der KI-Kennzeichnung („digitaler KI-Assistent“, KI-VO Art. 50), dann die erste Frage als letzte Zeile (ab v7 nicht fett).
 // Kein „Mensch“-Angebot und kein „berate nicht zu Tarifen“ in der ersten Nachricht: beides regelt der Assistent im
-// Gespräch (bot.ts). Name: Vorname des Vermittlers laut Profil, sonst der Agenturname, höchstens zweimal.
+// Gespräch (bot.ts). Vermittler ab v6 als Person (lib/vermittler-nennung.ts: Sie „Herrn Kannapinn“, Du Vorname).
 // Die Erstinformation folgt direkt danach als PDF-Dokument (lib/whatsapp/erstinfo-pdf.ts).
 //
 // v6 (Ole, 17.11.2026, ERSTANSCHREIBEN_V6): eine Fassung für alle Produkte, die erste Frage ist ein Platzhalter, damit
@@ -16,6 +16,14 @@
 //
 // v7 (Ole, 17.11.2026): gleicher Text, die erste Frage aber NICHT mehr fett (ohne Sternchen), in Vorlage und Freitext.
 // v6 bleibt bei Meta freigegeben und wird gesendet, bis v7 freigegeben ist (templates.ts rankOutreach).
+//
+// v8 (Ole, 17.11.2026, Testchat: v7 klappt in WhatsApp Desktop ein): kurz, das Thema fest je Produkt, die erste Frage
+// wieder fett. „Hallo {{1}}, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von {{2}}.
+// \n\n*{{3}}?*“, Fußzeile fest „KI-Assistent · Oben: Erstinformation (gesetzlich)“ (templates.ts ERSTINFO_FOOTER_V8),
+// Kopf weiter das PDF der Erstinformation. {{1}} Anrede („Frau Mustermann“, Anrede unsicher: Vor- und Nachname),
+// {{2}} Vermittler im Dativ („Herrn Kannapinn“, Du: Vorname), {{3}} erste offene Frage ohne „?“. Privatschutz fragt
+// zuerst nach bestehenden Verträgen, danach stellt die App genau eine Zwischenfrage (lib/whatsapp/zwischenfrage.ts).
+// v7 bleibt Rückfall, bis v8 bei Meta freigegeben ist (PLATZHALTER_AB).
 
 import { displayProduct } from "@/lib/products";
 import { a, anredeName, type AnredeKontakt, type Ansprache } from "@/lib/ansprache";
@@ -36,6 +44,30 @@ export const ERSTANSCHREIBEN_V7 = {
   sie: "danke für Ihre Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?",
   du: "danke für deine Anfrage zum Thema {{2}}! Ich bin der digitale KI-Assistent von {{3}}.\n\n{{4}}?",
 } as const;
+
+/**
+ * Thema je Erstanschreiben ab v8, fest im Vorlagentext (Ole, 17.11.2026): „danke für Ihre Anfrage zum Privatschutz!“.
+ * Allgemeine Fassung ohne Thema („danke für Ihre Anfrage!“).
+ */
+export const V8_THEMA: Record<"outreach" | "outreach_tkv" | "outreach_zahn" | "outreach_pkv" | "outreach_privatschutz", string> = {
+  outreach: "",
+  outreach_tkv: " zur Tierkrankenversicherung",
+  outreach_zahn: " zur Zahnzusatzversicherung",
+  outreach_pkv: " zur privaten Krankenversicherung",
+  outreach_privatschutz: " zum Privatschutz",
+};
+
+/**
+ * Erstanschreiben v8 (Ole, 17.11.2026), Text nach „Hallo {{1}}, “ (ohne Namen „Hallo, “, die Platzhalter rücken auf):
+ * {{2}} Vermittler im Dativ, {{3}} erste offene Frage ohne „?“ (fett). Neuer Text = neue Version (PURPOSE_VERSION).
+ */
+export function erstanschreibenV8(purpose: keyof typeof V8_THEMA): { sie: string; du: string } {
+  const thema = V8_THEMA[purpose];
+  return {
+    sie: `danke für Ihre Anfrage${thema}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
+    du: `danke für deine Anfrage${thema}! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*`,
+  };
+}
 
 /** Frage für den Platzhalter {{4}} (v6): ohne abschließendes „?“ (steht fest in der Vorlage). */
 export function frageOhneFragezeichen(frage: string): string {
@@ -260,16 +292,16 @@ function spartenWoerter(interesse: string | null): string[] {
   return out;
 }
 
-/** „Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?“ (Ole, 17.11.2026). */
+/** „Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?“ (Ole, 17.11.2026, v8 ohne „irgendwo“). */
 export function vorhandenFrage(interesse: string | null): { sie: string; du: string } {
   const w = spartenWoerter(interesse);
   if (w.length >= 2) {
     const liste = `${w.slice(0, -1).join(", ")} und ${w.at(-1)}`;
-    const t = `Sind ${liste} schon irgendwo versichert, oder wäre ${w.length === 2 ? "beides" : "alles"} neu?`;
+    const t = `Sind ${liste} schon versichert, oder wäre ${w.length === 2 ? "beides" : "alles"} neu?`;
     return { sie: t, du: t };
   }
-  if (w.length === 1) return { sie: `Sind Sie bei ${w[0]} schon irgendwo versichert, oder wäre es neu?`, du: `Bist du bei ${w[0]} schon irgendwo versichert, oder wäre es neu?` };
-  return { sie: "Sind Sie dafür schon irgendwo versichert, oder wäre es neu?", du: "Bist du dafür schon irgendwo versichert, oder wäre es neu?" };
+  if (w.length === 1) return { sie: `Sind Sie bei ${w[0]} schon versichert, oder wäre es neu?`, du: `Bist du bei ${w[0]} schon versichert, oder wäre es neu?` };
+  return { sie: "Sind Sie dafür schon versichert, oder wäre es neu?", du: "Bist du dafür schon versichert, oder wäre es neu?" };
 }
 
 const TERMIN_RE = /Videotermin mit .+ in den nächsten Tagen\?/;
@@ -294,10 +326,18 @@ export function frageplan(source: string | null | undefined, formular: FormAntwo
     { key: "frage2", feld: p.feld2, sie: p.frage2Sie, du: p.frage2Du, hinweis: p.frage2, bekannt: bekannt.frage2 },
   ];
   if (p.purpose === "outreach_privatschutz") {
-    const v = vorhandenFrage((formular ?? []).find((x) => /versicherungsinteresse/i.test(x.label))?.value ?? null);
-    fragen.push({ key: "vorhanden", feld: "vorhanden", sie: v.sie, du: v.du, bekannt: find(BEKANNT_VORHANDEN) });
+    // v8 (Ole, 17.11.2026): zuerst „Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?“, dann die
+    // Zwischenfrage „Wer soll mitversichert sein?“ (stellt die App, zwischenfrage.ts); ohne Interesse im Formular gilt
+    // Privatschutz als Haftpflicht und Hausrat
+    const ausForm = (formular ?? []).find((x) => /versicherungsinteresse/i.test(x.label))?.value ?? null;
+    const ausProdukt = /privatschutz/i.test(source ?? "") ? "Haftpflicht, Hausrat" : spartenWoerter(source ?? null).length ? (source ?? null) : null;
+    const v = vorhandenFrage(ausForm ?? ausProdukt);
+    fragen.unshift({ key: "vorhanden", feld: "vorhanden", sie: v.sie, du: v.du, bekannt: find(BEKANNT_VORHANDEN) });
+    if (!fragen[1].bekannt && ausProdukt) fragen[1] = { ...fragen[1], bekannt: `Produkt: ${spartenWoerter(ausProdukt).join(", ")}` };
   }
-  const istIn = (f: { sie: string; du: string }) => !!gesendet && (gesendet.includes(f.sie) || gesendet.includes(f.du));
+  // Ältere Fassung der Frage nach bestehenden Verträgen („schon irgendwo versichert“) gilt als dieselbe
+  const istIn = (f: PlanFrage) =>
+    !!gesendet && (gesendet.includes(f.sie) || gesendet.includes(f.du) || (f.key === "vorhanden" && /schon (irgendwo )?versichert, oder wäre/.test(gesendet)));
   const gestellt: PlanFrage | SonstigeFrage | null =
     p.purpose === "outreach_tkv" && gesendet.includes(TKV_V4.frage1)
       ? { key: "tier_v4", sie: TKV_V4.frage1, du: TKV_V4.frage1, feld: "tier", bekannt: null }
@@ -311,7 +351,7 @@ export function frageplan(source: string | null | undefined, formular: FormAntwo
 export function formularRegel(an: Ansprache): string {
   return [
     "Angaben aus dem Leadformular gelten als beantwortet, auch Mehrfachauswahl (z. B. „Haftpflicht, Hausrat“ heißt: beides).",
-    `- Greif sie höchstens einmal kurz und natürlich auf (z. B. ${a(an, "„Haftpflicht und Hausrat für deine Familie, alles klar.“", "„Haftpflicht und Hausrat für Ihre Familie, alles klar.“")}) und frag sie nicht erneut ab, auch nicht umformuliert.`,
+    `- Greif sie höchstens einmal kurz und natürlich auf (z. B. ${a(an, "„Haftpflicht und Hausrat, alles klar.“", "„Haftpflicht und Hausrat, alles klar.“")}) und frag sie nicht erneut ab, auch nicht umformuliert. Sprich nur dann von Familie, Partner oder Kindern, wenn der Lead es gesagt hat.`,
     "- Keine Rückfragen zum Schwerpunkt oder zur Bestätigung von Bekanntem, z. B. nie „Worum geht es Ihnen dabei vor allem?“, „Was ist Ihnen davon am wichtigsten?“ oder „Habe ich richtig verstanden, dass …?“.",
   ].join("\n");
 }
@@ -325,7 +365,16 @@ export function formularRegel(an: Ansprache): string {
 export function ersteFrageRegel(
   source: string | null | undefined,
   advisorName: string,
-  opts: { gesendet?: string | null; jetzt?: boolean; an?: Ansprache; formular?: FormAntwort[] | null } = {},
+  opts: {
+    gesendet?: string | null;
+    jetzt?: boolean;
+    an?: Ansprache;
+    formular?: FormAntwort[] | null;
+    /** Vermittler im Nominativ („Herr Kannapinn“, Du: Vorname) für die Telefonatsfrage; ohne: advisorName */
+    personNom?: string | null;
+    /** Die App stellt nach der Öffnungsfrage selbst genau eine Zwischenfrage (lib/whatsapp/zwischenfrage.ts) */
+    zwischenApp?: boolean;
+  } = {},
 ): string {
   const an = opts.an ?? "sie";
   const plan = frageplan(source, opts.formular, { gesendet: opts.jetzt ? null : opts.gesendet });
@@ -335,7 +384,7 @@ export function ersteFrageRegel(
     if (opts.jetzt) return "";
     if (plan.gestellt?.key === "termin") return `Erste Frage (stand schon in unserer ersten WhatsApp): „${terminFrage(an, advisorName)}“.\n- Sagt der Lead ja oder nennt er einen Tag: ${termine}`;
     return [
-      `Erste Frage (stand schon in unserer ersten WhatsApp): „Wann erreicht ${advisorName} Sie am besten für ein kurzes Telefonat?“ mit den Knöpfen ${OUTREACH_ALLGEMEIN.knoepfe.map((k) => `„${k}“`).join(", ")}.`,
+      `Erste Frage (stand schon in unserer ersten WhatsApp): „Wann erreicht ${opts.personNom || advisorName} ${a(an, "dich", "Sie")} am besten für ein kurzes Telefonat?“ mit den Knöpfen ${OUTREACH_ALLGEMEIN.knoepfe.map((k) => `„${k}“`).join(", ")}.`,
       "- Antwortet der Lead „Heute“ oder „Morgen“ (Knopf oder frei): halte das als Wunsch fest (angaben.wunsch) und mach den Terminvorschlag mit zwei freien Zeiten an diesem Tag (gibt es keine, die nächsten).",
       "- „Lieber schriftlich“: kein Problem, mach im Chat weiter: frag in einem Satz, worum es genau geht, dann der Terminvorschlag.",
     ].join("\n");
@@ -367,7 +416,10 @@ export function ersteFrageRegel(
     const erste = text(plan.offen[0]);
     lines.push(`- Der Lead hat zuerst geschrieben. Beantworte kurz, was er geschrieben hat (falls nötig), und schließe deine Antwort mit genau dieser Frage als eigener letzter Zeile (ohne Sternchen, nicht fett): ${erste}`);
     lines.push(`- Die nächste Nachricht des Leads ist die Antwort darauf: mit record_qualification festhalten (angaben.${plan.offen[0].feld}) und kurz bestätigen.`);
-    if (plan.offen[1]) lines.push(`- Dann genau noch diese Frage: „${text(plan.offen[1])}“ (angaben.${plan.offen[1].feld}${plan.offen[1].hinweis ? `; ${plan.offen[1].hinweis}` : ""}).`);
+    if (opts.zwischenApp) lines.push(ZWISCHEN_APP_REGEL);
+    else if (plan.offen[1]) lines.push(`- Dann genau noch diese Frage: „${text(plan.offen[1])}“ (angaben.${plan.offen[1].feld}${plan.offen[1].hinweis ? `; ${plan.offen[1].hinweis}` : ""}).`);
+  } else if (opts.zwischenApp) {
+    lines.push(ZWISCHEN_APP_REGEL);
   } else if (plan.offen.length) {
     lines.push(`- Danach noch ${plan.offen.length === 1 ? "genau diese Frage" : "genau diese Fragen, je eine pro Nachricht"}: ${plan.offen.map((f) => `„${text(f)}“ (angaben.${f.feld}${f.hinweis ? `; ${f.hinweis}` : ""})`).join(", dann ")}. Sonst nichts fragen.`);
   } else {
@@ -377,6 +429,10 @@ export function ersteFrageRegel(
   return [...lines, ...zahn].join("\n");
 }
 
+/** Regel, wenn die App die Zwischenfrage selbst stellt (Privatschutz, lib/whatsapp/zwischenfrage.ts). */
+const ZWISCHEN_APP_REGEL =
+  "- Die eine Frage danach (z. B. „Wer soll mitversichert sein?“ mit Knöpfen) stellt die App selbst. Du stellst vor dem Termin keine weitere Frage, auch nicht nach der Antwort darauf.";
+
 /**
  * Enthält eine Nachricht von uns die erste Frage des Produkts (Frage 1, Frage 2 oder die Terminfrage)? Für Chats, in
  * denen der Lead zuerst geschrieben hat: Dort stellt der Assistent die Frage selbst, ohne Erstanschreiben-Vorlage.
@@ -384,7 +440,7 @@ export function ersteFrageRegel(
 export function enthaeltErsteFrage(text: string | null | undefined, source: string | null | undefined): boolean {
   const p = outreachProdukt(source);
   if (!p || !text) return false;
-  return [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) || /schon irgendwo versichert, oder wäre/.test(text) || /Videotermin mit .+ in den nächsten Tagen\?/.test(text);
+  return [p.frage1, p.frage1Du, p.frage2Sie, p.frage2Du].some((f) => text.includes(f)) || /schon (irgendwo )?versichert, oder wäre/.test(text) || /Videotermin mit .+ in den nächsten Tagen\?/.test(text);
 }
 
 /** Woher kommt der Kontakt? „anfrage“ = Leadformular (Meta, Funnel), „nachricht“ = hat uns zuerst per WhatsApp geschrieben. */
@@ -422,15 +478,18 @@ export function erstGruss(an: Ansprache, kontakt?: AnredeKontakt | null): string
  * Erste Zeilen (Begrüßung, Dank, KI-Assistent mit Nutzen), ohne Frage. Auch Kopf der ersten Antwort des Assistenten,
  * wenn der Lead zuerst geschrieben hat (bot.ts).
  */
-export function erstanschreibenKopf(o: ErstanschreibenOpts, opts: { themaImmer?: boolean } = {}): string {
+export function erstanschreibenKopf(o: ErstanschreibenOpts): string {
   const an = o.an;
   const von = o.vermittler || o.name;
   const was = o.herkunft === "nachricht" ? a(an, "deine Nachricht", "Ihre Nachricht") : a(an, "deine Anfrage", "Ihre Anfrage");
-  // v6: „danke für Ihre Anfrage zum Thema Privatschutz! Ich bin der digitale KI-Assistent von Herrn Kannapinn.“
   if (o.ohneLead) return `${erstGruss(an, o.kontakt)} danke für ${was}! Ich bin der digitale KI-Assistent von ${von} und helfe ${a(an, "dir", "Ihnen")} gern weiter.`;
-  // Ohne Produkt nur im Erstanschreiben „zum Thema Versicherung“ (gleich der Vorlage), in der ersten Antwort ohne Thema
-  const thema = opts.themaImmer || (o.source ?? "").trim() ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
-  return `${erstGruss(an, o.kontakt)} danke für ${was}${thema}! Ich bin der digitale KI-Assistent von ${von}.`;
+  // v8 (Ole, 17.11.2026): „danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn
+  // Kannapinn.“ Das Thema wie in der Vorlage fest je Produkt; ohne Produkt mit dem Produktnamen, sonst ohne Thema. Im
+  // Freitext mit „KI“ im Satz, weil die Fußzeile der Vorlage („KI-Assistent“) fehlt.
+  const p = outreachProdukt(o.source);
+  const s = (o.source ?? "").trim();
+  const thema = p ? V8_THEMA[p.purpose as keyof typeof V8_THEMA] : s ? ` zum Thema ${erstanschreibenThema(o.source)}` : "";
+  return `${erstGruss(an, o.kontakt)} danke für ${was}${thema}! Hier schreibt der digitale KI-Assistent von ${von}.`;
 }
 
 /**
@@ -455,6 +514,11 @@ export function erstanschreibenV6Params(o: { source: string | null | undefined; 
   return [erstanschreibenThema(o.source), o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
 }
 
+/** Parameter der v8-Vorlage nach dem Namen: [Vermittler im Dativ, erste offene Frage ohne „?“] (rein, testbar). */
+export function erstanschreibenV8Params(o: { source: string | null | undefined; an: Ansprache; formular?: FormAntwort[] | null; person: { nom: string; dat: string }; kurz: string }): [string, string] {
+  return [o.person.dat, frageOhneFragezeichen(ersteFrage(o.source, o.an, o.kurz, o.formular, o.person))];
+}
+
 /** Knöpfe zur ersten Frage im Freitext: nur bei Frage 1 des Produkts bzw. der Telefonatsfrage, sonst keine. */
 export function ersteFrageKnoepfe(source: string | null | undefined, formular?: FormAntwort[] | null): string[] {
   const p = outreachProdukt(source);
@@ -464,17 +528,17 @@ export function ersteFrageKnoepfe(source: string | null | undefined, formular?: 
 
 /**
  * Nachricht 1 des Erstanschreibens (Freitext im offenen Fenster), z. B.
- *   Hallo Herr Müller, danke für Ihre Anfrage zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von Herrn Kannapinn.
+ *   Hallo Herr Müller, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale KI-Assistent von Herrn Kannapinn.
  *
- *   Wie alt ist Ihre Katze?
- * (Aufbau wie ERSTANSCHREIBEN_V7.)
+ *   *Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?*
+ * (Aufbau wie v8, erstanschreibenV8.)
  * Nachricht 2 ist das PDF der Erstinformation (lib/whatsapp/erstinfo-pdf.ts).
  */
 export function erstanschreibenText(o: ErstanschreibenOpts): string {
   const person = o.vermittler ? { nom: o.vermittlerNom || o.vermittler, dat: o.vermittler } : null;
   const frage = frageOhneFragezeichen(ersteFrage(o.source, o.an, o.name, o.formular, person));
-  // v7 (Ole, 17.11.2026): die erste Frage nicht fett
-  return `${erstanschreibenKopf(o, { themaImmer: true })}\n\n${frage}?`;
+  // v8 (Ole, 17.11.2026): die erste Frage wieder fett
+  return `${erstanschreibenKopf(o)}\n\n*${frage}?*`;
 }
 
 /** Knöpfe der bei Meta noch freigegebenen v4 (Zahnzusatz), Antworten darauf gelten als dieselbe Frage 1. */

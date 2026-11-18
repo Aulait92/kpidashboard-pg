@@ -423,7 +423,11 @@ async function persistInbound(
       void import("@/lib/policen/auslesen/server")
         .then((x) => x.nachEingang(linkedLead.leadId!, now))
         .catch(() => console.error("[policen-auslesen] nach eingang fehlgeschlagen"));
-      if (r.handled) return;
+      if (r.handled) {
+        // Termin-Strecke (P2): Antwort auf die Einwilligung zur Policen-Bitte → jetzt der Schluss (Adresse bestätigen)
+        if (!media && botErlaubt) await import("@/lib/whatsapp/termin-strecke").then((x) => x.nachPolicenAntwort(conversation.id, now)).catch(() => false);
+        return;
+      }
       if (media && botErlaubt) botErlaubt = false;
     } catch (e) {
       // Keine Inhalte, Dateinamen oder Medien-Adressen ins Protokoll (Rechtsprüfung A7)

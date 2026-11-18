@@ -16,6 +16,8 @@ import {
 
 export type CustomerEvent = {
   uid: string;
+  /** SEQUENCE der Einladung (Appointment.einladungSeq): Änderungen als Aktualisierung derselben UID */
+  sequence?: number;
   start: Date;
   end: Date;
   summary: string;
@@ -54,6 +56,9 @@ async function loadCustomerEvent(
       mode: true,
       meetUrl: true,
       conversationId: true,
+      customerId: true,
+      leadId: true,
+      einladungSeq: true,
       customer: { select: { name: true, leadAddress: true } },
       lead: { select: { name: true, formData: true, contactOverrides: true, assignedUser: { select: { displayName: true } } } },
     },
@@ -72,11 +77,18 @@ async function loadCustomerEvent(
   const manageUrl = manageUrlFor(token);
   const an = asAnsprache(appt.customer.leadAddress);
   const hi = anredeZeile(an, kontaktFromLead(appt.lead, conv?.contactName ?? null));
+  // Vermittler-Nennung im Text (Ole, 17.11.2026, lib/vermittler-nennung.ts): gesiezt „Herr/Herrn Kannapinn“; Gruß mit vollem Namen
+  const person = await (async () => {
+    const [{ ansprechpartner }, { vermittlerName }] = await Promise.all([import("@/lib/lead-anrede"), import("@/lib/vermittler-nennung")]);
+    const who = await ansprechpartner({ customerId: appt.customerId, leadId: appt.leadId });
+    return vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: advisor });
+  })().catch(() => ({ nom: advisor, dat: advisor }));
   return {
     uid: `${appt.id}@termin`,
+    sequence: appt.einladungSeq,
     start: appt.startsAt,
     end: appt.endsAt ?? new Date(appt.startsAt.getTime() + 30 * 60000),
-    summary: customerEventSummary(mode, advisor),
+    summary: customerEventSummary(mode, person.dat),
     description: customerEventDescription({
       hi,
       an,
@@ -85,11 +97,12 @@ async function loadCustomerEvent(
       videoUrl: appt.meetUrl,
       manageUrl,
       advisorName: advisor,
+      person,
     }),
     location:
       mode === "video"
         ? (appt.meetUrl ?? "Videocall")
-        : `Telefon: ${advisor} ruft ${an === "du" ? "dich" : "Sie"} an`,
+        : `Telefon: ${person.nom} ruft ${an === "du" ? "dich" : "Sie"} an`,
     manageUrl,
     token,
     advisorName: advisor,
@@ -129,6 +142,7 @@ export function buildIcs(ev: CustomerEvent): string {
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:${ev.uid}`,
+    `SEQUENCE:${ev.sequence ?? 0}`,
     `DTSTAMP:${icsDate(new Date())}`,
     `DTSTART:${icsDate(ev.start)}`,
     `DTEND:${icsDate(ev.end)}`,
