@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F05_Krankenzusatzambulant%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.2.057_BR_Krankenzusatzambulant.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AmbulantKomfort",
@@ -41,8 +40,7 @@
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F05_Krankenzusatzambulant%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.2.057_BR_Krankenzusatzambulant.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AmbulantPremium",
@@ -58,8 +56,7 @@
       },
       "bausteine": {},
       "quelle": "https://nextcloud.stuttgarter.de/s/iAR6cfRLwJBSGse/download?path=%2F03_Komposit%2F05_Krankenzusatzambulant%2F01_Verkaufsunterstuetzung_fuer_Sie&files=7.2.057_BR_Krankenzusatzambulant.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -69,6 +66,7 @@
   "offen": [
     "Quelle: Broschüre Krankenzusatz ambulant 7.2.057 (Stand 1/2024) der Stuttgarter Versicherung AG. Alle Beträge 100 % bis zur genannten Summe in zwei Versicherungsjahren, teils unter Anrechnung der Kassenleistung.",
     "Arznei- und Verbandmittel als Zuzahlungen nach SGB V gelesen. Vorsorge umfasst Vorsorge- und Früherkennungsuntersuchungen sowie Reise- und Schutzimpfungen. Sehschärfenkorrektur (LASIK) und Hörhilfen teilen sich eine Summe.",
-    "Heilpraktiker und Auslandsreise nicht genannt. Prävention (Kurse nach § 20 SGB V) nur Premium bis 400 €. Leistungsstaffel in den ersten 24 Monaten (Basis 200 €, Komfort 300 €, Premium 500 €). Keine Empfehlung markiert, Komfort als mittlere Stufe."
+    "Heilpraktiker und Auslandsreise nicht genannt. Prävention (Kurse nach § 20 SGB V) nur Premium bis 400 €. Leistungsstaffel in den ersten 24 Monaten (Basis 200 €, Komfort 300 €, Premium 500 €). Keine Empfehlung markiert, Komfort als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

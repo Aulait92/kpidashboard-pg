@@ -24,8 +24,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/ruerup-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "BasisRente IndexGarant",
@@ -42,8 +41,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.sparkassenversicherung.de/privatkunden/ruerup-rente.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -52,6 +50,7 @@
   "offen": [
     "SV SparkassenVersicherung (Baden-Württemberg, Hessen, Thüringen, Teile von Rheinland-Pfalz). Abruf 17.11.2026.",
     "Zwei Produktvarianten laut Seite: klassische BasisRente und BasisRente IndexGarant (TrendPortfolio Index, EURO STOXX 50, VolaIndexPerform, Deka-MultiAktiv Global, Climate Objective Index). Keine Empfehlung.",
-    "Absicherung von Ehepartner und Kindern zusätzlich möglich. Garantierter Rentenfaktor nicht genannt."
+    "Absicherung von Ehepartner und Kindern zusätzlich möglich. Garantierter Rentenfaktor nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

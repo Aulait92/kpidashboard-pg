@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankenversicherung premium",
@@ -40,8 +39,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Krankenversicherung premium plus",
@@ -58,8 +56,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/6SLpDAOdnFgFG5WSYcK128/2ec09c04c969b192d43fcbec167d81bd/hundeversicherung-leistungsuebersicht.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -70,6 +67,7 @@
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Produkt des Kooperationspartners Uelzener Versicherungen; Leistungsübersicht der Uelzener von der S-Direkt-Seite. Die Stufen basis, premium, premium plus weichen vom Uelzener-Ordner (dort ein Tarif, Unterlagen 2024 bis 2025) ab; die S-Direkt-Unterlage ist älter, bitte Aktualität prüfen.",
     "Leistungsübersicht HUOPKV_IB_1121; enthält die OP-Leistungen der jeweiligen Stufe. Keine Empfehlung; premium als mittlere Stufe.",
-    "Ob das Erstattungslimit der OP-Stufe (1.500 €, 3.000 €, ohne Limit) auch für die übrigen Behandlungen gilt, steht nicht in der Übersicht; deshalb ohne Jahreshöchstleistung erfasst. GOT-Satz für Behandlungen ohne OP nicht genannt. Gesundheitspauschale ohne Wartezeit."
+    "Ob das Erstattungslimit der OP-Stufe (1.500 €, 3.000 €, ohne Limit) auch für die übrigen Behandlungen gilt, steht nicht in der Übersicht; deshalb ohne Jahreshöchstleistung erfasst. GOT-Satz für Behandlungen ohne OP nicht genannt. Gesundheitspauschale ohne Wartezeit.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

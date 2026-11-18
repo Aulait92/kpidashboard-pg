@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/25I7G3uNySz9n0yYEbfurI/f0ca3eb8f6a369a409283abc7a92e622/ZE_80.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tarif Zahnbehandlung (ZB 90)",
@@ -37,8 +36,7 @@
       },
       "bausteine": {},
       "quelle": "https://assets.ctfassets.net/4b9zk5bbf1ft/1EwsRbDkfRBoY3nSiL8wLL/69657a47ae4468278aa5f225540c01e4/ZB_90.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -50,6 +48,7 @@
     "Sparkassen DirektVersicherung (S-Direkt, Direktversicherer der Provinzial). Abruf 17.11.2026.",
     "Produkte des Kooperationspartners ALTE OLDENBURGER Krankenversicherung AG. Zwei Tarife, einzeln oder kombiniert. Keine Empfehlung.",
     "ZE 80: bis 80 % des Kostenanteils für Zahnersatz; Erstattung in den ersten vier Kalenderjahren begrenzt (800 €, 1.200 €, 1.600 €, 3.200 €). ZB 90: Kieferorthopädie bis 18 Jahre, 90 % bis 2.500 € (ohne GKV-Leistung) bzw. 1.000 €.",
-    "Implantate und Wartezeit nicht ausgewertet."
+    "Implantate und Wartezeit nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

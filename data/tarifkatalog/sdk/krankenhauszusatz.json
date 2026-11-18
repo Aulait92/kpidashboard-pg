@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Klinik 2-Bett",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Klinik 1-Bett",
@@ -63,8 +61,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.sdk.de/versicherungen/zusatzversicherung/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -75,6 +72,7 @@
   "offen": [
     "SDK markiert Klinik 2-Bett als „Am beliebtesten“.",
     "Klinik bei Unfall leistet nur nach Unfällen (laut Produktseite ohne Gesundheitsprüfung, mit allen Leistungen von Klinik 1-Bett). Wechsel zwischen den Tarifen alle fünf Jahre bis zum 65. Geburtstag ohne erneute Gesundheitsfragen möglich.",
-    "Ersatz-Krankenhaustagegeld laut Tarifvergleich ohne Angabe, ob je Tag; Zuzahlung im Krankenhaus (10 €) bei Unfall und 1-Bett ohne zeitliche Begrenzung, Familienzimmer bei 1-Bett. Krankenhaustagegeld als Baustein nicht belegt."
+    "Ersatz-Krankenhaustagegeld laut Tarifvergleich ohne Angabe, ob je Tag; Zuzahlung im Krankenhaus (10 €) bei Unfall und 1-Bett ohne zeitliche Begrenzung, Familienzimmer bei 1-Bett. Krankenhaustagegeld als Baustein nicht belegt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

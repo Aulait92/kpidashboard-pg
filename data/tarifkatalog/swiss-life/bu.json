@@ -34,8 +34,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.swisslife.de/content/dam/de/documents/49/8855.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Swiss Life BU plus",
@@ -62,8 +61,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.swisslife.de/content/dam/de/documents/49/8855.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -78,6 +76,7 @@
     "Rückwirkende Leistung: Anspruch entsteht mit Beginn des Monats nach Eintritt der Berufsunfähigkeit; eine Frist für verspätete Meldung ist nicht genannt.",
     "Umorganisation: Verzicht bei Arbeitnehmern immer, bei Selbstständigen unter 5 Mitarbeitern oder mit akademischem Abschluss und mindestens 90 % kaufmännischer Tätigkeit.",
     "Akuthilfe: 18 Monate BU-Rente bei schwerer Krankheit (z. B. Krebs). Leistung bei voller Erwerbsminderung nur unter Voraussetzungen (u. a. ab Alter 50).",
-    "Swiss Life markiert keine Variante. Die Grundfähigkeitsversicherung heißt Swiss Life Vitalschutz (siehe grundfaehigkeit.json)."
+    "Swiss Life markiert keine Variante. Die Grundfähigkeitsversicherung heißt Swiss Life Vitalschutz (siehe grundfaehigkeit.json).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

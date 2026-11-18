@@ -22,8 +22,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.stuttgarter.de/familie-gesundheit/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -34,6 +33,7 @@
     "Drei Varianten: konstante (T20), linear fallende (T21) und annuitätisch fallende Summe (T22), jeweils auch auf zwei Leben. Das sind Summenverläufe, keine Leistungsstufen; daher ein Tarif mit Bausteinen fallend und verbunden (ob mit Aufpreis, nicht belegt).",
     "Nachversicherung laut Bedingungen V20 bei Ereignissen wie Geburt oder Adoption, Einkommenserhöhung ab 20 % u. a. innerhalb von 6 Monaten; höchstens 100 % der Anfangssumme, Gesamtsumme bis 400.000 €.",
     "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und Umtauschrecht weder auf der Produktseite noch in den Bedingungen V20 gefunden. Schwere Krankheiten als Zusatzversicherung erwähnt (Details nicht ausgewertet).",
-    "Kinder-Nachversicherung und Endalter nicht auf der Produktseite."
+    "Kinder-Nachversicherung und Endalter nicht auf der Produktseite.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }

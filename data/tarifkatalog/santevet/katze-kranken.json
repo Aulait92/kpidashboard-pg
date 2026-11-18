@@ -32,8 +32,7 @@
         "vorsorge": "inklusive"
       },
       "quelle": "https://www.santevet.de/katzenkrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "SantéVet Comfort",
@@ -58,8 +57,7 @@
         "vorsorge": "inklusive"
       },
       "quelle": "https://www.santevet.de/katzenkrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "SantéVet Premium",
@@ -84,8 +82,7 @@
         "vorsorge": "inklusive"
       },
       "quelle": "https://www.santevet.de/katzenkrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -103,6 +100,7 @@
     "Kein reiner OP-Tarif. Versicherer ist die Allianz IARD (Frankreich), Vermittler VetAssur unter der Marke SantéVet.",
     "Ausland: Reisen unter drei aufeinanderfolgenden Monaten.",
     "Neuabschluss bis 8 Jahre.",
-    "Vierter Tarif Cat Indoor für Wohnungskatzen (90 %, 5.000 € im Jahr, 50 € Selbstbeteiligung im Jahr, Vorsorge 50 €, therapeutisches Futter 50 €; Unfälle außerhalb der Wohnung nur bei Fenster- oder Balkonsturz); hier nicht als Stufe geführt."
+    "Vierter Tarif Cat Indoor für Wohnungskatzen (90 %, 5.000 € im Jahr, 50 € Selbstbeteiligung im Jahr, Vorsorge 50 €, therapeutisches Futter 50 €; Unfälle außerhalb der Wohnung nur bei Fenster- oder Balkonsturz); hier nicht als Stufe geführt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht, Broschüre bzw. Bedingungen."
   ]
 }
