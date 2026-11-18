@@ -87,7 +87,7 @@ export function LogoForm({ website: initialWebsite, dataUri, bestaetigt, canEdit
             <div className="mt-3 space-y-3">
               <label className="flex items-start gap-2 text-sm">
                 <input type="checkbox" className="mt-0.5 h-4 w-4" checked={erlaubt} disabled={!canEdit || pending} onChange={(e) => setErlaubt(e.target.checked)} />
-                <span>Ich darf dieses Logo in meiner Beratung verwenden (z. B. als Agentur meiner Gesellschaft oder als eigenes Logo).</span>
+                <span>Ich darf dieses Logo in meiner Beratung verwenden (z. B. als Agentur meines Versicherers oder als eigenes Logo).</span>
               </label>
               <Button variant="primary" disabled={!canEdit || pending || !erlaubt} onClick={() => run(() => logoBestaetigenAction(erlaubt), "Logo übernommen")}>
                 Logo verwenden

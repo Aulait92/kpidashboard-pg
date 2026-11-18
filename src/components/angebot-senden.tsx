@@ -294,7 +294,7 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
       ) : (
         <div className="space-y-4 px-5 py-4" data-angebot-app>
           <section>
-            <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Angebot der Gesellschaft (PDF)</h3>
+            <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Angebot des Versicherers (PDF)</h3>
             {info.dateien.length ? (
               <ul className="mb-2 space-y-1">
                 {info.dateien.map((f) => (

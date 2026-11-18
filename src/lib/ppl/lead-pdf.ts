@@ -74,7 +74,7 @@ const ANGABEN: Record<Category, { label: string; fields: Field[] }> = {
   pkv: {
     label: "Angaben zum Interessenten",
     fields: [
-      { k: "Aktuelle Gesellschaft", from: ["Aktuelle Versicherung"] },
+      { k: "Aktueller Versicherer", from: ["Aktuelle Versicherung"] },
       { k: "Versicherungsdauer", from: ["Wie lange in PKV?"] },
       { k: "Monatsbeitrag", from: ["Monatlicher Beitrag"], fmt: euro },
       { k: "Situation", from: ["Situation"] },

@@ -1,6 +1,6 @@
 "use client";
 
-// Einrichtung ohne Ole (18.11.2026): Testlead an das eigene Handy, Logo bestätigen, Gesellschaften wählen.
+// Einrichtung ohne Ole (18.11.2026): Testlead an das eigene Handy, Logo bestätigen, Versicherer wählen.
 
 import { useActionState, useState, useTransition } from "react";
 import { Check, Send, X } from "lucide-react";
@@ -80,7 +80,12 @@ export function LogoZeile({ dataUri, bestaetigt, readOnly }: { dataUri: string |
   );
 }
 
-export function GesellschaftenWahl({ alle, gewaehlt: start0, readOnly, makler }: { alle: { key: string; name: string }[]; gewaehlt: string[]; readOnly: boolean; makler: boolean }) {
+/**
+ * Versicherer für die Tarifvorschläge (Ole, 18.11.2026: Kunden sagen „Versicherer“, nicht „Gesellschaft“). Makler und
+ * Mehrfachvertreter wählen mehrere; ein Ausschließlichkeitsvertreter genau einen (kein „Hinzufügen“, sobald er steht).
+ */
+export function GesellschaftenWahl({ alle, gewaehlt: start0, readOnly, vermittlerTyp }: { alle: { key: string; name: string }[]; gewaehlt: string[]; readOnly: boolean; vermittlerTyp: string }) {
+  const nurEiner = vermittlerTyp !== "makler" && vermittlerTyp !== "mehrfachvertreter";
   const toast = useToast();
   const [gewaehlt, setGewaehlt] = useState(start0);
   const [pending, start] = useTransition();
@@ -94,7 +99,7 @@ export function GesellschaftenWahl({ alle, gewaehlt: start0, readOnly, makler }:
   };
   return (
     <div className="mt-4 border-t border-[color:var(--border)] pt-4 text-sm" data-gesellschaften-wahl>
-      <p className="mb-2 font-medium">{makler ? "Mit welchen Gesellschaften arbeiten Sie am meisten?" : "Ihre Gesellschaft für Angebote"}</p>
+      <p className="mb-2 font-medium">{nurEiner ? "Für welchen Versicherer sind Sie tätig?" : "Mit welchen Versicherern arbeiten Sie?"}</p>
       <div className="flex flex-wrap items-center gap-2">
         {gewaehlt.map((k) => (
           <span key={k} className="inline-flex min-h-9 items-center gap-1 rounded-full border border-[color:var(--border)] bg-[color:var(--surface-sunken)] pl-3 pr-1">
@@ -106,16 +111,16 @@ export function GesellschaftenWahl({ alle, gewaehlt: start0, readOnly, makler }:
             ) : null}
           </span>
         ))}
-        {!readOnly && gewaehlt.length < 12 ? (
+        {!readOnly && gewaehlt.length < (nurEiner ? 1 : 12) ? (
           <select
             value=""
             disabled={pending}
             onChange={(e) => e.target.value && speichern([...gewaehlt, e.target.value])}
             className="h-9 rounded-full border border-dashed border-[color:var(--border-strong)] bg-white px-3 text-sm"
-            aria-label="Gesellschaft hinzufügen"
+            aria-label="Versicherer hinzufügen"
             data-gesellschaft-dazu
           >
-            <option value="">+ Gesellschaft</option>
+            <option value="">+ Versicherer hinzufügen</option>
             {alle
               .filter((g) => !gewaehlt.includes(g.key))
               .map((g) => (
@@ -126,7 +131,7 @@ export function GesellschaftenWahl({ alle, gewaehlt: start0, readOnly, makler }:
           </select>
         ) : null}
       </div>
-      <p className="mt-2 text-xs text-[color:var(--muted)]">Diese Tarife schlägt die App bei der Terminvorbereitung zuerst vor.</p>
+      <p className="mt-2 text-xs text-[color:var(--muted)]">Deren Tarife schlägt Ihnen die App in der Terminvorbereitung zuerst vor.</p>
     </div>
   );
 }

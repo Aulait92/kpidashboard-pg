@@ -33,7 +33,7 @@ export function MarkthinweisForm({ text: initial, standard, canEdit }: { text: s
         disabled={!canEdit || pending}
         onChange={(e) => setText(e.target.value)}
       />
-      <p className="text-xs text-[color:var(--muted)]">{"{gesellschaften}"} ersetzt die App durch die Gesellschaften der gezeigten Tarife.</p>
+      <p className="text-xs text-[color:var(--muted)]">{"{gesellschaften}"} ersetzt die App durch die Versicherer der gezeigten Tarife.</p>
       <div className="flex flex-wrap items-center gap-3 pt-1">
         <Button disabled={!canEdit || pending || text.trim() === initial.trim()} onClick={() => save(text)}>
           Speichern

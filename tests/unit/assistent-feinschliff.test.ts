@@ -216,7 +216,7 @@ describe("Buchung, Komplettcheck und Abschluss", () => {
 
   it("Vertragsfrage nach „Ja, gern“ (Sie, Familie, Du)", () => {
     expect(vertragsFrage("sie", false)).toBe(
-      "Super! Welche Versicherungen haben Sie heute schon? Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Gesellschaft.",
+      "Super! Welche Versicherungen haben Sie heute schon? Zum Beispiel Haftpflicht, Hausrat, Unfall, Berufsunfähigkeit, Rechtsschutz, Kfz, Kranken- oder Lebensversicherung und Altersvorsorge. Gern auch mit Versicherer.",
     );
     expect(vertragsFrage("sie", true)).toContain("Welche Versicherungen haben Sie und Ihre Familie heute schon?");
     expect(vertragsFrage("du", false)).toContain("Welche Versicherungen hast du heute schon?");

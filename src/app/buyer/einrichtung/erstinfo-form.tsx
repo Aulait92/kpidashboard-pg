@@ -106,7 +106,7 @@ export function ErstinfoForm({
       ) : (
         <>
           <details className={`min-w-0 ${box}`} open={!!initial.fileName || status === "vertreter"} data-erstinfo-upload>
-            <summary className="cursor-pointer text-sm font-medium">Erstinformation Ihrer Gesellschaft als PDF hochladen (freiwillig)</summary>
+            <summary className="cursor-pointer text-sm font-medium">Erstinformation Ihres Versicherers als PDF hochladen (freiwillig)</summary>
             <p className="mt-2 text-xs text-[color:var(--muted)] [overflow-wrap:anywhere]">
               {status === "vertreter"
                 ? "Als Ausschließlichkeitsvertreter haben Sie meist eine fertige Erstinformation von Ihrem Versicherer. Laden Sie dieses PDF hoch, dann schickt Ihr Assistent genau dieses Dokument. "

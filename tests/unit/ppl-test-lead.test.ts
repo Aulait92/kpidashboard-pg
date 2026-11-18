@@ -118,7 +118,7 @@ describe("Lead-PDF", () => {
     ]);
     expect(d.angabenLabel).toBe("Angaben zum Interessenten");
     expect(d.angaben.map((c) => [c.k, c.v])).toEqual([
-      ["Aktuelle Gesellschaft", "Testversicherung AG"],
+      ["Aktueller Versicherer", "Testversicherung AG"],
       ["Versicherungsdauer", "Mehr als 10 Jahre"],
       ["Monatsbeitrag", "850 €"],
       ["Situation", "Angestellt"],
