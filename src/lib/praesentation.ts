@@ -188,12 +188,12 @@ export function praesentationCss(m: Marke): string {
 .vgl thead .tarif{font-size:24px;font-weight:700}.vgl thead .tarif.lang{font-size:20px}.vgl thead .preis{font-size:30px;font-weight:800;color:var(--f)}.vgl thead .preis small{display:block;font-size:15px;font-weight:500;color:#66758f;margin-top:-2px}
 .vgl .badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--f);color:#fff;font-size:14px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap}
 .vgl .gew{background:var(--fh)}
-.vgl .ja-z{color:#047857;font-weight:900;font-size:28px;line-height:1}.vgl .nein-z{font-size:16px;color:#475569}.alle .ja-k{color:#047857;font-weight:900;font-style:normal}
+.vgl .ja-z{color:#047857;font-weight:900;font-size:24px;line-height:1}.vgl .nein-z{font-size:15px;line-height:1.15;color:#475569}.vgl.mit-bisher .nein-z{font-size:14px;line-height:1.05}.alle .ja-k{color:#047857;font-weight:900;font-style:normal}
 .vgl .bisher{background:#f4f6f9;color:#334155}
 .vgl.mit-bisher th,.vgl.mit-bisher td{padding:8px 10px}.vgl.mit-bisher thead th{padding-top:20px}.vgl.mit-bisher tbody th{width:22%}
 .vgl.mit-bisher .bs{font-size:14px;padding:3px 10px 3px 5px;gap:6px}.vgl.mit-bisher .bs small{white-space:nowrap;font-size:14px}.vgl.mit-bisher .bausteine{gap:6px}
 .vgl thead th.bisher{width:14%;overflow-wrap:normal;hyphens:auto}
-.vgl thead th.bisher .bt{font-size:14px;font-weight:700;color:#66758f;margin-bottom:2px}
+.vgl thead th.bisher .bt{font-size:13px;font-weight:700;color:#66758f;margin-bottom:2px}
 .vgl thead th.bisher .bg{font-size:15px;font-weight:600;color:#4b5568}
 .vgl thead th.bisher .tarif{font-size:18px}.vgl thead th.bisher .preis{font-size:22px;color:#334155}
 .vgl .pruef{font-size:15px;color:#66758f;font-style:italic}
