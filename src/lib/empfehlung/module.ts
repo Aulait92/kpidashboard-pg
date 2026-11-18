@@ -6,6 +6,7 @@
 // Stripe-Abo. Geht das nicht automatisch (kein Abo, Startpreis-Phase, Fehler), bleibt
 // das Modul trotzdem frei und Ole bekommt die Aufgabe „Preis anpassen“.
 
+import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { reportError } from "@/lib/monitoring";
@@ -340,7 +341,8 @@ export async function sendAnnouncement(actor: AuditActor, now = new Date()): Pro
     return { ok: false, error: "Die Ankündigung wird gerade schon verschickt." };
   }
   const customers = await prisma.customer.findMany({
-    where: { archived: false, plan: { not: "service" }, empfehlungEnabled: false },
+    // Nicht an reine Pay-per-Lead-Kunden (Ole, 18.11.2026)
+    where: { archived: false, plan: { not: "service" }, empfehlungEnabled: false, NOT: NUR_PPL_WHERE },
     select: { id: true },
   });
   let sent = 0;

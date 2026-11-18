@@ -1,6 +1,7 @@
 // Neuigkeiten im Kundenbereich: Laden, Ungelesen-Zähler, Pflege im Admin,
 // optionaler Push beim Veröffentlichen und KI-Entwurf.
 
+import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import { prisma } from "@/lib/prisma";
 import { audit, type AuditActor } from "@/lib/audit";
 import { sendToBuyersOfCustomer } from "@/lib/push";
@@ -132,6 +133,8 @@ export async function pushUpdate(id: string): Promise<number> {
     where: {
       ...(plans ? { plan: { in: plans } } : { plan: { not: "internal" } }),
       archived: false,
+      // Nicht an reine Pay-per-Lead-Kunden (Ole, 18.11.2026): sie nutzen die Software nicht
+      NOT: NUR_PPL_WHERE,
       users: { some: { role: "BUYER", id: { in: subUserIds } } },
       // Neuigkeit zum Bestandskunden-Modul: nur an Kunden, die es sehen (lib/bestand/sichtbar.ts)
       ...(isBestandUpdate(row) && !BESTAND_MODULE_AVAILABLE ? { OR: [{ existingCustomersEnabled: true }, { bestandSichtbar: true }] } : {}),
