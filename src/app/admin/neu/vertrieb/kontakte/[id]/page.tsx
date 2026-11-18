@@ -11,7 +11,7 @@ import { OnboardingCard, StartOnboardingCard } from "@/components/vertrieb/onboa
 import { TaskForm } from "@/components/vertrieb/task-form";
 import { TaskRow } from "@/components/vertrieb/ui";
 import { Seite } from "@/components/admin-neu/ui/seite";
-import { Agentur, ColdMails, Kundendaten, NaechsterSchritt, Stammdaten, Verlauf } from "@/components/admin-neu/vertrieb/kontakt-karten";
+import { Agentur, ColdMails, Kundendaten, NaechsterSchritt, Stammdaten, Verlauf, offeneNachfrage } from "@/components/admin-neu/vertrieb/kontakt-karten";
 import { KONTAKTE, VERTRIEB_NEU_LISTE, VERTRIEB_NEU_LISTEN, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { neuerPfad } from "@/lib/admin-neu/umzug";
 import type { ImpressumInfo } from "@/lib/impressum";
@@ -58,6 +58,9 @@ export default async function KontaktaktePage({ params, searchParams }: { params
   const pfad = kontaktPfad(c.id);
   const ansprechpartner = [c.salutation, c.firstName, c.lastName].filter(Boolean).join(" ");
   const adresse = [c.street, [c.zip, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  // „Wie lief der Termin?“ steht oben im Nächsten Schritt, nicht noch einmal unter Aufgaben
+  const nachfrage = offeneNachfrage(a);
+  const aufgaben = a.open.filter((t) => t !== nachfrage);
   const feedback = a.onboarding ? await prisma.customerFeedback.findMany({ where: { customerId: a.onboarding.customerId }, orderBy: { sentAt: "asc" } }) : [];
 
   return (
@@ -211,11 +214,11 @@ export default async function KontaktaktePage({ params, searchParams }: { params
             </div>
 
             <Card id="aufgaben">
-              <CardHeader title="Aufgaben" count={a.open.length} />
+              <CardHeader title="Aufgaben" count={aufgaben.length} />
               <div data-funktion="page-aufgaben--offene-aufgaben-des-kontakts-und-neue-aufgabe">
-                {a.open.length ? (
+                {aufgaben.length ? (
                   <ul className="divide-y divide-[color:var(--border)]">
-                    {a.open.map((t) => (
+                    {aufgaben.map((t) => (
                       <TaskRow key={t.id} t={t} showContact={false} />
                     ))}
                   </ul>

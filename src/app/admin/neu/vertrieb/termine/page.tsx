@@ -5,6 +5,7 @@ import { Badge, ButtonLink, Card, EmptyState, buttonClass } from "@/components/u
 import { CopyField } from "@/components/termin/copy-field";
 import { AdminRescheduleButton } from "@/components/termin/admin-termin";
 import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
+import { Kennzahlen, type Kennzahl } from "@/components/admin-neu/ui/kennzahlen";
 import { Seite } from "@/components/admin-neu/ui/seite";
 import { V, kontaktPfad } from "@/components/admin-neu/vertrieb/listen";
 import { TerminBuchen } from "@/components/admin-neu/vertrieb/termin-buchen";
@@ -15,7 +16,7 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 import { DEFAULT_BOOKING_TYPE, VERTRIEB_CUSTOMER_ID, bookingPath, publicSalesBookingUrl, salesAppUrl } from "@/lib/vertrieb/buchung";
 import { fmtDateTime } from "@/lib/vertrieb/dates";
 import { waConfirmLabel } from "@/lib/vertrieb/kontaktakte";
-import { ANGEBOT_TAG, ANSICHTEN, FILTER, STUFE_TON, ansichtVon, istAbgeschlossen, stufeLabel, type Ansicht, type TerminZeile } from "@/lib/vertrieb/termine-uebersicht";
+import { ANGEBOT_TAG, ANSICHTEN, FILTER, STUFE_TON, ansichtVon, istAbgeschlossen, stufeLabel, type Ansicht, type TerminKennzahlen, type TerminZeile } from "@/lib/vertrieb/termine-uebersicht";
 import { ladeTerminUebersicht } from "@/lib/vertrieb/termine-uebersicht-server";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,21 @@ const CHIP = "inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full bord
 const chipAn = (an: boolean) =>
   an ? "border-[color:var(--brand)] bg-[color:var(--brand)] text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)] hover:text-[color:var(--foreground)]";
 const SPALTEN = "md:grid-cols-[8.5rem_minmax(0,1.3fr)_minmax(0,1.5fr)_10.5rem_11rem]";
+const prozent = (x: number) => `${Math.round(x * 100)} %`;
+
+/** Stufe 2: vier Kennzahlen oben (Woche, erschienen, mit Angebot, gewonnen; die drei letzten über 30 Tage). */
+function kennzahlen(k: TerminKennzahlen): Kennzahl[] {
+  return [
+    { label: "Termine diese Woche", wert: String(k.woche.anzahl), hinweis: k.woche.kommend ? `${k.woche.kommend} noch offen` : "keiner mehr offen", href: href("kommend") },
+    {
+      label: "Erschienen (30 Tage)",
+      wert: k.erschienen.quote == null ? "–" : prozent(k.erschienen.quote),
+      hinweis: k.erschienen.basis ? `${k.erschienen.erschienen} von ${k.erschienen.basis} Terminen` : "noch kein Ergebnis",
+    },
+    { label: "Mit Angebot (30 Tage)", wert: String(k.angebot.anzahl), hinweis: `von ${k.angebot.gehalten} Gesprächen` },
+    { label: "Gewonnen (30 Tage)", wert: String(k.gewonnen.anzahl), hinweis: `von ${k.gewonnen.kontakte} Kontakten`, ton: k.gewonnen.anzahl ? "gut" : undefined, href: href("30", "gewonnen") },
+  ];
+}
 
 // Verkaufen → Termine (Ole, 18.11.2026): Übersicht über alle Vertriebstermine (eigene Buchungsseite, Calendly, von Hand),
 // damit niemand vergessen wird. Oben „Braucht Aufmerksamkeit“ (Ergebnis fehlt, kein nächster Schritt, nicht erschienen,
@@ -49,6 +65,8 @@ const SPALTEN = "md:grid-cols-[8.5rem_minmax(0,1.3fr)_minmax(0,1.5fr)_10.5rem_11
 // Stand, nächster Schritt. Zeile antippen öffnet die Kontaktakte. Daten: lib/vertrieb/termine-uebersicht(-server).ts.
 // Buchungslinks und Kalender (selten gebraucht) eingeklappt darunter; Einstellungen unter Einstellungen → Buchungsseiten.
 // „Termin buchen“: Kontakt wählen, dann das bestehende Fenster in der Kontaktakte (auch über „+ Neu → Termin“).
+// Stufe 2 (Ole, 18.11.2026): oben vier Kennzahlen (Kennzahlen aus Admin v2), Termine nur als Aufgabe „Termin“ mit Art
+// „Termin (Aufgabe)“ in der Liste.
 export default async function TerminePage({ searchParams }: { searchParams: Promise<{ buchen?: string; ansicht?: string; f?: string }> }) {
   await connection();
   await requireAuth();
@@ -56,7 +74,7 @@ export default async function TerminePage({ searchParams }: { searchParams: Prom
   const ansicht = ansichtVon(sp.ansicht);
   const filter = FILTER.find((f) => f.key === sp.f)?.key;
   const now = new Date();
-  const [{ zeilen, anzahl, aufmerksamkeit }, conn, types] = await Promise.all([
+  const [{ zeilen, anzahl, aufmerksamkeit, kennzahlen: kz }, conn, types] = await Promise.all([
     ladeTerminUebersicht({ ansicht, filter }, now),
     prisma.calendarConnection.findUnique({ where: { customerId: VERTRIEB_CUSTOMER_ID }, select: { status: true, provider: true, accountEmail: true } }),
     prisma.salesBookingType.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, select: { id: true, slug: true, title: true, durationMin: true, bookingWindowDays: true } }),
@@ -68,6 +86,9 @@ export default async function TerminePage({ searchParams }: { searchParams: Prom
 
   return (
     <Seite titel="Verkaufen" reiter="verkaufen" aktionen={<TerminBuchen offen={!!sp.buchen} key={sp.buchen ?? "zu"} />}>
+      <div data-termine-kennzahlen>
+        <Kennzahlen werte={kennzahlen(kz)} />
+      </div>
       <div data-termine-aufmerksamkeit>
         <Aufmerksamkeit punkte={aufmerksamkeit} max={4} restAufklappen leer="Alles im Griff: Jedes Gespräch hat ein Ergebnis und einen nächsten Schritt." />
       </div>

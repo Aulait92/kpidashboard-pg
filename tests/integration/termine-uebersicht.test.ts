@@ -70,7 +70,7 @@ describe("Termin-Übersicht laden (Datenbank)", () => {
       schritt: { art: "schritt", text: "Angebot läuft" },
     });
     expect(z[0]).toMatchObject({ person: "Berta Bauer", artLabel: "Entscheidungs-Call", ergebnis: { art: "fehlt", reviewOffen: true }, schritt: { art: "keiner" } });
-    expect(z[0].ergebnisHref).toBe(`/admin/neu/vertrieb/kontakte/${b}#aufgaben`);
+    expect(z[0].ergebnisHref).toBe(`/admin/neu/vertrieb/kontakte/${b}#ergebnis`);
 
     const meinePunkte = aufmerksamkeit.filter((p) => p.title.includes(uid) || p.title.includes("Berta Bauer"));
     expect(meinePunkte.map((p) => p.title)).toEqual(["Ergebnis fehlt: Berta Bauer", `Angebot ohne Reaktion: Firma 2 ${uid}`]);

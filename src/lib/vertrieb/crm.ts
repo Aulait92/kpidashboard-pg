@@ -80,10 +80,14 @@ export const OUTCOME_BY_ID = Object.fromEntries(OUTCOMES.map((o) => [o.id, o]));
 /** Aufgabe nach jedem Termin (Ole, 13.11.): Titel beginnt immer so. */
 export const TERMIN_REVIEW_PREFIX = "Wie lief der Termin";
 export const isTerminReview = (title: string) => title.startsWith(TERMIN_REVIEW_PREFIX);
+/** Eigene Termin-Aufgabe (Termin ohne Buchung, z. B. aus „Termin vereinbart“): „Termin“, „Termin: …“, „Termin mit …“, nicht „Termin vorbereiten“. */
+export const istTerminAufgabe = (title: string) => !isTerminReview(title) && /^Termin(?:$|:|\s+mit\b)/i.test(title.trim());
 /** Schnellauswahl in der Aufgabe „Wie lief der Termin?“ (Knopftext + Ergebnis). */
 export const TERMIN_REVIEW_CHOICES: { outcome: string; label: string }[] = [
   { outcome: "gewonnen", label: "Abschluss" },
   { outcome: "angebot_gesendet", label: "Angebot geschickt" },
+  // Folgetermin (Ole, 18.11.2026): Stufe Termin, Folgeaufgabe „Folgetermin buchen“ (termin-review.ts)
+  { outcome: "termin", label: "Folgetermin" },
   { outcome: "bedenkzeit", label: "Bedenkzeit" },
   { outcome: "nicht_erschienen", label: "Nicht erschienen" },
   { outcome: "verloren", label: "Kein Interesse" },
