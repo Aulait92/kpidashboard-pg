@@ -34,7 +34,7 @@ import {
   abschlussText,
   adresseUnvollstaendig,
   andereAdresseFrage,
-  bereitlegenListe,
+  bereitlegenFuerLead,
   EMAIL_KNOEPFE,
   einladungUnterwegs,
   istFamilie,
@@ -440,14 +440,30 @@ async function mitPolicenHinweis(k: StreckenKontext, liste: string[]): Promise<s
   return liste.map((x) => (VERTRAEGE_BEREITLEGEN_RE.test(x) ? ersatz : x));
 }
 
+/** Bereitlegen-Liste zum Termin (eine Quelle für den WhatsApp-Schluss und die Termin-Mails, M3). */
+async function bereitlegenFuer(k: StreckenKontext): Promise<string[]> {
+  return mitPolicenHinweis(k, bereitlegenFuerLead({ source: k.source, formular: k.formular, angaben: k.angaben, an: k.an, komplettcheck: k.termin?.komplettcheck === true }));
+}
+
+/**
+ * Vorbereitung für die Termin-Mails (Bestätigung bzw. Einladung und Vortags-Mail, Ole 18.11.2026, M3): dieselbe
+ * Bereitlegen-Liste wie im WhatsApp-Schluss, Komplettcheck und Familie für den Komplettcheck-Satz.
+ */
+export async function bereitlegenFuerTermin(conversationId: string, appointmentId: string, now = new Date()): Promise<{ liste: string[]; komplettcheck: boolean; familie: boolean } | null> {
+  const k = await streckenKontext(conversationId, now);
+  if (!k) return null;
+  const termin = await prisma.appointment.findUnique({ where: { id: appointmentId }, select: { id: true, startsAt: true, confirmedAt: true, komplettcheck: true } });
+  if (!termin) return null;
+  const liste = await bereitlegenFuer({ ...k, termin });
+  return { liste, komplettcheck: termin.komplettcheck === true, familie: k.familie };
+}
+
 /** Schluss der Strecke (Bereitlegen in einer Zeile, Frage nach der Adresse), ohne Senden. */
 export async function abschlussNachricht(k: StreckenKontext, einleitung: string | null): Promise<{ text: string; buttons: Knopf[] | null }> {
-  const quelle = { formular: k.formular, angaben: k.angaben };
-  const sparten = spartenDesLeads(k.source, quelle);
   const text = abschlussText({
     an: k.an,
     person: k.person,
-    bereitlegen: await mitPolicenHinweis(k, bereitlegenListe(k.source, sparten, k.an, { quelle, komplettcheck: k.termin?.komplettcheck === true })),
+    bereitlegen: await bereitlegenFuer(k),
     email: k.email,
     nachFragen: true,
     einleitung,

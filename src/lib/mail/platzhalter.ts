@@ -2,6 +2,7 @@
 
 import { a, anredeName, anredeZeile, kontaktParts, type AnredeKontakt, type Ansprache, grusswort } from "@/lib/ansprache";
 import { outreachProdukt } from "@/lib/whatsapp/erstanschreiben";
+import { bereitlegenPunkte } from "@/lib/whatsapp/gespraech";
 
 export const PLATZHALTER = [
   "{anrede}",
@@ -283,29 +284,12 @@ export function datumKurz(dayKey: string): string {
 
 const liste = (items: string[]) => items.map((x) => `• ${x}`).join("\n");
 
-export type ProduktArt = "tier" | "sach" | "sonst";
-
-/** Grobe Art des Produkts für „Was bereitliegen sollte“ (Tier, Sach, sonst). */
-export function produktArt(produkt: string | null | undefined): ProduktArt {
-  const p = (produkt ?? "").toLowerCase();
-  if (p.includes("futter")) return "sonst";
-  if (/\btkv\b|tier|hund|katze|pferd/.test(p)) return "tier";
-  if (/hausrat|haftpflicht|geb[äa]ude|rechtsschutz|privatschutz|unfall|kfz|\bauto|sach|glas|elementar/.test(p)) return "sach";
-  return "sonst";
-}
-
-/** {termin_unterlagen}: was zum Termin bereitliegen sollte, je Produkt. */
-export function terminUnterlagen(produkt: string | null | undefined, an: Ansprache): string {
-  const art = produktArt(produkt);
-  const items: string[] = [];
-  if (art === "tier") items.push("Tierpass bzw. Chipnummer", "Tierarztrechnungen der letzten Zeit, falls vorhanden");
-  if (art === "sach")
-    items.push(
-      a(an, "deine bisherige Police mit Ablaufdatum, falls vorhanden", "Ihre bisherige Police mit Ablaufdatum, falls vorhanden"),
-      "Geburtsdaten aller Personen, die mitversichert werden sollen",
-    );
-  items.push(a(an, "deine IBAN, falls du direkt abschließen möchtest", "Ihre IBAN, falls Sie direkt abschließen möchten"));
-  return liste(items);
+/**
+ * {termin_unterlagen}: was zum Termin bereitliegen sollte, als Aufzählung. Dieselbe Liste wie im WhatsApp-Schluss und
+ * in den Termin-Mails (bereitlegenListe bzw. bereitlegenFuerLead in lib/whatsapp/gespraech.ts, Ole 18.11.2026, M3).
+ */
+export function terminUnterlagen(bereitlegen: readonly string[]): string {
+  return liste(bereitlegenPunkte(bereitlegen));
 }
 
 /** Auswahl im Dialog „Unterlagen fehlen noch“ (neutral formuliert, passt zu Du und Sie). */

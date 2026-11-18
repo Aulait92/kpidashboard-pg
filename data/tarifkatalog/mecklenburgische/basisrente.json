@@ -24,8 +24,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/basis-rente_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Fondsgebundene Basis-Rente",
@@ -41,8 +40,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/basis-rente_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
   "offen": [
     "Zwei Tarife laut Kundeninformation (VF 1120.0337.01.26): klassische Kapitalanlage mit hoher Garantie oder fondsgebunden (DWS-Fonds bzw. deutscher, europäischer oder weltweiter Indexfonds, bis 3 Fonds). Keine Empfehlung der Gesellschaft.",
     "Beitragsgarantie und garantierter Rentenfaktor nicht genau beziffert; fondsgebunden keine Garantie genannt. BU-Zusatz und Beitragspause nicht genannt.",
-    "Hinterbliebenenrente an Ehe- oder eingetragene Lebenspartner bzw. kindergeldberechtigte Kinder möglich. Jährliche Sonderzahlungen bis zum steuerlichen Höchstbetrag."
+    "Hinterbliebenenrente an Ehe- oder eingetragene Lebenspartner bzw. kindergeldberechtigte Kinder möglich. Jährliche Sonderzahlungen bis zum steuerlichen Höchstbetrag.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

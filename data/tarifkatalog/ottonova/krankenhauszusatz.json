@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ottonova.de/v/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ottonova Klinik Einbett",
@@ -43,8 +42,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.ottonova.de/v/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -57,6 +55,7 @@
     "Klinik Zweibett Flex: gleiche Leistungen wie Klinik Zweibett, ohne Alterungsrückstellungen bis 39 Jahre (danach automatisch Klinik Zweibett).",
     "Über Höchstsatz nur mit gültiger Honorarvereinbarung, max. 5-facher Satz (Tarifbedingungen). Wartezeit 3 Monate, Entbindung und Psychotherapie 8 Monate, bei Unfall keine.",
     "Krankenhaustagegeld bei schwerer Erkrankung: 50 € (Zweibett) bzw. 70 € (Einbett). Einbett: 35 € je Tag, wenn kein Einbettzimmer verfügbar ist; Ersatztagegeld bei Zweibett nicht eindeutig belegt.",
-    "Home-Assistance (z. B. Haushaltshilfe) nur in Klinik Einbett."
+    "Home-Assistance (z. B. Haushaltshilfe) nur in Klinik Einbett.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

@@ -53,7 +53,7 @@ import { LeadContracts } from "@/components/lead-contracts";
 import { anrufZiel } from "@/lib/anruf-ziel";
 import { BestehendeVertraege } from "@/components/bestehende-vertraege";
 import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
-import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
+import { bereitlegenFuerLead, formularAus, lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { waOhneMarker } from "@/lib/wa-format";
 import { NaechsteNachrichtenCard } from "@/components/naechste-nachrichten-card";
 import { angebotStandText } from "@/lib/angebot-senden";
@@ -551,6 +551,13 @@ export async function LeadDetailBody({
           vorlagen={vorlagen}
           empfohlen={empfohlen}
           termin={nextAppt ? { startsAt: nextAppt.startsAt.toISOString(), mode: nextAppt.mode, meetUrl: nextAppt.meetUrl } : null}
+          bereitlegen={bereitlegenFuerLead({
+            source: lead.source,
+            formular: formularAus(lead.formData),
+            angaben: conv?.qualificationData,
+            an: ansprache,
+            komplettcheck: nextAppt?.komplettcheck === true,
+          })}
           beratung={{
             wuensche: wuenscheVorschlag({ produkt: lead.source, formData: lead.formData, qualificationData: conv?.qualificationData, qualificationSummary: conv?.qualificationSummary }),
             notizen: notizen.map((n) => n.text),

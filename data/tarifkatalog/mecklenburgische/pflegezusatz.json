@@ -25,8 +25,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/pflegetagegeld_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "proME Pflegeplus",
@@ -44,8 +43,7 @@
         "dynamik": "inklusive"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/pflegetagegeld_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -56,6 +54,7 @@
   "offen": [
     "Werte aus der Kundeninformation Pflegetagegeld (VF1120.0237.07.25) und dem Tarifvergleich der Produktseite. Zwei Tarife ohne Empfehlung.",
     "Beispiel Tagessatz 50 €: ambulant PG 1 und 2 nur Pflegeplus 450 €, PG 3 750 €, PG 4 1.050 €, PG 5 1.500 € im Monat; stationär ab dem versicherten Pflegegrad 1.500 €. Einmalleistung und Beitragsbefreiung nicht genannt.",
-    "Wartezeiten in den Pflegegraden 1 und 2 nicht genannt. Dynamik: Tagegeld alle 3 Jahre ohne erneute Prüfung um 10 % erhöhbar. Assistance: Kosten vermittelter Dienste in den ersten 12 Wochen bis 2.000 €."
+    "Wartezeiten in den Pflegegraden 1 und 2 nicht genannt. Dynamik: Tagegeld alle 3 Jahre ohne erneute Prüfung um 10 % erhöhbar. Assistance: Kosten vermittelter Dienste in den ersten 12 Wochen bis 2.000 €.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

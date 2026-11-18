@@ -23,8 +23,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.muenchener-verein.de/privatkunden/altersvorsorge/basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -32,6 +31,7 @@
   ],
   "offen": [
     "Fondspolice; Beitragsgarantie, garantierter Rentenfaktor (Seite: „hoher Rentenfaktor“ ohne Zahl), Dynamik und Beitragspause nicht genannt.",
-    "Bis zu 12 kostenlose Fondswechsel je Jahr, Rebalancing. BU: Rentenschutzbrief übernimmt bei BU die Beiträge bis 3.000 € jährlich (36 Monate Wartezeit, bei Unfall sofort). Keine Renditeangaben übernommen."
+    "Bis zu 12 kostenlose Fondswechsel je Jahr, Rebalancing. BU: Rentenschutzbrief übernimmt bei BU die Beiträge bis 3.000 € jährlich (36 Monate Wartezeit, bei Unfall sofort). Keine Renditeangaben übernommen.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

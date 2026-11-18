@@ -22,8 +22,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/vorsorge-vermoegen/risikolebensversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -34,6 +33,7 @@
   "offen": [
     "Ein Tarif mit Varianten (konstante Summe mit konstanten oder altersabhängigen Beiträgen, linear oder annuitätisch fallende Summe) laut Kundeninformation (VF1120.0222.01.25).",
     "Vorgezogene Leistung bei schwerer Krankheit, Verlängerungsoption und weltweiter Schutz nicht genannt. Umtausch in eine Rentenversicherung ohne Gesundheitsprüfung innerhalb der ersten 10 Jahre. Verbundene Leben nicht genannt.",
-    "Je nach Tarif einschließbar: Beitragsbefreiung bei Berufsunfähigkeit (nur konstante Beiträge), Dynamik, Unfall-Zusatzversicherung."
+    "Je nach Tarif einschließbar: Beitragsbefreiung bei Berufsunfähigkeit (nur konstante Beiträge), Dynamik, Unfall-Zusatzversicherung.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

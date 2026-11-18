@@ -30,8 +30,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Produktvergleich_NV_Unfall_5.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV Unfallmax. 5.0",
@@ -54,8 +53,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Produktvergleich_NV_Unfall_5.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV UnfallPremium 5.0",
@@ -78,8 +76,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.nv-online.de/fileadmin/downloadcenter/unfall/5-0/Produktvergleich_NV_Unfall_5.0.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -90,6 +87,7 @@
   "offen": [
     "Werte aus dem Produktvergleich NV Unfall 5.0 (Symboltabelle) und der Produktseite. Invaliditätssumme, Progression (mit oder ohne), Unfallrente, Todesfall und Krankenhaustagegeld werden je Vertrag vereinbart; Progressionsstufen nicht genannt. NV markiert keine Empfehlung; Unfallmax. als mittlere Stufe gesetzt.",
     "Sofortleistung bei schweren Verletzungen in Prozent der Invaliditätssumme. Zecken: FSME in allen Stufen, Infektionen durch Tierbisse und Insektenstiche nur max. und Premium. Gliedertaxe Arm: Spar 75 %, max. und Premium 80 % (Hand 70 / 70 / 75 %).",
-    "Mitwirkung von Krankheiten erst ab 50 / 75 / 100 % angerechnet. Rehabilitations-Paket mit Assistance wählbar; Assistance-Pflegepaket für Dritte nur in UnfallPremium. Auch Kinder- und Senioren-Unfall (eigene Seiten), hier nicht ausgewertet."
+    "Mitwirkung von Krankheiten erst ab 50 / 75 / 100 % angerechnet. Rehabilitations-Paket mit Assistance wählbar; Assistance-Pflegepaket für Dritte nur in UnfallPremium. Auch Kinder- und Senioren-Unfall (eigene Seiten), hier nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }
