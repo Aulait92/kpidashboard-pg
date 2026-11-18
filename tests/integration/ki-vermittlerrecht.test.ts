@@ -101,7 +101,7 @@ describe("Assistent: KI-Hinweis, Erstinformation, Übergabe an einen Menschen, B
     await inbound(phone, "Hallo, ich interessiere mich für eine Zahnzusatz");
     const first = lastText();
     // Erstanschreiben ab v6 (Ole, 17.11.2026): Lead hat zuerst geschrieben → „danke für Ihre Nachricht“, Vermittler als Person
-    expect(first).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht! Ich bin der digitale KI-Assistent von [^.\n]+\.\n\nFür wen soll die Zahnzusatzversicherung sein\?$/);
+    expect(first).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht! Hier schreibt der digitale KI-Assistent von [^.\n]+\.\n\nFür wen soll die Zahnzusatzversicherung sein\?$/);
     expect(first).not.toMatch(/Mensch|berate nicht/);
     // Erstinformation unvollständig: PDF im aktuellen Stand direkt nach der Antwort (Ole, 17.11.2026), kein Link-Rückfall
     const e = await prisma.erstinformation.findUniqueOrThrow({ where: { customerId } });

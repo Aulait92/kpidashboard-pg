@@ -58,15 +58,23 @@ export function sortiereVorlagen<T extends { standardKey?: string | null }>(vorl
 }
 
 // Nachfass-Aufgabe nach dem Senden, je Vorlage (Ausführung in lib/mail/termin-erinnerung.ts).
-export type Nachfassen = { art: "terminlink" | "nicht_erschienen" | "unterlagen"; tage: number } | { art: "melden"; tag: string } | { art: "beenden" };
+export type Nachfassen =
+  | { art: "terminlink" | "nicht_erschienen"; tage: number }
+  // Paket M6: mit der Liste der fehlenden Angaben erinnert die App nach 3 Tagen automatisch per E-Mail
+  | { art: "unterlagen"; tage: number; fehlende?: string | null }
+  | { art: "melden"; tag: string }
+  | { art: "beenden" };
 
 /** Was nach dem Senden passiert, je Vorlage (rein, für Dialog und Server gleich). */
-export function nachfassenFuer(key: string | null | undefined, o: { erinnern: boolean; tage: number; mitLink: boolean; meldeTag?: string | null }): Nachfassen | null {
+export function nachfassenFuer(
+  key: string | null | undefined,
+  o: { erinnern: boolean; tage: number; mitLink: boolean; meldeTag?: string | null; fehlende?: string | null },
+): Nachfassen | null {
   if (key === "tuer_offen") return { art: "beenden" };
   if (o.meldeTag) return { art: "melden", tag: o.meldeTag };
   if (key === "wie_besprochen") return null;
   if (!o.erinnern) return null;
   if (key === "nicht_erschienen") return { art: "nicht_erschienen", tage: o.tage };
-  if (key === "unterlagen_fehlen") return { art: "unterlagen", tage: 3 };
+  if (key === "unterlagen_fehlen") return { art: "unterlagen", tage: 3, fehlende: o.fehlende?.trim() || null };
   return o.mitLink ? { art: "terminlink", tage: o.tage } : null;
 }

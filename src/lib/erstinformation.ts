@@ -210,7 +210,12 @@ export async function saveErstinfo(customerId: string, input: SaveErstinfoInput)
     zuwendungen: input.zuwendungen ?? false,
     ihk: txt(input.ihk, 160),
   };
-  const anrede = input.anrede === undefined ? undefined : input.anrede === "Herr" || input.anrede === "Frau" ? input.anrede : null;
+  // Anrede Pflicht in der Einrichtung (Ole, 17.11.2026, Vermittler-Nennung „Herr Kannapinn“): Herr, Frau oder bewusst
+  // keine („keine“: Vor- und Nachname). Nur geprüft, wenn das Formular sie mitschickt (undefined = unverändert).
+  if (input.anrede !== undefined && !["Herr", "Frau", "keine"].includes(input.anrede ?? "")) {
+    return { ok: false, error: "Bitte Ihre Anrede wählen. Der Assistent nennt Sie gegenüber Kunden z. B. „Herr Kannapinn“." };
+  }
+  const anrede = input.anrede === undefined ? undefined : input.anrede === "Herr" || input.anrede === "Frau" || input.anrede === "keine" ? input.anrede : null;
   // Ohne eigenes PDF erzeugen wir die Erstinformation aus den Angaben: dann alle Pflichtangaben prüfen
   if (status === "vertreter" && versicherer.length > 1) {
     return { ok: false, error: "Als Ausschließlichkeitsvertreter tragen Sie bitte genau einen Versicherer ein. Für mehrere Versicherer wählen Sie „Mehrfachvertreter“." };

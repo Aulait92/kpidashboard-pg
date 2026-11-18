@@ -40,6 +40,7 @@ import { PURPOSE_LABELS, rolleText, TEMPLATE_HEADER, variantOfName, type NoticeP
 async function submitContext(customerId: string, customerName: string): Promise<{ names: TemplateNames; documentExample: string | null }> {
   let role: string | undefined;
   let profilName: string | null = null;
+  let anrede: string | null = null;
   let documentExample: string | null = null;
   try {
     const { erstinfoPdfUrlFor, loadErstinfo } = await import("@/lib/erstinformation");
@@ -47,11 +48,12 @@ async function submitContext(customerId: string, customerName: string): Promise<
     role = rolleText(e.daten.status, e.daten.versicherer);
     // Vor- und Nachname aus den Anbieterangaben: Vorname für „digitaler KI-Assistent von Ole“ (Erstanschreiben v5)
     profilName = e.daten.name || null;
+    anrede = e.anrede;
     documentExample = await erstinfoPdfUrlFor(customerId);
   } catch (err) {
     reportError(err, "templates-erstinfo", { customer: customerId });
   }
-  return { names: templateNamesOf(customerName, role, profilName), documentExample };
+  return { names: templateNamesOf(customerName, role, profilName, anrede), documentExample };
 }
 
 /**

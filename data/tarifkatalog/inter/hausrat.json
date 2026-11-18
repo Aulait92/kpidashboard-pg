@@ -31,8 +31,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.inter.de/produkte/sach-und-haftpflicht/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Exklusiv",
@@ -56,8 +55,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.inter.de/produkte/sach-und-haftpflicht/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Premium",
@@ -83,8 +81,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.inter.de/produkte/sach-und-haftpflicht/hausratversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
   "offen": [
     "Grobe Fahrlässigkeit: Kopf der Seite „beitragsfrei mitversichert“, volle Leistung laut Vorteilsliste nur im Premium; Grenze in Basis und Exklusiv nicht genannt.",
     "Einfacher Diebstahl in der Wohnung nicht als eigener Punkt genannt; Trickdiebstahl aus der Wohnung Basis bis 750 €, Exklusiv und Premium bis 100 % der VS.",
-    "Fahrraddiebstahl, Elementar, Glas und Notfall-Schutzbrief als Zusatzbausteine zu allen Tarifstufen. Phishing nur Premium. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+    "Fahrraddiebstahl, Elementar, Glas und Notfall-Schutzbrief als Zusatzbausteine zu allen Tarifstufen. Phishing nur Premium. Keine Empfehlung markiert; Exklusiv als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

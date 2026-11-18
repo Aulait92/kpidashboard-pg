@@ -32,8 +32,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Komfort",
@@ -58,8 +57,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Prestige",
@@ -84,8 +82,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Prestige Plus (Allgefahren)",
@@ -110,8 +107,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:b6dd809b-cf32-4568-b807-f9a2bd571b45/B%20299442_Hausrat%202025_Leistungs%C3%BCbersicht_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -124,6 +120,7 @@
     "Einfacher Diebstahl in der Wohnung nicht als eigene Zeile; Trickdiebstahl in der Wohnung: Smart 500 €, Komfort 2.500 €, Prestige und Prestige Plus bis Versicherungssumme. Prestige Plus zusätzlich nicht aufklärbares Abhandenkommen bis 5.000 € (SB 500 €).",
     "Online-Betrug: Wert ist Phishing (Cyberdeckung); Online-Handel-Betrug nur in Prestige Plus (1.000 €, SB 250 €). Grobe Fahrlässigkeit: Smart bis 10.000 €, sonst ohne Grenze.",
     "Fahrrad über Baustein „Fahrrad Plus“, Elementar über Baustein „weitere Naturgefahren“. Hotelkosten und Selbstbeteiligung je Stufe nicht sicher zuzuordnen. Unterversicherungsverzicht ab 650 €/m².",
-    "Prestige Plus nur über Berater (Online-Rechner: Smart, Komfort, Prestige). Keine Markierung; Prestige als mittlere Stufe gesetzt."
+    "Prestige Plus nur über Berater (Online-Rechner: Smart, Komfort, Prestige). Keine Markierung; Prestige als mittlere Stufe gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

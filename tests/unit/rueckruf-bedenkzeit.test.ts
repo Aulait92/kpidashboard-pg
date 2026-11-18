@@ -27,7 +27,7 @@ import { SEQUENCES } from "@/lib/lead-sequences";
 import { planeNachrichten, type PlanEingabe } from "@/lib/nachrichtenplan";
 import { knopfAktion } from "@/lib/whatsapp/knopf";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
-import { CORE_PURPOSES, VORBEREITET_BEDENKZEIT, buildTemplateRequest, categoryFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateNameFor } from "@/lib/whatsapp/template-plan";
+import { BEDENKZEIT_PURPOSES, CORE_PURPOSES, buildTemplateRequest, categoryFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateNameFor } from "@/lib/whatsapp/template-plan";
 import { TEMPLATE_BUTTONS } from "@/lib/whatsapp/templates";
 
 const herr = { nom: "Herr Kannapinn", dat: "Herrn Kannapinn" };
@@ -165,6 +165,8 @@ describe("Bedenkzeit: Abfolge und Nachrichtenplan", () => {
     const s = SEQUENCES.offer_bedenkzeit.steps;
     expect(s.map((x) => [x.day, x.action])).toEqual([
       [0, "whatsapp"],
+      // Paket M4: 2 Std. nach der WhatsApp die Mail „Wie besprochen“ (nur beim Versand über die App)
+      [2 / 24, "email"],
       [3, "call"],
       [5, "email"],
       [10, "whatsapp"],
@@ -205,7 +207,12 @@ describe("Bedenkzeit: Abfolge und Nachrichtenplan", () => {
     expect(plan[0]).toMatchObject({ kanal: "push", at: "2026-11-30T17:00:00.000Z" });
     const wa = plan.find((e) => e.kanal === "whatsapp")!;
     expect(wa.at).toBe(bis.toISOString());
-    expect(wa.titel).toContain("Bedenkzeit zum Angebot: WhatsApp (Schritt 1 von 5), nach der Bedenkzeit");
+    expect(wa.titel).toContain("Bedenkzeit zum Angebot: WhatsApp (Schritt 1 von 6), nach der Bedenkzeit");
+    // Paket M4: Mail „Wie besprochen“ 2 Std. nach der WhatsApp, ohne eigenen Vorab-Check
+    const mail = plan.find((e) => e.kanal === "email")!;
+    expect(mail.at).toBe(new Date(bis.getTime() + 2 * 60 * 60 * 1000).toISOString());
+    expect(mail.vorschau).toContain("wie besprochen melde ich mich heute");
+    expect(plan.filter((e) => e.kanal === "push" && e.at === "2026-11-30T17:00:00.000Z")).toHaveLength(1);
     expect(wa.vorschau).toContain("wie besprochen melde ich mich wieder");
     expect(plan.every((e) => e.at >= "2026-11-30")).toBe(true);
     // Anruf-Aufgabe 3 Tage nach dem Neustart, nicht nach dem Start der Pause
@@ -231,10 +238,10 @@ describe("Bedenkzeit: Abfolge und Nachrichtenplan", () => {
 });
 
 describe("Vorlage offer_bedenkzeit", () => {
-  it("nur vorbereitet, Meta-tauglich, ohne Terminvorschläge, mit den Angebots-Knöpfen", () => {
-    for (const p of VORBEREITET_BEDENKZEIT) {
-      expect(CORE_PURPOSES).not.toContain(p);
-      expect(plannedTemplates(purposesFor({ bestand: true, empfehlung: true })).some((t) => t.purpose === p)).toBe(false);
+  it("zur Einreichung freigegeben (Ole, 17.11.2026), Meta-tauglich, ohne Terminvorschläge, mit den Angebots-Knöpfen", () => {
+    for (const p of BEDENKZEIT_PURPOSES) {
+      expect(CORE_PURPOSES).toContain(p);
+      expect(plannedTemplates(purposesFor({ bestand: false })).filter((t) => t.purpose === p)).toHaveLength(3);
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, { firm: "Agentur Meier", advisor: "Susanne Meier" }, undefined, form);
         const body = (req.components as { type: string; text?: string }[]).find((c) => c.type === "BODY")!.text!;

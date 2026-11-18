@@ -31,8 +31,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.janitos.de/produkte/kraftfahrzeugversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Versicherung Advanced",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://www.janitos.de/produkte/kraftfahrzeugversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -68,6 +66,7 @@
     "Quelle: Leistungsübersicht der Produktseite (Symbole aus dem Seitenquelltext gelesen). Nur zwei Linien, keine Markierung.",
     "Marder = Tierbiss an Verkabelung, Schläuchen, Leitungen und Dämmmatten mit Folgeschäden. Kaufpreisentschädigung für Gebrauchte 12 bzw. 24 Monate.",
     "Werkstattmanagement enthalten, gegen Zuschlag abwählbar. Akku-Schutz: Allgefahren für den Akku nur Advanced in der Vollkasko (bis 25.000 €).",
-    "Nur Advanced: JurDrive (Schadenersatz- und Verteidigungs-Rechtsschutz), Kasko Pur (einmaliger SB-Verzicht nach 4 schadenfreien Jahren), Mietwagen nach Diebstahl, Kasko-Extra-Schutz optional. Gegen Zuschlag: Fahrerschutz, Auslandsschaden-Schutz."
+    "Nur Advanced: JurDrive (Schadenersatz- und Verteidigungs-Rechtsschutz), Kasko Pur (einmaliger SB-Verzicht nach 4 schadenfreien Jahren), Mietwagen nach Diebstahl, Kasko-Extra-Schutz optional. Gegen Zuschlag: Fahrerschutz, Auslandsschaden-Schutz.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

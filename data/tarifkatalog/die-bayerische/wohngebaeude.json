@@ -31,8 +31,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:092a53f0-46a4-43ae-96be-caf259f7ed31/333243_tarifuebersicht_wohngebaeude_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäudeversicherung Komfort",
@@ -56,8 +55,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:092a53f0-46a4-43ae-96be-caf259f7ed31/333243_tarifuebersicht_wohngebaeude_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäudeversicherung Prestige",
@@ -82,8 +80,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:092a53f0-46a4-43ae-96be-caf259f7ed31/333243_tarifuebersicht_wohngebaeude_bf.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -94,6 +91,7 @@
     "Quelle: Tarifübersicht Wohngebäude Einfamilienhauskonzept 2025 und Produktseite (Abruf 17.11.2026). Laut Produktseite über den Kooperationspartner asspario (Schadenservice); Risikoträger nicht genannt. Keine Stufe markiert; Komfort als mittlere Stufe.",
     "Grobe Fahrlässigkeit bei Herbeiführung des Schadens: Komfort und Prestige; bei Obliegenheitsverletzung nur Prestige bis 50.000 €. Ableitungsrohre: Komfort 5.000 €, Prestige unbegrenzt, jeweils nur bei Gebäude bis 30 Jahre oder Dichtigkeitsprüfung, sonst 1.000 € bzw. 20.000 €.",
     "Elementar in allen Stufen mit SB 10 %, mind. 500 €, max. 5.000 €; Starkregen-Erweiterung optional. Kosten (Abbruch, Bewegung, Schutz): 50.000 €, 1 Mio. €, unbegrenzt. Marder und Wildtiere nur Prestige bis 5.000 €.",
-    "Bausteine: Zukunft-Plus, Allgefahren Haustechnik, Allgefahren Erneuerbare Energien, Allgefahren Gebäude und Grundstück (nur Prestige). Überspannung durch Blitz in allen Stufen versichert."
+    "Bausteine: Zukunft-Plus, Allgefahren Haustechnik, Allgefahren Erneuerbare Energien, Allgefahren Gebäude und Grundstück (nur Prestige). Überspannung durch Blitz in allen Stufen versichert.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

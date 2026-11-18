@@ -40,6 +40,8 @@ const DAY = 86_400_000;
 const TZ = "Europe/Berlin";
 const CLOSED = "Abschluss";
 const ENDE = ["Abschluss", "Kein Interesse", "Disqualifiziert"];
+/** Anlass der Danke-Mail (je Kontakt einmal, Paket M6). */
+export const DANKE_ANLASS = "abschluss";
 
 type PushPayload = { title: string; body: string; url: string; tag: string };
 export type PushFn = (userId: string | null, customerId: string, p: PushPayload) => Promise<unknown>;
@@ -90,6 +92,8 @@ export type AbschlussStand = {
   einheit: "/Jahr" | "/Monat";
   ersparnis: boolean;
   glueckwunsch: GlueckwunschStand;
+  /** Paket M6: Haken „Danke-Mail senden“ (Vorlage „Nach dem Abschluss“), null = nicht anbieten */
+  dankeMail: import("@/lib/mail/ein-tipp").EinTippMail | null;
 };
 
 async function leadKontakt(leadId: string, customerId: string) {
@@ -134,7 +138,7 @@ export async function glueckwunschStand(leadId: string, customerId: string, now 
   return { moeglich, offen, gesendet, vorausgewaehlt: offen && !gesendet && glueckwunschVorausgewaehlt(termin?.startsAt, now), text };
 }
 
-export async function ladeAbschlussStand(leadId: string, customerId: string, now = new Date()): Promise<AbschlussStand | null> {
+export async function ladeAbschlussStand(leadId: string, customerId: string, now = new Date(), opts: { userId?: string | null } = {}): Promise<AbschlussStand | null> {
   const lead = await leadKontakt(leadId, customerId);
   if (!lead) return null;
   const { loadCustomerProvision } = await import("@/lib/provision-server");
@@ -161,6 +165,12 @@ export async function ladeAbschlussStand(leadId: string, customerId: string, now
     einheit: e.suffix,
     ersparnis: e.ersparnis,
     glueckwunsch: await glueckwunschStand(leadId, customerId, now),
+    dankeMail:
+      lead.status === CLOSED
+        ? await import("@/lib/mail/ein-tipp")
+            .then((m) => m.einTippMailStand(leadId, "nach_abschluss", { anlass: DANKE_ANLASS, userId: opts.userId }))
+            .catch(() => null)
+        : null,
   };
 }
 

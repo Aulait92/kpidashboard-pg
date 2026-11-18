@@ -24,8 +24,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.inter.de/vorsorge-vermoegen/berufsunfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -33,6 +32,7 @@
   ],
   "offen": [
     "Kein eigenes DU-Produkt: Berufsunfähigkeitsversicherung (Tarif Premium) mit Dienstunfähigkeitsklausel für Beamte. Entlassung oder Ruhestand wegen allgemeiner oder (in bestimmten Beamtenberufen) spezieller Dienstunfähigkeit gilt als Berufsunfähigkeit.",
-    "Leistung für Beamte auf Probe und Widerruf sowie Teildienstunfähigkeit nicht genannt; bitte in den Bedingungen prüfen. Übrige Werte wie inter/bu.json."
+    "Leistung für Beamte auf Probe und Widerruf sowie Teildienstunfähigkeit nicht genannt; bitte in den Bedingungen prüfen. Übrige Werte wie inter/bu.json.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

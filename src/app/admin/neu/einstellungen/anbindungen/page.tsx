@@ -4,15 +4,15 @@ import { CheckCircle2, ChevronDown, XCircle } from "lucide-react";
 import { DisconnectButton } from "@/app/admin/marketing/linkedin/forms";
 import { convertInboundLead } from "@/app/admin/vertrieb/actions";
 import { EinstellungSeite, LISTE } from "@/components/admin-neu/einstellungen/rahmen";
-import { WaalaxyImport } from "@/components/admin-neu/einstellungen/waalaxy-import";
 import { Button, Card, CardHeader, buttonClass } from "@/components/ui";
-import { CalendlyForms, ColdCrmImport, ColdCrmReplace, ContactDataBackfill, ContactsImport, CopyField, InstantlyCsvImport, InstantlyNachholen, InstantlySync } from "@/components/vertrieb/import-forms";
+import { ContactDataBackfill, ContactsImport, CopyField, InstantlyNachholen } from "@/components/vertrieb/import-forms";
 import { getAppUrl } from "@/lib/email";
 import { linkedInAvailable } from "@/lib/linkedin/api";
 import { metaDiagnostics } from "@/lib/meta-leads";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/vertrieb/auth";
-import { coldCrmReplaceAllowed, coldCrmSourceConfigured, stagingSourceConfigured } from "@/lib/vertrieb/cold-crm-import";
+import { auslesenStatus, einstellung as auslesenEinstellung } from "@/lib/policen/auslesen/server";
+import { pauseAufhebenAction, zdrNachweisAction } from "./policen-actions";
 import { placesDailyLimit, placesKey, placesUsedToday } from "@/lib/vertrieb/contact-enrich";
 import { fmtDateTime, isWithinDays } from "@/lib/vertrieb/dates";
 
@@ -21,7 +21,7 @@ export const metadata = { title: "Anbindungen & Import | performancegrowth Admin
 
 // Anbindungen & Import (Demo „e-anbindungen“): woher Daten kommen. Eine Liste der Quellen mit Status (grün = in 7 Tagen
 // etwas empfangen); Adresse, Anleitung und Knöpfe je Quelle zum Aufklappen. Zusammengelegt aus /admin/vertrieb/import
-// (Instantly, Calendly, Formulare, LinkedIn-Nachrichten, Anreicherung, Import), /admin/lead-eingang (Meta-Verbindung,
+// (Instantly, Formulare, LinkedIn-Nachrichten, Anreicherung, Import), /admin/lead-eingang (Meta-Verbindung,
 // Zapier-Übergang) und /admin/marketing/linkedin (Verbindung). Bausteine und Server Actions wie dort; der Team-Kalender
 // liegt jetzt unter Einrichtung neuer Kunden.
 
@@ -97,16 +97,16 @@ export default async function Page() {
     base = origin;
   }
 
-  const [contacts, lastMail, lastMeeting, lastForm, lastLinkedIn, openLinkedIn, li, diag] = await Promise.all([
+  const [contacts, lastMail, lastForm, lastLinkedIn, openLinkedIn, li, diag] = await Promise.all([
     prisma.salesContact.count(),
     prisma.salesEmail.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
-    prisma.salesMeeting.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesInboundLead.findFirst({ where: { source: { not: "LINKEDIN" } }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesInboundLead.findFirst({ where: { source: "LINKEDIN" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     prisma.salesInboundLead.findMany({ where: { source: "LINKEDIN", contactId: null }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.linkedInConnection.findFirst({ orderBy: { updatedAt: "desc" }, select: { name: true, expiresAt: true, status: true, lastError: true } }),
     metaDiagnostics(),
   ]);
+  const [policen, policenEinst] = await Promise.all([auslesenStatus().catch(() => null), auslesenEinstellung().catch(() => null)]);
   const placesOk = !!placesKey();
   const [placesUsed, enrichedGoogle, enrichedWeb] = await Promise.all([
     placesUsedToday().catch(() => 0),
@@ -123,18 +123,12 @@ export default async function Page() {
       <Card>
         <CardHeader title="Quellen" hint="grün: in den letzten 7 Tagen etwas empfangen" />
         <ul className={LISTE} data-funktion="page--status-je-quelle-instantly-calendly-formulare page-copyfield--webhook-adressen-kopieren-und-anleitung">
-          <Quelle name="Instantly" was="Cold Mails: gesendet, geöffnet, Antworten" ok={isWithinDays(lastMail?.createdAt, 7)} status={zuletzt(lastMail?.createdAt)} funktion="actions-syncinstantlyaction--jetzt-mit-instantly-abgleichen">
+          <Quelle name="Instantly" was="Cold Mails: gesendet, geöffnet, Antworten" ok={isWithinDays(lastMail?.createdAt, 7)} status={zuletzt(lastMail?.createdAt)}>
             {adresse(hook("/api/vertrieb/instantly/webhook"))}
-            <InstantlySync hasKey={!!process.env.INSTANTLY_API_KEY} />
             <div data-funktion="import-forms-instantlynachholen--fehlende-instantly-antworten-der-letzten-90-tage">
               <InstantlyNachholen hasKey={!!process.env.INSTANTLY_API_KEY} />
             </div>
             <Schritte steps={["Instantly → Settings → Integrations → Webhooks", "Bestehenden Webhook bearbeiten, URL ersetzen, „All Events“"]} />
-          </Quelle>
-
-          <Quelle name="Calendly" was="Gebuchte, verschobene und abgesagte Termine" ok={isWithinDays(lastMeeting?.createdAt, 7)} status={zuletzt(lastMeeting?.createdAt)} funktion="actions-connectcalendlyaction--calendly-verbinden-und-termine-abgleichen">
-            <CalendlyForms hasToken={!!process.env.CALENDLY_TOKEN} />
-            <Schritte steps={["„Calendly verbinden“ legt den Webhook selbst an", "Danach einmal „Bestehende Termine abgleichen“"]} />
           </Quelle>
 
           <Quelle name="Meta-Leadformulare" was="Leads der Kunden direkt von Meta" ok={metaOk} status={metaOk ? "bereit" : "unvollständig"} funktion="page-diag--meta-verbindung-pruefen-token-rechte-webhook-url">
@@ -173,10 +167,10 @@ export default async function Page() {
 
           <Quelle
             name="LinkedIn"
-            was="Nachrichten, Posts und Waalaxy"
+            was="Nachrichten und Posts"
             ok={liOk && isWithinDays(lastLinkedIn?.createdAt, 7)}
             status={li ? (liOk ? `verbunden bis ${fmtDateTime(li.expiresAt)}` : "Zugang abgelaufen") : "nicht verbunden"}
-            funktion="actions-disconnectaction--linkedin-verbinden-bzw-trennen-hinweis-zugang actions-importwaalaxyaction--waalaxy-import-ohne-oberflaeche"
+            funktion="actions-disconnectaction--linkedin-verbinden-bzw-trennen-hinweis-zugang"
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="min-w-0 flex-1">
@@ -191,10 +185,6 @@ export default async function Page() {
               <p className="font-medium">Nachrichten aus der LinkedIn-Mail (Zapier)</p>
               <p className="text-[color:var(--muted)]">{zuletzt(lastLinkedIn?.createdAt)}</p>
               {adresse(hook("/api/vertrieb/linkedin/message"))}
-            </div>
-            <div className="border-t border-[color:var(--border)] pt-3">
-              <p className="mb-2 font-medium">Waalaxy-Export einlesen</p>
-              <WaalaxyImport />
             </div>
           </Quelle>
 
@@ -233,30 +223,49 @@ export default async function Page() {
         </Card>
       ) : null}
 
+      {policen ? (
+        <Card className="mb-5" data-policen-auslesen>
+          <CardHeader title="KI für Unterlagen (Policen auslesen)" hint="nur Dokumente, getrennt vom Chat-Assistenten" />
+          <div className="space-y-3 px-5 py-4 text-sm">
+            <ul className="space-y-1.5">
+              <Check ok={policen.an} label={policen.an ? "An" : policen.notschalterAus ? "Aus (POLICEN_AUSLESEN_AN)" : "Aus: Schlüssel fehlt (POLICEN_OPENAI_API_KEY)"} />
+              <Check ok={!policen.pausiert} label={policen.pausiert ? "Pausiert: Schlüssel ungültig (401)" : "Schlüssel nicht abgelehnt"} />
+              <Check ok={policen.zdrNachweis} label={policen.zdrNachweis ? `Nachweis „keine Speicherung“ vom ${policen.zdrNachweisAm}: Kranken, BU, Leben an` : "Kein Nachweis „keine Speicherung“: nur Sachversicherungen"} />
+            </ul>
+            <p className="text-[color:var(--muted)]">
+              {policen.anbieter} · {String(policen.endpunkt ?? "")} · Modell {String(policen.modell ?? "")}
+              {"tageBisAblauf" in policen ? ` · Schlüssel bis ${policen.schluesselAblauf} (${policen.tageBisAblauf} Tage)` : ""} · heute {policen.heute.anzahl} von {policen.maxProTag}
+            </p>
+            {policen.pausiert ? (
+              <form action={pauseAufhebenAction}>
+                <Button type="submit">Pause aufheben (Schlüssel erneuert)</Button>
+              </form>
+            ) : null}
+            <form action={zdrNachweisAction} className="flex flex-wrap items-end gap-2">
+              <label className="block">
+                <span className="mb-1 block text-[13px] text-[color:var(--muted)]">Nachweis vom</span>
+                <input name="am" type="date" defaultValue={policenEinst?.zdrNachweisAm?.toISOString().slice(0, 10) ?? ""} className="h-10 rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3" />
+              </label>
+              <label className="block min-w-48 flex-1">
+                <span className="mb-1 block text-[13px] text-[color:var(--muted)]">Referenz (Ablage)</span>
+                <input name="referenz" defaultValue={policenEinst?.zdrReferenz ?? ""} placeholder="z. B. OpenAI ZDR-Bestätigung, docs/recht/…" className="h-10 w-full rounded-[var(--radius-sm)] border border-[color:var(--border)] px-3" />
+              </label>
+              <Button type="submit">Nachweis speichern</Button>
+              {policen.zdrNachweis ? (
+                <Button type="submit" name="entfernen" value="1" variant="ghost">
+                  Entfernen
+                </Button>
+              ) : null}
+            </form>
+          </div>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader title="Import" hint={`${contacts.toLocaleString("de-DE")} Kontakte, erkannt über die E-Mail`} />
         <ul className={LISTE}>
           <Quelle name="Agenturliste (CSV)" was="Numbers: Ablage → Exportieren → CSV" funktion="actions-importcontactsaction--agenturliste-csv-importieren">
             <ContactsImport />
-          </Quelle>
-          <Quelle name="Instantly-Export (CSV)" was="Nur nötig, wenn der Abgleich nicht reicht" funktion="actions-importinstantlyaction--instantly-csv-importieren">
-            <InstantlyCsvImport />
-          </Quelle>
-          <Quelle
-            name="Altes Cold CRM"
-            was="Übernimmt nur, was hier noch fehlt"
-            ok={coldCrmSourceConfigured()}
-            status={coldCrmSourceConfigured() ? "eingerichtet" : "nicht eingerichtet"}
-            funktion="actions-importcoldcrmaction--daten-aus-altem-cold-crm-uebernehmen actions-replacecoldcrmaction--vertrieb-neu-importieren-ersetzt-alles"
-          >
-            <ColdCrmImport configured={coldCrmSourceConfigured()} />
-            {coldCrmSourceConfigured() && coldCrmReplaceAllowed() ? <ColdCrmReplace /> : null}
-            {stagingSourceConfigured() && process.env.VERTRIEB_NEUIMPORT_ERLAUBT === "1" ? (
-              <div className="border-t border-[color:var(--border)] pt-3">
-                <p className="mb-2 font-medium">Vertrieb aus der Testumgebung (einmalig beim Livegang)</p>
-                <ColdCrmReplace source="staging" />
-              </div>
-            ) : null}
           </Quelle>
         </ul>
       </Card>

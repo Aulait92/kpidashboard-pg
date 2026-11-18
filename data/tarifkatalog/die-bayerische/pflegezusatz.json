@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:b7742c41-58ea-4080-aad8-0d40e99dcb7e/Produktbeschreibung_IDEAL_PflegeRente_0126.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IDEAL PflegeRente KLASSIK",
@@ -48,8 +47,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:b7742c41-58ea-4080-aad8-0d40e99dcb7e/Produktbeschreibung_IDEAL_PflegeRente_0126.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "IDEAL PflegeRente EXKLUSIV",
@@ -69,8 +67,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/dam/jcr:b7742c41-58ea-4080-aad8-0d40e99dcb7e/Produktbeschreibung_IDEAL_PflegeRente_0126.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Pflegerente frei wählbar 250 bis 4.000 € im Monat; Staffel je Pflegegrad und „ambulant wie stationär“ in der Produktbeschreibung nicht genannt.",
     "Einmalleistung als optionale Sofortleistung (1 bis 12 Monatsrenten der Pflegegrade 4 und 5). Optional außerdem Todesfallleistung und Pflegerentengarantiezeit.",
     "Nicht als Stufen geführt: IDEAL PflegeStarter (Einsteigertarif bis 65, Klassik ab Pflegegrad 3, Exklusiv ab Pflegegrad 2) und Pflegemonatsgeld „Mehr Pflege“ (Partner Barmenia, ab Pflegegrad 1, keine Wartezeit).",
-    "Keine Markierung der Gesellschaft; Klassik als mittlere Stufe gesetzt."
+    "Keine Markierung der Gesellschaft; Klassik als mittlere Stufe gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

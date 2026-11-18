@@ -5,6 +5,9 @@
 //   spätere Wiedervorlage des Beraters bleibt bestehen; Anruf-Aufgaben der Nicht-erreicht-Abfolge werden
 //   ersetzt statt verdoppelt.
 // - Dazwischen: Nicht-erreicht-Abfolge (WhatsApp), falls beim Kunden eingeschaltet.
+// - Paket M4 (18.11.2026): nach dem 2. gezählten Versuch einmal die E-Mail „Nicht erreicht“ (Stufe „automatisch“, 2 Std.
+//   nach einer etwaigen WhatsApp, entfällt bei Antwort; lib/mail/abfolgen-mail.ts). Das Fenster nach dem Anruf zeigt dann
+//   „E-Mail geht automatisch raus“ statt eine von Hand anzubieten.
 // - Alles steht im Verlauf.
 
 import { anrufErledigt } from "@/lib/telefonat-server";
@@ -26,7 +29,34 @@ export type CallAttemptResult = {
   auto: boolean;
   /** Nur im Browser: Nachricht „Nicht erreicht“ wurde schon angeboten (kein zweites Angebot) */
   offered?: boolean;
+  /** E-Mail „Nicht erreicht“ (Paket M4); null = nicht automatisch (das Fenster bietet sie von Hand an) */
+  mail?: NichtErreichtMailHinweis | null;
 };
+
+/**
+ * Stand der automatischen Mail „Nicht erreicht“ fürs Fenster nach dem Anruf: geplant (Zeitpunkt, sofort oder 2 Std. nach
+ * der WhatsApp), schon gesendet, oder sie kommt erst nach dem 2. Versuch.
+ */
+export type NichtErreichtMailHinweis = { status: "geplant"; at: string; sofort: boolean } | { status: "gesendet"; at: string } | { status: "nach_versuch_2" };
+
+/** Hinweis aus dem Stand der Mail (rein). null = nicht automatisch. */
+export function nichtErreichtHinweis(
+  s: { geplant: { at: Date; sofort: boolean } | null; gesendetAt: Date | null; automatisch: boolean },
+  attempts: number,
+): NichtErreichtMailHinweis | null {
+  if (s.geplant) return { status: "geplant", at: s.geplant.at.toISOString(), sofort: s.geplant.sofort };
+  if (s.gesendetAt) return { status: "gesendet", at: s.gesendetAt.toISOString() };
+  if (s.automatisch && attempts < 2) return { status: "nach_versuch_2" };
+  return null;
+}
+
+/** Stand der Mail „Nicht erreicht“ laden (wirft nicht). */
+export async function ladeNichtErreichtHinweis(leadId: string, attempts: number, now = new Date()): Promise<NichtErreichtMailHinweis | null> {
+  const { nichtErreichtMailStand } = await import("@/lib/mail/abfolgen-mail");
+  return nichtErreichtMailStand(leadId, now)
+    .then((s) => nichtErreichtHinweis(s, attempts))
+    .catch(() => null);
+}
 
 /**
  * Nächsten Versuch als Wiedervorlage setzen (ohne neuen Versuch zu zählen). Gibt den Zeitpunkt zurück,
@@ -88,7 +118,8 @@ export async function registerCallAttempt(leadId: string, opts: { customerId: st
   });
   if (claimed.count === 0) {
     const cur = await prisma.lead.findUnique({ where: { id: lead.id }, select: { callAttempts: true, followUpAt: true } });
-    return { counted: false, attempts: cur?.callAttempts ?? lead.callAttempts, nextAt: cur?.followUpAt?.toISOString() ?? null, keptFollowUp: false, auto: false };
+    const n = cur?.callAttempts ?? lead.callAttempts;
+    return { counted: false, attempts: n, nextAt: cur?.followUpAt?.toISOString() ?? null, keptFollowUp: false, auto: false, mail: await ladeNichtErreichtHinweis(lead.id, n, now) };
   }
   const attempts = lead.callAttempts + 1;
   if (lead.airtableId) {
@@ -106,6 +137,13 @@ export async function registerCallAttempt(leadId: string, opts: { customerId: st
     console.error("[lead-sequences]", e);
     return null;
   });
+  // Paket M4: nach dem 2. gezählten Versuch einmal die E-Mail „Nicht erreicht“
+  if (attempts === 2) {
+    await import("@/lib/mail/abfolgen-mail")
+      .then((m) => m.planeNichtErreichtMail(lead.id, now))
+      .catch((e) => console.error("[nicht-erreicht-mail]", e));
+  }
+  const mail = await ladeNichtErreichtHinweis(lead.id, attempts, now);
   const n = Math.min(attempts, CALL_ATTEMPTS_TARGET);
   const tail = plan.nextAt
     ? ` · nächster Versuch ${fmtAttemptAt(plan.nextAt, now)}`
@@ -118,5 +156,5 @@ export async function registerCallAttempt(leadId: string, opts: { customerId: st
     customerId: opts.customerId,
     ...(opts.userId !== undefined ? { userId: opts.userId } : {}),
   });
-  return { counted: true, attempts, nextAt: plan.nextAt?.toISOString() ?? null, keptFollowUp: plan.kept, auto: !!seq };
+  return { counted: true, attempts, nextAt: plan.nextAt?.toISOString() ?? null, keptFollowUp: plan.kept, auto: !!seq, mail };
 }

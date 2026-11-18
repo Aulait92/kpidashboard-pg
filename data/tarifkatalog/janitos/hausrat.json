@@ -35,8 +35,7 @@
         "notfall": "nein"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/hausratversicherung/leistungsuebersicht_online_hausratversicherung_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat onlinePlus",
@@ -64,8 +63,7 @@
         "notfall": "nein"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/hausratversicherung/leistungsuebersicht_online_hausratversicherung_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat onlineMax",
@@ -93,8 +91,7 @@
         "notfall": "inklusive"
       },
       "quelle": "https://www.janitos.de/media/downloads/produkte/hausratversicherung/leistungsuebersicht_online_hausratversicherung_janitos_versicherung_ag.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -105,6 +102,7 @@
     "Quelle: Leistungsübersicht Hausrat online (Stand 01.07.2024) und Tabelle der Produktseite. Keine Markierung; onlinePlus als mittlere Stufe.",
     "Einfacher Diebstahl in der Wohnung nicht als eigene Zeile (Trickdiebstahl in versicherten Räumen onlinePlus 5 % der VS bis 2.500 €, onlineMax 10 % bis 5.000 €; Diebstahl durch Hausangestellte nur onlineMax).",
     "Garten = Diebstahl und böswillige Beschädigung auf dem Grundstück; Auto = Diebstahl aus verschlossenem Kfz ohne Wertsachen (Elektronik bis 250 €). Hotel je Tag höchstens 2 % (onlineMax 3 %) der VS.",
-    "Fahrrad optional 1 bis 10 % der VS ohne Nachtzeitklausel; Elementar optional mit 10 % Selbstbeteiligung (500 bis 2.500 €); Allgefahren nur onlineMax. Notfallservice (Schlüsseldienst u. a. je 500 €) nur onlineMax."
+    "Fahrrad optional 1 bis 10 % der VS ohne Nachtzeitklausel; Elementar optional mit 10 % Selbstbeteiligung (500 bis 2.500 €); Allgefahren nur onlineMax. Notfallservice (Schlüsseldienst u. a. je 500 €) nur onlineMax.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

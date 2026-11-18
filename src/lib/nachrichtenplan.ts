@@ -8,7 +8,9 @@
 //                             (lib/call-plan.ts); vor dem Start der Auslöser 30 Min. nach dem Erstanschreiben
 //   Bedenkzeit, Rückruf (P5)  Pause: Schritte erst ab dem Tag der Bedenkzeit (neustartAt) bzw. nach dem Rückruf-Fenster;
 //                             die Rückruf-Aufgabe „Rückruf gewünscht: heute 14 bis 17 Uhr“ selbst
-// Rein (ohne Datenbank, testbar); Laden: lib/nachrichtenplan-server.ts. Noch ohne Oberfläche.
+// Rein (ohne Datenbank, testbar); Laden: lib/nachrichtenplan-server.ts. Oberfläche (Paket P6): „Nächste Nachrichten“ am
+// Kontakt (components/naechste-nachrichten.tsx) mit Aktionen je Eintrag (aktionen, key; lib/nachrichtenplan-aktionen.ts),
+// die Zeile „Morgen … automatische Nachrichten“ auf „Heute“ (zaehleAutomatische) und die Ablaufübersicht (lib/ablauf.ts).
 // „voraussichtlich“: hängt davon ab, was vorher passiert (z. B. nicht erreicht), oder wartet aufs Versandfenster.
 
 import type { Ansprache } from "@/lib/ansprache";
@@ -27,7 +29,12 @@ const HOUR = 60 * 60 * 1000;
 export type PlanKanal = "whatsapp" | "email" | "push" | "anruf";
 export type PlanQuelle = "erinnerung" | "terminbeginn" | "abfolge" | "anrufplan";
 
+/** Was der Vermittler mit einem Eintrag tun kann (Paket P6). */
+export type PlanAktion = "jetzt" | "verschieben" | "ueberspringen" | "rueckgaengig";
+
 export type PlanEintrag = {
+  /** Eindeutig je Eintrag, Ziel der Aktionen: abfolge:<id>:<schritt>, erinnerung:<termin>:<art>, anruf:<n>, … */
+  key: string;
   /** Zeitpunkt (ISO) */
   at: string;
   kanal: PlanKanal;
@@ -40,7 +47,17 @@ export type PlanEintrag = {
   voraussichtlich?: boolean;
   terminId?: string;
   abfolgeId?: string;
+  /** Aktionen am Kontakt (leer: nur Anzeige) */
+  aktionen?: PlanAktion[];
+  /** Vom Vermittler übersprungen: geht nicht raus (Rückgängig möglich) */
+  uebersprungen?: boolean;
+  /** „Alle pausieren“: wartet, bis der Vermittler fortsetzt */
+  pausiert?: boolean;
 };
+
+/** Erinnerungen, die der Vermittler einzeln überspringen kann (Appointment.erinnerungenUebersprungen). */
+export const ERINNERUNG_ARTEN = ["vortag", "vortag_mail", "stunde", "gleich"] as const;
+export type ErinnerungKey = (typeof ERINNERUNG_ARTEN)[number];
 
 export type PlanTermin = {
   id: string;
@@ -57,6 +74,8 @@ export type PlanTermin = {
   startPushAt: Date | null;
   rescheduleRequestedAt: Date | null;
   attendance: string | null;
+  /** Vom Vermittler übersprungen (P6) */
+  erinnerungenUebersprungen?: string[];
 };
 
 export type PlanEingabe = {
@@ -84,16 +103,45 @@ export type PlanEingabe = {
   emailKontakt?: boolean;
   /** Kann WhatsApp gehen (Nummer, kein STOPP, Einwilligung)? */
   whatsapp: boolean;
-  abfolgen: { id: string; kind: string; step: number; startedAt: Date; nextAt: Date | null; stoppedAt: Date | null; vorabCheckStep?: number | null; neustartAt?: Date | null }[];
+  abfolgen: {
+    id: string;
+    kind: string;
+    step: number;
+    startedAt: Date;
+    nextAt: Date | null;
+    stoppedAt: Date | null;
+    vorabCheckStep?: number | null;
+    neustartAt?: Date | null;
+    /** Vom Vermittler übersprungene Schritte (P6) */
+    uebersprungen?: number[];
+    /** Angaben für Mail-Schritte (Paket M6, z. B. fehlende Unterlagen) */
+    daten?: unknown;
+  }[];
   abfolgeKontext: SequenceCtx;
   anrufplan: { followUpAt: Date | null; followUpNote: string | null; callAttempts: number; callPlanStartedAt: Date | null; lastCallAttemptAt: Date | null };
   /** Auslöser „keine Antwort 30 Min. nach dem Erstanschreiben“, falls noch offen: wann er greift */
   anrufAusloeserAt?: Date | null;
+  /** „Alle pausieren“ am Kontakt (Lead.nachrichtenPausiertAt) */
+  pausiertAt?: Date | null;
 };
 
 const iso = (d: Date) => d.toISOString();
 /** Fällige, aber noch nicht gesendete Schritte gehen beim nächsten Lauf raus: nicht in die Vergangenheit legen. */
 const fruehestens = (d: Date, now: Date) => (d.getTime() < now.getTime() ? now : d);
+
+/** Erinnerung (an den Lead): überspringbar, wartet bei „Alle pausieren“. */
+function erinnerung(p: PlanEingabe, t: PlanTermin, art: ErinnerungKey, e: Omit<PlanEintrag, "key" | "quelle" | "terminId">): PlanEintrag {
+  const weg = (t.erinnerungenUebersprungen ?? []).includes(art);
+  return {
+    ...e,
+    key: `erinnerung:${t.id}:${art}`,
+    quelle: "erinnerung",
+    terminId: t.id,
+    aktionen: weg ? ["rueckgaengig"] : ["ueberspringen"],
+    ...(weg ? { uebersprungen: true } : {}),
+    ...(p.pausiertAt && !weg ? { pausiert: true } : {}),
+  };
+}
 
 function terminEintraege(p: PlanEingabe, t: PlanTermin): PlanEintrag[] {
   if (t.status !== "booked" || t.startsAt.getTime() <= p.now.getTime() - HOUR) return [];
@@ -113,30 +161,40 @@ function terminEintraege(p: PlanEingabe, t: PlanTermin): PlanEintrag[] {
         meetUrl: t.meetUrl,
         person: p.person,
       });
-      if (p.whatsapp) out.push({ at, kanal: "whatsapp", quelle: "erinnerung", titel: "Erinnerung am Vortag", vorschau, terminId: t.id });
-      if (p.email) out.push({ at, kanal: "email", quelle: "erinnerung", titel: "Erinnerungs-Mail am Vortag", vorschau: `Betreff: ${p.mailBetreff?.[t.id] ?? `Erinnerung an den Termin mit ${p.person.dat}`}`, terminId: t.id });
+      if (p.whatsapp) out.push(erinnerung(p, t, "vortag", { at, kanal: "whatsapp", titel: "Erinnerung am Vortag", vorschau }));
+      if (p.email) out.push(erinnerung(p, t, "vortag_mail", { at, kanal: "email", titel: "Erinnerungs-Mail am Vortag", vorschau: `Betreff: ${p.mailBetreff?.[t.id] ?? `Erinnerung an den Termin mit ${p.person.dat}`}` }));
     }
   }
   if (p.whatsapp) {
     if (plan.stunde && !t.soonReminderSentAt && vorStart(plan.stunde) && t.startsAt.getTime() - p.now.getTime() > 10 * 60 * 1000) {
-      out.push({ at: iso(fruehestens(plan.stunde, p.now)), kanal: "whatsapp", quelle: "erinnerung", titel: "Erinnerung 1 Stunde vorher", vorschau: stundeText({ an: p.an, hi: p.hi, mode: t.mode, person: p.person }), terminId: t.id });
+      out.push(erinnerung(p, t, "stunde", { at: iso(fruehestens(plan.stunde, p.now)), kanal: "whatsapp", titel: "Erinnerung 1 Stunde vorher", vorschau: stundeText({ an: p.an, hi: p.hi, mode: t.mode, person: p.person }) }));
     }
     if (plan.gleich && t.meetUrl && !t.startReminderSentAt && vorStart(plan.gleich)) {
-      out.push({
-        at: iso(fruehestens(plan.gleich, p.now)),
-        kanal: "whatsapp",
-        quelle: "erinnerung",
-        titel: "Erinnerung 15 Minuten vorher",
-        vorschau: gleichText({ an: p.an, hi: p.hi, person: p.person, startsAt: t.startsAt, meetUrl: t.meetUrl }),
-        terminId: t.id,
-      });
+      out.push(
+        erinnerung(p, t, "gleich", {
+          at: iso(fruehestens(plan.gleich, p.now)),
+          kanal: "whatsapp",
+          titel: "Erinnerung 15 Minuten vorher",
+          vorschau: gleichText({ an: p.an, hi: p.hi, person: p.person, startsAt: t.startsAt, meetUrl: t.meetUrl }),
+        }),
+      );
     }
   }
   if (t.mode === "video" && !t.startPushAt && !t.attendance && t.startsAt.getTime() > p.now.getTime() - 15 * 60 * 1000) {
     const push = startPush({ appointmentId: t.id, name: p.label, startsAt: t.startsAt });
-    out.push({ at: iso(fruehestens(t.startsAt, p.now)), kanal: "push", quelle: "terminbeginn", titel: "Push an Sie zum Terminbeginn", vorschau: push.title, terminId: t.id });
+    out.push({ key: `start:${t.id}`, at: iso(fruehestens(t.startsAt, p.now)), kanal: "push", quelle: "terminbeginn", titel: "Push an Sie zum Terminbeginn", vorschau: push.title, terminId: t.id });
   }
   return out;
+}
+
+/** Werte der Mail-Schritte aus Paket M4/M6 für die Vorschau (wie lib/mail/abfolgen-mail.ts). */
+function mailExtra(vorlage: VorlageKey, daten: unknown): Record<string, string> {
+  if (vorlage === "wie_besprochen") return { melde_wann: "heute" };
+  if (vorlage === "unterlagen_fehlen") {
+    const f = daten && typeof daten === "object" ? (daten as Record<string, unknown>).fehlende : null;
+    return { fehlende_unterlagen: typeof f === "string" ? f : "" };
+  }
+  return {};
 }
 
 function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): PlanEintrag[] {
@@ -155,20 +213,31 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     prev = at;
     // Erster Schritt nach der Bedenkzeit: antwortet der Lead vorher, wird es eine Aufgabe für Sie
     const nr = `(Schritt ${i + 1} von ${def.steps.length})${istBedenkzeitAbfolge(a.kind) && i === 0 ? ", nach der Bedenkzeit" : ""}`;
+    // Nächste Nachrichten (P6): übersprungen, pausiert, Aktionen (der nächste Schritt: jetzt, verschieben, überspringen)
+    const weg = (a.uebersprungen ?? []).includes(i);
+    const p6 = {
+      key: `abfolge:${a.id}:${i}`,
+      aktionen: (weg ? ["rueckgaengig"] : i === a.step ? [...(step.action === "call" ? [] : ["jetzt" as const]), "verschieben", "ueberspringen"] : ["ueberspringen"]) as PlanAktion[],
+      ...(weg ? { uebersprungen: true } : {}),
+      ...(p.pausiertAt && !weg ? { pausiert: true } : {}),
+    };
+    const begleit = (art: string) => ({ key: `${art}:${a.id}:${i}`, ...(p.pausiertAt ? { pausiert: true } : {}) });
     // Angebot (P3): Vorab-Check-Push an den Vermittler am Vorabend jedes automatischen Nachfassens (WhatsApp, E-Mail)
-    if (angebot && step.action !== "call" && !(i === a.step && a.vorabCheckStep === a.step)) {
+    // Mail am selben Tag wie die WhatsApp davor (Paket M4, z. B. „Wie besprochen“ 2 Std. danach): kein zweiter Vorab-Check
+    const gleicherTag = step.day % 1 !== 0;
+    if (!weg && angebot && step.action !== "call" && !gleicherTag && !(i === a.step && a.vorabCheckStep === a.step)) {
       const versand = at;
       const zeit = vorabCheckZeit(versand);
       if (zeit.getTime() > p.now.getTime()) {
         const push = vorabCheckPush({ leadId: p.leadId, name: p.label, kanal: step.action, versand, now: zeit });
-        out.push({ at: iso(zeit), kanal: "push", quelle: "abfolge", titel: `${def.label}: Vorab-Check an Sie ${nr}`, vorschau: push.title, voraussichtlich: true, abfolgeId: a.id });
+        out.push({ ...begleit("vorab"), at: iso(zeit), kanal: "push", quelle: "abfolge", titel: `${def.label}: Vorab-Check an Sie ${nr}`, vorschau: push.title, voraussichtlich: true, abfolgeId: a.id });
       }
     }
     if (step.action === "call") {
-      out.push({ at: iso(at), kanal: "anruf", quelle: "abfolge", titel: `${def.label}: Anruf-Aufgabe ${nr}`, vorschau: step.note, voraussichtlich: i > a.step, abfolgeId: a.id });
+      out.push({ ...p6, at: iso(at), kanal: "anruf", quelle: "abfolge", titel: `${def.label}: Anruf-Aufgabe ${nr}`, vorschau: step.note, voraussichtlich: i > a.step, abfolgeId: a.id });
       // Angebot Tag 3: dazu ein Push an den Vermittler (nur, wenn die Aufgabe neu angelegt wird)
-      if (step.push) {
-        out.push({ at: iso(at), kanal: "push", quelle: "abfolge", titel: `${def.label}: Push an Sie ${nr}`, vorschau: angebotAnrufPush({ leadId: p.leadId, name: p.label }).title, voraussichtlich: true, abfolgeId: a.id });
+      if (step.push && !weg) {
+        out.push({ ...begleit("push"), at: iso(at), kanal: "push", quelle: "abfolge", titel: `${def.label}: Push an Sie ${nr}`, vorschau: angebotAnrufPush({ leadId: p.leadId, name: p.label }).title, voraussichtlich: true, abfolgeId: a.id });
       }
     } else if (step.action === "email") {
       // Text aus der Vorlage des Vermittlers (geladen in lib/nachrichtenplan-server.ts), sonst der Standardtext
@@ -177,7 +246,14 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
       const knoepfe = step.knoepfe ?? [];
       const m = vorlagenMail({
         vorlage,
-        werte: mailWerte({ an: c.an, kontakt: c.kontakt, thema: c.topic, meinname: c.person?.nom ?? "", now: at, extra: { ...(knoepfe.includes("rueckruf") ? { rueckruf_link: "[Link Rückruf]" } : {}), ...step.zusatz?.(c) } }),
+        werte: mailWerte({
+          an: c.an,
+          kontakt: c.kontakt,
+          thema: c.topic,
+          meinname: c.person?.nom ?? "",
+          now: at,
+          extra: { ...(knoepfe.includes("rueckruf") ? { rueckruf_link: "[Link Rückruf]" } : {}), ...mailExtra(step.vorlage, a.daten), ...step.zusatz?.(c) },
+        }),
         knoepfe: [
           ...(knoepfe.includes("angebot") ? [{ label: "Angebot ansehen", href: "[Link zum Angebot]" }] : []),
           ...(knoepfe.includes("rueckruf") ? [{ label: "Rückruf wünschen", href: "[Link Rückruf]" }] : []),
@@ -185,6 +261,7 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
         signatur: { text: "", html: "" },
       });
       out.push({
+        ...p6,
         at: iso(at),
         kanal: "email",
         quelle: "abfolge",
@@ -197,6 +274,7 @@ function abfolgeEintraege(p: PlanEingabe, a: PlanEingabe["abfolgen"][number]): P
     } else {
       const zeiten = step.purpose === "followup" || step.slots ? " (mit zwei freien Zeiten, falls der Kalender verbunden ist)" : "";
       out.push({
+        ...p6,
         at: iso(at),
         kanal: "whatsapp",
         quelle: "abfolge",
@@ -216,7 +294,7 @@ function anrufVersuche(p: PlanEingabe, ab: number, erstAt: Date, startedAt: Date
   const out: PlanEintrag[] = [];
   let at: Date | null = erstAt;
   for (let n = ab; n <= CALL_ATTEMPTS_TARGET && at; n++) {
-    out.push({ at: iso(at), kanal: "anruf", quelle: "anrufplan", titel: callPlanNote(n), vorschau: `Aufgabe auf „Heute“: ${p.label} anrufen`, voraussichtlich: n > ab });
+    out.push({ key: `anruf:${n}`, at: iso(at), kanal: "anruf", quelle: "anrufplan", titel: callPlanNote(n), vorschau: `Aufgabe auf „Heute“: ${p.label} anrufen`, voraussichtlich: n > ab });
     at = nextCallAttemptAt({ done: n, startedAt, lastAt: at, now: at });
   }
   return out;
@@ -227,14 +305,15 @@ function anrufplanEintraege(p: PlanEingabe): PlanEintrag[] {
   if (ap.followUpAt && isCallPlanNote(ap.followUpNote)) {
     const n = Number(/(\d+) von/.exec(ap.followUpNote ?? "")?.[1] ?? ap.callAttempts + 1);
     const at = fruehestens(ap.followUpAt, p.now);
-    return anrufVersuche(p, n, at, ap.callPlanStartedAt ?? ap.lastCallAttemptAt ?? at);
+    // Der nächste Versuch steht als Wiedervorlage auf „Heute“: verschiebbar (P6)
+    return anrufVersuche(p, n, at, ap.callPlanStartedAt ?? ap.lastCallAttemptAt ?? at).map((e, i) => (i === 0 ? { ...e, aktionen: ["verschieben" as const] } : e));
   }
   if (p.anrufAusloeserAt) {
     const at = fruehestens(p.anrufAusloeserAt, p.now);
     const push = anrufPush({ leadId: p.leadId, name: p.label });
     return [
-      { at: iso(at), kanal: "push", quelle: "anrufplan", titel: "Keine Antwort: Push an Sie", vorschau: push.title, voraussichtlich: true },
-      ...anrufVersuche(p, 1, at, at).map((e) => ({ ...e, voraussichtlich: true })),
+      { key: "ausloeser", at: iso(at), kanal: "push", quelle: "anrufplan", titel: "Keine Antwort: Push an Sie", vorschau: push.title, voraussichtlich: true },
+      ...anrufVersuche(p, 1, at, at).map((e) => ({ ...e, key: `ausloeser-${e.key}`, voraussichtlich: true })),
     ];
   }
   return [];
@@ -244,7 +323,7 @@ function anrufplanEintraege(p: PlanEingabe): PlanEintrag[] {
 function rueckrufEintraege(p: PlanEingabe): PlanEintrag[] {
   const ap = p.anrufplan;
   if (!ap.followUpAt || !istRueckrufNotiz(ap.followUpNote)) return [];
-  return [{ at: iso(fruehestens(ap.followUpAt, p.now)), kanal: "anruf", quelle: "anrufplan", titel: ap.followUpNote!, vorschau: `Aufgabe auf „Heute“: ${p.label} anrufen` }];
+  return [{ key: "rueckruf", at: iso(fruehestens(ap.followUpAt, p.now)), kanal: "anruf", quelle: "anrufplan", titel: ap.followUpNote!, vorschau: `Aufgabe auf „Heute“: ${p.label} anrufen` }];
 }
 
 /** Alle geplanten automatischen Nachrichten und Aufgaben eines Leads, nach Zeit sortiert. */
@@ -260,3 +339,16 @@ export function planeNachrichten(p: PlanEingabe): PlanEintrag[] {
     ...rueckrufEintraege(p),
   ].sort((x, y) => x.at.localeCompare(y.at));
 }
+
+/** Geht an den Lead (WhatsApp, E-Mail), nicht an den Vermittler (Push, Anruf-Aufgabe). */
+export const anLead = (e: Pick<PlanEintrag, "kanal">) => e.kanal === "whatsapp" || e.kanal === "email";
+
+/**
+ * Automatische Nachrichten an den Lead in [von, bis) (Zeile „Morgen … automatische Nachrichten“ auf „Heute“, P6):
+ * WhatsApp und E-Mail, ohne übersprungene und pausierte.
+ */
+export function zaehleAutomatische(eintraege: PlanEintrag[], von: Date, bis: Date): PlanEintrag[] {
+  return eintraege.filter((e) => anLead(e) && !e.uebersprungen && !e.pausiert && e.at >= von.toISOString() && e.at < bis.toISOString());
+}
+
+export { morgenText } from "@/lib/morgen-text";

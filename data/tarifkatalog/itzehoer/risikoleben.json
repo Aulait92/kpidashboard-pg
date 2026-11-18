@@ -24,8 +24,7 @@
         "fallend": "optional"
       },
       "quelle": "https://www.itzehoer.de/produkte/leben-vorsorge/risiko-lebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Risiko-Lebensversicherung TOP (R10)",
@@ -42,8 +41,7 @@
         "fallend": "nein"
       },
       "quelle": "https://www.itzehoer.de/produkte/leben-vorsorge/risiko-lebensversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "Zwei Stufen laut Tarifvergleich der Produktseite (Abruf 17.11.2026); keine Stufe markiert. Versicherer: Itzehoer Lebensversicherungs-AG.",
     "Fallende Summe (linear oder progressiv) nur als KOMFORT Tarif R20 (ohne Verlängerungsrecht und Dynamik).",
     "TOP: Nachversicherung je Ereignis max. 10 % bzw. 10.000 €, insgesamt bis 50.000 €; Immobilie bis 100 %. Pflegebonus und Soforthilfe bei Tod bis 15.000 €.",
-    "Umtauschrecht: auf der Produktseite nicht genannt. Kinderbonus-Zeile im Tarifvergleich nicht eindeutig lesbar."
+    "Umtauschrecht: auf der Produktseite nicht genannt. Kinderbonus-Zeile im Tarifvergleich nicht eindeutig lesbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

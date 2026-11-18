@@ -11,9 +11,17 @@ vi.mock("@/lib/whatsapp/gateway", async (orig) => {
   const real = await orig<typeof import("@/lib/whatsapp/gateway")>();
   return { ...real, sendWhatsAppMessage: (...a: unknown[]) => chat(...a) };
 });
+const mails: { leadId: string; art: string; subject: string; text: string }[] = [];
 vi.mock("@/lib/mail/lead-versand", async (orig) => {
   const real = await orig<typeof import("@/lib/mail/lead-versand")>();
-  return { ...real, sendeLeadMail: async () => ({ sent: true, via: "resend" }) };
+  return {
+    ...real,
+    sendeLeadMail: async (_k: unknown, o: { inhalt: (s: { text: string; html: string }) => { subject: string; text: string }; protokoll: { art: string; leadId: string } }) => {
+      const m = o.inhalt({ text: "Viele Grüße\nOle Kannapinn", html: "" });
+      mails.push({ leadId: o.protokoll.leadId, art: o.protokoll.art, subject: m.subject, text: m.text });
+      return { sent: true, via: "resend" };
+    },
+  };
 });
 vi.mock("@/lib/push", () => ({ sendToUser: async () => undefined, sendToBuyersOfCustomer: async () => undefined }));
 
@@ -143,7 +151,43 @@ describe("Rückruf und Bedenkzeit (P5)", () => {
     expect(waFuer(lead.id)[0].text).toContain("wie besprochen melde ich mich wieder zu Ihrem Angebot");
     const nach = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
     expect(nach.step).toBe(1);
-    expect(nach.nextAt?.toISOString()).toBe(new Date(bis.getTime() + 3 * DAY).toISOString());
+    // Paket M4: 2 Std. nach der WhatsApp die Mail „Wie besprochen“ (Versand über die App), dann die übrigen Schritte
+    const H2 = new Date(bis.getTime() + 2 * 60 * 60 * 1000);
+    expect(nach.nextAt?.toISOString()).toBe(H2.toISOString());
+    await runSequences(H2);
+    const wie = mails.filter((m) => m.leadId === lead.id && m.art === "wie_besprochen");
+    expect(wie).toHaveLength(1);
+    expect(wie[0].subject).toBe("Frau Becker, ich melde mich wie besprochen");
+    expect(wie[0].text).toContain("wie besprochen melde ich mich heute bei Ihnen zu Ihrem Angebot");
+    const danach = await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } });
+    expect(danach.step).toBe(2);
+    expect(danach.nextAt?.toISOString()).toBe(new Date(bis.getTime() + 3 * DAY).toISOString());
+  });
+
+  it("Bedenkzeit nach „Habe ich selbst gesendet“: keine Mail „Wie besprochen“; Antwort auf die WhatsApp stoppt die Mail", async () => {
+    // Selbst gesendet: nur WhatsApp und Anruf
+    const a1 = await terminMitLead();
+    await angebotSelbst(a1.t.id, ctx(), {}, { now: T0 });
+    const bis = new Date("2026-12-02T09:00:00Z");
+    await startBedenkzeit(a1.lead.id, bis, { quelle: "vermittler", now: new Date(T0.getTime() + DAY) });
+    await runSequences(bis);
+    await runSequences(new Date(bis.getTime() + 3 * 60 * 60 * 1000));
+    expect(mails.filter((m) => m.leadId === a1.lead.id && m.art === "wie_besprochen")).toHaveLength(0);
+
+    // Über die App: Antwort zwischen WhatsApp und Mail stoppt die Mail
+    const a2 = await terminMitLead();
+    await angebotSenden(a2.t.id, ctx(), { dateiId: a2.pdf.id, kundenlink: false }, { now: T0 });
+    const seq = await startBedenkzeit(a2.lead.id, bis, { quelle: "vermittler", now: new Date(T0.getTime() + DAY) });
+    await runSequences(bis);
+    const conv = await prisma.conversation.upsert({
+      where: { customerId_contactPhone: { customerId, contactPhone: a2.phone } },
+      create: { customerId, contactPhone: a2.phone, leadId: a2.lead.id },
+      update: {},
+    });
+    await prisma.message.create({ data: { conversationId: conv.id, direction: "inbound", body: "Danke, ich schaue es mir heute an", createdAt: new Date(bis.getTime() + 60 * 60 * 1000) } });
+    await runSequences(new Date(bis.getTime() + 2 * 60 * 60 * 1000));
+    expect(mails.filter((m) => m.leadId === a2.lead.id && m.art === "wie_besprochen")).toHaveLength(0);
+    expect((await prisma.leadSequence.findUniqueOrThrow({ where: { id: seq!.id } })).stopReason).toBe("Lead hat geantwortet");
   });
 
   it("Antwort vor dem Tag: kein Nachfassen, aber die Aufgabe „Bedenkzeit vorbei“ am Tag", async () => {

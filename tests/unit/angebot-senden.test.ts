@@ -25,7 +25,7 @@ import { planeNachrichten, type PlanEingabe } from "@/lib/nachrichtenplan";
 import { STANDARD_VORLAGEN_JE } from "@/lib/mail/vorlagen";
 import { PLATZHALTER, fuelle, werteFuer } from "@/lib/mail/platzhalter";
 import { hatGedankenstrich } from "@/lib/gedankenstriche";
-import { CORE_PURPOSES, VORBEREITET_ANGEBOT, buildTemplateRequest, categoryFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateNameFor } from "@/lib/whatsapp/template-plan";
+import { ANGEBOT_PURPOSES, CORE_PURPOSES, buildTemplateRequest, categoryFor, exampleValuesFor, metaTemplateProblems, plannedTemplates, purposesFor, templateNameFor } from "@/lib/whatsapp/template-plan";
 import { TEMPLATE_BODY } from "@/lib/whatsapp/templates";
 import { END_CUSTOMER_PREFIXES, RESERVED_SEGMENTS } from "@/lib/public-booking-host";
 
@@ -233,10 +233,10 @@ describe("Nachfassen zum Angebot (SEQUENCES)", () => {
 });
 
 describe("Vorlagen und öffentliche Seiten", () => {
-  it("„Angebot senden“ und das Nachfassen zum selbst gesendeten Angebot sind nur vorbereitet, aber Meta-tauglich", () => {
-    for (const p of VORBEREITET_ANGEBOT) {
-      expect(CORE_PURPOSES).not.toContain(p);
-      expect(plannedTemplates(purposesFor({ bestand: true, empfehlung: true })).some((t) => t.purpose === p)).toBe(false);
+  it("„Angebot senden“ und das Nachfassen zum selbst gesendeten Angebot werden eingereicht (Ole, 17.11.2026) und sind Meta-tauglich", () => {
+    for (const p of ANGEBOT_PURPOSES) {
+      expect(CORE_PURPOSES).toContain(p);
+      expect(plannedTemplates(purposesFor({ bestand: false })).filter((t) => t.purpose === p)).toHaveLength(3);
       for (const form of ["du", "sie", "sie_ohne_name"] as const) {
         const req = buildTemplateRequest(p, { firm: "Agentur Meier", advisor: "Susanne Meier" }, undefined, form);
         const body = (req.components as { type: string; text?: string }[]).find((c) => c.type === "BODY")!.text!;

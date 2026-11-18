@@ -23,8 +23,7 @@
         "ambulant-op": "nur mit SZ PLUS"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/krankenhaus-zusatzversicherungen/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Stationäre Zusatzversicherung SZ 1",
@@ -40,8 +39,7 @@
         "ambulant-op": "nur mit SZ PLUS"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/krankenhaus-zusatzversicherungen/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Stationäre Zusatzversicherung SZ 1 mit SZ PLUS",
@@ -57,8 +55,7 @@
         "ambulant-op": "ja, im Krankenhaus"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/krankenhaus-zusatzversicherungen/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +64,7 @@
   "offen": [
     "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Keine Stufe markiert; SZ 1 als mittlere Stufe. SZ PLUS ist ein Ergänzungstarif zu SZ 1 oder SZ 2.",
     "Ersatz-Krankenhaustagegeld: 20 € bei Verzicht auf Chefarzt, 40 € (SZ 1) bzw. 20 € (SZ 2) bei Verzicht auf das Ein- bzw. Zweibettzimmer. Wartezeit nicht genannt.",
-    "SZ PLUS zusätzlich: Zuzahlung Krankenhaus 10 €/Tag bis 28 Tage, Rooming-in 25 €/Tag, Wechseloption in die Vollversicherung nach 5 Jahren. Krankenhaustagegeld als eigener Tarif KHT."
+    "SZ PLUS zusätzlich: Zuzahlung Krankenhaus 10 €/Tag bis 28 Tage, Rooming-in 25 €/Tag, Wechseloption in die Vollversicherung nach 5 Jahren. Krankenhaustagegeld als eigener Tarif KHT.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

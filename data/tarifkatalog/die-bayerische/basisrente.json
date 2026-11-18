@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/rentenversicherung/basisrente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Basisrente Blue Invest",
@@ -44,8 +43,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/rentenversicherung/basisrente-blue-invest/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -58,6 +56,7 @@
     "Beitragsgarantie und garantierter Rentenfaktor in den Unterlagen nicht beziffert. Effektivkosten nicht ausgewertet.",
     "Hinterbliebenenrente aus dem Hinterbliebenenkapital vor Rentenbeginn; nach Rentenbeginn nur mit gewählter Rentengarantiezeit.",
     "BU-Zusatz als Beitragsbefreiung und/oder BU-Rente. Dynamik 1 bis 15 % (mit BUZ 3 bis 5 % bzw. 3 bis 10 %).",
-    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt. Keine Renditeangaben."
+    "Zwei Stufen ohne Markierung, daher keine Empfehlung gesetzt. Keine Renditeangaben.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

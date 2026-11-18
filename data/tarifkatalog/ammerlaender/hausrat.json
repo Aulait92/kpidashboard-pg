@@ -36,8 +36,7 @@
         "smarthome": "nein"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:e48aba58-84cc-4989-9e5a-47f3934f3c08/Leistungseinschl%c3%bcsse.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Comfort",
@@ -66,8 +65,7 @@
         "smarthome": "nein"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:e48aba58-84cc-4989-9e5a-47f3934f3c08/Leistungseinschl%c3%bcsse.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Exclusiv",
@@ -96,8 +94,7 @@
         "smarthome": "nein"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:e48aba58-84cc-4989-9e5a-47f3934f3c08/Leistungseinschl%c3%bcsse.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Excellent",
@@ -126,8 +123,7 @@
         "smarthome": "inklusive"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:e48aba58-84cc-4989-9e5a-47f3934f3c08/Leistungseinschl%c3%bcsse.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -138,6 +134,7 @@
     "Quelle: „Leistungseinschlüsse in der Hausratversicherung“ (Stand 03.2026, als Bild gelesen) und Leistungsvergleich der Produktseite. Keine Markierung; bei 4 Stufen Exclusiv (dritte) als Empfehlung gesetzt.",
     "Einfacher Diebstahl in der Wohnung nicht als eigene Zeile; einfacher Diebstahl nur für bestimmte Sachen (Gehhilfen, Kinderwagen, ab Exclusiv Seniorenschutz). Trickdiebstahl in der Wohnung 2.500 € (Classic, Comfort) bzw. 10.000 €.",
     "Elementar ist in allen Tarifen als Baustein wählbar; Excellent enthält beitragsfrei nur Überschwemmung durch Starkregen. Allgefahren = unbenannte Gefahren (ab Exclusiv).",
-    "Garten = Diebstahl von Wäsche, Gartenmöbeln und -geräten; Auto = Diebstahl aus Kfz weltweit. Außenversicherung bis 12 Monate. Smart-Home nur Excellent bis 3.500 €; Balkonkraftwerk Excellent inklusive, sonst optional."
+    "Garten = Diebstahl von Wäsche, Gartenmöbeln und -geräten; Auto = Diebstahl aus Kfz weltweit. Außenversicherung bis 12 Monate. Smart-Home nur Excellent bis 3.500 €; Balkonkraftwerk Excellent inklusive, sonst optional.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Produktbroschüre (Symbole im PDF am Zeichensatz gegengeprüft)."
   ]
 }

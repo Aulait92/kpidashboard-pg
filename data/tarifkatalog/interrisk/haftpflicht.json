@@ -30,8 +30,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/broschueren-und-leistungsueberblick/PH_pdf-09.26.12.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht XL",
@@ -54,8 +53,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/broschueren-und-leistungsueberblick/PH_pdf-09.26.12.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht XXL",
@@ -78,8 +76,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.interrisk.de/wMedia/docs/haftpflicht-downloads/privathaftpflicht/broschueren-und-leistungsueberblick/PH_pdf-09.26.12.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -90,6 +87,7 @@
   "offen": [
     "Werte aus dem Leistungsprofil Privathaftpflicht (PH 09.26, Symboltabelle L / XL / XXL). Deckungssumme je Vertrag wählbar (3, 5, 10, 25 oder 50 Mio. €), nicht je Konzept.",
     "Gefälligkeit: Schäden durch unentgeltliche Hilfeleistungen für Dritte. Neuwert: höchstens 1 Jahr alte Sachen bis 5.000 €, nur XXL. Drohnen mit Motor bis 250 g (L, XL) bzw. bis 5 kg (XXL).",
-    "Selbstbeteiligung wählbar (150, 300 oder 500 €) gegen Nachlass. Rabattretter: SFR-Ausgleich bis 5 Jahre nur XXL. InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt."
+    "Selbstbeteiligung wählbar (150, 300 oder 500 €) gegen Nachlass. Rabattretter: SFR-Ausgleich bis 5 Jahre nur XXL. InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

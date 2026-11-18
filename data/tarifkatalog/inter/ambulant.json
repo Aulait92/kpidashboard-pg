@@ -21,8 +21,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/ambulantekrankenzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "INTER QualiMed Z Ambulant Exklusiv",
@@ -37,8 +36,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/ambulantekrankenzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "INTER QualiMed Z Ambulant Premium",
@@ -55,8 +53,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.inter.de/gesundheit/ambulantekrankenzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -65,6 +62,7 @@
   "offen": [
     "Basis: alle gesetzlichen Zuzahlungen (Arznei, Heil-, Hilfsmittel, Fahrtkosten), Vorsorge 100 % bis 150 € in den ersten 12, 300 € in 24 Monaten, danach 500 € im Jahr; ohne Gesundheitsprüfung, bis GOÄ-Höchstsatz.",
     "Exklusiv: Vorsorge und Schutzimpfungen; Heilpraktiker, Osteopathen, Hufeland; über GOÄ-Höchstsatz, Verzicht auf GKV-Vorleistung. Zuzahlungen in der Exklusiv-Spalte ohne Eintrag (nicht belegt).",
-    "Premium zusätzlich IGeL, Augenlaser (erneut frühestens nach 3 Jahren), Hilfsmittel 80 % bis 250 € und Heilmittel 100 % bis 200 € im Jahr, Prävention bis 50 €. Hörgeräte nicht eigens genannt. Keine Empfehlung markiert; Exklusiv als mittlere Stufe."
+    "Premium zusätzlich IGeL, Augenlaser (erneut frühestens nach 3 Jahren), Hilfsmittel 80 % bis 250 € und Heilmittel 100 % bis 200 € im Jahr, Prävention bis 50 €. Hörgeräte nicht eigens genannt. Keine Empfehlung markiert; Exklusiv als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

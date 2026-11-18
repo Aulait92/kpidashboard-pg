@@ -26,6 +26,18 @@
 // (Antwort des Leads, Schalter aus), steht am Tag die Aufgabe „Bedenkzeit vorbei“ auf „Heute“. „Rückruf gewünscht“
 // pausiert die Angebots-Abfolge bis zwei Tage nach dem Zeitfenster (pauseAngebotsAbfolge, alle Schritte rücken nach).
 //
+// E-Mails in der Abfolge (Pakete M4/M6, Ole 18.11.2026, docs/plan-mail-vorlagen.md): Mail-Schritte gehen über die zentrale
+// Funktion (lib/mail/abfolgen-mail.ts → sendeVorlagenMail: Stufe, Sperren, Idempotenz, höchstens eine automatische Mail je
+// Lead und Tag), 2 Std. nach der WhatsApp desselben Anlasses: No-Show-Rettung („nicht_erschienen“), Neustart nach der
+// Bedenkzeit beim Versand über die App („wie_besprochen“), Angebot Tag 5 („nachfassen_angebot“). Begleit-Abfolgen laufen
+// neben den anderen (keine verdrängt die andere): „nicht_erreicht_mail“ (einmal nach dem 2. gezählten Anrufversuch,
+// lib/call-attempts.ts) und „unterlagen“ (Erinnerung 3 Tage nach der Mail „Unterlagen fehlen“, danach eine Aufgabe).
+//
+// Nächste Nachrichten (Paket P6, Ole 17.11.2026, lib/nachrichtenplan-aktionen.ts): Der Vermittler kann am Kontakt einzelne
+// Schritte überspringen (LeadSequence.uebersprungen: beim Fälligwerden ohne Versand weitergeschaltet), den nächsten Schritt
+// verschieben (nextAt, die folgenden rücken über neustartAt mit), sofort senden (runSequences mit nurId und sofort) und
+// alle Nachrichten an den Lead pausieren (Lead.nachrichtenPausiertAt: Abfolgen warten).
+//
 // Termin-Nachfassen (Ole, 17.11.2026): Antwortet der Lead 2 Std. nach dem Terminvorschlag des Assistenten nicht, ist der
 // erste Schritt von „Chat ruht“ ein kurzes Nachfassen mit denselben (bzw. neu berechneten, noch freien) Zeit-Knöpfen:
 // nur im offenen 24-h-Fenster, Mo bis Sa 8 bis 20 Uhr, einmal; die übrigen Stopp-Gründe gelten wie immer (Termin
@@ -47,7 +59,17 @@ import type { Werte } from "@/lib/mail/platzhalter";
 import { hatMailAntwort } from "@/lib/mail/kontakt-mail";
 import { BEDENKZEIT_AUFGABE, bedenkzeitNeustartText, tagKurz } from "@/lib/bedenkzeit";
 
-export type SequenceKind = "not_reached" | "offer" | "offer_selbst" | "offer_bedenkzeit" | "offer_selbst_bedenkzeit" | "no_show" | "silent" | "recall";
+export type SequenceKind =
+  | "not_reached"
+  | "offer"
+  | "offer_selbst"
+  | "offer_bedenkzeit"
+  | "offer_selbst_bedenkzeit"
+  | "no_show"
+  | "silent"
+  | "recall"
+  | "nicht_erreicht_mail"
+  | "unterlagen";
 
 /** Abfolgen zum Angebot (Nachfassen, Vorab-Check, Thema aus dem Termin). */
 export const ANGEBOT_KINDS: SequenceKind[] = ["offer", "offer_selbst", "offer_bedenkzeit", "offer_selbst_bedenkzeit"];
@@ -55,6 +77,11 @@ export const ANGEBOT_KINDS: SequenceKind[] = ["offer", "offer_selbst", "offer_be
 export const BEDENKZEIT_KINDS: SequenceKind[] = ["offer_bedenkzeit", "offer_selbst_bedenkzeit"];
 export const istAngebotsAbfolge = (kind: string | null | undefined) => (ANGEBOT_KINDS as string[]).includes(kind ?? "");
 export const istBedenkzeitAbfolge = (kind: string | null | undefined) => (BEDENKZEIT_KINDS as string[]).includes(kind ?? "");
+/** Begleit-Abfolgen (Pakete M4/M6): nur E-Mail bzw. Aufgabe, laufen neben den anderen und beenden keine. */
+export const BEGLEIT_KINDS: SequenceKind[] = ["nicht_erreicht_mail", "unterlagen"];
+export const istBegleitAbfolge = (kind: string | null | undefined) => (BEGLEIT_KINDS as string[]).includes(kind ?? "");
+/** Aufgabe nach der Erinnerung „Unterlagen fehlen“ (gleicher Text wie UNTERLAGEN_NOTE in lib/mail/termin-erinnerung.ts). */
+export const UNTERLAGEN_AUFGABE = "Unterlagen nachfassen";
 
 const DAY = 24 * 60 * 60 * 1000;
 const DONE_STATUSES = new Set(["abschluss", "kein interesse", "disqualifiziert"]);
@@ -92,6 +119,8 @@ type Step =
       note: string;
       /** Push an den Vermittler (Ole, 17.11.2026: „Frau Becker anrufen: Fragen zum Angebot?“), nur wenn die Aufgabe neu ist */
       push?: boolean;
+      /** Als Aufgabe (LeadTask dieser Art, lib/lead-aufgaben.ts) statt direkt als Wiedervorlage: wartet, bis sie frei ist */
+      aufgabe?: string;
     }
   | {
       day: number;
@@ -147,6 +176,8 @@ const angebotMail: Extract<Step, { action: "email" }> = {
   vorlage: "nachfassen_angebot",
   knoepfe: ["angebot", "rueckruf"],
 };
+/** Neustart nach der Bedenkzeit (Paket M4): 2 Std. nach der WhatsApp die Mail „Wie besprochen“ (nur Versand über die App). */
+const bedenkzeitMail: Extract<Step, { action: "email" }> = { day: 2 / 24, action: "email", titel: "E-Mail „Wie besprochen“", vorlage: "wie_besprochen" };
 /** Nach der Bedenkzeit (Paket P5): WhatsApp zum Angebot, Vorlage offer_bedenkzeit (bis zur Freigabe followup_offer). */
 const bedenkzeitWa = (selbst: boolean): Extract<Step, { action: "whatsapp" }> => ({
   day: 0,
@@ -199,7 +230,7 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
   // Nach der Bedenkzeit neu (Paket P5): Tage ab neustartAt, sonst wie „offer“ bzw. „offer_selbst“
   offer_bedenkzeit: {
     label: "Bedenkzeit zum Angebot",
-    steps: [bedenkzeitWa(false), angebotAnruf, angebotMail, angebotLetzteWa(false), angebotSchluss],
+    steps: [bedenkzeitWa(false), bedenkzeitMail, angebotAnruf, angebotMail, angebotLetzteWa(false), angebotSchluss],
   },
   offer_selbst_bedenkzeit: {
     label: "Bedenkzeit zum Angebot",
@@ -248,6 +279,8 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
           ),
         fallbackNote: "Nicht erschienen: neuen Termin vereinbaren",
       },
+      // Paket M4: am selben Tag, 2 Std. nach der WhatsApp, die Mail „Nicht erschienen“ (entfällt bei Antwort oder Buchung)
+      { day: 2 / 24, action: "email", titel: "E-Mail mit Link für einen neuen Termin", vorlage: "nicht_erschienen" },
       {
         day: 1,
         action: "whatsapp",
@@ -347,6 +380,19 @@ export const SEQUENCES: Record<SequenceKind, { label: string; steps: Step[] }> =
       },
     ],
   },
+  // Paket M4: einmal nach dem 2. gezählten erfolglosen Anrufversuch, 2 Std. nach einer etwaigen WhatsApp (lib/call-attempts.ts)
+  nicht_erreicht_mail: {
+    label: "Nicht erreicht: E-Mail",
+    steps: [{ day: 0, action: "email", titel: "E-Mail mit den nächsten Anrufzeiten", vorlage: "nicht_erreicht" }],
+  },
+  // Paket M6: Erinnerung 3 Tage nach der Mail „Unterlagen fehlen“ ohne Antwort oder Upload, danach eine Aufgabe für Sie
+  unterlagen: {
+    label: "Unterlagen fehlen",
+    steps: [
+      { day: 3, action: "email", titel: "Erinnerung per E-Mail", vorlage: "unterlagen_fehlen" },
+      { day: 5, action: "call", note: UNTERLAGEN_AUFGABE, aufgabe: "unterlagen_fehlen" },
+    ],
+  },
 };
 
 export type SequenceLogEntry = {
@@ -391,7 +437,8 @@ export async function startSequence(leadId: string, kind: SequenceKind, now = ne
   const running = await prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null } });
   const same = running.find((r) => r.kind === kind);
   if (same) return same;
-  for (const r of running) {
+  // Begleit-Abfolgen (E-Mail „Nicht erreicht“, Erinnerung „Unterlagen fehlen“) laufen weiter
+  for (const r of running.filter((x) => !istBegleitAbfolge(x.kind))) {
     await prisma.leadSequence.update({
       where: { id: r.id },
       data: {
@@ -424,10 +471,10 @@ export async function restartSilentSequence(leadId: string, now = new Date()) {
   const upcoming = await prisma.appointment.count({ where: { leadId, status: "booked", startsAt: { gt: now } } });
   if (upcoming > 0) return null;
   const running = await prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true } });
-  if (running.some((r) => r.kind !== "silent")) return null;
+  if (running.some((r) => r.kind !== "silent" && !istBegleitAbfolge(r.kind))) return null;
   const nextAt = new Date(now.getTime() + SEQUENCES.silent.steps[0].day * DAY);
   const same = running.find((r) => r.kind === "silent");
-  if (same) return prisma.leadSequence.update({ where: { id: same.id }, data: { step: 0, startedAt: now, nextAt } });
+  if (same) return prisma.leadSequence.update({ where: { id: same.id }, data: { step: 0, startedAt: now, nextAt, neustartAt: null, uebersprungen: [] } });
   return prisma.leadSequence.create({ data: { leadId, customerId: lead.customerId, kind: "silent", step: 0, startedAt: now, nextAt } });
 }
 
@@ -461,11 +508,17 @@ export async function scheduleBotRecall(leadId: string, at: Date, note: string |
   });
 }
 
-/** Laufende Abfolgen eines Leads beenden. Optional nur die seit `since` gestarteten. */
-export async function stopSequences(leadId: string, reason: string, opts: { since?: Date; now?: Date } = {}): Promise<number> {
+/** Laufende Abfolgen eines Leads beenden. Optional nur die seit `since` gestarteten bzw. alle außer bestimmten Arten. */
+export async function stopSequences(leadId: string, reason: string, opts: { since?: Date; now?: Date; ausser?: SequenceKind[]; nurId?: string } = {}): Promise<number> {
   const now = opts.now ?? new Date();
   const running = await prisma.leadSequence.findMany({
-    where: { leadId, stoppedAt: null, ...(opts.since ? { startedAt: { gte: opts.since } } : {}) },
+    where: {
+      leadId,
+      stoppedAt: null,
+      ...(opts.nurId ? { id: opts.nurId } : {}),
+      ...(opts.since ? { startedAt: { gte: opts.since } } : {}),
+      ...(opts.ausser?.length ? { kind: { notIn: opts.ausser } } : {}),
+    },
     select: { id: true, log: true },
   });
   for (const r of running) {
@@ -561,7 +614,8 @@ export async function pauseAngebotsAbfolge(leadId: string, bis: Date, grund: str
 export async function onLeadStatus(leadId: string, status: string | null | undefined, now = new Date()): Promise<{ started: boolean }> {
   const s = (status ?? "").trim().toLowerCase();
   if (DONE_STATUSES.has(s)) {
-    await stopSequences(leadId, `Phase: ${status}`, { now });
+    // Nach dem Abschluss läuft die Erinnerung „Unterlagen fehlen“ weiter (Paket M6)
+    await stopSequences(leadId, `Phase: ${status}`, { now, ...(s === "abschluss" ? { ausser: ["unterlagen" as const] } : {}) });
     return { started: false };
   }
   // „Angebot gesendet“ allein startet kein Nachfassen mehr (Paket P3): erst der Versand über die App bzw. „Habe ich selbst
@@ -590,16 +644,25 @@ export async function stopReasonFor(seq: { leadId: string; customerId: string; s
     select: { status: true, stornoState: true, erasedAt: true, phone: true, abschlussGemeldetAt: true },
   });
   if (!lead || lead.erasedAt) return "Lead gelöscht";
-  if (lead.abschlussGemeldetAt && lead.abschlussGemeldetAt.getTime() >= seq.startedAt.getTime()) return "Lead meldet: schon abgeschlossen";
+  const unterlagen = seq.kind === "unterlagen";
+  if (!unterlagen && lead.abschlussGemeldetAt && lead.abschlussGemeldetAt.getTime() >= seq.startedAt.getTime()) return "Lead meldet: schon abgeschlossen";
   if (lead.stornoState) return "Lead reklamiert";
   const s = (lead.status ?? "").trim().toLowerCase();
-  if (DONE_STATUSES.has(s)) return `Phase: ${lead.status}`;
-  if (seq.kind === "recall") {
+  // „Unterlagen fehlen“ gehört oft zum Abschluss (Paket M6): endet nur bei Absage
+  if (DONE_STATUSES.has(s) && !(unterlagen && s === "abschluss")) return `Phase: ${lead.status}`;
+  if (unterlagen) {
+    // Der Kontakt hat inzwischen Unterlagen geschickt bzw. Sie haben welche abgelegt
+    const neu = await prisma.leadFile.count({ where: { leadId: seq.leadId, createdAt: { gt: seq.startedAt }, kind: { not: "angebot" } } });
+    if (neu > 0) return "Unterlagen sind da";
+  }
+  if (istBegleitAbfolge(seq.kind)) {
+    // E-Mails folgen der Stufe je Vorlage (lib/mail/ablauf.ts), nicht dem Schalter „Automatisch nachfassen“
+  } else if (seq.kind === "recall") {
     const agent = await prisma.agentConfig.findUnique({ where: { customerId: seq.customerId }, select: { active: true } });
     if (!agent?.active) return "Assistent ausgeschaltet";
   } else if (!(await enabledFor(seq.customerId))) return "Automatisches Nachfassen ausgeschaltet";
   // Neu gebuchter oder noch bevorstehender Termin → nicht weiter nachfassen.
-  const booked = await prisma.appointment.count({ where: { leadId: seq.leadId, status: "booked", OR: [{ createdAt: { gt: seq.startedAt } }, { startsAt: { gt: now } }] } });
+  const booked = unterlagen ? 0 : await prisma.appointment.count({ where: { leadId: seq.leadId, status: "booked", OR: [{ createdAt: { gt: seq.startedAt } }, { startsAt: { gt: now } }] } });
   if (booked > 0) return "Termin gebucht";
   const reply = await prisma.message.findFirst({
     where: {
@@ -654,12 +717,20 @@ const BEDENKZEIT_AUFGABE_GRUENDE = new Set(["Lead hat geantwortet", "Lead hat pe
 
 export type SequenceRunResult = { due: number; sent: number; tasks: number; stopped: number; waiting: number; failed: number };
 
-/** Fällige Schritte abarbeiten (Cron alle 5 Minuten). */
-export async function runSequences(now = new Date()): Promise<SequenceRunResult> {
+/**
+ * Fällige Schritte abarbeiten (Cron alle 5 Minuten). Mit `nurId` und `sofort` („Jetzt senden“ am Kontakt, Paket P6): nur
+ * diese Abfolge, auch außerhalb des Versandfensters und während einer Pause; die Stopp-Gründe gelten trotzdem.
+ */
+export async function runSequences(now = new Date(), opts: { nurId?: string; sofort?: boolean } = {}): Promise<SequenceRunResult> {
   const res: SequenceRunResult = { due: 0, sent: 0, tasks: 0, stopped: 0, waiting: 0, failed: 0 };
   const due = await prisma.leadSequence.findMany({
-    // Ruhende Konten (lib/ruhend.ts): kein Nachfassen
-    where: { stoppedAt: null, nextAt: { lte: now }, lead: { customer: { dormantSince: null } } },
+    // Ruhende Konten (lib/ruhend.ts): kein Nachfassen; „Alle pausieren“ am Kontakt (P6): Schritte warten
+    where: {
+      stoppedAt: null,
+      nextAt: { lte: now },
+      ...(opts.nurId ? { id: opts.nurId } : {}),
+      lead: { customer: { dormantSince: null }, ...(opts.sofort ? {} : { nachrichtenPausiertAt: null }) },
+    },
     orderBy: { nextAt: "asc" },
     take: 100,
   });
@@ -674,7 +745,8 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     }
     const reason = await stopReasonFor(seq, now);
     if (reason) {
-      await stopSequences(seq.leadId, reason, { now });
+      // Begleit-Abfolgen prüfen ihre Stopp-Gründe selbst: eine endet allein, die übrigen lassen sie weiterlaufen
+      await stopSequences(seq.leadId, reason, istBegleitAbfolge(seq.kind) ? { now, nurId: seq.id } : { now, ausser: BEGLEIT_KINDS });
       // Bedenkzeit (P5): Antwort vorher bzw. Nachfassen aus, der Tag bleibt als Aufgabe für den Vermittler
       if (istBedenkzeitAbfolge(seq.kind) && seq.step === 0 && BEDENKZEIT_AUFGABE_GRUENDE.has(reason)) {
         if ((await createCallTask(seq.leadId, BEDENKZEIT_AUFGABE, now)) === "call_task") res.tasks++;
@@ -682,16 +754,18 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
       res.stopped++;
       continue;
     }
+    // Vom Vermittler übersprungen (P6): ohne Versand weiter, nicht aufs Versandfenster warten
+    const skip = seq.uebersprungen.includes(seq.step);
     // Offener Terminvorschlag (erster Schritt „Chat ruht“): Nachfassen mit den Zeit-Knöpfen, Mo bis Sa 8 bis 20 Uhr
     const terminNachfass =
-      seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
+      !skip && seq.kind === "silent" && seq.step === 0 ? await import("@/lib/whatsapp/termin-strecke").then((m) => m.offenerTerminvorschlag(seq.leadId, seq.customerId)).catch(() => null) : null;
     // WhatsApp und E-Mail nur im Versandfenster – Schritt wartet, Anruf-Aufgaben jederzeit.
-    if ((step.action === "whatsapp" || step.action === "email") && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
+    if (!skip && !opts.sofort && (step.action === "whatsapp" || step.action === "email") && !(terminNachfass ? inSendWindow(now, TERMIN_NACHFASS_STUNDEN) : windowOpen)) {
       res.waiting++;
       continue;
     }
     // Vermittler telefoniert gerade bzw. hat noch kein Ergebnis eingetragen (lib/telefonat.ts): kein Nachfassen, Schritt wartet
-    if (step.action === "whatsapp" && (await anrufPausiert(seq.leadId, now))) {
+    if (!skip && !opts.sofort && step.action === "whatsapp" && (await anrufPausiert(seq.leadId, now))) {
       res.waiting++;
       continue;
     }
@@ -706,7 +780,15 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
     if (claimed.count === 0) continue;
 
     let entry: SequenceLogEntry;
-    if (step.action === "call") {
+    if (skip) {
+      entry = { at: now.toISOString(), step: seq.step, action: step.action, result: "skipped", detail: "von Ihnen" };
+    } else if (step.action === "call" && step.aufgabe) {
+      // Aufgabe über LeadTask (P7): verdrängt keine andere Wiedervorlage, rückt nach, sobald sie frei ist
+      const { planeAufgabe } = await import("@/lib/lead-aufgaben");
+      const r = await planeAufgabe({ leadId: seq.leadId, customerId: seq.customerId, kind: step.aufgabe, note: step.note, dueAt: now }, now);
+      entry = { at: now.toISOString(), step: seq.step, action: "call", result: r === "aktiv" ? "call_task" : "kept_followup", detail: r === "wartet" ? "Aufgabe wartet, bis die Wiedervorlage frei ist" : undefined };
+      if (r === "aktiv") res.tasks++;
+    } else if (step.action === "call") {
       const r = await createCallTask(seq.leadId, step.note, now);
       entry = { at: now.toISOString(), step: seq.step, action: "call", result: r };
       if (r === "call_task") res.tasks++;
@@ -716,8 +798,8 @@ export async function runSequences(now = new Date()): Promise<SequenceRunResult>
           .catch((e) => console.error("[lead-sequences push]", e));
       }
     } else if (step.action === "email") {
-      entry = await import("@/lib/angebot-senden-server")
-        .then((m) => m.sendeNachfassMail(seq, step, now))
+      entry = await import("@/lib/mail/abfolgen-mail")
+        .then((m) => m.sendeAbfolgenMail(seq, step, now))
         .catch((e): SequenceLogEntry => ({ at: now.toISOString(), step: seq.step, action: "email", result: "failed", detail: (e instanceof Error ? e.message : String(e)).slice(0, 160) }));
       if (entry.result === "sent") res.sent++;
       else if (entry.result === "failed") res.failed++;
@@ -910,11 +992,12 @@ export function describe(e: SequenceLogEntry, total: number): string {
   if (e.action === "stop" && e.detail?.startsWith("Pausiert")) return e.detail;
   if (e.action === "stop") return `Abfolge beendet: ${e.detail ?? "gestoppt"}`;
   if (e.action === "plan" && e.result === "paused") return e.detail ?? "Pausiert";
-  if (e.action === "plan" && e.detail?.startsWith("Bedenkzeit")) return e.detail;
+  if (e.action === "plan" && /^(Bedenkzeit|E-Mail|Erinnerung)/.test(e.detail ?? "")) return e.detail!;
   if (e.action === "plan") return `Wiedervorlage vom Assistenten: ${e.detail ?? "meldet sich später"}`;
+  if (e.action === "call" && e.result === "skipped") return `Anruf-Aufgabe übersprungen (${e.detail ?? "von Ihnen"}) ${n}`;
   if (e.action === "call") return e.result === "kept_followup" ? `Anruf fällig, Ihre eigene Wiedervorlage bleibt ${n}` : `Anruf-Aufgabe auf „Heute“ angelegt ${n}`;
   if (e.action === "email") {
-    if (e.result === "sent") return `Nachfassen: E-Mail gesendet ${n}`;
+    if (e.result === "sent") return `${e.detail ?? "Nachfassen"}: E-Mail gesendet ${n}`;
     if (e.result === "skipped") return `E-Mail übersprungen${e.detail ? ` (${e.detail})` : ""} ${n}`;
     return `E-Mail konnte nicht gesendet werden ${n}`;
   }
@@ -926,6 +1009,8 @@ export function describe(e: SequenceLogEntry, total: number): string {
       return `WhatsApp nicht möglich${e.detail ? ` (${e.detail.replace(/ – .*$/, "")})` : ""} – Anruf-Aufgabe angelegt ${n}`;
     case "kept_followup":
       return `WhatsApp nicht möglich, Ihre Wiedervorlage bleibt ${n}`;
+    case "skipped":
+      return `WhatsApp übersprungen${e.detail ? ` (${e.detail})` : ""} ${n}`;
     default:
       return `WhatsApp konnte nicht gesendet werden ${n}`;
   }

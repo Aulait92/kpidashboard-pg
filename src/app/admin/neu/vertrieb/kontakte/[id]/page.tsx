@@ -197,7 +197,6 @@ export default async function KontaktaktePage({ params, searchParams }: { params
                 "followup-actions-approvefollowupaction--spaeter-follow-up-je-kontakt-freigeben-texte",
                 "followup-actions-sendfollowupnowaction--spaeter-follow-up-mail-sofort-senden-texte-neu",
                 "followup-actions-stopfollowupaction--spaeter-follow-up-stoppen-oder-planen",
-                "followup-actions-redraftfollowupaction--spaeter-follow-up-neu-schreiben-ohne-oberflaeche",
               ].join(" ")}
             >
               {a.activeFollowup || c.followups.length || c.stage === "SPAETER" || c.emails.some((e) => e.sentiment === "SPAETER") ? (

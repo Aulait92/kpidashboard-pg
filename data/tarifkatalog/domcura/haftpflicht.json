@@ -28,8 +28,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/privathaftpflicht/leistungsuebersicht_phv.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Komfort-Schutz",
@@ -50,8 +49,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/privathaftpflicht/leistungsuebersicht_phv.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Top-Schutz",
@@ -72,8 +70,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/privathaftpflicht/leistungsuebersicht_phv.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
     "Leistungsübersicht DC/PHV/LUE 2024/11 (Vertragsgrundlagen Stand 01.11.2024). Domcura ist Assekuradeur; Risikoträger nicht auf der Produktseite genannt.",
     "Schlüssel Standard nur private Schlüssel; berufliche ab Komfort.",
     "Mietsachschäden an beweglichen Einrichtungsgegenständen: Standard 10.000 €, Komfort 50.000 € (je SB 150 €), Top 50 Mio. €.",
-    "Domcura markiert keinen Tarif; Komfort als mittlere Stufe. Selbstbeteiligung allgemein nicht genannt."
+    "Domcura markiert keinen Tarif; Komfort als mittlere Stufe. Selbstbeteiligung allgemein nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

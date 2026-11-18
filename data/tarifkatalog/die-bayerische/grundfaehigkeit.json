@@ -23,8 +23,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/arbeitskraftsicherung/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Grundtarif Body mit Option Mind",
@@ -40,8 +39,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.diebayerische.de/arbeitskraftsicherung/grundfaehigkeitsversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -53,6 +51,7 @@
     "Body: 15 Fähigkeiten (Sehen, Hören, Sprechen, Gleichgewicht, Hand, Arm, Fingerfertigkeit, Heben/Tragen, Schieben/Ziehen, Sitzen, Stehen, Gehen, Bücken, Knien, Treppensteigen). Mind ergänzt 9 Leistungsauslöser (u. a. Tasten, Riechen/Schmecken, geistige Leistungsfähigkeit, Pflege inkl. Demenz, Bildschirmtätigkeit); Zählung „24 inkl. Pflege“ selbst gebildet.",
     "Weitere Optionen zu beiden Stufen: Mobilität, Fürsorge, Infektion, Psyche (Leistung, wenn keine 3 Stunden täglich Arbeit möglich), Arbeitsunfähigkeit (bis 24 Monate), Familienhalt (Einmalleistungen).",
     "Weltweiter Schutz nicht ausdrücklich genannt. Dynamik über eigene Bedingungen (AVB GF Dynamik) wählbar.",
-    "Zwei Stufen ohne Markierung der Gesellschaft, daher keine Empfehlung gesetzt."
+    "Zwei Stufen ohne Markierung der Gesellschaft, daher keine Empfehlung gesetzt.",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

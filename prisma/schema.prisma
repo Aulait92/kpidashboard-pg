@@ -776,6 +776,9 @@ model Lead {
   callPlanStartedAt    DateTime?
   // Anrufplan automatisch gestartet: 30 Min. nach dem Erstanschreiben ohne Antwort (Ole, 17.11.2026, lib/anruf-ausloeser.ts)
   autoCallAt           DateTime?
+  // „Alle pausieren“ unter „Nächste Nachrichten“ am Kontakt (Paket P6, lib/nachrichtenplan-aktionen.ts): solange gesetzt,
+  // warten Nachfass-Abfolgen und Termin-Erinnerungen an den Lead; „Fortsetzen“ rückt die Abfolgen um die Pause nach
+  nachrichtenPausiertAt DateTime?
   // Rückruf wünschen (Link in der Nachfass-Mail zum Angebot, Minimalseite /rueckruf/<token>, Ausbau in P5)
   rueckrufToken        String?           @unique
   rueckrufGewuenschtAt DateTime?
@@ -821,6 +824,7 @@ model Lead {
   files               LeadFile[]
   // Unterlagen vom Lead per WhatsApp (Policen vor dem Termin, lib/policen)
   documents           LeadDocument[]
+  policenAuszuege     PolicenAuszug[]
   // Ausgehende E-Mails an den Lead (Verlauf mit Zustellstatus, lib/mail/kontakt-mail.ts)
   mails               ContactMail[]
   // Automatische Vorlagen-Mails: Idempotenz je Vorlage und Anlass, höchstens eine je Tag (lib/mail/vorlagen-mail.ts)
@@ -1399,11 +1403,21 @@ model Appointment {
   // Push „Ist … da?“ zum Terminbeginn bzw. „Ist … noch gekommen?“ nach dem Termin (je einmal)
   startPushAt           DateTime?
   afterPushAt           DateTime?
+  // Vom Vermittler übersprungene Erinnerungen (Paket P6): vortag | vortag_mail | stunde | gleich
+  erinnerungenUebersprungen String[] @default([])
   // Komplettcheck = Ja: auf 45 Min. verlängert („verlaengert“) bzw. Hinweis an den Vermittler („hinweis“)
   verlaengerung         String?
   verlaengerungAt       DateTime?
   // Lead hat per Knopf „Ja, passt“ bestätigt (Erinnerung am Vortag bzw. kurz vorher)
   confirmedAt        DateTime?
+  // Einladung mit Kalendereintrag an den Lead (Ole, 17.11.2026, lib/calendar/einladung.ts): genau einmal, gesendet am
+  // und an welche Adresse; Änderungen danach als Aktualisierung (gleiche UID, einladungSeq + 1). Bei Buchung im
+  // WhatsApp-Assistenten ausstehend (einladungAusstehend = Buchungszeit), bis Adresse und Komplettcheck feststehen bzw.
+  // der Lead nicht mehr antwortet (15 Min., kurzfristig 5 Min., spätestens 60 Min. vor Beginn)
+  einladungAt          DateTime?
+  einladungAn          String?
+  einladungSeq         Int       @default(0)
+  einladungAusstehend  DateTime?
   // Komplettcheck nach der Buchung (Ole, 17.11.2026): true = Lead möchte, dass der Berater im Termin auch kurz schaut,
   // ob er insgesamt gut abgesichert ist; false = nein; null = nicht gefragt bzw. offen
   komplettcheck      Boolean?
@@ -1448,6 +1462,7 @@ model Appointment {
   lead     Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
 
   @@index([customerId, startsAt])
+  @@index([einladungAusstehend])
 }
 
 // WhatsApp-Vorlage je Kunde (für Erstansprache / außerhalb des 24h-Fensters).
@@ -2879,6 +2894,7 @@ model LeadSequence {
   leadId     String
   customerId String
   // not_reached | offer | offer_selbst | offer_bedenkzeit | offer_selbst_bedenkzeit | no_show | silent | recall
+  // | nicht_erreicht_mail | unterlagen (Begleit-Abfolgen, Pakete M4/M6)
   kind       String
   // Index des nächsten Schritts
   step       Int       @default(0)
@@ -2892,6 +2908,10 @@ model LeadSequence {
   vorabCheckStep Int?
   // Bedenkzeit zum Angebot (Paket P5): Die Abfolge startet an diesem Tag neu, die Schritt-Tage zählen ab hier statt ab startedAt
   neustartAt DateTime?
+  // Angaben für die Schritte (Paket M6): z. B. { fehlende: "• IBAN …" } für die Erinnerung „Unterlagen fehlen“
+  daten      Json?
+  // Vom Vermittler übersprungene Schritte (Paket P6, „Nächste Nachrichten“): werden ohne Versand weitergeschaltet
+  uebersprungen Int[] @default([])
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
@@ -3995,10 +4015,72 @@ model LeadDocument {
   behaltenVonId    String?
   behaltenVermerk  String?
   createdAt        DateTime  @default(now())
+  auszug           PolicenAuszug?
 
   @@index([leadId])
   @@index([customerId])
   @@index([status, createdAt])
+}
+
+// Policen auslesen (Ole, 18.11.2026, lib/policen/auslesen): Vertragsfelder einer Unterlage vom Kunden für das
+// Vergleichsblatt in der Terminvorbereitung. Nur feste Vertragsfelder (Whitelist, keine Gesundheitsangaben, kein
+// Freitext), Versicherungsnummer nur maskiert. Kein Prompt, keine Rohantwort. Wird mit der Unterlage gelöscht
+// (Cascade: Löschfrist, Widerruf, Art. 17); bleibt nur, was der Vermittler ausdrücklich in den Bestand übernimmt
+// (ExistingContract). Eigene Tabelle ohne Anbindung an Statistik oder Benchmarks.
+model PolicenAuszug {
+  id                 String       @id @default(cuid())
+  customerId         String
+  leadId             String
+  lead               Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  documentId         String       @unique
+  document           LeadDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  // laeuft | ausgelesen | sparte_offen | sparte_abweichend | gesperrt | limit | fehler | leer
+  status             String
+  // Sparte für das Auslesen (lib/policen/auslesen/felder.ts AUSLESEN_SPARTEN) und woher sie vorab stammt:
+  // unterlage (Dateiname/Begleittext) | text (Textebene Seite 1, lokal) | vermittler
+  sparte             String?
+  sparteQuelle       String?
+  // { feld: { w: Wert, s: ok | pruefen | korrigiert } }, nur Felder der Whitelist
+  felder             Json?
+  anbieter           String?
+  modell             String?
+  ausgelesenAt       DateTime?
+  versuche           Int          @default(0)
+  // Vermittler hat die Werte geprüft bzw. korrigiert
+  geprueftAt         DateTime?
+  geprueftVonId      String?
+  // „In Bestand übernehmen“: ExistingContract.id (bleibt nach der Löschung dieser Zeile bestehen)
+  uebernommenAt      DateTime?
+  uebernommenVonId   String?
+  existingContractId String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([leadId])
+  @@index([customerId])
+}
+
+// Bremse für das Auslesen (Ole, 18.11.2026): Aufrufe beim KI-Anbieter je Kalendertag (Europe/Berlin), unabhängig von
+// späteren Löschungen; gemeldetAt = Admin-Hinweis „Tageslimit erreicht“ schon verschickt.
+model PolicenAuslesenTag {
+  tag        String    @id
+  anzahl     Int       @default(0)
+  gemeldetAt DateTime?
+}
+
+// Einstellungen zum Auslesen (eine Zeile, id „global“, Admin → Anbindungen): Nachweis „keine Speicherung“ beim
+// KI-Anbieter (schaltet Kranken/BU/Leben frei, Rechtsprüfung K2), Pause nach 401 (Fingerabdruck des Schlüssels,
+// ein neuer Schlüssel hebt sie auf) und wann Admins zuletzt benachrichtigt wurden.
+model PolicenAuslesenEinstellung {
+  id                    String    @id @default("global")
+  zdrNachweisAm         DateTime?
+  zdrReferenz           String?
+  zdrVonId              String?
+  schluesselUngueltigAt DateTime?
+  schluesselFinger      String?
+  ungueltigGemeldetAt   DateTime?
+  ablaufGemeldetAt      DateTime?
+  updatedAt             DateTime  @updatedAt
 }
 
 // Nachweise zu Policen per WhatsApp (Rechtsprüfung A3, Ole 18.11.2026): Einwilligung (mit bzw. ohne KI), Ablehnung,
@@ -4409,8 +4491,8 @@ model Erstinformation {
   // Pflichtangaben nach § 15 Abs. 1 VersVermV (Ole, 15.11.2026). null = Vorschlag aus Impressum/Angebot
   // (lib/erstinformation-shared.ts erstinfoDaten), gespeichert wird beim Bestätigen in der Einrichtung.
   name           String?
-  // Anrede des Vermittlers (Herr | Frau), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
-  // null = nicht angegeben, dann Vor- und Nachname. Kein Pflichtfeld der Erstinformation.
+  // Anrede des Vermittlers (Herr | Frau | keine), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
+  // Pflicht in der Einrichtung; „keine“ (bewusst ohne) bzw. null (nicht angegeben): Vor- und Nachname.
   anrede         String?
   firma          String?
   anschrift      String?

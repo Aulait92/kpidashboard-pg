@@ -30,8 +30,6 @@ import {
   angebotMail,
   angebotVorteile,
   mailWerte,
-  vorlagenMail,
-  type MailKnopf,
   type MailVorlageText,
   angebotThema,
   angebotVorlageParams,
@@ -446,54 +444,31 @@ export async function rueckrufToken(leadId: string): Promise<string> {
 }
 
 /**
- * Schritt „email“ einer Abfolge (z. B. Angebot Tag 5): Text aus der Vermittler-Vorlage des Schritts, Rahmen mit den
- * Knöpfen des Schritts ([Angebot ansehen], [Rückruf wünschen] bzw. {rueckruf_link}).
+ * Schritt „email“ der Angebots-Abfolge (Tag 5): seit Paket M4 über die zentrale Funktion (lib/mail/abfolgen-mail.ts,
+ * sendeVorlagenMail mit Stufe, Sperren, Idempotenz und Tageslimit). Bleibt als Name für bestehende Aufrufer.
  */
 export async function sendeNachfassMail(
-  seq: { leadId: string; customerId: string; step: number; kind?: string },
+  seq: { id: string; leadId: string; customerId: string; step: number; kind?: string; startedAt: Date; neustartAt?: Date | null; daten?: unknown },
   step: { vorlage: VorlageKey; knoepfe?: ("angebot" | "rueckruf")[]; zusatz?: (c: SequenceCtx) => Partial<Werte> },
   now = new Date(),
 ): Promise<SequenceLogEntry> {
-  const base = { at: now.toISOString(), step: seq.step, action: "email" as const };
-  const lead = await prisma.lead.findUnique({ where: { id: seq.leadId }, select: leadSelect });
-  if (!lead || lead.erasedAt) return { ...base, result: "skipped", detail: "Lead gelöscht" };
-  const conv = await chatVon(lead.customerId, lead.id, lead.phone);
-  const to = lead.email?.trim() || conv?.contactEmail?.trim() || null;
-  if (!to) return { ...base, result: "skipped", detail: "keine E-Mail-Adresse" };
-  const an = asAnsprache(lead.customer.leadAddress);
-  const who = await ansprechpartner({ customerId: lead.customerId, leadId: lead.id, phone: lead.phone, name: lead.name });
+  const { sendeAbfolgenMail } = await import("@/lib/mail/abfolgen-mail");
+  return sendeAbfolgenMail(seq, step, now);
+}
+
+/**
+ * Knöpfe und Thema für Mails zum Angebot (Paket M4): [Angebot ansehen] (nur, solange das PDF noch abrufbar ist),
+ * [Rückruf wünschen] und das Thema aus der Auswahl im Termin („Haftpflicht und Hausrat“).
+ */
+export async function angebotMailAngaben(leadId: string, knoepfe: ("angebot" | "rueckruf")[], now = new Date()): Promise<{ angebot: string | null; rueckruf: string | null; thema: string | null }> {
   const termin = await prisma.appointment.findFirst({
-    where: { leadId: lead.id, angebotGesendetAt: { not: null }, angebotToken: { not: null } },
+    where: { leadId, angebotGesendetAt: { not: null }, angebotToken: { not: null } },
     orderBy: { angebotGesendetAt: "desc" },
-    select: { angebotToken: true, offersJson: true },
+    select: { angebotToken: true },
   });
-  const knoepfe = step.knoepfe ?? [];
   const angebot = knoepfe.includes("angebot") && termin?.angebotToken && (await ladeAngebotDatei(termin.angebotToken, now)) ? angebotUrl(termin.angebotToken) : null;
-  const rueckruf = knoepfe.includes("rueckruf") ? rueckrufUrl(await rueckrufToken(lead.id)) : null;
-  const { firstNameOf } = await import("@/lib/whatsapp/templates");
-  const { vermittlerName } = await import("@/lib/whatsapp/gespraech");
-  const ctx: SequenceCtx = {
-    firstName: firstNameOf(lead.name),
-    hi: anredeZeile(an, who.kontakt),
-    kontakt: who.kontakt,
-    topic: themaAus(termin?.offersJson).thema ?? topicOf(lead.formData, lead.source, an),
-    an,
-    person: vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.advisor || who.firm }),
-  };
-  const { leadVersandKontext, sendeLeadMail } = await import("@/lib/mail/lead-versand");
-  const k = await leadVersandKontext(lead.customerId, { leadId: lead.id, who });
-  const vorlage = await mailVorlage(lead.customerId, step.vorlage, an);
-  const werte = mailWerte({ an, kontakt: who.kontakt, thema: ctx.topic, meinname: k.daten.name, now, extra: { ...(rueckruf ? { rueckruf_link: rueckruf } : {}), ...step.zusatz?.(ctx) } });
-  const rahmen: MailKnopf[] = [
-    ...(angebot ? [{ label: "Angebot ansehen", href: angebot, primary: !rueckruf }] : []),
-    ...(rueckruf ? [{ label: "Rückruf wünschen", href: rueckruf }] : []),
-  ];
-  const res = await sendeLeadMail(k, {
-    to,
-    inhalt: (sig) => vorlagenMail({ vorlage, werte, knoepfe: rahmen, signatur: sig }),
-    protokoll: { customerId: lead.customerId, leadId: lead.id, art: step.vorlage === "nachfassen_angebot" ? "angebot_nachfassen" : "manuell" },
-  });
-  return res.sent ? { ...base, result: "sent" } : { ...base, result: res.reason === "not_configured" ? "skipped" : "failed", detail: res.reason === "not_configured" ? "Versand nicht eingerichtet" : res.reason.slice(0, 160) };
+  const rueckruf = knoepfe.includes("rueckruf") ? rueckrufUrl(await rueckrufToken(leadId)) : null;
+  return { angebot, rueckruf, thema: await angebotThemaFuerLead(leadId) };
 }
 
 /** Geschäftszeiten des zuständigen Kalenders (Lead-Zeiten, wie der Anruf-Auslöser), sonst der Standard. */
@@ -586,15 +561,17 @@ export async function runAngebotVorabCheck(now = new Date(), push: PushFn = stan
       stoppedAt: null,
       kind: { in: ANGEBOT_ABFOLGEN },
       nextAt: { not: null, lte: new Date(now.getTime() + 3 * DAY) },
-      lead: { erasedAt: null, customer: { dormantSince: null } },
+      // „Alle pausieren“ am Kontakt (P6): kein Vorab-Check, solange pausiert
+      lead: { erasedAt: null, customer: { dormantSince: null }, nachrichtenPausiertAt: null },
     },
-    select: { id: true, leadId: true, kind: true, step: true, nextAt: true, vorabCheckStep: true },
+    select: { id: true, leadId: true, kind: true, step: true, nextAt: true, vorabCheckStep: true, uebersprungen: true },
     take: 200,
   });
   let gesendet = 0;
   for (const s of seqs) {
     const step = SEQUENCES[s.kind as SequenceKind]?.steps[s.step];
-    if (!step || step.action === "call" || s.vorabCheckStep === s.step || !s.nextAt) continue;
+    // Übersprungener Schritt (P6): nichts anzukündigen
+    if (!step || step.action === "call" || s.vorabCheckStep === s.step || !s.nextAt || s.uebersprungen.includes(s.step)) continue;
     const versand = naechsterVersand(new Date(Math.max(s.nextAt.getTime(), now.getTime())));
     if (!vorabCheckFaellig({ now, versand })) continue;
     // Beanspruchen (nie doppelt, auch bei parallelen Läufen)

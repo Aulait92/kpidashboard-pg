@@ -23,7 +23,7 @@
         "zahn": "nein",
         "kastration": "nur bei Diagnose",
         "nachbehandlung": "bis 30 Tage",
-        "physio": "bis 7 Behandlungen",
+        "physio": "bis 10 Behandlungen",
         "sb": "0 oder 20 %, max. 250 €",
         "wartezeit": "30 Tage",
         "ausland": "12 Monate weltweit"
@@ -32,8 +32,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tierkrankenversicherung Top",
@@ -49,7 +48,7 @@
         "zahn": "bis 150 €",
         "kastration": "nur bei Diagnose",
         "nachbehandlung": "bis 30 Tage",
-        "physio": "bis 7 Behandlungen",
+        "physio": "bis 10 Behandlungen",
         "sb": "0 oder 20 %, max. 250 €",
         "wartezeit": "30 Tage",
         "ausland": "12 Monate weltweit"
@@ -58,8 +57,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tierkrankenversicherung Premium",
@@ -75,7 +73,7 @@
         "zahn": "bis 500 €",
         "kastration": "nur bei Diagnose",
         "nachbehandlung": "bis 30 Tage",
-        "physio": "bis 7 Behandlungen",
+        "physio": "bis 10 Behandlungen",
         "sb": "0 oder 20 %, max. 250 €",
         "wartezeit": "30 Tage",
         "ausland": "12 Monate weltweit"
@@ -84,8 +82,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Tierkrankenversicherung Premium Plus",
@@ -101,7 +98,7 @@
         "zahn": "bis 500 €",
         "kastration": "Zuschuss 150 €",
         "nachbehandlung": "bis 120 Tage",
-        "physio": "bis 7 Behandlungen",
+        "physio": "bis 10 Behandlungen",
         "sb": "0 oder 20 %, max. 250 €",
         "wartezeit": "30 Tage"
       },
@@ -109,8 +106,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.diebayerische.de/tierversicherungen/katzenkrankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -119,12 +115,13 @@
   ],
   "offen": [
     "Angebot der Bayerischen mit dem Partner Barmenia (Risikoträger Barmenia Allgemeine, Marke BarmeniaGothaer); gleiche Tarife wie im Ordner barmenia-gothaer, Stufen und Tabelle auf diebayerische.de geprüft (Abruf 17.11.2026). Die Bayerische markiert keine Stufe.",
-    "Physiotherapie laut Tabelle der Bayerischen bis zu 7 Behandlungen je 1,5 Stunden (Leistungsübersicht Barmenia: 10 Behandlungen); bitte prüfen.",
     "Selbstbeteiligung wählbar: 20 %, höchstens 250 € je Einreichung; sonst 100 % Erstattung.",
     "Besondere Operationen (z. B. HD, ED, Patellaluxation): Wartezeit 18 Monate, im Premium Plus 6 Monate.",
     "Operationen in allen Stufen ohne Jahreshöchstgrenze; Heilbehandlungen ohne OP jährlich 400 €, 800 €, bei Premium und Premium Plus 1.200 € oder unbegrenzt.",
     "Akut-Varianten (Top, Premium, Premium Plus) ohne Vorsorge und Zahnbehandlung; Zahnextraktion und Wurzelbehandlung bleiben als OP versichert.",
     "Ausland Premium Plus: Leistungsübersicht nennt 12 Monate, Produktseite unbegrenzt; deshalb offen.",
-    "Tiere ab 2 Monate bis einschließlich 5 Jahre versicherbar."
+    "Tiere ab 2 Monate bis einschließlich 5 Jahre versicherbar.",
+    "Physiotherapie: bis zu 10 Behandlungen je 30 Minuten (Leistungsübersicht WS1282 des Risikoträgers Barmenia). Die „7 Behandlungen je 1,5 Stunden“ der Tabelle auf diebayerische.de gehören zur Verhaltenstherapie (korrigiert am 18.11.2026).",
+    "Geprüft am 18.11.2026 an Produktseite, Highlightblatt bzw. Leistungsübersicht des Risikoträgers."
   ]
 }

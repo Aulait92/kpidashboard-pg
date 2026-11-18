@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/krankentagegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "KT-Plus für Selbstständige",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/krankentagegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
     "Nur für TK-Versicherte. Tarife KTP21, KTP42, KTP182 (Zahlung ab dem 22., 43. bzw. 183. Tag); Angestellte nur 42 oder 182 Tage Karenz.",
     "Tagegeld bis zur Höhe des Nettoeinkommens, Arbeitnehmer bis 100 €, Selbstständige je nach Leistungsbeginn bis 100 € oder 200 € je Tag; im ersten Jahr der Selbstständigkeit gelten Grenzen.",
     "Ende bei Berufsunfähigkeit laut FAQ („Vertrag endet, z. B. weil Sie berufsunfähig werden“). Anpassung an gestiegenes Nettoeinkommen innerhalb von 2 Monaten ohne Gesundheitsprüfung.",
-    "Wartezeit 3 Monate, entfällt bei Unfall. Leistung im Ausland nicht ausgewertet."
+    "Wartezeit 3 Monate, entfällt bei Unfall. Leistung im Ausland nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

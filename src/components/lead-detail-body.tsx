@@ -33,6 +33,7 @@ import { loadLeadHistory } from "@/lib/lead-history";
 import { listLeadFiles } from "@/lib/lead-files";
 import { listUnterlagen } from "@/lib/policen/server";
 import { mailFeaturesOffFor, postfachOf } from "@/lib/mail/postfach";
+import { ABLAUF_VORLAGEN, leseMailAblauf } from "@/lib/mail/ablauf";
 import { leadVersandKontext, resendBereit } from "@/lib/mail/lead-versand";
 import { leadAnzeigename, leadSignatur } from "@/lib/mail/lead-absender";
 import { loadVorlagen } from "@/lib/mail/vorlagen";
@@ -54,7 +55,7 @@ import { BestehendeVertraege } from "@/components/bestehende-vertraege";
 import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
 import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { waOhneMarker } from "@/lib/wa-format";
-import { LeadSequenceCard } from "@/components/lead-sequence-card";
+import { NaechsteNachrichtenCard } from "@/components/naechste-nachrichten-card";
 import { angebotStandText } from "@/lib/angebot-senden";
 import {
   ALL_GROUP_KEYS,
@@ -411,8 +412,11 @@ export async function LeadDetailBody({
     }),
     prisma.leadHistory.findMany({ where: { leadId: lead.id, kind: "notiz" }, orderBy: { createdAt: "desc" }, take: 3, select: { text: true } }),
     leadVersandKontext(customerId, { leadId: lead.id, schreiber: team.userId, nurLesen: true }),
-    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true, mailAblauf: true } }),
   ]);
+  // Paket M6: Vorlagen mit Stufe „aus“ bekommen keinen Vorschlag in Aufgaben
+  const stufen = leseMailAblauf(customerAn?.mailAblauf).stufen;
+  const mailAus = ABLAUF_VORLAGEN.filter((k) => stufen[k] === "aus");
   const empfohlen = passendeVorlagen({
     status: lead.status,
     contactAttempts: lead.contactAttempts,
@@ -500,6 +504,7 @@ export async function LeadDetailBody({
         hasUpcomingAppointment={!!nextAppt && nextAppt.startsAt.getTime() > nowMs()}
         nameZusatz={<EinwilligungEtikett stand={einwilligung} />}
         anrufenNeutral={!!kartenTermin}
+        mailAus={mailAus}
       />
       {kartenTermin ? (
         <TerminKarte
@@ -562,6 +567,7 @@ export async function LeadDetailBody({
           provision={provision}
           policyDoneAt={lead.policyDoneAt?.toISOString() ?? null}
           mailVorschlag={!lead.erasedAt && vorlagen.some((v) => v.standardKey === "willkommen")}
+          unterlagenMail={!lead.erasedAt && !mailAus.includes("unterlagen_fehlen") && vorlagen.some((v) => v.standardKey === "unterlagen_fehlen")}
         >
           <LeadContracts leadId={lead.id} contracts={contracts} readOnly={!team.userId} />
         </AbschlussCard>
@@ -617,6 +623,9 @@ export async function LeadDetailBody({
           readOnly={!team.userId}
         />
       ) : null}
+
+      {/* Nächste Nachrichten (Paket P6): ersetzt „Automatisches Nachfassen“, oberhalb der Angaben */}
+      <NaechsteNachrichtenCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
       {ziel || conv?.qualificationSummary || qPoints.length || vorvertraege ? (
         <Card className="mb-6">
@@ -681,8 +690,6 @@ export async function LeadDetailBody({
           nameImTitel={!!lead.name}
         />
       ) : null}
-
-      <LeadSequenceCard leadId={lead.id} readOnly={!!lead.erasedAt} />
 
       <LeadFiles leadId={lead.id} files={files.map((f) => ({ ...f, stand: angebotStand.get(f.id) ?? null }))} unterlagen={unterlagen} defaultKind={won ? "police" : "angebot"} />
 

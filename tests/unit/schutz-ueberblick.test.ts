@@ -19,6 +19,26 @@ const termin = (x: { produkt?: string; angaben?: Record<string, string>; formula
 });
 const status = (xs: SchutzEintrag[]) => Object.fromEntries(xs.map((x) => [x.key, x.status]));
 
+describe("Ampel mit den Verträgen aus dem Komplettcheck (Lead.vorvertraege, P2)", () => {
+  const vv = (liste: { sparte: string; gesellschaft?: string | null }[], keine = false) => ({ at: "2026-11-17T10:00:00Z", liste, ...(keine ? { keine: true } : {}) });
+  it("genannte Verträge sind „woanders“ mit Gesellschaft; große Produkte nur mit Komplettcheck", () => {
+    const d = { ...termin(), komplettcheck: true, vorvertraege: vv([{ sparte: "Haftpflicht", gesellschaft: "HUK" }, { sparte: "Berufsunfähigkeit" }, { sparte: "Kfz", gesellschaft: "Allianz" }]) };
+    const s = schutzVorschlag(d, { angebot: ["hausrat"] });
+    expect(s.find((x) => x.key === "haftpflicht")).toMatchObject({ status: "woanders", versicherer: "HUK" });
+    expect(s.find((x) => x.key === "bu")?.status).toBe("woanders");
+    expect(s.find((x) => x.key === "kfz")).toMatchObject({ status: "woanders", versicherer: "Allianz" });
+    expect(s.find((x) => x.key === "hausrat")?.status).toBe("pruefen");
+    const ohne = schutzVorschlag({ ...d, komplettcheck: false }, { angebot: ["hausrat"] });
+    expect(ohne.find((x) => x.key === "haftpflicht")?.status).toBe("woanders");
+    expect(ohne.some((x) => x.key === "bu" || x.key === "kfz")).toBe(false);
+  });
+  it("Komplettcheck und „keine Versicherungen“: naheliegende Sparten sind Lücken; ohne Komplettcheck nur „prüfen“", () => {
+    const d = { ...termin(), komplettcheck: true, vorvertraege: vv([], true) };
+    expect(new Set(Object.values(status(schutzVorschlag(d, { angebot: [] }))))).toEqual(new Set(["luecke"]));
+    expect(new Set(Object.values(status(schutzVorschlag({ ...d, komplettcheck: null }, { angebot: [] }))))).toEqual(new Set(["pruefen"]));
+  });
+});
+
 describe("Ampel: Vorschlag aus Formular, Chat und Verträgen", () => {
   it("Angebot zuerst; Genanntes woanders, „sonst nichts“ heißt Lücke, Rechtsschutz und Unfall vor Haftpflicht", () => {
     const s = schutzVorschlag(termin({ angaben: { vorhanden: "alte Haftpflicht von 2012, sonst nichts", lebenssituation: "Single, Mietwohnung" } }), { angebot: ["hausrat"] });

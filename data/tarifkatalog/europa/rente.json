@@ -27,8 +27,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/klassische-rentenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Fondsgebundene Rentenversicherung mit Garantie (E-RIG)",
@@ -46,8 +45,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/fondsrente-mit-garantie/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Fondsgebundene Rentenversicherung (E-RI)",
@@ -66,8 +64,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/private-rentenversicherung/fondsgebundene-rente/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -81,6 +78,7 @@
     "Garantie: klassisch mindestens 100 % der Beiträge zum Garantietermin; mit Garantie 50, 80 oder 100 % bei Vertragsbeginn wählbar; Fondsrente ohne Mindestgarantie (aus der Gegenüberstellung der Seiten, nicht ausdrücklich so formuliert).",
     "Garantierter Rentenfaktor bei klassisch und Fondsrente genannt, bei der Fondsrente mit Garantie nur „garantierte Günstigerprüfung“.",
     "Hinterbliebenenschutz nur bei der klassischen Rente belegt (Rentengarantiezeit oder Kapitalrückgewähr). BU-Zusatz und Effektivkosten nicht genannt (Verwaltungskostenquote 0,78 % ist eine Unternehmenskennzahl).",
-    "Sonderzahlungen: klassisch 4x im Jahr ab 500 €, mit Garantie 4x ab 250 €, Fondsrente 6x ab 250 €. Dynamik 3 bis 5 % (Fondsrente 3 bis 10 %). Beitragsunterbrechung bis 6 Monate."
+    "Sonderzahlungen: klassisch 4x im Jahr ab 500 €, mit Garantie 4x ab 250 €, Fondsrente 6x ab 250 €. Dynamik 3 bis 5 % (Fondsrente 3 bis 10 %). Beitragsunterbrechung bis 6 Monate.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

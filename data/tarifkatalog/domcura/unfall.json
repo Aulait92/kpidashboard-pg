@@ -26,8 +26,7 @@
         "rente": "nein"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/unfall/leistungsuebersicht_unfall.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Komfort-Schutz",
@@ -46,8 +45,7 @@
         "rente": "nein"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/unfall/leistungsuebersicht_unfall.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Top-Schutz",
@@ -67,8 +65,7 @@
         "rente": "optional"
       },
       "quelle": "https://www.domcura.de/fileadmin/content/downloads/unfall/leistungsuebersicht_unfall.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
     "Grundsumme, Progression und Leistung ab Invaliditätsgrad nicht genannt (Summen individuell).",
     "Unfallrente: nur Baustein „Unfall-Rente PLUS“ im Top-Schutz (ab 35 %); ob Standard und Komfort eine Rente haben, ist nicht belegt.",
     "Bergung Top: 500.000 € im Inland, 1 Mio. € im Ausland. Baustein „First Aid“ (Chefarzt, Zweibettzimmer) nicht im Schema.",
-    "Domcura markiert keinen Tarif; Komfort als mittlere Stufe."
+    "Domcura markiert keinen Tarif; Komfort als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

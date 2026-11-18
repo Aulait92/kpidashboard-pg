@@ -28,8 +28,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/fahrzeuge-verkehr/auto/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Tarif Premium Partner",
@@ -53,8 +52,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/fahrzeuge-verkehr/auto/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz-Tarif Premium",
@@ -78,8 +76,7 @@
         "schutzbrief": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/fahrzeuge-verkehr/auto/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -89,8 +86,9 @@
   "offen": [
     "Werte aus den Leistungsbeschreibungen der Produktseite („Was ist in den Kfz-Tarifen …“); die Vergleichstabelle K-8021 (10/2026) nutzt Symbole, die sich nicht lesen ließen.",
     "Premium Partner und Premium haben denselben Leistungsumfang; Premium Partner verpflichtet bei Kaskoschäden zur Partnerwerkstatt (Kasko rund 15 % günstiger), Premium nutzt sie freiwillig. Classic: Partnerwerkstatt Pflicht, kein Rabattschutz, stärkere Rückstufung.",
-    "Classic: Mallorca-Deckung, GAP-Deckung und ElektroDrive auf der Produktseite nicht genannt (in der Symboltabelle nicht lesbar). Kurzschluss-Folgeschäden Premium bis 10.000 €.",
     "Neuwert Premium: Neuwert bis 36 Monate nach Erstzulassung, Kaufpreis bis 36 Monate nach Kauf; Classic Neuwert 6 Monate. Tierbiss ohne Innenraum.",
-    "Schutzbrief MobilPlus, Rabattschutz (ab SF 4), Fahrerschutz, ElektroDrive und VollkaskoPlus sind Zusatzbausteine; Zuordnung je Tarif nur für Rabattschutz belegt. Concordia markiert keinen Tarif; Premium Partner als mittlere Stufe."
+    "Schutzbrief MobilPlus, Rabattschutz (ab SF 4), Fahrerschutz, ElektroDrive und VollkaskoPlus sind Zusatzbausteine; Zuordnung je Tarif nur für Rabattschutz belegt. Concordia markiert keinen Tarif; Premium Partner als mittlere Stufe.",
+    "Classic: Mallorca-Deckung, GAP-Deckung und ElektroDrive stehen in der Übersicht K-8021 (am Bild geprüft) ohne Symbol, also weder enthalten noch zuwählbar ausgewiesen; daher kein Wert. Kurzschluss-Folgeschäden Premium bis 10.000 €.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

@@ -24,8 +24,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "KlinikFlex.M",
@@ -42,8 +41,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "KlinikFlex.MAX",
@@ -60,8 +58,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -73,6 +70,7 @@
     "S und M: Einbettzimmer wird zu 50 % erstattet. Über GOÄ-Höchstsatz nur in MAX, mit Honorarvereinbarung vor Behandlungsbeginn.",
     "Nur MAX: Privatklinik ohne GKV-Vertrag und Ausland (Mehrkosten), Wunschverlegung, Familienzimmer, gesetzliche Zuzahlungen (Krankenhaus 10 € je Tag bis 28 Tage, Transport, Kur bis 42 Tage).",
     "Wartezeit 3 Monate, Entbindung und stationäre Psychotherapie 8 Monate, bei Unfall keine. Wechselrecht bis 49 Jahre alle 3 Jahre.",
-    "Krankenhaustagegeld als eigener Tarif KHT Plus (bis 60 € je Tag), nicht als Stufe aufgenommen."
+    "Krankenhaustagegeld als eigener Tarif KHT Plus (bis 60 € je Tag), nicht als Stufe aufgenommen.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

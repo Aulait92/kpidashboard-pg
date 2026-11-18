@@ -7,6 +7,8 @@
 //                   „STOPP“ per WhatsApp. Sperrt alle automatischen Mails und von Hand die werblichen Vorlagen.
 //   Nur automatisch: Stufe nicht „automatisch“, Stopp-Regeln (Abschluss, Absage), Antwort des Leads seit dem Anlass
 //                   (WhatsApp oder, seit Paket M2, E-Mail an die Antwortadresse; automatische Antworten zählen nicht).
+//                   Vom Vermittler angestoßen (z. B. Erinnerung „Unterlagen fehlen“ nach seiner ersten Mail, Paket M6):
+//                   Stufe „ein Tipp“ genügt, nur „aus“ sperrt.
 // Tageslimit und Idempotenz stehen in vorlagen-mail.ts (Reservierung in LeadMailVersand).
 
 import { prisma } from "@/lib/prisma";
@@ -60,14 +62,17 @@ const NUR_DANACH = new Set<VorlageKey>(["nach_abschluss", "willkommen", "kuendig
  * Darf diese Mail raus? null = ja, sonst der erste Grund (rein). `stufe` nur bei automatischen Mails.
  * Pflicht-Mails (z. B. Terminbestätigung) prüfen Stufe und Status nicht.
  */
-export function sperrGrund(d: SperrDaten, o: { vorlage: VorlageKey | null; automatisch: boolean; stufe?: MailStufe; pflicht?: boolean }): SperrGrund | null {
+export function sperrGrund(
+  d: SperrDaten,
+  o: { vorlage: VorlageKey | null; automatisch: boolean; stufe?: MailStufe; pflicht?: boolean; freigegeben?: boolean },
+): SperrGrund | null {
   if (d.geloescht) return "geloescht";
   if (d.ruhend) return "ruhend";
   if (d.mailAus) return "mail_aus";
   if (!istMailAdresse(d.adresse)) return "keine_adresse";
   if (d.abgemeldet && (o.automatisch || (o.vorlage && WERBLICH.has(o.vorlage)))) return "abgemeldet";
   if (!o.automatisch || o.pflicht) return null;
-  if (o.stufe && o.stufe !== "auto") return "stufe";
+  if (o.stufe && o.stufe !== "auto" && !(o.freigegeben && o.stufe === "tipp")) return "stufe";
   const g = statusGruppe(d.status);
   if (g === "abschluss" && !(o.vorlage && NACH_ABSCHLUSS.has(o.vorlage))) return "status";
   if (g === "verloren" && !(o.vorlage && NACH_ABSAGE.has(o.vorlage))) return "status";

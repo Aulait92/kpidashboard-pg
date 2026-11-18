@@ -33,7 +33,33 @@ const REGELN: Record<string, NochNoetig> = {
     (await prisma.leadContract.count({ where: { primaryLeadId: leadId, OR: [{ fileId: { not: null } }, { status: "storniert" }] } })) ? "Police schon da" : null,
   // Weiterer Vertrag schon eingetragen
   cross_sell: async (leadId) => ((await prisma.leadContract.count({ where: { leadId, primaryLeadId: null, status: "aktiv" } })) ? "Weiterer Vertrag eingetragen" : null),
+  // Paket M6: Kündigung schon gesendet (App oder eigenes Mailprogramm)
+  kuendigung: async (leadId) => ((await prisma.contactMail.count({ where: { leadId, kind: "kuendigung", status: { not: "nicht_versendet" } } })) ? "Kündigung schon gesendet" : null),
 };
+
+/**
+ * Aufgabe „Alten Vertrag kündigen: Haftpflicht bei HUK-Coburg“ beim Abschluss (Paket M6), wenn der Lead im Komplettcheck
+ * (Lead.vorvertraege) einen Vertrag derselben Sparte genannt hat. Wartet hinter „Police fertig machen“, verdrängt nichts.
+ * Die Mail „Kündigung alte Versicherung“ schreibt der Vermittler von Hand (Musterkündigung als PDF, Versicherer vorausgefüllt).
+ */
+export async function planeKuendigung(leadId: string, now = new Date()): Promise<"aktiv" | "wartet" | "vorhanden" | null> {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { customerId: true, status: true, source: true, vorvertraege: true, erasedAt: true } });
+  if (!lead || lead.erasedAt || lead.status !== "Abschluss") return null;
+  const { vorvertraegeAus, zuErsetzendeVertraege } = await import("@/lib/whatsapp/vorvertraege");
+  const v = vorvertraegeAus(lead.vorvertraege);
+  if (!v?.liste.length) return null;
+  const [vertrag, termin] = await Promise.all([
+    prisma.leadContract.findUnique({ where: { primaryLeadId: leadId }, select: { sparte: true, productName: true } }),
+    prisma.appointment.findMany({ where: { leadId }, orderBy: { startsAt: "desc" }, take: 5, select: { offersJson: true } }),
+  ]);
+  const { cleanAngebote, gewaehlte } = await import("@/lib/angebote-daten");
+  const mitAngebot = termin.find((t) => t.offersJson);
+  const angebote = mitAngebot ? gewaehlte(cleanAngebote(mitAngebot.offersJson)).map((i) => i.sparte) : [];
+  const treffer = zuErsetzendeVertraege(v, [lead.source, vertrag?.sparte, vertrag?.productName, ...angebote])[0];
+  if (!treffer) return null;
+  const { kuendigungNote } = await import("@/lib/vertraege-shared");
+  return planeAufgabe({ leadId, customerId: lead.customerId, kind: "kuendigung", note: kuendigungNote(treffer.sparte, treffer.gesellschaft), dueAt: now, requiresStatus: "Abschluss" }, now);
+}
 
 /** Aufgabe planen (einmal je Lead und Art) und, wenn die Wiedervorlage frei ist, sofort aktivieren. */
 export async function planeAufgabe(p: AufgabePlan, now = new Date()): Promise<"aktiv" | "wartet" | "vorhanden"> {

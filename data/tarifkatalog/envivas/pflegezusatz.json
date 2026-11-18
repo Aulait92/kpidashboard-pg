@@ -23,8 +23,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PflegePlus Pflege2+3",
@@ -40,8 +39,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "PflegeAktiv (gefördert)",
@@ -56,8 +54,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.envivas.de/tarife/pflegezusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -69,6 +66,7 @@
     "Leistung in % des vereinbarten Tagegelds: Pflege2+3 PG 3 60 %, PG 4 80 %, PG 5 100 %; Pflege3 PG 4 60 %, PG 5 100 %; PflegeAktiv PG 1 10 %, PG 2 20 %, PG 3 30 %, PG 4 60 %, PG 5 100 %.",
     "PflegeAktiv: staatlich gefördert (5 € im Monat), ohne Gesundheitsprüfung. Höherstufung Pflege3 in Pflege2+3 ohne Prüfung bis 55 Jahre.",
     "Ambulant wie stationär: laut Seite unabhängig von der Art der Pflege (PflegePlus); bei PflegeAktiv nicht ausdrücklich genannt.",
-    "Einmalleistung und Beitragsbefreiung im Pflegefall nicht belegt. Ergänzungsbaustein PflegeXtra (Pflege-Soforthilfe, Vermittlung von Diensten) nicht im Schema."
+    "Einmalleistung und Beitragsbefreiung im Pflegefall nicht belegt. Ergänzungsbaustein PflegeXtra (Pflege-Soforthilfe, Vermittlung von Diensten) nicht im Schema.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

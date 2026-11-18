@@ -27,8 +27,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.hannoversche.de/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Grundfähigkeitsversicherung Premium",
@@ -48,8 +47,7 @@
         "ernst": "optional"
       },
       "quelle": "https://www.hannoversche.de/grundfaehigkeitsversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -62,6 +60,7 @@
     "Pflegebedürftigkeit (eigenständige Versorgung) und Demenz sind als Grundfähigkeiten versichert; eine eigene Pflegerente ist nicht genannt.",
     "Bausteine frei kombinierbar: Psyche, Schwere Erkrankungen, Arbeitsunfähigkeits-Leistung (bis 24 Monate), Bauhandwerk.",
     "Nachversicherung alle 5 Jahre oder zu Ereignissen ohne Risikoprüfung; Beitrags- und Leistungsdynamik wählbar; Wechseloption in die BU bei Abschluss vor 26.",
-    "Rückwirkende Leistung ab Verlust der Grundfähigkeit; Umstellung Basis auf Premium in den ersten 12 Monaten möglich."
+    "Rückwirkende Leistung ab Verlust der Grundfähigkeit; Umstellung Basis auf Premium in den ersten 12 Monaten möglich.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

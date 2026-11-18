@@ -119,6 +119,11 @@ async function handle(req: Request): Promise<Response> {
             reportError(e, "cron-policen");
             return null;
           }),
+          // Policen auslesen: Hinweis vor Ablauf des Schlüssels, „Schlüssel ungültig“ täglich (lib/policen/auslesen)
+          policenAuslesen: await import("@/lib/policen/auslesen/server").then((m) => m.auslesenTaeglich(now)).catch((e: unknown) => {
+            reportError(e, "cron-policen-auslesen");
+            return null;
+          }),
           // Vertragsende: Konto ruht, Erinnerungen 30/7 Tage vor der Löschung, endgültige Löschung (lib/ruhend.ts)
           retention: await import("@/lib/ruhend").then((m) => m.runRetentionCron(now)).catch((e: unknown) => {
             reportError(e, "cron-retention");
@@ -191,6 +196,20 @@ async function handle(req: Request): Promise<Response> {
     .then((m) => m.runStreckeAbschliessen(now))
     .catch((e: unknown) => {
       reportError(e, "cron-strecke");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
+  // Einladung an den Lead ohne Antwort: 15 Min. (kurzfristig 5 Min.), spätestens 60 Min. vor Beginn (lib/calendar/einladung.ts)
+  const einladungen = await import("@/lib/calendar/einladung")
+    .then((m) => m.runEinladungNachholen(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-einladung");
+      return { error: e instanceof Error ? e.message : String(e) };
+    });
+  // Policen-Erinnerung 24 Std. nach der Buchung (nur bei mehr als 2 Tagen bis zum Termin)
+  const policenErinnerung = await import("@/lib/whatsapp/termin-strecke")
+    .then((m) => m.runPolicenErinnerung(now))
+    .catch((e: unknown) => {
+      reportError(e, "cron-policen-erinnerung");
       return { error: e instanceof Error ? e.message : String(e) };
     });
   // A/B-Tests der Vorlagen: einmal je Stunde prüfen, ob eine Fassung genug Vorsprung hat (lib/whatsapp/ab-test.ts)
@@ -383,7 +402,7 @@ async function handle(req: Request): Promise<Response> {
       return null;
     });
   if (nachher.length) nextAfter(() => Promise.allSettled(nachher.map(async (fn) => fn())));
-  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, angebotVorab, anrufAusloeser, strecke, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
+  return Response.json({ ok: true, outreach, responses, reminders, soonReminders, startReminders, terminBeginn, onboarding, pruned, fees, ppl, campaigns, empfehlungen, sequences, angebotVorab, anrufAusloeser, strecke, einladungen, policenErinnerung, abTests, naechsterSchritt, abschlussFrage, telefonate, vertraege, terminNachfragen, vertriebErinnerungen, zahlungserinnerung, mahnwesen, whatsappConnect, templates, supportTemplates, status });
 }
 
 export const GET = handle;

@@ -32,8 +32,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Komfort-Schutz",
@@ -58,8 +57,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Premium-Schutz",
@@ -84,8 +82,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.europa.de/versicherungen/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -98,6 +95,7 @@
     "Grundsumme und Progression laut Leistungsübersicht der Produktseite (Vollinvalidität 200.000, 300.000 bzw. 500.000 €); ob andere Summen wählbar sind, nicht genannt.",
     "Leistung ab Invaliditätsgrad nicht genannt.",
     "Unfallrente, Sofortleistung, Todesfallleistung, kosmetische OP und Krankenhaustagegeld Plus optional in allen Tarifen; Unfall-Schutzbrief im Premium enthalten.",
-    "Mitwirkung von Krankheiten: Abzug ab 25 % (Basis) bzw. 50 %."
+    "Mitwirkung von Krankheiten: Abzug ab 25 % (Basis) bzw. 50 %.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und Leistungsübersicht, IPID bzw. Bedingungen."
   ]
 }

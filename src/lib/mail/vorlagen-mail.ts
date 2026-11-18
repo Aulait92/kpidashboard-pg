@@ -50,6 +50,10 @@ export type VorlagenMailOpts = {
   automatisch?: boolean;
   /** Pflicht-Mail (z. B. Terminbestätigung): ohne Stufe, Stopp-Regeln und Tageslimit */
   pflicht?: boolean;
+  /** Automatisch, aber vom Vermittler angestoßen (z. B. Erinnerung nach seiner Mail): Stufe „ein Tipp“ genügt */
+  freigegeben?: boolean;
+  /** Vor den Betreff („Erinnerung: “) */
+  betreffVorsatz?: string | null;
   /** Stopp, wenn der Lead seitdem per WhatsApp geantwortet hat */
   antwortSeit?: Date | null;
   /** Zusatzwerte des Anlasses ({termin_datum}, {melde_datum} …) */
@@ -117,7 +121,10 @@ export async function bereiteVorlagenMail(leadId: string, key: VorlageKey, o: Vo
     vorlage,
     werte,
     abmeldeUrl,
-    inhalt: (sig) => vorlagenInhalt(vorlage, werte, sig, { knoepfe: o.knoepfe, abmeldeUrl }),
+    inhalt: (sig) => {
+      const i = vorlagenInhalt(vorlage, werte, sig, { knoepfe: o.knoepfe, abmeldeUrl });
+      return o.betreffVorsatz ? { ...i, subject: `${o.betreffVorsatz}${i.subject}` } : i;
+    },
   };
 }
 
@@ -142,7 +149,7 @@ export async function sendeVorlagenMail(leadId: string, key: VorlageKey, o: Vorl
     if (!d.customerId) return { sent: false, reason: "nicht_gefunden" };
     const c = await prisma.customer.findUnique({ where: { id: d.customerId }, select: { mailAblauf: true } });
     const stufe = leseMailAblauf(c?.mailAblauf).stufen[key];
-    const grund = sperrGrund(d, { vorlage: key, automatisch, stufe, pflicht: o.pflicht });
+    const grund = sperrGrund(d, { vorlage: key, automatisch, stufe, pflicht: o.pflicht, freigegeben: o.freigegeben });
     if (grund) return { sent: false, reason: grund };
 
     // Reservierung: je Lead/Vorlage/Anlass einmal, automatisch höchstens eine je Tag
