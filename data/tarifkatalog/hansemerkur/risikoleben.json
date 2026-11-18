@@ -22,8 +22,7 @@
         "verbunden": "optional"
       },
       "quelle": "https://www.hansemerkur.de/risikolebensversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -32,6 +31,7 @@
   "offen": [
     "Quelle: Leistungsübersicht der Produktseite hansemerkur.de (Tarif Risiko Care).",
     "Vorgezogene Leistung, Verlängerungsoption, Umtauschrecht, weltweiter Schutz und höchstes Endalter auf der Seite nicht genannt.",
-    "Verbundene Leben für Partner oder Geschäftspartner möglich."
+    "Verbundene Leben für Partner oder Geschäftspartner möglich.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

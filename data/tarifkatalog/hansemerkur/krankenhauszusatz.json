@@ -23,8 +23,7 @@
         "ambulant-op": "nein"
       },
       "quelle": "https://www.hansemerkur.de/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Klinik Premium (Tarif PSG)",
@@ -40,8 +39,7 @@
         "ambulant-op": "nein"
       },
       "quelle": "https://www.hansemerkur.de/krankenhauszusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Klinik Premium Plus (Tarif SGK)",
@@ -58,8 +56,7 @@
         "ambulant-op": "ja, 100 %"
       },
       "quelle": "https://www.hansemerkur.de/resource/blob/287984/46fd5c604a85e494e6e3ab83a47df7a2/advigon-flyer-klinik-premium-plus-tarif-sgk-data.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -72,6 +69,7 @@
     "Wartezeit Klinik Premium: nur „keine bei Unfall“ genannt, Dauer der allgemeinen Wartezeit nicht belegt. Premium Plus: besondere Wartezeit 8 Monate für Entbindung und Psychotherapie.",
     "Erstattung über dem GOÄ-Höchstsatz nur für Premium Plus belegt (Flyer); Fit und Premium offen. Freie Krankenhauswahl für Fit und Premium nur aus den Vorteilen der Produktseite.",
     "Premium Plus zusätzlich Kurtagegeld 40 €/Tag und Entbindungsgeld 50 €/Tag (je 21 Tage), Rooming-in; Premium mit Rücktransport aus dem Ausland. Risikoträger Advigon Versicherung AG (Tochter der HanseMerkur).",
-    "Empfehlung: HanseMerkur markiert Klinik Premium als „Bestseller“."
+    "Empfehlung: HanseMerkur markiert Klinik Premium als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

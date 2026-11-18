@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ChevronRight, MoreHorizontal, TrendingUp } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { BEREICHE, NEU, bereichFuer, type NeuBereich } from "@/lib/admin-neu/navigation";
@@ -14,16 +14,23 @@ import { NeuMenue } from "./neu-menue";
 import { ProfilMenue } from "./profil-menue";
 import { Suche } from "./suche";
 
-// Rahmen des neuen Admins (/admin/neu, Ole 16.11.2026; Entwurf docs/ux/admin-neu/demo.html):
-// Rechner: Seitenleiste (Arbeit oben, Einstellungen und „Was wo ist“ unten, Profil), oben Suche und „+ Neu“.
-// Handy: Kopfzeile mit Suche, „+ Neu“, Profil; unten fünf Bereiche plus „Mehr“ (wie der Kundenbereich).
+// Rahmen des neuen Admins (/admin/neu; Admin v2 nach Rollen, Ole 17.11.2026, Vorlage docs/ux/admin-v2/demo.html):
+// Rechner: Seitenleiste mit „Mein Tag“, den vier Rollen (Verkaufen, Betreuen, Liefern, Geld) und unten Werkzeuge,
+// Einstellungen, „Was wo ist“ und Profil; oben Suche und „+ Neu“.
+// Handy: Kopfzeile mit Suche, „+ Neu“, Profil; unten Mein Tag, die vier Rollen und „Mehr“ (Werkzeuge, Einstellungen, Was wo ist).
 // Bereiche und Seiten: src/lib/admin-neu/navigation.ts. data-admin-shell → Abstände aus globals.css (wie die alte Shell).
 
 export type NavZaehler = { heute: number; chats: number };
 
-function Zahl({ n }: { n: number }) {
+/** Zähler: „Mein Tag“ in Markenfarbe (offene Punkte), Rollen dezent (wie in der Demo). */
+function Zahl({ n, dezent }: { n: number; dezent?: boolean }) {
   return (
-    <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">
+    <span
+      className={cn(
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold leading-none tabular-nums",
+        dezent ? "border border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]" : "bg-[color:var(--brand)] text-white",
+      )}
+    >
       {n > 99 ? "99+" : n}
     </span>
   );
@@ -59,20 +66,23 @@ function useUmzugLinks() {
 
 function Logo({ mitName }: { mitName?: boolean }) {
   return (
-    <Link href={NEU} className="-m-1.5 flex min-h-10 min-w-10 items-center gap-2 p-1.5" aria-label="Zu Heute" data-funktion="admin-shell-logo--logo-fuehrt-zu-heute">
+    <Link href={NEU} className="-m-1.5 flex min-h-10 min-w-10 items-center gap-2 p-1.5" aria-label="Zu Mein Tag" data-funktion="admin-shell-logo--logo-fuehrt-zu-heute">
       <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[color:var(--brand)] text-white">
         <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.75} />
       </span>
       {mitName ? (
-        <span className="text-[15px] font-semibold tracking-tight">
-          performance<span className="text-[color:var(--brand)]">growth</span>
+        <span className="leading-tight">
+          <span className="block text-[15px] font-semibold tracking-tight">
+            performance<span className="text-[color:var(--brand)]">growth</span>
+          </span>
+          <span className="block text-xs text-[color:var(--muted)]">Admin</span>
         </span>
       ) : null}
     </Link>
   );
 }
 
-function SeitenleistenLink({ b, aktiv, zaehler, klein }: { b: NeuBereich; aktiv: boolean; zaehler: number; klein?: boolean }) {
+function SeitenleistenLink({ b, aktiv, zaehler }: { b: NeuBereich; aktiv: boolean; zaehler: number }) {
   const Icon = BEREICH_SYMBOL[b.id];
   return (
     <Link
@@ -80,20 +90,18 @@ function SeitenleistenLink({ b, aktiv, zaehler, klein }: { b: NeuBereich; aktiv:
       aria-current={aktiv ? "page" : undefined}
       data-bereich={b.id}
       className={cn(
-        "flex items-center gap-3 rounded-[var(--radius-md)] px-3 font-medium transition",
-        klein ? "h-10 text-sm" : "h-11 text-[15px]",
-        aktiv
-          ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]"
-          : klein
-            ? "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]"
-            : "text-[color:var(--foreground)] hover:bg-[color:var(--surface-sunken)]",
+        "flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] px-3 py-1.5 text-[15px] font-medium leading-tight transition",
+        aktiv ? "bg-[color:var(--brand-soft)] text-[color:var(--brand-dark)]" : "text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)] hover:text-[color:var(--foreground)]",
       )}
     >
-      <Icon className={klein ? "h-4 w-4" : "h-[18px] w-[18px]"} strokeWidth={aktiv ? 2.4 : 1.9} />
-      <span className="min-w-0 flex-1 truncate">{b.label}</span>
+      <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={aktiv ? 2.3 : 1.9} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{b.label}</span>
+        {b.hinweis ? <span className={cn("block truncate text-xs font-normal", aktiv ? "text-[color:var(--brand-dark)]/75" : "text-[color:var(--muted)]/80")}>{b.hinweis}</span> : null}
+      </span>
       {zaehler ? (
         <span data-funktion={b.zaehler === "heute" ? "admin-shell-count--zaehler-badge-an-heute-offene-punkte" : "admin-shell-count--zaehler-badge-an-chats-offene-whatsapp"}>
-          <Zahl n={zaehler} />
+          <Zahl n={zaehler} dezent={b.id !== "mein-tag"} />
         </span>
       ) : null}
     </Link>
@@ -116,29 +124,34 @@ export function AdminNeuShell({ email, zaehler, children }: { email: string; zae
     <div data-admin-shell="" data-admin-neu="" className="flex min-h-dvh flex-1 flex-col">
       <AdminNutzungMessung />
       {/* Rechner: Seitenleiste */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-y-auto border-r border-[color:var(--border)] bg-white px-3 pb-3 pt-5 lg:flex">
         <div className="mb-5 px-2">
           <Logo mitName />
         </div>
-        <nav className="space-y-1" aria-label="Bereiche" data-funktion="admin-shell-adminareas--seitenleiste-mit-bereichen-heute-vertrieb-kunden">
-          {oben.map((b) => (
-            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={zaehlerVon(b, zaehler)} />
+        <nav className="space-y-0.5" aria-label="Bereiche" data-funktion="admin-shell-adminareas--seitenleiste-mit-bereichen-heute-vertrieb-kunden">
+          {oben.map((b, i) => (
+            <Fragment key={b.id}>
+              {/* „Mein Tag“ allein oben, darunter die Rollen */}
+              {i === 1 ? <div className="px-3 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]/80">Rollen</div> : null}
+              <SeitenleistenLink b={b} aktiv={aktuell?.id === b.id} zaehler={zaehlerVon(b, zaehler)} />
+            </Fragment>
           ))}
         </nav>
-        <div className="mt-auto space-y-1 border-t border-[color:var(--border)] pt-3">
+        <nav className="mt-auto space-y-0.5 pt-3" aria-label="Werkzeuge und Einstellungen">
           {unten.map((b) => (
-            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={0} klein />
+            <SeitenleistenLink key={b.id} b={b} aktiv={aktuell?.id === b.id} zaehler={0} />
           ))}
           <div className="pt-2">
             <ProfilMenue email={email} variant="sidebar" />
           </div>
-        </div>
+        </nav>
       </aside>
 
       {/* Kopfzeile: Rechner Suche + Neu, Handy zusätzlich Logo und Profil */}
       <header className="sticky top-0 z-20 border-b border-[color:var(--border)] bg-[color:var(--background)]/90 backdrop-blur">
         <div className="hidden h-16 items-center gap-3 px-8 lg:flex">
           <Suche variante="breit" />
+          <div className="flex-1" />
           <NeuMenue variante="breit" />
         </div>
         <div className="flex h-14 items-center gap-2 px-4 lg:hidden">
@@ -173,7 +186,7 @@ export function AdminNeuShell({ email, zaehler, children }: { email: string; zae
                   <span className="relative">
                     <Icon className="h-6 w-6" strokeWidth={aktiv ? 2.4 : 1.9} />
                     {z ? (
-                      <span className="absolute -right-2.5 -top-1.5">
+                      <span className="absolute -right-3 -top-1.5">
                         <Zahl n={z} />
                       </span>
                     ) : null}

@@ -29,7 +29,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   const stockend = report.customers.filter((c) => c.stalled.outcomesOpen + c.stalled.followUpsOverdue + c.stalled.attentionOver24h > 0).length;
 
   return (
-    <Seite titel="Zahlen" reiter="zahlen" breit>
+    <Seite titel="Betreuen" reiter="betreuen" breit>
       <div className="space-y-6">
         <div data-funktion="storno-quote-stornoquoteuebersicht--stornoquote-der-vertraege-je-kunde-und-sparte">
           <StornoQuoteUebersicht leerHinweis />

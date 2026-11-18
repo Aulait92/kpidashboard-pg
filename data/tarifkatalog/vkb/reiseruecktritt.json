@@ -4,9 +4,8 @@
   "produkt": "Reiserücktrittsversicherung (URV)",
   "empfehlung": "keine",
   "inAllenTarifen": [
-    "Mit oder ohne Selbstbehalt",
     "Abbruch-Schutz zuwählbar",
-    "Jobverlust als Grund versichert"
+    "Neuer Job als Grund versichert"
   ],
   "tarife": [
     {
@@ -24,8 +23,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.vkb.de/v/reiseversicherungen/reiseruecktritt-einmal.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Jahres-Reiserücktrittsversicherung",
@@ -34,14 +32,14 @@
       "werte": {
         "abbruch": "ja",
         "jahr": "ja",
-        "gruende": "z. B. Jobverlust"
+        "gruende": "z. B. neue Arbeitsstelle",
+        "sb": "ohne Selbstbehalt"
       },
       "bausteine": {
         "abbruch": "inklusive"
       },
       "quelle": "https://www.vkb.de/v/reiseversicherungen/reiseruecktritt-jahres.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -50,8 +48,10 @@
   ],
   "offen": [
     "Versicherungskammer Bayern (vkb.de, Bayern und Pfalz). Werte aus dem Tarifvergleich bzw. Text der Produktseite, Abruf 17.11.2026.",
-    "Produktgeber ist die URV Union Reiseversicherung AG. Stufen Einmalpolice und Jahrespolice; Tarife jeweils mit oder ohne Selbstbehalt (20 % des Schadens, mindestens 25 €) und mit oder ohne Reiseabbruch.",
-    "Versicherungssumme, Erkrankung an Pandemien und Mitversicherung der Familie sind auf den Seiten nicht beziffert. Selbstbehalt für die Jahrespolice nicht genannt; laut Seite deckt sie Rücktritt und Abbruch.",
-    "Auslandsreisekranken (UKV/URV) siehe Ordner ukv; nicht hier."
+    "Auslandsreisekranken (UKV/URV) siehe Ordner ukv; nicht hier.",
+    "Versicherungssumme, Erkrankung an Pandemien und Mitversicherung der Familie sind auf den Seiten nicht beziffert. Jahrespolice laut Seite ganz ohne Selbstbehalt und mit Reiseabbruch.",
+    "Jobverlust (betriebsbedingte Kündigung) als Grund nur auf der Seite der Einmalpolice genannt; die Jahrespolice nennt die Aufnahme einer neuen Arbeitsstelle.",
+    "Geprüft am 18.11.2026 an beiden Produktseiten.",
+    "Produktgeber ist die URV Union Reiseversicherung AG. Stufen Einmalpolice (mit oder ohne Selbstbehalt von 20 %, mindestens 25 €, mit oder ohne Reiseabbruch) und Jahrespolice."
   ]
 }

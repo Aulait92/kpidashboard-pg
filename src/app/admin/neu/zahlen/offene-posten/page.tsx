@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ o
   const hinweis = "rounded-[var(--radius-md)] border px-4 py-3 text-sm";
 
   return (
-    <Seite titel="Zahlen" reiter="zahlen">
+    <Seite titel="Geld" reiter="geld">
       <div className="space-y-4">
         {sp.ok ? <p className={`${hinweis} border-emerald-200 bg-emerald-50 text-emerald-800`}>{sp.ok}</p> : null}
         {sp.fehler ? <p className={`${hinweis} border-rose-200 bg-rose-50 text-rose-800`}>{sp.fehler}</p> : null}

@@ -9,7 +9,7 @@
 import { prisma } from "@/lib/prisma";
 import { isMetaLeadId } from "@/lib/capi/shared";
 import { leadOrigin } from "@/lib/lead-herkunft";
-import { auswerten, FEHLENDE_FELDER, imZeitraum, kompakt, ZEITRAEUME, type Herkunft, type KetteLead, type Kundenart } from "@/lib/ops/kette-auswertung";
+import { auswerten, FEHLENDE_FELDER, imZeitraum, kompakt, kundenartFuer, kundenartKunde, ZEITRAEUME, type Herkunft, type KetteLead } from "@/lib/ops/kette-auswertung";
 
 const DEMO_KUNDE = "cust_google_review_demo";
 const BATCH = 2000;
@@ -18,7 +18,7 @@ type IdRow = { id: string };
 
 /** Lead-IDs (nur intern als Schlüssel, nie in der Ausgabe) für Merkmale in JSON- oder Textfeldern. */
 async function idSets() {
-  const [formular, reentryFormular, angebotVerlauf, verschobenVerlauf, angebotTermin, tarifTermin, pool, intake, hvk] = await Promise.all([
+  const [formular, reentryFormular, angebotVerlauf, verschobenVerlauf, angebotTermin, tarifTermin, pool, intake, hvk, bezuege] = await Promise.all([
     prisma.$queryRaw<IdRow[]>`SELECT "id" FROM "Lead" WHERE COALESCE("consentData"->>'formId', '') <> ''`,
     prisma.$queryRaw<IdRow[]>`SELECT DISTINCT "leadId" AS "id" FROM "LeadReentry" WHERE COALESCE("formId", '') <> ''`,
     prisma.$queryRaw<IdRow[]>`SELECT DISTINCT "leadId" AS "id" FROM "LeadHistory" WHERE "text" ILIKE '%Angebot gesendet%'`,
@@ -28,6 +28,7 @@ async function idSets() {
     prisma.poolLead.findMany({ where: { leadId: { not: null } }, select: { leadId: true } }),
     prisma.pplIntake.findMany({ where: { leadId: { not: null } }, select: { leadId: true } }),
     prisma.hvkReklamation.findMany({ where: { leadId: { not: null } }, select: { leadId: true } }),
+    prisma.leadSubscription.findMany({ select: { customerId: true, productKey: true } }),
   ]);
   const set = (rows: IdRow[]) => new Set(rows.map((r) => r.id));
   const set2 = (rows: { leadId: string | null }[]) => new Set(rows.map((r) => r.leadId!));
@@ -42,8 +43,12 @@ async function idSets() {
     pool: set2(pool),
     intake: set2(intake),
     hvk: set2(hvk),
+    /** Produkte, die ein Kunde als Pay-per-Lead-Bezug kauft (für die Kundenart der Airtable-Leads) */
+    bezugProdukte: bezuege.reduce((m, b) => m.set(b.customerId, (m.get(b.customerId) ?? new Set<string>()).add(b.productKey)), new Map<string, Set<string>>()),
   };
 }
+
+const KEINE = new Set<string>();
 
 const leadSelect = {
   id: true,
@@ -54,6 +59,11 @@ const leadSelect = {
   referralLinkId: true,
   externalId: true,
   airtableId: true,
+  adPlatform: true,
+  adFormId: true,
+  adCampaignId: true,
+  adSetId: true,
+  adId: true,
   firstContactAt: true,
   reached: true,
   contactAttempts: true,
@@ -119,8 +129,13 @@ async function ladeLeads(customerIds: string[]): Promise<KetteLead[]> {
       select: leadSelect,
     });
     for (const l of batch) {
-      const ppl = !!l.subscriptionId || ids.pool.has(l.id) || ids.intake.has(l.id);
-      const kundenart: Kundenart = ppl ? "ppl" : "vermittler";
+      const kundenart = kundenartFuer({
+        bezug: !!l.subscriptionId,
+        pool: ids.pool.has(l.id),
+        eingang: ids.intake.has(l.id),
+        produkt: l.source,
+        bezugProdukte: ids.bezugProdukte.get(l.customerId) ?? KEINE,
+      });
       const num = (d: unknown) => d != null && Number(d) > 0;
       out.push({
         customerId: l.customerId,
@@ -130,7 +145,11 @@ async function ladeLeads(customerIds: string[]): Promise<KetteLead[]> {
         produkt: !!l.source,
         kanal: !!l.adChannel,
         metaLeadId: isMetaLeadId(l.externalId),
-        formular: ids.formular.has(l.id),
+        formular: ids.formular.has(l.id) || !!l.adFormId,
+        plattform: !!l.adPlatform,
+        kampagne: !!l.adCampaignId,
+        anzeigengruppe: !!l.adSetId,
+        anzeige: !!l.adId,
         firstContactAt: l.firstContactAt,
         reached: l.reached,
         kontaktversuche: l.contactAttempts > 0 || l.callAttempts > 0,
@@ -210,13 +229,13 @@ export async function kette(params: URLSearchParams, now = new Date()) {
   const kunden = customers
     .map((c) => {
       const r = byCustomer.get(c.id) ?? [];
-      const ppl = r.filter((l) => l.kundenart === "ppl").length;
       return {
         id: c.id,
         name: c.name,
         paket: c.plan,
         archiviert: c.archived,
-        kundenart: ppl && ppl === r.length ? "ppl" : ppl ? "gemischt" : c._count.leadSubscriptions ? "ppl" : "vermittler",
+        // Ohne Leads im Kunden: Bezug vorhanden → Pay-per-Lead (taucht ohne &kunde nicht auf)
+        kundenart: r.length ? kundenartKunde(r) : c._count.leadSubscriptions ? "ppl" : "vermittler",
         ...(kunde
           ? { zeitraeume: jeZeitraum(r, now) }
           : { zeitraeume: Object.fromEntries(ZEITRAEUME.map((z) => [z.key, kompakt(auswerten(imZeitraum(r, z.tage, now), now))])) }),
