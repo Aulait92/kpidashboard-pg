@@ -119,7 +119,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const helpUpcoming = ob.helpCallAt && ob.helpCallAt > new Date();
   const slots = !helpUpcoming && !ob.liveAt ? await helpCallSlots().catch(() => []) : [];
   const calendar = await loadCalendarSetup(ctx.customerId, ctx.customerId);
-  const makler = (await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true } }))?.vermittlerTyp === "makler";
+  const kundeBasis = await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { vermittlerTyp: true, leadAddress: true } });
+  const makler = kundeBasis?.vermittlerTyp === "makler";
   // Erstinformation (§ 15 VersVermV) und Einwilligungstext fürs Leadformular
   const erstinfo = software ? await loadErstinfo(ctx.customerId) : null;
   // Impressum-Adresse: Pflichtangabe auf den Seiten für Endkunden, geprüft, aber nicht blockierend (Rechtsvorprüfung 16.11.2026)
@@ -216,7 +217,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       <div className="space-y-5">
         <Step n={nextNo()} title="Kurzer Fragebogen" icon={ClipboardList} done={done("questionnaire")} open={isOpen("questionnaire")} id="questionnaire">
           <p className="mb-4 text-sm text-[color:var(--muted)]">Nur noch, wie Sie arbeiten möchten:</p>
-          <QuestionnaireForm software={software} initial={(ob.questionnaire ?? {}) as Record<string, never>} readOnly={readOnly} />
+          <QuestionnaireForm
+            software={software}
+            // Ansprache immer aus der echten Einstellung (Ole, 18.11.2026: Fragebogen zeigte „Sie“, gespeichert war „du“)
+            initial={{ ...((ob.questionnaire ?? {}) as Record<string, unknown>), ansprache: kundeBasis?.leadAddress === "du" ? "du" : "sie" } as unknown as Record<string, never>}
+            readOnly={readOnly}
+          />
         </Step>
 
         <Step n={nextNo()} title="App aufs Handy und Mitteilungen" icon={Smartphone} done={appDone} open={isOpen("app")} id="app">
