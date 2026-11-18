@@ -56,7 +56,8 @@ export function markeFuer(kunde: { name: string; vermittlerTyp?: string | null; 
   return { name, gesellschaft: null, farbe: "#2563eb", farbeHell: "#e5edff", akzent: "#2563eb", logoUrl, markthinweis };
 }
 
-export type Folie = { id: string; titel: string; html: string };
+/** produkt: Sparte einer Produktfolie (Vergleich), z. B. für „Unfall hinzugefügt“ im Termin. */
+export type Folie = { id: string; titel: string; html: string; produkt?: string };
 
 const e = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
@@ -542,11 +543,18 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   let spNr = -1;
   // Kündigung relativ zum Termin (Berliner Datum)
   const heute = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d.termin.startsAt);
+  // Cross-Selling im Termin (Ole, 18.11.2026): per „Mit anschauen“ dazugenommene Sparten stehen direkt hinter „Ihr Schutz
+  // im Überblick“, in der Reihenfolge des Hinzufügens (zusatzFolge). So springt das Deck vorwärts auf die neue Folie,
+  // der Beitrag bleibt dahinter und rechnet sie mit. Ohne Überblick bleibt alles an seinem Platz.
+  const mitUeberblick = !!angebote?.schutz?.length;
+  const zusatzFolien: { folie: Folie; platz: number }[] = [];
   for (const [sparte, varianten] of nachSparte) {
     spNr++;
     // Bisheriger Vertrag des Kunden (Paket P3b): Vergleich auch mit nur einem neuen Tarif
     const bisher = angebote?.bisher?.find((x) => x.sparte === sparte) ?? null;
-    if (varianten.length < 2 && !bisher) continue;
+    const zusatz = varianten.some((i) => i.zusatz);
+    // Cross-Selling: eigene Folie auch mit nur einem Tarif (sonst stünde der Preis nirgends)
+    if (varianten.length < 2 && !bisher && !(zusatz && mitUeberblick)) continue;
     // Cross-Selling: erst nach „Mit anschauen“ (Folie „Ihr Schutz im Überblick“) im Vergleich
     if (varianten.every((i) => zusatzAus(i, varianten))) continue;
     // höchstens 4 Spalten (mit bisherigem Vertrag 3 neue); die gewählte Stufe ist immer dabei
@@ -573,16 +581,21 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
             (i, k) => `<div class="angebot${i.empfohlen ? " empf" : ""}${i.gewaehlt ? " gew" : ""}">${badge(i)}<div class="tarif">${e(kurz[k])}</div>${preis(i)}${punkte(i.leistungen.slice(0, 3))}${bs(i)}${knopf(i)}</div>`,
           )
           .join("")}</div>`;
-    out.push({
+    const folie: Folie = {
       // feste ID je Sparte: das Deck bleibt beim Umschalten auf derselben Folie, auch wenn eine Sparte dazukommt
       id: `vergleich-${sparteKey(sparte)}-${spNr}`,
       titel: `Auswahl ${sparte}`,
+      produkt: sparte,
       html: R(`<h2>${e(a(an, "Deine Auswahl", "Ihre Auswahl"))}: ${e(sparte)}</h2>${html}`, undefined, "", markthinweisText(m.markthinweis, varianten)),
-    });
+    };
+    if (zusatz && mitUeberblick) zusatzFolien.push({ folie, platz: angebote?.zusatzFolge?.indexOf(sparte) ?? -1 });
+    else out.push(folie);
   }
 
   // Ihr Schutz im Überblick (Cross-Selling, Ole 16.11.2026): Ampel je Sparte, „Mit anschauen“, Kombi-Rabatt
   if (angebote?.schutz?.length) out.push(ueberblickFolie(angebote.schutz, items, beitrag?.kombi ?? null, an, R));
+  // dahinter die dazugenommenen Sparten (ohne gespeicherte Reihenfolge, z. B. ältere Daten: zuerst, wie im Angebot)
+  out.push(...zusatzFolien.sort((x, y) => x.platz - y.platz).map((x) => x.folie));
 
   const summe = beitrag?.endbeitrag ?? null;
   // Produkte als Schalter: antippen nimmt eine Sparte heraus bzw. wieder hinein (Cross-Selling-Sparten erst nach „Mit anschauen“)
