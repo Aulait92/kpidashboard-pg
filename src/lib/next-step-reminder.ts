@@ -3,9 +3,12 @@
 // abschaltbar (User.nextStepReminder). Läuft im zentralen Cron (alle 5 Minuten) zwischen 8 und 12 Uhr;
 // die Sperre je Tag (User.nextStepReminderDay, bedingtes Update) verhindert doppelte Erinnerungen.
 //
+// Nicht an reine Pay-per-Lead-Kunden (ohne Software/Betreuung, customer-package.ts), Ole 18.11.2026.
+//
 // Zuständig: Berater für ihre zugeteilten Leads. Inhaber: eigene und nicht zugeteilte Leads (ohne Team: alle).
 
 import type { Prisma } from "@/generated/prisma/client";
+import { NUR_PPL_WHERE } from "@/lib/customer-package";
 import { sendCustomerMail } from "@/lib/email";
 import { appUrl } from "@/lib/whatsapp/event-text";
 import { NEXT_STEP_TASK_NOTE, resultMissingWhere, withoutNextStepWhere } from "@/lib/lead-next-step";
@@ -50,6 +53,8 @@ export async function runNextStepReminders(now = new Date()): Promise<ReminderRu
       nextStepReminder: true,
       OR: [{ nextStepReminderDay: null }, { nextStepReminderDay: { not: day } }],
       customer: { archived: false },
+      // Nicht an reine Pay-per-Lead-Kunden: sie nutzen das CRM nicht (Ole, 18.11.2026)
+      NOT: { customer: NUR_PPL_WHERE },
     },
     select: { id: true, email: true, teamRole: true, customerId: true },
     take: 200,

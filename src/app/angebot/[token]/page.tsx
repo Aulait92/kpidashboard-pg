@@ -1,8 +1,10 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { OfferDocument, offerProducts, toOfferDoc } from "@/components/offer-document";
 import { getCurrentSession } from "@/lib/auth";
 import { getOfferByToken, markOfferViewed, offerAddOnsOf, offerSummaryInput } from "@/lib/offers";
+import { zaehltAlsGeoeffnet } from "@/lib/offer-view";
 import {
   abschlussBonusJetzt,
   addDaysIso,
@@ -66,9 +68,11 @@ export default async function OfferPage({
     );
   }
 
-  // Aufrufe durch eingeloggte Admins (Vorschau) zählen nicht als „gesehen“.
+  // Als „geöffnet“ zählt nur der Interessent: nicht eingeloggte Admins oder Vermittler, nicht Link-Vorschauen
+  // und Scanner (lib/offer-view.ts, Ole 18.11.2026).
   const session = await getCurrentSession().catch(() => null);
-  if (session?.role !== "ADMIN") await markOfferViewed(offer.id);
+  const ua = (await headers().catch(() => null))?.get("user-agent") ?? null;
+  if (zaehltAlsGeoeffnet({ sessionRole: session?.role ?? null, userAgent: ua })) await markOfferViewed(offer.id);
 
   const expired = offer.validUntil.getTime() < nowMs();
   const canAccept = (offer.status === "draft" || offer.status === "sent") && !expired && offer.termsUrl && offer.dpaUrl;

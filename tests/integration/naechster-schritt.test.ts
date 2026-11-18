@@ -44,7 +44,8 @@ describe("Nächster Schritt", () => {
 
   beforeAll(async () => {
     requireTestDb();
-    const c = await makeCustomer();
+    // Software-Kunde (Betreuungsgebühr): bekommt die CRM-Erinnerungen
+    const c = await makeCustomer({ retainerMonthly: 990 });
     customerId = c.id;
     const u = await makeBuyer(c.id, "owner");
     st.userId = u.id;
@@ -242,6 +243,24 @@ describe("Nächster Schritt", () => {
     await runNextStepReminders(new Date(at8.getTime() + 2 * DAY));
     expect(push.mock.calls.filter((c) => c[0] === st.userId)).toHaveLength(2);
     await prisma.user.update({ where: { id: st.userId }, data: { nextStepReminder: true } });
+  });
+
+  it("reine Pay-per-Lead-Kunden bekommen keine Erinnerung, Software-Kunden schon (Ole, 18.11.2026)", async () => {
+    const ppl = await makeCustomer();
+    const pplUser = await makeBuyer(ppl.id, "owner");
+    await prisma.lead.create({ data: { customerId: ppl.id, name: "Lisa Koch", phone: "4915120099901", status: "Im Gespräch" } });
+    await prisma.lead.deleteMany({ where: { customerId } });
+    await lead();
+    const at8 = new Date("2026-11-20T07:05:00.000Z");
+    await runNextStepReminders(at8);
+    expect(push.mock.calls.filter((c) => c[0] === pplUser.id)).toHaveLength(0);
+    expect(mail.mock.calls.filter((c) => (c[0] as { to: string }).to === pplUser.email)).toHaveLength(0);
+    expect(push.mock.calls.filter((c) => c[0] === st.userId)).toHaveLength(1);
+    // „Nur Betreuung“ zählt nicht als reiner Pay-per-Lead-Kunde
+    await prisma.customer.update({ where: { id: ppl.id }, data: { plan: "service" } });
+    await runNextStepReminders(new Date(at8.getTime() + DAY));
+    expect(push.mock.calls.filter((c) => c[0] === pplUser.id)).toHaveLength(1);
+    await cleanupCustomer(ppl.id);
   });
 
   it("Berater bekommt die Erinnerung nur für eigene Leads", async () => {
