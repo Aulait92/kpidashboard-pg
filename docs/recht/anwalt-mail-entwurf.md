@@ -1,3 +1,5 @@
+> Status 18.11.: zurückgestellt bis Budget da ist. Bis dahin Rechtsprüfung intern (siehe policen-whatsapp-gesundheitsdaten.md, Abschnitt „Arbeitsweise Recht“).
+
 # Mailentwurf an die Anwältin
 
 Entwurf, nicht versendet. Anhang: `docs/recht/anwalt-paket-2026-11.docx`

@@ -466,3 +466,22 @@ Stand 18.11. Abend: Limit nach 7 Abfragen erneut erreicht, resets_at 2026-11-19T
 - Einwilligung nur mit zwei Knöpfen „Einverstanden“ und „Lieber nicht“. Speichern und KI-Auslesen werden gebündelt eingewilligt, ohne getrennte Option „ohne KI“. Begründung Ole: sonst wählen fast alle die Option ohne KI. Rechtliche Einordnung: Das Angebot bleibt insgesamt freiwillig (der Termin findet auch ohne Unterlagen statt), daher kein Kopplungsproblem nach Art. 7 Abs. 4 DSGVO. Offen ist, ob ErwG 43 hier eine getrennte Einwilligung verlangt (Anwaltsfrage 11). Restrisiko leicht erhöht, von Ole bewusst getragen.
   - Nachtrag 18.11.: Nach der Nachrecherche (Art. 4 Nr. 2, Art. 7 DSGVO, EuGH C-252/21, alle [LDH]) ist die Bündelung vertretbar, aber das Restrisiko eher mittel als leicht erhöht. Empfehlung ohne dritten Knopf: Auflage A9 (Stichwort „ohne KI“), senkt es auf gering bis mittel. Entscheidung über A9 liegt bei Ole.
 - Livegang aller Sparten. Gesundheitssparten je Vermittler erst nach Zustimmung zur AVV-Ergänzung (A5). KI-Auslesen für Kranken, BU und Leben erst mit Nachweis der Null-Speicherung (K2).
+
+
+## Bewertung Policen-Strecke v2 (18.11., nach Marketing-Review)
+
+Prüfgegenstand: docs/ux/policen-flow/texte-v2.md und mockup-v2.png (Variante A, ein Bildschirm, Knopf „Zustimmen & senden“, Checkbox „Lieber ohne KI: nur speichern“). Variante B (zwei Bildschirme) ist inhaltlich identisch und gleich zu bewerten.
+
+**Ergebnis: GELB, live mit den bestehenden Auflagen. Gegenüber der Chat-Fassung mit Knopf [Ja, einverstanden] ist v2 rechtlich gleich gut oder besser.**
+
+1. **Ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a, Art. 4 Nr. 11, Art. 7 DSGVO; A1):** erfüllt. Der Klick auf einen Knopf ist eine eindeutige bestätigende Handlung. Unmittelbar über dem Knopf steht der Erklärungssatz „Mit ‚Zustimmen & senden‘ sind Sie mit den Punkten oben einverstanden.“ Das ist eine ausdrückliche Erklärung im Sinne der EDPB-Leitlinien 05/2020 (elektronisches Formular mit klarer Erklärung). Die Verbindung von Zustimmung und Absenden ist zulässig, weil der Knopftext beides benennt und nichts vorher übertragen wird (kein data_exchange vor dem Footer-Knopf, A2). Kein Haken ist vorbelegt (C-673/17 Planet49 nicht berührt).
+2. **Informiertheit (A1 Mindestinhalt):** alle Punkte sichtbar am Ort des Klicks: Vermittler mit Firma, Zweck, „per KI“, Gesundheits-Halbsatz, Beteiligte (Meta/USA, performancegrowth, KI-Dienst EU), Widerruf, Link. Erfüllt.
+3. **Gesonderte Wahl ohne KI (A9, ErwG 43, C-252/21 Rn. 150 f.):** besser erfüllt als mit dem Stichwort. Die Checkbox steht direkt unter dem KI-Punkt, ist leer und wirkt allein auf den KI-Teil. Restrisiko der Bündelung: **gering**. Einordnung: Das KI-Auslesen ist ein Mittel zum selben Zweck (Vergleich zur Terminvorbereitung) durch einen Auftragsverarbeiter, kein eigener Zweck; die Checkbox geht damit über das Mindestmaß hinaus.
+4. **Nutzenhinweise („ob Sie Geld sparen können“, „damit Ihr Vergleich zum Termin schon fertig ist“):** zulässig. Sie beschreiben den Zweck genauer und versprechen kein Ergebnis (§ 5 UWG nicht berührt). Bedingung: Der Vergleich entsteht tatsächlich vor dem Termin, sonst irreführend. „Ohne KI“ wird nirgends abgewertet (kein manipulatives Design).
+5. **Freiwilligkeit (Art. 7 Abs. 4):** erfüllt durch „Ihr Termin findet auch ohne Policen statt“ in Chat und Formular und durch den neutralen Weg über „Später“ (A8).
+6. **Erinnerungen (§ 7 UWG):** zulässig als Termin-Service mit Opt-in aus der Buchung, höchstens 2, jeweils mit „Nein, danke“ und STOP.
+7. **Unverändert offen:** K2 (KI-Auslesen bei Kranken, BU, Leben nur mit Nachweis Null-Speicherung), AVV-Ergänzung je Vermittler, § 203-Verpflichtungen, Protokoll der neuen Textversion (A3), Löschhinweis nur mit laufendem Löschjob.
+
+## Arbeitsweise Recht (Entscheidung Ole, 18.11.)
+
+Bis Budget für eine Anwältin da ist, übernimmt Claude die Rechtsprüfung nach bestem Wissen; umgesetzt wird nach dieser Bewertung. Jede Rechtsanforderung an Texte oder Strecken geht vorher durch die Conversion-Prüfung eines Marketing-Agenten. Das Anwaltspaket (anwalt-paket-2026-11.docx) bleibt als Vorlage für später; bei Budget zuerst A1/A9 (Bündelung), A3 (§ 203 und Meta) und die Benchmark-Klausel vorlegen.
