@@ -321,6 +321,7 @@ describe("Datenschutzhinweise und Opt-in", () => {
       expect(t).toContain("90 Tage");
       expect(t).toMatch(/Widerruf/);
       expect(t).toMatch(/Meta/);
+      expect(t).toContain("„ohne KI“"); // Auflage A9
       expect(t).not.toMatch(GEDANKENSTRICH);
     }
     expect(ERINNERUNG_OPTIN_TEXT).toContain("STOP");
