@@ -67,6 +67,7 @@ function anzeige(e: PlanEintrag): { titel: string; zusatz: string | null } {
       e.kanal === "whatsapp" ? "Nachfrage per WhatsApp" : e.kanal === "anruf" ? "Anruf-Aufgabe für Sie" : rest.replace(/\[([^\]]+)\]/g, "„$1“");
     return { titel: klar, zusatz: [abfolge, zusatz].filter(Boolean).join(", ") || null };
   }
+  if (e.quelle === "vorschlag") return { titel: titel.replace(/^Vorschlag: /, ""), zusatz: "Vorschlag für Sie, mit einem Tipp" };
   const kanal = KANAL[e.kanal].name;
   return { titel, zusatz: [titel.includes(kanal) || e.kanal === "anruf" ? null : kanal, zusatz].filter(Boolean).join(", ") || null };
 }
@@ -110,7 +111,8 @@ export function NaechsteNachrichten({
   const jetzt = useMemo(() => new Date(jetztIso), [jetztIso]);
   const eintraege = alleEintraege.filter((e) => !begleitend(e));
   const pausiert = !!pausiertAt;
-  const anLead = eintraege.filter((e) => (e.kanal === "whatsapp" || e.kanal === "email") && !e.uebersprungen);
+  // Vorschläge (M7) gehen nicht von selbst raus: zählen nicht als Nachricht an den Lead
+  const anLead = eintraege.filter((e) => (e.kanal === "whatsapp" || e.kanal === "email") && e.quelle !== "vorschlag" && !e.uebersprungen);
   const gezeigt = alle ? eintraege : eintraege.slice(0, ZUERST);
 
   function los(a: NachrichtenAktion, opts: { danach?: () => void; rueckgaengig?: NachrichtenAktion } = {}) {

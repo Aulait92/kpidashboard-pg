@@ -48,9 +48,16 @@ async function speichereAblauf(customerId: string, fn: (a: ReturnType<typeof les
  * „Ja, Mails in meinem Namen senden“: Voreinstellungen (bzw. die in der Liste gewählten Stufen), Kopie an die eigene
  * Adresse, fehlende Signaturangaben speichern.
  */
-export async function serviceMailsBestaetigenAction(input: { stufen?: Record<string, string>; angaben?: Partial<SignaturAngaben> }): Promise<Ergebnis> {
+export async function serviceMailsBestaetigenAction(input: { stufen?: Record<string, string>; angaben?: Partial<SignaturAngaben>; anrede?: string }): Promise<Ergebnis> {
   try {
     const ctx = await inhaber();
+    // Anrede des Vermittlers (Pflicht, Einrichtung P8/M9): nur setzen, wenn sie gefragt war
+    if (input.anrede !== undefined) {
+      if (!["Herr", "Frau", "keine"].includes(input.anrede)) return { ok: false, error: "Bitte die Anrede wählen." };
+      const { getOrCreateErstinfo } = await import("@/lib/erstinformation");
+      const { id } = await getOrCreateErstinfo(ctx.customerId);
+      await prisma.erstinformation.update({ where: { id }, data: { anrede: input.anrede } });
+    }
     await speichereAngaben(ctx.customerId, input.angaben ?? {});
     await speichereAblauf(ctx.customerId, () => {
       let a = voreinstellungen();
@@ -58,6 +65,7 @@ export async function serviceMailsBestaetigenAction(input: { stufen?: Record<str
       return a;
     });
     revalidatePath("/buyer/einstellungen/assistent");
+    revalidatePath("/buyer", "layout");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };

@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { AlertTriangle, CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
+import { useActionState, useState, useTransition } from "react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Copy, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import type { MetaCheck } from "@/lib/selbst-einrichtung";
 import {
   bookHelpCallAction,
@@ -359,6 +359,39 @@ export function SkipButton({ kind, label, readOnly, primary }: { kind: string; l
       </button>
       {state.error ? <span className="text-sm font-medium text-rose-700">{state.error}</span> : null}
     </form>
+  );
+}
+
+/**
+ * „Weiter“ (P8, eine Hauptaktion je Schritt): Schritt als erledigt merken und zum nächsten offenen Schritt springen.
+ */
+export function WeiterButton({ kind, next, readOnly }: { kind: string; next: string; readOnly: boolean }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  // Nach dem Speichern ganz neu laden: der nächste Schritt ist serverseitig aufgeklappt und der Anker scrollt hin
+  // (der Knopf selbst verschwindet beim Neuzeichnen, deshalb nicht über useActionState)
+  const weiter = () =>
+    start(async () => {
+      const fd = new FormData();
+      fd.set("kind", kind);
+      const res = await skipSetupStepAction({}, fd);
+      if (res.error) return setError(res.error);
+      window.location.assign(next);
+    });
+  return (
+    <div className="mt-5" data-weiter={kind}>
+      <button
+        type="button"
+        onClick={weiter}
+        disabled={pending || readOnly}
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand)] px-5 text-[15px] font-semibold text-white transition hover:bg-[color:var(--brand-dark)] disabled:opacity-60 sm:w-auto sm:min-w-[200px]"
+      >
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+        Weiter
+        {!pending ? <ArrowRight className="h-4 w-4" /> : null}
+      </button>
+      {error ? <p className="mt-2 text-sm font-medium text-rose-700">{error}</p> : null}
+    </div>
   );
 }
 

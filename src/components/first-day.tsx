@@ -4,7 +4,7 @@
 
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import Link from "next/link";
-import { ArrowRight, BellRing, CalendarDays, CheckCircle2, Circle, ClipboardList, FileText, KeyRound, LifeBuoy, MessageCircle, Percent, Phone, Rocket, ShieldCheck, Smartphone, Mail, Upload, Star, Users } from "lucide-react";
+import { ArrowRight, BellRing, CalendarDays, CheckCircle2, Circle, ClipboardList, FileText, KeyRound, LifeBuoy, MessageCircle, Percent, Phone, Rocket, Route, ShieldCheck, Smartphone, Mail, Upload, Star, Users } from "lucide-react";
 import { buttonClass, Card } from "@/components/ui";
 import { customerExtras, customerSetupProgress, loadOnboarding, onboardingChecklist, type ChecklistItem } from "@/lib/onboarding";
 import { prisma } from "@/lib/prisma";
@@ -137,6 +137,8 @@ export const STEP_TEXT: Record<string, { label: string; icon: typeof Rocket }> =
   provision: { label: "Provisionen hinterlegen", icon: Percent },
   consent: { label: "Einwilligung im Leadformular bestätigen", icon: ShieldCheck },
   erstinfo: { label: "Erstinformation hinterlegen (Pflicht für den Assistenten)", icon: FileText },
+  assistent: { label: "So arbeitet Ihr Assistent", icon: Route },
+  serviceMails: { label: "Service-Mails in Ihrem Namen", icon: Mail },
 };
 
 /** Ganze Tage bis zum Start (Berliner Kalendertage), nie negativ. */
