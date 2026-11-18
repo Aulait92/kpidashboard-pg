@@ -10,6 +10,7 @@ import { AnalyseSchalter } from "@/components/nutzungsanalyse";
 import { asAnalyseStatus } from "@/lib/nutzungsanalyse";
 import { analysePseudonym } from "@/lib/nutzungsanalyse-server";
 import { PolicenFreischaltungKarte } from "@/components/policen-freischaltung-karte";
+import { BeratungsdokuSchalter } from "@/components/beratungsdoku-schalter";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Einstellungen | performancegrowth" };
@@ -23,6 +24,9 @@ export default async function EinstellungenPage() {
   const owner = ctx.teamRole !== "advisor";
   // Kachel „Kollegen empfehlen“: gleiche Bedingung wie die Seite selbst, Untertitel aus der eingestellten Prämie
   const referralText = canOpenReferralPage(ctx) ? referralTileText(await loadReferralSettings()) : null;
+  // Beratungsdokumentation (Paket B): Schalter nur für Inhaber mit Software-Paket
+  const kunde = owner ? await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { plan: true, beratungsdokuAn: true } }) : null;
+  const bdSchalter = kunde && kunde.plan !== "service" ? { an: kunde.beratungsdokuAn } : null;
   const analyse = ctx.userId && !ctx.preview ? asAnalyseStatus((await prisma.user.findUnique({ where: { id: ctx.userId }, select: { analyseEinwilligung: true } }))?.analyseEinwilligung) : null;
   const groups: { title: string; items: Item[] }[] = [
     {
@@ -88,6 +92,14 @@ export default async function EinstellungenPage() {
               </ul>
             </section>
           ))}
+        {bdSchalter ? (
+          <section>
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Beratung</h2>
+            <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-white shadow-[var(--shadow-sm)]" id="beratungsdoku">
+              <BeratungsdokuSchalter an={bdSchalter.an} darf={!ctx.preview} />
+            </div>
+          </section>
+        ) : null}
         {ctx.userId && !ctx.preview ? (
           <section>
             <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">Datenschutz</h2>

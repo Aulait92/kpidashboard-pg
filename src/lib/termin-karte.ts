@@ -2,6 +2,9 @@
 //   vorher   (bis 10 Minuten vor Beginn)      Vorbereiten
 //   jetzt    (ab 10 Minuten vorher bis Ende)  Videocall starten, beim Telefontermin Anrufen
 //   nachher  (ab Ende)                         Ergebnis eintragen; erschienen (Show-up-Paket) und Angebot offen: Angebot senden
+// Beratungsdokumentation (Paket B, Ole 18.11.2026, nur mit Schalter): nach dem Termin „Dokumentation“ als erster Zweitknopf,
+// solange sie offen ist (erledigt: unter „Mehr“). Ist das Ergebnis schon eingetragen und die Dokumentation offen, zeigt der
+// Kontakt die Karte noch BD_KARTE_TAGE Tage mit „Beratungsdokumentation erstellen“ als Hauptknopf.
 // Ende = endsAt bzw. Beginn + 30 Minuten (lib/showup.ts terminEnde). Grenzen: genau 10 Minuten vorher gilt schon „jetzt“,
 // genau zum Ende schon „nachher“.
 // Rein (ohne Datenbank), Tests: tests/unit/termin-karte.test.ts
@@ -11,7 +14,7 @@ import { terminEnde } from "@/lib/showup";
 export const TERMIN_VORLAUF_MS = 10 * 60 * 1000;
 
 export type TerminPhase = "vorher" | "jetzt" | "nachher";
-export type TerminAktion = "vorbereiten" | "videocall" | "anrufen" | "ergebnis" | "angebot" | "praesentation" | "verschieben";
+export type TerminAktion = "vorbereiten" | "videocall" | "anrufen" | "ergebnis" | "angebot" | "praesentation" | "verschieben" | "beratungsdoku";
 
 export type KartenTermin = {
   startsAt: Date;
@@ -50,7 +53,18 @@ export type TerminKartenAktionen = {
   naechsterWechsel: Date | null;
 };
 
-export function terminKartenAktionen(t: KartenTermin, f: { now: Date; telefon: boolean; angebotOffen: boolean }): TerminKartenAktionen {
+export function terminKartenAktionen(
+  t: KartenTermin,
+  f: {
+    now: Date;
+    telefon: boolean;
+    angebotOffen: boolean;
+    /** Beratungsdokumentation zu diesem Termin (null = Schalter aus) */
+    beratungsdoku?: "offen" | "erledigt" | null;
+    /** false: Ergebnis steht schon (Karte nur noch für die Dokumentation) */
+    ergebnisFehlt?: boolean;
+  },
+): TerminKartenAktionen {
   const phase = terminPhase(t, f.now);
   const video = t.mode === "video" && !!t.meetUrl;
   const vorBeginn = f.now.getTime() < t.startsAt.getTime();
@@ -62,9 +76,15 @@ export function terminKartenAktionen(t: KartenTermin, f: { now: Date; telefon: b
   } else if (phase === "jetzt") {
     haupt = video ? "videocall" : f.telefon ? "anrufen" : "vorbereiten";
     reihe = ["praesentation", "vorbereiten", ...(video && f.telefon ? (["anrufen"] as const) : []), ...(vorBeginn ? (["verschieben"] as const) : [])];
+  } else if (f.ergebnisFehlt === false && f.beratungsdoku === "offen") {
+    haupt = "beratungsdoku";
+    reihe = ["praesentation", "vorbereiten"];
   } else {
     haupt = t.attendance === "erschienen" && f.angebotOffen ? "angebot" : "ergebnis";
     reihe = haupt === "angebot" ? ["ergebnis", "praesentation", "vorbereiten"] : ["praesentation", "vorbereiten"];
+    // Offen: gleich nach dem Ergebnis bzw. als erster Zweitknopf; erledigt: zum Nachsehen unter „Mehr“
+    if (f.beratungsdoku === "offen") reihe.splice(haupt === "angebot" ? 1 : 0, 0, "beratungsdoku");
+    else if (f.beratungsdoku === "erledigt") reihe.push("beratungsdoku");
   }
   const rest = reihe.filter((a) => a !== haupt);
   return {

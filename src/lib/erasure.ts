@@ -149,6 +149,8 @@ async function eraseLeads(customerId: string, leads: LeadRef[], opts: { aufbewah
     prisma.leadMailVersand.deleteMany({ where: { leadId: { in: ids } } }),
     // Mail-Strecke (Antworten der Seite, lib/mail-strecke)
     prisma.leadMailStrecke.deleteMany({ where: { leadId: { in: ids } } }),
+    // Beratungsdokumentation (Paket B): Entwurf, Link und Bestätigung; das PDF bleibt als LeadFile (aufbewahrtFilter)
+    prisma.beratungsdoku.deleteMany({ where: { leadId: { in: ids } } }),
     // Dokumente am Lead; die Beratungsdokumentation bleibt bei der Löschung eines Leads als Nachweis (aufbewahrtFilter)
     prisma.leadFile.deleteMany({ where: { leadId: { in: ids }, ...(opts.aufbewahrung ? { NOT: aufbewahrtFilter(now) } : {}) } }),
     // Unterlagen per WhatsApp (Policen, lib/policen) und deren Einwilligungen

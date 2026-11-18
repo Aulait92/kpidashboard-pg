@@ -11,6 +11,8 @@ import { NpsCard } from "@/app/admin/nutzung/nps-card";
 import { loadHelpQuestions } from "@/lib/hilfe-report";
 import { loadSupportRequests } from "@/lib/support-server";
 import { computeUsageReport } from "@/lib/usage-report";
+import { bdNutzung } from "@/lib/beratungsdoku-server";
+import { BeratungsdokuNutzung, bdNutzungHinweis } from "@/components/admin/beratungsdoku-nutzung";
 import { requireAuth } from "@/lib/vertrieb/auth";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +27,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
   await requireAuth();
   const sp = await searchParams;
   const days = [7, 14, 30].includes(Number(sp.tage)) ? Number(sp.tage) : 14;
-  const [report, help, support] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days), loadSupportRequests(days)]);
+  const [report, help, support, bd] = await Promise.all([computeUsageReport(days), loadHelpQuestions(days), loadSupportRequests(days), bdNutzung(days)]);
   const stockend = report.customers.filter((c) => c.stalled.outcomesOpen + c.stalled.followUpsOverdue + c.stalled.attentionOver24h > 0).length;
 
   return (
@@ -72,6 +74,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ t
             funktion="page--nutzung-je-kunde-liegt-herum-genutzte-aktionen"
           >
             <NutzungJeKunde report={report} />
+          </Aufklapp>
+          {/* Paket B (Ole, 18.11.2026): Beratungsdokumentation, eingeschaltet und Dokumente je Termin */}
+          <Aufklapp titel="Beratungsdokumentation" hinweis={bdNutzungHinweis(bd)} id="beratungsdoku">
+            <BeratungsdokuNutzung n={bd} tage={days} />
           </Aufklapp>
           <Aufklapp titel="Zusatzmodul: Kandidaten fürs Gespräch" offen={!!sp.ankuendigung} funktion="module-card--zusatzmodul-empfehlungen-kandidaten-fuers">
             <ModuleCandidatesCard message={sp.ankuendigung ?? null} zurueck="/admin/neu/zahlen/qualitaet" />

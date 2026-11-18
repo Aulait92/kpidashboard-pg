@@ -45,6 +45,7 @@ const PUBLIC_PREFIXES = [
   "/ihr-angebot", // Angebots-PDF nach dem Termin (geheimer Link je Termin, lib/angebot-senden-server.ts)
   "/rueckruf", // „Rückruf wünschen“ aus der Nachfass-Mail zum Angebot (geheimer Link je Lead)
   "/t", // Antwortseite der Mail-Strecke für Leads ohne WhatsApp (signierter Token, lib/mail-strecke)
+  "/dokumentation", // Beratungsdokumentation für den Kunden mit Bestätigung per Klick (geheimer Link je Fassung, 30 Tage)
   "/api/mail-strecke", // Minuten-Cron der Mail-Strecke (per WHATSAPP_WEBHOOK_SECRET gesichert)
   "/api/login-info", // Bilder und Klick-Zählung der Infokarten auf der Login-Seite (öffentlich, keine Personendaten)
   "/login-karten", // Bilder der Infokarten auf der Login-Seite (public/login-karten)
@@ -225,6 +226,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/ihr-angebot/") ||
     pathname.startsWith("/rueckruf/") ||
     pathname.startsWith("/t/") ||
+    pathname.startsWith("/dokumentation/") ||
     pathname === "/demo" ||
     pathname.startsWith("/demo/")
   ) {

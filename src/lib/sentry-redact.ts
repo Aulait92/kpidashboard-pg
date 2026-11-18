@@ -23,6 +23,7 @@ export const TOKEN_PATH_PREFIXES = [
   "/einwilligung/bestaetigen", // Double-Opt-in-Bestätigung
   "/einwilligung", // Einwilligungs-Abfrage
   "/vollmacht", // Maklervollmacht je Kunde
+  "/dokumentation", // Beratungsdokumentation je Fassung (Bestätigung per Klick)
   "/empfehlung/g", // Google-Bewertungslink je Kontakt
   "/empfehlung", // Empfehlungsseite je Kontakt
   "/feedback", // Kunden-Feedback per Mail-Link
@@ -85,7 +86,7 @@ export function isTokenPath(pathOrUrl: string): boolean {
  * Endkundenseiten (Middleware setzt dort x-bare-layout=lead; zusätzlich alle Token-Seiten):
  * Hier wird Session Replay gar nicht erst gestartet.
  */
-const LEAD_PAGE_PREFIXES = ["/book", "/empfehlung", "/einwilligung", "/vollmacht", "/abmelden", "/erstinformation", "/beratung", "/demo"];
+const LEAD_PAGE_PREFIXES = ["/book", "/empfehlung", "/einwilligung", "/vollmacht", "/dokumentation", "/abmelden", "/erstinformation", "/beratung", "/demo"];
 
 export function isReplayBlockedPath(pathOrUrl: string): boolean {
   if (isTokenPath(pathOrUrl)) return true;

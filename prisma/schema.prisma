@@ -370,6 +370,11 @@ model Customer {
   eigeneTarife                   EigenerTarif[]
   beraterMerkmale                BeraterMerkmale[]
   maklervollmachten              Maklervollmacht[]
+  // Beratungsdokumentation als Angebot (Paket B, Ole 18.11.2026, lib/beratungsdoku-server.ts): Schalter je Vermittler,
+  // Standard aus. Zeitpunkt des letzten Einschaltens für die Nutzungsmessung (Admin Betreuen › Qualität & Nutzung).
+  beratungsdokuAn                Boolean                   @default(false)
+  beratungsdokuAnAt              DateTime?
+  beratungsdokus                 Beratungsdoku[]
 }
 
 // Tagesbudget je Produkt (Kundenbereich → Konto → Werbebudget). Ohne Eintrag gilt das
@@ -882,6 +887,7 @@ model Lead {
   // Rückmeldung an Meta (lib/capi): Stufen dieses Leads im Postausgang
   capiEvents            CapiEvent[]
   maklervollmachten     Maklervollmacht[]
+  beratungsdokus        Beratungsdoku[]
 
   @@index([customerId, createdAt])
   @@index([assignedUserId])
@@ -5002,4 +5008,38 @@ model Loeschprotokoll {
 
   @@unique([art, entityId])
   @@index([createdAt])
+}
+
+// Beratungsdokumentation nach dem Termin (Paket B, Ole 18.11.2026; lib/beratungsdoku-server.ts). Nur bei
+// Customer.beratungsdokuAn. Je Fassung eine Zeile: abgelegt (nur PDF unter Dokumente), sendet (Versand läuft),
+// gesendet (E-Mail mit PDF in Textform, Link /dokumentation/<token>), bestaetigt (Erhalt per Klick, nur POST),
+// ersetzt (neuere Fassung gesendet). Das PDF liegt als LeadFile „beratungsdoku“ mit Aufbewahrungsfrist; beim Löschen
+// des Leads fällt diese Zeile weg (lib/erasure.ts), das PDF bleibt bis aufbewahrenBis.
+model Beratungsdoku {
+  id                String    @id @default(cuid())
+  customerId        String
+  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  leadId            String
+  lead              Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  appointmentId     String?
+  // {abschnitte: {wuensche, beratung, empfehlung, entscheidung, hinweise}, kopf: {kunde, produkt, berater, termin}}
+  inhalt            Json
+  // sie | du (Ansprache in PDF, Mail und auf der Seite)
+  ansprache         String    @default("sie")
+  // SHA-256 des Inhalts; je Termin und Inhalt eine Zeile (Doppelklick)
+  inhaltHash        String
+  status            String    @default("abgelegt")
+  token             String?   @unique
+  gesendetAt        DateTime?
+  gesendetAn        String?
+  dateiId           String?
+  bestaetigtAt      DateTime?
+  bestaetigtDateiId String?
+  createdById       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([appointmentId, inhaltHash])
+  @@index([customerId, createdAt])
+  @@index([leadId])
 }
