@@ -462,9 +462,11 @@ export function OfferForm({
             <label className={`flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-sm ${annualPossible ? "border-[color:var(--border)] bg-white" : "border-[color:var(--border)] bg-[color:var(--surface-sunken)] text-[color:var(--muted)]"}`}>
               <input type="checkbox" name="annual" className="mt-0.5 h-4 w-4" disabled={!annualPossible} checked={annual && annualPossible} onChange={(e) => setAnnual(e.target.checked)} />
               <span>
-                <span className="block font-semibold">Jährlich im Voraus zahlen: {PRICE_LIST.annualFreeMonths} Monate geschenkt</span>
+                <span className="block font-semibold">Jahreszahlung anbieten ({PRICE_LIST.annualFreeMonths} Monate geschenkt)</span>
                 <span className="block text-xs text-[color:var(--muted)]">
-                  {annualPossible ? `Jahresbetrag = ${12 - PRICE_LIST.annualFreeMonths} × Monatspreis inkl. Zusätze, fällig zum Start.` : "Nur mit 12 Monaten Laufzeit und ohne Startpreis."}
+                  {annualPossible
+                    ? `Der Kunde wählt bei der Annahme monatlich (vorausgewählt) oder jährlich für ${12 - PRICE_LIST.annualFreeMonths} × Monatspreis inkl. Zusätze.`
+                    : "Nur mit 12 Monaten Laufzeit und ohne Startpreis."}
                 </span>
               </span>
             </label>
@@ -546,7 +548,7 @@ export function OfferForm({
             ) : null}
             {price.annualTotal != null ? (
               <Sum
-                k="Jährlich im Voraus"
+                k="Oder jährlich (Kunde wählt)"
                 v={eur(price.annualTotal)}
                 sub={`${PRICE_LIST.annualFreeMonths} Monate geschenkt (spart ${eur(price.annualSavings)}) · ${eur(withVat(price.annualTotal))} brutto`}
               />

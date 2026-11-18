@@ -99,6 +99,8 @@ export type AngebotFuerFolien = {
   empfehlungMonthly: number | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
+  /** Jahreszahlung angeboten: Kunde wählt bei der Annahme (fehlt bei Alt-Daten = nein). */
+  annualChoice?: boolean;
   customerChoosesTerm: boolean;
   setupDiscount: number | null;
   introMonthlyFee: number | null;
@@ -202,7 +204,8 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     seatMonthly: angebot.seatMonthly,
     bestandMonthly: angebot.bestandMonthly,
     empfehlungMonthly: angebot.empfehlungMonthly,
-    annualPrepay: angebot.annualPrepay,
+    // Jahreszahlung zur Wahl: Jahresbetrag trotzdem nennen (Wahl bei der Annahme)
+    annualPrepay: angebot.annualPrepay || !!angebot.annualChoice,
     annualFreeMonths: angebot.annualFreeMonths,
   });
   const rabatt = angebot.setupDiscount != null && angebot.setupDiscount > 0 ? angebot.setupDiscount : null;
@@ -237,7 +240,7 @@ export function paketDaten(angebot: AngebotFuerFolien | null, audience: Verkaufs
     monatlich,
     monatlichNetto: add.monthlyTotal,
     jaehrlich: add.annual && add.annualTotal != null
-      ? `Jährlich im Voraus: ${eur0(add.annualTotal)} netto für 12 Monate, ${add.freeMonths} Monate geschenkt`
+      ? `${angebot.annualChoice && !angebot.annualPrepay ? "Wahlweise jährlich im Voraus" : "Jährlich im Voraus"}: ${eur0(add.annualTotal)} netto für 12 Monate, ${add.freeMonths} Monate geschenkt`
       : term === "12m" || angebot.customerChoosesTerm
         ? `Jährlich im Voraus: ${PRICE_LIST.annualFreeMonths} Monate geschenkt`
         : null,

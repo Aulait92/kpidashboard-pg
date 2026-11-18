@@ -299,6 +299,16 @@ export function offerAddOns(o: OfferAddOnsInput): OfferAddOns {
 /** Faktor Monatspreis → Jahrespreis bei Vorauszahlung (z. B. 10). */
 export const annualMultiplier = (freeMonths: number = PRICE_LIST.annualFreeMonths) => 12 - freeMonths;
 
+/**
+ * Beträge der Jahreszahlung zur Wahl (Ole, 18.11.2026): Jahresbetrag = (12 − Freimonate) × Monatspreis inkl. Zusätze,
+ * Ersparnis = Freimonate × Monatspreis. Gleiche Rechnung wie {@link offerAddOns} bei vereinbarter Jahreszahlung.
+ */
+export function jahreswahlBetraege(monthlyTotal: number, freeMonths: number | null = PRICE_LIST.annualFreeMonths): { annualTotal: number; savings: number; freeMonths: number } {
+  const free = freeMonths ?? PRICE_LIST.annualFreeMonths;
+  const annualTotal = round2(monthlyTotal * annualMultiplier(free));
+  return { annualTotal, savings: round2(monthlyTotal * 12 - annualTotal), freeMonths: free };
+}
+
 export const withVat = (net: number) => round2(net * (1 + PRICE_LIST.vatRate));
 export const vatOf = (net: number) => round2(net * PRICE_LIST.vatRate);
 
@@ -384,6 +394,8 @@ export type OfferChoiceSnapshot = {
   startIso: string | null;
   annualPrepay: boolean;
   annualFreeMonths: number | null;
+  /** Jahreszahlung angeboten: Kunde wählt monatlich oder jährlich (nur mit 12 Monaten); annualPrepay = Vorauswahl. */
+  annualChoice?: boolean;
   choosesTerm: boolean;
   choosesStart: boolean;
   /** Vereinbarter Empfehlungsrabatt (netto) und Listenpreis vor Rabatt; fehlt = keiner. */
@@ -410,7 +422,7 @@ export type OfferChoiceResult =
  */
 export function resolveOfferChoice(
   snap: OfferChoiceSnapshot,
-  input: { term?: string | null; startDate?: string | null },
+  input: { term?: string | null; startDate?: string | null; annual?: boolean | null },
   todayIso: string,
 ): OfferChoiceResult {
   const fixedTerm = normalizeTerm(snap.term);
@@ -448,7 +460,14 @@ export function resolveOfferChoice(
     return { ok: false, error: "Das Startdatum ist in diesem Angebot fest vereinbart." };
   }
 
-  const annualPrepay = snap.annualPrepay && term === "12m";
+  // Zahlweise: mit „Jahreszahlung anbieten“ wählt der Kunde (ohne Angabe gilt die Vorauswahl), sonst wie vereinbart.
+  // Jahreszahlung gibt es nur mit 12 Monaten Laufzeit.
+  let annualPrepay = snap.annualPrepay && term === "12m";
+  if (snap.annualChoice) {
+    annualPrepay = term === "12m" && (input.annual ?? snap.annualPrepay) === true;
+  } else if (input.annual != null && input.annual !== annualPrepay) {
+    return { ok: false, error: "Die Zahlweise ist in diesem Angebot fest vereinbart." };
+  }
   return {
     ok: true,
     term,

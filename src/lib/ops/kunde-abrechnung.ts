@@ -9,7 +9,7 @@ const OFFER_FELDER = {
   setupFee: true, setupListFee: true, setupDiscount: true, setupDiscountLabel: true, monthlyFee: true, softwareFee: true, introMonthlyFee: true,
   introMonths: true, specialTerms: true, startDate: true, billingDay: true, billingFreeStart: true, customerChoosesTerm: true, customerChoosesStart: true, validUntil: true, sentAt: true,
   acceptedAt: true, acceptedCompany: true, acceptedAsBusiness: true, seats: true, seatsIncluded: true, seatMonthly: true, bestandMonthly: true,
-  empfehlungMonthly: true, annualPrepay: true, annualFreeMonths: true, abschlussBonus: true, abschlussBonusBis: true, abschlussBonusGewaehrt: true,
+  empfehlungMonthly: true, annualPrepay: true, annualFreeMonths: true, annualChoice: true, abschlussBonus: true, abschlussBonusBis: true, abschlussBonusGewaehrt: true,
   stripeCustomerId: true, stripeSubscriptionId: true, stripeScheduleId: true, paymentStatus: true, subscriptionStatus: true, paidAt: true,
   paymentReminderAt: true, allowPayLater: true, paymentReminderCount: true, startShiftedFrom: true, createdAt: true,
 } as const;

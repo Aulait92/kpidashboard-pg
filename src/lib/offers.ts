@@ -56,7 +56,10 @@ export type OfferFormInput = {
   validDays?: number;
   /** Aktive Verkäufer gesamt (bekommen Leads); 3 inklusive, Mitglieder ohne Leads kostenlos. */
   seats?: number | null;
-  /** Jährlich im Voraus (nur 12 Monate Laufzeit, nicht mit Startpreis). */
+  /**
+   * „Jahreszahlung anbieten“ (nur 12 Monate Laufzeit, nicht mit Startpreis): Der Kunde wählt bei der Annahme
+   * monatlich (vorausgewählt) oder jährlich im Voraus (Ole, 18.11.2026; vorher war das Angebot dann nur jährlich).
+   */
   annual?: boolean;
   /** Bestandskunden-Modul dazubuchen. */
   bestandModule?: boolean;
@@ -250,7 +253,9 @@ export async function createOffer(target: OfferTarget, input: OfferFormInput, cr
             // Modul gebucht: Monatspreis; null = nicht gebucht
             bestandMonthly: price.bestandActive ? price.bestandFee : null,
             empfehlungMonthly: price.empfehlungActive ? price.empfehlungFee : null,
-            annualPrepay: price.annual,
+            // Jahreszahlung angeboten: Kunde wählt bei der Annahme, monatlich vorausgewählt
+            annualPrepay: false,
+            annualChoice: price.annual,
             annualFreeMonths: price.annual ? PRICE_LIST.annualFreeMonths : null,
             introMonthlyFee: input.introMonthlyFee ?? null,
             introMonths: input.introMonthlyFee != null ? (input.introMonths ?? null) : null,
@@ -322,6 +327,8 @@ export async function acceptOffer(
     /** Wahl des Kunden (nur wenn im Angebot freigegeben; serverseitig geprüft). */
     term?: string | null;
     startDate?: string | null;
+    /** Zahlweise: true = jährlich im Voraus, false = monatlich (nur mit „Jahreszahlung anbieten“); fehlt = Vorauswahl. */
+    annual?: boolean | null;
   },
 ): Promise<AcceptResult> {
   const offer = await getOfferByToken(token);
@@ -345,12 +352,13 @@ export async function acceptOffer(
       startIso: offer.startDate ? offer.startDate.toISOString().slice(0, 10) : null,
       annualPrepay: offer.annualPrepay,
       annualFreeMonths: offer.annualFreeMonths,
+      annualChoice: offer.annualChoice,
       choosesTerm: offer.customerChoosesTerm,
       choosesStart: offer.customerChoosesStart,
       setupDiscount: offer.setupDiscount == null ? null : Number(offer.setupDiscount),
       setupListFee: offer.setupListFee == null ? null : Number(offer.setupListFee),
     },
-    { term: opts.term, startDate: opts.startDate },
+    { term: opts.term, startDate: opts.startDate, annual: opts.annual },
     berlinTodayIso(),
   );
   if (!choice.ok) return { ok: false, error: choice.error };
@@ -386,7 +394,7 @@ export async function acceptOffer(
   if (updated.count === 0) return { ok: false, error: "Dieses Angebot kann nicht mehr angenommen werden." };
   // Ab hier mit den angenommenen Werten weiterarbeiten.
   const accepted = { ...offer, term: choice.term, startDate, annualPrepay: choice.annualPrepay, annualFreeMonths: choice.annualFreeMonths };
-  const chosenText = `${TERM_SHORT[choice.term]}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
+  const chosenText = `${TERM_SHORT[choice.term]}${offer.annualChoice && choice.term === "12m" ? (choice.annualPrepay ? ", jährlich im Voraus" : ", monatlich") : ""}${startDate ? `, Start ${startDate.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "numeric" })}` : ""}`;
   await audit("offer.accept", {
     entity: "Offer",
     entityId: offer.id,
@@ -398,7 +406,8 @@ export async function acceptOffer(
       startDate: choice.startIso,
       setupFee: choice.setupFee,
       annualPrepay: choice.annualPrepay,
-      chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart,
+      annualChoice: offer.annualChoice,
+      chosenByCustomer: offer.customerChoosesTerm || offer.customerChoosesStart || offer.annualChoice,
       company: business.company,
       vatId: business.vatId,
       asBusiness: true,
