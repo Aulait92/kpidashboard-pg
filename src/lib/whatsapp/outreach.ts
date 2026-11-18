@@ -24,6 +24,7 @@ import {
   erstanschreibenV6Params,
   erstanschreibenZweck,
   erstanschreibenV8Params,
+  erstanschreibenV9Params,
   outreachProdukt,
   tierWort,
   type Herkunft,
@@ -93,9 +94,11 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
   const first = firstNameOf(opts.name);
   // v6 (Ole, 17.11.2026): Vermittler als Person im Dativ („von Herrn Kannapinn“, Du Vorname), Rückfall Agentur
   const person = (an: Ansprache) => vermittlerName(an, { name: who.vermittler.name, anrede: who.vermittler.anrede, fallback: who.firm || kurz });
-  // Parameter je gewählter Vorlage: v8 Vermittler, erste offene Frage (ohne „?“); v6/v7 Thema, Vermittler, Frage; Produkt
+  // Parameter je gewählter Vorlage: v9 erste offene Frage (ohne „?“), TKV mit Tier davor; v8 Vermittler, erste offene
+  // Frage; v6/v7 Thema, Vermittler, Frage; Produkt
   // (v5 mit Tier, v4) bzw. allgemeine Fassung (nur Name), v3 mit Link
   const paramsFor = (p: { version: number; ansprache: Ansprache; purpose?: NoticePurpose }): string[] => {
+    if (p.version >= 9) return [first, ...erstanschreibenV9Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
     if (p.version >= 8) return [first, ...erstanschreibenV8Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
     if (p.version >= 6) {
       return [first, ...erstanschreibenV6Params({ source: opts.source, an: p.ansprache, formular, person: person(p.ansprache), kurz })];
@@ -109,7 +112,7 @@ export async function outreachMessage(opts: { customerId: string; leadId: string
     who,
     purpose,
     variant,
-    params: paramsFor({ version: 8, ansprache: opts.an }),
+    params: paramsFor({ version: 9, ansprache: opts.an }),
     paramsFor,
     legacyParams: [first, url],
     // Knöpfe im offenen Fenster nur, wenn sie zur gestellten Frage passen (Frage 1 bzw. Telefonat)
@@ -135,7 +138,7 @@ export async function sendOutreach(opts: { customerId: string; leadId: string; p
     customerId: opts.customerId,
     to: opts.phone,
     purpose: m.purpose,
-    params: m.paramsFor({ version: 8, ansprache: opts.an }),
+    params: m.paramsFor({ version: 9, ansprache: opts.an }),
     paramsFor: m.paramsFor,
     legacyParams: m.legacyParams,
     textButtons: m.textButtons,

@@ -25,26 +25,26 @@ describe("Erstanschreiben: nur Hausrat angefragt", () => {
 
   it("Freitext Sie und Du; Frageplan bleibt beim Privatschutz", () => {
     expect(erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", vermittler: "Herrn Kannapinn", source: "Privatschutz", herkunft: "anfrage", formular: NUR_HAUSRAT })).toBe(
-      "Hallo Herr Müller, danke für Ihre Anfrage zu Ihrer Hausratversicherung! Hier schreibt der digitale KI-Assistent von Herrn Kannapinn.\n\n*Sind Sie bei Hausrat schon versichert, oder wäre es neu?*",
+      "Hallo Herr Müller, danke für Ihre Anfrage zu Ihrer Hausratversicherung an Herrn Kannapinn! *Sind Sie bei Hausrat schon versichert, oder wäre es neu?*\n\n_KI-Assistent · Erstinformation folgt als PDF_",
     );
     expect(erstanschreibenText({ an: "du", kontakt: { fullName: "Thomas" }, name: "Ole", source: "Privatschutz", herkunft: "anfrage", formular: NUR_HAUSRAT })).toContain(
-      "danke für deine Anfrage zu deiner Hausratversicherung!",
+      "danke für deine Anfrage zu deiner Hausratversicherung an Ole!",
     );
-    expect(erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", source: "Privatschutz", herkunft: "anfrage", formular: BEIDES })).toContain("zum Privatschutz!");
+    expect(erstanschreibenText({ an: "sie", kontakt: MUELLER, name: "Ole", source: "Privatschutz", herkunft: "anfrage", formular: BEIDES })).toContain("zum Privatschutz an Ole!");
     expect(frageplan("Privatschutz", NUR_HAUSRAT).produkt?.purpose).toBe("outreach_privatschutz");
   });
 
-  it("eigene Vorlage v8 zur Einreichung, mit PDF-Kopf, ohne Meta-Probleme", () => {
+  it("eigene Vorlage v9 zur Einreichung, mit PDF-Kopf, ohne Meta-Probleme", () => {
     expect(CORE_PURPOSES).toContain("outreach_hausrat");
     expect(isOutreachPurpose("outreach_hausrat")).toBe(true);
-    expect(templateVersionFor("outreach_hausrat")).toBe("v8");
-    expect(templateTextFor("outreach_hausrat", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zu Ihrer Hausratversicherung! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*");
-    expect(templateTextFor("outreach_hausrat", "du")).toBe("Hallo {{1}}, danke für deine Anfrage zu deiner Hausratversicherung! Hier schreibt der digitale Assistent von {{2}}.\n\n*{{3}}?*");
+    expect(templateVersionFor("outreach_hausrat")).toBe("v9");
+    expect(templateTextFor("outreach_hausrat", "sie")).toBe("Hallo {{1}}, danke für Ihre Anfrage zu Ihrer Hausratversicherung an {{2}}! *{{3}}?*");
+    expect(templateTextFor("outreach_hausrat", "du")).toBe("Hallo {{1}}, danke für deine Anfrage zu deiner Hausratversicherung an {{2}}! *{{3}}?*");
     const geplant = plannedTemplates(["outreach_hausrat"]);
     expect(geplant.map((g) => g.form)).toEqual(["du", "sie", "sie_ohne_name"]);
     for (const g of geplant) {
       const req = buildTemplateRequest(g.purpose, { firm: "Agentur Kannapinn", advisor: "Ole Kannapinn" }, undefined, g.form, { variant: g.variant, documentExample: "https://x.de/erstinformation/abc/pdf", kopf: g.kopf });
-      expect(req.name).toMatch(/^pg_outreach_hausrat_v8/);
+      expect(req.name).toMatch(/^pg_outreach_hausrat_v9/);
       const body = (req.components as { type: string; text?: string; example?: { body_text: string[][] } }[]).find((c) => c.type === "BODY")!;
       expect(body.text).toContain("Hausratversicherung");
       expect(metaTemplateProblems(body.text!, body.example?.body_text[0] ?? [])).toEqual([]);
