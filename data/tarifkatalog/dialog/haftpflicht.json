@@ -29,8 +29,7 @@
         "oeltank": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/3858/3f7cecfac29ad6a26035cead0cc95a2f/Leistungs%C3%BCbersicht%20Privathaftpflicht",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privathaftpflicht KomfortPlus-Schutz",
@@ -52,8 +51,7 @@
         "oeltank": "optional"
       },
       "quelle": "https://www.dialog-versicherung.de/resource/blob/3858/3f7cecfac29ad6a26035cead0cc95a2f/Leistungs%C3%BCbersicht%20Privathaftpflicht",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -65,6 +63,7 @@
     "Werte aus der Leistungsübersicht: „versichert“ heißt im Rahmen der Versicherungssumme, ohne eigene Grenze.",
     "Deliktunfähige Kinder nicht bei Single-Deckung. Drohnen bis 250 g nach Vereinbarung bis 5 Mio. €. Schlüsselverlust und Forderungsausfall im KomfortPlus abwählbar.",
     "Personenschäden max. 15 Mio. € je Person. Selbstbeteiligung nicht genannt.",
-    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali)."
+    "Dialog verkauft nur über Makler und Vermittler (Spezialversicherer der Generali).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichproben am Bild der Übersicht)."
   ]
 }

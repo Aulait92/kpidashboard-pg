@@ -30,8 +30,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.da-direkt.de/unfallversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Komfort",
@@ -54,8 +53,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.da-direkt.de/unfallversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Top",
@@ -79,8 +77,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.da-direkt.de/unfallversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
     "Invaliditätsleistung, Progressionsstaffeln, Unfallrente, Todesfallleistung und Krankenhaustagegeld (Basis, Komfort bis 3 Jahre, Top bis 5 Jahre) einschließbar; Summen individuell.",
     "Leistung ab Invaliditätsgrad im Tarifvergleich nicht genannt.",
     "Sofortleistung bei Knochenbruch einschließbar. Top mit Premium-Baustein: Bergung und kosmetische OP bis 100.000 €.",
-    "Mitwirkung von Krankheiten: Basis 25 %, Komfort und Top 50 %."
+    "Mitwirkung von Krankheiten: Basis 25 %, Komfort und Top 50 %.",
+    "Geprüft am 18.11.2026 an Tariftabellen der Produktseiten und den verlinkten Übersichten von DA Direkt."
   ]
 }

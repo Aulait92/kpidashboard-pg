@@ -34,8 +34,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäudeversicherung Comfort-Schutz",
@@ -62,8 +61,7 @@
         "notfall": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/wohngebaeudeversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -76,6 +74,7 @@
     "Photovoltaik als Baustein (inkl. Ertragsausfall bis 5.000 €); Wärmepumpen und Ladestationen in beiden Tarifen versichert.",
     "Ableitungsrohre außerhalb des Gebäudes als Baustein bis 5.000 €.",
     "Vandalismus: Comfort ersetzt Gebäudeschäden durch Einbrecher und Graffiti je bis 5.000 €.",
-    "Selbstbeteiligung wählbar (Preisbeispiel 500 €)."
+    "Selbstbeteiligung wählbar (Preisbeispiel 500 €).",
+    "Geprüft am 18.11.2026 an den Tarifvergleichen der Produktseiten und den Basisinformationen von CosmosDirekt."
   ]
 }

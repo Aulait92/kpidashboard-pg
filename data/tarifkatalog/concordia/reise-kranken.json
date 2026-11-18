@@ -24,8 +24,7 @@
         "familie": "optional"
       },
       "quelle": "https://www.concordia.de/produkte/gesundheit-lifestyle/krankenversicherungen/auslandsreise-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -33,6 +32,7 @@
   ],
   "offen": [
     "Risikoträger Concordia Krankenversicherungs-AG. Werte von der Produktseite auf concordia.de (Abruf 17.11.2026). Ein Jahresvertrag für Einzelpersonen oder Familien (Partner und minderjährige Kinder).",
-    "Selbstbeteiligung, Zahnbehandlung und bekannte Erkrankungen auf der Seite nicht genannt. Bestattung im Ausland oder Überführung versichert."
+    "Selbstbeteiligung, Zahnbehandlung und bekannte Erkrankungen auf der Seite nicht genannt. Bestattung im Ausland oder Überführung versichert.",
+    "Geprüft am 18.11.2026 an Produktseite und verlinkten Übersichten der Concordia."
   ]
 }

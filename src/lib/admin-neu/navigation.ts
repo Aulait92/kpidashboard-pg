@@ -183,6 +183,7 @@ export const BEREICHE: NeuBereich[] = [
     handy: "mehr",
     seiten: [
       { view: "werkzeuge", pfad: n("/werkzeuge"), titel: "Werkzeuge", alt: [], suchwoerter: "Technik Diagnose Verbindungen Import", fertig: true },
+      { view: "w-zustand", pfad: n("/werkzeuge/zustand"), titel: "Systemzustand", gruppe: "Zustand", alt: [], suchwoerter: "Diagnose Hintergrund-Jobs Heartbeat Meta Stripe Bank LinkedIn WhatsApp-Zustellung Google-Kontingent Werbekosten", fertig: true },
       { view: "e-status", pfad: n("/einstellungen/status"), titel: "Status & Support", gruppe: "Zustand", alt: ["/admin/einstellungen/status"], suchwoerter: "Störung Statusmeldung", untertitel: "Öffentliche Statusseite und Support-Kontakt im Hilfe-Chat.", fertig: true },
       { view: "e-anbindungen", pfad: n("/einstellungen/anbindungen"), titel: "Anbindungen & Import", gruppe: "Verbindungen & Importe", alt: ["/admin/vertrieb/import"], suchwoerter: "Instantly Webhook Meta-Verbindung LinkedIn Agenturliste", untertitel: "Woher Vertrieb und Lead-Eingang ihre Daten bekommen.", fertig: true },
       { view: "e-vorlagen", pfad: n("/einstellungen/whatsapp"), titel: "WhatsApp-Vorlagen & Support-Nummer", gruppe: "WhatsApp", alt: ["/admin/whatsapp/settings"], suchwoerter: "Vorlagen Assistent Support-Nummer A/B-Test", untertitel: "Support-Nummer und A/B-Tests der Vorlagen.", fertig: true },

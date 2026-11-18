@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.da-direkt.de/krankenzusatzversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -38,6 +37,7 @@
     "DA Direkt hat keine eigene Krankenhauszusatzversicherung: Die Krankenzusatzversicherung (Komfort, Premium, Premium Plus) kombiniert ein ambulantes Gesundheitsbudget mit Notfall-Leistungen im Krankenhaus. Die Krankenhausleistungen sind in allen drei Tarifen gleich, daher ein Tarif.",
     "Krankenhausleistungen nur bei stationärer Behandlung nach Unfall oder schwerer Krankheit (laut AVB definiert), zu 100 %, nicht auf das Budget angerechnet.",
     "Ersatz-Krankenhaustagegeld: 50 € bei Verzicht auf Chefarzt, 20 € bei Zweibettzimmer statt Einbettzimmer, 50 € bei Verzicht auf Ein- und Zweibettzimmer. Rooming-in für Kinder bis 10 Tage.",
-    "Tarifblatt und AVB Stand 01.04.2024 (Wartezeiten bestehen nicht); Budgethöhen im Tarifblatt weichen von der Produktseite ab, für das Krankenhaus ohne Bedeutung."
+    "Tarifblatt und AVB Stand 01.04.2024 (Wartezeiten bestehen nicht); Budgethöhen im Tarifblatt weichen von der Produktseite ab, für das Krankenhaus ohne Bedeutung.",
+    "Geprüft am 18.11.2026 an Tariftabellen der Produktseiten und den verlinkten Übersichten von DA Direkt."
   ]
 }

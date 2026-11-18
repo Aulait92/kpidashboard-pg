@@ -31,8 +31,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.da-direkt.de/rechtsschutzversicherung/privat-und-berufsrechtsschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat- und Berufs-Rechtsschutz Komfort",
@@ -56,8 +55,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.da-direkt.de/rechtsschutzversicherung/privat-und-berufsrechtsschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat- und Berufs-Rechtsschutz Top",
@@ -81,8 +79,7 @@
         "wohnen": "optional"
       },
       "quelle": "https://www.da-direkt.de/rechtsschutzversicherung/privat-und-berufsrechtsschutz",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -96,6 +93,7 @@
     "Erfasst ist der Baustein Privat und Beruf; Verkehr und Immobilien (Wohnen) sind eigene Bausteine mit gleichen Stufen und Summen.",
     "Arbeits-Rechtsschutz ausschließbar. Selbstbeteiligung je Fall wählbar, geringer bei von DA Direkt vermitteltem Anwalt.",
     "Wartezeit 3 Monate für Arbeits-, Vertrags-, Steuer- und Sozial-Rechtsschutz; entfällt bei lückenloser Vorversicherung.",
-    "Weltweit: Basis 6 Wochen privat, Komfort 3 Monate, Top 2 Jahre (auch beruflich)."
+    "Weltweit: Basis 6 Wochen privat, Komfort 3 Monate, Top 2 Jahre (auch beruflich).",
+    "Geprüft am 18.11.2026 an Tariftabellen der Produktseiten und den verlinkten Übersichten von DA Direkt."
   ]
 }

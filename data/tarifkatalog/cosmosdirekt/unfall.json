@@ -32,8 +32,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Comfort-Schutz",
@@ -58,8 +57,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.cosmosdirekt.de/unfallversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -72,6 +70,7 @@
     "Invaliditätssumme frei wählbar (Empfehlung der Seite: 5- bis 6-faches Bruttojahresgehalt); Progression wählbar, Beispiele mit 225 % und 500 %.",
     "Unfallrente (ab 50 % Invalidität), Todesfallleistung und Krankenhaustage- und Genesungsgeld frei wählbar; Unfallschutz Plus (Hilfeleistungen) als Zusatz.",
     "Zeckenstich: Infektionen durch Insektenstiche und Tierbisse in beiden Tarifen versichert.",
-    "Knochenbruch-Extrageld Basis bis 250 €, Comfort bis 500 €; 25 % Mehrleistung bei Unfall im bei CosmosDirekt versicherten Pkw."
+    "Knochenbruch-Extrageld Basis bis 250 €, Comfort bis 500 €; 25 % Mehrleistung bei Unfall im bei CosmosDirekt versicherten Pkw.",
+    "Geprüft am 18.11.2026 an den Tarifvergleichen der Produktseiten und den Basisinformationen von CosmosDirekt."
   ]
 }

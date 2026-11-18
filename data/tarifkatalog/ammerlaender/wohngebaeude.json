@@ -27,8 +27,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:a5b34a34-2bb8-48f1-aace-eeeef1555010/Leistungseinschluesse%20im%20Wohngebaeude%20Classic-%20und%20Exclusiv-Schutz.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Exclusiv",
@@ -48,8 +47,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.ammerlaender-versicherung.de/dam/jcr:a5b34a34-2bb8-48f1-aace-eeeef1555010/Leistungseinschluesse%20im%20Wohngebaeude%20Classic-%20und%20Exclusiv-Schutz.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -60,6 +58,7 @@
     "Quelle: „Leistungseinschlüsse in der Wohngebäudeversicherung Classic- und Exclusiv-Schutz“ (VGB 2012, Stand 07/2025, als Bild gelesen) und Produktseite. Nur zwei Tarife, keine Markierung.",
     "Ableitungsrohre außerhalb des Gebäudes und Photovoltaik stehen nicht in der Übersicht (nur Zuleitungsrohre: Exclusiv außerhalb des Grundstücks bis 5 % der VS).",
     "Kosten: Hotel nur Exclusiv (150 Tage je 100 €); Mietausfall Exclusiv bis 30 Monate, wenn die Wohnung unbewohnbar ist. Gleitender Neuwert nicht ausdrücklich genannt.",
-    "Elementar (Überschwemmung, Rückstau, Erdbeben u. a.) als Zusatzversicherung auf der Produktseite; Glas, Technik und Schutzbrief nicht genannt."
+    "Elementar (Überschwemmung, Rückstau, Erdbeben u. a.) als Zusatzversicherung auf der Produktseite; Glas, Technik und Schutzbrief nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Produktbroschüre (Symbole im PDF am Zeichensatz gegengeprüft)."
   ]
 }
