@@ -7,7 +7,7 @@ import { ohneGedankenstriche } from "@/lib/gedankenstriche";
 import { isSupportCustomer } from "@/lib/whatsapp/support-inbox";
 import { decryptSecret } from "@/lib/encryption";
 import { prisma } from "@/lib/prisma";
-import { sendButtons, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
+import { sendButtons, sendFlow, sendTemplate, sendText, type SendResult } from "@/lib/whatsapp/dialog360";
 import { linkLeadToConversation } from "@/lib/whatsapp/lead-link";
 import type { StatusError } from "@/lib/whatsapp/zustellfehler";
 import { waOhneMarker } from "@/lib/wa-format";
@@ -23,7 +23,13 @@ type InboundMessage = {
   // Antwort per Schnellantwort-Knopf einer Vorlage (z. B. „Keine Nachrichten mehr“)
   button?: { text?: string; payload?: string };
   // Antwort auf interaktive Knöpfe/Listen (freie Nachrichten im 24-h-Fenster)
-  interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { id?: string; title?: string } };
+  // nfm_reply: Antwort aus einem WhatsApp Flow (Policen-Strecke v2, response_json als JSON-Text)
+  interactive?: {
+    type?: string;
+    button_reply?: { id?: string; title?: string };
+    list_reply?: { id?: string; title?: string };
+    nfm_reply?: { response_json?: string | Record<string, unknown>; body?: string; name?: string };
+  };
   // Antwort auf eine unserer Nachrichten (z. B. Knopf der Policen-Einwilligung): ID der beantworteten Nachricht
   context?: { id?: string };
   // Fotos und PDFs (z. B. Policen vor dem Termin, lib/policen)
@@ -36,6 +42,8 @@ export function inboundBody(m: InboundMessage): string | null {
   const type = m.type ?? "text";
   if (type === "text") return m.text?.body ?? null;
   if (type === "button") return m.button?.text ?? m.button?.payload ?? "[button]";
+  // Formular-Antwort ohne Inhalte (Dateinamen bleiben draußen, A7)
+  if (type === "interactive" && m.interactive?.nfm_reply) return "Formular „Policen senden“ abgeschickt";
   if (type === "interactive") return m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? "[interactive]";
   // Ohne Dateinamen: ob er gezeigt werden darf (Gesundheitsangaben), entscheidet lib/policen/server.ts danach
   if (type === "image" || type === "document") return "Dokument empfangen";
@@ -425,9 +433,13 @@ async function persistInbound(
     try {
       const policen = await import("@/lib/policen/server");
       const media = type === "image" ? m.image : type === "document" ? m.document : null;
+      const nfm = type === "interactive" ? m.interactive?.nfm_reply : null;
       const r = media
         ? await policen.handleInboundMedia({ conversationId: conversation.id, messageId: inboundMsg.id, medium: { type, ...media }, botErlaubt, now })
-        : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m), waMessageId: m.id ?? null, frageWaMessageId: m.context?.id ?? null }, now);
+        : nfm
+          ? // Policen-Strecke v2: Formular „Policen senden“ abgeschickt (Einwilligung, Dateien, lib/policen/server.ts)
+            await policen.handleFlowAntwort({ conversationId: conversation.id, messageId: inboundMsg.id, responseJson: nfm.response_json ?? null, waMessageId: m.id ?? null, frageWaMessageId: m.context?.id ?? null, botErlaubt, now })
+          : await policen.handlePolicenAntwort(conversation.id, { kind: type, text: body, payload: inboundPayload(m), waMessageId: m.id ?? null, frageWaMessageId: m.context?.id ?? null }, now);
       // Policen auslesen (lib/policen/auslesen, eigener KI-Zugang nur für Dokumente): nach Eingang bzw. Einwilligung im
       // Hintergrund; ohne Schlüssel, Einwilligung mit KI oder freigegebene Sparte passiert nichts
       void import("@/lib/policen/auslesen/server")
@@ -436,7 +448,7 @@ async function persistInbound(
       if (r.handled) {
         // Termin-Strecke (P2): Antwort auf die Einwilligung zur Policen-Bitte → jetzt der Schluss (Adresse bestätigen)
         // Nur das Stichwort „ohne KI“ (A9, weiter = false): keine Antwort auf die Bitte, die Strecke wartet
-        if (!media && botErlaubt && r.weiter !== false) await import("@/lib/whatsapp/termin-strecke").then((x) => x.nachPolicenAntwort(conversation.id, now)).catch(() => false);
+        if (!media && botErlaubt && r.weiter !== false) await import("@/lib/whatsapp/termin-strecke").then((x) => x.nachPolicenAntwort(conversation.id, now, r.art)).catch(() => false);
         return;
       }
       if (media && botErlaubt) botErlaubt = false;
@@ -596,6 +608,12 @@ export async function sendWhatsAppMessage(opts: {
   buttons?: { id: string; title: string }[] | null;
   /** Fußzeile der interaktiven Nachricht (nur mit Knöpfen, höchstens 60 Zeichen; Policen-Einwilligung) */
   footer?: string | null;
+  /**
+   * Policen-Strecke v2 (lib/policen/flow): interaktive Flow-Nachricht (ein Knopf öffnet das Formular) statt Knöpfen,
+   * bzw. eine freigegebene Vorlage mit Flow-Knopf (auch außerhalb des Fensters). body ist dann der gezeigte Text.
+   */
+  flow?: { flowId: string; token: string; cta: string; screen: string; data: Record<string, string> } | null;
+  vorlage?: { name: string; language: string; components: unknown[] } | null;
 }): Promise<SendResult> {
   const account = await prisma.whatsAppAccount.findUnique({
     where: { customerId: opts.customerId },
@@ -612,8 +630,14 @@ export async function sendWhatsAppMessage(opts: {
   // Keine Gedankenstriche an Leads (auch KI-Antworten des Assistenten)
   opts = { ...opts, body: ohneGedankenstriche(opts.body) };
   const knoepfe = opts.buttons?.length && opts.buttons.length <= 3 && opts.buttons.every((b) => b.title.length <= 20) ? opts.buttons : null;
-  const footer = knoepfe && opts.footer ? ohneGedankenstriche(opts.footer) : null;
-  const result = knoepfe ? await sendButtons(apiKey, opts.to, opts.body, knoepfe, footer) : await sendText(apiKey, opts.to, opts.body);
+  const footer = (knoepfe || opts.flow || opts.vorlage) && opts.footer ? ohneGedankenstriche(opts.footer) : null;
+  const result = opts.vorlage
+    ? await sendTemplate(apiKey, opts.to, opts.vorlage.name, opts.vorlage.language, opts.vorlage.components)
+    : opts.flow
+      ? await sendFlow(apiKey, opts.to, { ...opts.flow, body: opts.body, footer })
+      : knoepfe
+        ? await sendButtons(apiKey, opts.to, opts.body, knoepfe, footer)
+        : await sendText(apiKey, opts.to, opts.body);
 
   const now = new Date();
   const conversation = await prisma.conversation.upsert({

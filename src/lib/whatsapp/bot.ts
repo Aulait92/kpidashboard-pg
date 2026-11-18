@@ -1362,13 +1362,22 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
       await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.text, sentBy: "bot", buttons: policen.buttons });
       await sendWhatsAppMessage({ customerId: conversation.customerId, to: conversation.contactPhone, body: policen.folge.text, sentBy: "bot", buttons: policen.folge.buttons, footer: policen.folge.footer });
     }
-    const sent = await sendWhatsAppMessage({
+    // Policen-Strecke v2 (POLICEN_FLOW): statt der Einleitung die Chat-Nachricht mit Formular (lib/policen/flow)
+    const flowSent = schritt?.flow
+      ? await import("@/lib/policen/flow/server")
+          .then((m) => m.sendeFlowNachricht(conversation.id, "bitte", { vorweg: prefix.filter(Boolean).join("\n\n") || null }))
+          .catch((e) => {
+            console.error("[policen flow bitte]", e instanceof Error ? e.name : "Fehler");
+            return null;
+          })
+      : null;
+    const sent = flowSent ?? (await sendWhatsAppMessage({
       customerId: conversation.customerId,
       to: conversation.contactPhone,
       body: [...prefix, finalText].join("\n\n"),
       sentBy: "bot",
       buttons: knoepfe,
-    });
+    }));
     logTestLead(lead, "bot reply sent", { waMessageId: sent.messageId ?? "none", blocked: hits.length > 0, buttons: knoepfe?.length ?? 0 });
     // Merker: Terminvorschlag (Zeiten fürs Nachfassen und für „die erste passt“), Komplettcheck gefragt
     if (zug.vorschlag) await persistInternal(conversation.id, strecke.STRECKE.vorschlag, { starts: zug.vorschlag.starts });

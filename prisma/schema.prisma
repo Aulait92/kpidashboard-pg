@@ -4224,10 +4224,33 @@ model PolicenNachweis {
   vermittlerName     String?
   // whatsapp | buchung | vermittler | system
   quelle             String
+  // SHA-256 (hex) des Wortlauts, dem zugestimmt wurde (Policen-Strecke v2, Formular „Zustimmen & senden“, A3)
+  textHash           String?
   createdAt          DateTime @default(now())
 
   @@index([customerId, phone, createdAt])
   @@index([leadId, createdAt])
+}
+
+// Policen-Strecke v2 (Ole, 19.11.2026, lib/policen/flow): WhatsApp Flow „Policen senden“ je Kunde (WABA), angelegt und
+// veröffentlicht über 360dialog, dazu die Vorlagen mit Flow-Knopf. Nur mit POLICEN_FLOW=1 angelegt und genutzt.
+model PolicenFlow {
+  id          String    @id @default(cuid())
+  customerId  String    @unique
+  // ID des Flows bei Meta (über 360dialog)
+  flowId      String?
+  // Name bei Meta (policen_senden_<hash>) und SHA-256 des veröffentlichten Flow JSON (Änderung = neuer Flow)
+  name        String?
+  jsonHash    String?
+  // entwurf | veroeffentlicht | fehler
+  status      String    @default("entwurf")
+  fehler      String?
+  // Vorlagen mit Flow-Knopf: { [name]: { status, category, grund } }
+  vorlagen    Json?
+  publishedAt DateTime?
+  checkedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 // Verträge je Lead (Cross-Selling, Ole 14.11.2026): Sparte, Beitrag, Datum, optional Versicherer,

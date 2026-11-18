@@ -97,6 +97,40 @@ export function sendButtons(
 }
 
 /**
+ * Interaktive Flow-Nachricht (WhatsApp Flows, nur im 24-Stunden-Fenster; Policen-Strecke v2, lib/policen/flow): Text,
+ * optional Fußzeile, genau ein Knopf (flow_cta), der das Formular öffnet (flow_action navigate mit Startdaten). Meta
+ * erlaubt hier keine zusätzlichen Antwort-Knöpfe. Antwort kommt als interactive.nfm_reply (gateway.ts).
+ */
+export function sendFlow(
+  apiKey: string,
+  to: string,
+  o: { body: string; footer?: string | null; flowId: string; token: string; cta: string; screen: string; data: Record<string, string> },
+): Promise<SendResult> {
+  return postMessage(apiKey, {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "interactive",
+    interactive: {
+      type: "flow",
+      body: { text: o.body.slice(0, 1024) },
+      ...(o.footer && o.footer.length <= 60 ? { footer: { text: o.footer } } : {}),
+      action: {
+        name: "flow",
+        parameters: {
+          flow_message_version: "3",
+          flow_token: o.token,
+          flow_id: o.flowId,
+          flow_cta: o.cta,
+          flow_action: "navigate",
+          flow_action_payload: { screen: o.screen, data: o.data },
+        },
+      },
+    },
+  });
+}
+
+/**
  * Dokument (z. B. PDF) senden, nur innerhalb des 24-Stunden-Fensters (wie Freitext). Cloud-API-Format
  * `type: "document"` mit öffentlicher HTTPS-Adresse (`link`); Meta lädt die Datei dort selbst.
  */
