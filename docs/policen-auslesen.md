@@ -90,15 +90,19 @@ ungültig“ höchstens einmal am Tag.
 
 ## Offen
 
-- Einwilligungstext mit KI und Nachweis (`PolicenNachweis`, `ki = true`) kommen aus „Policen per WhatsApp“; bis dahin
-  liest die App nichts aus.
-- Ablage im privaten Bucket (`LeadDocument.storageKey`, Policen per WhatsApp): beim Zusammenführen den Inhalt auch von
-  dort laden (heute `LeadDocument.data`).
 - AVV-Ergänzung § 1a/§ 4 (OpenAI Ireland Ltd. als Unterauftragnehmer) und Datenschutzhinweis (c) mit KI-Absatz vor dem
   breiten Einsatz; Freischaltung je Vermittler bei Bedarf mit `POLICEN_AUSLESEN_KUNDEN`.
+- Nachweis „keine Speicherung“ (OpenAI EU-Projekt mit ZDR) schriftlich ablegen und im Admin hinterlegen, erst dann
+  PKV/BU/Leben.
+- Neuigkeit und Webseiten-Eintrag (unten) anlegen, sobald Ole den Livegang bestätigt.
 
-## Vorgemerkt: Neuigkeit (erst anlegen, wenn Einwilligung mit KI live ist)
+## Vorgemerkt: Neuigkeit und Webseite (erst anlegen, wenn Ole den Livegang bestätigt)
 
 `kind` neu, `audience` alle: „**Vergleichsblatt in der Terminvorbereitung:** Hat Ihr Kunde seine Policen per WhatsApp
 geschickt und dem Auslesen zugestimmt, sehen Sie seine Verträge auf einen Blick: Beiträge im Monat, Kündigungstermine
 und was fehlt. Prüfen Sie die Werte und übernehmen Sie Verträge mit einem Klick in Ihren Bestand.“
+
+Webseite (`docs/webseite-offen.md`, Du-Form): „Vergleichsblatt: Schickt dein Kunde seine Policen per WhatsApp und
+stimmt dem Auslesen zu, siehst du vor dem Termin seine Verträge auf einen Blick (Beiträge im Monat, Kündigungstermine,
+fehlende Bausteine).“ Nur Sachversicherungen nennen, Kranken/BU/Leben „demnächst“, keine Ersparnisversprechen, keine Preise.
+Der Eintrag vom 18.11. („Kein automatisches Auslesen nennen“) ist dann zu ersetzen.
