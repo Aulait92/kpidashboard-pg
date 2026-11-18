@@ -312,7 +312,7 @@ export function ReferralLinkButton({ leadId, existingCustomerId, readOnly }: { l
     });
   };
   return (
-    <div className="space-y-2">
+    <div className="min-w-0 max-w-full space-y-2" data-referral-share>
       <form action={action} className="flex flex-wrap items-center gap-2">
         {leadId ? <input type="hidden" name="leadId" value={leadId} /> : null}
         {existingCustomerId ? <input type="hidden" name="existingCustomerId" value={existingCustomerId} /> : null}
@@ -353,7 +353,7 @@ export function ReferralLinkButton({ leadId, existingCustomerId, readOnly }: { l
           <p className="font-medium">{state.error}</p>
           {state.text ? (
             <>
-              <p className="mt-1 whitespace-pre-wrap text-[color:var(--muted)]">{state.text}</p>
+              <p className="mt-1 whitespace-pre-wrap [overflow-wrap:anywhere] text-[color:var(--muted)]">{state.text}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button
                   icon={copied ? Check : Copy}

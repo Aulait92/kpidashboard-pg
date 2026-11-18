@@ -308,7 +308,7 @@ export default async function EmpfehlungenPage({ searchParams }: { searchParams:
                 <p>
                   <b>E-Mail-Signatur:</b> Diese Zeile unter Ihre Mails setzen.
                 </p>
-                <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs">{signatureLine(generalUrl, offer)}</p>
+                <p className="rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] p-3 text-xs [overflow-wrap:anywhere]" data-empfehlung-signatur>{signatureLine(generalUrl, offer)}</p>
                 <CopyText text={signatureLine(generalUrl, offer)} label="Zeile kopieren" />
                 <p className="text-sm text-[color:var(--muted)]">
                   Die Signatur nutzt einen allgemeinen Link. Ihr Kunde kann dort seine Handynummer angeben und bekommt seinen persönlichen Link; sonst kommt die
