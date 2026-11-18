@@ -78,3 +78,19 @@ export function nennungsRegel(an: Ansprache, person: VermittlerName, voll: strin
     .join("\n");
 }
 
+
+const FIRMA_WORT = /^(company|co\.?|inc\.?|ltd\.?|ag|ug|gmbh|kg|ohg|gbr|e\.?\s?k\.?|group|gruppe|holding|services?|solutions|consulting|partner|agentur|versicherung(en)?|finanz\w*|makler\w*|büro|buero|&|und|test)$/i;
+
+/**
+ * Name in der Begrüßung des Vermittlers in der App („Guten Abend, Herr Kannapinn“, Ole 18.11.2026): Sie mit Anrede
+ * „Herr/Frau Nachname“, ohne Anrede Vor- und Nachname; Du der Vorname. Kein plausibler Personenname (z. B. Firmenname
+ * im Namensfeld, nur ein Wort): null, dann nur „Guten Abend“.
+ */
+export function grussName(o: { name?: string | null; anrede?: Salutation | null; du?: boolean }): string | null {
+  const name = (o.name ?? "").replace(/\s+/g, " ").trim();
+  const words = name.split(" ").filter(Boolean);
+  const vorname = vornameAus(name);
+  if (words.length < 2 || !vorname || !/^\p{Lu}[\p{L}'-]+$/u.test(words.at(-1)!) || words.some((w) => FIRMA_WORT.test(w))) return null;
+  if (o.du) return vorname;
+  return o.anrede ? `${o.anrede} ${words.at(-1)}` : name;
+}
