@@ -143,6 +143,7 @@ Stand: im Code fertig, **Schalter `MAIL_ANTWORT_EINGANG` aus** (Standard) bis zu
   Nr. 2 BGB 30 Jahre); Rechtsgrundlage Art. 17 Abs. 3 lit. e DSGVO und Hinweis im Datenschutzhinweis für Leads;
   AVV: Aufbewahrung über die Löschung hinaus als Weisung des Vermittlers; Bedrock EU vor dem Einschalten in
   `SUBPROCESSORS` aufnehmen.
+
 Stand 18.11.2026: M4 und M6 umgesetzt. Mail-Schritte der Abfolgen über `lib/mail/abfolgen-mail.ts` (zentral über
 `sendeVorlagenMail`), Begleit-Abfolgen `nicht_erreicht_mail` und `unterlagen` (laufen neben den anderen), Haken mit einem
 Tipp über `lib/mail/ein-tipp.ts` (Danke-Mail im Abschluss-Blatt, „Tür offen“ bei „Kein Interesse“), Aufgaben „Alten
