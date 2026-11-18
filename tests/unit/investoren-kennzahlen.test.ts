@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { bindung, gegenprobe, investorKennzahlen, kohortenAb, margeMonat, MIN_KOHORTE, type KostenMonat } from "@/lib/investoren/kennzahlen";
 import { monthRange, type LedgerRow, type Stream } from "@/lib/revenue-ledger";
+import { bindungZeilen, kacheln, OHNE_KOSTEN } from "@/lib/investoren/darstellung";
+import type { InvestorenDaten } from "@/lib/investoren/server";
 
 // Rechenkern der Investoren-Kennzahlen (Geld › Auswertung): Bindung 3/6/12, NRR/GRR, CLV, CAC + Amortisation,
 // Kohorten erst ab 5 Kunden, Bruttomarge mit KI-Anteil, Abo vs. Pay-per-Lead.
@@ -148,5 +150,28 @@ describe("Gegenprobe mit der Übersicht", () => {
   it("Abweichung wird gemeldet", () => {
     const g = gegenprobe(k, { ...z, headline: { ...z.headline, mrr: 2500 } });
     expect(g.filter((x) => !x.gleich).map((x) => x.name)).toEqual(["MRR"]);
+  });
+});
+
+describe("Darstellung ohne Kosten und noch nicht messbare Bindung (Usability-Check 18.11.2026)", () => {
+  const daten = (kosten: KostenMonat[]) => ({ k: investorKennzahlen({ rows: ROWS, months: MONTHS, current: "2026-07", kosten, gruenderMonat: 1000 }) }) as unknown as InvestorenDaten;
+
+  it("ohne erfasste Akquisekosten: „Nicht berechenbar, Kosten fehlen“ statt „0,0 Mon.“ und „CAC 0 €“", () => {
+    const ks = kacheln(daten(KOSTEN.map((c) => ({ ...c, akquise: 0 }))));
+    const amort = ks.find((x) => x.label === "Amortisation")!;
+    expect(amort).toMatchObject({ wert: "Nicht berechenbar", hinweis: "Kosten fehlen" });
+    expect(amort.zeilen.find((z) => z.label === "CAC")?.wert).toBe(OHNE_KOSTEN);
+    expect(ks.find((x) => x.label === "Kundenwert : CAC")?.wert).toBe("Nicht berechenbar");
+    expect(JSON.stringify(ks)).not.toMatch(/0,0\sMon\.|CAC 0\s€/);
+    // mit Kosten wie bisher
+    expect(kacheln(daten(KOSTEN)).find((x) => x.label === "Amortisation")?.hinweis).toMatch(/^CAC 150\s€$/);
+  });
+
+  it("Bindung: „messbar ab …“ als eigener Hinweis, nicht in der Spalte „Kunden gehalten“", () => {
+    const zeilen = bindungZeilen(daten(KOSTEN).k);
+    expect(zeilen[0]).toMatchObject({ zeitraum: "3 Monate", hinweis: null });
+    expect(zeilen[0].kunden).toMatch(/^2 von 3/);
+    expect(zeilen[2].hinweis).toMatch(/^messbar ab /);
+    expect(zeilen[2].kunden).not.toMatch(/^ab /);
   });
 });

@@ -21,7 +21,7 @@ export function tabellen(d: InvestorenDaten): Tabelle[] {
   out.push({
     titel: `Bindung bis ${monat(k.lastComplete)}`,
     kopf: ["Zeitraum", "Basis", "Kunden gehalten", "NRR (netto)", "GRR (brutto)"],
-    zeilen: bindungZeilen(k).map((b) => [b.zeitraum, b.basis, b.kunden, b.nrr, b.grr]),
+    zeilen: bindungZeilen(k).map((b) => (b.hinweis ? [b.zeitraum, b.basis, b.hinweis, "", ""] : [b.zeitraum, b.basis, b.kunden, b.nrr, b.grr])),
   });
   out.push({
     titel: "MRR-Bewegung",

@@ -5,13 +5,18 @@ import { monthLabel } from "@/lib/revenue-ledger";
 import { MIN_KOHORTE, MAX_LAUFZEIT, CAC_FENSTER, type InvestorKennzahlen } from "@/lib/investoren/kennzahlen";
 import type { InvestorenDaten } from "@/lib/investoren/server";
 import { SICHT_LABEL } from "@/lib/zahlen-sicht";
+import { NOCH_KEINE_DATEN } from "@/lib/platzhalter";
 
 export const eur = (v: number) => v.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-export const pct = (x: number | null | undefined, d = 0) => (x == null ? "–" : `${(x * 100).toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: d })} %`);
-export const monate = (v: number | null | undefined) => (v == null ? "–" : `${v.toLocaleString("de-DE", { maximumFractionDigits: 1, minimumFractionDigits: v < 10 ? 1 : 0 })} Mon.`);
-export const faktor = (v: number | null | undefined) => (v == null ? "–" : `${v.toLocaleString("de-DE", { maximumFractionDigits: 1 })}×`);
+export const pct = (x: number | null | undefined, d = 0) => (x == null ? NOCH_KEINE_DATEN : `${(x * 100).toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: d })} %`);
+export const monate = (v: number | null | undefined) => (v == null ? NOCH_KEINE_DATEN : `${v.toLocaleString("de-DE", { maximumFractionDigits: 1, minimumFractionDigits: v < 10 ? 1 : 0 })} Mon.`);
+export const faktor = (v: number | null | undefined) => (v == null ? NOCH_KEINE_DATEN : `${v.toLocaleString("de-DE", { maximumFractionDigits: 1 })}×`);
 export const signed = (n: number) => (Math.abs(n) < 0.5 ? "0 €" : `${n > 0 ? "+" : "−"}${eur(Math.abs(n))}`);
 export const monat = (k: string) => monthLabel(k, true);
+
+/** Ohne erfasste Akquisekosten sind CAC, Amortisation und Kundenwert : CAC nicht berechenbar (statt „0 €“, „0,0 Mon.“). */
+export const OHNE_KOSTEN = "Nicht berechenbar, Kosten fehlen";
+const ohneKosten = (k: InvestorKennzahlen) => k.cac.neukunden > 0 && !(k.cac.kosten > 0);
 
 /** Definitionen „So rechnen wir“: ein Satz je Kennzahl. */
 export const DEFINITIONEN: { name: string; satz: string }[] = [
@@ -37,6 +42,7 @@ export function kacheln(d: InvestorenDaten): Kachel[] {
   const b = k.nrrKachel;
   const erste = k.bindung.find((x) => x.ab);
   const amort = k.cac.amortisation;
+  const keineKosten = ohneKosten(k);
   return [
     {
       label: "MRR",
@@ -44,16 +50,16 @@ export function kacheln(d: InvestorenDaten): Kachel[] {
       hinweis: `ARR ${eur(k.arr)}${k.wachstum != null ? ` · ${k.wachstum >= 0 ? "+" : "−"}${pct(Math.abs(k.wachstum))}` : ""}`,
       zeilen: [
         { label: `MRR ${monat(k.lastComplete)}`, wert: eur(k.mrrVormonat) },
-        { label: "Wachstum zum Vormonat", wert: k.wachstum == null ? "–" : pct(k.wachstum, 1) },
+        { label: "Wachstum zum Vormonat", wert: k.wachstum == null ? NOCH_KEINE_DATEN : pct(k.wachstum, 1) },
         { label: `Aktive Kunden ${monat(k.lastComplete)}`, wert: String(k.aktiveKunden) },
       ],
       text: def("MRR"),
     },
     {
       label: "Umsatzbindung",
-      wert: b?.nrr != null ? pct(b.nrr) : "–",
+      wert: b?.nrr != null ? pct(b.nrr) : NOCH_KEINE_DATEN,
       hinweis: b ? `nach ${b.monate} Monaten` : erste?.ab ? `ab ${monat(erste.ab)}` : "noch keine Kunden",
-      zeilen: k.bindung.map((x) => ({ label: `Nach ${x.monate} Monaten`, wert: x.nrr != null ? `${pct(x.nrr)} (Kunden ${pct(x.kundenBindung)})` : x.ab ? `ab ${monat(x.ab)}` : "–" })),
+      zeilen: k.bindung.map((x) => ({ label: `Nach ${x.monate} Monaten`, wert: x.nrr != null ? `${pct(x.nrr)} (Kunden ${pct(x.kundenBindung)})` : x.ab ? `ab ${monat(x.ab)}` : NOCH_KEINE_DATEN })),
       text: def("Umsatzbindung (NRR)"),
     },
     {
@@ -65,40 +71,48 @@ export function kacheln(d: InvestorenDaten): Kachel[] {
     },
     {
       label: "Amortisation",
-      wert: monate(amort),
-      hinweis: k.cac.cac != null ? `CAC ${eur(k.cac.cac)}` : "noch keine Neukunden",
+      wert: keineKosten ? "Nicht berechenbar" : monate(amort),
+      hinweis: keineKosten ? "Kosten fehlen" : k.cac.cac != null ? `CAC ${eur(k.cac.cac)}` : "noch keine Neukunden",
       zeilen: [
-        { label: "CAC", wert: k.cac.cac != null ? eur(k.cac.cac) : "–" },
-        { label: "CAC mit Gründerzeit", wert: k.cac.cacMitGruender != null ? eur(k.cac.cacMitGruender) : "–" },
+        { label: "CAC", wert: keineKosten ? OHNE_KOSTEN : k.cac.cac != null ? eur(k.cac.cac) : NOCH_KEINE_DATEN },
+        { label: "CAC mit Gründerzeit", wert: k.cac.cacMitGruender != null ? eur(k.cac.cacMitGruender) : NOCH_KEINE_DATEN },
         { label: "Amortisation mit Gründerzeit", wert: monate(k.cac.amortisationMitGruender) },
-        { label: `Neue Kunden (${k.cac.fenster.map((m) => monthLabel(m)).join(", ") || "–"})`, wert: String(k.cac.neukunden) },
-        { label: "Rohertrag je Kunde und Monat", wert: k.cac.rohertragJeKunde != null ? eur(k.cac.rohertragJeKunde) : "–" },
+        { label: `Neue Kunden (${k.cac.fenster.map((m) => monthLabel(m)).join(", ") || NOCH_KEINE_DATEN})`, wert: String(k.cac.neukunden) },
+        { label: "Rohertrag je Kunde und Monat", wert: k.cac.rohertragJeKunde != null ? eur(k.cac.rohertragJeKunde) : NOCH_KEINE_DATEN },
       ],
       text: `${def("CAC")} ${def("Amortisation")}`,
     },
     {
       label: "Kundenwert : CAC",
-      wert: faktor(k.clv.zuCac),
+      wert: keineKosten ? "Nicht berechenbar" : faktor(k.clv.zuCac),
       hinweis: k.clv.wert != null ? `CLV ${eur(k.clv.wert)}` : "ab 2 Monaten Umsatz",
       zeilen: [
-        { label: "Kundenwert (CLV)", wert: k.clv.wert != null ? eur(k.clv.wert) : "–" },
-        { label: "Erwartete Laufzeit", wert: k.kuendigung ? `${monate(k.clv.laufzeit)}${k.clv.laufzeitGedeckelt ? " (gedeckelt)" : ""}` : "–" },
-        { label: "Kündigungsquote je Monat", wert: k.kuendigung ? pct(k.kuendigung.quote, 1) : "–" },
+        { label: "Kundenwert (CLV)", wert: k.clv.wert != null ? eur(k.clv.wert) : NOCH_KEINE_DATEN },
+        { label: "Erwartete Laufzeit", wert: k.kuendigung ? `${monate(k.clv.laufzeit)}${k.clv.laufzeitGedeckelt ? " (gedeckelt)" : ""}` : NOCH_KEINE_DATEN },
+        { label: "Kündigungsquote je Monat", wert: k.kuendigung ? pct(k.kuendigung.quote, 1) : NOCH_KEINE_DATEN },
       ],
       text: `${def("Kundenwert (CLV)")} Geteilt durch den CAC ohne Gründerzeit, wie die Amortisation.`,
     },
   ];
 }
 
-/** Tabellenzeilen „Bindung“: je Zeitraum Kunden, netto, brutto oder „ab Monat“. */
+/**
+ * Tabellenzeilen „Bindung“: je Zeitraum Kunden, netto, brutto. Noch nicht messbar: eigener Hinweis „messbar ab Jan 2027“
+ * (Usability-Check 18.11.2026; stand vorher in der Spalte „Kunden gehalten“).
+ */
 export function bindungZeilen(k: InvestorKennzahlen) {
-  return k.bindung.map((b) => ({
-    zeitraum: `${b.monate} Monate`,
-    basis: monat(b.basis),
-    kunden: b.kundenBindung != null ? `${b.gehalten} von ${b.kunden} (${pct(b.kundenBindung)})` : b.ab ? `ab ${monat(b.ab)}` : "–",
-    nrr: pct(b.nrr),
-    grr: pct(b.grr),
-  }));
+  return k.bindung.map((b) => {
+    const messbar = b.kundenBindung != null;
+    return {
+      zeitraum: `${b.monate} Monate`,
+      basis: monat(b.basis),
+      kunden: messbar ? `${b.gehalten} von ${b.kunden} (${pct(b.kundenBindung)})` : NOCH_KEINE_DATEN,
+      nrr: pct(b.nrr),
+      grr: pct(b.grr),
+      /** „messbar ab Jan 2027“, solange der Zeitraum noch nicht erreicht ist */
+      hinweis: !messbar && b.ab ? `messbar ab ${monat(b.ab)}` : null,
+    };
+  });
 }
 
 export function sichtText(d: InvestorenDaten) {

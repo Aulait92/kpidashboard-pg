@@ -96,9 +96,17 @@ export function Auswertung({ d }: { d: InvestorenDaten }) {
                 {bindungZeilen(k).map((b) => (
                   <tr key={b.zeitraum} className="border-t border-[color:var(--border)]">
                     <td className={tdL}>{b.zeitraum}</td>
-                    <td className={td}>{b.kunden}</td>
-                    <td className={cn(td, "font-semibold")}>{b.nrr}</td>
-                    <td className={td}>{b.grr}</td>
+                    {b.hinweis ? (
+                      <td colSpan={3} className={cn(td, "text-left text-[color:var(--muted)]")}>
+                        {b.hinweis}
+                      </td>
+                    ) : (
+                      <>
+                        <td className={td}>{b.kunden}</td>
+                        <td className={cn(td, "font-semibold")}>{b.nrr}</td>
+                        <td className={td}>{b.grr}</td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
