@@ -87,3 +87,17 @@ export async function bisherTarifeAction(sparte: string, gesellschaft: string): 
   const tarife = tarifeFuer(await ladeTarifkatalogAktuell(), String(sparte ?? "").slice(0, 80), [g]).slice(0, 30);
   return { ok: true, tarife: tarife.map((t) => ({ id: t.id, name: t.name, kurz: t.kurz, gesellschaft: t.gesellschaftName, werte: katalogWerte(t) })) };
 }
+
+/**
+ * Versicherer mit Tarifen dieser Sparte im Katalog (Ole, 18.11.2026: „bei der Katzenversicherung nur die
+ * Katzenversicherungsgesellschaften“). Für die Auswahl beim bisherigen Vertrag der Tier-Kranken- und OP-Sparten.
+ */
+export async function bisherGesellschaftenAction(sparte: string): Promise<{ ok: true; gesellschaften: { key: string; name: string }[] } | Fehler> {
+  const ctx = await getBuyerContext();
+  if (!ctx) return { ok: false, error: "Bitte neu anmelden." };
+  if (!neueTerminvorbereitung(ctx)) return { ok: false, error: "Nicht verfügbar." };
+  const tarife = tarifeFuer(await ladeTarifkatalogAktuell(), String(sparte ?? "").slice(0, 80));
+  const map = new Map<string, string>();
+  for (const t of tarife) if (!map.has(t.gesellschaft)) map.set(t.gesellschaft, t.gesellschaftName);
+  return { ok: true, gesellschaften: [...map].map(([key, name]) => ({ key, name })) };
+}

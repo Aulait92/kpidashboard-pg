@@ -27,7 +27,7 @@ import {
   unterschiedText,
   type BisherVertrag,
 } from "@/lib/bisheriger-vertrag";
-import { bisherTarifeAction, type BisherTarif } from "./neu-actions";
+import { bisherGesellschaftenAction, bisherTarifeAction, type BisherTarif } from "./neu-actions";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 const geld = (n: number | null) => (n == null ? "" : n.toFixed(2).replace(".", ",").replace(/,00$/, ""));
@@ -204,6 +204,24 @@ function BisherFormular({
       setEigenerName(false);
     }
   }
+  // Tier-Kranken und Tier-OP: nur Versicherer, die diese Sparte anbieten (Ole, 18.11.2026); sonst alle Versicherer
+  const nurSparte = /^(katze|hund|pferd)-/.test(sp.key);
+  const [spartenGes, setSpartenGes] = useState<{ key: string; name: string }[] | null>(null);
+  useEffect(() => {
+    if (!open || !nurSparte) return;
+    let aktuell = true;
+    void bisherGesellschaftenAction(sp.key).then((r) => {
+      if (aktuell && r.ok && r.gesellschaften.length) setSpartenGes(r.gesellschaften);
+    });
+    return () => {
+      aktuell = false;
+    };
+  }, [open, nurSparte, sp.key]);
+  const auswahl = (
+    nurSparte && spartenGes
+      ? spartenGes
+      : [...new Map([...gesellschaften, ...bekannteGesellschaften().map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()]
+  ).sort((x, y) => x.name.localeCompare(y.name, "de"));
   const gKey = gesellschaftAusText(e.gesellschaft);
   // Tarife der Gesellschaft in dieser Sparte aus dem ganzen Katalog
   useEffect(() => {
@@ -291,12 +309,10 @@ function BisherFormular({
             data-bisher-versicherer
           />
           <datalist id={`bisher-ges-${sp.key}`}>
-            {/* Alle Versicherer, nicht nur die mit Tarifen im Katalog, alphabetisch (Ole, 18.11.2026: SIGNAL IDUNA fehlte) */}
-            {[...new Map([...gesellschaften, ...bekannteGesellschaften().map((key) => ({ key, name: gesellschaftName(key) }))].map((g) => [g.key, g])).values()]
-              .sort((x, y) => x.name.localeCompare(y.name, "de"))
-              .map((g) => (
-                <option key={g.key} value={g.name} />
-              ))}
+            {/* Alle Versicherer alphabetisch (SIGNAL IDUNA fehlte), bei Tier-Kranken/OP nur die der Sparte (Ole, 18.11.2026) */}
+            {auswahl.map((g) => (
+              <option key={g.key} value={g.name} />
+            ))}
           </datalist>
         </label>
 
