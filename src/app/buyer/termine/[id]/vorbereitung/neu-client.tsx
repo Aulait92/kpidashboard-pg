@@ -704,6 +704,7 @@ function Angebote(p: {
         vorsorge={p.daten.vorsorge ?? null}
         kunde={p.daten.kunde || "der Kunde"}
         speichern={{ status: p.status, erneut: p.erneut }}
+        gesellschaften={p.daten.gesellschaften}
       />
 
       {/* Schritte klar getrennt (Ole, 17.11.2026): mehr Luft um die Trennlinie */}
