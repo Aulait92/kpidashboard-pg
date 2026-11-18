@@ -511,15 +511,17 @@ export async function runAngebotVorabCheck(now = new Date(), push: PushFn = stan
       stoppedAt: null,
       kind: { in: ANGEBOT_ABFOLGEN },
       nextAt: { not: null, lte: new Date(now.getTime() + 3 * DAY) },
-      lead: { erasedAt: null, customer: { dormantSince: null } },
+      // „Alle pausieren“ am Kontakt (P6): kein Vorab-Check, solange pausiert
+      lead: { erasedAt: null, customer: { dormantSince: null }, nachrichtenPausiertAt: null },
     },
-    select: { id: true, leadId: true, kind: true, step: true, nextAt: true, vorabCheckStep: true },
+    select: { id: true, leadId: true, kind: true, step: true, nextAt: true, vorabCheckStep: true, uebersprungen: true },
     take: 200,
   });
   let gesendet = 0;
   for (const s of seqs) {
     const step = SEQUENCES[s.kind as SequenceKind]?.steps[s.step];
-    if (!step || step.action === "call" || s.vorabCheckStep === s.step || !s.nextAt) continue;
+    // Übersprungener Schritt (P6): nichts anzukündigen
+    if (!step || step.action === "call" || s.vorabCheckStep === s.step || !s.nextAt || s.uebersprungen.includes(s.step)) continue;
     const versand = naechsterVersand(new Date(Math.max(s.nextAt.getTime(), now.getTime())));
     if (!vorabCheckFaellig({ now, versand })) continue;
     // Beanspruchen (nie doppelt, auch bei parallelen Läufen)

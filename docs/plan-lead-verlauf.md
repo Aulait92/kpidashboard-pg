@@ -216,3 +216,38 @@ Soll-Verlauf nach der Buchung (Sie-Fassung, Du analog):
 6. **Einladung genau einmal**, sobald Adresse und Komplettcheck feststehen. Ohne Antwort mit dem aktuellen Stand an die bekannte Adresse: 15 Min. nach der letzten Nachricht, bei Terminbeginn in unter 3 Std. nach 5 Min., spätestens 60 Min. vor Beginn (nicht, solange der Lead „Andere Adresse“ gewählt und keine neue genannt hat). Änderung danach (neue Adresse, 45 Min., andere Zeit): EINE Aktualisierung derselben Einladung (gleiche UID, SEQUENCE + 1), bei neuer Adresse nur an die neue.
 7. **Policen-Erinnerungen** (höchstens 2): 24 Std. nach der Buchung, wenn zwischen Buchung und Termin mehr als 2 Tage liegen (im 24-h-Fenster als Freitext, spätestens 30 Min. vor Fensterende; die Vorlage ist nur vorbereitet), mit „Keine Nachrichten mehr? Antworten Sie einfach STOP.“; dazu eine Zeile im Nutzensatz der Vortags-Erinnerung. Nur mit `darfPolicenErinnern` (Policen-Modul: Opt-in aus der Buchung, kein „Lieber nicht“, kein Widerruf, kein STOPP, kein Dokument, Termin steht); Schluss auch bei „habe keine“.
 
+## Umgesetzt: Erstnachricht v8, Zwischenfrage, Vermittler-Nennung (Ole, Testchat 17.11.2026, abends)
+
+Ersetzt für die Punkte 1 und 2 das SOLL oben und die Entscheidung 4 („nicht fett“): Die Frage ist in v8 wieder fett,
+wie in Oles neuem Text.
+
+**1. Erstkontakt (SOLL neu, umgesetzt):** Vorlage v8 je Produkt mit PDF der Erstinformation im Kopf, kurz (klappt in
+WhatsApp Desktop nicht mehr ein), Fußzeile fest „KI-Assistent · Oben: Erstinformation (gesetzlich)“. Texte und
+Platzhalter: `docs/vorlagen-erstanschreiben-v8.md`. Bis zur Freigabe bei Meta gehen v7 bzw. v6 raus (`PLATZHALTER_AB`).
+
+> Hallo Frau Becker, danke für Ihre Anfrage zum Privatschutz! Hier schreibt der digitale Assistent von Herrn Kannapinn.
+>
+> **Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?**
+
+**2. Zwischenfrage und Terminvorschlag (SOLL neu, umgesetzt für Privatschutz):** Öffnungsfrage → Antwort → genau eine
+Zwischenfrage mit Knöpfen (die App stellt sie, `src/lib/whatsapp/zwischenfrage.ts`) → Antwort → Terminvorschlag, der die
+Antwort aufgreift. Terminwunsch, Rückfrage, Absage oder Freitext: nicht weiterfragen, direkt der Termin. Andere Produkte:
+Vorschlag in `docs/vorschlag-zwischenfrage.md`.
+
+> Danke! Damit Herr Kannapinn Ihnen im Termin gleich passende Beiträge zeigen kann: Wer soll mitversichert sein?
+> [Nur ich] [Zu zweit] [Familie mit Kindern]
+>
+> (Lead: „Nur ich“)
+>
+> Danke! In einem kurzen Videotermin zeigt Ihnen Herr Kannapinn, was Haftpflicht und Hausrat für Sie kosten und worauf
+> Sie achten sollten. Passt Ihnen heute um 16 Uhr oder morgen um 10 Uhr?
+> [Heute 16 Uhr] [Morgen 10 Uhr] [Andere Zeit]
+
+**Vermittler-Nennung (überall):** gesiezt immer „Herr/Frau Nachname“, gebeugt („Herr Kannapinn zeigt Ihnen“, „von
+Herrn Kannapinn“, „Termin mit Herrn Kannapinn“), Du der Vorname; ohne Anrede Vor- und Nachname. Zentral in
+`src/lib/vermittler-nennung.ts` (`vermittlerName`, Sicherheitsnetz `vermittlerNennungKorrigieren` für KI-Antworten,
+Prompt-Regel `nennungsRegel`). Anrede ist Pflicht in der Einrichtung (Erstinformation, „Herr“, „Frau“ oder „Keine“).
+Kunden ohne Anrede: `GET /api/ops/diagnose?q=vermittler-anrede`.
+
+**Für P8 (Onboarding, Beispielverlauf in WhatsApp-Optik):** dieselben Bausteine nutzen, nicht abschreiben:
+`erstanschreibenText`, `zwischenfrageText` und `zwischenKnoepfe`, `terminVorschlagText` und `terminKnoepfe`.

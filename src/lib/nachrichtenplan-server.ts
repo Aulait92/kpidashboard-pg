@@ -1,5 +1,7 @@
-// Nachrichtenplan je Lead laden (Daten für lib/nachrichtenplan.ts planeNachrichten). Noch ohne Oberfläche (P6).
+// Nachrichtenplan je Lead laden (Daten für lib/nachrichtenplan.ts planeNachrichten). Oberfläche: „Nächste Nachrichten“ am
+// Kontakt (Paket P6, components/naechste-nachrichten.tsx); dazu die Zählung für „Heute“ (ladeAutomatischeNachrichten).
 
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { a, anredeZeile, asAnsprache, type Ansprache } from "@/lib/ansprache";
 import type { VorlageKey } from "@/lib/mail/vorlagen";
@@ -11,7 +13,47 @@ import { terminNutzenSatz, vermittlerName, zeitKurz } from "@/lib/whatsapp/gespr
 import { istAngebotsAbfolge, topicOf } from "@/lib/lead-sequences";
 import { leadLabel } from "@/lib/showup";
 import { ANTWORT_WARTEZEIT_MS, anrufStartZeitpunkt } from "@/lib/anruf-ausloeser";
-import { planeNachrichten, type PlanEintrag } from "@/lib/nachrichtenplan";
+import { planeNachrichten, zaehleAutomatische, type PlanEintrag, type PlanEingabe } from "@/lib/nachrichtenplan";
+
+const ABFOLGE_SELECT = {
+  id: true,
+  kind: true,
+  step: true,
+  startedAt: true,
+  nextAt: true,
+  stoppedAt: true,
+  vorabCheckStep: true,
+  neustartAt: true,
+  uebersprungen: true,
+  daten: true,
+} as const;
+
+const TERMIN_SELECT = {
+  id: true,
+  leadId: true,
+  startsAt: true,
+  createdAt: true,
+  endsAt: true,
+  mode: true,
+  meetUrl: true,
+  status: true,
+  komplettcheck: true,
+  reminderSentAt: true,
+  soonReminderSentAt: true,
+  startReminderSentAt: true,
+  startPushAt: true,
+  rescheduleRequestedAt: true,
+  attendance: true,
+  erinnerungenUebersprungen: true,
+} as const;
+
+/** Kann WhatsApp an den Lead gehen (Nummer, Einwilligung, kein STOPP, erreichbar oder hat selbst geschrieben)? */
+function waMoeglich(
+  lead: { phone: string | null; waConsent: string | null; waUnavailableAt: Date | null },
+  conv: { optedOutAt: Date | null; _count: { messages: number } } | null | undefined,
+): boolean {
+  return !!lead.phone && lead.waConsent !== "nein" && !conv?.optedOutAt && (!lead.waUnavailableAt || (conv?._count.messages ?? 0) > 0);
+}
 
 function formAnswers(raw: unknown): { label: string; value: string }[] {
   if (!Array.isArray(raw)) return [];
@@ -42,6 +84,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
       lastCallAttemptAt: true,
       followUpAt: true,
       followUpNote: true,
+      nachrichtenPausiertAt: true,
       customer: { select: { name: true, leadAddress: true } },
     },
   });
@@ -67,9 +110,10 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
         rescheduleRequestedAt: true,
         attendance: true,
         conversationId: true,
+        erinnerungenUebersprungen: true,
       },
     }),
-    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: { id: true, kind: true, step: true, startedAt: true, nextAt: true, stoppedAt: true, vorabCheckStep: true, neustartAt: true, daten: true } }),
+    prisma.leadSequence.findMany({ where: { leadId, stoppedAt: null }, select: ABFOLGE_SELECT }),
     prisma.conversation.findFirst({
       where: { customerId: lead.customerId, OR: [{ leadId }, ...(lead.phone ? [{ contactPhone: lead.phone }] : [])] },
       orderBy: { lastMessageAt: "desc" },
@@ -92,7 +136,7 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     wann[t.id] = zeitKurz(t.startsAt, vortag);
     mailBetreff[t.id] = erinnerungsBetreff({ start: t.startsAt, now: vortag, mode: t.mode === "video" ? "video" : "phone", an, person });
   }
-  const whatsapp = !!lead.phone && lead.waConsent !== "nein" && !conv?.optedOutAt && (!lead.waUnavailableAt || (conv?._count.messages ?? 0) > 0);
+  const whatsapp = waMoeglich(lead, conv);
   let anrufAusloeserAt: Date | null = null;
   if (lead.outreachStatus === "sent" && lead.outreachAt && !lead.autoCallAt && lead.callAttempts === 0 && !(conv?._count.messages ?? 0) && !termine.length) {
     const { bookingKeys } = await import("@/lib/calendar");
@@ -131,10 +175,104 @@ export async function loadNachrichtenPlan(leadId: string, now = new Date()): Pro
     },
     anrufplan: { followUpAt: lead.followUpAt, followUpNote: lead.followUpNote, callAttempts: lead.callAttempts, callPlanStartedAt: lead.callPlanStartedAt, lastCallAttemptAt: lead.lastCallAttemptAt },
     anrufAusloeserAt,
+    pausiertAt: lead.nachrichtenPausiertAt,
     // E-Mail-Schritte (Angebot Tag 5, Pakete M4/M6): Text aus der Vorlage des Vermittlers
     mailVorlagen: await mailVorlagenFuer(lead.customerId, abfolgen, an),
   });
 }
+
+/** Berlin: Beginn des Tages von `d`. */
+function berlinTagesbeginn(d: Date): Date {
+  const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d);
+  const guess = new Date(`${ymd}T00:00:00Z`);
+  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(guess));
+  return new Date(guess.getTime() - h * 60 * 60 * 1000);
+}
+
+/** Morgen (Berlin) als [von, bis). */
+export function morgenBerlin(now: Date): { von: Date; bis: Date } {
+  const von = berlinTagesbeginn(new Date(berlinTagesbeginn(now).getTime() + 36 * 60 * 60 * 1000));
+  const bis = berlinTagesbeginn(new Date(von.getTime() + 36 * 60 * 60 * 1000));
+  return { von, bis };
+}
+
+export type AutomatischeNachrichten = { anzahl: number; leads: { leadId: string; name: string; anzahl: number; erste: string }[] };
+
+/**
+ * Automatische Nachrichten an Leads (WhatsApp, E-Mail) in [von, bis), je Kontakt (Zeile auf „Heute“, Paket P6). Rechnet
+ * mit derselben Planung wie „Nächste Nachrichten“ (planeNachrichten), ohne Texte; übersprungene und pausierte zählen nicht.
+ */
+export async function ladeAutomatischeNachrichten(scope: Prisma.LeadWhereInput, von: Date, bis: Date, now = new Date()): Promise<AutomatischeNachrichten> {
+  const DAY = 24 * 60 * 60 * 1000;
+  const aktiv: Prisma.LeadWhereInput = { AND: [scope, { erasedAt: null, nachrichtenPausiertAt: null }] };
+  // Kandidaten: Termine bis einen Tag nach `bis` (Vortags-Erinnerung) und Abfolgen mit dem nächsten Schritt bis `bis`
+  const [termine, abfolgen] = await Promise.all([
+    prisma.appointment.findMany({
+      where: { status: "booked", startsAt: { gt: new Date(Math.max(now.getTime(), von.getTime()) - 60 * 60 * 1000), lte: new Date(bis.getTime() + DAY + 60 * 60 * 1000) }, leadId: { not: null }, lead: aktiv },
+      select: TERMIN_SELECT,
+      orderBy: { startsAt: "asc" },
+      take: 500,
+    }),
+    prisma.leadSequence.findMany({ where: { stoppedAt: null, nextAt: { not: null, lt: bis }, lead: aktiv }, select: { ...ABFOLGE_SELECT, leadId: true }, take: 500 }),
+  ]);
+  const ids = [...new Set([...termine.map((t) => t.leadId!), ...abfolgen.map((a) => a.leadId)])];
+  if (!ids.length) return { anzahl: 0, leads: [] };
+  const [leads, convs, kommend] = await Promise.all([
+    prisma.lead.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, phone: true, email: true, waConsent: true, waUnavailableAt: true } }),
+    prisma.conversation.findMany({
+      where: { leadId: { in: ids } },
+      orderBy: { lastMessageAt: "desc" },
+      select: { leadId: true, contactEmail: true, optedOutAt: true, _count: { select: { messages: { where: { direction: "inbound" } } } } },
+    }),
+    // Ein anstehender Termin beendet laufende Abfolgen (planeNachrichten): auch Termine nach `bis`
+    prisma.appointment.findMany({ where: { leadId: { in: ids }, status: "booked", startsAt: { gt: now } }, select: { leadId: true }, distinct: ["leadId"] }),
+  ]);
+  const convByLead = new Map<string, (typeof convs)[number]>();
+  for (const c of convs) if (c.leadId && !convByLead.has(c.leadId)) convByLead.set(c.leadId, c);
+  const mitTermin = new Set(kommend.map((k) => k.leadId));
+  const person = { nom: "", dat: "" };
+  const out: AutomatischeNachrichten["leads"] = [];
+  for (const lead of leads) {
+    const conv = convByLead.get(lead.id);
+    const eigene = termine.filter((t) => t.leadId === lead.id);
+    const eingabe: PlanEingabe = {
+      now,
+      an: "sie",
+      hi: "",
+      person,
+      label: lead.name ?? "",
+      leadId: lead.id,
+      // Ohne Texte: Termine nach `bis` nur, damit laufende Abfolgen wie im Plan entfallen
+      termine: [...eigene, ...(mitTermin.has(lead.id) && !eigene.some((t) => t.startsAt > now) ? [{ ...TERMIN_PLATZHALTER, startsAt: new Date(bis.getTime() + 2 * DAY), createdAt: now }] : [])],
+      email: !!conv?.contactEmail,
+      emailKontakt: !!lead.email || !!conv?.contactEmail,
+      whatsapp: waMoeglich(lead, conv),
+      abfolgen: abfolgen.filter((a) => a.leadId === lead.id),
+      abfolgeKontext: { firstName: "", hi: "", kontakt: {}, topic: "", an: "sie", person },
+      anrufplan: { followUpAt: null, followUpNote: null, callAttempts: 0, callPlanStartedAt: null, lastCallAttemptAt: null },
+    };
+    const treffer = zaehleAutomatische(planeNachrichten(eingabe), von, bis);
+    if (treffer.length) out.push({ leadId: lead.id, name: lead.name ?? "Kontakt", anzahl: treffer.length, erste: treffer[0].at });
+  }
+  out.sort((x, y) => x.erste.localeCompare(y.erste));
+  return { anzahl: out.reduce((n, l) => n + l.anzahl, 0), leads: out };
+}
+
+/** Termin ohne Erinnerungen (nur „steht noch an“). */
+const TERMIN_PLATZHALTER = {
+  id: "kommend",
+  endsAt: null,
+  mode: "phone",
+  meetUrl: null,
+  status: "booked",
+  komplettcheck: null,
+  reminderSentAt: new Date(0),
+  soonReminderSentAt: new Date(0),
+  startReminderSentAt: new Date(0),
+  startPushAt: new Date(0),
+  rescheduleRequestedAt: null,
+  attendance: null,
+};
 
 /** Vorlagen der Mail-Schritte laufender Abfolgen (Kunden-Vorlage, sonst Standard). */
 async function mailVorlagenFuer(customerId: string, abfolgen: { kind: string; stoppedAt: Date | null }[], an: Ansprache) {

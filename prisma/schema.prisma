@@ -776,6 +776,9 @@ model Lead {
   callPlanStartedAt    DateTime?
   // Anrufplan automatisch gestartet: 30 Min. nach dem Erstanschreiben ohne Antwort (Ole, 17.11.2026, lib/anruf-ausloeser.ts)
   autoCallAt           DateTime?
+  // „Alle pausieren“ unter „Nächste Nachrichten“ am Kontakt (Paket P6, lib/nachrichtenplan-aktionen.ts): solange gesetzt,
+  // warten Nachfass-Abfolgen und Termin-Erinnerungen an den Lead; „Fortsetzen“ rückt die Abfolgen um die Pause nach
+  nachrichtenPausiertAt DateTime?
   // Rückruf wünschen (Link in der Nachfass-Mail zum Angebot, Minimalseite /rueckruf/<token>, Ausbau in P5)
   rueckrufToken        String?           @unique
   rueckrufGewuenschtAt DateTime?
@@ -1399,6 +1402,8 @@ model Appointment {
   // Push „Ist … da?“ zum Terminbeginn bzw. „Ist … noch gekommen?“ nach dem Termin (je einmal)
   startPushAt           DateTime?
   afterPushAt           DateTime?
+  // Vom Vermittler übersprungene Erinnerungen (Paket P6): vortag | vortag_mail | stunde | gleich
+  erinnerungenUebersprungen String[] @default([])
   // Komplettcheck = Ja: auf 45 Min. verlängert („verlaengert“) bzw. Hinweis an den Vermittler („hinweis“)
   verlaengerung         String?
   verlaengerungAt       DateTime?
@@ -2904,6 +2909,8 @@ model LeadSequence {
   neustartAt DateTime?
   // Angaben für die Schritte (Paket M6): z. B. { fehlende: "• IBAN …" } für die Erinnerung „Unterlagen fehlen“
   daten      Json?
+  // Vom Vermittler übersprungene Schritte (Paket P6, „Nächste Nachrichten“): werden ohne Versand weitergeschaltet
+  uebersprungen Int[] @default([])
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
@@ -4417,8 +4424,8 @@ model Erstinformation {
   // Pflichtangaben nach § 15 Abs. 1 VersVermV (Ole, 15.11.2026). null = Vorschlag aus Impressum/Angebot
   // (lib/erstinformation-shared.ts erstinfoDaten), gespeichert wird beim Bestätigen in der Einrichtung.
   name           String?
-  // Anrede des Vermittlers (Herr | Frau), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
-  // null = nicht angegeben, dann Vor- und Nachname. Kein Pflichtfeld der Erstinformation.
+  // Anrede des Vermittlers (Herr | Frau | keine), für den Assistenten: „Herr Kannapinn zeigt Ihnen …“ (Ole, 17.11.2026).
+  // Pflicht in der Einrichtung; „keine“ (bewusst ohne) bzw. null (nicht angegeben): Vor- und Nachname.
   anrede         String?
   firma          String?
   anschrift      String?

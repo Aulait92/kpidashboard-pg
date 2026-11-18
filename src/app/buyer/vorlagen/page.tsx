@@ -39,7 +39,7 @@ export default async function VorlagenPage() {
       empfehlungEnabled: true,
       leadAddress: true,
       whatsAppAccount: { select: { status: true } },
-      erstinformation: { select: { name: true } },
+      erstinformation: { select: { name: true, anrede: true } },
       onboarding: { select: { websiteInfo: true } },
       messageTemplates: { select: { name: true, purpose: true, status: true, body: true, headerFormat: true, updatedAt: true }, orderBy: { updatedAt: "desc" } },
     },
@@ -47,7 +47,7 @@ export default async function VorlagenPage() {
   if (!customer) redirect("/buyer");
   const connected = customer.whatsAppAccount?.status === "connected";
   // Vorname im Erstanschreiben wie beim Einreichen (Anbieterangaben, sonst Vorschlag)
-  const names = templateNamesOf(customer.name, undefined, erstinfoName(customer.erstinformation?.name, (customer.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer.name));
+  const names = templateNamesOf(customer.name, undefined, erstinfoName(customer.erstinformation?.name, (customer.onboarding?.websiteInfo ?? undefined) as ErstinfoWeb | undefined, customer.name), customer.erstinformation?.anrede);
   const purposes = purposesFor({ bestand: customer.existingCustomersEnabled, empfehlung: customer.empfehlungEnabled });
 
   // Gespeicherte Ansprache (Sie/Du) bestimmt Fassung und Vorschau; Beispielkontakt: Julia Schneider, Anrede „Frau“

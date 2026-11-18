@@ -139,7 +139,7 @@ describe("3./4. Frageplan je Produkt (Testlead mit vollständigen Formularangabe
     const plan = frageplan("Privatschutz", formular, { gesendet });
     expect(plan.gestellt?.key).toBe("frage1");
     expect(plan.gestellt?.bekannt).toBe("Versicherungsinteresse: Haftpflicht, Hausrat");
-    expect(plan.offen.map((f) => f.sie)).toEqual(["Sind Haftpflicht und Hausrat schon irgendwo versichert, oder wäre beides neu?"]);
+    expect(plan.offen.map((f) => f.sie)).toEqual(["Sind Haftpflicht und Hausrat schon versichert, oder wäre beides neu?"]);
     const regel = ersteFrageRegel("Privatschutz", "Herr Kannapinn", { gesendet, an: "sie", formular });
     expect(regel).toMatch(/gilt als beantwortet/);
     expect(regel).toMatch(/verfolge die Frage nicht weiter/);
