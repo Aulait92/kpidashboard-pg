@@ -275,7 +275,8 @@ export function RechnerView({ config, cpl, initial }: { config: RechnerConfig; c
                 value={input.laufzeit}
                 options={[
                   { value: "12m", label: `12 Monate (${eur(PRICE_LIST.setup12m)})` },
-                  { value: "6m", label: `6 Monate (${eur(PRICE_LIST.setup6m)})` },
+                  // 6 Monate nur auf Nachfrage (Ole, 18.11.2026): nur sichtbar, wenn per Link (lz=6) gewählt
+                  ...(input.laufzeit === "6m" ? [{ value: "6m", label: `6 Monate (${eur(PRICE_LIST.setup6m)})` }] : []),
                   { value: "3m", label: `3 Monate (${eur(PRICE_LIST.setup3m)})` },
                   { value: "none", label: `Ohne Laufzeit (${eur(PRICE_LIST.setupNoTerm)})` },
                 ]}

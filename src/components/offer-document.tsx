@@ -548,7 +548,7 @@ export function OfferDocument({
                 {termOpen
                   ? halb
                     ? " Vorauszahlung für 6 Monate gibt es mit 6 Monaten Laufzeit, jährlich im Voraus mit 12 Monaten Laufzeit (2 Monate geschenkt)."
-                    : ` Jahreszahlung gibt es mit 12 Monaten Laufzeit${termOptionsFor(offer.createdAt).includes("6m") ? ", 6 Monate im Voraus mit 6 Monaten Laufzeit (1 Monat geschenkt)" : ""}.`
+                    : ` Jahreszahlung gibt es mit 12 Monaten Laufzeit${termOptionsFor(offer.createdAt, offer.term).includes("6m") ? ", 6 Monate im Voraus mit 6 Monaten Laufzeit (1 Monat geschenkt)" : ""}.`
                   : ""}{" "}
                 Der Vertrag verlängert sich dann nach {pm} Monaten um jeweils weitere {pm} Monate, wenn er nicht mit einer Frist von einem Monat zum Ende der
                 Laufzeit gekündigt wird. Für Pausen gibt es bei {vorausWort} keine Gutschrift.
@@ -566,7 +566,7 @@ export function OfferDocument({
             {termOpen ? (
               <Note>
                 Laufzeit wählen Sie unten bei der Annahme:{" "}
-                {termOptionsFor(offer.createdAt)
+                {termOptionsFor(offer.createdAt, offer.term)
                   .map((t) => `${TERM_MONTHS[t] > 0 ? `${TERM_MONTHS[t]} Monate` : "ohne Laufzeit"} (${t === "12m" ? "Setup " : ""}${eur(setupForChoice(t, products.length || 1, choiceDiscount))})`)
                   .join(", ")
                   .replace(/, ([^,]*)$/, " oder $1")}

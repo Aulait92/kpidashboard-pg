@@ -354,5 +354,12 @@ async function einplanen(contactId: string, p: Plan, now: Date): Promise<boolean
     });
   }
   const f = await planFollowup(contactId, { source: "ANTWORT", replyEmailId: email, dueAt: p.dueAt, timing: p.timing, status: "GEPLANT", now });
+  // Offene Antwort- bzw. Anruf-Aufgabe erledigt sich mit dem Einplanen (Ole, 18.11.2026)
+  if (f) {
+    await prisma.salesTask.updateMany({
+      where: { contactId, doneAt: null, title: { in: ["Auf Cold-Mail-Antwort reagieren", "Interessent aus Cold Mail anrufen"] } },
+      data: { doneAt: now },
+    });
+  }
   return !!f;
 }

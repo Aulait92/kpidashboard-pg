@@ -141,7 +141,8 @@ describe("Kundenwahl auf der Angebotsseite", () => {
   it("Altangebote: 6 Monate nicht wählbar, feste Jahreszahlung nur mit 12 Monaten", () => {
     const alt = termOptionsFor(new Date(TERM_6M_AB.getTime() - 60_000));
     expect(alt).toEqual(["12m", "3m", "none"]);
-    expect(termOptionsFor(TERM_6M_AB)).toEqual(TERM_OPTIONS);
+    expect(termOptionsFor(TERM_6M_AB, "6m")).toEqual(TERM_OPTIONS);
+    expect(termOptionsFor(TERM_6M_AB, "12m")).toEqual(["12m", "3m", "none"]);
     expect(resolveOfferChoice(snap({ termOptions: alt }), { term: "6m" }, today)).toEqual({ ok: false, error: "Bitte eine gültige Laufzeit wählen." });
     // altes Angebot mit fester Jahreszahlung (ohne Wahl): 6 Monate gewählt → monatlich, wie bei 3 Monaten
     const fest = snap({ annualPrepay: true, annualChoice: false });
@@ -249,15 +250,14 @@ describe("Zusatzmodule und Präsentation", () => {
     expect(bookingTerms({ trial: false, annual: true }).lines.join(" ")).toMatch(/Abrechnungsjahres/);
   });
 
-  it("Präsentation: Setup mit 6 Monaten, Vorauszahlung beider Laufzeiten", () => {
+  it("Präsentation: Listenpreise ohne 6 Monate (nur auf Nachfrage, Ole 18.11.2026)", () => {
     const liste = paketDaten(null, "vertreter");
     expect(liste.setup.map((s) => [s.label, s.betrag])).toEqual([
       ["Ohne Laufzeit", 2490],
       ["Mit 3 Monaten", 1990],
-      ["Mit 6 Monaten", 1490],
       ["Mit 12 Monaten", 990],
     ]);
-    expect(liste.jaehrlich).toBe("Jährlich im Voraus: 2 Monate geschenkt · 6 Monate im Voraus: 1 Monat geschenkt");
+    expect(liste.jaehrlich).toBe("Jährlich im Voraus: 2 Monate geschenkt");
   });
 });
 
@@ -377,5 +377,19 @@ describe("Angebotsdokument mit 6 Monaten", () => {
   it("Altangebot (vor der Einführung) mit Laufzeitwahl: Liste ohne 6 Monate", () => {
     const t = text(renderToStaticMarkup(createElement(OfferDocument, { offer: doc({ term: "12m", setupFee: 990, annualFreeMonths: 2, createdAt: new Date("2026-11-17T12:00:00Z") }) })));
     expect(t).toMatch(/Laufzeit wählen Sie unten bei der Annahme: 12 Monate \(Setup 990 €\), 3 Monate \(1\.990 €\) oder ohne Laufzeit \(2\.490 €\)/);
+  });
+});
+
+// 6 Monate nur auf Nachfrage (Ole, 18.11.2026): zur Wahl nur, wenn das Angebot selbst auf 6 Monate steht
+import { termOptionsFor as termOptionsFor6m } from "@/lib/offer-pricing";
+describe("6 Monate nur auf Nachfrage", () => {
+  const neu = new Date("2026-11-19T10:00:00Z");
+  it("ohne 6-Monats-Angebot nie zur Wahl", () => {
+    expect(termOptionsFor6m(neu, "12m")).not.toContain("6m");
+    expect(termOptionsFor6m(neu, "3m")).not.toContain("6m");
+    expect(termOptionsFor6m(neu)).not.toContain("6m");
+  });
+  it("mit 6-Monats-Angebot zur Wahl", () => {
+    expect(termOptionsFor6m(neu, "6m")).toContain("6m");
   });
 });

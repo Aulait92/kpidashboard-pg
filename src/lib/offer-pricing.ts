@@ -472,8 +472,12 @@ export const TERM_OPTIONS: readonly OfferTerm[] = ["12m", "6m", "3m", "none"];
  * Ältere offene Angebote mit Laufzeitwahl bleiben wie verschickt (12 Monate, 3 Monate, ohne Laufzeit).
  */
 export const TERM_6M_AB = new Date("2026-11-18T13:00:00Z");
-export const termOptionsFor = (createdAt: Date | null | undefined): readonly OfferTerm[] =>
-  !createdAt || createdAt.getTime() >= TERM_6M_AB.getTime() ? TERM_OPTIONS : TERM_OPTIONS.filter((t) => t !== "6m");
+/**
+ * 6 Monate bietet Ole nur an, wenn jemand ausdrücklich danach fragt (Ole, 18.11.2026): Zur Wahl steht sie nur, wenn
+ * das Angebot selbst auf 6 Monate steht, sonst nie (auch nicht in Präsentation und Rechner).
+ */
+export const termOptionsFor = (createdAt: Date | null | undefined, term?: OfferTerm | string | null): readonly OfferTerm[] =>
+  term === "6m" && (!createdAt || createdAt.getTime() >= TERM_6M_AB.getTime()) ? TERM_OPTIONS : TERM_OPTIONS.filter((t) => t !== "6m");
 
 /** Gespeicherter Stand eines Angebots, soweit für die Kundenwahl nötig. */
 export type OfferChoiceSnapshot = {
