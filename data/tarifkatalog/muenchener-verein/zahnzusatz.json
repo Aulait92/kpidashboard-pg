@@ -25,8 +25,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ZahnGesund 85+",
@@ -44,8 +43,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "ZahnGesund 100",
@@ -63,8 +61,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/gesundheit/zahnzusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -80,6 +77,7 @@
     "Prophylaxe: 2 Behandlungen je Versicherungsjahr à 75, 85 bzw. 100 €.",
     "Leistungsbegrenzung in den ersten 4 Versicherungsjahren (75+: 900 € je Jahr, 85+: 1.000 €, 100: 1.500 €), ab dem 5. Jahr unbegrenzt.",
     "Kieferorthopädie für Kinder und Erwachsene; bei Unfall begrenzt (75+: 1.000 €, 85+: 2.500 €, 100: 5.000 € bzw. 2.500 € Erwachsene). Inlays nicht je Tarif beziffert.",
-    "ZahnGesund 100 wird mit Testergebnis beworben, aber nicht als Empfehlung markiert; Empfehlung daher mittlere Stufe."
+    "ZahnGesund 100 wird mit Testergebnis beworben, aber nicht als Empfehlung markiert; Empfehlung daher mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

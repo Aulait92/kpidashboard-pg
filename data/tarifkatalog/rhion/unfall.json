@@ -31,8 +31,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/3-1_Unfall/4_Leistungsuebersichten/UP2701_2026_04_Vergleich_Pauschaldekla_Unfall_AUB2026_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Plus",
@@ -56,8 +55,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/3-1_Unfall/4_Leistungsuebersichten/UP2701_2026_04_Vergleich_Pauschaldekla_Unfall_AUB2026_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung Premium",
@@ -81,8 +79,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/3-1_Unfall/4_Leistungsuebersichten/UP2701_2026_04_Vergleich_Pauschaldekla_Unfall_AUB2026_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
   "offen": [
     "Werte aus dem Vergleich der Pauschaldeklarationen Unfall AUB 2026 (UP 2701, 04/2026) und der Produktseite. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
     "Invaliditätssumme, Progression (ohne, 350 %, 500 % oder Mehrleistung ab 90 %), Unfallrente (ab 50 % Invalidität) und Krankenhaustagegeld werden je Vertrag vereinbart. Leistung ab Invaliditätsgrad für das Kapital nicht genannt.",
-    "Kosmetik einschließlich Zahnbehandlung. Bergung im Ausland in Premium bis 1 Mio. €. Zecken: FSME in allen Stufen, Borreliose und andere durch Tiere übertragene Krankheiten nur Plus und Premium. Gliedertaxe Standard nach AUB."
+    "Kosmetik einschließlich Zahnbehandlung. Bergung im Ausland in Premium bis 1 Mio. €. Zecken: FSME in allen Stufen, Borreliose und andere durch Tiere übertragene Krankheiten nur Plus und Premium. Gliedertaxe Standard nach AUB.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

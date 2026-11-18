@@ -27,8 +27,7 @@
         "einbett": "nein"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatzversicherung-stationaer_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "proME ZSplus",
@@ -48,8 +47,7 @@
         "einbett": "inklusive"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/krankenzusatzversicherung-stationaer_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -60,6 +58,7 @@
   "offen": [
     "Werte aus der Kundeninformation Stationäre Zusatzversicherungen (VF1120.0234.02.25). Wartezeit nicht genannt. Zwei Tarife ohne Empfehlung.",
     "proME ZS: freie Wahl unter Vertragskrankenhäusern (Bundespflegesatzverordnung); proME ZSplus übernimmt auch andere Krankenhäuser. Erstattung über GOÄ-Höchstsätze, ambulante Operationen, Rooming-In und gesetzliche Zuzahlung nur proME ZSplus.",
-    "Ersatz-Krankenhaustagegeld bei Verzicht auf Zimmer oder Chefarzt: ZS 20 € je Leistung, ZSplus 20 € bzw. 40 € je Tag. Krankenhaustagegeld als eigener Tarif. Für 16 bis 49 Jahre Variante ohne Alterungsrückstellungen (proME ZSplus-O)."
+    "Ersatz-Krankenhaustagegeld bei Verzicht auf Zimmer oder Chefarzt: ZS 20 € je Leistung, ZSplus 20 € bzw. 40 € je Tag. Krankenhaustagegeld als eigener Tarif. Für 16 bis 49 Jahre Variante ohne Alterungsrückstellungen (proME ZSplus-O).",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

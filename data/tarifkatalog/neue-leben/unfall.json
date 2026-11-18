@@ -20,8 +20,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.neueleben.de/Unfallplus.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallassist (ab 50 Jahre)",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.neueleben.de/Unfallassist.html",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -49,6 +47,7 @@
   "offen": [
     "neue leben (neueleben.de, Partner der Sparkassen, Konzern HDI). Werte aus dem Text der Produktseite, Abruf 17.11.2026; keine Tarifvergleiche veröffentlicht.",
     "Zwei Produkte für Zielgruppen: Unfallplus (Familien, Laufzeit und Summe individuell, Kinder bis 6 Monate nach Geburt beitragsfrei) und Unfallassist für Menschen ab 50 (Kapital bis 24.000 € ab 50 % Invalidität, Oberschenkelhalsbruch 5.000 €, Johanniter-Service). Keine Leistungsstufen, keine Empfehlung.",
-    "Unfallplus: Progression, Leistung ab Grad, Unfallrente und Beträge nicht genannt. „Sofort“ bei Unfallassist ist ein Sofortkapital ab 50 % Invalidität, keine Sofortleistung bei Knochenbruch."
+    "Unfallplus: Progression, Leistung ab Grad, Unfallrente und Beträge nicht genannt. „Sofort“ bei Unfallassist ist ein Sofortkapital ab 50 % Invalidität, keine Sofortleistung bei Knochenbruch.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

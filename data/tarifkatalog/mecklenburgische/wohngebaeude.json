@@ -31,8 +31,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/wohngebaeudeversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Komfortdeckung",
@@ -56,8 +55,7 @@
         "erneuerbar": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/haus-wohnen/wohngebaeudeversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -68,6 +66,7 @@
   "offen": [
     "Werte aus der Kundeninformation Wohngebäude (Tabelle Grund- und Komfortdeckung, VF1120.0241a.10.23). Ableitungsrohre außerhalb des Gebäudes nicht genannt. Zwei Stufen ohne Empfehlung.",
     "Grobe Fahrlässigkeit bei Herbeiführung nur Komfort; bei Obliegenheiten bis 2.500 €. Kosten = Aufräumungs-, Abbruch-, Bewegungs- und Schutzkosten; Hotel 100 bzw. 200 € je Tag. Wärmepumpen und Geothermie nur Komfort bis 25.000 €.",
-    "Photovoltaikanlagen bis 30 kWp in beiden Stufen wählbar; Baustein Photovoltaikanlagen plus (technische Gefahren, Ertragsausfall) und Mehrkosten plus. Weitere Naturgefahren als Elementarschadendeckung wählbar. Tiere = Marder oder Waschbären."
+    "Photovoltaikanlagen bis 30 kWp in beiden Stufen wählbar; Baustein Photovoltaikanlagen plus (technische Gefahren, Ertragsausfall) und Mehrkosten plus. Weitere Naturgefahren als Elementarschadendeckung wählbar. Tiere = Marder oder Waschbären.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

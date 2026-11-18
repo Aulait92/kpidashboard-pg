@@ -31,8 +31,7 @@
         "rabattschutz": "nein"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NKP2901_2026_10_Kfz_Infoheft_Privat_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz Plus",
@@ -56,8 +55,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NKP2901_2026_10_Kfz_Infoheft_Privat_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Kfz Premium",
@@ -81,8 +79,7 @@
         "rabattschutz": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/1-1_Kfz/NKP2901_2026_10_Kfz_Infoheft_Privat_01.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -93,6 +90,7 @@
   "offen": [
     "Werte aus Anhang 8 (Vergleich Leistungsübersicht Kfz-Privat) des Kfz-Infohefts 10/2026 und der Produktseite. Premium nur für Pkw. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
     "Grobe Fahrlässigkeit: Kürzung in allen Stufen nur bei Alkohol oder Drogen und bei grob fahrlässig ermöglichtem Diebstahl (AKB A.2.18.1). Neupreisentschädigung nach Erstzulassung (Smart und Plus nur Pkw); Kaufpreisentschädigung entsprechend 6, 24 bzw. 36 Monate nach Kauf.",
-    "Marderbiss: Tierbissschäden inklusive Folgeschäden. E-Auto: erweiterte Leistungen für Elektrofahrzeuge ab Plus, in Premium kein Abzug neu für alt bei Akkus in den ersten 4 Jahren. GAP-Deckung bis 10.000 €, Werkstatt-Service und Schutzbrief ONroad wählbar."
+    "Marderbiss: Tierbissschäden inklusive Folgeschäden. E-Auto: erweiterte Leistungen für Elektrofahrzeuge ab Plus, in Premium kein Abzug neu für alt bei Akkus in den ersten 4 Jahren. GAP-Deckung bis 10.000 €, Werkstatt-Service und Schutzbrief ONroad wählbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

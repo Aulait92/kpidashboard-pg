@@ -22,8 +22,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/pflege/private-pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Deutsche PrivatPflege Premium-Schutz 600",
@@ -38,8 +37,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/pflege/private-pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Deutsche PrivatPflege Premium-Schutz 750",
@@ -54,8 +52,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/pflege/private-pflegezusatzversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +64,7 @@
     "Stufen nach Monatsleistung in Pflegegrad 5 (450, 600, 750 €). Stationär in Pflegegrad 2 bis 5 volle Leistung, häuslich in Pflegegrad 4: 75 %, 3: 50 %, 2: 25 %; Pflegegrad 1: 10 %.",
     "Einmalleistung bei Pflegebeginn und Beitragsbefreiung im Pflegefall: auf der Seite nicht genannt.",
     "Höherversicherung ohne Gesundheitsprüfung, wenn die Option bei Abschluss gewählt wurde.",
-    "Keine Stufe hervorgehoben, Empfehlung mittlere Stufe."
+    "Keine Stufe hervorgehoben, Empfehlung mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

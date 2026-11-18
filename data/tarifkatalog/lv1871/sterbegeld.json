@@ -24,8 +24,7 @@
         "dynamik": "nein"
       },
       "quelle": "https://www.lv1871.de/sterbegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Bestattungsvorsorge Comfort Plus",
@@ -44,8 +43,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.lv1871.de/sterbegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Bestattungsvorsorge Premium",
@@ -63,8 +61,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.lv1871.de/sterbegeldversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -74,6 +71,7 @@
   "offen": [
     "Quelle: Tarifvergleich auf der Produktseite (Bestattungsvorsorge der Lebensversicherung von 1871 a. G. München); Comfort Plus ist dort als „Unsere Empfehlung“ markiert.",
     "Volle Leistung nach 24 bis 36 bzw. 12 bis 36 Monaten (Staffelung vermutlich nach Eintrittsalter, nicht erläutert); bei Unfalltod keine Wartezeit. Unfall-Zusatz: Verdoppelung der Summe bei Unfalltod ab Comfort Plus.",
-    "Beitragsdynamik 3 % ab Comfort Plus wählbar. Erbrechtsberatung und vorläufiger Schutz ab Comfort Plus; Kinder- und Enkelmitversicherung sowie Auslandsüberführung nur Premium. Ein eigener Bestattungsvorsorge-Service ist nicht genannt."
+    "Beitragsdynamik 3 % ab Comfort Plus wählbar. Erbrechtsberatung und vorläufiger Schutz ab Comfort Plus; Kinder- und Enkelmitversicherung sowie Auslandsüberführung nur Premium. Ein eigener Bestattungsvorsorge-Service ist nicht genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

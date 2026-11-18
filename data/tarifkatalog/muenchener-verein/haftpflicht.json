@@ -28,8 +28,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/privat-haftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-Haftpflicht Komfort",
@@ -51,8 +50,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/privat-haftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Privat-Haftpflicht Optimal",
@@ -74,8 +72,7 @@
       },
       "bausteine": {},
       "quelle": "https://www.muenchener-verein.de/privatkunden/haftpflicht/privat-haftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -85,6 +82,7 @@
   "offen": [
     "Werte aus der Tabelle der Produktseite und dem Prospekt „Leistungsstufen im Vergleich“ (Stand 11.2018, bitte auf Aktualität prüfen).",
     "Schlüssel: Verlust privater Schlüssel und Code-Karten; berufliche Schlüssel nicht genannt, Ehrenamtsschlüssel nur Optimal bis 15.000 €. Deliktunfähige Kinder nur im Familien-Tarif.",
-    "Selbstbehalt 150 € nur bei Sachschäden. Neuwert und Drohnen nicht genannt. Keine Empfehlung markiert; Komfort als mittlere Stufe."
+    "Selbstbehalt 150 € nur bei Sachschäden. Neuwert und Drohnen nicht genannt. Keine Empfehlung markiert; Komfort als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

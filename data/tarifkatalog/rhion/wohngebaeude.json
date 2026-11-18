@@ -28,8 +28,7 @@
         "elementar": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/2_Pauschaldeklarationen/SP2701_2025_04_Vergleich_Pauschaldekla_Wohngebaeude_VGB2025_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Plus",
@@ -50,8 +49,7 @@
         "elementar": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/2_Pauschaldeklarationen/SP2701_2025_04_Vergleich_Pauschaldekla_Wohngebaeude_VGB2025_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Wohngebäude Premium",
@@ -72,8 +70,7 @@
         "elementar": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/5-1_Verbundene_Wohngebaeude/2_Pauschaldeklarationen/SP2701_2025_04_Vergleich_Pauschaldekla_Wohngebaeude_VGB2025_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
   "offen": [
     "Werte aus dem Vergleich der Pauschaldeklarationen Wohngebäude VGB 2025 (SP 2701, 04/2025) und der Produktseite. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
     "Grobe Fahrlässigkeit: Verzicht bei Herbeiführung in Plus und Premium; bei Obliegenheiten nur Premium bis 50.000 €. Ableitungsrohre auf dem und außerhalb des Grundstücks. Tiere: Bissschäden durch wild lebende Kleintiere an Leitungen und Dämmung.",
-    "Kosten: Aufräumungs- und Abbruchkosten in allen Stufen; Hotelkosten nur Plus und Premium (Premium bis 150 € am Tag, bis 1 Jahr). Weitere Elementargefahren und Starkregen als Baustein; Allgefahren in der Übersicht genannt, Stufen nicht belegt."
+    "Kosten: Aufräumungs- und Abbruchkosten in allen Stufen; Hotelkosten nur Plus und Premium (Premium bis 150 € am Tag, bis 1 Jahr). Weitere Elementargefahren und Starkregen als Baustein; Allgefahren in der Übersicht genannt, Stufen nicht belegt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

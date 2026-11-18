@@ -28,8 +28,7 @@
         "smarthome": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/2_Vergleich_Leistungsuebersichten/SP2711_2024_08_Vergleich_Pauschaldekla_Hausrat_VHB2024_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Plus",
@@ -50,8 +49,7 @@
         "smarthome": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/2_Vergleich_Leistungsuebersichten/SP2711_2024_08_Vergleich_Pauschaldekla_Hausrat_VHB2024_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat Premium",
@@ -72,8 +70,7 @@
         "smarthome": "optional"
       },
       "quelle": "https://rhion.digital/fileadmin/redaktion/DOWNLOADS/Bedingungen/1_Privatkunden/6-1_Hausrat/2_Vergleich_Leistungsuebersichten/SP2711_2024_08_Vergleich_Pauschaldekla_Hausrat_VHB2024_Std_Plus_Premium.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -84,6 +81,7 @@
   "offen": [
     "Werte aus dem Vergleich der Pauschaldeklarationen Hausrat VHB 2024 (SP 2711, 08/2024) und der Produktseite. Rhion markiert keine Empfehlung; Plus als mittlere Stufe gesetzt.",
     "Wertsachen nicht als Anteil der Summe, sondern je Art begrenzt (z. B. Schmuck außerhalb Tresor 20.000 / 30.000 / 50.000 €). Einfacher Diebstahl aus der Wohnung nicht ausdrücklich genannt; Trickdiebstahl Plus bis 1.500 €, Premium bis 5.000 €.",
-    "Grobe Fahrlässigkeit: Verzicht bei Herbeiführung in Plus und Premium, bei Obliegenheiten nur Premium. Fahrraddiebstahl, weitere Elementargefahren (Starkregen), Smart Home und Cyber als Bausteine wählbar; Stufen dafür nicht einzeln genannt."
+    "Grobe Fahrlässigkeit: Verzicht bei Herbeiführung in Plus und Premium, bei Obliegenheiten nur Premium. Fahrraddiebstahl, weitere Elementargefahren (Starkregen), Smart Home und Cyber als Bausteine wählbar; Stufen dafür nicht einzeln genannt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen."
   ]
 }

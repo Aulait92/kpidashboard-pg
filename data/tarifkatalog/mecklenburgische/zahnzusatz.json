@@ -27,8 +27,7 @@
         "kfo": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnersatz ZE 80",
@@ -48,8 +47,7 @@
         "kfo": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnersatz ZE 90",
@@ -69,8 +67,7 @@
         "kfo": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Zahnersatz ZE 100",
@@ -90,8 +87,7 @@
         "kfo": "optional"
       },
       "quelle": "https://www.mecklenburgische.de/pdfs/produkte/kundeninformationen/privat/gesundheit-freizeit/zahnzusatzversicherung_kundeninfo.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -102,6 +98,7 @@
   "offen": [
     "Stufen = Zahnersatztarife ZE 70 bis ZE 100 (Erstattung der erstattungsfähigen Aufwendungen, unabhängig von der Kasse). Wartezeit nicht genannt. Keine Empfehlung der Gesellschaft; bei 4 Stufen die dritte gesetzt.",
     "Zahnbehandlung und Prophylaxe über die Zusatztarife ZB bzw. ZBplus: Zahnreinigung bis 100 bzw. 200 € im Jahr, Füllungen, Wurzel- und Parodontosebehandlung, Kieferorthopädie bis 19 Jahre bis 1.200 bzw. 2.000 €.",
-    "Zahnstaffel ZE je Jahr: 1. Jahr 700 / 800 / 900 / 1.000 €, steigend bis zum 4. Jahr (2.800 / 3.200 / 3.600 / 4.000 €), ab dem 5. Jahr unbegrenzt."
+    "Zahnstaffel ZE je Jahr: 1. Jahr 700 / 800 / 900 / 1.000 €, steigend bis zum 4. Jahr (2.800 / 3.200 / 3.600 / 4.000 €), ab dem 5. Jahr unbegrenzt.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }

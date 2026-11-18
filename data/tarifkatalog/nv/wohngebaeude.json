@@ -28,8 +28,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.nv-online.de/versicherungen/wohngebaeude",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV Wohnhausmax. 2.0",
@@ -51,8 +50,7 @@
         "elementar": "optional"
       },
       "quelle": "https://www.nv-online.de/versicherungen/wohngebaeude",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "NV WohnhausPremium 2.0",
@@ -74,18 +72,21 @@
         "elementar": "optional"
       },
       "quelle": "https://www.nv-online.de/versicherungen/wohngebaeude",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
     "https://www.nv-online.de/versicherungen/wohngebaeude",
     "https://www.nv-online.de/fileadmin/downloadcenter/wohngebaeude/2-0/Produktvergleich_NV_Wohn_2.0.pdf",
-    "https://www.nv-online.de/versicherungen/elementarschaden"
+    "https://www.nv-online.de/versicherungen/elementarschaden",
+    "https://www.nv-online.de/fileadmin/downloadcenter/wohngebaeude/2-0/Leistung_NV_WohnhausSpar_2.0.pdf",
+    "https://www.nv-online.de/fileadmin/downloadcenter/wohngebaeude/2-0/Leistung_NV_Wohnhausmax._2.0.pdf",
+    "https://www.nv-online.de/fileadmin/downloadcenter/wohngebaeude/2-0/Leistung_NV_WohnhausPremium_2.0.pdf"
   ],
   "offen": [
-    "Werte aus der Vergleichstabelle und den Texten der Produktseite sowie dem Produktvergleich NV Wohn 2.0 (Stand 01/2015, ältere Fassung). Bitte gegen die aktuellen Leistungsübersichten prüfen. NV markiert keine Empfehlung; Wohnhausmax. als mittlere Stufe gesetzt.",
     "Grobe Fahrlässigkeit: Wohnhausmax. ohne Kürzung bis 10.000 €, WohnhausPremium voll. Ableitungsrohre auf und außerhalb des Grundstücks: Wohnhausmax. nur wenn vereinbart. Photovoltaik: nur Diebstahl regenerativer Anlagen belegt, für WohnhausSpar nicht genannt; Elektronikversicherung für PV-Anlagen separat.",
-    "Kosten: Aufräumungs- und Abbruchkosten (Spar bis 10.000 €), Hotelkosten nur max. und Premium (bis 100 bzw. 200 Tage). Vandalismus = Gebäudeschäden durch unbefugte Dritte. Tiere = Tierbissschäden an Elektrik und Dämmung. Elementarschäden über die eigene NV Elementarschadenversicherung."
+    "Kosten: Aufräumungs- und Abbruchkosten (Spar bis 10.000 €), Hotelkosten nur max. und Premium (bis 100 bzw. 200 Tage). Vandalismus = Gebäudeschäden durch unbefugte Dritte. Tiere = Tierbissschäden an Elektrik und Dämmung. Elementarschäden über die eigene NV Elementarschadenversicherung.",
+    "Werte aus Vergleichstabelle und Texten der Produktseite sowie den Leistungsübersichten NV WohnhausSpar, Wohnhausmax. und WohnhausPremium 2.0 (am 18.11.2026 gegengeprüft: Tierbiss 1.000 bzw. 5.000 €, unbefugte Dritte 2.500 bzw. 5.000 €, grobe Fahrlässigkeit bis 10.000 € bzw. voll). In der Übersicht WohnhausSpar fehlen diese Leistungen, daher dort „nein“. NV markiert keine Empfehlung; Wohnhausmax. als mittlere Stufe.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen; Widersprüche zwischen Quellen siehe oben."
   ]
 }
