@@ -119,8 +119,8 @@ export function withoutNextStepWhere(now: Date): Prisma.LeadWhereInput {
       { followUpAt: null },
       { appointments: { none: upcomingAppointmentWhere(now) } },
       { conversations: { none: activeBotChatWhere(now) } },
-      // Wiedervorlage des Assistenten (schedule_followup) ist ein nächster Schritt
-      { sequences: { none: { kind: "recall", stoppedAt: null } } },
+      // Wiedervorlage des Assistenten (schedule_followup) bzw. Bedenkzeit zum Angebot (P5) ist ein nächster Schritt
+      { sequences: { none: { kind: { in: ["recall", "offer_bedenkzeit", "offer_selbst_bedenkzeit"] }, stoppedAt: null } } },
     ],
   };
 }

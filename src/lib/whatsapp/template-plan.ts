@@ -67,6 +67,8 @@ export const CORE_PURPOSES: NoticePurpose[] = [
   "followup_offer_selbst",
   // P4 Glückwunsch zum Abschluss (Ole hat die Einreichung am 17.11.2026 freigegeben, docs/vorlagen-abschluss.md)
   "glueckwunsch",
+  // P5 Nachfassen nach der Bedenkzeit (Ole hat die Einreichung am 17.11.2026 freigegeben, docs/vorlagen-angebot.md)
+  "offer_bedenkzeit",
 ];
 /**
  * Neue Zwecke, die nur VORBEREITET sind: Sie stehen NICHT in CORE_PURPOSES und werden deshalb nicht bei Meta eingereicht,
@@ -81,6 +83,13 @@ export const VORBEREITETE_PURPOSES: NoticePurpose[] = [];
  * freigegebenen Vorlage followup_offer.
  */
 export const ANGEBOT_PURPOSES: NoticePurpose[] = ["offer_send", "followup_offer_selbst"];
+/**
+ * Bedenkzeit zum Angebot (Paket P5): erste WhatsApp, wenn das Nachfassen nach der Bedenkzeit neu startet (MARKETING),
+ * docs/vorlagen-angebot.md. Ole hat die Einreichung am 17.11.2026 freigegeben: in CORE_PURPOSES. Bis Meta freigibt: im
+ * offenen Fenster als Freitext, sonst die freigegebene Vorlage followup_offer (nie followup mit Terminvorschlägen), sonst
+ * eine Anruf-Aufgabe.
+ */
+export const BEDENKZEIT_PURPOSES: NoticePurpose[] = ["offer_bedenkzeit"];
 
 /** Nur mit gebuchtem Bestandskunden-Modul. */
 export const CAMPAIGN_PURPOSES: NoticePurpose[] = ["campaign_cross_sell", "campaign_review", "campaign_birthday", "campaign_renewal"];
@@ -356,6 +365,7 @@ export const CUSTOMER_TITLES: Record<NoticePurpose, { title: string; when: strin
   followup_offer: { title: "Nachfassen nach einem Angebot", when: "Zwei Tage, nachdem Sie das Angebot über die App gesendet haben." },
   followup_offer_selbst: { title: "Nachfassen nach einem selbst gesendeten Angebot", when: "Zwei Tage, nachdem Sie „Habe ich selbst gesendet“ angetippt haben." },
   offer_send: { title: "Ihr Angebot nach dem Termin", when: "Wenn Sie das Angebot über die App senden und der Chat länger als 24 Stunden ruht." },
+  offer_bedenkzeit: { title: "Nachfassen nach der Bedenkzeit", when: "Am Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte." },
   followup_noshow: { title: "Nachfassen nach verpasstem Termin", when: "Wenn ein Lead nicht zum Termin erschienen ist." },
   glueckwunsch: { title: "Glückwunsch zum Abschluss", when: "Wenn Sie beim Eintragen eines Abschlusses „Glückwunsch per WhatsApp senden“ anhaken." },
   followup_last: { title: "Letzte Nachricht", when: "Zum Abschluss einer Nachfass-Abfolge." },

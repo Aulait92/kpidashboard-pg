@@ -50,6 +50,7 @@ export type NoticePurpose =
   | "followup_offer"
   | "followup_offer_selbst"
   | "offer_send"
+  | "offer_bedenkzeit"
   | "followup_noshow"
   | "followup_last"
   | "glueckwunsch"
@@ -79,6 +80,7 @@ export const PURPOSE_LABELS: Record<NoticePurpose, string> = {
   followup_offer: "Nachfassen nach Angebot",
   followup_offer_selbst: "Nachfassen nach Angebot (vom Vermittler selbst gesendet)",
   offer_send: "Angebot senden (nach dem Termin)",
+  offer_bedenkzeit: "Nachfassen nach der Bedenkzeit zum Angebot",
   followup_noshow: "Nachfassen nach verpasstem Termin",
   followup_last: "Nachfassen: letzte Nachricht (Abfolge)",
   glueckwunsch: "Glückwunsch zum Abschluss",
@@ -136,6 +138,8 @@ export const PURPOSE_VERSION: Partial<Record<NoticePurpose, string>> = {
   // Angebot nach dem Termin (Paket P3, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, ANGEBOT_PURPOSES)
   offer_send: "v5",
   followup_offer_selbst: "v5",
+  // Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026): zur Einreichung freigegeben (CORE_PURPOSES, BEDENKZEIT_PURPOSES)
+  offer_bedenkzeit: "v5",
 };
 
 /**
@@ -179,6 +183,7 @@ export const REST_PARAMS: Record<NoticePurpose, string[]> = {
   followup_offer: ["Thema (z. B. Hausrat, Haftpflicht)"],
   followup_offer_selbst: ["Vermittler (Nominativ)"],
   offer_send: ["Thema (z. B. Haftpflicht und Hausrat)", "Angebotslink"],
+  offer_bedenkzeit: ["Thema (z. B. Hausrat, Haftpflicht)"],
   followup_noshow: [],
   followup_last: [],
   glueckwunsch: ["Vermittler (Akkusativ)"],
@@ -260,8 +265,14 @@ export const TEMPLATE_BODY: Record<NoticePurpose, { du?: string; sie: string }> 
     sie: "vielen Dank für das Gespräch! Wie besprochen hier Ihr Angebot für {{2}}: {{3}} Bei Fragen schreiben Sie mir einfach hier.",
   },
   followup_offer_selbst: {
-    du: "hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
-    sie: "hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot, das {{2}} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Konnten Sie sich das Angebot, das {{2}} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
+  },
+  // Nach der Bedenkzeit zum Angebot (Paket P5, Ole 17.11.2026), zur Einreichung freigegeben (BEDENKZEIT_PURPOSES,
+  // docs/vorlagen-angebot.md). Bewusst ohne Terminvorschläge; Freitext: lib/bedenkzeit.ts bedenkzeitNeustartText.
+  offer_bedenkzeit: {
+    du: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?",
+    sie: "hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?",
   },
   followup_noshow: {
     du: "kein Problem, so etwas passiert. Hier ist der digitale KI-Assistent von [Firma]. Sollen wir einen neuen Termin mit [Berater] finden?",
@@ -766,6 +777,7 @@ export const TEMPLATE_BUTTONS: Partial<Record<NoticePurpose, string[]>> = {
   followup_nudge: [KNOPF.weiter, KNOPF.keinBedarfMehr],
   followup_offer: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
   followup_offer_selbst: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
+  offer_bedenkzeit: [KNOPF.beitrag, KNOPF.leistung, KNOPF.keinBedarfMehr],
   followup_noshow: [KNOPF.neuerTermin, KNOPF.keinBedarfMehr],
   followup_last: [KNOPF.nochAktuell, KNOPF.neinDanke],
   campaign_cross_sell: [KNOPF.gernPruefen, KNOPF.keinBedarf, OPT_OUT_BUTTON],

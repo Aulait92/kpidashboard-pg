@@ -1,8 +1,11 @@
-# WhatsApp-Vorlagen Angebot (P3) zur Freigabe durch Ole
+# WhatsApp-Vorlagen Angebot (P3, P5)
 
-Stand 17.11.2026. **Von Ole zur Einreichung freigegeben** (17.11.2026, nach Regelprüfung): beide Zwecke stehen in
-`CORE_PURPOSES` (`ANGEBOT_PURPOSES` in `src/lib/whatsapp/template-plan.ts`) und werden vom Cron je Kunde mit der neuen
-Erstnachricht v8 eingereicht. Vermittler bei Sie „Herr/Frau Nachname“ (`lib/vermittler-nennung.ts`).
+Stand 17.11.2026. **Von Ole zur Einreichung freigegeben** (17.11.2026, nach Regelprüfung): `offer_send`,
+`followup_offer_selbst` (`ANGEBOT_PURPOSES`) und `offer_bedenkzeit` (`BEDENKZEIT_PURPOSES`) stehen in `CORE_PURPOSES`
+(`src/lib/whatsapp/template-plan.ts`) und werden vom Cron je Kunde mit der neuen Erstnachricht v8 eingereicht.
+Vermittler nach `lib/vermittler-nennung.ts`: „digitale KI-Assistent von [BeraterDat]“ wird beim Einreichen je Kunde
+fest eingesetzt (Sie „Herrn Kannapinn“ bzw. „Frau Meier“, ohne Anrede Vor- und Nachname; Du der Vorname), gleich wie in
+der neuen Erstnachricht („Hier schreibt der digitale Assistent von Herrn Kannapinn“).
 
 Bis zur Freigabe durch Meta gilt:
 
@@ -38,8 +41,8 @@ Beispiel (Freitext, Sie):
 
 Tag 2 nach „Habe ich selbst gesendet“, nur ohne Antwort des Leads.
 
-- Sie: „Guten Tag {{1}}, hier ist der digitale KI-Assistent von [Firma]. Konnten Sie sich das Angebot, das {{2}} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?“
-- Du: „Hallo {{1}}, hier ist der digitale KI-Assistent von [Firma]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?“
+- Sie: „Guten Tag {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Konnten Sie sich das Angebot, das {{2}} Ihnen geschickt hat, schon anschauen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?“
+- Du: „Hallo {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Konntest du dir das Angebot, das {{2}} dir geschickt hat, schon anschauen? Ist für dich eher der Beitrag oder die Leistung entscheidend?“
 - Knöpfe wie `followup_offer`: „Eher der Beitrag“ · „Eher die Leistung“ · „Kein Bedarf mehr“
 - {{2}} „Herr Kannapinn“ (Du: „Ole“)
 
@@ -54,4 +57,29 @@ Tag 2 nach „Habe ich selbst gesendet“, nur ohne Antwort des Leads.
 | 10 | letzte WhatsApp (`followup_last`) | letzte WhatsApp („das Angebot, das Herr Kannapinn Ihnen geschickt hat“) |
 | 12 | Anruf-Aufgabe zum Schluss | gleich |
 
-Stopp wie bei allen Abfolgen: Antwort des Leads, Abschluss, Absage, „Stopp“, Rückruf gewünscht, Schalter aus.
+Stopp wie bei allen Abfolgen: Antwort des Leads, Abschluss, Absage, „Stopp“, Schalter aus. „Rückruf gewünscht“ (P5)
+pausiert die Abfolge bis zwei Tage nach dem gewählten Zeitfenster, danach geht sie mit den übrigen Schritten weiter.
+
+## 3. Nach der Bedenkzeit (neuer Zweck `offer_bedenkzeit`, v5, MARKETING; Paket P5)
+
+Stand 17.11.2026, **zur Einreichung freigegeben** (`BEDENKZEIT_PURPOSES` in `CORE_PURPOSES`).
+Geht raus an dem Tag, an dem sich der Kontakt nach seiner Bedenkzeit melden wollte („meldet sich am …“, Standard
+14 Tage), wenn der Chat länger als 24 Stunden ruht. Bewusst **ohne** Terminvorschläge (nicht `followup`).
+
+- Sie: „Guten Tag {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu Ihrem Angebot für {{2}}. Haben Sie noch Fragen? Ist für Sie eher der Beitrag oder die Leistung entscheidend?“
+- Du: „Hallo {{1}}, hier ist der digitale KI-Assistent von [BeraterDat]. Wie besprochen melde ich mich wieder zu deinem Angebot für {{2}}. Hast du noch Fragen? Ist für dich eher der Beitrag oder die Leistung entscheidend?“
+- Knöpfe wie `followup_offer`: „Eher der Beitrag“ · „Eher die Leistung“ · „Kein Bedarf mehr“
+- {{2}} Thema aus der Auswahl im Termin („Haftpflicht und Hausrat“)
+
+Bis zur Freigabe durch Meta: im offenen Fenster als Freitext (beim selbst gesendeten Angebot „zum Angebot, das Herr Kannapinn
+Ihnen geschickt hat“), sonst die freigegebene Vorlage `followup_offer`, fehlt auch die, eine Anruf-Aufgabe.
+
+Abfolge nach der Bedenkzeit (`offer_bedenkzeit` bzw. `offer_selbst_bedenkzeit`), Tage ab dem gewählten Tag: 0 WhatsApp
+(oben), 3 Anruf-Aufgabe plus Push, 5 E-Mail mit [Rückruf wünschen] (nur beim Versand über die App), 10 letzte WhatsApp,
+12 Anruf-Aufgabe. Antwortet der Kontakt vorher, endet sie, der Tag bleibt als Aufgabe „Bedenkzeit vorbei: Angebot
+nachfassen“ auf „Heute“.
+
+Im Chat (keine Vorlage nötig, immer im offenen Fenster): „ich überlege noch“ → „Gern, nehmen Sie sich ruhig Zeit. Wann
+darf ich mich wieder bei Ihnen melden?“ mit [1 Woche] [2 Wochen] [Ende des Monats], danach „Alles klar, dann melde ich
+mich am Dienstag, 1. Dezember wieder. Wenn vorher Fragen aufkommen, schreiben Sie einfach hier.“ Die Bestätigung eines
+Rückrufwunschs geht ebenfalls nur im offenen Fenster als Freitext, sonst zeigt sie nur die Seite.

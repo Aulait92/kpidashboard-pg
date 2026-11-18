@@ -797,7 +797,7 @@ export async function runBotTurn(conversationId: string, opts: { hint?: string |
     upcoming,
     formAnswers: form.normal,
     recallAt: conversation.leadId
-      ? ((await prisma.leadSequence.findFirst({ where: { leadId: conversation.leadId, kind: "recall", stoppedAt: null }, select: { nextAt: true } }))?.nextAt ?? null)
+      ? ((await prisma.leadSequence.findFirst({ where: { leadId: conversation.leadId, kind: { in: ["recall", "offer_bedenkzeit", "offer_selbst_bedenkzeit"] }, stoppedAt: null }, select: { nextAt: true } }))?.nextAt ?? null)
       : null,
     ersteFrage,
     hint: opts.hint ?? (zw ? zwischenHinweis(zw) : null),

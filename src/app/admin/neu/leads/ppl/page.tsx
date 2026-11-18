@@ -4,7 +4,11 @@ import { AlertTriangle, ChevronRight, CloudDownload, PackageOpen, Plus } from "l
 import { Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { Seite } from "@/components/admin-neu/ui/seite";
-import { Ansichten, Kennzahlen, Meldung } from "@/components/admin-neu/leads/ansichten";
+import { Ansichten, Meldung } from "@/components/admin-neu/leads/ansichten";
+import { Aufmerksamkeit } from "@/components/admin-neu/ui/aufmerksamkeit";
+import { Kennzahlen } from "@/components/admin-neu/ui/kennzahlen";
+import { punkteDerRolle } from "@/lib/admin-neu/rollen-server";
+import { requireAuth } from "@/lib/vertrieb/auth";
 import { PplOverview, PplReportView } from "@/components/admin/ppl-auswertung";
 import { prisma } from "@/lib/prisma";
 import { quotaFor } from "@/lib/ppl/engine";
@@ -61,8 +65,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
 
   return (
     <Seite
-      titel="Leads & Kampagnen"
-      reiter="leads"
+      titel="Liefern"
+      reiter="liefern"
       breit
       aktionen={
         <span data-funktion="actions-savesubscriptionaction--bezug-anlegen-bearbeiten-kunde-produkt-menge">
@@ -121,8 +125,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Suc
 type Subs = Awaited<ReturnType<typeof prisma.leadSubscription.findMany<{ include: { customer: { select: { name: true } } } }>>>;
 
 async function Start({ syncAus }: { syncAus: boolean }) {
+  const session = await requireAuth();
   const seit = new Date(nowMs() - 7 * 86_400_000);
-  const [subs, parked, review, eingang7, geliefert7, hvkOffen] = await Promise.all([
+  const [punkte, eingangJeStatus, subs, parked, review, eingang7, geliefert7, hvkOffen] = await Promise.all([
+    punkteDerRolle(session.userId, "liefern"),
+    prisma.poolLead.groupBy({ by: ["status"], where: { createdAt: { gte: seit } }, _count: { _all: true } }),
     prisma.leadSubscription.findMany({ include: { customer: { select: { name: true } } }, orderBy: [{ productKey: "asc" }, { active: "desc" }, { createdAt: "asc" }] }),
     prisma.poolLead.findMany({ where: { status: "parked" }, orderBy: { createdAt: "desc" }, take: 100 }),
     prisma.lead.findMany({
@@ -137,12 +144,25 @@ async function Start({ syncAus }: { syncAus: boolean }) {
   ]);
   return (
     <div className="space-y-4">
+      {/* Seitenmuster Admin v2 (A2): oben, was die Rolle Liefern braucht; Kennzahlen mit Aufschlüsselung im Fenster */}
+      {/* Geparkt und Storno stehen unten als Karten mit Knöpfen, oben nur, was diese Seite nicht zeigt */}
+      <Aufmerksamkeit punkte={punkte?.filter((p) => p.key !== "parked" && !p.key.startsWith("storno")) ?? null} />
       <Kennzahlen
-        items={[
-          { label: "Eingang 7 Tage", wert: eingang7, href: `${PFAD}?ansicht=eingang` },
-          { label: "Ausgeliefert 7 Tage", wert: geliefert7 },
-          { label: "Geparkt", wert: parked.length, warn: parked.length > 0, href: "#geparkt" },
-          { label: "Storno in Prüfung", wert: review.length + hvkOffen, warn: review.length + hvkOffen > 0, href: "#storno" },
+        werte={[
+          {
+            label: "Eingang 7 Tage",
+            wert: String(eingang7),
+            details: {
+              text: "Pool-Leads der letzten 7 Tage nach Ergebnis.",
+              zeilen: eingangJeStatus
+                .sort((a, b) => b._count._all - a._count._all)
+                .map((g) => ({ label: POOL_STATUS[g.status]?.label ?? g.status, wert: String(g._count._all) })),
+              link: { href: `${PFAD}?ansicht=eingang`, label: "Eingang ansehen" },
+            },
+          },
+          { label: "Ausgeliefert 7 Tage", wert: String(geliefert7), hinweis: eingang7 ? `${Math.round((geliefert7 / eingang7) * 100)} % vom Eingang` : undefined },
+          { label: "Geparkt", wert: String(parked.length), ton: parked.length > 0 ? "schlecht" : undefined, href: "#geparkt" },
+          { label: "Storno in Prüfung", wert: String(review.length + hvkOffen), ton: review.length + hvkOffen > 0 ? "schlecht" : undefined, href: "#storno" },
         ]}
       />
       {hvkOffen ? (

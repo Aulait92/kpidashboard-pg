@@ -10,16 +10,11 @@ import {
   CreditCard,
   FileBarChart,
   Gift,
-  History,
   Landmark,
   Layers,
   LifeBuoy,
-  LogIn,
   Megaphone,
-  MessageCircle,
-  PlugZap,
   Receipt,
-  Rocket,
   ShieldCheck,
   Users,
   type LucideIcon,
@@ -34,12 +29,13 @@ import { requireAuth } from "@/lib/vertrieb/auth";
 
 export const metadata = { title: "Einstellungen | performancegrowth Admin" };
 
-// Einstellungen im neuen Admin (Demo „einstellungen“): alles, was man einmal einrichtet und selten ändert, in 6 Gruppen
-// mit 21 Seiten. Die Seiten kommen aus navigation.ts (Feld `gruppe`); dazu zwei Seiten anderer Bereiche, die man auch
-// hier sucht (Preise & Rechner liegt unter Marketing, Bank & Karten unter Zahlen). Oben die Warnhinweise der alten
-// Übersicht (Zwei-Faktor, Steuernummer, Support-Kontakt).
+// Einstellungen im neuen Admin: alles, was man einmal einrichtet und selten ändert, in 7 Gruppen wie in der Demo v2
+// (docs/ux/admin-v2/demo.html, Konto & Sicherheit, je Rolle, Angebot & Produkte, Werbung, Finanzen). Technik und
+// Einrichtung (Anbindungen, Vorlagen, Login-Seite, Status, Protokoll) liegen seit Admin v2 unter Werkzeuge.
+// Die Seiten kommen aus navigation.ts (Feld `gruppe`); dazu zwei Seiten anderer Bereiche, die man auch hier sucht
+// (Preise & Rechner unter Verkaufen › Marketing, Bank & Karten unter Geld). Oben die Warnhinweise der alten Übersicht.
 
-const GRUPPEN = ["Produkte & Preise", "Automatiken", "Kommunikation", "Vertrieb", "Firma & Finanzen", "Sicherheit"] as const;
+const GRUPPEN = ["Konto & Sicherheit", "Verkaufen", "Kunden", "Angebot & Produkte", "Werbung", "Marketing", "Finanzen"] as const;
 
 /** Kurzbeschreibung je Seite (Demo) und Symbol. */
 const INFO: Record<string, { text: string; icon: LucideIcon }> = {
@@ -49,25 +45,19 @@ const INFO: Record<string, { text: string; icon: LucideIcon }> = {
   "e-followups": { text: "Freigabe, Tageslimit, Signatur", icon: Clock },
   "e-halte": { text: "Angebote beim Kündigen je Grund", icon: Anchor },
   "e-zahlung": { text: "Angenommen, aber nicht bezahlt", icon: CreditCard },
-  "e-vorlagen": { text: "Support-Nummer, A/B-Tests", icon: MessageCircle },
   "e-neuigkeiten": { text: "Einträge für den Kundenbereich", icon: Megaphone },
   "e-berichte": { text: "Einstufung, Versand", icon: FileBarChart },
-  "e-login": { text: "Infokarten neben dem Login", icon: LogIn },
-  "e-status": { text: "Statusmeldungen, Support-Kontakt", icon: LifeBuoy },
   "e-buchung": { text: "Kalender, Termintypen, Zeiten", icon: CalendarDays },
-  "e-anbindungen": { text: "Instantly, Calendly, Meta, CSV", icon: PlugZap },
   "e-empfehlen": { text: "Prämie und Vorteil für Neukunden", icon: Gift },
   "e-rechnung": { text: "Steuernummer, Stripe-Prüfung", icon: Receipt },
-  "e-einrichtung": { text: "Business-ID, Videos, Hilfetermin", icon: Rocket },
   "e-sicherheit": { text: "Zwei-Faktor-Login, Abmelden", icon: ShieldCheck },
-  "e-protokoll": { text: "Wer hat wann was geändert", icon: History },
   "e-admins": { text: "Zugänge zum Admin", icon: Users },
 };
 
 /** Seiten anderer Bereiche, die hier mit aufgeführt sind (nach `nach` einsortiert). */
 const FREMD = [
-  { gruppe: "Produkte & Preise", nach: "e-produkte", titel: "Preise & Rechner", href: `${NEU}/marketing/webseite`, text: "Öffentlicher Rechner", icon: Calculator },
-  { gruppe: "Firma & Finanzen", nach: "e-rechnung", titel: "Bank & Karten", href: `${NEU}/zahlen/kosten`, text: "Konten, Regeln, laufende Kosten", icon: Landmark },
+  { gruppe: "Angebot & Produkte", nach: "e-produkte", titel: "Preise & Rechner", href: `${NEU}/marketing/webseite`, text: "Öffentlicher Rechner", icon: Calculator },
+  { gruppe: "Finanzen", nach: "e-rechnung", titel: "Bank & Karten", href: `${NEU}/zahlen/kosten`, text: "Konten, Regeln, laufende Kosten", icon: Landmark },
 ];
 
 type Eintrag = { titel: string; href: string; text: string; icon: LucideIcon };
@@ -98,6 +88,7 @@ export default async function EinstellungenPage() {
   const hinweise = [
     !me?.totpEnabledAt ? { href: `${NEU}/einstellungen/sicherheit`, icon: ShieldCheck, text: "Zwei-Faktor-Login ist noch nicht eingerichtet.", knopf: "Einrichten" } : null,
     taxNumberWarning(taxNumber) ? { href: `${NEU}/einstellungen/rechnungsangaben`, icon: Receipt, text: "Auf Stripe-Rechnungen fehlt die Steuernummer.", knopf: "Eintragen" } : null,
+    // Status & Support liegt unter Werkzeuge, der Hinweis bleibt hier
     !support.whatsapp && !support.email ? { href: `${NEU}/einstellungen/status`, icon: LifeBuoy, text: "Im Hilfe-Chat fehlt der Support-Kontakt.", knopf: "Ansehen" } : null,
   ].filter((h) => h !== null);
 

@@ -35,8 +35,7 @@
         "reise": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat classic",
@@ -65,8 +64,7 @@
         "reise": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Hausrat comfort",
@@ -94,8 +92,7 @@
         "reise": "optional"
       },
       "quelle": "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -103,9 +100,10 @@
     "https://www.alte-leipziger.de/-/media/druckstuecke/deklarationsvergleich/pp/136/deklarationsvergleichhausratpp136pdf/deklarationsvergleich-hausrat-pp136.pdf"
   ],
   "offen": [
-    "Quelle: Deklarationsvergleich PP 136 (Stand 07.2023) der Alte Leipziger Versicherung AG; Symbole im PDF-Text nicht lesbar, leere Felder als „mitversichert“ gelesen.",
+    "Quelle: Deklarationsvergleich PP 136 (Stand 07.2023) der Alte Leipziger Versicherung AG; Haken im PDF am Zeichensatz gegengeprüft (Haken mitversichert, Strich nicht enthalten).",
     "Einfacher Diebstahl aus der Wohnung ist im Vergleich nicht genannt (nur Diebstahl vom Grundstück, Taschen- und Trickdiebstahl ab classic).",
     "Fahrrad, weitere Naturgefahren (Elementar, SB 10 %, mind. 250 €), Cyber (Online-Shopping), Reisegepäck und Haus- und Wohnungsschutzbrief sind Pakete gegen Aufpreis.",
-    "Versicherungssumme 650 €/m² laut Produktseite mit Unterversicherungsverzicht; Diebstahl aus dem Auto in % der Versicherungssumme; Unbenannte Gefahren nur comfort (SB 300 €). Keine Empfehlung markiert."
+    "Versicherungssumme 650 €/m² laut Produktseite mit Unterversicherungsverzicht; Diebstahl aus dem Auto in % der Versicherungssumme; Unbenannte Gefahren nur comfort (SB 300 €). Keine Empfehlung markiert.",
+    "Geprüft am 18.11.2026 an Produktseite, Deklarationsvergleich bzw. Bedingungen der Alte Leipziger."
   ]
 }

@@ -19,7 +19,7 @@ export default async function Page() {
   const dataInfo = Object.fromEntries(config.products.map((p, i) => [p.key, data[i]]));
   return (
     <Seite
-      titel="Marketing"
+      titel="Verkaufen"
       reiter="marketing"
       aktionen={
         <span data-funktion="nav--oeffentlichen-rechner-oeffnen">

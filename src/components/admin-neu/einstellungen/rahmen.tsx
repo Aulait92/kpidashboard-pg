@@ -8,7 +8,10 @@ import { cn } from "@/lib/utils";
 
 export const EINSTELLUNGEN = `${NEU}/einstellungen`;
 
-/** Rahmen einer Einstellungsseite: „Zurück: Einstellungen“, Titel und Untertitel aus navigation.ts, schmale Spalte. */
+export const WERKZEUGE = `${NEU}/werkzeuge`;
+
+/** Rahmen einer Einstellungsseite: „Zurück“ zur Übersicht (Einstellungen bzw. Werkzeuge, je nach Bereich in
+ *  navigation.ts), Titel und Untertitel aus navigation.ts, schmale Spalte. */
 export function EinstellungSeite({
   pfad,
   titel,
@@ -26,8 +29,9 @@ export function EinstellungSeite({
   children: React.ReactNode;
 }) {
   const seite = SEITEN.find((s) => s.pfad === pfad);
+  const zurueck = seite?.bereich === "werkzeuge" ? { href: WERKZEUGE, label: "Werkzeuge" } : { href: EINSTELLUNGEN, label: "Einstellungen" };
   return (
-    <Seite titel={titel ?? seite?.titel ?? ""} untertitel={titel ? undefined : seite?.untertitel} zurueck={{ href: EINSTELLUNGEN, label: "Einstellungen" }} aktionen={aktionen}>
+    <Seite titel={titel ?? seite?.titel ?? ""} untertitel={titel ? undefined : seite?.untertitel} zurueck={zurueck} aktionen={aktionen}>
       <div className={cn("space-y-5", breit ? "" : "max-w-3xl")}>{children}</div>
     </Seite>
   );

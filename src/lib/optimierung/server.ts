@@ -236,6 +236,12 @@ async function agentCampaigns(customerId: string): Promise<Map<string, string>> 
   return out;
 }
 
+/** Ziel-Leadpreis eines Kontos (wie im Optimierungslauf), z. B. für „Leadpreis 7 Tage“ unter Liefern › Werbekonten. */
+export async function zielLeadpreis(accountId: string, now = new Date()): Promise<{ cpl: number | null; label: string }> {
+  const a = await loadAccount(accountId);
+  return a ? refCplFor(a, now) : { cpl: null, label: "Schnitt des Kontos" };
+}
+
 async function refCplFor(a: AccountRow, now: Date): Promise<{ cpl: number | null; label: string }> {
   if (a.targetCpl != null) return { cpl: Number(a.targetCpl), label: "Ziel-Leadpreis" };
   if (a.kind === "kunde" && a.customerId && a.customer) {

@@ -22,8 +22,7 @@
         "zahn": "Schmerzbehandl., Füllung"
       },
       "quelle": "https://www.hansemerkur.de/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Jahres-Auslandskrankenversicherung",
@@ -41,8 +40,7 @@
         "familie": "optional"
       },
       "quelle": "https://www.hansemerkur.de/auslandskrankenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -54,6 +52,7 @@
     "Zahn: schmerzstillende Behandlung, einfache Füllungen und Reparatur von Zahnersatz.",
     "Bekannte Erkrankungen und Schwangerschaft nicht auf der Produktseite; Details in der Leistungsbeschreibung (PDF) nicht ausgewertet.",
     "Für lange Aufenthalte eigene Tarife (Langfristige Auslandskrankenversicherung, Young Travel), nicht aufgenommen.",
-    "Empfehlung: HanseMerkur markiert die Jahres-Auslandskrankenversicherung als „Bestseller“."
+    "Empfehlung: HanseMerkur markiert die Jahres-Auslandskrankenversicherung als „Bestseller“.",
+    "Geprüft am 18.11.2026 an den Leistungstabellen der Produktseite (Spaltenreihenfolge beachtet) und den verlinkten Leistungsübersichten."
   ]
 }

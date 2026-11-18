@@ -259,6 +259,12 @@ describe("C) Vermittler-Nennung", () => {
     // Ansprechpartner-Form (lib/lead-anrede.ts) ohne fertige person
     const who = { firm: "Agentur", advisor: "Susanne Meier", vermittler: { name: "Susanne Meier", anrede: "Frau" as const } };
     expect(noticeText("followup", "sie", who, null, ["heute", "morgen"])).toContain("mit Frau Meier hätte ich");
+    // neu eingereichte Vorlagen P3/P5 (Ole, 17.11.2026): Vermittler nach der Regel fest im Text, wie in der Erstnachricht
+    for (const p of ["offer_bedenkzeit", "followup_offer_selbst"] as NoticePurpose[]) {
+      expect(templateBodyFor(p, names, "sie")).toContain("digitale KI-Assistent von Herrn Kannapinn.");
+      expect(templateBodyFor(p, names, "du")).toContain("digitale KI-Assistent von Ole.");
+      expect(templateBodyFor(p, names, "sie")).not.toContain("Ole Kannapinn");
+    }
     // eingereichte Texte ändern sich dadurch nicht (keine ungewollte Neueinreichung)
     for (const p of ["followup", "followup_noshow", "booking_confirmation"] as NoticePurpose[]) {
       expect(templateBodyFor(p, names, "sie")).toBe(templateBodyFor(p, templateNamesOf("Agentur Ole Kannapinn"), "sie"));

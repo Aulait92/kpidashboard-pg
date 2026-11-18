@@ -24,8 +24,7 @@
         "sb0": "optional"
       },
       "quelle": "https://www.nuernberger.de/recht-haftung/haftpflichtversicherung/pferdehaftpflicht/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -34,6 +33,7 @@
   ],
   "offen": [
     "Werte von der Produktseite auf nuernberger.de (Abruf 17.11.2026). Ein Tarif mit wählbarer Summe (10 oder 20 Mio. €).",
-    "Flurschäden auf der Pferdeseite nicht genannt (bei Hunden ja). Selbstbeteiligung laut Fragen wählbar, Höhe nicht genannt. Forderungsausfall ab 2.500 € Schaden durch fremdes Tier."
+    "Flurschäden auf der Pferdeseite nicht genannt (bei Hunden ja). Selbstbeteiligung laut Fragen wählbar, Höhe nicht genannt. Forderungsausfall ab 2.500 € Schaden durch fremdes Tier.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

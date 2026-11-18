@@ -27,8 +27,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Komforttarife TOP3/TOP6",
@@ -49,8 +48,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Premiumtarif MAX6+",
@@ -71,8 +69,7 @@
         "ktg": "optional"
       },
       "quelle": "https://www.nuernberger.de/gesundheit-freizeit/krankenversicherung/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -82,6 +79,7 @@
     "Werte aus dem Tarifvergleich der Produktseite auf nuernberger.de (Abruf 17.11.2026). Keine Stufe markiert; Komforttarife als mittlere Stufe.",
     "Stationär HAT6 und TOP: Stationsarzt und Mehrbettzimmer; Chefarzt und Ein-/Zweibettzimmer über die Zusatztarife S1, S2 bzw. SZU (nur Unfall). Selbstbehalt Kinder jeweils halb.",
     "Beitragsrückerstattung erfolgsabhängig in allen Tarifen; garantiert 4 Monatsbeiträge in TOP3+/TOP6+, im MAX6+ Gesundheitsplus 1.500 € im Jahr ab 21 Jahren. Zahnstaffel 1.000 bis 5.000 € in den ersten Jahren.",
-    "Krankentagegeld als eigener Tarif wählbar (Krankentagegeld für vollversicherte Arbeitnehmer). Hilfsmittel, Psychotherapie und Ausland nicht ausgewertet."
+    "Krankentagegeld als eigener Tarif wählbar (Krankentagegeld für vollversicherte Arbeitnehmer). Hilfsmittel, Psychotherapie und Ausland nicht ausgewertet.",
+    "Geprüft am 18.11.2026 an Produktseite (Tarifvergleich mit Symbolen) und den verlinkten Kundeninformationen der NÜRNBERGER."
   ]
 }

@@ -22,7 +22,7 @@
         "hilfsmittel": "100 %, offener Katalog",
         "psychotherapie": "100 %, 52 Sitzungen",
         "sehhilfen": "100 %, Fassung 200 €",
-        "ausland": "weltweit",
+        "ausland": "Europa, sonst 2 Monate",
         "stationaer": "Mehrbett, ohne Chefarzt"
       },
       "bausteine": {
@@ -30,8 +30,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "AM-V, ZE-V, ST-V3 und ST-V2",
@@ -46,7 +45,7 @@
         "hilfsmittel": "100 %, offener Katalog",
         "psychotherapie": "100 %, 52 Sitzungen",
         "sehhilfen": "100 %, Fassung 200 €",
-        "ausland": "weltweit",
+        "ausland": "Europa, sonst 2 Monate",
         "stationaer": "Zweibett, Chefarzt"
       },
       "bausteine": {
@@ -54,8 +53,7 @@
         "pflege": "optional"
       },
       "quelle": "https://www.devk.de/produkte/krankenversicherung/private-krankenversicherung/",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -67,6 +65,8 @@
     "Einbettzimmer mit 35 € Eigenbeteiligung je Tag; Ersatzkrankenhaustagegeld 21 €.",
     "Selbstbehalt nicht genannt. Beitragsrückerstattung erfolgsabhängig bis zu fünf Monatsbeiträge.",
     "Kieferorthopädie bis 100 %; ohne ZE-V jeweils 50 %.",
-    "Krankentagegeld, Krankenhaustagegeld und Pflegetagegeld als Ergänzung empfohlen."
+    "Krankentagegeld, Krankenhaustagegeld und Pflegetagegeld als Ergänzung empfohlen.",
+    "Ausland: laut Produktinformation weltweit versichert, bei Reisen außerhalb Europas für zwei Monate.",
+    "Geprüft am 18.11.2026 an Produktseite und Produktinformation 08506-301."
   ]
 }

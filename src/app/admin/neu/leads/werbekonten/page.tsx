@@ -9,6 +9,9 @@ import { STALE_DAYS } from "@/lib/optimierung/shared";
 import { GlobalForm } from "@/app/admin/optimierung/ui";
 import { MediaBuyerLayout } from "@/app/admin/media-buyer/media-buyer-admin";
 import { loadMediaBuyer } from "@/app/admin/media-buyer/daten";
+import { ladeLeadpreise } from "@/lib/optimierung/leadpreis-server";
+import { LEADPREIS_TAGE, UEBER_ZIEL_EUR } from "@/lib/optimierung/leadpreis";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Werbekonten | performancegrowth Admin" };
 
@@ -17,8 +20,11 @@ export const metadata = { title: "Werbekonten | performancegrowth Admin" };
 //   Konten (Start): je Werbekonto Modus, letzte Maßnahme (rot, wenn alt), offene Freigaben, letzter Lauf → Kontoansicht
 //   Pool-Budgets: der Media Buyer unverändert (Pools mit Ist/Ziel/Prognose, Einstellungen, Simulieren/Anwenden)
 // Die globalen Schalter der Optimierung liegen eingeklappt unten.
+// Admin v2 (A6): je Konto „Leadpreis 7 Tage“ aus AdSpendDaily gegen den Ziel-Leadpreis des Optimierungslaufs, teuerste
+// zuerst; mehr als 5 € über Ziel rot und als Punkt in „Braucht Aufmerksamkeit“ (Liefern, Mein Tag).
 
 const PFAD = "/admin/neu/leads/werbekonten";
+const eur = (n: number) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 const fmt = (d: Date) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", year: "2-digit" }).format(d);
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ ansicht?: string }> }) {
@@ -26,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
   const { ansicht } = await searchParams;
   const pools = ansicht === "pools";
   return (
-    <Seite titel="Leads & Kampagnen" reiter="leads" breit>
+    <Seite titel="Liefern" reiter="liefern" breit>
       <Ansichten
         aktiv={pools ? "pools" : ""}
         items={[
@@ -41,14 +47,23 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
 
 async function Konten() {
   await syncOptimizationAccounts().catch(() => undefined);
-  const { settings, rows } = await loadOptimizationOverview(new Date());
-  const sortiert = [...rows.filter((r) => r.active), ...rows.filter((r) => !r.active)];
+  const [{ settings, rows }, preise] = await Promise.all([loadOptimizationOverview(new Date()), ladeLeadpreise()]);
+  const preis = new Map(preise.konten.map((k) => [k.id, k]));
+  // Teuerste zuerst (Reihenfolge aus ladeLeadpreise), inaktive Konten ans Ende
+  const rang = new Map(preise.konten.map((k, i) => [k.id, i]));
+  const nachPreis = (a: (typeof rows)[number], b: (typeof rows)[number]) => (rang.get(a.id) ?? 1e6) - (rang.get(b.id) ?? 1e6);
+  const sortiert = [...rows.filter((r) => r.active).sort(nachPreis), ...rows.filter((r) => !r.active).sort(nachPreis)];
   const offen = rows.reduce((a, r) => a + r.planned, 0);
   return (
     <div className="space-y-4">
       <Card>
         <div data-funktion="page--werbekonten-liste-mit-modus-letzter-massnahme">
           <CardHeader title="Werbekonten" count={rows.filter((r) => r.active).length} hint={offen ? `${offen} ${offen === 1 ? "Maßnahme wartet" : "Maßnahmen warten"} auf Freigabe` : `rot: letzte Maßnahme älter als ${STALE_DAYS} Tage`} />
+          {!preise.datenDa ? (
+            <p className="border-b border-[color:var(--border)] px-4 pb-3 text-sm text-[color:var(--muted)] sm:px-5" data-leadpreis-leer="">
+              Leadpreis {LEADPREIS_TAGE} Tage: erste Werte nach dem nächsten Abgleich der Werbekosten (täglich früh morgens).
+            </p>
+          ) : null}
           {sortiert.length ? (
             <ul className="divide-y divide-[color:var(--border)]">
               {sortiert.map((r) => (
@@ -69,6 +84,7 @@ async function Konten() {
                         {r.lastRunAt ? `Lauf ${fmt(r.lastRunAt)}${r.lastRunNote ? `: ${r.lastRunNote}` : ""}` : "noch kein Lauf"}
                       </div>
                     </div>
+                    <LeadpreisZelle k={preis.get(r.id)} />
                     {r.planned ? <Badge tone="brand">{r.planned} freigeben</Badge> : null}
                     {r.approved ? <Badge tone="success">{r.approved} freigegeben</Badge> : null}
                     <ChevronRight className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
@@ -98,6 +114,20 @@ async function Konten() {
         </div>
       </details>
     </div>
+  );
+}
+
+/** „Leadpreis 7 Tage“ gegen Ziel; rot ab 5 € über Ziel. Ohne Leads im Zeitraum: Strich. */
+function LeadpreisZelle({ k }: { k: Awaited<ReturnType<typeof ladeLeadpreise>>["konten"][number] | undefined }) {
+  const lp = k?.leadpreis;
+  return (
+    <span className="w-24 shrink-0 text-right sm:w-32" data-leadpreis={lp?.cpl ?? ""} title={k ? `Ziel: ${k.zielLabel}` : undefined}>
+      <span className={cn("block font-semibold tabular-nums", lp?.zuTeuer ? "text-rose-700" : "")}>{lp?.cpl != null ? eur(lp.cpl) : "–"}</span>
+      <span className="block text-xs text-[color:var(--muted)]">
+        {lp?.ziel != null ? `Ziel ${eur(lp.ziel)}` : `${LEADPREIS_TAGE} Tage`}
+        {lp?.zuTeuer && lp.ueberZiel != null ? <span className="sr-only"> (mehr als {UEBER_ZIEL_EUR} € über Ziel)</span> : null}
+      </span>
+    </span>
   );
 }
 
