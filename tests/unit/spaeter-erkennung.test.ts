@@ -2,7 +2,7 @@
 // breitere Regeln als Absicherung ohne KI, klare Absagen nie, KI nur mit Hinweis auf später (gemockt, keine echten Aufrufe).
 import { describe, expect, it, vi } from "vitest";
 import { classifyReply } from "@/lib/vertrieb/sentiment";
-import { hasLaterHint, isClearDecline, isLaterInterest } from "@/lib/vertrieb/spaeter";
+import { hasLaterHint, eigenerText, isClearDecline, isLaterInterest } from "@/lib/vertrieb/spaeter";
 import { kiEinstufen, spaeterPerKi } from "@/lib/vertrieb/spaeter-ki";
 import { dayKey } from "@/lib/vertrieb/dates";
 import type { LlmCall } from "@/lib/kampagnen/llm";
@@ -49,6 +49,43 @@ describe("Regeln: mehr Später-Antworten erkennen", () => {
   it("Vorfilter für die KI", () => {
     expect(hasLaterHint("Wir sind gut aufgestellt. Im Frühjahr sieht das anders aus.")).toBe(true);
     expect(hasLaterHint("Ja, rufen Sie an.")).toBe(false);
+  });
+});
+
+describe("Nur die eigenen Zeilen zählen (Fehltreffer 18.11.2026)", () => {
+  const COLD = " Am Di., 17. Nov. 2026 um 09:12 schrieb Ole <o@example.de>: Hallo, wir liefern Leads. Melden Sie sich gerne wieder, auch später im Januar 2027.";
+  const SIG = " Mit freundlichen Grüßen Max Muster Agentur der Beispiel AG Hauptstr. 1, 12345 Ort Mobil: 0152 [cid:image001.png@01DD72A4] Sitz Mai 2027";
+
+  it.each([
+    "Moin, lösch mich bitte aus deinem Verteiler",
+    "nein Danke",
+    "Hallo Herr Muster, ich habe kein Interesse, vielen Dank.",
+    "Guten Morgen, vielen Dank für Ihr Angebot, ich habe selbst so viele Anfragen das ich den Service nicht benötige.",
+    "Habe kein Interesse an Leadsystemen und werde hier zeitnah (2027/2028) aufhören.",
+  ])("Absage bleibt Absage, auch mit Zitat und Signatur: %s", (t) => {
+    const voll = t + SIG + COLD;
+    expect(isClearDecline(voll)).toBe(true);
+    expect(isLaterInterest(voll, NOV)).toBe(false);
+    expect(classifyReply(voll, null, NOV)).not.toBe("SPAETER");
+  });
+
+  it.each([
+    "Guten Tag, gerne können Sie sich im neuen Jahr bei mir melden.",
+    "Aktuell habe ich allerdings keinen Bedarf! Gerne können Sie mich aber im neuen Jahr wieder kontaktieren.",
+    "Hallo, momentan ist meine Kapazität mehr als ausgereizt. Später vielleicht.",
+    "Danke. Eventuell erst später interessant.",
+    "Im Moment nicht, ab dem 2. Quartal 2027 eher.",
+    "evtl. könnte es für mich in Q2 2027 relevant werden. Bescheid & Gruß: Max",
+  ])("Später bleibt Später: %s", (t) => {
+    const voll = t + SIG + COLD;
+    expect(isClearDecline(voll)).toBe(false);
+    expect(isLaterInterest(voll, NOV)).toBe(true);
+  });
+
+  it("eigenerText schneidet Zitat und Signatur ab, auch ohne Zeilenumbruch", () => {
+    expect(eigenerText("nein Danke" + SIG + COLD)).toBe("nein Danke");
+    expect(eigenerText("Viele Grüße zurück, gerne im März wieder.")).toBe("Viele Grüße zurück, gerne im März wieder.");
+    expect(eigenerText("Ich melde mich mit Freude im März.")).toBe("Ich melde mich mit Freude im März.");
   });
 });
 

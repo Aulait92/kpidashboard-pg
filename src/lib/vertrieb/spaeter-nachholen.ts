@@ -19,7 +19,7 @@ import { STOP_STAGES, loadFollowupSettings, nurAutomatischVerloren, planFollowup
 import { stripQuoted } from "@/lib/vertrieb/instantly";
 import { nachholenAntworten, type NachholenEintrag } from "@/lib/vertrieb/instantly-nachholen";
 import { isAutoReplyText } from "@/lib/vertrieb/sentiment";
-import { hasLaterHint, isClearDecline, isLaterInterest, laterTiming, nextWorkdayKey } from "@/lib/vertrieb/spaeter";
+import { eigenerText, hasLaterHint, isClearDecline, isLaterInterest, laterTiming, nextWorkdayKey } from "@/lib/vertrieb/spaeter";
 import { spaeterLlm, spaeterPerKi } from "@/lib/vertrieb/spaeter-ki";
 import { emailGesperrt, kontaktGesperrt } from "@/lib/vertrieb/sperrliste";
 
@@ -153,7 +153,7 @@ export async function spaeterNachholen(
       contactId: m.contactId,
       lead: null,
       emailId: m.id,
-      text: stripQuoted(m.text ?? ""),
+      text: eigenerText(stripQuoted(m.text ?? "")),
       subject: m.subject,
       sentAt: m.sentAt,
       sentiment: m.sentiment,
@@ -172,7 +172,7 @@ export async function spaeterNachholen(
       contactId: e.contactId ?? null,
       lead: e.lead,
       emailId: null,
-      text: e.text ?? "",
+      text: eigenerText(stripQuoted(e.text ?? "")),
       subject: e.betreff,
       sentAt: at,
       sentiment: e.spaeter ? "SPAETER" : null,
