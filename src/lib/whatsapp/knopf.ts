@@ -14,6 +14,7 @@
 //   Zeit mit 45 Min. (lang:<ISO>) / „Zeit behalten“ (lang:behalten) → Komplettcheck-Termin verlegen bzw. behalten
 //   „Schicke ich gleich“/„Nicht zur Hand“ (policenbitte:<Titel>) → Reaktion auf die Policen-Bitte, dann der Schluss
 //   „Ja, stimmt“/„Andere Adresse“ (email:ja|andere) → Einladung (einmal) bzw. Frage nach der neuen Adresse
+//   „Ja, eingetragen“/„Nein, bitte nochmal“ (eingetragen:ja|nein) → kurzer Dank bzw. Termin mit Kalender-Links nochmal
 //   „Ja“/„Mache ich gleich“ (kalender:ja|gleich, frühere Kalenderfrage) → zugesagt, kurze Antwort
 //   „Ja“/„Nein“ zu einer Angebotsfrage (folge:<key>:ja|nein) → Assistent mit Hinweis, welche Frage beantwortet ist
 // Bedenkzeit zum Angebot (Paket P5, lib/bedenkzeit-server.ts):
@@ -37,6 +38,7 @@ export type KnopfAktion =
   | { aktion: "komplettcheck"; ja: boolean }
   | { aktion: "kalender"; art: "ja" | "gleich" }
   | { aktion: "email"; art: "ja" | "andere" }
+  | { aktion: "eingetragen"; ja: boolean }
   | { aktion: "lang"; wahl: string }
   | { aktion: "policenbitte"; titel: string }
   | { aktion: "folge"; key: string; wert: string }
@@ -59,6 +61,7 @@ export function knopfAktion(kind: string | null | undefined, text: string | null
   if (p === "komplettcheck:ja" || p === "komplettcheck:nein") return { aktion: "komplettcheck", ja: p.endsWith(":ja") };
   if (p === "kalender:ja" || p === "kalender:gleich") return { aktion: "kalender", art: p.endsWith(":ja") ? "ja" : "gleich" };
   if (p === "email:ja" || p === "email:andere") return { aktion: "email", art: p.endsWith(":ja") ? "ja" : "andere" };
+  if (p === "eingetragen:ja" || p === "eingetragen:nein") return { aktion: "eingetragen", ja: p.endsWith(":ja") };
   if (p.startsWith("lang:")) {
     const w = p.slice(5);
     if (w === "behalten" || !Number.isNaN(new Date(w).getTime())) return { aktion: "lang", wahl: w };
@@ -190,6 +193,10 @@ export async function handleButtonReply(
   if (k.aktion === "email") {
     const s = await import("@/lib/whatsapp/termin-strecke");
     return { handled: k.art === "ja" ? await s.emailBestaetigt(conversationId, now) : await s.emailAndere(conversationId, now) };
+  }
+  if (k.aktion === "eingetragen") {
+    const { eingetragenAntwort } = await import("@/lib/whatsapp/termin-strecke");
+    return { handled: await eingetragenAntwort(conversationId, k.ja, now) };
   }
   if (k.aktion === "lang") {
     const { langeZeitAntwort } = await import("@/lib/whatsapp/termin-strecke");

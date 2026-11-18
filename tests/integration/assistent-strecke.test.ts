@@ -308,7 +308,13 @@ describe("Termin-Strecke mit Knöpfen", () => {
 
     // „Ja, stimmt“ → Einladung genau einmal (mit 45 Min.), zugesagt, Abschlusssatz
     await knopf(phone, "email:ja", "Ja, stimmt");
-    expect(gesendet().at(-1)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(gesendet().at(-2)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    // Danach die Frage nach dem Kalendereintrag mit Knöpfen (Ole, 18.11.2026)
+    expect(gesendet().at(-1)!.body).toBe("Konnten Sie den Termin in Ihrem Kalender eintragen?");
+    expect(gesendet().at(-1)!.buttons).toEqual([
+      { id: "eingetragen:ja", title: "Ja, eingetragen" },
+      { id: "eingetragen:nein", title: "Nein, bitte nochmal" },
+    ]);
     expect(mails).toEqual([{ id: appt.id, kind: "booked", ende: t2.endsAt!.toISOString(), an: "julia@example.com" }]);
     const t3 = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
     expect(t3.confirmedAt).not.toBeNull();
@@ -323,6 +329,42 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await knopf(phone, "email:ja", "Ja, stimmt");
     await runEinladungNachholen(new Date(Date.now() + 2 * HOUR));
     expect(mails).toHaveLength(1);
+    // Frage nach dem Kalendereintrag nur einmal je Termin
+    expect(gesendet().filter((s) => s.body === "Konnten Sie den Termin in Ihrem Kalender eintragen?")).toHaveLength(0);
+
+    // „Nein, bitte nochmal“ → Termin als Text mit Links zum Eintragen (Google-Kalender, Kalenderdatei)
+    const token = `tok-eingetragen-${uid()}`;
+    await prisma.appointment.update({ where: { id: appt.id }, data: { manageToken: token } });
+    await knopf(phone, "eingetragen:nein", "Nein, bitte nochmal");
+    const nochmal = gesendet().at(-1)!.body;
+    expect(nochmal).toMatch(/^Kein Problem, hier ist Ihr Termin noch einmal: \*.+\* mit Herrn Kannapinn\./);
+    expect(nochmal).toContain("Google-Kalender: https://calendar.google.com/calendar/render?action=TEMPLATE");
+    expect(nochmal).toContain(`Apple, Outlook und andere: `);
+    expect(nochmal).toContain(`/book/manage/${token}/ics`);
+    expect(nochmal).toContain("Einfach antippen, dann öffnet sich der Kalendereintrag.");
+    expect(nochmal).not.toMatch(/[–—]/);
+    // „Ja, eingetragen“ → kurzer Dank, sonst nichts
+    const vorher = gesendet().length;
+    await knopf(phone, "eingetragen:ja", "Ja, eingetragen");
+    expect(gesendet().length).toBe(vorher + 1);
+    expect(gesendet().at(-1)!.body).toMatch(/^Super, vielen Dank! Dann bis .+ Uhr\.$/);
+    expect(gesendet().at(-1)!.buttons).toBeNull();
+  });
+
+  it("Frage nach dem Kalendereintrag nur im offenen 24-h-Fenster; Du-Form", async () => {
+    const { conv, phone } = await gebuchtPerKnopf();
+    await knopf(phone, "komplettcheck:nein", "Nein, danke");
+    // Fenster zu (z. B. sehr späte Antwort über eine Vorlage): keine interaktive Frage
+    await prisma.conversation.update({ where: { id: conv.id }, data: { windowExpiresAt: new Date(Date.now() - 60_000) } });
+    const { emailBestaetigt } = await import("@/lib/whatsapp/termin-strecke");
+    await merke(conv.id, STRECKE.abschluss, {});
+    waSend.mockClear();
+    expect(await emailBestaetigt(conv.id)).toBe(true);
+    expect(gesendet().map((s) => s.body)).toEqual(["Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier."]);
+    const { eingetragenFrage, kalenderNochmalText, eingetragenDank } = await import("@/lib/whatsapp/gespraech");
+    expect(eingetragenFrage("du")).toBe("Konntest du den Termin in deinem Kalender eintragen?");
+    expect(eingetragenDank("du", new Date("2026-11-20T15:00:00Z"))).toMatch(/^Super, danke dir! Dann bis /);
+    expect(kalenderNochmalText({ an: "du", start: new Date("2026-11-20T15:00:00Z"), person: { dat: "Ole" }, google: "https://g", ics: "https://i" })).toMatch(/^Kein Problem, hier ist dein Termin noch einmal: \*.+\* mit Ole\./);
   });
 
   // Live-Test 18.11.2026: Komplettcheck per Knopf, danach rief der Assistent bei der Antwort aufs Geburtsdatum noch einmal
@@ -384,7 +426,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await text(phone, "julia.neu@example");
     expect(gesendet().at(-1)!.body).toBe("Die Adresse scheint nicht vollständig zu sein. Schreiben Sie sie mir bitte noch einmal, z. B. name@beispiel.de.");
     await text(phone, "julia.neu@example.com");
-    expect(gesendet().at(-1)!.body).toBe("Danke, die Einladung ist an julia.neu@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(gesendet().at(-2)!.body).toBe("Danke, die Einladung ist an julia.neu@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
     expect(mails.map((m) => m.kind)).toEqual(["booked"]);
     expect((await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } })).einladungAn).toBe("julia.neu@example.com");
     expect(policenBitten(gesendet())).toBe(1);
@@ -444,7 +486,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     expect(st.ai).toBe(0);
     expect((await prisma.conversation.findUniqueOrThrow({ where: { id: conv.id } })).contactEmail).toBe("julia.becker@example.com");
     expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).email).toBe("julia.becker@example.com");
-    expect(gesendet().at(-1)!.body).toBe("Danke, die Einladung ist an julia.becker@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(gesendet().at(-2)!.body).toBe("Danke, die Einladung ist an julia.becker@example.com unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
     expect(mails.map((m) => m.kind)).toEqual(["booked"]);
   });
 
@@ -464,7 +506,7 @@ describe("Termin-Strecke mit Knöpfen", () => {
     await text(phone, "Ja das passt so, danke");
     const t = await prisma.appointment.findUniqueOrThrow({ where: { id: appt.id } });
     expect(t.confirmedAt).not.toBeNull();
-    expect(gesendet().at(-1)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
+    expect(gesendet().at(-2)!.body).toBe("Super, die Einladung ist unterwegs. Tragen Sie sich den Termin am besten gleich ein. Falls etwas dazwischenkommt, schreiben Sie mir einfach hier.");
     expect(mails.map((m) => m.kind)).toEqual(["booked"]);
     const { eraseLead } = await import("@/lib/erasure");
     await eraseLead(lead.id);

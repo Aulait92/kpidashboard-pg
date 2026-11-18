@@ -79,6 +79,10 @@ describe("Zeit-Knöpfe zum Terminvorschlag", () => {
     expect(knopfAktion("interactive", "Nein, danke", "komplettcheck:nein")).toEqual({ aktion: "komplettcheck", ja: false });
     expect(knopfAktion("interactive", "Nein, danke", "Nein, danke")).toEqual({ aktion: "kein_bedarf" });
     expect(knopfAktion("interactive", "Ja", "kalender:ja")).toEqual({ aktion: "kalender", art: "ja" });
+    // Frage nach dem Kalendereintrag (Ole, 18.11.2026)
+    expect(knopfAktion("interactive", "Ja, eingetragen", "eingetragen:ja")).toEqual({ aktion: "eingetragen", ja: true });
+    expect(knopfAktion("interactive", "Nein, bitte nochmal", "eingetragen:nein")).toEqual({ aktion: "eingetragen", ja: false });
+    expect(knopfAktion("text", "Nein, bitte nochmal", null)).toBeNull();
     expect(knopfAktion("interactive", "Mache ich gleich", "kalender:gleich")).toEqual({ aktion: "kalender", art: "gleich" });
     expect(knopfAktion("interactive", "Nein", "folge:oeffentlicherDienst:nein")).toEqual({ aktion: "folge", key: "oeffentlicherDienst", wert: "Nein" });
     expect(knopfHinweis({ aktion: "folge", key: "oeffentlicherDienst", wert: "Nein" }, NOW)).toMatch(/öffentlicher Dienst.*record_qualification/);

@@ -383,6 +383,35 @@ export function schlussSatz(an: Ansprache): string {
   );
 }
 
+/**
+ * Nach „Die Einladung ist unterwegs“ (Ole, 18.11.2026): Frage mit Knöpfen, ob der Termin im Kalender steht. Knopftitel
+ * höchstens 20 Zeichen (WhatsApp), deshalb „Nein, bitte nochmal“ statt „Nein, bitte nochmal schicken“.
+ */
+export function eingetragenFrage(an: Ansprache): string {
+  return a(an, "Konntest du den Termin in deinem Kalender eintragen?", "Konnten Sie den Termin in Ihrem Kalender eintragen?");
+}
+
+export const EINGETRAGEN_KNOEPFE: Knopf[] = [
+  { id: "eingetragen:ja", title: "Ja, eingetragen" },
+  { id: "eingetragen:nein", title: "Nein, bitte nochmal" },
+];
+
+/** Antwort auf „Ja, eingetragen“: kurzer Dank, fertig. */
+export function eingetragenDank(an: Ansprache, start: Date): string {
+  return a(an, `Super, danke dir! Dann bis ${zeitLang(start)}.`, `Super, vielen Dank! Dann bis ${zeitLang(start)}.`);
+}
+
+/**
+ * Antwort auf „Nein, bitte nochmal“: Termin als Text und Links zum Eintragen (Google-Kalender, Kalenderdatei für Apple,
+ * Outlook und andere). Ohne Links (Termin nicht ladbar) nur der Text.
+ */
+export function kalenderNochmalText(o: { an: Ansprache; start: Date; person: { dat: string }; google?: string | null; ics?: string | null; ort?: string | null }): string {
+  const kopf = a(o.an, `Kein Problem, hier ist dein Termin noch einmal: *${zeitLang(o.start)}* mit ${o.person.dat}.`, `Kein Problem, hier ist Ihr Termin noch einmal: *${zeitLang(o.start)}* mit ${o.person.dat}.`);
+  const links = [o.google ? `Google-Kalender: ${o.google}` : "", o.ics ? `Apple, Outlook und andere: ${o.ics}` : ""].filter(Boolean);
+  const tipp = links.length ? a(o.an, "Einfach antippen, dann öffnet sich der Kalendereintrag.", "Einfach antippen, dann öffnet sich der Kalendereintrag.") : "";
+  return [kopf, o.ort ? `Adresse: ${o.ort}` : "", links.join("\n"), tipp].filter(Boolean).join("\n\n");
+}
+
 /** Antwort auf „Ja, stimmt“ bzw. eine neue Adresse: „Super, die Einladung ist unterwegs. …“ (mit Adresse bei neuer). */
 export function einladungUnterwegs(an: Ansprache, email?: string | null): string {
   return `${email ? `Danke, die Einladung ist an ${email} unterwegs.` : "Super, die Einladung ist unterwegs."} ${schlussSatz(an)}`;
