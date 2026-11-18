@@ -25,8 +25,7 @@
         "bu": "optional"
       },
       "quelle": "https://www.hannoversche.de/altersvorsorge/private-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Fondsgebundene Rentenversicherung (Fondsrente)",
@@ -44,8 +43,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hannoversche.de/altersvorsorge/fondsgebundene-rentenversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -59,6 +57,7 @@
     "Beitragsgarantie und garantierter Rentenfaktor sind für keine Variante beziffert (Bausteinrente: „hohe garantierte Leistungen“; Fondsrente: Umwandlung in eine garantierte Rente zum Rentenbeginn).",
     "Hinterbliebene: Bausteinrente mit Rentengarantiezeit oder zusätzlicher Hinterbliebenenrente; Fondsrente vor Rentenbeginn Fondsguthaben, mindestens die gezahlten Beiträge, danach Rentengarantiezeit.",
     "Bausteinrente: Rentenbeginn 62 bis 80 Jahre, Beitragsfreistellung bis 2 Jahre, BU-Beitragsübernahme als Zusatzbaustein. Fondsrente: Teilentnahmen, Beitragspause bis 3 Jahre, Beitragsdynamik; 5 Musterportfolios (auch reines ETF-Portfolio) oder bis zu 5 Fonds frei.",
-    "BU-Zusatz bei der Fondsrente und Kosten (Effektivkosten) nicht belegt; Kosten stehen in den Basisinformationsblättern."
+    "BU-Zusatz bei der Fondsrente und Kosten (Effektivkosten) nicht belegt; Kosten stehen in den Basisinformationsblättern.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }

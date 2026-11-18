@@ -30,8 +30,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/unfallversicherung-downloads/broschueren-und-leistungsueberblick/UH_pdf-09.26.11.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung XL",
@@ -54,8 +53,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/unfallversicherung-downloads/broschueren-und-leistungsueberblick/UH_pdf-09.26.11.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Unfallversicherung XXL",
@@ -78,8 +76,7 @@
         "tagegeld": "optional"
       },
       "quelle": "https://www.interrisk.de/wMedia/docs/unfallversicherung-downloads/broschueren-und-leistungsueberblick/UH_pdf-09.26.11.pdf",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -90,6 +87,7 @@
   "offen": [
     "Werte aus dem Leistungsprofil Unfall (UH 09.26, Symboltabelle L / XL / XXL) und dem Tarifvergleich der Produktseite. InterRisk markiert keine Empfehlung; XL als mittlere Stufe gesetzt.",
     "Invaliditätssumme, Progression (ohne, Basis, 225, 350, 500 oder 1.000 %), Unfallrente und Krankenhaustagegeld werden je Vertrag vereinbart (Tarifbestimmungen UT2020). Leistung ab Invaliditätsgrad nicht je Stufe genannt.",
-    "Gliedertaxe: L Standard (Arm 70 %), XL Arm 80 %, XXL Arm 100 %. Kosmetik und Bergung in XXL ohne Begrenzung laut Hinweis im Leistungsprofil. Sofortleistung 20.000 € bei Schwerverletzungen nur XXL; Unfall-Hilfe-Paket nur XXL."
+    "Gliedertaxe: L Standard (Arm 70 %), XL Arm 80 %, XXL Arm 100 %. Kosmetik und Bergung in XXL ohne Begrenzung laut Hinweis im Leistungsprofil. Sofortleistung 20.000 € bei Schwerverletzungen nur XXL; Unfall-Hilfe-Paket nur XXL.",
+    "Geprüft am 18.11.2026 an Produktseite und Leistungsübersicht bzw. Bedingungen (Stichprobe am Bild der Übersicht)."
   ]
 }

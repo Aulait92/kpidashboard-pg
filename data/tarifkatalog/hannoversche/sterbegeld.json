@@ -25,8 +25,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hannoversche.de/sterbegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Sterbegeldversicherung Plus",
@@ -45,8 +44,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hannoversche.de/sterbegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     },
     {
       "name": "Sterbegeldversicherung Exklusiv",
@@ -65,8 +63,7 @@
         "dynamik": "optional"
       },
       "quelle": "https://www.hannoversche.de/sterbegeldversicherung",
-      "stand": "2026-11-17",
-      "ungeprueft": true
+      "stand": "2026-11-18"
     }
   ],
   "quellen": [
@@ -79,6 +76,7 @@
     "Wartezeit frei wählbar 12 bis 36 Monate; bei Tod in der Wartezeit werden die Beiträge erstattet, bei Unfalltod volle Summe (auch Basis).",
     "Beitragszahlung bis zu einem wählbaren Alter zwischen 65 und 95 Jahren, Schutz lebenslang. Summe innerhalb 3.000 bis 25.000 € später anpassbar.",
     "Plus und Exklusiv zusätzlich: Rückholung bei Tod im Ausland (bis doppelte Summe, höchstens 20.000 €), Kinder mit 3.000 € mitversichert. Exklusiv zusätzlich: Beitragsbefreiung ab Pflegegrad 3, vorgezogene Leistung bei schwerer Krankheit.",
-    "Bestattungsvorsorge-Service nicht genannt. Dynamik: Beitragsdynamik in allen drei Tarifen wählbar."
+    "Bestattungsvorsorge-Service nicht genannt. Dynamik: Beitragsdynamik in allen drei Tarifen wählbar.",
+    "Geprüft am 18.11.2026 an Produktseite und Bedingungen bzw. Leistungsübersicht."
   ]
 }
