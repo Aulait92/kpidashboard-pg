@@ -54,6 +54,7 @@ vi.mock("@/lib/whatsapp/erstinfo-pdf", () => ({ sendErstinfoPdf: async () => "al
 
 import { prisma } from "@/lib/prisma";
 import { encryptBytes, encryptSecret } from "@/lib/encryption";
+import { legeAb, setzeSpeicherFuerTests, type Speicher } from "@/lib/policen/ablage";
 import {
   auslesenStatus,
   auslesenTaeglich,
@@ -71,6 +72,21 @@ import { runBotTurn } from "@/lib/whatsapp/bot";
 import { cleanupCustomer, makeBuyer, makeCustomer, requireTestDb } from "./db";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+// Privater Policen-Bucket (lib/policen/ablage.ts) im Speicher
+const ABLAGE_ENV = {
+  POLICEN_S3_ENDPOINT: "https://test123.eu.r2.cloudflarestorage.com",
+  POLICEN_S3_BUCKET: "pg-policen-eu",
+  POLICEN_S3_ACCESS_KEY_ID: "id",
+  POLICEN_S3_SECRET_ACCESS_KEY: "secret",
+  POLICEN_SCHLUESSEL: Buffer.alloc(32, 11).toString("base64"),
+};
+const objekte = new Map<string, Buffer>();
+const memory: Speicher = {
+  put: async (k, b) => void objekte.set(k, b),
+  get: async (k) => objekte.get(k) ?? null,
+  del: async (ks) => ks.forEach((k) => objekte.delete(k)),
+  list: async () => [],
+};
 let seq = 0;
 const newPhone = () => `4916${String(Date.now()).slice(-6)}${String(++seq).padStart(3, "0")}`;
 
@@ -133,8 +149,9 @@ describe("Policen auslesen", () => {
   async function leadMitUnterlage(o: { data: Buffer; sparte?: string | null; mime?: string; nachweis?: { ki: boolean | null; version: string; art?: string } | null; leadExtra?: Record<string, unknown> }) {
     const phone = newPhone();
     const lead = await prisma.lead.create({ data: { customerId, name: "Julia Schneider", phone, source: "Privatschutz", status: "Termin", reached: true, assignedUserId: ownerId, ...o.leadExtra } });
+    const storageKey = await legeAb(customerId, lead.id, o.data);
     const doc = await prisma.leadDocument.create({
-      data: { customerId, leadId: lead.id, status: "gespeichert", mimeType: o.mime ?? "application/pdf", fileName: "Julia Schneider Police.pdf", size: o.data.length, data: encryptBytes(o.data), sparte: o.sparte ?? null },
+      data: { customerId, leadId: lead.id, status: "gespeichert", mimeType: o.mime ?? "application/pdf", fileName: "Julia Schneider Police.pdf", size: o.data.length, storageKey, sparte: o.sparte ?? null },
     });
     if (o.nachweis !== null) await nachweis(lead.id, phone, o.nachweis ?? { ki: true, version: "2026-11-18.g1" });
     return { lead, doc, phone };
@@ -154,13 +171,15 @@ describe("Policen auslesen", () => {
     await prisma.policenAuslesenTag.deleteMany({});
   });
   afterAll(async () => {
+    setzeSpeicherFuerTests(null);
     await prisma.policenAuslesenEinstellung.deleteMany({});
     await prisma.policenAuslesenTag.deleteMany({});
     await cleanupCustomer(customerId);
   });
   beforeEach(async () => {
     for (const k of Object.keys(process.env)) if (/^POLICEN_/.test(k)) delete process.env[k];
-    Object.assign(process.env, { POLICEN_OPENAI_API_KEY: "sk-test-geheim" });
+    Object.assign(process.env, { POLICEN_OPENAI_API_KEY: "sk-test-geheim", ...ABLAGE_ENV });
+    setzeSpeicherFuerTests(memory);
     oa.antwort = HAUSRAT_ANTWORT;
     oa.status401 = false;
     oa.calls = [];
@@ -184,6 +203,10 @@ describe("Policen auslesen", () => {
     expect(await nachEingang(a.lead.id)).toBe(0);
     expect(await liesUnterlageAus(a.doc.id)).toEqual({ status: "gesperrt:aus" });
     process.env.POLICEN_OPENAI_API_KEY = "sk-test-geheim";
+    // Ohne Policen-Bucket: aus
+    delete process.env.POLICEN_S3_BUCKET;
+    expect(await liesUnterlageAus(a.doc.id)).toEqual({ status: "gesperrt:aus" });
+    process.env.POLICEN_S3_BUCKET = ABLAGE_ENV.POLICEN_S3_BUCKET;
     process.env.POLICEN_AUSLESEN_AN = "0";
     expect(await liesUnterlageAus(a.doc.id)).toEqual({ status: "gesperrt:aus" });
     delete process.env.POLICEN_AUSLESEN_AN;

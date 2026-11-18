@@ -3,6 +3,7 @@
 // der Chat nichts von hier (Test tests/unit/policen-auslesen-grenze.test.ts).
 //
 // Ein Dokument wird nur ausgelesen, wenn ALLES zutrifft (sonst kein Aufruf beim Anbieter):
+//   0. Privater Policen-Bucket eingerichtet (lib/policen/ablage.ts, sonst ist Policen per WhatsApp aus),
 //   1. Anbieter eingerichtet (POLICEN_OPENAI_API_KEY bzw. ausdrücklich Bedrock), kein Notschalter, nicht pausiert (401),
 //   2. Kunde freigeschaltet (POLICEN_AUSLESEN_KUNDEN leer oder enthält ihn),
 //   3. Einwilligung des Leads mit KI (PolicenNachweis: art einwilligung, ki = true, Textversion ab
@@ -86,6 +87,9 @@ export type Sperre = "aus" | "kunde" | "pause" | "einwilligung";
 /** Darf für diesen Lead überhaupt ausgelesen werden? null = ja, sonst der Grund. */
 export async function sperreFuer(customerId: string, leadId: string): Promise<Sperre | null> {
   if (!auslesenAn()) return "aus";
+  // Ohne privaten Policen-Bucket ist Policen per WhatsApp aus, dann auch das Auslesen
+  const { ablageBereit } = await import("@/lib/policen/ablage");
+  if (!ablageBereit()) return "aus";
   if (!kundeFreigeschaltet(customerId)) return "kunde";
   if (await pausiert()) return "pause";
   if (!(await kiEinwilligung(leadId))) return "einwilligung";
@@ -492,6 +496,7 @@ export async function auslesenStatus(now = new Date()) {
   return {
     ...auslesenKonfigStatus({ zdr: !!e?.zdrNachweisAm, now }),
     zdrNachweisAm: e?.zdrNachweisAm?.toISOString().slice(0, 10) ?? null,
+    ablage: (await import("@/lib/policen/ablage")).ablageBereit(),
     pausiert: await pausiert(),
     pausiertSeit: e?.schluesselUngueltigAt?.toISOString() ?? null,
     heute: { tag: berlinTag(now), anzahl: heute?.anzahl ?? 0, limitGemeldet: !!heute?.gemeldetAt },
