@@ -27,7 +27,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
   const hinweis = "rounded-[var(--radius-md)] border px-4 py-3 text-sm";
 
   return (
-    <Seite titel="Zahlen" reiter="zahlen">
+    <Seite titel="Geld" reiter="geld">
       <div className="space-y-4">
         {sp.fehler ? <p className={`${hinweis} border-rose-200 bg-rose-50 text-rose-800`}>{sp.fehler}</p> : null}
         {sp.verbunden ? <p className={`${hinweis} border-emerald-200 bg-emerald-50 text-emerald-800`}>Verbunden. Die Umsätze der letzten 90 Tage wurden abgerufen.</p> : null}

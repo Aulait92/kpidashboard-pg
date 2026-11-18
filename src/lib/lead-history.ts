@@ -59,7 +59,7 @@ export const fmtDayShort = (d: Date) =>
 export async function abschlussText(customerId: string, source: string | null, closeValue: number | null, leadId?: string): Promise<string> {
   const [{ loadCustomerProvision }, { closeValueLabel }] = await Promise.all([import("@/lib/provision-server"), import("@/lib/provision")]);
   const rates = (await loadCustomerProvision(customerId)).rates;
-  const primary = leadId ? await prisma.leadContract.findUnique({ where: { primaryLeadId: leadId }, select: { sparte: true, premium: true, provisionValue: true } }).catch(() => null) : null;
+  const primary = leadId ? await prisma.leadContract.findUnique({ where: { primaryLeadId: leadId }, select: { sparte: true, premium: true, premiumSource: true, provisionValue: true, productName: true } }).catch(() => null) : null;
   if (primary) {
     const { contractSummary } = await import("@/lib/vertraege");
     return `Abschluss · ${contractSummary(primary, rates)}`;

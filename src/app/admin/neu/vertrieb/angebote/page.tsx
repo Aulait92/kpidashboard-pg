@@ -38,7 +38,7 @@ export default async function AngebotePage({ searchParams }: { searchParams: Pro
   );
 
   return (
-    <Seite titel="Vertrieb" reiter="vertrieb">
+    <Seite titel="Verkaufen" reiter="verkaufen">
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { l: "Verschickt", v: String(sent.length) },

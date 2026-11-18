@@ -31,6 +31,7 @@ import { normalizePath, sendUsage } from "@/lib/usage-client";
 import { cn } from "@/lib/utils";
 import { EMPFEHLUNG_MODULE_AVAILABLE, showNewBadge } from "@/lib/empfehlung/shared";
 import { NotReachedOfferHost } from "@/components/next-step";
+import { AbschlussNachherHost } from "@/components/abschluss-nachher";
 import { ZurueckLink } from "@/components/zurueck-link";
 import { demoPfadAlsBuyer } from "@/lib/app-demo/weiche";
 
@@ -225,6 +226,7 @@ export function BuyerShell({
       </nav>
     </div>
     <NotReachedOfferHost />
+    <AbschlussNachherHost />
     </ToastProvider>
   );
 }
@@ -592,6 +594,7 @@ function BuyerShellA({
         </nav>
       </div>
       <NotReachedOfferHost />
+      <AbschlussNachherHost />
     </ToastProvider>
   );
 }
