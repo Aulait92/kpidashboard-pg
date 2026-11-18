@@ -1,8 +1,9 @@
 "use client";
 
+import { InfoHinweis } from "@/components/info-hinweis";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
-import { Check, Info, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -70,12 +71,9 @@ export function Switch({
   );
 }
 
+/** Hinweis-Symbol, jetzt gemeinsam mit dem Kundenbereich (components/info-hinweis.tsx, auch am Handy antippbar). */
 function Hint({ text }: { text: string }) {
-  return (
-    <span title={text} className="inline-flex cursor-help text-[color:var(--muted)]">
-      <Info className="h-4 w-4" />
-    </span>
-  );
+  return <InfoHinweis text={text} />;
 }
 
 function SavedBadge({ state }: { state: "idle" | "saving" | "saved" }) {

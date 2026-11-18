@@ -1,5 +1,7 @@
 "use client";
 
+import { InfoHinweis } from "@/components/info-hinweis";
+import { SICHT_ERKLAERT } from "@/lib/begriffe";
 import Link from "next/link";
 import { useActionState, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties, type ReactNode } from "react";
 import type { DrillMonth, ZahlenData } from "@/lib/zahlen";
@@ -316,6 +318,7 @@ export function ZahlenView({
               </button>
             ))}
           </div>
+          <InfoHinweis begriff="Kerngeschäft und Gesamt" text={SICHT_ERKLAERT} />
           <button
             type="button"
             aria-pressed={investor}

@@ -1,4 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
+import { InfoHinweis } from "@/components/info-hinweis";
+import { PREISSTUFE_ERKLAERT } from "@/lib/begriffe";
 import { LegalSections } from "@/components/legal-sections";
 import { AGB, PROVIDER } from "@/lib/legal-texts";
 import {
@@ -489,6 +491,7 @@ export function OfferDocument({
               {monthlyIsList
                 ? `${serviceOnly ? "Paket Nur Betreuung" : `Preisstufe Werbebudget ${list.tierLabel}`}${extra ? `, inklusive ${extra} × ${eur(PRICE_LIST.extraProductMonthly)} für weitere Produkte` : ""}`
                 : "Sonderkondition"}
+              {monthlyIsList && !serviceOnly ? <InfoHinweis begriff="Preisstufe Werbebudget" text={PREISSTUFE_ERKLAERT} className="ml-1 print:hidden" /> : null}
             </Note>
             {staffel ? <Note>{tierStaffelText(staffel)}</Note> : null}
           </Tr>

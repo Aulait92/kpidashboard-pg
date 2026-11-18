@@ -1,5 +1,7 @@
 "use client";
 
+import { InfoHinweis } from "@/components/info-hinweis";
+import { BETREUUNG_ERKLAERT } from "@/lib/begriffe";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Loader2, Minus, Plus, TrendingUp } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
@@ -207,7 +209,10 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
               p.overIndividual ? "border-sky-300 bg-sky-50 text-sky-950" : "border-amber-300 bg-amber-50 text-amber-950"
             }`}
           >
-            <div className="mb-1 text-xs font-bold uppercase tracking-wide">{p.overIndividual ? "Individuelles Angebot" : "Neue Betreuungsstufe"}</div>
+            <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide">
+              {p.overIndividual ? "Individuelles Angebot" : "Neue Betreuungsstufe"}
+              {p.overIndividual ? null : <InfoHinweis begriff="Betreuungsstufe" text={BETREUUNG_ERKLAERT} />}
+            </div>
             <p className="font-semibold">{sentence}</p>
             {p.pricing === "individual" && !p.overIndividual ? (
               <p className="mt-2 text-sm">Ihre Konditionen sind individuell, wir bestätigen den neuen Preis. Ihr Budget gilt trotzdem wie gewählt.</p>
@@ -215,7 +220,8 @@ export function BudgetCard({ lines, upcoming, ctx, pending, today, readOnly, est
           </div>
         ) : ctx.plan !== "service" && p.tierTo ? (
           <p className="text-sm text-[color:var(--muted)]" data-budget-tier>
-            Ihre Betreuungsstufe bleibt gleich ({p.tierTo.label}){p.pricing === "list" && p.feeTo != null ? `: ${eur0(p.feeTo)} netto im Monat` : ""}.
+            Ihre Betreuungsstufe bleibt gleich ({p.tierTo.label}){p.pricing === "list" && p.feeTo != null ? `: ${eur0(p.feeTo)} netto im Monat` : ""}.{" "}
+            <InfoHinweis begriff="Betreuungsstufe" text={BETREUUNG_ERKLAERT} />
           </p>
         ) : ctx.plan === "service" ? (
           <p className="text-sm text-[color:var(--muted)]">Paket „Nur Betreuung“: Ihr Monatspreis hängt nicht vom Werbebudget ab.</p>

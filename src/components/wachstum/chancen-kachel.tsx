@@ -9,6 +9,7 @@ import { ChevronRight } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { KACHEL, KennzahlInhalt } from "@/components/wachstum/kennzahl";
 import { STUFE_LABEL, type ChanceStufe } from "@/lib/offene-chancen";
+import { BEDENKZEIT_ERKLAERT } from "@/lib/begriffe";
 
 export type ChanceZeile = { leadId: string; name: string; stufe: ChanceStufe; provision: number; erwartet: number; naechsterSchritt: string };
 
@@ -84,6 +85,7 @@ export function ChancenKachel({
         <p className="border-t border-[color:var(--border)] px-5 py-3 text-xs leading-relaxed text-[color:var(--muted)]">
           Erwartet = Provision bei Abschluss × Ihre Quote (Angebot {pct(quoten.angebot)}, Termin {pct(quoten.termin)}).
           {schaetzung ? " Schätzung mit Standardquote, bis 10 eigene Fälle je Stufe da sind." : ""}
+          {liste.some((c) => c.stufe === "wiedervorlage") ? <span className="mt-1 block" data-bedenkzeit-erklaert>{BEDENKZEIT_ERKLAERT}</span> : null}
         </p>
       </Sheet>
     </>
