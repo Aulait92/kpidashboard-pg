@@ -10,7 +10,16 @@ import { decryptBytes, encryptBytes } from "@/lib/encryption";
 import { logLeadHistory } from "@/lib/lead-history";
 import { asAnsprache, type Ansprache } from "@/lib/ansprache";
 import { publicUrlOr } from "@/lib/public-url";
-import { gesundheitNoetig, versichererListe, type VvDaten, type VvEingabe, type VvVertrag } from "@/lib/maklervollmacht/regeln";
+import {
+  gesundheitNoetig,
+  leseUebertragung,
+  uebertragungsStand,
+  versichererKey,
+  versichererListe,
+  type VvDaten,
+  type VvEingabe,
+  type VvVertrag,
+} from "@/lib/maklervollmacht/regeln";
 import {
   VV_TEXT_VERSION,
   einwilligungGesundheit,
@@ -20,7 +29,9 @@ import {
   protokoll,
   uebertragungsschreiben,
   vollmacht,
+  type VvAbschnitt,
   type VvKontext,
+  type VvKopie,
   type VvMakler,
 } from "@/lib/maklervollmacht/texte";
 import { sha256, vollmachtPdf } from "@/lib/maklervollmacht/pdf";
@@ -72,7 +83,16 @@ export async function vollmachtAnlegen(leadId: string, customerId: string, opts:
 /** Vorschlag für die Formularfelder aus dem Kontakt (Name, E-Mail, Adresse aus dem Leadformular, falls vorhanden). */
 async function vorschlag(leadId: string): Promise<Partial<VvDaten>> {
   const l = await prisma.lead.findUnique({ where: { id: leadId }, select: { name: true, email: true, formData: true } });
-  const f = (l?.formData ?? {}) as Record<string, unknown>;
+  // formData ist meist eine Liste [{label, value}] (Leadformular), ältere Einträge ein Objekt {feld: wert}
+  const roh = l?.formData ?? {};
+  const f: Record<string, unknown> = Array.isArray(roh)
+    ? Object.fromEntries(
+        roh.flatMap((x) => {
+          const o = (x ?? {}) as { label?: unknown; value?: unknown };
+          return typeof o.label === "string" ? [[o.label, o.value]] : [];
+        }),
+      )
+    : (roh as Record<string, unknown>);
   const pick = (...keys: string[]) => {
     for (const k of Object.keys(f)) if (keys.some((x) => k.toLowerCase().replace(/[^a-zäöüß]/g, "").includes(x))) {
       const v = String(f[k] ?? "").trim();
@@ -140,18 +160,35 @@ function kontext(v: { id: string; signedAt: Date | null }, makler: VvMakler, kun
 }
 
 /** Gesamt-PDF für Makler und Kunde: Vollmacht, Maklerauftrag, ggf. Einwilligung, Protokoll mit Prüfsummen. */
-async function gesamtPdf(c: VvKontext, p: { an: Ansprache; gesundheit: boolean; signatur: Uint8Array; ip: string | null; ua: string | null; weg: string }) {
-  const dokumente = [vollmacht(c), maklerauftrag(c), ...(p.gesundheit ? [einwilligungGesundheit(c, p.an)] : [])];
+async function gesamtPdf(c: VvKontext, p: { an: Ansprache; gesundheit: boolean; signatur: Uint8Array; ip: string | null; ua: string | null; weg: string; kopie: VvKopie }) {
+  const dokumente = [vollmacht(c), maklerauftrag(c), ...(p.gesundheit ? [einwilligungGesundheit(c)] : [])];
   const ohneProtokoll = await vollmachtPdf({ titel: `Maklervollmacht ${kundeName(c.kunde)}`, abschnitte: dokumente, signaturPng: p.signatur, dokumentId: c.dokumentId, autor: c.makler.firma ?? c.makler.name });
   const hashes = [{ name: "Vollmacht, Maklerauftrag" + (p.gesundheit ? ", Einwilligung" : ""), sha256: sha256(ohneProtokoll) }];
   const geraet = p.ua ? p.ua.slice(0, 160) : null;
   return vollmachtPdf({
     titel: `Maklervollmacht ${kundeName(c.kunde)}`,
-    abschnitte: [...dokumente, protokoll(c, { an: p.an, gesundheit: p.gesundheit, ipKurz: ipKurz(p.ip), geraet, weg: p.weg, hashes })],
+    abschnitte: [...dokumente, protokoll(c, { an: p.an, gesundheit: p.gesundheit, ipKurz: ipKurz(p.ip), geraet, weg: p.weg, hashes, kopie: p.kopie })],
     signaturPng: p.signatur,
     dokumentId: c.dokumentId,
     autor: c.makler.firma ?? c.makler.name,
   });
+}
+
+/**
+ * Anrede für das Schreiben an den Versicherer aus dem Kontakt (Formular, Korrektur im Kontakt, Bestandskunde), nur wenn
+ * der Nachname passt (unterschreibt z. B. der Ehepartner, bleibt es neutral). Nie aus dem Vornamen geraten.
+ */
+async function anredeAusKontakt(customerId: string, leadId: string, nachname: string): Promise<"Herr" | "Frau" | null> {
+  try {
+    const { ansprechpartner } = await import("@/lib/lead-anrede");
+    const { kontaktParts, salutationOf } = await import("@/lib/ansprache");
+    const { kontakt } = await ansprechpartner({ customerId, leadId });
+    const last = kontaktParts(kontakt).last.trim().toLowerCase();
+    if (last && last !== nachname.trim().toLowerCase()) return null;
+    return salutationOf(kontakt.salutation);
+  } catch {
+    return null;
+  }
 }
 
 export type VvUnterschriftErgebnis = { ok: true; mailGesendet: boolean } | { ok: false; error: string };
@@ -167,12 +204,16 @@ export async function unterschreiben(token: string, e: VvEingabe, meta: { ip: st
   const an = asAnsprache(v.ansprache);
   const makler = await maklerDaten(v.customerId);
   const gesundheit = e.gesundheit && gesundheitNoetig(e.vertraege);
-  const c = kontext({ id: v.id, signedAt: now }, makler, e.daten, e.vertraege);
-  const pdf = await gesamtPdf(c, { an, gesundheit, signatur: e.signaturPng, ip: meta.ip, ua: meta.ua, weg: v.sentAt ? "Persönlicher Link per E-Mail" : "Persönlicher Link (im Termin oder vom Makler geteilt)" });
+  const daten: VvDaten = { ...e.daten, anrede: await anredeAusKontakt(v.customerId, v.leadId, e.daten.nachname) };
+  const c = kontext({ id: v.id, signedAt: now }, makler, daten, e.vertraege);
+  const pdfOpts = { an, gesundheit, signatur: e.signaturPng, ip: meta.ip, ua: meta.ua, weg: v.sentAt ? "Persönlicher Link per E-Mail" : "Persönlicher Link (im Termin oder vom Makler geteilt)" };
+  // Fassung für den Kunden (Anhang der Kopie); ohne Adresse schon die endgültige
+  const pdf = await gesamtPdf(c, { ...pdfOpts, kopie: e.daten.email ? { status: "anhang", email: e.daten.email } : { status: "keine_adresse" } });
   await prisma.maklervollmacht.update({
     where: { id: v.id },
     data: {
-      daten: e.daten,
+      daten,
+      kopieStatus: e.daten.email ? null : "keine_adresse",
       vertraege: e.vertraege,
       gesundheit,
       textVersion: VV_TEXT_VERSION,
@@ -208,6 +249,17 @@ export async function unterschreiben(token: string, e: VvEingabe, meta: { ip: st
     } catch (err) {
       console.error("[maklervollmacht] Kopie an Kunden", err);
     }
+    // Gespeicherte Fassung (Nachweis für den Makler) mit dem tatsächlichen Versandstatus; die Prüfsummen bleiben gleich,
+    // weil sie nur die Dokumente ohne Protokoll abdecken. Fehler hier blockieren die Unterschrift nicht.
+    try {
+      const jetzt = new Date();
+      const t = berlin(jetzt);
+      const kopie: VvKopie = mailGesendet ? { status: "gesendet", email: e.daten.email, datum: t.datum, uhrzeit: t.uhrzeit } : { status: "fehlgeschlagen", email: e.daten.email };
+      const nachweis = await gesamtPdf(c, { ...pdfOpts, kopie });
+      await prisma.maklervollmacht.update({ where: { id: v.id }, data: { pdf: encryptBytes(nachweis), kopieStatus: mailGesendet ? "gesendet" : "fehlgeschlagen", kopieAt: jetzt } });
+    } catch (err) {
+      console.error("[maklervollmacht] Versandstatus der Kopie", err);
+    }
   }
   return { ok: true, mailGesendet };
 }
@@ -217,35 +269,74 @@ export async function vollmachtFuerLead(leadId: string, customerId: string) {
   const v = await prisma.maklervollmacht.findFirst({
     where: { leadId, customerId, status: { not: "widerrufen" } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, token: true, status: true, vertraege: true, gesundheit: true, signedAt: true, sentAt: true, createdAt: true },
+    select: { id: true, token: true, status: true, vertraege: true, gesundheit: true, signedAt: true, sentAt: true, createdAt: true, kopieStatus: true, uebertragung: true },
   });
   if (!v) return null;
   const vertraege = (Array.isArray(v.vertraege) ? v.vertraege : []) as VvVertrag[];
-  return { ...v, vertraege, versicherer: versichererListe(vertraege).map((x) => x.versicherer), link: vollmachtLink(v.token), abgelaufen: v.status === "offen" && v.createdAt.getTime() < Date.now() - VV_LINK_TAGE * DAY };
+  return {
+    ...v,
+    vertraege,
+    versicherer: versichererListe(vertraege).map((x) => x.versicherer),
+    stand: uebertragungsStand(vertraege, leseUebertragung(v.uebertragung)),
+    link: vollmachtLink(v.token),
+    abgelaufen: v.status === "offen" && v.createdAt.getTime() < Date.now() - VV_LINK_TAGE * DAY,
+  };
 }
 
-/** PDF für den Makler: „gesamt“ (gespeichert) oder Übertragungsschreiben + Vollmacht (+ Einwilligung) für einen Versicherer. */
-export async function vollmachtPdfFuer(id: string, customerId: string, versicherer: string | null): Promise<{ name: string; pdf: Uint8Array } | null> {
+/** Makler hakt ab: Schreiben an einen Versicherer gesendet (oder wieder offen). */
+export async function uebertragungMarkieren(id: string, customerId: string, versicherer: string, gesendet: boolean, userId: string | null, now = new Date()): Promise<boolean> {
+  const v = await prisma.maklervollmacht.findFirst({ where: { id, customerId, status: "unterschrieben" }, select: { id: true, leadId: true, vertraege: true, uebertragung: true } });
+  if (!v) return false;
+  const vertraege = (Array.isArray(v.vertraege) ? v.vertraege : []) as unknown as VvVertrag[];
+  const gruppe = versichererListe(vertraege).find((g) => versichererKey(g.versicherer) === versichererKey(versicherer));
+  if (!gruppe) return false;
+  const u = leseUebertragung(v.uebertragung);
+  const key = versichererKey(gruppe.versicherer);
+  if (gesendet === !!u[key]) return true;
+  if (gesendet) u[key] = now.toISOString();
+  else delete u[key];
+  await prisma.maklervollmacht.update({ where: { id: v.id }, data: { uebertragung: u } });
+  await logLeadHistory(v.leadId, "dokument", gesendet ? `Schreiben an ${gruppe.versicherer} gesendet (Maklervollmacht)` : `Schreiben an ${gruppe.versicherer} wieder offen (Maklervollmacht)`, { customerId, userId });
+  return true;
+}
+
+/**
+ * PDF für den Makler: ohne Auswahl „gesamt“ (gespeichert), mit Versicherer dessen Übertragungsschreiben + Vollmacht
+ * (+ Einwilligung), mit { offen: true } alle Schreiben an Versicherer, die noch nicht als gesendet abgehakt sind, in einer Datei.
+ */
+export async function vollmachtPdfFuer(id: string, customerId: string, versicherer: string | null | { offen: true }): Promise<{ name: string; pdf: Uint8Array } | null> {
   const v = await prisma.maklervollmacht.findFirst({ where: { id, customerId, status: "unterschrieben" } });
   if (!v?.pdf || !v.signatur || !v.daten) return null;
-  const kunde = v.daten as unknown as VvDaten;
+  const gespeichert = v.daten as unknown as VvDaten;
   const vertraege = (Array.isArray(v.vertraege) ? v.vertraege : []) as unknown as VvVertrag[];
   const datum = berlin(v.signedAt ?? v.createdAt).datum.replace(/\./g, "-");
-  if (!versicherer) return { name: `Maklervollmacht-${kunde.nachname}-${datum}.pdf`, pdf: decryptBytes(v.pdf) };
-  const gruppe = versichererListe(vertraege).find((g) => g.versicherer.toLowerCase() === versicherer.toLowerCase());
-  if (!gruppe) return null;
+  if (!versicherer) return { name: `Maklervollmacht-${gespeichert.nachname}-${datum}.pdf`, pdf: decryptBytes(v.pdf) };
+  const alle = versichererListe(vertraege);
+  const u = leseUebertragung(v.uebertragung);
+  const auswahl =
+    typeof versicherer === "string"
+      ? alle.filter((g) => versichererKey(g.versicherer) === versichererKey(versicherer))
+      : // alles abgehakt: alle Schreiben noch einmal
+        alle.filter((g) => !u[versichererKey(g.versicherer)]).length
+        ? alle.filter((g) => !u[versichererKey(g.versicherer)])
+        : alle;
+  if (!auswahl.length) return null;
+  // Vollmachten von vor dem 18.11.2026 (ohne gespeicherte Anrede): Anrede jetzt aus dem Kontakt
+  const kunde: VvDaten = gespeichert.anrede !== undefined ? gespeichert : { ...gespeichert, anrede: await anredeAusKontakt(customerId, v.leadId, gespeichert.nachname) };
   const makler = await maklerDaten(customerId);
   const c = kontext(v, makler, kunde, vertraege);
-  const cGruppe = { ...c, vertraege: gruppe.vertraege };
-  const mitGesundheit = v.gesundheit && gesundheitNoetig(gruppe.vertraege);
+  const abschnitte: VvAbschnitt[] = auswahl.flatMap((g) => {
+    const mitGesundheit = v.gesundheit && gesundheitNoetig(g.vertraege);
+    return [uebertragungsschreiben(c, g.versicherer, g.vertraege, mitGesundheit), vollmacht(c), ...(mitGesundheit ? [einwilligungGesundheit({ ...c, vertraege: g.vertraege })] : [])];
+  });
   const pdf = await vollmachtPdf({
-    titel: `Bestandsübertragung ${gruppe.versicherer} ${kundeName(kunde)}`,
-    abschnitte: [uebertragungsschreiben(c, gruppe.versicherer, gruppe.vertraege, mitGesundheit), vollmacht(c), ...(mitGesundheit ? [einwilligungGesundheit(cGruppe, asAnsprache(v.ansprache))] : [])],
+    titel: `Bestandsübertragung ${auswahl.map((g) => g.versicherer).join(", ")} ${kundeName(kunde)}`,
+    abschnitte,
     signaturPng: decryptBytes(v.signatur),
     dokumentId: v.id,
     autor: makler.firma ?? makler.name,
   });
-  const slug = gruppe.versicherer.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "Versicherer";
+  const slug = auswahl.length === 1 ? auswahl[0].versicherer.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "Versicherer" : "Versicherer";
   return { name: `Uebertragung-${slug}-${kunde.nachname}-${datum}.pdf`, pdf };
 }
 
