@@ -69,6 +69,8 @@ export type AngeboteProps = {
   schutzNeu?: boolean;
   /** Vorsorge-Thema (Teil C2), nur Hinweis */
   vorsorge?: VorsorgeThema | null;
+  /** Kunde im Satz („Frau Becker“ bzw. „Julia Becker“) für „Hat … das schon?“ im Schutz-Überblick */
+  kunde?: string;
 };
 
 const entwurfKey = (id: string) => `pg-tarifauswahl-entwurf-${id}`;
@@ -536,6 +538,20 @@ function Angebote(p: {
     });
     setAktiv(key);
   };
+  /** Schalter „In heutiges Angebot aufnehmen“ aus: Sparte aus den Angeboten nehmen (mit Rückgängig, wenn sie fest drin war). */
+  const ausAngebot = (key: string) => {
+    const index = p.auswahl.sparten.findIndex((x) => x.key === key);
+    if (index < 0) return;
+    const vorher = structuredClone(p.auswahl.sparten[index]);
+    p.aendern((a) => void (a.sparten = a.sparten.filter((x) => x.key !== key)));
+    if (sp?.key === key) setAktiv(p.auswahl.sparten.find((x) => x.key !== key)?.key ?? null);
+    if (!vorher.zusatz)
+      toast.show({
+        message: `${vorher.label} aus dem Angebot genommen`,
+        actionLabel: "Rückgängig",
+        onAction: () => p.aendern((a) => void a.sparten.splice(Math.min(index, a.sparten.length), 0, vorher), true),
+      });
+  };
   const sparteWeg = () => {
     if (!sp) return;
     const vorher = structuredClone(sp);
@@ -674,7 +690,16 @@ function Angebote(p: {
         ) : null}
       </div>
 
-      <ChanceImTermin auswahl={p.auswahl} ro={ro} aendern={p.aendern} anbieten={(key) => anbieten(key)} vorsorge={p.daten.vorsorge ?? null} />
+      <ChanceImTermin
+        auswahl={p.auswahl}
+        ro={ro}
+        aendern={p.aendern}
+        anbieten={(key) => anbieten(key)}
+        entfernen={ausAngebot}
+        vorsorge={p.daten.vorsorge ?? null}
+        kunde={p.daten.kunde || "der Kunde"}
+        speichern={{ status: p.status, erneut: p.erneut }}
+      />
 
       {/* Schritte klar getrennt (Ole, 17.11.2026): mehr Luft um die Trennlinie */}
       <div className="mx-4 mt-7 border-t border-[color:var(--border)] sm:mx-5" />

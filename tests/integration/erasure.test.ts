@@ -32,7 +32,7 @@ describe("Datenschutz-Löschung", () => {
     const lead = await leadWithChat(customerId, "4915100000001");
     const other = await leadWithChat(customerId, "4915100000002");
     const r = await eraseLead(lead.id, actor);
-    expect(r).toEqual({ conversations: 1, messages: 1, appointments: 1, consents: 1 });
+    expect(r).toEqual({ conversations: 1, messages: 1, appointments: 1, consents: 1, aufbewahrt: 0 });
 
     const after = await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } });
     expect(after.name).toBe(ERASED_NAME);

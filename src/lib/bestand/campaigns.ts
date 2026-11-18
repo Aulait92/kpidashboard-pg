@@ -57,6 +57,31 @@ export function daysUntilBirthday(b: Date, now = new Date()): number {
   return Math.round((next - today) / DAY);
 }
 
+/**
+ * Geburtstagsgruß fällig? Glückwünsche gehen am Geburtstag raus (Berliner Datum), nicht beim Start der Kampagne
+ * (Segment „Geburtstag in den nächsten 30 Tagen“). Bis 2 Tage danach noch „due“ (Geburtstag am Sonntag oder
+ * außerhalb der Versandzeit), länger her: „missed“ (wird übersprungen). Ohne Geburtsdatum: „due“.
+ */
+export function birthdayState(b: Date | null | undefined, now = new Date()): "due" | "wait" | "missed" {
+  if (!b) return "due";
+  const [y, m, d] = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(now).split("-").map(Number);
+  const today = Date.UTC(y, m - 1, d, 12);
+  for (let k = 0; k <= 2; k++) if (daysUntilBirthday(b, new Date(today - k * DAY)) === 0) return "due";
+  return daysUntilBirthday(b, new Date(today)) <= 300 ? "wait" : "missed";
+}
+
+/** Nur fällige Empfänger (Geburtstag: erst am Tag selbst), höchstens `limit`. */
+function dueOnly<T extends { existingCustomer: { birthday: Date | null } }>(occasion: string, rows: T[], limit: number, now: Date): T[] {
+  return (occasion === "birthday" ? rows.filter((r) => birthdayState(r.existingCustomer.birthday, now) === "due") : rows).slice(0, Math.max(0, limit));
+}
+
+/** Geburtstagskampagne: Empfänger, deren Geburtstag schon länger vorbei ist (z. B. Kampagne war pausiert), überspringen. */
+async function skipMissedBirthdays(campaignId: string, now: Date): Promise<void> {
+  const queued = await prisma.campaignRecipient.findMany({ where: { campaignId, status: "queued" }, select: { id: true, existingCustomer: { select: { birthday: true } } } });
+  const missed = queued.filter((r) => birthdayState(r.existingCustomer.birthday, now) === "missed").map((r) => r.id);
+  if (missed.length) await prisma.campaignRecipient.updateMany({ where: { id: { in: missed } }, data: { status: "skipped", reason: "Geburtstag verpasst" } });
+}
+
 // ─── Zielgruppe: Segment, dann Kanal und Rechtsgrundlage je Kunde ─────────
 
 const CANDIDATE_SELECT = {
@@ -382,6 +407,7 @@ export async function runCampaigns(now = new Date(), opts: RunOpts = {}): Promis
       await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "paused" } });
       continue;
     }
+    if (c.occasion === "birthday") await skipMissedBirthdays(c.id, now);
     if (!(await prisma.campaignRecipient.count({ where: { campaignId: c.id, status: "queued" } }))) {
       await prisma.customerCampaign.update({ where: { id: c.id }, data: { status: "done", finishedAt: now } });
       continue;
@@ -415,7 +441,14 @@ export async function runCampaigns(now = new Date(), opts: RunOpts = {}): Promis
 }
 
 /** Vor dem Versand neu prüfen: Kanal und Rechtsgrundlage nach aktuellem Stand (Abmeldung, Widerruf). */
-async function recheck(r: RecipientRow, c: CampaignRow, cx: { settings: ConsentSettings; sup: Suppression }, mode: ChannelMode): Promise<Channel | null> {
+async function recheck(r: RecipientRow, c: CampaignRow, cx: { settings: ConsentSettings; sup: Suppression }, mode: ChannelMode, now: Date): Promise<Channel | null> {
+  // Abstand zwischen zwei Kampagnen auch beim Versand: Wer gleichzeitig in zwei Kampagnen wartet (z. B. Ablauf und
+  // Geburtstag), bekommt nicht zwei Nachrichten kurz hintereinander
+  const last = r.existingCustomer.lastCampaignAt;
+  if (last && last > new Date(now.getTime() - COOLDOWN_DAYS * DAY)) {
+    await prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "skipped", reason: `in den letzten ${COOLDOWN_DAYS} Tagen schon angeschrieben` } });
+    return null;
+  }
   const choice = chooseChannel(mode, subjectOf(r.existingCustomer, cx.sup), c.occasion as Occasion, cx.settings);
   if (!choice.channel) {
     await prisma.campaignRecipient.update({ where: { id: r.id }, data: { status: "skipped", reason: choice.reason } });
@@ -447,17 +480,24 @@ async function sendWhatsAppPart(
     out.stop = true;
     return out;
   }
-  const batch = await prisma.campaignRecipient.findMany({
-    where: { campaignId: c.id, status: "queued", channel: "whatsapp" },
-    // Wertvollste Kunden zuerst (höchster Jahresbeitrag), dann in Anlage-Reihenfolge
-    orderBy: [{ existingCustomer: { premiumTotal: { sort: "desc", nulls: "last" } } }, { id: "asc" }],
-    take: Math.min(limit, quota.remaining),
-    include: { existingCustomer: true },
-  });
+  const take = Math.min(limit, quota.remaining);
+  const batch = dueOnly(
+    c.occasion,
+    await prisma.campaignRecipient.findMany({
+      where: { campaignId: c.id, status: "queued", channel: "whatsapp" },
+      // Wertvollste Kunden zuerst (höchster Jahresbeitrag), dann in Anlage-Reihenfolge
+      orderBy: [{ existingCustomer: { premiumTotal: { sort: "desc", nulls: "last" } } }, { id: "asc" }],
+      // Geburtstag: alle laden und nach Fälligkeit filtern (sonst blockieren noch nicht fällige die fälligen)
+      ...(c.occasion === "birthday" ? {} : { take }),
+      include: { existingCustomer: true },
+    }),
+    take,
+    now,
+  );
   const { sendWhatsAppNotice, NoTemplateError } = await import("@/lib/whatsapp/templates");
   for (const r of batch) {
     const ec = r.existingCustomer;
-    if ((await recheck(r, c, cx, mode)) !== "whatsapp") continue;
+    if ((await recheck(r, c, cx, mode, now)) !== "whatsapp") continue;
     const first = ec.firstName?.split(/\s+/)[0] || "";
     // Anrede aus dem Bestand (Herr/Frau, Nachname): „Guten Tag Frau Schneider,“
     const kontakt = kontaktFromExisting(ec);
@@ -470,7 +510,7 @@ async function sendWhatsAppPart(
         to: ec.phone!,
         purpose: OCCASIONS[c.occasion as Occasion].purpose as Parameters<typeof sendWhatsAppNotice>[0]["purpose"],
         // Empfehlung v4: Thema vor dem Link ({{2}}), ältere Fassung nur mit Link
-        params: referral ? [first || "Hallo", empfehlungsThema(ec.lines[0]), referral.url] : [first || "Hallo", topic ?? ""],
+        params: referral ? [first || "Hallo", empfehlungsThema(ec.lines[0]), referral.url] : [first || "Hallo", topic ?? (c.occasion === "renewal" ? RENEWAL_TOPIC_FALLBACK : "")],
         ...(referral ? { legacyParams: [first || "Hallo", referral.url] } : {}),
         text: referral ? referral.text : campaignText(c.occasion as Occasion, kontakt, topic),
         contactName: displayName(ec),
@@ -599,12 +639,17 @@ async function sendMailPart(
   const mailQuota = await bestandMailQuota(c.customerId, now);
   const slots = Math.min(mailSlots(mb.state, { sentToday: mb.sentToday, baseLimit: providerDailyLimit(mb.provider, mb.email), now }), budget, mailQuota.remaining);
   if (slots <= 0) return out;
-  const batch = await prisma.campaignRecipient.findMany({
-    where: { campaignId: c.id, status: "queued", channel: "email" },
-    orderBy: [{ existingCustomer: { premiumTotal: { sort: "desc", nulls: "last" } } }, { id: "asc" }],
-    take: slots,
-    include: { existingCustomer: true },
-  });
+  const batch = dueOnly(
+    c.occasion,
+    await prisma.campaignRecipient.findMany({
+      where: { campaignId: c.id, status: "queued", channel: "email" },
+      orderBy: [{ existingCustomer: { premiumTotal: { sort: "desc", nulls: "last" } } }, { id: "asc" }],
+      ...(c.occasion === "birthday" ? {} : { take: slots }),
+      include: { existingCustomer: true },
+    }),
+    slots,
+    now,
+  );
   const imprint = cx.settings.imprint ?? imprintFromWebsiteInfo(cx.settings.websiteInfo);
   const { advisorPerson } = await import("@/lib/lead-anrede");
   const sender = await prisma.user.findUnique({ where: { id: mb.userId }, select: { displayName: true } });
@@ -616,7 +661,7 @@ async function sendMailPart(
   let first = true;
   for (const r of batch) {
     const ec = r.existingCustomer;
-    if ((await recheck(r, c, cx, mode)) !== "email") continue;
+    if ((await recheck(r, c, cx, mode, now)) !== "email") continue;
     if (!first) await sleep(innerGap(rand()));
     first = false;
     const referral = c.occasion === "empfehlung" ? await referralCampaignParts(c.customerId, ec.id, ec.firstName?.split(/\s+/)[0] || "", kontaktFromExisting(ec)) : null;
@@ -669,6 +714,12 @@ async function recipientTopic(c: { occasion: string; topic: string | null }, ec:
   const due = await prisma.existingContract.findFirst({ where: { existingCustomerId: ec.id, renewalDate: ec.nextRenewal }, select: { line: true }, orderBy: { id: "asc" } });
   return renewalTopic(due?.line ?? null, c.topic);
 }
+
+/**
+ * Ablauf/Wechsel ohne erkennbare Sparte (z. B. „Sonstiges“): Die WhatsApp-Vorlage braucht trotzdem ein Thema,
+ * sonst stünde „Bei Ihrem Vertrag () steht bald …“ in der Nachricht.
+ */
+export const RENEWAL_TOPIC_FALLBACK = "Versicherung";
 
 /** Thema für Ablauf/Wechsel aus der Sparte des ablaufenden Vertrags (rein). */
 export function renewalTopic(line: string | null, fallback: string | null): string | null {

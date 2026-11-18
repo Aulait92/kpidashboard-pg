@@ -29,6 +29,24 @@ export const SCHUTZ_STATUS: Record<SchutzStatus, { label: string; kurz: string; 
 };
 export const SCHUTZ_REIHENFOLGE: SchutzStatus[] = ["bei-uns", "woanders", "pruefen", "luecke"];
 
+/**
+ * Antworten im Fenster „Schutz im Überblick“ der Terminvorbereitung (Ole, 18.11.2026): Frage „Hat Frau Becker das
+ * schon?“. Ein Farbsystem (Entscheidung 18.11.2026): Die Farbpunkte nutzen dieselben Farben wie die Ampel der
+ * Präsentation (grün bei mir, blau woanders, orange weiß nicht, rot nein), damit Vorschau und Antworten zusammenpassen.
+ * „Weiß nicht“ bleibt im Knopf dezent (nur Umriss), damit es nicht wie eine Entscheidung aussieht. Die Präsentation für
+ * den Kunden behält die Ampel-Begriffe aus SCHUTZ_STATUS.
+ */
+export const SCHUTZ_ANTWORT: Record<SchutzStatus, { label: string; farbe: string }> = {
+  "bei-uns": { label: "Ja, bei mir", farbe: "#16a34a" },
+  woanders: { label: "Ja, woanders", farbe: "#2563eb" },
+  pruefen: { label: "Weiß nicht", farbe: "#d97706" },
+  luecke: { label: "Nein", farbe: "#dc2626" },
+};
+
+/** Woher eine vorbelegte Antwort stammt (kleiner Hinweis im Fenster); nach einer Änderung durch den Vermittler entfällt sie. */
+export type SchutzQuelle = "chat" | "formular";
+export const SCHUTZ_QUELLE_TEXT: Record<SchutzQuelle, string> = { chat: "aus dem Chat", formular: "aus dem Formular" };
+
 /** Eine Sparte im Überblick, wie in der Terminvorbereitung erfasst (Tarifauswahl.schutz). */
 export type SchutzEintrag = {
   /** Sparte im Tarifkatalog (haftpflicht, hausrat, …) */
@@ -45,6 +63,8 @@ export type SchutzEintrag = {
   oeffner?: string | null;
   /** Vertrag schon bei uns, z. B. „seit 03/2026“ */
   seit?: string | null;
+  /** Vorbelegt aus Chat (Angaben, Komplettcheck) bzw. Formular; null/fehlt = vom Vermittler gesetzt oder unbekannt */
+  quelle?: SchutzQuelle | null;
 };
 
 /** Zeile der Folie „Ihr Schutz im Überblick“ (liegt mit den Angeboten in offersJson). */
@@ -246,7 +266,8 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
   const q = angabenVon(d);
   const kat = produktCheckliste(d.lead.produkt)?.key ?? null;
   const formularText = d.formular.map((f) => `${f.label}: ${f.value}`).join(" ");
-  const vorhanden = [q.vorhanden, formWert(d, /vorhanden|bestehende|bisherige|versichert bei/i)].filter(Boolean).join(" ");
+  // Mit „;“ getrennt, damit „keinen Rechtsschutz“ aus dem Chat nicht in die Formularangabe hineinliest
+  const vorhanden = [q.vorhanden, formWert(d, /vorhanden|bestehende|bisherige|versichert bei/i)].filter(Boolean).join("; ");
   const alles = [q.lebenssituation, q.tier, q.gebaeude, q.wohnflaeche, q.interesse, q.anlass, d.lead.produkt, formularText].filter(Boolean).join(" ").toLocaleLowerCase("de");
   const tierText = [q.tier, formWert(d, /tierart/i), kat === "tier" ? d.lead.produkt : null].filter(Boolean).join(" ").toLocaleLowerCase("de");
   const hund = /hund/.test(tierText) || /\bhund/.test(alles);
@@ -260,6 +281,8 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
 
   const genannt = new Set(spartenIm(vorhanden));
   const ohne = new Set(ausdruecklichOhne(vorhanden));
+  // Quelle der Vorbelegung: Chat (Angaben des Assistenten, Komplettcheck) vor Formular
+  const ausChat = new Set([...spartenIm(q.vorhanden ?? ""), ...ausdruecklichOhne(q.vorhanden ?? "")]);
   // Beim Komplettcheck genannte Verträge (Lead.vorvertraege): „woanders“ mit Gesellschaft
   const komplettcheck = d.komplettcheck === true;
   const vv = vorvertraegeAus(d.vorvertraege);
@@ -269,6 +292,7 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
     if (!key || (!komplettcheck && !SACH_SPARTEN.has(key))) continue;
     genannt.add(key);
     ohne.delete(key);
+    ausChat.add(key);
     if (!bei.get(key)) bei.set(key, v.gesellschaft ?? null);
   }
   // Komplettcheck und „keine Versicherungen“: alles nicht Genannte fehlt ausdrücklich
@@ -298,8 +322,9 @@ export function schutzVorschlag(d: VorbereitungDaten, k: SchutzKontext, an: Ansp
       const seit = vertraege.get(key);
       return { key, label, status: "bei-uns", seit: seit ? `seit ${monatJahr(seit)}` : null, oeffner };
     }
-    if (genannt.has(key) && !ohne.has(key)) return { key, label, status: "woanders", ...(bei.get(key) ? { versicherer: bei.get(key) } : {}), oeffner };
-    if (ohne.has(key) || (sonstNichts && vorhanden.trim()) || keineLaut) return { key, label, status: "luecke", oeffner };
+    const quelle: SchutzQuelle = ausChat.has(key) || keineLaut || (sonstNichts && !!q.vorhanden?.trim()) ? "chat" : "formular";
+    if (genannt.has(key) && !ohne.has(key)) return { key, label, status: "woanders", ...(bei.get(key) ? { versicherer: bei.get(key) } : {}), oeffner, quelle };
+    if (ohne.has(key) || (sonstNichts && vorhanden.trim()) || keineLaut) return { key, label, status: "luecke", oeffner, quelle };
     return { key, label, status: "pruefen", oeffner };
   });
   // Angebot zuerst (Reihenfolge des Angebots), dann nach Gewicht als Chance
@@ -321,6 +346,18 @@ export function chancen(schutz: SchutzEintrag[], angebot: string[], max = CHANCE
     .filter((s) => !angebot.includes(s.key) && s.status !== "bei-uns")
     .sort((x, y) => gewichtVon(y.key) + rang[y.status] * 5 - (gewichtVon(x.key) + rang[x.status] * 5))
     .slice(0, max);
+}
+
+/**
+ * Live-Vorschau der Ampel wie auf der Folie „Ihr Schutz im Überblick“ (praesentation.ts ueberblickFolie): dieselben
+ * Zeilen (schutzZeilen), Sparten fest im Angebot als „Im Angebot“, sonst die Ampel-Begriffe.
+ */
+export function ampelVorschau(schutz: SchutzEintrag[], sparten: { key: string; zusatz?: boolean }[]): { key: string; label: string; status: SchutzStatus; text: string; farbe: string }[] {
+  return schutzZeilen(schutz, sparten.map((s) => s.key)).map((z) => {
+    const imAngebot = sparten.some((s) => s.key === z.key && !s.zusatz);
+    const status: SchutzStatus = imAngebot ? "bei-uns" : z.status;
+    return { key: z.key, label: z.label, status, text: imAngebot ? "Im Angebot" : SCHUTZ_STATUS[z.status].label, farbe: SCHUTZ_STATUS[status].farbe };
+  });
 }
 
 /** Info-Zeile „woanders“: „bei HUK-COBURG, Ablauf 03/2027, ca. 8 € im Monat“. */
@@ -435,6 +472,7 @@ export function cleanSchutz(raw: unknown): SchutzEintrag[] {
       ...(ablauf ? { ablauf } : {}),
       ...(txt(r.oeffner, 240) ? { oeffner: txt(r.oeffner, 240) } : {}),
       ...(txt(r.seit, 30) ? { seit: txt(r.seit, 30) } : {}),
+      ...(r.quelle === "chat" || r.quelle === "formular" ? { quelle: r.quelle } : {}),
     });
   }
   return out;

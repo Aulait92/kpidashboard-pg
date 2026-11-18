@@ -218,8 +218,10 @@ export async function startCampaignAction(fd: FormData): Promise<void> {
   }
   const segment = JSON.parse(String(fd.get("segment") ?? "{}")) as Segment;
   const channelMode = asChannelMode(fd.get("channelMode"));
+  // Zurück mit Fehlermeldung: Thema bleibt erhalten (sonst stünde danach ein anderes Thema in der Nachricht)
+  const thema = String(fd.get("topic") ?? "").trim();
   const back = (err: string): never =>
-    redirect(`/buyer/bestand/kampagne?${new URLSearchParams({ anlass: occasion, segment: JSON.stringify(segment), kanal: channelMode, fehler: err })}`);
+    redirect(`/buyer/bestand/kampagne?${new URLSearchParams({ anlass: occasion, segment: JSON.stringify(segment), ...(thema ? { thema } : {}), kanal: channelMode, fehler: err })}`);
   // Bestätigung der Befugnis vor der ersten Kampagne (gebundene Vertreter: aktuelle Textversion, meist schon beim Import)
   const agentErr = await confirmAgentIfNeeded(ctx, fd, "kampagne");
   if (agentErr) back(agentErr);

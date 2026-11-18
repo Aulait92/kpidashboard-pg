@@ -4,7 +4,10 @@
 // - „Chance im Termin“ (Teil A2): höchstens 2 erkannte Lücken mit Gesprächsöffner, ein Klick nimmt die Sparte als
 //   „bei Bedarf“ in die Angebote (erscheint in der Präsentation auf „Ihr Schutz im Überblick“ mit „Mit anschauen“).
 // - „Schutz im Überblick“ (Teil A7): je Sparte bei uns, woanders (Versicherer, Ablauf, ungefährer Beitrag), prüfen,
-//   Lücke; selten gebraucht, daher in einem Fenster.
+//   Lücke; selten gebraucht, daher in einem Fenster. Seit 18.11.2026 (Ole) als Frage „Hat Frau Becker das schon?“ mit
+//   „Ja, bei mir“, „Ja, woanders“, „Weiß nicht“, „Nein“ (Präsentation behält die Ampel-Begriffe), Vorbelegung mit
+//   Hinweis „aus dem Chat“, Schalter „In heutiges Angebot aufnehmen“, Live-Vorschau der Ampel, „Fertig“ statt
+//   „Abbrechen“ (alles wird automatisch gespeichert).
 // - Empfehlung gesamt mit Kombi-Rabatt (Rabattstufen Privatschutz-Kombi): Endbeitrag, nächste Stufe mit einem Klick,
 //   Hinweis, wenn eine gewählte Stufe (Basis/Smart) den Rabatt verhindert.
 // Wer: Vermittler vor dem Termin. Wo: im bestehenden Angebote-Bereich, keine neue Karte.
@@ -16,12 +19,23 @@ import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { tarifMitSparte } from "@/lib/praesentation";
 import { naechsteText, prozentMit } from "@/lib/kombi-rabatt";
-import { chancen, SCHUTZ_REIHENFOLGE, SCHUTZ_SPARTEN, SCHUTZ_STATUS, type SchutzEintrag, type SchutzStatus, VORSORGE_SPARTE, type VorsorgeThema } from "@/lib/schutz-ueberblick";
+import {
+  ampelVorschau,
+  chancen,
+  SCHUTZ_ANTWORT,
+  SCHUTZ_QUELLE_TEXT,
+  SCHUTZ_REIHENFOLGE,
+  SCHUTZ_SPARTEN,
+  type SchutzEintrag,
+  type SchutzStatus,
+  VORSORGE_SPARTE,
+  type VorsorgeThema,
+} from "@/lib/schutz-ueberblick";
 import type { BuendelRegel, Katalog } from "@/lib/tarifkatalog";
 import { beitragsUebersicht, betrag, type Tarifauswahl } from "@/lib/tarifauswahl";
 
 const eur = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
-const Punkt = ({ status }: { status: SchutzStatus }) => <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: SCHUTZ_STATUS[status].farbe }} aria-hidden />;
+const Punkt = ({ farbe }: { farbe: string }) => <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: farbe }} aria-hidden />;
 
 type Aendern = (fn: (a: Tarifauswahl) => void, extern?: boolean) => void;
 
@@ -33,13 +47,22 @@ export function ChanceImTermin({
   ro,
   aendern,
   anbieten,
+  entfernen,
   vorsorge,
+  kunde,
+  speichern,
 }: {
   auswahl: Tarifauswahl;
   ro: boolean;
   aendern: Aendern;
   anbieten: SparteAnbieten;
+  /** Sparte aus dem heutigen Angebot nehmen (Schalter im Überblick) */
+  entfernen: SparteAnbieten;
   vorsorge: VorsorgeThema | null;
+  /** Kunde im Satz: „Frau Becker“ bzw. „Julia Becker“ (Frage „Hat … das schon?“) */
+  kunde: string;
+  /** Speicherstand der Terminvorbereitung (automatisch gespeichert) */
+  speichern: { status: SpeicherStand; erneut: () => void };
 }) {
   const [offen, setOffen] = useState(false);
   const schutz = auswahl.schutz ?? [];
@@ -54,16 +77,20 @@ export function ChanceImTermin({
           Schutz im Überblick
         </button>
       </div>
+      <p className="text-[13px] text-[color:var(--muted)]">Was Sie zusätzlich ansprechen können, ausgewählt aus Lebenslage und Angaben.</p>
       {liste.length ? (
-        <ul className="mt-1.5 space-y-2">
+        <ul className="mt-2 space-y-2">
           {liste.map((c) => (
             <li key={c.key} className="flex items-start gap-2.5" data-chance={c.key}>
-              <Punkt status={c.status} />
+              <Punkt farbe={SCHUTZ_ANTWORT[c.status].farbe} />
               <div className="min-w-0 flex-1 text-sm">
-                <span className="font-semibold">{c.label}</span>{" "}
-                <span className="text-[13px]" style={{ color: SCHUTZ_STATUS[c.status].farbe }}>
-                  {SCHUTZ_STATUS[c.status].kurz}
-                </span>
+                <span className="font-semibold">{c.label}</span>
+                {/* Ole, 18.11.2026: kein Status neben der Sparte, nur bei „Nein“ klein „fehlt“ */}
+                {c.status === "luecke" ? (
+                  <span className="ml-1.5 text-xs font-medium text-red-700" data-chance-fehlt>
+                    fehlt
+                  </span>
+                ) : null}
                 {c.oeffner ? <p className="text-[13px] text-[color:var(--muted)]">„{c.oeffner}“</p> : null}
               </div>
               {!ro ? (
@@ -81,7 +108,7 @@ export function ChanceImTermin({
         // Teil C2: großes Thema getrennt von den Sach-Chancen, keine Gesundheitsfragen; „Ins Angebot“ holt die Sparte
         // aus dem Tarifkatalog (erst nach „Mit anschauen“ im Vergleich, wie die Chancen)
         <div className="mt-2 flex items-start gap-2.5 border-t border-[color:var(--border)] pt-2" data-vorsorge-thema={vorsorge.key}>
-          <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-violet-500" aria-hidden />
+          <Punkt farbe={VORSORGE_FARBE} />
           <div className="min-w-0 flex-1 text-sm">
             <span className="font-semibold">Vorsorge: {vorsorge.label}</span>
             <p className="text-[13px] text-[color:var(--muted)]">„{vorsorge.oeffner}“</p>
@@ -94,45 +121,110 @@ export function ChanceImTermin({
           ) : null}
         </div>
       ) : null}
-      <SchutzFenster open={offen} onClose={() => setOffen(false)} auswahl={auswahl} ro={ro} aendern={aendern} anbieten={anbieten} />
+      <SchutzFenster
+        open={offen}
+        onClose={() => setOffen(false)}
+        auswahl={auswahl}
+        ro={ro}
+        aendern={aendern}
+        anbieten={anbieten}
+        entfernen={entfernen}
+        kunde={kunde}
+        speichern={speichern}
+      />
     </div>
   );
 }
 
-function SchutzFenster({ open, onClose, auswahl, ro, aendern, anbieten }: { open: boolean; onClose: () => void; auswahl: Tarifauswahl; ro: boolean; aendern: Aendern; anbieten: SparteAnbieten }) {
+/** Speicherstand der Terminvorbereitung (neu-client.tsx). */
+export type SpeicherStand = "ruhe" | "speichert" | "gespeichert" | "fehler";
+
+/** Lila für das Vorsorge-Thema (wie bisher bg-violet-500). */
+const VORSORGE_FARBE = "#8b5cf6";
+
+/** Ausgewählte Antwort in den Ampel-Farben der Präsentation (ein Farbsystem): bei mir grün, woanders blau, Nein rot;
+ *  „Weiß nicht“ nur mit orangem Umriss (erkennbar gewählt, aber keine Entscheidung). */
+function antwortKlasse(st: SchutzStatus, an: boolean): string {
+  if (!an) return "border-[color:var(--border)] bg-white text-[color:var(--muted)]";
+  if (st === "pruefen") return "border-amber-400 bg-amber-50 text-amber-800";
+  return cn("border-transparent text-white", st === "luecke" ? "bg-red-600" : st === "woanders" ? "bg-blue-600" : "bg-emerald-600");
+}
+
+function SchutzFenster({
+  open,
+  onClose,
+  auswahl,
+  ro,
+  aendern,
+  anbieten,
+  entfernen,
+  kunde,
+  speichern,
+}: {
+  open: boolean;
+  onClose: () => void;
+  auswahl: Tarifauswahl;
+  ro: boolean;
+  aendern: Aendern;
+  anbieten: SparteAnbieten;
+  entfernen: SparteAnbieten;
+  kunde: string;
+  speichern: { status: SpeicherStand; erneut: () => void };
+}) {
   const schutz = auswahl.schutz ?? [];
-  const setze =(key: string, fn: (s: SchutzEintrag) => void) =>
+  const setze = (key: string, fn: (s: SchutzEintrag) => void) =>
     aendern((a) => {
       const s = a.schutz?.find((x) => x.key === key);
       if (s) fn(s);
     });
   const fehlend = Object.entries(SCHUTZ_SPARTEN).filter(([k]) => !schutz.some((s) => s.key === k));
+  const vorschau = ampelVorschau(schutz, auswahl.sparten);
+  const fuss = (
+    <div className="flex shrink-0 items-center gap-3 border-t border-[color:var(--border)] px-5 py-3" data-schutz-fuss>
+      <SpeicherHinweis status={speichern.status} ro={ro} erneut={speichern.erneut} />
+      <Button variant="primary" size="md" className="ml-auto min-w-[7.5rem] justify-center" onClick={onClose} data-schutz-fertig>
+        Fertig
+      </Button>
+    </div>
+  );
   return (
-    <Sheet open={open} onClose={onClose} title="Schutz im Überblick" message="Erscheint so in der Präsentation. Was hat der Kunde und wo?">
+    <Sheet open={open} onClose={onClose} title="Schutz im Überblick" footer={fuss}>
+      {vorschau.length ? (
+        // Live-Vorschau der Ampel wie auf der Folie (Begriffe der Präsentation)
+        <div className="mx-5 mt-3 rounded-[var(--radius-md)] border border-[color:var(--border)] bg-[color:var(--surface-sunken)] px-3 py-2" data-ampel-vorschau>
+          <div className="text-[11px] font-medium text-[color:var(--muted)]">So sieht es der Kunde</div>
+          <ul className="mt-1 grid gap-y-0.5">
+            {vorschau.map((z) => (
+              <li key={z.key} className="flex min-w-0 items-center gap-1.5 text-[12px]" data-ampel={z.key} data-ampel-status={z.status}>
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: z.farbe }} aria-hidden />
+                <span className="min-w-0 truncate font-medium">{z.label}</span>
+                <span className="ml-auto shrink-0" style={{ color: z.farbe }}>
+                  {z.text}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div className="px-5 pb-1 pt-4 text-sm font-semibold" data-schutz-frage>
+        Hat {kunde} das schon?
+      </div>
       <ul className="divide-y divide-[color:var(--border)]" data-schutz-liste>
         {schutz.map((s) => {
           const sp = auswahl.sparten.find((x) => x.key === s.key);
-          const imAngebot = !!sp && !sp.zusatz;
+          const hinweis = s.quelle ? SCHUTZ_QUELLE_TEXT[s.quelle] : s.status === "bei-uns" ? s.seit : null;
           return (
             <li key={s.key} className="px-5 py-3" data-schutz-zeile={s.key}>
               <div className="flex items-center gap-2">
-                <Punkt status={imAngebot ? "bei-uns" : s.status} />
+                <Punkt farbe={SCHUTZ_ANTWORT[s.status].farbe} />
                 <span className="min-w-0 flex-1 text-sm font-semibold">{s.label}</span>
-                {imAngebot ? (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
-                    <Check className="h-3.5 w-3.5" /> Im Angebot
+                {hinweis ? (
+                  <span className="shrink-0 text-[11px] text-[color:var(--muted)]" data-schutz-quelle>
+                    {hinweis}
                   </span>
-                ) : sp ? (
-                  // vorbereitet „bei Bedarf“: kommt in der Präsentation mit „Mit anschauen“
-                  <span className="text-xs font-medium text-[color:var(--muted)]">Bei Bedarf</span>
-                ) : !ro ? (
-                  <Button size="sm" icon={Plus} onClick={() => anbieten(s.key)}>
-                    Ins Angebot
-                  </Button>
                 ) : null}
               </div>
-              {/* Vier Zustände wie auf der Folie (Ampel) */}
-              <div className="mt-2 grid grid-cols-4 gap-1" role="radiogroup" aria-label={`${s.label}: Stand`}>
+              <div className="mt-2 grid grid-cols-4 gap-1" role="radiogroup" aria-label={`Hat ${kunde} ${s.label} schon?`}>
                 {SCHUTZ_REIHENFOLGE.map((st) => (
                   <button
                     key={st}
@@ -140,15 +232,17 @@ function SchutzFenster({ open, onClose, auswahl, ro, aendern, anbieten }: { open
                     role="radio"
                     aria-checked={s.status === st}
                     disabled={ro}
-                    onClick={() => setze(s.key, (x) => void (x.status = st))}
-                    className={cn(
-                      "h-10 rounded-[var(--radius-sm)] border px-1 text-xs font-semibold sm:h-8",
-                      s.status === st ? "border-transparent text-white" : "border-[color:var(--border)] bg-white text-[color:var(--muted)]",
-                    )}
-                    style={s.status === st ? { background: SCHUTZ_STATUS[st].farbe } : undefined}
+                    onClick={() =>
+                      setze(s.key, (x) => {
+                        x.status = st;
+                        // vom Vermittler entschieden: Hinweis „aus dem Chat“ entfällt
+                        delete x.quelle;
+                      })
+                    }
+                    className={cn("h-10 whitespace-nowrap rounded-[var(--radius-sm)] border px-0.5 text-[12px] font-semibold sm:h-8", antwortKlasse(st, s.status === st))}
                     data-schutz-status={st}
                   >
-                    {SCHUTZ_STATUS[st].kurz}
+                    {SCHUTZ_ANTWORT[st].label}
                   </button>
                 ))}
               </div>
@@ -182,6 +276,23 @@ function SchutzFenster({ open, onClose, auswahl, ro, aendern, anbieten }: { open
                   />
                 </div>
               ) : null}
+              {s.status !== "bei-uns" || sp ? (
+                <div className="mt-2 flex items-center gap-3">
+                  <span className="min-w-0 flex-1 text-[13px] text-[color:var(--muted)]">In heutiges Angebot aufnehmen</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={!!sp}
+                    aria-label={`${s.label} in heutiges Angebot aufnehmen`}
+                    disabled={ro}
+                    onClick={() => (sp ? entfernen(s.key) : anbieten(s.key))}
+                    className={cn("relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-50", sp ? "bg-emerald-600" : "bg-slate-300")}
+                    data-schutz-angebot
+                  >
+                    <span className={cn("absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all", sp ? "left-[22px]" : "left-0.5")} />
+                  </button>
+                </div>
+              ) : null}
             </li>
           );
         })}
@@ -202,6 +313,28 @@ function SchutzFenster({ open, onClose, auswahl, ro, aendern, anbieten }: { open
       ) : null}
     </Sheet>
   );
+}
+
+/** Kurzer Speicherstand neben „Fertig“: „Speichert …“, „Gespeichert“, bei Fehler „Erneut versuchen“. */
+function SpeicherHinweis({ status, ro, erneut }: { status: SpeicherStand; ro: boolean; erneut: () => void }) {
+  if (ro) return <span className="text-xs text-[color:var(--muted)]">Vorschau</span>;
+  if (status === "fehler")
+    return (
+      <span className="flex items-center gap-2 text-xs text-rose-700" data-schutz-speicher="fehler">
+        Nicht gespeichert
+        <button type="button" className="font-semibold underline" onClick={erneut}>
+          Erneut versuchen
+        </button>
+      </span>
+    );
+  if (status === "speichert") return <span className="text-xs text-[color:var(--muted)]" data-schutz-speicher="speichert">Speichert …</span>;
+  if (status === "gespeichert")
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-emerald-700" data-schutz-speicher="gespeichert">
+        <Check className="h-3.5 w-3.5" /> Gespeichert
+      </span>
+    );
+  return null;
 }
 
 /**

@@ -9,7 +9,8 @@ import { publicBaseOrNull } from "@/lib/public-url";
 import { content, leadEmailBody } from "@/lib/calendar/lead-email";
 import { leadAnzeigename, leadMailAdresse, leadSignatur, postfachSignatur } from "@/lib/mail/lead-absender";
 import { leadVersandKontext } from "@/lib/mail/lead-versand";
-import { vermittlerName } from "@/lib/whatsapp/gespraech";
+import { bereitlegenFuerLead, vermittlerName } from "@/lib/whatsapp/gespraech";
+import { leseMailAblauf } from "@/lib/mail/ablauf";
 import type { CustomerEvent } from "@/lib/calendar/add-to-calendar";
 
 /** Angaben für die Signatur (wie in der Erstinformation). */
@@ -78,7 +79,7 @@ function beispielTermin(advisorName: string, now: Date): CustomerEvent {
 export async function serviceMailVorschau(customerId: string, o: { userId?: string | null; angaben?: Partial<SignaturAngaben>; now?: Date } = {}): Promise<ServiceMailVorschau> {
   const [k, c] = await Promise.all([
     leadVersandKontext(customerId, { schreiber: o.userId ?? null, nurLesen: true }),
-    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true } }),
+    prisma.customer.findUnique({ where: { id: customerId }, select: { leadAddress: true, mailAblauf: true } }),
   ]);
   const an = asAnsprache(c?.leadAddress);
   const a = o.angaben ?? {};
@@ -93,7 +94,17 @@ export async function serviceMailVorschau(customerId: string, o: { userId?: stri
   const sig = (k.postfach ? postfachSignatur(k.postfach.signatur) : null) ?? leadSignatur(daten);
   const person = vermittlerName(an, { name: clean(a.name) || k.vermittler.name, anrede: k.vermittler.anrede, fallback: daten.name });
   const ev = beispielTermin(daten.name, o.now ?? new Date());
-  const inhalt = content("booked", ev, { fullName: "Julia Schneider", firstName: "Julia", lastName: "Schneider", salutation: "Frau" }, an, { person, erstinfoUrl: daten.erstinfoUrl, erstinfoPdf: false });
+  // Vorbereitungsteil wie im Versand (M3): nur bei „Termin: Vorbereitung“ auf „Automatisch“, Beispiel Privatschutz
+  const vorbereitung =
+    leseMailAblauf(c?.mailAblauf).stufen.termin_vorbereitung === "auto"
+      ? { bereitlegen: bereitlegenFuerLead({ source: "Privatschutz", formular: [{ label: "Versicherungsinteresse", value: "Haftpflicht und Hausrat" }], an }), komplettcheck: false, familie: false }
+      : null;
+  const inhalt = content("booked", ev, { fullName: "Julia Schneider", firstName: "Julia", lastName: "Schneider", salutation: "Frau" }, an, {
+    person,
+    erstinfoUrl: daten.erstinfoUrl,
+    erstinfoPdf: false,
+    vorbereitung,
+  });
   const body = leadEmailBody(inhalt, ev, sig);
   return {
     von: postfach ? postfach.fromName?.trim() || postfach.email : leadAnzeigename(daten.name, daten.agentur),

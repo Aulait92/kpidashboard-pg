@@ -1,6 +1,6 @@
 import { getBuyerContext } from "@/lib/buyer-context";
 import { writableCustomerId } from "@/lib/buyer-write";
-import { isFileKind, MAX_FILE_BYTES, saveLeadFile } from "@/lib/lead-files";
+import { isUploadKind, MAX_FILE_BYTES, saveLeadFile } from "@/lib/lead-files";
 import { prisma } from "@/lib/prisma";
 import { leadScope } from "@/lib/team";
 
@@ -20,7 +20,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const lead = await prisma.lead.findFirst({ where: { id, ...leadScope(ctx) }, select: { id: true, erasedAt: true } });
   if (!lead || lead.erasedAt) return Response.json({ error: "Lead nicht gefunden." }, { status: 404 });
   const kind = new URL(req.url).searchParams.get("kind");
-  if (!isFileKind(kind)) return Response.json({ error: "Ungültige Art." }, { status: 400 });
+  // Beratungsdokumentation nur aus der App (Aufbewahrung beim Löschen gilt nur für dieses PDF)
+  if (!isUploadKind(kind)) return Response.json({ error: "Ungültige Art." }, { status: 400 });
   if (Number(req.headers.get("content-length") ?? 0) > MAX_FILE_BYTES + 1024 * 1024) {
     return Response.json({ error: "Die Datei ist zu groß (höchstens 15 MB)." }, { status: 413 });
   }

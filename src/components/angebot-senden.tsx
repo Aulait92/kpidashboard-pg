@@ -6,16 +6,30 @@
 //   „Über die App senden“      PDF wählen bzw. hochladen (Pflicht), optional Kundenlink, ein Knopf „Jetzt senden“
 //   „Habe ich selbst gesendet“ ein Tipp; danach freiwillig das PDF ablegen
 //   „Später senden“            nur aus „Wie lief der Termin?“: Ergebnis setzen, Aufgabe bleibt auf „Heute“
+// Paket M5 (Ole, 18.11.2026): Mailtext aus der Vorlage „Angebot“ unter „Texte ansehen“; Haken „Gesprächszusammenfassung
+// mitsenden“ (Stufe „ein Tipp“) mit Editor, PDF im Anhang der Angebots-Mail. Nach „Habe ich selbst gesendet“ der
+// Vorschlag „Zusammenfassung erstellen“: per App senden, im eigenen Mailprogramm (PDF teilen bzw. herunterladen) oder
+// nur ablegen. Senden und Ablegen erst nach dem Ansehen der aktuellen Fassung.
 
 import { useEffect, useState, useTransition } from "react";
-import { CheckCircle2, Clock, FileText, Loader2, Send, TriangleAlert, UserCheck } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, FileText, Loader2, Send, TriangleAlert, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui";
+import { MailWege } from "@/components/mail-wege";
+import { ZusammenfassungEditor, useZfPdf, zfBereit, zfHinweis, zfStart, type ZfZustand } from "@/components/zusammenfassung-editor";
 import { FileDrop } from "@/components/ui/file-drop";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { SELBST_UPLOAD_HINWEIS, angebotStandText } from "@/lib/angebot-senden";
 import type { AngebotInfo } from "@/lib/angebot-senden-server";
-import { angebotAblegenResult, angebotInfoResult, angebotSelbstResult, angebotSendenResult } from "@/app/buyer/angebot-actions";
+import {
+  angebotAblegenResult,
+  angebotInfoResult,
+  angebotSelbstResult,
+  angebotSendenResult,
+  zusammenfassungAblegenResult,
+  zusammenfassungSelbstResult,
+  zusammenfassungSendenResult,
+} from "@/app/buyer/angebot-actions";
 
 const tag = (iso: string) => new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "numeric" }).format(new Date(iso));
 
@@ -39,13 +53,18 @@ export function AngebotSendenSheet(p: SheetProps) {
 function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetProps & { ziel: AngebotZiel }) {
   const [info, setInfo] = useState<AngebotInfo | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
-  const [schritt, setSchritt] = useState<"wahl" | "app" | "selbst">("wahl");
+  const [schritt, setSchritt] = useState<"wahl" | "app" | "selbst" | "zusammenfassung">("wahl");
   const [datei, setDatei] = useState<string | null>(null);
   const [kundenlink, setKundenlink] = useState(false);
   const [laedt, setLaedt] = useState(false);
   const [abgelegt, setAbgelegt] = useState<string | null>(null);
+  // Gesprächszusammenfassung (Paket M5): mitsenden (Weg „app“) bzw. nach „selbst gesendet“; zfFertig = abgelegt
+  const [zfMit, setZfMit] = useState(false);
+  const [zf, setZf] = useState<ZfZustand | null>(null);
+  const [zfFertig, setZfFertig] = useState<{ dateiId: string; text: string } | null>(null);
   const [busy, start] = useTransition();
   const id = ziel.appointmentId;
+  const zfPdf = useZfPdf(id, zf ?? { wuensche: "", rat: "", ki: false, ansicht: false, geprueft: false });
 
   useEffect(() => {
     let weg = false;
@@ -53,6 +72,7 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
       if (weg) return;
       if (!r.ok) return setFehler(r.error);
       setInfo(r.info);
+      if (r.info.zusammenfassung) setZf(zfStart(r.info.zusammenfassung));
       setDatei(r.info.vorausgewaehlt);
       setKundenlink(r.info.kundenlink === "aktiv");
     });
@@ -88,7 +108,8 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
   const senden = () =>
     start(async () => {
       if (!datei) return;
-      const r = await angebotSendenResult(ziel.appointmentId, { dateiId: datei, kundenlink });
+      const mitZf = zfMit && zf && info?.zusammenfassung ? { wuensche: zf.wuensche, rat: zf.rat, ki: zf.ki } : null;
+      const r = await angebotSendenResult(ziel.appointmentId, { dateiId: datei, kundenlink, zusammenfassung: mitZf });
       if (!r.ok) return onError(r.error);
       onDone(`${ziel.name}: ${r.message}`);
       onClose();
@@ -110,13 +131,53 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
     setAbgelegt(files[0]?.name ?? "PDF");
   };
 
+  const zfText = zf ? { wuensche: zf.wuensche, rat: zf.rat, ki: zf.ki } : null;
+  const zfErledigt = (dateiId: string, text: string) => {
+    setZfFertig({ dateiId, text });
+    setSchritt("selbst");
+  };
+  const zfSenden = () =>
+    start(async () => {
+      if (!zfText) return;
+      const r = await zusammenfassungSendenResult(id, zfText);
+      if (!r.ok) return onError(r.error);
+      onDone(`${ziel.name}: ${r.message}`);
+      zfErledigt(r.dateiId, "Zusammenfassung gesendet und abgelegt");
+    });
+  const zfAblegen = () =>
+    start(async () => {
+      if (!zfText) return;
+      const r = await zusammenfassungAblegenResult(id, zfText);
+      if (!r.ok) return onError(r.error);
+      onDone(`${ziel.name}: ${r.message}`);
+      zfErledigt(r.dateiId, "Zusammenfassung abgelegt");
+    });
+  const zfMail = info?.zusammenfassung
+    ? {
+        to: info.zusammenfassung.email ?? "",
+        subject: info.zusammenfassung.mail.subject,
+        text: info.zusammenfassung.mail.body.split("{wuensche}").join(zf?.wuensche.trim() ?? "").split("{rat}").join(zf?.rat.trim() ?? ""),
+      }
+    : null;
+  const zfSelbst = async () => {
+    if (!zfText || !zfMail) return;
+    const r = await zusammenfassungSelbstResult(id, { ...zfText, ...zfMail });
+    if (!r.ok) return onError(r.error);
+    onDone(`${ziel.name}: ${r.message}`);
+    zfErledigt(r.dateiId, "Zusammenfassung gesendet und abgelegt");
+  };
+
   const stand = info ? angebotStandText(info.stand) : null;
   const wa = info?.whatsapp;
   const waGeht = !!wa?.moeglich && (wa.fensterOffen || wa.vorlage);
   const kanalFehlt = !!info && !waGeht && !info.email;
 
   return (
-    <Sheet open onClose={onClose} title={schritt === "app" ? "Über die App senden" : `Angebot senden: ${ziel.name}`}>
+    <Sheet
+      open
+      onClose={onClose}
+      title={schritt === "app" ? "Über die App senden" : schritt === "zusammenfassung" ? `Gesprächszusammenfassung: ${ziel.name}` : `Angebot senden: ${ziel.name}`}
+    >
       {!info ? (
         <div className="flex items-center gap-2 px-5 py-6 text-sm text-[color:var(--muted)]">
           {fehler ? (
@@ -165,9 +226,51 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
           ) : (
             <FileDrop variant="button" instant accept=".pdf,application/pdf,image/*" label="PDF ablegen" busy={laedt} onFiles={(f) => void ablegen(f)} hint={SELBST_UPLOAD_HINWEIS} />
           )}
+          {info.zusammenfassung ? (
+            zfFertig || info.zusammenfassung.abgelegt ? (
+              <p className="flex items-center gap-2 text-sm" data-zf-abgelegt>
+                <ClipboardList className="h-4 w-4 text-[color:var(--muted)]" /> {zfFertig?.text ?? `Zusammenfassung abgelegt am ${tag(info.zusammenfassung.abgelegt!.createdAt)}`}
+              </p>
+            ) : (
+              <div className="border-t border-[color:var(--border)] pt-4" data-zf-vorschlag>
+                <p className="text-[15px] font-semibold">Gesprächszusammenfassung</p>
+                <p className="mb-2 text-xs text-[color:var(--muted)]">Für Ihre Beratungsdokumentation, vorbefüllt aus dem Termin.</p>
+                <Button variant="secondary" size="md" icon={ClipboardList} className="w-full" onClick={() => setSchritt("zusammenfassung")} data-zf-erstellen>
+                  {info.zusammenfassung.appVersand ? "Ablegen oder per App senden" : "Erstellen und ablegen"}
+                </Button>
+              </div>
+            )
+          ) : null}
           <Button variant="secondary" className="h-11 w-full" onClick={onClose}>
             Fertig
           </Button>
+        </div>
+      ) : schritt === "zusammenfassung" && info.zusammenfassung && zf ? (
+        <div className="space-y-4 px-5 py-4" data-zf-schritt>
+          <ZusammenfassungEditor appointmentId={id} info={info.zusammenfassung} wert={zf} onChange={setZf} onError={onError} pdf={zfPdf} />
+          {zfHinweis(zf) ? <p className="text-xs text-[color:var(--muted)]" data-zf-hinweis>{zfHinweis(zf)}</p> : null}
+          {zfMail ? (
+            <MailWege
+              appVersand={info.zusammenfassung.appVersand}
+              senden={zfSenden}
+              pending={busy}
+              disabled={!zfBereit(zf) || busy}
+              mail={zfMail}
+              signatur={null}
+              anhaenge={zfPdf ? [zfPdf] : []}
+              onGesendet={zfSelbst}
+              sendenLabel="Per App senden"
+            />
+          ) : null}
+          <button
+            type="button"
+            className="inline-flex min-h-10 w-full items-center justify-center text-sm font-medium text-[color:var(--muted)] hover:text-[color:var(--foreground)] disabled:opacity-50"
+            disabled={!zfBereit(zf) || busy}
+            onClick={zfAblegen}
+            data-zf-nur-ablegen
+          >
+            Nur ablegen, nicht senden
+          </button>
         </div>
       ) : (
         <div className="space-y-4 px-5 py-4" data-angebot-app>
@@ -211,17 +314,47 @@ function AngebotSendenBlatt({ ziel, onClose, onDone, onError, spaeter }: SheetPr
             <Kanal ok={waGeht} text={waGeht ? "WhatsApp" : `WhatsApp: ${wa?.grund ?? "Chat ruht seit über 24 Stunden"}`} />
             <Kanal ok={!!info.email} text={info.email ? `E-Mail an ${info.email}` : "E-Mail: keine Adresse bekannt"} />
           </ul>
+          {info.zusammenfassung && info.email && zf ? (
+            <section className="space-y-3" data-zf-mit>
+              <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[color:var(--brand)]" checked={zfMit} onChange={(e) => setZfMit(e.target.checked)} data-zf-haken />
+                <span>
+                  Gesprächszusammenfassung mitsenden
+                  <span className="block text-xs text-[color:var(--muted)]">Als PDF im Anhang der E-Mail, liegt danach unter Dokumente.</span>
+                </span>
+              </label>
+              {zfMit ? <ZusammenfassungEditor appointmentId={id} info={info.zusammenfassung} wert={zf} onChange={setZf} onError={onError} pdf={zfPdf} /> : null}
+            </section>
+          ) : null}
           {info.kombi ? <p className="text-xs text-[color:var(--muted)]">Mit Hinweis: {info.kombi}</p> : null}
           <details className="text-sm">
-            <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Text ansehen</summary>
-            <p className="mt-2 whitespace-pre-line rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2.5" data-angebot-vorschau>
+            <summary className="cursor-pointer font-medium text-[color:var(--brand)]">Texte ansehen</summary>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">WhatsApp</p>
+            <p className="mt-1 whitespace-pre-line rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2.5" data-angebot-vorschau>
               {info.vorschau}
             </p>
+            {info.email ? (
+              <>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">E-Mail</p>
+                <div className="mt-1 rounded-[var(--radius-sm)] bg-[color:var(--surface-sunken)] px-3 py-2.5" data-angebot-mail-vorschau>
+                  <p className="font-semibold">{info.mail.subject}</p>
+                  <p className="mt-1 whitespace-pre-line">{info.mail.text}</p>
+                </div>
+              </>
+            ) : null}
           </details>
           {kanalFehlt ? (
             <p className="text-sm text-amber-800">Weder WhatsApp noch E-Mail möglich. Senden Sie es selbst und tippen Sie danach „Habe ich selbst gesendet“.</p>
           ) : null}
-          <Button variant="primary" icon={busy ? Loader2 : Send} className="h-11 w-full text-[15px]" disabled={!datei || busy || laedt || kanalFehlt} onClick={senden} data-angebot-jetzt-senden>
+          {zfMit && zf && zfHinweis(zf) ? <p className="text-xs text-[color:var(--muted)]" data-zf-hinweis>{zfHinweis(zf)}</p> : null}
+          <Button
+            variant="primary"
+            icon={busy ? Loader2 : Send}
+            className="h-11 w-full text-[15px]"
+            disabled={!datei || busy || laedt || kanalFehlt || (zfMit && !!zf && !zfBereit(zf))}
+            onClick={senden}
+            data-angebot-jetzt-senden
+          >
             {busy ? "Sendet …" : "Jetzt senden"}
           </Button>
         </div>

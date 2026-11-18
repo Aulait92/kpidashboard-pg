@@ -97,6 +97,7 @@ export function LeadMailComposer({
   termin = null,
   beratung = { wuensche: "", notizen: [] },
   appVersand = true,
+  bereitlegen = [],
 }: {
   leadId: string;
   lead: { name: string | null; source: string | null; salutation?: string | null; firstName?: string | null; lastName?: string | null };
@@ -120,6 +121,8 @@ export function LeadMailComposer({
   beratung?: { wuensche: string; notizen: string[] };
   /** Über die App senden möglich (Postfach oder Versanddomain); false bei „E-Mail-Funktionen aus“ */
   appVersand?: boolean;
+  /** Bereitlegen-Liste zum Termin (bereitlegenFuerLead, dieselbe wie in WhatsApp und Termin-Mails) für {termin_unterlagen} */
+  bereitlegen?: string[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -175,7 +178,7 @@ export function LeadMailComposer({
       termin_datum: start && !Number.isNaN(start.getTime()) ? terminDatumText(start) : "",
       termin_art: terminArtText(f.terminArt),
       videolink: f.terminArt === "video" ? f.videolink : "",
-      termin_unterlagen: terminUnterlagen(lead.source, ansprache),
+      termin_unterlagen: terminUnterlagen(bereitlegen),
       fehlende_unterlagen: fehlendeUnterlagen([...f.unterlagen, f.unterlagenExtra]),
       melde_datum: f.meldeTag ? tagText(f.meldeTag) : "",
       melde_wann: f.meldeTag ? `am ${tagText(f.meldeTag)}` : "",

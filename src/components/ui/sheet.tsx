@@ -25,12 +25,15 @@ export function Sheet({
   title,
   message,
   children,
+  footer,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   message?: string;
   children: React.ReactNode;
+  /** Eigene Fußzeile statt „Abbrechen“ (z. B. „Fertig“, wenn Änderungen automatisch gespeichert werden) */
+  footer?: React.ReactNode;
 }) {
   // Nach unten wischen schließt (Ole, 16.11.2026: „Ich kann hier nicht runterwischen“), nur am Griff bzw. an der
   // Kopfzeile, damit das Scrollen der Liste nicht ausgelöst wird.
@@ -86,13 +89,15 @@ export function Sheet({
         </div>
         {/* Inhalt scrollt, Kopf und „Abbrechen“ bleiben stehen */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="h-12 w-full shrink-0 border-t border-[color:var(--border)] text-sm font-medium text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]"
-        >
-          Abbrechen
-        </button>
+        {footer ?? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 w-full shrink-0 border-t border-[color:var(--border)] text-sm font-medium text-[color:var(--muted)] hover:bg-[color:var(--surface-sunken)]"
+          >
+            Abbrechen
+          </button>
+        )}
       </div>
     </div>
   );

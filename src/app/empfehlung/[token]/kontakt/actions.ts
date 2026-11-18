@@ -1,6 +1,8 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { REFERRAL_DRAFT_COOKIE, REFERRAL_DRAFT_MAX_AGE, encodeReferralDraft } from "@/lib/empfehlung/entwurf";
 import { claimPersonalLink, submitReferral } from "@/lib/empfehlung/requests";
 import { EMAIL_RE, normalizePhone } from "@/lib/whatsapp/phone";
 import { checkLimit, requestIp } from "@/lib/rate-limit";
@@ -10,12 +12,28 @@ import { checkLimit, requestIp } from "@/lib/rate-limit";
 export async function submitReferralAction(token: string, fd: FormData): Promise<void> {
   if (!/^[\w-]{10,64}$/.test(token)) redirect("/");
   const base = `/empfehlung/${token}/kontakt`;
-  const fail = (code: string): never => redirect(`${base}?err=${code}`);
+  const jar = await cookies();
+  // Bei einem Fehler die Eingaben kurz merken, damit niemand alles neu tippen muss (lib/empfehlung/entwurf.ts)
+  const fail = (code: string, keep = true): never => {
+    if (keep) {
+      const draft = encodeReferralDraft({
+        name: String(fd.get("name") ?? ""),
+        phone: String(fd.get("phone") ?? ""),
+        email: String(fd.get("email") ?? ""),
+        topic: String(fd.get("topic") ?? ""),
+        message: String(fd.get("message") ?? ""),
+        consent: fd.get("consent") === "on",
+        statusConsent: fd.get("statusConsent") === "on",
+      });
+      jar.set(REFERRAL_DRAFT_COOKIE, draft, { path: base, maxAge: REFERRAL_DRAFT_MAX_AGE, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+    }
+    redirect(`${base}?err=${code}`);
+  };
   // Drosselung je IP (wie die öffentliche Buchungsseite)
   if (!checkLimit("publicBooking", `empfehlung:${await requestIp()}`).ok) fail("busy");
   const honeypot = String(fd.get("zq_hp_field") ?? "").trim();
   const renderedAt = Number(fd.get("rendered_at") ?? 0);
-  if (honeypot && (!renderedAt || Date.now() - renderedAt < 3000)) fail("invalid");
+  if (honeypot && (!renderedAt || Date.now() - renderedAt < 3000)) fail("invalid", false);
 
   const name = String(fd.get("name") ?? "").trim().slice(0, 80);
   const phone = normalizePhone(String(fd.get("phone") ?? ""));
@@ -26,7 +44,8 @@ export async function submitReferralAction(token: string, fd: FormData): Promise
   if (!phone) fail("phone");
   if (emailRaw && !EMAIL_RE.test(emailRaw)) fail("email");
   const r = await submitReferral(token, { name, phone: phone!, email: emailRaw || null, topic, message, consent: fd.get("consent") === "on", statusConsent: fd.get("statusConsent") === "on" });
-  if (!r.ok) fail(r.error);
+  if (!r.ok) fail(r.error, r.error !== "unavailable");
+  jar.delete({ name: REFERRAL_DRAFT_COOKIE, path: base });
   redirect(`${base}?ok=1`);
 }
 

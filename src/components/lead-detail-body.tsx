@@ -53,7 +53,7 @@ import { LeadContracts } from "@/components/lead-contracts";
 import { anrufZiel } from "@/lib/anruf-ziel";
 import { BestehendeVertraege } from "@/components/bestehende-vertraege";
 import { vorvertraegeAus } from "@/lib/whatsapp/vorvertraege";
-import { lebenssituationAus } from "@/lib/whatsapp/gespraech";
+import { bereitlegenFuerLead, formularAus, lebenssituationAus } from "@/lib/whatsapp/gespraech";
 import { waOhneMarker } from "@/lib/wa-format";
 import { NaechsteNachrichtenCard } from "@/components/naechste-nachrichten-card";
 import { angebotStandText } from "@/lib/angebot-senden";
@@ -195,9 +195,27 @@ export async function LeadDetailBody({
   });
   if (!lead) notFound();
   if (lead.erasedAt) {
+    // Gesetzliche Aufbewahrung (Paket M5, lib/erasure.ts): nur die Beratungsdokumentation bleibt als Nachweis
+    const aufbewahrt = await prisma.leadFile.findMany({
+      where: { leadId: lead.id, kind: "beratungsdoku" },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, fileName: true, createdAt: true, aufbewahrenBis: true },
+    });
     return (
       <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-white px-5 py-6 text-sm text-[color:var(--muted)]">
         Die Daten dieses Leads wurden am {formatDate(lead.erasedAt)} auf Wunsch gelöscht. Für Abrechnung und Zahlen bleibt nur ein anonymer Eintrag.
+        {aufbewahrt.length ? (
+          <ul className="mt-3 space-y-1" data-aufbewahrt>
+            {aufbewahrt.map((f) => (
+              <li key={f.id}>
+                <a href={`/api/buyer/leads/${lead.id}/dateien/${f.id}`} target="_blank" rel="noopener" className="font-medium text-[color:var(--brand)] hover:underline">
+                  Beratungsdokumentation vom {formatDate(f.createdAt)}
+                </a>
+                {f.aufbewahrenBis ? <> · gesetzliche Aufbewahrung bis {formatDate(f.aufbewahrenBis)}</> : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     );
   }
@@ -533,6 +551,13 @@ export async function LeadDetailBody({
           vorlagen={vorlagen}
           empfohlen={empfohlen}
           termin={nextAppt ? { startsAt: nextAppt.startsAt.toISOString(), mode: nextAppt.mode, meetUrl: nextAppt.meetUrl } : null}
+          bereitlegen={bereitlegenFuerLead({
+            source: lead.source,
+            formular: formularAus(lead.formData),
+            angaben: conv?.qualificationData,
+            an: ansprache,
+            komplettcheck: nextAppt?.komplettcheck === true,
+          })}
           beratung={{
             wuensche: wuenscheVorschlag({ produkt: lead.source, formData: lead.formData, qualificationData: conv?.qualificationData, qualificationSummary: conv?.qualificationSummary }),
             notizen: notizen.map((n) => n.text),
