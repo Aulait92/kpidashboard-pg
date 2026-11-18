@@ -343,7 +343,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     const l2 = await lead("Max Weber", "4917600000022");
     await sendOutreach({ customerId, leadId: l2.id, phone: l2.phone!, name: l2.name, an: "sie", source: l2.source });
     expect(tplOf("4917600000022").name).toBe("pg_outreach_tkv_v5_sie");
-    expect(params("4917600000022")).toEqual(["Max Weber", "Katzenversicherung", "Ihre Katze"]);
+    expect(params("4917600000022")).toEqual(["Herr Weber", "Katzenversicherung", "Ihre Katze"]);
 
     // v6 nur ohne PDF-Kopf freigegeben: wird nie gewählt (nie ohne Erstinformation), weiter v5 mit PDF
     const body = templateBodyFor("outreach_tkv", templateNamesOf("Allianz Anid Brand", undefined, "Anid Brand"), "sie");
@@ -360,9 +360,9 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     // Erstinformation (hier unvollständig) als PDF im aktuellen Stand im Kopf
     expect((tplOf("4917600000024").components as { type: string }[] | undefined)?.[0].type).toBe("header");
     const p4 = params("4917600000024")!;
-    expect([p4[0], p4[1], p4[3]]).toEqual(["Max Weber", "Katzenversicherung", "Wie alt ist Ihre Katze"]);
+    expect([p4[0], p4[1], p4[3]]).toEqual(["Herr Weber", "Katzenversicherung", "Wie alt ist Ihre Katze"]);
     const m4 = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: "4917600000024" } } });
-    expect(m4.body).toBe(`[Erstinformation als PDF]\nHallo Max Weber, danke für Ihre Anfrage zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von ${p4[2]}.\n\nWie alt ist Ihre Katze?`);
+    expect(m4.body).toBe(`[Erstinformation als PDF]\nHallo Herr Weber, danke für Ihre Anfrage zum Thema Katzenversicherung! Ich bin der digitale KI-Assistent von ${p4[2]}.\n\nWie alt ist Ihre Katze?`);
     expect(m4.body).not.toContain("??");
     expect(m4.purpose).toBe("outreach_tkv");
 
@@ -372,9 +372,9 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     await sendOutreach({ customerId, leadId: l8.id, phone: l8.phone!, name: l8.name, an: "sie", source: l8.source });
     expect(tplOf("4917600000026").name).toBe("pg_outreach_tkv_v8_sie");
     const p8 = params("4917600000026")!;
-    expect([p8[0], p8[2]]).toEqual(["Max Weber", "Wie alt ist Ihre Katze"]);
+    expect([p8[0], p8[2]]).toEqual(["Herr Weber", "Wie alt ist Ihre Katze"]);
     const m8 = await prisma.message.findFirstOrThrow({ where: { conversation: { customerId, contactPhone: "4917600000026" } } });
-    expect(m8.body).toBe(`[Erstinformation als PDF]\nHallo Max Weber, danke für Ihre Anfrage zur Tierkrankenversicherung! Hier schreibt der digitale Assistent von ${p8[1]}.\n\n*Wie alt ist Ihre Katze?*\n\nKI-Assistent · Oben: Erstinformation (gesetzlich)`);
+    expect(m8.body).toBe(`[Erstinformation als PDF]\nHallo Herr Weber, danke für Ihre Anfrage zur Tierkrankenversicherung! Hier schreibt der digitale Assistent von ${p8[1]}.\n\n*Wie alt ist Ihre Katze?*\n\nKI-Assistent · Oben: Erstinformation (gesetzlich)`);
 
     // Lead hat schon geschrieben (Fenster offen): Freitext „danke für Ihre Nachricht“, danach die Erstinformation
     const l3 = await lead("Julia Schneider", "4917600000023");
@@ -385,7 +385,7 @@ describe("WhatsApp-Vorlagen automatisch einreichen", () => {
     expect(r3.mode).toBe("text");
     const out = sent.slice(before) as Array<{ type: string; text?: { body: string } }>;
     expect(out[0]).toMatchObject({ type: "text" });
-    expect(out[0].text?.body).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht zur Tierkrankenversicherung! Hier schreibt der digitale KI-Assistent von [^.\n]+\.\n\n\*Wie alt ist Ihre Katze\?\*$/);
+    expect(out[0].text?.body).toMatch(/^Hallo Frau Schneider, danke für Ihre Nachricht zur Tierkrankenversicherung! Hier schreibt der digitale KI-Assistent von [^.\n]+\.\n\n\*Wie alt ist Ihre Katze\?\*$/);
     // Erstinformation unvollständig: PDF im aktuellen Stand unmittelbar als Nachricht 2 (kein Link-Rückfall)
     expect(out[1]).toMatchObject({ type: "document" });
     expect(out).toHaveLength(2);

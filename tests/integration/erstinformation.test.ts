@@ -231,7 +231,7 @@ describe("WhatsApp: Erstinformation als PDF-Dokument (§ 16 VersVermV)", () => {
     const idx = sent.findIndex((s) => s.type === "document" && s.to === "4917699990002");
     expect(idx).toBeGreaterThan(0);
     expect(sent[idx - 1].type).toBe("text"); // erst Begrüßung mit KI-Assistent und Antwort (Nachricht 1), dann das PDF (Nachricht 2)
-    expect(sent[idx - 1].text?.body).toMatch(/^Hallo Julia Schneider, danke für Ihre Nachricht! Hier schreibt der digitale KI-Assistent von Susanne Meier\.\n\n/);
+    expect(sent[idx - 1].text?.body).toMatch(/^Hallo Frau Schneider, danke für Ihre Nachricht! Hier schreibt der digitale KI-Assistent von Susanne Meier\.\n\n/);
     expect(sent[idx - 1].text?.body).not.toContain("/erstinformation/");
     const e = await prisma.erstinformation.findUniqueOrThrow({ where: { customerId: st.customerId } });
     expect(sent[idx]).toMatchObject({ to: "4917699990002", document: { filename: "Erstinformation_Agentur_Meier_GmbH.pdf" } });
