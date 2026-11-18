@@ -6,13 +6,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Check, ClipboardList, MoreHorizontal, Phone, Presentation, Send, Video, CalendarSync, type LucideIcon } from "lucide-react";
+import { CalendarClock, Check, ClipboardCheck, ClipboardList, MoreHorizontal, Phone, Presentation, Send, Video, CalendarSync, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { buttonClass, Card } from "@/components/ui";
 import { ActionMenu } from "@/components/ui/menu";
 import { NextStepButton } from "@/components/next-step";
 import { RescheduleDialog } from "@/components/reschedule-dialog";
 import { AngebotSendenSheet } from "@/components/angebot-senden";
+import { BeratungsdokuSheet } from "@/components/beratungsdoku-sheet";
 import { useToast } from "@/components/ui/toast";
 import { terminArtLabel } from "@/lib/termin-art";
 import type { TerminAktion, TerminKartenAktionen } from "@/lib/termin-karte";
@@ -39,7 +40,11 @@ const LABEL: Record<TerminAktion, string> = {
   angebot: "Angebot senden",
   praesentation: "Präsentation",
   verschieben: "Verschieben",
+  beratungsdoku: "Beratungsdokumentation",
 };
+/** Beratungsdokumentation (Paket B): als Hauptknopf ausgeschrieben, als Zweitknopf kurz (Handy, halbe Breite) */
+const BD_HAUPT = "Beratungsdokumentation erstellen";
+const BD_ZWEIT = "Dokumentation";
 const ICON: Record<TerminAktion, LucideIcon> = {
   vorbereiten: ClipboardList,
   videocall: Video,
@@ -48,6 +53,7 @@ const ICON: Record<TerminAktion, LucideIcon> = {
   angebot: Send,
   praesentation: Presentation,
   verschieben: CalendarSync,
+  beratungsdoku: ClipboardCheck,
 };
 
 export function TerminKarte({
@@ -70,6 +76,7 @@ export function TerminKarte({
   const router = useRouter();
   const [verschieben, setVerschieben] = useState(false);
   const [angebotOffen, setAngebotOffen] = useState(false);
+  const [dokuOffen, setDokuOffen] = useState(false);
   const toast = useToast();
   const wechsel = a.naechsterWechsel ? new Date(a.naechsterWechsel).getTime() : null;
 
@@ -124,6 +131,13 @@ export function TerminKarte({
         </button>
       );
     }
+    if (x === "beratungsdoku") {
+      return (
+        <button key={x} type="button" onClick={() => setDokuOffen(true)} className={buttonClass(variant, size, cls)} aria-label={BD_HAUPT} data-termin-aktion={x}>
+          <Icon className={haupt ? "h-4 w-4" : "h-3.5 w-3.5"} /> {haupt ? BD_HAUPT : BD_ZWEIT}
+        </button>
+      );
+    }
     const h = href[x];
     if (!h) return null;
     // Eigene Links statt ButtonLink, damit die Merkmale am Knopf selbst stehen (Erklärvideo klickt [data-termin-vorbereiten])
@@ -144,8 +158,9 @@ export function TerminKarte({
     );
   }
 
-  const mehr = a.mehr.filter((x) => x === "verschieben" || x === "angebot" || x === "ergebnis" || !!href[x]);
-  const zweit = a.zweit.filter((x) => x === "verschieben" || x === "angebot" || x === "ergebnis" || !!href[x]);
+  const machbar = (x: TerminAktion) => x === "verschieben" || x === "angebot" || x === "ergebnis" || x === "beratungsdoku" || !!href[x];
+  const mehr = a.mehr.filter(machbar);
+  const zweit = a.zweit.filter(machbar);
   const status =
     a.phase === "jetzt" ? (t.begonnen ? "Läuft" : "Gleich") : a.phase === "nachher" ? (t.erschienen ? "Erschienen" : "Vorbei") : null;
 
@@ -194,6 +209,7 @@ export function TerminKarte({
                     onSelect: () => {
                       if (x === "verschieben") return setVerschieben(true);
                       if (x === "angebot") return angebotMail();
+                      if (x === "beratungsdoku") return setDokuOffen(true);
                       const h = href[x];
                       if (!h) return;
                       if (x === "videocall") window.open(h, "_blank", "noreferrer");
@@ -207,6 +223,15 @@ export function TerminKarte({
         </div>
       </div>
       <RescheduleDialog appointmentId={t.id} open={verschieben} onClose={() => setVerschieben(false)} onChanged={() => router.refresh()} />
+      <BeratungsdokuSheet
+        ziel={dokuOffen ? { appointmentId: t.id, name } : null}
+        onClose={() => setDokuOffen(false)}
+        onError={(message) => toast.show({ message, tone: "error" })}
+        onDone={(message) => {
+          toast.show({ message });
+          router.refresh();
+        }}
+      />
       <AngebotSendenSheet
         ziel={angebotOffen ? { appointmentId: t.id, name } : null}
         onClose={() => setAngebotOffen(false)}

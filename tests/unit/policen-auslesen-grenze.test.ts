@@ -90,6 +90,7 @@ describe("Importgrenze Chat-Assistent / Dokument-KI", () => {
       /^src\/app\/buyer\/termine\/\[id\]\/vorbereitung\/vertraege\//,
       /^src\/components\/policen-vergleichsblatt\.tsx$/,
       /^src\/components\/policen-vergleich-kurz\.tsx$/,
+      /^src\/lib\/beratungsdoku-server\.ts$/, // Beratungsdokumentation (Paket B): liest geprüfte Verträge des Vergleichsblatts, nur dynamisch
       /^src\/app\/admin\/neu\/einstellungen\/anbindungen\//,
     ];
     const verstoesse: string[] = [];

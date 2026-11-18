@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isNewUi } from "@/lib/new-ui";
 import { HilfeChatButton } from "@/components/hilfe-chat";
 import { STEP_TEXT } from "@/components/first-day";
-import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Circle, ClipboardCheck, ClipboardList, FileText, KeyRound, Mail, MessageCircle, Percent, PlayCircle, Rocket, Route, Smartphone, Star, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/buyer-shell";
 import { MicrosoftAdminConsent } from "@/components/microsoft-admin-consent";
 import { microsoftAdminConsentUrl } from "@/lib/microsoft-admin-consent";
@@ -14,6 +14,7 @@ import { HelpCallPicker, ImpressumUrlForm, MetaAccessForm, QuestionnaireForm, Sk
 import { SoArbeitet } from "@/components/so-arbeitet";
 import { ladeSoArbeitet } from "@/lib/so-arbeitet-server";
 import { ServiceMails } from "@/app/buyer/einstellungen/assistent/service-mails";
+import { BeratungsdokuSchalter } from "@/components/beratungsdoku-schalter";
 import { serviceMailsDaten } from "@/lib/mail/service-mails-daten";
 import { impressumUrlAus } from "@/lib/impressum-fehlt";
 import { ErstinfoForm } from "./erstinfo-form";
@@ -118,6 +119,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const impressumFehlt = !impressumUrlAus(ob.websiteInfo);
   // P8 „So arbeitet Ihr Assistent“ und M9 „Service-Mails in Ihrem Namen“ (beide nur mit Software)
   const soArbeitet = software ? await ladeSoArbeitet(ctx.customerId, produkt) : null;
+  // Beratungsdokumentation (Paket B): optionaler Punkt, eingeklappt, kein Pflichtschritt, zählt nicht in den Fortschritt
+  const bdAn = software ? ((await prisma.customer.findUnique({ where: { id: ctx.customerId }, select: { beratungsdokuAn: true } }))?.beratungsdokuAn ?? false) : null;
   const mails = software && !done("serviceMails") ? await serviceMailsDaten(ctx.customerId, ctx.userId, ctx.email) : null;
   const metaInit = {
     adAccount: ob.customer.metaAdAccountId ? `act_${ob.customer.metaAdAccountId}` : "",
@@ -392,6 +395,23 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
               </p>
             )}
           </Step>
+        ) : null}
+
+        {bdAn !== null ? (
+          <details
+            id="beratungsdoku"
+            open={schritt === "beratungsdoku"}
+            className="group overflow-hidden rounded-[var(--radius-lg)] border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] [&>summary::-webkit-details-marker]:hidden"
+            data-einrichtung-optional="beratungsdoku"
+          >
+            <summary className="flex cursor-pointer items-center gap-2.5 px-5 py-3.5 group-open:border-b group-open:border-[color:var(--border)]">
+              <ClipboardCheck className="h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+              <span className="flex-1 text-[15px] font-semibold tracking-tight">Beratungsdokumentation</span>
+              <span className="text-xs font-medium text-[color:var(--muted)]">{bdAn ? "an" : "optional"}</span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--muted)] transition group-open:rotate-180" />
+            </summary>
+            <BeratungsdokuSchalter an={bdAn} darf={!readOnly} />
+          </details>
         ) : null}
 
         <Step n={nextNo()} title="Meta freigeben (Werbekonto und Seite)" icon={KeyRound} done={done("metaAccess")} open={isOpen("metaAccess")} id="metaAccess">

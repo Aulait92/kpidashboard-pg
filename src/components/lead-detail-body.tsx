@@ -12,6 +12,7 @@ import { EinwilligungEtikett } from "@/components/einwilligung-kontakt";
 import { einwilligungStand } from "@/lib/einwilligung-stand";
 import { optOutHash } from "@/lib/bestand/links";
 import { angebotOffen, terminKartenAktionen } from "@/lib/termin-karte";
+import { BD_KARTE_TAGE, bdKartenStand, beratungsdokuAn } from "@/lib/beratungsdoku-server";
 import { formatPhone } from "@/lib/format";
 import { pipelinePhasesFor, WHATSAPP_STATUS_LABELS } from "@/lib/products";
 import { hasWhatsAppInbox } from "@/lib/whatsapp/access";
@@ -355,6 +356,24 @@ export async function LeadDetailBody({
   const resultMissingAppt = stepState === "result_missing" ? (pastAppt?.id ?? null) : null;
   // Terminkarte unter den Aktionen (lib/termin-karte.ts): kommender bzw. laufender Termin, sonst der vergangene ohne Ergebnis
   const kartenTermin = nextAppt ?? (resultMissingAppt ? pastAppt : null);
+  // Beratungsdokumentation (Paket B, nur mit Schalter): Stand je Termin. Steht das Ergebnis schon, bleibt die Karte noch
+  // BD_KARTE_TAGE Tage nach dem Termin mit „Beratungsdokumentation erstellen“, solange sie offen ist.
+  const bdAn = !lead.erasedAt && (await beratungsdokuAn(customerId));
+  const bdTermin =
+    bdAn && !kartenTermin
+      ? await prisma.appointment.findFirst({
+          where: {
+            leadId: lead.id,
+            status: { in: ["booked", "completed"] },
+            startsAt: { lt: new Date(nowMs()), gte: new Date(nowMs() - BD_KARTE_TAGE * 86_400_000) },
+            OR: [{ attendance: null }, { attendance: { not: "nicht_erschienen" } }],
+          },
+          orderBy: { startsAt: "desc" },
+          select: TERMIN_SELECT,
+        })
+      : null;
+  const bdStand = bdAn ? await bdKartenStand([kartenTermin?.id ?? bdTermin?.id ?? ""]) : null;
+  const karte = kartenTermin ?? (bdTermin && bdStand?.get(bdTermin.id) === "offen" ? bdTermin : null);
   const storniert = !!lead.status?.toLowerCase().startsWith("storno");
   // Abschluss (Ole, 13.11.2026): Beitrag, geschätzte Provision und Police im Kontakt sehen
   const won = (lead.status ?? "").trim().toLowerCase() === "abschluss";
@@ -507,19 +526,25 @@ export async function LeadDetailBody({
         anrufenNeutral={!!kartenTermin}
         mailAus={mailAus}
       />
-      {kartenTermin ? (
+      {karte ? (
         <TerminKarte
           t={{
-            id: kartenTermin.id,
-            wann: apptFmt(kartenTermin.startsAt),
-            mode: kartenTermin.mode,
-            meetUrl: kartenTermin.meetUrl,
-            zugesagt: !!kartenTermin.confirmedAt,
-            komplettcheck: !!kartenTermin.komplettcheck,
-            erschienen: kartenTermin.attendance === "erschienen",
-            begonnen: kartenTermin.startsAt.getTime() <= nowMs(),
+            id: karte.id,
+            wann: apptFmt(karte.startsAt),
+            mode: karte.mode,
+            meetUrl: karte.meetUrl,
+            zugesagt: !!karte.confirmedAt,
+            komplettcheck: !!karte.komplettcheck,
+            erschienen: karte.attendance === "erschienen",
+            begonnen: karte.startsAt.getTime() <= nowMs(),
           }}
-          a={terminKartenAktionen(kartenTermin, { now: new Date(nowMs()), telefon: !!lead.phone, angebotOffen: angebotOffen(lead.status) })}
+          a={terminKartenAktionen(karte, {
+            now: new Date(nowMs()),
+            telefon: !!lead.phone,
+            angebotOffen: angebotOffen(lead.status),
+            beratungsdoku: bdStand?.get(karte.id) ?? null,
+            ...(karte === kartenTermin ? {} : { ergebnisFehlt: false }),
+          })}
           leadId={lead.id}
           name={lead.name ?? "Lead"}
           source={lead.source}

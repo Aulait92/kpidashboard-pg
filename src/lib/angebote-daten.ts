@@ -4,6 +4,7 @@
 
 import { cleanKombiRegeln, cleanKombiZuordnung, kombiRabatt, rabattAuf, type KombiErgebnis, type KombiRegel, type KombiZuordnung } from "@/lib/kombi-rabatt";
 import { cleanSchutzZeilen, type SchutzZeile } from "@/lib/schutz-ueberblick";
+import { cleanBisherSpalten, type BisherSpalte } from "@/lib/bisheriger-vertrag";
 
 const MAX_ITEMS = 20; // z. B. 4 Sparten mit je 4 Stufen (Allianz Basis, Smart, Komfort, Premium)
 
@@ -41,6 +42,8 @@ export type AngeboteDaten = {
   kombi?: KombiRegel[];
   /** Folie „Ihr Schutz im Überblick“ (Ampel je Sparte); ohne: keine Folie */
   schutz?: SchutzZeile[];
+  /** Spalte „Ihr bisheriger Vertrag“ je Sparte auf der Vergleichsfolie (lib/bisheriger-vertrag.ts) */
+  bisher?: BisherSpalte[];
 };
 
 /**
@@ -139,7 +142,8 @@ export function cleanAngebote(raw: unknown): AngeboteDaten {
   const quelle = Array.isArray(o.quelle) ? o.quelle.map((q) => str(q, 120)).filter((q): q is string => !!q).slice(0, 10) : [];
   const kombi = cleanKombiRegeln(o.kombi);
   const schutz = cleanSchutzZeilen(o.schutz);
-  return { items, quelle, ...(kombi.length ? { kombi } : {}), ...(schutz.length ? { schutz } : {}) };
+  const bisher = cleanBisherSpalten(o.bisher).filter((b) => items.some((i) => i.sparte === b.sparte));
+  return { items, quelle, ...(kombi.length ? { kombi } : {}), ...(schutz.length ? { schutz } : {}), ...(bisher.length ? { bisher } : {}) };
 }
 
 /** Gewählte Angebote: je Sparte die im Termin gewählte Stufe, sonst die Empfehlung. */

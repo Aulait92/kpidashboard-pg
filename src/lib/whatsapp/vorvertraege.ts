@@ -3,7 +3,7 @@
 // Liste je Sparte gebracht (Sparte, Gesellschaft falls genannt, für wen falls genannt) und am Lead gespeichert
 // (Lead.vorvertraege). Anzeige in der Terminvorbereitung und im Kontakt als „Bestehende Verträge“ mit
 // „noch nicht genannt: …“ gegenüber den gängigen Sparten der Lebenssituation (neutral, keine Empfehlung).
-// Keine Gesundheitsangaben: gespeichert werden nur Sparte, Gesellschaft und Person. Rein, ohne Datenbank.
+// Keine Gesundheitsangaben: gespeichert werden nur Sparte, Gesellschaft, Tarifname und Person. Rein, ohne Datenbank.
 
 /** Sparten in der Reihenfolge der Anzeige. */
 export const VERTRAG_SPARTEN = [
@@ -26,7 +26,8 @@ export const VERTRAG_SPARTEN = [
 ] as const;
 export type VertragSparte = (typeof VERTRAG_SPARTEN)[number];
 
-export type Vorvertrag = { sparte: VertragSparte; gesellschaft?: string | null; fuer?: string | null };
+/** tarif: Tarifname, nur wenn der Lead ihn nennt (Vergleich bisheriger Vertrag, Paket P3b, lib/bisheriger-vertrag.ts) */
+export type Vorvertrag = { sparte: VertragSparte; gesellschaft?: string | null; fuer?: string | null; tarif?: string | null };
 
 /** Gespeichert am Lead (Lead.vorvertraege). keine = Lead sagt, er habe keine; liste leer und keine false = nichts erkannt. */
 export type Vorvertraege = { at: string; liste: Vorvertrag[]; keine?: boolean };
@@ -78,8 +79,12 @@ export function normalisiereVertraege(raw: unknown): Vorvertrag[] {
     const o = x as Record<string, unknown>;
     const sparte = sparteAus(typeof o.sparte === "string" ? o.sparte : null);
     if (!sparte) continue;
-    const v: Vorvertrag = { sparte, gesellschaft: kurz(o.gesellschaft), fuer: kurz(o.fuer ?? o.fuerWen ?? o.person, 30) };
-    if (!out.some((y) => y.sparte === v.sparte && (y.gesellschaft ?? "") === (v.gesellschaft ?? "") && (y.fuer ?? "") === (v.fuer ?? ""))) out.push(v);
+    const tarif = kurz(o.tarif, 60);
+    const v: Vorvertrag = { sparte, gesellschaft: kurz(o.gesellschaft), fuer: kurz(o.fuer ?? o.fuerWen ?? o.person, 30), ...(tarif ? { tarif } : {}) };
+    const gleich = (y: Vorvertrag) => y.sparte === v.sparte && (y.gesellschaft ?? "") === (v.gesellschaft ?? "") && (y.fuer ?? "") === (v.fuer ?? "");
+    const da = out.find(gleich);
+    if (!da) out.push(v);
+    else if (!da.tarif && v.tarif) da.tarif = v.tarif;
   }
   return out.sort((x, y) => VERTRAG_SPARTEN.indexOf(x.sparte) - VERTRAG_SPARTEN.indexOf(y.sparte));
 }
@@ -155,7 +160,7 @@ export function zuErsetzendeVertraege(v: Vorvertraege | null | undefined, produk
 
 /** Eine Zeile je Vertrag: „Haftpflicht (HUK, für die Familie)“. */
 export function vertragZeile(v: Vorvertrag): string {
-  const zusatz = [v.gesellschaft, v.fuer ? `für ${v.fuer.replace(/^für\s+/i, "")}` : null].filter(Boolean).join(", ");
+  const zusatz = [[v.gesellschaft, v.tarif].filter(Boolean).join(" ") || null, v.fuer ? `für ${v.fuer.replace(/^für\s+/i, "")}` : null].filter(Boolean).join(", ");
   return zusatz ? `${v.sparte} (${zusatz})` : v.sparte;
 }
 
@@ -166,12 +171,13 @@ export const VORVERTRAEGE_SCHEMA = {
     keine: { type: "boolean", description: "true, wenn der Lead sagt, er habe keine Versicherungen." },
     vertraege: {
       type: "array",
-      description: "Je genannter Versicherung ein Eintrag. Nur Sparte, Gesellschaft und Person, nie Gesundheitsangaben, Beträge oder Tarifdetails.",
+      description: "Je genannter Versicherung ein Eintrag. Nur Sparte, Gesellschaft, Tarifname und Person, nie Gesundheitsangaben, Beträge oder sonstige Tarifdetails.",
       items: {
         type: "object",
         properties: {
           sparte: { type: "string", enum: [...VERTRAG_SPARTEN] },
           gesellschaft: { type: "string", description: "Versicherer, nur falls genannt." },
+          tarif: { type: "string", description: "Tarif- bzw. Produktname, nur falls genannt (z. B. „Classic“, „PrivatSchutz Komfort“)." },
           fuer: { type: "string", description: "Für wen, nur falls genannt (z. B. „Kinder“, „Partnerin“)." },
         },
         required: ["sparte"],
