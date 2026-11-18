@@ -12,6 +12,7 @@ import { anzahlFuer, bedingungText, naechsteText, prozentFuer, staffelLeiste, ty
 import { SCHUTZ_STATUS, type SchutzZeile } from "@/lib/schutz-ueberblick";
 import { a, type Ansprache } from "@/lib/ansprache";
 import { folienEinpassen } from "@/lib/folien-einpassen";
+import { beitragsUnterschiedJahr, kuendigungText, unterschiedText, WERT_PRUEFEN, type BisherSpalte } from "@/lib/bisheriger-vertrag";
 
 export type Marke = {
   name: string;
@@ -188,6 +189,15 @@ export function praesentationCss(m: Marke): string {
 .vgl .badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--f);color:#fff;font-size:14px;font-weight:700;padding:3px 12px;border-radius:99px;white-space:nowrap}
 .vgl .gew{background:var(--fh)}
 .vgl .ja-z{color:#16a34a;font-weight:800;font-size:22px}.vgl .nein-z{display:inline-block;width:18px;height:2px;background:#94a3b8;vertical-align:middle}
+.vgl .bisher{background:#f4f6f9;color:#334155}
+.vgl.mit-bisher th,.vgl.mit-bisher td{padding:8px 10px}.vgl.mit-bisher thead th{padding-top:20px}.vgl.mit-bisher tbody th{width:22%}
+.vgl.mit-bisher .bs{font-size:14px;padding:3px 10px 3px 5px;gap:6px}.vgl.mit-bisher .bs small{white-space:nowrap;font-size:14px}.vgl.mit-bisher .bausteine{gap:6px}
+.vgl thead th.bisher{width:14%;overflow-wrap:normal;hyphens:auto}
+.vgl thead th.bisher .bt{font-size:13px;font-weight:700;color:#66758f;margin-bottom:2px}
+.vgl thead th.bisher .bg{font-size:15px;font-weight:600;color:#4b5568}
+.vgl thead th.bisher .tarif{font-size:18px}.vgl thead th.bisher .preis{font-size:22px;color:#334155}
+.vgl .pruef{font-size:15px;color:#66758f;font-style:italic}
+.bisher-fuss{display:flex;flex-wrap:wrap;gap:0 24px;margin-top:8px;font-size:16px;line-height:1.3;color:#334155}.bisher-fuss b{color:var(--f)}
 .vgl .bausteine{justify-content:center;margin-top:0}.vgl .bs{font-size:15px;padding:4px 12px 4px 6px}
 .gross .einheit{font-size:30px;font-weight:600;color:#66758f}
 .entscheidung{display:grid;grid-template-columns:3fr 2fr;gap:24px;margin-bottom:28px}
@@ -320,6 +330,8 @@ function fehlendeMerkmale(i: AngebotItem, stufen: AngebotItem[]): string[] {
 function vergleichTabelle(
   v: AngebotItem[],
   f: { badge: (i: AngebotItem) => string; preis: (i: AngebotItem) => string; knopf: (i: AngebotItem) => string; schalter: (i: AngebotItem) => string },
+  /** Spalte „Ihr bisheriger Vertrag“ (links von den neuen Tarifen) */
+  bisher?: { spalte: BisherSpalte; titel: string } | null,
 ): string {
   const namen = [...new Set(v.flatMap((i) => i.merkmale.map((m) => m.name)))];
   const wert = (i: AngebotItem, n: string) => i.merkmale.find((m) => m.name === n)?.wert;
@@ -328,7 +340,8 @@ function vergleichTabelle(
   const lang = kurz.some((k) => k.length > GRENZEN.kurzname);
   const mitBausteinen = v.some((i) => i.bausteine.length);
   // gemessen: 4 Spalten mit Bausteinen bzw. lange (zweizeilige) Tarifnamen kosten je eine Merkmalzeile
-  const maxMerkmale = GRENZEN.merkmale - (v.length >= 4 && mitBausteinen ? 1 : 0) - (lang ? 1 : 0);
+  // Spalte „Ihr bisheriger Vertrag“: eine Zeile weniger (Beitragsunterschied und Kündigung stehen darunter)
+  const maxMerkmale = GRENZEN.merkmale - (v.length >= 4 && mitBausteinen ? 1 : 0) - (lang ? 1 : 0) - (bisher ? 1 : 0);
   // Zeilen: die gewählten Merkmale in ihrer Reihenfolge (Ole, 16.11.2026: „die Merkmale, die man auswählt, landen
   // nicht in der Präsi“, gleiche Werte verschwanden in „In allen Tarifen“). Sind es mehr als Platz ist, zuerst die,
   // in denen sich die Stufen unterscheiden.
@@ -342,10 +355,23 @@ function vergleichTabelle(
     .map((n) => (JA.test(wert(v[0], n)!.trim()) ? n : `${n}: ${wert(v[0], n)}`));
   const alle = [...new Set([...gemeinsam, ...gleicheMerkmale])].slice(0, GRENZEN.alle);
   const col = (i: AngebotItem) => (i.gewaehlt ? ` class="gew"` : "");
-  const bs = mitBausteinen ? `<tr><th>Bausteine</th>${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";
-  return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span>✓ ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl"><thead><tr><th></th>${v
+  const b = bisher?.spalte;
+  const bTd = (inhalt: string) => (b ? `<td class="bisher">${inhalt}</td>` : "");
+  const bZelle = (n: string) => {
+    const w = b?.merkmale.find((m) => klein(m.name) === klein(n))?.wert ?? WERT_PRUEFEN;
+    // Unbekanntes neutral, nie „nicht enthalten“; ein „nein“ aus dem Tarifkatalog bleibt ein „nein“
+    return w === WERT_PRUEFEN ? `<span class="pruef">${e(WERT_PRUEFEN)}</span>` : zelle(w);
+  };
+  // Kopf schmal: Gesellschaft und Tarif getrennt, Summe und Selbstbeteiligung stehen unter der Tabelle
+  const bKopf = b
+    ? `<th class="bisher"><div class="bt">${e(bisher!.titel)}</div>${b.gesellschaft ? `<div class="bg">${e(b.gesellschaft)}</div>` : ""}${b.tarif ? `<div class="tarif">${e(b.tarif)}</div>` : ""}${
+        b.beitragMonat != null ? `<div class="preis">${eur(b.beitragMonat)} <small>im Monat</small></div>` : ""
+      }</th>`
+    : "";
+  const bs = mitBausteinen ? `<tr><th>Bausteine</th>${bTd("")}${v.map((i) => `<td${col(i)}>${f.schalter(i)}</td>`).join("")}</tr>` : "";
+  return `${alle.length ? `<div class="alle"><b>In allen Tarifen:</b> ${alle.map((x) => `<span>✓ ${e(x)}</span>`).join("")}</div>` : ""}<table class="vgl${b ? " mit-bisher" : ""}"><thead><tr><th></th>${bKopf}${v
     .map((i, k) => `<th${col(i)}>${f.badge(i)}<div class="tarif${lang ? " lang" : ""}">${e(kurz[k])}</div>${f.preis(i)}${f.knopf(i)}</th>`)
-    .join("")}</tr></thead><tbody>${anders.map((n) => `<tr><th>${e(n)}</th>${v.map((i) => `<td${col(i)}>${zelle(wert(i, n))}</td>`).join("")}</tr>`).join("")}${bs}</tbody></table>`;
+    .join("")}</tr></thead><tbody>${anders.map((n) => `<tr><th>${e(n)}</th>${b ? bTd(bZelle(n)) : ""}${v.map((i) => `<td${col(i)}>${zelle(wert(i, n))}</td>`).join("")}</tr>`).join("")}${bs}</tbody></table>`;
 }
 
 const punkte = (xs: string[]) => `<ul>${xs.map((x) => `<li><span class="dot"></span><span>${e(x)}</span></li>`).join("")}</ul>`;
@@ -511,21 +537,35 @@ export function folien(d: VorbereitungDaten, angebote: AngeboteDaten | null, m: 
   const nachSparte = new Map<string, AngebotItem[]>();
   for (const i of items) nachSparte.set(i.sparte, [...(nachSparte.get(i.sparte) ?? []), i]);
   let spNr = -1;
+  // Kündigung relativ zum Termin (Berliner Datum)
+  const heute = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(d.termin.startsAt);
   for (const [sparte, varianten] of nachSparte) {
     spNr++;
-    if (varianten.length < 2) continue;
+    // Bisheriger Vertrag des Kunden (Paket P3b): Vergleich auch mit nur einem neuen Tarif
+    const bisher = angebote?.bisher?.find((x) => x.sparte === sparte) ?? null;
+    if (varianten.length < 2 && !bisher) continue;
     // Cross-Selling: erst nach „Mit anschauen“ (Folie „Ihr Schutz im Überblick“) im Vergleich
     if (varianten.every((i) => zusatzAus(i, varianten))) continue;
-    // höchstens 4 Spalten; die gewählte Stufe ist immer dabei
+    // höchstens 4 Spalten (mit bisherigem Vertrag 3 neue); die gewählte Stufe ist immer dabei
+    const maxSp = bisher ? 3 : 4;
     const g = varianten.find((i) => i.gewaehlt);
-    const v = varianten.length <= 4 || !g || varianten.indexOf(g) < 4 ? varianten.slice(0, 4) : [...varianten.slice(0, 3), g];
+    const v = varianten.length <= maxSp || !g || varianten.indexOf(g) < maxSp ? varianten.slice(0, maxSp) : [...varianten.slice(0, maxSp - 1), g];
     const badge = (i: AngebotItem) => (i.empfohlen ? `<span class="badge">${e(a(an, "Passt zu dir", "Passt zu Ihnen"))}</span>` : "");
     const preis = (i: AngebotItem) => (i.beitragMonat != null ? `<div class="preis">${eur(beitragEffektiv(i)!)} <small>im Monat</small></div>` : "");
     const knopf = (i: AngebotItem) =>
       `<button type="button" class="wahl${i.gewaehlt ? " an" : ""}" data-tarif="${items.indexOf(i)}">${i.gewaehlt ? "✓ Ausgewählt" : "Auswählen"}</button>`;
     const bs = (i: AngebotItem) => schalter(items, i, false, GRENZEN.bausteine);
     const kurz = spaltenNamen(v, sparte);
-    const html = v.some((i) => i.merkmale.length) ? vergleichTabelle(v, { badge, preis, knopf, schalter: bs }) : `<div class="angebote" style="grid-template-columns:repeat(${v.length},minmax(0,1fr))">${v
+    // Darunter: Beitragsunterschied zum gewählten Tarif und Kündigung des bisherigen Vertrags
+    const diff = bisher ? beitragsUnterschiedJahr(g ? beitragEffektiv(g) : null, bisher.beitragMonat) : null;
+    // „Ihr bisheriger Vertrag: Versicherungssumme 65.000 €, Selbstbeteiligung 150 €, kündbar zum … (Kündigung bis …).“
+    const bSatz = bisher ? [...bisher.info, kuendigungText(bisher, heute)].join(", ") : "";
+    const bisherFuss = bisher
+      ? `<div class="bisher-fuss" data-bisher-fuss>${diff != null ? `<span>${e(a(an, "Dein gewählter Tarif", "Ihr gewählter Tarif"))}: <b>${e(unterschiedText(diff))}</b></span>` : ""}<span>${e(
+          `${a(an, "Dein bisheriger Vertrag", "Ihr bisheriger Vertrag")}: ${bSatz}`,
+        )}</span></div>`
+      : "";
+    const html = v.some((i) => i.merkmale.length) || bisher ? vergleichTabelle(v, { badge, preis, knopf, schalter: bs }, bisher ? { spalte: bisher, titel: a(an, "Dein bisheriger Vertrag", "Ihr bisheriger Vertrag") } : null) + bisherFuss : `<div class="angebote" style="grid-template-columns:repeat(${v.length},minmax(0,1fr))">${v
           .map(
             (i, k) => `<div class="angebot${i.empfohlen ? " empf" : ""}${i.gewaehlt ? " gew" : ""}">${badge(i)}<div class="tarif">${e(kurz[k])}</div>${preis(i)}${punkte(i.leistungen.slice(0, 3))}${bs(i)}${knopf(i)}</div>`,
           )

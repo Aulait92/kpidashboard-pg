@@ -687,7 +687,7 @@ model Lead {
   contactOverrides     Json?
   contactEditedAt      DateTime?
   // Bestehende Verträge laut Lead (Komplettcheck im WhatsApp-Assistenten, Ole 17.11.2026, lib/whatsapp/vorvertraege.ts):
-  // { at, liste: [{ sparte, gesellschaft?, fuer? }], keine? }. Nur Sparte, Gesellschaft und Person, nie Gesundheitsangaben.
+  // { at, liste: [{ sparte, gesellschaft?, fuer?, tarif? }], keine? }. Nur Sparte, Gesellschaft, Tarifname und Person, nie Gesundheitsangaben.
   vorvertraege         Json?
   // WhatsApp-Erstanschreiben (Outreach-Job): Zeitpunkt + Ergebnis
   // (sent | skipped_booked | skipped_contact | no_template | failed: …).

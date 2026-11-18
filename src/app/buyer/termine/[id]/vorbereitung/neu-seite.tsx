@@ -212,6 +212,8 @@ export async function NeueVorbereitung({ ctx, d, von }: { ctx: BuyerContext; d: 
           meine: tv.meine,
           rechnen,
           schutzNeu: tv.schutzNeu,
+          bisherNeu: tv.bisherNeu,
+          gesundheitFrei: tv.gesundheitFrei,
           // Teil C2: höchstens ein Vorsorge-Thema, nur als Hinweis (nichts gespeichert)
           vorsorge: vorsorgeThema(d, kunde?.vorsorgeThemenAus ?? [], asAnsprache(kunde?.leadAddress)),
           // „Hat Frau Becker das schon?“ (Vermittler-Oberfläche: Herr/Frau Nachname, sonst Vor- und Nachname)

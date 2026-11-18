@@ -57,16 +57,17 @@ function maximal(anzahl: 3 | 4): Tarifauswahl {
   return a;
 }
 
-async function messen(a: Tarifauswahl) {
+/** mitZoom: so messen, wie die Folie gezeigt wird (folienEinpassen darf verkleinern, abgeschnitten wird nichts) */
+async function messen(a: Tarifauswahl, mitZoom = false) {
   const fs = folien(termin, zuAngebote(a), markeFuer({ name: "Allianz Agentur Max Berger" }));
   const vgl = fs.filter((f) => f.id.startsWith("vergleich-"));
   const page = await browser!.newPage({ viewport: { width: 1280, height: 720 } });
   await page.setContent(praesentationHtml(vgl, markeFuer({ name: "Allianz Agentur Max Berger" }), "Test"));
-  const r = await page.evaluate(() =>
+  const r = await page.evaluate((mitZoom) =>
     [...document.querySelectorAll<HTMLElement>(".slide")].map((s) => {
       const inhalt = s.querySelector<HTMLElement>(":scope > .inhalt")!;
       const zoom = inhalt.style.zoom;
-      inhalt.style.removeProperty("zoom");
+      if (!mitZoom) inhalt.style.removeProperty("zoom");
       const sr = s.getBoundingClientRect();
       return {
         zoom,
@@ -78,7 +79,7 @@ async function messen(a: Tarifauswahl) {
         breiter: inhalt.scrollWidth > inhalt.clientWidth + 1,
       };
     }),
-  );
+  mitZoom);
   await page.close();
   return r;
 }
@@ -147,6 +148,62 @@ describe("Vergleichsfolie passt (Chromium)", () => {
       }
     }
   }, 600_000);
+
+  // Bisheriger Vertrag (Paket P3b): langer Versicherer und Tarif, Beitrag, Summe, SB und Kündigung unter der Tabelle
+  const bisher = (): NonNullable<Tarifauswahl["sparten"][number]["bisher"]> => ({
+    quelle: "hand",
+    zeigen: true,
+    gesellschaft: "Württembergische",
+    tarif: "Hausrat Kompakt Plus",
+    katalogId: null,
+    werte: {},
+    beitrag: 1234.56,
+    zahlweise: "jahr",
+    summe: 1_250_000,
+    sb: 1500,
+    ablauf: "2026-01-01",
+    kuendbarZum: null,
+    fristMonate: 3,
+  });
+
+  it("mit „Ihr bisheriger Vertrag“ (Paket P3b): Höchstwerte mit 3 Tarifen plus Spalte passen, abgeschnitten wird nichts", async (ctx) => {
+    if (!browser) return ctx.skip();
+    for (const n of [3, 4] as const) {
+      const a = maximal(n);
+      a.sparten[0].bisher = { ...bisher(), werte: { "kfz-diebstahl": "bis 10.000 € je Fall", "grobe-fahrlaessigkeit": "bis 100.000 €" } };
+      const [f] = await messen(a, true);
+      expect(f.spalten).toBe(4); // bisheriger Vertrag + höchstens 3 Tarife
+      expect(f.zeilen, `${n}`).toBeLessThanOrEqual(5);
+      expect(f.unten, `${n}: Inhalt ${f.unten} px, Fußzeile ${f.fuss} px`).toBeLessThanOrEqual(f.fuss);
+      expect(f.breiter).toBe(false);
+    }
+  });
+
+  it("mit „Ihr bisheriger Vertrag“: echter Katalog, jede Allianz-Sparte mit Standard-Merkmalen und 2 Bausteinen passt ohne Verkleinern", async (ctx) => {
+    if (!browser) return ctx.skip();
+    const echt = ladeTarifkatalog(path.join(__dirname, "..", "..", "data", "tarifkatalog"));
+    const zuGross: string[] = [];
+    for (const s of echt.sparten) {
+      const a = startAuswahl(echt, [s.key], { rolle: "vertreter", gesellschaften: ["allianz"] });
+      const sp = a.sparten[0];
+      sp.tarife = echt.tarife.filter((t) => t.gesellschaft === "allianz" && t.sparte === s.key).map(tarifAusKatalog);
+      if (!sp.tarife.length) continue;
+      sp.bausteine = s.bausteine.slice(0, 2).map((b) => b.key);
+      sp.tarife.forEach((t, i) => {
+        t.beitrag = 123.45 + i;
+        for (const b of sp.bausteine) {
+          t.bausteinStatus[b] = "optional";
+          t.bausteine[b] = { an: i % 2 === 0, beitrag: 12.34 };
+        }
+      });
+      sp.bisher = bisher();
+      const [f] = await messen(a);
+      expect(f, s.key).toBeTruthy();
+      expect(f.spalten, s.key).toBeLessThanOrEqual(4);
+      if (f.unten > f.fuss || f.breiter) zuGross.push(`${s.key}: Inhalt ${f.unten} px, Fußzeile ${f.fuss} px${f.breiter ? ", zu breit" : ""}`);
+    }
+    expect(zuGross).toEqual([]);
+  }, 60_000);
 
   it("4 Stufen: eine Merkmalzeile weniger, nichts unter der Fußzeile", async (ctx) => {
     if (!browser) return ctx.skip();
