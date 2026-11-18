@@ -368,6 +368,7 @@ model Customer {
   // „Verglichen wurden Tarife von {gesellschaften}.“ (lib/praesentation.ts, Einstellungen → Präsentation)
   maklerMarkthinweis             String?
   eigeneTarife                   EigenerTarif[]
+  tarifVorschlaege               TarifVorschlag[]
   beraterMerkmale                BeraterMerkmale[]
   maklervollmachten              Maklervollmacht[]
   // Beratungsdokumentation als Angebot (Paket B, Ole 18.11.2026, lib/beratungsdoku-server.ts): Schalter je Vermittler,
@@ -4678,6 +4679,60 @@ model EigenerTarif {
   createdAt    DateTime @default(now())
 
   @@index([customerId, sparte])
+}
+
+/// Tarifkatalog lernt aus Einträgen der Vermittler (Ole, 18.11.2026, lib/tarif-vorschlaege*.ts): Was ein Vermittler in
+/// der Terminvorbereitung von Hand zu einem Katalogtarif einträgt (eigener Tarif mit Werten zu einem Katalogtarif,
+/// fehlender Tarifname, „Anderer Tarif“ beim bisherigen Vertrag), wird als Vorschlag gesammelt. Nur Katalogbezug:
+/// keine Lead-, Termin- oder Personendaten, keine Gesundheitsangaben. customerId = Vermittler-Konto (zählt
+/// „verschiedene Vermittler“). tarifId = Katalog-ID („lvm/hausrat/komfort“) bzw. „<gesellschaft>/<sparte>/*“ für einen
+/// Tarifnamen, der im Katalog fehlt (merkmal „__tarif“). Je Vermittler und Wert nur ein Eintrag.
+model TarifVorschlag {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  userId        String?
+  gesellschaft  String
+  sparte        String
+  /// Katalogdatei relativ zu data/tarifkatalog („lvm/hausrat.json“)
+  datei         String
+  tarifId       String
+  merkmal       String
+  /// Katalogwert beim Erfassen (NULL = im Katalog leer bzw. neuer Tarifname)
+  alterWert     String?
+  neuerWert     String
+  /// Katalogtarif war beim Erfassen ungeprüft (Ungeprüfte zuerst in der Admin-Liste)
+  ungeprueft    Boolean   @default(false)
+  /// vorbereitung | bisheriger-vertrag
+  quelle        String
+  /// offen | uebernommen | abgelehnt
+  status        String    @default("offen")
+  entschiedenAm DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@unique([customerId, tarifId, merkmal, neuerWert])
+  @@index([status, tarifId, merkmal])
+}
+
+/// Übernommene Werte (Admin Einstellungen › Tarifkatalog): Laufzeit-Überlagerung über den Datei-Katalog
+/// (lib/tarif-vorschlaege-server.ts ladeTarifkatalogAktuell). Wirkt sofort für alle Vermittler; das Merkmal gilt dann
+/// als „von Vermittlern bestätigt“. Unabhängig von den Vorschlägen (bleibt, wenn ein Vermittler-Konto gelöscht wird).
+/// Später per scripts/tarif-vorschlaege-export.mjs in die Katalogdateien schreiben. merkmal „__tarif“: neuer
+/// Tarifname, nur für den Export (keine Laufzeitwirkung).
+model TarifKatalogWert {
+  id            String   @id @default(cuid())
+  tarifId       String
+  merkmal       String
+  wert          String
+  gesellschaft  String
+  sparte        String
+  datei         String
+  /// Anzahl verschiedener Vermittler beim Übernehmen
+  vermittler    Int      @default(0)
+  uebernommenAm DateTime @default(now())
+  uebernommenVon String?
+
+  @@unique([tarifId, merkmal])
 }
 
 /// „Meine Merkmale“ (Terminvorbereitung, Ole 15.11.2026): zuletzt gewählte Merkmale und Bausteine je Sparte als

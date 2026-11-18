@@ -4368,6 +4368,42 @@
   "ort_neu": "src/app/admin/neu/einstellungen/tarife/page.tsx"
  },
  {
+  "heute": "(neu)",
+  "funktion": "Vorschläge von Vermittlern zum Tarifkatalog: je Tarif und Merkmal, verschiedene Vermittler je Wert, ungeprüfte zuerst, „Empfohlen“ ab 3",
+  "quelle": "app/admin/neu/einstellungen/tarife/page.tsx",
+  "neu": "Einstellungen › Tarifkatalog",
+  "status": "neu",
+  "demo_view": "e-tarife",
+  "id": "tarif-vorschlaege--liste-nach-tarif-und-merkmal",
+  "bereich": "einstellungen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/einstellungen/tarif-vorschlaege.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Vorschlag übernehmen (gilt sofort für alle Vermittler), ablehnen oder zurücknehmen",
+  "quelle": "app/admin/neu/einstellungen/tarife/actions.ts",
+  "neu": "Einstellungen › Tarifkatalog",
+  "status": "neu",
+  "demo_view": "e-tarife",
+  "id": "tarif-vorschlaege--uebernehmen-oder-ablehnen",
+  "bereich": "einstellungen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/einstellungen/tarif-vorschlaege.tsx"
+ },
+ {
+  "heute": "(neu)",
+  "funktion": "Übernommene Werte als JSON für die Katalogdateien exportieren (scripts/tarif-vorschlaege-export.mjs)",
+  "quelle": "app/admin/neu/einstellungen/tarife/vorschlaege/export/route.ts",
+  "neu": "Einstellungen › Tarifkatalog",
+  "status": "neu",
+  "demo_view": "e-tarife",
+  "id": "tarif-vorschlaege--export-fuer-katalogdateien",
+  "bereich": "einstellungen",
+  "status_neu": "vorhanden",
+  "ort_neu": "src/components/admin-neu/einstellungen/tarif-vorschlaege.tsx"
+ },
+ {
   "heute": "/admin/einstellungen/kampagnen-automatik",
   "funktion": "Budgetänderungen automatisch bei Meta umsetzen",
   "quelle": "app/admin/einstellungen/kampagnen-automatik/actions.ts:saveAutomationAction",

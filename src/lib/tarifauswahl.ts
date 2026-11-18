@@ -58,6 +58,8 @@ export type TarifWahl = {
   preisPruefen?: { quelle: string; am: string } | null;
   /** Werte aus dem Katalog sind nicht an der Quelle gegengeprüft (KatalogTarif.ungeprueft): „bitte prüfen“ an der Karte */
   werteUngeprueft?: boolean;
+  /** Merkmale, die Vermittler bestätigt haben (KatalogTarif.bestaetigt): dort kein „bitte prüfen“ */
+  werteBestaetigt?: string[];
   /** Für einen späteren Bündelrabatt (lib/tarifkatalog.ts BuendelRegel): Produktlinie und Vertragslaufzeit */
   linie?: string | null;
   laufzeitJahre?: number | null;
@@ -160,6 +162,7 @@ function cleanTarif(v: unknown): TarifWahl | null {
     inAllen: strs(r.inAllen, 8, 120),
     ...(preisPruefen && betrag(r.beitrag) != null ? { preisPruefen } : {}),
     ...(r.werteUngeprueft === true ? { werteUngeprueft: true } : {}),
+    ...(Array.isArray(r.werteBestaetigt) && strs(r.werteBestaetigt, 40, 80).length ? { werteBestaetigt: strs(r.werteBestaetigt, 40, 80) } : {}),
     ...(r.linie !== undefined ? { linie: str(r.linie, 40) } : {}),
     ...(typeof r.laufzeitJahre === "number" && r.laufzeitJahre > 0 && r.laufzeitJahre <= 10 ? { laufzeitJahre: Math.round(r.laufzeitJahre) } : {}),
     ...(Array.isArray(r.leistungen) ? { leistungen: strs(r.leistungen, 6, 160) } : {}),
@@ -224,6 +227,7 @@ export function tarifAusKatalog(t: KatalogTarif): TarifWahl {
     inAllen: [...t.inAllenTarifen],
     linie: t.linie ?? t.kurz,
     ...(t.ungeprueft ? { werteUngeprueft: true } : {}),
+    ...(t.ungeprueft && t.bestaetigt?.length ? { werteBestaetigt: [...t.bestaetigt] } : {}),
   };
 }
 
